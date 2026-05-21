@@ -27,21 +27,29 @@ export function PesosSimulator() {
   const cuotasPendientes = Math.max(0, plazoInicial - cuotasPagadas);
   const honorariosPct = parsePercentage(client.porcentajeHonorarios) || 6;
 
+  const cuotaActualNum = parseCurrency(cuotaActual);
+  const segurosNum = parseCurrency(seguros);
+  const cuotaSinSegurosNum = Math.max(0, cuotaActualNum - segurosNum);
+
   const input: PesosInput = useMemo(() => ({
     saldoCapital: parseCurrency(saldoCapital),
-    cuotaActual: parseCurrency(cuotaActual),
-    seguros: parseCurrency(seguros),
+    cuotaActual: cuotaActualNum,
+    seguros: segurosNum,
     tea: parsePercentage(tea),
     cuotasPendientes,
     porcentajeHonorarios: honorariosPct,
-  }), [saldoCapital, cuotaActual, seguros, tea, cuotasPendientes, honorariosPct]);
+  }), [saldoCapital, cuotaActualNum, segurosNum, tea, cuotasPendientes, honorariosPct]);
 
   const validaciones: string[] = [];
   if (plazoInicial > 0 && cuotasPagadas > plazoInicial) validaciones.push("Las cuotas pagadas no pueden ser mayores al plazo inicial.");
   if (plazoInicial > 0 && cuotasPagadas === plazoInicial) validaciones.push("Este crédito ya está amortizado.");
+  if (cuotaActualNum > 0 && segurosNum > cuotaActualNum) validaciones.push("Los seguros no pueden ser mayores que la cuota actual.");
+  if (cuotaActualNum > 0 && segurosNum > 0 && cuotaSinSegurosNum <= 0) validaciones.push("La cuota sin seguros debe ser mayor a cero para calcular la proyección.");
+
+  const cuotaSinSegurosValida = cuotaActualNum === 0 || segurosNum === 0 || (segurosNum < cuotaActualNum && cuotaSinSegurosNum > 0);
 
   const datosCompletos =
-    input.saldoCapital > 0 && input.cuotaActual > 0 && input.tea > 0 && cuotasPendientes > 0;
+    input.saldoCapital > 0 && input.cuotaActual > 0 && input.tea > 0 && cuotasPendientes > 0 && cuotaSinSegurosValida;
 
   const calc = useMemo(() => {
     if (!datosCompletos) return null;
