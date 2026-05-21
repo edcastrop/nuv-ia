@@ -71,29 +71,17 @@ export function ComparativeTable({ mode, pesos, uvr, bestIndex, honorariosPct }:
     <div
       className="nuvex-avoid-break overflow-hidden bg-white"
       style={{
-        borderRadius: 16,
+        borderRadius: 14,
         border: `1px solid ${BORDER}`,
-        boxShadow: "0 1px 3px rgba(36,36,36,0.04), 0 12px 32px rgba(36,36,36,0.06)",
+        boxShadow: "0 1px 3px rgba(36,36,36,0.04), 0 6px 18px rgba(36,36,36,0.05)",
       }}
     >
-      <div
-        className="px-6 pt-6 pb-5 border-b"
-        style={{ borderColor: BORDER, fontFamily: "Inter, sans-serif" }}
-      >
-        <h3 className="text-[15px] font-bold tracking-wider uppercase" style={{ color: NUVEX.negro }}>
-          Propuestas de optimización financiera
-        </h3>
-        <p className="mt-1.5 text-sm text-[#5C6770]">
-          Analizamos 4 escenarios posibles para reducir tiempo, intereses y seguros del crédito.
-        </p>
-      </div>
-
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-sm" style={{ fontFamily: "Inter, sans-serif" }}>
+        <table className="w-full border-collapse text-[13px]" style={{ fontFamily: "Inter, sans-serif" }}>
           <thead>
             <tr>
               <th
-                className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white"
+                className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-white"
                 style={{ backgroundColor: NUVEX.negro, border: `1px solid ${BORDER}` }}
               >
                 Concepto
@@ -103,22 +91,21 @@ export function ComparativeTable({ mode, pesos, uvr, bestIndex, honorariosPct }:
                 return (
                   <th
                     key={i}
-                    className="px-5 py-4 text-center text-[11px] font-bold uppercase tracking-wider text-white align-top"
+                    className="px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wider text-white align-top"
                     style={{
                       backgroundColor: isBest ? NUVEX.verde : NUVEX.azul,
-                      border: isBest ? `3px solid ${NUVEX.verde}` : `1px solid ${BORDER}`,
-                      borderBottom: isBest ? `3px solid ${NUVEX.verde}` : `1px solid ${BORDER}`,
+                      border: isBest ? `2px solid ${NUVEX.verde}` : `1px solid ${BORDER}`,
                     }}
                   >
-                    <div className="flex flex-col items-center gap-1.5">
-                      <span className="text-[13px]">Propuesta {i + 1}</span>
-                      <span className="text-[10px] font-normal opacity-95">− {p.cuotasEliminadas} cuotas</span>
+                    <div className="flex flex-col items-center gap-0.5">
+                      <span className="text-[12px]">Propuesta {i + 1}</span>
+                      <span className="text-[9px] font-normal opacity-95">− {p.cuotasEliminadas} cuotas</span>
                       {isBest && (
                         <span
-                          className="mt-1 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wider"
-                          style={{ backgroundColor: NUVEX.verde, color: "#FFFFFF", border: "1px solid #FFFFFF" }}
+                          className="mt-0.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold tracking-wider"
+                          style={{ backgroundColor: "#FFFFFF", color: "#1F7A45" }}
                         >
-                          ✓ PROPUESTA RECOMENDADA
+                          ✓ RECOMENDADA
                         </span>
                       )}
                     </div>
@@ -131,11 +118,13 @@ export function ComparativeTable({ mode, pesos, uvr, bestIndex, honorariosPct }:
             {rows.map((row) => (
               <tr key={row.key} className="nuvex-avoid-break">
                 <td
-                  className="px-5 py-3.5 text-left text-xs font-semibold"
+                  className="px-3 py-1.5 text-left text-[11px] font-semibold"
                   style={{
                     border: `1px solid ${BORDER}`,
                     backgroundColor: "#F7F9FB",
                     color: NUVEX.negro,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.03em",
                   }}
                 >
                   {row.label}
@@ -146,8 +135,8 @@ export function ComparativeTable({ mode, pesos, uvr, bestIndex, honorariosPct }:
                     border: `1px solid ${BORDER}`,
                     color: NUVEX.negro,
                     backgroundColor: isBest ? "#F4FBF6" : "#FFFFFF",
-                    fontSize: 14,
-                    padding: "14px 20px",
+                    fontSize: 12,
+                    padding: "6px 12px",
                     textAlign: "center",
                     fontWeight: 500,
                   };
@@ -156,7 +145,7 @@ export function ComparativeTable({ mode, pesos, uvr, bestIndex, honorariosPct }:
                     style = { ...style, backgroundColor: "#F4FBF6", color: "#1F7A45", fontWeight: 700 };
                   }
                   if (row.key === "ahorroTotal") {
-                    style = { ...style, backgroundColor: "#EAF8EF", color: "#1F7A45", fontWeight: 800, fontSize: 20 };
+                    style = { ...style, backgroundColor: "#EAF8EF", color: "#1F7A45", fontWeight: 800, fontSize: 14 };
                   }
                   if (row.key === "honorarios") {
                     if (honorariosNegByCol[vi]) {
@@ -167,8 +156,8 @@ export function ComparativeTable({ mode, pesos, uvr, bestIndex, honorariosPct }:
                   }
 
                   if (isBest) {
-                    style.borderLeft = `3px solid ${NUVEX.verde}`;
-                    style.borderRight = `3px solid ${NUVEX.verde}`;
+                    style.borderLeft = `2px solid ${NUVEX.verde}`;
+                    style.borderRight = `2px solid ${NUVEX.verde}`;
                   }
 
                   return (
@@ -186,30 +175,10 @@ export function ComparativeTable({ mode, pesos, uvr, bestIndex, honorariosPct }:
                 })}
               </tr>
             ))}
-            <tr>
-              <td style={{ border: `1px solid ${BORDER}`, backgroundColor: "#F7F9FB", padding: 0 }} />
-              {propuestas.map((_, vi) => {
-                const isBest = vi === bestIndex;
-                return (
-                  <td
-                    key={vi}
-                    style={{
-                      padding: 0,
-                      border: `1px solid ${BORDER}`,
-                      borderTop: "none",
-                      borderLeft: isBest ? `3px solid ${NUVEX.verde}` : `1px solid ${BORDER}`,
-                      borderRight: isBest ? `3px solid ${NUVEX.verde}` : `1px solid ${BORDER}`,
-                      borderBottom: isBest ? `3px solid ${NUVEX.verde}` : `1px solid ${BORDER}`,
-                      backgroundColor: isBest ? "#F4FBF6" : "#FFFFFF",
-                      height: 6,
-                    }}
-                  />
-                );
-              })}
-            </tr>
           </tbody>
         </table>
       </div>
     </div>
   );
 }
+
