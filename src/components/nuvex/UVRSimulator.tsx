@@ -173,6 +173,11 @@ export function UVRSimulator({
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-6 py-6">
+      {onReset && (
+        <div className="flex justify-end">
+          <button onClick={onReset} className="text-xs text-[#445DA3] hover:underline">← Cambiar modo</button>
+        </div>
+      )}
       <Card>
         <SectionTitle sub="Información general del cliente y del crédito en UVR">Datos del cliente</SectionTitle>
         <ClientFields data={client} onChange={setClient} productos={PRODUCTOS_UVR} cuotasPendientes={cuotasPendientes} />
@@ -293,6 +298,36 @@ export function UVRSimulator({
             <DiscountModule honorariosBase={recomendada.honorarios} state={discount} onChange={setDiscount} />
           )}
 
+          {recomendada && (() => {
+            const d = computeDiscount(recomendada.honorarios, discount);
+            return (
+              <SaveExpedienteButton
+                expedienteId={init?.id}
+                onSaved={onSaved}
+                payload={{
+                  modo: "uvr",
+                  cliente: client,
+                  credito: { valorDesembolsado, saldoPesos, saldoUVR, valorUVR, cuotaActualPesos, seguros, teaCobrada, variacionUVR, nuevaCuotaManual },
+                  propuesta: {
+                    nuevaCuota: recomendada.nuevaCuota,
+                    nuevoPlazo: recomendada.nuevoPlazo,
+                    añosEliminados: recomendada.añosEliminados,
+                    ahorroIntereses: recomendada.ahorroIntereses,
+                    ahorroSeguros: recomendada.ahorroSeguros,
+                    ahorroTotal: recomendada.ahorroTotal,
+                    honorarios: recomendada.honorarios,
+                    totalProyectado: recomendada.totalProyectado,
+                    fuente: manualValido ? "manual" : "automatica",
+                  },
+                  discountState: discount as unknown as Record<string, unknown>,
+                  honorariosBase: recomendada.honorarios,
+                  honorariosFinal: d.final,
+                  descuento: d.descuento,
+                }}
+              />
+            );
+          })()}
+
           {recomendada && (
             <div className="flex justify-end">
               <button
@@ -381,6 +416,8 @@ export function UVRSimulator({
                 cuotaActualConSeguro={input.cuotaActualPesos}
                 seguros={input.seguros}
                 honorariosPct={honorariosPct}
+                expedienteId={init?.id}
+                aprobadoInicial={init?.aprobado_data ?? null}
               />
             );
           })()}
