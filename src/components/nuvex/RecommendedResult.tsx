@@ -5,6 +5,7 @@ export function RecommendedResult({
   mode,
   items,
   honorariosPct,
+  personalizada = false,
 }: {
   mode: "pesos" | "uvr";
   items: {
@@ -16,8 +17,11 @@ export function RecommendedResult({
     nuevaCuota: number;
   };
   honorariosPct: number;
+  personalizada?: boolean;
 }) {
   const intLabel = mode === "uvr" ? "Ahorro intereses + CM" : "Ahorro intereses";
+  const headerBg = personalizada ? NUVEX.azul : NUVEX.verde;
+  const badgeLabel = personalizada ? "Propuesta personalizada" : "Propuesta recomendada";
   const cells: { label: string; value: string; highlight?: boolean }[] = [
     { label: "Años eliminados", value: formatNumber(items.añosEliminados, 0) },
     { label: "Nueva cuota", value: formatCOP(items.nuevaCuota) },
@@ -41,11 +45,11 @@ export function RecommendedResult({
     >
       <div
         className="flex items-center justify-between px-4 py-2.5"
-        style={{ backgroundColor: NUVEX.verde, color: "#FFFFFF" }}
+        style={{ backgroundColor: headerBg, color: "#FFFFFF" }}
       >
         <div className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider">
-          <span>🏆</span>
-          <span>Propuesta recomendada</span>
+          <span>{personalizada ? "✎" : "🏆"}</span>
+          <span>{badgeLabel}</span>
         </div>
         <div className="text-[11px] opacity-90">
           {mode === "uvr" ? "Crédito UVR" : "Crédito en pesos"} · Elimina{" "}

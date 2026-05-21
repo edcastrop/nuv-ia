@@ -17,6 +17,7 @@ interface Props {
   uvrPropuestas?: UVRPropuesta[];
   bestIndex: number;
   honorariosPct: number;
+  personalizada?: boolean;
   recommended: {
     añosEliminados: number;
     ahorroIntereses: number;
@@ -61,6 +62,7 @@ export function PrintDocument(props: Props) {
   const {
     mode, client, cuotasPendientes, metrics,
     pesosPropuestas, uvrPropuestas, bestIndex, honorariosPct, recommended, scenarioRows,
+    personalizada = false,
   } = props;
 
   const titulo = mode === "uvr"
@@ -149,7 +151,7 @@ export function PrintDocument(props: Props) {
       <section className="nuvex-print-page">
         <PrintHeader />
         <div className="mt-5 text-[10px]">
-          <RecommendedResult mode={mode} items={recommended} honorariosPct={honorariosPct} />
+          <RecommendedResult mode={mode} items={recommended} honorariosPct={honorariosPct} personalizada={personalizada} />
         </div>
 
         <div className="mt-5">
