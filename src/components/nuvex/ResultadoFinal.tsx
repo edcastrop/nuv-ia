@@ -377,13 +377,17 @@ function PrintHeader({ subtitle }: { subtitle: string }) {
 }
 
 function PrintInformeFinal({
-  id, mode, client, aprob, aprobado, proyeccion, metricas, rows,
+  id, mode, client, aprob, aprobado, metricas, rows,
 }: {
   id: string;
   mode: "pesos" | "uvr";
   client: ClientData;
   aprob: AprobacionState;
-  aprobado: NonNullable<ReturnType<typeof useMemo<any>>>;
+  aprobado: {
+    cuota: number; plazo: number; cuotasEliminadas: number; añosEliminados: number;
+    ahorroIntereses: number; ahorroSeguros: number; ahorroTotal: number;
+    honorariosBase: number; descuento: number; honorariosFinales: number;
+  };
   proyeccion: ProyeccionNuvex;
   metricas: { aCuota: number; aPlazo: number; aElim: number; aAhorro: number; global: number; cal: { label: string; color: string; bg: string } };
   rows: { c: string; p: string; a: string; v: string }[];
