@@ -4,6 +4,7 @@ import { NUVEX, CORPORATIVO } from "./constants";
 import { formatCOP, formatNumber, parseCurrency, parseDecimal } from "../../lib/format";
 import { applyHonorariosFloor, HONORARIOS_MIN_BASE, HONORARIOS_MIN_FINAL } from "../../lib/finance";
 import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
+import { setAprobado, type AprobadoData } from "@/lib/expedientes";
 import type { ClientData } from "./ClientFields";
 
 export interface ProyeccionNuvex {
@@ -72,6 +73,8 @@ export function ResultadoFinal({
   cuotaActualConSeguro,
   seguros,
   honorariosPct,
+  expedienteId,
+  aprobadoInicial,
 }: {
   mode: "pesos" | "uvr";
   client: ClientData;
@@ -80,8 +83,23 @@ export function ResultadoFinal({
   cuotaActualConSeguro: number;
   seguros: number;
   honorariosPct: number;
+  expedienteId?: string;
+  aprobadoInicial?: AprobadoData | null;
 }) {
-  const [aprob, setAprob] = useState<AprobacionState>(() => defaultAprobacion(client.banco));
+  const [aprob, setAprob] = useState<AprobacionState>(() =>
+    aprobadoInicial
+      ? {
+          fechaAprobacion: aprobadoInicial.fechaAprobacion,
+          radicado: aprobadoInicial.radicado,
+          banco: aprobadoInicial.banco,
+          cuotaAprobada: String(aprobadoInicial.cuotaAprobada ?? ""),
+          plazoAprobado: String(aprobadoInicial.plazoAprobado ?? ""),
+          observaciones: aprobadoInicial.observaciones ?? "",
+        }
+      : defaultAprobacion(client.banco),
+  );
+  const [savingApr, setSavingApr] = useState(false);
+  const [savedMsg, setSavedMsg] = useState<string | null>(null);
   const [consecutivo] = useState<string>(() => nextConsecutivo());
   const set = <K extends keyof AprobacionState>(k: K, v: AprobacionState[K]) =>
     setAprob((s) => ({ ...s, [k]: v }));
