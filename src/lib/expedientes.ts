@@ -168,12 +168,28 @@ export async function updateEstado(id: string, estado: EstadoExpediente, nota?: 
 }
 
 export async function setAprobado(id: string, aprobado: AprobadoData, acertividad: number) {
+  const prev = await getExpediente(id);
   const { error } = await supabase
     .from("expedientes")
-    .update({ aprobado_data: aprobado as unknown as never, acertividad_global: acertividad })
+    .update({
+      aprobado_data: aprobado as unknown as never,
+      acertividad_global: acertividad,
+      estado: "APROBADO",
+    })
     .eq("id", id);
   if (error) throw error;
+  if (prev.estado !== "APROBADO") {
+    const { data: userData } = await supabase.auth.getUser();
+    await supabase.from("expediente_historial").insert({
+      expediente_id: id,
+      estado_anterior: prev.estado,
+      estado_nuevo: "APROBADO",
+      user_id: userData.user?.id ?? null,
+      nota: "Aprobación bancaria registrada",
+    });
+  }
 }
+
 
 export async function deleteExpediente(id: string) {
   const { error } = await supabase.from("expedientes").delete().eq("id", id);
