@@ -16,19 +16,35 @@ import { PrintDocument } from "./PrintDocument";
 import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
 import { DiscountModule, computeDiscount, defaultDiscount, type DiscountState } from "./DiscountModule";
 import { ResultadoFinal, type ProyeccionNuvex } from "./ResultadoFinal";
+import { SaveExpedienteButton } from "./SaveExpedienteButton";
+import type { Expediente } from "@/lib/expedientes";
 
-export function UVRSimulator() {
-  const [discount, setDiscount] = useState<DiscountState>(defaultDiscount);
-  const [client, setClient] = useState<ClientData>(defaultClient);
-  const [valorDesembolsado, setValorDesembolsado] = useState("");
-  const [saldoPesos, setSaldoPesos] = useState("");
-  const [saldoUVR, setSaldoUVR] = useState("");
-  const [valorUVR, setValorUVR] = useState("");
-  const [cuotaActualPesos, setCuotaActualPesos] = useState("");
-  const [seguros, setSeguros] = useState("");
-  const [teaCobrada, setTeaCobrada] = useState("");
-  const [variacionUVR, setVariacionUVR] = useState("");
-  const [nuevaCuotaManual, setNuevaCuotaManual] = useState("");
+export function UVRSimulator({
+  initialExpediente,
+  onSaved,
+  onReset,
+}: {
+  initialExpediente?: Expediente;
+  onSaved?: (e: Expediente) => void;
+  onReset?: () => void;
+} = {}) {
+  const init = initialExpediente;
+  const initCred = (init?.credito_data ?? {}) as Record<string, string>;
+  const [discount, setDiscount] = useState<DiscountState>(
+    () => (init?.discount_data && Object.keys(init.discount_data).length
+      ? (init.discount_data as unknown as DiscountState)
+      : defaultDiscount),
+  );
+  const [client, setClient] = useState<ClientData>(() => (init?.cliente_data as ClientData) ?? defaultClient);
+  const [valorDesembolsado, setValorDesembolsado] = useState(initCred.valorDesembolsado ?? "");
+  const [saldoPesos, setSaldoPesos] = useState(initCred.saldoPesos ?? "");
+  const [saldoUVR, setSaldoUVR] = useState(initCred.saldoUVR ?? "");
+  const [valorUVR, setValorUVR] = useState(initCred.valorUVR ?? "");
+  const [cuotaActualPesos, setCuotaActualPesos] = useState(initCred.cuotaActualPesos ?? "");
+  const [seguros, setSeguros] = useState(initCred.seguros ?? "");
+  const [teaCobrada, setTeaCobrada] = useState(initCred.teaCobrada ?? "");
+  const [variacionUVR, setVariacionUVR] = useState(initCred.variacionUVR ?? "");
+  const [nuevaCuotaManual, setNuevaCuotaManual] = useState(initCred.nuevaCuotaManual ?? "");
 
   const plazoInicial = parseDecimal(client.plazoInicial);
   const cuotasPagadas = parseDecimal(client.cuotasPagadas);
