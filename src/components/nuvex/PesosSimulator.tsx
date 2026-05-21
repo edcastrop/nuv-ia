@@ -283,6 +283,36 @@ export function PesosSimulator({
             <DiscountModule honorariosBase={recomendada.honorarios} state={discount} onChange={setDiscount} />
           )}
 
+          {recomendada && (() => {
+            const d = computeDiscount(recomendada.honorarios, discount);
+            return (
+              <SaveExpedienteButton
+                expedienteId={init?.id}
+                onSaved={onSaved}
+                payload={{
+                  modo: "pesos",
+                  cliente: client,
+                  credito: { valorDesembolsado, saldoCapital, cuotaActual, seguros, tea, nuevaCuotaManual },
+                  propuesta: {
+                    nuevaCuota: recomendada.nuevaCuota,
+                    nuevoPlazo: recomendada.nuevoPlazo,
+                    añosEliminados: recomendada.añosEliminados,
+                    ahorroIntereses: recomendada.ahorroIntereses,
+                    ahorroSeguros: recomendada.ahorroSeguros,
+                    ahorroTotal: recomendada.ahorroTotal,
+                    honorarios: recomendada.honorarios,
+                    totalProyectado: recomendada.totalProyectado,
+                    fuente: manualValido ? "manual" : "automatica",
+                  },
+                  discountState: discount as unknown as Record<string, unknown>,
+                  honorariosBase: recomendada.honorarios,
+                  honorariosFinal: d.final,
+                  descuento: d.descuento,
+                }}
+              />
+            );
+          })()}
+
           {recomendada && (
             <div className="flex justify-end">
               <button
@@ -303,6 +333,7 @@ export function PesosSimulator({
               </button>
             </div>
           )}
+
 
           {recomendada && (() => {
             const d = computeDiscount(recomendada.honorarios, discount);
@@ -371,6 +402,8 @@ export function PesosSimulator({
                 cuotaActualConSeguro={input.cuotaActual}
                 seguros={input.seguros}
                 honorariosPct={honorariosPct}
+                expedienteId={init?.id}
+                aprobadoInicial={init?.aprobado_data ?? null}
               />
             );
           })()}
