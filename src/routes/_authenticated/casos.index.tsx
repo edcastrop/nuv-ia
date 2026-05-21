@@ -6,7 +6,7 @@ import { formatCOP } from "@/lib/format";
 import { Card, SectionTitle } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
 
-export const Route = createFileRoute("/_authenticated/casos")({
+export const Route = createFileRoute("/_authenticated/casos/")({
   component: CasosPage,
   head: () => ({ meta: [{ title: "Casos · NUVEX" }] }),
 });

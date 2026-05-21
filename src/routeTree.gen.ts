@@ -13,7 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedCasosRouteImport } from './routes/_authenticated/casos'
+import { Route as AuthenticatedCasosIndexRouteImport } from './routes/_authenticated/casos.index'
 import { Route as AuthenticatedCasosIdRouteImport } from './routes/_authenticated/casos.$id'
 
 const LoginRoute = LoginRouteImport.update({
@@ -35,53 +35,53 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedCasosRoute = AuthenticatedCasosRouteImport.update({
-  id: '/casos',
-  path: '/casos',
+const AuthenticatedCasosIndexRoute = AuthenticatedCasosIndexRouteImport.update({
+  id: '/casos/',
+  path: '/casos/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedCasosIdRoute = AuthenticatedCasosIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AuthenticatedCasosRoute,
+  id: '/casos/$id',
+  path: '/casos/$id',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
-  '/casos': typeof AuthenticatedCasosRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
+  '/casos/': typeof AuthenticatedCasosIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
-  '/casos': typeof AuthenticatedCasosRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/': typeof AuthenticatedIndexRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
+  '/casos': typeof AuthenticatedCasosIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
-  '/_authenticated/casos': typeof AuthenticatedCasosRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/casos/$id': typeof AuthenticatedCasosIdRoute
+  '/_authenticated/casos/': typeof AuthenticatedCasosIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/casos' | '/dashboard' | '/casos/$id'
+  fullPaths: '/' | '/login' | '/dashboard' | '/casos/$id' | '/casos/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/casos' | '/dashboard' | '/' | '/casos/$id'
+  to: '/login' | '/dashboard' | '/' | '/casos/$id' | '/casos'
   id:
     | '__root__'
     | '/_authenticated'
     | '/login'
-    | '/_authenticated/casos'
     | '/_authenticated/dashboard'
     | '/_authenticated/'
     | '/_authenticated/casos/$id'
+    | '/_authenticated/casos/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -119,44 +119,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/casos': {
-      id: '/_authenticated/casos'
+    '/_authenticated/casos/': {
+      id: '/_authenticated/casos/'
       path: '/casos'
-      fullPath: '/casos'
-      preLoaderRoute: typeof AuthenticatedCasosRouteImport
+      fullPath: '/casos/'
+      preLoaderRoute: typeof AuthenticatedCasosIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/casos/$id': {
       id: '/_authenticated/casos/$id'
-      path: '/$id'
+      path: '/casos/$id'
       fullPath: '/casos/$id'
       preLoaderRoute: typeof AuthenticatedCasosIdRouteImport
-      parentRoute: typeof AuthenticatedCasosRoute
+      parentRoute: typeof AuthenticatedRoute
     }
   }
 }
 
-interface AuthenticatedCasosRouteChildren {
-  AuthenticatedCasosIdRoute: typeof AuthenticatedCasosIdRoute
-}
-
-const AuthenticatedCasosRouteChildren: AuthenticatedCasosRouteChildren = {
-  AuthenticatedCasosIdRoute: AuthenticatedCasosIdRoute,
-}
-
-const AuthenticatedCasosRouteWithChildren =
-  AuthenticatedCasosRoute._addFileChildren(AuthenticatedCasosRouteChildren)
-
 interface AuthenticatedRouteChildren {
-  AuthenticatedCasosRoute: typeof AuthenticatedCasosRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedCasosIdRoute: typeof AuthenticatedCasosIdRoute
+  AuthenticatedCasosIndexRoute: typeof AuthenticatedCasosIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedCasosRoute: AuthenticatedCasosRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedCasosIdRoute: AuthenticatedCasosIdRoute,
+  AuthenticatedCasosIndexRoute: AuthenticatedCasosIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -170,3 +161,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
