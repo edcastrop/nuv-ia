@@ -1,6 +1,14 @@
 // Motores financieros NUVEX: PESOS y UVR
 // No exponer fórmulas al usuario final.
 
+export const HONORARIOS_MIN_BASE = 2_000_000;
+export const HONORARIOS_MIN_FINAL = 1_800_000;
+
+export function applyHonorariosFloor(calculado: number): number {
+  if (!isFinite(calculado) || calculado <= 0) return calculado;
+  return Math.max(HONORARIOS_MIN_BASE, calculado);
+}
+
 export function pmt(rate: number, nper: number, pv: number): number {
   if (nper <= 0) return 0;
   if (rate === 0) return pv / nper;
