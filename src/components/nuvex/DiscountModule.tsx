@@ -1,6 +1,7 @@
-import { Card, SectionTitle, TextField } from "./ui";
+import { Card, SectionTitle, TextField, Alert } from "./ui";
 import { NUVEX } from "./constants";
 import { formatCOP } from "../../lib/format";
+import { HONORARIOS_MIN_BASE, HONORARIOS_MIN_FINAL } from "../../lib/finance";
 
 export type DiscountType = "percent" | "fixed";
 
@@ -20,16 +21,29 @@ export function computeDiscount(honorariosBase: number, d: DiscountState) {
   const raw = parseFloat(
     String(d.value).replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", "."),
   ) || 0;
-  let descuento = 0;
-  if (d.type === "percent") descuento = (honorariosBase * raw) / 100;
-  else descuento = raw;
-  descuento = Math.max(0, Math.min(descuento, honorariosBase));
+  let descuentoSolicitado = 0;
+  if (d.type === "percent") descuentoSolicitado = (honorariosBase * raw) / 100;
+  else descuentoSolicitado = raw;
+  descuentoSolicitado = Math.max(0, Math.min(descuentoSolicitado, honorariosBase));
+
+  // Piso comercial: cuando los honorarios base están en el mínimo ($2.000.000),
+  // el final no puede bajar de $1.800.000.
+  const aplicaPiso = honorariosBase <= HONORARIOS_MIN_BASE + 0.5;
+  const finalSolicitado = honorariosBase - descuentoSolicitado;
+  const bloqueado = aplicaPiso && descuentoSolicitado > 0 && finalSolicitado < HONORARIOS_MIN_FINAL;
+
+  const descuento = bloqueado ? 0 : descuentoSolicitado;
   const final = Math.max(0, honorariosBase - descuento);
+
   return {
     descuento,
     final,
     hasDiscount: descuento > 0,
     rawValue: raw,
+    bloqueado,
+    aplicaPiso,
+    descuentoSolicitado,
+    finalSolicitado,
   };
 }
 
@@ -42,7 +56,10 @@ export function DiscountModule({
   state: DiscountState;
   onChange: (s: DiscountState) => void;
 }) {
-  const { descuento, final, hasDiscount } = computeDiscount(honorariosBase, state);
+  const { descuento, final, hasDiscount, bloqueado, aplicaPiso } = computeDiscount(
+    honorariosBase,
+    state,
+  );
   const set = <K extends keyof DiscountState>(k: K, v: DiscountState[K]) =>
     onChange({ ...state, [k]: v });
 
@@ -89,11 +106,25 @@ export function DiscountModule({
           </div>
           {hasDiscount && (
             <div className="text-[10px]" style={{ color: "#1F7A45", opacity: 0.85 }}>
-              Ahorras {formatCOP(descuento)} sobre honorarios
+              Honorarios originales {formatCOP(honorariosBase)} · Descuento −{formatCOP(descuento)}
             </div>
           )}
         </div>
       </div>
+      {bloqueado && (
+        <div className="mt-3">
+          <Alert tone="error">
+            El descuento supera el límite comercial autorizado para honorarios mínimos. El honorario final no puede ser inferior a {formatCOP(HONORARIOS_MIN_FINAL)}.
+          </Alert>
+        </div>
+      )}
+      {aplicaPiso && !bloqueado && (
+        <div className="mt-3">
+          <Alert>
+            Honorarios en mínimo comercial ({formatCOP(HONORARIOS_MIN_BASE)}). Descuento máximo permitido: {formatCOP(HONORARIOS_MIN_BASE - HONORARIOS_MIN_FINAL)}.
+          </Alert>
+        </div>
+      )}
     </Card>
   );
 }
