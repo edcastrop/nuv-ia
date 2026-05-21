@@ -196,19 +196,31 @@ export async function deleteExpediente(id: string) {
   if (error) throw error;
 }
 
+export interface AsesorStats {
+  asesor_id: string;
+  nombre: string;
+  total: number;
+  aprobados: number;
+  pagados: number;
+  honorariosFinal: number;
+  honorariosPagados: number;
+  acertividadPromedio: number;
+}
+
 export interface DashboardMetrics {
   total: number;
   porEstado: Record<EstadoExpediente, number>;
-  tasaAprobacion: number; // APROBADO / RADICADO
-  tasaCierre: number; // PAGADO / SIMULADO
+  tasaAprobacion: number;
+  tasaCierre: number;
   acertividadPromedio: number;
   honorariosBase: number;
   honorariosFacturados: number;
   honorariosPagados: number;
   pipeline: number;
+  porAsesor?: AsesorStats[];
 }
 
-export async function getDashboardMetrics(): Promise<{ metrics: DashboardMetrics; rows: Expediente[] }> {
+export async function getDashboardMetrics(opts: { global?: boolean } = {}): Promise<{ metrics: DashboardMetrics; rows: Expediente[] }> {
   const rows = await listExpedientes();
   const porEstado = ESTADOS.reduce((acc, e) => ({ ...acc, [e]: 0 }), {} as Record<EstadoExpediente, number>);
   let honBase = 0, honFact = 0, honPag = 0, pipeline = 0;
@@ -233,6 +245,42 @@ export async function getDashboardMetrics(): Promise<{ metrics: DashboardMetrics
   const tasaCierre = rows.length > 0 ? (porEstado.PAGADO / rows.length) * 100 : 0;
   const acertividadPromedio = acertCount > 0 ? acertSum / acertCount : 0;
 
+  let porAsesor: AsesorStats[] | undefined;
+  if (opts.global) {
+    const ids = Array.from(new Set(rows.map((r) => r.asesor_id)));
+    const nombreById = new Map<string, string>();
+    if (ids.length > 0) {
+      const { data: profs } = await supabase.from("profiles").select("id,nombre,email").in("id", ids);
+      (profs ?? []).forEach((p) => nombreById.set(p.id, p.nombre || p.email || "Sin nombre"));
+    }
+    const acertByAsesor = new Map<string, { sum: number; n: number }>();
+    const map = new Map<string, AsesorStats>();
+    for (const r of rows) {
+      const cur = map.get(r.asesor_id) ?? {
+        asesor_id: r.asesor_id,
+        nombre: nombreById.get(r.asesor_id) || "—",
+        total: 0, aprobados: 0, pagados: 0,
+        honorariosFinal: 0, honorariosPagados: 0,
+        acertividadPromedio: 0,
+      };
+      cur.total += 1;
+      if (["APROBADO","FACTURADO","PAGADO"].includes(r.estado)) cur.aprobados += 1;
+      if (r.estado === "PAGADO") { cur.pagados += 1; cur.honorariosPagados += Number(r.honorarios_final) || 0; }
+      cur.honorariosFinal += Number(r.honorarios_final) || 0;
+      if (r.acertividad_global != null) {
+        const a = acertByAsesor.get(r.asesor_id) ?? { sum: 0, n: 0 };
+        a.sum += Number(r.acertividad_global); a.n += 1;
+        acertByAsesor.set(r.asesor_id, a);
+      }
+      map.set(r.asesor_id, cur);
+    }
+    for (const [id, a] of acertByAsesor) {
+      const s = map.get(id);
+      if (s) s.acertividadPromedio = a.n > 0 ? a.sum / a.n : 0;
+    }
+    porAsesor = Array.from(map.values()).sort((a, b) => b.honorariosFinal - a.honorariosFinal);
+  }
+
   return {
     metrics: {
       total: rows.length,
@@ -244,6 +292,7 @@ export async function getDashboardMetrics(): Promise<{ metrics: DashboardMetrics
       honorariosFacturados: honFact,
       honorariosPagados: honPag,
       pipeline,
+      porAsesor,
     },
     rows,
   };
