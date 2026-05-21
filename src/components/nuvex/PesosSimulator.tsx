@@ -17,16 +17,32 @@ import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
 import { NUVEX } from "./constants";
 import { DiscountModule, computeDiscount, defaultDiscount, type DiscountState } from "./DiscountModule";
 import { ResultadoFinal, type ProyeccionNuvex } from "./ResultadoFinal";
+import { SaveExpedienteButton } from "./SaveExpedienteButton";
+import type { Expediente } from "@/lib/expedientes";
 
-export function PesosSimulator() {
-  const [discount, setDiscount] = useState<DiscountState>(defaultDiscount);
-  const [client, setClient] = useState<ClientData>(defaultClient);
-  const [valorDesembolsado, setValorDesembolsado] = useState("");
-  const [saldoCapital, setSaldoCapital] = useState("");
-  const [cuotaActual, setCuotaActual] = useState("");
-  const [seguros, setSeguros] = useState("");
-  const [tea, setTea] = useState("");
-  const [nuevaCuotaManual, setNuevaCuotaManual] = useState("");
+export function PesosSimulator({
+  initialExpediente,
+  onSaved,
+  onReset,
+}: {
+  initialExpediente?: Expediente;
+  onSaved?: (e: Expediente) => void;
+  onReset?: () => void;
+} = {}) {
+  const init = initialExpediente;
+  const initCred = (init?.credito_data ?? {}) as Record<string, string>;
+  const [discount, setDiscount] = useState<DiscountState>(
+    () => (init?.discount_data && Object.keys(init.discount_data).length
+      ? init.discount_data as DiscountState
+      : defaultDiscount),
+  );
+  const [client, setClient] = useState<ClientData>(() => (init?.cliente_data as ClientData) ?? defaultClient);
+  const [valorDesembolsado, setValorDesembolsado] = useState(initCred.valorDesembolsado ?? "");
+  const [saldoCapital, setSaldoCapital] = useState(initCred.saldoCapital ?? "");
+  const [cuotaActual, setCuotaActual] = useState(initCred.cuotaActual ?? "");
+  const [seguros, setSeguros] = useState(initCred.seguros ?? "");
+  const [tea, setTea] = useState(initCred.tea ?? "");
+  const [nuevaCuotaManual, setNuevaCuotaManual] = useState(initCred.nuevaCuotaManual ?? "");
 
   const plazoInicial = parseDecimal(client.plazoInicial);
   const cuotasPagadas = parseDecimal(client.cuotasPagadas);
