@@ -5,6 +5,7 @@ export function RecommendedResult({
   mode,
   items,
   honorariosPct,
+  personalizada = false,
 }: {
   mode: "pesos" | "uvr";
   items: {
@@ -16,8 +17,11 @@ export function RecommendedResult({
     nuevaCuota: number;
   };
   honorariosPct: number;
+  personalizada?: boolean;
 }) {
   const intLabel = mode === "uvr" ? "Ahorro intereses + CM" : "Ahorro intereses";
+  const headerBg = personalizada ? NUVEX.azul : NUVEX.verde;
+  const badgeLabel = personalizada ? "Propuesta personalizada" : "Propuesta recomendada";
   const cells: { label: string; value: string; highlight?: boolean }[] = [
     { label: "Años eliminados", value: formatNumber(items.añosEliminados, 0) },
     { label: "Nueva cuota", value: formatCOP(items.nuevaCuota) },
