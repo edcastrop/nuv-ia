@@ -92,8 +92,11 @@ export function PrintDocument(props: Props) {
     ? "Esta simulación es una proyección financiera aproximada elaborada con base en la información suministrada por el cliente. En créditos denominados en UVR, los resultados pueden variar por cambios futuros en el valor de la UVR, inflación, políticas internas de la entidad financiera, validación documental, capacidad de pago y respuesta final del banco. NUVEX trabaja bajo modalidad de honorarios a éxito: los honorarios únicamente se causan si el proceso genera un resultado favorable para el cliente."
     : "Esta simulación es una proyección financiera aproximada elaborada con base en la información suministrada por el cliente. Los resultados pueden variar según validación documental, capacidad de pago, políticas internas del banco y respuesta final de la entidad financiera. NUVEX trabaja bajo modalidad de honorarios a éxito: los honorarios únicamente se causan si el proceso genera un resultado favorable para el cliente.";
 
+  const containerId = mode === "uvr" ? "pdf-content-uvr" : "pdf-content-pesos";
+
   return (
-    <div className="nuvex-print-only" style={{ background: "#fff", color: NUVEX.negro }}>
+    <div id={containerId} className="nuvex-print-only" style={{ background: "#fff", color: NUVEX.negro, padding: "32px 36px" }}>
+
       {/* PÁGINA 1 */}
       <section className="nuvex-print-page">
         <PrintHeader />

@@ -13,6 +13,7 @@ import { ComparativeTable } from "./ComparativeTable";
 import { RecommendedResult } from "./RecommendedResult";
 import { ScenarioTable, ImpactCard, type ScenarioRow } from "./ScenarioTable";
 import { PrintDocument } from "./PrintDocument";
+import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
 
 export function UVRSimulator() {
   const [client, setClient] = useState<ClientData>(defaultClient);
@@ -223,7 +224,16 @@ export function UVRSimulator() {
           {best && (
             <div className="flex justify-end">
               <button
-                onClick={() => window.print()}
+                onClick={async () => {
+                  if (!best || !calc || calc.propuestas.length === 0 || scenarioRows.length === 0) {
+                    alert("Primero debes calcular la simulación UVR antes de exportar el PDF.");
+                    return;
+                  }
+                  await exportElementToPdf(
+                    "pdf-content-uvr",
+                    `NUVEX_Propuesta_UVR_${sanitizeFileName(client.nombre)}.pdf`
+                  );
+                }}
                 className="rounded-lg bg-[#242424] px-5 py-2.5 text-sm font-semibold text-white shadow transition-transform hover:scale-[1.01]"
               >
                 Exportar PDF profesional

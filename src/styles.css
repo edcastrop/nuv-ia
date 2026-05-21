@@ -179,5 +179,25 @@
     break-inside: avoid !important;
   }
 }
-.nuvex-print-only { display: none; }
+/* Mantener el contenedor PDF renderizado pero fuera de pantalla.
+   html2canvas no captura elementos con display:none. */
+.nuvex-print-only {
+  position: absolute;
+  left: -10000px;
+  top: 0;
+  width: 1120px;
+  background: #ffffff;
+  z-index: -1;
+  pointer-events: none;
+}
+@media print {
+  .nuvex-print-only {
+    position: static;
+    left: auto;
+    top: auto;
+    width: auto;
+    z-index: auto;
+    pointer-events: auto;
+  }
+}
 
