@@ -131,9 +131,15 @@ export function UVRSimulator() {
           <TextField label="Saldo actual en pesos" value={saldoPesos} onChange={setSaldoPesos} placeholder="98.500.000" />
           <TextField label="Saldo actual en UVR" value={saldoUVR} onChange={setSaldoUVR} placeholder="371029,7251" />
           <TextField label="Valor UVR actual" value={valorUVR} onChange={setValorUVR} placeholder="372,1234" />
-          <TextField label="Cuota actual en pesos (con seguro)" value={cuotaActualPesos} onChange={setCuotaActualPesos} placeholder="1.480.000" />
-          <TextField label="Cuota sin seguros" value={cuotaSinSeguros} onChange={setCuotaSinSeguros} placeholder="1.250.000" />
+          <TextField label="Cuota actual en pesos con seguros" value={cuotaActualPesos} onChange={setCuotaActualPesos} placeholder="1.480.000" />
           <TextField label="Seguros mensuales" value={seguros} onChange={setSeguros} placeholder="230.000" />
+          <TextField
+            label="Cuota sin seguros"
+            value={cuotaActualPesosNum > 0 && segurosNum >= 0 ? formatCOP(cuotaSinSegurosNum) : ""}
+            readOnly
+            hint="Calculada automáticamente"
+          />
+          <TextField label="Tasa cobrada EA (%)" value={teaCobrada} onChange={setTeaCobrada} placeholder="8,50" />
           <TextField label="Tasa cobrada EA (%)" value={teaCobrada} onChange={setTeaCobrada} placeholder="8,50" />
           <TextField label="Variación UVR EA (%)" value={variacionUVR} onChange={setVariacionUVR} placeholder="5,20" />
         </div>
