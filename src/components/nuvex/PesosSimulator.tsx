@@ -162,6 +162,14 @@ export function PesosSimulator() {
                     <SectionTitle>Escenario actual vs escenario optimizado</SectionTitle>
                     <ScenarioTable rows={scenarioRows} />
                   </Card>
+                  <ImpactCard
+                    mode="pesos"
+                    añosEliminados={best.añosEliminados}
+                    ahorroIntereses={best.ahorroIntereses}
+                    ahorroSeguros={best.ahorroSeguros}
+                    ahorroTotal={best.ahorroTotal}
+                  />
+
                 </>
               )}
             </>
