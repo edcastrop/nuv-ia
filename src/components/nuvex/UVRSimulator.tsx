@@ -21,7 +21,6 @@ export function UVRSimulator() {
   const [saldoUVR, setSaldoUVR] = useState("");
   const [valorUVR, setValorUVR] = useState("");
   const [cuotaActualPesos, setCuotaActualPesos] = useState("");
-  const [cuotaSinSeguros, setCuotaSinSeguros] = useState("");
   const [seguros, setSeguros] = useState("");
   const [teaCobrada, setTeaCobrada] = useState("");
   const [variacionUVR, setVariacionUVR] = useState("");
@@ -32,28 +31,36 @@ export function UVRSimulator() {
   const cuotasPendientes = Math.max(0, plazoInicial - cuotasPagadas);
   const honorariosPct = parsePercentage(client.porcentajeHonorarios) || 6;
 
+  const cuotaActualPesosNum = parseCurrency(cuotaActualPesos);
+  const segurosNum = parseCurrency(seguros);
+  const cuotaSinSegurosNum = Math.max(0, cuotaActualPesosNum - segurosNum);
+
   const input: UVRInput = useMemo(() => ({
     valorDesembolsado: parseCurrency(valorDesembolsado),
     saldoPesos: parseCurrency(saldoPesos),
     saldoUVR: parseDecimal(saldoUVR),
     valorUVR: parseDecimal(valorUVR),
-    cuotaActualPesos: parseCurrency(cuotaActualPesos),
-    cuotaSinSeguros: parseCurrency(cuotaSinSeguros),
-    seguros: parseCurrency(seguros),
+    cuotaActualPesos: cuotaActualPesosNum,
+    cuotaSinSeguros: cuotaSinSegurosNum,
+    seguros: segurosNum,
     teaCobrada: parsePercentage(teaCobrada),
     variacionUVR: parsePercentage(variacionUVR),
     cuotasPendientes,
     porcentajeHonorarios: honorariosPct,
-  }), [valorDesembolsado, saldoPesos, saldoUVR, valorUVR, cuotaActualPesos, cuotaSinSeguros, seguros, teaCobrada, variacionUVR, cuotasPendientes, honorariosPct]);
+  }), [valorDesembolsado, saldoPesos, saldoUVR, valorUVR, cuotaActualPesosNum, cuotaSinSegurosNum, segurosNum, teaCobrada, variacionUVR, cuotasPendientes, honorariosPct]);
 
   const validaciones: string[] = [];
   if (plazoInicial > 0 && cuotasPagadas > plazoInicial) validaciones.push("Las cuotas pagadas no pueden ser mayores al plazo inicial.");
   if (input.saldoUVR <= 0 && saldoUVR) validaciones.push("Saldo UVR debe ser mayor a 0.");
   if (input.valorUVR <= 0 && valorUVR) validaciones.push("Valor UVR debe ser mayor a 0.");
+  if (cuotaActualPesosNum > 0 && segurosNum > cuotaActualPesosNum) validaciones.push("Los seguros no pueden ser mayores que la cuota actual.");
+  if (cuotaActualPesosNum > 0 && segurosNum > 0 && cuotaSinSegurosNum <= 0) validaciones.push("La cuota sin seguros debe ser mayor a cero para calcular la proyección.");
+
+  const cuotaSinSegurosValida = cuotaActualPesosNum === 0 || segurosNum === 0 || (segurosNum < cuotaActualPesosNum && cuotaSinSegurosNum > 0);
 
   const datosCompletos =
     input.saldoUVR > 0 && input.valorUVR > 0 && input.cuotaActualPesos > 0 &&
-    input.teaCobrada > 0 && cuotasPendientes > 0;
+    input.teaCobrada > 0 && cuotasPendientes > 0 && cuotaSinSegurosValida;
 
   const calc = useMemo(() => {
     if (!datosCompletos) return null;
@@ -78,8 +85,9 @@ export function UVRSimulator() {
     { label: "Saldo actual en pesos", value: formatCOP(input.saldoPesos) },
     { label: "Saldo actual en UVR", value: formatNumber(input.saldoUVR, 2) },
     { label: "Valor UVR actual", value: formatCOP(input.valorUVR) },
-    { label: "Cuota actual", value: formatCOP(input.cuotaActualPesos) },
-    { label: "Seguros", value: formatCOP(input.seguros) },
+    { label: "Cuota actual con seguros", value: formatCOP(input.cuotaActualPesos) },
+    { label: "Seguros mensuales", value: formatCOP(input.seguros) },
+    { label: "Cuota sin seguros", value: formatCOP(cuotaSinSegurosNum) },
     { label: "Plazo inicial", value: `${plazoInicial} meses` },
     { label: "Cuotas pendientes", value: String(cuotasPendientes) },
     { label: "Variación UVR EA", value: formatPercentage(input.variacionUVR) },
@@ -123,9 +131,14 @@ export function UVRSimulator() {
           <TextField label="Saldo actual en pesos" value={saldoPesos} onChange={setSaldoPesos} placeholder="98.500.000" />
           <TextField label="Saldo actual en UVR" value={saldoUVR} onChange={setSaldoUVR} placeholder="371029,7251" />
           <TextField label="Valor UVR actual" value={valorUVR} onChange={setValorUVR} placeholder="372,1234" />
-          <TextField label="Cuota actual en pesos (con seguro)" value={cuotaActualPesos} onChange={setCuotaActualPesos} placeholder="1.480.000" />
-          <TextField label="Cuota sin seguros" value={cuotaSinSeguros} onChange={setCuotaSinSeguros} placeholder="1.250.000" />
+          <TextField label="Cuota actual en pesos con seguros" value={cuotaActualPesos} onChange={setCuotaActualPesos} placeholder="1.480.000" />
           <TextField label="Seguros mensuales" value={seguros} onChange={setSeguros} placeholder="230.000" />
+          <TextField
+            label="Cuota sin seguros"
+            value={cuotaActualPesosNum > 0 && segurosNum >= 0 ? formatCOP(cuotaSinSegurosNum) : ""}
+            readOnly
+            hint="Calculada automáticamente"
+          />
           <TextField label="Tasa cobrada EA (%)" value={teaCobrada} onChange={setTeaCobrada} placeholder="8,50" />
           <TextField label="Variación UVR EA (%)" value={variacionUVR} onChange={setVariacionUVR} placeholder="5,20" />
         </div>
