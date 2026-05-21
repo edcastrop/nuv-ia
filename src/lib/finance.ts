@@ -322,7 +322,7 @@ export function calculateUVRProjection(input: UVRInput): {
       ahorroIntereses,
       ahorroSeguros,
       ahorroTotal,
-      honorariosNuvex: ahorroTotal * (input.porcentajeHonorarios / 100),
+      honorariosNuvex: applyHonorariosFloor(ahorroTotal * (input.porcentajeHonorarios / 100)),
       totalAproxPagar: prop.totalPagoPesos,
     });
   }
