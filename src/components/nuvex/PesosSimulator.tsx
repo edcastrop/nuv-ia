@@ -33,7 +33,7 @@ export function PesosSimulator({
   const initCred = (init?.credito_data ?? {}) as Record<string, string>;
   const [discount, setDiscount] = useState<DiscountState>(
     () => (init?.discount_data && Object.keys(init.discount_data).length
-      ? init.discount_data as DiscountState
+      ? (init.discount_data as unknown as DiscountState)
       : defaultDiscount),
   );
   const [client, setClient] = useState<ClientData>(() => (init?.cliente_data as ClientData) ?? defaultClient);
