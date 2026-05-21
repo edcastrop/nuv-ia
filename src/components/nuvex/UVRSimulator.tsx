@@ -11,7 +11,7 @@ import {
 } from "../../lib/finance";
 import { ComparativeTable } from "./ComparativeTable";
 import { RecommendedResult } from "./RecommendedResult";
-import { ScenarioTable, ImpactCard, type ScenarioRow } from "./ScenarioTable";
+import { ScenarioTable, ImpactCard, SavingsCard, type ScenarioRow } from "./ScenarioTable";
 import { PrintDocument } from "./PrintDocument";
 import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
 
