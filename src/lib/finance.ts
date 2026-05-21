@@ -405,7 +405,7 @@ export function calculateUVRManual(
     ahorroIntereses,
     ahorroSeguros,
     ahorroTotal,
-    honorarios: ahorroTotal * (input.porcentajeHonorarios / 100),
+    honorarios: applyHonorariosFloor(ahorroTotal * (input.porcentajeHonorarios / 100)),
     valid: true,
   };
 }
