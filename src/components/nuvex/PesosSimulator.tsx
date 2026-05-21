@@ -17,16 +17,32 @@ import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
 import { NUVEX } from "./constants";
 import { DiscountModule, computeDiscount, defaultDiscount, type DiscountState } from "./DiscountModule";
 import { ResultadoFinal, type ProyeccionNuvex } from "./ResultadoFinal";
+import { SaveExpedienteButton } from "./SaveExpedienteButton";
+import type { Expediente } from "@/lib/expedientes";
 
-export function PesosSimulator() {
-  const [discount, setDiscount] = useState<DiscountState>(defaultDiscount);
-  const [client, setClient] = useState<ClientData>(defaultClient);
-  const [valorDesembolsado, setValorDesembolsado] = useState("");
-  const [saldoCapital, setSaldoCapital] = useState("");
-  const [cuotaActual, setCuotaActual] = useState("");
-  const [seguros, setSeguros] = useState("");
-  const [tea, setTea] = useState("");
-  const [nuevaCuotaManual, setNuevaCuotaManual] = useState("");
+export function PesosSimulator({
+  initialExpediente,
+  onSaved,
+  onReset,
+}: {
+  initialExpediente?: Expediente;
+  onSaved?: (e: Expediente) => void;
+  onReset?: () => void;
+} = {}) {
+  const init = initialExpediente;
+  const initCred = (init?.credito_data ?? {}) as Record<string, string>;
+  const [discount, setDiscount] = useState<DiscountState>(
+    () => (init?.discount_data && Object.keys(init.discount_data).length
+      ? (init.discount_data as unknown as DiscountState)
+      : defaultDiscount),
+  );
+  const [client, setClient] = useState<ClientData>(() => (init?.cliente_data as ClientData) ?? defaultClient);
+  const [valorDesembolsado, setValorDesembolsado] = useState(initCred.valorDesembolsado ?? "");
+  const [saldoCapital, setSaldoCapital] = useState(initCred.saldoCapital ?? "");
+  const [cuotaActual, setCuotaActual] = useState(initCred.cuotaActual ?? "");
+  const [seguros, setSeguros] = useState(initCred.seguros ?? "");
+  const [tea, setTea] = useState(initCred.tea ?? "");
+  const [nuevaCuotaManual, setNuevaCuotaManual] = useState(initCred.nuevaCuotaManual ?? "");
 
   const plazoInicial = parseDecimal(client.plazoInicial);
   const cuotasPagadas = parseDecimal(client.cuotasPagadas);
@@ -144,9 +160,15 @@ export function PesosSimulator() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-6 py-6">
+      {onReset && (
+        <div className="flex justify-end">
+          <button onClick={onReset} className="text-xs text-[#445DA3] hover:underline">← Cambiar modo</button>
+        </div>
+      )}
       <Card>
         <SectionTitle sub="Información general del cliente y del crédito">Datos del cliente</SectionTitle>
         <ClientFields data={client} onChange={setClient} productos={PRODUCTOS_PESOS} cuotasPendientes={cuotasPendientes} />
+
         {validaciones.map((v, i) => (
           <div key={i} className="mt-3"><Alert tone="error">{v}</Alert></div>
         ))}
@@ -261,6 +283,36 @@ export function PesosSimulator() {
             <DiscountModule honorariosBase={recomendada.honorarios} state={discount} onChange={setDiscount} />
           )}
 
+          {recomendada && (() => {
+            const d = computeDiscount(recomendada.honorarios, discount);
+            return (
+              <SaveExpedienteButton
+                expedienteId={init?.id}
+                onSaved={onSaved}
+                payload={{
+                  modo: "pesos",
+                  cliente: client,
+                  credito: { valorDesembolsado, saldoCapital, cuotaActual, seguros, tea, nuevaCuotaManual },
+                  propuesta: {
+                    nuevaCuota: recomendada.nuevaCuota,
+                    nuevoPlazo: recomendada.nuevoPlazo,
+                    añosEliminados: recomendada.añosEliminados,
+                    ahorroIntereses: recomendada.ahorroIntereses,
+                    ahorroSeguros: recomendada.ahorroSeguros,
+                    ahorroTotal: recomendada.ahorroTotal,
+                    honorarios: recomendada.honorarios,
+                    totalProyectado: recomendada.totalProyectado,
+                    fuente: manualValido ? "manual" : "automatica",
+                  },
+                  discountState: discount as unknown as Record<string, unknown>,
+                  honorariosBase: recomendada.honorarios,
+                  honorariosFinal: d.final,
+                  descuento: d.descuento,
+                }}
+              />
+            );
+          })()}
+
           {recomendada && (
             <div className="flex justify-end">
               <button
@@ -281,6 +333,7 @@ export function PesosSimulator() {
               </button>
             </div>
           )}
+
 
           {recomendada && (() => {
             const d = computeDiscount(recomendada.honorarios, discount);
@@ -349,6 +402,8 @@ export function PesosSimulator() {
                 cuotaActualConSeguro={input.cuotaActual}
                 seguros={input.seguros}
                 honorariosPct={honorariosPct}
+                expedienteId={init?.id}
+                aprobadoInicial={init?.aprobado_data ?? null}
               />
             );
           })()}

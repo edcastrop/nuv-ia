@@ -4,6 +4,7 @@ import { NUVEX, CORPORATIVO } from "./constants";
 import { formatCOP, formatNumber, parseCurrency, parseDecimal } from "../../lib/format";
 import { applyHonorariosFloor, HONORARIOS_MIN_BASE, HONORARIOS_MIN_FINAL } from "../../lib/finance";
 import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
+import { setAprobado, type AprobadoData } from "@/lib/expedientes";
 import type { ClientData } from "./ClientFields";
 
 export interface ProyeccionNuvex {
@@ -72,6 +73,8 @@ export function ResultadoFinal({
   cuotaActualConSeguro,
   seguros,
   honorariosPct,
+  expedienteId,
+  aprobadoInicial,
 }: {
   mode: "pesos" | "uvr";
   client: ClientData;
@@ -80,8 +83,23 @@ export function ResultadoFinal({
   cuotaActualConSeguro: number;
   seguros: number;
   honorariosPct: number;
+  expedienteId?: string;
+  aprobadoInicial?: AprobadoData | null;
 }) {
-  const [aprob, setAprob] = useState<AprobacionState>(() => defaultAprobacion(client.banco));
+  const [aprob, setAprob] = useState<AprobacionState>(() =>
+    aprobadoInicial
+      ? {
+          fechaAprobacion: aprobadoInicial.fechaAprobacion,
+          radicado: aprobadoInicial.radicado,
+          banco: aprobadoInicial.banco,
+          cuotaAprobada: String(aprobadoInicial.cuotaAprobada ?? ""),
+          plazoAprobado: String(aprobadoInicial.plazoAprobado ?? ""),
+          observaciones: aprobadoInicial.observaciones ?? "",
+        }
+      : defaultAprobacion(client.banco),
+  );
+  const [savingApr, setSavingApr] = useState(false);
+  const [savedMsg, setSavedMsg] = useState<string | null>(null);
   const [consecutivo] = useState<string>(() => nextConsecutivo());
   const set = <K extends keyof AprobacionState>(k: K, v: AprobacionState[K]) =>
     setAprob((s) => ({ ...s, [k]: v }));
@@ -239,7 +257,42 @@ export function ResultadoFinal({
               <ComparativeProyVsApr rows={filasComparativo} />
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-3 justify-end">
+            <div className="mt-6 flex flex-wrap gap-3 justify-end items-center">
+              {expedienteId && savedMsg && <span className="text-xs text-[#242424]/70">{savedMsg}</span>}
+              {expedienteId && (
+                <button
+                  disabled={savingApr}
+                  onClick={async () => {
+                    if (!aprobado || !metricas) return;
+                    setSavingApr(true);
+                    setSavedMsg(null);
+                    try {
+                      await setAprobado(
+                        expedienteId,
+                        {
+                          fechaAprobacion: aprob.fechaAprobacion,
+                          radicado: aprob.radicado,
+                          banco: aprob.banco,
+                          cuotaAprobada: aprobado.cuota,
+                          plazoAprobado: aprobado.plazo,
+                          ahorroAprobado: aprobado.ahorroTotal,
+                          observaciones: aprob.observaciones,
+                        },
+                        metricas.global,
+                      );
+                      setSavedMsg("Aprobación guardada");
+                    } catch (e) {
+                      setSavedMsg((e as Error).message);
+                    } finally {
+                      setSavingApr(false);
+                    }
+                  }}
+                  className="rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow transition-transform hover:scale-[1.01] disabled:opacity-50"
+                  style={{ backgroundColor: NUVEX.verde, color: "#0F3D1F" }}
+                >
+                  {savingApr ? "Guardando…" : "Guardar aprobación"}
+                </button>
+              )}
               <button
                 onClick={() =>
                   exportElementToPdf(informeId, `NUVEX_Resultado_Final_${sanitizeFileName(client.nombre)}.pdf`)

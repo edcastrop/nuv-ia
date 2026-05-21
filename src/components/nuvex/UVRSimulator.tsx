@@ -16,19 +16,35 @@ import { PrintDocument } from "./PrintDocument";
 import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
 import { DiscountModule, computeDiscount, defaultDiscount, type DiscountState } from "./DiscountModule";
 import { ResultadoFinal, type ProyeccionNuvex } from "./ResultadoFinal";
+import { SaveExpedienteButton } from "./SaveExpedienteButton";
+import type { Expediente } from "@/lib/expedientes";
 
-export function UVRSimulator() {
-  const [discount, setDiscount] = useState<DiscountState>(defaultDiscount);
-  const [client, setClient] = useState<ClientData>(defaultClient);
-  const [valorDesembolsado, setValorDesembolsado] = useState("");
-  const [saldoPesos, setSaldoPesos] = useState("");
-  const [saldoUVR, setSaldoUVR] = useState("");
-  const [valorUVR, setValorUVR] = useState("");
-  const [cuotaActualPesos, setCuotaActualPesos] = useState("");
-  const [seguros, setSeguros] = useState("");
-  const [teaCobrada, setTeaCobrada] = useState("");
-  const [variacionUVR, setVariacionUVR] = useState("");
-  const [nuevaCuotaManual, setNuevaCuotaManual] = useState("");
+export function UVRSimulator({
+  initialExpediente,
+  onSaved,
+  onReset,
+}: {
+  initialExpediente?: Expediente;
+  onSaved?: (e: Expediente) => void;
+  onReset?: () => void;
+} = {}) {
+  const init = initialExpediente;
+  const initCred = (init?.credito_data ?? {}) as Record<string, string>;
+  const [discount, setDiscount] = useState<DiscountState>(
+    () => (init?.discount_data && Object.keys(init.discount_data).length
+      ? (init.discount_data as unknown as DiscountState)
+      : defaultDiscount),
+  );
+  const [client, setClient] = useState<ClientData>(() => (init?.cliente_data as ClientData) ?? defaultClient);
+  const [valorDesembolsado, setValorDesembolsado] = useState(initCred.valorDesembolsado ?? "");
+  const [saldoPesos, setSaldoPesos] = useState(initCred.saldoPesos ?? "");
+  const [saldoUVR, setSaldoUVR] = useState(initCred.saldoUVR ?? "");
+  const [valorUVR, setValorUVR] = useState(initCred.valorUVR ?? "");
+  const [cuotaActualPesos, setCuotaActualPesos] = useState(initCred.cuotaActualPesos ?? "");
+  const [seguros, setSeguros] = useState(initCred.seguros ?? "");
+  const [teaCobrada, setTeaCobrada] = useState(initCred.teaCobrada ?? "");
+  const [variacionUVR, setVariacionUVR] = useState(initCred.variacionUVR ?? "");
+  const [nuevaCuotaManual, setNuevaCuotaManual] = useState(initCred.nuevaCuotaManual ?? "");
 
   const plazoInicial = parseDecimal(client.plazoInicial);
   const cuotasPagadas = parseDecimal(client.cuotasPagadas);
@@ -157,6 +173,11 @@ export function UVRSimulator() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-6 py-6">
+      {onReset && (
+        <div className="flex justify-end">
+          <button onClick={onReset} className="text-xs text-[#445DA3] hover:underline">← Cambiar modo</button>
+        </div>
+      )}
       <Card>
         <SectionTitle sub="Información general del cliente y del crédito en UVR">Datos del cliente</SectionTitle>
         <ClientFields data={client} onChange={setClient} productos={PRODUCTOS_UVR} cuotasPendientes={cuotasPendientes} />
@@ -277,6 +298,36 @@ export function UVRSimulator() {
             <DiscountModule honorariosBase={recomendada.honorarios} state={discount} onChange={setDiscount} />
           )}
 
+          {recomendada && (() => {
+            const d = computeDiscount(recomendada.honorarios, discount);
+            return (
+              <SaveExpedienteButton
+                expedienteId={init?.id}
+                onSaved={onSaved}
+                payload={{
+                  modo: "uvr",
+                  cliente: client,
+                  credito: { valorDesembolsado, saldoPesos, saldoUVR, valorUVR, cuotaActualPesos, seguros, teaCobrada, variacionUVR, nuevaCuotaManual },
+                  propuesta: {
+                    nuevaCuota: recomendada.nuevaCuota,
+                    nuevoPlazo: recomendada.nuevoPlazo,
+                    añosEliminados: recomendada.añosEliminados,
+                    ahorroIntereses: recomendada.ahorroIntereses,
+                    ahorroSeguros: recomendada.ahorroSeguros,
+                    ahorroTotal: recomendada.ahorroTotal,
+                    honorarios: recomendada.honorarios,
+                    totalProyectado: recomendada.totalProyectado,
+                    fuente: manualValido ? "manual" : "automatica",
+                  },
+                  discountState: discount as unknown as Record<string, unknown>,
+                  honorariosBase: recomendada.honorarios,
+                  honorariosFinal: d.final,
+                  descuento: d.descuento,
+                }}
+              />
+            );
+          })()}
+
           {recomendada && (
             <div className="flex justify-end">
               <button
@@ -365,6 +416,8 @@ export function UVRSimulator() {
                 cuotaActualConSeguro={input.cuotaActualPesos}
                 seguros={input.seguros}
                 honorariosPct={honorariosPct}
+                expedienteId={init?.id}
+                aprobadoInicial={init?.aprobado_data ?? null}
               />
             );
           })()}
