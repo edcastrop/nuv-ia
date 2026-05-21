@@ -345,39 +345,148 @@ function ComparativeProyVsApr({ rows }: { rows: { c: string; p: string; a: strin
   );
 }
 
-// ============ PDFs ============
+// ============ PDFs Premium ============
 
 const printShell: React.CSSProperties = {
   position: "absolute",
   left: "-99999px",
   top: 0,
   width: "794px",
-  padding: "28px 32px",
   backgroundColor: "#FFFFFF",
   fontFamily: "Inter, system-ui, sans-serif",
   color: NUVEX.negro,
 };
 
-function PrintHeader({ subtitle }: { subtitle: string }) {
+const NUVEX_GRADIENT = `linear-gradient(135deg, ${NUVEX.negro} 0%, ${NUVEX.azul} 100%)`;
+
+function LogoMark({ size = 44, light = false }: { size?: number; light?: boolean }) {
   return (
-    <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: "#E3E7EE" }}>
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg text-white font-bold" style={{ backgroundColor: NUVEX.negro }}>N</div>
-        <div>
-          <div className="text-sm font-extrabold tracking-tight">NUVEX FINANZAS INTELIGENTES</div>
-          <div className="text-[10px]" style={{ color: "#5C6770" }}>{subtitle}</div>
-        </div>
+    <div
+      style={{
+        width: size,
+        height: size,
+        borderRadius: 12,
+        background: light ? "rgba(255,255,255,0.14)" : NUVEX_GRADIENT,
+        border: light ? "1px solid rgba(255,255,255,0.35)" : "none",
+        color: "#fff",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontWeight: 900,
+        fontSize: size * 0.42,
+        letterSpacing: 1,
+      }}
+    >
+      N
+    </div>
+  );
+}
+
+function PremiumFooter() {
+  return (
+    <div
+      style={{
+        marginTop: 28,
+        paddingTop: 14,
+        borderTop: `1px solid #E3E7EE`,
+        fontSize: 9.5,
+        color: "#5C6770",
+        display: "flex",
+        justifyContent: "space-between",
+        letterSpacing: 0.3,
+      }}
+    >
+      <div>
+        <div style={{ fontWeight: 800, color: NUVEX.negro, letterSpacing: 1 }}>NUVEX FINANZAS INTELIGENTES</div>
+        <div style={{ marginTop: 2 }}>Carrera 16 # 37-48 Piso 4 · Centro Bucaramanga</div>
+        <div>Bogotá | Bucaramanga</div>
       </div>
-      <div className="text-right text-[10px]" style={{ color: "#5C6770" }}>
-        <div>{CORPORATIVO.web}</div>
-        <div>{CORPORATIVO.telefono}</div>
+      <div style={{ textAlign: "right" }}>
+        <div>+57 316 402 3779</div>
+        <div>www.nuvex.com.co</div>
       </div>
     </div>
   );
 }
 
+function MetaRow({ items }: { items: { label: string; value: string }[] }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: `repeat(${items.length}, 1fr)`, gap: 0, border: "1px solid #E3E7EE", borderRadius: 12, overflow: "hidden", background: "#fff" }}>
+      {items.map((it, idx) => (
+        <div
+          key={it.label}
+          style={{
+            padding: "12px 14px",
+            borderRight: idx < items.length - 1 ? "1px solid #EEF1F5" : "none",
+          }}
+        >
+          <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: 1.2, color: "#8892A0", textTransform: "uppercase" }}>{it.label}</div>
+          <div style={{ marginTop: 4, fontSize: 11.5, fontWeight: 700, color: NUVEX.negro }}>{it.value || "—"}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function GaugeCircle({ value, color, label }: { value: number; color: string; label: string }) {
+  const size = 150;
+  const stroke = 12;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const pct = Math.max(0, Math.min(100, value));
+  const dash = (pct / 100) * c;
+  return (
+    <div style={{ position: "relative", width: size, height: size }}>
+      <svg width={size} height={size}>
+        <circle cx={size / 2} cy={size / 2} r={r} stroke="rgba(255,255,255,0.18)" strokeWidth={stroke} fill="none" />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          stroke={color}
+          strokeWidth={stroke}
+          fill="none"
+          strokeDasharray={`${dash} ${c - dash}`}
+          strokeLinecap="round"
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        />
+      </svg>
+      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+        <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: 1.5, opacity: 0.85 }}>ACERTIVIDAD</div>
+        <div style={{ fontSize: 30, fontWeight: 900, lineHeight: 1, marginTop: 4 }}>{formatNumber(value, 1)}%</div>
+        <div style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: 1.4, marginTop: 4 }}>{label}</div>
+      </div>
+    </div>
+  );
+}
+
+function PremiumStatCard({ label, value, accent }: { label: string; value: string; accent?: "blue" | "green" | "dark" | "default" }) {
+  const palette =
+    accent === "blue"
+      ? { border: NUVEX.azul, label: NUVEX.azul, value: NUVEX.negro, bg: "#fff" }
+      : accent === "green"
+        ? { border: NUVEX.verde, label: NUVEX.verdeTextoFuerte, value: NUVEX.verdeTextoFuerte, bg: NUVEX.verdeClaro }
+        : accent === "dark"
+          ? { border: NUVEX.negro, label: "#fff", value: "#fff", bg: NUVEX.negro }
+          : { border: "#E3E7EE", label: "#8892A0", value: NUVEX.negro, bg: "#fff" };
+  return (
+    <div
+      style={{
+        borderRadius: 14,
+        border: `1px solid ${palette.border}`,
+        background: palette.bg,
+        padding: "16px 16px 18px",
+        boxShadow: "0 1px 2px rgba(36,36,36,0.04)",
+      }}
+    >
+      <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: 1.3, color: palette.label, textTransform: "uppercase" }}>{label}</div>
+      <div style={{ marginTop: 8, fontSize: 17, fontWeight: 900, color: palette.value, lineHeight: 1.1 }}>{value}</div>
+    </div>
+  );
+}
+
 function PrintInformeFinal({
-  id, mode, client, aprob, aprobado, metricas, rows,
+  id, mode, client, aprob, aprobado, proyeccion, metricas, rows,
 }: {
   id: string;
   mode: "pesos" | "uvr";
@@ -392,129 +501,201 @@ function PrintInformeFinal({
   metricas: { aCuota: number; aPlazo: number; aElim: number; aAhorro: number; global: number; cal: { label: string; color: string; bg: string } };
   rows: { c: string; p: string; a: string; v: string }[];
 }) {
+  void proyeccion;
+  const acertividadFilas: number[] = [
+    metricas.aCuota,
+    metricas.aPlazo,
+    metricas.aElim,
+    metricas.aElim,
+    metricas.aAhorro,
+    metricas.aAhorro,
+    metricas.aAhorro,
+    100,
+  ];
+
   return (
     <div id={id} style={printShell}>
-      <PrintHeader subtitle="Informe final del proceso" />
+      {/* ===== Página 1 ===== */}
+      <div style={{ paddingBottom: 24 }}>
+        <div style={{ background: NUVEX_GRADIENT, padding: "28px 36px 32px", color: "#fff" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <LogoMark light />
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: 2 }}>NUVEX</div>
+                <div style={{ fontSize: 9, letterSpacing: 1.6, opacity: 0.85 }}>FINANZAS INTELIGENTES</div>
+              </div>
+            </div>
+            <div style={{ textAlign: "right", fontSize: 9.5, opacity: 0.9, letterSpacing: 0.5 }}>
+              <div style={{ fontWeight: 700, letterSpacing: 2 }}>INFORME FINAL</div>
+              <div style={{ marginTop: 2 }}>{aprob.fechaAprobacion || new Date().toISOString().slice(0, 10)}</div>
+            </div>
+          </div>
 
-      <div className="mt-4">
-        <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: NUVEX.azul }}>
-          {mode === "uvr" ? "Crédito UVR" : "Crédito en pesos"} · Resultado final
+          <div style={{ marginTop: 28, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 10, letterSpacing: 3, opacity: 0.85, fontWeight: 700 }}>
+                {mode === "uvr" ? "CRÉDITO UVR · RESULTADO CERTIFICADO" : "CRÉDITO EN PESOS · RESULTADO CERTIFICADO"}
+              </div>
+              <div style={{ fontSize: 30, fontWeight: 900, marginTop: 8, lineHeight: 1.1, letterSpacing: -0.5 }}>
+                Resultado final<br />del proceso
+              </div>
+              <div style={{ marginTop: 12, fontSize: 12.5, opacity: 0.92, maxWidth: 360, lineHeight: 1.45 }}>
+                Tu crédito fue optimizado exitosamente.
+              </div>
+            </div>
+            <GaugeCircle value={metricas.global} color={metricas.cal.color} label={metricas.cal.label} />
+          </div>
         </div>
-        <h1 className="text-2xl font-extrabold tracking-tight mt-1">Resultado final del proceso</h1>
-      </div>
 
-      <div className="mt-4 grid grid-cols-4 gap-2 text-[10.5px]">
-        <Field label="Cliente" value={client.nombre || "—"} />
-        <Field label="Cédula" value={client.cedula || "—"} />
-        <Field label="Banco" value={aprob.banco || client.banco || "—"} />
-        <Field label="N° de crédito" value={client.numeroCredito || "—"} />
-        <Field label="Fecha aprobación" value={aprob.fechaAprobacion || "—"} />
-        <Field label="Radicado" value={aprob.radicado || "—"} />
-        <Field label="Producto" value={client.tipoProducto || "—"} />
-        <Field label="Asesor NUVEX" value={client.asesor || "—"} />
-      </div>
+        <div style={{ padding: "26px 36px 0" }}>
+          <div style={{ marginBottom: 20 }}>
+            <MetaRow
+              items={[
+                { label: "Cliente", value: client.nombre || "—" },
+                { label: "Cédula", value: client.cedula || "—" },
+                { label: "Banco", value: aprob.banco || client.banco || "—" },
+                { label: "N° crédito", value: client.numeroCredito || "—" },
+              ]}
+            />
+            <div style={{ height: 8 }} />
+            <MetaRow
+              items={[
+                { label: "Producto", value: client.tipoProducto || "—" },
+                { label: "Fecha aprobación", value: aprob.fechaAprobacion || "—" },
+                { label: "Asesor", value: client.asesor || "—" },
+                { label: "Radicado", value: aprob.radicado || "—" },
+              ]}
+            />
+          </div>
 
-      <div className="mt-5">
-        <div className="text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: NUVEX.azul }}>Dashboard ejecutivo</div>
-        <div className="grid grid-cols-5 gap-2">
-          <PdfDash label="Años eliminados" value={formatNumber(aprobado.añosEliminados, 1)} />
-          <PdfDash label="Ahorro aprobado" value={formatCOP(aprobado.ahorroTotal)} />
-          <PdfDash label="Nueva cuota" value={formatCOP(aprobado.cuota)} />
-          <PdfDash label="Honorarios finales" value={formatCOP(aprobado.honorariosFinales)} green />
+          <div style={{ marginTop: 6 }}>
+            <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2, color: NUVEX.azul, marginBottom: 10 }}>
+              DASHBOARD EJECUTIVO
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10 }}>
+              <PremiumStatCard label="Años eliminados" value={formatNumber(aprobado.añosEliminados, 1)} accent="dark" />
+              <PremiumStatCard label="Ahorro total" value={formatCOP(aprobado.ahorroTotal)} accent="green" />
+              <PremiumStatCard label="Nueva cuota" value={formatCOP(aprobado.cuota)} />
+              <PremiumStatCard label="Honorarios finales" value={formatCOP(aprobado.honorariosFinales)} accent="blue" />
+              <PremiumStatCard label="Acertividad" value={`${formatNumber(metricas.global, 1)}%`} accent="green" />
+            </div>
+          </div>
+
           <div
             style={{
-              borderRadius: 10,
-              border: `2px solid ${metricas.cal.color}`,
-              backgroundColor: metricas.cal.bg,
-              padding: 10,
+              marginTop: 22,
+              padding: "22px 26px",
+              borderRadius: 16,
+              background: `linear-gradient(135deg, ${NUVEX.verdeClaro} 0%, #FFFFFF 100%)`,
+              border: `1px solid ${NUVEX.verde}`,
             }}
           >
-            <div style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.5, color: metricas.cal.color }}>Acertividad global</div>
-            <div style={{ fontSize: 24, fontWeight: 900, color: metricas.cal.color, lineHeight: 1, marginTop: 4 }}>{formatNumber(metricas.global, 1)}%</div>
-            <div style={{ fontSize: 9, fontWeight: 800, color: metricas.cal.color, marginTop: 4 }}>{metricas.cal.label}</div>
+            <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2.5, color: NUVEX.verdeTextoFuerte }}>
+              ¡FELICITACIONES!
+            </div>
+            <div style={{ marginTop: 10, fontSize: 11.5, lineHeight: 1.6, color: NUVEX.negro }}>
+              Nos alegra profundamente que este proceso haya finalizado exitosamente. Gracias por confiar en
+              NUVEX Finanzas Inteligentes. El resultado obtenido demuestra que una estrategia financiera
+              adecuada puede transformar por completo el futuro de un crédito.
+              <br /><br />
+              Hoy no solo eliminaste tiempo de tu deuda: también redujiste intereses futuros y construiste
+              un camino más rápido hacia tu libertad financiera. Seguiremos acompañándote en cada paso.
+            </div>
+          </div>
+
+          <div style={{ padding: "0 0" }}>
+            <PremiumFooter />
           </div>
         </div>
       </div>
 
-      <div className="mt-5">
-        <div className="text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: NUVEX.azul }}>Proyectado vs aprobado</div>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
-          <thead>
-            <tr style={{ backgroundColor: NUVEX.negro, color: "#fff" }}>
-              <th style={{ textAlign: "left", padding: "6px 8px", fontSize: 10 }}>Concepto</th>
-              <th style={{ textAlign: "right", padding: "6px 8px", fontSize: 10 }}>Proyectado</th>
-              <th style={{ textAlign: "right", padding: "6px 8px", fontSize: 10 }}>Aprobado</th>
-              <th style={{ textAlign: "right", padding: "6px 8px", fontSize: 10 }}>Variación</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r, i) => (
-              <tr key={r.c} style={{ backgroundColor: i % 2 ? "#F7F9FB" : "#fff" }}>
-                <td style={{ padding: "6px 8px", fontWeight: 600 }}>{r.c}</td>
-                <td style={{ padding: "6px 8px", textAlign: "right" }}>{r.p}</td>
-                <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: 700 }}>{r.a}</td>
-                <td style={{ padding: "6px 8px", textAlign: "right", color: NUVEX.azul, fontWeight: 700 }}>{r.v}</td>
+      {/* ===== Página 2 ===== */}
+      <div style={{ pageBreakBefore: "always", padding: "32px 36px 28px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid #E3E7EE`, paddingBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <LogoMark size={36} />
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.5 }}>NUVEX FINANZAS INTELIGENTES</div>
+              <div style={{ fontSize: 9, color: "#5C6770", letterSpacing: 1 }}>PROYECTADO VS APROBADO</div>
+            </div>
+          </div>
+          <div style={{ fontSize: 9.5, color: "#5C6770", letterSpacing: 0.5, textAlign: "right" }}>
+            <div style={{ fontWeight: 700, color: NUVEX.negro }}>{client.nombre || "—"}</div>
+            <div>{aprob.banco || client.banco}</div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 22 }}>
+          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2.5, color: NUVEX.azul }}>COMPARATIVO EJECUTIVO</div>
+          <div style={{ fontSize: 20, fontWeight: 900, marginTop: 6, letterSpacing: -0.3 }}>Proyectado vs aprobado</div>
+          <div style={{ fontSize: 10.5, color: "#5C6770", marginTop: 4 }}>
+            Comparación detallada entre la proyección NUVEX y la aprobación final del banco.
+          </div>
+        </div>
+
+        <div style={{ marginTop: 18, border: "1px solid #E3E7EE", borderRadius: 12, overflow: "hidden" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.5 }}>
+            <thead>
+              <tr style={{ background: NUVEX_GRADIENT, color: "#fff" }}>
+                <th style={{ textAlign: "left", padding: "10px 14px", fontSize: 9, letterSpacing: 1, fontWeight: 700 }}>CONCEPTO</th>
+                <th style={{ textAlign: "right", padding: "10px 14px", fontSize: 9, letterSpacing: 1, fontWeight: 700 }}>PROYECTADO</th>
+                <th style={{ textAlign: "right", padding: "10px 14px", fontSize: 9, letterSpacing: 1, fontWeight: 700 }}>APROBADO</th>
+                <th style={{ textAlign: "right", padding: "10px 14px", fontSize: 9, letterSpacing: 1, fontWeight: 700 }}>VARIACIÓN</th>
+                <th style={{ textAlign: "right", padding: "10px 14px", fontSize: 9, letterSpacing: 1, fontWeight: 700, width: 150 }}>ACERTIVIDAD</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Página 2 */}
-      <div style={{ pageBreakBefore: "always", marginTop: 32 }}>
-        <PrintHeader subtitle="Certificado de resultado" />
-        <div className="mt-6 text-center">
-          <div className="text-[11px] font-bold uppercase tracking-wider" style={{ color: NUVEX.azul }}>Documento certificado</div>
-          <h1 className="text-3xl font-extrabold tracking-tight mt-1">Certificado de resultado</h1>
+            </thead>
+            <tbody>
+              {rows.map((r, i) => {
+                const cap = Math.max(0, Math.min(100, acertividadFilas[i] ?? 0));
+                return (
+                  <tr key={r.c} style={{ background: i % 2 ? "#FAFBFD" : "#fff", borderTop: "1px solid #EEF1F5" }}>
+                    <td style={{ padding: "11px 14px", fontWeight: 700, color: NUVEX.negro }}>{r.c}</td>
+                    <td style={{ padding: "11px 14px", textAlign: "right", color: "#5C6770" }}>{r.p}</td>
+                    <td style={{ padding: "11px 14px", textAlign: "right", fontWeight: 800, color: NUVEX.negro }}>{r.a}</td>
+                    <td style={{ padding: "11px 14px", textAlign: "right", color: NUVEX.azul, fontWeight: 700 }}>{r.v}</td>
+                    <td style={{ padding: "11px 14px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ flex: 1, height: 6, borderRadius: 999, background: "#EEF1F5", overflow: "hidden" }}>
+                          <div style={{ width: `${cap}%`, height: "100%", background: NUVEX.verde, borderRadius: 999 }} />
+                        </div>
+                        <div style={{ fontSize: 10, fontWeight: 800, color: NUVEX.verdeTextoFuerte, minWidth: 38, textAlign: "right" }}>{formatNumber(cap, 0)}%</div>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
 
         <div
           style={{
-            marginTop: 28,
-            padding: 22,
-            border: `1px solid #E3E7EE`,
-            borderLeft: `4px solid ${NUVEX.azul}`,
-            borderRadius: 10,
-            backgroundColor: "#F7F9FB",
-            fontSize: 13,
-            lineHeight: 1.6,
+            marginTop: 22,
+            padding: "22px 26px",
+            borderRadius: 16,
+            background: NUVEX_GRADIENT,
+            color: "#fff",
           }}
         >
-          NUVEX presentó una proyección financiera con base en la información suministrada por el cliente
-          y los criterios técnicos aplicables al crédito. Una vez culminado el proceso ante la entidad financiera,
-          se obtuvo un resultado con una <b>acertividad del {formatNumber(metricas.global, 1)}%</b>,
-          evidenciando la consistencia y precisión del análisis realizado.
-        </div>
-
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          <CertCell label="Cliente" value={client.nombre || "—"} />
-          <CertCell label="Banco" value={aprob.banco || client.banco || "—"} />
-          <CertCell label="Nueva cuota aprobada" value={formatCOP(aprobado.cuota)} />
-          <CertCell label="Nuevo plazo aprobado" value={`${aprobado.plazo} meses`} />
-          <CertCell label="Años eliminados" value={formatNumber(aprobado.añosEliminados, 1)} />
-          <CertCell label="Ahorro logrado" value={formatCOP(aprobado.ahorroTotal)} highlight />
-        </div>
-
-        <div
-          style={{
-            marginTop: 24,
-            padding: 18,
-            borderRadius: 10,
-            backgroundColor: metricas.cal.bg,
-            border: `2px solid ${metricas.cal.color}`,
-            textAlign: "center",
-          }}
-        >
-          <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: metricas.cal.color }}>Acertividad global NUVEX</div>
-          <div style={{ fontSize: 44, fontWeight: 900, color: metricas.cal.color, lineHeight: 1, margin: "6px 0" }}>
-            {formatNumber(metricas.global, 1)}%
+          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2.5, opacity: 0.9 }}>
+            ¿CONOCES A ALGUIEN QUE TAMBIÉN PUEDA BENEFICIARSE?
           </div>
-          <div style={{ fontSize: 11, fontWeight: 800, color: metricas.cal.color, letterSpacing: 1 }}>{metricas.cal.label}</div>
+          <div style={{ marginTop: 10, fontSize: 11.5, lineHeight: 1.6, opacity: 0.95 }}>
+            Miles de familias aún desconocen que pueden reducir años de su crédito hipotecario o leasing
+            habitacional. Si tienes familiares, amigos o compañeros de trabajo con crédito de vivienda,
+            recomiéndales este diagnóstico. Tu recomendación puede ayudarles a ahorrar tiempo, dinero e intereses.
+          </div>
         </div>
 
-        <div className="mt-10 text-[10px] text-center" style={{ color: "#5C6770" }}>
-          {CORPORATIVO.nombre} · {CORPORATIVO.direccion} · {CORPORATIVO.ciudades} · {CORPORATIVO.telefono} · {CORPORATIVO.web}
-        </div>
+        {aprob.observaciones && (
+          <div style={{ marginTop: 16, padding: "14px 18px", border: `1px dashed #E3E7EE`, borderRadius: 10, fontSize: 10.5, color: "#5C6770" }}>
+            <span style={{ fontWeight: 800, color: NUVEX.negro, letterSpacing: 0.5 }}>Observaciones: </span>
+            {aprob.observaciones}
+          </div>
+        )}
+
+        <PremiumFooter />
       </div>
     </div>
   );
@@ -530,138 +711,160 @@ function PrintCuentaCobro({
   aprobado: { honorariosBase: number; descuento: number; honorariosFinales: number };
 }) {
   const hoy = new Date().toISOString().slice(0, 10);
+  const hasDiscount = aprobado.descuento > 0;
   return (
     <div id={id} style={printShell}>
-      <PrintHeader subtitle="Cuenta de cobro" />
-
-      <div className="mt-4 flex items-start justify-between">
-        <div>
-          <div className="text-[11px] font-bold uppercase tracking-wider" style={{ color: NUVEX.azul }}>Documento corporativo</div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Cuenta de cobro</h1>
-        </div>
-        <div className="text-right">
-          <div className="text-[10px]" style={{ color: "#5C6770" }}>Consecutivo</div>
-          <div className="text-lg font-extrabold" style={{ color: NUVEX.negro }}>{consecutivo}</div>
-          <div className="text-[10px] mt-1" style={{ color: "#5C6770" }}>Fecha</div>
-          <div className="text-sm font-bold">{hoy}</div>
-        </div>
-      </div>
-
-      <div className="mt-5 grid grid-cols-2 gap-3 text-[11px]">
-        <Field label="Cliente" value={client.nombre || "—"} />
-        <Field label="Cédula" value={client.cedula || "—"} />
-        <Field label="Banco" value={aprob.banco || client.banco || "—"} />
-        <Field label="Número de crédito" value={client.numeroCredito || "—"} />
-      </div>
-
-      <div className="mt-5">
-        <div className="text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: NUVEX.azul }}>Concepto</div>
+      <div style={{ display: "flex", minHeight: 1080 }}>
         <div
           style={{
-            padding: 14,
-            border: "1px solid #E3E7EE",
-            borderLeft: `4px solid ${NUVEX.verde}`,
-            borderRadius: 10,
-            backgroundColor: "#F7F9FB",
-            fontSize: 12,
-            lineHeight: 1.5,
+            width: 220,
+            background: NUVEX_GRADIENT,
+            color: "#fff",
+            padding: "36px 24px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
           }}
         >
-          Honorarios por optimización financiera exitosa del crédito hipotecario / leasing habitacional
-          gestionado ante la entidad financiera. Servicio prestado conforme a los términos comerciales
-          acordados con el cliente.
-        </div>
-      </div>
+          <div>
+            <LogoMark light size={48} />
+            <div style={{ marginTop: 20, fontSize: 10, letterSpacing: 2.5, fontWeight: 700, opacity: 0.85 }}>
+              DOCUMENTO
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1.1, marginTop: 4, letterSpacing: -0.3 }}>
+              Cuenta<br />de cobro
+            </div>
 
-      <div className="mt-5">
-        <div className="text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: NUVEX.azul }}>Liquidación</div>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-          <tbody>
-            <tr style={{ backgroundColor: "#fff" }}>
-              <td style={{ padding: "10px 12px", border: "1px solid #E3E7EE" }}>Honorarios originales</td>
-              <td style={{ padding: "10px 12px", border: "1px solid #E3E7EE", textAlign: "right", fontWeight: 700 }}>{formatCOP(aprobado.honorariosBase)}</td>
-            </tr>
-            <tr style={{ backgroundColor: "#F7F9FB" }}>
-              <td style={{ padding: "10px 12px", border: "1px solid #E3E7EE" }}>Descuento comercial</td>
-              <td style={{ padding: "10px 12px", border: "1px solid #E3E7EE", textAlign: "right", color: NUVEX.azul, fontWeight: 700 }}>
-                {aprobado.descuento > 0 ? `− ${formatCOP(aprobado.descuento)}` : formatCOP(0)}
-              </td>
-            </tr>
-            <tr style={{ backgroundColor: NUVEX.verdeClaro }}>
-              <td style={{ padding: "12px", border: `2px solid ${NUVEX.verde}`, fontWeight: 800, color: NUVEX.verdeTextoFuerte, textTransform: "uppercase", letterSpacing: 0.5 }}>
-                Total a pagar (honorarios finales)
-              </td>
-              <td style={{ padding: "12px", border: `2px solid ${NUVEX.verde}`, textAlign: "right", fontSize: 18, fontWeight: 900, color: NUVEX.verdeTextoFuerte }}>
-                {formatCOP(aprobado.honorariosFinales)}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+            <div style={{ marginTop: 36 }}>
+              <div style={{ fontSize: 8.5, letterSpacing: 1.5, opacity: 0.75, fontWeight: 700 }}>CONSECUTIVO</div>
+              <div style={{ fontSize: 16, fontWeight: 900, marginTop: 4 }}>{consecutivo}</div>
+            </div>
+            <div style={{ marginTop: 18 }}>
+              <div style={{ fontSize: 8.5, letterSpacing: 1.5, opacity: 0.75, fontWeight: 700 }}>FECHA</div>
+              <div style={{ fontSize: 13, fontWeight: 700, marginTop: 4 }}>{hoy}</div>
+            </div>
+          </div>
 
-      <div className="mt-6 text-[10.5px]" style={{ color: "#5C6770", lineHeight: 1.5 }}>
-        El presente documento corresponde a la cuenta de cobro generada por NUVEX Finanzas Inteligentes
-        por concepto de honorarios derivados de la optimización financiera exitosa del crédito referenciado.
-        Para consultas escribir a {CORPORATIVO.web}.
-      </div>
-
-      <div className="mt-12 grid grid-cols-2 gap-12">
-        <div>
-          <div style={{ borderTop: "1px solid #242424", paddingTop: 6, fontSize: 10, textAlign: "center" }}>
-            Firma autorizada NUVEX
+          <div style={{ fontSize: 9, opacity: 0.85, lineHeight: 1.5, letterSpacing: 0.3 }}>
+            <div style={{ fontWeight: 800, letterSpacing: 1.5, marginBottom: 6 }}>NUVEX</div>
+            Carrera 16 # 37-48 Piso 4<br />
+            Centro Bucaramanga<br />
+            Bogotá | Bucaramanga<br />
+            +57 316 402 3779<br />
+            www.nuvex.com.co
           </div>
         </div>
-        <div>
-          <div style={{ borderTop: "1px solid #242424", paddingTop: 6, fontSize: 10, textAlign: "center" }}>
-            Recibido por el cliente
+
+        <div style={{ flex: 1, padding: "44px 40px 32px" }}>
+          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2.5, color: NUVEX.azul }}>
+            FIRMA ESPECIALIZADA EN OPTIMIZACIÓN FINANCIERA
+          </div>
+          <div style={{ fontSize: 22, fontWeight: 900, marginTop: 8, letterSpacing: -0.3 }}>
+            Liquidación de honorarios
+          </div>
+
+          <div style={{ marginTop: 22, display: "grid", gridTemplateColumns: "1fr 1fr", rowGap: 14, columnGap: 24, border: "1px solid #E3E7EE", borderRadius: 12, padding: "18px 20px" }}>
+            <CcRow label="Cliente" value={client.nombre || "—"} />
+            <CcRow label="Cédula" value={client.cedula || "—"} />
+            <CcRow label="Banco" value={aprob.banco || client.banco || "—"} />
+            <CcRow label="N° crédito" value={client.numeroCredito || "—"} />
+            <CcRow label="Producto" value={client.tipoProducto || "—"} />
+            <CcRow label="Fecha aprobación" value={aprob.fechaAprobacion || "—"} />
+          </div>
+
+          <div style={{ marginTop: 22 }}>
+            <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2, color: NUVEX.azul, marginBottom: 8 }}>CONCEPTO</div>
+            <div
+              style={{
+                padding: "18px 20px",
+                border: "1px solid #E3E7EE",
+                borderLeft: `4px solid ${NUVEX.azul}`,
+                borderRadius: 12,
+                background: "#FAFBFD",
+                fontSize: 11.5,
+                lineHeight: 1.6,
+                color: NUVEX.negro,
+              }}
+            >
+              <div style={{ fontWeight: 800, letterSpacing: 0.3 }}>
+                HONORARIOS POR OPTIMIZACIÓN FINANCIERA EXITOSA DEL CRÉDITO HIPOTECARIO O LEASING HABITACIONAL.
+              </div>
+              <div style={{ marginTop: 6, color: "#5C6770" }}>
+                Proceso ejecutado bajo modalidad de prestación de servicios a éxito.
+              </div>
+            </div>
+          </div>
+
+          <div style={{ marginTop: 22 }}>
+            <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2, color: NUVEX.azul, marginBottom: 8 }}>LIQUIDACIÓN</div>
+            <div style={{ border: "1px solid #E3E7EE", borderRadius: 14, overflow: "hidden" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "14px 20px", borderBottom: "1px solid #EEF1F5" }}>
+                <div style={{ fontSize: 11, color: "#5C6770" }}>Honorarios originales</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: NUVEX.negro, textDecoration: hasDiscount ? "line-through" : "none", opacity: hasDiscount ? 0.55 : 1 }}>
+                  {formatCOP(aprobado.honorariosBase)}
+                </div>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "14px 20px", borderBottom: "1px solid #EEF1F5", background: "#FAFBFD" }}>
+                <div style={{ fontSize: 11, color: "#5C6770" }}>Descuento comercial</div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: hasDiscount ? NUVEX.azul : "#8892A0" }}>
+                  {hasDiscount ? `− ${formatCOP(aprobado.descuento)}` : formatCOP(0)}
+                </div>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "20px 22px",
+                  background: NUVEX_GRADIENT,
+                  color: "#fff",
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: 9, letterSpacing: 2, opacity: 0.85, fontWeight: 700 }}>TOTAL A PAGAR</div>
+                  <div style={{ fontSize: 9.5, opacity: 0.85, marginTop: 2 }}>Honorarios finales</div>
+                </div>
+                <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: -0.5 }}>
+                  {formatCOP(aprobado.honorariosFinales)}
+                </div>
+              </div>
+            </div>
+            {hasDiscount && (
+              <div style={{ marginTop: 8, fontSize: 10, color: NUVEX.verdeTextoFuerte, fontWeight: 700, letterSpacing: 0.4 }}>
+                Beneficio aplicado: ahorras {formatCOP(aprobado.descuento)} sobre los honorarios originales.
+              </div>
+            )}
+          </div>
+
+          <div style={{ marginTop: 22, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+            {[
+              "Solo pagas si el proceso fue exitoso",
+              "Estrategia financiera especializada",
+              "Acompañamiento profesional NUVEX",
+            ].map((t) => (
+              <div key={t} style={{ border: `1px solid ${NUVEX.verde}`, background: NUVEX.verdeClaro, borderRadius: 12, padding: "12px 14px", fontSize: 10.5, fontWeight: 700, color: NUVEX.verdeTextoFuerte, display: "flex", alignItems: "flex-start", gap: 8 }}>
+                <span style={{ fontSize: 14, lineHeight: 1 }}>✓</span>
+                <span>{t}</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ marginTop: 22, padding: "18px 20px", borderRadius: 12, border: "1px solid #E3E7EE", fontSize: 11, lineHeight: 1.6, color: "#5C6770" }}>
+            <div style={{ fontWeight: 800, color: NUVEX.negro, letterSpacing: 0.4, marginBottom: 4 }}>Gracias por confiar en NUVEX.</div>
+            Nos sentimos orgullosos de haber contribuido a mejorar las condiciones de tu crédito.
+            Cada año eliminado representa más tranquilidad financiera para tu familia.
           </div>
         </div>
       </div>
-
-      <div className="mt-8 text-[9.5px] text-center" style={{ color: "#5C6770" }}>
-        {CORPORATIVO.nombre} · {CORPORATIVO.direccion} · {CORPORATIVO.ciudades} · {CORPORATIVO.telefono} · {CORPORATIVO.web}
-      </div>
     </div>
   );
 }
 
-function Field({ label, value }: { label: string; value: string }) {
+function CcRow({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ border: "1px solid #E3E7EE", borderRadius: 8, padding: "6px 8px", backgroundColor: "#FFFFFF" }}>
-      <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: 0.4, color: "#5C6770", fontWeight: 700 }}>{label}</div>
-      <div style={{ fontSize: 11.5, fontWeight: 700, color: NUVEX.negro, marginTop: 2 }}>{value}</div>
-    </div>
-  );
-}
-
-function PdfDash({ label, value, green }: { label: string; value: string; green?: boolean }) {
-  return (
-    <div
-      style={{
-        borderRadius: 10,
-        border: `1px solid ${green ? NUVEX.verde : "#E3E7EE"}`,
-        backgroundColor: green ? NUVEX.verdeClaro : "#FFFFFF",
-        padding: 10,
-      }}
-    >
-      <div style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.4, color: green ? NUVEX.verdeTextoFuerte : "#5C6770" }}>{label}</div>
-      <div style={{ fontSize: 13, fontWeight: 800, color: green ? NUVEX.verdeTextoFuerte : NUVEX.negro, marginTop: 4 }}>{value}</div>
-    </div>
-  );
-}
-
-function CertCell({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-  return (
-    <div
-      style={{
-        borderRadius: 10,
-        border: `1px solid ${highlight ? NUVEX.verde : "#E3E7EE"}`,
-        backgroundColor: highlight ? NUVEX.verdeClaro : "#FFFFFF",
-        padding: 12,
-      }}
-    >
-      <div style={{ fontSize: 9.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.5, color: highlight ? NUVEX.verdeTextoFuerte : "#5C6770" }}>{label}</div>
-      <div style={{ fontSize: 16, fontWeight: 900, color: highlight ? NUVEX.verdeTextoFuerte : NUVEX.negro, marginTop: 4 }}>{value}</div>
+    <div>
+      <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: 1.2, color: "#8892A0", textTransform: "uppercase" }}>{label}</div>
+      <div style={{ marginTop: 3, fontSize: 12, fontWeight: 700, color: NUVEX.negro }}>{value}</div>
     </div>
   );
 }
