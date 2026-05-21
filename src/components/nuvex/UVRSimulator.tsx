@@ -13,6 +13,7 @@ import { ComparativeTable } from "./ComparativeTable";
 import { RecommendedResult } from "./RecommendedResult";
 import { ScenarioTable, ImpactCard, type ScenarioRow } from "./ScenarioTable";
 import { PrintDocument } from "./PrintDocument";
+import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
 
 export function UVRSimulator() {
   const [client, setClient] = useState<ClientData>(defaultClient);
