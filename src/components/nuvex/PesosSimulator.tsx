@@ -72,8 +72,9 @@ export function PesosSimulator() {
 
   const metrics = [
     { label: "Saldo a capital", value: formatCOP(input.saldoCapital) },
-    { label: "Cuota actual", value: formatCOP(input.cuotaActual) },
-    { label: "Seguros", value: formatCOP(input.seguros) },
+    { label: "Cuota actual con seguros", value: formatCOP(input.cuotaActual) },
+    { label: "Seguros mensuales", value: formatCOP(input.seguros) },
+    { label: "Cuota sin seguros", value: formatCOP(cuotaSinSegurosNum) },
     { label: "Plazo inicial", value: `${plazoInicial} meses` },
     { label: "Cuotas pagadas", value: String(cuotasPagadas) },
     { label: "Cuotas pendientes", value: String(cuotasPendientes) },
