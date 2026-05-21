@@ -14,16 +14,190 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      expediente_historial: {
+        Row: {
+          created_at: string
+          estado_anterior:
+            | Database["public"]["Enums"]["expediente_estado"]
+            | null
+          estado_nuevo: Database["public"]["Enums"]["expediente_estado"]
+          expediente_id: string
+          id: string
+          nota: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          estado_anterior?:
+            | Database["public"]["Enums"]["expediente_estado"]
+            | null
+          estado_nuevo: Database["public"]["Enums"]["expediente_estado"]
+          expediente_id: string
+          id?: string
+          nota?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          estado_anterior?:
+            | Database["public"]["Enums"]["expediente_estado"]
+            | null
+          estado_nuevo?: Database["public"]["Enums"]["expediente_estado"]
+          expediente_id?: string
+          id?: string
+          nota?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expediente_historial_expediente_id_fkey"
+            columns: ["expediente_id"]
+            isOneToOne: false
+            referencedRelation: "expedientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expedientes: {
+        Row: {
+          acertividad_global: number | null
+          aprobado_data: Json | null
+          asesor_id: string
+          banco: string | null
+          cedula: string | null
+          cliente_data: Json
+          cliente_nombre: string
+          created_at: string
+          credito_data: Json
+          descuento: number | null
+          discount_data: Json
+          estado: Database["public"]["Enums"]["expediente_estado"]
+          fecha_simulacion: string
+          honorarios_base: number | null
+          honorarios_final: number | null
+          id: string
+          modo: Database["public"]["Enums"]["expediente_modo"]
+          numero_credito: string | null
+          producto: string | null
+          propuesta_data: Json
+          updated_at: string
+        }
+        Insert: {
+          acertividad_global?: number | null
+          aprobado_data?: Json | null
+          asesor_id: string
+          banco?: string | null
+          cedula?: string | null
+          cliente_data?: Json
+          cliente_nombre: string
+          created_at?: string
+          credito_data?: Json
+          descuento?: number | null
+          discount_data?: Json
+          estado?: Database["public"]["Enums"]["expediente_estado"]
+          fecha_simulacion?: string
+          honorarios_base?: number | null
+          honorarios_final?: number | null
+          id?: string
+          modo: Database["public"]["Enums"]["expediente_modo"]
+          numero_credito?: string | null
+          producto?: string | null
+          propuesta_data?: Json
+          updated_at?: string
+        }
+        Update: {
+          acertividad_global?: number | null
+          aprobado_data?: Json | null
+          asesor_id?: string
+          banco?: string | null
+          cedula?: string | null
+          cliente_data?: Json
+          cliente_nombre?: string
+          created_at?: string
+          credito_data?: Json
+          descuento?: number | null
+          discount_data?: Json
+          estado?: Database["public"]["Enums"]["expediente_estado"]
+          fecha_simulacion?: string
+          honorarios_base?: number | null
+          honorarios_final?: number | null
+          id?: string
+          modo?: Database["public"]["Enums"]["expediente_modo"]
+          numero_credito?: string | null
+          producto?: string | null
+          propuesta_data?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          nombre: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id: string
+          nombre?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          nombre?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "asesor"
+      expediente_estado:
+        | "SIMULADO"
+        | "FIRMADO"
+        | "RADICADO"
+        | "APROBADO"
+        | "FACTURADO"
+        | "PAGADO"
+      expediente_modo: "pesos" | "uvr"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +324,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "asesor"],
+      expediente_estado: [
+        "SIMULADO",
+        "FIRMADO",
+        "RADICADO",
+        "APROBADO",
+        "FACTURADO",
+        "PAGADO",
+      ],
+      expediente_modo: ["pesos", "uvr"],
+    },
   },
 } as const
