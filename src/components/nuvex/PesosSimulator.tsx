@@ -112,8 +112,14 @@ export function PesosSimulator() {
         <SectionTitle sub="Información financiera del crédito en pesos">Datos del crédito</SectionTitle>
         <div className="grid gap-4 md:grid-cols-4">
           <TextField label="Saldo a capital" value={saldoCapital} onChange={setSaldoCapital} placeholder="221.903.943" />
-          <TextField label="Cuota mensual actual (con seguros)" value={cuotaActual} onChange={setCuotaActual} placeholder="2.260.000" />
+          <TextField label="Cuota mensual actual con seguros" value={cuotaActual} onChange={setCuotaActual} placeholder="2.260.000" />
           <TextField label="Seguros mensuales" value={seguros} onChange={setSeguros} placeholder="180.000" />
+          <TextField
+            label="Cuota mensual sin seguros"
+            value={cuotaActualNum > 0 && segurosNum >= 0 ? formatCOP(cuotaSinSegurosNum) : ""}
+            readOnly
+            hint="Calculada automáticamente"
+          />
           <TextField label="Tasa Efectiva Anual (%)" value={tea} onChange={setTea} placeholder="11,15" />
         </div>
       </Card>
