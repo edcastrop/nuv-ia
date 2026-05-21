@@ -182,16 +182,28 @@ export function UVRSimulator() {
                   />
                   <Card>
                     <SectionTitle>Escenario actual vs escenario optimizado</SectionTitle>
-                    <ScenarioTable rows={scenarioRows} />
+                    <div className="grid gap-4 lg:grid-cols-12">
+                      <div className="lg:col-span-6">
+                        <ScenarioTable rows={scenarioRows} />
+                      </div>
+                      <div className="lg:col-span-3">
+                        <SavingsCard
+                          mode="uvr"
+                          ahorroTotal={best.ahorroTotal}
+                          añosEliminados={best.añosEliminados}
+                        />
+                      </div>
+                      <div className="lg:col-span-3">
+                        <ImpactCard
+                          mode="uvr"
+                          añosEliminados={best.añosEliminados}
+                          ahorroIntereses={best.ahorroIntereses}
+                          ahorroSeguros={best.ahorroSeguros}
+                          ahorroTotal={best.ahorroTotal}
+                        />
+                      </div>
+                    </div>
                   </Card>
-                  <ImpactCard
-                    mode="uvr"
-                    añosEliminados={best.añosEliminados}
-                    ahorroIntereses={best.ahorroIntereses}
-                    ahorroSeguros={best.ahorroSeguros}
-                    ahorroTotal={best.ahorroTotal}
-                  />
-
                 </>
               )}
             </>
