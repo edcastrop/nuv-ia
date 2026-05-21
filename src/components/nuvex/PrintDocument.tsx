@@ -62,6 +62,7 @@ export function PrintDocument(props: Props) {
   const {
     mode, client, cuotasPendientes, metrics,
     pesosPropuestas, uvrPropuestas, bestIndex, honorariosPct, recommended, scenarioRows,
+    personalizada = false,
   } = props;
 
   const titulo = mode === "uvr"
