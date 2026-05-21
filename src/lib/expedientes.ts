@@ -39,14 +39,8 @@ export interface PropuestaData {
   fuente: "manual" | "automatica";
 }
 
-export interface DiscountData {
-  motivo?: string;
-  porcentaje?: number;
-  vigencia?: string;
-  descuento: number;
-  final: number;
-  hasDiscount: boolean;
-}
+// discount_data persists the raw form state from DiscountModule (type/value/vigencia)
+export type DiscountData = Record<string, unknown>;
 
 export interface AprobadoData {
   fechaAprobacion: string;
@@ -88,7 +82,10 @@ export interface UpsertPayload {
   cliente: ClientData;
   credito: Record<string, string>;
   propuesta: PropuestaData;
-  discount: DiscountData;
+  discountState: DiscountData;
+  honorariosBase: number;
+  honorariosFinal: number;
+  descuento: number;
 }
 
 export async function listExpedientes(params: { search?: string; estado?: EstadoExpediente | "" } = {}) {
@@ -131,10 +128,10 @@ export async function upsertExpediente(p: UpsertPayload): Promise<Expediente> {
     cliente_data: p.cliente as unknown as never,
     credito_data: p.credito as unknown as never,
     propuesta_data: p.propuesta as unknown as never,
-    discount_data: p.discount as unknown as never,
-    honorarios_base: p.propuesta.honorarios,
-    honorarios_final: p.discount.final,
-    descuento: p.discount.descuento,
+    discount_data: p.discountState as unknown as never,
+    honorarios_base: p.honorariosBase,
+    honorarios_final: p.honorariosFinal,
+    descuento: p.descuento,
   };
 
   if (p.id) {
