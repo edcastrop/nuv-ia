@@ -160,9 +160,15 @@ export function PesosSimulator({
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-6 py-6">
+      {onReset && (
+        <div className="flex justify-end">
+          <button onClick={onReset} className="text-xs text-[#445DA3] hover:underline">← Cambiar modo</button>
+        </div>
+      )}
       <Card>
         <SectionTitle sub="Información general del cliente y del crédito">Datos del cliente</SectionTitle>
         <ClientFields data={client} onChange={setClient} productos={PRODUCTOS_PESOS} cuotasPendientes={cuotasPendientes} />
+
         {validaciones.map((v, i) => (
           <div key={i} className="mt-3"><Alert tone="error">{v}</Alert></div>
         ))}
