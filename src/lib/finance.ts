@@ -272,7 +272,7 @@ export function calculateUVRProjection(input: UVRInput): {
     totalSeguros: actual.totalSeguros,
   };
 
-  const eliminaciones = [72, 84, 96, 108];
+  const eliminaciones = getUVRReductionOptions(input.cuotasPendientes + (input as { plazoInicial?: number }).plazoInicial! ? (input as { plazoInicial?: number }).plazoInicial ?? input.cuotasPendientes : input.cuotasPendientes);
   const propuestas: UVRPropuesta[] = [];
   for (const cuotasEliminadas of eliminaciones) {
     const nuevoPlazo = input.cuotasPendientes - cuotasEliminadas;
