@@ -17,6 +17,7 @@ interface Props {
   uvrPropuestas?: UVRPropuesta[];
   bestIndex: number;
   honorariosPct: number;
+  personalizada?: boolean;
   recommended: {
     añosEliminados: number;
     ahorroIntereses: number;
