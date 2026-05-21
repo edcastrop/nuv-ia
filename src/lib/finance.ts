@@ -72,7 +72,7 @@ function buildPesosPropuesta(
   const ahorroIntereses = interesesActuales - interesesProyectados;
   const ahorroSeguros = input.seguros * cuotasEliminadas;
   const ahorroTotal = ahorroIntereses + ahorroSeguros;
-  const honorariosNuvex = ahorroTotal * (input.porcentajeHonorarios / 100);
+  const honorariosNuvex = applyHonorariosFloor(ahorroTotal * (input.porcentajeHonorarios / 100));
   return {
     cuotasEliminadas,
     añosEliminados: cuotasEliminadas / 12,
