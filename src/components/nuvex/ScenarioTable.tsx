@@ -26,31 +26,31 @@ function isEmphasized(label: string) {
 export function ScenarioTable({ rows }: { rows: ScenarioRow[] }) {
   return (
     <div
-      className="nuvex-avoid-break overflow-hidden bg-white"
+      className="nuvex-avoid-break overflow-hidden bg-white h-full"
       style={{
-        borderRadius: 16,
+        borderRadius: 14,
         border: `1px solid ${BORDER}`,
-        boxShadow: "0 1px 3px rgba(36,36,36,0.04), 0 8px 24px rgba(36,36,36,0.05)",
+        boxShadow: "0 1px 3px rgba(36,36,36,0.04), 0 4px 12px rgba(36,36,36,0.04)",
         fontFamily: "Inter, sans-serif",
       }}
     >
-      <table className="w-full border-collapse text-sm">
+      <table className="w-full border-collapse text-[13px]">
         <thead>
           <tr>
             <th
-              className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-white"
+              className="px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-white"
               style={{ backgroundColor: NUVEX.negro, border: `1px solid ${BORDER}` }}
             >
               Concepto
             </th>
             <th
-              className="px-5 py-4 text-center text-[11px] font-bold uppercase tracking-wider text-white"
+              className="px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wider text-white"
               style={{ backgroundColor: NUVEX.azul, border: `1px solid ${BORDER}` }}
             >
               Escenario actual
             </th>
             <th
-              className="px-5 py-4 text-center text-[11px] font-bold uppercase tracking-wider text-white"
+              className="px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wider text-white"
               style={{ backgroundColor: NUVEX.verde, border: `1px solid ${BORDER}` }}
             >
               Escenario optimizado
@@ -62,8 +62,8 @@ export function ScenarioTable({ rows }: { rows: ScenarioRow[] }) {
             const emph = isEmphasized(r.concepto);
             const baseCell: React.CSSProperties = {
               border: `1px solid ${BORDER}`,
-              padding: "14px 20px",
-              fontSize: emph ? 16 : 14,
+              padding: "7px 12px",
+              fontSize: emph ? 13 : 12,
               fontWeight: emph ? 700 : 500,
             };
             return (
@@ -74,10 +74,10 @@ export function ScenarioTable({ rows }: { rows: ScenarioRow[] }) {
                     backgroundColor: "#F7F9FB",
                     color: NUVEX.negro,
                     textAlign: "left",
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: 600,
                     textTransform: "uppercase",
-                    letterSpacing: "0.04em",
+                    letterSpacing: "0.03em",
                   }}
                 >
                   {r.concepto}
@@ -131,6 +131,40 @@ export function buildPesosScenarioRows(args: {
   ];
 }
 
+export function SavingsCard({
+  ahorroTotal,
+  añosEliminados,
+  mode,
+}: {
+  ahorroTotal: number;
+  añosEliminados: number;
+  mode: "pesos" | "uvr";
+}) {
+  return (
+    <div
+      className="nuvex-avoid-break flex h-full flex-col justify-center p-4 text-center"
+      style={{
+        backgroundColor: NUVEX.verde,
+        color: "#FFFFFF",
+        borderRadius: 14,
+        boxShadow: "0 6px 18px rgba(132,185,143,0.30)",
+        fontFamily: "Inter, sans-serif",
+      }}
+    >
+      <div className="text-[10px] font-bold uppercase tracking-wider opacity-95">
+        Tu ahorro con la propuesta recomendada
+      </div>
+      <div className="mt-2 text-[26px] font-extrabold leading-tight">
+        {formatCOP(ahorroTotal)}
+      </div>
+      <div className="mt-1 text-[11px] opacity-95">
+        Elimina {formatNumber(añosEliminados, 0)} años de crédito
+        {mode === "uvr" ? " en UVR" : ""}
+      </div>
+    </div>
+  );
+}
+
 export function ImpactCard({
   mode,
   añosEliminados,
@@ -144,37 +178,37 @@ export function ImpactCard({
   ahorroSeguros: number;
   ahorroTotal: number;
 }) {
-  const interesesLabel = mode === "uvr" ? "intereses y corrección monetaria" : "intereses";
+  const interesesLabel = mode === "uvr" ? "intereses + CM" : "intereses";
   const items = [
     `Eliminas ${formatNumber(añosEliminados, 0)} años de crédito`,
     `Ahorras ${formatCOP(ahorroIntereses)} en ${interesesLabel}`,
     `Ahorras ${formatCOP(ahorroSeguros)} en seguros`,
     `Ahorras ${formatCOP(ahorroTotal)} en total`,
-    `Disminuyes el tiempo de endeudamiento`,
+    `Disminuyes tu tiempo de endeudamiento`,
     `Finalizas tu crédito más rápido`,
   ];
   return (
     <div
-      className="nuvex-avoid-break p-6"
+      className="nuvex-avoid-break flex h-full flex-col p-4"
       style={{
         backgroundColor: "#FFFFFF",
-        borderRadius: 16,
-        border: `2px solid ${NUVEX.verde}`,
-        boxShadow: "0 1px 3px rgba(36,36,36,0.04), 0 10px 28px rgba(132,185,143,0.18)",
+        borderRadius: 14,
+        border: `1px solid ${NUVEX.verde}`,
+        boxShadow: "0 1px 3px rgba(36,36,36,0.04), 0 4px 12px rgba(132,185,143,0.12)",
         fontFamily: "Inter, sans-serif",
       }}
     >
       <h4
-        className="text-[13px] font-bold uppercase tracking-wider"
+        className="text-[11px] font-bold uppercase tracking-wider"
         style={{ color: NUVEX.negro }}
       >
-        ¿Qué significa esta optimización?
+        ¿Qué significan estos números?
       </h4>
-      <ul className="mt-4 grid gap-2.5 sm:grid-cols-2">
+      <ul className="mt-2 space-y-1.5">
         {items.map((t, i) => (
-          <li key={i} className="flex items-start gap-2.5 text-sm" style={{ color: NUVEX.negro }}>
+          <li key={i} className="flex items-start gap-2 text-[12px] leading-snug" style={{ color: NUVEX.negro }}>
             <span
-              className="mt-0.5 inline-flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
+              className="mt-0.5 inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-[9px] font-bold"
               style={{ backgroundColor: NUVEX.verde, color: "#FFFFFF" }}
             >
               ✓
