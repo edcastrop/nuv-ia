@@ -46,8 +46,9 @@ export function UVRSimulator() {
     teaCobrada: parsePercentage(teaCobrada),
     variacionUVR: parsePercentage(variacionUVR),
     cuotasPendientes,
+    plazoInicial,
     porcentajeHonorarios: honorariosPct,
-  }), [valorDesembolsado, saldoPesos, saldoUVR, valorUVR, cuotaActualPesosNum, cuotaSinSegurosNum, segurosNum, teaCobrada, variacionUVR, cuotasPendientes, honorariosPct]);
+  }), [valorDesembolsado, saldoPesos, saldoUVR, valorUVR, cuotaActualPesosNum, cuotaSinSegurosNum, segurosNum, teaCobrada, variacionUVR, cuotasPendientes, plazoInicial, honorariosPct]);
 
   const validaciones: string[] = [];
   if (plazoInicial > 0 && cuotasPagadas > plazoInicial) validaciones.push("Las cuotas pagadas no pueden ser mayores al plazo inicial.");

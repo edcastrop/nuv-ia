@@ -168,7 +168,14 @@ export interface UVRInput {
   teaCobrada: number; // %
   variacionUVR: number; // % EA
   cuotasPendientes: number;
+  plazoInicial: number;
   porcentajeHonorarios: number;
+}
+
+export function getUVRReductionOptions(plazoInicial: number): number[] {
+  if (plazoInicial >= 360) return [72, 84, 96, 108];
+  if (plazoInicial >= 240) return [36, 48, 60, 72];
+  return [12, 24, 36, 48];
 }
 
 interface UVRProyeccionTotales {
@@ -272,7 +279,7 @@ export function calculateUVRProjection(input: UVRInput): {
     totalSeguros: actual.totalSeguros,
   };
 
-  const eliminaciones = [72, 84, 96, 108];
+  const eliminaciones = getUVRReductionOptions(input.plazoInicial);
   const propuestas: UVRPropuesta[] = [];
   for (const cuotasEliminadas of eliminaciones) {
     const nuevoPlazo = input.cuotasPendientes - cuotasEliminadas;
