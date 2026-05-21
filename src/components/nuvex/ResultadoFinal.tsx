@@ -257,7 +257,42 @@ export function ResultadoFinal({
               <ComparativeProyVsApr rows={filasComparativo} />
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-3 justify-end">
+            <div className="mt-6 flex flex-wrap gap-3 justify-end items-center">
+              {expedienteId && savedMsg && <span className="text-xs text-[#242424]/70">{savedMsg}</span>}
+              {expedienteId && (
+                <button
+                  disabled={savingApr}
+                  onClick={async () => {
+                    if (!aprobado || !metricas) return;
+                    setSavingApr(true);
+                    setSavedMsg(null);
+                    try {
+                      await setAprobado(
+                        expedienteId,
+                        {
+                          fechaAprobacion: aprob.fechaAprobacion,
+                          radicado: aprob.radicado,
+                          banco: aprob.banco,
+                          cuotaAprobada: aprobado.cuota,
+                          plazoAprobado: aprobado.plazo,
+                          ahorroAprobado: aprobado.ahorroTotal,
+                          observaciones: aprob.observaciones,
+                        },
+                        metricas.global,
+                      );
+                      setSavedMsg("Aprobación guardada");
+                    } catch (e) {
+                      setSavedMsg((e as Error).message);
+                    } finally {
+                      setSavingApr(false);
+                    }
+                  }}
+                  className="rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow transition-transform hover:scale-[1.01] disabled:opacity-50"
+                  style={{ backgroundColor: NUVEX.verde, color: "#0F3D1F" }}
+                >
+                  {savingApr ? "Guardando…" : "Guardar aprobación"}
+                </button>
+              )}
               <button
                 onClick={() =>
                   exportElementToPdf(informeId, `NUVEX_Resultado_Final_${sanitizeFileName(client.nombre)}.pdf`)
