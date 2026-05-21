@@ -15,8 +15,10 @@ import { ScenarioTable, buildPesosScenarioRows, ImpactCard, SavingsCard, getVece
 import { PrintDocument } from "./PrintDocument";
 import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
 import { NUVEX } from "./constants";
+import { DiscountModule, computeDiscount, defaultDiscount, type DiscountState } from "./DiscountModule";
 
 export function PesosSimulator() {
+  const [discount, setDiscount] = useState<DiscountState>(defaultDiscount);
   const [client, setClient] = useState<ClientData>(defaultClient);
   const [valorDesembolsado, setValorDesembolsado] = useState("");
   const [saldoCapital, setSaldoCapital] = useState("");
@@ -255,6 +257,10 @@ export function PesosSimulator() {
           </Card>
 
           {recomendada && (
+            <DiscountModule honorariosBase={recomendada.honorarios} state={discount} onChange={setDiscount} />
+          )}
+
+          {recomendada && (
             <div className="flex justify-end">
               <button
                 onClick={async () => {
@@ -275,27 +281,46 @@ export function PesosSimulator() {
             </div>
           )}
 
-          {recomendada && (
-            <PrintDocument
-              mode="pesos"
-              client={client}
-              cuotasPendientes={cuotasPendientes}
-              metrics={metrics}
-              pesosPropuestas={calc!.propuestas}
-              bestIndex={bestIndex}
-              honorariosPct={honorariosPct}
-              personalizada={manualValido}
-              recommended={{
-                añosEliminados: recomendada.añosEliminados,
-                ahorroIntereses: recomendada.ahorroIntereses,
-                ahorroSeguros: recomendada.ahorroSeguros,
-                ahorroTotal: recomendada.ahorroTotal,
-                honorarios: recomendada.honorarios,
-                nuevaCuota: recomendada.nuevaCuota,
-              }}
-              scenarioRows={scenarioRows}
-            />
-          )}
+          {recomendada && (() => {
+            const d = computeDiscount(recomendada.honorarios, discount);
+            return (
+              <PrintDocument
+                mode="pesos"
+                client={client}
+                cuotasPendientes={cuotasPendientes}
+                metrics={metrics}
+                pesosPropuestas={calc!.propuestas}
+                bestIndex={bestIndex}
+                honorariosPct={honorariosPct}
+                personalizada={manualValido}
+                recommended={{
+                  añosEliminados: recomendada.añosEliminados,
+                  ahorroIntereses: recomendada.ahorroIntereses,
+                  ahorroSeguros: recomendada.ahorroSeguros,
+                  ahorroTotal: recomendada.ahorroTotal,
+                  honorarios: recomendada.honorarios,
+                  nuevaCuota: recomendada.nuevaCuota,
+                }}
+                scenario={{
+                  cuotaActual: input.cuotaActual,
+                  nuevaCuota: recomendada.nuevaCuota,
+                  plazoActual: cuotasPendientes,
+                  nuevoPlazo: recomendada.nuevoPlazo,
+                  totalActual: totalActualPendiente,
+                  totalOptimizado: recomendada.totalProyectado,
+                  vecesActual,
+                  vecesOptimizado: vecesOpt,
+                }}
+                commercial={{
+                  honorariosBase: recomendada.honorarios,
+                  descuento: d.descuento,
+                  finales: d.final,
+                  vigencia: discount.vigencia || undefined,
+                  hasDiscount: d.hasDiscount,
+                }}
+              />
+            );
+          })()}
         </>
       )}
     </div>

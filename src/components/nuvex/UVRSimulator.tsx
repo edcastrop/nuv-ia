@@ -14,8 +14,10 @@ import { RecommendedResult } from "./RecommendedResult";
 import { ScenarioTable, ImpactCard, SavingsCard, buildUVRScenarioRows, getVecesStyle } from "./ScenarioTable";
 import { PrintDocument } from "./PrintDocument";
 import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
+import { DiscountModule, computeDiscount, defaultDiscount, type DiscountState } from "./DiscountModule";
 
 export function UVRSimulator() {
+  const [discount, setDiscount] = useState<DiscountState>(defaultDiscount);
   const [client, setClient] = useState<ClientData>(defaultClient);
   const [valorDesembolsado, setValorDesembolsado] = useState("");
   const [saldoPesos, setSaldoPesos] = useState("");
@@ -271,6 +273,10 @@ export function UVRSimulator() {
           </Card>
 
           {recomendada && (
+            <DiscountModule honorariosBase={recomendada.honorarios} state={discount} onChange={setDiscount} />
+          )}
+
+          {recomendada && (
             <div className="flex justify-end">
               <button
                 onClick={async () => {
@@ -291,27 +297,46 @@ export function UVRSimulator() {
             </div>
           )}
 
-          {recomendada && (
-            <PrintDocument
-              mode="uvr"
-              client={client}
-              cuotasPendientes={cuotasPendientes}
-              metrics={metrics}
-              uvrPropuestas={calc!.propuestas}
-              bestIndex={bestIndex}
-              honorariosPct={honorariosPct}
-              personalizada={manualValido}
-              recommended={{
-                añosEliminados: recomendada.añosEliminados,
-                ahorroIntereses: recomendada.ahorroIntereses,
-                ahorroSeguros: recomendada.ahorroSeguros,
-                ahorroTotal: recomendada.ahorroTotal,
-                honorarios: recomendada.honorarios,
-                nuevaCuota: recomendada.nuevaCuota,
-              }}
-              scenarioRows={scenarioRows}
-            />
-          )}
+          {recomendada && (() => {
+            const d = computeDiscount(recomendada.honorarios, discount);
+            return (
+              <PrintDocument
+                mode="uvr"
+                client={client}
+                cuotasPendientes={cuotasPendientes}
+                metrics={metrics}
+                uvrPropuestas={calc!.propuestas}
+                bestIndex={bestIndex}
+                honorariosPct={honorariosPct}
+                personalizada={manualValido}
+                recommended={{
+                  añosEliminados: recomendada.añosEliminados,
+                  ahorroIntereses: recomendada.ahorroIntereses,
+                  ahorroSeguros: recomendada.ahorroSeguros,
+                  ahorroTotal: recomendada.ahorroTotal,
+                  honorarios: recomendada.honorarios,
+                  nuevaCuota: recomendada.nuevaCuota,
+                }}
+                scenario={{
+                  cuotaActual: input.cuotaActualPesos,
+                  nuevaCuota: recomendada.nuevaCuota,
+                  plazoActual: cuotasPendientes,
+                  nuevoPlazo: recomendada.nuevoPlazo,
+                  totalActual: totalActualPesos,
+                  totalOptimizado: recomendada.totalProyectado,
+                  vecesActual,
+                  vecesOptimizado: vecesOpt,
+                }}
+                commercial={{
+                  honorariosBase: recomendada.honorarios,
+                  descuento: d.descuento,
+                  finales: d.final,
+                  vigencia: discount.vigencia || undefined,
+                  hasDiscount: d.hasDiscount,
+                }}
+              />
+            );
+          })()}
         </>
       )}
     </div>
