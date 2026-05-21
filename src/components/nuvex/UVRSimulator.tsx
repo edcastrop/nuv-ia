@@ -53,10 +53,14 @@ export function UVRSimulator() {
   if (plazoInicial > 0 && cuotasPagadas > plazoInicial) validaciones.push("Las cuotas pagadas no pueden ser mayores al plazo inicial.");
   if (input.saldoUVR <= 0 && saldoUVR) validaciones.push("Saldo UVR debe ser mayor a 0.");
   if (input.valorUVR <= 0 && valorUVR) validaciones.push("Valor UVR debe ser mayor a 0.");
+  if (cuotaActualPesosNum > 0 && segurosNum > cuotaActualPesosNum) validaciones.push("Los seguros no pueden ser mayores que la cuota actual.");
+  if (cuotaActualPesosNum > 0 && segurosNum > 0 && cuotaSinSegurosNum <= 0) validaciones.push("La cuota sin seguros debe ser mayor a cero para calcular la proyección.");
+
+  const cuotaSinSegurosValida = cuotaActualPesosNum === 0 || segurosNum === 0 || (segurosNum < cuotaActualPesosNum && cuotaSinSegurosNum > 0);
 
   const datosCompletos =
     input.saldoUVR > 0 && input.valorUVR > 0 && input.cuotaActualPesos > 0 &&
-    input.teaCobrada > 0 && cuotasPendientes > 0;
+    input.teaCobrada > 0 && cuotasPendientes > 0 && cuotaSinSegurosValida;
 
   const calc = useMemo(() => {
     if (!datosCompletos) return null;
