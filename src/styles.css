@@ -140,5 +140,44 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    letter-spacing: normal;
+    word-spacing: normal;
+    line-height: 1.45;
   }
 }
+
+/* ============================================================
+   NUVEX - Estilos para exportación PDF (impresión)
+   ============================================================ */
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm 12mm;
+  }
+  html, body {
+    background: #fff !important;
+    color: #242424 !important;
+    letter-spacing: normal !important;
+    word-spacing: normal !important;
+    text-align: left !important;
+    line-height: 1.45 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .nuvex-no-print { display: none !important; }
+  .nuvex-print-only { display: block !important; }
+  .nuvex-print-page {
+    page-break-after: always;
+    break-after: page;
+  }
+  .nuvex-print-page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+  .nuvex-avoid-break, table, tr, td, th, thead, tbody {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
+.nuvex-print-only { display: none; }
+
