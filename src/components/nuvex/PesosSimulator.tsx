@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Alert, Card, MetricCard, SectionTitle, TextField } from "./ui";
 import { ClientFields, defaultClient, type ClientData } from "./ClientFields";
 import { PRODUCTOS_PESOS } from "./constants";
-import { parseCurrency, parseDecimal, parsePercentage, formatCOP, formatPercentage } from "../../lib/format";
+import { parseCurrency, parseDecimal, parsePercentage, formatCOP, formatNumber, formatPercentage } from "../../lib/format";
 import {
   calculatePesosManual,
   calculatePesosProjection,
@@ -11,12 +11,14 @@ import {
 } from "../../lib/finance";
 import { ComparativeTable } from "./ComparativeTable";
 import { RecommendedResult } from "./RecommendedResult";
-import { ScenarioTable, buildPesosScenarioRows, ImpactCard, SavingsCard } from "./ScenarioTable";
+import { ScenarioTable, buildPesosScenarioRows, ImpactCard, SavingsCard, getVecesStyle } from "./ScenarioTable";
 import { PrintDocument } from "./PrintDocument";
 import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
+import { NUVEX } from "./constants";
 
 export function PesosSimulator() {
   const [client, setClient] = useState<ClientData>(defaultClient);
+  const [valorDesembolsado, setValorDesembolsado] = useState("");
   const [saldoCapital, setSaldoCapital] = useState("");
   const [cuotaActual, setCuotaActual] = useState("");
   const [seguros, setSeguros] = useState("");
@@ -28,18 +30,21 @@ export function PesosSimulator() {
   const cuotasPendientes = Math.max(0, plazoInicial - cuotasPagadas);
   const honorariosPct = parsePercentage(client.porcentajeHonorarios) || 6;
 
+  const valorDesembolsadoNum = parseCurrency(valorDesembolsado);
   const cuotaActualNum = parseCurrency(cuotaActual);
   const segurosNum = parseCurrency(seguros);
   const cuotaSinSegurosNum = Math.max(0, cuotaActualNum - segurosNum);
+  const saldoCapitalNum = parseCurrency(saldoCapital);
+  const dineroPagadoFecha = cuotaActualNum * cuotasPagadas;
 
   const input: PesosInput = useMemo(() => ({
-    saldoCapital: parseCurrency(saldoCapital),
+    saldoCapital: saldoCapitalNum,
     cuotaActual: cuotaActualNum,
     seguros: segurosNum,
     tea: parsePercentage(tea),
     cuotasPendientes,
     porcentajeHonorarios: honorariosPct,
-  }), [saldoCapital, cuotaActualNum, segurosNum, tea, cuotasPendientes, honorariosPct]);
+  }), [saldoCapitalNum, cuotaActualNum, segurosNum, tea, cuotasPendientes, honorariosPct]);
 
   const validaciones: string[] = [];
   if (plazoInicial > 0 && cuotasPagadas > plazoInicial) validaciones.push("Las cuotas pagadas no pueden ser mayores al plazo inicial.");
@@ -69,35 +74,73 @@ export function PesosSimulator() {
     return calculatePesosManual(input, v);
   }, [datosCompletos, input, nuevaCuotaManual]);
 
-  const ahorroNegativo = best && (best.ahorroTotal < 0 || best.honorariosNuvex < 0);
+  const manualValido = !!(manual && manual.valid);
+
+  // Recomendación efectiva: manual cuando es válida; si no, la mejor automática
+  const recomendada = manualValido && manual
+    ? {
+        añosEliminados: manual.añosEliminados,
+        ahorroIntereses: manual.ahorroIntereses,
+        ahorroSeguros: manual.ahorroSeguros,
+        ahorroTotal: manual.ahorroTotal,
+        honorarios: manual.honorarios,
+        nuevaCuota: manual.nuevaCuotaConSeguro,
+        nuevoPlazo: manual.nuevoPlazo,
+        totalProyectado: manual.totalProyectado,
+      }
+    : best
+      ? {
+          añosEliminados: best.añosEliminados,
+          ahorroIntereses: best.ahorroIntereses,
+          ahorroSeguros: best.ahorroSeguros,
+          ahorroTotal: best.ahorroTotal,
+          honorarios: best.honorariosNuvex,
+          nuevaCuota: best.nuevaCuotaConSeguro,
+          nuevoPlazo: best.nuevoPlazo,
+          totalProyectado: best.totalAproxPagar,
+        }
+      : null;
+
+  const ahorroNegativo = recomendada && (recomendada.ahorroTotal < 0 || recomendada.honorarios < 0);
+
+  const totalActualPendiente = cuotaActualNum * cuotasPendientes;
+  const vecesActual = saldoCapitalNum > 0 ? totalActualPendiente / saldoCapitalNum : 0;
+  const vsActual = getVecesStyle(vecesActual);
 
   const metrics = [
-    { label: "Saldo a capital", value: formatCOP(input.saldoCapital) },
+    { label: "Valor desembolsado", value: formatCOP(valorDesembolsadoNum) },
+    { label: "Saldo actual", value: formatCOP(input.saldoCapital) },
     { label: "Cuota actual con seguros", value: formatCOP(input.cuotaActual) },
     { label: "Seguros mensuales", value: formatCOP(input.seguros) },
     { label: "Cuota sin seguros", value: formatCOP(cuotaSinSegurosNum) },
-    { label: "Plazo inicial", value: `${plazoInicial} meses` },
     { label: "Cuotas pagadas", value: String(cuotasPagadas) },
     { label: "Cuotas pendientes", value: String(cuotasPendientes) },
+    { label: "Dinero pagado a la fecha", value: formatCOP(dineroPagadoFecha) },
+    { label: "N° veces pagado el crédito", value: `${formatNumber(vecesActual, 2)} veces` },
+    { label: "Plazo inicial", value: `${plazoInicial} meses` },
     { label: "TEA", value: formatPercentage(input.tea) },
-    { label: "Total por pagar", value: formatCOP(input.cuotaActual * cuotasPendientes) },
+    { label: "Total por pagar", value: formatCOP(totalActualPendiente) },
   ];
 
-  const scenarioRows = best
+  const scenarioRows = recomendada
     ? buildPesosScenarioRows({
         cuotaActual: input.cuotaActual,
         cuotasPendientes,
-        totalActualPendiente: input.cuotaActual * cuotasPendientes,
-        nuevaCuota: best.nuevaCuotaConSeguro,
-        nuevoPlazo: best.nuevoPlazo,
-        totalProyectado: best.totalAproxPagar,
-        ahorroTotal: best.ahorroTotal,
-        añosEliminados: best.añosEliminados,
+        totalActualPendiente,
+        saldoCapital: saldoCapitalNum,
+        nuevaCuota: recomendada.nuevaCuota,
+        nuevoPlazo: recomendada.nuevoPlazo,
+        totalProyectado: recomendada.totalProyectado,
+        ahorroIntereses: recomendada.ahorroIntereses,
+        ahorroSeguros: recomendada.ahorroSeguros,
+        ahorroTotal: recomendada.ahorroTotal,
       })
     : [];
 
+  const vecesOpt = recomendada && saldoCapitalNum > 0 ? recomendada.totalProyectado / saldoCapitalNum : 0;
+
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-6 py-8">
+    <div className="mx-auto max-w-7xl space-y-4 px-6 py-6">
       <Card>
         <SectionTitle sub="Información general del cliente y del crédito">Datos del cliente</SectionTitle>
         <ClientFields data={client} onChange={setClient} productos={PRODUCTOS_PESOS} cuotasPendientes={cuotasPendientes} />
@@ -112,6 +155,7 @@ export function PesosSimulator() {
       <Card>
         <SectionTitle sub="Información financiera del crédito en pesos">Datos del crédito</SectionTitle>
         <div className="grid gap-4 md:grid-cols-4">
+          <TextField label="Valor desembolsado" value={valorDesembolsado} onChange={setValorDesembolsado} placeholder="250.000.000" />
           <TextField label="Saldo a capital" value={saldoCapital} onChange={setSaldoCapital} placeholder="221.903.943" />
           <TextField label="Cuota mensual actual con seguros" value={cuotaActual} onChange={setCuotaActual} placeholder="2.260.000" />
           <TextField label="Seguros mensuales" value={seguros} onChange={setSeguros} placeholder="180.000" />
@@ -130,7 +174,17 @@ export function PesosSimulator() {
           <Card>
             <SectionTitle sub="Resumen ejecutivo del crédito actual">Situación actual del crédito</SectionTitle>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              {metrics.map((m) => <MetricCard key={m.label} label={m.label} value={m.value} />)}
+              {metrics.map((m) => {
+                if (m.label === "N° veces pagado el crédito") {
+                  return (
+                    <div key={m.label} className="rounded-xl border p-4" style={{ backgroundColor: vsActual.bg, borderColor: vsActual.color }}>
+                      <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: vsActual.color, opacity: 0.85 }}>{m.label}</div>
+                      <div className="mt-1.5 text-lg font-extrabold leading-tight" style={{ color: vsActual.color }}>{m.value}</div>
+                    </div>
+                  );
+                }
+                return <MetricCard key={m.label} label={m.label} value={m.value} />;
+              })}
             </div>
           </Card>
 
@@ -145,19 +199,13 @@ export function PesosSimulator() {
                 <ComparativeTable mode="pesos" pesos={calc.propuestas} bestIndex={bestIndex} honorariosPct={honorariosPct} />
               </Card>
 
-              {best && (
+              {recomendada && (
                 <>
                   <RecommendedResult
                     mode="pesos"
+                    personalizada={manualValido}
                     honorariosPct={honorariosPct}
-                    items={{
-                      añosEliminados: best.añosEliminados,
-                      ahorroIntereses: best.ahorroIntereses,
-                      ahorroSeguros: best.ahorroSeguros,
-                      ahorroTotal: best.ahorroTotal,
-                      honorarios: best.honorariosNuvex,
-                      nuevaCuota: best.nuevaCuotaConSeguro,
-                    }}
+                    items={recomendada}
                   />
                   <Card>
                     <SectionTitle>Escenario actual vs escenario optimizado</SectionTitle>
@@ -168,18 +216,12 @@ export function PesosSimulator() {
                       <div className="lg:col-span-3">
                         <SavingsCard
                           mode="pesos"
-                          ahorroTotal={best.ahorroTotal}
-                          añosEliminados={best.añosEliminados}
+                          ahorroTotal={recomendada.ahorroTotal}
+                          añosEliminados={recomendada.añosEliminados}
                         />
                       </div>
                       <div className="lg:col-span-3">
-                        <ImpactCard
-                          mode="pesos"
-                          añosEliminados={best.añosEliminados}
-                          ahorroIntereses={best.ahorroIntereses}
-                          ahorroSeguros={best.ahorroSeguros}
-                          ahorroTotal={best.ahorroTotal}
-                        />
+                        <ImpactCard vecesActual={vecesActual} vecesOptimizado={vecesOpt} />
                       </div>
                     </div>
                   </Card>
@@ -189,7 +231,7 @@ export function PesosSimulator() {
           )}
 
           <Card>
-            <SectionTitle sub="Calcule el nuevo plazo a partir de una cuota propuesta por el cliente">Calculadora manual por nueva cuota propuesta</SectionTitle>
+            <SectionTitle sub="Si se calcula, reemplaza automáticamente a la propuesta recomendada">Calculadora manual por nueva cuota propuesta</SectionTitle>
             <div className="grid gap-4 md:grid-cols-3">
               <TextField label="Nueva cuota propuesta por el cliente" value={nuevaCuotaManual} onChange={setNuevaCuotaManual} placeholder="2.800.000" />
             </div>
@@ -212,11 +254,11 @@ export function PesosSimulator() {
             )}
           </Card>
 
-          {best && (
+          {recomendada && (
             <div className="flex justify-end">
               <button
                 onClick={async () => {
-                  if (!best || !calc || calc.propuestas.length === 0) {
+                  if (!recomendada || !calc || calc.propuestas.length === 0) {
                     alert("Primero debes calcular la simulación en pesos antes de exportar el PDF.");
                     return;
                   }
@@ -225,14 +267,15 @@ export function PesosSimulator() {
                     `NUVEX_Propuesta_Pesos_${sanitizeFileName(client.nombre)}.pdf`
                   );
                 }}
-                className="rounded-lg bg-[#242424] px-5 py-2.5 text-sm font-semibold text-white shadow transition-transform hover:scale-[1.01]"
+                className="rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow transition-transform hover:scale-[1.01]"
+                style={{ backgroundColor: NUVEX.negro }}
               >
                 Exportar PDF profesional
               </button>
             </div>
           )}
 
-          {best && (
+          {recomendada && (
             <PrintDocument
               mode="pesos"
               client={client}
@@ -241,13 +284,14 @@ export function PesosSimulator() {
               pesosPropuestas={calc!.propuestas}
               bestIndex={bestIndex}
               honorariosPct={honorariosPct}
+              personalizada={manualValido}
               recommended={{
-                añosEliminados: best.añosEliminados,
-                ahorroIntereses: best.ahorroIntereses,
-                ahorroSeguros: best.ahorroSeguros,
-                ahorroTotal: best.ahorroTotal,
-                honorarios: best.honorariosNuvex,
-                nuevaCuota: best.nuevaCuotaConSeguro,
+                añosEliminados: recomendada.añosEliminados,
+                ahorroIntereses: recomendada.ahorroIntereses,
+                ahorroSeguros: recomendada.ahorroSeguros,
+                ahorroTotal: recomendada.ahorroTotal,
+                honorarios: recomendada.honorarios,
+                nuevaCuota: recomendada.nuevaCuota,
               }}
               scenarioRows={scenarioRows}
             />
