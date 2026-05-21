@@ -158,7 +158,7 @@ export function calculatePesosManual(
     ahorroIntereses,
     ahorroSeguros,
     ahorroTotal,
-    honorarios: ahorroTotal * (input.porcentajeHonorarios / 100),
+    honorarios: applyHonorariosFloor(ahorroTotal * (input.porcentajeHonorarios / 100)),
     incrementoMensual: nuevaCuotaConSeguro - input.cuotaActual,
     valid: true,
   };
