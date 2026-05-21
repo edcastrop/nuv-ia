@@ -21,7 +21,6 @@ export function UVRSimulator() {
   const [saldoUVR, setSaldoUVR] = useState("");
   const [valorUVR, setValorUVR] = useState("");
   const [cuotaActualPesos, setCuotaActualPesos] = useState("");
-  const [cuotaSinSeguros, setCuotaSinSeguros] = useState("");
   const [seguros, setSeguros] = useState("");
   const [teaCobrada, setTeaCobrada] = useState("");
   const [variacionUVR, setVariacionUVR] = useState("");
@@ -32,19 +31,23 @@ export function UVRSimulator() {
   const cuotasPendientes = Math.max(0, plazoInicial - cuotasPagadas);
   const honorariosPct = parsePercentage(client.porcentajeHonorarios) || 6;
 
+  const cuotaActualPesosNum = parseCurrency(cuotaActualPesos);
+  const segurosNum = parseCurrency(seguros);
+  const cuotaSinSegurosNum = Math.max(0, cuotaActualPesosNum - segurosNum);
+
   const input: UVRInput = useMemo(() => ({
     valorDesembolsado: parseCurrency(valorDesembolsado),
     saldoPesos: parseCurrency(saldoPesos),
     saldoUVR: parseDecimal(saldoUVR),
     valorUVR: parseDecimal(valorUVR),
-    cuotaActualPesos: parseCurrency(cuotaActualPesos),
-    cuotaSinSeguros: parseCurrency(cuotaSinSeguros),
-    seguros: parseCurrency(seguros),
+    cuotaActualPesos: cuotaActualPesosNum,
+    cuotaSinSeguros: cuotaSinSegurosNum,
+    seguros: segurosNum,
     teaCobrada: parsePercentage(teaCobrada),
     variacionUVR: parsePercentage(variacionUVR),
     cuotasPendientes,
     porcentajeHonorarios: honorariosPct,
-  }), [valorDesembolsado, saldoPesos, saldoUVR, valorUVR, cuotaActualPesos, cuotaSinSeguros, seguros, teaCobrada, variacionUVR, cuotasPendientes, honorariosPct]);
+  }), [valorDesembolsado, saldoPesos, saldoUVR, valorUVR, cuotaActualPesosNum, cuotaSinSegurosNum, segurosNum, teaCobrada, variacionUVR, cuotasPendientes, honorariosPct]);
 
   const validaciones: string[] = [];
   if (plazoInicial > 0 && cuotasPagadas > plazoInicial) validaciones.push("Las cuotas pagadas no pueden ser mayores al plazo inicial.");
