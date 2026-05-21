@@ -203,7 +203,16 @@ export function PesosSimulator() {
           {best && (
             <div className="flex justify-end">
               <button
-                onClick={() => window.print()}
+                onClick={async () => {
+                  if (!best || !calc || calc.propuestas.length === 0) {
+                    alert("Primero debes calcular la simulación en pesos antes de exportar el PDF.");
+                    return;
+                  }
+                  await exportElementToPdf(
+                    "pdf-content-pesos",
+                    `NUVEX_Propuesta_Pesos_${sanitizeFileName(client.nombre)}.pdf`
+                  );
+                }}
                 className="rounded-lg bg-[#242424] px-5 py-2.5 text-sm font-semibold text-white shadow transition-transform hover:scale-[1.01]"
               >
                 Exportar PDF profesional
