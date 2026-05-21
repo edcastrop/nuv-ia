@@ -15,6 +15,7 @@ import { ScenarioTable, ImpactCard, SavingsCard, buildUVRScenarioRows, getVecesS
 import { PrintDocument } from "./PrintDocument";
 import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
 import { DiscountModule, computeDiscount, defaultDiscount, type DiscountState } from "./DiscountModule";
+import { ResultadoFinal, type ProyeccionNuvex } from "./ResultadoFinal";
 
 export function UVRSimulator() {
   const [discount, setDiscount] = useState<DiscountState>(defaultDiscount);
@@ -334,6 +335,36 @@ export function UVRSimulator() {
                   vigencia: discount.vigencia || undefined,
                   hasDiscount: d.hasDiscount,
                 }}
+              />
+            );
+          })()}
+
+          {recomendada && (() => {
+            const d = computeDiscount(recomendada.honorarios, discount);
+            const proyeccion: ProyeccionNuvex = {
+              cuotaProyectada: recomendada.nuevaCuota,
+              plazoProyectado: recomendada.nuevoPlazo,
+              cuotasEliminadasProyectadas: cuotasPendientes - recomendada.nuevoPlazo,
+              añosEliminadosProyectados: recomendada.añosEliminados,
+              ahorroInteresesProyectado: recomendada.ahorroIntereses,
+              ahorroSegurosProyectado: recomendada.ahorroSeguros,
+              ahorroProyectado: recomendada.ahorroTotal,
+              honorariosProyectados: recomendada.honorarios,
+              honorariosBase: recomendada.honorarios,
+              descuentoAplicado: d.descuento,
+              honorariosFinales: d.final,
+              fechaSimulacion: new Date().toISOString().slice(0, 10),
+              fuente: manualValido ? "manual" : "automatica",
+            };
+            return (
+              <ResultadoFinal
+                mode="uvr"
+                client={client}
+                proyeccion={proyeccion}
+                cuotasPendientes={cuotasPendientes}
+                cuotaActualConSeguro={input.cuotaActualPesos}
+                seguros={input.seguros}
+                honorariosPct={honorariosPct}
               />
             );
           })()}
