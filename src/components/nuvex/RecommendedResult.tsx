@@ -35,44 +35,70 @@ export function RecommendedResult({
 
   return (
     <div
-      className="nuvex-avoid-break rounded-2xl border-2 p-6"
-      style={{ backgroundColor: NUVEX.verdeClaro, borderColor: NUVEX.verde }}
+      className="nuvex-avoid-break p-8"
+      style={{
+        backgroundColor: "#FFFFFF",
+        borderRadius: 16,
+        border: `1px solid #DDE3EA`,
+        boxShadow: "0 1px 3px rgba(36,36,36,0.04), 0 12px 32px rgba(36,36,36,0.06)",
+        fontFamily: "Inter, sans-serif",
+      }}
     >
       <div className="text-center">
-        <div className="text-[11px] font-bold uppercase tracking-wider" style={{ color: NUVEX.verdeTextoFuerte }}>
-          Resultado de la propuesta recomendada
+        <div
+          className="inline-block rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider"
+          style={{ backgroundColor: NUVEX.verde, color: "#FFFFFF" }}
+        >
+          ✓ Propuesta recomendada
         </div>
-        <h3 className="mt-2 text-2xl font-semibold" style={{ color: NUVEX.negro }}>
+        <h3 className="mt-3 text-[18px] font-bold uppercase tracking-wider" style={{ color: NUVEX.negro }}>
+          Resultado de la propuesta recomendada
+        </h3>
+        <p className="mt-1.5 text-sm text-[#5C6770]">
+          Impacto financiero estimado bajo el escenario sugerido.
+        </p>
+        <div className="mt-4 text-[22px] font-semibold" style={{ color: NUVEX.negro }}>
           {mode === "uvr"
             ? `Elimina ${formatNumber(items.añosEliminados, 0)} años de crédito en UVR`
             : `Elimina ${formatNumber(items.añosEliminados, 0)} años de crédito`}
-        </h3>
+        </div>
       </div>
-      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {cards.map((c) => (
-          <div
-            key={c.label}
-            className={`rounded-xl border p-4 ${c.emphasize ? "" : "bg-white"}`}
-            style={
-              c.emphasize
-                ? { backgroundColor: NUVEX.verdeFuerte, borderColor: NUVEX.verde }
-                : { borderColor: "#D7E8DC" }
-            }
-          >
+      <div className="mt-8 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        {cards.map((c) => {
+          const isStar = c.emphasize;
+          return (
             <div
-              className="text-[10px] font-bold uppercase tracking-wider"
-              style={{ color: c.emphasize ? NUVEX.verdeTextoFuerte : "#5C7A64" }}
+              key={c.label}
+              className="flex flex-col justify-between p-5"
+              style={{
+                borderRadius: 16,
+                minHeight: 130,
+                backgroundColor: isStar ? "#EAF8EF" : "#FFFFFF",
+                border: isStar ? `2px solid ${NUVEX.verde}` : `1px solid #DDE3EA`,
+                boxShadow: isStar
+                  ? "0 8px 20px rgba(132,185,143,0.18)"
+                  : "0 1px 2px rgba(36,36,36,0.04)",
+              }}
             >
-              {c.label}
+              <div
+                className="text-[10px] font-bold uppercase tracking-wider"
+                style={{ color: isStar ? "#1F7A45" : "#5C6770" }}
+              >
+                {c.label}
+              </div>
+              <div
+                className="mt-3 leading-tight"
+                style={{
+                  color: isStar ? "#1F7A45" : NUVEX.negro,
+                  fontSize: isStar ? 32 : 22,
+                  fontWeight: isStar ? 800 : 700,
+                }}
+              >
+                {c.value}
+              </div>
             </div>
-            <div
-              className={`mt-1.5 leading-tight ${c.emphasize ? "text-2xl font-bold" : "text-lg font-semibold"}`}
-              style={{ color: c.emphasize ? NUVEX.verdeTextoFuerte : NUVEX.negro }}
-            >
-              {c.value}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
