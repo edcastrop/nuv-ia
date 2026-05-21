@@ -4,36 +4,55 @@ import { getDashboardMetrics, ESTADOS, ESTADO_COLORS, type DashboardMetrics, typ
 import { Card, SectionTitle } from "@/components/nuvex/ui";
 import { formatCOP, formatNumber } from "@/lib/format";
 import { NUVEX } from "@/components/nuvex/constants";
+import { useUserRole } from "@/hooks/useUserRole";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from "recharts";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
-  head: () => ({ meta: [{ title: "Dashboard Gerencial · NUVEX" }] }),
+  head: () => ({ meta: [{ title: "Dashboard · NUVEX" }] }),
 });
 
 function DashboardPage() {
+  const { isManager, loading: roleLoading } = useUserRole();
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [rows, setRows] = useState<Expediente[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    getDashboardMetrics()
+    if (roleLoading) return;
+    setLoading(true);
+    getDashboardMetrics({ global: isManager })
       .then((r) => { setMetrics(r.metrics); setRows(r.rows); })
       .catch((e) => setErr(e.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [isManager, roleLoading]);
 
-  if (loading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando indicadores…</div>;
+  if (loading || roleLoading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando indicadores…</div>;
   if (err || !metrics) return <div className="p-12 text-center text-sm text-[#B42318]">{err}</div>;
 
   const funnel = ESTADOS.map((e) => ({ estado: e, count: metrics.porEstado[e] || 0, color: ESTADO_COLORS[e].color }));
+  const titulo = isManager ? "Dashboard Gerencial NUVEX" : "Mi Dashboard";
+  const sub = isManager
+    ? "Vista global · Indicadores de todos los asesores y licenciados."
+    : "Vista personal · Solo tus expedientes y métricas.";
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-6 space-y-4">
       <Card>
-        <SectionTitle sub="Indicadores en tiempo real de producción, aprobación, acertividad y honorarios.">Dashboard Gerencial NUVEX</SectionTitle>
-        <div className="grid gap-3 md:grid-cols-4">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <SectionTitle sub={sub}>{titulo}</SectionTitle>
+          <span
+            className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full"
+            style={{
+              backgroundColor: isManager ? "#FFF7E6" : "#EEF1FA",
+              color: isManager ? "#8A5A00" : "#445DA3",
+            }}
+          >
+            {isManager ? "Gerencia" : "Asesor / Licenciado"}
+          </span>
+        </div>
+        <div className="grid gap-3 md:grid-cols-4 mt-3">
           <KPI label="Expedientes totales" value={String(metrics.total)} accent={NUVEX.negro} />
           <KPI label="Tasa de aprobación" value={`${formatNumber(metrics.tasaAprobacion, 1)}%`} accent={NUVEX.verdeTextoFuerte} />
           <KPI label="Acertividad promedio" value={`${formatNumber(metrics.acertividadPromedio, 1)}%`} accent={NUVEX.azul} />
@@ -72,8 +91,42 @@ function DashboardPage() {
         </Card>
       </div>
 
+      {isManager && metrics.porAsesor && metrics.porAsesor.length > 0 && (
+        <Card>
+          <SectionTitle sub="Ranking de producción por asesor / licenciado">Desempeño por asesor</SectionTitle>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-[11px] uppercase tracking-wider text-[#242424]/55 border-b border-[#E3E7EE]">
+                  <th className="py-2 pr-3">Asesor</th>
+                  <th className="py-2 pr-3 text-right">Casos</th>
+                  <th className="py-2 pr-3 text-right">Aprobados</th>
+                  <th className="py-2 pr-3 text-right">Pagados</th>
+                  <th className="py-2 pr-3 text-right">Honorarios</th>
+                  <th className="py-2 pr-3 text-right">Pagados $</th>
+                  <th className="py-2 pr-3 text-right">Acertividad</th>
+                </tr>
+              </thead>
+              <tbody>
+                {metrics.porAsesor.map((a) => (
+                  <tr key={a.asesor_id} className="border-b border-[#F0F3F8]">
+                    <td className="py-2 pr-3 font-medium">{a.nombre}</td>
+                    <td className="py-2 pr-3 text-right">{a.total}</td>
+                    <td className="py-2 pr-3 text-right">{a.aprobados}</td>
+                    <td className="py-2 pr-3 text-right">{a.pagados}</td>
+                    <td className="py-2 pr-3 text-right font-semibold">{formatCOP(a.honorariosFinal)}</td>
+                    <td className="py-2 pr-3 text-right" style={{ color: NUVEX.verdeTextoFuerte }}>{formatCOP(a.honorariosPagados)}</td>
+                    <td className="py-2 pr-3 text-right">{a.acertividadPromedio > 0 ? `${formatNumber(a.acertividadPromedio, 1)}%` : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+
       <Card>
-        <SectionTitle>Últimos expedientes</SectionTitle>
+        <SectionTitle>{isManager ? "Últimos expedientes (global)" : "Mis últimos expedientes"}</SectionTitle>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
