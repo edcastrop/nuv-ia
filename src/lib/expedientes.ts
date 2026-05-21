@@ -128,10 +128,10 @@ export async function upsertExpediente(p: UpsertPayload): Promise<Expediente> {
     banco: p.cliente.banco || null,
     numero_credito: p.cliente.numeroCredito || null,
     producto: p.cliente.tipoProducto || null,
-    cliente_data: p.cliente as unknown as Record<string, unknown>,
-    credito_data: p.credito,
-    propuesta_data: p.propuesta as unknown as Record<string, unknown>,
-    discount_data: p.discount as unknown as Record<string, unknown>,
+    cliente_data: p.cliente as unknown as never,
+    credito_data: p.credito as unknown as never,
+    propuesta_data: p.propuesta as unknown as never,
+    discount_data: p.discount as unknown as never,
     honorarios_base: p.propuesta.honorarios,
     honorarios_final: p.discount.final,
     descuento: p.discount.descuento,
@@ -173,7 +173,7 @@ export async function updateEstado(id: string, estado: EstadoExpediente, nota?: 
 export async function setAprobado(id: string, aprobado: AprobadoData, acertividad: number) {
   const { error } = await supabase
     .from("expedientes")
-    .update({ aprobado_data: aprobado as unknown as Record<string, unknown>, acertividad_global: acertividad })
+    .update({ aprobado_data: aprobado as unknown as never, acertividad_global: acertividad })
     .eq("id", id);
   if (error) throw error;
 }
