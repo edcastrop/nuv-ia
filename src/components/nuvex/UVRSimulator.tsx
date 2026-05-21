@@ -11,7 +11,7 @@ import {
 } from "../../lib/finance";
 import { ComparativeTable } from "./ComparativeTable";
 import { RecommendedResult } from "./RecommendedResult";
-import { ScenarioTable, type ScenarioRow } from "./ScenarioTable";
+import { ScenarioTable, ImpactCard, type ScenarioRow } from "./ScenarioTable";
 import { PrintDocument } from "./PrintDocument";
 
 export function UVRSimulator() {
@@ -183,6 +183,14 @@ export function UVRSimulator() {
                     <SectionTitle>Escenario actual vs escenario optimizado</SectionTitle>
                     <ScenarioTable rows={scenarioRows} />
                   </Card>
+                  <ImpactCard
+                    mode="uvr"
+                    añosEliminados={best.añosEliminados}
+                    ahorroIntereses={best.ahorroIntereses}
+                    ahorroSeguros={best.ahorroSeguros}
+                    ahorroTotal={best.ahorroTotal}
+                  />
+
                 </>
               )}
             </>

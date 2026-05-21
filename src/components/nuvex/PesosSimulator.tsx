@@ -11,7 +11,7 @@ import {
 } from "../../lib/finance";
 import { ComparativeTable } from "./ComparativeTable";
 import { RecommendedResult } from "./RecommendedResult";
-import { ScenarioTable, buildPesosScenarioRows } from "./ScenarioTable";
+import { ScenarioTable, buildPesosScenarioRows, ImpactCard } from "./ScenarioTable";
 import { PrintDocument } from "./PrintDocument";
 
 export function PesosSimulator() {
@@ -162,6 +162,14 @@ export function PesosSimulator() {
                     <SectionTitle>Escenario actual vs escenario optimizado</SectionTitle>
                     <ScenarioTable rows={scenarioRows} />
                   </Card>
+                  <ImpactCard
+                    mode="pesos"
+                    añosEliminados={best.añosEliminados}
+                    ahorroIntereses={best.ahorroIntereses}
+                    ahorroSeguros={best.ahorroSeguros}
+                    ahorroTotal={best.ahorroTotal}
+                  />
+
                 </>
               )}
             </>
