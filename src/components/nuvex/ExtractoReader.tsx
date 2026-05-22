@@ -823,17 +823,27 @@ export function ExtractoReader({ modo, onApply }: Props) {
                 >
                   Cargar otro extracto
                 </button>
-                <button
-                  onClick={handleConfirm}
-                  className="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.02]"
-                  style={{
-                    background: "linear-gradient(135deg, #445DA3, #84B98F)",
-                    boxShadow: "0 10px 28px -10px rgba(132,185,143,0.6)",
-                  }}
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                  Confirmar y llenar simulador
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => cuotaBaseInputRef.current?.focus()}
+                    className="rounded-xl px-5 py-3 text-sm font-semibold text-white/85 transition hover:text-white"
+                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}
+                  >
+                    EDITAR CUOTA BASE
+                  </button>
+                  <button
+                    onClick={handleConfirm}
+                    disabled={tieneBeneficio && !cuotaBaseLista}
+                    className="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:scale-100"
+                    style={{
+                      background: "linear-gradient(135deg, #445DA3, #84B98F)",
+                      boxShadow: "0 10px 28px -10px rgba(132,185,143,0.6)",
+                    }}
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    CONFIRMAR DATOS
+                  </button>
+                </div>
               </div>
             )}
           </div>
