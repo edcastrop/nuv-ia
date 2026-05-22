@@ -296,7 +296,7 @@ export const extractStatement = createServerFn({ method: "POST" })
       const valorBenef = monto("valorCobertura");
       const cuotaMensual = monto("cuotaMensual");
       const segurosNum = monto("seguros");
-      const cuotaConInteresSinSeguros = monto("cuotaConInteresSinSeguros") || monto("cuotaSinSeguros") || monto("cuotaSinSubsidio");
+      const cuotaConInteresSinSeguros = monto("cuotaConInteresSinSeguros") || monto("cuotaSinSeguros");
       if (cuotaConInteresSinSeguros > 0 && !parsed.cuotaConInteresSinSeguros) {
         parsed.cuotaConInteresSinSeguros = formatMontoExtracto(cuotaConInteresSinSeguros);
       }
