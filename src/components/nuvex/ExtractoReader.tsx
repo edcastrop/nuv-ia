@@ -364,8 +364,11 @@ export function ExtractoReader({ modo, onApply }: Props) {
     { key: "teaCobrada", label: "Tasa de interés cobrada (%)" },
     { key: "teaPactada", label: "Tasa de interés pactada (%) · referencia" },
     { key: "tea", label: "Tasa usada para simulación (%)" },
-    { key: "valorCobertura", label: "Valor de cobertura (si aplica)" },
-    { key: "tasaCobertura", label: "Tasa de cobertura (%) (si aplica)" },
+    { key: "tipoBeneficio", label: "Tipo de beneficio (FRECH, Fresh, Cobertura VIS, Mi Casa Ya, etc.)" },
+    { key: "valorCobertura", label: "Valor del beneficio mensual" },
+    { key: "tasaCobertura", label: "Tasa de cobertura/subsidio (%)" },
+    { key: "cuotaPagadaCliente", label: "Cuota pagada por cliente (con subsidio)" },
+    { key: "cuotaSinSubsidio", label: "Cuota sin subsidio (si el extracto la muestra)" },
     { key: "fechaExtracto", label: "Fecha del extracto" },
   ];
   const fields = modo === "uvr"
