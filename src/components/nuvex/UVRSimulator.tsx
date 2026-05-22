@@ -239,6 +239,8 @@ export function UVRSimulator({
               tasaCobertura: p.cobertura.tasaCobertura || "",
               tipoBeneficio: p.cobertura.tipoBeneficio || "",
               cuotaPagadaCliente: p.cobertura.cuotaPagadaCliente || "",
+              cuotaConInteresSinSeguros: p.cobertura.cuotaConInteresSinSeguros || "",
+              segurosMensuales: p.cobertura.segurosMensuales || p.uvr?.seguros || "",
               cuotaBaseSimulacion: p.cobertura.cuotaBaseSimulacion || "",
               requiereVerificacion: !!p.cobertura.requiereVerificacion,
             });
@@ -445,7 +447,7 @@ export function UVRSimulator({
                 payload={{
                   modo: "uvr",
                   cliente: { ...client, intervinientes, cobertura },
-                  credito: { valorDesembolsado, saldoPesos, saldoUVR, valorUVR, cuotaActualPesos, seguros, teaCobrada, variacionUVR, nuevaCuotaManual },
+                  credito: { valorDesembolsado, saldoPesos, saldoUVR, valorUVR, cuotaActualPesos, seguros, teaCobrada, variacionUVR, nuevaCuotaManual, cuotaPagadaCliente: cobertura.cuotaPagadaCliente || "", valorBeneficio: cobertura.valorCobertura || "", tipoBeneficio: cobertura.tipoBeneficio || "", cuotaConInteresSinSeguros: cobertura.cuotaConInteresSinSeguros || "", cuotaBaseSimulacion: cobertura.cuotaBaseSimulacion || cuotaActualPesos, segurosMensuales: cobertura.segurosMensuales || seguros, tieneBeneficio: cobertura.activo ? "si" : "no" },
                   propuesta: {
                     nuevaCuota: recomendada.nuevaCuota,
                     nuevoPlazo: recomendada.nuevoPlazo,
