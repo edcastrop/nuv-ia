@@ -1,5 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import {
+  ALERTA_CUOTA_CON_INTERES_SIN_SEGUROS,
+  calcularCuotaBaseSimulacion,
+  formatMontoExtracto,
+  parseMontoExtracto,
+} from "@/lib/cuotaBase";
 
 const InputSchema = z.object({
   images: z
@@ -33,8 +39,9 @@ const tool = {
         saldoCapital: { type: "string", description: "Saldo a capital en pesos. Solo número, sin símbolos." },
         valorDesembolsado: { type: "string", description: "Valor inicialmente desembolsado del crédito, en pesos. Solo dígitos." },
         cuotaMensual: { type: "string", description: "Cuota mensual total con seguros en pesos. Solo número." },
-        seguros: { type: "string", description: "Valor mensual de seguros en pesos. Solo número." },
+        seguros: { type: "string", description: "Sumatoria mensual de TODOS los seguros del crédito (vida, incendio, terremoto, todo riesgo y otros seguros asociados). Solo número." },
         cuotaSinSeguros: { type: "string" },
+        cuotaConInteresSinSeguros: { type: "string", description: "Cuota con capital/interés SIN seguros y ANTES de subsidio/cobertura. Puede aparecer como 'valor de la cuota sin seguros y sin comisiones', 'cuota sin seguros', 'cuota antes de seguros', 'cuota con interés', 'valor cuota con subsidio' o 'valor cuota sin seguros'. Solo dígitos. Vacío si no aparece explícitamente." },
         plazoInicial: { type: "string", description: "Plazo total inicial aprobado en meses." },
         cuotasPagadas: { type: "string" },
         cuotasPendientes: { type: "string" },
@@ -85,7 +92,7 @@ const tool = {
       },
       required: [
         "banco","cliente","cedula","numeroCredito","producto","tipoCredito","moneda",
-        "saldoCapital","valorDesembolsado","cuotaMensual","seguros","cuotaSinSeguros","plazoInicial",
+        "saldoCapital","valorDesembolsado","cuotaMensual","seguros","cuotaSinSeguros","cuotaConInteresSinSeguros","plazoInicial",
         "cuotasPagadas","cuotasPendientes","tea","teaCobrada","teaPactada","tasaMensual","interesCuota","capitalCuota",
         "valorUVR","saldoUVR","valorCobertura","tasaCobertura","tieneCobertura","tipoBeneficio","cuotaPagadaCliente","cuotaSinSubsidio","fechaExtracto","confianza",
       ],
@@ -120,9 +127,12 @@ REGLAS ESTRICTAS:
   * Si aparece CUALQUIERA: tieneCobertura="si" y llena "tipoBeneficio" con el nombre exacto detectado (ej: "FRECH", "Tasa Fresh", "Cobertura VIS", "Mi Casa Ya", "Subsidio Gobierno").
   * Si NO aparece ninguna: tieneCobertura="no", tipoBeneficio="".
   * Cuando tieneCobertura="si": extrae "valorCobertura" (monto mensual del subsidio en pesos, solo dígitos) y "tasaCobertura" (puntos porcentuales, ej "5.00").
+  * "cuotaConInteresSinSeguros": dato CRÍTICO. Extrae la cuota de capital/interés SIN seguros y ANTES de subsidio/cobertura. Etiquetas: "valor de la cuota sin seguros y sin comisiones", "cuota sin seguros", "cuota antes de seguros", "cuota con interés", "valor cuota con subsidio", "valor cuota sin seguros". Déjalo vacío si NO aparece explícitamente — NO lo inventes.
   * "cuotaPagadaCliente": cuota que efectivamente PAGA el cliente después del subsidio (etiquetas comunes: "cuota cliente", "valor a pagar", "cuota neta", "cuota con subsidio", "valor a pagar cliente", "cuota a cargo del cliente"). Solo dígitos.
-  * "cuotaSinSubsidio": cuota plena ANTES del subsidio (etiquetas comunes: "cuota sin subsidio", "cuota sin cobertura", "cuota antes del subsidio", "cuota sin beneficio", "cuota plena", "cuota total", "cuota financiera"). Solo dígitos. Déjalo vacío si NO aparece explícitamente — NO lo inventes.
-  * "cuotaMensual": cuando hay beneficio, prioriza llenarla con la cuota sin subsidio (la real). Si solo está disponible la cuota del cliente, úsala pero baja la confianza a "media".
+  * "cuotaSinSubsidio": cuota plena ANTES del subsidio/cobertura si el banco la muestra como tal. Si el dato está SIN seguros, también debe ir en "cuotaConInteresSinSeguros". Solo dígitos. Déjalo vacío si NO aparece explícitamente — NO lo inventes.
+  * "seguros": suma TODOS los seguros detectados: seguro vida + seguro incendio + seguro terremoto + seguro todo riesgo + otros seguros asociados al crédito.
+  * Fórmula obligatoria para la cuota base: cuotaConInteresSinSeguros + valorCobertura + seguros. NUNCA uses únicamente cuotaPagadaCliente + valorCobertura.
+  * "cuotaMensual": cuando hay beneficio, si puedes aplicar la fórmula obligatoria, debe reflejar la cuota base real con seguros; si no puedes, conserva el dato visible y baja la confianza a "media".
   * Cuando tieneCobertura="si" y el campo "producto" no incluya ya la frase "con Beneficio de Cobertura", AÑÁDELA al final del producto.
 - Confianza "alta" solo si el dato es 100% explícito en el extracto. "media" si requiere inferencia simple. "baja" si dudoso o ausente.`;
 
