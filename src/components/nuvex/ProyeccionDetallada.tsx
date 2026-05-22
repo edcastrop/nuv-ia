@@ -76,7 +76,7 @@ export function ProyeccionDetallada() {
     if (!expediente) return;
     const c = expediente.credito_data as Record<string, unknown>;
     const persisted = c?.coberturaFresh as Partial<CoberturaFresh> | undefined;
-    if (persisted && typeof persisted === "object") {
+    if (persisted && typeof persisted === "object" && Object.keys(persisted).length > 0) {
       setFresh({
         activo: !!persisted.activo,
         valorMensual: Number(persisted.valorMensual) || 0,
@@ -86,7 +86,23 @@ export function ProyeccionDetallada() {
         cuotasPendientes: Number(persisted.cuotasPendientes) ?? FRESH_DEFAULT_TOTAL,
       });
     } else {
-      setFresh(defaultFresh());
+      // Fallback: si el simulador guardó la cobertura clásica, activar Fresh
+      // por defecto con 84 cuotas para que aparezca en la proyección.
+      const cob = c?.cobertura as { activo?: boolean; valorCobertura?: string; tasaCobertura?: string } | undefined;
+      const tieneCobSim = !!cob && (cob.activo || !!cob.valorCobertura || !!cob.tasaCobertura);
+      if (tieneCobSim) {
+        const tasa = parseDecimal(cob?.tasaCobertura ?? "");
+        setFresh({
+          activo: true,
+          valorMensual: 0,
+          tasa,
+          cuotasTotales: FRESH_DEFAULT_TOTAL,
+          cuotasPagadas: 0,
+          cuotasPendientes: FRESH_DEFAULT_TOTAL,
+        });
+      } else {
+        setFresh(defaultFresh());
+      }
     }
     setGenerado(false);
   }, [expediente]);
