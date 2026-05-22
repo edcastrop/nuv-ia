@@ -18,6 +18,8 @@ import { DiscountModule, computeDiscount, defaultDiscount, type DiscountState } 
 import { ResultadoFinal, type ProyeccionNuvex } from "./ResultadoFinal";
 import { SaveExpedienteButton } from "./SaveExpedienteButton";
 import type { Expediente } from "@/lib/expedientes";
+import { ExtractoReader, type ExtractoApplyPayload } from "./ExtractoReader";
+
 
 export function UVRSimulator({
   initialExpediente,
