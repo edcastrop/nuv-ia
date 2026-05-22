@@ -339,7 +339,7 @@ export function PesosSimulator({
                 onSaved={onSaved}
                 payload={{
                   modo: "pesos",
-                  cliente: client,
+                  cliente: { ...client, intervinientes, cobertura } as ClientData,
                   credito: { valorDesembolsado, saldoCapital, cuotaActual, seguros, tea, nuevaCuotaManual },
                   propuesta: {
                     nuevaCuota: recomendada.nuevaCuota,
