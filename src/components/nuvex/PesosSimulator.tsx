@@ -211,6 +211,10 @@ export function PesosSimulator({
               activo: true,
               valorCobertura: p.cobertura.valorCobertura || "",
               tasaCobertura: p.cobertura.tasaCobertura || "",
+              tipoBeneficio: p.cobertura.tipoBeneficio || "",
+              cuotaPagadaCliente: p.cobertura.cuotaPagadaCliente || "",
+              cuotaBaseSimulacion: p.cobertura.cuotaBaseSimulacion || "",
+              requiereVerificacion: !!p.cobertura.requiereVerificacion,
             });
           }
         }}
