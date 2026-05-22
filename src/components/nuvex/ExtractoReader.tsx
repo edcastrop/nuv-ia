@@ -31,6 +31,8 @@ export type ExtractoApplyPayload = {
   uvr?: {
     saldoUVR?: string;
     valorUVR?: string;
+    saldoPesos?: string;
+    valorDesembolsado?: string;
     cuotaActualPesos?: string;
     seguros?: string;
     teaCobrada?: string;
