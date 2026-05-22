@@ -4,8 +4,9 @@ import { NUVEX, CORPORATIVO } from "./constants";
 import { formatCOP, formatNumber, parseCurrency, parseDecimal } from "../../lib/format";
 import { applyHonorariosFloor, HONORARIOS_MIN_BASE, HONORARIOS_MIN_FINAL } from "../../lib/finance";
 import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
-import { setAprobado, type AprobadoData } from "@/lib/expedientes";
+import { setAprobado, type AprobadoData, type EstadoExpediente } from "@/lib/expedientes";
 import type { ClientData } from "./ClientFields";
+import { PazYSalvo } from "./PazYSalvo";
 
 export interface ProyeccionNuvex {
   cuotaProyectada: number;
@@ -75,6 +76,8 @@ export function ResultadoFinal({
   honorariosPct,
   expedienteId,
   aprobadoInicial,
+  estado,
+  fechaPagoHonorarios,
 }: {
   mode: "pesos" | "uvr";
   client: ClientData;
@@ -85,6 +88,8 @@ export function ResultadoFinal({
   honorariosPct: number;
   expedienteId?: string;
   aprobadoInicial?: AprobadoData | null;
+  estado?: EstadoExpediente;
+  fechaPagoHonorarios?: string;
 }) {
   const [aprob, setAprob] = useState<AprobacionState>(() =>
     aprobadoInicial
@@ -101,6 +106,7 @@ export function ResultadoFinal({
   const [savingApr, setSavingApr] = useState(false);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
   const [consecutivo] = useState<string>(() => nextConsecutivo());
+  const [honorariosPagadosManual, setHonorariosPagadosManual] = useState(false);
   const set = <K extends keyof AprobacionState>(k: K, v: AprobacionState[K]) =>
     setAprob((s) => ({ ...s, [k]: v }));
 
@@ -311,7 +317,31 @@ export function ResultadoFinal({
               >
                 Generar cuenta de cobro
               </button>
+              <PazYSalvo
+                client={client}
+                enabled={estado === "PAGADO" || honorariosPagadosManual}
+                data={{
+                  fechaAprobacion: aprob.fechaAprobacion,
+                  fechaPago: fechaPagoHonorarios || new Date().toISOString().slice(0, 10),
+                  honorariosPagados: aprobado.honorariosFinales,
+                  ahorroLogrado: aprobado.ahorroTotal,
+                  añosEliminados: aprobado.añosEliminados,
+                }}
+              />
             </div>
+
+            {estado !== "PAGADO" && (
+              <div className="mt-3 flex justify-end">
+                <label className="inline-flex items-center gap-2 text-xs text-[#242424]/70 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={honorariosPagadosManual}
+                    onChange={(e) => setHonorariosPagadosManual(e.target.checked)}
+                  />
+                  Marcar honorarios pagados (habilita Paz y Salvo)
+                </label>
+              </div>
+            )}
           </>
         )}
       </Card>

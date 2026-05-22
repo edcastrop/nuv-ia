@@ -452,6 +452,8 @@ export function PesosSimulator({
                 honorariosPct={honorariosPct}
                 expedienteId={init?.id}
                 aprobadoInicial={init?.aprobado_data ?? null}
+                estado={init?.estado}
+                fechaPagoHonorarios={init?.updated_at ? init.updated_at.slice(0, 10) : undefined}
               />
             );
           })()}
