@@ -4,8 +4,9 @@ import { NUVEX, CORPORATIVO } from "./constants";
 import { formatCOP, formatNumber, parseCurrency, parseDecimal } from "../../lib/format";
 import { applyHonorariosFloor, HONORARIOS_MIN_BASE, HONORARIOS_MIN_FINAL } from "../../lib/finance";
 import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
-import { setAprobado, type AprobadoData } from "@/lib/expedientes";
+import { setAprobado, type AprobadoData, type EstadoExpediente } from "@/lib/expedientes";
 import type { ClientData } from "./ClientFields";
+import { PazYSalvo } from "./PazYSalvo";
 
 export interface ProyeccionNuvex {
   cuotaProyectada: number;
