@@ -280,18 +280,27 @@ REGLAS ESTRICTAS:
   * Fórmula obligatoria para la cuota base: cuotaConInteresSinSeguros + valorCobertura + seguros. NUNCA uses únicamente cuotaPagadaCliente + valorCobertura.
   * "cuotaMensual": cuando hay beneficio, si puedes aplicar la fórmula obligatoria, debe reflejar la cuota base real con seguros; si no puedes, conserva el dato visible y baja la confianza a "media".
   * Cuando tieneCobertura="si" y el campo "producto" no incluya ya la frase "con Beneficio de Cobertura", AÑÁDELA al final del producto.
-- BANCOLOMBIA — mapeo literal obligatorio (PRIORIDAD MÁXIMA):
-  * Cuando el extracto sea de Bancolombia, EXTRAE LITERALMENTE estos campos sin recalcularlos:
-    - "valorAPagar" ← campo literal "Valor a Pagar".
-    - "cuotaSinSeguros" y "cuotaConInteresSinSeguros" ← campo literal "Valor de la cuota sin seguros y sin comisiones".
-    - "valorSeguroVida" ← "Valor seguro vida".
-    - "valorSeguroIncendio" ← "Valor seguro incendio".
-    - "valorSeguroTerremoto" ← "Valor seguro terremoto".
-    - "valorCuotaSinSubsidioGobierno" ← "Valor cuota sin subsidio Gobierno".
-    - "valorSubsidioGobierno" ← "Valor subsidio Gobierno".
-    - "valorCuotaConSubsidio" ← "Valor cuota con subsidio".
-  * Todos en pesos, solo dígitos (sin puntos, comas ni decimales si no aplica). Si el campo trae decimales (ej "1.302.922,98") devuélvelo como dígitos enteros redondeando ("1302923"). Vacío si no aparece literalmente.
-  * NO inventes ni deduzcas estos campos. Si no están en el extracto, déjalos vacíos.
+- BANCOLOMBIA — diccionario de mapeo LITERAL obligatorio (PRIORIDAD MÁXIMA — NO interpretes nombres parecidos):
+  * Usa EXACTAMENTE este diccionario etiqueta-del-extracto → campo de salida. Si la etiqueta literal no aparece, deja el campo vacío. NO mapees por sinónimos ni por aproximación.
+    - "Saldo a la fecha en que se generó el extracto" → "saldoCapital"
+    - "Valor desembolso" → "valorDesembolsado"
+    - "Plazo total en meses" → "plazoInicial"
+    - "Nro. cuota a cancelar" → "cuotaActualNumero"
+    - "Nro. cuotas pendientes para pago total" → "cuotasPendientes"
+    - "Valor a Pagar" → "valorAPagar" (y úsalo como "cuotaPagadaCliente")
+    - "Valor de la cuota sin seguros y sin comisiones" → "cuotaSinSeguros" y "cuotaConInteresSinSeguros"
+    - "Valor seguro vida" → "valorSeguroVida"
+    - "Valor seguro incendio" → "valorSeguroIncendio"
+    - "Valor seguro terremoto" → "valorSeguroTerremoto"
+    - "Valor cuota sin subsidio Gobierno" → "valorCuotaSinSubsidioGobierno"
+    - "Valor subsidio Gobierno" → "valorSubsidioGobierno"
+    - "Valor cuota con subsidio" → "valorCuotaConSubsidio"
+    - "Tasa interés cobrada" → "teaCobrada"
+    - "Tasa interés pactada" → "teaPactada"
+    - "Valor asegurado Incendio y Terremoto" → "valorAseguradoInmueble" (NO confundir con seguro mensual, NO con cuota, NO con saldo).
+  * PRESERVA los decimales tal como aparecen. Si el extracto muestra "1.302.922,98", devuelve "1302922.98" (punto decimal). NO redondees. Si es entero, devuelve solo dígitos.
+  * NO inventes ni deduzcas. Si una etiqueta literal no está presente, deja el campo vacío.
+  * Los seguros mensuales se calculan EXCLUSIVAMENTE como valorSeguroVida + valorSeguroIncendio + valorSeguroTerremoto. Nunca incluyas "Valor asegurado Incendio y Terremoto" en esta suma.
 - Confianza "alta" solo si el dato es 100% explícito en el extracto. "media" si requiere inferencia simple. "baja" si dudoso o ausente.`;
 
 export type ExtractoData = Record<string, string | Record<string, string>>;
