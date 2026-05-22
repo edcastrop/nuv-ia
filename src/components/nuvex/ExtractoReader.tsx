@@ -308,7 +308,7 @@ export function ExtractoReader({ modo, onApply }: Props) {
       cuotaBaseInputRef.current?.focus();
       return;
     }
-    const cuotaParaSimulador = tieneCob ? cuotaBaseStr : get("cuotaMensual");
+    const cuotaParaSimulador = cuotaBaseStr;
 
     const payload: ExtractoApplyPayload = {
       cliente: {
