@@ -258,6 +258,51 @@ export const extractStatement = createServerFn({ method: "POST" })
         parsed.tea = parsed.teaCobrada;
       }
 
+      // CUOTA BASE DE SIMULACIÓN — jerarquía
+      // P1: si vino cuotaSinSubsidio explícita → usar (sumar seguros si no estaban incluidos).
+      // P2: cuotaPagadaCliente + valorCobertura.
+      // P3: si hay beneficio pero no se puede determinar → requiereVerificacion=true,
+      //     usar cuotaMensual como respaldo.
+      const tieneCob = (typeof parsed.tieneCobertura === "string" && parsed.tieneCobertura.toLowerCase() === "si")
+        || num("valorCobertura") > 0
+        || num("tasaCobertura") > 0;
+
+      const cuotaSinSub = num("cuotaSinSubsidio");
+      const cuotaCliente = num("cuotaPagadaCliente");
+      const valorBenef = num("valorCobertura");
+      const cuotaMensual = num("cuotaMensual");
+      const segurosNum = num("seguros");
+
+      let cuotaBase = 0;
+      let requiereVerificacion = false;
+
+      if (tieneCob) {
+        if (cuotaSinSub > 0) {
+          // P1 — si la cuota sin subsidio reportada parece NO incluir seguros, súmalos.
+          const probablementeSinSeguros = segurosNum > 0 && cuotaSinSub < cuotaMensual * 0.95 && (cuotaSinSub + segurosNum * 0.5) < cuotaMensual * 1.1;
+          cuotaBase = probablementeSinSeguros ? cuotaSinSub + segurosNum : cuotaSinSub;
+        } else if (cuotaCliente > 0 && valorBenef > 0) {
+          // P2
+          cuotaBase = cuotaCliente + valorBenef;
+        } else if (cuotaMensual > 0) {
+          // Si cuotaMensual ya parece ser la real (mayor a cuotaCliente), úsala
+          if (cuotaCliente > 0 && cuotaMensual > cuotaCliente * 1.02) {
+            cuotaBase = cuotaMensual;
+          } else {
+            // P3 — no podemos certificar la cuota base
+            cuotaBase = cuotaMensual;
+            requiereVerificacion = true;
+          }
+        } else {
+          requiereVerificacion = true;
+        }
+      } else {
+        cuotaBase = cuotaMensual;
+      }
+
+      parsed.cuotaBaseSimulacion = cuotaBase > 0 ? String(Math.round(cuotaBase)) : "";
+      parsed.requiereVerificacionBeneficio = requiereVerificacion ? "si" : "no";
+
       return { error: null, data: parsed };
     } catch (e) {
       console.error("JSON parse error:", e, argsRaw);
