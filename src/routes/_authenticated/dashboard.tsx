@@ -18,7 +18,7 @@ import {
   ResponsiveContainer,
   Cell,
   CartesianGrid,
-  defs as _defs,
+  
 } from "recharts";
 import {
   Folder,
