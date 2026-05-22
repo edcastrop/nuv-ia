@@ -110,6 +110,38 @@ const tool = {
           description:
             "Cuota ANTES del subsidio/cobertura (también llamada 'cuota sin subsidio', 'cuota sin cobertura', 'cuota antes del subsidio', 'cuota sin beneficio', 'cuota plena', 'cuota total'). En pesos, solo dígitos. Vacío si el extracto no la muestra explícitamente.",
         },
+        valorAPagar: {
+          type: "string",
+          description:
+            "Bancolombia: campo literal 'Valor a Pagar' del extracto. Solo dígitos. Vacío si no aparece.",
+        },
+        valorSeguroVida: {
+          type: "string",
+          description: "Seguro de vida MENSUAL. Solo dígitos. Vacío si no aparece.",
+        },
+        valorSeguroIncendio: {
+          type: "string",
+          description: "Seguro de incendio MENSUAL. Solo dígitos. Vacío si no aparece.",
+        },
+        valorSeguroTerremoto: {
+          type: "string",
+          description: "Seguro de terremoto MENSUAL. Solo dígitos. Vacío si no aparece.",
+        },
+        valorCuotaSinSubsidioGobierno: {
+          type: "string",
+          description:
+            "Bancolombia: campo literal 'Valor cuota sin subsidio Gobierno'. Solo dígitos. Vacío si no aparece.",
+        },
+        valorSubsidioGobierno: {
+          type: "string",
+          description:
+            "Bancolombia: campo literal 'Valor subsidio Gobierno'. Solo dígitos. Vacío si no aparece.",
+        },
+        valorCuotaConSubsidio: {
+          type: "string",
+          description:
+            "Bancolombia: campo literal 'Valor cuota con subsidio'. Solo dígitos. Vacío si no aparece.",
+        },
         fechaExtracto: { type: "string" },
         confianza: {
           type: "object",
