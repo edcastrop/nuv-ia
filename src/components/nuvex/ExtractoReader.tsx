@@ -283,7 +283,8 @@ export function ExtractoReader({ modo, onApply }: Props) {
     const tieneCob = get("tieneCobertura").toLowerCase() === "si"
       || /con\s+beneficio\s+de\s+cobertura/i.test(get("producto"))
       || !!get("valorCobertura")
-      || !!get("tasaCobertura");
+      || !!get("tasaCobertura")
+      || !!get("tipoBeneficio");
     let producto = get("producto");
     if (tieneCob && producto && !/con\s+beneficio\s+de\s+cobertura/i.test(producto)) {
       producto = `${producto} con Beneficio de Cobertura`;
@@ -291,6 +292,12 @@ export function ExtractoReader({ modo, onApply }: Props) {
     // Normalizar banco: Colpatria -> Davibank (cambio de razón social)
     let banco = get("banco");
     if (/colpatria/i.test(banco)) banco = "Davibank";
+
+    // Cuota base de simulación: si hay beneficio se usa la cuota real (sin subsidio)
+    // como cuota del simulador. Si no hay beneficio, se usa la cuota mensual normal.
+    const cuotaBaseStr = get("cuotaBaseSimulacion") || get("cuotaMensual");
+    const cuotaParaSimulador = tieneCob ? cuotaBaseStr : get("cuotaMensual");
+
     const payload: ExtractoApplyPayload = {
       cliente: {
         nombre: get("cliente"),
@@ -306,7 +313,7 @@ export function ExtractoReader({ modo, onApply }: Props) {
     if (modo === "pesos") {
       payload.pesos = {
         saldoCapital: get("saldoCapital"),
-        cuotaActual: get("cuotaMensual"),
+        cuotaActual: cuotaParaSimulador,
         seguros: get("seguros"),
         tea: get("tea"),
       };
@@ -316,7 +323,7 @@ export function ExtractoReader({ modo, onApply }: Props) {
         valorUVR: get("valorUVR"),
         saldoPesos: get("saldoCapital"),
         valorDesembolsado: get("valorDesembolsado"),
-        cuotaActualPesos: get("cuotaMensual"),
+        cuotaActualPesos: cuotaParaSimulador,
         seguros: get("seguros"),
         teaCobrada: get("tea"),
       };
@@ -326,6 +333,10 @@ export function ExtractoReader({ modo, onApply }: Props) {
         activo: true,
         valorCobertura: get("valorCobertura"),
         tasaCobertura: get("tasaCobertura"),
+        tipoBeneficio: get("tipoBeneficio") || "Beneficio detectado",
+        cuotaPagadaCliente: get("cuotaPagadaCliente") || get("cuotaMensual"),
+        cuotaBaseSimulacion: cuotaBaseStr,
+        requiereVerificacion: get("requiereVerificacionBeneficio").toLowerCase() === "si",
       };
     }
     onApply(payload);
