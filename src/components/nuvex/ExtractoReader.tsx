@@ -328,8 +328,93 @@ export function ExtractoReader({ modo, onApply }: Props) {
     }
   };
 
+  const BANCOLOMBIA_KEYS = new Set([
+    "valorSeguroVida",
+    "valorSeguroIncendio",
+    "valorSeguroTerremoto",
+    "valorCuotaSinSubsidioGobierno",
+    "valorSubsidioGobierno",
+    "valorAPagar",
+    "valorCuotaConSubsidio",
+    "cuotaConInteresSinSeguros",
+    "cuotaSinSeguros",
+    "seguros",
+    "cuotaPagadaCliente",
+    "valorCobertura",
+  ]);
+
+  const recomputeBancolombia = (data: ExtractoData): ExtractoData => {
+    const g = (k: string) => (typeof data[k] === "string" ? (data[k] as string) : "");
+    const m = (k: string) => parseMontoExtracto(g(k));
+    const banco = g("banco").toLowerCase();
+    if (!/bancolombia/.test(banco)) return data;
+
+    const sVida = m("valorSeguroVida");
+    const sInc = m("valorSeguroIncendio");
+    const sTer = m("valorSeguroTerremoto");
+    const segurosSum = sVida + sInc + sTer;
+    const valorAPagar = m("valorAPagar");
+    const cuotaConSub = m("valorCuotaConSubsidio");
+    const subsGob = m("valorSubsidioGobierno");
+    const cuotaSinSubGob = m("valorCuotaSinSubsidioGobierno");
+    const cuotaSinSeg = m("cuotaConInteresSinSeguros") || m("cuotaSinSeguros");
+    const out: ExtractoData = { ...data };
+
+    if (segurosSum > 0) out.seguros = String(Math.round(segurosSum));
+    const cuotaCli = valorAPagar > 0 ? valorAPagar : cuotaConSub;
+    if (cuotaCli > 0) out.cuotaPagadaCliente = String(Math.round(cuotaCli));
+    if (subsGob > 0) {
+      out.valorCobertura = String(Math.round(subsGob));
+      out.tieneCobertura = "si";
+      if (!g("tipoBeneficio")) out.tipoBeneficio = "Subsidio Gobierno";
+    }
+
+    const errores: string[] = [];
+    let cuotaBase = 0;
+    if (cuotaSinSubGob > 0 && segurosSum > 0) {
+      cuotaBase = cuotaSinSubGob + segurosSum;
+    } else if (cuotaSinSubGob > 0) {
+      cuotaBase = cuotaSinSubGob;
+      errores.push("No se detectaron los seguros (vida, incendio, terremoto).");
+    } else {
+      errores.push(
+        "Falta 'Valor cuota sin subsidio Gobierno' para calcular la cuota base.",
+      );
+    }
+
+    if (cuotaSinSeg > 0 && segurosSum > 0) {
+      if (Math.abs(segurosSum - cuotaSinSeg) < 1) {
+        errores.push("Seguros mensuales = Cuota sin seguros. Lectura inconsistente.");
+      }
+      if (segurosSum > cuotaSinSeg * 0.3) {
+        errores.push("Seguros mensuales > 30% de la cuota sin seguros.");
+      }
+    }
+    if (cuotaBase > 0 && cuotaCli > 0) {
+      const limite = cuotaCli + subsGob + segurosSum + 10;
+      if (cuotaBase > limite) {
+        errores.push("Cuota base > cuota pagada + beneficio + seguros.");
+      }
+      if (cuotaBase < cuotaCli) {
+        errores.push("Cuota base < cuota pagada por cliente.");
+      }
+    }
+
+    if (cuotaBase > 0) out.cuotaBaseSimulacion = String(Math.round(cuotaBase));
+    out.erroresValidacion = errores.join("\n");
+    out.mapeoBanco = "bancolombia";
+    return out;
+  };
+
   const updateField = (key: string, value: string) => {
-    setParsed((prev) => (prev ? { ...prev, [key]: value } : prev));
+    setParsed((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, [key]: value };
+      if (BANCOLOMBIA_KEYS.has(key) || key === "banco") {
+        return recomputeBancolombia(next);
+      }
+      return next;
+    });
   };
 
   const handleConfirm = () => {
