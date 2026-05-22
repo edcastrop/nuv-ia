@@ -101,12 +101,14 @@ REGLAS ESTRICTAS:
 - Para montos en pesos, devuelve solo dígitos sin puntos, comas ni símbolos (ej: "221903943").
 - "valorDesembolsado": monto inicial desembolsado del crédito (también llamado "valor desembolsado", "monto desembolso", "valor del crédito desembolsado", "desembolso inicial"). En pesos, solo dígitos. Si no aparece, vacío "".
 - "saldoCapital": SIEMPRE el saldo a capital actual en PESOS (no en UVR). Para créditos UVR, busca "saldo en pesos", "saldo capital pesos", "equivalente en pesos" del saldo. Solo dígitos.
-- TASAS DE INTERÉS — regla obligatoria:
-  * Identifica explícitamente la "tasa de interés cobrada" (también llamada "tasa cobrada", "tasa aplicada", "tasa efectivamente aplicada") y la "tasa de interés pactada" (también "tasa pactada", "tasa contractual").
-  * El campo "teaCobrada" SOLO se llena cuando aparece textualmente la tasa cobrada.
-  * El campo "teaPactada" SOLO se llena cuando aparece textualmente la tasa pactada.
-  * El campo "tea" (tasa oficial para simulación) debe ser EXACTAMENTE igual a "teaCobrada". Si no hay tasa cobrada en el extracto, "tea" DEBE quedar vacío "" (NUNCA uses la tasa pactada como "tea").
-  * Si el extracto solo trae una tasa sin distinción explícita y es claramente la tasa vigente del periodo, úsala como "teaCobrada".
+- TASAS DE INTERÉS — regla obligatoria (PRIORIDAD ALTA, casi siempre debes llenar "teaCobrada"):
+  * Identifica todas las tasas que aparezcan: "tasa de interés cobrada" / "tasa cobrada" / "tasa aplicada" / "tasa efectivamente aplicada" / "tasa vigente" / "tasa actual" / "tasa de interés del periodo" / "tasa remuneratoria" y "tasa pactada" / "tasa contractual" / "tasa nominal pactada".
+  * "teaCobrada": llénalo SIEMPRE que el extracto muestre cualquier tasa que represente la efectivamente aplicada al periodo. Es muy común que aparezca como "Tasa Cobrada", "Tasa de interés cobrada EA", "Tasa EA cobrada", o simplemente como la tasa vigente del periodo en la sección de condiciones del crédito.
+  * "teaPactada": llénalo cuando aparezca explícitamente la tasa pactada/contractual.
+  * Si el extracto muestra una sola tasa sin distinguir, asume que es la cobrada y úsala como "teaCobrada" (confianza "media").
+  * Si aparecen ambas (cobrada y pactada), "teaCobrada" = cobrada, "teaPactada" = pactada. NUNCA confundas una con otra.
+  * El campo "tea" debe ser EXACTAMENTE igual a "teaCobrada" (mismo valor textual). Solo déjalo vacío si REALMENTE no hay ninguna tasa visible en el extracto.
+  * Para créditos UVR la tasa cobrada suele estar entre 4% y 8% EA; para Pesos entre 9% y 18% EA. Si lo que ves cae en esos rangos y es la única tasa, casi seguro es la cobrada.
 - Para tasas (TEA), devuelve el porcentaje con punto decimal (ej: "11.15").
 - Para fechas, formato YYYY-MM-DD si es posible.
 - Si encuentras múltiples valores posibles para un campo crítico (cuota, saldo, tasa), elige el más reciente / del periodo del extracto y baja la confianza a "media".
