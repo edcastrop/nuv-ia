@@ -218,9 +218,9 @@ export function ExtractoReader({ modo, onApply }: Props) {
     if (tieneCob && producto && !/con\s+beneficio\s+de\s+cobertura/i.test(producto)) {
       producto = `${producto} con Beneficio de Cobertura`;
     }
-    // Normalizar banco: Colpatria -> Davivibank
+    // Normalizar banco: Colpatria -> Davibank (cambio de razón social)
     let banco = get("banco");
-    if (/colpatria/i.test(banco)) banco = "Davivibank";
+    if (/colpatria/i.test(banco)) banco = "Davibank";
     const payload: ExtractoApplyPayload = {
       cliente: {
         nombre: get("cliente"),
