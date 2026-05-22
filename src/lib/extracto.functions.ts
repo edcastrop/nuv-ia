@@ -539,17 +539,32 @@ export const extractStatement = createServerFn({ method: "POST" })
         }
 
         // ===== Validaciones duras Bancolombia =====
-        if (cuotaConInteresSinSeguros > 0 && segurosNum > 0) {
-          if (Math.abs(segurosNum - cuotaConInteresSinSeguros) < 1) {
-            errores.push(
-              "Seguros mensuales = Cuota sin seguros. Lectura inconsistente, revise valores.",
-            );
-          }
-          if (segurosNum > cuotaConInteresSinSeguros * 0.3) {
-            errores.push(
-              "Seguros mensuales > 30% de la cuota sin seguros. Lectura inconsistente.",
-            );
-          }
+        if (segurosNum > 100000) {
+          errores.push(
+            `Seguros mensuales (${formatMontoExtracto(segurosNum)}) > 100.000. Revise valores.`,
+          );
+        }
+        const cuotaRefParaSeguros = cuotaConInteresSinSeguros > 0 ? cuotaConInteresSinSeguros : cuotaCliente;
+        if (cuotaRefParaSeguros > 0 && segurosNum > cuotaRefParaSeguros * 0.1) {
+          errores.push(
+            "Seguros mensuales > 10% de la cuota. Lectura inconsistente, revise valores.",
+          );
+        }
+        if (cuotaConInteresSinSeguros > 0 && segurosNum > 0 && Math.abs(segurosNum - cuotaConInteresSinSeguros) < 1) {
+          errores.push(
+            "Seguros mensuales = Cuota sin seguros. Lectura inconsistente, revise valores.",
+          );
+        }
+        const saldoActualNum = monto("saldoCapital");
+        if (cuotaCliente > 10000000) {
+          errores.push(
+            "Cuota pagada por cliente > 10.000.000. Lectura inconsistente, revise valores.",
+          );
+        }
+        if (saldoActualNum > 0 && cuotaCliente > saldoActualNum) {
+          errores.push(
+            "Cuota pagada por cliente > saldo actual. Lectura inconsistente, revise valores.",
+          );
         }
         if (cuotaBase > 0 && cuotaCliente > 0) {
           const limiteSuperior = cuotaCliente + valorBenef + segurosNum + 10;
