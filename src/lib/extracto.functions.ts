@@ -71,10 +71,11 @@ const tool = {
             saldoUVR: { type: "string", enum: ["alta", "media", "baja"] },
             valorCobertura: { type: "string", enum: ["alta", "media", "baja"] },
             tasaCobertura: { type: "string", enum: ["alta", "media", "baja"] },
+            valorDesembolsado: { type: "string", enum: ["alta", "media", "baja"] },
           },
           required: [
             "banco","cliente","cedula","numeroCredito","producto","moneda",
-            "saldoCapital","cuotaMensual","seguros","plazoInicial","cuotasPagadas","tea","teaCobrada","teaPactada","valorUVR","saldoUVR","valorCobertura","tasaCobertura",
+            "saldoCapital","cuotaMensual","seguros","plazoInicial","cuotasPagadas","tea","teaCobrada","teaPactada","valorUVR","saldoUVR","valorCobertura","tasaCobertura","valorDesembolsado",
           ],
           additionalProperties: false,
         },
