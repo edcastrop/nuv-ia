@@ -983,7 +983,7 @@ export function ExtractoReader({ modo, onApply }: Props) {
                       )}
                     </div>
 
-                    {(requiereVerificacion || alertaCuotaBase) && (
+                    {(requiereVerificacion || alertaCuotaBase) && !hayErrores && (
                       <div
                         className="mb-3 flex items-start gap-2 rounded-lg px-3 py-2 text-[12px]"
                         style={{
@@ -997,6 +997,27 @@ export function ExtractoReader({ modo, onApply }: Props) {
                           {alertaCuotaBase ||
                             "Se detectó un posible beneficio de cobertura o subsidio. Verifique manualmente la cuota base de simulación."}
                         </span>
+                      </div>
+                    )}
+
+                    {hayErrores && (
+                      <div
+                        className="mb-3 rounded-lg px-3 py-2 text-[12px]"
+                        style={{
+                          background: "rgba(240,68,56,0.12)",
+                          border: "1px solid rgba(240,68,56,0.5)",
+                          color: "#F04438",
+                        }}
+                      >
+                        <div className="mb-1 flex items-center gap-2 font-bold uppercase tracking-wider">
+                          <AlertTriangle className="h-4 w-4" />
+                          Lectura inconsistente. Revise manualmente los valores detectados.
+                        </div>
+                        <ul className="ml-5 list-disc space-y-0.5">
+                          {erroresValidacion.map((e, i) => (
+                            <li key={i}>{e}</li>
+                          ))}
+                        </ul>
                       </div>
                     )}
 
