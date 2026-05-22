@@ -167,8 +167,29 @@ export function PesosSimulator({
           <button onClick={onReset} className="text-xs text-[#445DA3] hover:underline">← Cambiar modo</button>
         </div>
       )}
+      <ExtractoReader
+        modo="pesos"
+        onApply={(p: ExtractoApplyPayload) => {
+          setClient((prev) => ({
+            ...prev,
+            nombre: p.cliente.nombre || prev.nombre,
+            cedula: p.cliente.cedula || prev.cedula,
+            numeroCredito: p.cliente.numeroCredito || prev.numeroCredito,
+            banco: p.cliente.banco || prev.banco,
+            tipoProducto: p.cliente.tipoProducto || prev.tipoProducto,
+            plazoInicial: p.cliente.plazoInicial || prev.plazoInicial,
+            cuotasPagadas: p.cliente.cuotasPagadas || prev.cuotasPagadas,
+          }));
+          if (p.pesos?.saldoCapital) setSaldoCapital(p.pesos.saldoCapital);
+          if (p.pesos?.cuotaActual) setCuotaActual(p.pesos.cuotaActual);
+          if (p.pesos?.seguros) setSeguros(p.pesos.seguros);
+          if (p.pesos?.tea) setTea(p.pesos.tea);
+        }}
+      />
       <Card>
+        <div id="datos-cliente-card" />
         <SectionTitle sub="Información general del cliente y del crédito">Datos del cliente</SectionTitle>
+
         <ClientFields data={client} onChange={setClient} productos={PRODUCTOS_PESOS} cuotasPendientes={cuotasPendientes} />
 
         {validaciones.map((v, i) => (
