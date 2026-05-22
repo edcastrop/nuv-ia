@@ -180,8 +180,30 @@ export function UVRSimulator({
           <button onClick={onReset} className="text-xs text-[#445DA3] hover:underline">← Cambiar modo</button>
         </div>
       )}
+      <ExtractoReader
+        modo="uvr"
+        onApply={(p: ExtractoApplyPayload) => {
+          setClient((prev) => ({
+            ...prev,
+            nombre: p.cliente.nombre || prev.nombre,
+            cedula: p.cliente.cedula || prev.cedula,
+            numeroCredito: p.cliente.numeroCredito || prev.numeroCredito,
+            banco: p.cliente.banco || prev.banco,
+            tipoProducto: p.cliente.tipoProducto || prev.tipoProducto,
+            plazoInicial: p.cliente.plazoInicial || prev.plazoInicial,
+            cuotasPagadas: p.cliente.cuotasPagadas || prev.cuotasPagadas,
+          }));
+          if (p.uvr?.saldoUVR) setSaldoUVR(p.uvr.saldoUVR);
+          if (p.uvr?.valorUVR) setValorUVR(p.uvr.valorUVR);
+          if (p.uvr?.cuotaActualPesos) setCuotaActualPesos(p.uvr.cuotaActualPesos);
+          if (p.uvr?.seguros) setSeguros(p.uvr.seguros);
+          if (p.uvr?.teaCobrada) setTeaCobrada(p.uvr.teaCobrada);
+        }}
+      />
       <Card>
+        <div id="datos-cliente-card" />
         <SectionTitle sub="Información general del cliente y del crédito en UVR">Datos del cliente</SectionTitle>
+
         <ClientFields data={client} onChange={setClient} productos={PRODUCTOS_UVR} cuotasPendientes={cuotasPendientes} />
         {validaciones.map((v, i) => (
           <div key={i} className="mt-3"><Alert tone="error">{v}</Alert></div>
