@@ -46,11 +46,11 @@ interface Props {
 // PDF.js dynamic loader (client-only)
 async function loadPdfJs() {
   const pdfjs = await import("pdfjs-dist");
-  // @ts-expect-error vite-resolved url
-  const workerUrl = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
-  pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+  const workerMod = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")) as { default: string };
+  pdfjs.GlobalWorkerOptions.workerSrc = workerMod.default;
   return pdfjs;
 }
+
 
 async function renderPdfToImages(file: File, password?: string): Promise<{ images: { mime: string; dataUrl: string }[]; needsPassword: boolean; wrongPassword: boolean }> {
   const pdfjs = await loadPdfJs();
