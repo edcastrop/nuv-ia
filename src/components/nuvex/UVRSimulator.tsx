@@ -222,6 +222,14 @@ export function UVRSimulator({
         <SectionTitle sub="Información general del cliente y del crédito en UVR">Datos del cliente</SectionTitle>
 
         <ClientFields data={client} onChange={setClient} productos={PRODUCTOS_UVR} cuotasPendientes={cuotasPendientes} />
+
+        <div className="mt-6">
+          <IntervinientesFields producto={client.tipoProducto} data={intervinientes} onChange={setIntervinientes} />
+        </div>
+
+        <div className="mt-6">
+          <CoberturaFields producto={client.tipoProducto} data={cobertura} onChange={setCobertura} />
+        </div>
         {validaciones.map((v, i) => (
           <div key={i} className="mt-3"><Alert tone="error">{v}</Alert></div>
         ))}
@@ -347,7 +355,7 @@ export function UVRSimulator({
                 onSaved={onSaved}
                 payload={{
                   modo: "uvr",
-                  cliente: client,
+                  cliente: { ...client, intervinientes, cobertura },
                   credito: { valorDesembolsado, saldoPesos, saldoUVR, valorUVR, cuotaActualPesos, seguros, teaCobrada, variacionUVR, nuevaCuotaManual },
                   propuesta: {
                     nuevaCuota: recomendada.nuevaCuota,
@@ -395,7 +403,7 @@ export function UVRSimulator({
             return (
               <PrintDocument
                 mode="uvr"
-                client={client}
+                client={{ ...client, intervinientes, cobertura }}
                 cuotasPendientes={cuotasPendientes}
                 metrics={metrics}
                 uvrPropuestas={calc!.propuestas}
@@ -451,7 +459,7 @@ export function UVRSimulator({
             return (
               <ResultadoFinal
                 mode="uvr"
-                client={client}
+                client={{ ...client, intervinientes, cobertura }}
                 proyeccion={proyeccion}
                 cuotasPendientes={cuotasPendientes}
                 cuotaActualConSeguro={input.cuotaActualPesos}
