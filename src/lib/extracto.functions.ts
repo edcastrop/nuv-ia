@@ -148,22 +148,32 @@ export const extractStatement = createServerFn({ method: "POST" })
       })),
     ];
 
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userContent },
-        ],
-        tools: [tool],
-        tool_choice: { type: "function", function: { name: "extract_extracto" } },
-      }),
-    });
+    const callModel = async (model: string) => {
+      return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            { role: "user", content: userContent },
+          ],
+          tools: [tool],
+          tool_choice: { type: "function", function: { name: "extract_extracto" } },
+        }),
+      });
+    };
+
+    // Estrategia: primero Flash (mucho más rápido, evita timeouts con varias
+    // páginas/imágenes). Si falla por timeout/5xx, reintentamos con Pro.
+    let resp = await callModel("google/gemini-2.5-flash");
+    if (!resp.ok && (resp.status === 504 || resp.status === 408 || resp.status === 524 || resp.status >= 500)) {
+      try { await resp.text(); } catch {}
+      resp = await callModel("google/gemini-2.5-pro");
+    }
 
     if (!resp.ok) {
       if (resp.status === 429) {
@@ -172,6 +182,12 @@ export const extractStatement = createServerFn({ method: "POST" })
       if (resp.status === 402) {
         return {
           error: "Se agotaron los créditos de IA. Recarga tu workspace de Lovable para continuar.",
+          data: null,
+        };
+      }
+      if (resp.status === 504 || resp.status === 408 || resp.status === 524) {
+        return {
+          error: "El análisis tardó demasiado. Sube menos páginas o un PDF más liviano e intenta de nuevo.",
           data: null,
         };
       }
