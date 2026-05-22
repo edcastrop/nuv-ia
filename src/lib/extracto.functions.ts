@@ -238,6 +238,7 @@ export const extractStatement = createServerFn({ method: "POST" })
         const n = parseFloat(s);
         return isFinite(n) ? n : 0;
       };
+      const monto = (k: string) => parseMontoExtracto(typeof parsed[k] === "string" ? (parsed[k] as string) : "");
       const teaCobradaEmpty = !numStr("teaCobrada");
       const teaEmpty = !numStr("tea");
 
@@ -284,63 +285,41 @@ export const extractStatement = createServerFn({ method: "POST" })
         parsed.tea = parsed.teaCobrada;
       }
 
-      // CUOTA BASE DE SIMULACIÓN — jerarquía
-      // P1: si vino cuotaSinSubsidio explícita → usar (sumar seguros si no estaban incluidos).
-      // P2: cuotaPagadaCliente + valorCobertura.
-      // P3: si hay beneficio pero no se puede determinar → requiereVerificacion=true,
-      //     usar cuotaMensual como respaldo.
+      // CUOTA BASE DE SIMULACIÓN — regla obligatoria:
+      // cuotaConInteresSinSeguros + beneficioAplicado + totalSeguros.
+      // Nunca usar únicamente cuotaPagadaCliente + beneficio.
       const tieneCob = (typeof parsed.tieneCobertura === "string" && parsed.tieneCobertura.toLowerCase() === "si")
-        || num("valorCobertura") > 0
+        || monto("valorCobertura") > 0
         || num("tasaCobertura") > 0;
 
-      const cuotaSinSub = num("cuotaSinSubsidio");
-      const cuotaCliente = num("cuotaPagadaCliente");
-      const valorBenef = num("valorCobertura");
-      const cuotaMensual = num("cuotaMensual");
-      const segurosNum = num("seguros");
-
-      let cuotaBase = 0;
-      let requiereVerificacion = false;
-
-      if (tieneCob) {
-        // Prioridad: P2 cuando tenemos cuota cliente + valor beneficio, porque
-        // la cuota cliente del extracto incluye seguros y reconstruir
-        // (cliente + beneficio) garantiza que la cuota base también los incluya.
-        if (cuotaCliente > 0 && valorBenef > 0) {
-          cuotaBase = cuotaCliente + valorBenef;
-        } else if (cuotaSinSub > 0) {
-          // P1 — la cuota sin subsidio suele venir SIN seguros en el extracto.
-          // Garantizamos que la cuota base SIEMPRE los incluya.
-          cuotaBase = cuotaSinSub;
-          if (cuotaCliente > 0 && cuotaBase < cuotaCliente) {
-            // Imposible: la cuota base nunca puede ser menor que la pagada.
-            cuotaBase = cuotaCliente + Math.max(valorBenef, segurosNum);
-          } else if (segurosNum > 0) {
-            // Heurística: si la cuota sin subsidio NO supera a la mensual por
-            // al menos el valor de seguros, asumimos que viene sin ellos.
-            const yaIncluyeSeguros = cuotaCliente > 0
-              ? (cuotaBase - cuotaCliente) >= (valorBenef + segurosNum * 0.5)
-              : (cuotaMensual > 0 && cuotaBase >= cuotaMensual + segurosNum * 0.5);
-            if (!yaIncluyeSeguros) {
-              cuotaBase = cuotaBase + segurosNum;
-            }
-          }
-        } else if (cuotaMensual > 0) {
-          if (cuotaCliente > 0 && cuotaMensual > cuotaCliente * 1.02) {
-            cuotaBase = cuotaMensual;
-          } else {
-            cuotaBase = cuotaMensual;
-            requiereVerificacion = true;
-          }
-        } else {
-          requiereVerificacion = true;
-        }
-      } else {
-        cuotaBase = cuotaMensual;
+      const cuotaCliente = monto("cuotaPagadaCliente");
+      const valorBenef = monto("valorCobertura");
+      const cuotaMensual = monto("cuotaMensual");
+      const segurosNum = monto("seguros");
+      const cuotaConInteresSinSeguros = monto("cuotaConInteresSinSeguros") || monto("cuotaSinSeguros") || monto("cuotaSinSubsidio");
+      if (cuotaConInteresSinSeguros > 0 && !parsed.cuotaConInteresSinSeguros) {
+        parsed.cuotaConInteresSinSeguros = formatMontoExtracto(cuotaConInteresSinSeguros);
       }
 
-      parsed.cuotaBaseSimulacion = cuotaBase > 0 ? String(Math.round(cuotaBase)) : "";
+      const resultadoCuotaBase = calcularCuotaBaseSimulacion({
+        cuotaConInteresSinSeguros,
+        beneficioAplicado: valorBenef,
+        totalSeguros: segurosNum,
+      });
+      let cuotaBase = resultadoCuotaBase.cuotaBaseSimulacion;
+      let requiereVerificacion = resultadoCuotaBase.requiereVerificacion;
+
+      if (!tieneCob && cuotaConInteresSinSeguros > 0) {
+        cuotaBase = cuotaConInteresSinSeguros + segurosNum;
+        requiereVerificacion = false;
+      } else if (!tieneCob && cuotaBase <= 0) {
+        cuotaBase = cuotaMensual;
+        requiereVerificacion = false;
+      }
+
+      parsed.cuotaBaseSimulacion = cuotaBase > 0 ? formatMontoExtracto(cuotaBase) : "";
       parsed.requiereVerificacionBeneficio = requiereVerificacion ? "si" : "no";
+      parsed.alertaCuotaBase = requiereVerificacion ? (resultadoCuotaBase.alerta || ALERTA_CUOTA_CON_INTERES_SIN_SEGUROS) : "";
 
       // Cuando hay beneficio: la "Cuota mensual (con seguros)" mostrada debe
       // reflejar la cuota REAL del crédito = Capital + Interés + Seguros
@@ -351,14 +330,14 @@ export const extractStatement = createServerFn({ method: "POST" })
       if (tieneCob && cuotaBase > 0) {
         if (cuotaMensual > 0 && cuotaMensual < cuotaBase * 0.98) {
           if (!cuotaCliente) {
-            parsed.cuotaPagadaCliente = String(Math.round(cuotaMensual));
+            parsed.cuotaPagadaCliente = formatMontoExtracto(cuotaMensual);
           }
-          parsed.cuotaMensual = String(Math.round(cuotaBase));
+          parsed.cuotaMensual = formatMontoExtracto(cuotaBase);
           if (parsed.confianza && typeof parsed.confianza === "object") {
             (parsed.confianza as Record<string, string>).cuotaMensual = "media";
           }
         } else if (!cuotaMensual) {
-          parsed.cuotaMensual = String(Math.round(cuotaBase));
+          parsed.cuotaMensual = formatMontoExtracto(cuotaBase);
         }
       }
 
