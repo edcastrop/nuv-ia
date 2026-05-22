@@ -282,7 +282,9 @@ export const extractStatement = createServerFn({ method: "POST" })
     ) {
       try {
         await resp.text();
-      } catch {}
+      } catch {
+        // Ignorar: solo intentamos drenar el cuerpo antes del fallback.
+      }
       resp = await callModel("google/gemini-2.5-pro");
     }
 
