@@ -45,6 +45,9 @@ const tool = {
         capitalCuota: { type: "string" },
         valorUVR: { type: "string", description: "Valor de la UVR del día, si aplica." },
         saldoUVR: { type: "string", description: "Saldo a capital en UVR, si aplica." },
+        valorCobertura: { type: "string", description: "Valor del beneficio de cobertura (cobertura FRECH / cobertura de tasa), en pesos (solo dígitos). Vacío si no aplica." },
+        tasaCobertura: { type: "string", description: "Tasa (puntos porcentuales) del beneficio de cobertura. Vacío si no aplica." },
+        tieneCobertura: { type: "string", enum: ["si", "no", ""], description: "'si' cuando el extracto mencione cobertura FRECH, cobertura de tasa, beneficio de cobertura, subsidio a la tasa o equivalente." },
         fechaExtracto: { type: "string" },
         confianza: {
           type: "object",
