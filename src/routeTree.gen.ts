@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedAcademiaRouteImport } from './routes/_authenticated/academia'
 import { Route as AuthenticatedCasosIndexRouteImport } from './routes/_authenticated/casos.index'
 import { Route as AuthenticatedCasosIdRouteImport } from './routes/_authenticated/casos.$id'
 
@@ -35,6 +36,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAcademiaRoute = AuthenticatedAcademiaRouteImport.update({
+  id: '/academia',
+  path: '/academia',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedCasosIndexRoute = AuthenticatedCasosIndexRouteImport.update({
   id: '/casos/',
   path: '/casos/',
@@ -49,12 +55,14 @@ const AuthenticatedCasosIdRoute = AuthenticatedCasosIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
+  '/academia': typeof AuthenticatedAcademiaRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
   '/casos/': typeof AuthenticatedCasosIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
+  '/academia': typeof AuthenticatedAcademiaRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/': typeof AuthenticatedIndexRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
@@ -64,6 +72,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/_authenticated/academia': typeof AuthenticatedAcademiaRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/casos/$id': typeof AuthenticatedCasosIdRoute
@@ -71,13 +80,20 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/dashboard' | '/casos/$id' | '/casos/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/academia'
+    | '/dashboard'
+    | '/casos/$id'
+    | '/casos/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/dashboard' | '/' | '/casos/$id' | '/casos'
+  to: '/login' | '/academia' | '/dashboard' | '/' | '/casos/$id' | '/casos'
   id:
     | '__root__'
     | '/_authenticated'
     | '/login'
+    | '/_authenticated/academia'
     | '/_authenticated/dashboard'
     | '/_authenticated/'
     | '/_authenticated/casos/$id'
@@ -119,6 +135,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/academia': {
+      id: '/_authenticated/academia'
+      path: '/academia'
+      fullPath: '/academia'
+      preLoaderRoute: typeof AuthenticatedAcademiaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/casos/': {
       id: '/_authenticated/casos/'
       path: '/casos'
@@ -137,6 +160,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedAcademiaRoute: typeof AuthenticatedAcademiaRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedCasosIdRoute: typeof AuthenticatedCasosIdRoute
@@ -144,6 +168,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAcademiaRoute: AuthenticatedAcademiaRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedCasosIdRoute: AuthenticatedCasosIdRoute,

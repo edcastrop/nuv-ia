@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, useNavigate, Link, useLocation } from "@tansta
 import { useEffect, useState } from "react";
 import { useAuth, signOut } from "@/hooks/useAuth";
 import { CORPORATIVO } from "@/components/nuvex/constants";
-import { LayoutGrid, FolderKanban, BarChart3, LogOut } from "lucide-react";
+import { LayoutGrid, FolderKanban, BarChart3, LogOut, GraduationCap } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
@@ -48,6 +48,7 @@ function AuthenticatedLayout() {
     { to: "/", label: "Simulador", Icon: LayoutGrid, exact: true },
     { to: "/casos", label: "Casos", Icon: FolderKanban },
     { to: "/dashboard", label: "Dashboard", Icon: BarChart3 },
+    { to: "/academia", label: "Academia", Icon: GraduationCap },
   ];
 
   const NavBtn = ({ to, label, Icon, exact }: { to: string; label: string; Icon: typeof LayoutGrid; exact?: boolean }) => {
