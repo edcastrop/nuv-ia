@@ -324,6 +324,7 @@ export function UVRSimulator({
               </div>
             )}
           </div>
+        </div>
       </Card>
 
       {datosCompletos && (
