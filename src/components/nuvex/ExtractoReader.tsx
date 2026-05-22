@@ -445,13 +445,22 @@ export function ExtractoReader({ modo, onApply }: Props) {
             <div className="max-h-[68vh] overflow-y-auto px-6 py-5">
               {stage === "idle" && (
                 <div
-                  className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed py-12 text-center"
+                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const f = e.dataTransfer.files?.[0];
+                    if (f) handleFileSelect(f);
+                  }}
+                  onClick={() => fileRef.current?.click()}
+                  className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed py-12 text-center transition-colors hover:border-white/30"
                   style={{ borderColor: "rgba(255,255,255,0.15)" }}
                 >
                   <Upload className="h-10 w-10 text-white/40" />
                   <div className="text-sm text-white/70">Arrastra el extracto o haz clic para seleccionar</div>
                   <button
-                    onClick={() => fileRef.current?.click()}
+                    onClick={(e) => { e.stopPropagation(); fileRef.current?.click(); }}
                     className="rounded-lg px-4 py-2 text-xs font-semibold text-white"
                     style={{ background: "linear-gradient(135deg, #445DA3, #84B98F)" }}
                   >
@@ -460,6 +469,7 @@ export function ExtractoReader({ modo, onApply }: Props) {
                   <div className="text-[11px] text-white/40">PDF, JPG o PNG · hasta 6 páginas</div>
                 </div>
               )}
+
 
               {stage === "reading" && (
                 <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
