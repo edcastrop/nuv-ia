@@ -380,6 +380,16 @@ export function ExtractoReader({ modo, onApply }: Props) {
   const teaUsada = (parsed?.tea as string) ?? "";
   const soloPactada = !teaCobrada && !!teaPactada;
 
+  // Resumen de interpretación del crédito (cuota base de simulación)
+  const tipoBeneficio = (parsed?.tipoBeneficio as string) ?? "";
+  const tieneCoberturaStr = ((parsed?.tieneCobertura as string) ?? "").toLowerCase() === "si";
+  const tieneBeneficio = tieneCoberturaStr || !!tipoBeneficio || !!(parsed?.valorCobertura as string) || !!(parsed?.tasaCobertura as string);
+  const requiereVerificacion = ((parsed?.requiereVerificacionBeneficio as string) ?? "").toLowerCase() === "si";
+  const fmtCO = (raw: string) => {
+    const n = Number(String(raw ?? "").replace(/[^\d]/g, ""));
+    return isFinite(n) && n > 0 ? new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n) : "—";
+  };
+
   const progressIdx = STAGES.findIndex((s) => s.id === stage);
 
   return (
