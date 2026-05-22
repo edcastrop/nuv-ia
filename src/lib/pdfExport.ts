@@ -2,7 +2,7 @@ import html2canvas from "html2canvas-pro";
 import { jsPDF } from "jspdf";
 
 export async function exportElementToPdf(elementId: string, filename: string) {
-  // Esperar a que el DOM termine de renderizar
+  // Esperar a que React termine de pintar el contenido
   await new Promise((r) => setTimeout(r, 300));
 
   const element = document.getElementById(elementId);
@@ -11,34 +11,40 @@ export async function exportElementToPdf(elementId: string, filename: string) {
     return;
   }
 
-  // El contenedor está posicionado fuera de pantalla (left: -10000px).
-  // html2canvas-pro tiene problemas capturando elementos muy alejados del viewport,
-  // así que lo movemos temporalmente a una posición visible pero oculta visualmente.
-  const originalStyle = element.getAttribute("style") || "";
-  element.style.position = "fixed";
-  element.style.left = "0";
-  element.style.top = "0";
-  element.style.zIndex = "-1";
-  element.style.opacity = "0";
-  element.style.pointerEvents = "none";
-
-  // Esperar al reflow
-  await new Promise((r) => setTimeout(r, 200));
-
   try {
-    if (element.offsetHeight === 0 || element.scrollWidth === 0) {
-      alert("El contenido PDF está vacío o no se ha renderizado.");
-      return;
-    }
-
+    // html2canvas-pro clona el documento antes de renderizar.
+    // Usamos onclone para posicionar el contenedor en (0,0) DENTRO del clon,
+    // de modo que el original puede seguir oculto fuera de pantalla
+    // (sin opacity:0 ni visibility:hidden, que producen páginas en blanco).
     const canvas = await html2canvas(element, {
       scale: 2,
       useCORS: true,
       backgroundColor: "#ffffff",
       logging: false,
-      windowWidth: element.scrollWidth,
-      windowHeight: element.scrollHeight,
+      windowWidth: 1200,
+      onclone: (doc) => {
+        const target = doc.getElementById(elementId) as HTMLElement | null;
+        if (target) {
+          target.style.position = "static";
+          target.style.left = "0";
+          target.style.top = "0";
+          target.style.right = "auto";
+          target.style.bottom = "auto";
+          target.style.margin = "0";
+          target.style.zIndex = "auto";
+          target.style.opacity = "1";
+          target.style.visibility = "visible";
+          target.style.transform = "none";
+          target.style.pointerEvents = "auto";
+          target.style.display = "block";
+        }
+      },
     });
+
+    if (!canvas.width || !canvas.height) {
+      alert("No se pudo renderizar el contenido del PDF.");
+      return;
+    }
 
     const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF("p", "mm", "a4");
@@ -65,9 +71,6 @@ export async function exportElementToPdf(elementId: string, filename: string) {
     console.error("[pdfExport] Falló la exportación:", err);
     const msg = err instanceof Error ? err.message : String(err);
     alert("No se pudo exportar el PDF: " + msg);
-  } finally {
-    // Restaurar estilos originales
-    element.setAttribute("style", originalStyle);
   }
 }
 
