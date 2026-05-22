@@ -388,7 +388,7 @@ export function PesosSimulator({
             return (
               <PrintDocument
                 mode="pesos"
-                client={client}
+                client={{ ...client, intervinientes, cobertura }}
                 cuotasPendientes={cuotasPendientes}
                 metrics={metrics}
                 pesosPropuestas={calc!.propuestas}
@@ -444,7 +444,7 @@ export function PesosSimulator({
             return (
               <ResultadoFinal
                 mode="pesos"
-                client={client}
+                client={{ ...client, intervinientes, cobertura }}
                 proyeccion={proyeccion}
                 cuotasPendientes={cuotasPendientes}
                 cuotaActualConSeguro={input.cuotaActual}
