@@ -101,12 +101,14 @@ REGLAS ESTRICTAS:
 - Para montos en pesos, devuelve solo dígitos sin puntos, comas ni símbolos (ej: "221903943").
 - "valorDesembolsado": monto inicial desembolsado del crédito (también llamado "valor desembolsado", "monto desembolso", "valor del crédito desembolsado", "desembolso inicial"). En pesos, solo dígitos. Si no aparece, vacío "".
 - "saldoCapital": SIEMPRE el saldo a capital actual en PESOS (no en UVR). Para créditos UVR, busca "saldo en pesos", "saldo capital pesos", "equivalente en pesos" del saldo. Solo dígitos.
-- TASAS DE INTERÉS — regla obligatoria:
-  * Identifica explícitamente la "tasa de interés cobrada" (también llamada "tasa cobrada", "tasa aplicada", "tasa efectivamente aplicada") y la "tasa de interés pactada" (también "tasa pactada", "tasa contractual").
-  * El campo "teaCobrada" SOLO se llena cuando aparece textualmente la tasa cobrada.
-  * El campo "teaPactada" SOLO se llena cuando aparece textualmente la tasa pactada.
-  * El campo "tea" (tasa oficial para simulación) debe ser EXACTAMENTE igual a "teaCobrada". Si no hay tasa cobrada en el extracto, "tea" DEBE quedar vacío "" (NUNCA uses la tasa pactada como "tea").
-  * Si el extracto solo trae una tasa sin distinción explícita y es claramente la tasa vigente del periodo, úsala como "teaCobrada".
+- TASAS DE INTERÉS — regla obligatoria (PRIORIDAD ALTA, casi siempre debes llenar "teaCobrada"):
+  * Identifica todas las tasas que aparezcan: "tasa de interés cobrada" / "tasa cobrada" / "tasa aplicada" / "tasa efectivamente aplicada" / "tasa vigente" / "tasa actual" / "tasa de interés del periodo" / "tasa remuneratoria" y "tasa pactada" / "tasa contractual" / "tasa nominal pactada".
+  * "teaCobrada": llénalo SIEMPRE que el extracto muestre cualquier tasa que represente la efectivamente aplicada al periodo. Es muy común que aparezca como "Tasa Cobrada", "Tasa de interés cobrada EA", "Tasa EA cobrada", o simplemente como la tasa vigente del periodo en la sección de condiciones del crédito.
+  * "teaPactada": llénalo cuando aparezca explícitamente la tasa pactada/contractual.
+  * Si el extracto muestra una sola tasa sin distinguir, asume que es la cobrada y úsala como "teaCobrada" (confianza "media").
+  * Si aparecen ambas (cobrada y pactada), "teaCobrada" = cobrada, "teaPactada" = pactada. NUNCA confundas una con otra.
+  * El campo "tea" debe ser EXACTAMENTE igual a "teaCobrada" (mismo valor textual). Solo déjalo vacío si REALMENTE no hay ninguna tasa visible en el extracto.
+  * Para créditos UVR la tasa cobrada suele estar entre 4% y 8% EA; para Pesos entre 9% y 18% EA. Si lo que ves cae en esos rangos y es la única tasa, casi seguro es la cobrada.
 - Para tasas (TEA), devuelve el porcentaje con punto decimal (ej: "11.15").
 - Para fechas, formato YYYY-MM-DD si es posible.
 - Si encuentras múltiples valores posibles para un campo crítico (cuota, saldo, tasa), elige el más reciente / del periodo del extracto y baja la confianza a "media".
@@ -192,6 +194,63 @@ export const extractStatement = createServerFn({ method: "POST" })
       if (/colpatria/i.test(bancoRaw)) {
         parsed.banco = "Davibank";
       }
+
+      // Fallback: derivar tasa cobrada si la IA la dejó vacía
+      const numStr = (k: string) => {
+        const v = parsed[k];
+        return typeof v === "string" ? v.replace(/[^\d.]/g, "") : "";
+      };
+      const num = (k: string) => {
+        const s = numStr(k);
+        const n = parseFloat(s);
+        return isFinite(n) ? n : 0;
+      };
+      const teaCobradaEmpty = !numStr("teaCobrada");
+      const teaEmpty = !numStr("tea");
+
+      if (teaCobradaEmpty) {
+        // 1) usar tasaMensual si vino
+        const tm = num("tasaMensual");
+        if (tm > 0 && tm < 5) {
+          const tea = (Math.pow(1 + tm / 100, 12) - 1) * 100;
+          parsed.teaCobrada = tea.toFixed(4);
+        } else {
+          // 2) calcular desde interes/saldo (en UVR si aplica, sino en pesos)
+          const moneda = (parsed.moneda as string) || "";
+          let interes = 0;
+          let saldo = 0;
+          if (moneda === "UVR") {
+            // intentar UVR puro primero
+            interes = num("interesCuota");
+            saldo = num("saldoUVR");
+            const vUVR = num("valorUVR");
+            // si interesCuota viene en pesos, convertir a UVR
+            if (interes > 0 && saldo > 0 && vUVR > 0 && interes > saldo) {
+              interes = interes / vUVR;
+            }
+          } else {
+            interes = num("interesCuota");
+            saldo = num("saldoCapital");
+          }
+          if (interes > 0 && saldo > 0) {
+            const tasaMes = interes / saldo;
+            if (tasaMes > 0 && tasaMes < 0.05) {
+              const tea = (Math.pow(1 + tasaMes, 12) - 1) * 100;
+              parsed.teaCobrada = tea.toFixed(4);
+              // marcar confianza media
+              if (parsed.confianza && typeof parsed.confianza === "object") {
+                (parsed.confianza as Record<string, string>).teaCobrada = "media";
+              }
+            }
+          }
+        }
+      }
+
+      // tea = teaCobrada si tea está vacío
+      if (teaEmpty && numStr("teaCobrada")) {
+        parsed.tea = parsed.teaCobrada;
+      }
+
       return { error: null, data: parsed };
     } catch (e) {
       console.error("JSON parse error:", e, argsRaw);
