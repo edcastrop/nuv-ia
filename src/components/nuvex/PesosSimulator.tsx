@@ -46,7 +46,7 @@ export function PesosSimulator({
       ? (init.discount_data as unknown as DiscountState)
       : defaultDiscount),
   );
-  const initClient = (init?.cliente_data as (ClientData & { intervinientes?: Interviniente[]; cobertura?: Cobertura }) | undefined) ?? undefined;
+  const initClient = (init?.cliente_data as ClientData | undefined) ?? undefined;
   const [client, setClient] = useState<ClientData>(() => initClient ?? defaultClient);
   const [intervinientes, setIntervinientes] = useState<Interviniente[]>(
     () => initClient?.intervinientes && initClient.intervinientes.length > 0
@@ -339,7 +339,7 @@ export function PesosSimulator({
                 onSaved={onSaved}
                 payload={{
                   modo: "pesos",
-                  cliente: { ...client, intervinientes, cobertura } as ClientData,
+                  cliente: { ...client, intervinientes, cobertura },
                   credito: { valorDesembolsado, saldoCapital, cuotaActual, seguros, tea, nuevaCuotaManual },
                   propuesta: {
                     nuevaCuota: recomendada.nuevaCuota,
