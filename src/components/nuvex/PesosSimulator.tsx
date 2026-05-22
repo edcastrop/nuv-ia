@@ -20,6 +20,14 @@ import { ResultadoFinal, type ProyeccionNuvex } from "./ResultadoFinal";
 import { SaveExpedienteButton } from "./SaveExpedienteButton";
 import type { Expediente } from "@/lib/expedientes";
 import { ExtractoReader, type ExtractoApplyPayload } from "./ExtractoReader";
+import { IntervinientesFields } from "./IntervinientesFields";
+import { CoberturaFields } from "./CoberturaFields";
+import {
+  defaultCobertura,
+  defaultIntervinientes,
+  type Cobertura,
+  type Interviniente,
+} from "./intervinientes";
 
 
 export function PesosSimulator({
@@ -38,7 +46,16 @@ export function PesosSimulator({
       ? (init.discount_data as unknown as DiscountState)
       : defaultDiscount),
   );
-  const [client, setClient] = useState<ClientData>(() => (init?.cliente_data as ClientData) ?? defaultClient);
+  const initClient = (init?.cliente_data as (ClientData & { intervinientes?: Interviniente[]; cobertura?: Cobertura }) | undefined) ?? undefined;
+  const [client, setClient] = useState<ClientData>(() => initClient ?? defaultClient);
+  const [intervinientes, setIntervinientes] = useState<Interviniente[]>(
+    () => initClient?.intervinientes && initClient.intervinientes.length > 0
+      ? initClient.intervinientes
+      : defaultIntervinientes(initClient?.tipoProducto),
+  );
+  const [cobertura, setCobertura] = useState<Cobertura>(
+    () => initClient?.cobertura ?? defaultCobertura,
+  );
   const [valorDesembolsado, setValorDesembolsado] = useState(initCred.valorDesembolsado ?? "");
   const [saldoCapital, setSaldoCapital] = useState(initCred.saldoCapital ?? "");
   const [cuotaActual, setCuotaActual] = useState(initCred.cuotaActual ?? "");
