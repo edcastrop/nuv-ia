@@ -106,6 +106,11 @@ REGLAS ESTRICTAS:
 - Para tasas (TEA), devuelve el porcentaje con punto decimal (ej: "11.15").
 - Para fechas, formato YYYY-MM-DD si es posible.
 - Si encuentras múltiples valores posibles para un campo crítico (cuota, saldo, tasa), elige el más reciente / del periodo del extracto y baja la confianza a "media".
+- BENEFICIO DE COBERTURA — regla obligatoria:
+  * Si el extracto menciona "cobertura FRECH", "cobertura de tasa", "beneficio de cobertura", "subsidio a la tasa", "cobertura condicionada", "cobertura tasa de interés" o equivalente, marca tieneCobertura="si".
+  * Si NO aparece, tieneCobertura="no".
+  * Cuando tieneCobertura="si": extrae "valorCobertura" (monto mensual o saldo de cobertura en pesos, solo dígitos) y "tasaCobertura" (puntos porcentuales de la cobertura, ej "5.00" o "2.50").
+  * Cuando tieneCobertura="si" y el campo "producto" no incluya ya la frase "con Beneficio de Cobertura", AÑÁDELA al final del producto (ej: "Hipotecario en Pesos con Beneficio de Cobertura"). Esto activa la sección de cobertura en el simulador.
 - Confianza "alta" solo si el dato es 100% explícito en el extracto. "media" si requiere inferencia simple. "baja" si dudoso o ausente.`;
 
 export type ExtractoData = Record<string, string | Record<string, string>>;
