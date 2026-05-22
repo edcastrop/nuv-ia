@@ -445,6 +445,16 @@ export function ExtractoReader({ modo, onApply }: Props) {
     { key: "cuotaPagadaCliente", label: "Cuota pagada por cliente (con subsidio)" },
     { key: "cuotaConInteresSinSeguros", label: "Cuota con interés / sin seguros" },
     { key: "cuotaSinSubsidio", label: "Cuota sin subsidio (si el extracto la muestra)" },
+    { key: "valorSeguroVida", label: "Seguro vida (mensual)" },
+    { key: "valorSeguroIncendio", label: "Seguro incendio (mensual)" },
+    { key: "valorSeguroTerremoto", label: "Seguro terremoto (mensual)" },
+    { key: "valorAPagar", label: "Bancolombia · Valor a Pagar" },
+    {
+      key: "valorCuotaSinSubsidioGobierno",
+      label: "Bancolombia · Valor cuota sin subsidio Gobierno",
+    },
+    { key: "valorSubsidioGobierno", label: "Bancolombia · Valor subsidio Gobierno" },
+    { key: "valorCuotaConSubsidio", label: "Bancolombia · Valor cuota con subsidio" },
     { key: "fechaExtracto", label: "Fecha del extracto" },
   ];
   const fields =
