@@ -31,6 +31,7 @@ const tool = {
         tipoCredito: { type: "string" },
         moneda: { type: "string", enum: ["PESOS", "UVR", ""] },
         saldoCapital: { type: "string", description: "Saldo a capital en pesos. Solo número, sin símbolos." },
+        valorDesembolsado: { type: "string", description: "Valor inicialmente desembolsado del crédito, en pesos. Solo dígitos." },
         cuotaMensual: { type: "string", description: "Cuota mensual total con seguros en pesos. Solo número." },
         seguros: { type: "string", description: "Valor mensual de seguros en pesos. Solo número." },
         cuotaSinSeguros: { type: "string" },
