@@ -252,12 +252,19 @@ export function ExtractoReader({ modo, onApply }: Props) {
     { key: "saldoCapital", label: "Saldo a capital" },
     { key: "cuotaMensual", label: "Cuota mensual (con seguros)" },
     { key: "seguros", label: "Seguros mensuales" },
-    { key: "tea", label: "TEA (%)" },
+    { key: "teaCobrada", label: "Tasa de interés cobrada (%)" },
+    { key: "teaPactada", label: "Tasa de interés pactada (%) · referencia" },
+    { key: "tea", label: "Tasa usada para simulación (%)" },
     { key: "fechaExtracto", label: "Fecha del extracto" },
   ];
   const fields = modo === "uvr"
     ? [...fieldsBase, { key: "saldoUVR", label: "Saldo en UVR" }, { key: "valorUVR", label: "Valor UVR del día" }]
     : fieldsBase;
+
+  const teaCobrada = (parsed?.teaCobrada as string) ?? "";
+  const teaPactada = (parsed?.teaPactada as string) ?? "";
+  const teaUsada = (parsed?.tea as string) ?? "";
+  const soloPactada = !teaCobrada && !!teaPactada;
 
   const progressIdx = STAGES.findIndex((s) => s.id === stage);
 
@@ -493,6 +500,36 @@ export function ExtractoReader({ modo, onApply }: Props) {
                       Datos detectados por IA. Revisa y corrige antes de llenar el simulador. Tu validación es obligatoria.
                     </div>
                   </div>
+
+                  {/* Resumen de tasas */}
+                  {(teaCobrada || teaPactada || teaUsada) && (
+                    <div className="mb-4 rounded-xl px-4 py-3" style={{ background: soloPactada ? "rgba(244,162,97,0.10)" : "rgba(68,93,163,0.10)", border: `1px solid ${soloPactada ? "rgba(244,162,97,0.40)" : "rgba(68,93,163,0.30)"}` }}>
+                      <div className="grid gap-2 text-xs text-white/85 md:grid-cols-3">
+                        <div>
+                          <div className="text-[10px] uppercase tracking-wider text-white/55">Tasa cobrada detectada</div>
+                          <div className="mt-0.5 font-semibold text-white">{teaCobrada ? `${teaCobrada}%` : "— no detectada"}</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] uppercase tracking-wider text-white/55">Tasa pactada detectada</div>
+                          <div className="mt-0.5 font-semibold text-white">{teaPactada ? `${teaPactada}%` : "—"}</div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] uppercase tracking-wider text-white/55">Tasa usada para simulación</div>
+                          <div className="mt-0.5 font-semibold" style={{ color: teaUsada ? "#84B98F" : "#F4A261" }}>{teaUsada ? `${teaUsada}%` : "— pendiente"}</div>
+                        </div>
+                      </div>
+                      {soloPactada ? (
+                        <div className="mt-2 flex items-start gap-2 text-[11px] font-semibold" style={{ color: "#F4A261" }}>
+                          <AlertTriangle className="mt-0.5 h-3.5 w-3.5" />
+                          No se detectó tasa de interés cobrada. Verifique manualmente antes de simular. La tasa pactada NO se usará automáticamente.
+                        </div>
+                      ) : teaUsada ? (
+                        <div className="mt-2 text-[11px] text-white/65">
+                          Se usa la tasa de interés cobrada para la proyección.
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
 
                   <div className="grid gap-3 md:grid-cols-2">
                     {fields.map((f) => {

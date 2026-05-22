@@ -19,6 +19,14 @@ import { ResultadoFinal, type ProyeccionNuvex } from "./ResultadoFinal";
 import { SaveExpedienteButton } from "./SaveExpedienteButton";
 import type { Expediente } from "@/lib/expedientes";
 import { ExtractoReader, type ExtractoApplyPayload } from "./ExtractoReader";
+import { IntervinientesFields } from "./IntervinientesFields";
+import { CoberturaFields } from "./CoberturaFields";
+import {
+  defaultCobertura,
+  defaultIntervinientes,
+  type Cobertura,
+  type Interviniente,
+} from "./intervinientes";
 
 
 export function UVRSimulator({
@@ -37,7 +45,16 @@ export function UVRSimulator({
       ? (init.discount_data as unknown as DiscountState)
       : defaultDiscount),
   );
-  const [client, setClient] = useState<ClientData>(() => (init?.cliente_data as ClientData) ?? defaultClient);
+  const initClient = (init?.cliente_data as ClientData | undefined) ?? undefined;
+  const [client, setClient] = useState<ClientData>(() => initClient ?? defaultClient);
+  const [intervinientes, setIntervinientes] = useState<Interviniente[]>(
+    () => initClient?.intervinientes && initClient.intervinientes.length > 0
+      ? initClient.intervinientes
+      : defaultIntervinientes(initClient?.tipoProducto),
+  );
+  const [cobertura, setCobertura] = useState<Cobertura>(
+    () => initClient?.cobertura ?? defaultCobertura,
+  );
   const [valorDesembolsado, setValorDesembolsado] = useState(initCred.valorDesembolsado ?? "");
   const [saldoPesos, setSaldoPesos] = useState(initCred.saldoPesos ?? "");
   const [saldoUVR, setSaldoUVR] = useState(initCred.saldoUVR ?? "");
@@ -205,6 +222,14 @@ export function UVRSimulator({
         <SectionTitle sub="Información general del cliente y del crédito en UVR">Datos del cliente</SectionTitle>
 
         <ClientFields data={client} onChange={setClient} productos={PRODUCTOS_UVR} cuotasPendientes={cuotasPendientes} />
+
+        <div className="mt-6">
+          <IntervinientesFields producto={client.tipoProducto} data={intervinientes} onChange={setIntervinientes} />
+        </div>
+
+        <div className="mt-6">
+          <CoberturaFields producto={client.tipoProducto} data={cobertura} onChange={setCobertura} />
+        </div>
         {validaciones.map((v, i) => (
           <div key={i} className="mt-3"><Alert tone="error">{v}</Alert></div>
         ))}
@@ -330,7 +355,7 @@ export function UVRSimulator({
                 onSaved={onSaved}
                 payload={{
                   modo: "uvr",
-                  cliente: client,
+                  cliente: { ...client, intervinientes, cobertura },
                   credito: { valorDesembolsado, saldoPesos, saldoUVR, valorUVR, cuotaActualPesos, seguros, teaCobrada, variacionUVR, nuevaCuotaManual },
                   propuesta: {
                     nuevaCuota: recomendada.nuevaCuota,
@@ -378,7 +403,7 @@ export function UVRSimulator({
             return (
               <PrintDocument
                 mode="uvr"
-                client={client}
+                client={{ ...client, intervinientes, cobertura }}
                 cuotasPendientes={cuotasPendientes}
                 metrics={metrics}
                 uvrPropuestas={calc!.propuestas}
@@ -434,7 +459,7 @@ export function UVRSimulator({
             return (
               <ResultadoFinal
                 mode="uvr"
-                client={client}
+                client={{ ...client, intervinientes, cobertura }}
                 proyeccion={proyeccion}
                 cuotasPendientes={cuotasPendientes}
                 cuotaActualConSeguro={input.cuotaActualPesos}

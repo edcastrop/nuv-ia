@@ -1,5 +1,6 @@
 import { BANCOS } from "./constants";
 import { SelectField, TextField } from "./ui";
+import type { Cobertura, Interviniente } from "./intervinientes";
 
 export interface ClientData {
   nombre: string;
@@ -11,6 +12,9 @@ export interface ClientData {
   plazoInicial: string;
   cuotasPagadas: string;
   porcentajeHonorarios: string;
+  // Aditivos opcionales (persistidos en cliente_data jsonb)
+  intervinientes?: Interviniente[];
+  cobertura?: Cobertura;
 }
 
 export function ClientFields({

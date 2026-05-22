@@ -20,6 +20,14 @@ import { ResultadoFinal, type ProyeccionNuvex } from "./ResultadoFinal";
 import { SaveExpedienteButton } from "./SaveExpedienteButton";
 import type { Expediente } from "@/lib/expedientes";
 import { ExtractoReader, type ExtractoApplyPayload } from "./ExtractoReader";
+import { IntervinientesFields } from "./IntervinientesFields";
+import { CoberturaFields } from "./CoberturaFields";
+import {
+  defaultCobertura,
+  defaultIntervinientes,
+  type Cobertura,
+  type Interviniente,
+} from "./intervinientes";
 
 
 export function PesosSimulator({
@@ -38,7 +46,16 @@ export function PesosSimulator({
       ? (init.discount_data as unknown as DiscountState)
       : defaultDiscount),
   );
-  const [client, setClient] = useState<ClientData>(() => (init?.cliente_data as ClientData) ?? defaultClient);
+  const initClient = (init?.cliente_data as ClientData | undefined) ?? undefined;
+  const [client, setClient] = useState<ClientData>(() => initClient ?? defaultClient);
+  const [intervinientes, setIntervinientes] = useState<Interviniente[]>(
+    () => initClient?.intervinientes && initClient.intervinientes.length > 0
+      ? initClient.intervinientes
+      : defaultIntervinientes(initClient?.tipoProducto),
+  );
+  const [cobertura, setCobertura] = useState<Cobertura>(
+    () => initClient?.cobertura ?? defaultCobertura,
+  );
   const [valorDesembolsado, setValorDesembolsado] = useState(initCred.valorDesembolsado ?? "");
   const [saldoCapital, setSaldoCapital] = useState(initCred.saldoCapital ?? "");
   const [cuotaActual, setCuotaActual] = useState(initCred.cuotaActual ?? "");
@@ -192,6 +209,14 @@ export function PesosSimulator({
 
         <ClientFields data={client} onChange={setClient} productos={PRODUCTOS_PESOS} cuotasPendientes={cuotasPendientes} />
 
+        <div className="mt-6">
+          <IntervinientesFields producto={client.tipoProducto} data={intervinientes} onChange={setIntervinientes} />
+        </div>
+
+        <div className="mt-6">
+          <CoberturaFields producto={client.tipoProducto} data={cobertura} onChange={setCobertura} />
+        </div>
+
         {validaciones.map((v, i) => (
           <div key={i} className="mt-3"><Alert tone="error">{v}</Alert></div>
         ))}
@@ -314,7 +339,7 @@ export function PesosSimulator({
                 onSaved={onSaved}
                 payload={{
                   modo: "pesos",
-                  cliente: client,
+                  cliente: { ...client, intervinientes, cobertura },
                   credito: { valorDesembolsado, saldoCapital, cuotaActual, seguros, tea, nuevaCuotaManual },
                   propuesta: {
                     nuevaCuota: recomendada.nuevaCuota,
@@ -363,7 +388,7 @@ export function PesosSimulator({
             return (
               <PrintDocument
                 mode="pesos"
-                client={client}
+                client={{ ...client, intervinientes, cobertura }}
                 cuotasPendientes={cuotasPendientes}
                 metrics={metrics}
                 pesosPropuestas={calc!.propuestas}
@@ -419,7 +444,7 @@ export function PesosSimulator({
             return (
               <ResultadoFinal
                 mode="pesos"
-                client={client}
+                client={{ ...client, intervinientes, cobertura }}
                 proyeccion={proyeccion}
                 cuotasPendientes={cuotasPendientes}
                 cuotaActualConSeguro={input.cuotaActual}

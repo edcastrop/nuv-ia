@@ -1,106 +1,77 @@
+# Ajustes: Intervinientes, Cobertura, Cuenta de Cobro y Tasa Cobrada
 
-# Gestión de Casos NUVEX
+Cambios solo aditivos. No se tocan fórmulas financieras ni el diseño base.
 
-## 1. Backend (Lovable Cloud)
+## 1. Modelo de datos compartido
 
-**Migración SQL:**
+Crear `src/components/nuvex/intervinientes.ts`:
+- Tipo `Interviniente { rol, nombreCompleto, cedula, lugarExpedicionCedula, direccion }`.
+- Helpers: `isLeasing(producto)`, `rolTitular(producto)`, `rolCotitular(producto)` (devuelven "Titular"/"Cotitular" o "Locatario"/"Colocatario").
+- `defaultIntervinientes()` con 1 titular vacío.
+- Tipo `Cobertura { activo, valorCobertura, tasaCobertura }` + `tieneCobertura(producto)`.
 
-- `profiles` (id uuid PK = auth.users.id, nombre, email, created_at)
-  - Trigger `on_auth_user_created` que inserta perfil al registrarse.
-- `app_role` enum: `admin`, `asesor`
-- `user_roles` (user_id, role) + función `has_role(uuid, app_role) security definer`
-- `expediente_estado` enum: `SIMULADO`, `FIRMADO`, `RADICADO`, `APROBADO`, `FACTURADO`, `PAGADO`
-- `expedientes`:
-  - id uuid PK, asesor_id uuid (auth.users), modo ('pesos'|'uvr'),
-  - cliente_nombre, cedula, banco, numero_credito, producto,
-  - cliente_data jsonb (todos los campos de ClientData),
-  - credito_data jsonb (inputs del simulador),
-  - propuesta_data jsonb (recomendada efectiva: cuota, plazo, ahorros, honorarios, manual o auto),
-  - honorarios_base numeric, honorarios_final numeric, descuento numeric,
-  - estado expediente_estado default 'SIMULADO',
-  - fecha_simulacion date default current_date,
-  - aprobado_data jsonb null (datos del banco cuando se registra resultado final),
-  - acertividad_global numeric null,
-  - created_at, updated_at
-- `expediente_historial` (id, expediente_id FK, estado_anterior, estado_nuevo, user_id, nota, created_at) — para auditoría.
-- RLS: cada asesor solo ve sus expedientes (`asesor_id = auth.uid()`); admin ve todos vía `has_role`.
+## 2. Componente UI
 
-## 2. Autenticación
+Crear `src/components/nuvex/IntervinientesFields.tsx`:
+- Sección "DATOS DE LOS INTERVINIENTES" (renombrada dinámicamente si es leasing).
+- Bloque Titular/Locatario (siempre 1).
+- Lista de cotitulares/colocatarios con botón "+ Agregar cotitular/colocatario" y botón eliminar por fila.
+- Checkbox por cotitular "La dirección es la misma del titular" → copia dirección.
+- Campos: Nombre, Cédula, Lugar de expedición, Dirección.
 
-- Página `/login` (email+password + Google).
-- Layout `_authenticated.tsx` que redirige a `/login` si no hay sesión.
-- Hook `useAuth` con `onAuthStateChange` + `getSession`.
-- Configurar Google OAuth con `configure_social_auth`.
+Crear `src/components/nuvex/CoberturaFields.tsx`:
+- Mostrado solo si `tieneCobertura(producto)`.
+- Campos opcionales: Valor de cobertura, Tasa de cobertura.
 
-## 3. UI / Rutas
+## 3. Simuladores (Pesos y UVR)
 
-```
-/login                        público
-/_authenticated
-  /                           selector de modo (actual)
-  /casos                      lista + buscador
-  /casos/$id                  detalle: simulador precargado + estados + acciones
-  /dashboard                  Dashboard gerencial
-```
+En `PesosSimulator.tsx` y `UVRSimulator.tsx`:
+- Añadir state `intervinientes` y `cobertura`.
+- Renderizar `<IntervinientesFields>` y `<CoberturaFields>` debajo de `ClientFields`.
+- Hidratar desde `initialExpediente.cliente_data.intervinientes` y `.cobertura` al cargar.
+- Incluir ambos en el payload guardado (cliente_data).
+- Pasar a `PrintDocument` y `ResultadoFinal`.
 
-Buscador: nombre, cédula, # crédito, banco, estado (filtros combinables).
+## 4. Persistencia
 
-## 4. Integración con simuladores
+Sin migración: ambos viven dentro de `cliente_data` jsonb (ya existente). `expedientes.ts` no requiere cambios de schema; solo asegurar que `cliente_data` se serializa tal cual.
 
-- Botón **"Guardar expediente"** en `PesosSimulator` y `UVRSimulator` → crea/actualiza fila en `expedientes`.
-- Al abrir `/casos/$id`, los simuladores se hidratan desde `cliente_data` + `credito_data` + `propuesta_data`.
-- `ResultadoFinal` lee/escribe `aprobado_data` y `acertividad_global` directamente del expediente; ya no se reingresa nada.
-- Selector de estado (botón con dropdown) actualiza `estado` y agrega fila en `expediente_historial`.
+## 5. PrintDocument (propuesta PDF)
 
-## 5. Dashboard Gerencial
+Agregar sección "DATOS DE LOS INTERVINIENTES" con etiquetas dinámicas (Titular/Locatario, Cotitular/Colocatario) listando los campos. Si `cobertura.activo`, agregar bloque "BENEFICIO DE COBERTURA" con valor y tasa.
 
-KPIs (filtrables por rango de fecha y asesor si admin):
-- Total expedientes por estado (funnel SIMULADO → PAGADO).
-- Tasa de aprobación = APROBADO / RADICADO.
-- Acertividad promedio (de los con aprobado_data).
-- Honorarios facturados, pagados, pipeline.
-- Top asesores (solo admin).
+## 6. ResultadoFinal
 
-Gráficos con `recharts` (ya disponible).
+Mostrar mismos bloques en la vista del resultado y en el certificado.
 
-## 6. Server Functions
+## 7. Cuenta de cobro
 
-`src/lib/expedientes.functions.ts` — todo protegido con `requireSupabaseAuth`:
-- `listExpedientes({ search, estado })`
-- `getExpediente({ id })`
-- `upsertExpediente(payload)`
-- `updateEstado({ id, estado, nota })`
-- `setAprobado({ id, aprobado, acertividad })`
-- `getDashboardMetrics({ from, to })`
+Buscar el componente/sección de cuenta de cobro (probablemente en `ResultadoFinal.tsx` o `PrintDocument.tsx`). Reemplazar el concepto por:
 
-Verificar `attachSupabaseAuth` en `src/start.ts`.
+> "Servicio Tecnológico Financiero prestado por NUVEX Finanzas Inteligentes, asociado al análisis, proyección, gestión tecnológica y acompañamiento financiero del proceso de optimización del crédito hipotecario o leasing habitacional."
 
-## 7. Archivos a crear
+Título corto: "SERVICIO TECNOLÓGICO FINANCIERO".
 
-- `src/lib/expedientes.functions.ts`
-- `src/lib/expedientes.types.ts`
-- `src/hooks/useAuth.ts`
-- `src/routes/login.tsx`
-- `src/routes/_authenticated.tsx`
-- `src/routes/_authenticated/index.tsx` (mover home actual)
-- `src/routes/_authenticated/casos.tsx`
-- `src/routes/_authenticated/casos.$id.tsx`
-- `src/routes/_authenticated/dashboard.tsx`
-- `src/components/nuvex/CasosList.tsx`
-- `src/components/nuvex/CasoEstadoBadge.tsx`
-- `src/components/nuvex/DashboardGerencial.tsx`
-- `src/components/nuvex/SaveExpedienteButton.tsx`
+## 8. Lectura de extractos — tasa cobrada vs pactada
 
-## 8. Modificaciones
+En `src/lib/extracto.functions.ts`:
+- Añadir al schema: `teaCobrada`, `teaPactada` (ambas con confianza).
+- Mantener `tea` como tasa oficial pero asignarla solo si existe `teaCobrada`.
+- Actualizar `SYSTEM_PROMPT`: "Identifica explícitamente 'tasa de interés cobrada' y 'tasa de interés pactada'. NUNCA uses la pactada como `tea`. Si solo aparece pactada, deja `tea` vacío."
 
-- `src/components/nuvex/PesosSimulator.tsx`, `UVRSimulator.tsx`: aceptar prop `initialExpediente`, agregar botón guardar.
-- `src/components/nuvex/ResultadoFinal.tsx`: persistir aprobado en expediente cuando hay `expedienteId`.
-- `src/routes/index.tsx`: eliminado/reducido — la home queda en `_authenticated/index.tsx`.
-- `src/start.ts`: añadir `attachSupabaseAuth` a `functionMiddleware`.
+En `ExtractoReader.tsx`:
+- Mostrar ambas tasas detectadas y la tasa usada.
+- Etiqueta: "Se usa la tasa de interés cobrada para la proyección."
+- Si solo hay pactada: alerta "No se detectó tasa de interés cobrada. Verifique manualmente antes de simular." y no auto-llenar `tea`.
 
-## Detalles técnicos
+## 9. Detalles técnicos
 
-- Cálculos financieros se mantienen en cliente; sólo persistimos resultado serializado.
-- Honorarios mínimos ($2M base / $1.8M final) ya se aplican en `lib/finance.ts` y `DiscountModule`.
-- PDF se regenera en cliente al abrir el expediente (no se almacena).
-- Acertividad guardada como número 0–100; el desglose se recalcula desde `propuesta_data` vs `aprobado_data`.
+- Persistencia: `cliente_data.intervinientes` y `cliente_data.cobertura` (jsonb existente, sin migración).
+- Etiquetas dinámicas vía helper `rolTitular(producto)` reutilizado en todos los lugares.
+- No cambiar fórmulas: cobertura es solo display+storage.
+- Mantener compat hacia atrás: si `intervinientes` no existe en expedientes viejos, derivar uno desde `cliente.nombre`/`cliente.cedula`.
+
+## Archivos a tocar
+
+- Crear: `intervinientes.ts`, `IntervinientesFields.tsx`, `CoberturaFields.tsx`
+- Editar: `PesosSimulator.tsx`, `UVRSimulator.tsx`, `PrintDocument.tsx`, `ResultadoFinal.tsx`, `extracto.functions.ts`, `ExtractoReader.tsx`

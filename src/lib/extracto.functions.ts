@@ -37,7 +37,9 @@ const tool = {
         plazoInicial: { type: "string", description: "Plazo total inicial aprobado en meses." },
         cuotasPagadas: { type: "string" },
         cuotasPendientes: { type: "string" },
-        tea: { type: "string", description: "Tasa Efectiva Anual en %, por ejemplo 11.15" },
+        tea: { type: "string", description: "Tasa oficial para la simulación: SOLO la TASA DE INTERÉS COBRADA. Si no aparece explícitamente, deja vacío." },
+        teaCobrada: { type: "string", description: "Tasa de interés cobrada (la efectivamente aplicada en el periodo)." },
+        teaPactada: { type: "string", description: "Tasa de interés pactada (referencia contractual). NO usar para simulación." },
         tasaMensual: { type: "string" },
         interesCuota: { type: "string" },
         capitalCuota: { type: "string" },
@@ -59,12 +61,14 @@ const tool = {
             plazoInicial: { type: "string", enum: ["alta", "media", "baja"] },
             cuotasPagadas: { type: "string", enum: ["alta", "media", "baja"] },
             tea: { type: "string", enum: ["alta", "media", "baja"] },
+            teaCobrada: { type: "string", enum: ["alta", "media", "baja"] },
+            teaPactada: { type: "string", enum: ["alta", "media", "baja"] },
             valorUVR: { type: "string", enum: ["alta", "media", "baja"] },
             saldoUVR: { type: "string", enum: ["alta", "media", "baja"] },
           },
           required: [
             "banco","cliente","cedula","numeroCredito","producto","moneda",
-            "saldoCapital","cuotaMensual","seguros","plazoInicial","cuotasPagadas","tea","valorUVR","saldoUVR",
+            "saldoCapital","cuotaMensual","seguros","plazoInicial","cuotasPagadas","tea","teaCobrada","teaPactada","valorUVR","saldoUVR",
           ],
           additionalProperties: false,
         },
@@ -72,7 +76,7 @@ const tool = {
       required: [
         "banco","cliente","cedula","numeroCredito","producto","tipoCredito","moneda",
         "saldoCapital","cuotaMensual","seguros","cuotaSinSeguros","plazoInicial",
-        "cuotasPagadas","cuotasPendientes","tea","tasaMensual","interesCuota","capitalCuota",
+        "cuotasPagadas","cuotasPendientes","tea","teaCobrada","teaPactada","tasaMensual","interesCuota","capitalCuota",
         "valorUVR","saldoUVR","fechaExtracto","confianza",
       ],
       additionalProperties: false,
@@ -88,6 +92,12 @@ REGLAS ESTRICTAS:
 - NO inventes datos. Si un campo no aparece claramente, devuélvelo como cadena vacía "" y marca la confianza como "baja".
 - Marca la moneda como "UVR" si el extracto referencia UVR/saldo en UVR/valor UVR, de lo contrario "PESOS".
 - Para montos en pesos, devuelve solo dígitos sin puntos, comas ni símbolos (ej: "221903943").
+- TASAS DE INTERÉS — regla obligatoria:
+  * Identifica explícitamente la "tasa de interés cobrada" (también llamada "tasa cobrada", "tasa aplicada", "tasa efectivamente aplicada") y la "tasa de interés pactada" (también "tasa pactada", "tasa contractual").
+  * El campo "teaCobrada" SOLO se llena cuando aparece textualmente la tasa cobrada.
+  * El campo "teaPactada" SOLO se llena cuando aparece textualmente la tasa pactada.
+  * El campo "tea" (tasa oficial para simulación) debe ser EXACTAMENTE igual a "teaCobrada". Si no hay tasa cobrada en el extracto, "tea" DEBE quedar vacío "" (NUNCA uses la tasa pactada como "tea").
+  * Si el extracto solo trae una tasa sin distinción explícita y es claramente la tasa vigente del periodo, úsala como "teaCobrada".
 - Para tasas (TEA), devuelve el porcentaje con punto decimal (ej: "11.15").
 - Para fechas, formato YYYY-MM-DD si es posible.
 - Si encuentras múltiples valores posibles para un campo crítico (cuota, saldo, tasa), elige el más reciente / del periodo del extracto y baja la confianza a "media".
