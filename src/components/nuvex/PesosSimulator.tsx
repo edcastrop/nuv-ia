@@ -213,6 +213,8 @@ export function PesosSimulator({
               tasaCobertura: p.cobertura.tasaCobertura || "",
               tipoBeneficio: p.cobertura.tipoBeneficio || "",
               cuotaPagadaCliente: p.cobertura.cuotaPagadaCliente || "",
+              cuotaConInteresSinSeguros: p.cobertura.cuotaConInteresSinSeguros || "",
+              segurosMensuales: p.cobertura.segurosMensuales || p.pesos?.seguros || "",
               cuotaBaseSimulacion: p.cobertura.cuotaBaseSimulacion || "",
               requiereVerificacion: !!p.cobertura.requiereVerificacion,
             });
@@ -372,7 +374,7 @@ export function PesosSimulator({
                 payload={{
                   modo: "pesos",
                   cliente: { ...client, intervinientes, cobertura },
-                  credito: { valorDesembolsado, saldoCapital, cuotaActual, seguros, tea, nuevaCuotaManual },
+                  credito: { valorDesembolsado, saldoCapital, cuotaActual, seguros, tea, nuevaCuotaManual, cuotaPagadaCliente: cobertura.cuotaPagadaCliente || "", valorBeneficio: cobertura.valorCobertura || "", tipoBeneficio: cobertura.tipoBeneficio || "", cuotaConInteresSinSeguros: cobertura.cuotaConInteresSinSeguros || "", cuotaBaseSimulacion: cobertura.cuotaBaseSimulacion || cuotaActual, segurosMensuales: cobertura.segurosMensuales || seguros, tieneBeneficio: cobertura.activo ? "si" : "no" },
                   propuesta: {
                     nuevaCuota: recomendada.nuevaCuota,
                     nuevoPlazo: recomendada.nuevoPlazo,
