@@ -252,12 +252,19 @@ export function ExtractoReader({ modo, onApply }: Props) {
     { key: "saldoCapital", label: "Saldo a capital" },
     { key: "cuotaMensual", label: "Cuota mensual (con seguros)" },
     { key: "seguros", label: "Seguros mensuales" },
-    { key: "tea", label: "TEA (%)" },
+    { key: "teaCobrada", label: "Tasa de interés cobrada (%)" },
+    { key: "teaPactada", label: "Tasa de interés pactada (%) · referencia" },
+    { key: "tea", label: "Tasa usada para simulación (%)" },
     { key: "fechaExtracto", label: "Fecha del extracto" },
   ];
   const fields = modo === "uvr"
     ? [...fieldsBase, { key: "saldoUVR", label: "Saldo en UVR" }, { key: "valorUVR", label: "Valor UVR del día" }]
     : fieldsBase;
+
+  const teaCobrada = (parsed?.teaCobrada as string) ?? "";
+  const teaPactada = (parsed?.teaPactada as string) ?? "";
+  const teaUsada = (parsed?.tea as string) ?? "";
+  const soloPactada = !teaCobrada && !!teaPactada;
 
   const progressIdx = STAGES.findIndex((s) => s.id === stage);
 
