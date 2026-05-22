@@ -3,7 +3,7 @@ import type { ClientData } from "./ClientFields";
 import { formatCOP, formatNumber } from "../../lib/format";
 import type { PesosPropuesta, UVRPropuesta } from "../../lib/finance";
 import { getVecesStyle } from "./ScenarioTable";
-import { isLeasing, rolCotitular, rolTitular } from "./intervinientes";
+import { isLeasing } from "./intervinientes";
 
 interface MetricItem { label: string; value: string }
 
