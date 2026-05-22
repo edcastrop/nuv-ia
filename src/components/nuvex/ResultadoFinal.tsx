@@ -317,7 +317,31 @@ export function ResultadoFinal({
               >
                 Generar cuenta de cobro
               </button>
+              <PazYSalvo
+                client={client}
+                enabled={estado === "PAGADO" || honorariosPagadosManual}
+                data={{
+                  fechaAprobacion: aprob.fechaAprobacion,
+                  fechaPago: fechaPagoHonorarios || new Date().toISOString().slice(0, 10),
+                  honorariosPagados: aprobado.honorariosFinales,
+                  ahorroLogrado: aprobado.ahorroTotal,
+                  añosEliminados: aprobado.añosEliminados,
+                }}
+              />
             </div>
+
+            {estado !== "PAGADO" && (
+              <div className="mt-3 flex justify-end">
+                <label className="inline-flex items-center gap-2 text-xs text-[#242424]/70 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={honorariosPagadosManual}
+                    onChange={(e) => setHonorariosPagadosManual(e.target.checked)}
+                  />
+                  Marcar honorarios pagados (habilita Paz y Salvo)
+                </label>
+              </div>
+            )}
           </>
         )}
       </Card>
