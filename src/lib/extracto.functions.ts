@@ -443,53 +443,147 @@ export const extractStatement = createServerFn({ method: "POST" })
         parsed.tea = parsed.teaCobrada;
       }
 
-      // CUOTA BASE DE SIMULACIÓN — regla obligatoria:
-      // cuotaConInteresSinSeguros + beneficioAplicado + totalSeguros.
-      // Nunca usar únicamente cuotaPagadaCliente + beneficio.
-      const tieneCob =
+      // ===== Mapeo determinístico por banco =====
+      const bancoLower = (typeof parsed.banco === "string" ? parsed.banco : "").toLowerCase();
+      const esBancolombia = /bancolombia/.test(bancoLower);
+
+      let tieneCob =
         (typeof parsed.tieneCobertura === "string" &&
           parsed.tieneCobertura.toLowerCase() === "si") ||
         monto("valorCobertura") > 0 ||
-        num("tasaCobertura") > 0;
+        num("tasaCobertura") > 0 ||
+        monto("valorSubsidioGobierno") > 0;
 
-      const cuotaCliente = monto("cuotaPagadaCliente");
-      const valorBenef = monto("valorCobertura");
+      let cuotaCliente = monto("cuotaPagadaCliente");
+      let valorBenef = monto("valorCobertura");
       const cuotaMensual = monto("cuotaMensual");
-      const segurosNum = monto("seguros");
-      const cuotaConInteresSinSeguros =
+      let segurosNum = monto("seguros");
+      let cuotaConInteresSinSeguros =
         monto("cuotaConInteresSinSeguros") || monto("cuotaSinSeguros");
-      if (cuotaConInteresSinSeguros > 0 && !parsed.cuotaConInteresSinSeguros) {
-        parsed.cuotaConInteresSinSeguros = formatMontoExtracto(cuotaConInteresSinSeguros);
-      }
+      let cuotaBase = 0;
+      let requiereVerificacion = false;
+      const errores: string[] = [];
+      let mapeoBanco: "bancolombia" | "generico" = "generico";
 
-      const resultadoCuotaBase = calcularCuotaBaseSimulacion({
-        cuotaConInteresSinSeguros,
-        beneficioAplicado: valorBenef,
-        totalSeguros: segurosNum,
-      });
-      let cuotaBase = resultadoCuotaBase.cuotaBaseSimulacion;
-      let requiereVerificacion = resultadoCuotaBase.requiereVerificacion;
+      if (esBancolombia) {
+        // ----- BANCOLOMBIA: mapeo literal por campos del extracto -----
+        mapeoBanco = "bancolombia";
+        const valorAPagar = monto("valorAPagar");
+        const sVida = monto("valorSeguroVida");
+        const sIncendio = monto("valorSeguroIncendio");
+        const sTerremoto = monto("valorSeguroTerremoto");
+        const cuotaSinSubGob = monto("valorCuotaSinSubsidioGobierno");
+        const subsidioGob = monto("valorSubsidioGobierno");
+        const cuotaConSub = monto("valorCuotaConSubsidio");
+        const segurosSum = sVida + sIncendio + sTerremoto;
 
-      if (!tieneCob && cuotaConInteresSinSeguros > 0) {
-        cuotaBase = cuotaConInteresSinSeguros + segurosNum;
-        requiereVerificacion = false;
-      } else if (!tieneCob && cuotaBase <= 0) {
-        cuotaBase = cuotaMensual;
-        requiereVerificacion = false;
+        if (valorAPagar > 0) {
+          cuotaCliente = valorAPagar;
+          parsed.cuotaPagadaCliente = formatMontoExtracto(valorAPagar);
+        } else if (cuotaConSub > 0) {
+          cuotaCliente = cuotaConSub;
+          parsed.cuotaPagadaCliente = formatMontoExtracto(cuotaConSub);
+        }
+
+        if (segurosSum > 0) {
+          segurosNum = segurosSum;
+          parsed.seguros = formatMontoExtracto(segurosSum);
+        }
+
+        if (subsidioGob > 0) {
+          valorBenef = subsidioGob;
+          parsed.valorCobertura = formatMontoExtracto(subsidioGob);
+          tieneCob = true;
+          if (!parsed.tipoBeneficio) parsed.tipoBeneficio = "Subsidio Gobierno";
+          parsed.tieneCobertura = "si";
+        }
+
+        if (cuotaConInteresSinSeguros <= 0) {
+          // El "Valor de la cuota sin seguros y sin comisiones" debió quedar en cuotaSinSeguros/cuotaConInteresSinSeguros.
+          // Si la IA no lo recuperó pero tenemos los demás, no inventamos: dejamos vacío.
+        }
+
+        // Cuota base obligatoria = Valor cuota sin subsidio Gobierno + segurosMensuales
+        if (cuotaSinSubGob > 0 && segurosNum > 0) {
+          cuotaBase = cuotaSinSubGob + segurosNum;
+        } else if (cuotaSinSubGob > 0) {
+          cuotaBase = cuotaSinSubGob;
+          errores.push(
+            "No se detectaron los seguros (vida, incendio, terremoto). Revise manualmente.",
+          );
+        } else {
+          requiereVerificacion = true;
+          errores.push(
+            "No se encontró 'Valor cuota sin subsidio Gobierno' en el extracto Bancolombia. Revise manualmente.",
+          );
+        }
+
+        // ===== Validaciones duras Bancolombia =====
+        if (cuotaConInteresSinSeguros > 0 && segurosNum > 0) {
+          if (Math.abs(segurosNum - cuotaConInteresSinSeguros) < 1) {
+            errores.push(
+              "Seguros mensuales = Cuota sin seguros. Lectura inconsistente, revise valores.",
+            );
+          }
+          if (segurosNum > cuotaConInteresSinSeguros * 0.3) {
+            errores.push(
+              "Seguros mensuales > 30% de la cuota sin seguros. Lectura inconsistente.",
+            );
+          }
+        }
+        if (cuotaBase > 0 && cuotaCliente > 0) {
+          const limiteSuperior = cuotaCliente + valorBenef + segurosNum + 10;
+          if (cuotaBase > limiteSuperior) {
+            errores.push(
+              "Cuota base de simulación > cuota pagada + beneficio + seguros. Revise valores.",
+            );
+          }
+          if (cuotaBase < cuotaCliente) {
+            errores.push(
+              "Cuota base de simulación < cuota pagada por cliente. Lectura inconsistente.",
+            );
+          }
+        }
+      } else {
+        // ----- Genérico (otros bancos) -----
+        if (cuotaConInteresSinSeguros > 0 && !parsed.cuotaConInteresSinSeguros) {
+          parsed.cuotaConInteresSinSeguros = formatMontoExtracto(cuotaConInteresSinSeguros);
+        }
+        const r = calcularCuotaBaseSimulacion({
+          cuotaConInteresSinSeguros,
+          beneficioAplicado: valorBenef,
+          totalSeguros: segurosNum,
+        });
+        cuotaBase = r.cuotaBaseSimulacion;
+        requiereVerificacion = r.requiereVerificacion;
+
+        if (!tieneCob && cuotaConInteresSinSeguros > 0) {
+          cuotaBase = cuotaConInteresSinSeguros + segurosNum;
+          requiereVerificacion = false;
+        } else if (!tieneCob && cuotaBase <= 0) {
+          cuotaBase = cuotaMensual;
+          requiereVerificacion = false;
+        }
+
+        if (tieneCob && cuotaBase <= 0) {
+          errores.push(
+            "Este banco aún no tiene mapeo validado para beneficios/coberturas. Revise manualmente la cuota base de simulación.",
+          );
+          requiereVerificacion = true;
+        }
       }
 
       parsed.cuotaBaseSimulacion = cuotaBase > 0 ? formatMontoExtracto(cuotaBase) : "";
+      parsed.mapeoBanco = mapeoBanco;
       parsed.requiereVerificacionBeneficio = requiereVerificacion ? "si" : "no";
       parsed.alertaCuotaBase = requiereVerificacion
-        ? resultadoCuotaBase.alerta || ALERTA_CUOTA_CON_INTERES_SIN_SEGUROS
+        ? errores[0] || ALERTA_CUOTA_CON_INTERES_SIN_SEGUROS
+        : "";
+      parsed.erroresValidacion = errores.length
+        ? errores.join("\n")
         : "";
 
-      // Cuando hay beneficio: la "Cuota mensual (con seguros)" mostrada debe
-      // reflejar la cuota REAL del crédito = Capital + Interés + Seguros
-      // (sin descontar el beneficio/subsidio). Si el extracto trajo como
-      // cuotaMensual la cuota reducida del cliente, la reemplazamos por la
-      // cuota base de simulación y conservamos el valor original en
-      // cuotaPagadaCliente para trazabilidad.
+      // Cuota mensual mostrada con seguros
       if (tieneCob && cuotaBase > 0) {
         if (cuotaMensual > 0 && cuotaMensual < cuotaBase * 0.98) {
           if (!cuotaCliente) {
