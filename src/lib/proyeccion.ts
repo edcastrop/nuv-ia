@@ -64,7 +64,11 @@ function addMonths(d: Date, n: number): Date {
 }
 
 export function freshActiva(fresh: CoberturaFresh, cuotaIdx0: number): boolean {
-  if (!fresh.activo || fresh.valorMensual <= 0) return false;
+  // La cobertura se considera vigente mientras haya cuotas Fresh pendientes,
+  // aunque el analista no haya digitado el valor mensual. Esto garantiza que
+  // la columna Fresh y la finalización del beneficio se reflejen en la tabla.
+  if (!fresh.activo) return false;
+  if (fresh.cuotasPendientes <= 0) return false;
   return cuotaIdx0 < Math.max(0, fresh.cuotasPendientes);
 }
 

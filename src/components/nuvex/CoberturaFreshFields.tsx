@@ -10,7 +10,8 @@ interface Props {
 const AZUL = "#445DA3";
 
 export function CoberturaFreshFields({ data, onChange }: Props) {
-  // Mantener cuotasPendientes derivado cuando el usuario edita totales/pagadas
+  // Recalcular cuotasPendientes SOLO si totales o pagadas cambian.
+  // Esto evita pisar una edición manual del campo "pendientes".
   useEffect(() => {
     const pend = Math.max(0, (data.cuotasTotales || 0) - (data.cuotasPagadas || 0));
     if (pend !== data.cuotasPendientes) {
@@ -19,8 +20,10 @@ export function CoberturaFreshFields({ data, onChange }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.cuotasTotales, data.cuotasPagadas]);
 
+  // Cualquier edición fuera del switch activa automáticamente la cobertura,
+  // para que las proyecciones la tengan en cuenta sin pasos extra.
   const set = <K extends keyof CoberturaFresh>(k: K, v: CoberturaFresh[K]) =>
-    onChange({ ...data, [k]: v });
+    onChange({ ...data, [k]: v, activo: true });
 
   return (
     <div
