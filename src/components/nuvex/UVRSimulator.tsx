@@ -212,6 +212,8 @@ export function UVRSimulator({
           }));
           if (p.uvr?.saldoUVR) setSaldoUVR(p.uvr.saldoUVR);
           if (p.uvr?.valorUVR) setValorUVR(p.uvr.valorUVR);
+          if (p.uvr?.saldoPesos) setSaldoPesos(p.uvr.saldoPesos);
+          if (p.uvr?.valorDesembolsado) setValorDesembolsado(p.uvr.valorDesembolsado);
           if (p.uvr?.cuotaActualPesos) setCuotaActualPesos(p.uvr.cuotaActualPesos);
           if (p.uvr?.seguros) setSeguros(p.uvr.seguros);
           if (p.uvr?.teaCobrada) setTeaCobrada(p.uvr.teaCobrada);
