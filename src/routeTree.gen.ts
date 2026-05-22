@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedProyeccionRouteImport } from './routes/_authenticated/proyeccion'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAcademiaRouteImport } from './routes/_authenticated/academia'
 import { Route as AuthenticatedCasosIndexRouteImport } from './routes/_authenticated/casos.index'
@@ -29,6 +30,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedProyeccionRoute = AuthenticatedProyeccionRouteImport.update({
+  id: '/proyeccion',
+  path: '/proyeccion',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/academia': typeof AuthenticatedAcademiaRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
   '/casos/': typeof AuthenticatedCasosIndexRoute
 }
@@ -64,6 +71,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/academia': typeof AuthenticatedAcademiaRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/': typeof AuthenticatedIndexRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
   '/casos': typeof AuthenticatedCasosIndexRoute
@@ -74,6 +82,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_authenticated/academia': typeof AuthenticatedAcademiaRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/proyeccion': typeof AuthenticatedProyeccionRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/casos/$id': typeof AuthenticatedCasosIdRoute
   '/_authenticated/casos/': typeof AuthenticatedCasosIndexRoute
@@ -85,16 +94,25 @@ export interface FileRouteTypes {
     | '/login'
     | '/academia'
     | '/dashboard'
+    | '/proyeccion'
     | '/casos/$id'
     | '/casos/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/academia' | '/dashboard' | '/' | '/casos/$id' | '/casos'
+  to:
+    | '/login'
+    | '/academia'
+    | '/dashboard'
+    | '/proyeccion'
+    | '/'
+    | '/casos/$id'
+    | '/casos'
   id:
     | '__root__'
     | '/_authenticated'
     | '/login'
     | '/_authenticated/academia'
     | '/_authenticated/dashboard'
+    | '/_authenticated/proyeccion'
     | '/_authenticated/'
     | '/_authenticated/casos/$id'
     | '/_authenticated/casos/'
@@ -126,6 +144,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/proyeccion': {
+      id: '/_authenticated/proyeccion'
+      path: '/proyeccion'
+      fullPath: '/proyeccion'
+      preLoaderRoute: typeof AuthenticatedProyeccionRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/dashboard': {
@@ -162,6 +187,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteChildren {
   AuthenticatedAcademiaRoute: typeof AuthenticatedAcademiaRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedProyeccionRoute: typeof AuthenticatedProyeccionRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedCasosIdRoute: typeof AuthenticatedCasosIdRoute
   AuthenticatedCasosIndexRoute: typeof AuthenticatedCasosIndexRoute
@@ -170,6 +196,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAcademiaRoute: AuthenticatedAcademiaRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedProyeccionRoute: AuthenticatedProyeccionRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedCasosIdRoute: AuthenticatedCasosIdRoute,
   AuthenticatedCasosIndexRoute: AuthenticatedCasosIndexRoute,
@@ -186,3 +213,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
