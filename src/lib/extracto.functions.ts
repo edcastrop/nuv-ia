@@ -237,6 +237,8 @@ const tool = {
         "valorCuotaSinSubsidioGobierno",
         "valorSubsidioGobierno",
         "valorCuotaConSubsidio",
+        "valorAseguradoInmueble",
+        "cuotaActualNumero",
         "fechaExtracto",
         "confianza",
       ],
