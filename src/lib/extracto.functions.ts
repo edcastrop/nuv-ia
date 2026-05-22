@@ -187,10 +187,10 @@ export const extractStatement = createServerFn({ method: "POST" })
 
     try {
       const parsed = JSON.parse(argsRaw) as ExtractoData;
-      // Normalizar banco: Colpatria ahora es Davivibank
+      // Normalizar banco: Colpatria ahora es Davibank
       const bancoRaw = typeof parsed.banco === "string" ? parsed.banco : "";
       if (/colpatria/i.test(bancoRaw)) {
-        parsed.banco = "Davivibank";
+        parsed.banco = "Davibank";
       }
       return { error: null, data: parsed };
     } catch (e) {
