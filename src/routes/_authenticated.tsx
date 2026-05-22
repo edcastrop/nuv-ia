@@ -48,6 +48,7 @@ function AuthenticatedLayout() {
     { to: "/", label: "Simulador", Icon: LayoutGrid, exact: true },
     { to: "/casos", label: "Casos", Icon: FolderKanban },
     { to: "/dashboard", label: "Dashboard", Icon: BarChart3 },
+    { to: "/academia", label: "Academia", Icon: GraduationCap },
   ];
 
   const NavBtn = ({ to, label, Icon, exact }: { to: string; label: string; Icon: typeof LayoutGrid; exact?: boolean }) => {
