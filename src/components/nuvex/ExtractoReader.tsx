@@ -244,6 +244,8 @@ export function ExtractoReader({ modo, onApply }: Props) {
       payload.uvr = {
         saldoUVR: get("saldoUVR"),
         valorUVR: get("valorUVR"),
+        saldoPesos: get("saldoCapital"),
+        valorDesembolsado: get("valorDesembolsado"),
         cuotaActualPesos: get("cuotaMensual"),
         seguros: get("seguros"),
         teaCobrada: get("tea"),
