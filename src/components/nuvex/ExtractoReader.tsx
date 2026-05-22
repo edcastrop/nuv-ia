@@ -41,6 +41,10 @@ export type ExtractoApplyPayload = {
     activo: boolean;
     valorCobertura?: string;
     tasaCobertura?: string;
+    tipoBeneficio?: string;
+    cuotaPagadaCliente?: string;
+    cuotaBaseSimulacion?: string;
+    requiereVerificacion?: boolean;
   };
   archivoPath?: string;
 };
