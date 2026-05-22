@@ -299,6 +299,15 @@ export function ExtractoReader({ modo, onApply }: Props) {
     // Cuota base de simulación: si hay beneficio se usa la cuota real (sin subsidio)
     // como cuota del simulador. Si no hay beneficio, se usa la cuota mensual normal.
     const cuotaBaseStr = get("cuotaBaseSimulacion") || get("cuotaMensual");
+    if (tieneCob && parseMontoExtracto(cuotaBaseStr) <= 0) {
+      setParsed((prev) => prev ? {
+        ...prev,
+        requiereVerificacionBeneficio: "si",
+        alertaCuotaBase: "No se pudo identificar la cuota con interés sin seguros. Verifique manualmente.",
+      } : prev);
+      cuotaBaseInputRef.current?.focus();
+      return;
+    }
     const cuotaParaSimulador = tieneCob ? cuotaBaseStr : get("cuotaMensual");
 
     const payload: ExtractoApplyPayload = {
@@ -391,6 +400,8 @@ export function ExtractoReader({ modo, onApply }: Props) {
   const tieneCoberturaStr = ((parsed?.tieneCobertura as string) ?? "").toLowerCase() === "si";
   const tieneBeneficio = tieneCoberturaStr || !!tipoBeneficio || !!(parsed?.valorCobertura as string) || !!(parsed?.tasaCobertura as string);
   const requiereVerificacion = ((parsed?.requiereVerificacionBeneficio as string) ?? "").toLowerCase() === "si";
+  const alertaCuotaBase = (parsed?.alertaCuotaBase as string) ?? "";
+  const cuotaBaseLista = parseMontoExtracto((parsed?.cuotaBaseSimulacion as string) ?? "") > 0;
   const fmtCO = (raw: string) => {
     const n = parseMontoExtracto(raw);
     return isFinite(n) && n > 0 ? new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n) : "—";
