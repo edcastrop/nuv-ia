@@ -22,8 +22,8 @@ export async function exportElementToPdf(elementId: string, filename: string) {
       backgroundColor: "#ffffff",
       logging: false,
       windowWidth: 1200,
-      onclone: (_doc, cloned) => {
-        const target = cloned.getElementById(elementId) as HTMLElement | null;
+      onclone: (doc) => {
+        const target = doc.getElementById(elementId) as HTMLElement | null;
         if (target) {
           target.style.position = "static";
           target.style.left = "0";
