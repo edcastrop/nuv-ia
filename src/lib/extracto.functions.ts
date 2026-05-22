@@ -93,12 +93,15 @@ REGLAS ESTRICTAS:
 - Si encuentras múltiples valores posibles para un campo crítico (cuota, saldo, tasa), elige el más reciente / del periodo del extracto y baja la confianza a "media".
 - Confianza "alta" solo si el dato es 100% explícito en el extracto. "media" si requiere inferencia simple. "baja" si dudoso o ausente.`;
 
+export type ExtractoData = Record<string, string | Record<string, string>>;
+export type ExtractoResponse = { error: string | null; data: ExtractoData | null };
+
 export const extractStatement = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => InputSchema.parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data }): Promise<ExtractoResponse> => {
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
-      throw new Error("LOVABLE_API_KEY no está configurada en el servidor.");
+      return { error: "LOVABLE_API_KEY no está configurada en el servidor.", data: null };
     }
 
     const userContent = [
@@ -159,11 +162,12 @@ export const extractStatement = createServerFn({ method: "POST" })
     }
 
     try {
-      const parsed = JSON.parse(argsRaw) as Record<string, string | Record<string, string>>;
-      return { error: null as string | null, data: parsed };
+      const parsed = JSON.parse(argsRaw) as ExtractoData;
+      return { error: null, data: parsed };
     } catch (e) {
       console.error("JSON parse error:", e, argsRaw);
-      return { error: "No se pudo interpretar la respuesta de la IA.", data: null as Record<string, string | Record<string, string>> | null };
+      return { error: "No se pudo interpretar la respuesta de la IA.", data: null };
     }
   });
+
 
