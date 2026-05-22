@@ -277,19 +277,32 @@ export const extractStatement = createServerFn({ method: "POST" })
       let requiereVerificacion = false;
 
       if (tieneCob) {
-        if (cuotaSinSub > 0) {
-          // P1 — si la cuota sin subsidio reportada parece NO incluir seguros, súmalos.
-          const probablementeSinSeguros = segurosNum > 0 && cuotaSinSub < cuotaMensual * 0.95 && (cuotaSinSub + segurosNum * 0.5) < cuotaMensual * 1.1;
-          cuotaBase = probablementeSinSeguros ? cuotaSinSub + segurosNum : cuotaSinSub;
-        } else if (cuotaCliente > 0 && valorBenef > 0) {
-          // P2
+        // Prioridad: P2 cuando tenemos cuota cliente + valor beneficio, porque
+        // la cuota cliente del extracto incluye seguros y reconstruir
+        // (cliente + beneficio) garantiza que la cuota base también los incluya.
+        if (cuotaCliente > 0 && valorBenef > 0) {
           cuotaBase = cuotaCliente + valorBenef;
+        } else if (cuotaSinSub > 0) {
+          // P1 — la cuota sin subsidio suele venir SIN seguros en el extracto.
+          // Garantizamos que la cuota base SIEMPRE los incluya.
+          cuotaBase = cuotaSinSub;
+          if (cuotaCliente > 0 && cuotaBase < cuotaCliente) {
+            // Imposible: la cuota base nunca puede ser menor que la pagada.
+            cuotaBase = cuotaCliente + Math.max(valorBenef, segurosNum);
+          } else if (segurosNum > 0) {
+            // Heurística: si la cuota sin subsidio NO supera a la mensual por
+            // al menos el valor de seguros, asumimos que viene sin ellos.
+            const yaIncluyeSeguros = cuotaCliente > 0
+              ? (cuotaBase - cuotaCliente) >= (valorBenef + segurosNum * 0.5)
+              : (cuotaMensual > 0 && cuotaBase >= cuotaMensual + segurosNum * 0.5);
+            if (!yaIncluyeSeguros) {
+              cuotaBase = cuotaBase + segurosNum;
+            }
+          }
         } else if (cuotaMensual > 0) {
-          // Si cuotaMensual ya parece ser la real (mayor a cuotaCliente), úsala
           if (cuotaCliente > 0 && cuotaMensual > cuotaCliente * 1.02) {
             cuotaBase = cuotaMensual;
           } else {
-            // P3 — no podemos certificar la cuota base
             cuotaBase = cuotaMensual;
             requiereVerificacion = true;
           }
