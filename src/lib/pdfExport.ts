@@ -3,47 +3,72 @@ import { jsPDF } from "jspdf";
 
 export async function exportElementToPdf(elementId: string, filename: string) {
   // Esperar a que el DOM termine de renderizar
-  await new Promise((r) => setTimeout(r, 500));
+  await new Promise((r) => setTimeout(r, 300));
 
   const element = document.getElementById(elementId);
   if (!element) {
     alert("No se encontró el contenido PDF (" + elementId + ").");
     return;
   }
-  if (element.offsetHeight === 0) {
-    alert("El contenido PDF está vacío o no se ha renderizado.");
-    return;
-  }
 
-  const canvas = await html2canvas(element, {
-    scale: 2,
-    useCORS: true,
-    backgroundColor: "#ffffff",
-    logging: false,
-    windowWidth: element.scrollWidth,
-  });
+  // El contenedor está posicionado fuera de pantalla (left: -10000px).
+  // html2canvas-pro tiene problemas capturando elementos muy alejados del viewport,
+  // así que lo movemos temporalmente a una posición visible pero oculta visualmente.
+  const originalStyle = element.getAttribute("style") || "";
+  element.style.position = "fixed";
+  element.style.left = "0";
+  element.style.top = "0";
+  element.style.zIndex = "-1";
+  element.style.opacity = "0";
+  element.style.pointerEvents = "none";
 
-  const imgData = canvas.toDataURL("image/png");
-  const pdf = new jsPDF("p", "mm", "a4");
+  // Esperar al reflow
+  await new Promise((r) => setTimeout(r, 200));
 
-  const imgWidth = 210;
-  const pageHeight = 297;
-  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  try {
+    if (element.offsetHeight === 0 || element.scrollWidth === 0) {
+      alert("El contenido PDF está vacío o no se ha renderizado.");
+      return;
+    }
 
-  let heightLeft = imgHeight;
-  let position = 0;
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+      logging: false,
+      windowWidth: element.scrollWidth,
+      windowHeight: element.scrollHeight,
+    });
 
-  pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-  heightLeft -= pageHeight;
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
 
-  while (heightLeft > 0) {
-    position = heightLeft - imgHeight;
-    pdf.addPage();
+    const imgWidth = 210;
+    const pageHeight = 297;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    let heightLeft = imgHeight;
+    let position = 0;
+
     pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
     heightLeft -= pageHeight;
-  }
 
-  pdf.save(filename);
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+
+    pdf.save(filename);
+  } catch (err) {
+    console.error("[pdfExport] Falló la exportación:", err);
+    const msg = err instanceof Error ? err.message : String(err);
+    alert("No se pudo exportar el PDF: " + msg);
+  } finally {
+    // Restaurar estilos originales
+    element.setAttribute("style", originalStyle);
+  }
 }
 
 export function sanitizeFileName(name: string): string {
