@@ -269,6 +269,18 @@ REGLAS ESTRICTAS:
   * Fórmula obligatoria para la cuota base: cuotaConInteresSinSeguros + valorCobertura + seguros. NUNCA uses únicamente cuotaPagadaCliente + valorCobertura.
   * "cuotaMensual": cuando hay beneficio, si puedes aplicar la fórmula obligatoria, debe reflejar la cuota base real con seguros; si no puedes, conserva el dato visible y baja la confianza a "media".
   * Cuando tieneCobertura="si" y el campo "producto" no incluya ya la frase "con Beneficio de Cobertura", AÑÁDELA al final del producto.
+- BANCOLOMBIA — mapeo literal obligatorio (PRIORIDAD MÁXIMA):
+  * Cuando el extracto sea de Bancolombia, EXTRAE LITERALMENTE estos campos sin recalcularlos:
+    - "valorAPagar" ← campo literal "Valor a Pagar".
+    - "cuotaSinSeguros" y "cuotaConInteresSinSeguros" ← campo literal "Valor de la cuota sin seguros y sin comisiones".
+    - "valorSeguroVida" ← "Valor seguro vida".
+    - "valorSeguroIncendio" ← "Valor seguro incendio".
+    - "valorSeguroTerremoto" ← "Valor seguro terremoto".
+    - "valorCuotaSinSubsidioGobierno" ← "Valor cuota sin subsidio Gobierno".
+    - "valorSubsidioGobierno" ← "Valor subsidio Gobierno".
+    - "valorCuotaConSubsidio" ← "Valor cuota con subsidio".
+  * Todos en pesos, solo dígitos (sin puntos, comas ni decimales si no aplica). Si el campo trae decimales (ej "1.302.922,98") devuélvelo como dígitos enteros redondeando ("1302923"). Vacío si no aparece literalmente.
+  * NO inventes ni deduzcas estos campos. Si no están en el extracto, déjalos vacíos.
 - Confianza "alta" solo si el dato es 100% explícito en el extracto. "media" si requiere inferencia simple. "baja" si dudoso o ausente.`;
 
 export type ExtractoData = Record<string, string | Record<string, string>>;
