@@ -183,6 +183,11 @@ export const extractStatement = createServerFn({ method: "POST" })
 
     try {
       const parsed = JSON.parse(argsRaw) as ExtractoData;
+      // Normalizar banco: Colpatria ahora es Davivibank
+      const bancoRaw = typeof parsed.banco === "string" ? parsed.banco : "";
+      if (/colpatria/i.test(bancoRaw)) {
+        parsed.banco = "Davivibank";
+      }
       return { error: null, data: parsed };
     } catch (e) {
       console.error("JSON parse error:", e, argsRaw);
