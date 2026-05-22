@@ -1201,7 +1201,7 @@ export function ExtractoReader({ modo, onApply }: Props) {
                   </button>
                   <button
                     onClick={handleConfirm}
-                    disabled={tieneBeneficio && !cuotaBaseLista}
+                    disabled={hayErrores || (tieneBeneficio && !cuotaBaseLista)}
                     className="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:scale-100"
                     style={{
                       background: "linear-gradient(135deg, #445DA3, #84B98F)",
