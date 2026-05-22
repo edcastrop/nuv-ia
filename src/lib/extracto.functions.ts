@@ -82,7 +82,7 @@ const tool = {
       },
       required: [
         "banco","cliente","cedula","numeroCredito","producto","tipoCredito","moneda",
-        "saldoCapital","cuotaMensual","seguros","cuotaSinSeguros","plazoInicial",
+        "saldoCapital","valorDesembolsado","cuotaMensual","seguros","cuotaSinSeguros","plazoInicial",
         "cuotasPagadas","cuotasPendientes","tea","teaCobrada","teaPactada","tasaMensual","interesCuota","capitalCuota",
         "valorUVR","saldoUVR","valorCobertura","tasaCobertura","tieneCobertura","fechaExtracto","confianza",
       ],
