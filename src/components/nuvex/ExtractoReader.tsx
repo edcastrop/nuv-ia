@@ -217,7 +217,9 @@ export function ExtractoReader({ modo, onApply }: Props) {
     setStage("reading");
     try {
       let images: { mime: string; dataUrl: string }[] = [];
-      if (f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf")) {
+      const lowerName = f.name.toLowerCase();
+      const isZip = f.type === "application/zip" || f.type === "application/x-zip-compressed" || lowerName.endsWith(".zip");
+      if (f.type === "application/pdf" || lowerName.endsWith(".pdf")) {
         const result = await renderPdfToImages(f, pwd);
         if (result.needsPassword) {
           setWrongPassword(result.wrongPassword);
@@ -228,8 +230,10 @@ export function ExtractoReader({ modo, onApply }: Props) {
       } else if (f.type.startsWith("image/")) {
         const url = await fileToDataUrl(f);
         images = [{ mime: f.type, dataUrl: url }];
+      } else if (isZip) {
+        images = await extractImagesFromZip(f);
       } else {
-        throw new Error("Formato no soportado. Sube un PDF o una imagen (JPG/PNG).");
+        throw new Error("Formato no soportado. Sube un PDF, imagen (JPG/PNG) o un ZIP con esos archivos.");
       }
 
       // Subir archivo original a Supabase Storage (privado)
