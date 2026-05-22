@@ -2,7 +2,14 @@ import { useMemo, useState } from "react";
 import { Alert, Card, MetricCard, SectionTitle, TextField } from "./ui";
 import { ClientFields, defaultClient, type ClientData } from "./ClientFields";
 import { PRODUCTOS_PESOS } from "./constants";
-import { parseCurrency, parseDecimal, parsePercentage, formatCOP, formatNumber, formatPercentage } from "../../lib/format";
+import {
+  parseCurrency,
+  parseDecimal,
+  parsePercentage,
+  formatCOP,
+  formatNumber,
+  formatPercentage,
+} from "../../lib/format";
 import {
   calculatePesosManual,
   calculatePesosProjection,
@@ -11,11 +18,22 @@ import {
 } from "../../lib/finance";
 import { ComparativeTable } from "./ComparativeTable";
 import { RecommendedResult } from "./RecommendedResult";
-import { ScenarioTable, buildPesosScenarioRows, ImpactCard, SavingsCard, getVecesStyle } from "./ScenarioTable";
+import {
+  ScenarioTable,
+  buildPesosScenarioRows,
+  ImpactCard,
+  SavingsCard,
+  getVecesStyle,
+} from "./ScenarioTable";
 import { PrintDocument } from "./PrintDocument";
 import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
 import { NUVEX } from "./constants";
-import { DiscountModule, computeDiscount, defaultDiscount, type DiscountState } from "./DiscountModule";
+import {
+  DiscountModule,
+  computeDiscount,
+  defaultDiscount,
+  type DiscountState,
+} from "./DiscountModule";
 import { ResultadoFinal, type ProyeccionNuvex } from "./ResultadoFinal";
 import { SaveExpedienteButton } from "./SaveExpedienteButton";
 import type { Expediente } from "@/lib/expedientes";
@@ -30,7 +48,6 @@ import {
 } from "./intervinientes";
 import { useAsesorDefault } from "@/hooks/useAsesorDefault";
 
-
 export function PesosSimulator({
   initialExpediente,
   onSaved,
@@ -42,15 +59,15 @@ export function PesosSimulator({
 } = {}) {
   const init = initialExpediente;
   const initCred = (init?.credito_data ?? {}) as Record<string, string>;
-  const [discount, setDiscount] = useState<DiscountState>(
-    () => (init?.discount_data && Object.keys(init.discount_data).length
+  const [discount, setDiscount] = useState<DiscountState>(() =>
+    init?.discount_data && Object.keys(init.discount_data).length
       ? (init.discount_data as unknown as DiscountState)
-      : defaultDiscount),
+      : defaultDiscount,
   );
   const initClient = (init?.cliente_data as ClientData | undefined) ?? undefined;
   const [client, setClient] = useState<ClientData>(() => initClient ?? defaultClient);
-  const [intervinientes, setIntervinientes] = useState<Interviniente[]>(
-    () => initClient?.intervinientes && initClient.intervinientes.length > 0
+  const [intervinientes, setIntervinientes] = useState<Interviniente[]>(() =>
+    initClient?.intervinientes && initClient.intervinientes.length > 0
       ? initClient.intervinientes
       : defaultIntervinientes(initClient?.tipoProducto),
   );
@@ -67,7 +84,6 @@ export function PesosSimulator({
   // Prellenar el campo "Asesor NUVEX" con el nombre del perfil autenticado
   useAsesorDefault(client.asesor, (nombre) => setClient((prev) => ({ ...prev, asesor: nombre })));
 
-
   const plazoInicial = parseDecimal(client.plazoInicial);
   const cuotasPagadas = parseDecimal(client.cuotasPagadas);
   const cuotasPendientes = Math.max(0, plazoInicial - cuotasPagadas);
@@ -80,25 +96,39 @@ export function PesosSimulator({
   const saldoCapitalNum = parseCurrency(saldoCapital);
   const dineroPagadoFecha = cuotaActualNum * cuotasPagadas;
 
-  const input: PesosInput = useMemo(() => ({
-    saldoCapital: saldoCapitalNum,
-    cuotaActual: cuotaActualNum,
-    seguros: segurosNum,
-    tea: parsePercentage(tea),
-    cuotasPendientes,
-    porcentajeHonorarios: honorariosPct,
-  }), [saldoCapitalNum, cuotaActualNum, segurosNum, tea, cuotasPendientes, honorariosPct]);
+  const input: PesosInput = useMemo(
+    () => ({
+      saldoCapital: saldoCapitalNum,
+      cuotaActual: cuotaActualNum,
+      seguros: segurosNum,
+      tea: parsePercentage(tea),
+      cuotasPendientes,
+      porcentajeHonorarios: honorariosPct,
+    }),
+    [saldoCapitalNum, cuotaActualNum, segurosNum, tea, cuotasPendientes, honorariosPct],
+  );
 
   const validaciones: string[] = [];
-  if (plazoInicial > 0 && cuotasPagadas > plazoInicial) validaciones.push("Las cuotas pagadas no pueden ser mayores al plazo inicial.");
-  if (plazoInicial > 0 && cuotasPagadas === plazoInicial) validaciones.push("Este crédito ya está amortizado.");
-  if (cuotaActualNum > 0 && segurosNum > cuotaActualNum) validaciones.push("Los seguros no pueden ser mayores que la cuota actual.");
-  if (cuotaActualNum > 0 && segurosNum > 0 && cuotaSinSegurosNum <= 0) validaciones.push("La cuota sin seguros debe ser mayor a cero para calcular la proyección.");
+  if (plazoInicial > 0 && cuotasPagadas > plazoInicial)
+    validaciones.push("Las cuotas pagadas no pueden ser mayores al plazo inicial.");
+  if (plazoInicial > 0 && cuotasPagadas === plazoInicial)
+    validaciones.push("Este crédito ya está amortizado.");
+  if (cuotaActualNum > 0 && segurosNum > cuotaActualNum)
+    validaciones.push("Los seguros no pueden ser mayores que la cuota actual.");
+  if (cuotaActualNum > 0 && segurosNum > 0 && cuotaSinSegurosNum <= 0)
+    validaciones.push("La cuota sin seguros debe ser mayor a cero para calcular la proyección.");
 
-  const cuotaSinSegurosValida = cuotaActualNum === 0 || segurosNum === 0 || (segurosNum < cuotaActualNum && cuotaSinSegurosNum > 0);
+  const cuotaSinSegurosValida =
+    cuotaActualNum === 0 ||
+    segurosNum === 0 ||
+    (segurosNum < cuotaActualNum && cuotaSinSegurosNum > 0);
 
   const datosCompletos =
-    input.saldoCapital > 0 && input.cuotaActual > 0 && input.tea > 0 && cuotasPendientes > 0 && cuotaSinSegurosValida;
+    input.saldoCapital > 0 &&
+    input.cuotaActual > 0 &&
+    input.tea > 0 &&
+    cuotasPendientes > 0 &&
+    cuotaSinSegurosValida;
 
   const calc = useMemo(() => {
     if (!datosCompletos) return null;
@@ -120,29 +150,30 @@ export function PesosSimulator({
   const manualValido = !!(manual && manual.valid);
 
   // Recomendación efectiva: manual cuando es válida; si no, la mejor automática
-  const recomendada = manualValido && manual
-    ? {
-        añosEliminados: manual.añosEliminados,
-        ahorroIntereses: manual.ahorroIntereses,
-        ahorroSeguros: manual.ahorroSeguros,
-        ahorroTotal: manual.ahorroTotal,
-        honorarios: manual.honorarios,
-        nuevaCuota: manual.nuevaCuotaConSeguro,
-        nuevoPlazo: manual.nuevoPlazo,
-        totalProyectado: manual.totalProyectado,
-      }
-    : best
+  const recomendada =
+    manualValido && manual
       ? {
-          añosEliminados: best.añosEliminados,
-          ahorroIntereses: best.ahorroIntereses,
-          ahorroSeguros: best.ahorroSeguros,
-          ahorroTotal: best.ahorroTotal,
-          honorarios: best.honorariosNuvex,
-          nuevaCuota: best.nuevaCuotaConSeguro,
-          nuevoPlazo: best.nuevoPlazo,
-          totalProyectado: best.totalAproxPagar,
+          añosEliminados: manual.añosEliminados,
+          ahorroIntereses: manual.ahorroIntereses,
+          ahorroSeguros: manual.ahorroSeguros,
+          ahorroTotal: manual.ahorroTotal,
+          honorarios: manual.honorarios,
+          nuevaCuota: manual.nuevaCuotaConSeguro,
+          nuevoPlazo: manual.nuevoPlazo,
+          totalProyectado: manual.totalProyectado,
         }
-      : null;
+      : best
+        ? {
+            añosEliminados: best.añosEliminados,
+            ahorroIntereses: best.ahorroIntereses,
+            ahorroSeguros: best.ahorroSeguros,
+            ahorroTotal: best.ahorroTotal,
+            honorarios: best.honorariosNuvex,
+            nuevaCuota: best.nuevaCuotaConSeguro,
+            nuevoPlazo: best.nuevoPlazo,
+            totalProyectado: best.totalAproxPagar,
+          }
+        : null;
 
   const ahorroNegativo = recomendada && (recomendada.ahorroTotal < 0 || recomendada.honorarios < 0);
 
@@ -180,13 +211,16 @@ export function PesosSimulator({
       })
     : [];
 
-  const vecesOpt = recomendada && saldoCapitalNum > 0 ? recomendada.totalProyectado / saldoCapitalNum : 0;
+  const vecesOpt =
+    recomendada && saldoCapitalNum > 0 ? recomendada.totalProyectado / saldoCapitalNum : 0;
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-6 py-6">
       {onReset && (
         <div className="flex justify-end">
-          <button onClick={onReset} className="text-xs text-[#445DA3] hover:underline">← Cambiar modo</button>
+          <button onClick={onReset} className="text-xs text-[#445DA3] hover:underline">
+            ← Cambiar modo
+          </button>
         </div>
       )}
       <ExtractoReader
@@ -213,6 +247,8 @@ export function PesosSimulator({
               tasaCobertura: p.cobertura.tasaCobertura || "",
               tipoBeneficio: p.cobertura.tipoBeneficio || "",
               cuotaPagadaCliente: p.cobertura.cuotaPagadaCliente || "",
+              cuotaConInteresSinSeguros: p.cobertura.cuotaConInteresSinSeguros || "",
+              segurosMensuales: p.cobertura.segurosMensuales || p.pesos?.seguros || "",
               cuotaBaseSimulacion: p.cobertura.cuotaBaseSimulacion || "",
               requiereVerificacion: !!p.cobertura.requiereVerificacion,
             });
@@ -221,28 +257,49 @@ export function PesosSimulator({
       />
       <Card>
         <div id="datos-cliente-card" />
-        <SectionTitle sub="Información general del cliente y del crédito">Datos del cliente</SectionTitle>
+        <SectionTitle sub="Información general del cliente y del crédito">
+          Datos del cliente
+        </SectionTitle>
 
-        <ClientFields data={client} onChange={setClient} productos={PRODUCTOS_PESOS} cuotasPendientes={cuotasPendientes} />
+        <ClientFields
+          data={client}
+          onChange={setClient}
+          productos={PRODUCTOS_PESOS}
+          cuotasPendientes={cuotasPendientes}
+        />
 
         <div className="mt-6">
-          <IntervinientesFields producto={client.tipoProducto} data={intervinientes} onChange={setIntervinientes} />
+          <IntervinientesFields
+            producto={client.tipoProducto}
+            data={intervinientes}
+            onChange={setIntervinientes}
+          />
         </div>
 
         <div className="mt-6">
-          <CoberturaFields producto={client.tipoProducto} data={cobertura} onChange={setCobertura} />
+          <CoberturaFields
+            producto={client.tipoProducto}
+            data={cobertura}
+            onChange={setCobertura}
+          />
         </div>
 
         {validaciones.map((v, i) => (
-          <div key={i} className="mt-3"><Alert tone="error">{v}</Alert></div>
+          <div key={i} className="mt-3">
+            <Alert tone="error">{v}</Alert>
+          </div>
         ))}
         {cuotasPendientes > 0 && cuotasPendientes <= 72 && (
-          <div className="mt-3"><Alert>Cuotas pendientes ≤ 72. Revise viabilidad de la propuesta.</Alert></div>
+          <div className="mt-3">
+            <Alert>Cuotas pendientes ≤ 72. Revise viabilidad de la propuesta.</Alert>
+          </div>
         )}
       </Card>
 
       <Card>
-        <SectionTitle sub="Información financiera del crédito en pesos">Datos del crédito</SectionTitle>
+        <SectionTitle sub="Información financiera del crédito en pesos">
+          Datos del crédito
+        </SectionTitle>
         {cobertura.activo && (cobertura.tipoBeneficio || cobertura.cuotaBaseSimulacion) && (
           <div
             className="mb-4 flex items-start gap-2 rounded-lg px-3 py-2 text-[12px]"
@@ -254,37 +311,84 @@ export function PesosSimulator({
           >
             <span className="font-bold">Cuota base de simulación activa.</span>
             <span>
-              Beneficio detectado: <strong>{cobertura.tipoBeneficio || "Cobertura"}</strong>.
-              La cuota mensual usada para simular es la cuota real del crédito (sin subsidio), no la cuota que paga hoy el cliente.
+              Beneficio detectado: <strong>{cobertura.tipoBeneficio || "Cobertura"}</strong>. La
+              cuota mensual usada para simular es la cuota real del crédito (sin subsidio), no la
+              cuota que paga hoy el cliente.
             </span>
           </div>
         )}
         <div className="grid gap-4 md:grid-cols-4">
-          <TextField label="Valor desembolsado" value={valorDesembolsado} onChange={setValorDesembolsado} placeholder="250.000.000" />
-          <TextField label="Saldo a capital" value={saldoCapital} onChange={setSaldoCapital} placeholder="221.903.943" />
-          <TextField label="Cuota mensual actual con seguros" value={cuotaActual} onChange={setCuotaActual} placeholder="2.260.000" hint={cobertura.activo && cobertura.cuotaBaseSimulacion ? "Cuota BASE de simulación (sin subsidio)" : undefined} />
-          <TextField label="Seguros mensuales" value={seguros} onChange={setSeguros} placeholder="180.000" />
+          <TextField
+            label="Valor desembolsado"
+            value={valorDesembolsado}
+            onChange={setValorDesembolsado}
+            placeholder="250.000.000"
+          />
+          <TextField
+            label="Saldo a capital"
+            value={saldoCapital}
+            onChange={setSaldoCapital}
+            placeholder="221.903.943"
+          />
+          <TextField
+            label="Cuota mensual actual con seguros"
+            value={cuotaActual}
+            onChange={setCuotaActual}
+            placeholder="2.260.000"
+            hint={
+              cobertura.activo && cobertura.cuotaBaseSimulacion
+                ? "Cuota BASE de simulación (sin subsidio)"
+                : undefined
+            }
+          />
+          <TextField
+            label="Seguros mensuales"
+            value={seguros}
+            onChange={setSeguros}
+            placeholder="180.000"
+          />
           <TextField
             label="Cuota mensual sin seguros"
             value={cuotaActualNum > 0 && segurosNum >= 0 ? formatCOP(cuotaSinSegurosNum) : ""}
             readOnly
             hint="Calculada automáticamente"
           />
-          <TextField label="Tasa Efectiva Anual (%)" value={tea} onChange={setTea} placeholder="11,15" />
+          <TextField
+            label="Tasa Efectiva Anual (%)"
+            value={tea}
+            onChange={setTea}
+            placeholder="11,15"
+          />
         </div>
       </Card>
 
       {datosCompletos && (
         <>
           <Card>
-            <SectionTitle sub="Resumen ejecutivo del crédito actual">Situación actual del crédito</SectionTitle>
+            <SectionTitle sub="Resumen ejecutivo del crédito actual">
+              Situación actual del crédito
+            </SectionTitle>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               {metrics.map((m) => {
                 if (m.label === "N° veces pagado el crédito") {
                   return (
-                    <div key={m.label} className="rounded-xl border p-4" style={{ backgroundColor: vsActual.bg, borderColor: vsActual.color }}>
-                      <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: vsActual.color, opacity: 0.85 }}>{m.label}</div>
-                      <div className="mt-1.5 text-lg font-extrabold leading-tight" style={{ color: vsActual.color }}>{m.value}</div>
+                    <div
+                      key={m.label}
+                      className="rounded-xl border p-4"
+                      style={{ backgroundColor: vsActual.bg, borderColor: vsActual.color }}
+                    >
+                      <div
+                        className="text-[11px] font-semibold uppercase tracking-wider"
+                        style={{ color: vsActual.color, opacity: 0.85 }}
+                      >
+                        {m.label}
+                      </div>
+                      <div
+                        className="mt-1.5 text-lg font-extrabold leading-tight"
+                        style={{ color: vsActual.color }}
+                      >
+                        {m.value}
+                      </div>
                     </div>
                   );
                 }
@@ -294,14 +398,23 @@ export function PesosSimulator({
           </Card>
 
           {ahorroNegativo && (
-            <Alert tone="error">Revisar datos. El ahorro u honorarios calculados son negativos.</Alert>
+            <Alert tone="error">
+              Revisar datos. El ahorro u honorarios calculados son negativos.
+            </Alert>
           )}
 
           {calc && calc.propuestas.length > 0 && (
             <>
               <Card>
-                <SectionTitle sub="Compare cada propuesta y la recomendada en verde">Tabla comparativa de propuestas</SectionTitle>
-                <ComparativeTable mode="pesos" pesos={calc.propuestas} bestIndex={bestIndex} honorariosPct={honorariosPct} />
+                <SectionTitle sub="Compare cada propuesta y la recomendada en verde">
+                  Tabla comparativa de propuestas
+                </SectionTitle>
+                <ComparativeTable
+                  mode="pesos"
+                  pesos={calc.propuestas}
+                  bestIndex={bestIndex}
+                  honorariosPct={honorariosPct}
+                />
               </Card>
 
               {recomendada && (
@@ -336,74 +449,119 @@ export function PesosSimulator({
           )}
 
           <Card>
-            <SectionTitle sub="Si se calcula, reemplaza automáticamente a la propuesta recomendada">Calculadora manual por nueva cuota propuesta</SectionTitle>
+            <SectionTitle sub="Si se calcula, reemplaza automáticamente a la propuesta recomendada">
+              Calculadora manual por nueva cuota propuesta
+            </SectionTitle>
             <div className="grid gap-4 md:grid-cols-3">
-              <TextField label="Nueva cuota propuesta por el cliente" value={nuevaCuotaManual} onChange={setNuevaCuotaManual} placeholder="2.800.000" />
+              <TextField
+                label="Nueva cuota propuesta por el cliente"
+                value={nuevaCuotaManual}
+                onChange={setNuevaCuotaManual}
+                placeholder="2.800.000"
+              />
             </div>
             {manual && !manual.valid && manual.motivo && (
-              <div className="mt-3"><Alert tone="error">{manual.motivo}</Alert></div>
+              <div className="mt-3">
+                <Alert tone="error">{manual.motivo}</Alert>
+              </div>
             )}
             {manual && manual.valid && (
               <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-                <MetricCard label="Nueva cuota" value={formatCOP(manual.nuevaCuotaConSeguro)} accent="green" />
-                <MetricCard label="Incremento mensual" value={formatCOP(manual.incrementoMensual)} />
+                <MetricCard
+                  label="Nueva cuota"
+                  value={formatCOP(manual.nuevaCuotaConSeguro)}
+                  accent="green"
+                />
+                <MetricCard
+                  label="Incremento mensual"
+                  value={formatCOP(manual.incrementoMensual)}
+                />
                 <MetricCard label="Nuevo plazo" value={`${manual.nuevoPlazo} meses`} />
                 <MetricCard label="Cuotas eliminadas" value={String(manual.cuotasEliminadas)} />
                 <MetricCard label="Años eliminados" value={manual.añosEliminados.toFixed(1)} />
                 <MetricCard label="Ahorro intereses" value={formatCOP(manual.ahorroIntereses)} />
                 <MetricCard label="Ahorro seguros" value={formatCOP(manual.ahorroSeguros)} />
-                <MetricCard label="Ahorro total" value={formatCOP(manual.ahorroTotal)} accent="green" />
-                <MetricCard label="Honorarios NUVEX" value={formatCOP(manual.honorarios)} accent="blue" />
+                <MetricCard
+                  label="Ahorro total"
+                  value={formatCOP(manual.ahorroTotal)}
+                  accent="green"
+                />
+                <MetricCard
+                  label="Honorarios NUVEX"
+                  value={formatCOP(manual.honorarios)}
+                  accent="blue"
+                />
                 <MetricCard label="Total proyectado" value={formatCOP(manual.totalProyectado)} />
               </div>
             )}
           </Card>
 
           {recomendada && (
-            <DiscountModule honorariosBase={recomendada.honorarios} state={discount} onChange={setDiscount} />
+            <DiscountModule
+              honorariosBase={recomendada.honorarios}
+              state={discount}
+              onChange={setDiscount}
+            />
           )}
 
-          {recomendada && (() => {
-            const d = computeDiscount(recomendada.honorarios, discount);
-            return (
-              <SaveExpedienteButton
-                expedienteId={init?.id}
-                onSaved={onSaved}
-                payload={{
-                  modo: "pesos",
-                  cliente: { ...client, intervinientes, cobertura },
-                  credito: { valorDesembolsado, saldoCapital, cuotaActual, seguros, tea, nuevaCuotaManual },
-                  propuesta: {
-                    nuevaCuota: recomendada.nuevaCuota,
-                    nuevoPlazo: recomendada.nuevoPlazo,
-                    añosEliminados: recomendada.añosEliminados,
-                    ahorroIntereses: recomendada.ahorroIntereses,
-                    ahorroSeguros: recomendada.ahorroSeguros,
-                    ahorroTotal: recomendada.ahorroTotal,
-                    honorarios: recomendada.honorarios,
-                    totalProyectado: recomendada.totalProyectado,
-                    fuente: manualValido ? "manual" : "automatica",
-                  },
-                  discountState: discount as unknown as Record<string, unknown>,
-                  honorariosBase: recomendada.honorarios,
-                  honorariosFinal: d.final,
-                  descuento: d.descuento,
-                }}
-              />
-            );
-          })()}
+          {recomendada &&
+            (() => {
+              const d = computeDiscount(recomendada.honorarios, discount);
+              return (
+                <SaveExpedienteButton
+                  expedienteId={init?.id}
+                  onSaved={onSaved}
+                  payload={{
+                    modo: "pesos",
+                    cliente: { ...client, intervinientes, cobertura },
+                    credito: {
+                      valorDesembolsado,
+                      saldoCapital,
+                      cuotaActual,
+                      seguros,
+                      tea,
+                      nuevaCuotaManual,
+                      cuotaPagadaCliente: cobertura.cuotaPagadaCliente || "",
+                      valorBeneficio: cobertura.valorCobertura || "",
+                      tipoBeneficio: cobertura.tipoBeneficio || "",
+                      cuotaConInteresSinSeguros: cobertura.cuotaConInteresSinSeguros || "",
+                      cuotaBaseSimulacion: cobertura.cuotaBaseSimulacion || cuotaActual,
+                      segurosMensuales: cobertura.segurosMensuales || seguros,
+                      tieneBeneficio: cobertura.activo ? "si" : "no",
+                    },
+                    propuesta: {
+                      nuevaCuota: recomendada.nuevaCuota,
+                      nuevoPlazo: recomendada.nuevoPlazo,
+                      añosEliminados: recomendada.añosEliminados,
+                      ahorroIntereses: recomendada.ahorroIntereses,
+                      ahorroSeguros: recomendada.ahorroSeguros,
+                      ahorroTotal: recomendada.ahorroTotal,
+                      honorarios: recomendada.honorarios,
+                      totalProyectado: recomendada.totalProyectado,
+                      fuente: manualValido ? "manual" : "automatica",
+                    },
+                    discountState: discount as unknown as Record<string, unknown>,
+                    honorariosBase: recomendada.honorarios,
+                    honorariosFinal: d.final,
+                    descuento: d.descuento,
+                  }}
+                />
+              );
+            })()}
 
           {recomendada && (
             <div className="flex justify-end">
               <button
                 onClick={async () => {
                   if (!recomendada || !calc || calc.propuestas.length === 0) {
-                    alert("Primero debes calcular la simulación en pesos antes de exportar el PDF.");
+                    alert(
+                      "Primero debes calcular la simulación en pesos antes de exportar el PDF.",
+                    );
                     return;
                   }
                   await exportElementToPdf(
                     "pdf-content-pesos",
-                    `NUVEX_Propuesta_Pesos_${sanitizeFileName(client.nombre)}.pdf`
+                    `NUVEX_Propuesta_Pesos_${sanitizeFileName(client.nombre)}.pdf`,
                   );
                 }}
                 className="rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow transition-transform hover:scale-[1.01]"
@@ -414,81 +572,82 @@ export function PesosSimulator({
             </div>
           )}
 
+          {recomendada &&
+            (() => {
+              const d = computeDiscount(recomendada.honorarios, discount);
+              return (
+                <PrintDocument
+                  mode="pesos"
+                  client={{ ...client, intervinientes, cobertura }}
+                  cuotasPendientes={cuotasPendientes}
+                  metrics={metrics}
+                  pesosPropuestas={calc!.propuestas}
+                  bestIndex={bestIndex}
+                  honorariosPct={honorariosPct}
+                  personalizada={manualValido}
+                  recommended={{
+                    añosEliminados: recomendada.añosEliminados,
+                    ahorroIntereses: recomendada.ahorroIntereses,
+                    ahorroSeguros: recomendada.ahorroSeguros,
+                    ahorroTotal: recomendada.ahorroTotal,
+                    honorarios: recomendada.honorarios,
+                    nuevaCuota: recomendada.nuevaCuota,
+                  }}
+                  scenario={{
+                    cuotaActual: input.cuotaActual,
+                    nuevaCuota: recomendada.nuevaCuota,
+                    plazoActual: cuotasPendientes,
+                    nuevoPlazo: recomendada.nuevoPlazo,
+                    totalActual: totalActualPendiente,
+                    totalOptimizado: recomendada.totalProyectado,
+                    vecesActual,
+                    vecesOptimizado: vecesOpt,
+                  }}
+                  commercial={{
+                    honorariosBase: recomendada.honorarios,
+                    descuento: d.descuento,
+                    finales: d.final,
+                    vigencia: discount.vigencia || undefined,
+                    hasDiscount: d.hasDiscount,
+                  }}
+                />
+              );
+            })()}
 
-          {recomendada && (() => {
-            const d = computeDiscount(recomendada.honorarios, discount);
-            return (
-              <PrintDocument
-                mode="pesos"
-                client={{ ...client, intervinientes, cobertura }}
-                cuotasPendientes={cuotasPendientes}
-                metrics={metrics}
-                pesosPropuestas={calc!.propuestas}
-                bestIndex={bestIndex}
-                honorariosPct={honorariosPct}
-                personalizada={manualValido}
-                recommended={{
-                  añosEliminados: recomendada.añosEliminados,
-                  ahorroIntereses: recomendada.ahorroIntereses,
-                  ahorroSeguros: recomendada.ahorroSeguros,
-                  ahorroTotal: recomendada.ahorroTotal,
-                  honorarios: recomendada.honorarios,
-                  nuevaCuota: recomendada.nuevaCuota,
-                }}
-                scenario={{
-                  cuotaActual: input.cuotaActual,
-                  nuevaCuota: recomendada.nuevaCuota,
-                  plazoActual: cuotasPendientes,
-                  nuevoPlazo: recomendada.nuevoPlazo,
-                  totalActual: totalActualPendiente,
-                  totalOptimizado: recomendada.totalProyectado,
-                  vecesActual,
-                  vecesOptimizado: vecesOpt,
-                }}
-                commercial={{
-                  honorariosBase: recomendada.honorarios,
-                  descuento: d.descuento,
-                  finales: d.final,
-                  vigencia: discount.vigencia || undefined,
-                  hasDiscount: d.hasDiscount,
-                }}
-              />
-            );
-          })()}
-
-          {recomendada && (() => {
-            const d = computeDiscount(recomendada.honorarios, discount);
-            const proyeccion: ProyeccionNuvex = {
-              cuotaProyectada: recomendada.nuevaCuota,
-              plazoProyectado: recomendada.nuevoPlazo,
-              cuotasEliminadasProyectadas: cuotasPendientes - recomendada.nuevoPlazo,
-              añosEliminadosProyectados: recomendada.añosEliminados,
-              ahorroInteresesProyectado: recomendada.ahorroIntereses,
-              ahorroSegurosProyectado: recomendada.ahorroSeguros,
-              ahorroProyectado: recomendada.ahorroTotal,
-              honorariosProyectados: recomendada.honorarios,
-              honorariosBase: recomendada.honorarios,
-              descuentoAplicado: d.descuento,
-              honorariosFinales: d.final,
-              fechaSimulacion: new Date().toISOString().slice(0, 10),
-              fuente: manualValido ? "manual" : "automatica",
-            };
-            return (
-              <ResultadoFinal
-                mode="pesos"
-                client={{ ...client, intervinientes, cobertura }}
-                proyeccion={proyeccion}
-                cuotasPendientes={cuotasPendientes}
-                cuotaActualConSeguro={input.cuotaActual}
-                seguros={input.seguros}
-                honorariosPct={honorariosPct}
-                expedienteId={init?.id}
-                aprobadoInicial={init?.aprobado_data ?? null}
-                estado={init?.estado}
-                fechaPagoHonorarios={init?.updated_at ? init.updated_at.slice(0, 10) : undefined}
-              />
-            );
-          })()}
+          {recomendada &&
+            (() => {
+              const d = computeDiscount(recomendada.honorarios, discount);
+              const proyeccion: ProyeccionNuvex = {
+                cuotaProyectada: recomendada.nuevaCuota,
+                plazoProyectado: recomendada.nuevoPlazo,
+                cuotasEliminadasProyectadas: cuotasPendientes - recomendada.nuevoPlazo,
+                añosEliminadosProyectados: recomendada.añosEliminados,
+                ahorroInteresesProyectado: recomendada.ahorroIntereses,
+                ahorroSegurosProyectado: recomendada.ahorroSeguros,
+                ahorroProyectado: recomendada.ahorroTotal,
+                honorariosProyectados: recomendada.honorarios,
+                honorariosBase: recomendada.honorarios,
+                descuentoAplicado: d.descuento,
+                honorariosFinales: d.final,
+                fechaSimulacion: new Date().toISOString().slice(0, 10),
+                fuente: manualValido ? "manual" : "automatica",
+              };
+              return (
+                <ResultadoFinal
+                  mode="pesos"
+                  client={{ ...client, intervinientes, cobertura }}
+                  proyeccion={proyeccion}
+                  cuotasPendientes={cuotasPendientes}
+                  cuotaActualConSeguro={input.cuotaActual}
+                  seguros={input.seguros}
+                  honorariosPct={honorariosPct}
+                  expedienteId={init?.id}
+                  aprobadoInicial={init?.aprobado_data ?? null}
+                  estado={init?.estado}
+                  fechaPagoHonorarios={init?.updated_at ? init.updated_at.slice(0, 10) : undefined}
+                />
+              );
+            })()}
         </>
       )}
     </div>
