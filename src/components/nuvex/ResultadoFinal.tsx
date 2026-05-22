@@ -622,6 +622,46 @@ function PrintInformeFinal({
             />
           </div>
 
+          {(client.intervinientes ?? []).length > 0 && (
+            <div style={{ marginTop: 14 }}>
+              <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2, color: NUVEX.azul, marginBottom: 8 }}>
+                INTERVINIENTES
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
+                {(client.intervinientes ?? []).map((p, i) => (
+                  <div key={i} style={{ border: "1px solid #E3E7EE", borderRadius: 10, padding: "10px 12px", background: i === 0 ? "#F4F6FC" : "#FFFFFF" }}>
+                    <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 1.2, color: NUVEX.azul, textTransform: "uppercase" }}>
+                      {i === 0 ? p.rol : `${p.rol} ${i}`}
+                    </div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: NUVEX.negro, marginTop: 3 }}>{p.nombreCompleto || "—"}</div>
+                    <div style={{ fontSize: 9, color: "#5C6770", marginTop: 2 }}>
+                      CC {p.cedula || "—"}{p.lugarExpedicionCedula ? ` · ${p.lugarExpedicionCedula}` : ""}
+                    </div>
+                    {p.direccion && <div style={{ fontSize: 9, color: "#5C6770", marginTop: 1 }}>{p.direccion}</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {client.cobertura && (client.cobertura.activo || client.cobertura.valorCobertura || client.cobertura.tasaCobertura) && (
+            <div style={{ marginTop: 14 }}>
+              <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2, color: NUVEX.verdeTextoFuerte, marginBottom: 8 }}>
+                BENEFICIO DE COBERTURA
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
+                <div style={{ border: `1px solid ${NUVEX.verde}`, borderRadius: 10, padding: "10px 12px", background: NUVEX.verdeClaro }}>
+                  <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 1.2, color: NUVEX.verdeTextoFuerte, textTransform: "uppercase" }}>Valor de cobertura</div>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: NUVEX.verdeTextoFuerte, marginTop: 3 }}>{client.cobertura.valorCobertura || "—"}</div>
+                </div>
+                <div style={{ border: `1px solid ${NUVEX.verde}`, borderRadius: 10, padding: "10px 12px", background: NUVEX.verdeClaro }}>
+                  <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 1.2, color: NUVEX.verdeTextoFuerte, textTransform: "uppercase" }}>Tasa de cobertura</div>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: NUVEX.verdeTextoFuerte, marginTop: 3 }}>{client.cobertura.tasaCobertura ? `${client.cobertura.tasaCobertura}%` : "—"}</div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div style={{ marginTop: 6 }}>
             <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2, color: NUVEX.azul, marginBottom: 10 }}>
               DASHBOARD EJECUTIVO
