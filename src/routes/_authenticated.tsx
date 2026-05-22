@@ -1,75 +1,227 @@
 import { createFileRoute, Outlet, useNavigate, Link, useLocation } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth, signOut } from "@/hooks/useAuth";
-import { CORPORATIVO, NUVEX } from "@/components/nuvex/constants";
+import { CORPORATIVO } from "@/components/nuvex/constants";
+import { LayoutGrid, FolderKanban, BarChart3, FileBarChart, Settings, LogOut } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
 });
 
+const AZUL = "#445DA3";
+const VERDE = "#84B98F";
+
 function AuthenticatedLayout() {
   const { session, user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/login" });
   }, [loading, session, navigate]);
 
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   if (loading || !session) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F7F9FB] text-[#242424]/60 text-sm">
+      <div className="min-h-screen flex items-center justify-center text-white/60 text-sm" style={{ background: "#050814" }}>
         Cargando…
       </div>
     );
   }
 
-  const NavLink = ({ to, label }: { to: string; label: string }) => {
-    const active = location.pathname === to || (to !== "/" && location.pathname.startsWith(to));
+  const displayName: string = user?.user_metadata?.nombre || (user?.email?.split("@")[0] ?? "Usuario");
+  const initials = displayName
+    .split(/[.\s_-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((s) => s[0]?.toUpperCase())
+    .join("") || "NV";
+
+  const navItems = [
+    { to: "/", label: "Simulador", Icon: LayoutGrid, exact: true },
+    { to: "/casos", label: "Casos", Icon: FolderKanban },
+    { to: "/dashboard", label: "Dashboard", Icon: BarChart3 },
+    { to: "/reportes", label: "Reportes", Icon: FileBarChart },
+    { to: "/configuracion", label: "Configuración", Icon: Settings },
+  ];
+
+  const NavBtn = ({ to, label, Icon, exact }: { to: string; label: string; Icon: typeof LayoutGrid; exact?: boolean }) => {
+    const active = exact ? location.pathname === to : location.pathname === to || location.pathname.startsWith(to + "/") || location.pathname === to;
     return (
-      <Link to={to}
-        className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
-        style={{
-          backgroundColor: active ? NUVEX.negro : "transparent",
-          color: active ? "#fff" : "#242424",
-        }}>
-        {label}
+      <Link
+        to={to}
+        className="group relative flex items-center gap-2 rounded-xl px-3.5 py-2 text-[13px] font-medium transition-all duration-300 ease-out"
+        style={
+          active
+            ? {
+                background: `linear-gradient(135deg, ${AZUL}, ${VERDE})`,
+                color: "#fff",
+                boxShadow: `0 8px 24px -10px ${AZUL}, 0 0 0 1px rgba(255,255,255,0.08) inset`,
+              }
+            : {
+                color: "rgba(255,255,255,0.72)",
+                border: "1px solid transparent",
+              }
+        }
+        onMouseEnter={(e) => {
+          if (active) return;
+          const el = e.currentTarget;
+          el.style.background = "rgba(255,255,255,0.04)";
+          el.style.border = `1px solid ${AZUL}55`;
+          el.style.color = "#fff";
+          el.style.boxShadow = `0 0 0 1px ${AZUL}22, 0 6px 18px -8px ${AZUL}66`;
+        }}
+        onMouseLeave={(e) => {
+          if (active) return;
+          const el = e.currentTarget;
+          el.style.background = "transparent";
+          el.style.border = "1px solid transparent";
+          el.style.color = "rgba(255,255,255,0.72)";
+          el.style.boxShadow = "none";
+        }}
+      >
+        <Icon size={15} />
+        <span>{label}</span>
       </Link>
     );
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F9FB]">
-      <header className="border-b border-[#E3E7EE] bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-4">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg font-bold text-white" style={{ backgroundColor: NUVEX.negro }}>N</div>
-              <div className="hidden sm:block">
-                <div className="text-sm font-semibold text-[#242424]">NUVEX</div>
-                <div className="text-[10px] text-[#242424]/60 -mt-0.5">Finanzas Inteligentes</div>
-              </div>
-            </Link>
-            <nav className="flex items-center gap-1 ml-2">
-              <NavLink to="/" label="Simulador" />
-              <NavLink to="/casos" label="Casos" />
-              <NavLink to="/dashboard" label="Dashboard" />
-            </nav>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="hidden md:block text-right">
-              <div className="text-xs font-medium text-[#242424]">{user?.user_metadata?.nombre || user?.email}</div>
-              <div className="text-[10px] text-[#242424]/55">{user?.email}</div>
+    <div className="min-h-screen" style={{ background: "#F7F9FB" }}>
+      <header
+        className="sticky top-0 z-50 transition-all duration-300"
+        style={{
+          background: "linear-gradient(90deg, #050814, #0A1226, #07162D)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          boxShadow: scrolled ? "0 12px 40px -20px rgba(0,0,0,0.7)" : "none",
+        }}
+      >
+        {/* Inner glow ambient */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -top-24 left-1/4 h-48 w-[420px] rounded-full opacity-[0.12] blur-[100px]" style={{ background: AZUL }} />
+          <div className="absolute -top-24 right-1/4 h-48 w-[420px] rounded-full opacity-[0.10] blur-[100px]" style={{ background: VERDE }} />
+        </div>
+
+        <div className="relative mx-auto flex max-w-[1400px] items-center justify-between gap-6 px-6" style={{ height: 92 }}>
+          {/* IZQUIERDA — Logo */}
+          <Link to="/" className="group flex items-center gap-3 transition-transform duration-300 hover:-translate-y-0.5">
+            <div
+              className="relative flex h-12 w-12 items-center justify-center rounded-2xl text-white font-bold text-lg"
+              style={{
+                background: "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02))",
+                border: "1px solid rgba(255,255,255,0.10)",
+                boxShadow: `0 8px 24px -10px ${AZUL}, inset 0 1px 0 rgba(255,255,255,0.08)`,
+              }}
+            >
+              <span
+                style={{
+                  background: `linear-gradient(135deg, #fff, ${VERDE})`,
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
+                N
+              </span>
+              <span
+                className="absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 blur-md -z-10"
+                style={{ background: `linear-gradient(135deg, ${AZUL}, ${VERDE})` }}
+              />
             </div>
+            <div className="hidden sm:block leading-tight">
+              <div className="text-[17px] font-semibold tracking-tight text-white">NUVEX</div>
+              <div className="text-[11px] font-medium text-white/55 -mt-0.5">Finanzas Inteligentes</div>
+            </div>
+          </Link>
+
+          {/* CENTRO — Navegación */}
+          <nav className="hidden lg:flex items-center gap-1.5 rounded-2xl px-2 py-1.5"
+            style={{
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(255,255,255,0.06)",
+              backdropFilter: "blur(12px)",
+            }}
+          >
+            {navItems.map((it) => <NavBtn key={it.to} {...it} />)}
+          </nav>
+
+          {/* DERECHA — Usuario + Salir */}
+          <div className="flex items-center gap-3">
+            <div
+              className="hidden md:flex items-center gap-3 rounded-2xl pl-2 pr-4 py-2 transition-all duration-300 hover:-translate-y-0.5"
+              style={{
+                background: "linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))",
+                border: "1px solid rgba(255,255,255,0.08)",
+                boxShadow: "0 6px 18px -10px rgba(0,0,0,0.6)",
+              }}
+            >
+              <div
+                className="relative flex h-10 w-10 items-center justify-center rounded-full text-[12px] font-bold text-white"
+                style={{
+                  background: "#0A1226",
+                  boxShadow: `0 0 0 2px transparent`,
+                  backgroundImage: `linear-gradient(#0A1226, #0A1226), linear-gradient(135deg, ${AZUL}, ${VERDE})`,
+                  backgroundOrigin: "border-box",
+                  backgroundClip: "padding-box, border-box",
+                  border: "2px solid transparent",
+                }}
+              >
+                {initials}
+              </div>
+              <div className="leading-tight text-right">
+                <div className="text-[12.5px] font-semibold text-white truncate max-w-[180px]">
+                  {displayName}
+                </div>
+                <div className="text-[10.5px] text-white/55 truncate max-w-[180px]">{user?.email}</div>
+              </div>
+            </div>
+
             <button
               onClick={async () => { await signOut(); navigate({ to: "/login" }); }}
-              className="rounded-lg border border-[#E3E7EE] px-3 py-1.5 text-xs font-medium hover:bg-[#F7F9FB]">
-              Salir
+              className="group inline-flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-[12px] font-semibold uppercase tracking-wider text-white/80 transition-all duration-300 ease-out hover:text-white hover:-translate-y-0.5"
+              style={{
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.10)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.border = `1px solid ${VERDE}66`;
+                e.currentTarget.style.boxShadow = `0 6px 18px -10px ${VERDE}99`;
+                e.currentTarget.style.background = "rgba(132,185,143,0.08)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.border = "1px solid rgba(255,255,255,0.10)";
+                e.currentTarget.style.boxShadow = "none";
+                e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+              }}
+            >
+              <LogOut size={14} />
+              <span className="hidden sm:inline">Salir</span>
             </button>
           </div>
         </div>
+
+        {/* Línea inferior luminosa */}
+        <div className="relative h-px w-full" style={{ background: `linear-gradient(90deg, transparent, ${AZUL}66, ${VERDE}66, transparent)` }}>
+          <div className="absolute inset-x-0 -bottom-1 h-1 blur-md opacity-60" style={{ background: `linear-gradient(90deg, transparent, ${AZUL}, ${VERDE}, transparent)` }} />
+        </div>
+
+        {/* Nav móvil */}
+        <nav className="lg:hidden flex items-center gap-1.5 overflow-x-auto px-4 py-2"
+          style={{ background: "rgba(5,8,20,0.6)", borderTop: "1px solid rgba(255,255,255,0.04)" }}
+        >
+          {navItems.map((it) => <NavBtn key={it.to} {...it} />)}
+        </nav>
       </header>
+
       <Outlet />
+
       <footer className="border-t border-[#E3E7EE] bg-white mt-8">
         <div className="mx-auto max-w-7xl px-6 py-5 text-center text-[11px] text-[#242424]/60">
           <span className="font-semibold text-[#242424]">{CORPORATIVO.nombre}</span> · {CORPORATIVO.telefono} · {CORPORATIVO.web}
