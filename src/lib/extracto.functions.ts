@@ -36,29 +36,80 @@ const tool = {
         producto: { type: "string" },
         tipoCredito: { type: "string" },
         moneda: { type: "string", enum: ["PESOS", "UVR", ""] },
-        saldoCapital: { type: "string", description: "Saldo a capital en pesos. Solo número, sin símbolos." },
-        valorDesembolsado: { type: "string", description: "Valor inicialmente desembolsado del crédito, en pesos. Solo dígitos." },
-        cuotaMensual: { type: "string", description: "Cuota mensual total con seguros en pesos. Solo número." },
-        seguros: { type: "string", description: "Sumatoria mensual de TODOS los seguros del crédito (vida, incendio, terremoto, todo riesgo y otros seguros asociados). Solo número." },
+        saldoCapital: {
+          type: "string",
+          description: "Saldo a capital en pesos. Solo número, sin símbolos.",
+        },
+        valorDesembolsado: {
+          type: "string",
+          description: "Valor inicialmente desembolsado del crédito, en pesos. Solo dígitos.",
+        },
+        cuotaMensual: {
+          type: "string",
+          description: "Cuota mensual total con seguros en pesos. Solo número.",
+        },
+        seguros: {
+          type: "string",
+          description:
+            "Sumatoria mensual de TODOS los seguros del crédito (vida, incendio, terremoto, todo riesgo y otros seguros asociados). Solo número.",
+        },
         cuotaSinSeguros: { type: "string" },
-        cuotaConInteresSinSeguros: { type: "string", description: "Cuota con capital/interés SIN seguros y ANTES de subsidio/cobertura. Puede aparecer como 'valor de la cuota sin seguros y sin comisiones', 'cuota sin seguros', 'cuota antes de seguros', 'cuota con interés', 'valor cuota con subsidio' o 'valor cuota sin seguros'. Solo dígitos. Vacío si no aparece explícitamente." },
+        cuotaConInteresSinSeguros: {
+          type: "string",
+          description:
+            "Cuota con capital/interés SIN seguros y ANTES de subsidio/cobertura. Puede aparecer como 'valor de la cuota sin seguros y sin comisiones', 'cuota sin seguros', 'cuota antes de seguros', 'cuota con interés', 'valor cuota con subsidio' o 'valor cuota sin seguros'. Solo dígitos. Vacío si no aparece explícitamente.",
+        },
         plazoInicial: { type: "string", description: "Plazo total inicial aprobado en meses." },
         cuotasPagadas: { type: "string" },
         cuotasPendientes: { type: "string" },
-        tea: { type: "string", description: "Tasa oficial para la simulación: SOLO la TASA DE INTERÉS COBRADA. Si no aparece explícitamente, deja vacío." },
-        teaCobrada: { type: "string", description: "Tasa de interés cobrada (la efectivamente aplicada en el periodo)." },
-        teaPactada: { type: "string", description: "Tasa de interés pactada (referencia contractual). NO usar para simulación." },
+        tea: {
+          type: "string",
+          description:
+            "Tasa oficial para la simulación: SOLO la TASA DE INTERÉS COBRADA. Si no aparece explícitamente, deja vacío.",
+        },
+        teaCobrada: {
+          type: "string",
+          description: "Tasa de interés cobrada (la efectivamente aplicada en el periodo).",
+        },
+        teaPactada: {
+          type: "string",
+          description: "Tasa de interés pactada (referencia contractual). NO usar para simulación.",
+        },
         tasaMensual: { type: "string" },
         interesCuota: { type: "string" },
         capitalCuota: { type: "string" },
         valorUVR: { type: "string", description: "Valor de la UVR del día, si aplica." },
         saldoUVR: { type: "string", description: "Saldo a capital en UVR, si aplica." },
-        valorCobertura: { type: "string", description: "Valor del beneficio/subsidio mensual (cobertura FRECH, Tasa Fresh, Cobertura VIS, Mi Casa Ya, Subsidio Gobierno, Subsidio a la tasa, Beneficio VIS, Cobertura de tasa, Subsidio vivienda), en pesos (solo dígitos). Vacío si no aplica." },
-        tasaCobertura: { type: "string", description: "Tasa (puntos porcentuales) del beneficio/subsidio. Vacío si no aplica." },
-        tieneCobertura: { type: "string", enum: ["si", "no", ""], description: "'si' cuando el extracto mencione FRECH, Fresh, Tasa Fresh, cobertura, Cobertura VIS, Mi Casa Ya, subsidio, Subsidio Gobierno, Subsidio a la tasa, Beneficio VIS, cobertura de tasa, subsidio vivienda o equivalente." },
-        tipoBeneficio: { type: "string", description: "Tipo exacto del beneficio detectado (ej: 'FRECH', 'Tasa Fresh', 'Cobertura VIS', 'Mi Casa Ya', 'Subsidio Gobierno', 'Subsidio a la tasa', 'Beneficio VIS'). Vacío si no aplica." },
-        cuotaPagadaCliente: { type: "string", description: "Cuota efectivamente pagada por el cliente DESPUÉS de aplicar el subsidio/cobertura (también llamada 'cuota cliente', 'valor a pagar', 'cuota neta', 'cuota con subsidio'). En pesos, solo dígitos." },
-        cuotaSinSubsidio: { type: "string", description: "Cuota ANTES del subsidio/cobertura (también llamada 'cuota sin subsidio', 'cuota sin cobertura', 'cuota antes del subsidio', 'cuota sin beneficio', 'cuota plena', 'cuota total'). En pesos, solo dígitos. Vacío si el extracto no la muestra explícitamente." },
+        valorCobertura: {
+          type: "string",
+          description:
+            "Valor del beneficio/subsidio mensual (cobertura FRECH, Tasa Fresh, Cobertura VIS, Mi Casa Ya, Subsidio Gobierno, Subsidio a la tasa, Beneficio VIS, Cobertura de tasa, Subsidio vivienda), en pesos (solo dígitos). Vacío si no aplica.",
+        },
+        tasaCobertura: {
+          type: "string",
+          description: "Tasa (puntos porcentuales) del beneficio/subsidio. Vacío si no aplica.",
+        },
+        tieneCobertura: {
+          type: "string",
+          enum: ["si", "no", ""],
+          description:
+            "'si' cuando el extracto mencione FRECH, Fresh, Tasa Fresh, cobertura, Cobertura VIS, Mi Casa Ya, subsidio, Subsidio Gobierno, Subsidio a la tasa, Beneficio VIS, cobertura de tasa, subsidio vivienda o equivalente.",
+        },
+        tipoBeneficio: {
+          type: "string",
+          description:
+            "Tipo exacto del beneficio detectado (ej: 'FRECH', 'Tasa Fresh', 'Cobertura VIS', 'Mi Casa Ya', 'Subsidio Gobierno', 'Subsidio a la tasa', 'Beneficio VIS'). Vacío si no aplica.",
+        },
+        cuotaPagadaCliente: {
+          type: "string",
+          description:
+            "Cuota efectivamente pagada por el cliente DESPUÉS de aplicar el subsidio/cobertura (también llamada 'cuota cliente', 'valor a pagar', 'cuota neta', 'cuota con subsidio'). En pesos, solo dígitos.",
+        },
+        cuotaSinSubsidio: {
+          type: "string",
+          description:
+            "Cuota ANTES del subsidio/cobertura (también llamada 'cuota sin subsidio', 'cuota sin cobertura', 'cuota antes del subsidio', 'cuota sin beneficio', 'cuota plena', 'cuota total'). En pesos, solo dígitos. Vacío si el extracto no la muestra explícitamente.",
+        },
         fechaExtracto: { type: "string" },
         confianza: {
           type: "object",
@@ -84,17 +135,62 @@ const tool = {
             valorDesembolsado: { type: "string", enum: ["alta", "media", "baja"] },
           },
           required: [
-            "banco","cliente","cedula","numeroCredito","producto","moneda",
-            "saldoCapital","cuotaMensual","seguros","plazoInicial","cuotasPagadas","tea","teaCobrada","teaPactada","valorUVR","saldoUVR","valorCobertura","tasaCobertura","valorDesembolsado",
+            "banco",
+            "cliente",
+            "cedula",
+            "numeroCredito",
+            "producto",
+            "moneda",
+            "saldoCapital",
+            "cuotaMensual",
+            "seguros",
+            "plazoInicial",
+            "cuotasPagadas",
+            "tea",
+            "teaCobrada",
+            "teaPactada",
+            "valorUVR",
+            "saldoUVR",
+            "valorCobertura",
+            "tasaCobertura",
+            "valorDesembolsado",
           ],
           additionalProperties: false,
         },
       },
       required: [
-        "banco","cliente","cedula","numeroCredito","producto","tipoCredito","moneda",
-        "saldoCapital","valorDesembolsado","cuotaMensual","seguros","cuotaSinSeguros","cuotaConInteresSinSeguros","plazoInicial",
-        "cuotasPagadas","cuotasPendientes","tea","teaCobrada","teaPactada","tasaMensual","interesCuota","capitalCuota",
-        "valorUVR","saldoUVR","valorCobertura","tasaCobertura","tieneCobertura","tipoBeneficio","cuotaPagadaCliente","cuotaSinSubsidio","fechaExtracto","confianza",
+        "banco",
+        "cliente",
+        "cedula",
+        "numeroCredito",
+        "producto",
+        "tipoCredito",
+        "moneda",
+        "saldoCapital",
+        "valorDesembolsado",
+        "cuotaMensual",
+        "seguros",
+        "cuotaSinSeguros",
+        "cuotaConInteresSinSeguros",
+        "plazoInicial",
+        "cuotasPagadas",
+        "cuotasPendientes",
+        "tea",
+        "teaCobrada",
+        "teaPactada",
+        "tasaMensual",
+        "interesCuota",
+        "capitalCuota",
+        "valorUVR",
+        "saldoUVR",
+        "valorCobertura",
+        "tasaCobertura",
+        "tieneCobertura",
+        "tipoBeneficio",
+        "cuotaPagadaCliente",
+        "cuotaSinSubsidio",
+        "fechaExtracto",
+        "confianza",
       ],
       additionalProperties: false,
     },
@@ -180,8 +276,13 @@ export const extractStatement = createServerFn({ method: "POST" })
     // Estrategia: primero Flash (mucho más rápido, evita timeouts con varias
     // páginas/imágenes). Si falla por timeout/5xx, reintentamos con Pro.
     let resp = await callModel("google/gemini-2.5-flash");
-    if (!resp.ok && (resp.status === 504 || resp.status === 408 || resp.status === 524 || resp.status >= 500)) {
-      try { await resp.text(); } catch {}
+    if (
+      !resp.ok &&
+      (resp.status === 504 || resp.status === 408 || resp.status === 524 || resp.status >= 500)
+    ) {
+      try {
+        await resp.text();
+      } catch {}
       resp = await callModel("google/gemini-2.5-pro");
     }
 
@@ -197,7 +298,8 @@ export const extractStatement = createServerFn({ method: "POST" })
       }
       if (resp.status === 504 || resp.status === 408 || resp.status === 524) {
         return {
-          error: "El análisis tardó demasiado. Sube menos páginas o un PDF más liviano e intenta de nuevo.",
+          error:
+            "El análisis tardó demasiado. Sube menos páginas o un PDF más liviano e intenta de nuevo.",
           data: null,
         };
       }
@@ -214,10 +316,12 @@ export const extractStatement = createServerFn({ method: "POST" })
       }>;
     };
 
-    const argsRaw =
-      json.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ?? "";
+    const argsRaw = json.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ?? "";
     if (!argsRaw) {
-      return { error: "La IA no devolvió datos estructurados. Intenta con otra imagen.", data: null };
+      return {
+        error: "La IA no devolvió datos estructurados. Intenta con otra imagen.",
+        data: null,
+      };
     }
 
     try {
@@ -238,7 +342,8 @@ export const extractStatement = createServerFn({ method: "POST" })
         const n = parseFloat(s);
         return isFinite(n) ? n : 0;
       };
-      const monto = (k: string) => parseMontoExtracto(typeof parsed[k] === "string" ? (parsed[k] as string) : "");
+      const monto = (k: string) =>
+        parseMontoExtracto(typeof parsed[k] === "string" ? (parsed[k] as string) : "");
       const teaCobradaEmpty = !numStr("teaCobrada");
       const teaEmpty = !numStr("tea");
 
@@ -288,15 +393,18 @@ export const extractStatement = createServerFn({ method: "POST" })
       // CUOTA BASE DE SIMULACIÓN — regla obligatoria:
       // cuotaConInteresSinSeguros + beneficioAplicado + totalSeguros.
       // Nunca usar únicamente cuotaPagadaCliente + beneficio.
-      const tieneCob = (typeof parsed.tieneCobertura === "string" && parsed.tieneCobertura.toLowerCase() === "si")
-        || monto("valorCobertura") > 0
-        || num("tasaCobertura") > 0;
+      const tieneCob =
+        (typeof parsed.tieneCobertura === "string" &&
+          parsed.tieneCobertura.toLowerCase() === "si") ||
+        monto("valorCobertura") > 0 ||
+        num("tasaCobertura") > 0;
 
       const cuotaCliente = monto("cuotaPagadaCliente");
       const valorBenef = monto("valorCobertura");
       const cuotaMensual = monto("cuotaMensual");
       const segurosNum = monto("seguros");
-      const cuotaConInteresSinSeguros = monto("cuotaConInteresSinSeguros") || monto("cuotaSinSeguros");
+      const cuotaConInteresSinSeguros =
+        monto("cuotaConInteresSinSeguros") || monto("cuotaSinSeguros");
       if (cuotaConInteresSinSeguros > 0 && !parsed.cuotaConInteresSinSeguros) {
         parsed.cuotaConInteresSinSeguros = formatMontoExtracto(cuotaConInteresSinSeguros);
       }
@@ -319,7 +427,9 @@ export const extractStatement = createServerFn({ method: "POST" })
 
       parsed.cuotaBaseSimulacion = cuotaBase > 0 ? formatMontoExtracto(cuotaBase) : "";
       parsed.requiereVerificacionBeneficio = requiereVerificacion ? "si" : "no";
-      parsed.alertaCuotaBase = requiereVerificacion ? (resultadoCuotaBase.alerta || ALERTA_CUOTA_CON_INTERES_SIN_SEGUROS) : "";
+      parsed.alertaCuotaBase = requiereVerificacion
+        ? resultadoCuotaBase.alerta || ALERTA_CUOTA_CON_INTERES_SIN_SEGUROS
+        : "";
 
       // Cuando hay beneficio: la "Cuota mensual (con seguros)" mostrada debe
       // reflejar la cuota REAL del crédito = Capital + Interés + Seguros
@@ -347,5 +457,3 @@ export const extractStatement = createServerFn({ method: "POST" })
       return { error: "No se pudo interpretar la respuesta de la IA.", data: null };
     }
   });
-
-

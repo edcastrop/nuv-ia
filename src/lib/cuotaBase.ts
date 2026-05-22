@@ -33,7 +33,9 @@ export function parseMontoExtracto(value: string | number | null | undefined): n
 
 export function formatMontoExtracto(value: number): string {
   if (!Number.isFinite(value) || value <= 0) return "";
-  return Number.isInteger(value) ? String(Math.round(value)) : value.toFixed(2).replace(/\.?0+$/, "");
+  return Number.isInteger(value)
+    ? String(Math.round(value))
+    : value.toFixed(2).replace(/\.?0+$/, "");
 }
 
 export function calcularCuotaBaseSimulacion(input: CuotaBaseInput): CuotaBaseResultado {

@@ -20,12 +20,12 @@ export interface Cobertura {
   tasaCobertura: string;
   // Cuota Base de Simulación y trazabilidad del beneficio detectado en el extracto.
   // No alteran fórmulas: sólo controlan QUÉ cuota se usa como input.
-  tipoBeneficio?: string;          // "FRECH", "Tasa Fresh", "Cobertura VIS", "Mi Casa Ya", "Subsidio Gobierno", etc.
-  cuotaPagadaCliente?: string;     // Cuota efectivamente pagada por el cliente (con subsidio aplicado).
+  tipoBeneficio?: string; // "FRECH", "Tasa Fresh", "Cobertura VIS", "Mi Casa Ya", "Subsidio Gobierno", etc.
+  cuotaPagadaCliente?: string; // Cuota efectivamente pagada por el cliente (con subsidio aplicado).
   cuotaConInteresSinSeguros?: string; // Cuota de capital/interés sin seguros antes de subsidio/cobertura.
-  segurosMensuales?: string;       // Sumatoria de seguros detectados en el extracto.
-  cuotaBaseSimulacion?: string;    // Cuota real sobre la que se debe simular (sin subsidio).
-  requiereVerificacion?: boolean;  // true cuando se detectó beneficio pero no fue posible derivar la cuota base con certeza.
+  segurosMensuales?: string; // Sumatoria de seguros detectados en el extracto.
+  cuotaBaseSimulacion?: string; // Cuota real sobre la que se debe simular (sin subsidio).
+  requiereVerificacion?: boolean; // true cuando se detectó beneficio pero no fue posible derivar la cuota base con certeza.
 }
 
 export function isLeasing(producto?: string | null): boolean {

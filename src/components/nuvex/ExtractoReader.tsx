@@ -1,6 +1,16 @@
 import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Upload, Sparkles, FileText, Loader2, ShieldCheck, AlertTriangle, X, KeyRound, CheckCircle2 } from "lucide-react";
+import {
+  Upload,
+  Sparkles,
+  FileText,
+  Loader2,
+  ShieldCheck,
+  AlertTriangle,
+  X,
+  KeyRound,
+  CheckCircle2,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { extractStatement, type ExtractoData } from "@/lib/extracto.functions";
 import { parseMontoExtracto } from "@/lib/cuotaBase";
@@ -60,13 +70,21 @@ interface Props {
 // PDF.js dynamic loader (client-only)
 async function loadPdfJs() {
   const pdfjs = await import("pdfjs-dist");
-  const workerMod = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")) as { default: string };
+  const workerMod = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")) as {
+    default: string;
+  };
   pdfjs.GlobalWorkerOptions.workerSrc = workerMod.default;
   return pdfjs;
 }
 
-
-async function renderPdfToImages(file: File, password?: string): Promise<{ images: { mime: string; dataUrl: string }[]; needsPassword: boolean; wrongPassword: boolean }> {
+async function renderPdfToImages(
+  file: File,
+  password?: string,
+): Promise<{
+  images: { mime: string; dataUrl: string }[];
+  needsPassword: boolean;
+  wrongPassword: boolean;
+}> {
   const pdfjs = await loadPdfJs();
   const buffer = await file.arrayBuffer();
   try {
@@ -154,8 +172,8 @@ async function extractImagesFromZip(file: File): Promise<{ mime: string; dataUrl
       const mime = lower.endsWith(".png")
         ? "image/png"
         : lower.endsWith(".webp")
-        ? "image/webp"
-        : "image/jpeg";
+          ? "image/webp"
+          : "image/jpeg";
       const blob = await entry.async("blob");
       const dataUrl = await fileToDataUrl(blob, mime);
       images.push({ mime, dataUrl });
@@ -175,11 +193,40 @@ function getConfianza(data: ExtractoData | null, field: string): Confianza {
 }
 
 function confColor(c: Confianza, value: string) {
-  if (!value) return { bg: "rgba(244,162,97,0.10)", border: "rgba(244,162,97,0.35)", label: "Requiere revisión", labelColor: "#F4A261" };
-  if (c === "alta") return { bg: "rgba(132,185,143,0.10)", border: "rgba(132,185,143,0.35)", label: "Alta confianza", labelColor: "#84B98F" };
-  if (c === "media") return { bg: "rgba(68,93,163,0.10)", border: "rgba(68,93,163,0.35)", label: "Media confianza", labelColor: "#7B8FCB" };
-  if (c === "baja") return { bg: "rgba(244,162,97,0.12)", border: "rgba(244,162,97,0.40)", label: "Baja confianza · revisar", labelColor: "#F4A261" };
-  return { bg: "rgba(255,255,255,0.03)", border: "rgba(255,255,255,0.08)", label: "", labelColor: "#94a3b8" };
+  if (!value)
+    return {
+      bg: "rgba(244,162,97,0.10)",
+      border: "rgba(244,162,97,0.35)",
+      label: "Requiere revisión",
+      labelColor: "#F4A261",
+    };
+  if (c === "alta")
+    return {
+      bg: "rgba(132,185,143,0.10)",
+      border: "rgba(132,185,143,0.35)",
+      label: "Alta confianza",
+      labelColor: "#84B98F",
+    };
+  if (c === "media")
+    return {
+      bg: "rgba(68,93,163,0.10)",
+      border: "rgba(68,93,163,0.35)",
+      label: "Media confianza",
+      labelColor: "#7B8FCB",
+    };
+  if (c === "baja")
+    return {
+      bg: "rgba(244,162,97,0.12)",
+      border: "rgba(244,162,97,0.40)",
+      label: "Baja confianza · revisar",
+      labelColor: "#F4A261",
+    };
+  return {
+    bg: "rgba(255,255,255,0.03)",
+    border: "rgba(255,255,255,0.08)",
+    label: "",
+    labelColor: "#94a3b8",
+  };
 }
 
 const STAGES: { id: Stage; label: string }[] = [
@@ -225,7 +272,10 @@ export function ExtractoReader({ modo, onApply }: Props) {
     try {
       let images: { mime: string; dataUrl: string }[] = [];
       const lowerName = f.name.toLowerCase();
-      const isZip = f.type === "application/zip" || f.type === "application/x-zip-compressed" || lowerName.endsWith(".zip");
+      const isZip =
+        f.type === "application/zip" ||
+        f.type === "application/x-zip-compressed" ||
+        lowerName.endsWith(".zip");
       if (f.type === "application/pdf" || lowerName.endsWith(".pdf")) {
         const result = await renderPdfToImages(f, pwd);
         if (result.needsPassword) {
@@ -240,7 +290,9 @@ export function ExtractoReader({ modo, onApply }: Props) {
       } else if (isZip) {
         images = await extractImagesFromZip(f);
       } else {
-        throw new Error("Formato no soportado. Sube un PDF, imagen (JPG/PNG) o un ZIP con esos archivos.");
+        throw new Error(
+          "Formato no soportado. Sube un PDF, imagen (JPG/PNG) o un ZIP con esos archivos.",
+        );
       }
 
       // Subir archivo original a Supabase Storage (privado)
@@ -283,11 +335,12 @@ export function ExtractoReader({ modo, onApply }: Props) {
   const handleConfirm = () => {
     if (!parsed) return;
     const get = (k: string) => (typeof parsed[k] === "string" ? (parsed[k] as string) : "");
-    const tieneCob = get("tieneCobertura").toLowerCase() === "si"
-      || /con\s+beneficio\s+de\s+cobertura/i.test(get("producto"))
-      || !!get("valorCobertura")
-      || !!get("tasaCobertura")
-      || !!get("tipoBeneficio");
+    const tieneCob =
+      get("tieneCobertura").toLowerCase() === "si" ||
+      /con\s+beneficio\s+de\s+cobertura/i.test(get("producto")) ||
+      !!get("valorCobertura") ||
+      !!get("tasaCobertura") ||
+      !!get("tipoBeneficio");
     let producto = get("producto");
     if (tieneCob && producto && !/con\s+beneficio\s+de\s+cobertura/i.test(producto)) {
       producto = `${producto} con Beneficio de Cobertura`;
@@ -300,11 +353,16 @@ export function ExtractoReader({ modo, onApply }: Props) {
     // como cuota del simulador. Si no hay beneficio, se usa la cuota mensual normal.
     const cuotaBaseStr = get("cuotaBaseSimulacion") || get("cuotaMensual");
     if (tieneCob && parseMontoExtracto(cuotaBaseStr) <= 0) {
-      setParsed((prev) => prev ? {
-        ...prev,
-        requiereVerificacionBeneficio: "si",
-        alertaCuotaBase: "No se pudo identificar la cuota con interés sin seguros. Verifique manualmente.",
-      } : prev);
+      setParsed((prev) =>
+        prev
+          ? {
+              ...prev,
+              requiereVerificacionBeneficio: "si",
+              alertaCuotaBase:
+                "No se pudo identificar la cuota con interés sin seguros. Verifique manualmente.",
+            }
+          : prev,
+      );
       cuotaBaseInputRef.current?.focus();
       return;
     }
@@ -378,7 +436,10 @@ export function ExtractoReader({ modo, onApply }: Props) {
     { key: "teaCobrada", label: "Tasa de interés cobrada (%)" },
     { key: "teaPactada", label: "Tasa de interés pactada (%) · referencia" },
     { key: "tea", label: "Tasa usada para simulación (%)" },
-    { key: "tipoBeneficio", label: "Tipo de beneficio (FRECH, Fresh, Cobertura VIS, Mi Casa Ya, etc.)" },
+    {
+      key: "tipoBeneficio",
+      label: "Tipo de beneficio (FRECH, Fresh, Cobertura VIS, Mi Casa Ya, etc.)",
+    },
     { key: "valorCobertura", label: "Valor del beneficio mensual" },
     { key: "tasaCobertura", label: "Tasa de cobertura/subsidio (%)" },
     { key: "cuotaPagadaCliente", label: "Cuota pagada por cliente (con subsidio)" },
@@ -386,9 +447,14 @@ export function ExtractoReader({ modo, onApply }: Props) {
     { key: "cuotaSinSubsidio", label: "Cuota sin subsidio (si el extracto la muestra)" },
     { key: "fechaExtracto", label: "Fecha del extracto" },
   ];
-  const fields = modo === "uvr"
-    ? [...fieldsBase, { key: "saldoUVR", label: "Saldo en UVR" }, { key: "valorUVR", label: "Valor UVR del día" }]
-    : fieldsBase;
+  const fields =
+    modo === "uvr"
+      ? [
+          ...fieldsBase,
+          { key: "saldoUVR", label: "Saldo en UVR" },
+          { key: "valorUVR", label: "Valor UVR del día" },
+        ]
+      : fieldsBase;
 
   const teaCobrada = (parsed?.teaCobrada as string) ?? "";
   const teaPactada = (parsed?.teaPactada as string) ?? "";
@@ -398,13 +464,24 @@ export function ExtractoReader({ modo, onApply }: Props) {
   // Resumen de interpretación del crédito (cuota base de simulación)
   const tipoBeneficio = (parsed?.tipoBeneficio as string) ?? "";
   const tieneCoberturaStr = ((parsed?.tieneCobertura as string) ?? "").toLowerCase() === "si";
-  const tieneBeneficio = tieneCoberturaStr || !!tipoBeneficio || !!(parsed?.valorCobertura as string) || !!(parsed?.tasaCobertura as string);
-  const requiereVerificacion = ((parsed?.requiereVerificacionBeneficio as string) ?? "").toLowerCase() === "si";
+  const tieneBeneficio =
+    tieneCoberturaStr ||
+    !!tipoBeneficio ||
+    !!(parsed?.valorCobertura as string) ||
+    !!(parsed?.tasaCobertura as string);
+  const requiereVerificacion =
+    ((parsed?.requiereVerificacionBeneficio as string) ?? "").toLowerCase() === "si";
   const alertaCuotaBase = (parsed?.alertaCuotaBase as string) ?? "";
   const cuotaBaseLista = parseMontoExtracto((parsed?.cuotaBaseSimulacion as string) ?? "") > 0;
   const fmtCO = (raw: string) => {
     const n = parseMontoExtracto(raw);
-    return isFinite(n) && n > 0 ? new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n) : "—";
+    return isFinite(n) && n > 0
+      ? new Intl.NumberFormat("es-CO", {
+          style: "currency",
+          currency: "COP",
+          maximumFractionDigits: 0,
+        }).format(n)
+      : "—";
   };
   const cuotaBaseInputRef = useRef<HTMLInputElement>(null);
 
@@ -422,8 +499,14 @@ export function ExtractoReader({ modo, onApply }: Props) {
         }}
       >
         {/* glow */}
-        <div className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full blur-3xl" style={{ background: "radial-gradient(circle, rgba(68,93,163,0.35), transparent 70%)" }} />
-        <div className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full blur-3xl" style={{ background: "radial-gradient(circle, rgba(132,185,143,0.28), transparent 70%)" }} />
+        <div
+          className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full blur-3xl"
+          style={{ background: "radial-gradient(circle, rgba(68,93,163,0.35), transparent 70%)" }}
+        />
+        <div
+          className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full blur-3xl"
+          style={{ background: "radial-gradient(circle, rgba(132,185,143,0.28), transparent 70%)" }}
+        />
 
         <div className="relative flex flex-col gap-5 p-6 md:flex-row md:items-center md:justify-between md:p-7">
           <div className="flex items-start gap-4">
@@ -441,13 +524,19 @@ export function ExtractoReader({ modo, onApply }: Props) {
                 <h3 className="text-lg font-semibold text-white">Lectura automática de extracto</h3>
                 <span
                   className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
-                  style={{ background: "rgba(132,185,143,0.15)", color: "#84B98F", border: "1px solid rgba(132,185,143,0.35)" }}
+                  style={{
+                    background: "rgba(132,185,143,0.15)",
+                    color: "#84B98F",
+                    border: "1px solid rgba(132,185,143,0.35)",
+                  }}
                 >
                   NUVEX IA
                 </span>
               </div>
               <p className="mt-1 max-w-xl text-sm text-white/65">
-                Sube el extracto del cliente y NUVEX IA intentará identificar los datos principales para prellenar el simulador. Siempre podrás revisar y corregir antes de generar la propuesta.
+                Sube el extracto del cliente y NUVEX IA intentará identificar los datos principales
+                para prellenar el simulador. Siempre podrás revisar y corregir antes de generar la
+                propuesta.
               </p>
             </div>
           </div>
@@ -473,7 +562,10 @@ export function ExtractoReader({ modo, onApply }: Props) {
                 el?.scrollIntoView({ behavior: "smooth", block: "start" });
               }}
               className="inline-flex items-center justify-center gap-2 rounded-xl border px-5 py-3 text-sm font-semibold text-white/80 transition hover:text-white"
-              style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.10)" }}
+              style={{
+                background: "rgba(255,255,255,0.03)",
+                borderColor: "rgba(255,255,255,0.10)",
+              }}
             >
               Diligenciar manualmente
             </button>
@@ -513,12 +605,19 @@ export function ExtractoReader({ modo, onApply }: Props) {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b px-6 py-4" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+            <div
+              className="flex items-center justify-between border-b px-6 py-4"
+              style={{ borderColor: "rgba(255,255,255,0.08)" }}
+            >
               <div className="flex items-center gap-3">
                 <FileText className="h-5 w-5 text-white/70" />
                 <div>
-                  <div className="text-sm font-semibold text-white">{file?.name ?? "Subir extracto bancario"}</div>
-                  <div className="text-[11px] text-white/50">Procesamiento privado · {modo.toUpperCase()}</div>
+                  <div className="text-sm font-semibold text-white">
+                    {file?.name ?? "Subir extracto bancario"}
+                  </div>
+                  <div className="text-[11px] text-white/50">
+                    Procesamiento privado · {modo.toUpperCase()}
+                  </div>
                 </div>
               </div>
               <button
@@ -541,16 +640,27 @@ export function ExtractoReader({ modo, onApply }: Props) {
                       <div
                         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
                         style={{
-                          background: active ? "linear-gradient(135deg, #445DA3, #84B98F)" : "rgba(255,255,255,0.05)",
+                          background: active
+                            ? "linear-gradient(135deg, #445DA3, #84B98F)"
+                            : "rgba(255,255,255,0.05)",
                           color: active ? "#fff" : "rgba(255,255,255,0.5)",
                           boxShadow: current ? "0 0 0 4px rgba(132,185,143,0.18)" : undefined,
                         }}
                       >
                         {i + 1}
                       </div>
-                      <span className={`text-[11px] ${active ? "text-white" : "text-white/40"}`}>{s.label}</span>
+                      <span className={`text-[11px] ${active ? "text-white" : "text-white/40"}`}>
+                        {s.label}
+                      </span>
                       {i < STAGES.length - 1 && (
-                        <div className="mx-2 h-px flex-1" style={{ background: active ? "linear-gradient(90deg,#445DA3,#84B98F)" : "rgba(255,255,255,0.08)" }} />
+                        <div
+                          className="mx-2 h-px flex-1"
+                          style={{
+                            background: active
+                              ? "linear-gradient(90deg,#445DA3,#84B98F)"
+                              : "rgba(255,255,255,0.08)",
+                          }}
+                        />
                       )}
                     </div>
                   );
@@ -561,8 +671,14 @@ export function ExtractoReader({ modo, onApply }: Props) {
             <div className="max-h-[68vh] overflow-y-auto px-6 py-5">
               {stage === "idle" && (
                 <div
-                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                  onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onDragEnter={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                   onDrop={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -574,9 +690,14 @@ export function ExtractoReader({ modo, onApply }: Props) {
                   style={{ borderColor: "rgba(255,255,255,0.15)" }}
                 >
                   <Upload className="h-10 w-10 text-white/40" />
-                  <div className="text-sm text-white/70">Arrastra el extracto o haz clic para seleccionar</div>
+                  <div className="text-sm text-white/70">
+                    Arrastra el extracto o haz clic para seleccionar
+                  </div>
                   <button
-                    onClick={(e) => { e.stopPropagation(); fileRef.current?.click(); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      fileRef.current?.click();
+                    }}
                     className="rounded-lg px-4 py-2 text-xs font-semibold text-white"
                     style={{ background: "linear-gradient(135deg, #445DA3, #84B98F)" }}
                   >
@@ -586,18 +707,27 @@ export function ExtractoReader({ modo, onApply }: Props) {
                 </div>
               )}
 
-
               {stage === "reading" && (
                 <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
                   <Loader2 className="h-10 w-10 animate-spin text-[#84B98F]" />
-                  <div className="text-sm font-semibold text-white">NUVEX IA está leyendo el extracto…</div>
-                  <div className="text-xs text-white/50">Esto puede tardar entre 10 y 30 segundos.</div>
+                  <div className="text-sm font-semibold text-white">
+                    NUVEX IA está leyendo el extracto…
+                  </div>
+                  <div className="text-xs text-white/50">
+                    Esto puede tardar entre 10 y 30 segundos.
+                  </div>
                 </div>
               )}
 
               {stage === "password" && (
                 <div className="mx-auto max-w-md py-6">
-                  <div className="mb-4 flex items-center gap-3 rounded-xl px-4 py-3" style={{ background: "rgba(244,162,97,0.10)", border: "1px solid rgba(244,162,97,0.30)" }}>
+                  <div
+                    className="mb-4 flex items-center gap-3 rounded-xl px-4 py-3"
+                    style={{
+                      background: "rgba(244,162,97,0.10)",
+                      border: "1px solid rgba(244,162,97,0.30)",
+                    }}
+                  >
                     <KeyRound className="h-5 w-5 text-[#F4A261]" />
                     <div className="text-sm text-white">
                       {wrongPassword
@@ -605,14 +735,19 @@ export function ExtractoReader({ modo, onApply }: Props) {
                         : "Este extracto parece estar protegido con contraseña. Por favor ingresa la clave para continuar."}
                     </div>
                   </div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-white/60">Clave del PDF</label>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-white/60">
+                    Clave del PDF
+                  </label>
                   <input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     autoFocus
                     className="mt-2 w-full rounded-lg px-4 py-3 text-sm text-white outline-none transition"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)" }}
+                    style={{
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && file && password) processFile(file, password);
                     }}
@@ -631,12 +766,17 @@ export function ExtractoReader({ modo, onApply }: Props) {
               {stage === "error" && (
                 <div className="mx-auto max-w-lg py-8 text-center">
                   <AlertTriangle className="mx-auto h-10 w-10 text-[#F04438]" />
-                  <div className="mt-3 text-sm font-semibold text-white">No se pudo procesar el extracto</div>
+                  <div className="mt-3 text-sm font-semibold text-white">
+                    No se pudo procesar el extracto
+                  </div>
                   <div className="mt-1 text-xs text-white/60">{errorMsg}</div>
                   <button
                     onClick={reset}
                     className="mt-5 rounded-lg px-4 py-2 text-xs font-semibold text-white"
-                    style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)" }}
+                    style={{
+                      background: "rgba(255,255,255,0.06)",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                    }}
                   >
                     Intentar de nuevo
                   </button>
@@ -645,34 +785,66 @@ export function ExtractoReader({ modo, onApply }: Props) {
 
               {stage === "review" && parsed && (
                 <div>
-                  <div className="mb-4 flex items-center gap-2 rounded-xl px-4 py-3" style={{ background: "rgba(132,185,143,0.08)", border: "1px solid rgba(132,185,143,0.30)" }}>
+                  <div
+                    className="mb-4 flex items-center gap-2 rounded-xl px-4 py-3"
+                    style={{
+                      background: "rgba(132,185,143,0.08)",
+                      border: "1px solid rgba(132,185,143,0.30)",
+                    }}
+                  >
                     <ShieldCheck className="h-5 w-5 text-[#84B98F]" />
                     <div className="text-xs text-white/80">
-                      Datos detectados por IA. Revisa y corrige antes de llenar el simulador. Tu validación es obligatoria.
+                      Datos detectados por IA. Revisa y corrige antes de llenar el simulador. Tu
+                      validación es obligatoria.
                     </div>
                   </div>
 
                   {/* Resumen de tasas */}
                   {(teaCobrada || teaPactada || teaUsada) && (
-                    <div className="mb-4 rounded-xl px-4 py-3" style={{ background: soloPactada ? "rgba(244,162,97,0.10)" : "rgba(68,93,163,0.10)", border: `1px solid ${soloPactada ? "rgba(244,162,97,0.40)" : "rgba(68,93,163,0.30)"}` }}>
+                    <div
+                      className="mb-4 rounded-xl px-4 py-3"
+                      style={{
+                        background: soloPactada ? "rgba(244,162,97,0.10)" : "rgba(68,93,163,0.10)",
+                        border: `1px solid ${soloPactada ? "rgba(244,162,97,0.40)" : "rgba(68,93,163,0.30)"}`,
+                      }}
+                    >
                       <div className="grid gap-2 text-xs text-white/85 md:grid-cols-3">
                         <div>
-                          <div className="text-[10px] uppercase tracking-wider text-white/55">Tasa cobrada detectada</div>
-                          <div className="mt-0.5 font-semibold text-white">{teaCobrada ? `${teaCobrada}%` : "— no detectada"}</div>
+                          <div className="text-[10px] uppercase tracking-wider text-white/55">
+                            Tasa cobrada detectada
+                          </div>
+                          <div className="mt-0.5 font-semibold text-white">
+                            {teaCobrada ? `${teaCobrada}%` : "— no detectada"}
+                          </div>
                         </div>
                         <div>
-                          <div className="text-[10px] uppercase tracking-wider text-white/55">Tasa pactada detectada</div>
-                          <div className="mt-0.5 font-semibold text-white">{teaPactada ? `${teaPactada}%` : "—"}</div>
+                          <div className="text-[10px] uppercase tracking-wider text-white/55">
+                            Tasa pactada detectada
+                          </div>
+                          <div className="mt-0.5 font-semibold text-white">
+                            {teaPactada ? `${teaPactada}%` : "—"}
+                          </div>
                         </div>
                         <div>
-                          <div className="text-[10px] uppercase tracking-wider text-white/55">Tasa usada para simulación</div>
-                          <div className="mt-0.5 font-semibold" style={{ color: teaUsada ? "#84B98F" : "#F4A261" }}>{teaUsada ? `${teaUsada}%` : "— pendiente"}</div>
+                          <div className="text-[10px] uppercase tracking-wider text-white/55">
+                            Tasa usada para simulación
+                          </div>
+                          <div
+                            className="mt-0.5 font-semibold"
+                            style={{ color: teaUsada ? "#84B98F" : "#F4A261" }}
+                          >
+                            {teaUsada ? `${teaUsada}%` : "— pendiente"}
+                          </div>
                         </div>
                       </div>
                       {soloPactada ? (
-                        <div className="mt-2 flex items-start gap-2 text-[11px] font-semibold" style={{ color: "#F4A261" }}>
+                        <div
+                          className="mt-2 flex items-start gap-2 text-[11px] font-semibold"
+                          style={{ color: "#F4A261" }}
+                        >
                           <AlertTriangle className="mt-0.5 h-3.5 w-3.5" />
-                          No se detectó tasa de interés cobrada. Verifique manualmente antes de simular. La tasa pactada NO se usará automáticamente.
+                          No se detectó tasa de interés cobrada. Verifique manualmente antes de
+                          simular. La tasa pactada NO se usará automáticamente.
                         </div>
                       ) : teaUsada ? (
                         <div className="mt-2 text-[11px] text-white/65">
@@ -700,7 +872,11 @@ export function ExtractoReader({ modo, onApply }: Props) {
                       {tieneBeneficio && (
                         <span
                           className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase"
-                          style={{ background: "rgba(132,185,143,0.18)", color: "#84B98F", border: "1px solid rgba(132,185,143,0.45)" }}
+                          style={{
+                            background: "rgba(132,185,143,0.18)",
+                            color: "#84B98F",
+                            border: "1px solid rgba(132,185,143,0.45)",
+                          }}
                         >
                           Beneficio: {tipoBeneficio || "Cobertura detectada"}
                         </span>
@@ -710,31 +886,64 @@ export function ExtractoReader({ modo, onApply }: Props) {
                     {(requiereVerificacion || alertaCuotaBase) && (
                       <div
                         className="mb-3 flex items-start gap-2 rounded-lg px-3 py-2 text-[12px]"
-                        style={{ background: "rgba(244,162,97,0.12)", border: "1px solid rgba(244,162,97,0.45)", color: "#F4A261" }}
+                        style={{
+                          background: "rgba(244,162,97,0.12)",
+                          border: "1px solid rgba(244,162,97,0.45)",
+                          color: "#F4A261",
+                        }}
                       >
                         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                         <span>
-                          {alertaCuotaBase || "Se detectó un posible beneficio de cobertura o subsidio. Verifique manualmente la cuota base de simulación."}
+                          {alertaCuotaBase ||
+                            "Se detectó un posible beneficio de cobertura o subsidio. Verifique manualmente la cuota base de simulación."}
                         </span>
                       </div>
                     )}
 
                     <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-6">
-                      <div className="rounded-lg p-2.5" style={{ background: "rgba(255,255,255,0.04)" }}>
-                        <div className="text-[10px] uppercase tracking-wider text-white/55">Cuota pagada por cliente</div>
-                        <div className="mt-0.5 text-sm font-bold text-white">{fmtCO(parsed.cuotaPagadaCliente as string)}</div>
+                      <div
+                        className="rounded-lg p-2.5"
+                        style={{ background: "rgba(255,255,255,0.04)" }}
+                      >
+                        <div className="text-[10px] uppercase tracking-wider text-white/55">
+                          Cuota pagada por cliente
+                        </div>
+                        <div className="mt-0.5 text-sm font-bold text-white">
+                          {fmtCO(parsed.cuotaPagadaCliente as string)}
+                        </div>
                       </div>
-                      <div className="rounded-lg p-2.5" style={{ background: "rgba(255,255,255,0.04)" }}>
-                        <div className="text-[10px] uppercase tracking-wider text-white/55">Cuota con interés / sin seguros</div>
-                        <div className="mt-0.5 text-sm font-bold text-white">{fmtCO(parsed.cuotaConInteresSinSeguros as string)}</div>
+                      <div
+                        className="rounded-lg p-2.5"
+                        style={{ background: "rgba(255,255,255,0.04)" }}
+                      >
+                        <div className="text-[10px] uppercase tracking-wider text-white/55">
+                          Cuota con interés / sin seguros
+                        </div>
+                        <div className="mt-0.5 text-sm font-bold text-white">
+                          {fmtCO(parsed.cuotaConInteresSinSeguros as string)}
+                        </div>
                       </div>
-                      <div className="rounded-lg p-2.5" style={{ background: "rgba(255,255,255,0.04)" }}>
-                        <div className="text-[10px] uppercase tracking-wider text-white/55">Beneficio aplicado</div>
-                        <div className="mt-0.5 text-sm font-bold text-white">{tieneBeneficio ? fmtCO(parsed.valorCobertura as string) : "—"}</div>
+                      <div
+                        className="rounded-lg p-2.5"
+                        style={{ background: "rgba(255,255,255,0.04)" }}
+                      >
+                        <div className="text-[10px] uppercase tracking-wider text-white/55">
+                          Beneficio aplicado
+                        </div>
+                        <div className="mt-0.5 text-sm font-bold text-white">
+                          {tieneBeneficio ? fmtCO(parsed.valorCobertura as string) : "—"}
+                        </div>
                       </div>
-                      <div className="rounded-lg p-2.5" style={{ background: "rgba(255,255,255,0.04)" }}>
-                        <div className="text-[10px] uppercase tracking-wider text-white/55">Seguros totales</div>
-                        <div className="mt-0.5 text-sm font-bold text-white">{fmtCO(parsed.seguros as string)}</div>
+                      <div
+                        className="rounded-lg p-2.5"
+                        style={{ background: "rgba(255,255,255,0.04)" }}
+                      >
+                        <div className="text-[10px] uppercase tracking-wider text-white/55">
+                          Seguros totales
+                        </div>
+                        <div className="mt-0.5 text-sm font-bold text-white">
+                          {fmtCO(parsed.seguros as string)}
+                        </div>
                       </div>
                       <div
                         className="rounded-lg p-2.5"
@@ -743,34 +952,54 @@ export function ExtractoReader({ modo, onApply }: Props) {
                           border: "1px solid rgba(132,185,143,0.45)",
                         }}
                       >
-                        <div className="text-[10px] uppercase tracking-wider" style={{ color: "#84B98F" }}>
+                        <div
+                          className="text-[10px] uppercase tracking-wider"
+                          style={{ color: "#84B98F" }}
+                        >
                           Cuota base de simulación (editable)
                         </div>
                         <input
                           ref={cuotaBaseInputRef}
                           value={(parsed.cuotaBaseSimulacion as string) ?? ""}
-                          onChange={(e) => updateField("cuotaBaseSimulacion", e.target.value.replace(/[^\d,.]/g, ""))}
+                          onChange={(e) =>
+                            updateField(
+                              "cuotaBaseSimulacion",
+                              e.target.value.replace(/[^\d,.]/g, ""),
+                            )
+                          }
                           placeholder="0"
                           className="mt-1 w-full rounded-md bg-transparent px-2 py-1 text-sm font-bold text-white outline-none"
                           style={{ border: "1px solid rgba(132,185,143,0.45)" }}
                         />
                       </div>
-                      <div className="rounded-lg p-2.5" style={{ background: "rgba(255,255,255,0.04)" }}>
-                        <div className="text-[10px] uppercase tracking-wider text-white/55">Tasa utilizada</div>
-                        <div className="mt-0.5 text-sm font-bold text-white">{teaUsada ? `${teaUsada}%` : "—"}</div>
+                      <div
+                        className="rounded-lg p-2.5"
+                        style={{ background: "rgba(255,255,255,0.04)" }}
+                      >
+                        <div className="text-[10px] uppercase tracking-wider text-white/55">
+                          Tasa utilizada
+                        </div>
+                        <div className="mt-0.5 text-sm font-bold text-white">
+                          {teaUsada ? `${teaUsada}%` : "—"}
+                        </div>
                       </div>
                     </div>
 
                     {tieneBeneficio && (
-                      <div className="mt-3 rounded-lg px-3 py-2" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.10)" }}>
+                      <div
+                        className="mt-3 rounded-lg px-3 py-2"
+                        style={{
+                          background: "rgba(255,255,255,0.04)",
+                          border: "1px solid rgba(255,255,255,0.10)",
+                        }}
+                      >
                         <p className="text-[11px] leading-relaxed text-white/70">
-                          Confirma que la cuota base de simulación corresponde a la cuota real del crédito antes de subsidios/coberturas.
+                          Confirma que la cuota base de simulación corresponde a la cuota real del
+                          crédito antes de subsidios/coberturas.
                         </p>
                       </div>
                     )}
                   </div>
-
-
 
                   <div className="grid gap-3 md:grid-cols-2">
                     {fields.map((f) => {
@@ -784,9 +1013,14 @@ export function ExtractoReader({ modo, onApply }: Props) {
                           style={{ background: style.bg, border: `1px solid ${style.border}` }}
                         >
                           <div className="flex items-center justify-between">
-                            <label className="text-[11px] font-semibold uppercase tracking-wider text-white/70">{f.label}</label>
+                            <label className="text-[11px] font-semibold uppercase tracking-wider text-white/70">
+                              {f.label}
+                            </label>
                             {style.label && (
-                              <span className="text-[10px] font-semibold" style={{ color: style.labelColor }}>
+                              <span
+                                className="text-[10px] font-semibold"
+                                style={{ color: style.labelColor }}
+                              >
                                 {style.label}
                               </span>
                             )}
@@ -808,18 +1042,28 @@ export function ExtractoReader({ modo, onApply }: Props) {
               {stage === "applied" && (
                 <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
                   <CheckCircle2 className="h-12 w-12 text-[#84B98F]" />
-                  <div className="text-sm font-semibold text-white">Simulador prellenado correctamente</div>
-                  <div className="text-xs text-white/50">Revisa los campos del simulador y genera tus propuestas.</div>
+                  <div className="text-sm font-semibold text-white">
+                    Simulador prellenado correctamente
+                  </div>
+                  <div className="text-xs text-white/50">
+                    Revisa los campos del simulador y genera tus propuestas.
+                  </div>
                 </div>
               )}
             </div>
 
             {stage === "review" && (
-              <div className="flex items-center justify-between gap-3 border-t px-6 py-4" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+              <div
+                className="flex items-center justify-between gap-3 border-t px-6 py-4"
+                style={{ borderColor: "rgba(255,255,255,0.08)" }}
+              >
                 <button
                   onClick={reset}
                   className="rounded-lg px-4 py-2 text-xs font-semibold text-white/70 hover:text-white"
-                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.10)" }}
+                  style={{
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.10)",
+                  }}
                 >
                   Cargar otro extracto
                 </button>
@@ -827,7 +1071,10 @@ export function ExtractoReader({ modo, onApply }: Props) {
                   <button
                     onClick={() => cuotaBaseInputRef.current?.focus()}
                     className="rounded-xl px-5 py-3 text-sm font-semibold text-white/85 transition hover:text-white"
-                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}
+                    style={{
+                      background: "rgba(255,255,255,0.05)",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                    }}
                   >
                     EDITAR CUOTA BASE
                   </button>
