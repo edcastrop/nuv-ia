@@ -275,6 +275,8 @@ export function ExtractoReader({ modo, onApply }: Props) {
     { key: "teaCobrada", label: "Tasa de interés cobrada (%)" },
     { key: "teaPactada", label: "Tasa de interés pactada (%) · referencia" },
     { key: "tea", label: "Tasa usada para simulación (%)" },
+    { key: "valorCobertura", label: "Valor de cobertura (si aplica)" },
+    { key: "tasaCobertura", label: "Tasa de cobertura (%) (si aplica)" },
     { key: "fechaExtracto", label: "Fecha del extracto" },
   ];
   const fields = modo === "uvr"
