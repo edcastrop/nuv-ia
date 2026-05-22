@@ -567,6 +567,11 @@ export function ExtractoReader({ modo, onApply }: Props) {
   const requiereVerificacion =
     ((parsed?.requiereVerificacionBeneficio as string) ?? "").toLowerCase() === "si";
   const alertaCuotaBase = (parsed?.alertaCuotaBase as string) ?? "";
+  const erroresValidacion = ((parsed?.erroresValidacion as string) ?? "")
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const hayErrores = erroresValidacion.length > 0;
   const cuotaBaseLista = parseMontoExtracto((parsed?.cuotaBaseSimulacion as string) ?? "") > 0;
   const fmtCO = (raw: string) => {
     const n = parseMontoExtracto(raw);
