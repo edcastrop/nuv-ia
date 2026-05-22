@@ -46,9 +46,12 @@ const tool = {
         capitalCuota: { type: "string" },
         valorUVR: { type: "string", description: "Valor de la UVR del día, si aplica." },
         saldoUVR: { type: "string", description: "Saldo a capital en UVR, si aplica." },
-        valorCobertura: { type: "string", description: "Valor del beneficio de cobertura (cobertura FRECH / cobertura de tasa), en pesos (solo dígitos). Vacío si no aplica." },
-        tasaCobertura: { type: "string", description: "Tasa (puntos porcentuales) del beneficio de cobertura. Vacío si no aplica." },
-        tieneCobertura: { type: "string", enum: ["si", "no", ""], description: "'si' cuando el extracto mencione cobertura FRECH, cobertura de tasa, beneficio de cobertura, subsidio a la tasa o equivalente." },
+        valorCobertura: { type: "string", description: "Valor del beneficio/subsidio mensual (cobertura FRECH, Tasa Fresh, Cobertura VIS, Mi Casa Ya, Subsidio Gobierno, Subsidio a la tasa, Beneficio VIS, Cobertura de tasa, Subsidio vivienda), en pesos (solo dígitos). Vacío si no aplica." },
+        tasaCobertura: { type: "string", description: "Tasa (puntos porcentuales) del beneficio/subsidio. Vacío si no aplica." },
+        tieneCobertura: { type: "string", enum: ["si", "no", ""], description: "'si' cuando el extracto mencione FRECH, Fresh, Tasa Fresh, cobertura, Cobertura VIS, Mi Casa Ya, subsidio, Subsidio Gobierno, Subsidio a la tasa, Beneficio VIS, cobertura de tasa, subsidio vivienda o equivalente." },
+        tipoBeneficio: { type: "string", description: "Tipo exacto del beneficio detectado (ej: 'FRECH', 'Tasa Fresh', 'Cobertura VIS', 'Mi Casa Ya', 'Subsidio Gobierno', 'Subsidio a la tasa', 'Beneficio VIS'). Vacío si no aplica." },
+        cuotaPagadaCliente: { type: "string", description: "Cuota efectivamente pagada por el cliente DESPUÉS de aplicar el subsidio/cobertura (también llamada 'cuota cliente', 'valor a pagar', 'cuota neta', 'cuota con subsidio'). En pesos, solo dígitos." },
+        cuotaSinSubsidio: { type: "string", description: "Cuota ANTES del subsidio/cobertura (también llamada 'cuota sin subsidio', 'cuota sin cobertura', 'cuota antes del subsidio', 'cuota sin beneficio', 'cuota plena', 'cuota total'). En pesos, solo dígitos. Vacío si el extracto no la muestra explícitamente." },
         fechaExtracto: { type: "string" },
         confianza: {
           type: "object",
@@ -84,7 +87,7 @@ const tool = {
         "banco","cliente","cedula","numeroCredito","producto","tipoCredito","moneda",
         "saldoCapital","valorDesembolsado","cuotaMensual","seguros","cuotaSinSeguros","plazoInicial",
         "cuotasPagadas","cuotasPendientes","tea","teaCobrada","teaPactada","tasaMensual","interesCuota","capitalCuota",
-        "valorUVR","saldoUVR","valorCobertura","tasaCobertura","tieneCobertura","fechaExtracto","confianza",
+        "valorUVR","saldoUVR","valorCobertura","tasaCobertura","tieneCobertura","tipoBeneficio","cuotaPagadaCliente","cuotaSinSubsidio","fechaExtracto","confianza",
       ],
       additionalProperties: false,
     },
@@ -112,11 +115,15 @@ REGLAS ESTRICTAS:
 - Para tasas (TEA), devuelve el porcentaje con punto decimal (ej: "11.15").
 - Para fechas, formato YYYY-MM-DD si es posible.
 - Si encuentras múltiples valores posibles para un campo crítico (cuota, saldo, tasa), elige el más reciente / del periodo del extracto y baja la confianza a "media".
-- BENEFICIO DE COBERTURA — regla obligatoria:
-  * Si el extracto menciona "cobertura FRECH", "cobertura de tasa", "beneficio de cobertura", "subsidio a la tasa", "cobertura condicionada", "cobertura tasa de interés" o equivalente, marca tieneCobertura="si".
-  * Si NO aparece, tieneCobertura="no".
-  * Cuando tieneCobertura="si": extrae "valorCobertura" (monto mensual o saldo de cobertura en pesos, solo dígitos) y "tasaCobertura" (puntos porcentuales de la cobertura, ej "5.00" o "2.50").
-  * Cuando tieneCobertura="si" y el campo "producto" no incluya ya la frase "con Beneficio de Cobertura", AÑÁDELA al final del producto (ej: "Hipotecario en Pesos con Beneficio de Cobertura"). Esto activa la sección de cobertura en el simulador.
+- BENEFICIO / SUBSIDIO / COBERTURA — regla obligatoria (PRIORIDAD CRÍTICA):
+  * Busca SIEMPRE estas palabras clave: "FRECH", "Fresh", "Tasa Fresh", "cobertura", "Cobertura VIS", "Mi Casa Ya", "Subsidio", "Subsidio Gobierno", "Subsidio a la tasa", "Beneficio VIS", "Beneficio Gobierno", "cobertura de tasa", "subsidio vivienda", "cobertura condicionada", "cobertura tasa de interés".
+  * Si aparece CUALQUIERA: tieneCobertura="si" y llena "tipoBeneficio" con el nombre exacto detectado (ej: "FRECH", "Tasa Fresh", "Cobertura VIS", "Mi Casa Ya", "Subsidio Gobierno").
+  * Si NO aparece ninguna: tieneCobertura="no", tipoBeneficio="".
+  * Cuando tieneCobertura="si": extrae "valorCobertura" (monto mensual del subsidio en pesos, solo dígitos) y "tasaCobertura" (puntos porcentuales, ej "5.00").
+  * "cuotaPagadaCliente": cuota que efectivamente PAGA el cliente después del subsidio (etiquetas comunes: "cuota cliente", "valor a pagar", "cuota neta", "cuota con subsidio", "valor a pagar cliente", "cuota a cargo del cliente"). Solo dígitos.
+  * "cuotaSinSubsidio": cuota plena ANTES del subsidio (etiquetas comunes: "cuota sin subsidio", "cuota sin cobertura", "cuota antes del subsidio", "cuota sin beneficio", "cuota plena", "cuota total", "cuota financiera"). Solo dígitos. Déjalo vacío si NO aparece explícitamente — NO lo inventes.
+  * "cuotaMensual": cuando hay beneficio, prioriza llenarla con la cuota sin subsidio (la real). Si solo está disponible la cuota del cliente, úsala pero baja la confianza a "media".
+  * Cuando tieneCobertura="si" y el campo "producto" no incluya ya la frase "con Beneficio de Cobertura", AÑÁDELA al final del producto.
 - Confianza "alta" solo si el dato es 100% explícito en el extracto. "media" si requiere inferencia simple. "baja" si dudoso o ausente.`;
 
 export type ExtractoData = Record<string, string | Record<string, string>>;
@@ -250,6 +257,51 @@ export const extractStatement = createServerFn({ method: "POST" })
       if (teaEmpty && numStr("teaCobrada")) {
         parsed.tea = parsed.teaCobrada;
       }
+
+      // CUOTA BASE DE SIMULACIÓN — jerarquía
+      // P1: si vino cuotaSinSubsidio explícita → usar (sumar seguros si no estaban incluidos).
+      // P2: cuotaPagadaCliente + valorCobertura.
+      // P3: si hay beneficio pero no se puede determinar → requiereVerificacion=true,
+      //     usar cuotaMensual como respaldo.
+      const tieneCob = (typeof parsed.tieneCobertura === "string" && parsed.tieneCobertura.toLowerCase() === "si")
+        || num("valorCobertura") > 0
+        || num("tasaCobertura") > 0;
+
+      const cuotaSinSub = num("cuotaSinSubsidio");
+      const cuotaCliente = num("cuotaPagadaCliente");
+      const valorBenef = num("valorCobertura");
+      const cuotaMensual = num("cuotaMensual");
+      const segurosNum = num("seguros");
+
+      let cuotaBase = 0;
+      let requiereVerificacion = false;
+
+      if (tieneCob) {
+        if (cuotaSinSub > 0) {
+          // P1 — si la cuota sin subsidio reportada parece NO incluir seguros, súmalos.
+          const probablementeSinSeguros = segurosNum > 0 && cuotaSinSub < cuotaMensual * 0.95 && (cuotaSinSub + segurosNum * 0.5) < cuotaMensual * 1.1;
+          cuotaBase = probablementeSinSeguros ? cuotaSinSub + segurosNum : cuotaSinSub;
+        } else if (cuotaCliente > 0 && valorBenef > 0) {
+          // P2
+          cuotaBase = cuotaCliente + valorBenef;
+        } else if (cuotaMensual > 0) {
+          // Si cuotaMensual ya parece ser la real (mayor a cuotaCliente), úsala
+          if (cuotaCliente > 0 && cuotaMensual > cuotaCliente * 1.02) {
+            cuotaBase = cuotaMensual;
+          } else {
+            // P3 — no podemos certificar la cuota base
+            cuotaBase = cuotaMensual;
+            requiereVerificacion = true;
+          }
+        } else {
+          requiereVerificacion = true;
+        }
+      } else {
+        cuotaBase = cuotaMensual;
+      }
+
+      parsed.cuotaBaseSimulacion = cuotaBase > 0 ? String(Math.round(cuotaBase)) : "";
+      parsed.requiereVerificacionBeneficio = requiereVerificacion ? "si" : "no";
 
       return { error: null, data: parsed };
     } catch (e) {

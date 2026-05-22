@@ -237,6 +237,10 @@ export function UVRSimulator({
               activo: true,
               valorCobertura: p.cobertura.valorCobertura || "",
               tasaCobertura: p.cobertura.tasaCobertura || "",
+              tipoBeneficio: p.cobertura.tipoBeneficio || "",
+              cuotaPagadaCliente: p.cobertura.cuotaPagadaCliente || "",
+              cuotaBaseSimulacion: p.cobertura.cuotaBaseSimulacion || "",
+              requiereVerificacion: !!p.cobertura.requiereVerificacion,
             });
           }
         }}
@@ -264,6 +268,22 @@ export function UVRSimulator({
 
       <Card>
         <SectionTitle sub="Información financiera del crédito en UVR">Datos del crédito</SectionTitle>
+        {cobertura.activo && (cobertura.tipoBeneficio || cobertura.cuotaBaseSimulacion) && (
+          <div
+            className="mb-4 flex items-start gap-2 rounded-lg px-3 py-2 text-[12px]"
+            style={{
+              background: "rgba(132,185,143,0.10)",
+              border: "1px solid rgba(132,185,143,0.45)",
+              color: "#1F7A45",
+            }}
+          >
+            <span className="font-bold">Cuota base de simulación activa.</span>
+            <span>
+              Beneficio detectado: <strong>{cobertura.tipoBeneficio || "Cobertura"}</strong>.
+              La cuota usada para simular es la cuota real del crédito (sin subsidio), no la cuota que paga hoy el cliente.
+            </span>
+          </div>
+        )}
         <div className="grid gap-4 md:grid-cols-3">
           <TextField label="Valor desembolsado" value={valorDesembolsado} onChange={setValorDesembolsado} placeholder="120.000.000" />
           <TextField label="Saldo actual en pesos" value={saldoPesos} onChange={setSaldoPesos} placeholder="98.500.000" />

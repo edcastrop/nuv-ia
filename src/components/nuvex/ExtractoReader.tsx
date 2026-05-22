@@ -41,6 +41,10 @@ export type ExtractoApplyPayload = {
     activo: boolean;
     valorCobertura?: string;
     tasaCobertura?: string;
+    tipoBeneficio?: string;
+    cuotaPagadaCliente?: string;
+    cuotaBaseSimulacion?: string;
+    requiereVerificacion?: boolean;
   };
   archivoPath?: string;
 };
@@ -279,7 +283,8 @@ export function ExtractoReader({ modo, onApply }: Props) {
     const tieneCob = get("tieneCobertura").toLowerCase() === "si"
       || /con\s+beneficio\s+de\s+cobertura/i.test(get("producto"))
       || !!get("valorCobertura")
-      || !!get("tasaCobertura");
+      || !!get("tasaCobertura")
+      || !!get("tipoBeneficio");
     let producto = get("producto");
     if (tieneCob && producto && !/con\s+beneficio\s+de\s+cobertura/i.test(producto)) {
       producto = `${producto} con Beneficio de Cobertura`;
@@ -287,6 +292,12 @@ export function ExtractoReader({ modo, onApply }: Props) {
     // Normalizar banco: Colpatria -> Davibank (cambio de razón social)
     let banco = get("banco");
     if (/colpatria/i.test(banco)) banco = "Davibank";
+
+    // Cuota base de simulación: si hay beneficio se usa la cuota real (sin subsidio)
+    // como cuota del simulador. Si no hay beneficio, se usa la cuota mensual normal.
+    const cuotaBaseStr = get("cuotaBaseSimulacion") || get("cuotaMensual");
+    const cuotaParaSimulador = tieneCob ? cuotaBaseStr : get("cuotaMensual");
+
     const payload: ExtractoApplyPayload = {
       cliente: {
         nombre: get("cliente"),
@@ -302,7 +313,7 @@ export function ExtractoReader({ modo, onApply }: Props) {
     if (modo === "pesos") {
       payload.pesos = {
         saldoCapital: get("saldoCapital"),
-        cuotaActual: get("cuotaMensual"),
+        cuotaActual: cuotaParaSimulador,
         seguros: get("seguros"),
         tea: get("tea"),
       };
@@ -312,7 +323,7 @@ export function ExtractoReader({ modo, onApply }: Props) {
         valorUVR: get("valorUVR"),
         saldoPesos: get("saldoCapital"),
         valorDesembolsado: get("valorDesembolsado"),
-        cuotaActualPesos: get("cuotaMensual"),
+        cuotaActualPesos: cuotaParaSimulador,
         seguros: get("seguros"),
         teaCobrada: get("tea"),
       };
@@ -322,6 +333,10 @@ export function ExtractoReader({ modo, onApply }: Props) {
         activo: true,
         valorCobertura: get("valorCobertura"),
         tasaCobertura: get("tasaCobertura"),
+        tipoBeneficio: get("tipoBeneficio") || "Beneficio detectado",
+        cuotaPagadaCliente: get("cuotaPagadaCliente") || get("cuotaMensual"),
+        cuotaBaseSimulacion: cuotaBaseStr,
+        requiereVerificacion: get("requiereVerificacionBeneficio").toLowerCase() === "si",
       };
     }
     onApply(payload);
@@ -349,8 +364,11 @@ export function ExtractoReader({ modo, onApply }: Props) {
     { key: "teaCobrada", label: "Tasa de interés cobrada (%)" },
     { key: "teaPactada", label: "Tasa de interés pactada (%) · referencia" },
     { key: "tea", label: "Tasa usada para simulación (%)" },
-    { key: "valorCobertura", label: "Valor de cobertura (si aplica)" },
-    { key: "tasaCobertura", label: "Tasa de cobertura (%) (si aplica)" },
+    { key: "tipoBeneficio", label: "Tipo de beneficio (FRECH, Fresh, Cobertura VIS, Mi Casa Ya, etc.)" },
+    { key: "valorCobertura", label: "Valor del beneficio mensual" },
+    { key: "tasaCobertura", label: "Tasa de cobertura/subsidio (%)" },
+    { key: "cuotaPagadaCliente", label: "Cuota pagada por cliente (con subsidio)" },
+    { key: "cuotaSinSubsidio", label: "Cuota sin subsidio (si el extracto la muestra)" },
     { key: "fechaExtracto", label: "Fecha del extracto" },
   ];
   const fields = modo === "uvr"
@@ -361,6 +379,16 @@ export function ExtractoReader({ modo, onApply }: Props) {
   const teaPactada = (parsed?.teaPactada as string) ?? "";
   const teaUsada = (parsed?.tea as string) ?? "";
   const soloPactada = !teaCobrada && !!teaPactada;
+
+  // Resumen de interpretación del crédito (cuota base de simulación)
+  const tipoBeneficio = (parsed?.tipoBeneficio as string) ?? "";
+  const tieneCoberturaStr = ((parsed?.tieneCobertura as string) ?? "").toLowerCase() === "si";
+  const tieneBeneficio = tieneCoberturaStr || !!tipoBeneficio || !!(parsed?.valorCobertura as string) || !!(parsed?.tasaCobertura as string);
+  const requiereVerificacion = ((parsed?.requiereVerificacionBeneficio as string) ?? "").toLowerCase() === "si";
+  const fmtCO = (raw: string) => {
+    const n = Number(String(raw ?? "").replace(/[^\d]/g, ""));
+    return isFinite(n) && n > 0 ? new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n) : "—";
+  };
 
   const progressIdx = STAGES.findIndex((s) => s.id === stage);
 
@@ -635,6 +663,90 @@ export function ExtractoReader({ modo, onApply }: Props) {
                       ) : null}
                     </div>
                   )}
+
+                  {/* RESUMEN DE INTERPRETACIÓN DEL CRÉDITO — Cuota Base de Simulación */}
+                  <div
+                    className="mb-4 rounded-xl p-4"
+                    style={{
+                      background: tieneBeneficio
+                        ? "linear-gradient(135deg, rgba(132,185,143,0.10), rgba(68,93,163,0.08))"
+                        : "rgba(255,255,255,0.03)",
+                      border: `1px solid ${tieneBeneficio ? "rgba(132,185,143,0.45)" : "rgba(255,255,255,0.10)"}`,
+                    }}
+                  >
+                    <div className="mb-3 flex items-center gap-2">
+                      <Sparkles className="h-4 w-4" style={{ color: "#84B98F" }} />
+                      <div className="text-[12px] font-bold uppercase tracking-wider text-white">
+                        Resumen de interpretación del crédito
+                      </div>
+                      {tieneBeneficio && (
+                        <span
+                          className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase"
+                          style={{ background: "rgba(132,185,143,0.18)", color: "#84B98F", border: "1px solid rgba(132,185,143,0.45)" }}
+                        >
+                          Beneficio: {tipoBeneficio || "Cobertura detectada"}
+                        </span>
+                      )}
+                    </div>
+
+                    {requiereVerificacion && (
+                      <div
+                        className="mb-3 flex items-start gap-2 rounded-lg px-3 py-2 text-[12px]"
+                        style={{ background: "rgba(244,162,97,0.12)", border: "1px solid rgba(244,162,97,0.45)", color: "#F4A261" }}
+                      >
+                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                        <span>
+                          Se detectó un posible beneficio de cobertura o subsidio. Verifique manualmente la cuota base de simulación.
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
+                      <div className="rounded-lg p-2.5" style={{ background: "rgba(255,255,255,0.04)" }}>
+                        <div className="text-[10px] uppercase tracking-wider text-white/55">Cuota pagada por cliente</div>
+                        <div className="mt-0.5 text-sm font-bold text-white">{fmtCO((parsed.cuotaPagadaCliente as string) || (parsed.cuotaMensual as string))}</div>
+                      </div>
+                      <div className="rounded-lg p-2.5" style={{ background: "rgba(255,255,255,0.04)" }}>
+                        <div className="text-[10px] uppercase tracking-wider text-white/55">Beneficio aplicado</div>
+                        <div className="mt-0.5 text-sm font-bold text-white">{tieneBeneficio ? fmtCO(parsed.valorCobertura as string) : "—"}</div>
+                      </div>
+                      <div
+                        className="rounded-lg p-2.5"
+                        style={{
+                          background: "rgba(132,185,143,0.12)",
+                          border: "1px solid rgba(132,185,143,0.45)",
+                        }}
+                      >
+                        <div className="text-[10px] uppercase tracking-wider" style={{ color: "#84B98F" }}>
+                          Cuota base de simulación (editable)
+                        </div>
+                        <input
+                          value={(parsed.cuotaBaseSimulacion as string) ?? ""}
+                          onChange={(e) => updateField("cuotaBaseSimulacion", e.target.value.replace(/[^\d]/g, ""))}
+                          placeholder="0"
+                          className="mt-1 w-full rounded-md bg-transparent px-2 py-1 text-sm font-bold text-white outline-none"
+                          style={{ border: "1px solid rgba(132,185,143,0.45)" }}
+                        />
+                      </div>
+                      <div className="rounded-lg p-2.5" style={{ background: "rgba(255,255,255,0.04)" }}>
+                        <div className="text-[10px] uppercase tracking-wider text-white/55">Seguros</div>
+                        <div className="mt-0.5 text-sm font-bold text-white">{fmtCO(parsed.seguros as string)}</div>
+                      </div>
+                      <div className="rounded-lg p-2.5" style={{ background: "rgba(255,255,255,0.04)" }}>
+                        <div className="text-[10px] uppercase tracking-wider text-white/55">Tasa utilizada</div>
+                        <div className="mt-0.5 text-sm font-bold text-white">{teaUsada ? `${teaUsada}%` : "—"}</div>
+                      </div>
+                    </div>
+
+                    {tieneBeneficio && (
+                      <p className="mt-3 text-[11px] leading-relaxed text-white/65">
+                        La cuota base de simulación es la cuota real del crédito (sin subsidio). Es la que NUVEX usará
+                        para proyecciones, ahorros, honorarios y comparativos. <strong className="text-white">No es necesariamente la cuota que paga el cliente.</strong>
+                      </p>
+                    )}
+                  </div>
+
+
 
                   <div className="grid gap-3 md:grid-cols-2">
                     {fields.map((f) => {
