@@ -328,8 +328,93 @@ export function ExtractoReader({ modo, onApply }: Props) {
     }
   };
 
+  const BANCOLOMBIA_KEYS = new Set([
+    "valorSeguroVida",
+    "valorSeguroIncendio",
+    "valorSeguroTerremoto",
+    "valorCuotaSinSubsidioGobierno",
+    "valorSubsidioGobierno",
+    "valorAPagar",
+    "valorCuotaConSubsidio",
+    "cuotaConInteresSinSeguros",
+    "cuotaSinSeguros",
+    "seguros",
+    "cuotaPagadaCliente",
+    "valorCobertura",
+  ]);
+
+  const recomputeBancolombia = (data: ExtractoData): ExtractoData => {
+    const g = (k: string) => (typeof data[k] === "string" ? (data[k] as string) : "");
+    const m = (k: string) => parseMontoExtracto(g(k));
+    const banco = g("banco").toLowerCase();
+    if (!/bancolombia/.test(banco)) return data;
+
+    const sVida = m("valorSeguroVida");
+    const sInc = m("valorSeguroIncendio");
+    const sTer = m("valorSeguroTerremoto");
+    const segurosSum = sVida + sInc + sTer;
+    const valorAPagar = m("valorAPagar");
+    const cuotaConSub = m("valorCuotaConSubsidio");
+    const subsGob = m("valorSubsidioGobierno");
+    const cuotaSinSubGob = m("valorCuotaSinSubsidioGobierno");
+    const cuotaSinSeg = m("cuotaConInteresSinSeguros") || m("cuotaSinSeguros");
+    const out: ExtractoData = { ...data };
+
+    if (segurosSum > 0) out.seguros = String(Math.round(segurosSum));
+    const cuotaCli = valorAPagar > 0 ? valorAPagar : cuotaConSub;
+    if (cuotaCli > 0) out.cuotaPagadaCliente = String(Math.round(cuotaCli));
+    if (subsGob > 0) {
+      out.valorCobertura = String(Math.round(subsGob));
+      out.tieneCobertura = "si";
+      if (!g("tipoBeneficio")) out.tipoBeneficio = "Subsidio Gobierno";
+    }
+
+    const errores: string[] = [];
+    let cuotaBase = 0;
+    if (cuotaSinSubGob > 0 && segurosSum > 0) {
+      cuotaBase = cuotaSinSubGob + segurosSum;
+    } else if (cuotaSinSubGob > 0) {
+      cuotaBase = cuotaSinSubGob;
+      errores.push("No se detectaron los seguros (vida, incendio, terremoto).");
+    } else {
+      errores.push(
+        "Falta 'Valor cuota sin subsidio Gobierno' para calcular la cuota base.",
+      );
+    }
+
+    if (cuotaSinSeg > 0 && segurosSum > 0) {
+      if (Math.abs(segurosSum - cuotaSinSeg) < 1) {
+        errores.push("Seguros mensuales = Cuota sin seguros. Lectura inconsistente.");
+      }
+      if (segurosSum > cuotaSinSeg * 0.3) {
+        errores.push("Seguros mensuales > 30% de la cuota sin seguros.");
+      }
+    }
+    if (cuotaBase > 0 && cuotaCli > 0) {
+      const limite = cuotaCli + subsGob + segurosSum + 10;
+      if (cuotaBase > limite) {
+        errores.push("Cuota base > cuota pagada + beneficio + seguros.");
+      }
+      if (cuotaBase < cuotaCli) {
+        errores.push("Cuota base < cuota pagada por cliente.");
+      }
+    }
+
+    if (cuotaBase > 0) out.cuotaBaseSimulacion = String(Math.round(cuotaBase));
+    out.erroresValidacion = errores.join("\n");
+    out.mapeoBanco = "bancolombia";
+    return out;
+  };
+
   const updateField = (key: string, value: string) => {
-    setParsed((prev) => (prev ? { ...prev, [key]: value } : prev));
+    setParsed((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, [key]: value };
+      if (BANCOLOMBIA_KEYS.has(key) || key === "banco") {
+        return recomputeBancolombia(next);
+      }
+      return next;
+    });
   };
 
   const handleConfirm = () => {
@@ -445,6 +530,16 @@ export function ExtractoReader({ modo, onApply }: Props) {
     { key: "cuotaPagadaCliente", label: "Cuota pagada por cliente (con subsidio)" },
     { key: "cuotaConInteresSinSeguros", label: "Cuota con interés / sin seguros" },
     { key: "cuotaSinSubsidio", label: "Cuota sin subsidio (si el extracto la muestra)" },
+    { key: "valorSeguroVida", label: "Seguro vida (mensual)" },
+    { key: "valorSeguroIncendio", label: "Seguro incendio (mensual)" },
+    { key: "valorSeguroTerremoto", label: "Seguro terremoto (mensual)" },
+    { key: "valorAPagar", label: "Bancolombia · Valor a Pagar" },
+    {
+      key: "valorCuotaSinSubsidioGobierno",
+      label: "Bancolombia · Valor cuota sin subsidio Gobierno",
+    },
+    { key: "valorSubsidioGobierno", label: "Bancolombia · Valor subsidio Gobierno" },
+    { key: "valorCuotaConSubsidio", label: "Bancolombia · Valor cuota con subsidio" },
     { key: "fechaExtracto", label: "Fecha del extracto" },
   ];
   const fields =
@@ -472,6 +567,11 @@ export function ExtractoReader({ modo, onApply }: Props) {
   const requiereVerificacion =
     ((parsed?.requiereVerificacionBeneficio as string) ?? "").toLowerCase() === "si";
   const alertaCuotaBase = (parsed?.alertaCuotaBase as string) ?? "";
+  const erroresValidacion = ((parsed?.erroresValidacion as string) ?? "")
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const hayErrores = erroresValidacion.length > 0;
   const cuotaBaseLista = parseMontoExtracto((parsed?.cuotaBaseSimulacion as string) ?? "") > 0;
   const fmtCO = (raw: string) => {
     const n = parseMontoExtracto(raw);
@@ -883,7 +983,7 @@ export function ExtractoReader({ modo, onApply }: Props) {
                       )}
                     </div>
 
-                    {(requiereVerificacion || alertaCuotaBase) && (
+                    {(requiereVerificacion || alertaCuotaBase) && !hayErrores && (
                       <div
                         className="mb-3 flex items-start gap-2 rounded-lg px-3 py-2 text-[12px]"
                         style={{
@@ -897,6 +997,27 @@ export function ExtractoReader({ modo, onApply }: Props) {
                           {alertaCuotaBase ||
                             "Se detectó un posible beneficio de cobertura o subsidio. Verifique manualmente la cuota base de simulación."}
                         </span>
+                      </div>
+                    )}
+
+                    {hayErrores && (
+                      <div
+                        className="mb-3 rounded-lg px-3 py-2 text-[12px]"
+                        style={{
+                          background: "rgba(240,68,56,0.12)",
+                          border: "1px solid rgba(240,68,56,0.5)",
+                          color: "#F04438",
+                        }}
+                      >
+                        <div className="mb-1 flex items-center gap-2 font-bold uppercase tracking-wider">
+                          <AlertTriangle className="h-4 w-4" />
+                          Lectura inconsistente. Revise manualmente los valores detectados.
+                        </div>
+                        <ul className="ml-5 list-disc space-y-0.5">
+                          {erroresValidacion.map((e, i) => (
+                            <li key={i}>{e}</li>
+                          ))}
+                        </ul>
                       </div>
                     )}
 
@@ -1080,7 +1201,7 @@ export function ExtractoReader({ modo, onApply }: Props) {
                   </button>
                   <button
                     onClick={handleConfirm}
-                    disabled={tieneBeneficio && !cuotaBaseLista}
+                    disabled={hayErrores || (tieneBeneficio && !cuotaBaseLista)}
                     className="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:scale-100"
                     style={{
                       background: "linear-gradient(135deg, #445DA3, #84B98F)",
