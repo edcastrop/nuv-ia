@@ -142,6 +142,15 @@ const tool = {
           description:
             "Bancolombia: campo literal 'Valor cuota con subsidio'. Solo dígitos. Vacío si no aparece.",
         },
+        valorAseguradoInmueble: {
+          type: "string",
+          description:
+            "Bancolombia: 'Valor asegurado Incendio y Terremoto'. Es el valor asegurado del inmueble; NO es seguro mensual, NI cuota, NI saldo, NI ahorro. Solo dígitos. Vacío si no aparece.",
+        },
+        cuotaActualNumero: {
+          type: "string",
+          description: "Bancolombia: 'Nro. cuota a cancelar'. Solo dígitos.",
+        },
         fechaExtracto: { type: "string" },
         confianza: {
           type: "object",
