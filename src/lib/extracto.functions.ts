@@ -159,10 +159,11 @@ export const extractStatement = createServerFn({ method: "POST" })
     }
 
     try {
-      const parsed = JSON.parse(argsRaw) as Record<string, unknown>;
-      return { error: null, data: parsed };
+      const parsed = JSON.parse(argsRaw) as Record<string, string | Record<string, string>>;
+      return { error: null as string | null, data: parsed };
     } catch (e) {
       console.error("JSON parse error:", e, argsRaw);
-      return { error: "No se pudo interpretar la respuesta de la IA.", data: null };
+      return { error: "No se pudo interpretar la respuesta de la IA.", data: null as Record<string, string | Record<string, string>> | null };
     }
   });
+
