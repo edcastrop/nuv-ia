@@ -35,6 +35,11 @@ export type ExtractoApplyPayload = {
     seguros?: string;
     teaCobrada?: string;
   };
+  cobertura?: {
+    activo: boolean;
+    valorCobertura?: string;
+    tasaCobertura?: string;
+  };
   archivoPath?: string;
 };
 
