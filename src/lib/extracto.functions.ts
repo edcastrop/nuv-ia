@@ -99,6 +99,8 @@ REGLAS ESTRICTAS:
 - NO inventes datos. Si un campo no aparece claramente, devuélvelo como cadena vacía "" y marca la confianza como "baja".
 - Marca la moneda como "UVR" si el extracto referencia UVR/saldo en UVR/valor UVR, de lo contrario "PESOS".
 - Para montos en pesos, devuelve solo dígitos sin puntos, comas ni símbolos (ej: "221903943").
+- "valorDesembolsado": monto inicial desembolsado del crédito (también llamado "valor desembolsado", "monto desembolso", "valor del crédito desembolsado", "desembolso inicial"). En pesos, solo dígitos. Si no aparece, vacío "".
+- "saldoCapital": SIEMPRE el saldo a capital actual en PESOS (no en UVR). Para créditos UVR, busca "saldo en pesos", "saldo capital pesos", "equivalente en pesos" del saldo. Solo dígitos.
 - TASAS DE INTERÉS — regla obligatoria:
   * Identifica explícitamente la "tasa de interés cobrada" (también llamada "tasa cobrada", "tasa aplicada", "tasa efectivamente aplicada") y la "tasa de interés pactada" (también "tasa pactada", "tasa contractual").
   * El campo "teaCobrada" SOLO se llena cuando aparece textualmente la tasa cobrada.
