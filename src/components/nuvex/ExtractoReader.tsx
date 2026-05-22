@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Upload, Sparkles, FileText, Loader2, ShieldCheck, AlertTriangle, X, KeyRound, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { extractStatement, type ExtractoData } from "@/lib/extracto.functions";
+import { parseMontoExtracto } from "@/lib/cuotaBase";
 
 type Modo = "pesos" | "uvr";
 
@@ -43,6 +44,8 @@ export type ExtractoApplyPayload = {
     tasaCobertura?: string;
     tipoBeneficio?: string;
     cuotaPagadaCliente?: string;
+    cuotaConInteresSinSeguros?: string;
+    segurosMensuales?: string;
     cuotaBaseSimulacion?: string;
     requiereVerificacion?: boolean;
   };
@@ -334,7 +337,9 @@ export function ExtractoReader({ modo, onApply }: Props) {
         valorCobertura: get("valorCobertura"),
         tasaCobertura: get("tasaCobertura"),
         tipoBeneficio: get("tipoBeneficio") || "Beneficio detectado",
-        cuotaPagadaCliente: get("cuotaPagadaCliente") || get("cuotaMensual"),
+        cuotaPagadaCliente: get("cuotaPagadaCliente"),
+        cuotaConInteresSinSeguros: get("cuotaConInteresSinSeguros"),
+        segurosMensuales: get("seguros"),
         cuotaBaseSimulacion: cuotaBaseStr,
         requiereVerificacion: get("requiereVerificacionBeneficio").toLowerCase() === "si",
       };
@@ -368,6 +373,7 @@ export function ExtractoReader({ modo, onApply }: Props) {
     { key: "valorCobertura", label: "Valor del beneficio mensual" },
     { key: "tasaCobertura", label: "Tasa de cobertura/subsidio (%)" },
     { key: "cuotaPagadaCliente", label: "Cuota pagada por cliente (con subsidio)" },
+    { key: "cuotaConInteresSinSeguros", label: "Cuota con interés / sin seguros" },
     { key: "cuotaSinSubsidio", label: "Cuota sin subsidio (si el extracto la muestra)" },
     { key: "fechaExtracto", label: "Fecha del extracto" },
   ];
@@ -386,9 +392,10 @@ export function ExtractoReader({ modo, onApply }: Props) {
   const tieneBeneficio = tieneCoberturaStr || !!tipoBeneficio || !!(parsed?.valorCobertura as string) || !!(parsed?.tasaCobertura as string);
   const requiereVerificacion = ((parsed?.requiereVerificacionBeneficio as string) ?? "").toLowerCase() === "si";
   const fmtCO = (raw: string) => {
-    const n = Number(String(raw ?? "").replace(/[^\d]/g, ""));
+    const n = parseMontoExtracto(raw);
     return isFinite(n) && n > 0 ? new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n) : "—";
   };
+  const cuotaBaseInputRef = useRef<HTMLInputElement>(null);
 
   const progressIdx = STAGES.findIndex((s) => s.id === stage);
 
