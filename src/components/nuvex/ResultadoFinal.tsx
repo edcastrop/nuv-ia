@@ -76,6 +76,8 @@ export function ResultadoFinal({
   honorariosPct,
   expedienteId,
   aprobadoInicial,
+  estado,
+  fechaPagoHonorarios,
 }: {
   mode: "pesos" | "uvr";
   client: ClientData;
@@ -86,6 +88,8 @@ export function ResultadoFinal({
   honorariosPct: number;
   expedienteId?: string;
   aprobadoInicial?: AprobadoData | null;
+  estado?: EstadoExpediente;
+  fechaPagoHonorarios?: string;
 }) {
   const [aprob, setAprob] = useState<AprobacionState>(() =>
     aprobadoInicial
