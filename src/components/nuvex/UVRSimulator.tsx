@@ -277,9 +277,53 @@ export function UVRSimulator({
             readOnly
             hint="Calculada automáticamente"
           />
-          <TextField label="Tasa cobrada EA (%)" value={teaCobrada} onChange={setTeaCobrada} placeholder="8,50" />
-          <TextField label="Variación UVR EA (%)" value={variacionUVR} onChange={setVariacionUVR} placeholder="5,20" />
-        </div>
+          <TextField label="Tasa cobrada EA (%)" value={teaCobrada} onChange={setTeaCobrada} placeholder="8,50" hint="Solo la tasa cobrada. La tasa pactada nunca se usa para simular." />
+          <div>
+            <TextField
+              label="Variación UVR EA (%) · utilizada para simulación"
+              value={variacionUVR}
+              onChange={setVariacionUVR}
+              placeholder="6,00"
+              hint="Editable por el analista. Se guarda en el expediente."
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfigVariacion((v) => !v)}
+              className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-[#445DA3] hover:underline"
+            >
+              <Settings2 className="h-3 w-3" />
+              {showConfigVariacion ? "Ocultar configuración" : "Configurar valor por defecto"}
+            </button>
+            {showConfigVariacion && (
+              <div className="mt-2 rounded-lg border border-[#445DA3]/30 bg-[#445DA3]/5 p-3">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-[#445DA3]">
+                  Configuración UVR · Variación por defecto
+                </div>
+                <p className="mt-1 text-[11px] text-slate-600">
+                  Este valor se usará automáticamente como respaldo en nuevas simulaciones cuando no haya un dato actualizado.
+                </p>
+                <div className="mt-2 flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={variacionDefaultInput}
+                    onChange={(e) => setVariacionDefaultInput(e.target.value)}
+                    placeholder="6"
+                    className="w-24 rounded-md border border-slate-300 px-2 py-1 text-sm outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDefaultVariacionUVR(variacionDefaultInput);
+                      setShowConfigVariacion(false);
+                    }}
+                    className="rounded-md bg-[#445DA3] px-3 py-1 text-xs font-semibold text-white"
+                  >
+                    Guardar
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
       </Card>
 
       {datosCompletos && (
