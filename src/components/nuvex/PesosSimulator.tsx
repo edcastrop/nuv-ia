@@ -28,6 +28,7 @@ import {
   type Cobertura,
   type Interviniente,
 } from "./intervinientes";
+import { useAsesorDefault } from "@/hooks/useAsesorDefault";
 
 
 export function PesosSimulator({
@@ -62,6 +63,10 @@ export function PesosSimulator({
   const [seguros, setSeguros] = useState(initCred.seguros ?? "");
   const [tea, setTea] = useState(initCred.tea ?? "");
   const [nuevaCuotaManual, setNuevaCuotaManual] = useState(initCred.nuevaCuotaManual ?? "");
+
+  // Prellenar el campo "Asesor NUVEX" con el nombre del perfil autenticado
+  useAsesorDefault(client.asesor, (nombre) => setClient((prev) => ({ ...prev, asesor: nombre })));
+
 
   const plazoInicial = parseDecimal(client.plazoInicial);
   const cuotasPagadas = parseDecimal(client.cuotasPagadas);
