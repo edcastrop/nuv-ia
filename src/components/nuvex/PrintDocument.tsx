@@ -3,6 +3,7 @@ import type { ClientData } from "./ClientFields";
 import { formatCOP, formatNumber } from "../../lib/format";
 import type { PesosPropuesta, UVRPropuesta } from "../../lib/finance";
 import { getVecesStyle } from "./ScenarioTable";
+import { isLeasing, rolCotitular, rolTitular } from "./intervinientes";
 
 interface MetricItem { label: string; value: string }
 
@@ -211,6 +212,46 @@ export function PrintDocument(props: Props) {
             <FichaItem label="Asesor NUVEX" value={client.asesor || "—"} />
           </div>
         </div>
+
+        {/* Intervinientes */}
+        {(client.intervinientes ?? []).length > 0 && (
+          <div style={{ marginTop: 14 }}>
+            <SectionLabel>{isLeasing(client.tipoProducto) ? "Datos de los intervinientes (Leasing)" : "Datos de los intervinientes"}</SectionLabel>
+            <div className="grid grid-cols-2 gap-2" style={{ marginTop: 8 }}>
+              {(client.intervinientes ?? []).map((p, i) => (
+                <div key={i} style={{ borderRadius: 10, border: `1px solid ${C.borde}`, padding: "10px 12px", background: i === 0 ? "#F4F6FC" : "#FFFFFF" }}>
+                  <div className="text-[8.5px] font-bold uppercase tracking-wider" style={{ color: C.azul }}>
+                    {i === 0 ? p.rol : `${p.rol} ${i}`}
+                  </div>
+                  <div style={{ fontSize: 10.5, fontWeight: 700, marginTop: 2, color: C.negro }}>{p.nombreCompleto || "—"}</div>
+                  <div style={{ fontSize: 9, color: C.negro, opacity: 0.75, marginTop: 2 }}>
+                    CC {p.cedula || "—"}{p.lugarExpedicionCedula ? ` · ${p.lugarExpedicionCedula}` : ""}
+                  </div>
+                  {p.direccion && (
+                    <div style={{ fontSize: 9, color: C.negro, opacity: 0.75, marginTop: 1 }}>{p.direccion}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Beneficio de cobertura */}
+        {client.cobertura && (client.cobertura.activo || client.cobertura.valorCobertura || client.cobertura.tasaCobertura) && (
+          <div style={{ marginTop: 14 }}>
+            <SectionLabel>Beneficio de cobertura</SectionLabel>
+            <div className="grid grid-cols-2 gap-2" style={{ marginTop: 8 }}>
+              <div style={{ borderRadius: 10, border: `1px solid ${NUVEX.verde}`, background: "#EAF8EF", padding: "10px 12px" }}>
+                <div className="text-[8.5px] font-bold uppercase tracking-wider" style={{ color: C.verdeTexto }}>Valor de cobertura</div>
+                <div style={{ fontSize: 12, fontWeight: 800, color: C.verdeTexto, marginTop: 2 }}>{client.cobertura.valorCobertura || "—"}</div>
+              </div>
+              <div style={{ borderRadius: 10, border: `1px solid ${NUVEX.verde}`, background: "#EAF8EF", padding: "10px 12px" }}>
+                <div className="text-[8.5px] font-bold uppercase tracking-wider" style={{ color: C.verdeTexto }}>Tasa de cobertura</div>
+                <div style={{ fontSize: 12, fontWeight: 800, color: C.verdeTexto, marginTop: 2 }}>{client.cobertura.tasaCobertura ? `${client.cobertura.tasaCobertura}%` : "—"}</div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Situación actual */}
         <div style={{ marginTop: 20 }}>
