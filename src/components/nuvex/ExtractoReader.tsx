@@ -345,7 +345,6 @@ export function ExtractoReader({ modo, onApply }: Props) {
               onClick={() => {
                 reset();
                 setOpen(true);
-                setTimeout(() => fileRef.current?.click(), 100);
               }}
               className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.02]"
               style={{
