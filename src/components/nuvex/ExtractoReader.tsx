@@ -707,26 +707,34 @@ export function ExtractoReader({ modo, onApply }: Props) {
                       )}
                     </div>
 
-                    {requiereVerificacion && (
+                    {(requiereVerificacion || alertaCuotaBase) && (
                       <div
                         className="mb-3 flex items-start gap-2 rounded-lg px-3 py-2 text-[12px]"
                         style={{ background: "rgba(244,162,97,0.12)", border: "1px solid rgba(244,162,97,0.45)", color: "#F4A261" }}
                       >
                         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                         <span>
-                          Se detectó un posible beneficio de cobertura o subsidio. Verifique manualmente la cuota base de simulación.
+                          {alertaCuotaBase || "Se detectó un posible beneficio de cobertura o subsidio. Verifique manualmente la cuota base de simulación."}
                         </span>
                       </div>
                     )}
 
-                    <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
+                    <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-6">
                       <div className="rounded-lg p-2.5" style={{ background: "rgba(255,255,255,0.04)" }}>
                         <div className="text-[10px] uppercase tracking-wider text-white/55">Cuota pagada por cliente</div>
-                        <div className="mt-0.5 text-sm font-bold text-white">{fmtCO((parsed.cuotaPagadaCliente as string) || (parsed.cuotaMensual as string))}</div>
+                        <div className="mt-0.5 text-sm font-bold text-white">{fmtCO(parsed.cuotaPagadaCliente as string)}</div>
+                      </div>
+                      <div className="rounded-lg p-2.5" style={{ background: "rgba(255,255,255,0.04)" }}>
+                        <div className="text-[10px] uppercase tracking-wider text-white/55">Cuota con interés / sin seguros</div>
+                        <div className="mt-0.5 text-sm font-bold text-white">{fmtCO(parsed.cuotaConInteresSinSeguros as string)}</div>
                       </div>
                       <div className="rounded-lg p-2.5" style={{ background: "rgba(255,255,255,0.04)" }}>
                         <div className="text-[10px] uppercase tracking-wider text-white/55">Beneficio aplicado</div>
                         <div className="mt-0.5 text-sm font-bold text-white">{tieneBeneficio ? fmtCO(parsed.valorCobertura as string) : "—"}</div>
+                      </div>
+                      <div className="rounded-lg p-2.5" style={{ background: "rgba(255,255,255,0.04)" }}>
+                        <div className="text-[10px] uppercase tracking-wider text-white/55">Seguros totales</div>
+                        <div className="mt-0.5 text-sm font-bold text-white">{fmtCO(parsed.seguros as string)}</div>
                       </div>
                       <div
                         className="rounded-lg p-2.5"
@@ -739,16 +747,13 @@ export function ExtractoReader({ modo, onApply }: Props) {
                           Cuota base de simulación (editable)
                         </div>
                         <input
+                          ref={cuotaBaseInputRef}
                           value={(parsed.cuotaBaseSimulacion as string) ?? ""}
-                          onChange={(e) => updateField("cuotaBaseSimulacion", e.target.value.replace(/[^\d]/g, ""))}
+                          onChange={(e) => updateField("cuotaBaseSimulacion", e.target.value.replace(/[^\d,.]/g, ""))}
                           placeholder="0"
                           className="mt-1 w-full rounded-md bg-transparent px-2 py-1 text-sm font-bold text-white outline-none"
                           style={{ border: "1px solid rgba(132,185,143,0.45)" }}
                         />
-                      </div>
-                      <div className="rounded-lg p-2.5" style={{ background: "rgba(255,255,255,0.04)" }}>
-                        <div className="text-[10px] uppercase tracking-wider text-white/55">Seguros</div>
-                        <div className="mt-0.5 text-sm font-bold text-white">{fmtCO(parsed.seguros as string)}</div>
                       </div>
                       <div className="rounded-lg p-2.5" style={{ background: "rgba(255,255,255,0.04)" }}>
                         <div className="text-[10px] uppercase tracking-wider text-white/55">Tasa utilizada</div>
@@ -757,10 +762,11 @@ export function ExtractoReader({ modo, onApply }: Props) {
                     </div>
 
                     {tieneBeneficio && (
-                      <p className="mt-3 text-[11px] leading-relaxed text-white/65">
-                        La cuota base de simulación es la cuota real del crédito (sin subsidio). Es la que NUVEX usará
-                        para proyecciones, ahorros, honorarios y comparativos. <strong className="text-white">No es necesariamente la cuota que paga el cliente.</strong>
-                      </p>
+                      <div className="mt-3 rounded-lg px-3 py-2" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.10)" }}>
+                        <p className="text-[11px] leading-relaxed text-white/70">
+                          Confirma que la cuota base de simulación corresponde a la cuota real del crédito antes de subsidios/coberturas.
+                        </p>
+                      </div>
                     )}
                   </div>
 
