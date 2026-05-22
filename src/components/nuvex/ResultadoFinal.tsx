@@ -106,6 +106,7 @@ export function ResultadoFinal({
   const [savingApr, setSavingApr] = useState(false);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
   const [consecutivo] = useState<string>(() => nextConsecutivo());
+  const [honorariosPagadosManual, setHonorariosPagadosManual] = useState(false);
   const set = <K extends keyof AprobacionState>(k: K, v: AprobacionState[K]) =>
     setAprob((s) => ({ ...s, [k]: v }));
 
