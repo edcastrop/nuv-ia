@@ -161,9 +161,14 @@ export function UVRSimulator({
   const ahorroNegativo = recomendada && (recomendada.ahorroTotal < 0 || recomendada.honorarios < 0);
 
   const totalActualPesos = calc?.escenarioActual.totalPagoPesos ?? 0;
-  const vecesActual = saldoPesosNum > 0 ? totalActualPesos / saldoPesosNum : 0;
+  // N° veces pagado el crédito = (lo ya pagado + lo proyectado a pagar) / valor desembolsado.
+  // Si no hay valor desembolsado, se usa el saldo actual como respaldo.
+  const baseCredito = valorDesembolsadoNum > 0 ? valorDesembolsadoNum : saldoPesosNum;
+  const vecesActual = baseCredito > 0 ? (dineroPagadoFecha + totalActualPesos) / baseCredito : 0;
   const vsActual = getVecesStyle(vecesActual);
-  const vecesOpt = recomendada && saldoPesosNum > 0 ? recomendada.totalProyectado / saldoPesosNum : 0;
+  const vecesOpt = recomendada && baseCredito > 0
+    ? (dineroPagadoFecha + recomendada.totalProyectado) / baseCredito
+    : 0;
 
   const metrics = [
     { label: "Valor desembolsado", value: formatCOP(valorDesembolsadoNum) },
