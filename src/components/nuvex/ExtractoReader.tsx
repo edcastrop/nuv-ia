@@ -439,7 +439,7 @@ export function ExtractoReader({ modo, onApply }: Props) {
       <input
         ref={fileRef}
         type="file"
-        accept="application/pdf,image/png,image/jpeg,image/webp"
+        accept="application/pdf,image/png,image/jpeg,image/webp,application/zip,.zip"
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0];
