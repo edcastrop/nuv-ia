@@ -89,13 +89,75 @@ async function renderPdfToImages(file: File, password?: string): Promise<{ image
   }
 }
 
-async function fileToDataUrl(file: File): Promise<string> {
+async function fileToDataUrl(file: File | Blob, forceMime?: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
-    r.onload = () => resolve(String(r.result));
+    r.onload = () => {
+      const result = String(r.result);
+      if (forceMime && result.startsWith("data:application/octet-stream")) {
+        resolve(result.replace("data:application/octet-stream", `data:${forceMime}`));
+      } else {
+        resolve(result);
+      }
+    };
     r.onerror = () => reject(r.error);
     r.readAsDataURL(file);
   });
+}
+
+async function renderBlobPdfToImages(blob: Blob): Promise<{ mime: string; dataUrl: string }[]> {
+  const pdfjs = await loadPdfJs();
+  const buffer = await blob.arrayBuffer();
+  const loadingTask = pdfjs.getDocument({ data: new Uint8Array(buffer) });
+  const pdf = await loadingTask.promise;
+  const max = Math.min(pdf.numPages, 6);
+  const images: { mime: string; dataUrl: string }[] = [];
+  for (let i = 1; i <= max; i++) {
+    const page = await pdf.getPage(i);
+    const viewport = page.getViewport({ scale: 1.8 });
+    const canvas = document.createElement("canvas");
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    const ctx = canvas.getContext("2d")!;
+    await page.render({ canvasContext: ctx, viewport, canvas } as never).promise;
+    images.push({ mime: "image/jpeg", dataUrl: canvas.toDataURL("image/jpeg", 0.82) });
+  }
+  return images;
+}
+
+async function extractImagesFromZip(file: File): Promise<{ mime: string; dataUrl: string }[]> {
+  const JSZip = (await import("jszip")).default;
+  const zip = await JSZip.loadAsync(file);
+  const entries = Object.values(zip.files)
+    .filter((e) => !e.dir && !/^__MACOSX\//.test(e.name) && !/\/\.DS_Store$/.test(e.name))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const images: { mime: string; dataUrl: string }[] = [];
+  for (const entry of entries) {
+    if (images.length >= 10) break;
+    const lower = entry.name.toLowerCase();
+    if (lower.endsWith(".pdf")) {
+      const blob = await entry.async("blob");
+      const pdfImgs = await renderBlobPdfToImages(blob);
+      for (const img of pdfImgs) {
+        if (images.length >= 10) break;
+        images.push(img);
+      }
+    } else if (/\.(png|jpe?g|webp)$/.test(lower)) {
+      const mime = lower.endsWith(".png")
+        ? "image/png"
+        : lower.endsWith(".webp")
+        ? "image/webp"
+        : "image/jpeg";
+      const blob = await entry.async("blob");
+      const dataUrl = await fileToDataUrl(blob, mime);
+      images.push({ mime, dataUrl });
+    }
+  }
+  if (images.length === 0) {
+    throw new Error("El ZIP no contiene PDFs ni imágenes (JPG/PNG/WebP).");
+  }
+  return images;
 }
 
 function getConfianza(data: ExtractoData | null, field: string): Confianza {
@@ -155,7 +217,9 @@ export function ExtractoReader({ modo, onApply }: Props) {
     setStage("reading");
     try {
       let images: { mime: string; dataUrl: string }[] = [];
-      if (f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf")) {
+      const lowerName = f.name.toLowerCase();
+      const isZip = f.type === "application/zip" || f.type === "application/x-zip-compressed" || lowerName.endsWith(".zip");
+      if (f.type === "application/pdf" || lowerName.endsWith(".pdf")) {
         const result = await renderPdfToImages(f, pwd);
         if (result.needsPassword) {
           setWrongPassword(result.wrongPassword);
@@ -166,8 +230,10 @@ export function ExtractoReader({ modo, onApply }: Props) {
       } else if (f.type.startsWith("image/")) {
         const url = await fileToDataUrl(f);
         images = [{ mime: f.type, dataUrl: url }];
+      } else if (isZip) {
+        images = await extractImagesFromZip(f);
       } else {
-        throw new Error("Formato no soportado. Sube un PDF o una imagen (JPG/PNG).");
+        throw new Error("Formato no soportado. Sube un PDF, imagen (JPG/PNG) o un ZIP con esos archivos.");
       }
 
       // Subir archivo original a Supabase Storage (privado)
@@ -373,7 +439,7 @@ export function ExtractoReader({ modo, onApply }: Props) {
       <input
         ref={fileRef}
         type="file"
-        accept="application/pdf,image/png,image/jpeg,image/webp"
+        accept="application/pdf,image/png,image/jpeg,image/webp,application/zip,.zip"
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0];
