@@ -31,6 +31,7 @@ const tool = {
         tipoCredito: { type: "string" },
         moneda: { type: "string", enum: ["PESOS", "UVR", ""] },
         saldoCapital: { type: "string", description: "Saldo a capital en pesos. Solo número, sin símbolos." },
+        valorDesembolsado: { type: "string", description: "Valor inicialmente desembolsado del crédito, en pesos. Solo dígitos." },
         cuotaMensual: { type: "string", description: "Cuota mensual total con seguros en pesos. Solo número." },
         seguros: { type: "string", description: "Valor mensual de seguros en pesos. Solo número." },
         cuotaSinSeguros: { type: "string" },
@@ -70,17 +71,18 @@ const tool = {
             saldoUVR: { type: "string", enum: ["alta", "media", "baja"] },
             valorCobertura: { type: "string", enum: ["alta", "media", "baja"] },
             tasaCobertura: { type: "string", enum: ["alta", "media", "baja"] },
+            valorDesembolsado: { type: "string", enum: ["alta", "media", "baja"] },
           },
           required: [
             "banco","cliente","cedula","numeroCredito","producto","moneda",
-            "saldoCapital","cuotaMensual","seguros","plazoInicial","cuotasPagadas","tea","teaCobrada","teaPactada","valorUVR","saldoUVR","valorCobertura","tasaCobertura",
+            "saldoCapital","cuotaMensual","seguros","plazoInicial","cuotasPagadas","tea","teaCobrada","teaPactada","valorUVR","saldoUVR","valorCobertura","tasaCobertura","valorDesembolsado",
           ],
           additionalProperties: false,
         },
       },
       required: [
         "banco","cliente","cedula","numeroCredito","producto","tipoCredito","moneda",
-        "saldoCapital","cuotaMensual","seguros","cuotaSinSeguros","plazoInicial",
+        "saldoCapital","valorDesembolsado","cuotaMensual","seguros","cuotaSinSeguros","plazoInicial",
         "cuotasPagadas","cuotasPendientes","tea","teaCobrada","teaPactada","tasaMensual","interesCuota","capitalCuota",
         "valorUVR","saldoUVR","valorCobertura","tasaCobertura","tieneCobertura","fechaExtracto","confianza",
       ],
@@ -97,6 +99,8 @@ REGLAS ESTRICTAS:
 - NO inventes datos. Si un campo no aparece claramente, devuélvelo como cadena vacía "" y marca la confianza como "baja".
 - Marca la moneda como "UVR" si el extracto referencia UVR/saldo en UVR/valor UVR, de lo contrario "PESOS".
 - Para montos en pesos, devuelve solo dígitos sin puntos, comas ni símbolos (ej: "221903943").
+- "valorDesembolsado": monto inicial desembolsado del crédito (también llamado "valor desembolsado", "monto desembolso", "valor del crédito desembolsado", "desembolso inicial"). En pesos, solo dígitos. Si no aparece, vacío "".
+- "saldoCapital": SIEMPRE el saldo a capital actual en PESOS (no en UVR). Para créditos UVR, busca "saldo en pesos", "saldo capital pesos", "equivalente en pesos" del saldo. Solo dígitos.
 - TASAS DE INTERÉS — regla obligatoria:
   * Identifica explícitamente la "tasa de interés cobrada" (también llamada "tasa cobrada", "tasa aplicada", "tasa efectivamente aplicada") y la "tasa de interés pactada" (también "tasa pactada", "tasa contractual").
   * El campo "teaCobrada" SOLO se llena cuando aparece textualmente la tasa cobrada.

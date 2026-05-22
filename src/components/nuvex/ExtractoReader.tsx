@@ -31,6 +31,8 @@ export type ExtractoApplyPayload = {
   uvr?: {
     saldoUVR?: string;
     valorUVR?: string;
+    saldoPesos?: string;
+    valorDesembolsado?: string;
     cuotaActualPesos?: string;
     seguros?: string;
     teaCobrada?: string;
@@ -242,6 +244,8 @@ export function ExtractoReader({ modo, onApply }: Props) {
       payload.uvr = {
         saldoUVR: get("saldoUVR"),
         valorUVR: get("valorUVR"),
+        saldoPesos: get("saldoCapital"),
+        valorDesembolsado: get("valorDesembolsado"),
         cuotaActualPesos: get("cuotaMensual"),
         seguros: get("seguros"),
         teaCobrada: get("tea"),
@@ -272,7 +276,8 @@ export function ExtractoReader({ modo, onApply }: Props) {
     { key: "moneda", label: "Moneda" },
     { key: "plazoInicial", label: "Plazo inicial (meses)" },
     { key: "cuotasPagadas", label: "Cuotas pagadas" },
-    { key: "saldoCapital", label: "Saldo a capital" },
+    { key: "valorDesembolsado", label: "Valor desembolsado" },
+    { key: "saldoCapital", label: "Saldo actual en pesos" },
     { key: "cuotaMensual", label: "Cuota mensual (con seguros)" },
     { key: "seguros", label: "Seguros mensuales" },
     { key: "teaCobrada", label: "Tasa de interés cobrada (%)" },
