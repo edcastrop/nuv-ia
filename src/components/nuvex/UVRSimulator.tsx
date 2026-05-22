@@ -215,6 +215,13 @@ export function UVRSimulator({
           if (p.uvr?.cuotaActualPesos) setCuotaActualPesos(p.uvr.cuotaActualPesos);
           if (p.uvr?.seguros) setSeguros(p.uvr.seguros);
           if (p.uvr?.teaCobrada) setTeaCobrada(p.uvr.teaCobrada);
+          if (p.cobertura?.activo) {
+            setCobertura({
+              activo: true,
+              valorCobertura: p.cobertura.valorCobertura || "",
+              tasaCobertura: p.cobertura.tasaCobertura || "",
+            });
+          }
         }}
       />
       <Card>

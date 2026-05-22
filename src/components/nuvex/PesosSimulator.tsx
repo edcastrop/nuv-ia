@@ -201,6 +201,13 @@ export function PesosSimulator({
           if (p.pesos?.cuotaActual) setCuotaActual(p.pesos.cuotaActual);
           if (p.pesos?.seguros) setSeguros(p.pesos.seguros);
           if (p.pesos?.tea) setTea(p.pesos.tea);
+          if (p.cobertura?.activo) {
+            setCobertura({
+              activo: true,
+              valorCobertura: p.cobertura.valorCobertura || "",
+              tasaCobertura: p.cobertura.tasaCobertura || "",
+            });
+          }
         }}
       />
       <Card>

@@ -35,6 +35,11 @@ export type ExtractoApplyPayload = {
     seguros?: string;
     teaCobrada?: string;
   };
+  cobertura?: {
+    activo: boolean;
+    valorCobertura?: string;
+    tasaCobertura?: string;
+  };
   archivoPath?: string;
 };
 
@@ -203,13 +208,21 @@ export function ExtractoReader({ modo, onApply }: Props) {
   const handleConfirm = () => {
     if (!parsed) return;
     const get = (k: string) => (typeof parsed[k] === "string" ? (parsed[k] as string) : "");
+    const tieneCob = get("tieneCobertura").toLowerCase() === "si"
+      || /con\s+beneficio\s+de\s+cobertura/i.test(get("producto"))
+      || !!get("valorCobertura")
+      || !!get("tasaCobertura");
+    let producto = get("producto");
+    if (tieneCob && producto && !/con\s+beneficio\s+de\s+cobertura/i.test(producto)) {
+      producto = `${producto} con Beneficio de Cobertura`;
+    }
     const payload: ExtractoApplyPayload = {
       cliente: {
         nombre: get("cliente"),
         cedula: get("cedula"),
         numeroCredito: get("numeroCredito"),
         banco: get("banco"),
-        tipoProducto: get("producto"),
+        tipoProducto: producto,
         plazoInicial: get("plazoInicial"),
         cuotasPagadas: get("cuotasPagadas"),
       },
@@ -229,6 +242,13 @@ export function ExtractoReader({ modo, onApply }: Props) {
         cuotaActualPesos: get("cuotaMensual"),
         seguros: get("seguros"),
         teaCobrada: get("tea"),
+      };
+    }
+    if (tieneCob) {
+      payload.cobertura = {
+        activo: true,
+        valorCobertura: get("valorCobertura"),
+        tasaCobertura: get("tasaCobertura"),
       };
     }
     onApply(payload);
@@ -255,6 +275,8 @@ export function ExtractoReader({ modo, onApply }: Props) {
     { key: "teaCobrada", label: "Tasa de interés cobrada (%)" },
     { key: "teaPactada", label: "Tasa de interés pactada (%) · referencia" },
     { key: "tea", label: "Tasa usada para simulación (%)" },
+    { key: "valorCobertura", label: "Valor de cobertura (si aplica)" },
+    { key: "tasaCobertura", label: "Tasa de cobertura (%) (si aplica)" },
     { key: "fechaExtracto", label: "Fecha del extracto" },
   ];
   const fields = modo === "uvr"

@@ -45,6 +45,9 @@ const tool = {
         capitalCuota: { type: "string" },
         valorUVR: { type: "string", description: "Valor de la UVR del día, si aplica." },
         saldoUVR: { type: "string", description: "Saldo a capital en UVR, si aplica." },
+        valorCobertura: { type: "string", description: "Valor del beneficio de cobertura (cobertura FRECH / cobertura de tasa), en pesos (solo dígitos). Vacío si no aplica." },
+        tasaCobertura: { type: "string", description: "Tasa (puntos porcentuales) del beneficio de cobertura. Vacío si no aplica." },
+        tieneCobertura: { type: "string", enum: ["si", "no", ""], description: "'si' cuando el extracto mencione cobertura FRECH, cobertura de tasa, beneficio de cobertura, subsidio a la tasa o equivalente." },
         fechaExtracto: { type: "string" },
         confianza: {
           type: "object",
@@ -65,10 +68,12 @@ const tool = {
             teaPactada: { type: "string", enum: ["alta", "media", "baja"] },
             valorUVR: { type: "string", enum: ["alta", "media", "baja"] },
             saldoUVR: { type: "string", enum: ["alta", "media", "baja"] },
+            valorCobertura: { type: "string", enum: ["alta", "media", "baja"] },
+            tasaCobertura: { type: "string", enum: ["alta", "media", "baja"] },
           },
           required: [
             "banco","cliente","cedula","numeroCredito","producto","moneda",
-            "saldoCapital","cuotaMensual","seguros","plazoInicial","cuotasPagadas","tea","teaCobrada","teaPactada","valorUVR","saldoUVR",
+            "saldoCapital","cuotaMensual","seguros","plazoInicial","cuotasPagadas","tea","teaCobrada","teaPactada","valorUVR","saldoUVR","valorCobertura","tasaCobertura",
           ],
           additionalProperties: false,
         },
@@ -77,7 +82,7 @@ const tool = {
         "banco","cliente","cedula","numeroCredito","producto","tipoCredito","moneda",
         "saldoCapital","cuotaMensual","seguros","cuotaSinSeguros","plazoInicial",
         "cuotasPagadas","cuotasPendientes","tea","teaCobrada","teaPactada","tasaMensual","interesCuota","capitalCuota",
-        "valorUVR","saldoUVR","fechaExtracto","confianza",
+        "valorUVR","saldoUVR","valorCobertura","tasaCobertura","tieneCobertura","fechaExtracto","confianza",
       ],
       additionalProperties: false,
     },
@@ -101,6 +106,11 @@ REGLAS ESTRICTAS:
 - Para tasas (TEA), devuelve el porcentaje con punto decimal (ej: "11.15").
 - Para fechas, formato YYYY-MM-DD si es posible.
 - Si encuentras múltiples valores posibles para un campo crítico (cuota, saldo, tasa), elige el más reciente / del periodo del extracto y baja la confianza a "media".
+- BENEFICIO DE COBERTURA — regla obligatoria:
+  * Si el extracto menciona "cobertura FRECH", "cobertura de tasa", "beneficio de cobertura", "subsidio a la tasa", "cobertura condicionada", "cobertura tasa de interés" o equivalente, marca tieneCobertura="si".
+  * Si NO aparece, tieneCobertura="no".
+  * Cuando tieneCobertura="si": extrae "valorCobertura" (monto mensual o saldo de cobertura en pesos, solo dígitos) y "tasaCobertura" (puntos porcentuales de la cobertura, ej "5.00" o "2.50").
+  * Cuando tieneCobertura="si" y el campo "producto" no incluya ya la frase "con Beneficio de Cobertura", AÑÁDELA al final del producto (ej: "Hipotecario en Pesos con Beneficio de Cobertura"). Esto activa la sección de cobertura en el simulador.
 - Confianza "alta" solo si el dato es 100% explícito en el extracto. "media" si requiere inferencia simple. "baja" si dudoso o ausente.`;
 
 export type ExtractoData = Record<string, string | Record<string, string>>;
