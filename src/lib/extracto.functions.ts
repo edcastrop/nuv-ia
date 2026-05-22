@@ -316,6 +316,26 @@ export const extractStatement = createServerFn({ method: "POST" })
       parsed.cuotaBaseSimulacion = cuotaBase > 0 ? String(Math.round(cuotaBase)) : "";
       parsed.requiereVerificacionBeneficio = requiereVerificacion ? "si" : "no";
 
+      // Cuando hay beneficio: la "Cuota mensual (con seguros)" mostrada debe
+      // reflejar la cuota REAL del crédito = Capital + Interés + Seguros
+      // (sin descontar el beneficio/subsidio). Si el extracto trajo como
+      // cuotaMensual la cuota reducida del cliente, la reemplazamos por la
+      // cuota base de simulación y conservamos el valor original en
+      // cuotaPagadaCliente para trazabilidad.
+      if (tieneCob && cuotaBase > 0) {
+        if (cuotaMensual > 0 && cuotaMensual < cuotaBase * 0.98) {
+          if (!cuotaCliente) {
+            parsed.cuotaPagadaCliente = String(Math.round(cuotaMensual));
+          }
+          parsed.cuotaMensual = String(Math.round(cuotaBase));
+          if (parsed.confianza && typeof parsed.confianza === "object") {
+            (parsed.confianza as Record<string, string>).cuotaMensual = "media";
+          }
+        } else if (!cuotaMensual) {
+          parsed.cuotaMensual = String(Math.round(cuotaBase));
+        }
+      }
+
       return { error: null, data: parsed };
     } catch (e) {
       console.error("JSON parse error:", e, argsRaw);
