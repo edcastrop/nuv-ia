@@ -840,10 +840,13 @@ function PrintCuentaCobro({
               }}
             >
               <div style={{ fontWeight: 800, letterSpacing: 0.3 }}>
-                HONORARIOS POR OPTIMIZACIÓN FINANCIERA EXITOSA DEL CRÉDITO HIPOTECARIO O LEASING HABITACIONAL.
+                SERVICIO TECNOLÓGICO FINANCIERO
               </div>
               <div style={{ marginTop: 6, color: "#5C6770" }}>
-                Proceso ejecutado bajo modalidad de prestación de servicios a éxito.
+                Servicio Tecnológico Financiero prestado por NUVEX Finanzas Inteligentes,
+                asociado al análisis, proyección, gestión tecnológica y acompañamiento
+                financiero del proceso de optimización del crédito hipotecario o leasing
+                habitacional.
               </div>
             </div>
           </div>
