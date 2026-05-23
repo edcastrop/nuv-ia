@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { Component, type ReactNode, useEffect, useMemo, useState } from "react";
 import { getExpediente, updateEstado, deleteExpediente, ESTADOS, type Expediente, type EstadoExpediente } from "@/lib/expedientes";
 import { PesosSimulator } from "@/components/nuvex/PesosSimulator";
 import { UVRSimulator } from "@/components/nuvex/UVRSimulator";
@@ -30,6 +30,13 @@ function CasoDetail() {
   };
 
   useEffect(() => { reload(); }, [id]);
+
+  // IMPORTANTE: declarar todos los hooks antes de cualquier return condicional
+  // para evitar "Rendered more hooks than during the previous render".
+  const maestroLike = useMemo(
+    () => (exp ? expedienteToMaestroLike(exp) : null),
+    [exp],
+  );
 
   if (loading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando expediente…</div>;
   if (err || !exp) return <div className="p-12 text-center text-sm text-[#B42318]">{err || "No encontrado"}</div>;
@@ -76,7 +83,11 @@ function CasoDetail() {
         <UVRSimulator initialExpediente={exp} onSaved={reload} />
       )}
 
-      <DocumentosLegales expediente={useMemo(() => expedienteToMaestroLike(exp), [exp])} />
+      {maestroLike && (
+        <ErrorBoundary fallback={<Card><div className="text-sm text-[#B42318]">No se pudo cargar esta sección.</div></Card>}>
+          <DocumentosLegales expediente={maestroLike} />
+        </ErrorBoundary>
+      )}
 
       <Card>
         <div className="flex items-center justify-between">
@@ -100,4 +111,11 @@ function CasoDetail() {
       </Card>
     </div>
   );
+}
+
+class ErrorBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(err: unknown) { console.error("[ExpedienteSection]", err); }
+  render() { return this.state.hasError ? this.props.fallback : this.props.children; }
 }
