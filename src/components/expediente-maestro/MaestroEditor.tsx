@@ -100,7 +100,48 @@ export function MaestroEditor(p: Props) {
         )}
       </Accordion>
 
+      <Accordion title="Información jurídica" subtitle="Datos requeridos para generar Poder Especial y documentos legales">
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+          Estos datos alimentan los documentos jurídicos (Poder Especial, Tutela, Derecho de Petición). Si fueron leídos del extracto por OCR aparecerán precargados; complétalos manualmente si falta alguno.
+        </div>
+
+        <div className="text-[11px] uppercase tracking-wider font-semibold mb-2" style={{ color: NUVEX.azul }}>
+          Titular
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <SelectField label="Tipo de documento" value={p.cliente.tipoDocumento || "CC"} options={TIPOS_DOC} onChange={(v) => p.onCliente(set(p.cliente, "tipoDocumento", v))} />
+          <TextField label="Número de documento" value={p.cliente.cedula} onChange={(v) => p.onCliente(set(p.cliente, "cedula", v))} />
+          <TextField label="Lugar de expedición" value={p.cliente.expedidaEn} onChange={(v) => p.onCliente(set(p.cliente, "expedidaEn", v))} />
+          <TextField label="Fecha de expedición" value={p.cliente.fechaExpedicion || ""} placeholder="DD/MM/AAAA" onChange={(v) => p.onCliente(set(p.cliente, "fechaExpedicion", v))} />
+          <TextField label="Ciudad de residencia" value={p.cliente.ciudad} onChange={(v) => p.onCliente(set(p.cliente, "ciudad", v))} />
+          <TextField label="Departamento" value={p.cliente.departamento || ""} onChange={(v) => p.onCliente(set(p.cliente, "departamento", v))} />
+          <TextField label="Correo electrónico" value={p.cliente.email} onChange={(v) => p.onCliente(set(p.cliente, "email", v))} />
+          <TextField label="Celular" value={p.cliente.telefono} onChange={(v) => p.onCliente(set(p.cliente, "telefono", v))} />
+          <TextField label="Dirección" value={p.cliente.direccion} onChange={(v) => p.onCliente(set(p.cliente, "direccion", v))} className="md:col-span-2 lg:col-span-3" />
+        </div>
+
+        {p.cotitular.activo && (
+          <>
+            <div className="text-[11px] uppercase tracking-wider font-semibold mb-2" style={{ color: NUVEX.azul }}>
+              Cotitular / Colocatario
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <SelectField label="Tipo de documento" value={p.cotitular.tipoDocumento || "CC"} options={TIPOS_DOC} onChange={(v) => p.onCotitular(set(p.cotitular, "tipoDocumento", v))} />
+              <TextField label="Número de documento" value={p.cotitular.cedula} onChange={(v) => p.onCotitular(set(p.cotitular, "cedula", v))} />
+              <TextField label="Lugar de expedición" value={p.cotitular.expedidaEn} onChange={(v) => p.onCotitular(set(p.cotitular, "expedidaEn", v))} />
+              <TextField label="Fecha de expedición" value={p.cotitular.fechaExpedicion || ""} placeholder="DD/MM/AAAA" onChange={(v) => p.onCotitular(set(p.cotitular, "fechaExpedicion", v))} />
+              <TextField label="Ciudad de residencia" value={p.cotitular.ciudad} onChange={(v) => p.onCotitular(set(p.cotitular, "ciudad", v))} />
+              <TextField label="Departamento" value={p.cotitular.departamento || ""} onChange={(v) => p.onCotitular(set(p.cotitular, "departamento", v))} />
+              <TextField label="Correo electrónico" value={p.cotitular.email} onChange={(v) => p.onCotitular(set(p.cotitular, "email", v))} />
+              <TextField label="Celular" value={p.cotitular.telefono} onChange={(v) => p.onCotitular(set(p.cotitular, "telefono", v))} />
+              <TextField label="Dirección" value={p.cotitular.direccion} onChange={(v) => p.onCotitular(set(p.cotitular, "direccion", v))} className="md:col-span-2 lg:col-span-3" />
+            </div>
+          </>
+        )}
+      </Accordion>
+
       <Accordion title="Datos del crédito" subtitle="Información financiera vigente">
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <TextField label="Banco" value={p.credito.banco} onChange={(v) => p.onCredito(set(p.credito, "banco", v))} />
           <TextField label="Número de crédito" value={p.credito.numeroCredito} onChange={(v) => p.onCredito(set(p.credito, "numeroCredito", v))} />
