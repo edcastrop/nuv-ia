@@ -2,7 +2,8 @@ import { createFileRoute, Outlet, useNavigate, Link, useLocation } from "@tansta
 import { useEffect, useState } from "react";
 import { useAuth, signOut } from "@/hooks/useAuth";
 import { CORPORATIVO } from "@/components/nuvex/constants";
-import { LayoutGrid, FolderKanban, BarChart3, LogOut, GraduationCap, LineChart, UserSquare2, Users } from "lucide-react";
+import { LayoutGrid, FolderKanban, BarChart3, LogOut, GraduationCap, LineChart, UserSquare2, Users, Shield } from "lucide-react";
+import { useUserRole } from "@/hooks/useUserRole";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
