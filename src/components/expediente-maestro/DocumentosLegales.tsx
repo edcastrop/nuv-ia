@@ -44,8 +44,40 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente }: P
     };
   }, [apoderados, selectedApId]);
 
+  // ── Acuerdo comercial (Contado / Financiado)
+  const honorarios = useMemo(() => {
+    const p = (simExpediente?.propuesta_data ?? {}) as Partial<PropuestaData>;
+    return Number(p.honorarios ?? simExpediente?.honorarios_final ?? 0);
+  }, [simExpediente]);
+
+  const [modalidad, setModalidad] = useState<ModalidadPago>("contado");
+  const [numCuotas, setNumCuotas] = useState<number>(2);
+  const [cuotas, setCuotas] = useState<number[]>([]);
+
+  // Inicializa / redistribuye cuotas cuando cambia número o honorarios
+  useEffect(() => {
+    if (modalidad !== "financiado") return;
+    const n = Math.max(1, Math.min(24, Math.round(numCuotas) || 1));
+    const base = honorarios > 0 ? Math.round(honorarios / n) : 0;
+    const arr = Array.from({ length: n }, (_, i) =>
+      i === n - 1 ? Math.max(0, honorarios - base * (n - 1)) : base,
+    );
+    setCuotas(arr);
+  }, [modalidad, numCuotas, honorarios]);
+
+  const sumaCuotas = useMemo(() => cuotas.reduce((a, b) => a + (Number(b) || 0), 0), [cuotas]);
+  const saldoRestante = honorarios - sumaCuotas;
+
+  const acuerdo: AcuerdoComercial = useMemo(
+    () => (modalidad === "contado" ? { modalidad: "contado" } : { modalidad: "financiado", cuotas }),
+    [modalidad, cuotas],
+  );
+
   const poderDoc = useMemo(() => buildPoderEspecial(live, selectedAp), [live, selectedAp]);
-  const datosDoc = useMemo(() => buildDatosContrato(live, simExpediente ?? null), [live, simExpediente]);
+  const datosDoc = useMemo(
+    () => buildDatosContrato(live, simExpediente ?? null, acuerdo),
+    [live, simExpediente, acuerdo],
+  );
 
   return (
     <>
