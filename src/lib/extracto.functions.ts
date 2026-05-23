@@ -117,15 +117,18 @@ const tool = {
         },
         valorSeguroVida: {
           type: "string",
-          description: "Seguro de vida MENSUAL. Solo dígitos. Vacío si no aparece.",
+          description:
+            "Bancolombia: campo literal '*Valor seguro vida' (el asterisco es parte del nombre). Seguro MENSUAL de vida (típico 5.000–80.000). NO confundir con 'Valor asegurado'. Solo dígitos (puede incluir decimal). Vacío si no aparece.",
         },
         valorSeguroIncendio: {
           type: "string",
-          description: "Seguro de incendio MENSUAL. Solo dígitos. Vacío si no aparece.",
+          description:
+            "Bancolombia: campo literal '*Valor seguro incendio' (el asterisco es parte del nombre). Seguro MENSUAL de incendio (típico 5.000–100.000). NO confundir con 'Valor asegurado Incendio y Terremoto'. Solo dígitos. Vacío si no aparece.",
         },
         valorSeguroTerremoto: {
           type: "string",
-          description: "Seguro de terremoto MENSUAL. Solo dígitos. Vacío si no aparece.",
+          description:
+            "Bancolombia: campo literal '*Valor seguro terremoto' (el asterisco es parte del nombre). Seguro MENSUAL de terremoto (típico 5.000–80.000). NO confundir con 'Valor asegurado Incendio y Terremoto'. Solo dígitos. Vacío si no aparece.",
         },
         valorCuotaSinSubsidioGobierno: {
           type: "string",
