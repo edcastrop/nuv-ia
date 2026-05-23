@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
-import { FileText, Download, Eye, Receipt, BadgeCheck, Info, CheckCircle2, AlertTriangle, RefreshCw } from "lucide-react";
-import type { ExpedienteMaestro } from "@/lib/expedienteMaestro";
+import { FileText, Download, Eye, Receipt, BadgeCheck, Info, CheckCircle2, AlertTriangle, RefreshCw, Save, Scale } from "lucide-react";
+import type { ExpedienteMaestro, ClienteMaestro, CotitularMaestro } from "@/lib/expedienteMaestro";
+import { saveInformacionJuridicaExpediente } from "@/lib/expedienteMaestro";
 import type { Expediente, PropuestaData } from "@/lib/expedientes";
 import {
   buildDatosContrato, buildPoderesForExpediente, detectPoderTemplate,
@@ -23,17 +24,66 @@ interface Props {
   liveOverride?: Partial<ExpedienteMaestro>;
   /** Expediente del simulador (opcional) para alimentar Datos para Contrato. */
   simExpediente?: Expediente | null;
+  /** Si se entrega, habilita persistir Información Jurídica en cliente_data. */
+  expedienteIdToPersist?: string;
+  /** Notifica al padre cuando se persiste, para que recargue el expediente. */
+  onJuridicaSaved?: () => void;
 }
 
-export function DocumentosLegales({ expediente, liveOverride, simExpediente }: Props) {
+export function DocumentosLegales({ expediente, liveOverride, simExpediente, expedienteIdToPersist, onJuridicaSaved }: Props) {
   const [preview, setPreview] = useState<LegalDoc | null>(null);
   const [apoderados, setApoderados] = useState<ApoderadoNuvex[]>([]);
   const [selectedApId, setSelectedApId] = useState<string>("");
 
-  const live: ExpedienteMaestro = useMemo(
-    () => ({ ...expediente, ...(liveOverride ?? {}) }),
-    [expediente, liveOverride],
-  );
+  // ── Información Jurídica editable (fuente oficial para el Poder Especial)
+  const [ijTitular, setIjTitular] = useState<Partial<ClienteMaestro>>({});
+  const [ijCotitular, setIjCotitular] = useState<Partial<CotitularMaestro> & { activo?: boolean }>({});
+  const [savingIJ, setSavingIJ] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
+
+  // Inicializa desde el expediente cargado
+  useEffect(() => {
+    setIjTitular({
+      tipoDocumento: expediente.cliente?.tipoDocumento || "CC",
+      cedula: expediente.cliente?.cedula || "",
+      expedidaEn: expediente.cliente?.expedidaEn || "",
+      fechaExpedicion: expediente.cliente?.fechaExpedicion || "",
+      ciudad: expediente.cliente?.ciudad || "",
+      departamento: expediente.cliente?.departamento || "",
+      direccion: expediente.cliente?.direccion || "",
+      email: expediente.cliente?.email || "",
+      telefono: expediente.cliente?.telefono || "",
+    });
+    setIjCotitular({
+      activo: !!expediente.cotitular?.activo,
+      nombre: expediente.cotitular?.nombre || "",
+      tipoDocumento: expediente.cotitular?.tipoDocumento || "CC",
+      cedula: expediente.cotitular?.cedula || "",
+      expedidaEn: expediente.cotitular?.expedidaEn || "",
+      fechaExpedicion: expediente.cotitular?.fechaExpedicion || "",
+      ciudad: expediente.cotitular?.ciudad || "",
+      departamento: expediente.cotitular?.departamento || "",
+      direccion: expediente.cotitular?.direccion || "",
+      email: expediente.cotitular?.email || "",
+      telefono: expediente.cotitular?.telefono || "",
+    });
+  }, [expediente]);
+
+  // `live` = expediente + override del padre + edición en vivo de Información Jurídica.
+  // Esto garantiza que validación y plantilla del Poder vean los mismos valores que el editor.
+  const live: ExpedienteMaestro = useMemo(() => {
+    const base = { ...expediente, ...(liveOverride ?? {}) };
+    return {
+      ...base,
+      cliente: { ...base.cliente, ...ijTitular },
+      cotitular: {
+        ...base.cotitular,
+        ...ijCotitular,
+        activo: ijCotitular.activo ?? base.cotitular?.activo ?? false,
+      } as CotitularMaestro,
+    };
+  }, [expediente, liveOverride, ijTitular, ijCotitular]);
+
 
   useEffect(() => {
     listApoderados(true).then((rows) => {
