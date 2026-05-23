@@ -2,10 +2,26 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
-export type AppRole = "admin" | "gerencia" | "asesor" | "licenciado";
+export type AppRole =
+  | "admin"
+  | "super_admin"
+  | "gerencia"
+  | "asesor"
+  | "licenciado"
+  | "juridica"
+  | "operaciones"
+  | "cartera";
 
 export function isManager(roles: AppRole[]): boolean {
-  return roles.includes("admin") || roles.includes("gerencia");
+  return roles.includes("admin") || roles.includes("super_admin") || roles.includes("gerencia");
+}
+
+export function isSuperAdmin(roles: AppRole[]): boolean {
+  return roles.includes("super_admin") || roles.includes("admin");
+}
+
+export function isLicenciado(roles: AppRole[]): boolean {
+  return roles.includes("licenciado");
 }
 
 export function useUserRole() {
@@ -33,5 +49,11 @@ export function useUserRole() {
     return () => { cancel = true; };
   }, [user, authLoading]);
 
-  return { roles, isManager: isManager(roles), loading: loading || authLoading };
+  return {
+    roles,
+    isManager: isManager(roles),
+    isSuperAdmin: isSuperAdmin(roles),
+    isLicenciado: isLicenciado(roles),
+    loading: loading || authLoading,
+  };
 }
