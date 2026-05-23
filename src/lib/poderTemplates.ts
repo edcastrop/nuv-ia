@@ -93,44 +93,39 @@ type RawBlock =
   | { t: "sign" };
 
 const TPL_PODER_GENERAL_BANCOS: RawBlock[] = [
-  { t: "title", text: "PODER ESPECIAL" },
-  { t: "sp", size: 12 },
-  { t: "p", text: "{{CIUDAD_CLIENTE}}, {{FECHA}}." },
-  { t: "sp" },
-  { t: "p", text: "Señores" },
+  { t: "p", text: "Señores:" },
   { t: "p", text: "{{BANCO}}" },
-  { t: "p", text: "Ciudad." },
-  { t: "sp" },
-  { t: "subtitle", text: "Referencia: Poder especial — {{TIPO_PRODUCTO}} No. {{NUMERO_CREDITO}}" },
-  { t: "sp" },
+  { t: "sp", size: 8 },
+  { t: "p", text: "Asunto: Poder especial" },
+  { t: "sp", size: 12 },
   {
     t: "p",
     text:
-      "Yo, {{NOMBRE_CLIENTE}}, mayor de edad, identificado(a) con cédula de ciudadanía No. {{CEDULA_CLIENTE}} expedida en {{LUGAR_EXPEDICION_CLIENTE}}, con domicilio en {{CIUDAD_CLIENTE}}, obrando en mi calidad de {{CALIDAD_CLIENTE}} del producto {{TIPO_PRODUCTO}} identificado con el No. {{NUMERO_CREDITO}} en {{BANCO}}, en pleno uso de mis facultades legales, por medio del presente documento confiero PODER ESPECIAL, AMPLIO Y SUFICIENTE a:",
+      "Yo, {{NOMBRE_CLIENTE}}, mayor de edad, domiciliado en {{CIUDAD_CLIENTE}}, identificado con cédula de ciudadanía número {{CEDULA_CLIENTE}} de {{LUGAR_EXPEDICION_CLIENTE}}, por medio del presente escrito manifiesto que confiero PODER ESPECIAL a {{NOMBRE_APODERADO}}, identificada con cédula de ciudadanía número {{CEDULA_APODERADO}} de {{LUGAR_EXPEDICION_APODERADO}} y con notificaciones judiciales en el correo juridica@nuvex.com.co o al número celular {{CELULAR_APODERADO}} para que en mi nombre y representación inicie, tramite y lleve hasta su culminación proceso de modificación del plazo del {{TIPO_PRODUCTO}} del cual soy {{CALIDAD_CLIENTE}} ante su entidad, de conformidad con la Ley 546 de 1999.",
   },
-  { t: "sp" },
+  { t: "sp", size: 8 },
   {
     t: "p",
     text:
-      "{{NOMBRE_APODERADO}}, mayor de edad, identificado(a) con cédula de ciudadanía No. {{CEDULA_APODERADO}} expedida en {{LUGAR_EXPEDICION_APODERADO}}, con celular {{CELULAR_APODERADO}}, quien en adelante se denominará EL APODERADO,",
+      "Mi apoderado queda ampliamente investido para todo aquello que se encuentra estipulado en el artículo 77 del Código General del Proceso, así como para radicar derechos de petición, solicitar pruebas extraprocesales, conciliar, transigir, recibir, desistir, terminar, autorizar, sustituir, firmar y reasumir este poder, sin limitaciones especiales.",
   },
-  { t: "sp" },
-  {
-    t: "p",
-    text:
-      "para que en mi nombre y representación adelante ante {{BANCO}} todas las gestiones, trámites, solicitudes y actuaciones necesarias relacionadas con el {{TIPO_PRODUCTO}} identificado con el No. {{NUMERO_CREDITO}}, incluyendo de manera enunciativa, mas no taxativa, las siguientes:",
-  },
-  { t: "sp" },
-  { t: "p", text: "1. Solicitar y recibir extractos, certificaciones, paz y salvos, simulaciones, tablas de amortización y cualquier información relacionada con la obligación." },
-  { t: "p", text: "2. Radicar solicitudes de reestructuración, reliquidación, reducción de tasa, ampliación o disminución de plazo, abonos a capital y demás modificaciones contractuales." },
-  { t: "p", text: "3. Presentar derechos de petición, recursos de reposición y demás actuaciones administrativas." },
-  { t: "p", text: "4. Suscribir, presentar y retirar toda clase de comunicaciones, formularios y documentos." },
-  { t: "p", text: "5. Representarme en reuniones, conciliaciones y diligencias relativas al producto." },
-  { t: "p", text: "6. Realizar cualquier otra actuación necesaria para el cabal cumplimiento del presente mandato." },
-  { t: "sp" },
-  { t: "p", text: "El presente poder tendrá vigencia hasta su revocatoria expresa por escrito por parte del poderdante." },
+  { t: "sp", size: 16 },
+  { t: "p", text: "Atentamente," },
   { t: "sp", size: 24 },
-  { t: "sign" },
+  { t: "p", text: "______________________________" },
+  { t: "p", text: "{{NOMBRE_CLIENTE}}" },
+  { t: "p", text: "{{CEDULA_CLIENTE}} de {{LUGAR_EXPEDICION_CLIENTE}}" },
+  { t: "sp", size: 16 },
+  { t: "p", text: "Acepto el poder conferido," },
+  { t: "sp", size: 24 },
+  { t: "p", text: "________________________________" },
+  { t: "p", text: "{{NOMBRE_APODERADO}}" },
+  { t: "p", text: "C.C {{CEDULA_APODERADO}} de {{LUGAR_EXPEDICION_APODERADO}}" },
+  { t: "sp", size: 24 },
+  { t: "p", text: "Carrera 16 # 37-48 piso 4 Centro Bucaramanga" },
+  { t: "p", text: "Bogotá | Bucaramanga" },
+  { t: "p", text: "+57 316 4023779" },
+  { t: "p", text: "www.nuvex.com.co" },
 ];
 
 const TPL_FNA_CREDITO_HIPOTECARIO: RawBlock[] = [
