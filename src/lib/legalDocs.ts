@@ -7,6 +7,8 @@
 // refleje el estado actual del expediente.
 
 import type { ExpedienteMaestro } from "./expedienteMaestro";
+import type { Expediente, PropuestaData } from "./expedientes";
+import type { ApoderadoNuvex } from "./apoderados";
 
 export type DocBlock =
   | { type: "title"; text: string }
@@ -14,6 +16,8 @@ export type DocBlock =
   | { type: "heading"; text: string }
   | { type: "paragraph"; text: string }
   | { type: "spacer"; size?: number }
+  | { type: "section"; text: string } // encabezado de tabla en Datos para Contrato
+  | { type: "field"; label: string; value: string } // fila clave/valor
   | {
       type: "signature";
       columns: { label: string; name?: string; cc?: string }[];
@@ -37,6 +41,18 @@ const safe = (v?: string | null) => (v && v.trim() ? v.trim() : "_______________
 const fullName = (n?: string) => safe(n).toUpperCase();
 
 const ciudadFmt = (c?: string) => (c && c.trim() ? c.trim() : "Bogotá D.C.");
+
+const fmtCOP = (n: number | string | null | undefined) => {
+  const v = typeof n === "string" ? Number(n.replace(/[^\d.-]/g, "")) : Number(n ?? 0);
+  if (!isFinite(v) || v === 0) return "—";
+  return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(v);
+};
+
+const fmtTxt = (v: string | number | null | undefined) => {
+  if (v === null || v === undefined || v === "") return "—";
+  return String(v);
+};
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PODER ESPECIAL
