@@ -95,11 +95,6 @@ function CasoDetail() {
 
       <HistorialCaso expedienteId={exp.id} />
 
-      {maestroLike && (
-        <ErrorBoundary fallback={<Card><div className="text-sm text-[#B42318]">No se pudo cargar esta sección.</div></Card>}>
-          <DocumentosLegales expediente={maestroLike} simExpediente={exp} expedienteIdToPersist={exp.id} onJuridicaSaved={reload} />
-        </ErrorBoundary>
-      )}
 
 
       <Card>
