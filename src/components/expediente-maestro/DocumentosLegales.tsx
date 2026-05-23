@@ -165,6 +165,35 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
           </p>
         </div>
 
+        {/* INFORMACIÓN JURÍDICA — fuente oficial para el Poder Especial */}
+        <InformacionJuridicaEditor
+          titular={ijTitular}
+          cotitular={ijCotitular}
+          onTitular={setIjTitular}
+          onCotitular={setIjCotitular}
+          canPersist={!!expedienteIdToPersist}
+          saving={savingIJ}
+          saved={savedFlash}
+          onSave={async () => {
+            if (!expedienteIdToPersist) return;
+            setSavingIJ(true);
+            try {
+              await saveInformacionJuridicaExpediente(expedienteIdToPersist, {
+                titular: ijTitular,
+                cotitular: ijCotitular,
+              });
+              setSavedFlash(true);
+              setTimeout(() => setSavedFlash(false), 2000);
+              onJuridicaSaved?.();
+            } catch (e) {
+              alert("No se pudo guardar Información Jurídica: " + (e as Error).message);
+            } finally {
+              setSavingIJ(false);
+            }
+          }}
+        />
+
+
         {/* Selector de apoderado para el Poder Especial */}
         <div className="rounded-xl border bg-[#F7F9FB] p-3 mb-4" style={{ borderColor: "#E3E7EE" }}>
           <div className="flex flex-wrap items-center gap-3">
