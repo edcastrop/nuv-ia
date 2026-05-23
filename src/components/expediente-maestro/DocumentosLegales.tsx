@@ -15,7 +15,7 @@ import { exportLegalDocPDF, exportLegalDocDOCX } from "@/lib/legalDocsExport";
 import { listApoderados, seleccionarApoderado, type ApoderadoNuvex, type MotivoSeleccion } from "@/lib/apoderados";
 import { EnviarContratacionButton, type ContratacionContext } from "./EnviarContratacion";
 import { CitySelect } from "@/components/ui/CitySelect";
-import { normalizeCityText } from "@/lib/colombiaCities";
+import { normalizeCityText, cityDepartment } from "@/lib/colombiaCities";
 
 const fmtCOP = (n: number) =>
   !isFinite(n) || n === 0
