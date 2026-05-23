@@ -625,24 +625,40 @@ function PrintInformeFinal({
     100,
   ];
 
+  // Cálculo de fechas ANTES → DESPUÉS
+  const hoyDate = new Date();
+  const addMonths = (d: Date, m: number) => {
+    const nd = new Date(d);
+    nd.setMonth(nd.getMonth() + m);
+    return nd;
+  };
+  const fechaFinActual = addMonths(hoyDate, Math.round(aprobado.plazo + aprobado.cuotasEliminadas));
+  const fechaFinDespues = addMonths(hoyDate, Math.round(aprobado.plazo));
+  const fmtMesAño = (d: Date) =>
+    d.toLocaleDateString("es-CO", { month: "long", year: "numeric" }).replace(/^./, (c) => c.toUpperCase());
+
   return (
     <div id={id} style={printShell}>
       {/* ===== Página 1 ===== */}
-      <div style={{ paddingBottom: 24 }}>
+      <div style={{ position: "relative", paddingBottom: 24 }}>
+        <Watermark />
+        <div style={{ position: "relative", zIndex: 1 }}>
         <div style={{ background: NUVEX_GRADIENT, padding: "28px 36px 32px", color: "#fff" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <LogoMark light />
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <LogoMark light size={80} />
               <div>
-                <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: 2 }}>NUVEX</div>
-                <div style={{ fontSize: 9, letterSpacing: 1.6, opacity: 0.85 }}>FINANZAS INTELIGENTES</div>
+                <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: 2.2 }}>NUVEX FINANZAS INTELIGENTES</div>
+                <div style={{ fontSize: 9.5, letterSpacing: 1.6, opacity: 0.85, marginTop: 3 }}>Bogotá | Bucaramanga</div>
               </div>
             </div>
             <div style={{ textAlign: "right", fontSize: 9.5, opacity: 0.9, letterSpacing: 0.5 }}>
-              <div style={{ fontWeight: 700, letterSpacing: 2 }}>INFORME FINAL</div>
-              <div style={{ marginTop: 2 }}>{aprob.fechaAprobacion || new Date().toISOString().slice(0, 10)}</div>
+              <div style={{ fontWeight: 800, letterSpacing: 2.5 }}>CERTIFICADO DE RESULTADO</div>
+              <div style={{ marginTop: 3, fontSize: 11, fontWeight: 700 }}>{aprob.fechaAprobacion || new Date().toISOString().slice(0, 10)}</div>
+              <div style={{ marginTop: 2, fontSize: 9.5, opacity: 0.85 }}>{client.nombre || "—"}</div>
             </div>
           </div>
+
 
           <div style={{ marginTop: 28, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24 }}>
             <div style={{ flex: 1 }}>
