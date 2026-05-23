@@ -194,7 +194,7 @@ export async function listCarteras(filtros: {
   }
   let result = carteras.map((c) => ({
     ...c,
-    expediente: expMap.get(c.expediente_id) as never,
+    expediente: expMap.get(c.expediente_id) as CarteraConExpediente["expediente"],
     responsable: c.responsable_id ? respMap.get(c.responsable_id) ?? null : null,
   }));
   if (filtros.banco) result = result.filter((c) => c.expediente?.banco === filtros.banco);
