@@ -321,7 +321,7 @@ export function buildDatosContrato(
       : ([{ type: "field", label: "Estado", value: "NO APLICA" } as DocBlock])),
     { type: "spacer", size: 6 },
 
-    { type: "section", text: "ACUERDO COMERCIAL" },
+    { type: "section", text: "CONDICIONES DE PAGO" },
     { type: "field", label: "Modalidad de pago", value: ac.modalidad === "contado" ? "Contado" : "Financiado" },
     ...(ac.modalidad === "contado"
       ? ([{ type: "field", label: "Valor total honorarios", value: fmtCOP(honorarios) } as DocBlock])
