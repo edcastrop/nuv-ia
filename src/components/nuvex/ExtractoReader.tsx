@@ -37,6 +37,7 @@ export type ExtractoApplyPayload = {
     cuotaActual?: string;
     seguros?: string;
     tea?: string;
+    valorDesembolsado?: string;
   };
   // Para UVR
   uvr?: {
