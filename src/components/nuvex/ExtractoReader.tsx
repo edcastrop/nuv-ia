@@ -319,7 +319,7 @@ export function ExtractoReader({ modo, onApply }: Props) {
         setStage("error");
         return;
       }
-      setParsed(resp.data);
+      setParsed(recomputeBancolombia(resp.data));
       setStage("review");
     } catch (err) {
       console.error(err);
