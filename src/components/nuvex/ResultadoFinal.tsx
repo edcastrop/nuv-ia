@@ -928,21 +928,21 @@ function PrintCuentaCobro({
           }}
         >
           <div>
-            <LogoMark light size={48} />
-            <div style={{ marginTop: 20, fontSize: 10, letterSpacing: 2.5, fontWeight: 700, opacity: 0.85 }}>
+            <LogoMark light size={120} />
+            <div style={{ marginTop: 18, fontSize: 9.5, letterSpacing: 2.5, fontWeight: 700, opacity: 0.85 }}>
               DOCUMENTO
             </div>
-            <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1.1, marginTop: 4, letterSpacing: -0.3 }}>
+            <div style={{ fontSize: 20, fontWeight: 900, lineHeight: 1.1, marginTop: 4, letterSpacing: -0.3 }}>
               Cuenta<br />de cobro
             </div>
 
-            <div style={{ marginTop: 36 }}>
+            <div style={{ marginTop: 28 }}>
               <div style={{ fontSize: 8.5, letterSpacing: 1.5, opacity: 0.75, fontWeight: 700 }}>CONSECUTIVO</div>
-              <div style={{ fontSize: 16, fontWeight: 900, marginTop: 4 }}>{consecutivo}</div>
+              <div style={{ fontSize: 15, fontWeight: 900, marginTop: 4 }}>{consecutivo}</div>
             </div>
-            <div style={{ marginTop: 18 }}>
+            <div style={{ marginTop: 14 }}>
               <div style={{ fontSize: 8.5, letterSpacing: 1.5, opacity: 0.75, fontWeight: 700 }}>FECHA</div>
-              <div style={{ fontSize: 13, fontWeight: 700, marginTop: 4 }}>{hoy}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, marginTop: 4 }}>{hoy}</div>
             </div>
           </div>
 
@@ -973,25 +973,32 @@ function PrintCuentaCobro({
             <CcRow label="Fecha aprobación" value={aprob.fechaAprobacion || "—"} />
           </div>
 
-          {(client.intervinientes ?? []).length > 0 && (
-            <div style={{ marginTop: 18 }}>
-              <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2, color: NUVEX.azul, marginBottom: 8 }}>INTERVINIENTES</div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                {(client.intervinientes ?? []).map((p, i) => (
-                  <div key={i} style={{ border: "1px solid #E3E7EE", borderRadius: 10, padding: "10px 12px", background: i === 0 ? "#F4F6FC" : "#FFFFFF" }}>
-                    <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 1.2, color: NUVEX.azul, textTransform: "uppercase" }}>
-                      {i === 0 ? p.rol : `${p.rol} ${i}`}
+          {(() => {
+            // Solo renderizar bloque INTERVINIENTES si existen titulares con datos reales
+            const ints = (client.intervinientes ?? []).filter(
+              (p) => (p.nombreCompleto || "").trim() !== "" || (p.cedula || "").trim() !== "",
+            );
+            if (ints.length === 0) return null;
+            return (
+              <div style={{ marginTop: 18 }}>
+                <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2, color: NUVEX.azul, marginBottom: 8 }}>INTERVINIENTES</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  {ints.map((p, i) => (
+                    <div key={i} style={{ border: "1px solid #E3E7EE", borderRadius: 10, padding: "10px 12px", background: i === 0 ? "#F4F6FC" : "#FFFFFF" }}>
+                      <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 1.2, color: NUVEX.azul, textTransform: "uppercase" }}>
+                        {i === 0 ? p.rol : `${p.rol} ${i}`}
+                      </div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: NUVEX.negro, marginTop: 3 }}>{p.nombreCompleto || "—"}</div>
+                      <div style={{ fontSize: 9, color: "#5C6770", marginTop: 2 }}>
+                        CC {p.cedula || "—"}{p.lugarExpedicionCedula ? ` · ${p.lugarExpedicionCedula}` : ""}
+                      </div>
+                      {p.direccion && <div style={{ fontSize: 9, color: "#5C6770", marginTop: 1 }}>{p.direccion}</div>}
                     </div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: NUVEX.negro, marginTop: 3 }}>{p.nombreCompleto || "—"}</div>
-                    <div style={{ fontSize: 9, color: "#5C6770", marginTop: 2 }}>
-                      CC {p.cedula || "—"}{p.lugarExpedicionCedula ? ` · ${p.lugarExpedicionCedula}` : ""}
-                    </div>
-                    {p.direccion && <div style={{ fontSize: 9, color: "#5C6770", marginTop: 1 }}>{p.direccion}</div>}
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {client.cobertura && (client.cobertura.activo || client.cobertura.valorCobertura || client.cobertura.tasaCobertura) && (
             <div style={{ marginTop: 14 }}>
@@ -999,11 +1006,11 @@ function PrintCuentaCobro({
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                 <div style={{ border: `1px solid ${NUVEX.verde}`, borderRadius: 10, padding: "10px 12px", background: NUVEX.verdeClaro }}>
                   <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 1.2, color: NUVEX.verdeTextoFuerte, textTransform: "uppercase" }}>Valor de cobertura</div>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: NUVEX.verdeTextoFuerte, marginTop: 3 }}>{client.cobertura.valorCobertura || "—"}</div>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: NUVEX.verdeTextoFuerte, marginTop: 3 }}>{client.cobertura.valorCobertura || "No aplica"}</div>
                 </div>
                 <div style={{ border: `1px solid ${NUVEX.verde}`, borderRadius: 10, padding: "10px 12px", background: NUVEX.verdeClaro }}>
                   <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 1.2, color: NUVEX.verdeTextoFuerte, textTransform: "uppercase" }}>Tasa de cobertura</div>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: NUVEX.verdeTextoFuerte, marginTop: 3 }}>{client.cobertura.tasaCobertura ? `${client.cobertura.tasaCobertura}%` : "—"}</div>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: NUVEX.verdeTextoFuerte, marginTop: 3 }}>{client.cobertura.tasaCobertura ? `${client.cobertura.tasaCobertura}%` : "No aplica"}</div>
                 </div>
               </div>
             </div>
