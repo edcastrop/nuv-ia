@@ -1535,7 +1535,7 @@ function FlowArrow() {
 }
 
 function ClosingBlock({
-  añosEliminados, ahorroTotal,
+  añosEliminados: _añosEliminados, ahorroTotal: _ahorroTotal,
 }: { añosEliminados: number; ahorroTotal: number }) {
   const razones = [
     "Especialistas en Ley 546 de 1999",
@@ -1545,7 +1545,8 @@ function ClosingBlock({
     "Solo cobramos con resultado favorable",
   ];
   return (
-    <div style={{ marginTop: 18, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+    <div style={{ marginTop: 18, display: "grid", gridTemplateColumns: "1fr 1.15fr", gap: 14 }}>
+      {/* ¿POR QUÉ NUVEX? + PRUEBA SOCIAL */}
       <div
         style={{
           border: `1px solid ${C.line}`,
@@ -1583,13 +1584,31 @@ function ClosingBlock({
             </li>
           ))}
         </ul>
+
+        {/* Prueba social discreta */}
+        <div
+          style={{
+            marginTop: 12,
+            paddingTop: 10,
+            borderTop: `1px dashed ${C.line}`,
+            fontSize: 9,
+            color: C.muted,
+            lineHeight: 1.5,
+            fontStyle: "italic",
+            textAlign: "center",
+          }}
+        >
+          Más de <b style={{ color: C.negro, fontStyle: "normal" }}>1.000 familias</b> han
+          optimizado su crédito con NUVEX.
+        </div>
       </div>
 
+      {/* MENSAJE PERSONAL — sin título, tipo carta */}
       <div
         style={{
           background: `linear-gradient(135deg, ${C.cream} 0%, #fff 100%)`,
           border: `1px solid ${C.goldLine}`,
-          padding: "14px 16px",
+          padding: "20px 22px",
           borderRadius: 4,
           position: "relative",
         }}
@@ -1600,43 +1619,55 @@ function ClosingBlock({
             width: 3, background: C.goldLine,
           }}
         />
-        <div
-          style={{
-            fontSize: 8.5,
-            fontWeight: 700,
-            letterSpacing: "0.22em",
-            textTransform: "uppercase",
-            color: C.negro,
-          }}
-        >
-          Mensaje de cierre
-        </div>
         <p
           style={{
             fontSize: 10.5,
             color: C.negro,
-            lineHeight: 1.6,
-            marginTop: 8,
-            fontStyle: "italic",
+            lineHeight: 1.85,
+            margin: 0,
           }}
         >
           Nuestro análisis evidencia una oportunidad real para reducir
-          significativamente el tiempo de su crédito y disminuir el costo
-          financiero proyectado en <b>{formatCOP(ahorroTotal)}</b>.
-          Cada uno de los <b>{formatNumber(añosEliminados, 0)} años</b> eliminados
-          representa más tranquilidad, más liquidez y más patrimonio para su familia.
+          significativamente el tiempo de tu crédito y disminuir el costo
+          financiero proyectado.
         </p>
-        <div
+        <p
           style={{
-            marginTop: 10,
-            fontSize: 9.5,
-            fontWeight: 700,
+            fontSize: 10.5,
             color: C.negro,
-            letterSpacing: "0.04em",
+            lineHeight: 1.85,
+            marginTop: 10,
+            marginBottom: 0,
           }}
         >
-          — NUVEX Finanzas Inteligentes
-        </div>
+          Cada año eliminado representa más tranquilidad, mayor liquidez y más
+          patrimonio para tu familia.
+        </p>
+        <p
+          style={{
+            fontSize: 10.5,
+            color: C.negro,
+            lineHeight: 1.85,
+            marginTop: 10,
+            marginBottom: 0,
+          }}
+        >
+          Con esta estrategia financiera no solo finalizas antes tu obligación,
+          también recuperas años valiosos que hoy estarían destinados al pago de
+          intereses y seguros futuros.
+        </p>
+        <p
+          style={{
+            fontSize: 10.5,
+            color: C.negro,
+            lineHeight: 1.85,
+            marginTop: 12,
+            marginBottom: 0,
+            fontWeight: 600,
+          }}
+        >
+          Gracias por confiar en <b>NUVEX Finanzas Inteligentes</b>.
+        </p>
       </div>
     </div>
   );
