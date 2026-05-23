@@ -47,7 +47,11 @@ export async function createApoderado(p: ApoderadoInput): Promise<ApoderadoNuvex
 }
 
 export async function updateApoderado(id: string, p: Partial<ApoderadoInput>): Promise<ApoderadoNuvex> {
-  const row: Record<string, unknown> = {};
+  const row: {
+    nombre?: string; cedula?: string;
+    lugar_expedicion?: string | null; celular?: string | null; correo?: string | null;
+    activo?: boolean;
+  } = {};
   if (p.nombre !== undefined) row.nombre = p.nombre;
   if (p.cedula !== undefined) row.cedula = p.cedula;
   if (p.lugar_expedicion !== undefined) row.lugar_expedicion = p.lugar_expedicion || null;
@@ -63,6 +67,7 @@ export async function updateApoderado(id: string, p: Partial<ApoderadoInput>): P
   if (error) throw error;
   return data as ApoderadoNuvex;
 }
+
 
 export async function deleteApoderado(id: string): Promise<void> {
   const { error } = await supabase.from("apoderados_nuvex").delete().eq("id", id);
