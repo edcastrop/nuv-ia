@@ -79,11 +79,21 @@ function CasoDetail() {
         </div>
       </Card>
 
+      <EstadoCasoBlock expedienteId={exp.id} onChanged={reload} />
+
       {exp.modo === "pesos" ? (
         <PesosSimulator initialExpediente={exp} onSaved={reload} />
       ) : (
         <UVRSimulator initialExpediente={exp} onSaved={reload} />
       )}
+
+      {maestroLike && (
+        <ErrorBoundary fallback={<Card><div className="text-sm text-[#B42318]">No se pudo cargar esta sección.</div></Card>}>
+          <DocumentosLegales expediente={maestroLike} simExpediente={exp} expedienteIdToPersist={exp.id} onJuridicaSaved={reload} />
+        </ErrorBoundary>
+      )}
+
+      <HistorialCaso expedienteId={exp.id} />
 
       {maestroLike && (
         <ErrorBoundary fallback={<Card><div className="text-sm text-[#B42318]">No se pudo cargar esta sección.</div></Card>}>
