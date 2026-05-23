@@ -5,6 +5,7 @@ export interface ApoderadoNuvex {
   nombre: string;
   cedula: string;
   lugar_expedicion: string | null;
+  ciudad: string | null;
   celular: string | null;
   correo: string | null;
   activo: boolean;
@@ -16,6 +17,7 @@ export interface ApoderadoInput {
   nombre: string;
   cedula: string;
   lugar_expedicion: string;
+  ciudad: string;
   celular: string;
   correo: string;
   activo: boolean;
@@ -26,7 +28,7 @@ export async function listApoderados(soloActivos = false): Promise<ApoderadoNuve
   if (soloActivos) q = q.eq("activo", true);
   const { data, error } = await q;
   if (error) throw error;
-  return (data ?? []) as ApoderadoNuvex[];
+  return (data ?? []) as unknown as ApoderadoNuvex[];
 }
 
 export async function createApoderado(p: ApoderadoInput): Promise<ApoderadoNuvex> {
@@ -36,38 +38,35 @@ export async function createApoderado(p: ApoderadoInput): Promise<ApoderadoNuvex
       nombre: p.nombre,
       cedula: p.cedula,
       lugar_expedicion: p.lugar_expedicion || null,
+      ciudad: p.ciudad || null,
       celular: p.celular || null,
       correo: p.correo || null,
       activo: p.activo,
-    })
+    } as never)
     .select()
     .single();
   if (error) throw error;
-  return data as ApoderadoNuvex;
+  return data as unknown as ApoderadoNuvex;
 }
 
 export async function updateApoderado(id: string, p: Partial<ApoderadoInput>): Promise<ApoderadoNuvex> {
-  const row: {
-    nombre?: string; cedula?: string;
-    lugar_expedicion?: string | null; celular?: string | null; correo?: string | null;
-    activo?: boolean;
-  } = {};
+  const row: Record<string, unknown> = {};
   if (p.nombre !== undefined) row.nombre = p.nombre;
   if (p.cedula !== undefined) row.cedula = p.cedula;
   if (p.lugar_expedicion !== undefined) row.lugar_expedicion = p.lugar_expedicion || null;
+  if (p.ciudad !== undefined) row.ciudad = p.ciudad || null;
   if (p.celular !== undefined) row.celular = p.celular || null;
   if (p.correo !== undefined) row.correo = p.correo || null;
   if (p.activo !== undefined) row.activo = p.activo;
   const { data, error } = await supabase
     .from("apoderados_nuvex")
-    .update(row)
+    .update(row as never)
     .eq("id", id)
     .select()
     .single();
   if (error) throw error;
-  return data as ApoderadoNuvex;
+  return data as unknown as ApoderadoNuvex;
 }
-
 
 export async function deleteApoderado(id: string): Promise<void> {
   const { error } = await supabase.from("apoderados_nuvex").delete().eq("id", id);
