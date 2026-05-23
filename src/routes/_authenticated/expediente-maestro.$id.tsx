@@ -102,6 +102,13 @@ function MaestroDetail() {
         onFresh={setFresh} onAsesor={setAsesor} onLicenciado={setLicenciado} onApoderado={setApoderado}
       />
 
+      <DocumentosLegales
+        expediente={exp}
+        liveOverride={{ cliente, cotitular, credito, fresh, asesor, licenciado, apoderado }}
+      />
+
+
+
       <Card>
         <div className="flex items-center justify-between">
           <div className="text-sm text-[#242424]/70">¿Eliminar este expediente maestro?</div>
