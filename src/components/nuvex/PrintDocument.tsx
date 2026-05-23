@@ -1414,13 +1414,51 @@ function HonorariosBlock({
             marginTop: 12,
             paddingTop: 10,
             borderTop: `1px solid ${C.line}`,
-            fontSize: 9,
-            color: C.muted,
-            lineHeight: 1.5,
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr 1fr",
+            gap: 10,
           }}
         >
-          Contrato a éxito. NUVEX únicamente cobra sus honorarios cuando el proceso
-          de optimización obtiene un resultado favorable.
+          {[
+            "Contrato a éxito",
+            "Solo cobramos si obtenemos resultado favorable",
+            "Sin riesgo financiero para el cliente",
+          ].map((t, i) => (
+            <div
+              key={i}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                fontSize: 9.5,
+                color: C.negro,
+                fontWeight: 600,
+                background: C.verdeClaro,
+                border: `1px solid ${C.verde}`,
+                borderRadius: 4,
+                padding: "8px 10px",
+              }}
+            >
+              <span
+                style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: 999,
+                  background: C.verde,
+                  color: "#fff",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 10,
+                  fontWeight: 900,
+                  flexShrink: 0,
+                }}
+              >
+                ✓
+              </span>
+              <span style={{ lineHeight: 1.3 }}>{t}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
