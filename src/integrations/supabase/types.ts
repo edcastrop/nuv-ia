@@ -138,36 +138,54 @@ export type Database = {
       }
       expediente_historial: {
         Row: {
+          accion_origen: string | null
           created_at: string
           estado_anterior:
             | Database["public"]["Enums"]["expediente_estado"]
             | null
-          estado_nuevo: Database["public"]["Enums"]["expediente_estado"]
+          estado_caso_anterior:
+            | Database["public"]["Enums"]["caso_estado"]
+            | null
+          estado_caso_nuevo: Database["public"]["Enums"]["caso_estado"] | null
+          estado_nuevo: Database["public"]["Enums"]["expediente_estado"] | null
           expediente_id: string
           id: string
           nota: string | null
+          observacion: string | null
           user_id: string | null
         }
         Insert: {
+          accion_origen?: string | null
           created_at?: string
           estado_anterior?:
             | Database["public"]["Enums"]["expediente_estado"]
             | null
-          estado_nuevo: Database["public"]["Enums"]["expediente_estado"]
+          estado_caso_anterior?:
+            | Database["public"]["Enums"]["caso_estado"]
+            | null
+          estado_caso_nuevo?: Database["public"]["Enums"]["caso_estado"] | null
+          estado_nuevo?: Database["public"]["Enums"]["expediente_estado"] | null
           expediente_id: string
           id?: string
           nota?: string | null
+          observacion?: string | null
           user_id?: string | null
         }
         Update: {
+          accion_origen?: string | null
           created_at?: string
           estado_anterior?:
             | Database["public"]["Enums"]["expediente_estado"]
             | null
-          estado_nuevo?: Database["public"]["Enums"]["expediente_estado"]
+          estado_caso_anterior?:
+            | Database["public"]["Enums"]["caso_estado"]
+            | null
+          estado_caso_nuevo?: Database["public"]["Enums"]["caso_estado"] | null
+          estado_nuevo?: Database["public"]["Enums"]["expediente_estado"] | null
           expediente_id?: string
           id?: string
           nota?: string | null
+          observacion?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -242,6 +260,7 @@ export type Database = {
           descuento: number | null
           discount_data: Json
           estado: Database["public"]["Enums"]["expediente_estado"]
+          estado_caso: Database["public"]["Enums"]["caso_estado"]
           fecha_simulacion: string
           honorarios_base: number | null
           honorarios_final: number | null
@@ -265,6 +284,7 @@ export type Database = {
           descuento?: number | null
           discount_data?: Json
           estado?: Database["public"]["Enums"]["expediente_estado"]
+          estado_caso?: Database["public"]["Enums"]["caso_estado"]
           fecha_simulacion?: string
           honorarios_base?: number | null
           honorarios_final?: number | null
@@ -288,6 +308,7 @@ export type Database = {
           descuento?: number | null
           discount_data?: Json
           estado?: Database["public"]["Enums"]["expediente_estado"]
+          estado_caso?: Database["public"]["Enums"]["caso_estado"]
           fecha_simulacion?: string
           honorarios_base?: number | null
           honorarios_final?: number | null
@@ -302,6 +323,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          activo: boolean
           created_at: string
           email: string | null
           id: string
@@ -309,6 +331,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          activo?: boolean
           created_at?: string
           email?: string | null
           id: string
@@ -316,6 +339,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          activo?: boolean
           created_at?: string
           email?: string | null
           id?: string
@@ -368,6 +392,26 @@ export type Database = {
         | "juridica"
         | "operaciones"
         | "cartera"
+      caso_estado:
+        | "lead_creado"
+        | "extracto_recibido"
+        | "simulacion_realizada"
+        | "propuesta_presentada"
+        | "negociacion"
+        | "pendiente_contratacion"
+        | "enviado_contratacion"
+        | "contrato_enviado"
+        | "contrato_firmado"
+        | "poder_firmado"
+        | "radicacion_pendiente"
+        | "radicado_banco"
+        | "en_estudio_banco"
+        | "aprobado"
+        | "resultado_final_generado"
+        | "cuenta_cobro_enviada"
+        | "honorarios_pagados"
+        | "paz_y_salvo_generado"
+        | "proceso_cerrado"
       expediente_estado:
         | "SIMULADO"
         | "FIRMADO"
@@ -513,6 +557,27 @@ export const Constants = {
         "juridica",
         "operaciones",
         "cartera",
+      ],
+      caso_estado: [
+        "lead_creado",
+        "extracto_recibido",
+        "simulacion_realizada",
+        "propuesta_presentada",
+        "negociacion",
+        "pendiente_contratacion",
+        "enviado_contratacion",
+        "contrato_enviado",
+        "contrato_firmado",
+        "poder_firmado",
+        "radicacion_pendiente",
+        "radicado_banco",
+        "en_estudio_banco",
+        "aprobado",
+        "resultado_final_generado",
+        "cuenta_cobro_enviada",
+        "honorarios_pagados",
+        "paz_y_salvo_generado",
+        "proceso_cerrado",
       ],
       expediente_estado: [
         "SIMULADO",
