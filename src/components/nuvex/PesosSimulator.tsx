@@ -354,7 +354,7 @@ export function PesosSimulator({
           />
           <TextField
             label="Cuota mensual sin seguros"
-            value={cuotaActualNum > 0 && segurosNum >= 0 ? formatCOP(cuotaSinSegurosNum) : ""}
+            value={cuotaSimulacionNum > 0 && segurosNum >= 0 ? formatCOP(cuotaSinSegurosNum) : ""}
             readOnly
             hint="Calculada automáticamente"
           />
