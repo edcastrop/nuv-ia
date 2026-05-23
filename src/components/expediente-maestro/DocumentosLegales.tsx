@@ -713,7 +713,7 @@ function InformacionJuridicaEditor({
         <IJField label="Número de documento" value={titular.cedula || ""} onChange={(v) => setT("cedula", v)} required />
         <IJField label="Lugar de expedición" value={titular.expedidaEn || ""} onChange={(v) => setT("expedidaEn", v)} required />
         <IJField label="Fecha de expedición" value={titular.fechaExpedicion || ""} placeholder="DD/MM/AAAA" onChange={(v) => setT("fechaExpedicion", v)} />
-        <IJField label="Ciudad de residencia" value={titular.ciudad || ""} onChange={(v) => setT("ciudad", v)} required />
+        <IJCity label="Ciudad de residencia" value={titular.ciudad || ""} onChange={(v) => setT("ciudad", v)} required />
         <IJField label="Departamento" value={titular.departamento || ""} onChange={(v) => setT("departamento", v)} />
         <IJField label="Correo electrónico" value={titular.email || ""} onChange={(v) => setT("email", v)} />
         <IJField label="Celular" value={titular.telefono || ""} onChange={(v) => setT("telefono", v)} />
