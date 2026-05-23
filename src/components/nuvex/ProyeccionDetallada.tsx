@@ -71,46 +71,42 @@ export function ProyeccionDetallada() {
     return () => { cancel = true; };
   }, []);
 
-  // Cargar Fresh persistida al seleccionar
+  // Cargar Fresh persistida al seleccionar (centralizado en src/lib/cobertura)
   useEffect(() => {
     if (!expediente) return;
     const c = expediente.credito_data as Record<string, unknown>;
     const persisted = c?.coberturaFresh as Partial<CoberturaFresh> | undefined;
-
-    // Datos del simulador para derivar el Valor Fresh mensual
-    const cob = c?.cobertura as { activo?: boolean; valorCobertura?: string; tasaCobertura?: string } | undefined;
-    const valorCobertura = parseCurrency(cob?.valorCobertura ?? "");
-    const tasaCobPct = parseDecimal(cob?.tasaCobertura ?? "");
-    const saldoBase =
-      parseCurrency((c?.saldoPesos as string) ?? (c?.saldoCapital as string) ?? "");
-    // Fórmula: subsidio mensual ≈ saldo * tasa_mensual_cobertura
-    const tasaMensualCob = tasaCobPct > 0 ? Math.pow(1 + tasaCobPct / 100, 1 / 12) - 1 : 0;
-    const valorMensualDerivado =
-      saldoBase > 0 && tasaMensualCob > 0 ? Math.round(saldoBase * tasaMensualCob) : 0;
-    const tieneCobSim = !!cob && (cob.activo || valorCobertura > 0 || tasaCobPct > 0);
+    const cliente = expediente.cliente_data as unknown as {
+      cuotasPagadas?: string;
+      cobertura?: Cobertura;
+    };
+    const cuotasPagadasCredito = Math.max(
+      0,
+      Math.round(parseDecimal(cliente?.cuotasPagadas ?? "")),
+    );
+    const saldoBase = parseCurrency((c?.saldoPesos as string) ?? (c?.saldoCapital as string) ?? "");
 
     if (persisted && typeof persisted === "object" && Object.keys(persisted).length > 0) {
-      const valorPersistido = Number(persisted.valorMensual) || 0;
-      setFresh({
-        activo: persisted.activo === undefined ? tieneCobSim : !!persisted.activo,
-        // Si el persistido viene en 0 pero el simulador permite derivarlo, úsalo.
-        valorMensual: valorPersistido > 0 ? valorPersistido : valorMensualDerivado,
-        tasa: Number(persisted.tasa) || tasaCobPct,
-        cuotasTotales: Number(persisted.cuotasTotales) || FRESH_DEFAULT_TOTAL,
-        cuotasPagadas: Number(persisted.cuotasPagadas) || 0,
-        cuotasPendientes: Number(persisted.cuotasPendientes) ?? FRESH_DEFAULT_TOTAL,
-      });
-    } else if (tieneCobSim) {
-      setFresh({
-        activo: true,
-        valorMensual: valorMensualDerivado,
-        tasa: tasaCobPct,
-        cuotasTotales: FRESH_DEFAULT_TOTAL,
-        cuotasPagadas: 0,
-        cuotasPendientes: FRESH_DEFAULT_TOTAL,
-      });
+      setFresh(
+        withFreshDerivados(
+          {
+            ...persisted,
+            cuotasTotales: persisted.cuotasTotales ?? FRESH_DEFAULT_TOTAL,
+          },
+          // Si el campo persistido no trae cuotasPagadas, usar las del crédito (tope 84).
+          persisted.cuotasPagadas !== undefined ? undefined : cuotasPagadasCredito,
+        ),
+      );
     } else {
-      setFresh(defaultFresh());
+      // Hidratar desde el módulo Cobertura del simulador (centralización).
+      setFresh(
+        freshFromCobertura(cliente?.cobertura, {
+          cuotasPagadasCredito,
+          saldoCapital: saldoBase,
+          fuente: "ocr",
+          detectadoOCR: !!cliente?.cobertura?.tipoBeneficio,
+        }),
+      );
     }
     setGenerado(false);
   }, [expediente]);
