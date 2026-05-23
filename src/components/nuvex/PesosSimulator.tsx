@@ -540,6 +540,14 @@ export function PesosSimulator({
           {recomendada &&
             (() => {
               const d = computeDiscount(recomendada.honorarios, discount);
+              // Centralización Fresh: derivamos y persistimos en credito_data
+              // para que TODOS los módulos lo reutilicen sin recapturar datos.
+              const coberturaFresh = freshFromCobertura(cobertura, {
+                cuotasPagadasCredito: cuotasPagadas,
+                saldoCapital: saldoCapitalNum,
+                fuente: cobertura.activo ? "ocr" : "manual",
+                detectadoOCR: !!cobertura.tipoBeneficio,
+              });
               return (
                 <SaveExpedienteButton
                   expedienteId={init?.id}
@@ -561,6 +569,7 @@ export function PesosSimulator({
                       cuotaBaseSimulacion: cobertura.cuotaBaseSimulacion || cuotaActual,
                       segurosMensuales: cobertura.segurosMensuales || seguros,
                       tieneBeneficio: cobertura.activo ? "si" : "no",
+                      coberturaFresh: coberturaFresh as unknown as string,
                     },
                     propuesta: {
                       nuevaCuota: recomendada.nuevaCuota,
