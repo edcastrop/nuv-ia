@@ -54,6 +54,7 @@ function AuthenticatedLayout() {
     { to: "/dashboard", label: "Dashboard", Icon: BarChart3 },
     { to: "/academia", label: "Academia", Icon: GraduationCap },
     { to: "/apoderados-nuvex", label: "Apoderados", Icon: Users },
+    ...(roles.some((r) => ["super_admin","admin","gerencia","cartera","juridica","licenciado","asesor"].includes(r)) ? [{ to: "/cartera", label: "Cartera", Icon: Wallet }] : []),
     ...(isSuperAdmin ? [{ to: "/super-admin", label: "Super Admin", Icon: Shield }] : []),
   ];
 
