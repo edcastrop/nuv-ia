@@ -211,6 +211,8 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
           canPersist={!!expedienteIdToPersist}
           saving={savingIJ}
           saved={savedFlash}
+          onSync={syncFromCase}
+          syncFlash={syncFlash}
           onSave={async () => {
             if (!expedienteIdToPersist) return;
             setSavingIJ(true);
@@ -229,6 +231,7 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
             }
           }}
         />
+
 
 
         {/* Selector de apoderado para el Poder Especial */}
