@@ -119,8 +119,8 @@ export const enviarContratacion = createServerFn({ method: "POST" })
     } else {
       await supabase.from("expediente_historial").insert({
         expediente_id: data.expedienteId,
-        estado_anterior: estadoAnterior,
-        estado_nuevo: "ENVIADO_CONTRATACION",
+        estado_anterior: estadoAnterior as never,
+        estado_nuevo: "ENVIADO_CONTRATACION" as never,
         user_id: userId,
         nota: `Reenvío a contratación (${data.destinatarios.join(", ")})`,
       });
