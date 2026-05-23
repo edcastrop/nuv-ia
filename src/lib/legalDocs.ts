@@ -30,6 +30,10 @@ export interface LegalDoc {
   filename: string;
   title: string;
   blocks: DocBlock[];
+  /** Issues de validación detectados (campos faltantes, inconsistencias matemáticas, etc.). */
+  validationIssues?: string[];
+  /** Consecutivo documental NUVEX para PDFs operativos (Poder, Datos Contrato). */
+  consecutivo?: string;
 }
 
 const hoy = () =>
@@ -338,10 +342,22 @@ export function buildDatosContrato(
         ])),
   ];
 
+  const issues: string[] = [];
+  if (!coberturaMathOk) {
+    issues.push(
+      `Inconsistencia de cobertura: cuota sin cobertura (${fmtCOP(cuotaSinCob)}) − valor cobertura (${fmtCOP(valorCob)}) ≠ cuota con cobertura (${fmtCOP(cuotaConCob)}).`,
+    );
+  }
+  if (!c.nombre) issues.push("Falta nombre del cliente.");
+  if (!c.cedula) issues.push("Falta cédula del cliente.");
+  if (!cr.banco) issues.push("Falta banco.");
+  if (!cr.numeroCredito) issues.push("Falta número de crédito.");
+
   return {
     filename: `Datos_Contrato_${(c.nombre || "Cliente").replace(/\s+/g, "_")}`,
     title: "Datos para Contrato",
     blocks,
+    validationIssues: issues,
   };
 }
 
