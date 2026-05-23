@@ -125,6 +125,9 @@ export function buildPoderFromTemplate(i: BuildPoderInput): PoderResult {
   const missing = validatePoderVariables(vars, templateId);
   const blocks = renderPoderTemplate(templateId, vars);
   const safeName = (i.poderdante.nombre || "Cliente").replace(/\s+/g, "_");
+  const year = new Date().getFullYear();
+  const seq = String(Date.now()).slice(-4);
+  const consecutivo = `NUVEX-PE-${year}-${seq}`;
   return {
     templateId,
     missing,
@@ -132,6 +135,8 @@ export function buildPoderFromTemplate(i: BuildPoderInput): PoderResult {
       filename: `Poder_Especial_${i.poderdante.calidad}_${safeName}`,
       title: `Poder Especial — ${i.poderdante.calidad}`,
       blocks,
+      consecutivo,
+      validationIssues: missing.length > 0 ? missing.map((m) => `Falta: ${m}`) : undefined,
     },
   };
 }
