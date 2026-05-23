@@ -76,6 +76,8 @@ function CasoDetail() {
         <UVRSimulator initialExpediente={exp} onSaved={reload} />
       )}
 
+      <DocumentosLegales expediente={useMemo(() => expedienteToMaestroLike(exp), [exp])} />
+
       <Card>
         <div className="flex items-center justify-between">
           <div className="text-sm text-[#242424]/70">¿Eliminar este expediente?</div>
