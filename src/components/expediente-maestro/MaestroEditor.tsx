@@ -95,7 +95,7 @@ export function MaestroEditor(p: Props) {
             <TextField label="Profesión" value={p.cotitular.profesion} onChange={(v) => p.onCotitular(set(p.cotitular, "profesion", v))} />
             <TextField label="Teléfono" value={p.cotitular.telefono} onChange={(v) => p.onCotitular(set(p.cotitular, "telefono", v))} />
             <TextField label="Email" value={p.cotitular.email} onChange={(v) => p.onCotitular(set(p.cotitular, "email", v))} />
-            <TextField label="Ciudad" value={p.cotitular.ciudad} onChange={(v) => p.onCotitular(set(p.cotitular, "ciudad", v))} />
+            <CityField label="Ciudad" value={p.cotitular.ciudad} onChange={(v) => p.onCotitular(set(p.cotitular, "ciudad", v))} />
             <TextField label="Dirección" value={p.cotitular.direccion} onChange={(v) => p.onCotitular(set(p.cotitular, "direccion", v))} className="md:col-span-2 lg:col-span-3" />
           </div>
         )}
