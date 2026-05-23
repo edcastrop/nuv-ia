@@ -1,59 +1,118 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
-import { FileText, Download, Eye } from "lucide-react";
+import { FileText, Download, Eye, Receipt, BadgeCheck, Info } from "lucide-react";
 import type { ExpedienteMaestro } from "@/lib/expedienteMaestro";
-import { buildPoderEspecial, buildContratoServicios, type LegalDoc } from "@/lib/legalDocs";
+import type { Expediente } from "@/lib/expedientes";
+import { buildPoderEspecial, buildDatosContrato, type LegalDoc, type ApoderadoSeleccionado } from "@/lib/legalDocs";
 import { exportLegalDocPDF, exportLegalDocDOCX } from "@/lib/legalDocsExport";
+import { listApoderados, type ApoderadoNuvex } from "@/lib/apoderados";
 
 interface Props {
   expediente: ExpedienteMaestro;
-  /** Datos vigentes en pantalla (no necesariamente guardados aún). */
   liveOverride?: Partial<ExpedienteMaestro>;
+  /** Expediente del simulador (opcional) para alimentar Datos para Contrato. */
+  simExpediente?: Expediente | null;
 }
 
-export function DocumentosLegales({ expediente, liveOverride }: Props) {
+export function DocumentosLegales({ expediente, liveOverride, simExpediente }: Props) {
   const [preview, setPreview] = useState<LegalDoc | null>(null);
+  const [apoderados, setApoderados] = useState<ApoderadoNuvex[]>([]);
+  const [selectedApId, setSelectedApId] = useState<string>("");
 
-  // Mezcla el expediente guardado con los cambios en pantalla para que el
-  // documento siempre refleje el estado vigente del formulario.
   const live: ExpedienteMaestro = useMemo(
     () => ({ ...expediente, ...(liveOverride ?? {}) }),
     [expediente, liveOverride],
   );
 
-  const docs = useMemo(
-    () => ({
-      poder: buildPoderEspecial(live),
-      contrato: buildContratoServicios(live),
-    }),
-    [live],
-  );
+  useEffect(() => {
+    listApoderados(true).then((rows) => {
+      setApoderados(rows);
+      if (rows.length > 0) setSelectedApId((id) => id || rows[0].id);
+    }).catch(() => { /* silencioso */ });
+  }, []);
+
+  const selectedAp: ApoderadoSeleccionado | undefined = useMemo(() => {
+    const ap = apoderados.find((a) => a.id === selectedApId);
+    if (!ap) return undefined;
+    return {
+      nombre: ap.nombre, cedula: ap.cedula,
+      lugarExpedicion: ap.lugar_expedicion, celular: ap.celular,
+    };
+  }, [apoderados, selectedApId]);
+
+  const poderDoc = useMemo(() => buildPoderEspecial(live, selectedAp), [live, selectedAp]);
+  const datosDoc = useMemo(() => buildDatosContrato(live, simExpediente ?? null), [live, simExpediente]);
 
   return (
     <>
       <Card>
         <div className="mb-4">
           <div className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: NUVEX.azul }}>
-            Documentos jurídicos
+            Jurídica
           </div>
-          <h3 className="text-lg font-semibold text-[#242424]">Generador automático</h3>
+          <h3 className="text-lg font-semibold text-[#242424]">Documentos del expediente</h3>
           <p className="text-xs text-[#242424]/60 mt-0.5">
-            Los documentos se construyen en tiempo real con la información del expediente.
-            Cualquier cambio se refleja al volver a descargar o previsualizar.
+            Todos los documentos se generan automáticamente desde la información del expediente.
           </p>
+        </div>
+
+        {/* Selector de apoderado para el Poder Especial */}
+        <div className="rounded-xl border bg-[#F7F9FB] p-3 mb-4" style={{ borderColor: "#E3E7EE" }}>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="text-[11px] uppercase tracking-wider font-semibold text-[#242424]/70">
+              Apoderado NUVEX
+            </div>
+            {apoderados.length === 0 ? (
+              <span className="text-xs text-[#B42318]">
+                No hay apoderados activos. Crea uno en <strong>Apoderados</strong>.
+              </span>
+            ) : (
+              <select
+                value={selectedApId}
+                onChange={(e) => setSelectedApId(e.target.value)}
+                className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 text-sm"
+              >
+                {apoderados.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.nombre} — CC {a.cedula}
+                  </option>
+                ))}
+              </select>
+            )}
+            {selectedAp && (
+              <span className="text-[11px] text-[#242424]/60">
+                Expedida en {selectedAp.lugarExpedicion || "—"} · Cel {selectedAp.celular || "—"}
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <DocCard
-            doc={docs.poder}
-            descripcion="Poder amplio y suficiente al apoderado para gestionar el crédito ante el banco."
-            onPreview={() => setPreview(docs.poder)}
+            icon={<FileText size={18} />}
+            title="Poder Especial"
+            descripcion="Plantilla jurídica NUVEX con apoderado seleccionado y datos del expediente."
+            doc={poderDoc}
+            disabled={!selectedAp}
+            onPreview={() => setPreview(poderDoc)}
           />
           <DocCard
-            doc={docs.contrato}
-            descripcion="Contrato de prestación de servicios profesionales NUVEX, honorarios a éxito."
-            onPreview={() => setPreview(docs.contrato)}
+            icon={<FileText size={18} />}
+            title="Datos para Contrato"
+            descripcion="Tabla contractual con cliente, propuesta, forma de pago y beneficio Fresh."
+            doc={datosDoc}
+            onPreview={() => setPreview(datosDoc)}
+          />
+          <InfoCard
+            icon={<Receipt size={18} />}
+            title="Cuenta de Cobro"
+            descripcion="Disponible automáticamente en el simulador del expediente."
+          />
+          <InfoCard
+            icon={<BadgeCheck size={18} />}
+            title="Paz y Salvo"
+            descripcion="Disponible automáticamente en el simulador del expediente."
           />
         </div>
       </Card>
@@ -64,46 +123,40 @@ export function DocumentosLegales({ expediente, liveOverride }: Props) {
 }
 
 function DocCard({
-  doc, descripcion, onPreview,
-}: { doc: LegalDoc; descripcion: string; onPreview: () => void }) {
+  icon, title, descripcion, doc, disabled, onPreview,
+}: {
+  icon: React.ReactNode; title: string; descripcion: string;
+  doc: LegalDoc; disabled?: boolean; onPreview: () => void;
+}) {
   const [busy, setBusy] = useState<null | "pdf" | "docx">(null);
-
-  const downloadPDF = async () => {
-    setBusy("pdf");
-    try { exportLegalDocPDF(doc); } finally { setBusy(null); }
-  };
-  const downloadDOCX = async () => {
-    setBusy("docx");
-    try { await exportLegalDocDOCX(doc); } finally { setBusy(null); }
-  };
+  const downloadPDF = async () => { setBusy("pdf"); try { exportLegalDocPDF(doc); } finally { setBusy(null); } };
+  const downloadDOCX = async () => { setBusy("docx"); try { await exportLegalDocDOCX(doc); } finally { setBusy(null); } };
 
   return (
-    <div
-      className="rounded-xl border bg-white p-4 flex flex-col gap-3"
-      style={{ borderColor: "#E3E7EE" }}
-    >
+    <div className="rounded-xl border bg-white p-4 flex flex-col gap-3" style={{ borderColor: "#E3E7EE" }}>
       <div className="flex items-start gap-3">
         <div
           className="flex h-10 w-10 items-center justify-center rounded-lg text-white shrink-0"
           style={{ background: `linear-gradient(135deg, ${NUVEX.azul}, ${NUVEX.verde})` }}
         >
-          <FileText size={18} />
+          {icon}
         </div>
         <div className="flex-1">
-          <div className="font-semibold text-[#242424] text-sm">{doc.title}</div>
+          <div className="font-semibold text-[#242424] text-sm">{title}</div>
           <p className="text-xs text-[#242424]/60 mt-0.5">{descripcion}</p>
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2 mt-1">
         <button
           onClick={onPreview}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-[#E3E7EE] px-3 py-1.5 text-xs font-medium text-[#242424] hover:bg-[#F7F9FB]"
+          disabled={disabled}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-[#E3E7EE] px-3 py-1.5 text-xs font-medium text-[#242424] hover:bg-[#F7F9FB] disabled:opacity-50"
         >
           <Eye size={13} /> Previsualizar
         </button>
         <button
           onClick={downloadPDF}
-          disabled={busy !== null}
+          disabled={disabled || busy !== null}
           className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
           style={{ backgroundColor: NUVEX.azul }}
         >
@@ -111,12 +164,30 @@ function DocCard({
         </button>
         <button
           onClick={downloadDOCX}
-          disabled={busy !== null}
+          disabled={disabled || busy !== null}
           className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
           style={{ backgroundColor: NUVEX.verde }}
         >
-          <Download size={13} /> {busy === "docx" ? "Generando…" : "DOCX"}
+          <Download size={13} /> {busy === "docx" ? "Generando…" : "Word"}
         </button>
+      </div>
+    </div>
+  );
+}
+
+function InfoCard({ icon, title, descripcion }: { icon: React.ReactNode; title: string; descripcion: string }) {
+  return (
+    <div className="rounded-xl border bg-[#F7F9FB] p-4 flex items-start gap-3" style={{ borderColor: "#E3E7EE" }}>
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg text-white shrink-0"
+        style={{ background: "linear-gradient(135deg,#94A3B8,#64748B)" }}>
+        {icon}
+      </div>
+      <div className="flex-1">
+        <div className="font-semibold text-[#242424] text-sm">{title}</div>
+        <p className="text-xs text-[#242424]/60 mt-0.5">{descripcion}</p>
+        <div className="mt-2 inline-flex items-center gap-1 text-[11px] text-[#242424]/60">
+          <Info size={12} /> Conectado al expediente activo
+        </div>
       </div>
     </div>
   );
@@ -124,33 +195,29 @@ function DocCard({
 
 function PreviewModal({ doc, onClose }: { doc: LegalDoc; onClose: () => void }) {
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-2xl max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 py-3 border-b border-[#E3E7EE]">
           <div className="font-semibold text-[#242424]">{doc.title}</div>
-          <button onClick={onClose} className="text-sm text-[#242424]/60 hover:text-[#242424]">
-            Cerrar
-          </button>
+          <button onClick={onClose} className="text-sm text-[#242424]/60 hover:text-[#242424]">Cerrar</button>
         </div>
         <div className="overflow-y-auto p-8 text-[13px] leading-relaxed text-[#242424]" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
           {doc.blocks.map((b, i) => {
             switch (b.type) {
-              case "title":
-                return <h1 key={i} className="text-center text-xl font-bold mb-3">{b.text}</h1>;
-              case "subtitle":
-                return <h2 key={i} className="text-center text-sm font-semibold mb-3">{b.text}</h2>;
-              case "heading":
-                return <h3 key={i} className="font-bold mt-3 mb-1">{b.text}</h3>;
-              case "paragraph":
-                return <p key={i} className="text-justify mb-2">{b.text}</p>;
-              case "spacer":
-                return <div key={i} style={{ height: (b.size ?? 8) }} />;
+              case "title": return <h1 key={i} className="text-center text-xl font-bold mb-3">{b.text}</h1>;
+              case "subtitle": return <h2 key={i} className="text-center text-sm font-semibold mb-3">{b.text}</h2>;
+              case "heading": return <h3 key={i} className="font-bold mt-3 mb-1">{b.text}</h3>;
+              case "paragraph": return <p key={i} className="text-justify mb-2">{b.text}</p>;
+              case "section":
+                return <h3 key={i} className="font-bold text-sm uppercase tracking-wider border-b border-[#242424] pb-1 mt-4 mb-2">{b.text}</h3>;
+              case "field":
+                return (
+                  <div key={i} className="grid grid-cols-[180px_1fr] gap-3 py-0.5">
+                    <div className="font-semibold">{b.label}</div>
+                    <div>{b.value || "—"}</div>
+                  </div>
+                );
+              case "spacer": return <div key={i} style={{ height: (b.size ?? 8) }} />;
               case "signature":
                 return (
                   <div key={i} className="grid mt-10 gap-6" style={{ gridTemplateColumns: `repeat(${b.columns.length}, 1fr)` }}>
