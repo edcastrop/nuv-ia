@@ -12,6 +12,7 @@ import {
 } from "../../lib/format";
 import {
   calculateUVRManual,
+  calculateUVRManualByCuotas,
   calculateUVRProjection,
   pickBestProposal,
   type UVRInput,
@@ -87,6 +88,12 @@ export function UVRSimulator({
     initCred.variacionUVR ?? getDefaultVariacionUVR(),
   );
   const [nuevaCuotaManual, setNuevaCuotaManual] = useState(initCred.nuevaCuotaManual ?? "");
+  const [cuotasEliminarManual, setCuotasEliminarManual] = useState(
+    initCred.cuotasEliminarManual ?? "",
+  );
+  const [modoPersonalizada, setModoPersonalizada] = useState<"cuota" | "cuotas">(
+    initCred.cuotasEliminarManual && !initCred.nuevaCuotaManual ? "cuotas" : "cuota",
+  );
   const [showConfigVariacion, setShowConfigVariacion] = useState(false);
   const [variacionDefaultInput, setVariacionDefaultInput] = useState(getDefaultVariacionUVR());
 
@@ -176,9 +183,18 @@ export function UVRSimulator({
 
   const manual = useMemo(() => {
     if (!datosCompletos || !calc) return null;
-    const v = parseCurrency(nuevaCuotaManual);
-    if (!v) return null;
-    const baseResult = calculateUVRManual(input, calc.escenarioActual, v);
+    let v: number;
+    let baseResult;
+    if (modoPersonalizada === "cuotas") {
+      const ce = parseDecimal(cuotasEliminarManual);
+      if (!ce) return null;
+      baseResult = calculateUVRManualByCuotas(input, calc.escenarioActual, ce);
+      v = baseResult.nuevaCuotaPesos;
+    } else {
+      v = parseCurrency(nuevaCuotaManual);
+      if (!v) return null;
+      baseResult = calculateUVRManual(input, calc.escenarioActual, v);
+    }
     // Tolerancia $2.000: si la cuota manual coincide con una propuesta automática,
     // se usan los resultados de esa propuesta para evitar discrepancias por redondeo.
     if (baseResult.valid) {
@@ -204,7 +220,7 @@ export function UVRSimulator({
       }
     }
     return baseResult;
-  }, [datosCompletos, input, calc, nuevaCuotaManual]);
+  }, [datosCompletos, input, calc, nuevaCuotaManual, cuotasEliminarManual, modoPersonalizada]);
 
 
   const manualValido = !!(manual && manual.valid);
@@ -586,16 +602,55 @@ export function UVRSimulator({
           )}
 
           <Card>
-            <SectionTitle sub="Si se calcula, reemplaza automáticamente a la propuesta recomendada">
-              Calculadora manual por nueva cuota propuesta
+            <SectionTitle sub="Escenario adicional para negociación comercial. Reemplaza la propuesta recomendada cuando es válida.">
+              🎯 Propuesta personalizada NUVEX
             </SectionTitle>
+            <div className="mb-4 inline-flex rounded-lg border border-[#E3E7EE] bg-white p-1">
+              <button
+                type="button"
+                onClick={() => setModoPersonalizada("cuota")}
+                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                  modoPersonalizada === "cuota"
+                    ? "text-white shadow"
+                    : "text-[#242424]/70 hover:text-[#242424]"
+                }`}
+                style={
+                  modoPersonalizada === "cuota" ? { backgroundColor: NUVEX.azul } : undefined
+                }
+              >
+                Calcular por nueva cuota
+              </button>
+              <button
+                type="button"
+                onClick={() => setModoPersonalizada("cuotas")}
+                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                  modoPersonalizada === "cuotas"
+                    ? "text-white shadow"
+                    : "text-[#242424]/70 hover:text-[#242424]"
+                }`}
+                style={
+                  modoPersonalizada === "cuotas" ? { backgroundColor: NUVEX.azul } : undefined
+                }
+              >
+                Calcular por cuotas a eliminar
+              </button>
+            </div>
             <div className="grid gap-4 md:grid-cols-3">
-              <TextField
-                label="Nueva cuota propuesta por el cliente (pesos)"
-                value={nuevaCuotaManual}
-                onChange={setNuevaCuotaManual}
-                placeholder="1.800.000"
-              />
+              {modoPersonalizada === "cuota" ? (
+                <TextField
+                  label="Nueva cuota deseada (pesos)"
+                  value={nuevaCuotaManual}
+                  onChange={setNuevaCuotaManual}
+                  placeholder="1.800.000"
+                />
+              ) : (
+                <TextField
+                  label="Cuotas a eliminar"
+                  value={cuotasEliminarManual}
+                  onChange={setCuotasEliminarManual}
+                  placeholder="36"
+                />
+              )}
             </div>
             {manual && !manual.valid && manual.motivo && (
               <div className="mt-3">
@@ -670,6 +725,7 @@ export function UVRSimulator({
                       teaCobrada,
                       variacionUVR,
                       nuevaCuotaManual,
+                      cuotasEliminarManual,
                       cuotaPagadaCliente: cobertura.cuotaPagadaCliente || "",
                       valorBeneficio: cobertura.valorCobertura || "",
                       tipoBeneficio: cobertura.tipoBeneficio || "",

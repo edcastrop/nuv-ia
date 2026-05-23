@@ -12,6 +12,7 @@ import {
 } from "../../lib/format";
 import {
   calculatePesosManual,
+  calculatePesosManualByCuotas,
   calculatePesosProjection,
   pickBestProposal,
   type PesosInput,
@@ -81,6 +82,12 @@ export function PesosSimulator({
   const [seguros, setSeguros] = useState(initCred.seguros ?? "");
   const [tea, setTea] = useState(initCred.tea ?? "");
   const [nuevaCuotaManual, setNuevaCuotaManual] = useState(initCred.nuevaCuotaManual ?? "");
+  const [cuotasEliminarManual, setCuotasEliminarManual] = useState(
+    initCred.cuotasEliminarManual ?? "",
+  );
+  const [modoPersonalizada, setModoPersonalizada] = useState<"cuota" | "cuotas">(
+    initCred.cuotasEliminarManual && !initCred.nuevaCuotaManual ? "cuotas" : "cuota",
+  );
 
   // Prellenar el campo "Asesor NUVEX" con el nombre del perfil autenticado
   useAsesorDefault(client.asesor, (nombre) => setClient((prev) => ({ ...prev, asesor: nombre })));
@@ -147,9 +154,18 @@ export function PesosSimulator({
 
   const manual = useMemo(() => {
     if (!datosCompletos) return null;
-    const v = parseCurrency(nuevaCuotaManual);
-    if (!v) return null;
-    const baseResult = calculatePesosManual(input, v);
+    let v: number;
+    let baseResult;
+    if (modoPersonalizada === "cuotas") {
+      const ce = parseDecimal(cuotasEliminarManual);
+      if (!ce) return null;
+      baseResult = calculatePesosManualByCuotas(input, ce);
+      v = baseResult.nuevaCuotaConSeguro;
+    } else {
+      v = parseCurrency(nuevaCuotaManual);
+      if (!v) return null;
+      baseResult = calculatePesosManual(input, v);
+    }
     // Tolerancia $2.000: si la cuota manual coincide con una propuesta automática,
     // se usan los resultados de esa propuesta para evitar discrepancias por redondeo.
     if (baseResult.valid && calc) {
@@ -175,7 +191,7 @@ export function PesosSimulator({
       }
     }
     return baseResult;
-  }, [datosCompletos, input, nuevaCuotaManual, calc]);
+  }, [datosCompletos, input, nuevaCuotaManual, cuotasEliminarManual, modoPersonalizada, calc]);
 
 
   const manualValido = !!(manual && manual.valid);
@@ -483,16 +499,55 @@ export function PesosSimulator({
           )}
 
           <Card>
-            <SectionTitle sub="Si se calcula, reemplaza automáticamente a la propuesta recomendada">
-              Calculadora manual por nueva cuota propuesta
+            <SectionTitle sub="Escenario adicional para negociación comercial. Reemplaza la propuesta recomendada cuando es válida.">
+              🎯 Propuesta personalizada NUVEX
             </SectionTitle>
+            <div className="mb-4 inline-flex rounded-lg border border-[#E3E7EE] bg-white p-1">
+              <button
+                type="button"
+                onClick={() => setModoPersonalizada("cuota")}
+                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                  modoPersonalizada === "cuota"
+                    ? "text-white shadow"
+                    : "text-[#242424]/70 hover:text-[#242424]"
+                }`}
+                style={
+                  modoPersonalizada === "cuota" ? { backgroundColor: NUVEX.azul } : undefined
+                }
+              >
+                Calcular por nueva cuota
+              </button>
+              <button
+                type="button"
+                onClick={() => setModoPersonalizada("cuotas")}
+                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                  modoPersonalizada === "cuotas"
+                    ? "text-white shadow"
+                    : "text-[#242424]/70 hover:text-[#242424]"
+                }`}
+                style={
+                  modoPersonalizada === "cuotas" ? { backgroundColor: NUVEX.azul } : undefined
+                }
+              >
+                Calcular por cuotas a eliminar
+              </button>
+            </div>
             <div className="grid gap-4 md:grid-cols-3">
-              <TextField
-                label="Nueva cuota propuesta por el cliente"
-                value={nuevaCuotaManual}
-                onChange={setNuevaCuotaManual}
-                placeholder="2.800.000"
-              />
+              {modoPersonalizada === "cuota" ? (
+                <TextField
+                  label="Nueva cuota deseada"
+                  value={nuevaCuotaManual}
+                  onChange={setNuevaCuotaManual}
+                  placeholder="2.800.000"
+                />
+              ) : (
+                <TextField
+                  label="Cuotas a eliminar"
+                  value={cuotasEliminarManual}
+                  onChange={setCuotasEliminarManual}
+                  placeholder="36"
+                />
+              )}
             </div>
             {manual && !manual.valid && manual.motivo && (
               <div className="mt-3">
@@ -563,6 +618,7 @@ export function PesosSimulator({
                       seguros,
                       tea,
                       nuevaCuotaManual,
+                      cuotasEliminarManual,
                       cuotaPagadaCliente: cobertura.cuotaPagadaCliente || "",
                       valorBeneficio: cobertura.valorCobertura || "",
                       tipoBeneficio: cobertura.tipoBeneficio || "",
