@@ -10,6 +10,7 @@ import { DocumentosLegales } from "@/components/expediente-maestro/DocumentosLeg
 import { expedienteToMaestroLike } from "@/lib/expedienteMaestro";
 import { EstadoCasoBlock } from "@/components/expediente/EstadoCasoBlock";
 import { HistorialCaso } from "@/components/expediente/HistorialCaso";
+import { CarteraBlockExpediente } from "@/components/cartera/CarteraBlockExpediente";
 
 export const Route = createFileRoute("/_authenticated/casos/$id")({
   component: CasoDetail,
