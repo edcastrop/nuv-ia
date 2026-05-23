@@ -37,6 +37,7 @@ export type ExtractoApplyPayload = {
     cuotaActual?: string;
     seguros?: string;
     tea?: string;
+    valorDesembolsado?: string;
   };
   // Para UVR
   uvr?: {
@@ -471,6 +472,7 @@ export function ExtractoReader({ modo, onApply }: Props) {
         cuotaActual: cuotaParaSimulador,
         seguros: get("seguros"),
         tea: get("tea"),
+        valorDesembolsado: get("valorDesembolsado"),
       };
     } else {
       payload.uvr = {
