@@ -122,7 +122,7 @@ export function PrintDocument(props: Props) {
               textTransform: "uppercase",
             }}
           >
-            Documento confidencial · Cliente preferencial
+            {esPreferencial ? "Documento confidencial · Cliente preferencial" : "Documento confidencial"}
           </div>
           <h1
             style={{
