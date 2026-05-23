@@ -499,16 +499,55 @@ export function PesosSimulator({
           )}
 
           <Card>
-            <SectionTitle sub="Si se calcula, reemplaza automáticamente a la propuesta recomendada">
-              Calculadora manual por nueva cuota propuesta
+            <SectionTitle sub="Escenario adicional para negociación comercial. Reemplaza la propuesta recomendada cuando es válida.">
+              🎯 Propuesta personalizada NUVEX
             </SectionTitle>
+            <div className="mb-4 inline-flex rounded-lg border border-[#E3E7EE] bg-white p-1">
+              <button
+                type="button"
+                onClick={() => setModoPersonalizada("cuota")}
+                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                  modoPersonalizada === "cuota"
+                    ? "text-white shadow"
+                    : "text-[#242424]/70 hover:text-[#242424]"
+                }`}
+                style={
+                  modoPersonalizada === "cuota" ? { backgroundColor: NUVEX.azul } : undefined
+                }
+              >
+                Calcular por nueva cuota
+              </button>
+              <button
+                type="button"
+                onClick={() => setModoPersonalizada("cuotas")}
+                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                  modoPersonalizada === "cuotas"
+                    ? "text-white shadow"
+                    : "text-[#242424]/70 hover:text-[#242424]"
+                }`}
+                style={
+                  modoPersonalizada === "cuotas" ? { backgroundColor: NUVEX.azul } : undefined
+                }
+              >
+                Calcular por cuotas a eliminar
+              </button>
+            </div>
             <div className="grid gap-4 md:grid-cols-3">
-              <TextField
-                label="Nueva cuota propuesta por el cliente"
-                value={nuevaCuotaManual}
-                onChange={setNuevaCuotaManual}
-                placeholder="2.800.000"
-              />
+              {modoPersonalizada === "cuota" ? (
+                <TextField
+                  label="Nueva cuota deseada"
+                  value={nuevaCuotaManual}
+                  onChange={setNuevaCuotaManual}
+                  placeholder="2.800.000"
+                />
+              ) : (
+                <TextField
+                  label="Cuotas a eliminar"
+                  value={cuotasEliminarManual}
+                  onChange={setCuotasEliminarManual}
+                  placeholder="36"
+                />
+              )}
             </div>
             {manual && !manual.valid && manual.motivo && (
               <div className="mt-3">
