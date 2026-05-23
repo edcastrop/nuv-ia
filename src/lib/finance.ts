@@ -271,7 +271,8 @@ export function calculateUVRProjection(input: UVRInput): {
 } {
   const tasaMensual = Math.pow(1 + input.teaCobrada / 100, 1 / 12) - 1;
   const variacionMensualUVR = Math.pow(1 + input.variacionUVR / 100, 1 / 12) - 1;
-  const cuotaUVRActual = pmt(tasaMensual, input.cuotasPendientes, input.saldoUVR);
+  const cuotasBase = Math.max(0, input.cuotasPendientes - 1);
+  const cuotaUVRActual = pmt(tasaMensual, cuotasBase, input.saldoUVR);
 
   const actual = proyectarUVR(
     input.saldoUVR,
@@ -280,7 +281,7 @@ export function calculateUVRProjection(input: UVRInput): {
     variacionMensualUVR,
     cuotaUVRActual,
     input.seguros,
-    input.cuotasPendientes,
+    cuotasBase,
   );
 
   const escenarioActual: UVREscenarioActual = {
@@ -292,7 +293,7 @@ export function calculateUVRProjection(input: UVRInput): {
   const eliminaciones = getUVRReductionOptions(input.plazoInicial);
   const propuestas: UVRPropuesta[] = [];
   for (const cuotasEliminadas of eliminaciones) {
-    const nuevoPlazo = input.cuotasPendientes - cuotasEliminadas;
+    const nuevoPlazo = cuotasBase - cuotasEliminadas;
     if (nuevoPlazo <= 0) continue;
     const nuevaCuotaUVR = pmt(tasaMensual, nuevoPlazo, input.saldoUVR);
     const prop = proyectarUVR(
@@ -376,13 +377,14 @@ export function calculateUVRManual(
   if (nuevaCuotaUVR <= input.saldoUVR * tasaMensual) {
     return { ...base, motivo: "La cuota no alcanza a cubrir los intereses" };
   }
+  const cuotasBase = Math.max(0, input.cuotasPendientes - 1);
   const plazoExacto =
     -Math.log(1 - (input.saldoUVR * tasaMensual) / nuevaCuotaUVR) / Math.log(1 + tasaMensual);
   const nuevoPlazo = Math.ceil(plazoExacto);
-  if (nuevoPlazo <= 0 || nuevoPlazo >= input.cuotasPendientes) {
+  if (nuevoPlazo <= 0 || nuevoPlazo >= cuotasBase) {
     return { ...base, motivo: "El nuevo plazo no genera ahorro" };
   }
-  const cuotasEliminadas = input.cuotasPendientes - nuevoPlazo;
+  const cuotasEliminadas = cuotasBase - nuevoPlazo;
   const prop = proyectarUVR(
     input.saldoUVR,
     input.valorUVR,
