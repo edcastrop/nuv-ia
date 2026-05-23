@@ -91,21 +91,25 @@ export function PesosSimulator({
 
   const valorDesembolsadoNum = parseCurrency(valorDesembolsado);
   const cuotaActualNum = parseCurrency(cuotaActual);
+  const cuotaPagadaClienteNum = parseCurrency(cobertura.cuotaPagadaCliente);
+  const cuotaBaseSimulacionNum = parseCurrency(cobertura.cuotaBaseSimulacion);
+  const cuotaSimulacionNum = cuotaBaseSimulacionNum > 0 ? cuotaBaseSimulacionNum : cuotaActualNum;
+  const cuotaClienteHoyNum = cuotaPagadaClienteNum > 0 ? cuotaPagadaClienteNum : cuotaActualNum;
   const segurosNum = parseCurrency(seguros);
-  const cuotaSinSegurosNum = Math.max(0, cuotaActualNum - segurosNum);
+  const cuotaSinSegurosNum = Math.max(0, cuotaSimulacionNum - segurosNum);
   const saldoCapitalNum = parseCurrency(saldoCapital);
-  const dineroPagadoFecha = cuotaActualNum * cuotasPagadas;
+  const dineroPagadoFecha = cuotaClienteHoyNum * cuotasPagadas;
 
   const input: PesosInput = useMemo(
     () => ({
       saldoCapital: saldoCapitalNum,
-      cuotaActual: cuotaActualNum,
+      cuotaActual: cuotaSimulacionNum,
       seguros: segurosNum,
       tea: parsePercentage(tea),
       cuotasPendientes,
       porcentajeHonorarios: honorariosPct,
     }),
-    [saldoCapitalNum, cuotaActualNum, segurosNum, tea, cuotasPendientes, honorariosPct],
+    [saldoCapitalNum, cuotaSimulacionNum, segurosNum, tea, cuotasPendientes, honorariosPct],
   );
 
   const validaciones: string[] = [];
@@ -113,15 +117,15 @@ export function PesosSimulator({
     validaciones.push("Las cuotas pagadas no pueden ser mayores al plazo inicial.");
   if (plazoInicial > 0 && cuotasPagadas === plazoInicial)
     validaciones.push("Este crédito ya está amortizado.");
-  if (cuotaActualNum > 0 && segurosNum > cuotaActualNum)
+  if (cuotaSimulacionNum > 0 && segurosNum > cuotaSimulacionNum)
     validaciones.push("Los seguros no pueden ser mayores que la cuota actual.");
-  if (cuotaActualNum > 0 && segurosNum > 0 && cuotaSinSegurosNum <= 0)
+  if (cuotaSimulacionNum > 0 && segurosNum > 0 && cuotaSinSegurosNum <= 0)
     validaciones.push("La cuota sin seguros debe ser mayor a cero para calcular la proyección.");
 
   const cuotaSinSegurosValida =
-    cuotaActualNum === 0 ||
+    cuotaSimulacionNum === 0 ||
     segurosNum === 0 ||
-    (segurosNum < cuotaActualNum && cuotaSinSegurosNum > 0);
+    (segurosNum < cuotaSimulacionNum && cuotaSinSegurosNum > 0);
 
   const datosCompletos =
     input.saldoCapital > 0 &&
@@ -177,7 +181,8 @@ export function PesosSimulator({
 
   const ahorroNegativo = recomendada && (recomendada.ahorroTotal < 0 || recomendada.honorarios < 0);
 
-  const totalActualPendiente = cuotaActualNum * cuotasPendientes;
+  const cuotasBaseSimulacion = Math.max(0, cuotasPendientes - 1);
+  const totalActualPendiente = input.cuotaActual * cuotasBaseSimulacion;
   const vecesActual = saldoCapitalNum > 0 ? totalActualPendiente / saldoCapitalNum : 0;
   const vsActual = getVecesStyle(vecesActual);
 
