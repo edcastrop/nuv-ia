@@ -118,7 +118,7 @@ function toVariables(i: BuildPoderInput): PoderVariables {
 export function buildPoderFromTemplate(i: BuildPoderInput): PoderResult {
   const templateId = i.templateOverride ?? detectPoderTemplate(i.banco, i.producto);
   const vars = toVariables(i);
-  const missing = validatePoderVariables(vars);
+  const missing = validatePoderVariables(vars, templateId);
   const blocks = renderPoderTemplate(templateId, vars);
   const safeName = (i.poderdante.nombre || "Cliente").replace(/\s+/g, "_");
   return {
