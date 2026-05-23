@@ -177,8 +177,34 @@ export function UVRSimulator({
     if (!datosCompletos || !calc) return null;
     const v = parseCurrency(nuevaCuotaManual);
     if (!v) return null;
-    return calculateUVRManual(input, calc.escenarioActual, v);
+    const baseResult = calculateUVRManual(input, calc.escenarioActual, v);
+    // Tolerancia $2.000: si la cuota manual coincide con una propuesta automática,
+    // se usan los resultados de esa propuesta para evitar discrepancias por redondeo.
+    if (baseResult.valid) {
+      const TOLERANCIA = 2000;
+      for (const p of calc.propuestas) {
+        if (Math.abs(v - p.nuevaCuotaConSeguroAprox) <= TOLERANCIA) {
+          return {
+            ...baseResult,
+            nuevaCuotaPesos: v,
+            nuevaCuotaUVR: p.nuevaCuotaUVR,
+            nuevoPlazo: p.nuevoPlazo,
+            cuotasEliminadas: p.cuotasEliminadas,
+            añosEliminados: p.añosEliminados,
+            incrementoMensual: v - input.cuotaActualPesos,
+            totalProyectado: p.totalAproxPagar,
+            ahorroIntereses: p.ahorroIntereses,
+            ahorroSeguros: p.ahorroSeguros,
+            ahorroTotal: p.ahorroTotal,
+            honorarios: p.honorariosNuvex,
+            valid: true,
+          };
+        }
+      }
+    }
+    return baseResult;
   }, [datosCompletos, input, calc, nuevaCuotaManual]);
+
 
   const manualValido = !!(manual && manual.valid);
 
