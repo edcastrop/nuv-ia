@@ -90,7 +90,13 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente }: P
     [modalidad, cuotas],
   );
 
-  const poderDoc = useMemo(() => buildPoderEspecial(live, selectedAp), [live, selectedAp]);
+  const poderes = useMemo(
+    () => (selectedAp ? buildPoderesForExpediente(live, selectedAp, tplOverride ?? undefined) : []),
+    [live, selectedAp, tplOverride],
+  );
+  const poderesMissing = poderes.flatMap((p) => p.missing);
+  const hasMissing = poderesMissing.length > 0;
+  const uniqueMissing = Array.from(new Set(poderesMissing));
   const datosDoc = useMemo(
     () => buildDatosContrato(live, simExpediente ?? null, acuerdo),
     [live, simExpediente, acuerdo],
