@@ -204,7 +204,10 @@ function ApoderadosPage() {
               <Field label="Nombre completo *" value={form.nombre} onChange={(v) => setForm({ ...form, nombre: v })} className="sm:col-span-2" />
               <Field label="Cédula *" value={form.cedula} onChange={(v) => setForm({ ...form, cedula: v })} />
               <Field label="Lugar de expedición" value={form.lugar_expedicion} onChange={(v) => setForm({ ...form, lugar_expedicion: v })} />
-              <Field label="Ciudad" value={form.ciudad} onChange={(v) => setForm({ ...form, ciudad: v })} />
+              <label className="block">
+                <div className="text-[11px] uppercase tracking-wider text-[#242424]/60 font-semibold mb-1">Ciudad</div>
+                <CitySelect value={form.ciudad} onChange={(v) => setForm({ ...form, ciudad: v })} />
+              </label>
               <Field label="Celular" value={form.celular} onChange={(v) => setForm({ ...form, celular: v })} />
               <Field label="Correo" value={form.correo} onChange={(v) => setForm({ ...form, correo: v })} className="sm:col-span-2" />
 
