@@ -410,6 +410,45 @@ export const extractStatement = createServerFn({ method: "POST" })
         parsed.banco = "Davibank";
       }
 
+      // ===== Normalización de cuotasPagadas / cuotasPendientes =====
+      // Regla NUVEX: si el extracto trae "Nro. cuota a cancelar" y cuotasPagadas
+      // vino vacío o en 0, esa es la cuota que se está pagando → cuotasPagadas.
+      // cuotasPendientes = plazoInicial - cuotasPagadas (prioridad sobre el dato del extracto).
+      const _intStr = (k: string) => {
+        const v = parsed[k];
+        if (typeof v !== "string") return 0;
+        const n = parseInt(v.replace(/[^\d]/g, ""), 10);
+        return Number.isFinite(n) ? n : 0;
+      };
+      const _cuotaActualNumeroVal = _intStr("cuotaActualNumero");
+      let _cuotasPagadasVal = _intStr("cuotasPagadas");
+      const _plazoInicialVal = _intStr("plazoInicial");
+      const _cuotasPendientesVal = _intStr("cuotasPendientes");
+      const _advertenciasNorm: string[] = [];
+
+      if (_cuotasPagadasVal <= 0 && _cuotaActualNumeroVal > 0) {
+        _cuotasPagadasVal = _cuotaActualNumeroVal;
+        parsed.cuotasPagadas = String(_cuotaActualNumeroVal);
+      }
+      if (_plazoInicialVal > 0 && _cuotasPagadasVal > 0) {
+        const _calculada = _plazoInicialVal - _cuotasPagadasVal;
+        if (_calculada >= 0) {
+          if (_cuotasPendientesVal > 0 && _cuotasPendientesVal !== _calculada) {
+            _advertenciasNorm.push(
+              "Las cuotas pendientes del extracto no coinciden con el cálculo NUVEX. Se usará plazo inicial menos cuotas pagadas.",
+            );
+          }
+          parsed.cuotasPendientes = String(_calculada);
+        }
+      }
+      if (_cuotaActualNumeroVal > 0 && _cuotasPagadasVal <= 0) {
+        _advertenciasNorm.push(
+          "Inconsistencia detectada: el extracto contiene número de cuota, pero cuotas pagadas aparece en cero.",
+        );
+      }
+
+
+
       // Fallback: derivar tasa cobrada si la IA la dejó vacía
       const numStr = (k: string) => {
         const v = parsed[k];
@@ -644,6 +683,10 @@ export const extractStatement = createServerFn({ method: "POST" })
       parsed.erroresValidacion = errores.length
         ? errores.join("\n")
         : "";
+      parsed.advertenciasNormalizacion = _advertenciasNorm.length
+        ? _advertenciasNorm.join("\n")
+        : "";
+
 
       // Cuota mensual mostrada con seguros
       if (tieneCob && cuotaBase > 0) {

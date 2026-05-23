@@ -320,7 +320,7 @@ export function ExtractoReader({ modo, onApply }: Props) {
         setStage("error");
         return;
       }
-      setParsed(recomputeBancolombia(resp.data));
+      setParsed(normalizeExtractData(recomputeBancolombia(resp.data)));
       setStage("review");
     } catch (err) {
       console.error(err);
@@ -343,6 +343,47 @@ export function ExtractoReader({ modo, onApply }: Props) {
     "cuotaPagadaCliente",
     "valorCobertura",
   ]);
+
+  // Normaliza cuotasPagadas / cuotasPendientes. Misma lógica que el servidor
+  // para que ZIP, PDF, imagen y ediciones manuales produzcan el mismo objeto.
+  const normalizeExtractData = (data: ExtractoData): ExtractoData => {
+    const intStr = (k: string) => {
+      const v = data[k];
+      if (typeof v !== "string") return 0;
+      const n = parseInt(v.replace(/[^\d]/g, ""), 10);
+      return Number.isFinite(n) ? n : 0;
+    };
+    const out: ExtractoData = { ...data };
+    const cuotaActualNumero = intStr("cuotaActualNumero");
+    let cuotasPagadas = intStr("cuotasPagadas");
+    const plazoInicial = intStr("plazoInicial");
+    const cuotasPendientesExt = intStr("cuotasPendientes");
+    const advert: string[] = [];
+
+    if (cuotasPagadas <= 0 && cuotaActualNumero > 0) {
+      cuotasPagadas = cuotaActualNumero;
+      out.cuotasPagadas = String(cuotaActualNumero);
+    }
+    if (plazoInicial > 0 && cuotasPagadas > 0) {
+      const calc = plazoInicial - cuotasPagadas;
+      if (calc >= 0) {
+        if (cuotasPendientesExt > 0 && cuotasPendientesExt !== calc) {
+          advert.push(
+            "Las cuotas pendientes del extracto no coinciden con el cálculo NUVEX. Se usará plazo inicial menos cuotas pagadas.",
+          );
+        }
+        out.cuotasPendientes = String(calc);
+      }
+    }
+    if (cuotaActualNumero > 0 && cuotasPagadas <= 0) {
+      advert.push(
+        "Inconsistencia detectada: el extracto contiene número de cuota, pero cuotas pagadas aparece en cero.",
+      );
+    }
+    out.advertenciasNormalizacion = advert.join("\n");
+    return out;
+  };
+
 
   const recomputeBancolombia = (data: ExtractoData): ExtractoData => {
     const g = (k: string) => (typeof data[k] === "string" ? (data[k] as string) : "");
@@ -410,17 +451,35 @@ export function ExtractoReader({ modo, onApply }: Props) {
   const updateField = (key: string, value: string) => {
     setParsed((prev) => {
       if (!prev) return prev;
-      const next = { ...prev, [key]: value };
+      let next: ExtractoData = { ...prev, [key]: value };
       if (BANCOLOMBIA_KEYS.has(key) || key === "banco") {
-        return recomputeBancolombia(next);
+        next = recomputeBancolombia(next);
+      }
+      if (key === "cuotasPagadas" || key === "plazoInicial" || key === "cuotasPendientes" || key === "cuotaActualNumero") {
+        next = normalizeExtractData(next);
       }
       return next;
     });
   };
 
+
   const handleConfirm = () => {
     if (!parsed) return;
     const get = (k: string) => (typeof parsed[k] === "string" ? (parsed[k] as string) : "");
+    // Validación dura: cuotasPagadas no puede ser 0 si hay número de cuota
+    const _ip = (k: string) => {
+      const v = parsed[k];
+      if (typeof v !== "string") return 0;
+      const n = parseInt(v.replace(/[^\d]/g, ""), 10);
+      return Number.isFinite(n) ? n : 0;
+    };
+    if (_ip("cuotasPagadas") <= 0 && _ip("cuotaActualNumero") > 0) {
+      return;
+    }
+    if (_ip("plazoInicial") <= 0 || _ip("cuotasPagadas") <= 0) {
+      return;
+    }
+
     const tieneCob =
       get("tieneCobertura").toLowerCase() === "si" ||
       /con\s+beneficio\s+de\s+cobertura/i.test(get("producto")) ||
@@ -573,8 +632,32 @@ export function ExtractoReader({ modo, onApply }: Props) {
     .split("\n")
     .map((s) => s.trim())
     .filter(Boolean);
+  const advertenciasNorm = ((parsed?.advertenciasNormalizacion as string) ?? "")
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
   const hayErrores = erroresValidacion.length > 0;
   const cuotaBaseLista = parseMontoExtracto((parsed?.cuotaBaseSimulacion as string) ?? "") > 0;
+
+  // Validación dura antes de confirmar
+  const _intStrParsed = (k: string) => {
+    const v = parsed?.[k];
+    if (typeof v !== "string") return 0;
+    const n = parseInt(v.replace(/[^\d]/g, ""), 10);
+    return Number.isFinite(n) ? n : 0;
+  };
+  const _cuotasPagadasNum = _intStrParsed("cuotasPagadas");
+  const _plazoInicialNum = _intStrParsed("plazoInicial");
+  const _cuotaActualNumeroNum = _intStrParsed("cuotaActualNumero");
+  const _cuotasPagadasEnCero = _cuotasPagadasNum <= 0 && _cuotaActualNumeroNum > 0;
+  const _faltanDatosBase =
+    _plazoInicialNum <= 0 || _cuotasPagadasNum <= 0;
+  const confirmDisabled =
+    hayErrores ||
+    (tieneBeneficio && !cuotaBaseLista) ||
+    _cuotasPagadasEnCero ||
+    _faltanDatosBase;
+
   const fmtCO = (raw: string) => {
     const n = parseMontoExtracto(raw);
     return isFinite(n) && n > 0
@@ -1002,6 +1085,30 @@ export function ExtractoReader({ modo, onApply }: Props) {
                       </div>
                     )}
 
+                    {advertenciasNorm.length > 0 && (
+                      <div
+                        className="mb-3 rounded-lg px-3 py-2 text-[12px]"
+                        style={{
+                          background: "rgba(244,162,97,0.12)",
+                          border: "1px solid rgba(244,162,97,0.45)",
+                          color: "#F4A261",
+                        }}
+                      >
+                        <div className="mb-1 flex items-center gap-2 font-bold uppercase tracking-wider">
+                          <AlertTriangle className="h-4 w-4" />
+                          Revisión necesaria
+                        </div>
+                        <ul className="ml-5 list-disc space-y-0.5">
+                          {advertenciasNorm.map((e, i) => (
+                            <li key={i}>{e}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+
+
+
                     {hayErrores && (
                       <div
                         className="mb-3 rounded-lg px-3 py-2 text-[12px]"
@@ -1203,7 +1310,7 @@ export function ExtractoReader({ modo, onApply }: Props) {
                   </button>
                   <button
                     onClick={handleConfirm}
-                    disabled={hayErrores || (tieneBeneficio && !cuotaBaseLista)}
+                    disabled={confirmDisabled}
                     className="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:scale-100"
                     style={{
                       background: "linear-gradient(135deg, #445DA3, #84B98F)",
