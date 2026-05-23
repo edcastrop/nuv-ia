@@ -392,7 +392,7 @@ export function calculateUVRManual(
   const cuotasBase = Math.max(0, input.cuotasPendientes);
   const plazoExacto =
     -Math.log(1 - (input.saldoUVR * tasaMensual) / nuevaCuotaUVR) / Math.log(1 + tasaMensual);
-  const nuevoPlazo = Math.ceil(plazoExacto);
+  const nuevoPlazo = roundPlazoNuvex(plazoExacto);
   if (nuevoPlazo <= 0 || nuevoPlazo >= cuotasBase) {
     return { ...base, motivo: "El nuevo plazo no genera ahorro" };
   }
