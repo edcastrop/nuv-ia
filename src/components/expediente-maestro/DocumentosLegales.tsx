@@ -622,6 +622,19 @@ function IJField({
   );
 }
 
+function IJCity({
+  label, value, onChange, required,
+}: { label: string; value: string; onChange: (v: string) => void; required?: boolean }) {
+  return (
+    <label className="text-xs">
+      <span className="block text-[#242424]/70 mb-0.5">
+        {label}{required && <span className="text-[#B42318]"> *</span>}
+      </span>
+      <CitySelect value={value} onChange={onChange} required={required} />
+    </label>
+  );
+}
+
 function IJSelect({
   label, value, onChange, options,
 }: { label: string; value: string; onChange: (v: string) => void; options: string[] }) {
