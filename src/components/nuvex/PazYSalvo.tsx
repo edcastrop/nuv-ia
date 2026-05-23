@@ -36,15 +36,15 @@ export function PazYSalvo({ client, data, enabled }: Props) {
   if (!enabled) return null;
   const elementId = "pdf-paz-y-salvo";
   const handleExport = async () => {
-    // Validación obligatoria: campos del Expediente Maestro
-    const { validateRequired, ensureValid } = await import("@/lib/pdfValidator");
+    // Documento administrativo: validación informativa (NO bloquea export).
+    const { validateRequired, ensureValidAdvisory } = await import("@/lib/pdfValidator");
     const v = validateRequired([
       { key: "nombre", label: "Nombre cliente", value: client.nombre },
       { key: "cedula", label: "Cédula", value: client.cedula },
       { key: "banco", label: "Banco", value: client.banco },
       { key: "numeroCredito", label: "N° crédito", value: client.numeroCredito },
     ]);
-    if (!ensureValid("Paz y Salvo", v)) return;
+    ensureValidAdvisory("Paz y Salvo", v);
     exportElementToPdf(
       elementId,
       `NUVEX_PazYSalvo_${sanitizeFileName(client.nombre)}.pdf`,
