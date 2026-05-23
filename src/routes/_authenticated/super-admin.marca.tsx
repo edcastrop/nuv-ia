@@ -8,9 +8,9 @@ export const Route = createFileRoute("/_authenticated/super-admin/marca")({
 });
 
 function MarcaPage() {
-  const { role, loading } = useUserRole();
+  const { isSuperAdmin, loading } = useUserRole();
   if (loading) return null;
-  if (role !== "super_admin") return <Navigate to="/" />;
+  if (!isSuperAdmin) return <Navigate to="/" />;
 
   const B = NUVEX_BRAND;
 
