@@ -73,10 +73,14 @@ export type AccionOrigen =
   | "poder_firmado"
   | "radicado_confirmado"
   | "aprobacion_registrada"
+  | "documentos_banco_firmados"
+  | "condiciones_aplicadas"
   | "resultado_final"
+  | "cuenta_cobro_generada"
   | "cuenta_cobro_enviada"
   | "honorarios_pagados"
   | "paz_y_salvo_generado"
+  | "prejuridico"
   | "manual";
 
 export const ACCION_A_ESTADO: Record<Exclude<AccionOrigen, "manual">, CasoEstado> = {
@@ -88,10 +92,14 @@ export const ACCION_A_ESTADO: Record<Exclude<AccionOrigen, "manual">, CasoEstado
   poder_firmado: "poder_firmado",
   radicado_confirmado: "radicado_banco",
   aprobacion_registrada: "aprobado",
+  documentos_banco_firmados: "documentos_banco_firmados",
+  condiciones_aplicadas: "condiciones_aplicadas",
   resultado_final: "resultado_final_generado",
+  cuenta_cobro_generada: "cuenta_cobro_generada",
   cuenta_cobro_enviada: "cuenta_cobro_enviada",
   honorarios_pagados: "honorarios_pagados",
   paz_y_salvo_generado: "paz_y_salvo_generado",
+  prejuridico: "prejuridico",
 };
 
 export function labelEstado(e: CasoEstado | null | undefined): string {
