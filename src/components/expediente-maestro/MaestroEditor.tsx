@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, TextField, SelectField, SectionTitle } from "@/components/nuvex/ui";
 import { CityField } from "@/components/ui/CityField";
 import { NUVEX } from "@/components/nuvex/constants";
 import { withFreshDerivados, FRESH_TIPOS, type FreshTipoBeneficio } from "@/lib/cobertura";
+import { cityDepartment } from "@/lib/colombiaCities";
 import type {
   ClienteMaestro, CotitularMaestro, CreditoMaestro,
   AsesorMaestro, LicenciadoMaestro, ApoderadoMaestro,
@@ -62,6 +63,34 @@ interface Props {
 export function MaestroEditor(p: Props) {
   const set = <T, K extends keyof T>(obj: T, k: K, v: T[K]) => ({ ...obj, [k]: v });
 
+  // Auto-rellenar Departamento desde la Ciudad de residencia (titular y cotitular).
+  useEffect(() => {
+    const dep = cityDepartment(p.cliente.ciudad);
+    if (dep && dep !== p.cliente.departamento) {
+      p.onCliente({ ...p.cliente, departamento: dep });
+    }
+  }, [p.cliente.ciudad]);
+  useEffect(() => {
+    if (!p.cotitular.activo) return;
+    const dep = cityDepartment(p.cotitular.ciudad);
+    if (dep && dep !== p.cotitular.departamento) {
+      p.onCotitular({ ...p.cotitular, departamento: dep });
+    }
+  }, [p.cotitular.ciudad, p.cotitular.activo]);
+
+  // Herencia de datos del titular hacia el cotitular.
+  const [hered, setHered] = useState({ direccion: false, ciudad: false, email: false, telefono: false });
+  useEffect(() => {
+    if (!p.cotitular.activo) return;
+    const next = { ...p.cotitular };
+    let changed = false;
+    if (hered.direccion && next.direccion !== p.cliente.direccion) { next.direccion = p.cliente.direccion; changed = true; }
+    if (hered.ciudad && next.ciudad !== p.cliente.ciudad) { next.ciudad = p.cliente.ciudad; changed = true; }
+    if (hered.email && next.email !== p.cliente.email) { next.email = p.cliente.email; changed = true; }
+    if (hered.telefono && next.telefono !== p.cliente.telefono) { next.telefono = p.cliente.telefono; changed = true; }
+    if (changed) p.onCotitular(next);
+  }, [hered, p.cliente.direccion, p.cliente.ciudad, p.cliente.email, p.cliente.telefono, p.cotitular.activo]);
+
   return (
     <div className="space-y-4">
       <Accordion title="Datos del cliente" subtitle="Información personal del titular">
@@ -112,10 +141,10 @@ export function MaestroEditor(p: Props) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           <SelectField label="Tipo de documento" value={p.cliente.tipoDocumento || "CC"} options={TIPOS_DOC} onChange={(v) => p.onCliente(set(p.cliente, "tipoDocumento", v))} />
           <TextField label="Número de documento" value={p.cliente.cedula} onChange={(v) => p.onCliente(set(p.cliente, "cedula", v))} />
-          <TextField label="Lugar de expedición" value={p.cliente.expedidaEn} onChange={(v) => p.onCliente(set(p.cliente, "expedidaEn", v))} />
+          <CityField label="Lugar de expedición" value={p.cliente.expedidaEn} onChange={(v) => p.onCliente(set(p.cliente, "expedidaEn", v))} placeholder="Selecciona municipio…" />
           <TextField label="Fecha de expedición" value={p.cliente.fechaExpedicion || ""} placeholder="DD/MM/AAAA" onChange={(v) => p.onCliente(set(p.cliente, "fechaExpedicion", v))} />
           <CityField label="Ciudad de residencia" value={p.cliente.ciudad} onChange={(v) => p.onCliente(set(p.cliente, "ciudad", v))} required />
-          <TextField label="Departamento" value={p.cliente.departamento || ""} onChange={(v) => p.onCliente(set(p.cliente, "departamento", v))} />
+          <TextField label="Departamento" value={p.cliente.departamento || ""} readOnly />
           <TextField label="Correo electrónico" value={p.cliente.email} onChange={(v) => p.onCliente(set(p.cliente, "email", v))} />
           <TextField label="Celular" value={p.cliente.telefono} onChange={(v) => p.onCliente(set(p.cliente, "telefono", v))} />
           <TextField label="Dirección" value={p.cliente.direccion} onChange={(v) => p.onCliente(set(p.cliente, "direccion", v))} className="md:col-span-2 lg:col-span-3" />
@@ -126,13 +155,19 @@ export function MaestroEditor(p: Props) {
             <div className="text-[11px] uppercase tracking-wider font-semibold mb-2" style={{ color: NUVEX.azul }}>
               Cotitular / Colocatario
             </div>
+            <div className="mb-3 grid grid-cols-1 md:grid-cols-2 gap-2 rounded-lg border border-[#445DA3]/20 bg-[#445DA3]/5 p-3 text-sm text-[#242424]">
+              <label className="flex items-center gap-2"><input type="checkbox" checked={hered.direccion} onChange={(e) => setHered({ ...hered, direccion: e.target.checked })} /> Misma dirección del titular</label>
+              <label className="flex items-center gap-2"><input type="checkbox" checked={hered.ciudad} onChange={(e) => setHered({ ...hered, ciudad: e.target.checked })} /> Misma ciudad de residencia del titular</label>
+              <label className="flex items-center gap-2"><input type="checkbox" checked={hered.email} onChange={(e) => setHered({ ...hered, email: e.target.checked })} /> Mismo correo del titular</label>
+              <label className="flex items-center gap-2"><input type="checkbox" checked={hered.telefono} onChange={(e) => setHered({ ...hered, telefono: e.target.checked })} /> Mismo celular del titular</label>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <SelectField label="Tipo de documento" value={p.cotitular.tipoDocumento || "CC"} options={TIPOS_DOC} onChange={(v) => p.onCotitular(set(p.cotitular, "tipoDocumento", v))} />
               <TextField label="Número de documento" value={p.cotitular.cedula} onChange={(v) => p.onCotitular(set(p.cotitular, "cedula", v))} />
-              <TextField label="Lugar de expedición" value={p.cotitular.expedidaEn} onChange={(v) => p.onCotitular(set(p.cotitular, "expedidaEn", v))} />
+              <CityField label="Lugar de expedición" value={p.cotitular.expedidaEn} onChange={(v) => p.onCotitular(set(p.cotitular, "expedidaEn", v))} placeholder="Selecciona municipio…" />
               <TextField label="Fecha de expedición" value={p.cotitular.fechaExpedicion || ""} placeholder="DD/MM/AAAA" onChange={(v) => p.onCotitular(set(p.cotitular, "fechaExpedicion", v))} />
               <CityField label="Ciudad de residencia" value={p.cotitular.ciudad} onChange={(v) => p.onCotitular(set(p.cotitular, "ciudad", v))} required />
-              <TextField label="Departamento" value={p.cotitular.departamento || ""} onChange={(v) => p.onCotitular(set(p.cotitular, "departamento", v))} />
+              <TextField label="Departamento" value={p.cotitular.departamento || ""} readOnly />
               <TextField label="Correo electrónico" value={p.cotitular.email} onChange={(v) => p.onCotitular(set(p.cotitular, "email", v))} />
               <TextField label="Celular" value={p.cotitular.telefono} onChange={(v) => p.onCotitular(set(p.cotitular, "telefono", v))} />
               <TextField label="Dirección" value={p.cotitular.direccion} onChange={(v) => p.onCotitular(set(p.cotitular, "direccion", v))} className="md:col-span-2 lg:col-span-3" />
