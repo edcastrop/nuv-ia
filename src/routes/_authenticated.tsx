@@ -54,7 +54,9 @@ function AuthenticatedLayout() {
     { to: "/dashboard", label: "Dashboard", Icon: BarChart3 },
     { to: "/academia", label: "Academia", Icon: GraduationCap },
     { to: "/apoderados-nuvex", label: "Apoderados", Icon: Users },
+    ...(isSuperAdmin ? [{ to: "/super-admin", label: "Super Admin", Icon: Shield }] : []),
   ];
+
 
 
   const NavBtn = ({ to, label, Icon, exact }: { to: string; label: string; Icon: typeof LayoutGrid; exact?: boolean }) => {
