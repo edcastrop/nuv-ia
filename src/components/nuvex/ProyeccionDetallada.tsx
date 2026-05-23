@@ -14,22 +14,22 @@ import {
 } from "@/lib/proyeccion";
 import { exportProyeccionExcel, exportProyeccionPDF } from "@/lib/proyeccionExport";
 import { CoberturaFreshFields } from "./CoberturaFreshFields";
+import {
+  FRESH_DEFAULT_TOTAL,
+  freshFromCobertura,
+  withFreshDerivados,
+} from "@/lib/cobertura";
+import type { Cobertura } from "./intervinientes";
 
 const NEGRO = "#242424";
 const AZUL = "#445DA3";
 const VERDE = "#84B98F";
 
-const FRESH_DEFAULT_TOTAL = 84;
-
 function defaultFresh(): CoberturaFresh {
-  return {
+  return withFreshDerivados({
     activo: false,
-    valorMensual: 0,
-    tasa: 0,
     cuotasTotales: FRESH_DEFAULT_TOTAL,
-    cuotasPagadas: 0,
-    cuotasPendientes: FRESH_DEFAULT_TOTAL,
-  };
+  });
 }
 
 interface PropuestaSeleccionada {
