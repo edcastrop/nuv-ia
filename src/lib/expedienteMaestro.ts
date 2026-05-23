@@ -242,6 +242,13 @@ export function maestroToExpediente(m: ExpedienteMaestro) {
 export function expedienteToMaestroLike(exp: Expediente): ExpedienteMaestro {
   const c = exp.cliente_data ?? ({} as Expediente["cliente_data"]);
   const cr = exp.credito_data ?? {};
+  // Información Jurídica persistida en cliente_data (fuente oficial)
+  const ij = ((c as unknown as Record<string, unknown>).informacionJuridica ?? {}) as {
+    titular?: Partial<ClienteMaestro>;
+    cotitular?: Partial<CotitularMaestro> & { activo?: boolean };
+  };
+  const t = ij.titular ?? {};
+  const co = ij.cotitular ?? {};
   return {
     id: exp.id,
     asesor_id: exp.asesor_id,
@@ -251,8 +258,9 @@ export function expedienteToMaestroLike(exp: Expediente): ExpedienteMaestro {
       ...emptyCliente(),
       nombre: c.nombre ?? exp.cliente_nombre ?? "",
       cedula: c.cedula ?? exp.cedula ?? "",
+      ...t,
     },
-    cotitular: emptyCotitular(),
+    cotitular: { ...emptyCotitular(), ...co, activo: !!co.activo },
     credito: {
       ...emptyCredito(),
       banco: c.banco ?? exp.banco ?? "",
@@ -272,3 +280,26 @@ export function expedienteToMaestroLike(exp: Expediente): ExpedienteMaestro {
     updated_at: exp.updated_at,
   };
 }
+
+/**
+ * Persiste la sección Información Jurídica dentro de `expedientes.cliente_data.informacionJuridica`.
+ * Esta es la fuente oficial leída por `expedienteToMaestroLike` y por los generadores
+ * de Poder Especial. NO toca campos de simulación ni de propuesta.
+ */
+export async function saveInformacionJuridicaExpediente(
+  expedienteId: string,
+  data: {
+    titular: Partial<ClienteMaestro>;
+    cotitular?: Partial<CotitularMaestro> & { activo?: boolean };
+  },
+): Promise<void> {
+  const { data: row, error: e1 } = await supabase
+    .from("expedientes").select("cliente_data").eq("id", expedienteId).single();
+  if (e1) throw e1;
+  const cd = (row?.cliente_data ?? {}) as Record<string, unknown>;
+  const next = { ...cd, informacionJuridica: data };
+  const { error: e2 } = await supabase
+    .from("expedientes").update({ cliente_data: next as never }).eq("id", expedienteId);
+  if (e2) throw e2;
+}
+

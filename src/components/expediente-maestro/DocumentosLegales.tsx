@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
-import { FileText, Download, Eye, Receipt, BadgeCheck, Info, CheckCircle2, AlertTriangle, RefreshCw } from "lucide-react";
-import type { ExpedienteMaestro } from "@/lib/expedienteMaestro";
+import { FileText, Download, Eye, Receipt, BadgeCheck, Info, CheckCircle2, AlertTriangle, RefreshCw, Save, Scale } from "lucide-react";
+import type { ExpedienteMaestro, ClienteMaestro, CotitularMaestro } from "@/lib/expedienteMaestro";
+import { saveInformacionJuridicaExpediente } from "@/lib/expedienteMaestro";
 import type { Expediente, PropuestaData } from "@/lib/expedientes";
 import {
   buildDatosContrato, buildPoderesForExpediente, detectPoderTemplate,
@@ -23,17 +24,66 @@ interface Props {
   liveOverride?: Partial<ExpedienteMaestro>;
   /** Expediente del simulador (opcional) para alimentar Datos para Contrato. */
   simExpediente?: Expediente | null;
+  /** Si se entrega, habilita persistir Información Jurídica en cliente_data. */
+  expedienteIdToPersist?: string;
+  /** Notifica al padre cuando se persiste, para que recargue el expediente. */
+  onJuridicaSaved?: () => void;
 }
 
-export function DocumentosLegales({ expediente, liveOverride, simExpediente }: Props) {
+export function DocumentosLegales({ expediente, liveOverride, simExpediente, expedienteIdToPersist, onJuridicaSaved }: Props) {
   const [preview, setPreview] = useState<LegalDoc | null>(null);
   const [apoderados, setApoderados] = useState<ApoderadoNuvex[]>([]);
   const [selectedApId, setSelectedApId] = useState<string>("");
 
-  const live: ExpedienteMaestro = useMemo(
-    () => ({ ...expediente, ...(liveOverride ?? {}) }),
-    [expediente, liveOverride],
-  );
+  // ── Información Jurídica editable (fuente oficial para el Poder Especial)
+  const [ijTitular, setIjTitular] = useState<Partial<ClienteMaestro>>({});
+  const [ijCotitular, setIjCotitular] = useState<Partial<CotitularMaestro> & { activo?: boolean }>({});
+  const [savingIJ, setSavingIJ] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
+
+  // Inicializa desde el expediente cargado
+  useEffect(() => {
+    setIjTitular({
+      tipoDocumento: expediente.cliente?.tipoDocumento || "CC",
+      cedula: expediente.cliente?.cedula || "",
+      expedidaEn: expediente.cliente?.expedidaEn || "",
+      fechaExpedicion: expediente.cliente?.fechaExpedicion || "",
+      ciudad: expediente.cliente?.ciudad || "",
+      departamento: expediente.cliente?.departamento || "",
+      direccion: expediente.cliente?.direccion || "",
+      email: expediente.cliente?.email || "",
+      telefono: expediente.cliente?.telefono || "",
+    });
+    setIjCotitular({
+      activo: !!expediente.cotitular?.activo,
+      nombre: expediente.cotitular?.nombre || "",
+      tipoDocumento: expediente.cotitular?.tipoDocumento || "CC",
+      cedula: expediente.cotitular?.cedula || "",
+      expedidaEn: expediente.cotitular?.expedidaEn || "",
+      fechaExpedicion: expediente.cotitular?.fechaExpedicion || "",
+      ciudad: expediente.cotitular?.ciudad || "",
+      departamento: expediente.cotitular?.departamento || "",
+      direccion: expediente.cotitular?.direccion || "",
+      email: expediente.cotitular?.email || "",
+      telefono: expediente.cotitular?.telefono || "",
+    });
+  }, [expediente]);
+
+  // `live` = expediente + override del padre + edición en vivo de Información Jurídica.
+  // Esto garantiza que validación y plantilla del Poder vean los mismos valores que el editor.
+  const live: ExpedienteMaestro = useMemo(() => {
+    const base = { ...expediente, ...(liveOverride ?? {}) };
+    return {
+      ...base,
+      cliente: { ...base.cliente, ...ijTitular },
+      cotitular: {
+        ...base.cotitular,
+        ...ijCotitular,
+        activo: ijCotitular.activo ?? base.cotitular?.activo ?? false,
+      } as CotitularMaestro,
+    };
+  }, [expediente, liveOverride, ijTitular, ijCotitular]);
+
 
   useEffect(() => {
     listApoderados(true).then((rows) => {
@@ -114,6 +164,35 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente }: P
             Todos los documentos se generan automáticamente desde la información del expediente.
           </p>
         </div>
+
+        {/* INFORMACIÓN JURÍDICA — fuente oficial para el Poder Especial */}
+        <InformacionJuridicaEditor
+          titular={ijTitular}
+          cotitular={ijCotitular}
+          onTitular={setIjTitular}
+          onCotitular={setIjCotitular}
+          canPersist={!!expedienteIdToPersist}
+          saving={savingIJ}
+          saved={savedFlash}
+          onSave={async () => {
+            if (!expedienteIdToPersist) return;
+            setSavingIJ(true);
+            try {
+              await saveInformacionJuridicaExpediente(expedienteIdToPersist, {
+                titular: ijTitular,
+                cotitular: ijCotitular,
+              });
+              setSavedFlash(true);
+              setTimeout(() => setSavedFlash(false), 2000);
+              onJuridicaSaved?.();
+            } catch (e) {
+              alert("No se pudo guardar Información Jurídica: " + (e as Error).message);
+            } finally {
+              setSavingIJ(false);
+            }
+          }}
+        />
+
 
         {/* Selector de apoderado para el Poder Especial */}
         <div className="rounded-xl border bg-[#F7F9FB] p-3 mb-4" style={{ borderColor: "#E3E7EE" }}>
@@ -416,3 +495,133 @@ function PreviewModal({ doc, onClose }: { doc: LegalDoc; onClose: () => void }) 
     </div>
   );
 }
+
+const TIPOS_DOC = ["CC", "CE", "PA", "TI", "NIT"];
+
+function IJField({
+  label, value, onChange, placeholder, required,
+}: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; required?: boolean }) {
+  const empty = required && !value.trim();
+  return (
+    <label className="text-xs">
+      <span className="block text-[#242424]/70 mb-0.5">
+        {label}{required && <span className="text-[#B42318]"> *</span>}
+      </span>
+      <input
+        type="text"
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-lg border bg-white px-2 py-1.5 text-sm"
+        style={{ borderColor: empty ? "#F5C2C2" : "#E3E7EE" }}
+      />
+    </label>
+  );
+}
+
+function IJSelect({
+  label, value, onChange, options,
+}: { label: string; value: string; onChange: (v: string) => void; options: string[] }) {
+  return (
+    <label className="text-xs">
+      <span className="block text-[#242424]/70 mb-0.5">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-lg border border-[#E3E7EE] bg-white px-2 py-1.5 text-sm"
+      >
+        {options.map((o) => <option key={o} value={o}>{o}</option>)}
+      </select>
+    </label>
+  );
+}
+
+function InformacionJuridicaEditor({
+  titular, cotitular, onTitular, onCotitular, canPersist, saving, saved, onSave,
+}: {
+  titular: Partial<ClienteMaestro>;
+  cotitular: Partial<CotitularMaestro> & { activo?: boolean };
+  onTitular: (v: Partial<ClienteMaestro>) => void;
+  onCotitular: (v: Partial<CotitularMaestro> & { activo?: boolean }) => void;
+  canPersist: boolean;
+  saving: boolean;
+  saved: boolean;
+  onSave: () => void;
+}) {
+  const setT = <K extends keyof ClienteMaestro>(k: K, v: string) => onTitular({ ...titular, [k]: v });
+  const setC = <K extends keyof CotitularMaestro>(k: K, v: string) => onCotitular({ ...cotitular, [k]: v });
+
+  return (
+    <div className="rounded-xl border bg-white p-4 mb-4" style={{ borderColor: "#E3E7EE" }}>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+        <div className="flex items-center gap-2">
+          <Scale size={16} style={{ color: NUVEX.azul }} />
+          <div className="text-sm font-semibold text-[#242424]">Información Jurídica</div>
+          <span className="text-[11px] text-[#242424]/60">Fuente oficial del Poder Especial</span>
+        </div>
+        {canPersist && (
+          <button
+            onClick={onSave}
+            disabled={saving}
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
+            style={{ backgroundColor: saved ? NUVEX.verde : NUVEX.azul }}
+          >
+            {saved ? <CheckCircle2 size={13} /> : <Save size={13} />}
+            {saving ? "Guardando…" : saved ? "Guardado" : "Guardar"}
+          </button>
+        )}
+      </div>
+
+      <div className="text-[11px] uppercase tracking-wider font-semibold mb-2" style={{ color: NUVEX.azul }}>
+        Titular
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <IJSelect label="Tipo de documento" value={titular.tipoDocumento || "CC"} options={TIPOS_DOC} onChange={(v) => setT("tipoDocumento", v)} />
+        <IJField label="Número de documento" value={titular.cedula || ""} onChange={(v) => setT("cedula", v)} required />
+        <IJField label="Lugar de expedición" value={titular.expedidaEn || ""} onChange={(v) => setT("expedidaEn", v)} required />
+        <IJField label="Fecha de expedición" value={titular.fechaExpedicion || ""} placeholder="DD/MM/AAAA" onChange={(v) => setT("fechaExpedicion", v)} />
+        <IJField label="Ciudad de residencia" value={titular.ciudad || ""} onChange={(v) => setT("ciudad", v)} required />
+        <IJField label="Departamento" value={titular.departamento || ""} onChange={(v) => setT("departamento", v)} />
+        <IJField label="Correo electrónico" value={titular.email || ""} onChange={(v) => setT("email", v)} />
+        <IJField label="Celular" value={titular.telefono || ""} onChange={(v) => setT("telefono", v)} />
+        <IJField label="Dirección" value={titular.direccion || ""} onChange={(v) => setT("direccion", v)} />
+      </div>
+
+      <label className="mt-4 flex items-center gap-2 text-sm text-[#242424]">
+        <input
+          type="checkbox"
+          checked={!!cotitular.activo}
+          onChange={(e) => onCotitular({ ...cotitular, activo: e.target.checked })}
+        />
+        <span>El crédito tiene cotitular / colocatario</span>
+      </label>
+
+      {cotitular.activo && (
+        <>
+          <div className="text-[11px] uppercase tracking-wider font-semibold mt-3 mb-2" style={{ color: NUVEX.azul }}>
+            Cotitular / Colocatario
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <IJField label="Nombre completo" value={cotitular.nombre || ""} onChange={(v) => setC("nombre", v)} required />
+            <IJSelect label="Tipo de documento" value={cotitular.tipoDocumento || "CC"} options={TIPOS_DOC} onChange={(v) => setC("tipoDocumento", v)} />
+            <IJField label="Número de documento" value={cotitular.cedula || ""} onChange={(v) => setC("cedula", v)} required />
+            <IJField label="Lugar de expedición" value={cotitular.expedidaEn || ""} onChange={(v) => setC("expedidaEn", v)} required />
+            <IJField label="Fecha de expedición" value={cotitular.fechaExpedicion || ""} placeholder="DD/MM/AAAA" onChange={(v) => setC("fechaExpedicion", v)} />
+            <IJField label="Ciudad de residencia" value={cotitular.ciudad || ""} onChange={(v) => setC("ciudad", v)} required />
+            <IJField label="Departamento" value={cotitular.departamento || ""} onChange={(v) => setC("departamento", v)} />
+            <IJField label="Correo electrónico" value={cotitular.email || ""} onChange={(v) => setC("email", v)} />
+            <IJField label="Celular" value={cotitular.telefono || ""} onChange={(v) => setC("telefono", v)} />
+            <IJField label="Dirección" value={cotitular.direccion || ""} onChange={(v) => setC("direccion", v)} />
+          </div>
+        </>
+      )}
+
+      {!canPersist && (
+        <p className="mt-3 text-[11px] text-[#242424]/60">
+          Los cambios se aplican al Poder Especial en esta sesión. Para persistirlos, edita el Expediente Maestro.
+        </p>
+      )}
+    </div>
+  );
+}
+
