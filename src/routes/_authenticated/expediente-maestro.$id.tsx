@@ -126,6 +126,12 @@ function MaestroDetail() {
         liveOverride={{ cliente, cotitular, credito, fresh, asesor, licenciado, apoderado }}
       />
 
+      <ModuloJuridico
+        expediente={exp}
+        liveOverride={{ cliente, cotitular, credito, fresh, asesor, licenciado, apoderado }}
+      />
+
+
 
 
       <Card>
