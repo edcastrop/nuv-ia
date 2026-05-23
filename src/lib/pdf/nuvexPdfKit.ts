@@ -88,7 +88,6 @@ export function roundedRect(
   if (stroke) { pdf.setDrawColor(...stroke); pdf.setLineWidth(lineWidth); }
   const style = fill && stroke ? "FD" : fill ? "F" : stroke ? "S" : "S";
   // jsPDF roundedRect existe
-  // @ts-expect-error: roundedRect existe pero typings varían
   pdf.roundedRect(x, y, w, h, r, r, style);
 }
 
@@ -367,7 +366,6 @@ export function drawSectionCard(pdf: jsPDF, y: number, opts: SectionCardOpts): n
 
   // Sombra suave (rectángulo gris detrás)
   pdf.setFillColor(235, 238, 244);
-  // @ts-expect-error roundedRect typings
   pdf.roundedRect(marginX + 1, y + 2, w, totalH, 10, 10, "F");
 
   // Cuerpo blanco con borde
@@ -375,7 +373,6 @@ export function drawSectionCard(pdf: jsPDF, y: number, opts: SectionCardOpts): n
 
   // Header coloreado superior con recorte (overpaint)
   pdf.setFillColor(...accentColor);
-  // @ts-expect-error roundedRect typings
   pdf.roundedRect(marginX, y, w, headerH + 4, 10, 10, "F");
   // tapamos los redondeos inferiores del header con un rect plano
   pdf.setFillColor(...accentColor);
