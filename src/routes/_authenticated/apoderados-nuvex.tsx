@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/apoderados-nuvex")({
 });
 
 const empty: ApoderadoInput = {
-  nombre: "", cedula: "", lugar_expedicion: "", celular: "", correo: "", activo: true,
+  nombre: "", cedula: "", lugar_expedicion: "", ciudad: "", celular: "", correo: "", activo: true,
 };
 
 function ApoderadosPage() {
@@ -36,6 +36,7 @@ function ApoderadosPage() {
     setForm({
       nombre: a.nombre, cedula: a.cedula,
       lugar_expedicion: a.lugar_expedicion ?? "",
+      ciudad: a.ciudad ?? "",
       celular: a.celular ?? "", correo: a.correo ?? "",
       activo: a.activo,
     });
