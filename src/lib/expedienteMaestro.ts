@@ -14,6 +14,10 @@ export interface ClienteMaestro {
   email: string;
   direccion: string;
   ciudad: string;
+  /** Información jurídica complementaria (opcional) */
+  tipoDocumento?: string;
+  fechaExpedicion?: string;
+  departamento?: string;
 }
 
 export interface CotitularMaestro extends ClienteMaestro {
@@ -79,6 +83,7 @@ export interface ExpedienteMaestro {
 export const emptyCliente = (): ClienteMaestro => ({
   nombre: "", cedula: "", expedidaEn: "", fechaNacimiento: "", estadoCivil: "",
   profesion: "", telefono: "", email: "", direccion: "", ciudad: "",
+  tipoDocumento: "CC", fechaExpedicion: "", departamento: "",
 });
 
 export const emptyCotitular = (): CotitularMaestro => ({
