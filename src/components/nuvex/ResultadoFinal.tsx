@@ -117,20 +117,44 @@ export function ResultadoFinal({
     if (!proyeccion || cuotaAprobadaNum <= 0 || plazoAprobadoNum <= 0) return null;
     const cuotasEliminadas = Math.max(0, cuotasPendientes - plazoAprobadoNum);
     const añosEliminados = cuotasEliminadas / 12;
-    const totalActual = cuotaActualConSeguro * cuotasPendientes;
-    const totalAprobado = cuotaAprobadaNum * plazoAprobadoNum;
-    const ahorroTotal = Math.max(0, totalActual - totalAprobado);
-    const ahorroSeguros = seguros * cuotasEliminadas;
-    const ahorroIntereses = Math.max(0, ahorroTotal - ahorroSeguros);
-    const honorariosCalc = ahorroTotal * (honorariosPct / 100);
-    const honorariosBase = applyHonorariosFloor(honorariosCalc);
-    // Aplicar el mismo descuento comercial absoluto definido en la proyección
-    const descuento = Math.min(proyeccion.descuentoAplicado, honorariosBase);
-    let honorariosFinales = honorariosBase - descuento;
-    // Respetar el piso final cuando aplica
-    if (honorariosBase <= HONORARIOS_MIN_BASE + 0.5 && honorariosFinales < HONORARIOS_MIN_FINAL) {
-      honorariosFinales = HONORARIOS_MIN_FINAL;
+
+    // REGLA NUVEX: Si el plazo aprobado coincide con el proyectado
+    // (y por tanto las cuotas eliminadas también), el ahorro aprobado
+    // debe ser exactamente el ahorro proyectado. Una pequeña diferencia
+    // en la nueva cuota aprobada NO debe reducir artificialmente el ahorro.
+    const mismoPlazo =
+      plazoAprobadoNum === proyeccion.plazoProyectado &&
+      cuotasEliminadas === proyeccion.cuotasEliminadasProyectadas;
+
+    let ahorroTotal: number;
+    let ahorroSeguros: number;
+    let ahorroIntereses: number;
+    let honorariosBase: number;
+    let descuento: number;
+    let honorariosFinales: number;
+
+    if (mismoPlazo) {
+      ahorroTotal = proyeccion.ahorroProyectado;
+      ahorroSeguros = proyeccion.ahorroSegurosProyectado;
+      ahorroIntereses = proyeccion.ahorroInteresesProyectado;
+      honorariosBase = proyeccion.honorariosBase;
+      descuento = proyeccion.descuentoAplicado;
+      honorariosFinales = proyeccion.honorariosFinales;
+    } else {
+      const totalActual = cuotaActualConSeguro * cuotasPendientes;
+      const totalAprobado = cuotaAprobadaNum * plazoAprobadoNum;
+      ahorroTotal = Math.max(0, totalActual - totalAprobado);
+      ahorroSeguros = seguros * cuotasEliminadas;
+      ahorroIntereses = Math.max(0, ahorroTotal - ahorroSeguros);
+      const honorariosCalc = ahorroTotal * (honorariosPct / 100);
+      honorariosBase = applyHonorariosFloor(honorariosCalc);
+      descuento = Math.min(proyeccion.descuentoAplicado, honorariosBase);
+      honorariosFinales = honorariosBase - descuento;
+      if (honorariosBase <= HONORARIOS_MIN_BASE + 0.5 && honorariosFinales < HONORARIOS_MIN_FINAL) {
+        honorariosFinales = HONORARIOS_MIN_FINAL;
+      }
     }
+
     return {
       cuota: cuotaAprobadaNum,
       plazo: plazoAprobadoNum,
