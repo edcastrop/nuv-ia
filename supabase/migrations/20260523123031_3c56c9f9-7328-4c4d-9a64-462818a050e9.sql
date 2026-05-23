@@ -1,0 +1,1 @@
+ALTER TABLE public.apoderados_nuvex ADD COLUMN IF NOT EXISTS ciudad text;
