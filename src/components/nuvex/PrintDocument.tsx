@@ -386,6 +386,7 @@ function GoldRule() {
 function PageFooter({ pagina }: { pagina: number }) {
   return (
     <div
+      data-pdf-footer="true"
       style={{
         position: "absolute",
         bottom: "10mm",
