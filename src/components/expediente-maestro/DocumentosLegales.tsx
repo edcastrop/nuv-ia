@@ -778,7 +778,7 @@ function InformacionJuridicaEditor({
             <IJField label="Nombre completo" value={cotitular.nombre || ""} onChange={(v) => setC("nombre", v)} required />
             <IJSelect label="Tipo de documento" value={cotitular.tipoDocumento || "CC"} options={TIPOS_DOC} onChange={(v) => setC("tipoDocumento", v)} />
             <IJField label="Número de documento" value={cotitular.cedula || ""} onChange={(v) => setC("cedula", v)} required />
-            <IJCity label="Lugar de expedición" value={cotitular.expedidaEn || ""} onChange={(v) => setC("expedidaEn", v)} required />
+            <IJCity label="Lugar de expedición" value={cotitular.expedidaEn || ""} onChange={(v) => setC("expedidaEn", v)} required placeholder="Selecciona municipio de expedición…" />
             <IJField label="Fecha de expedición" value={cotitular.fechaExpedicion || ""} placeholder="DD/MM/AAAA" onChange={(v) => setC("fechaExpedicion", v)} />
             <IJCity label="Ciudad de residencia" value={cotitular.ciudad || ""} onChange={(v) => setC("ciudad", v)} required />
             <IJReadonly label="Departamento" value={cotitular.departamento || ""} hint="Se autocompleta desde la ciudad seleccionada" required />
