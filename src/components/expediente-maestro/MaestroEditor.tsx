@@ -74,7 +74,7 @@ export function MaestroEditor(p: Props) {
           <TextField label="Profesión" value={p.cliente.profesion} onChange={(v) => p.onCliente(set(p.cliente, "profesion", v))} />
           <TextField label="Teléfono" value={p.cliente.telefono} onChange={(v) => p.onCliente(set(p.cliente, "telefono", v))} />
           <TextField label="Email" value={p.cliente.email} onChange={(v) => p.onCliente(set(p.cliente, "email", v))} />
-          <TextField label="Ciudad" value={p.cliente.ciudad} onChange={(v) => p.onCliente(set(p.cliente, "ciudad", v))} />
+          <CityField label="Ciudad" value={p.cliente.ciudad} onChange={(v) => p.onCliente(set(p.cliente, "ciudad", v))} />
           <TextField label="Dirección" value={p.cliente.direccion} onChange={(v) => p.onCliente(set(p.cliente, "direccion", v))} className="md:col-span-2 lg:col-span-3" />
         </div>
       </Accordion>
