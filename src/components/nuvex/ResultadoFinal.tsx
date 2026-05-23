@@ -763,7 +763,7 @@ function PrintInformeFinal({
                 { label: "Producto", value: client.tipoProducto || "—" },
                 { label: "Fecha aprobación", value: aprob.fechaAprobacion || "—" },
                 { label: "Asesor", value: client.asesor || "—" },
-                { label: "Radicado", value: aprob.radicado || "—" },
+                ...(aprob.radicado ? [{ label: "Radicado", value: aprob.radicado }] : []),
               ]}
             />
           </div>
