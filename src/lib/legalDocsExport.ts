@@ -58,9 +58,37 @@ export function exportLegalDocPDF(doc: LegalDoc) {
       case "paragraph":
         writeText(b.text, { size: 11, lineGap: 4 });
         break;
+      case "section":
+        y += 6;
+        writeText(b.text, { size: 12, bold: true, lineGap: 4 });
+        // línea bajo el encabezado
+        pdf.setLineWidth(0.5);
+        pdf.line(marginX, y - 2, pageW - marginX, y - 2);
+        y += 4;
+        break;
+      case "field": {
+        const labelW = 170;
+        const valueW = contentW - labelW - 10;
+        pdf.setFont("times", "bold");
+        pdf.setFontSize(11);
+        const labelLines = pdf.splitTextToSize(b.label, labelW) as string[];
+        pdf.setFont("times", "normal");
+        const valueLines = pdf.splitTextToSize(b.value || "—", valueW) as string[];
+        const lines = Math.max(labelLines.length, valueLines.length);
+        const lineH = 11 * 1.35;
+        checkBreak(lines * lineH + 4);
+        const startY = y;
+        pdf.setFont("times", "bold");
+        labelLines.forEach((l, i) => pdf.text(l, marginX, startY + i * lineH));
+        pdf.setFont("times", "normal");
+        valueLines.forEach((l, i) => pdf.text(l, marginX + labelW + 10, startY + i * lineH));
+        y = startY + lines * lineH + 2;
+        break;
+      }
       case "spacer":
         y += b.size ?? 8;
         break;
+
       case "signature": {
         const colW = contentW / b.columns.length;
         checkBreak(80);
