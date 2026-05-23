@@ -163,3 +163,66 @@ export async function deleteMaestro(id: string): Promise<void> {
   const { error } = await supabase.from("expediente_maestro").delete().eq("id", id);
   if (error) throw error;
 }
+
+/**
+ * Determina el modo de simulación a partir del tipo de producto del crédito maestro.
+ * No altera reglas de negocio: sólo elige pesos / uvr para abrir el simulador correcto.
+ */
+export function modoFromMaestro(m: ExpedienteMaestro): "pesos" | "uvr" {
+  const t = (m.credito?.tipoProducto || "").toLowerCase();
+  return /uvr/.test(t) ? "uvr" : "pesos";
+}
+
+/**
+ * Construye un `Expediente` parcial (in-memory, sin id) consumible por los simuladores
+ * vía la prop `initialExpediente`. NO persiste, NO altera cálculos ni diseño —
+ * sólo reemplaza la captura manual por la lectura desde el Expediente Maestro.
+ *
+ * Los simuladores ya derivan Resultado Final, Cuenta de Cobro y Paz y Salvo a partir
+ * de estos datos, por lo que toda la cadena queda alimentada automáticamente.
+ */
+export function maestroToExpediente(m: ExpedienteMaestro) {
+  const modo = modoFromMaestro(m);
+  const cliente_data = {
+    nombre: m.cliente?.nombre ?? "",
+    cedula: m.cliente?.cedula ?? "",
+    numeroCredito: m.credito?.numeroCredito ?? "",
+    banco: m.credito?.banco ?? "",
+    tipoProducto: m.credito?.tipoProducto ?? "",
+    asesor: m.asesor?.nombre ?? "",
+    plazoInicial: m.credito?.plazoOriginal ?? "",
+    cuotasPagadas: m.credito?.cuotasPagadas ?? "",
+    porcentajeHonorarios: "6",
+  };
+  const credito_data: Record<string, string> = {
+    valorDesembolsado: "",
+    saldoCapital: m.credito?.saldoCapital ?? "",
+    cuotaActual: m.credito?.cuotaActual ?? "",
+    seguros: "",
+    tea: m.credito?.tasa ?? "",
+    nuevaCuotaManual: "",
+  };
+  return {
+    id: "",
+    asesor_id: m.asesor_id,
+    modo,
+    cliente_nombre: cliente_data.nombre || "Sin nombre",
+    cedula: cliente_data.cedula || null,
+    banco: cliente_data.banco || null,
+    numero_credito: cliente_data.numeroCredito || null,
+    producto: cliente_data.tipoProducto || null,
+    cliente_data: cliente_data as never,
+    credito_data,
+    propuesta_data: {},
+    discount_data: {},
+    honorarios_base: 0,
+    honorarios_final: 0,
+    descuento: 0,
+    estado: "SIMULADO",
+    fecha_simulacion: new Date().toISOString().slice(0, 10),
+    aprobado_data: null,
+    acertividad_global: null,
+    created_at: m.created_at,
+    updated_at: m.updated_at,
+  } as never;
+}
