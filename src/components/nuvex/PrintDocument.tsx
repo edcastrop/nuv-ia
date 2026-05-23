@@ -218,11 +218,11 @@ export function PrintDocument(props: Props) {
               letterSpacing: "-0.025em",
             }}
           >
-            Elimine{" "}
+            ELIMINA{" "}
             <span style={{ color: C.verde }}>
-              {formatNumber(recommended.añosEliminados, 0)} años
+              {formatNumber(recommended.añosEliminados, 0)} AÑOS
             </span>{" "}
-            de su crédito
+            DE TU CRÉDITO
           </h2>
           <div
             style={{
