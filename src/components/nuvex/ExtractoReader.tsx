@@ -320,7 +320,7 @@ export function ExtractoReader({ modo, onApply }: Props) {
         setStage("error");
         return;
       }
-      setParsed(recomputeBancolombia(resp.data));
+      setParsed(normalizeExtractData(recomputeBancolombia(resp.data)));
       setStage("review");
     } catch (err) {
       console.error(err);
