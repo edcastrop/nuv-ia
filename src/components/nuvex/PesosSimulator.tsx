@@ -181,7 +181,7 @@ export function PesosSimulator({
 
   const ahorroNegativo = recomendada && (recomendada.ahorroTotal < 0 || recomendada.honorarios < 0);
 
-  const cuotasBaseSimulacion = Math.max(0, cuotasPendientes - 1);
+  const cuotasBaseSimulacion = Math.max(0, cuotasPendientes);
   const totalActualPendiente = input.cuotaActual * cuotasBaseSimulacion;
   const vecesActual = saldoCapitalNum > 0 ? totalActualPendiente / saldoCapitalNum : 0;
   const vsActual = getVecesStyle(vecesActual);
