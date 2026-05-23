@@ -14,6 +14,10 @@ export interface ClienteMaestro {
   email: string;
   direccion: string;
   ciudad: string;
+  /** Información jurídica complementaria (opcional) */
+  tipoDocumento?: string;
+  fechaExpedicion?: string;
+  departamento?: string;
 }
 
 export interface CotitularMaestro extends ClienteMaestro {
