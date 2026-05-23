@@ -156,6 +156,7 @@ export function PrintDocument(props: Props) {
         <HeroBlock
           añosEliminados={añosEliminados}
           ahorroTotal={recommended.ahorroTotal}
+          cuotasEliminadas={cuotasEliminadas}
         />
 
         {/* ANTES VS DESPUÉS — gráfica de barras minimal */}
