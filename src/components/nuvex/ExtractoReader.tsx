@@ -618,8 +618,32 @@ export function ExtractoReader({ modo, onApply }: Props) {
     .split("\n")
     .map((s) => s.trim())
     .filter(Boolean);
+  const advertenciasNorm = ((parsed?.advertenciasNormalizacion as string) ?? "")
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
   const hayErrores = erroresValidacion.length > 0;
   const cuotaBaseLista = parseMontoExtracto((parsed?.cuotaBaseSimulacion as string) ?? "") > 0;
+
+  // Validación dura antes de confirmar
+  const _intStrParsed = (k: string) => {
+    const v = parsed?.[k];
+    if (typeof v !== "string") return 0;
+    const n = parseInt(v.replace(/[^\d]/g, ""), 10);
+    return Number.isFinite(n) ? n : 0;
+  };
+  const _cuotasPagadasNum = _intStrParsed("cuotasPagadas");
+  const _plazoInicialNum = _intStrParsed("plazoInicial");
+  const _cuotaActualNumeroNum = _intStrParsed("cuotaActualNumero");
+  const _cuotasPagadasEnCero = _cuotasPagadasNum <= 0 && _cuotaActualNumeroNum > 0;
+  const _faltanDatosBase =
+    _plazoInicialNum <= 0 || _cuotasPagadasNum <= 0;
+  const confirmDisabled =
+    hayErrores ||
+    (tieneBeneficio && !cuotaBaseLista) ||
+    _cuotasPagadasEnCero ||
+    _faltanDatosBase;
+
   const fmtCO = (raw: string) => {
     const n = parseMontoExtracto(raw);
     return isFinite(n) && n > 0
