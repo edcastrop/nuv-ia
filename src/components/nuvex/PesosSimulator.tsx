@@ -242,6 +242,7 @@ export function PesosSimulator({
             cuotasPagadas: p.cliente.cuotasPagadas || prev.cuotasPagadas,
           }));
           if (p.pesos?.saldoCapital) setSaldoCapital(p.pesos.saldoCapital);
+          if (p.pesos?.valorDesembolsado) setValorDesembolsado(p.pesos.valorDesembolsado);
           if (p.pesos?.cuotaActual) setCuotaActual(p.pesos.cuotaActual);
           if (p.pesos?.seguros) setSeguros(p.pesos.seguros);
           if (p.pesos?.tea) setTea(p.pesos.tea);
