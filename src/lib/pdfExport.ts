@@ -61,7 +61,7 @@ export async function exportElementToPdf(elementId: string, filename: string) {
 
     // Tolerancia: si el sobrante es menor a 8mm, NO crear página adicional
     // (evita la página en blanco al final por décimas de mm de overflow).
-    const TOLERANCE_MM = 8;
+    const TOLERANCE_MM = 20;
     while (heightLeft > TOLERANCE_MM) {
       position = heightLeft - imgHeight;
       pdf.addPage();
