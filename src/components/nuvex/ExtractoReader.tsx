@@ -472,6 +472,7 @@ export function ExtractoReader({ modo, onApply }: Props) {
         cuotaActual: cuotaParaSimulador,
         seguros: get("seguros"),
         tea: get("tea"),
+        valorDesembolsado: get("valorDesembolsado"),
       };
     } else {
       payload.uvr = {
