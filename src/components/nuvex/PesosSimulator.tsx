@@ -198,6 +198,7 @@ export function PesosSimulator({
     { label: "N° veces pagado el crédito", value: `${formatNumber(vecesActual, 2)} veces` },
     { label: "Plazo inicial", value: `${plazoInicial} meses` },
     { label: "TEA", value: formatPercentage(input.tea) },
+    { label: "Tasa mensual utilizada", value: calc ? formatPercentage(calc.tasaMensual * 100, 4) : "—" },
     { label: "Total por pagar", value: formatCOP(totalActualPendiente) },
   ];
 
