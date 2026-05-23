@@ -238,6 +238,10 @@ export function UVRSimulator({
 
   if (calc) {
     metrics.push({
+      label: "Tasa mensual utilizada",
+      value: formatPercentage(calc.tasaMensual * 100, 4),
+    });
+    metrics.push({
       label: "Total proyectado a pagar",
       value: formatCOP(calc.escenarioActual.totalPagoPesos),
     });
