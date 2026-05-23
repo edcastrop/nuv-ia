@@ -466,7 +466,7 @@ const printShell: React.CSSProperties = {
 
 const NUVEX_GRADIENT = `linear-gradient(135deg, ${NUVEX.negro} 0%, ${NUVEX.azul} 100%)`;
 
-function LogoMark({ size = 44, light = false }: { size?: number; light?: boolean }) {
+function LogoMark({ size = 72, light = false }: { size?: number; light?: boolean }) {
   return (
     <img
       src={new URL("@/assets/logo-nuvex.png", import.meta.url).toString()}
@@ -479,6 +479,20 @@ function LogoMark({ size = 44, light = false }: { size?: number; light?: boolean
     />
   );
 }
+
+function Watermark() {
+  return (
+    <div aria-hidden="true" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", overflow: "hidden", zIndex: 0 }}>
+      <img
+        src={new URL("@/assets/logo-nuvex.png", import.meta.url).toString()}
+        alt=""
+        style={{ width: "75%", maxWidth: "180mm", opacity: 0.05, transform: "rotate(-28deg)", objectFit: "contain" }}
+        draggable={false}
+      />
+    </div>
+  );
+}
+
 
 function PremiumFooter() {
   return (
