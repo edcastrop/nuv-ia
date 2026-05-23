@@ -12,7 +12,7 @@ import {
 } from "@/lib/legalDocs";
 import { PODER_TEMPLATES } from "@/lib/poderTemplates";
 import { exportLegalDocPDF, exportLegalDocDOCX } from "@/lib/legalDocsExport";
-import { listApoderados, type ApoderadoNuvex } from "@/lib/apoderados";
+import { listApoderados, seleccionarApoderado, type ApoderadoNuvex, type MotivoSeleccion } from "@/lib/apoderados";
 
 const fmtCOP = (n: number) =>
   !isFinite(n) || n === 0
