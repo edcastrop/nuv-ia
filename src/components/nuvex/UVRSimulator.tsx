@@ -12,6 +12,7 @@ import {
 } from "../../lib/format";
 import {
   calculateUVRManual,
+  calculateUVRManualByCuotas,
   calculateUVRProjection,
   pickBestProposal,
   type UVRInput,
