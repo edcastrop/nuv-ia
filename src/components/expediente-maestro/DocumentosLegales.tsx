@@ -40,34 +40,69 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
   const [ijCotitular, setIjCotitular] = useState<Partial<CotitularMaestro> & { activo?: boolean }>({});
   const [savingIJ, setSavingIJ] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [syncFlash, setSyncFlash] = useState(false);
 
-  // Inicializa desde el expediente cargado
+  // Fuente "Datos del Caso" (cliente_data crudo, sin Información Jurídica).
+  // Si no llega `simExpediente`, caemos a expediente.cliente como mejor esfuerzo.
+  const caseSource = useMemo<Partial<ClienteMaestro>>(() => {
+    const cd = (simExpediente?.cliente_data ?? {}) as Record<string, unknown>;
+    const pick = (k: string) => (typeof cd[k] === "string" ? (cd[k] as string) : "");
+    return {
+      tipoDocumento: pick("tipoDocumento") || "CC",
+      cedula: pick("cedula") || expediente.cliente?.cedula || "",
+      ciudad: pick("ciudad") || expediente.cliente?.ciudad || "",
+      email: pick("email") || pick("correo") || expediente.cliente?.email || "",
+      telefono: pick("telefono") || pick("celular") || expediente.cliente?.telefono || "",
+      direccion: pick("direccion") || expediente.cliente?.direccion || "",
+    };
+  }, [simExpediente, expediente]);
+
+  // Autocompletado al abrir: rellena SOLO campos vacíos de la Información Jurídica
+  // con los datos disponibles del caso. No sobrescribe valores diligenciados.
   useEffect(() => {
+    const t = (expediente.cliente ?? {}) as Partial<ClienteMaestro>;
     setIjTitular({
-      tipoDocumento: expediente.cliente?.tipoDocumento || "CC",
-      cedula: expediente.cliente?.cedula || "",
-      expedidaEn: expediente.cliente?.expedidaEn || "",
-      fechaExpedicion: expediente.cliente?.fechaExpedicion || "",
-      ciudad: expediente.cliente?.ciudad || "",
-      departamento: expediente.cliente?.departamento || "",
-      direccion: expediente.cliente?.direccion || "",
-      email: expediente.cliente?.email || "",
-      telefono: expediente.cliente?.telefono || "",
+      tipoDocumento: t.tipoDocumento || caseSource.tipoDocumento || "CC",
+      cedula: t.cedula || caseSource.cedula || "",
+      expedidaEn: t.expedidaEn || "",
+      fechaExpedicion: t.fechaExpedicion || "",
+      ciudad: t.ciudad || caseSource.ciudad || "",
+      departamento: t.departamento || "",
+      direccion: t.direccion || caseSource.direccion || "",
+      email: t.email || caseSource.email || "",
+      telefono: t.telefono || caseSource.telefono || "",
     });
+    const co = (expediente.cotitular ?? {}) as Partial<CotitularMaestro> & { activo?: boolean };
     setIjCotitular({
-      activo: !!expediente.cotitular?.activo,
-      nombre: expediente.cotitular?.nombre || "",
-      tipoDocumento: expediente.cotitular?.tipoDocumento || "CC",
-      cedula: expediente.cotitular?.cedula || "",
-      expedidaEn: expediente.cotitular?.expedidaEn || "",
-      fechaExpedicion: expediente.cotitular?.fechaExpedicion || "",
-      ciudad: expediente.cotitular?.ciudad || "",
-      departamento: expediente.cotitular?.departamento || "",
-      direccion: expediente.cotitular?.direccion || "",
-      email: expediente.cotitular?.email || "",
-      telefono: expediente.cotitular?.telefono || "",
+      activo: !!co.activo,
+      nombre: co.nombre || "",
+      tipoDocumento: co.tipoDocumento || "CC",
+      cedula: co.cedula || "",
+      expedidaEn: co.expedidaEn || "",
+      fechaExpedicion: co.fechaExpedicion || "",
+      ciudad: co.ciudad || "",
+      departamento: co.departamento || "",
+      direccion: co.direccion || "",
+      email: co.email || "",
+      telefono: co.telefono || "",
     });
-  }, [expediente]);
+  }, [expediente, caseSource]);
+
+  // Sincronización manual: copia TODOS los datos disponibles del caso hacia
+  // la Información Jurídica, sobrescribiendo los campos mapeados.
+  const syncFromCase = () => {
+    setIjTitular((prev) => ({
+      ...prev,
+      tipoDocumento: caseSource.tipoDocumento || prev.tipoDocumento || "CC",
+      cedula: caseSource.cedula || prev.cedula || "",
+      ciudad: caseSource.ciudad || prev.ciudad || "",
+      email: caseSource.email || prev.email || "",
+      telefono: caseSource.telefono || prev.telefono || "",
+      direccion: caseSource.direccion || prev.direccion || "",
+    }));
+    setSyncFlash(true);
+    setTimeout(() => setSyncFlash(false), 2500);
+  };
 
   // `live` = expediente + override del padre + edición en vivo de Información Jurídica.
   // Esto garantiza que validación y plantilla del Poder vean los mismos valores que el editor.
@@ -83,6 +118,8 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
       } as CotitularMaestro,
     };
   }, [expediente, liveOverride, ijTitular, ijCotitular]);
+
+
 
 
   useEffect(() => {
