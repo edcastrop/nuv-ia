@@ -1,127 +1,130 @@
-## Plan: Super Admin + Estados Inteligentes del Caso
 
-Módulo grande con cambios en BD, roles, estados, panel admin, confirmaciones y auditoría. NO toca simuladores, OCR, PDFs, plantillas ni cálculos.
+## Plan: Centro de Cartera NUVEX
 
----
-
-### 1. Base de datos (migración)
-
-**Roles** (extender enum `app_role`):
-- Agregar: `super_admin`, `juridica`, `operaciones`, `cartera`
-- Mantener: `admin`, `gerencia`, `asesor`, `licenciado`
-- `super_admin` se trata como super-usuario (alias funcional de admin con capacidades extra de gestión de usuarios).
-
-**Estados del caso** (nuevo enum `caso_estado_v2`):
-- 19 estados solicitados (Lead creado → Proceso cerrado).
-- Mantener enum viejo `expediente_estado` por compatibilidad con simuladores/aprobado_data.
-- Agregar columna `expedientes.estado_caso` (text/enum nuevo, default `'lead_creado'`).
-- NO eliminar `expedientes.estado` (lo usan simuladores, dashboard antiguo, badges).
-
-**Auditoría** (extender `expediente_historial`):
-- Agregar columnas: `accion_origen` (text), `observacion` (text), `estado_caso_anterior`, `estado_caso_nuevo`.
-- Los cambios del enum viejo siguen guardándose en `estado_anterior/nuevo`.
-
-**Gestión de usuarios** (Super Admin):
-- Agregar columna `profiles.activo` (bool, default true).
-- RLS: super_admin puede ver/editar todos los profiles y user_roles.
+Módulo nuevo y aislado para gestión de honorarios. NO toca simuladores, OCR, Expediente Maestro, Poderes, Datos Contrato, Resultado Final, Cuenta de Cobro, Paz y Salvo. Solo agrega.
 
 ---
 
-### 2. Hook de roles
+### 1. Base de datos (1 migración)
 
-`src/hooks/useUserRole.ts`:
-- Agregar tipo `AppRole` extendido.
-- Helpers: `isSuperAdmin`, `isLicenciado`, `canManageGlobal`.
+**Estados del caso** — agregar al enum `caso_estado`:
+- `documentos_banco_firmados`
+- `condiciones_aplicadas`
 
----
+Actualizar `CASO_ESTADOS` en `src/lib/casoEstados.ts` para insertar los dos nuevos estados en el orden correcto (entre `aprobado` y `resultado_final_generado`).
 
-### 3. Estados inteligentes
+**Tabla `cartera`** (1 fila por expediente, nace solo cuando estado_caso = `condiciones_aplicadas` o `resultado_final_generado`):
+- `id`, `expediente_id` (unique), `responsable_id` (uuid → profiles)
+- `estado_cartera` (enum nuevo)
+- `forma_pago` ('contado' | 'financiado')
+- `fecha_aplicacion_banco`, `fecha_resultado_final`, `fecha_cuenta_cobro`, `fecha_vencimiento` (calculada = aplicación + 5 días)
+- `honorarios_totales` (snapshot), `pagado`, `saldo` (generated)
+- `created_at`, `updated_at`
 
-`src/lib/casoEstados.ts` (nuevo):
-- Constante `CASO_ESTADOS` (19 estados con label, color, orden).
-- Mapa `ACCION_A_ESTADO`: `extracto_subido` → `extracto_recibido`, `simulacion_generada` → `simulacion_realizada`, etc.
-- Función `sugerirEstado(expedienteId, accion, userId)` → server fn que NO cambia estado, solo retorna sugerencia.
-- Función `confirmarEstado(expedienteId, nuevoEstado, accionOrigen, observacion?)` → cambia estado + guarda historial.
+**Enum `cartera_estado`**: pendiente_cobro, cuenta_cobro_generada, cuenta_cobro_enviada, pago_parcial, pago_total, vencido, acuerdo_pago, en_seguimiento, prejuridico, cerrado.
 
-**Componente** `ConfirmEstadoModal.tsx`:
-- Diálogo reusable: "¿Confirmas que deseas cambiar el estado del caso a: [X]?" con Confirmar / Cancelar + textarea opcional observación.
+**Tabla `cartera_cuotas`** (para financiado): cartera_id, numero, valor, fecha_vencimiento, estado, pagado.
 
-**Hook** `useEstadoSugerido(expedienteId)`:
-- API: `sugerir(accion)` abre modal; al confirmar dispara update y refresca expediente.
+**Tabla `cartera_pagos`**: cartera_id, fecha, valor, metodo, banco_receptor, comprobante_num, comprobante_url, observaciones, user_id.
 
-**Integración en puntos existentes** (sin tocar lógica):
-- `ExtractoReader` → al subir: `sugerir('extracto_subido')`.
-- `PesosSimulator`/`UVRSimulator` → tras `upsertExpediente` exitoso: `sugerir('simulacion_generada')`.
-- `RecommendedResult`/export propuesta PDF → `sugerir('propuesta_generada')`.
-- `EnviarContratacion` (server fn) → al enviar exitoso: marcar `enviado_contratacion` (auto, ya existe).
-- `DocumentosLegales` → botones nuevos pequeños: "Contrato firmado", "Poder firmado", "Radicado banco" → sugieren estado.
-- `ResultadoFinal` → `sugerir('resultado_final_generado')`.
-- `PazYSalvo` → `sugerir('paz_y_salvo_generado')`.
-- En detalle de caso (`casos.$id.tsx`): bloque "Estado del caso" con selector manual (solo super_admin/admin) + timeline historial.
+**Tabla `cartera_acuerdos`**: cartera_id, valor_total, numero_cuotas, fecha_inicio, fecha_fin, estado, observaciones, user_id.
 
----
+**Tabla `cartera_comunicaciones`** (correos + whatsapp manual): cartera_id, tipo ('email_cuenta_cobro'|'email_recordatorio'|'email_vencimiento'|'email_mora_7'|'email_mora_15'|'email_prejuridico'|'whatsapp_*'), canal ('email'|'whatsapp'), estado ('enviado'|'copiado'|'marcado'), asunto, destinatario, body, proveedor_msg_id, user_id, created_at.
 
-### 4. Panel Super Admin
+**Tabla `cartera_auditoria`**: cartera_id, user_id, accion, observacion, canal, created_at.
 
-Nuevo route `/_authenticated/super-admin/`:
-- `super-admin.index.tsx` → dashboard con métricas:
-  - Total expedientes, por estado, por licenciado, aprobados, honorarios proyectados/cobrados.
-  - Casos en mora (>30d sin avance), pendientes contratación, pendientes radicación.
-- `super-admin.usuarios.tsx` → CRUD usuarios: listar profiles, activar/desactivar, asignar roles, crear (invite by email vía signUp admin → en este stack usamos signup self-service + asignación manual de rol).
-- `super-admin.expedientes.tsx` → tabla global con filtros: licenciado, banco, estado, fechas, producto, ciudad, honorarios.
+**Bucket storage**: `cartera-comprobantes` (privado).
 
-Guard: `beforeLoad` redirige si no es super_admin/admin.
-
-Link en sidebar/nav solo visible si `isSuperAdmin || isAdmin`.
+**RLS**: 
+- super_admin ve todo
+- cartera (rol nuevo si no existe ya — sí existe) gestiona todo
+- juridica ve `estado_cartera = 'prejuridico'`
+- licenciado (asesor del expediente) solo SELECT, sin INSERT/UPDATE de pagos
+- Trigger en `cartera_pagos` insert → recalcula `cartera.pagado`/saldo; si saldo=0 → estado_cartera='pago_total' y estado_caso='honorarios_pagados'.
+- Trigger insert `cartera_comunicaciones` y `cartera_pagos` → `cartera_auditoria`.
 
 ---
 
-### 5. Filtros expedientes
+### 2. Server functions
 
-Extender `casos.index.tsx` y `super-admin.expedientes.tsx` con dropdowns adicionales (licenciado/ciudad/producto/honorarios min-max/fecha aprobación).
+`src/lib/cartera.functions.ts`:
+- `crearCartera({expedienteId, fechaAplicacion, formaPago, responsableId})` — valida estado, calcula vencimiento.
+- `registrarPago({carteraId, ...})` — upload comprobante a storage, insert pago, recalcula via trigger.
+- `crearAcuerdo({carteraId, ...})`.
+- `enviarPrejuridico(carteraId)` — cambia estado_cartera + estado_caso, registra auditoría.
+- `enviarCorreoCartera({carteraId, tipo})` — Resend con adjuntos PDF generados desde expediente (reutiliza helpers existentes de cuenta de cobro / resultado final si están; si no, genera básico). Tipos 1–6 según módulo 9.
+- `programarRecordatoriosCron` — server route `/api/public/hooks/cartera-recordatorios` ejecutado por pg_cron diariamente, escanea carteras por fecha y dispara correos automáticos según ventanas (día 3, vencimiento, +7, +15, +30).
 
----
-
-### 6. Historial visible
-
-En `casos.$id.tsx` agregar componente `HistorialCaso` que liste `expediente_historial` con: estado anterior → nuevo, usuario (join profiles), fecha/hora, acción origen, observación.
-
----
-
-### 7. Validaciones / RLS
-
-- `expedientes` SELECT: licenciado solo ve `asesor_id = auth.uid()`; super_admin/admin/gerencia ven todo (ya existe, verificar).
-- `profiles` UPDATE: super_admin puede actualizar cualquiera.
-- `user_roles` ALL: super_admin además de admin.
+`src/lib/cartera.ts` — helpers cliente (list, get, queries).
 
 ---
 
-### Archivos a crear
-- `supabase/migrations/<ts>_super_admin_estados.sql`
-- `src/lib/casoEstados.ts`
-- `src/lib/casoEstados.functions.ts`
-- `src/components/expediente/ConfirmEstadoModal.tsx`
-- `src/components/expediente/HistorialCaso.tsx`
-- `src/hooks/useEstadoSugerido.ts`
-- `src/routes/_authenticated/super-admin.index.tsx`
-- `src/routes/_authenticated/super-admin.usuarios.tsx`
-- `src/routes/_authenticated/super-admin.expedientes.tsx`
+### 3. UI
 
-### Archivos a editar (cambios mínimos, solo wiring)
-- `src/hooks/useUserRole.ts` (roles nuevos)
-- `src/routes/_authenticated/casos.$id.tsx` (bloque estado + historial)
-- `src/routes/_authenticated/casos.index.tsx` (filtros extra)
-- `src/components/nuvex/ExtractoReader.tsx` (sugerir tras subir)
-- `src/components/nuvex/PesosSimulator.tsx` y `UVRSimulator.tsx` (sugerir tras guardar)
-- `src/components/expediente-maestro/DocumentosLegales.tsx` (botones contrato/poder/radicado firmados)
-- Nav/sidebar para link Super Admin
+**Nuevo bloque en `casos.$id.tsx`** (solo si estado_caso ∈ {condiciones_aplicadas, resultado_final_generado, ...posteriores}):
+- Si no existe cartera → botón "Crear cartera" → modal con fecha aplicación banco + forma pago + responsable.
+- Si existe → resumen + link a `/cartera/$id`.
+
+**Nueva ruta `/_authenticated/cartera/index.tsx`** — Dashboard:
+- Indicadores: Causados, Recaudados, Pendientes, Vencidos, Acuerdos, Prejurídicos, Recaudo mes/año, por licenciado, por banco.
+- Tabla "Clientes por cobrar" con filtros (estado cartera, responsable, banco, mora >X días).
+
+**Ruta `/_authenticated/cartera/$id.tsx`** — Detalle:
+- Datos automáticos del expediente (cliente, cédula, banco, producto, etc.)
+- Fechas importantes (editable solo cartera/admin).
+- Selector responsable.
+- Forma de pago + cuotas si financiado (CRUD cuotas, valida suma).
+- Sección "Registrar pago" (form + upload comprobante).
+- Lista pagos con saldo en vivo.
+- Sección Acuerdos de Pago (CRUD).
+- Sección Comunicaciones: tabla + botones "Enviar correo X", "Copiar mensaje WhatsApp", "Marcar como enviado".
+- Botón "Enviar a prejurídico" (rojo).
+- Si saldo=0 → botón "Generar paz y salvo" (link a módulo existente).
+- Auditoría (timeline).
+
+**Sidebar/nav**: link "Cartera" visible para super_admin, admin, gerencia, cartera, juridica (juridica solo prejurídicos).
+
+**Hook**: `useCarteraPermissions()` para gating (licenciado readonly).
+
+**Integración estado_caso**: cuando se marca `condiciones_aplicadas` desde `EstadoCasoBlock`, mostrar toast "Listo para crear cartera".
+
+---
+
+### 4. Correos (Resend ya conectado)
+
+Reutilizar patrón de `contratacion.functions.ts`. Plantillas inline HTML (sencillas, branded). Adjuntos PDF: cuenta de cobro y resultado final generados con helpers existentes (`legalDocsExport` / `pdfExport`).
+
+Cron job pg_cron diario 09:00 COL → POST `/api/public/hooks/cartera-recordatorios` con apikey anon, route escanea carteras activas y envía correos pendientes según reglas + registra en `cartera_comunicaciones`.
+
+---
+
+### 5. Archivos
+
+**Crear:**
+- `supabase/migrations/<ts>_cartera.sql`
+- `src/lib/cartera.ts`, `src/lib/cartera.functions.ts`
+- `src/components/cartera/CrearCarteraModal.tsx`
+- `src/components/cartera/RegistrarPagoForm.tsx`
+- `src/components/cartera/CuotasFinanciadas.tsx`
+- `src/components/cartera/ComunicacionesPanel.tsx`
+- `src/components/cartera/AcuerdosPanel.tsx`
+- `src/components/cartera/CarteraBlockExpediente.tsx`
+- `src/routes/_authenticated/cartera.index.tsx`
+- `src/routes/_authenticated/cartera.$id.tsx`
+- `src/routes/api/public/hooks/cartera-recordatorios.ts`
+
+**Editar (mínimo):**
+- `src/lib/casoEstados.ts` (2 estados nuevos)
+- `src/routes/_authenticated/casos.$id.tsx` (montar `CarteraBlockExpediente`)
+- `src/routes/_authenticated.tsx` (link nav)
 
 ---
 
 ### Notas
 
-- "Crear usuarios" desde super_admin: en este stack no hay admin API expuesta al cliente. Implementaré "invitar" enviando email con link de signup + pre-asignación de rol pendiente; o más simple: el super_admin crea el rol después que el usuario se registra. Recomiendo opción simple: pantalla lista usuarios registrados + asignación de roles + activar/desactivar. Si se requiere invitación por email, lo hago como server fn con `supabaseAdmin.auth.admin.inviteUserByEmail`.
+- NO se toca cuenta de cobro, paz y salvo, resultado final — solo se consumen como PDFs adjuntos.
+- Cartera nace de forma explícita (botón) tras `condiciones_aplicadas`, no automáticamente, para que el usuario confirme la fecha real de aplicación.
+- Trigger DB asegura consistencia saldo/estado aún si se inserta pago vía otra ruta.
+- Cron de recordatorios es idempotente (no reenvía si ya hay comunicación con mismo tipo en la ventana).
 
-- Estado dual: dejo `estado` (enum antiguo del workflow simulador) y `estado_caso` (nuevo de 19 estados). El dashboard antiguo sigue funcionando; el nuevo panel usa `estado_caso`.
-
-¿Procedo?
+¿Procedo con la implementación?
