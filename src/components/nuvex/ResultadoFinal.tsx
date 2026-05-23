@@ -803,10 +803,14 @@ function PrintInformeFinal({
             <PremiumFooter />
           </div>
         </div>
+        </div>
       </div>
 
       {/* ===== Página 2 ===== */}
-      <div style={{ pageBreakBefore: "always", padding: "32px 36px 28px" }}>
+      <div style={{ position: "relative", pageBreakBefore: "always", padding: "32px 36px 28px" }}>
+        <Watermark />
+        <div style={{ position: "relative", zIndex: 1 }}>
+
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid #E3E7EE`, paddingBottom: 14 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <LogoMark size={36} />
