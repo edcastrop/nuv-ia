@@ -717,3 +717,21 @@ function InformacionJuridicaEditor({
   );
 }
 
+function MotivoBadge({ motivo, banco }: { motivo: MotivoSeleccion; banco?: string | null }) {
+  const map: Record<MotivoSeleccion, { label: string; bg: string; fg: string }> = {
+    predeterminado_fna: { label: "✓ Predeterminado FNA", bg: "#FEF3C7", fg: "#854D0E" },
+    predeterminado_general: { label: "✓ Predeterminado General", bg: NUVEX.verdeClaro, fg: NUVEX.verdeTextoFuerte },
+    asignado_banco: { label: `✓ Asignado a ${banco || "banco"}`, bg: "#E0E7FF", fg: "#3730A3" },
+    unico_disponible: { label: "✓ Único disponible", bg: "#E0E7FF", fg: "#3730A3" },
+    manual: { label: "✎ Selección manual", bg: "#F0F2F7", fg: "#475569" },
+    ninguno: { label: "Sin apoderados activos", bg: "#FDECEC", fg: "#B42318" },
+  };
+  const m = map[motivo];
+  return (
+    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+      style={{ background: m.bg, color: m.fg }}>
+      {m.label}
+    </span>
+  );
+}
+
