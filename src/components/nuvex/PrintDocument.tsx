@@ -1291,16 +1291,16 @@ function HonorariosBlock({
   const descuento = hasDiscount ? commercial!.descuento : 0;
 
   return (
-    <div style={{ marginTop: 18 }}>
+    <div style={{ marginTop: 12 }}>
       <SectionTitle eyebrow="Inversión" title="Honorarios NUVEX a éxito" />
 
       <div
         style={{
-          marginTop: 10,
+          marginTop: 6,
           border: `1px solid ${C.line}`,
           borderRadius: 4,
           background: C.cream,
-          padding: "16px 18px",
+          padding: "10px 12px",
         }}
       >
         {hasDiscount ? (
@@ -1309,7 +1309,7 @@ function HonorariosBlock({
               display: "grid",
               gridTemplateColumns: "1fr auto 1fr auto 1.3fr",
               alignItems: "center",
-              gap: 10,
+              gap: 8,
             }}
           >
             <FlowItem label="Honorarios originales" value={formatCOP(base)} strike />
@@ -1319,7 +1319,7 @@ function HonorariosBlock({
             <FlowItem label="Honorarios finales" value={formatCOP(finales)} highlight />
           </div>
         ) : (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
             <div style={{ flex: 1 }}>
               <div
                 style={{
@@ -1334,35 +1334,34 @@ function HonorariosBlock({
               </div>
               <div
                 style={{
-                  fontSize: 11,
+                  fontSize: 10,
                   color: C.negro,
                   opacity: 0.75,
-                  marginTop: 4,
-                  lineHeight: 1.5,
+                  marginTop: 2,
+                  lineHeight: 1.4,
                 }}
               >
                 Solo se generan si el proceso es aprobado favorablemente por el banco.
-                No hay cobros anticipados ni costos ocultos.
               </div>
             </div>
             <div
               style={{
                 background: C.negro,
                 color: "#fff",
-                padding: "14px 22px",
+                padding: "8px 16px",
                 borderLeft: `3px solid ${C.goldLine}`,
                 textAlign: "right",
-                minWidth: 200,
+                minWidth: 180,
               }}
             >
-              <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: "0.2em", color: C.goldLine }}>
+              <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: "0.2em", color: C.goldLine }}>
                 INVERSIÓN
               </div>
               <div
                 style={{
-                  fontSize: 24,
+                  fontSize: 22,
                   fontWeight: 900,
-                  marginTop: 4,
+                  marginTop: 2,
                   letterSpacing: "-0.02em",
                   lineHeight: 1,
                 }}
@@ -1376,17 +1375,17 @@ function HonorariosBlock({
         {hasDiscount && (
           <div
             style={{
-              marginTop: 14,
+              marginTop: 8,
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              gap: 12,
+              gap: 10,
               flexWrap: "wrap",
             }}
           >
             <div
               style={{
-                fontSize: 10,
+                fontSize: 9.5,
                 color: C.negro,
                 fontWeight: 600,
                 fontStyle: "italic",
@@ -1400,9 +1399,9 @@ function HonorariosBlock({
                   display: "inline-block",
                   background: C.negro,
                   color: "#fff",
-                  fontSize: 9,
+                  fontSize: 8.5,
                   fontWeight: 700,
-                  padding: "5px 12px",
+                  padding: "3px 10px",
                   borderRadius: 999,
                   letterSpacing: "0.08em",
                 }}
@@ -1412,58 +1411,62 @@ function HonorariosBlock({
             )}
           </div>
         )}
+      </div>
 
-        <div
-          style={{
-            marginTop: 12,
-            paddingTop: 10,
-            borderTop: `1px solid ${C.line}`,
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr",
-            gap: 10,
-          }}
-        >
-          {[
-            "Contrato a éxito",
-            "Solo cobramos si obtenemos resultado favorable",
-            "Sin riesgo financiero para el cliente",
-          ].map((t, i) => (
-            <div
-              key={i}
+      {/* BADGES — Contrato a éxito en UNA sola fila compacta */}
+      <div
+        style={{
+          marginTop: 8,
+          display: "flex",
+          alignItems: "stretch",
+          gap: 6,
+          flexWrap: "nowrap",
+        }}
+      >
+        {[
+          "Contrato a éxito",
+          "Solo cobramos si hay resultado favorable",
+          "Sin riesgo financiero para el cliente",
+        ].map((t, i) => (
+          <div
+            key={i}
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 9,
+              color: C.negro,
+              fontWeight: 600,
+              background: C.verdeClaro,
+              border: `1px solid ${C.verde}`,
+              borderRadius: 999,
+              padding: "5px 10px",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            <span
               style={{
-                display: "flex",
+                width: 14,
+                height: 14,
+                borderRadius: 999,
+                background: C.verde,
+                color: "#fff",
+                display: "inline-flex",
                 alignItems: "center",
-                gap: 8,
-                fontSize: 9.5,
-                color: C.negro,
-                fontWeight: 600,
-                background: C.verdeClaro,
-                border: `1px solid ${C.verde}`,
-                borderRadius: 4,
-                padding: "8px 10px",
+                justifyContent: "center",
+                fontSize: 9,
+                fontWeight: 900,
+                flexShrink: 0,
               }}
             >
-              <span
-                style={{
-                  width: 16,
-                  height: 16,
-                  borderRadius: 999,
-                  background: C.verde,
-                  color: "#fff",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 10,
-                  fontWeight: 900,
-                  flexShrink: 0,
-                }}
-              >
-                ✓
-              </span>
-              <span style={{ lineHeight: 1.3 }}>{t}</span>
-            </div>
-          ))}
-        </div>
+              ✓
+            </span>
+            <span style={{ lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis" }}>{t}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
