@@ -153,8 +153,23 @@ function blockToDocx(b: DocBlock): Paragraph | Table {
         spacing: { after: 120, line: 320 },
         children: [new TextRun({ text: b.text, size: 22 })],
       });
+    case "section":
+      return new Paragraph({
+        spacing: { before: 200, after: 100 },
+        border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: "242424", space: 1 } },
+        children: [new TextRun({ text: b.text, bold: true, size: 24 })],
+      });
+    case "field":
+      return new Paragraph({
+        spacing: { after: 60 },
+        children: [
+          new TextRun({ text: `${b.label}: `, bold: true, size: 22 }),
+          new TextRun({ text: b.value || "—", size: 22 }),
+        ],
+      });
     case "spacer":
       return new Paragraph({ spacing: { after: (b.size ?? 8) * 20 }, children: [new TextRun("")] });
+
     case "signature": {
       const colCount = b.columns.length;
       const tableW = 9360;
