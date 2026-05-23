@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedProyeccionRouteImport } from './routes/_authenticated/proyeccion'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedApoderadosNuvexRouteImport } from './routes/_authenticated/apoderados-nuvex'
 import { Route as AuthenticatedAcademiaRouteImport } from './routes/_authenticated/academia'
 import { Route as AuthenticatedExpedienteMaestroIndexRouteImport } from './routes/_authenticated/expediente-maestro.index'
 import { Route as AuthenticatedCasosIndexRouteImport } from './routes/_authenticated/casos.index'
@@ -44,6 +45,12 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedApoderadosNuvexRoute =
+  AuthenticatedApoderadosNuvexRouteImport.update({
+    id: '/apoderados-nuvex',
+    path: '/apoderados-nuvex',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedAcademiaRoute = AuthenticatedAcademiaRouteImport.update({
   id: '/academia',
   path: '/academia',
@@ -76,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
   '/academia': typeof AuthenticatedAcademiaRoute
+  '/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
@@ -86,6 +94,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/academia': typeof AuthenticatedAcademiaRoute
+  '/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/': typeof AuthenticatedIndexRoute
@@ -99,6 +108,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/_authenticated/academia': typeof AuthenticatedAcademiaRoute
+  '/_authenticated/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/proyeccion': typeof AuthenticatedProyeccionRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
@@ -113,6 +123,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/academia'
+    | '/apoderados-nuvex'
     | '/dashboard'
     | '/proyeccion'
     | '/casos/$id'
@@ -123,6 +134,7 @@ export interface FileRouteTypes {
   to:
     | '/login'
     | '/academia'
+    | '/apoderados-nuvex'
     | '/dashboard'
     | '/proyeccion'
     | '/'
@@ -135,6 +147,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/login'
     | '/_authenticated/academia'
+    | '/_authenticated/apoderados-nuvex'
     | '/_authenticated/dashboard'
     | '/_authenticated/proyeccion'
     | '/_authenticated/'
@@ -186,6 +199,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/apoderados-nuvex': {
+      id: '/_authenticated/apoderados-nuvex'
+      path: '/apoderados-nuvex'
+      fullPath: '/apoderados-nuvex'
+      preLoaderRoute: typeof AuthenticatedApoderadosNuvexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/academia': {
       id: '/_authenticated/academia'
       path: '/academia'
@@ -226,6 +246,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAcademiaRoute: typeof AuthenticatedAcademiaRoute
+  AuthenticatedApoderadosNuvexRoute: typeof AuthenticatedApoderadosNuvexRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedProyeccionRoute: typeof AuthenticatedProyeccionRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
@@ -237,6 +258,7 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAcademiaRoute: AuthenticatedAcademiaRoute,
+  AuthenticatedApoderadosNuvexRoute: AuthenticatedApoderadosNuvexRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedProyeccionRoute: AuthenticatedProyeccionRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
@@ -258,3 +280,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
