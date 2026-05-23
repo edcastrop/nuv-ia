@@ -1,0 +1,202 @@
+// Exportadores de documentos jurídicos: PDF (jsPDF) y DOCX (docx).
+// Consumen el árbol de bloques generado por `legalDocs.ts`.
+
+import { jsPDF } from "jspdf";
+import {
+  Document, Packer, Paragraph, TextRun, AlignmentType,
+  HeadingLevel, Table, TableRow, TableCell, WidthType, BorderStyle,
+} from "docx";
+import { saveAs } from "file-saver";
+import type { LegalDoc, DocBlock } from "./legalDocs";
+
+// ─────────────────────────────── PDF ───────────────────────────────
+
+export function exportLegalDocPDF(doc: LegalDoc) {
+  const pdf = new jsPDF({ unit: "pt", format: "letter" });
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  const marginX = 72; // 1"
+  const marginY = 72;
+  const contentW = pageW - marginX * 2;
+  let y = marginY;
+
+  const checkBreak = (needed: number) => {
+    if (y + needed > pageH - marginY) {
+      pdf.addPage();
+      y = marginY;
+    }
+  };
+
+  const writeText = (text: string, opts: { size: number; bold?: boolean; align?: "left" | "center"; lineGap?: number }) => {
+    pdf.setFont("times", opts.bold ? "bold" : "normal");
+    pdf.setFontSize(opts.size);
+    const lineH = opts.size * 1.35;
+    const lines = pdf.splitTextToSize(text, contentW) as string[];
+    for (const line of lines) {
+      checkBreak(lineH);
+      if (opts.align === "center") {
+        pdf.text(line, pageW / 2, y, { align: "center" });
+      } else {
+        pdf.text(line, marginX, y);
+      }
+      y += lineH;
+    }
+    if (opts.lineGap) y += opts.lineGap;
+  };
+
+  for (const b of doc.blocks) {
+    switch (b.type) {
+      case "title":
+        writeText(b.text, { size: 16, bold: true, align: "center", lineGap: 8 });
+        break;
+      case "subtitle":
+        writeText(b.text, { size: 12, bold: true, align: "center", lineGap: 6 });
+        break;
+      case "heading":
+        writeText(b.text, { size: 11, bold: true, lineGap: 2 });
+        break;
+      case "paragraph":
+        writeText(b.text, { size: 11, lineGap: 4 });
+        break;
+      case "spacer":
+        y += b.size ?? 8;
+        break;
+      case "signature": {
+        const colW = contentW / b.columns.length;
+        checkBreak(80);
+        // Líneas de firma
+        pdf.setLineWidth(0.5);
+        b.columns.forEach((_, i) => {
+          const x1 = marginX + colW * i + 20;
+          const x2 = marginX + colW * (i + 1) - 20;
+          pdf.line(x1, y, x2, y);
+        });
+        y += 14;
+        // Etiquetas
+        pdf.setFont("times", "bold");
+        pdf.setFontSize(10);
+        b.columns.forEach((col, i) => {
+          pdf.text(col.label, marginX + colW * i + colW / 2, y, { align: "center" });
+        });
+        y += 14;
+        pdf.setFont("times", "normal");
+        pdf.setFontSize(10);
+        b.columns.forEach((col, i) => {
+          if (col.name) pdf.text(col.name, marginX + colW * i + colW / 2, y, { align: "center" });
+        });
+        y += 12;
+        b.columns.forEach((col, i) => {
+          if (col.cc) pdf.text(col.cc, marginX + colW * i + colW / 2, y, { align: "center" });
+        });
+        y += 16;
+        break;
+      }
+    }
+  }
+
+  pdf.save(`${doc.filename}.pdf`);
+}
+
+// ─────────────────────────────── DOCX ───────────────────────────────
+
+function blockToDocx(b: DocBlock): Paragraph | Table {
+  switch (b.type) {
+    case "title":
+      return new Paragraph({
+        heading: HeadingLevel.HEADING_1,
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 200 },
+        children: [new TextRun({ text: b.text, bold: true, size: 32 })],
+      });
+    case "subtitle":
+      return new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 160 },
+        children: [new TextRun({ text: b.text, bold: true, size: 24 })],
+      });
+    case "heading":
+      return new Paragraph({
+        spacing: { before: 120, after: 80 },
+        children: [new TextRun({ text: b.text, bold: true, size: 22 })],
+      });
+    case "paragraph":
+      return new Paragraph({
+        alignment: AlignmentType.JUSTIFIED,
+        spacing: { after: 120, line: 320 },
+        children: [new TextRun({ text: b.text, size: 22 })],
+      });
+    case "spacer":
+      return new Paragraph({ spacing: { after: (b.size ?? 8) * 20 }, children: [new TextRun("")] });
+    case "signature": {
+      const colCount = b.columns.length;
+      const tableW = 9360;
+      const colW = Math.floor(tableW / colCount);
+      const noBorder = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
+      const cellBorders = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder };
+      const topBorder = { top: { style: BorderStyle.SINGLE, size: 8, color: "242424" }, bottom: noBorder, left: noBorder, right: noBorder };
+      return new Table({
+        width: { size: tableW, type: WidthType.DXA },
+        columnWidths: b.columns.map(() => colW),
+        rows: [
+          new TableRow({
+            children: b.columns.map(
+              (col) =>
+                new TableCell({
+                  width: { size: colW, type: WidthType.DXA },
+                  borders: topBorder,
+                  margins: { top: 120, bottom: 60, left: 80, right: 80 },
+                  children: [
+                    new Paragraph({
+                      alignment: AlignmentType.CENTER,
+                      spacing: { after: 40 },
+                      children: [new TextRun({ text: col.label, bold: true, size: 20 })],
+                    }),
+                    new Paragraph({
+                      alignment: AlignmentType.CENTER,
+                      spacing: { after: 20 },
+                      children: [new TextRun({ text: col.name ?? "", size: 20 })],
+                    }),
+                    new Paragraph({
+                      alignment: AlignmentType.CENTER,
+                      children: [new TextRun({ text: col.cc ?? "", size: 18 })],
+                    }),
+                  ],
+                }),
+            ),
+          }),
+          new TableRow({
+            children: b.columns.map(
+              () =>
+                new TableCell({
+                  width: { size: colW, type: WidthType.DXA },
+                  borders: cellBorders,
+                  children: [new Paragraph({ children: [new TextRun("")] })],
+                }),
+            ),
+          }),
+        ],
+      });
+    }
+  }
+}
+
+export async function exportLegalDocDOCX(doc: LegalDoc) {
+  const docx = new Document({
+    styles: {
+      default: { document: { run: { font: "Times New Roman", size: 22 } } },
+    },
+    sections: [
+      {
+        properties: {
+          page: {
+            size: { width: 12240, height: 15840 },
+            margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
+          },
+        },
+        children: doc.blocks.map(blockToDocx),
+      },
+    ],
+  });
+  const blob = await Packer.toBlob(docx);
+  saveAs(blob, `${doc.filename}.docx`);
+}
