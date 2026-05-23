@@ -154,9 +154,18 @@ export function PesosSimulator({
 
   const manual = useMemo(() => {
     if (!datosCompletos) return null;
-    const v = parseCurrency(nuevaCuotaManual);
-    if (!v) return null;
-    const baseResult = calculatePesosManual(input, v);
+    let v: number;
+    let baseResult;
+    if (modoPersonalizada === "cuotas") {
+      const ce = parseDecimal(cuotasEliminarManual);
+      if (!ce) return null;
+      baseResult = calculatePesosManualByCuotas(input, ce);
+      v = baseResult.nuevaCuotaConSeguro;
+    } else {
+      v = parseCurrency(nuevaCuotaManual);
+      if (!v) return null;
+      baseResult = calculatePesosManual(input, v);
+    }
     // Tolerancia $2.000: si la cuota manual coincide con una propuesta automática,
     // se usan los resultados de esa propuesta para evitar discrepancias por redondeo.
     if (baseResult.valid && calc) {
@@ -182,7 +191,7 @@ export function PesosSimulator({
       }
     }
     return baseResult;
-  }, [datosCompletos, input, nuevaCuotaManual, calc]);
+  }, [datosCompletos, input, nuevaCuotaManual, cuotasEliminarManual, modoPersonalizada, calc]);
 
 
   const manualValido = !!(manual && manual.valid);
