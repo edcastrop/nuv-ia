@@ -88,6 +88,12 @@ export function UVRSimulator({
     initCred.variacionUVR ?? getDefaultVariacionUVR(),
   );
   const [nuevaCuotaManual, setNuevaCuotaManual] = useState(initCred.nuevaCuotaManual ?? "");
+  const [cuotasEliminarManual, setCuotasEliminarManual] = useState(
+    initCred.cuotasEliminarManual ?? "",
+  );
+  const [modoPersonalizada, setModoPersonalizada] = useState<"cuota" | "cuotas">(
+    initCred.cuotasEliminarManual && !initCred.nuevaCuotaManual ? "cuotas" : "cuota",
+  );
   const [showConfigVariacion, setShowConfigVariacion] = useState(false);
   const [variacionDefaultInput, setVariacionDefaultInput] = useState(getDefaultVariacionUVR());
 
