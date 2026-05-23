@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, TextField, SelectField, SectionTitle } from "@/components/nuvex/ui";
 import { CityField } from "@/components/ui/CityField";
 import { NUVEX } from "@/components/nuvex/constants";
 import { withFreshDerivados, FRESH_TIPOS, type FreshTipoBeneficio } from "@/lib/cobertura";
+import { cityDepartment } from "@/lib/colombiaCities";
 import type {
   ClienteMaestro, CotitularMaestro, CreditoMaestro,
   AsesorMaestro, LicenciadoMaestro, ApoderadoMaestro,
