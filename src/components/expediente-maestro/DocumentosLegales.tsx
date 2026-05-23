@@ -233,7 +233,7 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
   const poderListo = poderes.length > 0 && poderes[0].missing.length === 0;
   const datosListos = datosDoc.blocks.length > 0;
   const clienteCompleto = !!(live.cliente?.nombre && live.cliente?.cedula);
-  const juridicaCompleta = !!(live.cliente?.cedula && live.cliente?.expedidaEn && live.cliente?.ciudad);
+  const juridicaCompleta = !!(live.cliente?.cedula && live.cliente?.expedidaEn && live.cliente?.ciudad && live.cliente?.departamento);
   const contratacionFaltantes: string[] = [];
   if (!clienteCompleto) contratacionFaltantes.push("Datos del cliente (nombre y cédula).");
   if (!juridicaCompleta) contratacionFaltantes.push("Información jurídica (cédula, lugar de expedición, ciudad).");
