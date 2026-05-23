@@ -8,6 +8,7 @@ import {
   type ApoderadoNuvex, type ApoderadoInput,
 } from "@/lib/apoderados";
 import { Pencil, Trash2, Plus, X, Star, Building2 } from "lucide-react";
+import { CitySelect } from "@/components/ui/CitySelect";
 
 export const Route = createFileRoute("/_authenticated/apoderados-nuvex")({
   component: ApoderadosPage,
