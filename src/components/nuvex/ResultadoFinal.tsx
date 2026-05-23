@@ -664,8 +664,8 @@ function PrintInformeFinal({
         <div style={{ position: "relative", zIndex: 1 }}>
         <div style={{ background: NUVEX_GRADIENT, padding: "28px 36px 32px", color: "#fff" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <LogoMark light size={80} />
+            <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+              <LogoMark light size={200} />
               <div>
                 <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: 2.2 }}>NUVEX FINANZAS INTELIGENTES</div>
                 <div style={{ fontSize: 9.5, letterSpacing: 1.6, opacity: 0.85, marginTop: 3 }}>Bogotá | Bucaramanga</div>
@@ -695,28 +695,52 @@ function PrintInformeFinal({
           </div>
         </div>
 
-        {/* ANTES → DESPUÉS — fechas de finalización */}
-        <div style={{ padding: "20px 36px 0" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 16, alignItems: "stretch" }}>
-            <div style={{ border: `1px solid #E3E7EE`, borderRadius: 14, padding: "16px 20px", background: "#FAFBFD" }}>
-              <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 3, color: "#8892A0", textTransform: "uppercase" }}>ANTES</div>
-              <div style={{ fontSize: 10, color: "#5C6770", marginTop: 4 }}>Fecha estimada de finalización</div>
-              <div style={{ fontSize: 20, fontWeight: 900, color: NUVEX.negro, marginTop: 6, letterSpacing: -0.3 }}>
+        {/* ANTES → DESPUÉS — fechas de finalización (+35% jerarquía) */}
+        <div style={{ padding: "26px 36px 0" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 20, alignItems: "stretch" }}>
+            <div style={{ border: `1px solid #E3E7EE`, borderRadius: 18, padding: "22px 26px", background: "#FAFBFD" }}>
+              <div style={{ fontSize: 11.5, fontWeight: 800, letterSpacing: 4, color: "#8892A0", textTransform: "uppercase" }}>ANTES</div>
+              <div style={{ fontSize: 13, color: "#5C6770", marginTop: 6 }}>Fecha estimada de finalización</div>
+              <div style={{ fontSize: 27, fontWeight: 900, color: NUVEX.negro, marginTop: 8, letterSpacing: -0.4 }}>
                 {fmtMesAño(fechaFinActual)}
               </div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
-              <div style={{ fontSize: 24, fontWeight: 900, color: NUVEX.azul, lineHeight: 1 }}>→</div>
-              <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2, color: NUVEX.verdeTextoFuerte, textAlign: "center" }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6 }}>
+              <div style={{ fontSize: 32, fontWeight: 900, color: NUVEX.azul, lineHeight: 1 }}>→</div>
+              <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: 2.5, color: NUVEX.verdeTextoFuerte, textAlign: "center" }}>
                 {formatNumber(aprobado.añosEliminados, 1)} AÑOS<br />ELIMINADOS
               </div>
             </div>
-            <div style={{ border: `1px solid ${NUVEX.verde}`, borderRadius: 14, padding: "16px 20px", background: NUVEX.verdeClaro }}>
-              <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 3, color: NUVEX.verdeTextoFuerte, textTransform: "uppercase" }}>DESPUÉS</div>
-              <div style={{ fontSize: 10, color: NUVEX.verdeTextoFuerte, marginTop: 4, opacity: 0.85 }}>Nueva fecha de finalización</div>
-              <div style={{ fontSize: 20, fontWeight: 900, color: NUVEX.verdeTextoFuerte, marginTop: 6, letterSpacing: -0.3 }}>
+            <div style={{ border: `1px solid ${NUVEX.verde}`, borderRadius: 18, padding: "22px 26px", background: NUVEX.verdeClaro }}>
+              <div style={{ fontSize: 11.5, fontWeight: 800, letterSpacing: 4, color: NUVEX.verdeTextoFuerte, textTransform: "uppercase" }}>DESPUÉS</div>
+              <div style={{ fontSize: 13, color: NUVEX.verdeTextoFuerte, marginTop: 6, opacity: 0.85 }}>Nueva fecha de finalización</div>
+              <div style={{ fontSize: 27, fontWeight: 900, color: NUVEX.verdeTextoFuerte, marginTop: 8, letterSpacing: -0.4 }}>
                 {fmtMesAño(fechaFinDespues)}
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* AHORRO TOTAL — Hero visual #1 del documento */}
+        <div style={{ padding: "22px 36px 0" }}>
+          <div
+            style={{
+              borderRadius: 20,
+              background: `linear-gradient(135deg, ${NUVEX.verdeClaro} 0%, #FFFFFF 100%)`,
+              border: `2px solid ${NUVEX.verde}`,
+              padding: "28px 32px",
+              textAlign: "center",
+              position: "relative",
+            }}
+          >
+            <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: 5, color: NUVEX.verdeTextoFuerte, textTransform: "uppercase" }}>
+              Ahorro total certificado
+            </div>
+            <div style={{ marginTop: 6, fontSize: 56, fontWeight: 900, color: NUVEX.verdeTextoFuerte, letterSpacing: -1.5, lineHeight: 1.05 }}>
+              {formatCOP(aprobado.ahorroTotal)}
+            </div>
+            <div style={{ marginTop: 6, fontSize: 11.5, color: NUVEX.negro, opacity: 0.7, letterSpacing: 0.3 }}>
+              Intereses + seguros que dejarás de pagar gracias al proceso NUVEX
             </div>
           </div>
         </div>
