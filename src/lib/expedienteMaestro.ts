@@ -243,7 +243,7 @@ export function expedienteToMaestroLike(exp: Expediente): ExpedienteMaestro {
   const c = exp.cliente_data ?? ({} as Expediente["cliente_data"]);
   const cr = exp.credito_data ?? {};
   // Información Jurídica persistida en cliente_data (fuente oficial)
-  const ij = ((c as Record<string, unknown>).informacionJuridica ?? {}) as {
+  const ij = ((c as unknown as Record<string, unknown>).informacionJuridica ?? {}) as {
     titular?: Partial<ClienteMaestro>;
     cotitular?: Partial<CotitularMaestro> & { activo?: boolean };
   };
