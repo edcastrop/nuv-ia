@@ -4,9 +4,10 @@ import { Card } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
 import {
   listApoderados, createApoderado, updateApoderado, deleteApoderado,
+  BANCOS_DISPONIBLES,
   type ApoderadoNuvex, type ApoderadoInput,
 } from "@/lib/apoderados";
-import { Pencil, Trash2, Plus, X } from "lucide-react";
+import { Pencil, Trash2, Plus, X, Star, Building2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/apoderados-nuvex")({
   component: ApoderadosPage,
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/_authenticated/apoderados-nuvex")({
 
 const empty: ApoderadoInput = {
   nombre: "", cedula: "", lugar_expedicion: "", ciudad: "", celular: "", correo: "", activo: true,
+  predeterminado_general: false, predeterminado_fna: false, bancos_asignados: [],
 };
 
 function ApoderadosPage() {
@@ -39,6 +41,9 @@ function ApoderadosPage() {
       ciudad: a.ciudad ?? "",
       celular: a.celular ?? "", correo: a.correo ?? "",
       activo: a.activo,
+      predeterminado_general: a.predeterminado_general,
+      predeterminado_fna: a.predeterminado_fna,
+      bancos_asignados: a.bancos_asignados ?? [],
     });
     setEditing(a);
   };
@@ -66,6 +71,15 @@ function ApoderadosPage() {
     catch (e) { alert((e as Error).message); }
   };
 
+  const toggleBanco = (b: string) => {
+    setForm((f) => ({
+      ...f,
+      bancos_asignados: f.bancos_asignados.includes(b)
+        ? f.bancos_asignados.filter((x) => x !== b)
+        : [...f.bancos_asignados, b],
+    }));
+  };
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-6 space-y-4">
       <Card>
@@ -76,7 +90,7 @@ function ApoderadosPage() {
             </div>
             <h1 className="text-2xl font-semibold text-[#242424]">Apoderados NUVEX</h1>
             <p className="text-sm text-[#242424]/70 mt-1">
-              Listado de apoderados disponibles para el Poder Especial.
+              Listado de apoderados disponibles para el Poder Especial. Marca un predeterminado para FNA y otro general.
             </p>
           </div>
           <button
@@ -105,10 +119,8 @@ function ApoderadosPage() {
                 <tr>
                   <th className="py-2 pr-3">Nombre</th>
                   <th className="py-2 pr-3">Cédula</th>
-                  <th className="py-2 pr-3">Expedida</th>
-                  <th className="py-2 pr-3">Ciudad</th>
-                  <th className="py-2 pr-3">Celular</th>
-                  <th className="py-2 pr-3">Correo</th>
+                  <th className="py-2 pr-3">Predet.</th>
+                  <th className="py-2 pr-3">Bancos asignados</th>
                   <th className="py-2 pr-3">Estado</th>
                   <th className="py-2 pr-3 text-right">Acciones</th>
                 </tr>
@@ -116,12 +128,37 @@ function ApoderadosPage() {
               <tbody>
                 {rows.map((a) => (
                   <tr key={a.id} className="border-b border-[#F0F2F7] last:border-0">
-                    <td className="py-2 pr-3 font-medium text-[#242424]">{a.nombre}</td>
+                    <td className="py-2 pr-3 font-medium text-[#242424]">
+                      {a.nombre}
+                      <div className="text-[11px] text-[#242424]/60">
+                        {a.lugar_expedicion ?? "—"} · {a.ciudad ?? "—"}
+                      </div>
+                    </td>
                     <td className="py-2 pr-3">{a.cedula}</td>
-                    <td className="py-2 pr-3 text-[#242424]/70">{a.lugar_expedicion ?? "—"}</td>
-                    <td className="py-2 pr-3 text-[#242424]/70">{a.ciudad ?? "—"}</td>
-                    <td className="py-2 pr-3 text-[#242424]/70">{a.celular ?? "—"}</td>
-                    <td className="py-2 pr-3 text-[#242424]/70">{a.correo ?? "—"}</td>
+                    <td className="py-2 pr-3">
+                      <div className="flex flex-col gap-1">
+                        {a.predeterminado_general && (
+                          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                            style={{ background: NUVEX.verdeClaro, color: NUVEX.verdeTextoFuerte }}>
+                            <Star size={10} /> General
+                          </span>
+                        )}
+                        {a.predeterminado_fna && (
+                          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                            style={{ background: "#FEF3C7", color: "#854D0E" }}>
+                            <Star size={10} /> FNA
+                          </span>
+                        )}
+                        {!a.predeterminado_general && !a.predeterminado_fna && (
+                          <span className="text-[11px] text-[#242424]/40">—</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-2 pr-3 text-[#242424]/70">
+                      {a.bancos_asignados && a.bancos_asignados.length > 0
+                        ? <span className="text-[11px]">{a.bancos_asignados.join(", ")}</span>
+                        : <span className="text-[11px] text-[#242424]/40">Todos</span>}
+                    </td>
                     <td className="py-2 pr-3">
                       <button
                         onClick={() => toggleActivo(a)}
@@ -155,7 +192,7 @@ function ApoderadosPage() {
 
       {editing !== null && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={close}>
-          <div className="bg-white rounded-2xl w-full max-w-lg p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-[#242424]">
                 {editing === "new" ? "Nuevo apoderado" : "Editar apoderado"}
@@ -168,15 +205,59 @@ function ApoderadosPage() {
               <Field label="Lugar de expedición" value={form.lugar_expedicion} onChange={(v) => setForm({ ...form, lugar_expedicion: v })} />
               <Field label="Ciudad" value={form.ciudad} onChange={(v) => setForm({ ...form, ciudad: v })} />
               <Field label="Celular" value={form.celular} onChange={(v) => setForm({ ...form, celular: v })} />
-              <Field label="Correo" value={form.correo} onChange={(v) => setForm({ ...form, correo: v })} />
-              <label className="flex items-center gap-2 text-sm text-[#242424] sm:col-span-2 mt-2">
-                <input
-                  type="checkbox"
-                  checked={form.activo}
-                  onChange={(e) => setForm({ ...form, activo: e.target.checked })}
-                />
-                Activo
-              </label>
+              <Field label="Correo" value={form.correo} onChange={(v) => setForm({ ...form, correo: v })} className="sm:col-span-2" />
+
+              <div className="sm:col-span-2 mt-2 rounded-xl border border-[#E3E7EE] p-3 space-y-2">
+                <div className="text-[11px] uppercase tracking-wider text-[#242424]/60 font-semibold">
+                  Estado y predeterminados
+                </div>
+                <label className="flex items-center gap-2 text-sm text-[#242424]">
+                  <input type="checkbox" checked={form.activo} onChange={(e) => setForm({ ...form, activo: e.target.checked })} />
+                  Activo
+                </label>
+                <label className="flex items-center gap-2 text-sm text-[#242424]">
+                  <input
+                    type="checkbox"
+                    checked={form.predeterminado_general}
+                    onChange={(e) => setForm({ ...form, predeterminado_general: e.target.checked })}
+                  />
+                  <Star size={13} style={{ color: NUVEX.verdeTextoFuerte }} />
+                  Predeterminado General (todos los bancos excepto FNA)
+                </label>
+                <label className="flex items-center gap-2 text-sm text-[#242424]">
+                  <input
+                    type="checkbox"
+                    checked={form.predeterminado_fna}
+                    onChange={(e) => setForm({ ...form, predeterminado_fna: e.target.checked })}
+                  />
+                  <Star size={13} style={{ color: "#854D0E" }} />
+                  Predeterminado FNA
+                </label>
+                <p className="text-[11px] text-[#242424]/60">
+                  Al guardar, cualquier otro apoderado con la misma marca quedará desmarcado automáticamente.
+                </p>
+              </div>
+
+              <div className="sm:col-span-2 mt-2 rounded-xl border border-[#E3E7EE] p-3">
+                <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-[#242424]/60 font-semibold mb-2">
+                  <Building2 size={13} /> Bancos asignados
+                </div>
+                <p className="text-[11px] text-[#242424]/60 mb-2">
+                  Si no marcas ninguno, el apoderado podrá usarse con cualquier banco.
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                  {BANCOS_DISPONIBLES.map((b) => (
+                    <label key={b} className="flex items-center gap-2 text-sm text-[#242424]">
+                      <input
+                        type="checkbox"
+                        checked={form.bancos_asignados.includes(b)}
+                        onChange={() => toggleBanco(b)}
+                      />
+                      {b}
+                    </label>
+                  ))}
+                </div>
+              </div>
             </div>
             <div className="mt-5 flex justify-end gap-2">
               <button onClick={close} className="rounded-lg border border-[#E3E7EE] px-4 py-2 text-sm">Cancelar</button>

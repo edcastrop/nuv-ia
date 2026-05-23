@@ -12,7 +12,7 @@ import {
 } from "@/lib/legalDocs";
 import { PODER_TEMPLATES } from "@/lib/poderTemplates";
 import { exportLegalDocPDF, exportLegalDocDOCX } from "@/lib/legalDocsExport";
-import { listApoderados, type ApoderadoNuvex } from "@/lib/apoderados";
+import { listApoderados, seleccionarApoderado, type ApoderadoNuvex, type MotivoSeleccion } from "@/lib/apoderados";
 
 const fmtCOP = (n: number) =>
   !isFinite(n) || n === 0
@@ -34,6 +34,7 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
   const [preview, setPreview] = useState<LegalDoc | null>(null);
   const [apoderados, setApoderados] = useState<ApoderadoNuvex[]>([]);
   const [selectedApId, setSelectedApId] = useState<string>("");
+  const [manualOverride, setManualOverride] = useState(false);
 
   // ── Información Jurídica editable (fuente oficial para el Poder Especial)
   const [ijTitular, setIjTitular] = useState<Partial<ClienteMaestro>>({});
@@ -125,9 +126,28 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
   useEffect(() => {
     listApoderados(true).then((rows) => {
       setApoderados(rows);
-      if (rows.length > 0) setSelectedApId((id) => id || rows[0].id);
     }).catch(() => { /* silencioso */ });
   }, []);
+
+  // Selección automática por banco (FNA → predeterminado FNA; otros → general)
+  const banco = live.credito?.banco;
+  const sugerencia = useMemo(() => seleccionarApoderado(banco, apoderados), [banco, apoderados]);
+
+  // Aplica sugerencia automática al cambiar banco, salvo que el usuario haya elegido manualmente
+  useEffect(() => {
+    if (manualOverride) return;
+    if (sugerencia.apoderado && sugerencia.apoderado.id !== selectedApId) {
+      setSelectedApId(sugerencia.apoderado.id);
+    } else if (!sugerencia.apoderado && !selectedApId && apoderados.length) {
+      setSelectedApId(apoderados[0].id);
+    }
+  }, [sugerencia, manualOverride, apoderados, selectedApId]);
+
+  const motivoActual: MotivoSeleccion = useMemo(() => {
+    if (manualOverride) return "manual";
+    if (sugerencia.apoderado && sugerencia.apoderado.id === selectedApId) return sugerencia.motivo;
+    return "manual";
+  }, [manualOverride, sugerencia, selectedApId]);
 
   const selectedAp: ApoderadoSeleccionado | undefined = useMemo(() => {
     const ap = apoderados.find((a) => a.id === selectedApId);
@@ -238,7 +258,7 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
         <div className="rounded-xl border bg-[#F7F9FB] p-3 mb-4" style={{ borderColor: "#E3E7EE" }}>
           <div className="flex flex-wrap items-center gap-3">
             <div className="text-[11px] uppercase tracking-wider font-semibold text-[#242424]/70">
-              Apoderado NUVEX
+              Apoderado seleccionado
             </div>
             {apoderados.length === 0 ? (
               <span className="text-xs text-[#B42318]">
@@ -247,7 +267,7 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
             ) : (
               <select
                 value={selectedApId}
-                onChange={(e) => setSelectedApId(e.target.value)}
+                onChange={(e) => { setSelectedApId(e.target.value); setManualOverride(true); }}
                 className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 text-sm"
               >
                 {apoderados.map((a) => (
@@ -257,13 +277,28 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
                 ))}
               </select>
             )}
-            {selectedAp && (
-              <span className="text-[11px] text-[#242424]/60">
-                Expedida en {selectedAp.lugarExpedicion || "—"} · Cel {selectedAp.celular || "—"}
-              </span>
+            <MotivoBadge motivo={motivoActual} banco={banco} />
+            {manualOverride && (
+              <button
+                onClick={() => setManualOverride(false)}
+                className="text-[11px] text-[#445DA3] hover:underline"
+              >
+                Volver a selección automática
+              </button>
             )}
           </div>
+          {selectedAp && (
+            <div className="mt-2 text-[11px] text-[#242424]/60">
+              {selectedAp.nombre} · Expedida en {selectedAp.lugarExpedicion || "—"} · Cel {selectedAp.celular || "—"}
+            </div>
+          )}
+          {sugerencia.candidatos.length > 1 && (
+            <div className="mt-1 text-[11px] text-[#242424]/60">
+              Hay {sugerencia.candidatos.length} apoderados elegibles para {banco || "este banco"}. Puedes cambiar manualmente.
+            </div>
+          )}
         </div>
+
 
         {/* Acuerdo comercial — Modalidad de pago */}
         <div className="rounded-xl border bg-[#F7F9FB] p-3 mb-4" style={{ borderColor: "#E3E7EE" }}>
@@ -679,6 +714,24 @@ function InformacionJuridicaEditor({
         </p>
       )}
     </div>
+  );
+}
+
+function MotivoBadge({ motivo, banco }: { motivo: MotivoSeleccion; banco?: string | null }) {
+  const map: Record<MotivoSeleccion, { label: string; bg: string; fg: string }> = {
+    predeterminado_fna: { label: "✓ Predeterminado FNA", bg: "#FEF3C7", fg: "#854D0E" },
+    predeterminado_general: { label: "✓ Predeterminado General", bg: NUVEX.verdeClaro, fg: NUVEX.verdeTextoFuerte },
+    asignado_banco: { label: `✓ Asignado a ${banco || "banco"}`, bg: "#E0E7FF", fg: "#3730A3" },
+    unico_disponible: { label: "✓ Único disponible", bg: "#E0E7FF", fg: "#3730A3" },
+    manual: { label: "✎ Selección manual", bg: "#F0F2F7", fg: "#475569" },
+    ninguno: { label: "Sin apoderados activos", bg: "#FDECEC", fg: "#B42318" },
+  };
+  const m = map[motivo];
+  return (
+    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+      style={{ background: m.bg, color: m.fg }}>
+      {m.label}
+    </span>
   );
 }
 
