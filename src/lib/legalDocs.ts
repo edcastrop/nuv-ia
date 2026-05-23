@@ -123,7 +123,20 @@ export function buildPoderFromTemplate(i: BuildPoderInput): PoderResult {
   const templateId = i.templateOverride ?? detectPoderTemplate(i.banco, i.producto);
   const vars = toVariables(i);
   const missing = validatePoderVariables(vars, templateId);
-  const blocks = renderPoderTemplate(templateId, vars);
+  const legalBlocks = renderPoderTemplate(templateId, vars);
+
+  // Bloque DATOS DEL CLIENTE — se inserta ANTES del texto jurídico.
+  const datosCliente: DocBlock[] = [
+    { type: "section", text: "DATOS DEL CLIENTE" },
+    { type: "field", label: "Nombre", value: fmtTxt(i.poderdante.nombre) },
+    { type: "field", label: "Cédula", value: fmtTxt(i.poderdante.cedula) },
+    { type: "field", label: "Banco", value: fmtTxt(i.banco) },
+    { type: "field", label: "Producto", value: fmtTxt(i.producto) },
+    { type: "field", label: "Número crédito", value: fmtTxt(i.numeroCredito) },
+    { type: "spacer", size: 12 },
+  ];
+  const blocks: DocBlock[] = [...datosCliente, ...legalBlocks];
+
   const safeName = (i.poderdante.nombre || "Cliente").replace(/\s+/g, "_");
   const year = new Date().getFullYear();
   const seq = String(Date.now()).slice(-4);
