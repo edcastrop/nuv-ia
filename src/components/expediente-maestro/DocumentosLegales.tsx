@@ -652,6 +652,29 @@ function IJCity({
   );
 }
 
+function IJReadonly({
+  label, value, hint, required,
+}: { label: string; value: string; hint?: string; required?: boolean }) {
+  const empty = required && !value.trim();
+  return (
+    <label className="text-xs">
+      <span className="block text-[#242424]/70 mb-0.5">
+        {label}{required && <span className="text-[#B42318]"> *</span>}
+      </span>
+      <input
+        type="text"
+        value={value}
+        readOnly
+        placeholder={hint}
+        className="w-full rounded-lg border bg-[#F7F9FB] px-2 py-1.5 text-sm text-[#242424] cursor-not-allowed"
+        style={{ borderColor: empty ? "#F5C2C2" : "#E3E7EE" }}
+        title={hint}
+      />
+      {hint && <span className="block text-[10px] text-[#242424]/50 mt-0.5">{hint}</span>}
+    </label>
+  );
+}
+
 function IJSelect({
   label, value, onChange, options,
 }: { label: string; value: string; onChange: (v: string) => void; options: string[] }) {
