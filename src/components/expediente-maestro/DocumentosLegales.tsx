@@ -577,7 +577,7 @@ function IJSelect({
 }
 
 function InformacionJuridicaEditor({
-  titular, cotitular, onTitular, onCotitular, canPersist, saving, saved, onSave,
+  titular, cotitular, onTitular, onCotitular, canPersist, saving, saved, onSave, onSync, syncFlash,
 }: {
   titular: Partial<ClienteMaestro>;
   cotitular: Partial<CotitularMaestro> & { activo?: boolean };
@@ -587,6 +587,8 @@ function InformacionJuridicaEditor({
   saving: boolean;
   saved: boolean;
   onSave: () => void;
+  onSync: () => void;
+  syncFlash: boolean;
 }) {
   const setT = <K extends keyof ClienteMaestro>(k: K, v: string) => onTitular({ ...titular, [k]: v });
   const setC = <K extends keyof CotitularMaestro>(k: K, v: string) => onCotitular({ ...cotitular, [k]: v });
@@ -599,18 +601,33 @@ function InformacionJuridicaEditor({
           <div className="text-sm font-semibold text-[#242424]">Información Jurídica</div>
           <span className="text-[11px] text-[#242424]/60">Fuente oficial del Poder Especial</span>
         </div>
-        {canPersist && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={onSave}
-            disabled={saving}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
-            style={{ backgroundColor: saved ? NUVEX.verde : NUVEX.azul }}
+            onClick={onSync}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 text-xs font-semibold text-[#242424] hover:bg-[#F7F9FB]"
+            title="Copia Tipo doc, Cédula, Ciudad, Correo, Celular y Dirección desde Datos del Cliente"
           >
-            {saved ? <CheckCircle2 size={13} /> : <Save size={13} />}
-            {saving ? "Guardando…" : saved ? "Guardado" : "Guardar"}
+            <RefreshCw size={13} /> Sincronizar desde datos del caso
           </button>
-        )}
+          {syncFlash && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold" style={{ color: NUVEX.verdeTextoFuerte }}>
+              <CheckCircle2 size={12} /> Información jurídica sincronizada correctamente.
+            </span>
+          )}
+          {canPersist && (
+            <button
+              onClick={onSave}
+              disabled={saving}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
+              style={{ backgroundColor: saved ? NUVEX.verde : NUVEX.azul }}
+            >
+              {saved ? <CheckCircle2 size={13} /> : <Save size={13} />}
+              {saving ? "Guardando…" : saved ? "Guardado" : "Guardar"}
+            </button>
+          )}
+        </div>
       </div>
+
 
       <div className="text-[11px] uppercase tracking-wider font-semibold mb-2" style={{ color: NUVEX.azul }}>
         Titular
