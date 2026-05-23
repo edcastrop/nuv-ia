@@ -62,6 +62,57 @@ export type Database = {
         }
         Relationships: []
       }
+      brand_config: {
+        Row: {
+          color_azul: string
+          color_negro: string
+          color_verde: string
+          correo_contratacion: string
+          correo_juridica: string
+          direccion_bogota: string
+          direccion_bucaramanga: string
+          id: boolean
+          logo_url: string
+          nombre_comercial: string
+          sitio_web: string
+          tagline: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          color_azul?: string
+          color_negro?: string
+          color_verde?: string
+          correo_contratacion?: string
+          correo_juridica?: string
+          direccion_bogota?: string
+          direccion_bucaramanga?: string
+          id?: boolean
+          logo_url?: string
+          nombre_comercial?: string
+          sitio_web?: string
+          tagline?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          color_azul?: string
+          color_negro?: string
+          color_verde?: string
+          correo_contratacion?: string
+          correo_juridica?: string
+          direccion_bogota?: string
+          direccion_bucaramanga?: string
+          id?: boolean
+          logo_url?: string
+          nombre_comercial?: string
+          sitio_web?: string
+          tagline?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       cartera: {
         Row: {
           created_at: string
