@@ -209,6 +209,7 @@ export function UVRSimulator({
 
   const ahorroNegativo = recomendada && (recomendada.ahorroTotal < 0 || recomendada.honorarios < 0);
 
+  const cuotasBaseSimulacion = Math.max(0, cuotasPendientes - 1);
   const totalActualPesos = calc?.escenarioActual.totalPagoPesos ?? 0;
   // N° veces pagado el crédito = (lo ya pagado + lo proyectado a pagar) / valor desembolsado.
   // Si no hay valor desembolsado, se usa el saldo actual como respaldo.
@@ -250,7 +251,7 @@ export function UVRSimulator({
     recomendada && calc
       ? buildUVRScenarioRows({
           cuotaActual: input.cuotaActualPesos,
-          cuotasPendientes,
+          cuotasPendientes: cuotasBaseSimulacion,
           totalActualPendiente: calc.escenarioActual.totalPagoPesos,
           saldoPesos: saldoPesosNum,
           nuevaCuota: recomendada.nuevaCuota,
@@ -693,7 +694,7 @@ export function UVRSimulator({
                 <PrintDocument
                   mode="uvr"
                   client={{ ...client, intervinientes, cobertura }}
-                  cuotasPendientes={cuotasPendientes}
+                  cuotasPendientes={cuotasBaseSimulacion}
                   metrics={metrics}
                   uvrPropuestas={calc!.propuestas}
                   bestIndex={bestIndex}
@@ -710,7 +711,7 @@ export function UVRSimulator({
                   scenario={{
                     cuotaActual: input.cuotaActualPesos,
                     nuevaCuota: recomendada.nuevaCuota,
-                    plazoActual: cuotasPendientes,
+                    plazoActual: cuotasBaseSimulacion,
                     nuevoPlazo: recomendada.nuevoPlazo,
                     totalActual: totalActualPesos,
                     totalOptimizado: recomendada.totalProyectado,
@@ -734,7 +735,7 @@ export function UVRSimulator({
               const proyeccion: ProyeccionNuvex = {
                 cuotaProyectada: recomendada.nuevaCuota,
                 plazoProyectado: recomendada.nuevoPlazo,
-                cuotasEliminadasProyectadas: cuotasPendientes - recomendada.nuevoPlazo,
+                cuotasEliminadasProyectadas: cuotasBaseSimulacion - recomendada.nuevoPlazo,
                 añosEliminadosProyectados: recomendada.añosEliminados,
                 ahorroInteresesProyectado: recomendada.ahorroIntereses,
                 ahorroSegurosProyectado: recomendada.ahorroSeguros,
@@ -751,7 +752,7 @@ export function UVRSimulator({
                   mode="uvr"
                   client={{ ...client, intervinientes, cobertura }}
                   proyeccion={proyeccion}
-                  cuotasPendientes={cuotasPendientes}
+                  cuotasPendientes={cuotasBaseSimulacion}
                   cuotaActualConSeguro={input.cuotaActualPesos}
                   seguros={input.seguros}
                   honorariosPct={honorariosPct}
