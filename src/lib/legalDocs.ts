@@ -8,7 +8,7 @@
 
 import type { ExpedienteMaestro } from "./expedienteMaestro";
 import type { Expediente, PropuestaData } from "./expedientes";
-import type { ApoderadoNuvex } from "./apoderados";
+// (ApoderadoNuvex se mantiene como contrato externo; aquí basta con ApoderadoSeleccionado)
 
 export type DocBlock =
   | { type: "title"; text: string }
