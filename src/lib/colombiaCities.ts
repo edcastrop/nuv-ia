@@ -240,6 +240,28 @@ export function cityLabel(c: CityRecord): string {
   return `${c.city}, ${c.department}`;
 }
 
+/** Extrae el departamento desde "Municipio, Departamento" (o '' si no aplica). */
+export function cityDepartment(label: string | null | undefined): string {
+  const t = (label || "").trim();
+  if (!t) return "";
+  if (t.includes(",")) {
+    const parts = t.split(",").map((s) => s.trim()).filter(Boolean);
+    if (parts.length >= 2) return parts[parts.length - 1];
+  }
+  // Si vino sólo el municipio, intentar resolver desde catálogo.
+  const folded = fold(t);
+  const hit = COLOMBIA_CITIES.find((c) => fold(c.city) === folded);
+  return hit?.department ?? "";
+}
+
+/** Extrae el municipio desde "Municipio, Departamento". */
+export function cityMunicipio(label: string | null | undefined): string {
+  const t = (label || "").trim();
+  if (!t) return "";
+  if (t.includes(",")) return t.split(",")[0].trim();
+  return t;
+}
+
 /** Quita acentos y normaliza para búsqueda fuzzy. */
 function fold(s: string): string {
   return (s || "")
