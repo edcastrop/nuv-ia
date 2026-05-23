@@ -680,23 +680,25 @@ function BeforeAfterChart({
         >
           <div
             style={{
-              fontSize: 8.5,
-              fontWeight: 700,
-              letterSpacing: "0.2em",
+              fontSize: 7.5,
+              fontWeight: 800,
+              letterSpacing: "0.22em",
               textTransform: "uppercase",
               color: C.verdeOscuro,
+              lineHeight: 1.3,
             }}
           >
-            Tiempo recuperado
+            Libertad financiera
+            <br />anticipada
           </div>
           <div
             style={{
-              fontSize: 30,
+              fontSize: 34,
               fontWeight: 900,
               color: C.verdeOscuro,
               lineHeight: 1,
-              marginTop: 6,
-              letterSpacing: "-0.02em",
+              marginTop: 8,
+              letterSpacing: "-0.025em",
             }}
           >
             {formatNumber(añosEliminados, 1)}
@@ -706,10 +708,11 @@ function BeforeAfterChart({
               fontSize: 10,
               fontWeight: 700,
               color: C.verdeOscuro,
-              marginTop: 2,
+              marginTop: 3,
+              letterSpacing: "0.04em",
             }}
           >
-            años de vida
+            años antes
           </div>
         </div>
       </div>
