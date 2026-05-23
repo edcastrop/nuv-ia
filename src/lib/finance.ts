@@ -151,7 +151,7 @@ export function calculatePesosManual(
   const nuevoPlazoExacto =
     -Math.log(1 - (input.saldoCapital * tasaMensual) / nuevaCuotaSinSeguro) /
     Math.log(1 + tasaMensual);
-  const nuevoPlazo = Math.ceil(nuevoPlazoExacto);
+  const nuevoPlazo = roundPlazoNuvex(nuevoPlazoExacto);
   if (nuevoPlazo <= 0 || nuevoPlazo >= cuotasBase) {
     return { ...base, motivo: "El nuevo plazo no genera ahorro" };
   }
