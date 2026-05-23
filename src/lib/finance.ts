@@ -15,6 +15,18 @@ export function pmt(rate: number, nper: number, pv: number): number {
   return (rate * pv) / (1 - Math.pow(1 + rate, -nper));
 }
 
+// Redondeo NUVEX para convertir plazo exacto (NPER) a plazo entero.
+// Si la fracción es ≤ 0.02 (errores de redondeo flotante), se redondea al entero
+// más cercano; de lo contrario se aplica Math.ceil. Garantiza que la calculadora
+// manual coincida con las propuestas automáticas cuando se ingresa la misma cuota.
+export function roundPlazoNuvex(plazoExacto: number): number {
+  const nearest = Math.round(plazoExacto);
+  const diff = Math.abs(plazoExacto - nearest);
+  if (diff <= 0.02) return nearest;
+  return Math.ceil(plazoExacto);
+}
+
+
 // ====================== PESOS ======================
 export interface PesosInput {
   saldoCapital: number;
