@@ -47,6 +47,7 @@ import {
   type Interviniente,
 } from "./intervinientes";
 import { useAsesorDefault } from "@/hooks/useAsesorDefault";
+import { freshFromCobertura } from "@/lib/cobertura";
 
 export function PesosSimulator({
   initialExpediente,
