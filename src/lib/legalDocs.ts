@@ -278,3 +278,397 @@ export function buildContratoServicios(e: ExpedienteMaestro): LegalDoc {
     blocks,
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MÓDULO JURÍDICO — Documentos generados desde el Expediente Maestro
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// Todos los builders consumen exclusivamente datos almacenados en el expediente
+// (cliente, crédito, apoderado, licenciado). Los parámetros "extra" representan
+// información propia del caso jurídico puntual (motivo, fecha de negación, etc.)
+// que NO existe en el expediente y que sólo se solicita una vez por documento.
+
+export interface DerechoPeticionExtra {
+  asunto: string;
+  hechos: string;
+  pretensiones: string;
+}
+
+export function buildDerechoPeticion(
+  e: ExpedienteMaestro,
+  extra: DerechoPeticionExtra,
+): LegalDoc {
+  const c = e.cliente;
+  const cr = e.credito;
+  const ap = e.apoderado;
+  const usaApoderado = !!(ap?.nombre && ap.nombre.trim());
+
+  const blocks: DocBlock[] = [
+    { type: "title", text: "DERECHO DE PETICIÓN" },
+    { type: "subtitle", text: "Artículo 23 de la Constitución Política · Ley 1755 de 2015" },
+    { type: "spacer", size: 12 },
+    { type: "paragraph", text: `${ciudadFmt(c.ciudad)}, ${hoy()}.` },
+    { type: "spacer" },
+    { type: "paragraph", text: "Señores" },
+    { type: "paragraph", text: `${safe(cr.banco).toUpperCase()}` },
+    { type: "paragraph", text: "Atn. Defensor del Consumidor Financiero / Oficina de Atención al Cliente" },
+    { type: "paragraph", text: "Ciudad." },
+    { type: "spacer" },
+    {
+      type: "subtitle",
+      text: `Referencia: Derecho de petición — Crédito No. ${safe(cr.numeroCredito)}`,
+    },
+    { type: "paragraph", text: `Asunto: ${safe(extra.asunto)}` },
+    { type: "spacer" },
+    {
+      type: "paragraph",
+      text:
+        `${fullName(c.nombre)}, mayor de edad, identificado(a) con cédula de ciudadanía ` +
+        `No. ${safe(c.cedula)} expedida en ${safe(c.expedidaEn)}, con domicilio en ` +
+        `${ciudadFmt(c.ciudad)}, actuando en nombre propio` +
+        (usaApoderado
+          ? ` y por intermedio de mi apoderado ${fullName(ap.nombre)}, identificado(a) con C.C. No. ${safe(ap.cedula)},`
+          : ",") +
+        ` respetuosamente me dirijo a ustedes para presentar el siguiente DERECHO DE PETICIÓN ` +
+        `con fundamento en el artículo 23 de la Constitución Política y la Ley 1755 de 2015.`,
+    },
+    { type: "spacer" },
+
+    { type: "heading", text: "HECHOS" },
+    { type: "paragraph", text: safe(extra.hechos) },
+    { type: "spacer" },
+
+    { type: "heading", text: "PETICIONES" },
+    { type: "paragraph", text: safe(extra.pretensiones) },
+    { type: "spacer" },
+
+    { type: "heading", text: "FUNDAMENTOS DE DERECHO" },
+    {
+      type: "paragraph",
+      text:
+        "Artículo 23 de la Constitución Política; Ley 1755 de 2015 (regulación del derecho " +
+        "fundamental de petición); Ley 1328 de 2009 (régimen de protección al consumidor " +
+        "financiero); Circular Básica Jurídica de la Superintendencia Financiera de Colombia.",
+    },
+    { type: "spacer" },
+
+    { type: "heading", text: "NOTIFICACIONES" },
+    {
+      type: "paragraph",
+      text:
+        `Recibiré notificaciones en ${safe(c.direccion)}, ${ciudadFmt(c.ciudad)}, ` +
+        `teléfono ${safe(c.telefono)}, correo electrónico ${safe(c.email)}.`,
+    },
+    { type: "spacer", size: 18 },
+
+    { type: "paragraph", text: "Cordialmente," },
+    { type: "spacer", size: 28 },
+    {
+      type: "signature",
+      columns: usaApoderado
+        ? [
+            { label: "EL PETICIONARIO", name: fullName(c.nombre), cc: `C.C. ${safe(c.cedula)}` },
+            { label: "APODERADO", name: fullName(ap.nombre), cc: `C.C. ${safe(ap.cedula)}` },
+          ]
+        : [{ label: "EL PETICIONARIO", name: fullName(c.nombre), cc: `C.C. ${safe(c.cedula)}` }],
+    },
+  ];
+
+  return {
+    filename: `Derecho_Peticion_${(c.nombre || "Cliente").replace(/\s+/g, "_")}`,
+    title: "Derecho de Petición",
+    blocks,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TUTELA
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface TutelaExtra {
+  derechoVulnerado: string;
+  hechos: string;
+  pretensiones: string;
+  pruebas?: string;
+}
+
+export function buildTutela(e: ExpedienteMaestro, extra: TutelaExtra): LegalDoc {
+  const c = e.cliente;
+  const cr = e.credito;
+
+  const blocks: DocBlock[] = [
+    { type: "title", text: "ACCIÓN DE TUTELA" },
+    {
+      type: "subtitle",
+      text: "Artículo 86 de la Constitución Política · Decreto 2591 de 1991",
+    },
+    { type: "spacer", size: 12 },
+    {
+      type: "paragraph",
+      text: `${ciudadFmt(c.ciudad)}, ${hoy()}.`,
+    },
+    { type: "spacer" },
+    { type: "paragraph", text: "Señor(a)" },
+    { type: "paragraph", text: "JUEZ DE TUTELA — REPARTO" },
+    { type: "paragraph", text: `${ciudadFmt(c.ciudad)}.` },
+    { type: "spacer" },
+    { type: "subtitle", text: `Referencia: Acción de tutela contra ${safe(cr.banco).toUpperCase()}` },
+    { type: "spacer" },
+    {
+      type: "paragraph",
+      text:
+        `${fullName(c.nombre)}, mayor de edad, identificado(a) con cédula de ciudadanía ` +
+        `No. ${safe(c.cedula)} expedida en ${safe(c.expedidaEn)}, con domicilio en ` +
+        `${safe(c.direccion)}, ${ciudadFmt(c.ciudad)}, en ejercicio del derecho consagrado ` +
+        `en el artículo 86 de la Constitución Política y reglamentado por el Decreto 2591 de 1991, ` +
+        `interpongo ACCIÓN DE TUTELA contra ${safe(cr.banco).toUpperCase()} con fundamento en lo siguiente:`,
+    },
+    { type: "spacer" },
+
+    { type: "heading", text: "I. DERECHO FUNDAMENTAL VULNERADO" },
+    { type: "paragraph", text: safe(extra.derechoVulnerado) },
+    { type: "spacer" },
+
+    { type: "heading", text: "II. HECHOS" },
+    { type: "paragraph", text: safe(extra.hechos) },
+    { type: "spacer" },
+
+    { type: "heading", text: "III. PRETENSIONES" },
+    { type: "paragraph", text: safe(extra.pretensiones) },
+    { type: "spacer" },
+
+    { type: "heading", text: "IV. PRUEBAS" },
+    {
+      type: "paragraph",
+      text: extra.pruebas?.trim()
+        ? extra.pruebas
+        : "Solicito tener como pruebas los documentos anexos que sustentan los hechos expuestos.",
+    },
+    { type: "spacer" },
+
+    { type: "heading", text: "V. JURAMENTO" },
+    {
+      type: "paragraph",
+      text:
+        "Bajo la gravedad del juramento manifiesto que no he interpuesto otra acción de tutela " +
+        "por los mismos hechos y derechos.",
+    },
+    { type: "spacer" },
+
+    { type: "heading", text: "VI. NOTIFICACIONES" },
+    {
+      type: "paragraph",
+      text:
+        `Recibiré notificaciones en ${safe(c.direccion)}, ${ciudadFmt(c.ciudad)}, ` +
+        `teléfono ${safe(c.telefono)}, correo electrónico ${safe(c.email)}. ` +
+        `La entidad accionada podrá ser notificada en sus oficinas principales en la ciudad.`,
+    },
+    { type: "spacer", size: 18 },
+
+    { type: "paragraph", text: "Atentamente," },
+    { type: "spacer", size: 28 },
+    {
+      type: "signature",
+      columns: [
+        { label: "EL ACCIONANTE", name: fullName(c.nombre), cc: `C.C. ${safe(c.cedula)}` },
+      ],
+    },
+  ];
+
+  return {
+    filename: `Tutela_${(c.nombre || "Cliente").replace(/\s+/g, "_")}`,
+    title: "Acción de Tutela",
+    blocks,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RESPUESTA A NEGACIÓN
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface RespuestaNegacionExtra {
+  fechaNegacion: string;
+  radicadoNegacion: string;
+  motivoNegacion: string;
+  argumentos: string;
+}
+
+export function buildRespuestaNegacion(
+  e: ExpedienteMaestro,
+  extra: RespuestaNegacionExtra,
+): LegalDoc {
+  const c = e.cliente;
+  const cr = e.credito;
+
+  const blocks: DocBlock[] = [
+    { type: "title", text: "RESPUESTA A NEGACIÓN" },
+    { type: "subtitle", text: "Solicitud de reconsideración y recurso de reposición" },
+    { type: "spacer", size: 12 },
+    { type: "paragraph", text: `${ciudadFmt(c.ciudad)}, ${hoy()}.` },
+    { type: "spacer" },
+    { type: "paragraph", text: "Señores" },
+    { type: "paragraph", text: safe(cr.banco).toUpperCase() },
+    { type: "paragraph", text: "Atn. Comité de Crédito / Vicepresidencia de Crédito Hipotecario" },
+    { type: "paragraph", text: "Ciudad." },
+    { type: "spacer" },
+    {
+      type: "subtitle",
+      text:
+        `Referencia: Respuesta a negación · Radicado ${safe(extra.radicadoNegacion)} · ` +
+        `Crédito No. ${safe(cr.numeroCredito)}`,
+    },
+    { type: "spacer" },
+    {
+      type: "paragraph",
+      text:
+        `${fullName(c.nombre)}, identificado(a) con cédula de ciudadanía No. ${safe(c.cedula)}, ` +
+        `titular del crédito hipotecario No. ${safe(cr.numeroCredito)}, en respuesta a la ` +
+        `comunicación de fecha ${safe(extra.fechaNegacion)} mediante la cual esa entidad negó ` +
+        `la solicitud presentada, me permito manifestar lo siguiente:`,
+    },
+    { type: "spacer" },
+
+    { type: "heading", text: "1. MOTIVO INVOCADO POR EL BANCO" },
+    { type: "paragraph", text: safe(extra.motivoNegacion) },
+    { type: "spacer" },
+
+    { type: "heading", text: "2. ARGUMENTOS DEL CLIENTE" },
+    { type: "paragraph", text: safe(extra.argumentos) },
+    { type: "spacer" },
+
+    { type: "heading", text: "3. SOLICITUD" },
+    {
+      type: "paragraph",
+      text:
+        `Con fundamento en lo anterior, solicito respetuosamente reconsiderar la decisión y ` +
+        `aprobar la solicitud presentada sobre el crédito No. ${safe(cr.numeroCredito)}. ` +
+        `De mantenerse la negativa, solicito se entienda interpuesto el recurso de reposición ` +
+        `correspondiente y se remita el asunto al Defensor del Consumidor Financiero.`,
+    },
+    { type: "spacer" },
+
+    { type: "heading", text: "4. NOTIFICACIONES" },
+    {
+      type: "paragraph",
+      text:
+        `Recibiré notificaciones en ${safe(c.direccion)}, ${ciudadFmt(c.ciudad)}, ` +
+        `teléfono ${safe(c.telefono)}, correo ${safe(c.email)}.`,
+    },
+    { type: "spacer", size: 18 },
+
+    { type: "paragraph", text: "Cordialmente," },
+    { type: "spacer", size: 28 },
+    {
+      type: "signature",
+      columns: [
+        { label: "EL TITULAR", name: fullName(c.nombre), cc: `C.C. ${safe(c.cedula)}` },
+      ],
+    },
+  ];
+
+  return {
+    filename: `Respuesta_Negacion_${(c.nombre || "Cliente").replace(/\s+/g, "_")}`,
+    title: "Respuesta a Negación",
+    blocks,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RADICACIÓN (oficio remisorio de radicación de documentos)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface RadicacionExtra {
+  oficina: string; // Oficina/área a la que se radica
+  asunto: string;
+  documentosAdjuntos: string; // listado libre, una línea por documento
+  observaciones?: string;
+}
+
+export function buildRadicacion(
+  e: ExpedienteMaestro,
+  extra: RadicacionExtra,
+): LegalDoc {
+  const c = e.cliente;
+  const cr = e.credito;
+  const ap = e.apoderado;
+  const usaApoderado = !!(ap?.nombre && ap.nombre.trim());
+
+  const blocks: DocBlock[] = [
+    { type: "title", text: "OFICIO DE RADICACIÓN" },
+    { type: "subtitle", text: "Constancia de entrega de documentos" },
+    { type: "spacer", size: 12 },
+    { type: "paragraph", text: `${ciudadFmt(c.ciudad)}, ${hoy()}.` },
+    { type: "spacer" },
+    { type: "paragraph", text: "Señores" },
+    { type: "paragraph", text: safe(cr.banco).toUpperCase() },
+    { type: "paragraph", text: `Atn. ${safe(extra.oficina)}` },
+    { type: "paragraph", text: "Ciudad." },
+    { type: "spacer" },
+    {
+      type: "subtitle",
+      text:
+        `Referencia: Radicación — Crédito No. ${safe(cr.numeroCredito)} · ` +
+        `Titular ${fullName(c.nombre)}`,
+    },
+    { type: "paragraph", text: `Asunto: ${safe(extra.asunto)}` },
+    { type: "spacer" },
+    {
+      type: "paragraph",
+      text:
+        `Por medio del presente oficio${
+          usaApoderado
+            ? `, y en mi calidad de apoderado de ${fullName(c.nombre)} (C.C. ${safe(c.cedula)}),`
+            : ","
+        } radico ante esa entidad los siguientes documentos relacionados con el ` +
+        `crédito hipotecario No. ${safe(cr.numeroCredito)} (producto ${safe(cr.tipoProducto)}):`,
+    },
+    { type: "spacer" },
+
+    { type: "heading", text: "DOCUMENTOS RADICADOS" },
+    ...safe(extra.documentosAdjuntos)
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0)
+      .map<DocBlock>((l, i) => ({
+        type: "paragraph",
+        text: `${i + 1}. ${l}`,
+      })),
+    { type: "spacer" },
+
+    ...(extra.observaciones?.trim()
+      ? ([
+          { type: "heading", text: "OBSERVACIONES" } as DocBlock,
+          { type: "paragraph", text: extra.observaciones.trim() } as DocBlock,
+          { type: "spacer" } as DocBlock,
+        ])
+      : []),
+
+    {
+      type: "paragraph",
+      text:
+        `Solicito amablemente expedir constancia de radicación con número, fecha y hora ` +
+        `de recepción. Para notificaciones, dirección ${safe(c.direccion)}, ${ciudadFmt(c.ciudad)}, ` +
+        `teléfono ${safe(c.telefono)}, correo ${safe(c.email)}.`,
+    },
+    { type: "spacer", size: 18 },
+
+    { type: "paragraph", text: "Atentamente," },
+    { type: "spacer", size: 28 },
+    {
+      type: "signature",
+      columns: usaApoderado
+        ? [
+            { label: "EL APODERADO", name: fullName(ap.nombre), cc: `C.C. ${safe(ap.cedula)}` },
+          ]
+        : [
+            { label: "EL TITULAR", name: fullName(c.nombre), cc: `C.C. ${safe(c.cedula)}` },
+          ],
+    },
+  ];
+
+  return {
+    filename: `Radicacion_${(c.nombre || "Cliente").replace(/\s+/g, "_")}`,
+    title: "Oficio de Radicación",
+    blocks,
+  };
+}
