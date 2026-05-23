@@ -324,18 +324,37 @@ export function ResultadoFinal({
                 </button>
               )}
               <button
-                onClick={() =>
-                  exportElementToPdf(informeId, `NUVEX_Resultado_Final_${sanitizeFileName(client.nombre)}.pdf`)
-                }
+                onClick={async () => {
+                  const { validateRequired, ensureValid } = await import("@/lib/pdfValidator");
+                  const v = validateRequired([
+                    { key: "nombre", label: "Nombre cliente", value: client.nombre },
+                    { key: "cedula", label: "Cédula", value: client.cedula },
+                    { key: "banco", label: "Banco", value: aprob.banco || client.banco },
+                    { key: "numeroCredito", label: "N° crédito", value: client.numeroCredito },
+                    { key: "producto", label: "Producto", value: client.tipoProducto },
+                    { key: "honorarios", label: "Honorarios", value: aprobado?.honorariosFinales },
+                  ]);
+                  if (!ensureValid("Resultado Final", v)) return;
+                  exportElementToPdf(informeId, `NUVEX_Resultado_Final_${sanitizeFileName(client.nombre)}.pdf`);
+                }}
                 className="rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow transition-transform hover:scale-[1.01]"
                 style={{ backgroundColor: NUVEX.azul }}
               >
                 Exportar informe final (PDF)
               </button>
               <button
-                onClick={() =>
-                  exportElementToPdf(cuentaId, `NUVEX_Cuenta_Cobro_${consecutivo}_${sanitizeFileName(client.nombre)}.pdf`)
-                }
+                onClick={async () => {
+                  const { validateRequired, ensureValid } = await import("@/lib/pdfValidator");
+                  const v = validateRequired([
+                    { key: "nombre", label: "Nombre cliente", value: client.nombre },
+                    { key: "cedula", label: "Cédula", value: client.cedula },
+                    { key: "banco", label: "Banco", value: aprob.banco || client.banco },
+                    { key: "numeroCredito", label: "N° crédito", value: client.numeroCredito },
+                    { key: "honorarios", label: "Honorarios finales", value: aprobado?.honorariosFinales },
+                  ]);
+                  if (!ensureValid("Cuenta de Cobro", v)) return;
+                  exportElementToPdf(cuentaId, `NUVEX_Cuenta_Cobro_${consecutivo}_${sanitizeFileName(client.nombre)}.pdf`);
+                }}
                 className="rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow transition-transform hover:scale-[1.01]"
                 style={{ backgroundColor: NUVEX.negro }}
               >
