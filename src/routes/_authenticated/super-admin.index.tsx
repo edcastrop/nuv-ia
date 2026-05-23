@@ -84,8 +84,9 @@ function SuperAdminDashboard() {
           <div className="text-sm text-[#242424]/60">Panel global de control NUVEX</div>
         </div>
         <div className="flex gap-2 text-xs">
-          <Link to="/super-admin/usuarios" className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 font-medium">Usuarios</Link>
-          <Link to="/super-admin/expedientes" className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 font-medium">Expedientes</Link>
+         <Link to="/super-admin/usuarios" className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 font-medium">Usuarios</Link>
+         <Link to="/super-admin/expedientes" className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 font-medium">Expedientes</Link>
+         <Link to="/super-admin/marca" className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 font-medium">Marca</Link>
         </div>
       </div>
 
