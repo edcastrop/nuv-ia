@@ -895,8 +895,10 @@ function PrintInformeFinal({
         )}
 
         <PremiumFooter />
+        </div>
       </div>
     </div>
+
   );
 }
 
