@@ -676,6 +676,33 @@ function PrintInformeFinal({
           </div>
         </div>
 
+        {/* ANTES → DESPUÉS — fechas de finalización */}
+        <div style={{ padding: "20px 36px 0" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 16, alignItems: "stretch" }}>
+            <div style={{ border: `1px solid #E3E7EE`, borderRadius: 14, padding: "16px 20px", background: "#FAFBFD" }}>
+              <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 3, color: "#8892A0", textTransform: "uppercase" }}>ANTES</div>
+              <div style={{ fontSize: 10, color: "#5C6770", marginTop: 4 }}>Fecha estimada de finalización</div>
+              <div style={{ fontSize: 20, fontWeight: 900, color: NUVEX.negro, marginTop: 6, letterSpacing: -0.3 }}>
+                {fmtMesAño(fechaFinActual)}
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
+              <div style={{ fontSize: 24, fontWeight: 900, color: NUVEX.azul, lineHeight: 1 }}>→</div>
+              <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2, color: NUVEX.verdeTextoFuerte, textAlign: "center" }}>
+                {formatNumber(aprobado.añosEliminados, 1)} AÑOS<br />ELIMINADOS
+              </div>
+            </div>
+            <div style={{ border: `1px solid ${NUVEX.verde}`, borderRadius: 14, padding: "16px 20px", background: NUVEX.verdeClaro }}>
+              <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 3, color: NUVEX.verdeTextoFuerte, textTransform: "uppercase" }}>DESPUÉS</div>
+              <div style={{ fontSize: 10, color: NUVEX.verdeTextoFuerte, marginTop: 4, opacity: 0.85 }}>Nueva fecha de finalización</div>
+              <div style={{ fontSize: 20, fontWeight: 900, color: NUVEX.verdeTextoFuerte, marginTop: 6, letterSpacing: -0.3 }}>
+                {fmtMesAño(fechaFinDespues)}
+              </div>
+            </div>
+          </div>
+        </div>
+
+
         <div style={{ padding: "26px 36px 0" }}>
           <div style={{ marginBottom: 20 }}>
             <MetaRow
