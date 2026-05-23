@@ -164,6 +164,7 @@ function ApoderadosPage() {
               <Field label="Nombre completo *" value={form.nombre} onChange={(v) => setForm({ ...form, nombre: v })} className="sm:col-span-2" />
               <Field label="Cédula *" value={form.cedula} onChange={(v) => setForm({ ...form, cedula: v })} />
               <Field label="Lugar de expedición" value={form.lugar_expedicion} onChange={(v) => setForm({ ...form, lugar_expedicion: v })} />
+              <Field label="Ciudad" value={form.ciudad} onChange={(v) => setForm({ ...form, ciudad: v })} />
               <Field label="Celular" value={form.celular} onChange={(v) => setForm({ ...form, celular: v })} />
               <Field label="Correo" value={form.correo} onChange={(v) => setForm({ ...form, correo: v })} />
               <label className="flex items-center gap-2 text-sm text-[#242424] sm:col-span-2 mt-2">
