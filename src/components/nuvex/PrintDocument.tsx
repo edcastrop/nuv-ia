@@ -191,6 +191,10 @@ export function PrintDocument(props: Props) {
           padding: "20mm 16mm 16mm 16mm",
           pageBreakBefore: "always",
           position: "relative",
+          minHeight: "297mm",
+          height: "297mm",
+          boxSizing: "border-box",
+          overflow: "hidden",
         }}
       >
         <PremiumHeader fecha={fecha} />
