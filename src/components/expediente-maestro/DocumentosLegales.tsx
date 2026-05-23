@@ -13,6 +13,7 @@ import {
 import { PODER_TEMPLATES } from "@/lib/poderTemplates";
 import { exportLegalDocPDF, exportLegalDocDOCX } from "@/lib/legalDocsExport";
 import { listApoderados, seleccionarApoderado, type ApoderadoNuvex, type MotivoSeleccion } from "@/lib/apoderados";
+import { EnviarContratacionButton, type ContratacionContext } from "./EnviarContratacion";
 
 const fmtCOP = (n: number) =>
   !isFinite(n) || n === 0
@@ -208,6 +209,29 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
     () => buildDatosContrato(live, simExpediente ?? null, acuerdo),
     [live, simExpediente, acuerdo],
   );
+
+  // ── Contexto para "Enviar a Contratación"
+  const poderListo = poderes.length > 0 && poderes[0].missing.length === 0;
+  const datosListos = datosDoc.blocks.length > 0;
+  const clienteCompleto = !!(live.cliente?.nombre && live.cliente?.cedula);
+  const juridicaCompleta = !!(live.cliente?.cedula && live.cliente?.expedidaEn && live.cliente?.ciudad);
+  const contratacionFaltantes: string[] = [];
+  if (!clienteCompleto) contratacionFaltantes.push("Datos del cliente (nombre y cédula).");
+  if (!juridicaCompleta) contratacionFaltantes.push("Información jurídica (cédula, lugar de expedición, ciudad).");
+  if (!selectedAp) contratacionFaltantes.push("Selecciona un apoderado NUVEX.");
+  if (!poderListo) contratacionFaltantes.push("Poder Especial generado sin datos faltantes.");
+  if (!datosListos) contratacionFaltantes.push("Datos para Contrato generados.");
+  if (!expedienteIdToPersist) contratacionFaltantes.push("Esta sección requiere un expediente guardado.");
+  const contratacionCtx: ContratacionContext = {
+    expedienteId: expedienteIdToPersist || "",
+    clienteNombre: live.cliente?.nombre || simExpediente?.cliente_nombre || "Cliente",
+    banco: live.credito?.banco || simExpediente?.banco || "",
+    producto: live.credito?.tipoProducto || simExpediente?.producto || "",
+    asesorNombre: live.asesor?.nombre || "",
+    poderDoc: poderListo ? poderes[0].doc : null,
+    datosDoc: datosListos ? datosDoc : null,
+    faltantes: contratacionFaltantes,
+  };
 
   return (
     <>
@@ -448,6 +472,8 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
             descripcion="Disponible automáticamente en el simulador del expediente."
           />
         </div>
+
+        <EnviarContratacionButton ctx={contratacionCtx} onSent={onJuridicaSaved} />
       </Card>
 
       {preview && <PreviewModal doc={preview} onClose={() => setPreview(null)} />}

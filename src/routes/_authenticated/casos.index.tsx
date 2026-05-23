@@ -33,6 +33,7 @@ const TEXT2 = "#94A3B8";
 const ESTADO_THEME: Record<EstadoExpediente, { color: string; label: string }> = {
   SIMULADO: { color: "#445DA3", label: "Simulado" },
   FIRMADO: { color: "#9333EA", label: "Firmado" },
+  ENVIADO_CONTRATACION: { color: "#6366F1", label: "Enviado a Contratación" },
   RADICADO: { color: "#F97316", label: "Radicado" },
   APROBADO: { color: "#84B98F", label: "Aprobado" },
   FACTURADO: { color: "#D4A017", label: "Facturado" },

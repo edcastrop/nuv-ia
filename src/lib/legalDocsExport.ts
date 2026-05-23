@@ -125,6 +125,93 @@ export function exportLegalDocPDF(doc: LegalDoc) {
   pdf.save(`${doc.filename}.pdf`);
 }
 
+/** Igual que exportLegalDocPDF pero devuelve el Blob en memoria (no descarga). */
+export function legalDocToPDFBlob(doc: LegalDoc): Blob {
+  // Reutilizamos exportLegalDocPDF redirigiendo la salida.
+  // jsPDF no permite "interceptar" save; replicamos el render sucintamente vía output.
+  const pdf = renderLegalDocToJsPDF(doc);
+  return pdf.output("blob");
+}
+
+function renderLegalDocToJsPDF(doc: LegalDoc): jsPDF {
+  const pdf = new jsPDF({ unit: "pt", format: "letter" });
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  const marginX = 72, marginY = 72;
+  const contentW = pageW - marginX * 2;
+  let y = marginY;
+
+  const checkBreak = (n: number) => { if (y + n > pageH - marginY) { pdf.addPage(); y = marginY; } };
+  const writeText = (text: string, opts: { size: number; bold?: boolean; align?: "left" | "center"; lineGap?: number }) => {
+    pdf.setFont("times", opts.bold ? "bold" : "normal");
+    pdf.setFontSize(opts.size);
+    const lineH = opts.size * 1.35;
+    const lines = pdf.splitTextToSize(text, contentW) as string[];
+    for (const line of lines) {
+      checkBreak(lineH);
+      if (opts.align === "center") pdf.text(line, pageW / 2, y, { align: "center" });
+      else pdf.text(line, marginX, y);
+      y += lineH;
+    }
+    if (opts.lineGap) y += opts.lineGap;
+  };
+
+  for (const b of doc.blocks) {
+    switch (b.type) {
+      case "title": writeText(b.text, { size: 16, bold: true, align: "center", lineGap: 8 }); break;
+      case "subtitle": writeText(b.text, { size: 12, bold: true, align: "center", lineGap: 6 }); break;
+      case "heading": writeText(b.text, { size: 11, bold: true, lineGap: 2 }); break;
+      case "paragraph": writeText(b.text, { size: 11, lineGap: 4 }); break;
+      case "section":
+        y += 6;
+        writeText(b.text, { size: 12, bold: true, lineGap: 4 });
+        pdf.setLineWidth(0.5);
+        pdf.line(marginX, y - 2, pageW - marginX, y - 2);
+        y += 4;
+        break;
+      case "field": {
+        const labelW = 170, valueW = contentW - labelW - 10;
+        pdf.setFont("times", "bold"); pdf.setFontSize(11);
+        const labelLines = pdf.splitTextToSize(b.label, labelW) as string[];
+        pdf.setFont("times", "normal");
+        const valueLines = pdf.splitTextToSize(b.value || "—", valueW) as string[];
+        const lines = Math.max(labelLines.length, valueLines.length);
+        const lineH = 11 * 1.35;
+        checkBreak(lines * lineH + 4);
+        const startY = y;
+        pdf.setFont("times", "bold");
+        labelLines.forEach((l, i) => pdf.text(l, marginX, startY + i * lineH));
+        pdf.setFont("times", "normal");
+        valueLines.forEach((l, i) => pdf.text(l, marginX + labelW + 10, startY + i * lineH));
+        y = startY + lines * lineH + 2;
+        break;
+      }
+      case "spacer": y += b.size ?? 8; break;
+      case "signature": {
+        const colW = contentW / b.columns.length;
+        checkBreak(80);
+        pdf.setLineWidth(0.5);
+        b.columns.forEach((_, i) => {
+          const x1 = marginX + colW * i + 20;
+          const x2 = marginX + colW * (i + 1) - 20;
+          pdf.line(x1, y, x2, y);
+        });
+        y += 14;
+        pdf.setFont("times", "bold"); pdf.setFontSize(10);
+        b.columns.forEach((col, i) => pdf.text(col.label, marginX + colW * i + colW / 2, y, { align: "center" }));
+        y += 14;
+        pdf.setFont("times", "normal"); pdf.setFontSize(10);
+        b.columns.forEach((col, i) => { if (col.name) pdf.text(col.name, marginX + colW * i + colW / 2, y, { align: "center" }); });
+        y += 12;
+        b.columns.forEach((col, i) => { if (col.cc) pdf.text(col.cc, marginX + colW * i + colW / 2, y, { align: "center" }); });
+        y += 16;
+        break;
+      }
+    }
+  }
+  return pdf;
+}
+
 // ─────────────────────────────── DOCX ───────────────────────────────
 
 function blockToDocx(b: DocBlock): Paragraph | Table {
@@ -223,23 +310,25 @@ function blockToDocx(b: DocBlock): Paragraph | Table {
   }
 }
 
-export async function exportLegalDocDOCX(doc: LegalDoc) {
-  const docx = new Document({
-    styles: {
-      default: { document: { run: { font: "Times New Roman", size: 22 } } },
-    },
-    sections: [
-      {
-        properties: {
-          page: {
-            size: { width: 12240, height: 15840 },
-            margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
-          },
-        },
-        children: doc.blocks.map(blockToDocx),
-      },
-    ],
+function buildLegalDocDocx(doc: LegalDoc): Document {
+  return new Document({
+    styles: { default: { document: { run: { font: "Times New Roman", size: 22 } } } },
+    sections: [{
+      properties: { page: {
+        size: { width: 12240, height: 15840 },
+        margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
+      } },
+      children: doc.blocks.map(blockToDocx),
+    }],
   });
-  const blob = await Packer.toBlob(docx);
+}
+
+export async function exportLegalDocDOCX(doc: LegalDoc) {
+  const blob = await Packer.toBlob(buildLegalDocDocx(doc));
   saveAs(blob, `${doc.filename}.docx`);
 }
+
+export async function legalDocToDOCXBlob(doc: LegalDoc): Promise<Blob> {
+  return await Packer.toBlob(buildLegalDocDocx(doc));
+}
+

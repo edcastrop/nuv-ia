@@ -7,11 +7,13 @@ export type EstadoExpediente =
   | "RADICADO"
   | "APROBADO"
   | "FACTURADO"
-  | "PAGADO";
+  | "PAGADO"
+  | "ENVIADO_CONTRATACION";
 
 export const ESTADOS: EstadoExpediente[] = [
   "SIMULADO",
   "FIRMADO",
+  "ENVIADO_CONTRATACION",
   "RADICADO",
   "APROBADO",
   "FACTURADO",
@@ -21,6 +23,7 @@ export const ESTADOS: EstadoExpediente[] = [
 export const ESTADO_COLORS: Record<EstadoExpediente, { bg: string; color: string; border: string }> = {
   SIMULADO:  { bg: "#EEF1FA", color: "#445DA3", border: "#445DA3" },
   FIRMADO:   { bg: "#FFF7E6", color: "#8A5A00", border: "#F0B429" },
+  ENVIADO_CONTRATACION: { bg: "#E0E7FF", color: "#3730A3", border: "#6366F1" },
   RADICADO:  { bg: "#E8F0FE", color: "#1A4A8A", border: "#3B6FA0" },
   APROBADO:  { bg: "#EAF7EE", color: "#1F7A45", border: "#2E8B57" },
   FACTURADO: { bg: "#F3E8FF", color: "#6B21A8", border: "#9333EA" },
