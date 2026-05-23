@@ -15,7 +15,9 @@ import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedProyeccionRouteImport } from './routes/_authenticated/proyeccion'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAcademiaRouteImport } from './routes/_authenticated/academia'
+import { Route as AuthenticatedExpedienteMaestroIndexRouteImport } from './routes/_authenticated/expediente-maestro.index'
 import { Route as AuthenticatedCasosIndexRouteImport } from './routes/_authenticated/casos.index'
+import { Route as AuthenticatedExpedienteMaestroIdRouteImport } from './routes/_authenticated/expediente-maestro.$id'
 import { Route as AuthenticatedCasosIdRouteImport } from './routes/_authenticated/casos.$id'
 
 const LoginRoute = LoginRouteImport.update({
@@ -47,11 +49,23 @@ const AuthenticatedAcademiaRoute = AuthenticatedAcademiaRouteImport.update({
   path: '/academia',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedExpedienteMaestroIndexRoute =
+  AuthenticatedExpedienteMaestroIndexRouteImport.update({
+    id: '/expediente-maestro/',
+    path: '/expediente-maestro/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedCasosIndexRoute = AuthenticatedCasosIndexRouteImport.update({
   id: '/casos/',
   path: '/casos/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedExpedienteMaestroIdRoute =
+  AuthenticatedExpedienteMaestroIdRouteImport.update({
+    id: '/expediente-maestro/$id',
+    path: '/expediente-maestro/$id',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedCasosIdRoute = AuthenticatedCasosIdRouteImport.update({
   id: '/casos/$id',
   path: '/casos/$id',
@@ -65,7 +79,9 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
+  '/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/casos/': typeof AuthenticatedCasosIndexRoute
+  '/expediente-maestro/': typeof AuthenticatedExpedienteMaestroIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -74,7 +90,9 @@ export interface FileRoutesByTo {
   '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/': typeof AuthenticatedIndexRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
+  '/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/casos': typeof AuthenticatedCasosIndexRoute
+  '/expediente-maestro': typeof AuthenticatedExpedienteMaestroIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -85,7 +103,9 @@ export interface FileRoutesById {
   '/_authenticated/proyeccion': typeof AuthenticatedProyeccionRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/casos/$id': typeof AuthenticatedCasosIdRoute
+  '/_authenticated/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/_authenticated/casos/': typeof AuthenticatedCasosIndexRoute
+  '/_authenticated/expediente-maestro/': typeof AuthenticatedExpedienteMaestroIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -96,7 +116,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/proyeccion'
     | '/casos/$id'
+    | '/expediente-maestro/$id'
     | '/casos/'
+    | '/expediente-maestro/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -105,7 +127,9 @@ export interface FileRouteTypes {
     | '/proyeccion'
     | '/'
     | '/casos/$id'
+    | '/expediente-maestro/$id'
     | '/casos'
+    | '/expediente-maestro'
   id:
     | '__root__'
     | '/_authenticated'
@@ -115,7 +139,9 @@ export interface FileRouteTypes {
     | '/_authenticated/proyeccion'
     | '/_authenticated/'
     | '/_authenticated/casos/$id'
+    | '/_authenticated/expediente-maestro/$id'
     | '/_authenticated/casos/'
+    | '/_authenticated/expediente-maestro/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -167,11 +193,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAcademiaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/expediente-maestro/': {
+      id: '/_authenticated/expediente-maestro/'
+      path: '/expediente-maestro'
+      fullPath: '/expediente-maestro/'
+      preLoaderRoute: typeof AuthenticatedExpedienteMaestroIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/casos/': {
       id: '/_authenticated/casos/'
       path: '/casos'
       fullPath: '/casos/'
       preLoaderRoute: typeof AuthenticatedCasosIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/expediente-maestro/$id': {
+      id: '/_authenticated/expediente-maestro/$id'
+      path: '/expediente-maestro/$id'
+      fullPath: '/expediente-maestro/$id'
+      preLoaderRoute: typeof AuthenticatedExpedienteMaestroIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/casos/$id': {
@@ -190,7 +230,9 @@ interface AuthenticatedRouteChildren {
   AuthenticatedProyeccionRoute: typeof AuthenticatedProyeccionRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedCasosIdRoute: typeof AuthenticatedCasosIdRoute
+  AuthenticatedExpedienteMaestroIdRoute: typeof AuthenticatedExpedienteMaestroIdRoute
   AuthenticatedCasosIndexRoute: typeof AuthenticatedCasosIndexRoute
+  AuthenticatedExpedienteMaestroIndexRoute: typeof AuthenticatedExpedienteMaestroIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -199,7 +241,10 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedProyeccionRoute: AuthenticatedProyeccionRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedCasosIdRoute: AuthenticatedCasosIdRoute,
+  AuthenticatedExpedienteMaestroIdRoute: AuthenticatedExpedienteMaestroIdRoute,
   AuthenticatedCasosIndexRoute: AuthenticatedCasosIndexRoute,
+  AuthenticatedExpedienteMaestroIndexRoute:
+    AuthenticatedExpedienteMaestroIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -213,3 +258,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
