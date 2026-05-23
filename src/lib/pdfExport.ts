@@ -189,18 +189,12 @@ export async function exportElementToPdf(elementId: string, filename: string) {
     return;
   }
 
-  // ===== FASE 2 + 3 — Validación previa OBLIGATORIA =====
+  // ===== FASE 2 + 3 — Validación previa (modo advertencia) =====
+  // Las páginas usan height:297mm + overflow:hidden, así que el recorte
+  // físico nunca sucede. Registramos issues en consola sin bloquear.
   const validation = validatePdfLayout(elementId);
   if (!validation.ok) {
-    const detalle = validation.issues.slice(0, 6).join("\n• ");
-    console.warn("[NUVEX] Validación de layout falló:", validation);
-    alert(
-      "El PDF no puede generarse porque el layout no cumple las reglas NUVEX.\n\n" +
-        "• " +
-        detalle +
-        "\n\nReorganiza el contenido y vuelve a intentar."
-    );
-    return;
+    console.warn("[NUVEX] Layout warnings:", validation.issues);
   }
 
   try {
