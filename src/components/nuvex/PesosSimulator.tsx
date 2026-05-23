@@ -618,6 +618,7 @@ export function PesosSimulator({
                       seguros,
                       tea,
                       nuevaCuotaManual,
+                      cuotasEliminarManual,
                       cuotaPagadaCliente: cobertura.cuotaPagadaCliente || "",
                       valorBeneficio: cobertura.valorCobertura || "",
                       tipoBeneficio: cobertura.tipoBeneficio || "",
