@@ -8,6 +8,8 @@ import { Card } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
 import { DocumentosLegales } from "@/components/expediente-maestro/DocumentosLegales";
 import { expedienteToMaestroLike } from "@/lib/expedienteMaestro";
+import { EstadoCasoBlock } from "@/components/expediente/EstadoCasoBlock";
+import { HistorialCaso } from "@/components/expediente/HistorialCaso";
 
 export const Route = createFileRoute("/_authenticated/casos/$id")({
   component: CasoDetail,
