@@ -83,6 +83,7 @@ export interface ExpedienteMaestro {
 export const emptyCliente = (): ClienteMaestro => ({
   nombre: "", cedula: "", expedidaEn: "", fechaNacimiento: "", estadoCivil: "",
   profesion: "", telefono: "", email: "", direccion: "", ciudad: "",
+  tipoDocumento: "CC", fechaExpedicion: "", departamento: "",
 });
 
 export const emptyCotitular = (): CotitularMaestro => ({
