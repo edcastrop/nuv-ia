@@ -230,7 +230,7 @@ export function MaestroEditor(p: Props) {
           <TextField label="Cédula" value={p.apoderado.cedula} onChange={(v) => p.onApoderado(set(p.apoderado, "cedula", v))} />
           <TextField label="Teléfono" value={p.apoderado.telefono} onChange={(v) => p.onApoderado(set(p.apoderado, "telefono", v))} />
           <TextField label="Email" value={p.apoderado.email} onChange={(v) => p.onApoderado(set(p.apoderado, "email", v))} />
-          <TextField label="Ciudad" value={p.apoderado.ciudad} onChange={(v) => p.onApoderado(set(p.apoderado, "ciudad", v))} />
+          <CityField label="Ciudad" value={p.apoderado.ciudad} onChange={(v) => p.onApoderado(set(p.apoderado, "ciudad", v))} />
           <TextField label="Número de poder" value={p.apoderado.numeroPoder} onChange={(v) => p.onApoderado(set(p.apoderado, "numeroPoder", v))} />
           <TextField label="Fecha de poder" value={p.apoderado.fechaPoder} placeholder="DD/MM/AAAA" onChange={(v) => p.onApoderado(set(p.apoderado, "fechaPoder", v))} />
           <TextField label="Dirección" value={p.apoderado.direccion} onChange={(v) => p.onApoderado(set(p.apoderado, "direccion", v))} className="md:col-span-2 lg:col-span-3" />
