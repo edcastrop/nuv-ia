@@ -1,130 +1,84 @@
+## Sistema PDF NUVEX 2026
 
-## Plan: Centro de Cartera NUVEX
-
-Módulo nuevo y aislado para gestión de honorarios. NO toca simuladores, OCR, Expediente Maestro, Poderes, Datos Contrato, Resultado Final, Cuenta de Cobro, Paz y Salvo. Solo agrega.
-
----
-
-### 1. Base de datos (1 migración)
-
-**Estados del caso** — agregar al enum `caso_estado`:
-- `documentos_banco_firmados`
-- `condiciones_aplicadas`
-
-Actualizar `CASO_ESTADOS` en `src/lib/casoEstados.ts` para insertar los dos nuevos estados en el orden correcto (entre `aprobado` y `resultado_final_generado`).
-
-**Tabla `cartera`** (1 fila por expediente, nace solo cuando estado_caso = `condiciones_aplicadas` o `resultado_final_generado`):
-- `id`, `expediente_id` (unique), `responsable_id` (uuid → profiles)
-- `estado_cartera` (enum nuevo)
-- `forma_pago` ('contado' | 'financiado')
-- `fecha_aplicacion_banco`, `fecha_resultado_final`, `fecha_cuenta_cobro`, `fecha_vencimiento` (calculada = aplicación + 5 días)
-- `honorarios_totales` (snapshot), `pagado`, `saldo` (generated)
-- `created_at`, `updated_at`
-
-**Enum `cartera_estado`**: pendiente_cobro, cuenta_cobro_generada, cuenta_cobro_enviada, pago_parcial, pago_total, vencido, acuerdo_pago, en_seguimiento, prejuridico, cerrado.
-
-**Tabla `cartera_cuotas`** (para financiado): cartera_id, numero, valor, fecha_vencimiento, estado, pagado.
-
-**Tabla `cartera_pagos`**: cartera_id, fecha, valor, metodo, banco_receptor, comprobante_num, comprobante_url, observaciones, user_id.
-
-**Tabla `cartera_acuerdos`**: cartera_id, valor_total, numero_cuotas, fecha_inicio, fecha_fin, estado, observaciones, user_id.
-
-**Tabla `cartera_comunicaciones`** (correos + whatsapp manual): cartera_id, tipo ('email_cuenta_cobro'|'email_recordatorio'|'email_vencimiento'|'email_mora_7'|'email_mora_15'|'email_prejuridico'|'whatsapp_*'), canal ('email'|'whatsapp'), estado ('enviado'|'copiado'|'marcado'), asunto, destinatario, body, proveedor_msg_id, user_id, created_at.
-
-**Tabla `cartera_auditoria`**: cartera_id, user_id, accion, observacion, canal, created_at.
-
-**Bucket storage**: `cartera-comprobantes` (privado).
-
-**RLS**: 
-- super_admin ve todo
-- cartera (rol nuevo si no existe ya — sí existe) gestiona todo
-- juridica ve `estado_cartera = 'prejuridico'`
-- licenciado (asesor del expediente) solo SELECT, sin INSERT/UPDATE de pagos
-- Trigger en `cartera_pagos` insert → recalcula `cartera.pagado`/saldo; si saldo=0 → estado_cartera='pago_total' y estado_caso='honorarios_pagados'.
-- Trigger insert `cartera_comunicaciones` y `cartera_pagos` → `cartera_auditoria`.
+Construir un **sistema unificado** del que hereden los 6 documentos, en vez de rediseñar uno por uno. Dos familias visuales, una misma infraestructura.
 
 ---
 
-### 2. Server functions
+### 1. Núcleo del sistema (`src/lib/pdf/`)
 
-`src/lib/cartera.functions.ts`:
-- `crearCartera({expedienteId, fechaAplicacion, formaPago, responsableId})` — valida estado, calcula vencimiento.
-- `registrarPago({carteraId, ...})` — upload comprobante a storage, insert pago, recalcula via trigger.
-- `crearAcuerdo({carteraId, ...})`.
-- `enviarPrejuridico(carteraId)` — cambia estado_cartera + estado_caso, registra auditoría.
-- `enviarCorreoCartera({carteraId, tipo})` — Resend con adjuntos PDF generados desde expediente (reutiliza helpers existentes de cuenta de cobro / resultado final si están; si no, genera básico). Tipos 1–6 según módulo 9.
-- `programarRecordatoriosCron` — server route `/api/public/hooks/cartera-recordatorios` ejecutado por pg_cron diariamente, escanea carteras por fecha y dispara correos automáticos según ventanas (día 3, vencimiento, +7, +15, +30).
+Nuevo módulo central:
 
-`src/lib/cartera.ts` — helpers cliente (list, get, queries).
+- **`PdfShell.tsx`** — componente React reutilizable con slots: `<PdfShell variant="commercial|operational" header={...} watermark>{children}</PdfShell>`. Gestiona página A4, márgenes seguros (40/50/40/40), paginación, footer institucional.
+- **`PdfHeader.tsx`** — Header Premium: logo NUVEX × 2.5, "NUVEX Finanzas Inteligentes", "Bogotá | Bucaramanga", fecha, nombre cliente. Variante comercial (banda azul + acento verde) y operativa (sobria, azul institucional).
+- **`PdfWatermark.tsx`** — logo NUVEX al 5% opacidad, centrado, rotado, detrás del contenido.
+- **`pdfTheme.ts`** — tokens (azul `#445DA3`, verde `#84B98F`, negro `#242424`), tipografía display vs body, escalas comerciales vs operativas.
+- **`pdfValidator.ts`** — endurece el `validatePdfLayout` actual: bloquea exportación si hay overflow, logo ausente, gráficos cortados, márgenes rotos. Reporta issues al usuario con toast antes de descargar.
 
----
+### 2. Familia Comercial (Wealth Management feel)
 
-### 3. UI
+#### Propuesta Financiera (nuevo `src/components/nuvex/PropuestaFinanciera.tsx`)
 
-**Nuevo bloque en `casos.$id.tsx`** (solo si estado_caso ∈ {condiciones_aplicadas, resultado_final_generado, ...posteriores}):
-- Si no existe cartera → botón "Crear cartera" → modal con fecha aplicación banco + forma pago + responsable.
-- Si existe → resumen + link a `/cartera/$id`.
+```text
+PÁG 1 — HERO
+┌──────────────────────────────────┐
+│  RECUPERA                        │
+│  [ X ] AÑOS                      │ ← display ~120pt
+│  DE TU VIDA FINANCIERA           │
+│                                  │
+│  Ahorro Total │ Nueva Cuota │ Cuotas Eliminadas
+│                                  │
+│  Línea de tiempo ANTES → DESPUÉS │
+└──────────────────────────────────┘
 
-**Nueva ruta `/_authenticated/cartera/index.tsx`** — Dashboard:
-- Indicadores: Causados, Recaudados, Pendientes, Vencidos, Acuerdos, Prejurídicos, Recaudo mes/año, por licenciado, por banco.
-- Tabla "Clientes por cobrar" con filtros (estado cartera, responsable, banco, mora >X días).
+PÁG 2 — HOY vs CON NUVEX (3 tarjetas: cuota, tiempo, total)
+PÁG 3 — Composición del ahorro (donut: intereses / seguros / total)
+PÁG 4 — Inversión por éxito (honorarios como inversión + disclaimer)
+```
 
-**Ruta `/_authenticated/cartera/$id.tsx`** — Detalle:
-- Datos automáticos del expediente (cliente, cédula, banco, producto, etc.)
-- Fechas importantes (editable solo cartera/admin).
-- Selector responsable.
-- Forma de pago + cuotas si financiado (CRUD cuotas, valida suma).
-- Sección "Registrar pago" (form + upload comprobante).
-- Lista pagos con saldo en vivo.
-- Sección Acuerdos de Pago (CRUD).
-- Sección Comunicaciones: tabla + botones "Enviar correo X", "Copiar mensaje WhatsApp", "Marcar como enviado".
-- Botón "Enviar a prejurídico" (rojo).
-- Si saldo=0 → botón "Generar paz y salvo" (link a módulo existente).
-- Auditoría (timeline).
+#### Resultado Final (rediseño de `ResultadoFinal.tsx`)
 
-**Sidebar/nav**: link "Cartera" visible para super_admin, admin, gerencia, cartera, juridica (juridica solo prejurídicos).
+Formato **certificación premium**: ANTES → DESPUÉS (fechas), años eliminados, ahorro, nueva cuota, acertividad, gráfico de cumplimiento (barra/medidor).
 
-**Hook**: `useCarteraPermissions()` para gating (licenciado readonly).
+### 3. Familia Operativa (corporativo sobrio)
 
-**Integración estado_caso**: cuando se marca `condiciones_aplicadas` desde `EstadoCasoBlock`, mostrar toast "Listo para crear cartera".
+Aplicar `PdfShell variant="operational"` con header institucional + watermark al 5% a:
 
----
+- Cuenta de Cobro (en `legalDocsExport`)
+- Paz y Salvo (`PazYSalvo.tsx`)
+- Poder (`poderTemplates` → render)
+- Datos para Contrato
 
-### 4. Correos (Resend ya conectado)
+**No** se cambia la lógica de negocio ni los campos; solo el chrome visual (header, tipografía, jerarquía, azul NUVEX más presente, logo más grande).
 
-Reutilizar patrón de `contratacion.functions.ts`. Plantillas inline HTML (sencillas, branded). Adjuntos PDF: cuenta de cobro y resultado final generados con helpers existentes (`legalDocsExport` / `pdfExport`).
+### 4. Validación obligatoria pre-export
 
-Cron job pg_cron diario 09:00 COL → POST `/api/public/hooks/cartera-recordatorios` con apikey anon, route escanea carteras activas y envía correos pendientes según reglas + registra en `cartera_comunicaciones`.
+`exportElementToPdf` se envuelve en `exportPdfSafely(id, filename)`:
 
----
+1. Ejecuta `pdfValidator` → si hay issues bloqueantes, muestra toast con la lista y **cancela**.
+2. Verifica que el `<img>` del logo cargó (`naturalWidth > 0`).
+3. Espera a que canvases/gráficos terminen de pintar.
+4. Solo entonces renderiza con html2canvas.
 
-### 5. Archivos
+### 5. Orden de entrega sugerido
 
-**Crear:**
-- `supabase/migrations/<ts>_cartera.sql`
-- `src/lib/cartera.ts`, `src/lib/cartera.functions.ts`
-- `src/components/cartera/CrearCarteraModal.tsx`
-- `src/components/cartera/RegistrarPagoForm.tsx`
-- `src/components/cartera/CuotasFinanciadas.tsx`
-- `src/components/cartera/ComunicacionesPanel.tsx`
-- `src/components/cartera/AcuerdosPanel.tsx`
-- `src/components/cartera/CarteraBlockExpediente.tsx`
-- `src/routes/_authenticated/cartera.index.tsx`
-- `src/routes/_authenticated/cartera.$id.tsx`
-- `src/routes/api/public/hooks/cartera-recordatorios.ts`
-
-**Editar (mínimo):**
-- `src/lib/casoEstados.ts` (2 estados nuevos)
-- `src/routes/_authenticated/casos.$id.tsx` (montar `CarteraBlockExpediente`)
-- `src/routes/_authenticated.tsx` (link nav)
+1. Núcleo (`PdfShell`, `PdfHeader`, `PdfWatermark`, `pdfTheme`, validador endurecido).
+2. Propuesta Financiera (nueva).
+3. Resultado Final (rediseño con shell comercial).
+4. Migrar los 4 operativos al `PdfShell` operativo.
+5. QA visual de los 6 PDFs (export real + revisión página por página).
 
 ---
 
-### Notas
+### Detalles técnicos
 
-- NO se toca cuenta de cobro, paz y salvo, resultado final — solo se consumen como PDFs adjuntos.
-- Cartera nace de forma explícita (botón) tras `condiciones_aplicadas`, no automáticamente, para que el usuario confirme la fecha real de aplicación.
-- Trigger DB asegura consistencia saldo/estado aún si se inserta pago vía otra ruta.
-- Cron de recordatorios es idempotente (no reenvía si ya hay comunicación con mismo tipo en la ventana).
+- Sigue usando `html2canvas-pro` + `jspdf` (ya funcionan en el stack).
+- Donut chart con SVG inline (sin dependencias nuevas).
+- Tipografía: mantener system stack actual; los "display" se logran con `font-weight: 800` + `letter-spacing: -0.04em` + tamaños 96–120pt.
+- Watermark: `<img>` con `position:absolute; inset:0; opacity:0.05; transform:rotate(-30deg); object-fit:contain;` dentro de cada `.nuvex-print-page`.
+- No se tocan: simuladores, OCR, Expediente Maestro (lógica), Cartera, roles, automatizaciones — solo la capa de presentación PDF.
 
-¿Procedo con la implementación?
+### Preguntas antes de empezar
+
+1. **Alcance de este turno**: ¿implemento el plan completo (5 pasos) o prefieres que entregue primero el **núcleo + Propuesta Financiera** y revisamos antes de seguir? Recomiendo lo segundo: la Propuesta es la pieza que más mueve cierres y conviene validarla visualmente antes de propagar el sistema.
+
+2. **Datos de la Propuesta**: los campos "años recuperados", "ahorro total", "cuotas eliminadas", "fecha estimada antes/después" — ¿ya están todos calculados en el simulador actual o necesito derivar alguno nuevo?
