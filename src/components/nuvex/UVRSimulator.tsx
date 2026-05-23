@@ -183,9 +183,18 @@ export function UVRSimulator({
 
   const manual = useMemo(() => {
     if (!datosCompletos || !calc) return null;
-    const v = parseCurrency(nuevaCuotaManual);
-    if (!v) return null;
-    const baseResult = calculateUVRManual(input, calc.escenarioActual, v);
+    let v: number;
+    let baseResult;
+    if (modoPersonalizada === "cuotas") {
+      const ce = parseDecimal(cuotasEliminarManual);
+      if (!ce) return null;
+      baseResult = calculateUVRManualByCuotas(input, calc.escenarioActual, ce);
+      v = baseResult.nuevaCuotaPesos;
+    } else {
+      v = parseCurrency(nuevaCuotaManual);
+      if (!v) return null;
+      baseResult = calculateUVRManual(input, calc.escenarioActual, v);
+    }
     // Tolerancia $2.000: si la cuota manual coincide con una propuesta automática,
     // se usan los resultados de esa propuesta para evitar discrepancias por redondeo.
     if (baseResult.valid) {
@@ -211,7 +220,7 @@ export function UVRSimulator({
       }
     }
     return baseResult;
-  }, [datosCompletos, input, calc, nuevaCuotaManual]);
+  }, [datosCompletos, input, calc, nuevaCuotaManual, cuotasEliminarManual, modoPersonalizada]);
 
 
   const manualValido = !!(manual && manual.valid);
