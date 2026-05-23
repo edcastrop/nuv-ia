@@ -47,9 +47,19 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente }: P
     if (!ap) return undefined;
     return {
       nombre: ap.nombre, cedula: ap.cedula,
-      lugarExpedicion: ap.lugar_expedicion, celular: ap.celular,
+      lugarExpedicion: ap.lugar_expedicion, ciudad: ap.ciudad, celular: ap.celular,
     };
   }, [apoderados, selectedApId]);
+
+  // ── Plantilla jurídica detectada (con override manual)
+  const detectedTemplate: PoderTemplateId = useMemo(
+    () => detectPoderTemplate(live.credito?.banco, live.credito?.tipoProducto),
+    [live.credito?.banco, live.credito?.tipoProducto],
+  );
+  const [tplOverride, setTplOverride] = useState<PoderTemplateId | null>(null);
+  const [showTplPicker, setShowTplPicker] = useState(false);
+  const activeTemplateId: PoderTemplateId = tplOverride ?? detectedTemplate;
+  const activeTemplateMeta = PODER_TEMPLATES.find((t) => t.id === activeTemplateId)!;
 
   // ── Acuerdo comercial (Contado / Financiado)
   const honorarios = useMemo(() => {
