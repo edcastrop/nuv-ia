@@ -344,6 +344,47 @@ export function ExtractoReader({ modo, onApply }: Props) {
     "valorCobertura",
   ]);
 
+  // Normaliza cuotasPagadas / cuotasPendientes. Misma lógica que el servidor
+  // para que ZIP, PDF, imagen y ediciones manuales produzcan el mismo objeto.
+  const normalizeExtractData = (data: ExtractoData): ExtractoData => {
+    const intStr = (k: string) => {
+      const v = data[k];
+      if (typeof v !== "string") return 0;
+      const n = parseInt(v.replace(/[^\d]/g, ""), 10);
+      return Number.isFinite(n) ? n : 0;
+    };
+    const out: ExtractoData = { ...data };
+    const cuotaActualNumero = intStr("cuotaActualNumero");
+    let cuotasPagadas = intStr("cuotasPagadas");
+    const plazoInicial = intStr("plazoInicial");
+    const cuotasPendientesExt = intStr("cuotasPendientes");
+    const advert: string[] = [];
+
+    if (cuotasPagadas <= 0 && cuotaActualNumero > 0) {
+      cuotasPagadas = cuotaActualNumero;
+      out.cuotasPagadas = String(cuotaActualNumero);
+    }
+    if (plazoInicial > 0 && cuotasPagadas > 0) {
+      const calc = plazoInicial - cuotasPagadas;
+      if (calc >= 0) {
+        if (cuotasPendientesExt > 0 && cuotasPendientesExt !== calc) {
+          advert.push(
+            "Las cuotas pendientes del extracto no coinciden con el cálculo NUVEX. Se usará plazo inicial menos cuotas pagadas.",
+          );
+        }
+        out.cuotasPendientes = String(calc);
+      }
+    }
+    if (cuotaActualNumero > 0 && cuotasPagadas <= 0) {
+      advert.push(
+        "Inconsistencia detectada: el extracto contiene número de cuota, pero cuotas pagadas aparece en cero.",
+      );
+    }
+    out.advertenciasNormalizacion = advert.join("\n");
+    return out;
+  };
+
+
   const recomputeBancolombia = (data: ExtractoData): ExtractoData => {
     const g = (k: string) => (typeof data[k] === "string" ? (data[k] as string) : "");
     const m = (k: string) => parseMontoExtracto(g(k));
