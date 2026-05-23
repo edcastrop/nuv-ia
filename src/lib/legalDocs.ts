@@ -297,7 +297,7 @@ export function buildDatosContrato(
     { type: "field", label: "Cuotas pagadas", value: fmtTxt(cr.cuotasPagadas) },
     { type: "spacer", size: 6 },
 
-    { type: "section", text: "PROPUESTA" },
+    { type: "section", text: "PROPUESTA ACEPTADA" },
     { type: "field", label: "Cuotas eliminadas", value: cuotasEliminadas !== null ? String(cuotasEliminadas) : "—" },
     { type: "field", label: "Nuevo plazo (meses)", value: fmtTxt(p.nuevoPlazo) },
     { type: "field", label: "Cuota actual", value: fmtCOP(cr.cuotaActual) },
