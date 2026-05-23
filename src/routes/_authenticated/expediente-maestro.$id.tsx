@@ -10,6 +10,7 @@ import { Card } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
 import { MaestroEditor } from "@/components/expediente-maestro/MaestroEditor";
 import { DocumentosLegales } from "@/components/expediente-maestro/DocumentosLegales";
+import { ModuloJuridico } from "@/components/expediente-maestro/ModuloJuridico";
 
 export const Route = createFileRoute("/_authenticated/expediente-maestro/$id")({
   component: MaestroDetail,
@@ -124,6 +125,12 @@ function MaestroDetail() {
         expediente={exp}
         liveOverride={{ cliente, cotitular, credito, fresh, asesor, licenciado, apoderado }}
       />
+
+      <ModuloJuridico
+        expediente={exp}
+        liveOverride={{ cliente, cotitular, credito, fresh, asesor, licenciado, apoderado }}
+      />
+
 
 
 
