@@ -1,6 +1,11 @@
 // Validador de datos PDF — fuente única: Expediente Maestro.
-// Si falta algún campo obligatorio o hay inconsistencias matemáticas,
-// bloquea la generación del documento.
+//
+// Dos modos:
+//  - ensureValid (estricto): bloquea exportación si hay issues. Usar SOLO
+//    para PDFs comerciales donde la inconsistencia rompe el cierre comercial.
+//  - ensureValidAdvisory (informativo): muestra una advertencia pero PERMITE
+//    exportar. Es el modo por defecto para documentos administrativos
+//    (Poder, Datos para Contrato, Cuenta de Cobro, Paz y Salvo).
 
 import { toast } from "sonner";
 
@@ -53,12 +58,7 @@ export function validateMath(
   return null;
 }
 
-/** Notifica issues al usuario con toast y devuelve true si puede continuar. */
-export function ensureValid(
-  documentName: string,
-  result: ValidationResult,
-): boolean {
-  if (result.ok) return true;
+function formatIssues(result: ValidationResult): string {
   const missing = result.issues.filter((i) => i.type === "missing");
   const math = result.issues.filter((i) => i.type !== "missing");
   const msgs: string[] = [];
@@ -67,9 +67,58 @@ export function ensureValid(
     msgs.push(
       `Inconsistencias: ${math.map((m) => `${m.label}${m.detail ? ` (${m.detail})` : ""}`).join("; ")}`,
     );
+  return msgs.join(" · ");
+}
+
+/** Bloquea la exportación si hay issues (modo estricto). */
+export function ensureValid(documentName: string, result: ValidationResult): boolean {
+  if (result.ok) return true;
   toast.error(`${documentName} — no se puede generar`, {
-    description: msgs.join(" · "),
+    description: formatIssues(result),
     duration: 7000,
   });
   return false;
+}
+
+/**
+ * Modo informativo (documentos administrativos): muestra una advertencia
+ * pero retorna SIEMPRE true para permitir la generación. Se usa para
+ * Poder, Datos para Contrato, Cuenta de Cobro y Paz y Salvo.
+ */
+export function ensureValidAdvisory(
+  documentName: string,
+  result: ValidationResult,
+): boolean {
+  if (!result.ok) {
+    toast.warning(`${documentName} — pendiente de validación financiera`, {
+      description: formatIssues(result),
+      duration: 6000,
+    });
+  }
+  return true;
+}
+
+/** Reporte final de exportación PDF (páginas generadas / campos pendientes). */
+export interface PdfExportReport {
+  documento: string;
+  paginas: number;
+  camposOcultados: number;
+  camposPendientes: string[];
+}
+
+export function reportPdfExport(r: PdfExportReport) {
+  const estado = r.camposPendientes.length === 0 ? "OK" : "Con pendientes";
+  const desc = [
+    `Páginas: ${r.paginas}`,
+    `Ocultos: ${r.camposOcultados}`,
+    r.camposPendientes.length
+      ? `Pendientes: ${r.camposPendientes.join(", ")}`
+      : "Sin pendientes",
+    `Estado: ${estado}`,
+  ].join(" · ");
+  if (r.camposPendientes.length === 0) {
+    toast.success(`${r.documento} generado`, { description: desc, duration: 5000 });
+  } else {
+    toast.message(`${r.documento} generado`, { description: desc, duration: 6500 });
+  }
 }
