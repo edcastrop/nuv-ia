@@ -80,8 +80,26 @@ function MaestroDetail() {
               Actualizado {new Date(exp.updated_at).toLocaleString("es-CO")}
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            {msg && <span className="text-xs text-[#242424]/70">{msg}</span>}
+          <div className="flex flex-wrap items-center gap-2">
+            {msg && <span className="text-xs text-[#242424]/70 mr-2">{msg}</span>}
+            <Link
+              to="/"
+              search={{ maestroId: id, modo: "pesos" as const }}
+              className="rounded-lg border px-3 py-2 text-xs font-semibold"
+              style={{ borderColor: NUVEX.azul, color: NUVEX.azul, backgroundColor: "#fff" }}
+              title="Abre el simulador en pesos con los datos del expediente"
+            >
+              Simular en Pesos
+            </Link>
+            <Link
+              to="/"
+              search={{ maestroId: id, modo: "uvr" as const }}
+              className="rounded-lg border px-3 py-2 text-xs font-semibold"
+              style={{ borderColor: NUVEX.azul, color: NUVEX.azul, backgroundColor: "#fff" }}
+              title="Abre el simulador en UVR con los datos del expediente"
+            >
+              Simular en UVR
+            </Link>
             <button
               onClick={guardar}
               disabled={saving}
@@ -90,7 +108,7 @@ function MaestroDetail() {
             >
               {saving ? "Guardando…" : "Guardar todo"}
             </button>
-            <Link to="/expediente-maestro" className="text-[11px] text-[#445DA3] hover:underline">← Volver</Link>
+            <Link to="/expediente-maestro" className="text-[11px] text-[#445DA3] hover:underline ml-1">← Volver</Link>
           </div>
         </div>
       </Card>
