@@ -120,33 +120,8 @@ function AuthenticatedLayout() {
 
         <div className="relative mx-auto flex max-w-[1400px] items-center justify-between gap-6 px-6" style={{ height: 92 }}>
           {/* IZQUIERDA — Logo */}
-          <Link to="/" className="group flex items-center gap-3 transition-transform duration-300 hover:-translate-y-0.5">
-            <div
-              className="relative flex h-12 w-12 items-center justify-center rounded-2xl text-white font-bold text-lg"
-              style={{
-                background: "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02))",
-                border: "1px solid rgba(255,255,255,0.10)",
-                boxShadow: `0 8px 24px -10px ${AZUL}, inset 0 1px 0 rgba(255,255,255,0.08)`,
-              }}
-            >
-              <span
-                style={{
-                  background: `linear-gradient(135deg, #fff, ${VERDE})`,
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
-              >
-                N
-              </span>
-              <span
-                className="absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 blur-md -z-10"
-                style={{ background: `linear-gradient(135deg, ${AZUL}, ${VERDE})` }}
-              />
-            </div>
-            <div className="hidden sm:block leading-tight">
-              <div className="text-[17px] font-semibold tracking-tight text-white">NUVEX</div>
-              <div className="text-[11px] font-medium text-white/55 -mt-0.5">Finanzas Inteligentes</div>
-            </div>
+          <Link to="/" className="group flex items-center transition-transform duration-300 hover:-translate-y-0.5">
+            <Logo variant="white" height={40} />
           </Link>
 
           {/* CENTRO — Navegación */}
