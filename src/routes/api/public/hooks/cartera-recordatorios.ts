@@ -3,6 +3,7 @@
 // Idempotente: por cada cartera + tipo + día sólo se envía una vez.
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { wrapNuvexEmail } from "@/lib/emailBrand.server";
 
 const RESEND_GATEWAY = "https://connector-gateway.lovable.dev/resend";
 const FROM = "NUVEX Cartera <cartera@notify.sistema-nuvex.com>";
@@ -118,7 +119,7 @@ export const Route = createFileRoute("/api/public/hooks/cartera-recordatorios")(
                 Authorization: `Bearer ${LOVABLE_API_KEY}`,
                 "X-Connection-Api-Key": RESEND_API_KEY,
               },
-              body: JSON.stringify({ from: FROM, to: [email], subject, text }),
+              body: JSON.stringify({ from: FROM, to: [email], subject, text, html: await wrapNuvexEmail({ subject, bodyText: text }) }),
             });
             const j = await r.json().catch(() => ({} as Record<string, unknown>));
             const ok = r.ok;

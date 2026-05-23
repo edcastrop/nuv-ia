@@ -5,6 +5,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { wrapNuvexEmail } from "@/lib/emailBrand.server";
 
 const AttachmentSchema = z.object({
   filename: z.string().min(1).max(255),
@@ -56,9 +57,7 @@ export const enviarContratacion = createServerFn({ method: "POST" })
         to: data.destinatarios,
         subject: data.asunto,
         text: data.cuerpo,
-        html: data.cuerpo
-          .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-          .replace(/\n/g, "<br>"),
+        html: await wrapNuvexEmail({ subject: data.asunto, bodyText: data.cuerpo }),
         attachments: data.attachments.map((a) => ({
           filename: a.filename,
           content: a.contentBase64,
