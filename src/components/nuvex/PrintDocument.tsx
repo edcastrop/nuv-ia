@@ -45,21 +45,27 @@ interface Props {
 }
 
 /* ============================================================
-   PALETA — NUVEX Private Banking
+   PALETA OFICIAL NUVEX — V3 (Azul dominante)
 ============================================================ */
 const C = {
-  ink: NUVEX.negro,        // #242424
-  azul: NUVEX.azul,        // #445DA3
-  brand: NUVEX.verde,      // #84B98F
+  ink: NUVEX.negro,                 // #242424
+  azul: NUVEX.azul,                 // #445DA3
+  azulDeep: "#2E4178",
+  azulSoft: "#EEF1FA",
+  azulSoft2: "#F6F8FD",
+  brand: NUVEX.verde,               // #84B98F
   brandDeep: "#3F8C57",
+  brandSoft: "#EAF5ED",
   graphite: "#52525B",
   muted: "#8A8A92",
   hairline: "#E6E6E6",
   hairlineSoft: "#F0F0EE",
   paper: "#FFFFFF",
   cream: "#FBFAF7",
-  ivory: "#F7F6F1",
 };
+
+const GRAD_BLUE = `linear-gradient(135deg, ${C.azul} 0%, ${C.azulDeep} 100%)`;
+const GRAD_HERO = `linear-gradient(135deg, ${C.azul} 0%, ${C.azulDeep} 55%, ${C.ink} 100%)`;
 
 /* ============================================================
    PRINT DOCUMENT — 2 páginas A4
@@ -77,7 +83,6 @@ export function PrintDocument(props: Props) {
   const cuotasEliminadas = Math.max(0, scenario.plazoActual - scenario.nuevoPlazo);
   const honorariosFinales = commercial?.hasDiscount ? commercial.finales : recommended.honorarios;
 
-  // Fechas de finalización proyectadas
   const fechaBase = new Date();
   const fechaFinActual = new Date(fechaBase);
   fechaFinActual.setMonth(fechaFinActual.getMonth() + scenario.plazoActual);
@@ -96,213 +101,153 @@ export function PrintDocument(props: Props) {
         color: C.ink,
         fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif",
         width: "210mm",
-        fontFeatureSettings: '"ss01","cv11"',
       }}
     >
-      {/* ============== PÁGINA 1 — PORTADA EJECUTIVA ============== */}
-      <section
-        className="nuvex-print-page"
-        style={{
-          padding: "20mm 18mm 18mm 18mm",
-          position: "relative",
-          minHeight: "297mm",
-          height: "297mm",
-          boxSizing: "border-box",
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <PremiumHeader fecha={fecha} />
+      {/* ============== PÁGINA 1 ============== */}
+      <PageShell pagina={1} fecha={fecha}>
+        {/* Eyebrow */}
+        <div style={eyebrow}>
+          Propuesta financiera personalizada · {client.nombre || "—"}
+        </div>
 
-        {/* CONTENIDO */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 22 }}>
-          {/* Eyebrow */}
-          <div style={eyebrow}>
-            Propuesta financiera personalizada · {client.nombre || "—"}
-          </div>
-
-          {/* HERO — título grande */}
-          <h1
-            style={{
-              fontSize: 40,
-              fontWeight: 300,
-              lineHeight: 1.05,
-              letterSpacing: "-0.03em",
-              color: C.ink,
-              margin: "16px 0 0 0",
-            }}
-          >
-            Recupera{" "}
-            <span style={{ fontWeight: 700, color: C.azul }}>
-              {formatNumber(añosEliminados, 0)} años
-            </span>
-            <br />
+        {/* TÍTULO STACK */}
+        <h1
+          style={{
+            fontSize: 56,
+            fontWeight: 800,
+            lineHeight: 0.98,
+            letterSpacing: "-0.035em",
+            margin: "10px 0 0 0",
+            textTransform: "uppercase",
+          }}
+        >
+          <span style={{ color: C.azul, display: "block" }}>Recupera</span>
+          <span style={{ color: C.brand, display: "block" }}>
+            {formatNumber(añosEliminados, 0)} años
+          </span>
+          <span style={{ color: C.ink, display: "block", fontWeight: 300, fontSize: 26, letterSpacing: "-0.02em", textTransform: "none", marginTop: 6 }}>
             de tu vida financiera.
-          </h1>
+          </span>
+        </h1>
 
-          {/* Subtítulo */}
-          <p
-            style={{
-              marginTop: 18,
-              fontSize: 12,
-              lineHeight: 1.6,
-              color: C.graphite,
-              maxWidth: "82%",
-              fontWeight: 400,
-              letterSpacing: "-0.005em",
-            }}
-          >
-            Nuestro análisis financiero muestra una oportunidad real para finalizar tu crédito
-            antes de lo previsto, reduciendo significativamente los intereses futuros y el
-            tiempo de endeudamiento.
-          </p>
+        {/* HERO CARD — AHORRO TOTAL (azul degradado) */}
+        <div
+          style={{
+            marginTop: 22,
+            background: GRAD_HERO,
+            color: "#fff",
+            borderRadius: 14,
+            padding: "26px 30px",
+            position: "relative",
+            overflow: "hidden",
+            boxShadow: "0 18px 40px -20px rgba(68,93,163,0.45)",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div
+                style={{
+                  fontSize: 9,
+                  fontWeight: 700,
+                  letterSpacing: "0.32em",
+                  color: C.brand,
+                  textTransform: "uppercase",
+                }}
+              >
+                Ahorro total proyectado
+              </div>
+              <div
+                style={{
+                  marginTop: 12,
+                  fontSize: 44,
+                  fontWeight: 700,
+                  letterSpacing: "-0.035em",
+                  lineHeight: 1,
+                  color: "#fff",
+                }}
+              >
+                {formatCOP(recommended.ahorroTotal)}
+              </div>
+              <div
+                style={{
+                  marginTop: 10,
+                  fontSize: 10.5,
+                  color: "rgba(255,255,255,0.78)",
+                }}
+              >
+                Lo que dejarías de pagar al optimizar tu crédito.
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 10, fontSize: 22 }}>
+              <span>💰</span>
+              <span>📈</span>
+            </div>
+          </div>
+        </div>
 
-          {/* HERO CARD — AHORRO TOTAL */}
-          <div
-            style={{
-              marginTop: 26,
-              background: C.ink,
-              color: "#fff",
-              borderRadius: 10,
-              padding: "30px 32px",
-              position: "relative",
-              overflow: "hidden",
-              boxShadow: "0 18px 40px -20px rgba(36,36,36,0.35)",
-            }}
-          >
-            {/* acento verde */}
-            <div
+        {/* KPIs */}
+        <div
+          style={{
+            marginTop: 16,
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr 1fr",
+            gap: 12,
+          }}
+        >
+          <KpiCard icon="📅" kicker="Años eliminados" value={formatNumber(añosEliminados, 1)} suffix="años" />
+          <KpiCard icon="🏠" kicker="Cuotas eliminadas" value={formatNumber(cuotasEliminadas, 0)} suffix="cuotas" />
+          <KpiCard icon="💵" kicker="Nueva cuota" value={formatCOP(recommended.nuevaCuota)} />
+        </div>
+
+        {/* TIMELINE */}
+        <Timeline
+          añosActual={añosActual}
+          añosOpt={añosOpt}
+          añosEliminados={añosEliminados}
+          añoHoy={añoActualHoy}
+          añoFinActual={añoFinActual}
+          añoFinOpt={añoFinOpt}
+        />
+
+        {/* BENEFICIOS */}
+        <Beneficios />
+      </PageShell>
+
+      {/* ============== PÁGINA 2 ============== */}
+      <PageShell pagina={2} fecha={fecha} breakBefore>
+        {/* Título con barra lateral azul */}
+        <div style={{ display: "flex", gap: 14, alignItems: "stretch" }}>
+          <div style={{ width: 5, background: C.azul, borderRadius: 4 }} />
+          <div>
+            <div style={eyebrow}>Resumen ejecutivo</div>
+            <h2
               style={{
-                position: "absolute",
-                top: 0, left: 0, bottom: 0,
-                width: 4,
-                background: C.brand,
-              }}
-            />
-            <div
-              style={{
-                fontSize: 9,
-                fontWeight: 600,
-                letterSpacing: "0.32em",
-                color: C.brand,
+                fontSize: 28,
+                fontWeight: 700,
+                letterSpacing: "-0.028em",
+                lineHeight: 1.05,
+                margin: "4px 0 0 0",
+                color: C.ink,
                 textTransform: "uppercase",
               }}
             >
-              Ahorro total proyectado
-            </div>
-            <div
+              Propuesta recomendada
+            </h2>
+            <p
               style={{
-                marginTop: 14,
-                fontSize: 46,
-                fontWeight: 600,
-                letterSpacing: "-0.035em",
-                lineHeight: 1,
-                color: "#fff",
-              }}
-            >
-              {formatCOP(recommended.ahorroTotal)}
-            </div>
-            <div
-              style={{
-                marginTop: 10,
+                marginTop: 8,
                 fontSize: 10.5,
-                color: "rgba(255,255,255,0.7)",
-                letterSpacing: "-0.005em",
+                lineHeight: 1.55,
+                color: C.graphite,
+                maxWidth: "92%",
               }}
             >
-              Estimado total al optimizar tu crédito hipotecario.
-            </div>
+              Escenario financiero construido con base en su capacidad de pago.
+            </p>
           </div>
-
-          {/* TRES TARJETAS SECUNDARIAS */}
-          <div
-            style={{
-              marginTop: 18,
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr 1fr",
-              gap: 12,
-            }}
-          >
-            <SecondaryCard
-              kicker="Años eliminados"
-              value={formatNumber(añosEliminados, 1)}
-              suffix="años"
-              accent
-            />
-            <SecondaryCard
-              kicker="Cuotas eliminadas"
-              value={formatNumber(cuotasEliminadas, 0)}
-              suffix="cuotas"
-            />
-            <SecondaryCard
-              kicker="Nueva cuota"
-              value={formatCOP(recommended.nuevaCuota)}
-            />
-          </div>
-
-          {/* TIMELINE */}
-          <Timeline
-            añosActual={añosActual}
-            añosOpt={añosOpt}
-            añosEliminados={añosEliminados}
-            añoHoy={añoActualHoy}
-            añoFinActual={añoFinActual}
-            añoFinOpt={añoFinOpt}
-          />
-
-          {/* RESUMEN EJECUTIVO */}
-          <ResumenEjecutivo />
         </div>
 
-        <PageFooter pagina={1} />
-      </section>
-
-      {/* ============== PÁGINA 2 — PROPUESTA RECOMENDADA ============== */}
-      <section
-        className="nuvex-print-page"
-        style={{
-          padding: "20mm 18mm 18mm 18mm",
-          pageBreakBefore: "always",
-          position: "relative",
-          minHeight: "297mm",
-          height: "297mm",
-          boxSizing: "border-box",
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <PremiumHeader fecha={fecha} />
-
-        <div style={{ marginTop: 22 }}>
-          <div style={eyebrow}>Resumen ejecutivo</div>
-          <h2
-            style={{
-              fontSize: 32,
-              fontWeight: 300,
-              letterSpacing: "-0.028em",
-              lineHeight: 1.05,
-              margin: "8px 0 0 0",
-              color: C.ink,
-            }}
-          >
-            Propuesta recomendada.
-          </h2>
-          <p
-            style={{
-              marginTop: 10,
-              fontSize: 11,
-              lineHeight: 1.55,
-              color: C.graphite,
-              maxWidth: "78%",
-            }}
-          >
-            Escenario financiero proyectado según el análisis realizado sobre tu crédito actual.
-          </p>
-        </div>
-
-        {/* HOY VS CON NUVEX */}
+        {/* TABLA COMPARATIVA */}
         <ComparativoHoyVsNuvex
           scenario={scenario}
           recommended={recommended}
@@ -310,24 +255,22 @@ export function PrintDocument(props: Props) {
           añosOpt={añosOpt}
         />
 
-        {/* COMPOSICIÓN DEL AHORRO */}
-        <ComposicionAhorro
+        {/* COMPOSICIÓN — DONUT */}
+        <ComposicionDonut
           ahorroIntereses={recommended.ahorroIntereses}
           ahorroSeguros={recommended.ahorroSeguros}
           ahorroTotal={recommended.ahorroTotal}
         />
 
-        {/* HONORARIOS — INVERSIÓN POR ÉXITO */}
+        {/* HONORARIOS */}
         <InversionPorExito
           honorarios={honorariosFinales}
           commercial={commercial}
         />
 
-        {/* MENSAJE FINAL */}
-        <ClosingNote />
-
-        <PageFooter pagina={2} />
-      </section>
+        {/* CITA INSTITUCIONAL */}
+        <ClosingQuote />
+      </PageShell>
     </div>
   );
 }
@@ -337,94 +280,126 @@ export function PrintDocument(props: Props) {
 ============================================================ */
 const eyebrow: React.CSSProperties = {
   fontSize: 8.5,
-  fontWeight: 600,
+  fontWeight: 700,
   letterSpacing: "0.34em",
-  color: C.muted,
+  color: C.azul,
   textTransform: "uppercase",
 };
 
 /* ============================================================
-   HEADER & FOOTER
+   PAGE SHELL — franja superior + footer azul
 ============================================================ */
-function PremiumHeader({ fecha }: { fecha: string }) {
+function PageShell({
+  children,
+  pagina,
+  fecha,
+  breakBefore,
+}: {
+  children: React.ReactNode;
+  pagina: number;
+  fecha: string;
+  breakBefore?: boolean;
+}) {
   return (
-    <div
+    <section
+      className="nuvex-print-page"
       style={{
+        position: "relative",
+        minHeight: "297mm",
+        height: "297mm",
+        boxSizing: "border-box",
+        overflow: "hidden",
         display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingBottom: 14,
-        borderBottom: `1px solid ${C.hairline}`,
+        flexDirection: "column",
+        pageBreakBefore: breakBefore ? "always" : "auto",
+        background: C.paper,
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <div
-          style={{
-            width: 26,
-            height: 26,
-            borderRadius: 6,
-            background: C.ink,
-            color: "#fff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: "0.08em",
-          }}
-        >
-          N
-        </div>
-        <div>
+      {/* FRANJA SUPERIOR */}
+      <div
+        style={{
+          height: 46,
+          background: GRAD_BLUE,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "0 18mm",
+          color: "#fff",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div
             style={{
+              width: 24,
+              height: 24,
+              borderRadius: 6,
+              background: "rgba(255,255,255,0.15)",
+              border: "1px solid rgba(255,255,255,0.3)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               fontSize: 11,
+              fontWeight: 800,
+              letterSpacing: "0.08em",
+            }}
+          >
+            N
+          </div>
+          <div
+            style={{
+              fontSize: 12,
               fontWeight: 700,
-              letterSpacing: "0.36em",
-              color: C.ink,
-              lineHeight: 1,
+              letterSpacing: "0.38em",
             }}
           >
             NUVEX
           </div>
           <div
             style={{
-              marginTop: 3,
               fontSize: 7.5,
               fontWeight: 500,
               letterSpacing: "0.22em",
-              color: C.muted,
+              color: "rgba(255,255,255,0.7)",
               textTransform: "uppercase",
+              borderLeft: "1px solid rgba(255,255,255,0.3)",
+              paddingLeft: 10,
+              marginLeft: 4,
             }}
           >
             Finanzas Inteligentes
           </div>
         </div>
-      </div>
-      <div style={{ textAlign: "right" }}>
-        <div
-          style={{
-            fontSize: 7.5,
-            fontWeight: 600,
-            color: C.muted,
-            letterSpacing: "0.26em",
-            textTransform: "uppercase",
-          }}
-        >
-          Propuesta financiera
-        </div>
-        <div
-          style={{
-            marginTop: 3,
-            fontSize: 9,
-            color: C.ink,
-            letterSpacing: "0.06em",
-          }}
-        >
-          {fecha}
+        <div style={{ textAlign: "right" }}>
+          <div
+            style={{
+              fontSize: 7.5,
+              fontWeight: 600,
+              color: "rgba(255,255,255,0.7)",
+              letterSpacing: "0.26em",
+              textTransform: "uppercase",
+            }}
+          >
+            Propuesta financiera
+          </div>
+          <div style={{ marginTop: 2, fontSize: 9, letterSpacing: "0.06em" }}>{fecha}</div>
         </div>
       </div>
-    </div>
+
+      {/* CONTENIDO */}
+      <div
+        style={{
+          flex: 1,
+          padding: "16mm 18mm 0 18mm",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        {children}
+      </div>
+
+      {/* FOOTER AZUL */}
+      <PageFooter pagina={pagina} />
+    </section>
   );
 }
 
@@ -433,58 +408,58 @@ function PageFooter({ pagina }: { pagina: number }) {
     <div
       data-pdf-footer="true"
       style={{
-        position: "absolute",
-        bottom: "10mm",
-        left: "18mm",
-        right: "18mm",
-        paddingTop: 10,
-        borderTop: `1px solid ${C.hairlineSoft}`,
+        background: GRAD_BLUE,
+        color: "#fff",
+        padding: "12px 18mm",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        fontSize: 7.5,
-        color: C.muted,
-        letterSpacing: "0.18em",
-        textTransform: "uppercase",
+        fontSize: 8.5,
+        letterSpacing: "0.04em",
       }}
     >
-      <div>{CORPORATIVO.web}</div>
-      <div style={{ fontWeight: 700, color: C.ink, letterSpacing: "0.36em" }}>NUVEX</div>
-      <div>{CORPORATIVO.telefono} · {pagina} / 2</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <div style={{ fontWeight: 800, letterSpacing: "0.36em", fontSize: 10 }}>NUVEX</div>
+        <div style={{ color: "rgba(255,255,255,0.78)", fontSize: 7.5 }}>
+          📍 {CORPORATIVO.direccion}
+        </div>
+      </div>
+      <div style={{ textAlign: "center", color: "rgba(255,255,255,0.85)" }}>
+        <div style={{ fontSize: 7.5 }}>🏢 {CORPORATIVO.ciudades}</div>
+        <div style={{ fontSize: 7.5, marginTop: 2 }}>🌐 {CORPORATIVO.web}</div>
+      </div>
+      <div style={{ textAlign: "right", color: "rgba(255,255,255,0.85)" }}>
+        <div style={{ fontSize: 7.5 }}>📞 {CORPORATIVO.telefono}</div>
+        <div style={{ fontSize: 7.5, marginTop: 2 }}>Página {pagina} / 2</div>
+      </div>
     </div>
   );
 }
 
 /* ============================================================
-   PÁGINA 1 — Tarjetas, Timeline, Resumen
+   KPI CARDS
 ============================================================ */
-function SecondaryCard({
-  kicker,
-  value,
-  suffix,
-  accent,
-}: {
-  kicker: string;
-  value: string;
-  suffix?: string;
-  accent?: boolean;
-}) {
+function KpiCard({
+  icon, kicker, value, suffix,
+}: { icon: string; kicker: string; value: string; suffix?: string }) {
   return (
     <div
       style={{
-        border: `1px solid ${C.hairline}`,
-        borderRadius: 8,
-        padding: "16px 16px",
+        border: `1px solid ${C.azulSoft}`,
+        borderRadius: 10,
+        padding: "14px 16px",
         background: C.paper,
-        position: "relative",
+        boxShadow: "0 1px 2px rgba(68,93,163,0.04)",
       }}
     >
+      <div style={{ fontSize: 18, lineHeight: 1 }}>{icon}</div>
       <div
         style={{
+          marginTop: 8,
           fontSize: 7.5,
-          fontWeight: 600,
-          letterSpacing: "0.28em",
-          color: C.muted,
+          fontWeight: 700,
+          letterSpacing: "0.26em",
+          color: C.graphite,
           textTransform: "uppercase",
         }}
       >
@@ -492,11 +467,11 @@ function SecondaryCard({
       </div>
       <div
         style={{
-          marginTop: 10,
+          marginTop: 6,
           fontSize: 20,
-          fontWeight: 600,
+          fontWeight: 700,
           letterSpacing: "-0.02em",
-          color: accent ? C.azul : C.ink,
+          color: C.azul,
           lineHeight: 1.05,
         }}
       >
@@ -511,31 +486,25 @@ function SecondaryCard({
   );
 }
 
+/* ============================================================
+   TIMELINE
+============================================================ */
 function Timeline({
-  añosActual,
-  añosOpt,
-  añosEliminados,
-  añoHoy,
-  añoFinActual,
-  añoFinOpt,
+  añosActual, añosOpt, añosEliminados, añoHoy, añoFinActual, añoFinOpt,
 }: {
-  añosActual: number;
-  añosOpt: number;
-  añosEliminados: number;
-  añoHoy: number;
-  añoFinActual: number;
-  añoFinOpt: number;
+  añosActual: number; añosOpt: number; añosEliminados: number;
+  añoHoy: number; añoFinActual: number; añoFinOpt: number;
 }) {
   const maxA = Math.max(añosActual, 1);
   const pctOpt = Math.max(10, (añosOpt / maxA) * 100);
   return (
     <div
       style={{
-        marginTop: 22,
-        padding: "18px 20px 16px",
-        border: `1px solid ${C.hairline}`,
-        borderRadius: 8,
-        background: C.cream,
+        marginTop: 18,
+        padding: "16px 20px",
+        border: `1px solid ${C.azulSoft}`,
+        borderRadius: 10,
+        background: C.azulSoft2,
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
@@ -553,17 +522,17 @@ function Timeline({
         </div>
       </div>
 
-      <div style={{ marginTop: 14 }}>
+      <div style={{ marginTop: 12 }}>
         <TimelineRow
           label="Situación actual"
           years={añosActual}
           widthPct={100}
-          color={C.graphite}
+          color="#C9CCD4"
           yearStart={añoHoy}
           yearEnd={añoFinActual}
           muted
         />
-        <div style={{ height: 14 }} />
+        <div style={{ height: 12 }} />
         <TimelineRow
           label="Con NUVEX"
           years={añosOpt}
@@ -578,21 +547,10 @@ function Timeline({
 }
 
 function TimelineRow({
-  label,
-  years,
-  widthPct,
-  color,
-  yearStart,
-  yearEnd,
-  muted,
+  label, years, widthPct, color, yearStart, yearEnd, muted,
 }: {
-  label: string;
-  years: number;
-  widthPct: number;
-  color: string;
-  yearStart: number;
-  yearEnd: number;
-  muted?: boolean;
+  label: string; years: number; widthPct: number; color: string;
+  yearStart: number; yearEnd: number; muted?: boolean;
 }) {
   return (
     <div>
@@ -601,31 +559,33 @@ function TimelineRow({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "baseline",
-          marginBottom: 6,
+          marginBottom: 5,
         }}
       >
         <div
           style={{
             fontSize: 8.5,
-            fontWeight: 600,
+            fontWeight: 700,
             letterSpacing: "0.22em",
-            color: muted ? C.muted : C.ink,
+            color: muted ? C.muted : C.azul,
             textTransform: "uppercase",
           }}
         >
           {label}
         </div>
-        <div
-          style={{
-            fontSize: 11,
-            fontWeight: 600,
-            color: muted ? C.muted : C.ink,
-          }}
-        >
+        <div style={{ fontSize: 11, fontWeight: 700, color: muted ? C.muted : C.ink }}>
           {formatNumber(years, 1)} años
         </div>
       </div>
-      <div style={{ position: "relative", height: 8, background: "#ECEAE4", borderRadius: 999 }}>
+      <div
+        style={{
+          position: "relative",
+          height: 10,
+          background: "#ECEEF3",
+          borderRadius: 999,
+          boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)",
+        }}
+      >
         <div
           style={{
             position: "absolute",
@@ -633,7 +593,7 @@ function TimelineRow({
             width: `${widthPct}%`,
             background: color,
             borderRadius: 999,
-            opacity: muted ? 0.5 : 1,
+            boxShadow: muted ? "none" : `0 2px 6px ${C.brand}55`,
           }}
         />
       </div>
@@ -642,80 +602,70 @@ function TimelineRow({
           marginTop: 5,
           display: "flex",
           justifyContent: "space-between",
-          fontSize: 8,
+          fontSize: 8.5,
           color: C.muted,
-          letterSpacing: "0.08em",
         }}
       >
-        <div>{yearStart}</div>
-        <div>{yearEnd}</div>
-      </div>
-    </div>
-  );
-}
-
-function ResumenEjecutivo() {
-  const items = [
-    "Menos tiempo de deuda",
-    "Menos intereses futuros",
-    "Menos seguros futuros",
-    "Más patrimonio para tu familia",
-  ];
-  return (
-    <div
-      style={{
-        marginTop: 18,
-        padding: "16px 20px",
-        border: `1px solid ${C.hairline}`,
-        borderRadius: 8,
-        background: C.paper,
-      }}
-    >
-      <div style={eyebrow}>Lo que esta propuesta significa</div>
-      <div
-        style={{
-          marginTop: 12,
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          rowGap: 8,
-          columnGap: 18,
-        }}
-      >
-        {items.map((t, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div
-              style={{
-                width: 16,
-                height: 16,
-                borderRadius: 999,
-                background: C.brand,
-                color: "#fff",
-                fontSize: 10,
-                fontWeight: 700,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}
-            >
-              ✓
-            </div>
-            <div style={{ fontSize: 11, color: C.ink, fontWeight: 500 }}>{t}</div>
-          </div>
-        ))}
+        <div>📍 {yearStart}</div>
+        <div>🏁 {yearEnd}</div>
       </div>
     </div>
   );
 }
 
 /* ============================================================
-   PÁGINA 2 — Comparativo, Composición, Honorarios, Cierre
+   BENEFICIOS (4 tarjetas azules)
+============================================================ */
+function Beneficios() {
+  const items = [
+    { icon: "🛡", text: "Menos tiempo de deuda" },
+    { icon: "💰", text: "Menos intereses futuros" },
+    { icon: "☂", text: "Menos seguros futuros" },
+    { icon: "👨‍👩‍👧", text: "Más patrimonio para tu familia" },
+  ];
+  return (
+    <div
+      style={{
+        marginTop: 16,
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr 1fr 1fr",
+        gap: 10,
+      }}
+    >
+      {items.map((it, i) => (
+        <div
+          key={i}
+          style={{
+            background: C.azulSoft,
+            border: `1px solid ${C.azulSoft}`,
+            borderRadius: 10,
+            padding: "12px 12px",
+            textAlign: "center",
+          }}
+        >
+          <div style={{ fontSize: 20, color: C.azul }}>{it.icon}</div>
+          <div
+            style={{
+              marginTop: 6,
+              fontSize: 10,
+              fontWeight: 600,
+              color: C.ink,
+              lineHeight: 1.3,
+            }}
+          >
+            {it.text}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ============================================================
+   PÁGINA 2 — Tabla comparativa
 ============================================================ */
 function ComparativoHoyVsNuvex({
-  scenario,
-  recommended,
-  añosActual,
-  añosOpt,
+  scenario, recommended, añosActual, añosOpt,
 }: {
   scenario: Props["scenario"];
   recommended: Props["recommended"];
@@ -727,248 +677,280 @@ function ComparativoHoyVsNuvex({
       label: "Cuota mensual",
       hoy: formatCOP(scenario.cuotaActual),
       nuvex: formatCOP(recommended.nuevaCuota),
+      highlight: true,
     },
     {
       label: "Tiempo restante",
       hoy: `${formatNumber(añosActual, 1)} años`,
       nuvex: `${formatNumber(añosOpt, 1)} años`,
+      highlight: true,
     },
     {
       label: "Total proyectado a pagar",
       hoy: formatCOP(scenario.totalActual),
       nuvex: formatCOP(scenario.totalOptimizado),
+      highlight: true,
     },
     {
       label: "Veces pagado el crédito",
       hoy: `${formatNumber(scenario.vecesActual, 2)} ×`,
       nuvex: `${formatNumber(scenario.vecesOptimizado, 2)} ×`,
+      highlight: false,
     },
   ];
 
   return (
-    <div style={{ marginTop: 22 }}>
+    <div
+      style={{
+        marginTop: 18,
+        borderRadius: 10,
+        overflow: "hidden",
+        border: `1px solid ${C.azulSoft}`,
+      }}
+    >
+      {/* Cabecera azul */}
       <div
         style={{
           display: "grid",
           gridTemplateColumns: "1.4fr 1fr 1fr",
           padding: "10px 16px",
-          background: C.ivory,
-          borderRadius: "8px 8px 0 0",
-          fontSize: 7.5,
+          background: GRAD_BLUE,
+          color: "#fff",
+          fontSize: 8,
           fontWeight: 700,
           letterSpacing: "0.28em",
-          color: C.muted,
           textTransform: "uppercase",
         }}
       >
         <div>Indicador</div>
         <div style={{ textAlign: "right" }}>Hoy</div>
-        <div style={{ textAlign: "right", color: C.brandDeep }}>Con NUVEX</div>
+        <div style={{ textAlign: "right" }}>Con NUVEX</div>
       </div>
-      <div style={{ border: `1px solid ${C.hairline}`, borderTop: "none", borderRadius: "0 0 8px 8px" }}>
-        {rows.map((r, i) => (
+      {rows.map((r, i) => (
+        <div
+          key={i}
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1.4fr 1fr 1fr",
+            padding: "11px 16px",
+            borderBottom: i < rows.length - 1 ? `1px solid ${C.hairlineSoft}` : "none",
+            alignItems: "baseline",
+            background: C.paper,
+          }}
+        >
+          <div style={{ fontSize: 10.5, fontWeight: 500, color: C.graphite }}>
+            {r.label}
+          </div>
           <div
-            key={i}
             style={{
-              display: "grid",
-              gridTemplateColumns: "1.4fr 1fr 1fr",
-              padding: "12px 16px",
-              borderBottom: i < rows.length - 1 ? `1px solid ${C.hairlineSoft}` : "none",
-              alignItems: "baseline",
+              fontSize: 12,
+              fontWeight: 400,
+              color: C.muted,
+              textAlign: "right",
             }}
           >
-            <div style={{ fontSize: 11, fontWeight: 500, color: C.graphite }}>
-              {r.label}
-            </div>
-            <div
-              style={{
-                fontSize: 13,
-                fontWeight: 400,
-                color: C.muted,
-                textAlign: "right",
-                letterSpacing: "-0.01em",
-              }}
-            >
-              {r.hoy}
-            </div>
-            <div
-              style={{
-                fontSize: 14,
-                fontWeight: 600,
-                color: C.ink,
-                textAlign: "right",
-                letterSpacing: "-0.015em",
-              }}
-            >
-              {r.nuvex}
-            </div>
+            {r.hoy}
           </div>
-        ))}
-      </div>
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: r.highlight ? 700 : 600,
+              color: r.highlight ? C.brandDeep : C.ink,
+              textAlign: "right",
+              background: C.brandSoft,
+              borderRadius: 6,
+              padding: "4px 10px",
+              marginLeft: "auto",
+              minWidth: "60%",
+            }}
+          >
+            {r.nuvex}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
 
-function ComposicionAhorro({
-  ahorroIntereses,
-  ahorroSeguros,
-  ahorroTotal,
-}: {
-  ahorroIntereses: number;
-  ahorroSeguros: number;
-  ahorroTotal: number;
-}) {
+/* ============================================================
+   COMPOSICIÓN DEL AHORRO — DONUT
+============================================================ */
+function ComposicionDonut({
+  ahorroIntereses, ahorroSeguros, ahorroTotal,
+}: { ahorroIntereses: number; ahorroSeguros: number; ahorroTotal: number }) {
+  const total = Math.max(1, ahorroIntereses + ahorroSeguros);
+  const pctInt = (ahorroIntereses / total) * 100;
+  const pctSeg = 100 - pctInt;
+
+  // SVG donut
+  const size = 150;
+  const stroke = 26;
+  const r = (size - stroke) / 2;
+  const cx = size / 2;
+  const cy = size / 2;
+  const circ = 2 * Math.PI * r;
+  const dashInt = (pctInt / 100) * circ;
+  const dashSeg = (pctSeg / 100) * circ;
+
   return (
-    <div style={{ marginTop: 22 }}>
+    <div style={{ marginTop: 18 }}>
       <div style={eyebrow}>Composición del ahorro</div>
       <div
         style={{
           marginTop: 10,
           display: "grid",
-          gridTemplateColumns: "1fr 2fr",
-          gap: 12,
+          gridTemplateColumns: "auto 1fr",
+          gap: 24,
+          alignItems: "center",
+          border: `1px solid ${C.azulSoft}`,
+          borderRadius: 10,
+          padding: "16px 20px",
+          background: C.paper,
         }}
       >
-        {/* Izquierda: dos minis apiladas */}
-        <div style={{ display: "grid", gridTemplateRows: "1fr 1fr", gap: 12 }}>
-          <MiniSaving label="Ahorro en intereses" value={ahorroIntereses} />
-          <MiniSaving label="Ahorro en seguros" value={ahorroSeguros} />
-        </div>
-
-        {/* Derecha: PROTAGONISTA (2x) */}
-        <div
-          style={{
-            background: C.ink,
-            color: "#fff",
-            padding: "22px 24px",
-            borderRadius: 8,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            position: "relative",
-            overflow: "hidden",
-            boxShadow: "0 14px 30px -18px rgba(36,36,36,0.4)",
-          }}
-        >
+        {/* DONUT */}
+        <div style={{ position: "relative", width: size, height: size }}>
+          <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+            <circle cx={cx} cy={cy} r={r} fill="none" stroke="#F2F4F8" strokeWidth={stroke} />
+            <circle
+              cx={cx} cy={cy} r={r} fill="none"
+              stroke={C.azul} strokeWidth={stroke}
+              strokeDasharray={`${dashInt} ${circ - dashInt}`}
+              strokeLinecap="butt"
+            />
+            <circle
+              cx={cx} cy={cy} r={r} fill="none"
+              stroke={C.brand} strokeWidth={stroke}
+              strokeDasharray={`${dashSeg} ${circ - dashSeg}`}
+              strokeDashoffset={-dashInt}
+              strokeLinecap="butt"
+            />
+          </svg>
           <div
             style={{
               position: "absolute",
-              top: 0, right: 0, bottom: 0,
-              width: 4,
-              background: C.brand,
+              inset: 0,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
             }}
+          >
+            <div
+              style={{
+                fontSize: 6.5,
+                fontWeight: 700,
+                letterSpacing: "0.24em",
+                color: C.muted,
+                textTransform: "uppercase",
+              }}
+            >
+              Total ahorrado
+            </div>
+            <div
+              style={{
+                marginTop: 3,
+                fontSize: 13,
+                fontWeight: 700,
+                color: C.ink,
+                letterSpacing: "-0.02em",
+              }}
+            >
+              {formatCOP(ahorroTotal)}
+            </div>
+          </div>
+        </div>
+
+        {/* LEYENDA */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <DonutLegend
+            color={C.azul}
+            icon="🔵"
+            label="Ahorro en intereses"
+            value={ahorroIntereses}
+            pct={pctInt}
           />
-          <div
-            style={{
-              fontSize: 8.5,
-              fontWeight: 600,
-              letterSpacing: "0.32em",
-              color: C.brand,
-              textTransform: "uppercase",
-            }}
-          >
-            Ahorro total
-          </div>
-          <div
-            style={{
-              marginTop: 12,
-              fontSize: 34,
-              fontWeight: 600,
-              letterSpacing: "-0.03em",
-              lineHeight: 1,
-              color: "#fff",
-            }}
-          >
-            {formatCOP(ahorroTotal)}
-          </div>
-          <div
-            style={{
-              marginTop: 8,
-              fontSize: 10,
-              color: "rgba(255,255,255,0.7)",
-              letterSpacing: "-0.005em",
-              lineHeight: 1.5,
-            }}
-          >
-            Lo que dejas de pagar al optimizar tu crédito hipotecario.
-          </div>
+          <DonutLegend
+            color={C.brand}
+            icon="🟢"
+            label="Ahorro en seguros"
+            value={ahorroSeguros}
+            pct={pctSeg}
+          />
         </div>
       </div>
     </div>
   );
 }
 
-function MiniSaving({ label, value }: { label: string; value: number }) {
+function DonutLegend({
+  color, icon, label, value, pct,
+}: { color: string; icon: string; label: string; value: number; pct: number }) {
   return (
-    <div
-      style={{
-        border: `1px solid ${C.hairline}`,
-        borderRadius: 8,
-        padding: "14px 16px",
-        background: C.cream,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-      }}
-    >
+    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
       <div
         style={{
-          fontSize: 7.5,
-          fontWeight: 600,
-          letterSpacing: "0.28em",
-          color: C.muted,
-          textTransform: "uppercase",
+          width: 10, height: 10, borderRadius: 3,
+          background: color, flexShrink: 0,
         }}
-      >
-        {label}
+      />
+      <div style={{ flex: 1 }}>
+        <div
+          style={{
+            fontSize: 8,
+            fontWeight: 700,
+            letterSpacing: "0.22em",
+            color: C.muted,
+            textTransform: "uppercase",
+          }}
+        >
+          {label}
+        </div>
+        <div style={{ marginTop: 3, display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: C.ink, letterSpacing: "-0.02em" }}>
+            {formatCOP(value)}
+          </div>
+          <div style={{ fontSize: 10, fontWeight: 600, color }}>
+            {formatNumber(pct, 0)}%
+          </div>
+        </div>
       </div>
-      <div
-        style={{
-          marginTop: 6,
-          fontSize: 16,
-          fontWeight: 600,
-          color: C.ink,
-          letterSpacing: "-0.02em",
-        }}
-      >
-        {formatCOP(value)}
-      </div>
+      <span style={{ display: "none" }}>{icon}</span>
     </div>
   );
 }
 
+/* ============================================================
+   HONORARIOS — INVERSIÓN POR ÉXITO
+============================================================ */
 function InversionPorExito({
-  honorarios,
-  commercial,
-}: {
-  honorarios: number;
-  commercial?: CommercialBenefit;
-}) {
+  honorarios, commercial,
+}: { honorarios: number; commercial?: CommercialBenefit }) {
   return (
     <div
       style={{
         marginTop: 18,
-        border: `1px solid ${C.hairline}`,
-        borderRadius: 8,
-        padding: "18px 22px",
-        background: C.paper,
+        borderRadius: 12,
+        padding: "20px 24px",
+        background: GRAD_BLUE,
+        color: "#fff",
+        boxShadow: "0 14px 30px -18px rgba(68,93,163,0.45)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 18,
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 16,
-        }}
-      >
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 14, flex: 1 }}>
+        <div style={{ fontSize: 26, lineHeight: 1 }}>🛡</div>
         <div>
           <div
             style={{
-              fontSize: 8.5,
-              fontWeight: 600,
+              fontSize: 9,
+              fontWeight: 700,
               letterSpacing: "0.32em",
-              color: C.azul,
+              color: C.brand,
               textTransform: "uppercase",
             }}
           >
@@ -978,95 +960,111 @@ function InversionPorExito({
             style={{
               marginTop: 8,
               fontSize: 10.5,
-              color: C.graphite,
-              letterSpacing: "-0.005em",
+              color: "rgba(255,255,255,0.82)",
               lineHeight: 1.5,
-              maxWidth: 380,
+              maxWidth: 360,
             }}
           >
-            Los honorarios únicamente se generan si el proceso es aprobado y ejecutado
-            exitosamente por el banco.
+            Los honorarios únicamente se generan si el resultado es aprobado y ejecutado
+            por el banco.
           </div>
         </div>
-        <div style={{ textAlign: "right" }}>
-          {commercial?.hasDiscount && (
-            <div
-              style={{
-                fontSize: 10,
-                color: C.muted,
-                textDecoration: "line-through",
-                marginBottom: 2,
-              }}
-            >
-              {formatCOP(commercial.honorariosBase)}
-            </div>
-          )}
+      </div>
+      <div style={{ textAlign: "right" }}>
+        {commercial?.hasDiscount && (
           <div
             style={{
-              fontSize: 24,
-              fontWeight: 600,
-              color: C.ink,
-              letterSpacing: "-0.025em",
+              fontSize: 10,
+              color: "rgba(255,255,255,0.55)",
+              textDecoration: "line-through",
+              marginBottom: 2,
             }}
           >
-            {formatCOP(honorarios)}
+            {formatCOP(commercial.honorariosBase)}
           </div>
+        )}
+        <div
+          style={{
+            fontSize: 26,
+            fontWeight: 700,
+            color: "#fff",
+            letterSpacing: "-0.025em",
+          }}
+        >
+          {formatCOP(honorarios)}
         </div>
       </div>
     </div>
   );
 }
 
-function ClosingNote() {
+/* ============================================================
+   CITA INSTITUCIONAL — CIERRE
+============================================================ */
+function ClosingQuote() {
   return (
     <div
       style={{
         marginTop: "auto",
-        paddingTop: 22,
-        borderTop: `1px solid ${C.hairline}`,
+        marginBottom: 4,
+        padding: "20px 0 8px 0",
+        position: "relative",
       }}
     >
-      <p
+      <div
         style={{
-          margin: 0,
-          fontSize: 11,
-          fontWeight: 400,
-          color: C.ink,
-          lineHeight: 1.65,
-          letterSpacing: "-0.005em",
-          maxWidth: "92%",
+          position: "absolute",
+          top: 6, left: 0,
+          fontSize: 44,
+          color: C.azul,
+          opacity: 0.18,
+          lineHeight: 1,
+          fontFamily: "Georgia, serif",
         }}
       >
-        Cada año que eliminas de tu crédito representa tiempo, tranquilidad y patrimonio
-        que vuelve a tu familia.
-      </p>
-      <p
-        style={{
-          margin: "10px 0 0 0",
-          fontSize: 11,
-          fontWeight: 400,
-          color: C.graphite,
-          lineHeight: 1.65,
-          letterSpacing: "-0.005em",
-          maxWidth: "92%",
-        }}
-      >
-        Esta propuesta refleja una oportunidad financiera real basada en cálculos técnicos
-        y experiencia especializada en optimización de créditos hipotecarios.
-      </p>
-      <p
-        style={{
-          margin: "10px 0 0 0",
-          fontSize: 11,
-          fontWeight: 500,
-          fontStyle: "italic",
-          color: C.ink,
-          lineHeight: 1.6,
-          letterSpacing: "-0.005em",
-        }}
-      >
-        Gracias por confiar en NUVEX Finanzas Inteligentes.
-      </p>
+        ❝
+      </div>
+      <div style={{ paddingLeft: 30, paddingRight: 20 }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: 11,
+            color: C.graphite,
+            lineHeight: 1.65,
+            fontStyle: "italic",
+            fontFamily: "Georgia, 'Times New Roman', serif",
+          }}
+        >
+          Cada año que eliminas de tu crédito representa tiempo, tranquilidad y patrimonio
+          que vuelve a tu familia.
+        </p>
+        <p
+          style={{
+            margin: "8px 0 0 0",
+            fontSize: 11,
+            color: C.graphite,
+            lineHeight: 1.65,
+            fontStyle: "italic",
+            fontFamily: "Georgia, 'Times New Roman', serif",
+          }}
+        >
+          Esta propuesta refleja una oportunidad financiera real basada en cálculos
+          técnicos y experiencia especializada en optimización de créditos hipotecarios.
+        </p>
+        <p
+          style={{
+            margin: "10px 0 0 0",
+            fontSize: 11,
+            color: C.ink,
+            lineHeight: 1.6,
+            fontStyle: "italic",
+            fontFamily: "Georgia, 'Times New Roman', serif",
+            fontWeight: 600,
+          }}
+        >
+          Gracias por confiar en NUVEX Finanzas Inteligentes.
+        </p>
+      </div>
     </div>
   );
 }
