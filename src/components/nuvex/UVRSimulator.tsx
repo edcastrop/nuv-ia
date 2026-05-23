@@ -209,7 +209,7 @@ export function UVRSimulator({
 
   const ahorroNegativo = recomendada && (recomendada.ahorroTotal < 0 || recomendada.honorarios < 0);
 
-  const cuotasBaseSimulacion = Math.max(0, cuotasPendientes - 1);
+  const cuotasBaseSimulacion = Math.max(0, cuotasPendientes);
   const totalActualPesos = calc?.escenarioActual.totalPagoPesos ?? 0;
   // N° veces pagado el crédito = (lo ya pagado + lo proyectado a pagar) / valor desembolsado.
   // Si no hay valor desembolsado, se usa el saldo actual como respaldo.

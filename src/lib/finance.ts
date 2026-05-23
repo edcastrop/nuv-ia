@@ -60,7 +60,7 @@ function buildPesosPropuesta(
   tasaMensual: number,
   cuotasEliminadas: number,
 ): PesosPropuesta | null {
-  const cuotasBase = Math.max(0, input.cuotasPendientes - 1);
+  const cuotasBase = Math.max(0, input.cuotasPendientes);
   const nuevoPlazo = cuotasBase - cuotasEliminadas;
   if (nuevoPlazo <= 0) return null;
   const nuevaCuotaSinSeguro = pmt(tasaMensual, nuevoPlazo, input.saldoCapital);
@@ -135,7 +135,7 @@ export function calculatePesosManual(
   if (nuevaCuotaSinSeguro <= input.saldoCapital * tasaMensual) {
     return { ...base, motivo: "La cuota no alcanza a cubrir los intereses" };
   }
-  const cuotasBase = Math.max(0, input.cuotasPendientes - 1);
+  const cuotasBase = Math.max(0, input.cuotasPendientes);
   const nuevoPlazoExacto =
     -Math.log(1 - (input.saldoCapital * tasaMensual) / nuevaCuotaSinSeguro) /
     Math.log(1 + tasaMensual);
@@ -271,7 +271,7 @@ export function calculateUVRProjection(input: UVRInput): {
 } {
   const tasaMensual = Math.pow(1 + input.teaCobrada / 100, 1 / 12) - 1;
   const variacionMensualUVR = Math.pow(1 + input.variacionUVR / 100, 1 / 12) - 1;
-  const cuotasBase = Math.max(0, input.cuotasPendientes - 1);
+  const cuotasBase = Math.max(0, input.cuotasPendientes);
   const cuotaUVRActual = pmt(tasaMensual, cuotasBase, input.saldoUVR);
 
   const actual = proyectarUVR(
@@ -377,7 +377,7 @@ export function calculateUVRManual(
   if (nuevaCuotaUVR <= input.saldoUVR * tasaMensual) {
     return { ...base, motivo: "La cuota no alcanza a cubrir los intereses" };
   }
-  const cuotasBase = Math.max(0, input.cuotasPendientes - 1);
+  const cuotasBase = Math.max(0, input.cuotasPendientes);
   const plazoExacto =
     -Math.log(1 - (input.saldoUVR * tasaMensual) / nuevaCuotaUVR) / Math.log(1 + tasaMensual);
   const nuevoPlazo = Math.ceil(plazoExacto);
