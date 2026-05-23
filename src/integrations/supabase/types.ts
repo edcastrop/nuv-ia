@@ -62,6 +62,286 @@ export type Database = {
         }
         Relationships: []
       }
+      cartera: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          estado_cartera: Database["public"]["Enums"]["cartera_estado"]
+          expediente_id: string
+          fecha_aplicacion_banco: string
+          fecha_cuenta_cobro: string | null
+          fecha_resultado_final: string | null
+          fecha_vencimiento: string
+          forma_pago: string
+          honorarios_totales: number
+          id: string
+          observaciones: string | null
+          pagado: number
+          responsable_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          estado_cartera?: Database["public"]["Enums"]["cartera_estado"]
+          expediente_id: string
+          fecha_aplicacion_banco: string
+          fecha_cuenta_cobro?: string | null
+          fecha_resultado_final?: string | null
+          fecha_vencimiento: string
+          forma_pago?: string
+          honorarios_totales?: number
+          id?: string
+          observaciones?: string | null
+          pagado?: number
+          responsable_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          estado_cartera?: Database["public"]["Enums"]["cartera_estado"]
+          expediente_id?: string
+          fecha_aplicacion_banco?: string
+          fecha_cuenta_cobro?: string | null
+          fecha_resultado_final?: string | null
+          fecha_vencimiento?: string
+          forma_pago?: string
+          honorarios_totales?: number
+          id?: string
+          observaciones?: string | null
+          pagado?: number
+          responsable_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cartera_acuerdos: {
+        Row: {
+          cartera_id: string
+          created_at: string
+          estado: string
+          fecha_fin: string
+          fecha_inicio: string
+          id: string
+          numero_cuotas: number
+          observaciones: string | null
+          user_id: string | null
+          valor_total: number
+        }
+        Insert: {
+          cartera_id: string
+          created_at?: string
+          estado?: string
+          fecha_fin: string
+          fecha_inicio: string
+          id?: string
+          numero_cuotas: number
+          observaciones?: string | null
+          user_id?: string | null
+          valor_total: number
+        }
+        Update: {
+          cartera_id?: string
+          created_at?: string
+          estado?: string
+          fecha_fin?: string
+          fecha_inicio?: string
+          id?: string
+          numero_cuotas?: number
+          observaciones?: string | null
+          user_id?: string | null
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cartera_acuerdos_cartera_id_fkey"
+            columns: ["cartera_id"]
+            isOneToOne: false
+            referencedRelation: "cartera"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cartera_auditoria: {
+        Row: {
+          accion: string
+          canal: string | null
+          cartera_id: string
+          created_at: string
+          id: string
+          observacion: string | null
+          user_id: string | null
+        }
+        Insert: {
+          accion: string
+          canal?: string | null
+          cartera_id: string
+          created_at?: string
+          id?: string
+          observacion?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          accion?: string
+          canal?: string | null
+          cartera_id?: string
+          created_at?: string
+          id?: string
+          observacion?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cartera_auditoria_cartera_id_fkey"
+            columns: ["cartera_id"]
+            isOneToOne: false
+            referencedRelation: "cartera"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cartera_comunicaciones: {
+        Row: {
+          asunto: string | null
+          body: string | null
+          canal: string
+          cartera_id: string
+          created_at: string
+          destinatario: string | null
+          estado: string
+          id: string
+          proveedor_msg_id: string | null
+          tipo: string
+          user_id: string | null
+        }
+        Insert: {
+          asunto?: string | null
+          body?: string | null
+          canal: string
+          cartera_id: string
+          created_at?: string
+          destinatario?: string | null
+          estado?: string
+          id?: string
+          proveedor_msg_id?: string | null
+          tipo: string
+          user_id?: string | null
+        }
+        Update: {
+          asunto?: string | null
+          body?: string | null
+          canal?: string
+          cartera_id?: string
+          created_at?: string
+          destinatario?: string | null
+          estado?: string
+          id?: string
+          proveedor_msg_id?: string | null
+          tipo?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cartera_comunicaciones_cartera_id_fkey"
+            columns: ["cartera_id"]
+            isOneToOne: false
+            referencedRelation: "cartera"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cartera_cuotas: {
+        Row: {
+          cartera_id: string
+          created_at: string
+          estado: string
+          fecha_vencimiento: string
+          id: string
+          numero: number
+          pagado: number
+          valor: number
+        }
+        Insert: {
+          cartera_id: string
+          created_at?: string
+          estado?: string
+          fecha_vencimiento: string
+          id?: string
+          numero: number
+          pagado?: number
+          valor: number
+        }
+        Update: {
+          cartera_id?: string
+          created_at?: string
+          estado?: string
+          fecha_vencimiento?: string
+          id?: string
+          numero?: number
+          pagado?: number
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cartera_cuotas_cartera_id_fkey"
+            columns: ["cartera_id"]
+            isOneToOne: false
+            referencedRelation: "cartera"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cartera_pagos: {
+        Row: {
+          banco_receptor: string | null
+          cartera_id: string
+          comprobante_num: string | null
+          comprobante_url: string | null
+          created_at: string
+          fecha: string
+          id: string
+          metodo: string | null
+          observaciones: string | null
+          user_id: string | null
+          valor: number
+        }
+        Insert: {
+          banco_receptor?: string | null
+          cartera_id: string
+          comprobante_num?: string | null
+          comprobante_url?: string | null
+          created_at?: string
+          fecha?: string
+          id?: string
+          metodo?: string | null
+          observaciones?: string | null
+          user_id?: string | null
+          valor: number
+        }
+        Update: {
+          banco_receptor?: string | null
+          cartera_id?: string
+          comprobante_num?: string | null
+          comprobante_url?: string | null
+          created_at?: string
+          fecha?: string
+          id?: string
+          metodo?: string | null
+          observaciones?: string | null
+          user_id?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cartera_pagos_cartera_id_fkey"
+            columns: ["cartera_id"]
+            isOneToOne: false
+            referencedRelation: "cartera"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contratacion_destinatarios: {
         Row: {
           activo: boolean
@@ -374,6 +654,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manage_cartera: { Args: { _uid: string }; Returns: boolean }
+      can_view_cartera_row: {
+        Args: { _exp_id: string; _uid: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -392,6 +677,17 @@ export type Database = {
         | "juridica"
         | "operaciones"
         | "cartera"
+      cartera_estado:
+        | "pendiente_cobro"
+        | "cuenta_cobro_generada"
+        | "cuenta_cobro_enviada"
+        | "pago_parcial"
+        | "pago_total"
+        | "vencido"
+        | "acuerdo_pago"
+        | "en_seguimiento"
+        | "prejuridico"
+        | "cerrado"
       caso_estado:
         | "lead_creado"
         | "extracto_recibido"
@@ -407,11 +703,15 @@ export type Database = {
         | "radicado_banco"
         | "en_estudio_banco"
         | "aprobado"
+        | "documentos_banco_firmados"
+        | "condiciones_aplicadas"
         | "resultado_final_generado"
+        | "cuenta_cobro_generada"
         | "cuenta_cobro_enviada"
         | "honorarios_pagados"
         | "paz_y_salvo_generado"
         | "proceso_cerrado"
+        | "prejuridico"
       expediente_estado:
         | "SIMULADO"
         | "FIRMADO"
@@ -558,6 +858,18 @@ export const Constants = {
         "operaciones",
         "cartera",
       ],
+      cartera_estado: [
+        "pendiente_cobro",
+        "cuenta_cobro_generada",
+        "cuenta_cobro_enviada",
+        "pago_parcial",
+        "pago_total",
+        "vencido",
+        "acuerdo_pago",
+        "en_seguimiento",
+        "prejuridico",
+        "cerrado",
+      ],
       caso_estado: [
         "lead_creado",
         "extracto_recibido",
@@ -573,11 +885,15 @@ export const Constants = {
         "radicado_banco",
         "en_estudio_banco",
         "aprobado",
+        "documentos_banco_firmados",
+        "condiciones_aplicadas",
         "resultado_final_generado",
+        "cuenta_cobro_generada",
         "cuenta_cobro_enviada",
         "honorarios_pagados",
         "paz_y_salvo_generado",
         "proceso_cerrado",
+        "prejuridico",
       ],
       expediente_estado: [
         "SIMULADO",

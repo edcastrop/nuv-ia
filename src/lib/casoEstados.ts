@@ -15,10 +15,14 @@ export type CasoEstado =
   | "radicado_banco"
   | "en_estudio_banco"
   | "aprobado"
+  | "documentos_banco_firmados"
+  | "condiciones_aplicadas"
   | "resultado_final_generado"
+  | "cuenta_cobro_generada"
   | "cuenta_cobro_enviada"
   | "honorarios_pagados"
   | "paz_y_salvo_generado"
+  | "prejuridico"
   | "proceso_cerrado";
 
 export interface CasoEstadoDef {
@@ -44,11 +48,15 @@ export const CASO_ESTADOS: CasoEstadoDef[] = [
   { key: "radicado_banco", label: "Radicado en banco", orden: 12, color: "#1A4A8A", bg: "#E8F0FE" },
   { key: "en_estudio_banco", label: "En estudio banco", orden: 13, color: "#1A4A8A", bg: "#E8F0FE" },
   { key: "aprobado", label: "Aprobado", orden: 14, color: "#1F7A45", bg: "#EAF7EE" },
-  { key: "resultado_final_generado", label: "Resultado final generado", orden: 15, color: "#1F7A45", bg: "#EAF7EE" },
-  { key: "cuenta_cobro_enviada", label: "Cuenta de cobro enviada", orden: 16, color: "#6B21A8", bg: "#F3E8FF" },
-  { key: "honorarios_pagados", label: "Honorarios pagados", orden: 17, color: "#1F7A45", bg: "#DDF4E3" },
-  { key: "paz_y_salvo_generado", label: "Paz y salvo generado", orden: 18, color: "#1F7A45", bg: "#DDF4E3" },
-  { key: "proceso_cerrado", label: "Proceso cerrado", orden: 19, color: "#242424", bg: "#E5E7EB" },
+  { key: "documentos_banco_firmados", label: "Documentos banco firmados", orden: 15, color: "#1F7A45", bg: "#EAF7EE" },
+  { key: "condiciones_aplicadas", label: "Condiciones aplicadas", orden: 16, color: "#1F7A45", bg: "#DDF4E3" },
+  { key: "resultado_final_generado", label: "Resultado final generado", orden: 17, color: "#1F7A45", bg: "#DDF4E3" },
+  { key: "cuenta_cobro_generada", label: "Cuenta de cobro generada", orden: 18, color: "#6B21A8", bg: "#F3E8FF" },
+  { key: "cuenta_cobro_enviada", label: "Cuenta de cobro enviada", orden: 19, color: "#6B21A8", bg: "#F3E8FF" },
+  { key: "honorarios_pagados", label: "Honorarios pagados", orden: 20, color: "#1F7A45", bg: "#DDF4E3" },
+  { key: "paz_y_salvo_generado", label: "Paz y salvo generado", orden: 21, color: "#1F7A45", bg: "#DDF4E3" },
+  { key: "prejuridico", label: "Prejurídico", orden: 22, color: "#991B1B", bg: "#FEE2E2" },
+  { key: "proceso_cerrado", label: "Proceso cerrado", orden: 23, color: "#242424", bg: "#E5E7EB" },
 ];
 
 export const CASO_ESTADO_BY_KEY: Record<CasoEstado, CasoEstadoDef> = CASO_ESTADOS.reduce(
@@ -65,10 +73,14 @@ export type AccionOrigen =
   | "poder_firmado"
   | "radicado_confirmado"
   | "aprobacion_registrada"
+  | "documentos_banco_firmados"
+  | "condiciones_aplicadas"
   | "resultado_final"
+  | "cuenta_cobro_generada"
   | "cuenta_cobro_enviada"
   | "honorarios_pagados"
   | "paz_y_salvo_generado"
+  | "prejuridico"
   | "manual";
 
 export const ACCION_A_ESTADO: Record<Exclude<AccionOrigen, "manual">, CasoEstado> = {
@@ -80,10 +92,14 @@ export const ACCION_A_ESTADO: Record<Exclude<AccionOrigen, "manual">, CasoEstado
   poder_firmado: "poder_firmado",
   radicado_confirmado: "radicado_banco",
   aprobacion_registrada: "aprobado",
+  documentos_banco_firmados: "documentos_banco_firmados",
+  condiciones_aplicadas: "condiciones_aplicadas",
   resultado_final: "resultado_final_generado",
+  cuenta_cobro_generada: "cuenta_cobro_generada",
   cuenta_cobro_enviada: "cuenta_cobro_enviada",
   honorarios_pagados: "honorarios_pagados",
   paz_y_salvo_generado: "paz_y_salvo_generado",
+  prejuridico: "prejuridico",
 };
 
 export function labelEstado(e: CasoEstado | null | undefined): string {
