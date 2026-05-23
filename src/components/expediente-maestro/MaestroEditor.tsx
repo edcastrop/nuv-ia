@@ -127,7 +127,7 @@ export function MaestroEditor(p: Props) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <SelectField
               label="Tipo de beneficio"
-              value={p.fresh.tipoBeneficio}
+              value={p.fresh.tipoBeneficio ?? ""}
               options={FRESH_TIPOS.map((t) => t.label)}
               onChange={(label) => {
                 const tipo = FRESH_TIPOS.find((t) => t.label === label)?.value as FreshTipoBeneficio | undefined;
@@ -156,8 +156,8 @@ export function MaestroEditor(p: Props) {
               onChange={(v) => p.onFresh(withFreshDerivados({ ...p.fresh, cuotasPagadas: Number(v.replace(/\D/g, "")) || 0 }))}
             />
             <TextField label="Cuotas Fresh pendientes" value={String(p.fresh.cuotasPendientes)} readOnly />
-            <TextField label="Beneficio recibido" value={p.fresh.beneficioRecibido.toLocaleString("es-CO")} readOnly />
-            <TextField label="Beneficio restante" value={p.fresh.beneficioRestante.toLocaleString("es-CO")} readOnly />
+            <TextField label="Beneficio recibido" value={(p.fresh.beneficioRecibido ?? 0).toLocaleString("es-CO")} readOnly />
+            <TextField label="Beneficio restante" value={(p.fresh.beneficioRestante ?? 0).toLocaleString("es-CO")} readOnly />
           </div>
         )}
       </Accordion>
