@@ -55,31 +55,40 @@ const fmtTxt = (v: string | number | null | undefined) => {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PODER ESPECIAL
+// PODER ESPECIAL  (plantilla jurídica fija NUVEX, sin IA)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function buildPoderEspecial(e: ExpedienteMaestro): LegalDoc {
+export interface ApoderadoSeleccionado {
+  nombre: string;
+  cedula: string;
+  lugarExpedicion?: string | null;
+  celular?: string | null;
+}
+
+export function buildPoderEspecial(
+  e: ExpedienteMaestro,
+  apOverride?: ApoderadoSeleccionado,
+): LegalDoc {
   const c = e.cliente;
-  const ap = e.apoderado;
   const cr = e.credito;
+  const ap: ApoderadoSeleccionado = apOverride ?? {
+    nombre: e.apoderado?.nombre ?? "",
+    cedula: e.apoderado?.cedula ?? "",
+    lugarExpedicion: null,
+    celular: e.apoderado?.telefono ?? "",
+  };
 
   const blocks: DocBlock[] = [
     { type: "title", text: "PODER ESPECIAL" },
     { type: "spacer", size: 12 },
-    {
-      type: "paragraph",
-      text: `${ciudadFmt(c.ciudad)}, ${hoy()}.`,
-    },
+    { type: "paragraph", text: `${ciudadFmt(c.ciudad)}, ${hoy()}.` },
     { type: "spacer" },
     { type: "paragraph", text: "Señores" },
-    { type: "paragraph", text: `${safe(cr.banco).toUpperCase()}` },
+    { type: "paragraph", text: safe(cr.banco).toUpperCase() },
     { type: "paragraph", text: "Ciudad." },
     { type: "spacer" },
     { type: "subtitle", text: "Referencia: Poder especial para gestión de crédito hipotecario" },
-    {
-      type: "paragraph",
-      text: `Crédito No. ${safe(cr.numeroCredito)} · Producto: ${safe(cr.tipoProducto)}`,
-    },
+    { type: "paragraph", text: `Crédito No. ${safe(cr.numeroCredito)} · Producto: ${safe(cr.tipoProducto)}` },
     { type: "spacer" },
     {
       type: "paragraph",
@@ -94,59 +103,36 @@ export function buildPoderEspecial(e: ExpedienteMaestro): LegalDoc {
       type: "paragraph",
       text:
         `${fullName(ap.nombre)}, mayor de edad, identificado(a) con cédula de ciudadanía ` +
-        `No. ${safe(ap.cedula)}, con domicilio en ${ciudadFmt(ap.ciudad)}, ` +
-        `quien en adelante se denominará EL APODERADO,`,
+        `No. ${safe(ap.cedula)} expedida en ${safe(ap.lugarExpedicion ?? "")}, ` +
+        `celular ${safe(ap.celular ?? "")}, quien en adelante se denominará EL APODERADO,`,
     },
     { type: "spacer" },
     {
       type: "paragraph",
       text:
         `para que en mi nombre y representación adelante ante ${safe(cr.banco).toUpperCase()} ` +
-        `y/o cualquier entidad financiera, todas las gestiones, trámites, solicitudes y ` +
-        `actuaciones necesarias relacionadas con el crédito hipotecario identificado con el ` +
-        `No. ${safe(cr.numeroCredito)}, incluyendo de manera enunciativa, mas no taxativa, las siguientes:`,
+        `todas las gestiones, trámites, solicitudes y actuaciones necesarias relacionadas con el ` +
+        `crédito hipotecario identificado con el No. ${safe(cr.numeroCredito)}, incluyendo de manera ` +
+        `enunciativa, mas no taxativa, las siguientes:`,
     },
+    { type: "spacer" },
+    { type: "paragraph", text: "1. Solicitar y recibir extractos, certificaciones, paz y salvos, simulaciones, tablas de amortización y cualquier información relacionada con la obligación." },
+    { type: "paragraph", text: "2. Radicar solicitudes de reestructuración, reliquidación, reducción de tasa, ampliación o disminución de plazo, abonos a capital y demás modificaciones contractuales." },
+    { type: "paragraph", text: "3. Suscribir, presentar y retirar toda clase de comunicaciones, formularios y documentos." },
+    { type: "paragraph", text: "4. Representarme en reuniones, conciliaciones y diligencias relativas al crédito." },
+    { type: "paragraph", text: "5. Realizar cualquier otra actuación necesaria para el cabal cumplimiento del presente mandato." },
     { type: "spacer" },
     {
       type: "paragraph",
       text:
-        "1. Solicitar y recibir extractos, certificaciones, paz y salvos, simulaciones, " +
-        "tablas de amortización y cualquier información relacionada con la obligación.",
-    },
-    {
-      type: "paragraph",
-      text:
-        "2. Radicar solicitudes de reestructuración, reliquidación, reducción de tasa, " +
-        "ampliación o disminución de plazo, abonos a capital y demás modificaciones contractuales.",
-    },
-    {
-      type: "paragraph",
-      text:
-        "3. Suscribir, presentar y retirar toda clase de comunicaciones, formularios y documentos.",
-    },
-    {
-      type: "paragraph",
-      text:
-        "4. Representarme en reuniones, conciliaciones y diligencias relativas al crédito.",
-    },
-    {
-      type: "paragraph",
-      text:
-        "5. Realizar cualquier otra actuación necesaria para el cabal cumplimiento del presente mandato.",
-    },
-    { type: "spacer" },
-    {
-      type: "paragraph",
-      text:
-        `El presente poder se otorga bajo el número ${safe(ap.numeroPoder)} con fecha ` +
-        `${safe(ap.fechaPoder)} y tendrá vigencia hasta su revocatoria expresa por escrito.`,
+        "El presente poder tendrá vigencia hasta su revocatoria expresa por escrito por parte del poderdante.",
     },
     { type: "spacer", size: 24 },
     {
       type: "signature",
       columns: [
-        { label: "EL PODERDANTE", name: fullName(c.nombre), cc: `C.C. ${safe(c.cedula)}` },
-        { label: "EL APODERADO", name: fullName(ap.nombre), cc: `C.C. ${safe(ap.cedula)}` },
+        { label: "EL PODERDANTE", name: fullName(c.nombre), cc: `C.C. ${safe(c.cedula)} de ${safe(c.expedidaEn)}` },
+        { label: "EL APODERADO", name: fullName(ap.nombre), cc: `C.C. ${safe(ap.cedula)} de ${safe(ap.lugarExpedicion ?? "")}` },
       ],
     },
   ];
@@ -157,6 +143,90 @@ export function buildPoderEspecial(e: ExpedienteMaestro): LegalDoc {
     blocks,
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DATOS PARA CONTRATO (tabla contractual descargable)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function buildDatosContrato(
+  e: ExpedienteMaestro,
+  sim?: Expediente | null,
+): LegalDoc {
+  const c = e.cliente;
+  const cr = e.credito;
+  const propuesta: PropuestaData | Record<string, never> = (sim?.propuesta_data ?? {}) as PropuestaData | Record<string, never>;
+  const fresh = e.fresh;
+  const p = propuesta as Partial<PropuestaData>;
+
+  // Cuotas eliminadas estimadas: cuotas pendientes originales - nuevo plazo
+  const cuotasPendientes = Number(cr.cuotasPagadas ? Number(cr.plazoOriginal) - Number(cr.cuotasPagadas) : 0) || 0;
+  const cuotasEliminadas =
+    p.añosEliminados !== undefined && p.nuevoPlazo !== undefined && cuotasPendientes > 0
+      ? Math.max(0, cuotasPendientes - Number(p.nuevoPlazo))
+      : null;
+
+  const honorarios = Number(p.honorarios ?? sim?.honorarios_final ?? 0);
+  const pagoUnico = honorarios;
+  const pago2 = honorarios > 0 ? honorarios / 2 : 0;
+  const pago3 = honorarios > 0 ? honorarios / 3 : 0;
+
+  const blocks: DocBlock[] = [
+    { type: "title", text: "DATOS PARA CONTRATO" },
+    { type: "subtitle", text: `${fullName(c.nombre)} · ${safe(cr.banco).toUpperCase()}` },
+    { type: "spacer", size: 10 },
+    { type: "paragraph", text: `Generado el ${hoy()}.` },
+    { type: "spacer", size: 10 },
+
+    { type: "section", text: "CLIENTE" },
+    { type: "field", label: "Nombre", value: fmtTxt(c.nombre) },
+    { type: "field", label: "Cédula", value: fmtTxt(c.cedula) },
+    { type: "field", label: "Banco", value: fmtTxt(cr.banco) },
+    { type: "field", label: "Producto", value: fmtTxt(cr.tipoProducto) },
+    { type: "field", label: "Número crédito", value: fmtTxt(cr.numeroCredito) },
+    { type: "field", label: "Plazo original (meses)", value: fmtTxt(cr.plazoOriginal) },
+    { type: "field", label: "Cuotas pagadas", value: fmtTxt(cr.cuotasPagadas) },
+    { type: "spacer", size: 6 },
+
+    { type: "section", text: "PROPUESTA" },
+    { type: "field", label: "Cuotas eliminadas", value: cuotasEliminadas !== null ? String(cuotasEliminadas) : "—" },
+    { type: "field", label: "Nuevo plazo (meses)", value: fmtTxt(p.nuevoPlazo) },
+    { type: "field", label: "Cuota actual", value: fmtCOP(cr.cuotaActual) },
+    { type: "field", label: "Nueva cuota", value: fmtCOP(p.nuevaCuota) },
+    { type: "field", label: "Honorarios", value: fmtCOP(honorarios) },
+    { type: "field", label: "Asesor", value: fmtTxt(e.asesor?.nombre) },
+    { type: "field", label: "Licenciado", value: fmtTxt(e.licenciado?.nombre) },
+    { type: "spacer", size: 6 },
+
+    { type: "section", text: "FORMA DE PAGO" },
+    { type: "field", label: "Pago único", value: fmtCOP(pagoUnico) },
+    { type: "field", label: "2 cuotas (c/u)", value: fmtCOP(pago2) },
+    { type: "field", label: "3 cuotas (c/u)", value: fmtCOP(pago3) },
+    { type: "spacer", size: 6 },
+
+    ...(fresh?.activo
+      ? ([
+          { type: "section", text: "BENEFICIO FRESH" } as DocBlock,
+          { type: "field", label: "Cuota actual sin cobertura", value: fmtCOP(cr.cuotaActual) } as DocBlock,
+          {
+            type: "field",
+            label: "Cuota actual con cobertura",
+            value: fmtCOP(Number(cr.cuotaActual || 0) - Number(fresh.valorMensual || 0)),
+          } as DocBlock,
+          { type: "field", label: "Valor cobertura mensual", value: fmtCOP(fresh.valorMensual) } as DocBlock,
+          { type: "field", label: "Cuotas Fresh pagadas", value: fmtTxt(fresh.cuotasPagadas) } as DocBlock,
+          { type: "field", label: "Cuotas Fresh pendientes", value: fmtTxt(fresh.cuotasPendientes) } as DocBlock,
+          { type: "field", label: "Nueva cuota posterior al Fresh", value: fmtCOP(p.nuevaCuota) } as DocBlock,
+        ])
+      : []),
+  ];
+
+  return {
+    filename: `Datos_Contrato_${(c.nombre || "Cliente").replace(/\s+/g, "_")}`,
+    title: "Datos para Contrato",
+    blocks,
+  };
+}
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONTRATO DE PRESTACIÓN DE SERVICIOS
