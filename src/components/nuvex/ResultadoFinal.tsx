@@ -947,16 +947,18 @@ function PrintInformeFinal({
 }
 
 function PrintCuentaCobro({
-  id, consecutivo, client, aprob, aprobado,
+  id, consecutivo, expedienteId, client, aprob, aprobado,
 }: {
   id: string;
   consecutivo: string;
+  expedienteId?: string;
   client: ClientData;
   aprob: AprobacionState;
   aprobado: { honorariosBase: number; descuento: number; honorariosFinales: number };
 }) {
   const hoy = new Date().toISOString().slice(0, 10);
   const hasDiscount = aprobado.descuento > 0;
+  const expedienteCorto = expedienteId ? `EXP-${expedienteId.slice(0, 8).toUpperCase()}` : "—";
   return (
     <div id={id} style={printShell}>
       <div style={{ display: "flex", minHeight: 1080 }}>
