@@ -12,6 +12,15 @@ import type { LegalDoc, DocBlock } from "./legalDocs";
 // ─────────────────────────────── PDF ───────────────────────────────
 
 export function exportLegalDocPDF(doc: LegalDoc) {
+  if (doc.validationIssues && doc.validationIssues.length > 0) {
+    // Bloqueo de exportación — el llamador debe corregir antes de generar.
+    // eslint-disable-next-line no-alert
+    alert(
+      `No se puede generar "${doc.title}".\n\n` +
+        doc.validationIssues.map((m) => `• ${m}`).join("\n"),
+    );
+    return;
+  }
   const pdf = new jsPDF({ unit: "pt", format: "letter" });
   const pageW = pdf.internal.pageSize.getWidth();
   const pageH = pdf.internal.pageSize.getHeight();
@@ -19,6 +28,29 @@ export function exportLegalDocPDF(doc: LegalDoc) {
   const marginY = 72;
   const contentW = pageW - marginX * 2;
   let y = marginY;
+
+  // Header NUVEX institucional + consecutivo (solo página 1)
+  pdf.setFont("times", "bold");
+  pdf.setFontSize(13);
+  pdf.text("NUVEX FINANZAS INTELIGENTES", marginX, y - 30);
+  pdf.setFont("times", "normal");
+  pdf.setFontSize(9);
+  pdf.text("Bogotá | Bucaramanga · www.nuvex.com.co", marginX, y - 18);
+  if (doc.consecutivo) {
+    pdf.setFont("times", "bold");
+    pdf.setFontSize(9);
+    pdf.text(doc.consecutivo, pageW - marginX, y - 30, { align: "right" });
+  }
+  pdf.setFont("times", "normal");
+  pdf.setFontSize(8);
+  pdf.text(
+    `Generado: ${new Date().toLocaleDateString("es-CO", { day: "2-digit", month: "long", year: "numeric" })}`,
+    pageW - marginX,
+    y - 18,
+    { align: "right" },
+  );
+  pdf.setLineWidth(0.8);
+  pdf.line(marginX, y - 10, pageW - marginX, y - 10);
 
   const checkBreak = (needed: number) => {
     if (y + needed > pageH - marginY) {

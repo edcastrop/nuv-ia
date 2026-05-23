@@ -30,6 +30,10 @@ export interface LegalDoc {
   filename: string;
   title: string;
   blocks: DocBlock[];
+  /** Issues de validación detectados (campos faltantes, inconsistencias matemáticas, etc.). */
+  validationIssues?: string[];
+  /** Consecutivo documental NUVEX para PDFs operativos (Poder, Datos Contrato). */
+  consecutivo?: string;
 }
 
 const hoy = () =>
@@ -121,6 +125,9 @@ export function buildPoderFromTemplate(i: BuildPoderInput): PoderResult {
   const missing = validatePoderVariables(vars, templateId);
   const blocks = renderPoderTemplate(templateId, vars);
   const safeName = (i.poderdante.nombre || "Cliente").replace(/\s+/g, "_");
+  const year = new Date().getFullYear();
+  const seq = String(Date.now()).slice(-4);
+  const consecutivo = `NUVEX-PE-${year}-${seq}`;
   return {
     templateId,
     missing,
@@ -128,6 +135,8 @@ export function buildPoderFromTemplate(i: BuildPoderInput): PoderResult {
       filename: `Poder_Especial_${i.poderdante.calidad}_${safeName}`,
       title: `Poder Especial — ${i.poderdante.calidad}`,
       blocks,
+      consecutivo,
+      validationIssues: missing.length > 0 ? missing.map((m) => `Falta: ${m}`) : undefined,
     },
   };
 }
@@ -266,6 +275,11 @@ export function buildDatosContrato(
   const sumaCuotas = (ac.cuotas ?? []).reduce((a, b) => a + (Number(b) || 0), 0);
   const saldo = honorarios - sumaCuotas;
 
+  // Validación matemática: cuotaSinCob - valorCobertura ≈ cuotaConCob
+  const valorCob = toNum(cob?.valorCobertura);
+  const coberturaMathOk =
+    !cobActivo || Math.abs(cuotaSinCob - valorCob - cuotaConCob) <= 1;
+
   const blocks: DocBlock[] = [
     { type: "title", text: "DATOS PARA CONTRATO" },
     { type: "subtitle", text: `${fullName(c.nombre)} · ${safe(cr.banco).toUpperCase()}` },
@@ -297,7 +311,7 @@ export function buildDatosContrato(
       ? ([
           { type: "field", label: "Tipo cobertura", value: fmtTxt(cob?.tipoBeneficio) } as DocBlock,
           { type: "field", label: "Valor cobertura mensual", value: fmtCOP(cob?.valorCobertura) } as DocBlock,
-          { type: "field", label: "% tasa cobertura", value: cob?.tasaCobertura ? `${cob.tasaCobertura}%` : "—" } as DocBlock,
+          { type: "field", label: "% tasa cobertura", value: cob?.tasaCobertura ? `${cob.tasaCobertura}%` : "No aplica" } as DocBlock,
           { type: "field", label: "Cuotas cobertura pagadas", value: String(cobPagadas) } as DocBlock,
           { type: "field", label: "Cuotas cobertura pendientes", value: String(cobPendientes) } as DocBlock,
           { type: "field", label: "Cuota actual con cobertura", value: fmtCOP(cuotaConCob) } as DocBlock,
@@ -333,10 +347,22 @@ export function buildDatosContrato(
         ])),
   ];
 
+  const issues: string[] = [];
+  if (!coberturaMathOk) {
+    issues.push(
+      `Inconsistencia de cobertura: cuota sin cobertura (${fmtCOP(cuotaSinCob)}) − valor cobertura (${fmtCOP(valorCob)}) ≠ cuota con cobertura (${fmtCOP(cuotaConCob)}).`,
+    );
+  }
+  if (!c.nombre) issues.push("Falta nombre del cliente.");
+  if (!c.cedula) issues.push("Falta cédula del cliente.");
+  if (!cr.banco) issues.push("Falta banco.");
+  if (!cr.numeroCredito) issues.push("Falta número de crédito.");
+
   return {
     filename: `Datos_Contrato_${(c.nombre || "Cliente").replace(/\s+/g, "_")}`,
     title: "Datos para Contrato",
     blocks,
+    validationIssues: issues,
   };
 }
 
