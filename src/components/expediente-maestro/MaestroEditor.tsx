@@ -63,6 +63,34 @@ interface Props {
 export function MaestroEditor(p: Props) {
   const set = <T, K extends keyof T>(obj: T, k: K, v: T[K]) => ({ ...obj, [k]: v });
 
+  // Auto-rellenar Departamento desde la Ciudad de residencia (titular y cotitular).
+  useEffect(() => {
+    const dep = cityDepartment(p.cliente.ciudad);
+    if (dep && dep !== p.cliente.departamento) {
+      p.onCliente({ ...p.cliente, departamento: dep });
+    }
+  }, [p.cliente.ciudad]);
+  useEffect(() => {
+    if (!p.cotitular.activo) return;
+    const dep = cityDepartment(p.cotitular.ciudad);
+    if (dep && dep !== p.cotitular.departamento) {
+      p.onCotitular({ ...p.cotitular, departamento: dep });
+    }
+  }, [p.cotitular.ciudad, p.cotitular.activo]);
+
+  // Herencia de datos del titular hacia el cotitular.
+  const [hered, setHered] = useState({ direccion: false, ciudad: false, email: false, telefono: false });
+  useEffect(() => {
+    if (!p.cotitular.activo) return;
+    const next = { ...p.cotitular };
+    let changed = false;
+    if (hered.direccion && next.direccion !== p.cliente.direccion) { next.direccion = p.cliente.direccion; changed = true; }
+    if (hered.ciudad && next.ciudad !== p.cliente.ciudad) { next.ciudad = p.cliente.ciudad; changed = true; }
+    if (hered.email && next.email !== p.cliente.email) { next.email = p.cliente.email; changed = true; }
+    if (hered.telefono && next.telefono !== p.cliente.telefono) { next.telefono = p.cliente.telefono; changed = true; }
+    if (changed) p.onCotitular(next);
+  }, [hered, p.cliente.direccion, p.cliente.ciudad, p.cliente.email, p.cliente.telefono, p.cotitular.activo]);
+
   return (
     <div className="space-y-4">
       <Accordion title="Datos del cliente" subtitle="Información personal del titular">
