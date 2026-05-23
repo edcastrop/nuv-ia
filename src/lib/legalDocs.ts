@@ -266,6 +266,11 @@ export function buildDatosContrato(
   const sumaCuotas = (ac.cuotas ?? []).reduce((a, b) => a + (Number(b) || 0), 0);
   const saldo = honorarios - sumaCuotas;
 
+  // Validación matemática: cuotaSinCob - valorCobertura ≈ cuotaConCob
+  const valorCob = toNum(cob?.valorCobertura);
+  const coberturaMathOk =
+    !cobActivo || Math.abs(cuotaSinCob - valorCob - cuotaConCob) <= 1;
+
   const blocks: DocBlock[] = [
     { type: "title", text: "DATOS PARA CONTRATO" },
     { type: "subtitle", text: `${fullName(c.nombre)} · ${safe(cr.banco).toUpperCase()}` },
@@ -297,7 +302,7 @@ export function buildDatosContrato(
       ? ([
           { type: "field", label: "Tipo cobertura", value: fmtTxt(cob?.tipoBeneficio) } as DocBlock,
           { type: "field", label: "Valor cobertura mensual", value: fmtCOP(cob?.valorCobertura) } as DocBlock,
-          { type: "field", label: "% tasa cobertura", value: cob?.tasaCobertura ? `${cob.tasaCobertura}%` : "—" } as DocBlock,
+          { type: "field", label: "% tasa cobertura", value: cob?.tasaCobertura ? `${cob.tasaCobertura}%` : "No aplica" } as DocBlock,
           { type: "field", label: "Cuotas cobertura pagadas", value: String(cobPagadas) } as DocBlock,
           { type: "field", label: "Cuotas cobertura pendientes", value: String(cobPendientes) } as DocBlock,
           { type: "field", label: "Cuota actual con cobertura", value: fmtCOP(cuotaConCob) } as DocBlock,
