@@ -1,8 +1,15 @@
-// Exportadores de documentos jurídicos: PDF (jsPDF) y DOCX (docx).
-// Consumen el árbol de bloques generado por `legalDocs.ts`.
+// Exportadores de documentos jurídicos NUVEX.
 //
-// Branding NUVEX obligatorio en PDF: header con logo + footer institucional
-// con franja azul, código documental y paginado en todas las páginas.
+// Arquitectura: ya NO renderizamos los documentos como bloques de texto. En su
+// lugar usamos PLANTILLAS GRÁFICAS construidas con el `nuvexPdfKit` (header
+// azul institucional + footer corporativo + portada hero + cards + secciones).
+//
+// Hay tres renderers:
+//   • renderPoderEspecial  → portada institucional + texto jurídico
+//   • renderFichaContractual → ficha ejecutiva en section cards
+//   • renderGenericLegalDoc → fallback compatible con docs antiguos (Cuenta
+//     de Cobro, Paz y Salvo, Contrato de Servicios) preservando los bloques
+//     `LegalDoc`. Mantiene branding pero sin hero.
 
 import { jsPDF } from "jspdf";
 import {
@@ -10,324 +17,316 @@ import {
   HeadingLevel, Table, TableRow, TableCell, WidthType, BorderStyle,
 } from "docx";
 import { saveAs } from "file-saver";
-import logoNuvex from "@/assets/logo-nuvex.png";
 import { NUVEX } from "@/components/nuvex/constants";
 import type { LegalDoc, DocBlock } from "./legalDocs";
+import {
+  BRAND, LAYOUT, loadLogoDataURL, applyChrome,
+  createNuvexPdf, nextPage,
+  drawHero, drawCardGrid, drawSectionCard,
+  writeText, drawSignatures, roundedRect,
+  type BrandMeta, type CardItem, type SectionCardOpts,
+} from "./pdf/nuvexPdfKit";
 
-// ─────────────────────────────── Logo (cached) ───────────────────────────
+// ─────────────────────────────── Routing por tipo ───────────────────────────
 
-let logoDataUrlPromise: Promise<string> | null = null;
-async function loadLogoDataURL(): Promise<string> {
-  if (logoDataUrlPromise) return logoDataUrlPromise;
-  logoDataUrlPromise = (async () => {
-    try {
-      const res = await fetch(logoNuvex as unknown as string);
-      const blob = await res.blob();
-      return await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = () => reject(reader.error);
-        reader.readAsDataURL(blob);
-      });
-    } catch {
-      return "";
-    }
-  })();
-  return logoDataUrlPromise;
+type DocKind = "poder" | "ficha" | "generic";
+
+function detectKind(doc: LegalDoc): DocKind {
+  if (/poder\s+especial/i.test(doc.title)) return "poder";
+  if (/ficha\s+contractual|datos\s+para\s+contrato/i.test(doc.title)) return "ficha";
+  return "generic";
 }
 
-// ─────────────────────────────── PDF ───────────────────────────────
-
-const BRAND_BLUE: [number, number, number] = [68, 93, 163]; // #445DA3
-const INK: [number, number, number] = [36, 36, 36]; // #242424
-const MUTED: [number, number, number] = [92, 103, 112]; // #5C6770
-
-interface BrandMeta {
-  documento: string; // ej. "Documento Jurídico — Poder Especial"
-  consecutivo?: string;
-}
-
-function inferDocumentoLabel(doc: LegalDoc): string {
-  if (/poder/i.test(doc.title)) return "Documento Jurídico — Poder Especial";
-  if (/ficha contractual|datos para contrato/i.test(doc.title)) return "Documento Administrativo — Ficha Contractual";
-  if (/contrato de prestación/i.test(doc.title)) return "Documento Contractual — Contrato de Prestación de Servicios";
+function inferDocumentoLabel(doc: LegalDoc, kind: DocKind): string {
+  if (kind === "poder") return "Documento Jurídico — Poder Especial";
+  if (kind === "ficha") return "Documento Administrativo — Ficha Contractual";
+  if (/contrato de prestación/i.test(doc.title)) return "Documento Contractual — Prestación de Servicios";
+  if (/cuenta de cobro/i.test(doc.title)) return "Documento Administrativo — Cuenta de Cobro";
+  if (/paz y salvo/i.test(doc.title)) return "Documento Administrativo — Paz y Salvo";
   return "Documento NUVEX";
 }
 
-function drawHeader(pdf: jsPDF, logoDataUrl: string, meta: BrandMeta) {
-  const pageW = pdf.internal.pageSize.getWidth();
-  const marginX = 50;
-  const headerH = 78;
+// ─────────────────────────────── Utilidades de extracción ───────────────────
 
-  // Franja blanca con línea inferior azul gruesa
-  pdf.setFillColor(255, 255, 255);
-  pdf.rect(0, 0, pageW, headerH, "F");
-
-  // Logo
-  if (logoDataUrl) {
-    try {
-      // PNG ~ proporción 1:1 cuadrada o similar; alto 46pt, ancho auto
-      pdf.addImage(logoDataUrl, "PNG", marginX, 18, 0, 46);
-    } catch { /* ignore */ }
+/** Toma el primer `field` por label (case-insensitive) del array de bloques. */
+function findField(blocks: DocBlock[], labelRegex: RegExp): string {
+  for (const b of blocks) {
+    if (b.type === "field" && labelRegex.test(b.label)) return b.value || "";
   }
+  return "";
+}
 
-  // Texto institucional
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(11);
-  pdf.setTextColor(...BRAND_BLUE);
-  pdf.text("NUVEX FINANZAS INTELIGENTES", marginX + 130, 36);
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(8.5);
-  pdf.setTextColor(...MUTED);
-  pdf.text(meta.documento.toUpperCase(), marginX + 130, 50, { charSpace: 0.6 });
-
-  // Bloque derecho: código + fecha
-  const rightX = pageW - marginX;
-  if (meta.consecutivo) {
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(9);
-    pdf.setTextColor(...BRAND_BLUE);
-    pdf.text(meta.consecutivo, rightX, 32, { align: "right" });
+/** Devuelve los bloques que NO son `section`/`field` (es decir, texto jurídico). */
+function legalProse(blocks: DocBlock[]): DocBlock[] {
+  // El header gráfico ya muestra cliente/banco/producto/crédito en cards.
+  // Quitamos el bloque introductorio "DATOS DEL CLIENTE" + sus campos.
+  const out: DocBlock[] = [];
+  let inSectionDatos = false;
+  for (const b of blocks) {
+    if (b.type === "section") {
+      inSectionDatos = /datos\s+del\s+cliente/i.test(b.text);
+      if (inSectionDatos) continue;
+    }
+    if (inSectionDatos && (b.type === "field" || b.type === "spacer")) continue;
+    if (b.type === "field") continue; // los fields se promueven a cards en el hero
+    out.push(b);
   }
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(8);
-  pdf.setTextColor(...MUTED);
-  const fecha = new Date().toLocaleDateString("es-CO", { day: "2-digit", month: "long", year: "numeric" });
-  pdf.text(`Generado: ${fecha}`, rightX, 48, { align: "right" });
-
-  // Línea azul inferior
-  pdf.setDrawColor(...BRAND_BLUE);
-  pdf.setLineWidth(2);
-  pdf.line(marginX, headerH - 4, pageW - marginX, headerH - 4);
+  return out;
 }
 
-function drawFooter(pdf: jsPDF, pageNum: number, totalPages: number) {
-  const pageW = pdf.internal.pageSize.getWidth();
-  const pageH = pdf.internal.pageSize.getHeight();
-  const marginX = 50;
-  const footerY = pageH - 60;
+/** Agrupa los bloques en secciones {title, fields} para la ficha. */
+interface FichaSection {
+  title: string;
+  fields: Array<{ label: string; value: string }>;
+}
 
-  // Línea superior azul
-  pdf.setDrawColor(...BRAND_BLUE);
-  pdf.setLineWidth(1.2);
-  pdf.line(marginX, footerY, pageW - marginX, footerY);
+function groupBySection(blocks: DocBlock[]): FichaSection[] {
+  const out: FichaSection[] = [];
+  let current: FichaSection | null = null;
+  for (const b of blocks) {
+    if (b.type === "section") {
+      // El texto suele venir como "1. CLIENTE" — limpiamos el prefijo numérico.
+      const title = b.text.replace(/^\s*\d+\s*\.?\s*/, "").trim();
+      current = { title, fields: [] };
+      out.push(current);
+    } else if (b.type === "field" && current) {
+      current.fields.push({ label: b.label, value: b.value || "—" });
+    }
+  }
+  return out;
+}
 
-  // Bloque institucional centrado
+// ─────────────────────────────── Renderer: PODER ESPECIAL ───────────────────
+
+function renderPoderEspecial(pdf: jsPDF, doc: LegalDoc): void {
+  // Hero institucional como portada
+  let y = drawHero(pdf, {
+    badge: "Documento Jurídico",
+    title: "PODER ESPECIAL",
+    subtitle: "Representación ante entidad financiera",
+    variant: "cover",
+  });
+
+  // Tarjetas de identificación del expediente
+  const cards: CardItem[] = [
+    { label: "Cliente",          value: findField(doc.blocks, /^nombre$/i) || "—", accent: "primary" },
+    { label: "Cédula",           value: findField(doc.blocks, /^cédula|^cedula/i) || "—" },
+    { label: "Banco",            value: findField(doc.blocks, /^banco$/i) || "—", accent: "primary" },
+    { label: "Producto",         value: findField(doc.blocks, /^producto$/i) || "—" },
+    { label: "Número de crédito", value: findField(doc.blocks, /número\s+crédito|numero\s+credito|n[uú]mero\s+de\s+cr[eé]dito/i) || "—", accent: "soft" },
+    { label: "Fecha emisión",     value: new Date().toLocaleDateString("es-CO", { day: "2-digit", month: "long", year: "numeric" }), accent: "soft" },
+  ];
+  y = drawCardGrid(pdf, y, cards, 2, 70, 10);
+
+  // Separador "Texto jurídico"
+  y += 6;
+  pdf.setDrawColor(...BRAND.border);
+  pdf.setLineWidth(0.6);
+  pdf.line(LAYOUT.marginX, y, LAYOUT.pageW - LAYOUT.marginX, y);
+  y += 16;
   pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(8.5);
-  pdf.setTextColor(...BRAND_BLUE);
-  pdf.text("NUVEX FINANZAS INTELIGENTES", pageW / 2, footerY + 14, { align: "center" });
+  pdf.setFontSize(9);
+  pdf.setTextColor(...BRAND.blue);
+  pdf.text("TEXTO JURÍDICO", LAYOUT.marginX, y, { charSpace: 0.6 });
+  y += 14;
 
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(7.5);
-  pdf.setTextColor(...MUTED);
-  pdf.text(
-    "Carrera 16 # 37-48 Piso 4, Centro de Bucaramanga  ·  Bogotá | Bucaramanga",
-    pageW / 2,
-    footerY + 26,
-    { align: "center" },
-  );
-  pdf.text(
-    "juridica@nuvex.com.co  ·  www.nuvex.com.co",
-    pageW / 2,
-    footerY + 37,
-    { align: "center" },
-  );
-
-  // Paginado
-  pdf.setFontSize(7);
-  pdf.setTextColor(...MUTED);
-  pdf.text(`Página ${pageNum} de ${totalPages}`, pageW - marginX, footerY + 37, { align: "right" });
-}
-
-interface RenderOpts {
-  meta: BrandMeta;
-  logoDataUrl: string;
-}
-
-function renderBrandedLegalDoc(doc: LegalDoc, opts: RenderOpts): jsPDF {
-  const pdf = new jsPDF({ unit: "pt", format: "letter" });
-  const pageW = pdf.internal.pageSize.getWidth();
-  const pageH = pdf.internal.pageSize.getHeight();
-  const marginX = 70; // ~2.5 cm
-  const topMargin = 100; // espacio bajo el header
-  const bottomMargin = 80; // espacio sobre el footer
-  const contentW = pageW - marginX * 2;
-  let y = topMargin;
-
-  const drawChrome = () => {
-    drawHeader(pdf, opts.logoDataUrl, opts.meta);
-    // footer se pinta al final con totalPages correcto
-  };
-  drawChrome();
-
-  const checkBreak = (needed: number) => {
-    if (y + needed > pageH - bottomMargin) {
-      pdf.addPage();
-      drawChrome();
-      y = topMargin;
-    }
-  };
-
-  const writeText = (
-    text: string,
-    opts: { size: number; bold?: boolean; align?: "left" | "center" | "justify"; lineGap?: number; color?: [number, number, number] },
-  ) => {
-    pdf.setFont("helvetica", opts.bold ? "bold" : "normal");
-    pdf.setFontSize(opts.size);
-    pdf.setTextColor(...(opts.color ?? INK));
-    const lineH = opts.size * 1.35;
-    const lines = pdf.splitTextToSize(text, contentW) as string[];
-    for (const line of lines) {
-      checkBreak(lineH);
-      if (opts.align === "center") {
-        pdf.text(line, pageW / 2, y, { align: "center" });
-      } else if (opts.align === "justify") {
-        pdf.text(line, marginX, y, { maxWidth: contentW, align: "justify" });
-      } else {
-        pdf.text(line, marginX, y);
-      }
-      y += lineH;
-    }
-    if (opts.lineGap) y += opts.lineGap;
-  };
-
-  for (const b of doc.blocks) {
+  // Render del texto jurídico restante
+  const onBreak = () => nextPage(pdf);
+  const prose = legalProse(doc.blocks);
+  for (const b of prose) {
+    if (y > LAYOUT.contentBottom - 60) y = onBreak();
     switch (b.type) {
       case "title":
-        writeText(b.text, { size: 16, bold: true, align: "center", lineGap: 6, color: BRAND_BLUE });
-        // Subrayado fino bajo el título
-        pdf.setDrawColor(...BRAND_BLUE);
-        pdf.setLineWidth(0.6);
-        pdf.line(pageW / 2 - 60, y - 2, pageW / 2 + 60, y - 2);
-        y += 6;
+        // El hero ya muestra el título; ignoramos.
         break;
       case "subtitle":
-        writeText(b.text, { size: 11, bold: true, align: "center", lineGap: 8, color: MUTED });
+        y = writeText(pdf, y, b.text, { size: 10.5, bold: true, color: BRAND.muted, lineGap: 6, align: "left" }, onBreak);
         break;
       case "heading":
-        writeText(b.text, { size: 11, bold: true, lineGap: 2, color: BRAND_BLUE });
+        y = writeText(pdf, y, b.text, { size: 10.5, bold: true, color: BRAND.blueDark, lineGap: 4 }, onBreak);
         break;
       case "paragraph":
-        writeText(b.text, { size: 10.5, align: "justify", lineGap: 4 });
+        y = writeText(pdf, y, b.text, { size: 10.5, align: "justify", lineGap: 6 }, onBreak);
+        break;
+      case "spacer":
+        y += b.size ?? 8;
+        break;
+      case "signature":
+        if (y + 80 > LAYOUT.contentBottom) y = onBreak();
+        y = drawSignatures(pdf, y + 16, b.columns);
+        break;
+    }
+  }
+}
+
+// ─────────────────────────────── Renderer: FICHA CONTRACTUAL ────────────────
+
+function renderFichaContractual(pdf: jsPDF, doc: LegalDoc): void {
+  // Hero compacto
+  let y = drawHero(pdf, {
+    badge: "Ficha Ejecutiva",
+    title: "FICHA CONTRACTUAL NUVEX",
+    subtitle: "Información base para el contrato de prestación de servicios",
+    variant: "compact",
+  });
+
+  // Banner pequeño con cliente + banco + fecha (resumen contextual)
+  const cliente = findField(doc.blocks, /nombre\s+completo/i);
+  const banco = findField(doc.blocks, /^banco$/i);
+  const fecha = new Date().toLocaleDateString("es-CO", { day: "2-digit", month: "long", year: "numeric" });
+  const summary: CardItem[] = [
+    { label: "Cliente", value: cliente || "—", accent: "primary" },
+    { label: "Entidad", value: banco || "—", accent: "primary" },
+    { label: "Fecha de emisión", value: fecha, accent: "soft" },
+  ];
+  y = drawCardGrid(pdf, y, summary, 3, 62, 10);
+  y += 4;
+
+  // Una section card por cada bloque `section` agrupado
+  const sections = groupBySection(doc.blocks);
+  const onBreak = () => nextPage(pdf);
+  sections.forEach((s, idx) => {
+    if (s.fields.length === 0) return;
+    const opts: SectionCardOpts = {
+      index: idx + 1,
+      title: s.title,
+      fields: s.fields,
+      accent: /honorarios|forma de pago/i.test(s.title) ? "green" : /asesor/i.test(s.title) ? "ink" : "blue",
+    };
+    // Estimar alto para decidir corte
+    const rows = Math.ceil(s.fields.length / 2);
+    const estH = 30 + 16 + rows * 32 + 18;
+    if (y + estH > LAYOUT.contentBottom) y = onBreak();
+    y = drawSectionCard(pdf, y, opts);
+  });
+
+  // Marca de validación
+  if (doc.validationIssues && doc.validationIssues.length > 0) {
+    if (y + 60 > LAYOUT.contentBottom) y = onBreak();
+    roundedRect(pdf, LAYOUT.marginX, y, LAYOUT.pageW - LAYOUT.marginX * 2, 48, 8, [255, 247, 235], [255, 207, 153], 0.6);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(9);
+    pdf.setTextColor(180, 95, 6);
+    pdf.text("PENDIENTE DE VALIDACIÓN FINANCIERA", LAYOUT.marginX + 14, y + 18, { charSpace: 0.5 });
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(8);
+    pdf.setTextColor(...BRAND.muted);
+    const msg = doc.validationIssues[0] || "Revisar consistencia financiera antes de contratar.";
+    const lines = (pdf.splitTextToSize(msg, LAYOUT.pageW - LAYOUT.marginX * 2 - 28) as string[]).slice(0, 2);
+    lines.forEach((l, i) => pdf.text(l, LAYOUT.marginX + 14, y + 32 + i * 10));
+    y += 58;
+  }
+}
+
+// ─────────────────────────────── Renderer: GENÉRICO (fallback) ──────────────
+
+function renderGenericLegalDoc(pdf: jsPDF, doc: LegalDoc): void {
+  // Header compacto con título del doc
+  let y = drawHero(pdf, {
+    badge: inferDocumentoLabel(doc, "generic"),
+    title: doc.title.toUpperCase(),
+    variant: "compact",
+  });
+
+  const onBreak = () => nextPage(pdf);
+
+  for (const b of doc.blocks) {
+    if (y > LAYOUT.contentBottom - 60) y = onBreak();
+    switch (b.type) {
+      case "title":
+        // ya está en hero
+        break;
+      case "subtitle":
+        y = writeText(pdf, y, b.text, { size: 10.5, bold: true, color: BRAND.muted, lineGap: 8, align: "left" }, onBreak);
+        break;
+      case "heading":
+        y = writeText(pdf, y, b.text, { size: 11, bold: true, color: BRAND.blue, lineGap: 4 }, onBreak);
+        break;
+      case "paragraph":
+        y = writeText(pdf, y, b.text, { size: 10.5, align: "justify", lineGap: 4 }, onBreak);
         break;
       case "section": {
         y += 8;
-        checkBreak(28);
-        // Banda gris claro con texto en azul
-        pdf.setFillColor(247, 249, 251);
-        pdf.rect(marginX, y - 12, contentW, 20, "F");
-        pdf.setDrawColor(...BRAND_BLUE);
-        pdf.setLineWidth(0.4);
-        pdf.line(marginX, y + 8, marginX + 4, y + 8); // marca lateral
-        pdf.setFillColor(...BRAND_BLUE);
-        pdf.rect(marginX, y - 12, 3, 20, "F");
+        if (y + 28 > LAYOUT.contentBottom) y = onBreak();
+        roundedRect(pdf, LAYOUT.marginX, y, LAYOUT.pageW - LAYOUT.marginX * 2, 22, 4, BRAND.blueSoft, BRAND.border, 0.4);
         pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(10.5);
-        pdf.setTextColor(...BRAND_BLUE);
-        pdf.text(b.text, marginX + 10, y + 2);
-        y += 18;
+        pdf.setFontSize(10);
+        pdf.setTextColor(...BRAND.blueDark);
+        pdf.text(b.text, LAYOUT.marginX + 10, y + 15);
+        y += 32;
         break;
       }
       case "field": {
         const labelW = 180;
+        const contentW = LAYOUT.pageW - LAYOUT.marginX * 2;
         const valueW = contentW - labelW - 12;
         pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(10);
-        pdf.setTextColor(...INK);
+        pdf.setFontSize(9.5);
+        pdf.setTextColor(...BRAND.muted);
         const labelLines = pdf.splitTextToSize(b.label, labelW) as string[];
         pdf.setFont("helvetica", "normal");
         const valueLines = pdf.splitTextToSize(b.value || "—", valueW) as string[];
-        const lines = Math.max(labelLines.length, valueLines.length);
+        const rows = Math.max(labelLines.length, valueLines.length);
         const lineH = 10 * 1.4;
-        checkBreak(lines * lineH + 4);
+        if (y + rows * lineH > LAYOUT.contentBottom) y = onBreak();
         const startY = y;
         pdf.setFont("helvetica", "bold");
-        pdf.setTextColor(...MUTED);
-        labelLines.forEach((l, i) => pdf.text(l, marginX, startY + i * lineH));
+        pdf.setTextColor(...BRAND.muted);
+        labelLines.forEach((l, i) => pdf.text(l, LAYOUT.marginX, startY + i * lineH));
         pdf.setFont("helvetica", "normal");
-        pdf.setTextColor(...INK);
-        valueLines.forEach((l, i) => pdf.text(l, marginX + labelW + 12, startY + i * lineH));
-        y = startY + lines * lineH + 3;
+        pdf.setTextColor(...BRAND.ink);
+        valueLines.forEach((l, i) => pdf.text(l, LAYOUT.marginX + labelW + 12, startY + i * lineH));
+        y = startY + rows * lineH + 4;
         break;
       }
       case "spacer":
         y += b.size ?? 8;
         break;
-
-      case "signature": {
-        const colW = contentW / b.columns.length;
-        checkBreak(90);
-        pdf.setDrawColor(...INK);
-        pdf.setLineWidth(0.6);
-        b.columns.forEach((_, i) => {
-          const x1 = marginX + colW * i + 20;
-          const x2 = marginX + colW * (i + 1) - 20;
-          pdf.line(x1, y, x2, y);
-        });
-        y += 14;
-        pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(9.5);
-        pdf.setTextColor(...BRAND_BLUE);
-        b.columns.forEach((col, i) => {
-          pdf.text(col.label, marginX + colW * i + colW / 2, y, { align: "center" });
-        });
-        y += 14;
-        pdf.setFont("helvetica", "normal");
-        pdf.setFontSize(10);
-        pdf.setTextColor(...INK);
-        b.columns.forEach((col, i) => {
-          if (col.name) pdf.text(col.name, marginX + colW * i + colW / 2, y, { align: "center" });
-        });
-        y += 12;
-        pdf.setFontSize(9);
-        pdf.setTextColor(...MUTED);
-        b.columns.forEach((col, i) => {
-          if (col.cc) pdf.text(col.cc, marginX + colW * i + colW / 2, y, { align: "center" });
-        });
-        y += 16;
+      case "signature":
+        if (y + 80 > LAYOUT.contentBottom) y = onBreak();
+        y = drawSignatures(pdf, y + 16, b.columns);
         break;
-      }
     }
   }
+}
 
-  // Footer en todas las páginas con paginado real
-  const totalPages = pdf.getNumberOfPages();
-  for (let i = 1; i <= totalPages; i++) {
-    pdf.setPage(i);
-    drawFooter(pdf, i, totalPages);
-  }
+// ─────────────────────────────── Composición final ──────────────────────────
 
+async function composeBrandedPdf(doc: LegalDoc): Promise<jsPDF> {
+  const pdf = createNuvexPdf();
+  const kind = detectKind(doc);
+  if (kind === "poder") renderPoderEspecial(pdf, doc);
+  else if (kind === "ficha") renderFichaContractual(pdf, doc);
+  else renderGenericLegalDoc(pdf, doc);
+
+  const logoDataUrl = await loadLogoDataURL();
+  const meta: BrandMeta = {
+    documento: inferDocumentoLabel(doc, kind),
+    consecutivo: doc.consecutivo,
+  };
+  applyChrome(pdf, logoDataUrl, meta);
   return pdf;
 }
 
 export async function exportLegalDocPDF(doc: LegalDoc) {
   if (doc.validationIssues && doc.validationIssues.length > 0) {
-    // Documento administrativo: NO bloquear. Solo advertir en consola.
     console.warn(
       `[NUVEX PDF] "${doc.title}" — advertencia pendiente de validación financiera:\n` +
         doc.validationIssues.map((m) => ` • ${m}`).join("\n"),
     );
   }
-  const logoDataUrl = await loadLogoDataURL();
-  const pdf = renderBrandedLegalDoc(doc, {
-    logoDataUrl,
-    meta: { documento: inferDocumentoLabel(doc), consecutivo: doc.consecutivo },
-  });
+  const pdf = await composeBrandedPdf(doc);
   pdf.save(`${doc.filename}.pdf`);
 }
 
 /** Igual que exportLegalDocPDF pero devuelve el Blob en memoria (no descarga). */
 export async function legalDocToPDFBlob(doc: LegalDoc): Promise<Blob> {
-  const logoDataUrl = await loadLogoDataURL();
-  const pdf = renderBrandedLegalDoc(doc, {
-    logoDataUrl,
-    meta: { documento: inferDocumentoLabel(doc), consecutivo: doc.consecutivo },
-  });
+  const pdf = await composeBrandedPdf(doc);
   return pdf.output("blob");
 }
 
-// ─────────────────────────────── DOCX ───────────────────────────────
+// ─────────────────────────────── DOCX ───────────────────────────────────────
+// La exportación a Word permanece como respaldo (mismo branding tipográfico).
 
 function blockToDocx(b: DocBlock): Paragraph | Table {
   const BLUE = "445DA3";
@@ -427,7 +426,6 @@ function blockToDocx(b: DocBlock): Paragraph | Table {
 }
 
 function buildLegalDocDocx(doc: LegalDoc): Document {
-  // Prepende cabecera institucional y antepone bloque de pie al final del documento.
   const top: Paragraph[] = [];
   if (doc.consecutivo) {
     top.push(new Paragraph({
@@ -476,5 +474,5 @@ export async function legalDocToDOCXBlob(doc: LegalDoc): Promise<Blob> {
   return await Packer.toBlob(buildLegalDocDocx(doc));
 }
 
-// Suppress unused import warnings (NUVEX may be referenced via brand palette).
+// suprime warning de import sin uso
 void NUVEX;
