@@ -451,13 +451,17 @@ export function ExtractoReader({ modo, onApply }: Props) {
   const updateField = (key: string, value: string) => {
     setParsed((prev) => {
       if (!prev) return prev;
-      const next = { ...prev, [key]: value };
+      let next: ExtractoData = { ...prev, [key]: value };
       if (BANCOLOMBIA_KEYS.has(key) || key === "banco") {
-        return recomputeBancolombia(next);
+        next = recomputeBancolombia(next);
+      }
+      if (key === "cuotasPagadas" || key === "plazoInicial" || key === "cuotasPendientes" || key === "cuotaActualNumero") {
+        next = normalizeExtractData(next);
       }
       return next;
     });
   };
+
 
   const handleConfirm = () => {
     if (!parsed) return;
