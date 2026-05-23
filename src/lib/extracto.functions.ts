@@ -494,9 +494,25 @@ export const extractStatement = createServerFn({ method: "POST" })
         // ----- BANCOLOMBIA: mapeo literal por campos del extracto -----
         mapeoBanco = "bancolombia";
         const valorAPagar = monto("valorAPagar");
-        const sVida = monto("valorSeguroVida");
-        const sIncendio = monto("valorSeguroIncendio");
-        const sTerremoto = monto("valorSeguroTerremoto");
+        const valorAsegInmueble = monto("valorAseguradoInmueble");
+
+        // Sanitización: si la IA confundió un seguro mensual con el valor asegurado
+        // del inmueble o devolvió un monto irracional (>250.000 mensuales), lo descartamos.
+        const sanitSeguro = (key: string): number => {
+          const v = monto(key);
+          if (v <= 0) return 0;
+          if (valorAsegInmueble > 0 && Math.abs(v - valorAsegInmueble) < 1) return 0;
+          if (v > 250000) return 0;
+          return v;
+        };
+        const sVida = sanitSeguro("valorSeguroVida");
+        const sIncendio = sanitSeguro("valorSeguroIncendio");
+        const sTerremoto = sanitSeguro("valorSeguroTerremoto");
+        // Reescribir cada campo individual con el valor saneado (o vacío)
+        parsed.valorSeguroVida = sVida > 0 ? formatMontoExtracto(sVida) : "";
+        parsed.valorSeguroIncendio = sIncendio > 0 ? formatMontoExtracto(sIncendio) : "";
+        parsed.valorSeguroTerremoto = sTerremoto > 0 ? formatMontoExtracto(sTerremoto) : "";
+
         const cuotaSinSubGob = monto("valorCuotaSinSubsidioGobierno");
         const subsidioGob = monto("valorSubsidioGobierno");
         const cuotaConSub = monto("valorCuotaConSubsidio");
@@ -510,10 +526,16 @@ export const extractStatement = createServerFn({ method: "POST" })
           parsed.cuotaPagadaCliente = formatMontoExtracto(cuotaConSub);
         }
 
+        // Para Bancolombia, "seguros" SIEMPRE se reescribe con la suma de los tres
+        // campos individuales saneados. Si la suma es 0, se vacía y se alerta.
         if (segurosSum > 0) {
           segurosNum = segurosSum;
           parsed.seguros = formatMontoExtracto(segurosSum);
+        } else {
+          segurosNum = 0;
+          parsed.seguros = "";
         }
+
 
         if (subsidioGob > 0) {
           valorBenef = subsidioGob;
