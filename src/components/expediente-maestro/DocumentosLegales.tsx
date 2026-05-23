@@ -3,8 +3,11 @@ import { Card } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
 import { FileText, Download, Eye, Receipt, BadgeCheck, Info } from "lucide-react";
 import type { ExpedienteMaestro } from "@/lib/expedienteMaestro";
-import type { Expediente } from "@/lib/expedientes";
-import { buildPoderEspecial, buildDatosContrato, type LegalDoc, type ApoderadoSeleccionado } from "@/lib/legalDocs";
+import type { Expediente, PropuestaData } from "@/lib/expedientes";
+import {
+  buildPoderEspecial, buildDatosContrato,
+  type LegalDoc, type ApoderadoSeleccionado, type AcuerdoComercial, type ModalidadPago,
+} from "@/lib/legalDocs";
 import { exportLegalDocPDF, exportLegalDocDOCX } from "@/lib/legalDocsExport";
 import { listApoderados, type ApoderadoNuvex } from "@/lib/apoderados";
 
