@@ -40,34 +40,69 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
   const [ijCotitular, setIjCotitular] = useState<Partial<CotitularMaestro> & { activo?: boolean }>({});
   const [savingIJ, setSavingIJ] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [syncFlash, setSyncFlash] = useState(false);
 
-  // Inicializa desde el expediente cargado
+  // Fuente "Datos del Caso" (cliente_data crudo, sin Información Jurídica).
+  // Si no llega `simExpediente`, caemos a expediente.cliente como mejor esfuerzo.
+  const caseSource = useMemo<Partial<ClienteMaestro>>(() => {
+    const cd = (simExpediente?.cliente_data ?? {}) as Record<string, unknown>;
+    const pick = (k: string) => (typeof cd[k] === "string" ? (cd[k] as string) : "");
+    return {
+      tipoDocumento: pick("tipoDocumento") || "CC",
+      cedula: pick("cedula") || expediente.cliente?.cedula || "",
+      ciudad: pick("ciudad") || expediente.cliente?.ciudad || "",
+      email: pick("email") || pick("correo") || expediente.cliente?.email || "",
+      telefono: pick("telefono") || pick("celular") || expediente.cliente?.telefono || "",
+      direccion: pick("direccion") || expediente.cliente?.direccion || "",
+    };
+  }, [simExpediente, expediente]);
+
+  // Autocompletado al abrir: rellena SOLO campos vacíos de la Información Jurídica
+  // con los datos disponibles del caso. No sobrescribe valores diligenciados.
   useEffect(() => {
+    const t = (expediente.cliente ?? {}) as Partial<ClienteMaestro>;
     setIjTitular({
-      tipoDocumento: expediente.cliente?.tipoDocumento || "CC",
-      cedula: expediente.cliente?.cedula || "",
-      expedidaEn: expediente.cliente?.expedidaEn || "",
-      fechaExpedicion: expediente.cliente?.fechaExpedicion || "",
-      ciudad: expediente.cliente?.ciudad || "",
-      departamento: expediente.cliente?.departamento || "",
-      direccion: expediente.cliente?.direccion || "",
-      email: expediente.cliente?.email || "",
-      telefono: expediente.cliente?.telefono || "",
+      tipoDocumento: t.tipoDocumento || caseSource.tipoDocumento || "CC",
+      cedula: t.cedula || caseSource.cedula || "",
+      expedidaEn: t.expedidaEn || "",
+      fechaExpedicion: t.fechaExpedicion || "",
+      ciudad: t.ciudad || caseSource.ciudad || "",
+      departamento: t.departamento || "",
+      direccion: t.direccion || caseSource.direccion || "",
+      email: t.email || caseSource.email || "",
+      telefono: t.telefono || caseSource.telefono || "",
     });
+    const co = (expediente.cotitular ?? {}) as Partial<CotitularMaestro> & { activo?: boolean };
     setIjCotitular({
-      activo: !!expediente.cotitular?.activo,
-      nombre: expediente.cotitular?.nombre || "",
-      tipoDocumento: expediente.cotitular?.tipoDocumento || "CC",
-      cedula: expediente.cotitular?.cedula || "",
-      expedidaEn: expediente.cotitular?.expedidaEn || "",
-      fechaExpedicion: expediente.cotitular?.fechaExpedicion || "",
-      ciudad: expediente.cotitular?.ciudad || "",
-      departamento: expediente.cotitular?.departamento || "",
-      direccion: expediente.cotitular?.direccion || "",
-      email: expediente.cotitular?.email || "",
-      telefono: expediente.cotitular?.telefono || "",
+      activo: !!co.activo,
+      nombre: co.nombre || "",
+      tipoDocumento: co.tipoDocumento || "CC",
+      cedula: co.cedula || "",
+      expedidaEn: co.expedidaEn || "",
+      fechaExpedicion: co.fechaExpedicion || "",
+      ciudad: co.ciudad || "",
+      departamento: co.departamento || "",
+      direccion: co.direccion || "",
+      email: co.email || "",
+      telefono: co.telefono || "",
     });
-  }, [expediente]);
+  }, [expediente, caseSource]);
+
+  // Sincronización manual: copia TODOS los datos disponibles del caso hacia
+  // la Información Jurídica, sobrescribiendo los campos mapeados.
+  const syncFromCase = () => {
+    setIjTitular((prev) => ({
+      ...prev,
+      tipoDocumento: caseSource.tipoDocumento || prev.tipoDocumento || "CC",
+      cedula: caseSource.cedula || prev.cedula || "",
+      ciudad: caseSource.ciudad || prev.ciudad || "",
+      email: caseSource.email || prev.email || "",
+      telefono: caseSource.telefono || prev.telefono || "",
+      direccion: caseSource.direccion || prev.direccion || "",
+    }));
+    setSyncFlash(true);
+    setTimeout(() => setSyncFlash(false), 2500);
+  };
 
   // `live` = expediente + override del padre + edición en vivo de Información Jurídica.
   // Esto garantiza que validación y plantilla del Poder vean los mismos valores que el editor.
@@ -83,6 +118,8 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
       } as CotitularMaestro,
     };
   }, [expediente, liveOverride, ijTitular, ijCotitular]);
+
+
 
 
   useEffect(() => {
@@ -174,6 +211,8 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
           canPersist={!!expedienteIdToPersist}
           saving={savingIJ}
           saved={savedFlash}
+          onSync={syncFromCase}
+          syncFlash={syncFlash}
           onSave={async () => {
             if (!expedienteIdToPersist) return;
             setSavingIJ(true);
@@ -192,6 +231,7 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
             }
           }}
         />
+
 
 
         {/* Selector de apoderado para el Poder Especial */}
@@ -537,7 +577,7 @@ function IJSelect({
 }
 
 function InformacionJuridicaEditor({
-  titular, cotitular, onTitular, onCotitular, canPersist, saving, saved, onSave,
+  titular, cotitular, onTitular, onCotitular, canPersist, saving, saved, onSave, onSync, syncFlash,
 }: {
   titular: Partial<ClienteMaestro>;
   cotitular: Partial<CotitularMaestro> & { activo?: boolean };
@@ -547,6 +587,8 @@ function InformacionJuridicaEditor({
   saving: boolean;
   saved: boolean;
   onSave: () => void;
+  onSync: () => void;
+  syncFlash: boolean;
 }) {
   const setT = <K extends keyof ClienteMaestro>(k: K, v: string) => onTitular({ ...titular, [k]: v });
   const setC = <K extends keyof CotitularMaestro>(k: K, v: string) => onCotitular({ ...cotitular, [k]: v });
@@ -559,18 +601,33 @@ function InformacionJuridicaEditor({
           <div className="text-sm font-semibold text-[#242424]">Información Jurídica</div>
           <span className="text-[11px] text-[#242424]/60">Fuente oficial del Poder Especial</span>
         </div>
-        {canPersist && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={onSave}
-            disabled={saving}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
-            style={{ backgroundColor: saved ? NUVEX.verde : NUVEX.azul }}
+            onClick={onSync}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 text-xs font-semibold text-[#242424] hover:bg-[#F7F9FB]"
+            title="Copia Tipo doc, Cédula, Ciudad, Correo, Celular y Dirección desde Datos del Cliente"
           >
-            {saved ? <CheckCircle2 size={13} /> : <Save size={13} />}
-            {saving ? "Guardando…" : saved ? "Guardado" : "Guardar"}
+            <RefreshCw size={13} /> Sincronizar desde datos del caso
           </button>
-        )}
+          {syncFlash && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold" style={{ color: NUVEX.verdeTextoFuerte }}>
+              <CheckCircle2 size={12} /> Información jurídica sincronizada correctamente.
+            </span>
+          )}
+          {canPersist && (
+            <button
+              onClick={onSave}
+              disabled={saving}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
+              style={{ backgroundColor: saved ? NUVEX.verde : NUVEX.azul }}
+            >
+              {saved ? <CheckCircle2 size={13} /> : <Save size={13} />}
+              {saving ? "Guardando…" : saved ? "Guardado" : "Guardar"}
+            </button>
+          )}
+        </div>
       </div>
+
 
       <div className="text-[11px] uppercase tracking-wider font-semibold mb-2" style={{ color: NUVEX.azul }}>
         Titular

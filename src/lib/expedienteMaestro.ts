@@ -242,8 +242,13 @@ export function maestroToExpediente(m: ExpedienteMaestro) {
 export function expedienteToMaestroLike(exp: Expediente): ExpedienteMaestro {
   const c = exp.cliente_data ?? ({} as Expediente["cliente_data"]);
   const cr = exp.credito_data ?? {};
+  // Lectura flexible de datos del caso: cliente_data puede contener campos
+  // adicionales (ciudad, email, teléfono, dirección, tipoDocumento) aunque
+  // el tipo base ClientData no los liste explícitamente.
+  const cAny = c as unknown as Record<string, unknown>;
+  const pickStr = (k: string) => (typeof cAny[k] === "string" ? (cAny[k] as string) : "");
   // Información Jurídica persistida en cliente_data (fuente oficial)
-  const ij = ((c as unknown as Record<string, unknown>).informacionJuridica ?? {}) as {
+  const ij = (cAny.informacionJuridica ?? {}) as {
     titular?: Partial<ClienteMaestro>;
     cotitular?: Partial<CotitularMaestro> & { activo?: boolean };
   };
@@ -256,8 +261,15 @@ export function expedienteToMaestroLike(exp: Expediente): ExpedienteMaestro {
     nombre_cliente: exp.cliente_nombre,
     cliente: {
       ...emptyCliente(),
+      // Autocompletado desde Datos del Cliente del expediente
       nombre: c.nombre ?? exp.cliente_nombre ?? "",
       cedula: c.cedula ?? exp.cedula ?? "",
+      tipoDocumento: pickStr("tipoDocumento") || "CC",
+      ciudad: pickStr("ciudad"),
+      email: pickStr("email") || pickStr("correo"),
+      telefono: pickStr("telefono") || pickStr("celular"),
+      direccion: pickStr("direccion"),
+      // Los valores persistidos en Información Jurídica priman
       ...t,
     },
     cotitular: { ...emptyCotitular(), ...co, activo: !!co.activo },
@@ -280,6 +292,7 @@ export function expedienteToMaestroLike(exp: Expediente): ExpedienteMaestro {
     updated_at: exp.updated_at,
   };
 }
+
 
 /**
  * Persiste la sección Información Jurídica dentro de `expedientes.cliente_data.informacionJuridica`.
