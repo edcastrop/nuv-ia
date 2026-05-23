@@ -380,7 +380,11 @@ export function ProyeccionDetallada() {
 
             {/* Cobertura Fresh */}
             <div className="mb-6">
-              <CoberturaFreshFields data={fresh} onChange={setFresh} />
+              <CoberturaFreshFields
+                data={fresh}
+                onChange={setFresh}
+                cuotasPagadasCredito={inputs.cuotasPagadas}
+              />
             </div>
 
             {/* Botón generar */}
