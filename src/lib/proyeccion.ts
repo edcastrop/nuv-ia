@@ -11,6 +11,20 @@ export interface CoberturaFresh {
   cuotasTotales: number;
   cuotasPagadas: number;
   cuotasPendientes: number;
+  // Campos extendidos (opcionales por compatibilidad). Calculados por
+  // src/lib/cobertura.ts y persistidos en el expediente.
+  tipoBeneficio?:
+    | "FRECH"
+    | "FRESH"
+    | "VIS"
+    | "MI_CASA_YA"
+    | "SUBSIDIO_TASA"
+    | "OTRO";
+  beneficioRecibido?: number;
+  beneficioRestante?: number;
+  detectadoOCR?: boolean;
+  fuente?: "ocr" | "manual" | "mixto";
+  ultimaSincronizacion?: string | null;
 }
 
 export interface ProyeccionInputBase {
