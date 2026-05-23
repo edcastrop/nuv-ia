@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      apoderados_nuvex: {
+        Row: {
+          activo: boolean
+          cedula: string
+          celular: string | null
+          correo: string | null
+          created_at: string
+          id: string
+          lugar_expedicion: string | null
+          nombre: string
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          cedula: string
+          celular?: string | null
+          correo?: string | null
+          created_at?: string
+          id?: string
+          lugar_expedicion?: string | null
+          nombre: string
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          cedula?: string
+          celular?: string | null
+          correo?: string | null
+          created_at?: string
+          id?: string
+          lugar_expedicion?: string | null
+          nombre?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       expediente_historial: {
         Row: {
           created_at: string
