@@ -11,6 +11,11 @@ import {
 import { exportLegalDocPDF, exportLegalDocDOCX } from "@/lib/legalDocsExport";
 import { listApoderados, type ApoderadoNuvex } from "@/lib/apoderados";
 
+const fmtCOP = (n: number) =>
+  !isFinite(n) || n === 0
+    ? "—"
+    : new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
+
 interface Props {
   expediente: ExpedienteMaestro;
   liveOverride?: Partial<ExpedienteMaestro>;
