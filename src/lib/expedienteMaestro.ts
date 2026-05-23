@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { Expediente } from "@/lib/expedientes";
 import { withFreshDerivados, FRESH_DEFAULT_TOTAL } from "@/lib/cobertura";
 import type { CoberturaFresh } from "@/lib/proyeccion";
 
