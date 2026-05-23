@@ -75,6 +75,7 @@ export function PrintDocument(props: Props) {
   const añosActual = scenario.plazoActual / 12;
   const añosOpt = scenario.nuevoPlazo / 12;
   const añosEliminados = Math.max(0, añosActual - añosOpt);
+  const cuotasEliminadas = Math.max(0, scenario.plazoActual - scenario.nuevoPlazo);
   const vsA = getVecesStyle(scenario.vecesActual);
   const vsO = getVecesStyle(scenario.vecesOptimizado);
 
@@ -82,6 +83,10 @@ export function PrintDocument(props: Props) {
   const maxAños = Math.max(añosActual, añosOpt, 1);
   const pctActual = (añosActual / maxAños) * 100;
   const pctOpt = (añosOpt / maxAños) * 100;
+
+  // Honorarios finales (con descuento si aplica)
+  const honorariosFinales = commercial?.hasDiscount ? commercial.finales : recommended.honorarios;
+  const esPreferencial = honorariosFinales >= 6_000_000;
 
   const badgeLabel = personalizada ? "PROPUESTA PERSONALIZADA" : "PROPUESTA RECOMENDADA";
 
