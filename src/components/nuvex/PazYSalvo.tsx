@@ -292,7 +292,6 @@ function PazYSalvoDocument({
         </div>
       </div>
     </div>
-    </div>
   );
 }
 
