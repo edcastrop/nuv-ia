@@ -35,11 +35,21 @@ interface Props {
 export function PazYSalvo({ client, data, enabled }: Props) {
   if (!enabled) return null;
   const elementId = "pdf-paz-y-salvo";
-  const handleExport = () =>
+  const handleExport = async () => {
+    // Validación obligatoria: campos del Expediente Maestro
+    const { validateRequired, ensureValid } = await import("@/lib/pdfValidator");
+    const v = validateRequired([
+      { key: "nombre", label: "Nombre cliente", value: client.nombre },
+      { key: "cedula", label: "Cédula", value: client.cedula },
+      { key: "banco", label: "Banco", value: client.banco },
+      { key: "numeroCredito", label: "N° crédito", value: client.numeroCredito },
+    ]);
+    if (!ensureValid("Paz y Salvo", v)) return;
     exportElementToPdf(
       elementId,
       `NUVEX_PazYSalvo_${sanitizeFileName(client.nombre)}.pdf`,
     );
+  };
 
   return (
     <>
