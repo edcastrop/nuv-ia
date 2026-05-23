@@ -17,6 +17,7 @@ export type Database = {
       apoderados_nuvex: {
         Row: {
           activo: boolean
+          bancos_asignados: string[]
           cedula: string
           celular: string | null
           ciudad: string | null
@@ -25,10 +26,13 @@ export type Database = {
           id: string
           lugar_expedicion: string | null
           nombre: string
+          predeterminado_fna: boolean
+          predeterminado_general: boolean
           updated_at: string
         }
         Insert: {
           activo?: boolean
+          bancos_asignados?: string[]
           cedula: string
           celular?: string | null
           ciudad?: string | null
@@ -37,10 +41,13 @@ export type Database = {
           id?: string
           lugar_expedicion?: string | null
           nombre: string
+          predeterminado_fna?: boolean
+          predeterminado_general?: boolean
           updated_at?: string
         }
         Update: {
           activo?: boolean
+          bancos_asignados?: string[]
           cedula?: string
           celular?: string | null
           ciudad?: string | null
@@ -49,6 +56,8 @@ export type Database = {
           id?: string
           lugar_expedicion?: string | null
           nombre?: string
+          predeterminado_fna?: boolean
+          predeterminado_general?: boolean
           updated_at?: string
         }
         Relationships: []
