@@ -427,25 +427,31 @@ function blockToDocx(b: DocBlock): Paragraph | Table {
 }
 
 function buildLegalDocDocx(doc: LegalDoc): Document {
-  // Header institucional + footer del documento.
-  const headerParagraphs: Paragraph[] = [];
+  // Prepende cabecera institucional y antepone bloque de pie al final del documento.
+  const top: Paragraph[] = [];
   if (doc.consecutivo) {
-    headerParagraphs.push(
-      new Paragraph({
-        alignment: AlignmentType.RIGHT,
-        spacing: { after: 20 },
-        children: [new TextRun({ text: doc.consecutivo, bold: true, size: 18, color: "445DA3" })],
-      }),
-    );
+    top.push(new Paragraph({
+      alignment: AlignmentType.RIGHT,
+      spacing: { after: 20 },
+      children: [new TextRun({ text: doc.consecutivo, bold: true, size: 18, color: "445DA3" })],
+    }));
   }
-  headerParagraphs.push(
-    new Paragraph({
-      alignment: AlignmentType.LEFT,
-      spacing: { after: 60 },
-      border: { bottom: { style: BorderStyle.SINGLE, size: 16, color: "445DA3", space: 4 } },
-      children: [new TextRun({ text: "NUVEX FINANZAS INTELIGENTES", bold: true, size: 22, color: "445DA3" })],
-    }),
-  );
+  top.push(new Paragraph({
+    spacing: { after: 120 },
+    border: { bottom: { style: BorderStyle.SINGLE, size: 16, color: "445DA3", space: 4 } },
+    children: [new TextRun({ text: "NUVEX FINANZAS INTELIGENTES", bold: true, size: 22, color: "445DA3" })],
+  }));
+
+  const footer = new Paragraph({
+    alignment: AlignmentType.CENTER,
+    spacing: { before: 400 },
+    border: { top: { style: BorderStyle.SINGLE, size: 12, color: "445DA3", space: 4 } },
+    children: [
+      new TextRun({ text: "NUVEX Finanzas Inteligentes", bold: true, size: 18, color: "445DA3" }),
+      new TextRun({ text: "  ·  Carrera 16 # 37-48 Piso 4, Bucaramanga  ·  Bogotá | Bucaramanga", size: 16, color: "5C6770" }),
+      new TextRun({ text: "  ·  juridica@nuvex.com.co  ·  www.nuvex.com.co", size: 16, color: "5C6770" }),
+    ],
+  });
 
   return new Document({
     styles: { default: { document: { run: { font: "Inter", size: 22 } } } },
@@ -456,20 +462,7 @@ function buildLegalDocDocx(doc: LegalDoc): Document {
           margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
         },
       },
-      headers: { default: { options: { children: headerParagraphs } } as never },
-      children: [
-        ...doc.blocks.map(blockToDocx),
-        new Paragraph({
-          alignment: AlignmentType.CENTER,
-          spacing: { before: 400 },
-          border: { top: { style: BorderStyle.SINGLE, size: 12, color: "445DA3", space: 4 } },
-          children: [
-            new TextRun({ text: "NUVEX Finanzas Inteligentes", bold: true, size: 18, color: "445DA3" }),
-            new TextRun({ text: "  ·  Carrera 16 # 37-48 Piso 4, Bucaramanga  ·  Bogotá | Bucaramanga", size: 16, color: "5C6770" }),
-            new TextRun({ text: "  ·  juridica@nuvex.com.co  ·  www.nuvex.com.co", size: 16, color: "5C6770" }),
-          ],
-        }),
-      ],
+      children: [...top, ...doc.blocks.map(blockToDocx), footer],
     }],
   });
 }
