@@ -12,6 +12,7 @@ import {
 } from "../../lib/format";
 import {
   calculatePesosManual,
+  calculatePesosManualByCuotas,
   calculatePesosProjection,
   pickBestProposal,
   type PesosInput,
