@@ -13,6 +13,7 @@ import {
 import { PODER_TEMPLATES } from "@/lib/poderTemplates";
 import { exportLegalDocPDF, exportLegalDocDOCX } from "@/lib/legalDocsExport";
 import { listApoderados, seleccionarApoderado, type ApoderadoNuvex, type MotivoSeleccion } from "@/lib/apoderados";
+import { EnviarContratacionButton, type ContratacionContext } from "./EnviarContratacion";
 
 const fmtCOP = (n: number) =>
   !isFinite(n) || n === 0
