@@ -31,6 +31,13 @@ function CasoDetail() {
 
   useEffect(() => { reload(); }, [id]);
 
+  // IMPORTANTE: declarar todos los hooks antes de cualquier return condicional
+  // para evitar "Rendered more hooks than during the previous render".
+  const maestroLike = useMemo(
+    () => (exp ? expedienteToMaestroLike(exp) : null),
+    [exp],
+  );
+
   if (loading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando expediente…</div>;
   if (err || !exp) return <div className="p-12 text-center text-sm text-[#B42318]">{err || "No encontrado"}</div>;
 
