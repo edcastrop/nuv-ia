@@ -123,6 +123,66 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente }: P
           </div>
         </div>
 
+        {/* Acuerdo comercial — Modalidad de pago */}
+        <div className="rounded-xl border bg-[#F7F9FB] p-3 mb-4" style={{ borderColor: "#E3E7EE" }}>
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="text-[11px] uppercase tracking-wider font-semibold text-[#242424]/70">
+              Acuerdo comercial
+            </div>
+            <label className="inline-flex items-center gap-2 text-sm">
+              <input type="radio" checked={modalidad === "contado"} onChange={() => setModalidad("contado")} />
+              Contado
+            </label>
+            <label className="inline-flex items-center gap-2 text-sm">
+              <input type="radio" checked={modalidad === "financiado"} onChange={() => setModalidad("financiado")} />
+              Financiado
+            </label>
+            <span className="text-[11px] text-[#242424]/60">
+              Honorarios: <strong>{fmtCOP(honorarios)}</strong>
+            </span>
+          </div>
+
+          {modalidad === "financiado" && (
+            <div className="mt-3 space-y-2">
+              <div className="flex flex-wrap items-center gap-3">
+                <label className="text-xs text-[#242424]/70">Número de cuotas</label>
+                <input
+                  type="number" min={1} max={24}
+                  value={numCuotas}
+                  onChange={(e) => setNumCuotas(Math.max(1, Math.min(24, Number(e.target.value) || 1)))}
+                  className="w-20 rounded-lg border border-[#E3E7EE] bg-white px-2 py-1 text-sm"
+                />
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {cuotas.map((v, i) => (
+                  <label key={i} className="text-xs">
+                    <span className="block text-[#242424]/60 mb-0.5">Cuota {i + 1}</span>
+                    <input
+                      type="number"
+                      value={v}
+                      onChange={(e) => {
+                        const n = Number(e.target.value) || 0;
+                        setCuotas((arr) => arr.map((x, j) => (j === i ? n : x)));
+                      }}
+                      className="w-full rounded-lg border border-[#E3E7EE] bg-white px-2 py-1 text-sm"
+                    />
+                  </label>
+                ))}
+              </div>
+              <div className="flex flex-wrap items-center gap-4 text-xs pt-1">
+                <span>Suma: <strong>{fmtCOP(sumaCuotas)}</strong></span>
+                <span style={{ color: saldoRestante === 0 ? "#1F7A45" : "#B42318" }}>
+                  {saldoRestante === 0
+                    ? "Cuadrado · $0"
+                    : saldoRestante > 0
+                      ? `Falta ${fmtCOP(saldoRestante)}`
+                      : `Excede en ${fmtCOP(Math.abs(saldoRestante))}`}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <DocCard
             icon={<FileText size={18} />}
