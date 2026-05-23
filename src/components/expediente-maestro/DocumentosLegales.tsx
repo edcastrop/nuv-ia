@@ -34,6 +34,7 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
   const [preview, setPreview] = useState<LegalDoc | null>(null);
   const [apoderados, setApoderados] = useState<ApoderadoNuvex[]>([]);
   const [selectedApId, setSelectedApId] = useState<string>("");
+  const [manualOverride, setManualOverride] = useState(false);
 
   // ── Información Jurídica editable (fuente oficial para el Poder Especial)
   const [ijTitular, setIjTitular] = useState<Partial<ClienteMaestro>>({});
