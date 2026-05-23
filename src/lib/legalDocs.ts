@@ -294,32 +294,36 @@ export function buildDatosContrato(
     !cobActivo || Math.abs(cuotaSinCob - valorCob - cuotaConCob) <= 1;
 
   const blocks: DocBlock[] = [
-    { type: "title", text: "DATOS PARA CONTRATO" },
-    { type: "subtitle", text: `${fullName(c.nombre)} · ${safe(cr.banco).toUpperCase()}` },
-    { type: "spacer", size: 10 },
-    { type: "paragraph", text: `Generado el ${hoy()}.` },
+    { type: "title", text: "FICHA CONTRACTUAL NUVEX" },
+    { type: "subtitle", text: "Información base para elaboración del contrato de prestación de servicios." },
+    { type: "spacer", size: 6 },
+    { type: "paragraph", text: `Cliente: ${fullName(c.nombre)} · Entidad: ${safe(cr.banco).toUpperCase()} · Generado el ${hoy()}.` },
     { type: "spacer", size: 10 },
 
-    { type: "section", text: "CLIENTE" },
-    { type: "field", label: "Nombre", value: fmtTxt(c.nombre) },
-    { type: "field", label: "Cédula", value: fmtTxt(c.cedula) },
+    { type: "section", text: "1. CLIENTE" },
+    { type: "field", label: "Nombre completo", value: fmtTxt(c.nombre) },
+    { type: "field", label: "Documento", value: `${c.tipoDocumento || "CC"} ${fmtTxt(c.cedula)}${c.expedidaEn ? ` de ${c.expedidaEn}` : ""}` },
+    { type: "field", label: "Ciudad de residencia", value: fmtTxt(c.ciudad) },
+    { type: "field", label: "Correo", value: fmtTxt(c.email) },
+    { type: "field", label: "Celular", value: fmtTxt(c.telefono) },
+    { type: "spacer", size: 6 },
+
+    { type: "section", text: "2. PRODUCTO FINANCIERO" },
     { type: "field", label: "Banco", value: fmtTxt(cr.banco) },
     { type: "field", label: "Producto", value: fmtTxt(cr.tipoProducto) },
-    { type: "field", label: "Número crédito", value: fmtTxt(cr.numeroCredito) },
+    { type: "field", label: "Número de crédito", value: fmtTxt(cr.numeroCredito) },
     { type: "field", label: "Plazo original (meses)", value: fmtTxt(cr.plazoOriginal) },
     { type: "field", label: "Cuotas pagadas", value: fmtTxt(cr.cuotasPagadas) },
+    { type: "field", label: "Cuota actual", value: fmtCOP(cr.cuotaActual) },
     { type: "spacer", size: 6 },
 
-    { type: "section", text: "PROPUESTA ACEPTADA" },
+    { type: "section", text: "3. PROPUESTA ACEPTADA" },
     { type: "field", label: "Cuotas eliminadas", value: cuotasEliminadas !== null ? String(cuotasEliminadas) : "—" },
     { type: "field", label: "Nuevo plazo (meses)", value: fmtTxt(p.nuevoPlazo) },
-    { type: "field", label: "Cuota actual", value: fmtCOP(cr.cuotaActual) },
     { type: "field", label: "Nueva cuota", value: fmtCOP(p.nuevaCuota) },
-    { type: "field", label: "Honorarios", value: fmtCOP(honorarios) },
-    { type: "field", label: "Asesor", value: fmtTxt(e.asesor?.nombre) },
     { type: "spacer", size: 6 },
 
-    { type: "section", text: "BENEFICIO DE COBERTURA" },
+    { type: "section", text: "4. BENEFICIO DE COBERTURA" },
     ...(cobActivo
       ? ([
           { type: "field", label: "Tipo cobertura", value: fmtTxt(cob?.tipoBeneficio) } as DocBlock,
@@ -334,10 +338,11 @@ export function buildDatosContrato(
       : ([{ type: "field", label: "Estado", value: "NO APLICA" } as DocBlock])),
     { type: "spacer", size: 6 },
 
-    { type: "section", text: "CONDICIONES DE PAGO" },
+    { type: "section", text: "5. HONORARIOS Y FORMA DE PAGO" },
+    { type: "field", label: "Honorarios totales", value: fmtCOP(honorarios) },
     { type: "field", label: "Modalidad de pago", value: ac.modalidad === "contado" ? "Contado" : "Financiado" },
     ...(ac.modalidad === "contado"
-      ? ([{ type: "field", label: "Valor total honorarios", value: fmtCOP(honorarios) } as DocBlock])
+      ? ([] as DocBlock[])
       : ([
           { type: "field", label: "Número de cuotas", value: String((ac.cuotas ?? []).length) } as DocBlock,
           ...((ac.cuotas ?? []).map((v, i) => ({
@@ -346,7 +351,6 @@ export function buildDatosContrato(
             value: fmtCOP(v),
           })) as DocBlock[]),
           { type: "field", label: "Suma cuotas", value: fmtCOP(sumaCuotas) } as DocBlock,
-          { type: "field", label: "Total honorarios", value: fmtCOP(honorarios) } as DocBlock,
           {
             type: "field",
             label: "Saldo restante",
@@ -358,12 +362,18 @@ export function buildDatosContrato(
                   : `Excede en ${fmtCOP(Math.abs(saldo))}`,
           } as DocBlock,
         ])),
+    { type: "spacer", size: 6 },
+
+    { type: "section", text: "6. ASESOR RESPONSABLE" },
+    { type: "field", label: "Nombre", value: fmtTxt(e.asesor?.nombre) },
+    { type: "field", label: "Correo", value: fmtTxt(e.asesor?.email) },
+    { type: "field", label: "Celular", value: fmtTxt(e.asesor?.telefono) },
   ];
 
   const issues: string[] = [];
   if (!coberturaMathOk) {
     issues.push(
-      `Inconsistencia de cobertura: cuota sin cobertura (${fmtCOP(cuotaSinCob)}) − valor cobertura (${fmtCOP(valorCob)}) ≠ cuota con cobertura (${fmtCOP(cuotaConCob)}).`,
+      `Advertencia: dato pendiente de validación financiera — cuota sin cobertura (${fmtCOP(cuotaSinCob)}) − valor cobertura (${fmtCOP(valorCob)}) ≠ cuota con cobertura (${fmtCOP(cuotaConCob)}).`,
     );
   }
   if (!c.nombre) issues.push("Falta nombre del cliente.");
@@ -371,10 +381,13 @@ export function buildDatosContrato(
   if (!cr.banco) issues.push("Falta banco.");
   if (!cr.numeroCredito) issues.push("Falta número de crédito.");
 
+  const year = new Date().getFullYear();
+  const seq = String(Date.now()).slice(-4);
   return {
-    filename: `Datos_Contrato_${(c.nombre || "Cliente").replace(/\s+/g, "_")}`,
-    title: "Datos para Contrato",
+    filename: `Ficha_Contractual_NUVEX_${(c.nombre || "Cliente").replace(/\s+/g, "_")}`,
+    title: "Ficha Contractual NUVEX",
     blocks,
+    consecutivo: `NUVEX-FC-${year}-${seq}`,
     validationIssues: issues,
   };
 }

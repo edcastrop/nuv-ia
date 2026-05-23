@@ -14,6 +14,8 @@ import { PODER_TEMPLATES } from "@/lib/poderTemplates";
 import { exportLegalDocPDF, exportLegalDocDOCX } from "@/lib/legalDocsExport";
 import { listApoderados, seleccionarApoderado, type ApoderadoNuvex, type MotivoSeleccion } from "@/lib/apoderados";
 import { EnviarContratacionButton, type ContratacionContext } from "./EnviarContratacion";
+import { CitySelect } from "@/components/ui/CitySelect";
+import { normalizeCityText } from "@/lib/colombiaCities";
 
 const fmtCOP = (n: number) =>
   !isFinite(n) || n === 0
@@ -456,8 +458,8 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
           ))}
           <DocCard
             icon={<FileText size={18} />}
-            title="Datos para Contrato"
-            descripcion="Cliente, propuesta, beneficio de cobertura y acuerdo comercial (contado o financiado)."
+            title="Ficha Contractual NUVEX"
+            descripcion="Información base para elaboración del contrato de prestación de servicios. Si hay alertas financieras, exporta igualmente con advertencia."
             doc={datosDoc}
             onPreview={() => setPreview(datosDoc)}
           />
@@ -488,7 +490,7 @@ function DocCard({
   doc: LegalDoc; disabled?: boolean; onPreview: () => void;
 }) {
   const [busy, setBusy] = useState<null | "pdf" | "docx">(null);
-  const downloadPDF = async () => { setBusy("pdf"); try { exportLegalDocPDF(doc); } finally { setBusy(null); } };
+  const downloadPDF = async () => { setBusy("pdf"); try { await exportLegalDocPDF(doc); } finally { setBusy(null); } };
   const downloadDOCX = async () => { setBusy("docx"); try { await exportLegalDocDOCX(doc); } finally { setBusy(null); } };
 
   return (

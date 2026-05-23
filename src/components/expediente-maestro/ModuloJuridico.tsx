@@ -396,7 +396,7 @@ function DocActions({ doc, onPreview }: { doc: LegalDoc; onPreview: () => void }
       <button
         onClick={async () => {
           setBusy("pdf");
-          try { exportLegalDocPDF(doc); } finally { setBusy(null); }
+          try { await exportLegalDocPDF(doc); } finally { setBusy(null); }
         }}
         disabled={busy !== null}
         className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
