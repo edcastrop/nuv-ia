@@ -258,7 +258,7 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
         <div className="rounded-xl border bg-[#F7F9FB] p-3 mb-4" style={{ borderColor: "#E3E7EE" }}>
           <div className="flex flex-wrap items-center gap-3">
             <div className="text-[11px] uppercase tracking-wider font-semibold text-[#242424]/70">
-              Apoderado NUVEX
+              Apoderado seleccionado
             </div>
             {apoderados.length === 0 ? (
               <span className="text-xs text-[#B42318]">
@@ -267,7 +267,7 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
             ) : (
               <select
                 value={selectedApId}
-                onChange={(e) => setSelectedApId(e.target.value)}
+                onChange={(e) => { setSelectedApId(e.target.value); setManualOverride(true); }}
                 className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 text-sm"
               >
                 {apoderados.map((a) => (
@@ -277,13 +277,28 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
                 ))}
               </select>
             )}
-            {selectedAp && (
-              <span className="text-[11px] text-[#242424]/60">
-                Expedida en {selectedAp.lugarExpedicion || "—"} · Cel {selectedAp.celular || "—"}
-              </span>
+            <MotivoBadge motivo={motivoActual} banco={banco} />
+            {manualOverride && (
+              <button
+                onClick={() => setManualOverride(false)}
+                className="text-[11px] text-[#445DA3] hover:underline"
+              >
+                Volver a selección automática
+              </button>
             )}
           </div>
+          {selectedAp && (
+            <div className="mt-2 text-[11px] text-[#242424]/60">
+              {selectedAp.nombre} · Expedida en {selectedAp.lugarExpedicion || "—"} · Cel {selectedAp.celular || "—"}
+            </div>
+          )}
+          {sugerencia.candidatos.length > 1 && (
+            <div className="mt-1 text-[11px] text-[#242424]/60">
+              Hay {sugerencia.candidatos.length} apoderados elegibles para {banco || "este banco"}. Puedes cambiar manualmente.
+            </div>
+          )}
         </div>
+
 
         {/* Acuerdo comercial — Modalidad de pago */}
         <div className="rounded-xl border bg-[#F7F9FB] p-3 mb-4" style={{ borderColor: "#E3E7EE" }}>
