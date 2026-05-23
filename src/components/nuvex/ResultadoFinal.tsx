@@ -974,7 +974,7 @@ function PrintCuentaCobro({
           }}
         >
           <div>
-            <LogoMark light size={120} />
+            <LogoMark light size={180} />
             <div style={{ marginTop: 18, fontSize: 9.5, letterSpacing: 2.5, fontWeight: 700, opacity: 0.85 }}>
               DOCUMENTO
             </div>
@@ -985,6 +985,10 @@ function PrintCuentaCobro({
             <div style={{ marginTop: 28 }}>
               <div style={{ fontSize: 8.5, letterSpacing: 1.5, opacity: 0.75, fontWeight: 700 }}>CONSECUTIVO</div>
               <div style={{ fontSize: 15, fontWeight: 900, marginTop: 4 }}>{consecutivo}</div>
+            </div>
+            <div style={{ marginTop: 14 }}>
+              <div style={{ fontSize: 8.5, letterSpacing: 1.5, opacity: 0.75, fontWeight: 700 }}>EXPEDIENTE</div>
+              <div style={{ fontSize: 12, fontWeight: 800, marginTop: 4 }}>{expedienteCorto}</div>
             </div>
             <div style={{ marginTop: 14 }}>
               <div style={{ fontSize: 8.5, letterSpacing: 1.5, opacity: 0.75, fontWeight: 700 }}>FECHA</div>
