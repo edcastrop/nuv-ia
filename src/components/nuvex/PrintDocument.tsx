@@ -337,7 +337,7 @@ function PremiumHeader({ fecha }: { fecha: string }) {
               color: C.muted,
             }}
           >
-            Private Wealth Advisory
+            Propuesta financiera personalizada
           </div>
           <div
             style={{
