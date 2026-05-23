@@ -325,7 +325,7 @@ export function ResultadoFinal({
               )}
               <button
                 onClick={async () => {
-                  const { validateRequired, ensureValid } = await import("@/lib/pdfValidator");
+                  const { validateRequired, ensureValidAdvisory } = await import("@/lib/pdfValidator");
                   const v = validateRequired([
                     { key: "nombre", label: "Nombre cliente", value: client.nombre },
                     { key: "cedula", label: "Cédula", value: client.cedula },
@@ -334,7 +334,7 @@ export function ResultadoFinal({
                     { key: "producto", label: "Producto", value: client.tipoProducto },
                     { key: "honorarios", label: "Honorarios", value: aprobado?.honorariosFinales },
                   ]);
-                  if (!ensureValid("Resultado Final", v)) return;
+                  ensureValidAdvisory("Resultado Final", v);
                   exportElementToPdf(informeId, `NUVEX_Resultado_Final_${sanitizeFileName(client.nombre)}.pdf`);
                 }}
                 className="rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow transition-transform hover:scale-[1.01]"
@@ -344,7 +344,7 @@ export function ResultadoFinal({
               </button>
               <button
                 onClick={async () => {
-                  const { validateRequired, ensureValid } = await import("@/lib/pdfValidator");
+                  const { validateRequired, ensureValidAdvisory } = await import("@/lib/pdfValidator");
                   const v = validateRequired([
                     { key: "nombre", label: "Nombre cliente", value: client.nombre },
                     { key: "cedula", label: "Cédula", value: client.cedula },
@@ -352,7 +352,7 @@ export function ResultadoFinal({
                     { key: "numeroCredito", label: "N° crédito", value: client.numeroCredito },
                     { key: "honorarios", label: "Honorarios finales", value: aprobado?.honorariosFinales },
                   ]);
-                  if (!ensureValid("Cuenta de Cobro", v)) return;
+                  ensureValidAdvisory("Cuenta de Cobro", v);
                   exportElementToPdf(cuentaId, `NUVEX_Cuenta_Cobro_${consecutivo}_${sanitizeFileName(client.nombre)}.pdf`);
                 }}
                 className="rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow transition-transform hover:scale-[1.01]"
@@ -405,6 +405,7 @@ export function ResultadoFinal({
           <PrintCuentaCobro
             id={cuentaId}
             consecutivo={consecutivo}
+            expedienteId={expedienteId}
             client={client}
             aprob={aprob}
             aprobado={aprobado}
@@ -665,7 +666,7 @@ function PrintInformeFinal({
         <div style={{ background: NUVEX_GRADIENT, padding: "28px 36px 32px", color: "#fff" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-              <LogoMark light size={200} />
+              <LogoMark light size={280} />
               <div>
                 <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: 2.2 }}>NUVEX FINANZAS INTELIGENTES</div>
                 <div style={{ fontSize: 9.5, letterSpacing: 1.6, opacity: 0.85, marginTop: 3 }}>Bogotá | Bucaramanga</div>
@@ -762,7 +763,7 @@ function PrintInformeFinal({
                 { label: "Producto", value: client.tipoProducto || "—" },
                 { label: "Fecha aprobación", value: aprob.fechaAprobacion || "—" },
                 { label: "Asesor", value: client.asesor || "—" },
-                { label: "Radicado", value: aprob.radicado || "—" },
+                ...(aprob.radicado ? [{ label: "Radicado", value: aprob.radicado }] : []),
               ]}
             />
           </div>
@@ -946,16 +947,18 @@ function PrintInformeFinal({
 }
 
 function PrintCuentaCobro({
-  id, consecutivo, client, aprob, aprobado,
+  id, consecutivo, expedienteId, client, aprob, aprobado,
 }: {
   id: string;
   consecutivo: string;
+  expedienteId?: string;
   client: ClientData;
   aprob: AprobacionState;
   aprobado: { honorariosBase: number; descuento: number; honorariosFinales: number };
 }) {
   const hoy = new Date().toISOString().slice(0, 10);
   const hasDiscount = aprobado.descuento > 0;
+  const expedienteCorto = expedienteId ? `EXP-${expedienteId.slice(0, 8).toUpperCase()}` : "—";
   return (
     <div id={id} style={printShell}>
       <div style={{ display: "flex", minHeight: 1080 }}>
@@ -971,7 +974,7 @@ function PrintCuentaCobro({
           }}
         >
           <div>
-            <LogoMark light size={120} />
+            <LogoMark light size={180} />
             <div style={{ marginTop: 18, fontSize: 9.5, letterSpacing: 2.5, fontWeight: 700, opacity: 0.85 }}>
               DOCUMENTO
             </div>
@@ -982,6 +985,10 @@ function PrintCuentaCobro({
             <div style={{ marginTop: 28 }}>
               <div style={{ fontSize: 8.5, letterSpacing: 1.5, opacity: 0.75, fontWeight: 700 }}>CONSECUTIVO</div>
               <div style={{ fontSize: 15, fontWeight: 900, marginTop: 4 }}>{consecutivo}</div>
+            </div>
+            <div style={{ marginTop: 14 }}>
+              <div style={{ fontSize: 8.5, letterSpacing: 1.5, opacity: 0.75, fontWeight: 700 }}>EXPEDIENTE</div>
+              <div style={{ fontSize: 12, fontWeight: 800, marginTop: 4 }}>{expedienteCorto}</div>
             </div>
             <div style={{ marginTop: 14 }}>
               <div style={{ fontSize: 8.5, letterSpacing: 1.5, opacity: 0.75, fontWeight: 700 }}>FECHA</div>
@@ -1014,6 +1021,8 @@ function PrintCuentaCobro({
             <CcRow label="N° crédito" value={client.numeroCredito || "—"} />
             <CcRow label="Producto" value={client.tipoProducto || "—"} />
             <CcRow label="Fecha aprobación" value={aprob.fechaAprobacion || "—"} />
+            <CcRow label="Asesor responsable" value={client.asesor || "—"} />
+            <CcRow label="N° expediente" value={expedienteCorto} />
           </div>
 
           {(() => {
