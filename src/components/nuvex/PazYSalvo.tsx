@@ -288,6 +288,7 @@ function PazYSalvoDocument({
               <div>www.nuvex.com.co</div>
             </div>
           </div>
+          </div>
         </div>
       </div>
     </div>
