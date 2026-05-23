@@ -82,6 +82,12 @@ export function PesosSimulator({
   const [seguros, setSeguros] = useState(initCred.seguros ?? "");
   const [tea, setTea] = useState(initCred.tea ?? "");
   const [nuevaCuotaManual, setNuevaCuotaManual] = useState(initCred.nuevaCuotaManual ?? "");
+  const [cuotasEliminarManual, setCuotasEliminarManual] = useState(
+    initCred.cuotasEliminarManual ?? "",
+  );
+  const [modoPersonalizada, setModoPersonalizada] = useState<"cuota" | "cuotas">(
+    initCred.cuotasEliminarManual && !initCred.nuevaCuotaManual ? "cuotas" : "cuota",
+  );
 
   // Prellenar el campo "Asesor NUVEX" con el nombre del perfil autenticado
   useAsesorDefault(client.asesor, (nombre) => setClient((prev) => ({ ...prev, asesor: nombre })));
