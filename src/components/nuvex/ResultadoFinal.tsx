@@ -405,6 +405,7 @@ export function ResultadoFinal({
           <PrintCuentaCobro
             id={cuentaId}
             consecutivo={consecutivo}
+            expedienteId={expedienteId}
             client={client}
             aprob={aprob}
             aprobado={aprobado}
