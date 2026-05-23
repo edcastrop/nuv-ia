@@ -107,7 +107,7 @@ export function PrintDocument(props: Props) {
       ============================================================ */}
       <section
         className="nuvex-print-page"
-        style={{ padding: "20mm 16mm 16mm 16mm", position: "relative" }}
+        style={{ padding: "20mm 16mm 16mm 16mm", position: "relative", minHeight: "297mm", height: "297mm", boxSizing: "border-box", overflow: "hidden" }}
       >
         <PremiumHeader fecha={fecha} />
 
