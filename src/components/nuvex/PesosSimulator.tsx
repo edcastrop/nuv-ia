@@ -204,7 +204,7 @@ export function PesosSimulator({
   const scenarioRows = recomendada
     ? buildPesosScenarioRows({
         cuotaActual: input.cuotaActual,
-        cuotasPendientes,
+        cuotasPendientes: cuotasBaseSimulacion,
         totalActualPendiente,
         saldoCapital: saldoCapitalNum,
         nuevaCuota: recomendada.nuevaCuota,
@@ -584,7 +584,7 @@ export function PesosSimulator({
                 <PrintDocument
                   mode="pesos"
                   client={{ ...client, intervinientes, cobertura }}
-                  cuotasPendientes={cuotasPendientes}
+                    cuotasPendientes={cuotasBaseSimulacion}
                   metrics={metrics}
                   pesosPropuestas={calc!.propuestas}
                   bestIndex={bestIndex}
@@ -601,7 +601,7 @@ export function PesosSimulator({
                   scenario={{
                     cuotaActual: input.cuotaActual,
                     nuevaCuota: recomendada.nuevaCuota,
-                    plazoActual: cuotasPendientes,
+                    plazoActual: cuotasBaseSimulacion,
                     nuevoPlazo: recomendada.nuevoPlazo,
                     totalActual: totalActualPendiente,
                     totalOptimizado: recomendada.totalProyectado,
@@ -625,7 +625,7 @@ export function PesosSimulator({
               const proyeccion: ProyeccionNuvex = {
                 cuotaProyectada: recomendada.nuevaCuota,
                 plazoProyectado: recomendada.nuevoPlazo,
-                cuotasEliminadasProyectadas: cuotasPendientes - recomendada.nuevoPlazo,
+                cuotasEliminadasProyectadas: cuotasBaseSimulacion - recomendada.nuevoPlazo,
                 añosEliminadosProyectados: recomendada.añosEliminados,
                 ahorroInteresesProyectado: recomendada.ahorroIntereses,
                 ahorroSegurosProyectado: recomendada.ahorroSeguros,
@@ -642,7 +642,7 @@ export function PesosSimulator({
                   mode="pesos"
                   client={{ ...client, intervinientes, cobertura }}
                   proyeccion={proyeccion}
-                  cuotasPendientes={cuotasPendientes}
+                  cuotasPendientes={cuotasBaseSimulacion}
                   cuotaActualConSeguro={input.cuotaActual}
                   seguros={input.seguros}
                   honorariosPct={honorariosPct}
