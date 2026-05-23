@@ -683,6 +683,10 @@ export const extractStatement = createServerFn({ method: "POST" })
       parsed.erroresValidacion = errores.length
         ? errores.join("\n")
         : "";
+      parsed.advertenciasNormalizacion = _advertenciasNorm.length
+        ? _advertenciasNorm.join("\n")
+        : "";
+
 
       // Cuota mensual mostrada con seguros
       if (tieneCob && cuotaBase > 0) {
