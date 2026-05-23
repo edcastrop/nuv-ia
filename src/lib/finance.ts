@@ -18,7 +18,7 @@ export function pmt(rate: number, nper: number, pv: number): number {
 // ====================== PESOS ======================
 export interface PesosInput {
   saldoCapital: number;
-  cuotaActual: number; // con seguro
+  cuotaActual: number; // cuota base de simulación con seguros
   seguros: number;
   tea: number; // % efectiva anual
   cuotasPendientes: number;
@@ -60,12 +60,13 @@ function buildPesosPropuesta(
   tasaMensual: number,
   cuotasEliminadas: number,
 ): PesosPropuesta | null {
-  const nuevoPlazo = input.cuotasPendientes - cuotasEliminadas;
+  const cuotasBase = Math.max(0, input.cuotasPendientes - 1);
+  const nuevoPlazo = cuotasBase - cuotasEliminadas;
   if (nuevoPlazo <= 0) return null;
   const nuevaCuotaSinSeguro = pmt(tasaMensual, nuevoPlazo, input.saldoCapital);
   const nuevaCuotaConSeguro = nuevaCuotaSinSeguro + input.seguros;
   const abonoAdicionalMensual = nuevaCuotaConSeguro - input.cuotaActual;
-  const totalActualPendiente = input.cuotaActual * input.cuotasPendientes;
+  const totalActualPendiente = input.cuotaActual * cuotasBase;
   const totalProyectadoNuevo = nuevaCuotaConSeguro * nuevoPlazo;
   const interesesActuales = totalActualPendiente - input.saldoCapital;
   const interesesProyectados = totalProyectadoNuevo - input.saldoCapital;
@@ -134,16 +135,17 @@ export function calculatePesosManual(
   if (nuevaCuotaSinSeguro <= input.saldoCapital * tasaMensual) {
     return { ...base, motivo: "La cuota no alcanza a cubrir los intereses" };
   }
+  const cuotasBase = Math.max(0, input.cuotasPendientes - 1);
   const nuevoPlazoExacto =
     -Math.log(1 - (input.saldoCapital * tasaMensual) / nuevaCuotaSinSeguro) /
     Math.log(1 + tasaMensual);
   const nuevoPlazo = Math.ceil(nuevoPlazoExacto);
-  if (nuevoPlazo <= 0 || nuevoPlazo >= input.cuotasPendientes) {
+  if (nuevoPlazo <= 0 || nuevoPlazo >= cuotasBase) {
     return { ...base, motivo: "El nuevo plazo no genera ahorro" };
   }
-  const cuotasEliminadas = input.cuotasPendientes - nuevoPlazo;
+  const cuotasEliminadas = cuotasBase - nuevoPlazo;
   const totalProyectado = nuevaCuotaConSeguro * nuevoPlazo;
-  const totalActualPendiente = input.cuotaActual * input.cuotasPendientes;
+  const totalActualPendiente = input.cuotaActual * cuotasBase;
   const interesesActuales = totalActualPendiente - input.saldoCapital;
   const ahorroIntereses = interesesActuales - (totalProyectado - input.saldoCapital);
   const ahorroSeguros = input.seguros * cuotasEliminadas;
