@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { wrapNuvexEmail } from "@/lib/emailBrand.server";
 
 const RESEND_GATEWAY = "https://connector-gateway.lovable.dev/resend";
 
@@ -372,11 +373,7 @@ export const enviarCorreoCartera = createServerFn({ method: "POST" })
         to: destinatarios,
         subject: asunto,
         text: body,
-        html: body
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/\n/g, "<br>"),
+        html: await wrapNuvexEmail({ subject: asunto, bodyText: body }),
       }),
     });
     const json = (await resp.json().catch(() => ({}))) as Record<string, unknown>;
