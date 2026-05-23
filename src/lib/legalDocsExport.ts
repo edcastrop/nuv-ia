@@ -310,23 +310,25 @@ function blockToDocx(b: DocBlock): Paragraph | Table {
   }
 }
 
-export async function exportLegalDocDOCX(doc: LegalDoc) {
-  const docx = new Document({
-    styles: {
-      default: { document: { run: { font: "Times New Roman", size: 22 } } },
-    },
-    sections: [
-      {
-        properties: {
-          page: {
-            size: { width: 12240, height: 15840 },
-            margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
-          },
-        },
-        children: doc.blocks.map(blockToDocx),
-      },
-    ],
+function buildLegalDocDocx(doc: LegalDoc): Document {
+  return new Document({
+    styles: { default: { document: { run: { font: "Times New Roman", size: 22 } } } },
+    sections: [{
+      properties: { page: {
+        size: { width: 12240, height: 15840 },
+        margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
+      } },
+      children: doc.blocks.map(blockToDocx),
+    }],
   });
-  const blob = await Packer.toBlob(docx);
+}
+
+export async function exportLegalDocDOCX(doc: LegalDoc) {
+  const blob = await Packer.toBlob(buildLegalDocDocx(doc));
   saveAs(blob, `${doc.filename}.docx`);
 }
+
+export async function legalDocToDOCXBlob(doc: LegalDoc): Promise<Blob> {
+  return await Packer.toBlob(buildLegalDocDocx(doc));
+}
+
