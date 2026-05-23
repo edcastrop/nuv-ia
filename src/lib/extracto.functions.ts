@@ -117,15 +117,18 @@ const tool = {
         },
         valorSeguroVida: {
           type: "string",
-          description: "Seguro de vida MENSUAL. Solo dígitos. Vacío si no aparece.",
+          description:
+            "Bancolombia: campo literal '*Valor seguro vida' (el asterisco es parte del nombre). Seguro MENSUAL de vida (típico 5.000–80.000). NO confundir con 'Valor asegurado'. Solo dígitos (puede incluir decimal). Vacío si no aparece.",
         },
         valorSeguroIncendio: {
           type: "string",
-          description: "Seguro de incendio MENSUAL. Solo dígitos. Vacío si no aparece.",
+          description:
+            "Bancolombia: campo literal '*Valor seguro incendio' (el asterisco es parte del nombre). Seguro MENSUAL de incendio (típico 5.000–100.000). NO confundir con 'Valor asegurado Incendio y Terremoto'. Solo dígitos. Vacío si no aparece.",
         },
         valorSeguroTerremoto: {
           type: "string",
-          description: "Seguro de terremoto MENSUAL. Solo dígitos. Vacío si no aparece.",
+          description:
+            "Bancolombia: campo literal '*Valor seguro terremoto' (el asterisco es parte del nombre). Seguro MENSUAL de terremoto (típico 5.000–80.000). NO confundir con 'Valor asegurado Incendio y Terremoto'. Solo dígitos. Vacío si no aparece.",
         },
         valorCuotaSinSubsidioGobierno: {
           type: "string",
@@ -289,9 +292,9 @@ REGLAS ESTRICTAS:
     - "Nro. cuotas pendientes para pago total" → "cuotasPendientes"
     - "Valor a Pagar" → "valorAPagar" (y úsalo como "cuotaPagadaCliente")
     - "Valor de la cuota sin seguros y sin comisiones" → "cuotaSinSeguros" y "cuotaConInteresSinSeguros"
-    - "Valor seguro vida" → "valorSeguroVida"
-    - "Valor seguro incendio" → "valorSeguroIncendio"
-    - "Valor seguro terremoto" → "valorSeguroTerremoto"
+    - "*Valor seguro vida" (con o sin asterisco) → "valorSeguroVida"
+    - "*Valor seguro incendio" (con o sin asterisco) → "valorSeguroIncendio"
+    - "*Valor seguro terremoto" (con o sin asterisco) → "valorSeguroTerremoto"
     - "Valor cuota sin subsidio Gobierno" → "valorCuotaSinSubsidioGobierno"
     - "Valor subsidio Gobierno" → "valorSubsidioGobierno"
     - "Valor cuota con subsidio" → "valorCuotaConSubsidio"
@@ -300,7 +303,9 @@ REGLAS ESTRICTAS:
     - "Valor asegurado Incendio y Terremoto" → "valorAseguradoInmueble" (NO confundir con seguro mensual, NO con cuota, NO con saldo).
   * PRESERVA los decimales tal como aparecen. Si el extracto muestra "1.302.922,98", devuelve "1302922.98" (punto decimal). NO redondees. Si es entero, devuelve solo dígitos.
   * NO inventes ni deduzcas. Si una etiqueta literal no está presente, deja el campo vacío.
+  * Los TRES seguros (vida, incendio, terremoto) DEBEN extraerse por separado y cada uno DEBE quedar lleno si aparece en el extracto. Si solo extraes uno o dos, la lectura será rechazada. Verifica visualmente que los tres valores estén presentes antes de responder.
   * Los seguros mensuales se calculan EXCLUSIVAMENTE como valorSeguroVida + valorSeguroIncendio + valorSeguroTerremoto. Nunca incluyas "Valor asegurado Incendio y Terremoto" en esta suma.
+  * EJEMPLO REAL Bancolombia (referencia obligatoria): "*Valor seguro vida $ 14,433.00", "*Valor seguro incendio $ 21,654.00", "*Valor seguro terremoto $ 14,435.00" → valorSeguroVida="14433", valorSeguroIncendio="21654", valorSeguroTerremoto="14435". Suma seguros = 50522. Si la tabla "Movimientos Último Periodo" muestra columnas "Seguros Vida / Seguros Incendio / Seguros Terremoto", esos valores deben coincidir con los anteriores.
 - Confianza "alta" solo si el dato es 100% explícito en el extracto. "media" si requiere inferencia simple. "baja" si dudoso o ausente.`;
 
 export type ExtractoData = Record<string, string | Record<string, string>>;
@@ -489,9 +494,25 @@ export const extractStatement = createServerFn({ method: "POST" })
         // ----- BANCOLOMBIA: mapeo literal por campos del extracto -----
         mapeoBanco = "bancolombia";
         const valorAPagar = monto("valorAPagar");
-        const sVida = monto("valorSeguroVida");
-        const sIncendio = monto("valorSeguroIncendio");
-        const sTerremoto = monto("valorSeguroTerremoto");
+        const valorAsegInmueble = monto("valorAseguradoInmueble");
+
+        // Sanitización: si la IA confundió un seguro mensual con el valor asegurado
+        // del inmueble o devolvió un monto irracional (>250.000 mensuales), lo descartamos.
+        const sanitSeguro = (key: string): number => {
+          const v = monto(key);
+          if (v <= 0) return 0;
+          if (valorAsegInmueble > 0 && Math.abs(v - valorAsegInmueble) < 1) return 0;
+          if (v > 250000) return 0;
+          return v;
+        };
+        const sVida = sanitSeguro("valorSeguroVida");
+        const sIncendio = sanitSeguro("valorSeguroIncendio");
+        const sTerremoto = sanitSeguro("valorSeguroTerremoto");
+        // Reescribir cada campo individual con el valor saneado (o vacío)
+        parsed.valorSeguroVida = sVida > 0 ? formatMontoExtracto(sVida) : "";
+        parsed.valorSeguroIncendio = sIncendio > 0 ? formatMontoExtracto(sIncendio) : "";
+        parsed.valorSeguroTerremoto = sTerremoto > 0 ? formatMontoExtracto(sTerremoto) : "";
+
         const cuotaSinSubGob = monto("valorCuotaSinSubsidioGobierno");
         const subsidioGob = monto("valorSubsidioGobierno");
         const cuotaConSub = monto("valorCuotaConSubsidio");
@@ -505,10 +526,16 @@ export const extractStatement = createServerFn({ method: "POST" })
           parsed.cuotaPagadaCliente = formatMontoExtracto(cuotaConSub);
         }
 
+        // Para Bancolombia, "seguros" SIEMPRE se reescribe con la suma de los tres
+        // campos individuales saneados. Si la suma es 0, se vacía y se alerta.
         if (segurosSum > 0) {
           segurosNum = segurosSum;
           parsed.seguros = formatMontoExtracto(segurosSum);
+        } else {
+          segurosNum = 0;
+          parsed.seguros = "";
         }
+
 
         if (subsidioGob > 0) {
           valorBenef = subsidioGob;
