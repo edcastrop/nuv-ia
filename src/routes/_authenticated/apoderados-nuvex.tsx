@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/apoderados-nuvex")({
 });
 
 const empty: ApoderadoInput = {
-  nombre: "", cedula: "", lugar_expedicion: "", celular: "", correo: "", activo: true,
+  nombre: "", cedula: "", lugar_expedicion: "", ciudad: "", celular: "", correo: "", activo: true,
 };
 
 function ApoderadosPage() {
@@ -36,6 +36,7 @@ function ApoderadosPage() {
     setForm({
       nombre: a.nombre, cedula: a.cedula,
       lugar_expedicion: a.lugar_expedicion ?? "",
+      ciudad: a.ciudad ?? "",
       celular: a.celular ?? "", correo: a.correo ?? "",
       activo: a.activo,
     });
@@ -105,6 +106,7 @@ function ApoderadosPage() {
                   <th className="py-2 pr-3">Nombre</th>
                   <th className="py-2 pr-3">Cédula</th>
                   <th className="py-2 pr-3">Expedida</th>
+                  <th className="py-2 pr-3">Ciudad</th>
                   <th className="py-2 pr-3">Celular</th>
                   <th className="py-2 pr-3">Correo</th>
                   <th className="py-2 pr-3">Estado</th>
@@ -117,6 +119,7 @@ function ApoderadosPage() {
                     <td className="py-2 pr-3 font-medium text-[#242424]">{a.nombre}</td>
                     <td className="py-2 pr-3">{a.cedula}</td>
                     <td className="py-2 pr-3 text-[#242424]/70">{a.lugar_expedicion ?? "—"}</td>
+                    <td className="py-2 pr-3 text-[#242424]/70">{a.ciudad ?? "—"}</td>
                     <td className="py-2 pr-3 text-[#242424]/70">{a.celular ?? "—"}</td>
                     <td className="py-2 pr-3 text-[#242424]/70">{a.correo ?? "—"}</td>
                     <td className="py-2 pr-3">
@@ -163,6 +166,7 @@ function ApoderadosPage() {
               <Field label="Nombre completo *" value={form.nombre} onChange={(v) => setForm({ ...form, nombre: v })} className="sm:col-span-2" />
               <Field label="Cédula *" value={form.cedula} onChange={(v) => setForm({ ...form, cedula: v })} />
               <Field label="Lugar de expedición" value={form.lugar_expedicion} onChange={(v) => setForm({ ...form, lugar_expedicion: v })} />
+              <Field label="Ciudad" value={form.ciudad} onChange={(v) => setForm({ ...form, ciudad: v })} />
               <Field label="Celular" value={form.celular} onChange={(v) => setForm({ ...form, celular: v })} />
               <Field label="Correo" value={form.correo} onChange={(v) => setForm({ ...form, correo: v })} />
               <label className="flex items-center gap-2 text-sm text-[#242424] sm:col-span-2 mt-2">

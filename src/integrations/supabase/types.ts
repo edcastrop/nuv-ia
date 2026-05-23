@@ -19,6 +19,7 @@ export type Database = {
           activo: boolean
           cedula: string
           celular: string | null
+          ciudad: string | null
           correo: string | null
           created_at: string
           id: string
@@ -30,6 +31,7 @@ export type Database = {
           activo?: boolean
           cedula: string
           celular?: string | null
+          ciudad?: string | null
           correo?: string | null
           created_at?: string
           id?: string
@@ -41,6 +43,7 @@ export type Database = {
           activo?: boolean
           cedula?: string
           celular?: string | null
+          ciudad?: string | null
           correo?: string | null
           created_at?: string
           id?: string

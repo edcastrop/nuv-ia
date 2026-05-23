@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
-import { FileText, Download, Eye, Receipt, BadgeCheck, Info } from "lucide-react";
+import { FileText, Download, Eye, Receipt, BadgeCheck, Info, CheckCircle2, AlertTriangle, RefreshCw } from "lucide-react";
 import type { ExpedienteMaestro } from "@/lib/expedienteMaestro";
 import type { Expediente, PropuestaData } from "@/lib/expedientes";
 import {
-  buildPoderEspecial, buildDatosContrato,
+  buildDatosContrato, buildPoderesForExpediente, detectPoderTemplate,
   type LegalDoc, type ApoderadoSeleccionado, type AcuerdoComercial, type ModalidadPago,
+  type PoderTemplateId,
 } from "@/lib/legalDocs";
+import { PODER_TEMPLATES } from "@/lib/poderTemplates";
 import { exportLegalDocPDF, exportLegalDocDOCX } from "@/lib/legalDocsExport";
 import { listApoderados, type ApoderadoNuvex } from "@/lib/apoderados";
 
@@ -45,9 +47,19 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente }: P
     if (!ap) return undefined;
     return {
       nombre: ap.nombre, cedula: ap.cedula,
-      lugarExpedicion: ap.lugar_expedicion, celular: ap.celular,
+      lugarExpedicion: ap.lugar_expedicion, ciudad: ap.ciudad, celular: ap.celular,
     };
   }, [apoderados, selectedApId]);
+
+  // ── Plantilla jurídica detectada (con override manual)
+  const detectedTemplate: PoderTemplateId = useMemo(
+    () => detectPoderTemplate(live.credito?.banco, live.credito?.tipoProducto),
+    [live.credito?.banco, live.credito?.tipoProducto],
+  );
+  const [tplOverride, setTplOverride] = useState<PoderTemplateId | null>(null);
+  const [showTplPicker, setShowTplPicker] = useState(false);
+  const activeTemplateId: PoderTemplateId = tplOverride ?? detectedTemplate;
+  const activeTemplateMeta = PODER_TEMPLATES.find((t) => t.id === activeTemplateId)!;
 
   // ── Acuerdo comercial (Contado / Financiado)
   const honorarios = useMemo(() => {
@@ -78,7 +90,13 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente }: P
     [modalidad, cuotas],
   );
 
-  const poderDoc = useMemo(() => buildPoderEspecial(live, selectedAp), [live, selectedAp]);
+  const poderes = useMemo(
+    () => (selectedAp ? buildPoderesForExpediente(live, selectedAp, tplOverride ?? undefined) : []),
+    [live, selectedAp, tplOverride],
+  );
+  const poderesMissing = poderes.flatMap((p) => p.missing);
+  const hasMissing = poderesMissing.length > 0;
+  const uniqueMissing = Array.from(new Set(poderesMissing));
   const datosDoc = useMemo(
     () => buildDatosContrato(live, simExpediente ?? null, acuerdo),
     [live, simExpediente, acuerdo],
@@ -188,15 +206,76 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente }: P
           )}
         </div>
 
+        {/* Plantilla jurídica detectada + override manual */}
+        <div className="rounded-xl border bg-white p-3 mb-4" style={{ borderColor: "#E3E7EE" }}>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="text-[11px] uppercase tracking-wider font-semibold text-[#242424]/70">
+              Plantilla detectada
+            </div>
+            <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
+              style={{ background: NUVEX.verdeClaro, color: NUVEX.verdeTextoFuerte }}>
+              <CheckCircle2 size={13} /> {activeTemplateMeta.nombre}
+              {tplOverride && <span className="ml-1 text-[10px] opacity-70">(manual)</span>}
+            </span>
+            <button
+              onClick={() => setShowTplPicker((s) => !s)}
+              className="inline-flex items-center gap-1 text-[11px] text-[#445DA3] hover:underline"
+            >
+              <RefreshCw size={11} /> Cambiar plantilla
+            </button>
+          </div>
+          {showTplPicker && (
+            <div className="mt-3 grid gap-2">
+              {PODER_TEMPLATES.map((t) => (
+                <label key={t.id} className="flex items-start gap-2 rounded-lg border border-[#E3E7EE] p-2 text-xs cursor-pointer hover:bg-[#F7F9FB]">
+                  <input
+                    type="radio" className="mt-0.5"
+                    checked={activeTemplateId === t.id}
+                    onChange={() => { setTplOverride(t.id === detectedTemplate ? null : t.id); setShowTplPicker(false); }}
+                  />
+                  <div>
+                    <div className="font-semibold text-[#242424]">{t.nombre}</div>
+                    <div className="text-[#242424]/60">{t.descripcion}</div>
+                  </div>
+                </label>
+              ))}
+              {tplOverride && (
+                <button onClick={() => { setTplOverride(null); setShowTplPicker(false); }} className="text-[11px] text-[#445DA3] hover:underline self-start">
+                  Volver a selección automática
+                </button>
+              )}
+            </div>
+          )}
+          {hasMissing && selectedAp && (
+            <div className="mt-3 rounded-lg border p-2 text-xs"
+              style={{ borderColor: "#F5C2C2", background: NUVEX.rojoBg, color: NUVEX.rojoTexto }}>
+              <div className="flex items-center gap-1.5 font-semibold mb-1">
+                <AlertTriangle size={13} /> Faltan datos para generar el poder.
+              </div>
+              <ul className="list-disc pl-5 space-y-0.5">
+                {uniqueMissing.map((m) => <li key={m}>{m}</li>)}
+              </ul>
+            </div>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <DocCard
-            icon={<FileText size={18} />}
-            title="Poder Especial"
-            descripcion="Plantilla jurídica NUVEX con apoderado seleccionado y datos del expediente."
-            doc={poderDoc}
-            disabled={!selectedAp}
-            onPreview={() => setPreview(poderDoc)}
-          />
+          {poderes.length === 0 && (
+            <div className="md:col-span-2 rounded-xl border bg-[#F7F9FB] p-4 text-xs text-[#242424]/70" style={{ borderColor: "#E3E7EE" }}>
+              Selecciona un Apoderado NUVEX para generar el Poder Especial.
+            </div>
+          )}
+          {poderes.map((p, i) => (
+            <DocCard
+              key={i}
+              icon={<FileText size={18} />}
+              title={`Poder Especial — ${p.doc.title.replace("Poder Especial — ", "")}`}
+              descripcion={`Plantilla ${activeTemplateMeta.nombre}. ${p.missing.length ? "Completa los datos faltantes antes de descargar." : "Listo para previsualizar y descargar."}`}
+              doc={p.doc}
+              disabled={p.missing.length > 0}
+              onPreview={() => setPreview(p.doc)}
+            />
+          ))}
           <DocCard
             icon={<FileText size={18} />}
             title="Datos para Contrato"
