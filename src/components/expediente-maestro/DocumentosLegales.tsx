@@ -92,6 +92,23 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
     });
   }, [expediente, caseSource]);
 
+  // Autocompletar Departamento desde Ciudad seleccionada (readonly en UI).
+  useEffect(() => {
+    const ciudad = ijTitular.ciudad || "";
+    const dep = cityDepartment(ciudad);
+    if (dep && dep !== ijTitular.departamento) {
+      setIjTitular((prev) => ({ ...prev, departamento: dep }));
+    }
+  }, [ijTitular.ciudad, ijTitular.departamento]);
+
+  useEffect(() => {
+    const ciudad = ijCotitular.ciudad || "";
+    const dep = cityDepartment(ciudad);
+    if (dep && dep !== ijCotitular.departamento) {
+      setIjCotitular((prev) => ({ ...prev, departamento: dep }));
+    }
+  }, [ijCotitular.ciudad, ijCotitular.departamento]);
+
   // Sincronización manual: copia TODOS los datos disponibles del caso hacia
   // la Información Jurídica, sobrescribiendo los campos mapeados.
   const syncFromCase = () => {
