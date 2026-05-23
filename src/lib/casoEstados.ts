@@ -15,10 +15,14 @@ export type CasoEstado =
   | "radicado_banco"
   | "en_estudio_banco"
   | "aprobado"
+  | "documentos_banco_firmados"
+  | "condiciones_aplicadas"
   | "resultado_final_generado"
+  | "cuenta_cobro_generada"
   | "cuenta_cobro_enviada"
   | "honorarios_pagados"
   | "paz_y_salvo_generado"
+  | "prejuridico"
   | "proceso_cerrado";
 
 export interface CasoEstadoDef {
