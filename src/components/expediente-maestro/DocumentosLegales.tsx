@@ -622,6 +622,19 @@ function IJField({
   );
 }
 
+function IJCity({
+  label, value, onChange, required,
+}: { label: string; value: string; onChange: (v: string) => void; required?: boolean }) {
+  return (
+    <label className="text-xs">
+      <span className="block text-[#242424]/70 mb-0.5">
+        {label}{required && <span className="text-[#B42318]"> *</span>}
+      </span>
+      <CitySelect value={value} onChange={onChange} required={required} />
+    </label>
+  );
+}
+
 function IJSelect({
   label, value, onChange, options,
 }: { label: string; value: string; onChange: (v: string) => void; options: string[] }) {
@@ -700,7 +713,7 @@ function InformacionJuridicaEditor({
         <IJField label="Número de documento" value={titular.cedula || ""} onChange={(v) => setT("cedula", v)} required />
         <IJField label="Lugar de expedición" value={titular.expedidaEn || ""} onChange={(v) => setT("expedidaEn", v)} required />
         <IJField label="Fecha de expedición" value={titular.fechaExpedicion || ""} placeholder="DD/MM/AAAA" onChange={(v) => setT("fechaExpedicion", v)} />
-        <IJField label="Ciudad de residencia" value={titular.ciudad || ""} onChange={(v) => setT("ciudad", v)} required />
+        <IJCity label="Ciudad de residencia" value={titular.ciudad || ""} onChange={(v) => setT("ciudad", v)} required />
         <IJField label="Departamento" value={titular.departamento || ""} onChange={(v) => setT("departamento", v)} />
         <IJField label="Correo electrónico" value={titular.email || ""} onChange={(v) => setT("email", v)} />
         <IJField label="Celular" value={titular.telefono || ""} onChange={(v) => setT("telefono", v)} />
@@ -727,7 +740,7 @@ function InformacionJuridicaEditor({
             <IJField label="Número de documento" value={cotitular.cedula || ""} onChange={(v) => setC("cedula", v)} required />
             <IJField label="Lugar de expedición" value={cotitular.expedidaEn || ""} onChange={(v) => setC("expedidaEn", v)} required />
             <IJField label="Fecha de expedición" value={cotitular.fechaExpedicion || ""} placeholder="DD/MM/AAAA" onChange={(v) => setC("fechaExpedicion", v)} />
-            <IJField label="Ciudad de residencia" value={cotitular.ciudad || ""} onChange={(v) => setC("ciudad", v)} required />
+            <IJCity label="Ciudad de residencia" value={cotitular.ciudad || ""} onChange={(v) => setC("ciudad", v)} required />
             <IJField label="Departamento" value={cotitular.departamento || ""} onChange={(v) => setC("departamento", v)} />
             <IJField label="Correo electrónico" value={cotitular.email || ""} onChange={(v) => setC("email", v)} />
             <IJField label="Celular" value={cotitular.telefono || ""} onChange={(v) => setC("telefono", v)} />

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Card, TextField, SelectField, SectionTitle } from "@/components/nuvex/ui";
+import { CityField } from "@/components/ui/CityField";
 import { NUVEX } from "@/components/nuvex/constants";
 import { withFreshDerivados, FRESH_TIPOS, type FreshTipoBeneficio } from "@/lib/cobertura";
 import type {
@@ -73,7 +74,7 @@ export function MaestroEditor(p: Props) {
           <TextField label="Profesión" value={p.cliente.profesion} onChange={(v) => p.onCliente(set(p.cliente, "profesion", v))} />
           <TextField label="Teléfono" value={p.cliente.telefono} onChange={(v) => p.onCliente(set(p.cliente, "telefono", v))} />
           <TextField label="Email" value={p.cliente.email} onChange={(v) => p.onCliente(set(p.cliente, "email", v))} />
-          <TextField label="Ciudad" value={p.cliente.ciudad} onChange={(v) => p.onCliente(set(p.cliente, "ciudad", v))} />
+          <CityField label="Ciudad" value={p.cliente.ciudad} onChange={(v) => p.onCliente(set(p.cliente, "ciudad", v))} />
           <TextField label="Dirección" value={p.cliente.direccion} onChange={(v) => p.onCliente(set(p.cliente, "direccion", v))} className="md:col-span-2 lg:col-span-3" />
         </div>
       </Accordion>
@@ -94,7 +95,7 @@ export function MaestroEditor(p: Props) {
             <TextField label="Profesión" value={p.cotitular.profesion} onChange={(v) => p.onCotitular(set(p.cotitular, "profesion", v))} />
             <TextField label="Teléfono" value={p.cotitular.telefono} onChange={(v) => p.onCotitular(set(p.cotitular, "telefono", v))} />
             <TextField label="Email" value={p.cotitular.email} onChange={(v) => p.onCotitular(set(p.cotitular, "email", v))} />
-            <TextField label="Ciudad" value={p.cotitular.ciudad} onChange={(v) => p.onCotitular(set(p.cotitular, "ciudad", v))} />
+            <CityField label="Ciudad" value={p.cotitular.ciudad} onChange={(v) => p.onCotitular(set(p.cotitular, "ciudad", v))} />
             <TextField label="Dirección" value={p.cotitular.direccion} onChange={(v) => p.onCotitular(set(p.cotitular, "direccion", v))} className="md:col-span-2 lg:col-span-3" />
           </div>
         )}
@@ -113,7 +114,7 @@ export function MaestroEditor(p: Props) {
           <TextField label="Número de documento" value={p.cliente.cedula} onChange={(v) => p.onCliente(set(p.cliente, "cedula", v))} />
           <TextField label="Lugar de expedición" value={p.cliente.expedidaEn} onChange={(v) => p.onCliente(set(p.cliente, "expedidaEn", v))} />
           <TextField label="Fecha de expedición" value={p.cliente.fechaExpedicion || ""} placeholder="DD/MM/AAAA" onChange={(v) => p.onCliente(set(p.cliente, "fechaExpedicion", v))} />
-          <TextField label="Ciudad de residencia" value={p.cliente.ciudad} onChange={(v) => p.onCliente(set(p.cliente, "ciudad", v))} />
+          <CityField label="Ciudad de residencia" value={p.cliente.ciudad} onChange={(v) => p.onCliente(set(p.cliente, "ciudad", v))} required />
           <TextField label="Departamento" value={p.cliente.departamento || ""} onChange={(v) => p.onCliente(set(p.cliente, "departamento", v))} />
           <TextField label="Correo electrónico" value={p.cliente.email} onChange={(v) => p.onCliente(set(p.cliente, "email", v))} />
           <TextField label="Celular" value={p.cliente.telefono} onChange={(v) => p.onCliente(set(p.cliente, "telefono", v))} />
@@ -130,7 +131,7 @@ export function MaestroEditor(p: Props) {
               <TextField label="Número de documento" value={p.cotitular.cedula} onChange={(v) => p.onCotitular(set(p.cotitular, "cedula", v))} />
               <TextField label="Lugar de expedición" value={p.cotitular.expedidaEn} onChange={(v) => p.onCotitular(set(p.cotitular, "expedidaEn", v))} />
               <TextField label="Fecha de expedición" value={p.cotitular.fechaExpedicion || ""} placeholder="DD/MM/AAAA" onChange={(v) => p.onCotitular(set(p.cotitular, "fechaExpedicion", v))} />
-              <TextField label="Ciudad de residencia" value={p.cotitular.ciudad} onChange={(v) => p.onCotitular(set(p.cotitular, "ciudad", v))} />
+              <CityField label="Ciudad de residencia" value={p.cotitular.ciudad} onChange={(v) => p.onCotitular(set(p.cotitular, "ciudad", v))} required />
               <TextField label="Departamento" value={p.cotitular.departamento || ""} onChange={(v) => p.onCotitular(set(p.cotitular, "departamento", v))} />
               <TextField label="Correo electrónico" value={p.cotitular.email} onChange={(v) => p.onCotitular(set(p.cotitular, "email", v))} />
               <TextField label="Celular" value={p.cotitular.telefono} onChange={(v) => p.onCotitular(set(p.cotitular, "telefono", v))} />
@@ -229,7 +230,7 @@ export function MaestroEditor(p: Props) {
           <TextField label="Cédula" value={p.apoderado.cedula} onChange={(v) => p.onApoderado(set(p.apoderado, "cedula", v))} />
           <TextField label="Teléfono" value={p.apoderado.telefono} onChange={(v) => p.onApoderado(set(p.apoderado, "telefono", v))} />
           <TextField label="Email" value={p.apoderado.email} onChange={(v) => p.onApoderado(set(p.apoderado, "email", v))} />
-          <TextField label="Ciudad" value={p.apoderado.ciudad} onChange={(v) => p.onApoderado(set(p.apoderado, "ciudad", v))} />
+          <CityField label="Ciudad" value={p.apoderado.ciudad} onChange={(v) => p.onApoderado(set(p.apoderado, "ciudad", v))} />
           <TextField label="Número de poder" value={p.apoderado.numeroPoder} onChange={(v) => p.onApoderado(set(p.apoderado, "numeroPoder", v))} />
           <TextField label="Fecha de poder" value={p.apoderado.fechaPoder} placeholder="DD/MM/AAAA" onChange={(v) => p.onApoderado(set(p.apoderado, "fechaPoder", v))} />
           <TextField label="Dirección" value={p.apoderado.direccion} onChange={(v) => p.onApoderado(set(p.apoderado, "direccion", v))} className="md:col-span-2 lg:col-span-3" />
