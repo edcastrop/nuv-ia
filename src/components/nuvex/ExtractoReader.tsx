@@ -1085,6 +1085,27 @@ export function ExtractoReader({ modo, onApply }: Props) {
                       </div>
                     )}
 
+                    {advertenciasNorm.length > 0 && (
+                      <div
+                        className="mb-3 rounded-lg px-3 py-2 text-[12px]"
+                        style={{
+                          background: "rgba(244,162,97,0.12)",
+                          border: "1px solid rgba(244,162,97,0.45)",
+                          color: "#F4A261",
+                        }}
+                      >
+                        <div className="mb-1 flex items-center gap-2 font-bold uppercase tracking-wider">
+                          <AlertTriangle className="h-4 w-4" />
+                          Revisión necesaria
+                        </div>
+                        <ul className="ml-5 list-disc space-y-0.5">
+                          {advertenciasNorm.map((e, i) => (
+                            <li key={i}>{e}</li>
+                          ))}
+                        </ul>
+                      </div>
+
+
                     {hayErrores && (
                       <div
                         className="mb-3 rounded-lg px-3 py-2 text-[12px]"
