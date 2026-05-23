@@ -106,6 +106,7 @@ function ApoderadosPage() {
                   <th className="py-2 pr-3">Nombre</th>
                   <th className="py-2 pr-3">Cédula</th>
                   <th className="py-2 pr-3">Expedida</th>
+                  <th className="py-2 pr-3">Ciudad</th>
                   <th className="py-2 pr-3">Celular</th>
                   <th className="py-2 pr-3">Correo</th>
                   <th className="py-2 pr-3">Estado</th>
@@ -118,6 +119,7 @@ function ApoderadosPage() {
                     <td className="py-2 pr-3 font-medium text-[#242424]">{a.nombre}</td>
                     <td className="py-2 pr-3">{a.cedula}</td>
                     <td className="py-2 pr-3 text-[#242424]/70">{a.lugar_expedicion ?? "—"}</td>
+                    <td className="py-2 pr-3 text-[#242424]/70">{a.ciudad ?? "—"}</td>
                     <td className="py-2 pr-3 text-[#242424]/70">{a.celular ?? "—"}</td>
                     <td className="py-2 pr-3 text-[#242424]/70">{a.correo ?? "—"}</td>
                     <td className="py-2 pr-3">
