@@ -1,6 +1,184 @@
 import html2canvas from "html2canvas-pro";
 import { jsPDF } from "jspdf";
 
+/* ============================================================
+   VALIDACIÓN OBLIGATORIA DE LAYOUT — antes de exportar
+   ------------------------------------------------------------
+   Reglas (NUVEX):
+   - Márgenes mínimos: top 40px / bottom 50px / left 40px / right 40px
+   - Cada página debe usar entre 75% y 92% del alto disponible
+   - Ningún elemento puede salirse, cortarse, superponerse al footer/header,
+     ni cruzar los bordes superior / inferior
+   - Si overflow / overlap / collision => NO EXPORTAR
+============================================================ */
+
+export interface LayoutValidationResult {
+  ok: boolean;
+  overflow: boolean;
+  overlap: boolean;
+  footerCollision: boolean;
+  headerCollision: boolean;
+  allMarginsValid: boolean;
+  pages: PageReport[];
+  issues: string[];
+}
+
+interface PageReport {
+  index: number;
+  pageHeightPx: number;
+  contentTopPx: number;
+  contentBottomPx: number;
+  usedPct: number;
+  overflowPx: number;
+}
+
+const MARGIN_TOP_PX = 40;
+const MARGIN_BOTTOM_PX = 50;
+const MARGIN_SIDE_PX = 40;
+const FOOTER_SAFE_GAP_PX = 30;
+const MIN_USE_PCT = 75;
+const MAX_USE_PCT = 92;
+
+export function validatePdfLayout(elementId: string): LayoutValidationResult {
+  const root = document.getElementById(elementId);
+  const result: LayoutValidationResult = {
+    ok: false,
+    overflow: false,
+    overlap: false,
+    footerCollision: false,
+    headerCollision: false,
+    allMarginsValid: true,
+    pages: [],
+    issues: [],
+  };
+
+  if (!root) {
+    result.issues.push(`No se encontró el contenedor #${elementId}.`);
+    return result;
+  }
+
+  const pages = Array.from(root.querySelectorAll<HTMLElement>(".nuvex-print-page"));
+  if (pages.length === 0) {
+    result.issues.push("No se encontraron páginas para validar.");
+    return result;
+  }
+
+  pages.forEach((page, idx) => {
+    const pageRect = page.getBoundingClientRect();
+    const pageHeight = pageRect.height || page.offsetHeight;
+    const pageWidth = pageRect.width || page.offsetWidth;
+
+    // 1. OVERFLOW — el contenido excede el alto disponible (recorte por overflow:hidden)
+    const overflowPx = Math.max(0, page.scrollHeight - page.clientHeight);
+    if (overflowPx > 2) {
+      result.overflow = true;
+      result.issues.push(
+        `Página ${idx + 1}: contenido excede el alto en ${overflowPx.toFixed(0)}px.`
+      );
+    }
+
+    // 2. Footer y contenido
+    const footer = page.querySelector<HTMLElement>('[data-pdf-footer="true"]');
+    const footerRect = footer?.getBoundingClientRect();
+    const footerTop = footerRect ? footerRect.top - pageRect.top : pageHeight - MARGIN_BOTTOM_PX;
+
+    // Calcular top/bottom del contenido (ignorando footer)
+    const contentNodes = Array.from(page.children).filter(
+      (n) => !(n as HTMLElement).hasAttribute("data-pdf-footer")
+    ) as HTMLElement[];
+
+    let contentTop = pageHeight;
+    let contentBottom = 0;
+    contentNodes.forEach((c) => {
+      const r = c.getBoundingClientRect();
+      if (r.height === 0 || r.width === 0) return;
+      contentTop = Math.min(contentTop, r.top - pageRect.top);
+      contentBottom = Math.max(contentBottom, r.bottom - pageRect.top);
+    });
+    if (contentNodes.length === 0) {
+      contentTop = 0;
+      contentBottom = 0;
+    }
+
+    // 3. Márgenes (top / bottom / left / right)
+    if (contentTop < MARGIN_TOP_PX - 1) {
+      result.headerCollision = true;
+      result.allMarginsValid = false;
+      result.issues.push(
+        `Página ${idx + 1}: el contenido cruza el margen superior (${contentTop.toFixed(0)}px < ${MARGIN_TOP_PX}px).`
+      );
+    }
+    if (pageHeight - contentBottom < MARGIN_BOTTOM_PX - 1) {
+      result.footerCollision = true;
+      result.allMarginsValid = false;
+      result.issues.push(
+        `Página ${idx + 1}: el contenido invade el margen inferior (${(pageHeight - contentBottom).toFixed(0)}px < ${MARGIN_BOTTOM_PX}px).`
+      );
+    }
+
+    // 4. Colisión con el footer (gap mínimo de 30px)
+    if (footerRect && contentBottom > footerTop - FOOTER_SAFE_GAP_PX + 1) {
+      result.footerCollision = true;
+      result.issues.push(
+        `Página ${idx + 1}: el último componente toca el footer (gap insuficiente).`
+      );
+    }
+
+    // 5. Márgenes laterales — chequeo simple sobre los hijos directos del contenido
+    contentNodes.forEach((c) => {
+      const r = c.getBoundingClientRect();
+      if (r.height === 0 || r.width === 0) return;
+      const leftOffset = r.left - pageRect.left;
+      const rightOffset = pageRect.right - r.right;
+      if (leftOffset < MARGIN_SIDE_PX - 1 || rightOffset < MARGIN_SIDE_PX - 1) {
+        // El padding del page section ya garantiza ~75px, esto solo dispararía con bugs reales
+        result.allMarginsValid = false;
+      }
+    });
+
+    // 6. % de uso de la página
+    const usedHeight = Math.max(0, contentBottom - contentTop);
+    const usedPct = pageHeight > 0 ? (usedHeight / pageHeight) * 100 : 0;
+    if (usedPct > MAX_USE_PCT + 1) {
+      result.overflow = true;
+      result.issues.push(
+        `Página ${idx + 1}: uso ${usedPct.toFixed(0)}% (> ${MAX_USE_PCT}%, riesgo de corte).`
+      );
+    }
+    // Uso bajo el 75% es solo advertencia visual, no bloquea — pero la registramos
+    if (usedPct > 0 && usedPct < MIN_USE_PCT) {
+      result.issues.push(
+        `Página ${idx + 1}: uso ${usedPct.toFixed(0)}% (< ${MIN_USE_PCT}%, espacio vacío excesivo).`
+      );
+    }
+
+    result.pages.push({
+      index: idx + 1,
+      pageHeightPx: pageHeight,
+      contentTopPx: contentTop,
+      contentBottomPx: contentBottom,
+      usedPct,
+      overflowPx,
+    });
+
+    // Evitar warning unused
+    void pageWidth;
+  });
+
+  result.ok =
+    !result.overflow &&
+    !result.overlap &&
+    !result.footerCollision &&
+    !result.headerCollision &&
+    result.allMarginsValid;
+
+  return result;
+}
+
+/* ============================================================
+   EXPORTACIÓN A PDF — con validación obligatoria
+============================================================ */
+
 export async function exportElementToPdf(elementId: string, filename: string) {
   // Esperar a que React termine de pintar el contenido
   await new Promise((r) => setTimeout(r, 300));
@@ -11,11 +189,22 @@ export async function exportElementToPdf(elementId: string, filename: string) {
     return;
   }
 
+  // ===== FASE 2 + 3 — Validación previa OBLIGATORIA =====
+  const validation = validatePdfLayout(elementId);
+  if (!validation.ok) {
+    const detalle = validation.issues.slice(0, 6).join("\n• ");
+    console.warn("[NUVEX] Validación de layout falló:", validation);
+    alert(
+      "El PDF no puede generarse porque el layout no cumple las reglas NUVEX.\n\n" +
+        "• " +
+        detalle +
+        "\n\nReorganiza el contenido y vuelve a intentar."
+    );
+    return;
+  }
+
   try {
     // html2canvas-pro clona el documento antes de renderizar.
-    // Usamos onclone para posicionar el contenedor en (0,0) DENTRO del clon,
-    // de modo que el original puede seguir oculto fuera de pantalla
-    // (sin opacity:0 ni visibility:hidden, que producen páginas en blanco).
     const canvas = await html2canvas(element, {
       scale: 2,
       useCORS: true,
@@ -59,8 +248,7 @@ export async function exportElementToPdf(elementId: string, filename: string) {
     pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
     heightLeft -= pageHeight;
 
-    // Tolerancia: si el sobrante es menor a 8mm, NO crear página adicional
-    // (evita la página en blanco al final por décimas de mm de overflow).
+    // Tolerancia: si el sobrante es menor a 20mm, NO crear página adicional.
     const TOLERANCE_MM = 20;
     while (heightLeft > TOLERANCE_MM) {
       position = heightLeft - imgHeight;
