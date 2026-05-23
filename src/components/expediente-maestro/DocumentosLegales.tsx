@@ -472,6 +472,8 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
             descripcion="Disponible automáticamente en el simulador del expediente."
           />
         </div>
+
+        <EnviarContratacionButton ctx={contratacionCtx} onSent={onJuridicaSaved} />
       </Card>
 
       {preview && <PreviewModal doc={preview} onClose={() => setPreview(null)} />}
