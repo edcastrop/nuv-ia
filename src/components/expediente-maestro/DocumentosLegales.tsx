@@ -126,9 +126,28 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
   useEffect(() => {
     listApoderados(true).then((rows) => {
       setApoderados(rows);
-      if (rows.length > 0) setSelectedApId((id) => id || rows[0].id);
     }).catch(() => { /* silencioso */ });
   }, []);
+
+  // Selección automática por banco (FNA → predeterminado FNA; otros → general)
+  const banco = live.credito?.banco;
+  const sugerencia = useMemo(() => seleccionarApoderado(banco, apoderados), [banco, apoderados]);
+
+  // Aplica sugerencia automática al cambiar banco, salvo que el usuario haya elegido manualmente
+  useEffect(() => {
+    if (manualOverride) return;
+    if (sugerencia.apoderado && sugerencia.apoderado.id !== selectedApId) {
+      setSelectedApId(sugerencia.apoderado.id);
+    } else if (!sugerencia.apoderado && !selectedApId && apoderados.length) {
+      setSelectedApId(apoderados[0].id);
+    }
+  }, [sugerencia, manualOverride, apoderados, selectedApId]);
+
+  const motivoActual: MotivoSeleccion = useMemo(() => {
+    if (manualOverride) return "manual";
+    if (sugerencia.apoderado && sugerencia.apoderado.id === selectedApId) return sugerencia.motivo;
+    return "manual";
+  }, [manualOverride, sugerencia, selectedApId]);
 
   const selectedAp: ApoderadoSeleccionado | undefined = useMemo(() => {
     const ap = apoderados.find((a) => a.id === selectedApId);
