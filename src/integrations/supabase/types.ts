@@ -58,6 +58,54 @@ export type Database = {
           },
         ]
       }
+      expediente_maestro: {
+        Row: {
+          apoderado: Json
+          asesor: Json
+          asesor_id: string
+          cedula_cliente: string | null
+          cliente: Json
+          cotitular: Json
+          created_at: string
+          credito: Json
+          fresh: Json
+          id: string
+          licenciado: Json
+          nombre_cliente: string
+          updated_at: string
+        }
+        Insert: {
+          apoderado?: Json
+          asesor?: Json
+          asesor_id: string
+          cedula_cliente?: string | null
+          cliente?: Json
+          cotitular?: Json
+          created_at?: string
+          credito?: Json
+          fresh?: Json
+          id?: string
+          licenciado?: Json
+          nombre_cliente?: string
+          updated_at?: string
+        }
+        Update: {
+          apoderado?: Json
+          asesor?: Json
+          asesor_id?: string
+          cedula_cliente?: string | null
+          cliente?: Json
+          cotitular?: Json
+          created_at?: string
+          credito?: Json
+          fresh?: Json
+          id?: string
+          licenciado?: Json
+          nombre_cliente?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       expedientes: {
         Row: {
           acertividad_global: number | null
