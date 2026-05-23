@@ -25,6 +25,7 @@ import { Route as AuthenticatedSuperAdminExpedientesRouteImport } from './routes
 import { Route as AuthenticatedExpedienteMaestroIdRouteImport } from './routes/_authenticated/expediente-maestro.$id'
 import { Route as AuthenticatedCasosIdRouteImport } from './routes/_authenticated/casos.$id'
 import { Route as AuthenticatedCarteraIdRouteImport } from './routes/_authenticated/cartera.$id'
+import { Route as ApiPublicHooksCarteraRecordatoriosRouteImport } from './routes/api/public/hooks/cartera-recordatorios'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -112,6 +113,12 @@ const AuthenticatedCarteraIdRoute = AuthenticatedCarteraIdRouteImport.update({
   path: '/cartera/$id',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const ApiPublicHooksCarteraRecordatoriosRoute =
+  ApiPublicHooksCarteraRecordatoriosRouteImport.update({
+    id: '/api/public/hooks/cartera-recordatorios',
+    path: '/api/public/hooks/cartera-recordatorios',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -129,6 +136,7 @@ export interface FileRoutesByFullPath {
   '/casos/': typeof AuthenticatedCasosIndexRoute
   '/expediente-maestro/': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/super-admin/': typeof AuthenticatedSuperAdminIndexRoute
+  '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -146,6 +154,7 @@ export interface FileRoutesByTo {
   '/casos': typeof AuthenticatedCasosIndexRoute
   '/expediente-maestro': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/super-admin': typeof AuthenticatedSuperAdminIndexRoute
+  '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -165,6 +174,7 @@ export interface FileRoutesById {
   '/_authenticated/casos/': typeof AuthenticatedCasosIndexRoute
   '/_authenticated/expediente-maestro/': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/_authenticated/super-admin/': typeof AuthenticatedSuperAdminIndexRoute
+  '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -184,6 +194,7 @@ export interface FileRouteTypes {
     | '/casos/'
     | '/expediente-maestro/'
     | '/super-admin/'
+    | '/api/public/hooks/cartera-recordatorios'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -201,6 +212,7 @@ export interface FileRouteTypes {
     | '/casos'
     | '/expediente-maestro'
     | '/super-admin'
+    | '/api/public/hooks/cartera-recordatorios'
   id:
     | '__root__'
     | '/_authenticated'
@@ -219,11 +231,13 @@ export interface FileRouteTypes {
     | '/_authenticated/casos/'
     | '/_authenticated/expediente-maestro/'
     | '/_authenticated/super-admin/'
+    | '/api/public/hooks/cartera-recordatorios'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  ApiPublicHooksCarteraRecordatoriosRoute: typeof ApiPublicHooksCarteraRecordatoriosRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -340,6 +354,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCarteraIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/api/public/hooks/cartera-recordatorios': {
+      id: '/api/public/hooks/cartera-recordatorios'
+      path: '/api/public/hooks/cartera-recordatorios'
+      fullPath: '/api/public/hooks/cartera-recordatorios'
+      preLoaderRoute: typeof ApiPublicHooksCarteraRecordatoriosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -386,7 +407,19 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
+  ApiPublicHooksCarteraRecordatoriosRoute:
+    ApiPublicHooksCarteraRecordatoriosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
