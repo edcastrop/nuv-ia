@@ -84,7 +84,7 @@ function PazYSalvoDocument({
           position: "relative",
         }}
       >
-        <div style={{ background: "#fff", padding: "44px 52px 36px", border: "1px solid #E3E7EE", position: "relative", overflow: "hidden" }}>
+        <div style={{ background: "#fff", padding: "28px 40px 24px", border: "1px solid #E3E7EE", position: "relative", overflow: "hidden" }}>
           {/* Marca de agua institucional 5% */}
           <div aria-hidden="true" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", overflow: "hidden", zIndex: 0 }}>
             <img src={logoNuvex} alt="" style={{ width: "75%", maxWidth: "180mm", opacity: 0.05, transform: "rotate(-28deg)", objectFit: "contain" }} draggable={false} />
@@ -110,16 +110,16 @@ function PazYSalvoDocument({
 
 
           {/* Título */}
-          <div style={{ textAlign: "center", marginTop: 38 }}>
-            <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 4, color: NUVEX.azul }}>
+          <div style={{ textAlign: "center", marginTop: 22 }}>
+            <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 4, color: NUVEX.azul }}>
               CERTIFICACIÓN
             </div>
             <h1
               style={{
-                fontSize: 42,
+                fontSize: 34,
                 fontWeight: 900,
-                letterSpacing: 6,
-                margin: "12px 0 6px",
+                letterSpacing: 5,
+                margin: "8px 0 4px",
                 color: NUVEX.negro,
               }}
             >
@@ -127,8 +127,8 @@ function PazYSalvoDocument({
             </h1>
             <div
               style={{
-                margin: "10px auto 0",
-                width: 90,
+                margin: "8px auto 0",
+                width: 80,
                 height: 3,
                 background: NUVEX.verde,
                 borderRadius: 999,
@@ -137,11 +137,11 @@ function PazYSalvoDocument({
           </div>
 
           {/* Certificación */}
-          <div style={{ marginTop: 34, fontSize: 12, lineHeight: 1.75, color: NUVEX.negro, textAlign: "justify" }}>
-            <div style={{ fontWeight: 800, textAlign: "center", letterSpacing: 1, marginBottom: 6 }}>
+          <div style={{ marginTop: 22, fontSize: 11, lineHeight: 1.6, color: NUVEX.negro, textAlign: "justify" }}>
+            <div style={{ fontWeight: 800, textAlign: "center", letterSpacing: 1, marginBottom: 4 }}>
               NUVEX FINANZAS INTELIGENTES S.A.S.
             </div>
-            <div style={{ textAlign: "center", fontSize: 11, letterSpacing: 4, fontWeight: 800, color: NUVEX.azul, marginBottom: 18 }}>
+            <div style={{ textAlign: "center", fontSize: 10, letterSpacing: 4, fontWeight: 800, color: NUVEX.azul, marginBottom: 12 }}>
               CERTIFICA
             </div>
 
@@ -150,7 +150,7 @@ function PazYSalvoDocument({
               <span style={{ fontWeight: 800 }}>{client.nombre || "—"}</span>, identificado con cédula
               de ciudadanía No. <span style={{ fontWeight: 800 }}>{client.cedula || "—"}</span>, se
               encuentra a <span style={{ fontWeight: 800 }}>PAZ Y SALVO</span> por todo concepto
-              relacionado con los servicios tecnológicos y financieros prestados por{" "}
+              relacionado con los servicios prestados por{" "}
               <span style={{ fontWeight: 800 }}>NUVEX</span> respecto al proceso de optimización de su
               crédito hipotecario o leasing habitacional.
             </div>
@@ -159,16 +159,16 @@ function PazYSalvoDocument({
           {/* Bloque resultados */}
           <div
             style={{
-              marginTop: 28,
+              marginTop: 18,
               border: `1px solid ${NUVEX.verde}`,
-              borderRadius: 14,
+              borderRadius: 12,
               overflow: "hidden",
             }}
           >
-            <div style={{ background: NUVEX.verdeClaro, padding: "10px 18px", fontSize: 10, fontWeight: 800, letterSpacing: 2.5, color: NUVEX.verdeTextoFuerte }}>
+            <div style={{ background: NUVEX.verdeClaro, padding: "8px 16px", fontSize: 9.5, fontWeight: 800, letterSpacing: 2.5, color: NUVEX.verdeTextoFuerte }}>
               RESULTADO DEL PROCESO
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", padding: "16px 18px", gap: "10px 24px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", padding: "12px 16px", gap: "8px 20px" }}>
               <Field label="Banco" value={client.banco || "—"} />
               <Field label="N° de crédito" value={client.numeroCredito || "—"} />
               <Field label="Producto" value={client.tipoProducto || "—"} />
@@ -183,81 +183,37 @@ function PazYSalvoDocument({
           {/* Felicitaciones */}
           <div
             style={{
-              marginTop: 22,
-              padding: "20px 24px",
-              borderRadius: 14,
+              marginTop: 14,
+              padding: "14px 18px",
+              borderRadius: 12,
               background: `linear-gradient(135deg, ${NUVEX.verdeClaro} 0%, #FFFFFF 100%)`,
               border: `1px solid ${NUVEX.verde}`,
             }}
           >
-            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 3, color: NUVEX.verdeTextoFuerte }}>
+            <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 3, color: NUVEX.verdeTextoFuerte }}>
               ¡FELICITACIONES!
             </div>
-            <div style={{ marginTop: 8, fontSize: 11, lineHeight: 1.65, color: NUVEX.negro }}>
-              Nos llena de satisfacción haber contribuido al mejoramiento de las condiciones
-              financieras de tu crédito. Gracias por confiar en NUVEX Finanzas Inteligentes. El
-              resultado obtenido representa una decisión inteligente que impactará positivamente tu
-              economía durante los próximos años. Esperamos que este ahorro en tiempo, intereses y
-              seguros contribuya al cumplimiento de tus metas financieras y familiares.
-            </div>
-          </div>
-
-          {/* Referidos */}
-          <div
-            style={{
-              marginTop: 16,
-              padding: "20px 24px",
-              borderRadius: 14,
-              background: NUVEX_GRADIENT,
-              color: "#fff",
-            }}
-          >
-            <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 2.5, opacity: 0.95 }}>
-              AYÚDANOS A AYUDAR A MÁS FAMILIAS
-            </div>
-            <div style={{ marginTop: 8, fontSize: 11, lineHeight: 1.65, opacity: 0.95 }}>
-              Miles de colombianos aún desconocen que pueden optimizar su crédito hipotecario o
-              leasing habitacional. Si conoces familiares, amigos o compañeros de trabajo con
-              crédito de vivienda, estaremos encantados de realizar un diagnóstico financiero
-              personalizado. Tu recomendación puede ayudarles a ahorrar tiempo, dinero e intereses.
-            </div>
-          </div>
-
-          {/* Testimonial */}
-          <div
-            style={{
-              marginTop: 16,
-              padding: "18px 22px",
-              borderRadius: 14,
-              border: `1px dashed ${NUVEX.azul}`,
-              background: "#F4F6FC",
-            }}
-          >
-            <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 2.5, color: NUVEX.azul }}>
-              TU EXPERIENCIA ES MUY VALIOSA
-            </div>
-            <div style={{ marginTop: 6, fontSize: 11, lineHeight: 1.65, color: NUVEX.negro }}>
-              Si el servicio recibido cumplió tus expectativas, te invitamos cordialmente a
-              compartir un breve video testimonial. Tu experiencia puede inspirar y ayudar a otras
-              familias que hoy enfrentan los mismos desafíos financieros que tú ya lograste superar.
+            <div style={{ marginTop: 6, fontSize: 10.5, lineHeight: 1.55, color: NUVEX.negro }}>
+              Gracias por confiar en NUVEX Finanzas Inteligentes. El resultado obtenido representa
+              una decisión inteligente que impactará positivamente tu economía durante los próximos años.
             </div>
           </div>
 
           {/* Cierre + firma */}
-          <div style={{ marginTop: 26, fontSize: 11, lineHeight: 1.7, color: NUVEX.negro }}>
+          <div style={{ marginTop: 16, fontSize: 10.5, lineHeight: 1.6, color: NUVEX.negro }}>
             Gracias por permitirnos acompañarte en este importante logro financiero.
           </div>
 
-          <div style={{ marginTop: 26, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+          <div style={{ marginTop: 18, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
             <div>
-              <div style={{ width: 220, borderTop: `1px solid ${NUVEX.negro}`, paddingTop: 6, fontSize: 10, color: "#5C6770", textAlign: "center" }}>
+              <div style={{ width: 200, borderTop: `1px solid ${NUVEX.negro}`, paddingTop: 5, fontSize: 9.5, color: "#5C6770", textAlign: "center" }}>
                 Equipo NUVEX Finanzas Inteligentes
               </div>
             </div>
             <div
               style={{
-                width: 110,
-                height: 110,
+                width: 90,
+                height: 90,
                 borderRadius: "50%",
                 border: `2px solid ${NUVEX.verde}`,
                 color: NUVEX.verdeTextoFuerte,
@@ -267,32 +223,31 @@ function PazYSalvoDocument({
                 justifyContent: "center",
                 fontWeight: 800,
                 textAlign: "center",
-                fontSize: 9,
-                letterSpacing: 1.6,
+                fontSize: 8.5,
+                letterSpacing: 1.5,
               }}
             >
               <div>PAZ Y</div>
               <div>SALVO</div>
-              <div style={{ marginTop: 4, fontSize: 8, opacity: 0.8 }}>NUVEX</div>
+              <div style={{ marginTop: 3, fontSize: 7.5, opacity: 0.8 }}>NUVEX</div>
             </div>
           </div>
 
           {/* Footer */}
           <div
             style={{
-              marginTop: 30,
-              paddingTop: 14,
+              marginTop: 18,
+              paddingTop: 10,
               borderTop: "1px solid #E3E7EE",
               display: "flex",
               justifyContent: "space-between",
-              fontSize: 9.5,
+              fontSize: 9,
               color: "#5C6770",
             }}
           >
             <div>
               <div style={{ fontWeight: 800, color: NUVEX.negro, letterSpacing: 1 }}>NUVEX FINANZAS INTELIGENTES</div>
-              <div style={{ marginTop: 2 }}>Carrera 16 # 37-48 Piso 4 · Centro de Bucaramanga</div>
-              <div>Bogotá | Bucaramanga</div>
+              <div style={{ marginTop: 2 }}>Bogotá | Bucaramanga</div>
             </div>
             <div style={{ textAlign: "right" }}>
               <div>www.nuvex.com.co</div>
