@@ -2,6 +2,9 @@ import { CORPORATIVO, NUVEX } from "./constants";
 import type { ClientData } from "./ClientFields";
 import { formatCOP, formatNumber } from "../../lib/format";
 import type { PesosPropuesta, UVRPropuesta } from "../../lib/finance";
+import { PdfBrandHeader } from "./pdf/PdfBrandHeader";
+import { PdfWatermark } from "./pdf/PdfWatermark";
+
 
 interface MetricItem { label: string; value: string }
 
@@ -91,6 +94,7 @@ export function PrintDocument(props: Props) {
   const añoActualHoy = fechaBase.getFullYear();
   const añoFinActual = fechaFinActual.getFullYear();
   const añoFinOpt = fechaFinOpt.getFullYear();
+
 
   return (
     <div
