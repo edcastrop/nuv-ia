@@ -725,6 +725,7 @@ export function UVRSimulator({
                       teaCobrada,
                       variacionUVR,
                       nuevaCuotaManual,
+                      cuotasEliminarManual,
                       cuotaPagadaCliente: cobertura.cuotaPagadaCliente || "",
                       valorBeneficio: cobertura.valorCobertura || "",
                       tipoBeneficio: cobertura.tipoBeneficio || "",
