@@ -189,13 +189,32 @@ export async function exportElementToPdf(elementId: string, filename: string) {
     return;
   }
 
-  // ===== FASE 2 + 3 — Validación previa (modo advertencia) =====
-  // Las páginas usan height:297mm + overflow:hidden, así que el recorte
-  // físico nunca sucede. Registramos issues en consola sin bloquear.
+  // ===== Esperar a que todas las imágenes (logo, watermark) carguen =====
+  const imgs = Array.from(element.querySelectorAll("img"));
+  await Promise.all(
+    imgs.map((img) => {
+      if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+      return new Promise<void>((resolve) => {
+        const done = () => resolve();
+        img.addEventListener("load", done, { once: true });
+        img.addEventListener("error", done, { once: true });
+        setTimeout(done, 2500);
+      });
+    }),
+  );
+
+  // ===== Validación de layout =====
   const validation = validatePdfLayout(elementId);
   if (!validation.ok) {
-    console.warn("[NUVEX] Layout warnings:", validation.issues);
+    console.warn("[NUVEX PDF] Layout warnings:", validation.issues);
   }
+
+  // Verificar que al menos un logo cargó (defensa contra exports sin marca)
+  const logoOk = imgs.some((i) => i.naturalWidth > 0);
+  if (!logoOk && imgs.length > 0) {
+    console.warn("[NUVEX PDF] Logo no cargó correctamente — el PDF puede salir sin marca.");
+  }
+
 
   try {
     // html2canvas-pro clona el documento antes de renderizar.

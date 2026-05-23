@@ -2,6 +2,8 @@ import { NUVEX } from "./constants";
 import { formatCOP, formatNumber } from "../../lib/format";
 import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
 import type { ClientData } from "./ClientFields";
+import logoNuvex from "@/assets/logo-nuvex.png";
+
 
 const NUVEX_GRADIENT = `linear-gradient(135deg, ${NUVEX.negro} 0%, ${NUVEX.azul} 100%)`;
 
@@ -69,41 +71,33 @@ function PazYSalvoDocument({
         style={{
           padding: 14,
           background: NUVEX_GRADIENT,
+          position: "relative",
         }}
       >
-        <div style={{ background: "#fff", padding: "44px 52px 36px", border: "1px solid #E3E7EE" }}>
+        <div style={{ background: "#fff", padding: "44px 52px 36px", border: "1px solid #E3E7EE", position: "relative", overflow: "hidden" }}>
+          {/* Marca de agua institucional 5% */}
+          <div aria-hidden="true" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", overflow: "hidden", zIndex: 0 }}>
+            <img src={logoNuvex} alt="" style={{ width: "75%", maxWidth: "180mm", opacity: 0.05, transform: "rotate(-28deg)", objectFit: "contain" }} draggable={false} />
+          </div>
+
+          <div style={{ position: "relative", zIndex: 1 }}>
           {/* Header */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `2px solid ${NUVEX.azul}`, paddingBottom: 18 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <div
-                style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 14,
-                  background: NUVEX_GRADIENT,
-                  color: "#fff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: 900,
-                  fontSize: 22,
-                  letterSpacing: 1,
-                }}
-              >
-                N
-              </div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `3px solid ${NUVEX.azul}`, paddingBottom: 18 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <img src={logoNuvex} alt="NUVEX" style={{ height: 72, width: "auto" }} draggable={false} />
               <div>
-                <div style={{ fontSize: 13, fontWeight: 900, letterSpacing: 2, color: NUVEX.negro }}>NUVEX</div>
-                <div style={{ fontSize: 9.5, letterSpacing: 1.8, color: NUVEX.azul, fontWeight: 700 }}>
-                  FINANZAS INTELIGENTES
+                <div style={{ fontSize: 14, fontWeight: 900, letterSpacing: 2, color: NUVEX.negro }}>NUVEX FINANZAS INTELIGENTES</div>
+                <div style={{ fontSize: 10, letterSpacing: 1.8, color: NUVEX.azul, fontWeight: 700, marginTop: 3 }}>
+                  Bogotá | Bucaramanga
                 </div>
               </div>
             </div>
             <div style={{ textAlign: "right", fontSize: 9.5, color: "#5C6770" }}>
               <div style={{ fontWeight: 800, letterSpacing: 2, color: NUVEX.negro }}>DOCUMENTO OFICIAL</div>
-              <div style={{ marginTop: 2 }}>Bogotá | Bucaramanga</div>
+              <div style={{ marginTop: 2 }}>{new Date().toLocaleDateString("es-CO", { day: "2-digit", month: "long", year: "numeric" })}</div>
             </div>
           </div>
+
 
           {/* Título */}
           <div style={{ textAlign: "center", marginTop: 38 }}>

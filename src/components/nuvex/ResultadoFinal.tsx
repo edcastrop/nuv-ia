@@ -466,7 +466,7 @@ const printShell: React.CSSProperties = {
 
 const NUVEX_GRADIENT = `linear-gradient(135deg, ${NUVEX.negro} 0%, ${NUVEX.azul} 100%)`;
 
-function LogoMark({ size = 44, light = false }: { size?: number; light?: boolean }) {
+function LogoMark({ size = 72, light = false }: { size?: number; light?: boolean }) {
   return (
     <img
       src={new URL("@/assets/logo-nuvex.png", import.meta.url).toString()}
@@ -479,6 +479,20 @@ function LogoMark({ size = 44, light = false }: { size?: number; light?: boolean
     />
   );
 }
+
+function Watermark() {
+  return (
+    <div aria-hidden="true" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", overflow: "hidden", zIndex: 0 }}>
+      <img
+        src={new URL("@/assets/logo-nuvex.png", import.meta.url).toString()}
+        alt=""
+        style={{ width: "75%", maxWidth: "180mm", opacity: 0.05, transform: "rotate(-28deg)", objectFit: "contain" }}
+        draggable={false}
+      />
+    </div>
+  );
+}
+
 
 function PremiumFooter() {
   return (
@@ -611,24 +625,40 @@ function PrintInformeFinal({
     100,
   ];
 
+  // Cálculo de fechas ANTES → DESPUÉS
+  const hoyDate = new Date();
+  const addMonths = (d: Date, m: number) => {
+    const nd = new Date(d);
+    nd.setMonth(nd.getMonth() + m);
+    return nd;
+  };
+  const fechaFinActual = addMonths(hoyDate, Math.round(aprobado.plazo + aprobado.cuotasEliminadas));
+  const fechaFinDespues = addMonths(hoyDate, Math.round(aprobado.plazo));
+  const fmtMesAño = (d: Date) =>
+    d.toLocaleDateString("es-CO", { month: "long", year: "numeric" }).replace(/^./, (c) => c.toUpperCase());
+
   return (
     <div id={id} style={printShell}>
       {/* ===== Página 1 ===== */}
-      <div style={{ paddingBottom: 24 }}>
+      <div style={{ position: "relative", paddingBottom: 24 }}>
+        <Watermark />
+        <div style={{ position: "relative", zIndex: 1 }}>
         <div style={{ background: NUVEX_GRADIENT, padding: "28px 36px 32px", color: "#fff" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <LogoMark light />
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <LogoMark light size={80} />
               <div>
-                <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: 2 }}>NUVEX</div>
-                <div style={{ fontSize: 9, letterSpacing: 1.6, opacity: 0.85 }}>FINANZAS INTELIGENTES</div>
+                <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: 2.2 }}>NUVEX FINANZAS INTELIGENTES</div>
+                <div style={{ fontSize: 9.5, letterSpacing: 1.6, opacity: 0.85, marginTop: 3 }}>Bogotá | Bucaramanga</div>
               </div>
             </div>
             <div style={{ textAlign: "right", fontSize: 9.5, opacity: 0.9, letterSpacing: 0.5 }}>
-              <div style={{ fontWeight: 700, letterSpacing: 2 }}>INFORME FINAL</div>
-              <div style={{ marginTop: 2 }}>{aprob.fechaAprobacion || new Date().toISOString().slice(0, 10)}</div>
+              <div style={{ fontWeight: 800, letterSpacing: 2.5 }}>CERTIFICADO DE RESULTADO</div>
+              <div style={{ marginTop: 3, fontSize: 11, fontWeight: 700 }}>{aprob.fechaAprobacion || new Date().toISOString().slice(0, 10)}</div>
+              <div style={{ marginTop: 2, fontSize: 9.5, opacity: 0.85 }}>{client.nombre || "—"}</div>
             </div>
           </div>
+
 
           <div style={{ marginTop: 28, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24 }}>
             <div style={{ flex: 1 }}>
@@ -645,6 +675,33 @@ function PrintInformeFinal({
             <GaugeCircle value={metricas.global} color={metricas.cal.color} label={metricas.cal.label} />
           </div>
         </div>
+
+        {/* ANTES → DESPUÉS — fechas de finalización */}
+        <div style={{ padding: "20px 36px 0" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 16, alignItems: "stretch" }}>
+            <div style={{ border: `1px solid #E3E7EE`, borderRadius: 14, padding: "16px 20px", background: "#FAFBFD" }}>
+              <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 3, color: "#8892A0", textTransform: "uppercase" }}>ANTES</div>
+              <div style={{ fontSize: 10, color: "#5C6770", marginTop: 4 }}>Fecha estimada de finalización</div>
+              <div style={{ fontSize: 20, fontWeight: 900, color: NUVEX.negro, marginTop: 6, letterSpacing: -0.3 }}>
+                {fmtMesAño(fechaFinActual)}
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
+              <div style={{ fontSize: 24, fontWeight: 900, color: NUVEX.azul, lineHeight: 1 }}>→</div>
+              <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2, color: NUVEX.verdeTextoFuerte, textAlign: "center" }}>
+                {formatNumber(aprobado.añosEliminados, 1)} AÑOS<br />ELIMINADOS
+              </div>
+            </div>
+            <div style={{ border: `1px solid ${NUVEX.verde}`, borderRadius: 14, padding: "16px 20px", background: NUVEX.verdeClaro }}>
+              <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 3, color: NUVEX.verdeTextoFuerte, textTransform: "uppercase" }}>DESPUÉS</div>
+              <div style={{ fontSize: 10, color: NUVEX.verdeTextoFuerte, marginTop: 4, opacity: 0.85 }}>Nueva fecha de finalización</div>
+              <div style={{ fontSize: 20, fontWeight: 900, color: NUVEX.verdeTextoFuerte, marginTop: 6, letterSpacing: -0.3 }}>
+                {fmtMesAño(fechaFinDespues)}
+              </div>
+            </div>
+          </div>
+        </div>
+
 
         <div style={{ padding: "26px 36px 0" }}>
           <div style={{ marginBottom: 20 }}>
@@ -746,10 +803,14 @@ function PrintInformeFinal({
             <PremiumFooter />
           </div>
         </div>
+        </div>
       </div>
 
       {/* ===== Página 2 ===== */}
-      <div style={{ pageBreakBefore: "always", padding: "32px 36px 28px" }}>
+      <div style={{ position: "relative", pageBreakBefore: "always", padding: "32px 36px 28px" }}>
+        <Watermark />
+        <div style={{ position: "relative", zIndex: 1 }}>
+
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid #E3E7EE`, paddingBottom: 14 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <LogoMark size={36} />
@@ -834,8 +895,10 @@ function PrintInformeFinal({
         )}
 
         <PremiumFooter />
+        </div>
       </div>
     </div>
+
   );
 }
 

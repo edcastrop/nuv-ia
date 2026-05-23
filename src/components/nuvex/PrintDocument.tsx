@@ -2,6 +2,9 @@ import { CORPORATIVO, NUVEX } from "./constants";
 import type { ClientData } from "./ClientFields";
 import { formatCOP, formatNumber } from "../../lib/format";
 import type { PesosPropuesta, UVRPropuesta } from "../../lib/finance";
+import { PdfBrandHeader } from "./pdf/PdfBrandHeader";
+import { PdfWatermark } from "./pdf/PdfWatermark";
+
 
 interface MetricItem { label: string; value: string }
 
@@ -92,6 +95,7 @@ export function PrintDocument(props: Props) {
   const añoFinActual = fechaFinActual.getFullYear();
   const añoFinOpt = fechaFinOpt.getFullYear();
 
+
   return (
     <div
       id={containerId}
@@ -104,31 +108,35 @@ export function PrintDocument(props: Props) {
       }}
     >
       {/* ============== PÁGINA 1 ============== */}
-      <PageShell pagina={1} fecha={fecha}>
+      <PageShell pagina={1} fecha={fecha} cliente={client.nombre || "—"}>
         {/* Eyebrow */}
         <div style={eyebrow}>
           Propuesta financiera personalizada · {client.nombre || "—"}
         </div>
 
-        {/* TÍTULO STACK */}
+        {/* HERO GIGANTE — "RECUPERA X AÑOS DE TU VIDA FINANCIERA" */}
         <h1
           style={{
-            fontSize: 56,
-            fontWeight: 800,
-            lineHeight: 0.98,
-            letterSpacing: "-0.035em",
-            margin: "10px 0 0 0",
+            fontSize: 92,
+            fontWeight: 900,
+            lineHeight: 0.92,
+            letterSpacing: "-0.045em",
+            margin: "12px 0 0 0",
             textTransform: "uppercase",
           }}
         >
-          <span style={{ color: C.azul, display: "block" }}>Recupera</span>
-          <span style={{ color: C.brand, display: "block" }}>
-            {formatNumber(añosEliminados, 0)} años
+          <span style={{ color: C.azul, display: "block", fontSize: 36, fontWeight: 800, letterSpacing: "-0.02em" }}>Recupera</span>
+          <span style={{ color: C.brand, display: "block", fontSize: 120, lineHeight: 0.9 }}>
+            {formatNumber(añosEliminados, 0)}
           </span>
-          <span style={{ color: C.ink, display: "block", fontWeight: 300, fontSize: 26, letterSpacing: "-0.02em", textTransform: "none", marginTop: 6 }}>
+          <span style={{ color: C.azul, display: "block", fontSize: 30, fontWeight: 800, marginTop: -6, letterSpacing: "-0.02em" }}>
+            años
+          </span>
+          <span style={{ color: C.ink, display: "block", fontWeight: 400, fontSize: 18, letterSpacing: "-0.01em", textTransform: "none", marginTop: 8 }}>
             de tu vida financiera.
           </span>
         </h1>
+
 
         {/* HERO CARD — AHORRO TOTAL (azul degradado) */}
         <div
@@ -214,7 +222,7 @@ export function PrintDocument(props: Props) {
       </PageShell>
 
       {/* ============== PÁGINA 2 ============== */}
-      <PageShell pagina={2} fecha={fecha} breakBefore>
+      <PageShell pagina={2} fecha={fecha} cliente={client.nombre || "—"} breakBefore>
         {/* Título con barra lateral azul */}
         <div style={{ display: "flex", gap: 14, alignItems: "stretch" }}>
           <div style={{ width: 5, background: C.azul, borderRadius: 4 }} />
@@ -293,11 +301,13 @@ function PageShell({
   children,
   pagina,
   fecha,
+  cliente,
   breakBefore,
 }: {
   children: React.ReactNode;
   pagina: number;
   fecha: string;
+  cliente: string;
   breakBefore?: boolean;
 }) {
   return (
@@ -315,93 +325,41 @@ function PageShell({
         background: C.paper,
       }}
     >
-      {/* FRANJA SUPERIOR */}
-      <div
-        style={{
-          height: 46,
-          background: GRAD_BLUE,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 18mm",
-          color: "#fff",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div
-            style={{
-              width: 24,
-              height: 24,
-              borderRadius: 6,
-              background: "rgba(255,255,255,0.15)",
-              border: "1px solid rgba(255,255,255,0.3)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 11,
-              fontWeight: 800,
-              letterSpacing: "0.08em",
-            }}
-          >
-            N
-          </div>
-          <div
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              letterSpacing: "0.38em",
-            }}
-          >
-            NUVEX
-          </div>
-          <div
-            style={{
-              fontSize: 7.5,
-              fontWeight: 500,
-              letterSpacing: "0.22em",
-              color: "rgba(255,255,255,0.7)",
-              textTransform: "uppercase",
-              borderLeft: "1px solid rgba(255,255,255,0.3)",
-              paddingLeft: 10,
-              marginLeft: 4,
-            }}
-          >
-            Finanzas Inteligentes
-          </div>
-        </div>
-        <div style={{ textAlign: "right" }}>
-          <div
-            style={{
-              fontSize: 7.5,
-              fontWeight: 600,
-              color: "rgba(255,255,255,0.7)",
-              letterSpacing: "0.26em",
-              textTransform: "uppercase",
-            }}
-          >
-            Propuesta financiera
-          </div>
-          <div style={{ marginTop: 2, fontSize: 9, letterSpacing: "0.06em" }}>{fecha}</div>
-        </div>
+      {/* MARCA DE AGUA AL 5% */}
+      <PdfWatermark />
+
+      {/* HEADER PREMIUM (logo 2.5× + ciudades + fecha + cliente) */}
+      <div style={{ position: "relative", zIndex: 1 }}>
+        <PdfBrandHeader
+          variant="commercial"
+          fecha={fecha}
+          cliente={cliente}
+          documento="Propuesta financiera"
+        />
       </div>
 
       {/* CONTENIDO */}
       <div
         style={{
           flex: 1,
-          padding: "16mm 18mm 0 18mm",
+          padding: "14mm 18mm 0 18mm",
           display: "flex",
           flexDirection: "column",
+          position: "relative",
+          zIndex: 1,
         }}
       >
         {children}
       </div>
 
       {/* FOOTER AZUL */}
-      <PageFooter pagina={pagina} />
+      <div style={{ position: "relative", zIndex: 1 }}>
+        <PageFooter pagina={pagina} />
+      </div>
     </section>
   );
 }
+
 
 function PageFooter({ pagina }: { pagina: number }) {
   return (
