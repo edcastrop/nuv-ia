@@ -466,6 +466,20 @@ export function ExtractoReader({ modo, onApply }: Props) {
   const handleConfirm = () => {
     if (!parsed) return;
     const get = (k: string) => (typeof parsed[k] === "string" ? (parsed[k] as string) : "");
+    // Validación dura: cuotasPagadas no puede ser 0 si hay número de cuota
+    const _ip = (k: string) => {
+      const v = parsed[k];
+      if (typeof v !== "string") return 0;
+      const n = parseInt(v.replace(/[^\d]/g, ""), 10);
+      return Number.isFinite(n) ? n : 0;
+    };
+    if (_ip("cuotasPagadas") <= 0 && _ip("cuotaActualNumero") > 0) {
+      return;
+    }
+    if (_ip("plazoInicial") <= 0 || _ip("cuotasPagadas") <= 0) {
+      return;
+    }
+
     const tieneCob =
       get("tieneCobertura").toLowerCase() === "si" ||
       /con\s+beneficio\s+de\s+cobertura/i.test(get("producto")) ||
