@@ -62,6 +62,80 @@ export type Database = {
         }
         Relationships: []
       }
+      contratacion_destinatarios: {
+        Row: {
+          activo: boolean
+          created_at: string
+          email: string
+          id: string
+          nombre: string | null
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          email: string
+          id?: string
+          nombre?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          email?: string
+          id?: string
+          nombre?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      envios_contratacion: {
+        Row: {
+          asunto: string
+          created_at: string
+          destinatarios: string[]
+          documentos: Json
+          error: string | null
+          estado_envio: string
+          expediente_id: string
+          id: string
+          proveedor_message_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          asunto: string
+          created_at?: string
+          destinatarios?: string[]
+          documentos?: Json
+          error?: string | null
+          estado_envio?: string
+          expediente_id: string
+          id?: string
+          proveedor_message_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          asunto?: string
+          created_at?: string
+          destinatarios?: string[]
+          documentos?: Json
+          error?: string | null
+          estado_envio?: string
+          expediente_id?: string
+          id?: string
+          proveedor_message_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "envios_contratacion_expediente_id_fkey"
+            columns: ["expediente_id"]
+            isOneToOne: false
+            referencedRelation: "expedientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expediente_historial: {
         Row: {
           created_at: string
@@ -293,6 +367,7 @@ export type Database = {
         | "APROBADO"
         | "FACTURADO"
         | "PAGADO"
+        | "ENVIADO_CONTRATACION"
       expediente_modo: "pesos" | "uvr"
     }
     CompositeTypes: {
@@ -429,6 +504,7 @@ export const Constants = {
         "APROBADO",
         "FACTURADO",
         "PAGADO",
+        "ENVIADO_CONTRATACION",
       ],
       expediente_modo: ["pesos", "uvr"],
     },
