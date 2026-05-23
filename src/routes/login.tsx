@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/useAuth";
+import { Logo } from "@/components/nuvex/Logo";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,

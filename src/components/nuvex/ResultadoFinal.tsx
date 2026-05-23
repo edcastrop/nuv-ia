@@ -468,24 +468,15 @@ const NUVEX_GRADIENT = `linear-gradient(135deg, ${NUVEX.negro} 0%, ${NUVEX.azul}
 
 function LogoMark({ size = 44, light = false }: { size?: number; light?: boolean }) {
   return (
-    <div
+    <img
+      src={new URL("@/assets/logo-nuvex.png", import.meta.url).toString()}
+      alt="NUVEX"
       style={{
-        width: size,
         height: size,
-        borderRadius: 12,
-        background: light ? "rgba(255,255,255,0.14)" : NUVEX_GRADIENT,
-        border: light ? "1px solid rgba(255,255,255,0.35)" : "none",
-        color: "#fff",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontWeight: 900,
-        fontSize: size * 0.42,
-        letterSpacing: 1,
+        width: "auto",
+        filter: light ? "brightness(0) invert(1)" : undefined,
       }}
-    >
-      N
-    </div>
+    />
   );
 }
 
