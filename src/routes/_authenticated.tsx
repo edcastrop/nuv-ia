@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, useNavigate, Link, useLocation } from "@tansta
 import { useEffect, useState } from "react";
 import { useAuth, signOut } from "@/hooks/useAuth";
 import { CORPORATIVO } from "@/components/nuvex/constants";
-import { LayoutGrid, FolderKanban, BarChart3, LogOut, GraduationCap, LineChart, UserSquare2, Users, Shield } from "lucide-react";
+import { LayoutGrid, FolderKanban, BarChart3, LogOut, GraduationCap, LineChart, UserSquare2, Users, Shield, Wallet } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -14,7 +14,7 @@ const VERDE = "#84B98F";
 
 function AuthenticatedLayout() {
   const { session, user, loading } = useAuth();
-  const { isSuperAdmin } = useUserRole();
+  const { isSuperAdmin, roles } = useUserRole();
   const navigate = useNavigate();
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
@@ -54,6 +54,7 @@ function AuthenticatedLayout() {
     { to: "/dashboard", label: "Dashboard", Icon: BarChart3 },
     { to: "/academia", label: "Academia", Icon: GraduationCap },
     { to: "/apoderados-nuvex", label: "Apoderados", Icon: Users },
+    ...(roles.some((r) => ["super_admin","admin","gerencia","cartera","juridica","licenciado","asesor"].includes(r)) ? [{ to: "/cartera", label: "Cartera", Icon: Wallet }] : []),
     ...(isSuperAdmin ? [{ to: "/super-admin", label: "Super Admin", Icon: Shield }] : []),
   ];
 

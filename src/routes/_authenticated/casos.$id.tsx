@@ -10,6 +10,7 @@ import { DocumentosLegales } from "@/components/expediente-maestro/DocumentosLeg
 import { expedienteToMaestroLike } from "@/lib/expedienteMaestro";
 import { EstadoCasoBlock } from "@/components/expediente/EstadoCasoBlock";
 import { HistorialCaso } from "@/components/expediente/HistorialCaso";
+import { CarteraBlockExpediente } from "@/components/cartera/CarteraBlockExpediente";
 
 export const Route = createFileRoute("/_authenticated/casos/$id")({
   component: CasoDetail,
@@ -92,6 +93,8 @@ function CasoDetail() {
           <DocumentosLegales expediente={maestroLike} simExpediente={exp} expedienteIdToPersist={exp.id} onJuridicaSaved={reload} />
         </ErrorBoundary>
       )}
+
+      <CarteraBlockExpediente expedienteId={exp.id} estadoCaso={(exp as unknown as { estado_caso?: string }).estado_caso ?? ""} />
 
       <HistorialCaso expedienteId={exp.id} />
 

@@ -19,10 +19,13 @@ import { Route as AuthenticatedAcademiaRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedSuperAdminIndexRouteImport } from './routes/_authenticated/super-admin.index'
 import { Route as AuthenticatedExpedienteMaestroIndexRouteImport } from './routes/_authenticated/expediente-maestro.index'
 import { Route as AuthenticatedCasosIndexRouteImport } from './routes/_authenticated/casos.index'
+import { Route as AuthenticatedCarteraIndexRouteImport } from './routes/_authenticated/cartera.index'
 import { Route as AuthenticatedSuperAdminUsuariosRouteImport } from './routes/_authenticated/super-admin.usuarios'
 import { Route as AuthenticatedSuperAdminExpedientesRouteImport } from './routes/_authenticated/super-admin.expedientes'
 import { Route as AuthenticatedExpedienteMaestroIdRouteImport } from './routes/_authenticated/expediente-maestro.$id'
 import { Route as AuthenticatedCasosIdRouteImport } from './routes/_authenticated/casos.$id'
+import { Route as AuthenticatedCarteraIdRouteImport } from './routes/_authenticated/cartera.$id'
+import { Route as ApiPublicHooksCarteraRecordatoriosRouteImport } from './routes/api/public/hooks/cartera-recordatorios'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -76,6 +79,12 @@ const AuthenticatedCasosIndexRoute = AuthenticatedCasosIndexRouteImport.update({
   path: '/casos/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedCarteraIndexRoute =
+  AuthenticatedCarteraIndexRouteImport.update({
+    id: '/cartera/',
+    path: '/cartera/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedSuperAdminUsuariosRoute =
   AuthenticatedSuperAdminUsuariosRouteImport.update({
     id: '/super-admin/usuarios',
@@ -99,6 +108,17 @@ const AuthenticatedCasosIdRoute = AuthenticatedCasosIdRouteImport.update({
   path: '/casos/$id',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedCarteraIdRoute = AuthenticatedCarteraIdRouteImport.update({
+  id: '/cartera/$id',
+  path: '/cartera/$id',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const ApiPublicHooksCarteraRecordatoriosRoute =
+  ApiPublicHooksCarteraRecordatoriosRouteImport.update({
+    id: '/api/public/hooks/cartera-recordatorios',
+    path: '/api/public/hooks/cartera-recordatorios',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -107,13 +127,16 @@ export interface FileRoutesByFullPath {
   '/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/proyeccion': typeof AuthenticatedProyeccionRoute
+  '/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
   '/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/super-admin/usuarios': typeof AuthenticatedSuperAdminUsuariosRoute
+  '/cartera/': typeof AuthenticatedCarteraIndexRoute
   '/casos/': typeof AuthenticatedCasosIndexRoute
   '/expediente-maestro/': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/super-admin/': typeof AuthenticatedSuperAdminIndexRoute
+  '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -122,13 +145,16 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/': typeof AuthenticatedIndexRoute
+  '/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
   '/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/super-admin/usuarios': typeof AuthenticatedSuperAdminUsuariosRoute
+  '/cartera': typeof AuthenticatedCarteraIndexRoute
   '/casos': typeof AuthenticatedCasosIndexRoute
   '/expediente-maestro': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/super-admin': typeof AuthenticatedSuperAdminIndexRoute
+  '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -139,13 +165,16 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/proyeccion': typeof AuthenticatedProyeccionRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/_authenticated/casos/$id': typeof AuthenticatedCasosIdRoute
   '/_authenticated/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/_authenticated/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/_authenticated/super-admin/usuarios': typeof AuthenticatedSuperAdminUsuariosRoute
+  '/_authenticated/cartera/': typeof AuthenticatedCarteraIndexRoute
   '/_authenticated/casos/': typeof AuthenticatedCasosIndexRoute
   '/_authenticated/expediente-maestro/': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/_authenticated/super-admin/': typeof AuthenticatedSuperAdminIndexRoute
+  '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -156,13 +185,16 @@ export interface FileRouteTypes {
     | '/apoderados-nuvex'
     | '/dashboard'
     | '/proyeccion'
+    | '/cartera/$id'
     | '/casos/$id'
     | '/expediente-maestro/$id'
     | '/super-admin/expedientes'
     | '/super-admin/usuarios'
+    | '/cartera/'
     | '/casos/'
     | '/expediente-maestro/'
     | '/super-admin/'
+    | '/api/public/hooks/cartera-recordatorios'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -171,13 +203,16 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/proyeccion'
     | '/'
+    | '/cartera/$id'
     | '/casos/$id'
     | '/expediente-maestro/$id'
     | '/super-admin/expedientes'
     | '/super-admin/usuarios'
+    | '/cartera'
     | '/casos'
     | '/expediente-maestro'
     | '/super-admin'
+    | '/api/public/hooks/cartera-recordatorios'
   id:
     | '__root__'
     | '/_authenticated'
@@ -187,18 +222,22 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/proyeccion'
     | '/_authenticated/'
+    | '/_authenticated/cartera/$id'
     | '/_authenticated/casos/$id'
     | '/_authenticated/expediente-maestro/$id'
     | '/_authenticated/super-admin/expedientes'
     | '/_authenticated/super-admin/usuarios'
+    | '/_authenticated/cartera/'
     | '/_authenticated/casos/'
     | '/_authenticated/expediente-maestro/'
     | '/_authenticated/super-admin/'
+    | '/api/public/hooks/cartera-recordatorios'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  ApiPublicHooksCarteraRecordatoriosRoute: typeof ApiPublicHooksCarteraRecordatoriosRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -273,6 +312,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCasosIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/cartera/': {
+      id: '/_authenticated/cartera/'
+      path: '/cartera'
+      fullPath: '/cartera/'
+      preLoaderRoute: typeof AuthenticatedCarteraIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/super-admin/usuarios': {
       id: '/_authenticated/super-admin/usuarios'
       path: '/super-admin/usuarios'
@@ -301,6 +347,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCasosIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/cartera/$id': {
+      id: '/_authenticated/cartera/$id'
+      path: '/cartera/$id'
+      fullPath: '/cartera/$id'
+      preLoaderRoute: typeof AuthenticatedCarteraIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/api/public/hooks/cartera-recordatorios': {
+      id: '/api/public/hooks/cartera-recordatorios'
+      path: '/api/public/hooks/cartera-recordatorios'
+      fullPath: '/api/public/hooks/cartera-recordatorios'
+      preLoaderRoute: typeof ApiPublicHooksCarteraRecordatoriosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -310,10 +370,12 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedProyeccionRoute: typeof AuthenticatedProyeccionRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedCarteraIdRoute: typeof AuthenticatedCarteraIdRoute
   AuthenticatedCasosIdRoute: typeof AuthenticatedCasosIdRoute
   AuthenticatedExpedienteMaestroIdRoute: typeof AuthenticatedExpedienteMaestroIdRoute
   AuthenticatedSuperAdminExpedientesRoute: typeof AuthenticatedSuperAdminExpedientesRoute
   AuthenticatedSuperAdminUsuariosRoute: typeof AuthenticatedSuperAdminUsuariosRoute
+  AuthenticatedCarteraIndexRoute: typeof AuthenticatedCarteraIndexRoute
   AuthenticatedCasosIndexRoute: typeof AuthenticatedCasosIndexRoute
   AuthenticatedExpedienteMaestroIndexRoute: typeof AuthenticatedExpedienteMaestroIndexRoute
   AuthenticatedSuperAdminIndexRoute: typeof AuthenticatedSuperAdminIndexRoute
@@ -325,11 +387,13 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedProyeccionRoute: AuthenticatedProyeccionRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedCarteraIdRoute: AuthenticatedCarteraIdRoute,
   AuthenticatedCasosIdRoute: AuthenticatedCasosIdRoute,
   AuthenticatedExpedienteMaestroIdRoute: AuthenticatedExpedienteMaestroIdRoute,
   AuthenticatedSuperAdminExpedientesRoute:
     AuthenticatedSuperAdminExpedientesRoute,
   AuthenticatedSuperAdminUsuariosRoute: AuthenticatedSuperAdminUsuariosRoute,
+  AuthenticatedCarteraIndexRoute: AuthenticatedCarteraIndexRoute,
   AuthenticatedCasosIndexRoute: AuthenticatedCasosIndexRoute,
   AuthenticatedExpedienteMaestroIndexRoute:
     AuthenticatedExpedienteMaestroIndexRoute,
@@ -343,6 +407,8 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
+  ApiPublicHooksCarteraRecordatoriosRoute:
+    ApiPublicHooksCarteraRecordatoriosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
