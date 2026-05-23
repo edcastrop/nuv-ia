@@ -112,3 +112,10 @@ function CasoDetail() {
     </div>
   );
 }
+
+class ErrorBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(err: unknown) { console.error("[ExpedienteSection]", err); }
+  render() { return this.state.hasError ? this.props.fallback : this.props.children; }
+}
