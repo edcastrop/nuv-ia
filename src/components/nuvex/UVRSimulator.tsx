@@ -47,6 +47,7 @@ import {
 } from "./intervinientes";
 import { getDefaultVariacionUVR, setDefaultVariacionUVR } from "../../lib/uvrConfig";
 import { useAsesorDefault } from "@/hooks/useAsesorDefault";
+import { freshFromCobertura } from "@/lib/cobertura";
 import { Settings2 } from "lucide-react";
 
 export function UVRSimulator({
@@ -646,6 +647,12 @@ export function UVRSimulator({
           {recomendada &&
             (() => {
               const d = computeDiscount(recomendada.honorarios, discount);
+              const coberturaFresh = freshFromCobertura(cobertura, {
+                cuotasPagadasCredito: cuotasPagadas,
+                saldoCapital: saldoPesosNum,
+                fuente: cobertura.activo ? "ocr" : "manual",
+                detectadoOCR: !!cobertura.tipoBeneficio,
+              });
               return (
                 <SaveExpedienteButton
                   expedienteId={init?.id}
@@ -670,6 +677,7 @@ export function UVRSimulator({
                       cuotaBaseSimulacion: cobertura.cuotaBaseSimulacion || cuotaActualPesos,
                       segurosMensuales: cobertura.segurosMensuales || seguros,
                       tieneBeneficio: cobertura.activo ? "si" : "no",
+                      coberturaFresh: coberturaFresh as unknown as string,
                     },
                     propuesta: {
                       nuevaCuota: recomendada.nuevaCuota,
