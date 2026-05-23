@@ -238,7 +238,7 @@ export function renderPoderTemplate(id: PoderTemplateId, v: PoderVariables): Doc
 }
 
 /** Validación: devuelve la lista de campos faltantes (vacíos). */
-export function validatePoderVariables(v: Partial<PoderVariables>): string[] {
+export function validatePoderVariables(v: Partial<PoderVariables>, templateId?: PoderTemplateId): string[] {
   const missing: string[] = [];
   const need: { k: keyof PoderVariables; label: string }[] = [
     { k: "BANCO", label: "Banco" },
@@ -247,11 +247,13 @@ export function validatePoderVariables(v: Partial<PoderVariables>): string[] {
     { k: "CIUDAD_CLIENTE", label: "Ciudad del cliente" },
     { k: "LUGAR_EXPEDICION_CLIENTE", label: "Lugar de expedición de la cédula del cliente" },
     { k: "TIPO_PRODUCTO", label: "Producto / tipo de crédito" },
-    { k: "NUMERO_CREDITO", label: "Número de crédito" },
     { k: "NOMBRE_APODERADO", label: "Apoderado NUVEX (nombre)" },
     { k: "CEDULA_APODERADO", label: "Apoderado NUVEX (cédula)" },
     { k: "LUGAR_EXPEDICION_APODERADO", label: "Apoderado NUVEX (lugar de expedición)" },
   ];
+  if (templateId && templateId !== "PODER_GENERAL_BANCOS") {
+    need.push({ k: "NUMERO_CREDITO", label: "Número de crédito" });
+  }
   for (const { k, label } of need) {
     const val = (v[k] ?? "").toString().trim();
     if (!val) missing.push(label);
