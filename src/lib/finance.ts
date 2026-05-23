@@ -460,6 +460,40 @@ export function calculateUVRManual(
   };
 }
 
+/**
+ * Modo 2 (UVR): el usuario indica cuántas cuotas quiere eliminar.
+ * Derivamos la nueva cuota requerida en pesos y delegamos en calculateUVRManual.
+ */
+export function calculateUVRManualByCuotas(
+  input: UVRInput,
+  escenarioActual: UVREscenarioActual,
+  cuotasEliminadas: number,
+): UVRManualResult {
+  const base: UVRManualResult = {
+    nuevaCuotaPesos: 0,
+    nuevaCuotaUVR: 0,
+    nuevoPlazo: 0,
+    cuotasEliminadas: 0,
+    añosEliminados: 0,
+    incrementoMensual: 0,
+    totalProyectado: 0,
+    ahorroIntereses: 0,
+    ahorroSeguros: 0,
+    ahorroTotal: 0,
+    honorarios: 0,
+    valid: false,
+  };
+  const cuotasBase = Math.max(0, input.cuotasPendientes);
+  if (cuotasEliminadas <= 0 || cuotasEliminadas >= cuotasBase) {
+    return { ...base, motivo: "Cuotas a eliminar fuera de rango" };
+  }
+  const tasaMensual = Math.pow(1 + input.teaCobrada / 100, 1 / 12) - 1;
+  const nuevoPlazo = cuotasBase - cuotasEliminadas;
+  const nuevaCuotaUVR = pmt(tasaMensual, nuevoPlazo, input.saldoUVR);
+  const nuevaCuotaPesos = nuevaCuotaUVR * input.valorUVR + input.seguros;
+  return calculateUVRManual(input, escenarioActual, nuevaCuotaPesos);
+}
+
 export function pickBestProposal<T extends { ahorroTotal: number }>(
   propuestas: T[],
 ): { best: T | null; bestIndex: number } {
