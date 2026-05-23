@@ -14,7 +14,7 @@ const VERDE = "#84B98F";
 
 function AuthenticatedLayout() {
   const { session, user, loading } = useAuth();
-  const { isSuperAdmin } = useUserRole();
+  const { isSuperAdmin, roles } = useUserRole();
   const navigate = useNavigate();
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
