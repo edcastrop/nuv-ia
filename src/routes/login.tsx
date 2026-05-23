@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/useAuth";
+import { Logo } from "@/components/nuvex/Logo";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -93,17 +94,8 @@ function LoginPage() {
         <div className="absolute -bottom-40 right-10 h-[28rem] w-[28rem] rounded-full blur-3xl opacity-25" style={{ background: NUVEX_VERDE }} />
 
         {/* Logo */}
-        <div className="relative z-10 flex items-center gap-3 animate-fade-in">
-          <div
-            className="flex h-12 w-12 items-center justify-center rounded-xl font-bold text-white text-lg shadow-lg"
-            style={{ background: `linear-gradient(135deg, ${NUVEX_AZUL}, ${NUVEX_VERDE})` }}
-          >
-            N
-          </div>
-          <div>
-            <div className="text-white text-base font-semibold tracking-tight">NUVEX</div>
-            <div className="text-[11px] uppercase tracking-[0.18em] text-white/55 -mt-0.5">Finanzas Inteligentes</div>
-          </div>
+        <div className="relative z-10 flex items-center animate-fade-in">
+          <Logo variant="white" height={48} />
         </div>
 
         {/* Headline & beneficios */}
