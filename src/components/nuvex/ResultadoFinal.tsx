@@ -666,7 +666,7 @@ function PrintInformeFinal({
         <div style={{ background: NUVEX_GRADIENT, padding: "28px 36px 32px", color: "#fff" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-              <LogoMark light size={200} />
+              <LogoMark light size={280} />
               <div>
                 <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: 2.2 }}>NUVEX FINANZAS INTELIGENTES</div>
                 <div style={{ fontSize: 9.5, letterSpacing: 1.6, opacity: 0.85, marginTop: 3 }}>Bogotá | Bucaramanga</div>
