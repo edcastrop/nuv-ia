@@ -148,14 +148,31 @@ export function buildPoderEspecial(
 // DATOS PARA CONTRATO (tabla contractual descargable)
 // ─────────────────────────────────────────────────────────────────────────────
 
+export type ModalidadPago = "contado" | "financiado";
+
+export interface AcuerdoComercial {
+  modalidad: ModalidadPago;
+  /** Valor de cada cuota (en pesos), sólo cuando modalidad = "financiado". */
+  cuotas?: number[];
+}
+
+const toNum = (v: unknown): number => {
+  if (typeof v === "number") return isFinite(v) ? v : 0;
+  if (typeof v === "string") {
+    const n = Number(v.replace(/[^\d.-]/g, ""));
+    return isFinite(n) ? n : 0;
+  }
+  return 0;
+};
+
 export function buildDatosContrato(
   e: ExpedienteMaestro,
   sim?: Expediente | null,
+  acuerdo?: AcuerdoComercial,
 ): LegalDoc {
   const c = e.cliente;
   const cr = e.credito;
   const propuesta: PropuestaData | Record<string, never> = (sim?.propuesta_data ?? {}) as PropuestaData | Record<string, never>;
-  const fresh = e.fresh;
   const p = propuesta as Partial<PropuestaData>;
 
   // Cuotas eliminadas estimadas: cuotas pendientes originales - nuevo plazo
@@ -166,9 +183,28 @@ export function buildDatosContrato(
       : null;
 
   const honorarios = Number(p.honorarios ?? sim?.honorarios_final ?? 0);
-  const pagoUnico = honorarios;
-  const pago2 = honorarios > 0 ? honorarios / 2 : 0;
-  const pago3 = honorarios > 0 ? honorarios / 3 : 0;
+
+  // ── BENEFICIO DE COBERTURA: leer desde el simulador (cliente_data.cobertura)
+  const cob = sim?.cliente_data?.cobertura;
+  const cobActivo = !!(cob && (cob.activo || cob.valorCobertura || cob.tasaCobertura));
+
+  const cuotaSinCob = cob?.cuotaConInteresSinSeguros
+    ? toNum(cob.cuotaConInteresSinSeguros)
+    : toNum(cr.cuotaActual);
+  const cuotaConCob = cob?.cuotaPagadaCliente
+    ? toNum(cob.cuotaPagadaCliente)
+    : Math.max(0, cuotaSinCob - toNum(cob?.valorCobertura));
+
+  // Derivados de cuotas de cobertura (tope 84 — alineado con FRESH_DEFAULT_TOTAL)
+  const cuotasPagadasCred = toNum(cr.cuotasPagadas);
+  const cobTotal = 84;
+  const cobPagadas = Math.min(Math.max(0, Math.round(cuotasPagadasCred)), cobTotal);
+  const cobPendientes = Math.max(0, cobTotal - cobPagadas);
+
+  // ── ACUERDO COMERCIAL
+  const ac: AcuerdoComercial = acuerdo ?? { modalidad: "contado" };
+  const sumaCuotas = (ac.cuotas ?? []).reduce((a, b) => a + (Number(b) || 0), 0);
+  const saldo = honorarios - sumaCuotas;
 
   const blocks: DocBlock[] = [
     { type: "title", text: "DATOS PARA CONTRATO" },
@@ -194,30 +230,47 @@ export function buildDatosContrato(
     { type: "field", label: "Nueva cuota", value: fmtCOP(p.nuevaCuota) },
     { type: "field", label: "Honorarios", value: fmtCOP(honorarios) },
     { type: "field", label: "Asesor", value: fmtTxt(e.asesor?.nombre) },
-    { type: "field", label: "Licenciado", value: fmtTxt(e.licenciado?.nombre) },
     { type: "spacer", size: 6 },
 
-    { type: "section", text: "FORMA DE PAGO" },
-    { type: "field", label: "Pago único", value: fmtCOP(pagoUnico) },
-    { type: "field", label: "2 cuotas (c/u)", value: fmtCOP(pago2) },
-    { type: "field", label: "3 cuotas (c/u)", value: fmtCOP(pago3) },
-    { type: "spacer", size: 6 },
-
-    ...(fresh?.activo
+    { type: "section", text: "BENEFICIO DE COBERTURA" },
+    ...(cobActivo
       ? ([
-          { type: "section", text: "BENEFICIO FRESH" } as DocBlock,
-          { type: "field", label: "Cuota actual sin cobertura", value: fmtCOP(cr.cuotaActual) } as DocBlock,
+          { type: "field", label: "Tipo cobertura", value: fmtTxt(cob?.tipoBeneficio) } as DocBlock,
+          { type: "field", label: "Valor cobertura mensual", value: fmtCOP(cob?.valorCobertura) } as DocBlock,
+          { type: "field", label: "% tasa cobertura", value: cob?.tasaCobertura ? `${cob.tasaCobertura}%` : "—" } as DocBlock,
+          { type: "field", label: "Cuotas cobertura pagadas", value: String(cobPagadas) } as DocBlock,
+          { type: "field", label: "Cuotas cobertura pendientes", value: String(cobPendientes) } as DocBlock,
+          { type: "field", label: "Cuota actual con cobertura", value: fmtCOP(cuotaConCob) } as DocBlock,
+          { type: "field", label: "Cuota actual sin cobertura", value: fmtCOP(cuotaSinCob) } as DocBlock,
+          { type: "field", label: "Nueva cuota después de finalizar cobertura", value: fmtCOP(p.nuevaCuota) } as DocBlock,
+        ])
+      : ([{ type: "field", label: "Estado", value: "NO APLICA" } as DocBlock])),
+    { type: "spacer", size: 6 },
+
+    { type: "section", text: "ACUERDO COMERCIAL" },
+    { type: "field", label: "Modalidad de pago", value: ac.modalidad === "contado" ? "Contado" : "Financiado" },
+    ...(ac.modalidad === "contado"
+      ? ([{ type: "field", label: "Valor total honorarios", value: fmtCOP(honorarios) } as DocBlock])
+      : ([
+          { type: "field", label: "Número de cuotas", value: String((ac.cuotas ?? []).length) } as DocBlock,
+          ...((ac.cuotas ?? []).map((v, i) => ({
+            type: "field" as const,
+            label: `Cuota ${i + 1}`,
+            value: fmtCOP(v),
+          })) as DocBlock[]),
+          { type: "field", label: "Suma cuotas", value: fmtCOP(sumaCuotas) } as DocBlock,
+          { type: "field", label: "Total honorarios", value: fmtCOP(honorarios) } as DocBlock,
           {
             type: "field",
-            label: "Cuota actual con cobertura",
-            value: fmtCOP(Number(cr.cuotaActual || 0) - Number(fresh.valorMensual || 0)),
+            label: "Saldo restante",
+            value:
+              saldo === 0
+                ? "Cuadrado · $0"
+                : saldo > 0
+                  ? `Falta ${fmtCOP(saldo)}`
+                  : `Excede en ${fmtCOP(Math.abs(saldo))}`,
           } as DocBlock,
-          { type: "field", label: "Valor cobertura mensual", value: fmtCOP(fresh.valorMensual) } as DocBlock,
-          { type: "field", label: "Cuotas Fresh pagadas", value: fmtTxt(fresh.cuotasPagadas) } as DocBlock,
-          { type: "field", label: "Cuotas Fresh pendientes", value: fmtTxt(fresh.cuotasPendientes) } as DocBlock,
-          { type: "field", label: "Nueva cuota posterior al Fresh", value: fmtCOP(p.nuevaCuota) } as DocBlock,
-        ])
-      : []),
+        ])),
   ];
 
   return {
