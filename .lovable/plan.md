@@ -1,91 +1,119 @@
-## Objetivo
+## Expediente Maestro NUVEX — Nuevo módulo
 
-Centralizar toda la lógica del beneficio Fresh / Cobertura VIS / Mi Casa Ya en el expediente del cliente: detección OCR automática, autocompletado, cálculos derivados (84 cuotas), resumen visual, almacenamiento permanente y reutilización en todos los módulos NUVEX (simuladores, PDF, proyecciones, paz y salvo, cuenta de cobro).
+Crear un módulo independiente que centraliza toda la información maestra del cliente. **Cero cambios** en simuladores, OCR, PDFs, Resultado Final, Cuenta de Cobro y Paz y Salvo.
 
-## Fase 1 — Modelo de datos unificado (`src/lib/proyeccion.ts`)
+### Alcance
 
-Extender `CoberturaFresh` con los campos derivados y de auditoría:
+Un único registro maestro por `cedula` (o por cliente) que almacena:
 
-```ts
-interface CoberturaFresh {
-  activo: boolean;
-  tipoBeneficio: "FRECH" | "FRESH" | "VIS" | "MI_CASA_YA" | "SUBSIDIO_TASA" | "OTRO";
-  valorMensual: number;
-  tasa: number;
-  cuotasTotales: number;      // default 84
-  cuotasPagadas: number;
-  cuotasPendientes: number;
-  beneficioRecibido: number;  // derivado
-  beneficioRestante: number;  // derivado
-  detectadoOCR: boolean;
-  fuente: "ocr" | "manual" | "mixto";
-  ultimaSincronizacion: string | null;
-}
+1. **Datos Cliente** — nombre, cédula, expedida en, fecha nacimiento, estado civil, profesión, teléfono, email, dirección, ciudad.
+2. **Datos Cotitular** — mismos campos + parentesco/relación + activo (sí/no).
+3. **Datos Crédito** — banco, número de crédito, tipo de producto (pesos/UVR), fecha desembolso, plazo original, saldo capital, cuota actual, tasa, cuotas pagadas, cuotas pendientes.
+4. **Datos Fresh / Cobertura** — tipoBeneficio, valorMensual, tasa, cuotasTotales (default 84), cuotasPagadas, cuotasPendientes, beneficioRecibido, beneficioRestante, detectadoOCR, fuente, ultimaSincronizacion. Reutiliza `src/lib/cobertura.ts` (sin tocarlo).
+5. **Datos Asesor** — nombre, cédula, teléfono, email, código asesor.
+6. **Datos Licenciado** — nombre, cédula profesional, teléfono, email.
+7. **Datos Apoderado** — nombre, cédula, teléfono, email, dirección, ciudad, número de poder, fecha poder.
+
+### Persistencia
+
+Tabla nueva `expediente_maestro` (independiente de `expedientes`):
+
+```text
+expediente_maestro
+├── id uuid PK
+├── asesor_id uuid (RLS owner)
+├── cedula_cliente text (búsqueda)
+├── nombre_cliente text
+├── cliente jsonb
+├── cotitular jsonb
+├── credito jsonb
+├── fresh jsonb
+├── asesor jsonb
+├── licenciado jsonb
+├── apoderado jsonb
+├── created_at / updated_at
 ```
 
-Crear helper puro `computeFreshDerivados(fresh, cuotasPagadasCredito)` que devuelve `{ cuotasPagadas, cuotasPendientes, beneficioRecibido, beneficioRestante }` aplicando el tope de 84.
+RLS idéntica al patrón de `expedientes` (owner + admin + gerencia). Trigger `update_updated_at_column` reutilizado.
 
-## Fase 2 — Detección OCR (`src/lib/extracto.functions.ts`)
+### UI
 
-Añadir al parser del extracto la detección de patrones (case-insensitive):
+Ruta nueva `/_authenticated/expediente-maestro` + `/_authenticated/expediente-maestro.$id`:
 
-- Activación: `/frech|fresh|cobertura vis|mi casa ya|subsidio (gobierno|de tasa)|cobertura a la tasa|beneficio de cobertura/`
-- Valor mensual: filas con `valor (fresh|subsidio) mensual` → monto.
-- Tasa: `tasa (subsidiada|de cobertura|fresh)` → porcentaje.
+- **Listado** con búsqueda por cédula/nombre y botón "Nuevo expediente maestro".
+- **Editor** con 7 secciones colapsables (acordeón estilo NUVEX) usando los tokens existentes (`#445DA3`, `#84B98F`, `#242424`). Cada sección con su botón "Guardar sección" + un "Guardar todo" general.
+- Enlace en el sidebar / navegación principal junto a "Casos".
 
-Devolver en el payload del OCR un bloque `coberturaDetectada` con `{ activo, valorMensual?, tasa?, tipoBeneficio, confidence }` y un flag `incompleto` cuando falte algún campo.
+Componentes nuevos (todos en `src/components/expediente-maestro/`, **sin tocar** `src/components/nuvex/*`):
 
-## Fase 3 — Hook de sincronización OCR ↔ expediente
+- `MaestroLayout.tsx` (acordeón + header)
+- `ClienteSection.tsx`
+- `CotitularSection.tsx`
+- `CreditoSection.tsx`
+- `FreshSection.tsx` (usa `withFreshDerivados` de `src/lib/cobertura.ts`)
+- `AsesorSection.tsx`
+- `LicenciadoSection.tsx`
+- `ApoderadoSection.tsx`
 
-Nuevo hook `useFreshSync` (en `src/hooks/useFreshSync.ts`) que:
+Hook + lib nuevos:
 
-1. Recibe `coberturaDetectada` del OCR y `coberturaActual` del expediente.
-2. Si el expediente está vacío → autocompletar y activar.
-3. Si difieren → exponer `diff` para que el componente muestre el aviso "Se detectaron cambios frente a la información previamente almacenada" con botones **Actualizar** / **Conservar**.
-4. Recalcular derivados cada vez que cambian `valorMensual`, `cuotasPagadas` del crédito o `cuotasTotales`.
-5. Mostrar toast "Información de cobertura no encontrada con suficiente confianza. Verifique manualmente." cuando OCR active el beneficio pero falten campos.
+- `src/lib/expedienteMaestro.ts` — tipos + `listMaestros`, `getMaestro`, `upsertMaestro`, `deleteMaestro`.
+- `src/hooks/useExpedienteMaestro.ts` — carga y guardado.
 
-## Fase 4 — UI del módulo Fresh (`CoberturaFreshFields.tsx`)
+Rutas nuevas:
 
-- Selector de **Tipo de beneficio** (FRECH/FRESH/VIS/Mi Casa Ya/Subsidio tasa/Otro).
-- Tarjeta nueva **RESUMEN DEL BENEFICIO DE COBERTURA** debajo del formulario:
-  - Valor Fresh mensual
-  - Cuotas subsidiadas pagadas / pendientes
-  - Beneficio recibido acumulado (verde)
-  - Beneficio restante estimado (verde)
-  - Estilo azul corporativo `#445DA3`, indicadores verde `#84B98F`.
-- Validación visual: si falta algún valor → borde ámbar + mensaje "Complete los campos antes de guardar".
-- Badge "Detectado automáticamente desde extracto" cuando `fuente !== "manual"`.
+- `src/routes/_authenticated/expediente-maestro.index.tsx`
+- `src/routes/_authenticated/expediente-maestro.$id.tsx`
 
-## Fase 5 — Persistencia en expediente
+### Migración SQL
 
-- En `src/lib/expedientes.ts` agregar `cobertura_fresh` al payload `UpsertPayload` y al tipo `Expediente` (almacenado dentro de `credito_data.coberturaFresh` para no romper esquema actual — JSONB existente).
-- `SaveExpedienteButton` bloquea guardado si `fresh.activo && incompleto` (regla 8) y muestra el detalle de campos faltantes.
-- Al reabrir el expediente, hidratar el estado Fresh desde `credito_data.coberturaFresh` en `PesosSimulator` y `UVRSimulator`.
+```sql
+create table public.expediente_maestro (
+  id uuid primary key default gen_random_uuid(),
+  asesor_id uuid not null,
+  cedula_cliente text,
+  nombre_cliente text not null default 'Sin nombre',
+  cliente jsonb not null default '{}'::jsonb,
+  cotitular jsonb not null default '{}'::jsonb,
+  credito jsonb not null default '{}'::jsonb,
+  fresh jsonb not null default '{}'::jsonb,
+  asesor jsonb not null default '{}'::jsonb,
+  licenciado jsonb not null default '{}'::jsonb,
+  apoderado jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
 
-## Fase 6 — Reutilización en módulos posteriores
+create index on public.expediente_maestro (asesor_id);
+create index on public.expediente_maestro (cedula_cliente);
 
-Ya consumen `CoberturaFresh` (proyección.ts, PrintDocument, ProyeccionDetallada, PazYSalvo). Verificar y, donde no esté:
+alter table public.expediente_maestro enable row level security;
 
-- **PrintDocument.tsx (PDF):** añadir mini-bloque "Cobertura activa: $X/mes · N cuotas restantes" en página 2 sólo si `fresh.activo`.
-- **ProyeccionDetallada.tsx:** mostrar dos líneas por cuota mientras dure el beneficio — **Cuota real pagada** (con subsidio descontado) y **Cuota sin subsidio** (regla 7).
-- **ResultadoFinal / Cuenta de cobro / Paz y Salvo:** leer del expediente, no del formulario.
+create policy "Maestro select por owner" on public.expediente_maestro
+  for select using (auth.uid() = asesor_id or has_role(auth.uid(),'admin') or has_role(auth.uid(),'gerencia'));
+create policy "Maestro insert por owner" on public.expediente_maestro
+  for insert with check (auth.uid() = asesor_id);
+create policy "Maestro update por owner" on public.expediente_maestro
+  for update using (auth.uid() = asesor_id or has_role(auth.uid(),'admin') or has_role(auth.uid(),'gerencia'));
+create policy "Maestro delete por owner" on public.expediente_maestro
+  for delete using (auth.uid() = asesor_id or has_role(auth.uid(),'admin') or has_role(auth.uid(),'gerencia'));
 
-## Fase 7 — Validación y auditoría
+create trigger trg_maestro_updated
+  before update on public.expediente_maestro
+  for each row execute function public.update_updated_at_column();
+```
 
-- En `useFreshSync`: comparar hash `{valorMensual,tasa,cuotasTotales}` OCR vs. expediente.
-- Componente `<FreshAuditBanner />` con las acciones Actualizar / Conservar.
-- Log local (no DB) del último diff aplicado.
+### Reglas de seguridad
 
-## Detalles técnicos
+- Cero `import` desde simuladores, PDFs, Resultado Final, Cuenta de Cobro o Paz y Salvo.
+- Cero edición en `src/components/nuvex/*`, `src/lib/proyeccion.ts`, `src/lib/pdfExport.ts`, `src/lib/cobertura.ts` (sólo lectura).
+- Cero cambio en RLS de tablas existentes.
+- Sólo se agrega un enlace de navegación al menú; no se reemplaza ningún flujo actual.
 
-- Todos los cálculos derivados son puros y se exportan desde `src/lib/cobertura.ts` (nuevo) para que PDF, proyección y UI compartan la misma fuente de verdad.
-- No se modifican fórmulas financieras base ni el cálculo de honorarios.
-- No se crean nuevas tablas: se reutiliza `expedientes.credito_data` (JSONB) — sin migración.
-- Tope duro 84 cuotas se aplica tanto en input (clamp) como en el cálculo derivado.
+### Entregables
 
-## Fuera de alcance
+1. Migración SQL (tabla + RLS + trigger).
+2. Lib + hook + 8 componentes nuevos + 2 rutas nuevas.
+3. Enlace de navegación al nuevo módulo.
 
-- Cambios visuales al PDF más allá del bloque informativo mínimo.
-- Nuevas integraciones de OCR (sólo se amplía el parser existente).
-- Cambios en lógica de honorarios o ahorro total.
+Tras tu aprobación ejecuto la migración y luego escribo el código.
