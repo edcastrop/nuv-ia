@@ -1,119 +1,127 @@
-## Expediente Maestro NUVEX — Nuevo módulo
+## Plan: Super Admin + Estados Inteligentes del Caso
 
-Crear un módulo independiente que centraliza toda la información maestra del cliente. **Cero cambios** en simuladores, OCR, PDFs, Resultado Final, Cuenta de Cobro y Paz y Salvo.
+Módulo grande con cambios en BD, roles, estados, panel admin, confirmaciones y auditoría. NO toca simuladores, OCR, PDFs, plantillas ni cálculos.
 
-### Alcance
+---
 
-Un único registro maestro por `cedula` (o por cliente) que almacena:
+### 1. Base de datos (migración)
 
-1. **Datos Cliente** — nombre, cédula, expedida en, fecha nacimiento, estado civil, profesión, teléfono, email, dirección, ciudad.
-2. **Datos Cotitular** — mismos campos + parentesco/relación + activo (sí/no).
-3. **Datos Crédito** — banco, número de crédito, tipo de producto (pesos/UVR), fecha desembolso, plazo original, saldo capital, cuota actual, tasa, cuotas pagadas, cuotas pendientes.
-4. **Datos Fresh / Cobertura** — tipoBeneficio, valorMensual, tasa, cuotasTotales (default 84), cuotasPagadas, cuotasPendientes, beneficioRecibido, beneficioRestante, detectadoOCR, fuente, ultimaSincronizacion. Reutiliza `src/lib/cobertura.ts` (sin tocarlo).
-5. **Datos Asesor** — nombre, cédula, teléfono, email, código asesor.
-6. **Datos Licenciado** — nombre, cédula profesional, teléfono, email.
-7. **Datos Apoderado** — nombre, cédula, teléfono, email, dirección, ciudad, número de poder, fecha poder.
+**Roles** (extender enum `app_role`):
+- Agregar: `super_admin`, `juridica`, `operaciones`, `cartera`
+- Mantener: `admin`, `gerencia`, `asesor`, `licenciado`
+- `super_admin` se trata como super-usuario (alias funcional de admin con capacidades extra de gestión de usuarios).
 
-### Persistencia
+**Estados del caso** (nuevo enum `caso_estado_v2`):
+- 19 estados solicitados (Lead creado → Proceso cerrado).
+- Mantener enum viejo `expediente_estado` por compatibilidad con simuladores/aprobado_data.
+- Agregar columna `expedientes.estado_caso` (text/enum nuevo, default `'lead_creado'`).
+- NO eliminar `expedientes.estado` (lo usan simuladores, dashboard antiguo, badges).
 
-Tabla nueva `expediente_maestro` (independiente de `expedientes`):
+**Auditoría** (extender `expediente_historial`):
+- Agregar columnas: `accion_origen` (text), `observacion` (text), `estado_caso_anterior`, `estado_caso_nuevo`.
+- Los cambios del enum viejo siguen guardándose en `estado_anterior/nuevo`.
 
-```text
-expediente_maestro
-├── id uuid PK
-├── asesor_id uuid (RLS owner)
-├── cedula_cliente text (búsqueda)
-├── nombre_cliente text
-├── cliente jsonb
-├── cotitular jsonb
-├── credito jsonb
-├── fresh jsonb
-├── asesor jsonb
-├── licenciado jsonb
-├── apoderado jsonb
-├── created_at / updated_at
-```
+**Gestión de usuarios** (Super Admin):
+- Agregar columna `profiles.activo` (bool, default true).
+- RLS: super_admin puede ver/editar todos los profiles y user_roles.
 
-RLS idéntica al patrón de `expedientes` (owner + admin + gerencia). Trigger `update_updated_at_column` reutilizado.
+---
 
-### UI
+### 2. Hook de roles
 
-Ruta nueva `/_authenticated/expediente-maestro` + `/_authenticated/expediente-maestro.$id`:
+`src/hooks/useUserRole.ts`:
+- Agregar tipo `AppRole` extendido.
+- Helpers: `isSuperAdmin`, `isLicenciado`, `canManageGlobal`.
 
-- **Listado** con búsqueda por cédula/nombre y botón "Nuevo expediente maestro".
-- **Editor** con 7 secciones colapsables (acordeón estilo NUVEX) usando los tokens existentes (`#445DA3`, `#84B98F`, `#242424`). Cada sección con su botón "Guardar sección" + un "Guardar todo" general.
-- Enlace en el sidebar / navegación principal junto a "Casos".
+---
 
-Componentes nuevos (todos en `src/components/expediente-maestro/`, **sin tocar** `src/components/nuvex/*`):
+### 3. Estados inteligentes
 
-- `MaestroLayout.tsx` (acordeón + header)
-- `ClienteSection.tsx`
-- `CotitularSection.tsx`
-- `CreditoSection.tsx`
-- `FreshSection.tsx` (usa `withFreshDerivados` de `src/lib/cobertura.ts`)
-- `AsesorSection.tsx`
-- `LicenciadoSection.tsx`
-- `ApoderadoSection.tsx`
+`src/lib/casoEstados.ts` (nuevo):
+- Constante `CASO_ESTADOS` (19 estados con label, color, orden).
+- Mapa `ACCION_A_ESTADO`: `extracto_subido` → `extracto_recibido`, `simulacion_generada` → `simulacion_realizada`, etc.
+- Función `sugerirEstado(expedienteId, accion, userId)` → server fn que NO cambia estado, solo retorna sugerencia.
+- Función `confirmarEstado(expedienteId, nuevoEstado, accionOrigen, observacion?)` → cambia estado + guarda historial.
 
-Hook + lib nuevos:
+**Componente** `ConfirmEstadoModal.tsx`:
+- Diálogo reusable: "¿Confirmas que deseas cambiar el estado del caso a: [X]?" con Confirmar / Cancelar + textarea opcional observación.
 
-- `src/lib/expedienteMaestro.ts` — tipos + `listMaestros`, `getMaestro`, `upsertMaestro`, `deleteMaestro`.
-- `src/hooks/useExpedienteMaestro.ts` — carga y guardado.
+**Hook** `useEstadoSugerido(expedienteId)`:
+- API: `sugerir(accion)` abre modal; al confirmar dispara update y refresca expediente.
 
-Rutas nuevas:
+**Integración en puntos existentes** (sin tocar lógica):
+- `ExtractoReader` → al subir: `sugerir('extracto_subido')`.
+- `PesosSimulator`/`UVRSimulator` → tras `upsertExpediente` exitoso: `sugerir('simulacion_generada')`.
+- `RecommendedResult`/export propuesta PDF → `sugerir('propuesta_generada')`.
+- `EnviarContratacion` (server fn) → al enviar exitoso: marcar `enviado_contratacion` (auto, ya existe).
+- `DocumentosLegales` → botones nuevos pequeños: "Contrato firmado", "Poder firmado", "Radicado banco" → sugieren estado.
+- `ResultadoFinal` → `sugerir('resultado_final_generado')`.
+- `PazYSalvo` → `sugerir('paz_y_salvo_generado')`.
+- En detalle de caso (`casos.$id.tsx`): bloque "Estado del caso" con selector manual (solo super_admin/admin) + timeline historial.
 
-- `src/routes/_authenticated/expediente-maestro.index.tsx`
-- `src/routes/_authenticated/expediente-maestro.$id.tsx`
+---
 
-### Migración SQL
+### 4. Panel Super Admin
 
-```sql
-create table public.expediente_maestro (
-  id uuid primary key default gen_random_uuid(),
-  asesor_id uuid not null,
-  cedula_cliente text,
-  nombre_cliente text not null default 'Sin nombre',
-  cliente jsonb not null default '{}'::jsonb,
-  cotitular jsonb not null default '{}'::jsonb,
-  credito jsonb not null default '{}'::jsonb,
-  fresh jsonb not null default '{}'::jsonb,
-  asesor jsonb not null default '{}'::jsonb,
-  licenciado jsonb not null default '{}'::jsonb,
-  apoderado jsonb not null default '{}'::jsonb,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
+Nuevo route `/_authenticated/super-admin/`:
+- `super-admin.index.tsx` → dashboard con métricas:
+  - Total expedientes, por estado, por licenciado, aprobados, honorarios proyectados/cobrados.
+  - Casos en mora (>30d sin avance), pendientes contratación, pendientes radicación.
+- `super-admin.usuarios.tsx` → CRUD usuarios: listar profiles, activar/desactivar, asignar roles, crear (invite by email vía signUp admin → en este stack usamos signup self-service + asignación manual de rol).
+- `super-admin.expedientes.tsx` → tabla global con filtros: licenciado, banco, estado, fechas, producto, ciudad, honorarios.
 
-create index on public.expediente_maestro (asesor_id);
-create index on public.expediente_maestro (cedula_cliente);
+Guard: `beforeLoad` redirige si no es super_admin/admin.
 
-alter table public.expediente_maestro enable row level security;
+Link en sidebar/nav solo visible si `isSuperAdmin || isAdmin`.
 
-create policy "Maestro select por owner" on public.expediente_maestro
-  for select using (auth.uid() = asesor_id or has_role(auth.uid(),'admin') or has_role(auth.uid(),'gerencia'));
-create policy "Maestro insert por owner" on public.expediente_maestro
-  for insert with check (auth.uid() = asesor_id);
-create policy "Maestro update por owner" on public.expediente_maestro
-  for update using (auth.uid() = asesor_id or has_role(auth.uid(),'admin') or has_role(auth.uid(),'gerencia'));
-create policy "Maestro delete por owner" on public.expediente_maestro
-  for delete using (auth.uid() = asesor_id or has_role(auth.uid(),'admin') or has_role(auth.uid(),'gerencia'));
+---
 
-create trigger trg_maestro_updated
-  before update on public.expediente_maestro
-  for each row execute function public.update_updated_at_column();
-```
+### 5. Filtros expedientes
 
-### Reglas de seguridad
+Extender `casos.index.tsx` y `super-admin.expedientes.tsx` con dropdowns adicionales (licenciado/ciudad/producto/honorarios min-max/fecha aprobación).
 
-- Cero `import` desde simuladores, PDFs, Resultado Final, Cuenta de Cobro o Paz y Salvo.
-- Cero edición en `src/components/nuvex/*`, `src/lib/proyeccion.ts`, `src/lib/pdfExport.ts`, `src/lib/cobertura.ts` (sólo lectura).
-- Cero cambio en RLS de tablas existentes.
-- Sólo se agrega un enlace de navegación al menú; no se reemplaza ningún flujo actual.
+---
 
-### Entregables
+### 6. Historial visible
 
-1. Migración SQL (tabla + RLS + trigger).
-2. Lib + hook + 8 componentes nuevos + 2 rutas nuevas.
-3. Enlace de navegación al nuevo módulo.
+En `casos.$id.tsx` agregar componente `HistorialCaso` que liste `expediente_historial` con: estado anterior → nuevo, usuario (join profiles), fecha/hora, acción origen, observación.
 
-Tras tu aprobación ejecuto la migración y luego escribo el código.
+---
+
+### 7. Validaciones / RLS
+
+- `expedientes` SELECT: licenciado solo ve `asesor_id = auth.uid()`; super_admin/admin/gerencia ven todo (ya existe, verificar).
+- `profiles` UPDATE: super_admin puede actualizar cualquiera.
+- `user_roles` ALL: super_admin además de admin.
+
+---
+
+### Archivos a crear
+- `supabase/migrations/<ts>_super_admin_estados.sql`
+- `src/lib/casoEstados.ts`
+- `src/lib/casoEstados.functions.ts`
+- `src/components/expediente/ConfirmEstadoModal.tsx`
+- `src/components/expediente/HistorialCaso.tsx`
+- `src/hooks/useEstadoSugerido.ts`
+- `src/routes/_authenticated/super-admin.index.tsx`
+- `src/routes/_authenticated/super-admin.usuarios.tsx`
+- `src/routes/_authenticated/super-admin.expedientes.tsx`
+
+### Archivos a editar (cambios mínimos, solo wiring)
+- `src/hooks/useUserRole.ts` (roles nuevos)
+- `src/routes/_authenticated/casos.$id.tsx` (bloque estado + historial)
+- `src/routes/_authenticated/casos.index.tsx` (filtros extra)
+- `src/components/nuvex/ExtractoReader.tsx` (sugerir tras subir)
+- `src/components/nuvex/PesosSimulator.tsx` y `UVRSimulator.tsx` (sugerir tras guardar)
+- `src/components/expediente-maestro/DocumentosLegales.tsx` (botones contrato/poder/radicado firmados)
+- Nav/sidebar para link Super Admin
+
+---
+
+### Notas
+
+- "Crear usuarios" desde super_admin: en este stack no hay admin API expuesta al cliente. Implementaré "invitar" enviando email con link de signup + pre-asignación de rol pendiente; o más simple: el super_admin crea el rol después que el usuario se registra. Recomiendo opción simple: pantalla lista usuarios registrados + asignación de roles + activar/desactivar. Si se requiere invitación por email, lo hago como server fn con `supabaseAdmin.auth.admin.inviteUserByEmail`.
+
+- Estado dual: dejo `estado` (enum antiguo del workflow simulador) y `estado_caso` (nuevo de 19 estados). El dashboard antiguo sigue funcionando; el nuevo panel usa `estado_caso`.
+
+¿Procedo?
