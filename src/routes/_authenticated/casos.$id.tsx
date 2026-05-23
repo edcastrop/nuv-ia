@@ -1,11 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getExpediente, updateEstado, deleteExpediente, ESTADOS, type Expediente, type EstadoExpediente } from "@/lib/expedientes";
 import { PesosSimulator } from "@/components/nuvex/PesosSimulator";
 import { UVRSimulator } from "@/components/nuvex/UVRSimulator";
 import { EstadoBadge } from "@/components/nuvex/EstadoBadge";
 import { Card } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
+import { DocumentosLegales } from "@/components/expediente-maestro/DocumentosLegales";
+import { expedienteToMaestroLike } from "@/lib/expedienteMaestro";
 
 export const Route = createFileRoute("/_authenticated/casos/$id")({
   component: CasoDetail,
@@ -73,6 +75,8 @@ function CasoDetail() {
       ) : (
         <UVRSimulator initialExpediente={exp} onSaved={reload} />
       )}
+
+      <DocumentosLegales expediente={useMemo(() => expedienteToMaestroLike(exp), [exp])} />
 
       <Card>
         <div className="flex items-center justify-between">

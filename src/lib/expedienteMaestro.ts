@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { Expediente } from "@/lib/expedientes";
 import { withFreshDerivados, FRESH_DEFAULT_TOTAL } from "@/lib/cobertura";
 import type { CoberturaFresh } from "@/lib/proyeccion";
 
@@ -225,4 +226,44 @@ export function maestroToExpediente(m: ExpedienteMaestro) {
     created_at: m.created_at,
     updated_at: m.updated_at,
   } as never;
+}
+
+/**
+ * Construye una vista tipo ExpedienteMaestro a partir de un Expediente del
+ * simulador, para alimentar los generadores de documentos jurídicos
+ * (Poder Especial, Datos para Contrato) sin requerir que el caso esté
+ * vinculado a un Maestro guardado. No persiste ni altera cálculos.
+ */
+export function expedienteToMaestroLike(exp: Expediente): ExpedienteMaestro {
+  const c = exp.cliente_data ?? ({} as Expediente["cliente_data"]);
+  const cr = exp.credito_data ?? {};
+  return {
+    id: exp.id,
+    asesor_id: exp.asesor_id,
+    cedula_cliente: exp.cedula ?? null,
+    nombre_cliente: exp.cliente_nombre,
+    cliente: {
+      ...emptyCliente(),
+      nombre: c.nombre ?? exp.cliente_nombre ?? "",
+      cedula: c.cedula ?? exp.cedula ?? "",
+    },
+    cotitular: emptyCotitular(),
+    credito: {
+      ...emptyCredito(),
+      banco: c.banco ?? exp.banco ?? "",
+      numeroCredito: c.numeroCredito ?? exp.numero_credito ?? "",
+      tipoProducto: c.tipoProducto ?? exp.producto ?? "",
+      plazoOriginal: c.plazoInicial ?? "",
+      cuotasPagadas: c.cuotasPagadas ?? "",
+      saldoCapital: (cr.saldoCapital as string) ?? "",
+      cuotaActual: (cr.cuotaActual as string) ?? "",
+      tasa: (cr.tea as string) ?? "",
+    },
+    fresh: emptyFresh(),
+    asesor: { ...emptyAsesor(), nombre: c.asesor ?? "" },
+    licenciado: emptyLicenciado(),
+    apoderado: emptyApoderado(),
+    created_at: exp.created_at,
+    updated_at: exp.updated_at,
+  };
 }
