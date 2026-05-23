@@ -83,7 +83,11 @@ function CasoDetail() {
         <UVRSimulator initialExpediente={exp} onSaved={reload} />
       )}
 
-      <DocumentosLegales expediente={useMemo(() => expedienteToMaestroLike(exp), [exp])} />
+      {maestroLike && (
+        <ErrorBoundary fallback={<Card><div className="text-sm text-[#B42318]">No se pudo cargar esta sección.</div></Card>}>
+          <DocumentosLegales expediente={maestroLike} />
+        </ErrorBoundary>
+      )}
 
       <Card>
         <div className="flex items-center justify-between">
