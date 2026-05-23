@@ -8,6 +8,8 @@ import { Card } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
 import { DocumentosLegales } from "@/components/expediente-maestro/DocumentosLegales";
 import { expedienteToMaestroLike } from "@/lib/expedienteMaestro";
+import { EstadoCasoBlock } from "@/components/expediente/EstadoCasoBlock";
+import { HistorialCaso } from "@/components/expediente/HistorialCaso";
 
 export const Route = createFileRoute("/_authenticated/casos/$id")({
   component: CasoDetail,
@@ -77,6 +79,8 @@ function CasoDetail() {
         </div>
       </Card>
 
+      <EstadoCasoBlock expedienteId={exp.id} onChanged={reload} />
+
       {exp.modo === "pesos" ? (
         <PesosSimulator initialExpediente={exp} onSaved={reload} />
       ) : (
@@ -88,6 +92,9 @@ function CasoDetail() {
           <DocumentosLegales expediente={maestroLike} simExpediente={exp} expedienteIdToPersist={exp.id} onJuridicaSaved={reload} />
         </ErrorBoundary>
       )}
+
+      <HistorialCaso expedienteId={exp.id} />
+
 
 
       <Card>

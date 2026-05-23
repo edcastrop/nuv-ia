@@ -16,8 +16,11 @@ import { Route as AuthenticatedProyeccionRouteImport } from './routes/_authentic
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedApoderadosNuvexRouteImport } from './routes/_authenticated/apoderados-nuvex'
 import { Route as AuthenticatedAcademiaRouteImport } from './routes/_authenticated/academia'
+import { Route as AuthenticatedSuperAdminIndexRouteImport } from './routes/_authenticated/super-admin.index'
 import { Route as AuthenticatedExpedienteMaestroIndexRouteImport } from './routes/_authenticated/expediente-maestro.index'
 import { Route as AuthenticatedCasosIndexRouteImport } from './routes/_authenticated/casos.index'
+import { Route as AuthenticatedSuperAdminUsuariosRouteImport } from './routes/_authenticated/super-admin.usuarios'
+import { Route as AuthenticatedSuperAdminExpedientesRouteImport } from './routes/_authenticated/super-admin.expedientes'
 import { Route as AuthenticatedExpedienteMaestroIdRouteImport } from './routes/_authenticated/expediente-maestro.$id'
 import { Route as AuthenticatedCasosIdRouteImport } from './routes/_authenticated/casos.$id'
 
@@ -56,6 +59,12 @@ const AuthenticatedAcademiaRoute = AuthenticatedAcademiaRouteImport.update({
   path: '/academia',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedSuperAdminIndexRoute =
+  AuthenticatedSuperAdminIndexRouteImport.update({
+    id: '/super-admin/',
+    path: '/super-admin/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedExpedienteMaestroIndexRoute =
   AuthenticatedExpedienteMaestroIndexRouteImport.update({
     id: '/expediente-maestro/',
@@ -67,6 +76,18 @@ const AuthenticatedCasosIndexRoute = AuthenticatedCasosIndexRouteImport.update({
   path: '/casos/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedSuperAdminUsuariosRoute =
+  AuthenticatedSuperAdminUsuariosRouteImport.update({
+    id: '/super-admin/usuarios',
+    path: '/super-admin/usuarios',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuperAdminExpedientesRoute =
+  AuthenticatedSuperAdminExpedientesRouteImport.update({
+    id: '/super-admin/expedientes',
+    path: '/super-admin/expedientes',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedExpedienteMaestroIdRoute =
   AuthenticatedExpedienteMaestroIdRouteImport.update({
     id: '/expediente-maestro/$id',
@@ -88,8 +109,11 @@ export interface FileRoutesByFullPath {
   '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
   '/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
+  '/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
+  '/super-admin/usuarios': typeof AuthenticatedSuperAdminUsuariosRoute
   '/casos/': typeof AuthenticatedCasosIndexRoute
   '/expediente-maestro/': typeof AuthenticatedExpedienteMaestroIndexRoute
+  '/super-admin/': typeof AuthenticatedSuperAdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -100,8 +124,11 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
   '/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
+  '/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
+  '/super-admin/usuarios': typeof AuthenticatedSuperAdminUsuariosRoute
   '/casos': typeof AuthenticatedCasosIndexRoute
   '/expediente-maestro': typeof AuthenticatedExpedienteMaestroIndexRoute
+  '/super-admin': typeof AuthenticatedSuperAdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -114,8 +141,11 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/casos/$id': typeof AuthenticatedCasosIdRoute
   '/_authenticated/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
+  '/_authenticated/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
+  '/_authenticated/super-admin/usuarios': typeof AuthenticatedSuperAdminUsuariosRoute
   '/_authenticated/casos/': typeof AuthenticatedCasosIndexRoute
   '/_authenticated/expediente-maestro/': typeof AuthenticatedExpedienteMaestroIndexRoute
+  '/_authenticated/super-admin/': typeof AuthenticatedSuperAdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -128,8 +158,11 @@ export interface FileRouteTypes {
     | '/proyeccion'
     | '/casos/$id'
     | '/expediente-maestro/$id'
+    | '/super-admin/expedientes'
+    | '/super-admin/usuarios'
     | '/casos/'
     | '/expediente-maestro/'
+    | '/super-admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -140,8 +173,11 @@ export interface FileRouteTypes {
     | '/'
     | '/casos/$id'
     | '/expediente-maestro/$id'
+    | '/super-admin/expedientes'
+    | '/super-admin/usuarios'
     | '/casos'
     | '/expediente-maestro'
+    | '/super-admin'
   id:
     | '__root__'
     | '/_authenticated'
@@ -153,8 +189,11 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/_authenticated/casos/$id'
     | '/_authenticated/expediente-maestro/$id'
+    | '/_authenticated/super-admin/expedientes'
+    | '/_authenticated/super-admin/usuarios'
     | '/_authenticated/casos/'
     | '/_authenticated/expediente-maestro/'
+    | '/_authenticated/super-admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -213,6 +252,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAcademiaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/super-admin/': {
+      id: '/_authenticated/super-admin/'
+      path: '/super-admin'
+      fullPath: '/super-admin/'
+      preLoaderRoute: typeof AuthenticatedSuperAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/expediente-maestro/': {
       id: '/_authenticated/expediente-maestro/'
       path: '/expediente-maestro'
@@ -225,6 +271,20 @@ declare module '@tanstack/react-router' {
       path: '/casos'
       fullPath: '/casos/'
       preLoaderRoute: typeof AuthenticatedCasosIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/super-admin/usuarios': {
+      id: '/_authenticated/super-admin/usuarios'
+      path: '/super-admin/usuarios'
+      fullPath: '/super-admin/usuarios'
+      preLoaderRoute: typeof AuthenticatedSuperAdminUsuariosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/super-admin/expedientes': {
+      id: '/_authenticated/super-admin/expedientes'
+      path: '/super-admin/expedientes'
+      fullPath: '/super-admin/expedientes'
+      preLoaderRoute: typeof AuthenticatedSuperAdminExpedientesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/expediente-maestro/$id': {
@@ -252,8 +312,11 @@ interface AuthenticatedRouteChildren {
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedCasosIdRoute: typeof AuthenticatedCasosIdRoute
   AuthenticatedExpedienteMaestroIdRoute: typeof AuthenticatedExpedienteMaestroIdRoute
+  AuthenticatedSuperAdminExpedientesRoute: typeof AuthenticatedSuperAdminExpedientesRoute
+  AuthenticatedSuperAdminUsuariosRoute: typeof AuthenticatedSuperAdminUsuariosRoute
   AuthenticatedCasosIndexRoute: typeof AuthenticatedCasosIndexRoute
   AuthenticatedExpedienteMaestroIndexRoute: typeof AuthenticatedExpedienteMaestroIndexRoute
+  AuthenticatedSuperAdminIndexRoute: typeof AuthenticatedSuperAdminIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -264,9 +327,13 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedCasosIdRoute: AuthenticatedCasosIdRoute,
   AuthenticatedExpedienteMaestroIdRoute: AuthenticatedExpedienteMaestroIdRoute,
+  AuthenticatedSuperAdminExpedientesRoute:
+    AuthenticatedSuperAdminExpedientesRoute,
+  AuthenticatedSuperAdminUsuariosRoute: AuthenticatedSuperAdminUsuariosRoute,
   AuthenticatedCasosIndexRoute: AuthenticatedCasosIndexRoute,
   AuthenticatedExpedienteMaestroIndexRoute:
     AuthenticatedExpedienteMaestroIndexRoute,
+  AuthenticatedSuperAdminIndexRoute: AuthenticatedSuperAdminIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
