@@ -99,10 +99,15 @@ export function UVRSimulator({
 
   const valorDesembolsadoNum = parseCurrency(valorDesembolsado);
   const cuotaActualPesosNum = parseCurrency(cuotaActualPesos);
+  const cuotaPagadaClienteNum = parseCurrency(cobertura.cuotaPagadaCliente);
+  const cuotaBaseSimulacionNum = parseCurrency(cobertura.cuotaBaseSimulacion);
+  const cuotaSimulacionPesosNum =
+    cuotaBaseSimulacionNum > 0 ? cuotaBaseSimulacionNum : cuotaActualPesosNum;
+  const cuotaClienteHoyNum = cuotaPagadaClienteNum > 0 ? cuotaPagadaClienteNum : cuotaActualPesosNum;
   const segurosNum = parseCurrency(seguros);
-  const cuotaSinSegurosNum = Math.max(0, cuotaActualPesosNum - segurosNum);
+  const cuotaSinSegurosNum = Math.max(0, cuotaSimulacionPesosNum - segurosNum);
   const saldoPesosNum = parseCurrency(saldoPesos);
-  const dineroPagadoFecha = cuotaActualPesosNum * cuotasPagadas;
+  const dineroPagadoFecha = cuotaClienteHoyNum * cuotasPagadas;
 
   const input: UVRInput = useMemo(
     () => ({
@@ -110,7 +115,7 @@ export function UVRSimulator({
       saldoPesos: saldoPesosNum,
       saldoUVR: parseDecimal(saldoUVR),
       valorUVR: parseDecimal(valorUVR),
-      cuotaActualPesos: cuotaActualPesosNum,
+      cuotaActualPesos: cuotaSimulacionPesosNum,
       cuotaSinSeguros: cuotaSinSegurosNum,
       seguros: segurosNum,
       teaCobrada: parsePercentage(teaCobrada),
@@ -124,7 +129,7 @@ export function UVRSimulator({
       saldoPesosNum,
       saldoUVR,
       valorUVR,
-      cuotaActualPesosNum,
+      cuotaSimulacionPesosNum,
       cuotaSinSegurosNum,
       segurosNum,
       teaCobrada,
@@ -140,15 +145,15 @@ export function UVRSimulator({
     validaciones.push("Las cuotas pagadas no pueden ser mayores al plazo inicial.");
   if (input.saldoUVR <= 0 && saldoUVR) validaciones.push("Saldo UVR debe ser mayor a 0.");
   if (input.valorUVR <= 0 && valorUVR) validaciones.push("Valor UVR debe ser mayor a 0.");
-  if (cuotaActualPesosNum > 0 && segurosNum > cuotaActualPesosNum)
+  if (cuotaSimulacionPesosNum > 0 && segurosNum > cuotaSimulacionPesosNum)
     validaciones.push("Los seguros no pueden ser mayores que la cuota actual.");
-  if (cuotaActualPesosNum > 0 && segurosNum > 0 && cuotaSinSegurosNum <= 0)
+  if (cuotaSimulacionPesosNum > 0 && segurosNum > 0 && cuotaSinSegurosNum <= 0)
     validaciones.push("La cuota sin seguros debe ser mayor a cero para calcular la proyección.");
 
   const cuotaSinSegurosValida =
-    cuotaActualPesosNum === 0 ||
+    cuotaSimulacionPesosNum === 0 ||
     segurosNum === 0 ||
-    (segurosNum < cuotaActualPesosNum && cuotaSinSegurosNum > 0);
+    (segurosNum < cuotaSimulacionPesosNum && cuotaSinSegurosNum > 0);
 
   const datosCompletos =
     input.saldoUVR > 0 &&
