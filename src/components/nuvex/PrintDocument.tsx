@@ -1628,22 +1628,21 @@ function ClosingBlock({
         />
         <p
           style={{
-            fontSize: 10.5,
+            fontSize: 10,
             color: C.negro,
-            lineHeight: 1.85,
+            lineHeight: 1.6,
             margin: 0,
           }}
         >
-          Nuestro análisis evidencia una oportunidad real para reducir
-          significativamente el tiempo de tu crédito y disminuir el costo
-          financiero proyectado.
+          Nuestro análisis evidencia una oportunidad real para reducir el tiempo
+          de tu crédito y disminuir el costo financiero proyectado.
         </p>
         <p
           style={{
-            fontSize: 10.5,
+            fontSize: 10,
             color: C.negro,
-            lineHeight: 1.85,
-            marginTop: 10,
+            lineHeight: 1.6,
+            marginTop: 8,
             marginBottom: 0,
           }}
         >
@@ -1652,23 +1651,10 @@ function ClosingBlock({
         </p>
         <p
           style={{
-            fontSize: 10.5,
+            fontSize: 10,
             color: C.negro,
-            lineHeight: 1.85,
+            lineHeight: 1.6,
             marginTop: 10,
-            marginBottom: 0,
-          }}
-        >
-          Con esta estrategia financiera no solo finalizas antes tu obligación,
-          también recuperas años valiosos que hoy estarían destinados al pago de
-          intereses y seguros futuros.
-        </p>
-        <p
-          style={{
-            fontSize: 10.5,
-            color: C.negro,
-            lineHeight: 1.85,
-            marginTop: 12,
             marginBottom: 0,
             fontWeight: 600,
           }}
