@@ -200,7 +200,7 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente }: P
           <DocCard
             icon={<FileText size={18} />}
             title="Datos para Contrato"
-            descripcion="Tabla contractual con cliente, propuesta, forma de pago y beneficio Fresh."
+            descripcion="Cliente, propuesta, beneficio de cobertura y acuerdo comercial (contado o financiado)."
             doc={datosDoc}
             onPreview={() => setPreview(datosDoc)}
           />
