@@ -8,7 +8,10 @@
 
 import type { ExpedienteMaestro } from "./expedienteMaestro";
 import type { Expediente, PropuestaData } from "./expedientes";
-// (ApoderadoNuvex se mantiene como contrato externo; aquí basta con ApoderadoSeleccionado)
+import {
+  detectPoderTemplate, renderPoderTemplate, validatePoderVariables, calidadFor,
+  type PoderTemplateId, type PoderVariables, type CalidadCliente,
+} from "./poderTemplates";
 
 export type DocBlock =
   | { type: "title"; text: string }
@@ -55,94 +58,151 @@ const fmtTxt = (v: string | number | null | undefined) => {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PODER ESPECIAL  (plantilla jurídica fija NUVEX, sin IA)
+// PODER ESPECIAL — basado en PLANTILLAS JURÍDICAS pre-aprobadas (sin IA).
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface ApoderadoSeleccionado {
   nombre: string;
   cedula: string;
   lugarExpedicion?: string | null;
+  ciudad?: string | null;
   celular?: string | null;
 }
 
+/** Persona (titular o cotitular) que firma como poderdante. */
+export interface PoderdanteInput {
+  nombre: string;
+  cedula: string;
+  lugarExpedicion: string;
+  ciudad: string;
+  calidad: CalidadCliente; // Titular / Cotitular / Locatario / Colocatario
+}
+
+export interface BuildPoderInput {
+  banco: string;
+  producto: string;
+  numeroCredito: string;
+  poderdante: PoderdanteInput;
+  apoderado: ApoderadoSeleccionado;
+  templateOverride?: PoderTemplateId;
+}
+
+export interface PoderResult {
+  doc: LegalDoc;
+  templateId: PoderTemplateId;
+  missing: string[]; // campos faltantes (vacío si OK)
+}
+
+function toVariables(i: BuildPoderInput): PoderVariables {
+  const a = i.apoderado;
+  const p = i.poderdante;
+  return {
+    BANCO: (i.banco || "").toUpperCase(),
+    NOMBRE_CLIENTE: (p.nombre || "").toUpperCase(),
+    CEDULA_CLIENTE: p.cedula || "",
+    CIUDAD_CLIENTE: ciudadFmt(p.ciudad),
+    LUGAR_EXPEDICION_CLIENTE: p.lugarExpedicion || "",
+    TIPO_PRODUCTO: i.producto || "",
+    CALIDAD_CLIENTE: p.calidad,
+    NUMERO_CREDITO: i.numeroCredito || "",
+    NOMBRE_APODERADO: (a.nombre || "").toUpperCase(),
+    CEDULA_APODERADO: a.cedula || "",
+    LUGAR_EXPEDICION_APODERADO: a.lugarExpedicion || "",
+    CELULAR_APODERADO: a.celular || "",
+    CIUDAD_APODERADO: a.ciudad || "",
+    FECHA: hoy(),
+  };
+}
+
+/** Construye UN poder para el poderdante indicado (titular o cotitular). */
+export function buildPoderFromTemplate(i: BuildPoderInput): PoderResult {
+  const templateId = i.templateOverride ?? detectPoderTemplate(i.banco, i.producto);
+  const vars = toVariables(i);
+  const missing = validatePoderVariables(vars);
+  const blocks = renderPoderTemplate(templateId, vars);
+  const safeName = (i.poderdante.nombre || "Cliente").replace(/\s+/g, "_");
+  return {
+    templateId,
+    missing,
+    doc: {
+      filename: `Poder_Especial_${i.poderdante.calidad}_${safeName}`,
+      title: `Poder Especial — ${i.poderdante.calidad}`,
+      blocks,
+    },
+  };
+}
+
+/**
+ * Devuelve uno o dos poderes (titular y cotitular si está activo) listos para
+ * generar. Para Leasing usa las calidades Locatario / Colocatario automáticamente.
+ */
+export function buildPoderesForExpediente(
+  e: ExpedienteMaestro,
+  apoderado: ApoderadoSeleccionado,
+  templateOverride?: PoderTemplateId,
+): PoderResult[] {
+  const cr = e.credito;
+  const c = e.cliente;
+  const banco = cr.banco;
+  const producto = cr.tipoProducto;
+  const numeroCredito = cr.numeroCredito;
+
+  const out: PoderResult[] = [];
+  out.push(
+    buildPoderFromTemplate({
+      banco, producto, numeroCredito, apoderado, templateOverride,
+      poderdante: {
+        nombre: c.nombre,
+        cedula: c.cedula,
+        lugarExpedicion: c.expedidaEn,
+        ciudad: c.ciudad,
+        calidad: calidadFor(producto, false),
+      },
+    }),
+  );
+
+  const co = e.cotitular;
+  if (co?.activo && (co.nombre || co.cedula)) {
+    out.push(
+      buildPoderFromTemplate({
+        banco, producto, numeroCredito, apoderado, templateOverride,
+        poderdante: {
+          nombre: co.nombre,
+          cedula: co.cedula,
+          lugarExpedicion: co.expedidaEn,
+          ciudad: co.ciudad || c.ciudad,
+          calidad: calidadFor(producto, true),
+        },
+      }),
+    );
+  }
+  return out;
+}
+
+/** Compat: una sola firma legacy usada por componentes existentes. */
 export function buildPoderEspecial(
   e: ExpedienteMaestro,
   apOverride?: ApoderadoSeleccionado,
+  templateOverride?: PoderTemplateId,
 ): LegalDoc {
-  const c = e.cliente;
-  const cr = e.credito;
   const ap: ApoderadoSeleccionado = apOverride ?? {
     nombre: e.apoderado?.nombre ?? "",
     cedula: e.apoderado?.cedula ?? "",
     lugarExpedicion: null,
+    ciudad: e.apoderado?.ciudad ?? null,
     celular: e.apoderado?.telefono ?? "",
   };
-
-  const blocks: DocBlock[] = [
-    { type: "title", text: "PODER ESPECIAL" },
-    { type: "spacer", size: 12 },
-    { type: "paragraph", text: `${ciudadFmt(c.ciudad)}, ${hoy()}.` },
-    { type: "spacer" },
-    { type: "paragraph", text: "Señores" },
-    { type: "paragraph", text: safe(cr.banco).toUpperCase() },
-    { type: "paragraph", text: "Ciudad." },
-    { type: "spacer" },
-    { type: "subtitle", text: "Referencia: Poder especial para gestión de crédito hipotecario" },
-    { type: "paragraph", text: `Crédito No. ${safe(cr.numeroCredito)} · Producto: ${safe(cr.tipoProducto)}` },
-    { type: "spacer" },
-    {
-      type: "paragraph",
-      text:
-        `Yo, ${fullName(c.nombre)}, mayor de edad, identificado(a) con cédula de ciudadanía ` +
-        `No. ${safe(c.cedula)} expedida en ${safe(c.expedidaEn)}, ` +
-        `con domicilio en ${ciudadFmt(c.ciudad)}, en pleno uso de mis facultades legales, ` +
-        `por medio del presente documento confiero PODER ESPECIAL, AMPLIO Y SUFICIENTE a:`,
-    },
-    { type: "spacer" },
-    {
-      type: "paragraph",
-      text:
-        `${fullName(ap.nombre)}, mayor de edad, identificado(a) con cédula de ciudadanía ` +
-        `No. ${safe(ap.cedula)} expedida en ${safe(ap.lugarExpedicion ?? "")}, ` +
-        `celular ${safe(ap.celular ?? "")}, quien en adelante se denominará EL APODERADO,`,
-    },
-    { type: "spacer" },
-    {
-      type: "paragraph",
-      text:
-        `para que en mi nombre y representación adelante ante ${safe(cr.banco).toUpperCase()} ` +
-        `todas las gestiones, trámites, solicitudes y actuaciones necesarias relacionadas con el ` +
-        `crédito hipotecario identificado con el No. ${safe(cr.numeroCredito)}, incluyendo de manera ` +
-        `enunciativa, mas no taxativa, las siguientes:`,
-    },
-    { type: "spacer" },
-    { type: "paragraph", text: "1. Solicitar y recibir extractos, certificaciones, paz y salvos, simulaciones, tablas de amortización y cualquier información relacionada con la obligación." },
-    { type: "paragraph", text: "2. Radicar solicitudes de reestructuración, reliquidación, reducción de tasa, ampliación o disminución de plazo, abonos a capital y demás modificaciones contractuales." },
-    { type: "paragraph", text: "3. Suscribir, presentar y retirar toda clase de comunicaciones, formularios y documentos." },
-    { type: "paragraph", text: "4. Representarme en reuniones, conciliaciones y diligencias relativas al crédito." },
-    { type: "paragraph", text: "5. Realizar cualquier otra actuación necesaria para el cabal cumplimiento del presente mandato." },
-    { type: "spacer" },
-    {
-      type: "paragraph",
-      text:
-        "El presente poder tendrá vigencia hasta su revocatoria expresa por escrito por parte del poderdante.",
-    },
-    { type: "spacer", size: 24 },
-    {
-      type: "signature",
-      columns: [
-        { label: "EL PODERDANTE", name: fullName(c.nombre), cc: `C.C. ${safe(c.cedula)} de ${safe(c.expedidaEn)}` },
-        { label: "EL APODERADO", name: fullName(ap.nombre), cc: `C.C. ${safe(ap.cedula)} de ${safe(ap.lugarExpedicion ?? "")}` },
-      ],
-    },
-  ];
-
-  return {
-    filename: `Poder_Especial_${(c.nombre || "Cliente").replace(/\s+/g, "_")}`,
+  const list = buildPoderesForExpediente(e, ap, templateOverride);
+  return list[0]?.doc ?? {
+    filename: "Poder_Especial",
     title: "Poder Especial",
-    blocks,
+    blocks: [{ type: "paragraph", text: "Sin datos suficientes." }],
   };
 }
+
+// Re-export para que los componentes UI puedan importar desde un único lugar.
+export { detectPoderTemplate } from "./poderTemplates";
+export type { PoderTemplateId, CalidadCliente } from "./poderTemplates";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DATOS PARA CONTRATO (tabla contractual descargable)
