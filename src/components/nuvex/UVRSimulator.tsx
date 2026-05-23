@@ -407,7 +407,7 @@ export function UVRSimulator({
           />
           <TextField
             label="Cuota sin seguros"
-            value={cuotaActualPesosNum > 0 && segurosNum >= 0 ? formatCOP(cuotaSinSegurosNum) : ""}
+            value={cuotaSimulacionPesosNum > 0 && segurosNum >= 0 ? formatCOP(cuotaSinSegurosNum) : ""}
             readOnly
             hint="Calculada automáticamente"
           />
