@@ -4,6 +4,7 @@ import { useAuth, signOut } from "@/hooks/useAuth";
 import { CORPORATIVO } from "@/components/nuvex/constants";
 import { LayoutGrid, FolderKanban, BarChart3, LogOut, GraduationCap, LineChart, UserSquare2, Users, Shield, Wallet } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
+import { Logo } from "@/components/nuvex/Logo";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
