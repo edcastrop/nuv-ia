@@ -94,6 +94,8 @@ function CasoDetail() {
         </ErrorBoundary>
       )}
 
+      <CarteraBlockExpediente expedienteId={exp.id} estadoCaso={(exp as unknown as { estado_caso?: string }).estado_caso ?? ""} />
+
       <HistorialCaso expedienteId={exp.id} />
 
 
