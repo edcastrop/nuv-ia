@@ -601,6 +601,7 @@ function EstadoPill({ estado }: { estado: EstadoExpediente }) {
   const map: Record<EstadoExpediente, string> = {
     SIMULADO: AZUL,
     FIRMADO: "#F0B429",
+    ENVIADO_CONTRATACION: "#6366F1",
     RADICADO: "#3B6FA0",
     APROBADO: VERDE,
     FACTURADO: "#9333EA",
