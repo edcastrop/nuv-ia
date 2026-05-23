@@ -13,13 +13,11 @@ import type { LegalDoc, DocBlock } from "./legalDocs";
 
 export function exportLegalDocPDF(doc: LegalDoc) {
   if (doc.validationIssues && doc.validationIssues.length > 0) {
-    // Bloqueo de exportación — el llamador debe corregir antes de generar.
-    // eslint-disable-next-line no-alert
-    alert(
-      `No se puede generar "${doc.title}".\n\n` +
-        doc.validationIssues.map((m) => `• ${m}`).join("\n"),
+    // Documento administrativo: NO bloquear. Solo advertir en consola.
+    console.warn(
+      `[NUVEX PDF] "${doc.title}" — pendiente de validación financiera:\n` +
+        doc.validationIssues.map((m) => ` • ${m}`).join("\n"),
     );
-    return;
   }
   const pdf = new jsPDF({ unit: "pt", format: "letter" });
   const pageW = pdf.internal.pageSize.getWidth();
