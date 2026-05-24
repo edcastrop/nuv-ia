@@ -652,6 +652,66 @@ export type Database = {
         }
         Relationships: []
       }
+      extractos_lecturas: {
+        Row: {
+          aprobado_por: string | null
+          archivo_nombre: string | null
+          archivo_path: string | null
+          asesor_id: string
+          banco: string | null
+          confianza_global: number
+          created_at: string
+          datos: Json
+          estado: string
+          expediente_id: string | null
+          id: string
+          moneda: string | null
+          motor_version: string
+          notas: string | null
+          producto: string | null
+          scores: Json
+          updated_at: string
+        }
+        Insert: {
+          aprobado_por?: string | null
+          archivo_nombre?: string | null
+          archivo_path?: string | null
+          asesor_id?: string
+          banco?: string | null
+          confianza_global?: number
+          created_at?: string
+          datos?: Json
+          estado?: string
+          expediente_id?: string | null
+          id?: string
+          moneda?: string | null
+          motor_version?: string
+          notas?: string | null
+          producto?: string | null
+          scores?: Json
+          updated_at?: string
+        }
+        Update: {
+          aprobado_por?: string | null
+          archivo_nombre?: string | null
+          archivo_path?: string | null
+          asesor_id?: string
+          banco?: string | null
+          confianza_global?: number
+          created_at?: string
+          datos?: Json
+          estado?: string
+          expediente_id?: string | null
+          id?: string
+          moneda?: string | null
+          motor_version?: string
+          notas?: string | null
+          producto?: string | null
+          scores?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           activo: boolean
