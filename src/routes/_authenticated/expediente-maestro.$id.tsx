@@ -132,6 +132,9 @@ function MaestroDetail() {
         liveOverride={{ cliente, cotitular, credito, fresh, asesor, licenciado, apoderado }}
       />
 
+      <MotorExtractosNUVEX expedienteId={id} />
+
+
 
 
 
