@@ -48,13 +48,63 @@ export const BANK_PROFILES: BankProfile[] = [
     id: "davivienda_leasing",
     banco: "Davivienda",
     productos: ["LEASING_HABITACIONAL"],
-    matchAny: [/davivienda.*leasing/i, /leasing.*davivienda/i],
-    hints: `DAVIVIENDA LEASING HABITACIONAL:
-- "Canon" o "Valor Canon" → cuotaActual.
-- "Cánones pendientes" → cuotasPendientes.
-- "Saldo del Contrato" o "Saldo Capital" → saldoCapital.
-- "Opción de Compra" — registrar en notas, NO como cuota.
-- "Interés Corriente" — guía interna, no es cuotaActual.`,
+    matchAny: [
+      /extracto\s+contrato\s+leasing/i,
+      /davivienda.*leasing/i,
+      /leasing.*davivienda/i,
+      /no\.?\s*c[aá]nones\s+pdtes/i,
+      /no\.?\s*de\s+canon\s+que\s+se\s+cancela/i,
+    ],
+    hints: `DAVIVIENDA LEASING HABITACIONAL (parser id: davivienda_leasing_pesos).
+
+IDENTIFICACIÓN: el documento dice "Extracto Contrato Leasing", "Davivienda",
+"No. Cánones Pdtes. Pago Total" y "No. de Canon que se Cancela".
+→ banco="Davivienda", producto="LEASING_HABITACIONAL", moneda="PESOS".
+
+CAMPOS — etiquetas LITERALES del extracto Davivienda Leasing:
+- titular ← texto que sigue a "Apreciado Cliente" (nombres en mayúsculas).
+- numeroCredito ← número junto a "Extracto Contrato Leasing" o "No.Contrato del Leasing" (ej "600303970014253-4").
+- cuotaActual ← "+ Valor Cuota Mes" (es el canon mensual que paga el cliente, INCLUYE seguros).
+- saldoCapital ← página 2, valor junto a "Saldo a: [fecha]". NO usar "Saldo anterior".
+- plazoInicial ← "Plazo" (en meses).
+- cuotasPendientes ← "No. Cánones Pdtes. Pago Total".
+- cuotasPagadas ← CALCULAR: plazoInicial - cuotasPendientes. Score 90.
+- tasaEA ← "Tasa Interés Cte. Cobrada" (esta es la que se usa para simulación).
+  La "Tasa Interés Cte. Pactada" NO va en tasaEA; déjala fuera o usa scoring bajo si no hay otro campo.
+
+SEGUROS (página 2, sección "Valores en Pesos"):
+- "Seguro de Vida" → un valor.
+- "Seguro de Incendio y Anexos" → un valor.
+- "Seguro Protección de Pagos" → un valor (puede ser 0).
+- seguros = suma exacta de los tres (NO calcular por tasa por millón).
+  Ejemplo real: 21174 + 43573 + 0 = 64747.
+
+CAPITAL E INTERESES (página 2):
+- interesCuota ← "Intereses Corrientes" (ej 773225).
+- capitalCuota ← "Abonos a Capital" (ej 226775).
+- Validación: capitalCuota + interesCuota + seguros ≈ cuotaActual (tolerancia ±2000 por redondeo).
+
+VALOR DESEMBOLSADO:
+- Si el extracto NO muestra "Valor del leasing", "Valor inicial del leasing"
+  ni "Valor del contrato" → valorDesembolsado="" con score 0.
+  NO inventar. NO usar valor asegurado. NO usar saldo anterior.
+
+CÉDULA:
+- Si "Documento No:" muestra "0000000000" o equivalente enmascarado →
+  cedula="" con score 0. NO inventar.
+
+FECHA DESEMBOLSO / FECHA EXTRACTO:
+- Para fechaDesembolso usar fecha del contrato si está visible; si no, vacío.
+- Para fecha del extracto usar "Saldo a: [fecha]" en formato YYYY-MM-DD
+  (ej "May. 08/2026" → "2026-05-08"). No guardar solo "2026-05".
+
+BENEFICIO / COBERTURA:
+- NO marcar beneficio solo por mencionar "cobertura" en el texto.
+- Activar solo si hay valor > 0 en "Interés Cte. Cobertura",
+  "Valor Beneficio", "Valor subsidio" o "Cobertura FRECH".
+- Si Interés Cte. Cobertura = 0 → producto SIN beneficio; no agregar alerta.
+
+sistemaAmortizacion = "leasing canon fijo" si no es claro otro sistema.`,
   },
   {
     id: "davibank",
