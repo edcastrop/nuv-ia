@@ -95,6 +95,12 @@ function CasoDetail() {
         </ErrorBoundary>
       )}
 
+      {maestroLike && (
+        <ErrorBoundary fallback={<Card><div className="text-sm text-[#B42318]">No se pudo cargar el Módulo Jurídico.</div></Card>}>
+          <ModuloJuridico expediente={maestroLike} />
+        </ErrorBoundary>
+      )}
+
       <CarteraBlockExpediente expedienteId={exp.id} estadoCaso={(exp as unknown as { estado_caso?: string }).estado_caso ?? ""} />
 
       <HistorialCaso expedienteId={exp.id} />
