@@ -244,13 +244,16 @@ export const CAMPOS_MOTOR = [
 
 export type CampoMotor = (typeof CAMPOS_MOTOR)[number];
 
+// REGLA DE ORO: solo estos campos son obligatorios para habilitar la simulación.
+// Cédula, valor desembolsado, beneficio, tasa cobertura, fecha expedición y
+// dirección son datos jurídicos/complementarios y NO bloquean el simulador.
 export const CAMPOS_CRITICOS: CampoMotor[] = [
-  "banco",
+  "titular",
   "producto",
-  "saldoCapital",
-  "cuotaActual",
   "plazoInicial",
-  "cuotasPagadas",
+  "cuotasPendientes",
+  "cuotaActual",
+  "seguros",
   "tasaEA",
 ];
 
