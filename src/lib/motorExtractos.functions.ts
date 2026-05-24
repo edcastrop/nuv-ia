@@ -163,13 +163,17 @@ async function callLovableAI(
   });
 }
 
-function findProfileByName(banco: string): BankProfile | null {
+function findProfileByName(banco: string, producto?: Producto): BankProfile | null {
   const t = banco.toLowerCase();
-  for (const p of BANK_PROFILES) {
-    if (p.matchAny.some((rx) => rx.test(banco))) return p;
-    if (p.banco.toLowerCase() === t) return p;
+  const candidates = BANK_PROFILES.filter(
+    (p) => p.matchAny.some((rx) => rx.test(banco)) || p.banco.toLowerCase() === t,
+  );
+  if (!candidates.length) return null;
+  if (producto) {
+    const exact = candidates.find((p) => p.productos.includes(producto));
+    if (exact) return exact;
   }
-  return null;
+  return candidates[0];
 }
 
 // ---------------- Server Function ----------------
