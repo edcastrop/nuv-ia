@@ -320,7 +320,7 @@ export function ExtractoReader({ modo, onApply }: Props) {
         setStage("error");
         return;
       }
-      setParsed(normalizeExtractData(recomputeBancolombia(resp.data)));
+      setParsed(normalizeExtractData(recomputeDaviviendaLeasing(recomputeBancolombia(resp.data))));
       setStage("review");
     } catch (err) {
       console.error(err);
@@ -344,6 +344,13 @@ export function ExtractoReader({ modo, onApply }: Props) {
     "valorCobertura",
   ]);
 
+  const DAVIVIENDA_LEASING_KEYS = new Set([
+    "banco", "producto", "tipoCredito", "plazoInicial", "cuotasPendientes",
+    "cuotasPagadas", "cuotaMensual", "seguros", "tea", "teaCobrada", "teaPactada",
+    "valorSeguroVida", "valorSeguroIncendio", "valorSeguroTerremoto", "valorCobertura",
+    "tasaCobertura", "tipoBeneficio", "tieneCobertura", "cuotaBaseSimulacion",
+  ]);
+
   // Normaliza cuotasPagadas / cuotasPendientes. Misma lógica que el servidor
   // para que ZIP, PDF, imagen y ediciones manuales produzcan el mismo objeto.
   const normalizeExtractData = (data: ExtractoData): ExtractoData => {
@@ -363,6 +370,10 @@ export function ExtractoReader({ modo, onApply }: Props) {
     if (cuotasPagadas <= 0 && cuotaActualNumero > 0) {
       cuotasPagadas = cuotaActualNumero;
       out.cuotasPagadas = String(cuotaActualNumero);
+    }
+    if (cuotasPagadas <= 0 && plazoInicial > 0 && cuotasPendientesExt > 0) {
+      cuotasPagadas = Math.max(0, plazoInicial - cuotasPendientesExt);
+      out.cuotasPagadas = String(cuotasPagadas);
     }
     if (plazoInicial > 0 && cuotasPagadas > 0) {
       const calc = plazoInicial - cuotasPagadas;
