@@ -7,6 +7,7 @@ import { EstadoBadge } from "@/components/nuvex/EstadoBadge";
 import { Card } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
 import { DocumentosLegales } from "@/components/expediente-maestro/DocumentosLegales";
+import { ModuloJuridico } from "@/components/expediente-maestro/ModuloJuridico";
 import { expedienteToMaestroLike } from "@/lib/expedienteMaestro";
 import { EstadoCasoBlock } from "@/components/expediente/EstadoCasoBlock";
 import { HistorialCaso } from "@/components/expediente/HistorialCaso";
@@ -91,6 +92,12 @@ function CasoDetail() {
       {maestroLike && (
         <ErrorBoundary fallback={<Card><div className="text-sm text-[#B42318]">No se pudo cargar esta sección.</div></Card>}>
           <DocumentosLegales expediente={maestroLike} simExpediente={exp} expedienteIdToPersist={exp.id} onJuridicaSaved={reload} />
+        </ErrorBoundary>
+      )}
+
+      {maestroLike && (
+        <ErrorBoundary fallback={<Card><div className="text-sm text-[#B42318]">No se pudo cargar el Módulo Jurídico.</div></Card>}>
+          <ModuloJuridico expediente={maestroLike} />
         </ErrorBoundary>
       )}
 
