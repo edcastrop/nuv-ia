@@ -712,13 +712,16 @@ export function ExtractoReader({ modo, onApply }: Props) {
   const _cuotasPagadasNum = _intStrParsed("cuotasPagadas");
   const _plazoInicialNum = _intStrParsed("plazoInicial");
   const _cuotaActualNumeroNum = _intStrParsed("cuotaActualNumero");
+  const _cuotasPendientesNum = _intStrParsed("cuotasPendientes");
+  const _esDaviviendaLeasing = /davivienda/i.test(String(parsed?.banco ?? "")) && /leasing/i.test(`${String(parsed?.producto ?? "")} ${String(parsed?.tipoCredito ?? "")}`);
   const _cuotasPagadasEnCero = _cuotasPagadasNum <= 0 && _cuotaActualNumeroNum > 0;
-  const _faltanDatosBase =
-    _plazoInicialNum <= 0 || _cuotasPagadasNum <= 0;
+  const _faltanDatosBase = _esDaviviendaLeasing
+    ? _plazoInicialNum <= 0 || _cuotasPendientesNum <= 0
+    : _plazoInicialNum <= 0 || _cuotasPagadasNum <= 0;
   const confirmDisabled =
-    hayErrores ||
+    (hayErrores && !_esDaviviendaLeasing) ||
     (tieneBeneficio && !cuotaBaseLista) ||
-    _cuotasPagadasEnCero ||
+    (!_esDaviviendaLeasing && _cuotasPagadasEnCero) ||
     _faltanDatosBase;
 
   const fmtCO = (raw: string) => {
