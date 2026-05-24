@@ -57,54 +57,55 @@ export const BANK_PROFILES: BankProfile[] = [
     ],
     hints: `DAVIVIENDA LEASING HABITACIONAL (parser id: davivienda_leasing_pesos).
 
-IDENTIFICACIÓN: el documento dice "Extracto Contrato Leasing", "Davivienda",
-"No. Cánones Pdtes. Pago Total" y "No. de Canon que se Cancela".
+IDENTIFICACIÓN: "Extracto Contrato Leasing" + "Davivienda" + "No. Cánones Pdtes. Pago Total".
 → banco="Davivienda", producto="LEASING_HABITACIONAL", moneda="PESOS".
 
-CAMPOS — etiquetas LITERALES del extracto Davivienda Leasing:
-- titular ← texto que sigue a "Apreciado Cliente" (nombres en mayúsculas).
-- numeroCredito ← número junto a "Extracto Contrato Leasing" o "No.Contrato del Leasing" (ej "600303970014253-4").
-- cuotaActual ← "+ Valor Cuota Mes" (es el canon mensual que paga el cliente, INCLUYE seguros).
-- saldoCapital ← página 2, valor junto a "Saldo a: [fecha]". NO usar "Saldo anterior".
-- plazoInicial ← "Plazo" (en meses).
-- cuotasPendientes ← "No. Cánones Pdtes. Pago Total".
-- cuotasPagadas ← CALCULAR: plazoInicial - cuotasPendientes. Score 90.
-- tasaEA ← "Tasa Interés Cte. Cobrada" (esta es la que se usa para simulación).
-  La "Tasa Interés Cte. Pactada" NO va en tasaEA; déjala fuera o usa scoring bajo si no hay otro campo.
+INTERPRETACIÓN DE NÚMEROS (CRÍTICO):
+- Formato americano "1,065,000.00" → 1065000. Coma=miles, punto=decimal.
+- Formato colombiano "1.065.000,00" → 1065000. Punto=miles, coma=decimal.
+- "$773,225.38" → 773225.38 (NO 773225380). "$21,174.00" → 21174.
+- NUNCA conviertas "$77,322.538" en 77322538. Reconoce cuál es decimal por el patrón.
+- Devuelve montos como dígitos con punto decimal si aplica (ej "773225.38" o "1065000").
 
-SEGUROS (página 2, sección "Valores en Pesos"):
-- "Seguro de Vida" → un valor.
-- "Seguro de Incendio y Anexos" → un valor.
-- "Seguro Protección de Pagos" → un valor (puede ser 0).
-- seguros = suma exacta de los tres (NO calcular por tasa por millón).
-  Ejemplo real: 21174 + 43573 + 0 = 64747.
+CAMPOS — etiquetas LITERALES:
+- titular ← texto inmediatamente debajo de "Apreciado Cliente" (nombres en mayúsculas).
+- numeroCredito ← número junto a "Extracto Contrato Leasing" o "No.Contrato del Leasing" (ej "600303970014253-4").
+- cuotaActual ← SOLO "+ Valor Cuota Mes". NO uses "Total Aplicado". NO uses "Total Valor a pagar" si hay mora.
+- saldoCapital ← página 2, "Saldo a: [fecha]" o "Saldo a la Fecha de Corte". NO uses "Saldo anterior".
+- plazoInicial ← "Plazo" (meses).
+- cuotasPendientes ← "No. Cánones Pdtes. Pago Total".
+- cuotasPagadas ← plazoInicial − cuotasPendientes (score 90).
+- tasaEA ← SOLO "Tasa Interés Cte. Cobrada" (es la usada para simulación).
+  "Tasa Interés Cte. Pactada" es solo referencia, NO la pongas en tasaEA.
+
+SEGUROS (página 2, "Valores en Pesos") — NO uses tasas por millón:
+- "Seguro de Vida"  +  "Seguro de Incendio y Anexos"  +  "Seguro Protección de Pagos"
+- seguros = suma exacta de los tres. Si alguno no aparece → 0.
+- Ejemplo real esperado: 21174 + 43573 + 0 = 64747.
 
 CAPITAL E INTERESES (página 2):
-- interesCuota ← "Intereses Corrientes" (ej 773225).
-- capitalCuota ← "Abonos a Capital" (ej 226775).
-- Validación: capitalCuota + interesCuota + seguros ≈ cuotaActual (tolerancia ±2000 por redondeo).
+- interesCuota ← "Intereses Corrientes" (ej 773225.38).
+- capitalCuota ← "Abonos a Capital" (ej 226774.62).
+- "Abonos a Capital" NO es beneficio, NO es cobertura, NO es subsidio.
 
-VALOR DESEMBOLSADO:
-- Si el extracto NO muestra "Valor del leasing", "Valor inicial del leasing"
-  ni "Valor del contrato" → valorDesembolsado="" con score 0.
-  NO inventar. NO usar valor asegurado. NO usar saldo anterior.
+BENEFICIO / COBERTURA — regla estricta:
+- NO marques beneficio solo porque el texto mencione "cobertura".
+- Solo si hay valor > 0 en "Interés Cte. Cobertura", "Valor Beneficio",
+  "Valor subsidio" o "Cobertura FRECH". Si todos están en 0 → SIN beneficio,
+  no agregues alerta tipo "La cobertura condicionada".
 
 CÉDULA:
-- Si "Documento No:" muestra "0000000000" o equivalente enmascarado →
-  cedula="" con score 0. NO inventar.
+- Si "Documento No:" muestra "0000000000" o enmascarado → cedula="" con score 0.
+- NUNCA tomes el NIT de Davivienda como cédula del cliente.
 
-FECHA DESEMBOLSO / FECHA EXTRACTO:
-- Para fechaDesembolso usar fecha del contrato si está visible; si no, vacío.
-- Para fecha del extracto usar "Saldo a: [fecha]" en formato YYYY-MM-DD
-  (ej "May. 08/2026" → "2026-05-08"). No guardar solo "2026-05".
+VALOR DESEMBOLSADO:
+- Si no aparece "Valor del leasing" / "Valor inicial del leasing" / "Valor del contrato"
+  → valorDesembolsado="" con score 0. NO inventar. NO bloquea simulación.
 
-BENEFICIO / COBERTURA:
-- NO marcar beneficio solo por mencionar "cobertura" en el texto.
-- Activar solo si hay valor > 0 en "Interés Cte. Cobertura",
-  "Valor Beneficio", "Valor subsidio" o "Cobertura FRECH".
-- Si Interés Cte. Cobertura = 0 → producto SIN beneficio; no agregar alerta.
+FECHA DEL EXTRACTO:
+- Toma "Saldo a: [fecha]" en formato YYYY-MM-DD (ej "May. 08/2026" → "2026-05-08").
 
-sistemaAmortizacion = "leasing canon fijo" si no es claro otro sistema.`,
+sistemaAmortizacion = "leasing canon fijo" si no hay otra evidencia.`,
   },
   {
     id: "davibank",
