@@ -659,6 +659,45 @@ export const extractStatement = createServerFn({ method: "POST" })
             );
           }
         }
+      } else if (esDaviviendaLeasing) {
+        // ----- DAVIVIENDA LEASING: no usa lógica genérica de beneficio -----
+        mapeoBanco = "davivienda_leasing";
+        parsed.banco = "Davivienda";
+        parsed.moneda = "PESOS";
+        parsed.tipoCredito = "LEASING_HABITACIONAL";
+        if (!parsed.producto || /hipotecario/i.test(String(parsed.producto))) {
+          parsed.producto = "Extracto Contrato Leasing";
+        }
+
+        if (_plazoInicialVal > 0 && _cuotasPendientesVal > 0) {
+          parsed.cuotasPagadas = String(Math.max(0, _plazoInicialVal - _cuotasPendientesVal));
+          parsed.cuotasPendientes = String(_cuotasPendientesVal);
+        }
+        if (teaCobradaEmpty && numStr("teaPactada")) parsed.teaCobrada = parsed.teaPactada;
+        if (!numStr("tea") && numStr("teaCobrada")) parsed.tea = parsed.teaCobrada;
+
+        const sVida = monto("valorSeguroVida");
+        const sIncendio = monto("valorSeguroIncendio");
+        const sProteccion = monto("valorSeguroTerremoto");
+        const segurosDetallados = sVida + sIncendio + sProteccion;
+        if (segurosDetallados > 0) {
+          segurosNum = segurosDetallados;
+          parsed.seguros = formatMontoExtracto(segurosDetallados);
+        }
+
+        parsed.tieneCobertura = valorBenef > 0 || num("tasaCobertura") > 0 ? "si" : "no";
+        if (parsed.tieneCobertura !== "si") {
+          parsed.valorCobertura = "";
+          parsed.tasaCobertura = "";
+          parsed.tipoBeneficio = "";
+          valorBenef = 0;
+          tieneCob = false;
+        }
+
+        cuotaBase = cuotaMensual;
+        requiereVerificacion = false;
+        parsed.cuotaPagadaCliente = cuotaMensual > 0 ? formatMontoExtracto(cuotaMensual) : parsed.cuotaPagadaCliente;
+        parsed.cuotaBaseSimulacion = cuotaMensual > 0 ? formatMontoExtracto(cuotaMensual) : "";
       } else {
         // ----- Genérico (otros bancos) -----
         if (cuotaConInteresSinSeguros > 0 && !parsed.cuotaConInteresSinSeguros) {
