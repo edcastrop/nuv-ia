@@ -306,6 +306,17 @@ REGLAS ESTRICTAS:
   * Los TRES seguros (vida, incendio, terremoto) DEBEN extraerse por separado y cada uno DEBE quedar lleno si aparece en el extracto. Si solo extraes uno o dos, la lectura será rechazada. Verifica visualmente que los tres valores estén presentes antes de responder.
   * Los seguros mensuales se calculan EXCLUSIVAMENTE como valorSeguroVida + valorSeguroIncendio + valorSeguroTerremoto. Nunca incluyas "Valor asegurado Incendio y Terremoto" en esta suma.
   * EJEMPLO REAL Bancolombia (referencia obligatoria): "*Valor seguro vida $ 14,433.00", "*Valor seguro incendio $ 21,654.00", "*Valor seguro terremoto $ 14,435.00" → valorSeguroVida="14433", valorSeguroIncendio="21654", valorSeguroTerremoto="14435". Suma seguros = 50522. Si la tabla "Movimientos Último Periodo" muestra columnas "Seguros Vida / Seguros Incendio / Seguros Terremoto", esos valores deben coincidir con los anteriores.
+- DAVIVIENDA LEASING HABITACIONAL — mapeo LITERAL obligatorio:
+  * Si aparece "Extracto Contrato Leasing", "Davivienda" y "No. Cánones Pdtes. Pago Total", producto="Extracto Contrato Leasing", tipoCredito="LEASING_HABITACIONAL", moneda="PESOS".
+  * "Apreciado Cliente" → cliente. "No.Contrato del Leasing" / número junto a "Extracto Contrato Leasing" → numeroCredito.
+  * "+ Valor Cuota Mes" → cuotaMensual y cuotaPagadaCliente. NO uses "Total Aplicado". NO uses "Total Valor a pagar" si hay mora.
+  * "Saldo a:" / "Saldo a la Fecha de Corte" → saldoCapital y fechaExtracto.
+  * "Plazo" → plazoInicial. "No. Cánones Pdtes. Pago Total" → cuotasPendientes. cuotasPagadas = plazoInicial - cuotasPendientes.
+  * "Tasa Interés Cte. Cobrada" → teaCobrada y tea. "Tasa Interés Cte. Pactada" → teaPactada únicamente como referencia.
+  * En "Valores en Pesos": seguros = "Seguro de Vida" + "Seguro de Incendio y Anexos" + "Seguro Protección de Pagos". También llena valorSeguroVida, valorSeguroIncendio y valorSeguroTerremoto/protección si aparecen.
+  * "Intereses Corrientes" → interesCuota. "Abonos a Capital" → capitalCuota. Abonos a Capital NO es beneficio/cobertura/subsidio.
+  * No marques beneficio por la sola palabra cobertura. Solo tieneCobertura="si" si "Interés Cte. Cobertura", "Valor Beneficio", "Valor subsidio" o "Cobertura FRECH" tienen valor > 0. Si no, tieneCobertura="no", tipoBeneficio="", valorCobertura="", tasaCobertura="".
+  * Si "Documento No:" es "0000000000" o enmascarado, cedula="". Si no aparece valor desembolsado, valorDesembolsado="".
 - Confianza "alta" solo si el dato es 100% explícito en el extracto. "media" si requiere inferencia simple. "baja" si dudoso o ausente.`;
 
 export type ExtractoData = Record<string, string | Record<string, string>>;
