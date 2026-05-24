@@ -222,7 +222,7 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
 
     if (/colpatria/i.test(det.banco)) det.banco = "Davibank";
 
-    const profile = findProfileByName(det.banco);
+    const profile = findProfileByName(det.banco, det.producto);
     if (!profile) {
       return {
         error: `No hay parser especializado para "${det.banco || "banco desconocido"}". El motor NUVEX V1 solo procesa bancos con plantilla. Usa el lector clásico como alternativa.`,
