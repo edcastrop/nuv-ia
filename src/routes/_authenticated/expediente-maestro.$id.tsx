@@ -11,6 +11,7 @@ import { NUVEX } from "@/components/nuvex/constants";
 import { MaestroEditor } from "@/components/expediente-maestro/MaestroEditor";
 import { DocumentosLegales } from "@/components/expediente-maestro/DocumentosLegales";
 import { ModuloJuridico } from "@/components/expediente-maestro/ModuloJuridico";
+import { MotorExtractosNUVEX } from "@/components/nuvex/MotorExtractosNUVEX";
 
 export const Route = createFileRoute("/_authenticated/expediente-maestro/$id")({
   component: MaestroDetail,
