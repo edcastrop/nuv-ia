@@ -270,6 +270,26 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
       const s = Number(parsed.scores?.[k] ?? 0);
       scores[k] = Number.isFinite(s) ? Math.max(0, Math.min(100, Math.round(s))) : 0;
     }
+
+    // Normalización numérica COP (US "1,065,000.00" y CO "1.065.000,00" → 1065000)
+    const CAMPOS_MONETARIOS: CampoMotor[] = [
+      "valorDesembolsado", "saldoCapital", "cuotaActual",
+      "interesCuota", "capitalCuota", "seguros", "valorUVR", "saldoUVR",
+    ];
+    for (const k of CAMPOS_MONETARIOS) {
+      if (datos[k]) datos[k] = parseCOP(datos[k]);
+    }
+    // Tasas: solo dígitos y un punto decimal
+    for (const k of ["tasaEA", "tasaMensual"] as CampoMotor[]) {
+      if (datos[k]) datos[k] = parseTasa(datos[k]);
+    }
+
+    // Limpia cédulas claramente inválidas (0000000000, enmascaradas)
+    if (datos.cedula && /^0+$/.test(datos.cedula.replace(/\D/g, ""))) {
+      datos.cedula = "";
+      scores.cedula = 0;
+    }
+
     // Forzar banco/producto/moneda según detección y plantilla
     datos.banco = profile.banco;
     scores.banco = 100;
