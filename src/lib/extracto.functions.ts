@@ -521,6 +521,9 @@ export const extractStatement = createServerFn({ method: "POST" })
       // ===== Mapeo determinístico por banco =====
       const bancoLower = (typeof parsed.banco === "string" ? parsed.banco : "").toLowerCase();
       const esBancolombia = /bancolombia/.test(bancoLower);
+      const productoLower = (typeof parsed.producto === "string" ? parsed.producto : "").toLowerCase();
+      const tipoLower = (typeof parsed.tipoCredito === "string" ? parsed.tipoCredito : "").toLowerCase();
+      const esDaviviendaLeasing = /davivienda/.test(bancoLower) && /leasing/.test(`${productoLower} ${tipoLower}`);
 
       let tieneCob =
         (typeof parsed.tieneCobertura === "string" &&
@@ -538,7 +541,7 @@ export const extractStatement = createServerFn({ method: "POST" })
       let cuotaBase = 0;
       let requiereVerificacion = false;
       const errores: string[] = [];
-      let mapeoBanco: "bancolombia" | "generico" = "generico";
+      let mapeoBanco: "bancolombia" | "davivienda_leasing" | "generico" = "generico";
 
       if (esBancolombia) {
         // ----- BANCOLOMBIA: mapeo literal por campos del extracto -----
