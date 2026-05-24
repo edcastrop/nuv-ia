@@ -459,12 +459,56 @@ export function ExtractoReader({ modo, onApply }: Props) {
     return out;
   };
 
+  const recomputeDaviviendaLeasing = (data: ExtractoData): ExtractoData => {
+    const g = (k: string) => (typeof data[k] === "string" ? (data[k] as string) : "");
+    const m = (k: string) => parseMontoExtracto(g(k));
+    const texto = `${g("banco")} ${g("producto")} ${g("tipoCredito")}`.toLowerCase();
+    if (!/davivienda/.test(texto) || !/leasing/.test(texto)) return data;
+
+    const out: ExtractoData = { ...data };
+    out.banco = "Davivienda";
+    out.moneda = "PESOS";
+    out.tipoCredito = "LEASING_HABITACIONAL";
+    out.producto = g("producto") || "Extracto Contrato Leasing";
+
+    const plazo = parseInt(g("plazoInicial").replace(/\D/g, ""), 10) || 0;
+    const pendientes = parseInt(g("cuotasPendientes").replace(/\D/g, ""), 10) || 0;
+    if (plazo > 0 && pendientes > 0) out.cuotasPagadas = String(Math.max(0, plazo - pendientes));
+
+    const segurosDetallados = m("valorSeguroVida") + m("valorSeguroIncendio") + m("valorSeguroTerremoto");
+    if (segurosDetallados > 0) out.seguros = String(Math.round(segurosDetallados));
+    if (!g("tea") && g("teaCobrada")) out.tea = g("teaCobrada");
+
+    const tieneBeneficioReal = m("valorCobertura") > 0 || parseMontoExtracto(g("tasaCobertura")) > 0;
+    out.tieneCobertura = tieneBeneficioReal ? "si" : "no";
+    if (!tieneBeneficioReal) {
+      out.valorCobertura = "";
+      out.tasaCobertura = "";
+      out.tipoBeneficio = "";
+      out.requiereVerificacionBeneficio = "no";
+      out.alertaCuotaBase = "";
+      out.erroresValidacion = "";
+    }
+
+    const cuota = m("cuotaMensual") || m("cuotaPagadaCliente") || m("cuotaBaseSimulacion");
+    if (cuota > 0) {
+      out.cuotaMensual = String(Math.round(cuota));
+      out.cuotaPagadaCliente = String(Math.round(cuota));
+      out.cuotaBaseSimulacion = String(Math.round(cuota));
+    }
+    out.mapeoBanco = "davivienda_leasing";
+    return out;
+  };
+
   const updateField = (key: string, value: string) => {
     setParsed((prev) => {
       if (!prev) return prev;
       let next: ExtractoData = { ...prev, [key]: value };
       if (BANCOLOMBIA_KEYS.has(key) || key === "banco") {
         next = recomputeBancolombia(next);
+      }
+      if (DAVIVIENDA_LEASING_KEYS.has(key)) {
+        next = recomputeDaviviendaLeasing(next);
       }
       if (key === "cuotasPagadas" || key === "plazoInicial" || key === "cuotasPendientes" || key === "cuotaActualNumero") {
         next = normalizeExtractData(next);
