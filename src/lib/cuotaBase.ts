@@ -16,19 +16,34 @@ export const ALERTA_CUOTA_CON_INTERES_SIN_SEGUROS =
 export function parseMontoExtracto(value: string | number | null | undefined): number {
   if (value === null || value === undefined) return 0;
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
-  const cleaned = String(value).replace(/[^\d,.-]/g, "");
+  let cleaned = String(value).replace(/[^\d,.-]/g, "").trim();
   if (!cleaned) return 0;
 
-  if (cleaned.includes(",") && cleaned.lastIndexOf(",") > cleaned.lastIndexOf(".")) {
-    return parseFloat(cleaned.replace(/\./g, "").replace(",", ".")) || 0;
+  const negative = cleaned.startsWith("-");
+  if (negative) cleaned = cleaned.slice(1);
+
+  const lastComma = cleaned.lastIndexOf(",");
+  const lastDot = cleaned.lastIndexOf(".");
+  let normalized = cleaned;
+
+  if (lastComma !== -1 && lastDot !== -1) {
+    normalized = lastComma > lastDot
+      ? cleaned.replace(/\./g, "").replace(",", ".")
+      : cleaned.replace(/,/g, "");
+  } else if (lastComma !== -1) {
+    const parts = cleaned.split(",");
+    const last = parts.at(-1) ?? "";
+    const thousands = parts.length > 1 && parts.slice(1).every((p) => p.length === 3);
+    normalized = thousands || last.length > 2 ? cleaned.replace(/,/g, "") : cleaned.replace(",", ".");
+  } else if (lastDot !== -1) {
+    const parts = cleaned.split(".");
+    const last = parts.at(-1) ?? "";
+    const thousands = parts.length > 1 && parts.slice(1).every((p) => p.length === 3);
+    normalized = thousands ? cleaned.replace(/\./g, "") : cleaned;
   }
 
-  const parts = cleaned.split(".");
-  if (parts.length > 2) return parseFloat(cleaned.replace(/\./g, "")) || 0;
-  if (parts.length === 2 && parts[1].length === 3 && parts[0].length <= 3) {
-    return parseFloat(cleaned.replace(/\./g, "")) || 0;
-  }
-  return parseFloat(cleaned) || 0;
+  const parsed = parseFloat(`${negative ? "-" : ""}${normalized}`);
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 export function formatMontoExtracto(value: number): string {
