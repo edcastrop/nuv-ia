@@ -7,6 +7,7 @@ import { EstadoBadge } from "@/components/nuvex/EstadoBadge";
 import { Card } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
 import { DocumentosLegales } from "@/components/expediente-maestro/DocumentosLegales";
+import { ModuloJuridico } from "@/components/expediente-maestro/ModuloJuridico";
 import { expedienteToMaestroLike } from "@/lib/expedienteMaestro";
 import { EstadoCasoBlock } from "@/components/expediente/EstadoCasoBlock";
 import { HistorialCaso } from "@/components/expediente/HistorialCaso";
