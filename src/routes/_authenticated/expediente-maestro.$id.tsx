@@ -14,6 +14,8 @@ import { DocumentosLegales } from "@/components/expediente-maestro/DocumentosLeg
 import { ModuloJuridico } from "@/components/expediente-maestro/ModuloJuridico";
 import { MotorExtractosNUVEX } from "@/components/nuvex/MotorExtractosNUVEX";
 import type { MotorResultado } from "@/lib/motorExtractos.functions";
+import { withFreshDerivados, normalizeTipoBeneficio, FRESH_DEFAULT_TOTAL } from "@/lib/cobertura";
+
 
 export const Route = createFileRoute("/_authenticated/expediente-maestro/$id")({
   component: MaestroDetail,
