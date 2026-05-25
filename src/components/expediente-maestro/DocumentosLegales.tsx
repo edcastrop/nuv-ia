@@ -16,6 +16,7 @@ import { listApoderados, seleccionarApoderado, type ApoderadoNuvex, type MotivoS
 import { EnviarContratacionButton, type ContratacionContext } from "./EnviarContratacion";
 import { CitySelect } from "@/components/ui/CitySelect";
 import { normalizeCityText, cityDepartment } from "@/lib/colombiaCities";
+import { honorariosFinalesCliente } from "@/lib/honorarios";
 
 const fmtCOP = (n: number) =>
   !isFinite(n) || n === 0
@@ -189,16 +190,30 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
   const activeTemplateMeta = PODER_TEMPLATES.find((t) => t.id === activeTemplateId)!;
 
   // ── Acuerdo comercial (Contado / Financiado)
-  const honorarios = useMemo(() => {
+  // Fuente ÚNICA DE VERDAD: honorariosFinalesCliente
+  //   1) recalculados a éxito  2) honorarios con descuento  3) originales
+  const honorariosOriginales = useMemo(() => {
     const p = (simExpediente?.propuesta_data ?? {}) as Partial<PropuestaData>;
-    return Number(p.honorarios ?? simExpediente?.honorarios_final ?? 0);
+    return Number(p.honorarios ?? simExpediente?.honorarios_base ?? 0);
+  }, [simExpediente]);
+  const descuentoAplicado = useMemo(
+    () => Number(simExpediente?.descuento ?? 0),
+    [simExpediente],
+  );
+  const honorariosRecalc = Number(
+    (simExpediente as unknown as { honorarios_recalculados?: number | null })?.honorarios_recalculados ?? 0,
+  );
+  const honorarios = useMemo(() => {
+    return honorariosFinalesCliente(
+      simExpediente as unknown as Parameters<typeof honorariosFinalesCliente>[0],
+    );
   }, [simExpediente]);
 
   const [modalidad, setModalidad] = useState<ModalidadPago>("contado");
   const [numCuotas, setNumCuotas] = useState<number>(2);
   const [cuotas, setCuotas] = useState<number[]>([]);
 
-  // Inicializa / redistribuye cuotas cuando cambia número o honorarios
+  // Inicializa / redistribuye cuotas cuando cambia número o honorariosFinalesCliente
   useEffect(() => {
     if (modalidad !== "financiado") return;
     const n = Math.max(1, Math.min(24, Math.round(numCuotas) || 1));
@@ -247,6 +262,9 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
   if (!selectedAp) contratacionFaltantes.push("Selecciona un apoderado NUVEX.");
   if (!poderListo) contratacionFaltantes.push("Poder Especial generado sin datos faltantes.");
   if (!datosListos) contratacionFaltantes.push("Datos para Contrato generados.");
+  if (modalidad === "financiado" && saldoRestante !== 0) {
+    contratacionFaltantes.push("La suma de las cuotas debe coincidir con los honorarios finales del cliente.");
+  }
   if (!expedienteIdToPersist) contratacionFaltantes.push("Esta sección requiere un expediente guardado.");
   const contratacionCtx: ContratacionContext = {
     expedienteId: expedienteIdToPersist || "",
@@ -365,9 +383,25 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
               Financiado
             </label>
             <span className="text-[11px] text-[#242424]/60">
-              Honorarios: <strong>{fmtCOP(honorarios)}</strong>
+              Honorarios finales a cobrar: <strong>{fmtCOP(honorarios)}</strong>
             </span>
           </div>
+          {(descuentoAplicado > 0 || honorariosRecalc > 0) && (
+            <div className="mt-2 grid gap-1 rounded-lg bg-white p-2 text-[11px] text-[#242424]/75" style={{ border: "1px dashed #E3E7EE" }}>
+              {honorariosOriginales > 0 && (
+                <div>Honorarios originales: <strong>{fmtCOP(honorariosOriginales)}</strong></div>
+              )}
+              {descuentoAplicado > 0 && (
+                <div>Descuento comercial aplicado: <strong>−{fmtCOP(descuentoAplicado)}</strong></div>
+              )}
+              {honorariosRecalc > 0 && (
+                <div>Honorarios recalculados a éxito: <strong>{fmtCOP(honorariosRecalc)}</strong></div>
+              )}
+              <div style={{ color: "#1F7A45" }}>
+                Honorarios finales del cliente: <strong>{fmtCOP(honorarios)}</strong>
+              </div>
+            </div>
+          )}
 
           {modalidad === "financiado" && (
             <div className="mt-3 space-y-2">
@@ -401,10 +435,13 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
                 <span style={{ color: saldoRestante === 0 ? "#1F7A45" : "#B42318" }}>
                   {saldoRestante === 0
                     ? "Cuadrado · $0"
-                    : saldoRestante > 0
-                      ? `Falta ${fmtCOP(saldoRestante)}`
-                      : `Excede en ${fmtCOP(Math.abs(saldoRestante))}`}
+                    : "La suma de las cuotas no coincide con los honorarios finales del cliente."}
                 </span>
+                {saldoRestante !== 0 && (
+                  <span className="text-[#B42318]">
+                    Diferencia: {saldoRestante > 0 ? `falta ${fmtCOP(saldoRestante)}` : `excede ${fmtCOP(Math.abs(saldoRestante))}`}
+                  </span>
+                )}
               </div>
             </div>
           )}

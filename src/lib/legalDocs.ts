@@ -12,6 +12,7 @@ import {
   detectPoderTemplate, renderPoderTemplate, validatePoderVariables, calidadFor,
   type PoderTemplateId, type PoderVariables, type CalidadCliente,
 } from "./poderTemplates";
+import { honorariosFinalesCliente } from "./honorarios";
 
 export type DocBlock =
   | { type: "title"; text: string }
@@ -264,7 +265,8 @@ export function buildDatosContrato(
       ? Math.max(0, cuotasPendientes - Number(p.nuevoPlazo))
       : null;
 
-  const honorarios = Number(p.honorarios ?? sim?.honorarios_final ?? 0);
+  // Fuente única de verdad para honorarios a cobrar (recalculado > con descuento > base)
+  const honorarios = honorariosFinalesCliente(sim ?? null);
 
   // ── BENEFICIO DE COBERTURA: leer desde el simulador (cliente_data.cobertura)
   const cob = sim?.cliente_data?.cobertura;

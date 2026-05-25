@@ -1,5 +1,35 @@
 // Recálculo de honorarios a éxito (regla de 3) — Fase 1
 import { supabase } from "@/integrations/supabase/client";
+import type { Expediente } from "@/lib/expedientes";
+
+/**
+ * Fuente ÚNICA DE VERDAD para el valor de honorarios a cobrar al cliente.
+ * Orden de prelación:
+ *   1) Honorarios recalculados a éxito (si existen y > 0).
+ *   2) Honorarios con descuento comercial aplicado (honorarios_final).
+ *   3) Honorarios originales (honorarios_base).
+ *
+ * Este valor DEBE usarse en: acuerdo comercial financiado, cuotas, contrato,
+ * cartera y cuentas de cobro al cliente. Nunca usar `propuesta_data.honorarios`
+ * (base sin descuento) ni `honorarios_pactados` directamente para cobrar.
+ */
+export function honorariosFinalesCliente(
+  exp:
+    | (Pick<Expediente, "honorarios_base" | "honorarios_final"> & {
+        honorarios_recalculados?: number | null;
+      })
+    | null
+    | undefined,
+): number {
+  if (!exp) return 0;
+  const recalc = Number(
+    (exp as { honorarios_recalculados?: number | null }).honorarios_recalculados ?? 0,
+  );
+  if (recalc > 0) return recalc;
+  const final = Number(exp.honorarios_final ?? 0);
+  if (final > 0) return final;
+  return Math.max(0, Number(exp.honorarios_base ?? 0));
+}
 
 export interface RecalculoHonorarios {
   cuotasPactadas: number;
