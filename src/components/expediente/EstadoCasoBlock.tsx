@@ -59,11 +59,20 @@ export function EstadoCasoBlock({ expedienteId, onChanged }: Props) {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="text-[11px] uppercase tracking-wider text-[#242424]/60">Estado del caso</div>
-            <div className="mt-1 flex items-center gap-2">
+            <div className="mt-1 flex items-center gap-2 flex-wrap">
               <span className="rounded-full px-3 py-1 text-xs font-semibold"
                 style={def ? { background: def.bg, color: def.color } : { background: "#F1F2F4", color: "#242424" }}>
                 {loading ? "Cargando…" : labelEstado(actual)}
               </span>
+              {alerta && (
+                <span
+                  className="rounded-full px-3 py-1 text-xs font-semibold"
+                  style={{ background: "#FEE2E2", color: "#991B1B" }}
+                  title={alerta.tipo}
+                >
+                  ⚠ Estancado {alerta.dias} días
+                </span>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-2">
