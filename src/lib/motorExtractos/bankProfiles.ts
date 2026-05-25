@@ -20,16 +20,19 @@ export const BANK_PROFILES: BankProfile[] = [
     banco: "Bancolombia",
     productos: ["CREDITO_HIPOTECARIO", "LEASING_HABITACIONAL"],
     matchAny: [/bancolombia/i, /grupo\s+bancolombia/i],
-    hints: `BANCOLOMBIA — etiquetas LITERALES (no interpretes sinónimos):
+    hints: `BANCOLOMBIA — etiquetas LITERALES (no interpretes sinónimos ni valores de anexos):
 - "Saldo a la fecha en que se generó el extracto" → saldoCapital
 - "Valor desembolso" → valorDesembolsado
 - "Plazo total en meses" → plazoInicial
 - "Nro. cuota a cancelar" → cuotasPagadas (es la cuota que se está pagando ahora)
 - "Nro. cuotas pendientes para pago total" → cuotasPendientes
 - "Valor a Pagar" → cuotaActual (cuota efectivamente pagada — generalmente la cuota CON subsidio si aplica)
-- "Tasa interés cobrada" → tasaEA. "Tasa interés pactada" NO usar.
+- "Tasa interés cobrada" → tasaEA. "Tasa interés pactada", "tasa interés subsidiada" y tablas de "Tasas y tarifas Seguro Vida" NO se usan como tasaEA.
 - Seguros = "*Valor seguro vida" + "*Valor seguro incendio" + "*Valor seguro terremoto" (suma).
 - NO confundir "Valor asegurado Incendio y Terremoto" (valor del inmueble) con los seguros mensuales.
+- capitalCuota e interesCuota se toman de "Movimientos Último Periodo" fila "Pago Cuota": columnas "Capital" e "Intereses Corriente". NO uses valores calculados ni aproximados.
+- Validación obligatoria antes de responder: cuotasPagadas + cuotasPendientes - 1 debe ser igual a plazoInicial; capitalCuota + interesCuota + seguros debe coincidir con "Valor a Pagar"; cuotaConSubsidio + seguros debe coincidir con "Valor a Pagar".
+- Si una validación no cuadra, re-lee el campo literal del extracto y baja el score del campo dudoso.
 
 BENEFICIO DE COBERTURA / SUBSIDIO GOBIERNO / FRECH (CRÍTICO):
 - "Valor cuota sin subsidio Gobierno" → cuotaSinSubsidio.
