@@ -113,6 +113,10 @@ export async function cambiarEstadoCuenta(
   nuevo: CuentaCobro["estado"],
   observacion?: string,
 ): Promise<void> {
+  // Snapshot previo para auditoría
+  const { data: prev } = await supabase.from("cuentas_cobro" as never).select("estado").eq("id", ccId).maybeSingle();
+  const estadoAnterior = (prev as unknown as { estado: string } | null)?.estado ?? null;
+
   const patch: Record<string, unknown> = { estado: nuevo };
   if (nuevo === "enviada") patch.fecha_envio = new Date().toISOString();
   if (nuevo === "aprobada") patch.fecha_aprobacion = new Date().toISOString();
@@ -131,5 +135,14 @@ export async function cambiarEstadoCuenta(
     user_id: u.user?.id ?? null,
     accion: `estado_${nuevo}`,
     observacion: observacion ?? null,
+  } as never);
+  await supabase.from("finanzas_auditoria" as never).insert({
+    entidad: "cuenta_cobro",
+    entidad_id: ccId,
+    accion: `estado_${nuevo}`,
+    user_id: u.user?.id ?? null,
+    motivo: observacion ?? null,
+    valor_anterior: { estado: estadoAnterior },
+    valor_nuevo: { estado: nuevo },
   } as never);
 }
