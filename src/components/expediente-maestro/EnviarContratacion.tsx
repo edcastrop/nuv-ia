@@ -12,6 +12,7 @@ import {
   type DestinatarioContratacion,
 } from "@/lib/contratacion";
 import { enviarContratacion } from "@/lib/contratacion.functions";
+import { cambiarEstadoCaso } from "@/lib/casoEstados";
 
 export interface ContratacionContext {
   expedienteId: string;
