@@ -32,6 +32,14 @@ const InputSchema = z.object({
     .max(10),
 });
 
+export interface CostoLlamada {
+  paso: "deteccion" | "extraccion";
+  modelo: string;
+  tokensInput: number;
+  tokensOutput: number;
+  costoUSD: number;
+}
+
 export interface MotorResultado {
   banco: string;
   producto: Producto;
@@ -42,9 +50,14 @@ export interface MotorResultado {
   confianzaGlobal: number;
   alertas: string[];
   rawDeteccion: string;
+  costo: {
+    totalUSD: number;
+    llamadas: CostoLlamada[];
+  };
 }
 
 export type MotorResponse = { error: string | null; data: MotorResultado | null };
+
 
 // ---------------- Esquema de salida del parser ----------------
 
