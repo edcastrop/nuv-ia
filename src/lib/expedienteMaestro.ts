@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Expediente } from "@/lib/expedientes";
 import { withFreshDerivados, FRESH_DEFAULT_TOTAL } from "@/lib/cobertura";
 import type { CoberturaFresh } from "@/lib/proyeccion";
+import { normalizeCreditMoneyInput } from "@/lib/creditoSanity";
 
 export interface ClienteMaestro {
   nombre: string;
@@ -241,17 +242,36 @@ export function modoFromMaestro(m: ExpedienteMaestro): "pesos" | "uvr" {
 export function maestroToExpediente(m: ExpedienteMaestro) {
   const modo = modoFromMaestro(m);
   const fresh = m.fresh;
+  const sane = normalizeCreditMoneyInput({
+    valorDesembolsado: m.credito?.valorDesembolsado,
+    saldoCapital: m.credito?.saldoCapital,
+    cuotaActual: m.credito?.cuotaActual,
+    seguros: m.credito?.seguros,
+    cuotaBaseSimulacion: m.credito?.cuotaBaseSimulacion,
+    cuotaConSubsidio: m.credito?.cuotaConSubsidio,
+    cuotaConInteresSinSeguros: m.credito?.cuotaConInteresSinSeguros,
+    valorBeneficioMensual: fresh?.valorMensual,
+  });
+  const money = (k: keyof typeof sane.values, fallback = "") => sane.values[k] || fallback;
+  const freshMensual =
+    sane.values.valorBeneficioMensual || String(Math.round(Number(fresh?.valorMensual) || 0));
   const coberturaActiva = !!fresh?.activo && Number(fresh?.valorMensual ?? 0) > 0;
   const cobertura = coberturaActiva
     ? {
         activo: true,
-        valorCobertura: String(Math.round(Number(fresh.valorMensual) || 0)),
+        valorCobertura: freshMensual,
         tasaCobertura: fresh.tasa ? String(fresh.tasa) : "",
         tipoBeneficio: fresh.tipoBeneficio || "",
-        cuotaPagadaCliente: m.credito?.cuotaConSubsidio ?? "",
-        cuotaConInteresSinSeguros: m.credito?.cuotaConInteresSinSeguros ?? "",
-        segurosMensuales: m.credito?.seguros ?? "",
-        cuotaBaseSimulacion: m.credito?.cuotaBaseSimulacion ?? m.credito?.cuotaActual ?? "",
+        cuotaPagadaCliente: money("cuotaConSubsidio", m.credito?.cuotaConSubsidio ?? ""),
+        cuotaConInteresSinSeguros: money(
+          "cuotaConInteresSinSeguros",
+          m.credito?.cuotaConInteresSinSeguros ?? "",
+        ),
+        segurosMensuales: money("seguros", m.credito?.seguros ?? ""),
+        cuotaBaseSimulacion: money(
+          "cuotaBaseSimulacion",
+          m.credito?.cuotaBaseSimulacion ?? m.credito?.cuotaActual ?? "",
+        ),
         requiereVerificacion: false,
       }
     : { activo: false, valorCobertura: "", tasaCobertura: "" };
@@ -273,10 +293,10 @@ export function maestroToExpediente(m: ExpedienteMaestro) {
     cobertura,
   };
   const credito_data: Record<string, string> = {
-    valorDesembolsado: m.credito?.valorDesembolsado ?? "",
-    saldoCapital: m.credito?.saldoCapital ?? "",
-    cuotaActual: m.credito?.cuotaActual ?? "",
-    seguros: m.credito?.seguros ?? "",
+    valorDesembolsado: money("valorDesembolsado", m.credito?.valorDesembolsado ?? ""),
+    saldoCapital: money("saldoCapital", m.credito?.saldoCapital ?? ""),
+    cuotaActual: money("cuotaActual", m.credito?.cuotaActual ?? ""),
+    seguros: money("seguros", m.credito?.seguros ?? ""),
     tea: m.credito?.tasa ?? "",
     nuevaCuotaManual: "",
   };

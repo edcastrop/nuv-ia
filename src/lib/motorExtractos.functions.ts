@@ -8,6 +8,7 @@ import {
   type Moneda,
   type Producto,
 } from "./motorExtractos/bankProfiles";
+import { normalizeCreditMoneyInput } from "./creditoSanity";
 
 // =============================================================
 // Motor de Extractos NUVEX V1
@@ -338,6 +339,22 @@ function normalizeParsedMotor(
   scores.banco = 100;
   if (!datos.producto && det.producto) datos.producto = det.producto;
   if (!datos.moneda && det.moneda) datos.moneda = det.moneda;
+
+  const sane = normalizeCreditMoneyInput({
+    valorDesembolsado: datos.valorDesembolsado,
+    saldoCapital: datos.saldoCapital,
+    cuotaActual: datos.cuotaActual,
+    seguros: datos.seguros,
+    cuotaSinSubsidio: datos.cuotaSinSubsidio,
+    cuotaConSubsidio: datos.cuotaConSubsidio,
+    cuotaConInteresSinSeguros: datos.cuotaSinSubsidio || datos.cuotaConSubsidio,
+    valorBeneficioMensual: datos.valorBeneficioMensual,
+    interesCuota: datos.interesCuota,
+    capitalCuota: datos.capitalCuota,
+  });
+  for (const [field, value] of Object.entries(sane.values)) {
+    if (value) datos[field as CampoMotor] = value;
+  }
 
   return { datos, scores };
 }
