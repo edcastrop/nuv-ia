@@ -32,6 +32,14 @@ const InputSchema = z.object({
     .max(10),
 });
 
+export interface CostoLlamada {
+  paso: "deteccion" | "extraccion";
+  modelo: string;
+  tokensInput: number;
+  tokensOutput: number;
+  costoUSD: number;
+}
+
 export interface MotorResultado {
   banco: string;
   producto: Producto;
@@ -42,9 +50,14 @@ export interface MotorResultado {
   confianzaGlobal: number;
   alertas: string[];
   rawDeteccion: string;
+  costo: {
+    totalUSD: number;
+    llamadas: CostoLlamada[];
+  };
 }
 
 export type MotorResponse = { error: string | null; data: MotorResultado | null };
+
 
 // ---------------- Esquema de salida del parser ----------------
 
@@ -235,6 +248,17 @@ function findProfileByName(banco: string, producto?: Producto): BankProfile | nu
 }
 
 // ---------------- Server Function ----------------
+    // Precios USD por 1M tokens (pass-through Lovable AI Gateway)
+    const PRECIOS: Record<string, { in: number; out: number }> = {
+      "google/gemini-2.5-pro": { in: 1.25, out: 10.0 },
+      "google/gemini-2.5-flash": { in: 0.30, out: 2.50 },
+    };
+    const calcCosto = (modelo: string, tokIn: number, tokOut: number) => {
+      const p = PRECIOS[modelo] ?? { in: 0, out: 0 };
+      return (tokIn / 1_000_000) * p.in + (tokOut / 1_000_000) * p.out;
+    };
+    const llamadas: CostoLlamada[] = [];
+
 
 export const extractStatementMotor = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => InputSchema.parse(data))
@@ -269,14 +293,26 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
     }
 
     interface ToolCall { function?: { arguments?: string } }
-    interface ChatResp { choices?: Array<{ message?: { tool_calls?: ToolCall[] } }> }
+    interface Usage { prompt_tokens?: number; completion_tokens?: number }
+    interface ChatResp { choices?: Array<{ message?: { tool_calls?: ToolCall[] } }>; usage?: Usage }
 
     const detJson = (await detResp.json()) as ChatResp;
+    const detModel = detResp.ok ? (detResp.status >= 500 ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash") : "google/gemini-2.5-flash";
+    const detIn = detJson.usage?.prompt_tokens ?? 0;
+    const detOut = detJson.usage?.completion_tokens ?? 0;
+    llamadas.push({
+      paso: "deteccion",
+      modelo: detModel,
+      tokensInput: detIn,
+      tokensOutput: detOut,
+      costoUSD: calcCosto(detModel, detIn, detOut),
+    });
     const detArgs = detJson.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ?? "";
     let det: { banco: string; producto: Producto; moneda: Moneda; evidencia: string } = {
       banco: "", producto: "", moneda: "", evidencia: "",
     };
     try { det = { ...det, ...JSON.parse(detArgs) }; } catch { /* ignore */ }
+
 
     if (/colpatria/i.test(det.banco)) det.banco = "Davibank";
 
@@ -310,8 +346,19 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
     }
 
     const pJson = (await parseResp.json()) as ChatResp;
+    const parseModel = parseResp.status >= 500 ? "google/gemini-2.5-flash" : "google/gemini-2.5-pro";
+    const pIn = pJson.usage?.prompt_tokens ?? 0;
+    const pOut = pJson.usage?.completion_tokens ?? 0;
+    llamadas.push({
+      paso: "extraccion",
+      modelo: parseModel,
+      tokensInput: pIn,
+      tokensOutput: pOut,
+      costoUSD: calcCosto(parseModel, pIn, pOut),
+    });
     const pArgs = pJson.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ?? "";
     if (!pArgs) return { error: "La IA no devolvió datos estructurados.", data: null };
+
 
     let parsed: { datos: Record<string, string>; scores: Record<string, number>; alertas: string[] };
     try {
@@ -390,6 +437,11 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
         confianzaGlobal,
         alertas: Array.isArray(parsed.alertas) ? parsed.alertas.map(String) : [],
         rawDeteccion: det.evidencia,
+        costo: {
+          totalUSD: llamadas.reduce((s, l) => s + l.costoUSD, 0),
+          llamadas,
+        },
       },
+
     };
   });
