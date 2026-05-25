@@ -250,13 +250,55 @@ function DetalleCuentaCobro() {
     }
   }
 
+  async function onDevolver() {
+    if (!cc) return;
+    if (observ.trim().length < 10) {
+      alert("Escribe el motivo de devolución (mínimo 10 caracteres) en el campo de observación.");
+      return;
+    }
+    if (!confirm("¿Devolver la cuenta de cobro al licenciado para corrección?")) return;
+    setBusy(true);
+    try {
+      await devolver({ data: { cuentaCobroId: cc.id, motivo: observ.trim() } });
+      setObserv("");
+      await cargar();
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onProgramar() {
+    if (!cc) return;
+    if (!fechaProg) {
+      alert("Selecciona la fecha programada de pago.");
+      return;
+    }
+    if (!confirm(`¿Programar el pago para el ${fechaProg}?`)) return;
+    setBusy(true);
+    try {
+      await programar({
+        data: { cuentaCobroId: cc.id, fechaProgramada: fechaProg, observacion: observ.trim() || undefined },
+      });
+      setObserv("");
+      setFechaProg("");
+      await cargar();
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (loading || rolesLoading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>;
   if (!cc) return <div className="p-12 text-center text-sm text-[#991B1B]">Cuenta no encontrada.</div>;
 
   const esDueno = user?.id === cc.user_id;
-  const puedeEnviar = esDueno && (cc.estado === "borrador" || cc.estado === "rechazada");
+  const puedeEnviar = esDueno && (cc.estado === "borrador" || cc.estado === "rechazada" || cc.estado === "devuelta_correccion");
   const puedeAprobar = esManager && cc.estado === "enviada";
-  const puedePagar = esManager && cc.estado === "aprobada";
+  const puedeProgramar = esManager && cc.estado === "aprobada";
+  const puedePagar = esManager && (cc.estado === "aprobada" || cc.estado === "programada_pago");
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
