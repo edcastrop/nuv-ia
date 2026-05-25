@@ -604,6 +604,7 @@ function EstadoPill({ estado }: { estado: EstadoExpediente }) {
     ENVIADO_CONTRATACION: "#6366F1",
     RADICADO: "#3B6FA0",
     APROBADO: VERDE,
+    CONDICIONES_APLICADAS: "#16A34A",
     FACTURADO: "#9333EA",
     PAGADO: VERDE,
   };
