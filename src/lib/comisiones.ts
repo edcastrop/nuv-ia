@@ -24,9 +24,11 @@ export interface CuentaCobro {
   fecha_aprobacion: string | null;
   fecha_pago: string | null;
   observaciones: string | null;
+  comprobante_url: string | null;
   created_at: string;
   updated_at: string;
 }
+
 
 export async function listMisComisiones(userId: string): Promise<Comision[]> {
   const { data, error } = await supabase
