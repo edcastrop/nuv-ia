@@ -19,11 +19,12 @@ export interface CuentaCobroPdfResult {
 export async function buildCuentaCobroPdf(data: CuentaCobroPdfData): Promise<CuentaCobroPdfResult> {
   const pdf = createNuvexPdf();
   const logo = await loadLogoDataURL();
-  applyChrome(pdf, logo, {
-    label: "Documento Financiero — Cuenta de Cobro",
-    docNumber: data.cuenta.numero,
-    issueDate: new Date(data.cuenta.created_at).toLocaleDateString("es-CO"),
-  });
+  const meta = {
+    documento: "Documento Financiero — Cuenta de Cobro",
+    consecutivo: data.cuenta.numero,
+  };
+  applyChrome(pdf, logo, meta);
+
 
   let y = drawHero(pdf, {
     title: "Cuenta de Cobro",
@@ -87,26 +88,23 @@ export async function buildCuentaCobroPdf(data: CuentaCobroPdfData): Promise<Cue
       Number(it.porcentaje).toFixed(2) + "%",
       formatCOP(Number(it.valor)),
     ]),
-    styles: { font: "helvetica", fontSize: 9, cellPadding: 5, textColor: BRAND.ink as unknown as number[] },
+    styles: { font: "helvetica", fontSize: 9, cellPadding: 5, textColor: [36, 36, 36] },
     headStyles: {
-      fillColor: BRAND.blueDark as unknown as number[],
+      fillColor: [38, 56, 110],
       textColor: 255,
       fontStyle: "bold",
       fontSize: 9,
     },
-    alternateRowStyles: { fillColor: BRAND.surface as unknown as number[] },
+    alternateRowStyles: { fillColor: [247, 249, 251] },
     columnStyles: {
       0: { cellWidth: 24, halign: "center" },
       3: { halign: "right" },
       4: { halign: "right", cellWidth: 50 },
       5: { halign: "right", fontStyle: "bold" },
     },
-    didDrawPage: () => applyChrome(pdf, logo, {
-      label: "Documento Financiero — Cuenta de Cobro",
-      docNumber: data.cuenta.numero,
-      issueDate: new Date(data.cuenta.created_at).toLocaleDateString("es-CO"),
-    }),
+    didDrawPage: () => applyChrome(pdf, logo, meta),
   });
+
 
   // Total
   const finalY = (pdf as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 14;
