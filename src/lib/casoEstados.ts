@@ -97,40 +97,102 @@ export const CASO_ESTADO_BY_KEY: Record<CasoEstado, CasoEstadoDef> = CASO_ESTADO
 export type AccionOrigen =
   | "extracto_subido"
   | "simulacion_generada"
+  | "simulacion_guardada"
   | "propuesta_generada"
-  | "envio_contratacion"
+  | "propuesta_enviada"
+  | "acepto_propuesta"
+  | "documentacion_completa"
+  | "contrato_generado"
   | "contrato_firmado"
+  | "poder_generado"
   | "poder_firmado"
+  | "envio_contratacion"
+  | "radicacion_preparada"
   | "radicado_confirmado"
+  | "en_estudio_banco"
   | "aprobacion_registrada"
+  | "aprobado_banco"
+  | "docs_complementarios_banco"
   | "documentos_banco_firmados"
   | "condiciones_aplicadas"
+  | "aplicado_banco"
   | "resultado_final"
   | "cuenta_cobro_generada"
   | "cuenta_cobro_enviada"
+  | "honorarios_pendientes"
   | "honorarios_pagados"
   | "paz_y_salvo_generado"
+  | "caso_finalizado"
+  | "devuelto_banco"
+  | "negado_banco"
   | "prejuridico"
   | "manual";
 
 export const ACCION_A_ESTADO: Record<Exclude<AccionOrigen, "manual">, CasoEstado> = {
   extracto_subido: "extracto_recibido",
   simulacion_generada: "simulacion_realizada",
+  simulacion_guardada: "simulado",
   propuesta_generada: "propuesta_presentada",
-  envio_contratacion: "enviado_contratacion",
+  propuesta_enviada: "propuesta_enviada",
+  acepto_propuesta: "acepto_propuesta",
+  documentacion_completa: "documentacion_completa",
+  contrato_generado: "contrato_generado",
   contrato_firmado: "contrato_firmado",
+  poder_generado: "poder_generado",
   poder_firmado: "poder_firmado",
+  envio_contratacion: "enviado_contratacion",
+  radicacion_preparada: "radicacion_preparada",
   radicado_confirmado: "radicado_banco",
+  en_estudio_banco: "en_estudio_banco",
   aprobacion_registrada: "aprobado",
+  aprobado_banco: "aprobado_banco",
+  docs_complementarios_banco: "docs_complementarios_banco",
   documentos_banco_firmados: "documentos_banco_firmados",
   condiciones_aplicadas: "condiciones_aplicadas",
+  aplicado_banco: "aplicado_banco",
   resultado_final: "resultado_final_generado",
   cuenta_cobro_generada: "cuenta_cobro_generada",
   cuenta_cobro_enviada: "cuenta_cobro_enviada",
+  honorarios_pendientes: "honorarios_pendientes",
   honorarios_pagados: "honorarios_pagados",
   paz_y_salvo_generado: "paz_y_salvo_generado",
+  caso_finalizado: "caso_finalizado",
+  devuelto_banco: "devuelto_banco",
+  negado_banco: "negado_banco",
   prejuridico: "prejuridico",
 };
+
+export const SUBMOTIVOS_DEVUELTO: string[] = [
+  "Documentos incompletos",
+  "Información inconsistente",
+  "Datos del cliente sin actualizar",
+  "Garantías insuficientes",
+  "Falta firma o autenticación",
+  "Otro",
+];
+
+export const SUBMOTIVOS_NEGADO: string[] = [
+  "Capacidad de pago insuficiente",
+  "Score crediticio bajo",
+  "Reportes negativos",
+  "Política interna del banco",
+  "Antigüedad laboral insuficiente",
+  "Otro",
+];
+
+export function requiereSubmotivo(estado: CasoEstado): boolean {
+  return estado === "devuelto_banco" || estado === "negado_banco";
+}
+
+export function submotivosPara(estado: CasoEstado): string[] {
+  if (estado === "devuelto_banco") return SUBMOTIVOS_DEVUELTO;
+  if (estado === "negado_banco") return SUBMOTIVOS_NEGADO;
+  return [];
+}
+
+export function transicionAutomatica(accion: Exclude<AccionOrigen, "manual">): CasoEstado | null {
+  return ACCION_A_ESTADO[accion] ?? null;
+}
 
 export function labelEstado(e: CasoEstado | null | undefined): string {
   if (!e) return "—";
@@ -142,6 +204,7 @@ export async function cambiarEstadoCaso(
   nuevoEstado: CasoEstado,
   accion: AccionOrigen,
   observacion?: string,
+  submotivo?: string,
 ): Promise<void> {
   // Read previous estado_caso
   const { data: prev, error: errSel } = await supabase
