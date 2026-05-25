@@ -17,9 +17,11 @@ import {
   enviarCuentaCobroEmail,
   marcarCuentaCobroPagada,
   rechazarCuentaCobro,
+  devolverCuentaCobro,
+  programarPagoCuentaCobro,
 } from "@/lib/comisiones.functions";
 import { buildCuentaCobroPdf, downloadBlob } from "@/lib/cuentaCobroPdf";
-import { ArrowLeft, Send, CheckCircle2, XCircle, DollarSign, Download, Mail } from "lucide-react";
+import { ArrowLeft, Send, CheckCircle2, XCircle, DollarSign, Download, Mail, RotateCcw, CalendarClock } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/comisiones/$id")({
   component: DetalleCuentaCobro,
