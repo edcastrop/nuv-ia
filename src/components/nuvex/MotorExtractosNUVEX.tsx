@@ -1,15 +1,23 @@
 import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  Upload, Sparkles, Loader2, FileText, CheckCircle2, AlertTriangle,
-  ShieldCheck, X, KeyRound,
+  Upload,
+  Sparkles,
+  Loader2,
+  FileText,
+  CheckCircle2,
+  AlertTriangle,
+  ShieldCheck,
+  X,
+  KeyRound,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { extractStatementMotor, type MotorResultado } from "@/lib/motorExtractos.functions";
 import {
-  extractStatementMotor, type MotorResultado,
-} from "@/lib/motorExtractos.functions";
-import {
-  CAMPOS_MOTOR, CAMPOS_CRITICOS, CAMPO_LABEL, type CampoMotor,
+  CAMPOS_MOTOR,
+  CAMPOS_CRITICOS,
+  CAMPO_LABEL,
+  type CampoMotor,
 } from "@/lib/motorExtractos/bankProfiles";
 import { NUVEX } from "@/components/nuvex/constants";
 
@@ -25,7 +33,9 @@ const UMBRAL_BLOQUEO = 90;
 // PDF.js loader (idéntico al ExtractoReader actual)
 async function loadPdfJs() {
   const pdfjs = await import("pdfjs-dist");
-  const workerMod = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")) as { default: string };
+  const workerMod = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")) as {
+    default: string;
+  };
   pdfjs.GlobalWorkerOptions.workerSrc = workerMod.default;
   return pdfjs;
 }
@@ -68,14 +78,16 @@ async function fileToImages(file: File): Promise<{ mime: string; dataUrl: string
 }
 
 function scoreBadge(score: number) {
-  if (score >= UMBRAL_BLOQUEO) return { bg: "rgba(132,185,143,0.15)", color: "#1F6D3D", label: "OK" };
+  if (score >= UMBRAL_BLOQUEO)
+    return { bg: "rgba(132,185,143,0.15)", color: "#1F6D3D", label: "OK" };
   if (score >= 70) return { bg: "rgba(244,162,97,0.18)", color: "#a35d1c", label: "Verificar" };
   if (score > 0) return { bg: "rgba(244,67,54,0.10)", color: "#B42318", label: "Bajo" };
   return { bg: "#F1F3F6", color: "#6b7280", label: "Vacío" };
 }
 
 const MAX_SIZE = 20 * 1024 * 1024;
-const fmtSize = (b: number) => b < 1024 * 1024 ? `${(b / 1024).toFixed(0)} KB` : `${(b / 1024 / 1024).toFixed(1)} MB`;
+const fmtSize = (b: number) =>
+  b < 1024 * 1024 ? `${(b / 1024).toFixed(0)} KB` : `${(b / 1024 / 1024).toFixed(1)} MB`;
 
 export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -91,13 +103,21 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
   const [readingPhase, setReadingPhase] = useState<"upload" | "ocr" | "analyze">("upload");
 
   const reset = () => {
-    setStage("idle"); setFile(null); setArchivoPath(null); setPassword("");
-    setError(null); setResult(null); setEditado({}); setIsDragging(false);
+    setStage("idle");
+    setFile(null);
+    setArchivoPath(null);
+    setPassword("");
+    setError(null);
+    setResult(null);
+    setEditado({});
+    setIsDragging(false);
     if (fileRef.current) fileRef.current.value = "";
   };
 
   const startRead = async (selected: File, pwd?: string) => {
-    setStage("reading"); setError(null); setReadingPhase("upload");
+    setStage("reading");
+    setError(null);
+    setReadingPhase("upload");
     try {
       let images: { mime: string; dataUrl: string }[] = [];
       if (selected.type === "application/pdf" || selected.name.toLowerCase().endsWith(".pdf")) {
@@ -116,22 +136,32 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
 
       // Subir archivo a storage para trazabilidad (opcional, no bloqueante)
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (user) {
           const path = `${user.id}/motor/${Date.now()}-${selected.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-          const up = await supabase.storage.from("extractos").upload(path, selected, { upsert: false });
+          const up = await supabase.storage
+            .from("extractos")
+            .upload(path, selected, { upsert: false });
           if (!up.error) setArchivoPath(path);
         }
-      } catch { /* no bloqueante */ }
+      } catch {
+        /* no bloqueante */
+      }
 
       setReadingPhase("analyze");
       const res = await motor({ data: { images } });
       if (res.error || !res.data) {
-        setError(res.error || "Lectura sin datos."); setStage("error"); return;
+        setError(res.error || "Lectura sin datos.");
+        setStage("error");
+        return;
       }
-      setResult(res.data); setStage("review");
+      setResult(res.data);
+      setStage("review");
     } catch (e) {
-      setError((e as Error).message); setStage("error");
+      setError((e as Error).message);
+      setStage("error");
     }
   };
 
@@ -157,7 +187,7 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
     await startRead(file, password);
   };
 
-  const valor = (k: CampoMotor) => (editado[k] ?? result?.datos[k] ?? "");
+  const valor = (k: CampoMotor) => editado[k] ?? result?.datos[k] ?? "";
   const setValor = (k: CampoMotor, v: string) => setEditado((e) => ({ ...e, [k]: v }));
 
   const confirmar = async () => {
@@ -165,7 +195,9 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
     setStage("saving");
     try {
       const datosFinales = { ...result.datos, ...editado };
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       const { error: insErr } = await supabase.from("extractos_lecturas").insert({
         expediente_id: expedienteId ?? null,
         asesor_id: user?.id,
@@ -185,30 +217,43 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
       onConfirm?.({ ...result, datos: datosFinales as Record<CampoMotor, string> });
       setStage("saved");
     } catch (e) {
-      setError((e as Error).message); setStage("error");
+      setError((e as Error).message);
+      setStage("error");
     }
   };
 
   const camposBloqueados = result
     ? CAMPOS_CRITICOS.filter((k) => result.scores[k] < UMBRAL_BLOQUEO && !valor(k).trim())
     : [];
-  const puedeAprobar = !!result && camposBloqueados.every((k) => (editado[k] ?? "").trim().length > 0);
+  const puedeAprobar =
+    !!result && camposBloqueados.every((k) => (editado[k] ?? "").trim().length > 0);
 
   return (
-    <div className="rounded-xl border bg-white p-5 shadow-sm" style={{ borderColor: NUVEX.azul + "33" }}>
+    <div
+      className="rounded-xl border bg-white p-5 shadow-sm"
+      style={{ borderColor: NUVEX.azul + "33" }}
+    >
       <div className="flex items-start justify-between gap-3 mb-4">
         <div>
-          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider" style={{ color: NUVEX.azul }}>
+          <div
+            className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider"
+            style={{ color: NUVEX.azul }}
+          >
             <Sparkles className="h-3.5 w-3.5" /> Motor Extractos NUVEX · V1 Beta
           </div>
-          <h3 className="mt-1 text-lg font-semibold text-[#242424]">Lector inteligente por plantillas bancarias</h3>
+          <h3 className="mt-1 text-lg font-semibold text-[#242424]">
+            Lector inteligente por plantillas bancarias
+          </h3>
           <p className="mt-1 text-xs text-[#242424]/60">
-            Detección automática de banco, producto y moneda. Parser especializado por banco.
-            Umbral de aprobación: <strong>{UMBRAL_BLOQUEO}%</strong> en variables críticas.
+            Detección automática de banco, producto y moneda. Parser especializado por banco. Umbral
+            de aprobación: <strong>{UMBRAL_BLOQUEO}%</strong> en variables críticas.
           </p>
         </div>
         {stage !== "idle" && (
-          <button onClick={reset} className="text-xs text-[#445DA3] hover:underline flex items-center gap-1">
+          <button
+            onClick={reset}
+            className="text-xs text-[#445DA3] hover:underline flex items-center gap-1"
+          >
             <X className="h-3 w-3" /> Reiniciar
           </button>
         )}
@@ -216,11 +261,25 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
 
       {stage === "idle" && (
         <div
-          onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); }}
-          onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); }}
-          onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); }}
+          onDragEnter={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragging(true);
+          }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragging(true);
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragging(false);
+          }}
           onDrop={(e) => {
-            e.preventDefault(); e.stopPropagation(); setIsDragging(false);
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragging(false);
             const f = e.dataTransfer.files?.[0] ?? null;
             onFile(f);
           }}
@@ -231,13 +290,20 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
           }}
         >
           <div className="flex flex-col items-center justify-center gap-3 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full" style={{ background: NUVEX.azul + "15" }}>
+            <div
+              className="flex h-12 w-12 items-center justify-center rounded-full"
+              style={{ background: NUVEX.azul + "15" }}
+            >
               <FileText className="h-6 w-6" style={{ color: NUVEX.azul }} />
             </div>
             <div>
-              <div className="text-sm font-semibold text-[#242424]">📄 Cargar Extracto Bancario</div>
+              <div className="text-sm font-semibold text-[#242424]">
+                📄 Cargar Extracto Bancario
+              </div>
               <div className="mt-1 text-xs text-[#242424]/70">
-                {isDragging ? "Suelte el archivo para cargarlo" : "Arrastre aquí el PDF del extracto"}
+                {isDragging
+                  ? "Suelte el archivo para cargarlo"
+                  : "Arrastre aquí el PDF del extracto"}
               </div>
             </div>
             {!isDragging && (
@@ -255,30 +321,55 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
                   Formato permitido: <strong>PDF</strong> · Tamaño máximo: <strong>20 MB</strong>
                 </div>
                 <div className="text-[10px] text-[#242424]/45 max-w-md">
-                  Bancos soportados: Bancolombia, Davivienda, Davibank, Caja Social, Banco de Bogotá, FNA, Banco Popular, Banco de Occidente, AV Villas, Credifamilia.
+                  Bancos soportados: Bancolombia, Davivienda, Davibank, Caja Social, Banco de
+                  Bogotá, FNA, Banco Popular, Banco de Occidente, AV Villas, Credifamilia.
                 </div>
               </>
             )}
-            <input ref={fileRef} type="file" accept="application/pdf,.pdf" className="hidden"
-              onChange={(e) => onFile(e.target.files?.[0] ?? null)} />
+            <input
+              ref={fileRef}
+              type="file"
+              accept="application/pdf,.pdf"
+              className="hidden"
+              onChange={(e) => onFile(e.target.files?.[0] ?? null)}
+            />
           </div>
         </div>
       )}
 
       {stage === "password" && (
-        <div className="rounded-lg border p-4" style={{ borderColor: NUVEX.azul + "33", background: "#F7F9FB" }}>
-          <div className="flex items-center gap-2 text-sm font-medium mb-2"><KeyRound className="h-4 w-4" /> El PDF requiere contraseña</div>
+        <div
+          className="rounded-lg border p-4"
+          style={{ borderColor: NUVEX.azul + "33", background: "#F7F9FB" }}
+        >
+          <div className="flex items-center gap-2 text-sm font-medium mb-2">
+            <KeyRound className="h-4 w-4" /> El PDF requiere contraseña
+          </div>
           <div className="flex gap-2">
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-              className="flex-1 rounded border px-3 py-2 text-sm" placeholder="Contraseña del PDF" />
-            <button onClick={onUnlock} className="rounded px-4 py-2 text-sm text-white" style={{ background: NUVEX.azul }}>Abrir</button>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="flex-1 rounded border px-3 py-2 text-sm"
+              placeholder="Contraseña del PDF"
+            />
+            <button
+              onClick={onUnlock}
+              className="rounded px-4 py-2 text-sm text-white"
+              style={{ background: NUVEX.azul }}
+            >
+              Abrir
+            </button>
           </div>
           {error && <div className="mt-2 text-xs text-[#B42318]">{error}</div>}
         </div>
       )}
 
       {stage === "reading" && (
-        <div className="rounded-lg border p-4 space-y-3" style={{ borderColor: NUVEX.azul + "33", background: "#F7F9FB" }}>
+        <div
+          className="rounded-lg border p-4 space-y-3"
+          style={{ borderColor: NUVEX.azul + "33", background: "#F7F9FB" }}
+        >
           {file && (
             <div className="flex items-center gap-2 text-xs text-[#242424]/80">
               <CheckCircle2 className="h-4 w-4" style={{ color: NUVEX.verdeTextoFuerte }} />
@@ -299,8 +390,11 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
               const order = { upload: 0, ocr: 1, analyze: 2 }[readingPhase];
               const done = i <= order;
               return (
-                <div key={p} className="h-1 flex-1 rounded-full transition-colors"
-                  style={{ background: done ? NUVEX.azul : NUVEX.azul + "22" }} />
+                <div
+                  key={p}
+                  className="h-1 flex-1 rounded-full transition-colors"
+                  style={{ background: done ? NUVEX.azul : NUVEX.azul + "22" }}
+                />
               );
             })}
           </div>
@@ -308,20 +402,44 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
       )}
 
       {stage === "error" && (
-        <div className="rounded-lg border p-4" style={{ borderColor: "#F5C2C2", background: NUVEX.rojoBg }}>
-          <div className="flex items-center gap-2 text-sm font-medium" style={{ color: NUVEX.rojoTexto }}>
+        <div
+          className="rounded-lg border p-4"
+          style={{ borderColor: "#F5C2C2", background: NUVEX.rojoBg }}
+        >
+          <div
+            className="flex items-center gap-2 text-sm font-medium"
+            style={{ color: NUVEX.rojoTexto }}
+          >
             <AlertTriangle className="h-4 w-4" /> {error}
           </div>
-          <button onClick={reset} className="mt-3 text-xs underline" style={{ color: NUVEX.rojoTexto }}>Subir otro archivo</button>
+          <button
+            onClick={reset}
+            className="mt-3 text-xs underline"
+            style={{ color: NUVEX.rojoTexto }}
+          >
+            Subir otro archivo
+          </button>
         </div>
       )}
 
       {stage === "saved" && (
-        <div className="rounded-lg border p-4" style={{ borderColor: NUVEX.verde, background: NUVEX.verdeClaro }}>
-          <div className="flex items-center gap-2 text-sm font-medium" style={{ color: NUVEX.verdeTextoFuerte }}>
+        <div
+          className="rounded-lg border p-4"
+          style={{ borderColor: NUVEX.verde, background: NUVEX.verdeClaro }}
+        >
+          <div
+            className="flex items-center gap-2 text-sm font-medium"
+            style={{ color: NUVEX.verdeTextoFuerte }}
+          >
             <CheckCircle2 className="h-4 w-4" /> Lectura aprobada y guardada en trazabilidad.
           </div>
-          <button onClick={reset} className="mt-3 text-xs underline" style={{ color: NUVEX.verdeTextoFuerte }}>Procesar otro extracto</button>
+          <button
+            onClick={reset}
+            className="mt-3 text-xs underline"
+            style={{ color: NUVEX.verdeTextoFuerte }}
+          >
+            Procesar otro extracto
+          </button>
         </div>
       )}
 
@@ -330,11 +448,26 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
           {/* Cabecera detección */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             <DetectChip label="Banco" value={result.banco} score={result.scores.banco} />
-            <DetectChip label="Producto" value={result.producto || "—"} score={result.scores.producto} />
+            <DetectChip
+              label="Producto"
+              value={result.producto || "—"}
+              score={result.scores.producto}
+            />
             <DetectChip label="Moneda" value={result.moneda || "—"} score={result.scores.moneda} />
-            <div className="rounded-lg border p-3" style={{ borderColor: NUVEX.azul + "33", background: "#F7F9FB" }}>
-              <div className="text-[10px] uppercase tracking-wide text-[#242424]/60">Confianza global</div>
-              <div className="text-2xl font-semibold" style={{ color: result.confianzaGlobal >= UMBRAL_BLOQUEO ? NUVEX.verdeTextoFuerte : "#a35d1c" }}>
+            <div
+              className="rounded-lg border p-3"
+              style={{ borderColor: NUVEX.azul + "33", background: "#F7F9FB" }}
+            >
+              <div className="text-[10px] uppercase tracking-wide text-[#242424]/60">
+                Confianza global
+              </div>
+              <div
+                className="text-2xl font-semibold"
+                style={{
+                  color:
+                    result.confianzaGlobal >= UMBRAL_BLOQUEO ? NUVEX.verdeTextoFuerte : "#a35d1c",
+                }}
+              >
                 {result.confianzaGlobal.toFixed(1)}%
               </div>
               <div className="text-[10px] text-[#242424]/60">Plantilla: {result.bankProfileId}</div>
@@ -343,10 +476,15 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
 
           {/* Costo IA */}
           {result.costo && (
-            <div className="rounded-lg border p-3" style={{ borderColor: NUVEX.azul + "33", background: "#FBFCFD" }}>
+            <div
+              className="rounded-lg border p-3"
+              style={{ borderColor: NUVEX.azul + "33", background: "#FBFCFD" }}
+            >
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div>
-                  <div className="text-[10px] uppercase tracking-wide text-[#242424]/60">Costo de procesamiento (IA)</div>
+                  <div className="text-[10px] uppercase tracking-wide text-[#242424]/60">
+                    Costo de procesamiento (IA)
+                  </div>
                   <div className="text-lg font-semibold text-[#242424]">
                     USD ${result.costo.totalUSD.toFixed(4)}
                     <span className="ml-2 text-[11px] font-normal text-[#242424]/60">
@@ -369,22 +507,34 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
             </div>
           )}
 
-
           {camposBloqueados.length > 0 && (
-            <div className="rounded-lg border p-3 text-xs" style={{ borderColor: "#F4A26155", background: "rgba(244,162,97,0.10)", color: "#a35d1c" }}>
+            <div
+              className="rounded-lg border p-3 text-xs"
+              style={{
+                borderColor: "#F4A26155",
+                background: "rgba(244,162,97,0.10)",
+                color: "#a35d1c",
+              }}
+            >
               <div className="flex items-center gap-2 font-medium mb-1">
                 <AlertTriangle className="h-3.5 w-3.5" /> Revisión manual requerida
               </div>
-              {camposBloqueados.length} variable(s) crítica(s) por debajo del {UMBRAL_BLOQUEO}%. Corrige o completa antes de aprobar:
-              {" "}{camposBloqueados.map((k) => CAMPO_LABEL[k]).join(", ")}.
+              {camposBloqueados.length} variable(s) crítica(s) por debajo del {UMBRAL_BLOQUEO}%.
+              Corrige o completa antes de aprobar:{" "}
+              {camposBloqueados.map((k) => CAMPO_LABEL[k]).join(", ")}.
             </div>
           )}
 
           {result.alertas.length > 0 && (
-            <div className="rounded-lg border p-3 text-xs" style={{ borderColor: NUVEX.azul + "33", background: "#F7F9FB" }}>
+            <div
+              className="rounded-lg border p-3 text-xs"
+              style={{ borderColor: NUVEX.azul + "33", background: "#F7F9FB" }}
+            >
               <div className="font-medium mb-1">Notas del parser</div>
               <ul className="list-disc pl-4 space-y-0.5 text-[#242424]/80">
-                {result.alertas.map((a, i) => <li key={i}>{a}</li>)}
+                {result.alertas.map((a, i) => (
+                  <li key={i}>{a}</li>
+                ))}
               </ul>
             </div>
           )}
@@ -408,16 +558,27 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
                     <tr key={k} className="border-t" style={{ borderColor: "#EEF1F5" }}>
                       <td className="px-3 py-2 align-top">
                         <div className="font-medium text-[#242424]">{CAMPO_LABEL[k]}</div>
-                        {isCritico && <div className="text-[10px]" style={{ color: NUVEX.azul }}>Crítico</div>}
+                        {isCritico && (
+                          <div className="text-[10px]" style={{ color: NUVEX.azul }}>
+                            Crítico
+                          </div>
+                        )}
                       </td>
                       <td className="px-3 py-2">
-                        <input value={valor(k)} onChange={(e) => setValor(k, e.target.value)}
+                        <input
+                          value={valor(k)}
+                          onChange={(e) => setValor(k, e.target.value)}
                           className="w-full rounded border px-2 py-1 text-sm"
-                          style={{ borderColor: s < UMBRAL_BLOQUEO && isCritico ? "#F4A261" : "#E5E7EB" }} />
+                          style={{
+                            borderColor: s < UMBRAL_BLOQUEO && isCritico ? "#F4A261" : "#E5E7EB",
+                          }}
+                        />
                       </td>
                       <td className="px-3 py-2">
-                        <span className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-semibold"
-                          style={{ background: badge.bg, color: badge.color }}>
+                        <span
+                          className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-semibold"
+                          style={{ background: badge.bg, color: badge.color }}
+                        >
                           {s}% · {badge.label}
                         </span>
                       </td>
@@ -429,13 +590,21 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
           </div>
 
           {/* Trazabilidad */}
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3 text-xs" style={{ borderColor: "#E5E7EB", background: "#F7F9FB" }}>
+          <div
+            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3 text-xs"
+            style={{ borderColor: "#E5E7EB", background: "#F7F9FB" }}
+          >
             <div className="flex items-center gap-2 text-[#242424]/70">
               <FileText className="h-3.5 w-3.5" />
-              {file?.name ?? "archivo"} {archivoPath ? "· almacenado para trazabilidad" : "· sin copia en storage"}
+              {file?.name ?? "archivo"}{" "}
+              {archivoPath ? "· almacenado para trazabilidad" : "· sin copia en storage"}
             </div>
             <div className="flex gap-2">
-              <button onClick={reset} className="rounded border px-3 py-1.5 text-xs" style={{ borderColor: "#E5E7EB" }}>
+              <button
+                onClick={reset}
+                className="rounded border px-3 py-1.5 text-xs"
+                style={{ borderColor: "#E5E7EB" }}
+              >
                 Descartar
               </button>
               <button
@@ -443,7 +612,11 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
                 disabled={!puedeAprobar || stage === "saving"}
                 className="rounded px-4 py-1.5 text-xs font-semibold text-white inline-flex items-center gap-1 disabled:opacity-50"
                 style={{ background: NUVEX.verde }}
-                title={!puedeAprobar ? "Completa los campos críticos en rojo antes de aprobar" : "Confirmar y guardar lectura"}
+                title={
+                  !puedeAprobar
+                    ? "Completa los campos críticos en rojo antes de aprobar"
+                    : "Confirmar y guardar lectura"
+                }
               >
                 <ShieldCheck className="h-3.5 w-3.5" />
                 {stage === "saving" ? "Guardando…" : "✓ Confirmar datos"}
@@ -459,10 +632,16 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
 function DetectChip({ label, value, score }: { label: string; value: string; score: number }) {
   const ok = score >= UMBRAL_BLOQUEO;
   return (
-    <div className="rounded-lg border p-3" style={{ borderColor: NUVEX.azul + "33", background: "#fff" }}>
+    <div
+      className="rounded-lg border p-3"
+      style={{ borderColor: NUVEX.azul + "33", background: "#fff" }}
+    >
       <div className="text-[10px] uppercase tracking-wide text-[#242424]/60">{label}</div>
       <div className="text-sm font-semibold text-[#242424] truncate">{value || "—"}</div>
-      <div className="text-[10px] mt-0.5" style={{ color: ok ? NUVEX.verdeTextoFuerte : "#a35d1c" }}>
+      <div
+        className="text-[10px] mt-0.5"
+        style={{ color: ok ? NUVEX.verdeTextoFuerte : "#a35d1c" }}
+      >
         {score}% confianza
       </div>
     </div>
