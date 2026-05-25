@@ -403,10 +403,9 @@ function applyBancolombiaDeterministicCorrections(
       (Math.pow(1 + (interes + beneficio) / saldoCapital, 12) - 1) * 100;
     const tasaEAActual = toNumber(datos.tasaEA);
     if (tasaEAActual > 0 && Math.abs(tasaEAActual - tasaCalculadaContaminada) <= 0.15) {
-      datos.tasaEA = "";
-      scores.tasaEA = 0;
+      scores.tasaEA = Math.min(scores.tasaEA || 70, 70);
       alertas.push(
-        "Bancolombia: tasa EA descartada porque parece calculada desde intereses + subsidio; debe tomarse sólo de 'Tasa interés cobrada'.",
+        "Bancolombia: tasa EA requiere verificación manual porque parece calculada desde intereses + subsidio; debe tomarse sólo de 'Tasa interés cobrada'.",
       );
     }
   }
