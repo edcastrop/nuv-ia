@@ -194,6 +194,61 @@ export function transicionAutomatica(accion: Exclude<AccionOrigen, "manual">): C
   return ACCION_A_ESTADO[accion] ?? null;
 }
 
+/**
+ * Mapeo oficial caso.estado → expediente.estado.
+ * Debe coincidir con la función SQL `public.map_caso_to_expediente_estado`.
+ * Single source of truth: el expediente.estado SIEMPRE se deriva del estado del caso.
+ */
+export type EstadoExpedienteDerivado =
+  | "SIMULADO"
+  | "ENVIADO_CONTRATACION"
+  | "FIRMADO"
+  | "RADICADO"
+  | "APROBADO"
+  | "FACTURADO"
+  | "PAGADO";
+
+export function mapCasoToExpedienteEstado(
+  caso: CasoEstado | null | undefined,
+): EstadoExpedienteDerivado {
+  switch (caso) {
+    case "enviado_contratacion":
+    case "contrato_enviado":
+    case "contrato_generado":
+      return "ENVIADO_CONTRATACION";
+    case "contrato_firmado":
+    case "poder_generado":
+    case "poder_firmado":
+    case "documentacion_completa":
+    case "radicacion_pendiente":
+    case "radicacion_preparada":
+      return "FIRMADO";
+    case "radicado_banco":
+    case "en_estudio_banco":
+    case "docs_complementarios_banco":
+    case "devuelto_banco":
+      return "RADICADO";
+    case "aprobado":
+    case "aprobado_banco":
+    case "documentos_banco_firmados":
+    case "condiciones_aplicadas":
+    case "aplicado_banco":
+    case "resultado_final_generado":
+      return "APROBADO";
+    case "cuenta_cobro_generada":
+    case "cuenta_cobro_enviada":
+    case "honorarios_pendientes":
+    case "prejuridico":
+      return "FACTURADO";
+    case "honorarios_pagados":
+    case "paz_y_salvo_generado":
+    case "caso_finalizado":
+      return "PAGADO";
+    default:
+      return "SIMULADO";
+  }
+}
+
 export function labelEstado(e: CasoEstado | null | undefined): string {
   if (!e) return "—";
   return CASO_ESTADO_BY_KEY[e]?.label ?? e;
