@@ -114,17 +114,39 @@ export const registrarPago = createServerFn({ method: "POST" })
         carteraId: z.string().uuid(),
         fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
         valor: z.number().positive(),
+        metodoPago: z.enum([
+          "transferencia", "wompi", "nequi", "daviplata", "pse", "efectivo", "cheque", "otro",
+        ]),
+        cuentaReceptoraId: z.string().uuid().optional().nullable(),
+        valorBruto: z.number().positive().optional(),
+        feeWompi: z.number().min(0).optional(),
+        ivaFee: z.number().min(0).optional(),
+        valorNeto: z.number().min(0).optional(),
+        numeroTransaccion: z.string().max(120).optional(),
         metodo: z.string().max(80).optional(),
         bancoReceptor: z.string().max(120).optional(),
         comprobanteNum: z.string().max(120).optional(),
         comprobanteBase64: z.string().optional(),
         comprobanteFilename: z.string().max(255).optional(),
         observaciones: z.string().max(2000).optional(),
+        omitirComprobante: z.boolean().optional(),
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+
+    // Comprobante obligatorio salvo override de super_admin/admin
+    if (!data.comprobanteBase64 && !data.omitirComprobante) {
+      throw new Error("El soporte de pago (comprobante) es obligatorio.");
+    }
+    if (data.omitirComprobante) {
+      const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+      const isAdmin = (roles ?? []).some(
+        (r) => r.role === "super_admin" || r.role === "admin",
+      );
+      if (!isAdmin) throw new Error("Solo super_admin/admin puede registrar pagos sin comprobante.");
+    }
 
     let comprobanteUrl: string | null = null;
     if (data.comprobanteBase64 && data.comprobanteFilename) {
@@ -141,7 +163,14 @@ export const registrarPago = createServerFn({ method: "POST" })
       cartera_id: data.carteraId,
       fecha: data.fecha,
       valor: data.valor,
-      metodo: data.metodo ?? null,
+      metodo: data.metodo ?? data.metodoPago,
+      metodo_pago: data.metodoPago,
+      cuenta_receptora_id: data.cuentaReceptoraId ?? null,
+      valor_bruto: data.valorBruto ?? data.valor,
+      fee_wompi: data.feeWompi ?? null,
+      iva_fee: data.ivaFee ?? null,
+      valor_neto: data.valorNeto ?? null,
+      numero_transaccion: data.numeroTransaccion ?? null,
       banco_receptor: data.bancoReceptor ?? null,
       comprobante_num: data.comprobanteNum ?? null,
       comprobante_url: comprobanteUrl,
@@ -150,7 +179,20 @@ export const registrarPago = createServerFn({ method: "POST" })
     } as never);
     if (error) throw new Error(error.message);
 
-    return { ok: true };
+    await supabase.from("finanzas_auditoria" as never).insert({
+      entidad: "cartera_pago",
+      entidad_id: data.carteraId,
+      accion: "pago_registrado",
+      user_id: userId,
+      valor_nuevo: {
+        valor: data.valor,
+        metodo_pago: data.metodoPago,
+        cuenta_receptora_id: data.cuentaReceptoraId ?? null,
+      },
+      documento_url: comprobanteUrl,
+    } as never);
+
+    return { ok: true, comprobantePath: comprobanteUrl };
   });
 
 // ---------- 3. Crear acuerdo ----------
