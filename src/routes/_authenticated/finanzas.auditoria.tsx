@@ -18,6 +18,7 @@ type Row = {
   user_id: string | null;
   documento_url: string | null;
   motivo: string | null;
+  valor_anterior: Record<string, unknown> | null;
   valor_nuevo: Record<string, unknown> | null;
   created_at: string;
 };
