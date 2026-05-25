@@ -39,8 +39,8 @@ export const enviarCuentaCobroEmail = createServerFn({ method: "POST" })
       porcentaje_comision: number | null;
     };
 
-    if (!cuenta.porcentaje_comision || ![35, 40, 45, 50].includes(Number(cuenta.porcentaje_comision))) {
-      throw new Error("Debes seleccionar el porcentaje de comisión (35%, 40%, 45% o 50%) antes de enviar a Contabilidad.");
+    if (!cuenta.porcentaje_comision || ![30, 35, 40, 45, 50].includes(Number(cuenta.porcentaje_comision))) {
+      throw new Error("Debes seleccionar el porcentaje de comisión (30%, 35%, 40%, 45% o 50%) antes de enviar a Contabilidad.");
     }
 
     const { data: prof } = await supabase
@@ -213,9 +213,10 @@ export const rechazarCuentaCobro = createServerFn({ method: "POST" })
       .eq("id", data.cuentaCobroId);
     if (error) throw new Error(error.message);
 
+    // Liberar comisiones para que el licenciado pueda corregir y reenviar en una nueva CC
     await supabase
       .from("comisiones" as never)
-      .update({ estado: "rechazada" } as never)
+      .update({ estado: "generada", cuenta_cobro_id: null } as never)
       .eq("cuenta_cobro_id", data.cuentaCobroId);
 
     await supabase.from("cuentas_cobro_historial" as never).insert({

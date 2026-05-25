@@ -125,6 +125,7 @@ function DetalleCuentaCobro() {
 
   async function guardarPorcentaje(pct: number): Promise<boolean> {
     if (!cc) return false;
+    // 1) Guardar % en la cuenta
     const { error } = await supabase
       .from("cuentas_cobro" as never)
       .update({ porcentaje_comision: pct } as never)
@@ -133,7 +134,16 @@ function DetalleCuentaCobro() {
       alert("No se pudo guardar el porcentaje: " + error.message);
       return false;
     }
-    setCc({ ...cc, porcentaje_comision: pct });
+    // 2) Recalcular cada comisión incluida: valor = round(base * pct / 100)
+    const updates = items.map((it) =>
+      supabase
+        .from("comisiones" as never)
+        .update({ porcentaje: pct, valor: Math.round(Number(it.base) * pct / 100) } as never)
+        .eq("id", it.id),
+    );
+    await Promise.all(updates);
+    // 3) Refrescar para que el trigger recalc_cuenta_cobro_total actualice cc.total
+    await cargar();
     return true;
   }
 
