@@ -437,6 +437,11 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
         confianzaGlobal,
         alertas: Array.isArray(parsed.alertas) ? parsed.alertas.map(String) : [],
         rawDeteccion: det.evidencia,
+        costo: {
+          totalUSD: llamadas.reduce((s, l) => s + l.costoUSD, 0),
+          llamadas,
+        },
       },
+
     };
   });
