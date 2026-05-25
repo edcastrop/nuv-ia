@@ -39,8 +39,8 @@ export const enviarCuentaCobroEmail = createServerFn({ method: "POST" })
       porcentaje_comision: number | null;
     };
 
-    if (!cuenta.porcentaje_comision || ![35, 40, 45, 50].includes(Number(cuenta.porcentaje_comision))) {
-      throw new Error("Debes seleccionar el porcentaje de comisión (35%, 40%, 45% o 50%) antes de enviar a Contabilidad.");
+    if (!cuenta.porcentaje_comision || ![30, 35, 40, 45, 50].includes(Number(cuenta.porcentaje_comision))) {
+      throw new Error("Debes seleccionar el porcentaje de comisión (30%, 35%, 40%, 45% o 50%) antes de enviar a Contabilidad.");
     }
 
     const { data: prof } = await supabase
