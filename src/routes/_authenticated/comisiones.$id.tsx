@@ -263,7 +263,11 @@ function DetalleCuentaCobro() {
           <div className="text-right">
             <div className="text-[11px] uppercase tracking-wide text-[#242424]/60">Total</div>
             <div className="mt-1 text-2xl font-bold text-[#1F7A45]">{formatCOP(Number(cc.total))}</div>
-            <div
+            {cc.porcentaje_comision && (
+              <div className="mt-1 text-[12px] text-[#242424]/70">
+                % Comisión licenciado: <b>{Number(cc.porcentaje_comision).toFixed(0)}%</b>
+              </div>
+            )}
               className="mt-2 inline-block rounded-full px-3 py-1 text-[12px] font-semibold"
               style={{ background: ESTADO_CC[cc.estado].bg, color: ESTADO_CC[cc.estado].color }}
             >
