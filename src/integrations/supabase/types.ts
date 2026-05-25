@@ -868,6 +868,48 @@ export type Database = {
         }
         Relationships: []
       }
+      expediente_soportes: {
+        Row: {
+          archivo_nombre: string
+          archivo_path: string
+          categoria: string
+          created_at: string
+          estado_relacionado: string | null
+          expediente_id: string
+          id: string
+          mime_type: string | null
+          size_bytes: number | null
+          subcategoria: string
+          user_id: string | null
+        }
+        Insert: {
+          archivo_nombre: string
+          archivo_path: string
+          categoria?: string
+          created_at?: string
+          estado_relacionado?: string | null
+          expediente_id: string
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          subcategoria: string
+          user_id?: string | null
+        }
+        Update: {
+          archivo_nombre?: string
+          archivo_path?: string
+          categoria?: string
+          created_at?: string
+          estado_relacionado?: string | null
+          expediente_id?: string
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          subcategoria?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       expedientes: {
         Row: {
           acertividad_global: number | null
@@ -1415,6 +1457,7 @@ export type Database = {
         | "FACTURADO"
         | "PAGADO"
         | "ENVIADO_CONTRATACION"
+        | "CONDICIONES_APLICADAS"
       expediente_modo: "pesos" | "uvr"
     }
     CompositeTypes: {
@@ -1614,6 +1657,7 @@ export const Constants = {
         "FACTURADO",
         "PAGADO",
         "ENVIADO_CONTRATACION",
+        "CONDICIONES_APLICADAS",
       ],
       expediente_modo: ["pesos", "uvr"],
     },
