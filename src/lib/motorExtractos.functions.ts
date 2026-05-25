@@ -563,9 +563,9 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
       return { error: "Respuesta del parser no interpretable.", data: null };
     }
 
+    const { datos, scores } = normalizeParsedMotor(parsed, det, profile);
     // Nota: se removió el reintento adicional con Pro para evitar timeouts del gateway.
-    // La validación se reporta como alerta sin disparar otra llamada a la IA.
-    const finalValidation = validation;
+    const finalValidation = validateMotorConsistency(profile, datos);
 
     // Confianza global: promedio ponderado de campos no vacíos
     let suma = 0,
