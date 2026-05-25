@@ -26,10 +26,11 @@ export const BANK_PROFILES: BankProfile[] = [
 - "Plazo total en meses" → plazoInicial
 - "Nro. cuota a cancelar" → cuotasPagadas (es la cuota que se está pagando ahora)
 - "Nro. cuotas pendientes para pago total" → cuotasPendientes
-- "Valor a Pagar" → cuotaActual (cuota efectivamente pagada — generalmente la cuota CON subsidio si aplica)
-- "Tasa interés cobrada" → tasaEA. "Tasa interés pactada", "tasa interés subsidiada" y tablas de "Tasas y tarifas Seguro Vida" NO se usan como tasaEA.
+- "Valor a Pagar" → cuotaActual (total del recibo: cuota con subsidio + seguros).
+- "Tasa interés cobrada" → tasaEA, pero si hay subsidio Gobierno/FRECH/Fresh la tasa real para simulación debe incluir el subsidio: calcula tasaEA desde (Intereses Corriente + Valor subsidio Gobierno) / Saldo Capital y conviértela a EA. "Tasa interés pactada", "tasa interés subsidiada" y tablas de "Tasas y tarifas Seguro Vida" NO se usan como tasaEA.
 - Seguros = "*Valor seguro vida" + "*Valor seguro incendio" + "*Valor seguro terremoto" (suma).
 - NO confundir "Valor asegurado Incendio y Terremoto" (valor del inmueble) con los seguros mensuales.
+- Si la suma visual de seguros no cuadra, usa esta validación: seguros = "Valor a Pagar" - "Valor cuota con subsidio".
 - capitalCuota e interesCuota se toman de "Movimientos Último Periodo" fila "Pago Cuota": columnas "Capital" e "Intereses Corriente". NO uses valores calculados ni aproximados.
 - Validación obligatoria antes de responder: cuotasPagadas + cuotasPendientes - 1 debe ser igual a plazoInicial; capitalCuota + interesCuota + seguros debe coincidir con "Valor a Pagar"; cuotaConSubsidio + seguros debe coincidir con "Valor a Pagar".
 - Si una validación no cuadra, re-lee el campo literal del extracto y baja el score del campo dudoso.
