@@ -28,6 +28,7 @@ import { Route as AuthenticatedSuperAdminUsuariosRouteImport } from './routes/_a
 import { Route as AuthenticatedSuperAdminMarcaRouteImport } from './routes/_authenticated/super-admin.marca'
 import { Route as AuthenticatedSuperAdminExpedientesRouteImport } from './routes/_authenticated/super-admin.expedientes'
 import { Route as AuthenticatedFinanzasRecaudosRouteImport } from './routes/_authenticated/finanzas.recaudos'
+import { Route as AuthenticatedFinanzasCuentasCobroRouteImport } from './routes/_authenticated/finanzas.cuentas-cobro'
 import { Route as AuthenticatedFinanzasComisionesRouteImport } from './routes/_authenticated/finanzas.comisiones'
 import { Route as AuthenticatedFinanzasCarteraRouteImport } from './routes/_authenticated/finanzas.cartera'
 import { Route as AuthenticatedExpedienteMaestroIdRouteImport } from './routes/_authenticated/expediente-maestro.$id'
@@ -143,6 +144,12 @@ const AuthenticatedFinanzasRecaudosRoute =
     path: '/recaudos',
     getParentRoute: () => AuthenticatedFinanzasRoute,
   } as any)
+const AuthenticatedFinanzasCuentasCobroRoute =
+  AuthenticatedFinanzasCuentasCobroRouteImport.update({
+    id: '/cuentas-cobro',
+    path: '/cuentas-cobro',
+    getParentRoute: () => AuthenticatedFinanzasRoute,
+  } as any)
 const AuthenticatedFinanzasComisionesRoute =
   AuthenticatedFinanzasComisionesRouteImport.update({
     id: '/comisiones',
@@ -212,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/finanzas/cartera': typeof AuthenticatedFinanzasCarteraRoute
   '/finanzas/comisiones': typeof AuthenticatedFinanzasComisionesRoute
+  '/finanzas/cuentas-cobro': typeof AuthenticatedFinanzasCuentasCobroRoute
   '/finanzas/recaudos': typeof AuthenticatedFinanzasRecaudosRoute
   '/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
@@ -240,6 +248,7 @@ export interface FileRoutesByTo {
   '/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/finanzas/cartera': typeof AuthenticatedFinanzasCarteraRoute
   '/finanzas/comisiones': typeof AuthenticatedFinanzasComisionesRoute
+  '/finanzas/cuentas-cobro': typeof AuthenticatedFinanzasCuentasCobroRoute
   '/finanzas/recaudos': typeof AuthenticatedFinanzasRecaudosRoute
   '/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
@@ -271,6 +280,7 @@ export interface FileRoutesById {
   '/_authenticated/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/_authenticated/finanzas/cartera': typeof AuthenticatedFinanzasCarteraRoute
   '/_authenticated/finanzas/comisiones': typeof AuthenticatedFinanzasComisionesRoute
+  '/_authenticated/finanzas/cuentas-cobro': typeof AuthenticatedFinanzasCuentasCobroRoute
   '/_authenticated/finanzas/recaudos': typeof AuthenticatedFinanzasRecaudosRoute
   '/_authenticated/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/_authenticated/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
@@ -302,6 +312,7 @@ export interface FileRouteTypes {
     | '/expediente-maestro/$id'
     | '/finanzas/cartera'
     | '/finanzas/comisiones'
+    | '/finanzas/cuentas-cobro'
     | '/finanzas/recaudos'
     | '/super-admin/expedientes'
     | '/super-admin/marca'
@@ -330,6 +341,7 @@ export interface FileRouteTypes {
     | '/expediente-maestro/$id'
     | '/finanzas/cartera'
     | '/finanzas/comisiones'
+    | '/finanzas/cuentas-cobro'
     | '/finanzas/recaudos'
     | '/super-admin/expedientes'
     | '/super-admin/marca'
@@ -360,6 +372,7 @@ export interface FileRouteTypes {
     | '/_authenticated/expediente-maestro/$id'
     | '/_authenticated/finanzas/cartera'
     | '/_authenticated/finanzas/comisiones'
+    | '/_authenticated/finanzas/cuentas-cobro'
     | '/_authenticated/finanzas/recaudos'
     | '/_authenticated/super-admin/expedientes'
     | '/_authenticated/super-admin/marca'
@@ -516,6 +529,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanzasRecaudosRouteImport
       parentRoute: typeof AuthenticatedFinanzasRoute
     }
+    '/_authenticated/finanzas/cuentas-cobro': {
+      id: '/_authenticated/finanzas/cuentas-cobro'
+      path: '/cuentas-cobro'
+      fullPath: '/finanzas/cuentas-cobro'
+      preLoaderRoute: typeof AuthenticatedFinanzasCuentasCobroRouteImport
+      parentRoute: typeof AuthenticatedFinanzasRoute
+    }
     '/_authenticated/finanzas/comisiones': {
       id: '/_authenticated/finanzas/comisiones'
       path: '/comisiones'
@@ -585,6 +605,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedFinanzasRouteChildren {
   AuthenticatedFinanzasCarteraRoute: typeof AuthenticatedFinanzasCarteraRoute
   AuthenticatedFinanzasComisionesRoute: typeof AuthenticatedFinanzasComisionesRoute
+  AuthenticatedFinanzasCuentasCobroRoute: typeof AuthenticatedFinanzasCuentasCobroRoute
   AuthenticatedFinanzasRecaudosRoute: typeof AuthenticatedFinanzasRecaudosRoute
   AuthenticatedFinanzasIndexRoute: typeof AuthenticatedFinanzasIndexRoute
 }
@@ -592,6 +613,8 @@ interface AuthenticatedFinanzasRouteChildren {
 const AuthenticatedFinanzasRouteChildren: AuthenticatedFinanzasRouteChildren = {
   AuthenticatedFinanzasCarteraRoute: AuthenticatedFinanzasCarteraRoute,
   AuthenticatedFinanzasComisionesRoute: AuthenticatedFinanzasComisionesRoute,
+  AuthenticatedFinanzasCuentasCobroRoute:
+    AuthenticatedFinanzasCuentasCobroRoute,
   AuthenticatedFinanzasRecaudosRoute: AuthenticatedFinanzasRecaudosRoute,
   AuthenticatedFinanzasIndexRoute: AuthenticatedFinanzasIndexRoute,
 }
