@@ -588,13 +588,16 @@ export type Database = {
           fecha_aprobacion: string | null
           fecha_envio: string | null
           fecha_pago: string | null
+          fecha_programada_pago: string | null
           id: string
+          motivo_devolucion: string | null
           numero: string
           observaciones: string | null
           porcentaje_comision: number | null
           total: number
           updated_at: string
           user_id: string
+          version: number
         }
         Insert: {
           comprobante_url?: string | null
@@ -603,13 +606,16 @@ export type Database = {
           fecha_aprobacion?: string | null
           fecha_envio?: string | null
           fecha_pago?: string | null
+          fecha_programada_pago?: string | null
           id?: string
+          motivo_devolucion?: string | null
           numero?: string
           observaciones?: string | null
           porcentaje_comision?: number | null
           total?: number
           updated_at?: string
           user_id: string
+          version?: number
         }
         Update: {
           comprobante_url?: string | null
@@ -618,13 +624,16 @@ export type Database = {
           fecha_aprobacion?: string | null
           fecha_envio?: string | null
           fecha_pago?: string | null
+          fecha_programada_pago?: string | null
           id?: string
+          motivo_devolucion?: string | null
           numero?: string
           observaciones?: string | null
           porcentaje_comision?: number | null
           total?: number
           updated_at?: string
           user_id?: string
+          version?: number
         }
         Relationships: []
       }

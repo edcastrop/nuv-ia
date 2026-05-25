@@ -17,9 +17,11 @@ import {
   enviarCuentaCobroEmail,
   marcarCuentaCobroPagada,
   rechazarCuentaCobro,
+  devolverCuentaCobro,
+  programarPagoCuentaCobro,
 } from "@/lib/comisiones.functions";
 import { buildCuentaCobroPdf, downloadBlob } from "@/lib/cuentaCobroPdf";
-import { ArrowLeft, Send, CheckCircle2, XCircle, DollarSign, Download, Mail } from "lucide-react";
+import { ArrowLeft, Send, CheckCircle2, XCircle, DollarSign, Download, Mail, RotateCcw, CalendarClock } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/comisiones/$id")({
   component: DetalleCuentaCobro,
@@ -52,6 +54,12 @@ function DetalleCuentaCobro() {
 
   // Envío contabilidad
   const [destinatariosExtra, setDestinatariosExtra] = useState("");
+
+  // Programación de pago
+  const [fechaProg, setFechaProg] = useState<string>("");
+
+  const devolver = useServerFn(devolverCuentaCobro);
+  const programar = useServerFn(programarPagoCuentaCobro);
 
   const cargar = async () => {
     setLoading(true);
@@ -242,13 +250,55 @@ function DetalleCuentaCobro() {
     }
   }
 
+  async function onDevolver() {
+    if (!cc) return;
+    if (observ.trim().length < 10) {
+      alert("Escribe el motivo de devolución (mínimo 10 caracteres) en el campo de observación.");
+      return;
+    }
+    if (!confirm("¿Devolver la cuenta de cobro al licenciado para corrección?")) return;
+    setBusy(true);
+    try {
+      await devolver({ data: { cuentaCobroId: cc.id, motivo: observ.trim() } });
+      setObserv("");
+      await cargar();
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onProgramar() {
+    if (!cc) return;
+    if (!fechaProg) {
+      alert("Selecciona la fecha programada de pago.");
+      return;
+    }
+    if (!confirm(`¿Programar el pago para el ${fechaProg}?`)) return;
+    setBusy(true);
+    try {
+      await programar({
+        data: { cuentaCobroId: cc.id, fechaProgramada: fechaProg, observacion: observ.trim() || undefined },
+      });
+      setObserv("");
+      setFechaProg("");
+      await cargar();
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (loading || rolesLoading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>;
   if (!cc) return <div className="p-12 text-center text-sm text-[#991B1B]">Cuenta no encontrada.</div>;
 
   const esDueno = user?.id === cc.user_id;
-  const puedeEnviar = esDueno && (cc.estado === "borrador" || cc.estado === "rechazada");
+  const puedeEnviar = esDueno && (cc.estado === "borrador" || cc.estado === "rechazada" || cc.estado === "devuelta_correccion");
   const puedeAprobar = esManager && cc.estado === "enviada";
-  const puedePagar = esManager && cc.estado === "aprobada";
+  const puedeProgramar = esManager && cc.estado === "aprobada";
+  const puedePagar = esManager && (cc.estado === "aprobada" || cc.estado === "programada_pago");
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
@@ -267,7 +317,22 @@ function DetalleCuentaCobro() {
             </div>
             <div className="mt-1 text-[12px] text-[#242424]/70">
               Creada el {new Date(cc.created_at).toLocaleString("es-CO")}
+              {Number(cc.version ?? 1) > 1 && (
+                <span className="ml-2 rounded bg-[#FEF3C7] px-1.5 py-0.5 text-[10px] font-semibold text-[#8A5A00]">
+                  v{cc.version}
+                </span>
+              )}
             </div>
+            {cc.fecha_programada_pago && (
+              <div className="mt-1 text-[12px] text-[#445DA3]">
+                📅 Pago programado: <b>{new Date(cc.fecha_programada_pago + "T00:00:00").toLocaleDateString("es-CO")}</b>
+              </div>
+            )}
+            {cc.motivo_devolucion && cc.estado === "devuelta_correccion" && (
+              <div className="mt-2 rounded-md border border-[#FCA5A5] bg-[#FEF2F2] p-2 text-[12px] text-[#7F1D1D]">
+                <b>Motivo de devolución:</b> {cc.motivo_devolucion}
+              </div>
+            )}
             {cc.observaciones && <div className="mt-2 text-[13px] italic text-[#242424]/70">"{cc.observaciones}"</div>}
           </div>
           <div className="text-right">
@@ -296,7 +361,7 @@ function DetalleCuentaCobro() {
           </div>
         </div>
 
-        {(puedeEnviar || puedeAprobar || puedePagar) && (
+        {(puedeEnviar || puedeAprobar || puedeProgramar || puedePagar) && (
           <div className="border-t border-[#E3E7EE] bg-[#F7F9FB] p-4 space-y-3">
             <input
               value={observ}
@@ -391,12 +456,44 @@ function DetalleCuentaCobro() {
                   <CheckCircle2 size={13} /> Aprobar
                 </button>
                 <button
+                  onClick={onDevolver}
+                  disabled={busy}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#8A5A00] px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
+                  title="Devolver al licenciado para corrección (motivo obligatorio ≥10 caracteres)"
+                >
+                  <RotateCcw size={13} /> Devolver para corrección
+                </button>
+                <button
                   onClick={onRechazar}
                   disabled={busy}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-[#991B1B] px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
                 >
                   <XCircle size={13} /> Rechazar (motivo obligatorio)
                 </button>
+              </div>
+            )}
+
+            {puedeProgramar && (
+              <div className="space-y-2 rounded-lg border border-[#E3E7EE] bg-white p-3">
+                <div className="text-[12px] font-semibold text-[#0A1226]">
+                  Programar pago (opcional, antes de marcar pagada)
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    type="date"
+                    value={fechaProg}
+                    onChange={(e) => setFechaProg(e.target.value)}
+                    min={new Date().toISOString().slice(0, 10)}
+                    className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 text-sm outline-none focus:border-[#445DA3]"
+                  />
+                  <button
+                    onClick={onProgramar}
+                    disabled={busy || !fechaProg}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#445DA3] px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
+                  >
+                    <CalendarClock size={13} /> Programar
+                  </button>
+                </div>
               </div>
             )}
 
@@ -492,6 +589,8 @@ const ESTADO_CC: Record<string, { bg: string; color: string; label: string }> = 
   borrador: { bg: "#F1F3F8", color: "#445DA3", label: "Borrador" },
   enviada: { bg: "#EEF1FA", color: "#445DA3", label: "Enviada" },
   aprobada: { bg: "#EAF7EE", color: "#1F7A45", label: "Aprobada" },
+  devuelta_correccion: { bg: "#FEF3C7", color: "#8A5A00", label: "Devuelta para corrección" },
   rechazada: { bg: "#FEE2E2", color: "#991B1B", label: "Rechazada" },
+  programada_pago: { bg: "#E0E7FF", color: "#3730A3", label: "Programada para pago" },
   pagada: { bg: "#DDF4E3", color: "#1F7A45", label: "Pagada" },
 };

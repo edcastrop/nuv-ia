@@ -19,11 +19,21 @@ export interface CuentaCobro {
   numero: string;
   user_id: string;
   total: number;
-  estado: "borrador" | "enviada" | "aprobada" | "rechazada" | "pagada";
+  estado:
+    | "borrador"
+    | "enviada"
+    | "aprobada"
+    | "devuelta_correccion"
+    | "rechazada"
+    | "programada_pago"
+    | "pagada";
   fecha_envio: string | null;
   fecha_aprobacion: string | null;
   fecha_pago: string | null;
+  fecha_programada_pago: string | null;
   observaciones: string | null;
+  motivo_devolucion: string | null;
+  version: number;
   comprobante_url: string | null;
   porcentaje_comision: number | null;
   created_at: string;

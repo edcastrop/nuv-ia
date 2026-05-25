@@ -242,3 +242,136 @@ export const rechazarCuentaCobro = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+// ---------- Devolver para corrección (Contabilidad → Licenciado) ----------
+export const devolverCuentaCobro = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        cuentaCobroId: z.string().uuid(),
+        motivo: z.string().min(10).max(2000),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    // Snapshot previo + version actual
+    const { data: prev } = await supabase
+      .from("cuentas_cobro" as never)
+      .select("*")
+      .eq("id", data.cuentaCobroId)
+      .single();
+    const cc = prev as unknown as {
+      id: string;
+      version: number | null;
+      estado: string;
+      user_id: string;
+      numero: string;
+      total: number;
+      porcentaje_comision: number | null;
+    } | null;
+    if (!cc) throw new Error("Cuenta de cobro no encontrada.");
+    if (!["enviada", "aprobada"].includes(cc.estado)) {
+      throw new Error(`No se puede devolver una cuenta en estado "${cc.estado}".`);
+    }
+
+    const nuevaVersion = Number(cc.version ?? 1) + 1;
+    const { error } = await supabase
+      .from("cuentas_cobro" as never)
+      .update({
+        estado: "devuelta_correccion",
+        motivo_devolucion: data.motivo,
+        version: nuevaVersion,
+      } as never)
+      .eq("id", data.cuentaCobroId);
+    if (error) throw new Error(error.message);
+
+    // Liberar comisiones para que el licenciado pueda corregir y re-armar la CC
+    await supabase
+      .from("comisiones" as never)
+      .update({ estado: "generada", cuenta_cobro_id: null } as never)
+      .eq("cuenta_cobro_id", data.cuentaCobroId);
+
+    await supabase.from("cuentas_cobro_historial" as never).insert({
+      cuenta_cobro_id: data.cuentaCobroId,
+      user_id: userId,
+      accion: `devuelta_v${nuevaVersion - 1}`,
+      observacion: data.motivo,
+    } as never);
+
+    await supabase.from("finanzas_auditoria" as never).insert({
+      entidad: "cuenta_cobro",
+      entidad_id: data.cuentaCobroId,
+      accion: "devuelta_correccion",
+      user_id: userId,
+      motivo: data.motivo,
+      valor_anterior: { estado: cc.estado, version: cc.version },
+      valor_nuevo: { estado: "devuelta_correccion", version: nuevaVersion },
+    } as never);
+
+    // Alerta al licenciado
+    await supabaseAdmin.from("finanzas_alertas" as never).insert({
+      tipo: "cuenta_cobro_devuelta",
+      severidad: "alta",
+      titulo: `Cuenta de cobro ${cc.numero} devuelta para corrección`,
+      mensaje_ia: data.motivo,
+      cuenta_cobro_id: data.cuentaCobroId,
+    } as never);
+
+    return { ok: true, version: nuevaVersion };
+  });
+
+// ---------- Programar pago (Contabilidad) ----------
+export const programarPagoCuentaCobro = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        cuentaCobroId: z.string().uuid(),
+        fechaProgramada: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha inválida (YYYY-MM-DD)"),
+        observacion: z.string().max(2000).optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: cc } = await supabase
+      .from("cuentas_cobro" as never)
+      .select("estado")
+      .eq("id", data.cuentaCobroId)
+      .single();
+    const row = cc as unknown as { estado: string } | null;
+    if (!row) throw new Error("Cuenta no encontrada.");
+    if (row.estado !== "aprobada") {
+      throw new Error("Solo se puede programar el pago de una cuenta aprobada.");
+    }
+
+    const { error } = await supabase
+      .from("cuentas_cobro" as never)
+      .update({
+        estado: "programada_pago",
+        fecha_programada_pago: data.fechaProgramada,
+      } as never)
+      .eq("id", data.cuentaCobroId);
+    if (error) throw new Error(error.message);
+
+    await supabase.from("cuentas_cobro_historial" as never).insert({
+      cuenta_cobro_id: data.cuentaCobroId,
+      user_id: userId,
+      accion: "programada_pago",
+      observacion: `Pago programado para ${data.fechaProgramada}` + (data.observacion ? ` · ${data.observacion}` : ""),
+    } as never);
+
+    await supabase.from("finanzas_auditoria" as never).insert({
+      entidad: "cuenta_cobro",
+      entidad_id: data.cuentaCobroId,
+      accion: "programada_pago",
+      user_id: userId,
+      valor_nuevo: { fecha_programada_pago: data.fechaProgramada },
+    } as never);
+
+    return { ok: true };
+  });

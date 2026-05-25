@@ -270,7 +270,9 @@ const ESTADO_CC: Record<string, { bg: string; color: string; label: string }> = 
   borrador: { bg: "#F1F3F8", color: "#445DA3", label: "Borrador" },
   enviada: { bg: "#EEF1FA", color: "#445DA3", label: "Enviada" },
   aprobada: { bg: "#EAF7EE", color: "#1F7A45", label: "Aprobada" },
+  devuelta_correccion: { bg: "#FEF3C7", color: "#8A5A00", label: "Devuelta" },
   rechazada: { bg: "#FEE2E2", color: "#991B1B", label: "Rechazada" },
+  programada_pago: { bg: "#E0E7FF", color: "#3730A3", label: "Programada" },
   pagada: { bg: "#DDF4E3", color: "#1F7A45", label: "Pagada" },
 };
 
