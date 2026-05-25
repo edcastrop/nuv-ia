@@ -14,6 +14,8 @@ export const Route = createFileRoute("/_authenticated/contabilidad/cuentas-cobro
 const FILTROS: { key: CuentaCobro["estado"] | "todas"; label: string }[] = [
   { key: "enviada", label: "Por aprobar" },
   { key: "aprobada", label: "Aprobadas (pendientes pago)" },
+  { key: "programada_pago", label: "Programadas" },
+  { key: "devuelta_correccion", label: "Devueltas" },
   { key: "pagada", label: "Pagadas" },
   { key: "rechazada", label: "Rechazadas" },
   { key: "todas", label: "Todas" },
