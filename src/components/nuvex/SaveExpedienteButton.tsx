@@ -26,6 +26,10 @@ export function SaveExpedienteButton({
       const wasNew = !expedienteId;
       const e = await upsertExpediente({ ...payload, id: expedienteId });
       setMsg(expedienteId ? "Expediente actualizado" : "Expediente guardado");
+      // Disparador automático: simulación guardada → estado "simulado"
+      if (wasNew) {
+        try { await cambiarEstadoCaso(e.id, "simulado", "simulacion_guardada"); } catch (err) { console.warn("[estado] simulado", err); }
+      }
       onSaved?.(e);
       if (wasNew) setCreado(e);
     } catch (err) {
