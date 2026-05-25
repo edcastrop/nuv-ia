@@ -97,7 +97,7 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
   };
 
   const startRead = async (selected: File, pwd?: string) => {
-    setStage("reading"); setError(null);
+    setStage("reading"); setError(null); setReadingPhase("upload");
     try {
       let images: { mime: string; dataUrl: string }[] = [];
       if (selected.type === "application/pdf" || selected.name.toLowerCase().endsWith(".pdf")) {
@@ -112,6 +112,7 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
         images = await fileToImages(selected);
       }
       if (!images.length) throw new Error("No se pudieron generar imágenes del archivo.");
+      setReadingPhase("ocr");
 
       // Subir archivo a storage para trazabilidad (opcional, no bloqueante)
       try {
@@ -123,6 +124,7 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
         }
       } catch { /* no bloqueante */ }
 
+      setReadingPhase("analyze");
       const res = await motor({ data: { images } });
       if (res.error || !res.data) {
         setError(res.error || "Lectura sin datos."); setStage("error"); return;
@@ -135,6 +137,17 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
 
   const onFile = (f: File | null) => {
     if (!f) return;
+    const isPdf = f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf");
+    if (!isPdf) {
+      setError("Solo se permiten archivos PDF. JPG, PNG, DOCX y XLSX no están soportados.");
+      setStage("error");
+      return;
+    }
+    if (f.size > MAX_SIZE) {
+      setError(`El archivo supera 20 MB (${fmtSize(f.size)}).`);
+      setStage("error");
+      return;
+    }
     setFile(f);
     void startRead(f);
   };
