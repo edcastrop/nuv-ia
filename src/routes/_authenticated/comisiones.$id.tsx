@@ -9,6 +9,7 @@ import { formatCOP } from "@/lib/format";
 import {
   getCuentaCobro,
   cambiarEstadoCuenta,
+  PORCENTAJES_COMISION_CC,
   type CuentaCobro,
   type Comision,
 } from "@/lib/comisiones";
