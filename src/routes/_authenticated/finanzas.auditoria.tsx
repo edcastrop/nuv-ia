@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { Card } from "@/components/nuvex/ui";
 import { supabase } from "@/integrations/supabase/client";
+import { obtenerUrlComprobante } from "@/lib/auditoria.functions";
 
 export const Route = createFileRoute("/_authenticated/finanzas/auditoria")({
   component: AuditoriaPage,
@@ -20,11 +22,19 @@ type Row = {
   created_at: string;
 };
 
+function extractFilenameFromPath(path: string): string {
+  const idx = path.lastIndexOf("-");
+  if (idx > 0) return path.slice(idx + 1);
+  return path.split("/").pop() ?? path;
+}
+
 function AuditoriaPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [filtroEnt, setFiltroEnt] = useState("");
   const [filtroAcc, setFiltroAcc] = useState("");
   const [profMap, setProfMap] = useState<Record<string, string>>({});
+  const [loadingDoc, setLoadingDoc] = useState<string | null>(null);
+  const fetchUrl = useServerFn(obtenerUrlComprobante);
 
   useEffect(() => {
     (async () => {
@@ -48,6 +58,18 @@ function AuditoriaPage() {
   const entidades = useMemo(() => Array.from(new Set(rows.map((r) => r.entidad))).sort(), [rows]);
   const acciones = useMemo(() => Array.from(new Set(rows.map((r) => r.accion))).sort(), [rows]);
   const filtradas = rows.filter((r) => (!filtroEnt || r.entidad === filtroEnt) && (!filtroAcc || r.accion === filtroAcc));
+
+  async function handleDownload(path: string) {
+    setLoadingDoc(path);
+    try {
+      const { url } = await fetchUrl({ data: { path } });
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      alert("No se pudo abrir el comprobante.");
+    } finally {
+      setLoadingDoc(null);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -95,7 +117,17 @@ function AuditoriaPage() {
                     <td className="pr-3 text-[#242424]/80">
                       {r.motivo && <div className="italic">{r.motivo}</div>}
                       {r.valor_nuevo && <code className="text-[10.5px] text-[#445DA3]">{JSON.stringify(r.valor_nuevo)}</code>}
-                      {r.documento_url && <div className="text-[10.5px] text-[#1F7A45]">📎 {r.documento_url}</div>}
+                      {r.documento_url && (
+                        <button
+                          onClick={() => handleDownload(r.documento_url!)}
+                          disabled={loadingDoc === r.documento_url}
+                          className="mt-1 text-[10.5px] text-[#1F7A45] hover:underline cursor-pointer flex items-center gap-1 disabled:opacity-50"
+                          type="button"
+                        >
+                          <span>📎</span>
+                          {loadingDoc === r.documento_url ? "Abriendo…" : extractFilenameFromPath(r.documento_url)}
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
