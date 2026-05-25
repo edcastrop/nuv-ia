@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, SectionTitle, TextField, Alert } from "./ui";
 import { NUVEX, CORPORATIVO } from "./constants";
 import { formatCOP, formatNumber, parseCurrency, parseDecimal } from "../../lib/format";
 import { applyHonorariosFloor, HONORARIOS_MIN_BASE, HONORARIOS_MIN_FINAL } from "../../lib/finance";
 import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
 import { setAprobado, type AprobadoData, type EstadoExpediente } from "@/lib/expedientes";
+import { calcularRecalculoHonorarios, guardarRecalculoHonorarios } from "@/lib/honorarios";
 import type { ClientData } from "./ClientFields";
 import { PazYSalvo } from "./PazYSalvo";
 
@@ -107,6 +108,49 @@ export function ResultadoFinal({
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
   const [consecutivo] = useState<string>(() => nextConsecutivo());
   const [honorariosPagadosManual, setHonorariosPagadosManual] = useState(false);
+
+  // ====== Recálculo de honorarios a éxito (Fase 1) ======
+  const honorariosPropuesta = proyeccion?.honorariosFinales ?? 0;
+  const [cuotasPactadas, setCuotasPactadas] = useState<string>("");
+  const [cuotasAprobadasBanco, setCuotasAprobadasBanco] = useState<string>("");
+  const [honorariosPactados, setHonorariosPactados] = useState<string>("");
+  const [savingRecalc, setSavingRecalc] = useState(false);
+  const [recalcMsg, setRecalcMsg] = useState<string | null>(null);
+
+  // Hidratar valores iniciales desde el expediente
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      if (!expedienteId) {
+        if (honorariosPropuesta > 0) setHonorariosPactados(String(honorariosPropuesta));
+        return;
+      }
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data } = await supabase
+        .from("expedientes")
+        .select("cuotas_pactadas, cuotas_aprobadas_banco, honorarios_pactados, propuesta_data")
+        .eq("id", expedienteId)
+        .maybeSingle();
+      if (cancel) return;
+      const row = data as { cuotas_pactadas?: number | null; cuotas_aprobadas_banco?: number | null; honorarios_pactados?: number | null; propuesta_data?: { nuevoPlazo?: number } } | null;
+      if (row?.cuotas_pactadas != null) setCuotasPactadas(String(row.cuotas_pactadas));
+      else if (row?.propuesta_data?.nuevoPlazo) setCuotasPactadas(String(Math.max(0, cuotasPendientes - row.propuesta_data.nuevoPlazo)));
+      if (row?.cuotas_aprobadas_banco != null) setCuotasAprobadasBanco(String(row.cuotas_aprobadas_banco));
+      if (row?.honorarios_pactados != null) setHonorariosPactados(String(row.honorarios_pactados));
+      else if (honorariosPropuesta > 0) setHonorariosPactados(String(honorariosPropuesta));
+    })();
+    return () => { cancel = true; };
+  }, [expedienteId, honorariosPropuesta, cuotasPendientes]);
+
+  const recalculo = useMemo(
+    () => calcularRecalculoHonorarios(
+      parseDecimal(cuotasPactadas),
+      parseDecimal(cuotasAprobadasBanco),
+      parseCurrency(honorariosPactados),
+    ),
+    [cuotasPactadas, cuotasAprobadasBanco, honorariosPactados],
+  );
+
   const set = <K extends keyof AprobacionState>(k: K, v: AprobacionState[K]) =>
     setAprob((s) => ({ ...s, [k]: v }));
 
@@ -244,11 +288,85 @@ export function ResultadoFinal({
           <TextField label="Observaciones" value={aprob.observaciones} onChange={(v) => set("observaciones", v)} placeholder="Opcional" />
         </div>
 
+        {/* ====== Reajuste de honorarios a éxito ====== */}
+        <div className="mt-6 rounded-xl border-2 p-4" style={{ borderColor: "#F0B429", backgroundColor: "#FFFBEB" }}>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: "#8A5A00" }}>
+              Reajuste de honorarios a éxito
+            </h3>
+            {recalculo.huboRecalculo && (
+              <span className="rounded-full px-3 py-1 text-[11px] font-bold" style={{ background: "#F0B429", color: "#2C1810" }}>
+                Honorarios recalculados
+              </span>
+            )}
+          </div>
+          <p className="mt-1 text-[11px] text-[#8A5A00]/80">
+            NUVEX trabaja a éxito. Si el banco aprueba menos cuotas eliminadas que las pactadas, los honorarios se recalculan por regla de 3.
+          </p>
+          <div className="mt-3 grid gap-3 md:grid-cols-3">
+            <TextField label="Cuotas pactadas en contrato" value={cuotasPactadas} onChange={setCuotasPactadas} placeholder="60" />
+            <TextField label="Honorarios pactados" value={honorariosPactados} onChange={setHonorariosPactados} placeholder="3.000.000" />
+            <TextField label="Cuotas aprobadas por banco" value={cuotasAprobadasBanco} onChange={setCuotasAprobadasBanco} placeholder="55" />
+          </div>
+          <div className="mt-3 grid gap-2 md:grid-cols-4 text-xs">
+            <div className="rounded-lg bg-white p-2 border border-[#F0B429]/40">
+              <div className="text-[10px] uppercase tracking-wider text-[#242424]/60">Cuotas pactadas</div>
+              <div className="font-semibold">{recalculo.cuotasPactadas || "—"}</div>
+            </div>
+            <div className="rounded-lg bg-white p-2 border border-[#F0B429]/40">
+              <div className="text-[10px] uppercase tracking-wider text-[#242424]/60">Cuotas aprobadas</div>
+              <div className="font-semibold">{recalculo.cuotasAprobadasBanco || "—"}</div>
+            </div>
+            <div className="rounded-lg bg-white p-2 border border-[#F0B429]/40">
+              <div className="text-[10px] uppercase tracking-wider text-[#242424]/60">Honorarios pactados</div>
+              <div className="font-semibold">{formatCOP(recalculo.honorariosPactados)}</div>
+            </div>
+            <div className="rounded-lg p-2 border-2" style={{ borderColor: NUVEX.verde, backgroundColor: "#EAF7EE" }}>
+              <div className="text-[10px] uppercase tracking-wider" style={{ color: "#1F7A45" }}>Honorarios recalculados</div>
+              <div className="font-extrabold text-base" style={{ color: "#1F7A45" }}>{formatCOP(recalculo.honorariosRecalculados)}</div>
+            </div>
+          </div>
+          {recalculo.huboRecalculo && (
+            <div className="mt-3 rounded-lg bg-amber-100 border border-amber-300 p-2 text-xs text-[#8A5A00]">
+              Los honorarios fueron recalculados porque el banco aprobó menos cuotas de las pactadas. Diferencia a favor del cliente: <strong>{formatCOP(recalculo.diferencia)}</strong>.
+            </div>
+          )}
+          {expedienteId && (
+            <div className="mt-3 flex items-center justify-end gap-3">
+              {recalcMsg && <span className="text-xs text-[#242424]/70">{recalcMsg}</span>}
+              <button
+                disabled={savingRecalc || recalculo.cuotasPactadas <= 0 || recalculo.honorariosPactados <= 0 || recalculo.cuotasAprobadasBanco <= 0}
+                onClick={async () => {
+                  setSavingRecalc(true); setRecalcMsg(null);
+                  try {
+                    await guardarRecalculoHonorarios(
+                      expedienteId,
+                      recalculo.cuotasPactadas,
+                      recalculo.cuotasAprobadasBanco,
+                      recalculo.honorariosPactados,
+                    );
+                    setRecalcMsg(`Honorarios oficiales actualizados a ${formatCOP(recalculo.honorariosRecalculados)}`);
+                  } catch (e) {
+                    setRecalcMsg((e as Error).message);
+                  } finally {
+                    setSavingRecalc(false);
+                  }
+                }}
+                className="rounded-lg px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
+                style={{ backgroundColor: "#8A5A00" }}
+              >
+                {savingRecalc ? "Guardando…" : "Guardar recálculo"}
+              </button>
+            </div>
+          )}
+        </div>
+
         {!aprobado && (
           <div className="mt-4">
             <Alert>Ingresa la nueva cuota y el nuevo plazo aprobados para calcular acertividad.</Alert>
           </div>
         )}
+
 
         {aprobado && metricas && (
           <>
