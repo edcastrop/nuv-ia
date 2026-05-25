@@ -26,11 +26,18 @@ export const BANK_PROFILES: BankProfile[] = [
 - "Plazo total en meses" → plazoInicial
 - "Nro. cuota a cancelar" → cuotasPagadas (es la cuota que se está pagando ahora)
 - "Nro. cuotas pendientes para pago total" → cuotasPendientes
-- "Valor a Pagar" → cuotaActual (cuota efectivamente pagada)
+- "Valor a Pagar" → cuotaActual (cuota efectivamente pagada — generalmente la cuota CON subsidio si aplica)
 - "Tasa interés cobrada" → tasaEA. "Tasa interés pactada" NO usar.
 - Seguros = "*Valor seguro vida" + "*Valor seguro incendio" + "*Valor seguro terremoto" (suma).
 - NO confundir "Valor asegurado Incendio y Terremoto" (valor del inmueble) con los seguros mensuales.
-- Si aparece "Valor subsidio Gobierno" o "FRECH" → es producto CON Beneficio de Cobertura.`,
+
+BENEFICIO DE COBERTURA / SUBSIDIO GOBIERNO / FRECH (CRÍTICO):
+- "Valor cuota sin subsidio Gobierno" → cuotaSinSubsidio.
+- "Valor subsidio Gobierno" → valorBeneficioMensual. tipoBeneficio="Subsidio Gobierno / FRECH".
+- "Valor cuota con subsidio" → cuotaConSubsidio.
+- Si valorBeneficioMensual > 0 → beneficioActivo="si". Si no aparece o es 0 → beneficioActivo="no", deja los demás campos de beneficio vacíos con score 0.
+- NO marques beneficio sólo por texto legal o por la palabra "cobertura" sin valor.
+- Si el extracto NO trae tasa de cobertura explícita, deja tasaCobertura="" con score 0 (no inventes).`,
   },
   {
     id: "davivienda_hipotecario",
