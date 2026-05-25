@@ -450,6 +450,81 @@ export type Database = {
         }
         Relationships: []
       }
+      comisiones: {
+        Row: {
+          base: number
+          created_at: string
+          cuenta_cobro_id: string | null
+          estado: string
+          expediente_id: string
+          id: string
+          porcentaje: number
+          rol: string
+          updated_at: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          base?: number
+          created_at?: string
+          cuenta_cobro_id?: string | null
+          estado?: string
+          expediente_id: string
+          id?: string
+          porcentaje?: number
+          rol?: string
+          updated_at?: string
+          user_id: string
+          valor?: number
+        }
+        Update: {
+          base?: number
+          created_at?: string
+          cuenta_cobro_id?: string | null
+          estado?: string
+          expediente_id?: string
+          id?: string
+          porcentaje?: number
+          rol?: string
+          updated_at?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
+      comisiones_reglas: {
+        Row: {
+          activo: boolean
+          banco: string | null
+          created_at: string
+          id: string
+          porcentaje: number
+          rol: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          activo?: boolean
+          banco?: string | null
+          created_at?: string
+          id?: string
+          porcentaje?: number
+          rol?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          activo?: boolean
+          banco?: string | null
+          created_at?: string
+          id?: string
+          porcentaje?: number
+          rol?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       contratacion_destinatarios: {
         Row: {
           activo: boolean
@@ -476,6 +551,83 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      cuentas_cobro: {
+        Row: {
+          created_at: string
+          estado: string
+          fecha_aprobacion: string | null
+          fecha_envio: string | null
+          fecha_pago: string | null
+          id: string
+          numero: string
+          observaciones: string | null
+          total: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          estado?: string
+          fecha_aprobacion?: string | null
+          fecha_envio?: string | null
+          fecha_pago?: string | null
+          id?: string
+          numero?: string
+          observaciones?: string | null
+          total?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          estado?: string
+          fecha_aprobacion?: string | null
+          fecha_envio?: string | null
+          fecha_pago?: string | null
+          id?: string
+          numero?: string
+          observaciones?: string | null
+          total?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cuentas_cobro_historial: {
+        Row: {
+          accion: string
+          created_at: string
+          cuenta_cobro_id: string
+          id: string
+          observacion: string | null
+          user_id: string | null
+        }
+        Insert: {
+          accion: string
+          created_at?: string
+          cuenta_cobro_id: string
+          id?: string
+          observacion?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          accion?: string
+          created_at?: string
+          cuenta_cobro_id?: string
+          id?: string
+          observacion?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cuentas_cobro_historial_cuenta_cobro_id_fkey"
+            columns: ["cuenta_cobro_id"]
+            isOneToOne: false
+            referencedRelation: "cuentas_cobro"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       envios_contratacion: {
         Row: {
