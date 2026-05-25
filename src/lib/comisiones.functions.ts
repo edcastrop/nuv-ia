@@ -137,7 +137,13 @@ export const marcarCuentaCobroPagada = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
 
     const bytes = Uint8Array.from(atob(data.comprobanteBase64), (c) => c.charCodeAt(0));
-    const path = `${data.cuentaCobroId}/${Date.now()}-${data.comprobanteFilename}`;
+    const safeName = data.comprobanteFilename
+      .normalize("NFKD")
+      .replace(/[^\w.\-]+/g, "_")
+      .replace(/_+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .slice(-120) || "comprobante";
+    const path = `${data.cuentaCobroId}/${Date.now()}-${safeName}`;
     const { error: upErr } = await supabaseAdmin.storage
       .from("comprobantes-finanzas")
       .upload(path, bytes, { contentType: "application/octet-stream", upsert: false });
