@@ -30,7 +30,7 @@ export interface CuentaCobro {
   updated_at: string;
 }
 
-export const PORCENTAJES_COMISION_CC = [35, 40, 45, 50] as const;
+export const PORCENTAJES_COMISION_CC = [30, 35, 40, 45, 50] as const;
 export type PorcentajeComisionCC = typeof PORCENTAJES_COMISION_CC[number];
 
 
