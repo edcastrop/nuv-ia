@@ -554,6 +554,7 @@ export type Database = {
       }
       cuentas_cobro: {
         Row: {
+          comprobante_url: string | null
           created_at: string
           estado: string
           fecha_aprobacion: string | null
@@ -567,6 +568,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          comprobante_url?: string | null
           created_at?: string
           estado?: string
           fecha_aprobacion?: string | null
@@ -580,6 +582,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          comprobante_url?: string | null
           created_at?: string
           estado?: string
           fecha_aprobacion?: string | null

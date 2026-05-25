@@ -1,12 +1,24 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Card } from "@/components/nuvex/ui";
 import { formatCOP } from "@/lib/format";
-import { getCuentaCobro, cambiarEstadoCuenta, type CuentaCobro, type Comision } from "@/lib/comisiones";
-import { ArrowLeft, Send, CheckCircle2, XCircle, DollarSign } from "lucide-react";
+import {
+  getCuentaCobro,
+  cambiarEstadoCuenta,
+  type CuentaCobro,
+  type Comision,
+} from "@/lib/comisiones";
+import {
+  enviarCuentaCobroEmail,
+  marcarCuentaCobroPagada,
+  rechazarCuentaCobro,
+} from "@/lib/comisiones.functions";
+import { buildCuentaCobroPdf, downloadBlob } from "@/lib/cuentaCobroPdf";
+import { ArrowLeft, Send, CheckCircle2, XCircle, DollarSign, Download, Mail } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/comisiones/$id")({
   component: DetalleCuentaCobro,
@@ -17,20 +29,37 @@ function DetalleCuentaCobro() {
   const { id } = Route.useParams();
   const { user } = useAuth();
   const { roles } = useUserRole();
-  const navigate = useNavigate();
-  const esManager = roles.some((r) => ["admin", "gerencia", "super_admin", "cartera"].includes(r));
+  const esManager = roles.some((r) =>
+    ["admin", "gerencia", "super_admin", "cartera", "contabilidad"].includes(r),
+  );
+
+  const enviarEmail = useServerFn(enviarCuentaCobroEmail);
+  const marcarPagada = useServerFn(marcarCuentaCobroPagada);
+  const rechazar = useServerFn(rechazarCuentaCobro);
 
   const [cc, setCc] = useState<CuentaCobro | null>(null);
   const [items, setItems] = useState<Comision[]>([]);
   const [expedientes, setExpedientes] = useState<Map<string, { cliente: string; banco: string | null }>>(new Map());
   const [historial, setHistorial] = useState<{ id: string; accion: string; observacion: string | null; created_at: string }[]>([]);
+  const [licenciado, setLicenciado] = useState<{ nombre: string; email: string | null } | null>(null);
   const [observ, setObserv] = useState("");
   const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+
+  // Pago
+  const [comprobante, setComprobante] = useState<File | null>(null);
+
+  // Envío contabilidad
+  const [destinatariosExtra, setDestinatariosExtra] = useState("");
 
   const cargar = async () => {
     setLoading(true);
     const c = await getCuentaCobro(id);
     setCc(c);
+    if (c) {
+      const { data: prof } = await supabase.from("profiles").select("nombre, email").eq("id", c.user_id).maybeSingle();
+      setLicenciado(prof ? { nombre: prof.nombre || prof.email || "—", email: prof.email } : null);
+    }
     const { data: its } = await supabase
       .from("comisiones" as never)
       .select("*")
@@ -60,23 +89,135 @@ function DetalleCuentaCobro() {
     cargar();
   }, [id]);
 
-  const cambiar = async (nuevo: CuentaCobro["estado"]) => {
-    if (!cc) return;
-    if (!confirm(`¿Cambiar a "${nuevo}"?`)) return;
+  function fileToBase64(f: File): Promise<string> {
+    return f.arrayBuffer().then((buf) => {
+      let bin = "";
+      const bytes = new Uint8Array(buf);
+      for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+      return btoa(bin);
+    });
+  }
+
+  async function buildPdf() {
+    if (!cc || !licenciado) throw new Error("Cuenta no lista para PDF.");
+    return buildCuentaCobroPdf({
+      cuenta: cc,
+      licenciado: { nombre: licenciado.nombre, email: licenciado.email },
+      items: items.map((it) => {
+        const exp = expedientes.get(it.expediente_id);
+        return { ...it, cliente: exp?.cliente ?? "—", banco: exp?.banco ?? null };
+      }),
+    });
+  }
+
+  async function onDescargar() {
     try {
-      await cambiarEstadoCuenta(cc.id, nuevo, observ.trim() || undefined);
+      setBusy(true);
+      const { blob, filename } = await buildPdf();
+      downloadBlob(blob, filename);
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onEnviarContabilidad() {
+    if (!cc) return;
+    const extras = destinatariosExtra
+      .split(/[,;\s]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (!confirm("¿Enviar cuenta de cobro a contabilidad por correo (con PDF adjunto)?")) return;
+    setBusy(true);
+    try {
+      const { base64, filename } = await buildPdf();
+      await enviarEmail({
+        data: {
+          cuentaCobroId: cc.id,
+          pdfBase64: base64,
+          pdfFilename: filename,
+          destinatarios: extras.length ? extras : undefined,
+          mensaje: observ.trim() || undefined,
+        },
+      });
+      setObserv("");
+      setDestinatariosExtra("");
+      await cargar();
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onAprobar() {
+    if (!cc) return;
+    if (!confirm("¿Aprobar esta cuenta de cobro?")) return;
+    setBusy(true);
+    try {
+      await cambiarEstadoCuenta(cc.id, "aprobada", observ.trim() || undefined);
       setObserv("");
       await cargar();
     } catch (e) {
       alert((e as Error).message);
+    } finally {
+      setBusy(false);
     }
-  };
+  }
+
+  async function onRechazar() {
+    if (!cc) return;
+    if (observ.trim().length < 5) {
+      alert("Indica el motivo de rechazo (mínimo 5 caracteres) en el campo de observación.");
+      return;
+    }
+    if (!confirm("¿Rechazar esta cuenta de cobro?")) return;
+    setBusy(true);
+    try {
+      await rechazar({ data: { cuentaCobroId: cc.id, motivo: observ.trim() } });
+      setObserv("");
+      await cargar();
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onMarcarPagada() {
+    if (!cc) return;
+    if (!comprobante) {
+      alert("Adjunta el comprobante de pago antes de marcar como pagada.");
+      return;
+    }
+    if (!confirm("¿Confirmar pago y registrar el comprobante?")) return;
+    setBusy(true);
+    try {
+      const base64 = await fileToBase64(comprobante);
+      await marcarPagada({
+        data: {
+          cuentaCobroId: cc.id,
+          comprobanteBase64: base64,
+          comprobanteFilename: comprobante.name,
+          observacion: observ.trim() || undefined,
+        },
+      });
+      setObserv("");
+      setComprobante(null);
+      await cargar();
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   if (loading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>;
   if (!cc) return <div className="p-12 text-center text-sm text-[#991B1B]">Cuenta no encontrada.</div>;
 
   const esDueno = user?.id === cc.user_id;
-  const puedeEnviar = esDueno && cc.estado === "borrador";
+  const puedeEnviar = esDueno && (cc.estado === "borrador" || cc.estado === "rechazada");
   const puedeAprobar = esManager && cc.estado === "enviada";
   const puedePagar = esManager && cc.estado === "aprobada";
 
@@ -92,6 +233,10 @@ function DetalleCuentaCobro() {
             <div className="text-[11px] uppercase tracking-wide text-[#242424]/60">Cuenta de cobro</div>
             <div className="mt-1 font-mono text-lg font-semibold text-[#0A1226]">{cc.numero}</div>
             <div className="mt-1 text-[12px] text-[#242424]/70">
+              Licenciado: <b>{licenciado?.nombre ?? "—"}</b>
+              {licenciado?.email && <> · {licenciado.email}</>}
+            </div>
+            <div className="mt-1 text-[12px] text-[#242424]/70">
               Creada el {new Date(cc.created_at).toLocaleString("es-CO")}
             </div>
             {cc.observaciones && <div className="mt-2 text-[13px] italic text-[#242424]/70">"{cc.observaciones}"</div>}
@@ -105,52 +250,103 @@ function DetalleCuentaCobro() {
             >
               {ESTADO_CC[cc.estado].label}
             </div>
+            <div className="mt-3">
+              <button
+                onClick={onDescargar}
+                disabled={busy || items.length === 0}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#445DA3] px-3 py-1.5 text-[12px] font-semibold text-[#445DA3] hover:bg-[#EEF1FA] disabled:opacity-50"
+              >
+                <Download size={13} /> Descargar PDF
+              </button>
+            </div>
           </div>
         </div>
 
         {(puedeEnviar || puedeAprobar || puedePagar) && (
-          <div className="border-t border-[#E3E7EE] bg-[#F7F9FB] p-4">
+          <div className="border-t border-[#E3E7EE] bg-[#F7F9FB] p-4 space-y-3">
             <input
               value={observ}
               onChange={(e) => setObserv(e.target.value)}
-              placeholder="Observación (opcional)"
-              className="mb-3 w-full rounded-lg border border-[#E3E7EE] bg-white px-3 py-2 text-sm outline-none focus:border-[#445DA3]"
+              placeholder={puedeAprobar ? "Observación (obligatoria si rechazas)" : "Observación / mensaje (opcional)"}
+              className="w-full rounded-lg border border-[#E3E7EE] bg-white px-3 py-2 text-sm outline-none focus:border-[#445DA3]"
             />
-            <div className="flex flex-wrap gap-2">
-              {puedeEnviar && (
+
+            {puedeEnviar && (
+              <div className="space-y-2">
+                <input
+                  value={destinatariosExtra}
+                  onChange={(e) => setDestinatariosExtra(e.target.value)}
+                  placeholder="Destinatarios adicionales (opcional, separados por coma). Por defecto: contabilidad@nuvex.com.co"
+                  className="w-full rounded-lg border border-[#E3E7EE] bg-white px-3 py-2 text-sm outline-none focus:border-[#445DA3]"
+                />
                 <button
-                  onClick={() => cambiar("enviada")}
-                  className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-semibold text-white"
+                  onClick={onEnviarContabilidad}
+                  disabled={busy}
+                  className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
                   style={{ background: "linear-gradient(135deg,#445DA3,#84B98F)" }}
                 >
-                  <Send size={13} /> Enviar a contabilidad
+                  <Mail size={13} /> {busy ? "Enviando…" : "Enviar a contabilidad por correo (con PDF)"}
                 </button>
-              )}
-              {puedeAprobar && (
-                <>
-                  <button
-                    onClick={() => cambiar("aprobada")}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F7A45] px-4 py-2 text-[12px] font-semibold text-white"
-                  >
-                    <CheckCircle2 size={13} /> Aprobar
-                  </button>
-                  <button
-                    onClick={() => cambiar("rechazada")}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#991B1B] px-4 py-2 text-[12px] font-semibold text-white"
-                  >
-                    <XCircle size={13} /> Rechazar
-                  </button>
-                </>
-              )}
-              {puedePagar && (
                 <button
-                  onClick={() => cambiar("pagada")}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F7A45] px-4 py-2 text-[12px] font-semibold text-white"
+                  onClick={async () => {
+                    if (!cc) return;
+                    if (!confirm("¿Marcar como enviada sin envío por correo?")) return;
+                    setBusy(true);
+                    try {
+                      await cambiarEstadoCuenta(cc.id, "enviada", observ.trim() || undefined);
+                      setObserv("");
+                      await cargar();
+                    } catch (e) {
+                      alert((e as Error).message);
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                  disabled={busy}
+                  className="ml-2 inline-flex items-center gap-1.5 rounded-lg border border-[#E3E7EE] bg-white px-3 py-2 text-[12px] font-semibold text-[#445DA3] disabled:opacity-50"
                 >
-                  <DollarSign size={13} /> Marcar pagada
+                  <Send size={13} /> Marcar enviada (sin correo)
                 </button>
-              )}
-            </div>
+              </div>
+            )}
+
+            {puedeAprobar && (
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={onAprobar}
+                  disabled={busy}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F7A45] px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
+                >
+                  <CheckCircle2 size={13} /> Aprobar
+                </button>
+                <button
+                  onClick={onRechazar}
+                  disabled={busy}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#991B1B] px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
+                >
+                  <XCircle size={13} /> Rechazar (motivo obligatorio)
+                </button>
+              </div>
+            )}
+
+            {puedePagar && (
+              <div className="space-y-2 rounded-lg border border-[#E0E7FF] bg-[#F5F7FF] p-3">
+                <div className="text-[12px] font-semibold text-[#0A1226]">Registro de pago</div>
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={(e) => setComprobante(e.target.files?.[0] ?? null)}
+                  className="w-full text-[12px]"
+                />
+                <button
+                  onClick={onMarcarPagada}
+                  disabled={busy || !comprobante}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F7A45] px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
+                >
+                  <DollarSign size={13} /> Marcar pagada (con comprobante)
+                </button>
+              </div>
+            )}
           </div>
         )}
       </Card>
@@ -206,9 +402,6 @@ function DetalleCuentaCobro() {
           </ul>
         )}
       </Card>
-
-      {/* Navigate helper unused but exported so the file uses it cleanly */}
-      <span hidden onClick={() => navigate({ to: "/comisiones" })} />
     </div>
   );
 }
