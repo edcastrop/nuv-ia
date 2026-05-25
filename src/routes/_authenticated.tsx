@@ -125,6 +125,14 @@ function AuthenticatedLayout() {
       >
         <Icon size={15} />
         <span>{label}</span>
+        {badge && badge > 0 ? (
+          <span
+            className="ml-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] font-bold"
+            style={{ background: "#E11D48", color: "#fff" }}
+          >
+            {badge > 99 ? "99+" : badge}
+          </span>
+        ) : null}
       </Link>
     );
   };
