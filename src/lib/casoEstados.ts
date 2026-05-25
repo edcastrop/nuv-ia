@@ -205,6 +205,7 @@ export type EstadoExpedienteDerivado =
   | "FIRMADO"
   | "RADICADO"
   | "APROBADO"
+  | "CONDICIONES_APLICADAS"
   | "FACTURADO"
   | "PAGADO";
 
@@ -230,11 +231,12 @@ export function mapCasoToExpedienteEstado(
       return "RADICADO";
     case "aprobado":
     case "aprobado_banco":
+      return "APROBADO";
     case "documentos_banco_firmados":
     case "condiciones_aplicadas":
     case "aplicado_banco":
     case "resultado_final_generado":
-      return "APROBADO";
+      return "CONDICIONES_APLICADAS";
     case "cuenta_cobro_generada":
     case "cuenta_cobro_enviada":
     case "honorarios_pendientes":

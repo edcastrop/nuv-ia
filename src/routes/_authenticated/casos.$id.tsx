@@ -11,6 +11,7 @@ import { ModuloJuridico } from "@/components/expediente-maestro/ModuloJuridico";
 import { expedienteToMaestroLike } from "@/lib/expedienteMaestro";
 import { EstadoCasoBlock } from "@/components/expediente/EstadoCasoBlock";
 import { HistorialCaso } from "@/components/expediente/HistorialCaso";
+import { SoportesBanco } from "@/components/expediente/SoportesBanco";
 import { CarteraBlockExpediente } from "@/components/cartera/CarteraBlockExpediente";
 
 export const Route = createFileRoute("/_authenticated/casos/$id")({
@@ -82,6 +83,11 @@ function CasoDetail() {
       </Card>
 
       <EstadoCasoBlock expedienteId={exp.id} onChanged={reload} />
+
+      <SoportesBanco
+        expedienteId={exp.id}
+        estadoCaso={(exp as unknown as { estado_caso?: string }).estado_caso ?? ""}
+      />
 
       {exp.modo === "pesos" ? (
         <PesosSimulator initialExpediente={exp} onSaved={reload} />

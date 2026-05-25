@@ -6,6 +6,7 @@ export type EstadoExpediente =
   | "FIRMADO"
   | "RADICADO"
   | "APROBADO"
+  | "CONDICIONES_APLICADAS"
   | "FACTURADO"
   | "PAGADO"
   | "ENVIADO_CONTRATACION";
@@ -16,6 +17,7 @@ export const ESTADOS: EstadoExpediente[] = [
   "ENVIADO_CONTRATACION",
   "RADICADO",
   "APROBADO",
+  "CONDICIONES_APLICADAS",
   "FACTURADO",
   "PAGADO",
 ];
@@ -26,8 +28,9 @@ export const ESTADO_COLORS: Record<EstadoExpediente, { bg: string; color: string
   ENVIADO_CONTRATACION: { bg: "#E0E7FF", color: "#3730A3", border: "#6366F1" },
   RADICADO:  { bg: "#E8F0FE", color: "#1A4A8A", border: "#3B6FA0" },
   APROBADO:  { bg: "#EAF7EE", color: "#1F7A45", border: "#2E8B57" },
+  CONDICIONES_APLICADAS: { bg: "#DDF4E3", color: "#0F5132", border: "#16A34A" },
   FACTURADO: { bg: "#F3E8FF", color: "#6B21A8", border: "#9333EA" },
-  PAGADO:    { bg: "#DDF4E3", color: "#1F7A45", border: "#84B98F" },
+  PAGADO:    { bg: "#DCFCE7", color: "#14532D", border: "#15803D" },
 };
 
 export interface PropuestaData {

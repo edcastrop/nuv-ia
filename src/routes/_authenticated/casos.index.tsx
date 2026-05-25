@@ -36,6 +36,7 @@ const ESTADO_THEME: Record<EstadoExpediente, { color: string; label: string }> =
   ENVIADO_CONTRATACION: { color: "#6366F1", label: "Enviado a Contratación" },
   RADICADO: { color: "#F97316", label: "Radicado" },
   APROBADO: { color: "#84B98F", label: "Aprobado" },
+  CONDICIONES_APLICADAS: { color: "#16A34A", label: "Condiciones aplicadas" },
   FACTURADO: { color: "#D4A017", label: "Facturado" },
   PAGADO: { color: "#1F7A45", label: "Pagado" },
 };
