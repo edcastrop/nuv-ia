@@ -242,7 +242,7 @@ function DetalleCuentaCobro() {
     }
   }
 
-  if (loading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>;
+  if (loading || rolesLoading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>;
   if (!cc) return <div className="p-12 text-center text-sm text-[#991B1B]">Cuenta no encontrada.</div>;
 
   const esDueno = user?.id === cc.user_id;
