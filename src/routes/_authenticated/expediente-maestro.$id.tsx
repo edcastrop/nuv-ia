@@ -148,7 +148,10 @@ function MaestroDetail() {
         plazoOriginal: d.plazoInicial || credito.plazoOriginal || "",
         saldoCapital: onlyDigits(d.saldoCapital) || credito.saldoCapital || "",
         cuotaActual: cuotaActualResuelta,
-        seguros: segurosResueltos > 0 ? String(Math.round(segurosResueltos)) : onlyDigits(d.seguros) || credito.seguros || "",
+        seguros:
+          segurosResueltos > 0
+            ? String(Math.round(segurosResueltos))
+            : onlyDigits(d.seguros) || credito.seguros || "",
         cuotaConSubsidio:
           cuotaConSub > 0
             ? String(Math.round(cuotaConSub + segurosResueltos))
