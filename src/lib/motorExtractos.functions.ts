@@ -563,39 +563,9 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
       return { error: "Respuesta del parser no interpretable.", data: null };
     }
 
-    const { datos, scores } = normalizeParsedMotor(parsed, det, profile);
-    const validation = validateMotorConsistency(profile, datos);
-    if (validation.critical && !usedProFallback) {
-      const retryResp = await callLovableAI(
-        "google/gemini-2.5-pro",
-        `${buildParserSystem(profile)}\n\nVALIDACIÓN ADICIONAL: Revisa aritmética antes de responder. Para Bancolombia debe cumplirse: cuotaSinSubsidio - valorBeneficioMensual = cuotaConSubsidio; cuotaConSubsidio + seguros = cuotaActual; capitalCuota + interesCuota + seguros = cuotaActual; cuotasPagadas + cuotasPendientes - 1 = plazoInicial.`,
-        userContent,
-        parserTool,
-      );
-      if (retryResp.ok) {
-        const retryJson = (await retryResp.json()) as ChatResp;
-        const retryArgs =
-          retryJson.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ?? "";
-        try {
-          const retryParsed = JSON.parse(retryArgs) as ParserPayload;
-          const normalized = normalizeParsedMotor(retryParsed, det, profile);
-          Object.assign(datos, normalized.datos);
-          Object.assign(scores, normalized.scores);
-          const rIn = retryJson.usage?.prompt_tokens ?? 0;
-          const rOut = retryJson.usage?.completion_tokens ?? 0;
-          llamadas.push({
-            paso: "extraccion",
-            modelo: "google/gemini-2.5-pro",
-            tokensInput: rIn,
-            tokensOutput: rOut,
-            costoUSD: calcCosto("google/gemini-2.5-pro", rIn, rOut),
-          });
-        } catch {
-          /* mantiene extracción original y alerta */
-        }
-      }
-    }
-    const finalValidation = validateMotorConsistency(profile, datos);
+    // Nota: se removió el reintento adicional con Pro para evitar timeouts del gateway.
+    // La validación se reporta como alerta sin disparar otra llamada a la IA.
+    const finalValidation = validation;
 
     // Confianza global: promedio ponderado de campos no vacíos
     let suma = 0,
