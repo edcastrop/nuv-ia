@@ -333,14 +333,31 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
     const CAMPOS_MONETARIOS: CampoMotor[] = [
       "valorDesembolsado", "saldoCapital", "cuotaActual",
       "interesCuota", "capitalCuota", "seguros", "valorUVR", "saldoUVR",
+      "valorBeneficioMensual", "cuotaSinSubsidio", "cuotaConSubsidio",
     ];
     for (const k of CAMPOS_MONETARIOS) {
       if (datos[k]) datos[k] = parseCOP(datos[k]);
     }
     // Tasas: solo dígitos y un punto decimal
-    for (const k of ["tasaEA", "tasaMensual"] as CampoMotor[]) {
+    for (const k of ["tasaEA", "tasaMensual", "tasaCobertura"] as CampoMotor[]) {
       if (datos[k]) datos[k] = parseTasa(datos[k]);
     }
+
+    // Normaliza beneficioActivo a "si"/"no" coherente con valorBeneficioMensual
+    const valorBenef = parseFloat(datos.valorBeneficioMensual || "0");
+    if (Number.isFinite(valorBenef) && valorBenef > 0) {
+      datos.beneficioActivo = "si";
+      scores.beneficioActivo = Math.max(scores.beneficioActivo, 95);
+    } else {
+      datos.beneficioActivo = "no";
+      // Limpia campos huérfanos para evitar falsos positivos aguas abajo
+      datos.valorBeneficioMensual = "";
+      datos.tipoBeneficio = "";
+      datos.tasaCobertura = "";
+      datos.cuotaSinSubsidio = "";
+      datos.cuotaConSubsidio = "";
+    }
+
 
     // Limpia cédulas claramente inválidas (0000000000, enmascaradas)
     if (datos.cedula && /^0+$/.test(datos.cedula.replace(/\D/g, ""))) {
