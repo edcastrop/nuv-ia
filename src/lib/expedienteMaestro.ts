@@ -203,6 +203,11 @@ export function maestroToExpediente(m: ExpedienteMaestro) {
         valorCobertura: String(Math.round(Number(fresh.valorMensual) || 0)),
         tasaCobertura: fresh.tasa ? String(fresh.tasa) : "",
         tipoBeneficio: fresh.tipoBeneficio || "",
+        cuotaPagadaCliente: m.credito?.cuotaConSubsidio ?? "",
+        cuotaConInteresSinSeguros: m.credito?.cuotaConInteresSinSeguros ?? "",
+        segurosMensuales: m.credito?.seguros ?? "",
+        cuotaBaseSimulacion: m.credito?.cuotaBaseSimulacion ?? m.credito?.cuotaActual ?? "",
+        requiereVerificacion: false,
       }
     : { activo: false, valorCobertura: "", tasaCobertura: "" };
   const productoBase = m.credito?.tipoProducto ?? "";
