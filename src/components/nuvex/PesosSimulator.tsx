@@ -100,12 +100,26 @@ export function PesosSimulator({
   const valorDesembolsadoNum = parseCurrency(valorDesembolsado);
   const cuotaActualNum = parseCurrency(cuotaActual);
   const cuotaPagadaClienteNum = parseCurrency(cobertura.cuotaPagadaCliente);
-  const cuotaBaseSimulacionNum = parseCurrency(cobertura.cuotaBaseSimulacion);
-  const cuotaSimulacionNum = cuotaBaseSimulacionNum > 0 ? cuotaBaseSimulacionNum : cuotaActualNum;
-  const cuotaClienteHoyNum = cuotaPagadaClienteNum > 0 ? cuotaPagadaClienteNum : cuotaActualNum;
+  const cuotaBaseSimulacionRaw = parseCurrency(cobertura.cuotaBaseSimulacion);
+  const saldoCapitalNum = parseCurrency(saldoCapital);
+  const baseReferenciaCredito = Math.max(saldoCapitalNum, valorDesembolsadoNum, 1);
+  const cuotaMaximaRazonable = Math.max(8_000_000, baseReferenciaCredito * 0.04);
+  const cuotaBaseSimulacionNum =
+    cuotaBaseSimulacionRaw > 0 && cuotaBaseSimulacionRaw <= cuotaMaximaRazonable
+      ? cuotaBaseSimulacionRaw
+      : 0;
+  const cuotaActualValida =
+    cuotaActualNum > 0 && cuotaActualNum <= cuotaMaximaRazonable ? cuotaActualNum : 0;
+  const cuotaPagadaClienteValida =
+    cuotaPagadaClienteNum > 0 && cuotaPagadaClienteNum <= cuotaMaximaRazonable
+      ? cuotaPagadaClienteNum
+      : 0;
+  const cuotaSimulacionNum =
+    cuotaBaseSimulacionNum > 0 ? cuotaBaseSimulacionNum : cuotaActualValida;
+  const cuotaClienteHoyNum =
+    cuotaPagadaClienteValida > 0 ? cuotaPagadaClienteValida : cuotaActualValida;
   const segurosNum = parseCurrency(seguros);
   const cuotaSinSegurosNum = Math.max(0, cuotaSimulacionNum - segurosNum);
-  const saldoCapitalNum = parseCurrency(saldoCapital);
   const dineroPagadoFecha = cuotaClienteHoyNum * cuotasPagadas;
 
   const input: PesosInput = useMemo(
@@ -127,6 +141,14 @@ export function PesosSimulator({
     validaciones.push("Este crédito ya está amortizado.");
   if (cuotaSimulacionNum > 0 && segurosNum > cuotaSimulacionNum)
     validaciones.push("Los seguros no pueden ser mayores que la cuota actual.");
+  if (cuotaActualNum > cuotaMaximaRazonable || cuotaBaseSimulacionRaw > cuotaMaximaRazonable)
+    validaciones.push(
+      "La cuota mensual está fuera de rango para este crédito. Revise la lectura del extracto antes de simular.",
+    );
+  if (segurosNum > 0 && segurosNum > Math.max(500_000, cuotaSimulacionNum * 0.2))
+    validaciones.push(
+      "Los seguros mensuales están fuera de rango. Revise la lectura del extracto.",
+    );
   if (cuotaSimulacionNum > 0 && segurosNum > 0 && cuotaSinSegurosNum <= 0)
     validaciones.push("La cuota sin seguros debe ser mayor a cero para calcular la proyección.");
 
@@ -134,13 +156,18 @@ export function PesosSimulator({
     cuotaSimulacionNum === 0 ||
     segurosNum === 0 ||
     (segurosNum < cuotaSimulacionNum && cuotaSinSegurosNum > 0);
+  const rangosFinancierosValidos =
+    cuotaSimulacionNum > 0 &&
+    cuotaSimulacionNum <= cuotaMaximaRazonable &&
+    (segurosNum === 0 || segurosNum <= Math.max(500_000, cuotaSimulacionNum * 0.2));
 
   const datosCompletos =
     input.saldoCapital > 0 &&
     input.cuotaActual > 0 &&
     input.tea > 0 &&
     cuotasPendientes > 0 &&
-    cuotaSinSegurosValida;
+    cuotaSinSegurosValida &&
+    rangosFinancierosValidos;
 
   const calc = useMemo(() => {
     if (!datosCompletos) return null;
