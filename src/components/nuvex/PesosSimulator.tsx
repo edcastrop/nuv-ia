@@ -103,7 +103,7 @@ export function PesosSimulator({
   const cuotaBaseSimulacionRaw = parseCurrency(cobertura.cuotaBaseSimulacion);
   const saldoCapitalNum = parseCurrency(saldoCapital);
   const baseReferenciaCredito = Math.max(saldoCapitalNum, valorDesembolsadoNum, 1);
-  const cuotaMaximaRazonable = Math.max(15_000_000, baseReferenciaCredito * 0.08);
+  const cuotaMaximaRazonable = Math.max(8_000_000, baseReferenciaCredito * 0.04);
   const cuotaBaseSimulacionNum =
     cuotaBaseSimulacionRaw > 0 && cuotaBaseSimulacionRaw <= cuotaMaximaRazonable
       ? cuotaBaseSimulacionRaw
