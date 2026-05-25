@@ -2,9 +2,11 @@ import { createFileRoute, Outlet, useNavigate, Link, useLocation } from "@tansta
 import { useEffect, useState } from "react";
 import { useAuth, signOut } from "@/hooks/useAuth";
 import { CORPORATIVO } from "@/components/nuvex/constants";
-import { LayoutGrid, FolderKanban, BarChart3, LogOut, GraduationCap, LineChart, UserSquare2, Users, Shield, Wallet } from "lucide-react";
+import { LayoutGrid, FolderKanban, BarChart3, LogOut, GraduationCap, LineChart, UserSquare2, Users, Shield, Wallet, Bell } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Logo } from "@/components/nuvex/Logo";
+import { supabase } from "@/integrations/supabase/client";
+
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
@@ -19,6 +21,8 @@ function AuthenticatedLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
+  const [unread, setUnread] = useState(0);
+
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/login" });
@@ -30,6 +34,28 @@ function AuthenticatedLayout() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    if (!session) return;
+    let active = true;
+    const load = async () => {
+      const { count } = await supabase
+        .from("caso_alertas" as never)
+        .select("id", { count: "exact", head: true })
+        .eq("leida", false);
+      if (active) setUnread(count ?? 0);
+    };
+    load();
+    const ch = supabase
+      .channel("caso_alertas_unread")
+      .on("postgres_changes", { event: "*", schema: "public", table: "caso_alertas" }, load)
+      .subscribe();
+    return () => {
+      active = false;
+      supabase.removeChannel(ch);
+    };
+  }, [session, location.pathname]);
+
 
   if (loading || !session) {
     return (
@@ -47,9 +73,10 @@ function AuthenticatedLayout() {
     .map((s) => s[0]?.toUpperCase())
     .join("") || "NV";
 
-  const navItems = [
+  const navItems: { to: string; label: string; Icon: typeof LayoutGrid; exact?: boolean; badge?: number }[] = [
     { to: "/", label: "Simulador", Icon: LayoutGrid, exact: true },
     { to: "/casos", label: "Casos", Icon: FolderKanban },
+    { to: "/notificaciones", label: "Alertas", Icon: Bell, badge: unread },
     { to: "/expediente-maestro", label: "Expediente", Icon: UserSquare2 },
     { to: "/proyeccion", label: "Proyección", Icon: LineChart },
     { to: "/dashboard", label: "Dashboard", Icon: BarChart3 },
@@ -61,7 +88,7 @@ function AuthenticatedLayout() {
 
 
 
-  const NavBtn = ({ to, label, Icon, exact }: { to: string; label: string; Icon: typeof LayoutGrid; exact?: boolean }) => {
+  const NavBtn = ({ to, label, Icon, exact, badge }: { to: string; label: string; Icon: typeof LayoutGrid; exact?: boolean; badge?: number }) => {
     const active = exact ? location.pathname === to : location.pathname === to || location.pathname.startsWith(to + "/") || location.pathname === to;
     return (
       <Link
@@ -98,6 +125,14 @@ function AuthenticatedLayout() {
       >
         <Icon size={15} />
         <span>{label}</span>
+        {badge && badge > 0 ? (
+          <span
+            className="ml-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] font-bold"
+            style={{ background: "#E11D48", color: "#fff" }}
+          >
+            {badge > 99 ? "99+" : badge}
+          </span>
+        ) : null}
       </Link>
     );
   };
