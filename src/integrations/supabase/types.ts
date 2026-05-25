@@ -393,6 +393,63 @@ export type Database = {
           },
         ]
       }
+      caso_alertas: {
+        Row: {
+          created_at: string
+          dias_estancado: number
+          expediente_id: string
+          id: string
+          leida: boolean
+          tipo: string
+        }
+        Insert: {
+          created_at?: string
+          dias_estancado?: number
+          expediente_id: string
+          id?: string
+          leida?: boolean
+          tipo: string
+        }
+        Update: {
+          created_at?: string
+          dias_estancado?: number
+          expediente_id?: string
+          id?: string
+          leida?: boolean
+          tipo?: string
+        }
+        Relationships: []
+      }
+      caso_submotivos: {
+        Row: {
+          created_at: string
+          estado: string
+          expediente_id: string
+          id: string
+          observacion: string | null
+          submotivo: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          estado: string
+          expediente_id: string
+          id?: string
+          observacion?: string | null
+          submotivo: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          estado?: string
+          expediente_id?: string
+          id?: string
+          observacion?: string | null
+          submotivo?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       contratacion_destinatarios: {
         Row: {
           activo: boolean
@@ -823,6 +880,21 @@ export type Database = {
         | "paz_y_salvo_generado"
         | "proceso_cerrado"
         | "prejuridico"
+        | "simulado"
+        | "prospecto"
+        | "propuesta_enviada"
+        | "acepto_propuesta"
+        | "documentacion_completa"
+        | "contrato_generado"
+        | "poder_generado"
+        | "radicacion_preparada"
+        | "aprobado_banco"
+        | "docs_complementarios_banco"
+        | "aplicado_banco"
+        | "honorarios_pendientes"
+        | "caso_finalizado"
+        | "devuelto_banco"
+        | "negado_banco"
       expediente_estado:
         | "SIMULADO"
         | "FIRMADO"
@@ -1005,6 +1077,21 @@ export const Constants = {
         "paz_y_salvo_generado",
         "proceso_cerrado",
         "prejuridico",
+        "simulado",
+        "prospecto",
+        "propuesta_enviada",
+        "acepto_propuesta",
+        "documentacion_completa",
+        "contrato_generado",
+        "poder_generado",
+        "radicacion_preparada",
+        "aprobado_banco",
+        "docs_complementarios_banco",
+        "aplicado_banco",
+        "honorarios_pendientes",
+        "caso_finalizado",
+        "devuelto_banco",
+        "negado_banco",
       ],
       expediente_estado: [
         "SIMULADO",
