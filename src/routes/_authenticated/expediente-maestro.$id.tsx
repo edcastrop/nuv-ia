@@ -71,6 +71,48 @@ function MaestroDetail() {
     }
   };
 
+  const aplicarExtracto = async (r: MotorResultado) => {
+    setAplicandoExtracto(true);
+    setMsg(null);
+    try {
+      const d = r.datos;
+      const onlyDigits = (s: string) => (s || "").replace(/[^\d.,-]/g, "");
+      const nuevoCliente = {
+        ...cliente,
+        nombre: cliente.nombre || d.titular || "",
+        cedula: cliente.cedula || d.cedula || "",
+      };
+      const nuevoCredito = {
+        ...credito,
+        banco: r.banco || credito.banco || "",
+        numeroCredito: d.numeroCredito || credito.numeroCredito || "",
+        tipoProducto: r.producto || credito.tipoProducto || "",
+        fechaDesembolso: d.fechaDesembolso || credito.fechaDesembolso || "",
+        plazoOriginal: d.plazoInicial || credito.plazoOriginal || "",
+        saldoCapital: onlyDigits(d.saldoCapital) || credito.saldoCapital || "",
+        cuotaActual: onlyDigits(d.cuotaActual) || credito.cuotaActual || "",
+        tasa: d.tasaEA || credito.tasa || "",
+        cuotasPagadas: d.cuotasPagadas || credito.cuotasPagadas || "",
+        cuotasPendientes: d.cuotasPendientes || credito.cuotasPendientes || "",
+      };
+      setCliente(nuevoCliente);
+      setCredito(nuevoCredito);
+      const saved = await upsertMaestro({
+        id, cliente: nuevoCliente, cotitular, credito: nuevoCredito,
+        fresh, asesor, licenciado, apoderado,
+      });
+      setExp(saved);
+      setExtractoAplicado(r);
+      setMsg("Expediente actualizado automáticamente desde el extracto");
+      setTimeout(() => setMsg(null), 3500);
+      setTimeout(() => resumenRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
+    } catch (e) {
+      setMsg((e as Error).message);
+    } finally {
+      setAplicandoExtracto(false);
+    }
+  };
+
   if (loading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando expediente…</div>;
   if (err || !exp) return <div className="p-12 text-center text-sm text-[#B42318]">{err || "No encontrado"}</div>;
 
