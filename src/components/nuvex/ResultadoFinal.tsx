@@ -154,6 +154,9 @@ export function ResultadoFinal({
   const set = <K extends keyof AprobacionState>(k: K, v: AprobacionState[K]) =>
     setAprob((s) => ({ ...s, [k]: v }));
 
+  const cuotaAprobadaNum = parseCurrency(aprob.cuotaAprobada);
+  const plazoAprobadoNum = parseDecimal(aprob.plazoAprobado);
+
   const aprobado = useMemo(() => {
     if (!proyeccion || cuotaAprobadaNum <= 0 || plazoAprobadoNum <= 0) return null;
     const cuotasEliminadas = Math.max(0, cuotasPendientes - plazoAprobadoNum);
