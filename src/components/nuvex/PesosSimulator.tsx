@@ -108,8 +108,13 @@ export function PesosSimulator({
     cuotaBaseSimulacionRaw > 0 && cuotaBaseSimulacionRaw <= cuotaMaximaRazonable
       ? cuotaBaseSimulacionRaw
       : 0;
-  const cuotaSimulacionNum = cuotaBaseSimulacionNum > 0 ? cuotaBaseSimulacionNum : cuotaActualNum;
-  const cuotaClienteHoyNum = cuotaPagadaClienteNum > 0 ? cuotaPagadaClienteNum : cuotaActualNum;
+  const cuotaActualValida = cuotaActualNum > 0 && cuotaActualNum <= cuotaMaximaRazonable ? cuotaActualNum : 0;
+  const cuotaPagadaClienteValida =
+    cuotaPagadaClienteNum > 0 && cuotaPagadaClienteNum <= cuotaMaximaRazonable
+      ? cuotaPagadaClienteNum
+      : 0;
+  const cuotaSimulacionNum = cuotaBaseSimulacionNum > 0 ? cuotaBaseSimulacionNum : cuotaActualValida;
+  const cuotaClienteHoyNum = cuotaPagadaClienteValida > 0 ? cuotaPagadaClienteValida : cuotaActualValida;
   const segurosNum = parseCurrency(seguros);
   const cuotaSinSegurosNum = Math.max(0, cuotaSimulacionNum - segurosNum);
   const dineroPagadoFecha = cuotaClienteHoyNum * cuotasPagadas;
@@ -146,13 +151,18 @@ export function PesosSimulator({
     cuotaSimulacionNum === 0 ||
     segurosNum === 0 ||
     (segurosNum < cuotaSimulacionNum && cuotaSinSegurosNum > 0);
+  const rangosFinancierosValidos =
+    cuotaSimulacionNum > 0 &&
+    cuotaSimulacionNum <= cuotaMaximaRazonable &&
+    (segurosNum === 0 || segurosNum <= Math.max(500_000, cuotaSimulacionNum * 0.2));
 
   const datosCompletos =
     input.saldoCapital > 0 &&
     input.cuotaActual > 0 &&
     input.tea > 0 &&
     cuotasPendientes > 0 &&
-    cuotaSinSegurosValida;
+    cuotaSinSegurosValida &&
+    rangosFinancierosValidos;
 
   const calc = useMemo(() => {
     if (!datosCompletos) return null;
