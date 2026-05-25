@@ -151,7 +151,19 @@ export const registrarPago = createServerFn({ method: "POST" })
     let comprobanteUrl: string | null = null;
     if (data.comprobanteBase64 && data.comprobanteFilename) {
       const bytes = Uint8Array.from(atob(data.comprobanteBase64), (c) => c.charCodeAt(0));
-      const path = `${data.carteraId}/${Date.now()}-${data.comprobanteFilename}`;
+      // Sanitizar nombre: Supabase Storage rechaza espacios, acentos y caracteres especiales
+      const dotIdx = data.comprobanteFilename.lastIndexOf(".");
+      const rawName = dotIdx > 0 ? data.comprobanteFilename.slice(0, dotIdx) : data.comprobanteFilename;
+      const rawExt = dotIdx > 0 ? data.comprobanteFilename.slice(dotIdx + 1) : "";
+      const safeName = rawName
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9._-]+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 80) || "comprobante";
+      const safeExt = rawExt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]+/g, "").toLowerCase().slice(0, 8);
+      const safeFilename = safeExt ? `${safeName}.${safeExt}` : safeName;
+      const path = `${data.carteraId}/${Date.now()}-${safeFilename}`;
       const { error: upErr } = await supabaseAdmin.storage
         .from("cartera-comprobantes")
         .upload(path, bytes, { contentType: "application/octet-stream", upsert: false });
