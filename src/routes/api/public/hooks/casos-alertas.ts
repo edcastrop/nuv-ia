@@ -66,12 +66,12 @@ export const Route = createFileRoute("/api/public/hooks/casos-alertas")({
           const ultima = (prev as unknown as { id: string; dias_estancado: number }[] | null)?.[0];
           if (ultima && ultima.dias_estancado >= dias) continue;
 
-          await supabaseAdmin.from("caso_alertas" as never).insert({
+          await supabaseAdmin.from("caso_alertas" as never).insert([{
             expediente_id: e.id,
             tipo: `estancado_${e.estado_caso}`,
             dias_estancado: dias,
             leida: false,
-          });
+          }] as never);
           creadas++;
         }
 
