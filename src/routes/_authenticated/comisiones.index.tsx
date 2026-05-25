@@ -142,7 +142,7 @@ function ComisionesPage() {
             {esManager ? "Comisiones (todas)" : "Mis comisiones"}
           </h1>
           <p className="text-sm text-[#242424]/60">
-            Las comisiones se liquidan automáticamente al marcar el caso como honorarios pagados.
+            Las comisiones se liberan únicamente sobre el dinero efectivamente recaudado por NUVEX en cartera.
           </p>
         </div>
         {esManager && (
