@@ -456,12 +456,44 @@ function DetalleCuentaCobro() {
                   <CheckCircle2 size={13} /> Aprobar
                 </button>
                 <button
+                  onClick={onDevolver}
+                  disabled={busy}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#8A5A00] px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
+                  title="Devolver al licenciado para corrección (motivo obligatorio ≥10 caracteres)"
+                >
+                  <RotateCcw size={13} /> Devolver para corrección
+                </button>
+                <button
                   onClick={onRechazar}
                   disabled={busy}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-[#991B1B] px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
                 >
                   <XCircle size={13} /> Rechazar (motivo obligatorio)
                 </button>
+              </div>
+            )}
+
+            {puedeProgramar && (
+              <div className="space-y-2 rounded-lg border border-[#E3E7EE] bg-white p-3">
+                <div className="text-[12px] font-semibold text-[#0A1226]">
+                  Programar pago (opcional, antes de marcar pagada)
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    type="date"
+                    value={fechaProg}
+                    onChange={(e) => setFechaProg(e.target.value)}
+                    min={new Date().toISOString().slice(0, 10)}
+                    className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 text-sm outline-none focus:border-[#445DA3]"
+                  />
+                  <button
+                    onClick={onProgramar}
+                    disabled={busy || !fechaProg}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#445DA3] px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
+                  >
+                    <CalendarClock size={13} /> Programar
+                  </button>
+                </div>
               </div>
             )}
 
