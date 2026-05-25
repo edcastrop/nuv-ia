@@ -58,7 +58,6 @@ export interface MotorResultado {
 
 export type MotorResponse = { error: string | null; data: MotorResultado | null };
 
-
 // ---------------- Esquema de salida del parser ----------------
 
 const fieldsSchemaProps: Record<string, { type: "string" }> = {};
@@ -78,14 +77,16 @@ const parserTool = {
       properties: {
         datos: {
           type: "object",
-          description: "Valores extraídos como strings. Montos: solo dígitos. Tasas: con punto decimal (ej '11.25'). Vacío si no aparece.",
+          description:
+            "Valores extraídos como strings. Montos: solo dígitos. Tasas: con punto decimal (ej '11.25'). Vacío si no aparece.",
           properties: fieldsSchemaProps,
           required: [...CAMPOS_MOTOR],
           additionalProperties: false,
         },
         scores: {
           type: "object",
-          description: "Score 0-100 por campo. 100=literal y explícito, 90=alto, 70=inferido, 30=dudoso, 0=ausente.",
+          description:
+            "Score 0-100 por campo. 100=literal y explícito, 90=alto, 70=inferido, 30=dudoso, 0=ausente.",
           properties: scoresSchemaProps,
           required: [...CAMPOS_MOTOR],
           additionalProperties: false,
@@ -116,7 +117,10 @@ const detectorTool = {
           enum: ["CREDITO_HIPOTECARIO", "LEASING_HABITACIONAL", ""],
         },
         moneda: { type: "string", enum: ["PESOS", "UVR", ""] },
-        evidencia: { type: "string", description: "Texto literal corto del extracto que justifica la detección." },
+        evidencia: {
+          type: "string",
+          description: "Texto literal corto del extracto que justifica la detección.",
+        },
       },
       required: ["banco", "producto", "moneda", "evidencia"],
       additionalProperties: false,
@@ -130,26 +134,39 @@ const detectorTool = {
 // → cadena numérica limpia. Preserva decimales si existen.
 export function parseCOP(raw: string): string {
   if (!raw) return "";
-  let s = String(raw).replace(/[^\d.,-]/g, "").trim();
+  let s = String(raw)
+    .replace(/[^\d.,-]/g, "")
+    .trim();
   if (!s) return "";
   const neg = s.startsWith("-");
   if (neg) s = s.slice(1);
   const lastComma = s.lastIndexOf(",");
   const lastDot = s.lastIndexOf(".");
-  let intPart = s, decPart = "";
+  let intPart = s,
+    decPart = "";
   if (lastComma === -1 && lastDot === -1) {
     intPart = s;
   } else if (lastComma > lastDot) {
     // formato CO: coma = decimal, punto = miles
     const decRaw = s.slice(lastComma + 1);
-    if (decRaw.length <= 2) { intPart = s.slice(0, lastComma); decPart = decRaw; }
-    else { intPart = s.replace(/[.,]/g, ""); }
+    if (decRaw.length <= 2) {
+      intPart = s.slice(0, lastComma);
+      decPart = decRaw;
+    } else {
+      intPart = s.replace(/[.,]/g, "");
+    }
   } else if (lastDot > lastComma) {
     // formato US: punto = decimal, coma = miles. Solo si la parte tras el punto tiene 1-2 dígitos.
     const decRaw = s.slice(lastDot + 1);
-    if (decRaw.length <= 2 && lastComma !== -1) { intPart = s.slice(0, lastDot); decPart = decRaw; }
-    else if (decRaw.length <= 2 && !/[.,]/.test(s.slice(0, lastDot))) { intPart = s.slice(0, lastDot); decPart = decRaw; }
-    else { intPart = s.replace(/[.,]/g, ""); }
+    if (decRaw.length <= 2 && lastComma !== -1) {
+      intPart = s.slice(0, lastDot);
+      decPart = decRaw;
+    } else if (decRaw.length <= 2 && !/[.,]/.test(s.slice(0, lastDot))) {
+      intPart = s.slice(0, lastDot);
+      decPart = decRaw;
+    } else {
+      intPart = s.replace(/[.,]/g, "");
+    }
   }
   intPart = intPart.replace(/[.,]/g, "");
   if (!/^\d+$/.test(intPart)) return "";
@@ -159,7 +176,9 @@ export function parseCOP(raw: string): string {
 
 function parseTasa(raw: string): string {
   if (!raw) return "";
-  const m = String(raw).replace(/[^\d.,-]/g, "").replace(",", ".");
+  const m = String(raw)
+    .replace(/[^\d.,-]/g, "")
+    .replace(",", ".");
   const n = parseFloat(m);
   return Number.isFinite(n) ? String(n) : "";
 }
@@ -208,7 +227,6 @@ CAMPO 'cuotasPendientes': si no es explícito calcula plazoInicial - cuotasPagad
 CAMPO 'sistemaAmortizacion': "abono constante a capital" / "cuota fija" / "UVR". Vacío si no es claro.`;
 }
 
-
 async function callLovableAI(
   model: string,
   systemPrompt: string,
@@ -247,18 +265,169 @@ function findProfileByName(banco: string, producto?: Producto): BankProfile | nu
   return candidates[0];
 }
 
-// ---------------- Server Function ----------------
-    // Precios USD por 1M tokens (pass-through Lovable AI Gateway)
-    const PRECIOS: Record<string, { in: number; out: number }> = {
-      "google/gemini-2.5-pro": { in: 1.25, out: 10.0 },
-      "google/gemini-2.5-flash": { in: 0.30, out: 2.50 },
-    };
-    const calcCosto = (modelo: string, tokIn: number, tokOut: number) => {
-      const p = PRECIOS[modelo] ?? { in: 0, out: 0 };
-      return (tokIn / 1_000_000) * p.in + (tokOut / 1_000_000) * p.out;
-    };
-    const llamadas: CostoLlamada[] = [];
+interface ToolCall {
+  function?: { arguments?: string };
+}
+interface Usage {
+  prompt_tokens?: number;
+  completion_tokens?: number;
+}
+interface ChatResp {
+  choices?: Array<{ message?: { tool_calls?: ToolCall[] }; finish_reason?: string }>;
+  usage?: Usage;
+}
+type DeteccionMotor = { banco: string; producto: Producto; moneda: Moneda; evidencia: string };
+type ParserPayload = {
+  datos: Record<string, string>;
+  scores: Record<string, number>;
+  alertas: string[];
+};
 
+function normalizeParsedMotor(
+  parsed: ParserPayload,
+  det: DeteccionMotor,
+  profile: BankProfile,
+): { datos: Record<CampoMotor, string>; scores: Record<CampoMotor, number> } {
+  const datos: Record<CampoMotor, string> = {} as Record<CampoMotor, string>;
+  const scores: Record<CampoMotor, number> = {} as Record<CampoMotor, number>;
+  for (const k of CAMPOS_MOTOR) {
+    datos[k] = String(parsed.datos?.[k] ?? "").trim();
+    const s = Number(parsed.scores?.[k] ?? 0);
+    scores[k] = Number.isFinite(s) ? Math.max(0, Math.min(100, Math.round(s))) : 0;
+  }
+
+  const CAMPOS_MONETARIOS: CampoMotor[] = [
+    "valorDesembolsado",
+    "saldoCapital",
+    "cuotaActual",
+    "interesCuota",
+    "capitalCuota",
+    "seguros",
+    "valorUVR",
+    "saldoUVR",
+    "valorBeneficioMensual",
+    "cuotaSinSubsidio",
+    "cuotaConSubsidio",
+  ];
+  for (const k of CAMPOS_MONETARIOS) {
+    if (datos[k]) datos[k] = parseCOP(datos[k]);
+  }
+  for (const k of ["tasaEA", "tasaMensual", "tasaCobertura"] as CampoMotor[]) {
+    if (datos[k]) datos[k] = parseTasa(datos[k]);
+  }
+
+  const valorBenef = parseFloat(datos.valorBeneficioMensual || "0");
+  if (Number.isFinite(valorBenef) && valorBenef > 0) {
+    datos.beneficioActivo = "si";
+    scores.beneficioActivo = Math.max(scores.beneficioActivo, 95);
+  } else {
+    datos.beneficioActivo = "no";
+    datos.valorBeneficioMensual = "";
+    datos.tipoBeneficio = "";
+    datos.tasaCobertura = "";
+    datos.cuotaSinSubsidio = "";
+    datos.cuotaConSubsidio = "";
+  }
+
+  if (datos.cedula && /^0+$/.test(datos.cedula.replace(/\D/g, ""))) {
+    datos.cedula = "";
+    scores.cedula = 0;
+  }
+
+  datos.banco = profile.banco;
+  scores.banco = 100;
+  if (!datos.producto && det.producto) datos.producto = det.producto;
+  if (!datos.moneda && det.moneda) datos.moneda = det.moneda;
+
+  return { datos, scores };
+}
+
+function toNumber(value: string): number {
+  const n = parseFloat(value || "0");
+  return Number.isFinite(n) ? n : 0;
+}
+
+function closeMoney(a: number, b: number): boolean {
+  return Math.abs(a - b) <= Math.max(2_500, Math.max(Math.abs(a), Math.abs(b)) * 0.005);
+}
+
+function validateMotorConsistency(profile: BankProfile, datos: Record<CampoMotor, string>) {
+  const alertas: string[] = [];
+  let critical = false;
+
+  if (profile.id === "bancolombia") {
+    const cuotaActual = toNumber(datos.cuotaActual);
+    const cuotaConSubsidio = toNumber(datos.cuotaConSubsidio);
+    const cuotaSinSubsidio = toNumber(datos.cuotaSinSubsidio);
+    const beneficio = toNumber(datos.valorBeneficioMensual);
+    const capital = toNumber(datos.capitalCuota);
+    const interes = toNumber(datos.interesCuota);
+    const seguros = toNumber(datos.seguros);
+    const plazo = Math.round(toNumber(datos.plazoInicial));
+    const cuotaActualNumero = Math.round(toNumber(datos.cuotasPagadas));
+    const pendientes = Math.round(toNumber(datos.cuotasPendientes));
+
+    if (
+      beneficio > 0 &&
+      cuotaSinSubsidio > 0 &&
+      cuotaConSubsidio > 0 &&
+      !closeMoney(cuotaSinSubsidio - beneficio, cuotaConSubsidio)
+    ) {
+      critical = true;
+      alertas.push(
+        "Inconsistencia Bancolombia: cuota sin subsidio - subsidio no coincide con cuota con subsidio.",
+      );
+    }
+    if (
+      cuotaActual > 0 &&
+      cuotaConSubsidio > 0 &&
+      seguros > 0 &&
+      !closeMoney(cuotaConSubsidio + seguros, cuotaActual)
+    ) {
+      critical = true;
+      alertas.push(
+        "Inconsistencia Bancolombia: valor a pagar no coincide con cuota con subsidio + seguros.",
+      );
+    }
+    if (
+      cuotaActual > 0 &&
+      capital > 0 &&
+      interes > 0 &&
+      seguros > 0 &&
+      !closeMoney(capital + interes + seguros, cuotaActual)
+    ) {
+      critical = true;
+      alertas.push(
+        "Inconsistencia Bancolombia: capital + intereses + seguros no coincide con el valor a pagar.",
+      );
+    }
+    if (
+      plazo > 0 &&
+      cuotaActualNumero > 0 &&
+      pendientes > 0 &&
+      cuotaActualNumero + pendientes - 1 !== plazo
+    ) {
+      critical = true;
+      alertas.push(
+        "Inconsistencia Bancolombia: número de cuota + cuotas pendientes no coincide con el plazo inicial.",
+      );
+    }
+  }
+
+  return { critical, alertas };
+}
+
+// ---------------- Server Function ----------------
+// Precios USD por 1M tokens (pass-through Lovable AI Gateway)
+const PRECIOS: Record<string, { in: number; out: number }> = {
+  "google/gemini-2.5-pro": { in: 1.25, out: 10.0 },
+  "google/gemini-2.5-flash": { in: 0.3, out: 2.5 },
+};
+const calcCosto = (modelo: string, tokIn: number, tokOut: number) => {
+  const p = PRECIOS[modelo] ?? { in: 0, out: 0 };
+  return (tokIn / 1_000_000) * p.in + (tokOut / 1_000_000) * p.out;
+};
+const llamadas: CostoLlamada[] = [];
 
 export const extractStatementMotor = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => InputSchema.parse(data))
@@ -284,20 +453,26 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
       detectorTool,
     );
     if (!detResp.ok && detResp.status >= 500) {
-      detResp = await callLovableAI("google/gemini-2.5-pro", SYSTEM_DETECTOR, userContent, detectorTool);
+      detResp = await callLovableAI(
+        "google/gemini-2.5-pro",
+        SYSTEM_DETECTOR,
+        userContent,
+        detectorTool,
+      );
     }
     if (!detResp.ok) {
-      if (detResp.status === 429) return { error: "Demasiadas solicitudes. Intenta de nuevo.", data: null };
+      if (detResp.status === 429)
+        return { error: "Demasiadas solicitudes. Intenta de nuevo.", data: null };
       if (detResp.status === 402) return { error: "Créditos de IA agotados.", data: null };
       return { error: `Error de IA detector (${detResp.status}).`, data: null };
     }
 
-    interface ToolCall { function?: { arguments?: string } }
-    interface Usage { prompt_tokens?: number; completion_tokens?: number }
-    interface ChatResp { choices?: Array<{ message?: { tool_calls?: ToolCall[] } }>; usage?: Usage }
-
     const detJson = (await detResp.json()) as ChatResp;
-    const detModel = detResp.ok ? (detResp.status >= 500 ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash") : "google/gemini-2.5-flash";
+    const detModel = detResp.ok
+      ? detResp.status >= 500
+        ? "google/gemini-2.5-pro"
+        : "google/gemini-2.5-flash"
+      : "google/gemini-2.5-flash";
     const detIn = detJson.usage?.prompt_tokens ?? 0;
     const detOut = detJson.usage?.completion_tokens ?? 0;
     llamadas.push({
@@ -308,11 +483,17 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
       costoUSD: calcCosto(detModel, detIn, detOut),
     });
     const detArgs = detJson.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ?? "";
-    let det: { banco: string; producto: Producto; moneda: Moneda; evidencia: string } = {
-      banco: "", producto: "", moneda: "", evidencia: "",
+    let det: DeteccionMotor = {
+      banco: "",
+      producto: "",
+      moneda: "",
+      evidencia: "",
     };
-    try { det = { ...det, ...JSON.parse(detArgs) }; } catch { /* ignore */ }
-
+    try {
+      det = { ...det, ...JSON.parse(detArgs) };
+    } catch {
+      /* ignore */
+    }
 
     if (/colpatria/i.test(det.banco)) det.banco = "Davibank";
 
@@ -332,7 +513,10 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
       parserTool,
     );
     let usedProFallback = false;
-    if (!parseResp.ok && (parseResp.status === 504 || parseResp.status === 408 || parseResp.status >= 500)) {
+    if (
+      !parseResp.ok &&
+      (parseResp.status === 504 || parseResp.status === 408 || parseResp.status >= 500)
+    ) {
       parseResp = await callLovableAI(
         "google/gemini-2.5-pro",
         buildParserSystem(profile),
@@ -342,7 +526,8 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
       usedProFallback = true;
     }
     if (!parseResp.ok) {
-      if (parseResp.status === 429) return { error: "Demasiadas solicitudes. Intenta de nuevo.", data: null };
+      if (parseResp.status === 429)
+        return { error: "Demasiadas solicitudes. Intenta de nuevo.", data: null };
       if (parseResp.status === 402) return { error: "Créditos de IA agotados.", data: null };
       return { error: `Error de IA parser (${parseResp.status}).`, data: null };
     }
@@ -361,69 +546,59 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
     const pArgs = pJson.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ?? "";
     if (!pArgs) return { error: "La IA no devolvió datos estructurados.", data: null };
 
-
-    let parsed: { datos: Record<string, string>; scores: Record<string, number>; alertas: string[] };
+    let parsed: {
+      datos: Record<string, string>;
+      scores: Record<string, number>;
+      alertas: string[];
+    };
     try {
       parsed = JSON.parse(pArgs);
     } catch {
       return { error: "Respuesta del parser no interpretable.", data: null };
     }
 
-    // Normaliza y completa todos los campos
-    const datos: Record<CampoMotor, string> = {} as Record<CampoMotor, string>;
-    const scores: Record<CampoMotor, number> = {} as Record<CampoMotor, number>;
-    for (const k of CAMPOS_MOTOR) {
-      datos[k] = String(parsed.datos?.[k] ?? "").trim();
-      const s = Number(parsed.scores?.[k] ?? 0);
-      scores[k] = Number.isFinite(s) ? Math.max(0, Math.min(100, Math.round(s))) : 0;
+    const { datos, scores } = normalizeParsedMotor(parsed, det, profile);
+    const validation = validateMotorConsistency(profile, datos);
+    if (validation.critical && !usedProFallback) {
+      const retryResp = await callLovableAI(
+        "google/gemini-2.5-pro",
+        `${buildParserSystem(profile)}\n\nVALIDACIÓN ADICIONAL: Revisa aritmética antes de responder. Para Bancolombia debe cumplirse: cuotaSinSubsidio - valorBeneficioMensual = cuotaConSubsidio; cuotaConSubsidio + seguros = cuotaActual; capitalCuota + interesCuota + seguros = cuotaActual; cuotasPagadas + cuotasPendientes - 1 = plazoInicial.`,
+        userContent,
+        parserTool,
+      );
+      if (retryResp.ok) {
+        const retryJson = (await retryResp.json()) as ChatResp;
+        const retryArgs =
+          retryJson.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ?? "";
+        try {
+          const retryParsed = JSON.parse(retryArgs) as ParserPayload;
+          const normalized = normalizeParsedMotor(retryParsed, det, profile);
+          Object.assign(datos, normalized.datos);
+          Object.assign(scores, normalized.scores);
+          const rIn = retryJson.usage?.prompt_tokens ?? 0;
+          const rOut = retryJson.usage?.completion_tokens ?? 0;
+          llamadas.push({
+            paso: "extraccion",
+            modelo: "google/gemini-2.5-pro",
+            tokensInput: rIn,
+            tokensOutput: rOut,
+            costoUSD: calcCosto("google/gemini-2.5-pro", rIn, rOut),
+          });
+        } catch {
+          /* mantiene extracción original y alerta */
+        }
+      }
     }
-
-    // Normalización numérica COP (US "1,065,000.00" y CO "1.065.000,00" → 1065000)
-    const CAMPOS_MONETARIOS: CampoMotor[] = [
-      "valorDesembolsado", "saldoCapital", "cuotaActual",
-      "interesCuota", "capitalCuota", "seguros", "valorUVR", "saldoUVR",
-      "valorBeneficioMensual", "cuotaSinSubsidio", "cuotaConSubsidio",
-    ];
-    for (const k of CAMPOS_MONETARIOS) {
-      if (datos[k]) datos[k] = parseCOP(datos[k]);
-    }
-    // Tasas: solo dígitos y un punto decimal
-    for (const k of ["tasaEA", "tasaMensual", "tasaCobertura"] as CampoMotor[]) {
-      if (datos[k]) datos[k] = parseTasa(datos[k]);
-    }
-
-    // Normaliza beneficioActivo a "si"/"no" coherente con valorBeneficioMensual
-    const valorBenef = parseFloat(datos.valorBeneficioMensual || "0");
-    if (Number.isFinite(valorBenef) && valorBenef > 0) {
-      datos.beneficioActivo = "si";
-      scores.beneficioActivo = Math.max(scores.beneficioActivo, 95);
-    } else {
-      datos.beneficioActivo = "no";
-      // Limpia campos huérfanos para evitar falsos positivos aguas abajo
-      datos.valorBeneficioMensual = "";
-      datos.tipoBeneficio = "";
-      datos.tasaCobertura = "";
-      datos.cuotaSinSubsidio = "";
-      datos.cuotaConSubsidio = "";
-    }
-
-
-    // Limpia cédulas claramente inválidas (0000000000, enmascaradas)
-    if (datos.cedula && /^0+$/.test(datos.cedula.replace(/\D/g, ""))) {
-      datos.cedula = "";
-      scores.cedula = 0;
-    }
-
-    // Forzar banco/producto/moneda según detección y plantilla
-    datos.banco = profile.banco;
-    scores.banco = 100;
-    if (!datos.producto && det.producto) datos.producto = det.producto;
-    if (!datos.moneda && det.moneda) datos.moneda = det.moneda;
+    const finalValidation = validateMotorConsistency(profile, datos);
 
     // Confianza global: promedio ponderado de campos no vacíos
-    let suma = 0, n = 0;
+    let suma = 0,
+      n = 0;
     for (const k of CAMPOS_MOTOR) {
-      if (datos[k]) { suma += scores[k]; n += 1; }
+      if (datos[k]) {
+        suma += scores[k];
+        n += 1;
+      }
     }
     const confianzaGlobal = n ? Math.round((suma / n) * 100) / 100 : 0;
 
@@ -437,13 +612,15 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
         datos,
         scores,
         confianzaGlobal,
-        alertas: Array.isArray(parsed.alertas) ? parsed.alertas.map(String) : [],
+        alertas: [
+          ...(Array.isArray(parsed.alertas) ? parsed.alertas.map(String) : []),
+          ...finalValidation.alertas,
+        ],
         rawDeteccion: det.evidencia,
         costo: {
           totalUSD: llamadas.reduce((s, l) => s + l.costoUSD, 0),
           llamadas,
         },
       },
-
     };
   });

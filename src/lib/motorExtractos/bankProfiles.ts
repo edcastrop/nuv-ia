@@ -6,8 +6,8 @@ export type Producto = "CREDITO_HIPOTECARIO" | "LEASING_HABITACIONAL" | "";
 
 export interface BankProfile {
   id: string;
-  banco: string;          // nombre canónico que se guarda
-  productos: Producto[];  // productos soportados por esta plantilla
+  banco: string; // nombre canónico que se guarda
+  productos: Producto[]; // productos soportados por esta plantilla
   // Pistas léxicas para detectar el banco a partir del texto del extracto
   matchAny: RegExp[];
   // Instrucciones específicas que se inyectan en el prompt del parser
@@ -20,20 +20,23 @@ export const BANK_PROFILES: BankProfile[] = [
     banco: "Bancolombia",
     productos: ["CREDITO_HIPOTECARIO", "LEASING_HABITACIONAL"],
     matchAny: [/bancolombia/i, /grupo\s+bancolombia/i],
-    hints: `BANCOLOMBIA — etiquetas LITERALES (no interpretes sinónimos):
+    hints: `BANCOLOMBIA — etiquetas LITERALES (no interpretes sinónimos ni valores de anexos):
 - "Saldo a la fecha en que se generó el extracto" → saldoCapital
 - "Valor desembolso" → valorDesembolsado
 - "Plazo total en meses" → plazoInicial
 - "Nro. cuota a cancelar" → cuotasPagadas (es la cuota que se está pagando ahora)
 - "Nro. cuotas pendientes para pago total" → cuotasPendientes
 - "Valor a Pagar" → cuotaActual (cuota efectivamente pagada — generalmente la cuota CON subsidio si aplica)
-- "Tasa interés cobrada" → tasaEA. "Tasa interés pactada" NO usar.
+- "Tasa interés cobrada" → tasaEA. "Tasa interés pactada", "tasa interés subsidiada" y tablas de "Tasas y tarifas Seguro Vida" NO se usan como tasaEA.
 - Seguros = "*Valor seguro vida" + "*Valor seguro incendio" + "*Valor seguro terremoto" (suma).
 - NO confundir "Valor asegurado Incendio y Terremoto" (valor del inmueble) con los seguros mensuales.
+- capitalCuota e interesCuota se toman de "Movimientos Último Periodo" fila "Pago Cuota": columnas "Capital" e "Intereses Corriente". NO uses valores calculados ni aproximados.
+- Validación obligatoria antes de responder: cuotasPagadas + cuotasPendientes - 1 debe ser igual a plazoInicial; capitalCuota + interesCuota + seguros debe coincidir con "Valor a Pagar"; cuotaConSubsidio + seguros debe coincidir con "Valor a Pagar".
+- Si una validación no cuadra, re-lee el campo literal del extracto y baja el score del campo dudoso.
 
 BENEFICIO DE COBERTURA / SUBSIDIO GOBIERNO / FRECH (CRÍTICO):
 - "Valor cuota sin subsidio Gobierno" → cuotaSinSubsidio.
-- "Valor subsidio Gobierno" → valorBeneficioMensual. tipoBeneficio="Subsidio Gobierno / FRECH".
+- "Valor subsidio Gobierno" → valorBeneficioMensual. tipoBeneficio="Subsidio Gobierno".
 - "Valor cuota con subsidio" → cuotaConSubsidio.
 - Si valorBeneficioMensual > 0 → beneficioActivo="si". Si no aparece o es 0 → beneficioActivo="no", deja los demás campos de beneficio vacíos con score 0.
 - NO marques beneficio sólo por texto legal o por la palabra "cobertura" sin valor.
@@ -300,4 +303,3 @@ export const CAMPO_LABEL: Record<CampoMotor, string> = {
   cuotaSinSubsidio: "Cuota sin subsidio",
   cuotaConSubsidio: "Cuota con subsidio",
 };
-
