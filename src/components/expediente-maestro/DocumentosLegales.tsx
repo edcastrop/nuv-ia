@@ -432,10 +432,13 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
                 <span style={{ color: saldoRestante === 0 ? "#1F7A45" : "#B42318" }}>
                   {saldoRestante === 0
                     ? "Cuadrado · $0"
-                    : saldoRestante > 0
-                      ? `Falta ${fmtCOP(saldoRestante)}`
-                      : `Excede en ${fmtCOP(Math.abs(saldoRestante))}`}
+                    : "La suma de las cuotas no coincide con los honorarios finales del cliente."}
                 </span>
+                {saldoRestante !== 0 && (
+                  <span className="text-[#B42318]">
+                    Diferencia: {saldoRestante > 0 ? `falta ${fmtCOP(saldoRestante)}` : `excede ${fmtCOP(Math.abs(saldoRestante))}`}
+                  </span>
+                )}
               </div>
             </div>
           )}
