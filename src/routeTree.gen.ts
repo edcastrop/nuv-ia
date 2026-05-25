@@ -19,12 +19,15 @@ import { Route as AuthenticatedApoderadosNuvexRouteImport } from './routes/_auth
 import { Route as AuthenticatedAcademiaRouteImport } from './routes/_authenticated/academia'
 import { Route as AuthenticatedSuperAdminIndexRouteImport } from './routes/_authenticated/super-admin.index'
 import { Route as AuthenticatedExpedienteMaestroIndexRouteImport } from './routes/_authenticated/expediente-maestro.index'
+import { Route as AuthenticatedComisionesIndexRouteImport } from './routes/_authenticated/comisiones.index'
 import { Route as AuthenticatedCasosIndexRouteImport } from './routes/_authenticated/casos.index'
 import { Route as AuthenticatedCarteraIndexRouteImport } from './routes/_authenticated/cartera.index'
 import { Route as AuthenticatedSuperAdminUsuariosRouteImport } from './routes/_authenticated/super-admin.usuarios'
 import { Route as AuthenticatedSuperAdminMarcaRouteImport } from './routes/_authenticated/super-admin.marca'
 import { Route as AuthenticatedSuperAdminExpedientesRouteImport } from './routes/_authenticated/super-admin.expedientes'
 import { Route as AuthenticatedExpedienteMaestroIdRouteImport } from './routes/_authenticated/expediente-maestro.$id'
+import { Route as AuthenticatedContabilidadCuentasCobroRouteImport } from './routes/_authenticated/contabilidad.cuentas-cobro'
+import { Route as AuthenticatedComisionesIdRouteImport } from './routes/_authenticated/comisiones.$id'
 import { Route as AuthenticatedCasosIdRouteImport } from './routes/_authenticated/casos.$id'
 import { Route as AuthenticatedCarteraIdRouteImport } from './routes/_authenticated/cartera.$id'
 import { Route as ApiPublicHooksCasosAlertasRouteImport } from './routes/api/public/hooks/casos-alertas'
@@ -83,6 +86,12 @@ const AuthenticatedExpedienteMaestroIndexRoute =
     path: '/expediente-maestro/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedComisionesIndexRoute =
+  AuthenticatedComisionesIndexRouteImport.update({
+    id: '/comisiones/',
+    path: '/comisiones/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedCasosIndexRoute = AuthenticatedCasosIndexRouteImport.update({
   id: '/casos/',
   path: '/casos/',
@@ -118,6 +127,18 @@ const AuthenticatedExpedienteMaestroIdRoute =
     path: '/expediente-maestro/$id',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedContabilidadCuentasCobroRoute =
+  AuthenticatedContabilidadCuentasCobroRouteImport.update({
+    id: '/contabilidad/cuentas-cobro',
+    path: '/contabilidad/cuentas-cobro',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedComisionesIdRoute =
+  AuthenticatedComisionesIdRouteImport.update({
+    id: '/comisiones/$id',
+    path: '/comisiones/$id',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedCasosIdRoute = AuthenticatedCasosIdRouteImport.update({
   id: '/casos/$id',
   path: '/casos/$id',
@@ -151,12 +172,15 @@ export interface FileRoutesByFullPath {
   '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
+  '/comisiones/$id': typeof AuthenticatedComisionesIdRoute
+  '/contabilidad/cuentas-cobro': typeof AuthenticatedContabilidadCuentasCobroRoute
   '/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
   '/super-admin/usuarios': typeof AuthenticatedSuperAdminUsuariosRoute
   '/cartera/': typeof AuthenticatedCarteraIndexRoute
   '/casos/': typeof AuthenticatedCasosIndexRoute
+  '/comisiones/': typeof AuthenticatedComisionesIndexRoute
   '/expediente-maestro/': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/super-admin/': typeof AuthenticatedSuperAdminIndexRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
@@ -172,12 +196,15 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
+  '/comisiones/$id': typeof AuthenticatedComisionesIdRoute
+  '/contabilidad/cuentas-cobro': typeof AuthenticatedContabilidadCuentasCobroRoute
   '/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
   '/super-admin/usuarios': typeof AuthenticatedSuperAdminUsuariosRoute
   '/cartera': typeof AuthenticatedCarteraIndexRoute
   '/casos': typeof AuthenticatedCasosIndexRoute
+  '/comisiones': typeof AuthenticatedComisionesIndexRoute
   '/expediente-maestro': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/super-admin': typeof AuthenticatedSuperAdminIndexRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
@@ -195,12 +222,15 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/_authenticated/casos/$id': typeof AuthenticatedCasosIdRoute
+  '/_authenticated/comisiones/$id': typeof AuthenticatedComisionesIdRoute
+  '/_authenticated/contabilidad/cuentas-cobro': typeof AuthenticatedContabilidadCuentasCobroRoute
   '/_authenticated/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/_authenticated/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/_authenticated/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
   '/_authenticated/super-admin/usuarios': typeof AuthenticatedSuperAdminUsuariosRoute
   '/_authenticated/cartera/': typeof AuthenticatedCarteraIndexRoute
   '/_authenticated/casos/': typeof AuthenticatedCasosIndexRoute
+  '/_authenticated/comisiones/': typeof AuthenticatedComisionesIndexRoute
   '/_authenticated/expediente-maestro/': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/_authenticated/super-admin/': typeof AuthenticatedSuperAdminIndexRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
@@ -218,12 +248,15 @@ export interface FileRouteTypes {
     | '/proyeccion'
     | '/cartera/$id'
     | '/casos/$id'
+    | '/comisiones/$id'
+    | '/contabilidad/cuentas-cobro'
     | '/expediente-maestro/$id'
     | '/super-admin/expedientes'
     | '/super-admin/marca'
     | '/super-admin/usuarios'
     | '/cartera/'
     | '/casos/'
+    | '/comisiones/'
     | '/expediente-maestro/'
     | '/super-admin/'
     | '/api/public/hooks/cartera-recordatorios'
@@ -239,12 +272,15 @@ export interface FileRouteTypes {
     | '/'
     | '/cartera/$id'
     | '/casos/$id'
+    | '/comisiones/$id'
+    | '/contabilidad/cuentas-cobro'
     | '/expediente-maestro/$id'
     | '/super-admin/expedientes'
     | '/super-admin/marca'
     | '/super-admin/usuarios'
     | '/cartera'
     | '/casos'
+    | '/comisiones'
     | '/expediente-maestro'
     | '/super-admin'
     | '/api/public/hooks/cartera-recordatorios'
@@ -261,12 +297,15 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/_authenticated/cartera/$id'
     | '/_authenticated/casos/$id'
+    | '/_authenticated/comisiones/$id'
+    | '/_authenticated/contabilidad/cuentas-cobro'
     | '/_authenticated/expediente-maestro/$id'
     | '/_authenticated/super-admin/expedientes'
     | '/_authenticated/super-admin/marca'
     | '/_authenticated/super-admin/usuarios'
     | '/_authenticated/cartera/'
     | '/_authenticated/casos/'
+    | '/_authenticated/comisiones/'
     | '/_authenticated/expediente-maestro/'
     | '/_authenticated/super-admin/'
     | '/api/public/hooks/cartera-recordatorios'
@@ -352,6 +391,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedExpedienteMaestroIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/comisiones/': {
+      id: '/_authenticated/comisiones/'
+      path: '/comisiones'
+      fullPath: '/comisiones/'
+      preLoaderRoute: typeof AuthenticatedComisionesIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/casos/': {
       id: '/_authenticated/casos/'
       path: '/casos'
@@ -394,6 +440,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedExpedienteMaestroIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/contabilidad/cuentas-cobro': {
+      id: '/_authenticated/contabilidad/cuentas-cobro'
+      path: '/contabilidad/cuentas-cobro'
+      fullPath: '/contabilidad/cuentas-cobro'
+      preLoaderRoute: typeof AuthenticatedContabilidadCuentasCobroRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/comisiones/$id': {
+      id: '/_authenticated/comisiones/$id'
+      path: '/comisiones/$id'
+      fullPath: '/comisiones/$id'
+      preLoaderRoute: typeof AuthenticatedComisionesIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/casos/$id': {
       id: '/_authenticated/casos/$id'
       path: '/casos/$id'
@@ -434,12 +494,15 @@ interface AuthenticatedRouteChildren {
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedCarteraIdRoute: typeof AuthenticatedCarteraIdRoute
   AuthenticatedCasosIdRoute: typeof AuthenticatedCasosIdRoute
+  AuthenticatedComisionesIdRoute: typeof AuthenticatedComisionesIdRoute
+  AuthenticatedContabilidadCuentasCobroRoute: typeof AuthenticatedContabilidadCuentasCobroRoute
   AuthenticatedExpedienteMaestroIdRoute: typeof AuthenticatedExpedienteMaestroIdRoute
   AuthenticatedSuperAdminExpedientesRoute: typeof AuthenticatedSuperAdminExpedientesRoute
   AuthenticatedSuperAdminMarcaRoute: typeof AuthenticatedSuperAdminMarcaRoute
   AuthenticatedSuperAdminUsuariosRoute: typeof AuthenticatedSuperAdminUsuariosRoute
   AuthenticatedCarteraIndexRoute: typeof AuthenticatedCarteraIndexRoute
   AuthenticatedCasosIndexRoute: typeof AuthenticatedCasosIndexRoute
+  AuthenticatedComisionesIndexRoute: typeof AuthenticatedComisionesIndexRoute
   AuthenticatedExpedienteMaestroIndexRoute: typeof AuthenticatedExpedienteMaestroIndexRoute
   AuthenticatedSuperAdminIndexRoute: typeof AuthenticatedSuperAdminIndexRoute
 }
@@ -453,6 +516,9 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedCarteraIdRoute: AuthenticatedCarteraIdRoute,
   AuthenticatedCasosIdRoute: AuthenticatedCasosIdRoute,
+  AuthenticatedComisionesIdRoute: AuthenticatedComisionesIdRoute,
+  AuthenticatedContabilidadCuentasCobroRoute:
+    AuthenticatedContabilidadCuentasCobroRoute,
   AuthenticatedExpedienteMaestroIdRoute: AuthenticatedExpedienteMaestroIdRoute,
   AuthenticatedSuperAdminExpedientesRoute:
     AuthenticatedSuperAdminExpedientesRoute,
@@ -460,6 +526,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSuperAdminUsuariosRoute: AuthenticatedSuperAdminUsuariosRoute,
   AuthenticatedCarteraIndexRoute: AuthenticatedCarteraIndexRoute,
   AuthenticatedCasosIndexRoute: AuthenticatedCasosIndexRoute,
+  AuthenticatedComisionesIndexRoute: AuthenticatedComisionesIndexRoute,
   AuthenticatedExpedienteMaestroIndexRoute:
     AuthenticatedExpedienteMaestroIndexRoute,
   AuthenticatedSuperAdminIndexRoute: AuthenticatedSuperAdminIndexRoute,

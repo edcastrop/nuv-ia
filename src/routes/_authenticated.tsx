@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, useNavigate, Link, useLocation } from "@tansta
 import { useEffect, useState } from "react";
 import { useAuth, signOut } from "@/hooks/useAuth";
 import { CORPORATIVO } from "@/components/nuvex/constants";
-import { LayoutGrid, FolderKanban, BarChart3, LogOut, GraduationCap, LineChart, UserSquare2, Users, Shield, Wallet, Bell } from "lucide-react";
+import { LayoutGrid, FolderKanban, BarChart3, LogOut, GraduationCap, LineChart, UserSquare2, Users, Shield, Wallet, Bell, CircleDollarSign } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Logo } from "@/components/nuvex/Logo";
 import { supabase } from "@/integrations/supabase/client";
@@ -83,6 +83,8 @@ function AuthenticatedLayout() {
     { to: "/academia", label: "Academia", Icon: GraduationCap },
     { to: "/apoderados-nuvex", label: "Apoderados", Icon: Users },
     ...(roles.some((r) => ["super_admin","admin","gerencia","cartera","juridica","licenciado","asesor"].includes(r)) ? [{ to: "/cartera", label: "Cartera", Icon: Wallet }] : []),
+    { to: "/comisiones", label: "Comisiones", Icon: CircleDollarSign },
+    ...(roles.some((r) => ["super_admin","admin","gerencia","cartera"].includes(r)) ? [{ to: "/contabilidad/cuentas-cobro", label: "Contabilidad", Icon: CircleDollarSign }] : []),
     ...(isSuperAdmin ? [{ to: "/super-admin", label: "Super Admin", Icon: Shield }] : []),
   ];
 
