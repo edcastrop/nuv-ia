@@ -35,6 +35,28 @@ function AuthenticatedLayout() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  useEffect(() => {
+    if (!session) return;
+    let active = true;
+    const load = async () => {
+      const { count } = await supabase
+        .from("caso_alertas" as never)
+        .select("id", { count: "exact", head: true })
+        .eq("leida", false);
+      if (active) setUnread(count ?? 0);
+    };
+    load();
+    const ch = supabase
+      .channel("caso_alertas_unread")
+      .on("postgres_changes", { event: "*", schema: "public", table: "caso_alertas" }, load)
+      .subscribe();
+    return () => {
+      active = false;
+      supabase.removeChannel(ch);
+    };
+  }, [session, location.pathname]);
+
+
   if (loading || !session) {
     return (
       <div className="min-h-screen flex items-center justify-center text-white/60 text-sm" style={{ background: "#050814" }}>
