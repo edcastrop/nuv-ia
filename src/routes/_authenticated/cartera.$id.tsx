@@ -122,14 +122,26 @@ function CarteraDetail() {
         {pagos.length === 0 ? <div className="text-[12px] text-[#242424]/55">Sin pagos.</div> : (
           <table className="w-full text-[12.5px]">
             <thead className="text-[11px] uppercase text-[#242424]/55"><tr className="border-b border-[#E5E7EB]">
-              <th className="text-left py-1.5">Fecha</th><th className="text-right">Valor</th><th className="text-left pl-3">Método</th><th className="text-left pl-3">Banco</th><th className="text-left pl-3">Comprobante</th><th className="text-left pl-3">Notas</th>
+              <th className="text-left py-1.5">Fecha</th>
+              <th className="text-right">Bruto</th>
+              <th className="text-right pl-3">Fee</th>
+              <th className="text-right pl-3">IVA</th>
+              <th className="text-right pl-3">Neto</th>
+              <th className="text-left pl-3">Método</th>
+              <th className="text-left pl-3">Transacción</th>
+              <th className="text-left pl-3">Soporte</th>
             </tr></thead>
             <tbody>
               {pagos.map((p) => (
                 <tr key={p.id} className="border-b border-[#F3F4F6]">
-                  <td className="py-1.5">{p.fecha}</td><td className="text-right">{money(Number(p.valor))}</td>
-                  <td className="pl-3">{p.metodo ?? "—"}</td><td className="pl-3">{p.banco_receptor ?? "—"}</td>
-                  <td className="pl-3">{p.comprobante_num ?? "—"}</td><td className="pl-3 text-[#242424]/70">{p.observaciones ?? ""}</td>
+                  <td className="py-1.5">{p.fecha}</td>
+                  <td className="text-right">{money(Number(p.valor_bruto ?? p.valor))}</td>
+                  <td className="text-right pl-3">{p.fee_wompi ? money(Number(p.fee_wompi)) : "—"}</td>
+                  <td className="text-right pl-3">{p.iva_fee ? money(Number(p.iva_fee)) : "—"}</td>
+                  <td className="text-right pl-3 font-semibold">{money(Number(p.valor_neto ?? p.valor))}</td>
+                  <td className="pl-3">{p.metodo_pago ?? p.metodo ?? "—"}</td>
+                  <td className="pl-3">{p.numero_transaccion ?? p.comprobante_num ?? "—"}</td>
+                  <td className="pl-3">{p.comprobante_url ? <span className="text-[#1F7A45]">✓</span> : <span className="text-[#B42318]">—</span>}</td>
                 </tr>
               ))}
             </tbody>
