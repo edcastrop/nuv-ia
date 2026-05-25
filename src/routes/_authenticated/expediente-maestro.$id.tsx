@@ -147,7 +147,7 @@ function MaestroDetail() {
       const cuotaActualResuelta =
         cuotaBaseSimulacion > 0
           ? String(Math.round(cuotaBaseSimulacion))
-          : onlyDigits(d.cuotaActual) || credito.cuotaActual || "";
+          : moneyText("cuotaActual", d.cuotaActual) || credito.cuotaActual || "";
       const segurosResueltos =
         segurosNum > 0
           ? segurosNum
@@ -185,7 +185,8 @@ function MaestroDetail() {
           cuotaConSub > 0
             ? String(Math.round(cuotaConSub + segurosResueltos))
             : onlyDigits(d.cuotaActual),
-        cuotaConInteresSinSeguros: d.cuotaSinSubsidio || d.cuotaConSubsidio || "",
+        cuotaConInteresSinSeguros:
+          moneyText("cuotaConInteresSinSeguros", d.cuotaSinSubsidio || d.cuotaConSubsidio) || "",
         cuotaBaseSimulacion: cuotaActualResuelta,
         tasa: tasaValida(d.tasaEA) || credito.tasa || "",
         cuotasPagadas: d.cuotasPagadas || credito.cuotasPagadas || "",
