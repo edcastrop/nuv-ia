@@ -147,7 +147,16 @@ function AuditoriaPage() {
                     <td className="pr-3">{r.user_id ? (profMap[r.user_id] ?? r.user_id.slice(0, 8)) : "—"}</td>
                     <td className="pr-3 text-[#242424]/80">
                       {r.motivo && <div className="italic">{r.motivo}</div>}
-                      {r.valor_nuevo && <code className="text-[10.5px] text-[#445DA3]">{JSON.stringify(r.valor_nuevo)}</code>}
+                      {r.valor_anterior && (
+                        <div className="text-[10.5px] text-[#991B1B]">
+                          <b>Antes:</b> <code>{JSON.stringify(r.valor_anterior)}</code>
+                        </div>
+                      )}
+                      {r.valor_nuevo && (
+                        <div className="text-[10.5px] text-[#445DA3]">
+                          <b>Nuevo:</b> <code>{JSON.stringify(r.valor_nuevo)}</code>
+                        </div>
+                      )}
                       {r.documento_url && (
                         <button
                           onClick={() => handleDownload(r.documento_url!)}
