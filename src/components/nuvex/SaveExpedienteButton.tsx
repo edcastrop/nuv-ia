@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { upsertExpediente, type UpsertPayload, type Expediente } from "@/lib/expedientes";
+import { cambiarEstadoCaso } from "@/lib/casoEstados";
 import { NUVEX } from "./constants";
 import { CasoCreadoModal } from "./CasoCreadoModal";
 
