@@ -8,10 +8,26 @@ export interface Comision {
   base: number;
   porcentaje: number;
   valor: number;
+  honorarios_contratados: number | null;
+  recaudado: number;
+  comision_potencial: number;
+  comision_liberada: number;
+  comision_pagada: number;
   estado: "generada" | "pendiente" | "aprobada" | "pagada" | "rechazada";
   cuenta_cobro_id: string | null;
   created_at: string;
   updated_at: string;
+}
+
+/** Saldo cobrable: liberado y no pagado, no incluido en CC activa. */
+export function saldoDisponibleComision(c: Comision): number {
+  if (c.cuenta_cobro_id) return 0;
+  return Math.max(0, Number(c.comision_liberada || 0) - Number(c.comision_pagada || 0));
+}
+
+/** Saldo pendiente de recaudo (potencial - liberada). */
+export function pendienteRecaudoComision(c: Comision): number {
+  return Math.max(0, Number(c.comision_potencial || 0) - Number(c.comision_liberada || 0));
 }
 
 export interface CuentaCobro {
@@ -76,9 +92,38 @@ export async function getCuentaCobro(id: string): Promise<CuentaCobro | null> {
   return (data ?? null) as unknown as CuentaCobro | null;
 }
 
-/** Crear cuenta de cobro con las comisiones seleccionadas */
+/**
+ * Crear cuenta de cobro con las comisiones seleccionadas.
+ * Sólo se incluyen comisiones con saldo LIBERADO disponible (recaudo real).
+ * El monto facturado de cada comisión = comision_liberada - comision_pagada.
+ */
 export async function crearCuentaCobro(userId: string, comisionIds: string[], observaciones?: string): Promise<string> {
   if (comisionIds.length === 0) throw new Error("Selecciona al menos una comisión");
+
+  // Releer las comisiones para validar saldo disponible
+  const { data: rows, error: errSel } = await supabase
+    .from("comisiones" as never)
+    .select("id, comision_liberada, comision_pagada, cuenta_cobro_id")
+    .in("id", comisionIds);
+  if (errSel) throw errSel;
+  const seleccionadas = (rows ?? []) as unknown as Array<{
+    id: string;
+    comision_liberada: number;
+    comision_pagada: number;
+    cuenta_cobro_id: string | null;
+  }>;
+  const validas = seleccionadas
+    .filter((r) => !r.cuenta_cobro_id)
+    .map((r) => ({
+      id: r.id,
+      disponible: Math.max(0, Number(r.comision_liberada || 0) - Number(r.comision_pagada || 0)),
+    }))
+    .filter((r) => r.disponible > 0);
+
+  if (validas.length === 0) {
+    throw new Error("Ninguna comisión seleccionada tiene saldo liberado disponible (recaudo real).");
+  }
+
   const { data: cc, error } = await supabase
     .from("cuentas_cobro" as never)
     .insert({ user_id: userId, estado: "borrador", observaciones: observaciones ?? null } as never)
@@ -86,24 +131,33 @@ export async function crearCuentaCobro(userId: string, comisionIds: string[], ob
     .single();
   if (error) throw error;
   const ccId = (cc as unknown as { id: string }).id;
-  const { error: errUpd } = await supabase
-    .from("comisiones" as never)
-    .update({ cuenta_cobro_id: ccId, estado: "pendiente" } as never)
-    .in("id", comisionIds)
-    .is("cuenta_cobro_id", null);
-  if (errUpd) throw errUpd;
+
+  // Fijar valor = saldo disponible y enlazar
+  for (const v of validas) {
+    const { error: errUpd } = await supabase
+      .from("comisiones" as never)
+      .update({ valor: v.disponible, cuenta_cobro_id: ccId, estado: "pendiente" } as never)
+      .eq("id", v.id)
+      .is("cuenta_cobro_id", null);
+    if (errUpd) throw errUpd;
+  }
+
   await supabase.from("cuentas_cobro_historial" as never).insert({
     cuenta_cobro_id: ccId,
     user_id: userId,
     accion: "creada",
-    observacion: `${comisionIds.length} comisiones agrupadas`,
+    observacion: `${validas.length} comisiones sobre recaudo real`,
   } as never);
   await supabase.from("finanzas_auditoria" as never).insert({
     entidad: "cuenta_cobro",
     entidad_id: ccId,
     accion: "creada",
     user_id: userId,
-    valor_nuevo: { comisiones: comisionIds.length, observaciones: observaciones ?? null },
+    valor_nuevo: {
+      comisiones: validas.length,
+      total_facturado: validas.reduce((s, v) => s + v.disponible, 0),
+      observaciones: observaciones ?? null,
+    },
   } as never);
   return ccId;
 }

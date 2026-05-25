@@ -10,10 +10,12 @@ import {
   listTodasComisiones,
   listCuentasCobro,
   crearCuentaCobro,
+  saldoDisponibleComision,
+  pendienteRecaudoComision,
   type Comision,
   type CuentaCobro,
 } from "@/lib/comisiones";
-import { CircleDollarSign, FileText, Plus } from "lucide-react";
+import { AlertTriangle, BellRing, CircleDollarSign, FileText, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/comisiones/")({
   component: ComisionesPage,
@@ -66,24 +68,47 @@ function ComisionesPage() {
     if (user) cargar();
   }, [user]);
 
+  // Disponibles para CC = liberado > pagado y sin CC activa
   const disponibles = useMemo(
-    () => comisiones.filter((c) => c.estado === "generada" && !c.cuenta_cobro_id),
+    () => comisiones.filter((c) => saldoDisponibleComision(c) > 0),
     [comisiones],
   );
 
   const totalSeleccionado = useMemo(
-    () => disponibles.filter((c) => selected.has(c.id)).reduce((s, c) => s + Number(c.valor || 0), 0),
+    () =>
+      disponibles
+        .filter((c) => selected.has(c.id))
+        .reduce((s, c) => s + saldoDisponibleComision(c), 0),
     [disponibles, selected],
   );
 
-  const totales = useMemo(
-    () => ({
-      generadas: comisiones.filter((c) => c.estado === "generada").reduce((s, c) => s + Number(c.valor), 0),
-      pendientes: comisiones.filter((c) => c.estado === "pendiente").reduce((s, c) => s + Number(c.valor), 0),
-      aprobadas: comisiones.filter((c) => c.estado === "aprobada").reduce((s, c) => s + Number(c.valor), 0),
-      pagadas: comisiones.filter((c) => c.estado === "pagada").reduce((s, c) => s + Number(c.valor), 0),
-    }),
-    [comisiones],
+  const totales = useMemo(() => {
+    let potencial = 0,
+      liberada = 0,
+      pagada = 0,
+      recaudado = 0,
+      contratado = 0;
+    for (const c of comisiones) {
+      potencial += Number(c.comision_potencial || 0);
+      liberada += Number(c.comision_liberada || 0);
+      pagada += Number(c.comision_pagada || 0);
+      recaudado += Number(c.recaudado || 0);
+      contratado += Number(c.honorarios_contratados || c.base || 0);
+    }
+    return {
+      potencial,
+      liberada,
+      pagada,
+      pendiente: Math.max(0, liberada - pagada),
+      por_recaudar: Math.max(0, potencial - liberada),
+      recaudado,
+      contratado,
+    };
+  }, [comisiones]);
+
+  const ccDevueltas = useMemo(
+    () => cuentas.filter((cc) => cc.estado === "devuelta_correccion"),
+    [cuentas],
   );
 
   const toggle = (id: string) => {
@@ -117,7 +142,7 @@ function ComisionesPage() {
             {esManager ? "Comisiones (todas)" : "Mis comisiones"}
           </h1>
           <p className="text-sm text-[#242424]/60">
-            Las comisiones se liquidan automáticamente al marcar el caso como honorarios pagados.
+            Las comisiones se liberan únicamente sobre el dinero efectivamente recaudado por NUVEX en cartera.
           </p>
         </div>
         {esManager && (
@@ -130,12 +155,39 @@ function ComisionesPage() {
         )}
       </div>
 
-      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Stat label="Generadas" value={formatCOP(totales.generadas)} color="#445DA3" />
-        <Stat label="En trámite" value={formatCOP(totales.pendientes)} color="#8A5A00" />
-        <Stat label="Aprobadas" value={formatCOP(totales.aprobadas)} color="#1F7A45" />
-        <Stat label="Pagadas" value={formatCOP(totales.pagadas)} color="#1F7A45" />
+      <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-5">
+        <Stat label="Comisión potencial" value={formatCOP(totales.potencial)} color="#445DA3" />
+        <Stat label="Comisión liberada" value={formatCOP(totales.liberada)} color="#1F7A45" />
+        <Stat label="Comisión pagada" value={formatCOP(totales.pagada)} color="#1F7A45" />
+        <Stat label="Pendiente de pago" value={formatCOP(totales.pendiente)} color="#8A5A00" />
+        <Stat label="Por recaudar" value={formatCOP(totales.por_recaudar)} color="#6B7280" />
       </div>
+
+      {disponibles.length > 0 && (
+        <div className="mb-4 flex items-start gap-3 rounded-xl border border-[#84B98F]/40 bg-[#EAF7EE] px-4 py-3 text-sm text-[#1F4D2C]">
+          <BellRing size={18} className="mt-0.5 text-[#1F7A45]" />
+          <div>
+            <div className="font-semibold">Tienes comisión disponible para generar cuenta de cobro.</div>
+            <div className="text-[12px] text-[#1F4D2C]/80">
+              {disponibles.length} caso{disponibles.length !== 1 ? "s" : ""} con saldo liberado por recaudo real ·{" "}
+              <strong>{formatCOP(totales.pendiente)}</strong> disponible.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {ccDevueltas.length > 0 && (
+        <div className="mb-4 flex items-start gap-3 rounded-xl border border-[#FACC15]/50 bg-[#FEF3C7] px-4 py-3 text-sm text-[#7C5700]">
+          <AlertTriangle size={18} className="mt-0.5" />
+          <div>
+            <div className="font-semibold">
+              {ccDevueltas.length} cuenta{ccDevueltas.length !== 1 ? "s" : ""} devuelta
+              {ccDevueltas.length !== 1 ? "s" : ""} para corrección
+            </div>
+            <div className="text-[12px]">Revisa el detalle y vuelve a enviarla a Contabilidad.</div>
+          </div>
+        </div>
+      )}
 
       {/* Comisiones disponibles para generar cuenta */}
       <Card className="mb-6">
@@ -169,43 +221,67 @@ function ComisionesPage() {
         {loading ? (
           <div className="p-8 text-center text-sm text-[#242424]/60">Cargando…</div>
         ) : disponibles.length === 0 ? (
-          <div className="p-8 text-center text-sm text-[#242424]/60">No hay comisiones disponibles.</div>
+          <div className="p-8 text-center text-sm text-[#242424]/60">
+            Aún no hay comisión liberada. Las comisiones se liberan a medida que cartera registra los pagos del cliente.
+          </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-[#F7F9FB] text-[11px] uppercase tracking-wide text-[#242424]/60">
-              <tr>
-                <th className="px-4 py-2 text-left w-10"></th>
-                <th className="px-4 py-2 text-left">Cliente</th>
-                <th className="px-4 py-2 text-left">Banco</th>
-                <th className="px-4 py-2 text-right">Base</th>
-                <th className="px-4 py-2 text-right">%</th>
-                <th className="px-4 py-2 text-right">Comisión</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#E3E7EE]">
-              {disponibles.map((c) => {
-                const exp = expedientes.get(c.expediente_id);
-                return (
-                  <tr key={c.id} className="hover:bg-[#F7F9FB]">
-                    <td className="px-4 py-2">
-                      <input
-                        type="checkbox"
-                        checked={selected.has(c.id)}
-                        onChange={() => toggle(c.id)}
-                      />
-                    </td>
-                    <td className="px-4 py-2 text-[#0A1226]">{exp?.cliente ?? "—"}</td>
-                    <td className="px-4 py-2 text-[#242424]/70">{exp?.banco ?? "—"}</td>
-                    <td className="px-4 py-2 text-right">{formatCOP(Number(c.base))}</td>
-                    <td className="px-4 py-2 text-right">{Number(c.porcentaje).toFixed(2)}%</td>
-                    <td className="px-4 py-2 text-right font-semibold text-[#1F7A45]">
-                      {formatCOP(Number(c.valor))}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[980px]">
+              <thead className="bg-[#F7F9FB] text-[11px] uppercase tracking-wide text-[#242424]/60">
+                <tr>
+                  <th className="px-3 py-2 text-left w-10"></th>
+                  <th className="px-3 py-2 text-left">Cliente</th>
+                  <th className="px-3 py-2 text-left">Banco</th>
+                  <th className="px-3 py-2 text-right">Honorarios contratados</th>
+                  <th className="px-3 py-2 text-right">Recaudado</th>
+                  <th className="px-3 py-2 text-right">%</th>
+                  <th className="px-3 py-2 text-right">Potencial</th>
+                  <th className="px-3 py-2 text-right">Liberada</th>
+                  <th className="px-3 py-2 text-right">Pagada</th>
+                  <th className="px-3 py-2 text-right">Saldo cobrable</th>
+                  <th className="px-3 py-2 text-right">Por recaudar</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#E3E7EE]">
+                {disponibles.map((c) => {
+                  const exp = expedientes.get(c.expediente_id);
+                  const disp = saldoDisponibleComision(c);
+                  const pendRec = pendienteRecaudoComision(c);
+                  return (
+                    <tr key={c.id} className="hover:bg-[#F7F9FB]">
+                      <td className="px-3 py-2">
+                        <input
+                          type="checkbox"
+                          checked={selected.has(c.id)}
+                          onChange={() => toggle(c.id)}
+                        />
+                      </td>
+                      <td className="px-3 py-2 text-[#0A1226]">{exp?.cliente ?? "—"}</td>
+                      <td className="px-3 py-2 text-[#242424]/70">{exp?.banco ?? "—"}</td>
+                      <td className="px-3 py-2 text-right">
+                        {formatCOP(Number(c.honorarios_contratados ?? c.base ?? 0))}
+                      </td>
+                      <td className="px-3 py-2 text-right">{formatCOP(Number(c.recaudado || 0))}</td>
+                      <td className="px-3 py-2 text-right">{Number(c.porcentaje).toFixed(2)}%</td>
+                      <td className="px-3 py-2 text-right text-[#445DA3]">
+                        {formatCOP(Number(c.comision_potencial || 0))}
+                      </td>
+                      <td className="px-3 py-2 text-right text-[#1F7A45]">
+                        {formatCOP(Number(c.comision_liberada || 0))}
+                      </td>
+                      <td className="px-3 py-2 text-right text-[#242424]/70">
+                        {formatCOP(Number(c.comision_pagada || 0))}
+                      </td>
+                      <td className="px-3 py-2 text-right font-semibold text-[#1F7A45]">
+                        {formatCOP(disp)}
+                      </td>
+                      <td className="px-3 py-2 text-right text-[#8A5A00]">{formatCOP(pendRec)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </Card>
 
