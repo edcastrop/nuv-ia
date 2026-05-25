@@ -189,16 +189,30 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
   const activeTemplateMeta = PODER_TEMPLATES.find((t) => t.id === activeTemplateId)!;
 
   // ── Acuerdo comercial (Contado / Financiado)
-  const honorarios = useMemo(() => {
+  // Fuente ÚNICA DE VERDAD: honorariosFinalesCliente
+  //   1) recalculados a éxito  2) honorarios con descuento  3) originales
+  const honorariosOriginales = useMemo(() => {
     const p = (simExpediente?.propuesta_data ?? {}) as Partial<PropuestaData>;
-    return Number(p.honorarios ?? simExpediente?.honorarios_final ?? 0);
+    return Number(p.honorarios ?? simExpediente?.honorarios_base ?? 0);
+  }, [simExpediente]);
+  const descuentoAplicado = useMemo(
+    () => Number(simExpediente?.descuento ?? 0),
+    [simExpediente],
+  );
+  const honorariosRecalc = Number(
+    (simExpediente as unknown as { honorarios_recalculados?: number | null })?.honorarios_recalculados ?? 0,
+  );
+  const honorarios = useMemo(() => {
+    return honorariosFinalesCliente(
+      simExpediente as unknown as Parameters<typeof honorariosFinalesCliente>[0],
+    );
   }, [simExpediente]);
 
   const [modalidad, setModalidad] = useState<ModalidadPago>("contado");
   const [numCuotas, setNumCuotas] = useState<number>(2);
   const [cuotas, setCuotas] = useState<number[]>([]);
 
-  // Inicializa / redistribuye cuotas cuando cambia número o honorarios
+  // Inicializa / redistribuye cuotas cuando cambia número o honorariosFinalesCliente
   useEffect(() => {
     if (modalidad !== "financiado") return;
     const n = Math.max(1, Math.min(24, Math.round(numCuotas) || 1));
