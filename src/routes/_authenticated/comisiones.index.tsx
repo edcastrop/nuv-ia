@@ -68,24 +68,47 @@ function ComisionesPage() {
     if (user) cargar();
   }, [user]);
 
+  // Disponibles para CC = liberado > pagado y sin CC activa
   const disponibles = useMemo(
-    () => comisiones.filter((c) => c.estado === "generada" && !c.cuenta_cobro_id),
+    () => comisiones.filter((c) => saldoDisponibleComision(c) > 0),
     [comisiones],
   );
 
   const totalSeleccionado = useMemo(
-    () => disponibles.filter((c) => selected.has(c.id)).reduce((s, c) => s + Number(c.valor || 0), 0),
+    () =>
+      disponibles
+        .filter((c) => selected.has(c.id))
+        .reduce((s, c) => s + saldoDisponibleComision(c), 0),
     [disponibles, selected],
   );
 
-  const totales = useMemo(
-    () => ({
-      generadas: comisiones.filter((c) => c.estado === "generada").reduce((s, c) => s + Number(c.valor), 0),
-      pendientes: comisiones.filter((c) => c.estado === "pendiente").reduce((s, c) => s + Number(c.valor), 0),
-      aprobadas: comisiones.filter((c) => c.estado === "aprobada").reduce((s, c) => s + Number(c.valor), 0),
-      pagadas: comisiones.filter((c) => c.estado === "pagada").reduce((s, c) => s + Number(c.valor), 0),
-    }),
-    [comisiones],
+  const totales = useMemo(() => {
+    let potencial = 0,
+      liberada = 0,
+      pagada = 0,
+      recaudado = 0,
+      contratado = 0;
+    for (const c of comisiones) {
+      potencial += Number(c.comision_potencial || 0);
+      liberada += Number(c.comision_liberada || 0);
+      pagada += Number(c.comision_pagada || 0);
+      recaudado += Number(c.recaudado || 0);
+      contratado += Number(c.honorarios_contratados || c.base || 0);
+    }
+    return {
+      potencial,
+      liberada,
+      pagada,
+      pendiente: Math.max(0, liberada - pagada),
+      por_recaudar: Math.max(0, potencial - liberada),
+      recaudado,
+      contratado,
+    };
+  }, [comisiones]);
+
+  const ccDevueltas = useMemo(
+    () => cuentas.filter((cc) => cc.estado === "devuelta_correccion"),
+    [cuentas],
   );
 
   const toggle = (id: string) => {
