@@ -468,56 +468,36 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
       return { error: "Respuesta del parser no interpretable.", data: null };
     }
 
-    // Normaliza y completa todos los campos
-    const datos: Record<CampoMotor, string> = {} as Record<CampoMotor, string>;
-    const scores: Record<CampoMotor, number> = {} as Record<CampoMotor, number>;
-    for (const k of CAMPOS_MOTOR) {
-      datos[k] = String(parsed.datos?.[k] ?? "").trim();
-      const s = Number(parsed.scores?.[k] ?? 0);
-      scores[k] = Number.isFinite(s) ? Math.max(0, Math.min(100, Math.round(s))) : 0;
+    const { datos, scores } = normalizeParsedMotor(parsed, det, profile);
+    const validation = validateMotorConsistency(profile, datos);
+    if (validation.critical && !usedProFallback) {
+      const retryResp = await callLovableAI(
+        "google/gemini-2.5-pro",
+        `${buildParserSystem(profile)}\n\nVALIDACIÓN ADICIONAL: Revisa aritmética antes de responder. Para Bancolombia debe cumplirse: cuotaSinSubsidio - valorBeneficioMensual = cuotaConSubsidio; cuotaConSubsidio + seguros = cuotaActual; capitalCuota + interesCuota + seguros = cuotaActual; cuotasPagadas + cuotasPendientes - 1 = plazoInicial.`,
+        userContent,
+        parserTool,
+      );
+      if (retryResp.ok) {
+        const retryJson = (await retryResp.json()) as ChatResp;
+        const retryArgs = retryJson.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ?? "";
+        try {
+          const retryParsed = JSON.parse(retryArgs) as ParserPayload;
+          const normalized = normalizeParsedMotor(retryParsed, det, profile);
+          Object.assign(datos, normalized.datos);
+          Object.assign(scores, normalized.scores);
+          const rIn = retryJson.usage?.prompt_tokens ?? 0;
+          const rOut = retryJson.usage?.completion_tokens ?? 0;
+          llamadas.push({
+            paso: "extraccion",
+            modelo: "google/gemini-2.5-pro",
+            tokensInput: rIn,
+            tokensOutput: rOut,
+            costoUSD: calcCosto("google/gemini-2.5-pro", rIn, rOut),
+          });
+        } catch { /* mantiene extracción original y alerta */ }
+      }
     }
-
-    // Normalización numérica COP (US "1,065,000.00" y CO "1.065.000,00" → 1065000)
-    const CAMPOS_MONETARIOS: CampoMotor[] = [
-      "valorDesembolsado", "saldoCapital", "cuotaActual",
-      "interesCuota", "capitalCuota", "seguros", "valorUVR", "saldoUVR",
-      "valorBeneficioMensual", "cuotaSinSubsidio", "cuotaConSubsidio",
-    ];
-    for (const k of CAMPOS_MONETARIOS) {
-      if (datos[k]) datos[k] = parseCOP(datos[k]);
-    }
-    // Tasas: solo dígitos y un punto decimal
-    for (const k of ["tasaEA", "tasaMensual", "tasaCobertura"] as CampoMotor[]) {
-      if (datos[k]) datos[k] = parseTasa(datos[k]);
-    }
-
-    // Normaliza beneficioActivo a "si"/"no" coherente con valorBeneficioMensual
-    const valorBenef = parseFloat(datos.valorBeneficioMensual || "0");
-    if (Number.isFinite(valorBenef) && valorBenef > 0) {
-      datos.beneficioActivo = "si";
-      scores.beneficioActivo = Math.max(scores.beneficioActivo, 95);
-    } else {
-      datos.beneficioActivo = "no";
-      // Limpia campos huérfanos para evitar falsos positivos aguas abajo
-      datos.valorBeneficioMensual = "";
-      datos.tipoBeneficio = "";
-      datos.tasaCobertura = "";
-      datos.cuotaSinSubsidio = "";
-      datos.cuotaConSubsidio = "";
-    }
-
-
-    // Limpia cédulas claramente inválidas (0000000000, enmascaradas)
-    if (datos.cedula && /^0+$/.test(datos.cedula.replace(/\D/g, ""))) {
-      datos.cedula = "";
-      scores.cedula = 0;
-    }
-
-    // Forzar banco/producto/moneda según detección y plantilla
-    datos.banco = profile.banco;
-    scores.banco = 100;
-    if (!datos.producto && det.producto) datos.producto = det.producto;
-    if (!datos.moneda && det.moneda) datos.moneda = det.moneda;
+    const finalValidation = validateMotorConsistency(profile, datos);
 
     // Confianza global: promedio ponderado de campos no vacíos
     let suma = 0, n = 0;
