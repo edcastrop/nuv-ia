@@ -341,6 +341,35 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
             </div>
           </div>
 
+          {/* Costo IA */}
+          {result.costo && (
+            <div className="rounded-lg border p-3" style={{ borderColor: NUVEX.azul + "33", background: "#FBFCFD" }}>
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                  <div className="text-[10px] uppercase tracking-wide text-[#242424]/60">Costo de procesamiento (IA)</div>
+                  <div className="text-lg font-semibold text-[#242424]">
+                    USD ${result.costo.totalUSD.toFixed(4)}
+                    <span className="ml-2 text-[11px] font-normal text-[#242424]/60">
+                      ≈ COP ${Math.round(result.costo.totalUSD * 4000).toLocaleString("es-CO")}
+                    </span>
+                  </div>
+                </div>
+                <div className="text-[10px] text-[#242424]/70 space-y-0.5">
+                  {result.costo.llamadas.map((l, i) => (
+                    <div key={i} className="flex gap-2">
+                      <span className="font-medium capitalize">{l.paso}:</span>
+                      <span>{l.modelo.replace("google/", "")}</span>
+                      <span>· in {l.tokensInput.toLocaleString()}</span>
+                      <span>· out {l.tokensOutput.toLocaleString()}</span>
+                      <span>· ${l.costoUSD.toFixed(4)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+
           {camposBloqueados.length > 0 && (
             <div className="rounded-lg border p-3 text-xs" style={{ borderColor: "#F4A26155", background: "rgba(244,162,97,0.10)", color: "#a35d1c" }}>
               <div className="flex items-center gap-2 font-medium mb-1">
