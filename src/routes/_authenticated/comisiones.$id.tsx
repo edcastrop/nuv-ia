@@ -268,6 +268,7 @@ function DetalleCuentaCobro() {
                 % Comisión licenciado: <b>{Number(cc.porcentaje_comision).toFixed(0)}%</b>
               </div>
             )}
+            <div
               className="mt-2 inline-block rounded-full px-3 py-1 text-[12px] font-semibold"
               style={{ background: ESTADO_CC[cc.estado].bg, color: ESTADO_CC[cc.estado].color }}
             >
