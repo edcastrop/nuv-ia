@@ -85,7 +85,13 @@ export function EnviarContratacionButton({ ctx, onSent }: Props) {
         <EnviarContratacionModal
           ctx={ctx}
           onClose={() => setOpen(false)}
-          onSent={() => { setOpen(false); onSent?.(); }}
+          onSent={() => {
+            setOpen(false);
+            // Disparador automático: envío a contratación → estado "documentación completa"
+            cambiarEstadoCaso(ctx.expedienteId, "documentacion_completa", "documentacion_completa")
+              .catch((err) => console.warn("[estado] documentacion_completa", err));
+            onSent?.();
+          }}
         />
       )}
     </>
