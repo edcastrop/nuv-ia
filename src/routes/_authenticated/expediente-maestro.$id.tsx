@@ -89,11 +89,22 @@ function MaestroDetail() {
       const valorBenef = num(d.valorBeneficioMensual);
       const beneficioReal = beneficioFlag && valorBenef > 0;
 
-      // Cuota actual: si hay subsidio explícito, preferimos la "con subsidio"
-      // (lo que realmente paga el cliente). Si no, usamos la cuota normal.
+      // Cuota actual para simulación: si hay subsidio, usamos la cuota real del crédito
+      // antes del beneficio. En Bancolombia, "Valor a Pagar" ya incluye seguros, por eso
+      // la base correcta es Valor a Pagar + subsidio, o cuota sin subsidio + seguros.
       const cuotaConSub = num(d.cuotaConSubsidio);
-      const cuotaActualResuelta = beneficioReal && cuotaConSub > 0
-        ? String(Math.round(cuotaConSub))
+      const cuotaActualDoc = num(d.cuotaActual);
+      const cuotaSinSub = num(d.cuotaSinSubsidio);
+      const segurosNum = num(d.seguros);
+      const cuotaBaseSimulacion = beneficioReal
+        ? Math.max(
+            cuotaActualDoc > 0 ? cuotaActualDoc + valorBenef : 0,
+            cuotaSinSub > 0 ? cuotaSinSub + segurosNum : 0,
+            cuotaConSub > 0 ? cuotaConSub + segurosNum + valorBenef : 0,
+          )
+        : cuotaActualDoc;
+      const cuotaActualResuelta = cuotaBaseSimulacion > 0
+        ? String(Math.round(cuotaBaseSimulacion))
         : (onlyDigits(d.cuotaActual) || credito.cuotaActual || "");
 
       const cuotasPagadasNum = num(d.cuotasPagadas);
@@ -109,9 +120,14 @@ function MaestroDetail() {
         numeroCredito: d.numeroCredito || credito.numeroCredito || "",
         tipoProducto: r.producto || credito.tipoProducto || "",
         fechaDesembolso: d.fechaDesembolso || credito.fechaDesembolso || "",
+        valorDesembolsado: onlyDigits(d.valorDesembolsado) || credito.valorDesembolsado || "",
         plazoOriginal: d.plazoInicial || credito.plazoOriginal || "",
         saldoCapital: onlyDigits(d.saldoCapital) || credito.saldoCapital || "",
         cuotaActual: cuotaActualResuelta,
+        seguros: onlyDigits(d.seguros) || credito.seguros || "",
+        cuotaConSubsidio: cuotaConSub > 0 ? String(Math.round(cuotaConSub + segurosNum)) : onlyDigits(d.cuotaActual),
+        cuotaConInteresSinSeguros: d.cuotaSinSubsidio || d.cuotaConSubsidio || "",
+        cuotaBaseSimulacion: cuotaActualResuelta,
         tasa: d.tasaEA || credito.tasa || "",
         cuotasPagadas: d.cuotasPagadas || credito.cuotasPagadas || "",
         cuotasPendientes: d.cuotasPendientes || credito.cuotasPendientes || "",
