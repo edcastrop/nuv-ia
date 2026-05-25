@@ -10,10 +10,12 @@ import {
   listTodasComisiones,
   listCuentasCobro,
   crearCuentaCobro,
+  saldoDisponibleComision,
+  pendienteRecaudoComision,
   type Comision,
   type CuentaCobro,
 } from "@/lib/comisiones";
-import { CircleDollarSign, FileText, Plus } from "lucide-react";
+import { AlertTriangle, BellRing, CircleDollarSign, FileText, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/comisiones/")({
   component: ComisionesPage,
