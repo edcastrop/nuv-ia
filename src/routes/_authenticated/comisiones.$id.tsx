@@ -361,7 +361,7 @@ function DetalleCuentaCobro() {
           </div>
         </div>
 
-        {(puedeEnviar || puedeAprobar || puedePagar) && (
+        {(puedeEnviar || puedeAprobar || puedeProgramar || puedePagar) && (
           <div className="border-t border-[#E3E7EE] bg-[#F7F9FB] p-4 space-y-3">
             <input
               value={observ}
