@@ -481,12 +481,17 @@ export type Database = {
       comisiones: {
         Row: {
           base: number
+          comision_liberada: number
+          comision_pagada: number
+          comision_potencial: number
           created_at: string
           cuenta_cobro_id: string | null
           estado: string
           expediente_id: string
+          honorarios_contratados: number | null
           id: string
           porcentaje: number
+          recaudado: number
           rol: string
           updated_at: string
           user_id: string
@@ -494,12 +499,17 @@ export type Database = {
         }
         Insert: {
           base?: number
+          comision_liberada?: number
+          comision_pagada?: number
+          comision_potencial?: number
           created_at?: string
           cuenta_cobro_id?: string | null
           estado?: string
           expediente_id: string
+          honorarios_contratados?: number | null
           id?: string
           porcentaje?: number
+          recaudado?: number
           rol?: string
           updated_at?: string
           user_id: string
@@ -507,12 +517,17 @@ export type Database = {
         }
         Update: {
           base?: number
+          comision_liberada?: number
+          comision_pagada?: number
+          comision_potencial?: number
           created_at?: string
           cuenta_cobro_id?: string | null
           estado?: string
           expediente_id?: string
+          honorarios_contratados?: number | null
           id?: string
           porcentaje?: number
+          recaudado?: number
           rol?: string
           updated_at?: string
           user_id?: string
@@ -1376,12 +1391,20 @@ export type Database = {
         Args: { _exp_id: string; _uid: string }
         Returns: boolean
       }
+      comision_disponible_para_cc: {
+        Args: { _comision_id: string }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      liberar_comisiones_por_recaudo: {
+        Args: { _expediente_id: string; _user_validador?: string }
+        Returns: undefined
       }
       map_caso_to_expediente_estado: {
         Args: { _caso: Database["public"]["Enums"]["caso_estado"] }
