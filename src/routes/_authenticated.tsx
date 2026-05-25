@@ -73,9 +73,10 @@ function AuthenticatedLayout() {
     .map((s) => s[0]?.toUpperCase())
     .join("") || "NV";
 
-  const navItems = [
+  const navItems: { to: string; label: string; Icon: typeof LayoutGrid; exact?: boolean; badge?: number }[] = [
     { to: "/", label: "Simulador", Icon: LayoutGrid, exact: true },
     { to: "/casos", label: "Casos", Icon: FolderKanban },
+    { to: "/notificaciones", label: "Alertas", Icon: Bell, badge: unread },
     { to: "/expediente-maestro", label: "Expediente", Icon: UserSquare2 },
     { to: "/proyeccion", label: "Proyección", Icon: LineChart },
     { to: "/dashboard", label: "Dashboard", Icon: BarChart3 },
