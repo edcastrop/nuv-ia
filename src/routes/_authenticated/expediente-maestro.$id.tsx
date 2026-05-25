@@ -179,7 +179,74 @@ function MaestroDetail() {
         liveOverride={{ cliente, cotitular, credito, fresh, asesor, licenciado, apoderado }}
       />
 
-      <MotorExtractosNUVEX expedienteId={id} />
+      <MotorExtractosNUVEX expedienteId={id} onConfirm={aplicarExtracto} />
+
+      {(aplicandoExtracto || extractoAplicado) && (
+        <div ref={resumenRef}>
+          <Card>
+            {aplicandoExtracto && !extractoAplicado ? (
+              <div className="flex items-center gap-2 text-sm text-[#242424]/70">
+                <Sparkles className="h-4 w-4 animate-pulse" style={{ color: NUVEX.azul }} />
+                Aplicando datos del extracto al expediente…
+              </div>
+            ) : extractoAplicado ? (
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full" style={{ background: NUVEX.verdeClaro }}>
+                    <CheckCircle2 className="h-5 w-5" style={{ color: NUVEX.verdeTextoFuerte }} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: NUVEX.verdeTextoFuerte }}>
+                      Extracto aplicado al expediente
+                    </div>
+                    <h3 className="text-lg font-semibold text-[#242424]">Resumen detectado</h3>
+                    <p className="text-xs text-[#242424]/60">
+                      Los datos del crédito se actualizaron automáticamente. Revisa el resumen y genera una nueva simulación.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                  <ResumenItem label="Banco" value={extractoAplicado.banco} />
+                  <ResumenItem label="Producto" value={extractoAplicado.producto || "—"} />
+                  <ResumenItem label="Titular" value={extractoAplicado.datos.titular || "—"} />
+                  <ResumenItem label="N° crédito" value={extractoAplicado.datos.numeroCredito || "—"} />
+                  <ResumenItem label="Saldo capital" value={extractoAplicado.datos.saldoCapital || "—"} />
+                  <ResumenItem label="Cuota actual" value={extractoAplicado.datos.cuotaActual || "—"} />
+                  <ResumenItem label="Tasa EA" value={extractoAplicado.datos.tasaEA || "—"} />
+                  <ResumenItem label="Cuotas pendientes" value={extractoAplicado.datos.cuotasPendientes || "—"} />
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t" style={{ borderColor: "#EEF1F5" }}>
+                  <div className="text-[11px] text-[#242424]/60">
+                    Confianza global: <strong style={{ color: NUVEX.verdeTextoFuerte }}>{extractoAplicado.confianzaGlobal.toFixed(1)}%</strong>
+                  </div>
+                  <div className="flex gap-2">
+                    <Link
+                      to="/"
+                      search={{ maestroId: id, modo: "pesos" as const }}
+                      className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow hover:opacity-90"
+                      style={{ background: NUVEX.verde }}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      Generar Nueva Simulación
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                    <Link
+                      to="/"
+                      search={{ maestroId: id, modo: "uvr" as const }}
+                      className="inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold"
+                      style={{ borderColor: NUVEX.azul, color: NUVEX.azul, background: "#fff" }}
+                    >
+                      Simular en UVR
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </Card>
+        </div>
+      )}
 
 
 
