@@ -516,7 +516,10 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
         datos,
         scores,
         confianzaGlobal,
-        alertas: Array.isArray(parsed.alertas) ? parsed.alertas.map(String) : [],
+        alertas: [
+          ...(Array.isArray(parsed.alertas) ? parsed.alertas.map(String) : []),
+          ...finalValidation.alertas,
+        ],
         rawDeteccion: det.evidencia,
         costo: {
           totalUSD: llamadas.reduce((s, l) => s + l.costoUSD, 0),
