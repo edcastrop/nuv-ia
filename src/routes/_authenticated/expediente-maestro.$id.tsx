@@ -99,6 +99,10 @@ function MaestroDetail() {
         const n = parseFloat((s || "").replace(/[^\d.-]/g, ""));
         return Number.isFinite(n) ? n : 0;
       };
+      const tasaValida = (s: string) => {
+        const n = num(s);
+        return n >= 7 && n <= 25 ? s : "";
+      };
 
       // Beneficio / Cobertura: activamos sólo si hay valor mensual > 0
       const beneficioFlag = (d.beneficioActivo || "").toLowerCase() === "si";
@@ -158,7 +162,7 @@ function MaestroDetail() {
             : onlyDigits(d.cuotaActual),
         cuotaConInteresSinSeguros: d.cuotaSinSubsidio || d.cuotaConSubsidio || "",
         cuotaBaseSimulacion: cuotaActualResuelta,
-        tasa: d.tasaEA || credito.tasa || "",
+        tasa: tasaValida(d.tasaEA) || credito.tasa || "",
         cuotasPagadas: d.cuotasPagadas || credito.cuotasPagadas || "",
         cuotasPendientes: d.cuotasPendientes || credito.cuotasPendientes || "",
       };
