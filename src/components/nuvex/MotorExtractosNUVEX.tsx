@@ -74,6 +74,9 @@ function scoreBadge(score: number) {
   return { bg: "#F1F3F6", color: "#6b7280", label: "Vacío" };
 }
 
+const MAX_SIZE = 20 * 1024 * 1024;
+const fmtSize = (b: number) => b < 1024 * 1024 ? `${(b / 1024).toFixed(0)} KB` : `${(b / 1024 / 1024).toFixed(1)} MB`;
+
 export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const motor = useServerFn(extractStatementMotor);
@@ -84,10 +87,12 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<MotorResultado | null>(null);
   const [editado, setEditado] = useState<Record<string, string>>({});
+  const [isDragging, setIsDragging] = useState(false);
+  const [readingPhase, setReadingPhase] = useState<"upload" | "ocr" | "analyze">("upload");
 
   const reset = () => {
     setStage("idle"); setFile(null); setArchivoPath(null); setPassword("");
-    setError(null); setResult(null); setEditado({});
+    setError(null); setResult(null); setEditado({}); setIsDragging(false);
     if (fileRef.current) fileRef.current.value = "";
   };
 
