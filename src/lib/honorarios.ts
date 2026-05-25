@@ -54,6 +54,12 @@ export async function guardarRecalculoHonorarios(
   honorariosPactados: number,
 ): Promise<void> {
   const { data: u } = await supabase.auth.getUser();
+  // Snapshot anterior
+  const { data: prev } = await supabase
+    .from("expedientes")
+    .select("cuotas_pactadas, cuotas_aprobadas_banco, honorarios_pactados, honorarios_recalculados")
+    .eq("id", expedienteId)
+    .maybeSingle();
   const { error } = await supabase
     .from("expedientes")
     .update({
@@ -65,4 +71,17 @@ export async function guardarRecalculoHonorarios(
     } as never)
     .eq("id", expedienteId);
   if (error) throw new Error(error.message);
+
+  await supabase.from("finanzas_auditoria" as never).insert({
+    entidad: "expediente",
+    entidad_id: expedienteId,
+    accion: "recalculo_honorarios",
+    user_id: u.user?.id ?? null,
+    valor_anterior: prev ?? null,
+    valor_nuevo: {
+      cuotas_pactadas: cuotasPactadas,
+      cuotas_aprobadas_banco: cuotasAprobadasBanco,
+      honorarios_pactados: honorariosPactados,
+    },
+  } as never);
 }
