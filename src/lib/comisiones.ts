@@ -8,10 +8,26 @@ export interface Comision {
   base: number;
   porcentaje: number;
   valor: number;
+  honorarios_contratados: number | null;
+  recaudado: number;
+  comision_potencial: number;
+  comision_liberada: number;
+  comision_pagada: number;
   estado: "generada" | "pendiente" | "aprobada" | "pagada" | "rechazada";
   cuenta_cobro_id: string | null;
   created_at: string;
   updated_at: string;
+}
+
+/** Saldo cobrable: liberado y no pagado, no incluido en CC activa. */
+export function saldoDisponibleComision(c: Comision): number {
+  if (c.cuenta_cobro_id) return 0;
+  return Math.max(0, Number(c.comision_liberada || 0) - Number(c.comision_pagada || 0));
+}
+
+/** Saldo pendiente de recaudo (potencial - liberada). */
+export function pendienteRecaudoComision(c: Comision): number {
+  return Math.max(0, Number(c.comision_potencial || 0) - Number(c.comision_liberada || 0));
 }
 
 export interface CuentaCobro {
