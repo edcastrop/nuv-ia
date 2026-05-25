@@ -803,6 +803,8 @@ export type Database = {
           cliente_nombre: string
           created_at: string
           credito_data: Json
+          cuotas_aprobadas_banco: number | null
+          cuotas_pactadas: number | null
           descuento: number | null
           discount_data: Json
           estado: Database["public"]["Enums"]["expediente_estado"]
@@ -810,11 +812,15 @@ export type Database = {
           fecha_simulacion: string
           honorarios_base: number | null
           honorarios_final: number | null
+          honorarios_pactados: number | null
+          honorarios_recalculados: number | null
           id: string
           modo: Database["public"]["Enums"]["expediente_modo"]
           numero_credito: string | null
           producto: string | null
           propuesta_data: Json
+          recalculo_at: string | null
+          recalculo_user_id: string | null
           updated_at: string
         }
         Insert: {
@@ -827,6 +833,8 @@ export type Database = {
           cliente_nombre: string
           created_at?: string
           credito_data?: Json
+          cuotas_aprobadas_banco?: number | null
+          cuotas_pactadas?: number | null
           descuento?: number | null
           discount_data?: Json
           estado?: Database["public"]["Enums"]["expediente_estado"]
@@ -834,11 +842,15 @@ export type Database = {
           fecha_simulacion?: string
           honorarios_base?: number | null
           honorarios_final?: number | null
+          honorarios_pactados?: number | null
+          honorarios_recalculados?: number | null
           id?: string
           modo: Database["public"]["Enums"]["expediente_modo"]
           numero_credito?: string | null
           producto?: string | null
           propuesta_data?: Json
+          recalculo_at?: string | null
+          recalculo_user_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -851,6 +863,8 @@ export type Database = {
           cliente_nombre?: string
           created_at?: string
           credito_data?: Json
+          cuotas_aprobadas_banco?: number | null
+          cuotas_pactadas?: number | null
           descuento?: number | null
           discount_data?: Json
           estado?: Database["public"]["Enums"]["expediente_estado"]
@@ -858,11 +872,15 @@ export type Database = {
           fecha_simulacion?: string
           honorarios_base?: number | null
           honorarios_final?: number | null
+          honorarios_pactados?: number | null
+          honorarios_recalculados?: number | null
           id?: string
           modo?: Database["public"]["Enums"]["expediente_modo"]
           numero_credito?: string | null
           producto?: string | null
           propuesta_data?: Json
+          recalculo_at?: string | null
+          recalculo_user_id?: string | null
           updated_at?: string
         }
         Relationships: []
