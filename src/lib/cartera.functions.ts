@@ -42,7 +42,7 @@ export const crearCartera = createServerFn({ method: "POST" })
 
     const { data: exp, error } = await supabase
       .from("expedientes")
-      .select("id, estado_caso, honorarios_final")
+      .select("id, estado_caso, honorarios_base, honorarios_final, honorarios_recalculados")
       .eq("id", data.expedienteId)
       .single();
     if (error || !exp) throw new Error("Expediente no encontrado.");
@@ -63,7 +63,19 @@ export const crearCartera = createServerFn({ method: "POST" })
       );
     }
 
-    const honorarios = Number(exp.honorarios_final ?? 0);
+    // Fuente ÚNICA DE VERDAD para honorarios a cobrar al cliente:
+    // 1) recalculados a éxito  2) honorarios con descuento  3) originales
+    const row = exp as {
+      honorarios_base?: number | null;
+      honorarios_final?: number | null;
+      honorarios_recalculados?: number | null;
+    };
+    const honorarios =
+      Number(row.honorarios_recalculados ?? 0) > 0
+        ? Number(row.honorarios_recalculados)
+        : Number(row.honorarios_final ?? 0) > 0
+          ? Number(row.honorarios_final)
+          : Number(row.honorarios_base ?? 0);
     if (data.formaPago === "financiado" && data.cuotas.length > 0) {
       const suma = data.cuotas.reduce((a, c) => a + c.valor, 0);
       if (Math.abs(suma - honorarios) > 1) {
