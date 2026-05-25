@@ -399,7 +399,8 @@ function applyBancolombiaDeterministicCorrections(
   }
 
   if (beneficio > 0 && saldoCapital > 0 && interes > 0 && datos.tasaEA) {
-    const tasaCalculadaContaminada = (Math.pow(1 + (interes + beneficio) / saldoCapital, 12) - 1) * 100;
+    const tasaCalculadaContaminada =
+      (Math.pow(1 + (interes + beneficio) / saldoCapital, 12) - 1) * 100;
     const tasaEAActual = toNumber(datos.tasaEA);
     if (tasaEAActual > 0 && Math.abs(tasaEAActual - tasaCalculadaContaminada) <= 0.15) {
       datos.tasaEA = "";
