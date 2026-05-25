@@ -247,6 +247,109 @@ function findProfileByName(banco: string, producto?: Producto): BankProfile | nu
   return candidates[0];
 }
 
+interface ToolCall { function?: { arguments?: string } }
+interface Usage { prompt_tokens?: number; completion_tokens?: number }
+interface ChatResp { choices?: Array<{ message?: { tool_calls?: ToolCall[] }; finish_reason?: string }>; usage?: Usage }
+type DeteccionMotor = { banco: string; producto: Producto; moneda: Moneda; evidencia: string };
+type ParserPayload = { datos: Record<string, string>; scores: Record<string, number>; alertas: string[] };
+
+function normalizeParsedMotor(
+  parsed: ParserPayload,
+  det: DeteccionMotor,
+  profile: BankProfile,
+): { datos: Record<CampoMotor, string>; scores: Record<CampoMotor, number> } {
+  const datos: Record<CampoMotor, string> = {} as Record<CampoMotor, string>;
+  const scores: Record<CampoMotor, number> = {} as Record<CampoMotor, number>;
+  for (const k of CAMPOS_MOTOR) {
+    datos[k] = String(parsed.datos?.[k] ?? "").trim();
+    const s = Number(parsed.scores?.[k] ?? 0);
+    scores[k] = Number.isFinite(s) ? Math.max(0, Math.min(100, Math.round(s))) : 0;
+  }
+
+  const CAMPOS_MONETARIOS: CampoMotor[] = [
+    "valorDesembolsado", "saldoCapital", "cuotaActual",
+    "interesCuota", "capitalCuota", "seguros", "valorUVR", "saldoUVR",
+    "valorBeneficioMensual", "cuotaSinSubsidio", "cuotaConSubsidio",
+  ];
+  for (const k of CAMPOS_MONETARIOS) {
+    if (datos[k]) datos[k] = parseCOP(datos[k]);
+  }
+  for (const k of ["tasaEA", "tasaMensual", "tasaCobertura"] as CampoMotor[]) {
+    if (datos[k]) datos[k] = parseTasa(datos[k]);
+  }
+
+  const valorBenef = parseFloat(datos.valorBeneficioMensual || "0");
+  if (Number.isFinite(valorBenef) && valorBenef > 0) {
+    datos.beneficioActivo = "si";
+    scores.beneficioActivo = Math.max(scores.beneficioActivo, 95);
+  } else {
+    datos.beneficioActivo = "no";
+    datos.valorBeneficioMensual = "";
+    datos.tipoBeneficio = "";
+    datos.tasaCobertura = "";
+    datos.cuotaSinSubsidio = "";
+    datos.cuotaConSubsidio = "";
+  }
+
+  if (datos.cedula && /^0+$/.test(datos.cedula.replace(/\D/g, ""))) {
+    datos.cedula = "";
+    scores.cedula = 0;
+  }
+
+  datos.banco = profile.banco;
+  scores.banco = 100;
+  if (!datos.producto && det.producto) datos.producto = det.producto;
+  if (!datos.moneda && det.moneda) datos.moneda = det.moneda;
+
+  return { datos, scores };
+}
+
+function toNumber(value: string): number {
+  const n = parseFloat(value || "0");
+  return Number.isFinite(n) ? n : 0;
+}
+
+function closeMoney(a: number, b: number): boolean {
+  return Math.abs(a - b) <= Math.max(2_500, Math.max(Math.abs(a), Math.abs(b)) * 0.005);
+}
+
+function validateMotorConsistency(profile: BankProfile, datos: Record<CampoMotor, string>) {
+  const alertas: string[] = [];
+  let critical = false;
+
+  if (profile.id === "bancolombia") {
+    const cuotaActual = toNumber(datos.cuotaActual);
+    const cuotaConSubsidio = toNumber(datos.cuotaConSubsidio);
+    const cuotaSinSubsidio = toNumber(datos.cuotaSinSubsidio);
+    const beneficio = toNumber(datos.valorBeneficioMensual);
+    const capital = toNumber(datos.capitalCuota);
+    const interes = toNumber(datos.interesCuota);
+    const seguros = toNumber(datos.seguros);
+    const plazo = Math.round(toNumber(datos.plazoInicial));
+    const cuotaActualNumero = Math.round(toNumber(datos.cuotasPagadas));
+    const pendientes = Math.round(toNumber(datos.cuotasPendientes));
+
+    if (beneficio > 0 && cuotaSinSubsidio > 0 && cuotaConSubsidio > 0 && !closeMoney(cuotaSinSubsidio - beneficio, cuotaConSubsidio)) {
+      critical = true;
+      alertas.push("Inconsistencia Bancolombia: cuota sin subsidio - subsidio no coincide con cuota con subsidio.");
+    }
+    if (cuotaActual > 0 && cuotaConSubsidio > 0 && seguros > 0 && !closeMoney(cuotaConSubsidio + seguros, cuotaActual)) {
+      critical = true;
+      alertas.push("Inconsistencia Bancolombia: valor a pagar no coincide con cuota con subsidio + seguros.");
+    }
+    if (cuotaActual > 0 && capital > 0 && interes > 0 && seguros > 0 && !closeMoney(capital + interes + seguros, cuotaActual)) {
+      critical = true;
+      alertas.push("Inconsistencia Bancolombia: capital + intereses + seguros no coincide con el valor a pagar.");
+    }
+    if (plazo > 0 && cuotaActualNumero > 0 && pendientes > 0 && cuotaActualNumero + pendientes - 1 !== plazo) {
+      critical = true;
+      alertas.push("Inconsistencia Bancolombia: número de cuota + cuotas pendientes no coincide con el plazo inicial.");
+    }
+  }
+
+  return { critical, alertas };
+}
+
 // ---------------- Server Function ----------------
     // Precios USD por 1M tokens (pass-through Lovable AI Gateway)
     const PRECIOS: Record<string, { in: number; out: number }> = {
