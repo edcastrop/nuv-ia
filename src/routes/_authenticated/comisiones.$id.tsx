@@ -123,8 +123,26 @@ function DetalleCuentaCobro() {
     }
   }
 
+  async function guardarPorcentaje(pct: number): Promise<boolean> {
+    if (!cc) return false;
+    const { error } = await supabase
+      .from("cuentas_cobro" as never)
+      .update({ porcentaje_comision: pct } as never)
+      .eq("id", cc.id);
+    if (error) {
+      alert("No se pudo guardar el porcentaje: " + error.message);
+      return false;
+    }
+    setCc({ ...cc, porcentaje_comision: pct });
+    return true;
+  }
+
   async function onEnviarContabilidad() {
     if (!cc) return;
+    if (!cc.porcentaje_comision) {
+      alert("Debes seleccionar el porcentaje de comisión (35%, 40%, 45% o 50%) antes de enviar a Contabilidad.");
+      return;
+    }
     const extras = destinatariosExtra
       .split(/[,;\s]+/)
       .map((s) => s.trim())
