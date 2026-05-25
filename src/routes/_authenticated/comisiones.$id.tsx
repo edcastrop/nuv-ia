@@ -55,6 +55,12 @@ function DetalleCuentaCobro() {
   // Envío contabilidad
   const [destinatariosExtra, setDestinatariosExtra] = useState("");
 
+  // Programación de pago
+  const [fechaProg, setFechaProg] = useState<string>("");
+
+  const devolver = useServerFn(devolverCuentaCobro);
+  const programar = useServerFn(programarPagoCuentaCobro);
+
   const cargar = async () => {
     setLoading(true);
     const c = await getCuentaCobro(id);
