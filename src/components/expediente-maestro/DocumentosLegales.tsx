@@ -262,6 +262,9 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
   if (!selectedAp) contratacionFaltantes.push("Selecciona un apoderado NUVEX.");
   if (!poderListo) contratacionFaltantes.push("Poder Especial generado sin datos faltantes.");
   if (!datosListos) contratacionFaltantes.push("Datos para Contrato generados.");
+  if (modalidad === "financiado" && saldoRestante !== 0) {
+    contratacionFaltantes.push("La suma de las cuotas debe coincidir con los honorarios finales del cliente.");
+  }
   if (!expedienteIdToPersist) contratacionFaltantes.push("Esta sección requiere un expediente guardado.");
   const contratacionCtx: ContratacionContext = {
     expedienteId: expedienteIdToPersist || "",
