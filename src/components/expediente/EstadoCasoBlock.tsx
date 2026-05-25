@@ -13,6 +13,7 @@ interface Props {
 export function EstadoCasoBlock({ expedienteId, onChanged }: Props) {
   const [actual, setActual] = useState<CasoEstado | null>(null);
   const [loading, setLoading] = useState(true);
+  const [alerta, setAlerta] = useState<{ dias: number; tipo: string } | null>(null);
   const { pendiente, sugerirManual, sugerir, confirmar, cancelar } = useEstadoSugerido(expedienteId, () => {
     reload();
     onChanged?.();
@@ -22,6 +23,16 @@ export function EstadoCasoBlock({ expedienteId, onChanged }: Props) {
     setLoading(true);
     const { data } = await supabase.from("expedientes").select("estado_caso" as never).eq("id", expedienteId).single();
     setActual((data as unknown as { estado_caso?: CasoEstado })?.estado_caso ?? "lead_creado");
+    // Alerta de estancamiento sin leer
+    const { data: alertas } = await supabase
+      .from("caso_alertas" as never)
+      .select("dias_estancado,tipo")
+      .eq("expediente_id", expedienteId)
+      .eq("leida", false)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    const a = (alertas as unknown as { dias_estancado: number; tipo: string }[] | null)?.[0];
+    setAlerta(a ? { dias: a.dias_estancado, tipo: a.tipo } : null);
     setLoading(false);
   };
 
