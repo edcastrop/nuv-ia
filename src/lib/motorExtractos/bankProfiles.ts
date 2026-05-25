@@ -27,7 +27,7 @@ export const BANK_PROFILES: BankProfile[] = [
 - "Nro. cuota a cancelar" → cuotasPagadas (es la cuota que se está pagando ahora)
 - "Nro. cuotas pendientes para pago total" → cuotasPendientes
 - "Valor a Pagar" → cuotaActual (total del recibo: cuota con subsidio + seguros).
-- "Tasa interés cobrada" → tasaEA, pero si hay subsidio Gobierno/FRECH/Fresh la tasa real para simulación debe incluir el subsidio: calcula tasaEA desde (Intereses Corriente + Valor subsidio Gobierno) / Saldo Capital y conviértela a EA. "Tasa interés pactada", "tasa interés subsidiada" y tablas de "Tasas y tarifas Seguro Vida" NO se usan como tasaEA.
+- "Tasa interés cobrada" → tasaEA. Esta tasa es LITERAL y manda sobre cualquier cálculo. NO recalcules tasaEA desde intereses, subsidio, saldo o cuota porque eso produce una tasa contaminada por FRECH/Fresh. "Tasa interés pactada", "tasa interés subsidiada" y tablas de "Tasas y tarifas Seguro Vida" NO se usan como tasaEA.
 - Seguros = "*Valor seguro vida" + "*Valor seguro incendio" + "*Valor seguro terremoto" (suma).
 - NO confundir "Valor asegurado Incendio y Terremoto" (valor del inmueble) con los seguros mensuales.
 - Si la suma visual de seguros no cuadra, usa esta validación: seguros = "Valor a Pagar" - "Valor cuota con subsidio".
