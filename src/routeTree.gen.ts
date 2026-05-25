@@ -33,6 +33,7 @@ import { Route as AuthenticatedFinanzasNominaRouteImport } from './routes/_authe
 import { Route as AuthenticatedFinanzasCuentasCobroRouteImport } from './routes/_authenticated/finanzas.cuentas-cobro'
 import { Route as AuthenticatedFinanzasComisionesRouteImport } from './routes/_authenticated/finanzas.comisiones'
 import { Route as AuthenticatedFinanzasCarteraRouteImport } from './routes/_authenticated/finanzas.cartera'
+import { Route as AuthenticatedFinanzasAuditoriaRouteImport } from './routes/_authenticated/finanzas.auditoria'
 import { Route as AuthenticatedFinanzasAlertasRouteImport } from './routes/_authenticated/finanzas.alertas'
 import { Route as AuthenticatedExpedienteMaestroIdRouteImport } from './routes/_authenticated/expediente-maestro.$id'
 import { Route as AuthenticatedContabilidadCuentasCobroRouteImport } from './routes/_authenticated/contabilidad.cuentas-cobro'
@@ -177,6 +178,12 @@ const AuthenticatedFinanzasCarteraRoute =
     path: '/cartera',
     getParentRoute: () => AuthenticatedFinanzasRoute,
   } as any)
+const AuthenticatedFinanzasAuditoriaRoute =
+  AuthenticatedFinanzasAuditoriaRouteImport.update({
+    id: '/auditoria',
+    path: '/auditoria',
+    getParentRoute: () => AuthenticatedFinanzasRoute,
+  } as any)
 const AuthenticatedFinanzasAlertasRoute =
   AuthenticatedFinanzasAlertasRouteImport.update({
     id: '/alertas',
@@ -239,6 +246,7 @@ export interface FileRoutesByFullPath {
   '/contabilidad/cuentas-cobro': typeof AuthenticatedContabilidadCuentasCobroRoute
   '/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/finanzas/alertas': typeof AuthenticatedFinanzasAlertasRoute
+  '/finanzas/auditoria': typeof AuthenticatedFinanzasAuditoriaRoute
   '/finanzas/cartera': typeof AuthenticatedFinanzasCarteraRoute
   '/finanzas/comisiones': typeof AuthenticatedFinanzasComisionesRoute
   '/finanzas/cuentas-cobro': typeof AuthenticatedFinanzasCuentasCobroRoute
@@ -271,6 +279,7 @@ export interface FileRoutesByTo {
   '/contabilidad/cuentas-cobro': typeof AuthenticatedContabilidadCuentasCobroRoute
   '/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/finanzas/alertas': typeof AuthenticatedFinanzasAlertasRoute
+  '/finanzas/auditoria': typeof AuthenticatedFinanzasAuditoriaRoute
   '/finanzas/cartera': typeof AuthenticatedFinanzasCarteraRoute
   '/finanzas/comisiones': typeof AuthenticatedFinanzasComisionesRoute
   '/finanzas/cuentas-cobro': typeof AuthenticatedFinanzasCuentasCobroRoute
@@ -306,6 +315,7 @@ export interface FileRoutesById {
   '/_authenticated/contabilidad/cuentas-cobro': typeof AuthenticatedContabilidadCuentasCobroRoute
   '/_authenticated/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/_authenticated/finanzas/alertas': typeof AuthenticatedFinanzasAlertasRoute
+  '/_authenticated/finanzas/auditoria': typeof AuthenticatedFinanzasAuditoriaRoute
   '/_authenticated/finanzas/cartera': typeof AuthenticatedFinanzasCarteraRoute
   '/_authenticated/finanzas/comisiones': typeof AuthenticatedFinanzasComisionesRoute
   '/_authenticated/finanzas/cuentas-cobro': typeof AuthenticatedFinanzasCuentasCobroRoute
@@ -341,6 +351,7 @@ export interface FileRouteTypes {
     | '/contabilidad/cuentas-cobro'
     | '/expediente-maestro/$id'
     | '/finanzas/alertas'
+    | '/finanzas/auditoria'
     | '/finanzas/cartera'
     | '/finanzas/comisiones'
     | '/finanzas/cuentas-cobro'
@@ -373,6 +384,7 @@ export interface FileRouteTypes {
     | '/contabilidad/cuentas-cobro'
     | '/expediente-maestro/$id'
     | '/finanzas/alertas'
+    | '/finanzas/auditoria'
     | '/finanzas/cartera'
     | '/finanzas/comisiones'
     | '/finanzas/cuentas-cobro'
@@ -407,6 +419,7 @@ export interface FileRouteTypes {
     | '/_authenticated/contabilidad/cuentas-cobro'
     | '/_authenticated/expediente-maestro/$id'
     | '/_authenticated/finanzas/alertas'
+    | '/_authenticated/finanzas/auditoria'
     | '/_authenticated/finanzas/cartera'
     | '/_authenticated/finanzas/comisiones'
     | '/_authenticated/finanzas/cuentas-cobro'
@@ -603,6 +616,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanzasCarteraRouteImport
       parentRoute: typeof AuthenticatedFinanzasRoute
     }
+    '/_authenticated/finanzas/auditoria': {
+      id: '/_authenticated/finanzas/auditoria'
+      path: '/auditoria'
+      fullPath: '/finanzas/auditoria'
+      preLoaderRoute: typeof AuthenticatedFinanzasAuditoriaRouteImport
+      parentRoute: typeof AuthenticatedFinanzasRoute
+    }
     '/_authenticated/finanzas/alertas': {
       id: '/_authenticated/finanzas/alertas'
       path: '/alertas'
@@ -664,6 +684,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedFinanzasRouteChildren {
   AuthenticatedFinanzasAlertasRoute: typeof AuthenticatedFinanzasAlertasRoute
+  AuthenticatedFinanzasAuditoriaRoute: typeof AuthenticatedFinanzasAuditoriaRoute
   AuthenticatedFinanzasCarteraRoute: typeof AuthenticatedFinanzasCarteraRoute
   AuthenticatedFinanzasComisionesRoute: typeof AuthenticatedFinanzasComisionesRoute
   AuthenticatedFinanzasCuentasCobroRoute: typeof AuthenticatedFinanzasCuentasCobroRoute
@@ -675,6 +696,7 @@ interface AuthenticatedFinanzasRouteChildren {
 
 const AuthenticatedFinanzasRouteChildren: AuthenticatedFinanzasRouteChildren = {
   AuthenticatedFinanzasAlertasRoute: AuthenticatedFinanzasAlertasRoute,
+  AuthenticatedFinanzasAuditoriaRoute: AuthenticatedFinanzasAuditoriaRoute,
   AuthenticatedFinanzasCarteraRoute: AuthenticatedFinanzasCarteraRoute,
   AuthenticatedFinanzasComisionesRoute: AuthenticatedFinanzasComisionesRoute,
   AuthenticatedFinanzasCuentasCobroRoute:
