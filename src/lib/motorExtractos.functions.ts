@@ -402,10 +402,16 @@ function applyBancolombiaDeterministicCorrections(
     const tasaMensualCalculada = (interes + beneficio) / saldoCapital;
     const tasaEACalculada = (Math.pow(1 + tasaMensualCalculada, 12) - 1) * 100;
     const tasaEAActual = toNumber(datos.tasaEA);
-    if (tasaEACalculada >= 5 && tasaEACalculada <= 30 && Math.abs(tasaEAActual - tasaEACalculada) > 0.2) {
+    if (
+      tasaEACalculada >= 5 &&
+      tasaEACalculada <= 30 &&
+      Math.abs(tasaEAActual - tasaEACalculada) > 0.2
+    ) {
       datos.tasaEA = tasaEACalculada.toFixed(2);
       scores.tasaEA = Math.max(scores.tasaEA, 90);
-      alertas.push("Bancolombia: tasa EA corregida por intereses corrientes + subsidio sobre saldo capital.");
+      alertas.push(
+        "Bancolombia: tasa EA corregida por intereses corrientes + subsidio sobre saldo capital.",
+      );
     }
   }
 
