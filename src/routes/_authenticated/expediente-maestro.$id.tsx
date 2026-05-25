@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Sparkles, CheckCircle2, ArrowRight } from "lucide-react";
 import {
   getMaestro, upsertMaestro, deleteMaestro,
   emptyCliente, emptyCotitular, emptyCredito, emptyFresh,
@@ -12,6 +13,7 @@ import { MaestroEditor } from "@/components/expediente-maestro/MaestroEditor";
 import { DocumentosLegales } from "@/components/expediente-maestro/DocumentosLegales";
 import { ModuloJuridico } from "@/components/expediente-maestro/ModuloJuridico";
 import { MotorExtractosNUVEX } from "@/components/nuvex/MotorExtractosNUVEX";
+import type { MotorResultado } from "@/lib/motorExtractos.functions";
 
 export const Route = createFileRoute("/_authenticated/expediente-maestro/$id")({
   component: MaestroDetail,
