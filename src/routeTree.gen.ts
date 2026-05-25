@@ -26,6 +26,7 @@ import { Route as AuthenticatedSuperAdminUsuariosRouteImport } from './routes/_a
 import { Route as AuthenticatedSuperAdminMarcaRouteImport } from './routes/_authenticated/super-admin.marca'
 import { Route as AuthenticatedSuperAdminExpedientesRouteImport } from './routes/_authenticated/super-admin.expedientes'
 import { Route as AuthenticatedExpedienteMaestroIdRouteImport } from './routes/_authenticated/expediente-maestro.$id'
+import { Route as AuthenticatedContabilidadCuentasCobroRouteImport } from './routes/_authenticated/contabilidad.cuentas-cobro'
 import { Route as AuthenticatedComisionesIdRouteImport } from './routes/_authenticated/comisiones.$id'
 import { Route as AuthenticatedCasosIdRouteImport } from './routes/_authenticated/casos.$id'
 import { Route as AuthenticatedCarteraIdRouteImport } from './routes/_authenticated/cartera.$id'
@@ -126,6 +127,12 @@ const AuthenticatedExpedienteMaestroIdRoute =
     path: '/expediente-maestro/$id',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedContabilidadCuentasCobroRoute =
+  AuthenticatedContabilidadCuentasCobroRouteImport.update({
+    id: '/contabilidad/cuentas-cobro',
+    path: '/contabilidad/cuentas-cobro',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedComisionesIdRoute =
   AuthenticatedComisionesIdRouteImport.update({
     id: '/comisiones/$id',
@@ -166,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
   '/comisiones/$id': typeof AuthenticatedComisionesIdRoute
+  '/contabilidad/cuentas-cobro': typeof AuthenticatedContabilidadCuentasCobroRoute
   '/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
@@ -189,6 +197,7 @@ export interface FileRoutesByTo {
   '/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
   '/comisiones/$id': typeof AuthenticatedComisionesIdRoute
+  '/contabilidad/cuentas-cobro': typeof AuthenticatedContabilidadCuentasCobroRoute
   '/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
@@ -214,6 +223,7 @@ export interface FileRoutesById {
   '/_authenticated/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/_authenticated/casos/$id': typeof AuthenticatedCasosIdRoute
   '/_authenticated/comisiones/$id': typeof AuthenticatedComisionesIdRoute
+  '/_authenticated/contabilidad/cuentas-cobro': typeof AuthenticatedContabilidadCuentasCobroRoute
   '/_authenticated/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/_authenticated/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/_authenticated/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
@@ -239,6 +249,7 @@ export interface FileRouteTypes {
     | '/cartera/$id'
     | '/casos/$id'
     | '/comisiones/$id'
+    | '/contabilidad/cuentas-cobro'
     | '/expediente-maestro/$id'
     | '/super-admin/expedientes'
     | '/super-admin/marca'
@@ -262,6 +273,7 @@ export interface FileRouteTypes {
     | '/cartera/$id'
     | '/casos/$id'
     | '/comisiones/$id'
+    | '/contabilidad/cuentas-cobro'
     | '/expediente-maestro/$id'
     | '/super-admin/expedientes'
     | '/super-admin/marca'
@@ -286,6 +298,7 @@ export interface FileRouteTypes {
     | '/_authenticated/cartera/$id'
     | '/_authenticated/casos/$id'
     | '/_authenticated/comisiones/$id'
+    | '/_authenticated/contabilidad/cuentas-cobro'
     | '/_authenticated/expediente-maestro/$id'
     | '/_authenticated/super-admin/expedientes'
     | '/_authenticated/super-admin/marca'
@@ -427,6 +440,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedExpedienteMaestroIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/contabilidad/cuentas-cobro': {
+      id: '/_authenticated/contabilidad/cuentas-cobro'
+      path: '/contabilidad/cuentas-cobro'
+      fullPath: '/contabilidad/cuentas-cobro'
+      preLoaderRoute: typeof AuthenticatedContabilidadCuentasCobroRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/comisiones/$id': {
       id: '/_authenticated/comisiones/$id'
       path: '/comisiones/$id'
@@ -475,6 +495,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCarteraIdRoute: typeof AuthenticatedCarteraIdRoute
   AuthenticatedCasosIdRoute: typeof AuthenticatedCasosIdRoute
   AuthenticatedComisionesIdRoute: typeof AuthenticatedComisionesIdRoute
+  AuthenticatedContabilidadCuentasCobroRoute: typeof AuthenticatedContabilidadCuentasCobroRoute
   AuthenticatedExpedienteMaestroIdRoute: typeof AuthenticatedExpedienteMaestroIdRoute
   AuthenticatedSuperAdminExpedientesRoute: typeof AuthenticatedSuperAdminExpedientesRoute
   AuthenticatedSuperAdminMarcaRoute: typeof AuthenticatedSuperAdminMarcaRoute
@@ -496,6 +517,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCarteraIdRoute: AuthenticatedCarteraIdRoute,
   AuthenticatedCasosIdRoute: AuthenticatedCasosIdRoute,
   AuthenticatedComisionesIdRoute: AuthenticatedComisionesIdRoute,
+  AuthenticatedContabilidadCuentasCobroRoute:
+    AuthenticatedContabilidadCuentasCobroRoute,
   AuthenticatedExpedienteMaestroIdRoute: AuthenticatedExpedienteMaestroIdRoute,
   AuthenticatedSuperAdminExpedientesRoute:
     AuthenticatedSuperAdminExpedientesRoute,
