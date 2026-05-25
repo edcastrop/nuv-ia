@@ -21,6 +21,8 @@ function AuthenticatedLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
+  const [unread, setUnread] = useState(0);
+
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/login" });
