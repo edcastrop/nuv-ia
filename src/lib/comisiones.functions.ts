@@ -213,9 +213,10 @@ export const rechazarCuentaCobro = createServerFn({ method: "POST" })
       .eq("id", data.cuentaCobroId);
     if (error) throw new Error(error.message);
 
+    // Liberar comisiones para que el licenciado pueda corregir y reenviar en una nueva CC
     await supabase
       .from("comisiones" as never)
-      .update({ estado: "rechazada" } as never)
+      .update({ estado: "generada", cuenta_cobro_id: null } as never)
       .eq("cuenta_cobro_id", data.cuentaCobroId);
 
     await supabase.from("cuentas_cobro_historial" as never).insert({
