@@ -83,6 +83,8 @@ function AuthenticatedLayout() {
     { to: "/academia", label: "Academia", Icon: GraduationCap },
     { to: "/apoderados-nuvex", label: "Apoderados", Icon: Users },
     ...(roles.some((r) => ["super_admin","admin","gerencia","cartera","juridica","licenciado","asesor"].includes(r)) ? [{ to: "/cartera", label: "Cartera", Icon: Wallet }] : []),
+    { to: "/comisiones", label: "Comisiones", Icon: CircleDollarSign },
+    ...(roles.some((r) => ["super_admin","admin","gerencia","cartera"].includes(r)) ? [{ to: "/contabilidad/cuentas-cobro", label: "Contabilidad", Icon: CircleDollarSign }] : []),
     ...(isSuperAdmin ? [{ to: "/super-admin", label: "Super Admin", Icon: Shield }] : []),
   ];
 
