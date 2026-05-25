@@ -997,6 +997,7 @@ export type Database = {
         | "juridica"
         | "operaciones"
         | "cartera"
+        | "contabilidad"
       cartera_estado:
         | "pendiente_cobro"
         | "cuenta_cobro_generada"
@@ -1192,6 +1193,7 @@ export const Constants = {
         "juridica",
         "operaciones",
         "cartera",
+        "contabilidad",
       ],
       cartera_estado: [
         "pendiente_cobro",
