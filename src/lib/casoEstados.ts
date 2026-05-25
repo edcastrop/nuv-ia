@@ -224,14 +224,26 @@ export async function cambiarEstadoCaso(
 
   // Historial
   const { data: userData } = await supabase.auth.getUser();
+  const userId = userData.user?.id ?? null;
   await supabase.from("expediente_historial").insert({
     expediente_id: expedienteId,
     estado_caso_anterior: anterior,
     estado_caso_nuevo: nuevoEstado,
     accion_origen: accion,
     observacion: observacion ?? null,
-    user_id: userData.user?.id ?? null,
+    user_id: userId,
   } as never);
+
+  // Submotivo (obligatorio para devuelto_banco / negado_banco)
+  if (submotivo && requiereSubmotivo(nuevoEstado)) {
+    await supabase.from("caso_submotivos" as never).insert({
+      expediente_id: expedienteId,
+      estado: nuevoEstado,
+      submotivo,
+      observacion: observacion ?? null,
+      user_id: userId,
+    } as never);
+  }
 }
 
 export interface HistorialEntry {
