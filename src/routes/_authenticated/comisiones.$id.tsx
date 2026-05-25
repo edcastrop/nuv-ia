@@ -29,7 +29,7 @@ export const Route = createFileRoute("/_authenticated/comisiones/$id")({
 function DetalleCuentaCobro() {
   const { id } = Route.useParams();
   const { user } = useAuth();
-  const { roles } = useUserRole();
+  const { roles, loading: rolesLoading } = useUserRole();
   const esManager = roles.some((r) =>
     ["admin", "gerencia", "super_admin", "cartera", "contabilidad"].includes(r),
   );
