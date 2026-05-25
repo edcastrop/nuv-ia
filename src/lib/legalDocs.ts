@@ -12,6 +12,7 @@ import {
   detectPoderTemplate, renderPoderTemplate, validatePoderVariables, calidadFor,
   type PoderTemplateId, type PoderVariables, type CalidadCliente,
 } from "./poderTemplates";
+import { honorariosFinalesCliente } from "./honorarios";
 
 export type DocBlock =
   | { type: "title"; text: string }
