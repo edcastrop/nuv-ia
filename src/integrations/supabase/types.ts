@@ -921,6 +921,188 @@ export type Database = {
         }
         Relationships: []
       }
+      finanzas_alertas: {
+        Row: {
+          cartera_id: string | null
+          created_at: string
+          cuenta_cobro_id: string | null
+          expediente_id: string | null
+          id: string
+          leida: boolean
+          mensaje_ia: string | null
+          nomina_pago_id: string | null
+          severidad: string
+          tipo: string
+          titulo: string
+        }
+        Insert: {
+          cartera_id?: string | null
+          created_at?: string
+          cuenta_cobro_id?: string | null
+          expediente_id?: string | null
+          id?: string
+          leida?: boolean
+          mensaje_ia?: string | null
+          nomina_pago_id?: string | null
+          severidad?: string
+          tipo: string
+          titulo: string
+        }
+        Update: {
+          cartera_id?: string | null
+          created_at?: string
+          cuenta_cobro_id?: string | null
+          expediente_id?: string | null
+          id?: string
+          leida?: boolean
+          mensaje_ia?: string | null
+          nomina_pago_id?: string | null
+          severidad?: string
+          tipo?: string
+          titulo?: string
+        }
+        Relationships: []
+      }
+      finanzas_auditoria: {
+        Row: {
+          accion: string
+          created_at: string
+          documento_url: string | null
+          entidad: string
+          entidad_id: string | null
+          id: string
+          motivo: string | null
+          rol: string | null
+          user_id: string | null
+          valor_anterior: Json | null
+          valor_nuevo: Json | null
+        }
+        Insert: {
+          accion: string
+          created_at?: string
+          documento_url?: string | null
+          entidad: string
+          entidad_id?: string | null
+          id?: string
+          motivo?: string | null
+          rol?: string | null
+          user_id?: string | null
+          valor_anterior?: Json | null
+          valor_nuevo?: Json | null
+        }
+        Update: {
+          accion?: string
+          created_at?: string
+          documento_url?: string | null
+          entidad?: string
+          entidad_id?: string | null
+          id?: string
+          motivo?: string | null
+          rol?: string | null
+          user_id?: string | null
+          valor_anterior?: Json | null
+          valor_nuevo?: Json | null
+        }
+        Relationships: []
+      }
+      nomina_empleados: {
+        Row: {
+          activo: boolean
+          area: string | null
+          cargo: string | null
+          created_at: string
+          documento: string | null
+          id: string
+          nombre: string
+          observaciones: string | null
+          tipo_contrato: string
+          updated_at: string
+          user_id: string | null
+          valor_mensual: number
+        }
+        Insert: {
+          activo?: boolean
+          area?: string | null
+          cargo?: string | null
+          created_at?: string
+          documento?: string | null
+          id?: string
+          nombre: string
+          observaciones?: string | null
+          tipo_contrato?: string
+          updated_at?: string
+          user_id?: string | null
+          valor_mensual?: number
+        }
+        Update: {
+          activo?: boolean
+          area?: string | null
+          cargo?: string | null
+          created_at?: string
+          documento?: string | null
+          id?: string
+          nombre?: string
+          observaciones?: string | null
+          tipo_contrato?: string
+          updated_at?: string
+          user_id?: string | null
+          valor_mensual?: number
+        }
+        Relationships: []
+      }
+      nomina_pagos: {
+        Row: {
+          comprobante_num: string | null
+          comprobante_url: string | null
+          created_at: string
+          empleado_id: string
+          estado: string
+          fecha_pago: string | null
+          id: string
+          observaciones: string | null
+          periodo: string
+          updated_at: string
+          user_id: string | null
+          valor: number
+        }
+        Insert: {
+          comprobante_num?: string | null
+          comprobante_url?: string | null
+          created_at?: string
+          empleado_id: string
+          estado?: string
+          fecha_pago?: string | null
+          id?: string
+          observaciones?: string | null
+          periodo: string
+          updated_at?: string
+          user_id?: string | null
+          valor?: number
+        }
+        Update: {
+          comprobante_num?: string | null
+          comprobante_url?: string | null
+          created_at?: string
+          empleado_id?: string
+          estado?: string
+          fecha_pago?: string | null
+          id?: string
+          observaciones?: string | null
+          periodo?: string
+          updated_at?: string
+          user_id?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nomina_pagos_empleado_id_fkey"
+            columns: ["empleado_id"]
+            isOneToOne: false
+            referencedRelation: "nomina_empleados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           activo: boolean
@@ -945,6 +1127,54 @@ export type Database = {
           id?: string
           nombre?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      tesoreria_movimientos: {
+        Row: {
+          categoria: string
+          comprobante_url: string | null
+          created_at: string
+          cuenta_cobro_id: string | null
+          descripcion: string | null
+          expediente_id: string | null
+          fecha: string
+          id: string
+          nomina_pago_id: string | null
+          tipo: string
+          updated_at: string
+          user_id: string | null
+          valor: number
+        }
+        Insert: {
+          categoria: string
+          comprobante_url?: string | null
+          created_at?: string
+          cuenta_cobro_id?: string | null
+          descripcion?: string | null
+          expediente_id?: string | null
+          fecha?: string
+          id?: string
+          nomina_pago_id?: string | null
+          tipo: string
+          updated_at?: string
+          user_id?: string | null
+          valor: number
+        }
+        Update: {
+          categoria?: string
+          comprobante_url?: string | null
+          created_at?: string
+          cuenta_cobro_id?: string | null
+          descripcion?: string | null
+          expediente_id?: string | null
+          fecha?: string
+          id?: string
+          nomina_pago_id?: string | null
+          tipo?: string
+          updated_at?: string
+          user_id?: string | null
+          valor?: number
         }
         Relationships: []
       }
@@ -975,6 +1205,7 @@ export type Database = {
     }
     Functions: {
       can_manage_cartera: { Args: { _uid: string }; Returns: boolean }
+      can_manage_finanzas: { Args: { _uid: string }; Returns: boolean }
       can_view_cartera_row: {
         Args: { _exp_id: string; _uid: string }
         Returns: boolean
