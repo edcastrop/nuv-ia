@@ -350,12 +350,19 @@ export type Database = {
           comprobante_num: string | null
           comprobante_url: string | null
           created_at: string
+          cuenta_receptora_id: string | null
           fecha: string
+          fee_wompi: number | null
           id: string
+          iva_fee: number | null
           metodo: string | null
+          metodo_pago: string | null
+          numero_transaccion: string | null
           observaciones: string | null
           user_id: string | null
           valor: number
+          valor_bruto: number | null
+          valor_neto: number | null
         }
         Insert: {
           banco_receptor?: string | null
@@ -363,12 +370,19 @@ export type Database = {
           comprobante_num?: string | null
           comprobante_url?: string | null
           created_at?: string
+          cuenta_receptora_id?: string | null
           fecha?: string
+          fee_wompi?: number | null
           id?: string
+          iva_fee?: number | null
           metodo?: string | null
+          metodo_pago?: string | null
+          numero_transaccion?: string | null
           observaciones?: string | null
           user_id?: string | null
           valor: number
+          valor_bruto?: number | null
+          valor_neto?: number | null
         }
         Update: {
           banco_receptor?: string | null
@@ -376,12 +390,19 @@ export type Database = {
           comprobante_num?: string | null
           comprobante_url?: string | null
           created_at?: string
+          cuenta_receptora_id?: string | null
           fecha?: string
+          fee_wompi?: number | null
           id?: string
+          iva_fee?: number | null
           metodo?: string | null
+          metodo_pago?: string | null
+          numero_transaccion?: string | null
           observaciones?: string | null
           user_id?: string | null
           valor?: number
+          valor_bruto?: number | null
+          valor_neto?: number | null
         }
         Relationships: [
           {
@@ -389,6 +410,13 @@ export type Database = {
             columns: ["cartera_id"]
             isOneToOne: false
             referencedRelation: "cartera"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cartera_pagos_cuenta_receptora_id_fkey"
+            columns: ["cuenta_receptora_id"]
+            isOneToOne: false
+            referencedRelation: "cuentas_receptoras"
             referencedColumns: ["id"]
           },
         ]
@@ -634,6 +662,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      cuentas_receptoras: {
+        Row: {
+          activa: boolean
+          banco: string
+          created_at: string
+          id: string
+          nit: string | null
+          numero: string | null
+          observaciones: string | null
+          tipo: string
+          titular: string | null
+          updated_at: string
+        }
+        Insert: {
+          activa?: boolean
+          banco: string
+          created_at?: string
+          id?: string
+          nit?: string | null
+          numero?: string | null
+          observaciones?: string | null
+          tipo?: string
+          titular?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activa?: boolean
+          banco?: string
+          created_at?: string
+          id?: string
+          nit?: string | null
+          numero?: string | null
+          observaciones?: string | null
+          tipo?: string
+          titular?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       envios_contratacion: {
         Row: {
@@ -1126,6 +1193,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      parametros_financieros: {
+        Row: {
+          clave: string
+          descripcion: string | null
+          updated_at: string
+          updated_by: string | null
+          valor: Json
+        }
+        Insert: {
+          clave: string
+          descripcion?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          valor: Json
+        }
+        Update: {
+          clave?: string
+          descripcion?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          valor?: Json
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
