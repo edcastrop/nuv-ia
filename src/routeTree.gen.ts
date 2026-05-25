@@ -26,6 +26,7 @@ import { Route as AuthenticatedSuperAdminExpedientesRouteImport } from './routes
 import { Route as AuthenticatedExpedienteMaestroIdRouteImport } from './routes/_authenticated/expediente-maestro.$id'
 import { Route as AuthenticatedCasosIdRouteImport } from './routes/_authenticated/casos.$id'
 import { Route as AuthenticatedCarteraIdRouteImport } from './routes/_authenticated/cartera.$id'
+import { Route as ApiPublicHooksCasosAlertasRouteImport } from './routes/api/public/hooks/casos-alertas'
 import { Route as ApiPublicHooksCarteraRecordatoriosRouteImport } from './routes/api/public/hooks/cartera-recordatorios'
 
 const LoginRoute = LoginRouteImport.update({
@@ -120,6 +121,12 @@ const AuthenticatedCarteraIdRoute = AuthenticatedCarteraIdRouteImport.update({
   path: '/cartera/$id',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const ApiPublicHooksCasosAlertasRoute =
+  ApiPublicHooksCasosAlertasRouteImport.update({
+    id: '/api/public/hooks/casos-alertas',
+    path: '/api/public/hooks/casos-alertas',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksCarteraRecordatoriosRoute =
   ApiPublicHooksCarteraRecordatoriosRouteImport.update({
     id: '/api/public/hooks/cartera-recordatorios',
@@ -145,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/expediente-maestro/': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/super-admin/': typeof AuthenticatedSuperAdminIndexRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
+  '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -164,6 +172,7 @@ export interface FileRoutesByTo {
   '/expediente-maestro': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/super-admin': typeof AuthenticatedSuperAdminIndexRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
+  '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -185,6 +194,7 @@ export interface FileRoutesById {
   '/_authenticated/expediente-maestro/': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/_authenticated/super-admin/': typeof AuthenticatedSuperAdminIndexRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
+  '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -206,6 +216,7 @@ export interface FileRouteTypes {
     | '/expediente-maestro/'
     | '/super-admin/'
     | '/api/public/hooks/cartera-recordatorios'
+    | '/api/public/hooks/casos-alertas'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -225,6 +236,7 @@ export interface FileRouteTypes {
     | '/expediente-maestro'
     | '/super-admin'
     | '/api/public/hooks/cartera-recordatorios'
+    | '/api/public/hooks/casos-alertas'
   id:
     | '__root__'
     | '/_authenticated'
@@ -245,12 +257,14 @@ export interface FileRouteTypes {
     | '/_authenticated/expediente-maestro/'
     | '/_authenticated/super-admin/'
     | '/api/public/hooks/cartera-recordatorios'
+    | '/api/public/hooks/casos-alertas'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
   ApiPublicHooksCarteraRecordatoriosRoute: typeof ApiPublicHooksCarteraRecordatoriosRoute
+  ApiPublicHooksCasosAlertasRoute: typeof ApiPublicHooksCasosAlertasRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -374,6 +388,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCarteraIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/api/public/hooks/casos-alertas': {
+      id: '/api/public/hooks/casos-alertas'
+      path: '/api/public/hooks/casos-alertas'
+      fullPath: '/api/public/hooks/casos-alertas'
+      preLoaderRoute: typeof ApiPublicHooksCasosAlertasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/cartera-recordatorios': {
       id: '/api/public/hooks/cartera-recordatorios'
       path: '/api/public/hooks/cartera-recordatorios'
@@ -431,6 +452,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ApiPublicHooksCarteraRecordatoriosRoute:
     ApiPublicHooksCarteraRecordatoriosRoute,
+  ApiPublicHooksCasosAlertasRoute: ApiPublicHooksCasosAlertasRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

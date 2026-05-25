@@ -13,6 +13,7 @@ interface Props {
 export function EstadoCasoBlock({ expedienteId, onChanged }: Props) {
   const [actual, setActual] = useState<CasoEstado | null>(null);
   const [loading, setLoading] = useState(true);
+  const [alerta, setAlerta] = useState<{ dias: number; tipo: string } | null>(null);
   const { pendiente, sugerirManual, sugerir, confirmar, cancelar } = useEstadoSugerido(expedienteId, () => {
     reload();
     onChanged?.();
@@ -22,6 +23,16 @@ export function EstadoCasoBlock({ expedienteId, onChanged }: Props) {
     setLoading(true);
     const { data } = await supabase.from("expedientes").select("estado_caso" as never).eq("id", expedienteId).single();
     setActual((data as unknown as { estado_caso?: CasoEstado })?.estado_caso ?? "lead_creado");
+    // Alerta de estancamiento sin leer
+    const { data: alertas } = await supabase
+      .from("caso_alertas" as never)
+      .select("dias_estancado,tipo")
+      .eq("expediente_id", expedienteId)
+      .eq("leida", false)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    const a = (alertas as unknown as { dias_estancado: number; tipo: string }[] | null)?.[0];
+    setAlerta(a ? { dias: a.dias_estancado, tipo: a.tipo } : null);
     setLoading(false);
   };
 
@@ -48,11 +59,20 @@ export function EstadoCasoBlock({ expedienteId, onChanged }: Props) {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="text-[11px] uppercase tracking-wider text-[#242424]/60">Estado del caso</div>
-            <div className="mt-1 flex items-center gap-2">
+            <div className="mt-1 flex items-center gap-2 flex-wrap">
               <span className="rounded-full px-3 py-1 text-xs font-semibold"
                 style={def ? { background: def.bg, color: def.color } : { background: "#F1F2F4", color: "#242424" }}>
                 {loading ? "Cargando…" : labelEstado(actual)}
               </span>
+              {alerta && (
+                <span
+                  className="rounded-full px-3 py-1 text-xs font-semibold"
+                  style={{ background: "#FEE2E2", color: "#991B1B" }}
+                  title={alerta.tipo}
+                >
+                  ⚠ Estancado {alerta.dias} días
+                </span>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-2">

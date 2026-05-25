@@ -12,6 +12,7 @@ import {
   type DestinatarioContratacion,
 } from "@/lib/contratacion";
 import { enviarContratacion } from "@/lib/contratacion.functions";
+import { cambiarEstadoCaso } from "@/lib/casoEstados";
 
 export interface ContratacionContext {
   expedienteId: string;
@@ -84,7 +85,13 @@ export function EnviarContratacionButton({ ctx, onSent }: Props) {
         <EnviarContratacionModal
           ctx={ctx}
           onClose={() => setOpen(false)}
-          onSent={() => { setOpen(false); onSent?.(); }}
+          onSent={() => {
+            setOpen(false);
+            // Disparador automático: envío a contratación → estado "documentación completa"
+            cambiarEstadoCaso(ctx.expedienteId, "documentacion_completa", "documentacion_completa")
+              .catch((err) => console.warn("[estado] documentacion_completa", err));
+            onSent?.();
+          }}
         />
       )}
     </>

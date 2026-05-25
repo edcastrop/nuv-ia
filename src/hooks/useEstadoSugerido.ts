@@ -16,10 +16,10 @@ export function useEstadoSugerido(expedienteId: string | undefined | null, onCha
     setPendiente({ estado, accion: "manual" });
   }, [expedienteId]);
 
-  const confirmar = useCallback(async (observacion: string) => {
+  const confirmar = useCallback(async (observacion: string, submotivo?: string) => {
     if (!expedienteId || !pendiente) return;
     try {
-      await cambiarEstadoCaso(expedienteId, pendiente.estado, pendiente.accion, observacion || undefined);
+      await cambiarEstadoCaso(expedienteId, pendiente.estado, pendiente.accion, observacion || undefined, submotivo);
       onChanged?.();
     } finally {
       setPendiente(null);

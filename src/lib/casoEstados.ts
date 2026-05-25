@@ -2,26 +2,41 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type CasoEstado =
   | "lead_creado"
+  | "prospecto"
   | "extracto_recibido"
   | "simulacion_realizada"
+  | "simulado"
   | "propuesta_presentada"
+  | "propuesta_enviada"
+  | "acepto_propuesta"
   | "negociacion"
   | "pendiente_contratacion"
   | "enviado_contratacion"
   | "contrato_enviado"
+  | "contrato_generado"
   | "contrato_firmado"
+  | "poder_generado"
   | "poder_firmado"
+  | "documentacion_completa"
   | "radicacion_pendiente"
+  | "radicacion_preparada"
   | "radicado_banco"
   | "en_estudio_banco"
+  | "docs_complementarios_banco"
   | "aprobado"
+  | "aprobado_banco"
   | "documentos_banco_firmados"
   | "condiciones_aplicadas"
+  | "aplicado_banco"
   | "resultado_final_generado"
   | "cuenta_cobro_generada"
   | "cuenta_cobro_enviada"
+  | "honorarios_pendientes"
   | "honorarios_pagados"
   | "paz_y_salvo_generado"
+  | "caso_finalizado"
+  | "devuelto_banco"
+  | "negado_banco"
   | "prejuridico"
   | "proceso_cerrado";
 
@@ -35,28 +50,43 @@ export interface CasoEstadoDef {
 
 export const CASO_ESTADOS: CasoEstadoDef[] = [
   { key: "lead_creado", label: "Lead creado", orden: 1, color: "#445DA3", bg: "#EEF1FA" },
-  { key: "extracto_recibido", label: "Extracto recibido", orden: 2, color: "#1A4A8A", bg: "#E8F0FE" },
-  { key: "simulacion_realizada", label: "Simulación realizada", orden: 3, color: "#1A4A8A", bg: "#E8F0FE" },
-  { key: "propuesta_presentada", label: "Propuesta presentada", orden: 4, color: "#6B21A8", bg: "#F3E8FF" },
-  { key: "negociacion", label: "Negociación", orden: 5, color: "#8A5A00", bg: "#FFF7E6" },
-  { key: "pendiente_contratacion", label: "Pendiente contratación", orden: 6, color: "#8A5A00", bg: "#FFF7E6" },
-  { key: "enviado_contratacion", label: "Enviado a contratación", orden: 7, color: "#3730A3", bg: "#E0E7FF" },
-  { key: "contrato_enviado", label: "Contrato enviado", orden: 8, color: "#3730A3", bg: "#E0E7FF" },
-  { key: "contrato_firmado", label: "Contrato firmado", orden: 9, color: "#1F7A45", bg: "#EAF7EE" },
-  { key: "poder_firmado", label: "Poder firmado", orden: 10, color: "#1F7A45", bg: "#EAF7EE" },
-  { key: "radicacion_pendiente", label: "Radicación pendiente", orden: 11, color: "#8A5A00", bg: "#FFF7E6" },
-  { key: "radicado_banco", label: "Radicado en banco", orden: 12, color: "#1A4A8A", bg: "#E8F0FE" },
-  { key: "en_estudio_banco", label: "En estudio banco", orden: 13, color: "#1A4A8A", bg: "#E8F0FE" },
-  { key: "aprobado", label: "Aprobado", orden: 14, color: "#1F7A45", bg: "#EAF7EE" },
-  { key: "documentos_banco_firmados", label: "Documentos banco firmados", orden: 15, color: "#1F7A45", bg: "#EAF7EE" },
-  { key: "condiciones_aplicadas", label: "Condiciones aplicadas", orden: 16, color: "#1F7A45", bg: "#DDF4E3" },
-  { key: "resultado_final_generado", label: "Resultado final generado", orden: 17, color: "#1F7A45", bg: "#DDF4E3" },
-  { key: "cuenta_cobro_generada", label: "Cuenta de cobro generada", orden: 18, color: "#6B21A8", bg: "#F3E8FF" },
-  { key: "cuenta_cobro_enviada", label: "Cuenta de cobro enviada", orden: 19, color: "#6B21A8", bg: "#F3E8FF" },
-  { key: "honorarios_pagados", label: "Honorarios pagados", orden: 20, color: "#1F7A45", bg: "#DDF4E3" },
-  { key: "paz_y_salvo_generado", label: "Paz y salvo generado", orden: 21, color: "#1F7A45", bg: "#DDF4E3" },
-  { key: "prejuridico", label: "Prejurídico", orden: 22, color: "#991B1B", bg: "#FEE2E2" },
-  { key: "proceso_cerrado", label: "Proceso cerrado", orden: 23, color: "#242424", bg: "#E5E7EB" },
+  { key: "prospecto", label: "Prospecto", orden: 2, color: "#445DA3", bg: "#EEF1FA" },
+  { key: "extracto_recibido", label: "Extracto recibido", orden: 3, color: "#1A4A8A", bg: "#E8F0FE" },
+  { key: "simulacion_realizada", label: "Simulación realizada", orden: 4, color: "#1A4A8A", bg: "#E8F0FE" },
+  { key: "simulado", label: "Simulado", orden: 5, color: "#1A4A8A", bg: "#E8F0FE" },
+  { key: "propuesta_presentada", label: "Propuesta presentada", orden: 6, color: "#6B21A8", bg: "#F3E8FF" },
+  { key: "propuesta_enviada", label: "Propuesta enviada", orden: 7, color: "#6B21A8", bg: "#F3E8FF" },
+  { key: "acepto_propuesta", label: "Aceptó propuesta", orden: 8, color: "#1F7A45", bg: "#EAF7EE" },
+  { key: "negociacion", label: "Negociación", orden: 9, color: "#8A5A00", bg: "#FFF7E6" },
+  { key: "pendiente_contratacion", label: "Pendiente contratación", orden: 10, color: "#8A5A00", bg: "#FFF7E6" },
+  { key: "enviado_contratacion", label: "Enviado a contratación", orden: 11, color: "#3730A3", bg: "#E0E7FF" },
+  { key: "contrato_enviado", label: "Contrato enviado", orden: 12, color: "#3730A3", bg: "#E0E7FF" },
+  { key: "contrato_generado", label: "Contrato generado", orden: 13, color: "#3730A3", bg: "#E0E7FF" },
+  { key: "contrato_firmado", label: "Contrato firmado", orden: 14, color: "#1F7A45", bg: "#EAF7EE" },
+  { key: "poder_generado", label: "Poder generado", orden: 15, color: "#3730A3", bg: "#E0E7FF" },
+  { key: "poder_firmado", label: "Poder firmado", orden: 16, color: "#1F7A45", bg: "#EAF7EE" },
+  { key: "documentacion_completa", label: "Documentación completa", orden: 17, color: "#1F7A45", bg: "#EAF7EE" },
+  { key: "radicacion_pendiente", label: "Radicación pendiente", orden: 18, color: "#8A5A00", bg: "#FFF7E6" },
+  { key: "radicacion_preparada", label: "Radicación preparada", orden: 19, color: "#8A5A00", bg: "#FFF7E6" },
+  { key: "radicado_banco", label: "Radicado en banco", orden: 20, color: "#1A4A8A", bg: "#E8F0FE" },
+  { key: "en_estudio_banco", label: "En estudio banco", orden: 21, color: "#1A4A8A", bg: "#E8F0FE" },
+  { key: "docs_complementarios_banco", label: "Docs complementarios banco", orden: 22, color: "#8A5A00", bg: "#FFF7E6" },
+  { key: "aprobado", label: "Aprobado", orden: 23, color: "#1F7A45", bg: "#EAF7EE" },
+  { key: "aprobado_banco", label: "Aprobado banco", orden: 24, color: "#1F7A45", bg: "#EAF7EE" },
+  { key: "documentos_banco_firmados", label: "Documentos banco firmados", orden: 25, color: "#1F7A45", bg: "#EAF7EE" },
+  { key: "condiciones_aplicadas", label: "Condiciones aplicadas", orden: 26, color: "#1F7A45", bg: "#DDF4E3" },
+  { key: "aplicado_banco", label: "Aplicado banco", orden: 27, color: "#1F7A45", bg: "#DDF4E3" },
+  { key: "resultado_final_generado", label: "Resultado final generado", orden: 28, color: "#1F7A45", bg: "#DDF4E3" },
+  { key: "cuenta_cobro_generada", label: "Cuenta de cobro generada", orden: 29, color: "#6B21A8", bg: "#F3E8FF" },
+  { key: "cuenta_cobro_enviada", label: "Cuenta de cobro enviada", orden: 30, color: "#6B21A8", bg: "#F3E8FF" },
+  { key: "honorarios_pendientes", label: "Honorarios pendientes", orden: 31, color: "#8A5A00", bg: "#FFF7E6" },
+  { key: "honorarios_pagados", label: "Honorarios pagados", orden: 32, color: "#1F7A45", bg: "#DDF4E3" },
+  { key: "paz_y_salvo_generado", label: "Paz y salvo generado", orden: 33, color: "#1F7A45", bg: "#DDF4E3" },
+  { key: "caso_finalizado", label: "Caso finalizado", orden: 34, color: "#242424", bg: "#E5E7EB" },
+  { key: "devuelto_banco", label: "Devuelto por banco", orden: 35, color: "#991B1B", bg: "#FEE2E2" },
+  { key: "negado_banco", label: "Negado por banco", orden: 36, color: "#991B1B", bg: "#FEE2E2" },
+  { key: "prejuridico", label: "Prejurídico", orden: 37, color: "#991B1B", bg: "#FEE2E2" },
+  { key: "proceso_cerrado", label: "Proceso cerrado", orden: 38, color: "#242424", bg: "#E5E7EB" },
 ];
 
 export const CASO_ESTADO_BY_KEY: Record<CasoEstado, CasoEstadoDef> = CASO_ESTADOS.reduce(
@@ -67,40 +97,102 @@ export const CASO_ESTADO_BY_KEY: Record<CasoEstado, CasoEstadoDef> = CASO_ESTADO
 export type AccionOrigen =
   | "extracto_subido"
   | "simulacion_generada"
+  | "simulacion_guardada"
   | "propuesta_generada"
-  | "envio_contratacion"
+  | "propuesta_enviada"
+  | "acepto_propuesta"
+  | "documentacion_completa"
+  | "contrato_generado"
   | "contrato_firmado"
+  | "poder_generado"
   | "poder_firmado"
+  | "envio_contratacion"
+  | "radicacion_preparada"
   | "radicado_confirmado"
+  | "en_estudio_banco"
   | "aprobacion_registrada"
+  | "aprobado_banco"
+  | "docs_complementarios_banco"
   | "documentos_banco_firmados"
   | "condiciones_aplicadas"
+  | "aplicado_banco"
   | "resultado_final"
   | "cuenta_cobro_generada"
   | "cuenta_cobro_enviada"
+  | "honorarios_pendientes"
   | "honorarios_pagados"
   | "paz_y_salvo_generado"
+  | "caso_finalizado"
+  | "devuelto_banco"
+  | "negado_banco"
   | "prejuridico"
   | "manual";
 
 export const ACCION_A_ESTADO: Record<Exclude<AccionOrigen, "manual">, CasoEstado> = {
   extracto_subido: "extracto_recibido",
   simulacion_generada: "simulacion_realizada",
+  simulacion_guardada: "simulado",
   propuesta_generada: "propuesta_presentada",
-  envio_contratacion: "enviado_contratacion",
+  propuesta_enviada: "propuesta_enviada",
+  acepto_propuesta: "acepto_propuesta",
+  documentacion_completa: "documentacion_completa",
+  contrato_generado: "contrato_generado",
   contrato_firmado: "contrato_firmado",
+  poder_generado: "poder_generado",
   poder_firmado: "poder_firmado",
+  envio_contratacion: "enviado_contratacion",
+  radicacion_preparada: "radicacion_preparada",
   radicado_confirmado: "radicado_banco",
+  en_estudio_banco: "en_estudio_banco",
   aprobacion_registrada: "aprobado",
+  aprobado_banco: "aprobado_banco",
+  docs_complementarios_banco: "docs_complementarios_banco",
   documentos_banco_firmados: "documentos_banco_firmados",
   condiciones_aplicadas: "condiciones_aplicadas",
+  aplicado_banco: "aplicado_banco",
   resultado_final: "resultado_final_generado",
   cuenta_cobro_generada: "cuenta_cobro_generada",
   cuenta_cobro_enviada: "cuenta_cobro_enviada",
+  honorarios_pendientes: "honorarios_pendientes",
   honorarios_pagados: "honorarios_pagados",
   paz_y_salvo_generado: "paz_y_salvo_generado",
+  caso_finalizado: "caso_finalizado",
+  devuelto_banco: "devuelto_banco",
+  negado_banco: "negado_banco",
   prejuridico: "prejuridico",
 };
+
+export const SUBMOTIVOS_DEVUELTO: string[] = [
+  "Documentos incompletos",
+  "Información inconsistente",
+  "Datos del cliente sin actualizar",
+  "Garantías insuficientes",
+  "Falta firma o autenticación",
+  "Otro",
+];
+
+export const SUBMOTIVOS_NEGADO: string[] = [
+  "Capacidad de pago insuficiente",
+  "Score crediticio bajo",
+  "Reportes negativos",
+  "Política interna del banco",
+  "Antigüedad laboral insuficiente",
+  "Otro",
+];
+
+export function requiereSubmotivo(estado: CasoEstado): boolean {
+  return estado === "devuelto_banco" || estado === "negado_banco";
+}
+
+export function submotivosPara(estado: CasoEstado): string[] {
+  if (estado === "devuelto_banco") return SUBMOTIVOS_DEVUELTO;
+  if (estado === "negado_banco") return SUBMOTIVOS_NEGADO;
+  return [];
+}
+
+export function transicionAutomatica(accion: Exclude<AccionOrigen, "manual">): CasoEstado | null {
+  return ACCION_A_ESTADO[accion] ?? null;
+}
 
 export function labelEstado(e: CasoEstado | null | undefined): string {
   if (!e) return "—";
@@ -112,6 +204,7 @@ export async function cambiarEstadoCaso(
   nuevoEstado: CasoEstado,
   accion: AccionOrigen,
   observacion?: string,
+  submotivo?: string,
 ): Promise<void> {
   // Read previous estado_caso
   const { data: prev, error: errSel } = await supabase
@@ -131,14 +224,26 @@ export async function cambiarEstadoCaso(
 
   // Historial
   const { data: userData } = await supabase.auth.getUser();
+  const userId = userData.user?.id ?? null;
   await supabase.from("expediente_historial").insert({
     expediente_id: expedienteId,
     estado_caso_anterior: anterior,
     estado_caso_nuevo: nuevoEstado,
     accion_origen: accion,
     observacion: observacion ?? null,
-    user_id: userData.user?.id ?? null,
+    user_id: userId,
   } as never);
+
+  // Submotivo (obligatorio para devuelto_banco / negado_banco)
+  if (submotivo && requiereSubmotivo(nuevoEstado)) {
+    await supabase.from("caso_submotivos" as never).insert({
+      expediente_id: expedienteId,
+      estado: nuevoEstado,
+      submotivo,
+      observacion: observacion ?? null,
+      user_id: userId,
+    } as never);
+  }
 }
 
 export interface HistorialEntry {
