@@ -107,7 +107,7 @@ function MaestroDetail() {
         const saldo = num(d.saldoCapital);
         const desembolso = num(d.valorDesembolsado);
         const base = Math.max(saldo, desembolso, 1);
-        return v > 0 && v <= Math.max(15_000_000, base * 0.08);
+        return v > 0 && v <= Math.max(8_000_000, base * 0.04);
       };
 
       // Beneficio / Cobertura: activamos sólo si hay valor mensual > 0
