@@ -334,3 +334,49 @@ function ResumenItem({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+function BeneficioBlock({
+  fresh,
+  datos,
+}: {
+  fresh: { activo: boolean; tipoBeneficio?: string; valorMensual: number; tasa: number; cuotasPagadas: number; cuotasPendientes: number };
+  datos: Record<string, string>;
+}) {
+  const activo = !!fresh.activo && fresh.valorMensual > 0;
+  const fmt = (n: number) => n > 0 ? `$ ${Math.round(n).toLocaleString("es-CO")}` : "—";
+  return (
+    <div
+      className="rounded-lg border p-3 space-y-2"
+      style={{
+        borderColor: activo ? NUVEX.verde : "#E5E7EB",
+        background: activo ? NUVEX.verdeClaro : "#FBFCFD",
+      }}
+    >
+      <div className="flex items-center justify-between">
+        <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: activo ? NUVEX.verdeTextoFuerte : "#6b7280" }}>
+          Beneficio de Cobertura
+        </div>
+        <div className="text-[11px] font-semibold" style={{ color: activo ? NUVEX.verdeTextoFuerte : "#6b7280" }}>
+          {activo ? "Sí aplica" : "No aplica"}
+        </div>
+      </div>
+      {activo ? (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+          <ResumenItem label="Tipo beneficio" value={fresh.tipoBeneficio || datos.tipoBeneficio || "Subsidio Gobierno"} />
+          <ResumenItem label="Valor mensual" value={fmt(fresh.valorMensual)} />
+          <ResumenItem label="Tasa cobertura" value={fresh.tasa > 0 ? `${fresh.tasa}%` : "Sin dato detectado"} />
+          <ResumenItem label="Cuota con cobertura" value={datos.cuotaConSubsidio ? fmt(Number(datos.cuotaConSubsidio)) : "—"} />
+          <ResumenItem label="Cuota sin cobertura" value={datos.cuotaSinSubsidio ? fmt(Number(datos.cuotaSinSubsidio)) : "—"} />
+          <ResumenItem label="Cuotas beneficio pagadas" value={String(fresh.cuotasPagadas)} />
+          <ResumenItem label="Cuotas beneficio pendientes" value={String(fresh.cuotasPendientes)} />
+          <ResumenItem label="Cuotas totales" value="84" />
+        </div>
+      ) : (
+        <div className="text-xs text-[#242424]/60">
+          No se detectó subsidio Gobierno / FRECH / Fresh con valor mensual mayor a cero en este extracto.
+        </div>
+      )}
+    </div>
+  );
+}
+
