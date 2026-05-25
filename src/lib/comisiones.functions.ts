@@ -288,10 +288,11 @@ export const devolverCuentaCobro = createServerFn({ method: "POST" })
       .eq("id", data.cuentaCobroId);
     if (error) throw new Error(error.message);
 
-    // Liberar comisiones para que el licenciado pueda corregir y re-armar la CC
+    // Mantener comisiones atadas a la CC para que el licenciado pueda corregir
+    // el % y reenviar sin perder el detalle. Solo regresamos el estado a "generada".
     await supabase
       .from("comisiones" as never)
-      .update({ estado: "generada", cuenta_cobro_id: null } as never)
+      .update({ estado: "generada" } as never)
       .eq("cuenta_cobro_id", data.cuentaCobroId);
 
     await supabase.from("cuentas_cobro_historial" as never).insert({
