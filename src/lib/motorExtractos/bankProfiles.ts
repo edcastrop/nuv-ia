@@ -6,8 +6,8 @@ export type Producto = "CREDITO_HIPOTECARIO" | "LEASING_HABITACIONAL" | "";
 
 export interface BankProfile {
   id: string;
-  banco: string;          // nombre canónico que se guarda
-  productos: Producto[];  // productos soportados por esta plantilla
+  banco: string; // nombre canónico que se guarda
+  productos: Producto[]; // productos soportados por esta plantilla
   // Pistas léxicas para detectar el banco a partir del texto del extracto
   matchAny: RegExp[];
   // Instrucciones específicas que se inyectan en el prompt del parser
@@ -300,4 +300,3 @@ export const CAMPO_LABEL: Record<CampoMotor, string> = {
   cuotaSinSubsidio: "Cuota sin subsidio",
   cuotaConSubsidio: "Cuota con subsidio",
 };
-

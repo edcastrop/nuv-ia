@@ -58,7 +58,6 @@ export interface MotorResultado {
 
 export type MotorResponse = { error: string | null; data: MotorResultado | null };
 
-
 // ---------------- Esquema de salida del parser ----------------
 
 const fieldsSchemaProps: Record<string, { type: "string" }> = {};
@@ -78,14 +77,16 @@ const parserTool = {
       properties: {
         datos: {
           type: "object",
-          description: "Valores extraídos como strings. Montos: solo dígitos. Tasas: con punto decimal (ej '11.25'). Vacío si no aparece.",
+          description:
+            "Valores extraídos como strings. Montos: solo dígitos. Tasas: con punto decimal (ej '11.25'). Vacío si no aparece.",
           properties: fieldsSchemaProps,
           required: [...CAMPOS_MOTOR],
           additionalProperties: false,
         },
         scores: {
           type: "object",
-          description: "Score 0-100 por campo. 100=literal y explícito, 90=alto, 70=inferido, 30=dudoso, 0=ausente.",
+          description:
+            "Score 0-100 por campo. 100=literal y explícito, 90=alto, 70=inferido, 30=dudoso, 0=ausente.",
           properties: scoresSchemaProps,
           required: [...CAMPOS_MOTOR],
           additionalProperties: false,
@@ -116,7 +117,10 @@ const detectorTool = {
           enum: ["CREDITO_HIPOTECARIO", "LEASING_HABITACIONAL", ""],
         },
         moneda: { type: "string", enum: ["PESOS", "UVR", ""] },
-        evidencia: { type: "string", description: "Texto literal corto del extracto que justifica la detección." },
+        evidencia: {
+          type: "string",
+          description: "Texto literal corto del extracto que justifica la detección.",
+        },
       },
       required: ["banco", "producto", "moneda", "evidencia"],
       additionalProperties: false,
@@ -130,26 +134,39 @@ const detectorTool = {
 // → cadena numérica limpia. Preserva decimales si existen.
 export function parseCOP(raw: string): string {
   if (!raw) return "";
-  let s = String(raw).replace(/[^\d.,-]/g, "").trim();
+  let s = String(raw)
+    .replace(/[^\d.,-]/g, "")
+    .trim();
   if (!s) return "";
   const neg = s.startsWith("-");
   if (neg) s = s.slice(1);
   const lastComma = s.lastIndexOf(",");
   const lastDot = s.lastIndexOf(".");
-  let intPart = s, decPart = "";
+  let intPart = s,
+    decPart = "";
   if (lastComma === -1 && lastDot === -1) {
     intPart = s;
   } else if (lastComma > lastDot) {
     // formato CO: coma = decimal, punto = miles
     const decRaw = s.slice(lastComma + 1);
-    if (decRaw.length <= 2) { intPart = s.slice(0, lastComma); decPart = decRaw; }
-    else { intPart = s.replace(/[.,]/g, ""); }
+    if (decRaw.length <= 2) {
+      intPart = s.slice(0, lastComma);
+      decPart = decRaw;
+    } else {
+      intPart = s.replace(/[.,]/g, "");
+    }
   } else if (lastDot > lastComma) {
     // formato US: punto = decimal, coma = miles. Solo si la parte tras el punto tiene 1-2 dígitos.
     const decRaw = s.slice(lastDot + 1);
-    if (decRaw.length <= 2 && lastComma !== -1) { intPart = s.slice(0, lastDot); decPart = decRaw; }
-    else if (decRaw.length <= 2 && !/[.,]/.test(s.slice(0, lastDot))) { intPart = s.slice(0, lastDot); decPart = decRaw; }
-    else { intPart = s.replace(/[.,]/g, ""); }
+    if (decRaw.length <= 2 && lastComma !== -1) {
+      intPart = s.slice(0, lastDot);
+      decPart = decRaw;
+    } else if (decRaw.length <= 2 && !/[.,]/.test(s.slice(0, lastDot))) {
+      intPart = s.slice(0, lastDot);
+      decPart = decRaw;
+    } else {
+      intPart = s.replace(/[.,]/g, "");
+    }
   }
   intPart = intPart.replace(/[.,]/g, "");
   if (!/^\d+$/.test(intPart)) return "";
@@ -159,7 +176,9 @@ export function parseCOP(raw: string): string {
 
 function parseTasa(raw: string): string {
   if (!raw) return "";
-  const m = String(raw).replace(/[^\d.,-]/g, "").replace(",", ".");
+  const m = String(raw)
+    .replace(/[^\d.,-]/g, "")
+    .replace(",", ".");
   const n = parseFloat(m);
   return Number.isFinite(n) ? String(n) : "";
 }
@@ -208,7 +227,6 @@ CAMPO 'cuotasPendientes': si no es explícito calcula plazoInicial - cuotasPagad
 CAMPO 'sistemaAmortizacion': "abono constante a capital" / "cuota fija" / "UVR". Vacío si no es claro.`;
 }
 
-
 async function callLovableAI(
   model: string,
   systemPrompt: string,
@@ -247,11 +265,23 @@ function findProfileByName(banco: string, producto?: Producto): BankProfile | nu
   return candidates[0];
 }
 
-interface ToolCall { function?: { arguments?: string } }
-interface Usage { prompt_tokens?: number; completion_tokens?: number }
-interface ChatResp { choices?: Array<{ message?: { tool_calls?: ToolCall[] }; finish_reason?: string }>; usage?: Usage }
+interface ToolCall {
+  function?: { arguments?: string };
+}
+interface Usage {
+  prompt_tokens?: number;
+  completion_tokens?: number;
+}
+interface ChatResp {
+  choices?: Array<{ message?: { tool_calls?: ToolCall[] }; finish_reason?: string }>;
+  usage?: Usage;
+}
 type DeteccionMotor = { banco: string; producto: Producto; moneda: Moneda; evidencia: string };
-type ParserPayload = { datos: Record<string, string>; scores: Record<string, number>; alertas: string[] };
+type ParserPayload = {
+  datos: Record<string, string>;
+  scores: Record<string, number>;
+  alertas: string[];
+};
 
 function normalizeParsedMotor(
   parsed: ParserPayload,
@@ -267,9 +297,17 @@ function normalizeParsedMotor(
   }
 
   const CAMPOS_MONETARIOS: CampoMotor[] = [
-    "valorDesembolsado", "saldoCapital", "cuotaActual",
-    "interesCuota", "capitalCuota", "seguros", "valorUVR", "saldoUVR",
-    "valorBeneficioMensual", "cuotaSinSubsidio", "cuotaConSubsidio",
+    "valorDesembolsado",
+    "saldoCapital",
+    "cuotaActual",
+    "interesCuota",
+    "capitalCuota",
+    "seguros",
+    "valorUVR",
+    "saldoUVR",
+    "valorBeneficioMensual",
+    "cuotaSinSubsidio",
+    "cuotaConSubsidio",
   ];
   for (const k of CAMPOS_MONETARIOS) {
     if (datos[k]) datos[k] = parseCOP(datos[k]);
@@ -329,21 +367,50 @@ function validateMotorConsistency(profile: BankProfile, datos: Record<CampoMotor
     const cuotaActualNumero = Math.round(toNumber(datos.cuotasPagadas));
     const pendientes = Math.round(toNumber(datos.cuotasPendientes));
 
-    if (beneficio > 0 && cuotaSinSubsidio > 0 && cuotaConSubsidio > 0 && !closeMoney(cuotaSinSubsidio - beneficio, cuotaConSubsidio)) {
+    if (
+      beneficio > 0 &&
+      cuotaSinSubsidio > 0 &&
+      cuotaConSubsidio > 0 &&
+      !closeMoney(cuotaSinSubsidio - beneficio, cuotaConSubsidio)
+    ) {
       critical = true;
-      alertas.push("Inconsistencia Bancolombia: cuota sin subsidio - subsidio no coincide con cuota con subsidio.");
+      alertas.push(
+        "Inconsistencia Bancolombia: cuota sin subsidio - subsidio no coincide con cuota con subsidio.",
+      );
     }
-    if (cuotaActual > 0 && cuotaConSubsidio > 0 && seguros > 0 && !closeMoney(cuotaConSubsidio + seguros, cuotaActual)) {
+    if (
+      cuotaActual > 0 &&
+      cuotaConSubsidio > 0 &&
+      seguros > 0 &&
+      !closeMoney(cuotaConSubsidio + seguros, cuotaActual)
+    ) {
       critical = true;
-      alertas.push("Inconsistencia Bancolombia: valor a pagar no coincide con cuota con subsidio + seguros.");
+      alertas.push(
+        "Inconsistencia Bancolombia: valor a pagar no coincide con cuota con subsidio + seguros.",
+      );
     }
-    if (cuotaActual > 0 && capital > 0 && interes > 0 && seguros > 0 && !closeMoney(capital + interes + seguros, cuotaActual)) {
+    if (
+      cuotaActual > 0 &&
+      capital > 0 &&
+      interes > 0 &&
+      seguros > 0 &&
+      !closeMoney(capital + interes + seguros, cuotaActual)
+    ) {
       critical = true;
-      alertas.push("Inconsistencia Bancolombia: capital + intereses + seguros no coincide con el valor a pagar.");
+      alertas.push(
+        "Inconsistencia Bancolombia: capital + intereses + seguros no coincide con el valor a pagar.",
+      );
     }
-    if (plazo > 0 && cuotaActualNumero > 0 && pendientes > 0 && cuotaActualNumero + pendientes - 1 !== plazo) {
+    if (
+      plazo > 0 &&
+      cuotaActualNumero > 0 &&
+      pendientes > 0 &&
+      cuotaActualNumero + pendientes - 1 !== plazo
+    ) {
       critical = true;
-      alertas.push("Inconsistencia Bancolombia: número de cuota + cuotas pendientes no coincide con el plazo inicial.");
+      alertas.push(
+        "Inconsistencia Bancolombia: número de cuota + cuotas pendientes no coincide con el plazo inicial.",
+      );
     }
   }
 
@@ -351,17 +418,16 @@ function validateMotorConsistency(profile: BankProfile, datos: Record<CampoMotor
 }
 
 // ---------------- Server Function ----------------
-    // Precios USD por 1M tokens (pass-through Lovable AI Gateway)
-    const PRECIOS: Record<string, { in: number; out: number }> = {
-      "google/gemini-2.5-pro": { in: 1.25, out: 10.0 },
-      "google/gemini-2.5-flash": { in: 0.30, out: 2.50 },
-    };
-    const calcCosto = (modelo: string, tokIn: number, tokOut: number) => {
-      const p = PRECIOS[modelo] ?? { in: 0, out: 0 };
-      return (tokIn / 1_000_000) * p.in + (tokOut / 1_000_000) * p.out;
-    };
-    const llamadas: CostoLlamada[] = [];
-
+// Precios USD por 1M tokens (pass-through Lovable AI Gateway)
+const PRECIOS: Record<string, { in: number; out: number }> = {
+  "google/gemini-2.5-pro": { in: 1.25, out: 10.0 },
+  "google/gemini-2.5-flash": { in: 0.3, out: 2.5 },
+};
+const calcCosto = (modelo: string, tokIn: number, tokOut: number) => {
+  const p = PRECIOS[modelo] ?? { in: 0, out: 0 };
+  return (tokIn / 1_000_000) * p.in + (tokOut / 1_000_000) * p.out;
+};
+const llamadas: CostoLlamada[] = [];
 
 export const extractStatementMotor = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => InputSchema.parse(data))
@@ -387,16 +453,26 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
       detectorTool,
     );
     if (!detResp.ok && detResp.status >= 500) {
-      detResp = await callLovableAI("google/gemini-2.5-pro", SYSTEM_DETECTOR, userContent, detectorTool);
+      detResp = await callLovableAI(
+        "google/gemini-2.5-pro",
+        SYSTEM_DETECTOR,
+        userContent,
+        detectorTool,
+      );
     }
     if (!detResp.ok) {
-      if (detResp.status === 429) return { error: "Demasiadas solicitudes. Intenta de nuevo.", data: null };
+      if (detResp.status === 429)
+        return { error: "Demasiadas solicitudes. Intenta de nuevo.", data: null };
       if (detResp.status === 402) return { error: "Créditos de IA agotados.", data: null };
       return { error: `Error de IA detector (${detResp.status}).`, data: null };
     }
 
     const detJson = (await detResp.json()) as ChatResp;
-    const detModel = detResp.ok ? (detResp.status >= 500 ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash") : "google/gemini-2.5-flash";
+    const detModel = detResp.ok
+      ? detResp.status >= 500
+        ? "google/gemini-2.5-pro"
+        : "google/gemini-2.5-flash"
+      : "google/gemini-2.5-flash";
     const detIn = detJson.usage?.prompt_tokens ?? 0;
     const detOut = detJson.usage?.completion_tokens ?? 0;
     llamadas.push({
@@ -408,10 +484,16 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
     });
     const detArgs = detJson.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ?? "";
     let det: DeteccionMotor = {
-      banco: "", producto: "", moneda: "", evidencia: "",
+      banco: "",
+      producto: "",
+      moneda: "",
+      evidencia: "",
     };
-    try { det = { ...det, ...JSON.parse(detArgs) }; } catch { /* ignore */ }
-
+    try {
+      det = { ...det, ...JSON.parse(detArgs) };
+    } catch {
+      /* ignore */
+    }
 
     if (/colpatria/i.test(det.banco)) det.banco = "Davibank";
 
@@ -431,7 +513,10 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
       parserTool,
     );
     let usedProFallback = false;
-    if (!parseResp.ok && (parseResp.status === 504 || parseResp.status === 408 || parseResp.status >= 500)) {
+    if (
+      !parseResp.ok &&
+      (parseResp.status === 504 || parseResp.status === 408 || parseResp.status >= 500)
+    ) {
       parseResp = await callLovableAI(
         "google/gemini-2.5-pro",
         buildParserSystem(profile),
@@ -441,7 +526,8 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
       usedProFallback = true;
     }
     if (!parseResp.ok) {
-      if (parseResp.status === 429) return { error: "Demasiadas solicitudes. Intenta de nuevo.", data: null };
+      if (parseResp.status === 429)
+        return { error: "Demasiadas solicitudes. Intenta de nuevo.", data: null };
       if (parseResp.status === 402) return { error: "Créditos de IA agotados.", data: null };
       return { error: `Error de IA parser (${parseResp.status}).`, data: null };
     }
@@ -460,8 +546,11 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
     const pArgs = pJson.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ?? "";
     if (!pArgs) return { error: "La IA no devolvió datos estructurados.", data: null };
 
-
-    let parsed: { datos: Record<string, string>; scores: Record<string, number>; alertas: string[] };
+    let parsed: {
+      datos: Record<string, string>;
+      scores: Record<string, number>;
+      alertas: string[];
+    };
     try {
       parsed = JSON.parse(pArgs);
     } catch {
@@ -479,7 +568,8 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
       );
       if (retryResp.ok) {
         const retryJson = (await retryResp.json()) as ChatResp;
-        const retryArgs = retryJson.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ?? "";
+        const retryArgs =
+          retryJson.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ?? "";
         try {
           const retryParsed = JSON.parse(retryArgs) as ParserPayload;
           const normalized = normalizeParsedMotor(retryParsed, det, profile);
@@ -494,15 +584,21 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
             tokensOutput: rOut,
             costoUSD: calcCosto("google/gemini-2.5-pro", rIn, rOut),
           });
-        } catch { /* mantiene extracción original y alerta */ }
+        } catch {
+          /* mantiene extracción original y alerta */
+        }
       }
     }
     const finalValidation = validateMotorConsistency(profile, datos);
 
     // Confianza global: promedio ponderado de campos no vacíos
-    let suma = 0, n = 0;
+    let suma = 0,
+      n = 0;
     for (const k of CAMPOS_MOTOR) {
-      if (datos[k]) { suma += scores[k]; n += 1; }
+      if (datos[k]) {
+        suma += scores[k];
+        n += 1;
+      }
     }
     const confianzaGlobal = n ? Math.round((suma / n) * 100) / 100 : 0;
 
@@ -526,6 +622,5 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
           llamadas,
         },
       },
-
     };
   });
