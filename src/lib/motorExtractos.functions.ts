@@ -293,14 +293,26 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
     }
 
     interface ToolCall { function?: { arguments?: string } }
-    interface ChatResp { choices?: Array<{ message?: { tool_calls?: ToolCall[] } }> }
+    interface Usage { prompt_tokens?: number; completion_tokens?: number }
+    interface ChatResp { choices?: Array<{ message?: { tool_calls?: ToolCall[] } }>; usage?: Usage }
 
     const detJson = (await detResp.json()) as ChatResp;
+    const detModel = detResp.ok ? (detResp.status >= 500 ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash") : "google/gemini-2.5-flash";
+    const detIn = detJson.usage?.prompt_tokens ?? 0;
+    const detOut = detJson.usage?.completion_tokens ?? 0;
+    llamadas.push({
+      paso: "deteccion",
+      modelo: detModel,
+      tokensInput: detIn,
+      tokensOutput: detOut,
+      costoUSD: calcCosto(detModel, detIn, detOut),
+    });
     const detArgs = detJson.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ?? "";
     let det: { banco: string; producto: Producto; moneda: Moneda; evidencia: string } = {
       banco: "", producto: "", moneda: "", evidencia: "",
     };
     try { det = { ...det, ...JSON.parse(detArgs) }; } catch { /* ignore */ }
+
 
     if (/colpatria/i.test(det.banco)) det.banco = "Davibank";
 
