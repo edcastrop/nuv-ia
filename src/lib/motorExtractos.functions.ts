@@ -370,6 +370,8 @@ function applyBancolombiaDeterministicCorrections(
   const cuotaActual = toNumber(datos.cuotaActual);
   const cuotaSinSubsidio = toNumber(datos.cuotaSinSubsidio);
   const beneficio = toNumber(datos.valorBeneficioMensual);
+  const saldoCapital = toNumber(datos.saldoCapital);
+  const interes = toNumber(datos.interesCuota);
   let cuotaConSubsidio = toNumber(datos.cuotaConSubsidio);
 
   if (beneficio > 0 && cuotaSinSubsidio > 0) {
@@ -393,6 +395,19 @@ function applyBancolombiaDeterministicCorrections(
       datos.seguros = formatNumeric(segurosCalculados);
       scores.seguros = Math.max(scores.seguros, 95);
       alertas.push("Bancolombia: seguros corregidos por Valor a Pagar - cuota con subsidio.");
+    }
+  }
+
+  if (beneficio > 0 && saldoCapital > 0 && interes > 0 && datos.tasaEA) {
+    const tasaCalculadaContaminada =
+      (Math.pow(1 + (interes + beneficio) / saldoCapital, 12) - 1) * 100;
+    const tasaEAActual = toNumber(datos.tasaEA);
+    if (tasaEAActual > 0 && Math.abs(tasaEAActual - tasaCalculadaContaminada) <= 0.15) {
+      datos.tasaEA = "";
+      scores.tasaEA = 0;
+      alertas.push(
+        "Bancolombia: tasa EA descartada porque parece calculada desde intereses + subsidio; debe tomarse sólo de 'Tasa interés cobrada'.",
+      );
     }
   }
 
