@@ -248,6 +248,17 @@ function findProfileByName(banco: string, producto?: Producto): BankProfile | nu
 }
 
 // ---------------- Server Function ----------------
+    // Precios USD por 1M tokens (pass-through Lovable AI Gateway)
+    const PRECIOS: Record<string, { in: number; out: number }> = {
+      "google/gemini-2.5-pro": { in: 1.25, out: 10.0 },
+      "google/gemini-2.5-flash": { in: 0.30, out: 2.50 },
+    };
+    const calcCosto = (modelo: string, tokIn: number, tokOut: number) => {
+      const p = PRECIOS[modelo] ?? { in: 0, out: 0 };
+      return (tokIn / 1_000_000) * p.in + (tokOut / 1_000_000) * p.out;
+    };
+    const llamadas: CostoLlamada[] = [];
+
 
 export const extractStatementMotor = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => InputSchema.parse(data))
