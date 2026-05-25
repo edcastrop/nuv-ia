@@ -38,6 +38,9 @@ export interface CreditoMaestro {
   saldoCapital: string;
   cuotaActual: string;
   seguros?: string;
+  cuotaConSubsidio?: string;
+  cuotaConInteresSinSeguros?: string;
+  cuotaBaseSimulacion?: string;
   tasa: string;
   cuotasPagadas: string;
   cuotasPendientes: string;
