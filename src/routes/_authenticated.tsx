@@ -88,7 +88,7 @@ function AuthenticatedLayout() {
 
 
 
-  const NavBtn = ({ to, label, Icon, exact }: { to: string; label: string; Icon: typeof LayoutGrid; exact?: boolean }) => {
+  const NavBtn = ({ to, label, Icon, exact, badge }: { to: string; label: string; Icon: typeof LayoutGrid; exact?: boolean; badge?: number }) => {
     const active = exact ? location.pathname === to : location.pathname === to || location.pathname.startsWith(to + "/") || location.pathname === to;
     return (
       <Link
