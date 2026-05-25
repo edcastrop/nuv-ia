@@ -324,20 +324,22 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
       };
     }
 
-    // PASO 2 — Parser especializado
+    // PASO 2 — Parser especializado (Flash por defecto, Pro como fallback)
     let parseResp = await callLovableAI(
-      "google/gemini-2.5-pro",
+      "google/gemini-2.5-flash",
       buildParserSystem(profile),
       userContent,
       parserTool,
     );
+    let usedProFallback = false;
     if (!parseResp.ok && (parseResp.status === 504 || parseResp.status === 408 || parseResp.status >= 500)) {
       parseResp = await callLovableAI(
-        "google/gemini-2.5-flash",
+        "google/gemini-2.5-pro",
         buildParserSystem(profile),
         userContent,
         parserTool,
       );
+      usedProFallback = true;
     }
     if (!parseResp.ok) {
       if (parseResp.status === 429) return { error: "Demasiadas solicitudes. Intenta de nuevo.", data: null };
@@ -346,7 +348,7 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
     }
 
     const pJson = (await parseResp.json()) as ChatResp;
-    const parseModel = parseResp.status >= 500 ? "google/gemini-2.5-flash" : "google/gemini-2.5-pro";
+    const parseModel = usedProFallback ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
     const pIn = pJson.usage?.prompt_tokens ?? 0;
     const pOut = pJson.usage?.completion_tokens ?? 0;
     llamadas.push({
