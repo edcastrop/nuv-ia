@@ -33,9 +33,11 @@ export interface CreditoMaestro {
   numeroCredito: string;
   tipoProducto: string; // pesos / UVR
   fechaDesembolso: string;
+  valorDesembolsado?: string;
   plazoOriginal: string;
   saldoCapital: string;
   cuotaActual: string;
+  seguros?: string;
   tasa: string;
   cuotasPagadas: string;
   cuotasPendientes: string;
@@ -96,7 +98,7 @@ export const emptyCotitular = (): CotitularMaestro => ({
 
 export const emptyCredito = (): CreditoMaestro => ({
   banco: "", numeroCredito: "", tipoProducto: "", fechaDesembolso: "",
-  plazoOriginal: "", saldoCapital: "", cuotaActual: "", tasa: "",
+  valorDesembolsado: "", plazoOriginal: "", saldoCapital: "", cuotaActual: "", seguros: "", tasa: "",
   cuotasPagadas: "", cuotasPendientes: "",
 });
 
@@ -221,10 +223,10 @@ export function maestroToExpediente(m: ExpedienteMaestro) {
     cobertura,
   };
   const credito_data: Record<string, string> = {
-    valorDesembolsado: "",
+    valorDesembolsado: m.credito?.valorDesembolsado ?? "",
     saldoCapital: m.credito?.saldoCapital ?? "",
     cuotaActual: m.credito?.cuotaActual ?? "",
-    seguros: "",
+    seguros: m.credito?.seguros ?? "",
     tea: m.credito?.tasa ?? "",
     nuevaCuotaManual: "",
   };
