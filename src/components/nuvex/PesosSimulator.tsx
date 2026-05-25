@@ -49,6 +49,7 @@ import {
 } from "./intervinientes";
 import { useAsesorDefault } from "@/hooks/useAsesorDefault";
 import { freshFromCobertura } from "@/lib/cobertura";
+import { normalizeCreditMoneyInput } from "@/lib/creditoSanity";
 
 export function PesosSimulator({
   initialExpediente,
@@ -97,11 +98,22 @@ export function PesosSimulator({
   const cuotasPendientes = Math.max(0, plazoInicial - cuotasPagadas);
   const honorariosPct = parsePercentage(client.porcentajeHonorarios) || 6;
 
-  const valorDesembolsadoNum = parseCurrency(valorDesembolsado);
-  const cuotaActualNum = parseCurrency(cuotaActual);
+  const saneCredito = normalizeCreditMoneyInput({
+    valorDesembolsado,
+    saldoCapital,
+    cuotaActual,
+    seguros,
+    cuotaBaseSimulacion: cobertura.cuotaBaseSimulacion,
+    cuotaConSubsidio: cobertura.cuotaPagadaCliente,
+    cuotaConInteresSinSeguros: cobertura.cuotaConInteresSinSeguros,
+    valorBeneficioMensual: cobertura.valorCobertura,
+  });
+  const valorDesembolsadoNum = saneCredito.numbers.valorDesembolsado ?? parseCurrency(valorDesembolsado);
+  const cuotaActualNum = saneCredito.numbers.cuotaActual ?? parseCurrency(cuotaActual);
   const cuotaPagadaClienteNum = parseCurrency(cobertura.cuotaPagadaCliente);
-  const cuotaBaseSimulacionRaw = parseCurrency(cobertura.cuotaBaseSimulacion);
-  const saldoCapitalNum = parseCurrency(saldoCapital);
+  const cuotaBaseSimulacionRaw =
+    saneCredito.numbers.cuotaBaseSimulacion ?? parseCurrency(cobertura.cuotaBaseSimulacion);
+  const saldoCapitalNum = saneCredito.numbers.saldoCapital ?? parseCurrency(saldoCapital);
   const baseReferenciaCredito = Math.max(saldoCapitalNum, valorDesembolsadoNum, 1);
   const cuotaMaximaRazonable = Math.max(8_000_000, baseReferenciaCredito * 0.04);
   const cuotaBaseSimulacionNum =
@@ -118,7 +130,7 @@ export function PesosSimulator({
     cuotaBaseSimulacionNum > 0 ? cuotaBaseSimulacionNum : cuotaActualValida;
   const cuotaClienteHoyNum =
     cuotaPagadaClienteValida > 0 ? cuotaPagadaClienteValida : cuotaActualValida;
-  const segurosNum = parseCurrency(seguros);
+  const segurosNum = saneCredito.numbers.seguros ?? parseCurrency(seguros);
   const cuotaSinSegurosNum = Math.max(0, cuotaSimulacionNum - segurosNum);
   const dineroPagadoFecha = cuotaClienteHoyNum * cuotasPagadas;
 

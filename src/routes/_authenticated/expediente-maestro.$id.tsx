@@ -22,6 +22,7 @@ import { ModuloJuridico } from "@/components/expediente-maestro/ModuloJuridico";
 import { MotorExtractosNUVEX } from "@/components/nuvex/MotorExtractosNUVEX";
 import type { MotorResultado } from "@/lib/motorExtractos.functions";
 import { withFreshDerivados, normalizeTipoBeneficio, FRESH_DEFAULT_TOTAL } from "@/lib/cobertura";
+import { normalizeCreditMoneyInput } from "@/lib/creditoSanity";
 
 export const Route = createFileRoute("/_authenticated/expediente-maestro/$id")({
   component: MaestroDetail,
@@ -103,25 +104,38 @@ function MaestroDetail() {
         const n = num(s);
         return n >= 7 && n <= 25 ? s : "";
       };
+      const sane = normalizeCreditMoneyInput({
+        valorDesembolsado: d.valorDesembolsado,
+        saldoCapital: d.saldoCapital,
+        cuotaActual: d.cuotaActual,
+        seguros: d.seguros,
+        cuotaSinSubsidio: d.cuotaSinSubsidio,
+        cuotaConSubsidio: d.cuotaConSubsidio,
+        cuotaConInteresSinSeguros: d.cuotaSinSubsidio || d.cuotaConSubsidio,
+        valorBeneficioMensual: d.valorBeneficioMensual,
+      });
+      const money = (k: keyof typeof sane.numbers, fallback = "") => sane.numbers[k] ?? num(fallback);
+      const moneyText = (k: keyof typeof sane.values, fallback = "") =>
+        sane.values[k] || onlyDigits(fallback);
       const cuotaRazonable = (v: number) => {
-        const saldo = num(d.saldoCapital);
-        const desembolso = num(d.valorDesembolsado);
+        const saldo = money("saldoCapital", d.saldoCapital);
+        const desembolso = money("valorDesembolsado", d.valorDesembolsado);
         const base = Math.max(saldo, desembolso, 1);
         return v > 0 && v <= Math.max(8_000_000, base * 0.04);
       };
 
       // Beneficio / Cobertura: activamos sólo si hay valor mensual > 0
       const beneficioFlag = (d.beneficioActivo || "").toLowerCase() === "si";
-      const valorBenef = num(d.valorBeneficioMensual);
+      const valorBenef = money("valorBeneficioMensual", d.valorBeneficioMensual);
       const beneficioReal = beneficioFlag && valorBenef > 0;
 
       // Cuota actual para simulación: si hay subsidio, usamos la cuota real del crédito
       // antes del beneficio. En Bancolombia, "Valor a Pagar" ya incluye seguros, por eso
       // la base correcta es Valor a Pagar + subsidio, o cuota sin subsidio + seguros.
-      const cuotaConSub = num(d.cuotaConSubsidio);
-      const cuotaActualDoc = num(d.cuotaActual);
-      const cuotaSinSub = num(d.cuotaSinSubsidio);
-      const segurosNum = num(d.seguros);
+      const cuotaConSub = money("cuotaConSubsidio", d.cuotaConSubsidio);
+      const cuotaActualDoc = money("cuotaActual", d.cuotaActual);
+      const cuotaSinSub = money("cuotaSinSubsidio", d.cuotaSinSubsidio);
+      const segurosNum = money("seguros", d.seguros);
       const candidatosCuotaBase = beneficioReal
         ? [
             cuotaActualDoc > 0 ? cuotaActualDoc + valorBenef : 0,
@@ -134,13 +148,16 @@ function MaestroDetail() {
         cuotaBaseSimulacion > 0
           ? String(Math.round(cuotaBaseSimulacion))
           : onlyDigits(d.cuotaActual) || credito.cuotaActual || "";
-      const segurosResueltos = beneficioReal
-        ? Math.max(
-            0,
-            cuotaActualDoc > 0 && cuotaConSub > 0 ? cuotaActualDoc - cuotaConSub : 0,
-            cuotaBaseSimulacion > 0 && cuotaSinSub > 0 ? cuotaBaseSimulacion - cuotaSinSub : 0,
-          )
-        : segurosNum;
+      const segurosResueltos =
+        segurosNum > 0
+          ? segurosNum
+          : beneficioReal
+            ? Math.max(
+                0,
+                cuotaActualDoc > 0 && cuotaConSub > 0 ? cuotaActualDoc - cuotaConSub : 0,
+                cuotaBaseSimulacion > 0 && cuotaSinSub > 0 ? cuotaBaseSimulacion - cuotaSinSub : 0,
+              )
+            : 0;
 
       const cuotasPagadasNum = num(d.cuotasPagadas);
 
@@ -155,9 +172,10 @@ function MaestroDetail() {
         numeroCredito: d.numeroCredito || credito.numeroCredito || "",
         tipoProducto: r.producto || credito.tipoProducto || "",
         fechaDesembolso: d.fechaDesembolso || credito.fechaDesembolso || "",
-        valorDesembolsado: onlyDigits(d.valorDesembolsado) || credito.valorDesembolsado || "",
+        valorDesembolsado:
+          moneyText("valorDesembolsado", d.valorDesembolsado) || credito.valorDesembolsado || "",
         plazoOriginal: d.plazoInicial || credito.plazoOriginal || "",
-        saldoCapital: onlyDigits(d.saldoCapital) || credito.saldoCapital || "",
+        saldoCapital: moneyText("saldoCapital", d.saldoCapital) || credito.saldoCapital || "",
         cuotaActual: cuotaActualResuelta,
         seguros:
           segurosResueltos > 0
