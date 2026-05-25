@@ -193,7 +193,6 @@ export function PesosSimulator({
     return baseResult;
   }, [datosCompletos, input, nuevaCuotaManual, cuotasEliminarManual, modoPersonalizada, calc]);
 
-
   const manualValido = !!(manual && manual.valid);
 
   // Recomendación efectiva: manual cuando es válida; si no, la mejor automática
@@ -241,7 +240,10 @@ export function PesosSimulator({
     { label: "N° veces pagado el crédito", value: `${formatNumber(vecesActual, 2)} veces` },
     { label: "Plazo inicial", value: `${plazoInicial} meses` },
     { label: "TEA", value: formatPercentage(input.tea) },
-    { label: "Tasa mensual utilizada", value: calc ? formatPercentage(calc.tasaMensual * 100, 4) : "—" },
+    {
+      label: "Tasa mensual utilizada",
+      value: calc ? formatPercentage(calc.tasaMensual * 100, 4) : "—",
+    },
     { label: "Total por pagar", value: formatCOP(totalActualPendiente) },
   ];
 
@@ -511,9 +513,7 @@ export function PesosSimulator({
                     ? "text-white shadow"
                     : "text-[#242424]/70 hover:text-[#242424]"
                 }`}
-                style={
-                  modoPersonalizada === "cuota" ? { backgroundColor: NUVEX.azul } : undefined
-                }
+                style={modoPersonalizada === "cuota" ? { backgroundColor: NUVEX.azul } : undefined}
               >
                 Calcular por nueva cuota
               </button>
@@ -525,9 +525,7 @@ export function PesosSimulator({
                     ? "text-white shadow"
                     : "text-[#242424]/70 hover:text-[#242424]"
                 }`}
-                style={
-                  modoPersonalizada === "cuotas" ? { backgroundColor: NUVEX.azul } : undefined
-                }
+                style={modoPersonalizada === "cuotas" ? { backgroundColor: NUVEX.azul } : undefined}
               >
                 Calcular por cuotas a eliminar
               </button>
@@ -678,7 +676,7 @@ export function PesosSimulator({
                 <PrintDocument
                   mode="pesos"
                   client={{ ...client, intervinientes, cobertura }}
-                    cuotasPendientes={cuotasBaseSimulacion}
+                  cuotasPendientes={cuotasBaseSimulacion}
                   metrics={metrics}
                   pesosPropuestas={calc!.propuestas}
                   bestIndex={bestIndex}

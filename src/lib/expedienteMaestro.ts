@@ -27,15 +27,19 @@ export interface CotitularMaestro extends ClienteMaestro {
   mismaDireccionTitular?: boolean;
 }
 
-
 export interface CreditoMaestro {
   banco: string;
   numeroCredito: string;
   tipoProducto: string; // pesos / UVR
   fechaDesembolso: string;
+  valorDesembolsado?: string;
   plazoOriginal: string;
   saldoCapital: string;
   cuotaActual: string;
+  seguros?: string;
+  cuotaConSubsidio?: string;
+  cuotaConInteresSinSeguros?: string;
+  cuotaBaseSimulacion?: string;
   tasa: string;
   cuotasPagadas: string;
   cuotasPendientes: string;
@@ -84,33 +88,67 @@ export interface ExpedienteMaestro {
 }
 
 export const emptyCliente = (): ClienteMaestro => ({
-  nombre: "", cedula: "", expedidaEn: "", fechaNacimiento: "", estadoCivil: "",
-  profesion: "", telefono: "", email: "", direccion: "", ciudad: "",
-  tipoDocumento: "CC", fechaExpedicion: "", departamento: "",
+  nombre: "",
+  cedula: "",
+  expedidaEn: "",
+  fechaNacimiento: "",
+  estadoCivil: "",
+  profesion: "",
+  telefono: "",
+  email: "",
+  direccion: "",
+  ciudad: "",
+  tipoDocumento: "CC",
+  fechaExpedicion: "",
+  departamento: "",
 });
 
 export const emptyCotitular = (): CotitularMaestro => ({
-  ...emptyCliente(), activo: false, parentesco: "", mismaDireccionTitular: false,
+  ...emptyCliente(),
+  activo: false,
+  parentesco: "",
+  mismaDireccionTitular: false,
 });
 
-
 export const emptyCredito = (): CreditoMaestro => ({
-  banco: "", numeroCredito: "", tipoProducto: "", fechaDesembolso: "",
-  plazoOriginal: "", saldoCapital: "", cuotaActual: "", tasa: "",
-  cuotasPagadas: "", cuotasPendientes: "",
+  banco: "",
+  numeroCredito: "",
+  tipoProducto: "",
+  fechaDesembolso: "",
+  valorDesembolsado: "",
+  plazoOriginal: "",
+  saldoCapital: "",
+  cuotaActual: "",
+  seguros: "",
+  tasa: "",
+  cuotasPagadas: "",
+  cuotasPendientes: "",
 });
 
 export const emptyAsesor = (): AsesorMaestro => ({
-  nombre: "", cedula: "", telefono: "", email: "", codigo: "",
+  nombre: "",
+  cedula: "",
+  telefono: "",
+  email: "",
+  codigo: "",
 });
 
 export const emptyLicenciado = (): LicenciadoMaestro => ({
-  nombre: "", cedulaProfesional: "", telefono: "", email: "",
+  nombre: "",
+  cedulaProfesional: "",
+  telefono: "",
+  email: "",
 });
 
 export const emptyApoderado = (): ApoderadoMaestro => ({
-  nombre: "", cedula: "", telefono: "", email: "",
-  direccion: "", ciudad: "", numeroPoder: "", fechaPoder: "",
+  nombre: "",
+  cedula: "",
+  telefono: "",
+  email: "",
+  direccion: "",
+  ciudad: "",
+  numeroPoder: "",
+  fechaPoder: "",
 });
 
 export const emptyFresh = (): CoberturaFresh =>
@@ -139,7 +177,11 @@ export async function listMaestros(search?: string): Promise<ExpedienteMaestro[]
 }
 
 export async function getMaestro(id: string): Promise<ExpedienteMaestro> {
-  const { data, error } = await supabase.from("expediente_maestro").select("*").eq("id", id).single();
+  const { data, error } = await supabase
+    .from("expediente_maestro")
+    .select("*")
+    .eq("id", id)
+    .single();
   if (error) throw error;
   return data as unknown as ExpedienteMaestro;
 }
@@ -160,7 +202,12 @@ export async function upsertMaestro(p: UpsertMaestro): Promise<ExpedienteMaestro
     apoderado: p.apoderado as unknown as never,
   };
   if (p.id) {
-    const { data, error } = await supabase.from("expediente_maestro").update(row).eq("id", p.id).select().single();
+    const { data, error } = await supabase
+      .from("expediente_maestro")
+      .update(row)
+      .eq("id", p.id)
+      .select()
+      .single();
     if (error) throw error;
     return data as unknown as ExpedienteMaestro;
   }
@@ -201,6 +248,11 @@ export function maestroToExpediente(m: ExpedienteMaestro) {
         valorCobertura: String(Math.round(Number(fresh.valorMensual) || 0)),
         tasaCobertura: fresh.tasa ? String(fresh.tasa) : "",
         tipoBeneficio: fresh.tipoBeneficio || "",
+        cuotaPagadaCliente: m.credito?.cuotaConSubsidio ?? "",
+        cuotaConInteresSinSeguros: m.credito?.cuotaConInteresSinSeguros ?? "",
+        segurosMensuales: m.credito?.seguros ?? "",
+        cuotaBaseSimulacion: m.credito?.cuotaBaseSimulacion ?? m.credito?.cuotaActual ?? "",
+        requiereVerificacion: false,
       }
     : { activo: false, valorCobertura: "", tasaCobertura: "" };
   const productoBase = m.credito?.tipoProducto ?? "";
@@ -221,10 +273,10 @@ export function maestroToExpediente(m: ExpedienteMaestro) {
     cobertura,
   };
   const credito_data: Record<string, string> = {
-    valorDesembolsado: "",
+    valorDesembolsado: m.credito?.valorDesembolsado ?? "",
     saldoCapital: m.credito?.saldoCapital ?? "",
     cuotaActual: m.credito?.cuotaActual ?? "",
-    seguros: "",
+    seguros: m.credito?.seguros ?? "",
     tea: m.credito?.tasa ?? "",
     nuevaCuotaManual: "",
   };
@@ -313,7 +365,6 @@ export function expedienteToMaestroLike(exp: Expediente): ExpedienteMaestro {
   };
 }
 
-
 /**
  * Persiste la sección Información Jurídica dentro de `expedientes.cliente_data.informacionJuridica`.
  * Esta es la fuente oficial leída por `expedienteToMaestroLike` y por los generadores
@@ -327,12 +378,16 @@ export async function saveInformacionJuridicaExpediente(
   },
 ): Promise<void> {
   const { data: row, error: e1 } = await supabase
-    .from("expedientes").select("cliente_data").eq("id", expedienteId).single();
+    .from("expedientes")
+    .select("cliente_data")
+    .eq("id", expedienteId)
+    .single();
   if (e1) throw e1;
   const cd = (row?.cliente_data ?? {}) as Record<string, unknown>;
   const next = { ...cd, informacionJuridica: data };
   const { error: e2 } = await supabase
-    .from("expedientes").update({ cliente_data: next as never }).eq("id", expedienteId);
+    .from("expedientes")
+    .update({ cliente_data: next as never })
+    .eq("id", expedienteId);
   if (e2) throw e2;
 }
-
