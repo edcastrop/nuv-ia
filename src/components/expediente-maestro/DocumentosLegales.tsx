@@ -380,9 +380,25 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
               Financiado
             </label>
             <span className="text-[11px] text-[#242424]/60">
-              Honorarios: <strong>{fmtCOP(honorarios)}</strong>
+              Honorarios finales a cobrar: <strong>{fmtCOP(honorarios)}</strong>
             </span>
           </div>
+          {(descuentoAplicado > 0 || honorariosRecalc > 0) && (
+            <div className="mt-2 grid gap-1 rounded-lg bg-white p-2 text-[11px] text-[#242424]/75" style={{ border: "1px dashed #E3E7EE" }}>
+              {honorariosOriginales > 0 && (
+                <div>Honorarios originales: <strong>{fmtCOP(honorariosOriginales)}</strong></div>
+              )}
+              {descuentoAplicado > 0 && (
+                <div>Descuento comercial aplicado: <strong>−{fmtCOP(descuentoAplicado)}</strong></div>
+              )}
+              {honorariosRecalc > 0 && (
+                <div>Honorarios recalculados a éxito: <strong>{fmtCOP(honorariosRecalc)}</strong></div>
+              )}
+              <div style={{ color: "#1F7A45" }}>
+                Honorarios finales del cliente: <strong>{fmtCOP(honorarios)}</strong>
+              </div>
+            </div>
+          )}
 
           {modalidad === "financiado" && (
             <div className="mt-3 space-y-2">
