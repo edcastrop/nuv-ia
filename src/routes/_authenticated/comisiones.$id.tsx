@@ -133,6 +133,7 @@ function DetalleCuentaCobro() {
 
   async function guardarPorcentaje(pct: number): Promise<boolean> {
     if (!cc) return false;
+    const pctAnterior = cc.porcentaje_comision;
     // 1) Guardar % en la cuenta
     const { error } = await supabase
       .from("cuentas_cobro" as never)
@@ -150,6 +151,15 @@ function DetalleCuentaCobro() {
         .eq("id", it.id),
     );
     await Promise.all(updates);
+    // Auditoría
+    await supabase.from("finanzas_auditoria" as never).insert({
+      entidad: "cuenta_cobro",
+      entidad_id: cc.id,
+      accion: "cambio_porcentaje",
+      user_id: user?.id ?? null,
+      valor_anterior: { porcentaje_comision: pctAnterior },
+      valor_nuevo: { porcentaje_comision: pct, comisiones_afectadas: items.length },
+    } as never);
     // 3) Refrescar para que el trigger recalc_cuenta_cobro_total actualice cc.total
     await cargar();
     return true;
