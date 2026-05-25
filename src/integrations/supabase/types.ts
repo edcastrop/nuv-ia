@@ -1341,6 +1341,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      map_caso_to_expediente_estado: {
+        Args: { _caso: Database["public"]["Enums"]["caso_estado"] }
+        Returns: Database["public"]["Enums"]["expediente_estado"]
+      }
     }
     Enums: {
       app_role:
