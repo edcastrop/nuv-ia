@@ -123,6 +123,13 @@ function MaestroDetail() {
         cuotaBaseSimulacion > 0
           ? String(Math.round(cuotaBaseSimulacion))
           : onlyDigits(d.cuotaActual) || credito.cuotaActual || "";
+      const segurosResueltos = beneficioReal
+        ? Math.max(
+            0,
+            cuotaActualDoc > 0 && cuotaConSub > 0 ? cuotaActualDoc - cuotaConSub : 0,
+            cuotaBaseSimulacion > 0 && cuotaSinSub > 0 ? cuotaBaseSimulacion - cuotaSinSub : 0,
+          )
+        : segurosNum;
 
       const cuotasPagadasNum = num(d.cuotasPagadas);
 
@@ -141,10 +148,13 @@ function MaestroDetail() {
         plazoOriginal: d.plazoInicial || credito.plazoOriginal || "",
         saldoCapital: onlyDigits(d.saldoCapital) || credito.saldoCapital || "",
         cuotaActual: cuotaActualResuelta,
-        seguros: onlyDigits(d.seguros) || credito.seguros || "",
+        seguros:
+          segurosResueltos > 0
+            ? String(Math.round(segurosResueltos))
+            : onlyDigits(d.seguros) || credito.seguros || "",
         cuotaConSubsidio:
           cuotaConSub > 0
-            ? String(Math.round(cuotaConSub + segurosNum))
+            ? String(Math.round(cuotaConSub + segurosResueltos))
             : onlyDigits(d.cuotaActual),
         cuotaConInteresSinSeguros: d.cuotaSinSubsidio || d.cuotaConSubsidio || "",
         cuotaBaseSimulacion: cuotaActualResuelta,
