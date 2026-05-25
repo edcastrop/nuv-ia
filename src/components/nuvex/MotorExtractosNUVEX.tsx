@@ -215,14 +215,54 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
       </div>
 
       {stage === "idle" && (
-        <label className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 cursor-pointer hover:bg-[#F7F9FB]"
-          style={{ borderColor: NUVEX.azul + "55" }}>
-          <Upload className="h-6 w-6" style={{ color: NUVEX.azul }} />
-          <div className="text-sm font-medium text-[#242424]">Subir extracto bancario (PDF o imagen)</div>
-          <div className="text-[11px] text-[#242424]/60">Bancos soportados: Bancolombia, Davivienda, Davibank, Caja Social, Banco de Bogotá, FNA, Banco Popular, Banco de Occidente, AV Villas, Credifamilia.</div>
-          <input ref={fileRef} type="file" accept=".pdf,image/*" className="hidden"
-            onChange={(e) => onFile(e.target.files?.[0] ?? null)} />
-        </label>
+        <div
+          onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); }}
+          onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); }}
+          onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); }}
+          onDrop={(e) => {
+            e.preventDefault(); e.stopPropagation(); setIsDragging(false);
+            const f = e.dataTransfer.files?.[0] ?? null;
+            onFile(f);
+          }}
+          className="rounded-xl border-2 border-dashed p-8 transition-colors"
+          style={{
+            borderColor: isDragging ? NUVEX.azul : NUVEX.azul + "55",
+            background: isDragging ? NUVEX.azul + "10" : "#FBFCFD",
+          }}
+        >
+          <div className="flex flex-col items-center justify-center gap-3 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full" style={{ background: NUVEX.azul + "15" }}>
+              <FileText className="h-6 w-6" style={{ color: NUVEX.azul }} />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-[#242424]">📄 Cargar Extracto Bancario</div>
+              <div className="mt-1 text-xs text-[#242424]/70">
+                {isDragging ? "Suelte el archivo para cargarlo" : "Arrastre aquí el PDF del extracto"}
+              </div>
+            </div>
+            {!isDragging && (
+              <>
+                <div className="text-[11px] text-[#242424]/50">o</div>
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold text-white shadow-sm hover:opacity-90"
+                  style={{ background: NUVEX.azul }}
+                >
+                  <Upload className="h-3.5 w-3.5" /> Seleccionar archivo
+                </button>
+                <div className="mt-2 text-[10px] text-[#242424]/55">
+                  Formato permitido: <strong>PDF</strong> · Tamaño máximo: <strong>20 MB</strong>
+                </div>
+                <div className="text-[10px] text-[#242424]/45 max-w-md">
+                  Bancos soportados: Bancolombia, Davivienda, Davibank, Caja Social, Banco de Bogotá, FNA, Banco Popular, Banco de Occidente, AV Villas, Credifamilia.
+                </div>
+              </>
+            )}
+            <input ref={fileRef} type="file" accept="application/pdf,.pdf" className="hidden"
+              onChange={(e) => onFile(e.target.files?.[0] ?? null)} />
+          </div>
+        </div>
       )}
 
       {stage === "password" && (
@@ -238,9 +278,32 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
       )}
 
       {stage === "reading" && (
-        <div className="flex items-center gap-3 rounded-lg border p-4" style={{ borderColor: NUVEX.azul + "33" }}>
-          <Loader2 className="h-5 w-5 animate-spin" style={{ color: NUVEX.azul }} />
-          <div className="text-sm">Detectando banco y aplicando parser especializado…</div>
+        <div className="rounded-lg border p-4 space-y-3" style={{ borderColor: NUVEX.azul + "33", background: "#F7F9FB" }}>
+          {file && (
+            <div className="flex items-center gap-2 text-xs text-[#242424]/80">
+              <CheckCircle2 className="h-4 w-4" style={{ color: NUVEX.verdeTextoFuerte }} />
+              <span className="font-medium">{file.name}</span>
+              <span className="text-[#242424]/50">· {fmtSize(file.size)}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-3">
+            <Loader2 className="h-5 w-5 animate-spin" style={{ color: NUVEX.azul }} />
+            <div className="text-sm font-medium text-[#242424]">
+              {readingPhase === "upload" && "Subiendo archivo…"}
+              {readingPhase === "ocr" && "Procesando OCR…"}
+              {readingPhase === "analyze" && "Analizando extracto…"}
+            </div>
+          </div>
+          <div className="flex gap-1">
+            {(["upload", "ocr", "analyze"] as const).map((p, i) => {
+              const order = { upload: 0, ocr: 1, analyze: 2 }[readingPhase];
+              const done = i <= order;
+              return (
+                <div key={p} className="h-1 flex-1 rounded-full transition-colors"
+                  style={{ background: done ? NUVEX.azul : NUVEX.azul + "22" }} />
+              );
+            })}
+          </div>
         </div>
       )}
 
