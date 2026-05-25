@@ -63,6 +63,10 @@ interface Props {
 export function MaestroEditor(p: Props) {
   const set = <T, K extends keyof T>(obj: T, k: K, v: T[K]) => ({ ...obj, [k]: v });
 
+  const esLeasing = /leasing/i.test(p.credito.tipoProducto || "");
+  const rolTitular = esLeasing ? "locatario" : "titular";
+  const rolCotitular = esLeasing ? "colocatario" : "cotitular";
+
   // Auto-rellenar Departamento desde la Ciudad de residencia (titular y cotitular).
   useEffect(() => {
     const dep = cityDepartment(p.cliente.ciudad);
@@ -78,18 +82,38 @@ export function MaestroEditor(p: Props) {
     }
   }, [p.cotitular.ciudad, p.cotitular.activo]);
 
-  // Herencia de datos del titular hacia el cotitular.
-  const [hered, setHered] = useState({ direccion: false, ciudad: false, email: false, telefono: false });
+  // Herencia de dirección del titular hacia el cotitular/colocatario.
+  // Cuando el checkbox está activo: copia dirección + ciudad + departamento
+  // y mantiene sincronizado si el titular los cambia.
+  const heredada = !!p.cotitular.mismaDireccionTitular;
   useEffect(() => {
-    if (!p.cotitular.activo) return;
+    if (!p.cotitular.activo || !heredada) return;
     const next = { ...p.cotitular };
     let changed = false;
-    if (hered.direccion && next.direccion !== p.cliente.direccion) { next.direccion = p.cliente.direccion; changed = true; }
-    if (hered.ciudad && next.ciudad !== p.cliente.ciudad) { next.ciudad = p.cliente.ciudad; changed = true; }
-    if (hered.email && next.email !== p.cliente.email) { next.email = p.cliente.email; changed = true; }
-    if (hered.telefono && next.telefono !== p.cliente.telefono) { next.telefono = p.cliente.telefono; changed = true; }
+    if (next.direccion !== p.cliente.direccion) { next.direccion = p.cliente.direccion; changed = true; }
+    if (next.ciudad !== p.cliente.ciudad) { next.ciudad = p.cliente.ciudad; changed = true; }
+    const dep = p.cliente.departamento || cityDepartment(p.cliente.ciudad);
+    if (dep && next.departamento !== dep) { next.departamento = dep; changed = true; }
     if (changed) p.onCotitular(next);
-  }, [hered, p.cliente.direccion, p.cliente.ciudad, p.cliente.email, p.cliente.telefono, p.cotitular.activo]);
+  }, [heredada, p.cliente.direccion, p.cliente.ciudad, p.cliente.departamento, p.cotitular.activo]);
+
+  const toggleMismaDireccion = (checked: boolean) => {
+    if (checked) {
+      p.onCotitular({
+        ...p.cotitular,
+        mismaDireccionTitular: true,
+        direccion: p.cliente.direccion,
+        ciudad: p.cliente.ciudad,
+        departamento: p.cliente.departamento || cityDepartment(p.cliente.ciudad) || p.cotitular.departamento,
+      });
+    } else {
+      // No borrar datos copiados; sólo desactivar la herencia.
+      p.onCotitular({ ...p.cotitular, mismaDireccionTitular: false });
+    }
+  };
+
+  const hintHeredada = `Dirección heredada del ${rolTitular}.`;
+
 
   return (
     <div className="space-y-4">
@@ -114,20 +138,38 @@ export function MaestroEditor(p: Props) {
           <span>El crédito tiene cotitular</span>
         </label>
         {p.cotitular.activo && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <TextField label="Nombre completo" value={p.cotitular.nombre} onChange={(v) => p.onCotitular(set(p.cotitular, "nombre", v))} />
-            <TextField label="Cédula" value={p.cotitular.cedula} onChange={(v) => p.onCotitular(set(p.cotitular, "cedula", v))} />
-            <TextField label="Parentesco / Relación" value={p.cotitular.parentesco} onChange={(v) => p.onCotitular(set(p.cotitular, "parentesco", v))} />
-            <TextField label="Expedida en" value={p.cotitular.expedidaEn} onChange={(v) => p.onCotitular(set(p.cotitular, "expedidaEn", v))} />
-            <TextField label="Fecha de nacimiento" value={p.cotitular.fechaNacimiento} placeholder="DD/MM/AAAA" onChange={(v) => p.onCotitular(set(p.cotitular, "fechaNacimiento", v))} />
-            <SelectField label="Estado civil" value={p.cotitular.estadoCivil} options={ESTADOS_CIVIL} onChange={(v) => p.onCotitular(set(p.cotitular, "estadoCivil", v))} />
-            <TextField label="Profesión" value={p.cotitular.profesion} onChange={(v) => p.onCotitular(set(p.cotitular, "profesion", v))} />
-            <TextField label="Teléfono" value={p.cotitular.telefono} onChange={(v) => p.onCotitular(set(p.cotitular, "telefono", v))} />
-            <TextField label="Email" value={p.cotitular.email} onChange={(v) => p.onCotitular(set(p.cotitular, "email", v))} />
-            <CityField label="Ciudad" value={p.cotitular.ciudad} onChange={(v) => p.onCotitular(set(p.cotitular, "ciudad", v))} />
-            <TextField label="Dirección" value={p.cotitular.direccion} onChange={(v) => p.onCotitular(set(p.cotitular, "direccion", v))} className="md:col-span-2 lg:col-span-3" />
-          </div>
+          <>
+            <label className="mb-4 flex items-center gap-2 rounded-lg border border-[#445DA3]/20 bg-[#445DA3]/5 p-3 text-sm text-[#242424]">
+              <input type="checkbox" checked={heredada} onChange={(e) => toggleMismaDireccion(e.target.checked)} />
+              <span>Vive en la misma dirección del {rolTitular}</span>
+            </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <TextField label="Nombre completo" value={p.cotitular.nombre} onChange={(v) => p.onCotitular(set(p.cotitular, "nombre", v))} />
+              <TextField label="Cédula" value={p.cotitular.cedula} onChange={(v) => p.onCotitular(set(p.cotitular, "cedula", v))} />
+              <TextField label="Parentesco / Relación" value={p.cotitular.parentesco} onChange={(v) => p.onCotitular(set(p.cotitular, "parentesco", v))} />
+              <TextField label="Expedida en" value={p.cotitular.expedidaEn} onChange={(v) => p.onCotitular(set(p.cotitular, "expedidaEn", v))} />
+              <TextField label="Fecha de nacimiento" value={p.cotitular.fechaNacimiento} placeholder="DD/MM/AAAA" onChange={(v) => p.onCotitular(set(p.cotitular, "fechaNacimiento", v))} />
+              <SelectField label="Estado civil" value={p.cotitular.estadoCivil} options={ESTADOS_CIVIL} onChange={(v) => p.onCotitular(set(p.cotitular, "estadoCivil", v))} />
+              <TextField label="Profesión" value={p.cotitular.profesion} onChange={(v) => p.onCotitular(set(p.cotitular, "profesion", v))} />
+              <TextField label="Teléfono" value={p.cotitular.telefono} onChange={(v) => p.onCotitular(set(p.cotitular, "telefono", v))} />
+              <TextField label="Email" value={p.cotitular.email} onChange={(v) => p.onCotitular(set(p.cotitular, "email", v))} />
+              {heredada ? (
+                <TextField label="Ciudad" value={p.cotitular.ciudad} readOnly hint={hintHeredada} />
+              ) : (
+                <CityField label="Ciudad" value={p.cotitular.ciudad} onChange={(v) => p.onCotitular(set(p.cotitular, "ciudad", v))} />
+              )}
+              <TextField
+                label="Dirección"
+                value={p.cotitular.direccion}
+                onChange={(v) => p.onCotitular(set(p.cotitular, "direccion", v))}
+                readOnly={heredada}
+                hint={heredada ? hintHeredada : undefined}
+                className="md:col-span-2 lg:col-span-3"
+              />
+            </div>
+          </>
         )}
+
       </Accordion>
 
       <Accordion title="Información jurídica" subtitle="Datos requeridos para generar Poder Especial y documentos legales">
@@ -153,27 +195,37 @@ export function MaestroEditor(p: Props) {
         {p.cotitular.activo && (
           <>
             <div className="text-[11px] uppercase tracking-wider font-semibold mb-2" style={{ color: NUVEX.azul }}>
-              Cotitular / Colocatario
+              {esLeasing ? "Colocatario" : "Cotitular"}
             </div>
-            <div className="mb-3 grid grid-cols-1 md:grid-cols-2 gap-2 rounded-lg border border-[#445DA3]/20 bg-[#445DA3]/5 p-3 text-sm text-[#242424]">
-              <label className="flex items-center gap-2"><input type="checkbox" checked={hered.direccion} onChange={(e) => setHered({ ...hered, direccion: e.target.checked })} /> Misma dirección del titular</label>
-              <label className="flex items-center gap-2"><input type="checkbox" checked={hered.ciudad} onChange={(e) => setHered({ ...hered, ciudad: e.target.checked })} /> Misma ciudad de residencia del titular</label>
-              <label className="flex items-center gap-2"><input type="checkbox" checked={hered.email} onChange={(e) => setHered({ ...hered, email: e.target.checked })} /> Mismo correo del titular</label>
-              <label className="flex items-center gap-2"><input type="checkbox" checked={hered.telefono} onChange={(e) => setHered({ ...hered, telefono: e.target.checked })} /> Mismo celular del titular</label>
-            </div>
+            <label className="mb-3 flex items-center gap-2 rounded-lg border border-[#445DA3]/20 bg-[#445DA3]/5 p-3 text-sm text-[#242424]">
+              <input type="checkbox" checked={heredada} onChange={(e) => toggleMismaDireccion(e.target.checked)} />
+              <span>Vive en la misma dirección del {rolTitular} (dirección, ciudad y departamento)</span>
+            </label>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <SelectField label="Tipo de documento" value={p.cotitular.tipoDocumento || "CC"} options={TIPOS_DOC} onChange={(v) => p.onCotitular(set(p.cotitular, "tipoDocumento", v))} />
               <TextField label="Número de documento" value={p.cotitular.cedula} onChange={(v) => p.onCotitular(set(p.cotitular, "cedula", v))} />
               <CityField label="Lugar de expedición" value={p.cotitular.expedidaEn} onChange={(v) => p.onCotitular(set(p.cotitular, "expedidaEn", v))} placeholder="Selecciona municipio…" />
               <TextField label="Fecha de expedición" value={p.cotitular.fechaExpedicion || ""} placeholder="DD/MM/AAAA" onChange={(v) => p.onCotitular(set(p.cotitular, "fechaExpedicion", v))} />
-              <CityField label="Ciudad de residencia" value={p.cotitular.ciudad} onChange={(v) => p.onCotitular(set(p.cotitular, "ciudad", v))} required />
-              <TextField label="Departamento" value={p.cotitular.departamento || ""} readOnly />
+              {heredada ? (
+                <TextField label="Ciudad de residencia" value={p.cotitular.ciudad} readOnly hint={hintHeredada} />
+              ) : (
+                <CityField label="Ciudad de residencia" value={p.cotitular.ciudad} onChange={(v) => p.onCotitular(set(p.cotitular, "ciudad", v))} required />
+              )}
+              <TextField label="Departamento" value={p.cotitular.departamento || ""} readOnly hint={heredada ? hintHeredada : undefined} />
               <TextField label="Correo electrónico" value={p.cotitular.email} onChange={(v) => p.onCotitular(set(p.cotitular, "email", v))} />
               <TextField label="Celular" value={p.cotitular.telefono} onChange={(v) => p.onCotitular(set(p.cotitular, "telefono", v))} />
-              <TextField label="Dirección" value={p.cotitular.direccion} onChange={(v) => p.onCotitular(set(p.cotitular, "direccion", v))} className="md:col-span-2 lg:col-span-3" />
+              <TextField
+                label="Dirección"
+                value={p.cotitular.direccion}
+                onChange={(v) => p.onCotitular(set(p.cotitular, "direccion", v))}
+                readOnly={heredada}
+                hint={heredada ? hintHeredada : undefined}
+                className="md:col-span-2 lg:col-span-3"
+              />
             </div>
           </>
         )}
+
       </Accordion>
 
       <Accordion title="Datos del crédito" subtitle="Información financiera vigente">
