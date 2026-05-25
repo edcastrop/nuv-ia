@@ -108,11 +108,51 @@ export function ResultadoFinal({
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
   const [consecutivo] = useState<string>(() => nextConsecutivo());
   const [honorariosPagadosManual, setHonorariosPagadosManual] = useState(false);
+
+  // ====== Recálculo de honorarios a éxito (Fase 1) ======
+  const honorariosPropuesta = proyeccion?.honorariosFinales ?? 0;
+  const [cuotasPactadas, setCuotasPactadas] = useState<string>("");
+  const [cuotasAprobadasBanco, setCuotasAprobadasBanco] = useState<string>("");
+  const [honorariosPactados, setHonorariosPactados] = useState<string>("");
+  const [savingRecalc, setSavingRecalc] = useState(false);
+  const [recalcMsg, setRecalcMsg] = useState<string | null>(null);
+
+  // Hidratar valores iniciales desde el expediente
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      if (!expedienteId) {
+        if (honorariosPropuesta > 0) setHonorariosPactados(String(honorariosPropuesta));
+        return;
+      }
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data } = await supabase
+        .from("expedientes")
+        .select("cuotas_pactadas, cuotas_aprobadas_banco, honorarios_pactados, propuesta_data")
+        .eq("id", expedienteId)
+        .maybeSingle();
+      if (cancel) return;
+      const row = data as { cuotas_pactadas?: number | null; cuotas_aprobadas_banco?: number | null; honorarios_pactados?: number | null; propuesta_data?: { nuevoPlazo?: number } } | null;
+      if (row?.cuotas_pactadas != null) setCuotasPactadas(String(row.cuotas_pactadas));
+      else if (row?.propuesta_data?.nuevoPlazo) setCuotasPactadas(String(Math.max(0, cuotasPendientes - row.propuesta_data.nuevoPlazo)));
+      if (row?.cuotas_aprobadas_banco != null) setCuotasAprobadasBanco(String(row.cuotas_aprobadas_banco));
+      if (row?.honorarios_pactados != null) setHonorariosPactados(String(row.honorarios_pactados));
+      else if (honorariosPropuesta > 0) setHonorariosPactados(String(honorariosPropuesta));
+    })();
+    return () => { cancel = true; };
+  }, [expedienteId, honorariosPropuesta, cuotasPendientes]);
+
+  const recalculo = useMemo(
+    () => calcularRecalculoHonorarios(
+      parseDecimal(cuotasPactadas),
+      parseDecimal(cuotasAprobadasBanco),
+      parseCurrency(honorariosPactados),
+    ),
+    [cuotasPactadas, cuotasAprobadasBanco, honorariosPactados],
+  );
+
   const set = <K extends keyof AprobacionState>(k: K, v: AprobacionState[K]) =>
     setAprob((s) => ({ ...s, [k]: v }));
-
-  const cuotaAprobadaNum = parseCurrency(aprob.cuotaAprobada);
-  const plazoAprobadoNum = parseDecimal(aprob.plazoAprobado);
 
   const aprobado = useMemo(() => {
     if (!proyeccion || cuotaAprobadaNum <= 0 || plazoAprobadoNum <= 0) return null;
