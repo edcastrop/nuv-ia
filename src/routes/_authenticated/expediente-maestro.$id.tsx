@@ -36,6 +36,9 @@ function MaestroDetail() {
   const [asesor, setAsesor] = useState(emptyAsesor());
   const [licenciado, setLicenciado] = useState(emptyLicenciado());
   const [apoderado, setApoderado] = useState(emptyApoderado());
+  const [extractoAplicado, setExtractoAplicado] = useState<MotorResultado | null>(null);
+  const [aplicandoExtracto, setAplicandoExtracto] = useState(false);
+  const resumenRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setLoading(true);
