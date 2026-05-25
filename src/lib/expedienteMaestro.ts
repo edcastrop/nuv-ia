@@ -253,7 +253,8 @@ export function maestroToExpediente(m: ExpedienteMaestro) {
     valorBeneficioMensual: fresh?.valorMensual,
   });
   const money = (k: keyof typeof sane.values, fallback = "") => sane.values[k] || fallback;
-  const freshMensual = sane.values.valorBeneficioMensual || String(Math.round(Number(fresh?.valorMensual) || 0));
+  const freshMensual =
+    sane.values.valorBeneficioMensual || String(Math.round(Number(fresh?.valorMensual) || 0));
   const coberturaActiva = !!fresh?.activo && Number(fresh?.valorMensual ?? 0) > 0;
   const cobertura = coberturaActiva
     ? {

@@ -108,7 +108,8 @@ export function PesosSimulator({
     cuotaConInteresSinSeguros: cobertura.cuotaConInteresSinSeguros,
     valorBeneficioMensual: cobertura.valorCobertura,
   });
-  const valorDesembolsadoNum = saneCredito.numbers.valorDesembolsado ?? parseCurrency(valorDesembolsado);
+  const valorDesembolsadoNum =
+    saneCredito.numbers.valorDesembolsado ?? parseCurrency(valorDesembolsado);
   const cuotaActualNum = saneCredito.numbers.cuotaActual ?? parseCurrency(cuotaActual);
   const cuotaPagadaClienteNum = parseCurrency(cobertura.cuotaPagadaCliente);
   const cuotaBaseSimulacionRaw =

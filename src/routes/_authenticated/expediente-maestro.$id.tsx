@@ -114,7 +114,8 @@ function MaestroDetail() {
         cuotaConInteresSinSeguros: d.cuotaSinSubsidio || d.cuotaConSubsidio,
         valorBeneficioMensual: d.valorBeneficioMensual,
       });
-      const money = (k: keyof typeof sane.numbers, fallback = "") => sane.numbers[k] ?? num(fallback);
+      const money = (k: keyof typeof sane.numbers, fallback = "") =>
+        sane.numbers[k] ?? num(fallback);
       const moneyText = (k: keyof typeof sane.values, fallback = "") =>
         sane.values[k] || onlyDigits(fallback);
       const cuotaRazonable = (v: number) => {
