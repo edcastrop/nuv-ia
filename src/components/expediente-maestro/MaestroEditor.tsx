@@ -63,6 +63,10 @@ interface Props {
 export function MaestroEditor(p: Props) {
   const set = <T, K extends keyof T>(obj: T, k: K, v: T[K]) => ({ ...obj, [k]: v });
 
+  const esLeasing = /leasing/i.test(p.credito.tipoProducto || "");
+  const rolTitular = esLeasing ? "locatario" : "titular";
+  const rolCotitular = esLeasing ? "colocatario" : "cotitular";
+
   // Auto-rellenar Departamento desde la Ciudad de residencia (titular y cotitular).
   useEffect(() => {
     const dep = cityDepartment(p.cliente.ciudad);
@@ -78,18 +82,38 @@ export function MaestroEditor(p: Props) {
     }
   }, [p.cotitular.ciudad, p.cotitular.activo]);
 
-  // Herencia de datos del titular hacia el cotitular.
-  const [hered, setHered] = useState({ direccion: false, ciudad: false, email: false, telefono: false });
+  // Herencia de dirección del titular hacia el cotitular/colocatario.
+  // Cuando el checkbox está activo: copia dirección + ciudad + departamento
+  // y mantiene sincronizado si el titular los cambia.
+  const heredada = !!p.cotitular.mismaDireccionTitular;
   useEffect(() => {
-    if (!p.cotitular.activo) return;
+    if (!p.cotitular.activo || !heredada) return;
     const next = { ...p.cotitular };
     let changed = false;
-    if (hered.direccion && next.direccion !== p.cliente.direccion) { next.direccion = p.cliente.direccion; changed = true; }
-    if (hered.ciudad && next.ciudad !== p.cliente.ciudad) { next.ciudad = p.cliente.ciudad; changed = true; }
-    if (hered.email && next.email !== p.cliente.email) { next.email = p.cliente.email; changed = true; }
-    if (hered.telefono && next.telefono !== p.cliente.telefono) { next.telefono = p.cliente.telefono; changed = true; }
+    if (next.direccion !== p.cliente.direccion) { next.direccion = p.cliente.direccion; changed = true; }
+    if (next.ciudad !== p.cliente.ciudad) { next.ciudad = p.cliente.ciudad; changed = true; }
+    const dep = p.cliente.departamento || cityDepartment(p.cliente.ciudad);
+    if (dep && next.departamento !== dep) { next.departamento = dep; changed = true; }
     if (changed) p.onCotitular(next);
-  }, [hered, p.cliente.direccion, p.cliente.ciudad, p.cliente.email, p.cliente.telefono, p.cotitular.activo]);
+  }, [heredada, p.cliente.direccion, p.cliente.ciudad, p.cliente.departamento, p.cotitular.activo]);
+
+  const toggleMismaDireccion = (checked: boolean) => {
+    if (checked) {
+      p.onCotitular({
+        ...p.cotitular,
+        mismaDireccionTitular: true,
+        direccion: p.cliente.direccion,
+        ciudad: p.cliente.ciudad,
+        departamento: p.cliente.departamento || cityDepartment(p.cliente.ciudad) || p.cotitular.departamento,
+      });
+    } else {
+      // No borrar datos copiados; sólo desactivar la herencia.
+      p.onCotitular({ ...p.cotitular, mismaDireccionTitular: false });
+    }
+  };
+
+  const hintHeredada = `Dirección heredada del ${rolTitular}.`;
+
 
   return (
     <div className="space-y-4">
