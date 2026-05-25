@@ -267,6 +267,10 @@ function MaestroDetail() {
                   <ResumenItem label="Cuotas pendientes" value={extractoAplicado.datos.cuotasPendientes || "—"} />
                 </div>
 
+                {/* BENEFICIO DE COBERTURA / FRESH / FRECH / Subsidio Gobierno */}
+                <BeneficioBlock fresh={fresh} datos={extractoAplicado.datos} />
+
+
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t" style={{ borderColor: "#EEF1F5" }}>
                   <div className="text-[11px] text-[#242424]/60">
                     Confianza global: <strong style={{ color: NUVEX.verdeTextoFuerte }}>{extractoAplicado.confianzaGlobal.toFixed(1)}%</strong>
