@@ -247,6 +247,13 @@ export const CAMPOS_MOTOR = [
   "sistemaAmortizacion",
   "valorUVR",
   "saldoUVR",
+  // Beneficio / Cobertura / FRECH / Fresh / Subsidio Gobierno
+  "beneficioActivo",
+  "tipoBeneficio",
+  "valorBeneficioMensual",
+  "tasaCobertura",
+  "cuotaSinSubsidio",
+  "cuotaConSubsidio",
 ] as const;
 
 export type CampoMotor = (typeof CAMPOS_MOTOR)[number];
@@ -286,4 +293,11 @@ export const CAMPO_LABEL: Record<CampoMotor, string> = {
   sistemaAmortizacion: "Sistema amortización",
   valorUVR: "Valor UVR",
   saldoUVR: "Saldo UVR",
+  beneficioActivo: "¿Tiene beneficio? (si/no)",
+  tipoBeneficio: "Tipo de beneficio",
+  valorBeneficioMensual: "Valor beneficio mensual",
+  tasaCobertura: "Tasa de cobertura (%)",
+  cuotaSinSubsidio: "Cuota sin subsidio",
+  cuotaConSubsidio: "Cuota con subsidio",
 };
+
