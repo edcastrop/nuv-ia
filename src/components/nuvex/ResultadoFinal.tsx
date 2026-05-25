@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, SectionTitle, TextField, Alert } from "./ui";
 import { NUVEX, CORPORATIVO } from "./constants";
 import { formatCOP, formatNumber, parseCurrency, parseDecimal } from "../../lib/format";
 import { applyHonorariosFloor, HONORARIOS_MIN_BASE, HONORARIOS_MIN_FINAL } from "../../lib/finance";
 import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
 import { setAprobado, type AprobadoData, type EstadoExpediente } from "@/lib/expedientes";
+import { calcularRecalculoHonorarios, guardarRecalculoHonorarios } from "@/lib/honorarios";
 import type { ClientData } from "./ClientFields";
 import { PazYSalvo } from "./PazYSalvo";
 
