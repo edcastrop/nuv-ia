@@ -10,7 +10,8 @@ export type AppRole =
   | "licenciado"
   | "juridica"
   | "operaciones"
-  | "cartera";
+  | "cartera"
+  | "contabilidad";
 
 export function isManager(roles: AppRole[]): boolean {
   return roles.includes("admin") || roles.includes("super_admin") || roles.includes("gerencia");
@@ -18,6 +19,10 @@ export function isManager(roles: AppRole[]): boolean {
 
 export function isSuperAdmin(roles: AppRole[]): boolean {
   return roles.includes("super_admin") || roles.includes("admin");
+}
+
+export function canManageFinanzas(roles: AppRole[]): boolean {
+  return roles.some((r) => ["super_admin", "admin", "gerencia", "contabilidad"].includes(r));
 }
 
 export function isLicenciado(roles: AppRole[]): boolean {
