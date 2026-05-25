@@ -402,19 +402,30 @@ function DetalleCuentaCobro() {
 
             {puedePagar && (
               <div className="space-y-2 rounded-lg border border-[#E0E7FF] bg-[#F5F7FF] p-3">
-                <div className="text-[12px] font-semibold text-[#0A1226]">Registro de pago</div>
+                <div className="text-[12px] font-semibold text-[#0A1226]">
+                  Registro de pago <span className="text-[#991B1B]">*</span>
+                </div>
+                <div className="text-[11px] text-[#242424]/70">
+                  Adjunta el comprobante (imagen o PDF) para habilitar el botón.
+                </div>
                 <input
                   type="file"
                   accept="image/*,application/pdf"
                   onChange={(e) => setComprobante(e.target.files?.[0] ?? null)}
-                  className="w-full text-[12px]"
+                  className="block w-full text-[12px] file:mr-3 file:rounded-md file:border-0 file:bg-[#445DA3] file:px-3 file:py-1.5 file:text-[12px] file:font-semibold file:text-white hover:file:bg-[#384e8a]"
                 />
+                {comprobante && (
+                  <div className="text-[11px] text-[#1F7A45]">
+                    ✓ Archivo listo: <b>{comprobante.name}</b>
+                  </div>
+                )}
                 <button
                   onClick={onMarcarPagada}
                   disabled={busy || !comprobante}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F7A45] px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
+                  title={!comprobante ? "Adjunta el comprobante primero" : undefined}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F7A45] px-4 py-2 text-[12px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <DollarSign size={13} /> Marcar pagada (con comprobante)
+                  <DollarSign size={13} /> {busy ? "Registrando…" : "Marcar pagada (con comprobante)"}
                 </button>
               </div>
             )}
