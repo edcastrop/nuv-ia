@@ -271,3 +271,12 @@ function MaestroDetail() {
     </div>
   );
 }
+
+function ResumenItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border p-2.5" style={{ borderColor: "#E5E7EB", background: "#FBFCFD" }}>
+      <div className="text-[10px] uppercase tracking-wide text-[#242424]/55">{label}</div>
+      <div className="text-sm font-semibold text-[#242424] truncate" title={value}>{value}</div>
+    </div>
+  );
+}
