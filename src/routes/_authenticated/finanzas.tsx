@@ -10,6 +10,7 @@ import {
   Landmark,
   BellRing,
   ShieldCheck,
+  FileBarChart2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/finanzas")({
@@ -29,6 +30,7 @@ const SUBMODULOS = [
   { to: "/finanzas/nomina", label: "Nómina", Icon: Users2 },
   { to: "/finanzas/tesoreria", label: "Tesorería", Icon: Landmark },
   { to: "/finanzas/alertas", label: "Alertas IA", Icon: BellRing },
+  { to: "/finanzas/reportes", label: "Reportes", Icon: FileBarChart2 },
   { to: "/finanzas/auditoria", label: "Auditoría", Icon: ShieldCheck },
 ];
 
