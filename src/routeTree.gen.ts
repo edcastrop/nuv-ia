@@ -28,6 +28,7 @@ import { Route as AuthenticatedSuperAdminUsuariosRouteImport } from './routes/_a
 import { Route as AuthenticatedSuperAdminMarcaRouteImport } from './routes/_authenticated/super-admin.marca'
 import { Route as AuthenticatedSuperAdminExpedientesRouteImport } from './routes/_authenticated/super-admin.expedientes'
 import { Route as AuthenticatedFinanzasTesoreriaRouteImport } from './routes/_authenticated/finanzas.tesoreria'
+import { Route as AuthenticatedFinanzasReportesRouteImport } from './routes/_authenticated/finanzas.reportes'
 import { Route as AuthenticatedFinanzasRecaudosRouteImport } from './routes/_authenticated/finanzas.recaudos'
 import { Route as AuthenticatedFinanzasNominaRouteImport } from './routes/_authenticated/finanzas.nomina'
 import { Route as AuthenticatedFinanzasCuentasCobroRouteImport } from './routes/_authenticated/finanzas.cuentas-cobro'
@@ -40,6 +41,7 @@ import { Route as AuthenticatedContabilidadCuentasCobroRouteImport } from './rou
 import { Route as AuthenticatedComisionesIdRouteImport } from './routes/_authenticated/comisiones.$id'
 import { Route as AuthenticatedCasosIdRouteImport } from './routes/_authenticated/casos.$id'
 import { Route as AuthenticatedCarteraIdRouteImport } from './routes/_authenticated/cartera.$id'
+import { Route as ApiPublicHooksFinanzasCronRouteImport } from './routes/api/public/hooks/finanzas-cron'
 import { Route as ApiPublicHooksCasosAlertasRouteImport } from './routes/api/public/hooks/casos-alertas'
 import { Route as ApiPublicHooksCarteraRecordatoriosRouteImport } from './routes/api/public/hooks/cartera-recordatorios'
 
@@ -148,6 +150,12 @@ const AuthenticatedFinanzasTesoreriaRoute =
     path: '/tesoreria',
     getParentRoute: () => AuthenticatedFinanzasRoute,
   } as any)
+const AuthenticatedFinanzasReportesRoute =
+  AuthenticatedFinanzasReportesRouteImport.update({
+    id: '/reportes',
+    path: '/reportes',
+    getParentRoute: () => AuthenticatedFinanzasRoute,
+  } as any)
 const AuthenticatedFinanzasRecaudosRoute =
   AuthenticatedFinanzasRecaudosRouteImport.update({
     id: '/recaudos',
@@ -218,6 +226,12 @@ const AuthenticatedCarteraIdRoute = AuthenticatedCarteraIdRouteImport.update({
   path: '/cartera/$id',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const ApiPublicHooksFinanzasCronRoute =
+  ApiPublicHooksFinanzasCronRouteImport.update({
+    id: '/api/public/hooks/finanzas-cron',
+    path: '/api/public/hooks/finanzas-cron',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksCasosAlertasRoute =
   ApiPublicHooksCasosAlertasRouteImport.update({
     id: '/api/public/hooks/casos-alertas',
@@ -252,6 +266,7 @@ export interface FileRoutesByFullPath {
   '/finanzas/cuentas-cobro': typeof AuthenticatedFinanzasCuentasCobroRoute
   '/finanzas/nomina': typeof AuthenticatedFinanzasNominaRoute
   '/finanzas/recaudos': typeof AuthenticatedFinanzasRecaudosRoute
+  '/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
   '/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
@@ -264,6 +279,7 @@ export interface FileRoutesByFullPath {
   '/super-admin/': typeof AuthenticatedSuperAdminIndexRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
+  '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -285,6 +301,7 @@ export interface FileRoutesByTo {
   '/finanzas/cuentas-cobro': typeof AuthenticatedFinanzasCuentasCobroRoute
   '/finanzas/nomina': typeof AuthenticatedFinanzasNominaRoute
   '/finanzas/recaudos': typeof AuthenticatedFinanzasRecaudosRoute
+  '/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
   '/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
@@ -297,6 +314,7 @@ export interface FileRoutesByTo {
   '/super-admin': typeof AuthenticatedSuperAdminIndexRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
+  '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -321,6 +339,7 @@ export interface FileRoutesById {
   '/_authenticated/finanzas/cuentas-cobro': typeof AuthenticatedFinanzasCuentasCobroRoute
   '/_authenticated/finanzas/nomina': typeof AuthenticatedFinanzasNominaRoute
   '/_authenticated/finanzas/recaudos': typeof AuthenticatedFinanzasRecaudosRoute
+  '/_authenticated/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/_authenticated/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
   '/_authenticated/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/_authenticated/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
@@ -333,6 +352,7 @@ export interface FileRoutesById {
   '/_authenticated/super-admin/': typeof AuthenticatedSuperAdminIndexRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
+  '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -357,6 +377,7 @@ export interface FileRouteTypes {
     | '/finanzas/cuentas-cobro'
     | '/finanzas/nomina'
     | '/finanzas/recaudos'
+    | '/finanzas/reportes'
     | '/finanzas/tesoreria'
     | '/super-admin/expedientes'
     | '/super-admin/marca'
@@ -369,6 +390,7 @@ export interface FileRouteTypes {
     | '/super-admin/'
     | '/api/public/hooks/cartera-recordatorios'
     | '/api/public/hooks/casos-alertas'
+    | '/api/public/hooks/finanzas-cron'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -390,6 +412,7 @@ export interface FileRouteTypes {
     | '/finanzas/cuentas-cobro'
     | '/finanzas/nomina'
     | '/finanzas/recaudos'
+    | '/finanzas/reportes'
     | '/finanzas/tesoreria'
     | '/super-admin/expedientes'
     | '/super-admin/marca'
@@ -402,6 +425,7 @@ export interface FileRouteTypes {
     | '/super-admin'
     | '/api/public/hooks/cartera-recordatorios'
     | '/api/public/hooks/casos-alertas'
+    | '/api/public/hooks/finanzas-cron'
   id:
     | '__root__'
     | '/_authenticated'
@@ -425,6 +449,7 @@ export interface FileRouteTypes {
     | '/_authenticated/finanzas/cuentas-cobro'
     | '/_authenticated/finanzas/nomina'
     | '/_authenticated/finanzas/recaudos'
+    | '/_authenticated/finanzas/reportes'
     | '/_authenticated/finanzas/tesoreria'
     | '/_authenticated/super-admin/expedientes'
     | '/_authenticated/super-admin/marca'
@@ -437,6 +462,7 @@ export interface FileRouteTypes {
     | '/_authenticated/super-admin/'
     | '/api/public/hooks/cartera-recordatorios'
     | '/api/public/hooks/casos-alertas'
+    | '/api/public/hooks/finanzas-cron'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -444,6 +470,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ApiPublicHooksCarteraRecordatoriosRoute: typeof ApiPublicHooksCarteraRecordatoriosRoute
   ApiPublicHooksCasosAlertasRoute: typeof ApiPublicHooksCasosAlertasRoute
+  ApiPublicHooksFinanzasCronRoute: typeof ApiPublicHooksFinanzasCronRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -581,6 +608,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanzasTesoreriaRouteImport
       parentRoute: typeof AuthenticatedFinanzasRoute
     }
+    '/_authenticated/finanzas/reportes': {
+      id: '/_authenticated/finanzas/reportes'
+      path: '/reportes'
+      fullPath: '/finanzas/reportes'
+      preLoaderRoute: typeof AuthenticatedFinanzasReportesRouteImport
+      parentRoute: typeof AuthenticatedFinanzasRoute
+    }
     '/_authenticated/finanzas/recaudos': {
       id: '/_authenticated/finanzas/recaudos'
       path: '/recaudos'
@@ -665,6 +699,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCarteraIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/api/public/hooks/finanzas-cron': {
+      id: '/api/public/hooks/finanzas-cron'
+      path: '/api/public/hooks/finanzas-cron'
+      fullPath: '/api/public/hooks/finanzas-cron'
+      preLoaderRoute: typeof ApiPublicHooksFinanzasCronRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/casos-alertas': {
       id: '/api/public/hooks/casos-alertas'
       path: '/api/public/hooks/casos-alertas'
@@ -690,6 +731,7 @@ interface AuthenticatedFinanzasRouteChildren {
   AuthenticatedFinanzasCuentasCobroRoute: typeof AuthenticatedFinanzasCuentasCobroRoute
   AuthenticatedFinanzasNominaRoute: typeof AuthenticatedFinanzasNominaRoute
   AuthenticatedFinanzasRecaudosRoute: typeof AuthenticatedFinanzasRecaudosRoute
+  AuthenticatedFinanzasReportesRoute: typeof AuthenticatedFinanzasReportesRoute
   AuthenticatedFinanzasTesoreriaRoute: typeof AuthenticatedFinanzasTesoreriaRoute
   AuthenticatedFinanzasIndexRoute: typeof AuthenticatedFinanzasIndexRoute
 }
@@ -703,6 +745,7 @@ const AuthenticatedFinanzasRouteChildren: AuthenticatedFinanzasRouteChildren = {
     AuthenticatedFinanzasCuentasCobroRoute,
   AuthenticatedFinanzasNominaRoute: AuthenticatedFinanzasNominaRoute,
   AuthenticatedFinanzasRecaudosRoute: AuthenticatedFinanzasRecaudosRoute,
+  AuthenticatedFinanzasReportesRoute: AuthenticatedFinanzasReportesRoute,
   AuthenticatedFinanzasTesoreriaRoute: AuthenticatedFinanzasTesoreriaRoute,
   AuthenticatedFinanzasIndexRoute: AuthenticatedFinanzasIndexRoute,
 }
@@ -771,6 +814,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksCarteraRecordatoriosRoute:
     ApiPublicHooksCarteraRecordatoriosRoute,
   ApiPublicHooksCasosAlertasRoute: ApiPublicHooksCasosAlertasRoute,
+  ApiPublicHooksFinanzasCronRoute: ApiPublicHooksFinanzasCronRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
