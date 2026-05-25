@@ -33,7 +33,7 @@ export const BANK_PROFILES: BankProfile[] = [
 
 BENEFICIO DE COBERTURA / SUBSIDIO GOBIERNO / FRECH (CRÍTICO):
 - "Valor cuota sin subsidio Gobierno" → cuotaSinSubsidio.
-- "Valor subsidio Gobierno" → valorBeneficioMensual. tipoBeneficio="Subsidio Gobierno / FRECH".
+- "Valor subsidio Gobierno" → valorBeneficioMensual. tipoBeneficio="Subsidio Gobierno".
 - "Valor cuota con subsidio" → cuotaConSubsidio.
 - Si valorBeneficioMensual > 0 → beneficioActivo="si". Si no aparece o es 0 → beneficioActivo="no", deja los demás campos de beneficio vacíos con score 0.
 - NO marques beneficio sólo por texto legal o por la palabra "cobertura" sin valor.
