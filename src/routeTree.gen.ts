@@ -19,6 +19,7 @@ import { Route as AuthenticatedApoderadosNuvexRouteImport } from './routes/_auth
 import { Route as AuthenticatedAcademiaRouteImport } from './routes/_authenticated/academia'
 import { Route as AuthenticatedSuperAdminIndexRouteImport } from './routes/_authenticated/super-admin.index'
 import { Route as AuthenticatedExpedienteMaestroIndexRouteImport } from './routes/_authenticated/expediente-maestro.index'
+import { Route as AuthenticatedComisionesIndexRouteImport } from './routes/_authenticated/comisiones.index'
 import { Route as AuthenticatedCasosIndexRouteImport } from './routes/_authenticated/casos.index'
 import { Route as AuthenticatedCarteraIndexRouteImport } from './routes/_authenticated/cartera.index'
 import { Route as AuthenticatedSuperAdminUsuariosRouteImport } from './routes/_authenticated/super-admin.usuarios'
@@ -81,6 +82,12 @@ const AuthenticatedExpedienteMaestroIndexRoute =
   AuthenticatedExpedienteMaestroIndexRouteImport.update({
     id: '/expediente-maestro/',
     path: '/expediente-maestro/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedComisionesIndexRoute =
+  AuthenticatedComisionesIndexRouteImport.update({
+    id: '/comisiones/',
+    path: '/comisiones/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedCasosIndexRoute = AuthenticatedCasosIndexRouteImport.update({
@@ -157,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/super-admin/usuarios': typeof AuthenticatedSuperAdminUsuariosRoute
   '/cartera/': typeof AuthenticatedCarteraIndexRoute
   '/casos/': typeof AuthenticatedCasosIndexRoute
+  '/comisiones/': typeof AuthenticatedComisionesIndexRoute
   '/expediente-maestro/': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/super-admin/': typeof AuthenticatedSuperAdminIndexRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
@@ -178,6 +186,7 @@ export interface FileRoutesByTo {
   '/super-admin/usuarios': typeof AuthenticatedSuperAdminUsuariosRoute
   '/cartera': typeof AuthenticatedCarteraIndexRoute
   '/casos': typeof AuthenticatedCasosIndexRoute
+  '/comisiones': typeof AuthenticatedComisionesIndexRoute
   '/expediente-maestro': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/super-admin': typeof AuthenticatedSuperAdminIndexRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
@@ -201,6 +210,7 @@ export interface FileRoutesById {
   '/_authenticated/super-admin/usuarios': typeof AuthenticatedSuperAdminUsuariosRoute
   '/_authenticated/cartera/': typeof AuthenticatedCarteraIndexRoute
   '/_authenticated/casos/': typeof AuthenticatedCasosIndexRoute
+  '/_authenticated/comisiones/': typeof AuthenticatedComisionesIndexRoute
   '/_authenticated/expediente-maestro/': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/_authenticated/super-admin/': typeof AuthenticatedSuperAdminIndexRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
@@ -224,6 +234,7 @@ export interface FileRouteTypes {
     | '/super-admin/usuarios'
     | '/cartera/'
     | '/casos/'
+    | '/comisiones/'
     | '/expediente-maestro/'
     | '/super-admin/'
     | '/api/public/hooks/cartera-recordatorios'
@@ -245,6 +256,7 @@ export interface FileRouteTypes {
     | '/super-admin/usuarios'
     | '/cartera'
     | '/casos'
+    | '/comisiones'
     | '/expediente-maestro'
     | '/super-admin'
     | '/api/public/hooks/cartera-recordatorios'
@@ -267,6 +279,7 @@ export interface FileRouteTypes {
     | '/_authenticated/super-admin/usuarios'
     | '/_authenticated/cartera/'
     | '/_authenticated/casos/'
+    | '/_authenticated/comisiones/'
     | '/_authenticated/expediente-maestro/'
     | '/_authenticated/super-admin/'
     | '/api/public/hooks/cartera-recordatorios'
@@ -350,6 +363,13 @@ declare module '@tanstack/react-router' {
       path: '/expediente-maestro'
       fullPath: '/expediente-maestro/'
       preLoaderRoute: typeof AuthenticatedExpedienteMaestroIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/comisiones/': {
+      id: '/_authenticated/comisiones/'
+      path: '/comisiones'
+      fullPath: '/comisiones/'
+      preLoaderRoute: typeof AuthenticatedComisionesIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/casos/': {
@@ -440,6 +460,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSuperAdminUsuariosRoute: typeof AuthenticatedSuperAdminUsuariosRoute
   AuthenticatedCarteraIndexRoute: typeof AuthenticatedCarteraIndexRoute
   AuthenticatedCasosIndexRoute: typeof AuthenticatedCasosIndexRoute
+  AuthenticatedComisionesIndexRoute: typeof AuthenticatedComisionesIndexRoute
   AuthenticatedExpedienteMaestroIndexRoute: typeof AuthenticatedExpedienteMaestroIndexRoute
   AuthenticatedSuperAdminIndexRoute: typeof AuthenticatedSuperAdminIndexRoute
 }
@@ -460,6 +481,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSuperAdminUsuariosRoute: AuthenticatedSuperAdminUsuariosRoute,
   AuthenticatedCarteraIndexRoute: AuthenticatedCarteraIndexRoute,
   AuthenticatedCasosIndexRoute: AuthenticatedCasosIndexRoute,
+  AuthenticatedComisionesIndexRoute: AuthenticatedComisionesIndexRoute,
   AuthenticatedExpedienteMaestroIndexRoute:
     AuthenticatedExpedienteMaestroIndexRoute,
   AuthenticatedSuperAdminIndexRoute: AuthenticatedSuperAdminIndexRoute,
@@ -479,3 +501,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
