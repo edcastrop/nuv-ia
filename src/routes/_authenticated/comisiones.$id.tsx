@@ -150,7 +150,7 @@ function DetalleCuentaCobro() {
   async function onEnviarContabilidad() {
     if (!cc) return;
     if (!cc.porcentaje_comision) {
-      alert("Debes seleccionar el porcentaje de comisión (35%, 40%, 45% o 50%) antes de enviar a Contabilidad.");
+      alert("Debes seleccionar el porcentaje de comisión (30%, 35%, 40%, 45% o 50%) antes de enviar a Contabilidad.");
       return;
     }
     const extras = destinatariosExtra
