@@ -100,12 +100,18 @@ export function PesosSimulator({
   const valorDesembolsadoNum = parseCurrency(valorDesembolsado);
   const cuotaActualNum = parseCurrency(cuotaActual);
   const cuotaPagadaClienteNum = parseCurrency(cobertura.cuotaPagadaCliente);
-  const cuotaBaseSimulacionNum = parseCurrency(cobertura.cuotaBaseSimulacion);
+  const cuotaBaseSimulacionRaw = parseCurrency(cobertura.cuotaBaseSimulacion);
+  const saldoCapitalNum = parseCurrency(saldoCapital);
+  const baseReferenciaCredito = Math.max(saldoCapitalNum, valorDesembolsadoNum, 1);
+  const cuotaMaximaRazonable = Math.max(15_000_000, baseReferenciaCredito * 0.08);
+  const cuotaBaseSimulacionNum =
+    cuotaBaseSimulacionRaw > 0 && cuotaBaseSimulacionRaw <= cuotaMaximaRazonable
+      ? cuotaBaseSimulacionRaw
+      : 0;
   const cuotaSimulacionNum = cuotaBaseSimulacionNum > 0 ? cuotaBaseSimulacionNum : cuotaActualNum;
   const cuotaClienteHoyNum = cuotaPagadaClienteNum > 0 ? cuotaPagadaClienteNum : cuotaActualNum;
   const segurosNum = parseCurrency(seguros);
   const cuotaSinSegurosNum = Math.max(0, cuotaSimulacionNum - segurosNum);
-  const saldoCapitalNum = parseCurrency(saldoCapital);
   const dineroPagadoFecha = cuotaClienteHoyNum * cuotasPagadas;
 
   const input: PesosInput = useMemo(
@@ -127,6 +133,12 @@ export function PesosSimulator({
     validaciones.push("Este crédito ya está amortizado.");
   if (cuotaSimulacionNum > 0 && segurosNum > cuotaSimulacionNum)
     validaciones.push("Los seguros no pueden ser mayores que la cuota actual.");
+  if (cuotaActualNum > cuotaMaximaRazonable || cuotaBaseSimulacionRaw > cuotaMaximaRazonable)
+    validaciones.push(
+      "La cuota mensual está fuera de rango para este crédito. Revise la lectura del extracto antes de simular.",
+    );
+  if (segurosNum > 0 && segurosNum > Math.max(500_000, cuotaSimulacionNum * 0.2))
+    validaciones.push("Los seguros mensuales están fuera de rango. Revise la lectura del extracto.");
   if (cuotaSimulacionNum > 0 && segurosNum > 0 && cuotaSinSegurosNum <= 0)
     validaciones.push("La cuota sin seguros debe ser mayor a cero para calcular la proyección.");
 
