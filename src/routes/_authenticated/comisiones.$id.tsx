@@ -317,7 +317,22 @@ function DetalleCuentaCobro() {
             </div>
             <div className="mt-1 text-[12px] text-[#242424]/70">
               Creada el {new Date(cc.created_at).toLocaleString("es-CO")}
+              {Number(cc.version ?? 1) > 1 && (
+                <span className="ml-2 rounded bg-[#FEF3C7] px-1.5 py-0.5 text-[10px] font-semibold text-[#8A5A00]">
+                  v{cc.version}
+                </span>
+              )}
             </div>
+            {cc.fecha_programada_pago && (
+              <div className="mt-1 text-[12px] text-[#445DA3]">
+                📅 Pago programado: <b>{new Date(cc.fecha_programada_pago + "T00:00:00").toLocaleDateString("es-CO")}</b>
+              </div>
+            )}
+            {cc.motivo_devolucion && cc.estado === "devuelta_correccion" && (
+              <div className="mt-2 rounded-md border border-[#FCA5A5] bg-[#FEF2F2] p-2 text-[12px] text-[#7F1D1D]">
+                <b>Motivo de devolución:</b> {cc.motivo_devolucion}
+              </div>
+            )}
             {cc.observaciones && <div className="mt-2 text-[13px] italic text-[#242424]/70">"{cc.observaciones}"</div>}
           </div>
           <div className="text-right">
