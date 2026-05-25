@@ -351,6 +351,73 @@ function closeMoney(a: number, b: number): boolean {
   return Math.abs(a - b) <= Math.max(2_500, Math.max(Math.abs(a), Math.abs(b)) * 0.005);
 }
 
+function formatNumeric(value: number): string {
+  if (!Number.isFinite(value)) return "";
+  const rounded = Math.round(value * 100) / 100;
+  return Number.isInteger(rounded)
+    ? String(rounded)
+    : rounded.toFixed(2).replace(/0$/, "").replace(/\.0$/, "");
+}
+
+function applyBancolombiaDeterministicCorrections(
+  profile: BankProfile,
+  datos: Record<CampoMotor, string>,
+  scores: Record<CampoMotor, number>,
+): string[] {
+  if (profile.id !== "bancolombia") return [];
+
+  const alertas: string[] = [];
+  const cuotaActual = toNumber(datos.cuotaActual);
+  const cuotaSinSubsidio = toNumber(datos.cuotaSinSubsidio);
+  const beneficio = toNumber(datos.valorBeneficioMensual);
+  const saldoCapital = toNumber(datos.saldoCapital);
+  const interes = toNumber(datos.interesCuota);
+  let cuotaConSubsidio = toNumber(datos.cuotaConSubsidio);
+
+  if (beneficio > 0 && cuotaSinSubsidio > 0) {
+    const cuotaConSubsidioCalculada = cuotaSinSubsidio - beneficio;
+    if (cuotaConSubsidioCalculada > 0 && !closeMoney(cuotaConSubsidio, cuotaConSubsidioCalculada)) {
+      datos.cuotaConSubsidio = formatNumeric(cuotaConSubsidioCalculada);
+      scores.cuotaConSubsidio = Math.max(scores.cuotaConSubsidio, 95);
+      cuotaConSubsidio = cuotaConSubsidioCalculada;
+      alertas.push("Bancolombia: cuota con subsidio corregida por cuota sin subsidio - subsidio.");
+    }
+  }
+
+  if (cuotaActual > 0 && cuotaConSubsidio > 0) {
+    const segurosCalculados = cuotaActual - cuotaConSubsidio;
+    const segurosActuales = toNumber(datos.seguros);
+    if (
+      segurosCalculados > 0 &&
+      segurosCalculados < cuotaActual * 0.3 &&
+      !closeMoney(segurosActuales, segurosCalculados)
+    ) {
+      datos.seguros = formatNumeric(segurosCalculados);
+      scores.seguros = Math.max(scores.seguros, 95);
+      alertas.push("Bancolombia: seguros corregidos por Valor a Pagar - cuota con subsidio.");
+    }
+  }
+
+  if (beneficio > 0 && saldoCapital > 0 && interes > 0) {
+    const tasaMensualCalculada = (interes + beneficio) / saldoCapital;
+    const tasaEACalculada = (Math.pow(1 + tasaMensualCalculada, 12) - 1) * 100;
+    const tasaEAActual = toNumber(datos.tasaEA);
+    if (
+      tasaEACalculada >= 5 &&
+      tasaEACalculada <= 30 &&
+      Math.abs(tasaEAActual - tasaEACalculada) > 0.2
+    ) {
+      datos.tasaEA = tasaEACalculada.toFixed(2);
+      scores.tasaEA = Math.max(scores.tasaEA, 90);
+      alertas.push(
+        "Bancolombia: tasa EA corregida por intereses corrientes + subsidio sobre saldo capital.",
+      );
+    }
+  }
+
+  return alertas;
+}
+
 function validateMotorConsistency(profile: BankProfile, datos: Record<CampoMotor, string>) {
   const alertas: string[] = [];
   let critical = false;
@@ -405,6 +472,7 @@ function validateMotorConsistency(profile: BankProfile, datos: Record<CampoMotor
       plazo > 0 &&
       cuotaActualNumero > 0 &&
       pendientes > 0 &&
+      cuotaActualNumero + pendientes !== plazo &&
       cuotaActualNumero + pendientes - 1 !== plazo
     ) {
       critical = true;
@@ -564,6 +632,7 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
     }
 
     const { datos, scores } = normalizeParsedMotor(parsed, det, profile);
+    const deterministicAlerts = applyBancolombiaDeterministicCorrections(profile, datos, scores);
     // Nota: se removió el reintento adicional con Pro para evitar timeouts del gateway.
     const finalValidation = validateMotorConsistency(profile, datos);
 
@@ -590,6 +659,7 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
         confianzaGlobal,
         alertas: [
           ...(Array.isArray(parsed.alertas) ? parsed.alertas.map(String) : []),
+          ...deterministicAlerts,
           ...finalValidation.alertas,
         ],
         rawDeteccion: det.evidencia,
