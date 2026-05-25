@@ -25,9 +25,13 @@ export interface CuentaCobro {
   fecha_pago: string | null;
   observaciones: string | null;
   comprobante_url: string | null;
+  porcentaje_comision: number | null;
   created_at: string;
   updated_at: string;
 }
+
+export const PORCENTAJES_COMISION_CC = [35, 40, 45, 50] as const;
+export type PorcentajeComisionCC = typeof PORCENTAJES_COMISION_CC[number];
 
 
 export async function listMisComisiones(userId: string): Promise<Comision[]> {

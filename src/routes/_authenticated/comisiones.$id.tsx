@@ -9,6 +9,7 @@ import { formatCOP } from "@/lib/format";
 import {
   getCuentaCobro,
   cambiarEstadoCuenta,
+  PORCENTAJES_COMISION_CC,
   type CuentaCobro,
   type Comision,
 } from "@/lib/comisiones";
@@ -122,8 +123,26 @@ function DetalleCuentaCobro() {
     }
   }
 
+  async function guardarPorcentaje(pct: number): Promise<boolean> {
+    if (!cc) return false;
+    const { error } = await supabase
+      .from("cuentas_cobro" as never)
+      .update({ porcentaje_comision: pct } as never)
+      .eq("id", cc.id);
+    if (error) {
+      alert("No se pudo guardar el porcentaje: " + error.message);
+      return false;
+    }
+    setCc({ ...cc, porcentaje_comision: pct });
+    return true;
+  }
+
   async function onEnviarContabilidad() {
     if (!cc) return;
+    if (!cc.porcentaje_comision) {
+      alert("Debes seleccionar el porcentaje de comisión (35%, 40%, 45% o 50%) antes de enviar a Contabilidad.");
+      return;
+    }
     const extras = destinatariosExtra
       .split(/[,;\s]+/)
       .map((s) => s.trim())
@@ -244,6 +263,11 @@ function DetalleCuentaCobro() {
           <div className="text-right">
             <div className="text-[11px] uppercase tracking-wide text-[#242424]/60">Total</div>
             <div className="mt-1 text-2xl font-bold text-[#1F7A45]">{formatCOP(Number(cc.total))}</div>
+            {cc.porcentaje_comision && (
+              <div className="mt-1 text-[12px] text-[#242424]/70">
+                % Comisión licenciado: <b>{Number(cc.porcentaje_comision).toFixed(0)}%</b>
+              </div>
+            )}
             <div
               className="mt-2 inline-block rounded-full px-3 py-1 text-[12px] font-semibold"
               style={{ background: ESTADO_CC[cc.estado].bg, color: ESTADO_CC[cc.estado].color }}
@@ -272,7 +296,39 @@ function DetalleCuentaCobro() {
             />
 
             {puedeEnviar && (
-              <div className="space-y-2">
+              <div className="space-y-3">
+                <div className="rounded-lg border border-[#E3E7EE] bg-white p-3">
+                  <div className="mb-2 text-[12px] font-semibold text-[#0A1226]">
+                    % Comisión licenciado <span className="text-[#991B1B]">*</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {PORCENTAJES_COMISION_CC.map((p) => {
+                      const active = Number(cc.porcentaje_comision) === p;
+                      return (
+                        <button
+                          key={p}
+                          type="button"
+                          disabled={busy}
+                          onClick={() => guardarPorcentaje(p)}
+                          className="rounded-lg border px-4 py-1.5 text-[13px] font-semibold transition disabled:opacity-50"
+                          style={{
+                            background: active ? "linear-gradient(135deg,#445DA3,#84B98F)" : "#fff",
+                            color: active ? "#fff" : "#0A1226",
+                            borderColor: active ? "transparent" : "#E3E7EE",
+                          }}
+                        >
+                          {p}%
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {!cc.porcentaje_comision && (
+                    <div className="mt-2 text-[11px] text-[#991B1B]">
+                      Selecciona el porcentaje antes de enviar la cuenta de cobro.
+                    </div>
+                  )}
+                </div>
+
                 <input
                   value={destinatariosExtra}
                   onChange={(e) => setDestinatariosExtra(e.target.value)}
@@ -281,15 +337,20 @@ function DetalleCuentaCobro() {
                 />
                 <button
                   onClick={onEnviarContabilidad}
-                  disabled={busy}
+                  disabled={busy || !cc.porcentaje_comision}
                   className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
                   style={{ background: "linear-gradient(135deg,#445DA3,#84B98F)" }}
+                  title={!cc.porcentaje_comision ? "Selecciona el % de comisión" : undefined}
                 >
                   <Mail size={13} /> {busy ? "Enviando…" : "Enviar a contabilidad por correo (con PDF)"}
                 </button>
                 <button
                   onClick={async () => {
                     if (!cc) return;
+                    if (!cc.porcentaje_comision) {
+                      alert("Selecciona el % de comisión antes de marcar como enviada.");
+                      return;
+                    }
                     if (!confirm("¿Marcar como enviada sin envío por correo?")) return;
                     setBusy(true);
                     try {
@@ -302,7 +363,7 @@ function DetalleCuentaCobro() {
                       setBusy(false);
                     }
                   }}
-                  disabled={busy}
+                  disabled={busy || !cc.porcentaje_comision}
                   className="ml-2 inline-flex items-center gap-1.5 rounded-lg border border-[#E3E7EE] bg-white px-3 py-2 text-[12px] font-semibold text-[#445DA3] disabled:opacity-50"
                 >
                   <Send size={13} /> Marcar enviada (sin correo)

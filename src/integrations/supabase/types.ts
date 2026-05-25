@@ -563,6 +563,7 @@ export type Database = {
           id: string
           numero: string
           observaciones: string | null
+          porcentaje_comision: number | null
           total: number
           updated_at: string
           user_id: string
@@ -577,6 +578,7 @@ export type Database = {
           id?: string
           numero?: string
           observaciones?: string | null
+          porcentaje_comision?: number | null
           total?: number
           updated_at?: string
           user_id: string
@@ -591,6 +593,7 @@ export type Database = {
           id?: string
           numero?: string
           observaciones?: string | null
+          porcentaje_comision?: number | null
           total?: number
           updated_at?: string
           user_id?: string

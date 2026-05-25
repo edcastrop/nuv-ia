@@ -108,25 +108,49 @@ export async function buildCuentaCobroPdf(data: CuentaCobroPdfData): Promise<Cue
 
   // Total
   const finalY = (pdf as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 14;
+  const totalComisiones = data.items.reduce((s, it) => s + Number(it.valor), 0);
+  const pct = data.cuenta.porcentaje_comision;
+  const totalPagar = pct ? Math.round((totalComisiones * Number(pct)) / 100) : Number(data.cuenta.total);
+
+  let blockY = finalY;
+  if (pct) {
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(10);
+    pdf.setTextColor(...BRAND.blueDark);
+    pdf.text("BASE COMISIONES", LAYOUT.marginX, blockY);
+    pdf.setFont("helvetica", "normal");
+    pdf.setTextColor(...BRAND.ink);
+    pdf.text(formatCOP(totalComisiones), rightX, blockY, { align: "right" });
+    blockY += 16;
+
+    pdf.setFont("helvetica", "bold");
+    pdf.setTextColor(...BRAND.blueDark);
+    pdf.text(`% COMISIÓN LICENCIADO`, LAYOUT.marginX, blockY);
+    pdf.setFont("helvetica", "normal");
+    pdf.setTextColor(...BRAND.ink);
+    pdf.text(`${Number(pct).toFixed(0)}%`, rightX, blockY, { align: "right" });
+    blockY += 18;
+  }
+
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(11);
   pdf.setTextColor(...BRAND.blueDark);
-  pdf.text("TOTAL A PAGAR", LAYOUT.marginX, finalY);
+  pdf.text("TOTAL A PAGAR", LAYOUT.marginX, blockY);
   pdf.setFontSize(16);
   pdf.setTextColor(...BRAND.ink);
-  pdf.text(formatCOP(Number(data.cuenta.total)), rightX, finalY, { align: "right" });
+  pdf.text(formatCOP(totalPagar), rightX, blockY, { align: "right" });
 
   // Observaciones
   if (data.cuenta.observaciones) {
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(9);
     pdf.setTextColor(...BRAND.blueDark);
-    pdf.text("OBSERVACIONES", LAYOUT.marginX, finalY + 28);
+    pdf.text("OBSERVACIONES", LAYOUT.marginX, blockY + 28);
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(10);
     pdf.setTextColor(...BRAND.ink);
     const lines = pdf.splitTextToSize(data.cuenta.observaciones, LAYOUT.pageW - LAYOUT.marginX * 2);
-    pdf.text(lines, LAYOUT.marginX, finalY + 44);
+    pdf.text(lines, LAYOUT.marginX, blockY + 44);
   }
 
   const blob = pdf.output("blob");
