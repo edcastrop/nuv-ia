@@ -98,6 +98,13 @@ export async function crearCuentaCobro(userId: string, comisionIds: string[], ob
     accion: "creada",
     observacion: `${comisionIds.length} comisiones agrupadas`,
   } as never);
+  await supabase.from("finanzas_auditoria" as never).insert({
+    entidad: "cuenta_cobro",
+    entidad_id: ccId,
+    accion: "creada",
+    user_id: userId,
+    valor_nuevo: { comisiones: comisionIds.length, observaciones: observaciones ?? null },
+  } as never);
   return ccId;
 }
 
