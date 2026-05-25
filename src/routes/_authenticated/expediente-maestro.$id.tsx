@@ -2,9 +2,16 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Sparkles, CheckCircle2, ArrowRight } from "lucide-react";
 import {
-  getMaestro, upsertMaestro, deleteMaestro,
-  emptyCliente, emptyCotitular, emptyCredito, emptyFresh,
-  emptyAsesor, emptyLicenciado, emptyApoderado,
+  getMaestro,
+  upsertMaestro,
+  deleteMaestro,
+  emptyCliente,
+  emptyCotitular,
+  emptyCredito,
+  emptyFresh,
+  emptyAsesor,
+  emptyLicenciado,
+  emptyApoderado,
   type ExpedienteMaestro,
 } from "@/lib/expedienteMaestro";
 import { Card } from "@/components/nuvex/ui";
@@ -15,7 +22,6 @@ import { ModuloJuridico } from "@/components/expediente-maestro/ModuloJuridico";
 import { MotorExtractosNUVEX } from "@/components/nuvex/MotorExtractosNUVEX";
 import type { MotorResultado } from "@/lib/motorExtractos.functions";
 import { withFreshDerivados, normalizeTipoBeneficio, FRESH_DEFAULT_TOTAL } from "@/lib/cobertura";
-
 
 export const Route = createFileRoute("/_authenticated/expediente-maestro/$id")({
   component: MaestroDetail,
@@ -60,9 +66,19 @@ function MaestroDetail() {
   }, [id]);
 
   const guardar = async () => {
-    setSaving(true); setMsg(null);
+    setSaving(true);
+    setMsg(null);
     try {
-      const saved = await upsertMaestro({ id, cliente, cotitular, credito, fresh, asesor, licenciado, apoderado });
+      const saved = await upsertMaestro({
+        id,
+        cliente,
+        cotitular,
+        credito,
+        fresh,
+        asesor,
+        licenciado,
+        apoderado,
+      });
       setExp(saved);
       setMsg("Expediente guardado");
       setTimeout(() => setMsg(null), 2500);
@@ -103,9 +119,10 @@ function MaestroDetail() {
             cuotaConSub > 0 ? cuotaConSub + segurosNum + valorBenef : 0,
           )
         : cuotaActualDoc;
-      const cuotaActualResuelta = cuotaBaseSimulacion > 0
-        ? String(Math.round(cuotaBaseSimulacion))
-        : (onlyDigits(d.cuotaActual) || credito.cuotaActual || "");
+      const cuotaActualResuelta =
+        cuotaBaseSimulacion > 0
+          ? String(Math.round(cuotaBaseSimulacion))
+          : onlyDigits(d.cuotaActual) || credito.cuotaActual || "";
 
       const cuotasPagadasNum = num(d.cuotasPagadas);
 
@@ -125,7 +142,10 @@ function MaestroDetail() {
         saldoCapital: onlyDigits(d.saldoCapital) || credito.saldoCapital || "",
         cuotaActual: cuotaActualResuelta,
         seguros: onlyDigits(d.seguros) || credito.seguros || "",
-        cuotaConSubsidio: cuotaConSub > 0 ? String(Math.round(cuotaConSub + segurosNum)) : onlyDigits(d.cuotaActual),
+        cuotaConSubsidio:
+          cuotaConSub > 0
+            ? String(Math.round(cuotaConSub + segurosNum))
+            : onlyDigits(d.cuotaActual),
         cuotaConInteresSinSeguros: d.cuotaSinSubsidio || d.cuotaConSubsidio || "",
         cuotaBaseSimulacion: cuotaActualResuelta,
         tasa: d.tasaEA || credito.tasa || "",
@@ -163,14 +183,23 @@ function MaestroDetail() {
       setCredito(nuevoCredito);
       setFresh(nuevoFresh);
       const saved = await upsertMaestro({
-        id, cliente: nuevoCliente, cotitular, credito: nuevoCredito,
-        fresh: nuevoFresh, asesor, licenciado, apoderado,
+        id,
+        cliente: nuevoCliente,
+        cotitular,
+        credito: nuevoCredito,
+        fresh: nuevoFresh,
+        asesor,
+        licenciado,
+        apoderado,
       });
       setExp(saved);
       setExtractoAplicado(r);
       setMsg("Expediente actualizado automáticamente desde el extracto");
       setTimeout(() => setMsg(null), 3500);
-      setTimeout(() => resumenRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
+      setTimeout(
+        () => resumenRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }),
+        100,
+      );
     } catch (e) {
       setMsg((e as Error).message);
     } finally {
@@ -178,17 +207,25 @@ function MaestroDetail() {
     }
   };
 
-
-  if (loading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando expediente…</div>;
-  if (err || !exp) return <div className="p-12 text-center text-sm text-[#B42318]">{err || "No encontrado"}</div>;
+  if (loading)
+    return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando expediente…</div>;
+  if (err || !exp)
+    return <div className="p-12 text-center text-sm text-[#B42318]">{err || "No encontrado"}</div>;
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-6 space-y-4">
       <Card>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: NUVEX.azul }}>Expediente Maestro</div>
-            <h1 className="text-2xl font-semibold text-[#242424]">{cliente.nombre || "Sin nombre"}</h1>
+            <div
+              className="text-[11px] uppercase tracking-wider font-semibold"
+              style={{ color: NUVEX.azul }}
+            >
+              Expediente Maestro
+            </div>
+            <h1 className="text-2xl font-semibold text-[#242424]">
+              {cliente.nombre || "Sin nombre"}
+            </h1>
             <div className="mt-1 text-sm text-[#242424]/70">
               {cliente.cedula && <>CC {cliente.cedula} · </>}
               {credito.banco && <>{credito.banco} · </>}
@@ -223,16 +260,31 @@ function MaestroDetail() {
             >
               {saving ? "Guardando…" : "Guardar todo"}
             </button>
-            <Link to="/expediente-maestro" className="text-[11px] text-[#445DA3] hover:underline ml-1">← Volver</Link>
+            <Link
+              to="/expediente-maestro"
+              className="text-[11px] text-[#445DA3] hover:underline ml-1"
+            >
+              ← Volver
+            </Link>
           </div>
         </div>
       </Card>
 
       <MaestroEditor
-        cliente={cliente} cotitular={cotitular} credito={credito} fresh={fresh}
-        asesor={asesor} licenciado={licenciado} apoderado={apoderado}
-        onCliente={setCliente} onCotitular={setCotitular} onCredito={setCredito}
-        onFresh={setFresh} onAsesor={setAsesor} onLicenciado={setLicenciado} onApoderado={setApoderado}
+        cliente={cliente}
+        cotitular={cotitular}
+        credito={credito}
+        fresh={fresh}
+        asesor={asesor}
+        licenciado={licenciado}
+        apoderado={apoderado}
+        onCliente={setCliente}
+        onCotitular={setCotitular}
+        onCredito={setCredito}
+        onFresh={setFresh}
+        onAsesor={setAsesor}
+        onLicenciado={setLicenciado}
+        onApoderado={setApoderado}
       />
 
       <DocumentosLegales
@@ -258,16 +310,23 @@ function MaestroDetail() {
             ) : extractoAplicado ? (
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full" style={{ background: NUVEX.verdeClaro }}>
+                  <div
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                    style={{ background: NUVEX.verdeClaro }}
+                  >
                     <CheckCircle2 className="h-5 w-5" style={{ color: NUVEX.verdeTextoFuerte }} />
                   </div>
                   <div className="flex-1">
-                    <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: NUVEX.verdeTextoFuerte }}>
+                    <div
+                      className="text-[11px] font-semibold uppercase tracking-wider"
+                      style={{ color: NUVEX.verdeTextoFuerte }}
+                    >
                       Extracto aplicado al expediente
                     </div>
                     <h3 className="text-lg font-semibold text-[#242424]">Resumen detectado</h3>
                     <p className="text-xs text-[#242424]/60">
-                      Los datos del crédito se actualizaron automáticamente. Revisa el resumen y genera una nueva simulación.
+                      Los datos del crédito se actualizaron automáticamente. Revisa el resumen y
+                      genera una nueva simulación.
                     </p>
                   </div>
                 </div>
@@ -276,20 +335,37 @@ function MaestroDetail() {
                   <ResumenItem label="Banco" value={extractoAplicado.banco} />
                   <ResumenItem label="Producto" value={extractoAplicado.producto || "—"} />
                   <ResumenItem label="Titular" value={extractoAplicado.datos.titular || "—"} />
-                  <ResumenItem label="N° crédito" value={extractoAplicado.datos.numeroCredito || "—"} />
-                  <ResumenItem label="Saldo capital" value={extractoAplicado.datos.saldoCapital || "—"} />
-                  <ResumenItem label="Cuota actual" value={extractoAplicado.datos.cuotaActual || "—"} />
+                  <ResumenItem
+                    label="N° crédito"
+                    value={extractoAplicado.datos.numeroCredito || "—"}
+                  />
+                  <ResumenItem
+                    label="Saldo capital"
+                    value={extractoAplicado.datos.saldoCapital || "—"}
+                  />
+                  <ResumenItem
+                    label="Cuota actual"
+                    value={extractoAplicado.datos.cuotaActual || "—"}
+                  />
                   <ResumenItem label="Tasa EA" value={extractoAplicado.datos.tasaEA || "—"} />
-                  <ResumenItem label="Cuotas pendientes" value={extractoAplicado.datos.cuotasPendientes || "—"} />
+                  <ResumenItem
+                    label="Cuotas pendientes"
+                    value={extractoAplicado.datos.cuotasPendientes || "—"}
+                  />
                 </div>
 
                 {/* BENEFICIO DE COBERTURA / FRESH / FRECH / Subsidio Gobierno */}
                 <BeneficioBlock fresh={fresh} datos={extractoAplicado.datos} />
 
-
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t" style={{ borderColor: "#EEF1F5" }}>
+                <div
+                  className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t"
+                  style={{ borderColor: "#EEF1F5" }}
+                >
                   <div className="text-[11px] text-[#242424]/60">
-                    Confianza global: <strong style={{ color: NUVEX.verdeTextoFuerte }}>{extractoAplicado.confianzaGlobal.toFixed(1)}%</strong>
+                    Confianza global:{" "}
+                    <strong style={{ color: NUVEX.verdeTextoFuerte }}>
+                      {extractoAplicado.confianzaGlobal.toFixed(1)}%
+                    </strong>
                   </div>
                   <div className="flex gap-2">
                     <Link
@@ -318,18 +394,18 @@ function MaestroDetail() {
         </div>
       )}
 
-
-
-
-
       <Card>
         <div className="flex items-center justify-between">
           <div className="text-sm text-[#242424]/70">¿Eliminar este expediente maestro?</div>
           <button
             onClick={async () => {
               if (!confirm("¿Eliminar definitivamente?")) return;
-              try { await deleteMaestro(id); navigate({ to: "/expediente-maestro" }); }
-              catch (e) { alert((e as Error).message); }
+              try {
+                await deleteMaestro(id);
+                navigate({ to: "/expediente-maestro" });
+              } catch (e) {
+                alert((e as Error).message);
+              }
             }}
             className="rounded-lg border px-3 py-1.5 text-xs font-medium"
             style={{ borderColor: "#F5C2C2", color: "#B42318", backgroundColor: "#FDECEC" }}
@@ -344,9 +420,14 @@ function MaestroDetail() {
 
 function ResumenItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border p-2.5" style={{ borderColor: "#E5E7EB", background: "#FBFCFD" }}>
+    <div
+      className="rounded-lg border p-2.5"
+      style={{ borderColor: "#E5E7EB", background: "#FBFCFD" }}
+    >
       <div className="text-[10px] uppercase tracking-wide text-[#242424]/55">{label}</div>
-      <div className="text-sm font-semibold text-[#242424] truncate" title={value}>{value}</div>
+      <div className="text-sm font-semibold text-[#242424] truncate" title={value}>
+        {value}
+      </div>
     </div>
   );
 }
@@ -355,11 +436,18 @@ function BeneficioBlock({
   fresh,
   datos,
 }: {
-  fresh: { activo: boolean; tipoBeneficio?: string; valorMensual: number; tasa: number; cuotasPagadas: number; cuotasPendientes: number };
+  fresh: {
+    activo: boolean;
+    tipoBeneficio?: string;
+    valorMensual: number;
+    tasa: number;
+    cuotasPagadas: number;
+    cuotasPendientes: number;
+  };
   datos: Record<string, string>;
 }) {
   const activo = !!fresh.activo && fresh.valorMensual > 0;
-  const fmt = (n: number) => n > 0 ? `$ ${Math.round(n).toLocaleString("es-CO")}` : "—";
+  const fmt = (n: number) => (n > 0 ? `$ ${Math.round(n).toLocaleString("es-CO")}` : "—");
   return (
     <div
       className="rounded-lg border p-3 space-y-2"
@@ -369,30 +457,48 @@ function BeneficioBlock({
       }}
     >
       <div className="flex items-center justify-between">
-        <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: activo ? NUVEX.verdeTextoFuerte : "#6b7280" }}>
+        <div
+          className="text-[11px] font-semibold uppercase tracking-wider"
+          style={{ color: activo ? NUVEX.verdeTextoFuerte : "#6b7280" }}
+        >
           Beneficio de Cobertura
         </div>
-        <div className="text-[11px] font-semibold" style={{ color: activo ? NUVEX.verdeTextoFuerte : "#6b7280" }}>
+        <div
+          className="text-[11px] font-semibold"
+          style={{ color: activo ? NUVEX.verdeTextoFuerte : "#6b7280" }}
+        >
           {activo ? "Sí aplica" : "No aplica"}
         </div>
       </div>
       {activo ? (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-          <ResumenItem label="Tipo beneficio" value={fresh.tipoBeneficio || datos.tipoBeneficio || "Subsidio Gobierno"} />
+          <ResumenItem
+            label="Tipo beneficio"
+            value={fresh.tipoBeneficio || datos.tipoBeneficio || "Subsidio Gobierno"}
+          />
           <ResumenItem label="Valor mensual" value={fmt(fresh.valorMensual)} />
-          <ResumenItem label="Tasa cobertura" value={fresh.tasa > 0 ? `${fresh.tasa}%` : "Sin dato detectado"} />
-          <ResumenItem label="Cuota con cobertura" value={datos.cuotaConSubsidio ? fmt(Number(datos.cuotaConSubsidio)) : "—"} />
-          <ResumenItem label="Cuota sin cobertura" value={datos.cuotaSinSubsidio ? fmt(Number(datos.cuotaSinSubsidio)) : "—"} />
+          <ResumenItem
+            label="Tasa cobertura"
+            value={fresh.tasa > 0 ? `${fresh.tasa}%` : "Sin dato detectado"}
+          />
+          <ResumenItem
+            label="Cuota con cobertura"
+            value={datos.cuotaConSubsidio ? fmt(Number(datos.cuotaConSubsidio)) : "—"}
+          />
+          <ResumenItem
+            label="Cuota sin cobertura"
+            value={datos.cuotaSinSubsidio ? fmt(Number(datos.cuotaSinSubsidio)) : "—"}
+          />
           <ResumenItem label="Cuotas beneficio pagadas" value={String(fresh.cuotasPagadas)} />
           <ResumenItem label="Cuotas beneficio pendientes" value={String(fresh.cuotasPendientes)} />
           <ResumenItem label="Cuotas totales" value="84" />
         </div>
       ) : (
         <div className="text-xs text-[#242424]/60">
-          No se detectó subsidio Gobierno / FRECH / Fresh con valor mensual mayor a cero en este extracto.
+          No se detectó subsidio Gobierno / FRECH / Fresh con valor mensual mayor a cero en este
+          extracto.
         </div>
       )}
     </div>
   );
 }
-
