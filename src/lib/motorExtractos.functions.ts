@@ -395,10 +395,6 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
       return { error: `Error de IA detector (${detResp.status}).`, data: null };
     }
 
-    interface ToolCall { function?: { arguments?: string } }
-    interface Usage { prompt_tokens?: number; completion_tokens?: number }
-    interface ChatResp { choices?: Array<{ message?: { tool_calls?: ToolCall[] } }>; usage?: Usage }
-
     const detJson = (await detResp.json()) as ChatResp;
     const detModel = detResp.ok ? (detResp.status >= 500 ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash") : "google/gemini-2.5-flash";
     const detIn = detJson.usage?.prompt_tokens ?? 0;
@@ -411,7 +407,7 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
       costoUSD: calcCosto(detModel, detIn, detOut),
     });
     const detArgs = detJson.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ?? "";
-    let det: { banco: string; producto: Producto; moneda: Moneda; evidencia: string } = {
+    let det: DeteccionMotor = {
       banco: "", producto: "", moneda: "", evidencia: "",
     };
     try { det = { ...det, ...JSON.parse(detArgs) }; } catch { /* ignore */ }
