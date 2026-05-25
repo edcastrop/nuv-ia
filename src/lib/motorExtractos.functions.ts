@@ -529,6 +529,12 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
       if (parseResp.status === 429)
         return { error: "Demasiadas solicitudes. Intenta de nuevo.", data: null };
       if (parseResp.status === 402) return { error: "Créditos de IA agotados.", data: null };
+      if (parseResp.status === 504 || parseResp.status === 408)
+        return {
+          error:
+            "El extracto es muy pesado y la IA tardó demasiado. Intenta subir solo las páginas relevantes (resumen + movimientos) o reduce el tamaño del PDF.",
+          data: null,
+        };
       return { error: `Error de IA parser (${parseResp.status}).`, data: null };
     }
 
