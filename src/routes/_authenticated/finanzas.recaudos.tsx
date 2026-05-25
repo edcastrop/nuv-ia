@@ -1,13 +1,333 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { Card } from "@/components/nuvex/ui";
+import { supabase } from "@/integrations/supabase/client";
+import { listCarteras, type CarteraConExpediente } from "@/lib/cartera";
+import { registrarPago } from "@/lib/cartera.functions";
 
 export const Route = createFileRoute("/_authenticated/finanzas/recaudos")({
-  component: () => (
-    <Card className="p-6">
-      <h2 className="text-lg font-semibold text-[#0A1226]">Recaudos</h2>
-      <p className="mt-1 text-sm text-[#242424]/60">Registro de pagos con comprobante y validaciones.</p>
-      <p className="mt-3 text-[12px] text-[#242424]/50">Disponible en próxima entrega.</p>
-    </Card>
-  ),
+  component: RecaudosPage,
   head: () => ({ meta: [{ title: "Recaudos · NUVEX" }] }),
 });
+
+const AZUL = "#445DA3";
+const money = (n: number) => "$" + Math.round(n).toLocaleString("es-CO");
+
+type PagoRecent = {
+  id: string;
+  cartera_id: string;
+  fecha: string;
+  valor: number;
+  metodo: string | null;
+  banco_receptor: string | null;
+  comprobante_num: string | null;
+  observaciones: string | null;
+  created_at: string;
+  cliente: string;
+  banco: string | null;
+};
+
+function RecaudosPage() {
+  const [carteras, setCarteras] = useState<CarteraConExpediente[]>([]);
+  const [pagos, setPagos] = useState<PagoRecent[]>([]);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    listCarteras()
+      .then(setCarteras)
+      .finally(() => setLoading(false));
+  }, [reloadKey]);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("cartera_pagos" as never)
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      const rows = (data ?? []) as unknown as PagoRecent[];
+      if (rows.length === 0) {
+        setPagos([]);
+        return;
+      }
+      const cartIds = Array.from(new Set(rows.map((r) => r.cartera_id)));
+      const { data: carts } = await supabase
+        .from("cartera" as never)
+        .select("id, expediente_id")
+        .in("id", cartIds);
+      const expIds = Array.from(new Set(((carts ?? []) as unknown as { id: string; expediente_id: string }[]).map((c) => c.expediente_id)));
+      const { data: exps } = await supabase
+        .from("expedientes")
+        .select("id, cliente_nombre, banco")
+        .in("id", expIds);
+      const expMap = new Map((exps ?? []).map((e) => [e.id, e]));
+      const cartMap = new Map(((carts ?? []) as unknown as { id: string; expediente_id: string }[]).map((c) => [c.id, c.expediente_id]));
+      setPagos(
+        rows.map((r) => {
+          const exp = expMap.get(cartMap.get(r.cartera_id) ?? "");
+          return { ...r, cliente: exp?.cliente_nombre ?? "—", banco: exp?.banco ?? null };
+        }),
+      );
+    })();
+  }, [reloadKey]);
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <h1 className="text-xl font-semibold text-[#0A1226]">Recaudos</h1>
+        <p className="text-[12px] text-[#242424]/60">
+          Registra pagos de clientes. El sistema recalcula saldo y cierra la cartera automáticamente cuando el pagado iguala los honorarios.
+        </p>
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-4">
+        <NuevoRecaudo
+          carteras={carteras}
+          loading={loading}
+          onSaved={() => setReloadKey((k) => k + 1)}
+        />
+
+        <Card>
+          <h2 className="text-sm font-semibold text-[#0A1226] mb-2">Últimos 50 recaudos</h2>
+          {pagos.length === 0 ? (
+            <div className="py-6 text-center text-sm text-[#242424]/60">Sin recaudos registrados aún.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-[12.5px]">
+                <thead className="text-[11px] uppercase tracking-wider text-[#242424]/60">
+                  <tr className="border-b border-[#E5E7EB]">
+                    <th className="text-left py-2 pr-3">Fecha</th>
+                    <th className="text-left pr-3">Cliente</th>
+                    <th className="text-left pr-3">Banco</th>
+                    <th className="text-right pr-3">Valor</th>
+                    <th className="text-left pr-3">Método</th>
+                    <th className="text-left pr-3">Comp. #</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pagos.map((p) => (
+                    <tr key={p.id} className="border-b border-[#F3F4F6]">
+                      <td className="py-2 pr-3">{p.fecha}</td>
+                      <td className="pr-3 font-medium text-[#242424]">{p.cliente}</td>
+                      <td className="pr-3">{p.banco ?? "—"}</td>
+                      <td className="text-right pr-3 text-[#1F7A45] font-semibold">{money(Number(p.valor))}</td>
+                      <td className="pr-3">{p.metodo ?? "—"}</td>
+                      <td className="pr-3">{p.comprobante_num ?? "—"}</td>
+                      <td>
+                        <Link to="/cartera/$id" params={{ id: p.cartera_id }} className="text-[11px] text-[#445DA3] hover:underline">Ver →</Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function NuevoRecaudo({
+  carteras,
+  loading,
+  onSaved,
+}: {
+  carteras: CarteraConExpediente[];
+  loading: boolean;
+  onSaved: () => void;
+}) {
+  const registrar = useServerFn(registrarPago);
+  const [busqueda, setBusqueda] = useState("");
+  const [carteraId, setCarteraId] = useState("");
+  const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10));
+  const [valor, setValor] = useState("");
+  const [metodo, setMetodo] = useState("");
+  const [bancoReceptor, setBancoReceptor] = useState("");
+  const [comprobanteNum, setComprobanteNum] = useState("");
+  const [observaciones, setObservaciones] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [ok, setOk] = useState<string | null>(null);
+
+  const candidatos = useMemo(() => {
+    const q = busqueda.trim().toLowerCase();
+    const conSaldo = carteras.filter((c) => Number(c.honorarios_totales) - Number(c.pagado) > 0);
+    if (!q) return conSaldo.slice(0, 25);
+    return conSaldo
+      .filter(
+        (c) =>
+          c.expediente?.cliente_nombre?.toLowerCase().includes(q) ||
+          c.expediente?.cedula?.toLowerCase().includes(q) ||
+          c.expediente?.banco?.toLowerCase().includes(q),
+      )
+      .slice(0, 25);
+  }, [carteras, busqueda]);
+
+  const seleccionada = carteras.find((c) => c.id === carteraId);
+  const saldo = seleccionada ? Number(seleccionada.honorarios_totales) - Number(seleccionada.pagado) : 0;
+
+  async function fileToBase64(f: File): Promise<string> {
+    const buf = await f.arrayBuffer();
+    let bin = "";
+    const bytes = new Uint8Array(buf);
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin);
+  }
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setOk(null);
+    if (!carteraId) {
+      setError("Selecciona la cartera a abonar.");
+      return;
+    }
+    const v = Number(valor);
+    if (!v || v <= 0) {
+      setError("Valor inválido.");
+      return;
+    }
+    if (v > saldo + 1) {
+      if (!confirm(`El valor (${money(v)}) supera el saldo (${money(saldo)}). ¿Continuar de todos modos?`)) return;
+    }
+    setSaving(true);
+    try {
+      let comprobanteBase64: string | undefined;
+      let comprobanteFilename: string | undefined;
+      if (file) {
+        comprobanteBase64 = await fileToBase64(file);
+        comprobanteFilename = file.name;
+      }
+      await registrar({
+        data: {
+          carteraId,
+          fecha,
+          valor: v,
+          metodo: metodo || undefined,
+          bancoReceptor: bancoReceptor || undefined,
+          comprobanteNum: comprobanteNum || undefined,
+          comprobanteBase64,
+          comprobanteFilename,
+          observaciones: observaciones || undefined,
+        },
+      });
+      setOk("Recaudo registrado correctamente.");
+      setValor("");
+      setMetodo("");
+      setBancoReceptor("");
+      setComprobanteNum("");
+      setObservaciones("");
+      setFile(null);
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al registrar pago.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card>
+      <h2 className="text-sm font-semibold text-[#0A1226] mb-3">Registrar recaudo</h2>
+      <form onSubmit={onSubmit} className="space-y-3">
+        <Field label="Buscar cliente / cédula / banco">
+          <input
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            placeholder="Escribe para filtrar carteras con saldo"
+            className="w-full text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white"
+          />
+        </Field>
+        <Field label="Cartera">
+          <select
+            value={carteraId}
+            onChange={(e) => setCarteraId(e.target.value)}
+            className="w-full text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white"
+          >
+            <option value="">{loading ? "Cargando…" : "— Selecciona —"}</option>
+            {candidatos.map((c) => {
+              const s = Number(c.honorarios_totales) - Number(c.pagado);
+              return (
+                <option key={c.id} value={c.id}>
+                  {c.expediente?.cliente_nombre} · {c.expediente?.banco ?? "—"} · saldo {money(s)}
+                </option>
+              );
+            })}
+          </select>
+        </Field>
+
+        {seleccionada && (
+          <div className="rounded-lg border border-[#E0E7FF] bg-[#F5F7FF] p-2 text-[11.5px] text-[#242424]/80">
+            Honorarios: <b>{money(Number(seleccionada.honorarios_totales))}</b> · Pagado:{" "}
+            <b className="text-[#1F7A45]">{money(Number(seleccionada.pagado))}</b> · Saldo:{" "}
+            <b style={{ color: AZUL }}>{money(saldo)}</b>
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-2">
+          <Field label="Fecha">
+            <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className="w-full text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white" />
+          </Field>
+          <Field label="Valor (COP)">
+            <input type="number" min={0} value={valor} onChange={(e) => setValor(e.target.value)} className="w-full text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white" />
+          </Field>
+          <Field label="Método">
+            <select value={metodo} onChange={(e) => setMetodo(e.target.value)} className="w-full text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white">
+              <option value="">—</option>
+              <option value="transferencia">Transferencia</option>
+              <option value="consignacion">Consignación</option>
+              <option value="efectivo">Efectivo</option>
+              <option value="pse">PSE</option>
+              <option value="otro">Otro</option>
+            </select>
+          </Field>
+          <Field label="Banco receptor">
+            <input value={bancoReceptor} onChange={(e) => setBancoReceptor(e.target.value)} className="w-full text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white" />
+          </Field>
+        </div>
+
+        <Field label="N° comprobante">
+          <input value={comprobanteNum} onChange={(e) => setComprobanteNum(e.target.value)} className="w-full text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white" />
+        </Field>
+        <Field label="Comprobante (PDF/imagen)">
+          <input
+            type="file"
+            accept="image/*,application/pdf"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            className="w-full text-[12px]"
+          />
+        </Field>
+        <Field label="Observaciones">
+          <textarea value={observaciones} onChange={(e) => setObservaciones(e.target.value)} rows={2} className="w-full text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white" />
+        </Field>
+
+        {error && <div className="text-[12px] text-[#B42318]">{error}</div>}
+        {ok && <div className="text-[12px] text-[#1F7A45]">{ok}</div>}
+
+        <button
+          type="submit"
+          disabled={saving}
+          className="w-full rounded-lg px-3 py-2 text-[12.5px] font-semibold text-white disabled:opacity-60"
+          style={{ background: `linear-gradient(135deg, ${AZUL}, #84B98F)` }}
+        >
+          {saving ? "Registrando…" : "Registrar recaudo"}
+        </button>
+      </form>
+    </Card>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="text-[10.5px] uppercase tracking-wider text-[#242424]/60">{label}</span>
+      {children}
+    </label>
+  );
+}
