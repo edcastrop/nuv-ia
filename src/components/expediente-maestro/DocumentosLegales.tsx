@@ -16,6 +16,7 @@ import { listApoderados, seleccionarApoderado, type ApoderadoNuvex, type MotivoS
 import { EnviarContratacionButton, type ContratacionContext } from "./EnviarContratacion";
 import { CitySelect } from "@/components/ui/CitySelect";
 import { normalizeCityText, cityDepartment } from "@/lib/colombiaCities";
+import { honorariosFinalesCliente } from "@/lib/honorarios";
 
 const fmtCOP = (n: number) =>
   !isFinite(n) || n === 0
