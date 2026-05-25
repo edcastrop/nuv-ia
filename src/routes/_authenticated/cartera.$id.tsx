@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Card } from "@/components/nuvex/ui";
 import {
@@ -11,6 +11,10 @@ import {
 import {
   registrarPago, crearAcuerdo, enviarPrejuridico, enviarCorreoCartera, registrarComunicacion,
 } from "@/lib/cartera.functions";
+import {
+  listCuentasReceptoras, getParametrosFinancieros, calcularDesgloseWompi,
+  METODOS_PAGO, type CuentaReceptora, type MetodoPago,
+} from "@/lib/cuentasReceptoras";
 import { useUserRole } from "@/hooks/useUserRole";
 
 export const Route = createFileRoute("/_authenticated/cartera/$id")({
