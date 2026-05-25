@@ -108,13 +108,16 @@ export function PesosSimulator({
     cuotaBaseSimulacionRaw > 0 && cuotaBaseSimulacionRaw <= cuotaMaximaRazonable
       ? cuotaBaseSimulacionRaw
       : 0;
-  const cuotaActualValida = cuotaActualNum > 0 && cuotaActualNum <= cuotaMaximaRazonable ? cuotaActualNum : 0;
+  const cuotaActualValida =
+    cuotaActualNum > 0 && cuotaActualNum <= cuotaMaximaRazonable ? cuotaActualNum : 0;
   const cuotaPagadaClienteValida =
     cuotaPagadaClienteNum > 0 && cuotaPagadaClienteNum <= cuotaMaximaRazonable
       ? cuotaPagadaClienteNum
       : 0;
-  const cuotaSimulacionNum = cuotaBaseSimulacionNum > 0 ? cuotaBaseSimulacionNum : cuotaActualValida;
-  const cuotaClienteHoyNum = cuotaPagadaClienteValida > 0 ? cuotaPagadaClienteValida : cuotaActualValida;
+  const cuotaSimulacionNum =
+    cuotaBaseSimulacionNum > 0 ? cuotaBaseSimulacionNum : cuotaActualValida;
+  const cuotaClienteHoyNum =
+    cuotaPagadaClienteValida > 0 ? cuotaPagadaClienteValida : cuotaActualValida;
   const segurosNum = parseCurrency(seguros);
   const cuotaSinSegurosNum = Math.max(0, cuotaSimulacionNum - segurosNum);
   const dineroPagadoFecha = cuotaClienteHoyNum * cuotasPagadas;
@@ -143,7 +146,9 @@ export function PesosSimulator({
       "La cuota mensual está fuera de rango para este crédito. Revise la lectura del extracto antes de simular.",
     );
   if (segurosNum > 0 && segurosNum > Math.max(500_000, cuotaSimulacionNum * 0.2))
-    validaciones.push("Los seguros mensuales están fuera de rango. Revise la lectura del extracto.");
+    validaciones.push(
+      "Los seguros mensuales están fuera de rango. Revise la lectura del extracto.",
+    );
   if (cuotaSimulacionNum > 0 && segurosNum > 0 && cuotaSinSegurosNum <= 0)
     validaciones.push("La cuota sin seguros debe ser mayor a cero para calcular la proyección.");
 
