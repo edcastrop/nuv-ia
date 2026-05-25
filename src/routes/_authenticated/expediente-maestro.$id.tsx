@@ -79,6 +79,25 @@ function MaestroDetail() {
     try {
       const d = r.datos;
       const onlyDigits = (s: string) => (s || "").replace(/[^\d.,-]/g, "");
+      const num = (s: string) => {
+        const n = parseFloat((s || "").replace(/[^\d.-]/g, ""));
+        return Number.isFinite(n) ? n : 0;
+      };
+
+      // Beneficio / Cobertura: activamos sólo si hay valor mensual > 0
+      const beneficioFlag = (d.beneficioActivo || "").toLowerCase() === "si";
+      const valorBenef = num(d.valorBeneficioMensual);
+      const beneficioReal = beneficioFlag && valorBenef > 0;
+
+      // Cuota actual: si hay subsidio explícito, preferimos la "con subsidio"
+      // (lo que realmente paga el cliente). Si no, usamos la cuota normal.
+      const cuotaConSub = num(d.cuotaConSubsidio);
+      const cuotaActualResuelta = beneficioReal && cuotaConSub > 0
+        ? String(Math.round(cuotaConSub))
+        : (onlyDigits(d.cuotaActual) || credito.cuotaActual || "");
+
+      const cuotasPagadasNum = num(d.cuotasPagadas);
+
       const nuevoCliente = {
         ...cliente,
         nombre: cliente.nombre || d.titular || "",
@@ -92,16 +111,44 @@ function MaestroDetail() {
         fechaDesembolso: d.fechaDesembolso || credito.fechaDesembolso || "",
         plazoOriginal: d.plazoInicial || credito.plazoOriginal || "",
         saldoCapital: onlyDigits(d.saldoCapital) || credito.saldoCapital || "",
-        cuotaActual: onlyDigits(d.cuotaActual) || credito.cuotaActual || "",
+        cuotaActual: cuotaActualResuelta,
         tasa: d.tasaEA || credito.tasa || "",
         cuotasPagadas: d.cuotasPagadas || credito.cuotasPagadas || "",
         cuotasPendientes: d.cuotasPendientes || credito.cuotasPendientes || "",
       };
+
+      // Construcción del bloque Fresh
+      const nuevoFresh = beneficioReal
+        ? withFreshDerivados(
+            {
+              activo: true,
+              tipoBeneficio: normalizeTipoBeneficio(d.tipoBeneficio || "Subsidio Gobierno"),
+              valorMensual: valorBenef,
+              tasa: num(d.tasaCobertura),
+              cuotasTotales: FRESH_DEFAULT_TOTAL,
+              detectadoOCR: true,
+              fuente: "ocr",
+              ultimaSincronizacion: new Date().toISOString(),
+            },
+            cuotasPagadasNum || undefined,
+          )
+        : withFreshDerivados(
+            {
+              activo: false,
+              cuotasTotales: FRESH_DEFAULT_TOTAL,
+              detectadoOCR: true,
+              fuente: "ocr",
+              ultimaSincronizacion: new Date().toISOString(),
+            },
+            cuotasPagadasNum || undefined,
+          );
+
       setCliente(nuevoCliente);
       setCredito(nuevoCredito);
+      setFresh(nuevoFresh);
       const saved = await upsertMaestro({
         id, cliente: nuevoCliente, cotitular, credito: nuevoCredito,
-        fresh, asesor, licenciado, apoderado,
+        fresh: nuevoFresh, asesor, licenciado, apoderado,
       });
       setExp(saved);
       setExtractoAplicado(r);
@@ -114,6 +161,7 @@ function MaestroDetail() {
       setAplicandoExtracto(false);
     }
   };
+
 
   if (loading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando expediente…</div>;
   if (err || !exp) return <div className="p-12 text-center text-sm text-[#B42318]">{err || "No encontrado"}</div>;
