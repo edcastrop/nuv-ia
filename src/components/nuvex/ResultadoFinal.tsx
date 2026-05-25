@@ -288,11 +288,85 @@ export function ResultadoFinal({
           <TextField label="Observaciones" value={aprob.observaciones} onChange={(v) => set("observaciones", v)} placeholder="Opcional" />
         </div>
 
+        {/* ====== Reajuste de honorarios a éxito ====== */}
+        <div className="mt-6 rounded-xl border-2 p-4" style={{ borderColor: "#F0B429", backgroundColor: "#FFFBEB" }}>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: "#8A5A00" }}>
+              Reajuste de honorarios a éxito
+            </h3>
+            {recalculo.huboRecalculo && (
+              <span className="rounded-full px-3 py-1 text-[11px] font-bold" style={{ background: "#F0B429", color: "#2C1810" }}>
+                Honorarios recalculados
+              </span>
+            )}
+          </div>
+          <p className="mt-1 text-[11px] text-[#8A5A00]/80">
+            NUVEX trabaja a éxito. Si el banco aprueba menos cuotas eliminadas que las pactadas, los honorarios se recalculan por regla de 3.
+          </p>
+          <div className="mt-3 grid gap-3 md:grid-cols-3">
+            <TextField label="Cuotas pactadas en contrato" value={cuotasPactadas} onChange={setCuotasPactadas} placeholder="60" />
+            <TextField label="Honorarios pactados" value={honorariosPactados} onChange={setHonorariosPactados} placeholder="3.000.000" />
+            <TextField label="Cuotas aprobadas por banco" value={cuotasAprobadasBanco} onChange={setCuotasAprobadasBanco} placeholder="55" />
+          </div>
+          <div className="mt-3 grid gap-2 md:grid-cols-4 text-xs">
+            <div className="rounded-lg bg-white p-2 border border-[#F0B429]/40">
+              <div className="text-[10px] uppercase tracking-wider text-[#242424]/60">Cuotas pactadas</div>
+              <div className="font-semibold">{recalculo.cuotasPactadas || "—"}</div>
+            </div>
+            <div className="rounded-lg bg-white p-2 border border-[#F0B429]/40">
+              <div className="text-[10px] uppercase tracking-wider text-[#242424]/60">Cuotas aprobadas</div>
+              <div className="font-semibold">{recalculo.cuotasAprobadasBanco || "—"}</div>
+            </div>
+            <div className="rounded-lg bg-white p-2 border border-[#F0B429]/40">
+              <div className="text-[10px] uppercase tracking-wider text-[#242424]/60">Honorarios pactados</div>
+              <div className="font-semibold">{formatCOP(recalculo.honorariosPactados)}</div>
+            </div>
+            <div className="rounded-lg p-2 border-2" style={{ borderColor: NUVEX.verde, backgroundColor: "#EAF7EE" }}>
+              <div className="text-[10px] uppercase tracking-wider" style={{ color: "#1F7A45" }}>Honorarios recalculados</div>
+              <div className="font-extrabold text-base" style={{ color: "#1F7A45" }}>{formatCOP(recalculo.honorariosRecalculados)}</div>
+            </div>
+          </div>
+          {recalculo.huboRecalculo && (
+            <div className="mt-3 rounded-lg bg-amber-100 border border-amber-300 p-2 text-xs text-[#8A5A00]">
+              Los honorarios fueron recalculados porque el banco aprobó menos cuotas de las pactadas. Diferencia a favor del cliente: <strong>{formatCOP(recalculo.diferencia)}</strong>.
+            </div>
+          )}
+          {expedienteId && (
+            <div className="mt-3 flex items-center justify-end gap-3">
+              {recalcMsg && <span className="text-xs text-[#242424]/70">{recalcMsg}</span>}
+              <button
+                disabled={savingRecalc || recalculo.cuotasPactadas <= 0 || recalculo.honorariosPactados <= 0 || recalculo.cuotasAprobadasBanco <= 0}
+                onClick={async () => {
+                  setSavingRecalc(true); setRecalcMsg(null);
+                  try {
+                    await guardarRecalculoHonorarios(
+                      expedienteId,
+                      recalculo.cuotasPactadas,
+                      recalculo.cuotasAprobadasBanco,
+                      recalculo.honorariosPactados,
+                    );
+                    setRecalcMsg(`Honorarios oficiales actualizados a ${formatCOP(recalculo.honorariosRecalculados)}`);
+                  } catch (e) {
+                    setRecalcMsg((e as Error).message);
+                  } finally {
+                    setSavingRecalc(false);
+                  }
+                }}
+                className="rounded-lg px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
+                style={{ backgroundColor: "#8A5A00" }}
+              >
+                {savingRecalc ? "Guardando…" : "Guardar recálculo"}
+              </button>
+            </div>
+          )}
+        </div>
+
         {!aprobado && (
           <div className="mt-4">
             <Alert>Ingresa la nueva cuota y el nuevo plazo aprobados para calcular acertividad.</Alert>
           </div>
         )}
+
 
         {aprobado && metricas && (
           <>
