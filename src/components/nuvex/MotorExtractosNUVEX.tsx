@@ -74,6 +74,9 @@ function scoreBadge(score: number) {
   return { bg: "#F1F3F6", color: "#6b7280", label: "Vacío" };
 }
 
+const MAX_SIZE = 20 * 1024 * 1024;
+const fmtSize = (b: number) => b < 1024 * 1024 ? `${(b / 1024).toFixed(0)} KB` : `${(b / 1024 / 1024).toFixed(1)} MB`;
+
 export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const motor = useServerFn(extractStatementMotor);
@@ -84,15 +87,17 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<MotorResultado | null>(null);
   const [editado, setEditado] = useState<Record<string, string>>({});
+  const [isDragging, setIsDragging] = useState(false);
+  const [readingPhase, setReadingPhase] = useState<"upload" | "ocr" | "analyze">("upload");
 
   const reset = () => {
     setStage("idle"); setFile(null); setArchivoPath(null); setPassword("");
-    setError(null); setResult(null); setEditado({});
+    setError(null); setResult(null); setEditado({}); setIsDragging(false);
     if (fileRef.current) fileRef.current.value = "";
   };
 
   const startRead = async (selected: File, pwd?: string) => {
-    setStage("reading"); setError(null);
+    setStage("reading"); setError(null); setReadingPhase("upload");
     try {
       let images: { mime: string; dataUrl: string }[] = [];
       if (selected.type === "application/pdf" || selected.name.toLowerCase().endsWith(".pdf")) {
@@ -107,6 +112,7 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
         images = await fileToImages(selected);
       }
       if (!images.length) throw new Error("No se pudieron generar imágenes del archivo.");
+      setReadingPhase("ocr");
 
       // Subir archivo a storage para trazabilidad (opcional, no bloqueante)
       try {
@@ -118,6 +124,7 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
         }
       } catch { /* no bloqueante */ }
 
+      setReadingPhase("analyze");
       const res = await motor({ data: { images } });
       if (res.error || !res.data) {
         setError(res.error || "Lectura sin datos."); setStage("error"); return;
@@ -130,6 +137,17 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
 
   const onFile = (f: File | null) => {
     if (!f) return;
+    const isPdf = f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf");
+    if (!isPdf) {
+      setError("Solo se permiten archivos PDF. JPG, PNG, DOCX y XLSX no están soportados.");
+      setStage("error");
+      return;
+    }
+    if (f.size > MAX_SIZE) {
+      setError(`El archivo supera 20 MB (${fmtSize(f.size)}).`);
+      setStage("error");
+      return;
+    }
     setFile(f);
     void startRead(f);
   };
@@ -197,14 +215,54 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
       </div>
 
       {stage === "idle" && (
-        <label className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 cursor-pointer hover:bg-[#F7F9FB]"
-          style={{ borderColor: NUVEX.azul + "55" }}>
-          <Upload className="h-6 w-6" style={{ color: NUVEX.azul }} />
-          <div className="text-sm font-medium text-[#242424]">Subir extracto bancario (PDF o imagen)</div>
-          <div className="text-[11px] text-[#242424]/60">Bancos soportados: Bancolombia, Davivienda, Davibank, Caja Social, Banco de Bogotá, FNA, Banco Popular, Banco de Occidente, AV Villas, Credifamilia.</div>
-          <input ref={fileRef} type="file" accept=".pdf,image/*" className="hidden"
-            onChange={(e) => onFile(e.target.files?.[0] ?? null)} />
-        </label>
+        <div
+          onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); }}
+          onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); }}
+          onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); }}
+          onDrop={(e) => {
+            e.preventDefault(); e.stopPropagation(); setIsDragging(false);
+            const f = e.dataTransfer.files?.[0] ?? null;
+            onFile(f);
+          }}
+          className="rounded-xl border-2 border-dashed p-8 transition-colors"
+          style={{
+            borderColor: isDragging ? NUVEX.azul : NUVEX.azul + "55",
+            background: isDragging ? NUVEX.azul + "10" : "#FBFCFD",
+          }}
+        >
+          <div className="flex flex-col items-center justify-center gap-3 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full" style={{ background: NUVEX.azul + "15" }}>
+              <FileText className="h-6 w-6" style={{ color: NUVEX.azul }} />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-[#242424]">📄 Cargar Extracto Bancario</div>
+              <div className="mt-1 text-xs text-[#242424]/70">
+                {isDragging ? "Suelte el archivo para cargarlo" : "Arrastre aquí el PDF del extracto"}
+              </div>
+            </div>
+            {!isDragging && (
+              <>
+                <div className="text-[11px] text-[#242424]/50">o</div>
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold text-white shadow-sm hover:opacity-90"
+                  style={{ background: NUVEX.azul }}
+                >
+                  <Upload className="h-3.5 w-3.5" /> Seleccionar archivo
+                </button>
+                <div className="mt-2 text-[10px] text-[#242424]/55">
+                  Formato permitido: <strong>PDF</strong> · Tamaño máximo: <strong>20 MB</strong>
+                </div>
+                <div className="text-[10px] text-[#242424]/45 max-w-md">
+                  Bancos soportados: Bancolombia, Davivienda, Davibank, Caja Social, Banco de Bogotá, FNA, Banco Popular, Banco de Occidente, AV Villas, Credifamilia.
+                </div>
+              </>
+            )}
+            <input ref={fileRef} type="file" accept="application/pdf,.pdf" className="hidden"
+              onChange={(e) => onFile(e.target.files?.[0] ?? null)} />
+          </div>
+        </div>
       )}
 
       {stage === "password" && (
@@ -220,9 +278,32 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
       )}
 
       {stage === "reading" && (
-        <div className="flex items-center gap-3 rounded-lg border p-4" style={{ borderColor: NUVEX.azul + "33" }}>
-          <Loader2 className="h-5 w-5 animate-spin" style={{ color: NUVEX.azul }} />
-          <div className="text-sm">Detectando banco y aplicando parser especializado…</div>
+        <div className="rounded-lg border p-4 space-y-3" style={{ borderColor: NUVEX.azul + "33", background: "#F7F9FB" }}>
+          {file && (
+            <div className="flex items-center gap-2 text-xs text-[#242424]/80">
+              <CheckCircle2 className="h-4 w-4" style={{ color: NUVEX.verdeTextoFuerte }} />
+              <span className="font-medium">{file.name}</span>
+              <span className="text-[#242424]/50">· {fmtSize(file.size)}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-3">
+            <Loader2 className="h-5 w-5 animate-spin" style={{ color: NUVEX.azul }} />
+            <div className="text-sm font-medium text-[#242424]">
+              {readingPhase === "upload" && "Subiendo archivo…"}
+              {readingPhase === "ocr" && "Procesando OCR…"}
+              {readingPhase === "analyze" && "Analizando extracto…"}
+            </div>
+          </div>
+          <div className="flex gap-1">
+            {(["upload", "ocr", "analyze"] as const).map((p, i) => {
+              const order = { upload: 0, ocr: 1, analyze: 2 }[readingPhase];
+              const done = i <= order;
+              return (
+                <div key={p} className="h-1 flex-1 rounded-full transition-colors"
+                  style={{ background: done ? NUVEX.azul : NUVEX.azul + "22" }} />
+              );
+            })}
+          </div>
         </div>
       )}
 
