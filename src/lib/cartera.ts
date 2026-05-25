@@ -69,6 +69,13 @@ export interface CarteraPago {
   fecha: string;
   valor: number;
   metodo: string | null;
+  metodo_pago: string | null;
+  cuenta_receptora_id: string | null;
+  valor_bruto: number | null;
+  fee_wompi: number | null;
+  iva_fee: number | null;
+  valor_neto: number | null;
+  numero_transaccion: string | null;
   banco_receptor: string | null;
   comprobante_num: string | null;
   comprobante_url: string | null;

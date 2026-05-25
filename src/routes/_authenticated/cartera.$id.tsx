@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Card } from "@/components/nuvex/ui";
 import {
@@ -11,6 +11,10 @@ import {
 import {
   registrarPago, crearAcuerdo, enviarPrejuridico, enviarCorreoCartera, registrarComunicacion,
 } from "@/lib/cartera.functions";
+import {
+  listCuentasReceptoras, getParametrosFinancieros, calcularDesgloseWompi,
+  METODOS_PAGO, type CuentaReceptora, type MetodoPago,
+} from "@/lib/cuentasReceptoras";
 import { useUserRole } from "@/hooks/useUserRole";
 
 export const Route = createFileRoute("/_authenticated/cartera/$id")({
@@ -118,14 +122,26 @@ function CarteraDetail() {
         {pagos.length === 0 ? <div className="text-[12px] text-[#242424]/55">Sin pagos.</div> : (
           <table className="w-full text-[12.5px]">
             <thead className="text-[11px] uppercase text-[#242424]/55"><tr className="border-b border-[#E5E7EB]">
-              <th className="text-left py-1.5">Fecha</th><th className="text-right">Valor</th><th className="text-left pl-3">Método</th><th className="text-left pl-3">Banco</th><th className="text-left pl-3">Comprobante</th><th className="text-left pl-3">Notas</th>
+              <th className="text-left py-1.5">Fecha</th>
+              <th className="text-right">Bruto</th>
+              <th className="text-right pl-3">Fee</th>
+              <th className="text-right pl-3">IVA</th>
+              <th className="text-right pl-3">Neto</th>
+              <th className="text-left pl-3">Método</th>
+              <th className="text-left pl-3">Transacción</th>
+              <th className="text-left pl-3">Soporte</th>
             </tr></thead>
             <tbody>
               {pagos.map((p) => (
                 <tr key={p.id} className="border-b border-[#F3F4F6]">
-                  <td className="py-1.5">{p.fecha}</td><td className="text-right">{money(Number(p.valor))}</td>
-                  <td className="pl-3">{p.metodo ?? "—"}</td><td className="pl-3">{p.banco_receptor ?? "—"}</td>
-                  <td className="pl-3">{p.comprobante_num ?? "—"}</td><td className="pl-3 text-[#242424]/70">{p.observaciones ?? ""}</td>
+                  <td className="py-1.5">{p.fecha}</td>
+                  <td className="text-right">{money(Number(p.valor_bruto ?? p.valor))}</td>
+                  <td className="text-right pl-3">{p.fee_wompi ? money(Number(p.fee_wompi)) : "—"}</td>
+                  <td className="text-right pl-3">{p.iva_fee ? money(Number(p.iva_fee)) : "—"}</td>
+                  <td className="text-right pl-3 font-semibold">{money(Number(p.valor_neto ?? p.valor))}</td>
+                  <td className="pl-3">{p.metodo_pago ?? p.metodo ?? "—"}</td>
+                  <td className="pl-3">{p.numero_transaccion ?? p.comprobante_num ?? "—"}</td>
+                  <td className="pl-3">{p.comprobante_url ? <span className="text-[#1F7A45]">✓</span> : <span className="text-[#B42318]">—</span>}</td>
                 </tr>
               ))}
             </tbody>
@@ -200,17 +216,45 @@ function AccionesCartera({ carteraId, onChanged }: { carteraId: string; onChange
   const prejur = useServerFn(enviarPrejuridico);
   const correo = useServerFn(enviarCorreoCartera);
   const comManual = useServerFn(registrarComunicacion);
+  const { isSuperAdmin } = useUserRole();
 
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
+  // catálogos
+  const [cuentas, setCuentas] = useState<CuentaReceptora[]>([]);
+  const [params, setParams] = useState<Record<string, number>>({});
+  useEffect(() => {
+    listCuentasReceptoras(true).then(setCuentas).catch(() => setCuentas([]));
+    getParametrosFinancieros().then(setParams).catch(() => setParams({}));
+  }, []);
+
   // pago
   const [pFecha, setPFecha] = useState(new Date().toISOString().slice(0, 10));
-  const [pValor, setPValor] = useState("");
-  const [pMetodo, setPMetodo] = useState("");
-  const [pBanco, setPBanco] = useState("");
-  const [pComp, setPComp] = useState("");
+  const [pBruto, setPBruto] = useState("");
+  const [pMetodo, setPMetodo] = useState<MetodoPago>("transferencia");
+  const [pCuenta, setPCuenta] = useState("");
+  const [pTx, setPTx] = useState("");
   const [pObs, setPObs] = useState("");
+  const [pFile, setPFile] = useState<File | null>(null);
+  const [pDrag, setPDrag] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [pOmitir, setPOmitir] = useState(false);
+
+  const bruto = Number(pBruto) || 0;
+  const feePct = params.fee_wompi_porcentaje ?? 2.99;
+  const ivaPct = params.iva_fee_wompi_porcentaje ?? 19;
+  const desglose = pMetodo === "wompi" && bruto > 0
+    ? calcularDesgloseWompi(bruto, feePct, ivaPct)
+    : { fee: 0, iva: 0, neto: bruto };
+
+  async function fileToBase64(file: File): Promise<string> {
+    const buf = await file.arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    let binary = "";
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+    return btoa(binary);
+  }
 
   // acuerdo
   const [aValor, setAValor] = useState("");
@@ -261,19 +305,96 @@ function AccionesCartera({ carteraId, onChanged }: { carteraId: string; onChange
         <div className="text-[11.5px] font-semibold mb-1">Registrar pago</div>
         <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
           <Input label="Fecha" type="date" value={pFecha} onChange={setPFecha} />
-          <Input label="Valor" type="number" value={pValor} onChange={setPValor} />
-          <Input label="Método" value={pMetodo} onChange={setPMetodo} placeholder="Transferencia/Efectivo" />
-          <Input label="Banco" value={pBanco} onChange={setPBanco} />
-          <Input label="Comprobante #" value={pComp} onChange={setPComp} />
+          <Input label="Valor bruto" type="number" value={pBruto} onChange={setPBruto} />
+          <label className="flex flex-col gap-1">
+            <span className="text-[10.5px] uppercase tracking-wider text-[#242424]/60">Método</span>
+            <select value={pMetodo} onChange={(e) => setPMetodo(e.target.value as MetodoPago)}
+              className="text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white">
+              {METODOS_PAGO.map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-[10.5px] uppercase tracking-wider text-[#242424]/60">Cuenta receptora</span>
+            <select value={pCuenta} onChange={(e) => setPCuenta(e.target.value)}
+              className="text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white">
+              <option value="">— Seleccionar —</option>
+              {cuentas.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.banco}{c.numero ? ` · ${c.numero}` : ""}{c.titular ? ` · ${c.titular}` : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Input label="# Transacción" value={pTx} onChange={setPTx} />
           <Input label="Notas" value={pObs} onChange={setPObs} />
         </div>
-        <button disabled={busy !== null || !pValor}
+
+        {pMetodo === "wompi" && bruto > 0 && (
+          <div className="mt-2 rounded-md bg-[#F5F7FF] border border-[#DCE3F5] px-3 py-2 text-[12px]">
+            <div className="text-[10.5px] uppercase tracking-wider text-[#445DA3] font-semibold mb-1">Desglose Wompi</div>
+            <div className="grid grid-cols-4 gap-2">
+              <div>Bruto: <b>{money(bruto)}</b></div>
+              <div>Fee ({feePct}%): <b className="text-[#B42318]">−{money(desglose.fee)}</b></div>
+              <div>IVA fee ({ivaPct}%): <b className="text-[#B42318]">−{money(desglose.iva)}</b></div>
+              <div>Neto recibido: <b className="text-[#1F7A45]">{money(desglose.neto)}</b></div>
+            </div>
+          </div>
+        )}
+
+        {/* Drag & drop comprobante */}
+        <div className="mt-2">
+          <div
+            onDragOver={(e) => { e.preventDefault(); setPDrag(true); }}
+            onDragLeave={() => setPDrag(false)}
+            onDrop={(e) => {
+              e.preventDefault(); setPDrag(false);
+              const f = e.dataTransfer.files?.[0];
+              if (f) setPFile(f);
+            }}
+            onClick={() => fileRef.current?.click()}
+            className={`cursor-pointer rounded-md border-2 border-dashed px-4 py-3 text-center text-[12px] ${pDrag ? "border-[#445DA3] bg-[#F5F7FF]" : "border-[#E5E7EB] bg-white"}`}
+          >
+            {pFile ? (
+              <span className="text-[#1F7A45] font-medium">📎 {pFile.name}</span>
+            ) : (
+              <span className="text-[#242424]/60">Arrastra el soporte de pago aquí o haz clic para seleccionar</span>
+            )}
+          </div>
+          <input ref={fileRef} type="file" accept="application/pdf,image/*" className="hidden"
+            onChange={(e) => setPFile(e.target.files?.[0] ?? null)} />
+          {isSuperAdmin && (
+            <label className="flex items-center gap-2 mt-1 text-[11px] text-[#242424]/70">
+              <input type="checkbox" checked={pOmitir} onChange={(e) => setPOmitir(e.target.checked)} />
+              Omitir comprobante (solo super_admin)
+            </label>
+          )}
+        </div>
+
+        <button disabled={busy !== null || !pBruto || !pMetodo || !pCuenta || (!pFile && !pOmitir)}
           onClick={() => run("pago", async () => {
-            await pagar({ data: { carteraId, fecha: pFecha, valor: Number(pValor), metodo: pMetodo || undefined, bancoReceptor: pBanco || undefined, comprobanteNum: pComp || undefined, observaciones: pObs || undefined } });
-            setPValor(""); setPMetodo(""); setPBanco(""); setPComp(""); setPObs("");
+            const base64 = pFile ? await fileToBase64(pFile) : undefined;
+            await pagar({ data: {
+              carteraId,
+              fecha: pFecha,
+              valor: bruto,
+              metodoPago: pMetodo,
+              cuentaReceptoraId: pCuenta || undefined,
+              valorBruto: bruto,
+              feeWompi: pMetodo === "wompi" ? desglose.fee : undefined,
+              ivaFee: pMetodo === "wompi" ? desglose.iva : undefined,
+              valorNeto: pMetodo === "wompi" ? desglose.neto : bruto,
+              numeroTransaccion: pTx || undefined,
+              comprobanteBase64: base64,
+              comprobanteFilename: pFile?.name,
+              observaciones: pObs || undefined,
+              omitirComprobante: pOmitir || undefined,
+            } });
+            setPBruto(""); setPTx(""); setPObs(""); setPFile(null); setPOmitir(false);
           })}
           className="mt-2 rounded-md bg-[#1F7A45] px-3 py-1.5 text-[11.5px] font-semibold text-white disabled:opacity-50"
         >{busy === "pago" ? "Registrando…" : "Registrar pago"}</button>
+        {!pCuenta && <div className="text-[11px] text-[#B42318] mt-1">Selecciona la cuenta receptora.</div>}
+        {!pFile && !pOmitir && <div className="text-[11px] text-[#B42318] mt-1">El soporte de pago es obligatorio.</div>}
       </div>
 
       <Divider />
