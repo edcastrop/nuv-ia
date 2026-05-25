@@ -134,14 +134,13 @@ function DetalleCuentaCobro() {
       alert("No se pudo guardar el porcentaje: " + error.message);
       return false;
     }
-    // 2) Recalcular cada comisión incluida: valor = base * pct / 100
-    const updates = items.map((it) => {
-      const nuevoValor = Math.round(Number(it.base) * pct) / 100 * 100;
-      return supabase
+    // 2) Recalcular cada comisión incluida: valor = round(base * pct / 100)
+    const updates = items.map((it) =>
+      supabase
         .from("comisiones" as never)
         .update({ porcentaje: pct, valor: Math.round(Number(it.base) * pct / 100) } as never)
-        .eq("id", it.id);
-    });
+        .eq("id", it.id),
+    );
     await Promise.all(updates);
     // 3) Refrescar para que el trigger recalc_cuenta_cobro_total actualice cc.total
     await cargar();
