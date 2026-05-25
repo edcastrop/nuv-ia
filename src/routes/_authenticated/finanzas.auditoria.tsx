@@ -18,6 +18,7 @@ type Row = {
   user_id: string | null;
   documento_url: string | null;
   motivo: string | null;
+  valor_anterior: Record<string, unknown> | null;
   valor_nuevo: Record<string, unknown> | null;
   created_at: string;
 };
@@ -79,7 +80,7 @@ function AuditoriaPage() {
             <h1 className="text-xl font-semibold text-[#0A1226]">Auditoría financiera</h1>
             <p className="text-[12px] text-[#242424]/60">Trazabilidad completa de cada acción en el módulo de finanzas.</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             <select value={filtroEnt} onChange={(e) => setFiltroEnt(e.target.value)} className="text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white">
               <option value="">Todas las entidades</option>
               {entidades.map((e) => <option key={e} value={e}>{e}</option>)}
@@ -88,6 +89,36 @@ function AuditoriaPage() {
               <option value="">Todas las acciones</option>
               {acciones.map((a) => <option key={a} value={a}>{a}</option>)}
             </select>
+            <button
+              onClick={() => {
+                const headers = ["Fecha", "Entidad", "Entidad ID", "Acción", "Usuario", "Motivo", "Valor anterior", "Valor nuevo", "Documento"];
+                const rows = filtradas.map((r) => [
+                  new Date(r.created_at).toLocaleString("es-CO"),
+                  r.entidad,
+                  r.entidad_id ?? "",
+                  r.accion,
+                  r.user_id ? (profMap[r.user_id] ?? r.user_id) : "",
+                  (r.motivo ?? "").replace(/"/g, '""'),
+                  r.valor_anterior ? JSON.stringify(r.valor_anterior) : "",
+                  r.valor_nuevo ? JSON.stringify(r.valor_nuevo) : "",
+                  r.documento_url ?? "",
+                ]);
+                const csv = [headers, ...rows]
+                  .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+                  .join("\n");
+                const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `auditoria-nuvex-${new Date().toISOString().slice(0, 10)}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+              className="text-[12px] rounded px-3 py-1.5 font-semibold text-white"
+              style={{ background: "linear-gradient(135deg,#445DA3,#84B98F)" }}
+            >
+              ⬇ Exportar CSV
+            </button>
           </div>
         </div>
       </Card>
@@ -116,7 +147,16 @@ function AuditoriaPage() {
                     <td className="pr-3">{r.user_id ? (profMap[r.user_id] ?? r.user_id.slice(0, 8)) : "—"}</td>
                     <td className="pr-3 text-[#242424]/80">
                       {r.motivo && <div className="italic">{r.motivo}</div>}
-                      {r.valor_nuevo && <code className="text-[10.5px] text-[#445DA3]">{JSON.stringify(r.valor_nuevo)}</code>}
+                      {r.valor_anterior && (
+                        <div className="text-[10.5px] text-[#991B1B]">
+                          <b>Antes:</b> <code>{JSON.stringify(r.valor_anterior)}</code>
+                        </div>
+                      )}
+                      {r.valor_nuevo && (
+                        <div className="text-[10.5px] text-[#445DA3]">
+                          <b>Nuevo:</b> <code>{JSON.stringify(r.valor_nuevo)}</code>
+                        </div>
+                      )}
                       {r.documento_url && (
                         <button
                           onClick={() => handleDownload(r.documento_url!)}
