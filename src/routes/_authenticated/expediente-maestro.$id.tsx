@@ -103,6 +103,12 @@ function MaestroDetail() {
         const n = num(s);
         return n >= 7 && n <= 25 ? s : "";
       };
+      const cuotaRazonable = (v: number) => {
+        const saldo = num(d.saldoCapital);
+        const desembolso = num(d.valorDesembolsado);
+        const base = Math.max(saldo, desembolso, 1);
+        return v > 0 && v <= Math.max(15_000_000, base * 0.08);
+      };
 
       // Beneficio / Cobertura: activamos sólo si hay valor mensual > 0
       const beneficioFlag = (d.beneficioActivo || "").toLowerCase() === "si";
@@ -116,13 +122,14 @@ function MaestroDetail() {
       const cuotaActualDoc = num(d.cuotaActual);
       const cuotaSinSub = num(d.cuotaSinSubsidio);
       const segurosNum = num(d.seguros);
-      const cuotaBaseSimulacion = beneficioReal
-        ? Math.max(
+      const candidatosCuotaBase = beneficioReal
+        ? [
             cuotaActualDoc > 0 ? cuotaActualDoc + valorBenef : 0,
             cuotaSinSub > 0 ? cuotaSinSub + segurosNum : 0,
             cuotaConSub > 0 ? cuotaConSub + segurosNum + valorBenef : 0,
-          )
-        : cuotaActualDoc;
+          ]
+        : [cuotaActualDoc];
+      const cuotaBaseSimulacion = Math.max(...candidatosCuotaBase.filter(cuotaRazonable), 0);
       const cuotaActualResuelta =
         cuotaBaseSimulacion > 0
           ? String(Math.round(cuotaBaseSimulacion))
