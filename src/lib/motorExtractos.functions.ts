@@ -346,8 +346,19 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
     }
 
     const pJson = (await parseResp.json()) as ChatResp;
+    const parseModel = parseResp.status >= 500 ? "google/gemini-2.5-flash" : "google/gemini-2.5-pro";
+    const pIn = pJson.usage?.prompt_tokens ?? 0;
+    const pOut = pJson.usage?.completion_tokens ?? 0;
+    llamadas.push({
+      paso: "extraccion",
+      modelo: parseModel,
+      tokensInput: pIn,
+      tokensOutput: pOut,
+      costoUSD: calcCosto(parseModel, pIn, pOut),
+    });
     const pArgs = pJson.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ?? "";
     if (!pArgs) return { error: "La IA no devolvió datos estructurados.", data: null };
+
 
     let parsed: { datos: Record<string, string>; scores: Record<string, number>; alertas: string[] };
     try {
