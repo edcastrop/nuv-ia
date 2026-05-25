@@ -190,7 +190,7 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
   };
 
   const camposBloqueados = result
-    ? CAMPOS_CRITICOS.filter((k) => result.scores[k] < UMBRAL_BLOQUEO)
+    ? CAMPOS_CRITICOS.filter((k) => result.scores[k] < UMBRAL_BLOQUEO && !valor(k).trim())
     : [];
   const puedeAprobar = !!result && camposBloqueados.every((k) => (editado[k] ?? "").trim().length > 0);
 
