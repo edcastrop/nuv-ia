@@ -14,6 +14,8 @@ import { DocumentosLegales } from "@/components/expediente-maestro/DocumentosLeg
 import { ModuloJuridico } from "@/components/expediente-maestro/ModuloJuridico";
 import { MotorExtractosNUVEX } from "@/components/nuvex/MotorExtractosNUVEX";
 import type { MotorResultado } from "@/lib/motorExtractos.functions";
+import { withFreshDerivados, normalizeTipoBeneficio, FRESH_DEFAULT_TOTAL } from "@/lib/cobertura";
+
 
 export const Route = createFileRoute("/_authenticated/expediente-maestro/$id")({
   component: MaestroDetail,
@@ -77,6 +79,25 @@ function MaestroDetail() {
     try {
       const d = r.datos;
       const onlyDigits = (s: string) => (s || "").replace(/[^\d.,-]/g, "");
+      const num = (s: string) => {
+        const n = parseFloat((s || "").replace(/[^\d.-]/g, ""));
+        return Number.isFinite(n) ? n : 0;
+      };
+
+      // Beneficio / Cobertura: activamos sólo si hay valor mensual > 0
+      const beneficioFlag = (d.beneficioActivo || "").toLowerCase() === "si";
+      const valorBenef = num(d.valorBeneficioMensual);
+      const beneficioReal = beneficioFlag && valorBenef > 0;
+
+      // Cuota actual: si hay subsidio explícito, preferimos la "con subsidio"
+      // (lo que realmente paga el cliente). Si no, usamos la cuota normal.
+      const cuotaConSub = num(d.cuotaConSubsidio);
+      const cuotaActualResuelta = beneficioReal && cuotaConSub > 0
+        ? String(Math.round(cuotaConSub))
+        : (onlyDigits(d.cuotaActual) || credito.cuotaActual || "");
+
+      const cuotasPagadasNum = num(d.cuotasPagadas);
+
       const nuevoCliente = {
         ...cliente,
         nombre: cliente.nombre || d.titular || "",
@@ -90,16 +111,44 @@ function MaestroDetail() {
         fechaDesembolso: d.fechaDesembolso || credito.fechaDesembolso || "",
         plazoOriginal: d.plazoInicial || credito.plazoOriginal || "",
         saldoCapital: onlyDigits(d.saldoCapital) || credito.saldoCapital || "",
-        cuotaActual: onlyDigits(d.cuotaActual) || credito.cuotaActual || "",
+        cuotaActual: cuotaActualResuelta,
         tasa: d.tasaEA || credito.tasa || "",
         cuotasPagadas: d.cuotasPagadas || credito.cuotasPagadas || "",
         cuotasPendientes: d.cuotasPendientes || credito.cuotasPendientes || "",
       };
+
+      // Construcción del bloque Fresh
+      const nuevoFresh = beneficioReal
+        ? withFreshDerivados(
+            {
+              activo: true,
+              tipoBeneficio: normalizeTipoBeneficio(d.tipoBeneficio || "Subsidio Gobierno"),
+              valorMensual: valorBenef,
+              tasa: num(d.tasaCobertura),
+              cuotasTotales: FRESH_DEFAULT_TOTAL,
+              detectadoOCR: true,
+              fuente: "ocr",
+              ultimaSincronizacion: new Date().toISOString(),
+            },
+            cuotasPagadasNum || undefined,
+          )
+        : withFreshDerivados(
+            {
+              activo: false,
+              cuotasTotales: FRESH_DEFAULT_TOTAL,
+              detectadoOCR: true,
+              fuente: "ocr",
+              ultimaSincronizacion: new Date().toISOString(),
+            },
+            cuotasPagadasNum || undefined,
+          );
+
       setCliente(nuevoCliente);
       setCredito(nuevoCredito);
+      setFresh(nuevoFresh);
       const saved = await upsertMaestro({
         id, cliente: nuevoCliente, cotitular, credito: nuevoCredito,
-        fresh, asesor, licenciado, apoderado,
+        fresh: nuevoFresh, asesor, licenciado, apoderado,
       });
       setExp(saved);
       setExtractoAplicado(r);
@@ -112,6 +161,7 @@ function MaestroDetail() {
       setAplicandoExtracto(false);
     }
   };
+
 
   if (loading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando expediente…</div>;
   if (err || !exp) return <div className="p-12 text-center text-sm text-[#B42318]">{err || "No encontrado"}</div>;
@@ -217,6 +267,10 @@ function MaestroDetail() {
                   <ResumenItem label="Cuotas pendientes" value={extractoAplicado.datos.cuotasPendientes || "—"} />
                 </div>
 
+                {/* BENEFICIO DE COBERTURA / FRESH / FRECH / Subsidio Gobierno */}
+                <BeneficioBlock fresh={fresh} datos={extractoAplicado.datos} />
+
+
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t" style={{ borderColor: "#EEF1F5" }}>
                   <div className="text-[11px] text-[#242424]/60">
                     Confianza global: <strong style={{ color: NUVEX.verdeTextoFuerte }}>{extractoAplicado.confianzaGlobal.toFixed(1)}%</strong>
@@ -280,3 +334,49 @@ function ResumenItem({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+function BeneficioBlock({
+  fresh,
+  datos,
+}: {
+  fresh: { activo: boolean; tipoBeneficio?: string; valorMensual: number; tasa: number; cuotasPagadas: number; cuotasPendientes: number };
+  datos: Record<string, string>;
+}) {
+  const activo = !!fresh.activo && fresh.valorMensual > 0;
+  const fmt = (n: number) => n > 0 ? `$ ${Math.round(n).toLocaleString("es-CO")}` : "—";
+  return (
+    <div
+      className="rounded-lg border p-3 space-y-2"
+      style={{
+        borderColor: activo ? NUVEX.verde : "#E5E7EB",
+        background: activo ? NUVEX.verdeClaro : "#FBFCFD",
+      }}
+    >
+      <div className="flex items-center justify-between">
+        <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: activo ? NUVEX.verdeTextoFuerte : "#6b7280" }}>
+          Beneficio de Cobertura
+        </div>
+        <div className="text-[11px] font-semibold" style={{ color: activo ? NUVEX.verdeTextoFuerte : "#6b7280" }}>
+          {activo ? "Sí aplica" : "No aplica"}
+        </div>
+      </div>
+      {activo ? (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+          <ResumenItem label="Tipo beneficio" value={fresh.tipoBeneficio || datos.tipoBeneficio || "Subsidio Gobierno"} />
+          <ResumenItem label="Valor mensual" value={fmt(fresh.valorMensual)} />
+          <ResumenItem label="Tasa cobertura" value={fresh.tasa > 0 ? `${fresh.tasa}%` : "Sin dato detectado"} />
+          <ResumenItem label="Cuota con cobertura" value={datos.cuotaConSubsidio ? fmt(Number(datos.cuotaConSubsidio)) : "—"} />
+          <ResumenItem label="Cuota sin cobertura" value={datos.cuotaSinSubsidio ? fmt(Number(datos.cuotaSinSubsidio)) : "—"} />
+          <ResumenItem label="Cuotas beneficio pagadas" value={String(fresh.cuotasPagadas)} />
+          <ResumenItem label="Cuotas beneficio pendientes" value={String(fresh.cuotasPendientes)} />
+          <ResumenItem label="Cuotas totales" value="84" />
+        </div>
+      ) : (
+        <div className="text-xs text-[#242424]/60">
+          No se detectó subsidio Gobierno / FRECH / Fresh con valor mensual mayor a cero en este extracto.
+        </div>
+      )}
+    </div>
+  );
+}
+

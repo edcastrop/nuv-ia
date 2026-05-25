@@ -193,16 +193,32 @@ export function modoFromMaestro(m: ExpedienteMaestro): "pesos" | "uvr" {
  */
 export function maestroToExpediente(m: ExpedienteMaestro) {
   const modo = modoFromMaestro(m);
+  const fresh = m.fresh;
+  const coberturaActiva = !!fresh?.activo && Number(fresh?.valorMensual ?? 0) > 0;
+  const cobertura = coberturaActiva
+    ? {
+        activo: true,
+        valorCobertura: String(Math.round(Number(fresh.valorMensual) || 0)),
+        tasaCobertura: fresh.tasa ? String(fresh.tasa) : "",
+        tipoBeneficio: fresh.tipoBeneficio || "",
+      }
+    : { activo: false, valorCobertura: "", tasaCobertura: "" };
+  const productoBase = m.credito?.tipoProducto ?? "";
+  const productoConBeneficio =
+    coberturaActiva && productoBase && !/con\s+beneficio\s+de\s+cobertura/i.test(productoBase)
+      ? `${productoBase} con Beneficio de Cobertura`
+      : productoBase;
   const cliente_data = {
     nombre: m.cliente?.nombre ?? "",
     cedula: m.cliente?.cedula ?? "",
     numeroCredito: m.credito?.numeroCredito ?? "",
     banco: m.credito?.banco ?? "",
-    tipoProducto: m.credito?.tipoProducto ?? "",
+    tipoProducto: productoConBeneficio,
     asesor: m.asesor?.nombre ?? "",
     plazoInicial: m.credito?.plazoOriginal ?? "",
     cuotasPagadas: m.credito?.cuotasPagadas ?? "",
     porcentajeHonorarios: "6",
+    cobertura,
   };
   const credito_data: Record<string, string> = {
     valorDesembolsado: "",

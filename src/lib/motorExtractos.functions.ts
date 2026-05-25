@@ -165,6 +165,25 @@ REGLAS GLOBALES:
 - Si un campo NO aparece literalmente en el extracto: devuelve cadena vacía "" y score 0. NO INVENTES.
 - Score 100 = etiqueta literal exacta visible. 90 = visible con leve normalización. 70 = inferido del contexto. 30 = dudoso. 0 = ausente.
 
+REGLAS GLOBALES DE BENEFICIO / COBERTURA / SUBSIDIO / FRECH / FRESH (aplica a TODOS los bancos):
+- Detecta beneficio SOLO si existe un VALOR NUMÉRICO MAYOR A CERO en alguno de:
+  "Valor subsidio Gobierno", "Valor subsidio", "Valor Beneficio", "Valor cobertura",
+  "Cobertura FRECH", "Interés Cte. Cobertura", "Interés cobertura", "Subsidio a la tasa".
+- Si NO hay valor numérico > 0 → beneficioActivo="no", tipoBeneficio="", valorBeneficioMensual="",
+  tasaCobertura="", cuotaSinSubsidio="", cuotaConSubsidio="", todos con score 0.
+- NO marques beneficio sólo porque aparezca la palabra "cobertura" o "FRECH" en texto legal o avisos.
+- Si hay valor > 0:
+  * beneficioActivo = "si" (score 100).
+  * valorBeneficioMensual = el valor mensual del subsidio/cobertura (solo dígitos).
+  * tipoBeneficio = "Subsidio Gobierno", "FRECH", "Fresh", "Cobertura VIS", "Mi Casa Ya"
+    según el rótulo literal. Si solo dice "Cobertura" o "Subsidio" → "Subsidio Gobierno".
+  * cuotaSinSubsidio = valor de "Valor cuota sin subsidio" / "Cuota sin cobertura" si aparece.
+  * cuotaConSubsidio = valor de "Valor cuota con subsidio" / "Cuota con cobertura" si aparece.
+  * tasaCobertura = porcentaje sólo si el extracto lo trae explícito (ej "Tasa cobertura 5.00%").
+    Si no aparece, deja "" con score 0 (NO inventes; la simulación puede usar el valor mensual).
+- Si el extracto pertenece a un producto VIS con cobertura por defecto pero no hay valor
+  visible en este corte → beneficioActivo="no", el licenciado lo ajustará manualmente.
+
 REGLAS ESPECÍFICAS DEL BANCO:
 ${profile.hints}
 
@@ -175,6 +194,7 @@ CAMPO 'cuotasPagadas': si no es explícito y conoces el "número de cuota actual
 CAMPO 'cuotasPendientes': si no es explícito calcula plazoInicial - cuotasPagadas y deja score=70.
 CAMPO 'sistemaAmortizacion': "abono constante a capital" / "cuota fija" / "UVR". Vacío si no es claro.`;
 }
+
 
 async function callLovableAI(
   model: string,
@@ -313,14 +333,31 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
     const CAMPOS_MONETARIOS: CampoMotor[] = [
       "valorDesembolsado", "saldoCapital", "cuotaActual",
       "interesCuota", "capitalCuota", "seguros", "valorUVR", "saldoUVR",
+      "valorBeneficioMensual", "cuotaSinSubsidio", "cuotaConSubsidio",
     ];
     for (const k of CAMPOS_MONETARIOS) {
       if (datos[k]) datos[k] = parseCOP(datos[k]);
     }
     // Tasas: solo dígitos y un punto decimal
-    for (const k of ["tasaEA", "tasaMensual"] as CampoMotor[]) {
+    for (const k of ["tasaEA", "tasaMensual", "tasaCobertura"] as CampoMotor[]) {
       if (datos[k]) datos[k] = parseTasa(datos[k]);
     }
+
+    // Normaliza beneficioActivo a "si"/"no" coherente con valorBeneficioMensual
+    const valorBenef = parseFloat(datos.valorBeneficioMensual || "0");
+    if (Number.isFinite(valorBenef) && valorBenef > 0) {
+      datos.beneficioActivo = "si";
+      scores.beneficioActivo = Math.max(scores.beneficioActivo, 95);
+    } else {
+      datos.beneficioActivo = "no";
+      // Limpia campos huérfanos para evitar falsos positivos aguas abajo
+      datos.valorBeneficioMensual = "";
+      datos.tipoBeneficio = "";
+      datos.tasaCobertura = "";
+      datos.cuotaSinSubsidio = "";
+      datos.cuotaConSubsidio = "";
+    }
+
 
     // Limpia cédulas claramente inválidas (0000000000, enmascaradas)
     if (datos.cedula && /^0+$/.test(datos.cedula.replace(/\D/g, ""))) {
