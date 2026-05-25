@@ -23,7 +23,10 @@ export interface ClienteMaestro {
 export interface CotitularMaestro extends ClienteMaestro {
   activo: boolean;
   parentesco: string;
+  /** Si true, dirección/ciudad/departamento se heredan del titular y los campos quedan readonly. */
+  mismaDireccionTitular?: boolean;
 }
+
 
 export interface CreditoMaestro {
   banco: string;
@@ -87,8 +90,9 @@ export const emptyCliente = (): ClienteMaestro => ({
 });
 
 export const emptyCotitular = (): CotitularMaestro => ({
-  ...emptyCliente(), activo: false, parentesco: "",
+  ...emptyCliente(), activo: false, parentesco: "", mismaDireccionTitular: false,
 });
+
 
 export const emptyCredito = (): CreditoMaestro => ({
   banco: "", numeroCredito: "", tipoProducto: "", fechaDesembolso: "",
