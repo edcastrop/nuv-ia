@@ -26,6 +26,7 @@ import { Route as AuthenticatedSuperAdminUsuariosRouteImport } from './routes/_a
 import { Route as AuthenticatedSuperAdminMarcaRouteImport } from './routes/_authenticated/super-admin.marca'
 import { Route as AuthenticatedSuperAdminExpedientesRouteImport } from './routes/_authenticated/super-admin.expedientes'
 import { Route as AuthenticatedExpedienteMaestroIdRouteImport } from './routes/_authenticated/expediente-maestro.$id'
+import { Route as AuthenticatedComisionesIdRouteImport } from './routes/_authenticated/comisiones.$id'
 import { Route as AuthenticatedCasosIdRouteImport } from './routes/_authenticated/casos.$id'
 import { Route as AuthenticatedCarteraIdRouteImport } from './routes/_authenticated/cartera.$id'
 import { Route as ApiPublicHooksCasosAlertasRouteImport } from './routes/api/public/hooks/casos-alertas'
@@ -125,6 +126,12 @@ const AuthenticatedExpedienteMaestroIdRoute =
     path: '/expediente-maestro/$id',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedComisionesIdRoute =
+  AuthenticatedComisionesIdRouteImport.update({
+    id: '/comisiones/$id',
+    path: '/comisiones/$id',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedCasosIdRoute = AuthenticatedCasosIdRouteImport.update({
   id: '/casos/$id',
   path: '/casos/$id',
@@ -158,6 +165,7 @@ export interface FileRoutesByFullPath {
   '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
+  '/comisiones/$id': typeof AuthenticatedComisionesIdRoute
   '/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
@@ -180,6 +188,7 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
+  '/comisiones/$id': typeof AuthenticatedComisionesIdRoute
   '/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
@@ -204,6 +213,7 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/_authenticated/casos/$id': typeof AuthenticatedCasosIdRoute
+  '/_authenticated/comisiones/$id': typeof AuthenticatedComisionesIdRoute
   '/_authenticated/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/_authenticated/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/_authenticated/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
@@ -228,6 +238,7 @@ export interface FileRouteTypes {
     | '/proyeccion'
     | '/cartera/$id'
     | '/casos/$id'
+    | '/comisiones/$id'
     | '/expediente-maestro/$id'
     | '/super-admin/expedientes'
     | '/super-admin/marca'
@@ -250,6 +261,7 @@ export interface FileRouteTypes {
     | '/'
     | '/cartera/$id'
     | '/casos/$id'
+    | '/comisiones/$id'
     | '/expediente-maestro/$id'
     | '/super-admin/expedientes'
     | '/super-admin/marca'
@@ -273,6 +285,7 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/_authenticated/cartera/$id'
     | '/_authenticated/casos/$id'
+    | '/_authenticated/comisiones/$id'
     | '/_authenticated/expediente-maestro/$id'
     | '/_authenticated/super-admin/expedientes'
     | '/_authenticated/super-admin/marca'
@@ -414,6 +427,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedExpedienteMaestroIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/comisiones/$id': {
+      id: '/_authenticated/comisiones/$id'
+      path: '/comisiones/$id'
+      fullPath: '/comisiones/$id'
+      preLoaderRoute: typeof AuthenticatedComisionesIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/casos/$id': {
       id: '/_authenticated/casos/$id'
       path: '/casos/$id'
@@ -454,6 +474,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedCarteraIdRoute: typeof AuthenticatedCarteraIdRoute
   AuthenticatedCasosIdRoute: typeof AuthenticatedCasosIdRoute
+  AuthenticatedComisionesIdRoute: typeof AuthenticatedComisionesIdRoute
   AuthenticatedExpedienteMaestroIdRoute: typeof AuthenticatedExpedienteMaestroIdRoute
   AuthenticatedSuperAdminExpedientesRoute: typeof AuthenticatedSuperAdminExpedientesRoute
   AuthenticatedSuperAdminMarcaRoute: typeof AuthenticatedSuperAdminMarcaRoute
@@ -474,6 +495,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedCarteraIdRoute: AuthenticatedCarteraIdRoute,
   AuthenticatedCasosIdRoute: AuthenticatedCasosIdRoute,
+  AuthenticatedComisionesIdRoute: AuthenticatedComisionesIdRoute,
   AuthenticatedExpedienteMaestroIdRoute: AuthenticatedExpedienteMaestroIdRoute,
   AuthenticatedSuperAdminExpedientesRoute:
     AuthenticatedSuperAdminExpedientesRoute,
