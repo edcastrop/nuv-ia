@@ -97,7 +97,7 @@ function KbTab() {
   const handleSave = async () => {
     if (!editing) return;
     await upsertFn({
-    await upsertFn({
+
       data: {
         id: editing.id,
         categoria: editing.categoria.trim(),
