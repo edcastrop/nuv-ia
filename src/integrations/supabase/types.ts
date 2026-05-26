@@ -1422,6 +1422,10 @@ export type Database = {
         | "operaciones"
         | "cartera"
         | "contabilidad"
+        | "director_financiero_qa"
+        | "director_juridico"
+        | "auxiliar_operativo"
+        | "apoderado"
       cartera_estado:
         | "pendiente_cobro"
         | "cuenta_cobro_generada"
@@ -1472,6 +1476,9 @@ export type Database = {
         | "caso_finalizado"
         | "devuelto_banco"
         | "negado_banco"
+        | "proyeccion_pendiente_qa"
+        | "proyeccion_aprobada_qa"
+        | "proyeccion_devuelta_qa"
       expediente_estado:
         | "SIMULADO"
         | "FIRMADO"
@@ -1619,6 +1626,10 @@ export const Constants = {
         "operaciones",
         "cartera",
         "contabilidad",
+        "director_financiero_qa",
+        "director_juridico",
+        "auxiliar_operativo",
+        "apoderado",
       ],
       cartera_estado: [
         "pendiente_cobro",
@@ -1671,6 +1682,9 @@ export const Constants = {
         "caso_finalizado",
         "devuelto_banco",
         "negado_banco",
+        "proyeccion_pendiente_qa",
+        "proyeccion_aprobada_qa",
+        "proyeccion_devuelta_qa",
       ],
       expediente_estado: [
         "SIMULADO",
