@@ -5,7 +5,7 @@ import { CORPORATIVO } from "@/components/nuvex/constants";
 import {
   LayoutGrid, FolderKanban, BarChart3, LogOut, GraduationCap, LineChart,
   UserSquare2, Users, Shield, Wallet, Bell, CircleDollarSign, Landmark,
-  ClipboardCheck, Briefcase, ChevronLeft, ChevronRight, UserCircle, MessageSquare,
+  ClipboardCheck, Briefcase, ChevronLeft, ChevronRight, UserCircle, MessageSquare, BookUser,
 } from "lucide-react";
 import { UserAvatar } from "@/components/nuvex/UserAvatar";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -100,6 +100,7 @@ function AuthenticatedLayout() {
             { to: "/notificaciones", label: "Alertas", Icon: Bell, badge: unread },
             { to: "/colaboracion", label: "Colaboración", Icon: MessageSquare },
             { to: "/mensajeria", label: "Mensajería", Icon: Briefcase },
+            { to: "/directorio", label: "Directorio", Icon: BookUser },
           ],
         },
         {
