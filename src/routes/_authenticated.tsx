@@ -125,8 +125,10 @@ function AuthenticatedLayout() {
             { to: "/apoderados-nuvex", label: "Apoderados", Icon: Users },
             { to: "/academia", label: "Academia", Icon: GraduationCap },
             ...(isSuperAdmin ? [{ to: "/super-admin/academia", label: "Admin Academia", Icon: GraduationCap }] : []),
+            ...(isSuperAdmin ? [{ to: "/super-admin/accesos", label: "Accesos", Icon: Shield }] : []),
             ...(isSuperAdmin ? [{ to: "/super-admin/nuvex-gpt", label: "NUVEX GPT", Icon: Shield }] : []),
             ...(isSuperAdmin ? [{ to: "/super-admin", label: "Super Admin", Icon: Shield }] : []),
+
           ],
         },
         {
