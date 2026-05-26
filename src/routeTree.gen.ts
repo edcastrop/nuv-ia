@@ -15,6 +15,7 @@ import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedQaRouteImport } from './routes/_authenticated/qa'
 import { Route as AuthenticatedProyeccionRouteImport } from './routes/_authenticated/proyeccion'
 import { Route as AuthenticatedNotificacionesRouteImport } from './routes/_authenticated/notificaciones'
+import { Route as AuthenticatedMiPerfilRouteImport } from './routes/_authenticated/mi-perfil'
 import { Route as AuthenticatedFinanzasRouteImport } from './routes/_authenticated/finanzas'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedApoderadosNuvexRouteImport } from './routes/_authenticated/apoderados-nuvex'
@@ -86,6 +87,11 @@ const AuthenticatedNotificacionesRoute =
     path: '/notificaciones',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedMiPerfilRoute = AuthenticatedMiPerfilRouteImport.update({
+  id: '/mi-perfil',
+  path: '/mi-perfil',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedFinanzasRoute = AuthenticatedFinanzasRouteImport.update({
   id: '/finanzas',
   path: '/finanzas',
@@ -328,6 +334,7 @@ export interface FileRoutesByFullPath {
   '/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/finanzas': typeof AuthenticatedFinanzasRouteWithChildren
+  '/mi-perfil': typeof AuthenticatedMiPerfilRoute
   '/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/qa': typeof AuthenticatedQaRoute
@@ -372,6 +379,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/mi-perfil': typeof AuthenticatedMiPerfilRoute
   '/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/qa': typeof AuthenticatedQaRoute
@@ -421,6 +429,7 @@ export interface FileRoutesById {
   '/_authenticated/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/finanzas': typeof AuthenticatedFinanzasRouteWithChildren
+  '/_authenticated/mi-perfil': typeof AuthenticatedMiPerfilRoute
   '/_authenticated/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/_authenticated/proyeccion': typeof AuthenticatedProyeccionRoute
   '/_authenticated/qa': typeof AuthenticatedQaRoute
@@ -471,6 +480,7 @@ export interface FileRouteTypes {
     | '/apoderados-nuvex'
     | '/dashboard'
     | '/finanzas'
+    | '/mi-perfil'
     | '/notificaciones'
     | '/proyeccion'
     | '/qa'
@@ -515,6 +525,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/apoderados-nuvex'
     | '/dashboard'
+    | '/mi-perfil'
     | '/notificaciones'
     | '/proyeccion'
     | '/qa'
@@ -563,6 +574,7 @@ export interface FileRouteTypes {
     | '/_authenticated/apoderados-nuvex'
     | '/_authenticated/dashboard'
     | '/_authenticated/finanzas'
+    | '/_authenticated/mi-perfil'
     | '/_authenticated/notificaciones'
     | '/_authenticated/proyeccion'
     | '/_authenticated/qa'
@@ -655,6 +667,13 @@ declare module '@tanstack/react-router' {
       path: '/notificaciones'
       fullPath: '/notificaciones'
       preLoaderRoute: typeof AuthenticatedNotificacionesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/mi-perfil': {
+      id: '/_authenticated/mi-perfil'
+      path: '/mi-perfil'
+      fullPath: '/mi-perfil'
+      preLoaderRoute: typeof AuthenticatedMiPerfilRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/finanzas': {
@@ -1005,6 +1024,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedApoderadosNuvexRoute: typeof AuthenticatedApoderadosNuvexRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFinanzasRoute: typeof AuthenticatedFinanzasRouteWithChildren
+  AuthenticatedMiPerfilRoute: typeof AuthenticatedMiPerfilRoute
   AuthenticatedNotificacionesRoute: typeof AuthenticatedNotificacionesRoute
   AuthenticatedProyeccionRoute: typeof AuthenticatedProyeccionRoute
   AuthenticatedQaRoute: typeof AuthenticatedQaRoute
@@ -1033,6 +1053,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedApoderadosNuvexRoute: AuthenticatedApoderadosNuvexRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFinanzasRoute: AuthenticatedFinanzasRouteWithChildren,
+  AuthenticatedMiPerfilRoute: AuthenticatedMiPerfilRoute,
   AuthenticatedNotificacionesRoute: AuthenticatedNotificacionesRoute,
   AuthenticatedProyeccionRoute: AuthenticatedProyeccionRoute,
   AuthenticatedQaRoute: AuthenticatedQaRoute,
