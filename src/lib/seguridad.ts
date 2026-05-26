@@ -79,6 +79,21 @@ export async function aprobarUsuario(userId: string, roles: AppRole[]) {
     accion: "aprobado",
     detalle: { roles },
   } as never);
+
+  // Notificar al usuario aprobado (in-app)
+  try {
+    await supabase.rpc("notify_user" as never, {
+      _uid: userId,
+      _tipo: "acceso_aprobado",
+      _titulo: "¡Tu acceso a NUVEX ha sido aprobado!",
+      _mensaje: `Tu cuenta fue activada con rol: ${roles.join(", ") || "—"}. Inicia tu onboarding para comenzar.`,
+      _link: "/onboarding",
+      _sev: "alta",
+      _meta: { roles },
+    } as never);
+  } catch {
+    // no bloquear el flujo si la notificación falla
+  }
 }
 
 export async function rechazarUsuario(userId: string, motivo: string) {
