@@ -5,9 +5,10 @@ import { useUserRole, type AppRole } from "@/hooks/useUserRole";
 import {
   listUsuariosAcceso, aprobarUsuario, rechazarUsuario,
   bloquearUsuario, activarUsuario, listAuditoria,
-  type UsuarioAcceso, type EstadoAcceso,
+  previewDesvinculacion, desvincularUsuario,
+  type UsuarioAcceso, type EstadoAcceso, type PreviewDesvinculacion,
 } from "@/lib/seguridad";
-import { ShieldCheck, ShieldAlert, ShieldOff, Clock, CheckCircle2, XCircle, Search, History } from "lucide-react";
+import { ShieldCheck, ShieldAlert, ShieldOff, Clock, CheckCircle2, XCircle, Search, History, UserMinus, AlertTriangle } from "lucide-react";
 import { UserAvatar } from "@/components/nuvex/UserAvatar";
 
 export const Route = createFileRoute("/_authenticated/super-admin/accesos")({
