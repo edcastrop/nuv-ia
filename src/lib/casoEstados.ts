@@ -6,6 +6,9 @@ export type CasoEstado =
   | "extracto_recibido"
   | "simulacion_realizada"
   | "simulado"
+  | "proyeccion_pendiente_qa"
+  | "proyeccion_aprobada_qa"
+  | "proyeccion_devuelta_qa"
   | "propuesta_presentada"
   | "propuesta_enviada"
   | "acepto_propuesta"
@@ -54,6 +57,9 @@ export const CASO_ESTADOS: CasoEstadoDef[] = [
   { key: "extracto_recibido", label: "Extracto recibido", orden: 3, color: "#1A4A8A", bg: "#E8F0FE" },
   { key: "simulacion_realizada", label: "Simulación realizada", orden: 4, color: "#1A4A8A", bg: "#E8F0FE" },
   { key: "simulado", label: "Simulado", orden: 5, color: "#1A4A8A", bg: "#E8F0FE" },
+  { key: "proyeccion_pendiente_qa", label: "Proyección pendiente QA", orden: 5.1, color: "#8A5A00", bg: "#FFF7E6" },
+  { key: "proyeccion_aprobada_qa", label: "Proyección aprobada QA", orden: 5.2, color: "#1F7A45", bg: "#EAF7EE" },
+  { key: "proyeccion_devuelta_qa", label: "Proyección devuelta QA", orden: 5.3, color: "#991B1B", bg: "#FEE2E2" },
   { key: "propuesta_presentada", label: "Propuesta presentada", orden: 6, color: "#6B21A8", bg: "#F3E8FF" },
   { key: "propuesta_enviada", label: "Propuesta enviada", orden: 7, color: "#6B21A8", bg: "#F3E8FF" },
   { key: "acepto_propuesta", label: "Aceptó propuesta", orden: 8, color: "#1F7A45", bg: "#EAF7EE" },

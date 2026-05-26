@@ -11,7 +11,11 @@ export type AppRole =
   | "juridica"
   | "operaciones"
   | "cartera"
-  | "contabilidad";
+  | "contabilidad"
+  | "director_financiero_qa"
+  | "director_juridico"
+  | "auxiliar_operativo"
+  | "apoderado";
 
 export function isManager(roles: AppRole[]): boolean {
   return roles.includes("admin") || roles.includes("super_admin") || roles.includes("gerencia");
@@ -27,6 +31,22 @@ export function canManageFinanzas(roles: AppRole[]): boolean {
 
 export function isLicenciado(roles: AppRole[]): boolean {
   return roles.includes("licenciado");
+}
+
+export function isDirectorQA(roles: AppRole[]): boolean {
+  return roles.includes("director_financiero_qa") || roles.includes("super_admin");
+}
+
+export function isDirectorJuridico(roles: AppRole[]): boolean {
+  return roles.includes("director_juridico") || roles.includes("super_admin");
+}
+
+export function isApoderadoRole(roles: AppRole[]): boolean {
+  return roles.includes("apoderado");
+}
+
+export function canValidarProyeccion(roles: AppRole[]): boolean {
+  return roles.some((r) => ["super_admin", "director_financiero_qa", "gerencia"].includes(r));
 }
 
 export function useUserRole() {
@@ -59,6 +79,10 @@ export function useUserRole() {
     isManager: isManager(roles),
     isSuperAdmin: isSuperAdmin(roles),
     isLicenciado: isLicenciado(roles),
+    isDirectorQA: isDirectorQA(roles),
+    isDirectorJuridico: isDirectorJuridico(roles),
+    isApoderado: isApoderadoRole(roles),
+    canValidarProyeccion: canValidarProyeccion(roles),
     loading: loading || authLoading,
   };
 }
