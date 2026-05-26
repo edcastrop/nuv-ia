@@ -17,6 +17,7 @@ import { Route as AuthenticatedQaRouteImport } from './routes/_authenticated/qa'
 import { Route as AuthenticatedProyeccionRouteImport } from './routes/_authenticated/proyeccion'
 import { Route as AuthenticatedNotificacionesRouteImport } from './routes/_authenticated/notificaciones'
 import { Route as AuthenticatedMiPerfilRouteImport } from './routes/_authenticated/mi-perfil'
+import { Route as AuthenticatedMensajeriaRouteImport } from './routes/_authenticated/mensajeria'
 import { Route as AuthenticatedFinanzasRouteImport } from './routes/_authenticated/finanzas'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedColaboracionRouteImport } from './routes/_authenticated/colaboracion'
@@ -98,6 +99,11 @@ const AuthenticatedNotificacionesRoute =
 const AuthenticatedMiPerfilRoute = AuthenticatedMiPerfilRouteImport.update({
   id: '/mi-perfil',
   path: '/mi-perfil',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedMensajeriaRoute = AuthenticatedMensajeriaRouteImport.update({
+  id: '/mensajeria',
+  path: '/mensajeria',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedFinanzasRoute = AuthenticatedFinanzasRouteImport.update({
@@ -355,6 +361,7 @@ export interface FileRoutesByFullPath {
   '/colaboracion': typeof AuthenticatedColaboracionRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/finanzas': typeof AuthenticatedFinanzasRouteWithChildren
+  '/mensajeria': typeof AuthenticatedMensajeriaRoute
   '/mi-perfil': typeof AuthenticatedMiPerfilRoute
   '/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/proyeccion': typeof AuthenticatedProyeccionRoute
@@ -403,6 +410,7 @@ export interface FileRoutesByTo {
   '/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
   '/colaboracion': typeof AuthenticatedColaboracionRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/mensajeria': typeof AuthenticatedMensajeriaRoute
   '/mi-perfil': typeof AuthenticatedMiPerfilRoute
   '/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/proyeccion': typeof AuthenticatedProyeccionRoute
@@ -456,6 +464,7 @@ export interface FileRoutesById {
   '/_authenticated/colaboracion': typeof AuthenticatedColaboracionRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/finanzas': typeof AuthenticatedFinanzasRouteWithChildren
+  '/_authenticated/mensajeria': typeof AuthenticatedMensajeriaRoute
   '/_authenticated/mi-perfil': typeof AuthenticatedMiPerfilRoute
   '/_authenticated/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/_authenticated/proyeccion': typeof AuthenticatedProyeccionRoute
@@ -510,6 +519,7 @@ export interface FileRouteTypes {
     | '/colaboracion'
     | '/dashboard'
     | '/finanzas'
+    | '/mensajeria'
     | '/mi-perfil'
     | '/notificaciones'
     | '/proyeccion'
@@ -558,6 +568,7 @@ export interface FileRouteTypes {
     | '/apoderados-nuvex'
     | '/colaboracion'
     | '/dashboard'
+    | '/mensajeria'
     | '/mi-perfil'
     | '/notificaciones'
     | '/proyeccion'
@@ -610,6 +621,7 @@ export interface FileRouteTypes {
     | '/_authenticated/colaboracion'
     | '/_authenticated/dashboard'
     | '/_authenticated/finanzas'
+    | '/_authenticated/mensajeria'
     | '/_authenticated/mi-perfil'
     | '/_authenticated/notificaciones'
     | '/_authenticated/proyeccion'
@@ -720,6 +732,13 @@ declare module '@tanstack/react-router' {
       path: '/mi-perfil'
       fullPath: '/mi-perfil'
       preLoaderRoute: typeof AuthenticatedMiPerfilRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/mensajeria': {
+      id: '/_authenticated/mensajeria'
+      path: '/mensajeria'
+      fullPath: '/mensajeria'
+      preLoaderRoute: typeof AuthenticatedMensajeriaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/finanzas': {
@@ -1085,6 +1104,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedColaboracionRoute: typeof AuthenticatedColaboracionRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFinanzasRoute: typeof AuthenticatedFinanzasRouteWithChildren
+  AuthenticatedMensajeriaRoute: typeof AuthenticatedMensajeriaRoute
   AuthenticatedMiPerfilRoute: typeof AuthenticatedMiPerfilRoute
   AuthenticatedNotificacionesRoute: typeof AuthenticatedNotificacionesRoute
   AuthenticatedProyeccionRoute: typeof AuthenticatedProyeccionRoute
@@ -1116,6 +1136,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedColaboracionRoute: AuthenticatedColaboracionRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFinanzasRoute: AuthenticatedFinanzasRouteWithChildren,
+  AuthenticatedMensajeriaRoute: AuthenticatedMensajeriaRoute,
   AuthenticatedMiPerfilRoute: AuthenticatedMiPerfilRoute,
   AuthenticatedNotificacionesRoute: AuthenticatedNotificacionesRoute,
   AuthenticatedProyeccionRoute: AuthenticatedProyeccionRoute,
