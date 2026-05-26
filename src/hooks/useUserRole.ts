@@ -33,6 +33,22 @@ export function isLicenciado(roles: AppRole[]): boolean {
   return roles.includes("licenciado");
 }
 
+export function isDirectorQA(roles: AppRole[]): boolean {
+  return roles.includes("director_financiero_qa") || roles.includes("super_admin");
+}
+
+export function isDirectorJuridico(roles: AppRole[]): boolean {
+  return roles.includes("director_juridico") || roles.includes("super_admin");
+}
+
+export function isApoderadoRole(roles: AppRole[]): boolean {
+  return roles.includes("apoderado");
+}
+
+export function canValidarProyeccion(roles: AppRole[]): boolean {
+  return roles.some((r) => ["super_admin", "director_financiero_qa", "gerencia"].includes(r));
+}
+
 export function useUserRole() {
   const { user, loading: authLoading } = useAuth();
   const [roles, setRoles] = useState<AppRole[]>([]);
