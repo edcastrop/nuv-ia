@@ -2,10 +2,11 @@ import { createFileRoute, Outlet, useNavigate, Link, useLocation } from "@tansta
 import { useEffect, useState } from "react";
 import { useAuth, signOut } from "@/hooks/useAuth";
 import { CORPORATIVO } from "@/components/nuvex/constants";
-import { LayoutGrid, FolderKanban, BarChart3, LogOut, GraduationCap, LineChart, UserSquare2, Users, Shield, Wallet, Bell, CircleDollarSign, Landmark } from "lucide-react";
+import { LayoutGrid, FolderKanban, BarChart3, LogOut, GraduationCap, LineChart, UserSquare2, Users, Shield, Wallet, Bell, CircleDollarSign, Landmark, ClipboardCheck, Briefcase } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Logo } from "@/components/nuvex/Logo";
 import { supabase } from "@/integrations/supabase/client";
+import { NotificationBell } from "@/components/notificaciones/NotificationBell";
 
 
 export const Route = createFileRoute("/_authenticated")({
@@ -17,7 +18,7 @@ const VERDE = "#84B98F";
 
 function AuthenticatedLayout() {
   const { session, user, loading } = useAuth();
-  const { isSuperAdmin, roles } = useUserRole();
+  const { isSuperAdmin, roles, isDirectorQA, isApoderado } = useUserRole();
   const navigate = useNavigate();
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
@@ -73,21 +74,27 @@ function AuthenticatedLayout() {
     .map((s) => s[0]?.toUpperCase())
     .join("") || "NV";
 
-  const navItems: { to: string; label: string; Icon: typeof LayoutGrid; exact?: boolean; badge?: number }[] = [
-    { to: "/", label: "Simulador", Icon: LayoutGrid, exact: true },
-    { to: "/casos", label: "Casos", Icon: FolderKanban },
-    { to: "/notificaciones", label: "Alertas", Icon: Bell, badge: unread },
-    { to: "/expediente-maestro", label: "Expediente", Icon: UserSquare2 },
-    { to: "/proyeccion", label: "Proyección", Icon: LineChart },
-    { to: "/dashboard", label: "Dashboard", Icon: BarChart3 },
-    { to: "/academia", label: "Academia", Icon: GraduationCap },
-    { to: "/apoderados-nuvex", label: "Apoderados", Icon: Users },
-    ...(roles.some((r) => ["super_admin","admin","gerencia","cartera","juridica","licenciado","asesor"].includes(r)) ? [{ to: "/cartera", label: "Cartera", Icon: Wallet }] : []),
-    { to: "/comisiones", label: "Comisiones", Icon: CircleDollarSign },
-    ...(roles.some((r) => ["super_admin","admin","gerencia","cartera"].includes(r)) ? [{ to: "/contabilidad/cuentas-cobro", label: "Contabilidad", Icon: CircleDollarSign }] : []),
-    ...(roles.some((r) => ["super_admin","admin","gerencia","contabilidad"].includes(r)) ? [{ to: "/finanzas", label: "Finanzas", Icon: Landmark }] : []),
-    ...(isSuperAdmin ? [{ to: "/super-admin", label: "Super Admin", Icon: Shield }] : []),
-  ];
+  const navItems: { to: string; label: string; Icon: typeof LayoutGrid; exact?: boolean; badge?: number }[] = isApoderado && !isSuperAdmin
+    ? [
+        { to: "/apoderado/mis-casos", label: "Mis casos", Icon: Briefcase },
+        { to: "/notificaciones", label: "Alertas", Icon: Bell, badge: unread },
+      ]
+    : [
+        { to: "/", label: "Simulador", Icon: LayoutGrid, exact: true },
+        { to: "/casos", label: "Casos", Icon: FolderKanban },
+        { to: "/notificaciones", label: "Alertas", Icon: Bell, badge: unread },
+        { to: "/expediente-maestro", label: "Expediente", Icon: UserSquare2 },
+        { to: "/proyeccion", label: "Proyección", Icon: LineChart },
+        { to: "/dashboard", label: "Dashboard", Icon: BarChart3 },
+        ...(isDirectorQA ? [{ to: "/qa", label: "QA", Icon: ClipboardCheck }] : []),
+        { to: "/academia", label: "Academia", Icon: GraduationCap },
+        { to: "/apoderados-nuvex", label: "Apoderados", Icon: Users },
+        ...(roles.some((r) => ["super_admin","admin","gerencia","cartera","juridica","licenciado","asesor"].includes(r)) ? [{ to: "/cartera", label: "Cartera", Icon: Wallet }] : []),
+        { to: "/comisiones", label: "Comisiones", Icon: CircleDollarSign },
+        ...(roles.some((r) => ["super_admin","admin","gerencia","cartera"].includes(r)) ? [{ to: "/contabilidad/cuentas-cobro", label: "Contabilidad", Icon: CircleDollarSign }] : []),
+        ...(roles.some((r) => ["super_admin","admin","gerencia","contabilidad"].includes(r)) ? [{ to: "/finanzas", label: "Finanzas", Icon: Landmark }] : []),
+        ...(isSuperAdmin ? [{ to: "/super-admin", label: "Super Admin", Icon: Shield }] : []),
+      ];
 
 
 
@@ -176,6 +183,7 @@ function AuthenticatedLayout() {
 
           {/* DERECHA — Usuario + Salir */}
           <div className="flex items-center gap-3">
+            <NotificationBell />
             <div
               className="hidden md:flex items-center gap-3 rounded-2xl pl-2 pr-4 py-2 transition-all duration-300 hover:-translate-y-0.5"
               style={{
