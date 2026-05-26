@@ -255,6 +255,8 @@ export const consultarIA = createServerFn({ method: "POST" })
       roles.find((r) => ["super_admin", "admin", "gerencia"].includes(r)) ?? roles[0] ?? "licenciado";
     const modulo = (data.modulo ?? "").toLowerCase() || null;
     const origen = data.origen ?? "nuvex_ia";
+    const audiencia = resolverAudiencia(roles);
+
 
     // Restricción: apoderado no usa la página completa
     if (roles.includes("apoderado") && !isAdmin) {
@@ -274,7 +276,7 @@ export const consultarIA = createServerFn({ method: "POST" })
     // ────────────────────────────────────────────
     // PASO 0: Búsqueda en NUVEX KB (cero tokens)
     // ────────────────────────────────────────────
-    const { hit, contexto: kbContexto } = await buscarKB(supabase, data.pregunta, modulo);
+    const { hit, contexto: kbContexto } = await buscarKB(supabase, data.pregunta, modulo, audiencia);
     if (hit) {
       const respuesta = `${hit.respuesta}\n\n*Fuente: NUVEX KB · ${hit.categoria}*`;
       await registrarLog(supabase, {
