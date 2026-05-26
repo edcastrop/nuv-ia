@@ -135,34 +135,159 @@ const DATASETS = [
   "ninguno",
 ] as const;
 
+// ============================================================
+// Búsqueda en NUVEX KB (base de conocimiento)
+// ============================================================
+type KBRow = { id: string; categoria: string; pregunta: string; respuesta: string; tags: string[] | null };
+
+async function buscarKB(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  pregunta: string,
+  modulo: string | null,
+): Promise<{ hit: KBRow | null; contexto: KBRow[] }> {
+  const terms = pregunta
+    .toLowerCase()
+    .replace(/[^\wáéíóúñü\s]/gi, " ")
+    .split(/\s+/)
+    .filter((t) => t.length >= 3)
+    .slice(0, 6);
+
+  let q = supabase
+    .from("nuvex_kb")
+    .select("id, categoria, pregunta, respuesta, tags")
+    .eq("estado", "activo")
+    .limit(6);
+
+  if (terms.length > 0) {
+    const orFilter = terms
+      .map((t) => `pregunta.ilike.%${t}%,respuesta.ilike.%${t}%,categoria.ilike.%${t}%`)
+      .join(",");
+    q = q.or(orFilter);
+  }
+
+  const { data } = await q;
+  let articulos = (data ?? []) as KBRow[];
+
+  if (modulo) {
+    articulos = articulos.sort((a, b) => {
+      const sa = a.categoria.toLowerCase().includes(modulo) ? 1 : 0;
+      const sb = b.categoria.toLowerCase().includes(modulo) ? 1 : 0;
+      return sb - sa;
+    });
+  }
+
+  // Hit fuerte: la pregunta normalizada contiene la pregunta del KB o viceversa
+  const norm = (s: string) => s.toLowerCase().replace(/[¿?¡!.,;:]/g, "").trim();
+  const np = norm(pregunta);
+  const hit = articulos.find((a) => {
+    const nq = norm(a.pregunta);
+    if (nq.length < 8) return false;
+    return np.includes(nq) || nq.includes(np);
+  }) ?? null;
+
+  return { hit, contexto: articulos };
+}
+
+async function registrarLog(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  params: {
+    userId: string;
+    nombre: string | null;
+    rol: string;
+    modulo: string | null;
+    pregunta: string;
+    respuesta: string;
+    origen: "nuvex_ia" | "nuvex_gpt" | "cliente";
+    fuente: "kb" | "modelo" | "escalado";
+    tiempoMs: number;
+  },
+) {
+  await supabase.from("nuvex_ia_log").insert({
+    usuario_id: params.userId,
+    nombre_usuario: params.nombre,
+    rol: params.rol,
+    modulo: params.modulo,
+    pregunta: params.pregunta.slice(0, 2000),
+    respuesta: params.respuesta.slice(0, 8000),
+    origen: params.origen,
+    fuente: params.fuente,
+    tiempo_respuesta_ms: params.tiempoMs,
+  });
+}
+
 export const consultarIA = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
     z.object({
-      pregunta: z.string().min(2).max(500),
+      pregunta: z.string().min(2).max(1000),
+      modulo: z.string().max(60).nullable().optional(),
+      origen: z.enum(["nuvex_ia", "nuvex_gpt", "cliente"]).optional(),
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
+    const t0 = Date.now();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const supabase = context.supabase as any;
     const userId = context.userId as string;
     const roles = await getRoles(supabase, userId);
     const { isAdmin, isContabilidad, isJuridico, isLicenciado } = alcance(roles);
-    const rolPrincipal = roles[0] ?? "licenciado";
+    const rolPrincipal =
+      roles.find((r) => ["super_admin", "admin", "gerencia"].includes(r)) ?? roles[0] ?? "licenciado";
+    const modulo = (data.modulo ?? "").toLowerCase() || null;
+    const origen = data.origen ?? "nuvex_ia";
+
+    // Restricción: apoderado no usa la página completa
+    if (roles.includes("apoderado") && !isAdmin) {
+      const msg = "El acceso de clientes a NUVEX IA aún no está habilitado.";
+      await registrarLog(supabase, {
+        userId, nombre: null, rol: "apoderado", modulo,
+        pregunta: data.pregunta, respuesta: msg,
+        origen, fuente: "escalado", tiempoMs: Date.now() - t0,
+      });
+      return { respuesta: msg, filas: [], dataset: "ninguno", fuente: "escalado", escalable: false };
+    }
+
+    // Nombre del usuario (best-effort)
+    const { data: prof } = await supabase.from("profiles").select("nombre").eq("id", userId).maybeSingle();
+    const nombre = (prof?.nombre as string) ?? null;
+
+    // ────────────────────────────────────────────
+    // PASO 0: Búsqueda en NUVEX KB (cero tokens)
+    // ────────────────────────────────────────────
+    const { hit, contexto: kbContexto } = await buscarKB(supabase, data.pregunta, modulo);
+    if (hit) {
+      const respuesta = `${hit.respuesta}\n\n*Fuente: NUVEX KB · ${hit.categoria}*`;
+      await registrarLog(supabase, {
+        userId, nombre, rol: rolPrincipal, modulo,
+        pregunta: data.pregunta, respuesta,
+        origen, fuente: "kb", tiempoMs: Date.now() - t0,
+      });
+      return { respuesta, filas: [], dataset: "kb", fuente: "kb", escalable: false };
+    }
 
     const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
     if (!LOVABLE_API_KEY) {
-      return { respuesta: "El servicio de IA no está configurado.", filas: [], dataset: "ninguno" };
+      const msg = "El servicio de IA no está configurado.";
+      await registrarLog(supabase, {
+        userId, nombre, rol: rolPrincipal, modulo,
+        pregunta: data.pregunta, respuesta: msg,
+        origen, fuente: "escalado", tiempoMs: Date.now() - t0,
+      });
+      return { respuesta: msg, filas: [], dataset: "ninguno", fuente: "escalado", escalable: true };
     }
 
+    // ────────────────────────────────────────────
     // PASO 1: Clasificar intención con tool calling
+    // ────────────────────────────────────────────
     const clasResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: `Eres un clasificador. Convierte la pregunta del usuario en un dataset a consultar en NUVEX. Datasets disponibles: ${DATASETS.join(", ")}. Si la pregunta menciona un cliente por nombre o cédula usa "buscar_cliente" y extrae el término. Si no aplica ninguno responde "ninguno".` },
+          { role: "system", content: `Eres un clasificador. Convierte la pregunta del usuario en un dataset a consultar en NUVEX. Datasets disponibles: ${DATASETS.join(", ")}. Si la pregunta menciona un cliente por nombre o cédula usa "buscar_cliente" y extrae el término. Si es una pregunta conceptual / procedimental, responde "ninguno".` },
           { role: "user", content: data.pregunta },
         ],
         tools: [{
@@ -185,20 +310,21 @@ export const consultarIA = createServerFn({ method: "POST" })
       }),
     });
 
-    if (!clasResp.ok) {
-      return { respuesta: "No pude procesar tu consulta en este momento.", filas: [], dataset: "ninguno" };
-    }
-    const clasJson = await clasResp.json();
-    const toolCall = clasJson.choices?.[0]?.message?.tool_calls?.[0];
     let dataset = "ninguno";
     let termino = "";
-    try {
-      const args = JSON.parse(toolCall?.function?.arguments ?? "{}");
-      dataset = args.dataset ?? "ninguno";
-      termino = (args.termino ?? "").trim();
-    } catch { /* noop */ }
+    if (clasResp.ok) {
+      const clasJson = await clasResp.json();
+      const toolCall = clasJson.choices?.[0]?.message?.tool_calls?.[0];
+      try {
+        const args = JSON.parse(toolCall?.function?.arguments ?? "{}");
+        dataset = args.dataset ?? "ninguno";
+        termino = (args.termino ?? "").trim();
+      } catch { /* noop */ }
+    }
 
-    // PASO 2: Ejecutar query según dataset (RLS aplica por el cliente autenticado)
+    // ────────────────────────────────────────────
+    // PASO 2: Ejecutar query según dataset (RLS aplica)
+    // ────────────────────────────────────────────
     const restringeAsesor = !isAdmin;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let filas: any[] = [];
@@ -232,7 +358,9 @@ export const consultarIA = createServerFn({ method: "POST" })
       filas = r ?? [];
     } else if (dataset === "honorarios_pendientes" || dataset === "clientes_morosos") {
       if (isJuridico && !isAdmin && !isContabilidad && !isLicenciado) {
-        return { respuesta: "Esta información está restringida para tu perfil de acceso.", filas: [], dataset };
+        const msg = "Esta información está restringida para tu perfil de acceso.";
+        await registrarLog(supabase, { userId, nombre, rol: rolPrincipal, modulo, pregunta: data.pregunta, respuesta: msg, origen, fuente: "escalado", tiempoMs: Date.now() - t0 });
+        return { respuesta: msg, filas: [], dataset, fuente: "escalado", escalable: false };
       }
       let q = supabase.from("cartera").select("id, expediente_id, honorarios_totales, pagado, estado_cartera, fecha_vencimiento, responsable_id").limit(30);
       if (isLicenciado && !isAdmin) q = q.eq("responsable_id", userId);
@@ -254,7 +382,9 @@ export const consultarIA = createServerFn({ method: "POST" })
       filas = r ?? [];
     } else if (dataset === "facturacion_mes") {
       if (isJuridico && !isAdmin && !isContabilidad) {
-        return { respuesta: "Esta información está restringida para tu perfil de acceso.", filas: [], dataset };
+        const msg = "Esta información está restringida para tu perfil de acceso.";
+        await registrarLog(supabase, { userId, nombre, rol: rolPrincipal, modulo, pregunta: data.pregunta, respuesta: msg, origen, fuente: "escalado", tiempoMs: Date.now() - t0 });
+        return { respuesta: msg, filas: [], dataset, fuente: "escalado", escalable: false };
       }
       const mesIni = new Date(); mesIni.setDate(1); mesIni.setHours(0, 0, 0, 0);
       let q = supabase.from("cuentas_cobro").select("id, numero, total, estado, user_id, created_at").gte("created_at", mesIni.toISOString()).limit(50);
@@ -268,21 +398,58 @@ export const consultarIA = createServerFn({ method: "POST" })
       filas = (r ?? []).filter((c: { comision_potencial: number; comision_pagada: number }) => Number(c.comision_potencial) - Number(c.comision_pagada) > 0);
     }
 
-    // PASO 3: Si no hay datos
-    if (filas.length === 0) {
-      return { respuesta: "No encontré información suficiente para responder esa consulta.", filas: [], dataset };
-    }
+    // ────────────────────────────────────────────
+    // PASO 3: Generar respuesta con el modelo
+    // ────────────────────────────────────────────
+    const kbBlock = kbContexto.length
+      ? kbContexto.map((a, i) => `### [KB-${i + 1}] ${a.categoria} — ${a.pregunta}\n${a.respuesta}`).join("\n\n")
+      : "No hay artículos relevantes en la base de conocimiento.";
 
-    // PASO 4: Redactar respuesta natural con los datos
-    const resumen = filas.slice(0, 15);
+    const datosBlock = filas.length
+      ? `Dataset: ${dataset}\nRegistros (máx 15):\n${JSON.stringify(filas.slice(0, 15), null, 2)}`
+      : "Sin datos estructurados para esta consulta.";
+
+    const restriccionesBlock = `RESTRICCIONES POR ROL (${rolPrincipal}):
+- Licenciado: solo sus propios casos, comisiones y cartera asignada.
+- Contabilidad: finanzas, comisiones y cartera (todos).
+- Jurídica: casos en flujo jurídico; no ve comisiones de terceros.
+- Operaciones: casos en flujo operativo.
+- Apoderado: solo sus propios casos; bloqueado por defecto.
+- Super Admin / Gerencia: acceso total.
+Si la pregunta excede tu rol, responde: "Esta información está restringida para tu perfil de acceso."`;
+
+    const systemPrompt = `Eres **NUVEX IA**, el cerebro único de IA de NUVEX Finanzas Inteligentes.
+
+Contexto:
+- Usuario rol: ${rolPrincipal}
+- Módulo actual: ${modulo ?? "ninguno"}
+- Origen: ${origen}
+
+Reglas:
+1. Responde en español, profesional, ejecutivo, en Markdown.
+2. Usa SOLO la información provista (KB + datos). Nunca inventes leyes, decretos, tarifas ni cifras.
+3. Si los datos están vacíos y la KB no cubre la pregunta, responde EXACTAMENTE con la línea:
+   __ESCALAR__
+   y debajo una breve explicación de por qué necesitas escalar.
+4. Respeta las restricciones por rol.
+5. Si la consulta es de un cliente futuro (origen=cliente), nunca reveles datos internos (comisiones, cartera global, honorarios de terceros).
+
+${restriccionesBlock}
+
+BASE DE CONOCIMIENTO RELEVANTE:
+${kbBlock}
+
+DATOS ESTRUCTURADOS:
+${datosBlock}`;
+
     const redactResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: `Eres NUVEX IA, asistente operativo. Responde en español, breve y ejecutivo, en formato Markdown. Usa ÚNICAMENTE los datos JSON entregados — nunca inventes. Si los datos están vacíos di que no hay información. El usuario tiene rol: ${rolPrincipal}. Total de registros encontrados: ${filas.length}.` },
-          { role: "user", content: `Pregunta: ${data.pregunta}\n\nDataset: ${dataset}\nDatos (máx 15 filas):\n${JSON.stringify(resumen, null, 2)}` },
+          { role: "system", content: systemPrompt },
+          { role: "user", content: data.pregunta },
         ],
       }),
     });
@@ -293,5 +460,24 @@ export const consultarIA = createServerFn({ method: "POST" })
       respuesta = j.choices?.[0]?.message?.content ?? respuesta;
     }
 
-    return { respuesta, filas, dataset };
+    const escalable = respuesta.includes("__ESCALAR__");
+    if (escalable) {
+      respuesta = respuesta.replace(/__ESCALAR__/g, "").trim() ||
+        "No tengo suficiente información para responder esta consulta con seguridad.";
+    }
+
+    await registrarLog(supabase, {
+      userId, nombre, rol: rolPrincipal, modulo,
+      pregunta: data.pregunta, respuesta,
+      origen, fuente: escalable ? "escalado" : "modelo",
+      tiempoMs: Date.now() - t0,
+    });
+
+    return {
+      respuesta,
+      filas,
+      dataset,
+      fuente: escalable ? "escalado" : "modelo",
+      escalable,
+    };
   });

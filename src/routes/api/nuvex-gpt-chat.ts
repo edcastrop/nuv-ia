@@ -61,7 +61,7 @@ export const Route = createFileRoute("/api/nuvex-gpt-chat")({
             roles[0] ??
             "licenciado";
 
-          // KB retrieval: simple keyword search across titulo + tags + contenido
+          // KB retrieval: nuvex_kb (cerebro único)
           const q = lastUserMsg.trim();
           const terms = q
             .toLowerCase()
@@ -73,52 +73,38 @@ export const Route = createFileRoute("/api/nuvex-gpt-chat")({
           const orFilters =
             terms.length > 0
               ? terms
-                  .map((t) => `titulo.ilike.%${t}%,contenido.ilike.%${t}%`)
+                  .map((t) => `pregunta.ilike.%${t}%,respuesta.ilike.%${t}%,categoria.ilike.%${t}%`)
                   .join(",")
               : "";
 
           let kbQuery = supabase
-            .from("gpt_kb_articulos")
-            .select("id,titulo,contenido,tags,categoria_id,gpt_kb_categorias!inner(nombre)")
-            .eq("activo", true)
+            .from("nuvex_kb")
+            .select("id,categoria,pregunta,respuesta,tags")
+            .eq("estado", "activo")
             .limit(6);
           if (orFilters) kbQuery = kbQuery.or(orFilters);
 
           const { data: kbRaw } = await kbQuery;
           let articulos = (kbRaw ?? []) as Array<{
-            titulo: string;
-            contenido: string;
+            categoria: string;
+            pregunta: string;
+            respuesta: string;
             tags: string[] | null;
-            gpt_kb_categorias: { nombre: string } | { nombre: string }[];
           }>;
 
-          // Filter by allowed roles for this user (if empty array, allowed for all)
-          // (RLS already filters by activo; allowed-roles filter is informational)
-          // Boost by modulo: if categoria coincides with current module, push it first
           if (modulo) {
             articulos = articulos.sort((a, b) => {
-              const ca = Array.isArray(a.gpt_kb_categorias)
-                ? a.gpt_kb_categorias[0]?.nombre
-                : a.gpt_kb_categorias?.nombre;
-              const cb = Array.isArray(b.gpt_kb_categorias)
-                ? b.gpt_kb_categorias[0]?.nombre
-                : b.gpt_kb_categorias?.nombre;
-              const sa = ca?.toLowerCase().includes(modulo) ? 1 : 0;
-              const sb = cb?.toLowerCase().includes(modulo) ? 1 : 0;
+              const sa = a.categoria.toLowerCase().includes(modulo) ? 1 : 0;
+              const sb = b.categoria.toLowerCase().includes(modulo) ? 1 : 0;
               return sb - sa;
             });
           }
 
           const kbContext = articulos.length
             ? articulos
-                .map((a, i) => {
-                  const cat = Array.isArray(a.gpt_kb_categorias)
-                    ? a.gpt_kb_categorias[0]?.nombre
-                    : a.gpt_kb_categorias?.nombre;
-                  return `### [${i + 1}] ${a.titulo} — ${cat ?? ""}\n${a.contenido}`;
-                })
+                .map((a, i) => `### [${i + 1}] ${a.categoria} — ${a.pregunta}\n${a.respuesta}`)
                 .join("\n\n---\n\n")
-            : "No hay artículos relevantes en la base de conocimiento para esta consulta.";
+            : "No hay artículos relevantes en la base de conocimiento NUVEX para esta consulta.";
 
           const systemPrompt = `Eres **NUVEX GPT**, el Copiloto Operativo Corporativo de NUVEX Finanzas Inteligentes.
 
@@ -140,19 +126,16 @@ REGLAS ESTRICTAS:
 BASE DE CONOCIMIENTO RELEVANTE (úsala como fuente única de verdad):
 ${kbContext}`;
 
-          // Log query (best-effort)
-          const categoriaDetectada = articulos[0]
-            ? Array.isArray(articulos[0].gpt_kb_categorias)
-              ? articulos[0].gpt_kb_categorias[0]?.nombre
-              : articulos[0].gpt_kb_categorias?.nombre
-            : null;
-          void supabase.from("gpt_consultas_log").insert({
-            user_id: userId,
+          // Log query en nuvex_ia_log (cerebro único)
+          const categoriaDetectada = articulos[0]?.categoria ?? null;
+          void supabase.from("nuvex_ia_log").insert({
+            usuario_id: userId,
             rol: rolPrincipal,
             modulo: modulo || null,
-            pregunta: q.slice(0, 1000),
-            categoria_detectada: categoriaDetectada ?? null,
-            respondida: articulos.length > 0,
+            pregunta: q.slice(0, 2000),
+            respuesta: categoriaDetectada ? `[KB: ${categoriaDetectada}]` : null,
+            origen: "nuvex_gpt",
+            fuente: articulos.length > 0 ? "kb" : "modelo",
           });
 
           // Call Lovable AI Gateway

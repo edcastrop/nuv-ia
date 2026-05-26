@@ -70,8 +70,13 @@ function NuvexIAPage() {
     setChat((c) => [...c, { rol: "user", texto: q }]);
     setEnviando(true);
     try {
-      const res = await consultaFn({ data: { pregunta: q } });
-      setChat((c) => [...c, { rol: "ai", texto: res.respuesta, filas: res.filas }]);
+      const res = await consultaFn({ data: { pregunta: q, modulo: "nuvex-ia", origen: "nuvex_ia" } });
+      const meta = res.fuente === "kb"
+        ? "📚 Respuesta de la base de conocimiento NUVEX (KB)"
+        : res.escalable
+        ? "⚠️ Sin información suficiente — puedes escalar esta consulta"
+        : undefined;
+      setChat((c) => [...c, { rol: "ai", texto: res.respuesta + (meta ? `\n\n*${meta}*` : ""), filas: res.filas }]);
     } catch {
       setChat((c) => [...c, { rol: "ai", texto: "Hubo un error al procesar tu consulta." }]);
     } finally {
