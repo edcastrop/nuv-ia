@@ -320,51 +320,161 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+type Filtros = {
+  desde?: string; hasta?: string;
+  origen?: "nuvex_ia" | "nuvex_gpt" | "cliente";
+  fuente?: "kb" | "modelo" | "escalado";
+  modulo?: string; rol?: string;
+  audiencia?: "interno" | "apoderado" | "cliente" | "publico";
+};
+
+function toIsoStart(d: string) { return d ? new Date(d + "T00:00:00").toISOString() : undefined; }
+function toIsoEnd(d: string) { return d ? new Date(d + "T23:59:59").toISOString() : undefined; }
+
 function AnaliticaTab() {
   const fn = useServerFn(kbAnalitica);
+  const exportFn = useServerFn(kbAnaliticaExport);
   const [data, setData] = useState<Awaited<ReturnType<typeof kbAnalitica>> | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [desdeStr, setDesdeStr] = useState("");
+  const [hastaStr, setHastaStr] = useState("");
+  const [origen, setOrigen] = useState<string>("");
+  const [fuente, setFuente] = useState<string>("");
+  const [audiencia, setAudiencia] = useState<string>("");
+  const [modulo, setModulo] = useState("");
+  const [rol, setRol] = useState("");
 
-  useEffect(() => { fn().then(setData); }, []);
+  const buildFiltros = (): Filtros => ({
+    desde: toIsoStart(desdeStr),
+    hasta: toIsoEnd(hastaStr),
+    origen: (origen || undefined) as Filtros["origen"],
+    fuente: (fuente || undefined) as Filtros["fuente"],
+    audiencia: (audiencia || undefined) as Filtros["audiencia"],
+    modulo: modulo.trim() || undefined,
+    rol: rol.trim() || undefined,
+  });
 
-  if (!data) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>;
+  const cargar = async () => {
+    setLoading(true);
+    try { setData(await fn({ data: buildFiltros() })); } finally { setLoading(false); }
+  };
 
-  const pctKb = data.total ? Math.round((data.desdeKb / data.total) * 100) : 0;
+  useEffect(() => { cargar(); /* eslint-disable-next-line */ }, []);
+
+  const exportar = async () => {
+    setExporting(true);
+    try {
+      const { csv } = await exportFn({ data: buildFiltros() });
+      const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `nuvex-ia-log-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    } finally { setExporting(false); }
+  };
+
+  const limpiar = () => {
+    setDesdeStr(""); setHastaStr(""); setOrigen(""); setFuente("");
+    setAudiencia(""); setModulo(""); setRol("");
+  };
+
+  const inputCls = "px-3 py-2 rounded-lg border border-[#E3E7EE] text-sm bg-white";
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Stat label="Consultas (30 días)" value={data.total} />
-        <Stat label="Resueltas con KB" value={`${pctKb}%`} tone="ok" />
-        <Stat label="Escaladas" value={data.escalados} tone="warn" />
-        <Stat label="Tiempo medio" value={`${data.avgMs} ms`} />
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-6">
-        <RankList title="Por interfaz (origen)" rows={data.top_origen} />
-        <RankList title="Por fuente de respuesta" rows={data.top_fuente} />
-        <RankList title="Top módulos" rows={data.top_modulo} />
-        <RankList title="Top roles" rows={data.top_rol} />
-      </div>
-
       <div className="bg-white rounded-2xl border border-[#E3E7EE] p-5">
-        <h3 className="font-bold text-[#050814] mb-3">Últimas consultas escaladas</h3>
-        <div className="space-y-2">
-          {data.ultimas_escaladas.length === 0 && (
-            <div className="text-sm text-[#242424]/50">Sin escalamientos recientes.</div>
-          )}
-          {data.ultimas_escaladas.map((r, i) => (
-            <div key={i} className="flex items-center justify-between text-sm border-b border-[#E3E7EE] pb-2 last:border-0">
-              <div className="truncate">
-                <span className="text-[11px] text-[#445DA3] font-semibold uppercase mr-2">{r.modulo ?? "—"}</span>
-                {r.pregunta}
-              </div>
-              <div className="text-[11px] text-[#242424]/50 shrink-0 ml-3">
-                {new Date(r.created_at).toLocaleString()}
-              </div>
-            </div>
-          ))}
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold text-[#050814]">Filtros</h3>
+          <div className="flex gap-2">
+            <button onClick={limpiar} className="px-3 py-2 rounded-lg border border-[#E3E7EE] text-sm">Limpiar</button>
+            <button onClick={cargar} disabled={loading}
+              className="px-3 py-2 rounded-lg text-sm text-white"
+              style={{ background: "#445DA3" }}>
+              {loading ? "Cargando…" : "Aplicar"}
+            </button>
+            <button onClick={exportar} disabled={exporting || !data?.total}
+              className="px-3 py-2 rounded-lg text-sm text-white disabled:opacity-50"
+              style={{ background: "#2E7D45" }}>
+              {exporting ? "Exportando…" : "Exportar CSV"}
+            </button>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+          <Field label="Desde"><input type="date" value={desdeStr} onChange={(e) => setDesdeStr(e.target.value)} className={inputCls} /></Field>
+          <Field label="Hasta"><input type="date" value={hastaStr} onChange={(e) => setHastaStr(e.target.value)} className={inputCls} /></Field>
+          <Field label="Origen">
+            <select value={origen} onChange={(e) => setOrigen(e.target.value)} className={inputCls}>
+              <option value="">Todos</option>
+              <option value="nuvex_ia">nuvex_ia</option>
+              <option value="nuvex_gpt">nuvex_gpt</option>
+              <option value="cliente">cliente</option>
+            </select>
+          </Field>
+          <Field label="Fuente">
+            <select value={fuente} onChange={(e) => setFuente(e.target.value)} className={inputCls}>
+              <option value="">Todas</option>
+              <option value="kb">KB</option>
+              <option value="modelo">Modelo</option>
+              <option value="escalado">Escalado</option>
+            </select>
+          </Field>
+          <Field label="Audiencia">
+            <select value={audiencia} onChange={(e) => setAudiencia(e.target.value)} className={inputCls}>
+              <option value="">Todas</option>
+              <option value="interno">Interno</option>
+              <option value="apoderado">Apoderado</option>
+              <option value="cliente">Cliente</option>
+              <option value="publico">Público</option>
+            </select>
+          </Field>
+          <Field label="Módulo"><input value={modulo} onChange={(e) => setModulo(e.target.value)} placeholder="ej. cartera" className={inputCls} /></Field>
+          <Field label="Rol"><input value={rol} onChange={(e) => setRol(e.target.value)} placeholder="ej. licenciado" className={inputCls} /></Field>
         </div>
       </div>
+
+      {!data ? (
+        <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Stat label="Consultas" value={data.total} />
+            <Stat label="Resueltas con KB" value={`${data.total ? Math.round((data.desdeKb / data.total) * 100) : 0}%`} tone="ok" />
+            <Stat label="Escaladas" value={data.escalados} tone="warn" />
+            <Stat label="Tiempo medio" value={`${data.avgMs} ms`} />
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <RankList title="Por interfaz (origen)" rows={data.top_origen} />
+            <RankList title="Por fuente de respuesta" rows={data.top_fuente} />
+            <RankList title="Top módulos" rows={data.top_modulo} />
+            <RankList title="Top roles" rows={data.top_rol} />
+            <RankList title="Por audiencia" rows={data.top_audiencia} />
+          </div>
+
+          <div className="bg-white rounded-2xl border border-[#E3E7EE] p-5">
+            <h3 className="font-bold text-[#050814] mb-3">Últimas consultas escaladas</h3>
+            <div className="space-y-2">
+              {data.ultimas_escaladas.length === 0 && (
+                <div className="text-sm text-[#242424]/50">Sin escalamientos recientes.</div>
+              )}
+              {data.ultimas_escaladas.map((r, i) => (
+                <div key={i} className="flex items-center justify-between text-sm border-b border-[#E3E7EE] pb-2 last:border-0">
+                  <div className="truncate">
+                    <span className="text-[11px] text-[#445DA3] font-semibold uppercase mr-2">{r.modulo ?? "—"}</span>
+                    {r.pregunta}
+                  </div>
+                  <div className="text-[11px] text-[#242424]/50 shrink-0 ml-3">
+                    {new Date(r.created_at).toLocaleString()}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
