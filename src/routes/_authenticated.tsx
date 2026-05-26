@@ -98,6 +98,7 @@ function AuthenticatedLayout() {
             { to: "/expediente-maestro", label: "Expediente", Icon: UserSquare2 },
             { to: "/proyeccion", label: "Proyección", Icon: LineChart },
             { to: "/notificaciones", label: "Alertas", Icon: Bell, badge: unread },
+            { to: "/colaboracion", label: "Colaboración", Icon: MessageSquare },
           ],
         },
         {
