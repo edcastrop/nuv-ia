@@ -368,6 +368,109 @@ function AccesosPage() {
         </Modal>
       )}
 
+      {/* Toast acción */}
+      {accionMsg && (
+        <div
+          className="fixed bottom-6 right-6 z-[60] rounded-lg px-4 py-3 text-sm font-semibold text-white shadow-lg"
+          style={{ background: accionMsg.tipo === "ok" ? VERDE : "#B42318" }}
+        >{accionMsg.texto}</div>
+      )}
+
+      {/* Modal Bloquear */}
+      {showBloquear && seleccionado && (
+        <Modal onClose={() => !bloqueando && setShowBloquear(false)} title={`Bloquear · ${seleccionado.nombre}`}>
+          <p className="mb-3 text-sm text-[#242424]/80">
+            ¿Estás seguro de bloquear este usuario? El usuario perderá acceso inmediato a la plataforma,
+            pero su historial, auditoría y procesos se conservarán.
+          </p>
+          <label className="block mb-3">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Motivo del bloqueo (obligatorio)</span>
+            <textarea
+              value={motivoBloqueo}
+              onChange={(e) => setMotivoBloqueo(e.target.value)}
+              rows={3}
+              className="mt-1.5 w-full rounded-[10px] border border-[#E1E5EE] bg-[#FAFBFD] px-3 py-2.5 text-sm outline-none focus:border-[#445DA3]"
+              placeholder="Indica el motivo del bloqueo (mín. 5 caracteres)…"
+            />
+          </label>
+          <label className="mb-3 flex items-start gap-2 text-sm">
+            <input type="checkbox" checked={confirmarBloqueo} onChange={(e) => setConfirmarBloqueo(e.target.checked)} className="mt-0.5" />
+            <span>Confirmo que entiendo el efecto del bloqueo y deseo continuar.</span>
+          </label>
+          {bloqueoError && <div className="mb-3 rounded-md bg-[#FDECEC] px-3 py-2 text-xs text-[#B42318]">{bloqueoError}</div>}
+          <div className="flex justify-end gap-2">
+            <button disabled={bloqueando} onClick={() => setShowBloquear(false)} className="rounded-lg border border-[#E3E7EE] px-4 py-2 text-sm font-medium">Cancelar</button>
+            <button
+              disabled={bloqueando || motivoBloqueo.trim().length < 5 || !confirmarBloqueo}
+              onClick={async () => {
+                setBloqueoError(null);
+                setBloqueando(true);
+                try {
+                  await bloquearUsuario(seleccionado.id, motivoBloqueo.trim());
+                  setShowBloquear(false);
+                  setSeleccionado(null);
+                  setAccionMsg({ tipo: "ok", texto: "Usuario bloqueado correctamente." });
+                  setTimeout(() => setAccionMsg(null), 4000);
+                  await reload();
+                } catch (e) {
+                  setBloqueoError((e as Error).message);
+                } finally {
+                  setBloqueando(false);
+                }
+              }}
+              className="rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+              style={{ background: "#B42318" }}
+            >{bloqueando ? "Bloqueando…" : "Confirmar bloqueo"}</button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Modal Desbloquear */}
+      {showDesbloquear && seleccionado && (
+        <Modal onClose={() => !desbloqueando && setShowDesbloquear(false)} title={`Desbloquear · ${seleccionado.nombre}`}>
+          <p className="mb-3 text-sm text-[#242424]/80">
+            El usuario recuperará acceso inmediato a la plataforma. Esta acción quedará registrada en auditoría.
+          </p>
+          <label className="block mb-3">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Motivo (opcional)</span>
+            <textarea
+              value={motivoDesbloqueo}
+              onChange={(e) => setMotivoDesbloqueo(e.target.value)}
+              rows={3}
+              className="mt-1.5 w-full rounded-[10px] border border-[#E1E5EE] bg-[#FAFBFD] px-3 py-2.5 text-sm outline-none focus:border-[#445DA3]"
+              placeholder="Razón del desbloqueo…"
+            />
+          </label>
+          {desbloqueoError && <div className="mb-3 rounded-md bg-[#FDECEC] px-3 py-2 text-xs text-[#B42318]">{desbloqueoError}</div>}
+          <div className="flex justify-end gap-2">
+            <button disabled={desbloqueando} onClick={() => setShowDesbloquear(false)} className="rounded-lg border border-[#E3E7EE] px-4 py-2 text-sm font-medium">Cancelar</button>
+            <button
+              disabled={desbloqueando}
+              onClick={async () => {
+                setDesbloqueoError(null);
+                setDesbloqueando(true);
+                try {
+                  await activarUsuario(seleccionado.id, motivoDesbloqueo.trim() || undefined);
+                  setShowDesbloquear(false);
+                  setSeleccionado(null);
+                  setAccionMsg({ tipo: "ok", texto: "Usuario desbloqueado correctamente." });
+                  setTimeout(() => setAccionMsg(null), 4000);
+                  await reload();
+                } catch (e) {
+                  setDesbloqueoError((e as Error).message);
+                } finally {
+                  setDesbloqueando(false);
+                }
+              }}
+              className="rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+              style={{ background: VERDE }}
+            >{desbloqueando ? "Desbloqueando…" : "Confirmar desbloqueo"}</button>
+          </div>
+        </Modal>
+      )}
+
+
+
       {/* Modal Desvincular */}
       {showDesvincular && seleccionado && (
         <Modal wide onClose={() => !desvinculando && setShowDesvincular(false)} title={`Desvincular · ${seleccionado.nombre}`}>
