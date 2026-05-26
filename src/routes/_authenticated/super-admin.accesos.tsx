@@ -529,6 +529,31 @@ function AccesosPage() {
             desvincularError && <div className="rounded-lg bg-[#FDECEC] border border-[#F5C2C2] px-3 py-2 text-xs text-[#B42318]">{desvincularError}</div>
           )}
 
+          {/* Checklist de requisitos en vivo */}
+          {modoDesvinc === "sin_traslado" && (
+            <ul className="mt-4 space-y-1 text-[11px]">
+              <li style={{ color: sinTrasladoMotivo.trim().length >= 10 ? "#1F6D3D" : "#B42318" }}>
+                {sinTrasladoMotivo.trim().length >= 10 ? "✓" : "○"} Motivo con al menos 10 caracteres ({sinTrasladoMotivo.trim().length}/10)
+              </li>
+              <li style={{ color: sinTrasladoAck ? "#1F6D3D" : "#B42318" }}>
+                {sinTrasladoAck ? "✓" : "○"} Reconocimiento de riesgo marcado
+              </li>
+              <li style={{ color: confirmText.trim().toUpperCase() === "DESVINCULAR SIN TRASLADO" ? "#1F6D3D" : "#B42318" }}>
+                {confirmText.trim().toUpperCase() === "DESVINCULAR SIN TRASLADO" ? "✓" : "○"} Texto de confirmación exacto: DESVINCULAR SIN TRASLADO
+              </li>
+            </ul>
+          )}
+          {modoDesvinc === "con_traslado" && (
+            <ul className="mt-4 space-y-1 text-[11px]">
+              <li style={{ color: reemplazoId ? "#1F6D3D" : "#B42318" }}>
+                {reemplazoId ? "✓" : "○"} Usuario de reemplazo seleccionado
+              </li>
+              <li style={{ color: confirmText.trim().toUpperCase() === "DESVINCULAR" ? "#1F6D3D" : "#B42318" }}>
+                {confirmText.trim().toUpperCase() === "DESVINCULAR" ? "✓" : "○"} Texto de confirmación: DESVINCULAR
+              </li>
+            </ul>
+          )}
+
           <div className="mt-5 flex justify-end gap-2">
             <button
               onClick={() => setShowDesvincular(false)}
@@ -538,46 +563,50 @@ function AccesosPage() {
             {modoDesvinc === "con_traslado" ? (
               <button
                 onClick={async () => {
-                  if (!reemplazoId || confirmText !== "DESVINCULAR") return;
-                  setDesvinculando(true);
                   setDesvincularError(null);
+                  if (!reemplazoId) { setDesvincularError("Selecciona un usuario de reemplazo."); return; }
+                  if (confirmText.trim().toUpperCase() !== "DESVINCULAR") { setDesvincularError('Escribe exactamente "DESVINCULAR" para confirmar.'); return; }
+                  setDesvinculando(true);
                   try {
                     await desvincularUsuario(seleccionado.id, reemplazoId, transferirComisiones);
                     setShowDesvincular(false);
                     setSeleccionado(null);
                     reload();
                   } catch (e) {
-                    setDesvincularError((e as Error).message);
+                    setDesvincularError((e as Error).message || "Error al desvincular.");
                   } finally {
                     setDesvinculando(false);
                   }
                 }}
-                disabled={!reemplazoId || confirmText !== "DESVINCULAR" || desvinculando}
+                disabled={desvinculando}
                 className="rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
                 style={{ background: "#7C2D12" }}
               >{desvinculando ? "Desvinculando…" : "Confirmar desvinculación con traslado"}</button>
             ) : (
               <button
                 onClick={async () => {
-                  if (!sinTrasladoAck || sinTrasladoMotivo.trim().length < 10 || confirmText !== "DESVINCULAR SIN TRASLADO") return;
-                  setDesvinculando(true);
                   setDesvincularError(null);
+                  if (sinTrasladoMotivo.trim().length < 10) { setDesvincularError("El motivo debe tener al menos 10 caracteres."); return; }
+                  if (!sinTrasladoAck) { setDesvincularError("Debes marcar el reconocimiento de riesgo."); return; }
+                  if (confirmText.trim().toUpperCase() !== "DESVINCULAR SIN TRASLADO") { setDesvincularError('Escribe exactamente "DESVINCULAR SIN TRASLADO" para confirmar.'); return; }
+                  setDesvinculando(true);
                   try {
                     await desvincularUsuarioSinTraslado(seleccionado.id, sinTrasladoMotivo.trim());
                     setShowDesvincular(false);
                     setSeleccionado(null);
                     reload();
                   } catch (e) {
-                    setDesvincularError((e as Error).message);
+                    setDesvincularError((e as Error).message || "Error al desvincular sin traslado.");
                   } finally {
                     setDesvinculando(false);
                   }
                 }}
-                disabled={!sinTrasladoAck || sinTrasladoMotivo.trim().length < 10 || confirmText !== "DESVINCULAR SIN TRASLADO" || desvinculando}
+                disabled={desvinculando}
                 className="rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
                 style={{ background: "#B42318" }}
               >{desvinculando ? "Desvinculando…" : "Desvincular sin traslado"}</button>
             )}
+
           </div>
         </Modal>
       )}
