@@ -2115,6 +2115,7 @@ export type Database = {
       }
       nuvex_ia_log: {
         Row: {
+          audiencia: string | null
           created_at: string
           fuente: string
           id: string
@@ -2128,6 +2129,7 @@ export type Database = {
           usuario_id: string | null
         }
         Insert: {
+          audiencia?: string | null
           created_at?: string
           fuente?: string
           id?: string
@@ -2141,6 +2143,7 @@ export type Database = {
           usuario_id?: string | null
         }
         Update: {
+          audiencia?: string | null
           created_at?: string
           fuente?: string
           id?: string
@@ -2157,6 +2160,7 @@ export type Database = {
       }
       nuvex_kb: {
         Row: {
+          audiencias: string[]
           categoria: string
           creado_por: string | null
           created_at: string
@@ -2168,6 +2172,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          audiencias?: string[]
           categoria: string
           creado_por?: string | null
           created_at?: string
@@ -2179,6 +2184,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          audiencias?: string[]
           categoria?: string
           creado_por?: string | null
           created_at?: string
