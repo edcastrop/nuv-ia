@@ -209,6 +209,30 @@ function AccesosPage() {
                       style={{ background: VERDE }}
                     ><CheckCircle2 size={12} className="inline mr-1" />Reactivar</button>
                   )}
+                  {u.estado_acceso !== "desvinculado" && (
+                    <button
+                      onClick={async () => {
+                        setSeleccionado(u);
+                        setShowDesvincular(true);
+                        setReemplazoId("");
+                        setTransferirComisiones(false);
+                        setConfirmText("");
+                        setDesvincularError(null);
+                        setPreview(null);
+                        setPreviewLoading(true);
+                        try {
+                          const p = await previewDesvinculacion(u.id);
+                          setPreview(p);
+                        } catch (e) {
+                          setDesvincularError((e as Error).message);
+                        } finally {
+                          setPreviewLoading(false);
+                        }
+                      }}
+                      className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
+                      style={{ background: "#7C2D12" }}
+                    ><UserMinus size={12} className="inline mr-1" />Desvincular</button>
+                  )}
                   <button
                     onClick={() => setSeleccionado(u)}
                     className="ml-auto rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 text-xs font-semibold"
