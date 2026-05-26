@@ -11,7 +11,11 @@ export type AppRole =
   | "juridica"
   | "operaciones"
   | "cartera"
-  | "contabilidad";
+  | "contabilidad"
+  | "director_financiero_qa"
+  | "director_juridico"
+  | "auxiliar_operativo"
+  | "apoderado";
 
 export function isManager(roles: AppRole[]): boolean {
   return roles.includes("admin") || roles.includes("super_admin") || roles.includes("gerencia");
