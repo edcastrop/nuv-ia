@@ -1569,6 +1569,234 @@ export type Database = {
         }
         Relationships: []
       }
+      gpt_consultas_log: {
+        Row: {
+          categoria_detectada: string | null
+          created_at: string
+          feedback: number | null
+          id: string
+          modulo: string | null
+          pregunta: string
+          respondida: boolean
+          rol: string | null
+          user_id: string | null
+        }
+        Insert: {
+          categoria_detectada?: string | null
+          created_at?: string
+          feedback?: number | null
+          id?: string
+          modulo?: string | null
+          pregunta: string
+          respondida?: boolean
+          rol?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          categoria_detectada?: string | null
+          created_at?: string
+          feedback?: number | null
+          id?: string
+          modulo?: string | null
+          pregunta?: string
+          respondida?: boolean
+          rol?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      gpt_conversaciones: {
+        Row: {
+          created_at: string
+          id: string
+          modulo_contexto: string | null
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          modulo_contexto?: string | null
+          titulo?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          modulo_contexto?: string | null
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      gpt_kb_articulos: {
+        Row: {
+          activo: boolean
+          categoria_id: string
+          contenido: string
+          created_at: string
+          created_by: string | null
+          id: string
+          roles_permitidos: string[]
+          tags: string[]
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          categoria_id: string
+          contenido: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          roles_permitidos?: string[]
+          tags?: string[]
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          categoria_id?: string
+          contenido?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          roles_permitidos?: string[]
+          tags?: string[]
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gpt_kb_articulos_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "gpt_kb_categorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gpt_kb_categorias: {
+        Row: {
+          activo: boolean
+          created_at: string
+          descripcion: string | null
+          id: string
+          nombre: string
+          orden: number
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          nombre: string
+          orden?: number
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          nombre?: string
+          orden?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      gpt_mensajes: {
+        Row: {
+          content: string
+          conversacion_id: string
+          created_at: string
+          id: string
+          metadata: Json
+          role: string
+        }
+        Insert: {
+          content: string
+          conversacion_id: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          role: string
+        }
+        Update: {
+          content?: string
+          conversacion_id?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gpt_mensajes_conversacion_id_fkey"
+            columns: ["conversacion_id"]
+            isOneToOne: false
+            referencedRelation: "gpt_conversaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gpt_tickets: {
+        Row: {
+          area: string
+          asignado_a: string | null
+          asunto: string
+          conversacion_id: string | null
+          created_at: string
+          descripcion: string
+          estado: string
+          id: string
+          prioridad: string
+          resuelto_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          area: string
+          asignado_a?: string | null
+          asunto: string
+          conversacion_id?: string | null
+          created_at?: string
+          descripcion: string
+          estado?: string
+          id?: string
+          prioridad?: string
+          resuelto_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          area?: string
+          asignado_a?: string | null
+          asunto?: string
+          conversacion_id?: string | null
+          created_at?: string
+          descripcion?: string
+          estado?: string
+          id?: string
+          prioridad?: string
+          resuelto_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gpt_tickets_conversacion_id_fkey"
+            columns: ["conversacion_id"]
+            isOneToOne: false
+            referencedRelation: "gpt_conversaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       modulo_ayuda: {
         Row: {
           activo: boolean
@@ -2142,6 +2370,10 @@ export type Database = {
       comision_disponible_para_cc: {
         Args: { _comision_id: string }
         Returns: number
+      }
+      gpt_can_see_ticket: {
+        Args: { _area: string; _user: string }
+        Returns: boolean
       }
       has_permission: {
         Args: { _accion: string; _modulo: string; _uid: string }

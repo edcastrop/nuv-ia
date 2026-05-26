@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as ApiNuvexGptChatRouteImport } from './routes/api/nuvex-gpt-chat'
 import { Route as AuthenticatedQaRouteImport } from './routes/_authenticated/qa'
 import { Route as AuthenticatedProyeccionRouteImport } from './routes/_authenticated/proyeccion'
 import { Route as AuthenticatedNotificacionesRouteImport } from './routes/_authenticated/notificaciones'
@@ -70,6 +71,11 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedRoute,
+} as any)
+const ApiNuvexGptChatRoute = ApiNuvexGptChatRouteImport.update({
+  id: '/api/nuvex-gpt-chat',
+  path: '/api/nuvex-gpt-chat',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedQaRoute = AuthenticatedQaRouteImport.update({
   id: '/qa',
@@ -338,6 +344,7 @@ export interface FileRoutesByFullPath {
   '/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/qa': typeof AuthenticatedQaRoute
+  '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
   '/apoderado/mis-casos': typeof AuthenticatedApoderadoMisCasosRoute
   '/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
@@ -383,6 +390,7 @@ export interface FileRoutesByTo {
   '/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/qa': typeof AuthenticatedQaRoute
+  '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
   '/': typeof AuthenticatedIndexRoute
   '/apoderado/mis-casos': typeof AuthenticatedApoderadoMisCasosRoute
   '/cartera/$id': typeof AuthenticatedCarteraIdRoute
@@ -433,6 +441,7 @@ export interface FileRoutesById {
   '/_authenticated/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/_authenticated/proyeccion': typeof AuthenticatedProyeccionRoute
   '/_authenticated/qa': typeof AuthenticatedQaRoute
+  '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/apoderado/mis-casos': typeof AuthenticatedApoderadoMisCasosRoute
   '/_authenticated/cartera/$id': typeof AuthenticatedCarteraIdRoute
@@ -484,6 +493,7 @@ export interface FileRouteTypes {
     | '/notificaciones'
     | '/proyeccion'
     | '/qa'
+    | '/api/nuvex-gpt-chat'
     | '/apoderado/mis-casos'
     | '/cartera/$id'
     | '/casos/$id'
@@ -529,6 +539,7 @@ export interface FileRouteTypes {
     | '/notificaciones'
     | '/proyeccion'
     | '/qa'
+    | '/api/nuvex-gpt-chat'
     | '/'
     | '/apoderado/mis-casos'
     | '/cartera/$id'
@@ -578,6 +589,7 @@ export interface FileRouteTypes {
     | '/_authenticated/notificaciones'
     | '/_authenticated/proyeccion'
     | '/_authenticated/qa'
+    | '/api/nuvex-gpt-chat'
     | '/_authenticated/'
     | '/_authenticated/apoderado/mis-casos'
     | '/_authenticated/cartera/$id'
@@ -620,6 +632,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  ApiNuvexGptChatRoute: typeof ApiNuvexGptChatRoute
   ApiPublicHooksCarteraRecordatoriosRoute: typeof ApiPublicHooksCarteraRecordatoriosRoute
   ApiPublicHooksCasosAlertasRoute: typeof ApiPublicHooksCasosAlertasRoute
   ApiPublicHooksFinanzasCronRoute: typeof ApiPublicHooksFinanzasCronRoute
@@ -647,6 +660,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/api/nuvex-gpt-chat': {
+      id: '/api/nuvex-gpt-chat'
+      path: '/api/nuvex-gpt-chat'
+      fullPath: '/api/nuvex-gpt-chat'
+      preLoaderRoute: typeof ApiNuvexGptChatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/qa': {
       id: '/_authenticated/qa'
@@ -1087,6 +1107,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
+  ApiNuvexGptChatRoute: ApiNuvexGptChatRoute,
   ApiPublicHooksCarteraRecordatoriosRoute:
     ApiPublicHooksCarteraRecordatoriosRoute,
   ApiPublicHooksCasosAlertasRoute: ApiPublicHooksCasosAlertasRoute,
