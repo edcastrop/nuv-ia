@@ -70,7 +70,7 @@ function LoginPage() {
           } as never);
           // MFA: si no se verificó en los últimos 30 días, exigir
           const mfaOk = isSuperAdmin || (p?.mfa_verificado_at &&
-            (Date.now() - new Date(p.mfa_verificado_at).getTime()) < 30 * 24 * 3600 * 1000;
+            (Date.now() - new Date(p.mfa_verificado_at).getTime()) < 30 * 24 * 3600 * 1000
           );
           if (!mfaOk) {
             navigate({ to: "/mfa-verificar" });
