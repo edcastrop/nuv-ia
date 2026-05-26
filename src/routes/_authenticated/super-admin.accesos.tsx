@@ -217,9 +217,12 @@ function AccesosPage() {
                       onClick={async () => {
                         setSeleccionado(u);
                         setShowDesvincular(true);
+                        setModoDesvinc("con_traslado");
                         setReemplazoId("");
                         setTransferirComisiones(false);
                         setConfirmText("");
+                        setSinTrasladoMotivo("");
+                        setSinTrasladoAck(false);
                         setDesvincularError(null);
                         setPreview(null);
                         setPreviewLoading(true);
