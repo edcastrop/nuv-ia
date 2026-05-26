@@ -61,9 +61,13 @@ function fmtCOP(n: number) {
 function NuvexIAPage() {
   const metricasFn = useServerFn(getMetricasIA);
   const alertasFn = useServerFn(getAlertasInteligentes);
+  const { isApoderado, isSuperAdmin } = useUserRole();
+  const soloApoderado = isApoderado && !isSuperAdmin;
+  const EJEMPLOS = soloApoderado ? EJEMPLOS_APODERADO : EJEMPLOS_INTERNO;
+  const SUGERENCIAS = soloApoderado ? SUGERENCIAS_APODERADO : SUGERENCIAS_INTERNO;
 
-  const { data: metricas } = useQuery({ queryKey: ["nuvex-ia-metricas"], queryFn: () => metricasFn() });
-  const { data: alertasData } = useQuery({ queryKey: ["nuvex-ia-alertas"], queryFn: () => alertasFn() });
+  const { data: metricas } = useQuery({ queryKey: ["nuvex-ia-metricas"], queryFn: () => metricasFn(), enabled: !soloApoderado });
+  const { data: alertasData } = useQuery({ queryKey: ["nuvex-ia-alertas"], queryFn: () => alertasFn(), enabled: !soloApoderado });
 
   const [pregunta, setPregunta] = useState("");
   const [enviando, setEnviando] = useState(false);
