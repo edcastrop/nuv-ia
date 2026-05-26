@@ -12,6 +12,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { Logo } from "@/components/nuvex/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationBell } from "@/components/notificaciones/NotificationBell";
+import { NuvexGptButton } from "@/components/nuvex-gpt/NuvexGptPanel";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
