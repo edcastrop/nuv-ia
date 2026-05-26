@@ -62,6 +62,13 @@ function AuthenticatedLayout() {
       if (!aprobado) {
         if (path !== "/pendiente-aprobacion") {
           setGateState("blocked");
+          // Auditar intento de acceso bloqueado (best-effort)
+          supabase.from("onboarding_auditoria" as never).insert({
+            user_id: session.user.id,
+            evento: "acceso_bloqueado",
+            actor_id: session.user.id,
+            detalle: { path, estado_acceso: estado },
+          } as never).then(() => {});
           navigate({ to: "/pendiente-aprobacion" });
         } else {
           setGateState("ok");
