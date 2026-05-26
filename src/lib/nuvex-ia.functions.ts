@@ -22,6 +22,17 @@ function alcance(roles: string[]) {
   return { isAdmin, isContabilidad, isJuridico, isCartera, isLicenciado };
 }
 
+/**
+ * Resuelve la "audiencia" del usuario en base a sus roles.
+ * Determina qué artículos KB puede ver y se registra en auditoría.
+ */
+function resolverAudiencia(roles: string[]): "interno" | "apoderado" | "cliente" {
+  if (roles.includes("apoderado")) return "apoderado";
+  if (roles.includes("cliente")) return "cliente";
+  return "interno"; // staff NUVEX por defecto
+}
+
+
 // ============================================================
 // MÉTRICAS IA
 // ============================================================
@@ -138,13 +149,14 @@ const DATASETS = [
 // ============================================================
 // Búsqueda en NUVEX KB (base de conocimiento)
 // ============================================================
-type KBRow = { id: string; categoria: string; pregunta: string; respuesta: string; tags: string[] | null };
+type KBRow = { id: string; categoria: string; pregunta: string; respuesta: string; tags: string[] | null; audiencias?: string[] | null };
 
 async function buscarKB(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
   pregunta: string,
   modulo: string | null,
+  audiencia: "interno" | "apoderado" | "cliente",
 ): Promise<{ hit: KBRow | null; contexto: KBRow[] }> {
   const terms = pregunta
     .toLowerCase()
@@ -153,10 +165,13 @@ async function buscarKB(
     .filter((t) => t.length >= 3)
     .slice(0, 6);
 
+  // Filtro de audiencia: el artículo debe contener la audiencia del usuario
+  // o estar marcado como "publico" (visible para todos).
   let q = supabase
     .from("nuvex_kb")
-    .select("id, categoria, pregunta, respuesta, tags")
+    .select("id, categoria, pregunta, respuesta, tags, audiencias")
     .eq("estado", "activo")
+    .overlaps("audiencias", [audiencia, "publico"])
     .limit(6);
 
   if (terms.length > 0) {
@@ -177,7 +192,6 @@ async function buscarKB(
     });
   }
 
-  // Hit fuerte: la pregunta normalizada contiene la pregunta del KB o viceversa
   const norm = (s: string) => s.toLowerCase().replace(/[¿?¡!.,;:]/g, "").trim();
   const np = norm(pregunta);
   const hit = articulos.find((a) => {
@@ -188,6 +202,7 @@ async function buscarKB(
 
   return { hit, contexto: articulos };
 }
+
 
 async function registrarLog(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -202,6 +217,7 @@ async function registrarLog(
     origen: "nuvex_ia" | "nuvex_gpt" | "cliente";
     fuente: "kb" | "modelo" | "escalado";
     tiempoMs: number;
+    audiencia: "interno" | "apoderado" | "cliente";
   },
 ) {
   await supabase.from("nuvex_ia_log").insert({
@@ -214,8 +230,10 @@ async function registrarLog(
     origen: params.origen,
     fuente: params.fuente,
     tiempo_respuesta_ms: params.tiempoMs,
+    audiencia: params.audiencia,
   });
 }
+
 
 export const consultarIA = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -237,6 +255,8 @@ export const consultarIA = createServerFn({ method: "POST" })
       roles.find((r) => ["super_admin", "admin", "gerencia"].includes(r)) ?? roles[0] ?? "licenciado";
     const modulo = (data.modulo ?? "").toLowerCase() || null;
     const origen = data.origen ?? "nuvex_ia";
+    const audiencia = resolverAudiencia(roles);
+
 
     // Restricción: apoderado no usa la página completa
     if (roles.includes("apoderado") && !isAdmin) {
@@ -244,7 +264,7 @@ export const consultarIA = createServerFn({ method: "POST" })
       await registrarLog(supabase, {
         userId, nombre: null, rol: "apoderado", modulo,
         pregunta: data.pregunta, respuesta: msg,
-        origen, fuente: "escalado", tiempoMs: Date.now() - t0,
+        origen, fuente: "escalado", tiempoMs: Date.now() - t0, audiencia,
       });
       return { respuesta: msg, filas: [], dataset: "ninguno", fuente: "escalado", escalable: false };
     }
@@ -256,13 +276,13 @@ export const consultarIA = createServerFn({ method: "POST" })
     // ────────────────────────────────────────────
     // PASO 0: Búsqueda en NUVEX KB (cero tokens)
     // ────────────────────────────────────────────
-    const { hit, contexto: kbContexto } = await buscarKB(supabase, data.pregunta, modulo);
+    const { hit, contexto: kbContexto } = await buscarKB(supabase, data.pregunta, modulo, audiencia);
     if (hit) {
       const respuesta = `${hit.respuesta}\n\n*Fuente: NUVEX KB · ${hit.categoria}*`;
       await registrarLog(supabase, {
         userId, nombre, rol: rolPrincipal, modulo,
         pregunta: data.pregunta, respuesta,
-        origen, fuente: "kb", tiempoMs: Date.now() - t0,
+        origen, fuente: "kb", tiempoMs: Date.now() - t0, audiencia,
       });
       return { respuesta, filas: [], dataset: "kb", fuente: "kb", escalable: false };
     }
@@ -273,7 +293,7 @@ export const consultarIA = createServerFn({ method: "POST" })
       await registrarLog(supabase, {
         userId, nombre, rol: rolPrincipal, modulo,
         pregunta: data.pregunta, respuesta: msg,
-        origen, fuente: "escalado", tiempoMs: Date.now() - t0,
+        origen, fuente: "escalado", tiempoMs: Date.now() - t0, audiencia,
       });
       return { respuesta: msg, filas: [], dataset: "ninguno", fuente: "escalado", escalable: true };
     }
@@ -359,7 +379,7 @@ export const consultarIA = createServerFn({ method: "POST" })
     } else if (dataset === "honorarios_pendientes" || dataset === "clientes_morosos") {
       if (isJuridico && !isAdmin && !isContabilidad && !isLicenciado) {
         const msg = "Esta información está restringida para tu perfil de acceso.";
-        await registrarLog(supabase, { userId, nombre, rol: rolPrincipal, modulo, pregunta: data.pregunta, respuesta: msg, origen, fuente: "escalado", tiempoMs: Date.now() - t0 });
+        await registrarLog(supabase, { userId, nombre, rol: rolPrincipal, modulo, pregunta: data.pregunta, respuesta: msg, origen, fuente: "escalado", tiempoMs: Date.now() - t0, audiencia });
         return { respuesta: msg, filas: [], dataset, fuente: "escalado", escalable: false };
       }
       let q = supabase.from("cartera").select("id, expediente_id, honorarios_totales, pagado, estado_cartera, fecha_vencimiento, responsable_id").limit(30);
@@ -383,7 +403,7 @@ export const consultarIA = createServerFn({ method: "POST" })
     } else if (dataset === "facturacion_mes") {
       if (isJuridico && !isAdmin && !isContabilidad) {
         const msg = "Esta información está restringida para tu perfil de acceso.";
-        await registrarLog(supabase, { userId, nombre, rol: rolPrincipal, modulo, pregunta: data.pregunta, respuesta: msg, origen, fuente: "escalado", tiempoMs: Date.now() - t0 });
+        await registrarLog(supabase, { userId, nombre, rol: rolPrincipal, modulo, pregunta: data.pregunta, respuesta: msg, origen, fuente: "escalado", tiempoMs: Date.now() - t0, audiencia });
         return { respuesta: msg, filas: [], dataset, fuente: "escalado", escalable: false };
       }
       const mesIni = new Date(); mesIni.setDate(1); mesIni.setHours(0, 0, 0, 0);
@@ -469,7 +489,7 @@ ${datosBlock}`;
     await registrarLog(supabase, {
       userId, nombre, rol: rolPrincipal, modulo,
       pregunta: data.pregunta, respuesta,
-      origen, fuente: escalable ? "escalado" : "modelo",
+      origen, fuente: escalable ? "escalado" : "modelo", audiencia,
       tiempoMs: Date.now() - t0,
     });
 
@@ -477,7 +497,7 @@ ${datosBlock}`;
       respuesta,
       filas,
       dataset,
-      fuente: escalable ? "escalado" : "modelo",
+      fuente: escalable ? "escalado" : "modelo", audiencia,
       escalable,
     };
   });
