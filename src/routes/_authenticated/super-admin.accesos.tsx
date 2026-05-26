@@ -25,6 +25,7 @@ const TABS: { v: EstadoAcceso | "todos"; label: string; Icon: typeof Clock }[] =
   { v: "aprobado", label: "Aprobados", Icon: CheckCircle2 },
   { v: "rechazado", label: "Rechazados", Icon: XCircle },
   { v: "bloqueado", label: "Bloqueados", Icon: ShieldOff },
+  { v: "desvinculado", label: "Desvinculados", Icon: UserMinus },
   { v: "todos", label: "Todos", Icon: ShieldCheck },
 ];
 
@@ -40,6 +41,7 @@ function badge(estado: EstadoAcceso) {
     aprobado: { bg: "#EAF7EE", fg: "#1F6D3D", label: "Aprobado" },
     rechazado: { bg: "#FDECEC", fg: "#B42318", label: "Rechazado" },
     bloqueado: { bg: "#E5E7EB", fg: "#374151", label: "Bloqueado" },
+    desvinculado: { bg: "#EEF2FF", fg: "#3730A3", label: "Desvinculado" },
   };
   const s = map[estado];
   return <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider" style={{ background: s.bg, color: s.fg }}>{s.label}</span>;
