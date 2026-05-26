@@ -18,15 +18,16 @@ export const kbList = createServerFn({ method: "GET" })
     const supabase = context.supabase as any;
     const { data, error } = await supabase
       .from("nuvex_kb")
-      .select("id, categoria, pregunta, respuesta, tags, estado, created_at, updated_at")
+      .select("id, categoria, pregunta, respuesta, tags, audiencias, estado, created_at, updated_at")
       .order("categoria", { ascending: true })
       .order("updated_at", { ascending: false });
     if (error) throw new Error(error.message);
     return (data ?? []) as Array<{
       id: string; categoria: string; pregunta: string; respuesta: string;
-      tags: string[]; estado: string; created_at: string; updated_at: string;
+      tags: string[]; audiencias: string[]; estado: string; created_at: string; updated_at: string;
     }>;
   });
+
 
 export const kbUpsert = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -37,6 +38,8 @@ export const kbUpsert = createServerFn({ method: "POST" })
       pregunta: z.string().min(3).max(500),
       respuesta: z.string().min(3).max(8000),
       tags: z.array(z.string().min(1).max(40)).max(20).default([]),
+      audiencias: z.array(z.enum(["interno", "apoderado", "cliente", "publico"]))
+        .min(1).max(4).default(["interno"]),
       estado: z.enum(["activo", "borrador", "archivado"]).default("activo"),
     }).parse(input),
   )
@@ -52,6 +55,7 @@ export const kbUpsert = createServerFn({ method: "POST" })
         pregunta: data.pregunta,
         respuesta: data.respuesta,
         tags: data.tags,
+        audiencias: data.audiencias,
         estado: data.estado,
       }).eq("id", data.id);
       if (error) throw new Error(error.message);
@@ -62,6 +66,7 @@ export const kbUpsert = createServerFn({ method: "POST" })
         pregunta: data.pregunta,
         respuesta: data.respuesta,
         tags: data.tags,
+        audiencias: data.audiencias,
         estado: data.estado,
         creado_por: userId,
       }).select("id").single();
@@ -69,6 +74,7 @@ export const kbUpsert = createServerFn({ method: "POST" })
       return { id: row.id as string };
     }
   });
+
 
 export const kbDelete = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
