@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegistroRouteImport } from './routes/registro'
+import { Route as MfaVerificarRouteImport } from './routes/mfa-verificar'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
@@ -66,6 +67,11 @@ import { Route as AuthenticatedAcademiaCertificadosCodigoRouteImport } from './r
 const RegistroRoute = RegistroRouteImport.update({
   id: '/registro',
   path: '/registro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MfaVerificarRoute = MfaVerificarRouteImport.update({
+  id: '/mfa-verificar',
+  path: '/mfa-verificar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -368,6 +374,7 @@ const AuthenticatedAcademiaCertificadosCodigoRoute =
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
+  '/mfa-verificar': typeof MfaVerificarRoute
   '/registro': typeof RegistroRoute
   '/academia': typeof AuthenticatedAcademiaRouteWithChildren
   '/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
@@ -421,6 +428,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
+  '/mfa-verificar': typeof MfaVerificarRoute
   '/registro': typeof RegistroRoute
   '/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
   '/colaboracion': typeof AuthenticatedColaboracionRoute
@@ -475,6 +483,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/mfa-verificar': typeof MfaVerificarRoute
   '/registro': typeof RegistroRoute
   '/_authenticated/academia': typeof AuthenticatedAcademiaRouteWithChildren
   '/_authenticated/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
@@ -532,6 +541,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/mfa-verificar'
     | '/registro'
     | '/academia'
     | '/apoderados-nuvex'
@@ -585,6 +595,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
+    | '/mfa-verificar'
     | '/registro'
     | '/apoderados-nuvex'
     | '/colaboracion'
@@ -638,6 +649,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_authenticated'
     | '/login'
+    | '/mfa-verificar'
     | '/registro'
     | '/_authenticated/academia'
     | '/_authenticated/apoderados-nuvex'
@@ -694,6 +706,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  MfaVerificarRoute: typeof MfaVerificarRoute
   RegistroRoute: typeof RegistroRoute
   ApiNuvexGptChatRoute: typeof ApiNuvexGptChatRoute
   ApiPublicHooksCarteraRecordatoriosRoute: typeof ApiPublicHooksCarteraRecordatoriosRoute
@@ -708,6 +721,13 @@ declare module '@tanstack/react-router' {
       path: '/registro'
       fullPath: '/registro'
       preLoaderRoute: typeof RegistroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mfa-verificar': {
+      id: '/mfa-verificar'
+      path: '/mfa-verificar'
+      fullPath: '/mfa-verificar'
+      preLoaderRoute: typeof MfaVerificarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -1213,6 +1233,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
+  MfaVerificarRoute: MfaVerificarRoute,
   RegistroRoute: RegistroRoute,
   ApiNuvexGptChatRoute: ApiNuvexGptChatRoute,
   ApiPublicHooksCarteraRecordatoriosRoute:
