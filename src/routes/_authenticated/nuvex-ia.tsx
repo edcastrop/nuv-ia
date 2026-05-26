@@ -322,6 +322,17 @@ function NuvexIAPage() {
           )}
         </div>
       </div>
+
+      <EscalarTicketDialog
+        open={escalarOpen}
+        onOpenChange={setEscalarOpen}
+        conversacionId={null}
+        preFillDescripcion={
+          escalarCtx
+            ? `Consulta original:\n${escalarCtx.pregunta}\n\nRespuesta NUVEX IA:\n${escalarCtx.respuesta}`
+            : ""
+        }
+      />
     </div>
   );
 }
