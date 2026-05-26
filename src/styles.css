@@ -213,6 +213,14 @@
     z-index: 1;
   }
 
+  .nuvex-register-brand-panel > img {
+    align-self: flex-start;
+    width: auto;
+    max-width: 220px;
+    height: auto;
+    object-fit: contain;
+  }
+
   .nuvex-register-brand-content {
     max-width: 420px;
   }
