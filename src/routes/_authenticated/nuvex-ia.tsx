@@ -353,8 +353,10 @@ function NuvexIAPage() {
             <Kpi icon={Clock} label="Estancados" value={String(metricas?.estancados ?? "—")} accent="#E11D48" />
           </div>
         </div>
+        )}
 
         {/* Alertas Inteligentes */}
+        {!soloApoderado && (
         <div>
           <div className="mb-3 flex items-center gap-2">
             <AlertTriangle size={14} style={{ color: "#f0d78c" }} />
