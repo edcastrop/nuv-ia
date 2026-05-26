@@ -30,6 +30,7 @@ import { Route as AuthenticatedCarteraIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedAcademiaIndexRouteImport } from './routes/_authenticated/academia.index'
 import { Route as AuthenticatedSuperAdminUsuariosRouteImport } from './routes/_authenticated/super-admin.usuarios'
 import { Route as AuthenticatedSuperAdminPermisosRouteImport } from './routes/_authenticated/super-admin.permisos'
+import { Route as AuthenticatedSuperAdminNuvexGptRouteImport } from './routes/_authenticated/super-admin.nuvex-gpt'
 import { Route as AuthenticatedSuperAdminMarcaRouteImport } from './routes/_authenticated/super-admin.marca'
 import { Route as AuthenticatedSuperAdminExpedientesRouteImport } from './routes/_authenticated/super-admin.expedientes'
 import { Route as AuthenticatedSuperAdminAuditoriaRouteImport } from './routes/_authenticated/super-admin.auditoria'
@@ -170,6 +171,12 @@ const AuthenticatedSuperAdminPermisosRoute =
   AuthenticatedSuperAdminPermisosRouteImport.update({
     id: '/super-admin/permisos',
     path: '/super-admin/permisos',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuperAdminNuvexGptRoute =
+  AuthenticatedSuperAdminNuvexGptRouteImport.update({
+    id: '/super-admin/nuvex-gpt',
+    path: '/super-admin/nuvex-gpt',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedSuperAdminMarcaRoute =
@@ -365,6 +372,7 @@ export interface FileRoutesByFullPath {
   '/super-admin/auditoria': typeof AuthenticatedSuperAdminAuditoriaRoute
   '/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
+  '/super-admin/nuvex-gpt': typeof AuthenticatedSuperAdminNuvexGptRoute
   '/super-admin/permisos': typeof AuthenticatedSuperAdminPermisosRoute
   '/super-admin/usuarios': typeof AuthenticatedSuperAdminUsuariosRoute
   '/academia/': typeof AuthenticatedAcademiaIndexRoute
@@ -412,6 +420,7 @@ export interface FileRoutesByTo {
   '/super-admin/auditoria': typeof AuthenticatedSuperAdminAuditoriaRoute
   '/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
+  '/super-admin/nuvex-gpt': typeof AuthenticatedSuperAdminNuvexGptRoute
   '/super-admin/permisos': typeof AuthenticatedSuperAdminPermisosRoute
   '/super-admin/usuarios': typeof AuthenticatedSuperAdminUsuariosRoute
   '/academia': typeof AuthenticatedAcademiaIndexRoute
@@ -463,6 +472,7 @@ export interface FileRoutesById {
   '/_authenticated/super-admin/auditoria': typeof AuthenticatedSuperAdminAuditoriaRoute
   '/_authenticated/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/_authenticated/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
+  '/_authenticated/super-admin/nuvex-gpt': typeof AuthenticatedSuperAdminNuvexGptRoute
   '/_authenticated/super-admin/permisos': typeof AuthenticatedSuperAdminPermisosRoute
   '/_authenticated/super-admin/usuarios': typeof AuthenticatedSuperAdminUsuariosRoute
   '/_authenticated/academia/': typeof AuthenticatedAcademiaIndexRoute
@@ -514,6 +524,7 @@ export interface FileRouteTypes {
     | '/super-admin/auditoria'
     | '/super-admin/expedientes'
     | '/super-admin/marca'
+    | '/super-admin/nuvex-gpt'
     | '/super-admin/permisos'
     | '/super-admin/usuarios'
     | '/academia/'
@@ -561,6 +572,7 @@ export interface FileRouteTypes {
     | '/super-admin/auditoria'
     | '/super-admin/expedientes'
     | '/super-admin/marca'
+    | '/super-admin/nuvex-gpt'
     | '/super-admin/permisos'
     | '/super-admin/usuarios'
     | '/academia'
@@ -611,6 +623,7 @@ export interface FileRouteTypes {
     | '/_authenticated/super-admin/auditoria'
     | '/_authenticated/super-admin/expedientes'
     | '/_authenticated/super-admin/marca'
+    | '/_authenticated/super-admin/nuvex-gpt'
     | '/_authenticated/super-admin/permisos'
     | '/_authenticated/super-admin/usuarios'
     | '/_authenticated/academia/'
@@ -785,6 +798,13 @@ declare module '@tanstack/react-router' {
       path: '/super-admin/permisos'
       fullPath: '/super-admin/permisos'
       preLoaderRoute: typeof AuthenticatedSuperAdminPermisosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/super-admin/nuvex-gpt': {
+      id: '/_authenticated/super-admin/nuvex-gpt'
+      path: '/super-admin/nuvex-gpt'
+      fullPath: '/super-admin/nuvex-gpt'
+      preLoaderRoute: typeof AuthenticatedSuperAdminNuvexGptRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/super-admin/marca': {
@@ -1059,6 +1079,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSuperAdminAuditoriaRoute: typeof AuthenticatedSuperAdminAuditoriaRoute
   AuthenticatedSuperAdminExpedientesRoute: typeof AuthenticatedSuperAdminExpedientesRoute
   AuthenticatedSuperAdminMarcaRoute: typeof AuthenticatedSuperAdminMarcaRoute
+  AuthenticatedSuperAdminNuvexGptRoute: typeof AuthenticatedSuperAdminNuvexGptRoute
   AuthenticatedSuperAdminPermisosRoute: typeof AuthenticatedSuperAdminPermisosRoute
   AuthenticatedSuperAdminUsuariosRoute: typeof AuthenticatedSuperAdminUsuariosRoute
   AuthenticatedCarteraIndexRoute: typeof AuthenticatedCarteraIndexRoute
@@ -1090,6 +1111,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSuperAdminExpedientesRoute:
     AuthenticatedSuperAdminExpedientesRoute,
   AuthenticatedSuperAdminMarcaRoute: AuthenticatedSuperAdminMarcaRoute,
+  AuthenticatedSuperAdminNuvexGptRoute: AuthenticatedSuperAdminNuvexGptRoute,
   AuthenticatedSuperAdminPermisosRoute: AuthenticatedSuperAdminPermisosRoute,
   AuthenticatedSuperAdminUsuariosRoute: AuthenticatedSuperAdminUsuariosRoute,
   AuthenticatedCarteraIndexRoute: AuthenticatedCarteraIndexRoute,
