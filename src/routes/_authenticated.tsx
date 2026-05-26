@@ -42,22 +42,39 @@ function AuthenticatedLayout() {
     if (!loading && !session) navigate({ to: "/login" });
   }, [loading, session, navigate]);
 
-  // CRITICAL GATE: bloquea render hasta validar estado_acceso=aprobado/activo
+  // CRITICAL GATE: bloquea render hasta validar estado_acceso=aprobado/activo.
+  // SUPER_ADMIN tiene bypass operativo para no quedar atrapado por estado/onboarding/academia.
   useEffect(() => {
     if (!session?.user) return;
     let cancel = false;
     setGateState("checking");
     (async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("estado_acceso, onboarding_estado")
-        .eq("id", session.user.id)
-        .maybeSingle();
+      const [{ data }, { data: roleRows }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("estado_acceso, onboarding_estado")
+          .eq("id", session.user.id)
+          .maybeSingle(),
+        supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id),
+      ]);
       if (cancel) return;
+      const roleNames = ((roleRows ?? []) as Array<{ role?: string }>).map((r) => r.role);
+      const superAdminBypass = roleNames.includes("super_admin");
       const estado = (data as { estado_acceso?: string } | null)?.estado_acceso ?? "pendiente";
       const onb = (data as { onboarding_estado?: string } | null)?.onboarding_estado ?? "pendiente";
       const path = location.pathname;
       const aprobado = estado === "aprobado" || estado === "activo";
+
+      if (superAdminBypass) {
+        setGateState("ok");
+        if (path === "/pendiente-aprobacion" || path.startsWith("/onboarding")) {
+          navigate({ to: "/" });
+        }
+        return;
+      }
 
       if (!aprobado) {
         if (path !== "/pendiente-aprobacion") {
