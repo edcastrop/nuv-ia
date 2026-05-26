@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Plus, Trash2, ToggleLeft, ToggleRight, ChevronDown, ChevronRight, Save, ArrowLeft } from "lucide-react";
+import { Plus, Trash2, ToggleLeft, ToggleRight, ChevronDown, ChevronRight, Save, ArrowLeft, Layers, BarChart3, Award } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import {
@@ -8,6 +8,9 @@ import {
   ROL_LIST, ROL_LABEL, type Curso, type Modulo, type Leccion, type Evaluacion, type Pregunta,
   type AcademiaRol, type LeccionTipo, type PreguntaTipo,
 } from "@/lib/academia";
+import { LessonContentEditor } from "@/components/academia/LessonContentEditor";
+import { SeguimientoPanel } from "@/components/academia/SeguimientoPanel";
+import { CertificadosPanel } from "@/components/academia/CertificadosPanel";
 
 export const Route = createFileRoute("/_authenticated/super-admin/academia")({
   component: AdminAcademia,
@@ -16,8 +19,11 @@ export const Route = createFileRoute("/_authenticated/super-admin/academia")({
 
 const sb = supabase as unknown as { from: (t: string) => any };
 
+type Tab = "contenido" | "seguimiento" | "certificados";
+
 function AdminAcademia() {
   const { isSuperAdmin, loading: rolesLoading } = useUserRole();
+  const [tab, setTab] = useState<Tab>("contenido");
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,20 +33,43 @@ function AdminAcademia() {
   if (rolesLoading || loading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>;
   if (!isSuperAdmin) return <div className="p-12 text-center text-sm text-[#B42318]">No autorizado.</div>;
 
+  const tabs: { id: Tab; label: string; icon: typeof Layers }[] = [
+    { id: "contenido", label: "Contenido", icon: Layers },
+    { id: "seguimiento", label: "Seguimiento", icon: BarChart3 },
+    { id: "certificados", label: "Certificados", icon: Award },
+  ];
+
   return (
     <div className="mx-auto max-w-7xl px-6 py-6 space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <Link to="/super-admin" className="inline-flex items-center gap-1 text-[11px] text-[#445DA3] mb-1"><ArrowLeft size={12} /> Super Admin</Link>
           <h1 className="text-2xl font-semibold text-[#0A1226]">Administración de la Academia</h1>
-          <div className="text-sm text-[#242424]/60">Gestiona cursos, módulos, lecciones y evaluaciones por rol.</div>
+          <div className="text-sm text-[#242424]/60">Gestiona cursos, módulos, lecciones, evaluaciones, inscritos y certificados por rol.</div>
         </div>
-        <CrearCursoButton onCreated={reload} />
+        {tab === "contenido" && <CrearCursoButton onCreated={reload} />}
       </div>
 
-      <div className="space-y-3">
-        {cursos.map((c) => <CursoCard key={c.id} curso={c} onChanged={reload} />)}
+      <div className="flex items-center gap-1 border-b border-[#E3E7EE]">
+        {tabs.map((t) => {
+          const Icon = t.icon;
+          const active = tab === t.id;
+          return (
+            <button key={t.id} onClick={() => setTab(t.id)}
+              className={`inline-flex items-center gap-1.5 border-b-2 px-3 py-2 text-[12px] font-semibold transition ${active ? "border-[#445DA3] text-[#0A1226]" : "border-transparent text-[#242424]/55 hover:text-[#0A1226]"}`}>
+              <Icon size={13} /> {t.label}
+            </button>
+          );
+        })}
       </div>
+
+      {tab === "contenido" && (
+        <div className="space-y-3">
+          {cursos.map((c) => <CursoCard key={c.id} curso={c} onChanged={reload} />)}
+        </div>
+      )}
+      {tab === "seguimiento" && <SeguimientoPanel cursos={cursos} />}
+      {tab === "certificados" && <CertificadosPanel cursos={cursos} />}
     </div>
   );
 }
@@ -175,7 +204,15 @@ function LeccionEditor({ leccion, onChanged }: { leccion: Leccion; onChanged: ()
   const [titulo, setTitulo] = useState(leccion.titulo);
   const [tipo, setTipo] = useState<LeccionTipo>(leccion.tipo);
   const [duracion, setDuracion] = useState(leccion.duracion_min);
-  const [contenido, setContenido] = useState(JSON.stringify(leccion.contenido ?? {}, null, 2));
+  const [contenido, setContenido] = useState<Record<string, unknown>>(leccion.contenido ?? {});
+  const [guardando, setGuardando] = useState(false);
+
+  const guardar = async () => {
+    setGuardando(true);
+    await sb.from("academia_lecciones").update({ titulo, tipo, duracion_min: duracion, contenido }).eq("id", leccion.id);
+    setGuardando(false);
+    onChanged();
+  };
 
   return (
     <div className="rounded border border-[#E3E7EE] bg-white">
@@ -186,23 +223,33 @@ function LeccionEditor({ leccion, onChanged }: { leccion: Leccion; onChanged: ()
         <button onClick={async () => { if (confirm("¿Eliminar lección?")) { await sb.from("academia_lecciones").delete().eq("id", leccion.id); onChanged(); } }}><Trash2 size={11} className="text-[#B42318]" /></button>
       </div>
       {open && (
-        <div className="space-y-2 border-t border-[#E3E7EE] p-2 bg-[#FAFBFD]">
+        <div className="space-y-3 border-t border-[#E3E7EE] p-3 bg-[#FAFBFD]">
           <div className="flex items-center gap-2">
-            <select value={tipo} onChange={(e) => setTipo(e.target.value as LeccionTipo)} className="rounded border border-[#E3E7EE] px-2 py-1 text-[11px]">
-              {["texto","pdf","video","imagen","checklist","enlace","faq"].map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-            <input type="number" value={duracion} onChange={(e) => setDuracion(Number(e.target.value) || 0)} className="w-20 rounded border border-[#E3E7EE] px-2 py-1 text-[11px]" />
-            <span className="text-[10px] text-[#242424]/50">min</span>
+            <div className="flex items-center gap-1">
+              <span className="text-[10px] font-semibold uppercase text-[#242424]/55">Tipo</span>
+              <select value={tipo} onChange={(e) => { setTipo(e.target.value as LeccionTipo); setContenido({}); }} className="rounded border border-[#E3E7EE] px-2 py-1 text-[11px]">
+                <option value="video">Video</option>
+                <option value="pdf">PDF</option>
+                <option value="imagen">Imagen</option>
+                <option value="texto">Texto</option>
+                <option value="checklist">Checklist</option>
+                <option value="faq">FAQ</option>
+                <option value="enlace">Enlace</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-[10px] font-semibold uppercase text-[#242424]/55">Duración</span>
+              <input type="number" value={duracion} onChange={(e) => setDuracion(Number(e.target.value) || 0)} className="w-16 rounded border border-[#E3E7EE] px-2 py-1 text-[11px]" />
+              <span className="text-[10px] text-[#242424]/50">min</span>
+            </div>
           </div>
-          <textarea value={contenido} onChange={(e) => setContenido(e.target.value)} rows={6} className="w-full rounded border border-[#E3E7EE] px-2 py-1 text-[11px] font-mono" placeholder='{"cuerpo":"…"}' />
-          <button onClick={async () => {
-            let parsed: Record<string, unknown> = {};
-            try { parsed = JSON.parse(contenido || "{}"); } catch { alert("JSON inválido"); return; }
-            await sb.from("academia_lecciones").update({ titulo, tipo, duracion_min: duracion, contenido: parsed }).eq("id", leccion.id);
-            onChanged();
-          }} className="inline-flex items-center gap-1 rounded bg-[#0A1226] px-2 py-1 text-[11px] font-semibold text-white"><Save size={10} /> Guardar lección</button>
-          <div className="text-[10px] text-[#242424]/50">
-            Formato según tipo: texto/enlace → {`{cuerpo, url}`}; pdf/video/imagen → {`{url}`}; checklist → {`{items: [...]}`}; faq → {`{faqs: [{q,a}]}`}.
+
+          <LessonContentEditor leccionId={leccion.id} tipo={tipo} value={contenido} onChange={setContenido} />
+
+          <div className="flex items-center justify-end">
+            <button onClick={guardar} disabled={guardando} className="inline-flex items-center gap-1 rounded bg-[#0A1226] px-3 py-1.5 text-[11px] font-semibold text-white disabled:opacity-50">
+              <Save size={11} /> {guardando ? "Guardando…" : "Guardar lección"}
+            </button>
           </div>
         </div>
       )}
