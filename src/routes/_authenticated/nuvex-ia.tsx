@@ -227,6 +227,22 @@ function NuvexIAPage() {
                   {m.rol === "ai" && m.filas && m.filas.length > 0 && (
                     <div className="mt-2 text-[10px] text-white/50">{m.filas.length} registro(s) consultados</div>
                   )}
+                  {m.rol === "ai" && m.escalable && (
+                    <button
+                      onClick={() => {
+                        setEscalarCtx({ pregunta: m.preguntaOriginal ?? "", respuesta: m.texto });
+                        setEscalarOpen(true);
+                      }}
+                      className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold transition hover:scale-[1.02]"
+                      style={{
+                        background: "linear-gradient(135deg, #E11D48, #f0d78c)",
+                        color: "white",
+                        boxShadow: "0 6px 18px -6px rgba(225,29,72,0.55)",
+                      }}
+                    >
+                      <AlertCircle size={12} /> Escalar a ticket
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
