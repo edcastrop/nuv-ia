@@ -60,6 +60,14 @@ function AccesosPage() {
   const [motivoRechazo, setMotivoRechazo] = useState("");
   const [showRechazar, setShowRechazar] = useState(false);
   const [auditoria, setAuditoria] = useState<Array<{ id: string; accion: string; created_at: string; detalle: Record<string, unknown> }>>([]);
+  const [showDesvincular, setShowDesvincular] = useState(false);
+  const [preview, setPreview] = useState<PreviewDesvinculacion | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [reemplazoId, setReemplazoId] = useState<string>("");
+  const [transferirComisiones, setTransferirComisiones] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [desvinculando, setDesvinculando] = useState(false);
+  const [desvincularError, setDesvincularError] = useState<string | null>(null);
 
   const reload = async () => {
     setLoading(true);
