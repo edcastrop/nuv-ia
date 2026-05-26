@@ -173,28 +173,45 @@ export async function rechazarUsuario(userId: string, motivo: string) {
   } as never);
 }
 
-export async function bloquearUsuario(userId: string) {
+export async function bloquearUsuario(userId: string, motivo: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("No autenticado");
-  await supabase
+  if (!motivo || motivo.trim().length < 5) {
+    throw new Error("Debes indicar un motivo (mín. 5 caracteres).");
+  }
+  const { data, error } = await supabase
     .from("profiles" as never)
     .update({ estado_acceso: "bloqueado", activo: false } as never)
-    .eq("id", userId);
-  await supabase.from("acceso_auditoria" as never).insert({
-    user_id: userId, actor_id: user.id, accion: "bloqueado", detalle: {},
+    .eq("id", userId)
+    .select("id");
+  if (error) throw new Error(error.message);
+  if (!data || (data as unknown[]).length === 0) {
+    throw new Error("No se actualizó ningún registro. Verifica permisos (solo Super Admin).");
+  }
+  // Revocar sesiones activas (best-effort vía RPC si existe)
+  try { await supabase.rpc("revocar_sesiones_usuario" as never, { _user_id: userId } as never); } catch { /* opcional */ }
+  const { error: audErr } = await supabase.from("acceso_auditoria" as never).insert({
+    user_id: userId, actor_id: user.id, accion: "bloqueado", detalle: { motivo: motivo.trim() },
   } as never);
+  if (audErr) throw new Error("Bloqueo aplicado pero falló la auditoría: " + audErr.message);
 }
 
-export async function activarUsuario(userId: string) {
+export async function activarUsuario(userId: string, motivo?: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("No autenticado");
-  await supabase
+  const { data, error } = await supabase
     .from("profiles" as never)
     .update({ estado_acceso: "aprobado", activo: true } as never)
-    .eq("id", userId);
-  await supabase.from("acceso_auditoria" as never).insert({
-    user_id: userId, actor_id: user.id, accion: "activado", detalle: {},
+    .eq("id", userId)
+    .select("id");
+  if (error) throw new Error(error.message);
+  if (!data || (data as unknown[]).length === 0) {
+    throw new Error("No se actualizó ningún registro. Verifica permisos (solo Super Admin).");
+  }
+  const { error: audErr } = await supabase.from("acceso_auditoria" as never).insert({
+    user_id: userId, actor_id: user.id, accion: "activado", detalle: motivo ? { motivo } : {},
   } as never);
+  if (audErr) throw new Error("Activación aplicada pero falló la auditoría: " + audErr.message);
 }
 
 export async function listAuditoria(userId?: string) {
