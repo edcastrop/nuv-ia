@@ -1,81 +1,38 @@
-## Centro de Seguridad y Gestión de Accesos NUVEX
+## NUVEX IA OPERATIVA — Nuevo módulo
 
-Implementar flujo de aprobación de cuentas, 2FA obligatorio, gestión de roles/permisos y auditoría completa.
+Voy a crear un módulo de IA conversacional que consulta datos reales de la plataforma respetando roles.
 
-### 1. Base de datos (migración)
+### Arquitectura
 
-**Modificar `profiles`** — agregar:
-- `estado_acceso` enum: `pendiente | aprobado | rechazado | bloqueado` (default `pendiente`)
-- `rol_solicitado` text (rol que el usuario pidió al registrarse)
-- `telefono_registro` text
-- `ciudad_registro` text, `equipo_registro` text
-- `aprobado_por` uuid, `aprobado_at` timestamptz, `rechazado_motivo` text
-- `ultimo_login_at` timestamptz
-- `intentos_fallidos` int default 0
-- `mfa_requerido` bool default true
-- `mfa_metodo` enum: `email | totp | ninguno` (default `ninguno`)
-- `mfa_secret` text (cifrado, para TOTP)
-- `mfa_verificado_at` timestamptz
+**Frontend** (`src/routes/_authenticated/nuvex-ia.tsx`):
+- Hero con título "NUVEX IA OPERATIVA" + subtítulo
+- Caja grande de consulta (textarea + botón enviar) con placeholder rotativo de ejemplos
+- Grid de **Métricas IA** (6 KPIs: casos activos, aprobados, honorarios pendientes, facturación mes, comisiones pendientes, estancados)
+- Panel **Alertas Inteligentes** (lista detectada por reglas SQL)
+- Sugerencias rápidas (chips clickeables con preguntas frecuentes según el rol)
+- Historial de la conversación con respuestas en markdown + tabla cuando aplique
+- Estilo: glassmorphism + azul oscuro `#050814 / #0A1226`, gradientes azul→verde como el resto del sistema
 
-**Nueva tabla `acceso_auditoria`**:
-- `id, user_id, actor_id, accion` (creado, aprobado, rechazado, bloqueado, activado, login_ok, login_fail, mfa_activado, mfa_verificado, cambio_rol)
-- `detalle jsonb, ip text, user_agent text, created_at`
+**Backend** (`src/lib/nuvex-ia.functions.ts` con `requireSupabaseAuth`):
+1. `getMetricasIA` — consultas SQL agregadas filtradas por rol
+2. `getAlertasInteligentes` — reglas: sin movimiento 15d, expedientes incompletos, honorarios vencidos, cuentas cobro pendientes, aprobados sin factura, facturados sin pago
+3. `consultarIA` — recibe la pregunta, clasifica intención con Lovable AI (Gemini), ejecuta query estructurada en Supabase con el cliente autenticado (RLS aplica), y devuelve respuesta + datos tabulares
 
-**Nueva tabla `mfa_codigos_email`** (códigos OTP de 6 dígitos enviados por correo):
-- `id, user_id, codigo_hash, expira_at, usado bool, created_at`
+**Flujo de la IA**:
+- Paso 1: LLM clasifica la pregunta en un intent JSON (`{categoria: "casos"|"expedientes"|..., filtros: {...}}`) usando tool-calling (structured output).
+- Paso 2: el server ejecuta la query Supabase correspondiente (RLS + filtros por rol asegura seguridad).
+- Paso 3: LLM redacta respuesta natural con los datos reales (no inventa; si datos vacíos → "No encontré información suficiente…").
 
-**Trigger `handle_new_user`** — modificar para que nuevos signups queden en `estado_acceso='pendiente'` y registrar metadatos (rol_solicitado, telefono, ciudad, equipo) desde `raw_user_meta_data`.
+### Sidebar
+Agregar entrada **"NUVEX IA"** con ícono `Sparkles` en la sección "Operación" de `_authenticated.tsx`, visible para todos los roles operativos (apoderado excluido).
 
-**RLS**: solo super_admin/admin/gerencia ven y modifican estos campos; usuario solo lee su propio estado.
+### Seguridad
+- Server function usa `requireSupabaseAuth` → RLS de Supabase aplica automáticamente al rol del usuario.
+- Adicionalmente filtramos por `useUserRole`: licenciado solo ve sus casos/comisiones/cartera, contabilidad solo financiero, jurídico solo jurídico, gerencia/admin todo.
+- Prompt del sistema instruye no inventar y solo usar datos provistos.
 
-**GRANTS** correspondientes.
+### Archivos
+- **Crear**: `src/routes/_authenticated/nuvex-ia.tsx`, `src/lib/nuvex-ia.functions.ts`
+- **Editar**: `src/routes/_authenticated.tsx` (agregar item de menú)
 
-### 2. Server functions (`src/lib/seguridad.functions.ts`)
-
-- `listUsuariosAcceso({ estado })` — lista perfiles filtrados por estado (admin only).
-- `aprobarUsuario({ userId, rolesAsignar })` — cambia estado a `aprobado`, inserta `user_roles`, registra auditoría, dispara notificación.
-- `rechazarUsuario({ userId, motivo })` — estado `rechazado`, auditoría.
-- `bloquearUsuario({ userId })` / `activarUsuario({ userId })` — toggle.
-- `enviarCodigoMfaEmail({ })` — genera código, lo guarda (hash), envía email vía Resend.
-- `verificarCodigoMfaEmail({ codigo })` — valida y marca `mfa_verificado_at`.
-- `setupTotp()` / `verifyTotp({ codigo })` — usa `otplib` para TOTP.
-- `listAuditoriaAcceso({ userId? })` — historial.
-
-### 3. Frontend
-
-**`/login` (modificar)**:
-- Tras `signInWithPassword`, comprobar `profiles.estado_acceso`. Si ≠ `aprobado` → cerrar sesión y mostrar mensaje.
-- Si aprobado pero `mfa_verificado_at` es null o expirado (>30 días) → redirigir a `/mfa-verificar`.
-
-**`/registro` (nueva ruta pública)**:
-- Form: nombre, correo, teléfono, ciudad, equipo, rol solicitado.
-- Llama `supabase.auth.signUp` con metadata.
-- Muestra pantalla "Cuenta pendiente de aprobación".
-
-**`/mfa-verificar` (nueva ruta semi-pública, requiere session)**:
-- Selección: email o app autenticadora.
-- Si email: botón "Enviar código" → input 6 dígitos.
-- Si TOTP: pantalla setup con QR (primera vez) o input código.
-
-**`/super-admin/accesos` (nueva ruta admin)** — "Gestión de Accesos":
-- Tabs: Pendientes | Aprobados | Rechazados | Bloqueados | Todos.
-- Tarjeta por usuario con foto, datos, rol solicitado, botones Aprobar/Rechazar/Bloquear/Activar.
-- Modal de aprobación: selección de roles a asignar.
-- Panel lateral con historial de auditoría del usuario.
-
-**Sidebar** (`_authenticated.tsx`):
-- Agregar item "Accesos" (Shield icon) bajo sección Gestión, visible para super_admin.
-
-### 4. Estilo
-Paleta `#242424`, `#445DA3`, `#84B98F`. Cards minimalistas, badges de estado con colores semánticos (ámbar pendiente, verde aprobado, rojo rechazado/bloqueado, gris inactivo).
-
-### 5. Notas técnicas
-- TOTP: instalar `otplib` y `qrcode`.
-- Email OTP: usar Resend (ya configurado) vía server function.
-- Permisos por perfil ya existen via `rol_permisos`/`has_permission`; expondré editor básico en la pantalla de aprobación para asignar roles, dejando los permisos finos al módulo existente de Super Admin.
-
-### Validación
-- Crear cuenta nueva → queda pendiente → no puede entrar.
-- Admin aprueba → usuario puede iniciar sesión.
-- Primer login pide MFA → bloquea hasta verificar.
-- Auditoría registra todos los eventos.
+¿Apruebas el plan?
