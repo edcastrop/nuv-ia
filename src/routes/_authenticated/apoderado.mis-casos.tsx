@@ -25,29 +25,33 @@ function ApoderadoMisCasos() {
   const { user } = useAuth();
   const { isApoderado, isSuperAdmin, loading } = useUserRole();
   const [rows, setRows] = useState<Row[]>([]);
+  const [apoderadoNombre, setApoderadoNombre] = useState<string | null>(null);
   const [load, setLoad] = useState(true);
 
   useEffect(() => {
     if (loading || !user) return;
     (async () => {
-      // Buscar el id de apoderado vinculado a este usuario (si existe), o usar email
+      // Localizar perfil de apoderado por correo
       const { data: ap } = await supabase
         .from("apoderados_nuvex" as never)
-        .select("id,user_id,email")
-        .or(`user_id.eq.${user.id},email.eq.${user.email}`);
-      const apIds = ((ap as unknown as { id: string }[]) ?? []).map((a) => a.id);
+        .select("id,nombre,correo,bancos_asignados")
+        .eq("correo" as never, user.email as never)
+        .maybeSingle();
+      const apoderado = ap as unknown as { id: string; nombre: string; bancos_asignados: string[] | null } | null;
+      setApoderadoNombre(apoderado?.nombre ?? null);
 
-      let q = supabase
+      // Filtrar expedientes por bancos asignados al apoderado
+      let query = supabase
         .from("expedientes")
         .select("id,cliente_nombre,banco,estado_caso,honorarios_final,updated_at" as never)
         .order("updated_at", { ascending: false });
-      if (apIds.length) {
-        q = q.in("apoderado_id" as never, apIds as never);
-      } else {
-        // Sin vínculo, no mostrar nada salvo super_admin
-        if (!isSuperAdmin) { setRows([]); setLoad(false); return; }
+      const bancos = apoderado?.bancos_asignados ?? [];
+      if (bancos.length > 0) {
+        query = query.in("banco" as never, bancos as never);
+      } else if (!isSuperAdmin) {
+        setRows([]); setLoad(false); return;
       }
-      const { data } = await q;
+      const { data } = await query;
       setRows((data as unknown as Row[]) ?? []);
       setLoad(false);
     })();
@@ -74,7 +78,9 @@ function ApoderadoMisCasos() {
           <Briefcase size={20} className="text-[#445DA3]" />
           <div>
             <h1 className="text-lg font-semibold text-[#0A1226]">Mis casos</h1>
-            <p className="text-[12px] text-[#242424]/60">Vista simplificada — solo casos asignados a tu poder.</p>
+            <p className="text-[12px] text-[#242424]/60">
+              {apoderadoNombre ? `Apoderado: ${apoderadoNombre}` : "Vista simplificada — solo casos asignados a tus bancos."}
+            </p>
           </div>
         </div>
       </Card>
@@ -88,7 +94,9 @@ function ApoderadoMisCasos() {
 
       <Card>
         {rows.length === 0 ? (
-          <div className="p-8 text-center text-sm text-[#242424]/60">Aún no tienes casos asignados.</div>
+          <div className="p-8 text-center text-sm text-[#242424]/60">
+            Aún no tienes casos asignados. Contacta a gerencia para vincular bancos a tu perfil.
+          </div>
         ) : (
           <table className="w-full text-[13px]">
             <thead className="bg-[#F7F9FB] text-[11px] uppercase tracking-wide text-[#242424]/60">
