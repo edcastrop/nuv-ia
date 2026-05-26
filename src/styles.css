@@ -146,6 +146,358 @@
   }
 }
 
+@layer components {
+  .nuvex-register-shell {
+    --nuvex-register-ink: oklch(0.17 0.025 260);
+    --nuvex-register-muted: oklch(0.49 0.025 260);
+    --nuvex-register-blue: oklch(0.34 0.105 269);
+    --nuvex-register-blue-deep: oklch(0.21 0.074 267);
+    --nuvex-register-mint: oklch(0.78 0.098 151);
+    --nuvex-register-line: oklch(0.89 0.018 255);
+    display: grid;
+    align-items: center;
+    overflow: hidden;
+    background:
+      linear-gradient(115deg, oklch(0.16 0.055 266 / 0.94) 0%, oklch(0.22 0.076 267 / 0.88) 36%, oklch(0.93 0.025 248) 36.2%, oklch(0.98 0.008 248) 100%),
+      radial-gradient(circle at 14% 20%, oklch(0.78 0.098 151 / 0.32), transparent 27%),
+      radial-gradient(circle at 86% 82%, oklch(0.34 0.105 269 / 0.16), transparent 31%);
+  }
+
+  .nuvex-register-grid {
+    min-height: min(760px, calc(100vh - 64px));
+  }
+
+  .nuvex-register-brand-panel {
+    position: relative;
+    display: flex;
+    min-height: 620px;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    border: 1px solid oklch(1 0 0 / 0.16);
+    border-radius: 32px;
+    padding: 42px;
+    color: oklch(0.98 0.005 248);
+    background:
+      linear-gradient(145deg, oklch(0.19 0.071 267 / 0.96), oklch(0.27 0.09 265 / 0.88)),
+      radial-gradient(circle at 78% 22%, oklch(0.78 0.098 151 / 0.38), transparent 27%);
+    box-shadow: 0 32px 90px -42px oklch(0.17 0.03 260 / 0.72);
+  }
+
+  .nuvex-register-brand-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(oklch(1 0 0 / 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(1 0 0 / 0.08) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: linear-gradient(to bottom, black, transparent 76%);
+    opacity: 0.3;
+  }
+
+  .nuvex-register-brand-panel::after {
+    content: "";
+    position: absolute;
+    right: -110px;
+    bottom: -110px;
+    width: 320px;
+    height: 320px;
+    border: 1px solid oklch(0.78 0.098 151 / 0.34);
+    border-radius: 999px;
+    box-shadow: inset 0 0 80px oklch(0.78 0.098 151 / 0.13);
+  }
+
+  .nuvex-register-brand-panel > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .nuvex-register-brand-content {
+    max-width: 420px;
+  }
+
+  .nuvex-register-kicker,
+  .nuvex-register-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.13em;
+  }
+
+  .nuvex-register-kicker {
+    border: 1px solid oklch(1 0 0 / 0.16);
+    background: oklch(1 0 0 / 0.08);
+    padding: 9px 12px;
+    color: oklch(0.85 0.073 154);
+  }
+
+  .nuvex-register-hero-title {
+    margin-top: 22px;
+    max-width: 8ch;
+    font-size: clamp(42px, 5vw, 74px);
+    font-weight: 800;
+    line-height: 0.95;
+  }
+
+  .nuvex-register-hero-copy {
+    margin-top: 22px;
+    max-width: 35rem;
+    color: oklch(0.92 0.014 248 / 0.78);
+    font-size: 16px;
+    line-height: 1.7;
+  }
+
+  .nuvex-register-trust-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    color: oklch(0.92 0.014 248 / 0.78);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .nuvex-register-trust-row span {
+    border: 1px solid oklch(1 0 0 / 0.14);
+    border-radius: 999px;
+    background: oklch(1 0 0 / 0.07);
+    padding: 8px 11px;
+  }
+
+  .nuvex-register-card {
+    align-self: center;
+    border: 1px solid oklch(1 0 0 / 0.68);
+    border-radius: 32px;
+    background: oklch(1 0 0 / 0.86);
+    padding: clamp(28px, 4vw, 48px);
+    box-shadow: 0 34px 90px -44px oklch(0.2 0.04 260 / 0.55), 0 1px 0 oklch(1 0 0 / 0.88) inset;
+    backdrop-filter: blur(18px);
+  }
+
+  .nuvex-register-card--success {
+    background: oklch(1 0 0 / 0.92);
+  }
+
+  .nuvex-register-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .nuvex-register-badge {
+    background: oklch(0.34 0.105 269 / 0.09);
+    color: var(--nuvex-register-blue);
+    padding: 8px 14px;
+  }
+
+  .nuvex-register-badge span {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--nuvex-register-mint);
+    box-shadow: 0 0 0 5px oklch(0.78 0.098 151 / 0.16);
+  }
+
+  .nuvex-register-lock-mark,
+  .nuvex-register-status-icon {
+    display: grid;
+    place-items: center;
+    color: oklch(0.98 0.005 248);
+    background: linear-gradient(135deg, var(--nuvex-register-blue-deep), var(--nuvex-register-mint));
+    box-shadow: 0 18px 40px -22px oklch(0.21 0.074 267 / 0.9);
+  }
+
+  .nuvex-register-lock-mark {
+    width: 54px;
+    height: 54px;
+    flex: 0 0 auto;
+    border-radius: 18px;
+  }
+
+  .nuvex-register-status-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 999px;
+  }
+
+  .nuvex-register-title {
+    color: var(--nuvex-register-ink);
+    font-size: clamp(26px, 3vw, 34px);
+    font-weight: 800;
+    line-height: 1.08;
+  }
+
+  .nuvex-register-copy {
+    max-width: 620px;
+    color: var(--nuvex-register-muted);
+    font-size: 15px;
+    line-height: 1.65;
+  }
+
+  .nuvex-register-label {
+    color: oklch(0.42 0.018 260);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .nuvex-register-control {
+    width: 100%;
+    height: 58px;
+    border: 1px solid var(--nuvex-register-line);
+    border-radius: 16px;
+    background: oklch(0.98 0.005 248 / 0.9);
+    padding: 0 16px;
+    color: var(--nuvex-register-ink);
+    font-size: 15px;
+    outline: none;
+    transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease, transform 180ms ease;
+  }
+
+  .nuvex-register-control::placeholder {
+    color: oklch(0.55 0.016 260 / 0.58);
+  }
+
+  .nuvex-register-control:focus {
+    border-color: var(--nuvex-register-blue);
+    background: oklch(1 0 0);
+    box-shadow: 0 0 0 4px oklch(0.34 0.105 269 / 0.12), 0 16px 30px -24px oklch(0.21 0.074 267 / 0.55);
+    transform: translateY(-1px);
+  }
+
+  .nuvex-register-select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23374B8E' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 18px center;
+    padding-right: 46px;
+  }
+
+  .nuvex-register-error {
+    border: 1px solid oklch(0.82 0.08 28);
+    border-radius: 16px;
+    background: oklch(0.97 0.026 28);
+    color: oklch(0.43 0.16 29);
+    padding: 13px 16px;
+    font-size: 14px;
+  }
+
+  .nuvex-register-submit {
+    display: flex;
+    height: 62px;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--nuvex-register-blue-deep) 0%, var(--nuvex-register-blue) 48%, var(--nuvex-register-mint) 100%);
+    color: oklch(0.99 0.003 248);
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    box-shadow: 0 22px 44px -24px oklch(0.21 0.074 267 / 0.9);
+    transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+  }
+
+  .nuvex-register-submit:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 28px 54px -26px oklch(0.21 0.074 267 / 0.95);
+    filter: saturate(1.06);
+  }
+
+  .nuvex-register-submit:disabled {
+    cursor: not-allowed;
+    opacity: 0.62;
+  }
+
+  .nuvex-register-note {
+    margin-top: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--nuvex-register-muted);
+    font-size: 14px;
+    line-height: 1.55;
+    text-align: center;
+  }
+
+  .nuvex-register-note svg {
+    color: oklch(0.66 0.1 151);
+  }
+
+  .nuvex-register-login-link {
+    margin-top: 24px;
+    border-top: 1px solid var(--nuvex-register-line);
+    padding-top: 22px;
+    text-align: center;
+    color: var(--nuvex-register-muted);
+    font-size: 14px;
+  }
+
+  .nuvex-register-login-link a {
+    color: var(--nuvex-register-blue);
+    font-weight: 800;
+  }
+
+  @media (max-width: 1023px) {
+    .nuvex-register-shell {
+      background: linear-gradient(155deg, oklch(0.94 0.02 248), oklch(0.99 0.005 248));
+    }
+
+    .nuvex-register-grid {
+      max-width: 760px;
+      min-height: auto;
+    }
+
+    .nuvex-register-brand-panel {
+      min-height: 320px;
+      padding: 30px;
+    }
+
+    .nuvex-register-hero-title {
+      max-width: 12ch;
+      font-size: clamp(36px, 8vw, 54px);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .nuvex-register-shell {
+      padding: 16px;
+    }
+
+    .nuvex-register-brand-panel {
+      min-height: 280px;
+      border-radius: 24px;
+      padding: 24px;
+    }
+
+    .nuvex-register-card {
+      border-radius: 24px;
+    }
+
+    .nuvex-register-card-header {
+      display: block;
+    }
+
+    .nuvex-register-lock-mark {
+      display: none;
+    }
+
+    .nuvex-register-control,
+    .nuvex-register-submit {
+      height: 56px;
+    }
+  }
+}
+
 /* ============================================================
    NUVEX - Estilos para exportación PDF (impresión)
    ============================================================ */
