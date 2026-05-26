@@ -377,7 +377,7 @@ export const consultarIA = createServerFn({ method: "POST" })
     } else if (dataset === "honorarios_pendientes" || dataset === "clientes_morosos") {
       if (isJuridico && !isAdmin && !isContabilidad && !isLicenciado) {
         const msg = "Esta información está restringida para tu perfil de acceso.";
-        await registrarLog(supabase, { userId, nombre, rol: rolPrincipal, modulo, pregunta: data.pregunta, respuesta: msg, origen, fuente: "escalado", tiempoMs: Date.now() - t0 });
+        await registrarLog(supabase, { userId, nombre, rol: rolPrincipal, modulo, pregunta: data.pregunta, respuesta: msg, origen, fuente: "escalado", tiempoMs: Date.now() - t0, audiencia });
         return { respuesta: msg, filas: [], dataset, fuente: "escalado", escalable: false };
       }
       let q = supabase.from("cartera").select("id, expediente_id, honorarios_totales, pagado, estado_cartera, fecha_vencimiento, responsable_id").limit(30);
@@ -401,7 +401,7 @@ export const consultarIA = createServerFn({ method: "POST" })
     } else if (dataset === "facturacion_mes") {
       if (isJuridico && !isAdmin && !isContabilidad) {
         const msg = "Esta información está restringida para tu perfil de acceso.";
-        await registrarLog(supabase, { userId, nombre, rol: rolPrincipal, modulo, pregunta: data.pregunta, respuesta: msg, origen, fuente: "escalado", tiempoMs: Date.now() - t0 });
+        await registrarLog(supabase, { userId, nombre, rol: rolPrincipal, modulo, pregunta: data.pregunta, respuesta: msg, origen, fuente: "escalado", tiempoMs: Date.now() - t0, audiencia });
         return { respuesta: msg, filas: [], dataset, fuente: "escalado", escalable: false };
       }
       const mesIni = new Date(); mesIni.setDate(1); mesIni.setHours(0, 0, 0, 0);
@@ -487,7 +487,7 @@ ${datosBlock}`;
     await registrarLog(supabase, {
       userId, nombre, rol: rolPrincipal, modulo,
       pregunta: data.pregunta, respuesta,
-      origen, fuente: escalable ? "escalado" : "modelo",
+      origen, fuente: escalable ? "escalado" : "modelo", audiencia,
       tiempoMs: Date.now() - t0,
     });
 
@@ -495,7 +495,7 @@ ${datosBlock}`;
       respuesta,
       filas,
       dataset,
-      fuente: escalable ? "escalado" : "modelo",
+      fuente: escalable ? "escalado" : "modelo", audiencia,
       escalable,
     };
   });
