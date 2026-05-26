@@ -5,7 +5,7 @@ import { useUserRole, type AppRole } from "@/hooks/useUserRole";
 import {
   listUsuariosAcceso, aprobarUsuario, rechazarUsuario,
   bloquearUsuario, activarUsuario, listAuditoria,
-  previewDesvinculacion, desvincularUsuario,
+  previewDesvinculacion, desvincularUsuario, desvincularUsuarioSinTraslado,
   type UsuarioAcceso, type EstadoAcceso, type PreviewDesvinculacion,
 } from "@/lib/seguridad";
 import { ShieldCheck, ShieldAlert, ShieldOff, Clock, CheckCircle2, XCircle, Search, History, UserMinus, AlertTriangle } from "lucide-react";
