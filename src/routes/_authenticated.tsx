@@ -2,12 +2,15 @@ import { createFileRoute, Outlet, useNavigate, Link, useLocation } from "@tansta
 import { useEffect, useState } from "react";
 import { useAuth, signOut } from "@/hooks/useAuth";
 import { CORPORATIVO } from "@/components/nuvex/constants";
-import { LayoutGrid, FolderKanban, BarChart3, LogOut, GraduationCap, LineChart, UserSquare2, Users, Shield, Wallet, Bell, CircleDollarSign, Landmark, ClipboardCheck, Briefcase } from "lucide-react";
+import {
+  LayoutGrid, FolderKanban, BarChart3, LogOut, GraduationCap, LineChart,
+  UserSquare2, Users, Shield, Wallet, Bell, CircleDollarSign, Landmark,
+  ClipboardCheck, Briefcase, ChevronLeft, ChevronRight,
+} from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Logo } from "@/components/nuvex/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationBell } from "@/components/notificaciones/NotificationBell";
-
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
@@ -16,25 +19,32 @@ export const Route = createFileRoute("/_authenticated")({
 const AZUL = "#445DA3";
 const VERDE = "#84B98F";
 
+type NavItem = { to: string; label: string; Icon: typeof LayoutGrid; exact?: boolean; badge?: number };
+type NavSection = { label: string; items: NavItem[] };
+
 function AuthenticatedLayout() {
   const { session, user, loading } = useAuth();
   const { isSuperAdmin, roles, isDirectorQA, isApoderado } = useUserRole();
   const navigate = useNavigate();
   const location = useLocation();
-  const [scrolled, setScrolled] = useState(false);
   const [unread, setUnread] = useState(0);
-
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("nuvex.sidebar.collapsed") === "1";
+  });
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/login" });
   }, [loading, session, navigate]);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("nuvex.sidebar.collapsed", collapsed ? "1" : "0");
+    }
+  }, [collapsed]);
+
+  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   useEffect(() => {
     if (!session) return;
@@ -51,12 +61,8 @@ function AuthenticatedLayout() {
       .channel("caso_alertas_unread")
       .on("postgres_changes", { event: "*", schema: "public", table: "caso_alertas" }, load)
       .subscribe();
-    return () => {
-      active = false;
-      supabase.removeChannel(ch);
-    };
+    return () => { active = false; supabase.removeChannel(ch); };
   }, [session, location.pathname]);
-
 
   if (loading || !session) {
     return (
@@ -67,196 +73,241 @@ function AuthenticatedLayout() {
   }
 
   const displayName: string = user?.user_metadata?.nombre || (user?.email?.split("@")[0] ?? "Usuario");
-  const initials = displayName
-    .split(/[.\s_-]+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((s) => s[0]?.toUpperCase())
-    .join("") || "NV";
+  const initials = displayName.split(/[.\s_-]+/).filter(Boolean).slice(0, 2).map((s) => s[0]?.toUpperCase()).join("") || "NV";
 
-  const navItems: { to: string; label: string; Icon: typeof LayoutGrid; exact?: boolean; badge?: number }[] = isApoderado && !isSuperAdmin
-    ? [
-        { to: "/apoderado/mis-casos", label: "Mis casos", Icon: Briefcase },
-        { to: "/notificaciones", label: "Alertas", Icon: Bell, badge: unread },
-      ]
+  const has = (r: string) => roles.includes(r as never);
+  const hasAny = (...rs: string[]) => rs.some(has);
+
+  const sections: NavSection[] = isApoderado && !isSuperAdmin
+    ? [{
+        label: "Apoderado",
+        items: [
+          { to: "/apoderado/mis-casos", label: "Mis casos", Icon: Briefcase },
+          { to: "/notificaciones", label: "Alertas", Icon: Bell, badge: unread },
+        ],
+      }]
     : [
-        { to: "/", label: "Simulador", Icon: LayoutGrid, exact: true },
-        { to: "/casos", label: "Casos", Icon: FolderKanban },
-        { to: "/notificaciones", label: "Alertas", Icon: Bell, badge: unread },
-        { to: "/expediente-maestro", label: "Expediente", Icon: UserSquare2 },
-        { to: "/proyeccion", label: "Proyección", Icon: LineChart },
-        { to: "/dashboard", label: "Dashboard", Icon: BarChart3 },
-        ...(isDirectorQA ? [{ to: "/qa", label: "QA", Icon: ClipboardCheck }] : []),
-        { to: "/academia", label: "Academia", Icon: GraduationCap },
-        { to: "/apoderados-nuvex", label: "Apoderados", Icon: Users },
-        ...(roles.some((r) => ["super_admin","admin","gerencia","cartera","juridica","licenciado","asesor"].includes(r)) ? [{ to: "/cartera", label: "Cartera", Icon: Wallet }] : []),
-        { to: "/comisiones", label: "Comisiones", Icon: CircleDollarSign },
-        ...(roles.some((r) => ["super_admin","admin","gerencia","cartera"].includes(r)) ? [{ to: "/contabilidad/cuentas-cobro", label: "Contabilidad", Icon: CircleDollarSign }] : []),
-        ...(roles.some((r) => ["super_admin","admin","gerencia","contabilidad"].includes(r)) ? [{ to: "/finanzas", label: "Finanzas", Icon: Landmark }] : []),
-        ...(isSuperAdmin ? [{ to: "/super-admin", label: "Super Admin", Icon: Shield }] : []),
+        {
+          label: "Operación",
+          items: [
+            { to: "/", label: "Simulador", Icon: LayoutGrid, exact: true },
+            { to: "/casos", label: "Casos", Icon: FolderKanban },
+            { to: "/expediente-maestro", label: "Expediente", Icon: UserSquare2 },
+            { to: "/proyeccion", label: "Proyección", Icon: LineChart },
+            { to: "/notificaciones", label: "Alertas", Icon: Bell, badge: unread },
+          ],
+        },
+        {
+          label: "Análisis",
+          items: [
+            { to: "/dashboard", label: "Dashboard", Icon: BarChart3 },
+            ...(isDirectorQA ? [{ to: "/qa", label: "QA", Icon: ClipboardCheck }] : []),
+          ],
+        },
+        {
+          label: "Finanzas",
+          items: [
+            ...(hasAny("super_admin","admin","gerencia","cartera","juridica","licenciado","asesor") ? [{ to: "/cartera", label: "Cartera", Icon: Wallet }] : []),
+            { to: "/comisiones", label: "Comisiones", Icon: CircleDollarSign },
+            ...(hasAny("super_admin","admin","gerencia","cartera") ? [{ to: "/contabilidad/cuentas-cobro", label: "Contabilidad", Icon: CircleDollarSign }] : []),
+            ...(hasAny("super_admin","admin","gerencia","contabilidad") ? [{ to: "/finanzas", label: "Finanzas", Icon: Landmark }] : []),
+          ],
+        },
+        {
+          label: "Gestión",
+          items: [
+            { to: "/apoderados-nuvex", label: "Apoderados", Icon: Users },
+            { to: "/academia", label: "Academia", Icon: GraduationCap },
+            ...(isSuperAdmin ? [{ to: "/super-admin", label: "Super Admin", Icon: Shield }] : []),
+          ],
+        },
       ];
 
+  const visibleSections = sections.map((s) => ({ ...s, items: s.items.filter(Boolean) })).filter((s) => s.items.length > 0);
 
+  const isActive = (to: string, exact?: boolean) =>
+    exact ? location.pathname === to : location.pathname === to || location.pathname.startsWith(to + "/");
 
-  const NavBtn = ({ to, label, Icon, exact, badge }: { to: string; label: string; Icon: typeof LayoutGrid; exact?: boolean; badge?: number }) => {
-    const active = exact ? location.pathname === to : location.pathname === to || location.pathname.startsWith(to + "/") || location.pathname === to;
+  const SidebarItem = ({ it }: { it: NavItem }) => {
+    const active = isActive(it.to, it.exact);
     return (
       <Link
-        to={to}
-        className="group relative flex items-center gap-2 rounded-xl px-3.5 py-2 text-[13px] font-medium transition-all duration-300 ease-out"
+        to={it.to}
+        title={collapsed ? it.label : undefined}
+        className="group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200"
         style={
           active
             ? {
                 background: `linear-gradient(135deg, ${AZUL}, ${VERDE})`,
                 color: "#fff",
-                boxShadow: `0 8px 24px -10px ${AZUL}, 0 0 0 1px rgba(255,255,255,0.08) inset`,
+                boxShadow: `0 8px 20px -10px ${AZUL}, 0 0 0 1px rgba(255,255,255,0.08) inset`,
               }
-            : {
-                color: "rgba(255,255,255,0.72)",
-                border: "1px solid transparent",
-              }
+            : { color: "rgba(255,255,255,0.72)" }
         }
         onMouseEnter={(e) => {
           if (active) return;
-          const el = e.currentTarget;
-          el.style.background = "rgba(255,255,255,0.04)";
-          el.style.border = `1px solid ${AZUL}55`;
-          el.style.color = "#fff";
-          el.style.boxShadow = `0 0 0 1px ${AZUL}22, 0 6px 18px -8px ${AZUL}66`;
+          e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+          e.currentTarget.style.color = "#fff";
         }}
         onMouseLeave={(e) => {
           if (active) return;
-          const el = e.currentTarget;
-          el.style.background = "transparent";
-          el.style.border = "1px solid transparent";
-          el.style.color = "rgba(255,255,255,0.72)";
-          el.style.boxShadow = "none";
+          e.currentTarget.style.background = "transparent";
+          e.currentTarget.style.color = "rgba(255,255,255,0.72)";
         }}
       >
-        <Icon size={15} />
-        <span>{label}</span>
-        {badge && badge > 0 ? (
+        <it.Icon size={17} className="shrink-0" />
+        {!collapsed && <span className="truncate">{it.label}</span>}
+        {!collapsed && it.badge && it.badge > 0 ? (
           <span
-            className="ml-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] font-bold"
+            className="ml-auto inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold"
             style={{ background: "#E11D48", color: "#fff" }}
           >
-            {badge > 99 ? "99+" : badge}
+            {it.badge > 99 ? "99+" : it.badge}
           </span>
+        ) : null}
+        {collapsed && it.badge && it.badge > 0 ? (
+          <span className="absolute top-1 right-1 h-2 w-2 rounded-full" style={{ background: "#E11D48" }} />
         ) : null}
       </Link>
     );
   };
 
-  return (
-    <div className="min-h-screen" style={{ background: "#F7F9FB" }}>
-      <header
-        className="sticky top-0 z-50 transition-all duration-300"
-        style={{
-          background: "linear-gradient(90deg, #050814, #0A1226, #07162D)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          boxShadow: scrolled ? "0 12px 40px -20px rgba(0,0,0,0.7)" : "none",
-        }}
-      >
-        {/* Inner glow ambient */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute -top-24 left-1/4 h-48 w-[420px] rounded-full opacity-[0.12] blur-[100px]" style={{ background: AZUL }} />
-          <div className="absolute -top-24 right-1/4 h-48 w-[420px] rounded-full opacity-[0.10] blur-[100px]" style={{ background: VERDE }} />
-        </div>
+  const sidebarWidth = collapsed ? 76 : 248;
 
-        <div className="relative mx-auto flex max-w-[1400px] items-center justify-between gap-6 px-6" style={{ height: 92 }}>
-          {/* IZQUIERDA — Logo */}
-          <Link to="/" className="group flex items-center transition-transform duration-300 hover:-translate-y-0.5">
-            <Logo variant="white" height={40} />
-          </Link>
+  const SidebarContent = (
+    <aside
+      className="flex h-full flex-col"
+      style={{
+        width: sidebarWidth,
+        background: "linear-gradient(180deg, #050814, #0A1226 60%, #07162D)",
+        borderRight: "1px solid rgba(255,255,255,0.06)",
+        transition: "width 200ms ease",
+      }}
+    >
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-24 -left-10 h-48 w-[280px] rounded-full opacity-[0.10] blur-[100px]" style={{ background: AZUL }} />
+        <div className="absolute bottom-10 -right-10 h-48 w-[260px] rounded-full opacity-[0.08] blur-[100px]" style={{ background: VERDE }} />
+      </div>
 
-          {/* CENTRO — Navegación */}
-          <nav className="hidden lg:flex items-center gap-1.5 rounded-2xl px-2 py-1.5"
-            style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.06)",
-              backdropFilter: "blur(12px)",
-            }}
-          >
-            {navItems.map((it) => <NavBtn key={it.to} {...it} />)}
-          </nav>
+      <div className="relative flex items-center justify-between px-4 py-5" style={{ minHeight: 76 }}>
+        <Link to="/" className="flex items-center">
+          {collapsed ? <Logo variant="white" height={28} iconOnly /> : <Logo variant="white" height={32} />}
+        </Link>
+        <button
+          onClick={() => setCollapsed((v) => !v)}
+          className="hidden lg:inline-flex h-7 w-7 items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/5"
+          aria-label={collapsed ? "Expandir menú" : "Contraer menú"}
+        >
+          {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+        </button>
+      </div>
 
-          {/* DERECHA — Usuario + Salir */}
-          <div className="flex items-center gap-3">
-            <NotificationBell />
-            <div
-              className="hidden md:flex items-center gap-3 rounded-2xl pl-2 pr-4 py-2 transition-all duration-300 hover:-translate-y-0.5"
-              style={{
-                background: "linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))",
-                border: "1px solid rgba(255,255,255,0.08)",
-                boxShadow: "0 6px 18px -10px rgba(0,0,0,0.6)",
-              }}
-            >
-              <div
-                className="relative flex h-10 w-10 items-center justify-center rounded-full text-[12px] font-bold text-white"
-                style={{
-                  background: "#0A1226",
-                  boxShadow: `0 0 0 2px transparent`,
-                  backgroundImage: `linear-gradient(#0A1226, #0A1226), linear-gradient(135deg, ${AZUL}, ${VERDE})`,
-                  backgroundOrigin: "border-box",
-                  backgroundClip: "padding-box, border-box",
-                  border: "2px solid transparent",
-                }}
-              >
-                {initials}
+      <div className="relative flex-1 overflow-y-auto px-3 pb-4 space-y-5 scrollbar-thin">
+        {visibleSections.map((s) => (
+          <div key={s.label}>
+            {!collapsed && (
+              <div className="px-2 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/40">
+                {s.label}
               </div>
-              <div className="leading-tight text-right">
-                <div className="text-[12.5px] font-semibold text-white truncate max-w-[180px]">
-                  {displayName}
-                </div>
-                <div className="text-[10.5px] text-white/55 truncate max-w-[180px]">{user?.email}</div>
+            )}
+            {collapsed && <div className="mx-3 mb-2 h-px bg-white/5" />}
+            <div className="space-y-1">
+              {s.items.map((it) => <SidebarItem key={it.to} it={it} />)}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="relative border-t border-white/5 p-3">
+        <button
+          onClick={async () => { await signOut(); navigate({ to: "/login" }); }}
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[12.5px] font-medium text-white/70 transition hover:bg-white/5 hover:text-white"
+          title={collapsed ? "Salir" : undefined}
+        >
+          <LogOut size={16} className="shrink-0" />
+          {!collapsed && <span>Salir</span>}
+        </button>
+      </div>
+    </aside>
+  );
+
+  return (
+    <div className="min-h-screen flex" style={{ background: "#F7F9FB" }}>
+      {/* Sidebar desktop */}
+      <div className="hidden lg:block sticky top-0 h-screen relative">
+        {SidebarContent}
+      </div>
+
+      {/* Sidebar móvil (drawer) */}
+      {mobileOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
+          <div className="relative h-full">{SidebarContent}</div>
+        </div>
+      )}
+
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header delgado */}
+        <header
+          className="sticky top-0 z-40"
+          style={{
+            background: "linear-gradient(90deg, #050814, #0A1226)",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
+          }}
+        >
+          <div className="flex items-center justify-between gap-4 px-5" style={{ height: 64 }}>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setMobileOpen(true)}
+                className="lg:hidden inline-flex h-9 w-9 items-center justify-center rounded-lg text-white/80 hover:bg-white/5"
+                aria-label="Abrir menú"
+              >
+                <LayoutGrid size={16} />
+              </button>
+              <div className="hidden md:block text-[12px] font-medium uppercase tracking-[0.18em] text-white/40">
+                {CORPORATIVO.nombre}
               </div>
             </div>
 
-            <button
-              onClick={async () => { await signOut(); navigate({ to: "/login" }); }}
-              className="group inline-flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-[12px] font-semibold uppercase tracking-wider text-white/80 transition-all duration-300 ease-out hover:text-white hover:-translate-y-0.5"
-              style={{
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.10)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.border = `1px solid ${VERDE}66`;
-                e.currentTarget.style.boxShadow = `0 6px 18px -10px ${VERDE}99`;
-                e.currentTarget.style.background = "rgba(132,185,143,0.08)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.border = "1px solid rgba(255,255,255,0.10)";
-                e.currentTarget.style.boxShadow = "none";
-                e.currentTarget.style.background = "rgba(255,255,255,0.03)";
-              }}
-            >
-              <LogOut size={14} />
-              <span className="hidden sm:inline">Salir</span>
-            </button>
+            <div className="flex items-center gap-3">
+              <NotificationBell />
+              <div
+                className="hidden sm:flex items-center gap-3 rounded-xl pl-2 pr-3 py-1.5"
+                style={{
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                }}
+              >
+                <div
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-bold text-white"
+                  style={{
+                    backgroundImage: `linear-gradient(#0A1226, #0A1226), linear-gradient(135deg, ${AZUL}, ${VERDE})`,
+                    backgroundOrigin: "border-box",
+                    backgroundClip: "padding-box, border-box",
+                    border: "2px solid transparent",
+                  }}
+                >
+                  {initials}
+                </div>
+                <div className="leading-tight text-right">
+                  <div className="text-[12px] font-semibold text-white truncate max-w-[160px]">{displayName}</div>
+                  <div className="text-[10px] text-white/50 truncate max-w-[160px]">{user?.email}</div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </header>
 
-        {/* Línea inferior luminosa */}
-        <div className="relative h-px w-full" style={{ background: `linear-gradient(90deg, transparent, ${AZUL}66, ${VERDE}66, transparent)` }}>
-          <div className="absolute inset-x-0 -bottom-1 h-1 blur-md opacity-60" style={{ background: `linear-gradient(90deg, transparent, ${AZUL}, ${VERDE}, transparent)` }} />
-        </div>
+        <main className="flex-1">
+          <Outlet />
+        </main>
 
-        {/* Nav móvil */}
-        <nav className="lg:hidden flex items-center gap-1.5 overflow-x-auto px-4 py-2"
-          style={{ background: "rgba(5,8,20,0.6)", borderTop: "1px solid rgba(255,255,255,0.04)" }}
-        >
-          {navItems.map((it) => <NavBtn key={it.to} {...it} />)}
-        </nav>
-      </header>
-
-      <Outlet />
-
-      <footer className="border-t border-[#E3E7EE] bg-white mt-8">
-        <div className="mx-auto max-w-7xl px-6 py-5 text-center text-[11px] text-[#242424]/60">
-          <span className="font-semibold text-[#242424]">{CORPORATIVO.nombre}</span> · {CORPORATIVO.telefono} · {CORPORATIVO.web}
-        </div>
-      </footer>
+        <footer className="border-t border-[#E3E7EE] bg-white">
+          <div className="mx-auto max-w-7xl px-6 py-5 text-center text-[11px] text-[#242424]/60">
+            <span className="font-semibold text-[#242424]">{CORPORATIVO.nombre}</span> · {CORPORATIVO.telefono} · {CORPORATIVO.web}
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }
