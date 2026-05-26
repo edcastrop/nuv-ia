@@ -333,6 +333,7 @@ function AuthenticatedLayout() {
         </header>
 
         <main className="flex-1">
+          <AcademiaBanner />
           <Outlet />
         </main>
 
