@@ -89,29 +89,56 @@ export const kbDelete = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export const kbAnalitica = createServerFn({ method: "GET" })
+const FiltrosSchema = z.object({
+  desde: z.string().datetime().optional(),
+  hasta: z.string().datetime().optional(),
+  origen: z.enum(["nuvex_ia", "nuvex_gpt", "cliente"]).optional(),
+  fuente: z.enum(["kb", "modelo", "escalado"]).optional(),
+  modulo: z.string().max(60).optional(),
+  rol: z.string().max(60).optional(),
+  audiencia: z.enum(["interno", "apoderado", "cliente", "publico"]).optional(),
+}).default({});
+
+type Filtros = z.infer<typeof FiltrosSchema>;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function aplicarFiltros(q: any, f: Filtros) {
+  const desde = f.desde ?? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  q = q.gte("created_at", desde);
+  if (f.hasta) q = q.lte("created_at", f.hasta);
+  if (f.origen) q = q.eq("origen", f.origen);
+  if (f.fuente) q = q.eq("fuente", f.fuente);
+  if (f.modulo) q = q.eq("modulo", f.modulo);
+  if (f.rol) q = q.eq("rol", f.rol);
+  if (f.audiencia) q = q.eq("audiencia", f.audiencia);
+  return q;
+}
+
+export const kbAnalitica = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((input: unknown) => FiltrosSchema.parse(input ?? {}))
+  .handler(async ({ data, context }) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const supabase = context.supabase as any;
     const userId = context.userId as string;
     await ensureManager(supabase, userId);
 
-    const desde = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    const { data: logs } = await supabase
+    let q = supabase
       .from("nuvex_ia_log")
-      .select("origen, fuente, modulo, rol, pregunta, tiempo_respuesta_ms, created_at")
-      .gte("created_at", desde)
+      .select("origen, fuente, modulo, rol, audiencia, pregunta, tiempo_respuesta_ms, created_at")
       .order("created_at", { ascending: false })
       .limit(2000);
+    q = aplicarFiltros(q, data);
+    const { data: logs } = await q;
 
     const rows = (logs ?? []) as Array<{
       origen: string; fuente: string; modulo: string | null; rol: string | null;
+      audiencia: string | null;
       pregunta: string; tiempo_respuesta_ms: number | null; created_at: string;
     }>;
 
     const total = rows.length;
-    const por = (key: "origen" | "fuente" | "modulo" | "rol") => {
+    const por = (key: "origen" | "fuente" | "modulo" | "rol" | "audiencia") => {
       const m = new Map<string, number>();
       for (const r of rows) {
         const k = (r[key] ?? "—") as string;
@@ -126,15 +153,46 @@ export const kbAnalitica = createServerFn({ method: "GET" })
     const avgMs = total ? Math.round(rows.reduce((s, r) => s + (r.tiempo_respuesta_ms ?? 0), 0) / total) : 0;
 
     return {
-      total,
-      desdeKb,
-      escalados,
-      avgMs,
+      total, desdeKb, escalados, avgMs,
       top_origen: por("origen"),
       top_fuente: por("fuente"),
       top_modulo: por("modulo"),
       top_rol: por("rol"),
+      top_audiencia: por("audiencia"),
       ultimas_escaladas: rows.filter((r) => r.fuente === "escalado").slice(0, 20)
         .map((r) => ({ pregunta: r.pregunta, created_at: r.created_at, modulo: r.modulo })),
     };
+  });
+
+export const kbAnaliticaExport = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => FiltrosSchema.parse(input ?? {}))
+  .handler(async ({ data, context }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supabase = context.supabase as any;
+    const userId = context.userId as string;
+    await ensureManager(supabase, userId);
+
+    let q = supabase
+      .from("nuvex_ia_log")
+      .select("created_at, origen, fuente, modulo, rol, audiencia, nombre_usuario, pregunta, respuesta, tiempo_respuesta_ms")
+      .order("created_at", { ascending: false })
+      .limit(5000);
+    q = aplicarFiltros(q, data);
+    const { data: logs, error } = await q;
+    if (error) throw new Error(error.message);
+
+    const headers = ["fecha", "origen", "fuente", "modulo", "rol", "audiencia", "usuario", "pregunta", "respuesta", "tiempo_ms"];
+    const escape = (v: unknown) => {
+      const s = v === null || v === undefined ? "" : String(v);
+      return `"${s.replace(/"/g, '""').replace(/\r?\n/g, " ")}"`;
+    };
+    const lines = [headers.join(",")];
+    for (const r of (logs ?? []) as Array<Record<string, unknown>>) {
+      lines.push([
+        r.created_at, r.origen, r.fuente, r.modulo, r.rol, r.audiencia,
+        r.nombre_usuario, r.pregunta, r.respuesta, r.tiempo_respuesta_ms,
+      ].map(escape).join(","));
+    }
+    return { csv: lines.join("\n"), total: (logs ?? []).length };
   });
