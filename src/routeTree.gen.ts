@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedQaRouteImport } from './routes/_authenticated/qa'
 import { Route as AuthenticatedProyeccionRouteImport } from './routes/_authenticated/proyeccion'
 import { Route as AuthenticatedNotificacionesRouteImport } from './routes/_authenticated/notificaciones'
 import { Route as AuthenticatedFinanzasRouteImport } from './routes/_authenticated/finanzas'
@@ -58,6 +59,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedQaRoute = AuthenticatedQaRouteImport.update({
+  id: '/qa',
+  path: '/qa',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedProyeccionRoute = AuthenticatedProyeccionRouteImport.update({
@@ -261,6 +267,7 @@ export interface FileRoutesByFullPath {
   '/finanzas': typeof AuthenticatedFinanzasRouteWithChildren
   '/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/proyeccion': typeof AuthenticatedProyeccionRoute
+  '/qa': typeof AuthenticatedQaRoute
   '/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
   '/comisiones/$id': typeof AuthenticatedComisionesIdRoute
@@ -296,6 +303,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/proyeccion': typeof AuthenticatedProyeccionRoute
+  '/qa': typeof AuthenticatedQaRoute
   '/': typeof AuthenticatedIndexRoute
   '/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
@@ -335,6 +343,7 @@ export interface FileRoutesById {
   '/_authenticated/finanzas': typeof AuthenticatedFinanzasRouteWithChildren
   '/_authenticated/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/_authenticated/proyeccion': typeof AuthenticatedProyeccionRoute
+  '/_authenticated/qa': typeof AuthenticatedQaRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/_authenticated/casos/$id': typeof AuthenticatedCasosIdRoute
@@ -375,6 +384,7 @@ export interface FileRouteTypes {
     | '/finanzas'
     | '/notificaciones'
     | '/proyeccion'
+    | '/qa'
     | '/cartera/$id'
     | '/casos/$id'
     | '/comisiones/$id'
@@ -410,6 +420,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/notificaciones'
     | '/proyeccion'
+    | '/qa'
     | '/'
     | '/cartera/$id'
     | '/casos/$id'
@@ -448,6 +459,7 @@ export interface FileRouteTypes {
     | '/_authenticated/finanzas'
     | '/_authenticated/notificaciones'
     | '/_authenticated/proyeccion'
+    | '/_authenticated/qa'
     | '/_authenticated/'
     | '/_authenticated/cartera/$id'
     | '/_authenticated/casos/$id'
@@ -507,6 +519,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/qa': {
+      id: '/_authenticated/qa'
+      path: '/qa'
+      fullPath: '/qa'
+      preLoaderRoute: typeof AuthenticatedQaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/proyeccion': {
@@ -785,6 +804,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedFinanzasRoute: typeof AuthenticatedFinanzasRouteWithChildren
   AuthenticatedNotificacionesRoute: typeof AuthenticatedNotificacionesRoute
   AuthenticatedProyeccionRoute: typeof AuthenticatedProyeccionRoute
+  AuthenticatedQaRoute: typeof AuthenticatedQaRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedCarteraIdRoute: typeof AuthenticatedCarteraIdRoute
   AuthenticatedCasosIdRoute: typeof AuthenticatedCasosIdRoute
@@ -808,6 +828,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedFinanzasRoute: AuthenticatedFinanzasRouteWithChildren,
   AuthenticatedNotificacionesRoute: AuthenticatedNotificacionesRoute,
   AuthenticatedProyeccionRoute: AuthenticatedProyeccionRoute,
+  AuthenticatedQaRoute: AuthenticatedQaRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedCarteraIdRoute: AuthenticatedCarteraIdRoute,
   AuthenticatedCasosIdRoute: AuthenticatedCasosIdRoute,
