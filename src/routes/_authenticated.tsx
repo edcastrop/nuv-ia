@@ -124,7 +124,12 @@ function AuthenticatedLayout() {
             ...(isSuperAdmin ? [{ to: "/super-admin", label: "Super Admin", Icon: Shield }] : []),
           ],
         },
-
+        {
+          label: "Cuenta",
+          items: [
+            { to: "/mi-perfil", label: "Mi Perfil", Icon: UserCircle },
+          ],
+        },
       ];
 
   const visibleSections = sections.map((s) => ({ ...s, items: s.items.filter(Boolean) })).filter((s) => s.items.length > 0);
