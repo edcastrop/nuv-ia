@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegistroRouteImport } from './routes/registro'
+import { Route as PendienteAprobacionRouteImport } from './routes/pendiente-aprobacion'
 import { Route as MfaVerificarRouteImport } from './routes/mfa-verificar'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
@@ -70,6 +71,11 @@ import { Route as AuthenticatedAcademiaCertificadosCodigoRouteImport } from './r
 const RegistroRoute = RegistroRouteImport.update({
   id: '/registro',
   path: '/registro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PendienteAprobacionRoute = PendienteAprobacionRouteImport.update({
+  id: '/pendiente-aprobacion',
+  path: '/pendiente-aprobacion',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MfaVerificarRoute = MfaVerificarRouteImport.update({
@@ -394,6 +400,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
   '/mfa-verificar': typeof MfaVerificarRoute
+  '/pendiente-aprobacion': typeof PendienteAprobacionRoute
   '/registro': typeof RegistroRoute
   '/academia': typeof AuthenticatedAcademiaRouteWithChildren
   '/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
@@ -451,6 +458,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/mfa-verificar': typeof MfaVerificarRoute
+  '/pendiente-aprobacion': typeof PendienteAprobacionRoute
   '/registro': typeof RegistroRoute
   '/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
   '/colaboracion': typeof AuthenticatedColaboracionRoute
@@ -509,6 +517,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/mfa-verificar': typeof MfaVerificarRoute
+  '/pendiente-aprobacion': typeof PendienteAprobacionRoute
   '/registro': typeof RegistroRoute
   '/_authenticated/academia': typeof AuthenticatedAcademiaRouteWithChildren
   '/_authenticated/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
@@ -570,6 +579,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/mfa-verificar'
+    | '/pendiente-aprobacion'
     | '/registro'
     | '/academia'
     | '/apoderados-nuvex'
@@ -627,6 +637,7 @@ export interface FileRouteTypes {
   to:
     | '/login'
     | '/mfa-verificar'
+    | '/pendiente-aprobacion'
     | '/registro'
     | '/apoderados-nuvex'
     | '/colaboracion'
@@ -684,6 +695,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/login'
     | '/mfa-verificar'
+    | '/pendiente-aprobacion'
     | '/registro'
     | '/_authenticated/academia'
     | '/_authenticated/apoderados-nuvex'
@@ -744,6 +756,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
   MfaVerificarRoute: typeof MfaVerificarRoute
+  PendienteAprobacionRoute: typeof PendienteAprobacionRoute
   RegistroRoute: typeof RegistroRoute
   ApiNuvexGptChatRoute: typeof ApiNuvexGptChatRoute
   ApiNuvexIaStreamRoute: typeof ApiNuvexIaStreamRoute
@@ -759,6 +772,13 @@ declare module '@tanstack/react-router' {
       path: '/registro'
       fullPath: '/registro'
       preLoaderRoute: typeof RegistroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pendiente-aprobacion': {
+      id: '/pendiente-aprobacion'
+      path: '/pendiente-aprobacion'
+      fullPath: '/pendiente-aprobacion'
+      preLoaderRoute: typeof PendienteAprobacionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mfa-verificar': {
@@ -1297,6 +1317,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
   MfaVerificarRoute: MfaVerificarRoute,
+  PendienteAprobacionRoute: PendienteAprobacionRoute,
   RegistroRoute: RegistroRoute,
   ApiNuvexGptChatRoute: ApiNuvexGptChatRoute,
   ApiNuvexIaStreamRoute: ApiNuvexIaStreamRoute,

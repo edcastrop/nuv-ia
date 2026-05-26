@@ -29,7 +29,7 @@ function PendienteAprobacionPage() {
     if (!data) return;
     setEstado(data.estado_acceso as string);
     setMotivo((data.rechazado_motivo as string) ?? null);
-    if (data.estado_acceso === "activo") {
+    if (data.estado_acceso === "aprobado") {
       navigate({ to: "/onboarding" });
     }
   };
