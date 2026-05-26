@@ -26,8 +26,10 @@ import { Route as AuthenticatedComisionesIndexRouteImport } from './routes/_auth
 import { Route as AuthenticatedCasosIndexRouteImport } from './routes/_authenticated/casos.index'
 import { Route as AuthenticatedCarteraIndexRouteImport } from './routes/_authenticated/cartera.index'
 import { Route as AuthenticatedSuperAdminUsuariosRouteImport } from './routes/_authenticated/super-admin.usuarios'
+import { Route as AuthenticatedSuperAdminPermisosRouteImport } from './routes/_authenticated/super-admin.permisos'
 import { Route as AuthenticatedSuperAdminMarcaRouteImport } from './routes/_authenticated/super-admin.marca'
 import { Route as AuthenticatedSuperAdminExpedientesRouteImport } from './routes/_authenticated/super-admin.expedientes'
+import { Route as AuthenticatedSuperAdminAuditoriaRouteImport } from './routes/_authenticated/super-admin.auditoria'
 import { Route as AuthenticatedFinanzasTesoreriaRouteImport } from './routes/_authenticated/finanzas.tesoreria'
 import { Route as AuthenticatedFinanzasReportesRouteImport } from './routes/_authenticated/finanzas.reportes'
 import { Route as AuthenticatedFinanzasRecaudosRouteImport } from './routes/_authenticated/finanzas.recaudos'
@@ -43,6 +45,7 @@ import { Route as AuthenticatedContabilidadCuentasCobroRouteImport } from './rou
 import { Route as AuthenticatedComisionesIdRouteImport } from './routes/_authenticated/comisiones.$id'
 import { Route as AuthenticatedCasosIdRouteImport } from './routes/_authenticated/casos.$id'
 import { Route as AuthenticatedCarteraIdRouteImport } from './routes/_authenticated/cartera.$id'
+import { Route as AuthenticatedApoderadoMisCasosRouteImport } from './routes/_authenticated/apoderado.mis-casos'
 import { Route as ApiPublicHooksFinanzasCronRouteImport } from './routes/api/public/hooks/finanzas-cron'
 import { Route as ApiPublicHooksCasosAlertasRouteImport } from './routes/api/public/hooks/casos-alertas'
 import { Route as ApiPublicHooksCarteraRecordatoriosRouteImport } from './routes/api/public/hooks/cartera-recordatorios'
@@ -139,6 +142,12 @@ const AuthenticatedSuperAdminUsuariosRoute =
     path: '/super-admin/usuarios',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedSuperAdminPermisosRoute =
+  AuthenticatedSuperAdminPermisosRouteImport.update({
+    id: '/super-admin/permisos',
+    path: '/super-admin/permisos',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedSuperAdminMarcaRoute =
   AuthenticatedSuperAdminMarcaRouteImport.update({
     id: '/super-admin/marca',
@@ -149,6 +158,12 @@ const AuthenticatedSuperAdminExpedientesRoute =
   AuthenticatedSuperAdminExpedientesRouteImport.update({
     id: '/super-admin/expedientes',
     path: '/super-admin/expedientes',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuperAdminAuditoriaRoute =
+  AuthenticatedSuperAdminAuditoriaRouteImport.update({
+    id: '/super-admin/auditoria',
+    path: '/super-admin/auditoria',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedFinanzasTesoreriaRoute =
@@ -239,6 +254,12 @@ const AuthenticatedCarteraIdRoute = AuthenticatedCarteraIdRouteImport.update({
   path: '/cartera/$id',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedApoderadoMisCasosRoute =
+  AuthenticatedApoderadoMisCasosRouteImport.update({
+    id: '/apoderado/mis-casos',
+    path: '/apoderado/mis-casos',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const ApiPublicHooksFinanzasCronRoute =
   ApiPublicHooksFinanzasCronRouteImport.update({
     id: '/api/public/hooks/finanzas-cron',
@@ -268,6 +289,7 @@ export interface FileRoutesByFullPath {
   '/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/qa': typeof AuthenticatedQaRoute
+  '/apoderado/mis-casos': typeof AuthenticatedApoderadoMisCasosRoute
   '/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
   '/comisiones/$id': typeof AuthenticatedComisionesIdRoute
@@ -283,8 +305,10 @@ export interface FileRoutesByFullPath {
   '/finanzas/recaudos': typeof AuthenticatedFinanzasRecaudosRoute
   '/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
+  '/super-admin/auditoria': typeof AuthenticatedSuperAdminAuditoriaRoute
   '/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
+  '/super-admin/permisos': typeof AuthenticatedSuperAdminPermisosRoute
   '/super-admin/usuarios': typeof AuthenticatedSuperAdminUsuariosRoute
   '/cartera/': typeof AuthenticatedCarteraIndexRoute
   '/casos/': typeof AuthenticatedCasosIndexRoute
@@ -305,6 +329,7 @@ export interface FileRoutesByTo {
   '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/qa': typeof AuthenticatedQaRoute
   '/': typeof AuthenticatedIndexRoute
+  '/apoderado/mis-casos': typeof AuthenticatedApoderadoMisCasosRoute
   '/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
   '/comisiones/$id': typeof AuthenticatedComisionesIdRoute
@@ -320,8 +345,10 @@ export interface FileRoutesByTo {
   '/finanzas/recaudos': typeof AuthenticatedFinanzasRecaudosRoute
   '/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
+  '/super-admin/auditoria': typeof AuthenticatedSuperAdminAuditoriaRoute
   '/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
+  '/super-admin/permisos': typeof AuthenticatedSuperAdminPermisosRoute
   '/super-admin/usuarios': typeof AuthenticatedSuperAdminUsuariosRoute
   '/cartera': typeof AuthenticatedCarteraIndexRoute
   '/casos': typeof AuthenticatedCasosIndexRoute
@@ -345,6 +372,7 @@ export interface FileRoutesById {
   '/_authenticated/proyeccion': typeof AuthenticatedProyeccionRoute
   '/_authenticated/qa': typeof AuthenticatedQaRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/apoderado/mis-casos': typeof AuthenticatedApoderadoMisCasosRoute
   '/_authenticated/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/_authenticated/casos/$id': typeof AuthenticatedCasosIdRoute
   '/_authenticated/comisiones/$id': typeof AuthenticatedComisionesIdRoute
@@ -360,8 +388,10 @@ export interface FileRoutesById {
   '/_authenticated/finanzas/recaudos': typeof AuthenticatedFinanzasRecaudosRoute
   '/_authenticated/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/_authenticated/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
+  '/_authenticated/super-admin/auditoria': typeof AuthenticatedSuperAdminAuditoriaRoute
   '/_authenticated/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/_authenticated/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
+  '/_authenticated/super-admin/permisos': typeof AuthenticatedSuperAdminPermisosRoute
   '/_authenticated/super-admin/usuarios': typeof AuthenticatedSuperAdminUsuariosRoute
   '/_authenticated/cartera/': typeof AuthenticatedCarteraIndexRoute
   '/_authenticated/casos/': typeof AuthenticatedCasosIndexRoute
@@ -385,6 +415,7 @@ export interface FileRouteTypes {
     | '/notificaciones'
     | '/proyeccion'
     | '/qa'
+    | '/apoderado/mis-casos'
     | '/cartera/$id'
     | '/casos/$id'
     | '/comisiones/$id'
@@ -400,8 +431,10 @@ export interface FileRouteTypes {
     | '/finanzas/recaudos'
     | '/finanzas/reportes'
     | '/finanzas/tesoreria'
+    | '/super-admin/auditoria'
     | '/super-admin/expedientes'
     | '/super-admin/marca'
+    | '/super-admin/permisos'
     | '/super-admin/usuarios'
     | '/cartera/'
     | '/casos/'
@@ -422,6 +455,7 @@ export interface FileRouteTypes {
     | '/proyeccion'
     | '/qa'
     | '/'
+    | '/apoderado/mis-casos'
     | '/cartera/$id'
     | '/casos/$id'
     | '/comisiones/$id'
@@ -437,8 +471,10 @@ export interface FileRouteTypes {
     | '/finanzas/recaudos'
     | '/finanzas/reportes'
     | '/finanzas/tesoreria'
+    | '/super-admin/auditoria'
     | '/super-admin/expedientes'
     | '/super-admin/marca'
+    | '/super-admin/permisos'
     | '/super-admin/usuarios'
     | '/cartera'
     | '/casos'
@@ -461,6 +497,7 @@ export interface FileRouteTypes {
     | '/_authenticated/proyeccion'
     | '/_authenticated/qa'
     | '/_authenticated/'
+    | '/_authenticated/apoderado/mis-casos'
     | '/_authenticated/cartera/$id'
     | '/_authenticated/casos/$id'
     | '/_authenticated/comisiones/$id'
@@ -476,8 +513,10 @@ export interface FileRouteTypes {
     | '/_authenticated/finanzas/recaudos'
     | '/_authenticated/finanzas/reportes'
     | '/_authenticated/finanzas/tesoreria'
+    | '/_authenticated/super-admin/auditoria'
     | '/_authenticated/super-admin/expedientes'
     | '/_authenticated/super-admin/marca'
+    | '/_authenticated/super-admin/permisos'
     | '/_authenticated/super-admin/usuarios'
     | '/_authenticated/cartera/'
     | '/_authenticated/casos/'
@@ -619,6 +658,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSuperAdminUsuariosRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/super-admin/permisos': {
+      id: '/_authenticated/super-admin/permisos'
+      path: '/super-admin/permisos'
+      fullPath: '/super-admin/permisos'
+      preLoaderRoute: typeof AuthenticatedSuperAdminPermisosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/super-admin/marca': {
       id: '/_authenticated/super-admin/marca'
       path: '/super-admin/marca'
@@ -631,6 +677,13 @@ declare module '@tanstack/react-router' {
       path: '/super-admin/expedientes'
       fullPath: '/super-admin/expedientes'
       preLoaderRoute: typeof AuthenticatedSuperAdminExpedientesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/super-admin/auditoria': {
+      id: '/_authenticated/super-admin/auditoria'
+      path: '/super-admin/auditoria'
+      fullPath: '/super-admin/auditoria'
+      preLoaderRoute: typeof AuthenticatedSuperAdminAuditoriaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/finanzas/tesoreria': {
@@ -738,6 +791,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCarteraIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/apoderado/mis-casos': {
+      id: '/_authenticated/apoderado/mis-casos'
+      path: '/apoderado/mis-casos'
+      fullPath: '/apoderado/mis-casos'
+      preLoaderRoute: typeof AuthenticatedApoderadoMisCasosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/api/public/hooks/finanzas-cron': {
       id: '/api/public/hooks/finanzas-cron'
       path: '/api/public/hooks/finanzas-cron'
@@ -806,13 +866,16 @@ interface AuthenticatedRouteChildren {
   AuthenticatedProyeccionRoute: typeof AuthenticatedProyeccionRoute
   AuthenticatedQaRoute: typeof AuthenticatedQaRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedApoderadoMisCasosRoute: typeof AuthenticatedApoderadoMisCasosRoute
   AuthenticatedCarteraIdRoute: typeof AuthenticatedCarteraIdRoute
   AuthenticatedCasosIdRoute: typeof AuthenticatedCasosIdRoute
   AuthenticatedComisionesIdRoute: typeof AuthenticatedComisionesIdRoute
   AuthenticatedContabilidadCuentasCobroRoute: typeof AuthenticatedContabilidadCuentasCobroRoute
   AuthenticatedExpedienteMaestroIdRoute: typeof AuthenticatedExpedienteMaestroIdRoute
+  AuthenticatedSuperAdminAuditoriaRoute: typeof AuthenticatedSuperAdminAuditoriaRoute
   AuthenticatedSuperAdminExpedientesRoute: typeof AuthenticatedSuperAdminExpedientesRoute
   AuthenticatedSuperAdminMarcaRoute: typeof AuthenticatedSuperAdminMarcaRoute
+  AuthenticatedSuperAdminPermisosRoute: typeof AuthenticatedSuperAdminPermisosRoute
   AuthenticatedSuperAdminUsuariosRoute: typeof AuthenticatedSuperAdminUsuariosRoute
   AuthenticatedCarteraIndexRoute: typeof AuthenticatedCarteraIndexRoute
   AuthenticatedCasosIndexRoute: typeof AuthenticatedCasosIndexRoute
@@ -830,15 +893,18 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedProyeccionRoute: AuthenticatedProyeccionRoute,
   AuthenticatedQaRoute: AuthenticatedQaRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedApoderadoMisCasosRoute: AuthenticatedApoderadoMisCasosRoute,
   AuthenticatedCarteraIdRoute: AuthenticatedCarteraIdRoute,
   AuthenticatedCasosIdRoute: AuthenticatedCasosIdRoute,
   AuthenticatedComisionesIdRoute: AuthenticatedComisionesIdRoute,
   AuthenticatedContabilidadCuentasCobroRoute:
     AuthenticatedContabilidadCuentasCobroRoute,
   AuthenticatedExpedienteMaestroIdRoute: AuthenticatedExpedienteMaestroIdRoute,
+  AuthenticatedSuperAdminAuditoriaRoute: AuthenticatedSuperAdminAuditoriaRoute,
   AuthenticatedSuperAdminExpedientesRoute:
     AuthenticatedSuperAdminExpedientesRoute,
   AuthenticatedSuperAdminMarcaRoute: AuthenticatedSuperAdminMarcaRoute,
+  AuthenticatedSuperAdminPermisosRoute: AuthenticatedSuperAdminPermisosRoute,
   AuthenticatedSuperAdminUsuariosRoute: AuthenticatedSuperAdminUsuariosRoute,
   AuthenticatedCarteraIndexRoute: AuthenticatedCarteraIndexRoute,
   AuthenticatedCasosIndexRoute: AuthenticatedCasosIndexRoute,
@@ -863,13 +929,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
