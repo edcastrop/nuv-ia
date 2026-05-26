@@ -14,6 +14,7 @@ import { HistorialCaso } from "@/components/expediente/HistorialCaso";
 import { SoportesBanco } from "@/components/expediente/SoportesBanco";
 import { ValidacionQABlock } from "@/components/qa/ValidacionQABlock";
 import { CarteraBlockExpediente } from "@/components/cartera/CarteraBlockExpediente";
+import { ConversacionCaso } from "@/components/expediente/ConversacionCaso";
 
 export const Route = createFileRoute("/_authenticated/casos/$id")({
   component: CasoDetail,
