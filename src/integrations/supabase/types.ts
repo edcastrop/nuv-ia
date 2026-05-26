@@ -885,6 +885,202 @@ export type Database = {
         }
         Relationships: []
       }
+      colab_auditoria: {
+        Row: {
+          accion: string
+          canal_id: string | null
+          created_at: string
+          detalle: Json | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          accion: string
+          canal_id?: string | null
+          created_at?: string
+          detalle?: Json | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          accion?: string
+          canal_id?: string | null
+          created_at?: string
+          detalle?: Json | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      colab_canales: {
+        Row: {
+          archivado: boolean
+          area: string | null
+          caso_id: string | null
+          created_at: string
+          created_by: string | null
+          descripcion: string | null
+          id: string
+          nombre: string
+          privado: boolean
+          tipo: Database["public"]["Enums"]["colab_canal_tipo"]
+          updated_at: string
+        }
+        Insert: {
+          archivado?: boolean
+          area?: string | null
+          caso_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string | null
+          id?: string
+          nombre: string
+          privado?: boolean
+          tipo?: Database["public"]["Enums"]["colab_canal_tipo"]
+          updated_at?: string
+        }
+        Update: {
+          archivado?: boolean
+          area?: string | null
+          caso_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string | null
+          id?: string
+          nombre?: string
+          privado?: boolean
+          tipo?: Database["public"]["Enums"]["colab_canal_tipo"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      colab_mensajes: {
+        Row: {
+          adjuntos: Json
+          borrado: boolean
+          canal_id: string
+          created_at: string
+          editado_at: string | null
+          id: string
+          menciones: string[]
+          reply_to: string | null
+          texto: string | null
+          user_id: string
+        }
+        Insert: {
+          adjuntos?: Json
+          borrado?: boolean
+          canal_id: string
+          created_at?: string
+          editado_at?: string | null
+          id?: string
+          menciones?: string[]
+          reply_to?: string | null
+          texto?: string | null
+          user_id: string
+        }
+        Update: {
+          adjuntos?: Json
+          borrado?: boolean
+          canal_id?: string
+          created_at?: string
+          editado_at?: string | null
+          id?: string
+          menciones?: string[]
+          reply_to?: string | null
+          texto?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "colab_mensajes_canal_id_fkey"
+            columns: ["canal_id"]
+            isOneToOne: false
+            referencedRelation: "colab_canales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      colab_miembros: {
+        Row: {
+          canal_id: string
+          created_at: string
+          rol: string
+          silenciado: boolean
+          ultima_lectura: string
+          user_id: string
+        }
+        Insert: {
+          canal_id: string
+          created_at?: string
+          rol?: string
+          silenciado?: boolean
+          ultima_lectura?: string
+          user_id: string
+        }
+        Update: {
+          canal_id?: string
+          created_at?: string
+          rol?: string
+          silenciado?: boolean
+          ultima_lectura?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "colab_miembros_canal_id_fkey"
+            columns: ["canal_id"]
+            isOneToOne: false
+            referencedRelation: "colab_canales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      colab_notificaciones: {
+        Row: {
+          canal_id: string | null
+          created_at: string
+          id: string
+          leida: boolean
+          mensaje_id: string | null
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          canal_id?: string | null
+          created_at?: string
+          id?: string
+          leida?: boolean
+          mensaje_id?: string | null
+          tipo: string
+          user_id: string
+        }
+        Update: {
+          canal_id?: string | null
+          created_at?: string
+          id?: string
+          leida?: boolean
+          mensaje_id?: string | null
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "colab_notificaciones_canal_id_fkey"
+            columns: ["canal_id"]
+            isOneToOne: false
+            referencedRelation: "colab_canales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "colab_notificaciones_mensaje_id_fkey"
+            columns: ["mensaje_id"]
+            isOneToOne: false
+            referencedRelation: "colab_mensajes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comisiones: {
         Row: {
           base: number
@@ -2367,6 +2563,14 @@ export type Database = {
         Args: { _profile_id: string; _uid: string }
         Returns: boolean
       }
+      colab_es_miembro: {
+        Args: { _canal: string; _user: string }
+        Returns: boolean
+      }
+      colab_puede_ver_canal: {
+        Args: { _canal: string; _user: string }
+        Returns: boolean
+      }
       comision_disponible_para_cc: {
         Args: { _comision_id: string }
         Returns: number
@@ -2504,6 +2708,7 @@ export type Database = {
         | "proyeccion_pendiente_qa"
         | "proyeccion_aprobada_qa"
         | "proyeccion_devuelta_qa"
+      colab_canal_tipo: "area" | "caso" | "dm" | "custom"
       expediente_estado:
         | "SIMULADO"
         | "FIRMADO"
@@ -2730,6 +2935,7 @@ export const Constants = {
         "proyeccion_aprobada_qa",
         "proyeccion_devuelta_qa",
       ],
+      colab_canal_tipo: ["area", "caso", "dm", "custom"],
       expediente_estado: [
         "SIMULADO",
         "FIRMADO",
