@@ -402,6 +402,7 @@ function NuvexIAPage() {
             </div>
           )}
         </div>
+        )}
       </div>
 
       <EscalarTicketDialog
