@@ -216,9 +216,25 @@ export async function getOtroMiembroLectura(canalId: string): Promise<string | n
   return (data as any)?.ultima_lectura ?? null;
 }
 
-export async function listDirectorio(): Promise<Array<{ user_id: string; nombre: string; correo: string | null; foto_url: string | null; roles: string[] }>> {
+export type DirectorioPersona = {
+  user_id: string;
+  nombre: string;
+  correo: string | null;
+  correo_corp: string | null;
+  whatsapp: string | null;
+  celular: string | null;
+  ciudad: string | null;
+  pais: string | null;
+  equipo: string | null;
+  sede: string | null;
+  foto_url: string | null;
+  activo: boolean;
+  roles: string[];
+};
+
+export async function listDirectorioFull(): Promise<DirectorioPersona[]> {
   const { data, error } = await T("profiles")
-    .select("id, nombre, email, avatar_url")
+    .select("id, nombre, email, avatar_url, correo_corporativo, whatsapp, celular, ciudad, pais, equipo, sede, activo")
     .order("nombre", { ascending: true });
   if (error) throw error;
   const rows = (data ?? []) as any[];
@@ -230,7 +246,26 @@ export async function listDirectorio(): Promise<Array<{ user_id: string; nombre:
     arr.push(r.role);
     map.set(r.user_id, arr);
   });
-  return rows.map((p) => ({ user_id: p.id, nombre: p.nombre ?? p.email ?? "Usuario", correo: p.email ?? null, foto_url: p.avatar_url ?? null, roles: map.get(p.id) ?? [] }));
+  return rows.map((p) => ({
+    user_id: p.id,
+    nombre: p.nombre ?? p.email ?? "Usuario",
+    correo: p.email ?? null,
+    correo_corp: p.correo_corporativo ?? null,
+    whatsapp: p.whatsapp ?? null,
+    celular: p.celular ?? null,
+    ciudad: p.ciudad ?? null,
+    pais: p.pais ?? null,
+    equipo: p.equipo ?? null,
+    sede: p.sede ?? null,
+    foto_url: p.avatar_url ?? null,
+    activo: p.activo ?? true,
+    roles: map.get(p.id) ?? [],
+  }));
+}
+
+export async function listDirectorio(): Promise<Array<{ user_id: string; nombre: string; correo: string | null; foto_url: string | null; roles: string[] }>> {
+  const rows = await listDirectorioFull();
+  return rows.map((p) => ({ user_id: p.user_id, nombre: p.nombre, correo: p.correo, foto_url: p.foto_url, roles: p.roles }));
 }
 
 export async function getOrCreateDM(otherUserId: string): Promise<Canal> {
