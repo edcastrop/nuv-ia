@@ -10,6 +10,7 @@ import {
 import { getMetricasIA, getAlertasInteligentes } from "@/lib/nuvex-ia.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { EscalarTicketDialog } from "@/components/nuvex-gpt/EscalarTicketDialog";
+import { useUserRole } from "@/hooks/useUserRole";
 
 export const Route = createFileRoute("/_authenticated/nuvex-ia")({
   component: NuvexIAPage,
