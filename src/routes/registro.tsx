@@ -1,17 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/nuvex/Logo";
-import { ArrowRight, ShieldCheck, Lock } from "lucide-react";
+import { ArrowRight, ShieldCheck, Lock, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/registro")({
   component: RegistroPage,
   head: () => ({ meta: [{ title: "Solicitar acceso · NUVEX" }] }),
 });
-
-const AZUL = "#445DA3";
-const VERDE = "#84B98F";
-const NEGRO = "#242424";
 
 const ROLES_SOLICITABLES = [
   { v: "licenciado", label: "Licenciado" },
@@ -65,55 +61,69 @@ function RegistroPage() {
 
   if (done) {
     return (
-      <div className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 overflow-hidden"
-        style={{ background: "linear-gradient(155deg, #F0F4FA 0%, #F8FAFF 40%, #EDF2F9 100%)" }}>
-        <BackgroundBlobs />
-        <div className="relative z-10 w-full max-w-md">
-          <div className="flex justify-center mb-8">
-            <Logo height={52} />
+      <main className="nuvex-register-shell min-h-screen px-4 py-8 sm:px-6">
+        <div className="nuvex-register-success mx-auto w-full max-w-md">
+          <div className="flex justify-center">
+            <Logo variant="white" height={72} />
           </div>
-          <div className="rounded-[28px] bg-white/90 backdrop-blur-sm border border-[#E5EAF2] shadow-[0_24px_72px_-24px_rgba(68,93,163,0.22)] p-10 text-center">
-            <div className="mx-auto mb-5 h-16 w-16 rounded-full flex items-center justify-center text-white text-2xl shadow-lg"
-                 style={{ background: `linear-gradient(135deg,${AZUL},${VERDE})` }}>
+          <section className="nuvex-register-card nuvex-register-card--success mt-8 text-center">
+            <div className="nuvex-register-status-icon mx-auto mb-5">
               <ShieldCheck className="w-7 h-7" strokeWidth={2.5} />
             </div>
-            <h2 className="text-xl font-semibold" style={{ color: NEGRO }}>Solicitud enviada</h2>
-            <p className="mt-3 text-sm text-[#242424]/70 leading-relaxed">
+            <h1 className="nuvex-register-title">Solicitud enviada</h1>
+            <p className="nuvex-register-copy mt-3">
               Tu cuenta quedó en <b>estado pendiente</b>. Un administrador NUVEX revisará y aprobará tu acceso.
               Recibirás una notificación cuando puedas iniciar sesión.
             </p>
             <button
               onClick={() => navigate({ to: "/login" })}
-              className="mt-7 w-full rounded-[18px] px-4 py-3.5 text-sm font-semibold uppercase tracking-wider text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
-              style={{ background: `linear-gradient(135deg,${AZUL},${VERDE})` }}
+              className="nuvex-register-submit mt-7 w-full"
             >Volver al login</button>
-          </div>
+          </section>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 py-10 overflow-hidden"
-      style={{ background: "linear-gradient(155deg, #F0F4FA 0%, #F8FAFF 40%, #EDF2F9 100%)" }}>
-      <BackgroundBlobs />
-      <div className="relative z-10 w-full max-w-[760px]">
-        <div className="flex justify-center mb-8">
-          <Logo height={52} />
-        </div>
-        <div className="rounded-[28px] bg-white/90 backdrop-blur-sm border border-[#E5EAF2] shadow-[0_24px_72px_-24px_rgba(68,93,163,0.22)] px-6 sm:px-10 md:px-12 py-10 sm:py-12">
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#445DA3]/8 px-4 py-1.5 text-[11px] uppercase tracking-[0.14em] font-semibold mb-4" style={{ color: AZUL }}>
-            <span className="h-2 w-2 rounded-full" style={{ background: VERDE }} />
-            Solicitud de acceso
+    <main className="nuvex-register-shell min-h-screen px-4 py-8 sm:px-6">
+      <div className="nuvex-register-grid mx-auto grid w-full max-w-6xl items-stretch gap-6 lg:grid-cols-[0.88fr_1.12fr]">
+        <aside className="nuvex-register-brand-panel">
+          <Logo variant="white" height={86} />
+          <div className="nuvex-register-brand-content">
+            <div className="nuvex-register-kicker">
+              <Sparkles className="h-4 w-4" strokeWidth={2.2} />
+              Acceso corporativo NUVEX
+            </div>
+            <h1 className="nuvex-register-hero-title">Crear cuenta NUVEX</h1>
+            <p className="nuvex-register-hero-copy">
+              Solicita ingreso a la plataforma financiera y operativa. Tu perfil será validado por administración antes de activar el acceso.
+            </p>
           </div>
-          <h2 className="text-[26px] sm:text-[28px] font-semibold tracking-tight leading-tight" style={{ color: NEGRO }}>
-            Crear cuenta NUVEX
-          </h2>
-          <p className="mt-2 text-sm sm:text-[15px] text-[#242424]/60 leading-relaxed max-w-lg">
-            Solicita tu acceso a la plataforma operativa de NUVEX. Un administrador revisará y aprobará tu cuenta antes de iniciar sesión.
-          </p>
+          <div className="nuvex-register-trust-row">
+            <span>Validación administrativa</span>
+            <span>Cuenta protegida</span>
+          </div>
+        </aside>
 
-          <form onSubmit={submit} className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <section className="nuvex-register-card">
+          <div className="nuvex-register-card-header">
+            <div>
+              <div className="nuvex-register-badge">
+                <span />
+                Solicitud de acceso
+              </div>
+              <h2 className="nuvex-register-title mt-4">Completa tus datos</h2>
+              <p className="nuvex-register-copy mt-2">
+                Conservamos el flujo actual de registro: la cuenta queda pendiente hasta aprobación interna.
+              </p>
+            </div>
+            <div className="nuvex-register-lock-mark" aria-hidden="true">
+              <Lock className="h-5 w-5" strokeWidth={2.3} />
+            </div>
+          </div>
+
+          <form onSubmit={submit} className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2">
             <Field label="Nombre completo *">
               <Input value={form.nombre} onChange={(v) => setForm({ ...form, nombre: v })} required />
             </Field>
@@ -137,8 +147,7 @@ function RegistroPage() {
                 <select
                   value={form.rol_solicitado}
                   onChange={(e) => setForm({ ...form, rol_solicitado: e.target.value })}
-                  className="w-full h-14 rounded-[14px] border border-[#DDE2EB] bg-[#FAFBFD] px-4 text-sm text-[#242424] outline-none focus:border-[#445DA3] focus:bg-white focus:ring-4 focus:ring-[#445DA3]/12 transition-all duration-200 appearance-none cursor-pointer"
-                  style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23445DA3' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 16px center" }}
+                  className="nuvex-register-control nuvex-register-select"
                 >
                   {ROLES_SOLICITABLES.map((r) => <option key={r.v} value={r.v}>{r.label}</option>)}
                 </select>
@@ -146,7 +155,7 @@ function RegistroPage() {
             </div>
 
             {err && (
-              <div className="sm:col-span-2 rounded-xl bg-[#FDECEC] border border-[#F5C2C2] px-4 py-3 text-sm text-[#B42318]">
+              <div className="nuvex-register-error sm:col-span-2">
                 {err}
               </div>
             )}
@@ -154,8 +163,7 @@ function RegistroPage() {
             <button
               type="submit"
               disabled={busy}
-              className="sm:col-span-2 h-[60px] mt-1 rounded-[18px] px-6 text-sm font-semibold uppercase tracking-wider text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-              style={{ background: `linear-gradient(135deg,${AZUL},${VERDE})` }}
+              className="nuvex-register-submit sm:col-span-2"
             >
               {busy ? (
                 <span className="inline-flex items-center gap-2">
@@ -172,40 +180,27 @@ function RegistroPage() {
             </button>
           </form>
 
-          <div className="mt-6 flex items-center justify-center gap-2 text-sm text-[#242424]/60">
-            <ShieldCheck className="w-4 h-4 flex-shrink-0" style={{ color: VERDE }} />
-            <span className="text-center leading-relaxed">
+          <div className="nuvex-register-note">
+            <ShieldCheck className="h-4 w-4 flex-shrink-0" strokeWidth={2.4} />
+            <span>
               Tu solicitud será revisada por el equipo administrador de NUVEX antes de habilitar el acceso.
             </span>
           </div>
 
-          <div className="mt-6 pt-5 border-t border-[#E5EAF2] text-center text-sm text-[#242424]/60">
+          <div className="nuvex-register-login-link">
             ¿Ya tienes cuenta?{" "}
-            <Link to="/login" className="font-semibold hover:underline transition-colors" style={{ color: AZUL }}>Iniciar sesión</Link>
+            <Link to="/login">Iniciar sesión</Link>
           </div>
-        </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
 
-function BackgroundBlobs() {
-  return (
-    <>
-      <div className="pointer-events-none absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full opacity-30 blur-[100px]"
-        style={{ background: "radial-gradient(circle, #445DA3 0%, transparent 70%)" }} />
-      <div className="pointer-events-none absolute top-1/2 -right-40 h-[420px] w-[420px] rounded-full opacity-25 blur-[100px]"
-        style={{ background: "radial-gradient(circle, #84B98F 0%, transparent 70%)" }} />
-      <div className="pointer-events-none absolute -bottom-32 left-1/4 h-[360px] w-[360px] rounded-full opacity-20 blur-[100px]"
-        style={{ background: "radial-gradient(circle, #445DA3 0%, transparent 70%)" }} />
-    </>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="block">
-      <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#242424]/55">{label}</span>
+      <span className="nuvex-register-label">{label}</span>
       <div className="mt-1.5">{children}</div>
     </label>
   );
@@ -219,7 +214,7 @@ function Input(props: { value: string; onChange: (v: string) => void; type?: str
       onChange={(e) => props.onChange(e.target.value)}
       required={props.required}
       placeholder={props.placeholder}
-      className="w-full h-14 rounded-[14px] border border-[#DDE2EB] bg-[#FAFBFD] px-4 text-sm text-[#242424] outline-none placeholder:text-[#242424]/30 focus:border-[#445DA3] focus:bg-white focus:ring-4 focus:ring-[#445DA3]/12 transition-all duration-200"
+      className="nuvex-register-control"
     />
   );
 }
