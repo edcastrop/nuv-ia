@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/nuvex-ia")({
 const AZUL = "#445DA3";
 const VERDE = "#84B98F";
 
-const EJEMPLOS = [
+const EJEMPLOS_INTERNO = [
   "¿Cómo va el caso de Adriana Vargas?",
   "¿Cuántos casos aprobados tengo?",
   "¿Qué clientes deben honorarios?",
@@ -28,13 +28,28 @@ const EJEMPLOS = [
   "¿Qué expedientes están incompletos?",
 ];
 
-const SUGERENCIAS = [
+const EJEMPLOS_APODERADO = [
+  "¿Cómo va mi caso?",
+  "¿Cuánto debo de honorarios?",
+  "¿Qué documentos me faltan?",
+  "¿En qué etapa está mi expediente?",
+  "¿Cuándo es mi próxima cuota?",
+];
+
+const SUGERENCIAS_INTERNO = [
   "Casos aprobados este mes",
   "Honorarios pendientes",
   "Cuentas de cobro pendientes",
   "Casos sin movimiento",
   "Comisiones pendientes",
   "Expedientes incompletos",
+];
+
+const SUGERENCIAS_APODERADO = [
+  "Estado de mi caso",
+  "Mis honorarios pendientes",
+  "Documentos requeridos",
+  "Próximos pasos",
 ];
 
 type Mensaje = { rol: "user" | "ai"; texto: string; filas?: unknown[]; escalable?: boolean; preguntaOriginal?: string };
