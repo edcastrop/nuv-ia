@@ -141,16 +141,17 @@ BASE DE CONOCIMIENTO RELEVANTE (úsala como fuente única de verdad):
 ${kbContext}`;
 
           // Log query (best-effort)
-          void supabase.from("gpt_consultas_log" as never).insert({
+          const categoriaDetectada = articulos[0]
+            ? Array.isArray(articulos[0].gpt_kb_categorias)
+              ? articulos[0].gpt_kb_categorias[0]?.nombre
+              : articulos[0].gpt_kb_categorias?.nombre
+            : null;
+          void supabase.from("gpt_consultas_log").insert({
             user_id: userId,
             rol: rolPrincipal,
             modulo: modulo || null,
             pregunta: q.slice(0, 1000),
-            categoria_detectada: articulos[0]
-              ? Array.isArray(articulos[0].gpt_kb_categorias)
-                ? articulos[0].gpt_kb_categorias[0]?.nombre
-                : articulos[0].gpt_kb_categorias?.nombre
-              : null,
+            categoria_detectada: categoriaDetectada ?? null,
             respondida: articulos.length > 0,
           });
 
