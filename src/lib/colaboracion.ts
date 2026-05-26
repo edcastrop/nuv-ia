@@ -139,6 +139,83 @@ export async function marcarTodasNotifLeidas() {
   await T("colab_notificaciones").update({ leida: true } as never).eq("leida", false);
 }
 
+export interface DMResumen {
+  canal: Canal;
+  otro: { user_id: string; nombre: string; foto_url: string | null; roles: string[]; ultima_lectura: string | null };
+  ultimo_mensaje: { texto: string | null; created_at: string; user_id: string } | null;
+  no_leidos: number;
+}
+
+export async function listMisDMs(): Promise<DMResumen[]> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data: mias } = await T("colab_miembros")
+    .select("canal_id, ultima_lectura, colab_canales!inner(id,nombre,tipo,privado,archivado,descripcion,area,caso_id,created_by,created_at,updated_at)")
+    .eq("user_id", user.id);
+  const dmRows = ((mias ?? []) as any[]).filter((m) => m.colab_canales?.tipo === "dm" && !m.colab_canales?.archivado);
+  if (!dmRows.length) return [];
+  const canalIds = dmRows.map((r) => r.canal_id);
+  const myReadByCanal = new Map<string, string>(dmRows.map((r) => [r.canal_id, r.ultima_lectura]));
+
+  const { data: otrosMiembros } = await T("colab_miembros")
+    .select("canal_id, user_id, ultima_lectura")
+    .in("canal_id", canalIds)
+    .neq("user_id", user.id);
+  const otroPorCanal = new Map<string, { user_id: string; ultima_lectura: string }>();
+  ((otrosMiembros ?? []) as any[]).forEach((m) => { otroPorCanal.set(m.canal_id, { user_id: m.user_id, ultima_lectura: m.ultima_lectura }); });
+
+  const otroIds = Array.from(new Set(Array.from(otroPorCanal.values()).map((v) => v.user_id)));
+  const dir = await listDirectorio();
+  const dirMap = new Map(dir.map((d) => [d.user_id, d]));
+
+  const { data: ultMsgs } = await T("colab_mensajes")
+    .select("canal_id, user_id, texto, created_at, borrado")
+    .in("canal_id", canalIds)
+    .order("created_at", { ascending: false })
+    .limit(canalIds.length * 30);
+  const ultimoPorCanal = new Map<string, any>();
+  ((ultMsgs ?? []) as any[]).forEach((m) => { if (!ultimoPorCanal.has(m.canal_id)) ultimoPorCanal.set(m.canal_id, m); });
+
+  const resumen: DMResumen[] = dmRows.map((r) => {
+    const otroRef = otroPorCanal.get(r.canal_id);
+    const perfil = otroRef ? dirMap.get(otroRef.user_id) : undefined;
+    const myRead = myReadByCanal.get(r.canal_id);
+    const noLeidos = ((ultMsgs ?? []) as any[]).filter((m) => m.canal_id === r.canal_id && m.user_id !== user.id && (!myRead || new Date(m.created_at) > new Date(myRead))).length;
+    return {
+      canal: r.colab_canales as Canal,
+      otro: {
+        user_id: otroRef?.user_id ?? "",
+        nombre: perfil?.nombre ?? "Usuario",
+        foto_url: perfil?.foto_url ?? null,
+        roles: perfil?.roles ?? [],
+        ultima_lectura: otroRef?.ultima_lectura ?? null,
+      },
+      ultimo_mensaje: ultimoPorCanal.get(r.canal_id) ?? null,
+      no_leidos: noLeidos,
+    };
+  });
+  void otroIds;
+  resumen.sort((a, b) => {
+    const ta = a.ultimo_mensaje ? new Date(a.ultimo_mensaje.created_at).getTime() : 0;
+    const tb = b.ultimo_mensaje ? new Date(b.ultimo_mensaje.created_at).getTime() : 0;
+    return tb - ta;
+  });
+  return resumen;
+}
+
+export async function marcarCanalLeido(canalId: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await T("colab_miembros").update({ ultima_lectura: new Date().toISOString() } as never).eq("canal_id", canalId).eq("user_id", user.id);
+}
+
+export async function getOtroMiembroLectura(canalId: string): Promise<string | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data } = await T("colab_miembros").select("user_id, ultima_lectura").eq("canal_id", canalId).neq("user_id", user.id).limit(1).maybeSingle();
+  return (data as any)?.ultima_lectura ?? null;
+}
+
 export async function listDirectorio(): Promise<Array<{ user_id: string; nombre: string; correo: string | null; foto_url: string | null; roles: string[] }>> {
   const { data, error } = await T("profiles")
     .select("id, nombre, email, avatar_url")
