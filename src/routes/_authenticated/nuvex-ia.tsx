@@ -35,7 +35,7 @@ const SUGERENCIAS = [
   "Expedientes incompletos",
 ];
 
-type Mensaje = { rol: "user" | "ai"; texto: string; filas?: unknown[] };
+type Mensaje = { rol: "user" | "ai"; texto: string; filas?: unknown[]; escalable?: boolean; preguntaOriginal?: string };
 
 function fmtCOP(n: number) {
   return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n || 0);
