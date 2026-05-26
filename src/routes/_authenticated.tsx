@@ -94,6 +94,7 @@ function AuthenticatedLayout() {
           label: "Operación",
           items: [
             { to: "/", label: "Simulador", Icon: LayoutGrid, exact: true },
+            { to: "/nuvex-ia", label: "NUVEX IA", Icon: Sparkles },
             { to: "/casos", label: "Casos", Icon: FolderKanban },
             { to: "/expediente-maestro", label: "Expediente", Icon: UserSquare2 },
             { to: "/proyeccion", label: "Proyección", Icon: LineChart },
