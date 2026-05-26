@@ -53,6 +53,8 @@ function NuvexIAPage() {
   const [enviando, setEnviando] = useState(false);
   const [chat, setChat] = useState<Mensaje[]>([]);
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
+  const [escalarOpen, setEscalarOpen] = useState(false);
+  const [escalarCtx, setEscalarCtx] = useState<{ pregunta: string; respuesta: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
