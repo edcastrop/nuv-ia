@@ -31,6 +31,7 @@ function AuthenticatedLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [unread, setUnread] = useState(0);
+  const [gateState, setGateState] = useState<"checking" | "ok" | "blocked">("checking");
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem("nuvex.sidebar.collapsed") === "1";
@@ -41,25 +42,45 @@ function AuthenticatedLayout() {
     if (!loading && !session) navigate({ to: "/login" });
   }, [loading, session, navigate]);
 
-  // Onboarding gate: pendiente/rechazado → pendiente-aprobacion; aprobado sin onboarding → /onboarding
+  // CRITICAL GATE: bloquea render hasta validar estado_acceso=aprobado/activo
   useEffect(() => {
     if (!session?.user) return;
     let cancel = false;
+    setGateState("checking");
     (async () => {
       const { data } = await supabase
         .from("profiles")
         .select("estado_acceso, onboarding_estado")
         .eq("id", session.user.id)
         .maybeSingle();
-      if (cancel || !data) return;
-      const estado = (data as { estado_acceso: string }).estado_acceso;
-      const onb = (data as { onboarding_estado: string }).onboarding_estado;
+      if (cancel) return;
+      const estado = (data as { estado_acceso?: string } | null)?.estado_acceso ?? "pendiente";
+      const onb = (data as { onboarding_estado?: string } | null)?.onboarding_estado ?? "pendiente";
       const path = location.pathname;
-      if ((estado === "pendiente" || estado === "rechazado" || estado === "bloqueado") && path !== "/pendiente-aprobacion") {
-        navigate({ to: "/pendiente-aprobacion" });
-      } else if (estado === "aprobado" && onb !== "completado" && !path.startsWith("/onboarding") && !path.startsWith("/mi-perfil")) {
-        navigate({ to: "/onboarding" });
+      const aprobado = estado === "aprobado" || estado === "activo";
+
+      if (!aprobado) {
+        if (path !== "/pendiente-aprobacion") {
+          setGateState("blocked");
+          // Auditar intento de acceso bloqueado (best-effort)
+          supabase.from("onboarding_auditoria" as never).insert({
+            user_id: session.user.id,
+            evento: "acceso_bloqueado",
+            actor_id: session.user.id,
+            detalle: { path, estado_acceso: estado },
+          } as never).then(() => {});
+          navigate({ to: "/pendiente-aprobacion" });
+        } else {
+          setGateState("ok");
+        }
+        return;
       }
+      if (onb !== "completado" && !path.startsWith("/onboarding") && !path.startsWith("/mi-perfil")) {
+        setGateState("blocked");
+        navigate({ to: "/onboarding" });
+        return;
+      }
+      setGateState("ok");
     })();
     return () => { cancel = true; };
   }, [session, location.pathname, navigate]);
@@ -73,7 +94,7 @@ function AuthenticatedLayout() {
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   useEffect(() => {
-    if (!session) return;
+    if (!session || gateState !== "ok") return;
     let active = true;
     const load = async () => {
       const { count } = await supabase
@@ -88,12 +109,12 @@ function AuthenticatedLayout() {
       .on("postgres_changes", { event: "*", schema: "public", table: "caso_alertas" }, load)
       .subscribe();
     return () => { active = false; supabase.removeChannel(ch); };
-  }, [session, location.pathname]);
+  }, [session, location.pathname, gateState]);
 
-  if (loading || !session) {
+  if (loading || !session || gateState !== "ok") {
     return (
       <div className="min-h-screen flex items-center justify-center text-white/60 text-sm" style={{ background: "#050814" }}>
-        Cargando…
+        Verificando acceso…
       </div>
     );
   }
