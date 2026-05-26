@@ -313,22 +313,12 @@ function LoginPage() {
             </button>
 
             <div className="mt-6 text-center text-sm text-[#242424]/70">
-              {mode === "signin" ? (
-                <>
-                  ¿No tienes cuenta?{" "}
-                  <button onClick={() => setMode("signup")} className="font-semibold hover:underline" style={{ color: NUVEX_AZUL }}>
-                    Crear una
-                  </button>
-                </>
-              ) : (
-                <>
-                  ¿Ya tienes cuenta?{" "}
-                  <button onClick={() => setMode("signin")} className="font-semibold hover:underline" style={{ color: NUVEX_AZUL }}>
-                    Iniciar sesión
-                  </button>
-                </>
-              )}
+              ¿No tienes cuenta?{" "}
+              <Link to="/registro" className="font-semibold hover:underline" style={{ color: NUVEX_AZUL }}>
+                Solicitar acceso
+              </Link>
             </div>
+
           </div>
 
           <p className="mt-5 text-center text-xs text-[#242424]/55">
