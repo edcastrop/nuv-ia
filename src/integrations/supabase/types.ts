@@ -62,6 +62,51 @@ export type Database = {
         }
         Relationships: []
       }
+      auditoria_global: {
+        Row: {
+          accion: string
+          caso_id: string | null
+          created_at: string
+          entidad: string
+          entidad_id: string | null
+          expediente_id: string | null
+          id: string
+          observacion: string | null
+          rol_efectivo: string | null
+          user_id: string | null
+          valor_anterior: Json | null
+          valor_nuevo: Json | null
+        }
+        Insert: {
+          accion: string
+          caso_id?: string | null
+          created_at?: string
+          entidad: string
+          entidad_id?: string | null
+          expediente_id?: string | null
+          id?: string
+          observacion?: string | null
+          rol_efectivo?: string | null
+          user_id?: string | null
+          valor_anterior?: Json | null
+          valor_nuevo?: Json | null
+        }
+        Update: {
+          accion?: string
+          caso_id?: string | null
+          created_at?: string
+          entidad?: string
+          entidad_id?: string | null
+          expediente_id?: string | null
+          id?: string
+          observacion?: string | null
+          rol_efectivo?: string | null
+          user_id?: string | null
+          valor_anterior?: Json | null
+          valor_nuevo?: Json | null
+        }
+        Relationships: []
+      }
       brand_config: {
         Row: {
           color_azul: string
@@ -1260,6 +1305,45 @@ export type Database = {
           },
         ]
       }
+      notificaciones_usuario: {
+        Row: {
+          created_at: string
+          id: string
+          leida: boolean
+          link: string | null
+          mensaje: string | null
+          metadata: Json | null
+          severidad: string
+          tipo: string
+          titulo: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          leida?: boolean
+          link?: string | null
+          mensaje?: string | null
+          metadata?: Json | null
+          severidad?: string
+          tipo: string
+          titulo: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          leida?: boolean
+          link?: string | null
+          mensaje?: string | null
+          metadata?: Json | null
+          severidad?: string
+          tipo?: string
+          titulo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       parametros_financieros: {
         Row: {
           clave: string
@@ -1281,6 +1365,27 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           valor?: Json
+        }
+        Relationships: []
+      }
+      permisos_catalogo: {
+        Row: {
+          accion: string
+          descripcion: string | null
+          id: string
+          modulo: string
+        }
+        Insert: {
+          accion: string
+          descripcion?: string | null
+          id?: string
+          modulo: string
+        }
+        Update: {
+          accion?: string
+          descripcion?: string | null
+          id?: string
+          modulo?: string
         }
         Relationships: []
       }
@@ -1308,6 +1413,36 @@ export type Database = {
           id?: string
           nombre?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      rol_permisos: {
+        Row: {
+          accion: string
+          id: string
+          modulo: string
+          permitido: boolean
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          accion: string
+          id?: string
+          modulo: string
+          permitido?: boolean
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          accion?: string
+          id?: string
+          modulo?: string
+          permitido?: boolean
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -1380,6 +1515,51 @@ export type Database = {
         }
         Relationships: []
       }
+      validaciones_qa: {
+        Row: {
+          created_at: string
+          expediente_id: string
+          id: string
+          motivo: string | null
+          observacion: string | null
+          primera_revision: boolean
+          resultado: string | null
+          solicitada_at: string
+          solicitada_por: string
+          tiempo_validacion_min: number | null
+          validada_at: string | null
+          validada_por: string | null
+        }
+        Insert: {
+          created_at?: string
+          expediente_id: string
+          id?: string
+          motivo?: string | null
+          observacion?: string | null
+          primera_revision?: boolean
+          resultado?: string | null
+          solicitada_at?: string
+          solicitada_por: string
+          tiempo_validacion_min?: number | null
+          validada_at?: string | null
+          validada_por?: string | null
+        }
+        Update: {
+          created_at?: string
+          expediente_id?: string
+          id?: string
+          motivo?: string | null
+          observacion?: string | null
+          primera_revision?: boolean
+          resultado?: string | null
+          solicitada_at?: string
+          solicitada_por?: string
+          tiempo_validacion_min?: number | null
+          validada_at?: string | null
+          validada_por?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1387,6 +1567,7 @@ export type Database = {
     Functions: {
       can_manage_cartera: { Args: { _uid: string }; Returns: boolean }
       can_manage_finanzas: { Args: { _uid: string }; Returns: boolean }
+      can_validar_proyeccion: { Args: { _uid: string }; Returns: boolean }
       can_view_cartera_row: {
         Args: { _exp_id: string; _uid: string }
         Returns: boolean
@@ -1395,6 +1576,10 @@ export type Database = {
         Args: { _comision_id: string }
         Returns: number
       }
+      has_permission: {
+        Args: { _accion: string; _modulo: string; _uid: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1402,6 +1587,9 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_apoderado: { Args: { _uid: string }; Returns: boolean }
+      is_director_juridico: { Args: { _uid: string }; Returns: boolean }
+      is_director_qa: { Args: { _uid: string }; Returns: boolean }
       liberar_comisiones_por_recaudo: {
         Args: { _expediente_id: string; _user_validador?: string }
         Returns: undefined
@@ -1409,6 +1597,30 @@ export type Database = {
       map_caso_to_expediente_estado: {
         Args: { _caso: Database["public"]["Enums"]["caso_estado"] }
         Returns: Database["public"]["Enums"]["expediente_estado"]
+      }
+      notify_role: {
+        Args: {
+          _link: string
+          _mensaje: string
+          _meta?: Json
+          _role: Database["public"]["Enums"]["app_role"]
+          _sev?: string
+          _tipo: string
+          _titulo: string
+        }
+        Returns: number
+      }
+      notify_user: {
+        Args: {
+          _link: string
+          _mensaje: string
+          _meta?: Json
+          _sev?: string
+          _tipo: string
+          _titulo: string
+          _uid: string
+        }
+        Returns: string
       }
     }
     Enums: {
