@@ -71,6 +71,16 @@ function AccesosPage() {
   const [sinTrasladoAck, setSinTrasladoAck] = useState(false);
   const [desvinculando, setDesvinculando] = useState(false);
   const [desvincularError, setDesvincularError] = useState<string | null>(null);
+  const [showBloquear, setShowBloquear] = useState(false);
+  const [motivoBloqueo, setMotivoBloqueo] = useState("");
+  const [confirmarBloqueo, setConfirmarBloqueo] = useState(false);
+  const [bloqueando, setBloqueando] = useState(false);
+  const [bloqueoError, setBloqueoError] = useState<string | null>(null);
+  const [showDesbloquear, setShowDesbloquear] = useState(false);
+  const [motivoDesbloqueo, setMotivoDesbloqueo] = useState("");
+  const [desbloqueando, setDesbloqueando] = useState(false);
+  const [desbloqueoError, setDesbloqueoError] = useState<string | null>(null);
+  const [accionMsg, setAccionMsg] = useState<{ tipo: "ok" | "err"; texto: string } | null>(null);
 
   const reload = async () => {
     setLoading(true);
