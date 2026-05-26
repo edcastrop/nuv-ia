@@ -2344,6 +2344,8 @@ export type Database = {
           correo_corporativo: string | null
           created_at: string
           departamento: string | null
+          desvinculado_at: string | null
+          desvinculado_por: string | null
           direccion: string | null
           email: string | null
           equipo: string | null
@@ -2367,6 +2369,7 @@ export type Database = {
           perfil_completo: boolean
           porcentaje_comision: number | null
           rechazado_motivo: string | null
+          reemplazo_user_id: string | null
           rol_solicitado: string | null
           sede: string | null
           telefono_registro: string | null
@@ -2395,6 +2398,8 @@ export type Database = {
           correo_corporativo?: string | null
           created_at?: string
           departamento?: string | null
+          desvinculado_at?: string | null
+          desvinculado_por?: string | null
           direccion?: string | null
           email?: string | null
           equipo?: string | null
@@ -2418,6 +2423,7 @@ export type Database = {
           perfil_completo?: boolean
           porcentaje_comision?: number | null
           rechazado_motivo?: string | null
+          reemplazo_user_id?: string | null
           rol_solicitado?: string | null
           sede?: string | null
           telefono_registro?: string | null
@@ -2446,6 +2452,8 @@ export type Database = {
           correo_corporativo?: string | null
           created_at?: string
           departamento?: string | null
+          desvinculado_at?: string | null
+          desvinculado_por?: string | null
           direccion?: string | null
           email?: string | null
           equipo?: string | null
@@ -2469,6 +2477,7 @@ export type Database = {
           perfil_completo?: boolean
           porcentaje_comision?: number | null
           rechazado_motivo?: string | null
+          reemplazo_user_id?: string | null
           rol_solicitado?: string | null
           sede?: string | null
           telefono_registro?: string | null
@@ -2729,6 +2738,14 @@ export type Database = {
         Args: { _comision_id: string }
         Returns: number
       }
+      desvincular_usuario: {
+        Args: {
+          _reemplazo: string
+          _target: string
+          _transferir_comisiones?: boolean
+        }
+        Returns: Json
+      }
       gpt_can_see_ticket: {
         Args: { _area: string; _user: string }
         Returns: boolean
@@ -2784,6 +2801,7 @@ export type Database = {
         }
         Returns: string
       }
+      preview_desvinculacion: { Args: { _target: string }; Returns: Json }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
     }
@@ -2796,7 +2814,12 @@ export type Database = {
         | "director_financiero_qa"
         | "gerencia"
         | "super_admin"
-      acceso_estado: "pendiente" | "aprobado" | "rechazado" | "bloqueado"
+      acceso_estado:
+        | "pendiente"
+        | "aprobado"
+        | "rechazado"
+        | "bloqueado"
+        | "desvinculado"
       app_role:
         | "admin"
         | "asesor"
@@ -3022,7 +3045,13 @@ export const Constants = {
         "gerencia",
         "super_admin",
       ],
-      acceso_estado: ["pendiente", "aprobado", "rechazado", "bloqueado"],
+      acceso_estado: [
+        "pendiente",
+        "aprobado",
+        "rechazado",
+        "bloqueado",
+        "desvinculado",
+      ],
       app_role: [
         "admin",
         "asesor",

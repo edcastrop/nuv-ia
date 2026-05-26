@@ -5,9 +5,10 @@ import { useUserRole, type AppRole } from "@/hooks/useUserRole";
 import {
   listUsuariosAcceso, aprobarUsuario, rechazarUsuario,
   bloquearUsuario, activarUsuario, listAuditoria,
-  type UsuarioAcceso, type EstadoAcceso,
+  previewDesvinculacion, desvincularUsuario,
+  type UsuarioAcceso, type EstadoAcceso, type PreviewDesvinculacion,
 } from "@/lib/seguridad";
-import { ShieldCheck, ShieldAlert, ShieldOff, Clock, CheckCircle2, XCircle, Search, History } from "lucide-react";
+import { ShieldCheck, ShieldAlert, ShieldOff, Clock, CheckCircle2, XCircle, Search, History, UserMinus, AlertTriangle } from "lucide-react";
 import { UserAvatar } from "@/components/nuvex/UserAvatar";
 
 export const Route = createFileRoute("/_authenticated/super-admin/accesos")({
@@ -24,6 +25,7 @@ const TABS: { v: EstadoAcceso | "todos"; label: string; Icon: typeof Clock }[] =
   { v: "aprobado", label: "Aprobados", Icon: CheckCircle2 },
   { v: "rechazado", label: "Rechazados", Icon: XCircle },
   { v: "bloqueado", label: "Bloqueados", Icon: ShieldOff },
+  { v: "desvinculado", label: "Desvinculados", Icon: UserMinus },
   { v: "todos", label: "Todos", Icon: ShieldCheck },
 ];
 
@@ -39,6 +41,7 @@ function badge(estado: EstadoAcceso) {
     aprobado: { bg: "#EAF7EE", fg: "#1F6D3D", label: "Aprobado" },
     rechazado: { bg: "#FDECEC", fg: "#B42318", label: "Rechazado" },
     bloqueado: { bg: "#E5E7EB", fg: "#374151", label: "Bloqueado" },
+    desvinculado: { bg: "#EEF2FF", fg: "#3730A3", label: "Desvinculado" },
   };
   const s = map[estado];
   return <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider" style={{ background: s.bg, color: s.fg }}>{s.label}</span>;
@@ -57,6 +60,14 @@ function AccesosPage() {
   const [motivoRechazo, setMotivoRechazo] = useState("");
   const [showRechazar, setShowRechazar] = useState(false);
   const [auditoria, setAuditoria] = useState<Array<{ id: string; accion: string; created_at: string; detalle: Record<string, unknown> }>>([]);
+  const [showDesvincular, setShowDesvincular] = useState(false);
+  const [preview, setPreview] = useState<PreviewDesvinculacion | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [reemplazoId, setReemplazoId] = useState<string>("");
+  const [transferirComisiones, setTransferirComisiones] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [desvinculando, setDesvinculando] = useState(false);
+  const [desvincularError, setDesvincularError] = useState<string | null>(null);
 
   const reload = async () => {
     setLoading(true);
@@ -198,6 +209,30 @@ function AccesosPage() {
                       style={{ background: VERDE }}
                     ><CheckCircle2 size={12} className="inline mr-1" />Reactivar</button>
                   )}
+                  {u.estado_acceso !== "desvinculado" && (
+                    <button
+                      onClick={async () => {
+                        setSeleccionado(u);
+                        setShowDesvincular(true);
+                        setReemplazoId("");
+                        setTransferirComisiones(false);
+                        setConfirmText("");
+                        setDesvincularError(null);
+                        setPreview(null);
+                        setPreviewLoading(true);
+                        try {
+                          const p = await previewDesvinculacion(u.id);
+                          setPreview(p);
+                        } catch (e) {
+                          setDesvincularError((e as Error).message);
+                        } finally {
+                          setPreviewLoading(false);
+                        }
+                      }}
+                      className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
+                      style={{ background: "#7C2D12" }}
+                    ><UserMinus size={12} className="inline mr-1" />Desvincular</button>
+                  )}
                   <button
                     onClick={() => setSeleccionado(u)}
                     className="ml-auto rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 text-xs font-semibold"
@@ -305,14 +340,152 @@ function AccesosPage() {
           </div>
         </Modal>
       )}
+
+      {/* Modal Desvincular */}
+      {showDesvincular && seleccionado && (
+        <Modal wide onClose={() => !desvinculando && setShowDesvincular(false)} title={`Desvincular · ${seleccionado.nombre}`}>
+          <div className="rounded-lg border border-[#FCD7D7] bg-[#FDF2F2] px-3 py-2.5 text-[12px] text-[#7C2D12] mb-4 flex items-start gap-2">
+            <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+            <div>
+              <b>Acción crítica.</b> El usuario perderá acceso operativo. Debes seleccionar un usuario de reemplazo obligatoriamente. Los datos históricos (mensajes, auditoría, academia) se conservan.
+            </div>
+          </div>
+
+          {previewLoading ? (
+            <div className="py-6 text-center text-sm text-[#242424]/60">Analizando dependencias…</div>
+          ) : preview ? (
+            <div className="space-y-4">
+              <div>
+                <div className="text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: AZUL }}>Se transferirán al reemplazo</div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <Stat label="Expedientes" v={preview.transferibles.expedientes} />
+                  <Stat label="Cartera (responsable)" v={preview.transferibles.cartera_responsable} />
+                  <Stat label="Cartera (creador)" v={preview.transferibles.cartera_creador} />
+                  <Stat label="Validaciones QA pendientes" v={preview.transferibles.validaciones_qa_pendientes} />
+                  <Stat label="Reglas de comisión" v={preview.transferibles.reglas_comision} />
+                </div>
+              </div>
+
+              <div>
+                <div className="text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: AZUL }}>Comisiones</div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <Stat label="Pendientes" v={preview.comisiones.pendientes} />
+                  <Stat label="Pagadas (histórico)" v={preview.comisiones.pagadas} />
+                  <Stat label="Cuentas de cobro pendientes" v={preview.comisiones.cuentas_cobro_pendientes} />
+                  <Stat label="Cuentas de cobro pagadas" v={preview.comisiones.cuentas_cobro_pagadas} />
+                </div>
+                <label className="mt-3 flex items-start gap-2 cursor-pointer text-xs">
+                  <input
+                    type="checkbox"
+                    checked={transferirComisiones}
+                    onChange={(e) => setTransferirComisiones(e.target.checked)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    <b>¿Transferir comisiones pendientes al reemplazo?</b>
+                    <div className="text-[11px] text-[#242424]/60">Si no marcas esta opción, las reglas del usuario se desactivan y las comisiones pendientes quedan a su nombre (histórico).</div>
+                  </span>
+                </label>
+              </div>
+
+              <div>
+                <div className="text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: NEGRO }}>Se conserva como histórico</div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <Stat label="Mensajes" v={preview.historico.mensajes} muted />
+                  <Stat label="Notificaciones" v={preview.historico.notificaciones} muted />
+                  <Stat label="Auditoría" v={preview.historico.auditoria} muted />
+                  <Stat label="Progreso academia" v={preview.historico.progreso_academia} muted />
+                  <Stat label="Validaciones QA históricas" v={preview.historico.validaciones_qa_historicas} muted />
+                </div>
+              </div>
+
+              <div>
+                <label className="block">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Usuario de reemplazo (obligatorio)</span>
+                  <select
+                    value={reemplazoId}
+                    onChange={(e) => setReemplazoId(e.target.value)}
+                    className="mt-1.5 w-full rounded-[10px] border border-[#E1E5EE] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#445DA3]"
+                  >
+                    <option value="">— Selecciona un usuario aprobado —</option>
+                    {usuarios
+                      .filter((x) => x.id !== seleccionado.id && x.estado_acceso === "aprobado")
+                      .map((x) => (
+                        <option key={x.id} value={x.id}>{x.nombre || x.email} ({x.email})</option>
+                      ))}
+                  </select>
+                  {usuarios.filter((x) => x.id !== seleccionado.id && x.estado_acceso === "aprobado").length === 0 && (
+                    <div className="mt-1.5 text-[11px] text-[#B42318]">No hay otros usuarios aprobados cargados. Cambia a la pestaña "Aprobados" para listarlos.</div>
+                  )}
+                </label>
+              </div>
+
+              <div>
+                <label className="block">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Escribe DESVINCULAR para confirmar</span>
+                  <input
+                    value={confirmText}
+                    onChange={(e) => setConfirmText(e.target.value)}
+                    className="mt-1.5 w-full rounded-[10px] border border-[#E1E5EE] bg-[#FAFBFD] px-3 py-2.5 text-sm outline-none focus:border-[#7C2D12]"
+                    placeholder="DESVINCULAR"
+                  />
+                </label>
+              </div>
+
+              {desvincularError && (
+                <div className="rounded-lg bg-[#FDECEC] border border-[#F5C2C2] px-3 py-2 text-xs text-[#B42318]">{desvincularError}</div>
+              )}
+            </div>
+          ) : (
+            desvincularError && <div className="rounded-lg bg-[#FDECEC] border border-[#F5C2C2] px-3 py-2 text-xs text-[#B42318]">{desvincularError}</div>
+          )}
+
+          <div className="mt-5 flex justify-end gap-2">
+            <button
+              onClick={() => setShowDesvincular(false)}
+              disabled={desvinculando}
+              className="rounded-lg border border-[#E3E7EE] px-4 py-2 text-sm font-medium disabled:opacity-50"
+            >Cancelar</button>
+            <button
+              onClick={async () => {
+                if (!reemplazoId || confirmText !== "DESVINCULAR") return;
+                setDesvinculando(true);
+                setDesvincularError(null);
+                try {
+                  await desvincularUsuario(seleccionado.id, reemplazoId, transferirComisiones);
+                  setShowDesvincular(false);
+                  setSeleccionado(null);
+                  reload();
+                } catch (e) {
+                  setDesvincularError((e as Error).message);
+                } finally {
+                  setDesvinculando(false);
+                }
+              }}
+              disabled={!reemplazoId || confirmText !== "DESVINCULAR" || desvinculando}
+              className="rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+              style={{ background: "#7C2D12" }}
+            >{desvinculando ? "Desvinculando…" : "Confirmar desvinculación"}</button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
 
-function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
+function Stat({ label, v, muted }: { label: string; v: number; muted?: boolean }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+    <div className="rounded-lg border border-[#E3E7EE] bg-white px-2.5 py-2 flex items-center justify-between">
+      <span className="text-[11px] text-[#242424]/70">{label}</span>
+      <span className="text-sm font-bold" style={{ color: muted ? "#6B7280" : "#242424" }}>{v}</span>
+    </div>
+  );
+}
+
+function Modal({ title, children, onClose, wide }: { title: string; children: React.ReactNode; onClose: () => void; wide?: boolean }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto" onClick={onClose}>
+      <div className={`w-full ${wide ? "max-w-2xl" : "max-w-md"} rounded-2xl bg-white p-6 shadow-2xl my-8`} onClick={(e) => e.stopPropagation()}>
         <h3 className="text-lg font-semibold mb-4" style={{ color: NEGRO }}>{title}</h3>
         {children}
       </div>

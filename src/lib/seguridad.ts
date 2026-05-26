@@ -1,7 +1,50 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { AppRole } from "@/hooks/useUserRole";
 
-export type EstadoAcceso = "pendiente" | "aprobado" | "rechazado" | "bloqueado";
+export type EstadoAcceso = "pendiente" | "aprobado" | "rechazado" | "bloqueado" | "desvinculado";
+
+export interface PreviewDesvinculacion {
+  transferibles: {
+    expedientes: number;
+    cartera_responsable: number;
+    cartera_creador: number;
+    reglas_comision: number;
+    validaciones_qa_pendientes: number;
+  };
+  comisiones: {
+    pendientes: number;
+    pagadas: number;
+    cuentas_cobro_pendientes: number;
+    cuentas_cobro_pagadas: number;
+  };
+  historico: {
+    mensajes: number;
+    notificaciones: number;
+    auditoria: number;
+    progreso_academia: number;
+    validaciones_qa_historicas: number;
+  };
+}
+
+export async function previewDesvinculacion(userId: string): Promise<PreviewDesvinculacion> {
+  const { data, error } = await supabase.rpc("preview_desvinculacion" as never, { _target: userId } as never);
+  if (error) throw error;
+  return data as unknown as PreviewDesvinculacion;
+}
+
+export async function desvincularUsuario(
+  userId: string,
+  reemplazoId: string,
+  transferirComisiones: boolean
+): Promise<{ ok: boolean; transferido: Record<string, number> }> {
+  const { data, error } = await supabase.rpc("desvincular_usuario" as never, {
+    _target: userId,
+    _reemplazo: reemplazoId,
+    _transferir_comisiones: transferirComisiones,
+  } as never);
+  if (error) throw error;
+  return data as unknown as { ok: boolean; transferido: Record<string, number> };
+}
 export type MfaMetodo = "ninguno" | "email" | "totp";
 
 export interface UsuarioAcceso {
