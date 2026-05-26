@@ -20,12 +20,23 @@ function PendienteAprobacionPage() {
   const check = async () => {
     if (!user) return;
     setRefreshing(true);
-    const { data } = await supabase
-      .from("profiles")
-      .select("estado_acceso, rechazado_motivo, onboarding_estado")
-      .eq("id", user.id)
-      .maybeSingle();
+    const [{ data }, { data: roleRows }] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("estado_acceso, rechazado_motivo, onboarding_estado")
+        .eq("id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id),
+    ]);
     setRefreshing(false);
+    const isSuperAdmin = ((roleRows ?? []) as Array<{ role?: string }>).some((r) => r.role === "super_admin");
+    if (isSuperAdmin) {
+      navigate({ to: "/" });
+      return;
+    }
     if (!data) return;
     setEstado(data.estado_acceso as string);
     setMotivo((data.rechazado_motivo as string) ?? null);
