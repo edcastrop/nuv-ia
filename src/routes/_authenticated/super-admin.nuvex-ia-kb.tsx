@@ -242,6 +242,41 @@ function KbTab() {
                 className="w-full px-3 py-2 rounded-lg border border-[#E3E7EE] text-sm"
               />
             </Field>
+            <Field label="Audiencias (quién puede ver este artículo)">
+              <div className="grid grid-cols-2 gap-1.5">
+                {(["interno", "apoderado", "cliente", "publico"] as const).map((aud) => {
+                  const checked = editing.audiencias.includes(aud);
+                  const label =
+                    aud === "interno" ? "Interno (staff NUVEX)" :
+                    aud === "apoderado" ? "Apoderados" :
+                    aud === "cliente" ? "Clientes" :
+                    "Público (todos)";
+                  return (
+                    <label
+                      key={aud}
+                      className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-[#E3E7EE] cursor-pointer hover:bg-[#F7F9FB] text-xs"
+                      style={{ background: checked ? "rgba(68,93,163,0.08)" : "white", borderColor: checked ? "#445DA3" : "#E3E7EE" }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) => {
+                          const next = e.target.checked
+                            ? [...editing.audiencias, aud]
+                            : editing.audiencias.filter((x) => x !== aud);
+                          setEditing({ ...editing, audiencias: next.length ? next : ["interno"] });
+                        }}
+                        className="accent-[#445DA3]"
+                      />
+                      <span className="font-medium text-[#050814]">{label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+              <p className="text-[10px] text-[#242424]/50 mt-1">
+                Si marcas "Público", el artículo será visible para todas las audiencias.
+              </p>
+            </Field>
             <Field label="Estado">
               <select
                 value={editing.estado}
@@ -253,6 +288,7 @@ function KbTab() {
                 <option value="archivado">Archivado</option>
               </select>
             </Field>
+
             <div className="flex gap-2 pt-2">
               <button
                 onClick={handleSave}
