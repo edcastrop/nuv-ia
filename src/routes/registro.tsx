@@ -1,8 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Logo } from "@/components/nuvex/Logo";
-import { ArrowRight, ShieldCheck, Lock, Sparkles } from "lucide-react";
+import logoNuvex from "@/assets/logo-nuvex.png";
+import {
+  ArrowRight, ShieldCheck, Lock, User, Mail, Phone, MapPin, Building2,
+  UserCog, Eye, EyeOff, Sparkles, Zap, CheckCircle2, MapPinned, PhoneCall, Globe, KeyRound,
+} from "lucide-react";
 
 export const Route = createFileRoute("/registro")({
   component: RegistroPage,
@@ -11,12 +14,11 @@ export const Route = createFileRoute("/registro")({
 
 const ROLES_SOLICITABLES = [
   { v: "licenciado", label: "Licenciado" },
-  { v: "operaciones", label: "Operaciones" },
-  { v: "juridica", label: "Jurídica" },
-  { v: "finanzas_tesoreria", label: "Finanzas y Tesorería" },
-  { v: "contabilidad", label: "Contabilidad" },
-  { v: "gerencia_comercial", label: "Gerencia Comercial" },
-  { v: "super_admin", label: "Super Admin" },
+  { v: "analista_financiero", label: "Analista Financiero" },
+  { v: "director_financiero_qa", label: "Dirección Financiera" },
+  { v: "operaciones", label: "Administrativo" },
+  { v: "juridica", label: "Jurídico" },
+  { v: "super_admin", label: "Super Administrador" },
 ];
 
 function RegistroPage() {
@@ -29,6 +31,7 @@ function RegistroPage() {
   const [err, setErr] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [showPwd, setShowPwd] = useState(false);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -61,24 +64,18 @@ function RegistroPage() {
 
   if (done) {
     return (
-      <main className="nuvex-register-shell min-h-screen px-4 py-8 sm:px-6">
-        <div className="nuvex-register-success mx-auto w-full max-w-md">
-          <div className="flex justify-center">
-            <Logo variant="white" height={72} />
-          </div>
-          <section className="nuvex-register-card nuvex-register-card--success mt-8 text-center">
-            <div className="nuvex-register-status-icon mx-auto mb-5">
-              <ShieldCheck className="w-7 h-7" strokeWidth={2.5} />
-            </div>
+      <main className="nuvex-register-shell">
+        <div className="nuvex-register-right" style={{ minHeight: "100vh" }}>
+          <section className="nuvex-register-card nuvex-register-card--success">
+            <div className="nrx-status-icon mb-5"><ShieldCheck className="w-7 h-7" strokeWidth={2.5} /></div>
             <h1 className="nuvex-register-title">Solicitud enviada</h1>
-            <p className="nuvex-register-copy mt-3">
+            <p className="nuvex-register-copy mx-auto mt-3">
               Tu cuenta quedó en <b>estado pendiente</b>. Un administrador NUVEX revisará y aprobará tu acceso.
               Recibirás una notificación cuando puedas iniciar sesión.
             </p>
-            <button
-              onClick={() => navigate({ to: "/login" })}
-              className="nuvex-register-submit mt-7 w-full"
-            >Volver al login</button>
+            <button onClick={() => navigate({ to: "/login" })} className="nuvex-register-submit mt-7">
+              Volver al login
+            </button>
           </section>
         </div>
       </main>
@@ -86,110 +83,180 @@ function RegistroPage() {
   }
 
   return (
-    <main className="nuvex-register-shell min-h-screen px-4 py-8 sm:px-6">
-      <div className="nuvex-register-grid mx-auto grid w-full max-w-6xl items-stretch gap-6 lg:grid-cols-[0.88fr_1.12fr]">
+    <main className="nuvex-register-shell">
+      <div className="nuvex-register-grid">
+        {/* ===== PANEL IZQUIERDO ===== */}
         <aside className="nuvex-register-brand-panel">
-          <Logo variant="white" height={86} />
+          {/* Ondas decorativas SVG */}
+          <svg className="nrx-waves" viewBox="0 0 600 1000" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="nrxWaveA" x1="0" x2="1" y1="0" y2="1">
+                <stop offset="0%" stopColor="#445DA3" stopOpacity="0.0" />
+                <stop offset="50%" stopColor="#445DA3" stopOpacity="0.35" />
+                <stop offset="100%" stopColor="#84B98F" stopOpacity="0.0" />
+              </linearGradient>
+              <linearGradient id="nrxWaveB" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0%" stopColor="#84B98F" stopOpacity="0.0" />
+                <stop offset="60%" stopColor="#84B98F" stopOpacity="0.45" />
+                <stop offset="100%" stopColor="#84B98F" stopOpacity="0.0" />
+              </linearGradient>
+            </defs>
+            <path d="M 0 720 C 160 660, 300 820, 600 700 L 600 1000 L 0 1000 Z" fill="url(#nrxWaveA)" />
+            <path d="M 0 820 C 200 780, 360 900, 600 820" stroke="url(#nrxWaveB)" strokeWidth="1.2" fill="none" />
+            <path d="M 0 870 C 220 840, 380 940, 600 870" stroke="url(#nrxWaveB)" strokeWidth="1" fill="none" opacity="0.7" />
+            <path d="M 0 920 C 240 890, 400 970, 600 920" stroke="url(#nrxWaveB)" strokeWidth="0.8" fill="none" opacity="0.5" />
+          </svg>
+
+          <img src={logoNuvex} alt="NUVEX" className="nrx-logo" style={{ filter: "brightness(0) invert(1)" }} draggable={false} />
+
           <div className="nuvex-register-brand-content">
-            <div className="nuvex-register-kicker">
-              <Sparkles className="h-4 w-4" strokeWidth={2.2} />
+            <div className="nrx-kicker">
+              <ShieldCheck className="w-3.5 h-3.5" strokeWidth={2.4} />
               Acceso corporativo NUVEX
             </div>
-            <h1 className="nuvex-register-hero-title">Crear cuenta NUVEX</h1>
-            <p className="nuvex-register-hero-copy">
-              Solicita ingreso a la plataforma financiera y operativa. Tu perfil será validado por administración antes de activar el acceso.
+            <h1 className="nrx-hero-title">
+              Crear
+              <span className="nrx-accent">cuenta</span>
+              NUVEX
+            </h1>
+            <p className="nrx-hero-copy">
+              Solicita acceso a la plataforma financiera y operativa NUVEX. Tu perfil será validado por
+              administración antes de activar el acceso.
             </p>
+
+            <div className="nrx-benefits">
+              <div className="nrx-benefit">
+                <div className="nrx-benefit-icon"><ShieldCheck className="w-4 h-4" strokeWidth={2.4} /></div>
+                <div>
+                  <div className="nrx-benefit-title">Seguro y confiable</div>
+                  <div className="nrx-benefit-copy">Tus datos protegidos bajo estándares corporativos.</div>
+                </div>
+              </div>
+              <div className="nrx-benefit">
+                <div className="nrx-benefit-icon"><CheckCircle2 className="w-4 h-4" strokeWidth={2.4} /></div>
+                <div>
+                  <div className="nrx-benefit-title">Validación administrativa</div>
+                  <div className="nrx-benefit-copy">Cada acceso es aprobado por el equipo NUVEX.</div>
+                </div>
+              </div>
+              <div className="nrx-benefit">
+                <div className="nrx-benefit-icon"><Zap className="w-4 h-4" strokeWidth={2.4} /></div>
+                <div>
+                  <div className="nrx-benefit-title">Plataforma especializada</div>
+                  <div className="nrx-benefit-copy">Herramientas financieras exclusivas para licenciados.</div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="nuvex-register-trust-row">
-            <span>Validación administrativa</span>
-            <span>Cuenta protegida</span>
+
+          <div className="nrx-footer">
+            <span className="nrx-footer-row"><MapPinned className="w-4 h-4" strokeWidth={2.2} /> Bogotá · Bucaramanga</span>
+            <span className="nrx-footer-row"><PhoneCall className="w-4 h-4" strokeWidth={2.2} /> +57 316 4023779</span>
+            <span className="nrx-footer-row"><Globe className="w-4 h-4" strokeWidth={2.2} /> www.nuvex.com.co</span>
           </div>
         </aside>
 
-        <section className="nuvex-register-card">
-          <div className="nuvex-register-card-header">
-            <div>
-              <div className="nuvex-register-badge">
-                <span />
-                Solicitud de acceso
+        {/* ===== PANEL DERECHO ===== */}
+        <section className="nuvex-register-right">
+          <div className="nuvex-register-card">
+            <div className="nuvex-register-card-header">
+              <div>
+                <div className="nrx-status-badge">Solicitud de acceso</div>
+                <h2 className="nuvex-register-title">Completa tus datos</h2>
+                <p className="nuvex-register-copy">
+                  Conservamos el flujo actual de registro: la cuenta quedará pendiente hasta aprobación interna.
+                </p>
               </div>
-              <h2 className="nuvex-register-title mt-4">Completa tus datos</h2>
-              <p className="nuvex-register-copy mt-2">
-                Conservamos el flujo actual de registro: la cuenta queda pendiente hasta aprobación interna.
-              </p>
+              <div className="nrx-lock-mark" aria-hidden="true">
+                <Lock className="w-6 h-6" strokeWidth={2.3} />
+              </div>
             </div>
-            <div className="nuvex-register-lock-mark" aria-hidden="true">
-              <Lock className="h-5 w-5" strokeWidth={2.3} />
-            </div>
-          </div>
 
-          <form onSubmit={submit} className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <Field label="Nombre completo *">
-              <Input value={form.nombre} onChange={(v) => setForm({ ...form, nombre: v })} required />
-            </Field>
-            <Field label="Correo corporativo *">
-              <Input type="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} required />
-            </Field>
-            <Field label="Contraseña *">
-              <Input type="password" value={form.password} onChange={(v) => setForm({ ...form, password: v })} required />
-            </Field>
-            <Field label="Teléfono / WhatsApp *">
-              <Input value={form.telefono} onChange={(v) => setForm({ ...form, telefono: v })} required placeholder="+57 …" />
-            </Field>
-            <Field label="Ciudad *">
-              <Input value={form.ciudad} onChange={(v) => setForm({ ...form, ciudad: v })} required />
-            </Field>
-            <Field label="Equipo / Sede">
-              <Input value={form.equipo} onChange={(v) => setForm({ ...form, equipo: v })} placeholder="Ej. Bogotá Norte" />
-            </Field>
-            <div className="sm:col-span-2">
-              <Field label="Rol solicitado *">
-                <select
-                  value={form.rol_solicitado}
-                  onChange={(e) => setForm({ ...form, rol_solicitado: e.target.value })}
-                  className="nuvex-register-control nuvex-register-select"
-                >
-                  {ROLES_SOLICITABLES.map((r) => <option key={r.v} value={r.v}>{r.label}</option>)}
-                </select>
+            <form onSubmit={submit} className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <Field label="Nombre completo *" icon={<User className="w-4 h-4" />}>
+                <input className="nuvex-register-control" value={form.nombre}
+                  onChange={(e) => setForm({ ...form, nombre: e.target.value })} required />
               </Field>
+              <Field label="Correo corporativo *" icon={<Mail className="w-4 h-4" />}>
+                <input type="email" className="nuvex-register-control" value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+              </Field>
+
+              <Field label="Contraseña *" icon={<KeyRound className="w-4 h-4" />}
+                trailing={
+                  <button type="button" className="nrx-field-trailing" onClick={() => setShowPwd((s) => !s)} aria-label="Mostrar contraseña">
+                    {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                }>
+                <input type={showPwd ? "text" : "password"} className="nuvex-register-control" value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })} required />
+              </Field>
+              <Field label="Teléfono / WhatsApp *" icon={<Phone className="w-4 h-4" />}>
+                <input className="nuvex-register-control" value={form.telefono}
+                  onChange={(e) => setForm({ ...form, telefono: e.target.value })} required placeholder="+57 3XX XXX XXXX" />
+              </Field>
+
+              <Field label="Ciudad *" icon={<MapPin className="w-4 h-4" />}>
+                <input className="nuvex-register-control" value={form.ciudad}
+                  onChange={(e) => setForm({ ...form, ciudad: e.target.value })} required placeholder="Ej. Bogotá" />
+              </Field>
+              <Field label="Equipo / Sede" icon={<Building2 className="w-4 h-4" />}>
+                <input className="nuvex-register-control" value={form.equipo}
+                  onChange={(e) => setForm({ ...form, equipo: e.target.value })} placeholder="Ej. Bogotá Norte" />
+              </Field>
+
+              <div className="sm:col-span-2">
+                <Field label="Rol solicitado *" icon={<UserCog className="w-4 h-4" />}>
+                  <select value={form.rol_solicitado}
+                    onChange={(e) => setForm({ ...form, rol_solicitado: e.target.value })}
+                    className="nuvex-register-control nuvex-register-select">
+                    {ROLES_SOLICITABLES.map((r) => <option key={r.v} value={r.v}>{r.label}</option>)}
+                  </select>
+                </Field>
+              </div>
+
+              {err && <div className="nuvex-register-error sm:col-span-2">{err}</div>}
+
+              {/* Bloque de verificación de identidad */}
+              <div className="nrx-security-block sm:col-span-2">
+                <div className="nrx-security-title">
+                  <ShieldCheck className="w-4 h-4" strokeWidth={2.4} />
+                  Verificación de identidad
+                </div>
+                <p className="nrx-security-copy">
+                  Para proteger la información financiera de NUVEX, todos los accesos nuevos deben completar:
+                </p>
+                <ul className="nrx-security-list">
+                  <li><CheckCircle2 className="w-4 h-4" strokeWidth={2.4} /> Verificación de correo electrónico</li>
+                  <li><CheckCircle2 className="w-4 h-4" strokeWidth={2.4} /> Código OTP vía SMS o WhatsApp</li>
+                  <li><CheckCircle2 className="w-4 h-4" strokeWidth={2.4} /> Aprobación administrativa</li>
+                </ul>
+              </div>
+
+              <button type="submit" disabled={busy} className="nuvex-register-submit sm:col-span-2">
+                {busy ? (
+                  <span className="inline-flex items-center gap-2">
+                    <span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                    Enviando…
+                  </span>
+                ) : (
+                  <>
+                    <Lock className="w-4 h-4" strokeWidth={2.6} />
+                    Solicitar acceso
+                    <ArrowRight className="w-4 h-4" strokeWidth={2.6} />
+                  </>
+                )}
+              </button>
+            </form>
+
+            <div className="nuvex-register-note">
+              <ShieldCheck className="w-4 h-4" strokeWidth={2.4} />
+              <span>Tu solicitud será revisada por el equipo administrador de NUVEX antes de habilitar el acceso.</span>
             </div>
 
-            {err && (
-              <div className="nuvex-register-error sm:col-span-2">
-                {err}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={busy}
-              className="nuvex-register-submit sm:col-span-2"
-            >
-              {busy ? (
-                <span className="inline-flex items-center gap-2">
-                  <span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
-                  Enviando…
-                </span>
-              ) : (
-                <>
-                  <Lock className="w-4 h-4" strokeWidth={2.5} />
-                  Solicitar acceso
-                  <ArrowRight className="w-4 h-4" strokeWidth={2.5} />
-                </>
-              )}
-            </button>
-          </form>
-
-          <div className="nuvex-register-note">
-            <ShieldCheck className="h-4 w-4 flex-shrink-0" strokeWidth={2.4} />
-            <span>
-              Tu solicitud será revisada por el equipo administrador de NUVEX antes de habilitar el acceso.
-            </span>
-          </div>
-
-          <div className="nuvex-register-login-link">
-            ¿Ya tienes cuenta?{" "}
-            <Link to="/login">Iniciar sesión</Link>
+            <div className="nuvex-register-login-link">
+              ¿Ya tienes cuenta? <Link to="/login">Iniciar sesión</Link>
+            </div>
           </div>
         </section>
       </div>
@@ -197,24 +264,15 @@ function RegistroPage() {
   );
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
+function Field({ label, icon, trailing, children }: { label: string; icon?: ReactNode; trailing?: ReactNode; children: ReactNode }) {
   return (
     <label className="block">
       <span className="nuvex-register-label">{label}</span>
-      <div className="mt-1.5">{children}</div>
+      <div className="nrx-field mt-2">
+        {icon && <span className="nrx-field-icon">{icon}</span>}
+        {children}
+        {trailing}
+      </div>
     </label>
-  );
-}
-
-function Input(props: { value: string; onChange: (v: string) => void; type?: string; required?: boolean; placeholder?: string }) {
-  return (
-    <input
-      type={props.type ?? "text"}
-      value={props.value}
-      onChange={(e) => props.onChange(e.target.value)}
-      required={props.required}
-      placeholder={props.placeholder}
-      className="nuvex-register-control"
-    />
   );
 }
