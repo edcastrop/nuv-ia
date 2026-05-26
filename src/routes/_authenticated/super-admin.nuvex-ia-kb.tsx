@@ -97,18 +97,21 @@ function KbTab() {
   const handleSave = async () => {
     if (!editing) return;
     await upsertFn({
+    await upsertFn({
       data: {
         id: editing.id,
         categoria: editing.categoria.trim(),
         pregunta: editing.pregunta.trim(),
         respuesta: editing.respuesta.trim(),
         tags: editing.tags.split(",").map((t) => t.trim()).filter(Boolean),
+        audiencias: editing.audiencias,
         estado: editing.estado,
       },
     });
     setEditing(null);
     reload();
   };
+
 
   return (
     <div className="grid lg:grid-cols-[1fr_440px] gap-6">
@@ -126,8 +129,10 @@ function KbTab() {
               pregunta: "",
               respuesta: "",
               tags: "",
+              audiencias: ["interno"],
               estado: "activo",
             })}
+
             className="px-4 py-2 rounded-lg text-white text-sm font-semibold"
             style={{ background: "#445DA3" }}
           >
@@ -173,8 +178,10 @@ function KbTab() {
                       pregunta: a.pregunta,
                       respuesta: a.respuesta,
                       tags: (a.tags ?? []).join(", "),
+                      audiencias: ((a.audiencias ?? ["interno"]) as ("interno" | "apoderado" | "cliente" | "publico")[]),
                       estado: a.estado as "activo" | "borrador" | "archivado",
                     })}
+
                     className="text-xs px-3 py-1.5 rounded-lg border border-[#E3E7EE] hover:bg-white"
                   >
                     Editar
