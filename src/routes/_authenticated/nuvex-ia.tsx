@@ -5,9 +5,10 @@ import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import {
   Sparkles, Send, Loader2, TrendingUp, FileCheck2, AlertTriangle,
-  Wallet, Receipt, Clock, ArrowRight, Bot, User as UserIcon,
+  Wallet, Receipt, Clock, ArrowRight, Bot, User as UserIcon, AlertCircle,
 } from "lucide-react";
 import { getMetricasIA, getAlertasInteligentes, consultarIA } from "@/lib/nuvex-ia.functions";
+import { EscalarTicketDialog } from "@/components/nuvex-gpt/EscalarTicketDialog";
 
 export const Route = createFileRoute("/_authenticated/nuvex-ia")({
   component: NuvexIAPage,
