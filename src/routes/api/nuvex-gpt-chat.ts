@@ -52,10 +52,10 @@ export const Route = createFileRoute("/api/nuvex-gpt-chat")({
 
           // Resolve user role
           const { data: rolesData } = await supabase
-            .from("user_roles" as never)
+            .from("user_roles")
             .select("role")
             .eq("user_id", userId);
-          const roles: string[] = ((rolesData as { role: string }[] | null) ?? []).map((r) => r.role);
+          const roles: string[] = ((rolesData ?? []) as Array<{ role: string }>).map((r) => r.role);
           const rolPrincipal =
             roles.find((r) => ["super_admin", "admin", "gerencia"].includes(r)) ??
             roles[0] ??
