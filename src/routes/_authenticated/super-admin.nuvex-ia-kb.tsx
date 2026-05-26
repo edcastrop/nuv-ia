@@ -76,8 +76,10 @@ function KbTab() {
     pregunta: string;
     respuesta: string;
     tags: string;
+    audiencias: ("interno" | "apoderado" | "cliente" | "publico")[];
     estado: "activo" | "borrador" | "archivado";
   }>(null);
+
 
   const reload = async () => setRows(await listFn());
   useEffect(() => { reload(); }, []);
