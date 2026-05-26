@@ -208,19 +208,30 @@ function AccesosPage() {
                       ><XCircle size={12} className="inline mr-1" />Rechazar</button>
                     </>
                   )}
-                  {u.estado_acceso === "aprobado" && (
+                  {u.estado_acceso === "aprobado" && isSuperAdmin && (
                     <button
-                      onClick={async () => { await bloquearUsuario(u.id); reload(); }}
+                      onClick={() => {
+                        setSeleccionado(u);
+                        setMotivoBloqueo("");
+                        setConfirmarBloqueo(false);
+                        setBloqueoError(null);
+                        setShowBloquear(true);
+                      }}
                       className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
                       style={{ background: "#6B7280" }}
                     ><ShieldOff size={12} className="inline mr-1" />Bloquear</button>
                   )}
-                  {(u.estado_acceso === "bloqueado" || u.estado_acceso === "rechazado") && (
+                  {(u.estado_acceso === "bloqueado" || u.estado_acceso === "rechazado") && isSuperAdmin && (
                     <button
-                      onClick={async () => { await activarUsuario(u.id); reload(); }}
+                      onClick={() => {
+                        setSeleccionado(u);
+                        setMotivoDesbloqueo("");
+                        setDesbloqueoError(null);
+                        setShowDesbloquear(true);
+                      }}
                       className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
                       style={{ background: VERDE }}
-                    ><CheckCircle2 size={12} className="inline mr-1" />Reactivar</button>
+                    ><CheckCircle2 size={12} className="inline mr-1" />{u.estado_acceso === "bloqueado" ? "Desbloquear" : "Reactivar"}</button>
                   )}
                   {u.estado_acceso !== "desvinculado" && (
                     <button
