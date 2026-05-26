@@ -100,6 +100,7 @@ function AuthenticatedLayout() {
             { to: "/notificaciones", label: "Alertas", Icon: Bell, badge: unread },
             { to: "/colaboracion", label: "Colaboración", Icon: MessageSquare },
             { to: "/mensajeria", label: "Mensajería", Icon: Briefcase },
+            { to: "/directorio", label: "Directorio", Icon: BookUser },
           ],
         },
         {
