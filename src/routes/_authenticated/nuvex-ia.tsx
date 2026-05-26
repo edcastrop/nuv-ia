@@ -79,7 +79,13 @@ function NuvexIAPage() {
         : res.escalable
         ? "⚠️ Sin información suficiente — puedes escalar esta consulta"
         : undefined;
-      setChat((c) => [...c, { rol: "ai", texto: res.respuesta + (meta ? `\n\n*${meta}*` : ""), filas: res.filas }]);
+      setChat((c) => [...c, {
+        rol: "ai",
+        texto: res.respuesta + (meta ? `\n\n*${meta}*` : ""),
+        filas: res.filas,
+        escalable: res.escalable,
+        preguntaOriginal: q,
+      }]);
     } catch {
       setChat((c) => [...c, { rol: "ai", texto: "Hubo un error al procesar tu consulta." }]);
     } finally {
