@@ -5,8 +5,9 @@ import { CORPORATIVO } from "@/components/nuvex/constants";
 import {
   LayoutGrid, FolderKanban, BarChart3, LogOut, GraduationCap, LineChart,
   UserSquare2, Users, Shield, Wallet, Bell, CircleDollarSign, Landmark,
-  ClipboardCheck, Briefcase, ChevronLeft, ChevronRight,
+  ClipboardCheck, Briefcase, ChevronLeft, ChevronRight, UserCircle,
 } from "lucide-react";
+import { UserAvatar } from "@/components/nuvex/UserAvatar";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Logo } from "@/components/nuvex/Logo";
 import { supabase } from "@/integrations/supabase/client";
@@ -73,7 +74,7 @@ function AuthenticatedLayout() {
   }
 
   const displayName: string = user?.user_metadata?.nombre || (user?.email?.split("@")[0] ?? "Usuario");
-  const initials = displayName.split(/[.\s_-]+/).filter(Boolean).slice(0, 2).map((s) => s[0]?.toUpperCase()).join("") || "NV";
+  
 
   const has = (r: string) => roles.includes(r as never);
   const hasAny = (...rs: string[]) => rs.some(has);
@@ -84,6 +85,7 @@ function AuthenticatedLayout() {
         items: [
           { to: "/apoderado/mis-casos", label: "Mis casos", Icon: Briefcase },
           { to: "/notificaciones", label: "Alertas", Icon: Bell, badge: unread },
+          { to: "/mi-perfil", label: "Mi Perfil", Icon: UserCircle },
         ],
       }]
     : [
@@ -122,7 +124,12 @@ function AuthenticatedLayout() {
             ...(isSuperAdmin ? [{ to: "/super-admin", label: "Super Admin", Icon: Shield }] : []),
           ],
         },
-
+        {
+          label: "Cuenta",
+          items: [
+            { to: "/mi-perfil", label: "Mi Perfil", Icon: UserCircle },
+          ],
+        },
       ];
 
   const visibleSections = sections.map((s) => ({ ...s, items: s.items.filter(Boolean) })).filter((s) => s.items.length > 0);
@@ -273,29 +280,21 @@ function AuthenticatedLayout() {
 
             <div className="flex items-center gap-3">
               <NotificationBell />
-              <div
-                className="hidden sm:flex items-center gap-3 rounded-xl pl-2 pr-3 py-1.5"
+              <Link
+                to="/mi-perfil"
+                title="Mi Perfil"
+                className="hidden sm:flex items-center gap-3 rounded-xl pl-1.5 pr-3 py-1 transition hover:bg-white/[0.07]"
                 style={{
                   background: "rgba(255,255,255,0.04)",
                   border: "1px solid rgba(255,255,255,0.08)",
                 }}
               >
-                <div
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-bold text-white"
-                  style={{
-                    backgroundImage: `linear-gradient(#0A1226, #0A1226), linear-gradient(135deg, ${AZUL}, ${VERDE})`,
-                    backgroundOrigin: "border-box",
-                    backgroundClip: "padding-box, border-box",
-                    border: "2px solid transparent",
-                  }}
-                >
-                  {initials}
-                </div>
+                <UserAvatar userId={user?.id} name={displayName} email={user?.email} size="sm" ring />
                 <div className="leading-tight text-right">
                   <div className="text-[12px] font-semibold text-white truncate max-w-[160px]">{displayName}</div>
                   <div className="text-[10px] text-white/50 truncate max-w-[160px]">{user?.email}</div>
                 </div>
-              </div>
+              </Link>
             </div>
           </div>
         </header>
