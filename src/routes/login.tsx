@@ -35,21 +35,44 @@ function LoginPage() {
     setErr(null); setInfo(null); setBusy(true);
     try {
       if (mode === "signin") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        const uid = signInData.user?.id;
+        if (uid) {
+          const { data: prof } = await supabase
+            .from("profiles" as never)
+            .select("estado_acceso, mfa_verificado_at, rechazado_motivo")
+            .eq("id", uid)
+            .maybeSingle();
+          const p = prof as { estado_acceso?: string; mfa_verificado_at?: string | null; rechazado_motivo?: string | null } | null;
+          if (p && p.estado_acceso !== "aprobado") {
+            await supabase.auth.signOut();
+            const msgs: Record<string, string> = {
+              pendiente: "Tu cuenta está pendiente de aprobación por un administrador.",
+              rechazado: `Tu acceso fue rechazado. ${p.rechazado_motivo ?? ""}`.trim(),
+              bloqueado: "Tu cuenta está bloqueada. Contacta al administrador.",
+            };
+            throw new Error(msgs[p.estado_acceso ?? "pendiente"] ?? "Acceso no autorizado.");
+          }
+          // Registrar último login
+          await supabase.from("profiles" as never)
+            .update({ ultimo_login_at: new Date().toISOString(), intentos_fallidos: 0 } as never)
+            .eq("id", uid);
+          await supabase.from("acceso_auditoria" as never).insert({
+            user_id: uid, actor_id: uid, accion: "login_ok", detalle: {},
+          } as never);
+          // MFA: si no se verificó en los últimos 30 días, exigir
+          const mfaOk = p?.mfa_verificado_at &&
+            (Date.now() - new Date(p.mfa_verificado_at).getTime()) < 30 * 24 * 3600 * 1000;
+          if (!mfaOk) {
+            navigate({ to: "/mfa-verificar" });
+            return;
+          }
+        }
         navigate({ to: "/" });
       } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { nombre },
-            emailRedirectTo: typeof window !== "undefined" ? window.location.origin : undefined,
-          },
-        });
-        if (error) throw error;
-        setInfo("Cuenta creada. Revisa tu correo para confirmarla y luego inicia sesión.");
-        setMode("signin");
+        navigate({ to: "/registro" });
+        return;
       }
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : "Error inesperado");
@@ -57,6 +80,7 @@ function LoginPage() {
       setBusy(false);
     }
   };
+
 
   const google = async () => {
     setErr(null); setBusy(true);

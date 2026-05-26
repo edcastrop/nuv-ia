@@ -39,6 +39,7 @@ import { Route as AuthenticatedSuperAdminNuvexGptRouteImport } from './routes/_a
 import { Route as AuthenticatedSuperAdminMarcaRouteImport } from './routes/_authenticated/super-admin.marca'
 import { Route as AuthenticatedSuperAdminExpedientesRouteImport } from './routes/_authenticated/super-admin.expedientes'
 import { Route as AuthenticatedSuperAdminAuditoriaRouteImport } from './routes/_authenticated/super-admin.auditoria'
+import { Route as AuthenticatedSuperAdminAccesosRouteImport } from './routes/_authenticated/super-admin.accesos'
 import { Route as AuthenticatedSuperAdminAcademiaRouteImport } from './routes/_authenticated/super-admin.academia'
 import { Route as AuthenticatedFinanzasTesoreriaRouteImport } from './routes/_authenticated/finanzas.tesoreria'
 import { Route as AuthenticatedFinanzasReportesRouteImport } from './routes/_authenticated/finanzas.reportes'
@@ -228,6 +229,12 @@ const AuthenticatedSuperAdminAuditoriaRoute =
     path: '/super-admin/auditoria',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedSuperAdminAccesosRoute =
+  AuthenticatedSuperAdminAccesosRouteImport.update({
+    id: '/super-admin/accesos',
+    path: '/super-admin/accesos',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedSuperAdminAcademiaRoute =
   AuthenticatedSuperAdminAcademiaRouteImport.update({
     id: '/super-admin/academia',
@@ -405,6 +412,7 @@ export interface FileRoutesByFullPath {
   '/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
   '/super-admin/academia': typeof AuthenticatedSuperAdminAcademiaRoute
+  '/super-admin/accesos': typeof AuthenticatedSuperAdminAccesosRoute
   '/super-admin/auditoria': typeof AuthenticatedSuperAdminAuditoriaRoute
   '/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
@@ -458,6 +466,7 @@ export interface FileRoutesByTo {
   '/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
   '/super-admin/academia': typeof AuthenticatedSuperAdminAcademiaRoute
+  '/super-admin/accesos': typeof AuthenticatedSuperAdminAccesosRoute
   '/super-admin/auditoria': typeof AuthenticatedSuperAdminAuditoriaRoute
   '/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
@@ -515,6 +524,7 @@ export interface FileRoutesById {
   '/_authenticated/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/_authenticated/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
   '/_authenticated/super-admin/academia': typeof AuthenticatedSuperAdminAcademiaRoute
+  '/_authenticated/super-admin/accesos': typeof AuthenticatedSuperAdminAccesosRoute
   '/_authenticated/super-admin/auditoria': typeof AuthenticatedSuperAdminAuditoriaRoute
   '/_authenticated/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/_authenticated/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
@@ -572,6 +582,7 @@ export interface FileRouteTypes {
     | '/finanzas/reportes'
     | '/finanzas/tesoreria'
     | '/super-admin/academia'
+    | '/super-admin/accesos'
     | '/super-admin/auditoria'
     | '/super-admin/expedientes'
     | '/super-admin/marca'
@@ -625,6 +636,7 @@ export interface FileRouteTypes {
     | '/finanzas/reportes'
     | '/finanzas/tesoreria'
     | '/super-admin/academia'
+    | '/super-admin/accesos'
     | '/super-admin/auditoria'
     | '/super-admin/expedientes'
     | '/super-admin/marca'
@@ -681,6 +693,7 @@ export interface FileRouteTypes {
     | '/_authenticated/finanzas/reportes'
     | '/_authenticated/finanzas/tesoreria'
     | '/_authenticated/super-admin/academia'
+    | '/_authenticated/super-admin/accesos'
     | '/_authenticated/super-admin/auditoria'
     | '/_authenticated/super-admin/expedientes'
     | '/_authenticated/super-admin/marca'
@@ -924,6 +937,13 @@ declare module '@tanstack/react-router' {
       path: '/super-admin/auditoria'
       fullPath: '/super-admin/auditoria'
       preLoaderRoute: typeof AuthenticatedSuperAdminAuditoriaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/super-admin/accesos': {
+      id: '/_authenticated/super-admin/accesos'
+      path: '/super-admin/accesos'
+      fullPath: '/super-admin/accesos'
+      preLoaderRoute: typeof AuthenticatedSuperAdminAccesosRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/super-admin/academia': {
@@ -1177,6 +1197,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedContabilidadCuentasCobroRoute: typeof AuthenticatedContabilidadCuentasCobroRoute
   AuthenticatedExpedienteMaestroIdRoute: typeof AuthenticatedExpedienteMaestroIdRoute
   AuthenticatedSuperAdminAcademiaRoute: typeof AuthenticatedSuperAdminAcademiaRoute
+  AuthenticatedSuperAdminAccesosRoute: typeof AuthenticatedSuperAdminAccesosRoute
   AuthenticatedSuperAdminAuditoriaRoute: typeof AuthenticatedSuperAdminAuditoriaRoute
   AuthenticatedSuperAdminExpedientesRoute: typeof AuthenticatedSuperAdminExpedientesRoute
   AuthenticatedSuperAdminMarcaRoute: typeof AuthenticatedSuperAdminMarcaRoute
@@ -1211,6 +1232,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedContabilidadCuentasCobroRoute,
   AuthenticatedExpedienteMaestroIdRoute: AuthenticatedExpedienteMaestroIdRoute,
   AuthenticatedSuperAdminAcademiaRoute: AuthenticatedSuperAdminAcademiaRoute,
+  AuthenticatedSuperAdminAccesosRoute: AuthenticatedSuperAdminAccesosRoute,
   AuthenticatedSuperAdminAuditoriaRoute: AuthenticatedSuperAdminAuditoriaRoute,
   AuthenticatedSuperAdminExpedientesRoute:
     AuthenticatedSuperAdminExpedientesRoute,
