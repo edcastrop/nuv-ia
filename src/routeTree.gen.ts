@@ -14,6 +14,7 @@ import { Route as MfaVerificarRouteImport } from './routes/mfa-verificar'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as ApiNuvexIaStreamRouteImport } from './routes/api/nuvex-ia-stream'
 import { Route as ApiNuvexGptChatRouteImport } from './routes/api/nuvex-gpt-chat'
 import { Route as AuthenticatedQaRouteImport } from './routes/_authenticated/qa'
 import { Route as AuthenticatedProyeccionRouteImport } from './routes/_authenticated/proyeccion'
@@ -89,6 +90,11 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedRoute,
+} as any)
+const ApiNuvexIaStreamRoute = ApiNuvexIaStreamRouteImport.update({
+  id: '/api/nuvex-ia-stream',
+  path: '/api/nuvex-ia-stream',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiNuvexGptChatRoute = ApiNuvexGptChatRouteImport.update({
   id: '/api/nuvex-gpt-chat',
@@ -402,6 +408,7 @@ export interface FileRoutesByFullPath {
   '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/qa': typeof AuthenticatedQaRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
+  '/api/nuvex-ia-stream': typeof ApiNuvexIaStreamRoute
   '/apoderado/mis-casos': typeof AuthenticatedApoderadoMisCasosRoute
   '/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
@@ -456,6 +463,7 @@ export interface FileRoutesByTo {
   '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/qa': typeof AuthenticatedQaRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
+  '/api/nuvex-ia-stream': typeof ApiNuvexIaStreamRoute
   '/': typeof AuthenticatedIndexRoute
   '/apoderado/mis-casos': typeof AuthenticatedApoderadoMisCasosRoute
   '/cartera/$id': typeof AuthenticatedCarteraIdRoute
@@ -515,6 +523,7 @@ export interface FileRoutesById {
   '/_authenticated/proyeccion': typeof AuthenticatedProyeccionRoute
   '/_authenticated/qa': typeof AuthenticatedQaRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
+  '/api/nuvex-ia-stream': typeof ApiNuvexIaStreamRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/apoderado/mis-casos': typeof AuthenticatedApoderadoMisCasosRoute
   '/_authenticated/cartera/$id': typeof AuthenticatedCarteraIdRoute
@@ -575,6 +584,7 @@ export interface FileRouteTypes {
     | '/proyeccion'
     | '/qa'
     | '/api/nuvex-gpt-chat'
+    | '/api/nuvex-ia-stream'
     | '/apoderado/mis-casos'
     | '/cartera/$id'
     | '/casos/$id'
@@ -629,6 +639,7 @@ export interface FileRouteTypes {
     | '/proyeccion'
     | '/qa'
     | '/api/nuvex-gpt-chat'
+    | '/api/nuvex-ia-stream'
     | '/'
     | '/apoderado/mis-casos'
     | '/cartera/$id'
@@ -687,6 +698,7 @@ export interface FileRouteTypes {
     | '/_authenticated/proyeccion'
     | '/_authenticated/qa'
     | '/api/nuvex-gpt-chat'
+    | '/api/nuvex-ia-stream'
     | '/_authenticated/'
     | '/_authenticated/apoderado/mis-casos'
     | '/_authenticated/cartera/$id'
@@ -734,6 +746,7 @@ export interface RootRouteChildren {
   MfaVerificarRoute: typeof MfaVerificarRoute
   RegistroRoute: typeof RegistroRoute
   ApiNuvexGptChatRoute: typeof ApiNuvexGptChatRoute
+  ApiNuvexIaStreamRoute: typeof ApiNuvexIaStreamRoute
   ApiPublicHooksCarteraRecordatoriosRoute: typeof ApiPublicHooksCarteraRecordatoriosRoute
   ApiPublicHooksCasosAlertasRoute: typeof ApiPublicHooksCasosAlertasRoute
   ApiPublicHooksFinanzasCronRoute: typeof ApiPublicHooksFinanzasCronRoute
@@ -775,6 +788,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/api/nuvex-ia-stream': {
+      id: '/api/nuvex-ia-stream'
+      path: '/api/nuvex-ia-stream'
+      fullPath: '/api/nuvex-ia-stream'
+      preLoaderRoute: typeof ApiNuvexIaStreamRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/nuvex-gpt-chat': {
       id: '/api/nuvex-gpt-chat'
@@ -1279,6 +1299,7 @@ const rootRouteChildren: RootRouteChildren = {
   MfaVerificarRoute: MfaVerificarRoute,
   RegistroRoute: RegistroRoute,
   ApiNuvexGptChatRoute: ApiNuvexGptChatRoute,
+  ApiNuvexIaStreamRoute: ApiNuvexIaStreamRoute,
   ApiPublicHooksCarteraRecordatoriosRoute:
     ApiPublicHooksCarteraRecordatoriosRoute,
   ApiPublicHooksCasosAlertasRoute: ApiPublicHooksCasosAlertasRoute,

@@ -7,7 +7,8 @@ import {
   Sparkles, Send, Loader2, TrendingUp, FileCheck2, AlertTriangle,
   Wallet, Receipt, Clock, ArrowRight, Bot, User as UserIcon, AlertCircle,
 } from "lucide-react";
-import { getMetricasIA, getAlertasInteligentes, consultarIA } from "@/lib/nuvex-ia.functions";
+import { getMetricasIA, getAlertasInteligentes } from "@/lib/nuvex-ia.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { EscalarTicketDialog } from "@/components/nuvex-gpt/EscalarTicketDialog";
 
 export const Route = createFileRoute("/_authenticated/nuvex-ia")({
@@ -44,7 +45,6 @@ function fmtCOP(n: number) {
 function NuvexIAPage() {
   const metricasFn = useServerFn(getMetricasIA);
   const alertasFn = useServerFn(getAlertasInteligentes);
-  const consultaFn = useServerFn(consultarIA);
 
   const { data: metricas } = useQuery({ queryKey: ["nuvex-ia-metricas"], queryFn: () => metricasFn() });
   const { data: alertasData } = useQuery({ queryKey: ["nuvex-ia-alertas"], queryFn: () => alertasFn() });
@@ -70,24 +70,82 @@ function NuvexIAPage() {
     const q = (texto ?? pregunta).trim();
     if (!q || enviando) return;
     setPregunta("");
-    setChat((c) => [...c, { rol: "user", texto: q }]);
+    setChat((c) => [...c, { rol: "user", texto: q }, { rol: "ai", texto: "", preguntaOriginal: q }]);
     setEnviando(true);
+
     try {
-      const res = await consultaFn({ data: { pregunta: q, modulo: "nuvex-ia", origen: "nuvex_ia" } });
-      const meta = res.fuente === "kb"
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error("Sin sesión");
+
+      const resp = await fetch("/api/nuvex-ia-stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ pregunta: q, modulo: "nuvex-ia", origen: "nuvex_ia" }),
+      });
+      if (!resp.ok || !resp.body) throw new Error(`HTTP ${resp.status}`);
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let fuente: "kb" | "modelo" | "escalado" = "modelo";
+      let escalable = false;
+      let filasCount = 0;
+
+      const appendToken = (delta: string) => {
+        setChat((c) => {
+          const next = [...c];
+          const last = next[next.length - 1];
+          if (last && last.rol === "ai") next[next.length - 1] = { ...last, texto: last.texto + delta };
+          return next;
+        });
+      };
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          const t = line.trim();
+          if (!t.startsWith("data:")) continue;
+          try {
+            const ev = JSON.parse(t.slice(5).trim());
+            if (ev.type === "meta") { fuente = ev.fuente; escalable = !!ev.escalable; }
+            else if (ev.type === "token") appendToken(ev.value as string);
+            else if (ev.type === "done") { filasCount = ev.filas ?? 0; if (typeof ev.escalable === "boolean") escalable = ev.escalable; }
+            else if (ev.type === "error") appendToken(`\n\n_${ev.message}_`);
+          } catch { /* noop */ }
+        }
+      }
+
+      const meta = fuente === "kb"
         ? "📚 Respuesta de la base de conocimiento NUVEX (KB)"
-        : res.escalable
+        : escalable
         ? "⚠️ Sin información suficiente — puedes escalar esta consulta"
         : undefined;
-      setChat((c) => [...c, {
-        rol: "ai",
-        texto: res.respuesta + (meta ? `\n\n*${meta}*` : ""),
-        filas: res.filas,
-        escalable: res.escalable,
-        preguntaOriginal: q,
-      }]);
+
+      setChat((c) => {
+        const next = [...c];
+        const last = next[next.length - 1];
+        if (last && last.rol === "ai") {
+          next[next.length - 1] = {
+            ...last,
+            texto: last.texto + (meta ? `\n\n*${meta}*` : ""),
+            escalable,
+            filas: filasCount > 0 ? new Array(filasCount).fill(null) : undefined,
+          };
+        }
+        return next;
+      });
     } catch {
-      setChat((c) => [...c, { rol: "ai", texto: "Hubo un error al procesar tu consulta." }]);
+      setChat((c) => {
+        const next = [...c];
+        const last = next[next.length - 1];
+        if (last && last.rol === "ai") next[next.length - 1] = { ...last, texto: "Hubo un error al procesar tu consulta." };
+        return next;
+      });
     } finally {
       setEnviando(false);
     }
