@@ -280,29 +280,21 @@ function AuthenticatedLayout() {
 
             <div className="flex items-center gap-3">
               <NotificationBell />
-              <div
-                className="hidden sm:flex items-center gap-3 rounded-xl pl-2 pr-3 py-1.5"
+              <Link
+                to="/mi-perfil"
+                title="Mi Perfil"
+                className="hidden sm:flex items-center gap-3 rounded-xl pl-1.5 pr-3 py-1 transition hover:bg-white/[0.07]"
                 style={{
                   background: "rgba(255,255,255,0.04)",
                   border: "1px solid rgba(255,255,255,0.08)",
                 }}
               >
-                <div
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-bold text-white"
-                  style={{
-                    backgroundImage: `linear-gradient(#0A1226, #0A1226), linear-gradient(135deg, ${AZUL}, ${VERDE})`,
-                    backgroundOrigin: "border-box",
-                    backgroundClip: "padding-box, border-box",
-                    border: "2px solid transparent",
-                  }}
-                >
-                  {initials}
-                </div>
+                <UserAvatar userId={user?.id} name={displayName} email={user?.email} size="sm" ring />
                 <div className="leading-tight text-right">
                   <div className="text-[12px] font-semibold text-white truncate max-w-[160px]">{displayName}</div>
                   <div className="text-[10px] text-white/50 truncate max-w-[160px]">{user?.email}</div>
                 </div>
-              </div>
+              </Link>
             </div>
           </div>
         </header>
