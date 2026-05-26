@@ -62,6 +62,7 @@ import { Route as AuthenticatedComisionesIdRouteImport } from './routes/_authent
 import { Route as AuthenticatedCasosIdRouteImport } from './routes/_authenticated/casos.$id'
 import { Route as AuthenticatedCarteraIdRouteImport } from './routes/_authenticated/cartera.$id'
 import { Route as AuthenticatedApoderadoMisCasosRouteImport } from './routes/_authenticated/apoderado.mis-casos'
+import { Route as AuthenticatedColaboracionDmIndexRouteImport } from './routes/_authenticated/colaboracion.dm.index'
 import { Route as ApiPublicHooksFinanzasCronRouteImport } from './routes/api/public/hooks/finanzas-cron'
 import { Route as ApiPublicHooksCasosAlertasRouteImport } from './routes/api/public/hooks/casos-alertas'
 import { Route as ApiPublicHooksCarteraRecordatoriosRouteImport } from './routes/api/public/hooks/cartera-recordatorios'
@@ -366,6 +367,12 @@ const AuthenticatedApoderadoMisCasosRoute =
     path: '/apoderado/mis-casos',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedColaboracionDmIndexRoute =
+  AuthenticatedColaboracionDmIndexRouteImport.update({
+    id: '/dm/',
+    path: '/dm/',
+    getParentRoute: () => AuthenticatedColaboracionRoute,
+  } as any)
 const ApiPublicHooksFinanzasCronRoute =
   ApiPublicHooksFinanzasCronRouteImport.update({
     id: '/api/public/hooks/finanzas-cron',
@@ -417,7 +424,7 @@ export interface FileRoutesByFullPath {
   '/registro': typeof RegistroRoute
   '/academia': typeof AuthenticatedAcademiaRouteWithChildren
   '/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
-  '/colaboracion': typeof AuthenticatedColaboracionRoute
+  '/colaboracion': typeof AuthenticatedColaboracionRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/directorio': typeof AuthenticatedDirectorioRoute
   '/finanzas': typeof AuthenticatedFinanzasRouteWithChildren
@@ -469,6 +476,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
   '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
+  '/colaboracion/dm/': typeof AuthenticatedColaboracionDmIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -476,7 +484,7 @@ export interface FileRoutesByTo {
   '/pendiente-aprobacion': typeof PendienteAprobacionRoute
   '/registro': typeof RegistroRoute
   '/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
-  '/colaboracion': typeof AuthenticatedColaboracionRoute
+  '/colaboracion': typeof AuthenticatedColaboracionRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/directorio': typeof AuthenticatedDirectorioRoute
   '/mensajeria': typeof AuthenticatedMensajeriaRoute
@@ -528,6 +536,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
   '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
+  '/colaboracion/dm': typeof AuthenticatedColaboracionDmIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -538,7 +547,7 @@ export interface FileRoutesById {
   '/registro': typeof RegistroRoute
   '/_authenticated/academia': typeof AuthenticatedAcademiaRouteWithChildren
   '/_authenticated/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
-  '/_authenticated/colaboracion': typeof AuthenticatedColaboracionRoute
+  '/_authenticated/colaboracion': typeof AuthenticatedColaboracionRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/directorio': typeof AuthenticatedDirectorioRoute
   '/_authenticated/finanzas': typeof AuthenticatedFinanzasRouteWithChildren
@@ -591,6 +600,7 @@ export interface FileRoutesById {
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
   '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
+  '/_authenticated/colaboracion/dm/': typeof AuthenticatedColaboracionDmIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -654,6 +664,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/cartera-recordatorios'
     | '/api/public/hooks/casos-alertas'
     | '/api/public/hooks/finanzas-cron'
+    | '/colaboracion/dm/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -713,6 +724,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/cartera-recordatorios'
     | '/api/public/hooks/casos-alertas'
     | '/api/public/hooks/finanzas-cron'
+    | '/colaboracion/dm'
   id:
     | '__root__'
     | '/_authenticated'
@@ -775,6 +787,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/cartera-recordatorios'
     | '/api/public/hooks/casos-alertas'
     | '/api/public/hooks/finanzas-cron'
+    | '/_authenticated/colaboracion/dm/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1163,6 +1176,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApoderadoMisCasosRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/colaboracion/dm/': {
+      id: '/_authenticated/colaboracion/dm/'
+      path: '/dm'
+      fullPath: '/colaboracion/dm/'
+      preLoaderRoute: typeof AuthenticatedColaboracionDmIndexRouteImport
+      parentRoute: typeof AuthenticatedColaboracionRoute
+    }
     '/api/public/hooks/finanzas-cron': {
       id: '/api/public/hooks/finanzas-cron'
       path: '/api/public/hooks/finanzas-cron'
@@ -1240,6 +1260,21 @@ const AuthenticatedAcademiaRouteWithChildren =
     AuthenticatedAcademiaRouteChildren,
   )
 
+interface AuthenticatedColaboracionRouteChildren {
+  AuthenticatedColaboracionDmIndexRoute: typeof AuthenticatedColaboracionDmIndexRoute
+}
+
+const AuthenticatedColaboracionRouteChildren: AuthenticatedColaboracionRouteChildren =
+  {
+    AuthenticatedColaboracionDmIndexRoute:
+      AuthenticatedColaboracionDmIndexRoute,
+  }
+
+const AuthenticatedColaboracionRouteWithChildren =
+  AuthenticatedColaboracionRoute._addFileChildren(
+    AuthenticatedColaboracionRouteChildren,
+  )
+
 interface AuthenticatedFinanzasRouteChildren {
   AuthenticatedFinanzasAlertasRoute: typeof AuthenticatedFinanzasAlertasRoute
   AuthenticatedFinanzasAuditoriaRoute: typeof AuthenticatedFinanzasAuditoriaRoute
@@ -1278,7 +1313,7 @@ const AuthenticatedFinanzasRouteWithChildren =
 interface AuthenticatedRouteChildren {
   AuthenticatedAcademiaRoute: typeof AuthenticatedAcademiaRouteWithChildren
   AuthenticatedApoderadosNuvexRoute: typeof AuthenticatedApoderadosNuvexRoute
-  AuthenticatedColaboracionRoute: typeof AuthenticatedColaboracionRoute
+  AuthenticatedColaboracionRoute: typeof AuthenticatedColaboracionRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDirectorioRoute: typeof AuthenticatedDirectorioRoute
   AuthenticatedFinanzasRoute: typeof AuthenticatedFinanzasRouteWithChildren
@@ -1315,7 +1350,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAcademiaRoute: AuthenticatedAcademiaRouteWithChildren,
   AuthenticatedApoderadosNuvexRoute: AuthenticatedApoderadosNuvexRoute,
-  AuthenticatedColaboracionRoute: AuthenticatedColaboracionRoute,
+  AuthenticatedColaboracionRoute: AuthenticatedColaboracionRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDirectorioRoute: AuthenticatedDirectorioRoute,
   AuthenticatedFinanzasRoute: AuthenticatedFinanzasRouteWithChildren,
