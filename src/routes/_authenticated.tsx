@@ -40,6 +40,29 @@ function AuthenticatedLayout() {
     if (!loading && !session) navigate({ to: "/login" });
   }, [loading, session, navigate]);
 
+  // Onboarding gate: pendiente/rechazado → pendiente-aprobacion; aprobado sin onboarding → /onboarding
+  useEffect(() => {
+    if (!session?.user) return;
+    let cancel = false;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("estado_acceso, onboarding_estado")
+        .eq("id", session.user.id)
+        .maybeSingle();
+      if (cancel || !data) return;
+      const estado = (data as { estado_acceso: string }).estado_acceso;
+      const onb = (data as { onboarding_estado: string }).onboarding_estado;
+      const path = location.pathname;
+      if ((estado === "pendiente" || estado === "rechazado" || estado === "bloqueado") && path !== "/pendiente-aprobacion") {
+        navigate({ to: "/pendiente-aprobacion" });
+      } else if (estado === "aprobado" && onb !== "completado" && !path.startsWith("/onboarding") && !path.startsWith("/mi-perfil")) {
+        navigate({ to: "/onboarding" });
+      }
+    })();
+    return () => { cancel = true; };
+  }, [session, location.pathname, navigate]);
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem("nuvex.sidebar.collapsed", collapsed ? "1" : "0");
