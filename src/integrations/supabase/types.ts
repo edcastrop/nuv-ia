@@ -1787,30 +1787,120 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_auditoria: {
+        Row: {
+          accion: string
+          actor_id: string | null
+          created_at: string
+          id: string
+          profile_id: string
+          valor_anterior: Json | null
+          valor_nuevo: Json | null
+        }
+        Insert: {
+          accion: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          profile_id: string
+          valor_anterior?: Json | null
+          valor_nuevo?: Json | null
+        }
+        Update: {
+          accion?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          profile_id?: string
+          valor_anterior?: Json | null
+          valor_nuevo?: Json | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           activo: boolean
+          avatar_path: string | null
+          avatar_url: string | null
+          banco: string | null
+          celular: string | null
+          ciudad: string | null
+          coordinador_id: string | null
+          correo_corporativo: string | null
           created_at: string
+          departamento: string | null
+          direccion: string | null
           email: string | null
+          equipo: string | null
+          fecha_ingreso: string | null
           id: string
           nombre: string | null
+          numero_cuenta: string | null
+          numero_documento: string | null
+          pais: string | null
+          porcentaje_comision: number | null
+          sede: string | null
+          tipo_cuenta: string | null
+          tipo_documento: string | null
+          titular_cuenta: string | null
           updated_at: string
+          whatsapp: string | null
         }
         Insert: {
           activo?: boolean
+          avatar_path?: string | null
+          avatar_url?: string | null
+          banco?: string | null
+          celular?: string | null
+          ciudad?: string | null
+          coordinador_id?: string | null
+          correo_corporativo?: string | null
           created_at?: string
+          departamento?: string | null
+          direccion?: string | null
           email?: string | null
+          equipo?: string | null
+          fecha_ingreso?: string | null
           id: string
           nombre?: string | null
+          numero_cuenta?: string | null
+          numero_documento?: string | null
+          pais?: string | null
+          porcentaje_comision?: number | null
+          sede?: string | null
+          tipo_cuenta?: string | null
+          tipo_documento?: string | null
+          titular_cuenta?: string | null
           updated_at?: string
+          whatsapp?: string | null
         }
         Update: {
           activo?: boolean
+          avatar_path?: string | null
+          avatar_url?: string | null
+          banco?: string | null
+          celular?: string | null
+          ciudad?: string | null
+          coordinador_id?: string | null
+          correo_corporativo?: string | null
           created_at?: string
+          departamento?: string | null
+          direccion?: string | null
           email?: string | null
+          equipo?: string | null
+          fecha_ingreso?: string | null
           id?: string
           nombre?: string | null
+          numero_cuenta?: string | null
+          numero_documento?: string | null
+          pais?: string | null
+          porcentaje_comision?: number | null
+          sede?: string | null
+          tipo_cuenta?: string | null
+          tipo_documento?: string | null
+          titular_cuenta?: string | null
           updated_at?: string
+          whatsapp?: string | null
         }
         Relationships: []
       }
@@ -1960,7 +2050,78 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_publicos: {
+        Row: {
+          activo: boolean | null
+          avatar_path: string | null
+          avatar_url: string | null
+          celular: string | null
+          ciudad: string | null
+          coordinador_id: string | null
+          correo_corporativo: string | null
+          created_at: string | null
+          departamento: string | null
+          direccion: string | null
+          email: string | null
+          equipo: string | null
+          fecha_ingreso: string | null
+          id: string | null
+          nombre: string | null
+          numero_documento: string | null
+          pais: string | null
+          sede: string | null
+          tipo_documento: string | null
+          updated_at: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          activo?: boolean | null
+          avatar_path?: string | null
+          avatar_url?: string | null
+          celular?: string | null
+          ciudad?: string | null
+          coordinador_id?: string | null
+          correo_corporativo?: string | null
+          created_at?: string | null
+          departamento?: string | null
+          direccion?: string | null
+          email?: string | null
+          equipo?: string | null
+          fecha_ingreso?: string | null
+          id?: string | null
+          nombre?: string | null
+          numero_documento?: string | null
+          pais?: string | null
+          sede?: string | null
+          tipo_documento?: string | null
+          updated_at?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          activo?: boolean | null
+          avatar_path?: string | null
+          avatar_url?: string | null
+          celular?: string | null
+          ciudad?: string | null
+          coordinador_id?: string | null
+          correo_corporativo?: string | null
+          created_at?: string | null
+          departamento?: string | null
+          direccion?: string | null
+          email?: string | null
+          equipo?: string | null
+          fecha_ingreso?: string | null
+          id?: string | null
+          nombre?: string | null
+          numero_documento?: string | null
+          pais?: string | null
+          sede?: string | null
+          tipo_documento?: string | null
+          updated_at?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       academia_rol_del_usuario: {
@@ -1972,6 +2133,10 @@ export type Database = {
       can_validar_proyeccion: { Args: { _uid: string }; Returns: boolean }
       can_view_cartera_row: {
         Args: { _exp_id: string; _uid: string }
+        Returns: boolean
+      }
+      can_view_profile_finanzas: {
+        Args: { _profile_id: string; _uid: string }
         Returns: boolean
       }
       comision_disponible_para_cc: {

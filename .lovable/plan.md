@@ -1,88 +1,149 @@
-# Academia NUVEX — Infraestructura
+# Ficha Única de Usuario NUVEX
 
-Construir solo la **infraestructura** del módulo Academia. Sin contenido real todavía: los cursos se cargarán después desde el panel Super Admin.
+Implementación completa de la ficha única de perfil aplicable a **todos los roles** (Super Admin, Gerencia, Director Financiero QA, Director Jurídico, Analista Jurídico, Contabilidad, Licenciado, Auxiliar Operativo, Apoderado).
 
-## 1. Modelo de datos (migración Supabase)
+---
 
-Nuevo enum `academia_rol` mapeado a `app_role`:
-- `licenciado`, `operaciones` (= `auxiliar_operativo`), `juridica`, `contabilidad`, `director_financiero_qa`, `gerencia`, `super_admin`
+## 1. Migración de Base de Datos
 
-Tablas (con RLS):
+### 1.1 Ampliar tabla `profiles`
+Agregar columnas (todas nullable salvo lo ya existente):
 
-- **academia_cursos**: `id`, `rol_destino academia_rol`, `titulo`, `descripcion`, `orden`, `activo`, `created_at`, `updated_at`, `created_by`. Curso = "Academia Licenciado" etc., uno por rol inicial (seed).
-- **academia_modulos**: `id`, `curso_id`, `titulo`, `descripcion`, `orden`, `activo`.
-- **academia_lecciones**: `id`, `modulo_id`, `titulo`, `tipo` (`texto|pdf|video|imagen|checklist|enlace|faq`), `contenido jsonb` (cuerpo / url / items), `orden`, `duracion_min`, `activo`.
-- **academia_recursos**: `id`, `leccion_id` (nullable), `modulo_id` (nullable), `titulo`, `tipo`, `url`, `orden`.
-- **academia_evaluaciones**: `id`, `modulo_id`, `titulo`, `nota_minima` (default 80), `intentos_permitidos` (default 3), `activo`.
-- **academia_preguntas**: `id`, `evaluacion_id`, `enunciado`, `tipo` (`unica|multiple|verdadero_falso`), `opciones jsonb`, `respuesta_correcta jsonb`, `puntos`, `orden`.
-- **academia_intentos**: `id`, `evaluacion_id`, `user_id`, `respuestas jsonb`, `nota`, `porcentaje`, `aprobado bool`, `created_at`. (lectura propia + super_admin/gerencia).
-- **academia_progreso_lecciones**: `user_id`, `leccion_id`, `completada bool`, `completada_at`. PK compuesta.
-- **academia_certificaciones**: `id`, `user_id`, `curso_id`, `emitida_at`, `nota_final`, `codigo` (slug único). Emisión automática vía función SQL `emitir_certificado(user, curso)` cuando promedio de evaluaciones aprobadas ≥ 80 y todas las lecciones completadas.
-- **modulo_ayuda**: `modulo_sistema text` (clave: 'casos','cartera','expediente', etc.), `tipo` (`guia|video|faq|checklist`), `titulo`, `contenido jsonb`, `orden`. Para el Centro de Ayuda contextual.
+**Datos personales**
+- `tipo_documento` text (CC, CE, PA, NIT)
+- `numero_documento` text
+- `pais` text default 'Colombia'
+- `departamento` text
+- `ciudad` text
+- `direccion` text
 
-RLS:
-- Lectura cursos/modulos/lecciones/recursos/evaluaciones/preguntas: cualquier autenticado cuyo `rol_destino` esté entre sus roles, o super_admin/gerencia (ven todo).
-- Escritura: solo super_admin.
-- Intentos/progreso/certificaciones: dueño + super_admin/gerencia.
-- modulo_ayuda: lectura autenticada, escritura super_admin.
+**Contacto**
+- `celular` text
+- `whatsapp` text
+- `correo_corporativo` text
+- (email ya existe → correo personal)
 
-Función `mapear_rol_to_academia(app_role) → academia_rol` y `academia_rol_del_usuario(uid) → academia_rol` (prioridad: super_admin > gerencia > director_financiero_qa > contabilidad > juridica > operaciones (auxiliar_operativo) > licenciado).
+**Foto**
+- `avatar_url` text
+- `avatar_path` text  (path en bucket para poder reemplazar/borrar)
 
-Seed: insertar un curso vacío por cada uno de los 7 roles.
+**Organizacional**
+- `fecha_ingreso` date
+- `coordinador_id` uuid (FK a profiles.id, nullable)
+- `equipo` text
+- `sede` text
 
-## 2. Frontend — rutas y vistas
+**Financiero (sensible)**
+- `porcentaje_comision` numeric
+- `banco` text
+- `tipo_cuenta` text  (ahorros/corriente)
+- `numero_cuenta` text
+- `titular_cuenta` text
 
-Reemplazar la ruta actual `/_authenticated/academia.tsx` (placeholder) con una **academia dinámica por rol**:
+### 1.2 Vista pública (sin financiero)
+Crear vista `profiles_public` que excluya columnas financieras + función `can_view_profile_finanzas(uuid)` (super_admin o contabilidad). Las columnas financieras se ocultan mediante una política RLS adicional: leer columnas financieras solo si dueño, super_admin o contabilidad.
 
-- `/academia` — **Dashboard Academia** del usuario:
-  - Detecta rol → muestra el curso correspondiente (`rol_destino = academia_rol_del_usuario`).
-  - Tarjetas: Progreso %, Cursos completados, Pendientes, Evaluaciones aprobadas, Certificaciones obtenidas.
-  - Listado de módulos con barra de avance por módulo.
-- `/academia/modulos/$moduloId` — vista del módulo con lecciones y evaluación.
-- `/academia/lecciones/$leccionId` — render por tipo (`texto|pdf|video|imagen|checklist|enlace|faq`). Botón "Marcar como completada" → upsert en `academia_progreso_lecciones`.
-- `/academia/evaluaciones/$evaluacionId` — flujo de evaluación: render preguntas → submit → muestra nota, %, aprobado/reprobado → guarda intento. Si aprobado y curso completo → dispara emisión de certificado.
-- `/academia/certificados/$codigo` — vista imprimible del certificado interno NUVEX (logo, nombre, curso, fecha, código, firma estilizada).
-- `/super-admin/academia` — **Administración** (solo super_admin):
-  - Listado de cursos por rol, crear/editar/eliminar/activar/desactivar.
-  - Editor de módulos, lecciones (por tipo de contenido), recursos, evaluaciones y preguntas.
-  - Asignación implícita: cada curso ya está atado a su `rol_destino`; opción futura de asignar a usuarios específicos (se deja columna preparada, no UI todavía).
+Como Postgres RLS es row-level (no column-level), usamos **dos vistas**:
+- `profiles_basico` → todos los datos no financieros, visible a autenticados.
+- `profiles_financiero` → solo financiero, restringido por RLS a (dueño OR super_admin OR contabilidad).
 
-## 3. Centro de Ayuda contextual
+### 1.3 Storage bucket `avatars`
+- `public = true` (avatars son URLs públicas).
+- Policy upload/update/delete: solo el dueño (`auth.uid()::text = (storage.foldername(name))[1]`).
+- Tamaño máx 5 MB validado en cliente; tipos JPG/PNG/WEBP.
 
-- Componente `<HelpButton modulo="casos" />` reutilizable: botón flotante "?" que abre un drawer con `modulo_ayuda` filtrado (Guía rápida / Video / FAQ / Checklist). Se montará después en módulos del sistema; en este sprint solo se crea el componente + tabla.
+### 1.4 Tabla `profile_auditoria`
+```
+id uuid pk
+profile_id uuid not null
+actor_id uuid (quien hizo el cambio)
+accion text  -- 'creado','cambio_foto','cambio_correo','cambio_celular','cambio_rol','update'
+valor_anterior jsonb
+valor_nuevo jsonb
+created_at timestamptz default now()
+```
+RLS: SELECT solo super_admin/gerencia o el propio dueño. INSERT por authenticated.
 
-## 4. Sidebar
+### 1.5 Triggers de auditoría
+- Trigger `AFTER UPDATE` en `profiles` que inserta en `profile_auditoria` si cambia `avatar_url`, `email`, `correo_corporativo`, `celular`, `whatsapp`.
+- Trigger `AFTER INSERT/DELETE` en `user_roles` que registra `cambio_rol`.
+- Trigger `AFTER INSERT` en `profiles` registra `creado`.
 
-El ítem **Academia** ya existe en la sección "Gestión" del sidebar (`src/routes/_authenticated.tsx`). No se cambia. Se añadirá un sub-ítem **Admin Academia** dentro de la sección Super Admin (visible solo si `isSuperAdmin`).
+---
 
-## 5. Archivos a crear / editar
+## 2. Frontend
 
-Crear:
-- `supabase/migrations/<ts>_academia.sql` (enum, tablas, RLS, funciones, seed)
-- `src/lib/academia.ts` (queries + tipos + helpers de rol)
-- `src/hooks/useAcademia.ts` (curso del usuario, progreso, certificaciones)
-- `src/components/academia/AcademiaDashboard.tsx`
-- `src/components/academia/LeccionRenderer.tsx` (switch por tipo)
-- `src/components/academia/EvaluacionPlayer.tsx`
-- `src/components/academia/CertificadoView.tsx`
-- `src/components/ayuda/HelpButton.tsx` + `HelpDrawer.tsx`
-- `src/routes/_authenticated/academia.index.tsx` (reemplaza `academia.tsx`)
-- `src/routes/_authenticated/academia.modulos.$moduloId.tsx`
-- `src/routes/_authenticated/academia.lecciones.$leccionId.tsx`
-- `src/routes/_authenticated/academia.evaluaciones.$evaluacionId.tsx`
-- `src/routes/_authenticated/academia.certificados.$codigo.tsx`
-- `src/routes/_authenticated/super-admin.academia.tsx` (CRUD)
+### 2.1 Helper `src/lib/profile.ts`
+- `getMyProfile()`, `updateMyProfile(payload)`, `uploadAvatar(file)`, `deleteAvatar()`.
+- `getProfileAuditoria(profileId)`.
+- Validación zod (límites de longitud + formato celular).
 
-Editar:
-- `src/routes/_authenticated.tsx` — añadir link "Admin Academia" en sección Gestión cuando `isSuperAdmin`.
-- Borrar contenido del actual `src/routes/_authenticated/academia.tsx` (se renombra a `academia.index.tsx`).
+### 2.2 Componente `<UserAvatar />` reutilizable
+- Lee `avatar_url` + iniciales fallback.
+- Tamaños: sm/md/lg.
+- Usar en: Sidebar header (reemplaza iniciales actuales en `_authenticated.tsx`), Dashboard, lista de Casos (asesor), Expedientes, Academia, Super Admin → Usuarios.
 
-## 6. Validación (criterios de cierre)
+### 2.3 Nueva ruta `/mi-perfil`  → `src/routes/_authenticated/mi-perfil.tsx`
+Layout en pestañas/secciones:
+1. **Foto de perfil** — preview circular, botones Subir / Reemplazar / Eliminar (drag & drop, valida 5 MB y mime).
+2. **Datos personales** — formulario editable.
+3. **Contacto** — celular, whatsapp, correo personal, correo corporativo.
+4. **Información organizacional** — solo lectura para el propio usuario (rol, estado, fecha ingreso, coordinador, equipo, sede). Editable solo por Super Admin/Gerencia desde `/super-admin/usuarios`.
+5. **Información financiera** — visible solo si dueño es Super Admin/Contabilidad **o** el dueño consulta su propia ficha. Editable por Super Admin/Contabilidad.
+6. **Información académica** — consulta a `academia_cursos` + `academia_progreso_lecciones` + `academia_certificaciones` del usuario: cursos asignados (por rol), % avance, certificaciones, último acceso (max(`completada_at`)).
+7. **Auditoría** — tabla de últimos 50 eventos del propio perfil.
 
-- Cada uno de los 7 roles ve **solo** su academia al entrar a `/academia`.
-- Dashboard con Progreso %, completados, pendientes, evaluaciones aprobadas, certificaciones.
-- Evaluaciones funcionando (3 tipos de pregunta, cálculo de %, aprobado/reprobado).
-- Certificación interna emitida automáticamente con 80% o más + ruta pública `/academia/certificados/$codigo`.
-- Super Admin puede crear/editar/eliminar/activar/desactivar cursos, módulos, lecciones y evaluaciones desde `/super-admin/academia`.
+Diseño coherente con NUVEX (paleta `#445DA3` / `#84B98F`, cards `src/components/nuvex/ui.tsx`).
 
-> Nota: este sprint deja todos los cursos **vacíos** (sin lecciones reales). El llenado de contenido se hará en una iteración posterior desde el panel Super Admin.
+### 2.4 Menú lateral
+En `src/routes/_authenticated.tsx`:
+- Agregar item **"Mi Perfil"** (icon `UserCircle`) en una nueva sección "Cuenta" al final, visible para todos los roles (incluido apoderado).
+- Hacer clic en el bloque de avatar del header también enlaza a `/mi-perfil`.
+
+### 2.5 Ampliar `/super-admin/usuarios`
+Extender la tabla existente para permitir editar:
+- Datos organizacionales (fecha ingreso, coordinador, equipo, sede).
+- Datos financieros (solo super_admin/contabilidad).
+- Ver auditoría completa del usuario seleccionado (drawer/modal).
+
+---
+
+## 3. Detalles técnicos
+
+```text
+profiles (ampliada)
+    ├─ avatar en bucket public "avatars/{user_id}/avatar.{ext}"
+    ├─ trigger AFTER UPDATE → profile_auditoria
+    └─ vista profiles_financiero (RLS dueño/super_admin/contabilidad)
+
+user_roles
+    └─ trigger AFTER INSERT/DELETE → profile_auditoria (cambio_rol)
+
+rutas nuevas
+    /mi-perfil              (todos)
+    /super-admin/usuarios   (ampliada: edición + auditoría)
+```
+
+### Validaciones zod (cliente + server)
+- nombre 1-120
+- celular/whatsapp regex `^\+?\d{7,15}$`
+- correo electrónico válido, máx 255
+- numero_documento 4-20, alfanumérico
+- foto: mime ∈ {image/jpeg, image/png, image/webp}, ≤ 5 MB
+
+### Compatibilidad
+- Todos los avatares actuales (header sidebar) se reemplazan por `<UserAvatar />`.
+- Roles existentes no se modifican; solo se agregan columnas y políticas.
+
+---
+
+## 4. Orden de ejecución
+1. Migración SQL (tablas, vistas, bucket, triggers, RLS).
+2. `src/lib/profile.ts` + componente `<UserAvatar />`.
+3. Ruta `/mi-perfil`.
+4. Sidebar: ítem "Mi Perfil" + avatar real en header.
+5. Reemplazo de iniciales en Casos / Expedientes / Academia / Dashboard.
+6. Ampliación de `/super-admin/usuarios`.
+7. Verificación final con todos los roles.
+
+¿Apruebas para proceder con la migración y la implementación?
