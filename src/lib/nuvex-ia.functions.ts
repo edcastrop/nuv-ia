@@ -262,7 +262,7 @@ export const consultarIA = createServerFn({ method: "POST" })
       await registrarLog(supabase, {
         userId, nombre: null, rol: "apoderado", modulo,
         pregunta: data.pregunta, respuesta: msg,
-        origen, fuente: "escalado", tiempoMs: Date.now() - t0,
+        origen, fuente: "escalado", tiempoMs: Date.now() - t0, audiencia,
       });
       return { respuesta: msg, filas: [], dataset: "ninguno", fuente: "escalado", escalable: false };
     }
@@ -280,7 +280,7 @@ export const consultarIA = createServerFn({ method: "POST" })
       await registrarLog(supabase, {
         userId, nombre, rol: rolPrincipal, modulo,
         pregunta: data.pregunta, respuesta,
-        origen, fuente: "kb", tiempoMs: Date.now() - t0,
+        origen, fuente: "kb", tiempoMs: Date.now() - t0, audiencia,
       });
       return { respuesta, filas: [], dataset: "kb", fuente: "kb", escalable: false };
     }
@@ -291,7 +291,7 @@ export const consultarIA = createServerFn({ method: "POST" })
       await registrarLog(supabase, {
         userId, nombre, rol: rolPrincipal, modulo,
         pregunta: data.pregunta, respuesta: msg,
-        origen, fuente: "escalado", tiempoMs: Date.now() - t0,
+        origen, fuente: "escalado", tiempoMs: Date.now() - t0, audiencia,
       });
       return { respuesta: msg, filas: [], dataset: "ninguno", fuente: "escalado", escalable: true };
     }
