@@ -191,7 +191,7 @@ function AuthenticatedLayout() {
 
       <div className="relative flex items-center justify-between px-4 py-5" style={{ minHeight: 76 }}>
         <Link to="/" className="flex items-center">
-          {collapsed ? <Logo variant="white" height={28} iconOnly /> : <Logo variant="white" height={32} />}
+          <Logo variant="white" height={collapsed ? 24 : 32} className={collapsed ? "max-w-[40px] object-contain" : ""} />
         </Link>
         <button
           onClick={() => setCollapsed((v) => !v)}
