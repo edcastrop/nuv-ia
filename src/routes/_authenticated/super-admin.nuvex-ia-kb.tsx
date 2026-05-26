@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useUserRole } from "@/hooks/useUserRole";
 import {
-  kbList, kbUpsert, kbDelete, kbAnalitica,
+  kbList, kbUpsert, kbDelete, kbAnalitica, kbAnaliticaExport,
 } from "@/lib/nuvex-kb-admin.functions";
 
 export const Route = createFileRoute("/_authenticated/super-admin/nuvex-ia-kb")({
