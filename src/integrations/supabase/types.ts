@@ -2197,6 +2197,60 @@ export type Database = {
         }
         Relationships: []
       }
+      onboarding_auditoria: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          detalle: Json
+          evento: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          detalle?: Json
+          evento: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          detalle?: Json
+          evento?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      onboarding_config: {
+        Row: {
+          descripcion_empresa: string
+          id: boolean
+          mensaje_bienvenida: string
+          updated_at: string
+          updated_by: string | null
+          video_bienvenida_url: string | null
+        }
+        Insert: {
+          descripcion_empresa?: string
+          id?: boolean
+          mensaje_bienvenida?: string
+          updated_at?: string
+          updated_by?: string | null
+          video_bienvenida_url?: string | null
+        }
+        Update: {
+          descripcion_empresa?: string
+          id?: boolean
+          mensaje_bienvenida?: string
+          updated_at?: string
+          updated_by?: string | null
+          video_bienvenida_url?: string | null
+        }
+        Relationships: []
+      }
       parametros_financieros: {
         Row: {
           clave: string
@@ -2274,13 +2328,16 @@ export type Database = {
       }
       profiles: {
         Row: {
+          academia_asignada: boolean
           activo: boolean
           aprobado_at: string | null
           aprobado_por: string | null
           avatar_path: string | null
           avatar_url: string | null
           banco: string | null
+          bienvenida_vista: boolean
           celular: string | null
+          checklist_completo: boolean
           ciudad: string | null
           ciudad_registro: string | null
           coordinador_id: string | null
@@ -2302,7 +2359,12 @@ export type Database = {
           nombre: string | null
           numero_cuenta: string | null
           numero_documento: string | null
+          onboarding_completed_at: string | null
+          onboarding_estado: string
+          onboarding_paso: number
+          onboarding_started_at: string | null
           pais: string | null
+          perfil_completo: boolean
           porcentaje_comision: number | null
           rechazado_motivo: string | null
           rol_solicitado: string | null
@@ -2311,18 +2373,22 @@ export type Database = {
           tipo_cuenta: string | null
           tipo_documento: string | null
           titular_cuenta: string | null
+          tour_completo: boolean
           ultimo_login_at: string | null
           updated_at: string
           whatsapp: string | null
         }
         Insert: {
+          academia_asignada?: boolean
           activo?: boolean
           aprobado_at?: string | null
           aprobado_por?: string | null
           avatar_path?: string | null
           avatar_url?: string | null
           banco?: string | null
+          bienvenida_vista?: boolean
           celular?: string | null
+          checklist_completo?: boolean
           ciudad?: string | null
           ciudad_registro?: string | null
           coordinador_id?: string | null
@@ -2344,7 +2410,12 @@ export type Database = {
           nombre?: string | null
           numero_cuenta?: string | null
           numero_documento?: string | null
+          onboarding_completed_at?: string | null
+          onboarding_estado?: string
+          onboarding_paso?: number
+          onboarding_started_at?: string | null
           pais?: string | null
+          perfil_completo?: boolean
           porcentaje_comision?: number | null
           rechazado_motivo?: string | null
           rol_solicitado?: string | null
@@ -2353,18 +2424,22 @@ export type Database = {
           tipo_cuenta?: string | null
           tipo_documento?: string | null
           titular_cuenta?: string | null
+          tour_completo?: boolean
           ultimo_login_at?: string | null
           updated_at?: string
           whatsapp?: string | null
         }
         Update: {
+          academia_asignada?: boolean
           activo?: boolean
           aprobado_at?: string | null
           aprobado_por?: string | null
           avatar_path?: string | null
           avatar_url?: string | null
           banco?: string | null
+          bienvenida_vista?: boolean
           celular?: string | null
+          checklist_completo?: boolean
           ciudad?: string | null
           ciudad_registro?: string | null
           coordinador_id?: string | null
@@ -2386,7 +2461,12 @@ export type Database = {
           nombre?: string | null
           numero_cuenta?: string | null
           numero_documento?: string | null
+          onboarding_completed_at?: string | null
+          onboarding_estado?: string
+          onboarding_paso?: number
+          onboarding_started_at?: string | null
           pais?: string | null
+          perfil_completo?: boolean
           porcentaje_comision?: number | null
           rechazado_motivo?: string | null
           rol_solicitado?: string | null
@@ -2395,6 +2475,7 @@ export type Database = {
           tipo_cuenta?: string | null
           tipo_documento?: string | null
           titular_cuenta?: string | null
+          tour_completo?: boolean
           ultimo_login_at?: string | null
           updated_at?: string
           whatsapp?: string | null

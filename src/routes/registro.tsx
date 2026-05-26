@@ -14,12 +14,11 @@ export const Route = createFileRoute("/registro")({
 
 const ROLES_SOLICITABLES = [
   { v: "licenciado", label: "Licenciado" },
-  { v: "analista_financiero", label: "Analista Financiero" },
-  { v: "director_financiero_qa", label: "Dirección Financiera" },
-  { v: "operaciones", label: "Administrativo" },
+  { v: "operaciones", label: "Operaciones" },
+  { v: "juridica", label: "Jurídica" },
   { v: "contabilidad", label: "Contabilidad" },
-  { v: "juridica", label: "Jurídico" },
-  { v: "super_admin", label: "Super Administrador" },
+  { v: "director_financiero_qa", label: "Director Financiero QA" },
+  { v: "apoderado", label: "Apoderado" },
 ];
 
 function RegistroPage() {

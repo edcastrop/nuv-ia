@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegistroRouteImport } from './routes/registro'
+import { Route as PendienteAprobacionRouteImport } from './routes/pendiente-aprobacion'
 import { Route as MfaVerificarRouteImport } from './routes/mfa-verificar'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
@@ -18,6 +19,7 @@ import { Route as ApiNuvexIaStreamRouteImport } from './routes/api/nuvex-ia-stre
 import { Route as ApiNuvexGptChatRouteImport } from './routes/api/nuvex-gpt-chat'
 import { Route as AuthenticatedQaRouteImport } from './routes/_authenticated/qa'
 import { Route as AuthenticatedProyeccionRouteImport } from './routes/_authenticated/proyeccion'
+import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedNuvexIaRouteImport } from './routes/_authenticated/nuvex-ia'
 import { Route as AuthenticatedNotificacionesRouteImport } from './routes/_authenticated/notificaciones'
 import { Route as AuthenticatedMiPerfilRouteImport } from './routes/_authenticated/mi-perfil'
@@ -37,6 +39,7 @@ import { Route as AuthenticatedCarteraIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedAcademiaIndexRouteImport } from './routes/_authenticated/academia.index'
 import { Route as AuthenticatedSuperAdminUsuariosRouteImport } from './routes/_authenticated/super-admin.usuarios'
 import { Route as AuthenticatedSuperAdminPermisosRouteImport } from './routes/_authenticated/super-admin.permisos'
+import { Route as AuthenticatedSuperAdminOnboardingRouteImport } from './routes/_authenticated/super-admin.onboarding'
 import { Route as AuthenticatedSuperAdminNuvexIaKbRouteImport } from './routes/_authenticated/super-admin.nuvex-ia-kb'
 import { Route as AuthenticatedSuperAdminMarcaRouteImport } from './routes/_authenticated/super-admin.marca'
 import { Route as AuthenticatedSuperAdminExpedientesRouteImport } from './routes/_authenticated/super-admin.expedientes'
@@ -70,6 +73,11 @@ import { Route as AuthenticatedAcademiaCertificadosCodigoRouteImport } from './r
 const RegistroRoute = RegistroRouteImport.update({
   id: '/registro',
   path: '/registro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PendienteAprobacionRoute = PendienteAprobacionRouteImport.update({
+  id: '/pendiente-aprobacion',
+  path: '/pendiente-aprobacion',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MfaVerificarRoute = MfaVerificarRouteImport.update({
@@ -109,6 +117,11 @@ const AuthenticatedQaRoute = AuthenticatedQaRouteImport.update({
 const AuthenticatedProyeccionRoute = AuthenticatedProyeccionRouteImport.update({
   id: '/proyeccion',
   path: '/proyeccion',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedNuvexIaRoute = AuthenticatedNuvexIaRouteImport.update({
@@ -215,6 +228,12 @@ const AuthenticatedSuperAdminPermisosRoute =
   AuthenticatedSuperAdminPermisosRouteImport.update({
     id: '/super-admin/permisos',
     path: '/super-admin/permisos',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuperAdminOnboardingRoute =
+  AuthenticatedSuperAdminOnboardingRouteImport.update({
+    id: '/super-admin/onboarding',
+    path: '/super-admin/onboarding',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedSuperAdminNuvexIaKbRoute =
@@ -394,6 +413,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
   '/mfa-verificar': typeof MfaVerificarRoute
+  '/pendiente-aprobacion': typeof PendienteAprobacionRoute
   '/registro': typeof RegistroRoute
   '/academia': typeof AuthenticatedAcademiaRouteWithChildren
   '/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
@@ -405,6 +425,7 @@ export interface FileRoutesByFullPath {
   '/mi-perfil': typeof AuthenticatedMiPerfilRoute
   '/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/nuvex-ia': typeof AuthenticatedNuvexIaRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
   '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/qa': typeof AuthenticatedQaRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
@@ -431,6 +452,7 @@ export interface FileRoutesByFullPath {
   '/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
   '/super-admin/nuvex-ia-kb': typeof AuthenticatedSuperAdminNuvexIaKbRoute
+  '/super-admin/onboarding': typeof AuthenticatedSuperAdminOnboardingRoute
   '/super-admin/permisos': typeof AuthenticatedSuperAdminPermisosRoute
   '/super-admin/usuarios': typeof AuthenticatedSuperAdminUsuariosRoute
   '/academia/': typeof AuthenticatedAcademiaIndexRoute
@@ -451,6 +473,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/mfa-verificar': typeof MfaVerificarRoute
+  '/pendiente-aprobacion': typeof PendienteAprobacionRoute
   '/registro': typeof RegistroRoute
   '/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
   '/colaboracion': typeof AuthenticatedColaboracionRoute
@@ -460,6 +483,7 @@ export interface FileRoutesByTo {
   '/mi-perfil': typeof AuthenticatedMiPerfilRoute
   '/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/nuvex-ia': typeof AuthenticatedNuvexIaRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
   '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/qa': typeof AuthenticatedQaRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
@@ -487,6 +511,7 @@ export interface FileRoutesByTo {
   '/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
   '/super-admin/nuvex-ia-kb': typeof AuthenticatedSuperAdminNuvexIaKbRoute
+  '/super-admin/onboarding': typeof AuthenticatedSuperAdminOnboardingRoute
   '/super-admin/permisos': typeof AuthenticatedSuperAdminPermisosRoute
   '/super-admin/usuarios': typeof AuthenticatedSuperAdminUsuariosRoute
   '/academia': typeof AuthenticatedAcademiaIndexRoute
@@ -509,6 +534,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/mfa-verificar': typeof MfaVerificarRoute
+  '/pendiente-aprobacion': typeof PendienteAprobacionRoute
   '/registro': typeof RegistroRoute
   '/_authenticated/academia': typeof AuthenticatedAcademiaRouteWithChildren
   '/_authenticated/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
@@ -520,6 +546,7 @@ export interface FileRoutesById {
   '/_authenticated/mi-perfil': typeof AuthenticatedMiPerfilRoute
   '/_authenticated/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/_authenticated/nuvex-ia': typeof AuthenticatedNuvexIaRoute
+  '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/proyeccion': typeof AuthenticatedProyeccionRoute
   '/_authenticated/qa': typeof AuthenticatedQaRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
@@ -547,6 +574,7 @@ export interface FileRoutesById {
   '/_authenticated/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/_authenticated/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
   '/_authenticated/super-admin/nuvex-ia-kb': typeof AuthenticatedSuperAdminNuvexIaKbRoute
+  '/_authenticated/super-admin/onboarding': typeof AuthenticatedSuperAdminOnboardingRoute
   '/_authenticated/super-admin/permisos': typeof AuthenticatedSuperAdminPermisosRoute
   '/_authenticated/super-admin/usuarios': typeof AuthenticatedSuperAdminUsuariosRoute
   '/_authenticated/academia/': typeof AuthenticatedAcademiaIndexRoute
@@ -570,6 +598,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/mfa-verificar'
+    | '/pendiente-aprobacion'
     | '/registro'
     | '/academia'
     | '/apoderados-nuvex'
@@ -581,6 +610,7 @@ export interface FileRouteTypes {
     | '/mi-perfil'
     | '/notificaciones'
     | '/nuvex-ia'
+    | '/onboarding'
     | '/proyeccion'
     | '/qa'
     | '/api/nuvex-gpt-chat'
@@ -607,6 +637,7 @@ export interface FileRouteTypes {
     | '/super-admin/expedientes'
     | '/super-admin/marca'
     | '/super-admin/nuvex-ia-kb'
+    | '/super-admin/onboarding'
     | '/super-admin/permisos'
     | '/super-admin/usuarios'
     | '/academia/'
@@ -627,6 +658,7 @@ export interface FileRouteTypes {
   to:
     | '/login'
     | '/mfa-verificar'
+    | '/pendiente-aprobacion'
     | '/registro'
     | '/apoderados-nuvex'
     | '/colaboracion'
@@ -636,6 +668,7 @@ export interface FileRouteTypes {
     | '/mi-perfil'
     | '/notificaciones'
     | '/nuvex-ia'
+    | '/onboarding'
     | '/proyeccion'
     | '/qa'
     | '/api/nuvex-gpt-chat'
@@ -663,6 +696,7 @@ export interface FileRouteTypes {
     | '/super-admin/expedientes'
     | '/super-admin/marca'
     | '/super-admin/nuvex-ia-kb'
+    | '/super-admin/onboarding'
     | '/super-admin/permisos'
     | '/super-admin/usuarios'
     | '/academia'
@@ -684,6 +718,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/login'
     | '/mfa-verificar'
+    | '/pendiente-aprobacion'
     | '/registro'
     | '/_authenticated/academia'
     | '/_authenticated/apoderados-nuvex'
@@ -695,6 +730,7 @@ export interface FileRouteTypes {
     | '/_authenticated/mi-perfil'
     | '/_authenticated/notificaciones'
     | '/_authenticated/nuvex-ia'
+    | '/_authenticated/onboarding'
     | '/_authenticated/proyeccion'
     | '/_authenticated/qa'
     | '/api/nuvex-gpt-chat'
@@ -722,6 +758,7 @@ export interface FileRouteTypes {
     | '/_authenticated/super-admin/expedientes'
     | '/_authenticated/super-admin/marca'
     | '/_authenticated/super-admin/nuvex-ia-kb'
+    | '/_authenticated/super-admin/onboarding'
     | '/_authenticated/super-admin/permisos'
     | '/_authenticated/super-admin/usuarios'
     | '/_authenticated/academia/'
@@ -744,6 +781,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
   MfaVerificarRoute: typeof MfaVerificarRoute
+  PendienteAprobacionRoute: typeof PendienteAprobacionRoute
   RegistroRoute: typeof RegistroRoute
   ApiNuvexGptChatRoute: typeof ApiNuvexGptChatRoute
   ApiNuvexIaStreamRoute: typeof ApiNuvexIaStreamRoute
@@ -759,6 +797,13 @@ declare module '@tanstack/react-router' {
       path: '/registro'
       fullPath: '/registro'
       preLoaderRoute: typeof RegistroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pendiente-aprobacion': {
+      id: '/pendiente-aprobacion'
+      path: '/pendiente-aprobacion'
+      fullPath: '/pendiente-aprobacion'
+      preLoaderRoute: typeof PendienteAprobacionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mfa-verificar': {
@@ -815,6 +860,13 @@ declare module '@tanstack/react-router' {
       path: '/proyeccion'
       fullPath: '/proyeccion'
       preLoaderRoute: typeof AuthenticatedProyeccionRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/onboarding': {
+      id: '/_authenticated/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/nuvex-ia': {
@@ -948,6 +1000,13 @@ declare module '@tanstack/react-router' {
       path: '/super-admin/permisos'
       fullPath: '/super-admin/permisos'
       preLoaderRoute: typeof AuthenticatedSuperAdminPermisosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/super-admin/onboarding': {
+      id: '/_authenticated/super-admin/onboarding'
+      path: '/super-admin/onboarding'
+      fullPath: '/super-admin/onboarding'
+      preLoaderRoute: typeof AuthenticatedSuperAdminOnboardingRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/super-admin/nuvex-ia-kb': {
@@ -1227,6 +1286,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedMiPerfilRoute: typeof AuthenticatedMiPerfilRoute
   AuthenticatedNotificacionesRoute: typeof AuthenticatedNotificacionesRoute
   AuthenticatedNuvexIaRoute: typeof AuthenticatedNuvexIaRoute
+  AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedProyeccionRoute: typeof AuthenticatedProyeccionRoute
   AuthenticatedQaRoute: typeof AuthenticatedQaRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
@@ -1242,6 +1302,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSuperAdminExpedientesRoute: typeof AuthenticatedSuperAdminExpedientesRoute
   AuthenticatedSuperAdminMarcaRoute: typeof AuthenticatedSuperAdminMarcaRoute
   AuthenticatedSuperAdminNuvexIaKbRoute: typeof AuthenticatedSuperAdminNuvexIaKbRoute
+  AuthenticatedSuperAdminOnboardingRoute: typeof AuthenticatedSuperAdminOnboardingRoute
   AuthenticatedSuperAdminPermisosRoute: typeof AuthenticatedSuperAdminPermisosRoute
   AuthenticatedSuperAdminUsuariosRoute: typeof AuthenticatedSuperAdminUsuariosRoute
   AuthenticatedCarteraIndexRoute: typeof AuthenticatedCarteraIndexRoute
@@ -1262,6 +1323,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedMiPerfilRoute: AuthenticatedMiPerfilRoute,
   AuthenticatedNotificacionesRoute: AuthenticatedNotificacionesRoute,
   AuthenticatedNuvexIaRoute: AuthenticatedNuvexIaRoute,
+  AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedProyeccionRoute: AuthenticatedProyeccionRoute,
   AuthenticatedQaRoute: AuthenticatedQaRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
@@ -1279,6 +1341,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedSuperAdminExpedientesRoute,
   AuthenticatedSuperAdminMarcaRoute: AuthenticatedSuperAdminMarcaRoute,
   AuthenticatedSuperAdminNuvexIaKbRoute: AuthenticatedSuperAdminNuvexIaKbRoute,
+  AuthenticatedSuperAdminOnboardingRoute:
+    AuthenticatedSuperAdminOnboardingRoute,
   AuthenticatedSuperAdminPermisosRoute: AuthenticatedSuperAdminPermisosRoute,
   AuthenticatedSuperAdminUsuariosRoute: AuthenticatedSuperAdminUsuariosRoute,
   AuthenticatedCarteraIndexRoute: AuthenticatedCarteraIndexRoute,
@@ -1297,6 +1361,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
   MfaVerificarRoute: MfaVerificarRoute,
+  PendienteAprobacionRoute: PendienteAprobacionRoute,
   RegistroRoute: RegistroRoute,
   ApiNuvexGptChatRoute: ApiNuvexGptChatRoute,
   ApiNuvexIaStreamRoute: ApiNuvexIaStreamRoute,

@@ -1,101 +1,111 @@
-# Arquitectura definitiva — NUVEX IA (cerebro único)
+## ONBOARDING V1 NUVEX — Plan de implementación
 
-Un único backend `consultarIA()` alimenta ambas interfaces (página completa NUVEX IA y botón flotante NUVEX GPT). Se reutiliza lo existente y se elimina duplicación.
+Aprovechamos la infraestructura existente (`profiles.estado_acceso`, `rol_solicitado`, `aprobado_por`, registro público, bandeja en `/super-admin/accesos`) y construimos encima el flujo guiado de 14 fases, **sin bloquear acceso por academia**.
 
-## 1. Base de datos (migración única)
+---
 
-**Tabla nueva `nuvex_kb`** (base de conocimiento con 30 categorías iniciales)
-- `id, categoria, pregunta, respuesta, tags[], estado ('activo'|'borrador'|'archivado'), creado_por, created_at, updated_at`
-- Índice de búsqueda en `pregunta + respuesta + tags` (trigram / ilike)
-- RLS: lectura para `authenticated`; escritura solo `super_admin`/`admin`/`gerencia`
-- Seed con las 30 categorías base (sin preguntas; el equipo las irá llenando desde super-admin)
+### 1. Base de datos (migración única)
 
-**Tabla nueva `nuvex_ia_log`** (auditoría única para las 3 interfaces)
-- `id, usuario_id, nombre_usuario, rol, modulo, pregunta, respuesta, origen ('nuvex_ia'|'nuvex_gpt'|'cliente'), fuente ('kb'|'modelo'), tiempo_respuesta_ms, created_at`
-- RLS: el usuario ve solo sus logs; `super_admin`/`gerencia` ven todo
+Añadir a `public.profiles`:
+- `onboarding_estado` text default `'pendiente'` — valores: `pendiente | en_progreso | completado`
+- `onboarding_paso` int default `0` (0–4: bienvenida, perfil, tour, academia, checklist)
+- `onboarding_started_at`, `onboarding_completed_at` timestamptz
+- `bienvenida_vista`, `perfil_completo`, `tour_completo`, `academia_asignada`, `checklist_completo` booleans
+- `pais` ya existe ✓
 
-Las tablas existentes `gpt_kb_articulos`, `gpt_kb_categorias`, `gpt_consultas_log` se mantienen por compatibilidad pero **dejan de usarse** para nuevas consultas (se migran lecturas a `nuvex_kb`/`nuvex_ia_log`). No se borran para no romper la pantalla de super-admin actual.
+Nueva tabla `onboarding_config` (singleton, edita Super Admin):
+- `video_bienvenida_url`, `mensaje_bienvenida`, `descripcion_empresa`
 
-## 2. Backend unificado (`consultarIA`)
+Nueva tabla `onboarding_auditoria`:
+- `user_id`, `evento` (registro/aprobacion/rechazo/inicio/fin/asignacion_academia/activacion_permisos), `actor_id`, `detalle jsonb`, `created_at`
 
-Refactorizar `src/lib/nuvex-ia.functions.ts`:
-- Mover toda la lógica de chat de `/api/nuvex-gpt-chat` a un único server function `consultarIA({ pregunta, modulo, origen, historial? })` con `requireSupabaseAuth`.
-- Pipeline interno:
-  1. Resolver `userId + roles + rol_principal` (RLS aplica automáticamente).
-  2. **Paso KB**: buscar en `nuvex_kb` por keywords (ilike sobre `pregunta`/`tags`/`respuesta`) + boost por `modulo`. Si hay match fuerte (score ≥ umbral), devolver respuesta directa con `fuente='kb'` (cero tokens).
-  3. **Paso modelo**: si no hay match, llamar a Lovable AI (`google/gemini-3-flash-preview`) con system prompt que incluye:
-     - rol + módulo actual
-     - KB relevante (top 6)
-     - reglas de restricción por rol (un licenciado no ve cartera global, un apoderado no ve honorarios, etc.)
-     - instrucción de devolver `__ESCALAR__` cuando no haya información suficiente
-  4. Detectar `__ESCALAR__` → marcar respuesta como escalable y sugerir áreas (jurídica / operaciones / contabilidad / director QA / soporte).
-  5. Registrar SIEMPRE en `nuvex_ia_log` (origen, fuente, tiempo).
-- Mantener variante con streaming SSE para el botón flotante (server route `/api/nuvex-ia-stream` que internamente llama a la misma lógica de KB + prompt builder).
+Trigger `on_profile_approved`: cuando `estado_acceso` cambia a `activo`, inserta auditoría + marca `academia_asignada=true` (la asignación real ya es por rol via `academia_cursos.rol_destino`).
 
-## 3. Restricción por rol (capa de seguridad)
+GRANTs y RLS:
+- `profiles`: ya tiene políticas; añadir UPDATE propio para campos onboarding.
+- `onboarding_config`: SELECT authenticated, ALL super_admin.
+- `onboarding_auditoria`: INSERT authenticated (self o admin), SELECT super_admin/gerencia.
 
-Helper `filtrosPorRol(roles)` que devuelve qué entidades puede leer la IA:
-- `super_admin`/`admin`/`gerencia` → todo
-- `director_financiero_qa` → QA + financiero
-- `contabilidad` → finanzas, comisiones, cartera
-- `juridica`/`director_juridico` → casos jurídicos
-- `operaciones`/`auxiliar_operativo` → casos operativos
-- `licenciado` → solo sus casos / sus comisiones (RLS ya lo aplica)
-- `apoderado` → **bloqueado en la interfaz flotante por ahora**; preparado pero deshabilitado
+### 2. Restringir roles solicitables en `/registro`
 
-El system prompt incluye las restricciones explícitas + RLS de Supabase como red de seguridad.
+Editar `src/routes/registro.tsx`:
+- Quitar `super_admin` de `ROLES_SOLICITABLES`.
+- Lista final: Licenciado, Operaciones, Jurídica, Contabilidad, Director Financiero QA, Apoderado.
+- Añadir campos: `pais` (default Colombia), foto de perfil opcional (upload a bucket `avatars`).
+- Insertar en `onboarding_auditoria` evento `registro`.
 
-## 4. Contexto por módulo
+### 3. Pantalla "Pendiente aprobación"
 
-Reutilizar `modulosDesdePath()` existente de `src/lib/nuvex-gpt.ts` para mandar `modulo` al backend. El backend lo usa para:
-- Ordenar la KB (boost por categoría que coincide con módulo).
-- Inyectar en el system prompt: "El usuario está en el módulo X, prioriza respuestas relevantes a ese contexto."
+Hoy `_authenticated.tsx` solo verifica sesión. Añadir gate:
+- Leer `profiles.estado_acceso` del usuario.
+- Si `pendiente` → redirigir a `/pendiente-aprobacion` (nueva ruta pública con sesión, fuera del layout principal).
+- Si `rechazado` → pantalla con motivo + botón cerrar sesión.
 
-## 5. Interfaces
+### 4. Bandeja Super Admin de pendientes
 
-### Página completa NUVEX IA (`/_authenticated/nuvex-ia`)
-- Ya existe. Cambiar para llamar a `consultarIA({ origen: 'nuvex_ia' })`.
-- Métricas y alertas se mantienen igual.
+Reutilizar `/super-admin/accesos` (ya existe). Verificar/extender para mostrar nuevos campos (país, celular, ciudad, rol solicitado, fecha registro) y acciones: Aprobar, Rechazar, Solicitar info, Cambiar rol. Al aprobar:
+- `estado_acceso='activo'`, asigna rol via `user_roles`, inicia onboarding (`onboarding_estado='en_progreso'`), inserta auditoría.
 
-### Botón flotante NUVEX GPT (`NuvexGptPanel`)
-- Ya existe. Cambiar `streamNuvexGpt` para apuntar a `/api/nuvex-ia-stream` con `origen: 'nuvex_gpt'`.
-- Conserva diálogo de escalamiento (`EscalarTicketDialog`) ya implementado.
+### 5. Wizard de Onboarding `/onboarding`
 
-### Admin de KB (`/_authenticated/super-admin/nuvex-ia-kb`)
-- Pantalla nueva mínima: tabla CRUD sobre `nuvex_kb` (categoría, pregunta, respuesta, tags, estado).
-- Solo `super_admin`/`admin`/`gerencia`.
-- Permite poblar la base de conocimiento sin tocar código.
+Nueva ruta `_authenticated/onboarding.tsx` con 5 pasos:
+1. **Bienvenida** — Logo, mensaje, video (de `onboarding_config`), botón "Comenzar".
+2. **Perfil** — validar nombre, celular, ciudad, país, avatar; usar componentes existentes de `mi-perfil`.
+3. **Tour** — overlay interactivo (componente propio con tooltips) explicando Dashboard, Casos, Expedientes, Simulador, Colaboración, Academia, NUVEX GPT, Perfil, Notificaciones. Skippable.
+4. **Academia** — muestra automáticamente el curso asignado por rol (consulta `academia_cursos` por `rol_destino`), botón "Ver mi academia" (no bloqueante).
+5. **Checklist** — resumen visual de los 6 ítems; botón "Finalizar onboarding" → marca `onboarding_estado='completado'`.
 
-### Cliente / Apoderado (Fase 9)
-- **No se habilita** en este turno. La función `consultarIA` ya acepta `origen: 'cliente'` y el filtro por rol lo bloqueará; no se monta UI todavía.
+Gate en `_authenticated.tsx`: si `estado_acceso='activo'` y `onboarding_estado!='completado'` y la ruta actual no es `/onboarding` ni `/mi-perfil`, redirige a `/onboarding`. Permitir saltar paso individual; el wizard guarda progreso parcial.
 
-## 6. Escalamiento
+### 6. Banner académico no bloqueante
 
-Cuando el backend devuelve `escalable: true`, ambas interfaces muestran el botón "Crear ticket" → usa el flujo existente `EscalarTicketDialog` (tabla `gpt_tickets_escalados` ya existe).
+Componente `<AcademiaBanner />` en layout autenticado: si hay módulos pendientes o certificación incompleta, muestra barra superior "📚 Capacitación en progreso · X% completado · Continuar". No interrumpe operación.
 
-## 7. Archivos
+### 7. Notificaciones (recordatorios)
 
-**Migración** (única):
-- `nuvex_kb` + `nuvex_ia_log` con grants, RLS, índices, seed de 30 categorías.
+Insertar en `colab_notificaciones` (tabla existente) recordatorios:
+- A los 3/7 días si `perfil_completo=false`
+- A los 7 días si `onboarding_estado='en_progreso'`
+- Semanalmente si academia <50%
 
-**Crear / editar**:
-- editar `src/lib/nuvex-ia.functions.ts` → agregar `consultarIA` unificado + helper `buscarEnKB` + `filtrosPorRol`.
-- crear `src/routes/api/nuvex-ia-stream.ts` → server route SSE que reutiliza la lógica.
-- editar `src/lib/nuvex-gpt.ts` → cambiar URL a `/api/nuvex-ia-stream`.
-- editar `src/routes/_authenticated/nuvex-ia.tsx` → usar `consultarIA` y mostrar fuente (KB vs IA) + botón escalar.
-- crear `src/routes/_authenticated/super-admin.nuvex-ia-kb.tsx` → CRUD de KB.
-- editar `src/routes/_authenticated.tsx` → añadir item de menú en super-admin para "NUVEX IA · KB".
+V1: insert al cargar `_authenticated` con dedupe por día (no requiere cron).
 
-**No tocar**: tablas `gpt_*` antiguas, edge functions, otros módulos.
+### 8. Panel Super Admin `/super-admin/onboarding`
 
-## Validación final
+Nueva ruta con KPIs (counts sobre `profiles`):
+- Pendientes / Aprobados / Rechazados
+- Onboarding completado / en progreso
+- Usuarios activos
+- Tabla de últimos registros con su estado y % avance.
 
-Antes de cerrar:
-1. KB responde sin consumir tokens cuando hay match.
-2. Modelo responde con contexto de rol + módulo cuando no hay match.
-3. Cada consulta queda registrada en `nuvex_ia_log` con `origen` y `fuente`.
-4. Licenciado no puede ver comisiones de otros (probar con query directa).
-5. Botón flotante y página usan el mismo backend.
-6. Mensaje de escalamiento aparece y crea ticket.
+### 9. Auditoría
 
-¿Apruebas el plan para empezar con la migración?
+Wrapper `logOnboarding(evento, detalle)` que inserta en `onboarding_auditoria`. Llamarlo en: registro, aprobación, rechazo, inicio/fin onboarding, asignación academia, activación permisos.
+
+---
+
+### Archivos a crear
+- `supabase/migrations/{ts}_onboarding_v1.sql`
+- `src/routes/pendiente-aprobacion.tsx`
+- `src/routes/_authenticated/onboarding.tsx`
+- `src/routes/_authenticated/super-admin.onboarding.tsx`
+- `src/components/onboarding/StepBienvenida.tsx`
+- `src/components/onboarding/StepPerfil.tsx`
+- `src/components/onboarding/StepTour.tsx`
+- `src/components/onboarding/StepAcademia.tsx`
+- `src/components/onboarding/StepChecklist.tsx`
+- `src/components/onboarding/AcademiaBanner.tsx`
+- `src/lib/onboarding.ts` (helpers + auditoría)
+
+### Archivos a editar
+- `src/routes/registro.tsx` — roles permitidos + país + avatar opcional
+- `src/routes/_authenticated.tsx` — gate de estado_acceso y onboarding
+- `src/routes/_authenticated/super-admin.accesos.tsx` — refrescar UI de aprobación (si necesario)
+
+### Lo que NO se toca
+- Roles, permisos, simuladores, expedientes, cartera, jurídica, contabilidad, academia (contenido).
+- La academia sigue siendo **opcional**: no bloquea CRM, solo banner de seguimiento.
+
+---
+
+¿Aprueba el plan para implementarlo?

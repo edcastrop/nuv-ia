@@ -13,6 +13,7 @@ import { Logo } from "@/components/nuvex/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationBell } from "@/components/notificaciones/NotificationBell";
 import { NuvexGptButton } from "@/components/nuvex-gpt/NuvexGptPanel";
+import { AcademiaBanner } from "@/components/onboarding/AcademiaBanner";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
@@ -39,6 +40,29 @@ function AuthenticatedLayout() {
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/login" });
   }, [loading, session, navigate]);
+
+  // Onboarding gate: pendiente/rechazado → pendiente-aprobacion; aprobado sin onboarding → /onboarding
+  useEffect(() => {
+    if (!session?.user) return;
+    let cancel = false;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("estado_acceso, onboarding_estado")
+        .eq("id", session.user.id)
+        .maybeSingle();
+      if (cancel || !data) return;
+      const estado = (data as { estado_acceso: string }).estado_acceso;
+      const onb = (data as { onboarding_estado: string }).onboarding_estado;
+      const path = location.pathname;
+      if ((estado === "pendiente" || estado === "rechazado" || estado === "bloqueado") && path !== "/pendiente-aprobacion") {
+        navigate({ to: "/pendiente-aprobacion" });
+      } else if (estado === "aprobado" && onb !== "completado" && !path.startsWith("/onboarding") && !path.startsWith("/mi-perfil")) {
+        navigate({ to: "/onboarding" });
+      }
+    })();
+    return () => { cancel = true; };
+  }, [session, location.pathname, navigate]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -128,6 +152,7 @@ function AuthenticatedLayout() {
             { to: "/academia", label: "Academia", Icon: GraduationCap },
             ...(isSuperAdmin ? [{ to: "/super-admin/academia", label: "Admin Academia", Icon: GraduationCap }] : []),
             ...(isSuperAdmin ? [{ to: "/super-admin/accesos", label: "Accesos", Icon: Shield }] : []),
+            ...(isSuperAdmin ? [{ to: "/super-admin/onboarding", label: "Onboarding", Icon: UserCircle }] : []),
             ...(isSuperAdmin ? [{ to: "/super-admin/nuvex-ia-kb", label: "NUVEX IA · KB", Icon: Shield }] : []),
             
             ...(isSuperAdmin ? [{ to: "/super-admin", label: "Super Admin", Icon: Shield }] : []),
@@ -310,6 +335,7 @@ function AuthenticatedLayout() {
         </header>
 
         <main className="flex-1">
+          <AcademiaBanner />
           <Outlet />
         </main>
 
