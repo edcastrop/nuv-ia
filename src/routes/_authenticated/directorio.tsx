@@ -73,7 +73,7 @@ function DirectorioPage() {
 
   const abrirDM = async (uid: string) => {
     const c = await getOrCreateDM(uid);
-    navigate({ to: "/colaboracion", search: { canal: c.id, tab: "canales" } });
+    navigate({ to: "/colaboracion/dm/$conversationId", params: { conversationId: c.id } });
   };
 
   return (
