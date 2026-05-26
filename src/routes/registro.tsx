@@ -17,6 +17,7 @@ const ROLES_SOLICITABLES = [
   { v: "analista_financiero", label: "Analista Financiero" },
   { v: "director_financiero_qa", label: "Dirección Financiera" },
   { v: "operaciones", label: "Administrativo" },
+  { v: "contabilidad", label: "Contabilidad" },
   { v: "juridica", label: "Jurídico" },
   { v: "super_admin", label: "Super Administrador" },
 ];
