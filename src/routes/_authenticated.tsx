@@ -12,6 +12,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { Logo } from "@/components/nuvex/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationBell } from "@/components/notificaciones/NotificationBell";
+import { NuvexGptButton } from "@/components/nuvex-gpt/NuvexGptPanel";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
@@ -121,6 +122,7 @@ function AuthenticatedLayout() {
             { to: "/apoderados-nuvex", label: "Apoderados", Icon: Users },
             { to: "/academia", label: "Academia", Icon: GraduationCap },
             ...(isSuperAdmin ? [{ to: "/super-admin/academia", label: "Admin Academia", Icon: GraduationCap }] : []),
+            ...(isSuperAdmin ? [{ to: "/super-admin/nuvex-gpt", label: "NUVEX GPT", Icon: Shield }] : []),
             ...(isSuperAdmin ? [{ to: "/super-admin", label: "Super Admin", Icon: Shield }] : []),
           ],
         },
@@ -302,6 +304,8 @@ function AuthenticatedLayout() {
         <main className="flex-1">
           <Outlet />
         </main>
+
+        <NuvexGptButton />
 
         <footer className="border-t border-[#E3E7EE] bg-white">
           <div className="mx-auto max-w-7xl px-6 py-5 text-center text-[11px] text-[#242424]/60">
