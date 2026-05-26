@@ -19,6 +19,7 @@ import { Route as AuthenticatedNotificacionesRouteImport } from './routes/_authe
 import { Route as AuthenticatedMiPerfilRouteImport } from './routes/_authenticated/mi-perfil'
 import { Route as AuthenticatedFinanzasRouteImport } from './routes/_authenticated/finanzas'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedColaboracionRouteImport } from './routes/_authenticated/colaboracion'
 import { Route as AuthenticatedApoderadosNuvexRouteImport } from './routes/_authenticated/apoderados-nuvex'
 import { Route as AuthenticatedAcademiaRouteImport } from './routes/_authenticated/academia'
 import { Route as AuthenticatedSuperAdminIndexRouteImport } from './routes/_authenticated/super-admin.index'
@@ -109,6 +110,12 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedColaboracionRoute =
+  AuthenticatedColaboracionRouteImport.update({
+    id: '/colaboracion',
+    path: '/colaboracion',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedApoderadosNuvexRoute =
   AuthenticatedApoderadosNuvexRouteImport.update({
     id: '/apoderados-nuvex',
@@ -345,6 +352,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/academia': typeof AuthenticatedAcademiaRouteWithChildren
   '/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
+  '/colaboracion': typeof AuthenticatedColaboracionRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/finanzas': typeof AuthenticatedFinanzasRouteWithChildren
   '/mi-perfil': typeof AuthenticatedMiPerfilRoute
@@ -393,6 +401,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
+  '/colaboracion': typeof AuthenticatedColaboracionRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/mi-perfil': typeof AuthenticatedMiPerfilRoute
   '/notificaciones': typeof AuthenticatedNotificacionesRoute
@@ -444,6 +453,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_authenticated/academia': typeof AuthenticatedAcademiaRouteWithChildren
   '/_authenticated/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
+  '/_authenticated/colaboracion': typeof AuthenticatedColaboracionRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/finanzas': typeof AuthenticatedFinanzasRouteWithChildren
   '/_authenticated/mi-perfil': typeof AuthenticatedMiPerfilRoute
@@ -497,6 +507,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/academia'
     | '/apoderados-nuvex'
+    | '/colaboracion'
     | '/dashboard'
     | '/finanzas'
     | '/mi-perfil'
@@ -545,6 +556,7 @@ export interface FileRouteTypes {
   to:
     | '/login'
     | '/apoderados-nuvex'
+    | '/colaboracion'
     | '/dashboard'
     | '/mi-perfil'
     | '/notificaciones'
@@ -595,6 +607,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_authenticated/academia'
     | '/_authenticated/apoderados-nuvex'
+    | '/_authenticated/colaboracion'
     | '/_authenticated/dashboard'
     | '/_authenticated/finanzas'
     | '/_authenticated/mi-perfil'
@@ -721,6 +734,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/colaboracion': {
+      id: '/_authenticated/colaboracion'
+      path: '/colaboracion'
+      fullPath: '/colaboracion'
+      preLoaderRoute: typeof AuthenticatedColaboracionRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/apoderados-nuvex': {
@@ -1062,6 +1082,7 @@ const AuthenticatedFinanzasRouteWithChildren =
 interface AuthenticatedRouteChildren {
   AuthenticatedAcademiaRoute: typeof AuthenticatedAcademiaRouteWithChildren
   AuthenticatedApoderadosNuvexRoute: typeof AuthenticatedApoderadosNuvexRoute
+  AuthenticatedColaboracionRoute: typeof AuthenticatedColaboracionRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFinanzasRoute: typeof AuthenticatedFinanzasRouteWithChildren
   AuthenticatedMiPerfilRoute: typeof AuthenticatedMiPerfilRoute
@@ -1092,6 +1113,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAcademiaRoute: AuthenticatedAcademiaRouteWithChildren,
   AuthenticatedApoderadosNuvexRoute: AuthenticatedApoderadosNuvexRoute,
+  AuthenticatedColaboracionRoute: AuthenticatedColaboracionRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFinanzasRoute: AuthenticatedFinanzasRouteWithChildren,
   AuthenticatedMiPerfilRoute: AuthenticatedMiPerfilRoute,
