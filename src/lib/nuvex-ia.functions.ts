@@ -22,6 +22,17 @@ function alcance(roles: string[]) {
   return { isAdmin, isContabilidad, isJuridico, isCartera, isLicenciado };
 }
 
+/**
+ * Resuelve la "audiencia" del usuario en base a sus roles.
+ * Determina qué artículos KB puede ver y se registra en auditoría.
+ */
+function resolverAudiencia(roles: string[]): "interno" | "apoderado" | "cliente" {
+  if (roles.includes("apoderado")) return "apoderado";
+  if (roles.includes("cliente")) return "cliente";
+  return "interno"; // staff NUVEX por defecto
+}
+
+
 // ============================================================
 // MÉTRICAS IA
 // ============================================================
@@ -138,13 +149,14 @@ const DATASETS = [
 // ============================================================
 // Búsqueda en NUVEX KB (base de conocimiento)
 // ============================================================
-type KBRow = { id: string; categoria: string; pregunta: string; respuesta: string; tags: string[] | null };
+type KBRow = { id: string; categoria: string; pregunta: string; respuesta: string; tags: string[] | null; audiencias?: string[] | null };
 
 async function buscarKB(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
   pregunta: string,
   modulo: string | null,
+  audiencia: "interno" | "apoderado" | "cliente",
 ): Promise<{ hit: KBRow | null; contexto: KBRow[] }> {
   const terms = pregunta
     .toLowerCase()
@@ -153,10 +165,13 @@ async function buscarKB(
     .filter((t) => t.length >= 3)
     .slice(0, 6);
 
+  // Filtro de audiencia: el artículo debe contener la audiencia del usuario
+  // o estar marcado como "publico" (visible para todos).
   let q = supabase
     .from("nuvex_kb")
-    .select("id, categoria, pregunta, respuesta, tags")
+    .select("id, categoria, pregunta, respuesta, tags, audiencias")
     .eq("estado", "activo")
+    .overlaps("audiencias", [audiencia, "publico"])
     .limit(6);
 
   if (terms.length > 0) {
@@ -177,7 +192,6 @@ async function buscarKB(
     });
   }
 
-  // Hit fuerte: la pregunta normalizada contiene la pregunta del KB o viceversa
   const norm = (s: string) => s.toLowerCase().replace(/[¿?¡!.,;:]/g, "").trim();
   const np = norm(pregunta);
   const hit = articulos.find((a) => {
@@ -188,6 +202,7 @@ async function buscarKB(
 
   return { hit, contexto: articulos };
 }
+
 
 async function registrarLog(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -202,6 +217,7 @@ async function registrarLog(
     origen: "nuvex_ia" | "nuvex_gpt" | "cliente";
     fuente: "kb" | "modelo" | "escalado";
     tiempoMs: number;
+    audiencia: "interno" | "apoderado" | "cliente";
   },
 ) {
   await supabase.from("nuvex_ia_log").insert({
@@ -214,8 +230,10 @@ async function registrarLog(
     origen: params.origen,
     fuente: params.fuente,
     tiempo_respuesta_ms: params.tiempoMs,
+    audiencia: params.audiencia,
   });
 }
+
 
 export const consultarIA = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
