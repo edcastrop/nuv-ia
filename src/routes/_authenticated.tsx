@@ -85,6 +85,7 @@ function AuthenticatedLayout() {
         label: "Apoderado",
         items: [
           { to: "/apoderado/mis-casos", label: "Mis casos", Icon: Briefcase },
+          { to: "/nuvex-ia", label: "NUVEX IA", Icon: Sparkles },
           { to: "/notificaciones", label: "Alertas", Icon: Bell, badge: unread },
           { to: "/mi-perfil", label: "Mi Perfil", Icon: UserCircle },
         ],
