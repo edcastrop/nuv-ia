@@ -229,8 +229,8 @@
   .nuvex-register-brand-panel .nrx-logo {
     align-self: flex-start;
     width: auto;
-    height: 56px;
-    max-width: 240px;
+    height: 88px;
+    max-width: 280px;
     object-fit: contain;
   }
 
