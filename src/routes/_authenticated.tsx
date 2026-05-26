@@ -85,6 +85,7 @@ function AuthenticatedLayout() {
         items: [
           { to: "/apoderado/mis-casos", label: "Mis casos", Icon: Briefcase },
           { to: "/notificaciones", label: "Alertas", Icon: Bell, badge: unread },
+          { to: "/mi-perfil", label: "Mi Perfil", Icon: UserCircle },
         ],
       }]
     : [
