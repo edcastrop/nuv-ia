@@ -39,13 +39,20 @@ function LoginPage() {
         if (error) throw error;
         const uid = signInData.user?.id;
         if (uid) {
-          const { data: prof } = await supabase
-            .from("profiles" as never)
-            .select("estado_acceso, mfa_verificado_at, rechazado_motivo")
-            .eq("id", uid)
-            .maybeSingle();
+          const [{ data: prof }, { data: roleRows }] = await Promise.all([
+            supabase
+              .from("profiles" as never)
+              .select("estado_acceso, mfa_verificado_at, rechazado_motivo")
+              .eq("id", uid)
+              .maybeSingle(),
+            supabase
+              .from("user_roles")
+              .select("role")
+              .eq("user_id", uid),
+          ]);
           const p = prof as { estado_acceso?: string; mfa_verificado_at?: string | null; rechazado_motivo?: string | null } | null;
-          if (p && p.estado_acceso !== "aprobado") {
+          const isSuperAdmin = ((roleRows ?? []) as Array<{ role?: string }>).some((r) => r.role === "super_admin");
+          if (!isSuperAdmin && p && p.estado_acceso !== "aprobado") {
             await supabase.auth.signOut();
             const msgs: Record<string, string> = {
               pendiente: "Tu cuenta está pendiente de aprobación por un administrador.",
@@ -62,8 +69,9 @@ function LoginPage() {
             user_id: uid, actor_id: uid, accion: "login_ok", detalle: {},
           } as never);
           // MFA: si no se verificó en los últimos 30 días, exigir
-          const mfaOk = p?.mfa_verificado_at &&
-            (Date.now() - new Date(p.mfa_verificado_at).getTime()) < 30 * 24 * 3600 * 1000;
+          const mfaOk = isSuperAdmin || (p?.mfa_verificado_at &&
+            (Date.now() - new Date(p.mfa_verificado_at).getTime()) < 30 * 24 * 3600 * 1000
+          );
           if (!mfaOk) {
             navigate({ to: "/mfa-verificar" });
             return;
