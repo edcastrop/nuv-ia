@@ -72,13 +72,13 @@ export function NotificationBell() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           {n.link ? (
-                            <Link
-                              to={n.link}
+                            <a
+                              href={n.link}
                               onClick={() => { leer(n.id); setOpen(false); }}
                               className="text-[12.5px] font-semibold text-[#0A1226] hover:text-[#445DA3] truncate"
                             >
                               {n.titulo}
-                            </Link>
+                            </a>
                           ) : (
                             <span className="text-[12.5px] font-semibold text-[#0A1226] truncate">{n.titulo}</span>
                           )}
