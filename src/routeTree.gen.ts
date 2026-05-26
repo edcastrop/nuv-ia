@@ -19,6 +19,7 @@ import { Route as ApiNuvexIaStreamRouteImport } from './routes/api/nuvex-ia-stre
 import { Route as ApiNuvexGptChatRouteImport } from './routes/api/nuvex-gpt-chat'
 import { Route as AuthenticatedQaRouteImport } from './routes/_authenticated/qa'
 import { Route as AuthenticatedProyeccionRouteImport } from './routes/_authenticated/proyeccion'
+import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedNuvexIaRouteImport } from './routes/_authenticated/nuvex-ia'
 import { Route as AuthenticatedNotificacionesRouteImport } from './routes/_authenticated/notificaciones'
 import { Route as AuthenticatedMiPerfilRouteImport } from './routes/_authenticated/mi-perfil'
@@ -115,6 +116,11 @@ const AuthenticatedQaRoute = AuthenticatedQaRouteImport.update({
 const AuthenticatedProyeccionRoute = AuthenticatedProyeccionRouteImport.update({
   id: '/proyeccion',
   path: '/proyeccion',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedNuvexIaRoute = AuthenticatedNuvexIaRouteImport.update({
@@ -412,6 +418,7 @@ export interface FileRoutesByFullPath {
   '/mi-perfil': typeof AuthenticatedMiPerfilRoute
   '/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/nuvex-ia': typeof AuthenticatedNuvexIaRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
   '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/qa': typeof AuthenticatedQaRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
@@ -468,6 +475,7 @@ export interface FileRoutesByTo {
   '/mi-perfil': typeof AuthenticatedMiPerfilRoute
   '/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/nuvex-ia': typeof AuthenticatedNuvexIaRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
   '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/qa': typeof AuthenticatedQaRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
@@ -529,6 +537,7 @@ export interface FileRoutesById {
   '/_authenticated/mi-perfil': typeof AuthenticatedMiPerfilRoute
   '/_authenticated/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/_authenticated/nuvex-ia': typeof AuthenticatedNuvexIaRoute
+  '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/proyeccion': typeof AuthenticatedProyeccionRoute
   '/_authenticated/qa': typeof AuthenticatedQaRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
@@ -591,6 +600,7 @@ export interface FileRouteTypes {
     | '/mi-perfil'
     | '/notificaciones'
     | '/nuvex-ia'
+    | '/onboarding'
     | '/proyeccion'
     | '/qa'
     | '/api/nuvex-gpt-chat'
@@ -647,6 +657,7 @@ export interface FileRouteTypes {
     | '/mi-perfil'
     | '/notificaciones'
     | '/nuvex-ia'
+    | '/onboarding'
     | '/proyeccion'
     | '/qa'
     | '/api/nuvex-gpt-chat'
@@ -707,6 +718,7 @@ export interface FileRouteTypes {
     | '/_authenticated/mi-perfil'
     | '/_authenticated/notificaciones'
     | '/_authenticated/nuvex-ia'
+    | '/_authenticated/onboarding'
     | '/_authenticated/proyeccion'
     | '/_authenticated/qa'
     | '/api/nuvex-gpt-chat'
@@ -835,6 +847,13 @@ declare module '@tanstack/react-router' {
       path: '/proyeccion'
       fullPath: '/proyeccion'
       preLoaderRoute: typeof AuthenticatedProyeccionRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/onboarding': {
+      id: '/_authenticated/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/nuvex-ia': {
@@ -1247,6 +1266,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedMiPerfilRoute: typeof AuthenticatedMiPerfilRoute
   AuthenticatedNotificacionesRoute: typeof AuthenticatedNotificacionesRoute
   AuthenticatedNuvexIaRoute: typeof AuthenticatedNuvexIaRoute
+  AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedProyeccionRoute: typeof AuthenticatedProyeccionRoute
   AuthenticatedQaRoute: typeof AuthenticatedQaRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
@@ -1282,6 +1302,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedMiPerfilRoute: AuthenticatedMiPerfilRoute,
   AuthenticatedNotificacionesRoute: AuthenticatedNotificacionesRoute,
   AuthenticatedNuvexIaRoute: AuthenticatedNuvexIaRoute,
+  AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedProyeccionRoute: AuthenticatedProyeccionRoute,
   AuthenticatedQaRoute: AuthenticatedQaRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
