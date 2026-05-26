@@ -13,6 +13,7 @@ import { Logo } from "@/components/nuvex/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationBell } from "@/components/notificaciones/NotificationBell";
 import { NuvexGptButton } from "@/components/nuvex-gpt/NuvexGptPanel";
+import { AcademiaBanner } from "@/components/onboarding/AcademiaBanner";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
