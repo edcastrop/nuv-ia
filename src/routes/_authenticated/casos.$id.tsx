@@ -85,6 +85,13 @@ function CasoDetail() {
 
       <EstadoCasoBlock expedienteId={exp.id} onChanged={reload} />
 
+      <ValidacionQABlock
+        expedienteId={exp.id}
+        estadoCaso={(exp as unknown as { estado_caso?: string }).estado_caso ?? ""}
+        onChanged={reload}
+      />
+
+
       <SoportesBanco
         expedienteId={exp.id}
         estadoCaso={(exp as unknown as { estado_caso?: string }).estado_caso ?? ""}
