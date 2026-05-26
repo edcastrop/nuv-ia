@@ -39,9 +39,10 @@ export interface NotifColab {
   created_at: string;
 }
 
+const T = (n: string) => supabase.from(n as never);
+
 export async function listCanales(): Promise<Canal[]> {
-  const { data, error } = await supabase
-    .from("colab_canales" as never)
+  const { data, error } = await T("colab_canales")
     .select("*")
     .eq("archivado", false)
     .order("tipo", { ascending: true })
@@ -51,51 +52,33 @@ export async function listCanales(): Promise<Canal[]> {
 }
 
 export async function getCanalDeCaso(casoId: string, nombre: string): Promise<Canal> {
-  const { data: ex } = await supabase
-    .from("colab_canales" as never)
-    .select("*")
-    .eq("caso_id", casoId)
-    .maybeSingle();
+  const { data: ex } = await T("colab_canales").select("*").eq("caso_id", casoId).maybeSingle();
   if (ex) return ex as unknown as Canal;
   const { data: { user } } = await supabase.auth.getUser();
-  const { data, error } = await supabase
-    .from("colab_canales" as never)
-    .insert({
-      nombre: `Caso · ${nombre}`,
-      tipo: "caso",
-      caso_id: casoId,
-      privado: true,
-      created_by: user?.id,
-    })
-    .select()
-    .single();
+  const payload = { nombre: `Caso · ${nombre}`, tipo: "caso", caso_id: casoId, privado: true, created_by: user?.id };
+  const { data, error } = await T("colab_canales").insert(payload as never).select().single();
   if (error) throw error;
-  // auto-add creator
-  await supabase.from("colab_miembros" as never).insert({ canal_id: (data as any).id, user_id: user?.id, rol: "admin" });
+  await T("colab_miembros").insert({ canal_id: (data as any).id, user_id: user?.id, rol: "admin" } as never);
   return data as unknown as Canal;
 }
 
 export async function crearCanal(input: { nombre: string; descripcion?: string; privado?: boolean; tipo?: CanalTipo }): Promise<Canal> {
   const { data: { user } } = await supabase.auth.getUser();
-  const { data, error } = await supabase
-    .from("colab_canales" as never)
-    .insert({
-      nombre: input.nombre,
-      descripcion: input.descripcion ?? null,
-      tipo: input.tipo ?? "custom",
-      privado: input.privado ?? false,
-      created_by: user?.id,
-    })
-    .select()
-    .single();
+  const payload = {
+    nombre: input.nombre,
+    descripcion: input.descripcion ?? null,
+    tipo: input.tipo ?? "custom",
+    privado: input.privado ?? false,
+    created_by: user?.id,
+  };
+  const { data, error } = await T("colab_canales").insert(payload as never).select().single();
   if (error) throw error;
-  await supabase.from("colab_miembros" as never).insert({ canal_id: (data as any).id, user_id: user?.id, rol: "admin" });
+  await T("colab_miembros").insert({ canal_id: (data as any).id, user_id: user?.id, rol: "admin" } as never);
   return data as unknown as Canal;
 }
 
 export async function listMensajes(canalId: string, limit = 100): Promise<Mensaje[]> {
-  const { data, error } = await supabase
-    .from("colab_mensajes" as never)
+  const { data, error } = await T("colab_mensajes")
     .select("*")
     .eq("canal_id", canalId)
     .order("created_at", { ascending: true })
@@ -107,25 +90,22 @@ export async function listMensajes(canalId: string, limit = 100): Promise<Mensaj
 export async function enviarMensaje(canalId: string, texto: string, adjuntos: Mensaje["adjuntos"] = [], menciones: string[] = [], replyTo?: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("No autenticado");
-  const { data, error } = await supabase
-    .from("colab_mensajes" as never)
-    .insert({ canal_id: canalId, user_id: user.id, texto, adjuntos, menciones, reply_to: replyTo ?? null })
-    .select()
-    .single();
+  const payload = { canal_id: canalId, user_id: user.id, texto, adjuntos, menciones, reply_to: replyTo ?? null };
+  const { data, error } = await T("colab_mensajes").insert(payload as never).select().single();
   if (error) throw error;
-  await supabase.from("colab_auditoria" as never).insert({ user_id: user.id, canal_id: canalId, accion: "mensaje_enviado", detalle: { id: (data as any).id } });
+  await T("colab_auditoria").insert({ user_id: user.id, canal_id: canalId, accion: "mensaje_enviado", detalle: { id: (data as any).id } } as never);
   return data as unknown as Mensaje;
 }
 
 export async function borrarMensaje(id: string) {
-  const { error } = await supabase.from("colab_mensajes" as never).update({ borrado: true, texto: null, adjuntos: [] }).eq("id", id);
+  const { error } = await T("colab_mensajes").update({ borrado: true, texto: null, adjuntos: [] } as never).eq("id", id);
   if (error) throw error;
 }
 
 export async function unirseCanal(canalId: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("No autenticado");
-  await supabase.from("colab_miembros" as never).upsert({ canal_id: canalId, user_id: user.id, rol: "miembro" });
+  await T("colab_miembros").upsert({ canal_id: canalId, user_id: user.id, rol: "miembro" } as never);
 }
 
 export async function subirAdjunto(canalId: string, file: File) {
@@ -144,8 +124,7 @@ export async function getAdjuntoUrl(path: string) {
 }
 
 export async function listMisNotifColab(): Promise<NotifColab[]> {
-  const { data, error } = await supabase
-    .from("colab_notificaciones" as never)
+  const { data, error } = await T("colab_notificaciones")
     .select("*")
     .order("created_at", { ascending: false })
     .limit(50);
@@ -154,60 +133,49 @@ export async function listMisNotifColab(): Promise<NotifColab[]> {
 }
 
 export async function marcarNotifLeida(id: string) {
-  await supabase.from("colab_notificaciones" as never).update({ leida: true }).eq("id", id);
+  await T("colab_notificaciones").update({ leida: true } as never).eq("id", id);
 }
-
 export async function marcarTodasNotifLeidas() {
-  await supabase.from("colab_notificaciones" as never).update({ leida: true }).eq("leida", false);
+  await T("colab_notificaciones").update({ leida: true } as never).eq("leida", false);
 }
 
 export async function listDirectorio(): Promise<Array<{ user_id: string; nombre: string; correo: string | null; foto_url: string | null; roles: string[] }>> {
-  const { data, error } = await supabase
-    .from("profiles" as never)
-    .select("user_id, nombre, correo, foto_url")
+  const { data, error } = await T("profiles")
+    .select("id, nombre, email, avatar_url")
     .order("nombre", { ascending: true });
   if (error) throw error;
-  const ids = (data ?? []).map((p: any) => p.user_id);
-  const { data: rolesData } = await supabase.from("user_roles").select("user_id, role").in("user_id", ids);
+  const rows = (data ?? []) as any[];
+  const ids = rows.map((p) => p.id);
+  const { data: rolesData } = await supabase.from("user_roles").select("user_id, role").in("user_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]);
   const map = new Map<string, string[]>();
   (rolesData ?? []).forEach((r: any) => {
     const arr = map.get(r.user_id) ?? [];
     arr.push(r.role);
     map.set(r.user_id, arr);
   });
-  return (data ?? []).map((p: any) => ({ ...p, roles: map.get(p.user_id) ?? [] }));
+  return rows.map((p) => ({ user_id: p.id, nombre: p.nombre ?? p.email ?? "Usuario", correo: p.email ?? null, foto_url: p.avatar_url ?? null, roles: map.get(p.id) ?? [] }));
 }
 
 export async function getOrCreateDM(otherUserId: string): Promise<Canal> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("No autenticado");
-  // find DM where both are members
-  const { data: mias } = await supabase
-    .from("colab_miembros" as never)
+  const { data: mias } = await T("colab_miembros")
     .select("canal_id, colab_canales!inner(id,tipo)")
     .eq("user_id", user.id);
-  const dmIds = (mias ?? []).filter((m: any) => m.colab_canales?.tipo === "dm").map((m: any) => m.canal_id);
+  const dmIds = ((mias ?? []) as any[]).filter((m) => m.colab_canales?.tipo === "dm").map((m) => m.canal_id);
   if (dmIds.length) {
-    const { data: shared } = await supabase
-      .from("colab_miembros" as never)
-      .select("canal_id")
-      .eq("user_id", otherUserId)
-      .in("canal_id", dmIds);
+    const { data: shared } = await T("colab_miembros").select("canal_id").eq("user_id", otherUserId).in("canal_id", dmIds);
     if (shared && shared.length) {
-      const { data: c } = await supabase.from("colab_canales" as never).select("*").eq("id", (shared[0] as any).canal_id).single();
+      const { data: c } = await T("colab_canales").select("*").eq("id", (shared[0] as any).canal_id).single();
       return c as unknown as Canal;
     }
   }
-  const { data: nuevo, error } = await supabase
-    .from("colab_canales" as never)
-    .insert({ nombre: "DM", tipo: "dm", privado: true, created_by: user.id })
-    .select()
-    .single();
+  const { data: nuevo, error } = await T("colab_canales").insert({ nombre: "DM", tipo: "dm", privado: true, created_by: user.id } as never).select().single();
   if (error) throw error;
-  await supabase.from("colab_miembros" as never).insert([
+  await T("colab_miembros").insert([
     { canal_id: (nuevo as any).id, user_id: user.id, rol: "admin" },
     { canal_id: (nuevo as any).id, user_id: otherUserId, rol: "miembro" },
-  ]);
+  ] as never);
   return nuevo as unknown as Canal;
 }
 
