@@ -376,6 +376,39 @@ export type Database = {
           },
         ]
       }
+      acceso_auditoria: {
+        Row: {
+          accion: string
+          actor_id: string | null
+          created_at: string
+          detalle: Json
+          id: string
+          ip: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          accion: string
+          actor_id?: string | null
+          created_at?: string
+          detalle?: Json
+          id?: string
+          ip?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          accion?: string
+          actor_id?: string | null
+          created_at?: string
+          detalle?: Json
+          id?: string
+          ip?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       apoderados_nuvex: {
         Row: {
           activo: boolean
@@ -1993,6 +2026,33 @@ export type Database = {
           },
         ]
       }
+      mfa_codigos_email: {
+        Row: {
+          codigo_hash: string
+          created_at: string
+          expira_at: string
+          id: string
+          usado: boolean
+          user_id: string
+        }
+        Insert: {
+          codigo_hash: string
+          created_at?: string
+          expira_at: string
+          id?: string
+          usado?: boolean
+          user_id: string
+        }
+        Update: {
+          codigo_hash?: string
+          created_at?: string
+          expira_at?: string
+          id?: string
+          usado?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       modulo_ayuda: {
         Row: {
           activo: boolean
@@ -2244,11 +2304,14 @@ export type Database = {
       profiles: {
         Row: {
           activo: boolean
+          aprobado_at: string | null
+          aprobado_por: string | null
           avatar_path: string | null
           avatar_url: string | null
           banco: string | null
           celular: string | null
           ciudad: string | null
+          ciudad_registro: string | null
           coordinador_id: string | null
           correo_corporativo: string | null
           created_at: string
@@ -2256,27 +2319,41 @@ export type Database = {
           direccion: string | null
           email: string | null
           equipo: string | null
+          equipo_registro: string | null
+          estado_acceso: Database["public"]["Enums"]["acceso_estado"]
           fecha_ingreso: string | null
           id: string
+          intentos_fallidos: number
+          mfa_metodo: Database["public"]["Enums"]["mfa_metodo"]
+          mfa_requerido: boolean
+          mfa_secret: string | null
+          mfa_verificado_at: string | null
           nombre: string | null
           numero_cuenta: string | null
           numero_documento: string | null
           pais: string | null
           porcentaje_comision: number | null
+          rechazado_motivo: string | null
+          rol_solicitado: string | null
           sede: string | null
+          telefono_registro: string | null
           tipo_cuenta: string | null
           tipo_documento: string | null
           titular_cuenta: string | null
+          ultimo_login_at: string | null
           updated_at: string
           whatsapp: string | null
         }
         Insert: {
           activo?: boolean
+          aprobado_at?: string | null
+          aprobado_por?: string | null
           avatar_path?: string | null
           avatar_url?: string | null
           banco?: string | null
           celular?: string | null
           ciudad?: string | null
+          ciudad_registro?: string | null
           coordinador_id?: string | null
           correo_corporativo?: string | null
           created_at?: string
@@ -2284,27 +2361,41 @@ export type Database = {
           direccion?: string | null
           email?: string | null
           equipo?: string | null
+          equipo_registro?: string | null
+          estado_acceso?: Database["public"]["Enums"]["acceso_estado"]
           fecha_ingreso?: string | null
           id: string
+          intentos_fallidos?: number
+          mfa_metodo?: Database["public"]["Enums"]["mfa_metodo"]
+          mfa_requerido?: boolean
+          mfa_secret?: string | null
+          mfa_verificado_at?: string | null
           nombre?: string | null
           numero_cuenta?: string | null
           numero_documento?: string | null
           pais?: string | null
           porcentaje_comision?: number | null
+          rechazado_motivo?: string | null
+          rol_solicitado?: string | null
           sede?: string | null
+          telefono_registro?: string | null
           tipo_cuenta?: string | null
           tipo_documento?: string | null
           titular_cuenta?: string | null
+          ultimo_login_at?: string | null
           updated_at?: string
           whatsapp?: string | null
         }
         Update: {
           activo?: boolean
+          aprobado_at?: string | null
+          aprobado_por?: string | null
           avatar_path?: string | null
           avatar_url?: string | null
           banco?: string | null
           celular?: string | null
           ciudad?: string | null
+          ciudad_registro?: string | null
           coordinador_id?: string | null
           correo_corporativo?: string | null
           created_at?: string
@@ -2312,17 +2403,28 @@ export type Database = {
           direccion?: string | null
           email?: string | null
           equipo?: string | null
+          equipo_registro?: string | null
+          estado_acceso?: Database["public"]["Enums"]["acceso_estado"]
           fecha_ingreso?: string | null
           id?: string
+          intentos_fallidos?: number
+          mfa_metodo?: Database["public"]["Enums"]["mfa_metodo"]
+          mfa_requerido?: boolean
+          mfa_secret?: string | null
+          mfa_verificado_at?: string | null
           nombre?: string | null
           numero_cuenta?: string | null
           numero_documento?: string | null
           pais?: string | null
           porcentaje_comision?: number | null
+          rechazado_motivo?: string | null
+          rol_solicitado?: string | null
           sede?: string | null
+          telefono_registro?: string | null
           tipo_cuenta?: string | null
           tipo_documento?: string | null
           titular_cuenta?: string | null
+          ultimo_login_at?: string | null
           updated_at?: string
           whatsapp?: string | null
         }
@@ -2640,6 +2742,7 @@ export type Database = {
         | "director_financiero_qa"
         | "gerencia"
         | "super_admin"
+      acceso_estado: "pendiente" | "aprobado" | "rechazado" | "bloqueado"
       app_role:
         | "admin"
         | "asesor"
@@ -2727,6 +2830,7 @@ export type Database = {
         | "checklist"
         | "enlace"
         | "faq"
+      mfa_metodo: "ninguno" | "email" | "totp"
       pregunta_tipo: "unica" | "multiple" | "verdadero_falso"
     }
     CompositeTypes: {
@@ -2864,6 +2968,7 @@ export const Constants = {
         "gerencia",
         "super_admin",
       ],
+      acceso_estado: ["pendiente", "aprobado", "rechazado", "bloqueado"],
       app_role: [
         "admin",
         "asesor",
@@ -2956,6 +3061,7 @@ export const Constants = {
         "enlace",
         "faq",
       ],
+      mfa_metodo: ["ninguno", "email", "totp"],
       pregunta_tipo: ["unica", "multiple", "verdadero_falso"],
     },
   },
