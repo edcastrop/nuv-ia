@@ -2226,6 +2226,84 @@ export type Database = {
         }
         Relationships: []
       }
+      nuvex_ia_log: {
+        Row: {
+          created_at: string
+          fuente: string
+          id: string
+          modulo: string | null
+          nombre_usuario: string | null
+          origen: string
+          pregunta: string
+          respuesta: string | null
+          rol: string | null
+          tiempo_respuesta_ms: number | null
+          usuario_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          fuente?: string
+          id?: string
+          modulo?: string | null
+          nombre_usuario?: string | null
+          origen?: string
+          pregunta: string
+          respuesta?: string | null
+          rol?: string | null
+          tiempo_respuesta_ms?: number | null
+          usuario_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          fuente?: string
+          id?: string
+          modulo?: string | null
+          nombre_usuario?: string | null
+          origen?: string
+          pregunta?: string
+          respuesta?: string | null
+          rol?: string | null
+          tiempo_respuesta_ms?: number | null
+          usuario_id?: string | null
+        }
+        Relationships: []
+      }
+      nuvex_kb: {
+        Row: {
+          categoria: string
+          creado_por: string | null
+          created_at: string
+          estado: string
+          id: string
+          pregunta: string
+          respuesta: string
+          tags: string[]
+          updated_at: string
+        }
+        Insert: {
+          categoria: string
+          creado_por?: string | null
+          created_at?: string
+          estado?: string
+          id?: string
+          pregunta: string
+          respuesta: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string
+          creado_por?: string | null
+          created_at?: string
+          estado?: string
+          id?: string
+          pregunta?: string
+          respuesta?: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       parametros_financieros: {
         Row: {
           clave: string
@@ -2732,6 +2810,8 @@ export type Database = {
         }
         Returns: string
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       academia_rol:
