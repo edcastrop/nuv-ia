@@ -1798,42 +1798,6 @@ export type Database = {
         }
         Relationships: []
       }
-      gpt_consultas_log: {
-        Row: {
-          categoria_detectada: string | null
-          created_at: string
-          feedback: number | null
-          id: string
-          modulo: string | null
-          pregunta: string
-          respondida: boolean
-          rol: string | null
-          user_id: string | null
-        }
-        Insert: {
-          categoria_detectada?: string | null
-          created_at?: string
-          feedback?: number | null
-          id?: string
-          modulo?: string | null
-          pregunta: string
-          respondida?: boolean
-          rol?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          categoria_detectada?: string | null
-          created_at?: string
-          feedback?: number | null
-          id?: string
-          modulo?: string | null
-          pregunta?: string
-          respondida?: boolean
-          rol?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       gpt_conversaciones: {
         Row: {
           created_at: string
@@ -1858,83 +1822,6 @@ export type Database = {
           titulo?: string
           updated_at?: string
           user_id?: string
-        }
-        Relationships: []
-      }
-      gpt_kb_articulos: {
-        Row: {
-          activo: boolean
-          categoria_id: string
-          contenido: string
-          created_at: string
-          created_by: string | null
-          id: string
-          roles_permitidos: string[]
-          tags: string[]
-          titulo: string
-          updated_at: string
-        }
-        Insert: {
-          activo?: boolean
-          categoria_id: string
-          contenido: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          roles_permitidos?: string[]
-          tags?: string[]
-          titulo: string
-          updated_at?: string
-        }
-        Update: {
-          activo?: boolean
-          categoria_id?: string
-          contenido?: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          roles_permitidos?: string[]
-          tags?: string[]
-          titulo?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "gpt_kb_articulos_categoria_id_fkey"
-            columns: ["categoria_id"]
-            isOneToOne: false
-            referencedRelation: "gpt_kb_categorias"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      gpt_kb_categorias: {
-        Row: {
-          activo: boolean
-          created_at: string
-          descripcion: string | null
-          id: string
-          nombre: string
-          orden: number
-          updated_at: string
-        }
-        Insert: {
-          activo?: boolean
-          created_at?: string
-          descripcion?: string | null
-          id?: string
-          nombre: string
-          orden?: number
-          updated_at?: string
-        }
-        Update: {
-          activo?: boolean
-          created_at?: string
-          descripcion?: string | null
-          id?: string
-          nombre?: string
-          orden?: number
-          updated_at?: string
         }
         Relationships: []
       }
