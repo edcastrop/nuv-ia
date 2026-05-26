@@ -5,9 +5,10 @@ import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import {
   Sparkles, Send, Loader2, TrendingUp, FileCheck2, AlertTriangle,
-  Wallet, Receipt, Clock, ArrowRight, Bot, User as UserIcon,
+  Wallet, Receipt, Clock, ArrowRight, Bot, User as UserIcon, AlertCircle,
 } from "lucide-react";
 import { getMetricasIA, getAlertasInteligentes, consultarIA } from "@/lib/nuvex-ia.functions";
+import { EscalarTicketDialog } from "@/components/nuvex-gpt/EscalarTicketDialog";
 
 export const Route = createFileRoute("/_authenticated/nuvex-ia")({
   component: NuvexIAPage,
@@ -34,7 +35,7 @@ const SUGERENCIAS = [
   "Expedientes incompletos",
 ];
 
-type Mensaje = { rol: "user" | "ai"; texto: string; filas?: unknown[] };
+type Mensaje = { rol: "user" | "ai"; texto: string; filas?: unknown[]; escalable?: boolean; preguntaOriginal?: string };
 
 function fmtCOP(n: number) {
   return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n || 0);
@@ -52,6 +53,8 @@ function NuvexIAPage() {
   const [enviando, setEnviando] = useState(false);
   const [chat, setChat] = useState<Mensaje[]>([]);
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
+  const [escalarOpen, setEscalarOpen] = useState(false);
+  const [escalarCtx, setEscalarCtx] = useState<{ pregunta: string; respuesta: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -76,7 +79,13 @@ function NuvexIAPage() {
         : res.escalable
         ? "⚠️ Sin información suficiente — puedes escalar esta consulta"
         : undefined;
-      setChat((c) => [...c, { rol: "ai", texto: res.respuesta + (meta ? `\n\n*${meta}*` : ""), filas: res.filas }]);
+      setChat((c) => [...c, {
+        rol: "ai",
+        texto: res.respuesta + (meta ? `\n\n*${meta}*` : ""),
+        filas: res.filas,
+        escalable: res.escalable,
+        preguntaOriginal: q,
+      }]);
     } catch {
       setChat((c) => [...c, { rol: "ai", texto: "Hubo un error al procesar tu consulta." }]);
     } finally {
@@ -218,6 +227,22 @@ function NuvexIAPage() {
                   {m.rol === "ai" && m.filas && m.filas.length > 0 && (
                     <div className="mt-2 text-[10px] text-white/50">{m.filas.length} registro(s) consultados</div>
                   )}
+                  {m.rol === "ai" && m.escalable && (
+                    <button
+                      onClick={() => {
+                        setEscalarCtx({ pregunta: m.preguntaOriginal ?? "", respuesta: m.texto });
+                        setEscalarOpen(true);
+                      }}
+                      className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold transition hover:scale-[1.02]"
+                      style={{
+                        background: "linear-gradient(135deg, #E11D48, #f0d78c)",
+                        color: "white",
+                        boxShadow: "0 6px 18px -6px rgba(225,29,72,0.55)",
+                      }}
+                    >
+                      <AlertCircle size={12} /> Escalar a ticket
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -297,6 +322,17 @@ function NuvexIAPage() {
           )}
         </div>
       </div>
+
+      <EscalarTicketDialog
+        open={escalarOpen}
+        onOpenChange={setEscalarOpen}
+        conversacionId={null}
+        preFillDescripcion={
+          escalarCtx
+            ? `Consulta original:\n${escalarCtx.pregunta}\n\nRespuesta NUVEX IA:\n${escalarCtx.respuesta}`
+            : ""
+        }
+      />
     </div>
   );
 }
