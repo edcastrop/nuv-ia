@@ -126,19 +126,16 @@ REGLAS ESTRICTAS:
 BASE DE CONOCIMIENTO RELEVANTE (úsala como fuente única de verdad):
 ${kbContext}`;
 
-          // Log query (best-effort)
-          const categoriaDetectada = articulos[0]
-            ? Array.isArray(articulos[0].gpt_kb_categorias)
-              ? articulos[0].gpt_kb_categorias[0]?.nombre
-              : articulos[0].gpt_kb_categorias?.nombre
-            : null;
-          void supabase.from("gpt_consultas_log").insert({
-            user_id: userId,
+          // Log query en nuvex_ia_log (cerebro único)
+          const categoriaDetectada = articulos[0]?.categoria ?? null;
+          void supabase.from("nuvex_ia_log").insert({
+            usuario_id: userId,
             rol: rolPrincipal,
             modulo: modulo || null,
-            pregunta: q.slice(0, 1000),
-            categoria_detectada: categoriaDetectada ?? null,
-            respondida: articulos.length > 0,
+            pregunta: q.slice(0, 2000),
+            respuesta: categoriaDetectada ? `[KB: ${categoriaDetectada}]` : null,
+            origen: "nuvex_gpt",
+            fuente: articulos.length > 0 ? "kb" : "modelo",
           });
 
           // Call Lovable AI Gateway
