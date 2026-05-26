@@ -1,181 +1,88 @@
-# Módulo Roles, Permisos, Validación QA y Auditoría — NUVEX
+# Academia NUVEX — Infraestructura
 
-Solución escalable (10 → 100+ licenciados) integrada con casos, expedientes, simulador, jurídica, cartera y contabilidad. Sin romper funcionalidades existentes.
+Construir solo la **infraestructura** del módulo Academia. Sin contenido real todavía: los cursos se cargarán después desde el panel Super Admin.
 
----
+## 1. Modelo de datos (migración Supabase)
 
-## 1. Roles y jerarquías (RBAC)
+Nuevo enum `academia_rol` mapeado a `app_role`:
+- `licenciado`, `operaciones` (= `auxiliar_operativo`), `juridica`, `contabilidad`, `director_financiero_qa`, `gerencia`, `super_admin`
 
-Ampliar enum `app_role` con los nuevos roles y asegurar que los existentes sigan funcionando.
+Tablas (con RLS):
 
-Roles finales:
-- `super_admin` (existe)
-- `gerencia` (existe → "Gerencia Administrativa")
-- `director_financiero_qa` (**NUEVO**)
-- `director_juridico` (**NUEVO**)
-- `juridica` (existe → "Analista Jurídico")
-- `contabilidad` (existe)
-- `licenciado` (existe)
-- `auxiliar_operativo` (**NUEVO**, reemplaza/coexiste con `operaciones`)
-- `apoderado` (**NUEVO**)
-- `admin`, `asesor`, `cartera` se conservan por compatibilidad
+- **academia_cursos**: `id`, `rol_destino academia_rol`, `titulo`, `descripcion`, `orden`, `activo`, `created_at`, `updated_at`, `created_by`. Curso = "Academia Licenciado" etc., uno por rol inicial (seed).
+- **academia_modulos**: `id`, `curso_id`, `titulo`, `descripcion`, `orden`, `activo`.
+- **academia_lecciones**: `id`, `modulo_id`, `titulo`, `tipo` (`texto|pdf|video|imagen|checklist|enlace|faq`), `contenido jsonb` (cuerpo / url / items), `orden`, `duracion_min`, `activo`.
+- **academia_recursos**: `id`, `leccion_id` (nullable), `modulo_id` (nullable), `titulo`, `tipo`, `url`, `orden`.
+- **academia_evaluaciones**: `id`, `modulo_id`, `titulo`, `nota_minima` (default 80), `intentos_permitidos` (default 3), `activo`.
+- **academia_preguntas**: `id`, `evaluacion_id`, `enunciado`, `tipo` (`unica|multiple|verdadero_falso`), `opciones jsonb`, `respuesta_correcta jsonb`, `puntos`, `orden`.
+- **academia_intentos**: `id`, `evaluacion_id`, `user_id`, `respuestas jsonb`, `nota`, `porcentaje`, `aprobado bool`, `created_at`. (lectura propia + super_admin/gerencia).
+- **academia_progreso_lecciones**: `user_id`, `leccion_id`, `completada bool`, `completada_at`. PK compuesta.
+- **academia_certificaciones**: `id`, `user_id`, `curso_id`, `emitida_at`, `nota_final`, `codigo` (slug único). Emisión automática vía función SQL `emitir_certificado(user, curso)` cuando promedio de evaluaciones aprobadas ≥ 80 y todas las lecciones completadas.
+- **modulo_ayuda**: `modulo_sistema text` (clave: 'casos','cartera','expediente', etc.), `tipo` (`guia|video|faq|checklist`), `titulo`, `contenido jsonb`, `orden`. Para el Centro de Ayuda contextual.
 
-Helpers SQL (security definer, evitan recursión RLS):
-- `is_director_qa(uid)`, `is_director_juridico(uid)`, `is_auxiliar(uid)`, `is_apoderado(uid)`
-- `can_validar_proyeccion(uid)` = super_admin OR director_financiero_qa
-- `can_aprobar_doc_juridico(uid)` = super_admin OR director_juridico
+RLS:
+- Lectura cursos/modulos/lecciones/recursos/evaluaciones/preguntas: cualquier autenticado cuyo `rol_destino` esté entre sus roles, o super_admin/gerencia (ven todo).
+- Escritura: solo super_admin.
+- Intentos/progreso/certificaciones: dueño + super_admin/gerencia.
+- modulo_ayuda: lectura autenticada, escritura super_admin.
 
-Cliente: ampliar `src/hooks/useUserRole.ts` con `isDirectorQA`, `isDirectorJuridico`, `isApoderado`, `isAuxiliar`, y helper `can(modulo, accion)`.
+Función `mapear_rol_to_academia(app_role) → academia_rol` y `academia_rol_del_usuario(uid) → academia_rol` (prioridad: super_admin > gerencia > director_financiero_qa > contabilidad > juridica > operaciones (auxiliar_operativo) > licenciado).
 
----
+Seed: insertar un curso vacío por cada uno de los 7 roles.
 
-## 2. Validación Financiera QA (flujo obligatorio)
+## 2. Frontend — rutas y vistas
 
-Nuevos valores en `caso_estado`:
-- `proyeccion_pendiente_qa`
-- `proyeccion_aprobada_qa`
-- `proyeccion_devuelta_qa`
+Reemplazar la ruta actual `/_authenticated/academia.tsx` (placeholder) con una **academia dinámica por rol**:
 
-Mapeo en `map_caso_to_expediente_estado`: los tres → `SIMULADO` (no avanza el expediente hasta aprobación).
+- `/academia` — **Dashboard Academia** del usuario:
+  - Detecta rol → muestra el curso correspondiente (`rol_destino = academia_rol_del_usuario`).
+  - Tarjetas: Progreso %, Cursos completados, Pendientes, Evaluaciones aprobadas, Certificaciones obtenidas.
+  - Listado de módulos con barra de avance por módulo.
+- `/academia/modulos/$moduloId` — vista del módulo con lecciones y evaluación.
+- `/academia/lecciones/$leccionId` — render por tipo (`texto|pdf|video|imagen|checklist|enlace|faq`). Botón "Marcar como completada" → upsert en `academia_progreso_lecciones`.
+- `/academia/evaluaciones/$evaluacionId` — flujo de evaluación: render preguntas → submit → muestra nota, %, aprobado/reprobado → guarda intento. Si aprobado y curso completo → dispara emisión de certificado.
+- `/academia/certificados/$codigo` — vista imprimible del certificado interno NUVEX (logo, nombre, curso, fecha, código, firma estilizada).
+- `/super-admin/academia` — **Administración** (solo super_admin):
+  - Listado de cursos por rol, crear/editar/eliminar/activar/desactivar.
+  - Editor de módulos, lecciones (por tipo de contenido), recursos, evaluaciones y preguntas.
+  - Asignación implícita: cada curso ya está atado a su `rol_destino`; opción futura de asignar a usuarios específicos (se deja columna preparada, no UI todavía).
 
-Flujo:
-```
-simulacion_realizada
-  → [Licenciado: "Enviar a Validación Financiera"]
-proyeccion_pendiente_qa
-  → [QA: Aprobar]  → proyeccion_aprobada_qa → habilita "Presentar propuesta"
-  → [QA: Devolver] → proyeccion_devuelta_qa  (motivo + observación obligatoria)
-```
+## 3. Centro de Ayuda contextual
 
-Regla bloqueante: el botón "Presentar propuesta" / "Enviar a contratación" se deshabilita si el caso no está en `proyeccion_aprobada_qa` (excepto super_admin con override auditado).
+- Componente `<HelpButton modulo="casos" />` reutilizable: botón flotante "?" que abre un drawer con `modulo_ayuda` filtrado (Guía rápida / Video / FAQ / Checklist). Se montará después en módulos del sistema; en este sprint solo se crea el componente + tabla.
 
-Tabla nueva `validaciones_qa`:
-- `expediente_id`, `solicitada_por`, `solicitada_at`
-- `validada_por`, `validada_at`
-- `resultado` ('aprobada'|'devuelta')
-- `motivo` (enum: cuota_incorrecta, fresh_incorrecto, ocr_incorrecto, honorarios_incorrectos, error_financiero, error_digitacion, otro)
-- `observacion` (text, obligatoria si devuelta)
-- `tiempo_validacion_min` (calculado)
-- RLS: licenciado ve las suyas; QA, gerencia y super_admin ven todas.
+## 4. Sidebar
 
-Trigger `audit_validacion_qa` → `finanzas_auditoria` + `caso_alertas`.
+El ítem **Academia** ya existe en la sección "Gestión" del sidebar (`src/routes/_authenticated.tsx`). No se cambia. Se añadirá un sub-ítem **Admin Academia** dentro de la sección Super Admin (visible solo si `isSuperAdmin`).
 
----
+## 5. Archivos a crear / editar
 
-## 3. Dashboard Financiero QA
+Crear:
+- `supabase/migrations/<ts>_academia.sql` (enum, tablas, RLS, funciones, seed)
+- `src/lib/academia.ts` (queries + tipos + helpers de rol)
+- `src/hooks/useAcademia.ts` (curso del usuario, progreso, certificaciones)
+- `src/components/academia/AcademiaDashboard.tsx`
+- `src/components/academia/LeccionRenderer.tsx` (switch por tipo)
+- `src/components/academia/EvaluacionPlayer.tsx`
+- `src/components/academia/CertificadoView.tsx`
+- `src/components/ayuda/HelpButton.tsx` + `HelpDrawer.tsx`
+- `src/routes/_authenticated/academia.index.tsx` (reemplaza `academia.tsx`)
+- `src/routes/_authenticated/academia.modulos.$moduloId.tsx`
+- `src/routes/_authenticated/academia.lecciones.$leccionId.tsx`
+- `src/routes/_authenticated/academia.evaluaciones.$evaluacionId.tsx`
+- `src/routes/_authenticated/academia.certificados.$codigo.tsx`
+- `src/routes/_authenticated/super-admin.academia.tsx` (CRUD)
 
-Nueva ruta `src/routes/_authenticated/qa.index.tsx` (sólo visible para director_financiero_qa, super_admin, gerencia).
+Editar:
+- `src/routes/_authenticated.tsx` — añadir link "Admin Academia" en sección Gestión cuando `isSuperAdmin`.
+- Borrar contenido del actual `src/routes/_authenticated/academia.tsx` (se renombra a `academia.index.tsx`).
 
-Componentes:
-- KPIs: pendientes por validar, aprobadas hoy, devueltas hoy, tiempo promedio (min).
-- Tabla "Pendientes" con acción rápida → modal Aprobar/Devolver.
-- Ranking licenciados: Simulaciones, Aprobadas, Devueltas, Calidad %.
-  - Calidad % = aprobadas_primera_revision / total_simulaciones
-  - Semáforo: ≥95 verde, 85-94 ámbar, <85 rojo.
+## 6. Validación (criterios de cierre)
 
-Vistas SQL: `qa_metrics_diarias`, `qa_ranking_licenciados` (materializadas para escalar).
+- Cada uno de los 7 roles ve **solo** su academia al entrar a `/academia`.
+- Dashboard con Progreso %, completados, pendientes, evaluaciones aprobadas, certificaciones.
+- Evaluaciones funcionando (3 tipos de pregunta, cálculo de %, aprobado/reprobado).
+- Certificación interna emitida automáticamente con 80% o más + ruta pública `/academia/certificados/$codigo`.
+- Super Admin puede crear/editar/eliminar/activar/desactivar cursos, módulos, lecciones y evaluaciones desde `/super-admin/academia`.
 
----
-
-## 4. Centro de Configuración — Roles y Permisos
-
-Tablas nuevas:
-- `permisos_catalogo` (`modulo`, `accion`) — semilla con módulos: casos, expedientes, simulador, juridico, cartera, contabilidad, dashboard, apoderados, academia, configuracion × acciones: ver, crear, editar, aprobar, eliminar, exportar.
-- `rol_permisos` (`role`, `modulo`, `accion`, `permitido`) — matriz editable.
-- `roles_personalizados` (`nombre`, `clonado_de`, `activo`) para futura expansión (clonar/activar/desactivar).
-
-Helper `has_permission(uid, modulo, accion)` — consulta `user_roles` ∪ `rol_permisos`, retorna boolean; usado en RLS y UI.
-
-UI nueva: `src/routes/_authenticated/super-admin.permisos.tsx` con matriz editable (sólo super_admin). Mantiene defaults por código si la tabla está vacía.
-
----
-
-## 5. Auditoría empresarial
-
-Aprovechar `finanzas_auditoria` (ya existe). Generalizar uso y añadir tabla nueva `auditoria_global`:
-- `user_id`, `rol_efectivo`, `accion`, `entidad`, `entidad_id`, `caso_id`, `expediente_id`, `valor_anterior` jsonb, `valor_nuevo` jsonb, `ip`, `user_agent`, `observacion`, `created_at`.
-
-Helper `audit_log(...)` (function) llamado desde:
-- Cambios de estado (trigger sobre `expedientes`)
-- Aprobaciones / rechazos QA y jurídico
-- Pagos (`cartera_pagos` ya audita; replicar a global)
-- Modificaciones de permisos
-- Generación de documentos
-- Eliminaciones
-
-UI: `src/routes/_authenticated/super-admin.auditoria.tsx` — filtros por usuario, rol, acción, fecha, entidad. Export CSV.
-
----
-
-## 6. Notificaciones inteligentes
-
-Usar `caso_alertas` + `finanzas_alertas` (ya existen) + nueva tabla `notificaciones_usuario`:
-- `user_id`, `tipo`, `titulo`, `mensaje`, `link`, `leida`, `created_at`, `severidad`.
-
-Triggers automáticos:
-- `proyeccion_pendiente_qa` → notifica a todos los director_financiero_qa.
-- Aprobada / devuelta → notifica al licenciado dueño.
-- `caso_alertas` cron existente (`casos-alertas.ts`) ya cubre >7 días para gerencia.
-- CC `enviada` → notifica a contabilidad.
-- `comision_liberada` (alerta ya existe) → notifica al licenciado.
-
-Componente `NotificationBell` en el header (badge con conteo no leídas, realtime por canal supabase).
-
----
-
-## 7. Integración UI
-
-- `EstadoCasoBlock`: añadir botones contextuales según rol y estado (Enviar a QA / Aprobar QA / Devolver QA).
-- `casos.$id.tsx`: banner amarillo si `proyeccion_devuelta_qa` con motivo + observación.
-- Sidebar (`_authenticated.tsx`): nuevos enlaces "Validación QA" (QA + gerencia + super), "Permisos" (super), "Auditoría" (super), "Notificaciones".
-- Apoderado: vista simplificada `/mis-casos` (sólo expedientes con `apoderado_id = uid`, sin cartera/honorarios/simulaciones).
-
----
-
-## Cambios técnicos (resumen)
-
-**Migraciones SQL:**
-1. ALTER TYPE `app_role` ADD VALUES (`director_financiero_qa`, `director_juridico`, `auxiliar_operativo`, `apoderado`).
-2. ALTER TYPE `caso_estado` ADD VALUES (`proyeccion_pendiente_qa`, `proyeccion_aprobada_qa`, `proyeccion_devuelta_qa`).
-3. CREATE TABLE `validaciones_qa`, `permisos_catalogo`, `rol_permisos`, `roles_personalizados`, `auditoria_global`, `notificaciones_usuario`.
-4. CREATE FUNCTION `has_permission`, `can_validar_proyeccion`, `can_aprobar_doc_juridico`, `audit_log`, `notify_user`.
-5. Triggers de auditoría/notificación sobre `expedientes`, `validaciones_qa`, `cuentas_cobro`, `cartera_pagos`, `comisiones`, `rol_permisos`.
-6. Vistas/materialized views `qa_metrics_diarias`, `qa_ranking_licenciados`.
-7. Update `map_caso_to_expediente_estado` con nuevos estados.
-8. RLS para todas las tablas nuevas usando los nuevos helpers.
-
-**Código TypeScript/React:**
-- `src/lib/permisos.ts` — wrapper `can(modulo, accion)` + tipos.
-- `src/lib/validacionQA.functions.ts` — `enviarAQA`, `aprobarQA`, `devolverQA`.
-- `src/lib/notificaciones.ts` — fetch + realtime + marcar leídas.
-- `src/lib/auditoria.ts` — `logAccion()` helper para callsites cliente.
-- `src/hooks/useUserRole.ts` — ampliado.
-- `src/hooks/useNotificaciones.ts` (nuevo).
-- `src/components/notificaciones/NotificationBell.tsx`.
-- `src/components/qa/EnviarValidacionButton.tsx`, `AprobarQAModal.tsx`, `DevolverQAModal.tsx`.
-- Rutas: `qa.index.tsx`, `super-admin.permisos.tsx`, `super-admin.auditoria.tsx`, `apoderado.mis-casos.tsx`.
-- Sidebar y `casos.$id.tsx` actualizados.
-
-**Lo que NO se toca:**
-- Motor OCR
-- Simuladores (Pesos/UVR)
-- Cálculo de honorarios y recálculo a éxito
-- Generación de PDFs y contratos
-- Lógica de cartera y comisiones por recaudo real
-- Mapeo casos↔expedientes (sólo se extiende para los 3 nuevos estados)
-
----
-
-## Plan de ejecución (orden propuesto)
-
-1. Migración SQL (enums, tablas, funciones, RLS, triggers, seed permisos).
-2. Hooks y libs cliente (`useUserRole`, `permisos.ts`, `validacionQA.functions.ts`, `notificaciones.ts`).
-3. Botones QA en `EstadoCasoBlock` + bloqueo de "Presentar propuesta".
-4. Dashboard QA + ranking.
-5. Centro de permisos (matriz editable).
-6. Vista de auditoría global.
-7. Campana de notificaciones (header + realtime).
-8. Vista apoderado.
-9. QA visual + ajustes finales sin romper estilos NUVEX.
-
-¿Aprueba el plan para iniciar la implementación?
+> Nota: este sprint deja todos los cursos **vacíos** (sin lecciones reales). El llenado de contenido se hará en una iteración posterior desde el panel Super Admin.

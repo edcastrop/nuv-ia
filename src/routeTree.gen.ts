@@ -25,11 +25,13 @@ import { Route as AuthenticatedExpedienteMaestroIndexRouteImport } from './route
 import { Route as AuthenticatedComisionesIndexRouteImport } from './routes/_authenticated/comisiones.index'
 import { Route as AuthenticatedCasosIndexRouteImport } from './routes/_authenticated/casos.index'
 import { Route as AuthenticatedCarteraIndexRouteImport } from './routes/_authenticated/cartera.index'
+import { Route as AuthenticatedAcademiaIndexRouteImport } from './routes/_authenticated/academia.index'
 import { Route as AuthenticatedSuperAdminUsuariosRouteImport } from './routes/_authenticated/super-admin.usuarios'
 import { Route as AuthenticatedSuperAdminPermisosRouteImport } from './routes/_authenticated/super-admin.permisos'
 import { Route as AuthenticatedSuperAdminMarcaRouteImport } from './routes/_authenticated/super-admin.marca'
 import { Route as AuthenticatedSuperAdminExpedientesRouteImport } from './routes/_authenticated/super-admin.expedientes'
 import { Route as AuthenticatedSuperAdminAuditoriaRouteImport } from './routes/_authenticated/super-admin.auditoria'
+import { Route as AuthenticatedSuperAdminAcademiaRouteImport } from './routes/_authenticated/super-admin.academia'
 import { Route as AuthenticatedFinanzasTesoreriaRouteImport } from './routes/_authenticated/finanzas.tesoreria'
 import { Route as AuthenticatedFinanzasReportesRouteImport } from './routes/_authenticated/finanzas.reportes'
 import { Route as AuthenticatedFinanzasRecaudosRouteImport } from './routes/_authenticated/finanzas.recaudos'
@@ -49,6 +51,10 @@ import { Route as AuthenticatedApoderadoMisCasosRouteImport } from './routes/_au
 import { Route as ApiPublicHooksFinanzasCronRouteImport } from './routes/api/public/hooks/finanzas-cron'
 import { Route as ApiPublicHooksCasosAlertasRouteImport } from './routes/api/public/hooks/casos-alertas'
 import { Route as ApiPublicHooksCarteraRecordatoriosRouteImport } from './routes/api/public/hooks/cartera-recordatorios'
+import { Route as AuthenticatedAcademiaModulosModuloIdRouteImport } from './routes/_authenticated/academia.modulos.$moduloId'
+import { Route as AuthenticatedAcademiaLeccionesLeccionIdRouteImport } from './routes/_authenticated/academia.lecciones.$leccionId'
+import { Route as AuthenticatedAcademiaEvaluacionesEvaluacionIdRouteImport } from './routes/_authenticated/academia.evaluaciones.$evaluacionId'
+import { Route as AuthenticatedAcademiaCertificadosCodigoRouteImport } from './routes/_authenticated/academia.certificados.$codigo'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -136,6 +142,12 @@ const AuthenticatedCarteraIndexRoute =
     path: '/cartera/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedAcademiaIndexRoute =
+  AuthenticatedAcademiaIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAcademiaRoute,
+  } as any)
 const AuthenticatedSuperAdminUsuariosRoute =
   AuthenticatedSuperAdminUsuariosRouteImport.update({
     id: '/super-admin/usuarios',
@@ -164,6 +176,12 @@ const AuthenticatedSuperAdminAuditoriaRoute =
   AuthenticatedSuperAdminAuditoriaRouteImport.update({
     id: '/super-admin/auditoria',
     path: '/super-admin/auditoria',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuperAdminAcademiaRoute =
+  AuthenticatedSuperAdminAcademiaRouteImport.update({
+    id: '/super-admin/academia',
+    path: '/super-admin/academia',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedFinanzasTesoreriaRoute =
@@ -278,11 +296,35 @@ const ApiPublicHooksCarteraRecordatoriosRoute =
     path: '/api/public/hooks/cartera-recordatorios',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedAcademiaModulosModuloIdRoute =
+  AuthenticatedAcademiaModulosModuloIdRouteImport.update({
+    id: '/modulos/$moduloId',
+    path: '/modulos/$moduloId',
+    getParentRoute: () => AuthenticatedAcademiaRoute,
+  } as any)
+const AuthenticatedAcademiaLeccionesLeccionIdRoute =
+  AuthenticatedAcademiaLeccionesLeccionIdRouteImport.update({
+    id: '/lecciones/$leccionId',
+    path: '/lecciones/$leccionId',
+    getParentRoute: () => AuthenticatedAcademiaRoute,
+  } as any)
+const AuthenticatedAcademiaEvaluacionesEvaluacionIdRoute =
+  AuthenticatedAcademiaEvaluacionesEvaluacionIdRouteImport.update({
+    id: '/evaluaciones/$evaluacionId',
+    path: '/evaluaciones/$evaluacionId',
+    getParentRoute: () => AuthenticatedAcademiaRoute,
+  } as any)
+const AuthenticatedAcademiaCertificadosCodigoRoute =
+  AuthenticatedAcademiaCertificadosCodigoRouteImport.update({
+    id: '/certificados/$codigo',
+    path: '/certificados/$codigo',
+    getParentRoute: () => AuthenticatedAcademiaRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
-  '/academia': typeof AuthenticatedAcademiaRoute
+  '/academia': typeof AuthenticatedAcademiaRouteWithChildren
   '/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/finanzas': typeof AuthenticatedFinanzasRouteWithChildren
@@ -305,24 +347,29 @@ export interface FileRoutesByFullPath {
   '/finanzas/recaudos': typeof AuthenticatedFinanzasRecaudosRoute
   '/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
+  '/super-admin/academia': typeof AuthenticatedSuperAdminAcademiaRoute
   '/super-admin/auditoria': typeof AuthenticatedSuperAdminAuditoriaRoute
   '/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
   '/super-admin/permisos': typeof AuthenticatedSuperAdminPermisosRoute
   '/super-admin/usuarios': typeof AuthenticatedSuperAdminUsuariosRoute
+  '/academia/': typeof AuthenticatedAcademiaIndexRoute
   '/cartera/': typeof AuthenticatedCarteraIndexRoute
   '/casos/': typeof AuthenticatedCasosIndexRoute
   '/comisiones/': typeof AuthenticatedComisionesIndexRoute
   '/expediente-maestro/': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/finanzas/': typeof AuthenticatedFinanzasIndexRoute
   '/super-admin/': typeof AuthenticatedSuperAdminIndexRoute
+  '/academia/certificados/$codigo': typeof AuthenticatedAcademiaCertificadosCodigoRoute
+  '/academia/evaluaciones/$evaluacionId': typeof AuthenticatedAcademiaEvaluacionesEvaluacionIdRoute
+  '/academia/lecciones/$leccionId': typeof AuthenticatedAcademiaLeccionesLeccionIdRoute
+  '/academia/modulos/$moduloId': typeof AuthenticatedAcademiaModulosModuloIdRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
   '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
-  '/academia': typeof AuthenticatedAcademiaRoute
   '/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/notificaciones': typeof AuthenticatedNotificacionesRoute
@@ -345,17 +392,23 @@ export interface FileRoutesByTo {
   '/finanzas/recaudos': typeof AuthenticatedFinanzasRecaudosRoute
   '/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
+  '/super-admin/academia': typeof AuthenticatedSuperAdminAcademiaRoute
   '/super-admin/auditoria': typeof AuthenticatedSuperAdminAuditoriaRoute
   '/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
   '/super-admin/permisos': typeof AuthenticatedSuperAdminPermisosRoute
   '/super-admin/usuarios': typeof AuthenticatedSuperAdminUsuariosRoute
+  '/academia': typeof AuthenticatedAcademiaIndexRoute
   '/cartera': typeof AuthenticatedCarteraIndexRoute
   '/casos': typeof AuthenticatedCasosIndexRoute
   '/comisiones': typeof AuthenticatedComisionesIndexRoute
   '/expediente-maestro': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/finanzas': typeof AuthenticatedFinanzasIndexRoute
   '/super-admin': typeof AuthenticatedSuperAdminIndexRoute
+  '/academia/certificados/$codigo': typeof AuthenticatedAcademiaCertificadosCodigoRoute
+  '/academia/evaluaciones/$evaluacionId': typeof AuthenticatedAcademiaEvaluacionesEvaluacionIdRoute
+  '/academia/lecciones/$leccionId': typeof AuthenticatedAcademiaLeccionesLeccionIdRoute
+  '/academia/modulos/$moduloId': typeof AuthenticatedAcademiaModulosModuloIdRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
   '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
@@ -364,7 +417,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
-  '/_authenticated/academia': typeof AuthenticatedAcademiaRoute
+  '/_authenticated/academia': typeof AuthenticatedAcademiaRouteWithChildren
   '/_authenticated/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/finanzas': typeof AuthenticatedFinanzasRouteWithChildren
@@ -388,17 +441,23 @@ export interface FileRoutesById {
   '/_authenticated/finanzas/recaudos': typeof AuthenticatedFinanzasRecaudosRoute
   '/_authenticated/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/_authenticated/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
+  '/_authenticated/super-admin/academia': typeof AuthenticatedSuperAdminAcademiaRoute
   '/_authenticated/super-admin/auditoria': typeof AuthenticatedSuperAdminAuditoriaRoute
   '/_authenticated/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/_authenticated/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
   '/_authenticated/super-admin/permisos': typeof AuthenticatedSuperAdminPermisosRoute
   '/_authenticated/super-admin/usuarios': typeof AuthenticatedSuperAdminUsuariosRoute
+  '/_authenticated/academia/': typeof AuthenticatedAcademiaIndexRoute
   '/_authenticated/cartera/': typeof AuthenticatedCarteraIndexRoute
   '/_authenticated/casos/': typeof AuthenticatedCasosIndexRoute
   '/_authenticated/comisiones/': typeof AuthenticatedComisionesIndexRoute
   '/_authenticated/expediente-maestro/': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/_authenticated/finanzas/': typeof AuthenticatedFinanzasIndexRoute
   '/_authenticated/super-admin/': typeof AuthenticatedSuperAdminIndexRoute
+  '/_authenticated/academia/certificados/$codigo': typeof AuthenticatedAcademiaCertificadosCodigoRoute
+  '/_authenticated/academia/evaluaciones/$evaluacionId': typeof AuthenticatedAcademiaEvaluacionesEvaluacionIdRoute
+  '/_authenticated/academia/lecciones/$leccionId': typeof AuthenticatedAcademiaLeccionesLeccionIdRoute
+  '/_authenticated/academia/modulos/$moduloId': typeof AuthenticatedAcademiaModulosModuloIdRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
   '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
@@ -431,24 +490,29 @@ export interface FileRouteTypes {
     | '/finanzas/recaudos'
     | '/finanzas/reportes'
     | '/finanzas/tesoreria'
+    | '/super-admin/academia'
     | '/super-admin/auditoria'
     | '/super-admin/expedientes'
     | '/super-admin/marca'
     | '/super-admin/permisos'
     | '/super-admin/usuarios'
+    | '/academia/'
     | '/cartera/'
     | '/casos/'
     | '/comisiones/'
     | '/expediente-maestro/'
     | '/finanzas/'
     | '/super-admin/'
+    | '/academia/certificados/$codigo'
+    | '/academia/evaluaciones/$evaluacionId'
+    | '/academia/lecciones/$leccionId'
+    | '/academia/modulos/$moduloId'
     | '/api/public/hooks/cartera-recordatorios'
     | '/api/public/hooks/casos-alertas'
     | '/api/public/hooks/finanzas-cron'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
-    | '/academia'
     | '/apoderados-nuvex'
     | '/dashboard'
     | '/notificaciones'
@@ -471,17 +535,23 @@ export interface FileRouteTypes {
     | '/finanzas/recaudos'
     | '/finanzas/reportes'
     | '/finanzas/tesoreria'
+    | '/super-admin/academia'
     | '/super-admin/auditoria'
     | '/super-admin/expedientes'
     | '/super-admin/marca'
     | '/super-admin/permisos'
     | '/super-admin/usuarios'
+    | '/academia'
     | '/cartera'
     | '/casos'
     | '/comisiones'
     | '/expediente-maestro'
     | '/finanzas'
     | '/super-admin'
+    | '/academia/certificados/$codigo'
+    | '/academia/evaluaciones/$evaluacionId'
+    | '/academia/lecciones/$leccionId'
+    | '/academia/modulos/$moduloId'
     | '/api/public/hooks/cartera-recordatorios'
     | '/api/public/hooks/casos-alertas'
     | '/api/public/hooks/finanzas-cron'
@@ -513,17 +583,23 @@ export interface FileRouteTypes {
     | '/_authenticated/finanzas/recaudos'
     | '/_authenticated/finanzas/reportes'
     | '/_authenticated/finanzas/tesoreria'
+    | '/_authenticated/super-admin/academia'
     | '/_authenticated/super-admin/auditoria'
     | '/_authenticated/super-admin/expedientes'
     | '/_authenticated/super-admin/marca'
     | '/_authenticated/super-admin/permisos'
     | '/_authenticated/super-admin/usuarios'
+    | '/_authenticated/academia/'
     | '/_authenticated/cartera/'
     | '/_authenticated/casos/'
     | '/_authenticated/comisiones/'
     | '/_authenticated/expediente-maestro/'
     | '/_authenticated/finanzas/'
     | '/_authenticated/super-admin/'
+    | '/_authenticated/academia/certificados/$codigo'
+    | '/_authenticated/academia/evaluaciones/$evaluacionId'
+    | '/_authenticated/academia/lecciones/$leccionId'
+    | '/_authenticated/academia/modulos/$moduloId'
     | '/api/public/hooks/cartera-recordatorios'
     | '/api/public/hooks/casos-alertas'
     | '/api/public/hooks/finanzas-cron'
@@ -651,6 +727,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCarteraIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/academia/': {
+      id: '/_authenticated/academia/'
+      path: '/'
+      fullPath: '/academia/'
+      preLoaderRoute: typeof AuthenticatedAcademiaIndexRouteImport
+      parentRoute: typeof AuthenticatedAcademiaRoute
+    }
     '/_authenticated/super-admin/usuarios': {
       id: '/_authenticated/super-admin/usuarios'
       path: '/super-admin/usuarios'
@@ -684,6 +767,13 @@ declare module '@tanstack/react-router' {
       path: '/super-admin/auditoria'
       fullPath: '/super-admin/auditoria'
       preLoaderRoute: typeof AuthenticatedSuperAdminAuditoriaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/super-admin/academia': {
+      id: '/_authenticated/super-admin/academia'
+      path: '/super-admin/academia'
+      fullPath: '/super-admin/academia'
+      preLoaderRoute: typeof AuthenticatedSuperAdminAcademiaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/finanzas/tesoreria': {
@@ -819,8 +909,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksCarteraRecordatoriosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/academia/modulos/$moduloId': {
+      id: '/_authenticated/academia/modulos/$moduloId'
+      path: '/modulos/$moduloId'
+      fullPath: '/academia/modulos/$moduloId'
+      preLoaderRoute: typeof AuthenticatedAcademiaModulosModuloIdRouteImport
+      parentRoute: typeof AuthenticatedAcademiaRoute
+    }
+    '/_authenticated/academia/lecciones/$leccionId': {
+      id: '/_authenticated/academia/lecciones/$leccionId'
+      path: '/lecciones/$leccionId'
+      fullPath: '/academia/lecciones/$leccionId'
+      preLoaderRoute: typeof AuthenticatedAcademiaLeccionesLeccionIdRouteImport
+      parentRoute: typeof AuthenticatedAcademiaRoute
+    }
+    '/_authenticated/academia/evaluaciones/$evaluacionId': {
+      id: '/_authenticated/academia/evaluaciones/$evaluacionId'
+      path: '/evaluaciones/$evaluacionId'
+      fullPath: '/academia/evaluaciones/$evaluacionId'
+      preLoaderRoute: typeof AuthenticatedAcademiaEvaluacionesEvaluacionIdRouteImport
+      parentRoute: typeof AuthenticatedAcademiaRoute
+    }
+    '/_authenticated/academia/certificados/$codigo': {
+      id: '/_authenticated/academia/certificados/$codigo'
+      path: '/certificados/$codigo'
+      fullPath: '/academia/certificados/$codigo'
+      preLoaderRoute: typeof AuthenticatedAcademiaCertificadosCodigoRouteImport
+      parentRoute: typeof AuthenticatedAcademiaRoute
+    }
   }
 }
+
+interface AuthenticatedAcademiaRouteChildren {
+  AuthenticatedAcademiaIndexRoute: typeof AuthenticatedAcademiaIndexRoute
+  AuthenticatedAcademiaCertificadosCodigoRoute: typeof AuthenticatedAcademiaCertificadosCodigoRoute
+  AuthenticatedAcademiaEvaluacionesEvaluacionIdRoute: typeof AuthenticatedAcademiaEvaluacionesEvaluacionIdRoute
+  AuthenticatedAcademiaLeccionesLeccionIdRoute: typeof AuthenticatedAcademiaLeccionesLeccionIdRoute
+  AuthenticatedAcademiaModulosModuloIdRoute: typeof AuthenticatedAcademiaModulosModuloIdRoute
+}
+
+const AuthenticatedAcademiaRouteChildren: AuthenticatedAcademiaRouteChildren = {
+  AuthenticatedAcademiaIndexRoute: AuthenticatedAcademiaIndexRoute,
+  AuthenticatedAcademiaCertificadosCodigoRoute:
+    AuthenticatedAcademiaCertificadosCodigoRoute,
+  AuthenticatedAcademiaEvaluacionesEvaluacionIdRoute:
+    AuthenticatedAcademiaEvaluacionesEvaluacionIdRoute,
+  AuthenticatedAcademiaLeccionesLeccionIdRoute:
+    AuthenticatedAcademiaLeccionesLeccionIdRoute,
+  AuthenticatedAcademiaModulosModuloIdRoute:
+    AuthenticatedAcademiaModulosModuloIdRoute,
+}
+
+const AuthenticatedAcademiaRouteWithChildren =
+  AuthenticatedAcademiaRoute._addFileChildren(
+    AuthenticatedAcademiaRouteChildren,
+  )
 
 interface AuthenticatedFinanzasRouteChildren {
   AuthenticatedFinanzasAlertasRoute: typeof AuthenticatedFinanzasAlertasRoute
@@ -858,7 +1001,7 @@ const AuthenticatedFinanzasRouteWithChildren =
   )
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedAcademiaRoute: typeof AuthenticatedAcademiaRoute
+  AuthenticatedAcademiaRoute: typeof AuthenticatedAcademiaRouteWithChildren
   AuthenticatedApoderadosNuvexRoute: typeof AuthenticatedApoderadosNuvexRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFinanzasRoute: typeof AuthenticatedFinanzasRouteWithChildren
@@ -872,6 +1015,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedComisionesIdRoute: typeof AuthenticatedComisionesIdRoute
   AuthenticatedContabilidadCuentasCobroRoute: typeof AuthenticatedContabilidadCuentasCobroRoute
   AuthenticatedExpedienteMaestroIdRoute: typeof AuthenticatedExpedienteMaestroIdRoute
+  AuthenticatedSuperAdminAcademiaRoute: typeof AuthenticatedSuperAdminAcademiaRoute
   AuthenticatedSuperAdminAuditoriaRoute: typeof AuthenticatedSuperAdminAuditoriaRoute
   AuthenticatedSuperAdminExpedientesRoute: typeof AuthenticatedSuperAdminExpedientesRoute
   AuthenticatedSuperAdminMarcaRoute: typeof AuthenticatedSuperAdminMarcaRoute
@@ -885,7 +1029,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedAcademiaRoute: AuthenticatedAcademiaRoute,
+  AuthenticatedAcademiaRoute: AuthenticatedAcademiaRouteWithChildren,
   AuthenticatedApoderadosNuvexRoute: AuthenticatedApoderadosNuvexRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFinanzasRoute: AuthenticatedFinanzasRouteWithChildren,
@@ -900,6 +1044,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedContabilidadCuentasCobroRoute:
     AuthenticatedContabilidadCuentasCobroRoute,
   AuthenticatedExpedienteMaestroIdRoute: AuthenticatedExpedienteMaestroIdRoute,
+  AuthenticatedSuperAdminAcademiaRoute: AuthenticatedSuperAdminAcademiaRoute,
   AuthenticatedSuperAdminAuditoriaRoute: AuthenticatedSuperAdminAuditoriaRoute,
   AuthenticatedSuperAdminExpedientesRoute:
     AuthenticatedSuperAdminExpedientesRoute,
@@ -929,13 +1074,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

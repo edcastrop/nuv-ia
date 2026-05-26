@@ -14,6 +14,368 @@ export type Database = {
   }
   public: {
     Tables: {
+      academia_certificaciones: {
+        Row: {
+          codigo: string
+          curso_id: string
+          emitida_at: string
+          id: string
+          nota_final: number
+          user_id: string
+        }
+        Insert: {
+          codigo: string
+          curso_id: string
+          emitida_at?: string
+          id?: string
+          nota_final?: number
+          user_id: string
+        }
+        Update: {
+          codigo?: string
+          curso_id?: string
+          emitida_at?: string
+          id?: string
+          nota_final?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academia_certificaciones_curso_id_fkey"
+            columns: ["curso_id"]
+            isOneToOne: false
+            referencedRelation: "academia_cursos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academia_cursos: {
+        Row: {
+          activo: boolean
+          created_at: string
+          created_by: string | null
+          descripcion: string | null
+          id: string
+          orden: number
+          rol_destino: Database["public"]["Enums"]["academia_rol"]
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string | null
+          id?: string
+          orden?: number
+          rol_destino: Database["public"]["Enums"]["academia_rol"]
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string | null
+          id?: string
+          orden?: number
+          rol_destino?: Database["public"]["Enums"]["academia_rol"]
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      academia_evaluaciones: {
+        Row: {
+          activo: boolean
+          created_at: string
+          id: string
+          intentos_permitidos: number
+          modulo_id: string
+          nota_minima: number
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          id?: string
+          intentos_permitidos?: number
+          modulo_id: string
+          nota_minima?: number
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          id?: string
+          intentos_permitidos?: number
+          modulo_id?: string
+          nota_minima?: number
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academia_evaluaciones_modulo_id_fkey"
+            columns: ["modulo_id"]
+            isOneToOne: false
+            referencedRelation: "academia_modulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academia_intentos: {
+        Row: {
+          aprobado: boolean
+          created_at: string
+          evaluacion_id: string
+          id: string
+          nota: number
+          porcentaje: number
+          respuestas: Json
+          user_id: string
+        }
+        Insert: {
+          aprobado?: boolean
+          created_at?: string
+          evaluacion_id: string
+          id?: string
+          nota?: number
+          porcentaje?: number
+          respuestas?: Json
+          user_id: string
+        }
+        Update: {
+          aprobado?: boolean
+          created_at?: string
+          evaluacion_id?: string
+          id?: string
+          nota?: number
+          porcentaje?: number
+          respuestas?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academia_intentos_evaluacion_id_fkey"
+            columns: ["evaluacion_id"]
+            isOneToOne: false
+            referencedRelation: "academia_evaluaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academia_lecciones: {
+        Row: {
+          activo: boolean
+          contenido: Json
+          created_at: string
+          duracion_min: number
+          id: string
+          modulo_id: string
+          orden: number
+          tipo: Database["public"]["Enums"]["leccion_tipo"]
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          contenido?: Json
+          created_at?: string
+          duracion_min?: number
+          id?: string
+          modulo_id: string
+          orden?: number
+          tipo?: Database["public"]["Enums"]["leccion_tipo"]
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          contenido?: Json
+          created_at?: string
+          duracion_min?: number
+          id?: string
+          modulo_id?: string
+          orden?: number
+          tipo?: Database["public"]["Enums"]["leccion_tipo"]
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academia_lecciones_modulo_id_fkey"
+            columns: ["modulo_id"]
+            isOneToOne: false
+            referencedRelation: "academia_modulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academia_modulos: {
+        Row: {
+          activo: boolean
+          created_at: string
+          curso_id: string
+          descripcion: string | null
+          id: string
+          orden: number
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          curso_id: string
+          descripcion?: string | null
+          id?: string
+          orden?: number
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          curso_id?: string
+          descripcion?: string | null
+          id?: string
+          orden?: number
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academia_modulos_curso_id_fkey"
+            columns: ["curso_id"]
+            isOneToOne: false
+            referencedRelation: "academia_cursos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academia_preguntas: {
+        Row: {
+          created_at: string
+          enunciado: string
+          evaluacion_id: string
+          id: string
+          opciones: Json
+          orden: number
+          puntos: number
+          respuesta_correcta: Json
+          tipo: Database["public"]["Enums"]["pregunta_tipo"]
+        }
+        Insert: {
+          created_at?: string
+          enunciado: string
+          evaluacion_id: string
+          id?: string
+          opciones?: Json
+          orden?: number
+          puntos?: number
+          respuesta_correcta?: Json
+          tipo?: Database["public"]["Enums"]["pregunta_tipo"]
+        }
+        Update: {
+          created_at?: string
+          enunciado?: string
+          evaluacion_id?: string
+          id?: string
+          opciones?: Json
+          orden?: number
+          puntos?: number
+          respuesta_correcta?: Json
+          tipo?: Database["public"]["Enums"]["pregunta_tipo"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academia_preguntas_evaluacion_id_fkey"
+            columns: ["evaluacion_id"]
+            isOneToOne: false
+            referencedRelation: "academia_evaluaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academia_progreso_lecciones: {
+        Row: {
+          completada: boolean
+          completada_at: string
+          leccion_id: string
+          user_id: string
+        }
+        Insert: {
+          completada?: boolean
+          completada_at?: string
+          leccion_id: string
+          user_id: string
+        }
+        Update: {
+          completada?: boolean
+          completada_at?: string
+          leccion_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academia_progreso_lecciones_leccion_id_fkey"
+            columns: ["leccion_id"]
+            isOneToOne: false
+            referencedRelation: "academia_lecciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academia_recursos: {
+        Row: {
+          created_at: string
+          id: string
+          leccion_id: string | null
+          modulo_id: string | null
+          orden: number
+          tipo: string
+          titulo: string
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          leccion_id?: string | null
+          modulo_id?: string | null
+          orden?: number
+          tipo?: string
+          titulo: string
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          leccion_id?: string | null
+          modulo_id?: string | null
+          orden?: number
+          tipo?: string
+          titulo?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academia_recursos_leccion_id_fkey"
+            columns: ["leccion_id"]
+            isOneToOne: false
+            referencedRelation: "academia_lecciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academia_recursos_modulo_id_fkey"
+            columns: ["modulo_id"]
+            isOneToOne: false
+            referencedRelation: "academia_modulos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       apoderados_nuvex: {
         Row: {
           activo: boolean
@@ -1207,6 +1569,42 @@ export type Database = {
         }
         Relationships: []
       }
+      modulo_ayuda: {
+        Row: {
+          activo: boolean
+          contenido: Json
+          created_at: string
+          id: string
+          modulo_sistema: string
+          orden: number
+          tipo: Database["public"]["Enums"]["ayuda_tipo"]
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          contenido?: Json
+          created_at?: string
+          id?: string
+          modulo_sistema: string
+          orden?: number
+          tipo: Database["public"]["Enums"]["ayuda_tipo"]
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          contenido?: Json
+          created_at?: string
+          id?: string
+          modulo_sistema?: string
+          orden?: number
+          tipo?: Database["public"]["Enums"]["ayuda_tipo"]
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       nomina_empleados: {
         Row: {
           activo: boolean
@@ -1565,6 +1963,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      academia_rol_del_usuario: {
+        Args: { _uid: string }
+        Returns: Database["public"]["Enums"]["academia_rol"]
+      }
       can_manage_cartera: { Args: { _uid: string }; Returns: boolean }
       can_manage_finanzas: { Args: { _uid: string }; Returns: boolean }
       can_validar_proyeccion: { Args: { _uid: string }; Returns: boolean }
@@ -1587,9 +1989,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      intentar_emitir_certificado: {
+        Args: { _curso_id: string; _user_id: string }
+        Returns: string
+      }
       is_apoderado: { Args: { _uid: string }; Returns: boolean }
       is_director_juridico: { Args: { _uid: string }; Returns: boolean }
       is_director_qa: { Args: { _uid: string }; Returns: boolean }
+      is_super_admin: { Args: { _uid: string }; Returns: boolean }
       liberar_comisiones_por_recaudo: {
         Args: { _expediente_id: string; _user_validador?: string }
         Returns: undefined
@@ -1624,6 +2031,14 @@ export type Database = {
       }
     }
     Enums: {
+      academia_rol:
+        | "licenciado"
+        | "operaciones"
+        | "juridica"
+        | "contabilidad"
+        | "director_financiero_qa"
+        | "gerencia"
+        | "super_admin"
       app_role:
         | "admin"
         | "asesor"
@@ -1638,6 +2053,7 @@ export type Database = {
         | "director_juridico"
         | "auxiliar_operativo"
         | "apoderado"
+      ayuda_tipo: "guia" | "video" | "faq" | "checklist"
       cartera_estado:
         | "pendiente_cobro"
         | "cuenta_cobro_generada"
@@ -1701,6 +2117,15 @@ export type Database = {
         | "ENVIADO_CONTRATACION"
         | "CONDICIONES_APLICADAS"
       expediente_modo: "pesos" | "uvr"
+      leccion_tipo:
+        | "texto"
+        | "pdf"
+        | "video"
+        | "imagen"
+        | "checklist"
+        | "enlace"
+        | "faq"
+      pregunta_tipo: "unica" | "multiple" | "verdadero_falso"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1828,6 +2253,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      academia_rol: [
+        "licenciado",
+        "operaciones",
+        "juridica",
+        "contabilidad",
+        "director_financiero_qa",
+        "gerencia",
+        "super_admin",
+      ],
       app_role: [
         "admin",
         "asesor",
@@ -1843,6 +2277,7 @@ export const Constants = {
         "auxiliar_operativo",
         "apoderado",
       ],
+      ayuda_tipo: ["guia", "video", "faq", "checklist"],
       cartera_estado: [
         "pendiente_cobro",
         "cuenta_cobro_generada",
@@ -1909,6 +2344,16 @@ export const Constants = {
         "CONDICIONES_APLICADAS",
       ],
       expediente_modo: ["pesos", "uvr"],
+      leccion_tipo: [
+        "texto",
+        "pdf",
+        "video",
+        "imagen",
+        "checklist",
+        "enlace",
+        "faq",
+      ],
+      pregunta_tipo: ["unica", "multiple", "verdadero_falso"],
     },
   },
 } as const

@@ -118,9 +118,11 @@ function AuthenticatedLayout() {
           items: [
             { to: "/apoderados-nuvex", label: "Apoderados", Icon: Users },
             { to: "/academia", label: "Academia", Icon: GraduationCap },
+            ...(isSuperAdmin ? [{ to: "/super-admin/academia", label: "Admin Academia", Icon: GraduationCap }] : []),
             ...(isSuperAdmin ? [{ to: "/super-admin", label: "Super Admin", Icon: Shield }] : []),
           ],
         },
+
       ];
 
   const visibleSections = sections.map((s) => ({ ...s, items: s.items.filter(Boolean) })).filter((s) => s.items.length > 0);
