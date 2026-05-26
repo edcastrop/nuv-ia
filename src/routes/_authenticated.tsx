@@ -74,7 +74,7 @@ function AuthenticatedLayout() {
   }
 
   const displayName: string = user?.user_metadata?.nombre || (user?.email?.split("@")[0] ?? "Usuario");
-  const initials = displayName.split(/[.\s_-]+/).filter(Boolean).slice(0, 2).map((s) => s[0]?.toUpperCase()).join("") || "NV";
+  
 
   const has = (r: string) => roles.includes(r as never);
   const hasAny = (...rs: string[]) => rs.some(has);
