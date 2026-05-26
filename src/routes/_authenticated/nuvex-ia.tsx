@@ -338,6 +338,7 @@ function NuvexIAPage() {
         )}
 
         {/* Métricas IA */}
+        {!soloApoderado && (
         <div className="mb-8">
           <div className="mb-3 flex items-center gap-2">
             <TrendingUp size={14} style={{ color: VERDE }} />
