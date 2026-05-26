@@ -45,6 +45,18 @@ export async function desvincularUsuario(
   if (error) throw error;
   return data as unknown as { ok: boolean; transferido: Record<string, number> };
 }
+
+export async function desvincularUsuarioSinTraslado(
+  userId: string,
+  motivo: string
+): Promise<{ ok: boolean; sin_traslado: boolean; huerfanos: PreviewDesvinculacion }> {
+  const { data, error } = await supabase.rpc("desvincular_usuario_sin_traslado" as never, {
+    _target: userId,
+    _motivo: motivo,
+  } as never);
+  if (error) throw error;
+  return data as unknown as { ok: boolean; sin_traslado: boolean; huerfanos: PreviewDesvinculacion };
+}
 export type MfaMetodo = "ninguno" | "email" | "totp";
 
 export interface UsuarioAcceso {

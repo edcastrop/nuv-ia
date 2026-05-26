@@ -2746,6 +2746,10 @@ export type Database = {
         }
         Returns: Json
       }
+      desvincular_usuario_sin_traslado: {
+        Args: { _motivo: string; _target: string }
+        Returns: Json
+      }
       gpt_can_see_ticket: {
         Args: { _area: string; _user: string }
         Returns: boolean

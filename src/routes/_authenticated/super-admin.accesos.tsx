@@ -5,7 +5,7 @@ import { useUserRole, type AppRole } from "@/hooks/useUserRole";
 import {
   listUsuariosAcceso, aprobarUsuario, rechazarUsuario,
   bloquearUsuario, activarUsuario, listAuditoria,
-  previewDesvinculacion, desvincularUsuario,
+  previewDesvinculacion, desvincularUsuario, desvincularUsuarioSinTraslado,
   type UsuarioAcceso, type EstadoAcceso, type PreviewDesvinculacion,
 } from "@/lib/seguridad";
 import { ShieldCheck, ShieldAlert, ShieldOff, Clock, CheckCircle2, XCircle, Search, History, UserMinus, AlertTriangle } from "lucide-react";
@@ -61,11 +61,14 @@ function AccesosPage() {
   const [showRechazar, setShowRechazar] = useState(false);
   const [auditoria, setAuditoria] = useState<Array<{ id: string; accion: string; created_at: string; detalle: Record<string, unknown> }>>([]);
   const [showDesvincular, setShowDesvincular] = useState(false);
+  const [modoDesvinc, setModoDesvinc] = useState<"con_traslado" | "sin_traslado">("con_traslado");
   const [preview, setPreview] = useState<PreviewDesvinculacion | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [reemplazoId, setReemplazoId] = useState<string>("");
   const [transferirComisiones, setTransferirComisiones] = useState(false);
   const [confirmText, setConfirmText] = useState("");
+  const [sinTrasladoMotivo, setSinTrasladoMotivo] = useState("");
+  const [sinTrasladoAck, setSinTrasladoAck] = useState(false);
   const [desvinculando, setDesvinculando] = useState(false);
   const [desvincularError, setDesvincularError] = useState<string | null>(null);
 
@@ -214,9 +217,12 @@ function AccesosPage() {
                       onClick={async () => {
                         setSeleccionado(u);
                         setShowDesvincular(true);
+                        setModoDesvinc("con_traslado");
                         setReemplazoId("");
                         setTransferirComisiones(false);
                         setConfirmText("");
+                        setSinTrasladoMotivo("");
+                        setSinTrasladoAck(false);
                         setDesvincularError(null);
                         setPreview(null);
                         setPreviewLoading(true);
@@ -344,10 +350,38 @@ function AccesosPage() {
       {/* Modal Desvincular */}
       {showDesvincular && seleccionado && (
         <Modal wide onClose={() => !desvinculando && setShowDesvincular(false)} title={`Desvincular · ${seleccionado.nombre}`}>
+          {/* Selector de modo */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+            <button
+              type="button"
+              onClick={() => setModoDesvinc("con_traslado")}
+              className="rounded-xl border p-3 text-left transition"
+              style={modoDesvinc === "con_traslado"
+                ? { borderColor: VERDE, background: "#EAF7EE" }
+                : { borderColor: "#E3E7EE", background: "#fff" }}
+            >
+              <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#1F6D3D" }}>Recomendado</div>
+              <div className="text-sm font-semibold mt-0.5" style={{ color: NEGRO }}>Con traslado</div>
+              <div className="text-[11px] text-[#242424]/65 mt-1">Transfiere casos, expedientes, cartera y responsabilidades a un usuario reemplazo.</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setModoDesvinc("sin_traslado")}
+              className="rounded-xl border p-3 text-left transition"
+              style={modoDesvinc === "sin_traslado"
+                ? { borderColor: "#B42318", background: "#FDF2F2" }
+                : { borderColor: "#E3E7EE", background: "#fff" }}
+            >
+              <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#B42318" }}>No recomendado</div>
+              <div className="text-sm font-semibold mt-0.5" style={{ color: NEGRO }}>Sin traslado</div>
+              <div className="text-[11px] text-[#242424]/65 mt-1">El usuario se desvincula sin reasignar. Casos y procesos pueden quedar sin responsable operativo.</div>
+            </button>
+          </div>
+
           <div className="rounded-lg border border-[#FCD7D7] bg-[#FDF2F2] px-3 py-2.5 text-[12px] text-[#7C2D12] mb-4 flex items-start gap-2">
             <AlertTriangle size={14} className="mt-0.5 shrink-0" />
             <div>
-              <b>Acción crítica.</b> El usuario perderá acceso operativo. Debes seleccionar un usuario de reemplazo obligatoriamente. Los datos históricos (mensajes, auditoría, academia) se conservan.
+              <b>Acción crítica.</b> El usuario perderá acceso operativo. Los datos históricos (mensajes, auditoría, academia) se conservan en todos los casos.
             </div>
           </div>
 
@@ -356,7 +390,9 @@ function AccesosPage() {
           ) : preview ? (
             <div className="space-y-4">
               <div>
-                <div className="text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: AZUL }}>Se transferirán al reemplazo</div>
+                <div className="text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: AZUL }}>
+                  {modoDesvinc === "con_traslado" ? "Se transferirán al reemplazo" : "Quedarán sin responsable (huérfanos)"}
+                </div>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <Stat label="Expedientes" v={preview.transferibles.expedientes} />
                   <Stat label="Cartera (responsable)" v={preview.transferibles.cartera_responsable} />
@@ -374,18 +410,20 @@ function AccesosPage() {
                   <Stat label="Cuentas de cobro pendientes" v={preview.comisiones.cuentas_cobro_pendientes} />
                   <Stat label="Cuentas de cobro pagadas" v={preview.comisiones.cuentas_cobro_pagadas} />
                 </div>
-                <label className="mt-3 flex items-start gap-2 cursor-pointer text-xs">
-                  <input
-                    type="checkbox"
-                    checked={transferirComisiones}
-                    onChange={(e) => setTransferirComisiones(e.target.checked)}
-                    className="mt-0.5"
-                  />
-                  <span>
-                    <b>¿Transferir comisiones pendientes al reemplazo?</b>
-                    <div className="text-[11px] text-[#242424]/60">Si no marcas esta opción, las reglas del usuario se desactivan y las comisiones pendientes quedan a su nombre (histórico).</div>
-                  </span>
-                </label>
+                {modoDesvinc === "con_traslado" && (
+                  <label className="mt-3 flex items-start gap-2 cursor-pointer text-xs">
+                    <input
+                      type="checkbox"
+                      checked={transferirComisiones}
+                      onChange={(e) => setTransferirComisiones(e.target.checked)}
+                      className="mt-0.5"
+                    />
+                    <span>
+                      <b>¿Transferir comisiones pendientes al reemplazo?</b>
+                      <div className="text-[11px] text-[#242424]/60">Si no marcas esta opción, las reglas del usuario se desactivan y las comisiones pendientes quedan a su nombre (histórico).</div>
+                    </span>
+                  </label>
+                )}
               </div>
 
               <div>
@@ -399,38 +437,89 @@ function AccesosPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Usuario de reemplazo (obligatorio)</span>
-                  <select
-                    value={reemplazoId}
-                    onChange={(e) => setReemplazoId(e.target.value)}
-                    className="mt-1.5 w-full rounded-[10px] border border-[#E1E5EE] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#445DA3]"
-                  >
-                    <option value="">— Selecciona un usuario aprobado —</option>
-                    {usuarios
-                      .filter((x) => x.id !== seleccionado.id && x.estado_acceso === "aprobado")
-                      .map((x) => (
-                        <option key={x.id} value={x.id}>{x.nombre || x.email} ({x.email})</option>
-                      ))}
-                  </select>
-                  {usuarios.filter((x) => x.id !== seleccionado.id && x.estado_acceso === "aprobado").length === 0 && (
-                    <div className="mt-1.5 text-[11px] text-[#B42318]">No hay otros usuarios aprobados cargados. Cambia a la pestaña "Aprobados" para listarlos.</div>
-                  )}
-                </label>
-              </div>
+              {modoDesvinc === "con_traslado" ? (
+                <>
+                  <div>
+                    <label className="block">
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Usuario de reemplazo (obligatorio)</span>
+                      <select
+                        value={reemplazoId}
+                        onChange={(e) => setReemplazoId(e.target.value)}
+                        className="mt-1.5 w-full rounded-[10px] border border-[#E1E5EE] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#445DA3]"
+                      >
+                        <option value="">— Selecciona un usuario aprobado —</option>
+                        {usuarios
+                          .filter((x) => x.id !== seleccionado.id && x.estado_acceso === "aprobado")
+                          .map((x) => (
+                            <option key={x.id} value={x.id}>{x.nombre || x.email} ({x.email})</option>
+                          ))}
+                      </select>
+                      {usuarios.filter((x) => x.id !== seleccionado.id && x.estado_acceso === "aprobado").length === 0 && (
+                        <div className="mt-1.5 text-[11px] text-[#B42318]">No hay otros usuarios aprobados cargados. Cambia a la pestaña "Aprobados" para listarlos.</div>
+                      )}
+                    </label>
+                  </div>
 
-              <div>
-                <label className="block">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Escribe DESVINCULAR para confirmar</span>
-                  <input
-                    value={confirmText}
-                    onChange={(e) => setConfirmText(e.target.value)}
-                    className="mt-1.5 w-full rounded-[10px] border border-[#E1E5EE] bg-[#FAFBFD] px-3 py-2.5 text-sm outline-none focus:border-[#7C2D12]"
-                    placeholder="DESVINCULAR"
-                  />
-                </label>
-              </div>
+                  <div>
+                    <label className="block">
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Escribe DESVINCULAR para confirmar</span>
+                      <input
+                        value={confirmText}
+                        onChange={(e) => setConfirmText(e.target.value)}
+                        className="mt-1.5 w-full rounded-[10px] border border-[#E1E5EE] bg-[#FAFBFD] px-3 py-2.5 text-sm outline-none focus:border-[#7C2D12]"
+                        placeholder="DESVINCULAR"
+                      />
+                    </label>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="rounded-lg border-2 border-[#B42318] bg-[#FDECEC] px-3 py-3 text-[12px] text-[#7C2D12] flex items-start gap-2">
+                    <AlertTriangle size={16} className="mt-0.5 shrink-0" style={{ color: "#B42318" }} />
+                    <div>
+                      <b>Advertencia:</b> estás intentando desvincular este usuario sin asignar un responsable reemplazo.
+                      Si continúas, algunos casos, expedientes, tareas, alertas o procesos pueden quedar sin responsable
+                      operativo. Esto puede afectar la trazabilidad, seguimiento comercial, cartera, jurídica, comisiones
+                      y control interno de NUVEX. Recomendamos usar la desvinculación segura con traslado.
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block">
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Motivo de la desvinculación sin traslado (obligatorio)</span>
+                      <textarea
+                        value={sinTrasladoMotivo}
+                        onChange={(e) => setSinTrasladoMotivo(e.target.value)}
+                        rows={3}
+                        className="mt-1.5 w-full rounded-[10px] border border-[#E1E5EE] bg-[#FAFBFD] px-3 py-2.5 text-sm outline-none focus:border-[#B42318]"
+                        placeholder="Explica por qué se procede sin reasignar responsable (mínimo 10 caracteres)…"
+                      />
+                    </label>
+                  </div>
+
+                  <label className="flex items-start gap-2 cursor-pointer text-xs">
+                    <input
+                      type="checkbox"
+                      checked={sinTrasladoAck}
+                      onChange={(e) => setSinTrasladoAck(e.target.checked)}
+                      className="mt-0.5"
+                    />
+                    <span><b>Entiendo el riesgo y deseo continuar sin traslado.</b></span>
+                  </label>
+
+                  <div>
+                    <label className="block">
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Escribe DESVINCULAR SIN TRASLADO para confirmar</span>
+                      <input
+                        value={confirmText}
+                        onChange={(e) => setConfirmText(e.target.value)}
+                        className="mt-1.5 w-full rounded-[10px] border border-[#E1E5EE] bg-[#FAFBFD] px-3 py-2.5 text-sm outline-none focus:border-[#B42318]"
+                        placeholder="DESVINCULAR SIN TRASLADO"
+                      />
+                    </label>
+                  </div>
+                </>
+              )}
 
               {desvincularError && (
                 <div className="rounded-lg bg-[#FDECEC] border border-[#F5C2C2] px-3 py-2 text-xs text-[#B42318]">{desvincularError}</div>
@@ -446,26 +535,49 @@ function AccesosPage() {
               disabled={desvinculando}
               className="rounded-lg border border-[#E3E7EE] px-4 py-2 text-sm font-medium disabled:opacity-50"
             >Cancelar</button>
-            <button
-              onClick={async () => {
-                if (!reemplazoId || confirmText !== "DESVINCULAR") return;
-                setDesvinculando(true);
-                setDesvincularError(null);
-                try {
-                  await desvincularUsuario(seleccionado.id, reemplazoId, transferirComisiones);
-                  setShowDesvincular(false);
-                  setSeleccionado(null);
-                  reload();
-                } catch (e) {
-                  setDesvincularError((e as Error).message);
-                } finally {
-                  setDesvinculando(false);
-                }
-              }}
-              disabled={!reemplazoId || confirmText !== "DESVINCULAR" || desvinculando}
-              className="rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-              style={{ background: "#7C2D12" }}
-            >{desvinculando ? "Desvinculando…" : "Confirmar desvinculación"}</button>
+            {modoDesvinc === "con_traslado" ? (
+              <button
+                onClick={async () => {
+                  if (!reemplazoId || confirmText !== "DESVINCULAR") return;
+                  setDesvinculando(true);
+                  setDesvincularError(null);
+                  try {
+                    await desvincularUsuario(seleccionado.id, reemplazoId, transferirComisiones);
+                    setShowDesvincular(false);
+                    setSeleccionado(null);
+                    reload();
+                  } catch (e) {
+                    setDesvincularError((e as Error).message);
+                  } finally {
+                    setDesvinculando(false);
+                  }
+                }}
+                disabled={!reemplazoId || confirmText !== "DESVINCULAR" || desvinculando}
+                className="rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                style={{ background: "#7C2D12" }}
+              >{desvinculando ? "Desvinculando…" : "Confirmar desvinculación con traslado"}</button>
+            ) : (
+              <button
+                onClick={async () => {
+                  if (!sinTrasladoAck || sinTrasladoMotivo.trim().length < 10 || confirmText !== "DESVINCULAR SIN TRASLADO") return;
+                  setDesvinculando(true);
+                  setDesvincularError(null);
+                  try {
+                    await desvincularUsuarioSinTraslado(seleccionado.id, sinTrasladoMotivo.trim());
+                    setShowDesvincular(false);
+                    setSeleccionado(null);
+                    reload();
+                  } catch (e) {
+                    setDesvincularError((e as Error).message);
+                  } finally {
+                    setDesvinculando(false);
+                  }
+                }}
+                disabled={!sinTrasladoAck || sinTrasladoMotivo.trim().length < 10 || confirmText !== "DESVINCULAR SIN TRASLADO" || desvinculando}
+                className="rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                style={{ background: "#B42318" }}
+              >{desvinculando ? "Desvinculando…" : "Desvincular sin traslado"}</button>
+            )}
           </div>
         </Modal>
       )}
