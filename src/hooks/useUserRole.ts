@@ -79,6 +79,10 @@ export function useUserRole() {
     isManager: isManager(roles),
     isSuperAdmin: isSuperAdmin(roles),
     isLicenciado: isLicenciado(roles),
+    isDirectorQA: isDirectorQA(roles),
+    isDirectorJuridico: isDirectorJuridico(roles),
+    isApoderado: isApoderadoRole(roles),
+    canValidarProyeccion: canValidarProyeccion(roles),
     loading: loading || authLoading,
   };
 }
