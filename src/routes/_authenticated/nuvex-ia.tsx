@@ -10,6 +10,7 @@ import {
 import { getMetricasIA, getAlertasInteligentes } from "@/lib/nuvex-ia.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { EscalarTicketDialog } from "@/components/nuvex-gpt/EscalarTicketDialog";
+import { useUserRole } from "@/hooks/useUserRole";
 
 export const Route = createFileRoute("/_authenticated/nuvex-ia")({
   component: NuvexIAPage,
@@ -19,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/nuvex-ia")({
 const AZUL = "#445DA3";
 const VERDE = "#84B98F";
 
-const EJEMPLOS = [
+const EJEMPLOS_INTERNO = [
   "¿Cómo va el caso de Adriana Vargas?",
   "¿Cuántos casos aprobados tengo?",
   "¿Qué clientes deben honorarios?",
@@ -27,13 +28,28 @@ const EJEMPLOS = [
   "¿Qué expedientes están incompletos?",
 ];
 
-const SUGERENCIAS = [
+const EJEMPLOS_APODERADO = [
+  "¿Cómo va mi caso?",
+  "¿Cuánto debo de honorarios?",
+  "¿Qué documentos me faltan?",
+  "¿En qué etapa está mi expediente?",
+  "¿Cuándo es mi próxima cuota?",
+];
+
+const SUGERENCIAS_INTERNO = [
   "Casos aprobados este mes",
   "Honorarios pendientes",
   "Cuentas de cobro pendientes",
   "Casos sin movimiento",
   "Comisiones pendientes",
   "Expedientes incompletos",
+];
+
+const SUGERENCIAS_APODERADO = [
+  "Estado de mi caso",
+  "Mis honorarios pendientes",
+  "Documentos requeridos",
+  "Próximos pasos",
 ];
 
 type Mensaje = { rol: "user" | "ai"; texto: string; filas?: unknown[]; escalable?: boolean; preguntaOriginal?: string };
@@ -45,9 +61,13 @@ function fmtCOP(n: number) {
 function NuvexIAPage() {
   const metricasFn = useServerFn(getMetricasIA);
   const alertasFn = useServerFn(getAlertasInteligentes);
+  const { isApoderado, isSuperAdmin } = useUserRole();
+  const soloApoderado = isApoderado && !isSuperAdmin;
+  const EJEMPLOS = soloApoderado ? EJEMPLOS_APODERADO : EJEMPLOS_INTERNO;
+  const SUGERENCIAS = soloApoderado ? SUGERENCIAS_APODERADO : SUGERENCIAS_INTERNO;
 
-  const { data: metricas } = useQuery({ queryKey: ["nuvex-ia-metricas"], queryFn: () => metricasFn() });
-  const { data: alertasData } = useQuery({ queryKey: ["nuvex-ia-alertas"], queryFn: () => alertasFn() });
+  const { data: metricas } = useQuery({ queryKey: ["nuvex-ia-metricas"], queryFn: () => metricasFn(), enabled: !soloApoderado });
+  const { data: alertasData } = useQuery({ queryKey: ["nuvex-ia-alertas"], queryFn: () => alertasFn(), enabled: !soloApoderado });
 
   const [pregunta, setPregunta] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -318,6 +338,7 @@ function NuvexIAPage() {
         )}
 
         {/* Métricas IA */}
+        {!soloApoderado && (
         <div className="mb-8">
           <div className="mb-3 flex items-center gap-2">
             <TrendingUp size={14} style={{ color: VERDE }} />
@@ -332,8 +353,10 @@ function NuvexIAPage() {
             <Kpi icon={Clock} label="Estancados" value={String(metricas?.estancados ?? "—")} accent="#E11D48" />
           </div>
         </div>
+        )}
 
         {/* Alertas Inteligentes */}
+        {!soloApoderado && (
         <div>
           <div className="mb-3 flex items-center gap-2">
             <AlertTriangle size={14} style={{ color: "#f0d78c" }} />
@@ -379,6 +402,7 @@ function NuvexIAPage() {
             </div>
           )}
         </div>
+        )}
       </div>
 
       <EscalarTicketDialog
