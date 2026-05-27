@@ -975,6 +975,8 @@ export function ProyeccionFinancieraView() {
                             };
                             if (d.cliente?.nombre) next.clienteNombre = d.cliente.nombre;
                             if (d.cliente?.banco) next.banco = d.cliente.banco;
+                            if (d.cliente?.cedula) next.cedula = d.cliente.cedula;
+                            if (d.cliente?.numeroCredito) next.numeroCredito = d.cliente.numeroCredito;
                             if (d.cliente?.plazoInicial) next.cuotasTotales = num(d.cliente.plazoInicial);
                             if (d.cliente?.cuotasPagadas) {
                               next.cuotasPagadas = num(d.cliente.cuotasPagadas);
