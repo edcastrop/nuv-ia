@@ -485,7 +485,7 @@ function AccionesCartera({ carteraId, onChanged }: { carteraId: string; onChange
 
 function PazYSalvoBlock({
   expedienteId, clienteNombre, cedula, banco, producto, numeroCredito,
-  clienteCorreoInicial, clienteDataActual,
+  clienteCorreoInicial, clienteDataActual, aprobadoData,
   honorariosPagados, fechaPago, yaEnviado, onSent,
 }: {
   expedienteId: string;
@@ -496,6 +496,7 @@ function PazYSalvoBlock({
   numeroCredito: string | null;
   clienteCorreoInicial: string;
   clienteDataActual: Record<string, unknown>;
+  aprobadoData: Record<string, unknown> | null;
   honorariosPagados: number;
   fechaPago: string;
   yaEnviado: boolean;
@@ -513,10 +514,15 @@ function PazYSalvoBlock({
     banco: banco ?? "", tipoProducto: producto ?? "", asesor: "",
     plazoInicial: "", cuotasPagadas: "", porcentajeHonorarios: "",
   };
+  const ap = aprobadoData ?? {};
   const data = {
-    fechaAprobacion: "", fechaPago, honorariosPagados,
-    ahorroLogrado: 0, añosEliminados: 0,
+    fechaAprobacion: (ap.fechaAprobacion as string) ?? "",
+    fechaPago,
+    honorariosPagados,
+    ahorroLogrado: Number((ap.ahorroTotal as number | undefined) ?? 0),
+    añosEliminados: Number((ap.añosEliminados as number | undefined) ?? 0),
   };
+
 
   const correoValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo.trim());
   const necesitaGuardarCorreo = correo.trim() !== "" && correo.trim() !== clienteCorreoInicial.trim();
