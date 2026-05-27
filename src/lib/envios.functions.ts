@@ -84,7 +84,7 @@ export const enviarDocumentoCliente = createServerFn({ method: "POST" })
 
     const { data: exp, error: expErr } = await supabase
       .from("expedientes")
-      .select("id, cliente_nombre, banco, asesor_id, propuesta_data, aprobado")
+      .select("id, cliente_nombre, banco, asesor_id, propuesta_data, aprobado_data")
       .eq("id", data.expedienteId)
       .single();
     if (expErr || !exp) throw new Error("Expediente no encontrado o sin acceso.");
