@@ -65,7 +65,7 @@ export function PazYSalvo({ client, data, enabled }: Props) {
   );
 }
 
-function PazYSalvoDocument({
+export function PazYSalvoDocument({
   id,
   client,
   data,
