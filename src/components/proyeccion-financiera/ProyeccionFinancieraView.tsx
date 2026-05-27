@@ -737,9 +737,10 @@ export function ProyeccionFinancieraView() {
                   <RefreshCw className="h-3.5 w-3.5" /> Limpiar
                 </button>
                 <button
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.06] bg-white/[0.03] px-3.5 py-2.5 text-[12.5px] font-medium text-white/70 transition hover:bg-white/[0.06] hover:text-white"
+                  onClick={() => setGuardarOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.05] px-3.5 py-2.5 text-[12.5px] font-medium text-white/85 transition hover:bg-white/[0.09] hover:text-white"
                 >
-                  <Save className="h-3.5 w-3.5" /> Guardar escenario
+                  <Save className="h-3.5 w-3.5" /> Guardar y crear caso
                 </button>
                 <button
                   onClick={exportCsv}
