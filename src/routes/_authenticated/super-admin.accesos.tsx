@@ -148,11 +148,47 @@ function AccesosPage() {
             <ShieldCheck size={12} /> Centro de seguridad
           </div>
           <h1 className="text-2xl font-semibold" style={{ color: NEGRO }}>Gestión de Accesos</h1>
-          <div className="text-sm text-[#242424]/60">Aprueba, rechaza y administra el acceso a la plataforma NUVEX</div>
+          <div className="text-sm text-[#242424]/60">Aprueba, rechaza, reactiva y administra el acceso a la plataforma NUVEX</div>
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Selector de vista (Usuarios / Reactivaciones) */}
+      {isSuperAdmin && (
+        <div className="flex gap-2 border-b border-[#E3E7EE]">
+          <button
+            onClick={() => setVista("usuarios")}
+            className="px-4 py-2 text-sm font-semibold border-b-2 transition -mb-px"
+            style={vista === "usuarios"
+              ? { borderColor: AZUL, color: AZUL }
+              : { borderColor: "transparent", color: "#6B7280" }}
+          >Usuarios</button>
+          <button
+            onClick={() => setVista("reactivaciones")}
+            className="px-4 py-2 text-sm font-semibold border-b-2 transition -mb-px inline-flex items-center gap-2"
+            style={vista === "reactivaciones"
+              ? { borderColor: AZUL, color: AZUL }
+              : { borderColor: "transparent", color: "#6B7280" }}
+          >
+            <RefreshCw size={14} /> Reactivaciones
+            {solicitudes.filter((s) => s.estado === "PENDIENTE").length > 0 && (
+              <span className="rounded-full bg-[#B42318] text-white text-[10px] font-bold px-1.5 py-0.5">
+                {solicitudes.filter((s) => s.estado === "PENDIENTE").length}
+              </span>
+            )}
+          </button>
+        </div>
+      )}
+
+      {vista === "reactivaciones" ? (
+        <ReactivacionesPanel
+          tab={reactTab} setTab={setReactTab}
+          solicitudes={solicitudes} loading={solLoading}
+          onAprobar={(s) => { setSolSel(s); setSolRolAsign((s.rol_solicitado as AppRole) || (s.rol_actual as AppRole) || ""); setSolObs(""); setSolError(null); setShowAprobarSol(true); }}
+          onRechazar={(s) => { setSolSel(s); setSolMotivoRech(""); setSolError(null); setShowRechazarSol(true); }}
+        />
+      ) : (
+        <>
+
       <div className="flex flex-wrap gap-2">
         {TABS.map((t) => {
           const active = tab === t.v;
