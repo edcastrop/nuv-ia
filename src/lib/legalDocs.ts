@@ -141,7 +141,7 @@ export function buildPoderFromTemplate(i: BuildPoderInput): PoderResult {
   const safeName = (i.poderdante.nombre || "Cliente").replace(/\s+/g, "_");
   const year = new Date().getFullYear();
   const seq = String(Date.now()).slice(-4);
-  const consecutivo = `NUVEX-PE-${year}-${seq}`;
+  const consecutivo = `NVX_${year}_${seq}`;
   return {
     templateId,
     missing,
