@@ -18,7 +18,9 @@ import {
 } from "recharts";
 import {
   Calculator,
+  ChevronDown,
   Download,
+  FileText,
   Loader2,
   PieChart as PieIcon,
   Plus,
@@ -26,6 +28,7 @@ import {
   Sparkles,
   TrendingDown,
   TrendingUp,
+  Upload,
 } from "lucide-react";
 import { formatCOP, parseCurrency, parseDecimal } from "@/lib/format";
 import {
@@ -37,7 +40,9 @@ import {
   type ProyeccionFinancieraInput,
   type TipoEscenario,
 } from "@/lib/proyeccionFinanciera";
+import { exportProyeccionFinancieraPDF } from "@/lib/proyeccionFinancieraExport";
 import { ExtractoReader, type ExtractoApplyPayload } from "@/components/nuvex/ExtractoReader";
+
 
 const NUVEX = { azul: "#445DA3", verde: "#84B98F", oscuro: "#242424", ambar: "#E0913A", rojo: "#C0392B" };
 
