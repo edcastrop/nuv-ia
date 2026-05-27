@@ -37,6 +37,7 @@ import {
   type ProyeccionFinancieraInput,
   type TipoEscenario,
 } from "@/lib/proyeccionFinanciera";
+import { ExtractoReader, type ExtractoApplyPayload } from "@/components/nuvex/ExtractoReader";
 
 const NUVEX = { azul: "#445DA3", verde: "#84B98F", oscuro: "#242424", ambar: "#E0913A", rojo: "#C0392B" };
 
