@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { X, FolderPlus, Loader2, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,15 +16,27 @@ import type {
 interface Props {
   open: boolean;
   onClose: () => void;
+  autoSave?: boolean;
   input: ProyeccionFinancieraInput;
   resultados: { actual: ResultadoEscenario; optimizado: ResultadoEscenario };
   escenarios: EscenarioInput[];
   kpis: KpisComparacion;
 }
 
-export function GuardarCasoModal({ open, onClose, input, resultados, escenarios, kpis }: Props) {
+type CasoForm = {
+  nombre: string;
+  cedula: string;
+  celular: string;
+  correo: string;
+  banco: string;
+  ciudad: string;
+  numeroCredito: string;
+};
+
+export function GuardarCasoModal({ open, onClose, autoSave = false, input, resultados, escenarios, kpis }: Props) {
   const navigate = useNavigate();
-  const [form, setForm] = useState({
+  const autoSaveRef = useRef(false);
+  const projectionForm: CasoForm = {
     nombre: input.clienteNombre || "",
     cedula: input.cedula || "",
     celular: input.celular || "",
@@ -32,19 +44,56 @@ export function GuardarCasoModal({ open, onClose, input, resultados, escenarios,
     banco: input.banco || "",
     ciudad: input.ciudad || "",
     numeroCredito: input.numeroCredito || "",
-  });
+  };
+  const [form, setForm] = useState<CasoForm>(projectionForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{ id: string } | null>(null);
+
+  useEffect(() => {
+    if (!open) {
+      autoSaveRef.current = false;
+      return;
+    }
+    setForm(projectionForm);
+    setError(null);
+    setDone(null);
+  }, [
+    open,
+    input.clienteNombre,
+    input.cedula,
+    input.celular,
+    input.correo,
+    input.banco,
+    input.ciudad,
+    input.numeroCredito,
+  ]);
+
+  useEffect(() => {
+    if (!open || !autoSave || autoSaveRef.current) return;
+    if (!projectionForm.nombre.trim() || !projectionForm.cedula.trim() || !projectionForm.banco.trim()) return;
+    autoSaveRef.current = true;
+    void saveCase(projectionForm);
+  }, [
+    open,
+    autoSave,
+    input.clienteNombre,
+    input.cedula,
+    input.banco,
+    input.celular,
+    input.correo,
+    input.ciudad,
+    input.numeroCredito,
+  ]);
 
   if (!open) return null;
 
   const set = <K extends keyof typeof form>(k: K, v: string) =>
     setForm((p) => ({ ...p, [k]: v }));
 
-  const handleSave = async () => {
+  async function saveCase(formData: CasoForm) {
     setError(null);
-    if (!form.nombre.trim() || !form.cedula.trim() || !form.banco.trim()) {
+    if (!formData.nombre.trim() || !formData.cedula.trim() || !formData.banco.trim()) {
       setError("Nombre, cédula y banco son obligatorios para crear el caso.");
       return;
     }
@@ -86,10 +135,10 @@ export function GuardarCasoModal({ open, onClose, input, resultados, escenarios,
 
       const cliente = {
         ...defaultClient,
-        nombre: form.nombre.trim(),
-        cedula: form.cedula.trim(),
-        numeroCredito: form.numeroCredito.trim(),
-        banco: form.banco,
+        nombre: formData.nombre.trim(),
+        cedula: formData.cedula.trim(),
+        numeroCredito: formData.numeroCredito.trim(),
+        banco: formData.banco,
         tipoProducto: input.tipoProducto === "leasing" ? "Leasing Habitacional" : "Hipotecario",
         asesor: "",
         plazoInicial: String(input.cuotasTotales || ""),
@@ -111,7 +160,7 @@ export function GuardarCasoModal({ open, onClose, input, resultados, escenarios,
         seguroIncendio: input.seguroIncendio,
         seguroTerremoto: input.seguroTerremoto,
         otrosSeguros: input.otrosSeguros,
-        contacto: { celular: form.celular, correo: form.correo, ciudad: form.ciudad },
+        contacto: { celular: formData.celular, correo: formData.correo, ciudad: formData.ciudad },
         proyeccion_financiera_snapshot: snapshot,
       };
 
@@ -148,7 +197,9 @@ export function GuardarCasoModal({ open, onClose, input, resultados, escenarios,
     } finally {
       setSaving(false);
     }
-  };
+  }
+
+  const handleSave = () => void saveCase(form);
 
   return (
     <div
