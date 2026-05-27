@@ -6,10 +6,13 @@ import {
   listUsuariosAcceso, aprobarUsuario, rechazarUsuario,
   bloquearUsuario, activarUsuario, listAuditoria,
   previewDesvinculacion, desvincularUsuario, desvincularUsuarioSinTraslado,
+  listSolicitudesReactivacion, aprobarReactivacion, rechazarReactivacion,
   type UsuarioAcceso, type EstadoAcceso, type PreviewDesvinculacion,
+  type SolicitudReactivacion, type EstadoReactivacion,
 } from "@/lib/seguridad";
-import { ShieldCheck, ShieldAlert, ShieldOff, Clock, CheckCircle2, XCircle, Search, History, UserMinus, AlertTriangle } from "lucide-react";
+import { ShieldCheck, ShieldAlert, ShieldOff, Clock, CheckCircle2, XCircle, Search, History, UserMinus, AlertTriangle, RefreshCw } from "lucide-react";
 import { UserAvatar } from "@/components/nuvex/UserAvatar";
+
 
 export const Route = createFileRoute("/_authenticated/super-admin/accesos")({
   component: AccesosPage,
