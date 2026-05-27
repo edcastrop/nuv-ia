@@ -122,7 +122,7 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
   };
   useEffect(() => { reload(); }, []);
 
-  const asunto = `Nuevo proceso para contratación - ${ctx.clienteNombre}`;
+  const asunto = `${ctx.clienteNombre} - Ficha de contratación y poder${ctx.asesorNombre ? ` - ${ctx.asesorNombre}` : ""}`;
   const cuerpo = useMemo(() => [
     `Cliente:\n${ctx.clienteNombre}`,
     `\nBanco:\n${ctx.banco || "—"}`,
