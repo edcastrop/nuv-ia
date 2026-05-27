@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Hash, MessageSquare, Users, Bell, Plus, FolderKanban } from "lucide-react";
 import { Card } from "@/components/nuvex/ui";
@@ -19,8 +19,8 @@ export const Route = createFileRoute("/_authenticated/colaboracion/")({
 
 function ColaboracionPage() {
   const { user } = useAuth();
-  const search = useSearch({ from: Route.fullPath });
-  const navigate = useNavigate({ from: Route.fullPath });
+  const search = Route.useSearch();
+  const navigate = useNavigate();
 
   const [canales, setCanales] = useState<Canal[]>([]);
   const [tab, setTab] = useState<string>(search.tab || "canales");
@@ -41,8 +41,8 @@ function ColaboracionPage() {
   const canalesCaso = canales.filter((c) => c.tipo === "caso");
   const dms = canales.filter((c) => c.tipo === "dm");
 
-  const setCanal = (id: string) => navigate({ search: { canal: id, tab } });
-  const setTabAndSync = (t: string) => { setTab(t); navigate({ search: { canal: search.canal, tab: t } }); };
+  const setCanal = (id: string) => navigate({ to: "/colaboracion", search: { canal: id, tab } });
+  const setTabAndSync = (t: string) => { setTab(t); navigate({ to: "/colaboracion", search: { canal: search.canal, tab: t } }); };
 
   const crear = async () => {
     if (!nuevoNombre.trim()) return;
