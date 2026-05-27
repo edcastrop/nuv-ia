@@ -123,14 +123,25 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
   useEffect(() => { reload(); }, []);
 
   const asunto = `${ctx.clienteNombre} - Ficha de contratación y poder${ctx.asesorNombre ? ` - ${ctx.asesorNombre}` : ""}`;
-  const cuerpo = useMemo(() => [
-    `Cliente:\n${ctx.clienteNombre}`,
-    `\nBanco:\n${ctx.banco || "—"}`,
-    `\nProducto:\n${ctx.producto || "—"}`,
-    `\nAsesor:\n${ctx.asesorNombre || "—"}`,
-    `\nFecha:\n${new Date().toLocaleString("es-CO")}`,
-    `\n\nAdjuntos:\n- Poder PDF\n- Poder Word\n- Datos Contrato PDF\n- Datos Contrato Word`,
-  ].join("\n"), [ctx]);
+  const cuerpo = useMemo(() => {
+    const saludo = `Estimado equipo de Contratación,`;
+    const intro = `Adjuntamos la documentación correspondiente al cliente ${ctx.clienteNombre} para continuar con el proceso de contratación con ${ctx.banco || "el banco"}${ctx.producto ? ` (${ctx.producto})` : ""}.`;
+    const detalle = [
+      `Detalle del expediente:`,
+      `• Cliente: ${ctx.clienteNombre}`,
+      `• Banco: ${ctx.banco || "—"}`,
+      `• Producto: ${ctx.producto || "—"}`,
+      `• Asesor responsable: ${ctx.asesorNombre || "—"}`,
+      `• Fecha de envío: ${new Date().toLocaleString("es-CO")}`,
+    ].join("\n");
+    const adjuntos = [
+      `Documentos adjuntos:`,
+      `- Poder Especial (PDF y Word)`,
+      `- Ficha de Datos del Contrato (PDF y Word)`,
+    ].join("\n");
+    const cierre = `Quedamos atentos a cualquier observación o requerimiento adicional para avanzar con la radicación.\n\nCordialmente,\n${ctx.asesorNombre || "Equipo NUVEX"}\nNUVEX — Finanzas Inteligentes`;
+    return [saludo, intro, detalle, adjuntos, cierre].join("\n\n");
+  }, [ctx]);
 
   const handleAdd = async () => {
     const v = newEmail.trim().toLowerCase();
