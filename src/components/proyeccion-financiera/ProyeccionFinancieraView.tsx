@@ -673,13 +673,16 @@ export function ProyeccionFinancieraView() {
   const axisTick = { fontSize: 10, fill: "rgba(255,255,255,0.45)" };
   const gridColor = "rgba(255,255,255,0.05)";
   const tooltipStyle = {
-    background: "rgba(20,20,20,0.95)",
-    border: "1px solid rgba(255,255,255,0.08)",
+    background: "rgba(15,15,15,0.98)",
+    border: "1px solid rgba(255,255,255,0.15)",
     borderRadius: 12,
-    color: "#fff",
+    color: "#ffffff",
     fontSize: 12,
-    boxShadow: "0 20px 40px -10px rgba(0,0,0,0.6)",
-  };
+    boxShadow: "0 20px 40px -10px rgba(0,0,0,0.7)",
+    padding: "10px 12px",
+  } as const;
+  const tooltipItemStyle = { color: "#ffffff", fontSize: 12 } as const;
+  const tooltipLabelStyle = { color: "#ffffff", fontWeight: 600, marginBottom: 4 } as const;
 
   return (
     <div
@@ -1201,7 +1204,7 @@ export function ProyeccionFinancieraView() {
                             tickLine={false}
                             tickFormatter={(v) => `${(v / 1_000_000).toFixed(1)}M`}
                           />
-                          <Tooltip formatter={(v: number) => formatCOP(v)} contentStyle={tooltipStyle} />
+                          <Tooltip formatter={(v: number) => formatCOP(v)} contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} wrapperStyle={{ outline: "none" }} />
                           <Legend wrapperStyle={{ fontSize: 11, color: "rgba(255,255,255,0.6)" }} />
                           <Area type="monotone" dataKey="Capital" stackId="1" stroke={NUVEX.azul} strokeWidth={2} fill="url(#gradCap)" />
                           <Area type="monotone" dataKey="Interés" stackId="1" stroke={NUVEX.rojo} strokeWidth={2} fill="url(#gradInt)" />
@@ -1217,7 +1220,7 @@ export function ProyeccionFinancieraView() {
                           <CartesianGrid strokeDasharray="2 4" stroke={gridColor} vertical={false} />
                           <XAxis dataKey="tipo" tick={axisTick} axisLine={false} tickLine={false} />
                           <YAxis tick={axisTick} axisLine={false} tickLine={false} />
-                          <Tooltip contentStyle={tooltipStyle} />
+                          <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} wrapperStyle={{ outline: "none" }} />
                           <Bar dataKey="Meses" radius={[10, 10, 0, 0]} barSize={70}>
                             <Cell fill={NUVEX.rojo} fillOpacity={0.85} />
                             <Cell fill={NUVEX.verde} fillOpacity={0.95} />
@@ -1244,7 +1247,7 @@ export function ProyeccionFinancieraView() {
                               <Cell key={i} fill={c.color} />
                             ))}
                           </Pie>
-                          <Tooltip formatter={(v: number) => formatCOP(v)} contentStyle={tooltipStyle} />
+                          <Tooltip formatter={(v: number) => formatCOP(v)} contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} wrapperStyle={{ outline: "none" }} />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
@@ -1262,7 +1265,7 @@ export function ProyeccionFinancieraView() {
                             tickLine={false}
                             tickFormatter={(v) => `${(v / 1_000_000).toFixed(0)}M`}
                           />
-                          <Tooltip formatter={(v: number) => formatCOP(v)} contentStyle={tooltipStyle} />
+                          <Tooltip formatter={(v: number) => formatCOP(v)} contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} wrapperStyle={{ outline: "none" }} />
                           <Legend wrapperStyle={{ fontSize: 11, color: "rgba(255,255,255,0.6)" }} />
                           <Line type="monotone" dataKey="Saldo actual" stroke={NUVEX.rojo} strokeWidth={2.5} dot={false} />
                           <Line type="monotone" dataKey="Saldo optimizado" stroke={NUVEX.verde} strokeWidth={2.5} dot={false} />
@@ -1289,7 +1292,7 @@ export function ProyeccionFinancieraView() {
                             tickLine={false}
                             tickFormatter={(v) => `${(v / 1_000_000).toFixed(0)}M`}
                           />
-                          <Tooltip formatter={(v: number) => formatCOP(v)} contentStyle={tooltipStyle} />
+                          <Tooltip formatter={(v: number) => formatCOP(v)} contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} wrapperStyle={{ outline: "none" }} />
                           <Area type="monotone" dataKey="Ahorro" stroke={NUVEX.verde} strokeWidth={2.5} fill="url(#gradAhorro)" />
                         </AreaChart>
                       </ResponsiveContainer>
@@ -1308,7 +1311,7 @@ export function ProyeccionFinancieraView() {
                             tickLine={false}
                             tickFormatter={(v) => `${(v / 1_000_000).toFixed(0)}M`}
                           />
-                          <Tooltip formatter={(v: number) => formatCOP(v)} contentStyle={tooltipStyle} />
+                          <Tooltip formatter={(v: number) => formatCOP(v)} contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} wrapperStyle={{ outline: "none" }} />
                           <Bar dataKey="Total" radius={[10, 10, 0, 0]} barSize={70}>
                             <Cell fill={NUVEX.rojo} fillOpacity={0.9} />
                             <Cell fill={NUVEX.verde} fillOpacity={0.95} />
