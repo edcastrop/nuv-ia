@@ -165,7 +165,7 @@ export async function getCartera(id: string): Promise<CarteraConExpediente | nul
   const c = data as unknown as Cartera;
   const { data: exp } = await supabase
     .from("expedientes")
-    .select("id, cliente_nombre, cedula, banco, producto, numero_credito, asesor_id, honorarios_final, descuento, cliente_data, estado_caso")
+    .select("id, cliente_nombre, cedula, banco, producto, numero_credito, asesor_id, honorarios_final, descuento, cliente_data, aprobado_data, estado_caso")
     .eq("id", c.expediente_id)
     .maybeSingle();
   let responsable = null;
@@ -193,7 +193,7 @@ export async function listCarteras(filtros: {
   const respIds = Array.from(new Set(carteras.map((c) => c.responsable_id).filter(Boolean))) as string[];
   const { data: exps } = await supabase
     .from("expedientes")
-    .select("id, cliente_nombre, cedula, banco, producto, numero_credito, asesor_id, honorarios_final, descuento, cliente_data, estado_caso")
+    .select("id, cliente_nombre, cedula, banco, producto, numero_credito, asesor_id, honorarios_final, descuento, cliente_data, aprobado_data, estado_caso")
     .in("id", expIds);
   const expMap = new Map((exps ?? []).map((e) => [e.id, e]));
   let respMap = new Map<string, { id: string; nombre: string | null; email: string | null }>();
