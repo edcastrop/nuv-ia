@@ -757,11 +757,40 @@ export function ExtractoReader({ modo, onApply }: Props) {
     <>
       {/* Tarjeta principal de entrada */}
       <div
-        className="relative overflow-hidden rounded-2xl"
+        className="relative overflow-hidden rounded-2xl transition-transform"
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (e.dataTransfer) e.dataTransfer.dropEffect = "copy";
+        }}
+        onDragEnter={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!dragActive) setDragActive(true);
+        }}
+        onDragLeave={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (e.currentTarget === e.target) setDragActive(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setDragActive(false);
+          const f = e.dataTransfer?.files?.[0];
+          if (f) {
+            reset();
+            setOpen(true);
+            handleFileSelect(f);
+          }
+        }}
         style={{
           background: "linear-gradient(135deg, rgba(10,18,38,0.92), rgba(7,22,45,0.92))",
-          border: "1px solid rgba(255,255,255,0.08)",
-          boxShadow: "0 24px 60px -30px rgba(68,93,163,0.45)",
+          border: `1px solid ${dragActive ? "rgba(132,185,143,0.6)" : "rgba(255,255,255,0.08)"}`,
+          boxShadow: dragActive
+            ? "0 24px 60px -20px rgba(132,185,143,0.55)"
+            : "0 24px 60px -30px rgba(68,93,163,0.45)",
+          transform: dragActive ? "scale(1.005)" : "scale(1)",
         }}
       >
         {/* glow */}
@@ -773,6 +802,20 @@ export function ExtractoReader({ modo, onApply }: Props) {
           className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full blur-3xl"
           style={{ background: "radial-gradient(circle, rgba(132,185,143,0.28), transparent 70%)" }}
         />
+        {dragActive && (
+          <div
+            className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl"
+            style={{
+              background: "rgba(132,185,143,0.10)",
+              border: "2px dashed rgba(132,185,143,0.7)",
+            }}
+          >
+            <div className="flex flex-col items-center gap-2 text-[#84B98F]">
+              <Upload className="h-10 w-10" />
+              <span className="text-sm font-semibold">Suelta el extracto para analizarlo</span>
+            </div>
+          </div>
+        )}
 
         <div className="relative flex flex-col gap-5 p-6 md:flex-row md:items-center md:justify-between md:p-7">
           <div className="flex items-start gap-4">
