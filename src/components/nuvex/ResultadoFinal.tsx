@@ -4,6 +4,7 @@ import { NUVEX, CORPORATIVO } from "./constants";
 import { formatCOP, formatNumber, parseCurrency, parseDecimal } from "../../lib/format";
 import { applyHonorariosFloor, HONORARIOS_MIN_BASE, HONORARIOS_MIN_FINAL } from "../../lib/finance";
 import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
+import { EnviarDocumentoButton } from "./EnviarDocumentoButton";
 import { setAprobado, type AprobadoData, type EstadoExpediente } from "@/lib/expedientes";
 import { calcularRecalculoHonorarios, guardarRecalculoHonorarios } from "@/lib/honorarios";
 import type { ClientData } from "./ClientFields";
