@@ -111,22 +111,37 @@ function AuthenticatedLayout() {
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   useEffect(() => {
-    if (!session || gateState !== "ok") return;
+    if (!session?.user || gateState !== "ok") return;
     let active = true;
+    const uid = session.user.id;
     const load = async () => {
-      const { count } = await supabase
-        .from("caso_alertas" as never)
-        .select("id", { count: "exact", head: true })
-        .eq("leida", false);
-      if (active) setUnread(count ?? 0);
+      const [{ count: ca }, { count: nu }] = await Promise.all([
+        supabase
+          .from("caso_alertas" as never)
+          .select("id", { count: "exact", head: true })
+          .eq("leida", false),
+        supabase
+          .from("notificaciones_usuario" as never)
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", uid)
+          .eq("leida", false),
+      ]);
+      if (active) setUnread((ca ?? 0) + (nu ?? 0));
     };
     load();
-    const ch = supabase
-      .channel("caso_alertas_unread")
+    const ch1 = supabase
+      .channel("alerts_unread_" + uid)
       .on("postgres_changes", { event: "*", schema: "public", table: "caso_alertas" }, load)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "notificaciones_usuario", filter: `user_id=eq.${uid}` },
+        load,
+      )
       .subscribe();
-    return () => { active = false; supabase.removeChannel(ch); };
+    const iv = setInterval(load, 15000);
+    return () => { active = false; clearInterval(iv); supabase.removeChannel(ch1); };
   }, [session, location.pathname, gateState]);
+
 
   if (loading || !session || gateState !== "ok") {
     return (
