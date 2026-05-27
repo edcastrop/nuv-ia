@@ -475,6 +475,79 @@ function AccionesCartera({ carteraId, onChanged }: { carteraId: string; onChange
   );
 }
 
+function PazYSalvoBlock({
+  expedienteId, clienteNombre, cedula, banco, producto, numeroCredito,
+  honorariosPagados, fechaPago, yaEnviado, onSent,
+}: {
+  expedienteId: string;
+  clienteNombre: string;
+  cedula: string | null;
+  banco: string | null;
+  producto: string | null;
+  numeroCredito: string | null;
+  honorariosPagados: number;
+  fechaPago: string;
+  yaEnviado: boolean;
+  onSent: () => void;
+}) {
+  const enviar = useServerFn(enviarPazYSalvoCliente);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const elementId = "pdf-paz-y-salvo-cartera";
+
+  const client = {
+    nombre: clienteNombre, cedula: cedula ?? "", numeroCredito: numeroCredito ?? "",
+    banco: banco ?? "", tipoProducto: producto ?? "", asesor: "",
+    plazoInicial: "", cuotasPagadas: "", porcentajeHonorarios: "",
+  };
+  const data = {
+    fechaAprobacion: "", fechaPago, honorariosPagados,
+    ahorroLogrado: 0, añosEliminados: 0,
+  };
+
+  async function handleSend() {
+    setBusy(true); setErr(null); setMsg(null);
+    try {
+      const pdf = await elementToPdfBlob(elementId);
+      if (!pdf) throw new Error("No se pudo generar el PDF.");
+      const filename = `NUVEX_PazYSalvo_${sanitizeFileName(clienteNombre)}.pdf`;
+      const res = await enviar({ data: { expedienteId, filename, contentBase64: pdf.base64 } });
+      setMsg(`✓ Enviado a ${(res as { destinatarios?: string[] }).destinatarios?.join(", ") ?? "cliente"}.`);
+      onSent();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Error al enviar Paz y Salvo.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="text-[11px] uppercase tracking-wider text-[#1F7A45] font-semibold">100% pagado</div>
+          <div className="text-[13px] font-semibold text-[#242424]">Enviar Paz y Salvo al cliente</div>
+          <div className="text-[11.5px] text-[#242424]/65">
+            Se enviará por correo desde la plataforma, con el PDF adjunto y mensaje de referidos (7%).
+          </div>
+          {yaEnviado && <div className="text-[11px] text-[#1F7A45] mt-1">Ya fue enviado previamente. Puedes reenviarlo si lo necesitas.</div>}
+          {msg && <div className="text-[11.5px] text-[#1F7A45] mt-1">{msg}</div>}
+          {err && <div className="text-[11.5px] text-[#B42318] mt-1">{err}</div>}
+        </div>
+        <button
+          onClick={handleSend}
+          disabled={busy}
+          className="rounded-md bg-[#1F7A45] px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
+        >
+          {busy ? "Enviando…" : yaEnviado ? "Reenviar Paz y Salvo" : "Enviar Paz y Salvo"}
+        </button>
+      </div>
+      <PazYSalvoDocument id={elementId} client={client} data={data} />
+    </Card>
+  );
+}
+
 function Divider() { return <div className="h-px bg-[#E5E7EB]" />; }
 function Input({ label, value, onChange, type = "text", placeholder }: { label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string }) {
   return (
