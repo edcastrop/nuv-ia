@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { X, FolderPlus, Loader2, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,15 +16,27 @@ import type {
 interface Props {
   open: boolean;
   onClose: () => void;
+  autoSave?: boolean;
   input: ProyeccionFinancieraInput;
   resultados: { actual: ResultadoEscenario; optimizado: ResultadoEscenario };
   escenarios: EscenarioInput[];
   kpis: KpisComparacion;
 }
 
-export function GuardarCasoModal({ open, onClose, input, resultados, escenarios, kpis }: Props) {
+type CasoForm = {
+  nombre: string;
+  cedula: string;
+  celular: string;
+  correo: string;
+  banco: string;
+  ciudad: string;
+  numeroCredito: string;
+};
+
+export function GuardarCasoModal({ open, onClose, autoSave = false, input, resultados, escenarios, kpis }: Props) {
   const navigate = useNavigate();
-  const projectionForm = {
+  const autoSaveRef = useRef(false);
+  const projectionForm: CasoForm = {
     nombre: input.clienteNombre || "",
     cedula: input.cedula || "",
     celular: input.celular || "",
@@ -33,7 +45,7 @@ export function GuardarCasoModal({ open, onClose, input, resultados, escenarios,
     ciudad: input.ciudad || "",
     numeroCredito: input.numeroCredito || "",
   };
-  const [form, setForm] = useState(projectionForm);
+  const [form, setForm] = useState<CasoForm>(projectionForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{ id: string } | null>(null);
