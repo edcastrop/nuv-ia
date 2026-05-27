@@ -106,6 +106,7 @@ function CarteraDetail() {
           }
           clienteDataActual={(c.expediente.cliente_data as Record<string, unknown> | null) ?? {}}
           aprobadoData={(c.expediente.aprobado_data as Record<string, unknown> | null) ?? null}
+          propuestaData={(c.expediente.propuesta_data as Record<string, unknown> | null) ?? null}
           honorariosPagados={Number(c.pagado)}
           fechaPago={pagos[0]?.fecha ?? new Date().toISOString().slice(0, 10)}
           yaEnviado={c.expediente.estado_caso === "paz_y_salvo_generado" || c.expediente.estado_caso === "proceso_cerrado"}
@@ -485,7 +486,7 @@ function AccionesCartera({ carteraId, onChanged }: { carteraId: string; onChange
 
 function PazYSalvoBlock({
   expedienteId, clienteNombre, cedula, banco, producto, numeroCredito,
-  clienteCorreoInicial, clienteDataActual, aprobadoData,
+  clienteCorreoInicial, clienteDataActual, aprobadoData, propuestaData,
   honorariosPagados, fechaPago, yaEnviado, onSent,
 }: {
   expedienteId: string;
@@ -497,6 +498,7 @@ function PazYSalvoBlock({
   clienteCorreoInicial: string;
   clienteDataActual: Record<string, unknown>;
   aprobadoData: Record<string, unknown> | null;
+  propuestaData: Record<string, unknown> | null;
   honorariosPagados: number;
   fechaPago: string;
   yaEnviado: boolean;
@@ -515,12 +517,19 @@ function PazYSalvoBlock({
     plazoInicial: "", cuotasPagadas: "", porcentajeHonorarios: "",
   };
   const ap = aprobadoData ?? {};
+  const propuesta = propuestaData ?? {};
+  const ahorroLogrado = Number(
+    ap.ahorroTotal ?? ap.ahorroAprobado ?? propuesta.ahorroTotal ?? 0,
+  );
+  const añosEliminados = Number(
+    ap.añosEliminados ?? propuesta.añosEliminados ?? 0,
+  );
   const data = {
     fechaAprobacion: (ap.fechaAprobacion as string) ?? "",
     fechaPago,
     honorariosPagados,
-    ahorroLogrado: Number((ap.ahorroTotal as number | undefined) ?? 0),
-    añosEliminados: Number((ap.añosEliminados as number | undefined) ?? 0),
+    ahorroLogrado: Number.isFinite(ahorroLogrado) ? ahorroLogrado : 0,
+    añosEliminados: Number.isFinite(añosEliminados) ? añosEliminados : 0,
   };
 
 
