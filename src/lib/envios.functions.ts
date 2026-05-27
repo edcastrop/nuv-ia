@@ -175,3 +175,131 @@ export const enviarDocumentoCliente = createServerFn({ method: "POST" })
 
     return { ok: true, messageId, asunto };
   });
+
+// ============================================================
+//  Paz y Salvo — envío automático al cliente cuando paga 100%
+// ============================================================
+
+const PazYSalvoInput = z.object({
+  expedienteId: z.string().uuid(),
+  filename: z.string().min(1).max(255),
+  contentBase64: z.string().min(1),
+  destinatariosOverride: z.array(z.string().email()).optional(),
+});
+
+export const enviarPazYSalvoCliente = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => PazYSalvoInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: exp, error: expErr } = await supabase
+      .from("expedientes")
+      .select("id, cliente_nombre, banco, asesor_id, cliente_data")
+      .eq("id", data.expedienteId)
+      .single();
+    if (expErr || !exp) throw new Error("Expediente no encontrado o sin acceso.");
+
+    const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
+    const RESEND_API_KEY = process.env.RESEND_API_KEY;
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY no está configurado.");
+    if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY no está configurado. Conecta Resend.");
+
+    const asesorId = (exp as { asesor_id: string | null }).asesor_id ?? userId;
+    const { data: asesor } = await supabase
+      .from("profiles")
+      .select("nombre, email, correo_corporativo, telefono")
+      .eq("id", asesorId)
+      .maybeSingle();
+
+    const sanitizeName = (s: string) =>
+      s.replace(/[\r\n"<>]/g, "").trim().slice(0, 80);
+    const asesorNombre = asesor?.nombre ? sanitizeName(asesor.nombre) : "NUVEX";
+    const asesorEmail = (asesor?.correo_corporativo || asesor?.email || "").trim();
+    const asesorTel = (asesor as { telefono?: string } | null)?.telefono ?? "";
+
+    const SENDER_ADDRESS =
+      process.env.CONTRATACION_FROM_EMAIL || "notificaciones@mail.nuvex.com.co";
+    const fromAddress = `${asesorNombre} (NUVEX) <${SENDER_ADDRESS}>`;
+    const replyTo = asesorEmail || SENDER_ADDRESS;
+
+    const clienteData = (exp.cliente_data ?? {}) as Record<string, string>;
+    const destinatarios =
+      data.destinatariosOverride && data.destinatariosOverride.length > 0
+        ? data.destinatariosOverride
+        : ([clienteData.correo, clienteData.email].filter(Boolean) as string[]);
+    if (destinatarios.length === 0)
+      throw new Error("No hay correo del cliente en el expediente.");
+
+    const banco = (exp as { banco: string | null }).banco || "su entidad financiera";
+    const cliente = exp.cliente_nombre;
+
+    const asunto = `Paz y Salvo - ${cliente} - Optimización Proceso (${banco})`;
+    const cuerpo =
+      `Estimado(a) ${cliente},\n\n` +
+      `Es para nosotros una enorme satisfacción hacerle entrega oficial de su PAZ Y SALVO ` +
+      `por el proceso de optimización adelantado con ${banco}. Con este documento certificamos ` +
+      `que se encuentra a paz y salvo por todo concepto con NUVEX.\n\n` +
+      `Queremos agradecerle profundamente la confianza depositada en nuestro equipo. Acompañarle ` +
+      `en esta decisión financiera ha sido un privilegio y celebramos junto a usted los resultados ` +
+      `obtenidos.\n\n` +
+      `— Programa de referidos NUVEX —\n` +
+      `Si su experiencia con nosotros fue positiva, nos encantaría seguir ayudando a sus familiares, ` +
+      `amigos o colegas a optimizar sus créditos. Por cada referido que culmine exitosamente su proceso ` +
+      `con NUVEX, le reconocemos un 7% sobre los honorarios pagados por esa persona, como muestra de ` +
+      `gratitud por confiar en nosotros.\n\n` +
+      `Puede compartirnos sus referidos respondiendo este correo${asesorTel ? ` o escribiéndonos al ${asesorTel}` : ""}.\n\n` +
+      `Adjuntamos su Paz y Salvo en formato PDF.\n\n` +
+      `Cordialmente,\n${asesorNombre}\nNUVEX — Finanzas Inteligentes`;
+
+    const resp = await fetch(`${RESEND_GATEWAY}/emails`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "X-Connection-Api-Key": RESEND_API_KEY,
+      },
+      body: JSON.stringify({
+        from: fromAddress,
+        to: destinatarios,
+        reply_to: replyTo,
+        subject: asunto,
+        text: cuerpo,
+        html: await wrapNuvexEmail({ subject: asunto, bodyText: cuerpo }),
+        attachments: [{ filename: data.filename, content: data.contentBase64 }],
+      }),
+    });
+
+    const body = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      const msg = `Resend [${resp.status}]: ${JSON.stringify(body).slice(0, 400)}`;
+      await supabase.from("expediente_historial").insert({
+        expediente_id: data.expedienteId,
+        user_id: userId,
+        nota: `❌ Falló envío de Paz y Salvo a ${destinatarios.join(", ")}: ${msg}`,
+      });
+      throw new Error(`No se pudo enviar el Paz y Salvo. ${msg}`);
+    }
+
+    const messageId =
+      body && typeof body === "object" && "id" in body
+        ? String((body as Record<string, unknown>).id)
+        : null;
+
+    // Actualizar estado y registrar
+    await supabase
+      .from("expedientes")
+      .update({ estado_caso: "paz_y_salvo_generado" as never })
+      .eq("id", data.expedienteId);
+
+    await supabase.from("expediente_historial").insert({
+      expediente_id: data.expedienteId,
+      estado_caso_nuevo: "paz_y_salvo_generado" as never,
+      accion_origen: "paz_y_salvo_enviado",
+      user_id: userId,
+      nota: `📧 Paz y Salvo enviado a ${destinatarios.join(", ")} (asunto: "${asunto}")`,
+    } as never);
+
+    return { ok: true, messageId, asunto, destinatarios };
+  });
+
