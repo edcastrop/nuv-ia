@@ -105,11 +105,13 @@ function CarteraDetail() {
             ""
           }
           clienteDataActual={(c.expediente.cliente_data as Record<string, unknown> | null) ?? {}}
+          aprobadoData={(c.expediente.aprobado_data as Record<string, unknown> | null) ?? null}
           honorariosPagados={Number(c.pagado)}
           fechaPago={pagos[0]?.fecha ?? new Date().toISOString().slice(0, 10)}
           yaEnviado={c.expediente.estado_caso === "paz_y_salvo_generado" || c.expediente.estado_caso === "proceso_cerrado"}
           onSent={reload}
         />
+
       )}
 
       <Card>
@@ -483,7 +485,7 @@ function AccionesCartera({ carteraId, onChanged }: { carteraId: string; onChange
 
 function PazYSalvoBlock({
   expedienteId, clienteNombre, cedula, banco, producto, numeroCredito,
-  clienteCorreoInicial, clienteDataActual,
+  clienteCorreoInicial, clienteDataActual, aprobadoData,
   honorariosPagados, fechaPago, yaEnviado, onSent,
 }: {
   expedienteId: string;
@@ -494,6 +496,7 @@ function PazYSalvoBlock({
   numeroCredito: string | null;
   clienteCorreoInicial: string;
   clienteDataActual: Record<string, unknown>;
+  aprobadoData: Record<string, unknown> | null;
   honorariosPagados: number;
   fechaPago: string;
   yaEnviado: boolean;
@@ -511,10 +514,15 @@ function PazYSalvoBlock({
     banco: banco ?? "", tipoProducto: producto ?? "", asesor: "",
     plazoInicial: "", cuotasPagadas: "", porcentajeHonorarios: "",
   };
+  const ap = aprobadoData ?? {};
   const data = {
-    fechaAprobacion: "", fechaPago, honorariosPagados,
-    ahorroLogrado: 0, añosEliminados: 0,
+    fechaAprobacion: (ap.fechaAprobacion as string) ?? "",
+    fechaPago,
+    honorariosPagados,
+    ahorroLogrado: Number((ap.ahorroTotal as number | undefined) ?? 0),
+    añosEliminados: Number((ap.añosEliminados as number | undefined) ?? 0),
   };
+
 
   const correoValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo.trim());
   const necesitaGuardarCorreo = correo.trim() !== "" && correo.trim() !== clienteCorreoInicial.trim();
