@@ -333,8 +333,8 @@ export const registrarComunicacion = createServerFn({ method: "POST" })
   });
 
 // ---------- 6. Enviar correo de cartera vía Resend ----------
-const ASUNTOS: Record<string, (cliente: string) => string> = {
-  email_cuenta_cobro: (c) => `Cuenta de Cobro NUVEX - ${c}`,
+const ASUNTOS: Record<string, (cliente: string, banco?: string | null) => string> = {
+  email_cuenta_cobro: (c, b) => `Cuenta de cobro - ${c}${b ? ` - Optimización ${b}` : ""}`,
   email_recordatorio: () => `Recordatorio de Honorarios NUVEX`,
   email_vencimiento: () => `Vencimiento Honorarios NUVEX`,
   email_mora_7: () => `Honorarios Pendientes NUVEX`,
@@ -347,7 +347,14 @@ function buildEmailBody(tipo: string, ctx: { cliente: string; saldo: number; ven
   const baseClose = `\n\nQuedamos atentos.\nEquipo NUVEX — Finanzas Inteligentes`;
   switch (tipo) {
     case "email_cuenta_cobro":
-      return `Estimado(a) ${ctx.cliente},\n\nAdjuntamos la cuenta de cobro por ${money(ctx.saldo)} correspondiente a los honorarios NUVEX${ctx.banco ? " por el proceso adelantado con " + ctx.banco : ""}.\nFecha de vencimiento: ${ctx.venc}.${baseClose}`;
+      return (
+        `Estimado(a) ${ctx.cliente},\n\n` +
+        `Antes que nada, queremos agradecerle la confianza depositada en NUVEX para acompañarle en este proceso. ` +
+        `Nuevamente le felicitamos por el ahorro obtenido${ctx.banco ? ` con la optimización adelantada con ${ctx.banco}` : ""}, ` +
+        `un resultado que refleja una decisión financiera acertada.\n\n` +
+        `Adjuntamos la cuenta de cobro por ${money(ctx.saldo)} correspondiente a los honorarios pactados.\n` +
+        `Fecha de vencimiento: ${ctx.venc}.${baseClose}`
+      );
     case "email_recordatorio":
       return `Estimado(a) ${ctx.cliente},\n\nRecordamos que el pago de honorarios NUVEX por ${money(ctx.saldo)} tiene como fecha de vencimiento el ${ctx.venc}.${baseClose}`;
     case "email_vencimiento":
