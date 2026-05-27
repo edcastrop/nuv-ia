@@ -37,6 +37,7 @@ import {
   type ProyeccionFinancieraInput,
   type TipoEscenario,
 } from "@/lib/proyeccionFinanciera";
+import { ExtractoReader, type ExtractoApplyPayload } from "@/components/nuvex/ExtractoReader";
 
 const NUVEX = { azul: "#445DA3", verde: "#84B98F", oscuro: "#242424", ambar: "#E0913A", rojo: "#C0392B" };
 
@@ -427,11 +428,46 @@ export function ProyeccionFinancieraView() {
               </Section>
             )}
 
-            <Section title="Lector IA de extractos" subtitle="Próximamente">
-              <div className="rounded-xl border border-dashed border-[#E3E7EE] bg-[#F5F7FB] p-4 text-center text-xs text-[#242424]/60">
-                <Loader2 className="mx-auto mb-1 h-4 w-4 animate-spin opacity-40" />
-                Subirás un PDF o imagen y la IA prellenará todos los campos automáticamente.
-              </div>
+            <Section title="Lector IA de extractos" subtitle="Sube PDF o imagen — la IA prellena los campos automáticamente">
+              <ExtractoReader
+                modo={input.moneda === "uvr" ? "uvr" : "pesos"}
+                onApply={(d: ExtractoApplyPayload) => {
+                  setInput((p) => {
+                    const next = { ...p };
+                    const num = (s?: string) => {
+                      if (!s) return 0;
+                      const n = parseFloat(String(s).replace(/[^\d.,-]/g, "").replace(/\.(?=\d{3}(\D|$))/g, "").replace(",", "."));
+                      return Number.isFinite(n) ? n : 0;
+                    };
+                    if (d.cliente?.nombre) next.clienteNombre = d.cliente.nombre;
+                    if (d.cliente?.banco) next.banco = d.cliente.banco;
+                    if (d.cliente?.plazoInicial) next.cuotasTotales = num(d.cliente.plazoInicial);
+                    if (d.cliente?.cuotasPagadas) {
+                      next.cuotasPagadas = num(d.cliente.cuotasPagadas);
+                      if (next.cuotasTotales) next.cuotasPendientes = Math.max(0, next.cuotasTotales - next.cuotasPagadas);
+                    }
+                    if (d.pesos) {
+                      next.moneda = "pesos";
+                      if (d.pesos.saldoCapital) next.saldoCapital = num(d.pesos.saldoCapital);
+                      if (d.pesos.cuotaActual) next.cuotaActual = num(d.pesos.cuotaActual);
+                      if (d.pesos.seguros) next.seguroVida = num(d.pesos.seguros);
+                      if (d.pesos.tea) next.teaPct = num(d.pesos.tea);
+                      if (d.pesos.valorDesembolsado) next.valorDesembolsado = num(d.pesos.valorDesembolsado);
+                    }
+                    if (d.uvr) {
+                      next.moneda = "uvr";
+                      if (d.uvr.saldoPesos) next.saldoCapital = num(d.uvr.saldoPesos);
+                      if (d.uvr.cuotaActualPesos) next.cuotaActual = num(d.uvr.cuotaActualPesos);
+                      if (d.uvr.seguros) next.seguroVida = num(d.uvr.seguros);
+                      if (d.uvr.teaCobrada) next.teaPct = num(d.uvr.teaCobrada);
+                      if (d.uvr.valorDesembolsado) next.valorDesembolsado = num(d.uvr.valorDesembolsado);
+                      if (d.uvr.valorUVR) next.uvrValor = num(d.uvr.valorUVR);
+                      if (d.uvr.saldoUVR) next.saldoUvr = num(d.uvr.saldoUVR);
+                    }
+                    return next;
+                  });
+                }}
+              />
             </Section>
           </div>
 
