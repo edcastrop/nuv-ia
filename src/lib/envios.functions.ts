@@ -208,7 +208,7 @@ export const enviarPazYSalvoCliente = createServerFn({ method: "POST" })
     const asesorId = (exp as { asesor_id: string | null }).asesor_id ?? userId;
     const { data: asesor } = await supabase
       .from("profiles")
-      .select("nombre, email, correo_corporativo, telefono")
+      .select("nombre, email, correo_corporativo")
       .eq("id", asesorId)
       .maybeSingle();
 
@@ -216,7 +216,7 @@ export const enviarPazYSalvoCliente = createServerFn({ method: "POST" })
       s.replace(/[\r\n"<>]/g, "").trim().slice(0, 80);
     const asesorNombre = asesor?.nombre ? sanitizeName(asesor.nombre) : "NUVEX";
     const asesorEmail = (asesor?.correo_corporativo || asesor?.email || "").trim();
-    const asesorTel = (asesor as { telefono?: string } | null)?.telefono ?? "";
+    const asesorTel = "";
 
     const SENDER_ADDRESS =
       process.env.CONTRATACION_FROM_EMAIL || "notificaciones@mail.nuvex.com.co";
