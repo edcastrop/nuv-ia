@@ -99,6 +99,12 @@ function CarteraDetail() {
           banco={c.expediente.banco}
           producto={c.expediente.producto}
           numeroCredito={c.expediente.numero_credito}
+          clienteCorreoInicial={
+            ((c.expediente.cliente_data as Record<string, unknown> | null)?.correo as string) ??
+            ((c.expediente.cliente_data as Record<string, unknown> | null)?.email as string) ??
+            ""
+          }
+          clienteDataActual={(c.expediente.cliente_data as Record<string, unknown> | null) ?? {}}
           honorariosPagados={Number(c.pagado)}
           fechaPago={pagos[0]?.fecha ?? new Date().toISOString().slice(0, 10)}
           yaEnviado={c.expediente.estado_caso === "paz_y_salvo_generado" || c.expediente.estado_caso === "proceso_cerrado"}
@@ -477,6 +483,7 @@ function AccionesCartera({ carteraId, onChanged }: { carteraId: string; onChange
 
 function PazYSalvoBlock({
   expedienteId, clienteNombre, cedula, banco, producto, numeroCredito,
+  clienteCorreoInicial, clienteDataActual,
   honorariosPagados, fechaPago, yaEnviado, onSent,
 }: {
   expedienteId: string;
@@ -485,6 +492,8 @@ function PazYSalvoBlock({
   banco: string | null;
   producto: string | null;
   numeroCredito: string | null;
+  clienteCorreoInicial: string;
+  clienteDataActual: Record<string, unknown>;
   honorariosPagados: number;
   fechaPago: string;
   yaEnviado: boolean;
@@ -494,6 +503,7 @@ function PazYSalvoBlock({
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [correo, setCorreo] = useState(clienteCorreoInicial);
   const elementId = "pdf-paz-y-salvo-cartera";
 
   const client = {
@@ -506,14 +516,33 @@ function PazYSalvoBlock({
     ahorroLogrado: 0, añosEliminados: 0,
   };
 
+  const correoValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo.trim());
+  const necesitaGuardarCorreo = correo.trim() !== "" && correo.trim() !== clienteCorreoInicial.trim();
+
   async function handleSend() {
     setBusy(true); setErr(null); setMsg(null);
     try {
+      if (!correoValido) throw new Error("Ingresa un correo válido del cliente.");
+      // Si el correo cambió o no existía, persistirlo en cliente_data antes de enviar
+      if (necesitaGuardarCorreo) {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const nuevoData = { ...clienteDataActual, correo: correo.trim() };
+        const { error } = await supabase
+          .from("expedientes")
+          .update({ cliente_data: nuevoData as never })
+          .eq("id", expedienteId);
+        if (error) throw new Error("No se pudo guardar el correo: " + error.message);
+      }
       const pdf = await elementToPdfBlob(elementId);
       if (!pdf) throw new Error("No se pudo generar el PDF.");
       const filename = `NUVEX_PazYSalvo_${sanitizeFileName(clienteNombre)}.pdf`;
-      const res = await enviar({ data: { expedienteId, filename, contentBase64: pdf.base64 } });
-      setMsg(`✓ Enviado a ${(res as { destinatarios?: string[] }).destinatarios?.join(", ") ?? "cliente"}.`);
+      const res = await enviar({
+        data: {
+          expedienteId, filename, contentBase64: pdf.base64,
+          destinatariosOverride: [correo.trim()],
+        },
+      });
+      setMsg(`✓ Enviado a ${(res as { destinatarios?: string[] }).destinatarios?.join(", ") ?? correo.trim()}.`);
       onSent();
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Error al enviar Paz y Salvo.");
@@ -522,23 +551,50 @@ function PazYSalvoBlock({
     }
   }
 
+  const faltaCorreo = clienteCorreoInicial.trim() === "";
+
   return (
     <Card>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex-1 min-w-[260px]">
           <div className="text-[11px] uppercase tracking-wider text-[#1F7A45] font-semibold">100% pagado</div>
           <div className="text-[13px] font-semibold text-[#242424]">Enviar Paz y Salvo al cliente</div>
           <div className="text-[11.5px] text-[#242424]/65">
             Se enviará por correo desde la plataforma, con el PDF adjunto y mensaje de referidos (7%).
           </div>
+
+          {faltaCorreo && (
+            <div className="mt-2 rounded-md border border-[#F0C97A] bg-[#FFF8E6] px-3 py-2 text-[11.5px] text-[#7A5B12]">
+              ⚠ Falta el <strong>correo del cliente</strong> en el expediente. Agrégalo abajo para continuar; se guardará en el caso automáticamente.
+            </div>
+          )}
+
+          <div className="mt-2 flex flex-wrap items-end gap-2">
+            <label className="flex flex-col gap-1">
+              <span className="text-[10.5px] uppercase tracking-wider text-[#242424]/60">
+                Correo del cliente {faltaCorreo && <span className="text-[#B42318]">*</span>}
+              </span>
+              <input
+                type="email"
+                value={correo}
+                onChange={(e) => setCorreo(e.target.value)}
+                placeholder="cliente@correo.com"
+                className="text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white min-w-[260px]"
+              />
+            </label>
+            {necesitaGuardarCorreo && correoValido && (
+              <span className="text-[11px] text-[#445DA3] pb-2">Se guardará en el expediente al enviar.</span>
+            )}
+          </div>
+
           {yaEnviado && <div className="text-[11px] text-[#1F7A45] mt-1">Ya fue enviado previamente. Puedes reenviarlo si lo necesitas.</div>}
           {msg && <div className="text-[11.5px] text-[#1F7A45] mt-1">{msg}</div>}
           {err && <div className="text-[11.5px] text-[#B42318] mt-1">{err}</div>}
         </div>
         <button
           onClick={handleSend}
-          disabled={busy}
-          className="rounded-md bg-[#1F7A45] px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
+          disabled={busy || !correoValido}
+          className="rounded-md bg-[#1F7A45] px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50 self-start"
         >
           {busy ? "Enviando…" : yaEnviado ? "Reenviar Paz y Salvo" : "Enviar Paz y Salvo"}
         </button>
