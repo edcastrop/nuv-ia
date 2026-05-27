@@ -479,6 +479,21 @@ export function ResultadoFinal({
               >
                 Generar cuenta de cobro
               </button>
+              <EnviarDocumentoButton
+                expedienteId={expedienteId}
+                tipo="informe_final"
+                elementId={informeId}
+                filename={`NUVEX_Informe_Final_${sanitizeFileName(client.nombre)}.pdf`}
+                label="Enviar informe final al cliente"
+              />
+              <EnviarDocumentoButton
+                expedienteId={expedienteId}
+                tipo="cuenta_cobro_cliente"
+                elementId={cuentaId}
+                filename={`NUVEX_Cuenta_Cobro_${consecutivo}_${sanitizeFileName(client.nombre)}.pdf`}
+                label="Enviar cuenta de cobro al cliente"
+                bgColor={NUVEX.negro}
+              />
               <PazYSalvo
                 client={client}
                 enabled={estado === "PAGADO" || honorariosPagadosManual}
