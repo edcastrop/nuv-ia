@@ -54,7 +54,15 @@ export interface AprobadoData {
   banco: string;
   cuotaAprobada: number;
   plazoAprobado: number;
+  cuotasEliminadas?: number;
+  añosEliminados?: number;
+  ahorroIntereses?: number;
+  ahorroSeguros?: number;
+  ahorroTotal?: number;
   ahorroAprobado: number;
+  honorariosBase?: number;
+  descuento?: number;
+  honorariosFinales?: number;
   observaciones?: string;
 }
 
