@@ -521,6 +521,7 @@ export function ProyeccionFinancieraView() {
   ]);
   const [selectedId, setSelectedId] = useState<string>(escenarios[1].id);
   const [activeNav, setActiveNav] = useState<string>("dashboard");
+  const [guardarOpen, setGuardarOpen] = useState(false);
 
   const upd = <K extends keyof ProyeccionFinancieraInput>(
     k: K,
