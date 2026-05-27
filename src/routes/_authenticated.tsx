@@ -32,6 +32,7 @@ function AuthenticatedLayout() {
   const location = useLocation();
   const [unread, setUnread] = useState(0);
   const [gateState, setGateState] = useState<"checking" | "ok" | "blocked">("checking");
+  const [gateChecked, setGateChecked] = useState(false);
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem("nuvex.sidebar.collapsed") === "1";
@@ -47,7 +48,6 @@ function AuthenticatedLayout() {
   useEffect(() => {
     if (!session?.user) return;
     let cancel = false;
-    setGateState("checking");
     (async () => {
       const [{ data }, { data: roleRows }] = await Promise.all([
         supabase
@@ -70,6 +70,7 @@ function AuthenticatedLayout() {
 
       if (superAdminBypass) {
         setGateState("ok");
+        setGateChecked(true);
         if (path === "/pendiente-aprobacion" || path.startsWith("/onboarding")) {
           navigate({ to: "/" });
         }
@@ -79,7 +80,7 @@ function AuthenticatedLayout() {
       if (!aprobado) {
         if (path !== "/pendiente-aprobacion") {
           setGateState("blocked");
-          // Auditar intento de acceso bloqueado (best-effort)
+          setGateChecked(true);
           supabase.from("onboarding_auditoria" as never).insert({
             user_id: session.user.id,
             evento: "acceso_bloqueado",
@@ -89,18 +90,23 @@ function AuthenticatedLayout() {
           navigate({ to: "/pendiente-aprobacion" });
         } else {
           setGateState("ok");
+          setGateChecked(true);
         }
         return;
       }
       if (onb !== "completado" && !path.startsWith("/onboarding") && !path.startsWith("/mi-perfil")) {
         setGateState("blocked");
+        setGateChecked(true);
         navigate({ to: "/onboarding" });
         return;
       }
       setGateState("ok");
+      setGateChecked(true);
     })();
     return () => { cancel = true; };
-  }, [session, location.pathname, navigate]);
+    // Sólo revalidar cuando cambia la sesión, NO en cada navegación (evita parpadeo).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
