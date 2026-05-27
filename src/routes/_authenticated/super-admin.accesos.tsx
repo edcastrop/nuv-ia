@@ -85,6 +85,20 @@ function AccesosPage() {
   const [desbloqueoError, setDesbloqueoError] = useState<string | null>(null);
   const [accionMsg, setAccionMsg] = useState<{ tipo: "ok" | "err"; texto: string } | null>(null);
 
+  // Reactivaciones
+  const [vista, setVista] = useState<"usuarios" | "reactivaciones">("usuarios");
+  const [reactTab, setReactTab] = useState<EstadoReactivacion | "todos">("PENDIENTE");
+  const [solicitudes, setSolicitudes] = useState<SolicitudReactivacion[]>([]);
+  const [solLoading, setSolLoading] = useState(false);
+  const [solSel, setSolSel] = useState<SolicitudReactivacion | null>(null);
+  const [showAprobarSol, setShowAprobarSol] = useState(false);
+  const [showRechazarSol, setShowRechazarSol] = useState(false);
+  const [solRolAsign, setSolRolAsign] = useState<AppRole | "">("");
+  const [solObs, setSolObs] = useState("");
+  const [solMotivoRech, setSolMotivoRech] = useState("");
+  const [solBusy, setSolBusy] = useState(false);
+  const [solError, setSolError] = useState<string | null>(null);
+
   const reload = async () => {
     setLoading(true);
     try {
@@ -93,7 +107,17 @@ function AccesosPage() {
     } finally { setLoading(false); }
   };
 
-  useEffect(() => { if (!rolesLoading && isAdmin) reload(); /* eslint-disable-next-line */ }, [tab, rolesLoading, isAdmin]);
+  const reloadSolicitudes = async () => {
+    setSolLoading(true);
+    try {
+      const data = await listSolicitudesReactivacion(reactTab === "todos" ? undefined : reactTab);
+      setSolicitudes(data);
+    } finally { setSolLoading(false); }
+  };
+
+  useEffect(() => { if (!rolesLoading && isAdmin && vista === "usuarios") reload(); /* eslint-disable-next-line */ }, [tab, rolesLoading, isAdmin, vista]);
+  useEffect(() => { if (!rolesLoading && isSuperAdmin && vista === "reactivaciones") reloadSolicitudes(); /* eslint-disable-next-line */ }, [reactTab, rolesLoading, isSuperAdmin, vista]);
+
 
   useEffect(() => {
     if (seleccionado) {
