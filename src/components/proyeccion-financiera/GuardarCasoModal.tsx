@@ -137,7 +137,7 @@ export function GuardarCasoModal({ open, onClose, input, resultados, escenarios,
       });
 
       try {
-        await cambiarEstadoCaso(e.id, "simulado", "proyeccion_financiera_guardada");
+        await cambiarEstadoCaso(e.id, "simulado", "simulacion_guardada");
       } catch (err) {
         console.warn("[estado]", err);
       }
