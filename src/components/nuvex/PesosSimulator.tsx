@@ -688,7 +688,7 @@ export function PesosSimulator({
             })()}
 
           {recomendada && (
-            <div className="flex justify-end">
+            <div className="flex flex-wrap justify-end gap-2">
               <button
                 onClick={async () => {
                   if (!recomendada || !calc || calc.propuestas.length === 0) {
@@ -707,6 +707,15 @@ export function PesosSimulator({
               >
                 Exportar PDF profesional
               </button>
+              <EnviarDocumentoButton
+                expedienteId={init?.id}
+                tipo="propuesta_comercial"
+                elementId="pdf-content-pesos"
+                filename={`NUVEX_Propuesta_Pesos_${sanitizeFileName(client.nombre)}.pdf`}
+                disabled={!recomendada || !calc || calc.propuestas.length === 0}
+                disabledReason="Primero calcula la simulación en pesos."
+                label="Enviar propuesta al cliente"
+              />
             </div>
           )}
 
