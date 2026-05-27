@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Card } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
@@ -7,13 +7,41 @@ import {
   BANCOS_DISPONIBLES,
   type ApoderadoNuvex, type ApoderadoInput,
 } from "@/lib/apoderados";
-import { Pencil, Trash2, Plus, X, Star, Building2 } from "lucide-react";
+import { Pencil, Trash2, Plus, X, Star, Building2, ShieldAlert } from "lucide-react";
 import { CitySelect } from "@/components/ui/CitySelect";
+import { useUserRole } from "@/hooks/useUserRole";
 
 export const Route = createFileRoute("/_authenticated/apoderados-nuvex")({
-  component: ApoderadosPage,
+  component: ApoderadosPageGuard,
   head: () => ({ meta: [{ title: "Apoderados NUVEX" }] }),
 });
+
+function ApoderadosPageGuard() {
+  const { isSuperAdmin, loading } = useUserRole();
+  if (loading) {
+    return <div className="p-10 text-center text-sm text-[#242424]/60">Verificando permisos…</div>;
+  }
+  if (!isSuperAdmin) {
+    return (
+      <div className="mx-auto max-w-xl px-6 py-16">
+        <Card>
+          <div className="flex flex-col items-center text-center gap-3 py-8">
+            <ShieldAlert size={36} className="text-[#B42318]" />
+            <h2 className="text-lg font-semibold text-[#242424]">Acceso restringido</h2>
+            <p className="text-sm text-[#242424]/70">
+              No tienes permiso para acceder a este módulo. La configuración de Apoderados es exclusiva del Super Admin.
+            </p>
+            <Link to="/" className="rounded-lg px-4 py-2 text-sm font-semibold text-white" style={{ background: NUVEX.azul }}>
+              Volver al inicio
+            </Link>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+  return <ApoderadosPage />;
+}
+
 
 const empty: ApoderadoInput = {
   nombre: "", cedula: "", lugar_expedicion: "", ciudad: "", celular: "", correo: "", activo: true,
