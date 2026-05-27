@@ -321,10 +321,17 @@ export function ProyeccionFinancieraView() {
             </button>
             <button
               onClick={exportCsv}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#445DA3] px-3 py-2 text-sm font-semibold text-white hover:bg-[#37508f]"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[#445DA3]/30 bg-white px-3 py-2 text-sm font-semibold text-[#445DA3] hover:bg-[#445DA3]/5"
             >
-              <Download className="h-3.5 w-3.5" /> Exportar tabla
+              <Download className="h-3.5 w-3.5" /> CSV
             </button>
+            <button
+              onClick={exportPdf}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#445DA3] to-[#37508f] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:from-[#37508f] hover:to-[#2c4378]"
+            >
+              <FileText className="h-3.5 w-3.5" /> Exportar PDF Premium
+            </button>
+
           </div>
         </div>
 
