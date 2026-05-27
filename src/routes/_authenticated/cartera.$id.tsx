@@ -99,6 +99,12 @@ function CarteraDetail() {
           banco={c.expediente.banco}
           producto={c.expediente.producto}
           numeroCredito={c.expediente.numero_credito}
+          clienteCorreoInicial={
+            ((c.expediente.cliente_data as Record<string, unknown> | null)?.correo as string) ??
+            ((c.expediente.cliente_data as Record<string, unknown> | null)?.email as string) ??
+            ""
+          }
+          clienteDataActual={(c.expediente.cliente_data as Record<string, unknown> | null) ?? {}}
           honorariosPagados={Number(c.pagado)}
           fechaPago={pagos[0]?.fecha ?? new Date().toISOString().slice(0, 10)}
           yaEnviado={c.expediente.estado_caso === "paz_y_salvo_generado" || c.expediente.estado_caso === "proceso_cerrado"}
