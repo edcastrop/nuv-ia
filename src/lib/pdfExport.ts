@@ -179,17 +179,15 @@ export function validatePdfLayout(elementId: string): LayoutValidationResult {
    EXPORTACIÓN A PDF — con validación obligatoria
 ============================================================ */
 
-export async function exportElementToPdf(elementId: string, filename: string) {
-  // Esperar a que React termine de pintar el contenido
+async function renderElementToPdf(elementId: string): Promise<jsPDF | null> {
   await new Promise((r) => setTimeout(r, 300));
 
   const element = document.getElementById(elementId);
   if (!element) {
     alert("No se encontró el contenido PDF (" + elementId + ").");
-    return;
+    return null;
   }
 
-  // ===== Esperar a que todas las imágenes (logo, watermark) carguen =====
   const imgs = Array.from(element.querySelectorAll("img"));
   await Promise.all(
     imgs.map((img) => {
@@ -203,73 +201,69 @@ export async function exportElementToPdf(elementId: string, filename: string) {
     }),
   );
 
-  // ===== Validación de layout =====
   const validation = validatePdfLayout(elementId);
   if (!validation.ok) {
     console.warn("[NUVEX PDF] Layout warnings:", validation.issues);
   }
 
-  // Verificar que al menos un logo cargó (defensa contra exports sin marca)
   const logoOk = imgs.some((i) => i.naturalWidth > 0);
   if (!logoOk && imgs.length > 0) {
     console.warn("[NUVEX PDF] Logo no cargó correctamente — el PDF puede salir sin marca.");
   }
 
+  const canvas = await html2canvas(element, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: "#ffffff",
+    logging: false,
+    windowWidth: 1200,
+    onclone: (doc) => {
+      const target = doc.getElementById(elementId) as HTMLElement | null;
+      if (target) {
+        target.style.position = "static";
+        target.style.left = "0";
+        target.style.top = "0";
+        target.style.right = "auto";
+        target.style.bottom = "auto";
+        target.style.margin = "0";
+        target.style.zIndex = "auto";
+        target.style.opacity = "1";
+        target.style.visibility = "visible";
+        target.style.transform = "none";
+        target.style.pointerEvents = "auto";
+        target.style.display = "block";
+      }
+    },
+  });
 
-  try {
-    // html2canvas-pro clona el documento antes de renderizar.
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: "#ffffff",
-      logging: false,
-      windowWidth: 1200,
-      onclone: (doc) => {
-        const target = doc.getElementById(elementId) as HTMLElement | null;
-        if (target) {
-          target.style.position = "static";
-          target.style.left = "0";
-          target.style.top = "0";
-          target.style.right = "auto";
-          target.style.bottom = "auto";
-          target.style.margin = "0";
-          target.style.zIndex = "auto";
-          target.style.opacity = "1";
-          target.style.visibility = "visible";
-          target.style.transform = "none";
-          target.style.pointerEvents = "auto";
-          target.style.display = "block";
-        }
-      },
-    });
+  if (!canvas.width || !canvas.height) {
+    alert("No se pudo renderizar el contenido del PDF.");
+    return null;
+  }
 
-    if (!canvas.width || !canvas.height) {
-      alert("No se pudo renderizar el contenido del PDF.");
-      return;
-    }
-
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF("p", "mm", "a4");
-
-    const imgWidth = 210;
-    const pageHeight = 297;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-    let heightLeft = imgHeight;
-    let position = 0;
-
+  const imgData = canvas.toDataURL("image/png");
+  const pdf = new jsPDF("p", "mm", "a4");
+  const imgWidth = 210;
+  const pageHeight = 297;
+  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  let heightLeft = imgHeight;
+  let position = 0;
+  pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+  heightLeft -= pageHeight;
+  const TOLERANCE_MM = 20;
+  while (heightLeft > TOLERANCE_MM) {
+    position = heightLeft - imgHeight;
+    pdf.addPage();
     pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
     heightLeft -= pageHeight;
+  }
+  return pdf;
+}
 
-    // Tolerancia: si el sobrante es menor a 20mm, NO crear página adicional.
-    const TOLERANCE_MM = 20;
-    while (heightLeft > TOLERANCE_MM) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-    }
-
+export async function exportElementToPdf(elementId: string, filename: string) {
+  try {
+    const pdf = await renderElementToPdf(elementId);
+    if (!pdf) return;
     pdf.save(filename);
   } catch (err) {
     console.error("[pdfExport] Falló la exportación:", err);
@@ -277,6 +271,24 @@ export async function exportElementToPdf(elementId: string, filename: string) {
     alert("No se pudo exportar el PDF: " + msg);
   }
 }
+
+export async function elementToPdfBlob(
+  elementId: string,
+): Promise<{ blob: Blob; base64: string } | null> {
+  const pdf = await renderElementToPdf(elementId);
+  if (!pdf) return null;
+  const blob = pdf.output("blob") as Blob;
+  const arrayBuffer = await blob.arrayBuffer();
+  const bytes = new Uint8Array(arrayBuffer);
+  let bin = "";
+  const CHUNK = 0x8000;
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    bin += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)));
+  }
+  const base64 = btoa(bin);
+  return { blob, base64 };
+}
+
 
 export function sanitizeFileName(name: string): string {
   return (name || "cliente")
