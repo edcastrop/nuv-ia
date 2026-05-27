@@ -4,6 +4,7 @@ import { NUVEX, CORPORATIVO } from "./constants";
 import { formatCOP, formatNumber, parseCurrency, parseDecimal } from "../../lib/format";
 import { applyHonorariosFloor, HONORARIOS_MIN_BASE, HONORARIOS_MIN_FINAL } from "../../lib/finance";
 import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
+import { EnviarDocumentoButton } from "./EnviarDocumentoButton";
 import { setAprobado, type AprobadoData, type EstadoExpediente } from "@/lib/expedientes";
 import { calcularRecalculoHonorarios, guardarRecalculoHonorarios } from "@/lib/honorarios";
 import type { ClientData } from "./ClientFields";
@@ -478,6 +479,21 @@ export function ResultadoFinal({
               >
                 Generar cuenta de cobro
               </button>
+              <EnviarDocumentoButton
+                expedienteId={expedienteId}
+                tipo="informe_final"
+                elementId={informeId}
+                filename={`NUVEX_Informe_Final_${sanitizeFileName(client.nombre)}.pdf`}
+                label="Enviar informe final al cliente"
+              />
+              <EnviarDocumentoButton
+                expedienteId={expedienteId}
+                tipo="cuenta_cobro_cliente"
+                elementId={cuentaId}
+                filename={`NUVEX_Cuenta_Cobro_${consecutivo}_${sanitizeFileName(client.nombre)}.pdf`}
+                label="Enviar cuenta de cobro al cliente"
+                bgColor={NUVEX.negro}
+              />
               <PazYSalvo
                 client={client}
                 enabled={estado === "PAGADO" || honorariosPagadosManual}

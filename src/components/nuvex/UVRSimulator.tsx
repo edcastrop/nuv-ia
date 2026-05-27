@@ -28,6 +28,7 @@ import {
 } from "./ScenarioTable";
 import { PrintDocument } from "./PrintDocument";
 import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
+import { EnviarDocumentoButton } from "./EnviarDocumentoButton";
 import {
   DiscountModule,
   computeDiscount,
@@ -756,7 +757,7 @@ export function UVRSimulator({
             })()}
 
           {recomendada && (
-            <div className="flex justify-end">
+            <div className="flex flex-wrap justify-end gap-2">
               <button
                 onClick={async () => {
                   if (
@@ -778,6 +779,15 @@ export function UVRSimulator({
               >
                 Exportar PDF profesional
               </button>
+              <EnviarDocumentoButton
+                expedienteId={init?.id}
+                tipo="propuesta_comercial"
+                elementId="pdf-content-uvr"
+                filename={`NUVEX_Propuesta_UVR_${sanitizeFileName(client.nombre)}.pdf`}
+                disabled={!recomendada || !calc || calc.propuestas.length === 0}
+                disabledReason="Primero calcula la simulación UVR."
+                label="Enviar propuesta al cliente"
+              />
             </div>
           )}
 
