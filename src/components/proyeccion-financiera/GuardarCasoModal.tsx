@@ -26,12 +26,12 @@ export function GuardarCasoModal({ open, onClose, input, resultados, escenarios,
   const navigate = useNavigate();
   const [form, setForm] = useState({
     nombre: input.clienteNombre || "",
-    cedula: "",
-    celular: "",
-    correo: "",
+    cedula: input.cedula || "",
+    celular: input.celular || "",
+    correo: input.correo || "",
     banco: input.banco || "",
-    ciudad: "",
-    numeroCredito: "",
+    ciudad: input.ciudad || "",
+    numeroCredito: input.numeroCredito || "",
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
