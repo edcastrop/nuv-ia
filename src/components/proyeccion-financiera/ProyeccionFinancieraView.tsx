@@ -52,6 +52,7 @@ import {
 } from "@/lib/proyeccionFinanciera";
 import { exportProyeccionFinancieraPDF } from "@/lib/proyeccionFinancieraExport";
 import { ExtractoReader, type ExtractoApplyPayload } from "@/components/nuvex/ExtractoReader";
+import { GuardarCasoModal } from "./GuardarCasoModal";
 
 // ──────────────────────────────────────────────────────────────────────────
 // Brand tokens
