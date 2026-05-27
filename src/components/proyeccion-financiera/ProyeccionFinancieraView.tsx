@@ -794,7 +794,7 @@ export function ProyeccionFinancieraView() {
         </div>
 
         <div className="mt-8 text-center text-[11px] text-[#242424]/40">
-          <PieIcon className="mx-auto mb-1 h-4 w-4" />
+          <Sparkles className="mx-auto mb-1 h-4 w-4" />
           NUVEX · Proyección Financiera · Las proyecciones son referenciales y dependen de los datos ingresados.
         </div>
       </div>
