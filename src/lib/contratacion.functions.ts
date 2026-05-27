@@ -42,7 +42,24 @@ export const enviarContratacion = createServerFn({ method: "POST" })
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY no está configurado.");
     if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY no está configurado. Conecta Resend.");
 
-    const fromAddress = process.env.CONTRATACION_FROM_EMAIL || "NUVEX <onboarding@resend.dev>";
+    // Obtener datos del asesor responsable del caso para personalizar el remitente
+    // y configurar el Reply-To, de modo que las respuestas lleguen directamente a él.
+    const asesorId = (exp as { asesor_id: string | null }).asesor_id ?? userId;
+    const { data: asesor } = await supabase
+      .from("profiles")
+      .select("nombre, email, correo_corporativo")
+      .eq("id", asesorId)
+      .maybeSingle();
+
+    const sanitizeName = (s: string) =>
+      s.replace(/[\r\n"<>]/g, "").trim().slice(0, 80);
+    const asesorNombre = asesor?.nombre ? sanitizeName(asesor.nombre) : "NUVEX";
+    const asesorEmail = (asesor?.correo_corporativo || asesor?.email || "").trim();
+
+    const SENDER_ADDRESS =
+      process.env.CONTRATACION_FROM_EMAIL || "notificaciones@notify.nuvex.com.co";
+    const fromAddress = `${asesorNombre} (NUVEX) <${SENDER_ADDRESS}>`;
+    const replyTo = asesorEmail || SENDER_ADDRESS;
 
     // Llamar a Resend
     const resp = await fetch(`${RESEND_GATEWAY}/emails`, {
@@ -55,6 +72,7 @@ export const enviarContratacion = createServerFn({ method: "POST" })
       body: JSON.stringify({
         from: fromAddress,
         to: data.destinatarios,
+        reply_to: replyTo,
         subject: data.asunto,
         text: data.cuerpo,
         html: await wrapNuvexEmail({ subject: data.asunto, bodyText: data.cuerpo }),
@@ -64,6 +82,7 @@ export const enviarContratacion = createServerFn({ method: "POST" })
         })),
       }),
     });
+
 
     const body = await resp.json().catch(() => ({}));
     const docsMeta = data.attachments.map((a) => ({
