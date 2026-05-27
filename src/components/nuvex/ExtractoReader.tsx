@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Upload,
@@ -247,8 +247,24 @@ export function ExtractoReader({ modo, onApply }: Props) {
   const [parsed, setParsed] = useState<ExtractoData | null>(null);
   const [archivoPath, setArchivoPath] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [dragActive, setDragActive] = useState(false);
+
+  // Evita que el navegador abra el archivo si el usuario suelta fuera de la zona
+  useEffect(() => {
+    if (!open) return;
+    const prevent = (e: DragEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("dragover", prevent);
+    window.addEventListener("drop", prevent);
+    return () => {
+      window.removeEventListener("dragover", prevent);
+      window.removeEventListener("drop", prevent);
+    };
+  }, [open]);
 
   const callExtract = useServerFn(extractStatement);
+
 
   const reset = () => {
     setStage("idle");
@@ -925,26 +941,41 @@ export function ExtractoReader({ modo, onApply }: Props) {
                   onDragOver={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    if (e.dataTransfer) e.dataTransfer.dropEffect = "copy";
+                    if (!dragActive) setDragActive(true);
                   }}
                   onDragEnter={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    setDragActive(true);
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setDragActive(false);
                   }}
                   onDrop={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    setDragActive(false);
                     const f = e.dataTransfer.files?.[0];
                     if (f) handleFileSelect(f);
                   }}
                   onClick={() => fileRef.current?.click()}
-                  className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed py-12 text-center transition-colors hover:border-white/30"
-                  style={{ borderColor: "rgba(255,255,255,0.15)" }}
+                  className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed py-12 text-center transition-all ${
+                    dragActive ? "scale-[1.01]" : ""
+                  }`}
+                  style={{
+                    borderColor: dragActive ? "#84B98F" : "rgba(255,255,255,0.15)",
+                    background: dragActive ? "rgba(132,185,143,0.08)" : "transparent",
+                  }}
                 >
-                  <Upload className="h-10 w-10 text-white/40" />
-                  <div className="text-sm text-white/70">
-                    Arrastra el extracto o haz clic para seleccionar
+                  <Upload className={`h-10 w-10 ${dragActive ? "text-[#84B98F]" : "text-white/40"}`} />
+                  <div className="text-sm text-white/70 pointer-events-none">
+                    {dragActive ? "Suelta el archivo aquí" : "Arrastra el extracto o haz clic para seleccionar"}
                   </div>
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       fileRef.current?.click();
@@ -954,9 +985,10 @@ export function ExtractoReader({ modo, onApply }: Props) {
                   >
                     Seleccionar archivo
                   </button>
-                  <div className="text-[11px] text-white/40">PDF, JPG o PNG · hasta 6 páginas</div>
+                  <div className="text-[11px] text-white/40 pointer-events-none">PDF, JPG o PNG · hasta 6 páginas</div>
                 </div>
               )}
+
 
               {stage === "reading" && (
                 <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
