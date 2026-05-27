@@ -6,10 +6,13 @@ import {
   listUsuariosAcceso, aprobarUsuario, rechazarUsuario,
   bloquearUsuario, activarUsuario, listAuditoria,
   previewDesvinculacion, desvincularUsuario, desvincularUsuarioSinTraslado,
+  listSolicitudesReactivacion, aprobarReactivacion, rechazarReactivacion,
   type UsuarioAcceso, type EstadoAcceso, type PreviewDesvinculacion,
+  type SolicitudReactivacion, type EstadoReactivacion,
 } from "@/lib/seguridad";
-import { ShieldCheck, ShieldAlert, ShieldOff, Clock, CheckCircle2, XCircle, Search, History, UserMinus, AlertTriangle } from "lucide-react";
+import { ShieldCheck, ShieldAlert, ShieldOff, Clock, CheckCircle2, XCircle, Search, History, UserMinus, AlertTriangle, RefreshCw } from "lucide-react";
 import { UserAvatar } from "@/components/nuvex/UserAvatar";
+
 
 export const Route = createFileRoute("/_authenticated/super-admin/accesos")({
   component: AccesosPage,
@@ -82,6 +85,20 @@ function AccesosPage() {
   const [desbloqueoError, setDesbloqueoError] = useState<string | null>(null);
   const [accionMsg, setAccionMsg] = useState<{ tipo: "ok" | "err"; texto: string } | null>(null);
 
+  // Reactivaciones
+  const [vista, setVista] = useState<"usuarios" | "reactivaciones">("usuarios");
+  const [reactTab, setReactTab] = useState<EstadoReactivacion | "todos">("PENDIENTE");
+  const [solicitudes, setSolicitudes] = useState<SolicitudReactivacion[]>([]);
+  const [solLoading, setSolLoading] = useState(false);
+  const [solSel, setSolSel] = useState<SolicitudReactivacion | null>(null);
+  const [showAprobarSol, setShowAprobarSol] = useState(false);
+  const [showRechazarSol, setShowRechazarSol] = useState(false);
+  const [solRolAsign, setSolRolAsign] = useState<AppRole | "">("");
+  const [solObs, setSolObs] = useState("");
+  const [solMotivoRech, setSolMotivoRech] = useState("");
+  const [solBusy, setSolBusy] = useState(false);
+  const [solError, setSolError] = useState<string | null>(null);
+
   const reload = async () => {
     setLoading(true);
     try {
@@ -90,7 +107,17 @@ function AccesosPage() {
     } finally { setLoading(false); }
   };
 
-  useEffect(() => { if (!rolesLoading && isAdmin) reload(); /* eslint-disable-next-line */ }, [tab, rolesLoading, isAdmin]);
+  const reloadSolicitudes = async () => {
+    setSolLoading(true);
+    try {
+      const data = await listSolicitudesReactivacion(reactTab === "todos" ? undefined : reactTab);
+      setSolicitudes(data);
+    } finally { setSolLoading(false); }
+  };
+
+  useEffect(() => { if (!rolesLoading && isAdmin && vista === "usuarios") reload(); /* eslint-disable-next-line */ }, [tab, rolesLoading, isAdmin, vista]);
+  useEffect(() => { if (!rolesLoading && isSuperAdmin && vista === "reactivaciones") reloadSolicitudes(); /* eslint-disable-next-line */ }, [reactTab, rolesLoading, isSuperAdmin, vista]);
+
 
   useEffect(() => {
     if (seleccionado) {
@@ -121,11 +148,47 @@ function AccesosPage() {
             <ShieldCheck size={12} /> Centro de seguridad
           </div>
           <h1 className="text-2xl font-semibold" style={{ color: NEGRO }}>Gestión de Accesos</h1>
-          <div className="text-sm text-[#242424]/60">Aprueba, rechaza y administra el acceso a la plataforma NUVEX</div>
+          <div className="text-sm text-[#242424]/60">Aprueba, rechaza, reactiva y administra el acceso a la plataforma NUVEX</div>
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Selector de vista (Usuarios / Reactivaciones) */}
+      {isSuperAdmin && (
+        <div className="flex gap-2 border-b border-[#E3E7EE]">
+          <button
+            onClick={() => setVista("usuarios")}
+            className="px-4 py-2 text-sm font-semibold border-b-2 transition -mb-px"
+            style={vista === "usuarios"
+              ? { borderColor: AZUL, color: AZUL }
+              : { borderColor: "transparent", color: "#6B7280" }}
+          >Usuarios</button>
+          <button
+            onClick={() => setVista("reactivaciones")}
+            className="px-4 py-2 text-sm font-semibold border-b-2 transition -mb-px inline-flex items-center gap-2"
+            style={vista === "reactivaciones"
+              ? { borderColor: AZUL, color: AZUL }
+              : { borderColor: "transparent", color: "#6B7280" }}
+          >
+            <RefreshCw size={14} /> Reactivaciones
+            {solicitudes.filter((s) => s.estado === "PENDIENTE").length > 0 && (
+              <span className="rounded-full bg-[#B42318] text-white text-[10px] font-bold px-1.5 py-0.5">
+                {solicitudes.filter((s) => s.estado === "PENDIENTE").length}
+              </span>
+            )}
+          </button>
+        </div>
+      )}
+
+      {vista === "reactivaciones" ? (
+        <ReactivacionesPanel
+          tab={reactTab} setTab={setReactTab}
+          solicitudes={solicitudes} loading={solLoading}
+          onAprobar={(s) => { setSolSel(s); setSolRolAsign((s.rol_solicitado as AppRole) || (s.rol_actual as AppRole) || ""); setSolObs(""); setSolError(null); setShowAprobarSol(true); }}
+          onRechazar={(s) => { setSolSel(s); setSolMotivoRech(""); setSolError(null); setShowRechazarSol(true); }}
+        />
+      ) : (
+        <>
+
       <div className="flex flex-wrap gap-2">
         {TABS.map((t) => {
           const active = tab === t.v;
@@ -734,9 +797,178 @@ function AccesosPage() {
           </div>
         </Modal>
       )}
+        </>
+      )}
+
+      {/* Modal Aprobar Reactivación */}
+      {showAprobarSol && solSel && (
+        <Modal onClose={() => !solBusy && setShowAprobarSol(false)} title={`Reactivar acceso · ${solSel.nombre || solSel.correo}`}>
+          <p className="mb-3 text-sm text-[#242424]/75">
+            El usuario recuperará acceso completo a NUVEX conservando todo su historial (auditoría, academia, expedientes, comisiones, colaboración).
+          </p>
+          <div className="mb-3 grid grid-cols-2 gap-2 text-[11px]">
+            <div className="rounded-md bg-[#FAFBFD] border border-[#E3E7EE] p-2"><b className="block uppercase tracking-wider text-[#242424]/55">Rol anterior</b>{solSel.rol_actual || "—"}</div>
+            <div className="rounded-md bg-[#FAFBFD] border border-[#E3E7EE] p-2"><b className="block uppercase tracking-wider text-[#242424]/55">Rol solicitado</b>{solSel.rol_solicitado || "—"}</div>
+          </div>
+          <label className="block mb-3">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Rol a asignar al reactivar</span>
+            <select value={solRolAsign} onChange={(e) => setSolRolAsign(e.target.value as AppRole | "")}
+              className="mt-1.5 w-full rounded-[10px] border border-[#E1E5EE] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#445DA3]">
+              <option value="">— Mantener / sin rol —</option>
+              {ROLES_DISPONIBLES.map((r) => <option key={r} value={r}>{r}</option>)}
+            </select>
+          </label>
+          <label className="block mb-3">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Observación (opcional)</span>
+            <textarea value={solObs} onChange={(e) => setSolObs(e.target.value)} rows={2}
+              className="mt-1.5 w-full rounded-[10px] border border-[#E1E5EE] bg-[#FAFBFD] px-3 py-2.5 text-sm outline-none focus:border-[#445DA3]" />
+          </label>
+          {solError && <div className="mb-3 rounded-md bg-[#FDECEC] px-3 py-2 text-xs text-[#B42318]">{solError}</div>}
+          <div className="flex justify-end gap-2">
+            <button disabled={solBusy} onClick={() => setShowAprobarSol(false)} className="rounded-lg border border-[#E3E7EE] px-4 py-2 text-sm font-medium">Cancelar</button>
+            <button
+              disabled={solBusy}
+              onClick={async () => {
+                setSolError(null); setSolBusy(true);
+                try {
+                  await aprobarReactivacion(solSel.id, (solRolAsign || undefined) as AppRole | undefined, solObs.trim() || undefined);
+                  setShowAprobarSol(false); setSolSel(null);
+                  setAccionMsg({ tipo: "ok", texto: "Usuario reactivado correctamente." });
+                  setTimeout(() => setAccionMsg(null), 4000);
+                  await reloadSolicitudes();
+                } catch (e) { setSolError((e as Error).message); } finally { setSolBusy(false); }
+              }}
+              className="rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+              style={{ background: `linear-gradient(135deg,${AZUL},${VERDE})` }}
+            >{solBusy ? "Reactivando…" : "Confirmar reactivación"}</button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Modal Rechazar Reactivación */}
+      {showRechazarSol && solSel && (
+        <Modal onClose={() => !solBusy && setShowRechazarSol(false)} title={`Rechazar reactivación · ${solSel.nombre || solSel.correo}`}>
+          <label className="block mb-3">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Motivo del rechazo (obligatorio, mín. 5)</span>
+            <textarea value={solMotivoRech} onChange={(e) => setSolMotivoRech(e.target.value)} rows={4}
+              className="mt-1.5 w-full rounded-[10px] border border-[#E1E5EE] bg-[#FAFBFD] px-3 py-2.5 text-sm outline-none focus:border-[#B42318]" />
+          </label>
+          {solError && <div className="mb-3 rounded-md bg-[#FDECEC] px-3 py-2 text-xs text-[#B42318]">{solError}</div>}
+          <div className="flex justify-end gap-2">
+            <button disabled={solBusy} onClick={() => setShowRechazarSol(false)} className="rounded-lg border border-[#E3E7EE] px-4 py-2 text-sm font-medium">Cancelar</button>
+            <button
+              disabled={solBusy || solMotivoRech.trim().length < 5}
+              onClick={async () => {
+                setSolError(null); setSolBusy(true);
+                try {
+                  await rechazarReactivacion(solSel.id, solMotivoRech.trim());
+                  setShowRechazarSol(false); setSolSel(null);
+                  setAccionMsg({ tipo: "ok", texto: "Solicitud rechazada." });
+                  setTimeout(() => setAccionMsg(null), 4000);
+                  await reloadSolicitudes();
+                } catch (e) { setSolError((e as Error).message); } finally { setSolBusy(false); }
+              }}
+              className="rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+              style={{ background: "#B42318" }}
+            >{solBusy ? "Rechazando…" : "Confirmar rechazo"}</button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
+
+function ReactivacionesPanel({
+  tab, setTab, solicitudes, loading, onAprobar, onRechazar,
+}: {
+  tab: EstadoReactivacion | "todos";
+  setTab: (t: EstadoReactivacion | "todos") => void;
+  solicitudes: SolicitudReactivacion[];
+  loading: boolean;
+  onAprobar: (s: SolicitudReactivacion) => void;
+  onRechazar: (s: SolicitudReactivacion) => void;
+}) {
+  const tabs: Array<{ v: EstadoReactivacion | "todos"; label: string }> = [
+    { v: "PENDIENTE", label: "Pendientes" },
+    { v: "APROBADA", label: "Aprobadas" },
+    { v: "RECHAZADA", label: "Rechazadas" },
+    { v: "todos", label: "Todas" },
+  ];
+  const estBadge: Record<EstadoReactivacion, { bg: string; fg: string }> = {
+    PENDIENTE: { bg: "#FEF3C7", fg: "#92400E" },
+    APROBADA: { bg: "#EAF7EE", fg: "#1F6D3D" },
+    RECHAZADA: { bg: "#FDECEC", fg: "#B42318" },
+  };
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        {tabs.map((t) => (
+          <button key={t.v} onClick={() => setTab(t.v)}
+            className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium border"
+            style={tab === t.v
+              ? { background: `linear-gradient(135deg,${AZUL},${VERDE})`, color: "#fff", borderColor: AZUL }
+              : { background: "#fff", color: NEGRO, borderColor: "#E3E7EE" }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+      {loading ? (
+        <div className="p-12 text-center text-sm text-[#242424]/60">Cargando solicitudes…</div>
+      ) : solicitudes.length === 0 ? (
+        <Card><div className="py-10 text-center text-sm text-[#242424]/60">No hay solicitudes en este estado.</div></Card>
+      ) : (
+        <Card>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-[10px] uppercase tracking-wider text-[#242424]/60 text-left border-b border-[#E3E7EE]">
+                  <th className="py-2">Nombre</th>
+                  <th>Correo</th>
+                  <th>Rol actual</th>
+                  <th>Rol solicitado</th>
+                  <th>Fecha solicitud</th>
+                  <th>Estado</th>
+                  <th className="text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {solicitudes.map((s) => (
+                  <tr key={s.id} className="border-b border-[#E3E7EE] last:border-0 align-top">
+                    <td className="py-3 pr-2">{s.nombre || "—"}</td>
+                    <td className="py-3 pr-2 text-[#242424]/75">{s.correo}</td>
+                    <td className="py-3 pr-2 text-xs">{s.rol_actual || "—"}</td>
+                    <td className="py-3 pr-2 text-xs">{s.rol_solicitado || "—"}</td>
+                    <td className="py-3 pr-2 text-xs text-[#242424]/70">{new Date(s.fecha_solicitud).toLocaleString("es-CO")}</td>
+                    <td className="py-3 pr-2">
+                      <span className="inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                        style={{ background: estBadge[s.estado].bg, color: estBadge[s.estado].fg }}>{s.estado}</span>
+                    </td>
+                    <td className="py-3 text-right">
+                      {s.estado === "PENDIENTE" ? (
+                        <div className="inline-flex gap-1">
+                          <button onClick={() => onAprobar(s)} className="rounded-md px-2.5 py-1 text-[11px] font-semibold text-white" style={{ background: VERDE }}>Reactivar</button>
+                          <button onClick={() => onRechazar(s)} className="rounded-md px-2.5 py-1 text-[11px] font-semibold text-white" style={{ background: "#B42318" }}>Rechazar</button>
+                        </div>
+                      ) : (
+                        <span className="text-[10px] text-[#242424]/55">
+                          {s.fecha_aprobacion ? new Date(s.fecha_aprobacion).toLocaleDateString("es-CO") : "—"}
+                        </span>
+                      )}
+                      {s.observacion_admin && (
+                        <div className="mt-1 text-[10px] text-[#242424]/60 italic max-w-[200px] truncate" title={s.observacion_admin}>{s.observacion_admin}</div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+    </div>
+  );
+}
+
 
 function Stat({ label, v, muted }: { label: string; v: number; muted?: boolean }) {
   return (

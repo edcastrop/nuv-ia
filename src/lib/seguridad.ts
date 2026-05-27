@@ -59,6 +59,59 @@ export async function desvincularUsuarioSinTraslado(
 }
 export type MfaMetodo = "ninguno" | "email" | "totp";
 
+// ============ Reactivaciones ============
+export type EstadoReactivacion = "PENDIENTE" | "APROBADA" | "RECHAZADA";
+
+export interface SolicitudReactivacion {
+  id: string;
+  user_id: string | null;
+  nombre: string | null;
+  correo: string;
+  rol_actual: string | null;
+  rol_solicitado: string | null;
+  motivo: string | null;
+  estado: EstadoReactivacion;
+  aprobado_por: string | null;
+  fecha_aprobacion: string | null;
+  observacion_admin: string | null;
+  fecha_solicitud: string;
+  created_at: string;
+}
+
+export async function solicitarReactivacionPorEmail(
+  email: string, rolSolicitado?: string, motivo?: string, nombre?: string
+): Promise<{ status: "created" | "already_pending" | "exists_not_desvinculado" | "not_found" | "invalid"; solicitud_id?: string; estado?: string }> {
+  const { data, error } = await supabase.rpc("solicitar_reactivacion_por_email" as never, {
+    _email: email, _rol_solicitado: rolSolicitado ?? null, _motivo: motivo ?? null, _nombre: nombre ?? null,
+  } as never);
+  if (error) throw error;
+  return data as unknown as { status: "created" | "already_pending" | "exists_not_desvinculado" | "not_found" | "invalid"; solicitud_id?: string; estado?: string };
+}
+
+export async function listSolicitudesReactivacion(estado?: EstadoReactivacion): Promise<SolicitudReactivacion[]> {
+  let q = supabase.from("solicitudes_reactivacion" as never).select("*").order("created_at", { ascending: false });
+  if (estado) q = q.eq("estado", estado);
+  const { data, error } = await q;
+  if (error) throw error;
+  return (data ?? []) as unknown as SolicitudReactivacion[];
+}
+
+export async function aprobarReactivacion(solicitudId: string, nuevoRol?: AppRole, observacion?: string) {
+  const { data, error } = await supabase.rpc("reactivar_usuario_solicitud" as never, {
+    _solicitud_id: solicitudId, _nuevo_rol: nuevoRol ?? null, _observacion: observacion ?? null,
+  } as never);
+  if (error) throw error;
+  return data as unknown as { ok: boolean; user_id: string; rol: string };
+}
+
+export async function rechazarReactivacion(solicitudId: string, motivo: string) {
+  const { error } = await supabase.rpc("rechazar_reactivacion_solicitud" as never, {
+    _solicitud_id: solicitudId, _motivo: motivo,
+  } as never);
+  if (error) throw error;
+}
+
+
 export interface UsuarioAcceso {
   id: string;
   nombre: string | null;

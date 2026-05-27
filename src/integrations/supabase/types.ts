@@ -2521,6 +2521,86 @@ export type Database = {
         }
         Relationships: []
       }
+      solicitudes_reactivacion: {
+        Row: {
+          aprobado_por: string | null
+          correo: string
+          created_at: string
+          estado: string
+          fecha_aprobacion: string | null
+          fecha_solicitud: string
+          id: string
+          motivo: string | null
+          nombre: string | null
+          observacion_admin: string | null
+          rol_actual: string | null
+          rol_solicitado: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          aprobado_por?: string | null
+          correo: string
+          created_at?: string
+          estado?: string
+          fecha_aprobacion?: string | null
+          fecha_solicitud?: string
+          id?: string
+          motivo?: string | null
+          nombre?: string | null
+          observacion_admin?: string | null
+          rol_actual?: string | null
+          rol_solicitado?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          aprobado_por?: string | null
+          correo?: string
+          created_at?: string
+          estado?: string
+          fecha_aprobacion?: string | null
+          fecha_solicitud?: string
+          id?: string
+          motivo?: string | null
+          nombre?: string | null
+          observacion_admin?: string | null
+          rol_actual?: string | null
+          rol_solicitado?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solicitudes_reactivacion_aprobado_por_fkey"
+            columns: ["aprobado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitudes_reactivacion_aprobado_por_fkey"
+            columns: ["aprobado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles_publicos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitudes_reactivacion_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitudes_reactivacion_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_publicos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tesoreria_movimientos: {
         Row: {
           categoria: string
@@ -2806,8 +2886,29 @@ export type Database = {
         Returns: string
       }
       preview_desvinculacion: { Args: { _target: string }; Returns: Json }
+      reactivar_usuario_solicitud: {
+        Args: {
+          _nuevo_rol?: Database["public"]["Enums"]["app_role"]
+          _observacion?: string
+          _solicitud_id: string
+        }
+        Returns: Json
+      }
+      rechazar_reactivacion_solicitud: {
+        Args: { _motivo: string; _solicitud_id: string }
+        Returns: Json
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      solicitar_reactivacion_por_email: {
+        Args: {
+          _email: string
+          _motivo?: string
+          _nombre?: string
+          _rol_solicitado?: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       academia_rol:

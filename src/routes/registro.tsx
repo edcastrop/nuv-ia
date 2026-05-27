@@ -30,6 +30,7 @@ function RegistroPage() {
   });
   const [err, setErr] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [doneMode, setDoneMode] = useState<"signup" | "reactivacion">("signup");
   const [busy, setBusy] = useState(false);
   const [showPwd, setShowPwd] = useState(false);
 
@@ -38,6 +39,35 @@ function RegistroPage() {
     setErr(null); setBusy(true);
     try {
       if (form.password.length < 8) throw new Error("La contraseña debe tener al menos 8 caracteres.");
+
+      // 1) Pre-check: si el correo corresponde a un usuario DESVINCULADO,
+      //    no crear cuenta nueva: generar solicitud de reactivación.
+      try {
+        const { data: pre, error: preErr } = await supabase.rpc(
+          "solicitar_reactivacion_por_email" as never,
+          {
+            _email: form.email.trim(),
+            _rol_solicitado: form.rol_solicitado,
+            _motivo: "Reingreso solicitado desde el formulario de registro",
+            _nombre: form.nombre,
+          } as never
+        );
+        if (!preErr && pre) {
+          const status = (pre as { status?: string }).status;
+          if (status === "created" || status === "already_pending") {
+            setDoneMode("reactivacion");
+            setDone(true);
+            return;
+          }
+          if (status === "exists_not_desvinculado") {
+            throw new Error("Este correo ya está registrado en NUVEX. Inicia sesión o contacta al administrador.");
+          }
+        }
+      } catch (preCheckErr) {
+        // Si la RPC indicó conflicto, abortamos; si fue un error de red genérico, continuamos al signUp normal.
+        if (preCheckErr instanceof Error && preCheckErr.message.includes("ya está registrado")) throw preCheckErr;
+      }
+
       const { error } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
@@ -54,6 +84,7 @@ function RegistroPage() {
       });
       if (error) throw error;
       await supabase.auth.signOut();
+      setDoneMode("signup");
       setDone(true);
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : "Error inesperado");
@@ -62,16 +93,21 @@ function RegistroPage() {
     }
   };
 
+
   if (done) {
+    const esReactivacion = doneMode === "reactivacion";
     return (
       <main className="nuvex-register-shell">
         <div className="nuvex-register-right" style={{ minHeight: "100vh" }}>
           <section className="nuvex-register-card nuvex-register-card--success">
             <div className="nrx-status-icon mb-5"><ShieldCheck className="w-7 h-7" strokeWidth={2.5} /></div>
-            <h1 className="nuvex-register-title">Solicitud enviada</h1>
+            <h1 className="nuvex-register-title">
+              {esReactivacion ? "Solicitud de reactivación enviada" : "Solicitud enviada"}
+            </h1>
             <p className="nuvex-register-copy mx-auto mt-3">
-              Tu cuenta quedó en <b>estado pendiente</b>. Un administrador NUVEX revisará y aprobará tu acceso.
-              Recibirás una notificación cuando puedas iniciar sesión.
+              {esReactivacion
+                ? "Tu cuenta ya existe en NUVEX y se encuentra desvinculada. Hemos enviado una solicitud de reactivación al administrador. Recibirás una notificación cuando tu acceso sea restaurado."
+                : <>Tu cuenta quedó en <b>estado pendiente</b>. Un administrador NUVEX revisará y aprobará tu acceso. Recibirás una notificación cuando puedas iniciar sesión.</>}
             </p>
             <button onClick={() => navigate({ to: "/login" })} className="nuvex-register-submit mt-7">
               Volver al login
@@ -81,6 +117,7 @@ function RegistroPage() {
       </main>
     );
   }
+
 
   return (
     <main className="nuvex-register-shell">
