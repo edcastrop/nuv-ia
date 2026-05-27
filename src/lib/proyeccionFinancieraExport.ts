@@ -108,11 +108,11 @@ export interface ExportCtx {
 
 export function exportProyeccionFinancieraPDF(ctx: ExportCtx) {
   const pdf = new jsPDF("p", "mm", "a4");
-  const totalPages = 3;
   const { input, escenario, actual, optimizado, kpis } = ctx;
 
   // ============ PÁGINA 1 — Portada + datos cliente + KPIs
-  header(pdf, ctx, 1, totalPages);
+  header(pdf, ctx, 1);
+
 
   pdf.setTextColor(...NEGRO);
   pdf.setFont("helvetica", "bold");
