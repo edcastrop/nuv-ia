@@ -188,7 +188,8 @@ export function exportProyeccionFinancieraPDF(ctx: ExportCtx) {
 
   // ============ PÁGINA 2 — Comparativo + estrategia
   pdf.addPage();
-  header(pdf, ctx, 2, totalPages);
+  header(pdf, ctx, 2);
+
 
   pdf.setTextColor(...NEGRO);
   pdf.setFont("helvetica", "bold");
