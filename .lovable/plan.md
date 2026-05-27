@@ -1,111 +1,96 @@
-## ONBOARDING V1 NUVEX — Plan de implementación
 
-Aprovechamos la infraestructura existente (`profiles.estado_acceso`, `rol_solicitado`, `aprobado_por`, registro público, bandeja en `/super-admin/accesos`) y construimos encima el flujo guiado de 14 fases, **sin bloquear acceso por academia**.
+# Plan: Módulo "Proyección Financiera NUVEX"
 
----
-
-### 1. Base de datos (migración única)
-
-Añadir a `public.profiles`:
-- `onboarding_estado` text default `'pendiente'` — valores: `pendiente | en_progreso | completado`
-- `onboarding_paso` int default `0` (0–4: bienvenida, perfil, tour, academia, checklist)
-- `onboarding_started_at`, `onboarding_completed_at` timestamptz
-- `bienvenida_vista`, `perfil_completo`, `tour_completo`, `academia_asignada`, `checklist_completo` booleans
-- `pais` ya existe ✓
-
-Nueva tabla `onboarding_config` (singleton, edita Super Admin):
-- `video_bienvenida_url`, `mensaje_bienvenida`, `descripcion_empresa`
-
-Nueva tabla `onboarding_auditoria`:
-- `user_id`, `evento` (registro/aprobacion/rechazo/inicio/fin/asignacion_academia/activacion_permisos), `actor_id`, `detalle jsonb`, `created_at`
-
-Trigger `on_profile_approved`: cuando `estado_acceso` cambia a `activo`, inserta auditoría + marca `academia_asignada=true` (la asignación real ya es por rol via `academia_cursos.rol_destino`).
-
-GRANTs y RLS:
-- `profiles`: ya tiene políticas; añadir UPDATE propio para campos onboarding.
-- `onboarding_config`: SELECT authenticated, ALL super_admin.
-- `onboarding_auditoria`: INSERT authenticated (self o admin), SELECT super_admin/gerencia.
-
-### 2. Restringir roles solicitables en `/registro`
-
-Editar `src/routes/registro.tsx`:
-- Quitar `super_admin` de `ROLES_SOLICITABLES`.
-- Lista final: Licenciado, Operaciones, Jurídica, Contabilidad, Director Financiero QA, Apoderado.
-- Añadir campos: `pais` (default Colombia), foto de perfil opcional (upload a bucket `avatars`).
-- Insertar en `onboarding_auditoria` evento `registro`.
-
-### 3. Pantalla "Pendiente aprobación"
-
-Hoy `_authenticated.tsx` solo verifica sesión. Añadir gate:
-- Leer `profiles.estado_acceso` del usuario.
-- Si `pendiente` → redirigir a `/pendiente-aprobacion` (nueva ruta pública con sesión, fuera del layout principal).
-- Si `rechazado` → pantalla con motivo + botón cerrar sesión.
-
-### 4. Bandeja Super Admin de pendientes
-
-Reutilizar `/super-admin/accesos` (ya existe). Verificar/extender para mostrar nuevos campos (país, celular, ciudad, rol solicitado, fecha registro) y acciones: Aprobar, Rechazar, Solicitar info, Cambiar rol. Al aprobar:
-- `estado_acceso='activo'`, asigna rol via `user_roles`, inicia onboarding (`onboarding_estado='en_progreso'`), inserta auditoría.
-
-### 5. Wizard de Onboarding `/onboarding`
-
-Nueva ruta `_authenticated/onboarding.tsx` con 5 pasos:
-1. **Bienvenida** — Logo, mensaje, video (de `onboarding_config`), botón "Comenzar".
-2. **Perfil** — validar nombre, celular, ciudad, país, avatar; usar componentes existentes de `mi-perfil`.
-3. **Tour** — overlay interactivo (componente propio con tooltips) explicando Dashboard, Casos, Expedientes, Simulador, Colaboración, Academia, NUVEX GPT, Perfil, Notificaciones. Skippable.
-4. **Academia** — muestra automáticamente el curso asignado por rol (consulta `academia_cursos` por `rol_destino`), botón "Ver mi academia" (no bloqueante).
-5. **Checklist** — resumen visual de los 6 ítems; botón "Finalizar onboarding" → marca `onboarding_estado='completado'`.
-
-Gate en `_authenticated.tsx`: si `estado_acceso='activo'` y `onboarding_estado!='completado'` y la ruta actual no es `/onboarding` ni `/mi-perfil`, redirige a `/onboarding`. Permitir saltar paso individual; el wizard guarda progreso parcial.
-
-### 6. Banner académico no bloqueante
-
-Componente `<AcademiaBanner />` en layout autenticado: si hay módulos pendientes o certificación incompleta, muestra barra superior "📚 Capacitación en progreso · X% completado · Continuar". No interrumpe operación.
-
-### 7. Notificaciones (recordatorios)
-
-Insertar en `colab_notificaciones` (tabla existente) recordatorios:
-- A los 3/7 días si `perfil_completo=false`
-- A los 7 días si `onboarding_estado='en_progreso'`
-- Semanalmente si academia <50%
-
-V1: insert al cargar `_authenticated` con dedupe por día (no requiere cron).
-
-### 8. Panel Super Admin `/super-admin/onboarding`
-
-Nueva ruta con KPIs (counts sobre `profiles`):
-- Pendientes / Aprobados / Rechazados
-- Onboarding completado / en progreso
-- Usuarios activos
-- Tabla de últimos registros con su estado y % avance.
-
-### 9. Auditoría
-
-Wrapper `logOnboarding(evento, detalle)` que inserta en `onboarding_auditoria`. Llamarlo en: registro, aprobación, rechazo, inicio/fin onboarding, asignación academia, activación permisos.
+Nuevo módulo avanzado de modelado financiero hipotecario / leasing habitacional, accesible para **Licenciado**, **Analista Financiero (director_financiero_qa)** y **Director Financiero**. Permite construir proyecciones desde cero o desde un expediente existente, comparar escenarios ilimitados y exportar informes corporativos.
 
 ---
 
-### Archivos a crear
-- `supabase/migrations/{ts}_onboarding_v1.sql`
-- `src/routes/pendiente-aprobacion.tsx`
-- `src/routes/_authenticated/onboarding.tsx`
-- `src/routes/_authenticated/super-admin.onboarding.tsx`
-- `src/components/onboarding/StepBienvenida.tsx`
-- `src/components/onboarding/StepPerfil.tsx`
-- `src/components/onboarding/StepTour.tsx`
-- `src/components/onboarding/StepAcademia.tsx`
-- `src/components/onboarding/StepChecklist.tsx`
-- `src/components/onboarding/AcademiaBanner.tsx`
-- `src/lib/onboarding.ts` (helpers + auditoría)
+## 1. Acceso y ruta
 
-### Archivos a editar
-- `src/routes/registro.tsx` — roles permitidos + país + avatar opcional
-- `src/routes/_authenticated.tsx` — gate de estado_acceso y onboarding
-- `src/routes/_authenticated/super-admin.accesos.tsx` — refrescar UI de aprobación (si necesario)
+- Ruta: `/_authenticated/proyeccion-financiera` (entrada nueva en sidebar: "Proyección Financiera").
+- Gate de rol: `licenciado`, `director_financiero_qa`, `gerencia`, `super_admin`, `admin`.
+- Mantener la ruta existente `/proyeccion` (proyección técnica dentro del expediente) intacta — este es un módulo nuevo independiente.
 
-### Lo que NO se toca
-- Roles, permisos, simuladores, expedientes, cartera, jurídica, contabilidad, academia (contenido).
-- La academia sigue siendo **opcional**: no bloquea CRM, solo banner de seguimiento.
+## 2. Modelo de datos (Supabase)
+
+Nuevas tablas:
+
+- **`proyecciones_financieras`** — cabecera del caso de proyección
+  - `expediente_id` (nullable, FK lógico), `cliente_nombre`, `banco`, `tipo_producto` (hipotecario|leasing), `moneda` (pesos|uvr), `fecha_desembolso`, `valor_desembolsado`, `saldo_capital`, `cuota_actual`, `tea_pct`, `cuotas_totales`, `cuotas_pagadas`, `cuotas_pendientes`, `fecha_terminacion_estimada`, `seguro_vida`, `seguro_incendio`, `seguro_terremoto`, `otros_seguros`, `uvr_valor`, `saldo_uvr`, `variacion_uvr_pct`, `created_by`, `notas`
+- **`proyeccion_escenarios`** — escenarios ilimitados por proyección
+  - `proyeccion_id` (FK), `nombre`, `tipo` (actual|nuvex|conservador|agresivo|personalizado), `aporte_mensual_extra`, `abono_extraordinario`, `nueva_tasa`, `nuevo_plazo`, `resultado_jsonb` (KPIs + tabla amortización cacheada), `es_principal`
+- RLS: SELECT/INSERT/UPDATE/DELETE para roles autorizados + creador; GRANT a `authenticated` y `service_role`.
+
+## 3. Motor financiero (frontend)
+
+Nuevo archivo `src/lib/proyeccionFinanciera.ts` que reutiliza `src/lib/proyeccion.ts` y añade:
+
+- `calcularEscenario({ saldo, tasa, cuota, seguros, aporteExtra, abonoExtraordinario })` → devuelve tabla mes-a-mes, totales, fecha fin, costo total.
+- `compararEscenarios(actual, optimizado)` → KPIs: años/meses eliminados, intereses evitados, seguros evitados, ahorro total, ROI cliente, costo de no actuar (= intereses + seguros que se pagarían de más manteniendo el escenario actual).
+- Soporte pesos y UVR (usa motor existente).
+
+## 4. UI / componentes
+
+Estructura en `src/components/proyeccion-financiera/`:
+
+- `ProyeccionFinancieraView.tsx` — layout principal tipo dashboard fintech (Bloomberg/Revolut), responsive mobile-first.
+- `FormularioDatos.tsx` — secciones colapsables:
+  - Información general (banco, producto, moneda, fecha, cliente)
+  - Datos del crédito (valor, saldo, cuota, tasa, plazos)
+  - Seguros desglosados (vida, incendio, terremoto, otros) + cálculos derivados
+  - Datos UVR (condicional)
+  - Botón "Cargar desde expediente" si se pasó `?expedienteId=…`
+- `CalculadoraAvanzada.tsx` — sliders/inputs para cuota, tasa, plazo, aportes mensuales, abonos extraordinarios; recálculo en vivo.
+- `MotorNuvex.tsx` — chips de aporte rápido (+100k, +200k, +300k, +500k, libre) y resultados instantáneos.
+- `ComparadorEscenarios.tsx` — tabla lado a lado "Crédito Actual" vs "Optimizado NUVEX".
+- `EscenariosManager.tsx` — crear/duplicar/eliminar/renombrar escenarios; ilimitados.
+- `KpiCards.tsx` — tarjetas destacadas con prioridad visual al "Costo de No Actuar".
+- `GraficasProyeccion.tsx` — 6 gráficas con `recharts`:
+  1. Capital vs Interés mes a mes (área apilada)
+  2. Tiempo Actual vs Optimizado (barras)
+  3. Composición de cuota (pie/donut)
+  4. Saldo pendiente (línea)
+  5. Ahorro acumulado (línea)
+  6. Costo de no actuar (barras comparativas)
+- `TablaAmortizacion.tsx` — virtualizada + exportable.
+- `InformeEjecutivo.tsx` — preview del informe.
+
+## 5. Exportaciones
+
+- **PDF Corporativo**: reutilizar `src/lib/pdf/nuvexPdfKit.ts` para generar informe con header de marca, KPIs, gráficas (renderizadas), tabla resumen y recomendación.
+- **Excel**: `xlsx` (ya disponible) con hojas: Resumen, Escenarios, Amortización, KPIs.
+
+## 6. Identidad visual
+
+- Tokens NUVEX existentes: azul `#445DA3`, verde `#84B98F`, oscuro `#242424`.
+- Diseño minimalista fintech: tarjetas blancas con sombra suave, tipografía clara, KPI hero destacando "Costo de No Actuar" en rojo/ámbar.
+
+## 7. Preparación para "Lector IA de Extractos" (futuro)
+
+- `FormularioDatos` expone un prop `onPrefill(data)` y un slot `<UploadExtractoIA />` placeholder con tooltip "Próximamente".
+- Esquema de datos del formulario tipado en `src/lib/proyeccionFinanciera.ts` con un `ProyeccionFinancieraInput` que la IA podrá rellenar.
+
+## 8. Navegación / sidebar
+
+- Añadir item "Proyección Financiera" en el sidebar visible solo a roles autorizados (verificar el archivo del sidebar existente).
+- Desde un expediente: botón "Abrir en Proyección Financiera" que navega a `/proyeccion-financiera?expedienteId={id}`.
+
+## 9. Detalles técnicos clave
+
+- Recálculo derivado con `useMemo` (no se persiste en cada tecla; se guarda al pulsar "Guardar escenario").
+- Persistencia opcional: el módulo funciona 100% en cliente; guardar es opcional para historial.
+- Validaciones con `zod`.
+- Reutiliza `formatCOP`, `parseCurrency`, hooks `useUserRole`, `useAuth`.
+
+## 10. Entregables
+
+1. Migración SQL (2 tablas + RLS + GRANTS).
+2. `src/lib/proyeccionFinanciera.ts` (motor + tipos).
+3. Componentes en `src/components/proyeccion-financiera/`.
+4. Ruta `src/routes/_authenticated/proyeccion-financiera.tsx`.
+5. Entrada en sidebar.
+6. Exportadores PDF y Excel.
 
 ---
 
-¿Aprueba el plan para implementarlo?
+**Confirma para construir.** Si quieres ajustar el alcance (p. ej. omitir persistencia en BD en esta primera versión, o reducir gráficas), dímelo y replanteo antes de implementar.
