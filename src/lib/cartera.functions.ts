@@ -420,7 +420,7 @@ export const enviarCorreoCartera = createServerFn({ method: "POST" })
     if (destinatarios.length === 0) throw new Error("No hay correo del cliente en el expediente.");
 
     const saldo = Number(cartera.honorarios_totales) - Number(cartera.pagado);
-    const asunto = ASUNTOS[data.tipo](exp.cliente_nombre);
+    const asunto = ASUNTOS[data.tipo](exp.cliente_nombre, exp.banco);
     const body = buildEmailBody(data.tipo, {
       cliente: exp.cliente_nombre,
       saldo,
