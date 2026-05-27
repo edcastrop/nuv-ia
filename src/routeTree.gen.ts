@@ -18,6 +18,7 @@ import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/
 import { Route as ApiNuvexIaStreamRouteImport } from './routes/api/nuvex-ia-stream'
 import { Route as ApiNuvexGptChatRouteImport } from './routes/api/nuvex-gpt-chat'
 import { Route as AuthenticatedQaRouteImport } from './routes/_authenticated/qa'
+import { Route as AuthenticatedProyeccionFinancieraRouteImport } from './routes/_authenticated/proyeccion-financiera'
 import { Route as AuthenticatedProyeccionRouteImport } from './routes/_authenticated/proyeccion'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedNuvexIaRouteImport } from './routes/_authenticated/nuvex-ia'
@@ -116,6 +117,12 @@ const AuthenticatedQaRoute = AuthenticatedQaRouteImport.update({
   path: '/qa',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedProyeccionFinancieraRoute =
+  AuthenticatedProyeccionFinancieraRouteImport.update({
+    id: '/proyeccion-financiera',
+    path: '/proyeccion-financiera',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedProyeccionRoute = AuthenticatedProyeccionRouteImport.update({
   id: '/proyeccion',
   path: '/proyeccion',
@@ -440,6 +447,7 @@ export interface FileRoutesByFullPath {
   '/nuvex-ia': typeof AuthenticatedNuvexIaRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/proyeccion': typeof AuthenticatedProyeccionRoute
+  '/proyeccion-financiera': typeof AuthenticatedProyeccionFinancieraRoute
   '/qa': typeof AuthenticatedQaRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
   '/api/nuvex-ia-stream': typeof ApiNuvexIaStreamRoute
@@ -500,6 +508,7 @@ export interface FileRoutesByTo {
   '/nuvex-ia': typeof AuthenticatedNuvexIaRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/proyeccion': typeof AuthenticatedProyeccionRoute
+  '/proyeccion-financiera': typeof AuthenticatedProyeccionFinancieraRoute
   '/qa': typeof AuthenticatedQaRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
   '/api/nuvex-ia-stream': typeof ApiNuvexIaStreamRoute
@@ -565,6 +574,7 @@ export interface FileRoutesById {
   '/_authenticated/nuvex-ia': typeof AuthenticatedNuvexIaRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/proyeccion': typeof AuthenticatedProyeccionRoute
+  '/_authenticated/proyeccion-financiera': typeof AuthenticatedProyeccionFinancieraRoute
   '/_authenticated/qa': typeof AuthenticatedQaRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
   '/api/nuvex-ia-stream': typeof ApiNuvexIaStreamRoute
@@ -631,6 +641,7 @@ export interface FileRouteTypes {
     | '/nuvex-ia'
     | '/onboarding'
     | '/proyeccion'
+    | '/proyeccion-financiera'
     | '/qa'
     | '/api/nuvex-gpt-chat'
     | '/api/nuvex-ia-stream'
@@ -691,6 +702,7 @@ export interface FileRouteTypes {
     | '/nuvex-ia'
     | '/onboarding'
     | '/proyeccion'
+    | '/proyeccion-financiera'
     | '/qa'
     | '/api/nuvex-gpt-chat'
     | '/api/nuvex-ia-stream'
@@ -755,6 +767,7 @@ export interface FileRouteTypes {
     | '/_authenticated/nuvex-ia'
     | '/_authenticated/onboarding'
     | '/_authenticated/proyeccion'
+    | '/_authenticated/proyeccion-financiera'
     | '/_authenticated/qa'
     | '/api/nuvex-gpt-chat'
     | '/api/nuvex-ia-stream'
@@ -879,6 +892,13 @@ declare module '@tanstack/react-router' {
       path: '/qa'
       fullPath: '/qa'
       preLoaderRoute: typeof AuthenticatedQaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/proyeccion-financiera': {
+      id: '/_authenticated/proyeccion-financiera'
+      path: '/proyeccion-financiera'
+      fullPath: '/proyeccion-financiera'
+      preLoaderRoute: typeof AuthenticatedProyeccionFinancieraRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/proyeccion': {
@@ -1327,6 +1347,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedNuvexIaRoute: typeof AuthenticatedNuvexIaRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedProyeccionRoute: typeof AuthenticatedProyeccionRoute
+  AuthenticatedProyeccionFinancieraRoute: typeof AuthenticatedProyeccionFinancieraRoute
   AuthenticatedQaRoute: typeof AuthenticatedQaRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedApoderadoMisCasosRoute: typeof AuthenticatedApoderadoMisCasosRoute
@@ -1366,6 +1387,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedNuvexIaRoute: AuthenticatedNuvexIaRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedProyeccionRoute: AuthenticatedProyeccionRoute,
+  AuthenticatedProyeccionFinancieraRoute:
+    AuthenticatedProyeccionFinancieraRoute,
   AuthenticatedQaRoute: AuthenticatedQaRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedApoderadoMisCasosRoute: AuthenticatedApoderadoMisCasosRoute,
