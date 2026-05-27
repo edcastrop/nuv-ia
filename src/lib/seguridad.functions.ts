@@ -1,8 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { sendLovableEmail } from "@lovable.dev/email-js";
 
-const RESEND_GATEWAY = "https://connector-gateway.lovable.dev/resend";
+const SENDER_DOMAIN = "nuvex.com.co";
+const FROM_ADDRESS = "NUVEX Seguridad <seguridad@nuvex.com.co>";
 
 function hashCodigo(codigo: string): string {
   // Hash simple — el código vive 10 minutos. Para auditoría/integridad.
