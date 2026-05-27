@@ -11,6 +11,9 @@ import {
 import {
   registrarPago, crearAcuerdo, enviarPrejuridico, enviarCorreoCartera, registrarComunicacion,
 } from "@/lib/cartera.functions";
+import { enviarPazYSalvoCliente } from "@/lib/envios.functions";
+import { PazYSalvoDocument } from "@/components/nuvex/PazYSalvo";
+import { elementToPdfBlob, sanitizeFileName } from "@/lib/pdfExport";
 import {
   listCuentasReceptoras, getParametrosFinancieros, calcularDesgloseWompi,
   METODOS_PAGO, type CuentaReceptora, type MetodoPago,
