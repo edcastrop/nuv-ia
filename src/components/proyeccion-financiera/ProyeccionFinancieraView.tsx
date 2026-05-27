@@ -1525,6 +1525,14 @@ export function ProyeccionFinancieraView() {
           </div>
         </main>
       </div>
+      <GuardarCasoModal
+        open={guardarOpen}
+        onClose={() => setGuardarOpen(false)}
+        input={input}
+        resultados={{ actual: resActual.res, optimizado: selected.res }}
+        escenarios={escenarios}
+        kpis={kpis}
+      />
     </div>
   );
 }
