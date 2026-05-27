@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { X, FolderPlus, Loader2, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,7 +24,7 @@ interface Props {
 
 export function GuardarCasoModal({ open, onClose, input, resultados, escenarios, kpis }: Props) {
   const navigate = useNavigate();
-  const [form, setForm] = useState({
+  const projectionForm = {
     nombre: input.clienteNombre || "",
     cedula: input.cedula || "",
     celular: input.celular || "",
@@ -32,10 +32,27 @@ export function GuardarCasoModal({ open, onClose, input, resultados, escenarios,
     banco: input.banco || "",
     ciudad: input.ciudad || "",
     numeroCredito: input.numeroCredito || "",
-  });
+  };
+  const [form, setForm] = useState(projectionForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{ id: string } | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setForm(projectionForm);
+    setError(null);
+    setDone(null);
+  }, [
+    open,
+    input.clienteNombre,
+    input.cedula,
+    input.celular,
+    input.correo,
+    input.banco,
+    input.ciudad,
+    input.numeroCredito,
+  ]);
 
   if (!open) return null;
 
