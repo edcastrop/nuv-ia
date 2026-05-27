@@ -324,7 +324,45 @@ export function ProyeccionFinancieraView() {
             <Section title="Información general">
               <div className="grid gap-3">
                 <Field label="Cliente" value={input.clienteNombre} onChange={(v) => upd("clienteNombre", v)} placeholder="Nombre del cliente" />
-                <Field label="Banco" value={input.banco} onChange={(v) => upd("banco", v)} placeholder="Bancolombia, BBVA…" />
+                <label className="flex flex-col gap-1">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/60">Banco</span>
+                  <select
+                    value={input.banco}
+                    onChange={(e) => upd("banco", e.target.value)}
+                    className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-2 text-sm outline-none transition focus:border-[#445DA3] focus:ring-2 focus:ring-[#445DA3]/15"
+                  >
+                    <option value="">Seleccione un banco…</option>
+                    {[
+                      "Bancolombia",
+                      "Davivienda",
+                      "BBVA Colombia",
+                      "Banco de Bogotá",
+                      "Banco Caja Social",
+                      "Banco AV Villas",
+                      "Banco Popular",
+                      "Banco Colpatria (Scotiabank)",
+                      "Banco Falabella",
+                      "Banco Itaú",
+                      "Banco GNB Sudameris",
+                      "Banco Pichincha",
+                      "Banco Agrario",
+                      "Banco Serfinanza",
+                      "Banco W",
+                      "Banco Coomeva",
+                      "Bancoomeva",
+                      "Citibank Colombia",
+                      "Banco Mundo Mujer",
+                      "Banco Finandina",
+                      "Fondo Nacional del Ahorro (FNA)",
+                      "Confiar Cooperativa Financiera",
+                      "Coltefinanciera",
+                      "Crezcamos",
+                      "Otro",
+                    ].map((b) => (
+                      <option key={b} value={b}>{b}</option>
+                    ))}
+                  </select>
+                </label>
                 <div className="grid grid-cols-2 gap-3">
                   <label className="flex flex-col gap-1">
                     <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/60">Producto</span>
