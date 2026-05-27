@@ -12,6 +12,7 @@
 //     `LegalDoc`. Mantiene branding pero sin hero.
 
 import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 import {
   Document, Packer, Paragraph, TextRun, AlignmentType,
   HeadingLevel, Table, TableRow, TableCell, WidthType, BorderStyle,
@@ -22,9 +23,9 @@ import type { LegalDoc, DocBlock } from "./legalDocs";
 import {
   BRAND, LAYOUT, loadLogoDataURL, applyChrome,
   createNuvexPdf, nextPage,
-  drawHero, drawCardGrid, drawSectionCard,
+  drawHero,
   writeText, drawSignatures, roundedRect,
-  type BrandMeta, type CardItem, type SectionCardOpts,
+  type BrandMeta,
 } from "./pdf/nuvexPdfKit";
 
 // ─────────────────────────────── Routing por tipo ───────────────────────────
