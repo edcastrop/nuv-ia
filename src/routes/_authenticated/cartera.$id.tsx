@@ -91,6 +91,21 @@ function CarteraDetail() {
         </Card>
       )}
 
+      {saldo <= 0 && c.expediente && puedeGestionar && (
+        <PazYSalvoBlock
+          expedienteId={c.expediente.id}
+          clienteNombre={c.expediente.cliente_nombre}
+          cedula={c.expediente.cedula}
+          banco={c.expediente.banco}
+          producto={c.expediente.producto}
+          numeroCredito={c.expediente.numero_credito}
+          honorariosPagados={Number(c.pagado)}
+          fechaPago={pagos[0]?.fecha ?? new Date().toISOString().slice(0, 10)}
+          yaEnviado={c.expediente.estado_caso === "paz_y_salvo_generado" || c.expediente.estado_caso === "proceso_cerrado"}
+          onSent={reload}
+        />
+      )}
+
       <Card>
         <SectionTitle>Acciones</SectionTitle>
         {!puedeGestionar ? (
