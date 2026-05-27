@@ -389,7 +389,7 @@ export function buildDatosContrato(
     filename: `Ficha_Contractual_NUVEX_${(c.nombre || "Cliente").replace(/\s+/g, "_")}`,
     title: "Ficha Contractual NUVEX",
     blocks,
-    consecutivo: `NUVEX-FC-${year}-${seq}`,
+    consecutivo: `NVX_${year}_${seq}`,
     validationIssues: issues,
   };
 }
