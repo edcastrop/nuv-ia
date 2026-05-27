@@ -1,8 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { sendLovableEmail } from "@lovable.dev/email-js";
 
-const RESEND_GATEWAY = "https://connector-gateway.lovable.dev/resend";
+const SENDER_DOMAIN = "nuvex.com.co";
+const FROM_ADDRESS = "NUVEX Seguridad <seguridad@nuvex.com.co>";
 
 function hashCodigo(codigo: string): string {
   // Hash simple — el código vive 10 minutos. Para auditoría/integridad.
@@ -44,11 +46,10 @@ export const enviarCodigoMfaEmail = createServerFn({ method: "POST" })
     });
 
     const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
-    const RESEND_API_KEY = process.env.RESEND_API_KEY;
-    if (!LOVABLE_API_KEY || !RESEND_API_KEY) throw new Error("Email no está configurado.");
+    if (!LOVABLE_API_KEY) throw new Error("Email no está configurado.");
 
-    const from = process.env.CONTRATACION_FROM_EMAIL || "NUVEX Seguridad <onboarding@resend.dev>";
     const subject = "Tu código de verificación NUVEX";
+    const text = `Tu código NUVEX: ${codigo} (expira en 10 minutos).`;
     const html = `
 <div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#F5F7FB;padding:32px">
   <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #E7EAF1">
@@ -66,24 +67,24 @@ export const enviarCodigoMfaEmail = createServerFn({ method: "POST" })
   </div>
 </div>`;
 
-    const resp = await fetch(`${RESEND_GATEWAY}/emails`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "X-Connection-Api-Key": RESEND_API_KEY,
-      },
-      body: JSON.stringify({
-        from,
-        to: [prof.email],
-        subject,
-        html,
-        text: `Tu código NUVEX: ${codigo} (expira en 10 minutos).`,
-      }),
-    });
-    if (!resp.ok) {
-      const j = await resp.text();
-      throw new Error(`No se pudo enviar el código (${resp.status}): ${j.slice(0, 200)}`);
+    try {
+      await sendLovableEmail(
+        {
+          to: prof.email,
+          from: FROM_ADDRESS,
+          sender_domain: SENDER_DOMAIN,
+          subject,
+          html,
+          text,
+          purpose: "auth",
+          label: "mfa_codigo",
+          idempotency_key: `mfa-${userId}-${Date.now()}`,
+        },
+        { apiKey: LOVABLE_API_KEY }
+      );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      throw new Error(`No se pudo enviar el código: ${msg.slice(0, 200)}`);
     }
     return { ok: true, expira };
   });
