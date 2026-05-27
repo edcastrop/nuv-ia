@@ -30,6 +30,7 @@ function RegistroPage() {
   });
   const [err, setErr] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [doneMode, setDoneMode] = useState<"signup" | "reactivacion">("signup");
   const [busy, setBusy] = useState(false);
   const [showPwd, setShowPwd] = useState(false);
 
@@ -38,6 +39,35 @@ function RegistroPage() {
     setErr(null); setBusy(true);
     try {
       if (form.password.length < 8) throw new Error("La contraseña debe tener al menos 8 caracteres.");
+
+      // 1) Pre-check: si el correo corresponde a un usuario DESVINCULADO,
+      //    no crear cuenta nueva: generar solicitud de reactivación.
+      try {
+        const { data: pre, error: preErr } = await supabase.rpc(
+          "solicitar_reactivacion_por_email" as never,
+          {
+            _email: form.email.trim(),
+            _rol_solicitado: form.rol_solicitado,
+            _motivo: "Reingreso solicitado desde el formulario de registro",
+            _nombre: form.nombre,
+          } as never
+        );
+        if (!preErr && pre) {
+          const status = (pre as { status?: string }).status;
+          if (status === "created" || status === "already_pending") {
+            setDoneMode("reactivacion");
+            setDone(true);
+            return;
+          }
+          if (status === "exists_not_desvinculado") {
+            throw new Error("Este correo ya está registrado en NUVEX. Inicia sesión o contacta al administrador.");
+          }
+        }
+      } catch (preCheckErr) {
+        // Si la RPC indicó conflicto, abortamos; si fue un error de red genérico, continuamos al signUp normal.
+        if (preCheckErr instanceof Error && preCheckErr.message.includes("ya está registrado")) throw preCheckErr;
+      }
+
       const { error } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
@@ -54,6 +84,7 @@ function RegistroPage() {
       });
       if (error) throw error;
       await supabase.auth.signOut();
+      setDoneMode("signup");
       setDone(true);
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : "Error inesperado");
@@ -61,6 +92,7 @@ function RegistroPage() {
       setBusy(false);
     }
   };
+
 
   if (done) {
     return (
