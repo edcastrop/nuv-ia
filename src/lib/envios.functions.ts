@@ -114,7 +114,7 @@ export const enviarDocumentoCliente = createServerFn({ method: "POST" })
     const banco = data.bancoOverride || (exp as { banco: string | null }).banco || "";
     // Ahorro estimado para los cuerpos
     const propuesta = (exp as { propuesta_data: Record<string, unknown> | null }).propuesta_data ?? {};
-    const aprobado = (exp as { aprobado: Record<string, unknown> | null }).aprobado ?? {};
+    const aprobado = (exp as { aprobado_data: Record<string, unknown> | null }).aprobado_data ?? {};
     const ahorro = Number(
       (aprobado as { ahorroTotal?: unknown }).ahorroTotal ??
         (propuesta as { ahorroTotal?: unknown }).ahorroTotal ??
