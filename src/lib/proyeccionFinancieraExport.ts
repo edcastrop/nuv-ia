@@ -25,7 +25,11 @@ function fmtFecha(d: Date | null): string {
   return d.toLocaleDateString("es-CO", { year: "numeric", month: "long" });
 }
 
-function header(pdf: jsPDF, ctx: ExportCtx, page: number, total: number) {
+function fmtMes(d: Date): string {
+  return d.toLocaleDateString("es-CO", { year: "numeric", month: "short" });
+}
+
+function header(pdf: jsPDF, ctx: ExportCtx, page: number) {
   // Banda superior
   pdf.setFillColor(...NEGRO);
   pdf.rect(0, 0, 210, 24, "F");
@@ -47,8 +51,9 @@ function header(pdf: jsPDF, ctx: ExportCtx, page: number, total: number) {
   pdf.text(`${ctx.input.clienteNombre || "Cliente NUVEX"}`, 200, 11, { align: "right" });
   pdf.setFont("helvetica", "normal");
   pdf.setTextColor(200, 210, 235);
-  pdf.text(`Página ${page} de ${total}`, 200, 17, { align: "right" });
+  pdf.text(`Página ${page}`, 200, 17, { align: "right" });
 }
+
 
 function footer(pdf: jsPDF) {
   pdf.setDrawColor(220, 220, 220);
@@ -103,11 +108,11 @@ export interface ExportCtx {
 
 export function exportProyeccionFinancieraPDF(ctx: ExportCtx) {
   const pdf = new jsPDF("p", "mm", "a4");
-  const totalPages = 3;
   const { input, escenario, actual, optimizado, kpis } = ctx;
 
   // ============ PÁGINA 1 — Portada + datos cliente + KPIs
-  header(pdf, ctx, 1, totalPages);
+  header(pdf, ctx, 1);
+
 
   pdf.setTextColor(...NEGRO);
   pdf.setFont("helvetica", "bold");
@@ -183,7 +188,8 @@ export function exportProyeccionFinancieraPDF(ctx: ExportCtx) {
 
   // ============ PÁGINA 2 — Comparativo + estrategia
   pdf.addPage();
-  header(pdf, ctx, 2, totalPages);
+  header(pdf, ctx, 2);
+
 
   pdf.setTextColor(...NEGRO);
   pdf.setFont("helvetica", "bold");
@@ -281,60 +287,152 @@ export function exportProyeccionFinancieraPDF(ctx: ExportCtx) {
 
   footer(pdf);
 
-  // ============ PÁGINA 3 — Tabla de amortización (resumen anual)
+  // ============ PÁGINA 3 — Resumen anual comparativo
   pdf.addPage();
-  header(pdf, ctx, 3, totalPages);
+  header(pdf, ctx, 3);
 
   pdf.setTextColor(...NEGRO);
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(15);
-  pdf.text("Proyección Anual — Estrategia Optimizada", 10, 36);
+  pdf.text("Resumen Anual Comparativo", 10, 36);
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(9);
   pdf.setTextColor(...GRIS_MEDIO);
-  pdf.text("Resumen consolidado por año del escenario seleccionado.", 10, 41);
+  pdf.text("Crédito actual vs. estrategia optimizada — agrupado por año.", 10, 41);
 
-  // Agrupar por año
-  const porAnio = new Map<number, { capital: number; interes: number; seguros: number; cuotas: number; saldoFin: number }>();
-  optimizado.cuotas.forEach((c) => {
-    const a = c.fecha.getFullYear();
-    const prev = porAnio.get(a) ?? { capital: 0, interes: 0, seguros: 0, cuotas: 0, saldoFin: 0 };
-    prev.capital += c.capital;
-    prev.interes += c.interes;
-    prev.seguros += c.seguros;
-    prev.cuotas += 1;
-    prev.saldoFin = c.saldoFinal;
-    porAnio.set(a, prev);
-  });
+  type AnioRow = { capital: number; interes: number; seguros: number; cuotas: number; saldoFin: number };
+  const groupBy = (res: ResultadoEscenario): Map<number, AnioRow> => {
+    const m = new Map<number, AnioRow>();
+    res.cuotas.forEach((c) => {
+      const a = c.fecha.getFullYear();
+      const prev = m.get(a) ?? { capital: 0, interes: 0, seguros: 0, cuotas: 0, saldoFin: 0 };
+      prev.capital += c.capital;
+      prev.interes += c.interes;
+      prev.seguros += c.seguros;
+      prev.cuotas += 1;
+      prev.saldoFin = c.saldoFinal;
+      m.set(a, prev);
+    });
+    return m;
+  };
+
+  const anosActual = groupBy(actual);
+  const anosOpt = groupBy(optimizado);
+  const todosLosAnios = Array.from(new Set([...anosActual.keys(), ...anosOpt.keys()])).sort();
 
   autoTable(pdf, {
     startY: 46,
-    head: [["Año", "Cuotas", "Capital", "Intereses", "Seguros", "Total año", "Saldo final"]],
-    headStyles: { fillColor: AZUL, textColor: 255, fontSize: 9 },
-    styles: { fontSize: 8.5, cellPadding: 2 },
+    head: [
+      [
+        { content: "Año", rowSpan: 2 },
+        { content: "Crédito Actual", colSpan: 3, styles: { halign: "center", fillColor: ROJO } },
+        { content: escenario.nombre, colSpan: 3, styles: { halign: "center", fillColor: VERDE } },
+      ],
+      ["Cuotas", "Total año", "Saldo", "Cuotas", "Total año", "Saldo"],
+    ],
+    headStyles: { fillColor: NEGRO, textColor: 255, fontSize: 8.5, halign: "center" },
+    styles: { fontSize: 8, cellPadding: 1.8, halign: "right" },
+    columnStyles: { 0: { halign: "center", fontStyle: "bold" } },
     alternateRowStyles: { fillColor: GRIS_CLARO },
-    body: Array.from(porAnio.entries()).map(([anio, r]) => [
-      `${anio}`,
-      `${r.cuotas}`,
-      formatCOP(r.capital),
-      formatCOP(r.interes),
-      formatCOP(r.seguros),
-      formatCOP(r.capital + r.interes + r.seguros),
-      formatCOP(r.saldoFin),
-    ]),
+    body: todosLosAnios.map((anio) => {
+      const a = anosActual.get(anio);
+      const o = anosOpt.get(anio);
+      return [
+        `${anio}`,
+        a ? `${a.cuotas}` : "—",
+        a ? formatCOP(a.capital + a.interes + a.seguros) : "—",
+        a ? formatCOP(a.saldoFin) : "—",
+        o ? `${o.cuotas}` : "—",
+        o ? formatCOP(o.capital + o.interes + o.seguros) : "—",
+        o ? formatCOP(o.saldoFin) : "—",
+      ];
+    }),
     foot: [[
       "Total",
+      `${actual.cuotas.length}`,
+      formatCOP(actual.totalPagado),
+      "—",
       `${optimizado.cuotas.length}`,
-      formatCOP(optimizado.totalCapital),
-      formatCOP(optimizado.totalIntereses),
-      formatCOP(optimizado.totalSeguros),
       formatCOP(optimizado.totalPagado),
       "—",
     ]],
-    footStyles: { fillColor: NEGRO, textColor: 255, fontSize: 9, fontStyle: "bold" },
+    footStyles: { fillColor: NEGRO, textColor: 255, fontSize: 8.5, fontStyle: "bold", halign: "right" },
+    didDrawPage: () => footer(pdf),
   });
 
-  footer(pdf);
+  // ============ ANEXO A — Tabla mes a mes · Crédito Actual
+  const renderAmortizacion = (
+    titulo: string,
+    subtitulo: string,
+    res: ResultadoEscenario,
+    accent: [number, number, number],
+  ) => {
+    pdf.addPage();
+    const startPage = pdf.getNumberOfPages();
+    header(pdf, ctx, startPage);
+
+    pdf.setTextColor(...NEGRO);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(15);
+    pdf.text(titulo, 10, 36);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(9);
+    pdf.setTextColor(...GRIS_MEDIO);
+    pdf.text(subtitulo, 10, 41);
+
+    autoTable(pdf, {
+      startY: 46,
+      margin: { top: 30, bottom: 18, left: 10, right: 10 },
+      head: [["#", "Fecha", "Cuota", "Capital", "Interés", "Seguros", "Saldo final"]],
+      headStyles: { fillColor: accent, textColor: 255, fontSize: 8.5, halign: "right" },
+      columnStyles: {
+        0: { halign: "center", cellWidth: 14, fontStyle: "bold" },
+        1: { halign: "center", cellWidth: 26 },
+      },
+      styles: { fontSize: 7.8, cellPadding: 1.4, halign: "right" },
+      alternateRowStyles: { fillColor: GRIS_CLARO },
+      body: res.cuotas.map((c) => [
+        `${c.numero}`,
+        fmtMes(c.fecha),
+        formatCOP(c.cuotaConExtra),
+        formatCOP(c.capital),
+        formatCOP(c.interes),
+        formatCOP(c.seguros),
+        formatCOP(c.saldoFinal),
+      ]),
+      foot: [[
+        { content: "TOTAL", colSpan: 2, styles: { halign: "center", fontStyle: "bold" } },
+        formatCOP(res.totalPagado),
+        formatCOP(res.totalCapital),
+        formatCOP(res.totalIntereses),
+        formatCOP(res.totalSeguros),
+        "—",
+      ]],
+      footStyles: { fillColor: NEGRO, textColor: 255, fontSize: 8.5, fontStyle: "bold", halign: "right" },
+      didDrawPage: (data) => {
+        // Repintar header en cada página nueva del anexo
+        if (data.pageNumber > 1) {
+          header(pdf, ctx, pdf.getNumberOfPages());
+        }
+        footer(pdf);
+      },
+    });
+  };
+
+  renderAmortizacion(
+    "Anexo A · Amortización mes a mes — Crédito Actual",
+    `${actual.cuotas.length} cuotas pendientes · termina ${fmtFecha(actual.fechaFinalizacion)}`,
+    actual,
+    ROJO,
+  );
+
+  renderAmortizacion(
+    `Anexo B · Amortización mes a mes — ${escenario.nombre}`,
+    `${optimizado.cuotas.length} cuotas · termina ${fmtFecha(optimizado.fechaFinalizacion)} · ahorro ${formatCOP(kpis.ahorroTotal)}`,
+    optimizado,
+    VERDE,
+  );
 
   pdf.save(`NUVEX_Proyeccion_${sanitize(input.clienteNombre)}.pdf`);
 }
+
