@@ -58,8 +58,10 @@ export interface CarteraConExpediente extends Cartera {
     honorarios_final: number;
     descuento: number;
     cliente_data: Record<string, unknown>;
+    aprobado_data: Record<string, unknown> | null;
     estado_caso: string;
   };
+
   responsable?: { id: string; nombre: string | null; email: string | null } | null;
 }
 
