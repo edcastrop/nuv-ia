@@ -51,7 +51,10 @@ export function GuardarCasoModal({ open, onClose, autoSave = false, input, resul
   const [done, setDone] = useState<{ id: string } | null>(null);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      autoSaveRef.current = false;
+      return;
+    }
     setForm(projectionForm);
     setError(null);
     setDone(null);
@@ -66,14 +69,31 @@ export function GuardarCasoModal({ open, onClose, autoSave = false, input, resul
     input.numeroCredito,
   ]);
 
+  useEffect(() => {
+    if (!open || !autoSave || autoSaveRef.current) return;
+    if (!projectionForm.nombre.trim() || !projectionForm.cedula.trim() || !projectionForm.banco.trim()) return;
+    autoSaveRef.current = true;
+    void saveCase(projectionForm);
+  }, [
+    open,
+    autoSave,
+    input.clienteNombre,
+    input.cedula,
+    input.banco,
+    input.celular,
+    input.correo,
+    input.ciudad,
+    input.numeroCredito,
+  ]);
+
   if (!open) return null;
 
   const set = <K extends keyof typeof form>(k: K, v: string) =>
     setForm((p) => ({ ...p, [k]: v }));
 
-  const handleSave = async () => {
+  async function saveCase(formData: CasoForm) {
     setError(null);
-    if (!form.nombre.trim() || !form.cedula.trim() || !form.banco.trim()) {
+    if (!formData.nombre.trim() || !formData.cedula.trim() || !formData.banco.trim()) {
       setError("Nombre, cédula y banco son obligatorios para crear el caso.");
       return;
     }
@@ -115,10 +135,10 @@ export function GuardarCasoModal({ open, onClose, autoSave = false, input, resul
 
       const cliente = {
         ...defaultClient,
-        nombre: form.nombre.trim(),
-        cedula: form.cedula.trim(),
-        numeroCredito: form.numeroCredito.trim(),
-        banco: form.banco,
+        nombre: formData.nombre.trim(),
+        cedula: formData.cedula.trim(),
+        numeroCredito: formData.numeroCredito.trim(),
+        banco: formData.banco,
         tipoProducto: input.tipoProducto === "leasing" ? "Leasing Habitacional" : "Hipotecario",
         asesor: "",
         plazoInicial: String(input.cuotasTotales || ""),
@@ -140,7 +160,7 @@ export function GuardarCasoModal({ open, onClose, autoSave = false, input, resul
         seguroIncendio: input.seguroIncendio,
         seguroTerremoto: input.seguroTerremoto,
         otrosSeguros: input.otrosSeguros,
-        contacto: { celular: form.celular, correo: form.correo, ciudad: form.ciudad },
+        contacto: { celular: formData.celular, correo: formData.correo, ciudad: formData.ciudad },
         proyeccion_financiera_snapshot: snapshot,
       };
 
@@ -177,7 +197,9 @@ export function GuardarCasoModal({ open, onClose, autoSave = false, input, resul
     } finally {
       setSaving(false);
     }
-  };
+  }
+
+  const handleSave = () => void saveCase(form);
 
   return (
     <div
