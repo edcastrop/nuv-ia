@@ -11,7 +11,7 @@ import {
 import { UserAvatar } from "@/components/nuvex/UserAvatar";
 import { useAuth } from "@/hooks/useAuth";
 
-export const Route = createFileRoute("/_authenticated/colaboracion")({
+export const Route = createFileRoute("/_authenticated/colaboracion/")({
   component: ColaboracionPage,
   validateSearch: (s: Record<string, unknown>) => ({ canal: (s.canal as string) || "", tab: (s.tab as string) || "canales" }),
   head: () => ({ meta: [{ title: "Colaboración · NUVEX" }] }),
