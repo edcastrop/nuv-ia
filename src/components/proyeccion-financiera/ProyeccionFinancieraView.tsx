@@ -454,47 +454,75 @@ export function ProyeccionFinancieraView() {
               </Section>
             )}
 
-            <Section title="Lector IA de extractos" subtitle="Sube PDF o imagen — la IA prellena los campos automáticamente">
-              <ExtractoReader
-                modo={input.moneda === "uvr" ? "uvr" : "pesos"}
-                onApply={(d: ExtractoApplyPayload) => {
-                  setInput((p) => {
-                    const next = { ...p };
-                    const num = (s?: string) => {
-                      if (!s) return 0;
-                      const n = parseFloat(String(s).replace(/[^\d.,-]/g, "").replace(/\.(?=\d{3}(\D|$))/g, "").replace(",", "."));
-                      return Number.isFinite(n) ? n : 0;
-                    };
-                    if (d.cliente?.nombre) next.clienteNombre = d.cliente.nombre;
-                    if (d.cliente?.banco) next.banco = d.cliente.banco;
-                    if (d.cliente?.plazoInicial) next.cuotasTotales = num(d.cliente.plazoInicial);
-                    if (d.cliente?.cuotasPagadas) {
-                      next.cuotasPagadas = num(d.cliente.cuotasPagadas);
-                      if (next.cuotasTotales) next.cuotasPendientes = Math.max(0, next.cuotasTotales - next.cuotasPagadas);
-                    }
-                    if (d.pesos) {
-                      next.moneda = "pesos";
-                      if (d.pesos.saldoCapital) next.saldoCapital = num(d.pesos.saldoCapital);
-                      if (d.pesos.cuotaActual) next.cuotaActual = num(d.pesos.cuotaActual);
-                      if (d.pesos.seguros) next.seguroVida = num(d.pesos.seguros);
-                      if (d.pesos.tea) next.teaPct = num(d.pesos.tea);
-                      if (d.pesos.valorDesembolsado) next.valorDesembolsado = num(d.pesos.valorDesembolsado);
-                    }
-                    if (d.uvr) {
-                      next.moneda = "uvr";
-                      if (d.uvr.saldoPesos) next.saldoCapital = num(d.uvr.saldoPesos);
-                      if (d.uvr.cuotaActualPesos) next.cuotaActual = num(d.uvr.cuotaActualPesos);
-                      if (d.uvr.seguros) next.seguroVida = num(d.uvr.seguros);
-                      if (d.uvr.teaCobrada) next.teaPct = num(d.uvr.teaCobrada);
-                      if (d.uvr.valorDesembolsado) next.valorDesembolsado = num(d.uvr.valorDesembolsado);
-                      if (d.uvr.valorUVR) next.uvrValor = num(d.uvr.valorUVR);
-                      if (d.uvr.saldoUVR) next.saldoUvr = num(d.uvr.saldoUVR);
-                    }
-                    return next;
-                  });
-                }}
-              />
-            </Section>
+            <section className="overflow-hidden rounded-2xl border border-[#445DA3]/20 bg-gradient-to-br from-[#445DA3]/5 to-white shadow-[0_1px_2px_rgba(36,36,36,0.04)]">
+              <button
+                type="button"
+                onClick={() => setLectorOpen((o) => !o)}
+                className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-[#445DA3]/5"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#445DA3] to-[#37508f] text-white">
+                    <Sparkles className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 text-sm font-bold text-[#242424]">
+                      Lector IA de extractos
+                      <span className="rounded-full bg-[#84B98F]/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#1F7A45]">
+                        IA
+                      </span>
+                    </div>
+                    <p className="truncate text-[11px] text-[#242424]/60">
+                      Sube PDF o imagen — auto-llenado inteligente
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown className={`h-4 w-4 shrink-0 text-[#445DA3] transition-transform ${lectorOpen ? "rotate-180" : ""}`} />
+              </button>
+              {lectorOpen && (
+                <div className="border-t border-[#445DA3]/15 bg-white p-4">
+                  <ExtractoReader
+                    modo={input.moneda === "uvr" ? "uvr" : "pesos"}
+                    onApply={(d: ExtractoApplyPayload) => {
+                      setInput((p) => {
+                        const next = { ...p };
+                        const num = (s?: string) => {
+                          if (!s) return 0;
+                          const n = parseFloat(String(s).replace(/[^\d.,-]/g, "").replace(/\.(?=\d{3}(\D|$))/g, "").replace(",", "."));
+                          return Number.isFinite(n) ? n : 0;
+                        };
+                        if (d.cliente?.nombre) next.clienteNombre = d.cliente.nombre;
+                        if (d.cliente?.banco) next.banco = d.cliente.banco;
+                        if (d.cliente?.plazoInicial) next.cuotasTotales = num(d.cliente.plazoInicial);
+                        if (d.cliente?.cuotasPagadas) {
+                          next.cuotasPagadas = num(d.cliente.cuotasPagadas);
+                          if (next.cuotasTotales) next.cuotasPendientes = Math.max(0, next.cuotasTotales - next.cuotasPagadas);
+                        }
+                        if (d.pesos) {
+                          next.moneda = "pesos";
+                          if (d.pesos.saldoCapital) next.saldoCapital = num(d.pesos.saldoCapital);
+                          if (d.pesos.cuotaActual) next.cuotaActual = num(d.pesos.cuotaActual);
+                          if (d.pesos.seguros) next.seguroVida = num(d.pesos.seguros);
+                          if (d.pesos.tea) next.teaPct = num(d.pesos.tea);
+                          if (d.pesos.valorDesembolsado) next.valorDesembolsado = num(d.pesos.valorDesembolsado);
+                        }
+                        if (d.uvr) {
+                          next.moneda = "uvr";
+                          if (d.uvr.saldoPesos) next.saldoCapital = num(d.uvr.saldoPesos);
+                          if (d.uvr.cuotaActualPesos) next.cuotaActual = num(d.uvr.cuotaActualPesos);
+                          if (d.uvr.seguros) next.seguroVida = num(d.uvr.seguros);
+                          if (d.uvr.teaCobrada) next.teaPct = num(d.uvr.teaCobrada);
+                          if (d.uvr.valorDesembolsado) next.valorDesembolsado = num(d.uvr.valorDesembolsado);
+                          if (d.uvr.valorUVR) next.uvrValor = num(d.uvr.valorUVR);
+                          if (d.uvr.saldoUVR) next.saldoUvr = num(d.uvr.saldoUVR);
+                        }
+                        return next;
+                      });
+                    }}
+                  />
+                </div>
+              )}
+            </section>
+
           </div>
 
           {/* Main column */}
