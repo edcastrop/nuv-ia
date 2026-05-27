@@ -19,8 +19,9 @@ export const Route = createFileRoute("/_authenticated/colaboracion/")({
 
 function ColaboracionPage() {
   const { user } = useAuth();
-  const search = useSearch({ from: "/_authenticated/colaboracion" });
-  const navigate = useNavigate({ from: "/_authenticated/colaboracion" });
+  const search = useSearch({ from: "/_authenticated/colaboracion/" });
+  const navigate = useNavigate({ from: "/_authenticated/colaboracion/" });
+
   const [canales, setCanales] = useState<Canal[]>([]);
   const [tab, setTab] = useState<string>(search.tab || "canales");
   const [notifs, setNotifs] = useState<NotifColab[]>([]);
