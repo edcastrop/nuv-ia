@@ -673,13 +673,16 @@ export function ProyeccionFinancieraView() {
   const axisTick = { fontSize: 10, fill: "rgba(255,255,255,0.45)" };
   const gridColor = "rgba(255,255,255,0.05)";
   const tooltipStyle = {
-    background: "rgba(20,20,20,0.95)",
-    border: "1px solid rgba(255,255,255,0.08)",
+    background: "rgba(15,15,15,0.98)",
+    border: "1px solid rgba(255,255,255,0.15)",
     borderRadius: 12,
-    color: "#fff",
+    color: "#ffffff",
     fontSize: 12,
-    boxShadow: "0 20px 40px -10px rgba(0,0,0,0.6)",
-  };
+    boxShadow: "0 20px 40px -10px rgba(0,0,0,0.7)",
+    padding: "10px 12px",
+  } as const;
+  const tooltipItemStyle = { color: "#ffffff", fontSize: 12 } as const;
+  const tooltipLabelStyle = { color: "#ffffff", fontWeight: 600, marginBottom: 4 } as const;
 
   return (
     <div
