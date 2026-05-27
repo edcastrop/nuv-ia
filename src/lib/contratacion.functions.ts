@@ -57,7 +57,7 @@ export const enviarContratacion = createServerFn({ method: "POST" })
     const asesorEmail = (asesor?.correo_corporativo || asesor?.email || "").trim();
 
     const SENDER_ADDRESS =
-      process.env.CONTRATACION_FROM_EMAIL || "notificaciones@notify.nuvex.com.co";
+      process.env.CONTRATACION_FROM_EMAIL || "notificaciones@mail.nuvex.com.co";
     const fromAddress = `${asesorNombre} (NUVEX) <${SENDER_ADDRESS}>`;
     const replyTo = asesorEmail || SENDER_ADDRESS;
 
