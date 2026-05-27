@@ -1571,7 +1571,11 @@ export function ProyeccionFinancieraView() {
       </div>
       <GuardarCasoModal
         open={guardarOpen}
-        onClose={() => setGuardarOpen(false)}
+        onClose={() => {
+          setGuardarOpen(false);
+          setGuardarAutoSave(false);
+        }}
+        autoSave={guardarAutoSave}
         input={input}
         resultados={{ actual: resActual.res, optimizado: selected.res }}
         escenarios={escenarios}
