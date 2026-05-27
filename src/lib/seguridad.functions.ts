@@ -17,6 +17,10 @@ function hashCodigo(codigo: string): string {
   return `v1.${h.toString(16)}.${codigo.length}`;
 }
 
+function crearTokenUnsubscribe(userId: string): string {
+  return `mfa-${userId}-${crypto.randomUUID()}`;
+}
+
 export const enviarCodigoMfaEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -79,6 +83,7 @@ export const enviarCodigoMfaEmail = createServerFn({ method: "POST" })
           purpose: "transactional",
           label: "mfa_codigo",
           idempotency_key: `mfa-${userId}-${Date.now()}`,
+          unsubscribe_token: crearTokenUnsubscribe(userId),
         },
         { apiKey: LOVABLE_API_KEY }
       );
