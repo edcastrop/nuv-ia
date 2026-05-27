@@ -284,6 +284,18 @@ export function ProyeccionFinancieraView() {
     URL.revokeObjectURL(url);
   };
 
+  const exportPdf = () => {
+    exportProyeccionFinancieraPDF({
+      input,
+      escenario: selected.esc,
+      actual: resActual.res,
+      optimizado: selected.res,
+      kpis,
+    });
+  };
+
+
+
   return (
     <div className="min-h-screen bg-[#F5F7FB]">
       <div className="mx-auto max-w-[1480px] px-4 py-6 lg:px-8">
