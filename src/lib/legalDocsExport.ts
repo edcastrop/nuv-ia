@@ -97,51 +97,111 @@ function groupBySection(blocks: DocBlock[]): FichaSection[] {
   return out;
 }
 
+// ─────────────────────────────── Helpers compartidos ───────────────────────
+
+/** Panel "label / value" en dos columnas, estilo Cuenta de Cobro. */
+function drawMetaPanel(
+  pdf: jsPDF,
+  y: number,
+  left: Array<{ label: string; value: string }>,
+  right: Array<{ label: string; value: string }>,
+): number {
+  const { pageW, marginX } = LAYOUT;
+  const rightX = pageW - marginX;
+  const rowH = 30;
+  const rows = Math.max(left.length, right.length);
+
+  for (let i = 0; i < rows; i++) {
+    const ly = y + i * rowH;
+    if (left[i]) {
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(8);
+      pdf.setTextColor(...BRAND.blueDark);
+      pdf.text(left[i].label.toUpperCase(), marginX, ly, { charSpace: 0.5 });
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(10.5);
+      pdf.setTextColor(...BRAND.ink);
+      pdf.text(left[i].value || "—", marginX, ly + 14);
+    }
+    if (right[i]) {
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(8);
+      pdf.setTextColor(...BRAND.blueDark);
+      pdf.text(right[i].label.toUpperCase(), rightX, ly, { align: "right", charSpace: 0.5 });
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(10.5);
+      pdf.setTextColor(...BRAND.ink);
+      pdf.text(right[i].value || "—", rightX, ly + 14, { align: "right" });
+    }
+  }
+  return y + rows * rowH + 8;
+}
+
+/** Línea divisoria fina, marca el cambio de sección. */
+function drawDivider(pdf: jsPDF, y: number): number {
+  const { pageW, marginX } = LAYOUT;
+  pdf.setDrawColor(...BRAND.border);
+  pdf.setLineWidth(0.5);
+  pdf.line(marginX, y, pageW - marginX, y);
+  return y + 14;
+}
+
+/** Título de sección discreto: pequeño, en mayúsculas, azul institucional. */
+function drawSectionTitle(pdf: jsPDF, y: number, text: string): number {
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(9);
+  pdf.setTextColor(...BRAND.blueDark);
+  pdf.text(text.toUpperCase(), LAYOUT.marginX, y, { charSpace: 0.6 });
+  return y + 14;
+}
+
 // ─────────────────────────────── Renderer: PODER ESPECIAL ───────────────────
 
 function renderPoderEspecial(pdf: jsPDF, doc: LegalDoc): void {
-  // Hero institucional como portada
+  // Hero compacto (igual a Cuenta de Cobro / Paz y Salvo)
   let y = drawHero(pdf, {
-    badge: "Documento Jurídico",
-    title: "PODER ESPECIAL",
+    badge: "NUVEX · Documento Jurídico",
+    title: "Poder Especial",
     subtitle: "Representación ante entidad financiera",
-    variant: "cover",
+    variant: "compact",
   });
 
-  // Tarjetas de identificación del expediente
-  const cards: CardItem[] = [
-    { label: "Cliente",          value: findField(doc.blocks, /^nombre$/i) || "—", accent: "primary" },
-    { label: "Cédula",           value: findField(doc.blocks, /^cédula|^cedula/i) || "—" },
-    { label: "Banco",            value: findField(doc.blocks, /^banco$/i) || "—", accent: "primary" },
-    { label: "Producto",         value: findField(doc.blocks, /^producto$/i) || "—" },
-    { label: "Número de crédito", value: findField(doc.blocks, /número\s+crédito|numero\s+credito|n[uú]mero\s+de\s+cr[eé]dito/i) || "—", accent: "soft" },
-    { label: "Fecha emisión",     value: new Date().toLocaleDateString("es-CO", { day: "2-digit", month: "long", year: "numeric" }), accent: "soft" },
-  ];
-  y = drawCardGrid(pdf, y, cards, 2, 70, 10);
+  // Metadatos: dos columnas label/value sobrias
+  const cliente = findField(doc.blocks, /^nombre$/i);
+  const cedula = findField(doc.blocks, /^cédula|^cedula/i);
+  const banco = findField(doc.blocks, /^banco$/i);
+  const producto = findField(doc.blocks, /^producto$/i);
+  const numero = findField(doc.blocks, /número\s+crédito|numero\s+credito|n[uú]mero\s+de\s+cr[eé]dito/i);
+  const fecha = new Date().toLocaleDateString("es-CO", { day: "2-digit", month: "long", year: "numeric" });
 
-  // Separador "Texto jurídico"
-  y += 6;
-  pdf.setDrawColor(...BRAND.border);
-  pdf.setLineWidth(0.6);
-  pdf.line(LAYOUT.marginX, y, LAYOUT.pageW - LAYOUT.marginX, y);
-  y += 16;
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(9);
-  pdf.setTextColor(...BRAND.blue);
-  pdf.text("TEXTO JURÍDICO", LAYOUT.marginX, y, { charSpace: 0.6 });
-  y += 14;
+  y = drawMetaPanel(
+    pdf,
+    y,
+    [
+      { label: "Poderdante", value: cliente || "—" },
+      { label: "Cédula", value: cedula || "—" },
+      { label: "Banco", value: banco || "—" },
+    ],
+    [
+      { label: "Fecha de emisión", value: fecha },
+      { label: "Producto", value: producto || "—" },
+      { label: "Número de crédito", value: numero || "—" },
+    ],
+  );
 
-  // Render del texto jurídico restante
+  y = drawDivider(pdf, y);
+  y = drawSectionTitle(pdf, y, "Texto Jurídico");
+
+  // Texto jurídico
   const onBreak = () => nextPage(pdf);
   const prose = legalProse(doc.blocks);
   for (const b of prose) {
     if (y > LAYOUT.contentBottom - 60) y = onBreak();
     switch (b.type) {
       case "title":
-        // El hero ya muestra el título; ignoramos.
-        break;
+        break; // ya está en hero
       case "subtitle":
-        y = writeText(pdf, y, b.text, { size: 10.5, bold: true, color: BRAND.muted, lineGap: 6, align: "left" }, onBreak);
+        y = writeText(pdf, y, b.text, { size: 10, bold: true, color: BRAND.muted, lineGap: 6, align: "left" }, onBreak);
         break;
       case "heading":
         y = writeText(pdf, y, b.text, { size: 10.5, bold: true, color: BRAND.blueDark, lineGap: 4 }, onBreak);
@@ -154,7 +214,7 @@ function renderPoderEspecial(pdf: jsPDF, doc: LegalDoc): void {
         break;
       case "signature":
         if (y + 80 > LAYOUT.contentBottom) y = onBreak();
-        y = drawSignatures(pdf, y + 16, b.columns);
+        y = drawSignatures(pdf, y + 24, b.columns);
         break;
     }
   }
@@ -165,57 +225,84 @@ function renderPoderEspecial(pdf: jsPDF, doc: LegalDoc): void {
 function renderFichaContractual(pdf: jsPDF, doc: LegalDoc): void {
   // Hero compacto
   let y = drawHero(pdf, {
-    badge: "Ficha Ejecutiva",
-    title: "FICHA CONTRACTUAL NUVEX",
+    badge: "NUVEX · Documento Administrativo",
+    title: "Ficha Contractual",
     subtitle: "Información base para el contrato de prestación de servicios",
     variant: "compact",
   });
 
-  // Banner pequeño con cliente + banco + fecha (resumen contextual)
+  // Banner sobrio: cliente / banco / fecha
   const cliente = findField(doc.blocks, /nombre\s+completo/i);
   const banco = findField(doc.blocks, /^banco$/i);
   const fecha = new Date().toLocaleDateString("es-CO", { day: "2-digit", month: "long", year: "numeric" });
-  const summary: CardItem[] = [
-    { label: "Cliente", value: cliente || "—", accent: "primary" },
-    { label: "Entidad", value: banco || "—", accent: "primary" },
-    { label: "Fecha de emisión", value: fecha, accent: "soft" },
-  ];
-  y = drawCardGrid(pdf, y, summary, 3, 62, 10);
-  y += 4;
+  y = drawMetaPanel(
+    pdf,
+    y,
+    [
+      { label: "Cliente", value: cliente || "—" },
+      { label: "Entidad financiera", value: banco || "—" },
+    ],
+    [
+      { label: "Fecha de emisión", value: fecha },
+      { label: "Consecutivo", value: doc.consecutivo || "—" },
+    ],
+  );
 
-  // Una section card por cada bloque `section` agrupado
+  y = drawDivider(pdf, y);
+
+  // Tabla limpia por cada sección, estilo Cuenta de Cobro
   const sections = groupBySection(doc.blocks);
   const onBreak = () => nextPage(pdf);
-  sections.forEach((s, idx) => {
+
+  sections.forEach((s) => {
     if (s.fields.length === 0) return;
-    const opts: SectionCardOpts = {
-      index: idx + 1,
-      title: s.title,
-      fields: s.fields,
-      accent: /honorarios|forma de pago/i.test(s.title) ? "green" : /asesor/i.test(s.title) ? "ink" : "blue",
-    };
-    // Estimar alto para decidir corte
-    const rows = Math.ceil(s.fields.length / 2);
-    const estH = 30 + 16 + rows * 32 + 18;
+    // Estimar alto mínimo (título + filas)
+    const estH = 22 + s.fields.length * 22 + 14;
     if (y + estH > LAYOUT.contentBottom) y = onBreak();
-    y = drawSectionCard(pdf, y, opts);
+
+    y = drawSectionTitle(pdf, y, s.title);
+
+    autoTable(pdf, {
+      startY: y,
+      margin: { left: LAYOUT.marginX, right: LAYOUT.marginX },
+      theme: "plain",
+      styles: {
+        font: "helvetica",
+        fontSize: 10,
+        cellPadding: { top: 6, bottom: 6, left: 0, right: 0 },
+        textColor: [36, 36, 36],
+        lineColor: [227, 231, 238],
+        lineWidth: { bottom: 0.4 } as unknown as number,
+      },
+      columnStyles: {
+        0: { cellWidth: 200, textColor: [92, 103, 112], fontStyle: "bold", fontSize: 9 },
+        1: { fontStyle: "normal" },
+      },
+      body: s.fields.map((f) => [f.label, f.value || "—"]),
+      didDrawPage: () => { /* chrome se aplica al final */ },
+    });
+
+    y = (pdf as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 16;
   });
 
-  // Marca de validación
+  // Aviso de validación (sin colores agresivos)
   if (doc.validationIssues && doc.validationIssues.length > 0) {
-    if (y + 60 > LAYOUT.contentBottom) y = onBreak();
-    roundedRect(pdf, LAYOUT.marginX, y, LAYOUT.pageW - LAYOUT.marginX * 2, 48, 8, [255, 247, 235], [255, 207, 153], 0.6);
+    if (y + 50 > LAYOUT.contentBottom) y = onBreak();
+    pdf.setDrawColor(...BRAND.border);
+    pdf.setLineWidth(0.5);
+    pdf.line(LAYOUT.marginX, y, LAYOUT.pageW - LAYOUT.marginX, y);
+    y += 12;
     pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(9);
+    pdf.setFontSize(8.5);
     pdf.setTextColor(180, 95, 6);
-    pdf.text("PENDIENTE DE VALIDACIÓN FINANCIERA", LAYOUT.marginX + 14, y + 18, { charSpace: 0.5 });
+    pdf.text("PENDIENTE DE VALIDACIÓN", LAYOUT.marginX, y, { charSpace: 0.5 });
+    y += 12;
     pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(8);
+    pdf.setFontSize(9);
     pdf.setTextColor(...BRAND.muted);
     const msg = doc.validationIssues[0] || "Revisar consistencia financiera antes de contratar.";
-    const lines = (pdf.splitTextToSize(msg, LAYOUT.pageW - LAYOUT.marginX * 2 - 28) as string[]).slice(0, 2);
-    lines.forEach((l, i) => pdf.text(l, LAYOUT.marginX + 14, y + 32 + i * 10));
-    y += 58;
+    const lines = (pdf.splitTextToSize(msg, LAYOUT.pageW - LAYOUT.marginX * 2) as string[]).slice(0, 3);
+    lines.forEach((l, i) => pdf.text(l, LAYOUT.marginX, y + i * 11));
   }
 }
 
