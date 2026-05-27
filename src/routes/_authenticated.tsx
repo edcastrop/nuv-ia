@@ -182,6 +182,7 @@ function AuthenticatedLayout() {
             { to: "/casos", label: "Casos", Icon: FolderKanban },
             { to: "/expediente-maestro", label: "Expediente", Icon: UserSquare2 },
             { to: "/proyeccion", label: "Proyección", Icon: LineChart },
+            ...(hasAny("super_admin","admin","gerencia","licenciado","director_financiero_qa") ? [{ to: "/proyeccion-financiera", label: "Proyección Financiera", Icon: LineChart }] : []),
             { to: "/notificaciones", label: "Alertas", Icon: Bell, badge: unread },
             { to: "/colaboracion", label: "Colaboración", Icon: MessageSquare },
             { to: "/colaboracion/dm", label: "Mensajería", Icon: Briefcase },
