@@ -35,6 +35,13 @@ export interface ProyeccionFinancieraInput {
   variacionUvrPct?: number;
 
   notas?: string;
+
+  // Datos de contacto / identificación (opcionales, usados para crear caso)
+  cedula?: string;
+  numeroCredito?: string;
+  celular?: string;
+  correo?: string;
+  ciudad?: string;
 }
 
 export interface EscenarioInput {
