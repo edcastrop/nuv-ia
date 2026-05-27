@@ -251,7 +251,6 @@ export function ExtractoReader({ modo, onApply }: Props) {
 
   // Evita que el navegador abra el archivo si el usuario suelta fuera de la zona
   useEffect(() => {
-    if (!open) return;
     const prevent = (e: DragEvent) => {
       e.preventDefault();
     };
@@ -261,7 +260,7 @@ export function ExtractoReader({ modo, onApply }: Props) {
       window.removeEventListener("dragover", prevent);
       window.removeEventListener("drop", prevent);
     };
-  }, [open]);
+  }, []);
 
   const callExtract = useServerFn(extractStatement);
 
