@@ -247,8 +247,24 @@ export function ExtractoReader({ modo, onApply }: Props) {
   const [parsed, setParsed] = useState<ExtractoData | null>(null);
   const [archivoPath, setArchivoPath] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [dragActive, setDragActive] = useState(false);
+
+  // Evita que el navegador abra el archivo si el usuario suelta fuera de la zona
+  useEffect(() => {
+    if (!open) return;
+    const prevent = (e: DragEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("dragover", prevent);
+    window.addEventListener("drop", prevent);
+    return () => {
+      window.removeEventListener("dragover", prevent);
+      window.removeEventListener("drop", prevent);
+    };
+  }, [open]);
 
   const callExtract = useServerFn(extractStatement);
+
 
   const reset = () => {
     setStage("idle");
