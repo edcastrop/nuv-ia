@@ -201,17 +201,16 @@ function AuthenticatedLayout() {
         {
           label: "Gestión",
           items: [
-            { to: "/apoderados-nuvex", label: "Apoderados", Icon: Users },
+            ...(isSuperAdmin ? [{ to: "/apoderados-nuvex", label: "Apoderados", Icon: Users }] : []),
             { to: "/academia", label: "Academia", Icon: GraduationCap },
             ...(isSuperAdmin ? [{ to: "/super-admin/academia", label: "Admin Academia", Icon: GraduationCap }] : []),
             ...(isSuperAdmin ? [{ to: "/super-admin/accesos", label: "Accesos", Icon: Shield }] : []),
             ...(isSuperAdmin ? [{ to: "/super-admin/onboarding", label: "Onboarding", Icon: UserCircle }] : []),
             ...(isSuperAdmin ? [{ to: "/super-admin/nuvex-ia-kb", label: "NUVEX IA · KB", Icon: Shield }] : []),
-            
             ...(isSuperAdmin ? [{ to: "/super-admin", label: "Super Admin", Icon: Shield }] : []),
-
           ],
         },
+
         {
           label: "Cuenta",
           items: [

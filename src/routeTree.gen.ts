@@ -27,13 +27,13 @@ import { Route as AuthenticatedMensajeriaRouteImport } from './routes/_authentic
 import { Route as AuthenticatedFinanzasRouteImport } from './routes/_authenticated/finanzas'
 import { Route as AuthenticatedDirectorioRouteImport } from './routes/_authenticated/directorio'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedColaboracionRouteImport } from './routes/_authenticated/colaboracion'
 import { Route as AuthenticatedApoderadosNuvexRouteImport } from './routes/_authenticated/apoderados-nuvex'
 import { Route as AuthenticatedAcademiaRouteImport } from './routes/_authenticated/academia'
 import { Route as AuthenticatedSuperAdminIndexRouteImport } from './routes/_authenticated/super-admin.index'
 import { Route as AuthenticatedFinanzasIndexRouteImport } from './routes/_authenticated/finanzas.index'
 import { Route as AuthenticatedExpedienteMaestroIndexRouteImport } from './routes/_authenticated/expediente-maestro.index'
 import { Route as AuthenticatedComisionesIndexRouteImport } from './routes/_authenticated/comisiones.index'
+import { Route as AuthenticatedColaboracionIndexRouteImport } from './routes/_authenticated/colaboracion.index'
 import { Route as AuthenticatedCasosIndexRouteImport } from './routes/_authenticated/casos.index'
 import { Route as AuthenticatedCarteraIndexRouteImport } from './routes/_authenticated/cartera.index'
 import { Route as AuthenticatedAcademiaIndexRouteImport } from './routes/_authenticated/academia.index'
@@ -162,12 +162,6 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedColaboracionRoute =
-  AuthenticatedColaboracionRouteImport.update({
-    id: '/colaboracion',
-    path: '/colaboracion',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
 const AuthenticatedApoderadosNuvexRoute =
   AuthenticatedApoderadosNuvexRouteImport.update({
     id: '/apoderados-nuvex',
@@ -201,6 +195,12 @@ const AuthenticatedComisionesIndexRoute =
   AuthenticatedComisionesIndexRouteImport.update({
     id: '/comisiones/',
     path: '/comisiones/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedColaboracionIndexRoute =
+  AuthenticatedColaboracionIndexRouteImport.update({
+    id: '/colaboracion/',
+    path: '/colaboracion/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedCasosIndexRoute = AuthenticatedCasosIndexRouteImport.update({
@@ -370,9 +370,9 @@ const AuthenticatedApoderadoMisCasosRoute =
   } as any)
 const AuthenticatedColaboracionDmIndexRoute =
   AuthenticatedColaboracionDmIndexRouteImport.update({
-    id: '/dm/',
-    path: '/dm/',
-    getParentRoute: () => AuthenticatedColaboracionRoute,
+    id: '/colaboracion/dm/',
+    path: '/colaboracion/dm/',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 const ApiPublicHooksFinanzasCronRoute =
   ApiPublicHooksFinanzasCronRouteImport.update({
@@ -394,9 +394,9 @@ const ApiPublicHooksCarteraRecordatoriosRoute =
   } as any)
 const AuthenticatedColaboracionDmConversationIdRoute =
   AuthenticatedColaboracionDmConversationIdRouteImport.update({
-    id: '/dm/$conversationId',
-    path: '/dm/$conversationId',
-    getParentRoute: () => AuthenticatedColaboracionRoute,
+    id: '/colaboracion/dm/$conversationId',
+    path: '/colaboracion/dm/$conversationId',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedAcademiaModulosModuloIdRoute =
   AuthenticatedAcademiaModulosModuloIdRouteImport.update({
@@ -431,7 +431,6 @@ export interface FileRoutesByFullPath {
   '/registro': typeof RegistroRoute
   '/academia': typeof AuthenticatedAcademiaRouteWithChildren
   '/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
-  '/colaboracion': typeof AuthenticatedColaboracionRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/directorio': typeof AuthenticatedDirectorioRoute
   '/finanzas': typeof AuthenticatedFinanzasRouteWithChildren
@@ -472,6 +471,7 @@ export interface FileRoutesByFullPath {
   '/academia/': typeof AuthenticatedAcademiaIndexRoute
   '/cartera/': typeof AuthenticatedCarteraIndexRoute
   '/casos/': typeof AuthenticatedCasosIndexRoute
+  '/colaboracion/': typeof AuthenticatedColaboracionIndexRoute
   '/comisiones/': typeof AuthenticatedComisionesIndexRoute
   '/expediente-maestro/': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/finanzas/': typeof AuthenticatedFinanzasIndexRoute
@@ -492,7 +492,6 @@ export interface FileRoutesByTo {
   '/pendiente-aprobacion': typeof PendienteAprobacionRoute
   '/registro': typeof RegistroRoute
   '/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
-  '/colaboracion': typeof AuthenticatedColaboracionRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/directorio': typeof AuthenticatedDirectorioRoute
   '/mensajeria': typeof AuthenticatedMensajeriaRoute
@@ -533,6 +532,7 @@ export interface FileRoutesByTo {
   '/academia': typeof AuthenticatedAcademiaIndexRoute
   '/cartera': typeof AuthenticatedCarteraIndexRoute
   '/casos': typeof AuthenticatedCasosIndexRoute
+  '/colaboracion': typeof AuthenticatedColaboracionIndexRoute
   '/comisiones': typeof AuthenticatedComisionesIndexRoute
   '/expediente-maestro': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/finanzas': typeof AuthenticatedFinanzasIndexRoute
@@ -556,7 +556,6 @@ export interface FileRoutesById {
   '/registro': typeof RegistroRoute
   '/_authenticated/academia': typeof AuthenticatedAcademiaRouteWithChildren
   '/_authenticated/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
-  '/_authenticated/colaboracion': typeof AuthenticatedColaboracionRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/directorio': typeof AuthenticatedDirectorioRoute
   '/_authenticated/finanzas': typeof AuthenticatedFinanzasRouteWithChildren
@@ -598,6 +597,7 @@ export interface FileRoutesById {
   '/_authenticated/academia/': typeof AuthenticatedAcademiaIndexRoute
   '/_authenticated/cartera/': typeof AuthenticatedCarteraIndexRoute
   '/_authenticated/casos/': typeof AuthenticatedCasosIndexRoute
+  '/_authenticated/colaboracion/': typeof AuthenticatedColaboracionIndexRoute
   '/_authenticated/comisiones/': typeof AuthenticatedComisionesIndexRoute
   '/_authenticated/expediente-maestro/': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/_authenticated/finanzas/': typeof AuthenticatedFinanzasIndexRoute
@@ -622,7 +622,6 @@ export interface FileRouteTypes {
     | '/registro'
     | '/academia'
     | '/apoderados-nuvex'
-    | '/colaboracion'
     | '/dashboard'
     | '/directorio'
     | '/finanzas'
@@ -663,6 +662,7 @@ export interface FileRouteTypes {
     | '/academia/'
     | '/cartera/'
     | '/casos/'
+    | '/colaboracion/'
     | '/comisiones/'
     | '/expediente-maestro/'
     | '/finanzas/'
@@ -683,7 +683,6 @@ export interface FileRouteTypes {
     | '/pendiente-aprobacion'
     | '/registro'
     | '/apoderados-nuvex'
-    | '/colaboracion'
     | '/dashboard'
     | '/directorio'
     | '/mensajeria'
@@ -724,6 +723,7 @@ export interface FileRouteTypes {
     | '/academia'
     | '/cartera'
     | '/casos'
+    | '/colaboracion'
     | '/comisiones'
     | '/expediente-maestro'
     | '/finanzas'
@@ -746,7 +746,6 @@ export interface FileRouteTypes {
     | '/registro'
     | '/_authenticated/academia'
     | '/_authenticated/apoderados-nuvex'
-    | '/_authenticated/colaboracion'
     | '/_authenticated/dashboard'
     | '/_authenticated/directorio'
     | '/_authenticated/finanzas'
@@ -788,6 +787,7 @@ export interface FileRouteTypes {
     | '/_authenticated/academia/'
     | '/_authenticated/cartera/'
     | '/_authenticated/casos/'
+    | '/_authenticated/colaboracion/'
     | '/_authenticated/comisiones/'
     | '/_authenticated/expediente-maestro/'
     | '/_authenticated/finanzas/'
@@ -944,13 +944,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/colaboracion': {
-      id: '/_authenticated/colaboracion'
-      path: '/colaboracion'
-      fullPath: '/colaboracion'
-      preLoaderRoute: typeof AuthenticatedColaboracionRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/apoderados-nuvex': {
       id: '/_authenticated/apoderados-nuvex'
       path: '/apoderados-nuvex'
@@ -991,6 +984,13 @@ declare module '@tanstack/react-router' {
       path: '/comisiones'
       fullPath: '/comisiones/'
       preLoaderRoute: typeof AuthenticatedComisionesIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/colaboracion/': {
+      id: '/_authenticated/colaboracion/'
+      path: '/colaboracion'
+      fullPath: '/colaboracion/'
+      preLoaderRoute: typeof AuthenticatedColaboracionIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/casos/': {
@@ -1191,10 +1191,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/colaboracion/dm/': {
       id: '/_authenticated/colaboracion/dm/'
-      path: '/dm'
+      path: '/colaboracion/dm'
       fullPath: '/colaboracion/dm/'
       preLoaderRoute: typeof AuthenticatedColaboracionDmIndexRouteImport
-      parentRoute: typeof AuthenticatedColaboracionRoute
+      parentRoute: typeof AuthenticatedRoute
     }
     '/api/public/hooks/finanzas-cron': {
       id: '/api/public/hooks/finanzas-cron'
@@ -1219,10 +1219,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/colaboracion/dm/$conversationId': {
       id: '/_authenticated/colaboracion/dm/$conversationId'
-      path: '/dm/$conversationId'
+      path: '/colaboracion/dm/$conversationId'
       fullPath: '/colaboracion/dm/$conversationId'
       preLoaderRoute: typeof AuthenticatedColaboracionDmConversationIdRouteImport
-      parentRoute: typeof AuthenticatedColaboracionRoute
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/academia/modulos/$moduloId': {
       id: '/_authenticated/academia/modulos/$moduloId'
@@ -1280,24 +1280,6 @@ const AuthenticatedAcademiaRouteWithChildren =
     AuthenticatedAcademiaRouteChildren,
   )
 
-interface AuthenticatedColaboracionRouteChildren {
-  AuthenticatedColaboracionDmConversationIdRoute: typeof AuthenticatedColaboracionDmConversationIdRoute
-  AuthenticatedColaboracionDmIndexRoute: typeof AuthenticatedColaboracionDmIndexRoute
-}
-
-const AuthenticatedColaboracionRouteChildren: AuthenticatedColaboracionRouteChildren =
-  {
-    AuthenticatedColaboracionDmConversationIdRoute:
-      AuthenticatedColaboracionDmConversationIdRoute,
-    AuthenticatedColaboracionDmIndexRoute:
-      AuthenticatedColaboracionDmIndexRoute,
-  }
-
-const AuthenticatedColaboracionRouteWithChildren =
-  AuthenticatedColaboracionRoute._addFileChildren(
-    AuthenticatedColaboracionRouteChildren,
-  )
-
 interface AuthenticatedFinanzasRouteChildren {
   AuthenticatedFinanzasAlertasRoute: typeof AuthenticatedFinanzasAlertasRoute
   AuthenticatedFinanzasAuditoriaRoute: typeof AuthenticatedFinanzasAuditoriaRoute
@@ -1336,7 +1318,6 @@ const AuthenticatedFinanzasRouteWithChildren =
 interface AuthenticatedRouteChildren {
   AuthenticatedAcademiaRoute: typeof AuthenticatedAcademiaRouteWithChildren
   AuthenticatedApoderadosNuvexRoute: typeof AuthenticatedApoderadosNuvexRoute
-  AuthenticatedColaboracionRoute: typeof AuthenticatedColaboracionRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDirectorioRoute: typeof AuthenticatedDirectorioRoute
   AuthenticatedFinanzasRoute: typeof AuthenticatedFinanzasRouteWithChildren
@@ -1365,15 +1346,17 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSuperAdminUsuariosRoute: typeof AuthenticatedSuperAdminUsuariosRoute
   AuthenticatedCarteraIndexRoute: typeof AuthenticatedCarteraIndexRoute
   AuthenticatedCasosIndexRoute: typeof AuthenticatedCasosIndexRoute
+  AuthenticatedColaboracionIndexRoute: typeof AuthenticatedColaboracionIndexRoute
   AuthenticatedComisionesIndexRoute: typeof AuthenticatedComisionesIndexRoute
   AuthenticatedExpedienteMaestroIndexRoute: typeof AuthenticatedExpedienteMaestroIndexRoute
   AuthenticatedSuperAdminIndexRoute: typeof AuthenticatedSuperAdminIndexRoute
+  AuthenticatedColaboracionDmConversationIdRoute: typeof AuthenticatedColaboracionDmConversationIdRoute
+  AuthenticatedColaboracionDmIndexRoute: typeof AuthenticatedColaboracionDmIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAcademiaRoute: AuthenticatedAcademiaRouteWithChildren,
   AuthenticatedApoderadosNuvexRoute: AuthenticatedApoderadosNuvexRoute,
-  AuthenticatedColaboracionRoute: AuthenticatedColaboracionRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDirectorioRoute: AuthenticatedDirectorioRoute,
   AuthenticatedFinanzasRoute: AuthenticatedFinanzasRouteWithChildren,
@@ -1405,10 +1388,14 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSuperAdminUsuariosRoute: AuthenticatedSuperAdminUsuariosRoute,
   AuthenticatedCarteraIndexRoute: AuthenticatedCarteraIndexRoute,
   AuthenticatedCasosIndexRoute: AuthenticatedCasosIndexRoute,
+  AuthenticatedColaboracionIndexRoute: AuthenticatedColaboracionIndexRoute,
   AuthenticatedComisionesIndexRoute: AuthenticatedComisionesIndexRoute,
   AuthenticatedExpedienteMaestroIndexRoute:
     AuthenticatedExpedienteMaestroIndexRoute,
   AuthenticatedSuperAdminIndexRoute: AuthenticatedSuperAdminIndexRoute,
+  AuthenticatedColaboracionDmConversationIdRoute:
+    AuthenticatedColaboracionDmConversationIdRoute,
+  AuthenticatedColaboracionDmIndexRoute: AuthenticatedColaboracionDmIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

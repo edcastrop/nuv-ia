@@ -11,7 +11,7 @@ import {
 import { UserAvatar } from "@/components/nuvex/UserAvatar";
 import { useAuth } from "@/hooks/useAuth";
 
-export const Route = createFileRoute("/_authenticated/colaboracion")({
+export const Route = createFileRoute("/_authenticated/colaboracion/")({
   component: ColaboracionPage,
   validateSearch: (s: Record<string, unknown>) => ({ canal: (s.canal as string) || "", tab: (s.tab as string) || "canales" }),
   head: () => ({ meta: [{ title: "Colaboración · NUVEX" }] }),
@@ -19,8 +19,9 @@ export const Route = createFileRoute("/_authenticated/colaboracion")({
 
 function ColaboracionPage() {
   const { user } = useAuth();
-  const search = useSearch({ from: "/_authenticated/colaboracion" });
-  const navigate = useNavigate({ from: "/_authenticated/colaboracion" });
+  const search = useSearch({ from: "/_authenticated/colaboracion/" });
+  const navigate = useNavigate({ from: "/_authenticated/colaboracion/" });
+
   const [canales, setCanales] = useState<Canal[]>([]);
   const [tab, setTab] = useState<string>(search.tab || "canales");
   const [notifs, setNotifs] = useState<NotifColab[]>([]);
