@@ -431,7 +431,7 @@ export function ProyeccionFinancieraView() {
             <Section title="Lector IA de extractos" subtitle="Sube PDF o imagen — la IA prellena los campos automáticamente">
               <ExtractoReader
                 modo={input.moneda === "uvr" ? "uvr" : "pesos"}
-                onApply={(d) => {
+                onApply={(d: ExtractoApplyPayload) => {
                   setInput((p) => {
                     const next = { ...p };
                     const num = (s?: string) => {
