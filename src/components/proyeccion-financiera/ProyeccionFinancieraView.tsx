@@ -158,6 +158,7 @@ function Kpi({
 
 export function ProyeccionFinancieraView() {
   const [input, setInput] = useState<ProyeccionFinancieraInput>(blankInput);
+  const [lectorOpen, setLectorOpen] = useState(false);
   const [escenarios, setEscenarios] = useState<EscenarioState[]>([
     { id: crypto.randomUUID(), ...escenarioActual() },
     {
@@ -169,6 +170,7 @@ export function ProyeccionFinancieraView() {
     },
   ]);
   const [selectedId, setSelectedId] = useState<string>(escenarios[1].id);
+
 
   const upd = <K extends keyof ProyeccionFinancieraInput>(k: K, v: ProyeccionFinancieraInput[K]) =>
     setInput((p) => ({ ...p, [k]: v }));
