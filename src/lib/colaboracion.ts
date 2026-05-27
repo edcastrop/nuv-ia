@@ -232,9 +232,29 @@ export type DirectorioPersona = {
   roles: string[];
 };
 
+const ROL_LABEL: Record<string, string> = {
+  super_admin: "Super Admin",
+  admin: "Administrador",
+  gerencia: "CEO / Gerencia",
+  asesor: "Asesor",
+  licenciado: "Licenciado",
+  juridica: "Jurídica",
+  operaciones: "Operaciones",
+  cartera: "Cartera",
+  contabilidad: "Contabilidad",
+  director_financiero_qa: "Director Financiero / QA",
+  director_juridico: "Director Jurídico",
+  auxiliar_operativo: "Auxiliar Operativo",
+  apoderado: "Apoderado",
+};
+
+export function labelRol(r: string): string {
+  return ROL_LABEL[r] ?? r.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export async function listDirectorioFull(): Promise<DirectorioPersona[]> {
   const { data, error } = await T("profiles")
-    .select("id, nombre, email, avatar_url, correo_corporativo, whatsapp, celular, ciudad, pais, equipo, sede, activo, estado_acceso")
+    .select("id, nombre, email, avatar_url, correo_corporativo, whatsapp, celular, ciudad, pais, equipo, sede, activo, estado_acceso, rol_solicitado")
     .eq("activo", true)
     .eq("estado_acceso", "aprobado")
     .order("nombre", { ascending: true });
@@ -248,27 +268,36 @@ export async function listDirectorioFull(): Promise<DirectorioPersona[]> {
     arr.push(r.role);
     map.set(r.user_id, arr);
   });
-  return rows.map((p) => ({
-    user_id: p.id,
-    nombre: p.nombre ?? p.email ?? "Usuario",
-    correo: p.email ?? null,
-    correo_corp: p.correo_corporativo ?? null,
-    whatsapp: p.whatsapp ?? null,
-    celular: p.celular ?? null,
-    ciudad: p.ciudad ?? null,
-    pais: p.pais ?? null,
-    equipo: p.equipo ?? null,
-    sede: p.sede ?? null,
-    foto_url: p.avatar_url ?? null,
-    activo: p.activo ?? true,
-    roles: map.get(p.id) ?? [],
-  }));
+  return rows.map((p) => {
+    const rolesRaw = map.get(p.id) ?? [];
+    // Fallback al rol solicitado si todavía no hay asignación en user_roles
+    const roles = rolesRaw.length > 0
+      ? rolesRaw
+      : (p.rol_solicitado ? [String(p.rol_solicitado)] : []);
+    return {
+      user_id: p.id,
+      nombre: p.nombre ?? p.email ?? "Usuario",
+      correo: p.email ?? null,
+      correo_corp: p.correo_corporativo ?? null,
+      whatsapp: p.whatsapp ?? null,
+      celular: p.celular ?? null,
+      ciudad: p.ciudad ?? null,
+      pais: p.pais ?? null,
+      equipo: p.equipo ?? null,
+      sede: p.sede ?? null,
+      foto_url: p.avatar_url ?? null,
+      activo: p.activo ?? true,
+      roles: roles.map(labelRol),
+    };
+  });
 }
 
 export async function listDirectorio(): Promise<Array<{ user_id: string; nombre: string; correo: string | null; foto_url: string | null; roles: string[] }>> {
   const rows = await listDirectorioFull();
   return rows.map((p) => ({ user_id: p.user_id, nombre: p.nombre, correo: p.correo, foto_url: p.foto_url, roles: p.roles }));
 }
+
+
 
 export async function getOrCreateDM(otherUserId: string): Promise<Canal> {
   const { data: { user } } = await supabase.auth.getUser();
