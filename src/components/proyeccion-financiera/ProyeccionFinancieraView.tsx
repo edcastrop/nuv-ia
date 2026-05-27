@@ -523,6 +523,7 @@ export function ProyeccionFinancieraView() {
   const [selectedId, setSelectedId] = useState<string>(escenarios[1].id);
   const [activeNav, setActiveNav] = useState<string>("dashboard");
   const [guardarOpen, setGuardarOpen] = useState(false);
+  const [guardarAutoSave, setGuardarAutoSave] = useState(false);
 
   const upd = <K extends keyof ProyeccionFinancieraInput>(
     k: K,
@@ -555,6 +556,13 @@ export function ProyeccionFinancieraView() {
   );
 
   const segurosMes = totalSegurosMensual(input);
+  const hasCaseRequiredData = Boolean(
+    input.clienteNombre?.trim() && input.cedula?.trim() && input.banco?.trim(),
+  );
+  const openGuardarCaso = () => {
+    setGuardarAutoSave(hasCaseRequiredData);
+    setGuardarOpen(true);
+  };
 
   const addEscenario = (preset?: TipoEscenario) => {
     const base: EscenarioState = {
@@ -739,7 +747,7 @@ export function ProyeccionFinancieraView() {
                   <RefreshCw className="h-3.5 w-3.5" /> Limpiar
                 </button>
                 <button
-                  onClick={() => setGuardarOpen(true)}
+                  onClick={openGuardarCaso}
                   className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.05] px-3.5 py-2.5 text-[12.5px] font-medium text-white/85 transition hover:bg-white/[0.09] hover:text-white"
                 >
                   <Save className="h-3.5 w-3.5" /> Guardar y crear caso
