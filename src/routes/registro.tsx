@@ -95,15 +95,19 @@ function RegistroPage() {
 
 
   if (done) {
+    const esReactivacion = doneMode === "reactivacion";
     return (
       <main className="nuvex-register-shell">
         <div className="nuvex-register-right" style={{ minHeight: "100vh" }}>
           <section className="nuvex-register-card nuvex-register-card--success">
             <div className="nrx-status-icon mb-5"><ShieldCheck className="w-7 h-7" strokeWidth={2.5} /></div>
-            <h1 className="nuvex-register-title">Solicitud enviada</h1>
+            <h1 className="nuvex-register-title">
+              {esReactivacion ? "Solicitud de reactivación enviada" : "Solicitud enviada"}
+            </h1>
             <p className="nuvex-register-copy mx-auto mt-3">
-              Tu cuenta quedó en <b>estado pendiente</b>. Un administrador NUVEX revisará y aprobará tu acceso.
-              Recibirás una notificación cuando puedas iniciar sesión.
+              {esReactivacion
+                ? "Tu cuenta ya existe en NUVEX y se encuentra desvinculada. Hemos enviado una solicitud de reactivación al administrador. Recibirás una notificación cuando tu acceso sea restaurado."
+                : <>Tu cuenta quedó en <b>estado pendiente</b>. Un administrador NUVEX revisará y aprobará tu acceso. Recibirás una notificación cuando puedas iniciar sesión.</>}
             </p>
             <button onClick={() => navigate({ to: "/login" })} className="nuvex-register-submit mt-7">
               Volver al login
@@ -113,6 +117,7 @@ function RegistroPage() {
       </main>
     );
   }
+
 
   return (
     <main className="nuvex-register-shell">
