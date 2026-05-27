@@ -105,11 +105,13 @@ function CarteraDetail() {
             ""
           }
           clienteDataActual={(c.expediente.cliente_data as Record<string, unknown> | null) ?? {}}
+          aprobadoData={(c.expediente.aprobado_data as Record<string, unknown> | null) ?? null}
           honorariosPagados={Number(c.pagado)}
           fechaPago={pagos[0]?.fecha ?? new Date().toISOString().slice(0, 10)}
           yaEnviado={c.expediente.estado_caso === "paz_y_salvo_generado" || c.expediente.estado_caso === "proceso_cerrado"}
           onSent={reload}
         />
+
       )}
 
       <Card>
