@@ -25,7 +25,11 @@ function fmtFecha(d: Date | null): string {
   return d.toLocaleDateString("es-CO", { year: "numeric", month: "long" });
 }
 
-function header(pdf: jsPDF, ctx: ExportCtx, page: number, total: number) {
+function fmtMes(d: Date): string {
+  return d.toLocaleDateString("es-CO", { year: "numeric", month: "short" });
+}
+
+function header(pdf: jsPDF, ctx: ExportCtx, page: number) {
   // Banda superior
   pdf.setFillColor(...NEGRO);
   pdf.rect(0, 0, 210, 24, "F");
@@ -47,8 +51,9 @@ function header(pdf: jsPDF, ctx: ExportCtx, page: number, total: number) {
   pdf.text(`${ctx.input.clienteNombre || "Cliente NUVEX"}`, 200, 11, { align: "right" });
   pdf.setFont("helvetica", "normal");
   pdf.setTextColor(200, 210, 235);
-  pdf.text(`Página ${page} de ${total}`, 200, 17, { align: "right" });
+  pdf.text(`Página ${page}`, 200, 17, { align: "right" });
 }
+
 
 function footer(pdf: jsPDF) {
   pdf.setDrawColor(220, 220, 220);
