@@ -68,8 +68,10 @@ function LoginPage() {
           await supabase.from("acceso_auditoria" as never).insert({
             user_id: uid, actor_id: uid, accion: "login_ok", detalle: {},
           } as never);
-          // MFA: si no se verificó en los últimos 30 días, exigir
-          const mfaOk = isSuperAdmin || (p?.mfa_verificado_at &&
+          // MFA OBLIGATORIO para TODOS los roles sin excepción (incluye super_admin).
+          // Si no se verificó en los últimos 30 días, exigir.
+          void isSuperAdmin;
+          const mfaOk = !!(p?.mfa_verificado_at &&
             (Date.now() - new Date(p.mfa_verificado_at).getTime()) < 30 * 24 * 3600 * 1000
           );
           if (!mfaOk) {
