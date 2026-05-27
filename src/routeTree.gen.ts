@@ -64,6 +64,7 @@ import { Route as AuthenticatedCasosIdRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedCarteraIdRouteImport } from './routes/_authenticated/cartera.$id'
 import { Route as AuthenticatedApoderadoMisCasosRouteImport } from './routes/_authenticated/apoderado.mis-casos'
 import { Route as AuthenticatedColaboracionDmIndexRouteImport } from './routes/_authenticated/colaboracion.dm.index'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicHooksFinanzasCronRouteImport } from './routes/api/public/hooks/finanzas-cron'
 import { Route as ApiPublicHooksCasosAlertasRouteImport } from './routes/api/public/hooks/casos-alertas'
 import { Route as ApiPublicHooksCarteraRecordatoriosRouteImport } from './routes/api/public/hooks/cartera-recordatorios'
@@ -381,6 +382,12 @@ const AuthenticatedColaboracionDmIndexRoute =
     path: '/colaboracion/dm/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksFinanzasCronRoute =
   ApiPublicHooksFinanzasCronRouteImport.update({
     id: '/api/public/hooks/finanzas-cron',
@@ -492,6 +499,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
   '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/colaboracion/dm/': typeof AuthenticatedColaboracionDmIndexRoute
 }
 export interface FileRoutesByTo {
@@ -554,6 +562,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
   '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/colaboracion/dm': typeof AuthenticatedColaboracionDmIndexRoute
 }
 export interface FileRoutesById {
@@ -620,6 +629,7 @@ export interface FileRoutesById {
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
   '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/colaboracion/dm/': typeof AuthenticatedColaboracionDmIndexRoute
 }
 export interface FileRouteTypes {
@@ -686,6 +696,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/cartera-recordatorios'
     | '/api/public/hooks/casos-alertas'
     | '/api/public/hooks/finanzas-cron'
+    | '/lovable/email/queue/process'
     | '/colaboracion/dm/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -748,6 +759,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/cartera-recordatorios'
     | '/api/public/hooks/casos-alertas'
     | '/api/public/hooks/finanzas-cron'
+    | '/lovable/email/queue/process'
     | '/colaboracion/dm'
   id:
     | '__root__'
@@ -813,6 +825,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/cartera-recordatorios'
     | '/api/public/hooks/casos-alertas'
     | '/api/public/hooks/finanzas-cron'
+    | '/lovable/email/queue/process'
     | '/_authenticated/colaboracion/dm/'
   fileRoutesById: FileRoutesById
 }
@@ -827,6 +840,7 @@ export interface RootRouteChildren {
   ApiPublicHooksCarteraRecordatoriosRoute: typeof ApiPublicHooksCarteraRecordatoriosRoute
   ApiPublicHooksCasosAlertasRoute: typeof ApiPublicHooksCasosAlertasRoute
   ApiPublicHooksFinanzasCronRoute: typeof ApiPublicHooksFinanzasCronRoute
+  LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1216,6 +1230,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedColaboracionDmIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/finanzas-cron': {
       id: '/api/public/hooks/finanzas-cron'
       path: '/api/public/hooks/finanzas-cron'
@@ -1437,6 +1458,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksCarteraRecordatoriosRoute,
   ApiPublicHooksCasosAlertasRoute: ApiPublicHooksCasosAlertasRoute,
   ApiPublicHooksFinanzasCronRoute: ApiPublicHooksFinanzasCronRoute,
+  LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
