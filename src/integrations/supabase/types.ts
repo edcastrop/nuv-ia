@@ -1657,6 +1657,7 @@ export type Database = {
           cedula: string | null
           cliente_data: Json
           cliente_nombre: string
+          codigo: string | null
           created_at: string
           credito_data: Json
           cuotas_aprobadas_banco: number | null
@@ -1687,6 +1688,7 @@ export type Database = {
           cedula?: string | null
           cliente_data?: Json
           cliente_nombre: string
+          codigo?: string | null
           created_at?: string
           credito_data?: Json
           cuotas_aprobadas_banco?: number | null
@@ -1717,6 +1719,7 @@ export type Database = {
           cedula?: string | null
           cliente_data?: Json
           cliente_nombre?: string
+          codigo?: string | null
           created_at?: string
           credito_data?: Json
           cuotas_aprobadas_banco?: number | null
