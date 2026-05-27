@@ -234,7 +234,9 @@ export type DirectorioPersona = {
 
 export async function listDirectorioFull(): Promise<DirectorioPersona[]> {
   const { data, error } = await T("profiles")
-    .select("id, nombre, email, avatar_url, correo_corporativo, whatsapp, celular, ciudad, pais, equipo, sede, activo")
+    .select("id, nombre, email, avatar_url, correo_corporativo, whatsapp, celular, ciudad, pais, equipo, sede, activo, estado_acceso")
+    .eq("activo", true)
+    .eq("estado_acceso", "aprobado")
     .order("nombre", { ascending: true });
   if (error) throw error;
   const rows = (data ?? []) as any[];
