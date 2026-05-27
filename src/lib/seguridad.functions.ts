@@ -3,8 +3,8 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { sendLovableEmail } from "@lovable.dev/email-js";
 
-const SENDER_DOMAIN = "nuvex.com.co";
-const FROM_ADDRESS = "NUVEX Seguridad <seguridad@nuvex.com.co>";
+const SENDER_DOMAIN = "notify.nuvex.com.co";
+const FROM_ADDRESS = "NUVEX Seguridad <seguridad@notify.nuvex.com.co>";
 
 function hashCodigo(codigo: string): string {
   // Hash simple — el código vive 10 minutos. Para auditoría/integridad.
