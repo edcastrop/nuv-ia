@@ -52,7 +52,7 @@ function AuthenticatedLayout() {
       const [{ data }, { data: roleRows }] = await Promise.all([
         supabase
           .from("profiles")
-          .select("estado_acceso, onboarding_estado")
+          .select("estado_acceso, onboarding_estado, mfa_verificado_at")
           .eq("id", session.user.id)
           .maybeSingle(),
         supabase
@@ -65,8 +65,19 @@ function AuthenticatedLayout() {
       const superAdminBypass = roleNames.includes("super_admin");
       const estado = (data as { estado_acceso?: string } | null)?.estado_acceso ?? "pendiente";
       const onb = (data as { onboarding_estado?: string } | null)?.onboarding_estado ?? "pendiente";
+      const mfaAt = (data as { mfa_verificado_at?: string | null } | null)?.mfa_verificado_at ?? null;
       const path = location.pathname;
       const aprobado = estado === "aprobado" || estado === "activo";
+
+      // GATE MFA GLOBAL: aplica a TODOS los roles sin excepción (incluido super_admin).
+      // Cubre acceso directo por URL, refresco de sesión y login vía Google OAuth.
+      const mfaOk = !!(mfaAt && (Date.now() - new Date(mfaAt).getTime()) < 30 * 24 * 3600 * 1000);
+      if (!mfaOk && path !== "/mfa-verificar") {
+        setGateState("blocked");
+        setGateChecked(true);
+        navigate({ to: "/mfa-verificar" });
+        return;
+      }
 
       if (superAdminBypass) {
         setGateState("ok");
