@@ -76,7 +76,7 @@ export const enviarCodigoMfaEmail = createServerFn({ method: "POST" })
           subject,
           html,
           text,
-          purpose: "auth",
+          purpose: "transactional",
           label: "mfa_codigo",
           idempotency_key: `mfa-${userId}-${Date.now()}`,
         },
