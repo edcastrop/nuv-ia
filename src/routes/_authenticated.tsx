@@ -32,6 +32,7 @@ function AuthenticatedLayout() {
   const location = useLocation();
   const [unread, setUnread] = useState(0);
   const [gateState, setGateState] = useState<"checking" | "ok" | "blocked">("checking");
+  const [gateChecked, setGateChecked] = useState(false);
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem("nuvex.sidebar.collapsed") === "1";
