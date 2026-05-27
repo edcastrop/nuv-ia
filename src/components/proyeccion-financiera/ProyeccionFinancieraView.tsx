@@ -17,19 +17,16 @@ import {
   YAxis,
 } from "recharts";
 import {
-  Calculator,
   ChevronDown,
   Download,
   FileText,
-  Loader2,
-  PieChart as PieIcon,
   Plus,
   RefreshCw,
   Sparkles,
   TrendingDown,
   TrendingUp,
-  Upload,
 } from "lucide-react";
+
 import { formatCOP, parseCurrency, parseDecimal } from "@/lib/format";
 import {
   compararEscenarios,
