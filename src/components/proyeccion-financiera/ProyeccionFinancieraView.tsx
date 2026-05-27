@@ -853,6 +853,39 @@ export function ProyeccionFinancieraView() {
                       value={input.fechaDesembolso}
                       onChange={(v) => upd("fechaDesembolso", v)}
                     />
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field
+                        label="Cédula"
+                        value={input.cedula || ""}
+                        onChange={(v) => upd("cedula", v)}
+                        placeholder="1.234.567.890"
+                      />
+                      <Field
+                        label="Número de crédito"
+                        value={input.numeroCredito || ""}
+                        onChange={(v) => upd("numeroCredito", v)}
+                        placeholder="Ref. banco"
+                      />
+                      <Field
+                        label="Celular"
+                        value={input.celular || ""}
+                        onChange={(v) => upd("celular", v)}
+                        placeholder="300 000 0000"
+                      />
+                      <Field
+                        label="Correo"
+                        type="email"
+                        value={input.correo || ""}
+                        onChange={(v) => upd("correo", v)}
+                        placeholder="cliente@correo.com"
+                      />
+                      <Field
+                        label="Ciudad"
+                        value={input.ciudad || ""}
+                        onChange={(v) => upd("ciudad", v)}
+                        placeholder="Bogotá"
+                      />
+                    </div>
                   </div>
                 </Surface>
 
