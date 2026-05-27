@@ -2491,6 +2491,149 @@ export type Database = {
         }
         Relationships: []
       }
+      proyeccion_escenarios: {
+        Row: {
+          abono_extraordinario: number
+          aporte_mensual_extra: number
+          created_at: string
+          created_by: string
+          es_principal: boolean
+          id: string
+          nombre: string
+          nueva_tasa: number | null
+          nuevo_plazo: number | null
+          proyeccion_id: string
+          resultado_jsonb: Json
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          abono_extraordinario?: number
+          aporte_mensual_extra?: number
+          created_at?: string
+          created_by: string
+          es_principal?: boolean
+          id?: string
+          nombre?: string
+          nueva_tasa?: number | null
+          nuevo_plazo?: number | null
+          proyeccion_id: string
+          resultado_jsonb?: Json
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          abono_extraordinario?: number
+          aporte_mensual_extra?: number
+          created_at?: string
+          created_by?: string
+          es_principal?: boolean
+          id?: string
+          nombre?: string
+          nueva_tasa?: number | null
+          nuevo_plazo?: number | null
+          proyeccion_id?: string
+          resultado_jsonb?: Json
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proyeccion_escenarios_proyeccion_id_fkey"
+            columns: ["proyeccion_id"]
+            isOneToOne: false
+            referencedRelation: "proyecciones_financieras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proyecciones_financieras: {
+        Row: {
+          banco: string
+          cliente_nombre: string
+          created_at: string
+          created_by: string
+          cuota_actual: number
+          cuotas_pagadas: number
+          cuotas_pendientes: number
+          cuotas_totales: number
+          expediente_id: string | null
+          fecha_desembolso: string | null
+          fecha_terminacion_estimada: string | null
+          id: string
+          moneda: string
+          notas: string | null
+          otros_seguros: number
+          saldo_capital: number
+          saldo_uvr: number
+          seguro_incendio: number
+          seguro_terremoto: number
+          seguro_vida: number
+          tea_pct: number
+          tipo_producto: string
+          updated_at: string
+          uvr_valor: number
+          valor_desembolsado: number
+          variacion_uvr_pct: number
+        }
+        Insert: {
+          banco?: string
+          cliente_nombre?: string
+          created_at?: string
+          created_by: string
+          cuota_actual?: number
+          cuotas_pagadas?: number
+          cuotas_pendientes?: number
+          cuotas_totales?: number
+          expediente_id?: string | null
+          fecha_desembolso?: string | null
+          fecha_terminacion_estimada?: string | null
+          id?: string
+          moneda?: string
+          notas?: string | null
+          otros_seguros?: number
+          saldo_capital?: number
+          saldo_uvr?: number
+          seguro_incendio?: number
+          seguro_terremoto?: number
+          seguro_vida?: number
+          tea_pct?: number
+          tipo_producto?: string
+          updated_at?: string
+          uvr_valor?: number
+          valor_desembolsado?: number
+          variacion_uvr_pct?: number
+        }
+        Update: {
+          banco?: string
+          cliente_nombre?: string
+          created_at?: string
+          created_by?: string
+          cuota_actual?: number
+          cuotas_pagadas?: number
+          cuotas_pendientes?: number
+          cuotas_totales?: number
+          expediente_id?: string | null
+          fecha_desembolso?: string | null
+          fecha_terminacion_estimada?: string | null
+          id?: string
+          moneda?: string
+          notas?: string | null
+          otros_seguros?: number
+          saldo_capital?: number
+          saldo_uvr?: number
+          seguro_incendio?: number
+          seguro_terremoto?: number
+          seguro_vida?: number
+          tea_pct?: number
+          tipo_producto?: string
+          updated_at?: string
+          uvr_valor?: number
+          valor_desembolsado?: number
+          variacion_uvr_pct?: number
+        }
+        Relationships: []
+      }
       rol_permisos: {
         Row: {
           accion: string
@@ -2797,6 +2940,10 @@ export type Database = {
       }
       can_manage_cartera: { Args: { _uid: string }; Returns: boolean }
       can_manage_finanzas: { Args: { _uid: string }; Returns: boolean }
+      can_use_proyeccion_financiera: {
+        Args: { _uid: string }
+        Returns: boolean
+      }
       can_validar_proyeccion: { Args: { _uid: string }; Returns: boolean }
       can_view_cartera_row: {
         Args: { _exp_id: string; _uid: string }
