@@ -6,7 +6,6 @@ import type { ExpedienteMaestro } from "@/lib/expedienteMaestro";
 import { listApoderados, seleccionarApoderado, type ApoderadoNuvex } from "@/lib/apoderados";
 import { ChecklistDocumental } from "./ChecklistDocumental";
 
-import { ChecklistDocumental } from "./ChecklistDocumental";
 
 import {
   buildDerechoPeticion,
