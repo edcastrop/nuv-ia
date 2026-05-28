@@ -153,8 +153,9 @@ function TipoSection({
         />
       </button>
 
-      {expanded && (
-        <div className="px-4 pb-4 pt-1 border-t border-[#E3E7EE]">
+          {tipo.id === "plazos" && (
+            <PlazosForm expediente={expediente} onPreview={onPreview} />
+          )}
           {tipo.id === "derecho" && (
             <DerechoForm expediente={expediente} onPreview={onPreview} />
           )}
