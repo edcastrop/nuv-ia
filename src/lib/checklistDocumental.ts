@@ -66,7 +66,6 @@ export interface DocRequerido {
 // ─── Generales para todos los bancos ───────────────────────────────────────
 const GENERALES: DocRequerido[] = [
   { id: "cedula_cliente", nombre: "Cédula del cliente", obligatorio: true, perfil: "ambos" },
-  { id: "cedula_apoderado", nombre: "Cédula del apoderado", obligatorio: true, perfil: "ambos" },
   { id: "poder", nombre: "Poder o poderes especiales firmados", obligatorio: true, perfil: "ambos" },
   { id: "solicitud_plazos", nombre: "Solicitud Cambio de Plazos", obligatorio: true, perfil: "ambos" },
 ];
