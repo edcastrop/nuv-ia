@@ -140,6 +140,7 @@ function CasoDetail() {
               <ErrorBoundary fallback={<Card><div className="text-sm text-[#B42318]">No se pudo cargar el Módulo Jurídico.</div></Card>}>
                 <ModuloJuridico expediente={maestroLike} />
               </ErrorBoundary>
+            )}
             <VersionesDocumentalesBlock exp={exp} />
           </>
         );
