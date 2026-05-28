@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { enviarCodigoMfaEmail, verificarCodigoMfaEmail } from "@/lib/seguridad.functions";
+import { enviarCodigoMfaEmail, verificarCodigoMfaEmail, verificarCodigoTotp, getEstadoMfa } from "@/lib/seguridad.functions";
 import { Logo } from "@/components/nuvex/Logo";
 import { ShieldCheck, Mail, Smartphone } from "lucide-react";
 
