@@ -158,8 +158,6 @@ function TipoSection({
           {tipo.id === "plazos" && (
             <PlazosForm expediente={expediente} onPreview={onPreview} />
           )}
-            <PlazosForm expediente={expediente} onPreview={onPreview} />
-          )}
           {tipo.id === "derecho" && (
             <DerechoForm expediente={expediente} onPreview={onPreview} />
           )}
