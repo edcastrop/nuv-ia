@@ -17,8 +17,10 @@ function etapaDe(p: Profile | null): Etapa {
   if (!p) return "desconocido";
   if (p.estado_acceso === "desvinculado") return "desvinculado";
   if (p.estado_acceso !== "aprobado" && p.estado_acceso !== "activo") return "pendiente_aprobacion";
-  if (!p.perfil_completo) return "pendiente_perfil";
-  if (!p.mfa_metodo) return "pendiente_mfa";
+  const mfaOk = !!p.mfa_metodo && p.mfa_metodo !== "ninguno";
+  const perfilOk = !!p.perfil_completo || p.onboarding_estado === "completado";
+  if (!perfilOk) return "pendiente_perfil";
+  if (!mfaOk) return "pendiente_mfa";
   return "completo";
 }
 

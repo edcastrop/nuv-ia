@@ -109,28 +109,44 @@ function Loading() {
 }
 
 function Stepper({ step }: { step: number }) {
+  const pct = (step / (STEPS.length - 1)) * 100;
   return (
-    <div className="flex items-center gap-2">
-      {STEPS.map((s, i) => {
-        const done = i < step;
-        const active = i === step;
-        return (
-          <div key={s.key} className="flex items-center gap-2 flex-1">
-            <div className="flex items-center gap-2">
-              <div className="h-9 w-9 rounded-full inline-flex items-center justify-center text-xs font-semibold"
+    <div className="relative">
+      {/* Track */}
+      <div className="absolute left-4 right-4 top-[18px] h-1 rounded-full bg-white/10 overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${pct}%`, background: "linear-gradient(90deg, #445DA3, #84B98F)" }}
+        />
+      </div>
+      <div className="relative flex items-start justify-between">
+        {STEPS.map((s, i) => {
+          const done = i < step;
+          const active = i === step;
+          return (
+            <div key={s.key} className="flex flex-col items-center gap-2 flex-1 min-w-0">
+              <div
+                className="h-9 w-9 rounded-full inline-flex items-center justify-center text-xs font-semibold shadow-md ring-2 ring-[#0A1226]"
                 style={{
-                  background: done ? "#84B98F" : active ? "linear-gradient(135deg, #445DA3, #84B98F)" : "rgba(255,255,255,0.05)",
-                  color: done || active ? "#fff" : "rgba(255,255,255,0.5)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                }}>
+                  background: done
+                    ? "linear-gradient(135deg, #84B98F, #5fa36c)"
+                    : active
+                      ? "linear-gradient(135deg, #445DA3, #84B98F)"
+                      : "#1a2440",
+                  color: done || active ? "#fff" : "rgba(255,255,255,0.55)",
+                  border: active ? "1px solid rgba(255,255,255,0.25)" : "1px solid rgba(255,255,255,0.08)",
+                  boxShadow: active ? "0 0 0 4px rgba(68,93,163,0.25)" : undefined,
+                }}
+              >
                 {done ? <CheckCircle2 size={16} /> : <s.Icon size={14} />}
               </div>
-              <span className={`text-xs ${active ? "text-white" : "text-white/40"}`}>{s.label}</span>
+              <span className={`text-[11px] text-center ${active ? "text-white font-medium" : done ? "text-white/70" : "text-white/40"}`}>
+                {s.label}
+              </span>
             </div>
-            {i < STEPS.length - 1 && <div className="flex-1 h-px bg-white/10" />}
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
