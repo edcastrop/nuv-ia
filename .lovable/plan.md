@@ -1,96 +1,99 @@
+# Checklist Inteligente de Documentos
 
-# Plan: Módulo "Proyección Financiera NUVEX"
+Submódulo nuevo dentro del Módulo Jurídico del Expediente Maestro, llamado **Documentos Requeridos**, que genera automáticamente el listado de documentos que se le deben pedir al cliente para radicar la representación ante el banco.
 
-Nuevo módulo avanzado de modelado financiero hipotecario / leasing habitacional, accesible para **Licenciado**, **Analista Financiero (director_financiero_qa)** y **Director Financiero**. Permite construir proyecciones desde cero o desde un expediente existente, comparar escenarios ilimitados y exportar informes corporativos.
+## 1. Alcance de esta primera entrega
 
----
+Voy a entregar la **matriz documental + UI + envío de correo + trazabilidad** completa y funcional. La matriz por banco se entrega cableada en código (editable luego desde Super Admin en una segunda iteración), porque hoy no existe tabla de "matriz documental editable" y crearla con UI de edición sin código entra en alcance de un segundo sprint.
 
-## 1. Acceso y ruta
+Confirma antes de implementar:
 
-- Ruta: `/_authenticated/proyeccion-financiera` (entrada nueva en sidebar: "Proyección Financiera").
-- Gate de rol: `licenciado`, `director_financiero_qa`, `gerencia`, `super_admin`, `admin`.
-- Mantener la ruta existente `/proyeccion` (proyección técnica dentro del expediente) intacta — este es un módulo nuevo independiente.
+1. **Persistencia**: ¿guardamos el estado del checklist (documentos, estados, fechas, archivos cargados) en una tabla nueva `expediente_documentos_requeridos` ligada al expediente? Recomiendo que sí.
+2. **Carga de archivos del cliente**: ¿el cliente sube archivos a un link público de NUVEX, o por ahora basta con que **el licenciado** marque "Recibido" y adjunte el archivo desde el expediente? Recomiendo la segunda opción para esta entrega (más rápido, sin portal externo).
+3. **Correo institucional NUVEX**: ¿usamos el sistema de correos ya existente del proyecto (Lovable Emails / dominio configurado), o solo generamos el PDF + cuerpo del correo y lo abrimos en el cliente de correo del licenciado (`mailto:`)? Recomiendo iniciar con envío real vía Lovable Emails si el dominio ya está activo; si no, fallback a `mailto:`.
+4. **Configuración Super Admin editable**: ¿lo dejamos para una segunda fase? La matriz funciona hardcoded por banco/perfil en esta entrega.
 
-## 2. Modelo de datos (Supabase)
+## 2. Matriz documental (cableada)
 
-Nuevas tablas:
+Archivo nuevo: `src/lib/checklistDocumental.ts`
 
-- **`proyecciones_financieras`** — cabecera del caso de proyección
-  - `expediente_id` (nullable, FK lógico), `cliente_nombre`, `banco`, `tipo_producto` (hipotecario|leasing), `moneda` (pesos|uvr), `fecha_desembolso`, `valor_desembolsado`, `saldo_capital`, `cuota_actual`, `tea_pct`, `cuotas_totales`, `cuotas_pagadas`, `cuotas_pendientes`, `fecha_terminacion_estimada`, `seguro_vida`, `seguro_incendio`, `seguro_terremoto`, `otros_seguros`, `uvr_valor`, `saldo_uvr`, `variacion_uvr_pct`, `created_by`, `notas`
-- **`proyeccion_escenarios`** — escenarios ilimitados por proyección
-  - `proyeccion_id` (FK), `nombre`, `tipo` (actual|nuvex|conservador|agresivo|personalizado), `aporte_mensual_extra`, `abono_extraordinario`, `nueva_tasa`, `nuevo_plazo`, `resultado_jsonb` (KPIs + tabla amortización cacheada), `es_principal`
-- RLS: SELECT/INSERT/UPDATE/DELETE para roles autorizados + creador; GRANT a `authenticated` y `service_role`.
+- `DocRequerido` con campos: `id`, `nombre`, `obligatorio`, `vigenciaDias?`, `observacion?`, `perfil: "ambos"|"empleado"|"independiente"`, `condicion?` (función contra el expediente).
+- `MATRIZ_DOCUMENTAL: Record<BancoKey, DocRequerido[]>` con:
+  - Generales (cédula cliente, cédula apoderado, poder, Solicitud Cambio de Plazos).
+  - Bancolombia, Davivienda, Davibank/Scotiabank Colpatria, Banco de Bogotá, Banco de Occidente, AV Villas, Banco Popular.
+- `buildChecklist(expediente, perfil, flags)` que:
+  - Combina generales + banco.
+  - Si `perfil = "ambos"`: une empleado + independiente sin duplicar por `id`.
+  - Aplica condiciones: declara renta sí/no, pago mensual/quincenal (3 vs 6 desprendibles), billeteras virtuales sí/no.
+  - Marca `vigenciaDias` (Certificado Tradición y Libertad = 15 días) y devuelve alertas.
 
-## 3. Motor financiero (frontend)
+## 3. Persistencia (migración Supabase)
 
-Nuevo archivo `src/lib/proyeccionFinanciera.ts` que reutiliza `src/lib/proyeccion.ts` y añade:
+Tabla nueva `expediente_documentos_requeridos`:
 
-- `calcularEscenario({ saldo, tasa, cuota, seguros, aporteExtra, abonoExtraordinario })` → devuelve tabla mes-a-mes, totales, fecha fin, costo total.
-- `compararEscenarios(actual, optimizado)` → KPIs: años/meses eliminados, intereses evitados, seguros evitados, ahorro total, ROI cliente, costo de no actuar (= intereses + seguros que se pagarían de más manteniendo el escenario actual).
-- Soporte pesos y UVR (usa motor existente).
+- `id`, `expediente_id`, `documento_id` (string de la matriz), `documento_nombre`, `obligatorio`, `estado` (`pendiente|solicitado|recibido|en_revision|aprobado|rechazado|vencido|no_aplica`), `vigencia_dias`, `fecha_solicitado`, `fecha_recibido`, `fecha_vencimiento`, `archivo_url`, `observaciones`, `created_by`, `updated_at`.
 
-## 4. UI / componentes
+Tabla nueva `expediente_checklist_envios`:
 
-Estructura en `src/components/proyeccion-financiera/`:
+- `id`, `expediente_id`, `enviado_a_email`, `cc_licenciado_email`, `asunto`, `cuerpo`, `pdf_url`, `enviado_por`, `enviado_at`.
 
-- `ProyeccionFinancieraView.tsx` — layout principal tipo dashboard fintech (Bloomberg/Revolut), responsive mobile-first.
-- `FormularioDatos.tsx` — secciones colapsables:
-  - Información general (banco, producto, moneda, fecha, cliente)
-  - Datos del crédito (valor, saldo, cuota, tasa, plazos)
-  - Seguros desglosados (vida, incendio, terremoto, otros) + cálculos derivados
-  - Datos UVR (condicional)
-  - Botón "Cargar desde expediente" si se pasó `?expedienteId=…`
-- `CalculadoraAvanzada.tsx` — sliders/inputs para cuota, tasa, plazo, aportes mensuales, abonos extraordinarios; recálculo en vivo.
-- `MotorNuvex.tsx` — chips de aporte rápido (+100k, +200k, +300k, +500k, libre) y resultados instantáneos.
-- `ComparadorEscenarios.tsx` — tabla lado a lado "Crédito Actual" vs "Optimizado NUVEX".
-- `EscenariosManager.tsx` — crear/duplicar/eliminar/renombrar escenarios; ilimitados.
-- `KpiCards.tsx` — tarjetas destacadas con prioridad visual al "Costo de No Actuar".
-- `GraficasProyeccion.tsx` — 6 gráficas con `recharts`:
-  1. Capital vs Interés mes a mes (área apilada)
-  2. Tiempo Actual vs Optimizado (barras)
-  3. Composición de cuota (pie/donut)
-  4. Saldo pendiente (línea)
-  5. Ahorro acumulado (línea)
-  6. Costo de no actuar (barras comparativas)
-- `TablaAmortizacion.tsx` — virtualizada + exportable.
-- `InformeEjecutivo.tsx` — preview del informe.
+RLS: lectura para roles `super_admin, admin, gerencia, licenciado, operaciones, juridica`. Inserción/actualización para los mismos roles excepto `contabilidad` (solo lectura). Borrado solo `super_admin`.
 
-## 5. Exportaciones
+## 4. UI nueva
 
-- **PDF Corporativo**: reutilizar `src/lib/pdf/nuvexPdfKit.ts` para generar informe con header de marca, KPIs, gráficas (renderizadas), tabla resumen y recomendación.
-- **Excel**: `xlsx` (ya disponible) con hojas: Resumen, Escenarios, Amortización, KPIs.
+Archivo nuevo: `src/components/expediente-maestro/ChecklistDocumental.tsx`
 
-## 6. Identidad visual
+- Header con banco detectado y badges del perfil seleccionado.
+- Selector de perfil: Empleado / Independiente / Ambos.
+- Flags condicionales: ¿Declara renta? · ¿Pago mensual o quincenal? · ¿Billeteras virtuales?
+- Lista de documentos con:
+  - Nombre, obligatoriedad, observación legal.
+  - Selector de estado (los 8 estados).
+  - Subida de archivo (Supabase Storage bucket `expedientes`).
+  - Alerta visual si CTL pasa 15 días.
+- Acciones:
+  - **Regenerar checklist** (recalcula desde matriz, conserva estados ya cargados).
+  - **Descargar PDF** del checklist (usa `legalDocsExport` adaptado o nuevo `checklistPdf.ts`).
+  - **Enviar al cliente** (modal con email del cliente, CC = correo del licenciado, asunto y cuerpo editables; usa la plantilla pedida).
+  - Estado global: badge "Listo para radicación" cuando todos los obligatorios están `aprobado`.
 
-- Tokens NUVEX existentes: azul `#445DA3`, verde `#84B98F`, oscuro `#242424`.
-- Diseño minimalista fintech: tarjetas blancas con sombra suave, tipografía clara, KPI hero destacando "Costo de No Actuar" en rojo/ámbar.
+Punto de entrada: nueva pestaña/sección dentro de `ModuloJuridico.tsx` arriba de los documentos jurídicos, titulada **"Documentos Requeridos"**.
 
-## 7. Preparación para "Lector IA de Extractos" (futuro)
+## 5. Envío de correo
 
-- `FormularioDatos` expone un prop `onPrefill(data)` y un slot `<UploadExtractoIA />` placeholder con tooltip "Próximamente".
-- Esquema de datos del formulario tipado en `src/lib/proyeccionFinanciera.ts` con un `ProyeccionFinancieraInput` que la IA podrá rellenar.
+Server function `src/lib/checklistDocumental.functions.ts`:
 
-## 8. Navegación / sidebar
+- `enviarChecklistAlCliente({ expedienteId, to, cc, asunto, cuerpo, pdfBase64 })` con `requireSupabaseAuth`.
+- Si el proyecto tiene Lovable Emails activo: envío real con plantilla transaccional + adjunto = link al PDF (no soportamos attachments nativos → subimos PDF a Storage y mandamos link de descarga, como dicta la guía).
+- Si no: la función devuelve `{ mailtoUrl }` y la UI abre el correo del licenciado prellenado.
+- Registra en `expediente_checklist_envios`.
 
-- Añadir item "Proyección Financiera" en el sidebar visible solo a roles autorizados (verificar el archivo del sidebar existente).
-- Desde un expediente: botón "Abrir en Proyección Financiera" que navega a `/proyeccion-financiera?expedienteId={id}`.
+## 6. Alertas y trazabilidad
 
-## 9. Detalles técnicos clave
+- Al guardar estados, se registra en `expediente_eventos` (o tabla equivalente ya existente) con `tipo = "checklist_documental"`.
+- Hook ya existente de alertas (`finanzas-cron` / `casos-alertas`) recibe una nueva regla: documentos pendientes > X días → notificación al licenciado.
+- Badge global "Expediente listo para radicación" disponible para que Operaciones lo accione.
 
-- Recálculo derivado con `useMemo` (no se persiste en cada tecla; se guarda al pulsar "Guardar escenario").
-- Persistencia opcional: el módulo funciona 100% en cliente; guardar es opcional para historial.
-- Validaciones con `zod`.
-- Reutiliza `formatCOP`, `parseCurrency`, hooks `useUserRole`, `useAuth`.
+## 7. Permisos
 
-## 10. Entregables
+Usando `useUserRole` ya existente:
 
-1. Migración SQL (2 tablas + RLS + GRANTS).
-2. `src/lib/proyeccionFinanciera.ts` (motor + tipos).
-3. Componentes en `src/components/proyeccion-financiera/`.
-4. Ruta `src/routes/_authenticated/proyeccion-financiera.tsx`.
-5. Entrada en sidebar.
-6. Exportadores PDF y Excel.
+- `licenciado`: ver/editar checklist de sus casos, enviar correo, marcar recibido, cargar archivos.
+- `operaciones`: cambiar estados, marcar listo para radicación.
+- `juridica`: validar Poder y Solicitud Cambio de Plazos.
+- `super_admin / admin`: todo.
+- `contabilidad`: solo lectura.
 
----
+## 8. Detalles técnicos
 
-**Confirma para construir.** Si quieres ajustar el alcance (p. ej. omitir persistencia en BD en esta primera versión, o reducir gráficas), dímelo y replanteo antes de implementar.
+- Mapa de banco → key normalizada reutilizando el helper que ya usa `legalDocs.ts` (`detectGrupoCalculoPlazo`). Lo extraigo a `bancoUtils.ts` si hace falta.
+- Storage: bucket `expedientes`, ruta `expediente/{id}/documentos-requeridos/{docId}/{filename}`.
+- PDF del checklist generado con el mismo `pdfKit` ya usado en otros documentos.
+
+## 9. Fuera de alcance (segunda fase)
+
+- UI Super Admin para editar la matriz sin código (la matriz vive en `checklistDocumental.ts` y es trivialmente editable por desarrollador).
+- Portal público para que el cliente suba archivos directamente.
+- Integración bidireccional con buzón del licenciado para parsear respuestas.
+
+Si confirmas las 4 preguntas del punto 1, procedo a implementar exactamente esto.
