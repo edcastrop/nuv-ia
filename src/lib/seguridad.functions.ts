@@ -178,11 +178,12 @@ export const iniciarEnrolarTotp = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     const { data: prof } = await supabase
-      .from("profiles").select("email").eq("id", userId).maybeSingle();
-    const email = (prof as { email?: string } | null)?.email ?? userId;
+      .from("profiles").select("email, correo_corporativo").eq("id", userId).maybeSingle();
+    const p = prof as { email?: string; correo_corporativo?: string | null } | null;
+    const label = p?.correo_corporativo?.trim() || p?.email || userId;
 
     const secret = new OTPAuth.Secret({ size: 20 }).base32;
-    const totp = buildTotp(secret, email);
+    const totp = buildTotp(secret, label);
     const otpauthUrl = totp.toString();
     const qrDataUrl = await QRCode.toDataURL(otpauthUrl, { margin: 1, width: 240 });
 
