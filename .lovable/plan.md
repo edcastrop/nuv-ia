@@ -1,99 +1,108 @@
-# Checklist Inteligente de Documentos
+# Validación de Identidad y Control Contractual
 
-Submódulo nuevo dentro del Módulo Jurídico del Expediente Maestro, llamado **Documentos Requeridos**, que genera automáticamente el listado de documentos que se le deben pedir al cliente para radicar la representación ante el banco.
+Sistema para evitar que datos mal digitados generen documentos jurídicos con errores. Introduce un ciclo formal de validación entre Licenciado → Contratación antes de habilitar la generación de cualquier documento dirigido al banco.
 
-## 1. Alcance de esta primera entrega
+## 1. Modelo de datos (migración Supabase)
 
-Voy a entregar la **matriz documental + UI + envío de correo + trazabilidad** completa y funcional. La matriz por banco se entrega cableada en código (editable luego desde Super Admin en una segunda iteración), porque hoy no existe tabla de "matriz documental editable" y crearla con UI de edición sin código entra en alcance de un segundo sprint.
+**Nuevas columnas en `expedientes`:**
+- `validacion_estado` text default `'pendiente_validacion'` — enum lógico: `pendiente_validacion | en_revision_contratacion | devuelto_datos_incorrectos | datos_validados | bloqueado_inconsistencia`
+- `validacion_confirmado_licenciado` bool default false
+- `validacion_confirmado_at` timestamptz
+- `validacion_aprobado_por` uuid (contratación)
+- `validacion_aprobado_at` timestamptz
+- `validacion_motivo_devolucion` text
+- `validacion_version` int default 1 (incrementa cuando cambian datos críticos tras aprobación)
 
-Confirma antes de implementar:
+**Nueva tabla `expediente_validacion_historial`:**
+- `id, expediente_id, accion (enviar|aprobar|devolver|bloquear|desbloquear|cambio_critico), motivo, datos_snapshot jsonb, user_id, created_at`
 
-1. **Persistencia**: ¿guardamos el estado del checklist (documentos, estados, fechas, archivos cargados) en una tabla nueva `expediente_documentos_requeridos` ligada al expediente? Recomiendo que sí.
-2. **Carga de archivos del cliente**: ¿el cliente sube archivos a un link público de NUVEX, o por ahora basta con que **el licenciado** marque "Recibido" y adjunte el archivo desde el expediente? Recomiendo la segunda opción para esta entrega (más rápido, sin portal externo).
-3. **Correo institucional NUVEX**: ¿usamos el sistema de correos ya existente del proyecto (Lovable Emails / dominio configurado), o solo generamos el PDF + cuerpo del correo y lo abrimos en el cliente de correo del licenciado (`mailto:`)? Recomiendo iniciar con envío real vía Lovable Emails si el dominio ya está activo; si no, fallback a `mailto:`.
-4. **Configuración Super Admin editable**: ¿lo dejamos para una segunda fase? La matriz funciona hardcoded por banco/perfil en esta entrega.
+**Nueva tabla `documentos_jurídicos_versiones`** (marcar versiones obsoletas):
+- `id, expediente_id, tipo (poder|contrato|solicitud_plazos|derecho_peticion|tutela|otros), version int, obsoleto bool default false, motivo_obsoleto text, created_by, created_at, snapshot jsonb`
 
-## 2. Matriz documental (cableada)
+**Trigger** en `expedientes`: si tras `datos_validados` se modifica cualquier columna crítica (nombre, cédula, banco, número_crédito, etc. dentro de `cliente_data`), marcar `validacion_estado = 'pendiente_validacion'`, incrementar `validacion_version`, marcar versiones documentales como `obsoleto = true`, e insertar historial `cambio_critico`.
 
-Archivo nuevo: `src/lib/checklistDocumental.ts`
+**RLS y GRANTs:**
+- Licenciado: SELECT/UPDATE en su propio expediente (solo si estado permite edición).
+- Contratación + admin/gerencia/super_admin: SELECT/UPDATE todos; pueden aprobar/devolver/bloquear.
+- Historial: insertable por authenticated; select por owner/contratación/admin.
 
-- `DocRequerido` con campos: `id`, `nombre`, `obligatorio`, `vigenciaDias?`, `observacion?`, `perfil: "ambos"|"empleado"|"independiente"`, `condicion?` (función contra el expediente).
-- `MATRIZ_DOCUMENTAL: Record<BancoKey, DocRequerido[]>` con:
-  - Generales (cédula cliente, cédula apoderado, poder, Solicitud Cambio de Plazos).
-  - Bancolombia, Davivienda, Davibank/Scotiabank Colpatria, Banco de Bogotá, Banco de Occidente, AV Villas, Banco Popular.
-- `buildChecklist(expediente, perfil, flags)` que:
-  - Combina generales + banco.
-  - Si `perfil = "ambos"`: une empleado + independiente sin duplicar por `id`.
-  - Aplica condiciones: declara renta sí/no, pago mensual/quincenal (3 vs 6 desprendibles), billeteras virtuales sí/no.
-  - Marca `vigenciaDias` (Certificado Tradición y Libertad = 15 días) y devuelve alertas.
+## 2. Lógica de bloqueo (frontend + función)
 
-## 3. Persistencia (migración Supabase)
+**`src/lib/validacionIdentidad.ts`** (nuevo):
+- `puedeGenerarDocumentos(expediente)` → solo `true` si `validacion_estado === 'datos_validados'`.
+- `detectarInconsistencias(clienteData)` → heurísticas (nombre con números/caracteres raros, cédula longitud, ciudad inexistente vs `colombiaCities`, campos vacíos críticos).
+- `confirmarDatosLicenciado(expedienteId)`, `enviarAValidacion`, `aprobarValidacion`, `devolverValidacion(motivo)`, `bloquearInconsistencia(motivo)`.
 
-Tabla nueva `expediente_documentos_requeridos`:
+**Documentos bloqueados:** Poder, Contrato (Datos Contrato), Solicitud Cambio de Plazos, Derechos de petición, Tutelas, y cualquier doc dirigido al banco. Se inserta un guard en:
+- `src/components/expediente-maestro/ModuloJuridico.tsx` (genera poder + solicitud plazos + DP/tutelas)
+- `src/components/expediente-maestro/DocumentosLegales.tsx`
+- `src/components/expediente-maestro/EnviarContratacion.tsx` (botón Enviar a Contratación queda bloqueado además por falta validación)
 
-- `id`, `expediente_id`, `documento_id` (string de la matriz), `documento_nombre`, `obligatorio`, `estado` (`pendiente|solicitado|recibido|en_revision|aprobado|rechazado|vencido|no_aplica`), `vigencia_dias`, `fecha_solicitado`, `fecha_recibido`, `fecha_vencimiento`, `archivo_url`, `observaciones`, `created_by`, `updated_at`.
+Mostrar alerta destacada cuando bloqueado:
+> "Este expediente aún no tiene datos validados. No se pueden generar documentos jurídicos hasta que Contratación apruebe la información."
 
-Tabla nueva `expediente_checklist_envios`:
+## 3. UI Licenciado
 
-- `id`, `expediente_id`, `enviado_a_email`, `cc_licenciado_email`, `asunto`, `cuerpo`, `pdf_url`, `enviado_por`, `enviado_at`.
+**Nuevo componente `ValidacionDatosCriticosBlock`** en MaestroEditor:
+- Resumen visible de campos críticos (nombre, doc, banco, crédito, producto, dirección, cotitular).
+- Panel de "Posibles inconsistencias" en rojo/ámbar con resultado de `detectarInconsistencias`.
+- Checkbox: "Confirmo que revisé los datos críticos del cliente."
+- Botón "Enviar a validación de Contratación" (deshabilitado hasta checkbox + sin inconsistencias críticas no resueltas).
+- Si estado = `devuelto_datos_incorrectos`: banner con motivo y botón "Reenviar tras corregir".
 
-RLS: lectura para roles `super_admin, admin, gerencia, licenciado, operaciones, juridica`. Inserción/actualización para los mismos roles excepto `contabilidad` (solo lectura). Borrado solo `super_admin`.
+## 4. UI Contratación
 
-## 4. UI nueva
+**Nueva ruta `src/routes/_authenticated/contratacion.validacion.tsx`**:
+- Bandeja "Expedientes pendientes por validar" (filtro por estado `en_revision_contratacion`).
+- Columnas: cliente, licenciado, banco, fecha creación, # datos críticos completos, link a documentos soporte (checklist).
+- Detalle: revisión lado-a-lado de campos críticos + acciones:
+  - **Aprobar datos** → estado `datos_validados`, registra auditoría, notifica al licenciado.
+  - **Devolver por corrección** → exige motivo (select: nombre mal digitado, doc incorrecto, lugar expedición faltante, banco incorrecto, # crédito incorrecto, dirección incompleta, cotitular incompleto, otro + texto libre).
+  - **Marcar inconsistencia crítica** → estado `bloqueado_inconsistencia`, notifica admin.
 
-Archivo nuevo: `src/components/expediente-maestro/ChecklistDocumental.tsx`
+Acceso: roles `contratacion`, `juridica`, `admin`, `gerencia`, `super_admin`.
 
-- Header con banco detectado y badges del perfil seleccionado.
-- Selector de perfil: Empleado / Independiente / Ambos.
-- Flags condicionales: ¿Declara renta? · ¿Pago mensual o quincenal? · ¿Billeteras virtuales?
-- Lista de documentos con:
-  - Nombre, obligatoriedad, observación legal.
-  - Selector de estado (los 8 estados).
-  - Subida de archivo (Supabase Storage bucket `expedientes`).
-  - Alerta visual si CTL pasa 15 días.
-- Acciones:
-  - **Regenerar checklist** (recalcula desde matriz, conserva estados ya cargados).
-  - **Descargar PDF** del checklist (usa `legalDocsExport` adaptado o nuevo `checklistPdf.ts`).
-  - **Enviar al cliente** (modal con email del cliente, CC = correo del licenciado, asunto y cuerpo editables; usa la plantilla pedida).
-  - Estado global: badge "Listo para radicación" cuando todos los obligatorios están `aprobado`.
+## 5. Notificaciones
 
-Punto de entrada: nueva pestaña/sección dentro de `ModuloJuridico.tsx` arriba de los documentos jurídicos, titulada **"Documentos Requeridos"**.
+Reusa `src/lib/notificaciones.ts` para:
+- Devolución → al asesor_id del expediente.
+- Aprobación → al asesor_id.
+- Inconsistencia crítica → super_admin/gerencia.
+- Cambio crítico post-aprobación → contratación + asesor.
 
-## 5. Envío de correo
+## 6. Auditoría y versionamiento
 
-Server function `src/lib/checklistDocumental.functions.ts`:
-
-- `enviarChecklistAlCliente({ expedienteId, to, cc, asunto, cuerpo, pdfBase64 })` con `requireSupabaseAuth`.
-- Si el proyecto tiene Lovable Emails activo: envío real con plantilla transaccional + adjunto = link al PDF (no soportamos attachments nativos → subimos PDF a Storage y mandamos link de descarga, como dicta la guía).
-- Si no: la función devuelve `{ mailtoUrl }` y la UI abre el correo del licenciado prellenado.
-- Registra en `expediente_checklist_envios`.
-
-## 6. Alertas y trazabilidad
-
-- Al guardar estados, se registra en `expediente_eventos` (o tabla equivalente ya existente) con `tipo = "checklist_documental"`.
-- Hook ya existente de alertas (`finanzas-cron` / `casos-alertas`) recibe una nueva regla: documentos pendientes > X días → notificación al licenciado.
-- Badge global "Expediente listo para radicación" disponible para que Operaciones lo accione.
+- Cada acción inserta en `expediente_validacion_historial` + `auditoria_global`.
+- Al generar un documento (poder/contrato/etc.), insertar fila en `documentos_juridicos_versiones` con snapshot del `cliente_data`.
+- Al detectar cambio crítico tras aprobación (trigger), `UPDATE documentos_juridicos_versiones SET obsoleto = true, motivo_obsoleto = 'Cambio en dato crítico'` para ese expediente.
+- En UI documental mostrar badge "OBSOLETO — regenerar" sobre documentos antiguos.
 
 ## 7. Permisos
 
-Usando `useUserRole` ya existente:
+- **Licenciado**: ingresar/corregir, confirmar checkbox, enviar a validación. NO puede aprobar.
+- **Contratación/Jurídica**: aprobar, devolver, marcar inconsistencia.
+- **Super Admin**: auditar todo + desbloqueo excepcional (botón "Desbloquear" con motivo obligatorio).
 
-- `licenciado`: ver/editar checklist de sus casos, enviar correo, marcar recibido, cargar archivos.
-- `operaciones`: cambiar estados, marcar listo para radicación.
-- `juridica`: validar Poder y Solicitud Cambio de Plazos.
-- `super_admin / admin`: todo.
-- `contabilidad`: solo lectura.
+## 8. Plan de verificación (checklist final)
 
-## 8. Detalles técnicos
+Ejecutar `tsc --noEmit` y validar manualmente los 13 escenarios del brief (crear correcto, crear mal digitado, alerta IA, envío, aprobación → desbloqueo, devolución → bloqueo, corrección, regeneración, cambio crítico → obsolescencia, nueva versión).
 
-- Mapa de banco → key normalizada reutilizando el helper que ya usa `legalDocs.ts` (`detectGrupoCalculoPlazo`). Lo extraigo a `bancoUtils.ts` si hace falta.
-- Storage: bucket `expedientes`, ruta `expediente/{id}/documentos-requeridos/{docId}/{filename}`.
-- PDF del checklist generado con el mismo `pdfKit` ya usado en otros documentos.
+## Archivos a crear/editar
 
-## 9. Fuera de alcance (segunda fase)
+**Crear:**
+- `supabase/migrations/<ts>_validacion_identidad.sql`
+- `src/lib/validacionIdentidad.ts`
+- `src/lib/validacionIdentidad.functions.ts` (server fns: aprobar/devolver/bloquear/desbloquear con auth + auditoría)
+- `src/components/expediente-maestro/ValidacionDatosCriticosBlock.tsx`
+- `src/components/contratacion/BandejaValidacion.tsx`
+- `src/routes/_authenticated/contratacion.validacion.tsx`
 
-- UI Super Admin para editar la matriz sin código (la matriz vive en `checklistDocumental.ts` y es trivialmente editable por desarrollador).
-- Portal público para que el cliente suba archivos directamente.
-- Integración bidireccional con buzón del licenciado para parsear respuestas.
+**Editar:**
+- `src/components/expediente-maestro/MaestroEditor.tsx` (montar bloque + propagar estado)
+- `src/components/expediente-maestro/ModuloJuridico.tsx` (guard de generación)
+- `src/components/expediente-maestro/DocumentosLegales.tsx` (guard)
+- `src/components/expediente-maestro/EnviarContratacion.tsx` (sumar `validacion_estado !== 'datos_validados'` a `faltantes`)
+- `src/components/nuvex/Layout.tsx` o sidebar de roles para exponer "Validación" a contratación/jurídica
+- `src/lib/casoEstados.ts` (registrar estado validación si se desea reflejar en timeline)
 
-Si confirmas las 4 preguntas del punto 1, procedo a implementar exactamente esto.
+Sin estos cambios, los licenciados podrán seguir generando documentos con errores tipográficos críticos que terminan en contratos y radicaciones bancarias incorrectas.
