@@ -19,8 +19,11 @@ function MfaPage() {
   const navigate = useNavigate();
   const enviar = useServerFn(enviarCodigoMfaEmail);
   const verificar = useServerFn(verificarCodigoMfaEmail);
+  const verificarTotp = useServerFn(verificarCodigoTotp);
+  const estadoMfa = useServerFn(getEstadoMfa);
 
   const [metodo, setMetodo] = useState<"email" | "totp">("email");
+  const [totpEnrolado, setTotpEnrolado] = useState(false);
   const [enviado, setEnviado] = useState(false);
   const [codigo, setCodigo] = useState("");
   const [err, setErr] = useState<string | null>(null);
@@ -31,7 +34,11 @@ function MfaPage() {
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) navigate({ to: "/login" });
     });
-  }, [navigate]);
+    estadoMfa().then((s) => {
+      setTotpEnrolado(s.totpEnrolado);
+      if (s.totpEnrolado) setMetodo("totp");
+    }).catch(() => {});
+  }, [navigate, estadoMfa]);
 
   const handleEnviar = async () => {
     setErr(null); setInfo(null); setBusy(true);
