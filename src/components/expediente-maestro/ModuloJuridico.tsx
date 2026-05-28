@@ -178,6 +178,102 @@ function TipoSection({
 
 // ── Formularios (sólo piden datos NO existentes en el expediente) ──────────
 
+function PlazosForm({
+  expediente,
+  onPreview,
+}: {
+  expediente: ExpedienteMaestro;
+  onPreview: (d: LegalDoc) => void;
+}) {
+  const [extra, setExtra] = useState<SolicitudCambioPlazosExtra>({
+    cuotasAEliminar: "",
+    nuevaCuotaProyectada: "",
+    areaDestinataria: "Vicepresidencia de Crédito Hipotecario",
+  });
+  const calc = useMemo(
+    () => calcularNuevoPlazo(expediente, extra.cuotasAEliminar),
+    [expediente, extra.cuotasAEliminar],
+  );
+  const doc = useMemo(
+    () => buildSolicitudCambioPlazos(expediente, extra),
+    [expediente, extra],
+  );
+  const banco = expediente.credito?.banco || "—";
+  return (
+    <>
+      <div className="grid gap-3 md:grid-cols-2">
+        <div className="rounded-lg border border-[#E3E7EE] bg-[#F7F9FB] p-3">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-[#242424]/60">
+            Banco detectado
+          </div>
+          <div className="text-sm font-semibold text-[#242424] mt-0.5">{banco}</div>
+          <div className="text-[11px] text-[#242424]/60 mt-1">
+            Fórmula:{" "}
+            <span className="font-semibold">
+              {calc.grupo === "grupo1"
+                ? "Plazo inicial − cuotas a eliminar"
+                : "Cuotas pendientes − cuotas a eliminar"}
+            </span>
+          </div>
+        </div>
+        <div className="rounded-lg border border-[#E3E7EE] bg-white p-3">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-[#242424]/60">
+            Cálculo automático
+          </div>
+          <div className="text-sm text-[#242424] mt-1 leading-relaxed">
+            Plazo inicial: <b>{calc.plazoInicial}</b> · Pagadas:{" "}
+            <b>{calc.cuotasPagadas}</b> · Pendientes: <b>{calc.cuotasPendientes}</b>
+          </div>
+          <div className="text-sm text-[#242424] mt-1">
+            Nuevo plazo solicitado:{" "}
+            <span className="font-bold" style={{ color: "#1F6F4A" }}>
+              {calc.nuevoPlazo} cuotas
+            </span>
+          </div>
+        </div>
+      </div>
+      <div className="grid gap-3 md:grid-cols-2">
+        <FieldText
+          label="Cuotas a eliminar"
+          value={extra.cuotasAEliminar}
+          onChange={(v) =>
+            setExtra((s) => ({ ...s, cuotasAEliminar: v.replace(/[^\d]/g, "") }))
+          }
+          placeholder="Ej: 24"
+        />
+        <FieldText
+          label="Nueva cuota proyectada (opcional)"
+          value={extra.nuevaCuotaProyectada ?? ""}
+          onChange={(v) =>
+            setExtra((s) => ({ ...s, nuevaCuotaProyectada: v.replace(/[^\d]/g, "") }))
+          }
+          placeholder="Ej: 1850000"
+        />
+      </div>
+      <FieldText
+        label="Área destinataria"
+        value={extra.areaDestinataria ?? ""}
+        onChange={(v) => setExtra((s) => ({ ...s, areaDestinataria: v }))}
+        placeholder="Vicepresidencia de Crédito Hipotecario"
+      />
+      {doc.validationIssues && doc.validationIssues.length > 0 && (
+        <div className="mt-3 rounded-lg border border-[#F3C892] bg-[#FFF8EC] p-3">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-[#8A5A00]">
+            Pendiente de completar
+          </div>
+          <ul className="mt-1 list-disc pl-4 text-xs text-[#8A5A00]">
+            {doc.validationIssues.map((m, i) => (
+              <li key={i}>{m}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <DocActions doc={doc} onPreview={() => onPreview(doc)} />
+    </>
+  );
+}
+
+
 function DerechoForm({
   expediente,
   onPreview,
