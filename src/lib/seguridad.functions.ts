@@ -2,6 +2,21 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { sendLovableEmail } from "@lovable.dev/email-js";
+import * as OTPAuth from "otpauth";
+import QRCode from "qrcode";
+
+const TOTP_ISSUER = "NUVEX";
+
+function buildTotp(secret: string, label: string): OTPAuth.TOTP {
+  return new OTPAuth.TOTP({
+    issuer: TOTP_ISSUER,
+    label,
+    algorithm: "SHA1",
+    digits: 6,
+    period: 30,
+    secret: OTPAuth.Secret.fromBase32(secret),
+  });
+}
 
 const SENDER_DOMAIN = "notify.nuvex.com.co";
 const FROM_ADDRESS = "NUVEX Seguridad <seguridad@notify.nuvex.com.co>";
