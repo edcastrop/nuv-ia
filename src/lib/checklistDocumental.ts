@@ -66,7 +66,6 @@ export interface DocRequerido {
 // ─── Generales para todos los bancos ───────────────────────────────────────
 const GENERALES: DocRequerido[] = [
   { id: "cedula_cliente", nombre: "Cédula del cliente", obligatorio: true, perfil: "ambos" },
-  { id: "cedula_apoderado", nombre: "Cédula del apoderado", obligatorio: true, perfil: "ambos" },
   { id: "poder", nombre: "Poder o poderes especiales firmados", obligatorio: true, perfil: "ambos" },
   { id: "solicitud_plazos", nombre: "Solicitud Cambio de Plazos", obligatorio: true, perfil: "ambos" },
 ];
@@ -352,7 +351,12 @@ export function buildEmailDefaults(
   const banco = expediente.credito?.banco || "el banco";
   const cliente = expediente.cliente?.nombre || "cliente";
   const licenciado = expediente.licenciado?.nombre || "Equipo NUVEX";
-  const lista = docs.map((d, i) => `${i + 1}. ${d.nombre}${d.obligatorio ? "" : " (opcional)"}`).join("\n");
+  const lista = docs.map((d, i) => {
+    let linea = `${i + 1}. ${d.nombre}${d.obligatorio ? "" : " (opcional)"}`;
+    if (d.id === "poder") linea += " — Si ya firmó el poder, haga caso omiso.";
+    if (d.id === "solicitud_plazos") linea += " — No olvide firmarla y devolverla.";
+    return linea;
+  }).join("\n");
   const cuerpo =
 `Estimado(a) ${cliente},
 
