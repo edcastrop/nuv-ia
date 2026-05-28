@@ -925,3 +925,260 @@ export function buildRadicacion(
     blocks,
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SOLICITUD CAMBIO DE PLAZOS — dinámico por banco
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// GRUPO 1 (Plazo inicial − cuotas a eliminar):
+//   Bancolombia, Davibank, ScotiaBank Colpatria, Banco Caja Social,
+//   Banco de Bogotá, AV Villas, Banco de Occidente
+// GRUPO 2 (Cuotas pendientes − cuotas a eliminar):
+//   Davivienda, Fondo Nacional del Ahorro, FNA
+
+export interface SolicitudCambioPlazosExtra {
+  cuotasAEliminar: string;
+  nuevaCuotaProyectada?: string;
+  areaDestinataria?: string;
+}
+
+export type GrupoCalculoPlazo = "grupo1" | "grupo2";
+
+const BANCOS_GRUPO_1 = [
+  "bancolombia",
+  "davibank",
+  "scotiabank colpatria",
+  "scotiabank",
+  "colpatria",
+  "banco caja social",
+  "caja social",
+  "banco de bogota",
+  "banco de bogotá",
+  "av villas",
+  "banco av villas",
+  "banco de occidente",
+  "occidente",
+];
+
+const BANCOS_GRUPO_2 = [
+  "davivienda",
+  "fondo nacional del ahorro",
+  "fna",
+];
+
+export function detectGrupoCalculoPlazo(banco: string): GrupoCalculoPlazo {
+  const b = (banco || "").trim().toLowerCase();
+  if (BANCOS_GRUPO_2.some((x) => b.includes(x))) return "grupo2";
+  if (BANCOS_GRUPO_1.some((x) => b.includes(x))) return "grupo1";
+  // Default conservador: GRUPO 1 (fórmula clásica)
+  return "grupo1";
+}
+
+const numOr0 = (v: unknown): number => {
+  if (typeof v === "number") return isFinite(v) ? v : 0;
+  if (typeof v === "string") {
+    const n = Number(v.replace(/[^\d.-]/g, ""));
+    return isFinite(n) ? n : 0;
+  }
+  return 0;
+};
+
+export interface CalculoPlazoResult {
+  grupo: GrupoCalculoPlazo;
+  plazoInicial: number;
+  cuotasPagadas: number;
+  cuotasPendientes: number;
+  cuotasAEliminar: number;
+  nuevoPlazo: number;
+}
+
+export function calcularNuevoPlazo(
+  e: ExpedienteMaestro,
+  cuotasAEliminarRaw: string | number,
+): CalculoPlazoResult {
+  const cr = e.credito;
+  const plazoInicial = Math.max(0, Math.round(numOr0(cr.plazoOriginal)));
+  const cuotasPagadas = Math.max(0, Math.round(numOr0(cr.cuotasPagadas)));
+  const pendDeclaradas = Math.max(0, Math.round(numOr0(cr.cuotasPendientes)));
+  const cuotasPendientes =
+    pendDeclaradas > 0 ? pendDeclaradas : Math.max(0, plazoInicial - cuotasPagadas);
+  const cuotasAEliminar = Math.max(0, Math.round(numOr0(cuotasAEliminarRaw)));
+  const grupo = detectGrupoCalculoPlazo(cr.banco);
+  const nuevoPlazo =
+    grupo === "grupo1"
+      ? Math.max(0, plazoInicial - cuotasAEliminar)
+      : Math.max(0, cuotasPendientes - cuotasAEliminar);
+  return { grupo, plazoInicial, cuotasPagadas, cuotasPendientes, cuotasAEliminar, nuevoPlazo };
+}
+
+export function buildSolicitudCambioPlazos(
+  e: ExpedienteMaestro,
+  extra: SolicitudCambioPlazosExtra,
+): LegalDoc {
+  const c = e.cliente;
+  const cr = e.credito;
+  const ap = e.apoderado;
+  const usaApoderado = !!(ap?.nombre && ap.nombre.trim());
+
+  const calc = calcularNuevoPlazo(e, extra.cuotasAEliminar);
+  const cuotaActualNum = numOr0(cr.cuotaActual);
+  const nuevaCuotaNum = numOr0(extra.nuevaCuotaProyectada);
+  const area = extra.areaDestinataria?.trim() || "Vicepresidencia de Crédito Hipotecario";
+
+  const issues: string[] = [];
+  if (!c.nombre) issues.push("Falta nombre del cliente.");
+  if (!c.cedula) issues.push("Falta cédula del cliente.");
+  if (!cr.banco) issues.push("Falta banco.");
+  if (!cr.numeroCredito) issues.push("Falta número de crédito.");
+  if (calc.cuotasAEliminar <= 0) issues.push("Cuotas a eliminar debe ser mayor a 0.");
+  if (!usaApoderado) issues.push("Falta apoderado configurado en el expediente.");
+
+  const blocks: DocBlock[] = [
+    { type: "title", text: "SOLICITUD DE CAMBIO DE PLAZOS" },
+    { type: "subtitle", text: "Modificación del plazo del crédito hipotecario · Ley 546 de 1999" },
+    { type: "spacer", size: 12 },
+
+    { type: "paragraph", text: `${ciudadFmt(c.ciudad)}, ${hoy()}.` },
+    { type: "spacer" },
+    { type: "paragraph", text: "Señores" },
+    { type: "paragraph", text: safe(cr.banco).toUpperCase() },
+    { type: "paragraph", text: `Atn. ${area}` },
+    { type: "paragraph", text: "Ciudad." },
+    { type: "spacer" },
+    {
+      type: "subtitle",
+      text:
+        `Referencia: Solicitud de modificación de plazo · ` +
+        `Crédito No. ${safe(cr.numeroCredito)} · Titular ${fullName(c.nombre)}`,
+    },
+    { type: "spacer" },
+
+    {
+      type: "paragraph",
+      text:
+        (usaApoderado
+          ? `${fullName(ap.nombre)}, identificado(a) con cédula de ciudadanía No. ${safe(ap.cedula)}, ` +
+            `actuando en calidad de apoderado(a) del señor(a) ${fullName(c.nombre)}, ` +
+            `identificado(a) con cédula de ciudadanía No. ${safe(c.cedula)}, titular del ` +
+            `crédito hipotecario No. ${safe(cr.numeroCredito)} otorgado por esa entidad, `
+          : `${fullName(c.nombre)}, identificado(a) con cédula de ciudadanía No. ${safe(c.cedula)}, ` +
+            `titular del crédito hipotecario No. ${safe(cr.numeroCredito)} otorgado por esa entidad, `) +
+        `me permito presentar de manera formal y respetuosa solicitud de modificación del plazo ` +
+        `actual del crédito de la referencia, en los términos que a continuación se exponen.`,
+    },
+    { type: "spacer" },
+
+    { type: "heading", text: "I. CONTEXTO FINANCIERO" },
+    {
+      type: "paragraph",
+      text:
+        `El crédito fue otorgado con un plazo inicial aprobado de ${calc.plazoInicial} cuotas, ` +
+        `de las cuales el titular ha cancelado oportunamente ${calc.cuotasPagadas}, restando a ` +
+        `la fecha ${calc.cuotasPendientes} cuotas por amortizar. Producto de un ejercicio ` +
+        `técnico y financiero de optimización del crédito, se ha proyectado la posibilidad ` +
+        `de eliminar ${calc.cuotasAEliminar} cuotas del plan de amortización vigente, mediante ` +
+        `un ajuste voluntario en la cuota mensual que asume el titular.`,
+    },
+    {
+      type: "paragraph",
+      text:
+        calc.grupo === "grupo1"
+          ? `Para esa entidad, el nuevo plazo solicitado se calcula sobre el plazo inicial ` +
+            `aprobado, descontando las cuotas a eliminar (${calc.plazoInicial} − ` +
+            `${calc.cuotasAEliminar} = ${calc.nuevoPlazo} cuotas).`
+          : `Para esa entidad, el nuevo plazo solicitado se calcula sobre las cuotas ` +
+            `pendientes por pagar, descontando las cuotas a eliminar (${calc.cuotasPendientes} − ` +
+            `${calc.cuotasAEliminar} = ${calc.nuevoPlazo} cuotas).`,
+    },
+    { type: "spacer" },
+
+    { type: "heading", text: "II. TABLA RESUMEN DE LA SOLICITUD" },
+    { type: "section", text: "RESUMEN DEL CRÉDITO" },
+    { type: "field", label: "Crédito No.", value: fmtTxt(cr.numeroCredito) },
+    { type: "field", label: "Banco", value: fmtTxt(cr.banco) },
+    { type: "field", label: "Producto", value: fmtTxt(cr.tipoProducto) },
+    { type: "field", label: "Plazo inicial aprobado (cuotas)", value: String(calc.plazoInicial) },
+    { type: "field", label: "Cuotas pagadas", value: String(calc.cuotasPagadas) },
+    { type: "field", label: "Cuotas pendientes", value: String(calc.cuotasPendientes) },
+    { type: "field", label: "Cuotas a eliminar", value: String(calc.cuotasAEliminar) },
+    { type: "field", label: "Nuevo plazo solicitado (cuotas)", value: String(calc.nuevoPlazo) },
+    { type: "field", label: "Cuota actual", value: cuotaActualNum > 0 ? fmtCOP(cuotaActualNum) : "—" },
+    { type: "field", label: "Nueva cuota proyectada", value: nuevaCuotaNum > 0 ? fmtCOP(nuevaCuotaNum) : "—" },
+    { type: "field", label: "Fórmula aplicada", value: calc.grupo === "grupo1" ? "Plazo inicial − cuotas a eliminar" : "Cuotas pendientes − cuotas a eliminar" },
+    { type: "spacer" },
+
+    { type: "heading", text: "III. FUNDAMENTO LEGAL" },
+    {
+      type: "paragraph",
+      text:
+        `La presente solicitud se fundamenta en la Ley 546 de 1999, por la cual se dictan ` +
+        `normas en materia de vivienda y se establecen los principios rectores de la ` +
+        `financiación de vivienda de largo plazo, en armonía con la Ley 1328 de 2009 sobre ` +
+        `protección al consumidor financiero, el principio de autonomía de la voluntad ` +
+        `consagrado en el artículo 1602 del Código Civil, y la facultad reconocida al titular ` +
+        `del crédito para mejorar las condiciones de amortización del mismo dentro del marco ` +
+        `de la adecuación del crédito hipotecario.`,
+    },
+    {
+      type: "paragraph",
+      text:
+        `En tal sentido, la modificación que se solicita no comporta novación ni desmejora ` +
+        `de las garantías constituidas, sino una optimización de las condiciones financieras ` +
+        `del crédito, plenamente compatible con la regulación vigente y con las políticas ` +
+        `de servicio al cliente de la entidad.`,
+    },
+    { type: "spacer" },
+
+    { type: "heading", text: "IV. PETICIÓN CONCRETA" },
+    {
+      type: "paragraph",
+      text:
+        `Conforme a lo anterior, solicito respetuosamente que esa entidad financiera proceda ` +
+        `con la modificación del plazo del crédito hipotecario No. ${safe(cr.numeroCredito)}, ` +
+        `ajustándolo a ${calc.nuevoPlazo} cuotas, manteniendo la regularidad de los pagos y ` +
+        `la integridad de las garantías ya constituidas. Quedo atento a la respuesta formal ` +
+        `dentro de los términos legales aplicables.`,
+    },
+    { type: "spacer" },
+
+    { type: "heading", text: "V. NOTIFICACIONES" },
+    {
+      type: "paragraph",
+      text:
+        `El titular recibirá notificaciones en ${safe(c.direccion)}, ${ciudadFmt(c.ciudad)}, ` +
+        `teléfono ${safe(c.telefono)}, correo electrónico ${safe(c.email)}` +
+        (usaApoderado
+          ? `. El apoderado podrá ser notificado al correo ${safe(ap.email)} y al ` +
+            `teléfono ${safe(ap.telefono)}.`
+          : `.`),
+    },
+    { type: "spacer", size: 18 },
+
+    { type: "paragraph", text: "Cordialmente," },
+    { type: "spacer", size: 28 },
+    {
+      type: "signature",
+      columns: usaApoderado
+        ? [
+            { label: "EL TITULAR", name: fullName(c.nombre), cc: `C.C. ${safe(c.cedula)}` },
+            {
+              label: "EL APODERADO — NUVEX FINANZAS INTELIGENTES",
+              name: fullName(ap.nombre),
+              cc: `C.C. ${safe(ap.cedula)}${ap.numeroPoder ? ` · T.P. ${safe(ap.numeroPoder)}` : ""}`,
+            },
+          ]
+        : [{ label: "EL TITULAR", name: fullName(c.nombre), cc: `C.C. ${safe(c.cedula)}` }],
+    },
+  ];
+
+  const year = new Date().getFullYear();
+  const seq = String(Date.now()).slice(-4);
+  return {
+    filename: `Solicitud_Cambio_Plazos_${(c.nombre || "Cliente").replace(/\s+/g, "_")}`,
+    title: "Solicitud Cambio de Plazos",
+    blocks,
+    consecutivo: `NVX_${year}_${seq}`,
+    validationIssues: issues.length > 0 ? issues : undefined,
+  };
+}
+
