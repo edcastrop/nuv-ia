@@ -1362,6 +1362,45 @@ export type Database = {
         }
         Relationships: []
       }
+      documentos_juridicos_versiones: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expediente_id: string
+          id: string
+          motivo_obsoleto: string | null
+          obsoleto: boolean
+          obsoleto_at: string | null
+          snapshot: Json | null
+          tipo: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expediente_id: string
+          id?: string
+          motivo_obsoleto?: string | null
+          obsoleto?: boolean
+          obsoleto_at?: string | null
+          snapshot?: Json | null
+          tipo: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expediente_id?: string
+          id?: string
+          motivo_obsoleto?: string | null
+          obsoleto?: boolean
+          obsoleto_at?: string | null
+          snapshot?: Json | null
+          tipo?: string
+          version?: number
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -1738,6 +1777,36 @@ export type Database = {
         }
         Relationships: []
       }
+      expediente_validacion_historial: {
+        Row: {
+          accion: string
+          created_at: string
+          datos_snapshot: Json | null
+          expediente_id: string
+          id: string
+          motivo: string | null
+          user_id: string | null
+        }
+        Insert: {
+          accion: string
+          created_at?: string
+          datos_snapshot?: Json | null
+          expediente_id: string
+          id?: string
+          motivo?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          accion?: string
+          created_at?: string
+          datos_snapshot?: Json | null
+          expediente_id?: string
+          id?: string
+          motivo?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       expedientes: {
         Row: {
           acertividad_global: number | null
@@ -1769,6 +1838,14 @@ export type Database = {
           recalculo_at: string | null
           recalculo_user_id: string | null
           updated_at: string
+          validacion_aprobado_at: string | null
+          validacion_aprobado_por: string | null
+          validacion_confirmado_at: string | null
+          validacion_confirmado_licenciado: boolean
+          validacion_enviado_at: string | null
+          validacion_estado: string
+          validacion_motivo_devolucion: string | null
+          validacion_version: number
         }
         Insert: {
           acertividad_global?: number | null
@@ -1800,6 +1877,14 @@ export type Database = {
           recalculo_at?: string | null
           recalculo_user_id?: string | null
           updated_at?: string
+          validacion_aprobado_at?: string | null
+          validacion_aprobado_por?: string | null
+          validacion_confirmado_at?: string | null
+          validacion_confirmado_licenciado?: boolean
+          validacion_enviado_at?: string | null
+          validacion_estado?: string
+          validacion_motivo_devolucion?: string | null
+          validacion_version?: number
         }
         Update: {
           acertividad_global?: number | null
@@ -1831,6 +1916,14 @@ export type Database = {
           recalculo_at?: string | null
           recalculo_user_id?: string | null
           updated_at?: string
+          validacion_aprobado_at?: string | null
+          validacion_aprobado_por?: string | null
+          validacion_confirmado_at?: string | null
+          validacion_confirmado_licenciado?: boolean
+          validacion_enviado_at?: string | null
+          validacion_estado?: string
+          validacion_motivo_devolucion?: string | null
+          validacion_version?: number
         }
         Relationships: []
       }
@@ -3201,6 +3294,7 @@ export type Database = {
         Args: { _uid: string }
         Returns: boolean
       }
+      can_validar_identidad: { Args: { _uid: string }; Returns: boolean }
       can_validar_proyeccion: { Args: { _uid: string }; Returns: boolean }
       can_view_cartera_row: {
         Args: { _exp_id: string; _uid: string }
