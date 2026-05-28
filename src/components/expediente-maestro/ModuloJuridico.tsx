@@ -4,6 +4,8 @@ import { NUVEX } from "@/components/nuvex/constants";
 import { Scale, FileText, Download, Eye, ChevronDown } from "lucide-react";
 import type { ExpedienteMaestro } from "@/lib/expedienteMaestro";
 import { listApoderados, seleccionarApoderado, type ApoderadoNuvex } from "@/lib/apoderados";
+import { ChecklistDocumental } from "./ChecklistDocumental";
+
 
 import {
   buildDerechoPeticion,
@@ -97,7 +99,11 @@ export function ModuloJuridico({ expediente, liveOverride }: Props) {
 
   return (
     <>
+      <div className="mb-3">
+        <ChecklistDocumental expediente={live} />
+      </div>
       <Card>
+
         <div className="mb-4 flex items-start gap-3">
           <div
             className="flex h-10 w-10 items-center justify-center rounded-lg text-white shrink-0"
