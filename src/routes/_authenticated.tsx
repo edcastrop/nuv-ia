@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { NotificationBell } from "@/components/notificaciones/NotificationBell";
 import { NuvexGptButton } from "@/components/nuvex-gpt/NuvexGptPanel";
 import { AcademiaBanner } from "@/components/onboarding/AcademiaBanner";
+import { OnboardingChecklistBanner } from "@/components/onboarding/OnboardingChecklistBanner";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
@@ -406,6 +407,7 @@ function AuthenticatedLayout() {
         </header>
 
         <main className="flex-1">
+          <div className="px-4 pt-4"><OnboardingChecklistBanner /></div>
           <AcademiaBanner />
           <Outlet />
         </main>

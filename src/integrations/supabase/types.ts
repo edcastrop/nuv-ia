@@ -2341,6 +2341,57 @@ export type Database = {
         }
         Relationships: []
       }
+      onboarding_notif_log: {
+        Row: {
+          asunto: string | null
+          canal: string
+          email_destino: string | null
+          enviado_at: string
+          etapa: string
+          id: string
+          metadata: Json
+          procesado_at: string | null
+          user_id: string
+        }
+        Insert: {
+          asunto?: string | null
+          canal: string
+          email_destino?: string | null
+          enviado_at?: string
+          etapa: string
+          id?: string
+          metadata?: Json
+          procesado_at?: string | null
+          user_id: string
+        }
+        Update: {
+          asunto?: string | null
+          canal?: string
+          email_destino?: string | null
+          enviado_at?: string
+          etapa?: string
+          id?: string
+          metadata?: Json
+          procesado_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_notif_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onboarding_notif_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_publicos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       parametros_financieros: {
         Row: {
           clave: string
@@ -3052,6 +3103,7 @@ export type Database = {
         Args: { _uid: string }
         Returns: Database["public"]["Enums"]["academia_rol"]
       }
+      calcular_etapa_onboarding: { Args: { _user_id: string }; Returns: string }
       can_manage_cartera: { Args: { _uid: string }; Returns: boolean }
       can_manage_finanzas: { Args: { _uid: string }; Returns: boolean }
       can_use_proyeccion_financiera: {
@@ -3164,6 +3216,7 @@ export type Database = {
         Returns: string
       }
       preview_desvinculacion: { Args: { _target: string }; Returns: Json }
+      procesar_recordatorios_onboarding: { Args: never; Returns: Json }
       reactivar_usuario_solicitud: {
         Args: {
           _nuevo_rol?: Database["public"]["Enums"]["app_role"]
@@ -3183,6 +3236,16 @@ export type Database = {
       rechazar_reactivacion_solicitud: {
         Args: { _motivo: string; _solicitud_id: string }
         Returns: Json
+      }
+      registrar_notif_onboarding: {
+        Args: {
+          _asunto?: string
+          _canal: string
+          _etapa: string
+          _meta?: Json
+          _user_id: string
+        }
+        Returns: string
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
