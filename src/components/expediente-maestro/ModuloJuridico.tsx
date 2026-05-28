@@ -25,9 +25,15 @@ interface Props {
   liveOverride?: Partial<ExpedienteMaestro>;
 }
 
-type Tipo = "derecho" | "tutela" | "negacion" | "radicacion";
+type Tipo = "plazos" | "derecho" | "tutela" | "negacion" | "radicacion";
 
 const TIPOS: { id: Tipo; titulo: string; descripcion: string; color: string }[] = [
+  {
+    id: "plazos",
+    titulo: "Solicitud Cambio de Plazos",
+    descripcion: "Modificación del plazo del crédito hipotecario · Ley 546 de 1999. Cálculo dinámico por banco.",
+    color: "#1F6F4A",
+  },
   {
     id: "derecho",
     titulo: "Derecho de Petición",
@@ -49,6 +55,10 @@ const TIPOS: { id: Tipo; titulo: string; descripcion: string; color: string }[] 
   {
     id: "radicacion",
     titulo: "Oficio de Radicación",
+    descripcion: "Constancia de entrega de documentos al banco con número de radicado.",
+    color: NUVEX.verde,
+  },
+];
     descripcion: "Constancia de entrega de documentos al banco con número de radicado.",
     color: NUVEX.verde,
   },
