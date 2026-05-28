@@ -1,8 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
 import { Scale, FileText, Download, Eye, ChevronDown } from "lucide-react";
 import type { ExpedienteMaestro } from "@/lib/expedienteMaestro";
+import { listApoderados, seleccionarApoderado, type ApoderadoNuvex } from "@/lib/apoderados";
+
 import {
   buildDerechoPeticion,
   buildTutela,
@@ -62,12 +64,36 @@ const TIPOS: { id: Tipo; titulo: string; descripcion: string; color: string }[] 
 
 export function ModuloJuridico({ expediente, liveOverride }: Props) {
   const [openTipo, setOpenTipo] = useState<Tipo | null>(null);
-  const [preview, setPreview] = useState<LegalDoc | null>(null);
 
-  const live: ExpedienteMaestro = useMemo(
-    () => ({ ...expediente, ...(liveOverride ?? {}) }),
-    [expediente, liveOverride],
-  );
+  const [preview, setPreview] = useState<LegalDoc | null>(null);
+  const [apoderados, setApoderados] = useState<ApoderadoNuvex[]>([]);
+
+  useEffect(() => {
+    listApoderados(true).then(setApoderados).catch(() => setApoderados([]));
+  }, []);
+
+  const live: ExpedienteMaestro = useMemo(() => {
+    const merged = { ...expediente, ...(liveOverride ?? {}) };
+    const tieneApoderado = !!(merged.apoderado?.nombre && merged.apoderado.nombre.trim());
+    if (!tieneApoderado && apoderados.length) {
+      const sug = seleccionarApoderado(merged.credito?.banco, apoderados);
+      const ap = sug.apoderado;
+      if (ap) {
+        merged.apoderado = {
+          nombre: ap.nombre,
+          cedula: ap.cedula,
+          telefono: ap.celular ?? "",
+          email: ap.correo ?? "",
+          direccion: "",
+          ciudad: ap.ciudad ?? "",
+          numeroPoder: "",
+          fechaPoder: "",
+        };
+      }
+    }
+    return merged;
+  }, [expediente, liveOverride, apoderados]);
+
 
   return (
     <>
