@@ -15,6 +15,7 @@ import { SoportesBanco } from "@/components/expediente/SoportesBanco";
 import { ValidacionQABlock } from "@/components/qa/ValidacionQABlock";
 import { CarteraBlockExpediente } from "@/components/cartera/CarteraBlockExpediente";
 import { ConversacionCaso } from "@/components/expediente/ConversacionCaso";
+import { ValidacionIdentidadBlock } from "@/components/expediente/ValidacionIdentidadBlock";
 
 export const Route = createFileRoute("/_authenticated/casos/$id")({
   component: CasoDetail,
@@ -85,6 +86,8 @@ function CasoDetail() {
       </Card>
 
       <EstadoCasoBlock expedienteId={exp.id} onChanged={reload} />
+
+      <ValidacionIdentidadBlock exp={exp} onChanged={reload} />
 
       <ValidacionQABlock
         expedienteId={exp.id}
