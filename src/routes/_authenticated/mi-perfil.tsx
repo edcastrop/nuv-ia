@@ -19,6 +19,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Camera, Trash2, Save, Loader2, Shield, GraduationCap, History, Briefcase, CircleDollarSign, User as UserIcon, Phone } from "lucide-react";
 import { toast } from "sonner";
+import { TotpEnrollmentSection } from "@/components/seguridad/TotpEnrollmentSection";
 
 export const Route = createFileRoute("/_authenticated/mi-perfil")({
   component: MiPerfilPage,
@@ -342,6 +343,8 @@ function MiPerfilPage() {
           </div>
         )}
       </Section>
+
+      <TotpEnrollmentSection />
 
       <div className="flex items-center gap-2 text-[11px] text-[#242424]/50">
         <Shield size={12} /> Toda modificación queda registrada para auditoría.

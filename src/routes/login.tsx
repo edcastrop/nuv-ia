@@ -69,10 +69,10 @@ function LoginPage() {
             user_id: uid, actor_id: uid, accion: "login_ok", detalle: {},
           } as never);
           // MFA OBLIGATORIO para TODOS los roles sin excepción (incluye super_admin).
-          // Si no se verificó en los últimos 30 días, exigir.
+          // Ventana: 24 horas desde la última verificación exitosa.
           void isSuperAdmin;
           const mfaOk = !!(p?.mfa_verificado_at &&
-            (Date.now() - new Date(p.mfa_verificado_at).getTime()) < 30 * 24 * 3600 * 1000
+            (Date.now() - new Date(p.mfa_verificado_at).getTime()) < 24 * 3600 * 1000
           );
           if (!mfaOk) {
             navigate({ to: "/mfa-verificar" });

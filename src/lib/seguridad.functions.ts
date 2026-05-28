@@ -2,6 +2,21 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { sendLovableEmail } from "@lovable.dev/email-js";
+import * as OTPAuth from "otpauth";
+import QRCode from "qrcode";
+
+const TOTP_ISSUER = "NUVEX";
+
+function buildTotp(secret: string, label: string): OTPAuth.TOTP {
+  return new OTPAuth.TOTP({
+    issuer: TOTP_ISSUER,
+    label,
+    algorithm: "SHA1",
+    digits: 6,
+    period: 30,
+    secret: OTPAuth.Secret.fromBase32(secret),
+  });
+}
 
 const SENDER_DOMAIN = "notify.nuvex.com.co";
 const FROM_ADDRESS = "NUVEX Seguridad <seguridad@notify.nuvex.com.co>";
@@ -134,3 +149,119 @@ export const verificarCodigoMfaEmail = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+/* ============================================================
+ * TOTP (App autenticadora: Google Authenticator / Authy / 1Password)
+ * ============================================================ */
+
+// Devuelve estado MFA del usuario
+export const getEstadoMfa = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data } = await supabase
+      .from("profiles")
+      .select("mfa_metodo, mfa_verificado_at")
+      .eq("id", userId)
+      .maybeSingle();
+    const p = data as { mfa_metodo?: string; mfa_verificado_at?: string | null } | null;
+    return {
+      metodo: (p?.mfa_metodo ?? "ninguno") as "ninguno" | "email" | "totp",
+      verificadoAt: p?.mfa_verificado_at ?? null,
+      totpEnrolado: p?.mfa_metodo === "totp",
+    };
+  });
+
+// Inicia enrolamiento TOTP: genera secret y otpauth URL + QR (data URL)
+export const iniciarEnrolarTotp = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: prof } = await supabase
+      .from("profiles").select("email").eq("id", userId).maybeSingle();
+    const email = (prof as { email?: string } | null)?.email ?? userId;
+
+    const secret = new OTPAuth.Secret({ size: 20 }).base32;
+    const totp = buildTotp(secret, email);
+    const otpauthUrl = totp.toString();
+    const qrDataUrl = await QRCode.toDataURL(otpauthUrl, { margin: 1, width: 240 });
+
+    // Guardamos el secret pendiente (se "activa" cuando confirme el código).
+    // Reusamos columna mfa_secret; el método queda en "email" o "ninguno" hasta confirmar.
+    await supabase.from("profiles").update({ mfa_secret: secret }).eq("id", userId);
+    return { otpauthUrl, qrDataUrl, secret };
+  });
+
+// Confirma el primer código TOTP y marca mfa_metodo=totp
+export const confirmarEnrolarTotp = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ codigo: z.string().regex(/^\d{6}$/) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: prof } = await supabase
+      .from("profiles").select("email, mfa_secret").eq("id", userId).maybeSingle();
+    const row = prof as { email?: string; mfa_secret?: string | null } | null;
+    if (!row?.mfa_secret) throw new Error("No hay enrolamiento TOTP en curso. Inicia de nuevo.");
+
+    const totp = buildTotp(row.mfa_secret, row.email ?? userId);
+    const delta = totp.validate({ token: data.codigo, window: 1 });
+    if (delta === null) throw new Error("Código inválido. Verifica la hora del dispositivo e intenta de nuevo.");
+
+    await supabase
+      .from("profiles")
+      .update({
+        mfa_metodo: "totp",
+        mfa_verificado_at: new Date().toISOString(),
+      })
+      .eq("id", userId);
+    await supabase.from("acceso_auditoria").insert({
+      user_id: userId, actor_id: userId, accion: "mfa_totp_enrolado", detalle: {},
+    });
+    return { ok: true };
+  });
+
+// Verifica un código TOTP en el flujo de login
+export const verificarCodigoTotp = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ codigo: z.string().regex(/^\d{6}$/) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: prof } = await supabase
+      .from("profiles").select("email, mfa_secret, mfa_metodo").eq("id", userId).maybeSingle();
+    const row = prof as { email?: string; mfa_secret?: string | null; mfa_metodo?: string } | null;
+    if (!row?.mfa_secret || row.mfa_metodo !== "totp") {
+      throw new Error("No tienes una app autenticadora configurada. Usa el código por correo.");
+    }
+    const totp = buildTotp(row.mfa_secret, row.email ?? userId);
+    const delta = totp.validate({ token: data.codigo, window: 1 });
+    if (delta === null) {
+      await supabase.from("acceso_auditoria").insert({
+        user_id: userId, actor_id: userId, accion: "mfa_fallido", detalle: { metodo: "totp" },
+      });
+      throw new Error("Código inválido");
+    }
+    await supabase
+      .from("profiles")
+      .update({ mfa_verificado_at: new Date().toISOString() })
+      .eq("id", userId);
+    await supabase.from("acceso_auditoria").insert({
+      user_id: userId, actor_id: userId, accion: "mfa_verificado", detalle: { metodo: "totp" },
+    });
+    return { ok: true };
+  });
+
+// Desactiva TOTP (vuelve a email)
+export const desactivarTotp = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await supabase
+      .from("profiles")
+      .update({ mfa_metodo: "email", mfa_secret: null })
+      .eq("id", userId);
+    await supabase.from("acceso_auditoria").insert({
+      user_id: userId, actor_id: userId, accion: "mfa_totp_desactivado", detalle: {},
+    });
+    return { ok: true };
+  });
+
