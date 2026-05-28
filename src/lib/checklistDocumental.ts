@@ -285,10 +285,18 @@ export interface ChecklistRow {
 export async function loadChecklistRows(expedienteId: string): Promise<ChecklistRow[]> {
   const { data, error } = await supabase
     .from("expediente_checklist_documentos" as never)
+export async function loadChecklistRows(expedienteId: string): Promise<ChecklistRow[]> {
+  const sb = supabase as unknown as {
+    from: (t: string) => {
+      select: (s: string) => { eq: (k: string, v: string) => Promise<{ data: unknown; error: unknown }> };
+    };
+  };
+  const { data, error } = await sb
+    .from("expediente_checklist_documentos")
     .select("*")
     .eq("expediente_id", expedienteId);
-  if (error) throw error;
-  return (data ?? []) as unknown as ChecklistRow[];
+  if (error) throw error as Error;
+  return (data ?? []) as ChecklistRow[];
 }
 
 export async function upsertChecklistRow(
@@ -309,10 +317,15 @@ export async function upsertChecklistRow(
     archivo_url: patch.archivo_url ?? null,
     observaciones: patch.observaciones ?? null,
   };
-  const { error } = await supabase
-    .from("expediente_checklist_documentos" as never)
+  const sb = supabase as unknown as {
+    from: (t: string) => {
+      upsert: (p: unknown, o: { onConflict: string }) => Promise<{ error: unknown }>;
+    };
+  };
+  const { error } = await sb
+    .from("expediente_checklist_documentos")
     .upsert(payload, { onConflict: "expediente_id,documento_id" });
-  if (error) throw error;
+  if (error) throw error as Error;
 }
 
 export async function registrarEnvioChecklist(input: {
@@ -324,13 +337,13 @@ export async function registrarEnvioChecklist(input: {
   pdf_url?: string;
 }): Promise<void> {
   const { data: u } = await supabase.auth.getUser();
-  const { error } = await supabase
-    .from("expediente_checklist_envios" as never)
-    .insert({
-      ...input,
-      enviado_por: u.user?.id ?? null,
-    });
-  if (error) throw error;
+  const sb = supabase as unknown as {
+    from: (t: string) => { insert: (p: unknown) => Promise<{ error: unknown }> };
+  };
+  const { error } = await sb
+    .from("expediente_checklist_envios")
+    .insert({ ...input, enviado_por: u.user?.id ?? null });
+  if (error) throw error as Error;
 }
 
 // ─── Plantilla de correo ───────────────────────────────────────────────────
