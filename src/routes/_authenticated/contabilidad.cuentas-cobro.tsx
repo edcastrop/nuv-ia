@@ -23,7 +23,7 @@ const FILTROS: { key: CuentaCobro["estado"] | "todas"; label: string }[] = [
 
 function ContabilidadPage() {
   const { roles, loading: rolesLoading } = useUserRole();
-  const autorizado = roles.some((r) => ["admin", "gerencia", "super_admin", "cartera"].includes(r));
+  const autorizado = roles.some((r) => ["admin", "gerencia", "super_admin", "cartera", "contabilidad"].includes(r));
   const [cuentas, setCuentas] = useState<CuentaCobro[]>([]);
   const [nombres, setNombres] = useState<Map<string, string>>(new Map());
   const [filtro, setFiltro] = useState<(typeof FILTROS)[number]["key"]>("enviada");
