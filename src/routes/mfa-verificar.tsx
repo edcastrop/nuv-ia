@@ -54,7 +54,11 @@ function MfaPage() {
   const handleVerificar = async () => {
     setErr(null); setBusy(true);
     try {
-      await verificar({ data: { codigo } });
+      if (metodo === "totp") {
+        await verificarTotp({ data: { codigo } });
+      } else {
+        await verificar({ data: { codigo } });
+      }
       navigate({ to: "/" });
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : "Código inválido");
