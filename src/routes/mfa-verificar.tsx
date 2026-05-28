@@ -139,11 +139,33 @@ function MfaPage() {
                 </>
               )}
             </div>
+          ) : totpEnrolado ? (
+            <div className="space-y-4">
+              <div className="text-xs text-[#242424]/65">
+                Abre tu app autenticadora (Google Authenticator, Authy, 1Password…) e ingresa el código de 6 dígitos para <span className="font-semibold" style={{ color: NEGRO }}>NUVEX</span>.
+              </div>
+              <label className="block">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Código de 6 dígitos</span>
+                <input
+                  value={codigo}
+                  onChange={(e) => setCodigo(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  inputMode="numeric"
+                  autoFocus
+                  placeholder="••••••"
+                  className="mt-1.5 w-full rounded-[10px] border border-[#E1E5EE] bg-[#FAFBFD] px-3 py-3 text-center text-2xl tracking-[0.4em] font-semibold outline-none focus:border-[#445DA3] focus:bg-white"
+                />
+              </label>
+              <button
+                onClick={handleVerificar}
+                disabled={busy || codigo.length !== 6}
+                className="w-full rounded-xl px-4 py-3 text-sm font-semibold uppercase tracking-wider text-white shadow disabled:opacity-50"
+                style={{ background: `linear-gradient(135deg,${AZUL},${VERDE})` }}
+              >{busy ? "Verificando…" : "Verificar y continuar"}</button>
+            </div>
           ) : (
             <div className="rounded-xl border border-[#E7EAF1] bg-[#FAFBFD] p-4 text-sm text-[#242424]/75">
               <div className="font-semibold mb-1.5" style={{ color: NEGRO }}>App autenticadora</div>
-              La integración con app autenticadora (Google Authenticator / Authy) estará disponible próximamente.
-              Por ahora, verifica con el código por correo.
+              Aún no has configurado una app autenticadora. Inicia sesión por correo y, una vez dentro, activa TOTP desde <span className="font-semibold">Mi Perfil → Seguridad</span>.
               <button
                 onClick={() => setMetodo("email")}
                 className="mt-3 inline-block text-xs font-semibold hover:underline"
