@@ -1,8 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
 import { Scale, FileText, Download, Eye, ChevronDown } from "lucide-react";
 import type { ExpedienteMaestro } from "@/lib/expedienteMaestro";
+import { listApoderados, seleccionarApoderado, type ApoderadoNuvex } from "@/lib/apoderados";
+
 import {
   buildDerechoPeticion,
   buildTutela,
