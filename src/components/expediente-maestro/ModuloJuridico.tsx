@@ -8,11 +8,14 @@ import {
   buildTutela,
   buildRespuestaNegacion,
   buildRadicacion,
+  buildSolicitudCambioPlazos,
+  calcularNuevoPlazo,
   type LegalDoc,
   type DerechoPeticionExtra,
   type TutelaExtra,
   type RespuestaNegacionExtra,
   type RadicacionExtra,
+  type SolicitudCambioPlazosExtra,
 } from "@/lib/legalDocs";
 import { exportLegalDocPDF, exportLegalDocDOCX } from "@/lib/legalDocsExport";
 
