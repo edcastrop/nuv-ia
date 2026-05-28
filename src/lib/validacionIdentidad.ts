@@ -173,7 +173,7 @@ export function detectarInconsistencias(c: CamposCriticos): Inconsistencia[] {
 export function extraerCamposCriticosDesdeExpediente(
   exp: Expediente,
 ): CamposCriticos {
-  const cd = (exp.cliente_data ?? {}) as Record<string, unknown>;
+  const cd = (exp.cliente_data ?? {}) as unknown as Record<string, unknown>;
   const pick = (k: string) => (typeof cd[k] === "string" ? (cd[k] as string) : "");
   const ij = (cd.informacionJuridica ?? {}) as {
     titular?: Record<string, string>;
