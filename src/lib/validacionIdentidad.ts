@@ -3,7 +3,9 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Expediente } from "@/lib/expedientes";
-import { isCityKnown } from "@/lib/colombiaCities";
+import { cityDepartment } from "@/lib/colombiaCities";
+
+const isCityKnown = (city: string | null | undefined) => !!cityDepartment(city);
 
 export type ValidacionEstado =
   | "pendiente_validacion"
