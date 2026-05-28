@@ -30,7 +30,7 @@ function money(n: number) { return "$" + Math.round(n).toLocaleString("es-CO"); 
 function CarteraDetail() {
   const { id } = Route.useParams();
   const { roles } = useUserRole();
-  const puedeGestionar = roles.some((r) => ["super_admin", "admin", "gerencia", "cartera"].includes(r));
+  const puedeGestionar = roles.some((r) => ["super_admin", "admin", "gerencia", "cartera", "contabilidad"].includes(r));
 
   const [c, setC] = useState<CarteraConExpediente | null>(null);
   const [pagos, setPagos] = useState<CarteraPago[]>([]);

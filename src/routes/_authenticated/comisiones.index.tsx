@@ -33,7 +33,7 @@ const ESTADO_BADGE: Record<string, { bg: string; color: string; label: string }>
 function ComisionesPage() {
   const { user } = useAuth();
   const { roles } = useUserRole();
-  const esManager = roles.some((r) => ["admin", "gerencia", "super_admin", "cartera"].includes(r));
+  const esManager = roles.some((r) => ["admin", "gerencia", "super_admin", "cartera", "contabilidad"].includes(r));
   const [comisiones, setComisiones] = useState<Comision[]>([]);
   const [cuentas, setCuentas] = useState<CuentaCobro[]>([]);
   const [expedientes, setExpedientes] = useState<Map<string, { cliente: string; banco: string | null }>>(new Map());
