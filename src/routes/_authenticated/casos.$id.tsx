@@ -16,6 +16,8 @@ import { ValidacionQABlock } from "@/components/qa/ValidacionQABlock";
 import { CarteraBlockExpediente } from "@/components/cartera/CarteraBlockExpediente";
 import { ConversacionCaso } from "@/components/expediente/ConversacionCaso";
 import { ValidacionIdentidadBlock } from "@/components/expediente/ValidacionIdentidadBlock";
+import { readValidacion, puedeGenerarDocumentos, razonBloqueoDocs } from "@/lib/validacionIdentidad";
+import { Lock } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/casos/$id")({
   component: CasoDetail,
@@ -107,17 +109,40 @@ function CasoDetail() {
         <UVRSimulator initialExpediente={exp} onSaved={reload} />
       )}
 
-      {maestroLike && (
-        <ErrorBoundary fallback={<Card><div className="text-sm text-[#B42318]">No se pudo cargar esta sección.</div></Card>}>
-          <DocumentosLegales expediente={maestroLike} simExpediente={exp} expedienteIdToPersist={exp.id} onJuridicaSaved={reload} />
-        </ErrorBoundary>
-      )}
-
-      {maestroLike && (
-        <ErrorBoundary fallback={<Card><div className="text-sm text-[#B42318]">No se pudo cargar el Módulo Jurídico.</div></Card>}>
-          <ModuloJuridico expediente={maestroLike} />
-        </ErrorBoundary>
-      )}
+      {(() => {
+        const v = readValidacion(exp as never);
+        const ok = puedeGenerarDocumentos(v);
+        if (!ok) {
+          return (
+            <Card>
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg text-white shrink-0" style={{ background: "#7A0E0E" }}>
+                  <Lock size={18} />
+                </div>
+                <div className="flex-1">
+                  <div className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: "#7A0E0E" }}>Documentos jurídicos bloqueados</div>
+                  <h3 className="text-lg font-semibold text-[#242424]">Validación de identidad requerida</h3>
+                  <p className="text-xs text-[#242424]/70 mt-1">{razonBloqueoDocs(v)}</p>
+                </div>
+              </div>
+            </Card>
+          );
+        }
+        return (
+          <>
+            {maestroLike && (
+              <ErrorBoundary fallback={<Card><div className="text-sm text-[#B42318]">No se pudo cargar esta sección.</div></Card>}>
+                <DocumentosLegales expediente={maestroLike} simExpediente={exp} expedienteIdToPersist={exp.id} onJuridicaSaved={reload} />
+              </ErrorBoundary>
+            )}
+            {maestroLike && (
+              <ErrorBoundary fallback={<Card><div className="text-sm text-[#B42318]">No se pudo cargar el Módulo Jurídico.</div></Card>}>
+                <ModuloJuridico expediente={maestroLike} />
+              </ErrorBoundary>
+            )}
+          </>
+        );
+      })()}
 
       <CarteraBlockExpediente expedienteId={exp.id} estadoCaso={(exp as unknown as { estado_caso?: string }).estado_caso ?? ""} />
 
