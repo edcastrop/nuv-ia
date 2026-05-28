@@ -91,7 +91,6 @@ const TIPOS: { id: Tipo; titulo: string; descripcion: string; color: string }[] 
     return merged;
   }, [expediente, liveOverride, apoderados]);
 
-  );
 
   return (
     <>
