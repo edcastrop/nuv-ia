@@ -407,6 +407,7 @@ function AuthenticatedLayout() {
         </header>
 
         <main className="flex-1">
+          <div className="px-4 pt-4"><OnboardingChecklistBanner /></div>
           <AcademiaBanner />
           <Outlet />
         </main>
