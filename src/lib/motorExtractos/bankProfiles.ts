@@ -200,6 +200,13 @@ sistemaAmortizacion = "leasing canon fijo" si no hay otra evidencia.`,
     matchAny: [/credifamilia/i],
     hints: `CREDIFAMILIA: especializada en vivienda VIS. Casi siempre tiene Cobertura/FRECH. Saldo Capital, Valor Cuota, Plazo en meses.`,
   },
+  {
+    id: "bancoomeva",
+    banco: "Bancoomeva",
+    productos: ["CREDITO_HIPOTECARIO", "LEASING_HABITACIONAL"],
+    matchAny: [/bancoomeva/i, /banco\s+omeva/i],
+    hints: `BANCOOMEVA: estructura estándar. Saldo Capital, Valor Cuota, Plazo en meses, Tasa EA. Si producto=Leasing, "Canon"→cuotaActual.`,
+  },
 ];
 
 // Detecta perfil a partir de texto crudo del extracto (primeras páginas).
