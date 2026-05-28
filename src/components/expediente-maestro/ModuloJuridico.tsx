@@ -4,7 +4,8 @@ import { NUVEX } from "@/components/nuvex/constants";
 import { Scale, FileText, Download, Eye, ChevronDown } from "lucide-react";
 import type { ExpedienteMaestro } from "@/lib/expedienteMaestro";
 import { listApoderados, seleccionarApoderado, type ApoderadoNuvex } from "@/lib/apoderados";
-import { listApoderados, seleccionarApoderado, type ApoderadoNuvex } from "@/lib/apoderados";
+import { ChecklistDocumental } from "./ChecklistDocumental";
+
 import { ChecklistDocumental } from "./ChecklistDocumental";
 
 import {
