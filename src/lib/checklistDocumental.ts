@@ -283,9 +283,7 @@ export interface ChecklistRow {
 }
 
 export async function loadChecklistRows(expedienteId: string): Promise<ChecklistRow[]> {
-  const { data, error } = await supabase
-    .from("expediente_checklist_documentos" as never)
-export async function loadChecklistRows(expedienteId: string): Promise<ChecklistRow[]> {
+
   const sb = supabase as unknown as {
     from: (t: string) => {
       select: (s: string) => { eq: (k: string, v: string) => Promise<{ data: unknown; error: unknown }> };
