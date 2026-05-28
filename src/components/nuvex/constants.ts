@@ -23,6 +23,9 @@ export const BANCOS = [
   "AV Villas",
   "Banco de Occidente",
   "Caja Honor",
+  "Credifamilia",
+  "Bancoomeva",
+  "Banco Popular",
 ];
 
 export const PRODUCTOS_PESOS = [
