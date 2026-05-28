@@ -61,7 +61,10 @@ const TIPOS: { id: Tipo; titulo: string; descripcion: string; color: string }[] 
     color: NUVEX.verde,
   },
 ];
+
+export function ModuloJuridico({ expediente, liveOverride }: Props) {
   const [openTipo, setOpenTipo] = useState<Tipo | null>(null);
+
   const [preview, setPreview] = useState<LegalDoc | null>(null);
   const [apoderados, setApoderados] = useState<ApoderadoNuvex[]>([]);
 
