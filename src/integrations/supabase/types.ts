@@ -1496,6 +1496,96 @@ export type Database = {
           },
         ]
       }
+      expediente_checklist_documentos: {
+        Row: {
+          archivo_url: string | null
+          created_at: string
+          created_by: string | null
+          documento_id: string
+          documento_nombre: string
+          estado: string
+          expediente_id: string
+          fecha_recibido: string | null
+          fecha_solicitado: string | null
+          fecha_vencimiento: string | null
+          id: string
+          obligatorio: boolean
+          observaciones: string | null
+          updated_at: string
+          vigencia_dias: number | null
+        }
+        Insert: {
+          archivo_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          documento_id: string
+          documento_nombre: string
+          estado?: string
+          expediente_id: string
+          fecha_recibido?: string | null
+          fecha_solicitado?: string | null
+          fecha_vencimiento?: string | null
+          id?: string
+          obligatorio?: boolean
+          observaciones?: string | null
+          updated_at?: string
+          vigencia_dias?: number | null
+        }
+        Update: {
+          archivo_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          documento_id?: string
+          documento_nombre?: string
+          estado?: string
+          expediente_id?: string
+          fecha_recibido?: string | null
+          fecha_solicitado?: string | null
+          fecha_vencimiento?: string | null
+          id?: string
+          obligatorio?: boolean
+          observaciones?: string | null
+          updated_at?: string
+          vigencia_dias?: number | null
+        }
+        Relationships: []
+      }
+      expediente_checklist_envios: {
+        Row: {
+          asunto: string
+          cc_licenciado_email: string | null
+          cuerpo: string
+          enviado_a_email: string
+          enviado_at: string
+          enviado_por: string | null
+          expediente_id: string
+          id: string
+          pdf_url: string | null
+        }
+        Insert: {
+          asunto: string
+          cc_licenciado_email?: string | null
+          cuerpo: string
+          enviado_a_email: string
+          enviado_at?: string
+          enviado_por?: string | null
+          expediente_id: string
+          id?: string
+          pdf_url?: string | null
+        }
+        Update: {
+          asunto?: string
+          cc_licenciado_email?: string | null
+          cuerpo?: string
+          enviado_a_email?: string
+          enviado_at?: string
+          enviado_por?: string | null
+          expediente_id?: string
+          id?: string
+          pdf_url?: string | null
+        }
+        Relationships: []
+      }
       expediente_historial: {
         Row: {
           accion_origen: string | null
@@ -3106,6 +3196,7 @@ export type Database = {
       calcular_etapa_onboarding: { Args: { _user_id: string }; Returns: string }
       can_manage_cartera: { Args: { _uid: string }; Returns: boolean }
       can_manage_finanzas: { Args: { _uid: string }; Returns: boolean }
+      can_use_checklist_docs: { Args: { _uid: string }; Returns: boolean }
       can_use_proyeccion_financiera: {
         Args: { _uid: string }
         Returns: boolean
