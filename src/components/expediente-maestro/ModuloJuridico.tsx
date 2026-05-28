@@ -59,10 +59,6 @@ const TIPOS: { id: Tipo; titulo: string; descripcion: string; color: string }[] 
     color: NUVEX.verde,
   },
 ];
-    descripcion: "Constancia de entrega de documentos al banco con número de radicado.",
-    color: NUVEX.verde,
-  },
-];
 
 export function ModuloJuridico({ expediente, liveOverride }: Props) {
   const [openTipo, setOpenTipo] = useState<Tipo | null>(null);
