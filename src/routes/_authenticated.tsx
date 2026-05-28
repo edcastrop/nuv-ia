@@ -71,7 +71,8 @@ function AuthenticatedLayout() {
 
       // GATE MFA GLOBAL: aplica a TODOS los roles sin excepción (incluido super_admin).
       // Cubre acceso directo por URL, refresco de sesión y login vía Google OAuth.
-      const mfaOk = !!(mfaAt && (Date.now() - new Date(mfaAt).getTime()) < 30 * 24 * 3600 * 1000);
+      // Ventana: 24 horas desde la última verificación exitosa.
+      const mfaOk = !!(mfaAt && (Date.now() - new Date(mfaAt).getTime()) < 24 * 3600 * 1000);
       if (!mfaOk && path !== "/mfa-verificar") {
         setGateState("blocked");
         setGateChecked(true);
