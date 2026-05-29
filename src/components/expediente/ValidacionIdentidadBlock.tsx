@@ -373,11 +373,32 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
   );
 }
 
-function Field({ label, value, className }: { label: string; value: string; className?: string }) {
+function EditField({
+  label,
+  value,
+  editing,
+  onChange,
+  className,
+}: {
+  label: string;
+  value: string;
+  editing: boolean;
+  onChange: (val: string) => void;
+  className?: string;
+}) {
   return (
-    <div className={`rounded-lg border bg-white px-2 py-1.5 ${className || ""}`} style={{ borderColor: "#E3E7EE" }}>
+    <div className={`rounded-lg border bg-white px-2 py-1.5 ${className || ""}`} style={{ borderColor: editing ? "#B6CEFF" : "#E3E7EE" }}>
       <div className="text-[10px] uppercase font-semibold text-[#242424]/60">{label}</div>
-      <div className="text-[12px] text-[#242424] truncate" title={value}>{value || "—"}</div>
+      {editing ? (
+        <input
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full bg-transparent text-[12px] text-[#242424] outline-none focus:ring-0 border-0 p-0"
+        />
+      ) : (
+        <div className="text-[12px] text-[#242424] truncate" title={value}>{value || "—"}</div>
+      )}
     </div>
   );
 }
+
