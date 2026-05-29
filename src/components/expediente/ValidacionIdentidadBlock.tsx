@@ -139,24 +139,62 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
         </div>
       )}
 
-      {/* Resumen */}
+      {/* Resumen / edición */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-[11px] uppercase tracking-wider font-semibold text-[#242424]/60">
+          Datos críticos del cliente
+        </div>
+        {puedeEditar && !editing && (
+          <button
+            onClick={() => { setDraft(campos); setEditing(true); }}
+            className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[11px] font-semibold text-[#242424] hover:bg-[#F7F9FB]"
+            style={{ borderColor: "#E3E7EE" }}
+          >
+            <Pencil size={12} /> Editar datos
+          </button>
+        )}
+        {editing && (
+          <div className="flex gap-1.5">
+            <button
+              onClick={() => { setEditing(false); setDraft(campos); }}
+              disabled={busy}
+              className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[11px] font-semibold text-[#242424] hover:bg-[#F7F9FB]"
+              style={{ borderColor: "#E3E7EE" }}
+            >
+              <X size={12} /> Cancelar
+            </button>
+            <button
+              onClick={() => run(async () => { await actualizarCamposCriticos(exp.id, draft); setEditing(false); })}
+              disabled={busy}
+              className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-semibold text-white"
+              style={{ backgroundColor: NUVEX.azul }}
+            >
+              <Save size={12} /> Guardar
+            </button>
+          </div>
+        )}
+      </div>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs mb-4">
-        <Field label="Nombre" value={campos.nombre} />
-        <Field label="Documento" value={`${campos.tipoDocumento || ""} ${campos.cedula}`.trim()} />
-        <Field label="Lugar expedición" value={campos.lugarExpedicion || "—"} />
-        <Field label="Banco" value={campos.banco} />
-        <Field label="N° crédito" value={campos.numeroCredito} />
-        <Field label="Producto" value={campos.tipoProducto || "—"} />
-        <Field label="Ciudad" value={campos.ciudad || "—"} />
-        <Field label="Dirección" value={campos.direccion || "—"} className="md:col-span-2" />
+        <EditField label="Nombre" value={editing ? draft.nombre : campos.nombre} editing={editing} onChange={(val) => setDraft({ ...draft, nombre: val })} className="md:col-span-2" />
+        <EditField label="Tipo doc." value={editing ? (draft.tipoDocumento || "") : (campos.tipoDocumento || "")} editing={editing} onChange={(val) => setDraft({ ...draft, tipoDocumento: val })} />
+        <EditField label="Documento" value={editing ? draft.cedula : campos.cedula} editing={editing} onChange={(val) => setDraft({ ...draft, cedula: val.replace(/\D/g, "") })} />
+        <EditField label="Lugar expedición" value={editing ? (draft.lugarExpedicion || "") : (campos.lugarExpedicion || "")} editing={editing} onChange={(val) => setDraft({ ...draft, lugarExpedicion: val })} />
+        <EditField label="Banco" value={editing ? draft.banco : campos.banco} editing={editing} onChange={(val) => setDraft({ ...draft, banco: val })} />
+        <EditField label="N° crédito" value={editing ? draft.numeroCredito : campos.numeroCredito} editing={editing} onChange={(val) => setDraft({ ...draft, numeroCredito: val })} />
+        <EditField label="Producto" value={editing ? (draft.tipoProducto || "") : (campos.tipoProducto || "")} editing={editing} onChange={(val) => setDraft({ ...draft, tipoProducto: val })} />
+        <EditField label="Ciudad" value={editing ? (draft.ciudad || "") : (campos.ciudad || "")} editing={editing} onChange={(val) => setDraft({ ...draft, ciudad: val })} />
+        <EditField label="Dirección" value={editing ? (draft.direccion || "") : (campos.direccion || "")} editing={editing} onChange={(val) => setDraft({ ...draft, direccion: val })} className="md:col-span-2" />
+        <EditField label="Email" value={editing ? (draft.email || "") : (campos.email || "")} editing={editing} onChange={(val) => setDraft({ ...draft, email: val })} />
+        <EditField label="Celular" value={editing ? (draft.celular || "") : (campos.celular || "")} editing={editing} onChange={(val) => setDraft({ ...draft, celular: val })} />
         {campos.cotitularActivo && (
           <>
-            <Field label="Cotitular" value={campos.cotitularNombre || "—"} />
-            <Field label="Doc. cotitular" value={campos.cotitularCedula || "—"} />
-            <Field label="Dir. cotitular" value={campos.cotitularDireccion || "—"} />
+            <EditField label="Cotitular" value={editing ? (draft.cotitularNombre || "") : (campos.cotitularNombre || "")} editing={editing} onChange={(val) => setDraft({ ...draft, cotitularNombre: val })} />
+            <EditField label="Doc. cotitular" value={editing ? (draft.cotitularCedula || "") : (campos.cotitularCedula || "")} editing={editing} onChange={(val) => setDraft({ ...draft, cotitularCedula: val.replace(/\D/g, "") })} />
+            <EditField label="Dir. cotitular" value={editing ? (draft.cotitularDireccion || "") : (campos.cotitularDireccion || "")} editing={editing} onChange={(val) => setDraft({ ...draft, cotitularDireccion: val })} />
           </>
         )}
       </div>
+
 
       {/* Inconsistencias */}
       {inconsistencias.length > 0 && (
