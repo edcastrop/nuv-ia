@@ -45,8 +45,8 @@ function MiPerfilPage() {
   const [academia, setAcademia] = useState<AcademiaResumen>({ cursos: 0, certificaciones: 0, avance: 0, ultimo: null });
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const verFinanzas = canManageFinanzas(roles) || true; // dueño siempre ve sus propios datos
-  const editFinanzas = canManageFinanzas(roles);
+  const verFinanzas = true; // dueño siempre ve sus propios datos
+  const editFinanzas = true; // dueño siempre puede editar sus propios datos financieros
 
   const reload = async () => {
     setLoading(true);
