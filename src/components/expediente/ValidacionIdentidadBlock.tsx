@@ -59,10 +59,14 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
   const [motivoBloqueo, setMotivoBloqueo] = useState("");
   const [motivoDesb, setMotivoDesb] = useState("");
 
-  // Modo edición de campos críticos
-  const [editing, setEditing] = useState(false);
+  // Edición directa de campos críticos (sin modo toggle)
   const [draft, setDraft] = useState<CamposCriticos>(campos);
   useEffect(() => { setDraft(campos); }, [campos]);
+  const hayCambios = useMemo(() => {
+    return (Object.keys(draft) as (keyof CamposCriticos)[]).some(
+      (k) => (draft[k] ?? "") !== (campos[k] ?? ""),
+    );
+  }, [draft, campos]);
 
   const puedeEditar =
     (esLicenciado || esContratacion) &&
