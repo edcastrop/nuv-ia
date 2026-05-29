@@ -235,6 +235,83 @@ async function registrar(
   });
 }
 
+export async function actualizarCamposCriticos(
+  expedienteId: string,
+  campos: Partial<CamposCriticos>,
+) {
+  const { data: cur, error: e1 } = await supabase
+    .from("expedientes")
+    .select("cliente_data,cliente_nombre,cedula,banco,numero_credito,producto")
+    .eq("id", expedienteId)
+    .single();
+  if (e1) throw e1;
+
+  const cd = ((cur?.cliente_data ?? {}) as Record<string, unknown>) || {};
+  const ij = ((cd.informacionJuridica ?? {}) as {
+    titular?: Record<string, string>;
+    cotitular?: Record<string, string> & { activo?: boolean };
+  }) || {};
+  const titular = { ...(ij.titular ?? {}) };
+  const cotitular = { ...(ij.cotitular ?? {}) };
+
+  const setIf = (key: keyof CamposCriticos, target: Record<string, unknown>, field: string) => {
+    if (campos[key] !== undefined) target[field] = String(campos[key] ?? "");
+  };
+
+  // Titular fields
+  setIf("nombre", titular, "nombre");
+  setIf("tipoDocumento", titular, "tipoDocumento");
+  setIf("cedula", titular, "cedula");
+  setIf("lugarExpedicion", titular, "expedidaEn");
+  setIf("fechaExpedicion", titular, "fechaExpedicion");
+  setIf("email", titular, "email");
+  setIf("celular", titular, "telefono");
+  setIf("direccion", titular, "direccion");
+  setIf("ciudad", titular, "ciudad");
+  setIf("departamento", titular, "departamento");
+
+  // Flat cliente_data fields (legacy compatibility)
+  if (campos.nombre !== undefined) cd.nombre = campos.nombre;
+  if (campos.cedula !== undefined) cd.cedula = campos.cedula;
+  if (campos.tipoDocumento !== undefined) cd.tipoDocumento = campos.tipoDocumento;
+  if (campos.lugarExpedicion !== undefined) cd.expedidaEn = campos.lugarExpedicion;
+  if (campos.direccion !== undefined) cd.direccion = campos.direccion;
+  if (campos.ciudad !== undefined) cd.ciudad = campos.ciudad;
+  if (campos.departamento !== undefined) cd.departamento = campos.departamento;
+  if (campos.email !== undefined) cd.email = campos.email;
+  if (campos.celular !== undefined) cd.telefono = campos.celular;
+  if (campos.banco !== undefined) cd.banco = campos.banco;
+  if (campos.numeroCredito !== undefined) cd.numeroCredito = campos.numeroCredito;
+  if (campos.tipoProducto !== undefined) cd.tipoProducto = campos.tipoProducto;
+
+  if (campos.cotitularActivo !== undefined) cotitular.activo = campos.cotitularActivo as never;
+  setIf("cotitularNombre", cotitular, "nombre");
+  setIf("cotitularCedula", cotitular, "cedula");
+  setIf("cotitularDireccion", cotitular, "direccion");
+
+  cd.informacionJuridica = { ...ij, titular, cotitular };
+
+  const update: Record<string, unknown> = {
+    cliente_data: cd as unknown as never,
+    // Reset checklist: any edit invalidates previous confirmation
+    validacion_confirmado_licenciado: false,
+    validacion_confirmado_at: null,
+  };
+  if (campos.nombre !== undefined) update.cliente_nombre = campos.nombre || "Sin nombre";
+  if (campos.cedula !== undefined) update.cedula = campos.cedula || null;
+  if (campos.banco !== undefined) update.banco = campos.banco || null;
+  if (campos.numeroCredito !== undefined) update.numero_credito = campos.numeroCredito || null;
+  if (campos.tipoProducto !== undefined) update.producto = campos.tipoProducto || null;
+
+  const { error: e2 } = await supabase
+    .from("expedientes")
+    .update(update as never)
+    .eq("id", expedienteId);
+  if (e2) throw e2;
+
+  await registrar(expedienteId, "editar_datos", "Actualización de campos críticos", campos as Record<string, unknown>);
+}
+
 export async function confirmarChecklistLicenciado(
   expedienteId: string,
   confirmar: boolean,
