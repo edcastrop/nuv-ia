@@ -43,7 +43,12 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
   const esContratacion = roles.some((r) =>
     ["juridica", "director_juridico", "operaciones", "admin", "gerencia", "super_admin"].includes(r),
   );
-  const esLicenciado = roles.includes("licenciado") || roles.includes("asesor") || exp.asesor_id;
+  const esLicenciado =
+    roles.includes("licenciado") ||
+    roles.includes("asesor") ||
+    roles.includes("auxiliar_operativo") ||
+    isSuperAdmin ||
+    !!exp.asesor_id;
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +58,17 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
   const [motivoOtro, setMotivoOtro] = useState("");
   const [motivoBloqueo, setMotivoBloqueo] = useState("");
   const [motivoDesb, setMotivoDesb] = useState("");
+
+  // Modo edición de campos críticos
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<CamposCriticos>(campos);
+  useEffect(() => { setDraft(campos); }, [campos]);
+
+  const puedeEditar =
+    (esLicenciado || esContratacion) &&
+    (v.validacion_estado === "pendiente_validacion" ||
+      v.validacion_estado === "devuelto_datos_incorrectos" ||
+      (isSuperAdmin && v.validacion_estado === "bloqueado_inconsistencia"));
 
   useEffect(() => {
     if (showHist) listHistorialValidacion(exp.id).then(setHistorial).catch(() => {});
