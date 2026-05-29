@@ -4,7 +4,7 @@
 // - Super Admin: puede desbloquear excepcionalmente.
 
 import { useEffect, useMemo, useState } from "react";
-import { ShieldCheck, AlertTriangle, CheckCircle2, Send, RotateCcw, Lock, Unlock, History } from "lucide-react";
+import { ShieldCheck, AlertTriangle, CheckCircle2, Send, RotateCcw, Lock, Unlock, History, Pencil, Save, X } from "lucide-react";
 import { Card } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
 import type { Expediente } from "@/lib/expedientes";
@@ -19,10 +19,12 @@ import {
   bloquearInconsistencia,
   desbloquearExcepcional,
   listHistorialValidacion,
+  actualizarCamposCriticos,
   VALIDACION_LABELS,
   VALIDACION_COLORS,
   MOTIVOS_DEVOLUCION,
   type HistorialItem,
+  type CamposCriticos,
 } from "@/lib/validacionIdentidad";
 import { useUserRole } from "@/hooks/useUserRole";
 
