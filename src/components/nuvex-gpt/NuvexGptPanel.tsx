@@ -63,7 +63,7 @@ function NuvexGptPanel({ open, onOpenChange }: { open: boolean; onOpenChange: (v
         modulo_contexto: modulo,
         conversacion_id: convId,
         onDelta: (chunk) => {
-          acc += "";
+          acc += chunk;
           setMessages((prev) => {
             const last = prev[prev.length - 1];
             if (last?.role === "assistant") {
