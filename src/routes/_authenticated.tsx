@@ -68,7 +68,7 @@ function AuthenticatedLayout() {
       const onb = (data as { onboarding_estado?: string } | null)?.onboarding_estado ?? "pendiente";
       const mfaAt = (data as { mfa_verificado_at?: string | null } | null)?.mfa_verificado_at ?? null;
       const path = location.pathname;
-      const aprobado = estado === "aprobado" || estado === "activo";
+      const aprobado = estado === "aprobado" || estado === "activo" || estado === "reactivado";
 
       // GATE MFA GLOBAL: aplica a TODOS los roles sin excepción (incluido super_admin).
       // Cubre acceso directo por URL, refresco de sesión y login vía Google OAuth.
@@ -206,7 +206,7 @@ function AuthenticatedLayout() {
           label: "Análisis",
           items: [
             { to: "/dashboard", label: "Dashboard", Icon: BarChart3 },
-            ...(isDirectorQA ? [{ to: "/qa", label: "QA", Icon: ClipboardCheck }] : []),
+            ...(hasAny("super_admin","admin","director_financiero_qa","gerencia") ? [{ to: "/qa", label: "QA", Icon: ClipboardCheck }] : []),
           ],
         },
         {
@@ -413,7 +413,7 @@ function AuthenticatedLayout() {
           <Outlet />
         </main>
 
-        <NuvexGptButton />
+        {!isApoderado && <NuvexGptButton />}
 
         <footer className="border-t border-[#E3E7EE] bg-white">
           <div className="mx-auto max-w-7xl px-6 py-5 text-center text-[11px] text-[#242424]/60">

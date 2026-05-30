@@ -275,7 +275,30 @@ function LoginPage() {
                     />
                     Recordarme
                   </label>
-                  <button type="button" className="font-medium hover:underline" style={{ color: NUVEX_AZUL }}>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setErr(null); setInfo(null);
+                      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                        setErr("Ingresa tu correo arriba para enviar el enlace de recuperación.");
+                        return;
+                      }
+                      setBusy(true);
+                      try {
+                        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                          redirectTo: `${window.location.origin}/login`,
+                        });
+                        if (error) throw error;
+                        setInfo("Te enviamos un enlace para restablecer tu contraseña. Revisa tu correo.");
+                      } catch (e: unknown) {
+                        setErr(e instanceof Error ? e.message : "No se pudo enviar el enlace.");
+                      } finally {
+                        setBusy(false);
+                      }
+                    }}
+                    className="font-medium hover:underline"
+                    style={{ color: NUVEX_AZUL }}
+                  >
                     ¿Olvidaste tu contraseña?
                   </button>
                 </div>
