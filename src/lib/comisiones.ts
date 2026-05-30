@@ -124,19 +124,33 @@ export async function crearCuentaCobro(userId: string, comisionIds: string[], ob
     throw new Error("Ninguna comisión seleccionada tiene saldo liberado disponible (recaudo real).");
   }
 
+  // Default % comisión: el del perfil del licenciado o 50% si no está definido.
+  const { data: prof } = await supabase
+    .from("profiles" as never)
+    .select("porcentaje_comision")
+    .eq("id", userId)
+    .maybeSingle();
+  const pctPerfilRaw = Number((prof as { porcentaje_comision?: number | null } | null)?.porcentaje_comision ?? NaN);
+  const pctDefault = [30, 35, 40, 45, 50].includes(pctPerfilRaw) ? pctPerfilRaw : 50;
+
   const { data: cc, error } = await supabase
     .from("cuentas_cobro" as never)
-    .insert({ user_id: userId, estado: "borrador", observaciones: observaciones ?? null } as never)
+    .insert({
+      user_id: userId,
+      estado: "borrador",
+      observaciones: observaciones ?? null,
+      porcentaje_comision: pctDefault,
+    } as never)
     .select("id")
     .single();
   if (error) throw error;
   const ccId = (cc as unknown as { id: string }).id;
 
-  // Fijar valor = saldo disponible y enlazar
+  // Fijar valor = saldo disponible, asignar % por defecto y enlazar
   for (const v of validas) {
     const { error: errUpd } = await supabase
       .from("comisiones" as never)
-      .update({ valor: v.disponible, cuenta_cobro_id: ccId, estado: "pendiente" } as never)
+      .update({ valor: v.disponible, porcentaje: pctDefault, cuenta_cobro_id: ccId, estado: "pendiente" } as never)
       .eq("id", v.id)
       .is("cuenta_cobro_id", null);
     if (errUpd) throw errUpd;
