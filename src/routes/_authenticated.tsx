@@ -206,7 +206,7 @@ function AuthenticatedLayout() {
           label: "Análisis",
           items: [
             { to: "/dashboard", label: "Dashboard", Icon: BarChart3 },
-            ...(isDirectorQA ? [{ to: "/qa", label: "QA", Icon: ClipboardCheck }] : []),
+            ...(hasAny("super_admin","admin","director_financiero_qa","gerencia") ? [{ to: "/qa", label: "QA", Icon: ClipboardCheck }] : []),
           ],
         },
         {
