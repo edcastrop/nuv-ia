@@ -18,6 +18,7 @@ import { ConversacionCaso } from "@/components/expediente/ConversacionCaso";
 import { ValidacionIdentidadBlock } from "@/components/expediente/ValidacionIdentidadBlock";
 import { VersionesDocumentalesBlock } from "@/components/expediente/VersionesDocumentalesBlock";
 import { readValidacion, puedeGenerarDocumentos, razonBloqueoDocs } from "@/lib/validacionIdentidad";
+import { addRecentCase } from "@/lib/recentCases";
 import { Lock } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/casos/$id")({
