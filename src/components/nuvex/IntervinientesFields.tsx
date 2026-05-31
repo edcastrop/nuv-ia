@@ -61,6 +61,13 @@ export function IntervinientesFields({ producto, data, onChange, onTitularSync }
         Datos de los intervinientes
       </SectionTitle>
 
+      <CedulaReader
+        intervinientes={list}
+        producto={producto}
+        onApply={(next) => onChange(next)}
+        onTitularSync={onTitularSync}
+      />
+
       {list.map((p, idx) => {
         const isTitular = idx === 0;
         const sameAsTitular =
