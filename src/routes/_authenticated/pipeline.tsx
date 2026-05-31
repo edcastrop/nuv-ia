@@ -153,6 +153,14 @@ function PipelinePage() {
       if (soloStuck && !(umbral > 0 && dias > umbral)) return;
       m.get(etapa)?.push(r);
     });
+    // P27 — Ordenar cada columna por antigüedad descendente (más estancados arriba).
+    m.forEach((items) => {
+      items.sort((a, b) => {
+        const ta = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+        const tb = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+        return ta - tb; // más antiguo primero
+      });
+    });
     return m;
   }, [filtered, soloStuck]);
 
