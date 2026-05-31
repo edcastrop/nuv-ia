@@ -129,7 +129,9 @@ function PipelinePage() {
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
+    const uid = user?.id ?? "";
     return rows.filter((r) => {
+      if (mios && uid && r.asesor_id !== uid) return false;
       if (banco && r.banco !== banco) return false;
       if (term) {
         const hay = `${r.cliente_nombre} ${r.cedula ?? ""} ${r.numero_credito ?? ""} ${r.banco ?? ""}`.toLowerCase();
@@ -137,7 +139,7 @@ function PipelinePage() {
       }
       return true;
     });
-  }, [rows, q, banco]);
+  }, [rows, q, banco, mios, user?.id]);
 
   const grupos = useMemo(() => {
     const m = new Map<EtapaPipelineId, Expediente[]>();
