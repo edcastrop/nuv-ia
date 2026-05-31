@@ -266,7 +266,7 @@ function DetalleCuentaCobro() {
       alert("Escribe el motivo de devolución (mínimo 10 caracteres) en el campo de observación.");
       return;
     }
-    if (!confirm("¿Devolver la cuenta de cobro al licenciado para corrección?")) return;
+    if (!confirm("¿Devolver la cuenta de cobro al Analista Financiero Comercial para corrección?")) return;
     setBusy(true);
     try {
       await devolver({ data: { cuentaCobroId: cc.id, motivo: observ.trim() } });
