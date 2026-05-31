@@ -278,10 +278,11 @@ export async function cambiarEstadoCaso(
   if (errSel) throw errSel;
   const anterior = (prev as unknown as { estado_caso?: CasoEstado })?.estado_caso ?? null;
 
-  // Update
+  // Update estado_caso + estado derivado (single source of truth)
+  const estadoDerivado = mapCasoToExpedienteEstado(nuevoEstado);
   const { error: errUpd } = await supabase
     .from("expedientes")
-    .update({ estado_caso: nuevoEstado } as never)
+    .update({ estado_caso: nuevoEstado, estado: estadoDerivado } as never)
     .eq("id", expedienteId);
   if (errUpd) throw errUpd;
 
