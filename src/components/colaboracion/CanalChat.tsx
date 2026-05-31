@@ -70,7 +70,7 @@ export function CanalChat({ canal }: { canal: Canal }) {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+      <div ref={scrollerRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
         {msgs.length === 0 && (
           <div className="text-center text-sm text-[#242424]/50 py-10">Sin mensajes aún. Empieza la conversación.</div>
         )}
