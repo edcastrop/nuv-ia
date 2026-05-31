@@ -133,7 +133,7 @@ function PermisosMatrix() {
                 <tr className="bg-[#F7F9FB] text-[10.5px] uppercase tracking-wide text-[#242424]/60">
                   <th className="px-3 py-2 text-left sticky left-0 bg-[#F7F9FB]">Acción</th>
                   {ROLES.map((r) => (
-                    <th key={r} className="px-2 py-2 text-center whitespace-nowrap">{r.replace(/_/g, " ")}</th>
+                    <th key={r} className="px-2 py-2 text-center whitespace-nowrap">{roleLabel(r, true)}</th>
                   ))}
                 </tr>
               </thead>
