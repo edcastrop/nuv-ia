@@ -62,6 +62,11 @@ export async function generarSolicitudCambioPlazosDocx(
   const plazoOrigStr = (exp.credito?.plazoOriginal || "").trim() || "____";
   const plazoOrigNum = toInt(exp.credito?.plazoOriginal);
 
+  const cot = exp.cotitular;
+  const tieneCotitular = !!cot?.activo && !!(cot?.nombre || "").trim();
+  const cotitularNombre = (cot?.nombre || "").trim();
+  const cotitularCedula = (cot?.cedula || "").trim() || "____________";
+
   const apoderadoNombre = (input.apoderado?.nombre || exp.apoderado?.nombre || "").trim() || "_____________________";
   const apoderadoCedula = (input.apoderado?.cedula || exp.apoderado?.cedula || "").trim() || "____________";
 
