@@ -96,6 +96,7 @@ const SLA_COLORS: Record<SlaNivel, { bg: string; fg: string; border: string }> =
 function CasosPage() {
   const [search, setSearch] = useState("");
   const [estado, setEstado] = useState<EstadoExpediente | "">("");
+  const [etapa, setEtapa] = useState<EtapaPipelineId | "">("");
   const [rows, setRows] = useState<Expediente[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -103,12 +104,12 @@ function CasosPage() {
   useEffect(() => {
     let cancel = false;
     setLoading(true);
-    listExpedientes({ search, estado })
+    listExpedientes({ search, estado, etapa })
       .then((r) => { if (!cancel) setRows(r); })
       .catch((e) => { if (!cancel) setErr(e.message); })
       .finally(() => { if (!cancel) setLoading(false); });
     return () => { cancel = true; };
-  }, [search, estado]);
+  }, [search, estado, etapa]);
 
   const totals = useMemo(() => ({
     total: rows.length,
