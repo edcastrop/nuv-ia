@@ -1,8 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ShieldCheck, RefreshCw } from "lucide-react";
 import { Card } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
+import { useUserRole } from "@/hooks/useUserRole";
 import {
   listBandejaValidacion,
   VALIDACION_LABELS,
