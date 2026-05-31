@@ -354,6 +354,8 @@ function MaestroDetail() {
 
       <EtapasFinales11a14 etapaActual={etapaActual} />
 
+      <TimelineEtapas14 expedienteId={id} />
+
       <AuditoriaPipeline expedienteId={id} />
 
 
