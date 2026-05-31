@@ -227,7 +227,7 @@ function LoginPage() {
             <p className="mt-1.5 text-sm text-[#242424]/60">
               {mode === "signin"
                 ? "Accede a la plataforma profesional NUVEX"
-                : "Solo personal licenciado NUVEX"}
+                : "Solo personal autorizado NUVEX"}
             </p>
 
             <form onSubmit={submit} className="mt-7 space-y-4">
