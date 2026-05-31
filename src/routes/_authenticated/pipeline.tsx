@@ -109,6 +109,41 @@ function PipelinePage() {
 
   const totalVisible = Array.from(grupos.values()).reduce((a, b) => a + b.length, 0);
 
+  // P17 — Exportar CSV de los casos visibles (respeta filtros + etapa derivada).
+  const exportarCSV = () => {
+    const etapaTitulo = new Map(ETAPAS_PIPELINE.map((e) => [e.id, `E${e.numero} ${e.titulo}`]));
+    const headers = ["Cliente", "Cédula", "Banco", "Crédito", "Etapa", "Estado", "Días", "Actualizado"];
+    const lines: string[] = [headers.join(",")];
+    const esc = (v: unknown) => {
+      const s = String(v ?? "");
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    ETAPAS_PIPELINE.forEach((etapa) => {
+      (grupos.get(etapa.id) ?? []).forEach((r) => {
+        lines.push([
+          esc(r.cliente_nombre),
+          esc(r.cedula),
+          esc(r.banco),
+          esc(r.numero_credito),
+          esc(etapaTitulo.get(etapa.id)),
+          esc(r.estado),
+          esc(diasDesde(r.updated_at)),
+          esc(r.updated_at?.slice(0, 10)),
+        ].join(","));
+      });
+    });
+    const blob = new Blob([`\uFEFF${lines.join("\n")}`], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `pipeline-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+
   return (
     <div className="mx-auto max-w-[1400px] space-y-4 p-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -152,6 +187,13 @@ function PipelinePage() {
               Limpiar
             </button>
           )}
+          <button
+            onClick={exportarCSV}
+            disabled={loading || totalVisible === 0}
+            className="h-8 rounded-md border border-[#445DA3] bg-[#445DA3] px-2 text-[12px] font-medium text-white hover:bg-[#3a4f8c] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Exportar CSV
+          </button>
           <Link to="/casos" className="text-[12px] text-[#445DA3] hover:underline">
             Ver lista →
           </Link>
