@@ -173,18 +173,41 @@ export async function upsertExpediente(p: UpsertPayload): Promise<Expediente> {
   return data as unknown as Expediente;
 }
 
+// Mapeo inverso: estado legacy → estado_caso canónico del pipeline.
+// Permite que el dropdown superior (legacy) mantenga sincronizado el
+// estado del caso del pipeline para evitar divergencias visuales.
+const ESTADO_LEGACY_A_CASO: Record<EstadoExpediente, string> = {
+  SIMULADO: "lead_creado",
+  ENVIADO_CONTRATACION: "enviado_contratacion",
+  FIRMADO: "contrato_firmado",
+  RADICADO: "radicado_banco",
+  APROBADO: "aprobado_banco",
+  CONDICIONES_APLICADAS: "condiciones_aplicadas",
+  FACTURADO: "cuenta_cobro_generada",
+  PAGADO: "honorarios_pagados",
+};
+
 export async function updateEstado(id: string, estado: EstadoExpediente, nota?: string) {
   const prev = await getExpediente(id);
-  const { error } = await supabase.from("expedientes").update({ estado }).eq("id", id);
+  const estadoCasoSync = ESTADO_LEGACY_A_CASO[estado];
+  const prevCaso = (prev as unknown as { estado_caso?: string | null }).estado_caso ?? null;
+  const { error } = await supabase
+    .from("expedientes")
+    .update({ estado, estado_caso: estadoCasoSync } as never)
+    .eq("id", id);
   if (error) throw error;
   const { data: userData } = await supabase.auth.getUser();
+  const userId = userData.user?.id ?? null;
   await supabase.from("expediente_historial").insert({
     expediente_id: id,
     estado_anterior: prev.estado,
     estado_nuevo: estado,
-    user_id: userData.user?.id ?? null,
+    estado_caso_anterior: prevCaso as never,
+    estado_caso_nuevo: estadoCasoSync as never,
+    accion_origen: "manual" as never,
+    user_id: userId,
     nota: nota ?? null,
-  });
+  } as never);
 }
 
 export async function setAprobado(id: string, aprobado: AprobadoData, acertividad: number) {
