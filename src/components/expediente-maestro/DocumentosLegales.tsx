@@ -17,6 +17,7 @@ import { EnviarContratacionButton, type ContratacionContext } from "./EnviarCont
 import { CitySelect } from "@/components/ui/CitySelect";
 import { normalizeCityText, cityDepartment } from "@/lib/colombiaCities";
 import { honorariosFinalesCliente } from "@/lib/honorarios";
+import { supabase } from "@/integrations/supabase/client";
 
 const fmtCOP = (n: number) =>
   !isFinite(n) || n === 0
