@@ -388,6 +388,26 @@ function ExpedienteCard({ r }: { r: Expediente }) {
 
         {/* Tags centrales */}
         <div className="hidden lg:flex flex-wrap gap-2">
+          <span
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold"
+            style={{
+              background: "rgba(68,93,163,0.10)",
+              color: AZUL,
+              border: `1px solid ${AZUL}40`,
+            }}
+            title={etapa.descripcion}
+          >
+            <Flag size={11} />
+            E{etapa.numero} · {etapa.titulo}
+          </span>
+          <span
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold"
+            style={{ background: slaTheme.bg, color: slaTheme.fg, border: `1px solid ${slaTheme.border}` }}
+            title={`Tiempo desde último cambio. SLA etapa: ${umbral} día(s).`}
+          >
+            <SlaIcon size={11} />
+            {slaLabel}
+          </span>
           <Tag icon={<Building2 size={11} />} text={r.banco || "Sin banco"} />
           <Tag icon={<Hash size={11} />} text={r.numero_credito || "—"} />
           <Tag icon={<Sparkles size={11} />} text={r.modo.toUpperCase()} accent={AZUL} />
