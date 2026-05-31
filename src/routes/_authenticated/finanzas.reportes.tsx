@@ -261,7 +261,7 @@ async function fetchReporte(id: ReporteId, desde: string, hasta: string) {
     const pmap = new Map((profs ?? []).map((p) => [p.id, p.nombre ?? "—"]));
     return rows.map((r) => ({
       Numero: r.numero,
-      Licenciado: pmap.get(r.user_id as string) ?? "—",
+      "Analista F. Comercial": pmap.get(r.user_id as string) ?? "—",
       Total: Number(r.total),
       Estado: r.estado,
       Creada: String(r.created_at).slice(0, 10),
