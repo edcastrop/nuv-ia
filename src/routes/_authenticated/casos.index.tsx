@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { listExpedientes, ESTADOS, type EstadoExpediente, type Expediente } from "@/lib/expedientes";
 import { formatCOP } from "@/lib/format";
 import { computeEtapaActual, getEtapaById, ETAPAS_PIPELINE, type EtapaPipelineId } from "@/lib/pipelineEtapas";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Search,
   Plus,
@@ -29,6 +30,7 @@ const casosSearchSchema = z.object({
   q: fallback(z.string(), "").default(""),
   estado: fallback(z.enum(["", ...ESTADOS]), "").default(""),
   etapa: fallback(z.enum(["", ...ETAPA_IDS]), "").default(""),
+  mios: fallback(z.boolean(), false).default(false),
 });
 
 export const Route = createFileRoute("/_authenticated/casos/")({
@@ -108,7 +110,8 @@ function CasosPage() {
   type CasosSearch = z.infer<typeof casosSearchSchema>;
   const urlSearch = Route.useSearch();
   const navigate = useNavigate({ from: "/casos" });
-  const { q: search, estado, etapa } = urlSearch;
+  const { user } = useAuth();
+  const { q: search, estado, etapa, mios } = urlSearch;
   const [qLocal, setQLocal] = useState(search);
   const [rows, setRows] = useState<Expediente[]>([]);
   const [loading, setLoading] = useState(true);
@@ -128,6 +131,8 @@ function CasosPage() {
     navigate({ search: (prev: CasosSearch) => ({ ...prev, estado: v }), replace: true });
   const setEtapa = (v: EtapaPipelineId | "") =>
     navigate({ search: (prev: CasosSearch) => ({ ...prev, etapa: v }), replace: true });
+  const setMios = (v: boolean) =>
+    navigate({ search: (prev: CasosSearch) => ({ ...prev, mios: v }), replace: true });
 
   useEffect(() => {
     let cancel = false;
@@ -139,10 +144,29 @@ function CasosPage() {
     return () => { cancel = true; };
   }, [search, estado, etapa]);
 
+  // P26 — Filtro client-side "Mis casos" (asesor_id === user.id).
+  const filteredRows = useMemo(() => {
+    if (!mios || !user?.id) return rows;
+    return rows.filter((r) => r.asesor_id === user.id);
+  }, [rows, mios, user?.id]);
+
+  // P26 — Detección de duplicados por cédula entre los expedientes cargados.
+  const dupCedulas = useMemo(() => {
+    const counts = new Map<string, number>();
+    rows.forEach((r) => {
+      const c = (r.cedula ?? "").trim();
+      if (!c) return;
+      counts.set(c, (counts.get(c) ?? 0) + 1);
+    });
+    const s = new Set<string>();
+    counts.forEach((n, c) => { if (n > 1) s.add(c); });
+    return s;
+  }, [rows]);
+
   const totals = useMemo(() => ({
-    total: rows.length,
-    honorarios: rows.reduce((s, r) => s + Number(r.honorarios_final || 0), 0),
-  }), [rows]);
+    total: filteredRows.length,
+    honorarios: filteredRows.reduce((s, r) => s + Number(r.honorarios_final || 0), 0),
+  }), [filteredRows]);
 
   // P21 — Exportar CSV de los casos visibles (respeta búsqueda, estado y etapa).
   const exportarCSV = () => {
@@ -152,7 +176,7 @@ function CasosPage() {
       return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
     };
     const lines = [headers.join(",")];
-    rows.forEach((r) => {
+    filteredRows.forEach((r) => {
       const etId = computeEtapaActual({ estado_caso: r.estado_caso ?? null });
       const et = getEtapaById(etId);
       lines.push([
@@ -225,7 +249,7 @@ function CasosPage() {
               <button
                 type="button"
                 onClick={exportarCSV}
-                disabled={loading || rows.length === 0}
+                disabled={loading || filteredRows.length === 0}
                 className="inline-flex items-center gap-2 rounded-[18px] px-5 py-4 text-xs font-bold uppercase tracking-wider transition-all duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
                 style={{
                   background: "rgba(255,255,255,0.04)",
@@ -343,6 +367,29 @@ function CasosPage() {
           </div>
         </section>
 
+        {/* P26 — Chip "Mis casos" */}
+        <section className="flex flex-wrap items-center gap-2 -mt-1">
+          <button
+            type="button"
+            onClick={() => setMios(!mios)}
+            disabled={!user?.id}
+            className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition disabled:cursor-not-allowed disabled:opacity-50"
+            style={{
+              background: mios ? `linear-gradient(135deg, ${AZUL}, ${VERDE})` : "rgba(255,255,255,0.04)",
+              color: mios ? "#fff" : TEXT2,
+              border: `1px solid ${mios ? "transparent" : BORDER}`,
+            }}
+            title="Mostrar solo los expedientes asignados a mí"
+          >
+            <Sparkles size={12} /> Mis casos
+          </button>
+          {(search || estado || etapa || mios) && (
+            <span className="text-[11px]" style={{ color: TEXT2 }}>
+              {filteredRows.length} de {rows.length} expedientes
+            </span>
+          )}
+        </section>
+
         {/* LISTADO */}
         <section className="space-y-3">
           {err && (
@@ -352,13 +399,13 @@ function CasosPage() {
           )}
           {loading ? (
             <div className="py-24 text-center text-sm" style={{ color: TEXT2 }}>Cargando expedientes…</div>
-          ) : rows.length === 0 ? (
+          ) : filteredRows.length === 0 ? (
             <div
               className="py-20 text-center text-sm rounded-2xl"
               style={{ background: `linear-gradient(180deg, ${CARD}, ${CARD2})`, border: `1px solid ${BORDER}`, color: TEXT2 }}
             >
               No hay expedientes que coincidan.
-              {!search && !estado && (
+              {!search && !estado && !mios && (
                 <>
                   {" "}Crea tu primer caso desde el{" "}
                   <Link to="/" className="font-semibold hover:underline" style={{ color: VERDE }}>simulador</Link>.
@@ -366,7 +413,13 @@ function CasosPage() {
               )}
             </div>
           ) : (
-            rows.map((r) => <ExpedienteCard key={r.id} r={r} />)
+            filteredRows.map((r) => (
+              <ExpedienteCard
+                key={r.id}
+                r={r}
+                isDup={!!r.cedula && dupCedulas.has(r.cedula.trim())}
+              />
+            ))
           )}
         </section>
 
@@ -428,7 +481,7 @@ function KpiCard({
   );
 }
 
-function ExpedienteCard({ r }: { r: Expediente }) {
+function ExpedienteCard({ r, isDup = false }: { r: Expediente; isDup?: boolean }) {
   const theme = ESTADO_THEME[r.estado];
   const aColor = avatarColor(r.cliente_nombre);
   const initial = (r.cliente_nombre || "?").trim().charAt(0).toUpperCase();
@@ -484,7 +537,18 @@ function ExpedienteCard({ r }: { r: Expediente }) {
             {initial}
           </div>
           <div className="min-w-0">
-            <div className="font-semibold text-base truncate">{r.cliente_nombre}</div>
+            <div className="flex items-center gap-2">
+              <div className="font-semibold text-base truncate">{r.cliente_nombre}</div>
+              {isDup && (
+                <span
+                  title="Esta cédula tiene más de un expediente activo"
+                  className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider"
+                  style={{ background: "rgba(245,158,11,0.15)", color: "#F59E0B", border: "1px solid rgba(245,158,11,0.4)" }}
+                >
+                  Dup
+                </span>
+              )}
+            </div>
             <div className="text-xs mt-0.5" style={{ color: TEXT2 }}>
               CC {r.cedula || "—"}
             </div>
