@@ -237,7 +237,7 @@ const ROL_LABEL: Record<string, string> = {
   admin: "Administrador",
   gerencia: "CEO / Gerencia",
   asesor: "Asesor",
-  licenciado: "Licenciado",
+  licenciado: "Analista Financiero Comercial",
   juridica: "Jurídica",
   operaciones: "Operaciones",
   cartera: "Cartera",
