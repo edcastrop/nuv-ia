@@ -169,7 +169,13 @@ export function EtapasIniciales123({ expedienteId, cliente, credito, etapaActual
           etapa={tab}
           items={checks[tab]}
           expedienteId={expedienteId}
-          qaEstado={qaEstado}
+          qaEstado={qaEstadoCalc}
+          validacion={validacion}
+          loadingQA={loadingQA}
+          enviandoQA={enviandoQA}
+          errQA={errQA}
+          onEnviarQA={handleEnviarQA}
+          puedeEnviarQA={datosCreditoOk && (validacion?.resultado !== null && validacion?.resultado !== undefined ? validacion.resultado === "devuelta" : !validacion)}
         />
       </div>
     </Card>
@@ -181,14 +187,27 @@ function EtapaPanel({
   items,
   expedienteId,
   qaEstado,
+  validacion,
+  loadingQA,
+  enviandoQA,
+  errQA,
+  onEnviarQA,
+  puedeEnviarQA,
 }: {
   etapa: EtapaKey;
   items: CheckItem[];
   expedienteId: string;
-  qaEstado?: "pendiente" | "aprobada" | "devuelta" | null;
+  qaEstado: "pendiente" | "aprobada" | "devuelta" | null;
+  validacion: ValidacionQA | null;
+  loadingQA: boolean;
+  enviandoQA: boolean;
+  errQA: string | null;
+  onEnviarQA: () => void;
+  puedeEnviarQA: boolean;
 }) {
   const meta = ETAPAS_PIPELINE.find((e) => e.id === etapa)!;
   const Icon = etapa === "lead" ? User : etapa === "extracto" ? FileSpreadsheet : Sparkles;
+  const motivoLabel = (m: string | null) => MOTIVOS_QA.find((x) => x.value === m)?.label ?? m ?? "—";
 
   return (
     <div className="rounded-lg border p-4" style={{ borderColor: "#E5E7EB", background: "#FBFCFD" }}>
@@ -232,7 +251,7 @@ function EtapaPanel({
       </ul>
 
       {/* CTAs por etapa */}
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-wrap items-center gap-2">
         {etapa === "lead" && (
           <div className="text-[11px] text-[#242424]/60">
             Completa los datos del cliente en el bloque «Expediente» más abajo.
@@ -255,19 +274,50 @@ function EtapaPanel({
               Generar proyección
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
+            <button
+              type="button"
+              onClick={onEnviarQA}
+              disabled={!puedeEnviarQA || enviandoQA || loadingQA}
+              className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold disabled:opacity-50"
+              style={{ borderColor: NUVEX.azul, color: NUVEX.azul, background: "#FFFFFF" }}
+              title={
+                !puedeEnviarQA
+                  ? qaEstado === "pendiente"
+                    ? "Ya hay una validación pendiente"
+                    : qaEstado === "aprobada"
+                      ? "QA ya aprobado"
+                      : "Completa los datos del crédito antes de enviar a QA"
+                  : "Enviar proyección al equipo de QA"
+              }
+            >
+              {enviandoQA ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+              {validacion?.resultado === "devuelta" ? "Reenviar a QA" : "Enviar a QA"}
+            </button>
             <Link
               to="/qa"
-              className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold"
-              style={{ borderColor: NUVEX.azul, color: NUVEX.azul, background: "#FFFFFF" }}
+              className="text-[11px] text-[#445DA3] hover:underline"
             >
-              Enviar a QA
+              Ver tablero QA →
             </Link>
-            {qaEstado === "devuelta" && (
-              <span className="text-[11px] font-semibold text-[#B42318]">QA devolvió la proyección — revisa observaciones.</span>
-            )}
-            {qaEstado === "aprobada" && (
-              <span className="text-[11px] font-semibold" style={{ color: NUVEX.verdeTextoFuerte }}>QA aprobado ✓ Puede avanzar a Presentación.</span>
-            )}
+
+            {loadingQA ? (
+              <span className="text-[11px] text-[#242424]/50">Consultando QA…</span>
+            ) : qaEstado === "pendiente" ? (
+              <span className="text-[11px] font-semibold" style={{ color: "#8A5A00" }}>
+                ⏳ Pendiente de validación QA — solicitada {new Date(validacion!.solicitada_at).toLocaleString("es-CO")}
+              </span>
+            ) : qaEstado === "devuelta" ? (
+              <div className="basis-full mt-2 rounded-md border p-2 text-[11px]" style={{ borderColor: "#FCA5A5", background: "#FEF2F2", color: "#991B1B" }}>
+                <div className="font-semibold">QA devolvió la proyección · {motivoLabel(validacion!.motivo)}</div>
+                {validacion!.observacion && <div className="mt-1 text-[#7F1D1D]">{validacion!.observacion}</div>}
+              </div>
+            ) : qaEstado === "aprobada" ? (
+              <span className="text-[11px] font-semibold" style={{ color: NUVEX.verdeTextoFuerte }}>
+                ✓ QA aprobado — puede avanzar a Presentación.
+              </span>
+            ) : null}
+
+            {errQA && <span className="text-[11px] text-[#B42318] basis-full">{errQA}</span>}
           </>
         )}
       </div>
