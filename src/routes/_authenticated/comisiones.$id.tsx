@@ -350,7 +350,7 @@ function DetalleCuentaCobro() {
             <div className="mt-1 text-2xl font-bold text-[#1F7A45]">{formatCOP(Number(cc.total))}</div>
             {cc.porcentaje_comision && (
               <div className="mt-1 text-[12px] text-[#242424]/70">
-                % Comisión licenciado: <b>{Number(cc.porcentaje_comision).toFixed(0)}%</b>
+                % Comisión Analista F. Comercial: <b>{Number(cc.porcentaje_comision).toFixed(0)}%</b>
               </div>
             )}
             <div
