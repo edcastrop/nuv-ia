@@ -839,7 +839,9 @@ function SendChecklistModal({
                 />
                 <div className="rounded-md border border-[#E3E7EE] bg-white px-3 py-2 text-xs">
                   <div className="font-semibold uppercase tracking-wider text-[#242424]/70">
-                    Apoderado NUVEX (sugerido para {expediente.credito?.banco || "este banco"})
+                    Apoderado NUVEX {apoderadoEsManual
+                      ? "(selección manual del caso)"
+                      : `(sugerido para ${expediente.credito?.banco || "este banco"})`}
                   </div>
                   <div className="mt-1 text-sm text-[#242424]">
                     {apoderadoSugerido
