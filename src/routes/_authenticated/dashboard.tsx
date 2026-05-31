@@ -142,7 +142,7 @@ function DashboardPage() {
                   </h1>
                   <p className="mt-2 text-base max-w-2xl" style={{ color: TEXT2 }}>
                     {isManager
-                      ? "Control financiero y operativo de toda la red de licenciados NUVEX."
+                      ? "Control financiero y operativo de toda la red de Analistas Financieros Comerciales NUVEX."
                       : "Indicadores personales de tu producción NUVEX."}
                   </p>
                 </div>
