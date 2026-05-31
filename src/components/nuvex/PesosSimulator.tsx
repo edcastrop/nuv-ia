@@ -366,6 +366,13 @@ export function PesosSimulator({
             producto={client.tipoProducto}
             data={intervinientes}
             onChange={setIntervinientes}
+            onTitularSync={(nombre, cedula) =>
+              setClient((c) => ({
+                ...c,
+                nombre: nombre || c.nombre,
+                cedula: cedula || c.cedula,
+              }))
+            }
           />
         </div>
 
