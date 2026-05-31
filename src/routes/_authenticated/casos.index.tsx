@@ -176,7 +176,7 @@ function CasosPage() {
       return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
     };
     const lines = [headers.join(",")];
-    rows.forEach((r) => {
+    filteredRows.forEach((r) => {
       const etId = computeEtapaActual({ estado_caso: r.estado_caso ?? null });
       const et = getEtapaById(etId);
       lines.push([
