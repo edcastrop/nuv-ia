@@ -481,7 +481,7 @@ function AuthenticatedLayout() {
                   border: "1px solid rgba(255,255,255,0.08)",
                 }}
               >
-                <UserAvatar userId={user?.id} name={displayName} email={user?.email} size="sm" ring />
+                <UserAvatar userId={user?.id} url={avatarUrl} name={displayName} email={user?.email} size="sm" ring />
                 <div className="leading-tight text-right">
                   <div className="text-[12px] font-semibold text-white truncate max-w-[160px]">{displayName}</div>
                   <div className="text-[10px] text-white/50 truncate max-w-[160px]">{user?.email}</div>
