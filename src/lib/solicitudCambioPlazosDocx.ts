@@ -157,6 +157,23 @@ export async function generarSolicitudCambioPlazosDocx(
     p("Titular del crédito", { align: AlignmentType.LEFT }),
   ];
 
+  // Firma del cotitular (si aplica)
+  if (tieneCotitular) {
+    children.push(
+      new Paragraph({
+        alignment: AlignmentType.LEFT,
+        spacing: { before: 800, after: 40 },
+        children: [
+          new TextRun({ text: "_______________________________", size: 22, color: INK }),
+        ],
+      }),
+      p(cotitularNombre, { bold: true, align: AlignmentType.LEFT, spacingAfter: 20 }),
+      p(`C.C. No. ${cotitularCedula}`, { align: AlignmentType.LEFT, spacingAfter: 20 }),
+      p("Cotitular del crédito", { align: AlignmentType.LEFT }),
+    );
+  }
+
+
   const doc = new Document({
     creator: "NUVEX Finanzas Inteligentes",
     title: `Solicitud Cambio de Plazos — ${cliente}`,
