@@ -2,13 +2,19 @@
 // Frontend-only: organiza el trabajo del Expediente Maestro por etapa con
 // checklist visual y gating. No modifica BD ni lógica de negocio existente.
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Link } from "@tanstack/react-router";
-import { CheckCircle2, Circle, AlertCircle, ArrowRight, FileSpreadsheet, Sparkles, User } from "lucide-react";
+import { CheckCircle2, Circle, AlertCircle, ArrowRight, FileSpreadsheet, Sparkles, User, Loader2 } from "lucide-react";
 import { NUVEX } from "@/components/nuvex/constants";
 import { Card } from "@/components/nuvex/ui";
 import { ETAPAS_PIPELINE, type EtapaPipelineId } from "@/lib/pipelineEtapas";
 import { roleLabel } from "@/lib/roleLabels";
+import {
+  enviarAValidacionQA,
+  obtenerUltimaValidacion,
+  type ValidacionQA,
+  MOTIVOS_QA,
+} from "@/lib/validacionQA";
 
 type ClienteLike = { nombre?: string; cedula?: string; celular?: string; correo?: string };
 type CreditoLike = {
