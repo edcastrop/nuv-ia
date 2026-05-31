@@ -937,8 +937,8 @@ function ReactivacionesPanel({
                   <tr key={s.id} className="border-b border-[#E3E7EE] last:border-0 align-top">
                     <td className="py-3 pr-2">{s.nombre || "—"}</td>
                     <td className="py-3 pr-2 text-[#242424]/75">{s.correo}</td>
-                    <td className="py-3 pr-2 text-xs">{s.rol_actual || "—"}</td>
-                    <td className="py-3 pr-2 text-xs">{s.rol_solicitado || "—"}</td>
+                    <td className="py-3 pr-2 text-xs">{roleLabel(s.rol_actual)}</td>
+                    <td className="py-3 pr-2 text-xs">{roleLabel(s.rol_solicitado)}</td>
                     <td className="py-3 pr-2 text-xs text-[#242424]/70">{new Date(s.fecha_solicitud).toLocaleString("es-CO")}</td>
                     <td className="py-3 pr-2">
                       <span className="inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
