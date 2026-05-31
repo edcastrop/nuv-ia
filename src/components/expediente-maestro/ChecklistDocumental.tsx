@@ -44,7 +44,7 @@ import {
   type PerfilLaboral,
 } from "@/lib/checklistDocumental";
 import { enviarChecklistCliente } from "@/lib/checklistEnvio.functions";
-import { generarSolicitudCambioPlazosPdf } from "@/lib/solicitudCambioPlazosPdf";
+import { generarSolicitudCambioPlazosDocx } from "@/lib/solicitudCambioPlazosDocx";
 import { generarChecklistDocumentalDocx } from "@/lib/checklistDocumentalDocx";
 
 
@@ -642,15 +642,15 @@ function SendChecklistModal({
       const attachments: Array<{ filename: string; contentBase64: string; contentType: string }> = [];
 
       if (adjuntarSolicitud) {
-        const pdfBlob = await generarSolicitudCambioPlazosPdf(expediente, {
+        const docxBlob = await generarSolicitudCambioPlazosDocx(expediente, {
           plazoSolicitadoMeses: plazoSolicitado,
           nuevoValorCuota: cuotaNueva,
           justificacion,
         });
         attachments.push({
-          filename: `NUVEX_Solicitud_Cambio_Plazos_${(expediente.cliente?.nombre || "cliente").replace(/\s+/g, "_")}.pdf`,
-          contentBase64: await blobToBase64(pdfBlob),
-          contentType: "application/pdf",
+          filename: `NUVEX_Solicitud_Cambio_Plazos_${(expediente.cliente?.nombre || "cliente").replace(/\s+/g, "_")}.docx`,
+          contentBase64: await blobToBase64(docxBlob),
+          contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         });
       }
 
