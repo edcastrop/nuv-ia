@@ -133,7 +133,7 @@ function DashboardPage() {
                 }}
               >
                 <Activity size={12} />
-                {isManager ? "Gerencia General" : "Asesor / Licenciado"}
+                {isManager ? "Gerencia General" : "Analista Financiero Comercial"}
               </span>
               <div className="flex items-end justify-between gap-6 flex-wrap">
                 <div>
