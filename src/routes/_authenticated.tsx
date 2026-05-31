@@ -171,6 +171,78 @@ function AuthenticatedLayout() {
     return () => { active = false; clearInterval(iv); supabase.removeChannel(ch1); };
   }, [session, location.pathname, gateState]);
 
+  // Carga nombre y avatar desde profiles (fuente única) para topbar/menú.
+  useEffect(() => {
+    if (!session?.user || gateState !== "ok") return;
+    let active = true;
+    const uid = session.user.id;
+    const loadProfile = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("nombre, avatar_url")
+        .eq("id", uid)
+        .maybeSingle();
+      if (!active || !data) return;
+      const d = data as { nombre: string | null; avatar_url: string | null };
+      setProfileMeta({ nombre: d.nombre, avatar_url: d.avatar_url });
+    };
+    loadProfile();
+    const ch = supabase
+      .channel("profile_self_" + uid)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${uid}` }, loadProfile)
+      .subscribe();
+    return () => { active = false; supabase.removeChannel(ch); };
+  }, [session?.user?.id, gateState]);
+
+  // Contadores colab (DM y notificaciones internas) para los badges del menú.
+  useEffect(() => {
+    if (!session?.user || gateState !== "ok") return;
+    let active = true;
+    const uid = session.user.id;
+    const load = async () => {
+      const [{ count: nc }, { data: miembros }] = await Promise.all([
+        supabase
+          .from("colab_notificaciones" as never)
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", uid)
+          .eq("leida", false),
+        supabase
+          .from("colab_miembros" as never)
+          .select("canal_id, ultima_lectura, colab_canales!inner(id,tipo,archivado)")
+          .eq("user_id", uid),
+      ]);
+      if (!active) return;
+      setColabUnread(nc ?? 0);
+      const dmRows = ((miembros ?? []) as any[]).filter((m) => m.colab_canales?.tipo === "dm" && !m.colab_canales?.archivado);
+      if (dmRows.length === 0) { setDmUnread(0); return; }
+      const ids = dmRows.map((r) => r.canal_id);
+      const readMap = new Map<string, string | null>(dmRows.map((r) => [r.canal_id, r.ultima_lectura]));
+      const { data: msgs } = await supabase
+        .from("colab_mensajes" as never)
+        .select("canal_id, user_id, created_at")
+        .in("canal_id", ids)
+        .order("created_at", { ascending: false })
+        .limit(ids.length * 30);
+      if (!active) return;
+      let total = 0;
+      ((msgs ?? []) as any[]).forEach((m) => {
+        if (m.user_id === uid) return;
+        const last = readMap.get(m.canal_id);
+        if (!last || new Date(m.created_at) > new Date(last)) total++;
+      });
+      setDmUnread(total);
+    };
+    load();
+    const ch = supabase
+      .channel("colab_unread_" + uid)
+      .on("postgres_changes", { event: "*", schema: "public", table: "colab_notificaciones", filter: `user_id=eq.${uid}` }, load)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "colab_mensajes" }, load)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "colab_miembros", filter: `user_id=eq.${uid}` }, load)
+      .subscribe();
+    const iv = setInterval(load, 30000);
+    return () => { active = false; clearInterval(iv); supabase.removeChannel(ch); };
+  }, [session?.user?.id, gateState]);
+
 
   if (loading || !session || gateState !== "ok") {
     return (
@@ -180,7 +252,9 @@ function AuthenticatedLayout() {
     );
   }
 
-  const displayName: string = user?.user_metadata?.nombre || (user?.email?.split("@")[0] ?? "Usuario");
+  const displayName: string = profileMeta.nombre || user?.user_metadata?.nombre || (user?.email?.split("@")[0] ?? "Usuario");
+  const avatarUrl: string | null = profileMeta.avatar_url;
+  
   
 
   const has = (r: string) => roles.includes(r as never);
