@@ -17,6 +17,7 @@ import { Card } from "@/components/nuvex/ui";
 import { BANCOS } from "@/components/nuvex/constants";
 import { useAuth } from "@/hooks/useAuth";
 import { getRecentCases } from "@/lib/recentCases";
+import { supabase } from "@/integrations/supabase/client";
 
 const FASE_IDS = ["comercial", "operativa", "banco", "cobro", "fin"] as const;
 type FaseId = (typeof FASE_IDS)[number];
@@ -27,6 +28,7 @@ const pipelineSearchSchema = z.object({
   stuck: fallback(z.boolean(), false).default(false),
   fase: fallback(z.enum(["", ...FASE_IDS]), "").default(""),
   mios: fallback(z.boolean(), false).default(false),
+  asesor: fallback(z.string(), "").default(""),
 });
 
 const FASE_ETAPAS: Record<FaseId, EtapaPipelineId[]> = {
@@ -63,9 +65,10 @@ function PipelinePage() {
   const [lastUpdated, setLastUpdated] = useState<number>(() => Date.now());
   const [nowTick, setNowTick] = useState<number>(() => Date.now());
   const [qLocal, setQLocal] = useState(search.q);
+  const [analistas, setAnalistas] = useState<{ id: string; nombre: string | null; email: string | null }[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const { q, banco, stuck: soloStuck, fase, mios } = search;
+  const { q, banco, stuck: soloStuck, fase, mios, asesor } = search;
 
   type PipelineSearch = z.infer<typeof pipelineSearchSchema>;
 
@@ -85,6 +88,8 @@ function PipelinePage() {
     navigate({ search: (prev: PipelineSearch) => ({ ...prev, stuck: v }), replace: true });
   const setMios = (v: boolean) =>
     navigate({ search: (prev: PipelineSearch) => ({ ...prev, mios: v }), replace: true });
+  const setAsesor = (v: string) =>
+    navigate({ search: (prev: PipelineSearch) => ({ ...prev, asesor: v }), replace: true });
   const toggleFase = (id: FaseId) =>
     navigate({
       search: (prev: PipelineSearch) => ({ ...prev, fase: prev.fase === id ? "" : id }),
@@ -92,7 +97,7 @@ function PipelinePage() {
     });
   const clearAll = () => {
     setQLocal("");
-    navigate({ search: { q: "", banco: "", stuck: false, fase: "", mios: false }, replace: true });
+    navigate({ search: { q: "", banco: "", stuck: false, fase: "", mios: false, asesor: "" }, replace: true });
   };
 
   // P29 — Atajos de teclado: "/" enfoca buscador, "m" toggle Mis casos, "s" toggle Stuck, Esc limpia búsqueda
@@ -151,6 +156,25 @@ function PipelinePage() {
     };
   }, []);
 
+  // Cargar analistas financieros (rol "licenciado") para el filtro.
+  useEffect(() => {
+    (async () => {
+      const { data: ur } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "licenciado" as never);
+      const ids = Array.from(new Set((ur ?? []).map((r) => (r as { user_id: string }).user_id)));
+      if (ids.length === 0) { setAnalistas([]); return; }
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, nombre, email")
+        .in("id", ids);
+      const list = (profs ?? []) as { id: string; nombre: string | null; email: string | null }[];
+      list.sort((a, b) => (a.nombre || a.email || "").localeCompare(b.nombre || b.email || "", "es"));
+      setAnalistas(list);
+    })();
+  }, []);
+
   const hace = Math.max(0, Math.round((nowTick - lastUpdated) / 1000));
   const haceLabel = hace < 60 ? `${hace}s` : `${Math.round(hace / 60)}min`;
 
@@ -166,6 +190,7 @@ function PipelinePage() {
     const uid = user?.id ?? "";
     return rows.filter((r) => {
       if (mios && uid && r.asesor_id !== uid) return false;
+      if (asesor && r.asesor_id !== asesor) return false;
       if (banco && r.banco !== banco) return false;
       if (term) {
         const hay = `${r.cliente_nombre} ${r.cedula ?? ""} ${r.numero_credito ?? ""} ${r.banco ?? ""}`.toLowerCase();
@@ -173,7 +198,7 @@ function PipelinePage() {
       }
       return true;
     });
-  }, [rows, q, banco, mios, user?.id]);
+  }, [rows, q, banco, mios, asesor, user?.id]);
 
   const grupos = useMemo(() => {
     const m = new Map<EtapaPipelineId, Expediente[]>();
@@ -353,6 +378,17 @@ function PipelinePage() {
               <option key={b} value={b}>{b}</option>
             ))}
           </select>
+          <select
+            value={asesor}
+            onChange={(e) => setAsesor(e.target.value)}
+            title="Filtrar por analista financiero"
+            className="h-8 max-w-[200px] rounded-md border border-[#E3E7EE] bg-white px-2 text-[12px] text-[#0A1226] focus:border-[#445DA3] focus:outline-none"
+          >
+            <option value="">Todos los analistas</option>
+            {analistas.map((a) => (
+              <option key={a.id} value={a.id}>{a.nombre || a.email || a.id.slice(0, 8)}</option>
+            ))}
+          </select>
           <button
             onClick={() => cargar(true)}
             disabled={loading || refreshing}
@@ -381,7 +417,7 @@ function PipelinePage() {
             />
             Solo estancados
           </label>
-          {(q || banco || soloStuck || fase || mios) && (
+          {(q || banco || soloStuck || fase || mios || asesor) && (
             <button
               onClick={clearAll}
               className="h-8 rounded-md border border-[#E3E7EE] bg-white px-2 text-[12px] text-[#445DA3] hover:bg-[#F1F3F8]"
