@@ -1535,6 +1535,42 @@ export type Database = {
           },
         ]
       }
+      expediente_checklist_auditoria: {
+        Row: {
+          created_at: string
+          documento_id: string
+          documento_nombre: string
+          estado_anterior: string | null
+          estado_nuevo: string
+          expediente_id: string
+          id: string
+          usuario_id: string | null
+          usuario_nombre: string | null
+        }
+        Insert: {
+          created_at?: string
+          documento_id: string
+          documento_nombre: string
+          estado_anterior?: string | null
+          estado_nuevo: string
+          expediente_id: string
+          id?: string
+          usuario_id?: string | null
+          usuario_nombre?: string | null
+        }
+        Update: {
+          created_at?: string
+          documento_id?: string
+          documento_nombre?: string
+          estado_anterior?: string | null
+          estado_nuevo?: string
+          expediente_id?: string
+          id?: string
+          usuario_id?: string | null
+          usuario_nombre?: string | null
+        }
+        Relationships: []
+      }
       expediente_checklist_documentos: {
         Row: {
           archivo_url: string | null
@@ -1550,7 +1586,9 @@ export type Database = {
           id: string
           obligatorio: boolean
           observaciones: string | null
+          recibido_por: string | null
           updated_at: string
+          updated_by: string | null
           vigencia_dias: number | null
         }
         Insert: {
@@ -1567,7 +1605,9 @@ export type Database = {
           id?: string
           obligatorio?: boolean
           observaciones?: string | null
+          recibido_por?: string | null
           updated_at?: string
+          updated_by?: string | null
           vigencia_dias?: number | null
         }
         Update: {
@@ -1584,7 +1624,9 @@ export type Database = {
           id?: string
           obligatorio?: boolean
           observaciones?: string | null
+          recibido_por?: string | null
           updated_at?: string
+          updated_by?: string | null
           vigencia_dias?: number | null
         }
         Relationships: []
@@ -1622,6 +1664,33 @@ export type Database = {
           expediente_id?: string
           id?: string
           pdf_url?: string | null
+        }
+        Relationships: []
+      }
+      expediente_checklist_validacion: {
+        Row: {
+          expediente_id: string
+          notas: string | null
+          total_obligatorios: number
+          validada_at: string
+          validada_por: string | null
+          validada_por_nombre: string | null
+        }
+        Insert: {
+          expediente_id: string
+          notas?: string | null
+          total_obligatorios: number
+          validada_at?: string
+          validada_por?: string | null
+          validada_por_nombre?: string | null
+        }
+        Update: {
+          expediente_id?: string
+          notas?: string | null
+          total_obligatorios?: number
+          validada_at?: string
+          validada_por?: string | null
+          validada_por_nombre?: string | null
         }
         Relationships: []
       }

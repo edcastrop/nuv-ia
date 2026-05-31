@@ -278,7 +278,45 @@ export interface ChecklistRow {
   fecha_vencimiento: string | null;
   archivo_url: string | null;
   observaciones: string | null;
+  recibido_por: string | null;
+  updated_by: string | null;
   updated_at: string;
+}
+
+export interface AuditoriaRow {
+  id: string;
+  expediente_id: string;
+  documento_id: string;
+  documento_nombre: string;
+  estado_anterior: EstadoDoc | null;
+  estado_nuevo: EstadoDoc;
+  usuario_id: string | null;
+  usuario_nombre: string | null;
+  created_at: string;
+}
+
+export interface ValidacionRow {
+  expediente_id: string;
+  validada_at: string;
+  validada_por: string | null;
+  validada_por_nombre: string | null;
+  total_obligatorios: number;
+  notas: string | null;
+}
+
+/**
+ * Un documento se considera "completo" (contado en el progreso) cuando ya
+ * llegó al expediente y nadie lo rechazó: estados `recibido`, `en_revision`,
+ * `aprobado` y `no_aplica` cuentan; `pendiente`, `solicitado`, `rechazado`
+ * y `vencido` no.
+ */
+export function esDocumentoCompleto(estado: EstadoDoc): boolean {
+  return estado === "recibido" || estado === "en_revision" || estado === "aprobado" || estado === "no_aplica";
+}
+
+/** Estados que aún hay que pedirle al cliente. */
+export function debeSolicitarse(estado: EstadoDoc): boolean {
+  return estado === "pendiente" || estado === "rechazado" || estado === "vencido";
 }
 
 export async function loadChecklistRows(expedienteId: string): Promise<ChecklistRow[]> {
@@ -301,18 +339,23 @@ export async function upsertChecklistRow(
   doc: DocRequerido,
   patch: Partial<ChecklistRow>,
 ): Promise<void> {
+  const { data: u } = await supabase.auth.getUser();
+  const userId = u.user?.id ?? null;
+  const estado = (patch.estado ?? "pendiente") as EstadoDoc;
   const payload = {
     expediente_id: expedienteId,
     documento_id: doc.id,
     documento_nombre: doc.nombre,
     obligatorio: doc.obligatorio,
     vigencia_dias: doc.vigenciaDias ?? null,
-    estado: patch.estado ?? "pendiente",
+    estado,
     fecha_solicitado: patch.fecha_solicitado ?? null,
     fecha_recibido: patch.fecha_recibido ?? null,
     fecha_vencimiento: patch.fecha_vencimiento ?? null,
     archivo_url: patch.archivo_url ?? null,
     observaciones: patch.observaciones ?? null,
+    recibido_por: patch.recibido_por ?? (estado === "recibido" ? userId : null),
+    updated_by: userId,
   };
   const sb = supabase as unknown as {
     from: (t: string) => {
@@ -322,6 +365,104 @@ export async function upsertChecklistRow(
   const { error } = await sb
     .from("expediente_checklist_documentos")
     .upsert(payload, { onConflict: "expediente_id,documento_id" });
+  if (error) throw error as Error;
+}
+
+export async function loadAuditoriaRows(expedienteId: string): Promise<AuditoriaRow[]> {
+  const sb = supabase as unknown as {
+    from: (t: string) => {
+      select: (s: string) => {
+        eq: (k: string, v: string) => {
+          order: (c: string, o: { ascending: boolean }) => Promise<{ data: unknown; error: unknown }>;
+        };
+      };
+    };
+  };
+  const { data, error } = await sb
+    .from("expediente_checklist_auditoria")
+    .select("*")
+    .eq("expediente_id", expedienteId)
+    .order("created_at", { ascending: false });
+  if (error) throw error as Error;
+  return (data ?? []) as AuditoriaRow[];
+}
+
+export async function insertAuditoriaRows(
+  expedienteId: string,
+  cambios: Array<{
+    documento_id: string;
+    documento_nombre: string;
+    estado_anterior: EstadoDoc | null;
+    estado_nuevo: EstadoDoc;
+  }>,
+): Promise<void> {
+  if (!cambios.length) return;
+  const { data: u } = await supabase.auth.getUser();
+  const userId = u.user?.id ?? null;
+  const userName =
+    (u.user?.user_metadata as { full_name?: string; name?: string } | undefined)?.full_name ??
+    (u.user?.user_metadata as { name?: string } | undefined)?.name ??
+    u.user?.email ?? null;
+  const payload = cambios.map((c) => ({
+    expediente_id: expedienteId,
+    documento_id: c.documento_id,
+    documento_nombre: c.documento_nombre,
+    estado_anterior: c.estado_anterior,
+    estado_nuevo: c.estado_nuevo,
+    usuario_id: userId,
+    usuario_nombre: userName,
+  }));
+  const sb = supabase as unknown as {
+    from: (t: string) => { insert: (p: unknown) => Promise<{ error: unknown }> };
+  };
+  const { error } = await sb.from("expediente_checklist_auditoria").insert(payload);
+  if (error) throw error as Error;
+}
+
+export async function loadValidacion(expedienteId: string): Promise<ValidacionRow | null> {
+  const sb = supabase as unknown as {
+    from: (t: string) => {
+      select: (s: string) => {
+        eq: (k: string, v: string) => { maybeSingle: () => Promise<{ data: unknown; error: unknown }> };
+      };
+    };
+  };
+  const { data, error } = await sb
+    .from("expediente_checklist_validacion")
+    .select("*")
+    .eq("expediente_id", expedienteId)
+    .maybeSingle();
+  if (error) throw error as Error;
+  return (data ?? null) as ValidacionRow | null;
+}
+
+export async function upsertValidacion(input: {
+  expediente_id: string;
+  total_obligatorios: number;
+  notas?: string;
+}): Promise<void> {
+  const { data: u } = await supabase.auth.getUser();
+  const userId = u.user?.id ?? null;
+  const userName =
+    (u.user?.user_metadata as { full_name?: string } | undefined)?.full_name ??
+    (u.user?.user_metadata as { name?: string } | undefined)?.name ??
+    u.user?.email ?? null;
+  const sb = supabase as unknown as {
+    from: (t: string) => {
+      upsert: (p: unknown, o: { onConflict: string }) => Promise<{ error: unknown }>;
+    };
+  };
+  const { error } = await sb.from("expediente_checklist_validacion").upsert(
+    {
+      expediente_id: input.expediente_id,
+      validada_at: new Date().toISOString(),
+      validada_por: userId,
+      validada_por_nombre: userName,
+      total_obligatorios: input.total_obligatorios,
+      notas: input.notas ?? null,
+    },
+    { onConflict: "expediente_id" },
+  );
   if (error) throw error as Error;
 }
 
