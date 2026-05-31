@@ -582,46 +582,120 @@ function downloadChecklistTxt(exp: ExpedienteMaestro, docs: DocRequerido[]) {
   URL.revokeObjectURL(url);
 }
 
+// ─── Modal de envío al cliente (Resend + adjuntos + trazabilidad) ──────────
+
+const blobToBase64 = (blob: Blob) =>
+  new Promise<string>((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onerror = () => reject(fr.error);
+    fr.onload = () => {
+      const r = String(fr.result || "");
+      const i = r.indexOf(",");
+      resolve(i >= 0 ? r.slice(i + 1) : r);
+    };
+    fr.readAsDataURL(blob);
+  });
+
 function SendChecklistModal({
   expediente,
   docs,
   onClose,
+  onSent,
 }: {
   expediente: ExpedienteMaestro;
   docs: DocRequerido[];
   onClose: () => void;
+  onSent: () => void;
 }) {
+  const send = useServerFn(enviarChecklistCliente);
   const defaults = useMemo(() => buildEmailDefaults(expediente, docs), [expediente, docs]);
-  const [to, setTo] = useState(expediente.cliente?.email ?? "");
-  const [cc, setCc] = useState(expediente.licenciado?.email ?? "");
+
+  // Destinatarios editables
+  const [destinatarios, setDestinatarios] = useState<string[]>(() =>
+    expediente.cliente?.email ? [expediente.cliente.email] : [],
+  );
+  const [newEmail, setNewEmail] = useState("");
+  const [cc, setCc] = useState(expediente.asesor?.email ?? expediente.licenciado?.email ?? "");
   const [asunto, setAsunto] = useState(defaults.asunto);
   const [cuerpo, setCuerpo] = useState(defaults.cuerpo);
+
+  // Solicitud Cambio de Plazos (campos opcionales editables)
+  const [plazoSolicitado, setPlazoSolicitado] = useState("");
+  const [cuotaNueva, setCuotaNueva] = useState("");
+  const [justificacion, setJustificacion] = useState("");
+  const [adjuntarSolicitud, setAdjuntarSolicitud] = useState(true);
+
   const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+
+  const addEmail = () => {
+    const v = newEmail.trim().toLowerCase();
+    if (!v || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
+      setError("Correo no válido");
+      return;
+    }
+    if (destinatarios.includes(v)) return;
+    setError(null);
+    setDestinatarios((d) => [...d, v]);
+    setNewEmail("");
+  };
+
+  const removeEmail = (e: string) =>
+    setDestinatarios((d) => d.filter((x) => x !== e));
 
   async function handleSend() {
-    if (!to.trim()) {
-      alert("Falta el correo del cliente.");
+    setError(null);
+    if (destinatarios.length === 0) {
+      setError("Agrega al menos un destinatario.");
+      return;
+    }
+    if (!asunto.trim() || !cuerpo.trim()) {
+      setError("Asunto y cuerpo son obligatorios.");
       return;
     }
     setSending(true);
     try {
-      await registrarEnvioChecklist({
-        expediente_id: expediente.id,
-        enviado_a_email: to.trim(),
-        cc_licenciado_email: cc.trim() || undefined,
-        asunto,
-        cuerpo,
+      // Generar adjuntos
+      const attachments: Array<{ filename: string; contentBase64: string; contentType: string }> = [];
+
+      if (adjuntarSolicitud) {
+        const pdfBlob = await generarSolicitudCambioPlazosPdf(expediente, {
+          plazoSolicitadoMeses: plazoSolicitado,
+          nuevoValorCuota: cuotaNueva,
+          justificacion,
+        });
+        attachments.push({
+          filename: `NUVEX_Solicitud_Cambio_Plazos_${(expediente.cliente?.nombre || "cliente").replace(/\s+/g, "_")}.pdf`,
+          contentBase64: await blobToBase64(pdfBlob),
+          contentType: "application/pdf",
+        });
+      }
+
+      const ccArr = cc.trim() ? [cc.trim()] : [];
+
+      await send({
+        data: {
+          expedienteId: expediente.id,
+          destinatarios,
+          cc: ccArr,
+          asunto: asunto.trim(),
+          cuerpo,
+          attachments,
+          documentosSolicitados: docs.map((d) => ({
+            documento_id: d.id,
+            documento_nombre: d.nombre,
+          })),
+        },
       });
-      window.location.href = buildMailto({
-        to: to.trim(),
-        cc: cc.trim() || undefined,
-        asunto,
-        cuerpo,
-      });
-      onClose();
+      setDone(true);
+      setTimeout(() => {
+        onSent();
+        onClose();
+      }, 1200);
     } catch (e) {
       console.error(e);
-      alert("No se pudo registrar el envío.");
+      setError((e as Error).message || "No se pudo enviar el correo.");
     } finally {
       setSending(false);
     }
@@ -633,24 +707,70 @@ function SendChecklistModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col"
+        className="bg-white rounded-2xl max-w-2xl w-full max-h-[92vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-3 border-b border-[#E3E7EE]">
-          <div>
-            <div className="font-semibold text-[#242424]">Solicitar documentos pendientes</div>
-            <div className="text-[11px] text-[#242424]/60">
-              Se solicitarán únicamente los {docs.length} documento(s) que faltan o fueron rechazados.
+          <div className="flex items-center gap-2">
+            <Mail size={16} style={{ color: NUVEX.azul }} />
+            <div>
+              <div className="font-semibold text-[#242424]">Solicitar documentos al cliente</div>
+              <div className="text-[11px] text-[#242424]/60">
+                {docs.length} documento(s) pendiente(s) · envío vía NUVEX (Resend)
+              </div>
             </div>
           </div>
-          <button onClick={onClose} className="text-sm text-[#242424]/60 hover:text-[#242424]">
-            Cerrar
-          </button>
+          <button onClick={onClose} className="text-[#242424]/60 hover:text-[#242424]"><X size={18} /></button>
         </div>
-        <div className="overflow-y-auto p-5 space-y-3">
-          <Field label="Para" value={to} onChange={setTo} type="email" />
-          <Field label="CC (Analista F. Comercial)" value={cc} onChange={setCc} type="email" />
+
+        <div className="overflow-y-auto p-5 space-y-4">
+          {/* Destinatarios */}
+          <div>
+            <div className="text-[11px] uppercase tracking-wider font-semibold text-[#242424]/70 mb-1">
+              Destinatarios (Para)
+            </div>
+            <div className="space-y-1">
+              {destinatarios.map((e) => (
+                <div key={e} className="flex items-center gap-2 rounded-lg border border-[#E3E7EE] bg-white p-2 text-sm">
+                  <Mail size={13} className="text-[#445DA3]" />
+                  <span className="flex-1 text-[#242424]">{e}</span>
+                  <button onClick={() => removeEmail(e)} className="text-[#B42318] hover:bg-[#FDECEC] rounded p-1" title="Quitar">
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              ))}
+              {destinatarios.length === 0 && (
+                <div className="text-xs text-[#242424]/60 italic">Sin destinatarios. Agrega al menos uno.</div>
+              )}
+            </div>
+            <div className="mt-2 flex gap-2">
+              <input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addEmail(); } }}
+                placeholder="cliente@correo.com"
+                className="flex-1 rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 text-sm"
+              />
+              <button onClick={addEmail} className="inline-flex items-center gap-1 rounded-lg border border-[#E3E7EE] px-3 py-1.5 text-xs font-semibold text-[#242424] hover:bg-[#F7F9FB]">
+                <Plus size={13} /> Agregar
+              </button>
+            </div>
+          </div>
+
+          {/* CC */}
+          <Field
+            label="CC (Analista Financiero / Comercial)"
+            value={cc}
+            onChange={setCc}
+            type="email"
+            placeholder="analista@nuvex.com.co"
+          />
+
+          {/* Asunto */}
           <Field label="Asunto" value={asunto} onChange={setAsunto} />
+
+          {/* Cuerpo */}
           <label className="block">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/70">
               Cuerpo
@@ -658,25 +778,66 @@ function SendChecklistModal({
             <textarea
               value={cuerpo}
               onChange={(e) => setCuerpo(e.target.value)}
-              rows={14}
+              rows={10}
               className="mt-1 w-full rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm leading-relaxed font-mono"
             />
           </label>
+
+          {/* Solicitud Cambio de Plazos */}
+          <div className="rounded-lg border border-[#E3E7EE] bg-[#F7F9FB] p-3">
+            <label className="flex items-center gap-2 text-xs font-semibold text-[#242424] mb-2">
+              <input
+                type="checkbox"
+                checked={adjuntarSolicitud}
+                onChange={(e) => setAdjuntarSolicitud(e.target.checked)}
+              />
+              <Paperclip size={13} /> Adjuntar Solicitud Cambio de Plazos (PDF)
+            </label>
+            {adjuntarSolicitud && (
+              <div className="grid gap-2 md:grid-cols-2">
+                <Field label="Plazo solicitado (meses)" value={plazoSolicitado} onChange={setPlazoSolicitado} placeholder="240" />
+                <Field label="Nuevo valor de cuota" value={cuotaNueva} onChange={setCuotaNueva} placeholder="$ 950.000" />
+                <label className="block md:col-span-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/70">
+                    Justificación (opcional)
+                  </span>
+                  <textarea
+                    value={justificacion}
+                    onChange={(e) => setJustificacion(e.target.value)}
+                    rows={3}
+                    placeholder="Si se deja vacío, se usa el texto institucional por defecto."
+                    className="mt-1 w-full rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm"
+                  />
+                </label>
+              </div>
+            )}
+          </div>
+
+          {error && (
+            <div className="rounded-lg border p-2 text-xs"
+              style={{ borderColor: "#F5C2C2", background: NUVEX.rojoBg, color: NUVEX.rojoTexto }}>
+              {error}
+            </div>
+          )}
+          {done && (
+            <div className="rounded-lg border p-2 text-xs inline-flex items-center gap-1.5"
+              style={{ borderColor: "#BBE4C9", background: NUVEX.verdeClaro, color: NUVEX.verdeTextoFuerte }}>
+              <CheckCircle2 size={13} /> Correo enviado correctamente. Los documentos pasan a "Solicitado".
+            </div>
+          )}
         </div>
-        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-[#E3E7EE]">
-          <button
-            onClick={onClose}
-            className="rounded-lg border border-[#E3E7EE] px-3 py-1.5 text-xs font-medium"
-          >
+
+        <div className="border-t border-[#E3E7EE] px-5 py-3 flex justify-end gap-2">
+          <button onClick={onClose} className="rounded-lg border border-[#E3E7EE] px-3 py-1.5 text-xs font-medium text-[#242424] hover:bg-[#F7F9FB]">
             Cancelar
           </button>
           <button
             onClick={handleSend}
-            disabled={sending}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+            disabled={sending || destinatarios.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
             style={{ backgroundColor: NUVEX.azul }}
           >
-            <Mail size={13} /> {sending ? "Enviando…" : "Abrir cliente de correo"}
+            {sending ? <><Loader2 size={13} className="animate-spin" /> Enviando…</> : <><Mail size={13} /> Enviar ahora</>}
           </button>
         </div>
       </div>
@@ -689,11 +850,13 @@ function Field({
   value,
   onChange,
   type = "text",
+  placeholder,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   type?: string;
+  placeholder?: string;
 }) {
   return (
     <label className="block">
@@ -704,8 +867,35 @@ function Field({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
         className="mt-1 w-full rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm"
       />
     </label>
   );
 }
+
+function downloadChecklistTxt(exp: ExpedienteMaestro, docs: DocRequerido[]) {
+  const banco = exp.credito?.banco || "—";
+  const cliente = exp.cliente?.nombre || "—";
+  const lines = [
+    "NUVEX — DOCUMENTOS REQUERIDOS",
+    `Cliente: ${cliente}`,
+    `Banco: ${banco}`,
+    `Fecha: ${new Date().toLocaleDateString("es-CO")}`,
+    "",
+    ...docs.map(
+      (d, i) =>
+        `${i + 1}. ${d.nombre}${d.obligatorio ? " (obligatorio)" : " (opcional)"}${
+          d.observacion ? ` — ${d.observacion}` : ""
+        }`,
+    ),
+  ];
+  const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `NUVEX_documentos_${cliente.replace(/\s+/g, "_")}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
