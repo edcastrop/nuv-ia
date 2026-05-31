@@ -514,7 +514,18 @@ function ExpedienteCard({ r, isDup = false }: { r: Expediente; isDup?: boolean }
             {initial}
           </div>
           <div className="min-w-0">
-            <div className="font-semibold text-base truncate">{r.cliente_nombre}</div>
+            <div className="flex items-center gap-2">
+              <div className="font-semibold text-base truncate">{r.cliente_nombre}</div>
+              {isDup && (
+                <span
+                  title="Esta cédula tiene más de un expediente activo"
+                  className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider"
+                  style={{ background: "rgba(245,158,11,0.15)", color: "#F59E0B", border: "1px solid rgba(245,158,11,0.4)" }}
+                >
+                  Dup
+                </span>
+              )}
+            </div>
             <div className="text-xs mt-0.5" style={{ color: TEXT2 }}>
               CC {r.cedula || "—"}
             </div>
