@@ -39,6 +39,7 @@ import {
   Activity,
 } from "lucide-react";
 import { KpisPipeline14 } from "@/components/pipeline/KpisPipeline14";
+import { AlertasEstancamientoPanel } from "@/components/pipeline/AlertasEstancamientoPanel";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
@@ -188,6 +189,8 @@ function DashboardPage() {
             </section>
 
             {isManager && <KpisPipeline14 />}
+
+            {isManager && <AlertasEstancamientoPanel />}
 
             {/* FUNNEL + PIPELINE */}
             <section className="grid gap-6 lg:grid-cols-3">
