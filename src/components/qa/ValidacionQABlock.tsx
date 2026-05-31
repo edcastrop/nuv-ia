@@ -204,7 +204,7 @@ export function ValidacionQABlock({ expedienteId, estadoCaso, onChanged }: Props
               onChange={(e) => setObservacion(e.target.value)}
               rows={4}
               className="mt-1 w-full rounded-lg border border-[#E3E7EE] bg-white px-3 py-2 text-sm"
-              placeholder="Explique qué debe corregir el licenciado…"
+              placeholder="Explique qué debe corregir el Analista Financiero Comercial…"
             />
             <div className="mt-4 flex justify-end gap-2">
               <button

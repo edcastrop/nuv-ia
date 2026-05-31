@@ -52,7 +52,7 @@ function Page() {
           {[
             ["fee_wompi_porcentaje", "Fee Wompi (%)"],
             ["iva_fee_wompi_porcentaje", "IVA del fee (%)"],
-            ["comision_predeterminada_licenciado", "Comisión licenciado por defecto (%)"],
+            ["comision_predeterminada_licenciado", "Comisión Analista F. Comercial por defecto (%)"],
           ].map(([k, label]) => (
             <label key={k} className="flex flex-col gap-1">
               <span className="text-[10.5px] uppercase tracking-wider text-[#242424]/60">{label}</span>

@@ -266,7 +266,7 @@ function DetalleCuentaCobro() {
       alert("Escribe el motivo de devolución (mínimo 10 caracteres) en el campo de observación.");
       return;
     }
-    if (!confirm("¿Devolver la cuenta de cobro al licenciado para corrección?")) return;
+    if (!confirm("¿Devolver la cuenta de cobro al Analista Financiero Comercial para corrección?")) return;
     setBusy(true);
     try {
       await devolver({ data: { cuentaCobroId: cc.id, motivo: observ.trim() } });
@@ -350,7 +350,7 @@ function DetalleCuentaCobro() {
             <div className="mt-1 text-2xl font-bold text-[#1F7A45]">{formatCOP(Number(cc.total))}</div>
             {cc.porcentaje_comision && (
               <div className="mt-1 text-[12px] text-[#242424]/70">
-                % Comisión licenciado: <b>{Number(cc.porcentaje_comision).toFixed(0)}%</b>
+                % Comisión Analista F. Comercial: <b>{Number(cc.porcentaje_comision).toFixed(0)}%</b>
               </div>
             )}
             <div
@@ -384,7 +384,7 @@ function DetalleCuentaCobro() {
               <div className="space-y-3">
                 <div className="rounded-lg border border-[#E3E7EE] bg-white p-3">
                   <div className="mb-2 text-[12px] font-semibold text-[#0A1226]">
-                    % Comisión licenciado <span className="text-[#991B1B]">*</span>
+                    % Comisión Analista F. Comercial <span className="text-[#991B1B]">*</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {PORCENTAJES_COMISION_CC.map((p) => {
@@ -469,7 +469,7 @@ function DetalleCuentaCobro() {
                   onClick={onDevolver}
                   disabled={busy}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-[#8A5A00] px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
-                  title="Devolver al licenciado para corrección (motivo obligatorio ≥10 caracteres)"
+                  title="Devolver al Analista Financiero Comercial para corrección (motivo obligatorio ≥10 caracteres)"
                 >
                   <RotateCcw size={13} /> Devolver para corrección
                 </button>

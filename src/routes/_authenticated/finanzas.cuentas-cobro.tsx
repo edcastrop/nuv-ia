@@ -15,7 +15,7 @@ const FILTROS: { key: CuentaCobro["estado"] | "todas"; label: string }[] = [
   { key: "aprobada", label: "Pendientes de pago" },
   { key: "pagada", label: "Pagadas" },
   { key: "rechazada", label: "Rechazadas" },
-  { key: "borrador", label: "Borrador (licenciado)" },
+  { key: "borrador", label: "Borrador (AFC)" },
   { key: "todas", label: "Todas" },
 ];
 

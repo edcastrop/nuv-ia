@@ -48,7 +48,7 @@ function FinanzasComisionesPage() {
       <Card>
         <h1 className="text-xl font-semibold text-[#0A1226]">Comisiones — Vista Finanzas</h1>
         <p className="text-[12px] text-[#242424]/60">
-          Resumen consolidado por licenciado. Para gestionar cuentas de cobro, abre el detalle.
+          Resumen consolidado por Analista Financiero Comercial. Para gestionar cuentas de cobro, abre el detalle.
         </p>
       </Card>
 

@@ -339,7 +339,7 @@ function SendChecklistModal({
         </div>
         <div className="overflow-y-auto p-5 space-y-3">
           <Field label="Para" value={to} onChange={setTo} type="email" />
-          <Field label="CC (licenciado)" value={cc} onChange={setCc} type="email" />
+          <Field label="CC (Analista F. Comercial)" value={cc} onChange={setCc} type="email" />
           <Field label="Asunto" value={asunto} onChange={setAsunto} />
           <label className="block">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/70">Cuerpo</span>
