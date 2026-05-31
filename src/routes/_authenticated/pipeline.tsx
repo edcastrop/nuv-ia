@@ -46,20 +46,22 @@ function PipelinePage() {
 
   const { q, banco, stuck: soloStuck } = search;
 
+  type PipelineSearch = z.infer<typeof pipelineSearchSchema>;
+
   // Debounce text input → URL
   useEffect(() => {
     const t = setTimeout(() => {
       if (qLocal !== q) {
-        navigate({ search: (prev) => ({ ...prev, q: qLocal }), replace: true });
+        navigate({ search: (prev: PipelineSearch) => ({ ...prev, q: qLocal }), replace: true });
       }
     }, 250);
     return () => clearTimeout(t);
   }, [qLocal, q, navigate]);
 
   const setBanco = (v: string) =>
-    navigate({ search: (prev) => ({ ...prev, banco: v }), replace: true });
+    navigate({ search: (prev: PipelineSearch) => ({ ...prev, banco: v }), replace: true });
   const setSoloStuck = (v: boolean) =>
-    navigate({ search: (prev) => ({ ...prev, stuck: v }), replace: true });
+    navigate({ search: (prev: PipelineSearch) => ({ ...prev, stuck: v }), replace: true });
   const clearAll = () => {
     setQLocal("");
     navigate({ search: { q: "", banco: "", stuck: false }, replace: true });
