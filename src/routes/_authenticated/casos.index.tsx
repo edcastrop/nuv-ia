@@ -1,4 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
+import { z } from "zod";
 import { useEffect, useMemo, useState } from "react";
 import { listExpedientes, ESTADOS, type EstadoExpediente, type Expediente } from "@/lib/expedientes";
 import { formatCOP } from "@/lib/format";
@@ -21,7 +23,16 @@ import {
   Clock,
 } from "lucide-react";
 
+const ETAPA_IDS = ETAPAS_PIPELINE.map((e) => e.id) as [EtapaPipelineId, ...EtapaPipelineId[]];
+
+const casosSearchSchema = z.object({
+  q: fallback(z.string(), "").default(""),
+  estado: fallback(z.enum(["", ...ESTADOS]), "").default(""),
+  etapa: fallback(z.enum(["", ...ETAPA_IDS]), "").default(""),
+});
+
 export const Route = createFileRoute("/_authenticated/casos/")({
+  validateSearch: zodValidator(casosSearchSchema),
   component: CasosPage,
   head: () => ({ meta: [{ title: "Expedientes · NUVEX" }] }),
 });
@@ -94,12 +105,29 @@ const SLA_COLORS: Record<SlaNivel, { bg: string; fg: string; border: string }> =
 };
 
 function CasosPage() {
-  const [search, setSearch] = useState("");
-  const [estado, setEstado] = useState<EstadoExpediente | "">("");
-  const [etapa, setEtapa] = useState<EtapaPipelineId | "">("");
+  type CasosSearch = z.infer<typeof casosSearchSchema>;
+  const urlSearch = Route.useSearch();
+  const navigate = useNavigate({ from: "/casos" });
+  const { q: search, estado, etapa } = urlSearch;
+  const [qLocal, setQLocal] = useState(search);
   const [rows, setRows] = useState<Expediente[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+
+  // Debounce text input → URL
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (qLocal !== search) {
+        navigate({ search: (prev: CasosSearch) => ({ ...prev, q: qLocal }), replace: true });
+      }
+    }, 250);
+    return () => clearTimeout(t);
+  }, [qLocal, search, navigate]);
+
+  const setEstado = (v: EstadoExpediente | "") =>
+    navigate({ search: (prev: CasosSearch) => ({ ...prev, estado: v }), replace: true });
+  const setEtapa = (v: EtapaPipelineId | "") =>
+    navigate({ search: (prev: CasosSearch) => ({ ...prev, etapa: v }), replace: true });
 
   useEffect(() => {
     let cancel = false;
@@ -261,8 +289,8 @@ function CasosPage() {
             <Search size={18} className="absolute left-5 top-1/2 -translate-y-1/2" style={{ color: TEXT2 }} />
             <input
               type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={qLocal}
+              onChange={(e) => setQLocal(e.target.value)}
               placeholder="Buscar cliente, cédula, banco o crédito..."
               className="w-full h-full bg-transparent pl-14 pr-5 text-sm outline-none placeholder:text-slate-500"
               style={{ color: "#fff" }}
