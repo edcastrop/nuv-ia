@@ -278,7 +278,45 @@ export interface ChecklistRow {
   fecha_vencimiento: string | null;
   archivo_url: string | null;
   observaciones: string | null;
+  recibido_por: string | null;
+  updated_by: string | null;
   updated_at: string;
+}
+
+export interface AuditoriaRow {
+  id: string;
+  expediente_id: string;
+  documento_id: string;
+  documento_nombre: string;
+  estado_anterior: EstadoDoc | null;
+  estado_nuevo: EstadoDoc;
+  usuario_id: string | null;
+  usuario_nombre: string | null;
+  created_at: string;
+}
+
+export interface ValidacionRow {
+  expediente_id: string;
+  validada_at: string;
+  validada_por: string | null;
+  validada_por_nombre: string | null;
+  total_obligatorios: number;
+  notas: string | null;
+}
+
+/**
+ * Un documento se considera "completo" (contado en el progreso) cuando ya
+ * llegó al expediente y nadie lo rechazó: estados `recibido`, `en_revision`,
+ * `aprobado` y `no_aplica` cuentan; `pendiente`, `solicitado`, `rechazado`
+ * y `vencido` no.
+ */
+export function esDocumentoCompleto(estado: EstadoDoc): boolean {
+  return estado === "recibido" || estado === "en_revision" || estado === "aprobado" || estado === "no_aplica";
+}
+
+/** Estados que aún hay que pedirle al cliente. */
+export function debeSolicitarse(estado: EstadoDoc): boolean {
+  return estado === "pendiente" || estado === "rechazado" || estado === "vencido";
 }
 
 export async function loadChecklistRows(expedienteId: string): Promise<ChecklistRow[]> {
