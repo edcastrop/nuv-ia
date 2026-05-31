@@ -150,9 +150,9 @@ export async function generarChecklistDocumentalPdf(
   // Nota institucional
   if (y > LAYOUT.contentBottom - 60) y = nextPage(pdf);
   y += 14;
-  pdf.setDrawColor(BRAND.azul);
+  pdf.setDrawColor(BRAND.blue[0], BRAND.blue[1], BRAND.blue[2]);
   pdf.setLineWidth(0.5);
-  pdf.line(LAYOUT.contentLeft, y - 8, LAYOUT.contentRight, y - 8);
+  pdf.line(contentLeft, y - 8, contentRight, y - 8);
   y = writeText(
     pdf, y,
     "Este listado refleja el estado de la documentación en el momento de su emisión. " +
