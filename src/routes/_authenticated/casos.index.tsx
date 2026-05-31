@@ -1,4 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
+import { z } from "zod";
 import { useEffect, useMemo, useState } from "react";
 import { listExpedientes, ESTADOS, type EstadoExpediente, type Expediente } from "@/lib/expedientes";
 import { formatCOP } from "@/lib/format";
@@ -21,7 +23,16 @@ import {
   Clock,
 } from "lucide-react";
 
+const ETAPA_IDS = ETAPAS_PIPELINE.map((e) => e.id) as [EtapaPipelineId, ...EtapaPipelineId[]];
+
+const casosSearchSchema = z.object({
+  q: fallback(z.string(), "").default(""),
+  estado: fallback(z.enum(["", ...ESTADOS]), "").default(""),
+  etapa: fallback(z.enum(["", ...ETAPA_IDS]), "").default(""),
+});
+
 export const Route = createFileRoute("/_authenticated/casos/")({
+  validateSearch: zodValidator(casosSearchSchema),
   component: CasosPage,
   head: () => ({ meta: [{ title: "Expedientes · NUVEX" }] }),
 });
