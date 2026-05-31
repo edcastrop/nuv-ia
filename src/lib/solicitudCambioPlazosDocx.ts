@@ -221,13 +221,13 @@ export async function generarSolicitudCambioPlazosDocx(
   ]);
 
   const justifPara = new Paragraph({
-    alignment: AlignmentType.JUSTIFY,
+    alignment: AlignmentType.JUSTIFIED,
     spacing: { after: 160, line: 320 },
     children: [new TextRun({ text: justif, size: 22, color: INK })],
   });
 
   const formalPara = new Paragraph({
-    alignment: AlignmentType.JUSTIFY,
+    alignment: AlignmentType.JUSTIFIED,
     spacing: { after: 240, line: 320 },
     children: [
       new TextRun({
