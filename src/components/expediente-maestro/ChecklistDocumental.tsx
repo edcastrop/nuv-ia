@@ -20,6 +20,8 @@ import {
   Trash2,
 } from "lucide-react";
 import type { ExpedienteMaestro } from "@/lib/expedienteMaestro";
+import { readApoderadoNuvexIdExpediente } from "@/lib/expedienteMaestro";
+import type { Expediente, PropuestaData } from "@/lib/expedientes";
 import {
   buildChecklist,
   bancoLabel,
@@ -51,6 +53,8 @@ import { listApoderados, seleccionarApoderado, type ApoderadoNuvex } from "@/lib
 
 interface Props {
   expediente: ExpedienteMaestro;
+  /** Expediente persistido (para leer apoderado guardado, plazos previos, etc.). */
+  simExpediente?: Expediente | null;
 }
 
 type EstadoMap = Record<string, EstadoDoc>;
