@@ -23,6 +23,9 @@ import { MotorExtractosNUVEX } from "@/components/nuvex/MotorExtractosNUVEX";
 import type { MotorResultado } from "@/lib/motorExtractos.functions";
 import { withFreshDerivados, normalizeTipoBeneficio, FRESH_DEFAULT_TOTAL } from "@/lib/cobertura";
 import { normalizeCreditMoneyInput } from "@/lib/creditoSanity";
+import { PipelineStepper14 } from "@/components/pipeline/PipelineStepper14";
+import { computeEtapaActual, type EtapaPipelineId } from "@/lib/pipelineEtapas";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/expediente-maestro/$id")({
   component: MaestroDetail,
@@ -47,12 +50,13 @@ function MaestroDetail() {
   const [apoderado, setApoderado] = useState(emptyApoderado());
   const [extractoAplicado, setExtractoAplicado] = useState<MotorResultado | null>(null);
   const [aplicandoExtracto, setAplicandoExtracto] = useState(false);
+  const [etapaActual, setEtapaActual] = useState<EtapaPipelineId>("lead");
   const resumenRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setLoading(true);
     getMaestro(id)
-      .then((e) => {
+      .then(async (e) => {
         setExp(e);
         setCliente({ ...emptyCliente(), ...(e.cliente || {}) });
         setCotitular({ ...emptyCotitular(), ...(e.cotitular || {}) });
@@ -61,6 +65,19 @@ function MaestroDetail() {
         setAsesor({ ...emptyAsesor(), ...(e.asesor || {}) });
         setLicenciado({ ...emptyLicenciado(), ...(e.licenciado || {}) });
         setApoderado({ ...emptyApoderado(), ...(e.apoderado || {}) });
+        // Pipeline (P1): mejor-esfuerzo. Busca el expediente operativo más
+        // reciente por cédula para mostrar la etapa actual del caso.
+        // Cuando P4 unifique el modelo, esto se reemplaza por un join directo.
+        if (e.cedula_cliente) {
+          const { data: exps } = await supabase
+            .from("expedientes")
+            .select("estado_caso, updated_at")
+            .eq("cedula", e.cedula_cliente)
+            .order("updated_at", { ascending: false })
+            .limit(1);
+          const row = exps?.[0] as { estado_caso?: string | null } | undefined;
+          if (row) setEtapaActual(computeEtapaActual({ estado_caso: row.estado_caso }));
+        }
       })
       .catch((e) => setErr(e.message))
       .finally(() => setLoading(false));
@@ -310,6 +327,8 @@ function MaestroDetail() {
           </div>
         </div>
       </Card>
+
+      <PipelineStepper14 etapaActual={etapaActual} />
 
       <MaestroEditor
         cliente={cliente}
