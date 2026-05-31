@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
-import { Loader2, Flag, Clock, AlertTriangle } from "lucide-react";
+import { Loader2, Flag, Clock, AlertTriangle, RefreshCw } from "lucide-react";
 import { listExpedientes, type Expediente } from "@/lib/expedientes";
 import {
   ETAPAS_PIPELINE,
