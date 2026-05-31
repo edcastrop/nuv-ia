@@ -2,7 +2,7 @@
 // P15 — Filtros (búsqueda, banco, solo estancados).
 // P16 — Filtros persistidos en URL via search params (compartibles).
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
@@ -63,6 +63,7 @@ function PipelinePage() {
   const [lastUpdated, setLastUpdated] = useState<number>(() => Date.now());
   const [nowTick, setNowTick] = useState<number>(() => Date.now());
   const [qLocal, setQLocal] = useState(search.q);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const { q, banco, stuck: soloStuck, fase, mios } = search;
 
@@ -93,6 +94,38 @@ function PipelinePage() {
     setQLocal("");
     navigate({ search: { q: "", banco: "", stuck: false, fase: "", mios: false }, replace: true });
   };
+
+  // P29 — Atajos de teclado: "/" enfoca buscador, "m" toggle Mis casos, "s" toggle Stuck, Esc limpia búsqueda
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      const isTyping =
+        tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target?.isContentEditable;
+
+      if (e.key === "Escape" && target === searchInputRef.current) {
+        setQLocal("");
+        navigate({ search: (prev: PipelineSearch) => ({ ...prev, q: "" }), replace: true });
+        return;
+      }
+      if (isTyping) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      if (e.key === "/") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+      } else if (e.key === "m" || e.key === "M") {
+        e.preventDefault();
+        setMios(!mios);
+      } else if (e.key === "s" || e.key === "S") {
+        e.preventDefault();
+        setSoloStuck(!soloStuck);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mios, soloStuck, navigate]);
 
 
 
@@ -269,9 +302,10 @@ function PipelinePage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <input
+            ref={searchInputRef}
             value={qLocal}
             onChange={(e) => setQLocal(e.target.value)}
-            placeholder="Buscar cliente, cédula, crédito…"
+            placeholder='Buscar cliente, cédula, crédito…  ( / )'
             className="h-8 w-[240px] rounded-md border border-[#E3E7EE] bg-white px-2 text-[12px] text-[#0A1226] placeholder:text-[#9CA3AF] focus:border-[#445DA3] focus:outline-none"
           />
           <select
