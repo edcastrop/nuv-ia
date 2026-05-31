@@ -249,7 +249,17 @@ export function buildChecklist(
   flags: FlagsCliente,
 ): DocRequerido[] {
   const banco = detectBanco(expediente.credito?.banco);
-  const candidatos = [...GENERALES, ...MATRIZ_DOCUMENTAL[banco]];
+  const especificos = MATRIZ_DOCUMENTAL[banco];
+
+  // Si el banco exige Cédula ampliada al 150%, ésta REEMPLAZA a la cédula
+  // estándar (la observación del documento lo indica). Filtramos la genérica
+  // para no pedir la cédula dos veces al cliente.
+  const exigeCedulaAmpliada = especificos.some((d) => d.id === "cedula_ampliada_150");
+  const generales = exigeCedulaAmpliada
+    ? GENERALES.filter((d) => d.id !== "cedula_cliente")
+    : GENERALES;
+
+  const candidatos = [...generales, ...especificos];
 
   // Dedupe por id, mantener primera ocurrencia.
   const vistos = new Set<string>();
