@@ -229,7 +229,7 @@ function PipelinePage() {
             />
             Solo estancados
           </label>
-          {(q || banco || soloStuck) && (
+          {(q || banco || soloStuck || fase) && (
             <button
               onClick={clearAll}
               className="h-8 rounded-md border border-[#E3E7EE] bg-white px-2 text-[12px] text-[#445DA3] hover:bg-[#F1F3F8]"
