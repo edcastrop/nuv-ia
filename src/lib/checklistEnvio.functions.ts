@@ -191,14 +191,52 @@ export const enviarChecklistCliente = createServerFn({ method: "POST" })
       }
     }
 
+    // Transición automática de estado del caso → radicacion_pendiente
+    // (sólo si el caso está en una etapa anterior a radicación)
+    const ESTADOS_POST_CHECKLIST = new Set([
+      "radicacion_pendiente",
+      "radicacion_preparada",
+      "radicado_banco",
+      "en_estudio_banco",
+      "docs_complementarios_banco",
+      "aprobado",
+      "aprobado_banco",
+      "documentos_banco_firmados",
+      "condiciones_aplicadas",
+      "aplicado_banco",
+      "resultado_final_generado",
+      "cuenta_cobro_generada",
+      "cuenta_cobro_enviada",
+      "honorarios_pendientes",
+      "honorarios_pagados",
+      "paz_y_salvo_generado",
+      "caso_finalizado",
+      "devuelto_banco",
+      "negado_banco",
+      "prejuridico",
+      "proceso_cerrado",
+    ]);
+    const estadoCasoActual = (exp as { estado_caso: string | null }).estado_caso;
+    const debeTransicionar = !estadoCasoActual || !ESTADOS_POST_CHECKLIST.has(estadoCasoActual);
+
+    if (debeTransicionar) {
+      await supabase
+        .from("expedientes")
+        .update({ estado_caso: "radicacion_pendiente" } as never)
+        .eq("id", data.expedienteId);
+    }
+
     // Trazar en historial general del expediente
     await supabase.from("expediente_historial").insert({
       expediente_id: data.expedienteId,
       estado_anterior: exp.estado as never,
       estado_nuevo: exp.estado as never,
+      estado_caso_anterior: (estadoCasoActual ?? null) as never,
+      estado_caso_nuevo: (debeTransicionar ? "radicacion_pendiente" : estadoCasoActual) as never,
+      accion_origen: "checklist_envio" as never,
       user_id: userId,
-      nota: `Checklist enviado al cliente (${data.destinatarios.join(", ")}) — ${data.documentosSolicitados.length} documento(s) solicitado(s)`,
+      nota: `Checklist enviado al cliente (${data.destinatarios.join(", ")}) — ${data.documentosSolicitados.length} documento(s) solicitado(s)${debeTransicionar ? " · estado → Radicación pendiente" : ""}`,
     } as never);
 
-    return { ok: true, messageId, ccFinal };
+    return { ok: true, messageId, ccFinal, transicionado: debeTransicionar };
   });
