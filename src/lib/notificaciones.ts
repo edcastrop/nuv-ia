@@ -57,3 +57,66 @@ export async function contarNoLeidas(): Promise<number> {
     .eq("leida", false);
   return count ?? 0;
 }
+
+/**
+ * Caso alertas (estancamiento) — RLS restringe a owner del expediente o managers.
+ * Las mapeamos a forma `Notificacion` para mostrarlas en la campana.
+ */
+export async function listCasoAlertasComoNotif(limit = 30): Promise<Notificacion[]> {
+  const { data: u } = await supabase.auth.getUser();
+  if (!u.user) return [];
+  const { data: alertas } = await supabase
+    .from("caso_alertas" as never)
+    .select("id, expediente_id, tipo, dias_estancado, leida, created_at")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  const arr = (alertas ?? []) as unknown as Array<{
+    id: string;
+    expediente_id: string;
+    tipo: string;
+    dias_estancado: number;
+    leida: boolean;
+    created_at: string;
+  }>;
+  if (arr.length === 0) return [];
+  const ids = Array.from(new Set(arr.map((a) => a.expediente_id)));
+  const { data: exps } = await supabase
+    .from("expedientes")
+    .select("id, cliente_nombre, banco")
+    .in("id", ids);
+  const expMap = new Map<string, { cliente_nombre: string | null; banco: string | null }>();
+  ((exps ?? []) as Array<{ id: string; cliente_nombre: string | null; banco: string | null }>).forEach((e) =>
+    expMap.set(e.id, { cliente_nombre: e.cliente_nombre, banco: e.banco }),
+  );
+  return arr.map((a) => {
+    const exp = expMap.get(a.expediente_id);
+    const cliente = exp?.cliente_nombre ?? "Caso";
+    const banco = exp?.banco ? ` · ${exp.banco}` : "";
+    return {
+      id: `alerta:${a.id}`,
+      user_id: u.user!.id,
+      tipo: "caso_alerta",
+      titulo: `Caso estancado: ${cliente}${banco}`,
+      mensaje: `Sin avance hace ${a.dias_estancado} días.`,
+      link: `/casos/${a.expediente_id}`,
+      severidad: (a.dias_estancado >= 10 ? "alta" : a.dias_estancado >= 5 ? "media" : "baja") as Notificacion["severidad"],
+      leida: a.leida,
+      metadata: { expediente_id: a.expediente_id, alerta_id: a.id, dias_estancado: a.dias_estancado, tipo: a.tipo },
+      created_at: a.created_at,
+    } satisfies Notificacion;
+  });
+}
+
+export async function contarCasoAlertasNoLeidas(): Promise<number> {
+  const { data: u } = await supabase.auth.getUser();
+  if (!u.user) return 0;
+  const { count } = await supabase
+    .from("caso_alertas" as never)
+    .select("id", { count: "exact", head: true })
+    .eq("leida", false);
+  return count ?? 0;
+}
+
+export async function marcarCasoAlertaLeida(alertaId: string): Promise<void> {
+  await supabase.from("caso_alertas" as never).update({ leida: true } as never).eq("id", alertaId);
+}
