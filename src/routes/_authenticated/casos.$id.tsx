@@ -160,7 +160,7 @@ function CasoDetail() {
                       Soportes que exige el banco para radicar el caso. La matriz se ajusta por banco, perfil laboral y condiciones del cliente.
                     </p>
                   </div>
-                  <ChecklistDocumental expediente={maestroLike} />
+                  <ChecklistDocumental expediente={maestroLike} simExpediente={exp} />
                 </Card>
               </ErrorBoundary>
             )}
