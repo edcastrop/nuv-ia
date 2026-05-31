@@ -29,6 +29,7 @@ const casosSearchSchema = z.object({
   q: fallback(z.string(), "").default(""),
   estado: fallback(z.enum(["", ...ESTADOS]), "").default(""),
   etapa: fallback(z.enum(["", ...ETAPA_IDS]), "").default(""),
+  mios: fallback(z.boolean(), false).default(false),
 });
 
 export const Route = createFileRoute("/_authenticated/casos/")({
