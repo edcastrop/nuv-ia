@@ -110,7 +110,8 @@ function CasosPage() {
   type CasosSearch = z.infer<typeof casosSearchSchema>;
   const urlSearch = Route.useSearch();
   const navigate = useNavigate({ from: "/casos" });
-  const { q: search, estado, etapa } = urlSearch;
+  const { user } = useAuth();
+  const { q: search, estado, etapa, mios } = urlSearch;
   const [qLocal, setQLocal] = useState(search);
   const [rows, setRows] = useState<Expediente[]>([]);
   const [loading, setLoading] = useState(true);
@@ -130,6 +131,8 @@ function CasosPage() {
     navigate({ search: (prev: CasosSearch) => ({ ...prev, estado: v }), replace: true });
   const setEtapa = (v: EtapaPipelineId | "") =>
     navigate({ search: (prev: CasosSearch) => ({ ...prev, etapa: v }), replace: true });
+  const setMios = (v: boolean) =>
+    navigate({ search: (prev: CasosSearch) => ({ ...prev, mios: v }), replace: true });
 
   useEffect(() => {
     let cancel = false;
@@ -141,10 +144,29 @@ function CasosPage() {
     return () => { cancel = true; };
   }, [search, estado, etapa]);
 
+  // P26 — Filtro client-side "Mis casos" (asesor_id === user.id).
+  const filteredRows = useMemo(() => {
+    if (!mios || !user?.id) return rows;
+    return rows.filter((r) => r.asesor_id === user.id);
+  }, [rows, mios, user?.id]);
+
+  // P26 — Detección de duplicados por cédula entre los expedientes cargados.
+  const dupCedulas = useMemo(() => {
+    const counts = new Map<string, number>();
+    rows.forEach((r) => {
+      const c = (r.cedula ?? "").trim();
+      if (!c) return;
+      counts.set(c, (counts.get(c) ?? 0) + 1);
+    });
+    const s = new Set<string>();
+    counts.forEach((n, c) => { if (n > 1) s.add(c); });
+    return s;
+  }, [rows]);
+
   const totals = useMemo(() => ({
-    total: rows.length,
-    honorarios: rows.reduce((s, r) => s + Number(r.honorarios_final || 0), 0),
-  }), [rows]);
+    total: filteredRows.length,
+    honorarios: filteredRows.reduce((s, r) => s + Number(r.honorarios_final || 0), 0),
+  }), [filteredRows]);
 
   // P21 — Exportar CSV de los casos visibles (respeta búsqueda, estado y etapa).
   const exportarCSV = () => {
