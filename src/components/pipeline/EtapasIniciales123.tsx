@@ -30,6 +30,7 @@ interface Props {
   cliente: ClienteLike;
   credito: CreditoLike;
   etapaActual: EtapaPipelineId;
+  /** Opcional; si se omite, el componente consulta la última validación. */
   qaEstado?: "pendiente" | "aprobada" | "devuelta" | null;
 }
 
@@ -41,12 +42,52 @@ interface CheckItem {
   hint?: string;
 }
 
-export function EtapasIniciales123({ expedienteId, cliente, credito, etapaActual, qaEstado }: Props) {
+export function EtapasIniciales123({ expedienteId, cliente, credito, etapaActual }: Props) {
   const [tab, setTab] = useState<EtapaKey>(() => {
     if (etapaActual === "extracto") return "extracto";
     if (etapaActual === "proyeccion") return "proyeccion";
     return "lead";
   });
+
+  const [validacion, setValidacion] = useState<ValidacionQA | null>(null);
+  const [loadingQA, setLoadingQA] = useState(true);
+  const [enviandoQA, setEnviandoQA] = useState(false);
+  const [errQA, setErrQA] = useState<string | null>(null);
+
+  const cargarQA = useCallback(async () => {
+    setLoadingQA(true);
+    try {
+      const v = await obtenerUltimaValidacion(expedienteId);
+      setValidacion(v);
+    } catch (e) {
+      setErrQA((e as Error).message);
+    } finally {
+      setLoadingQA(false);
+    }
+  }, [expedienteId]);
+
+  useEffect(() => {
+    cargarQA();
+  }, [cargarQA]);
+
+  const qaEstadoCalc: "pendiente" | "aprobada" | "devuelta" | null = validacion
+    ? validacion.resultado ?? "pendiente"
+    : null;
+
+  const handleEnviarQA = async () => {
+    setEnviandoQA(true);
+    setErrQA(null);
+    try {
+      await enviarAValidacionQA(expedienteId);
+      await cargarQA();
+    } catch (e) {
+      setErrQA((e as Error).message);
+    } finally {
+      setEnviandoQA(false);
+    }
+  };
+
+  const datosCreditoOk = !!credito.saldoCapital && !!credito.cuotaActual && !!credito.tasa;
 
   const checks = useMemo(() => ({
     lead: [
@@ -63,15 +104,17 @@ export function EtapasIniciales123({ expedienteId, cliente, credito, etapaActual
       { label: "Tasa EA", ok: !!credito.tasa?.trim() },
     ] as CheckItem[],
     proyeccion: [
-      { label: "Datos de crédito completos", ok: !!credito.saldoCapital && !!credito.cuotaActual && !!credito.tasa },
-      { label: "QA aprobado", ok: qaEstado === "aprobada", hint: "La proyección no avanza a Presentación sin QA aprobado." },
+      { label: "Datos de crédito completos", ok: datosCreditoOk },
+      { label: "Proyección enviada a QA", ok: !!validacion, hint: "Envía la proyección a validación QA." },
+      { label: "QA aprobado", ok: qaEstadoCalc === "aprobada", hint: "La proyección no avanza a Presentación sin QA aprobado." },
     ] as CheckItem[],
-  }), [cliente, credito, qaEstado]);
+  }), [cliente, credito, datosCreditoOk, validacion, qaEstadoCalc]);
 
   const completar = (items: CheckItem[]) => items.filter((i) => i.ok).length;
   const total = (items: CheckItem[]) => items.length;
 
   const etapas = ETAPAS_PIPELINE.slice(0, 3);
+
 
   return (
     <Card>
