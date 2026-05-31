@@ -376,13 +376,13 @@ function CasosPage() {
           )}
           {loading ? (
             <div className="py-24 text-center text-sm" style={{ color: TEXT2 }}>Cargando expedientes…</div>
-          ) : rows.length === 0 ? (
+          ) : filteredRows.length === 0 ? (
             <div
               className="py-20 text-center text-sm rounded-2xl"
               style={{ background: `linear-gradient(180deg, ${CARD}, ${CARD2})`, border: `1px solid ${BORDER}`, color: TEXT2 }}
             >
               No hay expedientes que coincidan.
-              {!search && !estado && (
+              {!search && !estado && !mios && (
                 <>
                   {" "}Crea tu primer caso desde el{" "}
                   <Link to="/" className="font-semibold hover:underline" style={{ color: VERDE }}>simulador</Link>.
@@ -390,7 +390,13 @@ function CasosPage() {
               )}
             </div>
           ) : (
-            rows.map((r) => <ExpedienteCard key={r.id} r={r} />)
+            filteredRows.map((r) => (
+              <ExpedienteCard
+                key={r.id}
+                r={r}
+                isDup={!!r.cedula && dupCedulas.has(r.cedula.trim())}
+              />
+            ))
           )}
         </section>
 
