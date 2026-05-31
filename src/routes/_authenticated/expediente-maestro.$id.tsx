@@ -28,6 +28,7 @@ import { EtapasIniciales123 } from "@/components/pipeline/EtapasIniciales123";
 import { EtapasMedias456 } from "@/components/pipeline/EtapasMedias456";
 import { EtapasOperativas78910 } from "@/components/pipeline/EtapasOperativas78910";
 import { EtapasFinales11a14 } from "@/components/pipeline/EtapasFinales11a14";
+import { AuditoriaPipeline } from "@/components/pipeline/AuditoriaPipeline";
 import { computeEtapaActual, type EtapaPipelineId } from "@/lib/pipelineEtapas";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -351,6 +352,8 @@ function MaestroDetail() {
       <EtapasOperativas78910 expedienteId={id} etapaActual={etapaActual} />
 
       <EtapasFinales11a14 etapaActual={etapaActual} />
+
+      <AuditoriaPipeline expedienteId={id} />
 
 
 
