@@ -144,7 +144,7 @@ function PipelinePage() {
           </label>
           {(q || banco || soloStuck) && (
             <button
-              onClick={() => { setQ(""); setBanco(""); setSoloStuck(false); }}
+              onClick={clearAll}
               className="h-8 rounded-md border border-[#E3E7EE] bg-white px-2 text-[12px] text-[#445DA3] hover:bg-[#F1F3F8]"
             >
               Limpiar
