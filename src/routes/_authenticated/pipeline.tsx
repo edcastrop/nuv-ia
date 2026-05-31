@@ -458,6 +458,7 @@ function PipelinePage() {
                 <div className="mt-0.5 text-lg font-semibold">{f.count}</div>
               </button>
             );
+          })}
         </div>
       )}
 
