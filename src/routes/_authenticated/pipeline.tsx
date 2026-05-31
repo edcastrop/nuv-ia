@@ -17,6 +17,7 @@ import { Card } from "@/components/nuvex/ui";
 import { BANCOS } from "@/components/nuvex/constants";
 import { useAuth } from "@/hooks/useAuth";
 import { getRecentCases } from "@/lib/recentCases";
+import { supabase } from "@/integrations/supabase/client";
 
 const FASE_IDS = ["comercial", "operativa", "banco", "cobro", "fin"] as const;
 type FaseId = (typeof FASE_IDS)[number];
