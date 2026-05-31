@@ -111,8 +111,12 @@ export async function generarSolicitudCambioPlazosDocx(
     p(
       `Yo, ${apoderadoNombre}, identificado con cédula de ciudadanía No. ${apoderadoCedula}, ` +
         `actuando en calidad de apoderado de ${cliente}, identificado(a) con cédula de ciudadanía ` +
-        `No. ${cedulaCliente}, actuando como titular, me permito solicitar la modificación del plazo ` +
-        `del crédito No. ${numCred} de ${banco}, conforme a la Ley 546 de 1999, en los siguientes términos:`,
+        `No. ${cedulaCliente}, actuando como titular` +
+        (tieneCotitular
+          ? `, y de ${cotitularNombre}, identificado(a) con cédula de ciudadanía No. ${cotitularCedula}, actuando como cotitular`
+          : "") +
+        `, me permito solicitar la modificación del plazo del crédito No. ${numCred} de ${banco}, ` +
+        `conforme a la Ley 546 de 1999, en los siguientes términos:`,
     ),
 
     p(
