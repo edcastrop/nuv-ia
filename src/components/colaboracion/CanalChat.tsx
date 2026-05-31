@@ -84,10 +84,19 @@ export function CanalChat({ canal }: { canal: Canal }) {
       )}
 
       <div className="border-t border-[#E3E7EE] px-4 py-3 flex items-end gap-2">
-        <button onClick={() => fileRef.current?.click()} className="rounded-lg border border-[#E3E7EE] p-2 hover:bg-[#F7F9FB]">
+        <button onClick={() => fileRef.current?.click()} className="rounded-lg border border-[#E3E7EE] p-2 hover:bg-[#F7F9FB]" title="Adjuntar archivo / imagen / PDF">
           <Paperclip size={16} className="text-[#242424]/70" />
         </button>
-        <input ref={fileRef} type="file" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt,.csv"
+          className="hidden"
+          onChange={(e) => {
+            onFile(e.target.files?.[0]);
+            if (fileRef.current) fileRef.current.value = "";
+          }}
+        />
         <textarea
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
