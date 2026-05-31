@@ -9,14 +9,17 @@ import {
   rolTitular,
   type Interviniente,
 } from "./intervinientes";
+import { CedulaReader } from "./CedulaReader";
 
 interface Props {
   producto?: string | null;
   data: Interviniente[];
   onChange: (next: Interviniente[]) => void;
+  /** Sincroniza nombre/cédula del titular en los campos de cliente al leer la cédula. */
+  onTitularSync?: (nombre: string, cedula: string) => void;
 }
 
-export function IntervinientesFields({ producto, data, onChange }: Props) {
+export function IntervinientesFields({ producto, data, onChange, onTitularSync }: Props) {
   const leasing = isLeasing(producto);
   const rolT = rolTitular(producto);
   const rolC = rolCotitular(producto);
