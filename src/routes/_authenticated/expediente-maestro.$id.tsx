@@ -25,6 +25,7 @@ import { withFreshDerivados, normalizeTipoBeneficio, FRESH_DEFAULT_TOTAL } from 
 import { normalizeCreditMoneyInput } from "@/lib/creditoSanity";
 import { PipelineStepper14 } from "@/components/pipeline/PipelineStepper14";
 import { EtapasIniciales123 } from "@/components/pipeline/EtapasIniciales123";
+import { EtapasMedias456 } from "@/components/pipeline/EtapasMedias456";
 import { computeEtapaActual, type EtapaPipelineId } from "@/lib/pipelineEtapas";
 import { supabase } from "@/integrations/supabase/client";
 
