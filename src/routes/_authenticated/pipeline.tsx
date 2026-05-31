@@ -251,6 +251,11 @@ function PipelinePage() {
   const fmtCOP = (n: number) =>
     new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 
+  // P28 — Vistos recientemente (localStorage). Se refresca al cargar y al refrescar.
+  const recents = useMemo(() => getRecentCases(), [lastUpdated]);
+
+
+
 
   return (
     <div className="mx-auto max-w-[1400px] space-y-4 p-4">
