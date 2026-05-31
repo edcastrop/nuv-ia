@@ -141,8 +141,8 @@ export async function generarSolicitudCambioPlazosDocx(
       ],
     }),
     p(apoderadoNombre, { bold: true, align: AlignmentType.LEFT, spacingAfter: 20 }),
-    p(`C.C. No. ${apoderadoCedula}`, { align: AlignmentType.LEFT, spacingAfter: 20 }),
-    p(`Apoderado de ${cliente}`, { align: AlignmentType.LEFT, spacingAfter: 800 }),
+    p(`C.C. No. ${apoderadoCedula}`, { align: AlignmentType.LEFT, spacingAfter: 800 }),
+
 
     // Firma del cliente (titular)
     new Paragraph({
