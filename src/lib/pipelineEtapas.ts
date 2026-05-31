@@ -141,3 +141,10 @@ export function indexOfEtapa(id: EtapaPipelineId): number {
   const i = ETAPAS_PIPELINE.findIndex((x) => x.id === id);
   return i < 0 ? 0 : i;
 }
+
+/** Todos los valores de estado_caso (BD) que caen en una etapa dada. */
+export function estadosParaEtapa(etapaId: EtapaPipelineId): string[] {
+  return Object.entries(CASO_ESTADO_A_ETAPA)
+    .filter(([, v]) => v === etapaId)
+    .map(([k]) => k);
+}

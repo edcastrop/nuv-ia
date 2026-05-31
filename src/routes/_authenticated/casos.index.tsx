@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { listExpedientes, ESTADOS, type EstadoExpediente, type Expediente } from "@/lib/expedientes";
 import { formatCOP } from "@/lib/format";
-import { computeEtapaActual, getEtapaById, type EtapaPipelineId } from "@/lib/pipelineEtapas";
+import { computeEtapaActual, getEtapaById, ETAPAS_PIPELINE, type EtapaPipelineId } from "@/lib/pipelineEtapas";
 import {
   Search,
   Plus,
@@ -96,6 +96,7 @@ const SLA_COLORS: Record<SlaNivel, { bg: string; fg: string; border: string }> =
 function CasosPage() {
   const [search, setSearch] = useState("");
   const [estado, setEstado] = useState<EstadoExpediente | "">("");
+  const [etapa, setEtapa] = useState<EtapaPipelineId | "">("");
   const [rows, setRows] = useState<Expediente[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -103,12 +104,12 @@ function CasosPage() {
   useEffect(() => {
     let cancel = false;
     setLoading(true);
-    listExpedientes({ search, estado })
+    listExpedientes({ search, estado, etapa })
       .then((r) => { if (!cancel) setRows(r); })
       .catch((e) => { if (!cancel) setErr(e.message); })
       .finally(() => { if (!cancel) setLoading(false); });
     return () => { cancel = true; };
-  }, [search, estado]);
+  }, [search, estado, etapa]);
 
   const totals = useMemo(() => ({
     total: rows.length,
@@ -195,7 +196,7 @@ function CasosPage() {
         </section>
 
         {/* FILTROS */}
-        <section className="grid gap-4 md:grid-cols-[1fr_280px]">
+        <section className="grid gap-4 md:grid-cols-[1fr_200px_200px]">
           <div
             className="relative rounded-2xl backdrop-blur-xl transition-all focus-within:border-[#445DA3]/60"
             style={{
@@ -232,6 +233,29 @@ function CasosPage() {
               <option value="" style={{ background: CARD }}>Todos los estados</option>
               {ESTADOS.map((s) => (
                 <option key={s} value={s} style={{ background: CARD }}>{ESTADO_THEME[s].label}</option>
+              ))}
+            </select>
+            <ArrowRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none" style={{ color: TEXT2 }} />
+          </div>
+
+          <div
+            className="relative rounded-2xl backdrop-blur-xl"
+            style={{
+              background: `linear-gradient(180deg, ${CARD}, ${CARD2})`,
+              border: `1px solid ${BORDER}`,
+              height: 60,
+            }}
+          >
+            <Flag size={14} className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: TEXT2 }} />
+            <select
+              value={etapa}
+              onChange={(e) => setEtapa(e.target.value as EtapaPipelineId | "")}
+              className="w-full h-full bg-transparent pl-10 pr-8 text-sm outline-none appearance-none cursor-pointer font-medium"
+              style={{ color: "#fff" }}
+            >
+              <option value="" style={{ background: CARD }}>Todas las etapas</option>
+              {ETAPAS_PIPELINE.map((e) => (
+                <option key={e.id} value={e.id} style={{ background: CARD }}>E{e.numero} · {e.titulo}</option>
               ))}
             </select>
             <ArrowRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none" style={{ color: TEXT2 }} />
