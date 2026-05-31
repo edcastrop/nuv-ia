@@ -288,6 +288,41 @@ function PipelinePage() {
   // P28 — Vistos recientemente (localStorage). Se refresca al cargar y al refrescar.
   const recents = useMemo(() => getRecentCases(), [lastUpdated]);
 
+  // P30 — Embudo ejecutivo E1→E14: conteo por etapa + conversión acumulada vs E1.
+  const [showFunnel, setShowFunnel] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem("nuvex.pipeline.funnel") !== "0";
+  });
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("nuvex.pipeline.funnel", showFunnel ? "1" : "0");
+    }
+  }, [showFunnel]);
+
+  const funnel = useMemo(() => {
+    const counts = ETAPAS_PIPELINE.map((e) => ({
+      id: e.id,
+      numero: e.numero,
+      titulo: e.titulo,
+      count: (grupos.get(e.id) ?? []).length,
+    }));
+    // "Pasaron por la etapa" = casos en esa etapa o más adelante.
+    let acumDesdeFin = 0;
+    const acum = [...counts].reverse().map((c) => {
+      acumDesdeFin += c.count;
+      return { ...c, passed: acumDesdeFin };
+    }).reverse();
+    const base = acum[0]?.passed ?? 0;
+    return acum.map((c, i) => {
+      const prev = acum[i - 1]?.passed ?? base;
+      return {
+        ...c,
+        pct: base > 0 ? Math.round((c.passed / base) * 100) : 0,
+        drop: prev > 0 ? Math.round(((prev - c.passed) / prev) * 100) : 0,
+      };
+    });
+  }, [grupos]);
+
 
 
 
@@ -424,6 +459,74 @@ function PipelinePage() {
               </button>
             );
           })}
+        </div>
+      )}
+
+      {!loading && funnel[0]?.passed > 0 && (
+        <div className="rounded-2xl border border-[#E3E7EE] bg-white p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-[#445DA3]">
+                Embudo ejecutivo · E1 → E14
+              </div>
+              <div className="text-[11px] text-[#242424]/60">
+                Conversión acumulada de casos visibles vs. E1 ({funnel[0].passed}).
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowFunnel((v) => !v)}
+              className="h-7 rounded-md border border-[#E3E7EE] bg-white px-2 text-[11px] text-[#445DA3] hover:bg-[#F1F3F8]"
+            >
+              {showFunnel ? "Ocultar" : "Mostrar"}
+            </button>
+          </div>
+          {showFunnel && (
+            <div className="space-y-1">
+              {funnel.map((f) => {
+                const widthPct = Math.max(2, f.pct);
+                const isStuck = f.drop >= 30 && f.numero > 1;
+                return (
+                  <div key={f.id} className="grid grid-cols-[64px_1fr_140px] items-center gap-2">
+                    <div className="text-[11px] font-semibold text-[#0A1226]">
+                      E{f.numero}
+                    </div>
+                    <div className="relative h-5 overflow-hidden rounded bg-[#F1F3F8]">
+                      <div
+                        className={`h-full rounded transition-all ${
+                          isStuck ? "bg-rose-400" : "bg-[#445DA3]"
+                        }`}
+                        style={{ width: `${widthPct}%` }}
+                        title={`${f.passed} casos · ${f.pct}%`}
+                      />
+                      <div className="pointer-events-none absolute inset-0 flex items-center px-2 text-[10px] font-medium text-white mix-blend-difference">
+                        {f.titulo}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-end gap-2 text-[11px] tabular-nums">
+                      <span className="font-semibold text-[#0A1226]">{f.passed}</span>
+                      <span className="text-[#242424]/50">·</span>
+                      <span className="text-[#242424]/70">{f.pct}%</span>
+                      {f.numero > 1 && (
+                        <span
+                          className={`rounded px-1 py-0.5 text-[9px] font-semibold ${
+                            f.drop >= 30
+                              ? "bg-rose-50 text-rose-700"
+                              : f.drop > 0
+                              ? "bg-amber-50 text-amber-700"
+                              : "bg-emerald-50 text-emerald-700"
+                          }`}
+                          title="Caída vs. etapa anterior"
+                        >
+                          -{f.drop}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
