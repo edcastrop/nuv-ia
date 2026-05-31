@@ -241,7 +241,7 @@ function AccesosPage() {
                       </div>
                       <div className="text-xs text-[#242424]/60 truncate">{u.email}</div>
                       <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-[#242424]/70">
-                        <div><b className="font-semibold text-[#242424]/55 uppercase tracking-wider">Rol solicitado:</b> {u.rol_solicitado || "—"}</div>
+                        <div><b className="font-semibold text-[#242424]/55 uppercase tracking-wider">Rol solicitado:</b> {roleLabel(u.rol_solicitado)}</div>
                         <div><b className="font-semibold text-[#242424]/55 uppercase tracking-wider">Teléfono:</b> {u.telefono_registro || "—"}</div>
                         <div><b className="font-semibold text-[#242424]/55 uppercase tracking-wider">Ciudad:</b> {u.ciudad_registro || "—"}</div>
                         <div><b className="font-semibold text-[#242424]/55 uppercase tracking-wider">Equipo:</b> {u.equipo_registro || "—"}</div>
