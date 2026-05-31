@@ -224,8 +224,10 @@ function CasosPage() {
               <Plus size={18} className="relative" />
               <span className="relative">Nueva Simulación</span>
             </Link>
+            </div>
           </div>
         </section>
+
 
         {/* KPIs */}
         <section className="grid gap-4 md:grid-cols-2">
