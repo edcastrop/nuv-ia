@@ -102,7 +102,7 @@ function SuperAdminDashboard() {
             <Stat label="Pendiente contratación" value={pendContratacion.toString()} />
             <Stat label="Pendiente radicación" value={pendRadicacion.toString()} />
             <Stat label="En mora (>30d)" value={enMora.toString()} />
-            <Stat label="Licenciados activos" value={porLicenciado.size.toString()} />
+            <Stat label="Analistas F. Comerciales activos" value={porLicenciado.size.toString()} />
           </div>
 
           <Card>
