@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
-import { Loader2, Flag, Clock, AlertTriangle } from "lucide-react";
+import { Loader2, Flag, Clock, AlertTriangle, RefreshCw } from "lucide-react";
 import { listExpedientes, type Expediente } from "@/lib/expedientes";
 import {
   ETAPAS_PIPELINE,
@@ -54,6 +54,9 @@ function PipelinePage() {
   const navigate = useNavigate({ from: "/pipeline" });
   const [rows, setRows] = useState<Expediente[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<number>(() => Date.now());
+  const [nowTick, setNowTick] = useState<number>(() => Date.now());
   const [qLocal, setQLocal] = useState(search.q);
 
   const { q, banco, stuck: soloStuck, fase } = search;
@@ -85,11 +88,30 @@ function PipelinePage() {
   };
 
 
+  const cargar = async (silent = false) => {
+    if (silent) setRefreshing(true);
+    try {
+      const data = await listExpedientes();
+      setRows(data);
+      setLastUpdated(Date.now());
+    } finally {
+      if (silent) setRefreshing(false);
+      else setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    listExpedientes()
-      .then(setRows)
-      .finally(() => setLoading(false));
+    cargar(false);
+    const auto = setInterval(() => cargar(true), 60_000);
+    const tick = setInterval(() => setNowTick(Date.now()), 15_000);
+    return () => {
+      clearInterval(auto);
+      clearInterval(tick);
+    };
   }, []);
+
+  const hace = Math.max(0, Math.round((nowTick - lastUpdated) / 1000));
+  const haceLabel = hace < 60 ? `${hace}s` : `${Math.round(hace / 60)}min`;
 
 
   const bancos = useMemo(() => {
@@ -220,6 +242,15 @@ function PipelinePage() {
               <option key={b} value={b}>{b}</option>
             ))}
           </select>
+          <button
+            onClick={() => cargar(true)}
+            disabled={loading || refreshing}
+            title={`Actualizado hace ${haceLabel}`}
+            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#E3E7EE] bg-white px-2 text-[12px] text-[#445DA3] hover:bg-[#F1F3F8] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+            <span className="text-[#242424]/60">hace {haceLabel}</span>
+          </button>
           <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-[#E3E7EE] bg-white px-2 py-1 text-[12px] text-[#0A1226]">
             <input
               type="checkbox"
