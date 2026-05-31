@@ -808,15 +808,15 @@ function AccesosPage() {
             El usuario recuperará acceso completo a NUVEX conservando todo su historial (auditoría, academia, expedientes, comisiones, colaboración).
           </p>
           <div className="mb-3 grid grid-cols-2 gap-2 text-[11px]">
-            <div className="rounded-md bg-[#FAFBFD] border border-[#E3E7EE] p-2"><b className="block uppercase tracking-wider text-[#242424]/55">Rol anterior</b>{solSel.rol_actual || "—"}</div>
-            <div className="rounded-md bg-[#FAFBFD] border border-[#E3E7EE] p-2"><b className="block uppercase tracking-wider text-[#242424]/55">Rol solicitado</b>{solSel.rol_solicitado || "—"}</div>
+            <div className="rounded-md bg-[#FAFBFD] border border-[#E3E7EE] p-2"><b className="block uppercase tracking-wider text-[#242424]/55">Rol anterior</b>{roleLabel(solSel.rol_actual)}</div>
+            <div className="rounded-md bg-[#FAFBFD] border border-[#E3E7EE] p-2"><b className="block uppercase tracking-wider text-[#242424]/55">Rol solicitado</b>{roleLabel(solSel.rol_solicitado)}</div>
           </div>
           <label className="block mb-3">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Rol a asignar al reactivar</span>
             <select value={solRolAsign} onChange={(e) => setSolRolAsign(e.target.value as AppRole | "")}
               className="mt-1.5 w-full rounded-[10px] border border-[#E1E5EE] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#445DA3]">
               <option value="">— Mantener / sin rol —</option>
-              {ROLES_DISPONIBLES.map((r) => <option key={r} value={r}>{r}</option>)}
+              {ROLES_DISPONIBLES.map((r) => <option key={r} value={r}>{roleLabel(r)}</option>)}
             </select>
           </label>
           <label className="block mb-3">
