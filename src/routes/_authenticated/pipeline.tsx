@@ -14,6 +14,7 @@ import {
   type EtapaPipelineId,
 } from "@/lib/pipelineEtapas";
 import { Card } from "@/components/nuvex/ui";
+import { BANCOS } from "@/components/nuvex/constants";
 
 const FASE_IDS = ["comercial", "operativa", "banco", "cobro", "fin"] as const;
 type FaseId = (typeof FASE_IDS)[number];
