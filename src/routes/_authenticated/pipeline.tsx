@@ -88,6 +88,8 @@ function PipelinePage() {
     navigate({ search: (prev: PipelineSearch) => ({ ...prev, stuck: v }), replace: true });
   const setMios = (v: boolean) =>
     navigate({ search: (prev: PipelineSearch) => ({ ...prev, mios: v }), replace: true });
+  const setAsesor = (v: string) =>
+    navigate({ search: (prev: PipelineSearch) => ({ ...prev, asesor: v }), replace: true });
   const toggleFase = (id: FaseId) =>
     navigate({
       search: (prev: PipelineSearch) => ({ ...prev, fase: prev.fase === id ? "" : id }),
@@ -95,7 +97,7 @@ function PipelinePage() {
     });
   const clearAll = () => {
     setQLocal("");
-    navigate({ search: { q: "", banco: "", stuck: false, fase: "", mios: false }, replace: true });
+    navigate({ search: { q: "", banco: "", stuck: false, fase: "", mios: false, asesor: "" }, replace: true });
   };
 
   // P29 — Atajos de teclado: "/" enfoca buscador, "m" toggle Mis casos, "s" toggle Stuck, Esc limpia búsqueda
