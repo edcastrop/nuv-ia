@@ -583,12 +583,14 @@ const blobToBase64 = (blob: Blob) =>
 
 function SendChecklistModal({
   expediente,
+  simExpediente,
   docs,
   docsConEstado,
   onClose,
   onSent,
 }: {
   expediente: ExpedienteMaestro;
+  simExpediente: Expediente | null;
   docs: DocRequerido[];
   docsConEstado: Array<DocRequerido & { estado: EstadoDoc }>;
   onClose: () => void;
@@ -606,20 +608,48 @@ function SendChecklistModal({
   const [asunto, setAsunto] = useState(defaults.asunto);
   const [cuerpo, setCuerpo] = useState(defaults.cuerpo);
 
+  // Default de "Cuotas a eliminar" derivado del caso:
+  // plazoOriginal − nuevoPlazo (propuesta_data). Editable por el usuario.
+  const cuotasDefault = useMemo(() => {
+    const plazoOrigStr = (expediente.credito?.plazoOriginal || "").trim();
+    const plazoOrig = parseInt(plazoOrigStr.replace(/[^\d]/g, ""), 10);
+    const propuesta = (simExpediente?.propuesta_data ?? {}) as Partial<PropuestaData>;
+    const nuevoPlazo = Number(propuesta.nuevoPlazo ?? 0);
+    if (!Number.isFinite(plazoOrig) || !Number.isFinite(nuevoPlazo) || nuevoPlazo <= 0) return "";
+    const diff = plazoOrig - nuevoPlazo;
+    return diff > 0 ? String(diff) : "";
+  }, [expediente.credito?.plazoOriginal, simExpediente]);
+
   // Solicitud Cambio de Plazos (campos opcionales editables)
-  const [cuotasAEliminar, setCuotasAEliminar] = useState("");
+  const [cuotasAEliminar, setCuotasAEliminar] = useState(cuotasDefault);
+  useEffect(() => {
+    // Si el usuario aún no escribió nada y aparece un default tardío, aplicarlo.
+    setCuotasAEliminar((prev) => (prev ? prev : cuotasDefault));
+  }, [cuotasDefault]);
   const [adjuntarSolicitud, setAdjuntarSolicitud] = useState(true);
   const [adjuntarChecklist, setAdjuntarChecklist] = useState(true);
 
-  // Apoderado NUVEX sugerido por banco (mismo mecanismo que el Poder Especial)
+  // Apoderado NUVEX: usa el guardado para el caso si existe (selección manual
+  // del editor jurídico). Si no, cae al sugerido por banco.
   const [apoderados, setApoderados] = useState<ApoderadoNuvex[]>([]);
   useEffect(() => {
     listApoderados(true).then(setApoderados).catch(() => setApoderados([]));
   }, []);
-  const apoderadoSugerido = useMemo(
-    () => seleccionarApoderado(expediente.credito?.banco ?? "", apoderados).apoderado,
-    [expediente.credito?.banco, apoderados],
+  const apoderadoGuardadoId = useMemo(
+    () => readApoderadoNuvexIdExpediente(
+      (simExpediente as unknown as { cliente_data?: unknown } | null)?.cliente_data,
+    ),
+    [simExpediente],
   );
+  const apoderadoSugerido = useMemo(() => {
+    if (apoderadoGuardadoId) {
+      const manual = apoderados.find((a) => a.id === apoderadoGuardadoId);
+      if (manual) return manual;
+    }
+    return seleccionarApoderado(expediente.credito?.banco ?? "", apoderados).apoderado;
+  }, [apoderadoGuardadoId, expediente.credito?.banco, apoderados]);
+  const apoderadoEsManual = !!apoderadoGuardadoId &&
+    !!apoderados.find((a) => a.id === apoderadoGuardadoId);
 
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
