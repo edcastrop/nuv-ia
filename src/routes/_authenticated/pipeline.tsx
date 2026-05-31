@@ -54,6 +54,9 @@ function PipelinePage() {
   const navigate = useNavigate({ from: "/pipeline" });
   const [rows, setRows] = useState<Expediente[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<number>(() => Date.now());
+  const [nowTick, setNowTick] = useState<number>(() => Date.now());
   const [qLocal, setQLocal] = useState(search.q);
 
   const { q, banco, stuck: soloStuck, fase } = search;
