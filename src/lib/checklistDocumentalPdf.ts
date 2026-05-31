@@ -59,17 +59,19 @@ export async function generarChecklistDocumentalPdf(
   );
 
   // Tabla simple
+  const contentLeft = LAYOUT.marginX;
+  const contentRight = LAYOUT.pageW - LAYOUT.marginX;
   const colX = {
-    n: LAYOUT.contentLeft,
-    doc: LAYOUT.contentLeft + 22,
-    tipo: LAYOUT.contentLeft + 290,
-    estado: LAYOUT.contentLeft + 360,
+    n: contentLeft,
+    doc: contentLeft + 22,
+    tipo: contentLeft + 290,
+    estado: contentLeft + 360,
   };
   const rowH = 18;
 
   function drawHeader(yy: number): number {
     pdf.setFillColor(245, 248, 252);
-    pdf.rect(LAYOUT.contentLeft, yy - 12, LAYOUT.contentRight - LAYOUT.contentLeft, rowH, "F");
+    pdf.rect(contentLeft, yy - 12, contentRight - contentLeft, rowH, "F");
     pdf.setTextColor(68, 93, 163);
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(9);
