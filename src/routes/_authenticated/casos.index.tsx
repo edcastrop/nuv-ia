@@ -458,7 +458,7 @@ function KpiCard({
   );
 }
 
-function ExpedienteCard({ r }: { r: Expediente }) {
+function ExpedienteCard({ r, isDup = false }: { r: Expediente; isDup?: boolean }) {
   const theme = ESTADO_THEME[r.estado];
   const aColor = avatarColor(r.cliente_nombre);
   const initial = (r.cliente_nombre || "?").trim().charAt(0).toUpperCase();
