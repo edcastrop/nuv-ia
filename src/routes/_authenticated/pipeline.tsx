@@ -450,6 +450,9 @@ function PipelinePage() {
                             <div className="mt-0.5 truncate text-[11px] text-[#242424]/60">
                               {r.banco ?? "—"} · {r.cedula ?? "s/cédula"}
                             </div>
+                            <div className="mt-0.5 text-[10px] text-[#242424]/45">
+                              act. {r.updated_at ? new Date(r.updated_at).toLocaleDateString("es-CO", { day: "2-digit", month: "short" }) : "—"}
+                            </div>
                             <div className="mt-2 flex items-center justify-between">
                               <span className="inline-flex items-center gap-1 rounded bg-[#F1F3F8] px-1.5 py-0.5 text-[10px] font-medium text-[#445DA3]">
                                 <Flag className="h-3 w-3" /> {r.estado}
