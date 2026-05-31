@@ -88,11 +88,30 @@ function PipelinePage() {
   };
 
 
+  const cargar = async (silent = false) => {
+    if (silent) setRefreshing(true);
+    try {
+      const data = await listExpedientes();
+      setRows(data);
+      setLastUpdated(Date.now());
+    } finally {
+      if (silent) setRefreshing(false);
+      else setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    listExpedientes()
-      .then(setRows)
-      .finally(() => setLoading(false));
+    cargar(false);
+    const auto = setInterval(() => cargar(true), 60_000);
+    const tick = setInterval(() => setNowTick(Date.now()), 15_000);
+    return () => {
+      clearInterval(auto);
+      clearInterval(tick);
+    };
   }, []);
+
+  const hace = Math.max(0, Math.round((nowTick - lastUpdated) / 1000));
+  const haceLabel = hace < 60 ? `${hace}s` : `${Math.round(hace / 60)}min`;
 
 
   const bancos = useMemo(() => {
