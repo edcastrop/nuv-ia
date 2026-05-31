@@ -196,6 +196,7 @@ function PipelinePage() {
       { id: "cobro",     label: "Cobro · E9-13",    etapas: ["informe", "cuenta", "pago", "comision", "paz_salvo"], count: 0, color: "bg-emerald-50 text-emerald-700 ring-emerald-200" },
       { id: "fin",       label: "Finalizado · E14", etapas: ["finalizado"], count: 0, color: "bg-zinc-100 text-zinc-700 ring-zinc-200" },
     ];
+    let honorarios = 0;
     ETAPAS_PIPELINE.forEach((etapa) => {
       const items = grupos.get(etapa.id) ?? [];
       const umbral = UMBRAL_DIAS[etapa.id] ?? 0;
@@ -203,6 +204,7 @@ function PipelinePage() {
         const d = diasDesde(r.updated_at);
         total += 1;
         totalDias += d;
+        honorarios += Number(r.honorarios_final ?? 0);
         if (umbral > 0 && d > umbral) estancados += 1;
       });
       const fase = fases.find((f) => f.etapas.includes(etapa.id));
@@ -212,9 +214,26 @@ function PipelinePage() {
       total,
       estancados,
       promedio: total > 0 ? Math.round(totalDias / total) : 0,
+      honorarios,
       fases,
     };
   }, [grupos]);
+
+  // P24 — Detección de duplicados por cédula (cliente con varios expedientes activos).
+  const dupCedulas = useMemo(() => {
+    const counts = new Map<string, number>();
+    rows.forEach((r) => {
+      const c = (r.cedula ?? "").trim();
+      if (!c) return;
+      counts.set(c, (counts.get(c) ?? 0) + 1);
+    });
+    const s = new Set<string>();
+    counts.forEach((n, c) => { if (n > 1) s.add(c); });
+    return s;
+  }, [rows]);
+
+  const fmtCOP = (n: number) =>
+    new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 
 
   return (
