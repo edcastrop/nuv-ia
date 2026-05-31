@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { ClientData } from "@/components/nuvex/ClientFields";
+import { estadosParaEtapa, type EtapaPipelineId } from "@/lib/pipelineEtapas";
 
 export type EstadoExpediente =
   | "SIMULADO"
