@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/nuvex/ui";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole, type AppRole } from "@/hooks/useUserRole";
+import { roleLabel } from "@/lib/roleLabels";
 import { Save, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/super-admin/permisos")({
