@@ -469,7 +469,7 @@ function DetalleCuentaCobro() {
                   onClick={onDevolver}
                   disabled={busy}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-[#8A5A00] px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
-                  title="Devolver al licenciado para corrección (motivo obligatorio ≥10 caracteres)"
+                  title="Devolver al Analista Financiero Comercial para corrección (motivo obligatorio ≥10 caracteres)"
                 >
                   <RotateCcw size={13} /> Devolver para corrección
                 </button>
