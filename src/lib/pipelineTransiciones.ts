@@ -8,6 +8,7 @@ import {
   type CasoEstado,
   type AccionOrigen,
 } from "@/lib/casoEstados";
+import { supabase } from "@/integrations/supabase/client";
 import {
   computeEtapaActual,
   indexOfEtapa,
@@ -32,7 +33,8 @@ export interface TransicionResult {
  * Los retrocesos siempre se permiten (con auditoría) salvo desde "finalizado".
  */
 const MAX_AVANCE_POR_ETAPA: Partial<Record<EtapaPipelineId, number>> = {
-  lead: 1,
+  // Lead permite saltar directo a proyección al guardar una simulación.
+  lead: 2,
   extracto: 1,
   proyeccion: 1,
   presentacion: 1,
@@ -150,4 +152,33 @@ export async function cambiarEstadoValidado(opts: {
     opts.submotivo,
   );
   return r;
+}
+
+/**
+ * Convenience: como cambiarEstadoCaso pero lee primero el estado actual
+ * del expediente y valida la transición contra las reglas del pipeline.
+ * Lanza TransicionInvalidaError si el avance no está permitido.
+ */
+export async function cambiarEstadoConValidacion(
+  expedienteId: string,
+  nuevoEstado: CasoEstado,
+  accion: AccionOrigen,
+  observacion?: string,
+  submotivo?: string,
+): Promise<TransicionResult> {
+  const { data, error } = await supabase
+    .from("expedientes")
+    .select("estado_caso" as never)
+    .eq("id", expedienteId)
+    .single();
+  if (error) throw error;
+  const anterior = (data as unknown as { estado_caso?: CasoEstado })?.estado_caso ?? null;
+  return cambiarEstadoValidado({
+    expedienteId,
+    estadoAnterior: anterior,
+    estadoNuevo: nuevoEstado,
+    accion,
+    observacion,
+    submotivo,
+  });
 }

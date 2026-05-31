@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { upsertExpediente, type UpsertPayload, type Expediente } from "@/lib/expedientes";
-import { cambiarEstadoCaso } from "@/lib/casoEstados";
+import { cambiarEstadoConValidacion } from "@/lib/pipelineTransiciones";
 import { NUVEX } from "./constants";
 import { CasoCreadoModal } from "./CasoCreadoModal";
 
@@ -28,7 +28,7 @@ export function SaveExpedienteButton({
       setMsg(expedienteId ? "Expediente actualizado" : "Expediente guardado");
       // Disparador automático: simulación guardada → estado "simulado"
       if (wasNew) {
-        try { await cambiarEstadoCaso(e.id, "simulado", "simulacion_guardada"); } catch (err) { console.warn("[estado] simulado", err); }
+        try { await cambiarEstadoConValidacion(e.id, "simulado", "simulacion_guardada"); } catch (err) { console.warn("[estado] simulado", err); }
       }
       onSaved?.(e);
       if (wasNew) setCreado(e);

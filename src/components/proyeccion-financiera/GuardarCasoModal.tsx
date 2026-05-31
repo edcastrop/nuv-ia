@@ -3,7 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { X, FolderPlus, Loader2, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { upsertExpediente } from "@/lib/expedientes";
-import { cambiarEstadoCaso } from "@/lib/casoEstados";
+import { cambiarEstadoConValidacion } from "@/lib/pipelineTransiciones";
 import { defaultClient } from "@/components/nuvex/ClientFields";
 import { BANCOS } from "@/components/nuvex/constants";
 import type {
@@ -186,7 +186,7 @@ export function GuardarCasoModal({ open, onClose, autoSave = false, input, resul
       });
 
       try {
-        await cambiarEstadoCaso(e.id, "simulado", "simulacion_guardada");
+        await cambiarEstadoConValidacion(e.id, "simulado", "simulacion_guardada");
       } catch (err) {
         console.warn("[estado]", err);
       }
