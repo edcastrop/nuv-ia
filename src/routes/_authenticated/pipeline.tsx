@@ -95,6 +95,38 @@ function PipelinePage() {
     navigate({ search: { q: "", banco: "", stuck: false, fase: "", mios: false }, replace: true });
   };
 
+  // P29 — Atajos de teclado: "/" enfoca buscador, "m" toggle Mis casos, "s" toggle Stuck, Esc limpia búsqueda
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      const isTyping =
+        tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target?.isContentEditable;
+
+      if (e.key === "Escape" && target === searchInputRef.current) {
+        setQLocal("");
+        navigate({ search: (prev: PipelineSearch) => ({ ...prev, q: "" }), replace: true });
+        return;
+      }
+      if (isTyping) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      if (e.key === "/") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+      } else if (e.key === "m" || e.key === "M") {
+        e.preventDefault();
+        setMios(!mios);
+      } else if (e.key === "s" || e.key === "S") {
+        e.preventDefault();
+        setSoloStuck(!soloStuck);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mios, soloStuck, navigate]);
+
 
 
   const cargar = async (silent = false) => {
