@@ -23,18 +23,22 @@ export function useEstadoSugerido(expedienteId: string | undefined | null, onCha
     if (!expedienteId || !pendiente) return;
     try {
       await cambiarEstadoConValidacion(expedienteId, pendiente.estado, pendiente.accion, observacion || undefined, submotivo);
+      toast.success("Estado del caso actualizado");
       onChanged?.();
     } catch (err) {
       if (err instanceof TransicionInvalidaError) {
         console.warn("[pipeline] transición bloqueada:", err.message);
-        if (typeof window !== "undefined") window.alert(err.message);
+        toast.error("Transición no permitida", { description: err.message, duration: 6000 });
       } else {
-        throw err;
+        const msg = err instanceof Error ? err.message : "No se pudo cambiar el estado del caso";
+        console.error("[pipeline] error cambiando estado:", err);
+        toast.error("Error al cambiar el estado", { description: msg, duration: 7000 });
       }
     } finally {
       setPendiente(null);
     }
   }, [expedienteId, pendiente, onChanged]);
+
 
   const cancelar = useCallback(() => setPendiente(null), []);
 
