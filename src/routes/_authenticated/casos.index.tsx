@@ -105,12 +105,29 @@ const SLA_COLORS: Record<SlaNivel, { bg: string; fg: string; border: string }> =
 };
 
 function CasosPage() {
-  const [search, setSearch] = useState("");
-  const [estado, setEstado] = useState<EstadoExpediente | "">("");
-  const [etapa, setEtapa] = useState<EtapaPipelineId | "">("");
+  type CasosSearch = z.infer<typeof casosSearchSchema>;
+  const urlSearch = Route.useSearch();
+  const navigate = useNavigate({ from: "/casos" });
+  const { q: search, estado, etapa } = urlSearch;
+  const [qLocal, setQLocal] = useState(search);
   const [rows, setRows] = useState<Expediente[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+
+  // Debounce text input → URL
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (qLocal !== search) {
+        navigate({ search: (prev: CasosSearch) => ({ ...prev, q: qLocal }), replace: true });
+      }
+    }, 250);
+    return () => clearTimeout(t);
+  }, [qLocal, search, navigate]);
+
+  const setEstado = (v: EstadoExpediente | "") =>
+    navigate({ search: (prev: CasosSearch) => ({ ...prev, estado: v }), replace: true });
+  const setEtapa = (v: EtapaPipelineId | "") =>
+    navigate({ search: (prev: CasosSearch) => ({ ...prev, etapa: v }), replace: true });
 
   useEffect(() => {
     let cancel = false;
