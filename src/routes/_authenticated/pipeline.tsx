@@ -190,6 +190,7 @@ function PipelinePage() {
     const uid = user?.id ?? "";
     return rows.filter((r) => {
       if (mios && uid && r.asesor_id !== uid) return false;
+      if (asesor && r.asesor_id !== asesor) return false;
       if (banco && r.banco !== banco) return false;
       if (term) {
         const hay = `${r.cliente_nombre} ${r.cedula ?? ""} ${r.numero_credito ?? ""} ${r.banco ?? ""}`.toLowerCase();
@@ -197,7 +198,7 @@ function PipelinePage() {
       }
       return true;
     });
-  }, [rows, q, banco, mios, user?.id]);
+  }, [rows, q, banco, mios, asesor, user?.id]);
 
   const grupos = useMemo(() => {
     const m = new Map<EtapaPipelineId, Expediente[]>();
