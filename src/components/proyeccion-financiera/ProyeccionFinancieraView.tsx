@@ -16,6 +16,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { CitySelect } from "@/components/ui/CitySelect";
 import {
   Activity,
   BarChart3,
@@ -887,12 +888,10 @@ export function ProyeccionFinancieraView() {
                         onChange={(v) => upd("correo", v)}
                         placeholder="cliente@correo.com"
                       />
-                      <Field
-                        label="Ciudad"
-                        value={input.ciudad || ""}
-                        onChange={(v) => upd("ciudad", v)}
-                        placeholder="Bogotá"
-                      />
+                      <label className="group flex flex-col gap-1.5">
+                        <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-white/40">Ciudad</span>
+                        <CitySelect value={input.ciudad || ""} onChange={(v) => upd("ciudad", v)} placeholder="Selecciona municipio…" />
+                      </label>
                     </div>
                   </div>
                 </Surface>

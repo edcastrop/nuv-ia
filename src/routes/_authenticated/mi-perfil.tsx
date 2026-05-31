@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Card, TextField, SelectField } from "@/components/nuvex/ui";
+import { CityField } from "@/components/ui/CityField";
+import { cityDepartment } from "@/lib/colombiaCities";
 import { UserAvatar, clearAvatarCache } from "@/components/nuvex/UserAvatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole, canManageFinanzas } from "@/hooks/useUserRole";
@@ -249,8 +251,16 @@ function MiPerfilPage() {
           <SelectField label="Tipo documento" value={form.tipo_documento ?? ""} onChange={(v) => upd("tipo_documento", v)} options={["CC","CE","PA","NIT","TI"]} />
           <TextField label="Número documento" value={form.numero_documento ?? ""} onChange={(v) => upd("numero_documento", v)} />
           <TextField label="País *" value={form.pais ?? ""} onChange={(v) => upd("pais", v)} />
-          <TextField label="Departamento *" value={form.departamento ?? ""} onChange={(v) => upd("departamento", v)} />
-          <TextField label="Ciudad *" value={form.ciudad ?? ""} onChange={(v) => upd("ciudad", v)} />
+          <TextField label="Departamento *" value={form.departamento ?? ""} onChange={(v) => upd("departamento", v)} hint="Se completa automáticamente al elegir la ciudad" />
+          <CityField
+            label="Ciudad *"
+            value={form.ciudad ?? ""}
+            onChange={(v) => {
+              const dep = cityDepartment(v);
+              setForm((prev) => ({ ...prev, ciudad: v, ...(dep ? { departamento: dep } : {}) }));
+            }}
+            required
+          />
           <TextField label="Dirección" value={form.direccion ?? ""} onChange={(v) => upd("direccion", v)} className="sm:col-span-2" />
         </div>
       </Section>

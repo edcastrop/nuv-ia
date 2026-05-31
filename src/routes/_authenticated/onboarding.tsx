@@ -8,6 +8,8 @@ import {
   ClipboardCheck, PlayCircle, ArrowRight,
 } from "lucide-react";
 import { logOnboarding, updateOnboarding, profileIsComplete, type OnboardingProfile } from "@/lib/onboarding";
+import { CitySelect } from "@/components/ui/CitySelect";
+import { cityDepartment } from "@/lib/colombiaCities";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   component: OnboardingPage,
@@ -223,7 +225,17 @@ function StepPerfil({
       <div className="grid grid-cols-2 gap-4">
         <Field label="Nombre completo" value={f.nombre} onChange={(v) => setF({ ...f, nombre: v })} />
         <Field label="Celular" value={f.celular} onChange={(v) => setF({ ...f, celular: v })} />
-        <Field label="Ciudad" value={f.ciudad} onChange={(v) => setF({ ...f, ciudad: v })} />
+        <label className="block">
+          <span className="text-xs text-white/60 mb-1.5 block">Ciudad</span>
+          <CitySelect
+            value={f.ciudad}
+            onChange={(v) => {
+              const dep = cityDepartment(v);
+              setF({ ...f, ciudad: v, pais: f.pais || "Colombia", ...(dep ? { departamento: dep } : {}) });
+            }}
+            placeholder="Selecciona municipio…"
+          />
+        </label>
         <Field label="País" value={f.pais} onChange={(v) => setF({ ...f, pais: v })} />
       </div>
       <div className="mt-3 text-xs text-white/50">
