@@ -45,6 +45,7 @@ import {
 } from "@/lib/checklistDocumental";
 import { enviarChecklistCliente } from "@/lib/checklistEnvio.functions";
 import { generarSolicitudCambioPlazosPdf } from "@/lib/solicitudCambioPlazosPdf";
+import { generarChecklistDocumentalPdf } from "@/lib/checklistDocumentalPdf";
 
 
 interface Props {
@@ -550,6 +551,7 @@ export function ChecklistDocumental({ expediente }: Props) {
         <SendChecklistModal
           expediente={expediente}
           docs={docsParaSolicitar}
+          docsConEstado={docs.map((d) => ({ ...d, estado: effectiveEstado(d.id) }))}
           onClose={() => setSendOpen(false)}
           onSent={() => refresh()}
         />
@@ -576,11 +578,13 @@ const blobToBase64 = (blob: Blob) =>
 function SendChecklistModal({
   expediente,
   docs,
+  docsConEstado,
   onClose,
   onSent,
 }: {
   expediente: ExpedienteMaestro;
   docs: DocRequerido[];
+  docsConEstado: Array<DocRequerido & { estado: EstadoDoc }>;
   onClose: () => void;
   onSent: () => void;
 }) {
@@ -601,6 +605,7 @@ function SendChecklistModal({
   const [cuotaNueva, setCuotaNueva] = useState("");
   const [justificacion, setJustificacion] = useState("");
   const [adjuntarSolicitud, setAdjuntarSolicitud] = useState(true);
+  const [adjuntarChecklist, setAdjuntarChecklist] = useState(true);
 
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -645,6 +650,15 @@ function SendChecklistModal({
         attachments.push({
           filename: `NUVEX_Solicitud_Cambio_Plazos_${(expediente.cliente?.nombre || "cliente").replace(/\s+/g, "_")}.pdf`,
           contentBase64: await blobToBase64(pdfBlob),
+          contentType: "application/pdf",
+        });
+      }
+
+      if (adjuntarChecklist) {
+        const chkBlob = await generarChecklistDocumentalPdf(expediente, docsConEstado);
+        attachments.push({
+          filename: `NUVEX_Checklist_Documental_${(expediente.cliente?.nombre || "cliente").replace(/\s+/g, "_")}.pdf`,
+          contentBase64: await blobToBase64(chkBlob),
           contentType: "application/pdf",
         });
       }
@@ -788,6 +802,21 @@ function SendChecklistModal({
                 </label>
               </div>
             )}
+          </div>
+
+          {/* Checklist Documental (PDF) */}
+          <div className="rounded-lg border border-[#E3E7EE] bg-[#F7F9FB] p-3">
+            <label className="flex items-center gap-2 text-xs font-semibold text-[#242424]">
+              <input
+                type="checkbox"
+                checked={adjuntarChecklist}
+                onChange={(e) => setAdjuntarChecklist(e.target.checked)}
+              />
+              <Paperclip size={13} /> Adjuntar Checklist Documental (PDF)
+              <span className="ml-1 text-[10px] font-normal text-[#242424]/60">
+                · {docsConEstado.length} documento(s) con estado actual
+              </span>
+            </label>
           </div>
 
           {error && (
