@@ -302,7 +302,7 @@ export function MaestroEditor(p: Props) {
         </div>
       </Accordion>
 
-      <Accordion title="Datos del licenciado" subtitle="Profesional que autoriza la propuesta" defaultOpen={false}>
+      <Accordion title="Datos del Analista Financiero Comercial" subtitle="Profesional que autoriza la propuesta" defaultOpen={false}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <TextField label="Nombre" value={p.licenciado.nombre} onChange={(v) => p.onLicenciado(set(p.licenciado, "nombre", v))} />
           <TextField label="Cédula profesional" value={p.licenciado.cedulaProfesional} onChange={(v) => p.onLicenciado(set(p.licenciado, "cedulaProfesional", v))} />
