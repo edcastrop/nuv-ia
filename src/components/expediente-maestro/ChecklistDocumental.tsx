@@ -45,7 +45,7 @@ import {
 } from "@/lib/checklistDocumental";
 import { enviarChecklistCliente } from "@/lib/checklistEnvio.functions";
 import { generarSolicitudCambioPlazosPdf } from "@/lib/solicitudCambioPlazosPdf";
-import { generarChecklistDocumentalPdf } from "@/lib/checklistDocumentalPdf";
+import { generarChecklistDocumentalDocx } from "@/lib/checklistDocumentalDocx";
 
 
 interface Props {
@@ -655,11 +655,11 @@ function SendChecklistModal({
       }
 
       if (adjuntarChecklist) {
-        const chkBlob = await generarChecklistDocumentalPdf(expediente, docsConEstado);
+        const chkBlob = await generarChecklistDocumentalDocx(expediente, docsConEstado);
         attachments.push({
-          filename: `NUVEX_Checklist_Documental_${(expediente.cliente?.nombre || "cliente").replace(/\s+/g, "_")}.pdf`,
+          filename: `NUVEX_Checklist_Documental_${(expediente.cliente?.nombre || "cliente").replace(/\s+/g, "_")}.docx`,
           contentBase64: await blobToBase64(chkBlob),
-          contentType: "application/pdf",
+          contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         });
       }
 
