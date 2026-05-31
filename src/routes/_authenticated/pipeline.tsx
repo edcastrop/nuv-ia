@@ -56,7 +56,7 @@ function PipelinePage() {
   const [loading, setLoading] = useState(true);
   const [qLocal, setQLocal] = useState(search.q);
 
-  const { q, banco, stuck: soloStuck } = search;
+  const { q, banco, stuck: soloStuck, fase } = search;
 
   type PipelineSearch = z.infer<typeof pipelineSearchSchema>;
 
@@ -74,10 +74,16 @@ function PipelinePage() {
     navigate({ search: (prev: PipelineSearch) => ({ ...prev, banco: v }), replace: true });
   const setSoloStuck = (v: boolean) =>
     navigate({ search: (prev: PipelineSearch) => ({ ...prev, stuck: v }), replace: true });
+  const toggleFase = (id: FaseId) =>
+    navigate({
+      search: (prev: PipelineSearch) => ({ ...prev, fase: prev.fase === id ? "" : id }),
+      replace: true,
+    });
   const clearAll = () => {
     setQLocal("");
-    navigate({ search: { q: "", banco: "", stuck: false }, replace: true });
+    navigate({ search: { q: "", banco: "", stuck: false, fase: "" }, replace: true });
   };
+
 
   useEffect(() => {
     listExpedientes()
