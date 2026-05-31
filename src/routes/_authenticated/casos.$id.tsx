@@ -8,6 +8,7 @@ import { Card } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
 import { DocumentosLegales } from "@/components/expediente-maestro/DocumentosLegales";
 import { ModuloJuridico } from "@/components/expediente-maestro/ModuloJuridico";
+import { ChecklistDocumental } from "@/components/expediente-maestro/ChecklistDocumental";
 import { expedienteToMaestroLike } from "@/lib/expedienteMaestro";
 import { EstadoCasoBlock } from "@/components/expediente/EstadoCasoBlock";
 import { HistorialCaso } from "@/components/expediente/HistorialCaso";
@@ -145,6 +146,22 @@ function CasoDetail() {
             {maestroLike && (
               <ErrorBoundary fallback={<Card><div className="text-sm text-[#B42318]">No se pudo cargar el Módulo Jurídico.</div></Card>}>
                 <ModuloJuridico expediente={maestroLike} />
+              </ErrorBoundary>
+            )}
+            {maestroLike && (
+              <ErrorBoundary fallback={<Card><div className="text-sm text-[#B42318]">No se pudo cargar el Checklist Documental.</div></Card>}>
+                <Card>
+                  <div className="mb-3">
+                    <div className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: "#1F6F4A" }}>
+                      Etapa 7 · Radicación bancaria
+                    </div>
+                    <h3 className="text-lg font-semibold text-[#242424]">Checklist Documental Inteligente</h3>
+                    <p className="text-xs text-[#242424]/65 mt-0.5">
+                      Soportes que exige el banco para radicar el caso. La matriz se ajusta por banco, perfil laboral y condiciones del cliente.
+                    </p>
+                  </div>
+                  <ChecklistDocumental expediente={maestroLike} />
+                </Card>
               </ErrorBoundary>
             )}
             <VersionesDocumentalesBlock exp={exp} />
