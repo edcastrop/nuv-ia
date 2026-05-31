@@ -127,6 +127,29 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
     setTimeout(() => setSyncFlash(false), 2500);
   };
 
+  // Carga el perfil del asesor responsable del caso para completar nombre,
+  // correo y celular en la Ficha de Contratación (sección 6).
+  const [asesorProfile, setAsesorProfile] = useState<{ nombre: string; email: string; telefono: string } | null>(null);
+  useEffect(() => {
+    const aid = expediente.asesor_id;
+    if (!aid) { setAsesorProfile(null); return; }
+    let cancelled = false;
+    (async () => {
+      const { data: p } = await supabase
+        .from("profiles")
+        .select("nombre, email, correo_corporativo, celular, whatsapp")
+        .eq("id", aid)
+        .maybeSingle();
+      if (cancelled || !p) return;
+      setAsesorProfile({
+        nombre: (p.nombre || "").trim(),
+        email: (p.correo_corporativo || p.email || "").trim(),
+        telefono: (p.celular || p.whatsapp || "").trim(),
+      });
+    })();
+    return () => { cancelled = true; };
+  }, [expediente.asesor_id]);
+
   // `live` = expediente + override del padre + edición en vivo de Información Jurídica.
   // Esto garantiza que validación y plantilla del Poder vean los mismos valores que el editor.
   const live: ExpedienteMaestro = useMemo(() => {
@@ -139,8 +162,14 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
         ...ijCotitular,
         activo: ijCotitular.activo ?? base.cotitular?.activo ?? false,
       } as CotitularMaestro,
+      asesor: {
+        ...base.asesor,
+        nombre: asesorProfile?.nombre || base.asesor?.nombre || "",
+        email: asesorProfile?.email || base.asesor?.email || "",
+        telefono: asesorProfile?.telefono || base.asesor?.telefono || "",
+      },
     };
-  }, [expediente, liveOverride, ijTitular, ijCotitular]);
+  }, [expediente, liveOverride, ijTitular, ijCotitular, asesorProfile]);
 
 
 
