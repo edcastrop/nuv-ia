@@ -28,7 +28,12 @@ export function CanalChat({ canal }: { canal: Canal }) {
     return () => { active = false; unsub(); };
   }, [canal.id]);
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs.length]);
+  // Auto-scroll SOLO dentro del contenedor del chat (no afecta el scroll de la página).
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [msgs.length]);
 
   const onEnviar = async () => {
     if (!texto.trim() && adjs.length === 0) return;
