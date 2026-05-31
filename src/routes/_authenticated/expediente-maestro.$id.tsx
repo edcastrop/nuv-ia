@@ -56,7 +56,7 @@ function MaestroDetail() {
   useEffect(() => {
     setLoading(true);
     getMaestro(id)
-      .then((e) => {
+      .then(async (e) => {
         setExp(e);
         setCliente({ ...emptyCliente(), ...(e.cliente || {}) });
         setCotitular({ ...emptyCotitular(), ...(e.cotitular || {}) });
@@ -65,6 +65,19 @@ function MaestroDetail() {
         setAsesor({ ...emptyAsesor(), ...(e.asesor || {}) });
         setLicenciado({ ...emptyLicenciado(), ...(e.licenciado || {}) });
         setApoderado({ ...emptyApoderado(), ...(e.apoderado || {}) });
+        // Pipeline (P1): mejor-esfuerzo. Busca el expediente operativo más
+        // reciente por cédula para mostrar la etapa actual del caso.
+        // Cuando P4 unifique el modelo, esto se reemplaza por un join directo.
+        if (e.cedula_cliente) {
+          const { data: exps } = await supabase
+            .from("expedientes")
+            .select("estado_caso, updated_at")
+            .eq("cedula", e.cedula_cliente)
+            .order("updated_at", { ascending: false })
+            .limit(1);
+          const row = exps?.[0] as { estado_caso?: string | null } | undefined;
+          if (row) setEtapaActual(computeEtapaActual({ estado_caso: row.estado_caso }));
+        }
       })
       .catch((e) => setErr(e.message))
       .finally(() => setLoading(false));
