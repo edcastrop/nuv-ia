@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { Card } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
 import {
@@ -12,6 +13,11 @@ import {
   Undo2,
   History,
   ShieldCheck,
+  Paperclip,
+  Loader2,
+  X,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import type { ExpedienteMaestro } from "@/lib/expedienteMaestro";
 import {
@@ -22,9 +28,7 @@ import {
   FLAGS_DEFAULT,
   loadChecklistRows,
   upsertChecklistRow,
-  registrarEnvioChecklist,
   buildEmailDefaults,
-  buildMailto,
   loadAuditoriaRows,
   insertAuditoriaRows,
   loadValidacion,
@@ -39,6 +43,9 @@ import {
   type FlagsCliente,
   type PerfilLaboral,
 } from "@/lib/checklistDocumental";
+import { enviarChecklistCliente } from "@/lib/checklistEnvio.functions";
+import { generarSolicitudCambioPlazosPdf } from "@/lib/solicitudCambioPlazosPdf";
+
 
 interface Props {
   expediente: ExpedienteMaestro;
