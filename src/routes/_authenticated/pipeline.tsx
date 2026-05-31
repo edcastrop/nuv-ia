@@ -187,6 +187,13 @@ function PipelinePage() {
               Limpiar
             </button>
           )}
+          <button
+            onClick={exportarCSV}
+            disabled={loading || totalVisible === 0}
+            className="h-8 rounded-md border border-[#445DA3] bg-[#445DA3] px-2 text-[12px] font-medium text-white hover:bg-[#3a4f8c] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Exportar CSV
+          </button>
           <Link to="/casos" className="text-[12px] text-[#445DA3] hover:underline">
             Ver lista →
           </Link>
