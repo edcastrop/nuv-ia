@@ -5,7 +5,7 @@ import { CORPORATIVO } from "@/components/nuvex/constants";
 import {
   LayoutGrid, FolderKanban, BarChart3, LogOut, GraduationCap, LineChart,
   UserSquare2, Users, Shield, Wallet, Bell, CircleDollarSign, Landmark,
-  ClipboardCheck, Briefcase, ChevronLeft, ChevronRight, UserCircle, MessageSquare, BookUser, Sparkles, ShieldCheck,
+  ClipboardCheck, Briefcase, ChevronLeft, ChevronRight, UserCircle, MessageSquare, BookUser, Sparkles, ShieldCheck, Kanban,
 } from "lucide-react";
 import { UserAvatar } from "@/components/nuvex/UserAvatar";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -277,6 +277,7 @@ function AuthenticatedLayout() {
             { to: "/", label: "Simulador", Icon: LayoutGrid, exact: true },
             { to: "/nuvex-ia", label: "NUVEX IA", Icon: Sparkles },
             { to: "/casos", label: "Casos", Icon: FolderKanban },
+            { to: "/pipeline", label: "Pipeline", Icon: Kanban },
             { to: "/expediente-maestro", label: "Expediente", Icon: UserSquare2 },
             { to: "/proyeccion", label: "Proyección", Icon: LineChart },
             ...(hasAny("super_admin","admin","gerencia","licenciado","director_financiero_qa") ? [{ to: "/proyeccion-financiera", label: "Proyección Financiera", Icon: LineChart }] : []),
