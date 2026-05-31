@@ -350,6 +350,8 @@ function MaestroDetail() {
 
       <EtapasOperativas78910 expedienteId={id} etapaActual={etapaActual} />
 
+      <EtapasFinales11a14 etapaActual={etapaActual} />
+
 
 
       <MaestroEditor
