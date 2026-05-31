@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_authenticated/directorio")({
 type GroupKey = "licenciados" | "juridica" | "operaciones" | "contabilidad" | "qa" | "direccion" | "otros";
 
 const GROUPS: { key: GroupKey; label: string; match: (roles: string[], equipo: string | null) => boolean }[] = [
-  { key: "licenciados", label: "Licenciados", match: (r) => r.includes("licenciado") || r.includes("asesor") },
+  { key: "licenciados", label: "Analistas Financieros Comerciales", match: (r) => r.includes("licenciado") || r.includes("asesor") },
   { key: "juridica", label: "Jurídica", match: (r) => r.includes("juridica") || r.includes("director_juridico") || r.includes("apoderado") },
   { key: "operaciones", label: "Operaciones", match: (r) => r.includes("operaciones") || r.includes("auxiliar_operativo") },
   { key: "contabilidad", label: "Contabilidad", match: (r) => r.includes("contabilidad") || r.includes("cartera") },

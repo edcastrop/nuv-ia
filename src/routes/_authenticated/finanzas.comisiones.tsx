@@ -71,7 +71,7 @@ function FinanzasComisionesPage() {
             <thead className="bg-[#F7F9FB] text-[11px] uppercase tracking-wide text-[#242424]/60">
               <tr>
                 <th className="px-4 py-2 text-left">Número</th>
-                <th className="px-4 py-2 text-left">Licenciado</th>
+                <th className="px-4 py-2 text-left">Analista F. Comercial</th>
                 <th className="px-4 py-2 text-left">Estado</th>
                 <th className="px-4 py-2 text-right">Total</th>
                 <th className="px-4 py-2"></th>

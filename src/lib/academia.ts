@@ -8,7 +8,7 @@ export type LeccionTipo = "texto" | "pdf" | "video" | "imagen" | "checklist" | "
 export type PreguntaTipo = "unica" | "multiple" | "verdadero_falso";
 
 export const ROL_LABEL: Record<AcademiaRol, string> = {
-  licenciado: "Academia Licenciado",
+  licenciado: "Academia Analista Financiero Comercial",
   operaciones: "Academia Operaciones",
   juridica: "Academia Jurídica",
   contabilidad: "Academia Contabilidad",

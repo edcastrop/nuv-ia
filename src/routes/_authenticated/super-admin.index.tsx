@@ -102,7 +102,7 @@ function SuperAdminDashboard() {
             <Stat label="Pendiente contratación" value={pendContratacion.toString()} />
             <Stat label="Pendiente radicación" value={pendRadicacion.toString()} />
             <Stat label="En mora (>30d)" value={enMora.toString()} />
-            <Stat label="Licenciados activos" value={porLicenciado.size.toString()} />
+            <Stat label="Analistas F. Comerciales activos" value={porLicenciado.size.toString()} />
           </div>
 
           <Card>
@@ -118,11 +118,11 @@ function SuperAdminDashboard() {
           </Card>
 
           <Card>
-            <h3 className="mb-3 text-base font-semibold text-[#242424]">Expedientes por licenciado</h3>
+            <h3 className="mb-3 text-base font-semibold text-[#242424]">Expedientes por Analista Financiero Comercial</h3>
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-[11px] uppercase tracking-wider text-[#242424]/60">
-                  <th className="text-left py-2">Licenciado</th>
+                  <th className="text-left py-2">Analista F. Comercial</th>
                   <th className="text-right">Casos</th>
                   <th className="text-right">Honorarios</th>
                 </tr>

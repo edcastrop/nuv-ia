@@ -322,7 +322,7 @@ function DetalleCuentaCobro() {
             <div className="text-[11px] uppercase tracking-wide text-[#242424]/60">Cuenta de cobro</div>
             <div className="mt-1 font-mono text-lg font-semibold text-[#0A1226]">{cc.numero}</div>
             <div className="mt-1 text-[12px] text-[#242424]/70">
-              Licenciado: <b>{licenciado?.nombre ?? "—"}</b>
+              Analista F. Comercial: <b>{licenciado?.nombre ?? "—"}</b>
               {licenciado?.email && <> · {licenciado.email}</>}
             </div>
             <div className="mt-1 text-[12px] text-[#242424]/70">

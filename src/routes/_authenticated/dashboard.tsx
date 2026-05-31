@@ -133,7 +133,7 @@ function DashboardPage() {
                 }}
               >
                 <Activity size={12} />
-                {isManager ? "Gerencia General" : "Asesor / Licenciado"}
+                {isManager ? "Gerencia General" : "Analista Financiero Comercial"}
               </span>
               <div className="flex items-end justify-between gap-6 flex-wrap">
                 <div>
@@ -142,7 +142,7 @@ function DashboardPage() {
                   </h1>
                   <p className="mt-2 text-base max-w-2xl" style={{ color: TEXT2 }}>
                     {isManager
-                      ? "Control financiero y operativo de toda la red de licenciados NUVEX."
+                      ? "Control financiero y operativo de toda la red de Analistas Financieros Comerciales NUVEX."
                       : "Indicadores personales de tu producción NUVEX."}
                   </p>
                 </div>
@@ -351,7 +351,7 @@ function DashboardPage() {
                       <Trophy size={18} />
                     </div>
                     <div>
-                      <h2 className="text-xl font-semibold">Ranking de Licenciados</h2>
+                      <h2 className="text-xl font-semibold">Ranking de Analistas Financieros Comerciales</h2>
                       <p className="text-sm" style={{ color: TEXT2 }}>
                         Top 5 por producción de honorarios.
                       </p>

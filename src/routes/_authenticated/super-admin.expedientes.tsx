@@ -125,7 +125,7 @@ function SuperAdminExpedientes() {
             <thead>
               <tr className="text-[11px] uppercase tracking-wider text-[#242424]/60">
                 <th className="text-left py-2">Cliente</th>
-                <th className="text-left">Licenciado</th>
+                <th className="text-left">Analista F. Comercial</th>
                 <th className="text-left">Banco</th>
                 <th className="text-left">Estado del caso</th>
                 <th className="text-right">Honorarios</th>
