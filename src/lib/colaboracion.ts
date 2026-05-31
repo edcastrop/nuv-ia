@@ -111,7 +111,14 @@ export async function unirseCanal(canalId: string) {
 export async function subirAdjunto(canalId: string, file: File) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("No autenticado");
-  const path = `${user.id}/${canalId}/${Date.now()}-${file.name}`;
+  const safeName = file.name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9._-]+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(-120) || "archivo";
+  const path = `${user.id}/${canalId}/${Date.now()}-${safeName}`;
   const { error } = await supabase.storage.from("colab-adjuntos").upload(path, file);
   if (error) throw error;
   return { nombre: file.name, path, mime: file.type, size: file.size };
