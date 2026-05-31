@@ -1,9 +1,11 @@
 // P14 — Vista Kanban del Pipeline Maestro NUVEX (14 columnas E1→E14).
-// Read-only: agrupa expedientes por etapa derivada de estado_caso, con
-// scroll horizontal y tarjetas que enlazan al detalle.
+// P15 — Filtros (búsqueda, banco, solo estancados).
+// P16 — Filtros persistidos en URL via search params (compartibles).
 
 import { useEffect, useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
+import { z } from "zod";
 import { Loader2, Flag, Clock, AlertTriangle } from "lucide-react";
 import { listExpedientes, type Expediente } from "@/lib/expedientes";
 import {
@@ -13,7 +15,14 @@ import {
 } from "@/lib/pipelineEtapas";
 import { Card } from "@/components/nuvex/ui";
 
+const pipelineSearchSchema = z.object({
+  q: fallback(z.string(), "").default(""),
+  banco: fallback(z.string(), "").default(""),
+  stuck: fallback(z.boolean(), false).default(false),
+});
+
 export const Route = createFileRoute("/_authenticated/pipeline")({
+  validateSearch: zodValidator(pipelineSearchSchema),
   component: PipelinePage,
 });
 
@@ -29,17 +38,39 @@ function diasDesde(iso: string | null | undefined): number {
 }
 
 function PipelinePage() {
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: "/pipeline" });
   const [rows, setRows] = useState<Expediente[]>([]);
   const [loading, setLoading] = useState(true);
-  const [q, setQ] = useState("");
-  const [banco, setBanco] = useState<string>("");
-  const [soloStuck, setSoloStuck] = useState(false);
+  const [qLocal, setQLocal] = useState(search.q);
+
+  const { q, banco, stuck: soloStuck } = search;
+
+  // Debounce text input → URL
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (qLocal !== q) {
+        navigate({ search: (prev) => ({ ...prev, q: qLocal }), replace: true });
+      }
+    }, 250);
+    return () => clearTimeout(t);
+  }, [qLocal, q, navigate]);
+
+  const setBanco = (v: string) =>
+    navigate({ search: (prev) => ({ ...prev, banco: v }), replace: true });
+  const setSoloStuck = (v: boolean) =>
+    navigate({ search: (prev) => ({ ...prev, stuck: v }), replace: true });
+  const clearAll = () => {
+    setQLocal("");
+    navigate({ search: { q: "", banco: "", stuck: false }, replace: true });
+  };
 
   useEffect(() => {
     listExpedientes()
       .then(setRows)
       .finally(() => setLoading(false));
   }, []);
+
 
   const bancos = useMemo(() => {
     const s = new Set<string>();
