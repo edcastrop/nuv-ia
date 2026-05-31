@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { listExpedientes, ESTADOS, type EstadoExpediente, type Expediente } from "@/lib/expedientes";
 import { formatCOP } from "@/lib/format";
+import { computeEtapaActual, getEtapaById, type EtapaPipelineId } from "@/lib/pipelineEtapas";
 import {
   Search,
   Plus,
@@ -15,6 +16,9 @@ import {
   Phone,
   Globe,
   Sparkles,
+  Flag,
+  AlertTriangle,
+  Clock,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/casos/")({
@@ -48,6 +52,46 @@ function avatarColor(name: string) {
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
   return AVATAR_COLORS[h % AVATAR_COLORS.length];
 }
+
+// SLA por etapa (días) — alineado con AlertasEstancamientoPanel.
+const UMBRAL_DIAS_ETAPA: Record<EtapaPipelineId, number> = {
+  lead: 3,
+  extracto: 3,
+  proyeccion: 5,
+  presentacion: 5,
+  cierre: 7,
+  contratacion: 7,
+  radicacion: 5,
+  banco: 21,
+  informe: 5,
+  cuenta: 5,
+  pago: 10,
+  comision: 10,
+  paz_salvo: 5,
+  finalizado: 0,
+};
+
+function diasDesde(iso: string | null | undefined): number {
+  if (!iso) return 0;
+  const ms = Date.now() - new Date(iso).getTime();
+  return Math.max(0, Math.floor(ms / 86400000));
+}
+
+type SlaNivel = "ok" | "atencion" | "critico" | "neutral";
+
+function slaNivel(dias: number, umbral: number): SlaNivel {
+  if (umbral <= 0) return "neutral";
+  if (dias >= umbral * 1.5) return "critico";
+  if (dias >= umbral) return "atencion";
+  return "ok";
+}
+
+const SLA_COLORS: Record<SlaNivel, { bg: string; fg: string; border: string }> = {
+  ok:       { bg: "rgba(132,185,143,0.10)", fg: "#84B98F", border: "rgba(132,185,143,0.35)" },
+  atencion: { bg: "rgba(245,158,11,0.10)",  fg: "#F59E0B", border: "rgba(245,158,11,0.40)" },
+  critico:  { bg: "rgba(244,63,94,0.12)",   fg: "#FB7185", border: "rgba(244,63,94,0.45)" },
+  neutral:  { bg: "rgba(148,163,184,0.10)", fg: "#94A3B8", border: "rgba(148,163,184,0.30)" },
+};
 
 function CasosPage() {
   const [search, setSearch] = useState("");
@@ -284,6 +328,22 @@ function ExpedienteCard({ r }: { r: Expediente }) {
   const aColor = avatarColor(r.cliente_nombre);
   const initial = (r.cliente_nombre || "?").trim().charAt(0).toUpperCase();
 
+  const etapaId = computeEtapaActual({ estado_caso: r.estado_caso ?? null });
+  const etapa = getEtapaById(etapaId);
+  const umbral = UMBRAL_DIAS_ETAPA[etapaId] ?? 0;
+  const dias = diasDesde(r.updated_at);
+  const nivel = slaNivel(dias, umbral);
+  const slaTheme = SLA_COLORS[nivel];
+  const slaLabel =
+    nivel === "critico"
+      ? `${dias}d · SLA ${umbral}d`
+      : nivel === "atencion"
+        ? `${dias}d / ${umbral}d`
+        : nivel === "ok"
+          ? `${dias}d`
+          : `${dias}d`;
+  const SlaIcon = nivel === "critico" ? AlertTriangle : Clock;
+
   return (
     <Link
       to="/casos/$id"
@@ -328,6 +388,26 @@ function ExpedienteCard({ r }: { r: Expediente }) {
 
         {/* Tags centrales */}
         <div className="hidden lg:flex flex-wrap gap-2">
+          <span
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold"
+            style={{
+              background: "rgba(68,93,163,0.10)",
+              color: AZUL,
+              border: `1px solid ${AZUL}40`,
+            }}
+            title={etapa.descripcion}
+          >
+            <Flag size={11} />
+            E{etapa.numero} · {etapa.titulo}
+          </span>
+          <span
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold"
+            style={{ background: slaTheme.bg, color: slaTheme.fg, border: `1px solid ${slaTheme.border}` }}
+            title={`Tiempo desde último cambio. SLA etapa: ${umbral} día(s).`}
+          >
+            <SlaIcon size={11} />
+            {slaLabel}
+          </span>
           <Tag icon={<Building2 size={11} />} text={r.banco || "Sin banco"} />
           <Tag icon={<Hash size={11} />} text={r.numero_credito || "—"} />
           <Tag icon={<Sparkles size={11} />} text={r.modo.toUpperCase()} accent={AZUL} />
