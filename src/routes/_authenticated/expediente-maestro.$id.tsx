@@ -328,6 +328,8 @@ function MaestroDetail() {
         </div>
       </Card>
 
+      <PipelineStepper14 etapaActual={etapaActual} />
+
       <MaestroEditor
         cliente={cliente}
         cotitular={cotitular}
