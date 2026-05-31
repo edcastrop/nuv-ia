@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/nuvex/ui";
 import { useUserRole, type AppRole } from "@/hooks/useUserRole";
@@ -137,7 +137,7 @@ function AccesosPage() {
   }, [usuarios, busqueda]);
 
   if (rolesLoading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>;
-  if (!isAdmin) return <div className="p-12 text-center text-sm text-[#B42318]">No autorizado.</div>;
+  if (!isAdmin) return <Navigate to="/" />;
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-6 space-y-5">

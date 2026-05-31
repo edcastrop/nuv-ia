@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/nuvex/ui";
 import { supabase } from "@/integrations/supabase/client";
@@ -82,7 +82,7 @@ function SuperAdminExpedientes() {
   const fmt = (n: number) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 
   if (rolesLoading || loading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>;
-  if (!isSuperAdmin) return <div className="p-12 text-center text-sm text-[#B42318]">No autorizado.</div>;
+  if (!isSuperAdmin) return <Navigate to="/" />;
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-6 space-y-4">

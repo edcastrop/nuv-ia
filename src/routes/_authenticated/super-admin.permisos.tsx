@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/nuvex/ui";
 import { supabase } from "@/integrations/supabase/client";
@@ -96,7 +96,7 @@ function PermisosMatrix() {
   }, [perms]);
 
   if (rolesLoading || loading) return <div className="p-8 text-center text-sm text-[#242424]/60">Cargando…</div>;
-  if (!isSuperAdmin) return <div className="p-8 text-center text-sm text-[#B42318]">Solo Super Admin.</div>;
+  if (!isSuperAdmin) return <Navigate to="/" />;
 
   return (
     <div className="mx-auto max-w-[1400px] px-6 py-6 space-y-4">

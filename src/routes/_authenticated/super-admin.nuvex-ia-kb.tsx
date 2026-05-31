@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -27,7 +27,7 @@ function AdminKB() {
   const [tab, setTab] = useState<Tab>("kb");
 
   if (loading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>;
-  if (!isSuperAdmin) return <div className="p-12 text-center text-sm text-[#B42318]">No autorizado.</div>;
+  if (!isSuperAdmin) return <Navigate to="/" />;
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-8">

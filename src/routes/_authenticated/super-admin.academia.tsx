@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Plus, Trash2, ToggleLeft, ToggleRight, ChevronDown, ChevronRight, Save, ArrowLeft, Layers, BarChart3, Award } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,7 +31,7 @@ function AdminAcademia() {
   useEffect(() => { (async () => { await reload(); setLoading(false); })(); }, []);
 
   if (rolesLoading || loading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>;
-  if (!isSuperAdmin) return <div className="p-12 text-center text-sm text-[#B42318]">No autorizado.</div>;
+  if (!isSuperAdmin) return <Navigate to="/" />;
 
   const tabs: { id: Tab; label: string; icon: typeof Layers }[] = [
     { id: "contenido", label: "Contenido", icon: Layers },

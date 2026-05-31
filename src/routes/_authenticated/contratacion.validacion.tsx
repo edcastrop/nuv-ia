@@ -1,8 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ShieldCheck, RefreshCw } from "lucide-react";
 import { Card } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
+import { useUserRole } from "@/hooks/useUserRole";
 import {
   listBandejaValidacion,
   VALIDACION_LABELS,
@@ -25,10 +26,17 @@ const FILTROS: Array<{ key: ValidacionEstado | "todos"; label: string }> = [
 ];
 
 function BandejaValidacion() {
+  const { roles, loading: rolesLoading } = useUserRole();
+  const allowed = roles.some((r) =>
+    ["super_admin", "admin", "gerencia", "operaciones", "auxiliar_operativo", "juridica"].includes(r),
+  );
   const [items, setItems] = useState<BandejaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [filtro, setFiltro] = useState<ValidacionEstado | "todos">("en_revision_contratacion");
+
+  if (!rolesLoading && !allowed) return <Navigate to="/" />;
+
 
   const reload = () => {
     setLoading(true);

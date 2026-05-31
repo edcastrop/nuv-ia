@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Card } from "@/components/nuvex/ui";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,7 +49,7 @@ function SuperAdminDashboard() {
   }, [rolesLoading, isSuperAdmin]);
 
   if (rolesLoading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>;
-  if (!isSuperAdmin) return <div className="p-12 text-center text-sm text-[#B42318]">No autorizado.</div>;
+  if (!rolesLoading && !isSuperAdmin) return <Navigate to="/" />;
 
   const total = rows.length;
   const porEstado = CASO_ESTADOS.map((e) => ({
