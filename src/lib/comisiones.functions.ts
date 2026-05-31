@@ -62,10 +62,10 @@ export const enviarCuentaCobroEmail = createServerFn({ method: "POST" })
       || process.env.CONTRATACION_FROM_EMAIL
       || "NUVEX <onboarding@resend.dev>";
 
-    const asunto = `Cuenta de Cobro NUVEX ${cuenta.numero} — ${prof?.nombre ?? "Licenciado"}`;
+    const asunto = `Cuenta de Cobro NUVEX ${cuenta.numero} — ${prof?.nombre ?? "Analista Financiero Comercial"}`;
     const bodyText =
       `Cordial saludo,\n\nAdjuntamos cuenta de cobro NUVEX ${cuenta.numero} por valor de COP ${Number(cuenta.total).toLocaleString("es-CO")}.\n` +
-      `Licenciado: ${prof?.nombre ?? "—"} (${prof?.email ?? "—"})\n` +
+      `Analista Financiero Comercial: ${prof?.nombre ?? "—"} (${prof?.email ?? "—"})\n` +
       (data.mensaje ? `\nMensaje: ${data.mensaje}\n` : "") +
       `\nQuedamos atentos a su aprobación y trámite de pago.\n\nEquipo NUVEX — Finanzas Inteligentes`;
 
