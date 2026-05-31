@@ -4,7 +4,7 @@ import { NUVEX } from "@/components/nuvex/constants";
 import { Scale, FileText, Download, Eye, ChevronDown } from "lucide-react";
 import type { ExpedienteMaestro } from "@/lib/expedienteMaestro";
 import { listApoderados, seleccionarApoderado, type ApoderadoNuvex } from "@/lib/apoderados";
-import { ChecklistDocumental } from "./ChecklistDocumental";
+// ChecklistDocumental se movió a la Etapa 7 · Radicación bancaria (ver casos.$id.tsx).
 
 
 import {
@@ -99,9 +99,6 @@ export function ModuloJuridico({ expediente, liveOverride }: Props) {
 
   return (
     <>
-      <div className="mb-3">
-        <ChecklistDocumental expediente={live} />
-      </div>
       <Card>
 
         <div className="mb-4 flex items-start gap-3">
