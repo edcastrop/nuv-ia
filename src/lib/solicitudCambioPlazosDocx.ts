@@ -133,7 +133,19 @@ export async function generarSolicitudCambioPlazosDocx(
     }),
     p(apoderadoNombre, { bold: true, align: AlignmentType.LEFT, spacingAfter: 20 }),
     p(`C.C. No. ${apoderadoCedula}`, { align: AlignmentType.LEFT, spacingAfter: 20 }),
-    p(`Apoderado de ${cliente}`, { align: AlignmentType.LEFT }),
+    p(`Apoderado de ${cliente}`, { align: AlignmentType.LEFT, spacingAfter: 800 }),
+
+    // Firma del cliente (titular)
+    new Paragraph({
+      alignment: AlignmentType.LEFT,
+      spacing: { after: 40 },
+      children: [
+        new TextRun({ text: "_______________________________", size: 22, color: INK }),
+      ],
+    }),
+    p(cliente, { bold: true, align: AlignmentType.LEFT, spacingAfter: 20 }),
+    p(`C.C. No. ${cedulaCliente}`, { align: AlignmentType.LEFT, spacingAfter: 20 }),
+    p("Titular del crédito", { align: AlignmentType.LEFT }),
   ];
 
   const doc = new Document({
