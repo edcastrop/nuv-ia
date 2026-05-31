@@ -183,6 +183,18 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
     }).catch(() => { /* silencioso */ });
   }, []);
 
+  // Restaura el apoderado guardado para el caso (si existe) y marca override manual.
+  useEffect(() => {
+    const savedId = readApoderadoNuvexIdExpediente(
+      (simExpediente as unknown as { cliente_data?: unknown })?.cliente_data,
+    );
+    if (savedId) {
+      setSavedApId(savedId);
+      setSelectedApId(savedId);
+      setManualOverride(true);
+    }
+  }, [simExpediente]);
+
   // Selección automática por banco (FNA → predeterminado FNA; otros → general)
   const banco = live.credito?.banco;
   const sugerencia = useMemo(() => seleccionarApoderado(banco, apoderados), [banco, apoderados]);
