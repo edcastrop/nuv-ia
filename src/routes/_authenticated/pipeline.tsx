@@ -302,9 +302,10 @@ function PipelinePage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <input
+            ref={searchInputRef}
             value={qLocal}
             onChange={(e) => setQLocal(e.target.value)}
-            placeholder="Buscar cliente, cédula, crédito…"
+            placeholder='Buscar cliente, cédula, crédito…  ( / )'
             className="h-8 w-[240px] rounded-md border border-[#E3E7EE] bg-white px-2 text-[12px] text-[#0A1226] placeholder:text-[#9CA3AF] focus:border-[#445DA3] focus:outline-none"
           />
           <select
