@@ -242,6 +242,15 @@ function PipelinePage() {
               <option key={b} value={b}>{b}</option>
             ))}
           </select>
+          <button
+            onClick={() => cargar(true)}
+            disabled={loading || refreshing}
+            title={`Actualizado hace ${haceLabel}`}
+            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#E3E7EE] bg-white px-2 text-[12px] text-[#445DA3] hover:bg-[#F1F3F8] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+            <span className="text-[#242424]/60">hace {haceLabel}</span>
+          </button>
           <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-[#E3E7EE] bg-white px-2 py-1 text-[12px] text-[#0A1226]">
             <input
               type="checkbox"
