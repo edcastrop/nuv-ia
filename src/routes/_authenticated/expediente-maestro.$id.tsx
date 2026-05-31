@@ -23,6 +23,9 @@ import { MotorExtractosNUVEX } from "@/components/nuvex/MotorExtractosNUVEX";
 import type { MotorResultado } from "@/lib/motorExtractos.functions";
 import { withFreshDerivados, normalizeTipoBeneficio, FRESH_DEFAULT_TOTAL } from "@/lib/cobertura";
 import { normalizeCreditMoneyInput } from "@/lib/creditoSanity";
+import { PipelineStepper14 } from "@/components/pipeline/PipelineStepper14";
+import { computeEtapaActual, type EtapaPipelineId } from "@/lib/pipelineEtapas";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/expediente-maestro/$id")({
   component: MaestroDetail,
