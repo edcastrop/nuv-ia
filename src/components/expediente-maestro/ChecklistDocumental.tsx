@@ -46,6 +46,7 @@ import {
 import { enviarChecklistCliente } from "@/lib/checklistEnvio.functions";
 import { generarSolicitudCambioPlazosDocx } from "@/lib/solicitudCambioPlazosDocx";
 import { generarChecklistDocumentalDocx } from "@/lib/checklistDocumentalDocx";
+import { listApoderados, seleccionarApoderado, type ApoderadoNuvex } from "@/lib/apoderados";
 
 
 interface Props {
@@ -601,11 +602,19 @@ function SendChecklistModal({
   const [cuerpo, setCuerpo] = useState(defaults.cuerpo);
 
   // Solicitud Cambio de Plazos (campos opcionales editables)
-  const [plazoSolicitado, setPlazoSolicitado] = useState("");
-  const [cuotaNueva, setCuotaNueva] = useState("");
-  const [justificacion, setJustificacion] = useState("");
+  const [cuotasAEliminar, setCuotasAEliminar] = useState("");
   const [adjuntarSolicitud, setAdjuntarSolicitud] = useState(true);
   const [adjuntarChecklist, setAdjuntarChecklist] = useState(true);
+
+  // Apoderado NUVEX sugerido por banco (mismo mecanismo que el Poder Especial)
+  const [apoderados, setApoderados] = useState<ApoderadoNuvex[]>([]);
+  useEffect(() => {
+    listApoderados(true).then(setApoderados).catch(() => setApoderados([]));
+  }, []);
+  const apoderadoSugerido = useMemo(
+    () => seleccionarApoderado(expediente.credito?.banco ?? "", apoderados).apoderado,
+    [expediente.credito?.banco, apoderados],
+  );
 
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -643,9 +652,10 @@ function SendChecklistModal({
 
       if (adjuntarSolicitud) {
         const docxBlob = await generarSolicitudCambioPlazosDocx(expediente, {
-          plazoSolicitadoMeses: plazoSolicitado,
-          nuevoValorCuota: cuotaNueva,
-          justificacion,
+          cuotasAEliminar,
+          apoderado: apoderadoSugerido
+            ? { nombre: apoderadoSugerido.nombre, cedula: apoderadoSugerido.cedula }
+            : null,
         });
         attachments.push({
           filename: `NUVEX_Solicitud_Cambio_Plazos_${(expediente.cliente?.nombre || "cliente").replace(/\s+/g, "_")}.docx`,
@@ -782,29 +792,31 @@ function SendChecklistModal({
                 checked={adjuntarSolicitud}
                 onChange={(e) => setAdjuntarSolicitud(e.target.checked)}
               />
-              <Paperclip size={13} /> Adjuntar Solicitud Cambio de Plazos (PDF)
+              <Paperclip size={13} /> Adjuntar Solicitud Cambio de Plazos (Word)
             </label>
             {adjuntarSolicitud && (
               <div className="grid gap-2 md:grid-cols-2">
-                <Field label="Plazo solicitado (meses)" value={plazoSolicitado} onChange={setPlazoSolicitado} placeholder="240" />
-                <Field label="Nuevo valor de cuota" value={cuotaNueva} onChange={setCuotaNueva} placeholder="$ 950.000" />
-                <label className="block md:col-span-2">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/70">
-                    Justificación (opcional)
-                  </span>
-                  <textarea
-                    value={justificacion}
-                    onChange={(e) => setJustificacion(e.target.value)}
-                    rows={3}
-                    placeholder="Si se deja vacío, se usa el texto institucional por defecto."
-                    className="mt-1 w-full rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm"
-                  />
-                </label>
+                <Field
+                  label="Cuotas a eliminar"
+                  value={cuotasAEliminar}
+                  onChange={setCuotasAEliminar}
+                  placeholder="Ej. 60"
+                />
+                <div className="rounded-md border border-[#E3E7EE] bg-white px-3 py-2 text-xs">
+                  <div className="font-semibold uppercase tracking-wider text-[#242424]/70">
+                    Apoderado NUVEX (sugerido para {expediente.credito?.banco || "este banco"})
+                  </div>
+                  <div className="mt-1 text-sm text-[#242424]">
+                    {apoderadoSugerido
+                      ? `${apoderadoSugerido.nombre} · C.C. ${apoderadoSugerido.cedula}`
+                      : "Sin apoderado asignado para este banco."}
+                  </div>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Checklist Documental (PDF) */}
+          {/* Checklist Documental (Word) */}
           <div className="rounded-lg border border-[#E3E7EE] bg-[#F7F9FB] p-3">
             <label className="flex items-center gap-2 text-xs font-semibold text-[#242424]">
               <input
@@ -812,7 +824,7 @@ function SendChecklistModal({
                 checked={adjuntarChecklist}
                 onChange={(e) => setAdjuntarChecklist(e.target.checked)}
               />
-              <Paperclip size={13} /> Adjuntar Checklist Documental (PDF)
+              <Paperclip size={13} /> Adjuntar Checklist Documental (Word)
               <span className="ml-1 text-[10px] font-normal text-[#242424]/60">
                 · {docsConEstado.length} documento(s) con estado actual
               </span>

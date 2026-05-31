@@ -1,279 +1,140 @@
 // Generador de "Solicitud Cambio de Plazos" en formato Microsoft Word (.docx).
-// Diseño sobrio replicando el del Checklist Documental: cabecera con banda
-// azul, panel de metadatos en dos columnas, secciones con divisor, párrafo
-// de justificación y bloque de firmas.
+// Carta formal sencilla, redactada en primera persona del apoderado, conforme
+// al texto institucional acordado con NUVEX.
 
 import {
   Document,
   Packer,
   Paragraph,
   TextRun,
-  Table,
-  TableRow,
-  TableCell,
-  WidthType,
-  BorderStyle,
   AlignmentType,
   HeadingLevel,
 } from "docx";
 import type { ExpedienteMaestro } from "@/lib/expedienteMaestro";
 
-const BRAND_BLUE = "445DA3";
-const BRAND_BLUE_DARK = "2E4178";
 const INK = "242424";
-const MUTED = "5C6770";
-const BORDER = "E3E7EE";
 
-const TABLE_W = 9360;
+export interface ApoderadoLite {
+  nombre: string;
+  cedula: string;
+}
 
 export interface SolicitudCambioPlazosInput {
-  plazoSolicitadoMeses?: string;
-  nuevoValorCuota?: string;
-  justificacion?: string;
+  /** Cuotas que se desean eliminar del plazo original. */
+  cuotasAEliminar?: string;
+  /** Apoderado seleccionado (proveniente de apoderados_nuvex). */
+  apoderado?: ApoderadoLite | null;
 }
 
-function noBorders() {
-  const none = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
-  return { top: none, bottom: none, left: none, right: none };
-}
-
-function metaLabel(text: string) {
+function p(text: string, opts: { bold?: boolean; align?: (typeof AlignmentType)[keyof typeof AlignmentType]; spacingAfter?: number; size?: number } = {}) {
   return new Paragraph({
-    spacing: { after: 20 },
+    alignment: opts.align ?? AlignmentType.JUSTIFIED,
+    spacing: { after: opts.spacingAfter ?? 160, line: 320 },
     children: [
       new TextRun({
-        text: text.toUpperCase(),
-        bold: true,
-        size: 14,
-        color: BRAND_BLUE_DARK,
-        characterSpacing: 10,
+        text,
+        bold: opts.bold,
+        size: opts.size ?? 22,
+        color: INK,
       }),
     ],
   });
 }
 
-function metaValue(text: string) {
-  return new Paragraph({
-    spacing: { after: 80 },
-    children: [new TextRun({ text: text || "—", size: 21, color: INK })],
-  });
+function blank(spacingAfter = 120) {
+  return new Paragraph({ spacing: { after: spacingAfter }, children: [new TextRun("")] });
 }
 
-function metaCell(label: string, value: string, width: number) {
-  return new TableCell({
-    borders: noBorders(),
-    width: { size: width, type: WidthType.DXA },
-    margins: { top: 40, bottom: 40, left: 0, right: 60 },
-    children: [metaLabel(label), metaValue(value)],
-  });
-}
-
-function metaPanel(rows: Array<[string, string, string, string]>) {
-  return new Table({
-    width: { size: TABLE_W, type: WidthType.DXA },
-    columnWidths: [4680, 4680],
-    rows: rows.map(
-      (r) =>
-        new TableRow({
-          children: [metaCell(r[0], r[1], 4680), metaCell(r[2], r[3], 4680)],
-        }),
-    ),
-  });
-}
-
-function sectionTitle(text: string) {
-  return new Paragraph({
-    spacing: { before: 280, after: 120 },
-    border: {
-      bottom: { style: BorderStyle.SINGLE, size: 6, color: BRAND_BLUE, space: 4 },
-    },
-    children: [
-      new TextRun({
-        text: text.toUpperCase(),
-        bold: true,
-        size: 18,
-        color: BRAND_BLUE_DARK,
-        characterSpacing: 12,
-      }),
-    ],
-  });
-}
-
-function signatureBlock(label: string, name: string, cc: string) {
-  return new TableCell({
-    borders: noBorders(),
-    width: { size: 4680, type: WidthType.DXA },
-    margins: { top: 60, bottom: 60, left: 0, right: 120 },
-    children: [
-      new Paragraph({
-        spacing: { before: 800, after: 60 },
-        border: {
-          top: { style: BorderStyle.SINGLE, size: 6, color: INK, space: 4 },
-        },
-        children: [new TextRun({ text: name, bold: true, size: 22, color: INK })],
-      }),
-      new Paragraph({
-        spacing: { after: 20 },
-        children: [new TextRun({ text: cc, size: 18, color: MUTED })],
-      }),
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: label.toUpperCase(),
-            size: 14,
-            color: BRAND_BLUE_DARK,
-            bold: true,
-            characterSpacing: 10,
-          }),
-        ],
-      }),
-    ],
-  });
+function toInt(s: string | undefined | null): number | null {
+  if (!s) return null;
+  const n = parseInt(String(s).replace(/[^\d-]/g, ""), 10);
+  return Number.isFinite(n) ? n : null;
 }
 
 export async function generarSolicitudCambioPlazosDocx(
   exp: ExpedienteMaestro,
   input: SolicitudCambioPlazosInput = {},
 ): Promise<Blob> {
-  const cliente = exp.cliente?.nombre || "—";
-  const cedula = exp.cliente?.cedula || "—";
-  const banco = exp.credito?.banco || "—";
-  const numCred = exp.credito?.numeroCredito || "—";
-  const tipo = exp.credito?.tipoProducto || "—";
-  const plazoOrig = exp.credito?.plazoOriginal || "—";
-  const cuotasPag = exp.credito?.cuotasPagadas || "—";
-  const cuotasPend = exp.credito?.cuotasPendientes || "—";
-  const cuotaAct = exp.credito?.cuotaActual || "—";
-  const saldo = exp.credito?.saldoCapital || "—";
-  const apoderado = exp.apoderado?.nombre || "—";
-  const apoderadoCc = exp.apoderado?.cedula || "—";
-  const numPoder = exp.apoderado?.numeroPoder || "—";
+  const cliente = (exp.cliente?.nombre || "").trim() || "_____________________";
+  const cedulaCliente = (exp.cliente?.cedula || "").trim() || "____________";
+  const banco = (exp.credito?.banco || "").trim() || "____________";
+  const numCred = (exp.credito?.numeroCredito || "").trim() || "____________";
+  const plazoOrigStr = (exp.credito?.plazoOriginal || "").trim() || "____";
+  const plazoOrigNum = toInt(exp.credito?.plazoOriginal);
+
+  const apoderadoNombre = (input.apoderado?.nombre || exp.apoderado?.nombre || "").trim() || "_____________________";
+  const apoderadoCedula = (input.apoderado?.cedula || exp.apoderado?.cedula || "").trim() || "____________";
+
+  const cuotasElimNum = toInt(input.cuotasAEliminar);
+  let nuevoPlazoStr = "____";
+  if (plazoOrigNum != null && cuotasElimNum != null) {
+    nuevoPlazoStr = String(Math.max(0, plazoOrigNum - cuotasElimNum));
+  }
+
   const fecha = new Date().toLocaleDateString("es-CO", {
     day: "2-digit",
     month: "long",
     year: "numeric",
   });
 
-  const plazoNuevo = input.plazoSolicitadoMeses?.trim() || "_______";
-  const cuotaNueva = input.nuevoValorCuota?.trim() || "_______";
-  const justif =
-    input.justificacion?.trim() ||
-    "El titular solicita el ajuste de plazo con el fin de adecuar la cuota mensual a su capacidad de pago actual, manteniendo el cumplimiento de la obligación crediticia.";
+  const ciudad = exp.cliente?.ciudad || "Bogotá D.C.";
 
-  const headerBadge = new Paragraph({
-    spacing: { after: 60 },
-    children: [
-      new TextRun({
-        text: "NUVEX · DOCUMENTO BANCARIO",
-        bold: true,
-        size: 14,
-        color: BRAND_BLUE,
-        characterSpacing: 30,
-      }),
-    ],
-  });
-  const headerTitle = new Paragraph({
-    heading: HeadingLevel.HEADING_1,
-    spacing: { after: 60 },
-    children: [
-      new TextRun({
-        text: "Solicitud de Cambio de Plazos",
-        bold: true,
-        size: 40,
-        color: INK,
-      }),
-    ],
-  });
-  const headerSubtitle = new Paragraph({
-    spacing: { after: 240 },
-    border: {
-      bottom: { style: BorderStyle.SINGLE, size: 8, color: BRAND_BLUE, space: 8 },
-    },
-    children: [
-      new TextRun({
-        text: `Dirigida a ${banco}`,
-        size: 22,
-        color: MUTED,
-        italics: true,
-      }),
-    ],
-  });
+  const children: Paragraph[] = [
+    // Fecha y ciudad
+    p(`${ciudad}, ${fecha}`, { align: AlignmentType.RIGHT, spacingAfter: 240 }),
 
-  const datosPanel = metaPanel([
-    ["Titular", cliente, "Fecha de emisión", fecha],
-    ["Cédula", cedula, "Producto", tipo],
-    ["Banco", banco, "Saldo capital", saldo],
-    ["Número de crédito", numCred, "Cuota actual", cuotaAct],
-  ]);
+    // Destinatario
+    new Paragraph({
+      heading: HeadingLevel.HEADING_2,
+      spacing: { after: 60 },
+      children: [new TextRun({ text: "Señores", bold: true, size: 24, color: INK })],
+    }),
+    p(banco.toUpperCase(), { bold: true, align: AlignmentType.LEFT, spacingAfter: 60 }),
+    p("Ciudad", { align: AlignmentType.LEFT, spacingAfter: 240 }),
 
-  const estadoPanel = metaPanel([
-    ["Plazo original", plazoOrig, "Cuotas pendientes", cuotasPend],
-    ["Cuotas pagadas", cuotasPag, "Cuota mensual vigente", cuotaAct],
-  ]);
+    // Asunto
+    p(`Asunto: Solicitud de modificación de plazo — Crédito No. ${numCred}`, {
+      bold: true,
+      align: AlignmentType.LEFT,
+      spacingAfter: 240,
+    }),
 
-  const modificacionPanel = metaPanel([
-    [
-      "Nuevo plazo solicitado (meses)",
-      plazoNuevo,
-      "Nuevo valor de cuota estimado",
-      cuotaNueva,
-    ],
-  ]);
+    // Saludo
+    p("Respetados señores,", { align: AlignmentType.LEFT, spacingAfter: 200 }),
 
-  const justifPara = new Paragraph({
-    alignment: AlignmentType.JUSTIFIED,
-    spacing: { after: 160, line: 320 },
-    children: [new TextRun({ text: justif, size: 22, color: INK })],
-  });
+    // Cuerpo principal
+    p(
+      `Yo, ${apoderadoNombre}, identificado con cédula de ciudadanía No. ${apoderadoCedula}, ` +
+        `actuando en calidad de apoderado de ${cliente}, identificado(a) con cédula de ciudadanía ` +
+        `No. ${cedulaCliente}, actuando como titular, me permito solicitar la modificación del plazo ` +
+        `del crédito No. ${numCred} de ${banco}, conforme a la Ley 546 de 1999, en los siguientes términos:`,
+    ),
 
-  const formalPara = new Paragraph({
-    alignment: AlignmentType.JUSTIFIED,
-    spacing: { after: 240, line: 320 },
-    children: [
-      new TextRun({
-        text:
-          "En cumplimiento de los principios de transparencia y debida representación, NUVEX Finanzas Inteligentes " +
-          `—actuando por intermedio del apoderado debidamente facultado mediante poder especial No. ${numPoder}— ` +
-          `solicita formalmente a ${banco} la modificación del plazo de la obligación arriba referenciada.`,
-        size: 22,
-        color: MUTED,
-        italics: true,
-      }),
-    ],
-  });
+    p(
+      `Actualmente, el plazo del Crédito Hipotecario es de ${plazoOrigStr} meses, y se desea modificar ` +
+        `a un nuevo plazo de ${nuevoPlazoStr} meses.`,
+    ),
 
-  const firmasTable = new Table({
-    width: { size: TABLE_W, type: WidthType.DXA },
-    columnWidths: [4680, 4680],
-    rows: [
-      new TableRow({
-        children: [
-          signatureBlock("Titular", cliente, `C.C. ${cedula}`),
-          signatureBlock(
-            "Apoderado NUVEX",
-            apoderado,
-            `C.C. ${apoderadoCc} · Poder ${numPoder}`,
-          ),
-        ],
-      }),
-    ],
-  });
+    p(
+      "Agradecemos su pronta gestión y quedamos atentos a su respuesta dentro del plazo establecido.",
+      { spacingAfter: 320 },
+    ),
 
-  const footer = new Paragraph({
-    spacing: { before: 320 },
-    alignment: AlignmentType.RIGHT,
-    border: {
-      top: { style: BorderStyle.SINGLE, size: 4, color: BORDER, space: 8 },
-    },
-    children: [
-      new TextRun({
-        text: `NUVEX-SCP-${new Date().getFullYear()}-${(exp.id || "").slice(0, 6).toUpperCase()}`,
-        size: 16,
-        color: MUTED,
-        characterSpacing: 8,
-      }),
-    ],
-  });
+    // Cierre
+    p("Atentamente,", { align: AlignmentType.LEFT, spacingAfter: 800 }),
+
+    // Firma
+    new Paragraph({
+      alignment: AlignmentType.LEFT,
+      spacing: { after: 40 },
+      children: [
+        new TextRun({ text: "_______________________________", size: 22, color: INK }),
+      ],
+    }),
+    p(apoderadoNombre, { bold: true, align: AlignmentType.LEFT, spacingAfter: 20 }),
+    p(`C.C. No. ${apoderadoCedula}`, { align: AlignmentType.LEFT, spacingAfter: 20 }),
+    p(`Apoderado de ${cliente}`, { align: AlignmentType.LEFT }),
+  ];
 
   const doc = new Document({
     creator: "NUVEX Finanzas Inteligentes",
@@ -289,21 +150,7 @@ export async function generarSolicitudCambioPlazosDocx(
             margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
           },
         },
-        children: [
-          headerBadge,
-          headerTitle,
-          headerSubtitle,
-          datosPanel,
-          sectionTitle("Estado actual de la obligación"),
-          estadoPanel,
-          sectionTitle("Modificación solicitada"),
-          modificacionPanel,
-          sectionTitle("Justificación"),
-          justifPara,
-          formalPara,
-          firmasTable,
-          footer,
-        ],
+        children,
       },
     ],
   });
