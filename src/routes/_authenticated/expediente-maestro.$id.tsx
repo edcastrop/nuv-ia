@@ -50,6 +50,7 @@ function MaestroDetail() {
   const [apoderado, setApoderado] = useState(emptyApoderado());
   const [extractoAplicado, setExtractoAplicado] = useState<MotorResultado | null>(null);
   const [aplicandoExtracto, setAplicandoExtracto] = useState(false);
+  const [etapaActual, setEtapaActual] = useState<EtapaPipelineId>("lead");
   const resumenRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
