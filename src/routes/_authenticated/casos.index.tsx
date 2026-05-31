@@ -116,6 +116,41 @@ function CasosPage() {
     honorarios: rows.reduce((s, r) => s + Number(r.honorarios_final || 0), 0),
   }), [rows]);
 
+  // P21 — Exportar CSV de los casos visibles (respeta búsqueda, estado y etapa).
+  const exportarCSV = () => {
+    const headers = ["Cliente", "Cédula", "Banco", "Crédito", "Modo", "Estado", "Etapa", "Días", "Honorarios", "Actualizado"];
+    const esc = (v: unknown) => {
+      const s = String(v ?? "");
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines = [headers.join(",")];
+    rows.forEach((r) => {
+      const etId = computeEtapaActual({ estado_caso: r.estado_caso ?? null });
+      const et = getEtapaById(etId);
+      lines.push([
+        esc(r.cliente_nombre),
+        esc(r.cedula),
+        esc(r.banco),
+        esc(r.numero_credito),
+        esc(r.modo),
+        esc(ESTADO_THEME[r.estado]?.label ?? r.estado),
+        esc(`E${et.numero} ${et.titulo}`),
+        esc(diasDesde(r.updated_at)),
+        esc(r.honorarios_final ?? 0),
+        esc(r.updated_at?.slice(0, 10)),
+      ].join(","));
+    });
+    const blob = new Blob([`\uFEFF${lines.join("\n")}`], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `casos-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div
       className="min-h-screen"
