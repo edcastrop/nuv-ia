@@ -43,6 +43,11 @@ function CasoDetail() {
 
   useEffect(() => { reload(); }, [id]);
 
+  // P28 — Registrar visita en "vistos recientemente" (localStorage).
+  useEffect(() => {
+    if (exp?.id && exp?.cliente_nombre) addRecentCase(exp.id, exp.cliente_nombre);
+  }, [exp?.id, exp?.cliente_nombre]);
+
   // IMPORTANTE: declarar todos los hooks antes de cualquier return condicional
   // para evitar "Rendered more hooks than during the previous render".
   const maestroLike = useMemo(
