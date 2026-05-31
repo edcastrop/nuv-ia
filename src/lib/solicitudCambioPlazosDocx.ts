@@ -62,6 +62,11 @@ export async function generarSolicitudCambioPlazosDocx(
   const plazoOrigStr = (exp.credito?.plazoOriginal || "").trim() || "____";
   const plazoOrigNum = toInt(exp.credito?.plazoOriginal);
 
+  const cot = exp.cotitular;
+  const tieneCotitular = !!cot?.activo && !!(cot?.nombre || "").trim();
+  const cotitularNombre = (cot?.nombre || "").trim();
+  const cotitularCedula = (cot?.cedula || "").trim() || "____________";
+
   const apoderadoNombre = (input.apoderado?.nombre || exp.apoderado?.nombre || "").trim() || "_____________________";
   const apoderadoCedula = (input.apoderado?.cedula || exp.apoderado?.cedula || "").trim() || "____________";
 
@@ -106,8 +111,12 @@ export async function generarSolicitudCambioPlazosDocx(
     p(
       `Yo, ${apoderadoNombre}, identificado con cédula de ciudadanía No. ${apoderadoCedula}, ` +
         `actuando en calidad de apoderado de ${cliente}, identificado(a) con cédula de ciudadanía ` +
-        `No. ${cedulaCliente}, actuando como titular, me permito solicitar la modificación del plazo ` +
-        `del crédito No. ${numCred} de ${banco}, conforme a la Ley 546 de 1999, en los siguientes términos:`,
+        `No. ${cedulaCliente}, actuando como titular` +
+        (tieneCotitular
+          ? `, y de ${cotitularNombre}, identificado(a) con cédula de ciudadanía No. ${cotitularCedula}, actuando como cotitular`
+          : "") +
+        `, me permito solicitar la modificación del plazo del crédito No. ${numCred} de ${banco}, ` +
+        `conforme a la Ley 546 de 1999, en los siguientes términos:`,
     ),
 
     p(
@@ -147,6 +156,23 @@ export async function generarSolicitudCambioPlazosDocx(
     p(`C.C. No. ${cedulaCliente}`, { align: AlignmentType.LEFT, spacingAfter: 20 }),
     p("Titular del crédito", { align: AlignmentType.LEFT }),
   ];
+
+  // Firma del cotitular (si aplica)
+  if (tieneCotitular) {
+    children.push(
+      new Paragraph({
+        alignment: AlignmentType.LEFT,
+        spacing: { before: 800, after: 40 },
+        children: [
+          new TextRun({ text: "_______________________________", size: 22, color: INK }),
+        ],
+      }),
+      p(cotitularNombre, { bold: true, align: AlignmentType.LEFT, spacingAfter: 20 }),
+      p(`C.C. No. ${cotitularCedula}`, { align: AlignmentType.LEFT, spacingAfter: 20 }),
+      p("Cotitular del crédito", { align: AlignmentType.LEFT }),
+    );
+  }
+
 
   const doc = new Document({
     creator: "NUVEX Finanzas Inteligentes",
