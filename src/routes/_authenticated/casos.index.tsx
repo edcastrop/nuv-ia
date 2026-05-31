@@ -289,8 +289,8 @@ function CasosPage() {
             <Search size={18} className="absolute left-5 top-1/2 -translate-y-1/2" style={{ color: TEXT2 }} />
             <input
               type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={qLocal}
+              onChange={(e) => setQLocal(e.target.value)}
               placeholder="Buscar cliente, cédula, banco o crédito..."
               className="w-full h-full bg-transparent pl-14 pr-5 text-sm outline-none placeholder:text-slate-500"
               style={{ color: "#fff" }}
