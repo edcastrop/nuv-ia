@@ -113,7 +113,7 @@ export async function listExpedientes(params: { search?: string; estado?: Estado
   if (params.estado) q = q.eq("estado", params.estado);
   if (params.etapa) {
     const estados = estadosParaEtapa(params.etapa);
-    if (estados.length > 0) q = q.in("estado_caso", estados);
+    if (estados.length > 0) q = q.in("estado_caso", estados as never);
   }
   if (params.search && params.search.trim()) {
     const s = `%${params.search.trim()}%`;
