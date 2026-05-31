@@ -156,6 +156,25 @@ function PipelinePage() {
     };
   }, []);
 
+  // Cargar analistas financieros (rol "licenciado") para el filtro.
+  useEffect(() => {
+    (async () => {
+      const { data: ur } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "licenciado" as never);
+      const ids = Array.from(new Set((ur ?? []).map((r) => (r as { user_id: string }).user_id)));
+      if (ids.length === 0) { setAnalistas([]); return; }
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, nombre, email")
+        .in("id", ids);
+      const list = (profs ?? []) as { id: string; nombre: string | null; email: string | null }[];
+      list.sort((a, b) => (a.nombre || a.email || "").localeCompare(b.nombre || b.email || "", "es"));
+      setAnalistas(list);
+    })();
+  }, []);
+
   const hace = Math.max(0, Math.round((nowTick - lastUpdated) / 1000));
   const haceLabel = hace < 60 ? `${hace}s` : `${Math.round(hace / 60)}min`;
 
