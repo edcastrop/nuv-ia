@@ -1925,6 +1925,8 @@ export type Database = {
           numero_credito: string | null
           producto: string | null
           propuesta_data: Json
+          radicado_fecha: string | null
+          radicado_id_banco: string | null
           recalculo_at: string | null
           recalculo_user_id: string | null
           updated_at: string
@@ -1964,6 +1966,8 @@ export type Database = {
           numero_credito?: string | null
           producto?: string | null
           propuesta_data?: Json
+          radicado_fecha?: string | null
+          radicado_id_banco?: string | null
           recalculo_at?: string | null
           recalculo_user_id?: string | null
           updated_at?: string
@@ -2003,6 +2007,8 @@ export type Database = {
           numero_credito?: string | null
           producto?: string | null
           propuesta_data?: Json
+          radicado_fecha?: string | null
+          radicado_id_banco?: string | null
           recalculo_at?: string | null
           recalculo_user_id?: string | null
           updated_at?: string
