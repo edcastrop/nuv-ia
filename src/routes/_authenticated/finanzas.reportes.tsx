@@ -20,7 +20,7 @@ type ReporteId = "cartera" | "recaudos" | "comisiones" | "cuentas_cobro" | "nomi
 const REPORTES: Array<{ id: ReporteId; label: string; descripcion: string }> = [
   { id: "cartera", label: "Cartera de clientes", descripcion: "Honorarios, recaudo, saldo y mora por expediente." },
   { id: "recaudos", label: "Recaudos", descripcion: "Pagos registrados de clientes con método y comprobante." },
-  { id: "comisiones", label: "Comisiones", descripcion: "Comisiones generadas, pendientes y pagadas por licenciado." },
+  { id: "comisiones", label: "Comisiones", descripcion: "Comisiones generadas, pendientes y pagadas por Analista Financiero Comercial." },
   { id: "cuentas_cobro", label: "Cuentas de cobro", descripcion: "Estado de cuentas de cobro y trazabilidad de pago." },
   { id: "nomina", label: "Nómina", descripcion: "Pagos de nómina por periodo y empleado." },
   { id: "tesoreria", label: "Tesorería", descripcion: "Movimientos ingresos / egresos con categoría." },
