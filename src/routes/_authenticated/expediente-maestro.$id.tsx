@@ -347,6 +347,10 @@ function MaestroDetail() {
         scrollContratacionId="modulo-juridico-contratacion"
       />
 
+      <EtapasOperativas78910 expedienteId={id} etapaActual={etapaActual} />
+
+
+
       <MaestroEditor
         cliente={cliente}
         cotitular={cotitular}
