@@ -3,7 +3,7 @@ import { Card } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
 import { FileText, Download, Eye, Receipt, BadgeCheck, Info, CheckCircle2, AlertTriangle, RefreshCw, Save, Scale } from "lucide-react";
 import type { ExpedienteMaestro, ClienteMaestro, CotitularMaestro } from "@/lib/expedienteMaestro";
-import { saveInformacionJuridicaExpediente } from "@/lib/expedienteMaestro";
+import { saveInformacionJuridicaExpediente, saveApoderadoNuvexIdExpediente, readApoderadoNuvexIdExpediente } from "@/lib/expedienteMaestro";
 import type { Expediente, PropuestaData } from "@/lib/expedientes";
 import {
   buildDatosContrato, buildPoderesForExpediente, detectPoderTemplate,
