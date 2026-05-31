@@ -367,6 +367,29 @@ function CasosPage() {
           </div>
         </section>
 
+        {/* P26 — Chip "Mis casos" */}
+        <section className="flex flex-wrap items-center gap-2 -mt-1">
+          <button
+            type="button"
+            onClick={() => setMios(!mios)}
+            disabled={!user?.id}
+            className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition disabled:cursor-not-allowed disabled:opacity-50"
+            style={{
+              background: mios ? `linear-gradient(135deg, ${AZUL}, ${VERDE})` : "rgba(255,255,255,0.04)",
+              color: mios ? "#fff" : TEXT2,
+              border: `1px solid ${mios ? "transparent" : BORDER}`,
+            }}
+            title="Mostrar solo los expedientes asignados a mí"
+          >
+            <Sparkles size={12} /> Mis casos
+          </button>
+          {(search || estado || etapa || mios) && (
+            <span className="text-[11px]" style={{ color: TEXT2 }}>
+              {filteredRows.length} de {rows.length} expedientes
+            </span>
+          )}
+        </section>
+
         {/* LISTADO */}
         <section className="space-y-3">
           {err && (
