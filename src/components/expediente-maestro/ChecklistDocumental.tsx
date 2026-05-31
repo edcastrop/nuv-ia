@@ -551,36 +551,13 @@ export function ChecklistDocumental({ expediente }: Props) {
           expediente={expediente}
           docs={docsParaSolicitar}
           onClose={() => setSendOpen(false)}
+          onSent={() => refresh()}
         />
       )}
     </Card>
   );
 }
 
-function downloadChecklistTxt(exp: ExpedienteMaestro, docs: DocRequerido[]) {
-  const banco = exp.credito?.banco || "—";
-  const cliente = exp.cliente?.nombre || "—";
-  const lines = [
-    "NUVEX — DOCUMENTOS REQUERIDOS",
-    `Cliente: ${cliente}`,
-    `Banco: ${banco}`,
-    `Fecha: ${new Date().toLocaleDateString("es-CO")}`,
-    "",
-    ...docs.map(
-      (d, i) =>
-        `${i + 1}. ${d.nombre}${d.obligatorio ? " (obligatorio)" : " (opcional)"}${
-          d.observacion ? ` — ${d.observacion}` : ""
-        }`,
-    ),
-  ];
-  const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `NUVEX_documentos_${cliente.replace(/\s+/g, "_")}.txt`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
 
 // ─── Modal de envío al cliente (Resend + adjuntos + trazabilidad) ──────────
 
