@@ -46,6 +46,7 @@ import {
 import { enviarChecklistCliente } from "@/lib/checklistEnvio.functions";
 import { generarSolicitudCambioPlazosDocx } from "@/lib/solicitudCambioPlazosDocx";
 import { generarChecklistDocumentalDocx } from "@/lib/checklistDocumentalDocx";
+import { listApoderados, seleccionarApoderado, type ApoderadoNuvex } from "@/lib/apoderados";
 
 
 interface Props {
