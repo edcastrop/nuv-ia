@@ -232,6 +232,34 @@ function PipelinePage() {
         </div>
       </div>
 
+      {!loading && kpis.total > 0 && (
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+          <div className="rounded-xl border border-[#E3E7EE] bg-white p-2.5">
+            <div className="text-[10px] uppercase tracking-wider text-[#242424]/50">Total</div>
+            <div className="mt-0.5 text-lg font-semibold text-[#0A1226]">{kpis.total}</div>
+          </div>
+          <div className="rounded-xl border border-rose-200 bg-rose-50 p-2.5">
+            <div className="text-[10px] uppercase tracking-wider text-rose-600/70">Estancados</div>
+            <div className="mt-0.5 flex items-center gap-1 text-lg font-semibold text-rose-700">
+              <AlertTriangle className="h-4 w-4" /> {kpis.estancados}
+            </div>
+          </div>
+          <div className="rounded-xl border border-[#E3E7EE] bg-white p-2.5">
+            <div className="text-[10px] uppercase tracking-wider text-[#242424]/50">Días prom.</div>
+            <div className="mt-0.5 flex items-center gap-1 text-lg font-semibold text-[#0A1226]">
+              <Clock className="h-4 w-4 text-[#445DA3]" /> {kpis.promedio}
+            </div>
+          </div>
+          {kpis.fases.map((f) => (
+            <div key={f.id} className={`rounded-xl p-2.5 ring-1 ${f.color}`}>
+              <div className="text-[10px] uppercase tracking-wider opacity-70">{f.label}</div>
+              <div className="mt-0.5 text-lg font-semibold">{f.count}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+
       {loading ? (
         <Card>
           <div className="flex items-center gap-2 text-sm text-[#242424]/70">
