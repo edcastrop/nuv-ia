@@ -282,13 +282,23 @@ function PipelinePage() {
           <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-[#E3E7EE] bg-white px-2 py-1 text-[12px] text-[#0A1226]">
             <input
               type="checkbox"
+              checked={mios}
+              onChange={(e) => setMios(e.target.checked)}
+              disabled={!user?.id}
+              className="h-3.5 w-3.5"
+            />
+            Mis casos
+          </label>
+          <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-[#E3E7EE] bg-white px-2 py-1 text-[12px] text-[#0A1226]">
+            <input
+              type="checkbox"
               checked={soloStuck}
               onChange={(e) => setSoloStuck(e.target.checked)}
               className="h-3.5 w-3.5"
             />
             Solo estancados
           </label>
-          {(q || banco || soloStuck || fase) && (
+          {(q || banco || soloStuck || fase || mios) && (
             <button
               onClick={clearAll}
               className="h-8 rounded-md border border-[#E3E7EE] bg-white px-2 text-[12px] text-[#445DA3] hover:bg-[#F1F3F8]"
