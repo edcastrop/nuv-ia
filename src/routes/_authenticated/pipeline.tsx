@@ -400,6 +400,7 @@ function PipelinePage() {
                       items.map((r) => {
                         const dias = diasDesde(r.updated_at);
                         const stuck = umbral > 0 && dias > umbral;
+                        const isDup = !!r.cedula && dupCedulas.has(r.cedula.trim());
                         return (
                           <Link
                             key={r.id}
@@ -407,8 +408,18 @@ function PipelinePage() {
                             params={{ id: r.id }}
                             className="block rounded-lg border border-[#E3E7EE] bg-white p-2.5 text-left transition hover:border-[#445DA3] hover:shadow-sm"
                           >
-                            <div className="truncate text-sm font-medium text-[#0A1226]">
-                              {r.cliente_nombre}
+                            <div className="flex items-center gap-1.5">
+                              <div className="flex-1 truncate text-sm font-medium text-[#0A1226]">
+                                {r.cliente_nombre}
+                              </div>
+                              {isDup && (
+                                <span
+                                  title="Esta cédula tiene más de un expediente activo"
+                                  className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-amber-800"
+                                >
+                                  Dup
+                                </span>
+                              )}
                             </div>
                             <div className="mt-0.5 truncate text-[11px] text-[#242424]/60">
                               {r.banco ?? "—"} · {r.cedula ?? "s/cédula"}
