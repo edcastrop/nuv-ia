@@ -380,7 +380,7 @@ function AccesosPage() {
                   style={sel
                     ? { background: AZUL, color: "#fff", borderColor: AZUL }
                     : { background: "#fff", color: NEGRO, borderColor: "#E3E7EE" }}
-                >{r}</button>
+                >{roleLabel(r)}</button>
               );
             })}
           </div>
