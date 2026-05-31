@@ -824,7 +824,7 @@ function SendChecklistModal({
                 checked={adjuntarChecklist}
                 onChange={(e) => setAdjuntarChecklist(e.target.checked)}
               />
-              <Paperclip size={13} /> Adjuntar Checklist Documental (PDF)
+              <Paperclip size={13} /> Adjuntar Checklist Documental (Word)
               <span className="ml-1 text-[10px] font-normal text-[#242424]/60">
                 · {docsConEstado.length} documento(s) con estado actual
               </span>
