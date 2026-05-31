@@ -308,6 +308,27 @@ export async function cambiarEstadoCaso(
       user_id: userId,
     } as never);
   }
+
+  // Auto-cierre: al generar el paz y salvo (E13) el caso pasa automáticamente
+  // a Caso finalizado (E14). El paz y salvo es el último entregable operativo.
+  if (nuevoEstado === "paz_y_salvo_generado") {
+    const finalEstado: CasoEstado = "caso_finalizado";
+    const finalDerivado = mapCasoToExpedienteEstado(finalEstado);
+    const { error: errFin } = await supabase
+      .from("expedientes")
+      .update({ estado_caso: finalEstado, estado: finalDerivado } as never)
+      .eq("id", expedienteId);
+    if (!errFin) {
+      await supabase.from("expediente_historial").insert({
+        expediente_id: expedienteId,
+        estado_caso_anterior: nuevoEstado,
+        estado_caso_nuevo: finalEstado,
+        accion_origen: "auto" as never,
+        observacion: "Cierre automático tras generación de paz y salvo",
+        user_id: userId,
+      } as never);
+    }
+  }
 }
 
 export interface HistorialEntry {
