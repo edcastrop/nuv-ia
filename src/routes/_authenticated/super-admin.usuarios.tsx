@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Card } from "@/components/nuvex/ui";
 import { supabase } from "@/integrations/supabase/client";
