@@ -55,6 +55,7 @@ function diasDesde(iso: string | null | undefined): number {
 function PipelinePage() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: "/pipeline" });
+  const { user } = useAuth();
   const [rows, setRows] = useState<Expediente[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -62,7 +63,7 @@ function PipelinePage() {
   const [nowTick, setNowTick] = useState<number>(() => Date.now());
   const [qLocal, setQLocal] = useState(search.q);
 
-  const { q, banco, stuck: soloStuck, fase } = search;
+  const { q, banco, stuck: soloStuck, fase, mios } = search;
 
   type PipelineSearch = z.infer<typeof pipelineSearchSchema>;
 
@@ -80,6 +81,8 @@ function PipelinePage() {
     navigate({ search: (prev: PipelineSearch) => ({ ...prev, banco: v }), replace: true });
   const setSoloStuck = (v: boolean) =>
     navigate({ search: (prev: PipelineSearch) => ({ ...prev, stuck: v }), replace: true });
+  const setMios = (v: boolean) =>
+    navigate({ search: (prev: PipelineSearch) => ({ ...prev, mios: v }), replace: true });
   const toggleFase = (id: FaseId) =>
     navigate({
       search: (prev: PipelineSearch) => ({ ...prev, fase: prev.fase === id ? "" : id }),
@@ -87,8 +90,9 @@ function PipelinePage() {
     });
   const clearAll = () => {
     setQLocal("");
-    navigate({ search: { q: "", banco: "", stuck: false, fase: "" }, replace: true });
+    navigate({ search: { q: "", banco: "", stuck: false, fase: "", mios: false }, replace: true });
   };
+
 
 
   const cargar = async (silent = false) => {
