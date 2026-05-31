@@ -328,6 +328,22 @@ function ExpedienteCard({ r }: { r: Expediente }) {
   const aColor = avatarColor(r.cliente_nombre);
   const initial = (r.cliente_nombre || "?").trim().charAt(0).toUpperCase();
 
+  const etapaId = computeEtapaActual({ estado_caso: r.estado_caso ?? null });
+  const etapa = getEtapaById(etapaId);
+  const umbral = UMBRAL_DIAS_ETAPA[etapaId] ?? 0;
+  const dias = diasDesde(r.updated_at);
+  const nivel = slaNivel(dias, umbral);
+  const slaTheme = SLA_COLORS[nivel];
+  const slaLabel =
+    nivel === "critico"
+      ? `${dias}d · SLA ${umbral}d`
+      : nivel === "atencion"
+        ? `${dias}d / ${umbral}d`
+        : nivel === "ok"
+          ? `${dias}d`
+          : `${dias}d`;
+  const SlaIcon = nivel === "critico" ? AlertTriangle : Clock;
+
   return (
     <Link
       to="/casos/$id"
