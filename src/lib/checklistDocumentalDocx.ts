@@ -132,7 +132,7 @@ function estadoColor(estado: EstadoDoc): string {
   }
 }
 
-function headerCell(text: string, width: number, align: AlignmentType = AlignmentType.LEFT) {
+function headerCell(text: string, width: number, align: (typeof AlignmentType)[keyof typeof AlignmentType] = AlignmentType.LEFT) {
   return new TableCell({
     borders: cellBorders,
     width: { size: width, type: WidthType.DXA },
@@ -158,7 +158,7 @@ function headerCell(text: string, width: number, align: AlignmentType = Alignmen
 function bodyCell(
   text: string,
   width: number,
-  opts: { color?: string; bold?: boolean; size?: number; align?: AlignmentType } = {},
+  opts: { color?: string; bold?: boolean; size?: number; align?: (typeof AlignmentType)[keyof typeof AlignmentType] } = {},
 ) {
   return new TableCell({
     borders: cellBorders,
