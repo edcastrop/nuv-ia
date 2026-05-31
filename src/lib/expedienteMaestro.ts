@@ -411,3 +411,35 @@ export async function saveInformacionJuridicaExpediente(
     .eq("id", expedienteId);
   if (e2) throw e2;
 }
+
+/**
+ * Persiste el apoderado NUVEX seleccionado manualmente para el caso.
+ * Guarda el ID dentro de `expedientes.cliente_data.apoderadoNuvexId` para que
+ * el Poder Especial y la Ficha de Contratación lo reutilicen en futuras visitas.
+ */
+export async function saveApoderadoNuvexIdExpediente(
+  expedienteId: string,
+  apoderadoNuvexId: string,
+): Promise<void> {
+  const { data: row, error: e1 } = await supabase
+    .from("expedientes")
+    .select("cliente_data")
+    .eq("id", expedienteId)
+    .single();
+  if (e1) throw e1;
+  const cd = (row?.cliente_data ?? {}) as Record<string, unknown>;
+  const next = { ...cd, apoderadoNuvexId };
+  const { error: e2 } = await supabase
+    .from("expedientes")
+    .update({ cliente_data: next as never })
+    .eq("id", expedienteId);
+  if (e2) throw e2;
+}
+
+export function readApoderadoNuvexIdExpediente(
+  cliente_data: unknown,
+): string | null {
+  const cd = (cliente_data ?? {}) as Record<string, unknown>;
+  const v = cd.apoderadoNuvexId;
+  return typeof v === "string" && v ? v : null;
+}

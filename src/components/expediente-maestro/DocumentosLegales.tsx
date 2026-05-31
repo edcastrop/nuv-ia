@@ -3,7 +3,7 @@ import { Card } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
 import { FileText, Download, Eye, Receipt, BadgeCheck, Info, CheckCircle2, AlertTriangle, RefreshCw, Save, Scale } from "lucide-react";
 import type { ExpedienteMaestro, ClienteMaestro, CotitularMaestro } from "@/lib/expedienteMaestro";
-import { saveInformacionJuridicaExpediente } from "@/lib/expedienteMaestro";
+import { saveInformacionJuridicaExpediente, saveApoderadoNuvexIdExpediente, readApoderadoNuvexIdExpediente } from "@/lib/expedienteMaestro";
 import type { Expediente, PropuestaData } from "@/lib/expedientes";
 import {
   buildDatosContrato, buildPoderesForExpediente, detectPoderTemplate,
@@ -40,6 +40,9 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
   const [apoderados, setApoderados] = useState<ApoderadoNuvex[]>([]);
   const [selectedApId, setSelectedApId] = useState<string>("");
   const [manualOverride, setManualOverride] = useState(false);
+  const [savedApId, setSavedApId] = useState<string>("");
+  const [savingAp, setSavingAp] = useState(false);
+  const [apSavedFlash, setApSavedFlash] = useState(false);
 
   // ── Información Jurídica editable (fuente oficial para el Poder Especial)
   const [ijTitular, setIjTitular] = useState<Partial<ClienteMaestro>>({});
@@ -179,6 +182,18 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
       setApoderados(rows);
     }).catch(() => { /* silencioso */ });
   }, []);
+
+  // Restaura el apoderado guardado para el caso (si existe) y marca override manual.
+  useEffect(() => {
+    const savedId = readApoderadoNuvexIdExpediente(
+      (simExpediente as unknown as { cliente_data?: unknown })?.cliente_data,
+    );
+    if (savedId) {
+      setSavedApId(savedId);
+      setSelectedApId(savedId);
+      setManualOverride(true);
+    }
+  }, [simExpediente]);
 
   // Selección automática por banco (FNA → predeterminado FNA; otros → general)
   const banco = live.credito?.banco;
@@ -378,11 +393,40 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
             <MotivoBadge motivo={motivoActual} banco={banco} />
             {manualOverride && (
               <button
-                onClick={() => setManualOverride(false)}
+                onClick={() => { setManualOverride(false); setSavedApId(""); }}
                 className="text-[11px] text-[#445DA3] hover:underline"
               >
                 Volver a selección automática
               </button>
+            )}
+            {expedienteIdToPersist && selectedApId && selectedApId !== savedApId && (
+              <button
+                onClick={async () => {
+                  if (!expedienteIdToPersist) return;
+                  setSavingAp(true);
+                  try {
+                    await saveApoderadoNuvexIdExpediente(expedienteIdToPersist, selectedApId);
+                    setSavedApId(selectedApId);
+                    setApSavedFlash(true);
+                    setTimeout(() => setApSavedFlash(false), 2500);
+                    onJuridicaSaved?.();
+                  } catch (e) {
+                    alert((e as Error).message);
+                  } finally {
+                    setSavingAp(false);
+                  }
+                }}
+                disabled={savingAp}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold text-white disabled:opacity-60"
+                style={{ background: "#1F6F4A" }}
+              >
+                <Save size={12} /> {savingAp ? "Guardando…" : "Guardar apoderado"}
+              </button>
+            )}
+            {apSavedFlash && (
+              <span className="text-[11px] font-semibold" style={{ color: "#1F6F4A" }}>
+                ✓ Apoderado guardado
+              </span>
             )}
           </div>
           {selectedAp && (

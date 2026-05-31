@@ -17,6 +17,7 @@ export function CanalChat({ canal }: { canal: Canal }) {
   const [adjs, setAdjs] = useState<Mensaje["adjuntos"]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let active = true;
@@ -27,7 +28,12 @@ export function CanalChat({ canal }: { canal: Canal }) {
     return () => { active = false; unsub(); };
   }, [canal.id]);
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs.length]);
+  // Auto-scroll SOLO dentro del contenedor del chat (no afecta el scroll de la página).
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [msgs.length]);
 
   const onEnviar = async () => {
     if (!texto.trim() && adjs.length === 0) return;
@@ -64,7 +70,7 @@ export function CanalChat({ canal }: { canal: Canal }) {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+      <div ref={scrollerRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
         {msgs.length === 0 && (
           <div className="text-center text-sm text-[#242424]/50 py-10">Sin mensajes aún. Empieza la conversación.</div>
         )}
