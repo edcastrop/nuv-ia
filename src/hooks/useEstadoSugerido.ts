@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
-import { ACCION_A_ESTADO, cambiarEstadoCaso, type AccionOrigen, type CasoEstado } from "@/lib/casoEstados";
+import { ACCION_A_ESTADO, type AccionOrigen, type CasoEstado } from "@/lib/casoEstados";
+import { cambiarEstadoConValidacion, TransicionInvalidaError } from "@/lib/pipelineTransiciones";
 
 export function useEstadoSugerido(expedienteId: string | undefined | null, onChanged?: () => void) {
   const [pendiente, setPendiente] = useState<{ estado: CasoEstado; accion: AccionOrigen } | null>(null);
@@ -19,8 +20,15 @@ export function useEstadoSugerido(expedienteId: string | undefined | null, onCha
   const confirmar = useCallback(async (observacion: string, submotivo?: string) => {
     if (!expedienteId || !pendiente) return;
     try {
-      await cambiarEstadoCaso(expedienteId, pendiente.estado, pendiente.accion, observacion || undefined, submotivo);
+      await cambiarEstadoConValidacion(expedienteId, pendiente.estado, pendiente.accion, observacion || undefined, submotivo);
       onChanged?.();
+    } catch (err) {
+      if (err instanceof TransicionInvalidaError) {
+        console.warn("[pipeline] transición bloqueada:", err.message);
+        if (typeof window !== "undefined") window.alert(err.message);
+      } else {
+        throw err;
+      }
     } finally {
       setPendiente(null);
     }
