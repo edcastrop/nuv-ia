@@ -25,6 +25,7 @@ import { withFreshDerivados, normalizeTipoBeneficio, FRESH_DEFAULT_TOTAL } from 
 import { normalizeCreditMoneyInput } from "@/lib/creditoSanity";
 import { PipelineStepper14 } from "@/components/pipeline/PipelineStepper14";
 import { EtapasIniciales123 } from "@/components/pipeline/EtapasIniciales123";
+import { EtapasMedias456 } from "@/components/pipeline/EtapasMedias456";
 import { computeEtapaActual, type EtapaPipelineId } from "@/lib/pipelineEtapas";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -339,6 +340,11 @@ function MaestroDetail() {
         qaEstado={null}
       />
 
+      <EtapasMedias456
+        expedienteId={id}
+        cliente={cliente}
+        scrollContratacionId="modulo-juridico-contratacion"
+      />
 
       <MaestroEditor
         cliente={cliente}
@@ -362,10 +368,12 @@ function MaestroDetail() {
         liveOverride={{ cliente, cotitular, credito, fresh, asesor, licenciado, apoderado }}
       />
 
-      <ModuloJuridico
-        expediente={exp}
-        liveOverride={{ cliente, cotitular, credito, fresh, asesor, licenciado, apoderado }}
-      />
+      <div id="modulo-juridico-contratacion">
+        <ModuloJuridico
+          expediente={exp}
+          liveOverride={{ cliente, cotitular, credito, fresh, asesor, licenciado, apoderado }}
+        />
+      </div>
 
       <MotorExtractosNUVEX expedienteId={id} onConfirm={aplicarExtracto} />
 
