@@ -116,6 +116,41 @@ function CasosPage() {
     honorarios: rows.reduce((s, r) => s + Number(r.honorarios_final || 0), 0),
   }), [rows]);
 
+  // P21 — Exportar CSV de los casos visibles (respeta búsqueda, estado y etapa).
+  const exportarCSV = () => {
+    const headers = ["Cliente", "Cédula", "Banco", "Crédito", "Modo", "Estado", "Etapa", "Días", "Honorarios", "Actualizado"];
+    const esc = (v: unknown) => {
+      const s = String(v ?? "");
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines = [headers.join(",")];
+    rows.forEach((r) => {
+      const etId = computeEtapaActual({ estado_caso: r.estado_caso ?? null });
+      const et = getEtapaById(etId);
+      lines.push([
+        esc(r.cliente_nombre),
+        esc(r.cedula),
+        esc(r.banco),
+        esc(r.numero_credito),
+        esc(r.modo),
+        esc(ESTADO_THEME[r.estado]?.label ?? r.estado),
+        esc(`E${et.numero} ${et.titulo}`),
+        esc(diasDesde(r.updated_at)),
+        esc(r.honorarios_final ?? 0),
+        esc(r.updated_at?.slice(0, 10)),
+      ].join(","));
+    });
+    const blob = new Blob([`\uFEFF${lines.join("\n")}`], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `casos-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div
       className="min-h-screen"
@@ -158,14 +193,30 @@ function CasosPage() {
               <div className="mt-4 h-px w-32" style={{ background: `linear-gradient(90deg, ${AZUL}, ${VERDE}, transparent)` }} />
             </div>
 
-            <Link
-              to="/"
-              className="group relative inline-flex items-center gap-2 rounded-[18px] px-6 py-4 text-sm font-bold uppercase tracking-wider text-white transition-all duration-300 hover:-translate-y-0.5"
-              style={{
-                background: `linear-gradient(135deg, ${AZUL}, ${VERDE})`,
-                boxShadow: `0 10px 30px -10px ${AZUL}, 0 0 0 1px rgba(255,255,255,0.05)`,
-              }}
-            >
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={exportarCSV}
+                disabled={loading || rows.length === 0}
+                className="inline-flex items-center gap-2 rounded-[18px] px-5 py-4 text-xs font-bold uppercase tracking-wider transition-all duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                style={{
+                  background: "rgba(255,255,255,0.04)",
+                  border: `1px solid ${BORDER}`,
+                  color: "#fff",
+                }}
+                title="Exportar la lista filtrada a CSV"
+              >
+                <ArrowRight size={14} className="-rotate-90" />
+                Exportar CSV
+              </button>
+              <Link
+                to="/"
+                className="group relative inline-flex items-center gap-2 rounded-[18px] px-6 py-4 text-sm font-bold uppercase tracking-wider text-white transition-all duration-300 hover:-translate-y-0.5"
+                style={{
+                  background: `linear-gradient(135deg, ${AZUL}, ${VERDE})`,
+                  boxShadow: `0 10px 30px -10px ${AZUL}, 0 0 0 1px rgba(255,255,255,0.05)`,
+                }}
+              >
               <span
                 className="absolute inset-0 rounded-[18px] opacity-0 transition-opacity duration-300 group-hover:opacity-100 blur-xl"
                 style={{ background: `linear-gradient(135deg, ${AZUL}, ${VERDE})` }}
@@ -173,8 +224,10 @@ function CasosPage() {
               <Plus size={18} className="relative" />
               <span className="relative">Nueva Simulación</span>
             </Link>
+            </div>
           </div>
         </section>
+
 
         {/* KPIs */}
         <section className="grid gap-4 md:grid-cols-2">
