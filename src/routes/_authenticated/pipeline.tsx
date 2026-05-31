@@ -378,6 +378,17 @@ function PipelinePage() {
               <option key={b} value={b}>{b}</option>
             ))}
           </select>
+          <select
+            value={asesor}
+            onChange={(e) => setAsesor(e.target.value)}
+            title="Filtrar por analista financiero"
+            className="h-8 max-w-[200px] rounded-md border border-[#E3E7EE] bg-white px-2 text-[12px] text-[#0A1226] focus:border-[#445DA3] focus:outline-none"
+          >
+            <option value="">Todos los analistas</option>
+            {analistas.map((a) => (
+              <option key={a.id} value={a.id}>{a.nombre || a.email || a.id.slice(0, 8)}</option>
+            ))}
+          </select>
           <button
             onClick={() => cargar(true)}
             disabled={loading || refreshing}
