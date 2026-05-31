@@ -18,6 +18,7 @@ import { ConversacionCaso } from "@/components/expediente/ConversacionCaso";
 import { ValidacionIdentidadBlock } from "@/components/expediente/ValidacionIdentidadBlock";
 import { VersionesDocumentalesBlock } from "@/components/expediente/VersionesDocumentalesBlock";
 import { readValidacion, puedeGenerarDocumentos, razonBloqueoDocs } from "@/lib/validacionIdentidad";
+import { addRecentCase } from "@/lib/recentCases";
 import { Lock } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/casos/$id")({
@@ -41,6 +42,11 @@ function CasoDetail() {
   };
 
   useEffect(() => { reload(); }, [id]);
+
+  // P28 — Registrar visita en "vistos recientemente" (localStorage).
+  useEffect(() => {
+    if (exp?.id && exp?.cliente_nombre) addRecentCase(exp.id, exp.cliente_nombre);
+  }, [exp?.id, exp?.cliente_nombre]);
 
   // IMPORTANTE: declarar todos los hooks antes de cualquier return condicional
   // para evitar "Rendered more hooks than during the previous render".

@@ -16,6 +16,7 @@ import {
 import { Card } from "@/components/nuvex/ui";
 import { BANCOS } from "@/components/nuvex/constants";
 import { useAuth } from "@/hooks/useAuth";
+import { getRecentCases } from "@/lib/recentCases";
 
 const FASE_IDS = ["comercial", "operativa", "banco", "cobro", "fin"] as const;
 type FaseId = (typeof FASE_IDS)[number];
@@ -251,6 +252,11 @@ function PipelinePage() {
   const fmtCOP = (n: number) =>
     new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 
+  // P28 — Vistos recientemente (localStorage). Se refresca al cargar y al refrescar.
+  const recents = useMemo(() => getRecentCases(), [lastUpdated]);
+
+
+
 
   return (
     <div className="mx-auto max-w-[1400px] space-y-4 p-4">
@@ -326,6 +332,26 @@ function PipelinePage() {
           </Link>
         </div>
       </div>
+
+      {recents.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#242424]/40">
+            Vistos recientemente
+          </span>
+          {recents.map((rc) => (
+            <Link
+              key={rc.id}
+              to="/casos/$id"
+              params={{ id: rc.id }}
+              className="inline-flex max-w-[180px] items-center gap-1 rounded-full border border-[#E3E7EE] bg-white px-2 py-0.5 text-[11px] text-[#0A1226] hover:border-[#445DA3] hover:text-[#445DA3]"
+              title={rc.nombre}
+            >
+              <span className="truncate">{rc.nombre}</span>
+            </Link>
+          ))}
+        </div>
+      )}
+
 
       {!loading && kpis.total > 0 && (
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
