@@ -63,6 +63,7 @@ function PipelinePage() {
   const [lastUpdated, setLastUpdated] = useState<number>(() => Date.now());
   const [nowTick, setNowTick] = useState<number>(() => Date.now());
   const [qLocal, setQLocal] = useState(search.q);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const { q, banco, stuck: soloStuck, fase, mios } = search;
 
