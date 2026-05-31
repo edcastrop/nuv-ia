@@ -64,6 +64,7 @@ function AuthenticatedLayout() {
       if (cancel) return;
       const roleNames = ((roleRows ?? []) as Array<{ role?: string }>).map((r) => r.role);
       const superAdminBypass = roleNames.includes("super_admin");
+      const isApoderadoOnly = roleNames.includes("apoderado") && !roleNames.some((r) => r && r !== "apoderado");
       const estado = (data as { estado_acceso?: string } | null)?.estado_acceso ?? "pendiente";
       const onb = (data as { onboarding_estado?: string } | null)?.onboarding_estado ?? "pendiente";
       const mfaAt = (data as { mfa_verificado_at?: string | null } | null)?.mfa_verificado_at ?? null;
@@ -107,10 +108,16 @@ function AuthenticatedLayout() {
         }
         return;
       }
-      if (onb !== "completado" && !path.startsWith("/onboarding") && !path.startsWith("/mi-perfil")) {
+      if (!isApoderadoOnly && onb !== "completado" && !path.startsWith("/onboarding") && !path.startsWith("/mi-perfil")) {
         setGateState("blocked");
         setGateChecked(true);
         navigate({ to: "/onboarding" });
+        return;
+      }
+      if (isApoderadoOnly && (path === "/" || path.startsWith("/onboarding") || path === "/pendiente-aprobacion")) {
+        setGateState("ok");
+        setGateChecked(true);
+        navigate({ to: "/apoderado/mis-casos" });
         return;
       }
       setGateState("ok");
