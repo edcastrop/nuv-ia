@@ -296,7 +296,7 @@ function PipelinePage() {
       ) : (
         <div className="overflow-x-auto pb-3">
           <div className="flex min-w-max gap-3">
-            {ETAPAS_PIPELINE.map((etapa) => {
+            {ETAPAS_PIPELINE.filter((etapa) => !fase || FASE_ETAPAS[fase as FaseId].includes(etapa.id)).map((etapa) => {
               const items = grupos.get(etapa.id) ?? [];
               const umbral = UMBRAL_DIAS[etapa.id] ?? 0;
               return (
