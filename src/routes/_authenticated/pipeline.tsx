@@ -143,6 +143,38 @@ function PipelinePage() {
     URL.revokeObjectURL(url);
   };
 
+  // P18 — KPIs agregados por fase.
+  const kpis = useMemo(() => {
+    let totalDias = 0;
+    let estancados = 0;
+    let total = 0;
+    const fases: Array<{ id: string; label: string; etapas: EtapaPipelineId[]; count: number; color: string }> = [
+      { id: "comercial", label: "Comercial · E1-3", etapas: ["lead", "extracto", "proyeccion"], count: 0, color: "bg-blue-50 text-blue-700 ring-blue-200" },
+      { id: "operativa", label: "Operativa · E4-7", etapas: ["presentacion", "cierre", "contratacion", "radicacion"], count: 0, color: "bg-indigo-50 text-indigo-700 ring-indigo-200" },
+      { id: "banco",     label: "Banco · E8",       etapas: ["banco"], count: 0, color: "bg-amber-50 text-amber-700 ring-amber-200" },
+      { id: "cobro",     label: "Cobro · E9-13",    etapas: ["informe", "cuenta", "pago", "comision", "paz_salvo"], count: 0, color: "bg-emerald-50 text-emerald-700 ring-emerald-200" },
+      { id: "fin",       label: "Finalizado · E14", etapas: ["finalizado"], count: 0, color: "bg-zinc-100 text-zinc-700 ring-zinc-200" },
+    ];
+    ETAPAS_PIPELINE.forEach((etapa) => {
+      const items = grupos.get(etapa.id) ?? [];
+      const umbral = UMBRAL_DIAS[etapa.id] ?? 0;
+      items.forEach((r) => {
+        const d = diasDesde(r.updated_at);
+        total += 1;
+        totalDias += d;
+        if (umbral > 0 && d > umbral) estancados += 1;
+      });
+      const fase = fases.find((f) => f.etapas.includes(etapa.id));
+      if (fase) fase.count += items.length;
+    });
+    return {
+      total,
+      estancados,
+      promedio: total > 0 ? Math.round(totalDias / total) : 0,
+      fases,
+    };
+  }, [grupos]);
+
 
   return (
     <div className="mx-auto max-w-[1400px] space-y-4 p-4">
