@@ -10,6 +10,7 @@ import {
   type Interviniente,
 } from "./intervinientes";
 import { CedulaReader } from "./CedulaReader";
+import { CityField } from "@/components/ui/CityField";
 
 interface Props {
   producto?: string | null;
@@ -113,11 +114,11 @@ export function IntervinientesFields({ producto, data, onChange, onTitularSync }
                 value={p.cedula}
                 onChange={(v) => update(idx, { cedula: v })}
               />
-              <TextField
+              <CityField
                 label="Lugar de expedición de la cédula"
                 value={p.lugarExpedicionCedula}
                 onChange={(v) => update(idx, { lugarExpedicionCedula: v })}
-                placeholder="Bogotá D.C."
+                placeholder="Selecciona municipio…"
               />
               <TextField
                 label="Dirección"

@@ -8,6 +8,7 @@ import { ShieldCheck, AlertTriangle, CheckCircle2, Send, RotateCcw, Lock, Unlock
 import { Card } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
 import type { Expediente } from "@/lib/expedientes";
+import { CitySelect } from "@/components/ui/CitySelect";
 import {
   readValidacion,
   detectarInconsistencias,
@@ -175,11 +176,11 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
         <EditField label="Nombre" value={draft.nombre} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, nombre: val })} className="md:col-span-2" />
         <EditField label="Tipo doc." value={draft.tipoDocumento || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, tipoDocumento: val })} />
         <EditField label="Documento" value={draft.cedula} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, cedula: val.replace(/\D/g, "") })} />
-        <EditField label="Lugar expedición" value={draft.lugarExpedicion || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, lugarExpedicion: val })} />
+        <EditField label="Lugar expedición" value={draft.lugarExpedicion || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, lugarExpedicion: val })} kind="city" />
         <EditField label="Banco" value={draft.banco} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, banco: val })} />
         <EditField label="N° crédito" value={draft.numeroCredito} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, numeroCredito: val })} />
         <EditField label="Producto" value={draft.tipoProducto || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, tipoProducto: val })} />
-        <EditField label="Ciudad" value={draft.ciudad || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, ciudad: val })} />
+        <EditField label="Ciudad" value={draft.ciudad || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, ciudad: val })} kind="city" />
         <EditField label="Dirección" value={draft.direccion || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, direccion: val })} className="md:col-span-2" />
         <EditField label="Email" value={draft.email || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, email: val })} />
         <EditField label="Celular" value={draft.celular || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, celular: val })} />
@@ -377,22 +378,30 @@ function EditField({
   editing,
   onChange,
   className,
+  kind = "text",
 }: {
   label: string;
   value: string;
   editing: boolean;
   onChange: (val: string) => void;
   className?: string;
+  kind?: "text" | "city";
 }) {
   return (
     <div className={`rounded-lg border bg-white px-2 py-1.5 ${className || ""}`} style={{ borderColor: editing ? "#B6CEFF" : "#E3E7EE" }}>
       <div className="text-[10px] uppercase font-semibold text-[#242424]/60">{label}</div>
       {editing ? (
-        <input
-          value={value || ""}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full bg-transparent text-[12px] text-[#242424] outline-none focus:ring-0 border-0 p-0"
-        />
+        kind === "city" ? (
+          <div className="-mx-1">
+            <CitySelect value={value || ""} onChange={onChange} placeholder="Selecciona municipio…" />
+          </div>
+        ) : (
+          <input
+            value={value || ""}
+            onChange={(e) => onChange(e.target.value)}
+            className="w-full bg-transparent text-[12px] text-[#242424] outline-none focus:ring-0 border-0 p-0"
+          />
+        )
       ) : (
         <div className="text-[12px] text-[#242424] truncate" title={value}>{value || "—"}</div>
       )}

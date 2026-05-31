@@ -6,6 +6,7 @@ import { upsertExpediente } from "@/lib/expedientes";
 import { cambiarEstadoConValidacion } from "@/lib/pipelineTransiciones";
 import { defaultClient } from "@/components/nuvex/ClientFields";
 import { BANCOS } from "@/components/nuvex/constants";
+import { CitySelect } from "@/components/ui/CitySelect";
 import type {
   ProyeccionFinancieraInput,
   ResultadoEscenario,
@@ -284,7 +285,10 @@ export function GuardarCasoModal({ open, onClose, autoSave = false, input, resul
                 onChange={(v) => set("banco", v)}
                 options={BANCOS}
               />
-              <Field label="Ciudad" value={form.ciudad} onChange={(v) => set("ciudad", v)} />
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-white/55">Ciudad</span>
+                <CitySelect value={form.ciudad} onChange={(v) => set("ciudad", v)} placeholder="Selecciona municipio…" />
+              </label>
               <Field
                 label="Número de crédito"
                 value={form.numeroCredito}

@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import logoNuvex from "@/assets/logo-nuvex.png";
+import { CitySelect } from "@/components/ui/CitySelect";
 import {
   ArrowRight, ShieldCheck, Lock, User, Mail, Phone, MapPin, Building2,
   UserCog, Eye, EyeOff, Sparkles, Zap, CheckCircle2, MapPinned, PhoneCall, Globe, KeyRound,
@@ -233,10 +234,17 @@ function RegistroPage() {
                   onChange={(e) => setForm({ ...form, telefono: e.target.value })} required placeholder="+57 3XX XXX XXXX" />
               </Field>
 
-              <Field label="Ciudad *" icon={<MapPin className="w-4 h-4" />}>
-                <input className="nuvex-register-control" value={form.ciudad}
-                  onChange={(e) => setForm({ ...form, ciudad: e.target.value })} required placeholder="Ej. Bogotá" />
-              </Field>
+              <label className="block">
+                <span className="nuvex-register-label">Ciudad *</span>
+                <div className="mt-2">
+                  <CitySelect
+                    value={form.ciudad}
+                    onChange={(v) => setForm({ ...form, ciudad: v })}
+                    required
+                    placeholder="Selecciona municipio…"
+                  />
+                </div>
+              </label>
               <Field label="Equipo / Sede" icon={<Building2 className="w-4 h-4" />}>
                 <input className="nuvex-register-control" value={form.equipo}
                   onChange={(e) => setForm({ ...form, equipo: e.target.value })} placeholder="Ej. Bogotá Norte" />
