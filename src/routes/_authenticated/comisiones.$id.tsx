@@ -384,7 +384,7 @@ function DetalleCuentaCobro() {
               <div className="space-y-3">
                 <div className="rounded-lg border border-[#E3E7EE] bg-white p-3">
                   <div className="mb-2 text-[12px] font-semibold text-[#0A1226]">
-                    % Comisión licenciado <span className="text-[#991B1B]">*</span>
+                    % Comisión Analista F. Comercial <span className="text-[#991B1B]">*</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {PORCENTAJES_COMISION_CC.map((p) => {
