@@ -17,6 +17,7 @@ export function CanalChat({ canal }: { canal: Canal }) {
   const [adjs, setAdjs] = useState<Mensaje["adjuntos"]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let active = true;
