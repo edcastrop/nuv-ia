@@ -38,6 +38,7 @@ import {
   Banknote,
   Activity,
 } from "lucide-react";
+import { KpisPipeline14 } from "@/components/pipeline/KpisPipeline14";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
@@ -185,6 +186,8 @@ function DashboardPage() {
                 hint="Pagados / totales"
               />
             </section>
+
+            {isManager && <KpisPipeline14 />}
 
             {/* FUNNEL + PIPELINE */}
             <section className="grid gap-6 lg:grid-cols-3">
