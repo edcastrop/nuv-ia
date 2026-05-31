@@ -64,9 +64,10 @@ export function TimelineEtapas14({ expedienteId, refreshKey = 0 }: Props) {
       // Construye ingreso por etapa: primera vez que aparece esa etapa en historial.
       // Si nunca hay historial, usa created_at del expediente para "lead".
       const ingresos = new Map<EtapaPipelineId, string>();
-      const { mapEstadoToEtapa } = await import("@/lib/pipelineEtapas");
       for (const row of hist ?? []) {
-        const etapa = mapEstadoToEtapa(row.estado_caso_nuevo as string);
+        const etapa = computeEtapaActual({
+          estado_caso: row.estado_caso_nuevo as string | null,
+        } as Parameters<typeof computeEtapaActual>[0]);
         if (!ingresos.has(etapa)) ingresos.set(etapa, row.created_at);
       }
       if (!ingresos.has("lead") && exp?.created_at) {
