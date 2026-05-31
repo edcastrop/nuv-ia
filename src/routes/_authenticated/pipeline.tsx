@@ -15,6 +15,7 @@ import {
 } from "@/lib/pipelineEtapas";
 import { Card } from "@/components/nuvex/ui";
 import { BANCOS } from "@/components/nuvex/constants";
+import { useAuth } from "@/hooks/useAuth";
 
 const FASE_IDS = ["comercial", "operativa", "banco", "cobro", "fin"] as const;
 type FaseId = (typeof FASE_IDS)[number];
@@ -24,6 +25,7 @@ const pipelineSearchSchema = z.object({
   banco: fallback(z.string(), "").default(""),
   stuck: fallback(z.boolean(), false).default(false),
   fase: fallback(z.enum(["", ...FASE_IDS]), "").default(""),
+  mios: fallback(z.boolean(), false).default(false),
 });
 
 const FASE_ETAPAS: Record<FaseId, EtapaPipelineId[]> = {
@@ -53,6 +55,7 @@ function diasDesde(iso: string | null | undefined): number {
 function PipelinePage() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: "/pipeline" });
+  const { user } = useAuth();
   const [rows, setRows] = useState<Expediente[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -60,7 +63,7 @@ function PipelinePage() {
   const [nowTick, setNowTick] = useState<number>(() => Date.now());
   const [qLocal, setQLocal] = useState(search.q);
 
-  const { q, banco, stuck: soloStuck, fase } = search;
+  const { q, banco, stuck: soloStuck, fase, mios } = search;
 
   type PipelineSearch = z.infer<typeof pipelineSearchSchema>;
 
@@ -78,6 +81,8 @@ function PipelinePage() {
     navigate({ search: (prev: PipelineSearch) => ({ ...prev, banco: v }), replace: true });
   const setSoloStuck = (v: boolean) =>
     navigate({ search: (prev: PipelineSearch) => ({ ...prev, stuck: v }), replace: true });
+  const setMios = (v: boolean) =>
+    navigate({ search: (prev: PipelineSearch) => ({ ...prev, mios: v }), replace: true });
   const toggleFase = (id: FaseId) =>
     navigate({
       search: (prev: PipelineSearch) => ({ ...prev, fase: prev.fase === id ? "" : id }),
@@ -85,8 +90,9 @@ function PipelinePage() {
     });
   const clearAll = () => {
     setQLocal("");
-    navigate({ search: { q: "", banco: "", stuck: false, fase: "" }, replace: true });
+    navigate({ search: { q: "", banco: "", stuck: false, fase: "", mios: false }, replace: true });
   };
+
 
 
   const cargar = async (silent = false) => {
@@ -123,7 +129,9 @@ function PipelinePage() {
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
+    const uid = user?.id ?? "";
     return rows.filter((r) => {
+      if (mios && uid && r.asesor_id !== uid) return false;
       if (banco && r.banco !== banco) return false;
       if (term) {
         const hay = `${r.cliente_nombre} ${r.cedula ?? ""} ${r.numero_credito ?? ""} ${r.banco ?? ""}`.toLowerCase();
@@ -131,7 +139,7 @@ function PipelinePage() {
       }
       return true;
     });
-  }, [rows, q, banco]);
+  }, [rows, q, banco, mios, user?.id]);
 
   const grupos = useMemo(() => {
     const m = new Map<EtapaPipelineId, Expediente[]>();
@@ -274,13 +282,23 @@ function PipelinePage() {
           <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-[#E3E7EE] bg-white px-2 py-1 text-[12px] text-[#0A1226]">
             <input
               type="checkbox"
+              checked={mios}
+              onChange={(e) => setMios(e.target.checked)}
+              disabled={!user?.id}
+              className="h-3.5 w-3.5"
+            />
+            Mis casos
+          </label>
+          <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-[#E3E7EE] bg-white px-2 py-1 text-[12px] text-[#0A1226]">
+            <input
+              type="checkbox"
               checked={soloStuck}
               onChange={(e) => setSoloStuck(e.target.checked)}
               className="h-3.5 w-3.5"
             />
             Solo estancados
           </label>
-          {(q || banco || soloStuck || fase) && (
+          {(q || banco || soloStuck || fase || mios) && (
             <button
               onClick={clearAll}
               className="h-8 rounded-md border border-[#E3E7EE] bg-white px-2 text-[12px] text-[#445DA3] hover:bg-[#F1F3F8]"
