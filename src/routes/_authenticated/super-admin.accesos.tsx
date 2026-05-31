@@ -10,6 +10,7 @@ import {
   type UsuarioAcceso, type EstadoAcceso, type PreviewDesvinculacion,
   type SolicitudReactivacion, type EstadoReactivacion,
 } from "@/lib/seguridad";
+import { roleLabel } from "@/lib/roleLabels";
 import { ShieldCheck, ShieldAlert, ShieldOff, Clock, CheckCircle2, XCircle, Search, History, UserMinus, AlertTriangle, RefreshCw } from "lucide-react";
 import { UserAvatar } from "@/components/nuvex/UserAvatar";
 
@@ -240,7 +241,7 @@ function AccesosPage() {
                       </div>
                       <div className="text-xs text-[#242424]/60 truncate">{u.email}</div>
                       <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-[#242424]/70">
-                        <div><b className="font-semibold text-[#242424]/55 uppercase tracking-wider">Rol solicitado:</b> {u.rol_solicitado || "—"}</div>
+                        <div><b className="font-semibold text-[#242424]/55 uppercase tracking-wider">Rol solicitado:</b> {roleLabel(u.rol_solicitado)}</div>
                         <div><b className="font-semibold text-[#242424]/55 uppercase tracking-wider">Teléfono:</b> {u.telefono_registro || "—"}</div>
                         <div><b className="font-semibold text-[#242424]/55 uppercase tracking-wider">Ciudad:</b> {u.ciudad_registro || "—"}</div>
                         <div><b className="font-semibold text-[#242424]/55 uppercase tracking-wider">Equipo:</b> {u.equipo_registro || "—"}</div>
@@ -379,7 +380,7 @@ function AccesosPage() {
                   style={sel
                     ? { background: AZUL, color: "#fff", borderColor: AZUL }
                     : { background: "#fff", color: NEGRO, borderColor: "#E3E7EE" }}
-                >{r}</button>
+                >{roleLabel(r)}</button>
               );
             })}
           </div>
@@ -807,15 +808,15 @@ function AccesosPage() {
             El usuario recuperará acceso completo a NUVEX conservando todo su historial (auditoría, academia, expedientes, comisiones, colaboración).
           </p>
           <div className="mb-3 grid grid-cols-2 gap-2 text-[11px]">
-            <div className="rounded-md bg-[#FAFBFD] border border-[#E3E7EE] p-2"><b className="block uppercase tracking-wider text-[#242424]/55">Rol anterior</b>{solSel.rol_actual || "—"}</div>
-            <div className="rounded-md bg-[#FAFBFD] border border-[#E3E7EE] p-2"><b className="block uppercase tracking-wider text-[#242424]/55">Rol solicitado</b>{solSel.rol_solicitado || "—"}</div>
+            <div className="rounded-md bg-[#FAFBFD] border border-[#E3E7EE] p-2"><b className="block uppercase tracking-wider text-[#242424]/55">Rol anterior</b>{roleLabel(solSel.rol_actual)}</div>
+            <div className="rounded-md bg-[#FAFBFD] border border-[#E3E7EE] p-2"><b className="block uppercase tracking-wider text-[#242424]/55">Rol solicitado</b>{roleLabel(solSel.rol_solicitado)}</div>
           </div>
           <label className="block mb-3">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Rol a asignar al reactivar</span>
             <select value={solRolAsign} onChange={(e) => setSolRolAsign(e.target.value as AppRole | "")}
               className="mt-1.5 w-full rounded-[10px] border border-[#E1E5EE] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#445DA3]">
               <option value="">— Mantener / sin rol —</option>
-              {ROLES_DISPONIBLES.map((r) => <option key={r} value={r}>{r}</option>)}
+              {ROLES_DISPONIBLES.map((r) => <option key={r} value={r}>{roleLabel(r)}</option>)}
             </select>
           </label>
           <label className="block mb-3">
@@ -936,8 +937,8 @@ function ReactivacionesPanel({
                   <tr key={s.id} className="border-b border-[#E3E7EE] last:border-0 align-top">
                     <td className="py-3 pr-2">{s.nombre || "—"}</td>
                     <td className="py-3 pr-2 text-[#242424]/75">{s.correo}</td>
-                    <td className="py-3 pr-2 text-xs">{s.rol_actual || "—"}</td>
-                    <td className="py-3 pr-2 text-xs">{s.rol_solicitado || "—"}</td>
+                    <td className="py-3 pr-2 text-xs">{roleLabel(s.rol_actual)}</td>
+                    <td className="py-3 pr-2 text-xs">{roleLabel(s.rol_solicitado)}</td>
                     <td className="py-3 pr-2 text-xs text-[#242424]/70">{new Date(s.fecha_solicitud).toLocaleString("es-CO")}</td>
                     <td className="py-3 pr-2">
                       <span className="inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
