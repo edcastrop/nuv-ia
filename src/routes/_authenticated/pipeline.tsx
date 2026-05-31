@@ -319,6 +319,10 @@ function PipelinePage() {
               <Clock className="h-4 w-4 text-[#445DA3]" /> {kpis.promedio}
             </div>
           </div>
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-2.5" title="Suma de honorarios_final de los casos visibles">
+            <div className="text-[10px] uppercase tracking-wider text-emerald-700/70">Honorarios</div>
+            <div className="mt-0.5 text-lg font-semibold text-emerald-800">{fmtCOP(kpis.honorarios)}</div>
+          </div>
           {kpis.fases.map((f) => {
             const active = fase === f.id;
             return (
