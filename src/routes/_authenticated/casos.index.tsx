@@ -53,6 +53,46 @@ function avatarColor(name: string) {
   return AVATAR_COLORS[h % AVATAR_COLORS.length];
 }
 
+// SLA por etapa (días) — alineado con AlertasEstancamientoPanel.
+const UMBRAL_DIAS_ETAPA: Record<EtapaPipelineId, number> = {
+  lead: 3,
+  extracto: 3,
+  proyeccion: 5,
+  presentacion: 5,
+  cierre: 7,
+  contratacion: 7,
+  radicacion: 5,
+  banco: 21,
+  informe: 5,
+  cuenta: 5,
+  pago: 10,
+  comision: 10,
+  paz_salvo: 5,
+  finalizado: 0,
+};
+
+function diasDesde(iso: string | null | undefined): number {
+  if (!iso) return 0;
+  const ms = Date.now() - new Date(iso).getTime();
+  return Math.max(0, Math.floor(ms / 86400000));
+}
+
+type SlaNivel = "ok" | "atencion" | "critico" | "neutral";
+
+function slaNivel(dias: number, umbral: number): SlaNivel {
+  if (umbral <= 0) return "neutral";
+  if (dias >= umbral * 1.5) return "critico";
+  if (dias >= umbral) return "atencion";
+  return "ok";
+}
+
+const SLA_COLORS: Record<SlaNivel, { bg: string; fg: string; border: string }> = {
+  ok:       { bg: "rgba(132,185,143,0.10)", fg: "#84B98F", border: "rgba(132,185,143,0.35)" },
+  atencion: { bg: "rgba(245,158,11,0.10)",  fg: "#F59E0B", border: "rgba(245,158,11,0.40)" },
+  critico:  { bg: "rgba(244,63,94,0.12)",   fg: "#FB7185", border: "rgba(244,63,94,0.45)" },
+  neutral:  { bg: "rgba(148,163,184,0.10)", fg: "#94A3B8", border: "rgba(148,163,184,0.30)" },
+};
+
 function CasosPage() {
   const [search, setSearch] = useState("");
   const [estado, setEstado] = useState<EstadoExpediente | "">("");
