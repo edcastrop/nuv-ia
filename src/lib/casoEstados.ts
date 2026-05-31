@@ -323,7 +323,7 @@ export async function cambiarEstadoCaso(
         expediente_id: expedienteId,
         estado_caso_anterior: nuevoEstado,
         estado_caso_nuevo: finalEstado,
-        accion_origen: "auto" as never,
+        accion_origen: "caso_finalizado",
         observacion: "Cierre automático tras generación de paz y salvo",
         user_id: userId,
       } as never);
