@@ -1633,37 +1633,58 @@ export type Database = {
       }
       expediente_checklist_envios: {
         Row: {
-          asunto: string
+          asunto: string | null
+          cc_emails: string[]
           cc_licenciado_email: string | null
-          cuerpo: string
-          enviado_a_email: string
+          cuerpo: string | null
+          destinatarios: string[]
+          documentos: Json
+          documentos_solicitados: Json
+          enviado_a_email: string | null
           enviado_at: string
           enviado_por: string | null
+          error: string | null
+          estado_envio: string
           expediente_id: string
           id: string
           pdf_url: string | null
+          proveedor_message_id: string | null
         }
         Insert: {
-          asunto: string
+          asunto?: string | null
+          cc_emails?: string[]
           cc_licenciado_email?: string | null
-          cuerpo: string
-          enviado_a_email: string
+          cuerpo?: string | null
+          destinatarios?: string[]
+          documentos?: Json
+          documentos_solicitados?: Json
+          enviado_a_email?: string | null
           enviado_at?: string
           enviado_por?: string | null
+          error?: string | null
+          estado_envio?: string
           expediente_id: string
           id?: string
           pdf_url?: string | null
+          proveedor_message_id?: string | null
         }
         Update: {
-          asunto?: string
+          asunto?: string | null
+          cc_emails?: string[]
           cc_licenciado_email?: string | null
-          cuerpo?: string
-          enviado_a_email?: string
+          cuerpo?: string | null
+          destinatarios?: string[]
+          documentos?: Json
+          documentos_solicitados?: Json
+          enviado_a_email?: string | null
           enviado_at?: string
           enviado_por?: string | null
+          error?: string | null
+          estado_envio?: string
           expediente_id?: string
           id?: string
           pdf_url?: string | null
+          proveedor_message_id?: string | null
         }
         Relationships: []
       }
