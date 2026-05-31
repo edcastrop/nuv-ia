@@ -17,6 +17,9 @@ function QADashboard() {
   const [nombres, setNombres] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
 
+  if (!rolesLoading && !canValidarProyeccion) return <Navigate to="/" />;
+
+
   useEffect(() => {
     (async () => {
       const all = await listValidaciones(500);
