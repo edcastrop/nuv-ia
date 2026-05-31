@@ -25,6 +25,7 @@ const pipelineSearchSchema = z.object({
   banco: fallback(z.string(), "").default(""),
   stuck: fallback(z.boolean(), false).default(false),
   fase: fallback(z.enum(["", ...FASE_IDS]), "").default(""),
+  mios: fallback(z.boolean(), false).default(false),
 });
 
 const FASE_ETAPAS: Record<FaseId, EtapaPipelineId[]> = {
