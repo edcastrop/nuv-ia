@@ -193,14 +193,30 @@ function CasosPage() {
               <div className="mt-4 h-px w-32" style={{ background: `linear-gradient(90deg, ${AZUL}, ${VERDE}, transparent)` }} />
             </div>
 
-            <Link
-              to="/"
-              className="group relative inline-flex items-center gap-2 rounded-[18px] px-6 py-4 text-sm font-bold uppercase tracking-wider text-white transition-all duration-300 hover:-translate-y-0.5"
-              style={{
-                background: `linear-gradient(135deg, ${AZUL}, ${VERDE})`,
-                boxShadow: `0 10px 30px -10px ${AZUL}, 0 0 0 1px rgba(255,255,255,0.05)`,
-              }}
-            >
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={exportarCSV}
+                disabled={loading || rows.length === 0}
+                className="inline-flex items-center gap-2 rounded-[18px] px-5 py-4 text-xs font-bold uppercase tracking-wider transition-all duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                style={{
+                  background: "rgba(255,255,255,0.04)",
+                  border: `1px solid ${BORDER}`,
+                  color: "#fff",
+                }}
+                title="Exportar la lista filtrada a CSV"
+              >
+                <ArrowRight size={14} className="-rotate-90" />
+                Exportar CSV
+              </button>
+              <Link
+                to="/"
+                className="group relative inline-flex items-center gap-2 rounded-[18px] px-6 py-4 text-sm font-bold uppercase tracking-wider text-white transition-all duration-300 hover:-translate-y-0.5"
+                style={{
+                  background: `linear-gradient(135deg, ${AZUL}, ${VERDE})`,
+                  boxShadow: `0 10px 30px -10px ${AZUL}, 0 0 0 1px rgba(255,255,255,0.05)`,
+                }}
+              >
               <span
                 className="absolute inset-0 rounded-[18px] opacity-0 transition-opacity duration-300 group-hover:opacity-100 blur-xl"
                 style={{ background: `linear-gradient(135deg, ${AZUL}, ${VERDE})` }}
