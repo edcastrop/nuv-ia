@@ -29,6 +29,7 @@ import { EtapasMedias456 } from "@/components/pipeline/EtapasMedias456";
 import { EtapasOperativas78910 } from "@/components/pipeline/EtapasOperativas78910";
 import { EtapasFinales11a14 } from "@/components/pipeline/EtapasFinales11a14";
 import { AuditoriaPipeline } from "@/components/pipeline/AuditoriaPipeline";
+import { TimelineEtapas14 } from "@/components/pipeline/TimelineEtapas14";
 import { computeEtapaActual, type EtapaPipelineId } from "@/lib/pipelineEtapas";
 import { supabase } from "@/integrations/supabase/client";
 
