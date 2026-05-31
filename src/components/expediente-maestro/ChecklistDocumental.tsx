@@ -654,6 +654,15 @@ function SendChecklistModal({
         });
       }
 
+      if (adjuntarChecklist) {
+        const chkBlob = await generarChecklistDocumentalPdf(expediente, docsConEstado);
+        attachments.push({
+          filename: `NUVEX_Checklist_Documental_${(expediente.cliente?.nombre || "cliente").replace(/\s+/g, "_")}.pdf`,
+          contentBase64: await blobToBase64(chkBlob),
+          contentType: "application/pdf",
+        });
+      }
+
       const ccArr = cc.trim() ? [cc.trim()] : [];
 
       await send({
