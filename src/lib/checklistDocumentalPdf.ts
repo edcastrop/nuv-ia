@@ -94,7 +94,7 @@ export async function generarChecklistDocumentalPdf(
     // zebra
     if (i % 2 === 0) {
       pdf.setFillColor(250, 251, 253);
-      pdf.rect(LAYOUT.contentLeft, y - 12, LAYOUT.contentRight - LAYOUT.contentLeft, rowH, "F");
+      pdf.rect(contentLeft, y - 12, contentRight - contentLeft, rowH, "F");
     }
     pdf.setFontSize(9.5);
     pdf.setTextColor(36, 36, 36);
