@@ -116,9 +116,9 @@ function PipelinePage() {
 
 
   const bancos = useMemo(() => {
-    const s = new Set<string>();
+    const s = new Set<string>(BANCOS);
     rows.forEach((r) => r.banco && s.add(r.banco));
-    return Array.from(s).sort();
+    return Array.from(s).sort((a, b) => a.localeCompare(b, "es"));
   }, [rows]);
 
   const filtered = useMemo(() => {
