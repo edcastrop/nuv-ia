@@ -602,11 +602,19 @@ function SendChecklistModal({
   const [cuerpo, setCuerpo] = useState(defaults.cuerpo);
 
   // Solicitud Cambio de Plazos (campos opcionales editables)
-  const [plazoSolicitado, setPlazoSolicitado] = useState("");
-  const [cuotaNueva, setCuotaNueva] = useState("");
-  const [justificacion, setJustificacion] = useState("");
+  const [cuotasAEliminar, setCuotasAEliminar] = useState("");
   const [adjuntarSolicitud, setAdjuntarSolicitud] = useState(true);
   const [adjuntarChecklist, setAdjuntarChecklist] = useState(true);
+
+  // Apoderado NUVEX sugerido por banco (mismo mecanismo que el Poder Especial)
+  const [apoderados, setApoderados] = useState<ApoderadoNuvex[]>([]);
+  useEffect(() => {
+    listApoderados(true).then(setApoderados).catch(() => setApoderados([]));
+  }, []);
+  const apoderadoSugerido = useMemo(
+    () => seleccionarApoderado(expediente.credito?.banco ?? "", apoderados).apoderado,
+    [expediente.credito?.banco, apoderados],
+  );
 
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
