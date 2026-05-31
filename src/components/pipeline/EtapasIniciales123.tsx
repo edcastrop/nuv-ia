@@ -146,7 +146,7 @@ function EtapaPanel({
       <div className="flex items-start gap-3">
         <div
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-          style={{ background: NUVEX.azulClaro }}
+          style={{ background: "#EAF1FF" }}
         >
           <Icon className="h-4 w-4" style={{ color: NUVEX.azul }} />
         </div>
