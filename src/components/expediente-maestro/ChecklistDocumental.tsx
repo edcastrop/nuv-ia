@@ -45,6 +45,7 @@ import {
 } from "@/lib/checklistDocumental";
 import { enviarChecklistCliente } from "@/lib/checklistEnvio.functions";
 import { generarSolicitudCambioPlazosPdf } from "@/lib/solicitudCambioPlazosPdf";
+import { generarChecklistDocumentalPdf } from "@/lib/checklistDocumentalPdf";
 
 
 interface Props {
