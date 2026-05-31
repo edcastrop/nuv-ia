@@ -288,6 +288,41 @@ function PipelinePage() {
   // P28 — Vistos recientemente (localStorage). Se refresca al cargar y al refrescar.
   const recents = useMemo(() => getRecentCases(), [lastUpdated]);
 
+  // P30 — Embudo ejecutivo E1→E14: conteo por etapa + conversión acumulada vs E1.
+  const [showFunnel, setShowFunnel] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem("nuvex.pipeline.funnel") !== "0";
+  });
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("nuvex.pipeline.funnel", showFunnel ? "1" : "0");
+    }
+  }, [showFunnel]);
+
+  const funnel = useMemo(() => {
+    const counts = ETAPAS_PIPELINE.map((e) => ({
+      id: e.id,
+      numero: e.numero,
+      titulo: e.titulo,
+      count: (grupos.get(e.id) ?? []).length,
+    }));
+    // "Pasaron por la etapa" = casos en esa etapa o más adelante.
+    let acumDesdeFin = 0;
+    const acum = [...counts].reverse().map((c) => {
+      acumDesdeFin += c.count;
+      return { ...c, passed: acumDesdeFin };
+    }).reverse();
+    const base = acum[0]?.passed ?? 0;
+    return acum.map((c, i) => {
+      const prev = acum[i - 1]?.passed ?? base;
+      return {
+        ...c,
+        pct: base > 0 ? Math.round((c.passed / base) * 100) : 0,
+        drop: prev > 0 ? Math.round(((prev - c.passed) / prev) * 100) : 0,
+      };
+    });
+  }, [grupos]);
+
 
 
 
