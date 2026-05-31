@@ -35,9 +35,6 @@ function BandejaValidacion() {
   const [err, setErr] = useState<string | null>(null);
   const [filtro, setFiltro] = useState<ValidacionEstado | "todos">("en_revision_contratacion");
 
-  if (!rolesLoading && !allowed) return <Navigate to="/" />;
-
-
   const reload = () => {
     setLoading(true);
     listBandejaValidacion(filtro)
@@ -46,7 +43,15 @@ function BandejaValidacion() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { reload(); }, [filtro]);
+  useEffect(() => {
+    if (!allowed) return;
+    reload();
+     
+  }, [filtro, allowed]);
+
+  if (!rolesLoading && !allowed) return <Navigate to="/" />;
+
+
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-6 space-y-4">
