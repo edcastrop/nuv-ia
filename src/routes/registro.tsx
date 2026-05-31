@@ -13,7 +13,7 @@ export const Route = createFileRoute("/registro")({
 });
 
 const ROLES_SOLICITABLES = [
-  { v: "licenciado", label: "Licenciado" },
+  { v: "licenciado", label: "Analista Financiero Comercial" },
   { v: "operaciones", label: "Operaciones" },
   { v: "juridica", label: "Jurídica" },
   { v: "contabilidad", label: "Contabilidad" },
