@@ -249,7 +249,7 @@ function CasosPage() {
               <button
                 type="button"
                 onClick={exportarCSV}
-                disabled={loading || rows.length === 0}
+                disabled={loading || filteredRows.length === 0}
                 className="inline-flex items-center gap-2 rounded-[18px] px-5 py-4 text-xs font-bold uppercase tracking-wider transition-all duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
                 style={{
                   background: "rgba(255,255,255,0.04)",
