@@ -15,11 +15,23 @@ import {
 } from "@/lib/pipelineEtapas";
 import { Card } from "@/components/nuvex/ui";
 
+const FASE_IDS = ["comercial", "operativa", "banco", "cobro", "fin"] as const;
+type FaseId = (typeof FASE_IDS)[number];
+
 const pipelineSearchSchema = z.object({
   q: fallback(z.string(), "").default(""),
   banco: fallback(z.string(), "").default(""),
   stuck: fallback(z.boolean(), false).default(false),
+  fase: fallback(z.enum(["", ...FASE_IDS]), "").default(""),
 });
+
+const FASE_ETAPAS: Record<FaseId, EtapaPipelineId[]> = {
+  comercial: ["lead", "extracto", "proyeccion"],
+  operativa: ["presentacion", "cierre", "contratacion", "radicacion"],
+  banco: ["banco"],
+  cobro: ["informe", "cuenta", "pago", "comision", "paz_salvo"],
+  fin: ["finalizado"],
+};
 
 export const Route = createFileRoute("/_authenticated/pipeline")({
   validateSearch: zodValidator(pipelineSearchSchema),
@@ -44,7 +56,7 @@ function PipelinePage() {
   const [loading, setLoading] = useState(true);
   const [qLocal, setQLocal] = useState(search.q);
 
-  const { q, banco, stuck: soloStuck } = search;
+  const { q, banco, stuck: soloStuck, fase } = search;
 
   type PipelineSearch = z.infer<typeof pipelineSearchSchema>;
 
@@ -62,10 +74,16 @@ function PipelinePage() {
     navigate({ search: (prev: PipelineSearch) => ({ ...prev, banco: v }), replace: true });
   const setSoloStuck = (v: boolean) =>
     navigate({ search: (prev: PipelineSearch) => ({ ...prev, stuck: v }), replace: true });
+  const toggleFase = (id: FaseId) =>
+    navigate({
+      search: (prev: PipelineSearch) => ({ ...prev, fase: prev.fase === id ? "" : id }),
+      replace: true,
+    });
   const clearAll = () => {
     setQLocal("");
-    navigate({ search: { q: "", banco: "", stuck: false }, replace: true });
+    navigate({ search: { q: "", banco: "", stuck: false, fase: "" }, replace: true });
   };
+
 
   useEffect(() => {
     listExpedientes()
@@ -211,7 +229,7 @@ function PipelinePage() {
             />
             Solo estancados
           </label>
-          {(q || banco || soloStuck) && (
+          {(q || banco || soloStuck || fase) && (
             <button
               onClick={clearAll}
               className="h-8 rounded-md border border-[#E3E7EE] bg-white px-2 text-[12px] text-[#445DA3] hover:bg-[#F1F3F8]"
@@ -250,12 +268,21 @@ function PipelinePage() {
               <Clock className="h-4 w-4 text-[#445DA3]" /> {kpis.promedio}
             </div>
           </div>
-          {kpis.fases.map((f) => (
-            <div key={f.id} className={`rounded-xl p-2.5 ring-1 ${f.color}`}>
-              <div className="text-[10px] uppercase tracking-wider opacity-70">{f.label}</div>
-              <div className="mt-0.5 text-lg font-semibold">{f.count}</div>
-            </div>
-          ))}
+          {kpis.fases.map((f) => {
+            const active = fase === f.id;
+            return (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => toggleFase(f.id as FaseId)}
+                className={`rounded-xl p-2.5 text-left ring-1 transition hover:brightness-95 ${f.color} ${active ? "ring-2 ring-offset-1 ring-[#445DA3]" : ""}`}
+                title={active ? "Quitar filtro de fase" : "Filtrar por esta fase"}
+              >
+                <div className="text-[10px] uppercase tracking-wider opacity-70">{f.label}</div>
+                <div className="mt-0.5 text-lg font-semibold">{f.count}</div>
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -269,7 +296,7 @@ function PipelinePage() {
       ) : (
         <div className="overflow-x-auto pb-3">
           <div className="flex min-w-max gap-3">
-            {ETAPAS_PIPELINE.map((etapa) => {
+            {ETAPAS_PIPELINE.filter((etapa) => !fase || FASE_ETAPAS[fase as FaseId].includes(etapa.id)).map((etapa) => {
               const items = grupos.get(etapa.id) ?? [];
               const umbral = UMBRAL_DIAS[etapa.id] ?? 0;
               return (
