@@ -299,10 +299,14 @@ function PipelinePage() {
             {ETAPAS_PIPELINE.filter((etapa) => !fase || FASE_ETAPAS[fase as FaseId].includes(etapa.id)).map((etapa) => {
               const items = grupos.get(etapa.id) ?? [];
               const umbral = UMBRAL_DIAS[etapa.id] ?? 0;
+              const diasArr = items.map((r) => diasDesde(r.updated_at));
+              const stuckCount = umbral > 0 ? diasArr.filter((d) => d > umbral).length : 0;
+              const avgDias = diasArr.length > 0 ? Math.round(diasArr.reduce((a, b) => a + b, 0) / diasArr.length) : 0;
+              const heatBorder = stuckCount > 0 ? "border-rose-300 bg-rose-50/40" : "border-[#E3E7EE] bg-[#F7F9FC]";
               return (
                 <div
                   key={etapa.id}
-                  className="w-[280px] flex-shrink-0 rounded-2xl border border-[#E3E7EE] bg-[#F7F9FC] p-2.5"
+                  className={`w-[280px] flex-shrink-0 rounded-2xl border p-2.5 ${heatBorder}`}
                 >
                   <div className="mb-2 flex items-center justify-between px-1">
                     <div className="min-w-0">
@@ -317,6 +321,20 @@ function PipelinePage() {
                       {items.length}
                     </span>
                   </div>
+                  {items.length > 0 && (
+                    <div className="mb-2 flex items-center justify-between gap-2 px-1 text-[10px]">
+                      <span className="inline-flex items-center gap-1 text-[#242424]/60">
+                        <Clock className="h-3 w-3" /> prom. {avgDias}d
+                        {umbral > 0 && <span className="text-[#242424]/40">· umbral {umbral}d</span>}
+                      </span>
+                      {stuckCount > 0 && (
+                        <span className="inline-flex items-center gap-1 rounded bg-rose-100 px-1.5 py-0.5 font-semibold text-rose-700">
+                          <AlertTriangle className="h-3 w-3" /> {stuckCount}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
 
                   <div className="space-y-2">
                     {items.length === 0 ? (
