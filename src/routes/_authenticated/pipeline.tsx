@@ -268,12 +268,21 @@ function PipelinePage() {
               <Clock className="h-4 w-4 text-[#445DA3]" /> {kpis.promedio}
             </div>
           </div>
-          {kpis.fases.map((f) => (
-            <div key={f.id} className={`rounded-xl p-2.5 ring-1 ${f.color}`}>
-              <div className="text-[10px] uppercase tracking-wider opacity-70">{f.label}</div>
-              <div className="mt-0.5 text-lg font-semibold">{f.count}</div>
-            </div>
-          ))}
+          {kpis.fases.map((f) => {
+            const active = fase === f.id;
+            return (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => toggleFase(f.id as FaseId)}
+                className={`rounded-xl p-2.5 text-left ring-1 transition hover:brightness-95 ${f.color} ${active ? "ring-2 ring-offset-1 ring-[#445DA3]" : ""}`}
+                title={active ? "Quitar filtro de fase" : "Filtrar por esta fase"}
+              >
+                <div className="text-[10px] uppercase tracking-wider opacity-70">{f.label}</div>
+                <div className="mt-0.5 text-lg font-semibold">{f.count}</div>
+              </button>
+            );
+          })}
         </div>
       )}
 
