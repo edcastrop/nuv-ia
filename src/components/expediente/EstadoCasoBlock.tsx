@@ -102,9 +102,10 @@ export function EstadoCasoBlock({ expedienteId, onChanged }: Props) {
       <ConfirmEstadoModal
         open={!!pendiente}
         nuevoEstado={pendiente?.estado ?? null}
-        onConfirm={async (obs) => { await confirmar(obs); }}
+        onConfirm={async (obs, submotivo, extras) => { await confirmar(obs, submotivo, extras); }}
         onCancel={cancelar}
       />
+
     </>
   );
 }
