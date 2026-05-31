@@ -578,11 +578,13 @@ const blobToBase64 = (blob: Blob) =>
 function SendChecklistModal({
   expediente,
   docs,
+  docsConEstado,
   onClose,
   onSent,
 }: {
   expediente: ExpedienteMaestro;
   docs: DocRequerido[];
+  docsConEstado: Array<DocRequerido & { estado: EstadoDoc }>;
   onClose: () => void;
   onSent: () => void;
 }) {
@@ -603,6 +605,7 @@ function SendChecklistModal({
   const [cuotaNueva, setCuotaNueva] = useState("");
   const [justificacion, setJustificacion] = useState("");
   const [adjuntarSolicitud, setAdjuntarSolicitud] = useState(true);
+  const [adjuntarChecklist, setAdjuntarChecklist] = useState(true);
 
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
