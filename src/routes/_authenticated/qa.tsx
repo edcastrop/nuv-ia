@@ -105,7 +105,7 @@ function QADashboard() {
             <thead className="bg-[#F7F9FB] text-[11px] uppercase tracking-wide text-[#242424]/60">
               <tr>
                 <th className="px-3 py-2 text-left">Solicitada</th>
-                <th className="px-3 py-2 text-left">Licenciado</th>
+                <th className="px-3 py-2 text-left">Analista F. Comercial</th>
                 <th className="px-3 py-2 text-left">Expediente</th>
                 <th className="px-3 py-2"></th>
               </tr>
