@@ -83,6 +83,7 @@ export interface Expediente {
   honorarios_final: number;
   descuento: number;
   estado: EstadoExpediente;
+  estado_caso?: string | null;
   fecha_simulacion: string;
   aprobado_data: AprobadoData | null;
   acertividad_global: number | null;
