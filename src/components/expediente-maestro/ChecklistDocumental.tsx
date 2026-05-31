@@ -555,6 +555,7 @@ export function ChecklistDocumental({ expediente, simExpediente }: Props) {
       {sendOpen && (
         <SendChecklistModal
           expediente={expediente}
+          simExpediente={simExpediente ?? null}
           docs={docsParaSolicitar}
           docsConEstado={docs.map((d) => ({ ...d, estado: effectiveEstado(d.id) }))}
           onClose={() => setSendOpen(false)}
