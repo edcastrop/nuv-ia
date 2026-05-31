@@ -70,7 +70,7 @@ function fmtDate(iso?: string | null) {
   return d.toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" });
 }
 
-export function ChecklistDocumental({ expediente }: Props) {
+export function ChecklistDocumental({ expediente, simExpediente }: Props) {
   const [perfil, setPerfil] = useState<PerfilLaboral>("empleado");
   const [flags, setFlags] = useState<FlagsCliente>(FLAGS_DEFAULT);
   const [rows, setRows] = useState<ChecklistRow[]>([]);
