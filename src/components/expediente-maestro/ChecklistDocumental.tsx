@@ -804,6 +804,21 @@ function SendChecklistModal({
             )}
           </div>
 
+          {/* Checklist Documental (PDF) */}
+          <div className="rounded-lg border border-[#E3E7EE] bg-[#F7F9FB] p-3">
+            <label className="flex items-center gap-2 text-xs font-semibold text-[#242424]">
+              <input
+                type="checkbox"
+                checked={adjuntarChecklist}
+                onChange={(e) => setAdjuntarChecklist(e.target.checked)}
+              />
+              <Paperclip size={13} /> Adjuntar Checklist Documental (PDF)
+              <span className="ml-1 text-[10px] font-normal text-[#242424]/60">
+                · {docsConEstado.length} documento(s) con estado actual
+              </span>
+            </label>
+          </div>
+
           {error && (
             <div className="rounded-lg border p-2 text-xs"
               style={{ borderColor: "#F5C2C2", background: NUVEX.rojoBg, color: NUVEX.rojoTexto }}>
