@@ -32,6 +32,9 @@ function AuthenticatedLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [unread, setUnread] = useState(0);
+  const [colabUnread, setColabUnread] = useState(0);
+  const [dmUnread, setDmUnread] = useState(0);
+  const [profileMeta, setProfileMeta] = useState<{ nombre: string | null; avatar_url: string | null }>({ nombre: null, avatar_url: null });
   const [gateState, setGateState] = useState<"checking" | "ok" | "blocked">("checking");
   const [gateChecked, setGateChecked] = useState(false);
   const [collapsed, setCollapsed] = useState<boolean>(() => {
