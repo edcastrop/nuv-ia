@@ -196,6 +196,7 @@ function PipelinePage() {
       { id: "cobro",     label: "Cobro · E9-13",    etapas: ["informe", "cuenta", "pago", "comision", "paz_salvo"], count: 0, color: "bg-emerald-50 text-emerald-700 ring-emerald-200" },
       { id: "fin",       label: "Finalizado · E14", etapas: ["finalizado"], count: 0, color: "bg-zinc-100 text-zinc-700 ring-zinc-200" },
     ];
+    let honorarios = 0;
     ETAPAS_PIPELINE.forEach((etapa) => {
       const items = grupos.get(etapa.id) ?? [];
       const umbral = UMBRAL_DIAS[etapa.id] ?? 0;
@@ -203,6 +204,7 @@ function PipelinePage() {
         const d = diasDesde(r.updated_at);
         total += 1;
         totalDias += d;
+        honorarios += Number(r.honorarios_final ?? 0);
         if (umbral > 0 && d > umbral) estancados += 1;
       });
       const fase = fases.find((f) => f.etapas.includes(etapa.id));
@@ -212,9 +214,26 @@ function PipelinePage() {
       total,
       estancados,
       promedio: total > 0 ? Math.round(totalDias / total) : 0,
+      honorarios,
       fases,
     };
   }, [grupos]);
+
+  // P24 — Detección de duplicados por cédula (cliente con varios expedientes activos).
+  const dupCedulas = useMemo(() => {
+    const counts = new Map<string, number>();
+    rows.forEach((r) => {
+      const c = (r.cedula ?? "").trim();
+      if (!c) return;
+      counts.set(c, (counts.get(c) ?? 0) + 1);
+    });
+    const s = new Set<string>();
+    counts.forEach((n, c) => { if (n > 1) s.add(c); });
+    return s;
+  }, [rows]);
+
+  const fmtCOP = (n: number) =>
+    new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 
 
   return (
@@ -300,6 +319,10 @@ function PipelinePage() {
               <Clock className="h-4 w-4 text-[#445DA3]" /> {kpis.promedio}
             </div>
           </div>
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-2.5" title="Suma de honorarios_final de los casos visibles">
+            <div className="text-[10px] uppercase tracking-wider text-emerald-700/70">Honorarios</div>
+            <div className="mt-0.5 text-lg font-semibold text-emerald-800">{fmtCOP(kpis.honorarios)}</div>
+          </div>
           {kpis.fases.map((f) => {
             const active = fase === f.id;
             return (
@@ -377,6 +400,7 @@ function PipelinePage() {
                       items.map((r) => {
                         const dias = diasDesde(r.updated_at);
                         const stuck = umbral > 0 && dias > umbral;
+                        const isDup = !!r.cedula && dupCedulas.has(r.cedula.trim());
                         return (
                           <Link
                             key={r.id}
@@ -384,8 +408,18 @@ function PipelinePage() {
                             params={{ id: r.id }}
                             className="block rounded-lg border border-[#E3E7EE] bg-white p-2.5 text-left transition hover:border-[#445DA3] hover:shadow-sm"
                           >
-                            <div className="truncate text-sm font-medium text-[#0A1226]">
-                              {r.cliente_nombre}
+                            <div className="flex items-center gap-1.5">
+                              <div className="flex-1 truncate text-sm font-medium text-[#0A1226]">
+                                {r.cliente_nombre}
+                              </div>
+                              {isDup && (
+                                <span
+                                  title="Esta cédula tiene más de un expediente activo"
+                                  className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-amber-800"
+                                >
+                                  Dup
+                                </span>
+                              )}
                             </div>
                             <div className="mt-0.5 truncate text-[11px] text-[#242424]/60">
                               {r.banco ?? "—"} · {r.cedula ?? "s/cédula"}
