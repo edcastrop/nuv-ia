@@ -65,9 +65,10 @@ function PipelinePage() {
   const [lastUpdated, setLastUpdated] = useState<number>(() => Date.now());
   const [nowTick, setNowTick] = useState<number>(() => Date.now());
   const [qLocal, setQLocal] = useState(search.q);
+  const [analistas, setAnalistas] = useState<{ id: string; nombre: string | null; email: string | null }[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const { q, banco, stuck: soloStuck, fase, mios } = search;
+  const { q, banco, stuck: soloStuck, fase, mios, asesor } = search;
 
   type PipelineSearch = z.infer<typeof pipelineSearchSchema>;
 
