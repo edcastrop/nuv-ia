@@ -40,7 +40,7 @@ export const enviarChecklistCliente = createServerFn({ method: "POST" })
     // Verificar acceso al expediente
     const { data: exp, error: expErr } = await supabase
       .from("expedientes")
-      .select("id, cliente_nombre, estado, asesor_id")
+      .select("id, cliente_nombre, estado, estado_caso, asesor_id")
       .eq("id", data.expedienteId)
       .single();
     if (expErr || !exp) throw new Error("Expediente no encontrado o sin acceso.");
