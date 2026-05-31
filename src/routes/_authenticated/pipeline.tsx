@@ -31,6 +31,9 @@ function diasDesde(iso: string | null | undefined): number {
 function PipelinePage() {
   const [rows, setRows] = useState<Expediente[]>([]);
   const [loading, setLoading] = useState(true);
+  const [q, setQ] = useState("");
+  const [banco, setBanco] = useState<string>("");
+  const [soloStuck, setSoloStuck] = useState(false);
 
   useEffect(() => {
     listExpedientes()
@@ -38,30 +41,88 @@ function PipelinePage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const bancos = useMemo(() => {
+    const s = new Set<string>();
+    rows.forEach((r) => r.banco && s.add(r.banco));
+    return Array.from(s).sort();
+  }, [rows]);
+
+  const filtered = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (banco && r.banco !== banco) return false;
+      if (term) {
+        const hay = `${r.cliente_nombre} ${r.cedula ?? ""} ${r.numero_credito ?? ""} ${r.banco ?? ""}`.toLowerCase();
+        if (!hay.includes(term)) return false;
+      }
+      return true;
+    });
+  }, [rows, q, banco]);
+
   const grupos = useMemo(() => {
     const m = new Map<EtapaPipelineId, Expediente[]>();
     ETAPAS_PIPELINE.forEach((e) => m.set(e.id, []));
-    rows.forEach((r) => {
+    filtered.forEach((r) => {
       const etapa = computeEtapaActual({
         estado_caso: (r as unknown as { estado_caso?: string | null }).estado_caso ?? null,
       } as Parameters<typeof computeEtapaActual>[0]);
+      const dias = diasDesde(r.updated_at);
+      const umbral = UMBRAL_DIAS[etapa] ?? 0;
+      if (soloStuck && !(umbral > 0 && dias > umbral)) return;
       m.get(etapa)?.push(r);
     });
     return m;
-  }, [rows]);
+  }, [filtered, soloStuck]);
+
+  const totalVisible = Array.from(grupos.values()).reduce((a, b) => a + b.length, 0);
 
   return (
     <div className="mx-auto max-w-[1400px] space-y-4 p-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-[#0A1226]">Pipeline Maestro</h1>
           <div className="text-[12px] text-[#242424]/60">
-            {rows.length} casos · 14 etapas
+            {totalVisible} de {rows.length} casos · 14 etapas
           </div>
         </div>
-        <Link to="/casos" className="text-[12px] text-[#445DA3] hover:underline">
-          Ver lista de casos →
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Buscar cliente, cédula, crédito…"
+            className="h-8 w-[240px] rounded-md border border-[#E3E7EE] bg-white px-2 text-[12px] text-[#0A1226] placeholder:text-[#9CA3AF] focus:border-[#445DA3] focus:outline-none"
+          />
+          <select
+            value={banco}
+            onChange={(e) => setBanco(e.target.value)}
+            className="h-8 rounded-md border border-[#E3E7EE] bg-white px-2 text-[12px] text-[#0A1226] focus:border-[#445DA3] focus:outline-none"
+          >
+            <option value="">Todos los bancos</option>
+            {bancos.map((b) => (
+              <option key={b} value={b}>{b}</option>
+            ))}
+          </select>
+          <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-[#E3E7EE] bg-white px-2 py-1 text-[12px] text-[#0A1226]">
+            <input
+              type="checkbox"
+              checked={soloStuck}
+              onChange={(e) => setSoloStuck(e.target.checked)}
+              className="h-3.5 w-3.5"
+            />
+            Solo estancados
+          </label>
+          {(q || banco || soloStuck) && (
+            <button
+              onClick={() => { setQ(""); setBanco(""); setSoloStuck(false); }}
+              className="h-8 rounded-md border border-[#E3E7EE] bg-white px-2 text-[12px] text-[#445DA3] hover:bg-[#F1F3F8]"
+            >
+              Limpiar
+            </button>
+          )}
+          <Link to="/casos" className="text-[12px] text-[#445DA3] hover:underline">
+            Ver lista →
+          </Link>
+        </div>
       </div>
 
       {loading ? (
