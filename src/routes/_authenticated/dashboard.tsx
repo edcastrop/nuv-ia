@@ -351,7 +351,7 @@ function DashboardPage() {
                       <Trophy size={18} />
                     </div>
                     <div>
-                      <h2 className="text-xl font-semibold">Ranking de Licenciados</h2>
+                      <h2 className="text-xl font-semibold">Ranking de Analistas Financieros Comerciales</h2>
                       <p className="text-sm" style={{ color: TEXT2 }}>
                         Top 5 por producción de honorarios.
                       </p>
