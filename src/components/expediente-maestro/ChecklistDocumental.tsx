@@ -652,9 +652,10 @@ function SendChecklistModal({
 
       if (adjuntarSolicitud) {
         const docxBlob = await generarSolicitudCambioPlazosDocx(expediente, {
-          plazoSolicitadoMeses: plazoSolicitado,
-          nuevoValorCuota: cuotaNueva,
-          justificacion,
+          cuotasAEliminar,
+          apoderado: apoderadoSugerido
+            ? { nombre: apoderadoSugerido.nombre, cedula: apoderadoSugerido.cedula }
+            : null,
         });
         attachments.push({
           filename: `NUVEX_Solicitud_Cambio_Plazos_${(expediente.cliente?.nombre || "cliente").replace(/\s+/g, "_")}.docx`,
