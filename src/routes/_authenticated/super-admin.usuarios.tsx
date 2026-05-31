@@ -102,7 +102,7 @@ function SuperAdminUsuarios() {
                               style={has
                                 ? { background: "#445DA3", color: "#fff", borderColor: "#445DA3" }
                                 : { background: "#fff", color: "#242424", borderColor: "#E3E7EE" }}
-                            >{r}</button>
+                            >{roleLabel(r, true)}</button>
                           );
                         })}
                       </div>
