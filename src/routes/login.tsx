@@ -52,7 +52,7 @@ function LoginPage() {
           ]);
           const p = prof as { estado_acceso?: string; mfa_verificado_at?: string | null; rechazado_motivo?: string | null } | null;
           const isSuperAdmin = ((roleRows ?? []) as Array<{ role?: string }>).some((r) => r.role === "super_admin");
-          const ESTADOS_OK = ["aprobado", "activo", "reactivado"];
+          const ESTADOS_OK = ["aprobado"];
           if (!isSuperAdmin && p && !ESTADOS_OK.includes(p.estado_acceso ?? "")) {
             await supabase.auth.signOut();
             const msgs: Record<string, string> = {
