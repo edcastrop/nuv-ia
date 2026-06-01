@@ -97,7 +97,7 @@ export async function actualizarIncidente(
   id: string,
   patch: Partial<Pick<Incidente, "estado" | "severidad" | "tipo" | "asignado_a" | "resolucion" | "titulo" | "descripcion">>,
 ): Promise<Incidente> {
-  const updates: Record<string, unknown> = { ...patch };
+  const updates: Partial<Incidente> = { ...patch };
   if (patch.estado === "resuelto") updates.resuelto_at = new Date().toISOString();
   if (patch.estado === "cerrado") updates.cerrado_at = new Date().toISOString();
   const { data, error } = await supabase
