@@ -305,7 +305,7 @@ function AuthenticatedLayout() {
           items: [
             ...(hasAny("super_admin","admin","gerencia","cartera","juridica","licenciado","asesor") ? [{ to: "/cartera", label: "Cartera", Icon: Wallet }] : []),
             { to: "/comisiones", label: "Comisiones", Icon: CircleDollarSign },
-            ...(hasAny("super_admin","admin","gerencia","cartera") ? [{ to: "/contabilidad/cuentas-cobro", label: "Contabilidad", Icon: CircleDollarSign }] : []),
+            ...(hasAny("super_admin","admin","gerencia","cartera","contabilidad") ? [{ to: "/contabilidad/cuentas-cobro", label: "Contabilidad", Icon: CircleDollarSign }] : []),
             ...(hasAny("super_admin","admin","gerencia","juridica","director_juridico","operaciones") ? [{ to: "/contratacion/validacion", label: "Validación contratación", Icon: ShieldCheck }] : []),
             ...(hasAny("super_admin","admin","gerencia","contabilidad") ? [{ to: "/finanzas", label: "Finanzas", Icon: Landmark }] : []),
           ],
