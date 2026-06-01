@@ -211,9 +211,20 @@ export async function listMisDMs(): Promise<DMResumen[]> {
   resumen.sort((a, b) => {
     const ta = a.ultimo_mensaje ? new Date(a.ultimo_mensaje.created_at).getTime() : 0;
     const tb = b.ultimo_mensaje ? new Date(b.ultimo_mensaje.created_at).getTime() : 0;
-    return tb - ta;
+    if (tb !== ta) return tb - ta;
+    return new Date(b.canal.created_at).getTime() - new Date(a.canal.created_at).getTime();
   });
-  return resumen;
+  // Deduplicar por contraparte: si hay varios canales DM con la misma persona
+  // (por carreras al crear o históricos), conservamos el más relevante y
+  // acumulamos los no_leidos de los duplicados.
+  const vistos = new Map<string, DMResumen>();
+  for (const r of resumen) {
+    const key = r.otro.user_id || `__canal__:${r.canal.id}`;
+    const prev = vistos.get(key);
+    if (!prev) vistos.set(key, r);
+    else prev.no_leidos += r.no_leidos;
+  }
+  return Array.from(vistos.values());
 }
 
 export async function marcarCanalLeido(canalId: string) {
