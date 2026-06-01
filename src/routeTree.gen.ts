@@ -17,6 +17,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as ApiNuvexIaStreamRouteImport } from './routes/api/nuvex-ia-stream'
 import { Route as ApiNuvexGptChatRouteImport } from './routes/api/nuvex-gpt-chat'
+import { Route as AuthenticatedTorreControlRouteImport } from './routes/_authenticated/torre-control'
 import { Route as AuthenticatedQaRouteImport } from './routes/_authenticated/qa'
 import { Route as AuthenticatedProyeccionFinancieraRouteImport } from './routes/_authenticated/proyeccion-financiera'
 import { Route as AuthenticatedProyeccionRouteImport } from './routes/_authenticated/proyeccion'
@@ -116,6 +117,12 @@ const ApiNuvexGptChatRoute = ApiNuvexGptChatRouteImport.update({
   path: '/api/nuvex-gpt-chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedTorreControlRoute =
+  AuthenticatedTorreControlRouteImport.update({
+    id: '/torre-control',
+    path: '/torre-control',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedQaRoute = AuthenticatedQaRouteImport.update({
   id: '/qa',
   path: '/qa',
@@ -477,6 +484,7 @@ export interface FileRoutesByFullPath {
   '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/proyeccion-financiera': typeof AuthenticatedProyeccionFinancieraRoute
   '/qa': typeof AuthenticatedQaRoute
+  '/torre-control': typeof AuthenticatedTorreControlRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
   '/api/nuvex-ia-stream': typeof ApiNuvexIaStreamRoute
   '/apoderado/mis-casos': typeof AuthenticatedApoderadoMisCasosRoute
@@ -542,6 +550,7 @@ export interface FileRoutesByTo {
   '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/proyeccion-financiera': typeof AuthenticatedProyeccionFinancieraRoute
   '/qa': typeof AuthenticatedQaRoute
+  '/torre-control': typeof AuthenticatedTorreControlRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
   '/api/nuvex-ia-stream': typeof ApiNuvexIaStreamRoute
   '/': typeof AuthenticatedIndexRoute
@@ -612,6 +621,7 @@ export interface FileRoutesById {
   '/_authenticated/proyeccion': typeof AuthenticatedProyeccionRoute
   '/_authenticated/proyeccion-financiera': typeof AuthenticatedProyeccionFinancieraRoute
   '/_authenticated/qa': typeof AuthenticatedQaRoute
+  '/_authenticated/torre-control': typeof AuthenticatedTorreControlRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
   '/api/nuvex-ia-stream': typeof ApiNuvexIaStreamRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
@@ -683,6 +693,7 @@ export interface FileRouteTypes {
     | '/proyeccion'
     | '/proyeccion-financiera'
     | '/qa'
+    | '/torre-control'
     | '/api/nuvex-gpt-chat'
     | '/api/nuvex-ia-stream'
     | '/apoderado/mis-casos'
@@ -748,6 +759,7 @@ export interface FileRouteTypes {
     | '/proyeccion'
     | '/proyeccion-financiera'
     | '/qa'
+    | '/torre-control'
     | '/api/nuvex-gpt-chat'
     | '/api/nuvex-ia-stream'
     | '/'
@@ -817,6 +829,7 @@ export interface FileRouteTypes {
     | '/_authenticated/proyeccion'
     | '/_authenticated/proyeccion-financiera'
     | '/_authenticated/qa'
+    | '/_authenticated/torre-control'
     | '/api/nuvex-gpt-chat'
     | '/api/nuvex-ia-stream'
     | '/_authenticated/'
@@ -939,6 +952,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/nuvex-gpt-chat'
       preLoaderRoute: typeof ApiNuvexGptChatRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/torre-control': {
+      id: '/_authenticated/torre-control'
+      path: '/torre-control'
+      fullPath: '/torre-control'
+      preLoaderRoute: typeof AuthenticatedTorreControlRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/qa': {
       id: '/_authenticated/qa'
@@ -1431,6 +1451,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedProyeccionRoute: typeof AuthenticatedProyeccionRoute
   AuthenticatedProyeccionFinancieraRoute: typeof AuthenticatedProyeccionFinancieraRoute
   AuthenticatedQaRoute: typeof AuthenticatedQaRoute
+  AuthenticatedTorreControlRoute: typeof AuthenticatedTorreControlRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedApoderadoMisCasosRoute: typeof AuthenticatedApoderadoMisCasosRoute
   AuthenticatedCarteraIdRoute: typeof AuthenticatedCarteraIdRoute
@@ -1474,6 +1495,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedProyeccionFinancieraRoute:
     AuthenticatedProyeccionFinancieraRoute,
   AuthenticatedQaRoute: AuthenticatedQaRoute,
+  AuthenticatedTorreControlRoute: AuthenticatedTorreControlRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedApoderadoMisCasosRoute: AuthenticatedApoderadoMisCasosRoute,
   AuthenticatedCarteraIdRoute: AuthenticatedCarteraIdRoute,
@@ -1530,13 +1552,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -7,7 +7,7 @@ import type { AppRole } from "@/hooks/useUserRole";
 export const ROLE_LABELS: Record<string, string> = {
   super_admin: "Super Admin",
   admin: "Administrador",
-  gerencia: "Gerencia",
+  gerencia: "Gerencia Administrativa y Operaciones",
   asesor: "Asesor",
   // Rebrand operativo (Lote R): Licenciado → Analista Financiero Comercial.
   // El valor en BD sigue siendo "licenciado" para no romper comisiones, RLS, ni Academia.
@@ -25,6 +25,7 @@ export const ROLE_LABELS: Record<string, string> = {
 /** Etiqueta corta (cuando el espacio es limitado: chips, badges). */
 export const ROLE_LABELS_SHORT: Record<string, string> = {
   ...ROLE_LABELS,
+  gerencia: "Gerencia Admin. y Ops.",
   licenciado: "Analista F. Comercial",
   director_financiero_qa: "Dir. Fra. QA",
   director_juridico: "Dir. Jurídico",
