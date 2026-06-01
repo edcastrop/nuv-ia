@@ -2282,6 +2282,57 @@ export type Database = {
           },
         ]
       }
+      incidentes_operativos: {
+        Row: {
+          asignado_a: string | null
+          cerrado_at: string | null
+          created_at: string
+          descripcion: string | null
+          estado: Database["public"]["Enums"]["incidente_estado"]
+          expediente_id: string | null
+          id: string
+          reportado_por: string
+          resolucion: string | null
+          resuelto_at: string | null
+          severidad: Database["public"]["Enums"]["incidente_severidad"]
+          tipo: Database["public"]["Enums"]["incidente_tipo"]
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          asignado_a?: string | null
+          cerrado_at?: string | null
+          created_at?: string
+          descripcion?: string | null
+          estado?: Database["public"]["Enums"]["incidente_estado"]
+          expediente_id?: string | null
+          id?: string
+          reportado_por: string
+          resolucion?: string | null
+          resuelto_at?: string | null
+          severidad?: Database["public"]["Enums"]["incidente_severidad"]
+          tipo?: Database["public"]["Enums"]["incidente_tipo"]
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          asignado_a?: string | null
+          cerrado_at?: string | null
+          created_at?: string
+          descripcion?: string | null
+          estado?: Database["public"]["Enums"]["incidente_estado"]
+          expediente_id?: string | null
+          id?: string
+          reportado_por?: string
+          resolucion?: string | null
+          resuelto_at?: string | null
+          severidad?: Database["public"]["Enums"]["incidente_severidad"]
+          tipo?: Database["public"]["Enums"]["incidente_tipo"]
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mfa_codigos_email: {
         Row: {
           codigo_hash: string
@@ -3634,6 +3685,16 @@ export type Database = {
         | "ENVIADO_CONTRATACION"
         | "CONDICIONES_APLICADAS"
       expediente_modo: "pesos" | "uvr"
+      incidente_estado: "abierto" | "en_gestion" | "resuelto" | "cerrado"
+      incidente_severidad: "baja" | "media" | "alta" | "critica"
+      incidente_tipo:
+        | "documental"
+        | "juridico"
+        | "financiero"
+        | "banco"
+        | "cliente"
+        | "sistema"
+        | "otro"
       leccion_tipo:
         | "texto"
         | "pdf"
@@ -3870,6 +3931,17 @@ export const Constants = {
         "CONDICIONES_APLICADAS",
       ],
       expediente_modo: ["pesos", "uvr"],
+      incidente_estado: ["abierto", "en_gestion", "resuelto", "cerrado"],
+      incidente_severidad: ["baja", "media", "alta", "critica"],
+      incidente_tipo: [
+        "documental",
+        "juridico",
+        "financiero",
+        "banco",
+        "cliente",
+        "sistema",
+        "otro",
+      ],
       leccion_tipo: [
         "texto",
         "pdf",
