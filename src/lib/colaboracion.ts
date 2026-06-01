@@ -296,6 +296,7 @@ export async function listDirectorioFull(): Promise<DirectorioPersona[]> {
       foto_url: p.avatar_url ?? null,
       activo: p.activo ?? true,
       roles: roles.map(labelRol),
+      rolesRaw: roles,
     };
   });
 }
