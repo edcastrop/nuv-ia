@@ -276,6 +276,14 @@ export async function cambiarEstadoCaso(
     if (!r.puedeRadicar) throw new BloqueoRadicacionError(r.pendientes);
   }
 
+  // Fase 6 — Bloqueo de cierre: paz y salvo requiere entregables finales
+  if (nuevoEstado === "paz_y_salvo_generado") {
+    const { evaluarEntregablesFinales, BloqueoCierreError } = await import("./validacionEntregablesFinales");
+    const r = await evaluarEntregablesFinales(expedienteId);
+    if (!r.puedeCerrar) throw new BloqueoCierreError(r.pendientes);
+  }
+
+
   // Read previous estado_caso
   const { data: prev, error: errSel } = await supabase
     .from("expedientes")
