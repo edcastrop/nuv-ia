@@ -145,6 +145,12 @@ export async function marcarNotifLeida(id: string) {
 export async function marcarTodasNotifLeidas() {
   await T("colab_notificaciones").update({ leida: true } as never).eq("leida", false);
 }
+export async function marcarNotifsCanalLeidas(canalId: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await T("colab_notificaciones").update({ leida: true } as never)
+    .eq("user_id", user.id).eq("canal_id", canalId).eq("leida", false);
+}
 
 export interface DMResumen {
   canal: Canal;
