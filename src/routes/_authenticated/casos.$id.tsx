@@ -108,6 +108,7 @@ function CasoDetail() {
       />
 
       <ValidacionRadicacionBlock expedienteId={exp.id} />
+      <ValidacionEntregablesBlock expedienteId={exp.id} />
 
 
 
