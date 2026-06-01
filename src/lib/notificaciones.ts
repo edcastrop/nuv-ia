@@ -120,3 +120,73 @@ export async function contarCasoAlertasNoLeidas(): Promise<number> {
 export async function marcarCasoAlertaLeida(alertaId: string): Promise<void> {
   await supabase.from("caso_alertas" as never).update({ leida: true } as never).eq("id", alertaId);
 }
+
+/**
+ * Notificaciones de colaboración (canales/mensajes/DM) mapeadas como Notificacion
+ * para mostrarlas en la campana unificada.
+ */
+export async function listColabNotifsComoNotif(limit = 30): Promise<Notificacion[]> {
+  const { data: u } = await supabase.auth.getUser();
+  if (!u.user) return [];
+  const { data } = await supabase
+    .from("colab_notificaciones" as never)
+    .select("id, canal_id, mensaje_id, tipo, leida, created_at")
+    .eq("user_id", u.user.id)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  const arr = (data ?? []) as unknown as Array<{
+    id: string;
+    canal_id: string | null;
+    mensaje_id: string | null;
+    tipo: string;
+    leida: boolean;
+    created_at: string;
+  }>;
+  if (arr.length === 0) return [];
+  const canalIds = Array.from(new Set(arr.map((a) => a.canal_id).filter(Boolean) as string[]));
+  const { data: canales } = canalIds.length
+    ? await supabase.from("colab_canales" as never).select("id, nombre, tipo").in("id", canalIds)
+    : { data: [] as Array<{ id: string; nombre: string; tipo: string }> };
+  const cMap = new Map<string, { nombre: string; tipo: string }>();
+  ((canales ?? []) as Array<{ id: string; nombre: string; tipo: string }>).forEach((c) =>
+    cMap.set(c.id, { nombre: c.nombre, tipo: c.tipo }),
+  );
+  return arr.map((a) => {
+    const c = a.canal_id ? cMap.get(a.canal_id) : undefined;
+    const esDM = c?.tipo === "dm";
+    const titulo = esDM
+      ? `Mensaje directo${c?.nombre && c.nombre !== "DM" ? ` · ${c.nombre}` : ""}`
+      : `Mensaje en ${c?.nombre ?? "canal"}`;
+    const link = a.canal_id
+      ? (esDM ? `/colaboracion/dm/${a.canal_id}` : `/colaboracion?canal=${a.canal_id}`)
+      : "/colaboracion";
+    return {
+      id: `colab:${a.id}`,
+      user_id: u.user!.id,
+      tipo: a.tipo || "mensaje_interno",
+      titulo,
+      mensaje: a.tipo === "mencion" ? "Te han mencionado." : "Nuevo mensaje.",
+      link,
+      severidad: "media",
+      leida: a.leida,
+      metadata: { canal_id: a.canal_id, mensaje_id: a.mensaje_id, colab_notif_id: a.id },
+      created_at: a.created_at,
+    } satisfies Notificacion;
+  });
+}
+
+export async function contarColabNotifsNoLeidas(): Promise<number> {
+  const { data: u } = await supabase.auth.getUser();
+  if (!u.user) return 0;
+  const { count } = await supabase
+    .from("colab_notificaciones" as never)
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", u.user.id)
+    .eq("leida", false);
+  return count ?? 0;
+}
+
+export async function marcarColabNotifLeida(id: string): Promise<void> {
+  await supabase.from("colab_notificaciones" as never).update({ leida: true } as never).eq("id", id);
+}
+
