@@ -106,6 +106,9 @@ function CasoDetail() {
         onChanged={reload}
       />
 
+      <ValidacionRadicacionBlock expedienteId={exp.id} />
+
+
 
       <SoportesBanco
         expedienteId={exp.id}
