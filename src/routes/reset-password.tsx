@@ -59,7 +59,7 @@ function ResetPasswordPage() {
     <div className="min-h-screen w-full flex items-center justify-center bg-white px-4">
       <div className="w-full max-w-md space-y-6">
         <div className="flex flex-col items-center gap-3">
-          <Logo size={56} />
+          <Logo />
           <h1 className="text-xl font-semibold text-[#242424]">Restablecer contraseña</h1>
           <p className="text-sm text-[#242424]/65 text-center">
             Define una contraseña nueva para tu cuenta NUVEX.
