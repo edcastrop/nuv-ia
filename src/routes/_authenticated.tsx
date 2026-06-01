@@ -285,7 +285,7 @@ function AuthenticatedLayout() {
             ...(hasAny("super_admin","admin","gerencia","licenciado","director_financiero_qa") ? [{ to: "/proyeccion-financiera", label: "Proyección Financiera", Icon: LineChart }] : []),
             { to: "/notificaciones", label: "Alertas", Icon: Bell, badge: unread },
             { to: "/colaboracion", label: "Colaboración", Icon: MessageSquare, badge: colabUnread },
-            { to: "/colaboracion/dm", label: "Mensajería", Icon: Briefcase, badge: dmUnread },
+            { to: "/colaboracion/dm", label: "Mensajería", Icon: MessageSquare, badge: dmUnread },
             { to: "/directorio", label: "Directorio", Icon: BookUser },
           ],
         },
