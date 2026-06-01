@@ -28,6 +28,7 @@ import { Route as AuthenticatedNotificacionesRouteImport } from './routes/_authe
 import { Route as AuthenticatedMiPerfilRouteImport } from './routes/_authenticated/mi-perfil'
 import { Route as AuthenticatedMensajeriaRouteImport } from './routes/_authenticated/mensajeria'
 import { Route as AuthenticatedIncidentesRouteImport } from './routes/_authenticated/incidentes'
+import { Route as AuthenticatedGestionUsuariosRouteImport } from './routes/_authenticated/gestion-usuarios'
 import { Route as AuthenticatedFinanzasRouteImport } from './routes/_authenticated/finanzas'
 import { Route as AuthenticatedDirectorioRouteImport } from './routes/_authenticated/directorio'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -176,6 +177,12 @@ const AuthenticatedIncidentesRoute = AuthenticatedIncidentesRouteImport.update({
   path: '/incidentes',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedGestionUsuariosRoute =
+  AuthenticatedGestionUsuariosRouteImport.update({
+    id: '/gestion-usuarios',
+    path: '/gestion-usuarios',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedFinanzasRoute = AuthenticatedFinanzasRouteImport.update({
   id: '/finanzas',
   path: '/finanzas',
@@ -481,6 +488,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/directorio': typeof AuthenticatedDirectorioRoute
   '/finanzas': typeof AuthenticatedFinanzasRouteWithChildren
+  '/gestion-usuarios': typeof AuthenticatedGestionUsuariosRoute
   '/incidentes': typeof AuthenticatedIncidentesRoute
   '/mensajeria': typeof AuthenticatedMensajeriaRoute
   '/mi-perfil': typeof AuthenticatedMiPerfilRoute
@@ -548,6 +556,7 @@ export interface FileRoutesByTo {
   '/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/directorio': typeof AuthenticatedDirectorioRoute
+  '/gestion-usuarios': typeof AuthenticatedGestionUsuariosRoute
   '/incidentes': typeof AuthenticatedIncidentesRoute
   '/mensajeria': typeof AuthenticatedMensajeriaRoute
   '/mi-perfil': typeof AuthenticatedMiPerfilRoute
@@ -620,6 +629,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/directorio': typeof AuthenticatedDirectorioRoute
   '/_authenticated/finanzas': typeof AuthenticatedFinanzasRouteWithChildren
+  '/_authenticated/gestion-usuarios': typeof AuthenticatedGestionUsuariosRoute
   '/_authenticated/incidentes': typeof AuthenticatedIncidentesRoute
   '/_authenticated/mensajeria': typeof AuthenticatedMensajeriaRoute
   '/_authenticated/mi-perfil': typeof AuthenticatedMiPerfilRoute
@@ -693,6 +703,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/directorio'
     | '/finanzas'
+    | '/gestion-usuarios'
     | '/incidentes'
     | '/mensajeria'
     | '/mi-perfil'
@@ -760,6 +771,7 @@ export interface FileRouteTypes {
     | '/apoderados-nuvex'
     | '/dashboard'
     | '/directorio'
+    | '/gestion-usuarios'
     | '/incidentes'
     | '/mensajeria'
     | '/mi-perfil'
@@ -831,6 +843,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/directorio'
     | '/_authenticated/finanzas'
+    | '/_authenticated/gestion-usuarios'
     | '/_authenticated/incidentes'
     | '/_authenticated/mensajeria'
     | '/_authenticated/mi-perfil'
@@ -1040,6 +1053,13 @@ declare module '@tanstack/react-router' {
       path: '/incidentes'
       fullPath: '/incidentes'
       preLoaderRoute: typeof AuthenticatedIncidentesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/gestion-usuarios': {
+      id: '/_authenticated/gestion-usuarios'
+      path: '/gestion-usuarios'
+      fullPath: '/gestion-usuarios'
+      preLoaderRoute: typeof AuthenticatedGestionUsuariosRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/finanzas': {
@@ -1461,6 +1481,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDirectorioRoute: typeof AuthenticatedDirectorioRoute
   AuthenticatedFinanzasRoute: typeof AuthenticatedFinanzasRouteWithChildren
+  AuthenticatedGestionUsuariosRoute: typeof AuthenticatedGestionUsuariosRoute
   AuthenticatedIncidentesRoute: typeof AuthenticatedIncidentesRoute
   AuthenticatedMensajeriaRoute: typeof AuthenticatedMensajeriaRoute
   AuthenticatedMiPerfilRoute: typeof AuthenticatedMiPerfilRoute
@@ -1505,6 +1526,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDirectorioRoute: AuthenticatedDirectorioRoute,
   AuthenticatedFinanzasRoute: AuthenticatedFinanzasRouteWithChildren,
+  AuthenticatedGestionUsuariosRoute: AuthenticatedGestionUsuariosRoute,
   AuthenticatedIncidentesRoute: AuthenticatedIncidentesRoute,
   AuthenticatedMensajeriaRoute: AuthenticatedMensajeriaRoute,
   AuthenticatedMiPerfilRoute: AuthenticatedMiPerfilRoute,
