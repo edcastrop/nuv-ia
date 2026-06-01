@@ -294,6 +294,7 @@ function AuthenticatedLayout() {
             ...(hasAny("super_admin","admin","gerencia") ? [{ to: "/torre-control", label: "Torre de Control", Icon: RadioTower }] : []),
             ...(hasAny("super_admin","admin","gerencia") ? [{ to: "/incidentes", label: "Incidentes", Icon: ShieldCheck }] : []),
             ...(hasAny("super_admin","gerencia") ? [{ to: "/gestion-usuarios", label: "Gestión usuarios", Icon: Users }] : []),
+            ...(hasAny("super_admin","gerencia") ? [{ to: "/productividad", label: "Productividad", Icon: BarChart3 }] : []),
             ...(hasAny("super_admin","admin","director_financiero_qa","gerencia") ? [{ to: "/qa", label: "QA", Icon: ClipboardCheck }] : []),
           ],
         },
