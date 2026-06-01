@@ -263,7 +263,7 @@ export async function listDirectorioFull(): Promise<DirectorioPersona[]> {
   const { data, error } = await T("profiles")
     .select("id, nombre, email, avatar_url, correo_corporativo, whatsapp, celular, ciudad, pais, equipo, sede, activo, estado_acceso, rol_solicitado")
     .eq("activo", true)
-    .eq("estado_acceso", "aprobado")
+    .in("estado_acceso", ["aprobado", "activo", "reactivado"])
     .order("nombre", { ascending: true });
   if (error) throw error;
   const rows = (data ?? []) as any[];
