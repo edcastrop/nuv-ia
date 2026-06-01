@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   type Canal, type Mensaje, listMensajes, enviarMensaje, suscribirMensajes,
   subirAdjunto, getAdjuntoUrl, borrarMensaje, unirseCanal,
+  marcarCanalLeido, marcarNotifsCanalLeidas,
 } from "@/lib/colaboracion";
 import { UserAvatar } from "@/components/nuvex/UserAvatar";
 import { Paperclip, Send, Trash2, Download, UserPlus, Hash, Users as UsersIcon } from "lucide-react";
