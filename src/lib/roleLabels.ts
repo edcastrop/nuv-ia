@@ -7,7 +7,7 @@ import type { AppRole } from "@/hooks/useUserRole";
 export const ROLE_LABELS: Record<string, string> = {
   super_admin: "Super Admin",
   admin: "Administrador",
-  gerencia: "Gerencia",
+  gerencia: "Gerencia Administrativa y Operaciones",
   asesor: "Asesor",
   // Rebrand operativo (Lote R): Licenciado → Analista Financiero Comercial.
   // El valor en BD sigue siendo "licenciado" para no romper comisiones, RLS, ni Academia.
