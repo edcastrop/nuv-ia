@@ -25,6 +25,7 @@ export const ROLE_LABELS: Record<string, string> = {
 /** Etiqueta corta (cuando el espacio es limitado: chips, badges). */
 export const ROLE_LABELS_SHORT: Record<string, string> = {
   ...ROLE_LABELS,
+  gerencia: "Gerencia Admin. y Ops.",
   licenciado: "Analista F. Comercial",
   director_financiero_qa: "Dir. Fra. QA",
   director_juridico: "Dir. Jurídico",
