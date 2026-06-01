@@ -17,6 +17,7 @@ import { ValidacionQABlock } from "@/components/qa/ValidacionQABlock";
 import { CarteraBlockExpediente } from "@/components/cartera/CarteraBlockExpediente";
 import { ConversacionCaso } from "@/components/expediente/ConversacionCaso";
 import { ValidacionIdentidadBlock } from "@/components/expediente/ValidacionIdentidadBlock";
+import { ValidacionRadicacionBlock } from "@/components/expediente/ValidacionRadicacionBlock";
 import { VersionesDocumentalesBlock } from "@/components/expediente/VersionesDocumentalesBlock";
 import { readValidacion, puedeGenerarDocumentos, razonBloqueoDocs } from "@/lib/validacionIdentidad";
 import { addRecentCase } from "@/lib/recentCases";
