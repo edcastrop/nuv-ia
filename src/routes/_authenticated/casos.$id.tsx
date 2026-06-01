@@ -18,6 +18,7 @@ import { CarteraBlockExpediente } from "@/components/cartera/CarteraBlockExpedie
 import { ConversacionCaso } from "@/components/expediente/ConversacionCaso";
 import { ValidacionIdentidadBlock } from "@/components/expediente/ValidacionIdentidadBlock";
 import { ValidacionRadicacionBlock } from "@/components/expediente/ValidacionRadicacionBlock";
+import { ValidacionEntregablesBlock } from "@/components/expediente/ValidacionEntregablesBlock";
 import { VersionesDocumentalesBlock } from "@/components/expediente/VersionesDocumentalesBlock";
 import { readValidacion, puedeGenerarDocumentos, razonBloqueoDocs } from "@/lib/validacionIdentidad";
 import { addRecentCase } from "@/lib/recentCases";
@@ -107,6 +108,7 @@ function CasoDetail() {
       />
 
       <ValidacionRadicacionBlock expedienteId={exp.id} />
+      <ValidacionEntregablesBlock expedienteId={exp.id} />
 
 
 
