@@ -269,6 +269,13 @@ export async function cambiarEstadoCaso(
   observacion?: string,
   submotivo?: string,
 ): Promise<void> {
+  // Fase 3 — Bloqueo de calidad antes de radicar en banco
+  if (nuevoEstado === "radicado_banco") {
+    const { evaluarRequisitosRadicacion, BloqueoRadicacionError } = await import("./validacionRadicacion");
+    const r = await evaluarRequisitosRadicacion(expedienteId);
+    if (!r.puedeRadicar) throw new BloqueoRadicacionError(r.pendientes);
+  }
+
   // Read previous estado_caso
   const { data: prev, error: errSel } = await supabase
     .from("expedientes")
