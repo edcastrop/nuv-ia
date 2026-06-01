@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   type Canal, type Mensaje, listMensajes, enviarMensaje, suscribirMensajes,
   subirAdjunto, getAdjuntoUrl, borrarMensaje, unirseCanal,
+  marcarCanalLeido, marcarNotifsCanalLeidas,
 } from "@/lib/colaboracion";
 import { UserAvatar } from "@/components/nuvex/UserAvatar";
 import { Paperclip, Send, Trash2, Download, UserPlus, Hash, Users as UsersIcon } from "lucide-react";
@@ -24,7 +25,11 @@ export function CanalChat({ canal }: { canal: Canal }) {
     listMensajes(canal.id).then((m) => { if (active) setMsgs(m); });
     const unsub = suscribirMensajes(canal.id, (nuevo) => {
       setMsgs((prev) => prev.some((x) => x.id === nuevo.id) ? prev : [...prev, nuevo]);
+      marcarNotifsCanalLeidas(canal.id).catch(() => {});
     });
+    // Al abrir el canal, marcar mensajes y notificaciones como leídos
+    marcarCanalLeido(canal.id).catch(() => {});
+    marcarNotifsCanalLeidas(canal.id).catch(() => {});
     return () => { active = false; unsub(); };
   }, [canal.id]);
 

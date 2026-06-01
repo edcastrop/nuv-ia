@@ -145,6 +145,12 @@ export async function marcarNotifLeida(id: string) {
 export async function marcarTodasNotifLeidas() {
   await T("colab_notificaciones").update({ leida: true } as never).eq("leida", false);
 }
+export async function marcarNotifsCanalLeidas(canalId: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await T("colab_notificaciones").update({ leida: true } as never)
+    .eq("user_id", user.id).eq("canal_id", canalId).eq("leida", false);
+}
 
 export interface DMResumen {
   canal: Canal;
@@ -264,7 +270,7 @@ export async function listDirectorioFull(): Promise<DirectorioPersona[]> {
   const { data, error } = await T("profiles")
     .select("id, nombre, email, avatar_url, correo_corporativo, whatsapp, celular, ciudad, pais, equipo, sede, activo, estado_acceso, rol_solicitado")
     .eq("activo", true)
-    .in("estado_acceso", ["aprobado", "activo", "reactivado"])
+    .eq("estado_acceso", "aprobado")
     .order("nombre", { ascending: true });
   if (error) throw error;
   const rows = (data ?? []) as any[];
