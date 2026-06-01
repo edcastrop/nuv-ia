@@ -90,6 +90,33 @@ export async function crearIncidente(input: CrearIncidenteInput): Promise<Incide
   const { data, error } = await supabase.from("incidentes_operativos").insert(payload).select("*").single();
   if (error) throw error;
   await registrarAuditoria("crear", data.id, payload);
+
+  // Fase 4 — Notificar a gerencia/super_admin cuando severidad es alta o crítica
+  if (input.severidad === "alta" || input.severidad === "critica") {
+    try {
+      const { data: gerentes } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .in("role", ["super_admin", "gerencia"]);
+      const destinos = new Set<string>(((gerentes ?? []) as Array<{ user_id: string }>).map((g) => g.user_id));
+      if (input.asignado_a) destinos.add(input.asignado_a);
+      destinos.delete(uid); // no auto-notificar al reportante
+      if (destinos.size > 0) {
+        const sev = input.severidad === "critica" ? "alta" : "media";
+        await supabase.from("notificaciones_usuario" as never).insert(
+          Array.from(destinos).map((u) => ({
+            user_id: u,
+            tipo: "incidente_operativo",
+            titulo: `Incidente ${input.severidad}: ${input.titulo}`,
+            mensaje: input.descripcion ?? null,
+            link: "/incidentes",
+            severidad: sev,
+            metadata: { incidente_id: data.id, tipo: input.tipo, severidad: input.severidad },
+          })) as never,
+        );
+      }
+    } catch { /* no romper la creación si falla la notificación */ }
+  }
   return data as Incidente;
 }
 
