@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RegistroRouteImport } from './routes/registro'
 import { Route as PendienteAprobacionRouteImport } from './routes/pendiente-aprobacion'
 import { Route as MfaVerificarRouteImport } from './routes/mfa-verificar'
@@ -81,6 +82,11 @@ import { Route as AuthenticatedAcademiaLeccionesLeccionIdRouteImport } from './r
 import { Route as AuthenticatedAcademiaEvaluacionesEvaluacionIdRouteImport } from './routes/_authenticated/academia.evaluaciones.$evaluacionId'
 import { Route as AuthenticatedAcademiaCertificadosCodigoRouteImport } from './routes/_authenticated/academia.certificados.$codigo'
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegistroRoute = RegistroRouteImport.update({
   id: '/registro',
   path: '/registro',
@@ -490,6 +496,7 @@ export interface FileRoutesByFullPath {
   '/mfa-verificar': typeof MfaVerificarRoute
   '/pendiente-aprobacion': typeof PendienteAprobacionRoute
   '/registro': typeof RegistroRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/academia': typeof AuthenticatedAcademiaRouteWithChildren
   '/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -561,6 +568,7 @@ export interface FileRoutesByTo {
   '/mfa-verificar': typeof MfaVerificarRoute
   '/pendiente-aprobacion': typeof PendienteAprobacionRoute
   '/registro': typeof RegistroRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/directorio': typeof AuthenticatedDirectorioRoute
@@ -633,6 +641,7 @@ export interface FileRoutesById {
   '/mfa-verificar': typeof MfaVerificarRoute
   '/pendiente-aprobacion': typeof PendienteAprobacionRoute
   '/registro': typeof RegistroRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/academia': typeof AuthenticatedAcademiaRouteWithChildren
   '/_authenticated/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -708,6 +717,7 @@ export interface FileRouteTypes {
     | '/mfa-verificar'
     | '/pendiente-aprobacion'
     | '/registro'
+    | '/reset-password'
     | '/academia'
     | '/apoderados-nuvex'
     | '/dashboard'
@@ -779,6 +789,7 @@ export interface FileRouteTypes {
     | '/mfa-verificar'
     | '/pendiente-aprobacion'
     | '/registro'
+    | '/reset-password'
     | '/apoderados-nuvex'
     | '/dashboard'
     | '/directorio'
@@ -850,6 +861,7 @@ export interface FileRouteTypes {
     | '/mfa-verificar'
     | '/pendiente-aprobacion'
     | '/registro'
+    | '/reset-password'
     | '/_authenticated/academia'
     | '/_authenticated/apoderados-nuvex'
     | '/_authenticated/dashboard'
@@ -924,6 +936,7 @@ export interface RootRouteChildren {
   MfaVerificarRoute: typeof MfaVerificarRoute
   PendienteAprobacionRoute: typeof PendienteAprobacionRoute
   RegistroRoute: typeof RegistroRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   ApiNuvexGptChatRoute: typeof ApiNuvexGptChatRoute
   ApiNuvexIaStreamRoute: typeof ApiNuvexIaStreamRoute
   ApiPublicHooksCarteraRecordatoriosRoute: typeof ApiPublicHooksCarteraRecordatoriosRoute
@@ -935,6 +948,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/registro': {
       id: '/registro'
       path: '/registro'
@@ -1604,6 +1624,7 @@ const rootRouteChildren: RootRouteChildren = {
   MfaVerificarRoute: MfaVerificarRoute,
   PendienteAprobacionRoute: PendienteAprobacionRoute,
   RegistroRoute: RegistroRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   ApiNuvexGptChatRoute: ApiNuvexGptChatRoute,
   ApiNuvexIaStreamRoute: ApiNuvexIaStreamRoute,
   ApiPublicHooksCarteraRecordatoriosRoute:

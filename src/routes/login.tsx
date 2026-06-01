@@ -52,7 +52,8 @@ function LoginPage() {
           ]);
           const p = prof as { estado_acceso?: string; mfa_verificado_at?: string | null; rechazado_motivo?: string | null } | null;
           const isSuperAdmin = ((roleRows ?? []) as Array<{ role?: string }>).some((r) => r.role === "super_admin");
-          if (!isSuperAdmin && p && p.estado_acceso !== "aprobado") {
+          const ESTADOS_OK = ["aprobado", "activo", "reactivado"];
+          if (!isSuperAdmin && p && !ESTADOS_OK.includes(p.estado_acceso ?? "")) {
             await supabase.auth.signOut();
             const msgs: Record<string, string> = {
               pendiente: "Tu cuenta está pendiente de aprobación por un administrador.",
@@ -286,7 +287,7 @@ function LoginPage() {
                       setBusy(true);
                       try {
                         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                          redirectTo: `${window.location.origin}/login`,
+                          redirectTo: `${window.location.origin}/reset-password`,
                         });
                         if (error) throw error;
                         setInfo("Te enviamos un enlace para restablecer tu contraseña. Revisa tu correo.");

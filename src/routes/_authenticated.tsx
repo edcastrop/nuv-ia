@@ -266,6 +266,8 @@ function AuthenticatedLayout() {
         items: [
           { to: "/apoderado/mis-casos", label: "Mis casos", Icon: Briefcase },
           { to: "/nuvex-ia", label: "NUVEX IA", Icon: Sparkles },
+          { to: "/colaboracion/dm", label: "Mensajería", Icon: MessageSquare, badge: dmUnread },
+          { to: "/directorio", label: "Directorio", Icon: BookUser },
           { to: "/notificaciones", label: "Alertas", Icon: Bell, badge: unread },
           { to: "/mi-perfil", label: "Mi Perfil", Icon: UserCircle },
         ],
@@ -283,7 +285,7 @@ function AuthenticatedLayout() {
             ...(hasAny("super_admin","admin","gerencia","licenciado","director_financiero_qa") ? [{ to: "/proyeccion-financiera", label: "Proyección Financiera", Icon: LineChart }] : []),
             { to: "/notificaciones", label: "Alertas", Icon: Bell, badge: unread },
             { to: "/colaboracion", label: "Colaboración", Icon: MessageSquare, badge: colabUnread },
-            { to: "/colaboracion/dm", label: "Mensajería", Icon: Briefcase, badge: dmUnread },
+            { to: "/colaboracion/dm", label: "Mensajería", Icon: MessageSquare, badge: dmUnread },
             { to: "/directorio", label: "Directorio", Icon: BookUser },
           ],
         },
@@ -303,7 +305,7 @@ function AuthenticatedLayout() {
           items: [
             ...(hasAny("super_admin","admin","gerencia","cartera","juridica","licenciado","asesor") ? [{ to: "/cartera", label: "Cartera", Icon: Wallet }] : []),
             { to: "/comisiones", label: "Comisiones", Icon: CircleDollarSign },
-            ...(hasAny("super_admin","admin","gerencia","cartera") ? [{ to: "/contabilidad/cuentas-cobro", label: "Contabilidad", Icon: CircleDollarSign }] : []),
+            ...(hasAny("super_admin","admin","gerencia","cartera","contabilidad") ? [{ to: "/contabilidad/cuentas-cobro", label: "Contabilidad", Icon: CircleDollarSign }] : []),
             ...(hasAny("super_admin","admin","gerencia","juridica","director_juridico","operaciones") ? [{ to: "/contratacion/validacion", label: "Validación contratación", Icon: ShieldCheck }] : []),
             ...(hasAny("super_admin","admin","gerencia","contabilidad") ? [{ to: "/finanzas", label: "Finanzas", Icon: Landmark }] : []),
           ],
