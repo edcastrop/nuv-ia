@@ -73,9 +73,44 @@ export const Route = createFileRoute("/api/public/hooks/casos-alertas")({
             leida: false,
           }] as never);
           creadas++;
+
+          // Fase 4 — Fan-out a notificaciones_usuario para Gerencia + asesor responsable
+          try {
+            const severidad: "alta" | "media" = dias >= umbral * 2 ? "alta" : "media";
+            const { data: exp } = await supabaseAdmin
+              .from("expedientes" as never)
+              .select("asesor_id, cliente_nombre")
+              .eq("id", e.id)
+              .single();
+            const cliente = (exp as unknown as { cliente_nombre?: string })?.cliente_nombre ?? "Expediente";
+            const asesorId = (exp as unknown as { asesor_id?: string })?.asesor_id ?? null;
+
+            const { data: gerentes } = await supabaseAdmin
+              .from("user_roles" as never)
+              .select("user_id")
+              .in("role", ["super_admin", "gerencia"]);
+            const destinatarios = new Set<string>(
+              ((gerentes ?? []) as Array<{ user_id: string }>).map((g) => g.user_id),
+            );
+            if (asesorId) destinatarios.add(asesorId);
+
+            if (destinatarios.size > 0) {
+              const payload = Array.from(destinatarios).map((uid) => ({
+                user_id: uid,
+                tipo: "caso_estancado",
+                titulo: `Caso estancado: ${cliente}`,
+                mensaje: `${dias} días en estado "${e.estado_caso}" (SLA ${umbral}d).`,
+                link: `/casos/${e.id}`,
+                severidad,
+                metadata: { expediente_id: e.id, estado: e.estado_caso, dias },
+              }));
+              await supabaseAdmin.from("notificaciones_usuario" as never).insert(payload as never);
+            }
+          } catch { /* notificaciones no deben romper el cron */ }
         }
 
         return Response.json({ ok: true, creadas });
+
       },
     },
   },
