@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/directorio")({
 
 type GroupKey = "licenciados" | "juridica" | "operaciones" | "contabilidad" | "qa" | "direccion" | "otros";
 
-const GROUPS: { key: GroupKey; label: string; match: (roles: string[], equipo: string | null) => boolean }[] = [
+const GROUPS: { key: GroupKey; label: string; match: (rolesRaw: string[], equipo: string | null) => boolean }[] = [
   { key: "licenciados", label: "Analistas Financieros Comerciales", match: (r) => r.includes("licenciado") || r.includes("asesor") },
   { key: "juridica", label: "Jurídica", match: (r) => r.includes("juridica") || r.includes("director_juridico") || r.includes("apoderado") },
   { key: "operaciones", label: "Operaciones", match: (r) => r.includes("operaciones") || r.includes("auxiliar_operativo") },
@@ -25,7 +25,7 @@ const GROUPS: { key: GroupKey; label: string; match: (roles: string[], equipo: s
 ];
 
 function asignarGrupo(p: DirectorioPersona): GroupKey {
-  for (const g of GROUPS) if (g.key !== "otros" && g.match(p.roles, p.equipo)) return g.key;
+  for (const g of GROUPS) if (g.key !== "otros" && g.match(p.rolesRaw, p.equipo)) return g.key;
   return "otros";
 }
 
