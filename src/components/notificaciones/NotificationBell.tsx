@@ -46,11 +46,26 @@ export function NotificationBell() {
   }, []);
 
   const abrirDetalle = (n: Notificacion) => {
-    setDetalle(n);
-    setOpen(false);
+    // Marca como leída inmediatamente y, si hay link, navega directo al origen.
     if (!n.leida) {
       void leer(n.id);
     }
+    setOpen(false);
+    if (n.link) {
+      const link = n.link;
+      try {
+        if (/^https?:\/\//i.test(link)) {
+          window.location.href = link;
+        } else {
+          router.navigate({ to: link });
+        }
+      } catch {
+        window.location.href = link;
+      }
+      return;
+    }
+    // Solo cuando no hay destino, mostramos un detalle informativo.
+    setDetalle(n);
   };
 
   const irAlEnlace = () => {
@@ -67,6 +82,7 @@ export function NotificationBell() {
       window.location.href = link;
     }
   };
+
 
   return (
     <>
