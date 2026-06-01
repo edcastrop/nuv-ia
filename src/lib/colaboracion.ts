@@ -236,7 +236,8 @@ export type DirectorioPersona = {
   sede: string | null;
   foto_url: string | null;
   activo: boolean;
-  roles: string[];
+  roles: string[];      // Labels traducidos para mostrar en UI
+  rolesRaw: string[];   // Códigos crudos para lógica/agrupación
 };
 
 const ROL_LABEL: Record<string, string> = {
