@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useLocation } from "@tanstack/react-router";
+import { useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Bell } from "lucide-react";
 import { useNotificaciones } from "@/hooks/useNotificaciones";
