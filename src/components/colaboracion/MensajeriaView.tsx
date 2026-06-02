@@ -9,7 +9,8 @@ import {
   listMisDMs, listDirectorio, getOrCreateDM, listMensajes, suscribirMensajes,
   enviarMensaje, subirAdjunto, getAdjuntoUrl, marcarCanalLeido, getOtroMiembroLectura,
 } from "@/lib/colaboracion";
-import { Send, Paperclip, Download, Search, Check, CheckCheck, Image as ImageIcon, FileText, Plus, AlertCircle } from "lucide-react";
+import { Send, Paperclip, Download, Search, Check, CheckCheck, Image as ImageIcon, FileText, Plus, AlertCircle, Smile } from "lucide-react";
+import { EmojiPickerPopover } from "@/components/colaboracion/EmojiPicker";
 import { PresenceDot } from "@/components/presencia/PresenceDot";
 
 const AZUL = NUVEX.azul;
@@ -220,6 +221,7 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
                   <Paperclip size={16} className="text-[#242424]/70" />
                 </button>
                 <input ref={fileRef} type="file" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt" className="hidden" onChange={(e) => { onFile(e.target.files?.[0]); if (fileRef.current) fileRef.current.value = ""; }} />
+                <EmojiPickerPopover onPick={(e) => setTexto((t) => t + e)} />
                 <textarea
                   value={texto}
                   onChange={(e) => setTexto(e.target.value)}
