@@ -4,8 +4,56 @@ const CHANNEL = "presencia-global";
 const HEARTBEAT_MS = 60_000;
 
 let _client: ReturnType<typeof supabase.channel> | null = null;
+let _subscribePromise: Promise<void> | null = null;
 let _heartbeatTimer: number | null = null;
 let _started = false;
+let _trackedUserId: string | null = null;
+let _currentOnline = new Set<string>();
+let _removeWindowListeners: (() => void) | null = null;
+
+const _listeners = new Set<(online: Set<string>) => void>();
+
+function emitirPresencia() {
+  const snapshot = new Set(_currentOnline);
+  _listeners.forEach((listener) => listener(snapshot));
+}
+
+function leerUsuariosOnline(ch: ReturnType<typeof supabase.channel>) {
+  const state = ch.presenceState() as Record<string, Array<{ user_id?: string }>>;
+  _currentOnline = new Set(
+    Object.entries(state).flatMap(([key, metas]) => {
+      const ids = metas.map((meta) => meta.user_id).filter(Boolean) as string[];
+      return ids.length > 0 ? ids : [key];
+    }),
+  );
+  emitirPresencia();
+}
+
+function asegurarCanalPresencia() {
+  if (_client) return _client;
+
+  const ch = supabase.channel(
+    CHANNEL,
+    _trackedUserId ? { config: { presence: { key: _trackedUserId } } } : undefined,
+  );
+
+  ch.on("presence", { event: "sync" }, () => leerUsuariosOnline(ch));
+  _client = ch;
+
+  return ch;
+}
+
+function suscribirCanal(ch: ReturnType<typeof supabase.channel>) {
+  if (_subscribePromise) return _subscribePromise;
+
+  _subscribePromise = new Promise<void>((resolve) => {
+    ch.subscribe((status) => {
+      if (status === "SUBSCRIBED") resolve();
+    });
+  });
+
+  return _subscribePromise;
+}
 
 async function tocarLastSeen(userId: string) {
   try {
@@ -26,6 +74,7 @@ async function tocarLastSeen(userId: string) {
 export async function iniciarPresenciaPropia(userId: string, visible: boolean) {
   if (_started || !userId) return;
   _started = true;
+  _trackedUserId = userId;
 
   // Si el usuario ocultó su estado, solo registramos last_seen y salimos.
   if (!visible) {
@@ -33,34 +82,33 @@ export async function iniciarPresenciaPropia(userId: string, visible: boolean) {
     return;
   }
 
-  const ch = supabase.channel(CHANNEL, {
-    config: { presence: { key: userId } },
-  });
-  _client = ch;
-
-  ch.on("presence", { event: "sync" }, () => { /* otros hooks lo leen */ });
-
-  await new Promise<void>((resolve) => {
-    ch.subscribe(async (status) => {
-      if (status === "SUBSCRIBED") {
-        await ch.track({ user_id: userId, online_at: new Date().toISOString() });
-        resolve();
-      }
-    });
-  });
+  const ch = asegurarCanalPresencia();
+  await suscribirCanal(ch);
+  await ch.track({ user_id: userId, online_at: new Date().toISOString() });
 
   await tocarLastSeen(userId);
+  if (typeof window === "undefined" || typeof document === "undefined") return;
+
   _heartbeatTimer = window.setInterval(() => { tocarLastSeen(userId); }, HEARTBEAT_MS);
 
   const onHide = () => { tocarLastSeen(userId); };
   document.addEventListener("visibilitychange", onHide);
   window.addEventListener("beforeunload", onHide);
+  _removeWindowListeners = () => {
+    document.removeEventListener("visibilitychange", onHide);
+    window.removeEventListener("beforeunload", onHide);
+  };
 }
 
 export function detenerPresenciaPropia() {
   if (_heartbeatTimer) { clearInterval(_heartbeatTimer); _heartbeatTimer = null; }
+  if (_removeWindowListeners) { _removeWindowListeners(); _removeWindowListeners = null; }
   if (_client) { supabase.removeChannel(_client); _client = null; }
+  _subscribePromise = null;
   _started = false;
+  _trackedUserId = null;
+  _currentOnline = new Set();
+  emitirPresencia();
 }
 
 /**
@@ -68,13 +116,13 @@ export function detenerPresenciaPropia() {
  * cb recibe Set<userId> de usuarios actualmente en línea.
  */
 export function suscribirPresencia(cb: (online: Set<string>) => void) {
-  const ch = supabase.channel(CHANNEL);
-  ch.on("presence", { event: "sync" }, () => {
-    const state = ch.presenceState() as Record<string, unknown[]>;
-    cb(new Set(Object.keys(state)));
-  });
-  ch.subscribe();
-  return () => { supabase.removeChannel(ch); };
+  _listeners.add(cb);
+  cb(new Set(_currentOnline));
+
+  const ch = asegurarCanalPresencia();
+  suscribirCanal(ch).then(() => leerUsuariosOnline(ch)).catch(() => {});
+
+  return () => { _listeners.delete(cb); };
 }
 
 /** Formatea "última vez" estilo redes sociales en español. */
