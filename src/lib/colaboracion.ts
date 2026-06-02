@@ -281,7 +281,7 @@ export function labelRol(r: string): string {
 
 export async function listDirectorioFull(): Promise<DirectorioPersona[]> {
   const { data, error } = await T("profiles")
-    .select("id, nombre, email, avatar_url, correo_corporativo, whatsapp, celular, ciudad, pais, equipo, sede, activo, estado_acceso, rol_solicitado")
+    .select("id, nombre, email, avatar_url, correo_corporativo, whatsapp, celular, ciudad, pais, equipo, sede, activo, estado_acceso, rol_solicitado, last_seen_at, presencia_visible")
     .eq("activo", true)
     .eq("estado_acceso", "aprobado")
     .order("nombre", { ascending: true });
@@ -316,6 +316,8 @@ export async function listDirectorioFull(): Promise<DirectorioPersona[]> {
       activo: p.activo ?? true,
       roles: roles.map(labelRol),
       rolesRaw: roles,
+      last_seen_at: p.last_seen_at ?? null,
+      presencia_visible: p.presencia_visible !== false,
     };
   });
 }
