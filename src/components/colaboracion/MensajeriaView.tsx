@@ -9,9 +9,11 @@ import {
   listMisDMs, listDirectorio, getOrCreateDM, listMensajes, suscribirMensajes,
   enviarMensaje, subirAdjunto, getAdjuntoUrl, marcarCanalLeido, getOtroMiembroLectura,
 } from "@/lib/colaboracion";
-import { Send, Paperclip, Download, Search, Check, CheckCheck, Image as ImageIcon, FileText, Plus, AlertCircle, ArrowLeft } from "lucide-react";
+import { Send, Paperclip, Download, Search, Check, CheckCheck, Image as ImageIcon, FileText, Plus, AlertCircle, ArrowLeft, Mic } from "lucide-react";
 import { EmojiPickerPopover } from "@/components/colaboracion/EmojiPicker";
 import { PresenceDot } from "@/components/presencia/PresenceDot";
+import { VoiceRecorder } from "@/components/colaboracion/VoiceRecorder";
+import { VoiceNotePlayer } from "@/components/colaboracion/VoiceNotePlayer";
 
 const AZUL = NUVEX.azul;
 
