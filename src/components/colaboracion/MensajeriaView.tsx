@@ -266,8 +266,14 @@ function ChatHeader({ dms, canal }: { dms: DMResumen[]; canal: Canal }) {
     <div className="border-b border-[#E3E7EE] px-5 py-3 flex items-center gap-3">
       <UserAvatar userId={d.otro.user_id} name={d.otro.nombre} size="md" />
       <div className="min-w-0">
-        <div className="text-[14px] font-semibold text-[#242424] truncate">{d.otro.nombre}</div>
-        <div className="text-[11px] text-[#242424]/55 truncate">{d.otro.roles.join(", ") || "—"}</div>
+        <div className="flex items-center gap-2">
+          <div className="text-[14px] font-semibold text-[#242424] truncate">{d.otro.nombre}</div>
+          <PresenceDot userId={d.otro.user_id} lastSeenAt={d.otro.last_seen_at} visible={d.otro.presencia_visible} />
+        </div>
+        <div className="text-[11px] text-[#242424]/55 truncate">
+          <PresenceDot userId={d.otro.user_id} lastSeenAt={d.otro.last_seen_at} visible={d.otro.presencia_visible} showText />
+          {d.otro.roles.length > 0 && <span className="ml-2">· {d.otro.roles.join(", ")}</span>}
+        </div>
       </div>
     </div>
   );
