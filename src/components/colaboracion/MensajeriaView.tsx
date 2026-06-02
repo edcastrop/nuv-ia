@@ -221,6 +221,7 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
                   <Paperclip size={16} className="text-[#242424]/70" />
                 </button>
                 <input ref={fileRef} type="file" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt" className="hidden" onChange={(e) => { onFile(e.target.files?.[0]); if (fileRef.current) fileRef.current.value = ""; }} />
+                <EmojiPickerPopover onPick={(e) => setTexto((t) => t + e)} />
                 <textarea
                   value={texto}
                   onChange={(e) => setTexto(e.target.value)}
