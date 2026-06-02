@@ -186,7 +186,7 @@ export async function listMisDMs(): Promise<DMResumen[]> {
   ((otrosMiembros ?? []) as any[]).forEach((m) => { otroPorCanal.set(m.canal_id, { user_id: m.user_id, ultima_lectura: m.ultima_lectura }); });
 
   const otroIds = Array.from(new Set(Array.from(otroPorCanal.values()).map((v) => v.user_id)));
-  const dir = await listDirectorio();
+  const dir = await listDirectorioFull();
   const dirMap = new Map(dir.map((d) => [d.user_id, d]));
 
   const { data: ultMsgs } = await T("colab_mensajes")
@@ -210,6 +210,8 @@ export async function listMisDMs(): Promise<DMResumen[]> {
         foto_url: perfil?.foto_url ?? null,
         roles: perfil?.roles ?? [],
         ultima_lectura: otroRef?.ultima_lectura ?? null,
+        last_seen_at: perfil?.last_seen_at ?? null,
+        presencia_visible: perfil?.presencia_visible !== false,
       },
       ultimo_mensaje: ultimoPorCanal.get(r.canal_id) ?? null,
       no_leidos: noLeidos,
