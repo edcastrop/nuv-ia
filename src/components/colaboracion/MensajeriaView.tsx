@@ -10,6 +10,7 @@ import {
   enviarMensaje, subirAdjunto, getAdjuntoUrl, marcarCanalLeido, getOtroMiembroLectura,
 } from "@/lib/colaboracion";
 import { Send, Paperclip, Download, Search, Check, CheckCheck, Image as ImageIcon, FileText, Plus, AlertCircle } from "lucide-react";
+import { PresenceDot } from "@/components/presencia/PresenceDot";
 
 const AZUL = NUVEX.azul;
 
