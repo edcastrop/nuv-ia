@@ -327,9 +327,13 @@ function MensajeBurbuja({ m, esMio, otroLectura }: { m: Mensaje; esMio: boolean;
         {m.adjuntos?.length > 0 && (
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {m.adjuntos.map((a, i) => (
-              <button key={i} onClick={async () => { const url = await getAdjuntoUrl(a.path); window.open(url, "_blank"); }} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px]" style={esMio ? { background: "rgba(255,255,255,0.18)", color: "#fff" } : { background: "#fff", border: "1px solid #E3E7EE", color: "#242424" }}>
-                {iconAdj(a.mime)} <span className="truncate max-w-[180px]">{a.nombre}</span> <Download size={10} />
-              </button>
+              a.mime?.startsWith("audio/") ? (
+                <VoiceNotePlayer key={i} path={a.path} mime={a.mime} nombre={a.nombre} esMio={esMio} />
+              ) : (
+                <button key={i} onClick={async () => { const url = await getAdjuntoUrl(a.path); window.open(url, "_blank"); }} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px]" style={esMio ? { background: "rgba(255,255,255,0.18)", color: "#fff" } : { background: "#fff", border: "1px solid #E3E7EE", color: "#242424" }}>
+                  {iconAdj(a.mime)} <span className="truncate max-w-[180px]">{a.nombre}</span> <Download size={10} />
+                </button>
+              )
             ))}
           </div>
         )}
