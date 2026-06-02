@@ -154,7 +154,15 @@ export async function marcarNotifsCanalLeidas(canalId: string) {
 
 export interface DMResumen {
   canal: Canal;
-  otro: { user_id: string; nombre: string; foto_url: string | null; roles: string[]; ultima_lectura: string | null };
+  otro: {
+    user_id: string;
+    nombre: string;
+    foto_url: string | null;
+    roles: string[];
+    ultima_lectura: string | null;
+    last_seen_at: string | null;
+    presencia_visible: boolean;
+  };
   ultimo_mensaje: { texto: string | null; created_at: string; user_id: string } | null;
   no_leidos: number;
 }
@@ -178,7 +186,7 @@ export async function listMisDMs(): Promise<DMResumen[]> {
   ((otrosMiembros ?? []) as any[]).forEach((m) => { otroPorCanal.set(m.canal_id, { user_id: m.user_id, ultima_lectura: m.ultima_lectura }); });
 
   const otroIds = Array.from(new Set(Array.from(otroPorCanal.values()).map((v) => v.user_id)));
-  const dir = await listDirectorio();
+  const dir = await listDirectorioFull();
   const dirMap = new Map(dir.map((d) => [d.user_id, d]));
 
   const { data: ultMsgs } = await T("colab_mensajes")
@@ -202,6 +210,8 @@ export async function listMisDMs(): Promise<DMResumen[]> {
         foto_url: perfil?.foto_url ?? null,
         roles: perfil?.roles ?? [],
         ultima_lectura: otroRef?.ultima_lectura ?? null,
+        last_seen_at: perfil?.last_seen_at ?? null,
+        presencia_visible: perfil?.presencia_visible !== false,
       },
       ultimo_mensaje: ultimoPorCanal.get(r.canal_id) ?? null,
       no_leidos: noLeidos,
@@ -255,6 +265,8 @@ export type DirectorioPersona = {
   activo: boolean;
   roles: string[];      // Labels traducidos para mostrar en UI
   rolesRaw: string[];   // Códigos crudos para lógica/agrupación
+  last_seen_at: string | null;
+  presencia_visible: boolean;
 };
 
 const ROL_LABEL: Record<string, string> = {
@@ -279,7 +291,7 @@ export function labelRol(r: string): string {
 
 export async function listDirectorioFull(): Promise<DirectorioPersona[]> {
   const { data, error } = await T("profiles")
-    .select("id, nombre, email, avatar_url, correo_corporativo, whatsapp, celular, ciudad, pais, equipo, sede, activo, estado_acceso, rol_solicitado")
+    .select("id, nombre, email, avatar_url, correo_corporativo, whatsapp, celular, ciudad, pais, equipo, sede, activo, estado_acceso, rol_solicitado, last_seen_at, presencia_visible")
     .eq("activo", true)
     .eq("estado_acceso", "aprobado")
     .order("nombre", { ascending: true });
@@ -314,6 +326,8 @@ export async function listDirectorioFull(): Promise<DirectorioPersona[]> {
       activo: p.activo ?? true,
       roles: roles.map(labelRol),
       rolesRaw: roles,
+      last_seen_at: p.last_seen_at ?? null,
+      presencia_visible: p.presencia_visible !== false,
     };
   });
 }

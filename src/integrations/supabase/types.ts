@@ -2825,6 +2825,7 @@ export type Database = {
           fecha_ingreso: string | null
           id: string
           intentos_fallidos: number
+          last_seen_at: string | null
           mfa_metodo: Database["public"]["Enums"]["mfa_metodo"]
           mfa_requerido: boolean
           mfa_secret: string | null
@@ -2839,6 +2840,7 @@ export type Database = {
           pais: string | null
           perfil_completo: boolean
           porcentaje_comision: number | null
+          presencia_visible: boolean
           rechazado_motivo: string | null
           reemplazo_user_id: string | null
           rol_solicitado: string | null
@@ -2879,6 +2881,7 @@ export type Database = {
           fecha_ingreso?: string | null
           id: string
           intentos_fallidos?: number
+          last_seen_at?: string | null
           mfa_metodo?: Database["public"]["Enums"]["mfa_metodo"]
           mfa_requerido?: boolean
           mfa_secret?: string | null
@@ -2893,6 +2896,7 @@ export type Database = {
           pais?: string | null
           perfil_completo?: boolean
           porcentaje_comision?: number | null
+          presencia_visible?: boolean
           rechazado_motivo?: string | null
           reemplazo_user_id?: string | null
           rol_solicitado?: string | null
@@ -2933,6 +2937,7 @@ export type Database = {
           fecha_ingreso?: string | null
           id?: string
           intentos_fallidos?: number
+          last_seen_at?: string | null
           mfa_metodo?: Database["public"]["Enums"]["mfa_metodo"]
           mfa_requerido?: boolean
           mfa_secret?: string | null
@@ -2947,6 +2952,7 @@ export type Database = {
           pais?: string | null
           perfil_completo?: boolean
           porcentaje_comision?: number | null
+          presencia_visible?: boolean
           rechazado_motivo?: string | null
           reemplazo_user_id?: string | null
           rol_solicitado?: string | null
