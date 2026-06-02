@@ -8,6 +8,8 @@ import {
 import { UserAvatar } from "@/components/nuvex/UserAvatar";
 import { Paperclip, Send, Trash2, Download, UserPlus, Hash, Users as UsersIcon } from "lucide-react";
 import { EmojiPickerPopover } from "@/components/colaboracion/EmojiPicker";
+import { VoiceRecorder } from "@/components/colaboracion/VoiceRecorder";
+import { VoiceNotePlayer } from "@/components/colaboracion/VoiceNotePlayer";
 
 const AZUL = "#445DA3";
 
