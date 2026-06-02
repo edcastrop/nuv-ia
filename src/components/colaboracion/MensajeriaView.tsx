@@ -167,7 +167,10 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
                   <UserAvatar userId={d.otro.user_id} name={d.otro.nombre} size="md" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <div className="text-[13px] font-semibold text-[#242424] truncate">{d.otro.nombre}</div>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <div className="text-[13px] font-semibold text-[#242424] truncate">{d.otro.nombre}</div>
+                        <PresenceDot userId={d.otro.user_id} lastSeenAt={d.otro.last_seen_at} visible={d.otro.presencia_visible} />
+                      </div>
                       {d.ultimo_mensaje && <div className="text-[10px] text-[#242424]/50 shrink-0">{formatRel(d.ultimo_mensaje.created_at)}</div>}
                     </div>
                     <div className="text-[11px] text-[#242424]/55 truncate">{d.otro.roles.join(", ") || "—"}</div>
