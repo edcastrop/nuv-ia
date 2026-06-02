@@ -33,8 +33,14 @@ function rutaActualCoincide(link: string | null): boolean {
  */
 export function NotificacionesAlerts() {
   const { items, unread, leer } = useNotificaciones();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const router = useRouter();
+  const navigate = (to: string) => {
+    if (/^https?:\/\//i.test(to)) {
+      window.location.href = to;
+    } else {
+      router.navigate({ to });
+    }
+  };
   const [prefs, setPrefs] = useState<NotifPrefs>(getNotifPrefs);
   // Set de IDs ya vistos por este montaje — evita re-disparar para ítems viejos.
   const vistosRef = useRef<Set<string>>(new Set());
@@ -99,7 +105,7 @@ export function NotificacionesAlerts() {
                 label: "Abrir",
                 onClick: () => {
                   void leer(n.id);
-                  navigate({ to: n.link! });
+                  navigate(n.link!);
                 },
               }
             : undefined,
@@ -136,7 +142,7 @@ export function NotificacionesAlerts() {
           window.focus();
           if (n.link) {
             void leer(n.id);
-            navigate({ to: n.link });
+            navigate(n.link);
           }
           not.close();
         };
@@ -154,10 +160,6 @@ export function NotificacionesAlerts() {
     };
   }, []);
 
-  // Silencia automáticamente si el usuario navega al chat exacto del último alerta
-  useEffect(() => {
-    // noop — solo se observa la location para forzar re-render si hace falta
-  }, [location.pathname]);
 
   return null;
 }
