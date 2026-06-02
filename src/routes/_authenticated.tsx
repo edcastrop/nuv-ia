@@ -16,6 +16,7 @@ import { NuvexGptButton } from "@/components/nuvex-gpt/NuvexGptPanel";
 import { AcademiaBanner } from "@/components/onboarding/AcademiaBanner";
 import { OnboardingChecklistBanner } from "@/components/onboarding/OnboardingChecklistBanner";
 import { iniciarPresenciaPropia, detenerPresenciaPropia } from "@/lib/presencia";
+import { NotificacionesAlerts } from "@/components/notificaciones/NotificacionesAlerts";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
