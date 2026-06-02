@@ -108,6 +108,7 @@ export function CanalChat({ canal }: { canal: Canal }) {
             if (fileRef.current) fileRef.current.value = "";
           }}
         />
+        <EmojiPickerPopover onPick={(e) => setTexto((t) => t + e)} />
         <textarea
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
