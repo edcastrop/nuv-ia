@@ -244,6 +244,26 @@ function AuthenticatedLayout() {
     return () => { active = false; clearInterval(iv); supabase.removeChannel(ch); };
   }, [session?.user?.id, gateState]);
 
+  // Presencia global (en línea / última vez). Respeta el toggle de privacidad.
+  useEffect(() => {
+    if (!session?.user || gateState !== "ok") return;
+    const uid = session.user.id;
+    let cancel = false;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("presencia_visible")
+        .eq("id", uid)
+        .maybeSingle();
+      if (cancel) return;
+      const visible = (data as { presencia_visible?: boolean } | null)?.presencia_visible !== false;
+      iniciarPresenciaPropia(uid, visible);
+    })();
+    return () => { cancel = true; detenerPresenciaPropia(); };
+  }, [session?.user?.id, gateState]);
+
+
+
 
   if (loading || !session || gateState !== "ok") {
     return (
