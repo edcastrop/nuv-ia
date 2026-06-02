@@ -61,6 +61,12 @@ export function CanalChat({ canal }: { canal: Canal }) {
     } catch (e) { alert((e as Error).message); }
   };
 
+  const onVoiceSend = async (file: File) => {
+    const a = await subirAdjunto(canal.id, file);
+    await enviarMensaje(canal.id, "", [a]);
+  };
+
+
   return (
     <div className="flex flex-col h-full bg-white">
       <div className="border-b border-[#E3E7EE] px-3 md:px-5 py-3 flex items-center justify-between gap-2">
