@@ -114,6 +114,13 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
     catch (e) { alert((e as Error).message); }
   };
 
+  const onVoiceSend = async (file: File) => {
+    if (!canal) return;
+    const a = await subirAdjunto(canal.id, file);
+    await enviarMensaje(canal.id, "", [a]);
+    await recargarDMs();
+  };
+
   const totalNoLeidos = dms.reduce((s, d) => s + d.no_leidos, 0);
   const hasCanal = !!canal;
 
