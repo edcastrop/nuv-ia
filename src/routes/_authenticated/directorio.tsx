@@ -6,6 +6,7 @@ import { NUVEX } from "@/components/nuvex/constants";
 import { UserAvatar } from "@/components/nuvex/UserAvatar";
 import { listDirectorioFull, getOrCreateDM, type DirectorioPersona } from "@/lib/colaboracion";
 import { useNavigate } from "@tanstack/react-router";
+import { PresenceDot } from "@/components/presencia/PresenceDot";
 
 export const Route = createFileRoute("/_authenticated/directorio")({
   component: DirectorioPage,
