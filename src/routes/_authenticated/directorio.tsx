@@ -145,9 +145,12 @@ function PersonaCard({ p, onDM }: { p: DirectorioPersona; onDM: () => void }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <div className="text-sm font-semibold text-[#242424] truncate">{p.nombre}</div>
-            <span className={`inline-block w-2 h-2 rounded-full ${p.activo ? "bg-[#84B98F]" : "bg-[#242424]/25"}`} title={p.activo ? "Activo" : "Inactivo"} />
+            <PresenceDot userId={p.user_id} lastSeenAt={p.last_seen_at} visible={p.presencia_visible} />
           </div>
           <div className="text-[12px] text-[#242424]/65 truncate">{cargo}</div>
+          <div className="text-[10.5px] text-[#242424]/50 mt-0.5">
+            <PresenceDot userId={p.user_id} lastSeenAt={p.last_seen_at} visible={p.presencia_visible} showText />
+          </div>
           {(p.ciudad || p.pais) && (
             <div className="text-[11px] text-[#242424]/55 inline-flex items-center gap-1 mt-0.5">
               <MapPin size={11} /> {[p.ciudad, p.pais].filter(Boolean).join(", ")}
