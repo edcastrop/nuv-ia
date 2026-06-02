@@ -12,6 +12,8 @@ import {
 import { Send, Paperclip, Download, Search, Check, CheckCheck, Image as ImageIcon, FileText, Plus, AlertCircle, ArrowLeft } from "lucide-react";
 import { EmojiPickerPopover } from "@/components/colaboracion/EmojiPicker";
 import { PresenceDot } from "@/components/presencia/PresenceDot";
+import { VoiceRecorder } from "@/components/colaboracion/VoiceRecorder";
+import { VoiceNotePlayer } from "@/components/colaboracion/VoiceNotePlayer";
 
 const AZUL = NUVEX.azul;
 
@@ -110,6 +112,13 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
     if (!f || !canal) return;
     try { const a = await subirAdjunto(canal.id, f); setAdjs((p) => [...p, a]); }
     catch (e) { alert((e as Error).message); }
+  };
+
+  const onVoiceSend = async (file: File) => {
+    if (!canal) return;
+    const a = await subirAdjunto(canal.id, file);
+    await enviarMensaje(canal.id, "", [a]);
+    await recargarDMs();
   };
 
   const totalNoLeidos = dms.reduce((s, d) => s + d.no_leidos, 0);
@@ -231,6 +240,7 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
                   <Paperclip size={16} className="text-[#242424]/70" />
                 </button>
                 <input ref={fileRef} type="file" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt" className="hidden" onChange={(e) => { onFile(e.target.files?.[0]); if (fileRef.current) fileRef.current.value = ""; }} />
+                <VoiceRecorder onSend={onVoiceSend} disabled={enviando} />
                 <EmojiPickerPopover onPick={(e) => setTexto((t) => t + e)} />
                 <textarea
                   value={texto}
@@ -317,9 +327,13 @@ function MensajeBurbuja({ m, esMio, otroLectura }: { m: Mensaje; esMio: boolean;
         {m.adjuntos?.length > 0 && (
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {m.adjuntos.map((a, i) => (
-              <button key={i} onClick={async () => { const url = await getAdjuntoUrl(a.path); window.open(url, "_blank"); }} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px]" style={esMio ? { background: "rgba(255,255,255,0.18)", color: "#fff" } : { background: "#fff", border: "1px solid #E3E7EE", color: "#242424" }}>
-                {iconAdj(a.mime)} <span className="truncate max-w-[180px]">{a.nombre}</span> <Download size={10} />
-              </button>
+              a.mime?.startsWith("audio/") ? (
+                <VoiceNotePlayer key={i} path={a.path} mime={a.mime} nombre={a.nombre} esMio={esMio} />
+              ) : (
+                <button key={i} onClick={async () => { const url = await getAdjuntoUrl(a.path); window.open(url, "_blank"); }} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px]" style={esMio ? { background: "rgba(255,255,255,0.18)", color: "#fff" } : { background: "#fff", border: "1px solid #E3E7EE", color: "#242424" }}>
+                  {iconAdj(a.mime)} <span className="truncate max-w-[180px]">{a.nombre}</span> <Download size={10} />
+                </button>
+              )
             ))}
           </div>
         )}

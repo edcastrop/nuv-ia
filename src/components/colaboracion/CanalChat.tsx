@@ -8,6 +8,8 @@ import {
 import { UserAvatar } from "@/components/nuvex/UserAvatar";
 import { Paperclip, Send, Trash2, Download, UserPlus, Hash, Users as UsersIcon } from "lucide-react";
 import { EmojiPickerPopover } from "@/components/colaboracion/EmojiPicker";
+import { VoiceRecorder } from "@/components/colaboracion/VoiceRecorder";
+import { VoiceNotePlayer } from "@/components/colaboracion/VoiceNotePlayer";
 
 const AZUL = "#445DA3";
 
@@ -59,6 +61,12 @@ export function CanalChat({ canal }: { canal: Canal }) {
     } catch (e) { alert((e as Error).message); }
   };
 
+  const onVoiceSend = async (file: File) => {
+    const a = await subirAdjunto(canal.id, file);
+    await enviarMensaje(canal.id, "", [a]);
+  };
+
+
   return (
     <div className="flex flex-col h-full bg-white">
       <div className="border-b border-[#E3E7EE] px-3 md:px-5 py-3 flex items-center justify-between gap-2">
@@ -109,6 +117,7 @@ export function CanalChat({ canal }: { canal: Canal }) {
             if (fileRef.current) fileRef.current.value = "";
           }}
         />
+        <VoiceRecorder onSend={onVoiceSend} disabled={enviando} />
         <EmojiPickerPopover onPick={(e) => setTexto((t) => t + e)} />
         <textarea
           value={texto}
@@ -147,9 +156,13 @@ function MensajeItem({ m, esMio }: { m: Mensaje; esMio: boolean }) {
         {m.adjuntos?.length > 0 && (
           <div className="mt-1 flex flex-wrap gap-2">
             {m.adjuntos.map((a, i) => (
-              <button key={i} onClick={async () => { const url = await getAdjuntoUrl(a.path); window.open(url, "_blank"); }} className="inline-flex items-center gap-1 rounded-md border border-[#E3E7EE] bg-[#F7F9FB] px-2 py-1 text-[11px] hover:bg-white">
-                <Download size={11} /> {a.nombre}
-              </button>
+              a.mime?.startsWith("audio/") ? (
+                <VoiceNotePlayer key={i} path={a.path} mime={a.mime} nombre={a.nombre} />
+              ) : (
+                <button key={i} onClick={async () => { const url = await getAdjuntoUrl(a.path); window.open(url, "_blank"); }} className="inline-flex items-center gap-1 rounded-md border border-[#E3E7EE] bg-[#F7F9FB] px-2 py-1 text-[11px] hover:bg-white">
+                  <Download size={11} /> {a.nombre}
+                </button>
+              )
             ))}
           </div>
         )}
