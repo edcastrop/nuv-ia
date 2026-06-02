@@ -7,6 +7,7 @@ import {
 } from "@/lib/colaboracion";
 import { UserAvatar } from "@/components/nuvex/UserAvatar";
 import { Paperclip, Send, Trash2, Download, UserPlus, Hash, Users as UsersIcon } from "lucide-react";
+import { EmojiPickerPopover } from "@/components/colaboracion/EmojiPicker";
 
 const AZUL = "#445DA3";
 
