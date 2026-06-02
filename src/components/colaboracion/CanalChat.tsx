@@ -117,6 +117,7 @@ export function CanalChat({ canal }: { canal: Canal }) {
             if (fileRef.current) fileRef.current.value = "";
           }}
         />
+        <VoiceRecorder onSend={onVoiceSend} disabled={enviando} />
         <EmojiPickerPopover onPick={(e) => setTexto((t) => t + e)} />
         <textarea
           value={texto}
