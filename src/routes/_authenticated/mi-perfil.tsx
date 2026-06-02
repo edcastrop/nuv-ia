@@ -357,6 +357,10 @@ function MiPerfilPage() {
 
       <TotpEnrollmentSection />
 
+      <PresenciaPrivacidadSection />
+
+
+
       <div className="flex items-center gap-2 text-[11px] text-[#242424]/50">
         <Shield size={12} /> Toda modificación queda registrada para auditoría.
       </div>
