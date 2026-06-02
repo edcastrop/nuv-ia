@@ -42,8 +42,9 @@ export function useNotificaciones() {
   useEffect(() => {
     if (!user) return;
     reload();
+    const instanceId = Math.random().toString(36).slice(2, 10);
     const ch = supabase
-      .channel("notif_user_" + user.id)
+      .channel(`notif_user_${user.id}_${instanceId}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "notificaciones_usuario", filter: `user_id=eq.${user.id}` },
