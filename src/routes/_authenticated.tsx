@@ -16,6 +16,7 @@ import { NuvexGptButton } from "@/components/nuvex-gpt/NuvexGptPanel";
 import { AcademiaBanner } from "@/components/onboarding/AcademiaBanner";
 import { OnboardingChecklistBanner } from "@/components/onboarding/OnboardingChecklistBanner";
 import { iniciarPresenciaPropia, detenerPresenciaPropia } from "@/lib/presencia";
+import { NotificacionesAlerts } from "@/components/notificaciones/NotificacionesAlerts";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
@@ -530,6 +531,7 @@ function AuthenticatedLayout() {
         </main>
 
         {!isApoderado && <NuvexGptButton />}
+        <NotificacionesAlerts />
 
         <footer className="border-t border-[#E3E7EE] bg-white">
           <div className="mx-auto max-w-7xl px-6 py-5 text-center text-[11px] text-[#242424]/60">

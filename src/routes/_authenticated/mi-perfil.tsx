@@ -23,6 +23,7 @@ import { Camera, Trash2, Save, Loader2, Shield, GraduationCap, History, Briefcas
 import { toast } from "sonner";
 import { TotpEnrollmentSection } from "@/components/seguridad/TotpEnrollmentSection";
 import { PresenciaPrivacidadSection } from "@/components/seguridad/PresenciaPrivacidadSection";
+import { NotificacionesPrefsSection } from "@/components/seguridad/NotificacionesPrefsSection";
 
 export const Route = createFileRoute("/_authenticated/mi-perfil")({
   component: MiPerfilPage,
@@ -358,6 +359,7 @@ function MiPerfilPage() {
       <TotpEnrollmentSection />
 
       <PresenciaPrivacidadSection />
+      <NotificacionesPrefsSection />
 
 
 
