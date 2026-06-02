@@ -255,6 +255,8 @@ export type DirectorioPersona = {
   activo: boolean;
   roles: string[];      // Labels traducidos para mostrar en UI
   rolesRaw: string[];   // Códigos crudos para lógica/agrupación
+  last_seen_at: string | null;
+  presencia_visible: boolean;
 };
 
 const ROL_LABEL: Record<string, string> = {
