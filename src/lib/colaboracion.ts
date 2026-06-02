@@ -154,7 +154,15 @@ export async function marcarNotifsCanalLeidas(canalId: string) {
 
 export interface DMResumen {
   canal: Canal;
-  otro: { user_id: string; nombre: string; foto_url: string | null; roles: string[]; ultima_lectura: string | null };
+  otro: {
+    user_id: string;
+    nombre: string;
+    foto_url: string | null;
+    roles: string[];
+    ultima_lectura: string | null;
+    last_seen_at: string | null;
+    presencia_visible: boolean;
+  };
   ultimo_mensaje: { texto: string | null; created_at: string; user_id: string } | null;
   no_leidos: number;
 }
