@@ -54,6 +54,7 @@ import { Route as AuthenticatedSuperAdminExpedientesRouteImport } from './routes
 import { Route as AuthenticatedSuperAdminAuditoriaRouteImport } from './routes/_authenticated/super-admin.auditoria'
 import { Route as AuthenticatedSuperAdminAccesosRouteImport } from './routes/_authenticated/super-admin.accesos'
 import { Route as AuthenticatedSuperAdminAcademiaRouteImport } from './routes/_authenticated/super-admin.academia'
+import { Route as AuthenticatedFinanzasWalletsRouteImport } from './routes/_authenticated/finanzas.wallets'
 import { Route as AuthenticatedFinanzasTesoreriaRouteImport } from './routes/_authenticated/finanzas.tesoreria'
 import { Route as AuthenticatedFinanzasReportesRouteImport } from './routes/_authenticated/finanzas.reportes'
 import { Route as AuthenticatedFinanzasRecaudosRouteImport } from './routes/_authenticated/finanzas.recaudos'
@@ -329,6 +330,12 @@ const AuthenticatedSuperAdminAcademiaRoute =
     path: '/super-admin/academia',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedFinanzasWalletsRoute =
+  AuthenticatedFinanzasWalletsRouteImport.update({
+    id: '/wallets',
+    path: '/wallets',
+    getParentRoute: () => AuthenticatedFinanzasRoute,
+  } as any)
 const AuthenticatedFinanzasTesoreriaRoute =
   AuthenticatedFinanzasTesoreriaRouteImport.update({
     id: '/tesoreria',
@@ -541,6 +548,7 @@ export interface FileRoutesByFullPath {
   '/finanzas/recaudos': typeof AuthenticatedFinanzasRecaudosRoute
   '/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
+  '/finanzas/wallets': typeof AuthenticatedFinanzasWalletsRoute
   '/super-admin/academia': typeof AuthenticatedSuperAdminAcademiaRoute
   '/super-admin/accesos': typeof AuthenticatedSuperAdminAccesosRoute
   '/super-admin/auditoria': typeof AuthenticatedSuperAdminAuditoriaRoute
@@ -613,6 +621,7 @@ export interface FileRoutesByTo {
   '/finanzas/recaudos': typeof AuthenticatedFinanzasRecaudosRoute
   '/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
+  '/finanzas/wallets': typeof AuthenticatedFinanzasWalletsRoute
   '/super-admin/academia': typeof AuthenticatedSuperAdminAcademiaRoute
   '/super-admin/accesos': typeof AuthenticatedSuperAdminAccesosRoute
   '/super-admin/auditoria': typeof AuthenticatedSuperAdminAuditoriaRoute
@@ -689,6 +698,7 @@ export interface FileRoutesById {
   '/_authenticated/finanzas/recaudos': typeof AuthenticatedFinanzasRecaudosRoute
   '/_authenticated/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/_authenticated/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
+  '/_authenticated/finanzas/wallets': typeof AuthenticatedFinanzasWalletsRoute
   '/_authenticated/super-admin/academia': typeof AuthenticatedSuperAdminAcademiaRoute
   '/_authenticated/super-admin/accesos': typeof AuthenticatedSuperAdminAccesosRoute
   '/_authenticated/super-admin/auditoria': typeof AuthenticatedSuperAdminAuditoriaRoute
@@ -765,6 +775,7 @@ export interface FileRouteTypes {
     | '/finanzas/recaudos'
     | '/finanzas/reportes'
     | '/finanzas/tesoreria'
+    | '/finanzas/wallets'
     | '/super-admin/academia'
     | '/super-admin/accesos'
     | '/super-admin/auditoria'
@@ -837,6 +848,7 @@ export interface FileRouteTypes {
     | '/finanzas/recaudos'
     | '/finanzas/reportes'
     | '/finanzas/tesoreria'
+    | '/finanzas/wallets'
     | '/super-admin/academia'
     | '/super-admin/accesos'
     | '/super-admin/auditoria'
@@ -912,6 +924,7 @@ export interface FileRouteTypes {
     | '/_authenticated/finanzas/recaudos'
     | '/_authenticated/finanzas/reportes'
     | '/_authenticated/finanzas/tesoreria'
+    | '/_authenticated/finanzas/wallets'
     | '/_authenticated/super-admin/academia'
     | '/_authenticated/super-admin/accesos'
     | '/_authenticated/super-admin/auditoria'
@@ -1275,6 +1288,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSuperAdminAcademiaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/finanzas/wallets': {
+      id: '/_authenticated/finanzas/wallets'
+      path: '/wallets'
+      fullPath: '/finanzas/wallets'
+      preLoaderRoute: typeof AuthenticatedFinanzasWalletsRouteImport
+      parentRoute: typeof AuthenticatedFinanzasRoute
+    }
     '/_authenticated/finanzas/tesoreria': {
       id: '/_authenticated/finanzas/tesoreria'
       path: '/tesoreria'
@@ -1510,6 +1530,7 @@ interface AuthenticatedFinanzasRouteChildren {
   AuthenticatedFinanzasRecaudosRoute: typeof AuthenticatedFinanzasRecaudosRoute
   AuthenticatedFinanzasReportesRoute: typeof AuthenticatedFinanzasReportesRoute
   AuthenticatedFinanzasTesoreriaRoute: typeof AuthenticatedFinanzasTesoreriaRoute
+  AuthenticatedFinanzasWalletsRoute: typeof AuthenticatedFinanzasWalletsRoute
   AuthenticatedFinanzasIndexRoute: typeof AuthenticatedFinanzasIndexRoute
 }
 
@@ -1526,6 +1547,7 @@ const AuthenticatedFinanzasRouteChildren: AuthenticatedFinanzasRouteChildren = {
   AuthenticatedFinanzasRecaudosRoute: AuthenticatedFinanzasRecaudosRoute,
   AuthenticatedFinanzasReportesRoute: AuthenticatedFinanzasReportesRoute,
   AuthenticatedFinanzasTesoreriaRoute: AuthenticatedFinanzasTesoreriaRoute,
+  AuthenticatedFinanzasWalletsRoute: AuthenticatedFinanzasWalletsRoute,
   AuthenticatedFinanzasIndexRoute: AuthenticatedFinanzasIndexRoute,
 }
 
