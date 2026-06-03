@@ -51,10 +51,17 @@ export function NotificacionesAlerts() {
     return subscribeNotifPrefs(() => setPrefs(getNotifPrefs()));
   }, []);
 
-  // Desbloqueo de audio tras primer gesto del usuario.
+  // Desbloqueo de audio + solicitud de permiso de notificaciones tras primer gesto.
   useEffect(() => {
     const h = () => {
       precalentarAudio();
+      if (
+        typeof window !== "undefined" &&
+        "Notification" in window &&
+        Notification.permission === "default"
+      ) {
+        try { Notification.requestPermission().catch(() => {}); } catch { /* noop */ }
+      }
       window.removeEventListener("click", h);
       window.removeEventListener("keydown", h);
     };
