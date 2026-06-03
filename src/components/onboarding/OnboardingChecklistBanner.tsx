@@ -43,7 +43,7 @@ export function OnboardingChecklistBanner() {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("estado_acceso, perfil_completo, mfa_metodo, onboarding_estado")
+        .select("estado_acceso, perfil_completo, mfa_metodo, onboarding_estado, nombre, celular, ciudad, pais")
         .eq("id", user.id)
         .maybeSingle();
       if (!cancel) setP(data as Profile | null);
