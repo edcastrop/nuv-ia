@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bell, Volume2, MonitorSmartphone, MoonStar, PlayCircle } from "lucide-react";
+import { Bell, Volume2, MonitorSmartphone, MoonStar, PlayCircle, Info, RefreshCw } from "lucide-react";
 import {
   DEFAULT_PREFS,
   getNotifPrefs,
@@ -8,6 +8,46 @@ import {
 } from "@/lib/notifPreferencias";
 import { reproducirSonido, precalentarAudio } from "@/lib/notifSound";
 import { toast } from "sonner";
+
+function detectarNavegador(): "chrome" | "safari" | "firefox" | "edge" | "otro" {
+  if (typeof navigator === "undefined") return "otro";
+  const ua = navigator.userAgent.toLowerCase();
+  if (ua.includes("edg/")) return "edge";
+  if (ua.includes("chrome") && !ua.includes("edg/")) return "chrome";
+  if (ua.includes("safari") && !ua.includes("chrome")) return "safari";
+  if (ua.includes("firefox")) return "firefox";
+  return "otro";
+}
+
+function instruccionesDesbloqueo(nav: ReturnType<typeof detectarNavegador>): string[] {
+  switch (nav) {
+    case "chrome":
+    case "edge":
+      return [
+        "Haz clic en el ícono 🔒 (o ⓘ) a la izquierda de la URL.",
+        "Busca 'Notificaciones' y cambia a 'Permitir'.",
+        "Recarga esta página y vuelve a activar el interruptor.",
+      ];
+    case "safari":
+      return [
+        "Abre Safari → Preferencias → Sitios web → Notificaciones.",
+        "Busca este sitio en la lista y cambia a 'Permitir'.",
+        "Recarga esta página.",
+      ];
+    case "firefox":
+      return [
+        "Haz clic en el ícono 🔒 a la izquierda de la URL.",
+        "En 'Permisos' busca 'Enviar notificaciones' y quita el bloqueo.",
+        "Recarga esta página.",
+      ];
+    default:
+      return [
+        "Abre la configuración de permisos del sitio en tu navegador.",
+        "Cambia 'Notificaciones' a 'Permitir'.",
+        "Recarga esta página.",
+      ];
+  }
+}
 
 function Row({
   icon,
