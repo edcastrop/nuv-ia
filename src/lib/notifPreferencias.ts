@@ -14,7 +14,7 @@ const KEY = "nuvex.notif.prefs.v1";
 export const DEFAULT_PREFS: NotifPrefs = {
   sonido: true,
   toast: true,
-  browser: false,
+  browser: true,
   dndEnabled: false,
   dndStart: "20:00",
   dndEnd: "07:00",
