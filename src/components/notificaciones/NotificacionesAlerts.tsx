@@ -138,24 +138,25 @@ export function NotificacionesAlerts() {
       Notification.permission === "granted" &&
       !documentoVisible
     ) {
-      try {
-        const n = nuevas[0];
-        const not = new Notification(n.titulo, {
-          body: n.mensaje ?? "",
-          tag: n.id,
-          icon: "/favicon.ico",
-        });
-        not.onclick = () => {
-          window.focus();
-          if (n.link) {
-            void leer(n.id);
-            navigate(n.link);
-          }
-          not.close();
-        };
-      } catch {
-        /* noop */
-      }
+      nuevas.slice(0, 3).forEach((n) => {
+        try {
+          const not = new Notification(n.titulo, {
+            body: n.mensaje ?? "",
+            tag: n.id,
+            icon: "/favicon.ico",
+          });
+          not.onclick = () => {
+            window.focus();
+            if (n.link) {
+              void leer(n.id);
+              navigate(n.link);
+            }
+            not.close();
+          };
+        } catch {
+          /* noop */
+        }
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items, prefs]);
