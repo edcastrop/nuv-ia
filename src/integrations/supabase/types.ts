@@ -3359,6 +3359,90 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_ajustes: {
+        Row: {
+          anulado: boolean
+          anulado_at: string | null
+          anulado_motivo: string | null
+          anulado_por: string | null
+          created_at: string
+          created_by: string
+          id: string
+          monto: number
+          motivo: string
+          tipo: Database["public"]["Enums"]["wallet_mov_tipo"]
+          user_id: string
+        }
+        Insert: {
+          anulado?: boolean
+          anulado_at?: string | null
+          anulado_motivo?: string | null
+          anulado_por?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          monto: number
+          motivo: string
+          tipo: Database["public"]["Enums"]["wallet_mov_tipo"]
+          user_id: string
+        }
+        Update: {
+          anulado?: boolean
+          anulado_at?: string | null
+          anulado_motivo?: string | null
+          anulado_por?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          monto?: number
+          motivo?: string
+          tipo?: Database["public"]["Enums"]["wallet_mov_tipo"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallet_movimientos: {
+        Row: {
+          actor_id: string | null
+          ajuste_id: string | null
+          comision_id: string | null
+          created_at: string
+          cuenta_cobro_id: string | null
+          descripcion: string | null
+          id: string
+          metadata: Json
+          monto: number
+          tipo: Database["public"]["Enums"]["wallet_mov_tipo"]
+          user_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          ajuste_id?: string | null
+          comision_id?: string | null
+          created_at?: string
+          cuenta_cobro_id?: string | null
+          descripcion?: string | null
+          id?: string
+          metadata?: Json
+          monto?: number
+          tipo: Database["public"]["Enums"]["wallet_mov_tipo"]
+          user_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          ajuste_id?: string | null
+          comision_id?: string | null
+          created_at?: string
+          cuenta_cobro_id?: string | null
+          descripcion?: string | null
+          id?: string
+          metadata?: Json
+          monto?: number
+          tipo?: Database["public"]["Enums"]["wallet_mov_tipo"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       profiles_publicos: {
@@ -3596,6 +3680,7 @@ export type Database = {
         }
         Returns: Json
       }
+      wallet_saldos: { Args: { _user_id: string }; Returns: Json }
     }
     Enums: {
       academia_rol:
@@ -3711,6 +3796,19 @@ export type Database = {
         | "faq"
       mfa_metodo: "ninguno" | "email" | "totp"
       pregunta_tipo: "unica" | "multiple" | "verdadero_falso"
+      wallet_mov_tipo:
+        | "comision_generada"
+        | "comision_liberada"
+        | "comision_pagada"
+        | "cc_creada"
+        | "cc_enviada"
+        | "cc_aprobada"
+        | "cc_pagada"
+        | "cc_rechazada"
+        | "ajuste_credito"
+        | "ajuste_debito"
+        | "retencion"
+        | "liberacion_retencion"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3959,6 +4057,20 @@ export const Constants = {
       ],
       mfa_metodo: ["ninguno", "email", "totp"],
       pregunta_tipo: ["unica", "multiple", "verdadero_falso"],
+      wallet_mov_tipo: [
+        "comision_generada",
+        "comision_liberada",
+        "comision_pagada",
+        "cc_creada",
+        "cc_enviada",
+        "cc_aprobada",
+        "cc_pagada",
+        "cc_rechazada",
+        "ajuste_credito",
+        "ajuste_debito",
+        "retencion",
+        "liberacion_retencion",
+      ],
     },
   },
 } as const
