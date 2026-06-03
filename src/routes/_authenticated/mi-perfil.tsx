@@ -183,6 +183,15 @@ function MiPerfilPage() {
         payload.numero_cuenta = form.numero_cuenta ?? null;
         payload.titular_cuenta = form.titular_cuenta ?? null;
       }
+      const completo = Boolean(
+        (payload.nombre ?? "").toString().trim() &&
+        (payload.celular ?? "").toString().trim() &&
+        (payload.ciudad ?? "").toString().trim() &&
+        (payload.pais ?? "").toString().trim()
+      );
+      if (completo) {
+        (payload as Partial<ProfileRow> & { perfil_completo?: boolean }).perfil_completo = true;
+      }
       await updateMyProfile(payload);
       toast.success("Perfil actualizado");
       await reload();
