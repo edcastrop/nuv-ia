@@ -18,6 +18,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as ApiNuvexIaStreamRouteImport } from './routes/api/nuvex-ia-stream'
 import { Route as ApiNuvexGptChatRouteImport } from './routes/api/nuvex-gpt-chat'
+import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
 import { Route as AuthenticatedTorreControlRouteImport } from './routes/_authenticated/torre-control'
 import { Route as AuthenticatedQaRouteImport } from './routes/_authenticated/qa'
 import { Route as AuthenticatedProyeccionFinancieraRouteImport } from './routes/_authenticated/proyeccion-financiera'
@@ -125,6 +126,11 @@ const ApiNuvexGptChatRoute = ApiNuvexGptChatRouteImport.update({
   id: '/api/nuvex-gpt-chat',
   path: '/api/nuvex-gpt-chat',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedWalletRoute = AuthenticatedWalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedTorreControlRoute =
   AuthenticatedTorreControlRouteImport.update({
@@ -515,6 +521,7 @@ export interface FileRoutesByFullPath {
   '/proyeccion-financiera': typeof AuthenticatedProyeccionFinancieraRoute
   '/qa': typeof AuthenticatedQaRoute
   '/torre-control': typeof AuthenticatedTorreControlRoute
+  '/wallet': typeof AuthenticatedWalletRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
   '/api/nuvex-ia-stream': typeof ApiNuvexIaStreamRoute
   '/apoderado/mis-casos': typeof AuthenticatedApoderadoMisCasosRoute
@@ -585,6 +592,7 @@ export interface FileRoutesByTo {
   '/proyeccion-financiera': typeof AuthenticatedProyeccionFinancieraRoute
   '/qa': typeof AuthenticatedQaRoute
   '/torre-control': typeof AuthenticatedTorreControlRoute
+  '/wallet': typeof AuthenticatedWalletRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
   '/api/nuvex-ia-stream': typeof ApiNuvexIaStreamRoute
   '/': typeof AuthenticatedIndexRoute
@@ -660,6 +668,7 @@ export interface FileRoutesById {
   '/_authenticated/proyeccion-financiera': typeof AuthenticatedProyeccionFinancieraRoute
   '/_authenticated/qa': typeof AuthenticatedQaRoute
   '/_authenticated/torre-control': typeof AuthenticatedTorreControlRoute
+  '/_authenticated/wallet': typeof AuthenticatedWalletRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
   '/api/nuvex-ia-stream': typeof ApiNuvexIaStreamRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
@@ -736,6 +745,7 @@ export interface FileRouteTypes {
     | '/proyeccion-financiera'
     | '/qa'
     | '/torre-control'
+    | '/wallet'
     | '/api/nuvex-gpt-chat'
     | '/api/nuvex-ia-stream'
     | '/apoderado/mis-casos'
@@ -806,6 +816,7 @@ export interface FileRouteTypes {
     | '/proyeccion-financiera'
     | '/qa'
     | '/torre-control'
+    | '/wallet'
     | '/api/nuvex-gpt-chat'
     | '/api/nuvex-ia-stream'
     | '/'
@@ -880,6 +891,7 @@ export interface FileRouteTypes {
     | '/_authenticated/proyeccion-financiera'
     | '/_authenticated/qa'
     | '/_authenticated/torre-control'
+    | '/_authenticated/wallet'
     | '/api/nuvex-gpt-chat'
     | '/api/nuvex-ia-stream'
     | '/_authenticated/'
@@ -1010,6 +1022,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/nuvex-gpt-chat'
       preLoaderRoute: typeof ApiNuvexGptChatRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/wallet': {
+      id: '/_authenticated/wallet'
+      path: '/wallet'
+      fullPath: '/wallet'
+      preLoaderRoute: typeof AuthenticatedWalletRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/torre-control': {
       id: '/_authenticated/torre-control'
@@ -1534,6 +1553,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedProyeccionFinancieraRoute: typeof AuthenticatedProyeccionFinancieraRoute
   AuthenticatedQaRoute: typeof AuthenticatedQaRoute
   AuthenticatedTorreControlRoute: typeof AuthenticatedTorreControlRoute
+  AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedApoderadoMisCasosRoute: typeof AuthenticatedApoderadoMisCasosRoute
   AuthenticatedCarteraIdRoute: typeof AuthenticatedCarteraIdRoute
@@ -1581,6 +1601,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedProyeccionFinancieraRoute,
   AuthenticatedQaRoute: AuthenticatedQaRoute,
   AuthenticatedTorreControlRoute: AuthenticatedTorreControlRoute,
+  AuthenticatedWalletRoute: AuthenticatedWalletRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedApoderadoMisCasosRoute: AuthenticatedApoderadoMisCasosRoute,
   AuthenticatedCarteraIdRoute: AuthenticatedCarteraIdRoute,
