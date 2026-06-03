@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { TotpEnrollmentSection } from "@/components/seguridad/TotpEnrollmentSection";
 import { PresenciaPrivacidadSection } from "@/components/seguridad/PresenciaPrivacidadSection";
 import { NotificacionesPrefsSection } from "@/components/seguridad/NotificacionesPrefsSection";
+import { roleLabel, roleLabels } from "@/lib/roleLabels";
 
 export const Route = createFileRoute("/_authenticated/mi-perfil")({
   component: MiPerfilPage,
@@ -47,6 +48,7 @@ function MiPerfilPage() {
   const [uploading, setUploading] = useState(false);
   const [aud, setAud] = useState<ProfileAuditoriaRow[]>([]);
   const [academia, setAcademia] = useState<AcademiaResumen>({ cursos: 0, certificaciones: 0, avance: 0, ultimo: null });
+  const [coordinadorNombre, setCoordinadorNombre] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const verFinanzas = true; // dueño siempre ve sus propios datos
@@ -58,6 +60,16 @@ function MiPerfilPage() {
     setProfile(p);
     setForm(p ?? {});
     if (p) {
+      setCoordinadorNombre(null);
+      if (p.coordinador_id) {
+        const { data: coord } = await supabase
+          .from("profiles" as never)
+          .select("nombre,email")
+          .eq("id", p.coordinador_id)
+          .maybeSingle();
+        const c = coord as unknown as { nombre: string | null; email: string | null } | null;
+        setCoordinadorNombre(c?.nombre || c?.email || null);
+      }
       const [a, cursos, certs, prog] = await Promise.all([
         getProfileAuditoria(p.id, 30),
         supabase.from("academia_cursos" as never).select("id", { count: "exact", head: true }).eq("activo", true),
@@ -224,7 +236,7 @@ function MiPerfilPage() {
             <div className="flex flex-wrap justify-center sm:justify-start gap-1.5 pt-1">
               {roles.map((r) => (
                 <span key={r} className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
-                  style={{ background: "#EAF1FF", color: "#445DA3", border: "1px solid #C9D7F1" }}>{r}</span>
+                  style={{ background: "#EAF1FF", color: "#445DA3", border: "1px solid #C9D7F1" }}>{roleLabel(r, true)}</span>
               ))}
             </div>
           </div>
@@ -280,12 +292,12 @@ function MiPerfilPage() {
       {/* Organizacional */}
       <Section icon={<Briefcase size={14} />} title="Información organizacional">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-          <ReadOnlyField label="Rol" value={roles.join(", ") || "—"} />
-          <ReadOnlyField label="Estado" value={profile.activo ? "Activo" : "Inactivo"} />
-          <ReadOnlyField label="Fecha ingreso" value={profile.fecha_ingreso || "—"} />
-          <ReadOnlyField label="Coordinador" value={profile.coordinador_id || "—"} />
-          <ReadOnlyField label="Equipo" value={profile.equipo || "—"} />
-          <ReadOnlyField label="Sede" value={profile.sede || "—"} />
+          <ReadOnlyField label="Rol" value={roleLabels(roles.length ? roles : profile.rol_solicitado ? [profile.rol_solicitado] : [], true)} />
+          <ReadOnlyField label="Estado" value={profile.activo && ["aprobado", "activo"].includes(profile.estado_acceso ?? "") ? "Activo" : "Inactivo"} />
+          <ReadOnlyField label="Fecha ingreso" value={formatDate(profile.fecha_ingreso ?? profile.aprobado_at ?? profile.created_at)} />
+          <ReadOnlyField label="Coordinador" value={coordinadorNombre || "Sin coordinador asignado"} />
+          <ReadOnlyField label="Equipo" value={profile.equipo || profile.equipo_registro || "Sin equipo asignado"} />
+          <ReadOnlyField label="Sede" value={profile.sede || profile.ciudad || profile.ciudad_registro || "Sin sede asignada"} />
         </div>
         <div className="mt-3 text-[11px] text-[#242424]/60">
           Estos campos los administra Gerencia o Super Admin desde el módulo de Usuarios.
@@ -393,6 +405,13 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
       <div className="rounded-lg border border-[#E3E7EE] bg-[#F7F9FB] px-3 py-2.5 text-sm text-[#242424]/80">{value}</div>
     </div>
   );
+}
+
+function formatDate(value?: string | null): string {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleDateString("es-CO");
 }
 
 function Stat({ label, value }: { label: string; value: string | number }) {
