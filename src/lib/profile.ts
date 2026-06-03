@@ -6,6 +6,8 @@ export interface ProfileRow {
   nombre: string | null;
   email: string | null;
   activo: boolean;
+  estado_acceso: string | null;
+  rol_solicitado: string | null;
   tipo_documento: string | null;
   numero_documento: string | null;
   pais: string | null;
@@ -21,6 +23,9 @@ export interface ProfileRow {
   coordinador_id: string | null;
   equipo: string | null;
   sede: string | null;
+  ciudad_registro: string | null;
+  equipo_registro: string | null;
+  aprobado_at: string | null;
   porcentaje_comision: number | null;
   banco: string | null;
   tipo_cuenta: string | null;

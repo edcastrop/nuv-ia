@@ -10,7 +10,11 @@ export const Route = createFileRoute("/_authenticated/super-admin/usuarios")({
   head: () => ({ meta: [{ title: "Usuarios · Super Admin" }] }),
 });
 
-const ROLES: AppRole[] = ["super_admin", "admin", "gerencia", "licenciado", "juridica", "operaciones", "cartera", "asesor"];
+const ROLES: AppRole[] = [
+  "super_admin", "admin", "gerencia", "licenciado", "asesor",
+  "juridica", "operaciones", "cartera", "contabilidad",
+  "director_financiero_qa", "director_juridico", "auxiliar_operativo", "apoderado",
+];
 
 interface Profile {
   id: string;

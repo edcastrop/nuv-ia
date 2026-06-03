@@ -37,6 +37,7 @@ const ROLES_DISPONIBLES: AppRole[] = [
   "super_admin", "admin", "gerencia", "licenciado",
   "asesor", "juridica", "operaciones", "contabilidad",
   "director_financiero_qa", "director_juridico", "cartera",
+  "auxiliar_operativo", "apoderado",
 ];
 
 function badge(estado: EstadoAcceso) {
