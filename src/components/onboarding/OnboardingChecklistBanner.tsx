@@ -11,14 +11,22 @@ type Profile = {
   perfil_completo: boolean | null;
   mfa_metodo: string | null;
   onboarding_estado: string | null;
+  nombre: string | null;
+  celular: string | null;
+  ciudad: string | null;
+  pais: string | null;
 };
+
+function isPerfilLleno(p: Profile): boolean {
+  return Boolean(p.nombre?.trim() && p.celular?.trim() && p.ciudad?.trim() && p.pais?.trim());
+}
 
 function etapaDe(p: Profile | null): Etapa {
   if (!p) return "desconocido";
   if (p.estado_acceso === "desvinculado") return "desvinculado";
   if (p.estado_acceso !== "aprobado" && p.estado_acceso !== "activo") return "pendiente_aprobacion";
   const mfaOk = !!p.mfa_metodo && p.mfa_metodo !== "ninguno";
-  const perfilOk = !!p.perfil_completo || p.onboarding_estado === "completado";
+  const perfilOk = !!p.perfil_completo || p.onboarding_estado === "completado" || isPerfilLleno(p);
   if (!perfilOk) return "pendiente_perfil";
   if (!mfaOk) return "pendiente_mfa";
   return "completo";
