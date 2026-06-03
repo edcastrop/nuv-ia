@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bell, Volume2, MonitorSmartphone, MoonStar, PlayCircle } from "lucide-react";
+import { Bell, Volume2, MonitorSmartphone, MoonStar, PlayCircle, Info, RefreshCw } from "lucide-react";
 import {
   DEFAULT_PREFS,
   getNotifPrefs,
@@ -8,6 +8,46 @@ import {
 } from "@/lib/notifPreferencias";
 import { reproducirSonido, precalentarAudio } from "@/lib/notifSound";
 import { toast } from "sonner";
+
+function detectarNavegador(): "chrome" | "safari" | "firefox" | "edge" | "otro" {
+  if (typeof navigator === "undefined") return "otro";
+  const ua = navigator.userAgent.toLowerCase();
+  if (ua.includes("edg/")) return "edge";
+  if (ua.includes("chrome") && !ua.includes("edg/")) return "chrome";
+  if (ua.includes("safari") && !ua.includes("chrome")) return "safari";
+  if (ua.includes("firefox")) return "firefox";
+  return "otro";
+}
+
+function instruccionesDesbloqueo(nav: ReturnType<typeof detectarNavegador>): string[] {
+  switch (nav) {
+    case "chrome":
+    case "edge":
+      return [
+        "Haz clic en el ícono 🔒 (o ⓘ) a la izquierda de la URL.",
+        "Busca 'Notificaciones' y cambia a 'Permitir'.",
+        "Recarga esta página y vuelve a activar el interruptor.",
+      ];
+    case "safari":
+      return [
+        "Abre Safari → Preferencias → Sitios web → Notificaciones.",
+        "Busca este sitio en la lista y cambia a 'Permitir'.",
+        "Recarga esta página.",
+      ];
+    case "firefox":
+      return [
+        "Haz clic en el ícono 🔒 a la izquierda de la URL.",
+        "En 'Permisos' busca 'Enviar notificaciones' y quita el bloqueo.",
+        "Recarga esta página.",
+      ];
+    default:
+      return [
+        "Abre la configuración de permisos del sitio en tu navegador.",
+        "Cambia 'Notificaciones' a 'Permitir'.",
+        "Recarga esta página.",
+      ];
+  }
+}
 
 function Row({
   icon,
@@ -147,7 +187,7 @@ export function NotificacionesPrefsSection() {
             : permiso === "granted"
               ? "Activas. Llegan aunque tengas otra pestaña abierta."
               : permiso === "denied"
-                ? "Bloqueadas. Habilítalas en la configuración del navegador."
+                ? "Bloqueadas por el navegador. Solo tú puedes desbloquearlas desde la configuración del sitio."
                 : "Te avisaremos aunque tengas otra pestaña activa."
         }
       >
@@ -160,10 +200,41 @@ export function NotificacionesPrefsSection() {
           >
             Activar
           </button>
+        ) : permiso === "denied" ? (
+          <button
+            onClick={() => {
+              const p = ("Notification" in window ? Notification.permission : "unsupported") as NotificationPermission | "unsupported";
+              setPermiso(p);
+              if (p === "granted") toast.success("Notificaciones desbloqueadas");
+              else toast.info("Si ya desbloqueaste el permiso, recarga la página.");
+            }}
+            className="inline-flex items-center gap-1 rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 text-xs font-semibold text-[#445DA3] hover:bg-[#F7F9FB]"
+          >
+            <RefreshCw size={12} /> Reintentar
+          </button>
         ) : (
           <Switch checked={false} onChange={() => {}} />
         )}
       </Row>
+
+      {permiso === "denied" && (
+        <div className="mx-12 mt-1 mb-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+          <div className="flex items-start gap-2">
+            <Info size={14} className="mt-0.5 shrink-0" />
+            <div className="space-y-1">
+              <div className="font-semibold">¿Cómo desbloquear las notificaciones?</div>
+              <ol className="list-decimal pl-4 space-y-0.5">
+                {instruccionesDesbloqueo(detectarNavegador()).map((p, i) => (
+                  <li key={i}>{p}</li>
+                ))}
+              </ol>
+              <div className="pt-1 text-[11px] text-amber-800/80">
+                Nota: en la app móvil, activa las notificaciones desde los ajustes del sistema operativo para esta app.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Row
         icon={<MoonStar size={14} />}
