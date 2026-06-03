@@ -155,10 +155,12 @@ function AuthenticatedLayout() {
           .from("notificaciones_usuario" as never)
           .select("id", { count: "exact", head: true })
           .eq("user_id", uid)
-          .eq("leida", false),
+          .eq("leida", false)
+          .neq("tipo", "mensaje_interno"),
       ]);
       if (active) setUnread((ca ?? 0) + (nu ?? 0));
     };
+
     load();
     const ch1 = supabase
       .channel("alerts_unread_" + uid)
@@ -202,10 +204,10 @@ function AuthenticatedLayout() {
     let active = true;
     const uid = session.user.id;
     const load = async () => {
-      const [{ count: nc }, { data: miembros }] = await Promise.all([
+      const [{ data: notifsCanal }, { data: miembros }] = await Promise.all([
         supabase
           .from("colab_notificaciones" as never)
-          .select("id", { count: "exact", head: true })
+          .select("id, colab_canales!inner(tipo)")
           .eq("user_id", uid)
           .eq("leida", false),
         supabase
@@ -214,7 +216,10 @@ function AuthenticatedLayout() {
           .eq("user_id", uid),
       ]);
       if (!active) return;
-      setColabUnread(nc ?? 0);
+      // Excluir DMs del badge "Colaboración" — los DMs viven en su propio badge "Mensajería".
+      const colabNoDm = ((notifsCanal ?? []) as any[]).filter((n) => n.colab_canales?.tipo !== "dm").length;
+      setColabUnread(colabNoDm);
+
       const dmRows = ((miembros ?? []) as any[]).filter((m) => m.colab_canales?.tipo === "dm" && !m.colab_canales?.archivado);
       if (dmRows.length === 0) { setDmUnread(0); return; }
       const ids = dmRows.map((r) => r.canal_id);
