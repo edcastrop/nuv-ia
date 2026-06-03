@@ -18,6 +18,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as ApiNuvexIaStreamRouteImport } from './routes/api/nuvex-ia-stream'
 import { Route as ApiNuvexGptChatRouteImport } from './routes/api/nuvex-gpt-chat'
+import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
 import { Route as AuthenticatedTorreControlRouteImport } from './routes/_authenticated/torre-control'
 import { Route as AuthenticatedQaRouteImport } from './routes/_authenticated/qa'
 import { Route as AuthenticatedProyeccionFinancieraRouteImport } from './routes/_authenticated/proyeccion-financiera'
@@ -53,6 +54,7 @@ import { Route as AuthenticatedSuperAdminExpedientesRouteImport } from './routes
 import { Route as AuthenticatedSuperAdminAuditoriaRouteImport } from './routes/_authenticated/super-admin.auditoria'
 import { Route as AuthenticatedSuperAdminAccesosRouteImport } from './routes/_authenticated/super-admin.accesos'
 import { Route as AuthenticatedSuperAdminAcademiaRouteImport } from './routes/_authenticated/super-admin.academia'
+import { Route as AuthenticatedFinanzasWalletsRouteImport } from './routes/_authenticated/finanzas.wallets'
 import { Route as AuthenticatedFinanzasTesoreriaRouteImport } from './routes/_authenticated/finanzas.tesoreria'
 import { Route as AuthenticatedFinanzasReportesRouteImport } from './routes/_authenticated/finanzas.reportes'
 import { Route as AuthenticatedFinanzasRecaudosRouteImport } from './routes/_authenticated/finanzas.recaudos'
@@ -125,6 +127,11 @@ const ApiNuvexGptChatRoute = ApiNuvexGptChatRouteImport.update({
   id: '/api/nuvex-gpt-chat',
   path: '/api/nuvex-gpt-chat',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedWalletRoute = AuthenticatedWalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedTorreControlRoute =
   AuthenticatedTorreControlRouteImport.update({
@@ -323,6 +330,12 @@ const AuthenticatedSuperAdminAcademiaRoute =
     path: '/super-admin/academia',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedFinanzasWalletsRoute =
+  AuthenticatedFinanzasWalletsRouteImport.update({
+    id: '/wallets',
+    path: '/wallets',
+    getParentRoute: () => AuthenticatedFinanzasRoute,
+  } as any)
 const AuthenticatedFinanzasTesoreriaRoute =
   AuthenticatedFinanzasTesoreriaRouteImport.update({
     id: '/tesoreria',
@@ -515,6 +528,7 @@ export interface FileRoutesByFullPath {
   '/proyeccion-financiera': typeof AuthenticatedProyeccionFinancieraRoute
   '/qa': typeof AuthenticatedQaRoute
   '/torre-control': typeof AuthenticatedTorreControlRoute
+  '/wallet': typeof AuthenticatedWalletRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
   '/api/nuvex-ia-stream': typeof ApiNuvexIaStreamRoute
   '/apoderado/mis-casos': typeof AuthenticatedApoderadoMisCasosRoute
@@ -534,6 +548,7 @@ export interface FileRoutesByFullPath {
   '/finanzas/recaudos': typeof AuthenticatedFinanzasRecaudosRoute
   '/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
+  '/finanzas/wallets': typeof AuthenticatedFinanzasWalletsRoute
   '/super-admin/academia': typeof AuthenticatedSuperAdminAcademiaRoute
   '/super-admin/accesos': typeof AuthenticatedSuperAdminAccesosRoute
   '/super-admin/auditoria': typeof AuthenticatedSuperAdminAuditoriaRoute
@@ -585,6 +600,7 @@ export interface FileRoutesByTo {
   '/proyeccion-financiera': typeof AuthenticatedProyeccionFinancieraRoute
   '/qa': typeof AuthenticatedQaRoute
   '/torre-control': typeof AuthenticatedTorreControlRoute
+  '/wallet': typeof AuthenticatedWalletRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
   '/api/nuvex-ia-stream': typeof ApiNuvexIaStreamRoute
   '/': typeof AuthenticatedIndexRoute
@@ -605,6 +621,7 @@ export interface FileRoutesByTo {
   '/finanzas/recaudos': typeof AuthenticatedFinanzasRecaudosRoute
   '/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
+  '/finanzas/wallets': typeof AuthenticatedFinanzasWalletsRoute
   '/super-admin/academia': typeof AuthenticatedSuperAdminAcademiaRoute
   '/super-admin/accesos': typeof AuthenticatedSuperAdminAccesosRoute
   '/super-admin/auditoria': typeof AuthenticatedSuperAdminAuditoriaRoute
@@ -660,6 +677,7 @@ export interface FileRoutesById {
   '/_authenticated/proyeccion-financiera': typeof AuthenticatedProyeccionFinancieraRoute
   '/_authenticated/qa': typeof AuthenticatedQaRoute
   '/_authenticated/torre-control': typeof AuthenticatedTorreControlRoute
+  '/_authenticated/wallet': typeof AuthenticatedWalletRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
   '/api/nuvex-ia-stream': typeof ApiNuvexIaStreamRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
@@ -680,6 +698,7 @@ export interface FileRoutesById {
   '/_authenticated/finanzas/recaudos': typeof AuthenticatedFinanzasRecaudosRoute
   '/_authenticated/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/_authenticated/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
+  '/_authenticated/finanzas/wallets': typeof AuthenticatedFinanzasWalletsRoute
   '/_authenticated/super-admin/academia': typeof AuthenticatedSuperAdminAcademiaRoute
   '/_authenticated/super-admin/accesos': typeof AuthenticatedSuperAdminAccesosRoute
   '/_authenticated/super-admin/auditoria': typeof AuthenticatedSuperAdminAuditoriaRoute
@@ -736,6 +755,7 @@ export interface FileRouteTypes {
     | '/proyeccion-financiera'
     | '/qa'
     | '/torre-control'
+    | '/wallet'
     | '/api/nuvex-gpt-chat'
     | '/api/nuvex-ia-stream'
     | '/apoderado/mis-casos'
@@ -755,6 +775,7 @@ export interface FileRouteTypes {
     | '/finanzas/recaudos'
     | '/finanzas/reportes'
     | '/finanzas/tesoreria'
+    | '/finanzas/wallets'
     | '/super-admin/academia'
     | '/super-admin/accesos'
     | '/super-admin/auditoria'
@@ -806,6 +827,7 @@ export interface FileRouteTypes {
     | '/proyeccion-financiera'
     | '/qa'
     | '/torre-control'
+    | '/wallet'
     | '/api/nuvex-gpt-chat'
     | '/api/nuvex-ia-stream'
     | '/'
@@ -826,6 +848,7 @@ export interface FileRouteTypes {
     | '/finanzas/recaudos'
     | '/finanzas/reportes'
     | '/finanzas/tesoreria'
+    | '/finanzas/wallets'
     | '/super-admin/academia'
     | '/super-admin/accesos'
     | '/super-admin/auditoria'
@@ -880,6 +903,7 @@ export interface FileRouteTypes {
     | '/_authenticated/proyeccion-financiera'
     | '/_authenticated/qa'
     | '/_authenticated/torre-control'
+    | '/_authenticated/wallet'
     | '/api/nuvex-gpt-chat'
     | '/api/nuvex-ia-stream'
     | '/_authenticated/'
@@ -900,6 +924,7 @@ export interface FileRouteTypes {
     | '/_authenticated/finanzas/recaudos'
     | '/_authenticated/finanzas/reportes'
     | '/_authenticated/finanzas/tesoreria'
+    | '/_authenticated/finanzas/wallets'
     | '/_authenticated/super-admin/academia'
     | '/_authenticated/super-admin/accesos'
     | '/_authenticated/super-admin/auditoria'
@@ -1010,6 +1035,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/nuvex-gpt-chat'
       preLoaderRoute: typeof ApiNuvexGptChatRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/wallet': {
+      id: '/_authenticated/wallet'
+      path: '/wallet'
+      fullPath: '/wallet'
+      preLoaderRoute: typeof AuthenticatedWalletRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/torre-control': {
       id: '/_authenticated/torre-control'
@@ -1256,6 +1288,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSuperAdminAcademiaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/finanzas/wallets': {
+      id: '/_authenticated/finanzas/wallets'
+      path: '/wallets'
+      fullPath: '/finanzas/wallets'
+      preLoaderRoute: typeof AuthenticatedFinanzasWalletsRouteImport
+      parentRoute: typeof AuthenticatedFinanzasRoute
+    }
     '/_authenticated/finanzas/tesoreria': {
       id: '/_authenticated/finanzas/tesoreria'
       path: '/tesoreria'
@@ -1491,6 +1530,7 @@ interface AuthenticatedFinanzasRouteChildren {
   AuthenticatedFinanzasRecaudosRoute: typeof AuthenticatedFinanzasRecaudosRoute
   AuthenticatedFinanzasReportesRoute: typeof AuthenticatedFinanzasReportesRoute
   AuthenticatedFinanzasTesoreriaRoute: typeof AuthenticatedFinanzasTesoreriaRoute
+  AuthenticatedFinanzasWalletsRoute: typeof AuthenticatedFinanzasWalletsRoute
   AuthenticatedFinanzasIndexRoute: typeof AuthenticatedFinanzasIndexRoute
 }
 
@@ -1507,6 +1547,7 @@ const AuthenticatedFinanzasRouteChildren: AuthenticatedFinanzasRouteChildren = {
   AuthenticatedFinanzasRecaudosRoute: AuthenticatedFinanzasRecaudosRoute,
   AuthenticatedFinanzasReportesRoute: AuthenticatedFinanzasReportesRoute,
   AuthenticatedFinanzasTesoreriaRoute: AuthenticatedFinanzasTesoreriaRoute,
+  AuthenticatedFinanzasWalletsRoute: AuthenticatedFinanzasWalletsRoute,
   AuthenticatedFinanzasIndexRoute: AuthenticatedFinanzasIndexRoute,
 }
 
@@ -1534,6 +1575,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedProyeccionFinancieraRoute: typeof AuthenticatedProyeccionFinancieraRoute
   AuthenticatedQaRoute: typeof AuthenticatedQaRoute
   AuthenticatedTorreControlRoute: typeof AuthenticatedTorreControlRoute
+  AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedApoderadoMisCasosRoute: typeof AuthenticatedApoderadoMisCasosRoute
   AuthenticatedCarteraIdRoute: typeof AuthenticatedCarteraIdRoute
@@ -1581,6 +1623,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedProyeccionFinancieraRoute,
   AuthenticatedQaRoute: AuthenticatedQaRoute,
   AuthenticatedTorreControlRoute: AuthenticatedTorreControlRoute,
+  AuthenticatedWalletRoute: AuthenticatedWalletRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedApoderadoMisCasosRoute: AuthenticatedApoderadoMisCasosRoute,
   AuthenticatedCarteraIdRoute: AuthenticatedCarteraIdRoute,
@@ -1638,13 +1681,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

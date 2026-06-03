@@ -26,6 +26,7 @@ const SUBMODULOS = [
   { to: "/finanzas/cartera", label: "Cartera clientes", Icon: Wallet },
   { to: "/finanzas/recaudos", label: "Recaudos", Icon: Receipt },
   { to: "/finanzas/comisiones", label: "Comisiones", Icon: CircleDollarSign },
+  { to: "/finanzas/wallets", label: "Wallets", Icon: Wallet },
   { to: "/finanzas/cuentas-cobro", label: "Cuentas de cobro", Icon: FileSpreadsheet },
   { to: "/finanzas/nomina", label: "Nómina", Icon: Users2 },
   { to: "/finanzas/tesoreria", label: "Tesorería", Icon: Landmark },

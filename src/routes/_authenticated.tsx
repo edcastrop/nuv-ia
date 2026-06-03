@@ -326,6 +326,7 @@ function AuthenticatedLayout() {
           label: "Finanzas",
           items: [
             ...(hasAny("super_admin","admin","gerencia","cartera","juridica","licenciado","asesor") ? [{ to: "/cartera", label: "Cartera", Icon: Wallet }] : []),
+            ...(hasAny("super_admin","admin","gerencia","licenciado","asesor","juridica","director_juridico","contabilidad") ? [{ to: "/wallet", label: "Mi Wallet", Icon: Wallet }] : []),
             { to: "/comisiones", label: "Comisiones", Icon: CircleDollarSign },
             ...(hasAny("super_admin","admin","gerencia","cartera","contabilidad") ? [{ to: "/contabilidad/cuentas-cobro", label: "Contabilidad", Icon: CircleDollarSign }] : []),
             ...(hasAny("super_admin","admin","gerencia","juridica","director_juridico","operaciones") ? [{ to: "/contratacion/validacion", label: "Validación contratación", Icon: ShieldCheck }] : []),
