@@ -20,7 +20,8 @@ interface Props {
 }
 
 export function ValidacionQABlock({ expedienteId, estadoCaso, onChanged }: Props) {
-  const { isLicenciado, canValidarProyeccion, loading: rolesLoading } = useUserRole();
+  const { isLicenciado, isSuperAdmin, roles, canValidarProyeccion, loading: rolesLoading } = useUserRole();
+  const puedeSolicitarRol = isLicenciado || isSuperAdmin || roles.includes("gerencia");
   const [ultima, setUltima] = useState<ValidacionQA | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -44,13 +45,10 @@ export function ValidacionQABlock({ expedienteId, estadoCaso, onChanged }: Props
   const pendiente = estadoCaso === "proyeccion_pendiente_qa";
   const aprobada = estadoCaso === "proyeccion_aprobada_qa";
   const devuelta = estadoCaso === "proyeccion_devuelta_qa";
-  const puedeEnviar =
-    isLicenciado &&
-    !pendiente &&
-    !aprobada &&
-    ["simulacion_realizada", "simulado", "extracto_recibido", "proyeccion_devuelta_qa"].includes(
-      String(estadoCaso),
-    );
+  const estadoHabilita = ["simulacion_realizada", "simulado", "extracto_recibido", "proyeccion_devuelta_qa"].includes(
+    String(estadoCaso),
+  );
+  const puedeEnviar = puedeSolicitarRol && !pendiente && !aprobada && estadoHabilita;
 
   const handleEnviar = async () => {
     setBusy(true);
@@ -175,9 +173,9 @@ export function ValidacionQABlock({ expedienteId, estadoCaso, onChanged }: Props
             </button>
           </>
         )}
-        {!puedeEnviar && !pendiente && !aprobada && !devuelta && isLicenciado && (
+        {!puedeEnviar && !pendiente && !aprobada && !devuelta && puedeSolicitarRol && (
           <div className="text-[11px] text-[#242424]/60">
-            Completa la simulación para habilitar el envío a validación.
+            Estado actual del caso: <b>{String(estadoCaso)}</b>. Completa la simulación (estado <i>simulacion_realizada</i>) para habilitar el envío a validación.
           </div>
         )}
       </div>
