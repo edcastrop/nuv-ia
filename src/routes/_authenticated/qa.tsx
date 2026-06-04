@@ -15,15 +15,34 @@ function QADashboard() {
   const { canValidarProyeccion, loading: rolesLoading } = useUserRole();
   const [items, setItems] = useState<ValidacionQA[]>([]);
   const [nombres, setNombres] = useState<Map<string, string>>(new Map());
+  const [expedientes, setExpedientes] = useState<Map<string, { existe: boolean; cliente?: string | null; estadoCaso?: string | null }>>(new Map());
   const [loading, setLoading] = useState(true);
-
-  if (!rolesLoading && !canValidarProyeccion) return <Navigate to="/" />;
 
 
   useEffect(() => {
     (async () => {
+      if (rolesLoading) return;
+      if (!canValidarProyeccion) {
+        setLoading(false);
+        return;
+      }
       const all = await listValidaciones(500);
       setItems(all);
+      const expedienteIds = Array.from(new Set(all.map((v) => v.expediente_id).filter(Boolean)));
+      if (expedienteIds.length) {
+        const { data: exps } = await supabase
+          .from("expedientes")
+          .select("id,cliente_nombre,estado_caso")
+          .in("id", expedienteIds);
+        const m = new Map<string, { existe: boolean; cliente?: string | null; estadoCaso?: string | null }>();
+        expedienteIds.forEach((eid) => m.set(eid, { existe: false }));
+        ((exps ?? []) as Array<{ id: string; cliente_nombre?: string | null; estado_caso?: string | null }>).forEach((e) =>
+          m.set(e.id, { existe: true, cliente: e.cliente_nombre, estadoCaso: e.estado_caso ?? null }),
+        );
+        setExpedientes(m);
+      } else {
+        setExpedientes(new Map());
+      }
       const ids = Array.from(new Set(all.flatMap((v) => [v.solicitada_por, v.validada_por]).filter(Boolean) as string[]));
       if (ids.length) {
         const { data } = await supabase.from("profiles").select("id,nombre,email").in("id", ids);
@@ -33,7 +52,7 @@ function QADashboard() {
       }
       setLoading(false);
     })();
-  }, []);
+  }, [rolesLoading, canValidarProyeccion]);
 
   const stats = useMemo(() => {
     const hoy = new Date().toISOString().slice(0, 10);
@@ -76,7 +95,7 @@ function QADashboard() {
   const colorCalidad = (q: number) => (q >= 95 ? "#1F7A45" : q >= 85 ? "#8A5A00" : "#991B1B");
   const bgCalidad = (q: number) => (q >= 95 ? "#EAF7EE" : q >= 85 ? "#FFF7E6" : "#FEE2E2");
 
-  const pendientes = items.filter((v) => !v.resultado);
+  const pendientes = items.filter((v) => !v.resultado && expedientes.get(v.expediente_id)?.existe !== false);
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-6 space-y-4">
@@ -115,7 +134,12 @@ function QADashboard() {
                 <tr key={v.id} className="hover:bg-[#F7F9FB]">
                   <td className="px-3 py-2">{new Date(v.solicitada_at).toLocaleString()}</td>
                   <td className="px-3 py-2">{nombres.get(v.solicitada_por) ?? "—"}</td>
-                  <td className="px-3 py-2 font-mono text-[11px]">{v.expediente_id.slice(0, 8)}…</td>
+                  <td className="px-3 py-2">
+                    <div className="font-medium text-[#242424]">
+                      {expedientes.get(v.expediente_id)?.cliente ?? "Expediente"}
+                    </div>
+                    <div className="font-mono text-[11px] text-[#242424]/55">{v.expediente_id.slice(0, 8)}…</div>
+                  </td>
                   <td className="px-3 py-2 text-right">
                     <Link to="/casos/$id" params={{ id: v.expediente_id }} className="text-[12px] text-[#445DA3] hover:underline">
                       Abrir →
