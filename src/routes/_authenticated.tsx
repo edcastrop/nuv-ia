@@ -306,7 +306,7 @@ function AuthenticatedLayout() {
             { to: "/", label: "Simulador", Icon: LayoutGrid, exact: true },
             { to: "/nuvex-ia", label: "NUVEX IA", Icon: Sparkles },
             { to: "/casos", label: "Casos", Icon: FolderKanban },
-            { to: "/pipeline", label: "Pipeline", Icon: Kanban },
+            ...(has("director_financiero_qa") && !hasAny("super_admin","admin","gerencia","licenciado","asesor","juridica","operaciones","cartera","contabilidad","director_juridico","auxiliar_operativo") ? [] : [{ to: "/pipeline", label: "Pipeline", Icon: Kanban }]),
             { to: "/expediente-maestro", label: "Expediente", Icon: UserSquare2 },
             { to: "/proyeccion", label: "Proyección", Icon: LineChart },
             ...(hasAny("super_admin","admin","gerencia","licenciado","director_financiero_qa") ? [{ to: "/proyeccion-financiera", label: "Proyección Financiera", Icon: LineChart }] : []),
@@ -319,7 +319,7 @@ function AuthenticatedLayout() {
         {
           label: "Análisis",
           items: [
-            { to: "/dashboard", label: "Dashboard", Icon: BarChart3 },
+            ...(has("director_financiero_qa") && !hasAny("super_admin","admin","gerencia","licenciado","asesor","juridica","operaciones","cartera","contabilidad","director_juridico","auxiliar_operativo") ? [] : [{ to: "/dashboard", label: "Dashboard", Icon: BarChart3 }]),
             ...(hasAny("super_admin","admin","gerencia") ? [{ to: "/torre-control", label: "Torre de Control", Icon: RadioTower }] : []),
             ...(hasAny("super_admin","admin","gerencia") ? [{ to: "/incidentes", label: "Incidentes", Icon: ShieldCheck }] : []),
             ...(hasAny("super_admin","gerencia") ? [{ to: "/gestion-usuarios", label: "Gestión usuarios", Icon: Users }] : []),
@@ -332,7 +332,7 @@ function AuthenticatedLayout() {
           items: [
             ...(hasAny("super_admin","admin","gerencia","cartera","juridica","licenciado","asesor") ? [{ to: "/cartera", label: "Cartera", Icon: Wallet }] : []),
             ...(hasAny("super_admin","admin","gerencia","licenciado","asesor","juridica","director_juridico","contabilidad") ? [{ to: "/wallet", label: "Mi Wallet", Icon: Wallet }] : []),
-            { to: "/comisiones", label: "Comisiones", Icon: CircleDollarSign },
+            ...(has("director_financiero_qa") && !hasAny("super_admin","admin","gerencia","licenciado","asesor","juridica","operaciones","cartera","contabilidad","director_juridico","auxiliar_operativo") ? [] : [{ to: "/comisiones", label: "Comisiones", Icon: CircleDollarSign }]),
             ...(hasAny("super_admin","admin","gerencia","cartera","contabilidad") ? [{ to: "/contabilidad/cuentas-cobro", label: "Contabilidad", Icon: CircleDollarSign }] : []),
             ...(hasAny("super_admin","admin","gerencia","juridica","director_juridico","operaciones") ? [{ to: "/contratacion/validacion", label: "Validación contratación", Icon: ShieldCheck }] : []),
             ...(hasAny("super_admin","admin","gerencia","contabilidad") ? [{ to: "/finanzas", label: "Finanzas", Icon: Landmark }] : []),
