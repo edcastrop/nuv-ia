@@ -112,16 +112,21 @@ function CasoDetail() {
 
 
 
-      <SoportesBanco
-        expedienteId={exp.id}
-        estadoCaso={(exp as unknown as { estado_caso?: string }).estado_caso ?? ""}
-      />
+      <div id="lector-extracto-qa" className="scroll-mt-6">
+        <SoportesBanco
+          expedienteId={exp.id}
+          estadoCaso={(exp as unknown as { estado_caso?: string }).estado_caso ?? ""}
+          allowUploadForQA
+        />
+      </div>
 
-      {exp.modo === "pesos" ? (
-        <PesosSimulator initialExpediente={exp} onSaved={reload} />
-      ) : (
-        <UVRSimulator initialExpediente={exp} onSaved={reload} />
-      )}
+      <div id="simulador-financiero-qa" className="scroll-mt-6">
+        {exp.modo === "pesos" ? (
+          <PesosSimulator initialExpediente={exp} onSaved={reload} />
+        ) : (
+          <UVRSimulator initialExpediente={exp} onSaved={reload} />
+        )}
+      </div>
 
       {(() => {
         const v = readValidacion(exp as never);
