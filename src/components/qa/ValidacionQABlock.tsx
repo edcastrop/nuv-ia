@@ -173,9 +173,9 @@ export function ValidacionQABlock({ expedienteId, estadoCaso, onChanged }: Props
             </button>
           </>
         )}
-        {!puedeEnviar && !pendiente && !aprobada && !devuelta && isLicenciado && (
+        {!puedeEnviar && !pendiente && !aprobada && !devuelta && puedeSolicitarRol && (
           <div className="text-[11px] text-[#242424]/60">
-            Completa la simulación para habilitar el envío a validación.
+            Estado actual del caso: <b>{String(estadoCaso)}</b>. Completa la simulación (estado <i>simulacion_realizada</i>) para habilitar el envío a validación.
           </div>
         )}
       </div>
