@@ -1,4 +1,4 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/nuvex/ui";
 import { supabase } from "@/integrations/supabase/client";
@@ -56,13 +56,14 @@ function QADashboard() {
 
   const stats = useMemo(() => {
     const hoy = new Date().toISOString().slice(0, 10);
-    const pendientes = items.filter((v) => !v.resultado).length;
-    const aprobadasHoy = items.filter((v) => v.resultado === "aprobada" && v.validada_at?.startsWith(hoy)).length;
-    const devueltasHoy = items.filter((v) => v.resultado === "devuelta" && v.validada_at?.startsWith(hoy)).length;
-    const tiempos = items.filter((v) => v.tiempo_validacion_min != null).map((v) => v.tiempo_validacion_min!);
+    const visibles = items.filter((v) => expedientes.get(v.expediente_id)?.existe !== false);
+    const pendientes = visibles.filter((v) => !v.resultado).length;
+    const aprobadasHoy = visibles.filter((v) => v.resultado === "aprobada" && v.validada_at?.startsWith(hoy)).length;
+    const devueltasHoy = visibles.filter((v) => v.resultado === "devuelta" && v.validada_at?.startsWith(hoy)).length;
+    const tiempos = visibles.filter((v) => v.tiempo_validacion_min != null).map((v) => v.tiempo_validacion_min!);
     const promedio = tiempos.length ? Math.round(tiempos.reduce((a, b) => a + b, 0) / tiempos.length) : 0;
     return { pendientes, aprobadasHoy, devueltasHoy, promedio };
-  }, [items]);
+  }, [items, expedientes]);
 
   const ranking = useMemo(() => {
     const map = new Map<string, { total: number; aprobadas: number; devueltas: number; aprobadasPrimera: number }>();
