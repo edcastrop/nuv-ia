@@ -63,6 +63,9 @@ export function UVRSimulator({
 } = {}) {
   const init = initialExpediente;
   const initCred = (init?.credito_data ?? {}) as Record<string, string>;
+  const [extractoArchivoPath, setExtractoArchivoPath] = useState<string>(() =>
+    typeof initCred.archivoPath === "string" ? initCred.archivoPath : "",
+  );
   const [discount, setDiscount] = useState<DiscountState>(() =>
     init?.discount_data && Object.keys(init.discount_data).length
       ? (init.discount_data as unknown as DiscountState)
@@ -322,7 +325,9 @@ export function UVRSimulator({
       )}
       <ExtractoReader
         modo="uvr"
+        existingArchivoPath={extractoArchivoPath}
         onApply={(p: ExtractoApplyPayload) => {
+          if (p.archivoPath) setExtractoArchivoPath(p.archivoPath);
           setClient((prev) => ({
             ...prev,
             nombre: p.cliente.nombre || prev.nombre,
@@ -742,6 +747,7 @@ export function UVRSimulator({
                       segurosMensuales: cobertura.segurosMensuales || seguros,
                       tieneBeneficio: cobertura.activo ? "si" : "no",
                       coberturaFresh: coberturaFresh as unknown as string,
+                      archivoPath: extractoArchivoPath,
                     },
                     propuesta: {
                       nuevaCuota: recomendada.nuevaCuota,

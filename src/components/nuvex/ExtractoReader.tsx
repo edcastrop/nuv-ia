@@ -66,6 +66,7 @@ export type ExtractoApplyPayload = {
 interface Props {
   modo: Modo;
   onApply: (data: ExtractoApplyPayload) => void;
+  existingArchivoPath?: string | null;
 }
 
 // PDF.js dynamic loader (client-only)
@@ -237,7 +238,7 @@ const STAGES: { id: Stage; label: string }[] = [
   { id: "applied", label: "Simulador completado" },
 ];
 
-export function ExtractoReader({ modo, onApply }: Props) {
+export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
   const [open, setOpen] = useState(false);
   const [stage, setStage] = useState<Stage>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -263,6 +264,18 @@ export function ExtractoReader({ modo, onApply }: Props) {
   }, []);
 
   const callExtract = useServerFn(extractStatement);
+
+  const handleViewExisting = async () => {
+    if (!existingArchivoPath) return;
+    const { data, error } = await supabase.storage
+      .from("extractos")
+      .createSignedUrl(existingArchivoPath, 60 * 5);
+    if (error) {
+      alert(error.message);
+      return;
+    }
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  };
 
 
   const reset = () => {
@@ -851,6 +864,19 @@ export function ExtractoReader({ modo, onApply }: Props) {
           </div>
 
           <div className="flex flex-col gap-2 md:flex-row md:items-center">
+            {existingArchivoPath && (
+              <button
+                onClick={handleViewExisting}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border px-5 py-3 text-sm font-semibold text-white/85 transition hover:text-white"
+                style={{
+                  background: "rgba(255,255,255,0.06)",
+                  borderColor: "rgba(132,185,143,0.35)",
+                }}
+              >
+                <FileText className="h-4 w-4" />
+                Ver extracto guardado
+              </button>
+            )}
             <button
               onClick={() => {
                 reset();

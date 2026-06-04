@@ -127,8 +127,9 @@ export async function listExpedientes(params: { search?: string; estado?: Estado
 }
 
 export async function getExpediente(id: string): Promise<Expediente> {
-  const { data, error } = await supabase.from("expedientes").select("*").eq("id", id).single();
+  const { data, error } = await supabase.from("expedientes").select("*").eq("id", id).maybeSingle();
   if (error) throw error;
+  if (!data) throw new Error("No se encontró este expediente o ya no está disponible.");
   return data as unknown as Expediente;
 }
 
@@ -159,8 +160,9 @@ export async function upsertExpediente(p: UpsertPayload): Promise<Expediente> {
       .update(row)
       .eq("id", p.id)
       .select()
-      .single();
+      .maybeSingle();
     if (error) throw error;
+    if (!data) throw new Error("No se pudo actualizar el expediente. Verifica que siga disponible.");
     return data as unknown as Expediente;
   }
   const { data, error } = await supabase
