@@ -9,6 +9,7 @@ const ACCEPTED = ["image/png", "image/jpeg", "image/jpg", "application/pdf"];
 interface Props {
   expedienteId: string;
   estadoCaso?: string | null;
+  allowUploadForQA?: boolean;
 }
 
 interface Soporte {
@@ -26,14 +27,14 @@ interface Soporte {
 
 const APROBADO_STATES = new Set(["aprobado", "aprobado_banco"]);
 
-export function SoportesBanco({ expedienteId, estadoCaso }: Props) {
+export function SoportesBanco({ expedienteId, estadoCaso, allowUploadForQA = false }: Props) {
   const [items, setItems] = useState<Soporte[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const showUploader = APROBADO_STATES.has(String(estadoCaso ?? ""));
+  const showUploader = allowUploadForQA || APROBADO_STATES.has(String(estadoCaso ?? ""));
   const aprobacionItems = items.filter((i) => i.subcategoria === "aprobacion_banco");
   const sinSoporte = showUploader && aprobacionItems.length === 0;
 

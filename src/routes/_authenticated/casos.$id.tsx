@@ -22,6 +22,7 @@ import { ValidacionEntregablesBlock } from "@/components/expediente/ValidacionEn
 import { VersionesDocumentalesBlock } from "@/components/expediente/VersionesDocumentalesBlock";
 import { readValidacion, puedeGenerarDocumentos, razonBloqueoDocs } from "@/lib/validacionIdentidad";
 import { addRecentCase } from "@/lib/recentCases";
+import { useUserRole } from "@/hooks/useUserRole";
 import { Lock } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/casos/$id")({
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/_authenticated/casos/$id")({
 function CasoDetail() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
+  const { canValidarProyeccion } = useUserRole();
   const [exp, setExp] = useState<Expediente | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -112,16 +114,21 @@ function CasoDetail() {
 
 
 
-      <SoportesBanco
-        expedienteId={exp.id}
-        estadoCaso={(exp as unknown as { estado_caso?: string }).estado_caso ?? ""}
-      />
+      <div id="lector-extracto-qa" className="scroll-mt-6">
+        <SoportesBanco
+          expedienteId={exp.id}
+          estadoCaso={(exp as unknown as { estado_caso?: string }).estado_caso ?? ""}
+          allowUploadForQA={canValidarProyeccion}
+        />
+      </div>
 
-      {exp.modo === "pesos" ? (
-        <PesosSimulator initialExpediente={exp} onSaved={reload} />
-      ) : (
-        <UVRSimulator initialExpediente={exp} onSaved={reload} />
-      )}
+      <div id="simulador-financiero-qa" className="scroll-mt-6">
+        {exp.modo === "pesos" ? (
+          <PesosSimulator initialExpediente={exp} onSaved={reload} />
+        ) : (
+          <UVRSimulator initialExpediente={exp} onSaved={reload} />
+        )}
+      </div>
 
       {(() => {
         const v = readValidacion(exp as never);

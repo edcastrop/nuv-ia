@@ -138,7 +138,6 @@ export async function upsertExpediente(p: UpsertPayload): Promise<Expediente> {
   if (!user) throw new Error("No autenticado");
 
   const row = {
-    asesor_id: user.id,
     modo: p.modo,
     cliente_nombre: p.cliente.nombre || "Sin nombre",
     cedula: p.cliente.cedula || null,
@@ -166,7 +165,7 @@ export async function upsertExpediente(p: UpsertPayload): Promise<Expediente> {
   }
   const { data, error } = await supabase
     .from("expedientes")
-    .insert(row)
+    .insert({ ...row, asesor_id: user.id })
     .select()
     .single();
   if (error) throw error;

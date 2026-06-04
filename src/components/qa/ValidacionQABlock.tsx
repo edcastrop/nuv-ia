@@ -42,13 +42,15 @@ export function ValidacionQABlock({ expedienteId, estadoCaso, onChanged }: Props
 
   if (rolesLoading || loading) return null;
 
-  const pendiente = estadoCaso === "proyeccion_pendiente_qa";
-  const aprobada = estadoCaso === "proyeccion_aprobada_qa";
-  const devuelta = estadoCaso === "proyeccion_devuelta_qa";
+  const validacionPendiente = !!ultima && !ultima.resultado;
+  const pendiente = estadoCaso === "proyeccion_pendiente_qa" || validacionPendiente;
+  const aprobada = estadoCaso === "proyeccion_aprobada_qa" || ultima?.resultado === "aprobada";
+  const devuelta = estadoCaso === "proyeccion_devuelta_qa" || ultima?.resultado === "devuelta";
   const estadoHabilita = ["simulacion_realizada", "simulado", "extracto_recibido", "proyeccion_devuelta_qa"].includes(
     String(estadoCaso),
   );
   const puedeEnviar = puedeSolicitarRol && !pendiente && !aprobada && estadoHabilita;
+  const puedeValidarPendiente = canValidarProyeccion && validacionPendiente;
 
   const handleEnviar = async () => {
     setBusy(true);
@@ -95,6 +97,10 @@ export function ValidacionQABlock({ expedienteId, estadoCaso, onChanged }: Props
     } finally {
       setBusy(false);
     }
+  };
+
+  const scrollToQaSection = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   return (
@@ -153,7 +159,25 @@ export function ValidacionQABlock({ expedienteId, estadoCaso, onChanged }: Props
             <Send size={13} /> Enviar a validación financiera
           </button>
         )}
-        {pendiente && canValidarProyeccion && ultima && (
+        {canValidarProyeccion && (
+          <>
+            <button
+              type="button"
+              onClick={() => scrollToQaSection("lector-extracto-qa")}
+              className="inline-flex items-center gap-2 rounded-lg border border-[#C9D7F1] bg-white px-3.5 py-2 text-[12px] font-semibold text-[#445DA3] hover:bg-[#F7F9FB]"
+            >
+              Ver / subir extracto
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToQaSection("simulador-financiero-qa")}
+              className="inline-flex items-center gap-2 rounded-lg border border-[#C9D7F1] bg-white px-3.5 py-2 text-[12px] font-semibold text-[#445DA3] hover:bg-[#F7F9FB]"
+            >
+              Revisar / editar simulación
+            </button>
+          </>
+        )}
+        {puedeValidarPendiente && ultima && (
           <>
             <button
               disabled={busy}
