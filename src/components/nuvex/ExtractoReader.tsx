@@ -446,11 +446,12 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       cuotasPagadas = cuotaActualNumero;
       out.cuotasPagadas = String(cuotaActualNumero);
     }
+    const esBancolombia = typeof out.banco === "string" && /bancolombia/i.test(out.banco);
     if (cuotasPagadas <= 0 && plazoInicial > 0 && cuotasPendientesExt > 0) {
       cuotasPagadas = Math.max(0, plazoInicial - cuotasPendientesExt);
       out.cuotasPagadas = String(cuotasPagadas);
     }
-    if (plazoInicial > 0 && cuotasPagadas > 0) {
+    if (plazoInicial > 0 && cuotasPagadas > 0 && !esBancolombia) {
       const calc = plazoInicial - cuotasPagadas;
       if (calc >= 0) {
         if (cuotasPendientesExt > 0 && cuotasPendientesExt !== calc) {
