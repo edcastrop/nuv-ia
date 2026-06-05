@@ -351,6 +351,8 @@ export function PesosSimulator({
               cuotaBaseSimulacion: p.cobertura.cuotaBaseSimulacion || "",
               requiereVerificacion: !!p.cobertura.requiereVerificacion,
             });
+          } else {
+            setCobertura(defaultCobertura);
           }
         }}
       />
