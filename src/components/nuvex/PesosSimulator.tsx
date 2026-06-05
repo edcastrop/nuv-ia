@@ -330,6 +330,7 @@ export function PesosSimulator({
             numeroCredito: p.cliente.numeroCredito || prev.numeroCredito,
             banco: p.cliente.banco || prev.banco,
             tipoProducto: p.cliente.tipoProducto || prev.tipoProducto,
+            productoBancarioId: p.cliente.productoBancarioId ?? prev.productoBancarioId ?? null,
             plazoInicial: p.cliente.plazoInicial || prev.plazoInicial,
             cuotasPagadas: p.cliente.cuotasPagadas || prev.cuotasPagadas,
           }));

@@ -9,6 +9,7 @@ import {
 } from "@/lib/expedientes";
 import { formatCOP, formatNumber } from "@/lib/format";
 import { useUserRole } from "@/hooks/useUserRole";
+import { parseProductoComercial } from "@/lib/productosBancarios";
 import {
   BarChart,
   Bar,
@@ -83,6 +84,40 @@ function DashboardPage() {
         : [],
     [metrics],
   );
+
+  // Distribución por producto bancario (banco · tipo · modalidad · cobertura)
+  const productoStats = useMemo(() => {
+    type Row = { key: string; banco: string; tipo: string; modalidad: string; cobertura: boolean; count: number };
+    const map = new Map<string, Row>();
+    for (const r of rows) {
+      const cd = (r.cliente_data ?? {}) as { banco?: string; tipoProducto?: string; cobertura?: { activo?: boolean } };
+      const banco = cd.banco?.trim() || "Sin banco";
+      const parsed = parseProductoComercial(cd.tipoProducto ?? "");
+      const tipo = parsed.esLeasing ? "Leasing" : "Hipotecario";
+      const modalidad = (r.modo ?? (parsed.esUVR ? "uvr" : "pesos")).toUpperCase();
+      const cobertura = !!cd.cobertura?.activo;
+      const key = `${banco}__${tipo}__${modalidad}__${cobertura ? "1" : "0"}`;
+      const prev = map.get(key);
+      if (prev) prev.count += 1;
+      else map.set(key, { key, banco, tipo, modalidad, cobertura, count: 1 });
+    }
+    return Array.from(map.values()).sort((a, b) => b.count - a.count);
+  }, [rows]);
+
+  const productoTotales = useMemo(() => {
+    const porBanco = new Map<string, number>();
+    let leasing = 0, hipotecario = 0, pesos = 0, uvr = 0, conCob = 0;
+    for (const s of productoStats) {
+      porBanco.set(s.banco, (porBanco.get(s.banco) ?? 0) + s.count);
+      if (s.tipo === "Leasing") leasing += s.count; else hipotecario += s.count;
+      if (s.modalidad === "UVR") uvr += s.count; else pesos += s.count;
+      if (s.cobertura) conCob += s.count;
+    }
+    return {
+      bancos: Array.from(porBanco.entries()).map(([banco, count]) => ({ banco, count })).sort((a, b) => b.count - a.count),
+      leasing, hipotecario, pesos, uvr, conCob,
+    };
+  }, [productoStats]);
 
   const ticketPromedio = useMemo(() => {
     if (!metrics || metrics.total === 0) return 0;
@@ -344,6 +379,81 @@ function DashboardPage() {
                 />
               </div>
             </section>
+
+            {/* DISTRIBUCIÓN POR PRODUCTO BANCARIO */}
+            {productoStats.length > 0 && (
+              <section>
+                <PremiumCard>
+                  <div className="mb-5">
+                    <h2 className="text-xl font-semibold">Distribución por Producto Bancario</h2>
+                    <p className="text-sm mt-1" style={{ color: TEXT2 }}>
+                      Casos clasificados por banco, modalidad y cobertura.
+                    </p>
+                  </div>
+
+                  <div className="grid gap-3 md:grid-cols-5 mb-6">
+                    <MiniStat label="Hipotecario" value={String(productoTotales.hipotecario)} color={AZUL} />
+                    <MiniStat label="Leasing" value={String(productoTotales.leasing)} color={VERDE} />
+                    <MiniStat label="Pesos" value={String(productoTotales.pesos)} color="#F0B429" />
+                    <MiniStat label="UVR" value={String(productoTotales.uvr)} color="#9333EA" />
+                    <MiniStat label="Con cobertura" value={String(productoTotales.conCob)} color={VERDE} />
+                  </div>
+
+                  <div className="grid gap-6 lg:grid-cols-2">
+                    <div>
+                      <div className="text-[11px] uppercase tracking-[0.18em] mb-3" style={{ color: TEXT2 }}>Por banco</div>
+                      <div className="space-y-2">
+                        {productoTotales.bancos.map((b) => {
+                          const max = productoTotales.bancos[0]?.count || 1;
+                          const pct = Math.round((b.count / max) * 100);
+                          return (
+                            <div key={b.banco}>
+                              <div className="flex items-center justify-between text-xs mb-1">
+                                <span style={{ color: "#fff" }}>{b.banco}</span>
+                                <span style={{ color: TEXT2 }}>{b.count}</span>
+                              </div>
+                              <div className="h-2 rounded-full" style={{ background: CARD2 }}>
+                                <div className="h-2 rounded-full" style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${AZUL}, ${VERDE})` }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-[11px] uppercase tracking-[0.18em] mb-3" style={{ color: TEXT2 }}>Detalle por combinación</div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="text-left border-b" style={{ color: TEXT2, borderColor: BORDER }}>
+                              <th className="py-2 pr-3">Banco</th>
+                              <th className="py-2 pr-3">Tipo</th>
+                              <th className="py-2 pr-3">Modalidad</th>
+                              <th className="py-2 pr-3">Cobertura</th>
+                              <th className="py-2 pr-3 text-right">Casos</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {productoStats.slice(0, 12).map((s) => (
+                              <tr key={s.key} className="border-b" style={{ borderColor: BORDER }}>
+                                <td className="py-2 pr-3 font-medium">{s.banco}</td>
+                                <td className="py-2 pr-3" style={{ color: TEXT2 }}>{s.tipo}</td>
+                                <td className="py-2 pr-3" style={{ color: TEXT2 }}>{s.modalidad}</td>
+                                <td className="py-2 pr-3" style={{ color: s.cobertura ? VERDE : TEXT2 }}>{s.cobertura ? "Sí" : "No"}</td>
+                                <td className="py-2 pr-3 text-right font-semibold">{s.count}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </PremiumCard>
+              </section>
+            )}
+
+
 
             {/* RANKING */}
             {isManager && metrics.porAsesor && metrics.porAsesor.length > 0 && (
