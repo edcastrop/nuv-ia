@@ -230,10 +230,19 @@ export function MaestroEditor(p: Props) {
 
       <Accordion title="Datos del crédito" subtitle="Información financiera vigente">
 
+        <div className="mb-4">
+          <ProductoBancarioSelect
+            banco={p.credito.banco}
+            producto={p.credito.tipoProducto}
+            onChange={({ banco, producto }) => {
+              const c1 = set(p.credito, "banco", banco);
+              p.onCredito(set(c1, "tipoProducto", producto));
+            }}
+          />
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <TextField label="Banco" value={p.credito.banco} onChange={(v) => p.onCredito(set(p.credito, "banco", v))} />
           <TextField label="Número de crédito" value={p.credito.numeroCredito} onChange={(v) => p.onCredito(set(p.credito, "numeroCredito", v))} />
-          <SelectField label="Tipo de producto" value={p.credito.tipoProducto} options={PRODUCTOS} onChange={(v) => p.onCredito(set(p.credito, "tipoProducto", v))} />
+
           <TextField label="Fecha de desembolso" value={p.credito.fechaDesembolso} placeholder="DD/MM/AAAA" onChange={(v) => p.onCredito(set(p.credito, "fechaDesembolso", v))} />
           <TextField label="Plazo original (meses)" value={p.credito.plazoOriginal} onChange={(v) => p.onCredito(set(p.credito, "plazoOriginal", v))} />
           <TextField label="Saldo capital" value={p.credito.saldoCapital} onChange={(v) => p.onCredito(set(p.credito, "saldoCapital", v))} />
