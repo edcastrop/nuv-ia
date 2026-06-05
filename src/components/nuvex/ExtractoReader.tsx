@@ -14,6 +14,11 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { extractStatement, type ExtractoData } from "@/lib/extracto.functions";
 import { parseMontoExtracto } from "@/lib/cuotaBase";
+import {
+  useProductosBancarios,
+  buscarProductoComercial,
+  parseProductoComercial,
+} from "@/lib/productosBancarios";
 
 type Modo = "pesos" | "uvr";
 
@@ -28,6 +33,7 @@ export type ExtractoApplyPayload = {
     numeroCredito?: string;
     banco?: string;
     tipoProducto?: string;
+    productoBancarioId?: string | null;
     plazoInicial?: string;
     cuotasPagadas?: string;
   };
@@ -249,6 +255,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
   const [archivoPath, setArchivoPath] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
+  const { data: catalogoProductos = [] } = useProductosBancarios();
 
   // Evita que el navegador abra el archivo si el usuario suelta fuera de la zona
   useEffect(() => {
@@ -604,13 +611,31 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
     }
     const cuotaParaSimulador = cuotaBaseStr;
 
+    // Mapeo OCR → catálogo jerárquico de productos bancarios
+    const parsedAttrs = parseProductoComercial(producto);
+    const tipoLower = get("tipoCredito").toLowerCase();
+    const esLeasingFinal = parsedAttrs.esLeasing || /leasing/.test(tipoLower);
+    const monedaUpper = get("moneda").toUpperCase();
+    const esUVRFinal = parsedAttrs.esUVR || monedaUpper === "UVR" || modo === "uvr";
+    const match = buscarProductoComercial(catalogoProductos, {
+      banco,
+      esLeasing: esLeasingFinal,
+      esUVR: esUVRFinal,
+      cobertura: tieneCob,
+    }) ?? buscarProductoComercial(catalogoProductos, {
+      banco,
+      esLeasing: esLeasingFinal,
+      esUVR: esUVRFinal,
+    });
+
     const payload: ExtractoApplyPayload = {
       cliente: {
         nombre: get("cliente"),
         cedula: get("cedula"),
         numeroCredito: get("numeroCredito"),
-        banco,
-        tipoProducto: producto,
+        banco: match?.banco ?? banco,
+        tipoProducto: match?.nombre_comercial ?? producto,
+        productoBancarioId: match?.id ?? null,
         plazoInicial: get("plazoInicial"),
         cuotasPagadas: get("cuotasPagadas"),
       },
