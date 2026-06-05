@@ -1924,6 +1924,7 @@ export type Database = {
           modo: Database["public"]["Enums"]["expediente_modo"]
           numero_credito: string | null
           producto: string | null
+          producto_bancario_id: string | null
           propuesta_data: Json
           radicado_fecha: string | null
           radicado_id_banco: string | null
@@ -1965,6 +1966,7 @@ export type Database = {
           modo: Database["public"]["Enums"]["expediente_modo"]
           numero_credito?: string | null
           producto?: string | null
+          producto_bancario_id?: string | null
           propuesta_data?: Json
           radicado_fecha?: string | null
           radicado_id_banco?: string | null
@@ -2006,6 +2008,7 @@ export type Database = {
           modo?: Database["public"]["Enums"]["expediente_modo"]
           numero_credito?: string | null
           producto?: string | null
+          producto_bancario_id?: string | null
           propuesta_data?: Json
           radicado_fecha?: string | null
           radicado_id_banco?: string | null
@@ -2021,7 +2024,15 @@ export type Database = {
           validacion_motivo_devolucion?: string | null
           validacion_version?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "expedientes_producto_bancario_id_fkey"
+            columns: ["producto_bancario_id"]
+            isOneToOne: false
+            referencedRelation: "productos_bancarios"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       extractos_lecturas: {
         Row: {
@@ -2764,6 +2775,51 @@ export type Database = {
           descripcion?: string | null
           id?: string
           modulo?: string
+        }
+        Relationships: []
+      }
+      productos_bancarios: {
+        Row: {
+          activo: boolean
+          banco: string
+          cobertura: boolean
+          codigo: string
+          created_at: string
+          id: string
+          modalidad: string
+          nombre_comercial: string
+          orden: number
+          submodalidad_uvr: string | null
+          tipo_producto: string
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          banco: string
+          cobertura?: boolean
+          codigo: string
+          created_at?: string
+          id?: string
+          modalidad: string
+          nombre_comercial: string
+          orden?: number
+          submodalidad_uvr?: string | null
+          tipo_producto: string
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          banco?: string
+          cobertura?: boolean
+          codigo?: string
+          created_at?: string
+          id?: string
+          modalidad?: string
+          nombre_comercial?: string
+          orden?: number
+          submodalidad_uvr?: string | null
+          tipo_producto?: string
+          updated_at?: string
         }
         Relationships: []
       }

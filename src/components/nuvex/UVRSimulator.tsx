@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Alert, Card, MetricCard, SectionTitle, TextField } from "./ui";
 import { ClientFields, defaultClient, type ClientData } from "./ClientFields";
-import { PRODUCTOS_UVR, NUVEX } from "./constants";
+import { NUVEX } from "./constants";
 import {
   parseCurrency,
   parseDecimal,
@@ -369,9 +369,10 @@ export function UVRSimulator({
         <ClientFields
           data={client}
           onChange={setClient}
-          productos={PRODUCTOS_UVR}
+          modalidad="uvr"
           cuotasPendientes={cuotasPendientes}
         />
+
 
         <div className="mt-6">
           <IntervinientesFields

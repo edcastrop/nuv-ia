@@ -1,5 +1,6 @@
-import { BANCOS } from "./constants";
-import { SelectField, TextField } from "./ui";
+import { ProductoBancarioSelect } from "./ProductoBancarioSelect";
+import { TextField } from "./ui";
+import type { ModalidadCat } from "@/lib/productosBancarios";
 import type { Cobertura, Interviniente } from "./intervinientes";
 
 export interface ClientData {
@@ -8,6 +9,7 @@ export interface ClientData {
   numeroCredito: string;
   banco: string;
   tipoProducto: string;
+  productoBancarioId?: string | null;
   asesor: string;
   plazoInicial: string;
   cuotasPagadas: string;
@@ -20,13 +22,16 @@ export interface ClientData {
 export function ClientFields({
   data,
   onChange,
-  productos,
   cuotasPendientes,
+  modalidad,
 }: {
   data: ClientData;
   onChange: (next: ClientData) => void;
-  productos: string[];
+  /** @deprecated lista heredada — ignorada; ahora se carga del catálogo. */
+  productos?: string[];
   cuotasPendientes: number;
+  /** Restringe el catálogo a Pesos o UVR según el simulador. */
+  modalidad?: ModalidadCat;
 }) {
   const set = <K extends keyof ClientData>(k: K, v: ClientData[K]) =>
     onChange({ ...data, [k]: v });
@@ -36,8 +41,18 @@ export function ClientFields({
       <TextField label="Nombre del cliente" value={data.nombre} onChange={(v) => set("nombre", v)} />
       <TextField label="Número de cédula" value={data.cedula} onChange={(v) => set("cedula", v)} />
       <TextField label="Número de crédito" value={data.numeroCredito} onChange={(v) => set("numeroCredito", v)} />
-      <SelectField label="Banco" value={data.banco} onChange={(v) => set("banco", v)} options={BANCOS} />
-      <SelectField label="Tipo de producto" value={data.tipoProducto} onChange={(v) => set("tipoProducto", v)} options={productos} className="md:col-span-2" />
+
+      <div className="md:col-span-3">
+        <ProductoBancarioSelect
+          banco={data.banco}
+          producto={data.tipoProducto}
+          filtrarPorModalidad={modalidad}
+          onChange={({ banco, producto, productoId }) =>
+            onChange({ ...data, banco, tipoProducto: producto, productoBancarioId: productoId })
+          }
+        />
+      </div>
+
       <TextField label="Asesor NUVEX" value={data.asesor} onChange={(v) => set("asesor", v)} />
       <TextField label="Plazo inicial aprobado (meses)" value={data.plazoInicial} onChange={(v) => set("plazoInicial", v)} placeholder="240" />
       <TextField label="Cuotas pagadas" value={data.cuotasPagadas} onChange={(v) => set("cuotasPagadas", v)} placeholder="36" />
@@ -53,6 +68,7 @@ export const defaultClient: ClientData = {
   numeroCredito: "",
   banco: "",
   tipoProducto: "",
+  productoBancarioId: null,
   asesor: "",
   plazoInicial: "",
   cuotasPagadas: "",

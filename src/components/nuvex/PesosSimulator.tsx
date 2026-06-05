@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Alert, Card, MetricCard, SectionTitle, TextField } from "./ui";
 import { ClientFields, defaultClient, type ClientData } from "./ClientFields";
-import { PRODUCTOS_PESOS } from "./constants";
+
 import {
   parseCurrency,
   parseDecimal,
@@ -362,9 +362,10 @@ export function PesosSimulator({
         <ClientFields
           data={client}
           onChange={setClient}
-          productos={PRODUCTOS_PESOS}
+          modalidad="pesos"
           cuotasPendientes={cuotasPendientes}
         />
+
 
         <div className="mt-6">
           <IntervinientesFields
