@@ -380,11 +380,14 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
   ]);
 
   const DAVIVIENDA_LEASING_KEYS = new Set([
-    "banco", "producto", "tipoCredito", "plazoInicial", "cuotasPendientes",
-    "cuotasPagadas", "cuotaMensual", "seguros", "tea", "teaCobrada", "teaPactada",
+    "banco", "producto", "tipoCredito", "moneda", "sistemaAmortizacion",
+    "plazoInicial", "cuotasPendientes", "cuotasPagadas", "cuotaMensual",
+    "seguros", "tea", "teaCobrada", "teaPactada",
     "valorSeguroVida", "valorSeguroIncendio", "valorSeguroTerremoto", "valorCobertura",
     "tasaCobertura", "tipoBeneficio", "tieneCobertura", "cuotaBaseSimulacion",
+    "saldoUVR", "valorUVR", "saldoCapital",
   ]);
+
 
   // Normaliza cuotasPagadas / cuotasPendientes. Misma lógica que el servidor
   // para que ZIP, PDF, imagen y ediciones manuales produzcan el mismo objeto.
