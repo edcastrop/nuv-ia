@@ -137,7 +137,7 @@ export function parseDaviviendaHipotecarioText(rawText: string): ExtractoRecord 
 
   const cuotaSinSeguros = cuotaMensual > 0 && seguros > 0 ? cuotaMensual - seguros : cuotaMensual;
 
-  const producto = `Crédito hipotecario en Pesos ${beneficioActivo ? "con" : "sin"} beneficio de cobertura`;
+  const producto = `Crédito Hipotecario en pesos ${beneficioActivo ? "con" : "sin"} Beneficio de Cobertura`;
 
   return {
     banco: "Davivienda",
