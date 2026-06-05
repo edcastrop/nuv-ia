@@ -747,6 +747,25 @@ export const extractStatement = createServerFn({ method: "POST" })
         parsed.cuotaPagadaCliente = cuotaMensual > 0 ? formatMontoExtracto(cuotaMensual) : parsed.cuotaPagadaCliente;
         if (cuotaMensual > 0 && segurosNum > 0) parsed.cuotaConInteresSinSeguros = formatMontoExtracto(cuotaMensual - segurosNum);
         parsed.cuotaBaseSimulacion = cuotaMensual > 0 ? formatMontoExtracto(cuotaMensual) : "";
+      } else if (esDaviviendaHipotecario) {
+        // ----- DAVIVIENDA HIPOTECARIO: no asumir cobertura por textos legales -----
+        mapeoBanco = "davivienda_hipotecario";
+        parsed.banco = "Davivienda";
+        parsed.tipoCredito = "CREDITO_HIPOTECARIO";
+        parsed.moneda = /\buvr\b/i.test(`${parsed.moneda ?? ""} ${parsed.producto ?? ""} ${parsed.sistemaAmortizacion ?? ""}`) ? "UVR" : "PESOS";
+        parsed.producto = `Crédito Hipotecario en ${parsed.moneda === "UVR" ? "UVR" : "pesos"} sin Beneficio de Cobertura`;
+        parsed.tieneCobertura = "no";
+        parsed.valorCobertura = "";
+        parsed.tasaCobertura = "";
+        parsed.tipoBeneficio = "";
+        parsed.cuotaSinSubsidio = "";
+        parsed.valorDesembolsado = "";
+        valorBenef = 0;
+        tieneCob = false;
+        cuotaBase = cuotaMensual;
+        requiereVerificacion = false;
+        parsed.cuotaPagadaCliente = cuotaMensual > 0 ? formatMontoExtracto(cuotaMensual) : parsed.cuotaPagadaCliente;
+        parsed.cuotaBaseSimulacion = cuotaMensual > 0 ? formatMontoExtracto(cuotaMensual) : "";
       } else {
         // ----- Genérico (otros bancos) -----
         if (cuotaConInteresSinSeguros > 0 && !parsed.cuotaConInteresSinSeguros) {
