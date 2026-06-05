@@ -358,6 +358,8 @@ export function UVRSimulator({
               cuotaBaseSimulacion: p.cobertura.cuotaBaseSimulacion || "",
               requiereVerificacion: !!p.cobertura.requiereVerificacion,
             });
+          } else {
+            setCobertura(defaultCobertura);
           }
         }}
       />

@@ -538,6 +538,8 @@ export const extractStatement = createServerFn({ method: "POST" })
       const productoLower = (typeof parsed.producto === "string" ? parsed.producto : "").toLowerCase();
       const tipoLower = (typeof parsed.tipoCredito === "string" ? parsed.tipoCredito : "").toLowerCase();
       const esDaviviendaLeasing = /davivienda/.test(bancoLower) && /leasing/.test(`${productoLower} ${tipoLower}`);
+      const esDaviviendaHipotecario = /davivienda/.test(bancoLower) && !esDaviviendaLeasing;
+      if (typeof parsed.cedula === "string" && /^0+$/.test(parsed.cedula.trim())) parsed.cedula = "";
 
       let cuotaCliente = monto("cuotaPagadaCliente");
       let valorBenef = monto("valorCobertura");
@@ -545,15 +547,17 @@ export const extractStatement = createServerFn({ method: "POST" })
       let segurosNum = monto("seguros");
       let cuotaConInteresSinSeguros =
         monto("cuotaConInteresSinSeguros") || monto("cuotaSinSeguros");
+      const tieneCobPorDiferencia =
+        monto("cuotaSinSubsidio") > 0 && cuotaCliente > 0 && monto("cuotaSinSubsidio") > cuotaCliente;
       let tieneCob =
         valorBenef > 0 ||
         num("tasaCobertura") > 0 ||
         monto("valorSubsidioGobierno") > 0 ||
-        (monto("cuotaSinSubsidio") > 0 && cuotaCliente > 0 && monto("cuotaSinSubsidio") > cuotaCliente);
+        (!esDaviviendaHipotecario && tieneCobPorDiferencia);
       let cuotaBase = 0;
       let requiereVerificacion = false;
       const errores: string[] = [];
-      let mapeoBanco: "bancolombia" | "davivienda_leasing" | "generico" = "generico";
+      let mapeoBanco: "bancolombia" | "davivienda_leasing" | "davivienda_hipotecario" | "generico" = "generico";
 
       if (esBancolombia) {
         // ----- BANCOLOMBIA: mapeo literal por campos del extracto -----
@@ -742,6 +746,25 @@ export const extractStatement = createServerFn({ method: "POST" })
         requiereVerificacion = false;
         parsed.cuotaPagadaCliente = cuotaMensual > 0 ? formatMontoExtracto(cuotaMensual) : parsed.cuotaPagadaCliente;
         if (cuotaMensual > 0 && segurosNum > 0) parsed.cuotaConInteresSinSeguros = formatMontoExtracto(cuotaMensual - segurosNum);
+        parsed.cuotaBaseSimulacion = cuotaMensual > 0 ? formatMontoExtracto(cuotaMensual) : "";
+      } else if (esDaviviendaHipotecario) {
+        // ----- DAVIVIENDA HIPOTECARIO: no asumir cobertura por textos legales -----
+        mapeoBanco = "davivienda_hipotecario";
+        parsed.banco = "Davivienda";
+        parsed.tipoCredito = "CREDITO_HIPOTECARIO";
+        parsed.moneda = /\buvr\b/i.test(`${parsed.moneda ?? ""} ${parsed.producto ?? ""} ${parsed.sistemaAmortizacion ?? ""}`) ? "UVR" : "PESOS";
+        parsed.producto = `Crédito Hipotecario en ${parsed.moneda === "UVR" ? "UVR" : "pesos"} sin Beneficio de Cobertura`;
+        parsed.tieneCobertura = "no";
+        parsed.valorCobertura = "";
+        parsed.tasaCobertura = "";
+        parsed.tipoBeneficio = "";
+        parsed.cuotaSinSubsidio = "";
+        parsed.valorDesembolsado = "";
+        valorBenef = 0;
+        tieneCob = false;
+        cuotaBase = cuotaMensual;
+        requiereVerificacion = false;
+        parsed.cuotaPagadaCliente = cuotaMensual > 0 ? formatMontoExtracto(cuotaMensual) : parsed.cuotaPagadaCliente;
         parsed.cuotaBaseSimulacion = cuotaMensual > 0 ? formatMontoExtracto(cuotaMensual) : "";
       } else {
         // ----- Genérico (otros bancos) -----
