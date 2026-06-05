@@ -92,9 +92,11 @@ function hasExplicitBenefit(rawText: string) {
 
 export function parseDaviviendaLeasingText(rawText: string): ExtractoRecord | null {
   const text = compactSpaces(rawText);
-  if (!/davivienda/i.test(text) || !/extracto\s+contrato\s+leasing|contrato\s+del\s+leasing/i.test(text)) {
-    return null;
-  }
+  if (!/davivienda/i.test(text)) return null;
+  // Only match real leasing extracts. The legal/informative text on hipotecario
+  // statements also mentions "contrato de leasing" — that must NOT trigger.
+  if (!/extracto\s+contrato\s+leasing/i.test(text)) return null;
+  if (/extracto\s+cr[eé]dito\s+hipotecario/i.test(text)) return null;
 
   const sistema = firstMatch(text, /Sistema\s+de\s+Amortizaci[oó]n\s+(.+?)\s+Tasa\s+Inter[eé]s\s+Mora/i) ||
     firstMatch(text, /Sistema\s+de\s+Amortizaci[oó]n\s+(.+?)\s+Plazo/i);
