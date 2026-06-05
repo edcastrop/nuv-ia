@@ -8,6 +8,7 @@ import {
 } from "@/lib/cuotaBase";
 import { parseBancolombiaText } from "@/lib/motorExtractos/bancolombiaParser";
 import { parseDaviviendaLeasingText } from "@/lib/motorExtractos/daviviendaLeasingParser";
+import { parseDaviviendaHipotecarioText } from "@/lib/motorExtractos/daviviendaHipotecarioParser";
 
 const InputSchema = z.object({
   rawText: z.string().max(250_000).optional(),
@@ -329,7 +330,9 @@ export const extractStatement = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => InputSchema.parse(data))
   .handler(async ({ data }): Promise<ExtractoResponse> => {
     const deterministicData = data.rawText
-      ? parseBancolombiaText(data.rawText) ?? parseDaviviendaLeasingText(data.rawText)
+      ? parseBancolombiaText(data.rawText)
+        ?? parseDaviviendaHipotecarioText(data.rawText)
+        ?? parseDaviviendaLeasingText(data.rawText)
       : null;
     if (deterministicData) {
       return { error: null, data: deterministicData };
