@@ -491,22 +491,33 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
     if (segurosSum > 0) out.seguros = String(Math.round(segurosSum));
     const cuotaCli = valorAPagar > 0 ? valorAPagar : cuotaConSub;
     if (cuotaCli > 0) out.cuotaPagadaCliente = String(Math.round(cuotaCli));
-    if (subsGob > 0) {
+    const tieneBeneficioBancolombia = subsGob > 0 || (cuotaSinSubGob > 0 && cuotaConSub > 0 && cuotaSinSubGob > cuotaConSub);
+    if (tieneBeneficioBancolombia) {
       out.valorCobertura = String(Math.round(subsGob));
       out.tieneCobertura = "si";
       if (!g("tipoBeneficio")) out.tipoBeneficio = "Subsidio Gobierno";
+    } else {
+      out.valorCobertura = "";
+      out.tasaCobertura = "";
+      out.tipoBeneficio = "";
+      out.tieneCobertura = "no";
+      out.cuotaSinSubsidio = "";
     }
 
     const errores: string[] = [];
     let cuotaBase = 0;
-    if (cuotaSinSubGob > 0 && segurosSum > 0) {
+    if (tieneBeneficioBancolombia && cuotaSinSubGob > 0 && segurosSum > 0) {
       cuotaBase = cuotaSinSubGob + segurosSum;
-    } else if (cuotaSinSubGob > 0) {
+    } else if (tieneBeneficioBancolombia && cuotaSinSubGob > 0) {
       cuotaBase = cuotaSinSubGob;
       errores.push("No se detectaron los seguros (vida, incendio, terremoto).");
+    } else if (!tieneBeneficioBancolombia && cuotaSinSeg > 0 && segurosSum > 0) {
+      cuotaBase = cuotaSinSeg + segurosSum;
+    } else if (!tieneBeneficioBancolombia && cuotaCli > 0) {
+      cuotaBase = cuotaCli;
     } else {
       errores.push(
-        "Falta 'Valor cuota sin subsidio Gobierno' para calcular la cuota base.",
+        "Falta 'Valor de la cuota sin seguros y sin comisiones' para calcular la cuota base.",
       );
     }
 
