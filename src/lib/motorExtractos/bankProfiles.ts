@@ -66,44 +66,65 @@ BENEFICIO DE COBERTURA / SUBSIDIO GOBIERNO / FRECH (CRÍTICO):
       /no\.?\s*c[aá]nones\s+pdtes/i,
       /no\.?\s*de\s+canon\s+que\s+se\s+cancela/i,
     ],
-    hints: `DAVIVIENDA LEASING HABITACIONAL (parser id: davivienda_leasing_pesos).
+    hints: `DAVIVIENDA LEASING HABITACIONAL (parser id: davivienda_leasing).
 
 IDENTIFICACIÓN: "Extracto Contrato Leasing" + "Davivienda" + "No. Cánones Pdtes. Pago Total".
-→ banco="Davivienda", producto="LEASING_HABITACIONAL", moneda="PESOS".
+→ banco="Davivienda", producto="LEASING_HABITACIONAL".
+
+MONEDA (CRÍTICO — antes era siempre PESOS, ahora detectar UVR):
+- moneda="UVR" si encuentras CUALQUIERA de estas señales:
+  * "Sistema de Amortización ... UVR" (incluye "BAJA UVR", "MEDIA UVR", "ALTA UVR").
+  * Encabezado "Valores en UVR" / "Valores en Uvr" en la tabla de la página 2.
+  * "Valor de la UVR a la Fecha de Corte" con un número.
+  * "Saldo a la Fecha de Corte" muestra dos columnas (UVR y Pesos).
+- moneda="PESOS" SOLO si ninguna señal UVR aparece.
 
 INTERPRETACIÓN DE NÚMEROS (CRÍTICO):
 - Formato americano "1,065,000.00" → 1065000. Coma=miles, punto=decimal.
 - Formato colombiano "1.065.000,00" → 1065000. Punto=miles, coma=decimal.
 - "$773,225.38" → 773225.38 (NO 773225380). "$21,174.00" → 21174.
 - NUNCA conviertas "$77,322.538" en 77322538. Reconoce cuál es decimal por el patrón.
-- Devuelve montos como dígitos con punto decimal si aplica (ej "773225.38" o "1065000").
+- Devuelve montos como dígitos con punto decimal si aplica.
 
 CAMPOS — etiquetas LITERALES:
 - titular ← texto inmediatamente debajo de "Apreciado Cliente" (nombres en mayúsculas).
-- numeroCredito ← número junto a "Extracto Contrato Leasing" o "No.Contrato del Leasing" (ej "600303970014253-4").
-- cuotaActual ← SOLO "+ Valor Cuota Mes". NO uses "Total Aplicado". NO uses "Total Valor a pagar" si hay mora.
-- saldoCapital ← página 2, "Saldo a: [fecha]" o "Saldo a la Fecha de Corte". NO uses "Saldo anterior".
+- numeroCredito ← número junto a "Extracto Contrato Leasing" o "No.Contrato del Leasing".
+- cuotaActual ← SOLO "+ Valor Cuota Mes". NO uses "Total Aplicado" ni "Total Valor a pagar".
 - plazoInicial ← "Plazo" (meses).
 - cuotasPendientes ← "No. Cánones Pdtes. Pago Total".
-- cuotasPagadas ← plazoInicial − cuotasPendientes (score 90).
-- tasaEA ← SOLO "Tasa Interés Cte. Cobrada" (es la usada para simulación).
-  "Tasa Interés Cte. Pactada" es solo referencia, NO la pongas en tasaEA.
+- cuotasPagadas ← "No. de Canon que se Cancela" (preferido, score 95). Validar con plazoInicial − cuotasPendientes.
+- tasaEA ← SOLO "Tasa Interés Cte. Cobrada". NO uses "Tasa Interés Cte. Pactada".
 
-SEGUROS (página 2, "Valores en Pesos") — NO uses tasas por millón:
-- "Seguro de Vida"  +  "Seguro de Incendio y Anexos"  +  "Seguro Protección de Pagos"
-- seguros = suma exacta de los tres. Si alguno no aparece → 0.
-- Ejemplo real esperado: 21174 + 43573 + 0 = 64747.
+SALDO Y UVR (página 2, sección "Nuevo Saldo de su Contrato de Leasing"):
+- saldoCapital ← columna "Valores en Pesos" de la fila "Saldo a la Fecha de Corte"
+  (ej "$273,373,886.78" → 273373886.78). NO uses "Saldo Anterior" ni la columna de Opción de Compra.
+- saldoUVR ← columna "Valores en Uvr" de la fila "Saldo a la Fecha de Corte"
+  (ej "672,379.7891" → 672379.7891). OBLIGATORIO si moneda=UVR.
+- valorUVR ← "Valor de la UVR a la Fecha de Corte" (ej "406.2551"). Es UN solo número decimal,
+  sin separador de miles. OBLIGATORIO si moneda=UVR.
+- Si moneda=UVR y saldoUVR o valorUVR vienen vacíos, RE-LEE la página 2 antes de responder.
 
-CAPITAL E INTERESES (página 2):
-- interesCuota ← "Intereses Corrientes" (ej 773225.38).
-- capitalCuota ← "Abonos a Capital" (ej 226774.62).
+SEGUROS (CRÍTICO — NO tasas por millón, NO inventar, NO confundir con UVR):
+- seguros = SUMA en PESOS de las tres filas de la tabla "Valores Aplicados en el Periodo":
+  "Seguro de Vida" + "Seguro de Incendio y Anexos" + "Seguro Protección de Pagos".
+- Toma SIEMPRE la columna "Valores en Pesos" (la segunda), NUNCA la columna "Valores en UVR".
+- Ejemplo real: 123612 + 98334 + 0 = 221946.
+- VALIDACIÓN OBLIGATORIA: la suma debe coincidir (±2) con la fila
+  "+ Seguros:" de la sección "Nuevo Saldo de su Contrato de Leasing"
+  (ej "+ Seguros: 546.3218 $221,946.00" → 221946 en Pesos).
+- Si no coincide, RE-LEE la tabla de seguros. NUNCA uses tasas "0.04466 por millón".
+- valorSeguroVida / valorSeguroIncendio / valorSeguroTerremoto → guarda cada uno en Pesos
+  (Protección de Pagos va en valorSeguroTerremoto si no hay campo dedicado).
+
+CAPITAL E INTERESES (página 2, "Valores Aplicados en el Periodo", columna Pesos):
+- interesCuota ← "Intereses Corrientes" en Pesos.
+- capitalCuota ← "Abonos a Capital" en Pesos.
 - "Abonos a Capital" NO es beneficio, NO es cobertura, NO es subsidio.
 
 BENEFICIO / COBERTURA — regla estricta:
-- NO marques beneficio solo porque el texto mencione "cobertura".
-- Solo si hay valor > 0 en "Interés Cte. Cobertura", "Valor Beneficio",
-  "Valor subsidio" o "Cobertura FRECH". Si todos están en 0 → SIN beneficio,
-  no agregues alerta tipo "La cobertura condicionada".
+- NO marques beneficio sólo porque el texto mencione "cobertura" o "FRECH" en notas legales.
+- Sólo si hay valor > 0 en "Interés Cte. Cobertura", "Valor Beneficio", "Valor subsidio"
+  o "Cobertura FRECH". Si todos están en 0 → SIN beneficio, deja vacíos los campos.
 
 CÉDULA:
 - Si "Documento No:" muestra "0000000000" o enmascarado → cedula="" con score 0.
@@ -111,12 +132,14 @@ CÉDULA:
 
 VALOR DESEMBOLSADO:
 - Si no aparece "Valor del leasing" / "Valor inicial del leasing" / "Valor del contrato"
-  → valorDesembolsado="" con score 0. NO inventar. NO bloquea simulación.
+  → valorDesembolsado="" con score 0. NO inventar.
 
 FECHA DEL EXTRACTO:
-- Toma "Saldo a: [fecha]" en formato YYYY-MM-DD (ej "May. 08/2026" → "2026-05-08").
+- Toma "Saldo a la Fecha de Corte: [fecha]" en formato YYYY-MM-DD
+  (ej "Abr. 07/2026" → "2026-04-07").
 
-sistemaAmortizacion = "leasing canon fijo" si no hay otra evidencia.`,
+sistemaAmortizacion ← texto literal junto a "Sistema de Amortización"
+(ej "BAJA UVR 0%"); si no aparece, "leasing canon fijo".`,
   },
   {
     id: "davibank",
