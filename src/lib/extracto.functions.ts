@@ -532,19 +532,17 @@ export const extractStatement = createServerFn({ method: "POST" })
       const tipoLower = (typeof parsed.tipoCredito === "string" ? parsed.tipoCredito : "").toLowerCase();
       const esDaviviendaLeasing = /davivienda/.test(bancoLower) && /leasing/.test(`${productoLower} ${tipoLower}`);
 
-      let tieneCob =
-        (typeof parsed.tieneCobertura === "string" &&
-          parsed.tieneCobertura.toLowerCase() === "si") ||
-        monto("valorCobertura") > 0 ||
-        num("tasaCobertura") > 0 ||
-        monto("valorSubsidioGobierno") > 0;
-
       let cuotaCliente = monto("cuotaPagadaCliente");
       let valorBenef = monto("valorCobertura");
       const cuotaMensual = monto("cuotaMensual");
       let segurosNum = monto("seguros");
       let cuotaConInteresSinSeguros =
         monto("cuotaConInteresSinSeguros") || monto("cuotaSinSeguros");
+      let tieneCob =
+        valorBenef > 0 ||
+        num("tasaCobertura") > 0 ||
+        monto("valorSubsidioGobierno") > 0 ||
+        (monto("cuotaSinSubsidio") > 0 && cuotaCliente > 0 && monto("cuotaSinSubsidio") > cuotaCliente);
       let cuotaBase = 0;
       let requiereVerificacion = false;
       const errores: string[] = [];
