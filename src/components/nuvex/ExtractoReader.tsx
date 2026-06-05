@@ -556,22 +556,27 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
     if (!/davivienda/.test(texto) || /leasing/.test(texto)) return data;
 
     const out: ExtractoData = { ...data };
-    const cuota = parseMontoExtracto(g("cuotaMensual")) || parseMontoExtracto(g("cuotaPagadaCliente")) || parseMontoExtracto(g("cuotaBaseSimulacion"));
+    const valorCobertura = parseMontoExtracto(g("valorCobertura")) || parseMontoExtracto(g("valorSubsidioGobierno"));
+    const tasaCobertura = parseMontoExtracto(g("tasaCobertura"));
+    const cuotaSinSubsidio = parseMontoExtracto(g("cuotaSinSubsidio"));
+    const cuotaCliente = parseMontoExtracto(g("cuotaPagadaCliente")) || parseMontoExtracto(g("valorAPagar")) || parseMontoExtracto(g("valorCuotaConSubsidio"));
+    const tieneBeneficioReal = valorCobertura > 0 || tasaCobertura > 0 || (cuotaSinSubsidio > 0 && cuotaCliente > 0 && cuotaSinSubsidio > cuotaCliente);
+    const cuota = cuotaSinSubsidio || parseMontoExtracto(g("cuotaBaseSimulacion")) || parseMontoExtracto(g("cuotaMensual")) || cuotaCliente;
     const esUVR = /\buvr\b/i.test(`${g("moneda")} ${g("producto")} ${g("sistemaAmortizacion")}`);
     out.banco = "Davivienda";
     out.tipoCredito = "CREDITO_HIPOTECARIO";
     out.moneda = esUVR ? "UVR" : "PESOS";
-    out.producto = `Crédito Hipotecario en ${esUVR ? "UVR" : "pesos"} sin Beneficio de Cobertura`;
-    out.tieneCobertura = "no";
-    out.valorCobertura = "";
-    out.tasaCobertura = "";
-    out.tipoBeneficio = "";
-    out.cuotaSinSubsidio = "";
+    out.producto = `Crédito Hipotecario en ${esUVR ? "UVR" : "pesos"} ${tieneBeneficioReal ? "con" : "sin"} Beneficio de Cobertura`;
+    out.tieneCobertura = tieneBeneficioReal ? "si" : "no";
+    out.valorCobertura = tieneBeneficioReal && valorCobertura > 0 ? String(Math.round(valorCobertura)) : "";
+    out.tasaCobertura = tieneBeneficioReal ? g("tasaCobertura") : "";
+    out.tipoBeneficio = tieneBeneficioReal ? g("tipoBeneficio") || "Cobertura de Tasa" : "";
+    out.cuotaSinSubsidio = tieneBeneficioReal && cuota > 0 ? String(Math.round(cuota)) : "";
     out.valorDesembolsado = "";
     if (/^0+$/.test(g("cedula").trim())) out.cedula = "";
     if (cuota > 0) {
       out.cuotaMensual = String(Math.round(cuota));
-      out.cuotaPagadaCliente = String(Math.round(cuota));
+      out.cuotaPagadaCliente = cuotaCliente > 0 ? String(Math.round(cuotaCliente)) : String(Math.round(cuota));
       out.cuotaBaseSimulacion = String(Math.round(cuota));
     }
     out.requiereVerificacionBeneficio = "no";
