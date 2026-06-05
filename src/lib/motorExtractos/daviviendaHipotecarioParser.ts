@@ -128,6 +128,8 @@ function extractClienteName(rawText: string): string {
   }
 
   return "";
+}
+
 
 /**
  * Deterministic parser for Davivienda HIPOTECARIO statements
