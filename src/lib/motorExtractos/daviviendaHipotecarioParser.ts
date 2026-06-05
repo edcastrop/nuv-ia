@@ -35,6 +35,32 @@ function firstMatch(text: string, rx: RegExp) {
   return text.match(rx)?.[1]?.trim() ?? "";
 }
 
+function formatDecimalValue(value: number) {
+  return Number.isFinite(value) && value > 0 ? String(value) : "";
+}
+
+function lastMoneyFromLine(line: string) {
+  const values = Array.from(line.matchAll(/\$\s*([0-9][0-9.,]*)/g)).map((match) =>
+    moneyToNumber(match[1]),
+  );
+  return values.at(-1) ?? 0;
+}
+
+function numberFromLine(line: string, rx: RegExp) {
+  return moneyToNumber(line.match(rx)?.[1] ?? "");
+}
+
+function extractDaviviendaPaymentDetail(text: string) {
+  const m = text.match(
+    /Valor\s+Cuota\s+Total\s+-\s*Cobertura\s+de\s+Tasa\*?\s+Pago\s+M[ií]nimo\s+Cliente\s+\$\s*([0-9][0-9.,]*)\s+\$\s*([0-9][0-9.,]*)\s+\$\s*([0-9][0-9.,]*)/i,
+  );
+  return {
+    cuotaTotal: moneyToNumber(m?.[1] ?? ""),
+    cobertura: moneyToNumber(m?.[2] ?? ""),
+    pagoMinimo: moneyToNumber(m?.[3] ?? ""),
+  };
+}
+
 /**
  * Search lines that match `rx` AND contain a "$ amount". Filters out lines that
  * mention tasa/aseguradora/valor asegurado/costo/prima (those are not the monthly value).
@@ -74,6 +100,35 @@ function hasExplicitBenefit(rawText: string) {
       .filter((value) => value > 0);
     return amounts.length > 0;
   });
+}
+
+function extractCoverageValue(rawText: string, compactText: string) {
+  const detail = extractDaviviendaPaymentDetail(compactText);
+  if (detail.cobertura > 0) return detail.cobertura;
+
+  const lines = rawText.split(/\r?\n/).map((line) => compactSpaces(line).trim());
+  const currentCoverageLine = lines.find((line) => /^-?\s*Cobertura\s+de\s+Tasa\*?/i.test(line));
+  const currentCoverage = currentCoverageLine ? lastMoneyFromLine(currentCoverageLine) : 0;
+  if (currentCoverage > 0) return currentCoverage;
+
+  const interestCoverageLine = lines.find((line) => /^Inter[eé]s\s+Cte\.\s+Cobertura\b/i.test(line));
+  return interestCoverageLine ? lastMoneyFromLine(interestCoverageLine) : 0;
+}
+
+function extractSaldoCorte(rawText: string, compactText: string) {
+  const m = compactText.match(
+    /Saldo\s+a\s+la\s+Fecha\s+de\s+Corte:\s*[A-Za-zÁÉÍÓÚÑáéíóúñ]{3}\.\s*[0-9]{1,2}\/\d{4}\s+([0-9]{1,3}(?:,[0-9]{3})*\.\d{4})\s+\$\s*([0-9]{1,3}(?:,[0-9]{3})*\.\d{2})/i,
+  );
+  if (m) return { saldoUVR: moneyToNumber(m[1]), saldoCapital: moneyToNumber(m[2]) };
+
+  const line = rawText
+    .split(/\r?\n/)
+    .map((item) => compactSpaces(item).trim())
+    .find((item) => /^Saldo\s+a\s+la\s+Fecha\s+de\s+Corte:/i.test(item));
+  return {
+    saldoUVR: line ? numberFromLine(line, /([0-9]{1,3}(?:,[0-9]{3})*\.\d{4})\s+\$/) : 0,
+    saldoCapital: line ? lastMoneyFromLine(line) : 0,
+  };
 }
 
 const STOP_WORDS = /^(DOCUMENTO|CEDULA|CÉDULA|NIT|FECHA|PERIODO|EXTRACTO|CREDITO|CRÉDITO|VALOR|TOTAL|SALDO|PLAZO|TASA|CUOTA|NO\.?|DIRECCION|DIRECCIÓN|CIUDAD|TELEFONO|TELÉFONO|CARRERA|CALLE|AV|AVENIDA|PRORROGADO|SUBSIDIO|SEGURO|BANCO)$/i;
