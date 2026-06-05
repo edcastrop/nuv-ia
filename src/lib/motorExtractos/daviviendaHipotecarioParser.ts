@@ -91,9 +91,7 @@ export function parseDaviviendaHipotecarioText(rawText: string): ExtractoRecord 
     firstMatch(text, /Extracto\s+Cr[eé]dito\s+Hipotecario\s+([0-9-]+)/i) ||
     firstMatch(text, /No\s+del\s+cr[eé]dito:\s*([0-9-]+)/i);
 
-  const cliente = (firstMatch(rawText, /Cliente:\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ\s]+?)\s*(?:\r?\n|Documento|Fecha\s+de\s+pago)/i) || "")
-    .replace(/\s+/g, " ")
-    .trim();
+  const cliente = extractClienteName(rawText);
   const cedulaRaw = firstMatch(text, /Documento\s+No:\s*([0-9]+)/i);
   const cedula = /^0+$/.test(cedulaRaw) ? "" : cedulaRaw;
 
