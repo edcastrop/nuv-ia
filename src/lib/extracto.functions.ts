@@ -330,7 +330,9 @@ export const extractStatement = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => InputSchema.parse(data))
   .handler(async ({ data }): Promise<ExtractoResponse> => {
     const deterministicData = data.rawText
-      ? parseBancolombiaText(data.rawText) ?? parseDaviviendaLeasingText(data.rawText)
+      ? parseBancolombiaText(data.rawText)
+        ?? parseDaviviendaHipotecarioText(data.rawText)
+        ?? parseDaviviendaLeasingText(data.rawText)
       : null;
     if (deterministicData) {
       return { error: null, data: deterministicData };
