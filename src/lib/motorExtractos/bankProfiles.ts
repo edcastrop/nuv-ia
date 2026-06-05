@@ -172,7 +172,7 @@ sistemaAmortizacion ← texto literal junto a "Sistema de Amortización"
 - "Valor del crédito" → valorDesembolsado.
 - "Plazo inicial" en meses.
 - "Cuotas pendientes" y "Cuota" / "Valor cuota".
-- "Beneficio" — si aparece, producto = CON Beneficio de Cobertura.`,
+- Beneficio/cobertura: NO lo marques por texto legal ni por la sola palabra "beneficio". Sólo aplica si hay valor mensual > 0 o tasa explícita > 0 de subsidio/cobertura.`,
   },
   {
     id: "banco_bogota_leasing",
@@ -221,7 +221,7 @@ sistemaAmortizacion ← texto literal junto a "Sistema de Amortización"
     banco: "Credifamilia",
     productos: ["CREDITO_HIPOTECARIO"],
     matchAny: [/credifamilia/i],
-    hints: `CREDIFAMILIA: especializada en vivienda VIS. Casi siempre tiene Cobertura/FRECH. Saldo Capital, Valor Cuota, Plazo en meses.`,
+    hints: `CREDIFAMILIA: especializada en vivienda VIS. Saldo Capital, Valor Cuota, Plazo en meses. Beneficio/cobertura sólo si el extracto trae valor mensual > 0 o tasa explícita > 0; no asumir por el banco ni por texto legal.`,
   },
   {
     id: "bancoomeva",

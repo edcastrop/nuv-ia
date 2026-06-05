@@ -95,7 +95,7 @@ const tool = {
           type: "string",
           enum: ["si", "no", ""],
           description:
-            "'si' cuando el extracto mencione FRECH, Fresh, Tasa Fresh, cobertura, Cobertura VIS, Mi Casa Ya, subsidio, Subsidio Gobierno, Subsidio a la tasa, Beneficio VIS, cobertura de tasa, subsidio vivienda o equivalente.",
+            "'si' SOLO cuando el extracto muestre un valor mensual > 0 o una tasa explícita > 0 de subsidio/cobertura en el detalle operativo del pago. No marcar por menciones legales o informativas.",
         },
         tipoBeneficio: {
           type: "string",
