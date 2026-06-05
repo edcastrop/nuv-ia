@@ -369,9 +369,10 @@ export function UVRSimulator({
         <ClientFields
           data={client}
           onChange={setClient}
-          productos={PRODUCTOS_UVR}
+          modalidad="uvr"
           cuotasPendientes={cuotasPendientes}
         />
+
 
         <div className="mt-6">
           <IntervinientesFields
