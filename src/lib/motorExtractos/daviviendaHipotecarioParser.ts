@@ -99,6 +99,15 @@ function cleanName(raw: string): string {
 function extractClienteName(rawText: string): string {
   const lines = rawText.split(/\r?\n/).map((l) => compactSpaces(l).trim());
 
+  // 0) Main Davivienda header: "NAME + Valor Prorrogado ...". This is the
+  // most stable source when PDF.js reorders the payment stub labels.
+  for (const line of lines) {
+    if (/\+\s*Valor\s+Prorrogado\b/i.test(line)) {
+      const candidate = cleanName(line.split(/\+\s*Valor\s+Prorrogado\b/i)[0] ?? "");
+      if (candidate) return candidate;
+    }
+  }
+
   // 1) Inline: "Cliente: NAME ..." on the same line
   for (const line of lines) {
     const m = line.match(/Cliente:\s*(.+)/i);
@@ -111,6 +120,10 @@ function extractClienteName(rawText: string): string {
   // 2) Label on its own line, name on a nearby following line
   for (let i = 0; i < lines.length; i++) {
     if (/^Cliente:?\s*$/i.test(lines[i])) {
+      for (let j = i - 1; j >= Math.max(i - 3, 0); j--) {
+        const candidate = cleanName(lines[j]);
+        if (candidate) return candidate;
+      }
       for (let j = i + 1; j < Math.min(i + 5, lines.length); j++) {
         const candidate = cleanName(lines[j]);
         if (candidate) return candidate;
