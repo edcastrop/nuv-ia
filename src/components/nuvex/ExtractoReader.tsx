@@ -573,8 +573,16 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
 
     if (!g("tea") && g("teaCobrada")) out.tea = g("teaCobrada");
 
+    const submodalidad = /\bbaja\b/i.test(`${g("sistemaAmortizacion")} ${g("producto")}`)
+      ? "Baja"
+      : /\bmedia\b/i.test(`${g("sistemaAmortizacion")} ${g("producto")}`)
+        ? "Media"
+        : /\balta\b/i.test(`${g("sistemaAmortizacion")} ${g("producto")}`)
+          ? "Alta"
+          : "";
     const tieneBeneficioReal = m("valorCobertura") > 0 || parseMontoExtracto(g("tasaCobertura")) > 0;
     out.tieneCobertura = tieneBeneficioReal ? "si" : "no";
+    out.producto = `Contrato leasing en ${esUVR ? `UVR${submodalidad ? ` ${submodalidad}` : ""}` : "Pesos"} ${tieneBeneficioReal ? "con" : "sin"} beneficio de cobertura`;
     if (!tieneBeneficioReal) {
       out.valorCobertura = "";
       out.tasaCobertura = "";
@@ -594,6 +602,16 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
     }
     out.mapeoBanco = "davivienda_leasing";
     return out;
+  };
+
+  const hasBeneficioReal = (data: ExtractoData, producto: string) => {
+    const get = (k: string) => (typeof data[k] === "string" ? (data[k] as string) : "");
+    const valorCobertura = parseMontoExtracto(get("valorCobertura"));
+    const tasaCobertura = parseMontoExtracto(get("tasaCobertura"));
+    const subsidioGobierno = parseMontoExtracto(get("valorSubsidioGobierno"));
+    const tieneCoberturaSi = get("tieneCobertura").toLowerCase() === "si";
+    if (valorCobertura > 0 || tasaCobertura > 0 || subsidioGobierno > 0) return true;
+    return tieneCoberturaSi && /con\s+beneficio\s+de\s+cobertura/i.test(producto);
   };
 
 
@@ -632,12 +650,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       return;
     }
 
-    const tieneCob =
-      get("tieneCobertura").toLowerCase() === "si" ||
-      /con\s+beneficio\s+de\s+cobertura/i.test(get("producto")) ||
-      !!get("valorCobertura") ||
-      !!get("tasaCobertura") ||
-      !!get("tipoBeneficio");
+    const tieneCob = hasBeneficioReal(parsed, get("producto"));
     let producto = get("producto");
     if (tieneCob && producto && !/con\s+beneficio\s+de\s+cobertura/i.test(producto)) {
       producto = `${producto} con Beneficio de Cobertura`;
