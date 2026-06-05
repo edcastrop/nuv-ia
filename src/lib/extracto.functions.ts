@@ -6,8 +6,10 @@ import {
   formatMontoExtracto,
   parseMontoExtracto,
 } from "@/lib/cuotaBase";
+import { parseDaviviendaLeasingText } from "@/lib/motorExtractos/daviviendaLeasingParser";
 
 const InputSchema = z.object({
+  rawText: z.string().max(250_000).optional(),
   images: z
     .array(
       z.object({
@@ -93,7 +95,7 @@ const tool = {
           type: "string",
           enum: ["si", "no", ""],
           description:
-            "'si' cuando el extracto mencione FRECH, Fresh, Tasa Fresh, cobertura, Cobertura VIS, Mi Casa Ya, subsidio, Subsidio Gobierno, Subsidio a la tasa, Beneficio VIS, cobertura de tasa, subsidio vivienda o equivalente.",
+            "'si' SOLO cuando el extracto muestre un valor mensual > 0 o una tasa explícita > 0 de subsidio/cobertura en el detalle operativo del pago. No marcar por menciones legales o informativas.",
         },
         tipoBeneficio: {
           type: "string",
@@ -272,17 +274,17 @@ REGLAS ESTRICTAS:
 - Para fechas, formato YYYY-MM-DD si es posible.
 - Si encuentras múltiples valores posibles para un campo crítico (cuota, saldo, tasa), elige el más reciente / del periodo del extracto y baja la confianza a "media".
 - BENEFICIO / SUBSIDIO / COBERTURA — regla obligatoria (PRIORIDAD CRÍTICA):
-  * Busca SIEMPRE estas palabras clave: "FRECH", "Fresh", "Tasa Fresh", "cobertura", "Cobertura VIS", "Mi Casa Ya", "Subsidio", "Subsidio Gobierno", "Subsidio a la tasa", "Beneficio VIS", "Beneficio Gobierno", "cobertura de tasa", "subsidio vivienda", "cobertura condicionada", "cobertura tasa de interés".
-  * Si aparece CUALQUIERA: tieneCobertura="si" y llena "tipoBeneficio" con el nombre exacto detectado (ej: "FRECH", "Tasa Fresh", "Cobertura VIS", "Mi Casa Ya", "Subsidio Gobierno").
-  * Si NO aparece ninguna: tieneCobertura="no", tipoBeneficio="".
-  * Cuando tieneCobertura="si": extrae "valorCobertura" (monto mensual del subsidio en pesos, solo dígitos) y "tasaCobertura" (puntos porcentuales, ej "5.00").
+  * NO marques beneficio por notas legales, definiciones, advertencias de mora, tablas de tasas, ni por la sola palabra "cobertura".
+  * tieneCobertura="si" SOLO si aparece un valor mensual > 0 o tasa explícita > 0 asociado a una etiqueta operativa del recibo como "Valor subsidio", "Valor beneficio", "Interés Cte. Cobertura", "Subsidio Gobierno", "Cobertura FRECH", "cuota con subsidio" / "cuota sin subsidio".
+  * Si solo aparece texto informativo/legal sobre FRECH/cobertura o si el valor es 0: tieneCobertura="no", tipoBeneficio="", valorCobertura="", tasaCobertura="".
+  * Cuando tieneCobertura="si": extrae "valorCobertura" (monto mensual del subsidio en pesos, solo dígitos) y "tasaCobertura" (puntos porcentuales, ej "5.00") únicamente si están explícitos.
   * "cuotaConInteresSinSeguros": dato CRÍTICO. Extrae la cuota de capital/interés SIN seguros y ANTES de subsidio/cobertura. Etiquetas: "valor de la cuota sin seguros y sin comisiones", "cuota sin seguros", "cuota antes de seguros", "cuota con interés", "valor cuota con subsidio", "valor cuota sin seguros". Déjalo vacío si NO aparece explícitamente — NO lo inventes.
   * "cuotaPagadaCliente": cuota que efectivamente PAGA el cliente después del subsidio (etiquetas comunes: "cuota cliente", "valor a pagar", "cuota neta", "cuota con subsidio", "valor a pagar cliente", "cuota a cargo del cliente"). Solo dígitos.
   * "cuotaSinSubsidio": cuota plena ANTES del subsidio/cobertura si el banco la muestra como tal. Si el dato está SIN seguros, también debe ir en "cuotaConInteresSinSeguros". Solo dígitos. Déjalo vacío si NO aparece explícitamente — NO lo inventes.
   * "seguros": suma TODOS los seguros detectados: seguro vida + seguro incendio + seguro terremoto + seguro todo riesgo + otros seguros asociados al crédito.
   * Fórmula obligatoria para la cuota base: cuotaConInteresSinSeguros + valorCobertura + seguros. NUNCA uses únicamente cuotaPagadaCliente + valorCobertura.
   * "cuotaMensual": cuando hay beneficio, si puedes aplicar la fórmula obligatoria, debe reflejar la cuota base real con seguros; si no puedes, conserva el dato visible y baja la confianza a "media".
-  * Cuando tieneCobertura="si" y el campo "producto" no incluya ya la frase "con Beneficio de Cobertura", AÑÁDELA al final del producto.
+  * NO añadas "con Beneficio de Cobertura" al producto salvo que la regla anterior confirme beneficio real.
 - BANCOLOMBIA — diccionario de mapeo LITERAL obligatorio (PRIORIDAD MÁXIMA — NO interpretes nombres parecidos):
   * Usa EXACTAMENTE este diccionario etiqueta-del-extracto → campo de salida. Si la etiqueta literal no aparece, deja el campo vacío. NO mapees por sinónimos ni por aproximación.
     - "Saldo a la fecha en que se generó el extracto" → "saldoCapital"
@@ -307,7 +309,7 @@ REGLAS ESTRICTAS:
   * Los seguros mensuales se calculan EXCLUSIVAMENTE como valorSeguroVida + valorSeguroIncendio + valorSeguroTerremoto. Nunca incluyas "Valor asegurado Incendio y Terremoto" en esta suma.
   * EJEMPLO REAL Bancolombia (referencia obligatoria): "*Valor seguro vida $ 14,433.00", "*Valor seguro incendio $ 21,654.00", "*Valor seguro terremoto $ 14,435.00" → valorSeguroVida="14433", valorSeguroIncendio="21654", valorSeguroTerremoto="14435". Suma seguros = 50522. Si la tabla "Movimientos Último Periodo" muestra columnas "Seguros Vida / Seguros Incendio / Seguros Terremoto", esos valores deben coincidir con los anteriores.
 - DAVIVIENDA LEASING HABITACIONAL — mapeo LITERAL obligatorio:
-  * Si aparece "Extracto Contrato Leasing", "Davivienda" y "No. Cánones Pdtes. Pago Total", producto="Extracto Contrato Leasing", tipoCredito="LEASING_HABITACIONAL", moneda="PESOS".
+  * Si aparece "Extracto Contrato Leasing", "Davivienda" y "No. Cánones Pdtes. Pago Total", producto="Extracto Contrato Leasing", tipoCredito="LEASING_HABITACIONAL". moneda="UVR" si Sistema de Amortización o la tabla dice UVR; en caso contrario moneda="PESOS".
   * "Apreciado Cliente" → cliente. "No.Contrato del Leasing" / número junto a "Extracto Contrato Leasing" → numeroCredito.
   * "+ Valor Cuota Mes" → cuotaMensual y cuotaPagadaCliente. NO uses "Total Aplicado". NO uses "Total Valor a pagar" si hay mora.
   * "Saldo a:" / "Saldo a la Fecha de Corte" → saldoCapital y fechaExtracto.
@@ -325,6 +327,11 @@ export type ExtractoResponse = { error: string | null; data: ExtractoData | null
 export const extractStatement = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => InputSchema.parse(data))
   .handler(async ({ data }): Promise<ExtractoResponse> => {
+    const deterministicData = data.rawText ? parseDaviviendaLeasingText(data.rawText) : null;
+    if (deterministicData) {
+      return { error: null, data: deterministicData };
+    }
+
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return { error: "LOVABLE_API_KEY no está configurada en el servidor.", data: null };
@@ -525,19 +532,17 @@ export const extractStatement = createServerFn({ method: "POST" })
       const tipoLower = (typeof parsed.tipoCredito === "string" ? parsed.tipoCredito : "").toLowerCase();
       const esDaviviendaLeasing = /davivienda/.test(bancoLower) && /leasing/.test(`${productoLower} ${tipoLower}`);
 
-      let tieneCob =
-        (typeof parsed.tieneCobertura === "string" &&
-          parsed.tieneCobertura.toLowerCase() === "si") ||
-        monto("valorCobertura") > 0 ||
-        num("tasaCobertura") > 0 ||
-        monto("valorSubsidioGobierno") > 0;
-
       let cuotaCliente = monto("cuotaPagadaCliente");
       let valorBenef = monto("valorCobertura");
       const cuotaMensual = monto("cuotaMensual");
       let segurosNum = monto("seguros");
       let cuotaConInteresSinSeguros =
         monto("cuotaConInteresSinSeguros") || monto("cuotaSinSeguros");
+      let tieneCob =
+        valorBenef > 0 ||
+        num("tasaCobertura") > 0 ||
+        monto("valorSubsidioGobierno") > 0 ||
+        (monto("cuotaSinSubsidio") > 0 && cuotaCliente > 0 && monto("cuotaSinSubsidio") > cuotaCliente);
       let cuotaBase = 0;
       let requiereVerificacion = false;
       const errores: string[] = [];
@@ -663,11 +668,13 @@ export const extractStatement = createServerFn({ method: "POST" })
         // ----- DAVIVIENDA LEASING: no usa lógica genérica de beneficio -----
         mapeoBanco = "davivienda_leasing";
         parsed.banco = "Davivienda";
-        parsed.moneda = "PESOS";
         parsed.tipoCredito = "LEASING_HABITACIONAL";
-        if (!parsed.producto || /hipotecario/i.test(String(parsed.producto))) {
-          parsed.producto = "Extracto Contrato Leasing";
-        }
+        const sistema = typeof parsed.sistemaAmortizacion === "string" ? parsed.sistemaAmortizacion : "";
+        const davEsUVR =
+          /\buvr\b/i.test(`${parsed.moneda ?? ""} ${parsed.producto ?? ""} ${sistema}`) ||
+          monto("saldoUVR") > 0 ||
+          monto("valorUVR") > 0;
+        parsed.moneda = davEsUVR ? "UVR" : "PESOS";
 
         if (_plazoInicialVal > 0 && _cuotasPendientesVal > 0) {
           parsed.cuotasPagadas = String(Math.max(0, _plazoInicialVal - _cuotasPendientesVal));
@@ -694,6 +701,14 @@ export const extractStatement = createServerFn({ method: "POST" })
         }
 
         parsed.tieneCobertura = valorBenef > 0 || num("tasaCobertura") > 0 ? "si" : "no";
+        const davSubmodalidad = /\bbaja\b/i.test(`${sistema} ${parsed.producto ?? ""}`)
+          ? " Baja"
+          : /\bmedia\b/i.test(`${sistema} ${parsed.producto ?? ""}`)
+            ? " Media"
+            : /\balta\b/i.test(`${sistema} ${parsed.producto ?? ""}`)
+              ? " Alta"
+              : "";
+        parsed.producto = `Contrato leasing en ${davEsUVR ? `UVR${davSubmodalidad}` : "Pesos"} ${parsed.tieneCobertura === "si" ? "con" : "sin"} beneficio de cobertura`;
         if (parsed.tieneCobertura !== "si") {
           parsed.valorCobertura = "";
           parsed.tasaCobertura = "";

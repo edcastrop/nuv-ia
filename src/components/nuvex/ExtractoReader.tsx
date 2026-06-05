@@ -122,6 +122,37 @@ async function renderPdfToImages(
   }
 }
 
+async function extractTextFromPdf(file: File, password?: string): Promise<string> {
+  const pdfjs = await loadPdfJs();
+  const buffer = await file.arrayBuffer();
+  const loadingTask = pdfjs.getDocument({ data: new Uint8Array(buffer), password });
+  const pdf = await loadingTask.promise;
+  const max = Math.min(pdf.numPages, 10);
+  const pages: string[] = [];
+  for (let i = 1; i <= max; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const lines = new Map<number, { x: number; text: string }[]>();
+    for (const item of content.items as Array<{ str?: string; transform?: number[] }>) {
+      const str = item.str?.trim();
+      const transform = item.transform;
+      if (!str || !transform) continue;
+      const x = Math.round(transform[4] ?? 0);
+      const y = Math.round((transform[5] ?? 0) / 3) * 3;
+      const row = lines.get(y) ?? [];
+      row.push({ x, text: str });
+      lines.set(y, row);
+    }
+    pages.push(
+      Array.from(lines.entries())
+        .sort((a, b) => b[0] - a[0])
+        .map(([, row]) => row.sort((a, b) => a.x - b.x).map((part) => part.text).join(" "))
+        .join("\n"),
+    );
+  }
+  return pages.join("\n").slice(0, 200_000);
+}
+
 async function fileToDataUrl(file: File | Blob, forceMime?: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
@@ -307,6 +338,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
     setStage("reading");
     try {
       let images: { mime: string; dataUrl: string }[] = [];
+      let rawText = "";
       const lowerName = f.name.toLowerCase();
       const isZip =
         f.type === "application/zip" ||
@@ -320,6 +352,11 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           return;
         }
         images = result.images;
+        try {
+          rawText = await extractTextFromPdf(f, pwd);
+        } catch (textErr) {
+          console.warn("No se pudo extraer texto estructural del PDF:", textErr);
+        }
       } else if (f.type.startsWith("image/")) {
         const url = await fileToDataUrl(f);
         images = [{ mime: f.type, dataUrl: url }];
@@ -349,7 +386,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       }
 
       // Llamar IA
-      const resp = await callExtract({ data: { images } });
+      const resp = await callExtract({ data: { images, rawText } });
       if (resp.error || !resp.data) {
         setErrorMsg(resp.error || "No se pudieron extraer datos.");
         setStage("error");
@@ -536,8 +573,16 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
 
     if (!g("tea") && g("teaCobrada")) out.tea = g("teaCobrada");
 
+    const submodalidad = /\bbaja\b/i.test(`${g("sistemaAmortizacion")} ${g("producto")}`)
+      ? "Baja"
+      : /\bmedia\b/i.test(`${g("sistemaAmortizacion")} ${g("producto")}`)
+        ? "Media"
+        : /\balta\b/i.test(`${g("sistemaAmortizacion")} ${g("producto")}`)
+          ? "Alta"
+          : "";
     const tieneBeneficioReal = m("valorCobertura") > 0 || parseMontoExtracto(g("tasaCobertura")) > 0;
     out.tieneCobertura = tieneBeneficioReal ? "si" : "no";
+    out.producto = `Contrato leasing en ${esUVR ? `UVR${submodalidad ? ` ${submodalidad}` : ""}` : "Pesos"} ${tieneBeneficioReal ? "con" : "sin"} beneficio de cobertura`;
     if (!tieneBeneficioReal) {
       out.valorCobertura = "";
       out.tasaCobertura = "";
@@ -557,6 +602,17 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
     }
     out.mapeoBanco = "davivienda_leasing";
     return out;
+  };
+
+  const hasBeneficioReal = (data: ExtractoData, producto: string) => {
+    const get = (k: string) => (typeof data[k] === "string" ? (data[k] as string) : "");
+    const valorCobertura = parseMontoExtracto(get("valorCobertura"));
+    const tasaCobertura = parseMontoExtracto(get("tasaCobertura"));
+    const subsidioGobierno = parseMontoExtracto(get("valorSubsidioGobierno"));
+    if (valorCobertura > 0 || tasaCobertura > 0 || subsidioGobierno > 0) return true;
+    const cuotaSinSubsidio = parseMontoExtracto(get("cuotaSinSubsidio")) || parseMontoExtracto(get("valorCuotaSinSubsidioGobierno"));
+    const cuotaCliente = parseMontoExtracto(get("cuotaPagadaCliente")) || parseMontoExtracto(get("valorCuotaConSubsidio"));
+    return cuotaSinSubsidio > 0 && cuotaCliente > 0 && cuotaSinSubsidio > cuotaCliente;
   };
 
 
@@ -595,12 +651,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       return;
     }
 
-    const tieneCob =
-      get("tieneCobertura").toLowerCase() === "si" ||
-      /con\s+beneficio\s+de\s+cobertura/i.test(get("producto")) ||
-      !!get("valorCobertura") ||
-      !!get("tasaCobertura") ||
-      !!get("tipoBeneficio");
+    const tieneCob = hasBeneficioReal(parsed, get("producto"));
     let producto = get("producto");
     if (tieneCob && producto && !/con\s+beneficio\s+de\s+cobertura/i.test(producto)) {
       producto = `${producto} con Beneficio de Cobertura`;
@@ -634,16 +685,18 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
     const esLeasingFinal = parsedAttrs.esLeasing || /leasing/.test(tipoLower);
     const monedaUpper = get("moneda").toUpperCase();
     const esUVRFinal = parsedAttrs.esUVR || monedaUpper === "UVR" || modo === "uvr";
-    const match = buscarProductoComercial(catalogoProductos, {
+    const matchExacto = buscarProductoComercial(catalogoProductos, {
       banco,
       esLeasing: esLeasingFinal,
       esUVR: esUVRFinal,
       cobertura: tieneCob,
-    }) ?? buscarProductoComercial(catalogoProductos, {
+    });
+    const matchFallback = buscarProductoComercial(catalogoProductos, {
       banco,
       esLeasing: esLeasingFinal,
       esUVR: esUVRFinal,
     });
+    const match = matchExacto ?? (matchFallback?.cobertura === tieneCob ? matchFallback : null);
 
     const payload: ExtractoApplyPayload = {
       cliente: {
@@ -754,10 +807,9 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
   const tipoBeneficio = (parsed?.tipoBeneficio as string) ?? "";
   const tieneCoberturaStr = ((parsed?.tieneCobertura as string) ?? "").toLowerCase() === "si";
   const tieneBeneficio =
-    tieneCoberturaStr ||
-    !!tipoBeneficio ||
-    !!(parsed?.valorCobertura as string) ||
-    !!(parsed?.tasaCobertura as string);
+    !!parsed &&
+    hasBeneficioReal(parsed, (parsed.producto as string) ?? "") &&
+    (tieneCoberturaStr || !!tipoBeneficio || !!(parsed?.valorCobertura as string) || !!(parsed?.tasaCobertura as string));
   const requiereVerificacion =
     ((parsed?.requiereVerificacionBeneficio as string) ?? "").toLowerCase() === "si";
   const alertaCuotaBase = (parsed?.alertaCuotaBase as string) ?? "";
