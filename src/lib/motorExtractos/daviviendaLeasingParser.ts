@@ -47,7 +47,12 @@ function moneyFromLine(text: string, rx: RegExp) {
   const line = text
     .split(/\r?\n/)
     .map((item) => compactSpaces(item).trim())
-    .find((item) => rx.test(item) && /\$\s*[0-9]/.test(item)) ?? "";
+    .find(
+      (item) =>
+        rx.test(item) &&
+        /\$\s*[0-9]/.test(item) &&
+        !/costo|prima|aseguradora|valor\s+asegurado|tasa/i.test(item),
+    ) ?? "";
   const value = line.match(/\$\s*([0-9][0-9.,]*)/)?.[1] ?? "";
   return moneyToNumber(value);
 }
