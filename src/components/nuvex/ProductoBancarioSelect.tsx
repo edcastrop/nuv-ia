@@ -61,7 +61,7 @@ export function ProductoBancarioSelect({ banco, producto, onChange, filtrarPorMo
       <label className="flex flex-col gap-1">
         <span className="text-xs font-medium tracking-wide text-[#242424]/70 uppercase">Banco</span>
         <select
-          value={banco}
+          value={bancoCanonico}
           onChange={(e) => handleBanco(e.target.value)}
           disabled={isLoading}
           className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-2.5 text-sm text-[#242424] outline-none transition-all focus:border-[#445DA3] focus:ring-2 focus:ring-[#445DA3]/15"
@@ -70,6 +70,9 @@ export function ProductoBancarioSelect({ banco, producto, onChange, filtrarPorMo
           {bancos.map((b) => (
             <option key={b} value={b}>{b}</option>
           ))}
+          {bancoEsLegacy && (
+            <option value={bancoCanonico}>{bancoCanonico} (legacy)</option>
+          )}
         </select>
       </label>
 
