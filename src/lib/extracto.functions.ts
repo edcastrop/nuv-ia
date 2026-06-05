@@ -6,8 +6,10 @@ import {
   formatMontoExtracto,
   parseMontoExtracto,
 } from "@/lib/cuotaBase";
+import { parseDaviviendaLeasingText } from "@/lib/motorExtractos/daviviendaLeasingParser";
 
 const InputSchema = z.object({
+  rawText: z.string().max(250_000).optional(),
   images: z
     .array(
       z.object({
@@ -325,6 +327,11 @@ export type ExtractoResponse = { error: string | null; data: ExtractoData | null
 export const extractStatement = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => InputSchema.parse(data))
   .handler(async ({ data }): Promise<ExtractoResponse> => {
+    const deterministicData = data.rawText ? parseDaviviendaLeasingText(data.rawText) : null;
+    if (deterministicData) {
+      return { error: null, data: deterministicData };
+    }
+
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return { error: "LOVABLE_API_KEY no está configurada en el servidor.", data: null };
