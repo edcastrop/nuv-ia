@@ -44,9 +44,16 @@ function findLine(text: string, rx: RegExp) {
 }
 
 function moneyFromLine(text: string, rx: RegExp) {
-  const line = findLine(text, rx);
+  const line = text
+    .split(/\r?\n/)
+    .map((item) => compactSpaces(item).trim())
+    .find((item) => rx.test(item) && /\$\s*[0-9]/.test(item)) ?? "";
   const value = line.match(/\$\s*([0-9][0-9.,]*)/)?.[1] ?? "";
   return moneyToNumber(value);
+}
+
+function formatDecimalValue(value: number) {
+  return Number.isFinite(value) && value > 0 ? String(value) : "";
 }
 
 function rateAfter(text: string, label: string) {
@@ -158,8 +165,8 @@ export function parseDaviviendaLeasingText(rawText: string): ExtractoRecord | nu
     tasaMensual: "",
     interesCuota: formatMontoExtracto(interesCuota),
     capitalCuota: formatMontoExtracto(capitalCuota),
-    valorUVR: formatMontoExtracto(valorUVR),
-    saldoUVR: formatMontoExtracto(saldoUVR),
+    valorUVR: formatDecimalValue(valorUVR),
+    saldoUVR: formatDecimalValue(saldoUVR),
     valorCobertura: "",
     tasaCobertura: "",
     tieneCobertura: beneficioActivo ? "si" : "no",
