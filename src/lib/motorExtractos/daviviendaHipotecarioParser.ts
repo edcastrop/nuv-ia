@@ -76,6 +76,61 @@ function hasExplicitBenefit(rawText: string) {
   });
 }
 
+const STOP_WORDS = /^(DOCUMENTO|CEDULA|CÉDULA|NIT|FECHA|PERIODO|EXTRACTO|CREDITO|CRÉDITO|VALOR|TOTAL|SALDO|PLAZO|TASA|CUOTA|NO\.?|DIRECCION|DIRECCIÓN|CIUDAD|TELEFONO|TELÉFONO|CARRERA|CALLE|AV|AVENIDA|PRORROGADO|SUBSIDIO|SEGURO|BANCO)$/i;
+
+function cleanName(raw: string): string {
+  const tokens = raw
+    .replace(/[+\-$]/g, " ")
+    .replace(/\d+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ");
+  const out: string[] = [];
+  for (const t of tokens) {
+    if (!t) continue;
+    if (STOP_WORDS.test(t)) break;
+    if (!/^[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ'.-]{1,}$/.test(t)) break;
+    out.push(t);
+    if (out.length >= 6) break;
+  }
+  return out.length >= 2 ? out.join(" ") : "";
+}
+
+function extractClienteName(rawText: string): string {
+  const lines = rawText.split(/\r?\n/).map((l) => compactSpaces(l).trim());
+
+  // 1) Inline: "Cliente: NAME ..." on the same line
+  for (const line of lines) {
+    const m = line.match(/Cliente:\s*(.+)/i);
+    if (m) {
+      const candidate = cleanName(m[1]);
+      if (candidate) return candidate;
+    }
+  }
+
+  // 2) Label on its own line, name on a nearby following line
+  for (let i = 0; i < lines.length; i++) {
+    if (/^Cliente:?\s*$/i.test(lines[i])) {
+      for (let j = i + 1; j < Math.min(i + 5, lines.length); j++) {
+        const candidate = cleanName(lines[j]);
+        if (candidate) return candidate;
+      }
+    }
+  }
+
+  // 3) Fallback: "Sr(a)." / "Señor(a)" labels
+  for (const line of lines) {
+    const m = line.match(/(?:Se[nñ]or(?:\(a\))?|Sr\.?\(a\)?\.?)\s*:?\s*(.+)/i);
+    if (m) {
+      const candidate = cleanName(m[1]);
+      if (candidate) return candidate;
+    }
+  }
+
+  return "";
+}
+
+
 /**
  * Deterministic parser for Davivienda HIPOTECARIO statements
  * ("Extracto Crédito Hipotecario"). Returns null when the text does not match.
@@ -91,9 +146,7 @@ export function parseDaviviendaHipotecarioText(rawText: string): ExtractoRecord 
     firstMatch(text, /Extracto\s+Cr[eé]dito\s+Hipotecario\s+([0-9-]+)/i) ||
     firstMatch(text, /No\s+del\s+cr[eé]dito:\s*([0-9-]+)/i);
 
-  const cliente = (firstMatch(rawText, /Cliente:\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ\s]+?)\s*(?:\r?\n|Documento|Fecha\s+de\s+pago)/i) || "")
-    .replace(/\s+/g, " ")
-    .trim();
+  const cliente = extractClienteName(rawText);
   const cedulaRaw = firstMatch(text, /Documento\s+No:\s*([0-9]+)/i);
   const cedula = /^0+$/.test(cedulaRaw) ? "" : cedulaRaw;
 
