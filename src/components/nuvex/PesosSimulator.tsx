@@ -362,9 +362,10 @@ export function PesosSimulator({
         <ClientFields
           data={client}
           onChange={setClient}
-          productos={PRODUCTOS_PESOS}
+          modalidad="pesos"
           cuotasPendientes={cuotasPendientes}
         />
+
 
         <div className="mt-6">
           <IntervinientesFields
