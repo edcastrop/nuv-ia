@@ -274,17 +274,17 @@ REGLAS ESTRICTAS:
 - Para fechas, formato YYYY-MM-DD si es posible.
 - Si encuentras múltiples valores posibles para un campo crítico (cuota, saldo, tasa), elige el más reciente / del periodo del extracto y baja la confianza a "media".
 - BENEFICIO / SUBSIDIO / COBERTURA — regla obligatoria (PRIORIDAD CRÍTICA):
-  * Busca SIEMPRE estas palabras clave: "FRECH", "Fresh", "Tasa Fresh", "cobertura", "Cobertura VIS", "Mi Casa Ya", "Subsidio", "Subsidio Gobierno", "Subsidio a la tasa", "Beneficio VIS", "Beneficio Gobierno", "cobertura de tasa", "subsidio vivienda", "cobertura condicionada", "cobertura tasa de interés".
-  * Si aparece CUALQUIERA: tieneCobertura="si" y llena "tipoBeneficio" con el nombre exacto detectado (ej: "FRECH", "Tasa Fresh", "Cobertura VIS", "Mi Casa Ya", "Subsidio Gobierno").
-  * Si NO aparece ninguna: tieneCobertura="no", tipoBeneficio="".
-  * Cuando tieneCobertura="si": extrae "valorCobertura" (monto mensual del subsidio en pesos, solo dígitos) y "tasaCobertura" (puntos porcentuales, ej "5.00").
+  * NO marques beneficio por notas legales, definiciones, advertencias de mora, tablas de tasas, ni por la sola palabra "cobertura".
+  * tieneCobertura="si" SOLO si aparece un valor mensual > 0 o tasa explícita > 0 asociado a una etiqueta operativa del recibo como "Valor subsidio", "Valor beneficio", "Interés Cte. Cobertura", "Subsidio Gobierno", "Cobertura FRECH", "cuota con subsidio" / "cuota sin subsidio".
+  * Si solo aparece texto informativo/legal sobre FRECH/cobertura o si el valor es 0: tieneCobertura="no", tipoBeneficio="", valorCobertura="", tasaCobertura="".
+  * Cuando tieneCobertura="si": extrae "valorCobertura" (monto mensual del subsidio en pesos, solo dígitos) y "tasaCobertura" (puntos porcentuales, ej "5.00") únicamente si están explícitos.
   * "cuotaConInteresSinSeguros": dato CRÍTICO. Extrae la cuota de capital/interés SIN seguros y ANTES de subsidio/cobertura. Etiquetas: "valor de la cuota sin seguros y sin comisiones", "cuota sin seguros", "cuota antes de seguros", "cuota con interés", "valor cuota con subsidio", "valor cuota sin seguros". Déjalo vacío si NO aparece explícitamente — NO lo inventes.
   * "cuotaPagadaCliente": cuota que efectivamente PAGA el cliente después del subsidio (etiquetas comunes: "cuota cliente", "valor a pagar", "cuota neta", "cuota con subsidio", "valor a pagar cliente", "cuota a cargo del cliente"). Solo dígitos.
   * "cuotaSinSubsidio": cuota plena ANTES del subsidio/cobertura si el banco la muestra como tal. Si el dato está SIN seguros, también debe ir en "cuotaConInteresSinSeguros". Solo dígitos. Déjalo vacío si NO aparece explícitamente — NO lo inventes.
   * "seguros": suma TODOS los seguros detectados: seguro vida + seguro incendio + seguro terremoto + seguro todo riesgo + otros seguros asociados al crédito.
   * Fórmula obligatoria para la cuota base: cuotaConInteresSinSeguros + valorCobertura + seguros. NUNCA uses únicamente cuotaPagadaCliente + valorCobertura.
   * "cuotaMensual": cuando hay beneficio, si puedes aplicar la fórmula obligatoria, debe reflejar la cuota base real con seguros; si no puedes, conserva el dato visible y baja la confianza a "media".
-  * Cuando tieneCobertura="si" y el campo "producto" no incluya ya la frase "con Beneficio de Cobertura", AÑÁDELA al final del producto.
+  * NO añadas "con Beneficio de Cobertura" al producto salvo que la regla anterior confirme beneficio real.
 - BANCOLOMBIA — diccionario de mapeo LITERAL obligatorio (PRIORIDAD MÁXIMA — NO interpretes nombres parecidos):
   * Usa EXACTAMENTE este diccionario etiqueta-del-extracto → campo de salida. Si la etiqueta literal no aparece, deja el campo vacío. NO mapees por sinónimos ni por aproximación.
     - "Saldo a la fecha en que se generó el extracto" → "saldoCapital"
@@ -309,7 +309,7 @@ REGLAS ESTRICTAS:
   * Los seguros mensuales se calculan EXCLUSIVAMENTE como valorSeguroVida + valorSeguroIncendio + valorSeguroTerremoto. Nunca incluyas "Valor asegurado Incendio y Terremoto" en esta suma.
   * EJEMPLO REAL Bancolombia (referencia obligatoria): "*Valor seguro vida $ 14,433.00", "*Valor seguro incendio $ 21,654.00", "*Valor seguro terremoto $ 14,435.00" → valorSeguroVida="14433", valorSeguroIncendio="21654", valorSeguroTerremoto="14435". Suma seguros = 50522. Si la tabla "Movimientos Último Periodo" muestra columnas "Seguros Vida / Seguros Incendio / Seguros Terremoto", esos valores deben coincidir con los anteriores.
 - DAVIVIENDA LEASING HABITACIONAL — mapeo LITERAL obligatorio:
-  * Si aparece "Extracto Contrato Leasing", "Davivienda" y "No. Cánones Pdtes. Pago Total", producto="Extracto Contrato Leasing", tipoCredito="LEASING_HABITACIONAL", moneda="PESOS".
+  * Si aparece "Extracto Contrato Leasing", "Davivienda" y "No. Cánones Pdtes. Pago Total", producto="Extracto Contrato Leasing", tipoCredito="LEASING_HABITACIONAL". moneda="UVR" si Sistema de Amortización o la tabla dice UVR; en caso contrario moneda="PESOS".
   * "Apreciado Cliente" → cliente. "No.Contrato del Leasing" / número junto a "Extracto Contrato Leasing" → numeroCredito.
   * "+ Valor Cuota Mes" → cuotaMensual y cuotaPagadaCliente. NO uses "Total Aplicado". NO uses "Total Valor a pagar" si hay mora.
   * "Saldo a:" / "Saldo a la Fecha de Corte" → saldoCapital y fechaExtracto.
