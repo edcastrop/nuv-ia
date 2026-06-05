@@ -9,6 +9,7 @@ import {
 } from "@/lib/expedientes";
 import { formatCOP, formatNumber } from "@/lib/format";
 import { useUserRole } from "@/hooks/useUserRole";
+import { parseProductoComercial } from "@/lib/productosBancarios";
 import {
   BarChart,
   Bar,
@@ -83,6 +84,40 @@ function DashboardPage() {
         : [],
     [metrics],
   );
+
+  // Distribución por producto bancario (banco · tipo · modalidad · cobertura)
+  const productoStats = useMemo(() => {
+    type Row = { key: string; banco: string; tipo: string; modalidad: string; cobertura: boolean; count: number };
+    const map = new Map<string, Row>();
+    for (const r of rows) {
+      const cd = (r.cliente_data ?? {}) as { banco?: string; tipoProducto?: string; cobertura?: { activo?: boolean } };
+      const banco = cd.banco?.trim() || "Sin banco";
+      const parsed = parseProductoComercial(cd.tipoProducto ?? "");
+      const tipo = parsed.esLeasing ? "Leasing" : "Hipotecario";
+      const modalidad = (r.modo ?? (parsed.esUVR ? "uvr" : "pesos")).toUpperCase();
+      const cobertura = !!cd.cobertura?.activo;
+      const key = `${banco}__${tipo}__${modalidad}__${cobertura ? "1" : "0"}`;
+      const prev = map.get(key);
+      if (prev) prev.count += 1;
+      else map.set(key, { key, banco, tipo, modalidad, cobertura, count: 1 });
+    }
+    return Array.from(map.values()).sort((a, b) => b.count - a.count);
+  }, [rows]);
+
+  const productoTotales = useMemo(() => {
+    const porBanco = new Map<string, number>();
+    let leasing = 0, hipotecario = 0, pesos = 0, uvr = 0, conCob = 0;
+    for (const s of productoStats) {
+      porBanco.set(s.banco, (porBanco.get(s.banco) ?? 0) + s.count);
+      if (s.tipo === "Leasing") leasing += s.count; else hipotecario += s.count;
+      if (s.modalidad === "UVR") uvr += s.count; else pesos += s.count;
+      if (s.cobertura) conCob += s.count;
+    }
+    return {
+      bancos: Array.from(porBanco.entries()).map(([banco, count]) => ({ banco, count })).sort((a, b) => b.count - a.count),
+      leasing, hipotecario, pesos, uvr, conCob,
+    };
+  }, [productoStats]);
 
   const ticketPromedio = useMemo(() => {
     if (!metrics || metrics.total === 0) return 0;
