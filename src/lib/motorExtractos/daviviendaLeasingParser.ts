@@ -102,8 +102,10 @@ export function parseDaviviendaLeasingText(rawText: string): ExtractoRecord | nu
   const submodalidad = detectSubmodalidad(sistema);
   const beneficioActivo = hasExplicitBenefit(rawText);
 
-  const clienteLine = findLine(rawText, /^[A-ZÁÉÍÓÚÑ ]{8,}/);
-  const cliente = clienteLine.split(/\s{2,}/)[0]?.trim() ?? "";
+  const clienteLine = findLine(rawText, /^[A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ ]{7,}/);
+  // Stop the name at any token that is not an uppercase word (digits, $, +, lowercase, punctuation)
+  const clienteMatch = clienteLine.match(/^((?:[A-ZÁÉÍÓÚÑ]{2,}\s+){1,6}[A-ZÁÉÍÓÚÑ]{2,})/);
+  const cliente = (clienteMatch?.[1] ?? clienteLine.split(/\s{2,}|\s+\+|\s+\$|\s+[a-z0-9]/)[0] ?? "").trim();
   const numeroCredito = firstMatch(text, /Extracto\s+Contrato\s+Leasing\s+([0-9-]+)/i) ||
     firstMatch(text, /No\.\s*Contrato\s+del\s+Leasing:\s*([0-9-]+)/i);
   const cedulaRaw = firstMatch(text, /Documento\s+No:\s*([0-9]+)/i);
