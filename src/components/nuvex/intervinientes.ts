@@ -29,7 +29,11 @@ export interface Cobertura {
 }
 
 export function isLeasing(producto?: string | null): boolean {
-  return !!producto && /leasing\s+habitacional/i.test(producto);
+  if (!producto) return false;
+  // Cubre: "Leasing habitacional ..." (Bancolombia/Bogotá/genéricos)
+  //        "Contrato leasing ..."     (Davivienda)
+  //        "Crédito Leasing Habitacional Familiar ..." (Bogotá)
+  return /leasing\s+habitacional|contrato\s+leasing|\bleasing\b/i.test(producto);
 }
 
 export function tieneCobertura(producto?: string | null): boolean {
