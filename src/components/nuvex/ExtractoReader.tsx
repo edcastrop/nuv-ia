@@ -751,12 +751,28 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
     });
     const match = matchExacto ?? (matchFallback?.cobertura === tieneCob ? matchFallback : null);
 
+    // Sanitizar cédula: descartar valores claramente placeholder/inválidos
+    // (todo ceros, vacíos o longitud absurda). Evita que llegue "0000000000"
+    // al expediente y luego al Director Financiero.
+    const cedulaRaw = get("cedula").replace(/\D/g, "");
+    const cedulaLimpia =
+      cedulaRaw && !/^0+$/.test(cedulaRaw) && cedulaRaw.length >= 5 && cedulaRaw.length <= 12
+        ? cedulaRaw
+        : "";
+
+    // Normalizar banco contra el catálogo (case-insensitive). Si "DAVIVIENDA"
+    // llega del OCR y el catálogo tiene "Davivienda", se persiste el canónico.
+    const bancoFinal = match?.banco ?? banco;
+    const bancoCanon =
+      catalogoProductos.find((p) => p.banco.toLowerCase() === bancoFinal.toLowerCase())?.banco ??
+      bancoFinal;
+
     const payload: ExtractoApplyPayload = {
       cliente: {
         nombre: get("cliente"),
-        cedula: get("cedula"),
+        cedula: cedulaLimpia,
         numeroCredito: get("numeroCredito"),
-        banco: match?.banco ?? banco,
+        banco: bancoCanon,
         tipoProducto: match?.nombre_comercial ?? producto,
         productoBancarioId: match?.id ?? null,
         plazoInicial: get("plazoInicial"),
