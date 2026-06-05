@@ -748,24 +748,36 @@ export const extractStatement = createServerFn({ method: "POST" })
         if (cuotaMensual > 0 && segurosNum > 0) parsed.cuotaConInteresSinSeguros = formatMontoExtracto(cuotaMensual - segurosNum);
         parsed.cuotaBaseSimulacion = cuotaMensual > 0 ? formatMontoExtracto(cuotaMensual) : "";
       } else if (esDaviviendaHipotecario) {
-        // ----- DAVIVIENDA HIPOTECARIO: no asumir cobertura por textos legales -----
+        // ----- DAVIVIENDA HIPOTECARIO: cobertura solo si hay valores operativos explícitos -----
         mapeoBanco = "davivienda_hipotecario";
         parsed.banco = "Davivienda";
         parsed.tipoCredito = "CREDITO_HIPOTECARIO";
         parsed.moneda = /\buvr\b/i.test(`${parsed.moneda ?? ""} ${parsed.producto ?? ""} ${parsed.sistemaAmortizacion ?? ""}`) ? "UVR" : "PESOS";
-        parsed.producto = `Crédito Hipotecario en ${parsed.moneda === "UVR" ? "UVR" : "pesos"} sin Beneficio de Cobertura`;
-        parsed.tieneCobertura = "no";
-        parsed.valorCobertura = "";
-        parsed.tasaCobertura = "";
-        parsed.tipoBeneficio = "";
-        parsed.cuotaSinSubsidio = "";
+        const tasaCobDav = num("tasaCobertura");
+        const cuotaClienteDav = cuotaCliente || monto("valorAPagar") || monto("valorCuotaConSubsidio");
+        const cuotaSinSubDav = monto("cuotaSinSubsidio");
+        const tieneBeneficioDav = valorBenef > 0 || tasaCobDav > 0 || (cuotaSinSubDav > 0 && cuotaClienteDav > 0 && cuotaSinSubDav > cuotaClienteDav);
+        parsed.producto = `Crédito Hipotecario en ${parsed.moneda === "UVR" ? "UVR" : "pesos"} ${tieneBeneficioDav ? "con" : "sin"} Beneficio de Cobertura`;
+        parsed.tieneCobertura = tieneBeneficioDav ? "si" : "no";
+        if (tieneBeneficioDav) {
+          parsed.valorCobertura = valorBenef > 0 ? formatMontoExtracto(valorBenef) : "";
+          parsed.tasaCobertura = tasaCobDav > 0 ? String(parsed.tasaCobertura ?? "") : "";
+          parsed.tipoBeneficio = typeof parsed.tipoBeneficio === "string" && parsed.tipoBeneficio ? parsed.tipoBeneficio : "Cobertura de Tasa";
+          if (cuotaSinSubDav > 0) parsed.cuotaSinSubsidio = formatMontoExtracto(cuotaSinSubDav);
+          tieneCob = true;
+        } else {
+          parsed.valorCobertura = "";
+          parsed.tasaCobertura = "";
+          parsed.tipoBeneficio = "";
+          parsed.cuotaSinSubsidio = "";
+          valorBenef = 0;
+          tieneCob = false;
+        }
         parsed.valorDesembolsado = "";
-        valorBenef = 0;
-        tieneCob = false;
-        cuotaBase = cuotaMensual;
+        cuotaBase = cuotaSinSubDav || cuotaMensual;
         requiereVerificacion = false;
-        parsed.cuotaPagadaCliente = cuotaMensual > 0 ? formatMontoExtracto(cuotaMensual) : parsed.cuotaPagadaCliente;
-        parsed.cuotaBaseSimulacion = cuotaMensual > 0 ? formatMontoExtracto(cuotaMensual) : "";
+        parsed.cuotaPagadaCliente = cuotaClienteDav > 0 ? formatMontoExtracto(cuotaClienteDav) : parsed.cuotaPagadaCliente;
+        parsed.cuotaBaseSimulacion = cuotaBase > 0 ? formatMontoExtracto(cuotaBase) : "";
       } else {
         // ----- Genérico (otros bancos) -----
         if (cuotaConInteresSinSeguros > 0 && !parsed.cuotaConInteresSinSeguros) {
