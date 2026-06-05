@@ -804,10 +804,9 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
   const tipoBeneficio = (parsed?.tipoBeneficio as string) ?? "";
   const tieneCoberturaStr = ((parsed?.tieneCobertura as string) ?? "").toLowerCase() === "si";
   const tieneBeneficio =
-    tieneCoberturaStr ||
-    !!tipoBeneficio ||
-    !!(parsed?.valorCobertura as string) ||
-    !!(parsed?.tasaCobertura as string);
+    !!parsed &&
+    hasBeneficioReal(parsed, (parsed.producto as string) ?? "") &&
+    (tieneCoberturaStr || !!tipoBeneficio || !!(parsed?.valorCobertura as string) || !!(parsed?.tasaCobertura as string));
   const requiereVerificacion =
     ((parsed?.requiereVerificacionBeneficio as string) ?? "").toLowerCase() === "si";
   const alertaCuotaBase = (parsed?.alertaCuotaBase as string) ?? "";
