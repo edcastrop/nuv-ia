@@ -21,6 +21,10 @@ const confidence = {
   teaPactada: "alta",
   tieneCobertura: "alta",
   valorDesembolsado: "baja",
+  valorUVR: "alta",
+  saldoUVR: "alta",
+  valorCobertura: "alta",
+  tasaCobertura: "alta",
 };
 
 function compactSpaces(text: string) {
@@ -230,7 +234,7 @@ export function parseDaviviendaHipotecarioText(rawText: string): ExtractoRecord 
 
   // Plazo / cuotas
   const plazoInicial = firstMatch(text, /\bPlazo\s+([0-9]{2,3})\b/i);
-  const cuotasPagadas = firstMatch(text, /No\.\s+Cuotas?\s+que\s+se\s+cancela\s+([0-9]+)/i);
+  const cuotasPagadas = firstMatch(text, /No\.\s+(?:de\s+)?Cuotas?\s+que\s+se\s+Cancela\s+([0-9]+)/i);
   const cuotasPendientes = firstMatch(text, /No\.\s+Cuotas?\s+Pdtes\.\s+Pago\s+Total\s+([0-9]+)/i);
 
   // Tasas
