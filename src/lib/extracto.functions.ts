@@ -8,6 +8,7 @@ import {
 } from "@/lib/cuotaBase";
 import { parseBancolombiaText } from "@/lib/motorExtractos/bancolombiaParser";
 import { parseDaviviendaLeasingText } from "@/lib/motorExtractos/daviviendaLeasingParser";
+import { parseDaviviendaHipotecarioText } from "@/lib/motorExtractos/daviviendaHipotecarioParser";
 
 const InputSchema = z.object({
   rawText: z.string().max(250_000).optional(),
