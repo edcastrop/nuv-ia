@@ -502,22 +502,35 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
 
     const out: ExtractoData = { ...data };
     out.banco = "Davivienda";
-    out.moneda = "PESOS";
     out.tipoCredito = "LEASING_HABITACIONAL";
     out.producto = g("producto") || "Extracto Contrato Leasing";
+
+    // Detectar UVR a partir de varias señales del extracto Davivienda
+    const sistema = g("sistemaAmortizacion").toLowerCase();
+    const monedaActual = g("moneda").toUpperCase();
+    const tieneSaldoUVR = m("saldoUVR") > 0;
+    const tieneValorUVR = m("valorUVR") > 0;
+    const esUVR =
+      monedaActual === "UVR" ||
+      /\buvr\b/.test(sistema) ||
+      /\buvr\b/.test(g("producto").toLowerCase()) ||
+      tieneSaldoUVR ||
+      tieneValorUVR;
+    out.moneda = esUVR ? "UVR" : "PESOS";
 
     const plazo = parseInt(g("plazoInicial").replace(/\D/g, ""), 10) || 0;
     const pendientes = parseInt(g("cuotasPendientes").replace(/\D/g, ""), 10) || 0;
     if (plazo > 0 && pendientes > 0) out.cuotasPagadas = String(Math.max(0, plazo - pendientes));
 
+    // Seguros: sumar Vida + Incendio + Protección de Pagos (en pesos).
+    // Si el motor entregó un valor agregado pero los desglosados suman > 0 y son mayores,
+    // preferimos el desglose. Esto corrige casos donde "seguros" tomó solo una línea.
     const segurosDetallados = m("valorSeguroVida") + m("valorSeguroIncendio") + m("valorSeguroTerremoto");
-    if (segurosDetallados > 0) out.seguros = String(Math.round(segurosDetallados));
-    if (Math.abs((m("cuotaMensual") || m("cuotaPagadaCliente")) - 1065000) < 1 && Math.abs(m("saldoCapital") - 90326011.99) < 1 && m("seguros") < 64747) {
-      out.valorSeguroVida = "21174";
-      out.valorSeguroIncendio = "43573";
-      out.valorSeguroTerremoto = "0";
-      out.seguros = "64747";
+    const segurosActual = m("seguros");
+    if (segurosDetallados > 0 && (segurosActual === 0 || segurosDetallados > segurosActual * 1.2)) {
+      out.seguros = String(Math.round(segurosDetallados));
     }
+
     if (!g("tea") && g("teaCobrada")) out.tea = g("teaCobrada");
 
     const tieneBeneficioReal = m("valorCobertura") > 0 || parseMontoExtracto(g("tasaCobertura")) > 0;
@@ -542,6 +555,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
     out.mapeoBanco = "davivienda_leasing";
     return out;
   };
+
 
   const updateField = (key: string, value: string) => {
     setParsed((prev) => {
