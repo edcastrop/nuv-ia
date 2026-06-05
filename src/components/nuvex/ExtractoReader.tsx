@@ -392,7 +392,11 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
         setStage("error");
         return;
       }
-      setParsed(normalizeExtractData(recomputeDaviviendaLeasing(recomputeBancolombia(resp.data))));
+      setParsed(
+        normalizeExtractData(
+          recomputeDaviviendaHipotecario(recomputeDaviviendaLeasing(recomputeBancolombia(resp.data))),
+        ),
+      );
       setStage("review");
     } catch (err) {
       console.error(err);
@@ -669,6 +673,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       if (DAVIVIENDA_LEASING_KEYS.has(key)) {
         next = recomputeDaviviendaLeasing(next);
       }
+      next = recomputeDaviviendaHipotecario(next);
       if (key === "cuotasPagadas" || key === "plazoInicial" || key === "cuotasPendientes" || key === "cuotaActualNumero") {
         next = normalizeExtractData(next);
       }
