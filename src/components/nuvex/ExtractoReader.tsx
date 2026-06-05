@@ -546,6 +546,37 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
     return out;
   };
 
+  const recomputeDaviviendaHipotecario = (data: ExtractoData): ExtractoData => {
+    const g = (k: string) => (typeof data[k] === "string" ? (data[k] as string) : "");
+    const texto = `${g("banco")} ${g("producto")} ${g("tipoCredito")}`.toLowerCase();
+    if (!/davivienda/.test(texto) || /leasing/.test(texto)) return data;
+
+    const out: ExtractoData = { ...data };
+    const cuota = parseMontoExtracto(g("cuotaMensual")) || parseMontoExtracto(g("cuotaPagadaCliente")) || parseMontoExtracto(g("cuotaBaseSimulacion"));
+    const esUVR = /\buvr\b/i.test(`${g("moneda")} ${g("producto")} ${g("sistemaAmortizacion")}`);
+    out.banco = "Davivienda";
+    out.tipoCredito = "CREDITO_HIPOTECARIO";
+    out.moneda = esUVR ? "UVR" : "PESOS";
+    out.producto = `Crédito Hipotecario en ${esUVR ? "UVR" : "pesos"} sin Beneficio de Cobertura`;
+    out.tieneCobertura = "no";
+    out.valorCobertura = "";
+    out.tasaCobertura = "";
+    out.tipoBeneficio = "";
+    out.cuotaSinSubsidio = "";
+    out.valorDesembolsado = "";
+    if (/^0+$/.test(g("cedula").trim())) out.cedula = "";
+    if (cuota > 0) {
+      out.cuotaMensual = String(Math.round(cuota));
+      out.cuotaPagadaCliente = String(Math.round(cuota));
+      out.cuotaBaseSimulacion = String(Math.round(cuota));
+    }
+    out.requiereVerificacionBeneficio = "no";
+    out.alertaCuotaBase = "";
+    out.erroresValidacion = "";
+    out.mapeoBanco = "davivienda_hipotecario";
+    return out;
+  };
+
   const recomputeDaviviendaLeasing = (data: ExtractoData): ExtractoData => {
     const g = (k: string) => (typeof data[k] === "string" ? (data[k] as string) : "");
     const m = (k: string) => parseMontoExtracto(g(k));
