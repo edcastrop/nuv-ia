@@ -41,7 +41,7 @@ function Accordion({
 }
 
 const ESTADOS_CIVIL = ["Soltero(a)", "Casado(a)", "Unión libre", "Divorciado(a)", "Viudo(a)"];
-const PRODUCTOS = ["Pesos", "UVR"];
+
 const TIPOS_DOC = ["CC", "CE", "PA", "TI", "NIT"];
 
 interface Props {
