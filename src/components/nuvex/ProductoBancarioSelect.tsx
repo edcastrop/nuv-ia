@@ -26,9 +26,25 @@ export function ProductoBancarioSelect({ banco, producto, onChange, filtrarPorMo
     return Array.from(set).sort();
   }, [productosFiltrados]);
 
+  // Resolver banco contra el catálogo case-insensitive. Si el expediente
+  // guardó un valor legacy ("DAVIVIENDA") evitamos que el <select> caiga
+  // silenciosamente al primer item alfabético ("AV Villas") y muestre un
+  // banco que no corresponde al caso real.
+  const bancoCanonico = useMemo(() => {
+    if (!banco) return "";
+    const exact = bancos.find((b) => b === banco);
+    if (exact) return exact;
+    const ci = bancos.find((b) => b.toLowerCase() === banco.toLowerCase());
+    return ci ?? banco;
+  }, [banco, bancos]);
+  const bancoEsLegacy = !!bancoCanonico && !bancos.includes(bancoCanonico);
+
   const productosDelBanco = useMemo(
-    () => productosFiltrados.filter((p) => p.banco === banco).sort((a, b) => a.orden - b.orden),
-    [productosFiltrados, banco],
+    () =>
+      productosFiltrados
+        .filter((p) => p.banco.toLowerCase() === bancoCanonico.toLowerCase())
+        .sort((a, b) => a.orden - b.orden),
+    [productosFiltrados, bancoCanonico],
   );
 
   const handleBanco = (b: string) => {
@@ -37,7 +53,7 @@ export function ProductoBancarioSelect({ banco, producto, onChange, filtrarPorMo
 
   const handleProducto = (nombre: string) => {
     const found: ProductoBancario | undefined = productosDelBanco.find((p) => p.nombre_comercial === nombre);
-    onChange({ banco, producto: nombre, productoId: found?.id ?? null });
+    onChange({ banco: bancoCanonico, producto: nombre, productoId: found?.id ?? null });
   };
 
   return (
@@ -45,7 +61,7 @@ export function ProductoBancarioSelect({ banco, producto, onChange, filtrarPorMo
       <label className="flex flex-col gap-1">
         <span className="text-xs font-medium tracking-wide text-[#242424]/70 uppercase">Banco</span>
         <select
-          value={banco}
+          value={bancoCanonico}
           onChange={(e) => handleBanco(e.target.value)}
           disabled={isLoading}
           className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-2.5 text-sm text-[#242424] outline-none transition-all focus:border-[#445DA3] focus:ring-2 focus:ring-[#445DA3]/15"
@@ -54,6 +70,9 @@ export function ProductoBancarioSelect({ banco, producto, onChange, filtrarPorMo
           {bancos.map((b) => (
             <option key={b} value={b}>{b}</option>
           ))}
+          {bancoEsLegacy && (
+            <option value={bancoCanonico}>{bancoCanonico} (legacy)</option>
+          )}
         </select>
       </label>
 
