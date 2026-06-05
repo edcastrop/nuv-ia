@@ -598,12 +598,21 @@ export const extractStatement = createServerFn({ method: "POST" })
         }
 
 
-        if (subsidioGob > 0) {
+        const tieneBeneficioBancolombia = subsidioGob > 0 || (cuotaSinSubGob > 0 && cuotaConSub > 0 && cuotaSinSubGob > cuotaConSub);
+        if (tieneBeneficioBancolombia) {
           valorBenef = subsidioGob;
           parsed.valorCobertura = formatMontoExtracto(subsidioGob);
           tieneCob = true;
           if (!parsed.tipoBeneficio) parsed.tipoBeneficio = "Subsidio Gobierno";
           parsed.tieneCobertura = "si";
+        } else {
+          valorBenef = 0;
+          tieneCob = false;
+          parsed.valorCobertura = "";
+          parsed.tasaCobertura = "";
+          parsed.tipoBeneficio = "";
+          parsed.tieneCobertura = "no";
+          parsed.cuotaSinSubsidio = "";
         }
 
         if (cuotaConInteresSinSeguros <= 0) {
@@ -611,18 +620,23 @@ export const extractStatement = createServerFn({ method: "POST" })
           // Si la IA no lo recuperó pero tenemos los demás, no inventamos: dejamos vacío.
         }
 
-        // Cuota base obligatoria = Valor cuota sin subsidio Gobierno + segurosMensuales
-        if (cuotaSinSubGob > 0 && segurosNum > 0) {
+        // Con beneficio: cuota base = Valor cuota sin subsidio Gobierno + seguros.
+        // Sin beneficio: cuota base = Valor de la cuota sin seguros y sin comisiones + seguros.
+        if (tieneBeneficioBancolombia && cuotaSinSubGob > 0 && segurosNum > 0) {
           cuotaBase = cuotaSinSubGob + segurosNum;
-        } else if (cuotaSinSubGob > 0) {
+        } else if (tieneBeneficioBancolombia && cuotaSinSubGob > 0) {
           cuotaBase = cuotaSinSubGob;
           errores.push(
             "No se detectaron los seguros (vida, incendio, terremoto). Revise manualmente.",
           );
+        } else if (!tieneBeneficioBancolombia && cuotaConInteresSinSeguros > 0 && segurosNum > 0) {
+          cuotaBase = cuotaConInteresSinSeguros + segurosNum;
+        } else if (!tieneBeneficioBancolombia && cuotaCliente > 0) {
+          cuotaBase = cuotaCliente;
         } else {
           requiereVerificacion = true;
           errores.push(
-            "No se encontró 'Valor cuota sin subsidio Gobierno' en el extracto Bancolombia. Revise manualmente.",
+            "No se encontró 'Valor de la cuota sin seguros y sin comisiones' en el extracto Bancolombia. Revise manualmente.",
           );
         }
 
