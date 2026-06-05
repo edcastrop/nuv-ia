@@ -26,9 +26,25 @@ export function ProductoBancarioSelect({ banco, producto, onChange, filtrarPorMo
     return Array.from(set).sort();
   }, [productosFiltrados]);
 
+  // Resolver banco contra el catálogo case-insensitive. Si el expediente
+  // guardó un valor legacy ("DAVIVIENDA") evitamos que el <select> caiga
+  // silenciosamente al primer item alfabético ("AV Villas") y muestre un
+  // banco que no corresponde al caso real.
+  const bancoCanonico = useMemo(() => {
+    if (!banco) return "";
+    const exact = bancos.find((b) => b === banco);
+    if (exact) return exact;
+    const ci = bancos.find((b) => b.toLowerCase() === banco.toLowerCase());
+    return ci ?? banco;
+  }, [banco, bancos]);
+  const bancoEsLegacy = !!bancoCanonico && !bancos.includes(bancoCanonico);
+
   const productosDelBanco = useMemo(
-    () => productosFiltrados.filter((p) => p.banco === banco).sort((a, b) => a.orden - b.orden),
-    [productosFiltrados, banco],
+    () =>
+      productosFiltrados
+        .filter((p) => p.banco.toLowerCase() === bancoCanonico.toLowerCase())
+        .sort((a, b) => a.orden - b.orden),
+    [productosFiltrados, bancoCanonico],
   );
 
   const handleBanco = (b: string) => {
@@ -37,7 +53,7 @@ export function ProductoBancarioSelect({ banco, producto, onChange, filtrarPorMo
 
   const handleProducto = (nombre: string) => {
     const found: ProductoBancario | undefined = productosDelBanco.find((p) => p.nombre_comercial === nombre);
-    onChange({ banco, producto: nombre, productoId: found?.id ?? null });
+    onChange({ banco: bancoCanonico, producto: nombre, productoId: found?.id ?? null });
   };
 
   return (
