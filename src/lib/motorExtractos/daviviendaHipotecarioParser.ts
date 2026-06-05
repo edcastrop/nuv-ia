@@ -218,10 +218,15 @@ export function parseDaviviendaHipotecarioText(rawText: string): ExtractoRecord 
   const cedulaRaw = firstMatch(text, /Documento\s+No:\s*([0-9]+)/i);
   const cedula = /^0+$/.test(cedulaRaw) ? "" : cedulaRaw;
 
+  const sistemaAmortizacion = firstMatch(text, /Sistema\s+de\s+Amortizaci[oó]n\s+(.+?)\s+(?:Tasa|Plazo)/i);
+  const isUVR = /\bUVR\b/i.test(`${sistemaAmortizacion} ${text}`);
+  const paymentDetail = extractDaviviendaPaymentDetail(text);
+
   // Cuota mes
-  const cuotaMensual =
+  const pagoMinimoCliente =
     moneyToNumber(firstMatch(text, /\+\s*Valor\s+Cuota\s+Mes\s+\$\s*([0-9][0-9.,]*)/i)) ||
-    moneyToNumber(firstMatch(text, /Total\s+Valor\s+a\s+pagar\s+\$\s*([0-9][0-9.,]*)/i));
+    moneyToNumber(firstMatch(text, /Total\s+Valor\s+a\s+pagar\s+\$\s*([0-9][0-9.,]*)/i)) ||
+    paymentDetail.pagoMinimo;
 
   // Plazo / cuotas
   const plazoInicial = firstMatch(text, /\bPlazo\s+([0-9]{2,3})\b/i);
@@ -244,9 +249,9 @@ export function parseDaviviendaHipotecarioText(rawText: string): ExtractoRecord 
   const interesCuota = moneyFromLine(rawText, /^Intereses\s+Corrientes\b/i);
   const capitalCuota = moneyFromLine(rawText, /^Abonos?\s+a\s+Capital\b/i);
 
-  // Saldo a la fecha de corte
-  // Formato: "Saldo a: Mes. dd/aaaa  $ 221,903,943.99"
-  const saldoCapital = moneyToNumber(
+  const saldoCorte = extractSaldoCorte(rawText, text);
+  // Saldo a la fecha de corte. Formatos Davivienda: pesos directo o UVR + pesos.
+  const saldoCapital = saldoCorte.saldoCapital || moneyToNumber(
     firstMatch(text, /Saldo\s+a:\s*[A-Za-zÁÉÍÓÚÑáéíóúñ]{3,4}\.?\s*[0-9]{1,2}\/[0-9]{4}\s*\$\s*([0-9][0-9.,]*)/i),
   );
 
@@ -254,11 +259,20 @@ export function parseDaviviendaHipotecarioText(rawText: string): ExtractoRecord 
     firstMatch(text, /Valor\s+Asegurado\s+del\s+Inmueble:?\s*\$\s*([0-9][0-9.,]*)/i),
   );
 
-  const beneficioActivo = hasExplicitBenefit(rawText);
+  const valorUVR = isUVR
+    ? moneyToNumber(firstMatch(text, /Valor\s+de\s+la\s+UVR\s+a\s+la\s+Fecha\s+de\s+Corte:\s*([0-9]+(?:[.,][0-9]{4})?)/i))
+    : 0;
 
-  const cuotaSinSeguros = cuotaMensual > 0 && seguros > 0 ? cuotaMensual - seguros : cuotaMensual;
+  const valorCobertura = extractCoverageValue(rawText, text);
+  const tasaCobertura = firstMatch(text, /Tasa\s+de\s+Cobertura\s+([0-9]+(?:[.,][0-9]+)?)\s+Efectivo/i).replace(",", ".");
+  const beneficioActivo = valorCobertura > 0 || moneyToNumber(tasaCobertura) > 0 || hasExplicitBenefit(rawText);
+  const cuotaTotal = beneficioActivo && paymentDetail.cuotaTotal > 0
+    ? paymentDetail.cuotaTotal
+    : pagoMinimoCliente;
 
-  const producto = `Crédito Hipotecario en pesos ${beneficioActivo ? "con" : "sin"} Beneficio de Cobertura`;
+  const cuotaSinSeguros = cuotaTotal > 0 && seguros > 0 ? cuotaTotal - seguros : cuotaTotal;
+
+  const producto = `Crédito Hipotecario en ${isUVR ? "UVR" : "pesos"} ${beneficioActivo ? "con" : "sin"} Beneficio de Cobertura`;
 
   return {
     banco: "Davivienda",
@@ -267,11 +281,11 @@ export function parseDaviviendaHipotecarioText(rawText: string): ExtractoRecord 
     numeroCredito,
     producto,
     tipoCredito: "CREDITO_HIPOTECARIO",
-    moneda: "PESOS",
-    sistemaAmortizacion: firstMatch(text, /Sistema\s+de\s+Amortizaci[oó]n\s+(.+?)\s+(?:Tasa|Plazo)/i),
+    moneda: isUVR ? "UVR" : "PESOS",
+    sistemaAmortizacion,
     saldoCapital: formatMontoExtracto(saldoCapital),
     valorDesembolsado: "", // Davivienda no lo imprime en el extracto mensual
-    cuotaMensual: formatMontoExtracto(cuotaMensual),
+    cuotaMensual: formatMontoExtracto(cuotaTotal),
     seguros: formatMontoExtracto(seguros),
     cuotaSinSeguros: formatMontoExtracto(cuotaSinSeguros),
     cuotaConInteresSinSeguros: formatMontoExtracto(cuotaSinSeguros),
@@ -284,25 +298,25 @@ export function parseDaviviendaHipotecarioText(rawText: string): ExtractoRecord 
     tasaMensual: "",
     interesCuota: formatMontoExtracto(interesCuota),
     capitalCuota: formatMontoExtracto(capitalCuota),
-    valorUVR: "",
-    saldoUVR: "",
-    valorCobertura: "",
-    tasaCobertura: "",
+    valorUVR: formatDecimalValue(valorUVR),
+    saldoUVR: formatDecimalValue(saldoCorte.saldoUVR),
+    valorCobertura: beneficioActivo ? formatMontoExtracto(valorCobertura) : "",
+    tasaCobertura: beneficioActivo ? tasaCobertura : "",
     tieneCobertura: beneficioActivo ? "si" : "no",
-    tipoBeneficio: beneficioActivo ? "Cobertura FRECH" : "",
-    cuotaPagadaCliente: formatMontoExtracto(cuotaMensual),
-    cuotaSinSubsidio: "",
-    valorAPagar: formatMontoExtracto(cuotaMensual),
+    tipoBeneficio: beneficioActivo ? "Cobertura de Tasa" : "",
+    cuotaPagadaCliente: formatMontoExtracto(pagoMinimoCliente || cuotaTotal),
+    cuotaSinSubsidio: beneficioActivo ? formatMontoExtracto(cuotaTotal) : "",
+    valorAPagar: formatMontoExtracto(pagoMinimoCliente || cuotaTotal),
     valorSeguroVida: formatMontoExtracto(valorSeguroVida),
     valorSeguroIncendio: formatMontoExtracto(valorSeguroIncendio),
     valorSeguroTerremoto: formatMontoExtracto(valorSeguroProteccion),
     valorCuotaSinSubsidioGobierno: "",
-    valorSubsidioGobierno: "",
-    valorCuotaConSubsidio: "",
+    valorSubsidioGobierno: beneficioActivo ? formatMontoExtracto(valorCobertura) : "",
+    valorCuotaConSubsidio: beneficioActivo ? formatMontoExtracto(pagoMinimoCliente) : "",
     valorAseguradoInmueble: formatMontoExtracto(valorAsegInmueble),
     cuotaActualNumero: cuotasPagadas,
     fechaExtracto: firstMatch(text, /Periodo\s+Liquidado\s+([A-Za-zÁÉÍÓÚÑáéíóúñ]{3}\.\s*[0-9]{1,2}\/[0-9]{4}\s*-\s*[A-Za-zÁÉÍÓÚÑáéíóúñ]{3}\.\s*[0-9]{1,2}\/[0-9]{4})/i),
-    cuotaBaseSimulacion: formatMontoExtracto(cuotaMensual),
+    cuotaBaseSimulacion: formatMontoExtracto(cuotaTotal),
     requiereVerificacionBeneficio: "no",
     alertaCuotaBase: "",
     erroresValidacion: "",
