@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Card, TextField, SelectField, SectionTitle } from "@/components/nuvex/ui";
+import { ProductoBancarioSelect } from "@/components/nuvex/ProductoBancarioSelect";
 import { CityField } from "@/components/ui/CityField";
 import { NUVEX } from "@/components/nuvex/constants";
 import { withFreshDerivados, FRESH_TIPOS, type FreshTipoBeneficio } from "@/lib/cobertura";
