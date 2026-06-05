@@ -609,9 +609,10 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
     const valorCobertura = parseMontoExtracto(get("valorCobertura"));
     const tasaCobertura = parseMontoExtracto(get("tasaCobertura"));
     const subsidioGobierno = parseMontoExtracto(get("valorSubsidioGobierno"));
-    const tieneCoberturaSi = get("tieneCobertura").toLowerCase() === "si";
     if (valorCobertura > 0 || tasaCobertura > 0 || subsidioGobierno > 0) return true;
-    return tieneCoberturaSi && /con\s+beneficio\s+de\s+cobertura/i.test(producto);
+    const cuotaSinSubsidio = parseMontoExtracto(get("cuotaSinSubsidio")) || parseMontoExtracto(get("valorCuotaSinSubsidioGobierno"));
+    const cuotaCliente = parseMontoExtracto(get("cuotaPagadaCliente")) || parseMontoExtracto(get("valorCuotaConSubsidio"));
+    return cuotaSinSubsidio > 0 && cuotaCliente > 0 && cuotaSinSubsidio > cuotaCliente;
   };
 
 
@@ -684,16 +685,18 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
     const esLeasingFinal = parsedAttrs.esLeasing || /leasing/.test(tipoLower);
     const monedaUpper = get("moneda").toUpperCase();
     const esUVRFinal = parsedAttrs.esUVR || monedaUpper === "UVR" || modo === "uvr";
-    const match = buscarProductoComercial(catalogoProductos, {
+    const matchExacto = buscarProductoComercial(catalogoProductos, {
       banco,
       esLeasing: esLeasingFinal,
       esUVR: esUVRFinal,
       cobertura: tieneCob,
-    }) ?? buscarProductoComercial(catalogoProductos, {
+    });
+    const matchFallback = buscarProductoComercial(catalogoProductos, {
       banco,
       esLeasing: esLeasingFinal,
       esUVR: esUVRFinal,
     });
+    const match = matchExacto ?? (matchFallback?.cobertura === tieneCob ? matchFallback : null);
 
     const payload: ExtractoApplyPayload = {
       cliente: {
