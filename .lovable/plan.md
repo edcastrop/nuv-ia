@@ -1,65 +1,91 @@
-# Auditoría Maestra NUVEX + Pipeline Operativo + E2E
+# Nueva estructura de productos bancarios NUVEX
 
-Lo que pides es **enorme** (rediseño del módulo central + renombrado global de rol + auditoría E2E con casos simulados). Hacerlo en un solo turno garantiza romper cosas que hoy funcionan y consumir muchos créditos. Lo divido en fases cortas, **cada una aprobable por separado**, antes de tocar código.
+Este es un cambio transversal que toca DB, simulador, expediente, OCR, documentos legales y dashboard. Lo hago por fases para no romper flujos existentes.
 
----
+## 1. Base de datos — tabla maestra
 
-## Fase R — Renombrado del rol `licenciado` → `Analista Financiero Comercial` (AFC)
+Nueva tabla `public.productos_bancarios`:
 
-**Decisión clave que necesito de ti antes de tocar BD:**
+- `id` (uuid)
+- `banco` (text)
+- `tipo_producto` ENUM: `credito_hipotecario` | `leasing_habitacional`
+- `modalidad` ENUM: `pesos` | `uvr_baja` | `uvr_media` | `uvr_alta` | `uvr`
+- `cobertura` (bool)
+- `nombre_comercial` (text, único)
+- `codigo` (text, único — ej `BCO_CH_PESOS_COB`)
+- `activo` (bool)
+- `orden` (int)
 
-- **Opción A (recomendada, segura):** mantener `app_role.licenciado` en la base de datos (no toco enum, RLS, triggers, comisiones, ni `academia_rol_del_usuario`). Cambio **solo etiquetas visibles**: menús, sidebar, dashboard, directorio, academia, comisiones, reportes, casos, expedientes, notificaciones, colaboración, DM.
-- **Opción B (riesgosa):** renombrar el valor del enum a `analista_financiero_comercial`. Requiere migración de enum + reescribir ~25 funciones SECURITY DEFINER (`has_role`, `auto_liquidar_comision`, `academia_rol_del_usuario`, `can_use_*`, etc.), políticas RLS y todos los `.from("user_roles").eq("role","licenciado")` del frontend. Alto riesgo de romper comisiones y RLS.
+RLS: lectura `authenticated`, escritura solo `super_admin` / `admin`.
+Seed inicial con los 36 productos (Bancolombia 8, Davivienda 16, Bogotá 8, Caja Social 4).
 
-**Mi recomendación:** Opción A. "Licenciado" desaparece de la UI; en BD sigue siendo `licenciado` (invisible para el usuario final).
+## 2. Capa TypeScript
 
-Entregable: una sola PR de strings + helper `roleLabel(role)` centralizado en `src/lib/roleLabels.ts`. Sin migración.
+- `src/lib/productosBancarios.ts`: tipos + helper `parseProductoComercial(nombre)` que retorna `{banco, tipo, esLeasing, esUVR, modalidadUVR, cobertura}`.
+- Hook `useProductosBancarios()` → carga lista activa cacheada (react-query).
+- Reemplazar las constantes `PRODUCTOS_PESOS` / `PRODUCTOS_UVR` por consultas a la tabla, manteniendo compatibilidad con `tipoProducto` (string nombre_comercial) ya guardado en expedientes.
 
----
+## 3. Selector de producto unificado
 
-## Fase P — Rediseño Expediente → **Pipeline Maestro NUVEX** (14 etapas)
+Nuevo componente `<ProductoBancarioSelect>` que reemplaza el `SelectField` de "Tipo de producto" en:
+- `ClientFields.tsx` (simulador Pesos/UVR)
+- Editor de expediente maestro
+- Cualquier formulario que pida producto
 
-El expediente actual es un editor largo (`MaestroEditor.tsx`). Lo convierto en un **pipeline visual con 14 etapas** sin tirar lo existente: cada etapa muestra el subcomponente actual (proyección, contratación, validación QA, etc.) ya construido.
+El selector muestra dos pasos: Banco → Producto, o un único combo agrupado por banco. Guarda el `nombre_comercial` exacto (compatibilidad con datos existentes) y opcionalmente `producto_id`.
 
-Sub-lotes (uno por turno):
+## 4. Integración con simulador
 
-| Sub-lote | Alcance | BD nueva |
-|---|---|---|
-| **P1** | Shell del Pipeline: stepper 14 etapas + estado calculado + guardas por rol | columna `etapa_pipeline` (computada o materializada) |
-| **P2** | Etapas 1–3 (Lead, Extracto, Proyección) — atar a componentes existentes | reusar `proyeccion_financiera`, `extractos_ocr` |
-| **P3** | Etapa 3 + QA: regla "no se presenta sin QA aprobado" | flag `proyeccion_qa_estado` (ya existe `validaciones_qa`) |
-| **P4** | Etapas 4–7 (Presentación, Cierre, Contratación, Radicación) | estados nuevos en `expedientes.estado_caso` |
-| **P5** | Etapa 8 + **flujo Banco → Jurídica → Dirección Fra → AFC** (bloquea comunicación directa al cliente) | tabla `respuesta_banco_validaciones` |
-| **P6** | **Recálculo automático** de honorarios cuando cuotas aprobadas ≠ contratadas (ya existe `aplicar_recalculo_honorarios`, lo extiendo) | extender trigger |
-| **P7** | **Otrosí automático** + **aceptación obligatoria del cliente** + bloqueo de cuenta de cobro/paz y salvo/comisión hasta evidencia cargada | nueva tabla `otrosi_aceptaciones` (estado, evidencia, fecha) + columna bloqueo en `expedientes` |
-| **P8** | Etapas 9–13 (Informe Final, Cuenta de Cobro, Pago, Comisión, Paz y Salvo) — atar a flujos existentes + notificaciones cruzadas al AFC | sin BD nueva (ya existe) |
-| **P9** | Etapa 14 (Caso Finalizado) con métricas: tiempo total, ahorro, honorarios cobrados, comisión pagada | view `vw_caso_resumen_final` |
+`/index.tsx` y `ModeSelector`: cuando se elige un producto, derivar automáticamente `modo` (`pesos` vs `uvr`) y abrir el simulador correspondiente. Si el producto es UVR Baja/Media/Alta (Davivienda), pasar `submodalidadUVR` al UVRSimulator para que aplique la curva/tasa correcta (los cálculos actuales se mantienen; solo etiqueta).
 
----
+## 5. Hipotecario vs Leasing → Intervinientes
 
-## Fase A — Auditoría E2E con caso simulado
+`intervinientes.tsx` ya soporta titular/cotitular. Lo extiendo:
+- Si `tipo_producto = leasing_habitacional`: las etiquetas pasan a **Locatario / Colocatario**.
+- Si `credito_hipotecario`: **Titular / Cotitular** (actual).
 
-Antes de "marcar como finalizado":
+Se hace mediante prop `modoIntervinientes: "hipotecario" | "leasing"` derivada del producto.
 
-1. **A1** — Script de seed (`/mnt/documents/seed-caso-prueba.sql` via insert tool): crea 1 caso ficticio (cliente "DEMO QA", banco Bancolombia, extracto fake), 1 usuario por rol si no existen.
-2. **A2** — Recorrer el pipeline rol por rol y dejar un **checklist marcado** (no inventado). Por cada paso: rol, ruta visitada, acción, resultado, evidencia (capturas en `/mnt/documents/e2e/`).
-3. **A3** — Auditoría transversal: LOGIN, perfil, notificaciones, DM, colaboración, academia, NUVEX IA, bloqueo por URL (esto ya quedó parcialmente cubierto en lotes A–F de la auditoría anterior; solo re-verifico).
-4. **A4** — Reporte final `/mnt/documents/auditoria-nuvex-pipeline-e2e.md` con: errores encontrados, correcciones, pruebas ejecutadas, resultado por rol.
+## 6. Documentos legales
 
----
+Los generadores ya leen `cliente_data.tipoProducto` como string. Garantizo que ese campo siempre sea el `nombre_comercial` exacto del catálogo y actualizo:
+- `poderTemplates.ts`
+- `legalDocs.ts` / `legalDocsExport.ts`
+- `solicitudCambioPlazosDocx.ts`
+- `checklistDocumentalDocx.ts`
+- `proyeccionFinancieraExport.ts`
+- Ficha contractual / Informe final / Otro Sí
 
-## Lo que **no** voy a hacer en este plan (para evitar romper cosas)
+Cambio puntual: donde dicen "Titular" reemplazo por la etiqueta dinámica (Locatario si leasing).
 
-- No reescribir lógica financiera, OCR, cálculos de UVR, simuladores, PDFs jurídicos.
-- No tocar el enum `app_role` (a menos que elijas Opción B en Fase R).
-- No "validar todo en un solo turno". Cada sub-lote se entrega y aprueba.
+## 7. OCR / Motor de extractos
 
----
+`bankProfiles.ts` ya detecta banco + producto + moneda. Añado un mapper `mapMotorAProductoComercial({banco, producto, moneda, beneficioActivo, modalidadUVR?})` que retorna el `nombre_comercial` exacto del catálogo, para autoseleccionar el producto al cargar un extracto.
 
-## Lo que necesito de ti antes de tocar código
+## 8. Dashboard / Estadísticas
 
-1. **¿Opción A o B en Fase R?** (recomendado A).
-2. **¿Empiezo por R (renombrado, bajo riesgo, ~1 turno) o por P1 (shell del Pipeline, define la columna vertebral)?**
-3. **¿Tengo permiso para crear el caso DEMO QA en producción de Cloud para la Fase A**, o lo dejas tú con datos reales no destructivos?
+En `dashboard.tsx` y `super-admin.expedientes.tsx`, añadir tarjetas:
+- Por banco
+- Hipotecario vs Leasing
+- Pesos vs UVR
+- Con cobertura vs Sin cobertura
 
-Una vez confirmes (1)(2)(3), arranco con el primer sub-lote y nada más. Cada turno = un sub-lote + validación.
+Se construyen agregando `expedientes` y resolviendo el producto vía `parseProductoComercial`.
+
+## 9. Compatibilidad / migración de datos
+
+Los expedientes existentes guardan `tipo_producto` como texto libre. Script de normalización (best-effort): match por nombre exacto contra catálogo; los que no matcheen quedan como `legacy` y se muestran con un badge "producto sin catalogar" en el expediente, sin romper nada.
+
+## Orden de entrega
+
+1. Migración DB + seed (te la mando para aprobación).
+2. Capa TS + selector + integración simulador/intervinientes.
+3. Integración OCR + documentos.
+4. Dashboard.
+5. QA cruzado en un expediente real antes de cerrar.
+
+## Confirmaciones que necesito antes de arrancar
+
+1. **UVR Baja / Media / Alta de Davivienda**: ¿son solo etiqueta comercial o cada una tiene una tasa/curva distinta que debe afectar el simulador hoy? (Hoy el UVRSimulator es uno solo).
+2. **Catálogo cerrado**: ¿agrego también FNA, Davibank, AV Villas, Credifamilia, Bancoomeva, Occidente, Popular que ya están en `BANCOS`, o por ahora solo los 4 bancos del mensaje y los demás quedan inactivos?
+3. **Productos existentes en expedientes**: ¿migro/normalizo los nombres viejos al nuevo catálogo, o los dejo como legacy y solo aplico catálogo a casos nuevos?
