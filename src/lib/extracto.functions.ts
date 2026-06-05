@@ -670,11 +670,13 @@ export const extractStatement = createServerFn({ method: "POST" })
         // ----- DAVIVIENDA LEASING: no usa lógica genérica de beneficio -----
         mapeoBanco = "davivienda_leasing";
         parsed.banco = "Davivienda";
-        parsed.moneda = "PESOS";
         parsed.tipoCredito = "LEASING_HABITACIONAL";
-        if (!parsed.producto || /hipotecario/i.test(String(parsed.producto))) {
-          parsed.producto = "Extracto Contrato Leasing";
-        }
+        const sistema = typeof parsed.sistemaAmortizacion === "string" ? parsed.sistemaAmortizacion : "";
+        const davEsUVR =
+          /\buvr\b/i.test(`${parsed.moneda ?? ""} ${parsed.producto ?? ""} ${sistema}`) ||
+          monto("saldoUVR") > 0 ||
+          monto("valorUVR") > 0;
+        parsed.moneda = davEsUVR ? "UVR" : "PESOS";
 
         if (_plazoInicialVal > 0 && _cuotasPendientesVal > 0) {
           parsed.cuotasPagadas = String(Math.max(0, _plazoInicialVal - _cuotasPendientesVal));
@@ -701,6 +703,14 @@ export const extractStatement = createServerFn({ method: "POST" })
         }
 
         parsed.tieneCobertura = valorBenef > 0 || num("tasaCobertura") > 0 ? "si" : "no";
+        const davSubmodalidad = /\bbaja\b/i.test(`${sistema} ${parsed.producto ?? ""}`)
+          ? " Baja"
+          : /\bmedia\b/i.test(`${sistema} ${parsed.producto ?? ""}`)
+            ? " Media"
+            : /\balta\b/i.test(`${sistema} ${parsed.producto ?? ""}`)
+              ? " Alta"
+              : "";
+        parsed.producto = `Contrato leasing en ${davEsUVR ? `UVR${davSubmodalidad}` : "Pesos"} ${parsed.tieneCobertura === "si" ? "con" : "sin"} beneficio de cobertura`;
         if (parsed.tieneCobertura !== "si") {
           parsed.valorCobertura = "";
           parsed.tasaCobertura = "";
