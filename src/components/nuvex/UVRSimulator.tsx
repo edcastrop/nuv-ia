@@ -222,39 +222,26 @@ export function UVRSimulator({
   }, [datosCompletos, input, calc, nuevaCuotaManual, cuotasEliminarManual, modoPersonalizada]);
 
 
-  const manualValido = !!(manual && manual.valid);
-
-  const recomendada =
-    manualValido && manual
-      ? {
-          añosEliminados: manual.añosEliminados,
-          ahorroIntereses: manual.ahorroIntereses,
-          ahorroSeguros: manual.ahorroSeguros,
-          ahorroTotal: manual.ahorroTotal,
-          honorarios: manual.honorarios,
-          nuevaCuota: manual.nuevaCuotaPesos,
-          nuevoPlazo: manual.nuevoPlazo,
-          totalProyectado: manual.totalProyectado,
-        }
-      : best
-        ? {
-            añosEliminados: best.añosEliminados,
-            ahorroIntereses: best.ahorroIntereses,
-            ahorroSeguros: best.ahorroSeguros,
-            ahorroTotal: best.ahorroTotal,
-            honorarios: best.honorariosNuvex,
-            nuevaCuota: best.nuevaCuotaConSeguroAprox,
-            nuevoPlazo: best.nuevoPlazo,
-            totalProyectado: best.totalAproxPagar,
-          }
-        : null;
+  // Recomendada elegida desde el bloque comercial de Propuestas (cards editables)
+  const [recomendadaPicked, setRecomendadaPicked] = useState<RecomendadaSeleccionada | null>(null);
+  const manualValido = recomendadaPicked?.fuente === "manual";
+  const recomendada = recomendadaPicked
+    ? {
+        añosEliminados: recomendadaPicked.añosEliminados,
+        ahorroIntereses: recomendadaPicked.ahorroIntereses,
+        ahorroSeguros: recomendadaPicked.ahorroSeguros,
+        ahorroTotal: recomendadaPicked.ahorroTotal,
+        honorarios: recomendadaPicked.honorarios,
+        nuevaCuota: recomendadaPicked.nuevaCuota,
+        nuevoPlazo: recomendadaPicked.nuevoPlazo,
+        totalProyectado: recomendadaPicked.totalProyectado,
+      }
+    : null;
 
   const ahorroNegativo = recomendada && (recomendada.ahorroTotal < 0 || recomendada.honorarios < 0);
 
   const cuotasBaseSimulacion = Math.max(0, cuotasPendientes);
   const totalActualPesos = calc?.escenarioActual.totalPagoPesos ?? 0;
-  // N° veces pagado el crédito = (lo ya pagado + lo proyectado a pagar) / valor desembolsado.
-  // Si no hay valor desembolsado, se usa el saldo actual como respaldo.
   const baseCredito = valorDesembolsadoNum > 0 ? valorDesembolsadoNum : saldoPesosNum;
   const vecesActual = baseCredito > 0 ? (dineroPagadoFecha + totalActualPesos) / baseCredito : 0;
   const vsActual = getVecesStyle(vecesActual);
@@ -292,22 +279,6 @@ export function UVRSimulator({
       value: `${formatNumber(vecesActual, 2)} veces`,
     });
   }
-
-  const scenarioRows =
-    recomendada && calc
-      ? buildUVRScenarioRows({
-          cuotaActual: input.cuotaActualPesos,
-          cuotasPendientes: cuotasBaseSimulacion,
-          totalActualPendiente: calc.escenarioActual.totalPagoPesos,
-          saldoPesos: saldoPesosNum,
-          nuevaCuota: recomendada.nuevaCuota,
-          nuevoPlazo: recomendada.nuevoPlazo,
-          totalProyectado: recomendada.totalProyectado,
-          ahorroIntereses: recomendada.ahorroIntereses,
-          ahorroSeguros: recomendada.ahorroSeguros,
-          ahorroTotal: recomendada.ahorroTotal,
-        })
-      : [];
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-6 py-6">
