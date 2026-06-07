@@ -16,6 +16,7 @@ export type EtapaPipelineId =
   | "informe"
   | "cuenta"
   | "pago"
+  | "comision" // @deprecated — se mantiene por compatibilidad; ahora rola en "pago".
   | "paz_salvo"
   | "finalizado";
 
