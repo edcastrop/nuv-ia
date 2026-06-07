@@ -49,6 +49,21 @@ function AuthenticatedLayout() {
     return localStorage.getItem("nuvex.sidebar.collapsed") === "1";
   });
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [reloading, setReloading] = useState(false);
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const handleReload = async () => {
+    if (reloading) return;
+    setReloading(true);
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries(),
+        router.invalidate(),
+      ]);
+    } finally {
+      setTimeout(() => setReloading(false), 400);
+    }
+  };
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/login" });
