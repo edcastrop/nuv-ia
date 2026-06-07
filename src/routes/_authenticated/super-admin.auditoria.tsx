@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/nuvex/ui";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Search, FileText } from "lucide-react";
+import { Search, FileText, Download } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/super-admin/auditoria")({
   component: AuditoriaGlobal,
