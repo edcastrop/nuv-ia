@@ -1,9 +1,6 @@
-// Pipeline Maestro NUVEX — definición de las 14 etapas operativas y mapeo
-// desde caso_estado (BD) hacia la etapa visible. NO modifica enums ni BD:
-// es 100% cliente, derivado de los datos que ya existen.
-//
-// Si en el futuro se agrega columna etapa_pipeline en BD, computeEtapaActual
-// puede usarla como override; mientras tanto deriva del caso_estado actual.
+// Pipeline Maestro NUVEX — 15 etapas operativas.
+// El Simulador termina en etapa 5 (presentación / generación de propuesta).
+// A partir de la etapa 6 (Contratación) en adelante, todo vive en el Expediente.
 
 export type EtapaPipelineId =
   | "lead"
@@ -14,10 +11,11 @@ export type EtapaPipelineId =
   | "contratacion"
   | "radicacion"
   | "banco"
+  | "resultado_banco"
+  | "aceptacion_cliente"
   | "informe"
   | "cuenta"
   | "pago"
-  | "comision"
   | "paz_salvo"
   | "finalizado";
 
@@ -26,31 +24,27 @@ export interface EtapaPipeline {
   numero: number;
   titulo: string;
   descripcion: string;
-  /** Roles responsables operativos de mover esta etapa. */
   responsables: ReadonlyArray<string>;
 }
 
 export const ETAPAS_PIPELINE: ReadonlyArray<EtapaPipeline> = [
-  { id: "lead",         numero: 1,  titulo: "Lead",                descripcion: "Ingreso y validación inicial del lead.",                   responsables: ["asesor"] },
-  { id: "extracto",     numero: 2,  titulo: "Extracto",            descripcion: "Recepción y lectura del extracto bancario.",               responsables: ["asesor", "licenciado"] },
-  { id: "proyeccion",   numero: 3,  titulo: "Proyección + QA",     descripcion: "Proyección financiera; no avanza sin QA aprobado.",        responsables: ["licenciado", "director_financiero_qa"] },
-  { id: "presentacion", numero: 4,  titulo: "Presentación",        descripcion: "Presentación de propuesta al cliente.",                    responsables: ["asesor"] },
-  { id: "cierre",       numero: 5,  titulo: "Cierre",              descripcion: "Negociación y aceptación de propuesta.",                   responsables: ["asesor"] },
-  { id: "contratacion", numero: 6,  titulo: "Contratación",        descripcion: "Generación y firma de contrato y poder.",                  responsables: ["juridica", "director_juridico", "operaciones"] },
-  { id: "radicacion",   numero: 7,  titulo: "Radicación",          descripcion: "Radicación del expediente ante el banco.",                 responsables: ["operaciones"] },
-  { id: "banco",        numero: 8,  titulo: "Banco → Jurídica → Dir. Fra. → AFC", descripcion: "Estudio en banco y traslado interno (sin contacto directo con cliente).", responsables: ["operaciones", "juridica", "director_financiero_qa", "licenciado"] },
-  { id: "informe",      numero: 9,  titulo: "Informe",             descripcion: "Resultado final del banco e informe al cliente.",          responsables: ["licenciado"] },
-  { id: "cuenta",       numero: 10, titulo: "Cuenta de cobro",     descripcion: "Generación y envío de cuenta de cobro.",                   responsables: ["licenciado", "contabilidad"] },
-  { id: "pago",         numero: 11, titulo: "Pago de honorarios",  descripcion: "Confirmación del pago de honorarios.",                     responsables: ["contabilidad", "cartera"] },
-  { id: "comision",     numero: 12, titulo: "Comisión",            descripcion: "Liquidación y pago de comisión al AFC.",                   responsables: ["contabilidad"] },
-  { id: "paz_salvo",    numero: 13, titulo: "Paz y salvo",         descripcion: "Emisión del paz y salvo al cliente.",                      responsables: ["juridica", "operaciones"] },
-  { id: "finalizado",   numero: 14, titulo: "Caso finalizado",     descripcion: "Cierre operativo y métricas finales.",                     responsables: ["gerencia"] },
+  { id: "lead",               numero: 1,  titulo: "Lead",                descripcion: "Ingreso y validación inicial del lead.",                              responsables: ["asesor"] },
+  { id: "extracto",           numero: 2,  titulo: "Extracto",            descripcion: "Recepción y lectura del extracto bancario.",                          responsables: ["asesor", "licenciado"] },
+  { id: "proyeccion",         numero: 3,  titulo: "Proyección + QA",     descripcion: "Proyección financiera; no avanza sin QA aprobado.",                   responsables: ["licenciado", "director_financiero_qa"] },
+  { id: "presentacion",       numero: 4,  titulo: "Presentación",        descripcion: "Presentación de propuesta al cliente.",                               responsables: ["asesor"] },
+  { id: "cierre",             numero: 5,  titulo: "Cierre",              descripcion: "Negociación y aceptación de propuesta.",                              responsables: ["asesor"] },
+  { id: "contratacion",       numero: 6,  titulo: "Contratación",        descripcion: "Generación y firma de contrato y poder.",                             responsables: ["juridica", "director_juridico", "operaciones"] },
+  { id: "radicacion",         numero: 7,  titulo: "Radicación",          descripcion: "Radicación del expediente ante el banco.",                            responsables: ["operaciones"] },
+  { id: "banco",              numero: 8,  titulo: "Estudio Banco",       descripcion: "Estudio en banco y traslado interno (sin contacto directo con cliente).", responsables: ["operaciones", "juridica", "director_financiero_qa"] },
+  { id: "resultado_banco",    numero: 9,  titulo: "Resultado Bancario",  descripcion: "Registro de respuesta del banco, comparativo NUVEX vs Banco y reajuste de honorarios.", responsables: ["director_financiero_qa", "apoderado"] },
+  { id: "aceptacion_cliente", numero: 10, titulo: "Aceptación Cliente",  descripcion: "Aceptación expresa del cliente (WhatsApp, correo o carta).",          responsables: ["asesor", "licenciado"] },
+  { id: "informe",            numero: 11, titulo: "Informe Final",       descripcion: "Generación y envío del informe final al cliente.",                    responsables: ["director_financiero_qa", "apoderado"] },
+  { id: "cuenta",             numero: 12, titulo: "Facturación",         descripcion: "Generación y envío de cuenta de cobro al cliente.",                   responsables: ["contabilidad"] },
+  { id: "pago",               numero: 13, titulo: "Pago de honorarios", descripcion: "Confirmación del pago de honorarios y liquidación de comisión AFC.",  responsables: ["contabilidad", "cartera"] },
+  { id: "paz_salvo",          numero: 14, titulo: "Paz y Salvo",         descripcion: "Emisión del paz y salvo al cliente.",                                  responsables: ["contabilidad", "juridica"] },
+  { id: "finalizado",         numero: 15, titulo: "Caso Cerrado",        descripcion: "Cierre operativo con indicadores finales del caso.",                   responsables: ["gerencia"] },
 ];
 
-/**
- * Mapeo caso_estado (enum BD) → etapa del pipeline.
- * Cualquier estado no listado cae en "lead" como fallback seguro.
- */
 const CASO_ESTADO_A_ETAPA: Record<string, EtapaPipelineId> = {
   lead_creado: "lead",
   prospecto: "lead",
@@ -83,42 +77,42 @@ const CASO_ESTADO_A_ETAPA: Record<string, EtapaPipelineId> = {
   radicado_banco: "radicacion",
 
   en_estudio_banco: "banco",
-  aprobado: "banco",
-  aprobado_banco: "banco",
   documentos_banco_firmados: "banco",
   docs_complementarios_banco: "banco",
   devuelto_banco: "banco",
   negado_banco: "banco",
+  prejuridico: "banco",
 
-  condiciones_aplicadas: "informe",
-  aplicado_banco: "informe",
+  aprobado: "resultado_banco",
+  aprobado_banco: "resultado_banco",
+  condiciones_aplicadas: "resultado_banco",
+  aplicado_banco: "resultado_banco",
+  resultado_banco_registrado: "resultado_banco",
+
+  aceptacion_cliente_pendiente: "aceptacion_cliente",
+  aceptacion_cliente_recibida: "aceptacion_cliente",
+
   resultado_final_generado: "informe",
+  informe_enviado: "informe",
 
   cuenta_cobro_generada: "cuenta",
   cuenta_cobro_enviada: "cuenta",
 
   honorarios_pendientes: "pago",
   honorarios_pagados: "pago",
-
-  // "comision" (12) se deriva del estado de la tabla comisiones, no del caso_estado.
-  // Se mantiene aquí para fallback si en el futuro entra un caso_estado dedicado.
+  comision_liquidada: "pago",
+  comision_pagada: "pago",
 
   paz_y_salvo_generado: "paz_salvo",
 
   proceso_cerrado: "finalizado",
   caso_finalizado: "finalizado",
-
-  prejuridico: "banco",
+  caso_cerrado: "finalizado",
 };
 
-/**
- * Datos mínimos del expediente para computar la etapa actual.
- * Acepta `unknown` extra sin romper.
- */
 export interface PipelineInput {
   estado_caso?: string | null;
   validacion_estado?: string | null;
-  /** Override opcional desde futura columna etapa_pipeline. */
   etapa_pipeline?: EtapaPipelineId | null;
 }
 
@@ -142,7 +136,6 @@ export function indexOfEtapa(id: EtapaPipelineId): number {
   return i < 0 ? 0 : i;
 }
 
-/** Todos los valores de estado_caso (BD) que caen en una etapa dada. */
 export function estadosParaEtapa(etapaId: EtapaPipelineId): string[] {
   return Object.entries(CASO_ESTADO_A_ETAPA)
     .filter(([, v]) => v === etapaId)
