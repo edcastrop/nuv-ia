@@ -75,12 +75,22 @@ function AuditoriaGlobal() {
   return (
     <div className="mx-auto max-w-[1400px] px-6 py-6 space-y-4">
       <Card>
-        <div className="flex items-center gap-3">
-          <FileText size={20} className="text-[#445DA3]" />
-          <div>
-            <h1 className="text-lg font-semibold text-[#0A1226]">Auditoría global</h1>
-            <p className="text-[12px] text-[#242424]/60">Últimos 500 eventos del sistema.</p>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <FileText size={20} className="text-[#445DA3]" />
+            <div>
+              <h1 className="text-lg font-semibold text-[#0A1226]">Auditoría global</h1>
+              <p className="text-[12px] text-[#242424]/60">Últimos 500 eventos del sistema.</p>
+            </div>
           </div>
+          <a
+            href="/auditoria-simuladores-nuvex.pdf"
+            download
+            className="inline-flex items-center gap-2 rounded-lg bg-[#445DA3] px-3 py-2 text-[12.5px] font-medium text-white hover:bg-[#3a4f8d] transition-colors"
+          >
+            <Download size={14} />
+            Descargar informe de auditoría (PDF)
+          </a>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           <div className="flex items-center gap-2 rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 flex-1 min-w-[240px]">
