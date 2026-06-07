@@ -32,6 +32,12 @@ import { AuditoriaPipeline } from "@/components/pipeline/AuditoriaPipeline";
 import { TimelineEtapas14 } from "@/components/pipeline/TimelineEtapas14";
 import { computeEtapaActual, type EtapaPipelineId } from "@/lib/pipelineEtapas";
 import { supabase } from "@/integrations/supabase/client";
+import { getExpediente, type Expediente } from "@/lib/expedientes";
+import { ExpedienteStepper13 } from "@/components/expediente/ExpedienteStepper13";
+import { SiguienteAccionPanel } from "@/components/expediente/SiguienteAccionPanel";
+import { QueFaltaPanel } from "@/components/expediente/QueFaltaPanel";
+import { ChecklistRolPanel } from "@/components/expediente/ChecklistRolPanel";
+
 
 export const Route = createFileRoute("/_authenticated/expediente-maestro/$id")({
   component: MaestroDetail,
