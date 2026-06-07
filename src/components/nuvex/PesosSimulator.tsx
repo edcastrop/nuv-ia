@@ -94,6 +94,7 @@ export function PesosSimulator({
 
   // Prellenar el campo "Asesor NUVEX" con el nombre del perfil autenticado
   useAsesorDefault(client.asesor, (nombre) => setClient((prev) => ({ ...prev, asesor: nombre })));
+  const { metricas: metricasAutonomia } = useNivelAutonomia();
 
   const plazoInicial = parseDecimal(client.plazoInicial);
   const cuotasPagadas = parseDecimal(client.cuotasPagadas);
