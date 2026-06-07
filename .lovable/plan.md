@@ -1,91 +1,98 @@
-# Nueva estructura de productos bancarios NUVEX
+# Reestructuración del Simulador NUVEX
 
-Este es un cambio transversal que toca DB, simulador, expediente, OCR, documentos legales y dashboard. Lo hago por fases para no romper flujos existentes.
+Convertir el simulador en una herramienta comercial enfocada exclusivamente en: **Extracto → Simulación → Propuesta → PDF Comercial**. Todo lo jurídico, documental, intervinientes y operativo queda únicamente en el Expediente Maestro.
 
-## 1. Base de datos — tabla maestra
+## Alcance — qué cambia y qué NO
 
-Nueva tabla `public.productos_bancarios`:
+**Cambia (simuladores PESOS y UVR):**
+- Bloque "Datos del Cliente" simplificado.
+- Eliminación del bloque "Intervinientes" del simulador.
+- Bloque "Datos del Crédito" reordenado y compacto.
+- Bloque "Beneficio Fresh" condicional.
+- Propuestas editables + botón "Nueva propuesta".
+- Diseño tipo dashboard comercial (cards), no hoja de cálculo.
+- PDF comercial recortado a lo financiero.
 
-- `id` (uuid)
-- `banco` (text)
-- `tipo_producto` ENUM: `credito_hipotecario` | `leasing_habitacional`
-- `modalidad` ENUM: `pesos` | `uvr_baja` | `uvr_media` | `uvr_alta` | `uvr`
-- `cobertura` (bool)
-- `nombre_comercial` (text, único)
-- `codigo` (text, único — ej `BCO_CH_PESOS_COB`)
-- `activo` (bool)
-- `orden` (int)
+**NO cambia:**
+- Fórmulas financieras (`src/lib/finance.ts`, motores PESOS/UVR).
+- Motor de extractos / OCR.
+- Expediente Maestro y todos sus bloques jurídicos/documentales/intervinientes.
+- Cálculo de honorarios (piso $1.800.000 / $2.000.000).
+- Persistencia en `expedientes`, `proyecciones_financieras`, `proyeccion_escenarios`.
 
-RLS: lectura `authenticated`, escritura solo `super_admin` / `admin`.
-Seed inicial con los 36 productos (Bancolombia 8, Davivienda 16, Bogotá 8, Caja Social 4).
+## Bloques del nuevo simulador
 
-## 2. Capa TypeScript
+### 1. Datos del Cliente (compacto)
+Campos: Nombre, Cédula, Correo, Celular, Banco, Número de crédito, Producto financiero.
+Botón existente "Leer cédula con IA" (reusar `CedulaReader`) ahora autocompleta directamente en estos campos (no en intervinientes).
 
-- `src/lib/productosBancarios.ts`: tipos + helper `parseProductoComercial(nombre)` que retorna `{banco, tipo, esLeasing, esUVR, modalidadUVR, cobertura}`.
-- Hook `useProductosBancarios()` → carga lista activa cacheada (react-query).
-- Reemplazar las constantes `PRODUCTOS_PESOS` / `PRODUCTOS_UVR` por consultas a la tabla, manteniendo compatibilidad con `tipoProducto` (string nombre_comercial) ya guardado en expedientes.
+### 2. Datos del Crédito
+Saldo a capital, Valor desembolsado, Tasa, Cuota actual, Seguros, Cuotas pactadas / pagadas / pendientes, Fecha desembolso.
 
-## 3. Selector de producto unificado
+### 3. Beneficio Fresh (condicional)
+Toggle SI/NO. Si SI → Valor beneficio, Tasa beneficio, Cuotas restantes beneficio. Si NO → ocultos.
 
-Nuevo componente `<ProductoBancarioSelect>` que reemplaza el `SelectField` de "Tipo de producto" en:
-- `ClientFields.tsx` (simulador Pesos/UVR)
-- Editor de expediente maestro
-- Cualquier formulario que pida producto
+### 4. Simulación (corazón)
+- **Resumen actual** en cards: saldo, cuota, cuotas pendientes, intereses proyectados, seguros proyectados, veces pagado.
+- **Propuestas como cards** (no tabla). Cada card muestra: cuotas eliminadas, nueva cuota, ahorro total, honorarios, nuevo plazo, abono adicional mensual, "veces pagado".
+- **Propuestas editables**: las 4 sugeridas (12/24/36/48 o 36/48/60/72…) son ahora inputs editables. Al cambiar el número de cuotas, recalcula en vivo.
+- **Botón "+ Nueva propuesta"**: agrega cards adicionales con cualquier valor permitido por el crédito.
+- **Marcar como recomendada**: una sola card destacada; alimenta el PDF y la persistencia.
 
-El selector muestra dos pasos: Banco → Producto, o un único combo agrupado por banco. Guarda el `nombre_comercial` exacto (compatibilidad con datos existentes) y opcionalmente `producto_id`.
+## Eliminaciones del simulador
+- Bloque "Intervinientes" (`IntervinientesFields`) — fuera de Pesos/UVR Simulator.
+- Cotitular / Colocatario / Dirección / Lugar expedición de cédula del titular sale de los datos del simulador (sigue existiendo en Expediente Maestro).
+- Cobertura jurídica/documental y poderes ya no se muestran aquí.
 
-## 4. Integración con simulador
+## PDF Comercial
+Recortar la plantilla actual para incluir SOLO:
+1. Datos cliente
+2. Datos crédito
+3. Situación actual
+4. Propuesta recomendada
+5. Comparativo actual vs optimizado
+6. Ahorro proyectado
 
-`/index.tsx` y `ModeSelector`: cuando se elige un producto, derivar automáticamente `modo` (`pesos` vs `uvr`) y abrir el simulador correspondiente. Si el producto es UVR Baja/Media/Alta (Davivienda), pasar `submodalidadUVR` al UVRSimulator para que aplique la curva/tasa correcta (los cálculos actuales se mantienen; solo etiqueta).
+Quitar: contrato, poder, cotitulares, documentación, jurídico.
 
-## 5. Hipotecario vs Leasing → Intervinientes
+## Archivos a modificar
 
-`intervinientes.tsx` ya soporta titular/cotitular. Lo extiendo:
-- Si `tipo_producto = leasing_habitacional`: las etiquetas pasan a **Locatario / Colocatario**.
-- Si `credito_hipotecario`: **Titular / Cotitular** (actual).
+```text
+src/components/nuvex/
+  PesosSimulator.tsx        ← restructurar bloques + propuestas editables
+  UVRSimulator.tsx          ← idem
+  ClientFields.tsx          ← simplificar a 7 campos + integrar CedulaReader
+  CedulaReader.tsx          ← agregar modo "cliente directo" (sin intervinientes)
+  ScenarioTable.tsx         ← convertir a ScenarioCards (cards editables)
+  RecommendedResult.tsx     ← ajustar a propuesta única recomendada
+  pdf/ (plantilla comercial) ← recortar secciones jurídicas/documentales
+  MotorExtractosNUVEX.tsx   ← quitar render de IntervinientesFields aquí si aplica
 
-Se hace mediante prop `modoIntervinientes: "hipotecario" | "leasing"` derivada del producto.
+NO se toca:
+  IntervinientesFields.tsx  ← sigue vivo en Expediente Maestro
+  src/lib/finance.ts        ← fórmulas intactas
+  src/lib/motorExtractos/*  ← OCR intacto
+  src/components/expediente-maestro/*  ← intacto
+```
 
-## 6. Documentos legales
+## Cambios técnicos clave
 
-Los generadores ya leen `cliente_data.tipoProducto` como string. Garantizo que ese campo siempre sea el `nombre_comercial` exacto del catálogo y actualizo:
-- `poderTemplates.ts`
-- `legalDocs.ts` / `legalDocsExport.ts`
-- `solicitudCambioPlazosDocx.ts`
-- `checklistDocumentalDocx.ts`
-- `proyeccionFinancieraExport.ts`
-- Ficha contractual / Informe final / Otro Sí
+1. **Propuestas editables**: extender `PesosPropuesta` / `UVRPropuesta` con un estado local `cuotasEliminadas` editable por card. Usar `calculatePesosManualByCuotas` / `calculateUVRManualByCuotas` (ya existen) para recalcular cuando el usuario edita el número.
+2. **Nueva propuesta**: estado `propuestasCustom: number[]` añadido al simulador; se concatena con las sugeridas. Validación: `0 < cuotasEliminadas < cuotasPendientes`.
+3. **Cards comerciales**: nuevo componente `PropuestaCard` con badge "Recomendada", input numérico para cuotas, métricas en grid 2x3.
+4. **Persistencia**: el payload guardado a `expedientes` / `proyecciones_financieras` mantiene la misma forma; solo cambia la UI.
+5. **PDF**: editar la plantilla en `src/components/nuvex/pdf/*` (o `src/lib/proyeccionFinancieraExport.ts`) para omitir secciones jurídicas.
 
-Cambio puntual: donde dicen "Titular" reemplazo por la etiqueta dinámica (Locatario si leasing).
+## QA antes de cerrar
 
-## 7. OCR / Motor de extractos
+- Simular un caso PESOS con extracto Davivienda hipotecario → propuesta recomendada → PDF.
+- Simular un caso UVR con cobertura Fresh → toggle SI/NO funciona → PDF.
+- Editar manualmente cuotas en una propuesta → cuota, ahorro y honorarios recalculan.
+- Agregar 2 propuestas custom → marcar la última como recomendada → PDF refleja la elegida.
+- Verificar que el Expediente Maestro del caso siga mostrando intervinientes / cotitulares / jurídico sin cambios.
+- `bun run build` limpio.
 
-`bankProfiles.ts` ya detecta banco + producto + moneda. Añado un mapper `mapMotorAProductoComercial({banco, producto, moneda, beneficioActivo, modalidadUVR?})` que retorna el `nombre_comercial` exacto del catálogo, para autoseleccionar el producto al cargar un extracto.
+## Riesgos
 
-## 8. Dashboard / Estadísticas
-
-En `dashboard.tsx` y `super-admin.expedientes.tsx`, añadir tarjetas:
-- Por banco
-- Hipotecario vs Leasing
-- Pesos vs UVR
-- Con cobertura vs Sin cobertura
-
-Se construyen agregando `expedientes` y resolviendo el producto vía `parseProductoComercial`.
-
-## 9. Compatibilidad / migración de datos
-
-Los expedientes existentes guardan `tipo_producto` como texto libre. Script de normalización (best-effort): match por nombre exacto contra catálogo; los que no matcheen quedan como `legacy` y se muestran con un badge "producto sin catalogar" en el expediente, sin romper nada.
-
-## Orden de entrega
-
-1. Migración DB + seed (te la mando para aprobación).
-2. Capa TS + selector + integración simulador/intervinientes.
-3. Integración OCR + documentos.
-4. Dashboard.
-5. QA cruzado en un expediente real antes de cerrar.
-
-## Confirmaciones que necesito antes de arrancar
-
-1. **UVR Baja / Media / Alta de Davivienda**: ¿son solo etiqueta comercial o cada una tiene una tasa/curva distinta que debe afectar el simulador hoy? (Hoy el UVRSimulator es uno solo).
-2. **Catálogo cerrado**: ¿agrego también FNA, Davibank, AV Villas, Credifamilia, Bancoomeva, Occidente, Popular que ya están en `BANCOS`, o por ahora solo los 4 bancos del mensaje y los demás quedan inactivos?
-3. **Productos existentes en expedientes**: ¿migro/normalizo los nombres viejos al nuevo catálogo, o los dejo como legacy y solo aplico catálogo a casos nuevos?
+- El simulador y el Expediente Maestro comparten algunos componentes (`IntervinientesFields`, `CedulaReader`). El cambio se limitará a **dejar de renderizarlos en los simuladores**; los componentes siguen existiendo para el Expediente Maestro.
+- La forma del payload persistido NO cambia para no romper expedientes existentes; los campos ya no editables en el simulador (dirección titular, cotitulares) se siguen guardando vacíos / desde el Expediente Maestro.

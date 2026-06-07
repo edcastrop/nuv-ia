@@ -17,15 +17,7 @@ import {
   pickBestProposal,
   type PesosInput,
 } from "../../lib/finance";
-import { ComparativeTable } from "./ComparativeTable";
-import { RecommendedResult } from "./RecommendedResult";
-import {
-  ScenarioTable,
-  buildPesosScenarioRows,
-  ImpactCard,
-  SavingsCard,
-  getVecesStyle,
-} from "./ScenarioTable";
+import { getVecesStyle } from "./ScenarioTable";
 import { PrintDocument } from "./PrintDocument";
 import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
 import { EnviarDocumentoButton } from "./EnviarDocumentoButton";
@@ -40,8 +32,11 @@ import { ResultadoFinal, type ProyeccionNuvex } from "./ResultadoFinal";
 import { SaveExpedienteButton } from "./SaveExpedienteButton";
 import type { Expediente } from "@/lib/expedientes";
 import { ExtractoReader, type ExtractoApplyPayload } from "./ExtractoReader";
-import { IntervinientesFields } from "./IntervinientesFields";
-import { CoberturaFields } from "./CoberturaFields";
+import { FreshBlock } from "./FreshBlock";
+import {
+  PropuestasComerciales,
+  type RecomendadaSeleccionada,
+} from "./PropuestasComerciales";
 import {
   defaultCobertura,
   defaultIntervinientes,
@@ -237,33 +232,21 @@ export function PesosSimulator({
     return baseResult;
   }, [datosCompletos, input, nuevaCuotaManual, cuotasEliminarManual, modoPersonalizada, calc]);
 
-  const manualValido = !!(manual && manual.valid);
-
-  // Recomendación efectiva: manual cuando es válida; si no, la mejor automática
-  const recomendada =
-    manualValido && manual
-      ? {
-          añosEliminados: manual.añosEliminados,
-          ahorroIntereses: manual.ahorroIntereses,
-          ahorroSeguros: manual.ahorroSeguros,
-          ahorroTotal: manual.ahorroTotal,
-          honorarios: manual.honorarios,
-          nuevaCuota: manual.nuevaCuotaConSeguro,
-          nuevoPlazo: manual.nuevoPlazo,
-          totalProyectado: manual.totalProyectado,
-        }
-      : best
-        ? {
-            añosEliminados: best.añosEliminados,
-            ahorroIntereses: best.ahorroIntereses,
-            ahorroSeguros: best.ahorroSeguros,
-            ahorroTotal: best.ahorroTotal,
-            honorarios: best.honorariosNuvex,
-            nuevaCuota: best.nuevaCuotaConSeguro,
-            nuevoPlazo: best.nuevoPlazo,
-            totalProyectado: best.totalAproxPagar,
-          }
-        : null;
+  // Recomendada elegida desde el bloque comercial de Propuestas (cards editables)
+  const [recomendadaPicked, setRecomendadaPicked] = useState<RecomendadaSeleccionada | null>(null);
+  const manualValido = recomendadaPicked?.fuente === "manual";
+  const recomendada = recomendadaPicked
+    ? {
+        añosEliminados: recomendadaPicked.añosEliminados,
+        ahorroIntereses: recomendadaPicked.ahorroIntereses,
+        ahorroSeguros: recomendadaPicked.ahorroSeguros,
+        ahorroTotal: recomendadaPicked.ahorroTotal,
+        honorarios: recomendadaPicked.honorarios,
+        nuevaCuota: recomendadaPicked.nuevaCuota,
+        nuevoPlazo: recomendadaPicked.nuevoPlazo,
+        totalProyectado: recomendadaPicked.totalProyectado,
+      }
+    : null;
 
   const ahorroNegativo = recomendada && (recomendada.ahorroTotal < 0 || recomendada.honorarios < 0);
 
@@ -290,21 +273,6 @@ export function PesosSimulator({
     },
     { label: "Total por pagar", value: formatCOP(totalActualPendiente) },
   ];
-
-  const scenarioRows = recomendada
-    ? buildPesosScenarioRows({
-        cuotaActual: input.cuotaActual,
-        cuotasPendientes: cuotasBaseSimulacion,
-        totalActualPendiente,
-        saldoCapital: saldoCapitalNum,
-        nuevaCuota: recomendada.nuevaCuota,
-        nuevoPlazo: recomendada.nuevoPlazo,
-        totalProyectado: recomendada.totalProyectado,
-        ahorroIntereses: recomendada.ahorroIntereses,
-        ahorroSeguros: recomendada.ahorroSeguros,
-        ahorroTotal: recomendada.ahorroTotal,
-      })
-    : [];
 
   const vecesOpt =
     recomendada && saldoCapitalNum > 0 ? recomendada.totalProyectado / saldoCapitalNum : 0;
@@ -369,29 +337,6 @@ export function PesosSimulator({
           cuotasPendientes={cuotasPendientes}
         />
 
-
-        <div className="mt-6">
-          <IntervinientesFields
-            producto={client.tipoProducto}
-            data={intervinientes}
-            onChange={setIntervinientes}
-            onTitularSync={(nombre, cedula) =>
-              setClient((c) => ({
-                ...c,
-                nombre: nombre || c.nombre,
-                cedula: cedula || c.cedula,
-              }))
-            }
-          />
-        </div>
-
-        <div className="mt-6">
-          <CoberturaFields
-            producto={client.tipoProducto}
-            data={cobertura}
-            onChange={setCobertura}
-          />
-        </div>
 
         {validaciones.map((v, i) => (
           <div key={i} className="mt-3">
@@ -471,6 +416,8 @@ export function PesosSimulator({
         </div>
       </Card>
 
+      <FreshBlock data={cobertura} onChange={setCobertura} />
+
       {datosCompletos && (
         <>
           <Card>
@@ -512,133 +459,15 @@ export function PesosSimulator({
             </Alert>
           )}
 
-          {calc && calc.propuestas.length > 0 && (
-            <>
-              <Card>
-                <SectionTitle sub="Compare cada propuesta y la recomendada en verde">
-                  Tabla comparativa de propuestas
-                </SectionTitle>
-                <ComparativeTable
-                  mode="pesos"
-                  pesos={calc.propuestas}
-                  bestIndex={bestIndex}
-                  honorariosPct={honorariosPct}
-                />
-              </Card>
-
-              {recomendada && (
-                <>
-                  <RecommendedResult
-                    mode="pesos"
-                    personalizada={manualValido}
-                    honorariosPct={honorariosPct}
-                    items={recomendada}
-                  />
-                  <Card>
-                    <SectionTitle>Escenario actual vs escenario optimizado</SectionTitle>
-                    <div className="grid gap-4 lg:grid-cols-12">
-                      <div className="lg:col-span-6">
-                        <ScenarioTable rows={scenarioRows} />
-                      </div>
-                      <div className="lg:col-span-3">
-                        <SavingsCard
-                          mode="pesos"
-                          ahorroTotal={recomendada.ahorroTotal}
-                          añosEliminados={recomendada.añosEliminados}
-                        />
-                      </div>
-                      <div className="lg:col-span-3">
-                        <ImpactCard vecesActual={vecesActual} vecesOptimizado={vecesOpt} />
-                      </div>
-                    </div>
-                  </Card>
-                </>
-              )}
-            </>
+          {datosCompletos && (
+            <PropuestasComerciales
+              mode="pesos"
+              input={input}
+              cuotasPendientes={cuotasBaseSimulacion}
+              baseCredito={saldoCapitalNum}
+              onRecomendadaChange={setRecomendadaPicked}
+            />
           )}
-
-          <Card>
-            <SectionTitle sub="Escenario adicional para negociación comercial. Reemplaza la propuesta recomendada cuando es válida.">
-              🎯 Propuesta personalizada NUVEX
-            </SectionTitle>
-            <div className="mb-4 inline-flex rounded-lg border border-[#E3E7EE] bg-white p-1">
-              <button
-                type="button"
-                onClick={() => setModoPersonalizada("cuota")}
-                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
-                  modoPersonalizada === "cuota"
-                    ? "text-white shadow"
-                    : "text-[#242424]/70 hover:text-[#242424]"
-                }`}
-                style={modoPersonalizada === "cuota" ? { backgroundColor: NUVEX.azul } : undefined}
-              >
-                Calcular por nueva cuota
-              </button>
-              <button
-                type="button"
-                onClick={() => setModoPersonalizada("cuotas")}
-                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
-                  modoPersonalizada === "cuotas"
-                    ? "text-white shadow"
-                    : "text-[#242424]/70 hover:text-[#242424]"
-                }`}
-                style={modoPersonalizada === "cuotas" ? { backgroundColor: NUVEX.azul } : undefined}
-              >
-                Calcular por cuotas a eliminar
-              </button>
-            </div>
-            <div className="grid gap-4 md:grid-cols-3">
-              {modoPersonalizada === "cuota" ? (
-                <TextField
-                  label="Nueva cuota deseada"
-                  value={nuevaCuotaManual}
-                  onChange={setNuevaCuotaManual}
-                  placeholder="2.800.000"
-                />
-              ) : (
-                <TextField
-                  label="Cuotas a eliminar"
-                  value={cuotasEliminarManual}
-                  onChange={setCuotasEliminarManual}
-                  placeholder="36"
-                />
-              )}
-            </div>
-            {manual && !manual.valid && manual.motivo && (
-              <div className="mt-3">
-                <Alert tone="error">{manual.motivo}</Alert>
-              </div>
-            )}
-            {manual && manual.valid && (
-              <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-                <MetricCard
-                  label="Nueva cuota"
-                  value={formatCOP(manual.nuevaCuotaConSeguro)}
-                  accent="green"
-                />
-                <MetricCard
-                  label="Incremento mensual"
-                  value={formatCOP(manual.incrementoMensual)}
-                />
-                <MetricCard label="Nuevo plazo" value={`${manual.nuevoPlazo} meses`} />
-                <MetricCard label="Cuotas eliminadas" value={String(manual.cuotasEliminadas)} />
-                <MetricCard label="Años eliminados" value={manual.añosEliminados.toFixed(1)} />
-                <MetricCard label="Ahorro intereses" value={formatCOP(manual.ahorroIntereses)} />
-                <MetricCard label="Ahorro seguros" value={formatCOP(manual.ahorroSeguros)} />
-                <MetricCard
-                  label="Ahorro total"
-                  value={formatCOP(manual.ahorroTotal)}
-                  accent="green"
-                />
-                <MetricCard
-                  label="Honorarios NUVEX"
-                  value={formatCOP(manual.honorarios)}
-                  accent="blue"
-                />
-                <MetricCard label="Total proyectado" value={formatCOP(manual.totalProyectado)} />
-              </div>
-            )}
-          </Card>
 
           {recomendada && (
             <DiscountModule
