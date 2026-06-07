@@ -143,46 +143,52 @@ export function ClientFields({
           onChange={(v) => set("celular", v)}
           placeholder="3001234567"
         />
-        <TextField
-          label="Número de crédito"
-          value={data.numeroCredito}
-          onChange={(v) => set("numeroCredito", v)}
-        />
+        {!hideCreditFields && (
+          <TextField
+            label="Número de crédito"
+            value={data.numeroCredito}
+            onChange={(v) => set("numeroCredito", v)}
+          />
+        )}
         <TextField
           label="Asesor NUVEX"
           value={data.asesor}
           onChange={(v) => set("asesor", v)}
         />
 
-        <div className="md:col-span-3">
-          <ProductoBancarioSelect
-            banco={data.banco}
-            producto={data.tipoProducto}
-            filtrarPorModalidad={modalidad}
-            onChange={({ banco, producto, productoId }) =>
-              onChange({ ...data, banco, tipoProducto: producto, productoBancarioId: productoId })
-            }
-          />
-        </div>
+        {!hideCreditFields && (
+          <>
+            <div className="md:col-span-3">
+              <ProductoBancarioSelect
+                banco={data.banco}
+                producto={data.tipoProducto}
+                filtrarPorModalidad={modalidad}
+                onChange={({ banco, producto, productoId }) =>
+                  onChange({ ...data, banco, tipoProducto: producto, productoBancarioId: productoId })
+                }
+              />
+            </div>
 
-        <TextField
-          label="Plazo inicial aprobado (meses)"
-          value={data.plazoInicial}
-          onChange={(v) => set("plazoInicial", v)}
-          placeholder="240"
-        />
-        <TextField
-          label="Cuotas pagadas"
-          value={data.cuotasPagadas}
-          onChange={(v) => set("cuotasPagadas", v)}
-          placeholder="36"
-        />
-        <TextField
-          label="Cuotas pendientes"
-          value={String(cuotasPendientes)}
-          readOnly
-          hint="Calculado automáticamente"
-        />
+            <TextField
+              label="Plazo inicial aprobado (meses)"
+              value={data.plazoInicial}
+              onChange={(v) => set("plazoInicial", v)}
+              placeholder="240"
+            />
+            <TextField
+              label="Cuotas pagadas"
+              value={data.cuotasPagadas}
+              onChange={(v) => set("cuotasPagadas", v)}
+              placeholder="36"
+            />
+            <TextField
+              label="Cuotas pendientes"
+              value={String(cuotasPendientes)}
+              readOnly
+              hint="Calculado automáticamente"
+            />
+          </>
+        )}
         <TextField
           label="Honorarios NUVEX (%)"
           value={data.porcentajeHonorarios}
