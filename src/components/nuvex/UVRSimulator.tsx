@@ -11,6 +11,7 @@ import {
   formatCOP,
   formatNumber,
   formatPercentage,
+  formatUVR,
 } from "../../lib/format";
 import {
   calculateUVRManual,
@@ -258,8 +259,8 @@ export function UVRSimulator({
   const metrics = [
     { label: "Valor desembolsado", value: formatCOP(valorDesembolsadoNum) },
     { label: "Saldo actual en pesos", value: formatCOP(input.saldoPesos) },
-    { label: "Saldo actual en UVR", value: formatNumber(input.saldoUVR, 2) },
-    { label: "Valor UVR actual", value: formatCOP(input.valorUVR) },
+    { label: "Saldo actual en UVR", value: formatNumber(input.saldoUVR, 4) },
+    { label: "Valor UVR actual", value: formatUVR(input.valorUVR) },
     { label: "Cuota actual con seguros", value: formatCOP(input.cuotaActualPesos) },
     { label: "Seguros mensuales", value: formatCOP(input.seguros) },
     { label: "Cuota sin seguros", value: formatCOP(cuotaSinSegurosNum) },
@@ -514,8 +515,8 @@ export function UVRSimulator({
               { label: "Dinero pagado a la fecha", value: formatCOP(dineroPagadoFecha) },
               { label: "Plazo inicial", value: `${plazoInicial} meses` },
               { label: "Cuotas pagadas", value: String(cuotasPagadas) },
-              { label: "Saldo actual en UVR", value: formatNumber(input.saldoUVR, 2) },
-              { label: "Valor UVR actual", value: formatCOP(input.valorUVR) },
+              { label: "Saldo actual en UVR", value: formatNumber(input.saldoUVR, 4) },
+              { label: "Valor UVR actual", value: formatUVR(input.valorUVR) },
             ]}
           />
 

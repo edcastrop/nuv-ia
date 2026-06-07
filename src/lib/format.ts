@@ -64,6 +64,19 @@ export function formatPercentage(value: number, decimals = 2): string {
   return `${formatNumber(value, decimals)}%`;
 }
 
+/**
+ * Formatea valores UVR con precisión exacta (4 decimales por defecto).
+ * La UVR se publica oficialmente con 4 decimales y NO debe redondearse,
+ * pues cualquier aproximación altera la proyección de capital e intereses.
+ */
+export function formatUVR(value: number, decimals = 4): string {
+  if (!isFinite(value)) return "$ 0";
+  return `$ ${new Intl.NumberFormat("es-CO", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(value)}`;
+}
+
 export function formatInt(value: number): string {
   return numberFormatter.format(Math.round(value));
 }

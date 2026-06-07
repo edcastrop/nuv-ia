@@ -7,7 +7,7 @@ import {
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { listExpedientes, type Expediente } from "@/lib/expedientes";
-import { formatCOP, formatInt, parseCurrency, parseDecimal, parsePercentage } from "@/lib/format";
+import { formatCOP, formatInt, formatUVR, parseCurrency, parseDecimal, parsePercentage } from "@/lib/format";
 import {
   proyectar, formatFecha, formatFechaLarga,
   type CoberturaFresh, type ProyeccionInputBase, type ProyeccionResultado,
@@ -343,7 +343,7 @@ export function ProyeccionDetallada() {
                   <KV label="Tasa cobrada" value={`${inputs.tea.toFixed(2)}% EA`} />
                   <KV label="Cuotas pendientes" value={formatInt(inputs.cuotasPendientesBase)} />
                   <KV label="Plazo inicial" value={`${formatInt(inputs.plazoInicial)} meses`} />
-                  {inputs.uvr && <KV label="Valor UVR / Variación" value={`${formatCOP(inputs.uvr.valorUVR)} · ${inputs.uvr.variacion.toFixed(2)}% EA`} />}
+                  {inputs.uvr && <KV label="Valor UVR / Variación" value={`${formatUVR(inputs.uvr.valorUVR)} · ${inputs.uvr.variacion.toFixed(2)}% EA`} />}
                 </div>
               </div>
 
