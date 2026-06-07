@@ -11,6 +11,7 @@ import {
   formatCOP,
   formatNumber,
   formatPercentage,
+  formatUVR,
 } from "../../lib/format";
 import {
   calculateUVRManual,
