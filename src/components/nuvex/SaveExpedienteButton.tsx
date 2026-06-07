@@ -49,7 +49,7 @@ export function SaveExpedienteButton({
           className="rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow transition-transform hover:scale-[1.01] disabled:opacity-50"
           style={{ backgroundColor: NUVEX.azul }}
         >
-          {saving ? "Guardando…" : expedienteId ? "Actualizar expediente" : "Guardar expediente"}
+          {saving ? "Enviando…" : expedienteId ? "Actualizar expediente" : "Enviar al expediente"}
         </button>
       </div>
       {creado && (
