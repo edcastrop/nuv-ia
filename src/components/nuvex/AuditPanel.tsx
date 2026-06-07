@@ -7,7 +7,7 @@ import {
 } from "@/lib/auditEngine";
 import { decidirPdf, etiquetaNivel, type NivelAutonomia } from "@/lib/autonomia";
 import { persistirAuditoriaSimulacion } from "@/lib/persistirAuditoria";
-import { registrarPrecisionAnalista } from "@/lib/precisionHistorica";
+
 
 
 const sevColor: Record<Severidad, string> = {
