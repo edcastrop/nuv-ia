@@ -24,6 +24,7 @@ export interface ClientData {
   fechaExpedicionCedula?: string;
   // Ubicación del cliente
   direccion?: string;
+  departamento?: string;
   ciudad?: string;
   municipio?: string;
   // Aditivos opcionales (persistidos en cliente_data jsonb)
@@ -153,6 +154,16 @@ export function ClientFields({
 
         <div>
           <label className="block text-xs font-medium text-[#242424]/70 mb-1">
+            Departamento
+          </label>
+          <CitySelect
+            value={data.departamento ?? ""}
+            onChange={(v) => set("departamento", v)}
+            placeholder="Selecciona departamento…"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-[#242424]/70 mb-1">
             Ciudad
           </label>
           <CitySelect
@@ -193,6 +204,7 @@ export const defaultClient: ClientData = {
   lugarExpedicionCedula: "",
   fechaExpedicionCedula: "",
   direccion: "",
+  departamento: "",
   ciudad: "",
   municipio: "",
 };
