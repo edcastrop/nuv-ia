@@ -3,15 +3,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAuth } from "@/hooks/useAuth";
 import { formatCOP, parseCurrency, parseDecimal } from "@/lib/format";
-import { honorariosFinalesCliente } from "@/lib/honorarios";
+import { honorariosFinalesCliente, calcularRecalculoHonorarios, guardarRecalculoHonorarios } from "@/lib/honorarios";
+import { calcularPrecision, registrarPrecisionAnalista } from "@/lib/precisionHistorica";
+import { aplicaOtrosi, abrirOtrosiImprimible } from "@/lib/otrosiContrato";
+import { crearNotificacion } from "@/lib/notificaciones";
 
 interface Props {
   expedienteId: string;
   simulacionId?: string | null;
+  analistaId?: string | null;
+  clienteNombre?: string;
+  clienteCedula?: string;
+  bancoNombre?: string;
+  numeroExpediente?: string;
+  cuotasPactadas?: number;
+  honorariosPactados?: number;
   // Datos presentados (referencia para el comparativo)
   cuotaPropuesta?: number;
   plazoPropuesto?: number;
   cuotasEliminadasPropuestas?: number;
+  ahorroPropuesto?: number;
 }
 
 type Tab = "financiero" | "juridico";
@@ -19,9 +30,17 @@ type Tab = "financiero" | "juridico";
 export function RespuestaBancoBlock({
   expedienteId,
   simulacionId,
+  analistaId,
+  clienteNombre = "",
+  clienteCedula = "",
+  bancoNombre = "",
+  numeroExpediente = "",
+  cuotasPactadas = 0,
+  honorariosPactados = 0,
   cuotaPropuesta = 0,
   plazoPropuesto = 0,
   cuotasEliminadasPropuestas = 0,
+  ahorroPropuesto = 0,
 }: Props) {
   const { user } = useAuth();
   const { roles, isSuperAdmin, isDirectorQA, isDirectorJuridico, isApoderado } = useUserRole();
