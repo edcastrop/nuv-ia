@@ -531,6 +531,38 @@ export function PesosSimulator({
             })()}
 
           {recomendada && (
+            <AuditPanel
+              nivelAutonomia={metricasAutonomia.nivelAutonomia}
+              input={{
+                moneda: "pesos",
+                extracto: {},
+                analista: {
+                  banco: client.banco,
+                  producto: client.tipoProducto,
+                  saldoCapital: saldoCapitalNum,
+                  cuotaActual: cuotaActualNum,
+                  seguros: parseCurrency(seguros),
+                  teaPct: parsePercentage(tea),
+                  plazoInicial,
+                  cuotasPagadas,
+                  cuotasPendientes,
+                },
+                propuesta: {
+                  cuotaActual: cuotaActualNum,
+                  cuotasPendientes,
+                  nuevaCuota: recomendada.nuevaCuota,
+                  nuevoPlazo: recomendada.nuevoPlazo,
+                  cuotasEliminadas: Math.max(0, cuotasPendientes - recomendada.nuevoPlazo),
+                  ahorroIntereses: recomendada.ahorroIntereses,
+                  ahorroSeguros: recomendada.ahorroSeguros,
+                  ahorroTotal: recomendada.ahorroTotal,
+                  honorarios: recomendada.honorarios,
+                },
+              }}
+            />
+          )}
+
+          {recomendada && (
             <div className="flex flex-wrap justify-end gap-2">
               <button
                 onClick={async () => {
