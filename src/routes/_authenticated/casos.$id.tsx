@@ -133,7 +133,7 @@ function CasoDetail() {
 
       {(() => {
         const prop = (exp as unknown as { propuesta_data?: Record<string, unknown> }).propuesta_data ?? {};
-        const cli = (exp.cliente_data ?? {}) as Record<string, unknown>;
+        const cli = (exp.cliente_data ?? {}) as unknown as Record<string, unknown>;
         const cuotasPactadas = Number((exp as unknown as { cuotas_pactadas?: number }).cuotas_pactadas ?? 0)
           || Number(prop.cuotasEliminadas ?? 0);
         const honorariosPactados = Number((exp as unknown as { honorarios_pactados?: number }).honorarios_pactados ?? 0)
