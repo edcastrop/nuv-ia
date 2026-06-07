@@ -216,6 +216,46 @@ export const registrarPago = createServerFn({ method: "POST" })
       documento_url: comprobanteUrl,
     } as never);
 
+    // Disparador: notificar a contabilidad + asesor responsable
+    try {
+      const { data: cartRow } = await supabase
+        .from("cartera")
+        .select("expediente_id")
+        .eq("id", data.carteraId)
+        .maybeSingle();
+      const expedienteId = (cartRow as { expediente_id: string | null } | null)?.expediente_id ?? null;
+      const { data: roleRows } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .in("role", ["contabilidad", "director_financiero_qa"] as never);
+      const destinos = new Set<string>(((roleRows ?? []) as Array<{ user_id: string }>).map((r) => r.user_id));
+      if (expedienteId) {
+        const { data: exp } = await supabase
+          .from("expedientes")
+          .select("asesor_id")
+          .eq("id", expedienteId)
+          .maybeSingle();
+        const aid = (exp as { asesor_id: string | null } | null)?.asesor_id;
+        if (aid) destinos.add(aid);
+      }
+      destinos.delete(userId);
+      if (destinos.size > 0) {
+        const fmt = new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(data.valor);
+        const link = expedienteId ? `/casos/${expedienteId}` : `/cartera/${data.carteraId}`;
+        await supabase.from("notificaciones_usuario" as never).insert(
+          Array.from(destinos).map((u) => ({
+            user_id: u,
+            tipo: "pago_registrado",
+            titulo: "Nuevo pago registrado",
+            mensaje: `Valor: ${fmt}`,
+            link,
+            severidad: "media",
+            metadata: { cartera_id: data.carteraId, expediente_id: expedienteId, valor: data.valor },
+          })) as never,
+        );
+      }
+    } catch { /* no romper la operación */ }
+
     return { ok: true, comprobantePath: comprobanteUrl };
   });
 
