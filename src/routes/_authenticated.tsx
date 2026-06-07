@@ -5,7 +5,7 @@ import { CORPORATIVO } from "@/components/nuvex/constants";
 import {
   LayoutGrid, FolderKanban, BarChart3, LogOut, GraduationCap, LineChart,
   UserSquare2, Users, Shield, Wallet, Bell, CircleDollarSign, Landmark,
-  ClipboardCheck, Briefcase, ChevronLeft, ChevronRight, UserCircle, MessageSquare, BookUser, Sparkles, ShieldCheck, Kanban, RadioTower,
+  ClipboardCheck, Briefcase, ChevronLeft, ChevronRight, UserCircle, MessageSquare, BookUser, Sparkles, ShieldCheck, Kanban, RadioTower, Award,
 } from "lucide-react";
 import { UserAvatar } from "@/components/nuvex/UserAvatar";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -17,6 +17,8 @@ import { AcademiaBanner } from "@/components/onboarding/AcademiaBanner";
 import { OnboardingChecklistBanner } from "@/components/onboarding/OnboardingChecklistBanner";
 import { iniciarPresenciaPropia, detenerPresenciaPropia } from "@/lib/presencia";
 import { NotificacionesAlerts } from "@/components/notificaciones/NotificacionesAlerts";
+import { useNivelAutonomia } from "@/hooks/useNivelAutonomia";
+import { etiquetaNivel } from "@/lib/autonomia";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
@@ -31,6 +33,7 @@ type NavSection = { label: string; items: NavItem[] };
 function AuthenticatedLayout() {
   const { session, user, loading } = useAuth();
   const { isSuperAdmin, roles, isDirectorQA, isApoderado } = useUserRole();
+  const { metricas: metricasAutonomia, loading: loadingAutonomia } = useNivelAutonomia();
   const navigate = useNavigate();
   const location = useLocation();
   const [unread, setUnread] = useState(0);
@@ -506,6 +509,36 @@ function AuthenticatedLayout() {
             </div>
 
             <div className="flex items-center gap-3">
+              {!loadingAutonomia && (
+                <Link
+                  to="/mi-perfil"
+                  title={`Nivel ${metricasAutonomia.nivelAutonomia} — ${etiquetaNivel(metricasAutonomia.nivelAutonomia)} · Score ${metricasAutonomia.scorePromedio.toFixed(1)}`}
+                  className="hidden sm:flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider transition hover:opacity-90"
+                  style={{
+                    background:
+                      metricasAutonomia.nivelAutonomia === 3
+                        ? "rgba(132,185,143,0.18)"
+                        : metricasAutonomia.nivelAutonomia === 2
+                          ? "rgba(255,236,179,0.18)"
+                          : "rgba(255,204,128,0.18)",
+                    color:
+                      metricasAutonomia.nivelAutonomia === 3
+                        ? "#84B98F"
+                        : metricasAutonomia.nivelAutonomia === 2
+                          ? "#FFE082"
+                          : "#FFCC80",
+                    border:
+                      metricasAutonomia.nivelAutonomia === 3
+                        ? "1px solid rgba(132,185,143,0.30)"
+                        : metricasAutonomia.nivelAutonomia === 2
+                          ? "1px solid rgba(255,236,179,0.30)"
+                          : "1px solid rgba(255,204,128,0.30)",
+                  }}
+                >
+                  <Award size={12} />
+                  N{metricasAutonomia.nivelAutonomia}
+                </Link>
+              )}
               <NotificationBell />
               <Link
                 to="/mi-perfil"
