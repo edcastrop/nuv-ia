@@ -26,6 +26,7 @@ export interface Cobertura {
   segurosMensuales?: string; // Sumatoria de seguros detectados en el extracto.
   cuotaBaseSimulacion?: string; // Cuota real sobre la que se debe simular (sin subsidio).
   requiereVerificacion?: boolean; // true cuando se detectó beneficio pero no fue posible derivar la cuota base con certeza.
+  cuotasRestantesBeneficio?: string; // Cuotas restantes del beneficio Fresh (capturado manualmente en el simulador comercial).
 }
 
 export function isLeasing(producto?: string | null): boolean {
