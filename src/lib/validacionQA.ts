@@ -102,6 +102,8 @@ export async function aprobarQA(validacionId: string): Promise<void> {
         .update({ aprobado_data: snapshot as unknown as never })
         .eq("id", expedienteId);
     }
+    // Disparador: notificar a asesor + jurídica
+    await notifQAAprobada(expedienteId);
   }
 }
 
