@@ -73,14 +73,14 @@ export function ResumenEjecutivo({ exp }: { exp: Expediente }) {
 
   return (
     <Card>
-      <div className="mb-4 flex items-end justify-between">
-        <div>
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
           <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#445DA3]">
             Resumen ejecutivo
           </div>
-          <h2 className="text-xl font-semibold text-[#0A1226]">{exp.cliente_nombre}</h2>
+          <h2 className="break-words text-xl font-semibold leading-tight text-[#0A1226]">{exp.cliente_nombre}</h2>
         </div>
-        <div className="text-right">
+        <div className="sm:text-right">
           <div className="text-[10px] uppercase tracking-wider text-[#242424]/55">Avance</div>
           <div className="text-2xl font-bold text-[#445DA3]">{pct}%</div>
         </div>
@@ -95,9 +95,9 @@ export function ResumenEjecutivo({ exp }: { exp: Expediente }) {
 
       <dl className="grid grid-cols-1 gap-x-6 gap-y-2 md:grid-cols-2">
         {items.map((it) => (
-          <div key={it.label} className="flex items-start justify-between gap-2 border-b border-[#F2F4F8] py-1.5 last:border-b-0">
+          <div key={it.label} className="flex flex-col gap-0.5 border-b border-[#F2F4F8] py-1.5 last:border-b-0 sm:flex-row sm:items-start sm:justify-between sm:gap-2">
             <dt className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/55">{it.label}</dt>
-            <dd className="text-right text-sm text-[#0A1226]">{it.value}</dd>
+            <dd className="min-w-0 break-words text-sm text-[#0A1226] sm:text-right">{it.value}</dd>
           </div>
         ))}
       </dl>

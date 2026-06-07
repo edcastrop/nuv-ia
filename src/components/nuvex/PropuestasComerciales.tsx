@@ -202,14 +202,14 @@ export function PropuestasComerciales(props: Props) {
 
   return (
     <Card>
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <SectionTitle sub="Cada escenario se recalcula al editar las cuotas a eliminar. Marca el que enviarás al cliente.">
           Propuestas comerciales
         </SectionTitle>
         <button
           type="button"
           onClick={addPropuesta}
-          className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:opacity-90"
+          className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:opacity-90 sm:w-auto"
           style={{ backgroundColor: NUVEX.azul }}
         >
           <Plus size={14} /> Nuevo escenario
@@ -219,16 +219,10 @@ export function PropuestasComerciales(props: Props) {
       {/* Franja de comparación rápida — scroll horizontal en móvil */}
       {cuotasList.length > 0 && (
         <div
-          className="overflow-hidden rounded-2xl border"
+          className="rounded-2xl border"
           style={{ borderColor: "#ECEFF3", backgroundColor: "#FAFBFC" }}
         >
-          <div className="overflow-x-auto">
-            <div
-              className="grid min-w-full"
-              style={{
-                gridTemplateColumns: `repeat(${cuotasList.length}, minmax(140px,1fr))`,
-              }}
-            >
+          <div className="grid gap-2 p-2 sm:grid-cols-2 lg:grid-cols-4">
               {cuotasList.map((_, idx) => {
                 const c = calcs[idx];
                 const isRec = idx === effectiveIdx;
@@ -237,10 +231,10 @@ export function PropuestasComerciales(props: Props) {
                     key={idx}
                     type="button"
                     onClick={() => c.valid && setRecomendadaIdx(idx)}
-                    className="group flex flex-col items-center gap-1 px-3 py-3 text-center transition"
+                    className="group flex min-w-0 flex-col items-center gap-1 rounded-xl border px-3 py-3 text-center transition"
                     style={{
-                      backgroundColor: isRec ? "#F1FAF4" : "transparent",
-                      borderRight: idx < cuotasList.length - 1 ? "1px solid #ECEFF3" : "none",
+                      backgroundColor: isRec ? "#F1FAF4" : "#FFFFFF",
+                      borderColor: isRec ? "#5CA875" : "#ECEFF3",
                       cursor: c.valid ? "pointer" : "default",
                     }}
                   >
@@ -298,12 +292,11 @@ export function PropuestasComerciales(props: Props) {
                   </button>
                 );
               })}
-            </div>
           </div>
         </div>
       )}
 
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid min-w-0 gap-5 md:grid-cols-2 xl:grid-cols-3">
         {cuotasList.map((cuotas, idx) => {
           const c = calcs[idx];
           const isRecomendada = idx === effectiveIdx;
@@ -327,7 +320,7 @@ export function PropuestasComerciales(props: Props) {
           return (
             <div
               key={idx}
-              className="relative flex flex-col rounded-2xl border bg-white transition"
+              className="relative flex min-w-0 flex-col rounded-2xl border bg-white transition"
               style={{
                 borderColor: isRecomendada ? "#5CA875" : "#ECEFF3",
                 boxShadow: isRecomendada
@@ -416,11 +409,9 @@ export function PropuestasComerciales(props: Props) {
                       Ahorro total
                     </div>
                     <div
-                      className="mt-1 font-extrabold leading-none tracking-tight"
+                      className="mt-1 break-words text-[26px] font-extrabold leading-none sm:text-[34px]"
                       style={{
                         color: "#1F7A45",
-                        fontSize: 34,
-                        letterSpacing: "-0.02em",
                       }}
                     >
                       {formatCOP(c.ahorroTotal)}
@@ -428,7 +419,7 @@ export function PropuestasComerciales(props: Props) {
                   </div>
 
                   {/* Métricas principales */}
-                  <div className="grid grid-cols-2 gap-x-5 gap-y-3 px-5 pt-5">
+                  <div className="grid min-w-0 grid-cols-1 gap-x-5 gap-y-3 px-5 pt-5 min-[380px]:grid-cols-2">
                     <HeroMetric
                       label="Incremento mensual"
                       value={`+${formatCOP(c.incrementoMensual)}`}
@@ -464,7 +455,7 @@ export function PropuestasComerciales(props: Props) {
 
                   {/* Sección secundaria: honorarios y veces pagado */}
                   <div
-                    className="mt-5 flex items-center justify-between gap-3 border-t px-5 py-3 text-[11px]"
+                    className="mt-5 flex flex-col gap-3 border-t px-5 py-3 text-[11px] min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between"
                     style={{ borderColor: "#F0F2F5", color: "#6B7480" }}
                   >
                     <div className="flex flex-col">
@@ -473,7 +464,7 @@ export function PropuestasComerciales(props: Props) {
                       </span>
                       <span className="font-semibold text-[#242424]">{formatCOP(c.honorarios)}</span>
                     </div>
-                    <div className="flex flex-col items-end">
+                    <div className="flex flex-col min-[380px]:items-end">
                       <span className="text-[9px] font-semibold uppercase tracking-wider opacity-70">
                         Veces pagado
                       </span>

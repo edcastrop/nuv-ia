@@ -58,7 +58,7 @@ export function SelectField({ label, value, onChange, options, placeholder, clas
 export function Card({ children, className, style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
   return (
     <div
-      className={`rounded-2xl border border-[#E3E7EE] bg-white p-5 shadow-[0_1px_3px_rgba(36,36,36,0.04),0_8px_24px_rgba(36,36,36,0.04)] ${className ?? ""}`}
+      className={`rounded-2xl border border-[#E3E7EE] bg-white p-4 shadow-[0_1px_3px_rgba(36,36,36,0.04),0_8px_24px_rgba(36,36,36,0.04)] sm:p-5 ${className ?? ""}`}
       style={style}
     >
       {children}

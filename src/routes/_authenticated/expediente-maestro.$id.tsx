@@ -294,31 +294,31 @@ function MaestroDetail() {
     return <div className="p-12 text-center text-sm text-[#B42318]">{err || "No encontrado"}</div>;
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-6 space-y-4">
+    <div className="mx-auto max-w-7xl space-y-4 px-3 py-4 sm:px-6 sm:py-6">
       <Card>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
+        <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-start lg:justify-between">
+          <div className="min-w-0">
             <div
               className="text-[11px] uppercase tracking-wider font-semibold"
               style={{ color: NUVEX.azul }}
             >
               Expediente Maestro
             </div>
-            <h1 className="text-2xl font-semibold text-[#242424]">
+            <h1 className="break-words text-2xl font-semibold leading-tight text-[#242424]">
               {cliente.nombre || "Sin nombre"}
             </h1>
-            <div className="mt-1 text-sm text-[#242424]/70">
+            <div className="mt-1 break-words text-sm text-[#242424]/70">
               {cliente.cedula && <>CC {cliente.cedula} · </>}
               {credito.banco && <>{credito.banco} · </>}
               Actualizado {new Date(exp.updated_at).toLocaleString("es-CO")}
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center lg:justify-end">
             {msg && <span className="text-xs text-[#242424]/70 mr-2">{msg}</span>}
             <Link
               to="/"
               search={{ maestroId: id, modo: "pesos" as const }}
-              className="rounded-lg border px-3 py-2 text-xs font-semibold"
+              className="rounded-lg border px-3 py-2 text-center text-xs font-semibold"
               style={{ borderColor: NUVEX.azul, color: NUVEX.azul, backgroundColor: "#fff" }}
               title="Abre el simulador en pesos con los datos del expediente"
             >
@@ -327,7 +327,7 @@ function MaestroDetail() {
             <Link
               to="/"
               search={{ maestroId: id, modo: "uvr" as const }}
-              className="rounded-lg border px-3 py-2 text-xs font-semibold"
+              className="rounded-lg border px-3 py-2 text-center text-xs font-semibold"
               style={{ borderColor: NUVEX.azul, color: NUVEX.azul, backgroundColor: "#fff" }}
               title="Abre el simulador en UVR con los datos del expediente"
             >

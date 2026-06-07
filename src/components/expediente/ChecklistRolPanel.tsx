@@ -21,12 +21,12 @@ export function ChecklistRolPanel({ exp, onIrATab }: Props) {
 
   return (
     <Card>
-      <div className="mb-3 flex items-baseline justify-between">
+      <div className="mb-3 flex items-baseline justify-between gap-3">
         <div>
           <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#445DA3]">
             Tu checklist
           </div>
-          <h3 className="text-base font-semibold text-[#0A1226]">
+          <h3 className="text-base font-semibold leading-snug text-[#0A1226]">
             {hechos} de {items.length} pasos completados
           </h3>
         </div>
@@ -37,14 +37,14 @@ export function ChecklistRolPanel({ exp, onIrATab }: Props) {
 
       <ul className="space-y-1.5">
         {items.map((it, i) => (
-          <li key={i} className="flex items-center gap-2.5">
+          <li key={i} className="flex min-w-0 items-start gap-2.5">
             {it.completado ? (
               <CheckCircle2 size={16} className="flex-shrink-0 text-[#1F7A45]" />
             ) : (
               <Circle size={16} className="flex-shrink-0 text-[#CBD3E0]" />
             )}
             <span
-              className={`flex-1 text-sm ${it.completado ? "text-[#242424]/55 line-through" : "text-[#0A1226]"}`}
+              className={`min-w-0 flex-1 break-words text-sm leading-snug ${it.completado ? "text-[#242424]/55 line-through" : "text-[#0A1226]"}`}
             >
               {it.label}
             </span>
@@ -60,7 +60,7 @@ export function ChecklistRolPanel({ exp, onIrATab }: Props) {
                     }, 80);
                   }
                 }}
-                className="text-[11px] font-semibold text-[#445DA3] hover:underline"
+                className="shrink-0 text-[11px] font-semibold text-[#445DA3] hover:underline"
               >
                 Ir →
               </button>

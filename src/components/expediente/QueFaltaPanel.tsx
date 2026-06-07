@@ -17,15 +17,15 @@ export function QueFaltaPanel({ exp, onIrATab }: Props) {
   if (bloqueos.length === 0) {
     return (
       <Card>
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 items-center gap-3">
           <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#EAF7EE] text-[#1F7A45]">
             <AlertCircle size={16} />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1F7A45]">
               Qué falta para continuar
             </div>
-            <p className="text-sm text-[#0A1226]">Sin bloqueos detectados en la etapa actual.</p>
+            <p className="text-sm leading-snug text-[#0A1226]">Sin bloqueos detectados en la etapa actual.</p>
           </div>
         </div>
       </Card>
@@ -49,7 +49,7 @@ export function QueFaltaPanel({ exp, onIrATab }: Props) {
           return (
             <li
               key={i}
-              className="flex flex-wrap items-center gap-3 rounded-lg border px-3 py-2"
+              className="flex min-w-0 flex-col items-start gap-2 rounded-lg border px-3 py-2 sm:flex-row sm:items-center sm:gap-3"
               style={{ borderColor: bg, background: "white" }}
             >
               <span
@@ -76,7 +76,7 @@ export function QueFaltaPanel({ exp, onIrATab }: Props) {
                       }, 80);
                     }
                   }}
-                  className="inline-flex items-center gap-1 rounded-md border border-[#E3E7EE] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#445DA3] hover:bg-[#EEF1FA]"
+                  className="inline-flex w-full items-center justify-center gap-1 rounded-md border border-[#E3E7EE] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#445DA3] hover:bg-[#EEF1FA] sm:w-auto"
                 >
                   Resolver
                   <ChevronRight size={12} />
