@@ -6,6 +6,7 @@ import { Check, ChevronDown, MapPin, Search } from "lucide-react";
 import {
   COLOMBIA_DEPARTAMENTOS,
   listDepartamentos,
+  listAllMunicipios,
   municipiosDe,
   searchInList,
 } from "@/lib/colombiaLocations";
@@ -139,15 +140,16 @@ export function MunicipioSelect({
   onChange: (v: string) => void;
   placeholder?: string;
 }) {
-  const options = useMemo(() => municipiosDe(departamento), [departamento]);
+  const options = useMemo(
+    () => (departamento ? municipiosDe(departamento) : listAllMunicipios()),
+    [departamento]
+  );
   return (
     <ListCombo
       value={value}
       onChange={onChange}
       placeholder={placeholder}
-      disabled={!departamento}
       options={options}
-      emptyHint="Selecciona primero el departamento."
     />
   );
 }

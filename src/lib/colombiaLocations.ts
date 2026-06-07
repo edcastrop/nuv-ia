@@ -1311,3 +1311,23 @@ export function searchInList(list: string[], query: string, limit = 100): string
   }
   return [...starts, ...contains].slice(0, limit);
 }
+
+/** Devuelve el departamento al que pertenece un municipio (o '' si no lo encuentra). */
+export function departamentoDeMunicipio(municipio: string | null | undefined): string {
+  const t = (municipio || "").trim();
+  if (!t) return "";
+  const folded = fold(t);
+  for (const d of COLOMBIA_DEPARTAMENTOS) {
+    if (d.municipios.some((m) => fold(m) === folded)) return d.departamento;
+  }
+  return "";
+}
+
+/** Lista todos los municipios del país en formato "Municipio (Departamento)". */
+export function listAllMunicipios(): string[] {
+  const out: string[] = [];
+  for (const d of COLOMBIA_DEPARTAMENTOS) {
+    for (const m of d.municipios) out.push(m);
+  }
+  return out;
+}
