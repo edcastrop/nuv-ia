@@ -21,25 +21,25 @@ export function ExpedienteStepper13({ exp, onSelectEtapa }: Props) {
   const idxActual = ETAPAS_GUIADAS.findIndex((e) => e.id === actual);
 
   return (
-    <div className="rounded-2xl border border-[#E3E7EE] bg-white p-3 md:p-4">
-      <div className="mb-3 flex items-baseline justify-between gap-3">
+    <div className="min-w-0 rounded-2xl border border-[#E3E7EE] bg-white p-3 md:p-4">
+      <div className="mb-3 flex flex-col gap-1.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
         <div>
           <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#242424]/55">
             Expediente Guiado NUVEX
           </div>
-          <div className="text-sm font-semibold text-[#0A1226]">
+          <div className="text-sm font-semibold leading-snug text-[#0A1226]">
             Etapa {idxActual + 1} de {ETAPAS_GUIADAS.length} ·{" "}
             <span style={{ color: ESTADO_COLOR[estadoDeEtapa(exp, actual)].fg }}>
               {ETAPAS_GUIADAS[idxActual].titulo}
             </span>
           </div>
         </div>
-        <div className="text-[11px] font-semibold text-[#242424]/55">
+        <div className="text-[11px] font-semibold text-[#242424]/55 sm:text-right">
           {Math.round(((idxActual + 1) / ETAPAS_GUIADAS.length) * 100)}%
         </div>
       </div>
 
-      <div className="overflow-x-auto -mx-1">
+      <div className="-mx-1 overflow-x-auto overscroll-x-contain">
         <ol className="flex min-w-max items-stretch gap-1 px-1">
           {ETAPAS_GUIADAS.map((e) => {
             const st = estadoDeEtapa(exp, e.id);
