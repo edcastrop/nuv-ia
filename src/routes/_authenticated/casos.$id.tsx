@@ -115,7 +115,7 @@ function CasoDetail() {
 
       {/* Tabs */}
       <Tabs value={tab} onValueChange={(v) => setTab(v as TabId)} className="space-y-4">
-        <TabsList className="flex w-full flex-wrap justify-start gap-1 bg-[#F7F9FB] p-1">
+        <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 bg-[#F7F9FB] p-1">
           <TabsTrigger value="resumen">Resumen</TabsTrigger>
           <TabsTrigger value="tareas">Tareas</TabsTrigger>
           <TabsTrigger value="documentos">Documentos</TabsTrigger>
