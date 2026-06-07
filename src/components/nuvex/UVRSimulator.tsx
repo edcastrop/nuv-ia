@@ -47,6 +47,8 @@ import { getDefaultVariacionUVR, setDefaultVariacionUVR } from "../../lib/uvrCon
 import { useAsesorDefault } from "@/hooks/useAsesorDefault";
 import { freshFromCobertura } from "@/lib/cobertura";
 import { Settings2 } from "lucide-react";
+import { AuditPanel } from "./AuditPanel";
+import { useNivelAutonomia } from "@/hooks/useNivelAutonomia";
 
 export function UVRSimulator({
   initialExpediente,
@@ -99,6 +101,7 @@ export function UVRSimulator({
 
   // Prellenar el campo "Asesor NUVEX" con el nombre del perfil autenticado
   useAsesorDefault(client.asesor, (nombre) => setClient((prev) => ({ ...prev, asesor: nombre })));
+  const { metricas: metricasAutonomia } = useNivelAutonomia();
 
   const plazoInicial = parseDecimal(client.plazoInicial);
   const cuotasPagadas = parseDecimal(client.cuotasPagadas);
@@ -591,6 +594,38 @@ export function UVRSimulator({
                 />
               );
             })()}
+
+          {recomendada && (
+            <AuditPanel
+              nivelAutonomia={metricasAutonomia.nivelAutonomia}
+              input={{
+                moneda: "uvr",
+                extracto: {},
+                analista: {
+                  banco: client.banco,
+                  producto: client.tipoProducto,
+                  saldoCapital: saldoPesosNum,
+                  cuotaActual: cuotaSimulacionPesosNum,
+                  seguros: segurosNum,
+                  teaPct: parsePercentage(teaCobrada),
+                  plazoInicial,
+                  cuotasPagadas,
+                  cuotasPendientes,
+                },
+                propuesta: {
+                  cuotaActual: cuotaSimulacionPesosNum,
+                  cuotasPendientes,
+                  nuevaCuota: recomendada.nuevaCuota,
+                  nuevoPlazo: recomendada.nuevoPlazo,
+                  cuotasEliminadas: Math.max(0, cuotasPendientes - recomendada.nuevoPlazo),
+                  ahorroIntereses: recomendada.ahorroIntereses,
+                  ahorroSeguros: recomendada.ahorroSeguros,
+                  ahorroTotal: recomendada.ahorroTotal,
+                  honorarios: recomendada.honorarios,
+                },
+              }}
+            />
+          )}
 
           {recomendada && (
             <div className="flex flex-wrap justify-end gap-2">

@@ -35,6 +35,7 @@ import { Route as AuthenticatedGestionUsuariosRouteImport } from './routes/_auth
 import { Route as AuthenticatedFinanzasRouteImport } from './routes/_authenticated/finanzas'
 import { Route as AuthenticatedDirectorioRouteImport } from './routes/_authenticated/directorio'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedAuditoriaFinancieraRouteImport } from './routes/_authenticated/auditoria-financiera'
 import { Route as AuthenticatedApoderadosNuvexRouteImport } from './routes/_authenticated/apoderados-nuvex'
 import { Route as AuthenticatedAcademiaRouteImport } from './routes/_authenticated/academia'
 import { Route as AuthenticatedSuperAdminIndexRouteImport } from './routes/_authenticated/super-admin.index'
@@ -218,6 +219,12 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAuditoriaFinancieraRoute =
+  AuthenticatedAuditoriaFinancieraRouteImport.update({
+    id: '/auditoria-financiera',
+    path: '/auditoria-financiera',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedApoderadosNuvexRoute =
   AuthenticatedApoderadosNuvexRouteImport.update({
     id: '/apoderados-nuvex',
@@ -512,6 +519,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/academia': typeof AuthenticatedAcademiaRouteWithChildren
   '/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
+  '/auditoria-financiera': typeof AuthenticatedAuditoriaFinancieraRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/directorio': typeof AuthenticatedDirectorioRoute
   '/finanzas': typeof AuthenticatedFinanzasRouteWithChildren
@@ -585,6 +593,7 @@ export interface FileRoutesByTo {
   '/registro': typeof RegistroRoute
   '/reset-password': typeof ResetPasswordRoute
   '/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
+  '/auditoria-financiera': typeof AuthenticatedAuditoriaFinancieraRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/directorio': typeof AuthenticatedDirectorioRoute
   '/gestion-usuarios': typeof AuthenticatedGestionUsuariosRoute
@@ -661,6 +670,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/academia': typeof AuthenticatedAcademiaRouteWithChildren
   '/_authenticated/apoderados-nuvex': typeof AuthenticatedApoderadosNuvexRoute
+  '/_authenticated/auditoria-financiera': typeof AuthenticatedAuditoriaFinancieraRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/directorio': typeof AuthenticatedDirectorioRoute
   '/_authenticated/finanzas': typeof AuthenticatedFinanzasRouteWithChildren
@@ -739,6 +749,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/academia'
     | '/apoderados-nuvex'
+    | '/auditoria-financiera'
     | '/dashboard'
     | '/directorio'
     | '/finanzas'
@@ -812,6 +823,7 @@ export interface FileRouteTypes {
     | '/registro'
     | '/reset-password'
     | '/apoderados-nuvex'
+    | '/auditoria-financiera'
     | '/dashboard'
     | '/directorio'
     | '/gestion-usuarios'
@@ -887,6 +899,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/_authenticated/academia'
     | '/_authenticated/apoderados-nuvex'
+    | '/_authenticated/auditoria-financiera'
     | '/_authenticated/dashboard'
     | '/_authenticated/directorio'
     | '/_authenticated/finanzas'
@@ -1153,6 +1166,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/auditoria-financiera': {
+      id: '/_authenticated/auditoria-financiera'
+      path: '/auditoria-financiera'
+      fullPath: '/auditoria-financiera'
+      preLoaderRoute: typeof AuthenticatedAuditoriaFinancieraRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/apoderados-nuvex': {
@@ -1559,6 +1579,7 @@ const AuthenticatedFinanzasRouteWithChildren =
 interface AuthenticatedRouteChildren {
   AuthenticatedAcademiaRoute: typeof AuthenticatedAcademiaRouteWithChildren
   AuthenticatedApoderadosNuvexRoute: typeof AuthenticatedApoderadosNuvexRoute
+  AuthenticatedAuditoriaFinancieraRoute: typeof AuthenticatedAuditoriaFinancieraRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDirectorioRoute: typeof AuthenticatedDirectorioRoute
   AuthenticatedFinanzasRoute: typeof AuthenticatedFinanzasRouteWithChildren
@@ -1606,6 +1627,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAcademiaRoute: AuthenticatedAcademiaRouteWithChildren,
   AuthenticatedApoderadosNuvexRoute: AuthenticatedApoderadosNuvexRoute,
+  AuthenticatedAuditoriaFinancieraRoute: AuthenticatedAuditoriaFinancieraRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDirectorioRoute: AuthenticatedDirectorioRoute,
   AuthenticatedFinanzasRoute: AuthenticatedFinanzasRouteWithChildren,
