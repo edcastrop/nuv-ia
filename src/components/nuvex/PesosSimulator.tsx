@@ -47,6 +47,8 @@ import {
 import { useAsesorDefault } from "@/hooks/useAsesorDefault";
 import { freshFromCobertura } from "@/lib/cobertura";
 import { normalizeCreditMoneyInput } from "@/lib/creditoSanity";
+import { AuditPanel } from "./AuditPanel";
+import { useNivelAutonomia } from "@/hooks/useNivelAutonomia";
 
 export function PesosSimulator({
   initialExpediente,

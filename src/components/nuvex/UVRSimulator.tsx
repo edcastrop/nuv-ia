@@ -47,6 +47,8 @@ import { getDefaultVariacionUVR, setDefaultVariacionUVR } from "../../lib/uvrCon
 import { useAsesorDefault } from "@/hooks/useAsesorDefault";
 import { freshFromCobertura } from "@/lib/cobertura";
 import { Settings2 } from "lucide-react";
+import { AuditPanel } from "./AuditPanel";
+import { useNivelAutonomia } from "@/hooks/useNivelAutonomia";
 
 export function UVRSimulator({
   initialExpediente,
