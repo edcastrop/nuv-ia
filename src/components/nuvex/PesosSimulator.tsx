@@ -551,7 +551,7 @@ export function PesosSimulator({
                 className="rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow transition-transform hover:scale-[1.01]"
                 style={{ backgroundColor: NUVEX.negro }}
               >
-                Exportar PDF profesional
+                Exportar propuesta comercial
               </button>
               <EnviarDocumentoButton
                 expedienteId={init?.id}
