@@ -41,6 +41,7 @@ export function ClientFields({
   onChange,
   cuotasPendientes,
   modalidad,
+  hideCreditFields = false,
 }: {
   data: ClientData;
   onChange: (next: ClientData) => void;
@@ -49,6 +50,8 @@ export function ClientFields({
   cuotasPendientes: number;
   /** Restringe el catálogo a Pesos o UVR según el simulador. */
   modalidad?: ModalidadCat;
+  /** Oculta banco/producto/número/plazo/cuotas — viven en "Datos del crédito". */
+  hideCreditFields?: boolean;
 }) {
   const set = <K extends keyof ClientData>(k: K, v: ClientData[K]) =>
     onChange({ ...data, [k]: v });
