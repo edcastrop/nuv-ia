@@ -232,33 +232,21 @@ export function PesosSimulator({
     return baseResult;
   }, [datosCompletos, input, nuevaCuotaManual, cuotasEliminarManual, modoPersonalizada, calc]);
 
-  const manualValido = !!(manual && manual.valid);
-
-  // Recomendación efectiva: manual cuando es válida; si no, la mejor automática
-  const recomendada =
-    manualValido && manual
-      ? {
-          añosEliminados: manual.añosEliminados,
-          ahorroIntereses: manual.ahorroIntereses,
-          ahorroSeguros: manual.ahorroSeguros,
-          ahorroTotal: manual.ahorroTotal,
-          honorarios: manual.honorarios,
-          nuevaCuota: manual.nuevaCuotaConSeguro,
-          nuevoPlazo: manual.nuevoPlazo,
-          totalProyectado: manual.totalProyectado,
-        }
-      : best
-        ? {
-            añosEliminados: best.añosEliminados,
-            ahorroIntereses: best.ahorroIntereses,
-            ahorroSeguros: best.ahorroSeguros,
-            ahorroTotal: best.ahorroTotal,
-            honorarios: best.honorariosNuvex,
-            nuevaCuota: best.nuevaCuotaConSeguro,
-            nuevoPlazo: best.nuevoPlazo,
-            totalProyectado: best.totalAproxPagar,
-          }
-        : null;
+  // Recomendada elegida desde el bloque comercial de Propuestas (cards editables)
+  const [recomendadaPicked, setRecomendadaPicked] = useState<RecomendadaSeleccionada | null>(null);
+  const manualValido = recomendadaPicked?.fuente === "manual";
+  const recomendada = recomendadaPicked
+    ? {
+        añosEliminados: recomendadaPicked.añosEliminados,
+        ahorroIntereses: recomendadaPicked.ahorroIntereses,
+        ahorroSeguros: recomendadaPicked.ahorroSeguros,
+        ahorroTotal: recomendadaPicked.ahorroTotal,
+        honorarios: recomendadaPicked.honorarios,
+        nuevaCuota: recomendadaPicked.nuevaCuota,
+        nuevoPlazo: recomendadaPicked.nuevoPlazo,
+        totalProyectado: recomendadaPicked.totalProyectado,
+      }
+    : null;
 
   const ahorroNegativo = recomendada && (recomendada.ahorroTotal < 0 || recomendada.honorarios < 0);
 
@@ -285,21 +273,6 @@ export function PesosSimulator({
     },
     { label: "Total por pagar", value: formatCOP(totalActualPendiente) },
   ];
-
-  const scenarioRows = recomendada
-    ? buildPesosScenarioRows({
-        cuotaActual: input.cuotaActual,
-        cuotasPendientes: cuotasBaseSimulacion,
-        totalActualPendiente,
-        saldoCapital: saldoCapitalNum,
-        nuevaCuota: recomendada.nuevaCuota,
-        nuevoPlazo: recomendada.nuevoPlazo,
-        totalProyectado: recomendada.totalProyectado,
-        ahorroIntereses: recomendada.ahorroIntereses,
-        ahorroSeguros: recomendada.ahorroSeguros,
-        ahorroTotal: recomendada.ahorroTotal,
-      })
-    : [];
 
   const vecesOpt =
     recomendada && saldoCapitalNum > 0 ? recomendada.totalProyectado / saldoCapitalNum : 0;
