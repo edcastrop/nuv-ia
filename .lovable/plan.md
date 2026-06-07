@@ -1,98 +1,86 @@
-# Reestructuración del Simulador NUVEX
+# NUVEX Financial Audit Engine™ + Licencia de Autonomía
 
-Convertir el simulador en una herramienta comercial enfocada exclusivamente en: **Extracto → Simulación → Propuesta → PDF Comercial**. Todo lo jurídico, documental, intervinientes y operativo queda únicamente en el Expediente Maestro.
+Este es un módulo grande (6 fases de auditoría + sistema de autonomía con 3 niveles + tablero gerencial + aprendizaje histórico). Para entregarlo bien necesito construirlo por etapas, validando cada una antes de pasar a la siguiente. Te propongo el siguiente plan.
 
-## Alcance — qué cambia y qué NO
+---
 
-**Cambia (simuladores PESOS y UVR):**
-- Bloque "Datos del Cliente" simplificado.
-- Eliminación del bloque "Intervinientes" del simulador.
-- Bloque "Datos del Crédito" reordenado y compacto.
-- Bloque "Beneficio Fresh" condicional.
-- Propuestas editables + botón "Nueva propuesta".
-- Diseño tipo dashboard comercial (cards), no hoja de cálculo.
-- PDF comercial recortado a lo financiero.
+## Arquitectura general
 
-**NO cambia:**
-- Fórmulas financieras (`src/lib/finance.ts`, motores PESOS/UVR).
-- Motor de extractos / OCR.
-- Expediente Maestro y todos sus bloques jurídicos/documentales/intervinientes.
-- Cálculo de honorarios (piso $1.800.000 / $2.000.000).
-- Persistencia en `expedientes`, `proyecciones_financieras`, `proyeccion_escenarios`.
+**Nuevos archivos clave**
+- `src/lib/auditEngine.ts` — motor puro de validación (sin UI). Funciones: `validarExtractoVsAnalista`, `validarConsistenciaMatematica`, `validarPropuesta`, `calcularConfidenceScore`, `clasificarRiesgo`.
+- `src/lib/autonomia.ts` — cálculo de nivel (1/2/3) por analista según métricas históricas.
+- `src/components/nuvex/AuditBadge.tsx` — semáforo 🟢🟡🔴 + score + tooltip con detalle.
+- `src/components/nuvex/AuditPanel.tsx` — panel desplegable con la tabla "Campo · Extracto · Analista · Resultado" y lista de inconsistencias.
+- `src/routes/_authenticated/auditoria-financiera.tsx` — tablero gerencial (ranking, niveles de autonomía, precisión).
 
-## Bloques del nuevo simulador
+**Nuevas tablas (Lovable Cloud)**
+- `audit_simulaciones` — snapshot de cada simulación: datos extracto, datos analista, score, nivel riesgo, decisión (apto/revisar/escalar).
+- `audit_respuestas_banco` — cuota/plazo/cuotas aprobadas por el banco vs propuestas → precisión.
+- `analista_metricas` (vista materializada o tabla calculada) — score promedio, simulaciones, precisión, nivel de autonomía vigente.
+- `audit_alertas` — cambios de nivel, escalamientos, devoluciones.
 
-### 1. Datos del Cliente (compacto)
-Campos: Nombre, Cédula, Correo, Celular, Banco, Número de crédito, Producto financiero.
-Botón existente "Leer cédula con IA" (reusar `CedulaReader`) ahora autocompleta directamente en estos campos (no en intervinientes).
+Todas con RLS: analista ve lo suyo, gerencia/director_financiero_qa/super_admin ven todo.
 
-### 2. Datos del Crédito
-Saldo a capital, Valor desembolsado, Tasa, Cuota actual, Seguros, Cuotas pactadas / pagadas / pendientes, Fecha desembolso.
+**Integraciones existentes a tocar**
+- `PesosSimulator.tsx` / `UVRSimulator.tsx` → ejecutan auditoría tras cargar extracto y antes de "Exportar propuesta comercial".
+- `PropuestasComerciales.tsx` → muestran badge de score por escenario; bloquean PDF si score < umbral según nivel de autonomía del usuario.
+- `useUserRole.ts` → añadir `nivelAutonomia` derivado de `analista_metricas`.
 
-### 3. Beneficio Fresh (condicional)
-Toggle SI/NO. Si SI → Valor beneficio, Tasa beneficio, Cuotas restantes beneficio. Si NO → ocultos.
+---
 
-### 4. Simulación (corazón)
-- **Resumen actual** en cards: saldo, cuota, cuotas pendientes, intereses proyectados, seguros proyectados, veces pagado.
-- **Propuestas como cards** (no tabla). Cada card muestra: cuotas eliminadas, nueva cuota, ahorro total, honorarios, nuevo plazo, abono adicional mensual, "veces pagado".
-- **Propuestas editables**: las 4 sugeridas (12/24/36/48 o 36/48/60/72…) son ahora inputs editables. Al cambiar el número de cuotas, recalcula en vivo.
-- **Botón "+ Nueva propuesta"**: agrega cards adicionales con cualquier valor permitido por el crédito.
-- **Marcar como recomendada**: una sola card destacada; alimenta el PDF y la persistencia.
+## Entregables por fase
 
-## Eliminaciones del simulador
-- Bloque "Intervinientes" (`IntervinientesFields`) — fuera de Pesos/UVR Simulator.
-- Cotitular / Colocatario / Dirección / Lugar expedición de cédula del titular sale de los datos del simulador (sigue existiendo en Expediente Maestro).
-- Cobertura jurídica/documental y poderes ya no se muestran aquí.
+### Etapa A — Fundación de datos (1 migración)
+- Crear las 4 tablas + GRANTs + RLS + policies.
+- Función `public.calcular_metricas_analista(user_id)` y vista `v_ranking_analistas`.
+- Sin UI todavía.
 
-## PDF Comercial
-Recortar la plantilla actual para incluir SOLO:
-1. Datos cliente
-2. Datos crédito
-3. Situación actual
-4. Propuesta recomendada
-5. Comparativo actual vs optimizado
-6. Ahorro proyectado
+### Etapa B — Motor de auditoría (puro, sin UI)
+- `auditEngine.ts` con todas las reglas de Fase 1, 2, 3, 5.
+- Tests rápidos de fórmulas (cuotas pagadas+pendientes=plazo, seguros<cuota, ahorro>0, etc.).
+- `calcularConfidenceScore` con la distribución 40/30/20/10 que pediste.
 
-Quitar: contrato, poder, cotitulares, documentación, jurídico.
+### Etapa C — Integración en Simuladores (Fase 1, 2, 3, 5)
+- Tras OCR/lector IA: comparar extracto vs digitado → tabla de diferencias.
+- Validaciones matemáticas en vivo.
+- `AuditBadge` visible en la cabecera de cada simulación.
+- Bloqueo de "Exportar propuesta comercial" si score < umbral.
 
-## Archivos a modificar
+### Etapa D — Casos de alto riesgo (Fase 4)
+- Clasificador: UVR complejo, diff>3%, fresh inconsistente, tasa atípica, score<85.
+- Marca "REQUIERE REVISIÓN DIRECCIÓN FINANCIERA" y bloquea presentación al cliente.
+- Notificación al director financiero (usa `notificaciones_usuario` existente).
 
-```text
-src/components/nuvex/
-  PesosSimulator.tsx        ← restructurar bloques + propuestas editables
-  UVRSimulator.tsx          ← idem
-  ClientFields.tsx          ← simplificar a 7 campos + integrar CedulaReader
-  CedulaReader.tsx          ← agregar modo "cliente directo" (sin intervinientes)
-  ScenarioTable.tsx         ← convertir a ScenarioCards (cards editables)
-  RecommendedResult.tsx     ← ajustar a propuesta única recomendada
-  pdf/ (plantilla comercial) ← recortar secciones jurídicas/documentales
-  MotorExtractosNUVEX.tsx   ← quitar render de IntervinientesFields aquí si aplica
+### Etapa E — Aprendizaje histórico (Fase 6)
+- Formulario en el expediente para registrar respuesta del banco (cuota/plazo/cuotas aprobadas).
+- Cálculo de precisión por analista/banco/producto/tipo de crédito.
 
-NO se toca:
-  IntervinientesFields.tsx  ← sigue vivo en Expediente Maestro
-  src/lib/finance.ts        ← fórmulas intactas
-  src/lib/motorExtractos/*  ← OCR intacto
-  src/components/expediente-maestro/*  ← intacto
-```
+### Etapa F — Licencia de Autonomía
+- Cálculo de nivel 1/2/3 según reglas exactas que diste.
+- Badge en perfil del analista.
+- Reglas de bloqueo según nivel + score de la simulación.
+- Recalc automático nocturno (cron job en `/api/public/hooks/`).
+- Alertas de subida/bajada de nivel.
 
-## Cambios técnicos clave
+### Etapa G — Tablero gerencial
+- Nueva ruta `auditoria-financiera`.
+- Ranking nacional, niveles, score promedio, precisión, % devoluciones, % aprobación bancaria.
+- Filtros por banco, producto, periodo.
 
-1. **Propuestas editables**: extender `PesosPropuesta` / `UVRPropuesta` con un estado local `cuotasEliminadas` editable por card. Usar `calculatePesosManualByCuotas` / `calculateUVRManualByCuotas` (ya existen) para recalcular cuando el usuario edita el número.
-2. **Nueva propuesta**: estado `propuestasCustom: number[]` añadido al simulador; se concatena con las sugeridas. Validación: `0 < cuotasEliminadas < cuotasPendientes`.
-3. **Cards comerciales**: nuevo componente `PropuestaCard` con badge "Recomendada", input numérico para cuotas, métricas en grid 2x3.
-4. **Persistencia**: el payload guardado a `expedientes` / `proyecciones_financieras` mantiene la misma forma; solo cambia la UI.
-5. **PDF**: editar la plantilla en `src/components/nuvex/pdf/*` (o `src/lib/proyeccionFinancieraExport.ts`) para omitir secciones jurídicas.
+---
 
-## QA antes de cerrar
+## Lo que NO se va a romper
 
-- Simular un caso PESOS con extracto Davivienda hipotecario → propuesta recomendada → PDF.
-- Simular un caso UVR con cobertura Fresh → toggle SI/NO funciona → PDF.
-- Editar manualmente cuotas en una propuesta → cuota, ahorro y honorarios recalculan.
-- Agregar 2 propuestas custom → marcar la última como recomendada → PDF refleja la elegida.
-- Verificar que el Expediente Maestro del caso siga mostrando intervinientes / cotitulares / jurídico sin cambios.
-- `bun run build` limpio.
+- Cálculos financieros existentes (`finance.ts`, `proyeccionFinanciera.ts`) — no se tocan.
+- PDFs comerciales — solo se les añade un gate (no se modifica el contenido).
+- Honorarios, simulador Pesos, simulador UVR, propuesta recomendada — intactos.
 
-## Riesgos
+---
 
-- El simulador y el Expediente Maestro comparten algunos componentes (`IntervinientesFields`, `CedulaReader`). El cambio se limitará a **dejar de renderizarlos en los simuladores**; los componentes siguen existiendo para el Expediente Maestro.
-- La forma del payload persistido NO cambia para no romper expedientes existentes; los campos ya no editables en el simulador (dirección titular, cotitulares) se siguen guardando vacíos / desde el Expediente Maestro.
+## Pregunta antes de empezar
+
+Este alcance es de varios días de trabajo. **¿Quieres que arranque por la Etapa A + B + C (lo que ya impacta al analista en pantalla) y dejamos D-G para iteraciones siguientes, o prefieres otro orden?**
+
+También necesito confirmar dos cosas operativas:
+1. ¿El umbral para bloquear PDF en Nivel 1 es score < 95, en Nivel 2 < 95, en Nivel 3 sin bloqueo salvo UVR/alto riesgo? (Es lo que infiero del brief.)
+2. ¿La "respuesta del banco" la registra el mismo analista en el expediente, o el director financiero?
