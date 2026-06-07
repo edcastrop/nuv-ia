@@ -1,6 +1,7 @@
 import { ProductoBancarioSelect } from "./ProductoBancarioSelect";
 import { TextField } from "./ui";
 import { ClientCedulaButton, type ClientCedulaPayload } from "./ClientCedulaButton";
+import { CitySelect } from "@/components/ui/CitySelect";
 import type { ModalidadCat } from "@/lib/productosBancarios";
 import type { Cobertura, Interviniente } from "./intervinientes";
 
@@ -21,6 +22,10 @@ export interface ClientData {
   fechaDesembolso?: string;
   lugarExpedicionCedula?: string;
   fechaExpedicionCedula?: string;
+  // Ubicación del cliente
+  direccion?: string;
+  ciudad?: string;
+  municipio?: string;
   // Aditivos opcionales (persistidos en cliente_data jsonb)
   intervinientes?: Interviniente[];
   cobertura?: Cobertura;
