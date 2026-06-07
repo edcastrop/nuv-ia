@@ -254,7 +254,7 @@ export function PesosSimulator({
   const cuotasBaseSimulacion = Math.max(0, cuotasPendientes);
   const totalActualPendiente = input.cuotaActual * cuotasBaseSimulacion;
   const vecesActual = saldoCapitalNum > 0 ? totalActualPendiente / saldoCapitalNum : 0;
-  const vsActual = getVecesStyle(vecesActual);
+  void getVecesStyle;
 
   const metrics = [
     { label: "Valor desembolsado", value: formatCOP(valorDesembolsadoNum) },
