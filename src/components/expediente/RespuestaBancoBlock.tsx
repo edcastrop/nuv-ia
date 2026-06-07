@@ -108,6 +108,52 @@ export function RespuestaBancoBlock({
     return { dCuota, dPlazo, dEliminadas };
   }, [cuotaAprob, plazoAprob, cuotasAprob, cuotaPropuesta, plazoPropuesto, cuotasEliminadasPropuestas]);
 
+  // Reajuste de honorarios (regla de 3 sobre cuotas eliminadas).
+  const reajuste = useMemo(() => {
+    const cuotasAprobadasBanco = Math.max(0, cuotasAprob || 0);
+    return calcularRecalculoHonorarios(
+      cuotasPactadas || cuotasEliminadasPropuestas || 0,
+      cuotasAprobadasBanco,
+      honorariosPactados || 0,
+    );
+  }, [cuotasAprob, cuotasPactadas, cuotasEliminadasPropuestas, honorariosPactados]);
+
+  // Precisión histórica del analista para esta simulación.
+  const precision = useMemo(
+    () =>
+      calcularPrecision({
+        cuotaPropuesta,
+        plazoPropuesto,
+        ahorroPropuesto,
+        cuotaAprobada: cuotaAprob,
+        plazoAprobado: plazoAprob,
+        ahorroAprobado: ahorroPropuesto, // fallback hasta que el banco reporte ahorro
+      }),
+    [cuotaPropuesta, plazoPropuesto, ahorroPropuesto, cuotaAprob, plazoAprob],
+  );
+
+  const requiereOtrosi = useMemo(
+    () =>
+      cuotaAprob > 0 &&
+      aplicaOtrosi({
+        numeroExpediente,
+        clienteNombre,
+        clienteCedula,
+        bancoNombre,
+        fechaPropuesta: "",
+        fechaAprobacion: respuesta.fechaAprobacion,
+        cuotaPropuesta,
+        plazoPropuesto,
+        ahorroPropuesto,
+        honorariosPactados,
+        cuotaAprobada: cuotaAprob,
+        plazoAprobado: plazoAprob,
+        ahorroAprobado: ahorroPropuesto,
+        honorariosRecalculados: reajuste.honorariosRecalculados,
+      }),
+    [cuotaAprob, plazoAprob, respuesta.fechaAprobacion, cuotaPropuesta, plazoPropuesto, ahorroPropuesto, honorariosPactados, reajuste.honorariosRecalculados, numeroExpediente, clienteNombre, clienteCedula, bancoNombre],
+  );
+
   async function guardarFinanciero() {
     if (!simulacionId || !user) return;
     setSaving(true);
@@ -129,12 +175,58 @@ export function RespuestaBancoBlock({
         ? await supabase.from("audit_respuestas_banco").update(payload).eq("id", respuesta.id)
         : await supabase.from("audit_respuestas_banco").insert(payload);
       if (error) throw error;
-      setMsg("Respuesta del banco registrada");
+
+      // Automatizaciones Etapa 9:
+      // 1) Reajuste de honorarios.
+      if (cuotasPactadas > 0 && honorariosPactados > 0 && cuotasAprob > 0) {
+        try {
+          await guardarRecalculoHonorarios(
+            expedienteId,
+            cuotasPactadas,
+            cuotasAprob,
+            honorariosPactados,
+          );
+        } catch (err) {
+          console.warn("[reajuste]", err);
+        }
+      }
+      // 2) Precisión histórica del analista (alimenta licencia de autonomía).
+      const targetAnalista = analistaId || user.id;
+      try {
+        await registrarPrecisionAnalista(targetAnalista, precision);
+      } catch (err) {
+        console.warn("[precision]", err);
+      }
+
+      setMsg(
+        requiereOtrosi
+          ? "Respuesta registrada. Condiciones difieren: se requiere generar otrosí."
+          : "Respuesta del banco registrada y honorarios reajustados.",
+      );
     } catch (e) {
       setMsg((e as Error).message);
     } finally {
       setSaving(false);
     }
+  }
+
+  function generarOtrosi() {
+    abrirOtrosiImprimible({
+      numeroExpediente: numeroExpediente || expedienteId.slice(0, 8),
+      clienteNombre,
+      clienteCedula,
+      bancoNombre,
+      fechaPropuesta: "",
+      fechaAprobacion: respuesta.fechaAprobacion,
+      cuotaPropuesta,
+      plazoPropuesto,
+      ahorroPropuesto,
+      honorariosPactados,
+      cuotaAprobada: cuotaAprob,
+      plazoAprobado: plazoAprob,
+      ahorroAprobado: ahorroPropuesto,
+      honorariosRecalculados: reajuste.honorariosRecalculados,
+    });
   }
 
   if (soloLectura) {
