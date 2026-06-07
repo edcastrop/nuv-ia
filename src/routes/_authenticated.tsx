@@ -5,8 +5,10 @@ import { CORPORATIVO } from "@/components/nuvex/constants";
 import {
   LayoutGrid, FolderKanban, BarChart3, LogOut, GraduationCap, LineChart,
   UserSquare2, Users, Shield, Wallet, Bell, CircleDollarSign, Landmark,
-  ClipboardCheck, Briefcase, ChevronLeft, ChevronRight, UserCircle, MessageSquare, BookUser, Sparkles, ShieldCheck, Kanban, RadioTower, Award,
+  ClipboardCheck, Briefcase, ChevronLeft, ChevronRight, UserCircle, MessageSquare, BookUser, Sparkles, ShieldCheck, Kanban, RadioTower, Award, RefreshCw,
 } from "lucide-react";
+import { useRouter } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { UserAvatar } from "@/components/nuvex/UserAvatar";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Logo } from "@/components/nuvex/Logo";
@@ -47,6 +49,21 @@ function AuthenticatedLayout() {
     return localStorage.getItem("nuvex.sidebar.collapsed") === "1";
   });
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [reloading, setReloading] = useState(false);
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const handleReload = async () => {
+    if (reloading) return;
+    setReloading(true);
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries(),
+        router.invalidate(),
+      ]);
+    } finally {
+      setTimeout(() => setReloading(false), 400);
+    }
+  };
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/login" });
@@ -539,6 +556,15 @@ function AuthenticatedLayout() {
                   N{metricasAutonomia.nivelAutonomia}
                 </Link>
               )}
+              <button
+                onClick={handleReload}
+                disabled={reloading}
+                aria-label="Recargar"
+                title="Recargar datos"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-white/80 hover:bg-white/5 disabled:opacity-60"
+              >
+                <RefreshCw size={16} className={reloading ? "animate-spin" : ""} />
+              </button>
               <NotificationBell />
               <Link
                 to="/mi-perfil"
