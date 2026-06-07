@@ -351,7 +351,21 @@ function MaestroDetail() {
         </div>
       </Card>
 
+      {/* Capa guiada NUVEX (13 etapas + Siguiente acción + Qué falta + Checklist por rol).
+          Solo se muestra si existe un caso operativo asociado a la cédula. */}
+      {expOperativo && (
+        <>
+          <ExpedienteStepper13 exp={expOperativo} />
+          <SiguienteAccionPanel exp={expOperativo} />
+          <div className="grid gap-4 md:grid-cols-2">
+            <QueFaltaPanel exp={expOperativo} />
+            <ChecklistRolPanel exp={expOperativo} />
+          </div>
+        </>
+      )}
+
       <PipelineStepper14 etapaActual={etapaActual} />
+
 
       <EtapasIniciales123
         expedienteId={id}
