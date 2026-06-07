@@ -338,29 +338,6 @@ export function PesosSimulator({
         />
 
 
-        <div className="mt-6">
-          <IntervinientesFields
-            producto={client.tipoProducto}
-            data={intervinientes}
-            onChange={setIntervinientes}
-            onTitularSync={(nombre, cedula) =>
-              setClient((c) => ({
-                ...c,
-                nombre: nombre || c.nombre,
-                cedula: cedula || c.cedula,
-              }))
-            }
-          />
-        </div>
-
-        <div className="mt-6">
-          <CoberturaFields
-            producto={client.tipoProducto}
-            data={cobertura}
-            onChange={setCobertura}
-          />
-        </div>
-
         {validaciones.map((v, i) => (
           <div key={i} className="mt-3">
             <Alert tone="error">{v}</Alert>
