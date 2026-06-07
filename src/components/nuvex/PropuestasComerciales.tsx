@@ -216,82 +216,89 @@ export function PropuestasComerciales(props: Props) {
         </button>
       </div>
 
-      {/* Franja de comparación rápida */}
+      {/* Franja de comparación rápida — scroll horizontal en móvil */}
       {cuotasList.length > 0 && (
         <div
           className="overflow-hidden rounded-2xl border"
           style={{ borderColor: "#ECEFF3", backgroundColor: "#FAFBFC" }}
         >
-          <div className="grid" style={{ gridTemplateColumns: `repeat(${cuotasList.length}, minmax(0,1fr))` }}>
-            {cuotasList.map((_, idx) => {
-              const c = calcs[idx];
-              const isRec = idx === effectiveIdx;
-              return (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => c.valid && setRecomendadaIdx(idx)}
-                  className="group flex flex-col items-center gap-1 px-3 py-3 text-center transition"
-                  style={{
-                    backgroundColor: isRec ? "#F1FAF4" : "transparent",
-                    borderRight: idx < cuotasList.length - 1 ? "1px solid #ECEFF3" : "none",
-                    cursor: c.valid ? "pointer" : "default",
-                  }}
-                >
-                  <div
-                    className="text-[9px] font-semibold uppercase tracking-[0.14em]"
-                    style={{ color: isRec ? "#1F7A45" : "#8893A0" }}
+          <div className="overflow-x-auto">
+            <div
+              className="grid min-w-full"
+              style={{
+                gridTemplateColumns: `repeat(${cuotasList.length}, minmax(140px,1fr))`,
+              }}
+            >
+              {cuotasList.map((_, idx) => {
+                const c = calcs[idx];
+                const isRec = idx === effectiveIdx;
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => c.valid && setRecomendadaIdx(idx)}
+                    className="group flex flex-col items-center gap-1 px-3 py-3 text-center transition"
+                    style={{
+                      backgroundColor: isRec ? "#F1FAF4" : "transparent",
+                      borderRight: idx < cuotasList.length - 1 ? "1px solid #ECEFF3" : "none",
+                      cursor: c.valid ? "pointer" : "default",
+                    }}
                   >
-                    Escenario {idx + 1}
-                  </div>
-                  {c.valid ? (
-                    <div className="flex w-full flex-col gap-1.5 px-1 text-left">
-                      <FranjaRow
-                        label="Cuotas a eliminar"
-                        value={`${c.cuotasEliminadas}`}
-                        highlight={isRec}
-                      />
-                      <FranjaRow
-                        label="Incremento mensual"
-                        value={`+${formatCOP(c.incrementoMensual)}`}
-                        highlight={isRec}
-                      />
-                      <FranjaRow
-                        label="Nueva cuota"
-                        value={formatCOP(c.nuevaCuota)}
-                        highlight={isRec}
-                      />
-                      <FranjaRow
-                        label="Nuevo plazo"
-                        value={`${c.nuevoPlazo} meses`}
-                        highlight={isRec}
-                      />
-                      <div className="mt-1 border-t pt-1.5" style={{ borderColor: "#ECEFF3" }}>
-                        <div
-                          className="text-[8px] font-semibold uppercase tracking-[0.14em]"
-                          style={{ color: isRec ? "#1F7A45" : "#8893A0" }}
-                        >
-                          Ahorro total
-                        </div>
-                        <div
-                          className="text-[15px] font-extrabold leading-tight"
-                          style={{ color: "#1F7A45" }}
-                        >
-                          {formatCOP(c.ahorroTotal)}
+                    <div
+                      className="text-[9px] font-semibold uppercase tracking-[0.14em]"
+                      style={{ color: isRec ? "#1F7A45" : "#8893A0" }}
+                    >
+                      Escenario {idx + 1}
+                    </div>
+                    {c.valid ? (
+                      <div className="flex w-full flex-col gap-1.5 px-1 text-left">
+                        <FranjaRow
+                          label="Cuotas a eliminar"
+                          value={`${c.cuotasEliminadas}`}
+                          highlight={isRec}
+                        />
+                        <FranjaRow
+                          label="Incremento mensual"
+                          value={`+${formatCOP(c.incrementoMensual)}`}
+                          highlight={isRec}
+                        />
+                        <FranjaRow
+                          label="Nueva cuota"
+                          value={formatCOP(c.nuevaCuota)}
+                          highlight={isRec}
+                        />
+                        <FranjaRow
+                          label="Nuevo plazo"
+                          value={`${c.nuevoPlazo} meses`}
+                          highlight={isRec}
+                        />
+                        <div className="mt-1 border-t pt-1.5" style={{ borderColor: "#ECEFF3" }}>
+                          <div
+                            className="text-[8px] font-semibold uppercase tracking-[0.14em]"
+                            style={{ color: isRec ? "#1F7A45" : "#8893A0" }}
+                          >
+                            Ahorro total
+                          </div>
+                          <div
+                            className="text-[14px] font-extrabold leading-tight break-words"
+                            style={{ color: "#1F7A45" }}
+                          >
+                            {formatCOP(c.ahorroTotal)}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div
-                      className="text-[13px] font-extrabold leading-none"
-                      style={{ color: "#C0392B" }}
-                    >
-                      No viable
-                    </div>
-                  )}
-                </button>
-              );
-            })}
+                    ) : (
+                      <div
+                        className="text-[13px] font-extrabold leading-none"
+                        style={{ color: "#C0392B" }}
+                      >
+                        No viable
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
