@@ -6,6 +6,7 @@ import { Check, ChevronDown, MapPin, Search } from "lucide-react";
 import {
   COLOMBIA_DEPARTAMENTOS,
   listDepartamentos,
+  listAllMunicipios,
   municipiosDe,
   searchInList,
 } from "@/lib/colombiaLocations";
