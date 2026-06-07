@@ -245,7 +245,7 @@ export function UVRSimulator({
   const totalActualPesos = calc?.escenarioActual.totalPagoPesos ?? 0;
   const baseCredito = valorDesembolsadoNum > 0 ? valorDesembolsadoNum : saldoPesosNum;
   const vecesActual = baseCredito > 0 ? (dineroPagadoFecha + totalActualPesos) / baseCredito : 0;
-  const vsActual = getVecesStyle(vecesActual);
+  
   const vecesOpt =
     recomendada && baseCredito > 0
       ? (dineroPagadoFecha + recomendada.totalProyectado) / baseCredito
