@@ -324,6 +324,20 @@ export async function cambiarEstadoCaso(
     } as never);
   }
 
+  // Disparadores de notificación cruzada
+  try {
+    if (nuevoEstado === "radicado_banco") {
+      const { data: exp } = await supabase
+        .from("expedientes")
+        .select("banco")
+        .eq("id", expedienteId)
+        .maybeSingle();
+      const banco = (exp as { banco: string | null } | null)?.banco ?? null;
+      const { notifRadicado } = await import("./notifTriggers");
+      await notifRadicado(expedienteId, banco);
+    }
+  } catch { /* nunca romper la transición por notificaciones */ }
+
   // Auto-cierre: al generar el paz y salvo (E13) el caso pasa automáticamente
   // a Caso finalizado (E14). El paz y salvo es el último entregable operativo.
   if (nuevoEstado === "paz_y_salvo_generado") {
