@@ -3939,6 +3939,27 @@ export type Database = {
           read_ct: number
         }[]
       }
+      recalcular_nivel_autonomia: {
+        Args: { _user_id: string }
+        Returns: {
+          analista_id: string
+          created_at: string
+          nivel_autonomia: number
+          porcentaje_aprobacion_banco: number
+          porcentaje_devoluciones: number
+          precision_historica: number
+          score_promedio: number
+          total_simulaciones: number
+          ultimo_recalculo: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "analista_metricas"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       rechazar_reactivacion_solicitud: {
         Args: { _motivo: string; _solicitud_id: string }
         Returns: Json
