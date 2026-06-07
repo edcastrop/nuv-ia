@@ -19,8 +19,10 @@ import {
   type ProfileAuditoriaRow,
 } from "@/lib/profile";
 import { supabase } from "@/integrations/supabase/client";
-import { Camera, Trash2, Save, Loader2, Shield, GraduationCap, History, Briefcase, CircleDollarSign, User as UserIcon, Phone } from "lucide-react";
+import { Camera, Trash2, Save, Loader2, Shield, GraduationCap, History, Briefcase, CircleDollarSign, User as UserIcon, Phone, Award, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
+import { useNivelAutonomia } from "@/hooks/useNivelAutonomia";
+import { etiquetaNivel, calcularNivelAutonomia, type MetricasAnalista, type NivelAutonomia } from "@/lib/autonomia";
 import { TotpEnrollmentSection } from "@/components/seguridad/TotpEnrollmentSection";
 import { PresenciaPrivacidadSection } from "@/components/seguridad/PresenciaPrivacidadSection";
 import { NotificacionesPrefsSection } from "@/components/seguridad/NotificacionesPrefsSection";
@@ -41,6 +43,7 @@ interface AcademiaResumen {
 function MiPerfilPage() {
   const { user } = useAuth();
   const { roles } = useUserRole();
+  const { metricas: metricasAutonomia, loading: loadingAutonomia } = useNivelAutonomia();
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [form, setForm] = useState<Partial<ProfileRow>>({});
   const [loading, setLoading] = useState(true);
@@ -337,6 +340,106 @@ function MiPerfilPage() {
         </div>
       </Section>
 
+      {/* Licencia de Autonomía NUVEX */}
+      <Section icon={<Award size={14} />} title="Licencia de Autonomía NUVEX" badge={loadingAutonomia ? "Cargando…" : undefined}>
+        {loadingAutonomia ? (
+          <div className="text-sm text-[#242424]/60">Cargando métricas de calidad…</div>
+        ) : (
+          <div className="space-y-4">
+            {/* Badge de nivel + semáforo */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div
+                className="rounded-xl px-4 py-3 text-center min-w-[140px]"
+                style={{
+                  background:
+                    metricasAutonomia.nivelAutonomia === 3
+                      ? "linear-gradient(135deg, #EAF7EE, #D4EDDA)"
+                      : metricasAutonomia.nivelAutonomia === 2
+                        ? "linear-gradient(135deg, #FFF8E1, #FFECB3)"
+                        : "linear-gradient(135deg, #FFF3E0, #FFE0B2)",
+                  border:
+                    metricasAutonomia.nivelAutonomia === 3
+                      ? "1px solid #B7D8C0"
+                      : metricasAutonomia.nivelAutonomia === 2
+                        ? "1px solid #FFE082"
+                        : "1px solid #FFCC80",
+                }}
+              >
+                <div
+                  className="text-xs font-semibold uppercase tracking-wider"
+                  style={{
+                    color:
+                      metricasAutonomia.nivelAutonomia === 3
+                        ? "#1F7A45"
+                        : metricasAutonomia.nivelAutonomia === 2
+                          ? "#8A6D1F"
+                          : "#A35D1C",
+                  }}
+                >
+                  Nivel {metricasAutonomia.nivelAutonomia}
+                </div>
+                <div
+                  className="text-lg font-bold"
+                  style={{
+                    color:
+                      metricasAutonomia.nivelAutonomia === 3
+                        ? "#1F7A45"
+                        : metricasAutonomia.nivelAutonomia === 2
+                          ? "#8A6D1F"
+                          : "#A35D1C",
+                  }}
+                >
+                  {etiquetaNivel(metricasAutonomia.nivelAutonomia)}
+                </div>
+              </div>
+
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center gap-2 text-sm text-[#242424]/80">
+                  <TrendingUp size={14} className="text-[#445DA3]" />
+                  <span>
+                    {metricasAutonomia.nivelAutonomia === 3
+                      ? "Autonomía completa. Puedes generar propuestas sin marca de auditoría."
+                      : metricasAutonomia.nivelAutonomia === 2
+                        ? "Autonomía parcial. Score ≥95 genera PDF directo; 85–94 con advertencia."
+                        : "Autonomía supervisada. Score ≥95 genera PDF con marca 'Pendiente Auditoría'."}
+                  </span>
+                </div>
+                {metricasAutonomia.nivelAutonomia < 3 && (
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-[11px] text-[#242424]/60">
+                      <span>Progreso hacia Nivel {metricasAutonomia.nivelAutonomia + 1}</span>
+                      <span>{progresoNivel(metricasAutonomia).toFixed(0)}%</span>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-[#E3E7EE] overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-700"
+                        style={{
+                          width: `${progresoNivel(metricasAutonomia)}%`,
+                          background: "linear-gradient(90deg, #445DA3, #84B98F)",
+                        }}
+                      />
+                    </div>
+                    <div className="text-[10px] text-[#242424]/50">
+                      {metricasAutonomia.nivelAutonomia === 1
+                        ? `Requiere ≥30 simulaciones y score promedio ≥85 (tienes ${metricasAutonomia.totalSimulaciones} sims · score ${metricasAutonomia.scorePromedio.toFixed(1)})`
+                        : `Requiere ≥100 simulaciones y score promedio ≥95 (tienes ${metricasAutonomia.totalSimulaciones} sims · score ${metricasAutonomia.scorePromedio.toFixed(1)})`}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <Stat label="Score promedio" value={metricasAutonomia.scorePromedio.toFixed(1)} />
+              <Stat label="Simulaciones" value={metricasAutonomia.totalSimulaciones} />
+              <Stat label="Precisión histórica" value={`${metricasAutonomia.precisionHistorica.toFixed(1)}%`} />
+              <Stat label="Estado PDF" value={estadoPdfLabel(metricasAutonomia)} />
+            </div>
+          </div>
+        )}
+      </Section>
+
       {/* Auditoría */}
       <Section icon={<History size={14} />} title="Historial de cambios">
         {aud.length === 0 ? (
@@ -430,4 +533,22 @@ function Stat({ label, value }: { label: string; value: string | number }) {
       <div className="mt-1 text-xl font-semibold text-[#445DA3]">{value}</div>
     </div>
   );
+}
+
+function progresoNivel(m: MetricasAnalista): number {
+  if (m.nivelAutonomia === 3) return 100;
+  if (m.nivelAutonomia === 2) {
+    const sims = Math.min((m.totalSimulaciones / 100) * 100, 100);
+    const score = Math.min((m.scorePromedio / 95) * 100, 100);
+    return (sims + score) / 2;
+  }
+  const sims = Math.min((m.totalSimulaciones / 30) * 100, 100);
+  const score = Math.min((m.scorePromedio / 85) * 100, 100);
+  return (sims + score) / 2;
+}
+
+function estadoPdfLabel(m: MetricasAnalista): string {
+  if (m.nivelAutonomia === 3) return "Directo";
+  if (m.nivelAutonomia === 2) return m.scorePromedio >= 95 ? "Directo" : m.scorePromedio >= 85 ? "Con advertencia" : "Bloqueado";
+  return m.scorePromedio >= 95 ? "Pendiente auditoría" : m.scorePromedio >= 85 ? "Requiere revisión" : "Bloqueado";
 }
