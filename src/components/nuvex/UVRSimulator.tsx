@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Alert, Card, MetricCard, SectionTitle, TextField } from "./ui";
+import { Alert, Card, SectionTitle, TextField } from "./ui";
+import { SituacionActualBlock } from "./SituacionActualBlock";
 import { ClientFields, defaultClient, type ClientData } from "./ClientFields";
 import { NUVEX } from "./constants";
 import {
@@ -17,7 +18,7 @@ import {
   pickBestProposal,
   type UVRInput,
 } from "../../lib/finance";
-import { getVecesStyle } from "./ScenarioTable";
+
 import { PrintDocument } from "./PrintDocument";
 import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
 import { EnviarDocumentoButton } from "./EnviarDocumentoButton";
@@ -244,7 +245,7 @@ export function UVRSimulator({
   const totalActualPesos = calc?.escenarioActual.totalPagoPesos ?? 0;
   const baseCredito = valorDesembolsadoNum > 0 ? valorDesembolsadoNum : saldoPesosNum;
   const vecesActual = baseCredito > 0 ? (dineroPagadoFecha + totalActualPesos) / baseCredito : 0;
-  const vsActual = getVecesStyle(vecesActual);
+  
   const vecesOpt =
     recomendada && baseCredito > 0
       ? (dineroPagadoFecha + recomendada.totalProyectado) / baseCredito
@@ -480,38 +481,33 @@ export function UVRSimulator({
 
       {datosCompletos && (
         <>
-          <Card>
-            <SectionTitle sub="Resumen ejecutivo del crédito UVR actual">
-              Situación actual del crédito
-            </SectionTitle>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              {metrics.map((m) => {
-                if (m.label === "N° veces pagado el crédito") {
-                  return (
-                    <div
-                      key={m.label}
-                      className="rounded-xl border p-4"
-                      style={{ backgroundColor: vsActual.bg, borderColor: vsActual.color }}
-                    >
-                      <div
-                        className="text-[11px] font-semibold uppercase tracking-wider"
-                        style={{ color: vsActual.color, opacity: 0.85 }}
-                      >
-                        {m.label}
-                      </div>
-                      <div
-                        className="mt-1.5 text-lg font-extrabold leading-tight"
-                        style={{ color: vsActual.color }}
-                      >
-                        {m.value}
-                      </div>
-                    </div>
-                  );
-                }
-                return <MetricCard key={m.label} label={m.label} value={m.value} />;
-              })}
-            </div>
-          </Card>
+          <SituacionActualBlock
+            hero={{
+              saldoActual: formatCOP(input.saldoPesos),
+              cuotaActual: formatCOP(input.cuotaActualPesos),
+              cuotasPendientes: String(cuotasPendientes),
+              totalProyectado: calc ? formatCOP(calc.escenarioActual.totalPagoPesos) : "—",
+            }}
+            vecesPagado={vecesActual}
+            secundarios={[
+              { label: "Variación UVR EA", value: formatPercentage(input.variacionUVR) },
+              {
+                label: "Tasa mensual utilizada",
+                value: calc ? formatPercentage(calc.tasaMensual * 100, 4) : "—",
+              },
+              { label: "Seguros mensuales", value: formatCOP(input.seguros) },
+              { label: "Cuota sin seguros", value: formatCOP(cuotaSinSegurosNum) },
+            ]}
+            detalle={[
+              { label: "Valor desembolsado", value: formatCOP(valorDesembolsadoNum) },
+              { label: "Dinero pagado a la fecha", value: formatCOP(dineroPagadoFecha) },
+              { label: "Plazo inicial", value: `${plazoInicial} meses` },
+              { label: "Cuotas pagadas", value: String(cuotasPagadas) },
+              { label: "Saldo actual en UVR", value: formatNumber(input.saldoUVR, 2) },
+              { label: "Valor UVR actual", value: formatCOP(input.valorUVR) },
+            ]}
+          />
+
 
           {ahorroNegativo && (
             <Alert tone="error">
