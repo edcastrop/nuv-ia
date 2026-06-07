@@ -43,6 +43,7 @@ interface AcademiaResumen {
 function MiPerfilPage() {
   const { user } = useAuth();
   const { roles } = useUserRole();
+  const { metricas: metricasAutonomia, loading: loadingAutonomia } = useNivelAutonomia();
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [form, setForm] = useState<Partial<ProfileRow>>({});
   const [loading, setLoading] = useState(true);
