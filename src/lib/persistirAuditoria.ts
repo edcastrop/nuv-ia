@@ -17,6 +17,17 @@ export async function persistirAuditoriaSimulacion(
       ? resultado.clasificacion.factores.join(" | ").slice(0, 500)
       : null;
 
+  const nivelRiesgo: "apto" | "revisar" | "escalar" =
+    resultado.clasificacion.requiereRevision
+      ? "escalar"
+      : resultado.score.total >= 95
+        ? "apto"
+        : resultado.score.total >= 85
+          ? "revisar"
+          : "escalar";
+
+
+
   const payload = {
     analista_id: u.user.id,
     expediente_id: expedienteId,
