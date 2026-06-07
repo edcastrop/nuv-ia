@@ -534,3 +534,21 @@ function Stat({ label, value }: { label: string; value: string | number }) {
     </div>
   );
 }
+
+function progresoNivel(m: MetricasAnalista): number {
+  if (m.nivelAutonomia === 3) return 100;
+  if (m.nivelAutonomia === 2) {
+    const sims = Math.min((m.totalSimulaciones / 100) * 100, 100);
+    const score = Math.min((m.scorePromedio / 95) * 100, 100);
+    return (sims + score) / 2;
+  }
+  const sims = Math.min((m.totalSimulaciones / 30) * 100, 100);
+  const score = Math.min((m.scorePromedio / 85) * 100, 100);
+  return (sims + score) / 2;
+}
+
+function estadoPdfLabel(m: MetricasAnalista): string {
+  if (m.nivelAutonomia === 3) return "Directo";
+  if (m.nivelAutonomia === 2) return m.scorePromedio >= 95 ? "Directo" : m.scorePromedio >= 85 ? "Con advertencia" : "Bloqueado";
+  return m.scorePromedio >= 95 ? "Pendiente auditoría" : m.scorePromedio >= 85 ? "Requiere revisión" : "Bloqueado";
+}
