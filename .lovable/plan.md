@@ -1,86 +1,85 @@
-# NUVEX Financial Audit Engine™ + Licencia de Autonomía
+# NUVEX Financial Audit Engine™ — Etapas C → G
 
-Este es un módulo grande (6 fases de auditoría + sistema de autonomía con 3 niveles + tablero gerencial + aprendizaje histórico). Para entregarlo bien necesito construirlo por etapas, validando cada una antes de pasar a la siguiente. Te propongo el siguiente plan.
+Continuamos sobre lo ya construido (Etapas A y B): tablas `audit_simulaciones`, `audit_respuestas_banco`, `analista_metricas`, `audit_alertas` y el motor puro `src/lib/auditEngine.ts`.
 
----
+## Decisiones confirmadas por el usuario
 
-## Arquitectura general
+### Niveles de autonomía
+- **Nivel 1 — Supervisada** (< 30 simulaciones o score histórico < 85)
+  - Score ≥ 95 → genera PDF marcado "Pendiente Auditoría"
+  - Score 85–94 → bloqueado, escala a Dirección Financiera
+  - Score < 85 → bloqueado
+- **Nivel 2 — Intermedia** (≥ 30 simulaciones y score histórico ≥ 85)
+  - Score ≥ 95 → genera PDF y presenta propuesta
+  - Score 85–94 → advertencia visible, puede generar con marca
+  - Score < 85 → bloqueado, escala
+- **Nivel 3 — Avanzada** (≥ 100 simulaciones y score histórico ≥ 95)
+  - Genera y presenta libre, salvo UVR complejo / inconsistencias críticas / alto riesgo → escala
 
-**Nuevos archivos clave**
-- `src/lib/auditEngine.ts` — motor puro de validación (sin UI). Funciones: `validarExtractoVsAnalista`, `validarConsistenciaMatematica`, `validarPropuesta`, `calcularConfidenceScore`, `clasificarRiesgo`.
-- `src/lib/autonomia.ts` — cálculo de nivel (1/2/3) por analista según métricas históricas.
-- `src/components/nuvex/AuditBadge.tsx` — semáforo 🟢🟡🔴 + score + tooltip con detalle.
-- `src/components/nuvex/AuditPanel.tsx` — panel desplegable con la tabla "Campo · Extracto · Analista · Resultado" y lista de inconsistencias.
-- `src/routes/_authenticated/auditoria-financiera.tsx` — tablero gerencial (ranking, niveles de autonomía, precisión).
+### Registro de respuesta del banco
+- **Director Financiero**: cuota, plazo, cuotas eliminadas aprobadas; recalcula honorarios; aprueba resultado financiero.
+- **Apoderado**: adjunta oficio, correo, soporte bancario; aprueba resultado jurídico.
+- **Analista Comercial**: solo lectura + notificaciones (banco respondió, diferencias detectadas, otrosí generado, contactar cliente).
 
-**Nuevas tablas (Lovable Cloud)**
-- `audit_simulaciones` — snapshot de cada simulación: datos extracto, datos analista, score, nivel riesgo, decisión (apto/revisar/escalar).
-- `audit_respuestas_banco` — cuota/plazo/cuotas aprobadas por el banco vs propuestas → precisión.
-- `analista_metricas` (vista materializada o tabla calculada) — score promedio, simulaciones, precisión, nivel de autonomía vigente.
-- `audit_alertas` — cambios de nivel, escalamientos, devoluciones.
+## Etapa C — Integración en simuladores
 
-Todas con RLS: analista ve lo suyo, gerencia/director_financiero_qa/super_admin ven todo.
+- `src/lib/autonomia.ts` (nuevo): `calcularNivelAutonomia(metricas)`, `puedeGenerarPdf(nivel, resultado)` con reglas anteriores. Devuelve `{ nivel, accion: "permitir" | "permitir_con_marca" | "bloquear", motivo }`.
+- `src/hooks/useNivelAutonomia.ts` (nuevo): lee `analista_metricas` del usuario actual, fallback Nivel 1.
+- `src/components/nuvex/AuditBadge.tsx` (nuevo): semáforo compacto (verde ≥95, ámbar 85–94, rojo <85) + tooltip con desglose 40/30/20/10.
+- `src/components/nuvex/AuditPanel.tsx` (nuevo): tabla extracto vs analista, lista de inconsistencias con severidad, score detallado, badge "REQUIERE REVISIÓN DIRECCIÓN FINANCIERA" cuando aplica.
+- `PesosSimulator.tsx` y `UVRSimulator.tsx`: tras lectura OCR llaman `auditarSimulacion`, persisten en `audit_simulaciones` (debounced) y muestran `AuditPanel`. Botón "Exportar propuesta comercial" se deshabilita según `puedeGenerarPdf`. Para Nivel 1 con score ≥95, el PDF sale con marca "Pendiente Auditoría" (texto adicional en `nuvexPdfKit`).
+- `PropuestasComerciales.tsx`: muestra `AuditBadge` por escenario y bloquea exportar cuando la auditoría lo indica.
 
-**Integraciones existentes a tocar**
-- `PesosSimulator.tsx` / `UVRSimulator.tsx` → ejecutan auditoría tras cargar extracto y antes de "Exportar propuesta comercial".
-- `PropuestasComerciales.tsx` → muestran badge de score por escenario; bloquean PDF si score < umbral según nivel de autonomía del usuario.
-- `useUserRole.ts` → añadir `nivelAutonomia` derivado de `analista_metricas`.
+## Etapa D — Clasificación de alto riesgo
 
----
+Ya cubierto en motor (`clasificarRiesgo`). En UI:
+- Banner rojo en simulador + escenario cuando `clasificacion.requiereRevision = true`.
+- Alerta automática en `audit_alertas` (severidad `alta`) al guardar simulación con motivo.
 
-## Entregables por fase
+## Etapa E — Respuesta del banco (solo Director / Apoderado)
 
-### Etapa A — Fundación de datos (1 migración)
-- Crear las 4 tablas + GRANTs + RLS + policies.
-- Función `public.calcular_metricas_analista(user_id)` y vista `v_ranking_analistas`.
-- Sin UI todavía.
+- `src/components/expediente/RespuestaBancoBlock.tsx` (nuevo): formulario con dos pestañas:
+  - **Financiero** (solo `director_financiero_qa` / `super_admin`): cuota aprobada, plazo aprobado, cuotas eliminadas aprobadas, observaciones; al guardar dispara recálculo de honorarios existente (`aplicar_recalculo_honorarios`).
+  - **Jurídico** (solo `apoderado` / `director_juridico` / `super_admin`): tipo de soporte, número de oficio, fecha, archivo (Supabase Storage), aprobación jurídica.
+- Visible para Analista Comercial en modo lectura.
+- Inserta en `audit_respuestas_banco`, marca `aprobado_financiero` / `aprobado_juridico`.
+- Notificaciones automáticas vía `notify_user` al Analista Comercial cuando:
+  - el banco responde,
+  - condiciones difieren de las presentadas,
+  - se generó otrosí (placeholder gancho — sin generación automática aún),
+  - debe contactar al cliente.
 
-### Etapa B — Motor de auditoría (puro, sin UI)
-- `auditEngine.ts` con todas las reglas de Fase 1, 2, 3, 5.
-- Tests rápidos de fórmulas (cuotas pagadas+pendientes=plazo, seguros<cuota, ahorro>0, etc.).
-- `calcularConfidenceScore` con la distribución 40/30/20/10 que pediste.
+## Etapa F — Cálculo y recálculo de nivel de autonomía
 
-### Etapa C — Integración en Simuladores (Fase 1, 2, 3, 5)
-- Tras OCR/lector IA: comparar extracto vs digitado → tabla de diferencias.
-- Validaciones matemáticas en vivo.
-- `AuditBadge` visible en la cabecera de cada simulación.
-- Bloqueo de "Exportar propuesta comercial" si score < umbral.
+- `public.recalcular_nivel_autonomia(_user_id uuid)` (RPC SECURITY DEFINER):
+  - Cuenta simulaciones aprobadas (`audit_simulaciones.score_total >= 85`).
+  - Calcula `score_promedio_90d`.
+  - Calcula precisión (`audit_respuestas_banco` aprobadas vs simuladas, |Δcuota|<3% y |Δplazo|≤1).
+  - Aplica reglas Nivel 1/2/3 y actualiza `analista_metricas`.
+- Trigger `AFTER INSERT` en `audit_simulaciones` y `audit_respuestas_banco` que llama la RPC del usuario afectado.
+- Alerta en `audit_alertas` al cambiar de nivel.
 
-### Etapa D — Casos de alto riesgo (Fase 4)
-- Clasificador: UVR complejo, diff>3%, fresh inconsistente, tasa atípica, score<85.
-- Marca "REQUIERE REVISIÓN DIRECCIÓN FINANCIERA" y bloquea presentación al cliente.
-- Notificación al director financiero (usa `notificaciones_usuario` existente).
+## Etapa G — Dashboard Dirección Financiera
 
-### Etapa E — Aprendizaje histórico (Fase 6)
-- Formulario en el expediente para registrar respuesta del banco (cuota/plazo/cuotas aprobadas).
-- Cálculo de precisión por analista/banco/producto/tipo de crédito.
+- Nueva ruta `src/routes/_authenticated/auditoria-financiera.tsx` (acceso `director_financiero_qa`, `super_admin`, `gerencia`).
+- Tabs:
+  - **Pendientes**: simulaciones con `revisado_director = false` y `requiere_revision = true`.
+  - **Ranking**: tabla con nombre, nivel, score promedio, simulaciones, precisión, %devoluciones, %aprobación.
+  - **Alertas**: feed de `audit_alertas`.
+- Acciones: marcar revisado, ajustar nivel manual (`super_admin`), añadir nota.
+- Link desde el menú lateral del Director Financiero.
 
-### Etapa F — Licencia de Autonomía
-- Cálculo de nivel 1/2/3 según reglas exactas que diste.
-- Badge en perfil del analista.
-- Reglas de bloqueo según nivel + score de la simulación.
-- Recalc automático nocturno (cron job en `/api/public/hooks/`).
-- Alertas de subida/bajada de nivel.
+## Detalles técnicos
 
-### Etapa G — Tablero gerencial
-- Nueva ruta `auditoria-financiera`.
-- Ranking nacional, niveles, score promedio, precisión, % devoluciones, % aprobación bancaria.
-- Filtros por banco, producto, periodo.
+- Hook `useUserRole` se amplía con `isDirectorFinanciero` (ya existe `isDirectorQA`, lo reutilizamos) y se añade `nivelAutonomia` al `useNivelAutonomia` separado para no recargar.
+- Cero cambios en `finance.ts`, `cuotaBase`, `proyeccionExport`, `nuvexPdfKit` (salvo añadir marca "Pendiente Auditoría" condicional, parámetro opcional).
+- Validaciones siguen siendo cliente; el motor `auditEngine.ts` se mantiene puro y testeable.
+- Snapshots se guardan al exportar PDF; durante edición solo se evalúa en memoria para evitar ruido en la BD.
 
----
+## Validación antes de cerrar
 
-## Lo que NO se va a romper
-
-- Cálculos financieros existentes (`finance.ts`, `proyeccionFinanciera.ts`) — no se tocan.
-- PDFs comerciales — solo se les añade un gate (no se modifica el contenido).
-- Honorarios, simulador Pesos, simulador UVR, propuesta recomendada — intactos.
-
----
-
-## Pregunta antes de empezar
-
-Este alcance es de varios días de trabajo. **¿Quieres que arranque por la Etapa A + B + C (lo que ya impacta al analista en pantalla) y dejamos D-G para iteraciones siguientes, o prefieres otro orden?**
-
-También necesito confirmar dos cosas operativas:
-1. ¿El umbral para bloquear PDF en Nivel 1 es score < 95, en Nivel 2 < 95, en Nivel 3 sin bloqueo salvo UVR/alto riesgo? (Es lo que infiero del brief.)
-2. ¿La "respuesta del banco" la registra el mismo analista en el expediente, o el director financiero?
+- Caso Nivel 1 con score 92 → PDF bloqueado, escala a Director.
+- Caso Nivel 2 con score 96 → PDF habilitado sin marca.
+- Caso Nivel 3 con UVR → PDF bloqueado, banner alto riesgo.
+- Director registra respuesta del banco con cuota distinta → recálculo de honorarios se dispara, Analista recibe notificación.
+- Analista intenta abrir formulario de respuesta → solo ve lectura.
