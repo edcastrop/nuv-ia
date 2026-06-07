@@ -63,7 +63,9 @@ function MaestroDetail() {
   const [extractoAplicado, setExtractoAplicado] = useState<MotorResultado | null>(null);
   const [aplicandoExtracto, setAplicandoExtracto] = useState(false);
   const [etapaActual, setEtapaActual] = useState<EtapaPipelineId>("lead");
+  const [expOperativo, setExpOperativo] = useState<Expediente | null>(null);
   const resumenRef = useRef<HTMLDivElement | null>(null);
+
 
   useEffect(() => {
     setLoading(true);
