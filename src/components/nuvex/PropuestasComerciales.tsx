@@ -521,7 +521,6 @@ function HeroMetric({ label, value, color }: { label: string; value: string; col
     </div>
   );
 }
-}
 
 function FranjaRow({ label, value, highlight }: { label: string; value: string; highlight: boolean }) {
   return (
