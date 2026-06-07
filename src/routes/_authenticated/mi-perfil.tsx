@@ -19,8 +19,10 @@ import {
   type ProfileAuditoriaRow,
 } from "@/lib/profile";
 import { supabase } from "@/integrations/supabase/client";
-import { Camera, Trash2, Save, Loader2, Shield, GraduationCap, History, Briefcase, CircleDollarSign, User as UserIcon, Phone } from "lucide-react";
+import { Camera, Trash2, Save, Loader2, Shield, GraduationCap, History, Briefcase, CircleDollarSign, User as UserIcon, Phone, Award, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
+import { useNivelAutonomia } from "@/hooks/useNivelAutonomia";
+import { etiquetaNivel, calcularNivelAutonomia, type MetricasAnalista, type NivelAutonomia } from "@/lib/autonomia";
 import { TotpEnrollmentSection } from "@/components/seguridad/TotpEnrollmentSection";
 import { PresenciaPrivacidadSection } from "@/components/seguridad/PresenciaPrivacidadSection";
 import { NotificacionesPrefsSection } from "@/components/seguridad/NotificacionesPrefsSection";
