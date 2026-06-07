@@ -5,7 +5,7 @@ import { CORPORATIVO } from "@/components/nuvex/constants";
 import {
   LayoutGrid, FolderKanban, BarChart3, LogOut, GraduationCap, LineChart,
   UserSquare2, Users, Shield, Wallet, Bell, CircleDollarSign, Landmark,
-  ClipboardCheck, Briefcase, ChevronLeft, ChevronRight, UserCircle, MessageSquare, BookUser, Sparkles, ShieldCheck, Kanban, RadioTower,
+  ClipboardCheck, Briefcase, ChevronLeft, ChevronRight, UserCircle, MessageSquare, BookUser, Sparkles, ShieldCheck, Kanban, RadioTower, Award,
 } from "lucide-react";
 import { UserAvatar } from "@/components/nuvex/UserAvatar";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -17,6 +17,8 @@ import { AcademiaBanner } from "@/components/onboarding/AcademiaBanner";
 import { OnboardingChecklistBanner } from "@/components/onboarding/OnboardingChecklistBanner";
 import { iniciarPresenciaPropia, detenerPresenciaPropia } from "@/lib/presencia";
 import { NotificacionesAlerts } from "@/components/notificaciones/NotificacionesAlerts";
+import { useNivelAutonomia } from "@/hooks/useNivelAutonomia";
+import { etiquetaNivel } from "@/lib/autonomia";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
