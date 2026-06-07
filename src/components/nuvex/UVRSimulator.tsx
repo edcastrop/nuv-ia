@@ -367,9 +367,15 @@ export function UVRSimulator({
         <SectionTitle sub="Información financiera del crédito en UVR">
           Datos del crédito
         </SectionTitle>
+        <CreditoMetaFields
+          data={client}
+          onChange={setClient}
+          modalidad="uvr"
+          cuotasPendientes={cuotasPendientes}
+        />
         {cobertura.activo && (cobertura.tipoBeneficio || cobertura.cuotaBaseSimulacion) && (
           <div
-            className="mb-4 flex items-start gap-2 rounded-lg px-3 py-2 text-[12px]"
+            className="mt-4 mb-4 flex items-start gap-2 rounded-lg px-3 py-2 text-[12px]"
             style={{
               background: "rgba(132,185,143,0.10)",
               border: "1px solid rgba(132,185,143,0.45)",
@@ -384,7 +390,7 @@ export function UVRSimulator({
             </span>
           </div>
         )}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="mt-4 grid gap-4 md:grid-cols-3">
           <TextField
             label="Valor desembolsado"
             value={valorDesembolsado}
