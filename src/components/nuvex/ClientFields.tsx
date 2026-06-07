@@ -2,6 +2,7 @@ import { ProductoBancarioSelect } from "./ProductoBancarioSelect";
 import { TextField } from "./ui";
 import { ClientCedulaButton, type ClientCedulaPayload } from "./ClientCedulaButton";
 import { CitySelect } from "@/components/ui/CitySelect";
+import { DepartamentoSelect, MunicipioSelect } from "@/components/ui/LocationSelects";
 import type { ModalidadCat } from "@/lib/productosBancarios";
 import type { Cobertura, Interviniente } from "./intervinientes";
 
