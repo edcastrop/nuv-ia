@@ -3,15 +3,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAuth } from "@/hooks/useAuth";
 import { formatCOP, parseCurrency, parseDecimal } from "@/lib/format";
-import { honorariosFinalesCliente } from "@/lib/honorarios";
+import { honorariosFinalesCliente, calcularRecalculoHonorarios, guardarRecalculoHonorarios } from "@/lib/honorarios";
+import { calcularPrecision, registrarPrecisionAnalista } from "@/lib/precisionHistorica";
+import { aplicaOtrosi, abrirOtrosiImprimible } from "@/lib/otrosiContrato";
+// Notificación al AFC: TODO cuando exista crearNotificacion helper.
 
 interface Props {
   expedienteId: string;
   simulacionId?: string | null;
+  analistaId?: string | null;
+  clienteNombre?: string;
+  clienteCedula?: string;
+  bancoNombre?: string;
+  numeroExpediente?: string;
+  cuotasPactadas?: number;
+  honorariosPactados?: number;
   // Datos presentados (referencia para el comparativo)
   cuotaPropuesta?: number;
   plazoPropuesto?: number;
   cuotasEliminadasPropuestas?: number;
+  ahorroPropuesto?: number;
 }
 
 type Tab = "financiero" | "juridico";
@@ -19,9 +30,17 @@ type Tab = "financiero" | "juridico";
 export function RespuestaBancoBlock({
   expedienteId,
   simulacionId,
+  analistaId,
+  clienteNombre = "",
+  clienteCedula = "",
+  bancoNombre = "",
+  numeroExpediente = "",
+  cuotasPactadas = 0,
+  honorariosPactados = 0,
   cuotaPropuesta = 0,
   plazoPropuesto = 0,
   cuotasEliminadasPropuestas = 0,
+  ahorroPropuesto = 0,
 }: Props) {
   const { user } = useAuth();
   const { roles, isSuperAdmin, isDirectorQA, isDirectorJuridico, isApoderado } = useUserRole();
@@ -89,6 +108,52 @@ export function RespuestaBancoBlock({
     return { dCuota, dPlazo, dEliminadas };
   }, [cuotaAprob, plazoAprob, cuotasAprob, cuotaPropuesta, plazoPropuesto, cuotasEliminadasPropuestas]);
 
+  // Reajuste de honorarios (regla de 3 sobre cuotas eliminadas).
+  const reajuste = useMemo(() => {
+    const cuotasAprobadasBanco = Math.max(0, cuotasAprob || 0);
+    return calcularRecalculoHonorarios(
+      cuotasPactadas || cuotasEliminadasPropuestas || 0,
+      cuotasAprobadasBanco,
+      honorariosPactados || 0,
+    );
+  }, [cuotasAprob, cuotasPactadas, cuotasEliminadasPropuestas, honorariosPactados]);
+
+  // Precisión histórica del analista para esta simulación.
+  const precision = useMemo(
+    () =>
+      calcularPrecision({
+        cuotaPropuesta,
+        plazoPropuesto,
+        ahorroPropuesto,
+        cuotaAprobada: cuotaAprob,
+        plazoAprobado: plazoAprob,
+        ahorroAprobado: ahorroPropuesto, // fallback hasta que el banco reporte ahorro
+      }),
+    [cuotaPropuesta, plazoPropuesto, ahorroPropuesto, cuotaAprob, plazoAprob],
+  );
+
+  const requiereOtrosi = useMemo(
+    () =>
+      cuotaAprob > 0 &&
+      aplicaOtrosi({
+        numeroExpediente,
+        clienteNombre,
+        clienteCedula,
+        bancoNombre,
+        fechaPropuesta: "",
+        fechaAprobacion: respuesta.fechaAprobacion,
+        cuotaPropuesta,
+        plazoPropuesto,
+        ahorroPropuesto,
+        honorariosPactados,
+        cuotaAprobada: cuotaAprob,
+        plazoAprobado: plazoAprob,
+        ahorroAprobado: ahorroPropuesto,
+        honorariosRecalculados: reajuste.honorariosRecalculados,
+      }),
+    [cuotaAprob, plazoAprob, respuesta.fechaAprobacion, cuotaPropuesta, plazoPropuesto, ahorroPropuesto, honorariosPactados, reajuste.honorariosRecalculados, numeroExpediente, clienteNombre, clienteCedula, bancoNombre],
+  );
+
   async function guardarFinanciero() {
     if (!simulacionId || !user) return;
     setSaving(true);
@@ -110,12 +175,58 @@ export function RespuestaBancoBlock({
         ? await supabase.from("audit_respuestas_banco").update(payload).eq("id", respuesta.id)
         : await supabase.from("audit_respuestas_banco").insert(payload);
       if (error) throw error;
-      setMsg("Respuesta del banco registrada");
+
+      // Automatizaciones Etapa 9:
+      // 1) Reajuste de honorarios.
+      if (cuotasPactadas > 0 && honorariosPactados > 0 && cuotasAprob > 0) {
+        try {
+          await guardarRecalculoHonorarios(
+            expedienteId,
+            cuotasPactadas,
+            cuotasAprob,
+            honorariosPactados,
+          );
+        } catch (err) {
+          console.warn("[reajuste]", err);
+        }
+      }
+      // 2) Precisión histórica del analista (alimenta licencia de autonomía).
+      const targetAnalista = analistaId || user.id;
+      try {
+        await registrarPrecisionAnalista(targetAnalista, precision);
+      } catch (err) {
+        console.warn("[precision]", err);
+      }
+
+      setMsg(
+        requiereOtrosi
+          ? "Respuesta registrada. Condiciones difieren: se requiere generar otrosí."
+          : "Respuesta del banco registrada y honorarios reajustados.",
+      );
     } catch (e) {
       setMsg((e as Error).message);
     } finally {
       setSaving(false);
     }
+  }
+
+  function generarOtrosi() {
+    abrirOtrosiImprimible({
+      numeroExpediente: numeroExpediente || expedienteId.slice(0, 8),
+      clienteNombre,
+      clienteCedula,
+      bancoNombre,
+      fechaPropuesta: "",
+      fechaAprobacion: respuesta.fechaAprobacion,
+      cuotaPropuesta,
+      plazoPropuesto,
+      ahorroPropuesto,
+      honorariosPactados,
+      cuotaAprobada: cuotaAprob,
+      plazoAprobado: plazoAprob,
+      ahorroAprobado: ahorroPropuesto,
+      honorariosRecalculados: reajuste.honorariosRecalculados,
+    });
   }
 
   if (soloLectura) {
@@ -202,16 +313,46 @@ export function RespuestaBancoBlock({
           </label>
 
           {(cuotaAprob > 0 || plazoAprob > 0) && (
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs">
-              <strong className="block text-slate-700">Comparativo presentado vs aprobado</strong>
-              <ul className="mt-1 space-y-1">
-                <li>
-                  Δ Cuota: {diffs.dCuota >= 0 ? "+" : ""}
-                  {diffs.dCuota.toFixed(2)}%
-                </li>
-                <li>Δ Plazo: {diffs.dPlazo} meses</li>
-                <li>Δ Cuotas eliminadas: {diffs.dEliminadas}</li>
-              </ul>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs">
+                <strong className="block text-slate-700">Comparativo NUVEX vs Banco</strong>
+                <ul className="mt-1 space-y-1">
+                  <li>Δ Cuota: {diffs.dCuota >= 0 ? "+" : ""}{diffs.dCuota.toFixed(2)}%</li>
+                  <li>Δ Plazo: {diffs.dPlazo} meses</li>
+                  <li>Δ Cuotas eliminadas: {diffs.dEliminadas}</li>
+                </ul>
+              </div>
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3 text-xs">
+                <strong className="block text-emerald-800">Precisión histórica</strong>
+                <ul className="mt-1 space-y-1 text-emerald-900">
+                  <li>Cuota: {(precision.precisionCuota * 100).toFixed(1)}%</li>
+                  <li>Plazo: {(precision.precisionPlazo * 100).toFixed(1)}%</li>
+                  <li>Ahorro: {(precision.precisionAhorro * 100).toFixed(1)}%</li>
+                </ul>
+              </div>
+              <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3 text-xs">
+                <strong className="block text-amber-800">Reajuste de honorarios</strong>
+                <ul className="mt-1 space-y-1 text-amber-900">
+                  <li>Pactados: {formatCOP(reajuste.honorariosPactados)}</li>
+                  <li>Recalculados: {formatCOP(reajuste.honorariosRecalculados)}</li>
+                  <li>Diferencia: {formatCOP(reajuste.diferencia)}</li>
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {requiereOtrosi && (
+            <div className="flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-900">
+              <span>
+                <strong>Otrosí requerido.</strong> Las condiciones aprobadas difieren de las
+                presentadas al cliente.
+              </span>
+              <button
+                onClick={generarOtrosi}
+                className="rounded-lg bg-rose-700 px-3 py-1.5 text-xs font-semibold text-white"
+              >
+                Generar otrosí
+              </button>
             </div>
           )}
 

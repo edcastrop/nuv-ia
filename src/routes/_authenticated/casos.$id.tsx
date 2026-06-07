@@ -20,6 +20,7 @@ import { ValidacionIdentidadBlock } from "@/components/expediente/ValidacionIden
 import { ValidacionRadicacionBlock } from "@/components/expediente/ValidacionRadicacionBlock";
 import { ValidacionEntregablesBlock } from "@/components/expediente/ValidacionEntregablesBlock";
 import { VersionesDocumentalesBlock } from "@/components/expediente/VersionesDocumentalesBlock";
+import { RespuestaBancoBlock } from "@/components/expediente/RespuestaBancoBlock";
 import { readValidacion, puedeGenerarDocumentos, razonBloqueoDocs } from "@/lib/validacionIdentidad";
 import { addRecentCase } from "@/lib/recentCases";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -129,6 +130,34 @@ function CasoDetail() {
           <UVRSimulator initialExpediente={exp} onSaved={reload} />
         )}
       </div>
+
+      {(() => {
+        const prop = (exp as unknown as { propuesta_data?: Record<string, unknown> }).propuesta_data ?? {};
+        const cli = (exp.cliente_data ?? {}) as unknown as Record<string, unknown>;
+        const cuotasPactadas = Number((exp as unknown as { cuotas_pactadas?: number }).cuotas_pactadas ?? 0)
+          || Number(prop.cuotasEliminadas ?? 0);
+        const honorariosPactados = Number((exp as unknown as { honorarios_pactados?: number }).honorarios_pactados ?? 0)
+          || Number(prop.honorarios ?? 0);
+        return (
+          <div id="resultado-bancario" className="scroll-mt-6">
+            <RespuestaBancoBlock
+              expedienteId={exp.id}
+              simulacionId={(exp as unknown as { simulacion_id?: string }).simulacion_id ?? null}
+              analistaId={(exp as unknown as { user_id?: string }).user_id ?? null}
+              numeroExpediente={exp.id.slice(0, 8)}
+              clienteNombre={String(cli.nombre ?? "")}
+              clienteCedula={String(cli.cedula ?? "")}
+              bancoNombre={String(cli.banco ?? "")}
+              cuotasPactadas={cuotasPactadas}
+              honorariosPactados={honorariosPactados}
+              cuotaPropuesta={Number(prop.nuevaCuota ?? 0)}
+              plazoPropuesto={Number(prop.nuevoPlazo ?? 0)}
+              cuotasEliminadasPropuestas={Number(prop.cuotasEliminadas ?? cuotasPactadas)}
+              ahorroPropuesto={Number(prop.ahorroTotal ?? 0)}
+            />
+          </div>
+        );
+      })()}
 
       {(() => {
         const v = readValidacion(exp as never);
