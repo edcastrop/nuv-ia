@@ -131,6 +131,36 @@ export function ClientFields({
           onChange={(v) => set("fechaDesembolso", v)}
           placeholder="YYYY-MM-DD"
         />
+
+        <div className="md:col-span-3">
+          <TextField
+            label="Dirección de residencia"
+            value={data.direccion ?? ""}
+            onChange={(v) => set("direccion", v)}
+            placeholder="Calle 123 # 45-67, Apto 101"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-[#242424]/70 mb-1">
+            Ciudad
+          </label>
+          <CitySelect
+            value={data.ciudad ?? ""}
+            onChange={(v) => set("ciudad", v)}
+            placeholder="Selecciona ciudad…"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-[#242424]/70 mb-1">
+            Municipio
+          </label>
+          <CitySelect
+            value={data.municipio ?? ""}
+            onChange={(v) => set("municipio", v)}
+            placeholder="Selecciona municipio…"
+          />
+        </div>
       </div>
     </div>
   );
@@ -152,4 +182,7 @@ export const defaultClient: ClientData = {
   fechaDesembolso: "",
   lugarExpedicionCedula: "",
   fechaExpedicionCedula: "",
+  direccion: "",
+  ciudad: "",
+  municipio: "",
 };
