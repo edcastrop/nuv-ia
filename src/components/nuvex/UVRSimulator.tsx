@@ -28,7 +28,7 @@ import {
   defaultDiscount,
   type DiscountState,
 } from "./DiscountModule";
-import { ResultadoFinal, type ProyeccionNuvex } from "./ResultadoFinal";
+// ResultadoFinal removido del simulador: vive en el Expediente (Etapa 9+).
 import { SaveExpedienteButton } from "./SaveExpedienteButton";
 import type { Expediente } from "@/lib/expedientes";
 import { ExtractoReader, type ExtractoApplyPayload } from "./ExtractoReader";
@@ -703,40 +703,7 @@ export function UVRSimulator({
               );
             })()}
 
-          {recomendada &&
-            (() => {
-              const d = computeDiscount(recomendada.honorarios, discount);
-              const proyeccion: ProyeccionNuvex = {
-                cuotaProyectada: recomendada.nuevaCuota,
-                plazoProyectado: recomendada.nuevoPlazo,
-                cuotasEliminadasProyectadas: cuotasBaseSimulacion - recomendada.nuevoPlazo,
-                añosEliminadosProyectados: recomendada.añosEliminados,
-                ahorroInteresesProyectado: recomendada.ahorroIntereses,
-                ahorroSegurosProyectado: recomendada.ahorroSeguros,
-                ahorroProyectado: recomendada.ahorroTotal,
-                honorariosProyectados: recomendada.honorarios,
-                honorariosBase: recomendada.honorarios,
-                descuentoAplicado: d.descuento,
-                honorariosFinales: d.final,
-                fechaSimulacion: new Date().toISOString().slice(0, 10),
-                fuente: manualValido ? "manual" : "automatica",
-              };
-              return (
-                <ResultadoFinal
-                  mode="uvr"
-                  client={{ ...client, intervinientes, cobertura }}
-                  proyeccion={proyeccion}
-                  cuotasPendientes={cuotasBaseSimulacion}
-                  cuotaActualConSeguro={input.cuotaActualPesos}
-                  seguros={input.seguros}
-                  honorariosPct={honorariosPct}
-                  expedienteId={init?.id}
-                  aprobadoInicial={init?.aprobado_data ?? null}
-                  estado={init?.estado}
-                  fechaPagoHonorarios={init?.updated_at ? init.updated_at.slice(0, 10) : undefined}
-                />
-              );
-            })()}
+          {/* Resultado bancario, otrosí, cuenta de cobro, paz y salvo: ahora viven en el Expediente. */}
         </>
       )}
     </div>

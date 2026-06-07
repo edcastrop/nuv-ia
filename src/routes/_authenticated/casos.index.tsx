@@ -76,6 +76,8 @@ const UMBRAL_DIAS_ETAPA: Record<EtapaPipelineId, number> = {
   contratacion: 7,
   radicacion: 5,
   banco: 21,
+  resultado_banco: 5,
+  aceptacion_cliente: 5,
   informe: 5,
   cuenta: 5,
   pago: 10,

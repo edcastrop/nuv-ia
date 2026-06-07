@@ -1,85 +1,85 @@
-# NUVEX Financial Audit Engine™ — Etapas C → G
+# Reestructuración Simulador NUVEX ↔ Expediente
 
-Continuamos sobre lo ya construido (Etapas A y B): tablas `audit_simulaciones`, `audit_respuestas_banco`, `analista_metricas`, `audit_alertas` y el motor puro `src/lib/auditEngine.ts`.
+## Principio
+El **Simulador** es una herramienta rápida: leer extracto → simular → auditar → generar propuesta → enviar al expediente. Termina ahí.
+Todo lo bancario, contractual, de cobro y cierre vive en el **Expediente**.
 
-## Decisiones confirmadas por el usuario
+## 1. Simulador NUVEX (limpiar)
 
-### Niveles de autonomía
-- **Nivel 1 — Supervisada** (< 30 simulaciones o score histórico < 85)
-  - Score ≥ 95 → genera PDF marcado "Pendiente Auditoría"
-  - Score 85–94 → bloqueado, escala a Dirección Financiera
-  - Score < 85 → bloqueado
-- **Nivel 2 — Intermedia** (≥ 30 simulaciones y score histórico ≥ 85)
-  - Score ≥ 95 → genera PDF y presenta propuesta
-  - Score 85–94 → advertencia visible, puede generar con marca
-  - Score < 85 → bloqueado, escala
-- **Nivel 3 — Avanzada** (≥ 100 simulaciones y score histórico ≥ 95)
-  - Genera y presenta libre, salvo UVR complejo / inconsistencias críticas / alto riesgo → escala
+Reescribir `PesosSimulator.tsx` y `UVRSimulator.tsx` para que sólo contengan estas 6 etapas, en este orden:
 
-### Registro de respuesta del banco
-- **Director Financiero**: cuota, plazo, cuotas eliminadas aprobadas; recalcula honorarios; aprueba resultado financiero.
-- **Apoderado**: adjunta oficio, correo, soporte bancario; aprueba resultado jurídico.
-- **Analista Comercial**: solo lectura + notificaciones (banco respondió, diferencias detectadas, otrosí generado, contactar cliente).
+```text
+1. Datos del cliente      → ClientFields + CedulaReader
+2. Datos del crédito      → SituacionActualBlock (banco, producto, saldo, cuota, seguros, TEA, plazo, pagadas, pendientes) + ExtractoReader
+3. Beneficio Fresh        → FreshBlock (sólo si aplica)
+4. Simulación             → PropuestasComerciales (crear/eliminar/editar/recomendada)
+5. Auditoría NUVEX        → AuditPanel (score, semáforo, alertas, nivel autonomía, riesgos)
+6. Generación de propuesta → Exportar PDF + Enviar propuesta al cliente + Crear / abrir expediente
+```
 
-## Etapa C — Integración en simuladores
+Eliminar del render de ambos simuladores (los archivos pueden permanecer en disco, sólo se quitan los imports/usos):
+- `ResultadoFinal`, `PazYSalvo`, `ComparativeTable`, `RecommendedResult` (queda recomendada como flag dentro de PropuestasComerciales), `DiscountModule`, `ProyeccionDetallada` cuando represente resultado bancario, bloques de honorarios recalculados, cuenta de cobro, otrosí, informe final, indicadores de precisión vs banco.
 
-- `src/lib/autonomia.ts` (nuevo): `calcularNivelAutonomia(metricas)`, `puedeGenerarPdf(nivel, resultado)` con reglas anteriores. Devuelve `{ nivel, accion: "permitir" | "permitir_con_marca" | "bloquear", motivo }`.
-- `src/hooks/useNivelAutonomia.ts` (nuevo): lee `analista_metricas` del usuario actual, fallback Nivel 1.
-- `src/components/nuvex/AuditBadge.tsx` (nuevo): semáforo compacto (verde ≥95, ámbar 85–94, rojo <85) + tooltip con desglose 40/30/20/10.
-- `src/components/nuvex/AuditPanel.tsx` (nuevo): tabla extracto vs analista, lista de inconsistencias con severidad, score detallado, badge "REQUIERE REVISIÓN DIRECCIÓN FINANCIERA" cuando aplica.
-- `PesosSimulator.tsx` y `UVRSimulator.tsx`: tras lectura OCR llaman `auditarSimulacion`, persisten en `audit_simulaciones` (debounced) y muestran `AuditPanel`. Botón "Exportar propuesta comercial" se deshabilita según `puedeGenerarPdf`. Para Nivel 1 con score ≥95, el PDF sale con marca "Pendiente Auditoría" (texto adicional en `nuvexPdfKit`).
-- `PropuestasComerciales.tsx`: muestra `AuditBadge` por escenario y bloquea exportar cuando la auditoría lo indica.
+No se borran archivos legacy en este paso para evitar romper otras rutas que los importen (cartera, expediente). Sólo se desconectan del simulador.
 
-## Etapa D — Clasificación de alto riesgo
+## 2. Nuevo módulo Expediente: "Resultado Bancario"
 
-Ya cubierto en motor (`clasificarRiesgo`). En UI:
-- Banner rojo en simulador + escenario cuando `clasificacion.requiereRevision = true`.
-- Alerta automática en `audit_alertas` (severidad `alta`) al guardar simulación con motivo.
+Crear `src/components/expediente/ResultadoBancarioBlock.tsx` que reemplaza/extiende el actual `RespuestaBancoBlock` con UX completa de la nueva Etapa 9:
 
-## Etapa E — Respuesta del banco (solo Director / Apoderado)
+Campos:
+- Fecha aprobación, Número de radicado, Banco, Nueva cuota aprobada, Nuevo plazo aprobado, Observaciones.
+- Adjuntos: carta del banco, correo del banco, soportes de aprobación (reutiliza `expediente_soportes`).
 
-- `src/components/expediente/RespuestaBancoBlock.tsx` (nuevo): formulario con dos pestañas:
-  - **Financiero** (solo `director_financiero_qa` / `super_admin`): cuota aprobada, plazo aprobado, cuotas eliminadas aprobadas, observaciones; al guardar dispara recálculo de honorarios existente (`aplicar_recalculo_honorarios`).
-  - **Jurídico** (solo `apoderado` / `director_juridico` / `super_admin`): tipo de soporte, número de oficio, fecha, archivo (Supabase Storage), aprobación jurídica.
-- Visible para Analista Comercial en modo lectura.
-- Inserta en `audit_respuestas_banco`, marca `aprobado_financiero` / `aprobado_juridico`.
-- Notificaciones automáticas vía `notify_user` al Analista Comercial cuando:
-  - el banco responde,
-  - condiciones difieren de las presentadas,
-  - se generó otrosí (placeholder gancho — sin generación automática aún),
-  - debe contactar al cliente.
+Acciones automáticas al guardar:
+- **Comparativo NUVEX vs Banco** (cuota, plazo, cuotas eliminadas, ahorro) usando `propuesta_data` recomendada del expediente.
+- **Precisión histórica** (cuota, plazo, ahorro) → persistir en `analista_metricas` (precision_cuota, precision_plazo, precision_ahorro) para alimentar perfil de riesgo, licencia de autonomía y dashboard gerencial.
+- **Reajuste honorarios** automático con `calcularRecalculoHonorarios` + `guardarRecalculoHonorarios` (ya existe).
+- **Generación automática de Otrosí** cuando aprobado ≠ presentado: nuevo helper `src/lib/otrosiContrato.ts` que produce el DOCX/PDF mostrando condiciones presentadas, aprobadas y honorarios recalculados.
 
-## Etapa F — Cálculo y recálculo de nivel de autonomía
+Vivirá en `src/routes/_authenticated/casos.$id.tsx` como bloque de la Etapa 9.
 
-- `public.recalcular_nivel_autonomia(_user_id uuid)` (RPC SECURITY DEFINER):
-  - Cuenta simulaciones aprobadas (`audit_simulaciones.score_total >= 85`).
-  - Calcula `score_promedio_90d`.
-  - Calcula precisión (`audit_respuestas_banco` aprobadas vs simuladas, |Δcuota|<3% y |Δplazo|≤1).
-  - Aplica reglas Nivel 1/2/3 y actualiza `analista_metricas`.
-- Trigger `AFTER INSERT` en `audit_simulaciones` y `audit_respuestas_banco` que llama la RPC del usuario afectado.
-- Alerta en `audit_alertas` al cambiar de nivel.
+## 3. Pipeline: ampliar a 15 etapas
 
-## Etapa G — Dashboard Dirección Financiera
+Actualizar `src/lib/pipelineEtapas.ts`:
 
-- Nueva ruta `src/routes/_authenticated/auditoria-financiera.tsx` (acceso `director_financiero_qa`, `super_admin`, `gerencia`).
-- Tabs:
-  - **Pendientes**: simulaciones con `revisado_director = false` y `requiere_revision = true`.
-  - **Ranking**: tabla con nombre, nivel, score promedio, simulaciones, precisión, %devoluciones, %aprobación.
-  - **Alertas**: feed de `audit_alertas`.
-- Acciones: marcar revisado, ajustar nivel manual (`super_admin`), añadir nota.
-- Link desde el menú lateral del Director Financiero.
+```text
+ 9. Resultado Bancario   (director_financiero, apoderado)
+10. Aceptación Cliente   (asesor / AFC) — obligatorio
+11. Informe Final        (director_financiero, apoderado, auto)
+12. Facturación          (contabilidad)
+13. Pago Honorarios      (contabilidad)
+14. Paz y Salvo          (contabilidad, auto)
+15. Caso Cerrado         (gerencia)
+```
+
+Reasignar `CASO_ESTADO_A_ETAPA` para usar los nuevos ids. Mantener compatibilidad con estados existentes mapeándolos a la etapa correspondiente.
+
+Crear bloques mínimos para etapas 10–15 dentro de `casos.$id.tsx`:
+- Etapa 10: `AceptacionClienteBlock` (fecha, medio, observaciones, adjuntos WA/correo/carta).
+- Etapas 11–14: tarjetas con CTA y estado; reutilizan helpers existentes (`cuentaCobroPdf`, `PazYSalvo`, etc.) movidos desde simulador.
+- Etapa 15: panel "Caso cerrado" con indicadores finales (ahorro, honorarios, precisión, tiempo total).
+
+## 4. Datos / backend
+
+Migración nueva:
+- `analista_metricas`: añadir `precision_cuota numeric`, `precision_plazo numeric`, `precision_ahorro numeric` (default 0).
+- `expedientes`: añadir `aceptacion_cliente_at timestamptz`, `aceptacion_medio text`, `aceptacion_observaciones text` (sólo si no existen).
+- Nuevo enum/valores `caso_estado`: `resultado_banco_registrado`, `aceptacion_cliente_recibida`, `caso_cerrado` (si faltan). GRANTs ya existentes.
+
+## 5. Navegación / UX
+
+- En el simulador, el botón final "Crear expediente" sigue funcionando vía `SaveExpedienteButton`, pero el copy cambia a "Enviar al expediente".
+- En el expediente (`casos.$id`), nuevo timeline 1–15 con bloques colapsables; la Etapa 9 (Resultado Bancario) es la entrada principal del Director Financiero / Apoderado.
+- Notificaciones automáticas al AFC cuando: banco responde, condiciones difieren, otrosí generado, informe enviado, cuenta de cobro emitida, pago registrado, paz y salvo emitido (reutilizar `notificaciones.ts`).
 
 ## Detalles técnicos
 
-- Hook `useUserRole` se amplía con `isDirectorFinanciero` (ya existe `isDirectorQA`, lo reutilizamos) y se añade `nivelAutonomia` al `useNivelAutonomia` separado para no recargar.
-- Cero cambios en `finance.ts`, `cuotaBase`, `proyeccionExport`, `nuvexPdfKit` (salvo añadir marca "Pendiente Auditoría" condicional, parámetro opcional).
-- Validaciones siguen siendo cliente; el motor `auditEngine.ts` se mantiene puro y testeable.
-- Snapshots se guardan al exportar PDF; durante edición solo se evalúa en memoria para evitar ruido en la BD.
+- No tocar `src/integrations/supabase/client.ts` ni `types.ts` manualmente — la migración regenera `types.ts`.
+- Mantener `auditEngine.ts` y `autonomia.ts` intactos.
+- `precision_*` se calcula como `1 - |nuvex-banco|/banco` clamp [0,1].
+- Otrosí: generar con `docx` (ya usado en `solicitudCambioPlazosDocx.ts`).
+- Mantener archivos legacy (`ResultadoFinal.tsx`, `PazYSalvo.tsx`, etc.) por ahora; sólo desconectarlos del simulador.
 
-## Validación antes de cerrar
-
-- Caso Nivel 1 con score 92 → PDF bloqueado, escala a Director.
-- Caso Nivel 2 con score 96 → PDF habilitado sin marca.
-- Caso Nivel 3 con UVR → PDF bloqueado, banner alto riesgo.
-- Director registra respuesta del banco con cuota distinta → recálculo de honorarios se dispara, Analista recibe notificación.
-- Analista intenta abrir formulario de respuesta → solo ve lectura.
+## Alcance fuera de este plan
+- Rediseño visual profundo del expediente (mantenemos look actual).
+- Borrado físico de componentes legacy (se hará en una pasada posterior una vez se confirme que el expediente cubre todo).

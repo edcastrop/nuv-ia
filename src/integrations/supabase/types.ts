@@ -416,7 +416,10 @@ export type Database = {
           nivel_autonomia: number
           porcentaje_aprobacion_banco: number
           porcentaje_devoluciones: number
+          precision_ahorro: number
+          precision_cuota: number
           precision_historica: number
+          precision_plazo: number
           score_promedio: number
           total_simulaciones: number
           ultimo_recalculo: string
@@ -428,7 +431,10 @@ export type Database = {
           nivel_autonomia?: number
           porcentaje_aprobacion_banco?: number
           porcentaje_devoluciones?: number
+          precision_ahorro?: number
+          precision_cuota?: number
           precision_historica?: number
+          precision_plazo?: number
           score_promedio?: number
           total_simulaciones?: number
           ultimo_recalculo?: string
@@ -440,7 +446,10 @@ export type Database = {
           nivel_autonomia?: number
           porcentaje_aprobacion_banco?: number
           porcentaje_devoluciones?: number
+          precision_ahorro?: number
+          precision_cuota?: number
           precision_historica?: number
+          precision_plazo?: number
           score_promedio?: number
           total_simulaciones?: number
           ultimo_recalculo?: string
@@ -2127,6 +2136,9 @@ export type Database = {
       }
       expedientes: {
         Row: {
+          aceptacion_cliente_at: string | null
+          aceptacion_medio: string | null
+          aceptacion_observaciones: string | null
           acertividad_global: number | null
           aprobado_data: Json | null
           asesor_id: string
@@ -2169,6 +2181,9 @@ export type Database = {
           validacion_version: number
         }
         Insert: {
+          aceptacion_cliente_at?: string | null
+          aceptacion_medio?: string | null
+          aceptacion_observaciones?: string | null
           acertividad_global?: number | null
           aprobado_data?: Json | null
           asesor_id: string
@@ -2211,6 +2226,9 @@ export type Database = {
           validacion_version?: number
         }
         Update: {
+          aceptacion_cliente_at?: string | null
+          aceptacion_medio?: string | null
+          aceptacion_observaciones?: string | null
           acertividad_global?: number | null
           aprobado_data?: Json | null
           asesor_id?: string
@@ -3947,7 +3965,10 @@ export type Database = {
           nivel_autonomia: number
           porcentaje_aprobacion_banco: number
           porcentaje_devoluciones: number
+          precision_ahorro: number
+          precision_cuota: number
           precision_historica: number
+          precision_plazo: number
           score_promedio: number
           total_simulaciones: number
           ultimo_recalculo: string
