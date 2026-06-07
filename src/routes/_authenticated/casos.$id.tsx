@@ -5,7 +5,6 @@ import { PesosSimulator } from "@/components/nuvex/PesosSimulator";
 import { UVRSimulator } from "@/components/nuvex/UVRSimulator";
 import { EstadoBadge } from "@/components/nuvex/EstadoBadge";
 import { Card } from "@/components/nuvex/ui";
-import { NUVEX } from "@/components/nuvex/constants";
 import { DocumentosLegales } from "@/components/expediente-maestro/DocumentosLegales";
 import { ModuloJuridico } from "@/components/expediente-maestro/ModuloJuridico";
 import { ChecklistDocumental } from "@/components/expediente-maestro/ChecklistDocumental";
@@ -26,6 +25,14 @@ import { readValidacion, puedeGenerarDocumentos, razonBloqueoDocs } from "@/lib/
 import { addRecentCase } from "@/lib/recentCases";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Lock } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { ExpedienteStepper13 } from "@/components/expediente/ExpedienteStepper13";
+import { SiguienteAccionPanel } from "@/components/expediente/SiguienteAccionPanel";
+import { QueFaltaPanel } from "@/components/expediente/QueFaltaPanel";
+import { ChecklistRolPanel } from "@/components/expediente/ChecklistRolPanel";
+import { ResumenEjecutivo } from "@/components/expediente/ResumenEjecutivo";
+import { ControlOperativoPanel } from "@/components/expediente/ControlOperativoPanel";
+import type { TabId } from "@/lib/expedienteGuiado";
 
 export const Route = createFileRoute("/_authenticated/casos/$id")({
   component: CasoDetail,
@@ -35,10 +42,11 @@ export const Route = createFileRoute("/_authenticated/casos/$id")({
 function CasoDetail() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
-  const { canValidarProyeccion } = useUserRole();
+  const { canValidarProyeccion, isManager } = useUserRole();
   const [exp, setExp] = useState<Expediente | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [tab, setTab] = useState<TabId>("resumen");
 
   const reload = () => {
     setLoading(true);
@@ -50,13 +58,10 @@ function CasoDetail() {
 
   useEffect(() => { reload(); }, [id]);
 
-  // P28 — Registrar visita en "vistos recientemente" (localStorage).
   useEffect(() => {
     if (exp?.id && exp?.cliente_nombre) addRecentCase(exp.id, exp.cliente_nombre);
   }, [exp?.id, exp?.cliente_nombre]);
 
-  // IMPORTANTE: declarar todos los hooks antes de cualquier return condicional
-  // para evitar "Rendered more hooks than during the previous render".
   const maestroLike = useMemo(
     () => (exp ? expedienteToMaestroLike(exp) : null),
     [exp],
@@ -65,12 +70,17 @@ function CasoDetail() {
   if (loading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando expediente…</div>;
   if (err || !exp) return <div className="p-12 text-center text-sm text-[#B42318]">{err || "No encontrado"}</div>;
 
+  const estadoCaso = (exp as unknown as { estado_caso?: string }).estado_caso ?? "";
+  const validacionIdentidad = readValidacion(exp as never);
+  const puedeDocs = puedeGenerarDocumentos(validacionIdentidad);
+
   return (
     <div className="mx-auto max-w-7xl px-6 py-6 space-y-4">
+      {/* Header */}
       <Card>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="text-[11px] uppercase tracking-wider text-[#242424]/55">Expediente</div>
+            <div className="text-[11px] uppercase tracking-wider text-[#242424]/55">Expediente Guiado NUVEX</div>
             <h1 className="text-2xl font-semibold text-[#242424]">{exp.cliente_nombre}</h1>
             <div className="mt-1 text-sm text-[#242424]/70">
               {exp.cedula && <>CC {exp.cedula} · </>}
@@ -85,12 +95,8 @@ function CasoDetail() {
               value={exp.estado}
               onChange={async (e) => {
                 const nuevo = e.target.value as EstadoExpediente;
-                try {
-                  await updateEstado(exp.id, nuevo);
-                  reload();
-                } catch (err) {
-                  alert((err as Error).message);
-                }
+                try { await updateEstado(exp.id, nuevo); reload(); }
+                catch (err) { alert((err as Error).message); }
               }}
               className="rounded-lg border border-[#E3E7EE] px-3 py-1.5 text-xs font-medium bg-white"
             >
@@ -101,83 +107,46 @@ function CasoDetail() {
         </div>
       </Card>
 
-      <EstadoCasoBlock expedienteId={exp.id} onChanged={reload} />
+      {/* Stepper 13 etapas */}
+      <ExpedienteStepper13 exp={exp} />
 
-      <ValidacionIdentidadBlock exp={exp} onChanged={reload} />
+      {/* Tu siguiente acción */}
+      <SiguienteAccionPanel exp={exp} onIrATab={setTab} />
 
-      <ValidacionQABlock
-        expedienteId={exp.id}
-        estadoCaso={(exp as unknown as { estado_caso?: string }).estado_caso ?? ""}
-        onChanged={reload}
-      />
+      {/* Tabs */}
+      <Tabs value={tab} onValueChange={(v) => setTab(v as TabId)} className="space-y-4">
+        <TabsList className="flex w-full flex-wrap justify-start gap-1 bg-[#F7F9FB] p-1">
+          <TabsTrigger value="resumen">Resumen</TabsTrigger>
+          <TabsTrigger value="tareas">Tareas</TabsTrigger>
+          <TabsTrigger value="documentos">Documentos</TabsTrigger>
+          <TabsTrigger value="comunicaciones">Comunicaciones</TabsTrigger>
+          <TabsTrigger value="financiero">Financiero</TabsTrigger>
+          <TabsTrigger value="juridico">Jurídico</TabsTrigger>
+          <TabsTrigger value="auditoria">Auditoría</TabsTrigger>
+          <TabsTrigger value="historial">Historial</TabsTrigger>
+        </TabsList>
 
-      <ValidacionRadicacionBlock expedienteId={exp.id} />
-      <ValidacionEntregablesBlock expedienteId={exp.id} />
+        {/* RESUMEN */}
+        <TabsContent value="resumen" className="space-y-4">
+          <ResumenEjecutivo exp={exp} />
+          <QueFaltaPanel exp={exp} onIrATab={setTab} />
+          <ChecklistRolPanel exp={exp} onIrATab={setTab} />
+          {isManager && <ControlOperativoPanel exp={exp} />}
+        </TabsContent>
 
-
-
-      <div id="lector-extracto-qa" className="scroll-mt-6">
-        <SoportesBanco
-          expedienteId={exp.id}
-          estadoCaso={(exp as unknown as { estado_caso?: string }).estado_caso ?? ""}
-          allowUploadForQA={canValidarProyeccion}
-        />
-      </div>
-
-      <div id="simulador-financiero-qa" className="scroll-mt-6">
-        {exp.modo === "pesos" ? (
-          <PesosSimulator initialExpediente={exp} onSaved={reload} />
-        ) : (
-          <UVRSimulator initialExpediente={exp} onSaved={reload} />
-        )}
-      </div>
-
-      {(() => {
-        const prop = (exp as unknown as { propuesta_data?: Record<string, unknown> }).propuesta_data ?? {};
-        const cli = (exp.cliente_data ?? {}) as unknown as Record<string, unknown>;
-        const cuotasPactadas = Number((exp as unknown as { cuotas_pactadas?: number }).cuotas_pactadas ?? 0)
-          || Number(prop.cuotasEliminadas ?? 0);
-        const honorariosPactados = Number((exp as unknown as { honorarios_pactados?: number }).honorarios_pactados ?? 0)
-          || Number(prop.honorarios ?? 0);
-        return (
-          <div id="resultado-bancario" className="scroll-mt-6">
-            <RespuestaBancoBlock
-              expedienteId={exp.id}
-              simulacionId={(exp as unknown as { simulacion_id?: string }).simulacion_id ?? null}
-              analistaId={(exp as unknown as { user_id?: string }).user_id ?? null}
-              numeroExpediente={exp.id.slice(0, 8)}
-              clienteNombre={String(cli.nombre ?? "")}
-              clienteCedula={String(cli.cedula ?? "")}
-              bancoNombre={String(cli.banco ?? "")}
-              cuotasPactadas={cuotasPactadas}
-              honorariosPactados={honorariosPactados}
-              cuotaPropuesta={Number(prop.nuevaCuota ?? 0)}
-              plazoPropuesto={Number(prop.nuevoPlazo ?? 0)}
-              cuotasEliminadasPropuestas={Number(prop.cuotasEliminadas ?? cuotasPactadas)}
-              ahorroPropuesto={Number(prop.ahorroTotal ?? 0)}
-            />
+        {/* TAREAS */}
+        <TabsContent value="tareas" className="space-y-4">
+          <EstadoCasoBlock expedienteId={exp.id} onChanged={reload} />
+          <div id="validacion-identidad" className="scroll-mt-6">
+            <ValidacionIdentidadBlock exp={exp} onChanged={reload} />
           </div>
-        );
-      })()}
+          <ValidacionRadicacionBlock expedienteId={exp.id} />
+          <ValidacionEntregablesBlock expedienteId={exp.id} />
+        </TabsContent>
 
-      <div id="cierre-operativo" className="scroll-mt-6">
-        <EtapasFinalesBlock
-          expedienteId={exp.id}
-          estadoCaso={(exp as unknown as { estado_caso?: string }).estado_caso ?? null}
-          etapaPipeline={(exp as unknown as { etapa_pipeline?: never }).etapa_pipeline ?? null}
-          aceptacionAt={(exp as unknown as { aceptacion_cliente_at?: string }).aceptacion_cliente_at ?? null}
-          aceptacionMedio={(exp as unknown as { aceptacion_medio?: string }).aceptacion_medio ?? null}
-          aceptacionObservaciones={(exp as unknown as { aceptacion_observaciones?: string }).aceptacion_observaciones ?? null}
-          onChanged={reload}
-        />
-      </div>
-
-
-      {(() => {
-        const v = readValidacion(exp as never);
-        const ok = puedeGenerarDocumentos(v);
-        if (!ok) {
-          return (
+        {/* DOCUMENTOS */}
+        <TabsContent value="documentos" className="space-y-4">
+          {!puedeDocs ? (
             <Card>
               <div className="flex items-start gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg text-white shrink-0" style={{ background: "#7A0E0E" }}>
@@ -186,65 +155,149 @@ function CasoDetail() {
                 <div className="flex-1">
                   <div className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: "#7A0E0E" }}>Documentos jurídicos bloqueados</div>
                   <h3 className="text-lg font-semibold text-[#242424]">Validación de identidad requerida</h3>
-                  <p className="text-xs text-[#242424]/70 mt-1">{razonBloqueoDocs(v)}</p>
+                  <p className="text-xs text-[#242424]/70 mt-1">{razonBloqueoDocs(validacionIdentidad)}</p>
+                  <button
+                    type="button"
+                    onClick={() => setTab("tareas")}
+                    className="mt-2 inline-flex items-center gap-1 rounded-md border border-[#E3E7EE] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#445DA3] hover:bg-[#EEF1FA]"
+                  >Ir a validar identidad →</button>
                 </div>
               </div>
             </Card>
-          );
-        }
-        return (
-          <>
-            {maestroLike && (
-              <ErrorBoundary fallback={<Card><div className="text-sm text-[#B42318]">No se pudo cargar esta sección.</div></Card>}>
-                <DocumentosLegales expediente={maestroLike} simExpediente={exp} expedienteIdToPersist={exp.id} onJuridicaSaved={reload} />
-              </ErrorBoundary>
+          ) : (
+            <>
+              {maestroLike && (
+                <div id="documentos-juridicos" className="scroll-mt-6 space-y-4">
+                  <ErrorBoundary fallback={<Card><div className="text-sm text-[#B42318]">No se pudo cargar esta sección.</div></Card>}>
+                    <DocumentosLegales expediente={maestroLike} simExpediente={exp} expedienteIdToPersist={exp.id} onJuridicaSaved={reload} />
+                  </ErrorBoundary>
+                </div>
+              )}
+              {maestroLike && (
+                <div id="checklist-documental" className="scroll-mt-6">
+                  <ErrorBoundary fallback={<Card><div className="text-sm text-[#B42318]">No se pudo cargar el Checklist Documental.</div></Card>}>
+                    <Card>
+                      <div className="mb-3">
+                        <div className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: "#1F6F4A" }}>
+                          Etapa 5 · Documentación bancaria
+                        </div>
+                        <h3 className="text-lg font-semibold text-[#242424]">Checklist Documental Inteligente</h3>
+                        <p className="text-xs text-[#242424]/65 mt-0.5">
+                          Soportes que exige el banco para radicar el caso. La matriz se ajusta por banco, perfil laboral y condiciones del cliente.
+                        </p>
+                      </div>
+                      <ChecklistDocumental expediente={maestroLike} simExpediente={exp} />
+                    </Card>
+                  </ErrorBoundary>
+                </div>
+              )}
+              <VersionesDocumentalesBlock exp={exp} />
+            </>
+          )}
+        </TabsContent>
+
+        {/* COMUNICACIONES */}
+        <TabsContent value="comunicaciones" className="space-y-4">
+          <ConversacionCaso expedienteId={exp.id} clienteNombre={exp.cliente_nombre} />
+        </TabsContent>
+
+        {/* FINANCIERO */}
+        <TabsContent value="financiero" className="space-y-4">
+          <div id="simulador-financiero-qa" className="scroll-mt-6">
+            {exp.modo === "pesos" ? (
+              <PesosSimulator initialExpediente={exp} onSaved={reload} />
+            ) : (
+              <UVRSimulator initialExpediente={exp} onSaved={reload} />
             )}
-            {maestroLike && (
-              <ErrorBoundary fallback={<Card><div className="text-sm text-[#B42318]">No se pudo cargar el Módulo Jurídico.</div></Card>}>
-                <ModuloJuridico expediente={maestroLike} />
-              </ErrorBoundary>
-            )}
-            {maestroLike && (
-              <ErrorBoundary fallback={<Card><div className="text-sm text-[#B42318]">No se pudo cargar el Checklist Documental.</div></Card>}>
-                <Card>
-                  <div className="mb-3">
-                    <div className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: "#1F6F4A" }}>
-                      Etapa 7 · Radicación bancaria
-                    </div>
-                    <h3 className="text-lg font-semibold text-[#242424]">Checklist Documental Inteligente</h3>
-                    <p className="text-xs text-[#242424]/65 mt-0.5">
-                      Soportes que exige el banco para radicar el caso. La matriz se ajusta por banco, perfil laboral y condiciones del cliente.
-                    </p>
-                  </div>
-                  <ChecklistDocumental expediente={maestroLike} simExpediente={exp} />
-                </Card>
-              </ErrorBoundary>
-            )}
-            <VersionesDocumentalesBlock exp={exp} />
-          </>
-        );
-      })()}
+          </div>
 
-      <CarteraBlockExpediente expedienteId={exp.id} estadoCaso={(exp as unknown as { estado_caso?: string }).estado_caso ?? ""} />
+          {(() => {
+            const prop = (exp as unknown as { propuesta_data?: Record<string, unknown> }).propuesta_data ?? {};
+            const cli = (exp.cliente_data ?? {}) as unknown as Record<string, unknown>;
+            const cuotasPactadas = Number((exp as unknown as { cuotas_pactadas?: number }).cuotas_pactadas ?? 0)
+              || Number(prop.cuotasEliminadas ?? 0);
+            const honorariosPactados = Number((exp as unknown as { honorarios_pactados?: number }).honorarios_pactados ?? 0)
+              || Number(prop.honorarios ?? 0);
+            return (
+              <div id="resultado-bancario" className="scroll-mt-6">
+                <RespuestaBancoBlock
+                  expedienteId={exp.id}
+                  simulacionId={(exp as unknown as { simulacion_id?: string }).simulacion_id ?? null}
+                  analistaId={(exp as unknown as { user_id?: string }).user_id ?? null}
+                  numeroExpediente={exp.id.slice(0, 8)}
+                  clienteNombre={String(cli.nombre ?? "")}
+                  clienteCedula={String(cli.cedula ?? "")}
+                  bancoNombre={String(cli.banco ?? "")}
+                  cuotasPactadas={cuotasPactadas}
+                  honorariosPactados={honorariosPactados}
+                  cuotaPropuesta={Number(prop.nuevaCuota ?? 0)}
+                  plazoPropuesto={Number(prop.nuevoPlazo ?? 0)}
+                  cuotasEliminadasPropuestas={Number(prop.cuotasEliminadas ?? cuotasPactadas)}
+                  ahorroPropuesto={Number(prop.ahorroTotal ?? 0)}
+                />
+              </div>
+            );
+          })()}
 
-      <ConversacionCaso expedienteId={exp.id} clienteNombre={exp.cliente_nombre} />
+          <div id="cierre-operativo" className="scroll-mt-6">
+            <EtapasFinalesBlock
+              expedienteId={exp.id}
+              estadoCaso={estadoCaso || null}
+              etapaPipeline={(exp as unknown as { etapa_pipeline?: never }).etapa_pipeline ?? null}
+              aceptacionAt={(exp as unknown as { aceptacion_cliente_at?: string }).aceptacion_cliente_at ?? null}
+              aceptacionMedio={(exp as unknown as { aceptacion_medio?: string }).aceptacion_medio ?? null}
+              aceptacionObservaciones={(exp as unknown as { aceptacion_observaciones?: string }).aceptacion_observaciones ?? null}
+              onChanged={reload}
+            />
+          </div>
 
-      <HistorialCaso expedienteId={exp.id} />
+          <CarteraBlockExpediente expedienteId={exp.id} estadoCaso={estadoCaso} />
+        </TabsContent>
 
+        {/* JURÍDICO */}
+        <TabsContent value="juridico" className="space-y-4">
+          {maestroLike ? (
+            <ErrorBoundary fallback={<Card><div className="text-sm text-[#B42318]">No se pudo cargar el Módulo Jurídico.</div></Card>}>
+              <ModuloJuridico expediente={maestroLike} />
+            </ErrorBoundary>
+          ) : (
+            <Card><div className="text-sm text-[#242424]/60">Sin datos jurídicos disponibles.</div></Card>
+          )}
+        </TabsContent>
 
+        {/* AUDITORÍA */}
+        <TabsContent value="auditoria" className="space-y-4">
+          <div id="validacion-qa" className="scroll-mt-6">
+            <ValidacionQABlock
+              expedienteId={exp.id}
+              estadoCaso={estadoCaso}
+              onChanged={reload}
+            />
+          </div>
+          <div id="lector-extracto-qa" className="scroll-mt-6">
+            <SoportesBanco
+              expedienteId={exp.id}
+              estadoCaso={estadoCaso}
+              allowUploadForQA={canValidarProyeccion}
+            />
+          </div>
+        </TabsContent>
 
+        {/* HISTORIAL */}
+        <TabsContent value="historial" className="space-y-4">
+          <HistorialCaso expedienteId={exp.id} />
+        </TabsContent>
+      </Tabs>
+
+      {/* Zona peligro */}
       <Card>
         <div className="flex items-center justify-between">
           <div className="text-sm text-[#242424]/70">¿Eliminar este expediente?</div>
           <button
             onClick={async () => {
               if (!confirm("¿Eliminar definitivamente este expediente?")) return;
-              try {
-                await deleteExpediente(exp.id);
-                navigate({ to: "/casos" });
-              } catch (e) {
-                alert((e as Error).message);
-              }
+              try { await deleteExpediente(exp.id); navigate({ to: "/casos" }); }
+              catch (e) { alert((e as Error).message); }
             }}
             className="rounded-lg border px-3 py-1.5 text-xs font-medium"
             style={{ borderColor: "#F5C2C2", color: "#B42318", backgroundColor: "#FDECEC" }}
