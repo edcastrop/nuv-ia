@@ -409,6 +409,45 @@ export type Database = {
         }
         Relationships: []
       }
+      analista_metricas: {
+        Row: {
+          analista_id: string
+          created_at: string
+          nivel_autonomia: number
+          porcentaje_aprobacion_banco: number
+          porcentaje_devoluciones: number
+          precision_historica: number
+          score_promedio: number
+          total_simulaciones: number
+          ultimo_recalculo: string
+          updated_at: string
+        }
+        Insert: {
+          analista_id: string
+          created_at?: string
+          nivel_autonomia?: number
+          porcentaje_aprobacion_banco?: number
+          porcentaje_devoluciones?: number
+          precision_historica?: number
+          score_promedio?: number
+          total_simulaciones?: number
+          ultimo_recalculo?: string
+          updated_at?: string
+        }
+        Update: {
+          analista_id?: string
+          created_at?: string
+          nivel_autonomia?: number
+          porcentaje_aprobacion_banco?: number
+          porcentaje_devoluciones?: number
+          precision_historica?: number
+          score_promedio?: number
+          total_simulaciones?: number
+          ultimo_recalculo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       apoderados_nuvex: {
         Row: {
           activo: boolean
@@ -456,6 +495,195 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      audit_alertas: {
+        Row: {
+          analista_id: string
+          created_at: string
+          id: string
+          leida: boolean
+          mensaje: string
+          nivel_anterior: number | null
+          nivel_nuevo: number | null
+          simulacion_id: string | null
+          tipo: string
+        }
+        Insert: {
+          analista_id: string
+          created_at?: string
+          id?: string
+          leida?: boolean
+          mensaje: string
+          nivel_anterior?: number | null
+          nivel_nuevo?: number | null
+          simulacion_id?: string | null
+          tipo: string
+        }
+        Update: {
+          analista_id?: string
+          created_at?: string
+          id?: string
+          leida?: boolean
+          mensaje?: string
+          nivel_anterior?: number | null
+          nivel_nuevo?: number | null
+          simulacion_id?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_alertas_simulacion_id_fkey"
+            columns: ["simulacion_id"]
+            isOneToOne: false
+            referencedRelation: "audit_simulaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_respuestas_banco: {
+        Row: {
+          analista_id: string
+          created_at: string
+          cuota_aprobada: number | null
+          cuota_propuesta: number | null
+          cuotas_aprobadas: number | null
+          cuotas_eliminadas_propuestas: number | null
+          fecha_aprobacion: string | null
+          id: string
+          observaciones: string | null
+          plazo_aprobado: number | null
+          plazo_propuesto: number | null
+          precision_ahorro: number | null
+          precision_cuota: number | null
+          precision_plazo: number | null
+          simulacion_id: string
+          updated_at: string
+        }
+        Insert: {
+          analista_id: string
+          created_at?: string
+          cuota_aprobada?: number | null
+          cuota_propuesta?: number | null
+          cuotas_aprobadas?: number | null
+          cuotas_eliminadas_propuestas?: number | null
+          fecha_aprobacion?: string | null
+          id?: string
+          observaciones?: string | null
+          plazo_aprobado?: number | null
+          plazo_propuesto?: number | null
+          precision_ahorro?: number | null
+          precision_cuota?: number | null
+          precision_plazo?: number | null
+          simulacion_id: string
+          updated_at?: string
+        }
+        Update: {
+          analista_id?: string
+          created_at?: string
+          cuota_aprobada?: number | null
+          cuota_propuesta?: number | null
+          cuotas_aprobadas?: number | null
+          cuotas_eliminadas_propuestas?: number | null
+          fecha_aprobacion?: string | null
+          id?: string
+          observaciones?: string | null
+          plazo_aprobado?: number | null
+          plazo_propuesto?: number | null
+          precision_ahorro?: number | null
+          precision_cuota?: number | null
+          precision_plazo?: number | null
+          simulacion_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_respuestas_banco_simulacion_id_fkey"
+            columns: ["simulacion_id"]
+            isOneToOne: false
+            referencedRelation: "audit_simulaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_simulaciones: {
+        Row: {
+          analista_id: string
+          banco: string | null
+          created_at: string
+          datos_analista: Json
+          datos_extracto: Json
+          datos_propuesta: Json
+          expediente_id: string | null
+          id: string
+          inconsistencias: Json
+          moneda: string | null
+          motivo_escalamiento: string | null
+          nivel_riesgo: string
+          producto: string | null
+          requiere_revision: boolean
+          score_campos: number
+          score_documental: number
+          score_extracto: number
+          score_matematico: number
+          score_total: number
+          tipo_credito: string | null
+          updated_at: string
+        }
+        Insert: {
+          analista_id: string
+          banco?: string | null
+          created_at?: string
+          datos_analista?: Json
+          datos_extracto?: Json
+          datos_propuesta?: Json
+          expediente_id?: string | null
+          id?: string
+          inconsistencias?: Json
+          moneda?: string | null
+          motivo_escalamiento?: string | null
+          nivel_riesgo?: string
+          producto?: string | null
+          requiere_revision?: boolean
+          score_campos?: number
+          score_documental?: number
+          score_extracto?: number
+          score_matematico?: number
+          score_total?: number
+          tipo_credito?: string | null
+          updated_at?: string
+        }
+        Update: {
+          analista_id?: string
+          banco?: string | null
+          created_at?: string
+          datos_analista?: Json
+          datos_extracto?: Json
+          datos_propuesta?: Json
+          expediente_id?: string | null
+          id?: string
+          inconsistencias?: Json
+          moneda?: string | null
+          motivo_escalamiento?: string | null
+          nivel_riesgo?: string
+          producto?: string | null
+          requiere_revision?: boolean
+          score_campos?: number
+          score_documental?: number
+          score_extracto?: number
+          score_matematico?: number
+          score_total?: number
+          tipo_credito?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_simulaciones_expediente_id_fkey"
+            columns: ["expediente_id"]
+            isOneToOne: false
+            referencedRelation: "expedientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       auditoria_global: {
         Row: {
