@@ -36,26 +36,26 @@ export function SiguienteAccionPanel({ exp, onIrATab }: Props) {
 
   return (
     <Card>
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-start gap-3">
+      <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex min-w-0 items-start gap-3">
           <div
             className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-xl text-white shadow-sm"
             style={{ background: color }}
           >
             <Sparkles size={18} />
           </div>
-          <div>
+          <div className="min-w-0 flex-1">
             <div className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color }}>
               Tu siguiente acción {accion.rol !== "todos" && <span className="ml-1 rounded-full px-1.5 py-0.5 text-[9px]" style={{ background: bg }}>{roleLabel(accion.rol, true)}</span>}
             </div>
-            <h3 className="text-lg font-semibold text-[#0A1226]">{accion.titulo}</h3>
+            <h3 className="break-words text-lg font-semibold leading-snug text-[#0A1226]">{accion.titulo}</h3>
             <p className="mt-0.5 text-xs text-[#242424]/70">{accion.descripcion}</p>
           </div>
         </div>
         <button
           type="button"
           onClick={handleClick}
-          className="inline-flex items-center justify-center gap-1.5 self-start whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 md:self-auto"
+          className="inline-flex w-full items-center justify-center gap-1.5 self-start rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 sm:w-auto md:self-auto"
           style={{ background: color }}
         >
           {accion.botonLabel}
