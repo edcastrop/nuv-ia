@@ -345,6 +345,7 @@ export function UVRSimulator({
           onChange={setClient}
           modalidad="uvr"
           cuotasPendientes={cuotasPendientes}
+          hideCreditFields
         />
 
 
