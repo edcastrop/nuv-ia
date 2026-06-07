@@ -339,6 +339,7 @@ export function PesosSimulator({
           onChange={setClient}
           modalidad="pesos"
           cuotasPendientes={cuotasPendientes}
+          hideCreditFields
         />
 
 
