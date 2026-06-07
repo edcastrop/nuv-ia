@@ -596,6 +596,38 @@ export function UVRSimulator({
             })()}
 
           {recomendada && (
+            <AuditPanel
+              nivelAutonomia={metricasAutonomia.nivelAutonomia}
+              input={{
+                moneda: "uvr",
+                extracto: {},
+                analista: {
+                  banco: client.banco,
+                  producto: client.tipoProducto,
+                  saldoCapital: saldoPesosNum,
+                  cuotaActual: cuotaSimulacionPesosNum,
+                  seguros: segurosNum,
+                  teaPct: parsePercentage(teaCobrada),
+                  plazoInicial,
+                  cuotasPagadas,
+                  cuotasPendientes,
+                },
+                propuesta: {
+                  cuotaActual: cuotaSimulacionPesosNum,
+                  cuotasPendientes,
+                  nuevaCuota: recomendada.nuevaCuota,
+                  nuevoPlazo: recomendada.nuevoPlazo,
+                  cuotasEliminadas: Math.max(0, cuotasPendientes - recomendada.nuevoPlazo),
+                  ahorroIntereses: recomendada.ahorroIntereses,
+                  ahorroSeguros: recomendada.ahorroSeguros,
+                  ahorroTotal: recomendada.ahorroTotal,
+                  honorarios: recomendada.honorarios,
+                },
+              }}
+            />
+          )}
+
+          {recomendada && (
             <div className="flex flex-wrap justify-end gap-2">
               <button
                 onClick={async () => {
