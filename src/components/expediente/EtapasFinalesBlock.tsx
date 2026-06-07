@@ -11,7 +11,7 @@ import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { cambiarEstadoConValidacion } from "@/lib/pipelineTransiciones";
 import { computeEtapaActual, indexOfEtapa, type EtapaPipelineId } from "@/lib/pipelineEtapas";
-import type { AccionOrigen } from "@/lib/casoEstados";
+import { ACCION_A_ESTADO, type AccionOrigen } from "@/lib/casoEstados";
 import { useUserRole } from "@/hooks/useUserRole";
 
 interface Props {
@@ -142,8 +142,8 @@ function AceptacionCliente({
   onChanged?: () => void;
 }) {
   const idxEtapa = 9; // índice 0-based de "aceptacion_cliente" (etapa 10)
-  const { isSuperAdmin, isAsesor, isLicenciado } = useUserRole();
-  const puedeEditar = isSuperAdmin || isAsesor || isLicenciado;
+  const { isSuperAdmin, isLicenciado, roles } = useUserRole();
+  const puedeEditar = isSuperAdmin || isLicenciado || roles.includes("asesor");
 
   const [medio, setMedio] = useState(aceptacionMedio ?? "whatsapp");
   const [obs, setObs] = useState(aceptacionObservaciones ?? "");
@@ -267,7 +267,7 @@ function EtapaAvance({
     setSaving(true);
     setMsg(null);
     try {
-      await cambiarEstadoConValidacion(expedienteId, accionADestino(accion), accion);
+      await cambiarEstadoConValidacion(expedienteId, ACCION_A_ESTADO[accion], accion);
       setMsg("Etapa avanzada.");
       onChanged?.();
     } catch (e) {
@@ -341,9 +341,3 @@ function EtapaShell({
   );
 }
 
-function accionADestino(_a: AccionOrigen): never {
-  // Helper sólo para forzar import de tipo. La transición real la resuelve
-  // cambiarEstadoConValidacion vía ACCION_A_ESTADO en pipelineTransiciones.
-  // Devolvemos el estado mapeado mediante un require dinámico para no acoplar.
-  throw new Error("accionADestino debe ser reemplazado por mapping directo");
-}
