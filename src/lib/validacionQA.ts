@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { notifQAAprobada, notifQADevuelta } from "@/lib/notifTriggers";
 
 export type MotivoDevolucionQA =
   | "cuota_incorrecta"
@@ -101,6 +102,8 @@ export async function aprobarQA(validacionId: string): Promise<void> {
         .update({ aprobado_data: snapshot as unknown as never })
         .eq("id", expedienteId);
     }
+    // Disparador: notificar a asesor + jurídica
+    await notifQAAprobada(expedienteId);
   }
 }
 
@@ -113,6 +116,13 @@ export async function devolverQA(
   if (!observacion.trim()) throw new Error("La observación es obligatoria");
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) throw new Error("No autenticado");
+  const { data: vRow } = await supabase
+    .from("validaciones_qa" as never)
+    .select("expediente_id")
+    .eq("id", validacionId)
+    .maybeSingle();
+  const expedienteId = (vRow as { expediente_id?: string } | null)?.expediente_id ?? null;
+
   const { error } = await supabase
     .from("validaciones_qa" as never)
     .update({
@@ -124,6 +134,7 @@ export async function devolverQA(
     } as never)
     .eq("id", validacionId);
   if (error) throw new Error(error.message);
+  if (expedienteId) await notifQADevuelta(expedienteId, motivo, observacion.trim());
 }
 
 export async function obtenerUltimaValidacion(
