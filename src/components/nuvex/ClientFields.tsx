@@ -67,6 +67,16 @@ export function ClientFields({
       <div className="grid gap-4 md:grid-cols-3">
         <TextField label="Nombre completo" value={data.nombre} onChange={(v) => set("nombre", v)} />
         <TextField label="Número de cédula" value={data.cedula} onChange={(v) => set("cedula", v)} />
+        <div>
+          <label className="block text-xs font-medium text-[#242424]/70 mb-1">
+            Lugar de expedición de la cédula
+          </label>
+          <CitySelect
+            value={data.lugarExpedicionCedula ?? ""}
+            onChange={(v) => set("lugarExpedicionCedula", v)}
+            placeholder="Selecciona ciudad de expedición…"
+          />
+        </div>
         <TextField
           label="Correo electrónico"
           value={data.correo ?? ""}
