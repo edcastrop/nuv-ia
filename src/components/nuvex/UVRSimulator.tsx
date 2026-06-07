@@ -17,15 +17,7 @@ import {
   pickBestProposal,
   type UVRInput,
 } from "../../lib/finance";
-import { ComparativeTable } from "./ComparativeTable";
-import { RecommendedResult } from "./RecommendedResult";
-import {
-  ScenarioTable,
-  ImpactCard,
-  SavingsCard,
-  buildUVRScenarioRows,
-  getVecesStyle,
-} from "./ScenarioTable";
+import { getVecesStyle } from "./ScenarioTable";
 import { PrintDocument } from "./PrintDocument";
 import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
 import { EnviarDocumentoButton } from "./EnviarDocumentoButton";
@@ -39,8 +31,11 @@ import { ResultadoFinal, type ProyeccionNuvex } from "./ResultadoFinal";
 import { SaveExpedienteButton } from "./SaveExpedienteButton";
 import type { Expediente } from "@/lib/expedientes";
 import { ExtractoReader, type ExtractoApplyPayload } from "./ExtractoReader";
-import { IntervinientesFields } from "./IntervinientesFields";
-import { CoberturaFields } from "./CoberturaFields";
+import { FreshBlock } from "./FreshBlock";
+import {
+  PropuestasComerciales,
+  type RecomendadaSeleccionada,
+} from "./PropuestasComerciales";
 import {
   defaultCobertura,
   defaultIntervinientes,
