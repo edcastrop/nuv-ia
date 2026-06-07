@@ -607,6 +607,8 @@ export function UVRSimulator({
           {recomendada && (
             <AuditPanel
               nivelAutonomia={metricasAutonomia.nivelAutonomia}
+              expedienteId={init?.id}
+
               input={{
                 moneda: "uvr",
                 extracto: {},
