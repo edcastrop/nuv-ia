@@ -32,6 +32,12 @@ import { AuditoriaPipeline } from "@/components/pipeline/AuditoriaPipeline";
 import { TimelineEtapas14 } from "@/components/pipeline/TimelineEtapas14";
 import { computeEtapaActual, type EtapaPipelineId } from "@/lib/pipelineEtapas";
 import { supabase } from "@/integrations/supabase/client";
+import { getExpediente, type Expediente } from "@/lib/expedientes";
+import { ExpedienteStepper13 } from "@/components/expediente/ExpedienteStepper13";
+import { SiguienteAccionPanel } from "@/components/expediente/SiguienteAccionPanel";
+import { QueFaltaPanel } from "@/components/expediente/QueFaltaPanel";
+import { ChecklistRolPanel } from "@/components/expediente/ChecklistRolPanel";
+
 
 export const Route = createFileRoute("/_authenticated/expediente-maestro/$id")({
   component: MaestroDetail,
@@ -57,7 +63,9 @@ function MaestroDetail() {
   const [extractoAplicado, setExtractoAplicado] = useState<MotorResultado | null>(null);
   const [aplicandoExtracto, setAplicandoExtracto] = useState(false);
   const [etapaActual, setEtapaActual] = useState<EtapaPipelineId>("lead");
+  const [expOperativo, setExpOperativo] = useState<Expediente | null>(null);
   const resumenRef = useRef<HTMLDivElement | null>(null);
+
 
   useEffect(() => {
     setLoading(true);
@@ -77,13 +85,22 @@ function MaestroDetail() {
         if (e.cedula_cliente) {
           const { data: exps } = await supabase
             .from("expedientes")
-            .select("estado_caso, updated_at")
+            .select("id, estado_caso, updated_at")
             .eq("cedula", e.cedula_cliente)
             .order("updated_at", { ascending: false })
             .limit(1);
-          const row = exps?.[0] as { estado_caso?: string | null } | undefined;
-          if (row) setEtapaActual(computeEtapaActual({ estado_caso: row.estado_caso }));
+          const row = exps?.[0] as { id?: string; estado_caso?: string | null } | undefined;
+          if (row) {
+            setEtapaActual(computeEtapaActual({ estado_caso: row.estado_caso }));
+            if (row.id) {
+              try {
+                const full = await getExpediente(row.id);
+                setExpOperativo(full);
+              } catch { /* opcional */ }
+            }
+          }
         }
+
       })
       .catch((e) => setErr(e.message))
       .finally(() => setLoading(false));
@@ -334,7 +351,21 @@ function MaestroDetail() {
         </div>
       </Card>
 
+      {/* Capa guiada NUVEX (13 etapas + Siguiente acción + Qué falta + Checklist por rol).
+          Solo se muestra si existe un caso operativo asociado a la cédula. */}
+      {expOperativo && (
+        <>
+          <ExpedienteStepper13 exp={expOperativo} />
+          <SiguienteAccionPanel exp={expOperativo} />
+          <div className="grid gap-4 md:grid-cols-2">
+            <QueFaltaPanel exp={expOperativo} />
+            <ChecklistRolPanel exp={expOperativo} />
+          </div>
+        </>
+      )}
+
       <PipelineStepper14 etapaActual={etapaActual} />
+
 
       <EtapasIniciales123
         expedienteId={id}
