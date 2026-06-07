@@ -75,21 +75,21 @@ function CasoDetail() {
   const puedeDocs = puedeGenerarDocumentos(validacionIdentidad);
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-6 space-y-4">
+    <div className="mx-auto max-w-7xl space-y-4 px-3 py-4 sm:px-6 sm:py-6">
       {/* Header */}
       <Card>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
+        <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+          <div className="min-w-0">
             <div className="text-[11px] uppercase tracking-wider text-[#242424]/55">Expediente Guiado NUVEX</div>
-            <h1 className="text-2xl font-semibold text-[#242424]">{exp.cliente_nombre}</h1>
-            <div className="mt-1 text-sm text-[#242424]/70">
+            <h1 className="break-words text-2xl font-semibold leading-tight text-[#242424]">{exp.cliente_nombre}</h1>
+            <div className="mt-1 break-words text-sm text-[#242424]/70">
               {exp.cedula && <>CC {exp.cedula} · </>}
               {exp.banco && <>{exp.banco} · </>}
               {exp.numero_credito && <>Crédito {exp.numero_credito} · </>}
               Modo <span className="uppercase font-semibold">{exp.modo}</span> · Simulado {exp.fecha_simulacion}
             </div>
           </div>
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:items-end">
             <EstadoBadge estado={exp.estado} />
             <select
               value={exp.estado}
@@ -98,7 +98,7 @@ function CasoDetail() {
                 try { await updateEstado(exp.id, nuevo); reload(); }
                 catch (err) { alert((err as Error).message); }
               }}
-              className="rounded-lg border border-[#E3E7EE] px-3 py-1.5 text-xs font-medium bg-white"
+              className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 text-xs font-medium"
             >
               {ESTADOS.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
