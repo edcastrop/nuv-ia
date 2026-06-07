@@ -556,6 +556,15 @@ function AuthenticatedLayout() {
                   N{metricasAutonomia.nivelAutonomia}
                 </Link>
               )}
+              <button
+                onClick={handleReload}
+                disabled={reloading}
+                aria-label="Recargar"
+                title="Recargar datos"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-white/80 hover:bg-white/5 disabled:opacity-60"
+              >
+                <RefreshCw size={16} className={reloading ? "animate-spin" : ""} />
+              </button>
               <NotificationBell />
               <Link
                 to="/mi-perfil"
