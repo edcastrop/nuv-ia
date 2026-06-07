@@ -603,8 +603,7 @@ export function UVRSimulator({
                   if (
                     !recomendada ||
                     !calc ||
-                    calc.propuestas.length === 0 ||
-                    scenarioRows.length === 0
+                    calc.propuestas.length === 0
                   ) {
                     alert("Primero debes calcular la simulación UVR antes de exportar el PDF.");
                     return;
