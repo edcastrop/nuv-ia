@@ -421,38 +421,31 @@ export function PesosSimulator({
 
       {datosCompletos && (
         <>
-          <Card>
-            <SectionTitle sub="Resumen ejecutivo del crédito actual">
-              Situación actual del crédito
-            </SectionTitle>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              {metrics.map((m) => {
-                if (m.label === "N° veces pagado el crédito") {
-                  return (
-                    <div
-                      key={m.label}
-                      className="rounded-xl border p-4"
-                      style={{ backgroundColor: vsActual.bg, borderColor: vsActual.color }}
-                    >
-                      <div
-                        className="text-[11px] font-semibold uppercase tracking-wider"
-                        style={{ color: vsActual.color, opacity: 0.85 }}
-                      >
-                        {m.label}
-                      </div>
-                      <div
-                        className="mt-1.5 text-lg font-extrabold leading-tight"
-                        style={{ color: vsActual.color }}
-                      >
-                        {m.value}
-                      </div>
-                    </div>
-                  );
-                }
-                return <MetricCard key={m.label} label={m.label} value={m.value} />;
-              })}
-            </div>
-          </Card>
+          <SituacionActualBlock
+            hero={{
+              saldoActual: formatCOP(input.saldoCapital),
+              cuotaActual: formatCOP(input.cuotaActual),
+              cuotasPendientes: String(cuotasPendientes),
+              totalProyectado: formatCOP(totalActualPendiente),
+            }}
+            vecesPagado={vecesActual}
+            secundarios={[
+              { label: "TEA", value: formatPercentage(input.tea) },
+              {
+                label: "Tasa mensual utilizada",
+                value: calc ? formatPercentage(calc.tasaMensual * 100, 4) : "—",
+              },
+              { label: "Seguros mensuales", value: formatCOP(input.seguros) },
+              { label: "Cuota sin seguros", value: formatCOP(cuotaSinSegurosNum) },
+            ]}
+            detalle={[
+              { label: "Valor desembolsado", value: formatCOP(valorDesembolsadoNum) },
+              { label: "Dinero pagado a la fecha", value: formatCOP(dineroPagadoFecha) },
+              { label: "Plazo inicial", value: `${plazoInicial} meses` },
+              { label: "Cuotas pagadas", value: String(cuotasPagadas) },
+            ]}
+          />
+
 
           {ahorroNegativo && (
             <Alert tone="error">
