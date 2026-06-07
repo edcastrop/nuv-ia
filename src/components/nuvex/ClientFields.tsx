@@ -220,7 +220,10 @@ export function ClientFields({
           <MunicipioSelect
             departamento={data.departamento ?? ""}
             value={data.ciudad ?? ""}
-            onChange={(v) => set("ciudad", v)}
+            onChange={(v) => {
+              const dep = data.departamento || departamentoDeMunicipio(v);
+              onChange({ ...data, departamento: dep, ciudad: v });
+            }}
             placeholder="Selecciona ciudad…"
           />
         </div>
@@ -231,7 +234,10 @@ export function ClientFields({
           <MunicipioSelect
             departamento={data.departamento ?? ""}
             value={data.municipio ?? ""}
-            onChange={(v) => set("municipio", v)}
+            onChange={(v) => {
+              const dep = data.departamento || departamentoDeMunicipio(v);
+              onChange({ ...data, departamento: dep, municipio: v });
+            }}
             placeholder="Selecciona municipio…"
           />
         </div>
