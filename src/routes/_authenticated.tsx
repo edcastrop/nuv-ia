@@ -33,6 +33,7 @@ type NavSection = { label: string; items: NavItem[] };
 function AuthenticatedLayout() {
   const { session, user, loading } = useAuth();
   const { isSuperAdmin, roles, isDirectorQA, isApoderado } = useUserRole();
+  const { metricas: metricasAutonomia, loading: loadingAutonomia } = useNivelAutonomia();
   const navigate = useNavigate();
   const location = useLocation();
   const [unread, setUnread] = useState(0);
