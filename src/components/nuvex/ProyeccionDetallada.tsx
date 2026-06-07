@@ -7,7 +7,7 @@ import {
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { listExpedientes, type Expediente } from "@/lib/expedientes";
-import { formatCOP, formatInt, parseCurrency, parseDecimal, parsePercentage } from "@/lib/format";
+import { formatCOP, formatInt, formatUVR, parseCurrency, parseDecimal, parsePercentage } from "@/lib/format";
 import {
   proyectar, formatFecha, formatFechaLarga,
   type CoberturaFresh, type ProyeccionInputBase, type ProyeccionResultado,
