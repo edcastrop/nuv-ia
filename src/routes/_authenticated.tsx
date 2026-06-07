@@ -509,6 +509,36 @@ function AuthenticatedLayout() {
             </div>
 
             <div className="flex items-center gap-3">
+              {!loadingAutonomia && (
+                <Link
+                  to="/mi-perfil"
+                  title={`Nivel ${metricasAutonomia.nivelAutonomia} — ${etiquetaNivel(metricasAutonomia.nivelAutonomia)} · Score ${metricasAutonomia.scorePromedio.toFixed(1)}`}
+                  className="hidden sm:flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider transition hover:opacity-90"
+                  style={{
+                    background:
+                      metricasAutonomia.nivelAutonomia === 3
+                        ? "rgba(132,185,143,0.18)"
+                        : metricasAutonomia.nivelAutonomia === 2
+                          ? "rgba(255,236,179,0.18)"
+                          : "rgba(255,204,128,0.18)",
+                    color:
+                      metricasAutonomia.nivelAutonomia === 3
+                        ? "#84B98F"
+                        : metricasAutonomia.nivelAutonomia === 2
+                          ? "#FFE082"
+                          : "#FFCC80",
+                    border:
+                      metricasAutonomia.nivelAutonomia === 3
+                        ? "1px solid rgba(132,185,143,0.30)"
+                        : metricasAutonomia.nivelAutonomia === 2
+                          ? "1px solid rgba(255,236,179,0.30)"
+                          : "1px solid rgba(255,204,128,0.30)",
+                  }}
+                >
+                  <Award size={12} />
+                  N{metricasAutonomia.nivelAutonomia}
+                </Link>
+              )}
               <NotificationBell />
               <Link
                 to="/mi-perfil"
