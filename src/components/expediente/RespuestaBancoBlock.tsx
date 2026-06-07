@@ -313,16 +313,46 @@ export function RespuestaBancoBlock({
           </label>
 
           {(cuotaAprob > 0 || plazoAprob > 0) && (
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs">
-              <strong className="block text-slate-700">Comparativo presentado vs aprobado</strong>
-              <ul className="mt-1 space-y-1">
-                <li>
-                  Δ Cuota: {diffs.dCuota >= 0 ? "+" : ""}
-                  {diffs.dCuota.toFixed(2)}%
-                </li>
-                <li>Δ Plazo: {diffs.dPlazo} meses</li>
-                <li>Δ Cuotas eliminadas: {diffs.dEliminadas}</li>
-              </ul>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs">
+                <strong className="block text-slate-700">Comparativo NUVEX vs Banco</strong>
+                <ul className="mt-1 space-y-1">
+                  <li>Δ Cuota: {diffs.dCuota >= 0 ? "+" : ""}{diffs.dCuota.toFixed(2)}%</li>
+                  <li>Δ Plazo: {diffs.dPlazo} meses</li>
+                  <li>Δ Cuotas eliminadas: {diffs.dEliminadas}</li>
+                </ul>
+              </div>
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3 text-xs">
+                <strong className="block text-emerald-800">Precisión histórica</strong>
+                <ul className="mt-1 space-y-1 text-emerald-900">
+                  <li>Cuota: {(precision.precisionCuota * 100).toFixed(1)}%</li>
+                  <li>Plazo: {(precision.precisionPlazo * 100).toFixed(1)}%</li>
+                  <li>Ahorro: {(precision.precisionAhorro * 100).toFixed(1)}%</li>
+                </ul>
+              </div>
+              <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3 text-xs">
+                <strong className="block text-amber-800">Reajuste de honorarios</strong>
+                <ul className="mt-1 space-y-1 text-amber-900">
+                  <li>Pactados: {formatCOP(reajuste.honorariosPactados)}</li>
+                  <li>Recalculados: {formatCOP(reajuste.honorariosRecalculados)}</li>
+                  <li>Diferencia: {formatCOP(reajuste.diferencia)}</li>
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {requiereOtrosi && (
+            <div className="flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-900">
+              <span>
+                <strong>Otrosí requerido.</strong> Las condiciones aprobadas difieren de las
+                presentadas al cliente.
+              </span>
+              <button
+                onClick={generarOtrosi}
+                className="rounded-lg bg-rose-700 px-3 py-1.5 text-xs font-semibold text-white"
+              >
+                Generar otrosí
+              </button>
             </div>
           )}
 
