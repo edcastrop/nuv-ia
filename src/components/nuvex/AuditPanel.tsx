@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import {
   auditarSimulacion,
   type AuditoriaInput,
@@ -6,6 +6,9 @@ import {
   type Severidad,
 } from "@/lib/auditEngine";
 import { decidirPdf, etiquetaNivel, type NivelAutonomia } from "@/lib/autonomia";
+import { persistirAuditoriaSimulacion } from "@/lib/persistirAuditoria";
+
+
 
 const sevColor: Record<Severidad, string> = {
   critica: "bg-red-100 text-red-800 border-red-200",
@@ -58,11 +61,28 @@ export function AuditBadge({
 export interface AuditPanelProps {
   input: AuditoriaInput;
   nivelAutonomia: NivelAutonomia;
+  expedienteId?: string;
 }
 
-export function AuditPanel({ input, nivelAutonomia }: AuditPanelProps) {
+export function AuditPanel({ input, nivelAutonomia, expedienteId }: AuditPanelProps) {
   const resultado = useMemo(() => auditarSimulacion(input), [input]);
   const decision = decidirPdf(nivelAutonomia, resultado);
+
+  // Persistencia debounced del snapshot de auditoría por expediente.
+  const persistTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!expedienteId) return;
+    if (persistTimer.current) clearTimeout(persistTimer.current);
+    persistTimer.current = setTimeout(() => {
+      void persistirAuditoriaSimulacion(expedienteId, input, resultado).catch(() => {
+        /* no-op: best-effort */
+      });
+    }, 1500);
+    return () => {
+      if (persistTimer.current) clearTimeout(persistTimer.current);
+    };
+  }, [expedienteId, input, resultado]);
+
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

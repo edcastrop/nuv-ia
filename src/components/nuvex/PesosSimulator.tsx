@@ -541,6 +541,8 @@ export function PesosSimulator({
           {recomendada && (
             <AuditPanel
               nivelAutonomia={metricasAutonomia.nivelAutonomia}
+              expedienteId={init?.id}
+
               input={{
                 moneda: "pesos",
                 extracto: {},

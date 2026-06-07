@@ -54,6 +54,15 @@ export async function enviarAValidacionQA(expedienteId: string): Promise<void> {
 export async function aprobarQA(validacionId: string): Promise<void> {
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) throw new Error("No autenticado");
+
+  // Recuperar la validación para obtener el expediente y poder snapshotear
+  const { data: vRow } = await supabase
+    .from("validaciones_qa" as never)
+    .select("expediente_id")
+    .eq("id", validacionId)
+    .maybeSingle();
+  const expedienteId = (vRow as { expediente_id?: string } | null)?.expediente_id ?? null;
+
   const { error } = await supabase
     .from("validaciones_qa" as never)
     .update({
@@ -63,7 +72,38 @@ export async function aprobarQA(validacionId: string): Promise<void> {
     } as never)
     .eq("id", validacionId);
   if (error) throw new Error(error.message);
+
+  // Snapshot inmutable: congela la propuesta aprobada en aprobado_data
+  if (expedienteId) {
+    const { data: exp } = await supabase
+      .from("expedientes")
+      .select(
+        "propuesta_data, credito_data, cliente_data, honorarios_final, descuento, banco, producto, numero_credito",
+      )
+      .eq("id", expedienteId)
+      .maybeSingle();
+    if (exp) {
+      const snapshot = {
+        fechaAprobacion: new Date().toISOString(),
+        aprobadoPor: u.user.id,
+        validacionId,
+        propuesta: (exp as Record<string, unknown>).propuesta_data ?? null,
+        credito: (exp as Record<string, unknown>).credito_data ?? null,
+        cliente: (exp as Record<string, unknown>).cliente_data ?? null,
+        honorariosFinal: (exp as Record<string, unknown>).honorarios_final ?? null,
+        descuento: (exp as Record<string, unknown>).descuento ?? null,
+        banco: (exp as Record<string, unknown>).banco ?? null,
+        producto: (exp as Record<string, unknown>).producto ?? null,
+        numeroCredito: (exp as Record<string, unknown>).numero_credito ?? null,
+      };
+      await supabase
+        .from("expedientes")
+        .update({ aprobado_data: snapshot as unknown as never })
+        .eq("id", expedienteId);
+    }
+  }
 }
+
 
 export async function devolverQA(
   validacionId: string,
