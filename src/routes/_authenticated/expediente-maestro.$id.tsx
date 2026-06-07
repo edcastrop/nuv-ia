@@ -85,13 +85,22 @@ function MaestroDetail() {
         if (e.cedula_cliente) {
           const { data: exps } = await supabase
             .from("expedientes")
-            .select("estado_caso, updated_at")
+            .select("id, estado_caso, updated_at")
             .eq("cedula", e.cedula_cliente)
             .order("updated_at", { ascending: false })
             .limit(1);
-          const row = exps?.[0] as { estado_caso?: string | null } | undefined;
-          if (row) setEtapaActual(computeEtapaActual({ estado_caso: row.estado_caso }));
+          const row = exps?.[0] as { id?: string; estado_caso?: string | null } | undefined;
+          if (row) {
+            setEtapaActual(computeEtapaActual({ estado_caso: row.estado_caso }));
+            if (row.id) {
+              try {
+                const full = await getExpediente(row.id);
+                setExpOperativo(full);
+              } catch { /* opcional */ }
+            }
+          }
         }
+
       })
       .catch((e) => setErr(e.message))
       .finally(() => setLoading(false));
