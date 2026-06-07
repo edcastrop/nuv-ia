@@ -187,12 +187,23 @@ export function PropuestasComerciales(props: Props) {
     setCuotasList((list) => [...list, sugerida]);
   };
 
-  const letters = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
+  // Mejor ahorro absoluto entre escenarios válidos (para badge "Mayor ahorro")
+  const maxAhorroIdx = useMemo(() => {
+    let best = -1;
+    let bestVal = -Infinity;
+    calcs.forEach((c, i) => {
+      if (c.valid && c.ahorroTotal > bestVal) {
+        bestVal = c.ahorroTotal;
+        best = i;
+      }
+    });
+    return best;
+  }, [calcs]);
 
   return (
     <Card>
       <div className="flex items-start justify-between gap-3">
-        <SectionTitle sub="Edita el número de cuotas a eliminar en cada propuesta o agrega nuevas. Marca la propuesta que enviarás al cliente.">
+        <SectionTitle sub="Cada escenario se recalcula al editar las cuotas a eliminar. Marca el que enviarás al cliente.">
           Propuestas comerciales
         </SectionTitle>
         <button
@@ -201,109 +212,251 @@ export function PropuestasComerciales(props: Props) {
           className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:opacity-90"
           style={{ backgroundColor: NUVEX.azul }}
         >
-          <Plus size={14} /> Nueva propuesta
+          <Plus size={14} /> Nuevo escenario
         </button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {/* Franja de comparación rápida */}
+      {cuotasList.length > 0 && (
+        <div
+          className="overflow-hidden rounded-2xl border"
+          style={{ borderColor: "#ECEFF3", backgroundColor: "#FAFBFC" }}
+        >
+          <div className="grid" style={{ gridTemplateColumns: `repeat(${cuotasList.length}, minmax(0,1fr))` }}>
+            {cuotasList.map((_, idx) => {
+              const c = calcs[idx];
+              const isRec = idx === effectiveIdx;
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => c.valid && setRecomendadaIdx(idx)}
+                  className="group flex flex-col items-center gap-1 px-3 py-3 text-center transition"
+                  style={{
+                    backgroundColor: isRec ? "#F1FAF4" : "transparent",
+                    borderRight: idx < cuotasList.length - 1 ? "1px solid #ECEFF3" : "none",
+                    cursor: c.valid ? "pointer" : "default",
+                  }}
+                >
+                  <div
+                    className="text-[9px] font-semibold uppercase tracking-[0.14em]"
+                    style={{ color: isRec ? "#1F7A45" : "#8893A0" }}
+                  >
+                    Escenario {idx + 1}
+                  </div>
+                  <div
+                    className="text-[11px] font-semibold"
+                    style={{ color: isRec ? "#1F7A45" : "#242424" }}
+                  >
+                    {c.valid ? `Elimina ${c.cuotasEliminadas} cuotas` : "—"}
+                  </div>
+                  <div
+                    className="text-[15px] font-extrabold leading-none"
+                    style={{ color: c.valid ? "#1F7A45" : "#C0392B" }}
+                  >
+                    {c.valid ? formatCOP(c.ahorroTotal) : "No viable"}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {cuotasList.map((cuotas, idx) => {
           const c = calcs[idx];
           const isRecomendada = idx === effectiveIdx;
+          const isMaxAhorro = idx === maxAhorroIdx;
           const veces =
             props.baseCredito > 0 && c.valid ? c.totalProyectado / props.baseCredito : 0;
+
+          let badgeLabel = "";
+          let badgeIcon = "";
+          if (isRecomendada && isMaxAhorro) {
+            badgeLabel = "Mayor ahorro";
+            badgeIcon = "💰";
+          } else if (isRecomendada) {
+            badgeLabel = "Mejor equilibrio";
+            badgeIcon = "🏆";
+          } else if (isMaxAhorro) {
+            badgeLabel = "Mayor ahorro";
+            badgeIcon = "💰";
+          }
+
           return (
             <div
               key={idx}
-              className="relative flex flex-col gap-3 rounded-2xl border p-4 transition"
+              className="relative flex flex-col rounded-2xl border bg-white transition"
               style={{
-                borderColor: isRecomendada ? NUVEX.verde : "#E3E7EE",
-                backgroundColor: isRecomendada ? "#F4FBF6" : "#FFFFFF",
+                borderColor: isRecomendada ? "#5CA875" : "#ECEFF3",
                 boxShadow: isRecomendada
-                  ? "0 8px 24px -10px rgba(132,185,143,0.45)"
-                  : "0 1px 3px rgba(36,36,36,0.04)",
+                  ? "0 12px 32px -14px rgba(92,168,117,0.35)"
+                  : "0 1px 2px rgba(36,36,36,0.03)",
               }}
             >
-              <div className="flex items-start justify-between gap-2">
-                <div>
+              {/* Header escenario */}
+              <div className="flex items-start justify-between gap-2 px-5 pt-5">
+                <div className="flex flex-col gap-2">
                   <div
-                    className="text-[10px] font-bold uppercase tracking-wider"
-                    style={{ color: isRecomendada ? "#1F7A45" : NUVEX.azul }}
+                    className="text-[10px] font-semibold uppercase tracking-[0.18em]"
+                    style={{ color: "#8893A0" }}
                   >
-                    Propuesta {letters[idx] ?? idx + 1}
+                    Escenario {idx + 1}
                   </div>
-                  {isRecomendada && (
-                    <div className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-[#5CA875] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
-                      <Star size={9} /> Recomendada
+                  {badgeLabel && (
+                    <div
+                      className="inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider"
+                      style={{
+                        backgroundColor: isRecomendada ? "#E8F5EC" : "#FFF8E1",
+                        color: isRecomendada ? "#1F7A45" : "#8A6D00",
+                      }}
+                    >
+                      <span>{badgeIcon}</span>
+                      {isRecomendada ? "⭐ " : ""}{badgeLabel}
                     </div>
                   )}
                 </div>
                 <button
                   type="button"
                   onClick={() => removePropuesta(idx)}
-                  className="text-[#242424]/40 hover:text-[#C0392B]"
-                  title="Eliminar propuesta"
+                  className="text-[#242424]/30 transition hover:text-[#C0392B]"
+                  title="Eliminar escenario"
                 >
                   <Trash2 size={14} />
                 </button>
               </div>
 
-              <div>
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-[#242424]/65">
-                  Cuotas a eliminar
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={Math.max(0, props.cuotasPendientes - 1)}
-                  value={cuotas}
-                  onChange={(e) => {
-                    const v = parseInt(e.target.value, 10);
-                    setCuotas(idx, Number.isFinite(v) ? v : 0);
-                  }}
-                  className="mt-1 w-full rounded-lg border border-[#E3E7EE] bg-white px-3 py-2 text-base font-bold text-[#242424] outline-none focus:border-[#445DA3] focus:ring-2 focus:ring-[#445DA3]/15"
-                />
+              {/* Cuotas eliminadas - Prioridad 2 */}
+              <div className="px-5 pt-4">
+                <div
+                  className="text-[11px] font-bold uppercase tracking-[0.18em]"
+                  style={{ color: NUVEX.azul }}
+                >
+                  Elimina{" "}
+                  <span className="text-[15px]" style={{ color: NUVEX.negro }}>
+                    {c.valid ? c.cuotasEliminadas : cuotas}
+                  </span>{" "}
+                  cuotas
+                </div>
               </div>
 
               {!c.valid ? (
-                <Alert tone="error">
-                  <span className="inline-flex items-center gap-1.5">
-                    <AlertTriangle size={12} /> {c.motivo ?? "No es viable con estos datos."}
-                  </span>
-                </Alert>
-              ) : (
-                <>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Metric label="Nueva cuota" value={formatCOP(c.nuevaCuota)} tone="primary" />
-                    <Metric
-                      label="Ahorro total"
-                      value={formatCOP(c.ahorroTotal)}
-                      tone="success"
-                    />
-                    <Metric label="Honorarios" value={formatCOP(c.honorarios)} />
-                    <Metric label="Nuevo plazo" value={`${c.nuevoPlazo} meses`} />
-                    <Metric
-                      label="Abono mensual"
-                      value={formatCOP(c.incrementoMensual)}
-                    />
-                    <Metric
-                      label="Veces pagado"
-                      value={`${formatNumber(veces, 2)}x`}
+                <div className="px-5 pb-5 pt-3">
+                  <Alert tone="error">
+                    <span className="inline-flex items-center gap-1.5">
+                      <AlertTriangle size={12} /> {c.motivo ?? "No es viable con estos datos."}
+                    </span>
+                  </Alert>
+                  <div className="mt-3">
+                    <label className="text-[10px] font-semibold uppercase tracking-wider text-[#242424]/65">
+                      Cuotas a eliminar
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={Math.max(0, props.cuotasPendientes - 1)}
+                      value={cuotas}
+                      onChange={(e) => {
+                        const v = parseInt(e.target.value, 10);
+                        setCuotas(idx, Number.isFinite(v) ? v : 0);
+                      }}
+                      className="mt-1 w-full rounded-lg border border-[#E3E7EE] bg-white px-3 py-2 text-base font-bold text-[#242424] outline-none focus:border-[#445DA3] focus:ring-2 focus:ring-[#445DA3]/15"
                     />
                   </div>
+                </div>
+              ) : (
+                <>
+                  {/* AHORRO TOTAL - Prioridad 1 (héroe) */}
+                  <div className="px-5 pt-4">
+                    <div
+                      className="text-[10px] font-semibold uppercase tracking-[0.18em]"
+                      style={{ color: "#1F7A45" }}
+                    >
+                      Ahorro total
+                    </div>
+                    <div
+                      className="mt-1 font-extrabold leading-none tracking-tight"
+                      style={{
+                        color: "#1F7A45",
+                        fontSize: 34,
+                        letterSpacing: "-0.02em",
+                      }}
+                    >
+                      {formatCOP(c.ahorroTotal)}
+                    </div>
+                  </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setRecomendadaIdx(idx)}
-                    disabled={isRecomendada}
-                    className="mt-1 w-full rounded-lg px-3 py-2 text-[11px] font-semibold transition"
-                    style={
-                      isRecomendada
-                        ? { backgroundColor: "#E6F2EA", color: "#1F7A45", cursor: "default" }
-                        : { backgroundColor: NUVEX.negro, color: "#fff" }
-                    }
+                  {/* Métricas principales */}
+                  <div className="grid grid-cols-2 gap-x-5 gap-y-3 px-5 pt-5">
+                    <HeroMetric
+                      label="Incremento mensual"
+                      value={`+${formatCOP(c.incrementoMensual)}`}
+                      color={NUVEX.azul}
+                    />
+                    <HeroMetric
+                      label="Nueva cuota"
+                      value={formatCOP(c.nuevaCuota)}
+                      color={NUVEX.negro}
+                    />
+                    <HeroMetric
+                      label="Nuevo plazo"
+                      value={`${c.nuevoPlazo} meses`}
+                      color={NUVEX.negro}
+                    />
+                    <div>
+                      <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[#8893A0]">
+                        Cuotas a eliminar
+                      </div>
+                      <input
+                        type="number"
+                        min={1}
+                        max={Math.max(0, props.cuotasPendientes - 1)}
+                        value={cuotas}
+                        onChange={(e) => {
+                          const v = parseInt(e.target.value, 10);
+                          setCuotas(idx, Number.isFinite(v) ? v : 0);
+                        }}
+                        className="mt-1 w-20 rounded-md border border-[#E3E7EE] bg-white px-2 py-1 text-base font-bold text-[#242424] outline-none focus:border-[#445DA3] focus:ring-2 focus:ring-[#445DA3]/15"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Sección secundaria: honorarios y veces pagado */}
+                  <div
+                    className="mt-5 flex items-center justify-between gap-3 border-t px-5 py-3 text-[11px]"
+                    style={{ borderColor: "#F0F2F5", color: "#6B7480" }}
                   >
-                    {isRecomendada ? "✓ Marcada como recomendada" : "Marcar como recomendada"}
-                  </button>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] font-semibold uppercase tracking-wider opacity-70">
+                        Honorarios
+                      </span>
+                      <span className="font-semibold text-[#242424]">{formatCOP(c.honorarios)}</span>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-[9px] font-semibold uppercase tracking-wider opacity-70">
+                        Veces pagado
+                      </span>
+                      <span className="font-semibold text-[#242424]">{formatNumber(veces, 2)}x</span>
+                    </div>
+                  </div>
+
+                  {/* CTA */}
+                  <div className="px-5 pb-5">
+                    <button
+                      type="button"
+                      onClick={() => setRecomendadaIdx(idx)}
+                      disabled={isRecomendada}
+                      className="w-full rounded-lg px-3 py-2.5 text-[11px] font-semibold tracking-wide transition"
+                      style={
+                        isRecomendada
+                          ? { backgroundColor: "#E6F2EA", color: "#1F7A45", cursor: "default" }
+                          : { backgroundColor: NUVEX.negro, color: "#fff" }
+                      }
+                    >
+                      {isRecomendada ? "✓ Escenario recomendado" : "Marcar como recomendado"}
+                    </button>
+                  </div>
                 </>
               )}
             </div>
@@ -313,30 +466,23 @@ export function PropuestasComerciales(props: Props) {
 
       {cuotasList.length === 0 && (
         <div className="rounded-lg border border-dashed border-[#E3E7EE] p-6 text-center text-sm text-[#242424]/60">
-          No hay propuestas. Usa “Nueva propuesta” para agregar una.
+          No hay escenarios. Usa “Nuevo escenario” para agregar uno.
         </div>
       )}
     </Card>
   );
 }
 
-function Metric({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone?: "primary" | "success";
-}) {
-  const bg = tone === "success" ? "#E6F2EA" : tone === "primary" ? "#EEF1FA" : "#F7F9FB";
-  const color = tone === "success" ? "#1F7A45" : tone === "primary" ? NUVEX.azul : NUVEX.negro;
+function HeroMetric({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <div className="rounded-lg p-2" style={{ backgroundColor: bg }}>
-      <div className="text-[9px] font-semibold uppercase tracking-wider" style={{ color, opacity: 0.75 }}>
+    <div>
+      <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[#8893A0]">
         {label}
       </div>
-      <div className="mt-0.5 text-sm font-bold leading-tight" style={{ color }}>
+      <div
+        className="mt-1 text-[17px] font-bold leading-tight tracking-tight"
+        style={{ color, letterSpacing: "-0.01em" }}
+      >
         {value}
       </div>
     </div>
