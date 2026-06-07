@@ -244,18 +244,51 @@ export function PropuestasComerciales(props: Props) {
                   >
                     Escenario {idx + 1}
                   </div>
-                  <div
-                    className="text-[11px] font-semibold"
-                    style={{ color: isRec ? "#1F7A45" : "#242424" }}
-                  >
-                    {c.valid ? `Elimina ${c.cuotasEliminadas} cuotas` : "—"}
-                  </div>
-                  <div
-                    className="text-[15px] font-extrabold leading-none"
-                    style={{ color: c.valid ? "#1F7A45" : "#C0392B" }}
-                  >
-                    {c.valid ? formatCOP(c.ahorroTotal) : "No viable"}
-                  </div>
+                  {c.valid ? (
+                    <div className="flex w-full flex-col gap-1.5 px-1 text-left">
+                      <FranjaRow
+                        label="Cuotas a eliminar"
+                        value={`${c.cuotasEliminadas}`}
+                        highlight={isRec}
+                      />
+                      <FranjaRow
+                        label="Incremento mensual"
+                        value={`+${formatCOP(c.incrementoMensual)}`}
+                        highlight={isRec}
+                      />
+                      <FranjaRow
+                        label="Nueva cuota"
+                        value={formatCOP(c.nuevaCuota)}
+                        highlight={isRec}
+                      />
+                      <FranjaRow
+                        label="Nuevo plazo"
+                        value={`${c.nuevoPlazo} meses`}
+                        highlight={isRec}
+                      />
+                      <div className="mt-1 border-t pt-1.5" style={{ borderColor: "#ECEFF3" }}>
+                        <div
+                          className="text-[8px] font-semibold uppercase tracking-[0.14em]"
+                          style={{ color: isRec ? "#1F7A45" : "#8893A0" }}
+                        >
+                          Ahorro total
+                        </div>
+                        <div
+                          className="text-[15px] font-extrabold leading-tight"
+                          style={{ color: "#1F7A45" }}
+                        >
+                          {formatCOP(c.ahorroTotal)}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      className="text-[13px] font-extrabold leading-none"
+                      style={{ color: "#C0392B" }}
+                    >
+                      No viable
+                    </div>
+                  )}
                 </button>
               );
             })}
@@ -485,6 +518,25 @@ function HeroMetric({ label, value, color }: { label: string; value: string; col
       >
         {value}
       </div>
+    </div>
+  );
+}
+
+function FranjaRow({ label, value, highlight }: { label: string; value: string; highlight: boolean }) {
+  return (
+    <div className="flex items-baseline justify-between gap-2">
+      <span
+        className="text-[8.5px] font-semibold uppercase tracking-[0.12em]"
+        style={{ color: highlight ? "#1F7A45" : "#8893A0" }}
+      >
+        {label}
+      </span>
+      <span
+        className="text-[11px] font-bold tabular-nums"
+        style={{ color: highlight ? "#1F7A45" : "#242424" }}
+      >
+        {value}
+      </span>
     </div>
   );
 }
