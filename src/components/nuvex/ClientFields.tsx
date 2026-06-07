@@ -2,6 +2,7 @@ import { ProductoBancarioSelect } from "./ProductoBancarioSelect";
 import { TextField } from "./ui";
 import { ClientCedulaButton, type ClientCedulaPayload } from "./ClientCedulaButton";
 import { CitySelect } from "@/components/ui/CitySelect";
+import { DepartamentoSelect, MunicipioSelect } from "@/components/ui/LocationSelects";
 import type { ModalidadCat } from "@/lib/productosBancarios";
 import type { Cobertura, Interviniente } from "./intervinientes";
 
@@ -156,17 +157,19 @@ export function ClientFields({
           <label className="block text-xs font-medium text-[#242424]/70 mb-1">
             Departamento
           </label>
-          <CitySelect
+          <DepartamentoSelect
             value={data.departamento ?? ""}
-            onChange={(v) => set("departamento", v)}
-            placeholder="Selecciona departamento…"
+            onChange={(v) =>
+              onChange({ ...data, departamento: v, ciudad: "", municipio: "" })
+            }
           />
         </div>
         <div>
           <label className="block text-xs font-medium text-[#242424]/70 mb-1">
             Ciudad
           </label>
-          <CitySelect
+          <MunicipioSelect
+            departamento={data.departamento ?? ""}
             value={data.ciudad ?? ""}
             onChange={(v) => set("ciudad", v)}
             placeholder="Selecciona ciudad…"
@@ -176,7 +179,8 @@ export function ClientFields({
           <label className="block text-xs font-medium text-[#242424]/70 mb-1">
             Municipio
           </label>
-          <CitySelect
+          <MunicipioSelect
+            departamento={data.departamento ?? ""}
             value={data.municipio ?? ""}
             onChange={(v) => set("municipio", v)}
             placeholder="Selecciona municipio…"
