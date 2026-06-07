@@ -72,15 +72,63 @@ export function ClientFields({
       <div className="grid gap-4 md:grid-cols-3">
         <TextField label="Nombre completo" value={data.nombre} onChange={(v) => set("nombre", v)} />
         <TextField label="Número de cédula" value={data.cedula} onChange={(v) => set("cedula", v)} />
-        <div>
-          <label className="block text-xs font-medium text-[#242424]/70 mb-1">
+        <div /> {/* spacer */}
+
+        <div className="md:col-span-3">
+          <div className="text-xs font-semibold uppercase tracking-wide text-[#242424]/60 mb-2">
             Lugar de expedición de la cédula
-          </label>
-          <CitySelect
-            value={data.lugarExpedicionCedula ?? ""}
-            onChange={(v) => set("lugarExpedicionCedula", v)}
-            placeholder="Selecciona ciudad de expedición…"
-          />
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            <div>
+              <label className="block text-xs font-medium text-[#242424]/70 mb-1">Departamento</label>
+              <DepartamentoSelect
+                value={data.lugarExpedicionDepartamento ?? ""}
+                onChange={(v) =>
+                  onChange({
+                    ...data,
+                    lugarExpedicionDepartamento: v,
+                    lugarExpedicionCiudad: "",
+                    lugarExpedicionMunicipio: "",
+                    lugarExpedicionCedula: v,
+                  })
+                }
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[#242424]/70 mb-1">Ciudad</label>
+              <MunicipioSelect
+                departamento={data.lugarExpedicionDepartamento ?? ""}
+                value={data.lugarExpedicionCiudad ?? ""}
+                onChange={(v) =>
+                  onChange({
+                    ...data,
+                    lugarExpedicionCiudad: v,
+                    lugarExpedicionCedula: [data.lugarExpedicionMunicipio, v, data.lugarExpedicionDepartamento]
+                      .filter(Boolean)
+                      .join(", "),
+                  })
+                }
+                placeholder="Selecciona ciudad…"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[#242424]/70 mb-1">Municipio</label>
+              <MunicipioSelect
+                departamento={data.lugarExpedicionDepartamento ?? ""}
+                value={data.lugarExpedicionMunicipio ?? ""}
+                onChange={(v) =>
+                  onChange({
+                    ...data,
+                    lugarExpedicionMunicipio: v,
+                    lugarExpedicionCedula: [v, data.lugarExpedicionCiudad, data.lugarExpedicionDepartamento]
+                      .filter(Boolean)
+                      .join(", "),
+                  })
+                }
+                placeholder="Selecciona municipio…"
+              />
+            </div>
+          </div>
         </div>
         <TextField
           label="Correo electrónico"
