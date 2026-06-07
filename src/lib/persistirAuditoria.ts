@@ -44,7 +44,7 @@ export async function persistirAuditoriaSimulacion(
     score_campos: Math.round(resultado.score.campos),
     score_documental: Math.round(resultado.score.documental),
     score_total: Math.round(resultado.score.total),
-    nivel_riesgo: resultado.clasificacion.nivel,
+    nivel_riesgo: nivelRiesgo,
     requiere_revision: resultado.clasificacion.requiereRevision,
     motivo_escalamiento: motivoEscalamiento,
   };
