@@ -519,5 +519,25 @@ function HeroMetric({ label, value, color }: { label: string; value: string; col
         {value}
       </div>
     </div>
+    </div>
+  );
+}
+
+function FranjaRow({ label, value, highlight }: { label: string; value: string; highlight: boolean }) {
+  return (
+    <div className="flex items-baseline justify-between gap-2">
+      <span
+        className="text-[8.5px] font-semibold uppercase tracking-[0.12em]"
+        style={{ color: highlight ? "#1F7A45" : "#8893A0" }}
+      >
+        {label}
+      </span>
+      <span
+        className="text-[11px] font-bold tabular-nums"
+        style={{ color: highlight ? "#1F7A45" : "#242424" }}
+      >
+        {value}
+      </span>
+    </div>
   );
 }
