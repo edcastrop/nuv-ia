@@ -21,6 +21,7 @@ import { ValidacionRadicacionBlock } from "@/components/expediente/ValidacionRad
 import { ValidacionEntregablesBlock } from "@/components/expediente/ValidacionEntregablesBlock";
 import { VersionesDocumentalesBlock } from "@/components/expediente/VersionesDocumentalesBlock";
 import { RespuestaBancoBlock } from "@/components/expediente/RespuestaBancoBlock";
+import { EtapasFinalesBlock } from "@/components/expediente/EtapasFinalesBlock";
 import { readValidacion, puedeGenerarDocumentos, razonBloqueoDocs } from "@/lib/validacionIdentidad";
 import { addRecentCase } from "@/lib/recentCases";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -158,6 +159,19 @@ function CasoDetail() {
           </div>
         );
       })()}
+
+      <div id="cierre-operativo" className="scroll-mt-6">
+        <EtapasFinalesBlock
+          expedienteId={exp.id}
+          estadoCaso={(exp as unknown as { estado_caso?: string }).estado_caso ?? null}
+          etapaPipeline={(exp as unknown as { etapa_pipeline?: never }).etapa_pipeline ?? null}
+          aceptacionAt={(exp as unknown as { aceptacion_cliente_at?: string }).aceptacion_cliente_at ?? null}
+          aceptacionMedio={(exp as unknown as { aceptacion_medio?: string }).aceptacion_medio ?? null}
+          aceptacionObservaciones={(exp as unknown as { aceptacion_observaciones?: string }).aceptacion_observaciones ?? null}
+          onChanged={reload}
+        />
+      </div>
+
 
       {(() => {
         const v = readValidacion(exp as never);
