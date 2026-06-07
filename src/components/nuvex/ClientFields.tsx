@@ -21,7 +21,10 @@ export interface ClientData {
   correo?: string;
   celular?: string;
   fechaDesembolso?: string;
-  lugarExpedicionCedula?: string;
+  lugarExpedicionCedula?: string; // etiqueta combinada "Municipio, Ciudad, Departamento"
+  lugarExpedicionDepartamento?: string;
+  lugarExpedicionCiudad?: string;
+  lugarExpedicionMunicipio?: string;
   fechaExpedicionCedula?: string;
   // Ubicación del cliente
   direccion?: string;
