@@ -152,7 +152,16 @@ export async function devolverQA(
     } as never)
     .eq("id", validacionId);
   if (error) throw new Error(error.message);
-  if (expedienteId) await notifQADevuelta(expedienteId, motivo, observacion.trim());
+  if (expedienteId) {
+    // Auto-avance de estado: el caso vuelve a estar "devuelto a Proyección"
+    // para que el analista corrija y reenvíe a QA.
+    try {
+      await cambiarEstadoCaso(expedienteId, "proyeccion_devuelta_qa", "manual", `QA devuelta: ${motivo}`);
+    } catch (e) {
+      console.warn("[validacionQA] no se pudo actualizar estado_caso al devolver QA", e);
+    }
+    await notifQADevuelta(expedienteId, motivo, observacion.trim());
+  }
 }
 
 export async function obtenerUltimaValidacion(
