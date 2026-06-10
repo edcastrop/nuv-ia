@@ -494,6 +494,7 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
                       <SelectItem value="nomina">Nómina</SelectItem>
                       <SelectItem value="carta_laboral">Carta laboral</SelectItem>
                       <SelectItem value="renta">Renta</SelectItem>
+                      <SelectItem value="extracto">Extracto bancario</SelectItem>
                       <SelectItem value="otro">Otro</SelectItem>
                     </SelectContent>
                   </Select>
