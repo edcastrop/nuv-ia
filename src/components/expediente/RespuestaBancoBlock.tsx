@@ -206,12 +206,15 @@ export function RespuestaBancoBlock({
   );
 
   async function guardarFinanciero() {
-    if (!simulacionId || !user) return;
+    if (!simIdResolved || !user) {
+      setMsg("No se encontró simulación asociada. Guarda primero la simulación financiera.");
+      return;
+    }
     setSaving(true);
     setMsg(null);
     try {
       const payload = {
-        simulacion_id: simulacionId,
+        simulacion_id: simIdResolved,
         analista_id: user.id,
         cuota_propuesta: cuotaPropuesta || null,
         plazo_propuesto: plazoPropuesto || null,
