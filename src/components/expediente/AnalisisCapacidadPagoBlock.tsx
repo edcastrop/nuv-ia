@@ -360,6 +360,44 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
     }
   };
 
+  const construirYEnviarSolicitud = async () => {
+    if (!resultado) { toast.error("Primero ejecuta el análisis de capacidad."); return; }
+    if (!plazoNuevo || plazoNuevo <= 0) { toast.error("Indica el nuevo plazo en meses."); return; }
+    const archivos = personas.flatMap((p) => p.archivos);
+    if (archivos.length === 0) { toast.error("No hay soportes adjuntos."); return; }
+
+    setEnviandoSolicitud(true);
+    try {
+      const adjuntos = archivos.map((a) => ({
+        filename: a.nombre,
+        contentBase64: a.dataUrl.includes(",") ? a.dataUrl.split(",")[1] : a.dataUrl,
+        contentType: a.mime || "application/octet-stream",
+      }));
+      const documentos = archivos.map((a) => `${a.tipo === "otro" ? "Documento" : a.tipo.replace("_", " ")} — ${a.nombre}`);
+
+      const titular = personas.find((p) => p.rol === "titular") ?? personas[0];
+
+      await enviarSolicitud({
+        data: {
+          expedienteId,
+          plazoNuevoMeses: plazoNuevo,
+          cuotaProyectada: cuota,
+          esVis,
+          tipoPersona: titular.tipoPersona,
+          documentos,
+          adjuntos,
+        },
+      });
+      toast.success("Solicitud enviada a Jurídica (juridica@nuvex.com.co).");
+      setOpenSolicitud(false);
+    } catch (e) {
+      console.error(e);
+      toast.error((e as Error).message || "No se pudo enviar la solicitud.");
+    } finally {
+      setEnviandoSolicitud(false);
+    }
+  };
+
   if (!bancoRequiereAnalisisCapacidad(banco)) return null;
 
   return (
