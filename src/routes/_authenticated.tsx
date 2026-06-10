@@ -5,7 +5,7 @@ import { CORPORATIVO } from "@/components/nuvex/constants";
 import {
   LayoutGrid, FolderKanban, BarChart3, LogOut, GraduationCap, LineChart,
   UserSquare2, Users, Shield, Wallet, Bell, CircleDollarSign, Landmark,
-  ClipboardCheck, Briefcase, ChevronLeft, ChevronRight, UserCircle, MessageSquare, BookUser, Sparkles, ShieldCheck, Kanban, RadioTower, Award, RefreshCw,
+  ClipboardCheck, Briefcase, ChevronLeft, ChevronRight, UserCircle, MessageSquare, BookUser, Sparkles, ShieldCheck, Kanban, RadioTower, Award, RefreshCw, Wrench,
 } from "lucide-react";
 import { useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -331,6 +331,7 @@ function AuthenticatedLayout() {
             { to: "/expediente-maestro", label: "Expediente", Icon: UserSquare2 },
             { to: "/proyeccion", label: "Proyección", Icon: LineChart },
             ...(hasAny("super_admin","admin","gerencia","licenciado","director_financiero_qa") ? [{ to: "/proyeccion-financiera", label: "Proyección Financiera", Icon: LineChart }] : []),
+            ...(hasAny("super_admin","admin","gerencia","licenciado","asesor","director_financiero_qa") ? [{ to: "/herramientas", label: "Herramientas", Icon: Wrench }] : []),
             { to: "/notificaciones", label: "Alertas", Icon: Bell, badge: unread },
             { to: "/colaboracion", label: "Colaboración", Icon: MessageSquare, badge: colabUnread },
             { to: "/colaboracion/dm", label: "Mensajería", Icon: MessageSquare, badge: dmUnread },
