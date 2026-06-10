@@ -637,6 +637,57 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
           ))}
         </div>
       )}
+
+      <Dialog open={openSolicitud} onOpenChange={setOpenSolicitud}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Construir solicitud al banco</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="text-xs bg-slate-50 border rounded-lg p-3">
+              <div><b>Destinatario:</b> juridica@nuvex.com.co</div>
+              <div><b>Banco:</b> {banco}</div>
+              <div><b>Cuota proyectada:</b> {formatCOP(cuota)} · <b>{esVis ? "VIS (40%)" : "No VIS (30%)"}</b></div>
+              <div><b>Soportes adjuntos:</b> {totalArchivos}</div>
+            </div>
+
+            <div>
+              <Label className="text-xs">Nuevo plazo solicitado (meses)</Label>
+              <Input
+                type="number"
+                min={1}
+                max={360}
+                value={plazoNuevo || ""}
+                onChange={(e) => setPlazoNuevo(Number(e.target.value))}
+                placeholder="Ej. 180"
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Solicitud formal de <b>disminución de plazo</b> conforme a la Ley 546 de 1999.
+              </p>
+            </div>
+
+            <div className="text-[11px] text-slate-600">
+              Se adjuntarán los {totalArchivos} documento(s) cargados en el módulo
+              (nóminas/extractos, carta laboral y renta según aplique) y se enviará
+              copia (CC) al asesor del caso.
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenSolicitud(false)} disabled={enviandoSolicitud}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={construirYEnviarSolicitud}
+              disabled={enviandoSolicitud || !plazoNuevo || plazoNuevo <= 0}
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
+              {enviandoSolicitud ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Enviando…</>) : (<><Mail className="w-4 h-4 mr-2" />Enviar a Jurídica</>)}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
