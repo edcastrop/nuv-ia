@@ -178,26 +178,85 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
   const limiteAplicable = esVis ? 0.40 : 0.30;
   const totalArchivos = useMemo(() => personas.reduce((s, p) => s + p.archivos.length, 0), [personas]);
 
-  const handleFiles = async (idxPersona: number, files: FileList | null) => {
-    if (!files) return;
-    const nuevos: ArchivoLocal[] = [];
-    for (const f of Array.from(files)) {
-      if (f.size > MAX_BYTES) {
-        toast.error(`${f.name} excede 10 MB.`);
-        continue;
-      }
-      const dataUrl = await fileToDataUrl(f);
-      nuevos.push({
-        id: crypto.randomUUID(),
-        nombre: f.name,
-        mime: f.type || "application/octet-stream",
-        size: f.size,
-        tipo: f.name.toLowerCase().includes("nomi") ? "nomina"
-          : f.name.toLowerCase().includes("carta") ? "carta_laboral"
-          : f.name.toLowerCase().includes("renta") ? "renta" : "otro",
-        dataUrl,
-      });
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+
+  const tipoDocFromName = (name: string): TipoDoc => {
+    const n = name.toLowerCase();
+    if (n.includes("nomi") || n.includes("desprend") || n.includes("payroll")) return "nomina";
+    if (n.includes("carta") || n.includes("labor")) return "carta_laboral";
+    if (n.includes("renta") || n.includes("dian") || n.includes("declarac")) return "renta";
+    return "otro";
+  };
+
+  const procesarArchivo = async (f: File): Promise<ArchivoLocal[]> => {
+    if (isCompressedUnsupported(f)) {
+      toast.error(`${f.name}: solo soportamos .zip. Recomprime el archivo.`);
+      return [];
     }
+    if (isZip(f)) {
+      if (f.size > ZIP_MAX_BYTES) {
+        toast.error(`${f.name} excede 50 MB.`);
+        return [];
+      }
+      try {
+        const buf = new Uint8Array(await f.arrayBuffer());
+        const entries = unzipSync(buf);
+        const out: ArchivoLocal[] = [];
+        for (const [name, bytes] of Object.entries(entries)) {
+          if (name.endsWith("/")) continue; // dir
+          const base = name.split("/").pop() || name;
+          if (base.startsWith(".") || base.startsWith("__MACOSX")) continue;
+          const ext = base.toLowerCase();
+          const valid = ext.endsWith(".pdf") || ext.endsWith(".png") || ext.endsWith(".jpg") || ext.endsWith(".jpeg") || ext.endsWith(".webp") || ext.endsWith(".gif");
+          if (!valid) continue;
+          if (bytes.length > MAX_BYTES) {
+            toast.warning(`${base} dentro del zip excede 10 MB, se omite.`);
+            continue;
+          }
+          const mime = mimeFromName(base);
+          out.push({
+            id: crypto.randomUUID(),
+            nombre: base,
+            mime,
+            size: bytes.length,
+            tipo: tipoDocFromName(base),
+            dataUrl: bytesToDataUrl(bytes, mime),
+          });
+        }
+        if (out.length === 0) toast.warning(`${f.name}: no se encontraron PDFs o imágenes válidos.`);
+        else toast.success(`${f.name}: ${out.length} documento(s) extraído(s).`);
+        return out;
+      } catch (e) {
+        console.error(e);
+        toast.error(`No se pudo descomprimir ${f.name}.`);
+        return [];
+      }
+    }
+    if (f.size > MAX_BYTES) {
+      toast.error(`${f.name} excede 10 MB.`);
+      return [];
+    }
+    const dataUrl = await fileToDataUrl(f);
+    return [{
+      id: crypto.randomUUID(),
+      nombre: f.name,
+      mime: f.type || mimeFromName(f.name),
+      size: f.size,
+      tipo: tipoDocFromName(f.name),
+      dataUrl,
+    }];
+  };
+
+  const handleFiles = async (idxPersona: number, files: FileList | File[] | null) => {
+    if (!files) return;
+    const arr = Array.from(files);
+    if (arr.length === 0) return;
+    const nuevos: ArchivoLocal[] = [];
+    for (const f of arr) {
+      const extraidos = await procesarArchivo(f);
+      nuevos.push(...extraidos);
+    }
+    if (nuevos.length === 0) return;
     setPersonas((prev) => prev.map((p, i) => i === idxPersona ? { ...p, archivos: [...p.archivos, ...nuevos] } : p));
   };
 
