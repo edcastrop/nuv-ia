@@ -409,6 +409,83 @@ export type Database = {
         }
         Relationships: []
       }
+      analisis_capacidad_pago: {
+        Row: {
+          confianza: number | null
+          created_at: string
+          created_by: string | null
+          cuota_propuesta: number
+          detalle_codeudor: Json | null
+          detalle_titular: Json | null
+          es_vis: boolean
+          expediente_id: string
+          id: string
+          ingreso_codeudor: number
+          ingreso_titular: number
+          ingreso_total: number | null
+          limite_aplicable: number
+          modelo_ia: string | null
+          observaciones: string[] | null
+          payload_ia: Json | null
+          porcentaje_endeudamiento: number | null
+          semaforo: string
+          tipo_persona: string
+          updated_at: string
+        }
+        Insert: {
+          confianza?: number | null
+          created_at?: string
+          created_by?: string | null
+          cuota_propuesta: number
+          detalle_codeudor?: Json | null
+          detalle_titular?: Json | null
+          es_vis?: boolean
+          expediente_id: string
+          id?: string
+          ingreso_codeudor?: number
+          ingreso_titular?: number
+          ingreso_total?: number | null
+          limite_aplicable: number
+          modelo_ia?: string | null
+          observaciones?: string[] | null
+          payload_ia?: Json | null
+          porcentaje_endeudamiento?: number | null
+          semaforo: string
+          tipo_persona: string
+          updated_at?: string
+        }
+        Update: {
+          confianza?: number | null
+          created_at?: string
+          created_by?: string | null
+          cuota_propuesta?: number
+          detalle_codeudor?: Json | null
+          detalle_titular?: Json | null
+          es_vis?: boolean
+          expediente_id?: string
+          id?: string
+          ingreso_codeudor?: number
+          ingreso_titular?: number
+          ingreso_total?: number | null
+          limite_aplicable?: number
+          modelo_ia?: string | null
+          observaciones?: string[] | null
+          payload_ia?: Json | null
+          porcentaje_endeudamiento?: number | null
+          semaforo?: string
+          tipo_persona?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analisis_capacidad_pago_expediente_id_fkey"
+            columns: ["expediente_id"]
+            isOneToOne: false
+            referencedRelation: "expedientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       analista_metricas: {
         Row: {
           analista_id: string

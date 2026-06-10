@@ -20,6 +20,7 @@ import { ValidacionRadicacionBlock } from "@/components/expediente/ValidacionRad
 import { ValidacionEntregablesBlock } from "@/components/expediente/ValidacionEntregablesBlock";
 import { VersionesDocumentalesBlock } from "@/components/expediente/VersionesDocumentalesBlock";
 import { RespuestaBancoBlock } from "@/components/expediente/RespuestaBancoBlock";
+import { AnalisisCapacidadPagoBlock } from "@/components/expediente/AnalisisCapacidadPagoBlock";
 import { EtapasFinalesBlock } from "@/components/expediente/EtapasFinalesBlock";
 import { ResultadoFinal, type ProyeccionNuvex } from "@/components/nuvex/ResultadoFinal";
 import { cambiarEstadoConValidacion } from "@/lib/pipelineTransiciones";
@@ -238,7 +239,12 @@ function CasoDetail() {
             const honorariosPactados = Number((exp as unknown as { honorarios_pactados?: number }).honorarios_pactados ?? 0)
               || Number(prop.honorarios ?? 0);
             return (
-              <div id="resultado-bancario" className="scroll-mt-6">
+              <div id="resultado-bancario" className="scroll-mt-6 space-y-4">
+                <AnalisisCapacidadPagoBlock
+                  expedienteId={exp.id}
+                  banco={String(cli.banco ?? "")}
+                  cuotaPropuesta={Number(prop.nuevaCuota ?? 0)}
+                />
                 <RespuestaBancoBlock
                   expedienteId={exp.id}
                   simulacionId={(exp as unknown as { simulacion_id?: string }).simulacion_id ?? null}
