@@ -30,7 +30,7 @@ const InputSchema = z.object({
 
 export type AnalisisPersonaResultado = {
   rol: "titular" | "codeudor";
-  tipoPersona: "empleado_mensual" | "empleado_quincenal";
+  tipoPersona: "empleado_mensual" | "empleado_quincenal" | "independiente";
   ingresoMensualPromedio: number;
   ingresosDetectados: Array<{
     documento: string;
