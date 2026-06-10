@@ -4,10 +4,12 @@ import { NUVEX } from "./constants";
 
 export function CasoCreadoModal({
   expediente,
+  qaEnviada = false,
   onClose,
   onSeguirSimulando,
 }: {
   expediente: Expediente;
+  qaEnviada?: boolean;
   onClose: () => void;
   onSeguirSimulando?: () => void;
 }) {
@@ -30,6 +32,11 @@ export function CasoCreadoModal({
           </span>
           Caso creado correctamente
         </div>
+        {qaEnviada && (
+          <div className="mt-2 rounded-lg border border-[#BBE3CB] bg-[#EAF7EE] px-3 py-2 text-[12px] font-medium text-[#1F7A45]">
+            ✓ Enviado automáticamente a auditoría QA — el Director Financiero recibió la notificación.
+          </div>
+        )}
 
         <dl className="mt-5 space-y-2 text-sm">
           <div className="flex justify-between gap-4">
