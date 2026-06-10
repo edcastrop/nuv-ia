@@ -1,4 +1,5 @@
-import { createFileRoute, Outlet, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { useUserRole } from "@/hooks/useUserRole";
 
 const ALLOWED = ["super_admin", "admin", "gerencia", "licenciado", "asesor", "director_financiero_qa"];
@@ -14,11 +15,19 @@ export const Route = createFileRoute("/_authenticated/herramientas")({
 });
 
 function HerramientasLayout() {
+  // El gate de _authenticated.tsx ya validó sesión + MFA + estado_acceso.
+  // Aquí evitamos render intermedio ("Cargando…") porque causa parpadeo al navegar.
+  // Si los roles aún no llegan, renderizamos el Outlet (que tiene su propio fondo)
+  // y, si finalmente no está autorizado, redirigimos vía efecto. Esto evita
+  // el flicker de pantalla blanca/negra entre dos estados de loading.
   const { roles, loading } = useUserRole();
-  if (loading) {
-    return <div className="flex min-h-[60vh] items-center justify-center text-sm text-[#242424]/60">Cargando…</div>;
-  }
-  const allowed = roles.some((r) => ALLOWED.includes(r));
-  if (!allowed) return <Navigate to="/" />;
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (loading) return;
+    const allowed = roles.some((r) => ALLOWED.includes(r));
+    if (!allowed) navigate({ to: "/" });
+  }, [loading, roles, navigate]);
+
   return <Outlet />;
 }
