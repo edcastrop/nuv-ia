@@ -184,7 +184,16 @@ function parseTasa(raw: string): string {
   return Number.isFinite(n) ? String(n) : "";
 }
 
-const SYSTEM_DETECTOR = `Eres un clasificador de extractos bancarios colombianos. Mira las imágenes y llena la función detectar_banco_producto. NO inventes — usa solo lo visible.`;
+const SYSTEM_DETECTOR = `Eres un clasificador de extractos bancarios colombianos. Mira las imágenes y llena la función detectar_banco_producto. NO inventes — usa solo lo visible.
+
+REGLA CRÍTICA DE MONEDA (no equivocarse):
+- moneda="UVR" SOLO si el extracto muestra EXPLÍCITAMENTE al menos UNA de estas señales:
+  * Texto literal "UVR" en el nombre del producto, sistema de amortización o encabezado de columnas ("Valores en UVR", "Saldo UVR", "Valor UVR del día", "Cotización UVR").
+  * Una columna o fila con valores expresados en UVR (números con 4 decimales típicos de UVR).
+  * "Sistema de Amortización" que contenga "UVR" (ej "BAJA UVR", "MEDIA UVR", "ALTA UVR").
+- moneda="PESOS" en TODOS los demás casos, incluyendo cuando los montos vienen con "$" y formato peso colombiano sin mención de UVR.
+- Si dudas o no ves ninguna señal UVR → moneda="PESOS". NO marques UVR por defecto.
+- La 'evidencia' debe citar el texto literal que justifica la moneda elegida.`;
 
 function buildParserSystem(profile: BankProfile): string {
   return `Eres NUVEX IA, parser especializado de extractos bancarios colombianos.
@@ -222,7 +231,10 @@ ${profile.hints}
 
 CAMPO 'banco': devuelve "${profile.banco}" con score 100.
 CAMPO 'producto': "CREDITO_HIPOTECARIO" o "LEASING_HABITACIONAL".
-CAMPO 'moneda': "PESOS" o "UVR".
+CAMPO 'moneda' (CRÍTICO):
+- "UVR" SOLO si ves explícitamente la palabra "UVR" en producto/sistema de amortización, encabezados de columna ("Valores en UVR", "Saldo UVR", "Valor UVR del día") o filas con valores en UVR (típicamente 4 decimales).
+- "PESOS" en cualquier otro caso. Si el extracto muestra montos en "$" sin mencionar UVR → moneda="PESOS".
+- Si dudas → "PESOS". NO uses UVR por defecto.
 CAMPO 'cuotasPagadas': si no es explícito y conoces el "número de cuota actual a pagar", úsalo y deja score=90.
 CAMPO 'cuotasPendientes': si no es explícito calcula plazoInicial - cuotasPagadas y deja score=70.
 CAMPO 'sistemaAmortizacion': "abono constante a capital" / "cuota fija" / "UVR". Vacío si no es claro.`;

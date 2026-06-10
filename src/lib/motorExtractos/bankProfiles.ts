@@ -172,6 +172,11 @@ sistemaAmortizacion ← texto literal junto a "Sistema de Amortización"
 - "Valor del crédito" → valorDesembolsado.
 - "Plazo inicial" en meses.
 - "Cuotas pendientes" y "Cuota" / "Valor cuota".
+- MONEDA (CRÍTICO): Banco de Bogotá emite la GRAN MAYORÍA de sus créditos hipotecarios en PESOS.
+  * moneda="PESOS" por defecto.
+  * Solo usa moneda="UVR" si ves literalmente "UVR" en el producto, sistema de amortización
+    o una columna/fila etiquetada "Saldo UVR" / "Valor UVR" / "Valores en UVR" con números.
+  * Montos en "$" con formato peso colombiano (ej "$221.903.943") → PESOS, NO UVR.
 - Beneficio/cobertura: NO lo marques por texto legal ni por la sola palabra "beneficio". Sólo aplica si hay valor mensual > 0 o tasa explícita > 0 de subsidio/cobertura.`,
   },
   {
