@@ -25,13 +25,21 @@ export function SiguienteAccionPanel({ exp, onIrATab }: Props) {
     accion.prioridad === "alta" ? "#EEF1FA" : accion.prioridad === "media" ? "#FFF7E6" : "#F2F4F8";
 
   function handleClick() {
+    const scrollToTarget = (attempt = 0) => {
+      const directTarget = accion?.scrollToId ? document.getElementById(accion.scrollToId) : null;
+      const activeTab = document.querySelector<HTMLElement>('[role="tabpanel"][data-state="active"]');
+      const el = directTarget ?? (attempt >= 2 ? activeTab : null);
+
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+
+      if (attempt < 12) window.setTimeout(() => scrollToTarget(attempt + 1), 80);
+    };
+
     if (accion?.tab && onIrATab) onIrATab(accion.tab);
-    if (accion?.scrollToId) {
-      setTimeout(() => {
-        const el = document.getElementById(accion.scrollToId!);
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 80);
-    }
+    scrollToTarget();
   }
 
   return (
