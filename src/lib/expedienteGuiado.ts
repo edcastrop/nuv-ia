@@ -469,7 +469,7 @@ export function getChecklistRol(exp: Expediente, roles: AppRole[]): ChecklistIte
     items.push({ label: "Paz y salvo emitido", completado: paso(ec, 29), tab: "financiero" });
   }
 
-  if (has("juridica") || has("director_juridico") || has("apoderado") || has("super_admin")) {
+  if (has("juridica") || has("director_juridico") || has("operaciones") || has("apoderado") || has("super_admin")) {
     items.push({ label: "Poder validado", completado: paso(ec, 16), tab: "documentos" });
     items.push({ label: "Documentación completa", completado: paso(ec, 17), tab: "documentos" });
     items.push({ label: "Radicación realizada", completado: paso(ec, 20), tab: "documentos" });
