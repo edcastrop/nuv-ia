@@ -369,3 +369,85 @@ function SelectFld({
     </label>
   );
 }
+
+function DoneBlock({
+  expedienteId,
+  onClose,
+  onOpen,
+}: {
+  expedienteId: string;
+  onClose: () => void;
+  onOpen: () => void;
+}) {
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const enviar = async () => {
+    setErr(null);
+    setSending(true);
+    try {
+      await enviarAValidacionQA(expedienteId);
+      setSent(true);
+    } catch (e) {
+      setErr((e as Error).message || "No se pudo enviar a auditoría");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center gap-4 px-8 py-10 text-center">
+      <div
+        className="flex h-16 w-16 items-center justify-center rounded-2xl"
+        style={{ background: "linear-gradient(135deg,#84B98F,#445DA3)" }}
+      >
+        <CheckCircle2 className="h-8 w-8 text-white" />
+      </div>
+      <div>
+        <h3 className="text-xl font-semibold text-white">Caso creado</h3>
+        <p className="mt-1 text-sm text-white/60">
+          {sent
+            ? "La proyección fue enviada a auditoría QA. Recibirás notificación cuando sea revisada."
+            : "Envíala ahora a auditoría QA para que el Director Financiero la apruebe."}
+        </p>
+      </div>
+
+      {!sent && (
+        <button
+          onClick={enviar}
+          disabled={sending}
+          className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:scale-[1.02] disabled:opacity-60"
+          style={{
+            background: "linear-gradient(135deg,#445DA3,#84B98F)",
+            boxShadow: "0 14px 30px -12px rgba(68,93,163,0.65)",
+          }}
+        >
+          {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+          {sending ? "Enviando…" : "Enviar a auditoría QA"}
+        </button>
+      )}
+
+      {err && (
+        <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-3.5 py-2 text-[12px] text-rose-200">
+          {err}
+        </div>
+      )}
+
+      <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
+        <button
+          onClick={onClose}
+          className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-5 py-2.5 text-sm text-white/80 hover:bg-white/[0.08]"
+        >
+          Seguir simulando
+        </button>
+        <button
+          onClick={onOpen}
+          className="rounded-xl border border-white/[0.08] bg-white/[0.06] px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/[0.10]"
+        >
+          Abrir expediente
+        </button>
+      </div>
+    </div>
+  );
+}
