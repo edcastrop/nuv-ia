@@ -39,8 +39,8 @@ export function bancoRequiereAnalisisCapacidad(banco: string | undefined | null)
   return BANCOS_REQUIEREN_CAPACIDAD.some((b) => n.includes(b));
 }
 
-type TipoDoc = "nomina" | "carta_laboral" | "renta" | "otro";
-type TipoPersona = "empleado_mensual" | "empleado_quincenal";
+type TipoDoc = "nomina" | "carta_laboral" | "renta" | "extracto" | "otro";
+type TipoPersona = "empleado_mensual" | "empleado_quincenal" | "independiente";
 type Rol = "titular" | "codeudor";
 
 type ArchivoLocal = {
