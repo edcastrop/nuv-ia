@@ -1561,7 +1561,30 @@ export function ProyeccionFinancieraView() {
               </div>
             </div>
 
-            <div className="mt-10 flex items-center justify-center gap-2 text-[11px] text-white/30">
+            <div className="mt-10 flex flex-col items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.025] px-6 py-8 text-center">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
+                Paso final
+              </div>
+              <h3 className="text-lg font-semibold text-white">
+                Convierte esta simulación en expediente
+              </h3>
+              <p className="max-w-xl text-[13px] text-white/60">
+                Crea el caso con un clic. Inmediatamente después podrás enviarlo a auditoría QA sin salir de esta pantalla.
+              </p>
+              <button
+                onClick={openGuardarCaso}
+                className="mt-2 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:scale-[1.02]"
+                style={{
+                  background: "linear-gradient(135deg, #445DA3, #84B98F)",
+                  boxShadow: "0 14px 30px -12px rgba(68,93,163,0.65)",
+                }}
+              >
+                <Save className="h-4 w-4" />
+                Crear expediente y enviar a auditoría
+              </button>
+            </div>
+
+            <div className="mt-6 flex items-center justify-center gap-2 text-[11px] text-white/30">
               <Sparkles className="h-3.5 w-3.5" />
               NUVEX Wealth Studio · Proyecciones referenciales basadas en los datos ingresados
             </div>
