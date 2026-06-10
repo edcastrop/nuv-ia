@@ -231,7 +231,10 @@ ${profile.hints}
 
 CAMPO 'banco': devuelve "${profile.banco}" con score 100.
 CAMPO 'producto': "CREDITO_HIPOTECARIO" o "LEASING_HABITACIONAL".
-CAMPO 'moneda': "PESOS" o "UVR".
+CAMPO 'moneda' (CRÍTICO):
+- "UVR" SOLO si ves explícitamente la palabra "UVR" en producto/sistema de amortización, encabezados de columna ("Valores en UVR", "Saldo UVR", "Valor UVR del día") o filas con valores en UVR (típicamente 4 decimales).
+- "PESOS" en cualquier otro caso. Si el extracto muestra montos en "$" sin mencionar UVR → moneda="PESOS".
+- Si dudas → "PESOS". NO uses UVR por defecto.
 CAMPO 'cuotasPagadas': si no es explícito y conoces el "número de cuota actual a pagar", úsalo y deja score=90.
 CAMPO 'cuotasPendientes': si no es explícito calcula plazoInicial - cuotasPagadas y deja score=70.
 CAMPO 'sistemaAmortizacion': "abono constante a capital" / "cuota fija" / "UVR". Vacío si no es claro.`;
