@@ -268,7 +268,13 @@ export function RespuestaBancoBlock({
             "Respuesta financiera del banco registrada",
           );
         } catch (err) {
+          // No bloqueamos el guardado: registramos en consola y mostramos
+          // mensaje al usuario para que sepa que debe avanzar manualmente.
           console.warn("[cambiarEstado]", err);
+          setMsg(
+            "Respuesta guardada, pero no se pudo avanzar el estado del caso automáticamente. " +
+              (err instanceof Error ? err.message : "Revisa el estado y avanza manualmente."),
+          );
         }
       }
 

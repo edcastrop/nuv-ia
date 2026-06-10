@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { notifQAAprobada, notifQADevuelta, notifQASolicitada } from "@/lib/notifTriggers";
+import { cambiarEstadoCaso } from "@/lib/casoEstados";
 
 export type MotivoDevolucionQA =
   | "cuota_incorrecta"
@@ -50,6 +51,14 @@ export async function enviarAValidacionQA(expedienteId: string): Promise<void> {
     primera_revision: primera,
   } as never);
   if (error) throw new Error(error.message);
+  // Auto-avance de estado: marcar el caso como "pendiente QA" para que el
+  // stepper / torre de control reflejen visualmente que la etapa de Proyección
+  // se cerró y el caso pasó a Auditoría QA.
+  try {
+    await cambiarEstadoCaso(expedienteId, "proyeccion_pendiente_qa", "manual", "Enviada a validación QA");
+  } catch (e) {
+    console.warn("[validacionQA] no se pudo actualizar estado_caso al enviar a QA", e);
+  }
   // Disparador: avisar a Directores QA + super_admin
   await notifQASolicitada(expedienteId);
 }
@@ -104,6 +113,13 @@ export async function aprobarQA(validacionId: string): Promise<void> {
         .update({ aprobado_data: snapshot as unknown as never })
         .eq("id", expedienteId);
     }
+    // Auto-avance de estado: marcar el caso como "proyección aprobada QA" para
+    // cerrar la etapa de Auditoría QA en el stepper y habilitar Contratación.
+    try {
+      await cambiarEstadoCaso(expedienteId, "proyeccion_aprobada_qa", "manual", "QA aprobada");
+    } catch (e) {
+      console.warn("[validacionQA] no se pudo actualizar estado_caso al aprobar QA", e);
+    }
     // Disparador: notificar a asesor + jurídica
     await notifQAAprobada(expedienteId);
   }
@@ -136,7 +152,16 @@ export async function devolverQA(
     } as never)
     .eq("id", validacionId);
   if (error) throw new Error(error.message);
-  if (expedienteId) await notifQADevuelta(expedienteId, motivo, observacion.trim());
+  if (expedienteId) {
+    // Auto-avance de estado: el caso vuelve a estar "devuelto a Proyección"
+    // para que el analista corrija y reenvíe a QA.
+    try {
+      await cambiarEstadoCaso(expedienteId, "proyeccion_devuelta_qa", "manual", `QA devuelta: ${motivo}`);
+    } catch (e) {
+      console.warn("[validacionQA] no se pudo actualizar estado_caso al devolver QA", e);
+    }
+    await notifQADevuelta(expedienteId, motivo, observacion.trim());
+  }
 }
 
 export async function obtenerUltimaValidacion(

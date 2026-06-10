@@ -205,6 +205,19 @@ function AceptacionCliente({
         } as never)
         .eq("id", expedienteId);
       if (error) throw error;
+      // Auto-avance: cerrar la etapa "Resultado / Aceptación" avanzando el
+      // caso a "aplicado_banco" (idempotente). Si el estado ya está más
+      // adelante, la validación de pipeline simplemente lo deja igual.
+      try {
+        await cambiarEstadoConValidacion(
+          expedienteId,
+          "aplicado_banco",
+          "aplicado_banco",
+          "Aceptación del cliente registrada",
+        );
+      } catch (e) {
+        console.warn("[aceptacionCliente] no se pudo avanzar estado", e);
+      }
       setMsg("Aceptación del cliente registrada.");
       onChanged?.();
     } catch (e) {
