@@ -17,7 +17,7 @@ import { Loader2, Upload, X, ShieldCheck, AlertTriangle, AlertOctagon, FileText,
 import { supabase } from "@/integrations/supabase/client";
 import { formatCOP } from "@/lib/format";
 import { analizarCapacidadPago, type AnalisisCapacidadResultado } from "@/lib/analisisCapacidad.functions";
-import { unzipSync, strFromU8 } from "fflate";
+import { unzipSync } from "fflate";
 
 export const BANCOS_REQUIEREN_CAPACIDAD = [
   "davivienda",
