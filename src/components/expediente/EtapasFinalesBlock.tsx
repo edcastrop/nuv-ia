@@ -40,12 +40,16 @@ export function EtapasFinalesBlock({
     etapa_pipeline: etapaPipeline ?? null,
   });
   const idxActual = indexOfEtapa(etapaActual);
-  const idxActualVisual =
-    estadoCaso === "resultado_final_generado"
-      ? indexOfEtapa("cuenta")
-      : aceptacionAt && etapaActual === "resultado_banco"
-        ? indexOfEtapa("informe")
-        : idxActual;
+  const idxActualVisual = (() => {
+    if (estadoCaso === "resultado_final_generado") return indexOfEtapa("cuenta");
+    if (estadoCaso === "cuenta_cobro_generada" || estadoCaso === "cuenta_cobro_enviada") return indexOfEtapa("pago");
+    if (estadoCaso === "honorarios_pagados") return indexOfEtapa("paz_salvo");
+    if (estadoCaso === "paz_y_salvo_generado" || estadoCaso === "caso_finalizado" || estadoCaso === "proceso_cerrado") {
+      return indexOfEtapa("finalizado") + 1;
+    }
+    if (aceptacionAt && etapaActual === "resultado_banco") return indexOfEtapa("informe");
+    return idxActual;
+  })();
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
