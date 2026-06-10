@@ -64,6 +64,7 @@ export function PesosSimulator({
 } = {}) {
   const init = initialExpediente;
   const initCred = (init?.credito_data ?? {}) as Record<string, string>;
+  const monedaAlerta = useMonedaMismatchAlert();
   const [extractoArchivoPath, setExtractoArchivoPath] = useState<string>(() =>
     typeof initCred.archivoPath === "string" ? initCred.archivoPath : "",
   );
