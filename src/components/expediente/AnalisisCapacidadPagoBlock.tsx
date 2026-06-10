@@ -17,6 +17,7 @@ import { Loader2, Upload, X, ShieldCheck, AlertTriangle, AlertOctagon, FileText,
 import { supabase } from "@/integrations/supabase/client";
 import { formatCOP } from "@/lib/format";
 import { analizarCapacidadPago, type AnalisisCapacidadResultado } from "@/lib/analisisCapacidad.functions";
+import { unzipSync } from "fflate";
 
 export const BANCOS_REQUIEREN_CAPACIDAD = [
   "davivienda",
@@ -62,14 +63,45 @@ interface Props {
 }
 
 const MAX_BYTES = 10 * 1024 * 1024;
+const ZIP_MAX_BYTES = 50 * 1024 * 1024;
 
-function fileToDataUrl(f: File): Promise<string> {
+function fileToDataUrl(f: File | Blob, nombre?: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
     reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(f);
+    reader.readAsDataURL(f instanceof File ? f : new File([f], nombre || "file"));
   });
+}
+
+function mimeFromName(name: string): string {
+  const n = name.toLowerCase();
+  if (n.endsWith(".pdf")) return "application/pdf";
+  if (n.endsWith(".png")) return "image/png";
+  if (n.endsWith(".jpg") || n.endsWith(".jpeg")) return "image/jpeg";
+  if (n.endsWith(".webp")) return "image/webp";
+  if (n.endsWith(".gif")) return "image/gif";
+  return "application/octet-stream";
+}
+
+function isZip(f: File): boolean {
+  const n = f.name.toLowerCase();
+  return n.endsWith(".zip") || f.type === "application/zip" || f.type === "application/x-zip-compressed";
+}
+
+function isCompressedUnsupported(f: File): boolean {
+  const n = f.name.toLowerCase();
+  return n.endsWith(".rar") || n.endsWith(".7z") || n.endsWith(".tar") || n.endsWith(".gz");
+}
+
+function bytesToDataUrl(bytes: Uint8Array, mime: string): string {
+  // Avoid stack overflow for big files
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunk)));
+  }
+  return `data:${mime};base64,${btoa(binary)}`;
 }
 
 function nuevaPersona(rol: Rol): PersonaForm {
@@ -144,26 +176,85 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
   const limiteAplicable = esVis ? 0.40 : 0.30;
   const totalArchivos = useMemo(() => personas.reduce((s, p) => s + p.archivos.length, 0), [personas]);
 
-  const handleFiles = async (idxPersona: number, files: FileList | null) => {
-    if (!files) return;
-    const nuevos: ArchivoLocal[] = [];
-    for (const f of Array.from(files)) {
-      if (f.size > MAX_BYTES) {
-        toast.error(`${f.name} excede 10 MB.`);
-        continue;
-      }
-      const dataUrl = await fileToDataUrl(f);
-      nuevos.push({
-        id: crypto.randomUUID(),
-        nombre: f.name,
-        mime: f.type || "application/octet-stream",
-        size: f.size,
-        tipo: f.name.toLowerCase().includes("nomi") ? "nomina"
-          : f.name.toLowerCase().includes("carta") ? "carta_laboral"
-          : f.name.toLowerCase().includes("renta") ? "renta" : "otro",
-        dataUrl,
-      });
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+
+  const tipoDocFromName = (name: string): TipoDoc => {
+    const n = name.toLowerCase();
+    if (n.includes("nomi") || n.includes("desprend") || n.includes("payroll")) return "nomina";
+    if (n.includes("carta") || n.includes("labor")) return "carta_laboral";
+    if (n.includes("renta") || n.includes("dian") || n.includes("declarac")) return "renta";
+    return "otro";
+  };
+
+  const procesarArchivo = async (f: File): Promise<ArchivoLocal[]> => {
+    if (isCompressedUnsupported(f)) {
+      toast.error(`${f.name}: solo soportamos .zip. Recomprime el archivo.`);
+      return [];
     }
+    if (isZip(f)) {
+      if (f.size > ZIP_MAX_BYTES) {
+        toast.error(`${f.name} excede 50 MB.`);
+        return [];
+      }
+      try {
+        const buf = new Uint8Array(await f.arrayBuffer());
+        const entries = unzipSync(buf);
+        const out: ArchivoLocal[] = [];
+        for (const [name, bytes] of Object.entries(entries)) {
+          if (name.endsWith("/")) continue; // dir
+          const base = name.split("/").pop() || name;
+          if (base.startsWith(".") || base.startsWith("__MACOSX")) continue;
+          const ext = base.toLowerCase();
+          const valid = ext.endsWith(".pdf") || ext.endsWith(".png") || ext.endsWith(".jpg") || ext.endsWith(".jpeg") || ext.endsWith(".webp") || ext.endsWith(".gif");
+          if (!valid) continue;
+          if (bytes.length > MAX_BYTES) {
+            toast.warning(`${base} dentro del zip excede 10 MB, se omite.`);
+            continue;
+          }
+          const mime = mimeFromName(base);
+          out.push({
+            id: crypto.randomUUID(),
+            nombre: base,
+            mime,
+            size: bytes.length,
+            tipo: tipoDocFromName(base),
+            dataUrl: bytesToDataUrl(bytes, mime),
+          });
+        }
+        if (out.length === 0) toast.warning(`${f.name}: no se encontraron PDFs o imágenes válidos.`);
+        else toast.success(`${f.name}: ${out.length} documento(s) extraído(s).`);
+        return out;
+      } catch (e) {
+        console.error(e);
+        toast.error(`No se pudo descomprimir ${f.name}.`);
+        return [];
+      }
+    }
+    if (f.size > MAX_BYTES) {
+      toast.error(`${f.name} excede 10 MB.`);
+      return [];
+    }
+    const dataUrl = await fileToDataUrl(f);
+    return [{
+      id: crypto.randomUUID(),
+      nombre: f.name,
+      mime: f.type || mimeFromName(f.name),
+      size: f.size,
+      tipo: tipoDocFromName(f.name),
+      dataUrl,
+    }];
+  };
+
+  const handleFiles = async (idxPersona: number, files: FileList | File[] | null) => {
+    if (!files) return;
+    const arr = Array.from(files);
+    if (arr.length === 0) return;
+    const nuevos: ArchivoLocal[] = [];
+    for (const f of arr) {
+      const extraidos = await procesarArchivo(f);
+      nuevos.push(...extraidos);
+    }
+    if (nuevos.length === 0) return;
     setPersonas((prev) => prev.map((p, i) => i === idxPersona ? { ...p, archivos: [...p.archivos, ...nuevos] } : p));
   };
 
@@ -320,18 +411,39 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
           <MinDocsHint tipo={p.tipoPersona} />
 
           <div className="mt-3">
-            <label className="flex items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-lg p-4 cursor-pointer hover:bg-slate-50 transition">
-              <Upload className="w-4 h-4" />
-              <span className="text-sm">Subir nóminas, carta laboral y renta (PDF o imagen)</span>
+            <label
+              onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); setDragIdx(idx); }}
+              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragIdx(idx); }}
+              onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setDragIdx((cur) => cur === idx ? null : cur); }}
+              onDrop={(e) => {
+                e.preventDefault(); e.stopPropagation();
+                setDragIdx(null);
+                const files = e.dataTransfer?.files;
+                if (files && files.length) handleFiles(idx, files);
+              }}
+              className={`flex flex-col items-center justify-center gap-1 border-2 border-dashed rounded-lg p-5 cursor-pointer transition ${
+                dragIdx === idx ? "border-[#445DA3] bg-[#445DA3]/10" : "border-slate-300 hover:bg-slate-50"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Upload className="w-4 h-4" />
+                <span className="text-sm font-medium">
+                  {dragIdx === idx ? "Suelta los archivos aquí" : "Arrastra archivos o haz clic para subir"}
+                </span>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                PDF, imágenes (JPG/PNG/WEBP) o <b>.ZIP</b> con varios documentos · máx. 10 MB por archivo, 50 MB por zip
+              </span>
               <input
                 type="file"
                 multiple
-                accept="image/*,application/pdf"
+                accept="image/*,application/pdf,.zip,application/zip,application/x-zip-compressed"
                 className="hidden"
-                onChange={(e) => handleFiles(idx, e.target.files)}
+                onChange={(e) => { handleFiles(idx, e.target.files); e.currentTarget.value = ""; }}
               />
             </label>
           </div>
+
 
           {p.archivos.length > 0 && (
             <ul className="mt-3 space-y-1">
