@@ -149,6 +149,10 @@ export function ValidacionRadicacionBlock({ expedienteId }: { expedienteId: stri
                   </div>
                 )}
               </div>
+            ) : faltaCapturarDatos ? (
+              <div className="rounded-lg border border-[#FBBF24] bg-[#FEF3C7] px-3 py-2 text-[12px] text-[#92400E] font-semibold">
+                ⚠ El caso figura como <strong>{estado ? labelEstado(estado) : "radicado"}</strong> pero falta capturar el ID y la fecha de radicación. Complétalos abajo.
+              </div>
             ) : data.puedeRadicar ? (
               <div className="rounded-lg border border-[#A6E2B6] bg-[#DDF4E3] px-3 py-2 text-[12px] text-[#1F7A45] font-semibold">
                 ✓ El expediente cumple los requisitos. Ya puede radicarse en el banco.
@@ -160,8 +164,56 @@ export function ValidacionRadicacionBlock({ expedienteId }: { expedienteId: stri
             )}
           </div>
 
-          {/* Acción: registrar radicado en banco */}
-          {!yaRadicado && (
+          {/* Form inline para completar datos cuando el estado ya avanzó pero faltan datos */}
+          {faltaCapturarDatos && (
+            <div className="mb-4 rounded-lg border border-[#E3E7EE] bg-[#F7F9FB] p-3">
+              <div className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: NUVEX.azul }}>
+                Completar datos de radicación
+              </div>
+              <div className="text-sm font-semibold text-[#242424] mt-0.5">
+                ID/código y fecha entregados por el banco
+              </div>
+              <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_220px_auto] items-end">
+                <div>
+                  <label className="text-[11px] uppercase tracking-wider text-[#242424]/60">
+                    ID de radicado <span className="text-[#B42318]">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={radicadoIdInput}
+                    onChange={(e) => setRadicadoIdInput(e.target.value)}
+                    placeholder="Ej: 2026-RAD-987654"
+                    className="mt-1 w-full rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm bg-white"
+                    maxLength={120}
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] uppercase tracking-wider text-[#242424]/60">
+                    Fecha de radicación
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={fechaInput}
+                    onChange={(e) => setFechaInput(e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm bg-white"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={guardarDatosRadicacion}
+                  disabled={savingDatos || radicadoIdInput.trim().length < 3}
+                  className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ background: NUVEX.azul }}
+                >
+                  <Save size={14} />
+                  {savingDatos ? "Guardando…" : "Guardar"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Acción: registrar radicado en banco (transición de estado) */}
+          {!yaRadicado && !faltaCapturarDatos && (
             <div className="mb-4 rounded-lg border border-[#E3E7EE] bg-[#F7F9FB] p-3">
               <div className="flex items-start justify-between gap-3 flex-wrap">
                 <div>
