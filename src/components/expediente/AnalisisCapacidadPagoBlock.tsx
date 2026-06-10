@@ -101,8 +101,6 @@ function bytesToDataUrl(bytes: Uint8Array, mime: string): string {
   for (let i = 0; i < bytes.length; i += chunk) {
     binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunk)));
   }
-  // eslint-disable-next-line no-void
-  void strFromU8;
   return `data:${mime};base64,${btoa(binary)}`;
 }
 
