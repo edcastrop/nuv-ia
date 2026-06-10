@@ -242,7 +242,7 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
         observaciones: res.data.personas.flatMap((p) => p.observaciones.map((o) => `[${p.rol}] ${o}`)),
         detalle_titular: res.data.personas.find((p) => p.rol === "titular") ?? {},
         detalle_codeudor: res.data.personas.find((p) => p.rol === "codeudor") ?? {},
-        payload_ia: res.data as unknown as Record<string, unknown>,
+        payload_ia: JSON.parse(JSON.stringify(res.data)),
         created_by: userId,
       });
 
