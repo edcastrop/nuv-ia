@@ -770,16 +770,21 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       bancoFinal;
 
     // Detectar moneda real del extracto a partir de los datos parseados,
-    // independiente del modo del simulador. Si el OCR detecta UVR explícito
-    // (campo moneda = UVR) o presencia de saldoUVR/valorUVR con valor, se
-    // marca como UVR. De lo contrario, pesos.
+    // independiente del modo del simulador. Requerimos AL MENOS una señal
+    // concreta de UVR: producto/sistema con "UVR" o saldoUVR/valorUVR con
+    // dígitos. El campo moneda="UVR" del OCR por sí solo no es suficiente
+    // (el modelo a veces lo marca por error en extractos en pesos).
     const saldoUvrRaw = get("saldoUVR");
     const valorUvrRaw = get("valorUVR");
     const tieneDatosUvr =
       (saldoUvrRaw && saldoUvrRaw.replace(/[^\d]/g, "") !== "") ||
       (valorUvrRaw && valorUvrRaw.replace(/[^\d]/g, "") !== "");
+    const sistemaAmortLower = get("sistemaAmortizacion").toLowerCase();
+    const productoLower = get("producto").toLowerCase();
+    const uvrEnTexto = /\buvr\b/.test(productoLower) || /\buvr\b/.test(sistemaAmortLower);
+    const señalUvrFuerte = parsedAttrs.esUVR || tieneDatosUvr || uvrEnTexto;
     const monedaDetectada: "uvr" | "pesos" =
-      monedaUpper === "UVR" || parsedAttrs.esUVR || tieneDatosUvr ? "uvr" : "pesos";
+      señalUvrFuerte || (monedaUpper === "UVR" && tieneDatosUvr) ? "uvr" : "pesos";
 
     const payload: ExtractoApplyPayload = {
       cliente: {
