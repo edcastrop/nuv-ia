@@ -114,6 +114,28 @@ export function indexEtapaGuiada(id: EtapaGuiadaId): number {
   return ETAPAS_GUIADAS.findIndex((e) => e.id === id);
 }
 
+// Mapea cada etapa visual a la pestaña y al ancla del bloque correspondiente
+// dentro de la vista de expediente. Lo usa el stepper para "saltar" al sitio
+// correcto al hacer clic en una etapa.
+export const ETAPA_A_DESTINO: Record<
+  EtapaGuiadaId,
+  { tab: TabId; scrollToId?: string }
+> = {
+  lead: { tab: "resumen" },
+  proyeccion: { tab: "financiero", scrollToId: "simulador-financiero-qa" },
+  auditoria_qa: { tab: "auditoria", scrollToId: "validacion-qa" },
+  contratacion: { tab: "documentos", scrollToId: "documentos-juridicos" },
+  documentacion_bancaria: { tab: "documentos", scrollToId: "checklist-documental" },
+  radicacion: { tab: "tareas", scrollToId: "validacion-radicacion" },
+  respuesta_banco: { tab: "financiero", scrollToId: "resultado-bancario" },
+  resultado_otrosi: { tab: "financiero", scrollToId: "resultado-bancario" },
+  informe_final: { tab: "financiero", scrollToId: "cierre-operativo" },
+  cuenta_cobro: { tab: "financiero", scrollToId: "cierre-operativo" },
+  pago: { tab: "financiero", scrollToId: "cierre-operativo" },
+  paz_salvo: { tab: "financiero", scrollToId: "cierre-operativo" },
+  caso_cerrado: { tab: "historial" },
+};
+
 export function porcentajeAvance(exp: Expediente): number {
   const idx = indexEtapaGuiada(etapaActualGuiada(exp));
   return Math.round(((idx + 1) / ETAPAS_GUIADAS.length) * 100);
