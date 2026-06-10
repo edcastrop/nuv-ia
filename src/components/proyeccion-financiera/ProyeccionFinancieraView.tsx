@@ -527,6 +527,7 @@ export function ProyeccionFinancieraView() {
   const [activeNav, setActiveNav] = useState<string>("dashboard");
   const [guardarOpen, setGuardarOpen] = useState(false);
   const [guardarAutoSave, setGuardarAutoSave] = useState(false);
+  const monedaAlerta = useMonedaMismatchAlert();
 
   const upd = <K extends keyof ProyeccionFinancieraInput>(
     k: K,
