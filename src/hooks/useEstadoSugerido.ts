@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { ACCION_A_ESTADO, type AccionOrigen, type CasoEstado } from "@/lib/casoEstados";
 import { cambiarEstadoConValidacion, TransicionInvalidaError } from "@/lib/pipelineTransiciones";
 import { supabase } from "@/integrations/supabase/client";
+import { programarEntregaDesdeBanco } from "@/lib/entregaDocumental";
 
 export interface ConfirmExtras {
   radicadoIdBanco?: string;
@@ -41,6 +42,23 @@ export function useEstadoSugerido(expedienteId: string | undefined | null, onCha
 
       await cambiarEstadoConValidacion(expedienteId, pendiente.estado, pendiente.accion, observacion || undefined, submotivo);
       toast.success("Estado del caso actualizado");
+
+      // Cuando se confirma la radicación, programar la entrega documental
+      // según las reglas del banco (Davivienda → correo; Bogotá → ya entregada;
+      // Davibank → T+4 hábiles; AV Villas → T+8 hábiles).
+      if (pendiente.estado === "radicado_banco") {
+        try {
+          const { data: expRow } = await supabase
+            .from("expedientes")
+            .select("banco")
+            .eq("id", expedienteId)
+            .maybeSingle();
+          const banco = (expRow as { banco?: string | null } | null)?.banco ?? null;
+          await programarEntregaDesdeBanco({ expedienteId, banco });
+        } catch (e) {
+          console.warn("[entregaDocumental] no se pudo programar", e);
+        }
+      }
 
       // Auto-avance: si se acaba de marcar contrato_firmado o poder_firmado
       // y AMBOS ya están firmados, avanzar a "documentación completa" para
