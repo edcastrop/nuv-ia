@@ -32,7 +32,7 @@ import { QueFaltaPanel } from "@/components/expediente/QueFaltaPanel";
 import { ChecklistRolPanel } from "@/components/expediente/ChecklistRolPanel";
 import { ResumenEjecutivo } from "@/components/expediente/ResumenEjecutivo";
 import { ControlOperativoPanel } from "@/components/expediente/ControlOperativoPanel";
-import type { TabId } from "@/lib/expedienteGuiado";
+import { ETAPA_A_DESTINO, type EtapaGuiadaId, type TabId } from "@/lib/expedienteGuiado";
 
 export const Route = createFileRoute("/_authenticated/casos/$id")({
   component: CasoDetail,
