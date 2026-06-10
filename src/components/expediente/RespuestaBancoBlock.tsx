@@ -6,6 +6,7 @@ import { formatCOP, parseCurrency, parseDecimal } from "@/lib/format";
 import { honorariosFinalesCliente, calcularRecalculoHonorarios, guardarRecalculoHonorarios } from "@/lib/honorarios";
 import { calcularPrecision, registrarPrecisionAnalista } from "@/lib/precisionHistorica";
 import { aplicaOtrosi, abrirOtrosiImprimible } from "@/lib/otrosiContrato";
+import { cambiarEstadoCaso } from "@/lib/casoEstados";
 // Notificación al AFC: TODO cuando exista crearNotificacion helper.
 
 interface Props {
@@ -257,11 +258,27 @@ export function RespuestaBancoBlock({
         console.warn("[precision]", err);
       }
 
+      // 3) Avanzar el estado del caso para cerrar la etapa "Respuesta Banco".
+      if (cuotaAprob > 0) {
+        try {
+          await cambiarEstadoCaso(
+            expedienteId,
+            "aplicado_banco",
+            "aplicado_banco",
+            "Respuesta financiera del banco registrada",
+          );
+        } catch (err) {
+          console.warn("[cambiarEstado]", err);
+        }
+      }
+
       setMsg(
         requiereOtrosi
           ? "Respuesta registrada. Condiciones difieren: se requiere generar otrosí."
           : "Respuesta del banco registrada y honorarios reajustados.",
       );
+      // Refrescar la vista para mostrar el nuevo estado/etapa.
+      setTimeout(() => window.location.reload(), 800);
     } catch (e) {
       setMsg((e as Error).message);
     } finally {
