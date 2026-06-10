@@ -21,6 +21,7 @@ import { iniciarPresenciaPropia, detenerPresenciaPropia } from "@/lib/presencia"
 import { NotificacionesAlerts } from "@/components/notificaciones/NotificacionesAlerts";
 import { useNivelAutonomia } from "@/hooks/useNivelAutonomia";
 import { etiquetaNivel } from "@/lib/autonomia";
+import { EtapaTransicionDialog } from "@/components/expediente/EtapaTransicionDialog";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
