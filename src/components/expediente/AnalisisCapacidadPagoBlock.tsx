@@ -1,0 +1,439 @@
+// Bloque "Análisis de Capacidad de Pago" para sustentación bancaria.
+// Visible en expedientes radicados en bancos que exigen documentación
+// financiera (Davivienda, Bco Bogotá, Bco Occidente, AV Villas, Davibank).
+// Aplica regla 30% (No VIS) / 40% (VIS).
+
+import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
+import { Loader2, Upload, X, ShieldCheck, AlertTriangle, AlertOctagon, FileText, Sparkles } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { formatCOP } from "@/lib/format";
+import { analizarCapacidadPago, type AnalisisCapacidadResultado } from "@/lib/analisisCapacidad.functions";
+
+export const BANCOS_REQUIEREN_CAPACIDAD = [
+  "davivienda",
+  "davibank",
+  "banco de bogota",
+  "banco de bogotá",
+  "bco bogota",
+  "banco de occidente",
+  "bco occidente",
+  "av villas",
+  "banco av villas",
+];
+
+export function bancoRequiereAnalisisCapacidad(banco: string | undefined | null): boolean {
+  if (!banco) return false;
+  const n = banco.toLowerCase().trim();
+  return BANCOS_REQUIEREN_CAPACIDAD.some((b) => n.includes(b));
+}
+
+type TipoDoc = "nomina" | "carta_laboral" | "renta" | "otro";
+type TipoPersona = "empleado_mensual" | "empleado_quincenal";
+type Rol = "titular" | "codeudor";
+
+type ArchivoLocal = {
+  id: string;
+  nombre: string;
+  mime: string;
+  size: number;
+  tipo: TipoDoc;
+  dataUrl: string;
+};
+
+type PersonaForm = {
+  rol: Rol;
+  tipoPersona: TipoPersona;
+  archivos: ArchivoLocal[];
+};
+
+interface Props {
+  expedienteId: string;
+  banco: string;
+  cuotaPropuesta: number;
+}
+
+const MAX_BYTES = 10 * 1024 * 1024;
+
+function fileToDataUrl(f: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(f);
+  });
+}
+
+function nuevaPersona(rol: Rol): PersonaForm {
+  return { rol, tipoPersona: "empleado_mensual", archivos: [] };
+}
+
+function MinDocsHint({ tipo }: { tipo: TipoPersona }) {
+  if (tipo === "empleado_mensual") {
+    return <p className="text-xs text-muted-foreground">Requeridos: <b>3 últimas nóminas mensuales</b> + carta laboral + última declaración de renta.</p>;
+  }
+  return <p className="text-xs text-muted-foreground">Requeridos: <b>6 últimas nóminas quincenales</b> + carta laboral + última declaración de renta.</p>;
+}
+
+function SemaforoBadge({ s }: { s: "verde" | "amarillo" | "rojo" | "sin_datos" }) {
+  const map = {
+    verde: { bg: "bg-emerald-500", label: "🟢 Aprobado por regla", Icon: ShieldCheck },
+    amarillo: { bg: "bg-amber-500", label: "🟡 Marginal", Icon: AlertTriangle },
+    rojo: { bg: "bg-red-600", label: "🔴 Excede política", Icon: AlertOctagon },
+    sin_datos: { bg: "bg-slate-400", label: "Sin datos", Icon: FileText },
+  } as const;
+  const { bg, label, Icon } = map[s];
+  return (
+    <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-white text-sm font-semibold ${bg}`}>
+      <Icon className="w-4 h-4" /> {label}
+    </span>
+  );
+}
+
+export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta }: Props) {
+  const ejecutar = useServerFn(analizarCapacidadPago);
+
+  const [esVis, setEsVis] = useState(false);
+  const [cuota, setCuota] = useState<number>(cuotaPropuesta || 0);
+  const [personas, setPersonas] = useState<PersonaForm[]>([nuevaPersona("titular")]);
+  const [analizando, setAnalizando] = useState(false);
+  const [resultado, setResultado] = useState<AnalisisCapacidadResultado["data"] | null>(null);
+  const [cargandoUltimo, setCargandoUltimo] = useState(true);
+
+  useEffect(() => {
+    setCuota(cuotaPropuesta || 0);
+  }, [cuotaPropuesta]);
+
+  // Cargar último análisis guardado
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase
+        .from("analisis_capacidad_pago")
+        .select("*")
+        .eq("expediente_id", expedienteId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!error && data) {
+        setEsVis(!!data.es_vis);
+        setCuota(Number(data.cuota_propuesta));
+        setResultado({
+          cuotaPropuesta: Number(data.cuota_propuesta),
+          esVis: !!data.es_vis,
+          limiteAplicable: Number(data.limite_aplicable),
+          ingresoTotal: Number(data.ingreso_total),
+          porcentajeEndeudamiento: Number(data.porcentaje_endeudamiento ?? 0),
+          semaforo: data.semaforo as "verde" | "amarillo" | "rojo" | "sin_datos",
+          mensaje: "Último análisis guardado.",
+          personas: (data.payload_ia as { personas?: unknown[] })?.personas as never ?? [],
+          modelo: data.modelo_ia ?? "",
+        });
+      }
+      setCargandoUltimo(false);
+    })();
+  }, [expedienteId]);
+
+  const limiteAplicable = esVis ? 0.40 : 0.30;
+  const totalArchivos = useMemo(() => personas.reduce((s, p) => s + p.archivos.length, 0), [personas]);
+
+  const handleFiles = async (idxPersona: number, files: FileList | null) => {
+    if (!files) return;
+    const nuevos: ArchivoLocal[] = [];
+    for (const f of Array.from(files)) {
+      if (f.size > MAX_BYTES) {
+        toast.error(`${f.name} excede 10 MB.`);
+        continue;
+      }
+      const dataUrl = await fileToDataUrl(f);
+      nuevos.push({
+        id: crypto.randomUUID(),
+        nombre: f.name,
+        mime: f.type || "application/octet-stream",
+        size: f.size,
+        tipo: f.name.toLowerCase().includes("nomi") ? "nomina"
+          : f.name.toLowerCase().includes("carta") ? "carta_laboral"
+          : f.name.toLowerCase().includes("renta") ? "renta" : "otro",
+        dataUrl,
+      });
+    }
+    setPersonas((prev) => prev.map((p, i) => i === idxPersona ? { ...p, archivos: [...p.archivos, ...nuevos] } : p));
+  };
+
+  const removeArchivo = (idxPersona: number, idArchivo: string) => {
+    setPersonas((prev) => prev.map((p, i) => i === idxPersona ? { ...p, archivos: p.archivos.filter((a) => a.id !== idArchivo) } : p));
+  };
+
+  const setTipoDoc = (idxPersona: number, idArchivo: string, tipo: TipoDoc) => {
+    setPersonas((prev) => prev.map((p, i) => i === idxPersona ? {
+      ...p,
+      archivos: p.archivos.map((a) => a.id === idArchivo ? { ...a, tipo } : a),
+    } : p));
+  };
+
+  const setTipoPersona = (idxPersona: number, tipo: TipoPersona) => {
+    setPersonas((prev) => prev.map((p, i) => i === idxPersona ? { ...p, tipoPersona: tipo } : p));
+  };
+
+  const agregarCodeudor = () => {
+    if (personas.length >= 2) return;
+    setPersonas((prev) => [...prev, nuevaPersona("codeudor")]);
+  };
+  const quitarCodeudor = () => setPersonas((prev) => prev.filter((p) => p.rol !== "codeudor"));
+
+  const subirArchivosAlBucket = async () => {
+    // Solo persistencia opcional. No bloquea el análisis.
+    for (const p of personas) {
+      for (const a of p.archivos) {
+        const path = `${expedienteId}/${p.rol}/${Date.now()}_${a.nombre}`;
+        const blob = await (await fetch(a.dataUrl)).blob();
+        const { error } = await supabase.storage.from("capacidad-pago-docs").upload(path, blob, {
+          contentType: a.mime, upsert: false,
+        });
+        if (error) console.warn("Upload error", error.message);
+      }
+    }
+  };
+
+  const correrAnalisis = async () => {
+    if (cuota <= 0) { toast.error("Define la cuota propuesta."); return; }
+    if (totalArchivos === 0) { toast.error("Sube al menos un soporte financiero."); return; }
+    setAnalizando(true);
+    try {
+      const res = await ejecutar({
+        data: {
+          expedienteId,
+          cuotaPropuesta: cuota,
+          esVis,
+          personas: personas.map((p) => ({
+            rol: p.rol,
+            tipoPersona: p.tipoPersona,
+            archivos: p.archivos.map((a) => ({ nombre: a.nombre, mime: a.mime, dataUrl: a.dataUrl, tipo: a.tipo })),
+          })),
+        },
+      });
+      if (res.error) toast.warning(res.error);
+      if (!res.data) { setAnalizando(false); return; }
+      setResultado(res.data);
+
+      // Guardar en BD + subir archivos en background
+      const { data: userResp } = await supabase.auth.getUser();
+      const userId = userResp.user?.id ?? null;
+      await supabase.from("analisis_capacidad_pago").insert({
+        expediente_id: expedienteId,
+        tipo_persona: personas[0].tipoPersona,
+        es_vis: esVis,
+        cuota_propuesta: cuota,
+        ingreso_titular: res.data.personas.find((p) => p.rol === "titular")?.ingresoMensualPromedio ?? 0,
+        ingreso_codeudor: res.data.personas.find((p) => p.rol === "codeudor")?.ingresoMensualPromedio ?? 0,
+        porcentaje_endeudamiento: res.data.porcentajeEndeudamiento,
+        limite_aplicable: res.data.limiteAplicable,
+        semaforo: res.data.semaforo,
+        modelo_ia: res.data.modelo,
+        confianza: res.data.personas.find((p) => p.rol === "titular")?.confianza === "alta" ? 0.9
+                  : res.data.personas.find((p) => p.rol === "titular")?.confianza === "media" ? 0.65 : 0.4,
+        observaciones: res.data.personas.flatMap((p) => p.observaciones.map((o) => `[${p.rol}] ${o}`)),
+        detalle_titular: res.data.personas.find((p) => p.rol === "titular") ?? {},
+        detalle_codeudor: res.data.personas.find((p) => p.rol === "codeudor") ?? {},
+        payload_ia: res.data as unknown as Record<string, unknown>,
+        created_by: userId,
+      });
+
+      // Subir archivos sin bloquear UI
+      subirArchivosAlBucket().catch(() => {/* silencioso */});
+      toast.success("Análisis completado.");
+    } catch (e) {
+      console.error(e);
+      toast.error("No se pudo ejecutar el análisis.");
+    } finally {
+      setAnalizando(false);
+    }
+  };
+
+  if (!bancoRequiereAnalisisCapacidad(banco)) return null;
+
+  return (
+    <Card className="p-6 border-2 border-[#445DA3]/20 bg-gradient-to-br from-white to-slate-50">
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Sparkles className="w-5 h-5 text-[#445DA3]" />
+            <h3 className="text-xl font-bold text-slate-900">Análisis de capacidad de pago</h3>
+            <Badge variant="outline" className="text-xs">{banco}</Badge>
+          </div>
+          <p className="text-sm text-slate-600">
+            Sustentación obligatoria para radicar. Regla del banco: la nueva cuota no debe superar el <b>{esVis ? "40%" : "30%"}</b> de los ingresos
+            ({esVis ? "crédito VIS" : "crédito No VIS"}).
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Label htmlFor="es-vis" className="text-sm">VIS</Label>
+          <Switch id="es-vis" checked={esVis} onCheckedChange={setEsVis} />
+        </div>
+      </div>
+
+      {/* Cuota a validar */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5 p-4 bg-slate-100/60 rounded-lg">
+        <div>
+          <Label className="text-xs text-slate-600">Cuota propuesta al banco</Label>
+          <Input type="number" value={cuota || ""} onChange={(e) => setCuota(Number(e.target.value))} className="font-bold" />
+          <p className="text-xs text-muted-foreground mt-1">Tomada del simulador NUVEX.</p>
+        </div>
+        <div>
+          <Label className="text-xs text-slate-600">Límite aplicable</Label>
+          <div className="text-2xl font-bold text-[#445DA3]">{Math.round(limiteAplicable * 100)}%</div>
+        </div>
+        <div>
+          <Label className="text-xs text-slate-600">Ingreso mínimo requerido</Label>
+          <div className="text-2xl font-bold text-slate-900">{cuota > 0 ? formatCOP(cuota / limiteAplicable) : "—"}</div>
+        </div>
+      </div>
+
+      {/* Personas */}
+      {personas.map((p, idx) => (
+        <div key={p.rol} className="mb-5 p-4 border rounded-lg bg-white">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <Badge className={p.rol === "titular" ? "bg-[#445DA3]" : "bg-slate-600"}>
+                {p.rol === "titular" ? "TITULAR" : "CODEUDOR"}
+              </Badge>
+              <Select value={p.tipoPersona} onValueChange={(v) => setTipoPersona(idx, v as TipoPersona)}>
+                <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="empleado_mensual">Empleado · pago mensual</SelectItem>
+                  <SelectItem value="empleado_quincenal">Empleado · pago quincenal</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {p.rol === "codeudor" && (
+              <Button variant="ghost" size="sm" onClick={quitarCodeudor}><X className="w-4 h-4" /></Button>
+            )}
+          </div>
+
+          <MinDocsHint tipo={p.tipoPersona} />
+
+          <div className="mt-3">
+            <label className="flex items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-lg p-4 cursor-pointer hover:bg-slate-50 transition">
+              <Upload className="w-4 h-4" />
+              <span className="text-sm">Subir nóminas, carta laboral y renta (PDF o imagen)</span>
+              <input
+                type="file"
+                multiple
+                accept="image/*,application/pdf"
+                className="hidden"
+                onChange={(e) => handleFiles(idx, e.target.files)}
+              />
+            </label>
+          </div>
+
+          {p.archivos.length > 0 && (
+            <ul className="mt-3 space-y-1">
+              {p.archivos.map((a) => (
+                <li key={a.id} className="flex items-center gap-2 text-sm p-2 bg-slate-50 rounded">
+                  <FileText className="w-4 h-4 text-slate-500" />
+                  <span className="truncate flex-1">{a.nombre}</span>
+                  <Select value={a.tipo} onValueChange={(v) => setTipoDoc(idx, a.id, v as TipoDoc)}>
+                    <SelectTrigger className="w-[150px] h-7 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="nomina">Nómina</SelectItem>
+                      <SelectItem value="carta_laboral">Carta laboral</SelectItem>
+                      <SelectItem value="renta">Renta</SelectItem>
+                      <SelectItem value="otro">Otro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button size="sm" variant="ghost" onClick={() => removeArchivo(idx, a.id)}><X className="w-3 h-3" /></Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ))}
+
+      <div className="flex items-center gap-3 mb-5">
+        {personas.length < 2 && (
+          <Button variant="outline" size="sm" onClick={agregarCodeudor}>+ Agregar codeudor</Button>
+        )}
+        <Button
+          onClick={correrAnalisis}
+          disabled={analizando || totalArchivos === 0 || cuota <= 0}
+          className="bg-[#445DA3] hover:bg-[#3a4f8a] ml-auto"
+        >
+          {analizando ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Analizando con IA…</>) : (<><Sparkles className="w-4 h-4 mr-2" />Ejecutar análisis</>)}
+        </Button>
+      </div>
+
+      {/* Resultado */}
+      {cargandoUltimo ? null : resultado && (
+        <div className="border-t pt-5">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <div className="md:col-span-2 p-5 rounded-xl bg-slate-900 text-white">
+              <div className="text-xs uppercase tracking-wide opacity-70 mb-1">% Endeudamiento</div>
+              <div className="text-5xl font-bold">{(resultado.porcentajeEndeudamiento * 100).toFixed(1)}%</div>
+              <div className="text-sm opacity-80 mt-1">Límite del banco: {Math.round(resultado.limiteAplicable * 100)}%</div>
+              <div className="mt-3"><SemaforoBadge s={resultado.semaforo} /></div>
+            </div>
+            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200">
+              <div className="text-xs text-emerald-700 uppercase">Ingreso total detectado</div>
+              <div className="text-2xl font-bold text-emerald-900">{formatCOP(resultado.ingresoTotal)}</div>
+              <div className="text-xs text-emerald-700 mt-1">Titular + codeudor</div>
+            </div>
+            <div className="p-4 rounded-xl bg-blue-50 border border-blue-200">
+              <div className="text-xs text-blue-700 uppercase">Cuota propuesta</div>
+              <div className="text-2xl font-bold text-blue-900">{formatCOP(resultado.cuotaPropuesta)}</div>
+              <div className="text-xs text-blue-700 mt-1">{resultado.esVis ? "Crédito VIS" : "Crédito No VIS"}</div>
+            </div>
+          </div>
+
+          <div className={`p-4 rounded-lg mb-4 ${
+            resultado.semaforo === "verde" ? "bg-emerald-50 text-emerald-900 border border-emerald-200"
+            : resultado.semaforo === "amarillo" ? "bg-amber-50 text-amber-900 border border-amber-200"
+            : "bg-red-50 text-red-900 border border-red-200"
+          }`}>
+            <p className="text-sm font-medium">{resultado.mensaje}</p>
+          </div>
+
+          {resultado.personas.map((per) => (
+            <div key={per.rol} className="mb-3 p-3 border rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">{per.rol.toUpperCase()}</Badge>
+                  <span className="text-sm font-semibold">{formatCOP(per.ingresoMensualPromedio)} / mes</span>
+                  <Badge variant="secondary" className="text-xs">Confianza {per.confianza}</Badge>
+                </div>
+              </div>
+              {per.ingresosDetectados.length > 0 && (
+                <table className="w-full text-xs">
+                  <thead className="text-slate-500">
+                    <tr><th className="text-left">Documento</th><th className="text-left">Periodo</th><th className="text-left">Tipo</th><th className="text-right">Valor</th></tr>
+                  </thead>
+                  <tbody>
+                    {per.ingresosDetectados.map((d, i) => (
+                      <tr key={i} className="border-t">
+                        <td className="py-1">{d.documento}</td>
+                        <td>{d.periodo || "—"}</td>
+                        <td>{d.tipo}</td>
+                        <td className="text-right font-mono">{formatCOP(d.valor)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              {per.observaciones.length > 0 && (
+                <ul className="mt-2 text-xs text-slate-600 list-disc pl-5">
+                  {per.observaciones.map((o, i) => <li key={i}>{o}</li>)}
+                </ul>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
