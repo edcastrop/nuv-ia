@@ -2029,6 +2029,56 @@ export type Database = {
         }
         Relationships: []
       }
+      expediente_entrega_documental: {
+        Row: {
+          banco: string
+          creado_por: string | null
+          created_at: string
+          estado: string
+          expediente_id: string
+          fecha_completada: string | null
+          fecha_programada: string | null
+          id: string
+          modalidad: string
+          notas: string | null
+          updated_at: string
+        }
+        Insert: {
+          banco: string
+          creado_por?: string | null
+          created_at?: string
+          estado?: string
+          expediente_id: string
+          fecha_completada?: string | null
+          fecha_programada?: string | null
+          id?: string
+          modalidad: string
+          notas?: string | null
+          updated_at?: string
+        }
+        Update: {
+          banco?: string
+          creado_por?: string | null
+          created_at?: string
+          estado?: string
+          expediente_id?: string
+          fecha_completada?: string | null
+          fecha_programada?: string | null
+          id?: string
+          modalidad?: string
+          notas?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expediente_entrega_documental_expediente_id_fkey"
+            columns: ["expediente_id"]
+            isOneToOne: true
+            referencedRelation: "expedientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expediente_historial: {
         Row: {
           accion_origen: string | null
