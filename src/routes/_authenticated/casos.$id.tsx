@@ -21,6 +21,8 @@ import { ValidacionEntregablesBlock } from "@/components/expediente/ValidacionEn
 import { VersionesDocumentalesBlock } from "@/components/expediente/VersionesDocumentalesBlock";
 import { RespuestaBancoBlock } from "@/components/expediente/RespuestaBancoBlock";
 import { EtapasFinalesBlock } from "@/components/expediente/EtapasFinalesBlock";
+import { ResultadoFinal, type ProyeccionNuvex } from "@/components/nuvex/ResultadoFinal";
+import { parseCurrency, parseDecimal, parsePercentage } from "@/lib/format";
 import { readValidacion, puedeGenerarDocumentos, razonBloqueoDocs } from "@/lib/validacionIdentidad";
 import { addRecentCase } from "@/lib/recentCases";
 import { useUserRole } from "@/hooks/useUserRole";
