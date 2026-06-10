@@ -54,6 +54,7 @@ import {
 } from "@/lib/proyeccionFinanciera";
 import { exportProyeccionFinancieraPDF } from "@/lib/proyeccionFinancieraExport";
 import { ExtractoReader, type ExtractoApplyPayload } from "@/components/nuvex/ExtractoReader";
+import { useMonedaMismatchAlert } from "@/components/nuvex/MonedaMismatchDialog";
 import { GuardarCasoModal } from "./GuardarCasoModal";
 
 // ──────────────────────────────────────────────────────────────────────────
