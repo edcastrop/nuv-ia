@@ -413,18 +413,39 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
           <MinDocsHint tipo={p.tipoPersona} />
 
           <div className="mt-3">
-            <label className="flex items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-lg p-4 cursor-pointer hover:bg-slate-50 transition">
-              <Upload className="w-4 h-4" />
-              <span className="text-sm">Subir nóminas, carta laboral y renta (PDF o imagen)</span>
+            <label
+              onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); setDragIdx(idx); }}
+              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragIdx(idx); }}
+              onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setDragIdx((cur) => cur === idx ? null : cur); }}
+              onDrop={(e) => {
+                e.preventDefault(); e.stopPropagation();
+                setDragIdx(null);
+                const files = e.dataTransfer?.files;
+                if (files && files.length) handleFiles(idx, files);
+              }}
+              className={`flex flex-col items-center justify-center gap-1 border-2 border-dashed rounded-lg p-5 cursor-pointer transition ${
+                dragIdx === idx ? "border-[#445DA3] bg-[#445DA3]/10" : "border-slate-300 hover:bg-slate-50"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Upload className="w-4 h-4" />
+                <span className="text-sm font-medium">
+                  {dragIdx === idx ? "Suelta los archivos aquí" : "Arrastra archivos o haz clic para subir"}
+                </span>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                PDF, imágenes (JPG/PNG/WEBP) o <b>.ZIP</b> con varios documentos · máx. 10 MB por archivo, 50 MB por zip
+              </span>
               <input
                 type="file"
                 multiple
-                accept="image/*,application/pdf"
+                accept="image/*,application/pdf,.zip,application/zip,application/x-zip-compressed"
                 className="hidden"
-                onChange={(e) => handleFiles(idx, e.target.files)}
+                onChange={(e) => { handleFiles(idx, e.target.files); e.currentTarget.value = ""; }}
               />
             </label>
           </div>
+
 
           {p.archivos.length > 0 && (
             <ul className="mt-3 space-y-1">
