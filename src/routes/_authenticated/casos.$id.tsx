@@ -311,7 +311,7 @@ function CasoDetail() {
                   }}
                   onCuentaCobroEnviada={async () => {
                     try {
-                      await cambiarEstadoConValidacion(exp.id, ACCION_A_ESTADO["cuenta_cobro_generada"], "cuenta_cobro_generada");
+                      await cambiarEstadoConValidacion(exp.id, ACCION_A_ESTADO["cuenta_cobro_enviada"], "cuenta_cobro_enviada");
                     } catch (e) {
                       console.warn("[cuenta_cobro] avance etapa", e);
                       throw e instanceof Error ? e : new Error("No se pudo completar la etapa de cuenta de cobro.");
