@@ -264,7 +264,7 @@ export function RespuestaBancoBlock({
           await cambiarEstadoCaso(
             expedienteId,
             "aplicado_banco",
-            "respuesta_banco_registrada",
+            "aplicado_banco",
             "Respuesta financiera del banco registrada",
           );
         } catch (err) {
