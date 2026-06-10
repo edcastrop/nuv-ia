@@ -31,6 +31,7 @@ import { Route as AuthenticatedNotificacionesRouteImport } from './routes/_authe
 import { Route as AuthenticatedMiPerfilRouteImport } from './routes/_authenticated/mi-perfil'
 import { Route as AuthenticatedMensajeriaRouteImport } from './routes/_authenticated/mensajeria'
 import { Route as AuthenticatedIncidentesRouteImport } from './routes/_authenticated/incidentes'
+import { Route as AuthenticatedHerramientasRouteImport } from './routes/_authenticated/herramientas'
 import { Route as AuthenticatedGestionUsuariosRouteImport } from './routes/_authenticated/gestion-usuarios'
 import { Route as AuthenticatedFinanzasRouteImport } from './routes/_authenticated/finanzas'
 import { Route as AuthenticatedDirectorioRouteImport } from './routes/_authenticated/directorio'
@@ -39,6 +40,7 @@ import { Route as AuthenticatedAuditoriaFinancieraRouteImport } from './routes/_
 import { Route as AuthenticatedApoderadosNuvexRouteImport } from './routes/_authenticated/apoderados-nuvex'
 import { Route as AuthenticatedAcademiaRouteImport } from './routes/_authenticated/academia'
 import { Route as AuthenticatedSuperAdminIndexRouteImport } from './routes/_authenticated/super-admin.index'
+import { Route as AuthenticatedHerramientasIndexRouteImport } from './routes/_authenticated/herramientas.index'
 import { Route as AuthenticatedFinanzasIndexRouteImport } from './routes/_authenticated/finanzas.index'
 import { Route as AuthenticatedExpedienteMaestroIndexRouteImport } from './routes/_authenticated/expediente-maestro.index'
 import { Route as AuthenticatedComisionesIndexRouteImport } from './routes/_authenticated/comisiones.index'
@@ -55,6 +57,8 @@ import { Route as AuthenticatedSuperAdminExpedientesRouteImport } from './routes
 import { Route as AuthenticatedSuperAdminAuditoriaRouteImport } from './routes/_authenticated/super-admin.auditoria'
 import { Route as AuthenticatedSuperAdminAccesosRouteImport } from './routes/_authenticated/super-admin.accesos'
 import { Route as AuthenticatedSuperAdminAcademiaRouteImport } from './routes/_authenticated/super-admin.academia'
+import { Route as AuthenticatedHerramientasProyeccionRouteImport } from './routes/_authenticated/herramientas.proyeccion'
+import { Route as AuthenticatedHerramientasCapacidadPagoRouteImport } from './routes/_authenticated/herramientas.capacidad-pago'
 import { Route as AuthenticatedFinanzasWalletsRouteImport } from './routes/_authenticated/finanzas.wallets'
 import { Route as AuthenticatedFinanzasTesoreriaRouteImport } from './routes/_authenticated/finanzas.tesoreria'
 import { Route as AuthenticatedFinanzasReportesRouteImport } from './routes/_authenticated/finanzas.reportes'
@@ -198,6 +202,12 @@ const AuthenticatedIncidentesRoute = AuthenticatedIncidentesRouteImport.update({
   path: '/incidentes',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedHerramientasRoute =
+  AuthenticatedHerramientasRouteImport.update({
+    id: '/herramientas',
+    path: '/herramientas',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedGestionUsuariosRoute =
   AuthenticatedGestionUsuariosRouteImport.update({
     id: '/gestion-usuarios',
@@ -241,6 +251,12 @@ const AuthenticatedSuperAdminIndexRoute =
     id: '/super-admin/',
     path: '/super-admin/',
     getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedHerramientasIndexRoute =
+  AuthenticatedHerramientasIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedHerramientasRoute,
   } as any)
 const AuthenticatedFinanzasIndexRoute =
   AuthenticatedFinanzasIndexRouteImport.update({
@@ -336,6 +352,18 @@ const AuthenticatedSuperAdminAcademiaRoute =
     id: '/super-admin/academia',
     path: '/super-admin/academia',
     getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedHerramientasProyeccionRoute =
+  AuthenticatedHerramientasProyeccionRouteImport.update({
+    id: '/proyeccion',
+    path: '/proyeccion',
+    getParentRoute: () => AuthenticatedHerramientasRoute,
+  } as any)
+const AuthenticatedHerramientasCapacidadPagoRoute =
+  AuthenticatedHerramientasCapacidadPagoRouteImport.update({
+    id: '/capacidad-pago',
+    path: '/capacidad-pago',
+    getParentRoute: () => AuthenticatedHerramientasRoute,
   } as any)
 const AuthenticatedFinanzasWalletsRoute =
   AuthenticatedFinanzasWalletsRouteImport.update({
@@ -524,6 +552,7 @@ export interface FileRoutesByFullPath {
   '/directorio': typeof AuthenticatedDirectorioRoute
   '/finanzas': typeof AuthenticatedFinanzasRouteWithChildren
   '/gestion-usuarios': typeof AuthenticatedGestionUsuariosRoute
+  '/herramientas': typeof AuthenticatedHerramientasRouteWithChildren
   '/incidentes': typeof AuthenticatedIncidentesRoute
   '/mensajeria': typeof AuthenticatedMensajeriaRoute
   '/mi-perfil': typeof AuthenticatedMiPerfilRoute
@@ -557,6 +586,8 @@ export interface FileRoutesByFullPath {
   '/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
   '/finanzas/wallets': typeof AuthenticatedFinanzasWalletsRoute
+  '/herramientas/capacidad-pago': typeof AuthenticatedHerramientasCapacidadPagoRoute
+  '/herramientas/proyeccion': typeof AuthenticatedHerramientasProyeccionRoute
   '/super-admin/academia': typeof AuthenticatedSuperAdminAcademiaRoute
   '/super-admin/accesos': typeof AuthenticatedSuperAdminAccesosRoute
   '/super-admin/auditoria': typeof AuthenticatedSuperAdminAuditoriaRoute
@@ -573,6 +604,7 @@ export interface FileRoutesByFullPath {
   '/comisiones/': typeof AuthenticatedComisionesIndexRoute
   '/expediente-maestro/': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/finanzas/': typeof AuthenticatedFinanzasIndexRoute
+  '/herramientas/': typeof AuthenticatedHerramientasIndexRoute
   '/super-admin/': typeof AuthenticatedSuperAdminIndexRoute
   '/academia/certificados/$codigo': typeof AuthenticatedAcademiaCertificadosCodigoRoute
   '/academia/evaluaciones/$evaluacionId': typeof AuthenticatedAcademiaEvaluacionesEvaluacionIdRoute
@@ -631,6 +663,8 @@ export interface FileRoutesByTo {
   '/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
   '/finanzas/wallets': typeof AuthenticatedFinanzasWalletsRoute
+  '/herramientas/capacidad-pago': typeof AuthenticatedHerramientasCapacidadPagoRoute
+  '/herramientas/proyeccion': typeof AuthenticatedHerramientasProyeccionRoute
   '/super-admin/academia': typeof AuthenticatedSuperAdminAcademiaRoute
   '/super-admin/accesos': typeof AuthenticatedSuperAdminAccesosRoute
   '/super-admin/auditoria': typeof AuthenticatedSuperAdminAuditoriaRoute
@@ -647,6 +681,7 @@ export interface FileRoutesByTo {
   '/comisiones': typeof AuthenticatedComisionesIndexRoute
   '/expediente-maestro': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/finanzas': typeof AuthenticatedFinanzasIndexRoute
+  '/herramientas': typeof AuthenticatedHerramientasIndexRoute
   '/super-admin': typeof AuthenticatedSuperAdminIndexRoute
   '/academia/certificados/$codigo': typeof AuthenticatedAcademiaCertificadosCodigoRoute
   '/academia/evaluaciones/$evaluacionId': typeof AuthenticatedAcademiaEvaluacionesEvaluacionIdRoute
@@ -675,6 +710,7 @@ export interface FileRoutesById {
   '/_authenticated/directorio': typeof AuthenticatedDirectorioRoute
   '/_authenticated/finanzas': typeof AuthenticatedFinanzasRouteWithChildren
   '/_authenticated/gestion-usuarios': typeof AuthenticatedGestionUsuariosRoute
+  '/_authenticated/herramientas': typeof AuthenticatedHerramientasRouteWithChildren
   '/_authenticated/incidentes': typeof AuthenticatedIncidentesRoute
   '/_authenticated/mensajeria': typeof AuthenticatedMensajeriaRoute
   '/_authenticated/mi-perfil': typeof AuthenticatedMiPerfilRoute
@@ -709,6 +745,8 @@ export interface FileRoutesById {
   '/_authenticated/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/_authenticated/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
   '/_authenticated/finanzas/wallets': typeof AuthenticatedFinanzasWalletsRoute
+  '/_authenticated/herramientas/capacidad-pago': typeof AuthenticatedHerramientasCapacidadPagoRoute
+  '/_authenticated/herramientas/proyeccion': typeof AuthenticatedHerramientasProyeccionRoute
   '/_authenticated/super-admin/academia': typeof AuthenticatedSuperAdminAcademiaRoute
   '/_authenticated/super-admin/accesos': typeof AuthenticatedSuperAdminAccesosRoute
   '/_authenticated/super-admin/auditoria': typeof AuthenticatedSuperAdminAuditoriaRoute
@@ -725,6 +763,7 @@ export interface FileRoutesById {
   '/_authenticated/comisiones/': typeof AuthenticatedComisionesIndexRoute
   '/_authenticated/expediente-maestro/': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/_authenticated/finanzas/': typeof AuthenticatedFinanzasIndexRoute
+  '/_authenticated/herramientas/': typeof AuthenticatedHerramientasIndexRoute
   '/_authenticated/super-admin/': typeof AuthenticatedSuperAdminIndexRoute
   '/_authenticated/academia/certificados/$codigo': typeof AuthenticatedAcademiaCertificadosCodigoRoute
   '/_authenticated/academia/evaluaciones/$evaluacionId': typeof AuthenticatedAcademiaEvaluacionesEvaluacionIdRoute
@@ -754,6 +793,7 @@ export interface FileRouteTypes {
     | '/directorio'
     | '/finanzas'
     | '/gestion-usuarios'
+    | '/herramientas'
     | '/incidentes'
     | '/mensajeria'
     | '/mi-perfil'
@@ -787,6 +827,8 @@ export interface FileRouteTypes {
     | '/finanzas/reportes'
     | '/finanzas/tesoreria'
     | '/finanzas/wallets'
+    | '/herramientas/capacidad-pago'
+    | '/herramientas/proyeccion'
     | '/super-admin/academia'
     | '/super-admin/accesos'
     | '/super-admin/auditoria'
@@ -803,6 +845,7 @@ export interface FileRouteTypes {
     | '/comisiones/'
     | '/expediente-maestro/'
     | '/finanzas/'
+    | '/herramientas/'
     | '/super-admin/'
     | '/academia/certificados/$codigo'
     | '/academia/evaluaciones/$evaluacionId'
@@ -861,6 +904,8 @@ export interface FileRouteTypes {
     | '/finanzas/reportes'
     | '/finanzas/tesoreria'
     | '/finanzas/wallets'
+    | '/herramientas/capacidad-pago'
+    | '/herramientas/proyeccion'
     | '/super-admin/academia'
     | '/super-admin/accesos'
     | '/super-admin/auditoria'
@@ -877,6 +922,7 @@ export interface FileRouteTypes {
     | '/comisiones'
     | '/expediente-maestro'
     | '/finanzas'
+    | '/herramientas'
     | '/super-admin'
     | '/academia/certificados/$codigo'
     | '/academia/evaluaciones/$evaluacionId'
@@ -904,6 +950,7 @@ export interface FileRouteTypes {
     | '/_authenticated/directorio'
     | '/_authenticated/finanzas'
     | '/_authenticated/gestion-usuarios'
+    | '/_authenticated/herramientas'
     | '/_authenticated/incidentes'
     | '/_authenticated/mensajeria'
     | '/_authenticated/mi-perfil'
@@ -938,6 +985,8 @@ export interface FileRouteTypes {
     | '/_authenticated/finanzas/reportes'
     | '/_authenticated/finanzas/tesoreria'
     | '/_authenticated/finanzas/wallets'
+    | '/_authenticated/herramientas/capacidad-pago'
+    | '/_authenticated/herramientas/proyeccion'
     | '/_authenticated/super-admin/academia'
     | '/_authenticated/super-admin/accesos'
     | '/_authenticated/super-admin/auditoria'
@@ -954,6 +1003,7 @@ export interface FileRouteTypes {
     | '/_authenticated/comisiones/'
     | '/_authenticated/expediente-maestro/'
     | '/_authenticated/finanzas/'
+    | '/_authenticated/herramientas/'
     | '/_authenticated/super-admin/'
     | '/_authenticated/academia/certificados/$codigo'
     | '/_authenticated/academia/evaluaciones/$evaluacionId'
@@ -1140,6 +1190,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIncidentesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/herramientas': {
+      id: '/_authenticated/herramientas'
+      path: '/herramientas'
+      fullPath: '/herramientas'
+      preLoaderRoute: typeof AuthenticatedHerramientasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/gestion-usuarios': {
       id: '/_authenticated/gestion-usuarios'
       path: '/gestion-usuarios'
@@ -1195,6 +1252,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/super-admin/'
       preLoaderRoute: typeof AuthenticatedSuperAdminIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/herramientas/': {
+      id: '/_authenticated/herramientas/'
+      path: '/'
+      fullPath: '/herramientas/'
+      preLoaderRoute: typeof AuthenticatedHerramientasIndexRouteImport
+      parentRoute: typeof AuthenticatedHerramientasRoute
     }
     '/_authenticated/finanzas/': {
       id: '/_authenticated/finanzas/'
@@ -1307,6 +1371,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/super-admin/academia'
       preLoaderRoute: typeof AuthenticatedSuperAdminAcademiaRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/herramientas/proyeccion': {
+      id: '/_authenticated/herramientas/proyeccion'
+      path: '/proyeccion'
+      fullPath: '/herramientas/proyeccion'
+      preLoaderRoute: typeof AuthenticatedHerramientasProyeccionRouteImport
+      parentRoute: typeof AuthenticatedHerramientasRoute
+    }
+    '/_authenticated/herramientas/capacidad-pago': {
+      id: '/_authenticated/herramientas/capacidad-pago'
+      path: '/capacidad-pago'
+      fullPath: '/herramientas/capacidad-pago'
+      preLoaderRoute: typeof AuthenticatedHerramientasCapacidadPagoRouteImport
+      parentRoute: typeof AuthenticatedHerramientasRoute
     }
     '/_authenticated/finanzas/wallets': {
       id: '/_authenticated/finanzas/wallets'
@@ -1576,6 +1654,26 @@ const AuthenticatedFinanzasRouteWithChildren =
     AuthenticatedFinanzasRouteChildren,
   )
 
+interface AuthenticatedHerramientasRouteChildren {
+  AuthenticatedHerramientasCapacidadPagoRoute: typeof AuthenticatedHerramientasCapacidadPagoRoute
+  AuthenticatedHerramientasProyeccionRoute: typeof AuthenticatedHerramientasProyeccionRoute
+  AuthenticatedHerramientasIndexRoute: typeof AuthenticatedHerramientasIndexRoute
+}
+
+const AuthenticatedHerramientasRouteChildren: AuthenticatedHerramientasRouteChildren =
+  {
+    AuthenticatedHerramientasCapacidadPagoRoute:
+      AuthenticatedHerramientasCapacidadPagoRoute,
+    AuthenticatedHerramientasProyeccionRoute:
+      AuthenticatedHerramientasProyeccionRoute,
+    AuthenticatedHerramientasIndexRoute: AuthenticatedHerramientasIndexRoute,
+  }
+
+const AuthenticatedHerramientasRouteWithChildren =
+  AuthenticatedHerramientasRoute._addFileChildren(
+    AuthenticatedHerramientasRouteChildren,
+  )
+
 interface AuthenticatedRouteChildren {
   AuthenticatedAcademiaRoute: typeof AuthenticatedAcademiaRouteWithChildren
   AuthenticatedApoderadosNuvexRoute: typeof AuthenticatedApoderadosNuvexRoute
@@ -1584,6 +1682,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDirectorioRoute: typeof AuthenticatedDirectorioRoute
   AuthenticatedFinanzasRoute: typeof AuthenticatedFinanzasRouteWithChildren
   AuthenticatedGestionUsuariosRoute: typeof AuthenticatedGestionUsuariosRoute
+  AuthenticatedHerramientasRoute: typeof AuthenticatedHerramientasRouteWithChildren
   AuthenticatedIncidentesRoute: typeof AuthenticatedIncidentesRoute
   AuthenticatedMensajeriaRoute: typeof AuthenticatedMensajeriaRoute
   AuthenticatedMiPerfilRoute: typeof AuthenticatedMiPerfilRoute
@@ -1632,6 +1731,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDirectorioRoute: AuthenticatedDirectorioRoute,
   AuthenticatedFinanzasRoute: AuthenticatedFinanzasRouteWithChildren,
   AuthenticatedGestionUsuariosRoute: AuthenticatedGestionUsuariosRoute,
+  AuthenticatedHerramientasRoute: AuthenticatedHerramientasRouteWithChildren,
   AuthenticatedIncidentesRoute: AuthenticatedIncidentesRoute,
   AuthenticatedMensajeriaRoute: AuthenticatedMensajeriaRoute,
   AuthenticatedMiPerfilRoute: AuthenticatedMiPerfilRoute,
@@ -1703,13 +1803,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
