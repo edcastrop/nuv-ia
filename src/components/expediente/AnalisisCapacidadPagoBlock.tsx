@@ -8,15 +8,17 @@ import { useServerFn } from "@tanstack/react-start";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
+
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Loader2, Upload, X, ShieldCheck, AlertTriangle, AlertOctagon, FileText, Sparkles } from "lucide-react";
+import { Loader2, Upload, X, ShieldCheck, AlertTriangle, AlertOctagon, FileText, Sparkles, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCOP } from "@/lib/format";
 import { analizarCapacidadPago, type AnalisisCapacidadResultado } from "@/lib/analisisCapacidad.functions";
+import { enviarSolicitudPlazoBanco } from "@/lib/solicitudPlazoBanco.functions";
 import { unzipSync } from "fflate";
 
 export const BANCOS_REQUIEREN_CAPACIDAD = [
@@ -37,8 +39,8 @@ export function bancoRequiereAnalisisCapacidad(banco: string | undefined | null)
   return BANCOS_REQUIEREN_CAPACIDAD.some((b) => n.includes(b));
 }
 
-type TipoDoc = "nomina" | "carta_laboral" | "renta" | "otro";
-type TipoPersona = "empleado_mensual" | "empleado_quincenal";
+type TipoDoc = "nomina" | "carta_laboral" | "renta" | "extracto" | "otro";
+type TipoPersona = "empleado_mensual" | "empleado_quincenal" | "independiente";
 type Rol = "titular" | "codeudor";
 
 type ArchivoLocal = {
@@ -112,7 +114,10 @@ function MinDocsHint({ tipo }: { tipo: TipoPersona }) {
   if (tipo === "empleado_mensual") {
     return <p className="text-xs text-muted-foreground">Requeridos: <b>3 últimas nóminas mensuales</b> + carta laboral + última declaración de renta.</p>;
   }
-  return <p className="text-xs text-muted-foreground">Requeridos: <b>6 últimas nóminas quincenales</b> + carta laboral + última declaración de renta.</p>;
+  if (tipo === "empleado_quincenal") {
+    return <p className="text-xs text-muted-foreground">Requeridos: <b>6 últimas nóminas quincenales</b> + carta laboral + última declaración de renta.</p>;
+  }
+  return <p className="text-xs text-muted-foreground">Requeridos: <b>3 últimos extractos bancarios</b> + última declaración de renta.</p>;
 }
 
 function SemaforoBadge({ s }: { s: "verde" | "amarillo" | "rojo" | "sin_datos" }) {
@@ -132,6 +137,7 @@ function SemaforoBadge({ s }: { s: "verde" | "amarillo" | "rojo" | "sin_datos" }
 
 export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta }: Props) {
   const ejecutar = useServerFn(analizarCapacidadPago);
+  const enviarSolicitud = useServerFn(enviarSolicitudPlazoBanco);
 
   const [esVis, setEsVis] = useState(false);
   const [cuota, setCuota] = useState<number>(cuotaPropuesta || 0);
@@ -139,6 +145,11 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
   const [analizando, setAnalizando] = useState(false);
   const [resultado, setResultado] = useState<AnalisisCapacidadResultado["data"] | null>(null);
   const [cargandoUltimo, setCargandoUltimo] = useState(true);
+
+  // Modal "Construir solicitud al banco"
+  const [openSolicitud, setOpenSolicitud] = useState(false);
+  const [plazoNuevo, setPlazoNuevo] = useState<number>(0);
+  const [enviandoSolicitud, setEnviandoSolicitud] = useState(false);
 
   useEffect(() => {
     setCuota(cuotaPropuesta || 0);
@@ -180,6 +191,7 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
 
   const tipoDocFromName = (name: string): TipoDoc => {
     const n = name.toLowerCase();
+    if (n.includes("extract") || n.includes("estado de cuenta") || n.includes("statement")) return "extracto";
     if (n.includes("nomi") || n.includes("desprend") || n.includes("payroll")) return "nomina";
     if (n.includes("carta") || n.includes("labor")) return "carta_laboral";
     if (n.includes("renta") || n.includes("dian") || n.includes("declarac")) return "renta";
@@ -348,6 +360,44 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
     }
   };
 
+  const construirYEnviarSolicitud = async () => {
+    if (!resultado) { toast.error("Primero ejecuta el análisis de capacidad."); return; }
+    if (!plazoNuevo || plazoNuevo <= 0) { toast.error("Indica el nuevo plazo en meses."); return; }
+    const archivos = personas.flatMap((p) => p.archivos);
+    if (archivos.length === 0) { toast.error("No hay soportes adjuntos."); return; }
+
+    setEnviandoSolicitud(true);
+    try {
+      const adjuntos = archivos.map((a) => ({
+        filename: a.nombre,
+        contentBase64: a.dataUrl.includes(",") ? a.dataUrl.split(",")[1] : a.dataUrl,
+        contentType: a.mime || "application/octet-stream",
+      }));
+      const documentos = archivos.map((a) => `${a.tipo === "otro" ? "Documento" : a.tipo.replace("_", " ")} — ${a.nombre}`);
+
+      const titular = personas.find((p) => p.rol === "titular") ?? personas[0];
+
+      await enviarSolicitud({
+        data: {
+          expedienteId,
+          plazoNuevoMeses: plazoNuevo,
+          cuotaProyectada: cuota,
+          esVis,
+          tipoPersona: titular.tipoPersona,
+          documentos,
+          adjuntos,
+        },
+      });
+      toast.success("Solicitud enviada a Jurídica (juridica@nuvex.com.co).");
+      setOpenSolicitud(false);
+    } catch (e) {
+      console.error(e);
+      toast.error((e as Error).message || "No se pudo enviar la solicitud.");
+    } finally {
+      setEnviandoSolicitud(false);
+    }
+  };
+
   if (!bancoRequiereAnalisisCapacidad(banco)) return null;
 
   return (
@@ -430,6 +480,7 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
                 <SelectContent>
                   <SelectItem value="empleado_mensual">Empleado · pago mensual</SelectItem>
                   <SelectItem value="empleado_quincenal">Empleado · pago quincenal</SelectItem>
+                  <SelectItem value="independiente">Independiente</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -487,6 +538,7 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
                       <SelectItem value="nomina">Nómina</SelectItem>
                       <SelectItem value="carta_laboral">Carta laboral</SelectItem>
                       <SelectItem value="renta">Renta</SelectItem>
+                      <SelectItem value="extracto">Extracto bancario</SelectItem>
                       <SelectItem value="otro">Otro</SelectItem>
                     </SelectContent>
                   </Select>
@@ -498,7 +550,7 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
         </div>
       ))}
 
-      <div className="flex items-center gap-3 mb-5">
+      <div className="flex items-center gap-3 mb-5 flex-wrap">
         {personas.length < 2 && (
           <Button variant="outline" size="sm" onClick={agregarCodeudor}>+ Agregar codeudor</Button>
         )}
@@ -508,6 +560,15 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
           className="bg-[#445DA3] hover:bg-[#3a4f8a] ml-auto"
         >
           {analizando ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Analizando con IA…</>) : (<><Sparkles className="w-4 h-4 mr-2" />Ejecutar análisis</>)}
+        </Button>
+        <Button
+          onClick={() => { setPlazoNuevo(0); setOpenSolicitud(true); }}
+          disabled={!resultado || totalArchivos === 0}
+          variant="outline"
+          className="border-emerald-600 text-emerald-700 hover:bg-emerald-50"
+          title={!resultado ? "Ejecuta primero el análisis" : "Construir y enviar a Jurídica"}
+        >
+          <Mail className="w-4 h-4 mr-2" /> Construir solicitud al banco
         </Button>
       </div>
 
@@ -576,6 +637,57 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
           ))}
         </div>
       )}
+
+      <Dialog open={openSolicitud} onOpenChange={setOpenSolicitud}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Construir solicitud al banco</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="text-xs bg-slate-50 border rounded-lg p-3">
+              <div><b>Destinatario:</b> juridica@nuvex.com.co</div>
+              <div><b>Banco:</b> {banco}</div>
+              <div><b>Cuota proyectada:</b> {formatCOP(cuota)} · <b>{esVis ? "VIS (40%)" : "No VIS (30%)"}</b></div>
+              <div><b>Soportes adjuntos:</b> {totalArchivos}</div>
+            </div>
+
+            <div>
+              <Label className="text-xs">Nuevo plazo solicitado (meses)</Label>
+              <Input
+                type="number"
+                min={1}
+                max={360}
+                value={plazoNuevo || ""}
+                onChange={(e) => setPlazoNuevo(Number(e.target.value))}
+                placeholder="Ej. 180"
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Solicitud formal de <b>disminución de plazo</b> conforme a la Ley 546 de 1999.
+              </p>
+            </div>
+
+            <div className="text-[11px] text-slate-600">
+              Se adjuntarán los {totalArchivos} documento(s) cargados en el módulo
+              (nóminas/extractos, carta laboral y renta según aplique) y se enviará
+              copia (CC) al asesor del caso.
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenSolicitud(false)} disabled={enviandoSolicitud}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={construirYEnviarSolicitud}
+              disabled={enviandoSolicitud || !plazoNuevo || plazoNuevo <= 0}
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
+              {enviandoSolicitud ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Enviando…</>) : (<><Mail className="w-4 h-4 mr-2" />Enviar a Jurídica</>)}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

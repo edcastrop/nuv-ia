@@ -11,13 +11,13 @@ const FileSchema = z.object({
   mime: z.string().min(3).max(80),
   // Acepta data: URL (image/* o application/pdf). Hasta ~12MB base64.
   dataUrl: z.string().min(20).max(18_000_000),
-  // Etiqueta opcional para guiar a la IA: "nomina", "carta_laboral", "renta"
-  tipo: z.enum(["nomina", "carta_laboral", "renta", "otro"]).default("otro"),
+  // Etiqueta opcional para guiar a la IA
+  tipo: z.enum(["nomina", "carta_laboral", "renta", "extracto", "otro"]).default("otro"),
 });
 
 const PersonaSchema = z.object({
   rol: z.enum(["titular", "codeudor"]),
-  tipoPersona: z.enum(["empleado_mensual", "empleado_quincenal"]),
+  tipoPersona: z.enum(["empleado_mensual", "empleado_quincenal", "independiente"]),
   archivos: z.array(FileSchema).min(1).max(12),
 });
 
@@ -30,7 +30,7 @@ const InputSchema = z.object({
 
 export type AnalisisPersonaResultado = {
   rol: "titular" | "codeudor";
-  tipoPersona: "empleado_mensual" | "empleado_quincenal";
+  tipoPersona: "empleado_mensual" | "empleado_quincenal" | "independiente";
   ingresoMensualPromedio: number;
   ingresosDetectados: Array<{
     documento: string;
@@ -101,19 +101,27 @@ const tool = {
   },
 };
 
-const SYSTEM_PROMPT = `Eres NUVEX IA, analista financiero senior. Tu tarea es leer soportes laborales colombianos (comprobantes de nómina, carta laboral y declaración de renta) de UN empleado y calcular su ingreso mensual promedio para presentación a un banco.
+const SYSTEM_PROMPT = `Eres NUVEX IA, analista financiero senior. Tu tarea es leer soportes de ingresos colombianos de UNA persona y calcular su ingreso mensual promedio para presentación a un banco.
 
-Reglas:
+Personas EMPLEADAS — soportes típicos: comprobantes de nómina (mensual o quincenal), carta laboral, declaración de renta.
+Personas INDEPENDIENTES — soportes típicos: 3 últimos extractos bancarios y declaración de renta.
+
+Reglas generales:
 - NO inventes cifras. Si un documento es ilegible o no aplica, devuelve valor 0 y baja la confianza.
-- El cálculo final es el INGRESO MENSUAL PROMEDIO neto recurrente. Si solo dispones del devengado, úsalo y anótalo en observaciones.
-- Si el empleado es quincenal, suma las dos quincenas del mismo mes para obtener el ingreso mensual; luego promedia los meses disponibles.
-- EXCLUYE bonificaciones extraordinarias claramente no recurrentes (prima de éxito puntual, indemnizaciones). INCLUYE auxilios fijos (transporte, alimentación cuando aparezca como recurrente).
-- La carta laboral suele repetir el salario; úsala para CRUZAR consistencia, no para sumar al promedio (registra tipo "salario_carta" con valor 0 o anótala en observaciones si el salario reportado difiere del de las nóminas en más del 10%).
-- La renta declarada sirve para CRUZAR consistencia anual (ingresos / 12). Regístrala con tipo "ingreso_declarado_renta" valor=ingreso mensual implícito; si difiere >15% del promedio de nóminas, agrega una observación.
-- Devuelve confianza "alta" solo si tienes ≥3 nóminas mensuales (o 6 quincenales) consistentes y la carta/renta no contradicen.`;
+- El cálculo final es el INGRESO MENSUAL PROMEDIO neto recurrente.
+- Para EMPLEADOS quincenales suma las dos quincenas del mismo mes y promedia los meses disponibles.
+- Para EMPLEADOS: EXCLUYE bonificaciones extraordinarias no recurrentes (prima de éxito puntual, indemnizaciones). INCLUYE auxilios fijos recurrentes (transporte, alimentación).
+- La carta laboral suele repetir el salario; úsala para CRUZAR consistencia, no para sumar al promedio (tipo "salario_carta" con valor 0, observación si difiere >10% de las nóminas).
+- Para INDEPENDIENTES: analiza los abonos/consignaciones recurrentes (no transferencias entre cuentas propias ni reembolsos puntuales), promedia el ingreso mensual de los 3 extractos, deja en observaciones la metodología. Tipo "consignaciones_mensual".
+- La renta declarada sirve para CRUZAR consistencia anual (ingresos / 12). Tipo "ingreso_declarado_renta" valor=ingreso mensual implícito; si difiere >15% del promedio del banco/nómina, observación.
+- Confianza "alta" solo si: empleados con ≥3 nóminas mensuales (o 6 quincenales) consistentes; independientes con 3 extractos completos y consistentes con renta.`;
 
 function buildUserContent(persona: z.infer<typeof PersonaSchema>) {
-  const intro = `Analiza los soportes financieros de este empleado (${persona.tipoPersona.replace("_", " ")}) y llama la función extraer_ingresos. Documentos adjuntos (${persona.archivos.length}):`;
+  const tipoLabel =
+    persona.tipoPersona === "independiente"
+      ? "persona independiente (extractos bancarios + renta)"
+      : `empleado ${persona.tipoPersona.replace("empleado_", "").replace("_", " ")}`;
+  const intro = `Analiza los soportes financieros de esta ${tipoLabel} y llama la función extraer_ingresos. Documentos adjuntos (${persona.archivos.length}):`;
   const parts: Array<Record<string, unknown>> = [{ type: "text", text: intro }];
   for (const f of persona.archivos) {
     parts.push({ type: "text", text: `\n— ${f.tipo.toUpperCase()}: ${f.nombre}` });
