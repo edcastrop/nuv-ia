@@ -94,8 +94,8 @@ export function ResultadoFinal({
   aprobadoInicial?: AprobadoData | null;
   estado?: EstadoExpediente;
   fechaPagoHonorarios?: string;
-  onInformeEnviado?: () => void;
-  onCuentaCobroEnviada?: () => void;
+  onInformeEnviado?: () => void | Promise<void>;
+  onCuentaCobroEnviada?: () => void | Promise<void>;
 }) {
 
   const [aprob, setAprob] = useState<AprobacionState>(() =>
