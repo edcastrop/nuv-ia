@@ -185,6 +185,7 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
 
   const tipoDocFromName = (name: string): TipoDoc => {
     const n = name.toLowerCase();
+    if (n.includes("extract") || n.includes("estado de cuenta") || n.includes("statement")) return "extracto";
     if (n.includes("nomi") || n.includes("desprend") || n.includes("payroll")) return "nomina";
     if (n.includes("carta") || n.includes("labor")) return "carta_laboral";
     if (n.includes("renta") || n.includes("dian") || n.includes("declarac")) return "renta";
