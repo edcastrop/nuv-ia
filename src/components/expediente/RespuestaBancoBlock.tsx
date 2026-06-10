@@ -6,7 +6,7 @@ import { formatCOP, parseCurrency, parseDecimal } from "@/lib/format";
 import { honorariosFinalesCliente, calcularRecalculoHonorarios, guardarRecalculoHonorarios } from "@/lib/honorarios";
 import { calcularPrecision, registrarPrecisionAnalista } from "@/lib/precisionHistorica";
 import { aplicaOtrosi, abrirOtrosiImprimible } from "@/lib/otrosiContrato";
-import { cambiarEstadoCaso } from "@/lib/casoEstados";
+import { cambiarEstadoConValidacion } from "@/lib/pipelineTransiciones";
 // Notificación al AFC: TODO cuando exista crearNotificacion helper.
 
 interface Props {
@@ -261,7 +261,7 @@ export function RespuestaBancoBlock({
       // 3) Avanzar el estado del caso para cerrar la etapa "Respuesta Banco".
       if (cuotaAprob > 0) {
         try {
-          await cambiarEstadoCaso(
+          await cambiarEstadoConValidacion(
             expedienteId,
             "aplicado_banco",
             "aplicado_banco",

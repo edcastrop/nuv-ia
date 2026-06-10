@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { CheckCircle2, AlertTriangle, ArrowRight, X, Sparkles } from "lucide-react";
+import confetti from "canvas-confetti";
 import {
   ETAPA_FEEDBACK_EVENT,
   type EtapaFeedbackEventDetail,
@@ -26,6 +27,42 @@ type State =
       faltantes: string[];
     };
 
+function fireCierreConfetti() {
+  if (typeof window === "undefined") return;
+  const duration = 1800;
+  const end = Date.now() + duration;
+  const colors = ["#445DA3", "#84B98F", "#A7F3C4", "#FFD15C", "#FFFFFF"];
+  // Ráfaga inicial central
+  confetti({
+    particleCount: 120,
+    spread: 80,
+    startVelocity: 45,
+    origin: { x: 0.5, y: 0.35 },
+    colors,
+    zIndex: 200,
+  });
+  // Ráfagas laterales sostenidas
+  (function frame() {
+    confetti({
+      particleCount: 4,
+      angle: 60,
+      spread: 55,
+      origin: { x: 0, y: 0.6 },
+      colors,
+      zIndex: 200,
+    });
+    confetti({
+      particleCount: 4,
+      angle: 120,
+      spread: 55,
+      origin: { x: 1, y: 0.6 },
+      colors,
+      zIndex: 200,
+    });
+    if (Date.now() < end) requestAnimationFrame(frame);
+  })();
+}
+
 export function EtapaTransicionDialog() {
   const [state, setState] = useState<State>({ open: false });
 
@@ -41,6 +78,7 @@ export function EtapaTransicionDialog() {
           etapaAnteriorId: d.etapaAnteriorId,
           etapaNuevaId: d.etapaNuevaId,
         });
+        if (d.etapaNuevaId === "finalizado") fireCierreConfetti();
       } else {
         setState({
           open: true,
