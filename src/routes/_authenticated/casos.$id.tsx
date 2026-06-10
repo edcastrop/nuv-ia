@@ -162,7 +162,17 @@ function CasoDetail() {
             <ValidacionIdentidadBlock exp={exp} onChanged={reload} />
           </div>
           <ValidacionRadicacionBlock expedienteId={exp.id} />
-          <EntregaDocumentalBlock expedienteId={exp.id} />
+          <EntregaDocumentalBlock
+            expedienteId={exp.id}
+            onIrAFinanciero={() => {
+              setTab("financiero");
+              setTimeout(() => {
+                document
+                  .getElementById("simulador-financiero-qa")
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }, 120);
+            }}
+          />
           <ValidacionEntregablesBlock expedienteId={exp.id} />
         </TabsContent>
 
