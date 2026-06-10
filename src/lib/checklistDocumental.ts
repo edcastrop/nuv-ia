@@ -238,6 +238,12 @@ const MATRIZ_DOCUMENTAL: Record<BancoKey, DocRequerido[]> = {
     ...FINANCIEROS_EMPLEADO,
     ...FINANCIEROS_INDEPENDIENTE,
   ],
+  caja_social_bbva_itau: [
+    CEDULA_AMPLIADA,
+    CERT_INGRESOS_RET,
+    ...FINANCIEROS_EMPLEADO,
+    ...FINANCIEROS_INDEPENDIENTE,
+  ],
   otros: [
     ...FINANCIEROS_EMPLEADO,
     ...FINANCIEROS_INDEPENDIENTE,
