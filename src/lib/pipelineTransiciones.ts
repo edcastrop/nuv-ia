@@ -15,6 +15,7 @@ import {
   getEtapaById,
   type EtapaPipelineId,
 } from "@/lib/pipelineEtapas";
+import { notifyEtapaExito, notifyEtapaError } from "@/lib/etapaFeedback";
 
 export interface TransicionResult {
   ok: boolean;
@@ -147,14 +148,31 @@ export async function cambiarEstadoValidado(opts: {
   submotivo?: string;
 }): Promise<TransicionResult> {
   const r = validateTransicion(opts.estadoAnterior, opts.estadoNuevo);
-  if (!r.ok) throw new TransicionInvalidaError(r);
-  await cambiarEstadoCaso(
-    opts.expedienteId,
-    opts.estadoNuevo,
-    opts.accion,
-    opts.observacion,
-    opts.submotivo,
-  );
+  if (!r.ok) {
+    notifyEtapaError({
+      etapaActualId: r.etapaAnterior,
+      etapaDestinoId: r.etapaNueva,
+      razon: r.reason ?? "Transición inválida",
+    });
+    throw new TransicionInvalidaError(r);
+  }
+  try {
+    await cambiarEstadoCaso(
+      opts.expedienteId,
+      opts.estadoNuevo,
+      opts.accion,
+      opts.observacion,
+      opts.submotivo,
+    );
+  } catch (err) {
+    notifyEtapaError({
+      etapaActualId: r.etapaAnterior,
+      etapaDestinoId: r.etapaNueva,
+      razon: err instanceof Error ? err.message : "No se pudo registrar el cambio de estado.",
+    });
+    throw err;
+  }
+  notifyEtapaExito(r.etapaAnterior, r.etapaNueva);
   return r;
 }
 
@@ -189,8 +207,26 @@ export async function cambiarEstadoConValidacion(
       etapaNueva,
       delta: indexOfEtapa(etapaNueva) - indexOfEtapa(etapaAnterior),
     };
-    if (!result.ok) throw new TransicionInvalidaError(result);
-    await cambiarEstadoCaso(expedienteId, nuevoEstado, accion, observacion, submotivo);
+    if (!result.ok) {
+      notifyEtapaError({
+        etapaActualId: etapaAnterior,
+        etapaDestinoId: etapaNueva,
+        razon: result.reason!,
+        faltantes: ["Aceptación expresa del cliente (WhatsApp, correo o carta)"],
+      });
+      throw new TransicionInvalidaError(result);
+    }
+    try {
+      await cambiarEstadoCaso(expedienteId, nuevoEstado, accion, observacion, submotivo);
+    } catch (err) {
+      notifyEtapaError({
+        etapaActualId: etapaAnterior,
+        etapaDestinoId: etapaNueva,
+        razon: err instanceof Error ? err.message : "No se pudo registrar el cambio de estado.",
+      });
+      throw err;
+    }
+    notifyEtapaExito(etapaAnterior, etapaNueva);
     return result;
   }
 

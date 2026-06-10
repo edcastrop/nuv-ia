@@ -21,6 +21,7 @@ import { iniciarPresenciaPropia, detenerPresenciaPropia } from "@/lib/presencia"
 import { NotificacionesAlerts } from "@/components/notificaciones/NotificacionesAlerts";
 import { useNivelAutonomia } from "@/hooks/useNivelAutonomia";
 import { etiquetaNivel } from "@/lib/autonomia";
+import { EtapaTransicionDialog } from "@/components/expediente/EtapaTransicionDialog";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
@@ -597,6 +598,8 @@ function AuthenticatedLayout() {
 
         {!isApoderado && <NuvexGptButton />}
         <NotificacionesAlerts />
+        <EtapaTransicionDialog />
+
 
         <footer className="border-t border-[#E3E7EE] bg-white">
           <div className="mx-auto max-w-7xl px-6 py-5 text-center text-[11px] text-[#242424]/60">
