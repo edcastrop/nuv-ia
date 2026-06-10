@@ -35,6 +35,7 @@ import { SaveExpedienteButton } from "./SaveExpedienteButton";
 import type { Expediente } from "@/lib/expedientes";
 import { ExtractoReader, type ExtractoApplyPayload } from "./ExtractoReader";
 import { toast } from "sonner";
+import { useMonedaMismatchAlert } from "./MonedaMismatchDialog";
 import { FreshBlock } from "./FreshBlock";
 import {
   PropuestasComerciales,
