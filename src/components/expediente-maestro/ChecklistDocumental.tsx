@@ -101,6 +101,40 @@ export function ChecklistDocumental({ expediente, simExpediente }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expediente.id]);
 
+  // Si ya existe validación de la documentación pero el caso aún no fue
+  // avanzado a "documentación completa", lo hacemos una sola vez por sesión.
+  // Esto cierra visualmente la etapa Documentación Bancaria en el stepper.
+  useEffect(() => {
+    if (!validacion) return;
+    const estadoActual =
+      (expediente as unknown as { estado_caso?: string | null })?.estado_caso ?? "";
+    const estadosPrevios = new Set([
+      "lead_creado", "prospecto", "extracto_recibido",
+      "simulacion_realizada", "simulado",
+      "proyeccion_pendiente_qa", "proyeccion_devuelta_qa", "proyeccion_aprobada_qa",
+      "propuesta_presentada", "propuesta_enviada", "acepto_propuesta", "negociacion",
+      "pendiente_contratacion", "enviado_contratacion",
+      "contrato_enviado", "contrato_generado", "contrato_firmado",
+      "poder_generado", "poder_firmado",
+    ]);
+    if (!estadosPrevios.has(estadoActual)) return;
+    (async () => {
+      try {
+        const { cambiarEstadoConValidacion } = await import("@/lib/pipelineTransiciones");
+        await cambiarEstadoConValidacion(
+          expediente.id,
+          "documentacion_completa",
+          "documentacion_completa",
+          "Checklist documental validado — avance automático",
+        );
+      } catch (e) {
+        console.warn("[pipeline] auto-avance retroactivo tras validación", e);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [validacion?.expediente_id]);
+
+
   const docs = useMemo(
     () => buildChecklist(expediente, perfil, flags),
     [expediente, perfil, flags],
