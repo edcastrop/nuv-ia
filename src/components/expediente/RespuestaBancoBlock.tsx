@@ -414,7 +414,7 @@ export function RespuestaBancoBlock({
             {msg && <span className="text-xs text-slate-500">{msg}</span>}
             <button
               onClick={guardarFinanciero}
-              disabled={saving || !simulacionId}
+              disabled={saving}
               className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white disabled:opacity-40"
             >
               {saving ? "Guardando…" : "Guardar respuesta financiera"}
