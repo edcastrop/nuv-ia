@@ -40,6 +40,9 @@ export function EtapasFinalesBlock({
     etapa_pipeline: etapaPipeline ?? null,
   });
   const idxActual = indexOfEtapa(etapaActual);
+  const idxActualVisual = aceptacionAt && etapaActual === "resultado_banco"
+    ? indexOfEtapa("informe")
+    : idxActual;
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
@@ -56,7 +59,7 @@ export function EtapasFinalesBlock({
 
       <AceptacionCliente
         expedienteId={expedienteId}
-        idxActual={idxActual}
+        idxActual={idxActualVisual}
         aceptacionAt={aceptacionAt}
         aceptacionMedio={aceptacionMedio}
         aceptacionObservaciones={aceptacionObservaciones}
@@ -68,7 +71,7 @@ export function EtapasFinalesBlock({
         titulo="Informe final"
         descripcion="Genera y envía el informe final con condiciones aprobadas, honorarios reajustados y soportes."
         accion="resultado_final"
-        idxActual={idxActual}
+        idxActual={idxActualVisual}
         expedienteId={expedienteId}
         onChanged={onChanged}
         extra={
@@ -90,7 +93,7 @@ export function EtapasFinalesBlock({
         titulo="Cuenta de cobro / Facturación"
         descripcion="Genera la cuenta de cobro definitiva y envíala al cliente."
         accion="cuenta_cobro_generada"
-        idxActual={idxActual}
+        idxActual={idxActualVisual}
         expedienteId={expedienteId}
         onChanged={onChanged}
         extra={
@@ -108,7 +111,7 @@ export function EtapasFinalesBlock({
         titulo="Pago de honorarios"
         descripcion="Confirma el pago efectivo del cliente y dispara la liquidación de comisión AFC."
         accion="honorarios_pagados"
-        idxActual={idxActual}
+        idxActual={idxActualVisual}
         expedienteId={expedienteId}
         onChanged={onChanged}
       />
@@ -118,7 +121,7 @@ export function EtapasFinalesBlock({
         titulo="Paz y salvo"
         descripcion="Emite el paz y salvo al cliente. Requiere confirmación del pago de honorarios."
         accion="paz_y_salvo_generado"
-        idxActual={idxActual}
+        idxActual={idxActualVisual}
         expedienteId={expedienteId}
         onChanged={onChanged}
       />
@@ -128,7 +131,7 @@ export function EtapasFinalesBlock({
         titulo="Caso cerrado"
         descripcion="Cierre operativo definitivo. Los indicadores finales alimentan el dashboard gerencial."
         accion="caso_finalizado"
-        idxActual={idxActual}
+        idxActual={idxActualVisual}
         expedienteId={expedienteId}
         onChanged={onChanged}
       />
@@ -164,8 +167,8 @@ function AceptacionCliente({
 
   const yaRegistrada = !!aceptacionAt;
   const estado = useMemo(
-    () => clasificarEtapa(idxActual, idxEtapa),
-    [idxActual],
+    () => (yaRegistrada ? "completada" : clasificarEtapa(idxActual, idxEtapa)),
+    [idxActual, yaRegistrada],
   );
 
   async function guardar() {
