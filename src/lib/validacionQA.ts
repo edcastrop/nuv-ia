@@ -51,6 +51,14 @@ export async function enviarAValidacionQA(expedienteId: string): Promise<void> {
     primera_revision: primera,
   } as never);
   if (error) throw new Error(error.message);
+  // Auto-avance de estado: marcar el caso como "pendiente QA" para que el
+  // stepper / torre de control reflejen visualmente que la etapa de Proyección
+  // se cerró y el caso pasó a Auditoría QA.
+  try {
+    await cambiarEstadoCaso(expedienteId, "proyeccion_pendiente_qa", "manual", "Enviada a validación QA");
+  } catch (e) {
+    console.warn("[validacionQA] no se pudo actualizar estado_caso al enviar a QA", e);
+  }
   // Disparador: avisar a Directores QA + super_admin
   await notifQASolicitada(expedienteId);
 }
