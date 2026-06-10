@@ -41,6 +41,38 @@ export function useEstadoSugerido(expedienteId: string | undefined | null, onCha
 
       await cambiarEstadoConValidacion(expedienteId, pendiente.estado, pendiente.accion, observacion || undefined, submotivo);
       toast.success("Estado del caso actualizado");
+
+      // Auto-avance: si se acaba de marcar contrato_firmado o poder_firmado
+      // y AMBOS ya están firmados, avanzar a "documentación completa" para
+      // cerrar visualmente la etapa de Contratación y abrir Documentación Bancaria.
+      if (pendiente.accion === "contrato_firmado" || pendiente.accion === "poder_firmado") {
+        try {
+          const { data: hist } = await supabase
+            .from("expediente_historial")
+            .select("accion_origen,estado_caso_nuevo")
+            .eq("expediente_id", expedienteId);
+          const rows = (hist as unknown as { accion_origen: string; estado_caso_nuevo: string }[] | null) ?? [];
+          const tieneContrato = rows.some(
+            (r) => r.accion_origen === "contrato_firmado" || r.estado_caso_nuevo === "contrato_firmado",
+          );
+          const tienePoder = rows.some(
+            (r) => r.accion_origen === "poder_firmado" || r.estado_caso_nuevo === "poder_firmado",
+          );
+          if (tieneContrato && tienePoder) {
+            await cambiarEstadoConValidacion(
+              expedienteId,
+              "documentacion_completa",
+              "documentacion_completa",
+              "Contrato y poder firmados — avance automático",
+            );
+            toast.success("Contratación completada — pasa a Documentación Bancaria");
+          }
+        } catch (e) {
+          // No romper el flujo principal si el auto-avance falla
+          console.warn("[pipeline] auto-avance documentacion_completa", e);
+        }
+      }
+
       onChanged?.();
     } catch (err) {
       if (err instanceof TransicionInvalidaError) {
