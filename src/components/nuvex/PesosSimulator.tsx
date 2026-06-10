@@ -297,13 +297,14 @@ export function PesosSimulator({
       <ExtractoReader
         modo="pesos"
         existingArchivoPath={extractoArchivoPath}
-        onApply={(p: ExtractoApplyPayload) => {
+        onApply={async (p: ExtractoApplyPayload) => {
           // Alerta crítica: bloquear si el extracto está en UVR pero estamos en simulador de Pesos.
           if (p.monedaDetectada && p.monedaDetectada !== "pesos") {
-            const ok = window.confirm(
-              `⚠️ ALERTA DE MONEDA\n\nEl extracto cargado está en UVR, pero este simulador es en PESOS.\n\nSi continúas, la proyección quedará mal calculada.\n\nAceptar = aplicar de todos modos (NO recomendado).\nCancelar = no aplicar nada.`,
-            );
-            if (!ok) {
+            const continuar = await monedaAlerta.confirm({
+              detectada: p.monedaDetectada,
+              simulador: "pesos",
+            });
+            if (!continuar) {
               toast.error(
                 "Carga cancelada: el extracto es UVR pero el simulador es Pesos. Usa el simulador UVR.",
                 { duration: 6000 },
