@@ -436,6 +436,7 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
                 <SelectContent>
                   <SelectItem value="empleado_mensual">Empleado · pago mensual</SelectItem>
                   <SelectItem value="empleado_quincenal">Empleado · pago quincenal</SelectItem>
+                  <SelectItem value="independiente">Independiente</SelectItem>
                 </SelectContent>
               </Select>
             </div>
