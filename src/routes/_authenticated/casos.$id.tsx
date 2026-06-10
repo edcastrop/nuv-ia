@@ -22,6 +22,9 @@ import { VersionesDocumentalesBlock } from "@/components/expediente/VersionesDoc
 import { RespuestaBancoBlock } from "@/components/expediente/RespuestaBancoBlock";
 import { EtapasFinalesBlock } from "@/components/expediente/EtapasFinalesBlock";
 import { ResultadoFinal, type ProyeccionNuvex } from "@/components/nuvex/ResultadoFinal";
+import { cambiarEstadoConValidacion } from "@/lib/pipelineTransiciones";
+import { ACCION_A_ESTADO } from "@/lib/casoEstados";
+
 import { parseCurrency, parseDecimal, parsePercentage } from "@/lib/format";
 import { readValidacion, puedeGenerarDocumentos, razonBloqueoDocs } from "@/lib/validacionIdentidad";
 import { addRecentCase } from "@/lib/recentCases";
@@ -296,8 +299,21 @@ function CasoDetail() {
                   expedienteId={exp.id}
                   aprobadoInicial={exp.aprobado_data}
                   estado={exp.estado}
+                  onInformeEnviado={async () => {
+                    try {
+                      await cambiarEstadoConValidacion(exp.id, ACCION_A_ESTADO["resultado_final"], "resultado_final");
+                    } catch (e) { console.warn("[informe_final] avance etapa", e); }
+                    reload();
+                  }}
+                  onCuentaCobroEnviada={async () => {
+                    try {
+                      await cambiarEstadoConValidacion(exp.id, ACCION_A_ESTADO["cuenta_cobro_generada"], "cuenta_cobro_generada");
+                    } catch (e) { console.warn("[cuenta_cobro] avance etapa", e); }
+                    reload();
+                  }}
                 />
               </div>
+
             );
           })()}
 
