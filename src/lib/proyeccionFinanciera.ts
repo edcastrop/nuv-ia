@@ -104,16 +104,25 @@ export const totalSegurosMensual = (i: ProyeccionFinancieraInput): number =>
 /**
  * Proyecta el crédito con cuota fija (sin seguros) calculada a partir de la
  * cuota actual del banco. Permite aportes mensuales extra y abono extraordinario.
+ *
+ * Si `input.moneda === "uvr"`, escala mes a mes el saldo, la cuota y los
+ * seguros con la tasa mensual equivalente a `variacionUvrPct` anual. Esto
+ * refleja el comportamiento real de un crédito UVR donde la unidad se
+ * reajusta con la inflación.
  */
 export function proyectarEscenario(
   input: ProyeccionFinancieraInput,
   escenario: EscenarioInput,
 ): ResultadoEscenario {
-  const seguros = totalSegurosMensual(input);
+  const segurosBase = totalSegurosMensual(input);
   const teaUsada = escenario.nuevaTasa && escenario.nuevaTasa > 0 ? escenario.nuevaTasa : input.teaPct;
   const tasaMensual = teaUsada > 0 ? Math.pow(1 + teaUsada / 100, 1 / 12) - 1 : 0;
-  const cuotaSinSeguros = Math.max(0, input.cuotaActual - seguros);
+  const cuotaSinSegurosBase = Math.max(0, input.cuotaActual - segurosBase);
   const fechaInicio = input.fechaDesembolso ? new Date(input.fechaDesembolso) : new Date();
+
+  const esUvr = input.moneda === "uvr";
+  const variacionAnual = esUvr ? Math.max(0, input.variacionUvrPct ?? 0) : 0;
+  const factorUvr = variacionAnual > 0 ? Math.pow(1 + variacionAnual / 100, 1 / 12) : 1;
 
   let saldo = Math.max(0, input.saldoCapital);
   if (escenario.abonoExtraordinario > 0) {
@@ -129,8 +138,15 @@ export function proyectarEscenario(
   let totalSeguros = 0;
   let totalPagado = 0;
   let i = 0;
+  let cuotaSinSeguros = cuotaSinSegurosBase;
+  let seguros = segurosBase;
 
   while (saldo > 0.5 && i < maxMeses) {
+    if (esUvr && i > 0 && factorUvr !== 1) {
+      saldo = saldo * factorUvr;
+      cuotaSinSeguros = cuotaSinSeguros * factorUvr;
+      seguros = seguros * factorUvr;
+    }
     const interes = saldo * tasaMensual;
     let capital = cuotaSinSeguros - interes + aporteExtra;
     if (capital <= 0) break;

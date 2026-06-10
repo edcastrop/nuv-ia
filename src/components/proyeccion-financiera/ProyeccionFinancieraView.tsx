@@ -727,7 +727,7 @@ export function ProyeccionFinancieraView() {
                   Modela, compara y demuestra el ahorro real.
                 </p>
                 <div className="mt-4 flex flex-wrap items-center gap-2">
-                  {["Hipotecario", "Leasing Habitacional", "Pesos", "UVR", "Escenarios ilimitados"].map(
+                  {["Hipotecario", "Leasing Habitacional", "Escenarios ilimitados"].map(
                     (chip) => (
                       <span
                         key={chip}
@@ -741,8 +741,60 @@ export function ProyeccionFinancieraView() {
                       </span>
                     ),
                   )}
+                  {/* Moneda toggle prominente */}
+                  <div
+                    className="inline-flex items-center gap-0.5 rounded-full p-0.5"
+                    style={{
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                    }}
+                    role="tablist"
+                    aria-label="Moneda del crédito"
+                  >
+                    {(["pesos", "uvr"] as const).map((m) => {
+                      const active = input.moneda === m;
+                      return (
+                        <button
+                          key={m}
+                          type="button"
+                          role="tab"
+                          aria-selected={active}
+                          onClick={() => upd("moneda", m as never)}
+                          className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wider transition ${
+                            active ? "text-white" : "text-white/55 hover:text-white"
+                          }`}
+                          style={
+                            active
+                              ? {
+                                  background:
+                                    "linear-gradient(135deg, #445DA3, #84B98F)",
+                                  boxShadow:
+                                    "0 8px 20px -10px rgba(132,185,143,0.6)",
+                                }
+                              : undefined
+                          }
+                        >
+                          {m === "pesos" ? "Pesos" : "UVR"}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {input.moneda === "uvr" && (
+                    <span
+                      className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10.5px] font-semibold"
+                      style={{
+                        background: "rgba(224,145,58,0.12)",
+                        color: "#E0913A",
+                        border: "1px solid rgba(224,145,58,0.3)",
+                      }}
+                      title="Tasa anual usada para escalar saldo y cuota mes a mes"
+                    >
+                      Modo UVR · variación {(input.variacionUvrPct ?? 0) || 6}%
+                    </span>
+                  )}
                 </div>
               </div>
+
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   onClick={() => setInput(blankInput)}
