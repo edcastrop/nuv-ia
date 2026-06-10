@@ -597,7 +597,13 @@ function SendChecklistModal({
   onSent: () => void;
 }) {
   const send = useServerFn(enviarChecklistCliente);
-  const defaults = useMemo(() => buildEmailDefaults(expediente, docs), [expediente, docs]);
+  // Sólo solicitamos al cliente los documentos que aún están pendientes;
+  // los que ya fueron recibidos/validados/no aplican no deben aparecer en el correo.
+  const docsPendientes = useMemo(
+    () => docsConEstado.filter((d) => d.estado !== "recibido" && d.estado !== "en_revision" && d.estado !== "aprobado" && d.estado !== "no_aplica"),
+    [docsConEstado],
+  );
+  const defaults = useMemo(() => buildEmailDefaults(expediente, docsPendientes), [expediente, docsPendientes]);
 
   // Destinatarios editables
   const [destinatarios, setDestinatarios] = useState<string[]>(() =>
