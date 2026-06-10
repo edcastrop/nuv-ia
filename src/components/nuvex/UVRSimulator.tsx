@@ -34,6 +34,7 @@ import {
 import { SaveExpedienteButton } from "./SaveExpedienteButton";
 import type { Expediente } from "@/lib/expedientes";
 import { ExtractoReader, type ExtractoApplyPayload } from "./ExtractoReader";
+import { toast } from "sonner";
 import { FreshBlock } from "./FreshBlock";
 import {
   PropuestasComerciales,
@@ -299,6 +300,20 @@ export function UVRSimulator({
         modo="uvr"
         existingArchivoPath={extractoArchivoPath}
         onApply={(p: ExtractoApplyPayload) => {
+          // Alerta crítica: bloquear si el extracto está en Pesos pero estamos en simulador UVR.
+          if (p.monedaDetectada && p.monedaDetectada !== "uvr") {
+            const ok = window.confirm(
+              `⚠️ ALERTA DE MONEDA\n\nEl extracto cargado está en PESOS, pero este simulador es en UVR.\n\nSi continúas, la proyección quedará mal calculada.\n\nAceptar = aplicar de todos modos (NO recomendado).\nCancelar = no aplicar nada.`,
+            );
+            if (!ok) {
+              toast.error(
+                "Carga cancelada: el extracto es Pesos pero el simulador es UVR. Usa el simulador de Pesos.",
+                { duration: 6000 },
+              );
+              return;
+            }
+            toast.warning("Aplicando extracto Pesos en simulador UVR. Revisa los resultados.");
+          }
           if (p.archivoPath) setExtractoArchivoPath(p.archivoPath);
           setClient((prev) => ({
             ...prev,

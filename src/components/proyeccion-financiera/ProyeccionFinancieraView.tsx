@@ -1002,24 +1002,28 @@ export function ProyeccionFinancieraView() {
                       <ExtractoReader
                         modo={input.moneda === "uvr" ? "uvr" : "pesos"}
                         onApply={(d: ExtractoApplyPayload) => {
-                          // Alerta: extracto no coincide con la moneda del simulador
-                          const extractoEsUvr = !!d.uvr && !d.pesos;
-                          const extractoEsPesos = !!d.pesos && !d.uvr;
-                          const simEsUvr = input.moneda === "uvr";
-                          const simEsPesos = input.moneda === "pesos";
-                          const mismatch =
-                            (extractoEsUvr && simEsPesos) || (extractoEsPesos && simEsUvr);
+                          // Alerta: extracto no coincide con la moneda del simulador.
+                          // IMPORTANTE: d.pesos / d.uvr se llenan según el modo del lector
+                          // (que es el modo del simulador), por lo que NO sirven para
+                          // detectar la moneda real del extracto. Usamos `monedaDetectada`,
+                          // que el lector calcula a partir de los datos OCR.
+                          const simMoneda: "uvr" | "pesos" = input.moneda === "uvr" ? "uvr" : "pesos";
+                          const detectada = d.monedaDetectada;
+                          const mismatch = !!detectada && detectada !== simMoneda;
                           if (mismatch) {
-                            const tipoExtracto = extractoEsUvr ? "UVR" : "Pesos";
-                            const tipoSim = simEsUvr ? "UVR" : "Pesos";
+                            const tipoExtracto = detectada === "uvr" ? "UVR" : "Pesos";
+                            const tipoSim = simMoneda === "uvr" ? "UVR" : "Pesos";
                             const ok = window.confirm(
-                              `⚠️ Extracto en ${tipoExtracto} detectado, pero el simulador está en ${tipoSim}.\n\n` +
-                                `¿Deseas cambiar automáticamente el simulador a ${tipoExtracto} y aplicar los datos?\n\n` +
-                                `Cancelar = no aplicar nada.`,
+                              `⚠️ ALERTA DE MONEDA\n\n` +
+                                `El extracto cargado está en ${tipoExtracto}, pero el simulador está configurado en ${tipoSim}.\n\n` +
+                                `Si continúas, los datos pueden quedar mal proyectados.\n\n` +
+                                `Aceptar = cambiar el simulador a ${tipoExtracto} y aplicar.\n` +
+                                `Cancelar = NO aplicar nada (recomendado).`,
                             );
                             if (!ok) {
                               toast.error(
-                                `Carga cancelada: el extracto está en ${tipoExtracto} y el simulador en ${tipoSim}.`,
+                                `Carga cancelada: el extracto está en ${tipoExtracto} y el simulador en ${tipoSim}. Cambia el simulador y vuelve a subir el extracto.`,
+                                { duration: 6000 },
                               );
                               return;
                             }

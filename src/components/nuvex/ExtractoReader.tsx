@@ -67,6 +67,8 @@ export type ExtractoApplyPayload = {
     requiereVerificacion?: boolean;
   };
   archivoPath?: string;
+  /** Moneda detectada en el extracto (independiente del modo del simulador). */
+  monedaDetectada?: "uvr" | "pesos";
 };
 
 interface Props {
@@ -767,6 +769,18 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       catalogoProductos.find((p) => p.banco.toLowerCase() === bancoFinal.toLowerCase())?.banco ??
       bancoFinal;
 
+    // Detectar moneda real del extracto a partir de los datos parseados,
+    // independiente del modo del simulador. Si el OCR detecta UVR explícito
+    // (campo moneda = UVR) o presencia de saldoUVR/valorUVR con valor, se
+    // marca como UVR. De lo contrario, pesos.
+    const saldoUvrRaw = get("saldoUVR");
+    const valorUvrRaw = get("valorUVR");
+    const tieneDatosUvr =
+      (saldoUvrRaw && saldoUvrRaw.replace(/[^\d]/g, "") !== "") ||
+      (valorUvrRaw && valorUvrRaw.replace(/[^\d]/g, "") !== "");
+    const monedaDetectada: "uvr" | "pesos" =
+      monedaUpper === "UVR" || parsedAttrs.esUVR || tieneDatosUvr ? "uvr" : "pesos";
+
     const payload: ExtractoApplyPayload = {
       cliente: {
         nombre: get("cliente"),
@@ -779,6 +793,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
         cuotasPagadas: get("cuotasPagadas"),
       },
       archivoPath: archivoPath ?? undefined,
+      monedaDetectada,
     };
     if (modo === "pesos") {
       payload.pesos = {
