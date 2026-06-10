@@ -11,13 +11,13 @@ const FileSchema = z.object({
   mime: z.string().min(3).max(80),
   // Acepta data: URL (image/* o application/pdf). Hasta ~12MB base64.
   dataUrl: z.string().min(20).max(18_000_000),
-  // Etiqueta opcional para guiar a la IA: "nomina", "carta_laboral", "renta"
-  tipo: z.enum(["nomina", "carta_laboral", "renta", "otro"]).default("otro"),
+  // Etiqueta opcional para guiar a la IA
+  tipo: z.enum(["nomina", "carta_laboral", "renta", "extracto", "otro"]).default("otro"),
 });
 
 const PersonaSchema = z.object({
   rol: z.enum(["titular", "codeudor"]),
-  tipoPersona: z.enum(["empleado_mensual", "empleado_quincenal"]),
+  tipoPersona: z.enum(["empleado_mensual", "empleado_quincenal", "independiente"]),
   archivos: z.array(FileSchema).min(1).max(12),
 });
 
