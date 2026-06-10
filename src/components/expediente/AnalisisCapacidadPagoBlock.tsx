@@ -63,14 +63,47 @@ interface Props {
 }
 
 const MAX_BYTES = 10 * 1024 * 1024;
+const ZIP_MAX_BYTES = 50 * 1024 * 1024;
 
-function fileToDataUrl(f: File): Promise<string> {
+function fileToDataUrl(f: File | Blob, nombre?: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
     reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(f);
+    reader.readAsDataURL(f instanceof File ? f : new File([f], nombre || "file"));
   });
+}
+
+function mimeFromName(name: string): string {
+  const n = name.toLowerCase();
+  if (n.endsWith(".pdf")) return "application/pdf";
+  if (n.endsWith(".png")) return "image/png";
+  if (n.endsWith(".jpg") || n.endsWith(".jpeg")) return "image/jpeg";
+  if (n.endsWith(".webp")) return "image/webp";
+  if (n.endsWith(".gif")) return "image/gif";
+  return "application/octet-stream";
+}
+
+function isZip(f: File): boolean {
+  const n = f.name.toLowerCase();
+  return n.endsWith(".zip") || f.type === "application/zip" || f.type === "application/x-zip-compressed";
+}
+
+function isCompressedUnsupported(f: File): boolean {
+  const n = f.name.toLowerCase();
+  return n.endsWith(".rar") || n.endsWith(".7z") || n.endsWith(".tar") || n.endsWith(".gz");
+}
+
+function bytesToDataUrl(bytes: Uint8Array, mime: string): string {
+  // Avoid stack overflow for big files
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunk)));
+  }
+  // eslint-disable-next-line no-void
+  void strFromU8;
+  return `data:${mime};base64,${btoa(binary)}`;
 }
 
 function nuevaPersona(rol: Rol): PersonaForm {
