@@ -672,6 +672,7 @@ export function PesosSimulator({
           {/* Resultado bancario, otrosí, cuenta de cobro, paz y salvo: ahora viven en el Expediente. */}
         </>
       )}
+      {monedaAlerta.dialog}
     </div>
   );
 }
