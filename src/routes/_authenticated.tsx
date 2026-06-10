@@ -598,6 +598,8 @@ function AuthenticatedLayout() {
 
         {!isApoderado && <NuvexGptButton />}
         <NotificacionesAlerts />
+        <EtapaTransicionDialog />
+
 
         <footer className="border-t border-[#E3E7EE] bg-white">
           <div className="mx-auto max-w-7xl px-6 py-5 text-center text-[11px] text-[#242424]/60">
