@@ -1003,7 +1003,7 @@ export function ProyeccionFinancieraView() {
                     <div className="relative border-t border-white/[0.06] p-5">
                       <ExtractoReader
                         modo={input.moneda === "uvr" ? "uvr" : "pesos"}
-                        onApply={(d: ExtractoApplyPayload) => {
+                        onApply={async (d: ExtractoApplyPayload) => {
                           // Alerta: extracto no coincide con la moneda del simulador.
                           // IMPORTANTE: d.pesos / d.uvr se llenan según el modo del lector
                           // (que es el modo del simulador), por lo que NO sirven para
@@ -1012,19 +1012,16 @@ export function ProyeccionFinancieraView() {
                           const simMoneda: "uvr" | "pesos" = input.moneda === "uvr" ? "uvr" : "pesos";
                           const detectada = d.monedaDetectada;
                           const mismatch = !!detectada && detectada !== simMoneda;
-                          if (mismatch) {
+                          if (mismatch && detectada) {
                             const tipoExtracto = detectada === "uvr" ? "UVR" : "Pesos";
                             const tipoSim = simMoneda === "uvr" ? "UVR" : "Pesos";
-                            const ok = window.confirm(
-                              `⚠️ ALERTA DE MONEDA\n\n` +
-                                `El extracto cargado está en ${tipoExtracto}, pero el simulador está configurado en ${tipoSim}.\n\n` +
-                                `Si continúas, los datos pueden quedar mal proyectados.\n\n` +
-                                `Aceptar = cambiar el simulador a ${tipoExtracto} y aplicar.\n` +
-                                `Cancelar = NO aplicar nada (recomendado).`,
-                            );
-                            if (!ok) {
+                            const continuar = await monedaAlerta.confirm({
+                              detectada,
+                              simulador: simMoneda,
+                            });
+                            if (!continuar) {
                               toast.error(
-                                `Carga cancelada: el extracto está en ${tipoExtracto} y el simulador en ${tipoSim}. Cambia el simulador y vuelve a subir el extracto.`,
+                                `Carga cancelada: el extracto está en ${tipoExtracto} y el simulador en ${tipoSim}.`,
                                 { duration: 6000 },
                               );
                               return;
