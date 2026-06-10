@@ -80,6 +80,8 @@ export function ResultadoFinal({
   aprobadoInicial,
   estado,
   fechaPagoHonorarios,
+  onInformeEnviado,
+  onCuentaCobroEnviada,
 }: {
   mode: "pesos" | "uvr";
   client: ClientData;
@@ -92,7 +94,10 @@ export function ResultadoFinal({
   aprobadoInicial?: AprobadoData | null;
   estado?: EstadoExpediente;
   fechaPagoHonorarios?: string;
+  onInformeEnviado?: () => void;
+  onCuentaCobroEnviada?: () => void;
 }) {
+
   const [aprob, setAprob] = useState<AprobacionState>(() =>
     aprobadoInicial
       ? {
@@ -493,6 +498,7 @@ export function ResultadoFinal({
                 elementId={informeId}
                 filename={`NUVEX_Informe_Final_${sanitizeFileName(client.nombre)}.pdf`}
                 label="Enviar informe final al cliente"
+                onSent={onInformeEnviado}
               />
               <EnviarDocumentoButton
                 expedienteId={expedienteId}
@@ -501,7 +507,9 @@ export function ResultadoFinal({
                 filename={`NUVEX_Cuenta_Cobro_${consecutivo}_${sanitizeFileName(client.nombre)}.pdf`}
                 label="Enviar cuenta de cobro al cliente"
                 bgColor={NUVEX.negro}
+                onSent={onCuentaCobroEnviada}
               />
+
               <PazYSalvo
                 client={client}
                 enabled={estado === "PAGADO" || honorariosPagadosManual}

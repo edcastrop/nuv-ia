@@ -25,7 +25,10 @@ interface Props {
   disabledReason?: string;
   /** Color de fondo. */
   bgColor?: string;
+  /** Callback opcional tras envío exitoso (p. ej. avanzar etapa del expediente). */
+  onSent?: () => void;
 }
+
 
 const TIPO_LABEL: Record<TipoDocumento, string> = {
   propuesta_comercial: "Propuesta comercial",
@@ -43,7 +46,9 @@ export function EnviarDocumentoButton({
   disabled,
   disabledReason,
   bgColor,
+  onSent,
 }: Props) {
+
   const [open, setOpen] = useState(false);
   const noExpediente = !expedienteId;
   const bloqueado = disabled || noExpediente;
@@ -71,11 +76,13 @@ export function EnviarDocumentoButton({
           filename={filename}
           destinatariosSugeridos={destinatariosSugeridos}
           onClose={() => setOpen(false)}
+          onSent={onSent}
         />
       )}
     </>
   );
 }
+
 
 function EnviarDocumentoModal({
   expedienteId,
@@ -84,6 +91,7 @@ function EnviarDocumentoModal({
   filename,
   destinatariosSugeridos,
   onClose,
+  onSent,
 }: {
   expedienteId: string;
   tipo: TipoDocumento;
@@ -91,7 +99,9 @@ function EnviarDocumentoModal({
   filename: string;
   destinatariosSugeridos: string[];
   onClose: () => void;
+  onSent?: () => void;
 }) {
+
   const send = useServerFn(enviarDocumentoCliente);
   const [destinatarios, setDestinatarios] = useState<string[]>([]);
   const [nuevo, setNuevo] = useState("");
@@ -167,7 +177,9 @@ function EnviarDocumentoModal({
         },
       });
       setDone(true);
+      try { onSent?.(); } catch { /* no-op */ }
       setTimeout(onClose, 1500);
+
     } catch (e) {
       setError((e as Error).message);
     } finally {
