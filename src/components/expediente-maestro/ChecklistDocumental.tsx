@@ -222,11 +222,27 @@ export function ChecklistDocumental({ expediente, simExpediente }: Props) {
         expediente_id: expediente.id,
         total_obligatorios: totalObligatorios,
       });
+      // Auto-avance del pipeline: dejar el caso en "documentación completa"
+      // para que la etapa Documentación Bancaria quede activa/cerrada
+      // y se habilite Radicación.
+      try {
+        const { cambiarEstadoConValidacion } = await import("@/lib/pipelineTransiciones");
+        await cambiarEstadoConValidacion(
+          expediente.id,
+          "documentacion_completa",
+          "documentacion_completa",
+          "Checklist documental validado — avance automático",
+        );
+      } catch (e) {
+        // Si ya está en un estado posterior, ignorar silenciosamente
+        console.warn("[pipeline] auto-avance tras validación checklist", e);
+      }
       await refresh();
     } catch (e) {
       alert("No se pudo validar: " + (e as Error).message);
     }
   }
+
 
   const banco = bancoLabel(expediente.credito?.banco);
 
