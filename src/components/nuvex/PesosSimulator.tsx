@@ -440,6 +440,11 @@ export function PesosSimulator({
               totalProyectado: formatCOP(totalActualPendiente),
             }}
             vecesPagado={vecesActual}
+            costoTotal={{
+              valorDesembolsado: valorDesembolsadoNum,
+              dineroPagado: dineroPagadoFecha,
+              totalProyectadoPendiente: totalActualPendiente,
+            }}
             secundarios={[
               { label: "TEA", value: formatPercentage(input.tea) },
               {
