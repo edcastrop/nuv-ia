@@ -137,6 +137,7 @@ function SemaforoBadge({ s }: { s: "verde" | "amarillo" | "rojo" | "sin_datos" }
 
 export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta }: Props) {
   const ejecutar = useServerFn(analizarCapacidadPago);
+  const enviarSolicitud = useServerFn(enviarSolicitudPlazoBanco);
 
   const [esVis, setEsVis] = useState(false);
   const [cuota, setCuota] = useState<number>(cuotaPropuesta || 0);
@@ -144,6 +145,11 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
   const [analizando, setAnalizando] = useState(false);
   const [resultado, setResultado] = useState<AnalisisCapacidadResultado["data"] | null>(null);
   const [cargandoUltimo, setCargandoUltimo] = useState(true);
+
+  // Modal "Construir solicitud al banco"
+  const [openSolicitud, setOpenSolicitud] = useState(false);
+  const [plazoNuevo, setPlazoNuevo] = useState<number>(0);
+  const [enviandoSolicitud, setEnviandoSolicitud] = useState(false);
 
   useEffect(() => {
     setCuota(cuotaPropuesta || 0);
