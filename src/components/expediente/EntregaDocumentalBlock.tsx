@@ -66,7 +66,7 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
-export function EntregaDocumentalBlock({ expedienteId }: Props) {
+export function EntregaDocumentalBlock({ expedienteId, onIrAFinanciero }: Props) {
   const [exp, setExp] = useState<ExpedienteMini | null>(null);
   const [row, setRow] = useState<EntregaDocumentalRow | null>(null);
   const [loading, setLoading] = useState(true);
