@@ -283,6 +283,7 @@ function EtapaAvance({
   expedienteId,
   onChanged,
   extra,
+  soloLectura,
 }: {
   numero: EtapaNum;
   titulo: string;
