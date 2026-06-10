@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { X, FolderPlus, Loader2, CheckCircle2 } from "lucide-react";
+import { X, FolderPlus, Loader2, CheckCircle2, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { enviarAValidacionQA } from "@/lib/validacionQA";
 import { upsertExpediente } from "@/lib/expedientes";
 import { cambiarEstadoConValidacion } from "@/lib/pipelineTransiciones";
 import { defaultClient } from "@/components/nuvex/ClientFields";
