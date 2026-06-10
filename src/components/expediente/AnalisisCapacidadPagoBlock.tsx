@@ -364,9 +364,38 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
             ({esVis ? "crédito VIS" : "crédito No VIS"}).
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Label htmlFor="es-vis" className="text-sm">VIS</Label>
-          <Switch id="es-vis" checked={esVis} onCheckedChange={setEsVis} />
+      </div>
+
+      {/* Selector tipo de crédito (prominente) */}
+      <div className="mb-4 p-3 rounded-lg border-2 border-[#445DA3]/30 bg-white">
+        <Label className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Tipo de crédito (define la regla aplicable)</Label>
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              if (resultado && esVis) toast.info("Cambiaste a No VIS. Vuelve a ejecutar el análisis para recalcular con el límite del 30%.");
+              setEsVis(false);
+            }}
+            className={`px-4 py-3 rounded-lg border-2 text-left transition ${
+              !esVis ? "border-[#445DA3] bg-[#445DA3] text-white shadow" : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+            }`}
+          >
+            <div className="text-sm font-bold">No VIS</div>
+            <div className={`text-xs ${!esVis ? "text-white/80" : "text-slate-500"}`}>Límite del 30% de ingresos</div>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (resultado && !esVis) toast.info("Cambiaste a VIS. Vuelve a ejecutar el análisis para recalcular con el límite del 40%.");
+              setEsVis(true);
+            }}
+            className={`px-4 py-3 rounded-lg border-2 text-left transition ${
+              esVis ? "border-emerald-600 bg-emerald-600 text-white shadow" : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+            }`}
+          >
+            <div className="text-sm font-bold">VIS</div>
+            <div className={`text-xs ${esVis ? "text-white/80" : "text-slate-500"}`}>Límite del 40% de ingresos</div>
+          </button>
         </div>
       </div>
 
@@ -379,13 +408,14 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
         </div>
         <div>
           <Label className="text-xs text-slate-600">Límite aplicable</Label>
-          <div className="text-2xl font-bold text-[#445DA3]">{Math.round(limiteAplicable * 100)}%</div>
+          <div className={`text-2xl font-bold ${esVis ? "text-emerald-600" : "text-[#445DA3]"}`}>{Math.round(limiteAplicable * 100)}% <span className="text-sm font-medium">({esVis ? "VIS" : "No VIS"})</span></div>
         </div>
         <div>
           <Label className="text-xs text-slate-600">Ingreso mínimo requerido</Label>
           <div className="text-2xl font-bold text-slate-900">{cuota > 0 ? formatCOP(cuota / limiteAplicable) : "—"}</div>
         </div>
       </div>
+
 
       {/* Personas */}
       {personas.map((p, idx) => (
