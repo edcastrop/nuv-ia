@@ -296,6 +296,15 @@ export function EntregaDocumentalBlock({ expedienteId, onIrAFinanciero }: Props)
                 cédulas y documentos financieros. Cuando lo hayas enviado, márcalo aquí.
               </p>
               <div className="flex flex-wrap gap-2">
+                {onIrAFinanciero && (
+                  <button
+                    type="button"
+                    onClick={onIrAFinanciero}
+                    className="rounded-lg px-3 py-2 text-xs font-semibold inline-flex items-center gap-2 border border-[#E3E7EE] bg-white text-[#445DA3] hover:bg-[#EEF1FA]"
+                  >
+                    <Mail size={14} /> Ir a Financiero (drag &amp; drop)
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={marcarEnviadaCorreo}
