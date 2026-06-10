@@ -1013,22 +1013,24 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           </div>
         )}
 
-        <div className="relative flex flex-col gap-5 p-6 md:flex-row md:items-center md:justify-between md:p-7">
-          <div className="flex items-start gap-4">
+        <div className="relative flex flex-col gap-5 p-5 sm:p-6 xl:flex-row xl:items-center xl:justify-between xl:gap-6 xl:p-7">
+          <div className="flex min-w-0 items-start gap-3.5">
             <div
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl sm:h-14 sm:w-14"
               style={{
                 background: "linear-gradient(135deg, #445DA3, #84B98F)",
                 boxShadow: "0 12px 32px -12px rgba(132,185,143,0.6)",
               }}
             >
-              <Sparkles className="h-7 w-7 text-white" />
+              <Sparkles className="h-6 w-6 text-white sm:h-7 sm:w-7" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-lg font-semibold text-white">Lectura automática de extracto</h3>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <h3 className="text-[15px] font-semibold leading-snug text-white sm:text-base">
+                  Lectura automática de extracto
+                </h3>
                 <span
-                  className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                  className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
                   style={{
                     background: "rgba(132,185,143,0.15)",
                     color: "#84B98F",
@@ -1038,7 +1040,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                   NUVEX IA
                 </span>
               </div>
-              <p className="mt-1 max-w-xl text-sm text-white/65">
+              <p className="mt-1.5 text-[12.5px] leading-relaxed text-white/65 sm:text-[13px]">
                 Sube el extracto del cliente y NUVEX IA intentará identificar los datos principales
                 para prellenar el simulador. Siempre podrás revisar y corregir antes de generar la
                 propuesta.
@@ -1046,18 +1048,18 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
             </div>
           </div>
 
-          <div className="flex flex-col gap-2 md:flex-row md:items-center">
+          <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap xl:w-auto xl:shrink-0 xl:flex-nowrap">
             {existingArchivoPath && (
               <button
                 onClick={handleViewExisting}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border px-5 py-3 text-sm font-semibold text-white/85 transition hover:text-white"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-[13px] font-semibold text-white/85 transition hover:text-white sm:w-auto"
                 style={{
                   background: "rgba(255,255,255,0.06)",
                   borderColor: "rgba(132,185,143,0.35)",
                 }}
               >
-                <FileText className="h-4 w-4" />
-                Ver extracto guardado
+                <FileText className="h-4 w-4 shrink-0" />
+                <span className="truncate">Ver extracto guardado</span>
               </button>
             )}
             <button
@@ -1065,29 +1067,30 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                 reset();
                 setOpen(true);
               }}
-              className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.02]"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white transition-transform hover:scale-[1.02] sm:w-auto"
               style={{
                 background: "linear-gradient(135deg, #445DA3, #84B98F)",
                 boxShadow: "0 10px 28px -10px rgba(68,93,163,0.7)",
               }}
             >
-              <Upload className="h-4 w-4" />
-              Subir extracto
+              <Upload className="h-4 w-4 shrink-0" />
+              <span className="truncate">Subir extracto</span>
             </button>
             <button
               onClick={() => {
                 const el = document.getElementById("datos-cliente-card");
                 el?.scrollIntoView({ behavior: "smooth", block: "start" });
               }}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border px-5 py-3 text-sm font-semibold text-white/80 transition hover:text-white"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-[13px] font-semibold text-white/80 transition hover:text-white sm:w-auto"
               style={{
                 background: "rgba(255,255,255,0.03)",
                 borderColor: "rgba(255,255,255,0.10)",
               }}
             >
-              Diligenciar manualmente
+              <span className="truncate">Diligenciar manualmente</span>
             </button>
           </div>
+
         </div>
       </div>
 
