@@ -156,6 +156,7 @@ export type BancoKey =
   | "davivienda"
   | "davibank"
   | "bogota_occidente_av_popular"
+  | "caja_social_bbva_itau"
   | "otros";
 
 export function detectBanco(banco?: string | null): BancoKey {
@@ -168,6 +169,12 @@ export function detectBanco(banco?: string | null): BancoKey {
     b.includes("bogot") || b.includes("occidente") ||
     b.includes("av villas") || b.includes("avvillas") || b.includes("popular")
   ) return "bogota_occidente_av_popular";
+  if (
+    b.includes("caja social") || b.includes("cajasocial") ||
+    b.includes("bbva") || b.includes("itau") || b.includes("itaú") ||
+    b.includes("banco w") || b.includes("bancoomeva") || b.includes("coomeva") ||
+    b.includes("falabella") || b.includes("pichincha") || b.includes("gnb")
+  ) return "caja_social_bbva_itau";
   return "otros";
 }
 
@@ -176,6 +183,7 @@ const BANCO_LABEL: Record<BancoKey, string> = {
   davivienda: "Davivienda",
   davibank: "Davibank (antes Scotiabank Colpatria)",
   bogota_occidente_av_popular: "Banco de Bogotá / Occidente / AV Villas / Popular",
+  caja_social_bbva_itau: "Banco Caja Social / BBVA / Itaú / otros tradicionales",
   otros: "Otro banco",
 };
 
