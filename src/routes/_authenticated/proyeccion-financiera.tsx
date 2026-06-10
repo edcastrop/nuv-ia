@@ -1,4 +1,5 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { ProyeccionFinancieraView } from "@/components/proyeccion-financiera/ProyeccionFinancieraView";
 import { useUserRole } from "@/hooks/useUserRole";
 
@@ -9,25 +10,27 @@ export const Route = createFileRoute("/_authenticated/proyeccion-financiera")({
       {
         name: "description",
         content:
-          "Módulo NUVEX para modelar créditos hipotecarios y leasing habitacional, comparar escenarios ilimitados y calcular el costo de no actuar.",
+          "Módulo NUVEX para modelar créditos hipotecarios y leasing habitacional en Pesos o UVR, comparar escenarios ilimitados y calcular el costo de no actuar.",
       },
     ],
   }),
   component: ProyeccionFinancieraPage,
 });
 
+const ALLOWED = ["super_admin", "admin", "gerencia", "licenciado", "director_financiero_qa"];
+
 function ProyeccionFinancieraPage() {
+  // El gate de _authenticated.tsx ya validó sesión + MFA.
+  // Evitamos render intermedio ("Cargando…") porque causa parpadeo al navegar.
   const { roles, loading } = useUserRole();
-  if (loading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center text-sm text-[#242424]/60">
-        Cargando módulo…
-      </div>
-    );
-  }
-  const allowed = roles.some((r) =>
-    ["super_admin", "admin", "gerencia", "licenciado", "director_financiero_qa"].includes(r),
-  );
-  if (!allowed) return <Navigate to="/" />;
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (loading) return;
+    const allowed = roles.some((r) => ALLOWED.includes(r));
+    if (!allowed) navigate({ to: "/" });
+  }, [loading, roles, navigate]);
+
   return <ProyeccionFinancieraView />;
 }
+
