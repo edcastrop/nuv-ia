@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { CheckCircle2, AlertTriangle, ArrowRight, X, Sparkles } from "lucide-react";
+import confetti from "canvas-confetti";
 import {
   ETAPA_FEEDBACK_EVENT,
   type EtapaFeedbackEventDetail,
