@@ -216,6 +216,53 @@ export const registrarPago = createServerFn({ method: "POST" })
       documento_url: comprobanteUrl,
     } as never);
 
+    // Auto-avance: si el total pagado cubre los honorarios, avanzar el caso
+    // a "honorarios_pagados" para que la etapa "Pago" se cierre en el stepper
+    // y la torre de control la marque en verde.
+    try {
+      const { data: cartFull } = await supabase
+        .from("cartera")
+        .select("expediente_id, honorarios_totales")
+        .eq("id", data.carteraId)
+        .maybeSingle();
+      const expedienteId = (cartFull as { expediente_id: string | null; honorarios_totales: number | null } | null)?.expediente_id ?? null;
+      const total = Number((cartFull as { honorarios_totales: number | null } | null)?.honorarios_totales ?? 0);
+      if (expedienteId && total > 0) {
+        const { data: pagosRows } = await supabase
+          .from("cartera_pagos" as never)
+          .select("valor")
+          .eq("cartera_id", data.carteraId);
+        const pagado = ((pagosRows ?? []) as Array<{ valor: number | null }>).reduce(
+          (acc, p) => acc + Number(p.valor ?? 0),
+          0,
+        );
+        if (pagado >= total) {
+          const { data: expRow } = await supabase
+            .from("expedientes")
+            .select("estado_caso")
+            .eq("id", expedienteId)
+            .maybeSingle();
+          const estadoActual = (expRow as { estado_caso: string | null } | null)?.estado_caso ?? null;
+          if (estadoActual !== "honorarios_pagados" && estadoActual !== "paz_y_salvo_generado" && estadoActual !== "caso_finalizado") {
+            await supabase
+              .from("expedientes")
+              .update({ estado_caso: "honorarios_pagados" as never, estado: "PAGADO" as never } as never)
+              .eq("id", expedienteId);
+            await supabase.from("expediente_historial").insert({
+              expediente_id: expedienteId,
+              estado_caso_anterior: estadoActual,
+              estado_caso_nuevo: "honorarios_pagados",
+              accion_origen: "honorarios_pagados",
+              observacion: "Saldo de honorarios cubierto por pagos registrados",
+              user_id: userId,
+            } as never);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("[registrarPago] no se pudo auto-avanzar a honorarios_pagados", e);
+    }
+
     // Disparador: notificar a contabilidad + asesor responsable
     try {
       const { data: cartRow } = await supabase
