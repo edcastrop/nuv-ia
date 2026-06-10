@@ -116,11 +116,24 @@ export function EtapasFinalesBlock({
       <EtapaAvance
         numero={13}
         titulo="Pago de honorarios"
-        descripcion="Confirma el pago efectivo del cliente y dispara la liquidación de comisión AFC."
+        descripcion="El pago se registra desde el módulo de Cartera (monto, método, comprobante). Al cubrirse el total, esta etapa se marca automáticamente."
         accion="honorarios_pagados"
         idxActual={idxActualVisual}
         expedienteId={expedienteId}
         onChanged={onChanged}
+        soloLectura
+        extra={
+          <a
+            href="#cartera-expediente"
+            onClick={(e) => {
+              e.preventDefault();
+              document.getElementById("cartera-expediente")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+            className="rounded-lg bg-[#1F7A45] px-3 py-1.5 text-[11px] font-semibold text-white hover:opacity-90"
+          >
+            Ir a cartera para registrar pago ↓
+          </a>
+        }
       />
 
       <EtapaAvance
@@ -270,6 +283,7 @@ function EtapaAvance({
   expedienteId,
   onChanged,
   extra,
+  soloLectura,
 }: {
   numero: EtapaNum;
   titulo: string;
@@ -279,6 +293,7 @@ function EtapaAvance({
   expedienteId: string;
   onChanged?: () => void;
   extra?: React.ReactNode;
+  soloLectura?: boolean;
 }) {
   const idxEtapa = numero - 1; // 1-based → 0-based
   const estado = clasificarEtapa(idxActual, idxEtapa);
@@ -305,14 +320,16 @@ function EtapaAvance({
       <div className="flex items-center justify-end gap-2">
         {msg && <span className="text-[11px] text-slate-500">{msg}</span>}
         {extra}
-        <button
-          onClick={avanzar}
-          disabled={saving || estado === "futura"}
-          title={estado === "futura" ? "Avanza primero las etapas previas" : ""}
-          className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white disabled:opacity-40"
-        >
-          {saving ? "Guardando…" : estado === "completada" ? "Re-confirmar" : "Marcar completada"}
-        </button>
+        {!soloLectura && (
+          <button
+            onClick={avanzar}
+            disabled={saving || estado === "futura"}
+            title={estado === "futura" ? "Avanza primero las etapas previas" : ""}
+            className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white disabled:opacity-40"
+          >
+            {saving ? "Guardando…" : estado === "completada" ? "Re-confirmar" : "Marcar completada"}
+          </button>
+        )}
       </div>
     </EtapaShell>
   );
