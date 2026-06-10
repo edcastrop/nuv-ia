@@ -36,8 +36,10 @@ const MAX_AVANCE_POR_ETAPA: Partial<Record<EtapaPipelineId, number>> = {
   // Lead permite saltar directo a proyección al guardar una simulación.
   lead: 2,
   extracto: 1,
-  proyeccion: 1,
-  presentacion: 1,
+  // Tras aprobación QA el analista puede saltar a contratación
+  // (presentación y cierre son etapas opcionales de seguimiento comercial).
+  proyeccion: 4,
+  presentacion: 2,
   cierre: 1,
   contratacion: 1,
   radicacion: 1,
@@ -56,8 +58,9 @@ const MAX_AVANCE_POR_ETAPA: Partial<Record<EtapaPipelineId, number>> = {
  */
 const PRERREQUISITO_DE: Partial<Record<EtapaPipelineId, EtapaPipelineId>> = {
   presentacion: "proyeccion",
-  cierre: "presentacion",
-  contratacion: "cierre",
+  cierre: "proyeccion",
+  // Contratación sólo exige tener la proyección lista (QA aprobada).
+  contratacion: "proyeccion",
   radicacion: "contratacion",
   banco: "radicacion",
   informe: "banco",
@@ -67,6 +70,7 @@ const PRERREQUISITO_DE: Partial<Record<EtapaPipelineId, EtapaPipelineId>> = {
   paz_salvo: "comision",
   finalizado: "paz_salvo",
 };
+
 
 export function validateTransicion(
   estadoAnterior: CasoEstado | null | undefined,

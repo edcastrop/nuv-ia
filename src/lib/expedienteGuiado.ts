@@ -36,7 +36,7 @@ export const ETAPAS_GUIADAS: EtapaGuiada[] = [
   { id: "lead", numero: 1, titulo: "Lead", descripcion: "Captura del lead y extracto del cliente.", responsables: ["asesor", "licenciado"] },
   { id: "proyeccion", numero: 2, titulo: "Proyección", descripcion: "Simulación y propuesta financiera.", responsables: ["licenciado"] },
   { id: "auditoria_qa", numero: 3, titulo: "Auditoría QA", descripcion: "Validación de la proyección por Dirección Financiera.", responsables: ["director_financiero_qa"] },
-  { id: "contratacion", numero: 4, titulo: "Contratación", descripcion: "Contrato y poder firmados por el cliente.", responsables: ["asesor", "juridica", "director_juridico"] },
+  { id: "contratacion", numero: 4, titulo: "Contratación", descripcion: "Contrato y poder firmados por el cliente.", responsables: ["asesor", "operaciones", "juridica", "director_juridico"] },
   { id: "documentacion_bancaria", numero: 5, titulo: "Documentación Bancaria", descripcion: "Checklist documental completo para radicar.", responsables: ["operaciones", "juridica"] },
   { id: "radicacion", numero: 6, titulo: "Radicación", descripcion: "Solicitud radicada en el banco.", responsables: ["operaciones", "apoderado"] },
   { id: "respuesta_banco", numero: 7, titulo: "Respuesta Banco", descripcion: "Banco evalúa la solicitud.", responsables: ["operaciones", "juridica"] },
@@ -469,7 +469,7 @@ export function getChecklistRol(exp: Expediente, roles: AppRole[]): ChecklistIte
     items.push({ label: "Paz y salvo emitido", completado: paso(ec, 29), tab: "financiero" });
   }
 
-  if (has("juridica") || has("director_juridico") || has("apoderado") || has("super_admin")) {
+  if (has("juridica") || has("director_juridico") || has("operaciones") || has("apoderado") || has("super_admin")) {
     items.push({ label: "Poder validado", completado: paso(ec, 16), tab: "documentos" });
     items.push({ label: "Documentación completa", completado: paso(ec, 17), tab: "documentos" });
     items.push({ label: "Radicación realizada", completado: paso(ec, 20), tab: "documentos" });
