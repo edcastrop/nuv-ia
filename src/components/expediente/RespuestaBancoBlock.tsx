@@ -67,14 +67,63 @@ export function RespuestaBancoBlock({
   });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [simIdResolved, setSimIdResolved] = useState<string | null>(simulacionId ?? null);
+
+  // Resolver simulacionId desde el expediente si no se pasó por props.
+  useEffect(() => {
+    if (simulacionId) {
+      setSimIdResolved(simulacionId);
+      return;
+    }
+    let cancel = false;
+    (async () => {
+      const { data } = await supabase
+        .from("audit_simulaciones")
+        .select("id")
+        .eq("expediente_id", expedienteId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancel) return;
+      if (data?.id) {
+        setSimIdResolved(data.id);
+      } else {
+        // Crear una simulación mínima para poder registrar la respuesta del banco.
+        const { data: created } = await supabase
+          .from("audit_simulaciones")
+          .insert({
+            expediente_id: expedienteId,
+            analista_id: analistaId || user?.id || null,
+            banco: bancoNombre || "",
+            producto: "",
+            tipo_credito: "",
+            moneda: "COP",
+            datos_extracto: {},
+            datos_analista: {},
+            datos_propuesta: {
+              nuevaCuota: cuotaPropuesta,
+              nuevoPlazo: plazoPropuesto,
+              cuotasEliminadas: cuotasEliminadasPropuestas,
+              ahorroTotal: ahorroPropuesto,
+            },
+          })
+          .select("id")
+          .maybeSingle();
+        if (!cancel && created?.id) setSimIdResolved(created.id);
+      }
+    })();
+    return () => {
+      cancel = true;
+    };
+  }, [simulacionId, expedienteId, analistaId, user?.id, bancoNombre, cuotaPropuesta, plazoPropuesto, cuotasEliminadasPropuestas, ahorroPropuesto]);
 
   useEffect(() => {
-    if (!simulacionId) return;
+    if (!simIdResolved) return;
     let cancel = false;
     supabase
       .from("audit_respuestas_banco")
       .select("*")
-      .eq("simulacion_id", simulacionId)
+      .eq("simulacion_id", simIdResolved)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle()
