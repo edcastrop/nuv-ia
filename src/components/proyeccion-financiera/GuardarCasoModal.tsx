@@ -225,35 +225,11 @@ export function GuardarCasoModal({ open, onClose, autoSave = false, input, resul
         </button>
 
         {done ? (
-          <div className="flex flex-col items-center gap-4 px-8 py-12 text-center">
-            <div
-              className="flex h-16 w-16 items-center justify-center rounded-2xl"
-              style={{ background: "linear-gradient(135deg,#84B98F,#445DA3)" }}
-            >
-              <CheckCircle2 className="h-8 w-8 text-white" />
-            </div>
-            <div>
-              <h3 className="text-xl font-semibold text-white">Caso creado</h3>
-              <p className="mt-1 text-sm text-white/60">
-                La proyección financiera quedó adjuntada al expediente.
-              </p>
-            </div>
-            <div className="mt-2 flex gap-3">
-              <button
-                onClick={onClose}
-                className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-5 py-2.5 text-sm text-white/80 hover:bg-white/[0.08]"
-              >
-                Seguir simulando
-              </button>
-              <button
-                onClick={() => navigate({ to: "/casos/$id", params: { id: done.id } })}
-                className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white"
-                style={{ background: "linear-gradient(135deg,#445DA3,#84B98F)" }}
-              >
-                Abrir expediente
-              </button>
-            </div>
-          </div>
+          <DoneBlock
+            expedienteId={done.id}
+            onClose={onClose}
+            onOpen={() => navigate({ to: "/casos/$id", params: { id: done.id } })}
+          />
         ) : (
           <>
             <header className="border-b border-white/[0.06] px-7 py-6">
