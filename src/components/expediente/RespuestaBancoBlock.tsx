@@ -261,7 +261,7 @@ export function RespuestaBancoBlock({
       // 3) Avanzar el estado del caso para cerrar la etapa "Respuesta Banco".
       if (cuotaAprob > 0) {
         try {
-          await cambiarEstadoCaso(
+          await cambiarEstadoConValidacion(
             expedienteId,
             "aplicado_banco",
             "aplicado_banco",
