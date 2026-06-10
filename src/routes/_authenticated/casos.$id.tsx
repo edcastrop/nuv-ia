@@ -17,6 +17,7 @@ import { CarteraBlockExpediente } from "@/components/cartera/CarteraBlockExpedie
 import { ConversacionCaso } from "@/components/expediente/ConversacionCaso";
 import { ValidacionIdentidadBlock } from "@/components/expediente/ValidacionIdentidadBlock";
 import { ValidacionRadicacionBlock } from "@/components/expediente/ValidacionRadicacionBlock";
+import { EntregaDocumentalBlock } from "@/components/expediente/EntregaDocumentalBlock";
 import { ValidacionEntregablesBlock } from "@/components/expediente/ValidacionEntregablesBlock";
 import { VersionesDocumentalesBlock } from "@/components/expediente/VersionesDocumentalesBlock";
 import { RespuestaBancoBlock } from "@/components/expediente/RespuestaBancoBlock";
@@ -161,6 +162,7 @@ function CasoDetail() {
             <ValidacionIdentidadBlock exp={exp} onChanged={reload} />
           </div>
           <ValidacionRadicacionBlock expedienteId={exp.id} />
+          <EntregaDocumentalBlock expedienteId={exp.id} />
           <ValidacionEntregablesBlock expedienteId={exp.id} />
         </TabsContent>
 
