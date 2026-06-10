@@ -102,8 +102,8 @@ export function ChecklistDocumental({ expediente, simExpediente }: Props) {
   }, [expediente.id]);
 
   // Si ya existe validación de la documentación pero el caso aún no fue
-  // avanzado a "documentación completa", lo hacemos una sola vez por sesión.
-  // Esto cierra visualmente la etapa Documentación Bancaria en el stepper.
+  // avanzado, lo empujamos hasta "radicación pendiente" para que la etapa
+  // Documentación Bancaria quede VERDE en el stepper y Radicación se active.
   useEffect(() => {
     if (!validacion) return;
     const estadoActual =
@@ -116,16 +116,28 @@ export function ChecklistDocumental({ expediente, simExpediente }: Props) {
       "pendiente_contratacion", "enviado_contratacion",
       "contrato_enviado", "contrato_generado", "contrato_firmado",
       "poder_generado", "poder_firmado",
+      "documentacion_completa",
     ]);
     if (!estadosPrevios.has(estadoActual)) return;
     (async () => {
       try {
         const { cambiarEstadoConValidacion } = await import("@/lib/pipelineTransiciones");
+        // Paso 1: si aún no está en documentacion_completa, llegar ahí.
+        if (estadoActual !== "documentacion_completa") {
+          await cambiarEstadoConValidacion(
+            expediente.id,
+            "documentacion_completa",
+            "documentacion_completa",
+            "Checklist documental validado — avance automático",
+          );
+        }
+        // Paso 2: avanzar a radicación pendiente para cerrar la etapa
+        // Documentación Bancaria.
         await cambiarEstadoConValidacion(
           expediente.id,
+          "radicacion_pendiente",
           "documentacion_completa",
-          "documentacion_completa",
-          "Checklist documental validado — avance automático",
+          "Documentación validada — listo para radicar",
         );
       } catch (e) {
         console.warn("[pipeline] auto-avance retroactivo tras validación", e);
@@ -133,6 +145,7 @@ export function ChecklistDocumental({ expediente, simExpediente }: Props) {
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [validacion?.expediente_id]);
+
 
 
   const docs = useMemo(
