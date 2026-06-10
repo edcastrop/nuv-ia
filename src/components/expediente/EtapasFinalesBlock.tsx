@@ -71,6 +71,18 @@ export function EtapasFinalesBlock({
         idxActual={idxActual}
         expedienteId={expedienteId}
         onChanged={onChanged}
+        extra={
+          <a
+            href="#informe-final"
+            onClick={(e) => {
+              e.preventDefault();
+              document.getElementById("informe-final")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+            className="rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Abrir constructor de informe ↓
+          </a>
+        }
       />
 
       <EtapaAvance

@@ -21,6 +21,8 @@ import { ValidacionEntregablesBlock } from "@/components/expediente/ValidacionEn
 import { VersionesDocumentalesBlock } from "@/components/expediente/VersionesDocumentalesBlock";
 import { RespuestaBancoBlock } from "@/components/expediente/RespuestaBancoBlock";
 import { EtapasFinalesBlock } from "@/components/expediente/EtapasFinalesBlock";
+import { ResultadoFinal, type ProyeccionNuvex } from "@/components/nuvex/ResultadoFinal";
+import { parseCurrency, parseDecimal, parsePercentage } from "@/lib/format";
 import { readValidacion, puedeGenerarDocumentos, razonBloqueoDocs } from "@/lib/validacionIdentidad";
 import { addRecentCase } from "@/lib/recentCases";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -248,6 +250,52 @@ function CasoDetail() {
                   plazoPropuesto={Number(prop.nuevoPlazo ?? 0)}
                   cuotasEliminadasPropuestas={Number(prop.cuotasEliminadas ?? cuotasPactadas)}
                   ahorroPropuesto={Number(prop.ahorroTotal ?? 0)}
+                />
+              </div>
+            );
+          })()}
+
+          {(() => {
+            const prop = (exp as unknown as { propuesta_data?: Record<string, unknown> }).propuesta_data ?? {};
+            const cli = (exp.cliente_data ?? {}) as unknown as Record<string, unknown>;
+            const cred = (exp.credito_data ?? {}) as unknown as Record<string, unknown>;
+            const plazoInicial = parseDecimal(String(cli.plazoInicial ?? ""));
+            const cuotasPagadas = parseDecimal(String(cli.cuotasPagadas ?? ""));
+            const cuotasPendientes = Math.max(0, plazoInicial - cuotasPagadas);
+            const honorariosPct = parsePercentage(String(cli.porcentajeHonorarios ?? "")) || 6;
+            const cuotaActualConSeguro = parseCurrency(String(cred.cuotaActual ?? ""));
+            const seguros = parseCurrency(String(cred.seguros ?? ""));
+            const nuevoPlazo = Number(prop.nuevoPlazo ?? 0);
+            const proyeccion: ProyeccionNuvex | null = (prop.nuevaCuota || prop.honorarios)
+              ? {
+                  cuotaProyectada: Number(prop.nuevaCuota ?? 0),
+                  plazoProyectado: nuevoPlazo,
+                  cuotasEliminadasProyectadas: Number(prop.cuotasEliminadas ?? Math.max(0, cuotasPendientes - nuevoPlazo)),
+                  añosEliminadosProyectados: Number(prop.añosEliminados ?? 0),
+                  ahorroInteresesProyectado: Number(prop.ahorroIntereses ?? 0),
+                  ahorroSegurosProyectado: Number(prop.ahorroSeguros ?? 0),
+                  ahorroProyectado: Number(prop.ahorroTotal ?? 0),
+                  honorariosProyectados: Number(prop.honorarios ?? 0),
+                  honorariosBase: Number(exp.honorarios_base ?? prop.honorarios ?? 0),
+                  descuentoAplicado: Number(exp.descuento ?? 0),
+                  honorariosFinales: Number(exp.honorarios_final ?? prop.honorarios ?? 0),
+                  fechaSimulacion: exp.fecha_simulacion,
+                  fuente: (prop.fuente as "manual" | "automatica") ?? "automatica",
+                }
+              : null;
+            return (
+              <div id="informe-final" className="scroll-mt-6">
+                <ResultadoFinal
+                  mode={exp.modo}
+                  client={exp.cliente_data}
+                  proyeccion={proyeccion}
+                  cuotasPendientes={cuotasPendientes}
+                  cuotaActualConSeguro={cuotaActualConSeguro}
+                  seguros={seguros}
+                  honorariosPct={honorariosPct}
+                  expedienteId={exp.id}
+                  aprobadoInicial={exp.aprobado_data}
+                  estado={exp.estado}
                 />
               </div>
             );
