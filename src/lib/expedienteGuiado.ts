@@ -70,9 +70,10 @@ const ESTADO_A_ETAPA: Partial<Record<CasoEstado, EtapaGuiadaId>> = {
   poder_generado: "contratacion",
   poder_firmado: "contratacion",
   documentacion_completa: "documentacion_bancaria",
-  radicacion_pendiente: "documentacion_bancaria",
-  radicacion_preparada: "documentacion_bancaria",
+  radicacion_pendiente: "radicacion",
+  radicacion_preparada: "radicacion",
   radicado_banco: "radicacion",
+
   en_estudio_banco: "respuesta_banco",
   docs_complementarios_banco: "respuesta_banco",
   devuelto_banco: "respuesta_banco",
