@@ -1643,7 +1643,6 @@ export function ProyeccionFinancieraView() {
                     </table>
                   </div>
                 </Surface>
-              </div>
             </div>
 
             <div className="mt-10 flex flex-col items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.025] px-6 py-8 text-center">
