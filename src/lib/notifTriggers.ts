@@ -84,6 +84,29 @@ export async function notificarAsesorExpediente(expedienteId: string, p: NotifPa
 
 // ----- Disparadores específicos --------------------------------------------
 
+export async function notifQASolicitada(expedienteId: string): Promise<void> {
+  const link = `/qa`;
+  let cliente: string | null = null;
+  try {
+    const { data } = await supabase
+      .from("expedientes")
+      .select("cliente_nombre")
+      .eq("id", expedienteId)
+      .maybeSingle();
+    cliente = (data as { cliente_nombre?: string | null } | null)?.cliente_nombre ?? null;
+  } catch {
+    /* swallow */
+  }
+  await notificarRoles(["director_financiero_qa", "super_admin"], {
+    tipo: "qa_solicitada",
+    titulo: "Nueva proyección pendiente de validar",
+    mensaje: cliente ? `Cliente: ${cliente}` : "Revisa el dashboard QA.",
+    link,
+    severidad: "alta",
+    metadata: { expediente_id: expedienteId },
+  });
+}
+
 export async function notifQADevuelta(expedienteId: string, motivo: string, observacion: string): Promise<void> {
   const link = `/casos/${expedienteId}`;
   await notificarAsesorExpediente(expedienteId, {
