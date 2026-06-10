@@ -1305,9 +1305,13 @@ export function ProyeccionFinancieraView() {
                     </table>
                   </div>
                 </Surface>
+              </div>
+            </div>
 
-                {/* Gráficas */}
-                <div id="sec-graficas" className="grid gap-6 lg:grid-cols-2">
+            {/* ─── ZONA FULL-WIDTH: gráficas, informe y amortización ─── */}
+            <div className="mt-6 space-y-6">
+              {/* Gráficas */}
+              <div id="sec-graficas" className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                   <Surface title="Capital vs Interés" subtitle="Composición mes a mes">
                     <div className="h-[320px]">
                       <ResponsiveContainer>
