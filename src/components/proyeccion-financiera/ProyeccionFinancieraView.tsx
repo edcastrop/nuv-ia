@@ -1632,6 +1632,7 @@ export function ProyeccionFinancieraView() {
         escenarios={escenarios}
         kpis={kpis}
       />
+      {monedaAlerta.dialog}
     </div>
   );
 }
