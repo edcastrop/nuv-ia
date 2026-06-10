@@ -292,6 +292,7 @@ function EtapaAvance({
   expedienteId: string;
   onChanged?: () => void;
   extra?: React.ReactNode;
+  soloLectura?: boolean;
 }) {
   const idxEtapa = numero - 1; // 1-based → 0-based
   const estado = clasificarEtapa(idxActual, idxEtapa);
@@ -318,14 +319,16 @@ function EtapaAvance({
       <div className="flex items-center justify-end gap-2">
         {msg && <span className="text-[11px] text-slate-500">{msg}</span>}
         {extra}
-        <button
-          onClick={avanzar}
-          disabled={saving || estado === "futura"}
-          title={estado === "futura" ? "Avanza primero las etapas previas" : ""}
-          className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white disabled:opacity-40"
-        >
-          {saving ? "Guardando…" : estado === "completada" ? "Re-confirmar" : "Marcar completada"}
-        </button>
+        {!soloLectura && (
+          <button
+            onClick={avanzar}
+            disabled={saving || estado === "futura"}
+            title={estado === "futura" ? "Avanza primero las etapas previas" : ""}
+            className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white disabled:opacity-40"
+          >
+            {saving ? "Guardando…" : estado === "completada" ? "Re-confirmar" : "Marcar completada"}
+          </button>
+        )}
       </div>
     </EtapaShell>
   );
