@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
   Area,
   AreaChart,
@@ -1001,6 +1002,31 @@ export function ProyeccionFinancieraView() {
                       <ExtractoReader
                         modo={input.moneda === "uvr" ? "uvr" : "pesos"}
                         onApply={(d: ExtractoApplyPayload) => {
+                          // Alerta: extracto no coincide con la moneda del simulador
+                          const extractoEsUvr = !!d.uvr && !d.pesos;
+                          const extractoEsPesos = !!d.pesos && !d.uvr;
+                          const simEsUvr = input.moneda === "uvr";
+                          const simEsPesos = input.moneda === "pesos";
+                          const mismatch =
+                            (extractoEsUvr && simEsPesos) || (extractoEsPesos && simEsUvr);
+                          if (mismatch) {
+                            const tipoExtracto = extractoEsUvr ? "UVR" : "Pesos";
+                            const tipoSim = simEsUvr ? "UVR" : "Pesos";
+                            const ok = window.confirm(
+                              `⚠️ Extracto en ${tipoExtracto} detectado, pero el simulador está en ${tipoSim}.\n\n` +
+                                `¿Deseas cambiar automáticamente el simulador a ${tipoExtracto} y aplicar los datos?\n\n` +
+                                `Cancelar = no aplicar nada.`,
+                            );
+                            if (!ok) {
+                              toast.error(
+                                `Carga cancelada: el extracto está en ${tipoExtracto} y el simulador en ${tipoSim}.`,
+                              );
+                              return;
+                            }
+                            toast.warning(
+                              `Simulador cambiado a ${tipoExtracto} para coincidir con el extracto.`,
+                            );
+                          }
                           setInput((p) => {
                             const next = { ...p };
                             const num = (s?: string) => {
