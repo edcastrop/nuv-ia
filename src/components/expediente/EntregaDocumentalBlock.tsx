@@ -39,6 +39,7 @@ import {
 
 interface Props {
   expedienteId: string;
+  onIrAFinanciero?: () => void;
 }
 
 interface ExpedienteMini {
