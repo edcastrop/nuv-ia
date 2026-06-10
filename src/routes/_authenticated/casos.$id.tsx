@@ -107,8 +107,22 @@ function CasoDetail() {
         </div>
       </Card>
 
-      {/* Stepper 13 etapas */}
-      <ExpedienteStepper13 exp={exp} />
+      {/* Stepper 13 etapas — clic salta a la pestaña y bloque correspondiente */}
+      <ExpedienteStepper13
+        exp={exp}
+        onSelectEtapa={(id: EtapaGuiadaId) => {
+          const dest = ETAPA_A_DESTINO[id];
+          if (!dest) return;
+          setTab(dest.tab);
+          if (dest.scrollToId) {
+            // Esperar a que la pestaña pinte el bloque antes de hacer scroll
+            setTimeout(() => {
+              const el = document.getElementById(dest.scrollToId!);
+              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 120);
+          }
+        }}
+      />
 
       {/* Tu siguiente acción */}
       <SiguienteAccionPanel exp={exp} onIrATab={setTab} />
