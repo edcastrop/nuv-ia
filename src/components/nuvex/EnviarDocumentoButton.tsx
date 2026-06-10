@@ -26,7 +26,7 @@ interface Props {
   /** Color de fondo. */
   bgColor?: string;
   /** Callback opcional tras envío exitoso (p. ej. avanzar etapa del expediente). */
-  onSent?: () => void;
+  onSent?: () => void | Promise<void>;
 }
 
 
@@ -99,7 +99,7 @@ function EnviarDocumentoModal({
   filename: string;
   destinatariosSugeridos: string[];
   onClose: () => void;
-  onSent?: () => void;
+  onSent?: () => void | Promise<void>;
 }) {
 
   const send = useServerFn(enviarDocumentoCliente);
@@ -176,8 +176,8 @@ function EnviarDocumentoModal({
           contentType: "application/pdf",
         },
       });
+      await onSent?.();
       setDone(true);
-      try { onSent?.(); } catch { /* no-op */ }
       setTimeout(onClose, 1500);
 
     } catch (e) {

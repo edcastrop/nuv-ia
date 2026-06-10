@@ -172,11 +172,28 @@ export async function cambiarEstadoConValidacion(
 ): Promise<TransicionResult> {
   const { data, error } = await supabase
     .from("expedientes")
-    .select("estado_caso" as never)
+    .select("estado_caso, aceptacion_cliente_at" as never)
     .eq("id", expedienteId)
     .single();
   if (error) throw error;
   const anterior = (data as unknown as { estado_caso?: CasoEstado })?.estado_caso ?? null;
+  const aceptacionAt = (data as unknown as { aceptacion_cliente_at?: string | null })?.aceptacion_cliente_at ?? null;
+  const etapaAnterior = computeEtapaActual({ estado_caso: anterior ?? null });
+  const etapaNueva = computeEtapaActual({ estado_caso: nuevoEstado });
+
+  if (etapaAnterior === "resultado_banco" && etapaNueva === "informe") {
+    const result: TransicionResult = {
+      ok: !!aceptacionAt,
+      reason: aceptacionAt ? undefined : "Registra primero la aceptación del cliente antes de completar el informe final.",
+      etapaAnterior,
+      etapaNueva,
+      delta: indexOfEtapa(etapaNueva) - indexOfEtapa(etapaAnterior),
+    };
+    if (!result.ok) throw new TransicionInvalidaError(result);
+    await cambiarEstadoCaso(expedienteId, nuevoEstado, accion, observacion, submotivo);
+    return result;
+  }
+
   return cambiarEstadoValidado({
     expedienteId,
     estadoAnterior: anterior,

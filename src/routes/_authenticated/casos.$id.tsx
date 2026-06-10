@@ -302,14 +302,22 @@ function CasoDetail() {
                   onInformeEnviado={async () => {
                     try {
                       await cambiarEstadoConValidacion(exp.id, ACCION_A_ESTADO["resultado_final"], "resultado_final");
-                    } catch (e) { console.warn("[informe_final] avance etapa", e); }
-                    reload();
+                    } catch (e) {
+                      console.warn("[informe_final] avance etapa", e);
+                      throw e instanceof Error ? e : new Error("No se pudo completar la etapa de informe final.");
+                    } finally {
+                      reload();
+                    }
                   }}
                   onCuentaCobroEnviada={async () => {
                     try {
                       await cambiarEstadoConValidacion(exp.id, ACCION_A_ESTADO["cuenta_cobro_generada"], "cuenta_cobro_generada");
-                    } catch (e) { console.warn("[cuenta_cobro] avance etapa", e); }
-                    reload();
+                    } catch (e) {
+                      console.warn("[cuenta_cobro] avance etapa", e);
+                      throw e instanceof Error ? e : new Error("No se pudo completar la etapa de cuenta de cobro.");
+                    } finally {
+                      reload();
+                    }
                   }}
                 />
               </div>
