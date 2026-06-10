@@ -89,17 +89,17 @@ export function RespuestaBancoBlock({
         setSimIdResolved(data.id);
       } else {
         // Crear una simulación mínima para poder registrar la respuesta del banco.
-        const analista = analistaId || user?.id;
-        if (!analista) return;
-        const { data: created } = await supabase
+        // RLS exige analista_id = auth.uid(), por eso usamos siempre user.id.
+        if (!user?.id) return;
+        const { data: created, error: errCreate } = await supabase
           .from("audit_simulaciones")
           .insert({
             expediente_id: expedienteId,
-            analista_id: analista,
+            analista_id: user.id,
             banco: bancoNombre || "",
             producto: "",
             tipo_credito: "",
-            moneda: "COP",
+            moneda: "pesos", // CHECK constraint: solo 'pesos' o 'uvr'
             datos_extracto: {},
             datos_analista: {},
             datos_propuesta: {
@@ -111,6 +111,11 @@ export function RespuestaBancoBlock({
           })
           .select("id")
           .maybeSingle();
+        if (errCreate) {
+          console.error("[crear simulacion]", errCreate);
+          if (!cancel) setMsg(`No se pudo crear simulación: ${errCreate.message}`);
+          return;
+        }
         if (!cancel && created?.id) setSimIdResolved(created.id);
       }
     })();
