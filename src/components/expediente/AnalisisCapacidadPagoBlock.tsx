@@ -114,7 +114,10 @@ function MinDocsHint({ tipo }: { tipo: TipoPersona }) {
   if (tipo === "empleado_mensual") {
     return <p className="text-xs text-muted-foreground">Requeridos: <b>3 últimas nóminas mensuales</b> + carta laboral + última declaración de renta.</p>;
   }
-  return <p className="text-xs text-muted-foreground">Requeridos: <b>6 últimas nóminas quincenales</b> + carta laboral + última declaración de renta.</p>;
+  if (tipo === "empleado_quincenal") {
+    return <p className="text-xs text-muted-foreground">Requeridos: <b>6 últimas nóminas quincenales</b> + carta laboral + última declaración de renta.</p>;
+  }
+  return <p className="text-xs text-muted-foreground">Requeridos: <b>3 últimos extractos bancarios</b> + última declaración de renta.</p>;
 }
 
 function SemaforoBadge({ s }: { s: "verde" | "amarillo" | "rojo" | "sin_datos" }) {
