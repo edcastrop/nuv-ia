@@ -116,11 +116,24 @@ export function EtapasFinalesBlock({
       <EtapaAvance
         numero={13}
         titulo="Pago de honorarios"
-        descripcion="Confirma el pago efectivo del cliente y dispara la liquidación de comisión AFC."
+        descripcion="El pago se registra desde el módulo de Cartera (monto, método, comprobante). Al cubrirse el total, esta etapa se marca automáticamente."
         accion="honorarios_pagados"
         idxActual={idxActualVisual}
         expedienteId={expedienteId}
         onChanged={onChanged}
+        soloLectura
+        extra={
+          <a
+            href="#cartera-expediente"
+            onClick={(e) => {
+              e.preventDefault();
+              document.getElementById("cartera-expediente")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+            className="rounded-lg bg-[#1F7A45] px-3 py-1.5 text-[11px] font-semibold text-white hover:opacity-90"
+          >
+            Ir a cartera para registrar pago ↓
+          </a>
+        }
       />
 
       <EtapaAvance
