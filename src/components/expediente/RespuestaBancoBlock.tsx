@@ -89,11 +89,13 @@ export function RespuestaBancoBlock({
         setSimIdResolved(data.id);
       } else {
         // Crear una simulación mínima para poder registrar la respuesta del banco.
+        const analista = analistaId || user?.id;
+        if (!analista) return;
         const { data: created } = await supabase
           .from("audit_simulaciones")
           .insert({
             expediente_id: expedienteId,
-            analista_id: analistaId || user?.id || null,
+            analista_id: analista,
             banco: bancoNombre || "",
             producto: "",
             tipo_credito: "",
