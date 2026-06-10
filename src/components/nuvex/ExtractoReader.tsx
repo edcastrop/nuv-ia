@@ -67,6 +67,8 @@ export type ExtractoApplyPayload = {
     requiereVerificacion?: boolean;
   };
   archivoPath?: string;
+  /** Moneda detectada en el extracto (independiente del modo del simulador). */
+  monedaDetectada?: "uvr" | "pesos";
 };
 
 interface Props {
