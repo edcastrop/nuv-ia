@@ -143,7 +143,7 @@ export function RespuestaBancoBlock({
     return () => {
       cancel = true;
     };
-  }, [simulacionId]);
+  }, [simIdResolved]);
 
   const cuotaAprob = parseCurrency(respuesta.cuotaAprobada);
   const plazoAprob = parseDecimal(respuesta.plazoAprobado);
