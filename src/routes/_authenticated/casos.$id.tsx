@@ -20,6 +20,7 @@ import { ValidacionRadicacionBlock } from "@/components/expediente/ValidacionRad
 import { ValidacionEntregablesBlock } from "@/components/expediente/ValidacionEntregablesBlock";
 import { VersionesDocumentalesBlock } from "@/components/expediente/VersionesDocumentalesBlock";
 import { RespuestaBancoBlock } from "@/components/expediente/RespuestaBancoBlock";
+import { AnalisisCapacidadPagoBlock } from "@/components/expediente/AnalisisCapacidadPagoBlock";
 import { EtapasFinalesBlock } from "@/components/expediente/EtapasFinalesBlock";
 import { ResultadoFinal, type ProyeccionNuvex } from "@/components/nuvex/ResultadoFinal";
 import { cambiarEstadoConValidacion } from "@/lib/pipelineTransiciones";
