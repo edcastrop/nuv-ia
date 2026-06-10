@@ -570,10 +570,24 @@ export const enviarCorreoCartera = createServerFn({ method: "POST" })
         .from("cartera" as never)
         .update({ estado_cartera: "cuenta_cobro_enviada", fecha_cuenta_cobro: new Date().toISOString().slice(0, 10) } as never)
         .eq("id", data.carteraId);
+      const { data: expPrev } = await supabase
+        .from("expedientes")
+        .select("estado_caso")
+        .eq("id", cartera.expediente_id)
+        .maybeSingle();
+      const estadoPrev = (expPrev as { estado_caso: string | null } | null)?.estado_caso ?? null;
       await supabase
         .from("expedientes")
-        .update({ estado_caso: "cuenta_cobro_enviada" as never })
+        .update({ estado_caso: "cuenta_cobro_enviada" as never, estado: "FACTURADO" as never } as never)
         .eq("id", cartera.expediente_id);
+      await supabase.from("expediente_historial").insert({
+        expediente_id: cartera.expediente_id,
+        estado_caso_anterior: estadoPrev,
+        estado_caso_nuevo: "cuenta_cobro_enviada",
+        accion_origen: "cuenta_cobro_enviada",
+        observacion: "Cuenta de cobro enviada por email",
+        user_id: userId,
+      } as never);
     }
 
     return { ok: true, messageId: msgId };
