@@ -337,7 +337,9 @@ function CasoDetail() {
             />
           </div>
 
-          <CarteraBlockExpediente expedienteId={exp.id} estadoCaso={estadoCaso} />
+          <div id="cartera-expediente" className="scroll-mt-6">
+            <CarteraBlockExpediente expedienteId={exp.id} estadoCaso={estadoCaso} />
+          </div>
         </TabsContent>
 
         {/* JURÍDICO */}
