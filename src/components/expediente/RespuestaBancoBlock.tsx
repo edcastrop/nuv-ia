@@ -67,14 +67,65 @@ export function RespuestaBancoBlock({
   });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [simIdResolved, setSimIdResolved] = useState<string | null>(simulacionId ?? null);
+
+  // Resolver simulacionId desde el expediente si no se pasó por props.
+  useEffect(() => {
+    if (simulacionId) {
+      setSimIdResolved(simulacionId);
+      return;
+    }
+    let cancel = false;
+    (async () => {
+      const { data } = await supabase
+        .from("audit_simulaciones")
+        .select("id")
+        .eq("expediente_id", expedienteId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancel) return;
+      if (data?.id) {
+        setSimIdResolved(data.id);
+      } else {
+        // Crear una simulación mínima para poder registrar la respuesta del banco.
+        const analista = analistaId || user?.id;
+        if (!analista) return;
+        const { data: created } = await supabase
+          .from("audit_simulaciones")
+          .insert({
+            expediente_id: expedienteId,
+            analista_id: analista,
+            banco: bancoNombre || "",
+            producto: "",
+            tipo_credito: "",
+            moneda: "COP",
+            datos_extracto: {},
+            datos_analista: {},
+            datos_propuesta: {
+              nuevaCuota: cuotaPropuesta,
+              nuevoPlazo: plazoPropuesto,
+              cuotasEliminadas: cuotasEliminadasPropuestas,
+              ahorroTotal: ahorroPropuesto,
+            },
+          })
+          .select("id")
+          .maybeSingle();
+        if (!cancel && created?.id) setSimIdResolved(created.id);
+      }
+    })();
+    return () => {
+      cancel = true;
+    };
+  }, [simulacionId, expedienteId, analistaId, user?.id, bancoNombre, cuotaPropuesta, plazoPropuesto, cuotasEliminadasPropuestas, ahorroPropuesto]);
 
   useEffect(() => {
-    if (!simulacionId) return;
+    if (!simIdResolved) return;
     let cancel = false;
     supabase
       .from("audit_respuestas_banco")
       .select("*")
-      .eq("simulacion_id", simulacionId)
+      .eq("simulacion_id", simIdResolved)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle()
@@ -92,7 +143,7 @@ export function RespuestaBancoBlock({
     return () => {
       cancel = true;
     };
-  }, [simulacionId]);
+  }, [simIdResolved]);
 
   const cuotaAprob = parseCurrency(respuesta.cuotaAprobada);
   const plazoAprob = parseDecimal(respuesta.plazoAprobado);
@@ -155,12 +206,15 @@ export function RespuestaBancoBlock({
   );
 
   async function guardarFinanciero() {
-    if (!simulacionId || !user) return;
+    if (!simIdResolved || !user) {
+      setMsg("No se encontró simulación asociada. Guarda primero la simulación financiera.");
+      return;
+    }
     setSaving(true);
     setMsg(null);
     try {
       const payload = {
-        simulacion_id: simulacionId,
+        simulacion_id: simIdResolved,
         analista_id: user.id,
         cuota_propuesta: cuotaPropuesta || null,
         plazo_propuesto: plazoPropuesto || null,
@@ -360,7 +414,7 @@ export function RespuestaBancoBlock({
             {msg && <span className="text-xs text-slate-500">{msg}</span>}
             <button
               onClick={guardarFinanciero}
-              disabled={saving || !simulacionId}
+              disabled={saving}
               className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white disabled:opacity-40"
             >
               {saving ? "Guardando…" : "Guardar respuesta financiera"}
