@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { notifQAAprobada, notifQADevuelta } from "@/lib/notifTriggers";
+import { notifQAAprobada, notifQADevuelta, notifQASolicitada } from "@/lib/notifTriggers";
 
 export type MotivoDevolucionQA =
   | "cuota_incorrecta"
