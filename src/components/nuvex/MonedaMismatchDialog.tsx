@@ -5,8 +5,11 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
+  AlertDialogDescription,
   AlertDialogFooter,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 type Args = {
   detectada: "uvr" | "pesos";
@@ -57,6 +60,12 @@ export function useMonedaMismatchAlert() {
           max-w-lg overflow-hidden border-0 bg-transparent p-0 shadow-none
         "
       >
+        <VisuallyHidden>
+          <AlertDialogTitle>Moneda del extracto no coincide</AlertDialogTitle>
+          <AlertDialogDescription>
+            El extracto cargado y el simulador en uso están en monedas distintas.
+          </AlertDialogDescription>
+        </VisuallyHidden>
         <div
           className="
             relative rounded-2xl border border-amber-400/20
