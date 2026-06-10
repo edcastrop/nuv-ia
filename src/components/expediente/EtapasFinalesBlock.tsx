@@ -40,9 +40,12 @@ export function EtapasFinalesBlock({
     etapa_pipeline: etapaPipeline ?? null,
   });
   const idxActual = indexOfEtapa(etapaActual);
-  const idxActualVisual = aceptacionAt && etapaActual === "resultado_banco"
-    ? indexOfEtapa("informe")
-    : idxActual;
+  const idxActualVisual =
+    estadoCaso === "resultado_final_generado"
+      ? indexOfEtapa("cuenta")
+      : aceptacionAt && etapaActual === "resultado_banco"
+        ? indexOfEtapa("informe")
+        : idxActual;
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
