@@ -184,7 +184,16 @@ function parseTasa(raw: string): string {
   return Number.isFinite(n) ? String(n) : "";
 }
 
-const SYSTEM_DETECTOR = `Eres un clasificador de extractos bancarios colombianos. Mira las imágenes y llena la función detectar_banco_producto. NO inventes — usa solo lo visible.`;
+const SYSTEM_DETECTOR = `Eres un clasificador de extractos bancarios colombianos. Mira las imágenes y llena la función detectar_banco_producto. NO inventes — usa solo lo visible.
+
+REGLA CRÍTICA DE MONEDA (no equivocarse):
+- moneda="UVR" SOLO si el extracto muestra EXPLÍCITAMENTE al menos UNA de estas señales:
+  * Texto literal "UVR" en el nombre del producto, sistema de amortización o encabezado de columnas ("Valores en UVR", "Saldo UVR", "Valor UVR del día", "Cotización UVR").
+  * Una columna o fila con valores expresados en UVR (números con 4 decimales típicos de UVR).
+  * "Sistema de Amortización" que contenga "UVR" (ej "BAJA UVR", "MEDIA UVR", "ALTA UVR").
+- moneda="PESOS" en TODOS los demás casos, incluyendo cuando los montos vienen con "$" y formato peso colombiano sin mención de UVR.
+- Si dudas o no ves ninguna señal UVR → moneda="PESOS". NO marques UVR por defecto.
+- La 'evidencia' debe citar el texto literal que justifica la moneda elegida.`;
 
 function buildParserSystem(profile: BankProfile): string {
   return `Eres NUVEX IA, parser especializado de extractos bancarios colombianos.
