@@ -1,85 +1,70 @@
-# Reestructuración Simulador NUVEX ↔ Expediente
+# Integración de entrega documental por banco
 
-## Principio
-El **Simulador** es una herramienta rápida: leer extracto → simular → auditar → generar propuesta → enviar al expediente. Termina ahí.
-Todo lo bancario, contractual, de cobro y cierre vive en el **Expediente**.
+Sub-flujo dentro de la etapa **Radicación** que aplica reglas diferentes según el banco del expediente, con días hábiles, gate duro en Bogotá y PDF consolidado imprimible.
 
-## 1. Simulador NUVEX (limpiar)
+## Matriz de reglas por banco
 
-Reescribir `PesosSimulator.tsx` y `UVRSimulator.tsx` para que sólo contengan estas 6 etapas, en este orden:
+| Banco | Al radicar | Documentación financiera | Disparador |
+|---|---|---|---|
+| Davivienda | Solo poder | Por correo a Jurídica del banco | Inmediato (botón) |
+| Banco de Bogotá | Poder + cédulas + checklist completo | Física, en el mismo acto | **Gate duro**: no permite radicar si falta algo |
+| Davibank | Solo poder | Física | Tarea programada **T+4 días hábiles** |
+| AV Villas | Solo poder | Física | Tarea programada **T+8 días hábiles** |
 
-```text
-1. Datos del cliente      → ClientFields + CedulaReader
-2. Datos del crédito      → SituacionActualBlock (banco, producto, saldo, cuota, seguros, TEA, plazo, pagadas, pendientes) + ExtractoReader
-3. Beneficio Fresh        → FreshBlock (sólo si aplica)
-4. Simulación             → PropuestasComerciales (crear/eliminar/editar/recomendada)
-5. Auditoría NUVEX        → AuditPanel (score, semáforo, alertas, nivel autonomía, riesgos)
-6. Generación de propuesta → Exportar PDF + Enviar propuesta al cliente + Crear / abrir expediente
-```
+## Componentes a construir
 
-Eliminar del render de ambos simuladores (los archivos pueden permanecer en disco, sólo se quitan los imports/usos):
-- `ResultadoFinal`, `PazYSalvo`, `ComparativeTable`, `RecommendedResult` (queda recomendada como flag dentro de PropuestasComerciales), `DiscountModule`, `ProyeccionDetallada` cuando represente resultado bancario, bloques de honorarios recalculados, cuenta de cobro, otrosí, informe final, indicadores de precisión vs banco.
+### 1. Tabla `expediente_entrega_documental`
+Sub-estado por expediente para la entrega de documentación financiera.
+- `expediente_id`, `banco`, `modalidad` (correo | fisica), `estado` (pendiente | programada | enviada_correo | entregada_fisica), `fecha_programada` (hábil), `fecha_completada`, `notas`.
+- RLS: asesor del caso + roles operativos. GRANT estándar.
 
-No se borran archivos legacy en este paso para evitar romper otras rutas que los importen (cartera, expediente). Sólo se desconectan del simulador.
+### 2. Helper `src/lib/diasHabiles.ts`
+- `sumarDiasHabiles(fecha, n)` — excluye sábado/domingo y festivos Colombia (lista estática de festivos 2026 ya cubre V1).
 
-## 2. Nuevo módulo Expediente: "Resultado Bancario"
+### 3. Reglas por banco `src/lib/reglasEntregaBanco.ts`
+- `getReglaEntrega(banco)` → `{ modalidad, diasHabiles, requiereChecklistCompleto, requierePoderFirmado }`.
 
-Crear `src/components/expediente/ResultadoBancarioBlock.tsx` que reemplaza/extiende el actual `RespuestaBancoBlock` con UX completa de la nueva Etapa 9:
+### 4. Gate Banco de Bogotá
+Extender `src/lib/validacionRadicacion.ts`:
+- Si `banco === "Banco de Bogotá"`, exigir checklist 100% completo antes de permitir `radicado_banco` (bloqueo, no warning).
+- Mensaje claro listando lo que falta.
 
-Campos:
-- Fecha aprobación, Número de radicado, Banco, Nueva cuota aprobada, Nuevo plazo aprobado, Observaciones.
-- Adjuntos: carta del banco, correo del banco, soportes de aprobación (reutiliza `expediente_soportes`).
+### 5. Trigger al marcar `radicado_banco`
+En `src/hooks/useEstadoSugerido.ts` (post-confirmación), si la acción es radicación:
+- Lee la regla del banco.
+- Crea fila en `expediente_entrega_documental` con la fecha programada (T+N hábiles) o `pendiente` inmediato (Davivienda/Bogotá).
+- Bogotá queda `entregada_fisica` automática (se entregó en el mismo acto).
 
-Acciones automáticas al guardar:
-- **Comparativo NUVEX vs Banco** (cuota, plazo, cuotas eliminadas, ahorro) usando `propuesta_data` recomendada del expediente.
-- **Precisión histórica** (cuota, plazo, ahorro) → persistir en `analista_metricas` (precision_cuota, precision_plazo, precision_ahorro) para alimentar perfil de riesgo, licencia de autonomía y dashboard gerencial.
-- **Reajuste honorarios** automático con `calcularRecalculoHonorarios` + `guardarRecalculoHonorarios` (ya existe).
-- **Generación automática de Otrosí** cuando aprobado ≠ presentado: nuevo helper `src/lib/otrosiContrato.ts` que produce el DOCX/PDF mostrando condiciones presentadas, aprobadas y honorarios recalculados.
+### 6. Bloque UI `EntregaDocumentalBlock`
+`src/components/expediente/EntregaDocumentalBlock.tsx` dentro de la pestaña de Radicación del caso. Muestra:
+- Banco, modalidad y fecha programada/vencida (badge rojo si pasó).
+- **Davivienda**: botón "Enviar documentación a Jurídica del banco" → abre modal que reutiliza `enviarSolicitudPlazoBanco` y adjunta poder + cédulas + financieros + cuerpo Ley 546.
+- **Bogotá**: estado "Entregada con el poder" (auto).
+- **Davibank / AV Villas**: contador "Faltan X días hábiles para entrega física" + botón "Generar paquete imprimible" + botón "Marcar entregada".
 
-Vivirá en `src/routes/_authenticated/casos.$id.tsx` como bloque de la Etapa 9.
+### 7. PDF consolidado imprimible
+`src/lib/paqueteDocumentalPdf.ts` (cliente, usa `pdf-lib` que ya existe en proyecto):
+- Carátula con datos del caso + banco + checklist de lo que va dentro.
+- Concatena: poder, cédula apoderado, cédulas titular(es) y codeudor, documentos financieros del análisis de capacidad.
+- Descarga `Paquete_<cliente>_<banco>.pdf`.
 
-## 3. Pipeline: ampliar a 15 etapas
+### 8. Alertas en pipeline
+Insertar fila en `caso_alertas` cuando la fecha programada sea hoy o esté vencida (lo recoge `AlertasEstancamientoPanel` existente).
 
-Actualizar `src/lib/pipelineEtapas.ts`:
+## Lo que NO cambia
 
-```text
- 9. Resultado Bancario   (director_financiero, apoderado)
-10. Aceptación Cliente   (asesor / AFC) — obligatorio
-11. Informe Final        (director_financiero, apoderado, auto)
-12. Facturación          (contabilidad)
-13. Pago Honorarios      (contabilidad)
-14. Paz y Salvo          (contabilidad, auto)
-15. Caso Cerrado         (gerencia)
-```
+- Estados oficiales del pipeline (`radicado_banco` sigue igual).
+- Motor de capacidad de pago.
+- Motor de envío de correo (solo se reutiliza desde el nuevo botón Davivienda).
 
-Reasignar `CASO_ESTADO_A_ETAPA` para usar los nuevos ids. Mantener compatibilidad con estados existentes mapeándolos a la etapa correspondiente.
+## Orden de implementación
 
-Crear bloques mínimos para etapas 10–15 dentro de `casos.$id.tsx`:
-- Etapa 10: `AceptacionClienteBlock` (fecha, medio, observaciones, adjuntos WA/correo/carta).
-- Etapas 11–14: tarjetas con CTA y estado; reutilizan helpers existentes (`cuentaCobroPdf`, `PazYSalvo`, etc.) movidos desde simulador.
-- Etapa 15: panel "Caso cerrado" con indicadores finales (ahorro, honorarios, precisión, tiempo total).
+1. Migración tabla + RLS + GRANT.
+2. Helpers (`diasHabiles`, `reglasEntregaBanco`).
+3. Extender `validacionRadicacion.ts` con gate Bogotá.
+4. Trigger en `useEstadoSugerido`.
+5. Bloque UI + integración en pestaña Radicación.
+6. PDF consolidado.
+7. Notificación de vencimiento.
 
-## 4. Datos / backend
-
-Migración nueva:
-- `analista_metricas`: añadir `precision_cuota numeric`, `precision_plazo numeric`, `precision_ahorro numeric` (default 0).
-- `expedientes`: añadir `aceptacion_cliente_at timestamptz`, `aceptacion_medio text`, `aceptacion_observaciones text` (sólo si no existen).
-- Nuevo enum/valores `caso_estado`: `resultado_banco_registrado`, `aceptacion_cliente_recibida`, `caso_cerrado` (si faltan). GRANTs ya existentes.
-
-## 5. Navegación / UX
-
-- En el simulador, el botón final "Crear expediente" sigue funcionando vía `SaveExpedienteButton`, pero el copy cambia a "Enviar al expediente".
-- En el expediente (`casos.$id`), nuevo timeline 1–15 con bloques colapsables; la Etapa 9 (Resultado Bancario) es la entrada principal del Director Financiero / Apoderado.
-- Notificaciones automáticas al AFC cuando: banco responde, condiciones difieren, otrosí generado, informe enviado, cuenta de cobro emitida, pago registrado, paz y salvo emitido (reutilizar `notificaciones.ts`).
-
-## Detalles técnicos
-
-- No tocar `src/integrations/supabase/client.ts` ni `types.ts` manualmente — la migración regenera `types.ts`.
-- Mantener `auditEngine.ts` y `autonomia.ts` intactos.
-- `precision_*` se calcula como `1 - |nuvex-banco|/banco` clamp [0,1].
-- Otrosí: generar con `docx` (ya usado en `solicitudCambioPlazosDocx.ts`).
-- Mantener archivos legacy (`ResultadoFinal.tsx`, `PazYSalvo.tsx`, etc.) por ahora; sólo desconectarlos del simulador.
-
-## Alcance fuera de este plan
-- Rediseño visual profundo del expediente (mantenemos look actual).
-- Borrado físico de componentes legacy (se hará en una pasada posterior una vez se confirme que el expediente cubre todo).
+¿Procedo así o ajustamos algo antes de construir?
