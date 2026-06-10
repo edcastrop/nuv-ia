@@ -113,6 +113,13 @@ export async function aprobarQA(validacionId: string): Promise<void> {
         .update({ aprobado_data: snapshot as unknown as never })
         .eq("id", expedienteId);
     }
+    // Auto-avance de estado: marcar el caso como "proyección aprobada QA" para
+    // cerrar la etapa de Auditoría QA en el stepper y habilitar Contratación.
+    try {
+      await cambiarEstadoCaso(expedienteId, "proyeccion_aprobada_qa", "manual", "QA aprobada");
+    } catch (e) {
+      console.warn("[validacionQA] no se pudo actualizar estado_caso al aprobar QA", e);
+    }
     // Disparador: notificar a asesor + jurídica
     await notifQAAprobada(expedienteId);
   }
