@@ -36,7 +36,7 @@ export const ETAPAS_GUIADAS: EtapaGuiada[] = [
   { id: "lead", numero: 1, titulo: "Lead", descripcion: "Captura del lead y extracto del cliente.", responsables: ["asesor", "licenciado"] },
   { id: "proyeccion", numero: 2, titulo: "Proyección", descripcion: "Simulación y propuesta financiera.", responsables: ["licenciado"] },
   { id: "auditoria_qa", numero: 3, titulo: "Auditoría QA", descripcion: "Validación de la proyección por Dirección Financiera.", responsables: ["director_financiero_qa"] },
-  { id: "contratacion", numero: 4, titulo: "Contratación", descripcion: "Contrato y poder firmados por el cliente.", responsables: ["asesor", "juridica", "director_juridico"] },
+  { id: "contratacion", numero: 4, titulo: "Contratación", descripcion: "Contrato y poder firmados por el cliente.", responsables: ["asesor", "operaciones", "juridica", "director_juridico"] },
   { id: "documentacion_bancaria", numero: 5, titulo: "Documentación Bancaria", descripcion: "Checklist documental completo para radicar.", responsables: ["operaciones", "juridica"] },
   { id: "radicacion", numero: 6, titulo: "Radicación", descripcion: "Solicitud radicada en el banco.", responsables: ["operaciones", "apoderado"] },
   { id: "respuesta_banco", numero: 7, titulo: "Respuesta Banco", descripcion: "Banco evalúa la solicitud.", responsables: ["operaciones", "juridica"] },
