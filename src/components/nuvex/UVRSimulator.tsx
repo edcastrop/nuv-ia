@@ -501,6 +501,11 @@ export function UVRSimulator({
               totalProyectado: calc ? formatCOP(calc.escenarioActual.totalPagoPesos) : "—",
             }}
             vecesPagado={vecesActual}
+            costoTotal={{
+              valorDesembolsado: valorDesembolsadoNum,
+              dineroPagado: dineroPagadoFecha,
+              totalProyectadoPendiente: calc ? calc.escenarioActual.totalPagoPesos : 0,
+            }}
             secundarios={[
               { label: "Variación UVR EA", value: formatPercentage(input.variacionUVR) },
               {
