@@ -72,23 +72,30 @@ const ESTADO_A_ETAPA: Partial<Record<CasoEstado, EtapaGuiadaId>> = {
   documentacion_completa: "documentacion_bancaria",
   radicacion_pendiente: "radicacion",
   radicacion_preparada: "radicacion",
-  radicado_banco: "radicacion",
+  // Una vez radicado, la etapa de Radicación queda completada
+  // y la actual pasa a Respuesta Banco (banco evaluando).
+  radicado_banco: "respuesta_banco",
 
   en_estudio_banco: "respuesta_banco",
   docs_complementarios_banco: "respuesta_banco",
   devuelto_banco: "respuesta_banco",
   negado_banco: "respuesta_banco",
+  // Aprobación del banco cierra "Respuesta Banco" → pasa a Resultado/Otrosí
   aprobado: "resultado_otrosi",
   aprobado_banco: "resultado_otrosi",
   documentos_banco_firmados: "resultado_otrosi",
   condiciones_aplicadas: "resultado_otrosi",
-  aplicado_banco: "resultado_otrosi",
-  resultado_final_generado: "informe_final",
+  // Aplicación del banco cierra Resultado/Otrosí → pasa a Informe Final
+  aplicado_banco: "informe_final",
+  resultado_final_generado: "cuenta_cobro",
   cuenta_cobro_generada: "cuenta_cobro",
-  cuenta_cobro_enviada: "cuenta_cobro",
+  // Cuenta enviada cierra Cuenta de Cobro → pasa a Pago
+  cuenta_cobro_enviada: "pago",
   honorarios_pendientes: "pago",
-  honorarios_pagados: "pago",
-  paz_y_salvo_generado: "paz_salvo",
+  // Pago efectuado cierra Pago → pasa a Paz y Salvo
+  honorarios_pagados: "paz_salvo",
+  // Paz y salvo cierra esa etapa → pasa a Caso Cerrado
+  paz_y_salvo_generado: "caso_cerrado",
   caso_finalizado: "caso_cerrado",
   proceso_cerrado: "caso_cerrado",
   prejuridico: "respuesta_banco",
