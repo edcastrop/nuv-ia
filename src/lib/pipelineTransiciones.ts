@@ -36,20 +36,25 @@ export interface TransicionResult {
 const MAX_AVANCE_POR_ETAPA: Partial<Record<EtapaPipelineId, number>> = {
   // Lead permite saltar directo a proyección al guardar una simulación.
   lead: 2,
-  extracto: 1,
+  extracto: 2,
   // Tras aprobación QA el analista puede saltar a contratación
   // (presentación y cierre son etapas opcionales de seguimiento comercial).
   proyeccion: 4,
   presentacion: 2,
-  cierre: 1,
-  contratacion: 1,
-  radicacion: 1,
-  banco: 1,
-  informe: 1,
-  cuenta: 1,
-  pago: 1,
-  comision: 1,
-  paz_salvo: 1,
+  cierre: 2,
+  contratacion: 2,
+  // Radicación y Banco pueden saltar hasta Resultado Bancario en un solo paso
+  // cuando se registra la respuesta del banco (radicacion → resultado_banco = +2).
+  radicacion: 2,
+  banco: 2,
+  // Resultado bancario puede saltar a Cuenta de Cobro (informe → cuenta = +1,
+  // pero al registrar el informe final y enviar la cuenta puede ser +2).
+  resultado_banco: 3,
+  informe: 2,
+  cuenta: 2,
+  pago: 2,
+  comision: 2,
+  paz_salvo: 2,
   finalizado: 0,
 };
 
