@@ -52,17 +52,27 @@ export function ValidacionRadicacionBlock({ expedienteId }: { expedienteId: stri
   );
 
   const estado = info?.estado_caso ?? null;
+  const ESTADOS_POST_RADICACION: CasoEstado[] = [
+    "radicado_banco",
+    "en_estudio_banco",
+    "docs_complementarios_banco",
+    "aprobado",
+    "aprobado_banco",
+    "documentos_banco_firmados",
+    "condiciones_aplicadas",
+    "aplicado_banco",
+    "resultado_final_generado",
+    "cuenta_cobro_generada",
+    "cuenta_cobro_enviada",
+    "honorarios_pendientes",
+    "honorarios_pagados",
+    "paz_y_salvo_generado",
+    "caso_finalizado",
+    "proceso_cerrado",
+  ];
   const yaRadicado =
     !!info?.radicado_id_banco ||
-    estado === "radicado_banco" ||
-    estado === "aprobado_banco" ||
-    estado === "documentos_banco_firmados" ||
-    estado === "condiciones_aplicadas" ||
-    estado === "cuenta_cobro_generada" ||
-    estado === "cuenta_cobro_enviada" ||
-    estado === "honorarios_pagados" ||
-    estado === "paz_y_salvo_generado" ||
-    estado === "caso_cerrado";
+    (!!estado && ESTADOS_POST_RADICACION.includes(estado));
 
   const puedeAccionar =
     !!data?.puedeRadicar &&
