@@ -71,15 +71,47 @@ export function ValidacionRadicacionBlock({ expedienteId }: { expedienteId: stri
     "caso_finalizado",
     "proceso_cerrado",
   ];
-  const yaRadicado =
-    !!info?.radicado_id_banco ||
-    (!!estado && ESTADOS_POST_RADICACION.includes(estado));
+  const tieneRadicadoId = !!info?.radicado_id_banco;
+  const estadoPostRadicacion = !!estado && ESTADOS_POST_RADICACION.includes(estado);
+  const yaRadicado = tieneRadicadoId && estadoPostRadicacion;
+  // Estado avanzado pero falta capturar el ID/fecha del banco
+  const faltaCapturarDatos = estadoPostRadicacion && !tieneRadicadoId;
 
   const puedeAccionar =
     !!data?.puedeRadicar &&
-    !yaRadicado &&
+    !estadoPostRadicacion &&
     !!estado &&
     ESTADOS_PERMITEN_RADICAR.includes(estado);
+
+  // Inline form para completar datos cuando el estado ya avanzó
+  const [radicadoIdInput, setRadicadoIdInput] = useState("");
+  const [fechaInput, setFechaInput] = useState<string>(() => new Date().toISOString().slice(0, 16));
+  const [savingDatos, setSavingDatos] = useState(false);
+
+  const guardarDatosRadicacion = async () => {
+    const id = radicadoIdInput.trim();
+    if (id.length < 3) {
+      toast.error("Ingresa un ID de radicado válido (mínimo 3 caracteres)");
+      return;
+    }
+    setSavingDatos(true);
+    try {
+      const fechaIso = fechaInput ? new Date(fechaInput).toISOString() : new Date().toISOString();
+      const { error } = await supabase
+        .from("expedientes")
+        .update({ radicado_id_banco: id, radicado_fecha: fechaIso } as never)
+        .eq("id", expedienteId);
+      if (error) throw error;
+      toast.success("Datos de radicación guardados");
+      setRadicadoIdInput("");
+      await load();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "No se pudieron guardar los datos";
+      toast.error("Error", { description: msg });
+    } finally {
+      setSavingDatos(false);
+    }
+  };
 
   return (
     <Card>
