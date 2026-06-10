@@ -35,6 +35,7 @@ import { SaveExpedienteButton } from "./SaveExpedienteButton";
 import type { Expediente } from "@/lib/expedientes";
 import { ExtractoReader, type ExtractoApplyPayload } from "./ExtractoReader";
 import { toast } from "sonner";
+import { useMonedaMismatchAlert } from "./MonedaMismatchDialog";
 import { FreshBlock } from "./FreshBlock";
 import {
   PropuestasComerciales,
@@ -63,6 +64,7 @@ export function PesosSimulator({
 } = {}) {
   const init = initialExpediente;
   const initCred = (init?.credito_data ?? {}) as Record<string, string>;
+  const monedaAlerta = useMonedaMismatchAlert();
   const [extractoArchivoPath, setExtractoArchivoPath] = useState<string>(() =>
     typeof initCred.archivoPath === "string" ? initCred.archivoPath : "",
   );
@@ -295,13 +297,14 @@ export function PesosSimulator({
       <ExtractoReader
         modo="pesos"
         existingArchivoPath={extractoArchivoPath}
-        onApply={(p: ExtractoApplyPayload) => {
+        onApply={async (p: ExtractoApplyPayload) => {
           // Alerta crítica: bloquear si el extracto está en UVR pero estamos en simulador de Pesos.
           if (p.monedaDetectada && p.monedaDetectada !== "pesos") {
-            const ok = window.confirm(
-              `⚠️ ALERTA DE MONEDA\n\nEl extracto cargado está en UVR, pero este simulador es en PESOS.\n\nSi continúas, la proyección quedará mal calculada.\n\nAceptar = aplicar de todos modos (NO recomendado).\nCancelar = no aplicar nada.`,
-            );
-            if (!ok) {
+            const continuar = await monedaAlerta.confirm({
+              detectada: p.monedaDetectada,
+              simulador: "pesos",
+            });
+            if (!continuar) {
               toast.error(
                 "Carga cancelada: el extracto es UVR pero el simulador es Pesos. Usa el simulador UVR.",
                 { duration: 6000 },
@@ -669,6 +672,7 @@ export function PesosSimulator({
           {/* Resultado bancario, otrosí, cuenta de cobro, paz y salvo: ahora viven en el Expediente. */}
         </>
       )}
+      {monedaAlerta.dialog}
     </div>
   );
 }
