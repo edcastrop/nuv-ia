@@ -42,6 +42,7 @@ export function EtapaTransicionDialog() {
           etapaAnteriorId: d.etapaAnteriorId,
           etapaNuevaId: d.etapaNuevaId,
         });
+        if (d.etapaNuevaId === "finalizado") fireCierreConfetti();
       } else {
         setState({
           open: true,
