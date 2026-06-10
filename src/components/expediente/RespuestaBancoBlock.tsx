@@ -6,6 +6,7 @@ import { formatCOP, parseCurrency, parseDecimal } from "@/lib/format";
 import { honorariosFinalesCliente, calcularRecalculoHonorarios, guardarRecalculoHonorarios } from "@/lib/honorarios";
 import { calcularPrecision, registrarPrecisionAnalista } from "@/lib/precisionHistorica";
 import { aplicaOtrosi, abrirOtrosiImprimible } from "@/lib/otrosiContrato";
+import { cambiarEstadoCaso } from "@/lib/casoEstados";
 // Notificación al AFC: TODO cuando exista crearNotificacion helper.
 
 interface Props {
