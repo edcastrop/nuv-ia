@@ -15,6 +15,7 @@ import {
   getEtapaById,
   type EtapaPipelineId,
 } from "@/lib/pipelineEtapas";
+import { notifyEtapaExito, notifyEtapaError } from "@/lib/etapaFeedback";
 
 export interface TransicionResult {
   ok: boolean;
