@@ -225,9 +225,9 @@ function LoginPage() {
               style={{ background: `linear-gradient(90deg, transparent, ${BLUE}, ${GREEN}, transparent)` }}
             />
 
-            <h2 className="text-[28px] font-semibold tracking-tight">Welcome back</h2>
+            <h2 className="text-[28px] font-semibold tracking-tight">Bienvenido de vuelta</h2>
             <p className="mt-1.5 text-sm text-white/50">
-              Access your financial intelligence workspace.
+              Accede a tu espacio de inteligencia financiera.
             </p>
 
             <form onSubmit={submit} className="mt-8 space-y-4">
