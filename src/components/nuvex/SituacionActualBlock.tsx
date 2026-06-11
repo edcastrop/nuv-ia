@@ -209,6 +209,77 @@ function NeuralgicoCard({
   );
 }
 
+function TeaAlertCard({ tea, umbral = 10 }: { tea: number; umbral?: number }) {
+  const esRiesgo = tea >= umbral;
+  const accent = esRiesgo ? "#B42318" : "#1F7A45";
+  const bg = esRiesgo
+    ? "linear-gradient(135deg, #2A0B0B 0%, #401010 55%, #2A0B0B 100%)"
+    : "linear-gradient(135deg, #0F2419 0%, #14361F 55%, #0F2419 100%)";
+  const ring = esRiesgo ? "rgba(255, 95, 95, 0.45)" : "rgba(115, 230, 156, 0.35)";
+  const text = esRiesgo ? "#FFB3B3" : "#A7F3C4";
+  const chipBg = esRiesgo ? "rgba(255, 95, 95, 0.2)" : "rgba(115, 230, 156, 0.18)";
+  const chipText = esRiesgo ? "#FF7878" : "#73E69C";
+  const icon = esRiesgo ? "🔴" : "🟢";
+  const label = esRiesgo ? "TASA ALTA" : "TASA DENTRO DE RANGO";
+  const mensaje = esRiesgo
+    ? `La TEA (${tea.toFixed(2).replace(".", ",")}%) supera el umbral crítico del ${umbral}%. Se recomienda revisar opciones de refinanciación.`
+    : `La TEA (${tea.toFixed(2).replace(".", ",")}%) se encuentra por debajo del umbral del ${umbral}%.`;
+
+  return (
+    <div
+      className="relative mt-4 overflow-hidden rounded-2xl"
+      style={{
+        background: bg,
+        border: `1px solid ${ring}`,
+        boxShadow: "0 16px 40px -16px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.04) inset",
+      }}
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full blur-3xl"
+        style={{ background: ring, opacity: 0.35 }}
+      />
+      <div className="flex flex-col gap-3 px-5 py-4 md:flex-row md:items-center md:justify-between md:px-6 md:py-5">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl" aria-hidden>{icon}</span>
+          <div>
+            <div
+              className="text-[10.5px] font-bold uppercase tracking-[0.22em]"
+              style={{ color: "rgba(255,255,255,0.65)" }}
+            >
+              Tasa Efectiva Anual (TEA)
+            </div>
+            <div
+              className="mt-1 text-[28px] md:text-[32px] font-extrabold leading-tight tracking-tight"
+              style={{ color: text, textShadow: `0 0 30px ${ring}` }}
+            >
+              {tea.toFixed(2).replace(".", ",")}%
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col items-start md:items-end gap-1.5">
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em]"
+            style={{
+              background: chipBg,
+              color: chipText,
+              border: `1px solid ${ring}`,
+            }}
+          >
+            {icon} {label}
+          </span>
+          <p
+            className="max-w-xs text-[12.5px] leading-relaxed md:text-right"
+            style={{ color: "rgba(255,255,255,0.78)" }}
+          >
+            {mensaje}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SecondaryKpi({ label, value }: SituacionMetric) {
 
 
