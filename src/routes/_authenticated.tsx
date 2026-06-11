@@ -523,8 +523,9 @@ function AuthenticatedLayout() {
               >
                 <LayoutGrid size={16} />
               </button>
-              <div className="hidden md:block text-[12px] font-medium uppercase tracking-[0.18em] text-white/40">
-                {CORPORATIVO.nombre}
+              <div className="hidden md:flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.22em] text-white/50">
+                <span className="inline-flex h-1.5 w-1.5 rounded-full" style={{ background: `linear-gradient(135deg, ${AZUL}, ${VERDE})` }} />
+                NUVIA · Inteligencia Financiera
               </div>
             </div>
 
