@@ -95,6 +95,7 @@ export interface HealthScorePayload {
     cartera: number;
     sla: number;
     actividad: number;
+    satisfaccion: number;
   };
   fresh: boolean;
 }
