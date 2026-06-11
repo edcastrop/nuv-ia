@@ -71,7 +71,7 @@ function LoginPage() {
       const r = await lovable.auth.signInWithOAuth(provider, { redirect_uri: window.location.origin });
       if (r.error) throw r.error;
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : `Error signing in with ${provider}`);
+      setErr(e instanceof Error ? e.message : `Error al iniciar sesión con ${provider}`);
       setBusy(false);
     }
   };
