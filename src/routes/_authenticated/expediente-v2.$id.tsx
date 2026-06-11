@@ -585,44 +585,58 @@ function ExpedienteV2Page() {
             </div>
           </NCard>
 
-          {/* ===== PLAN DE TRATAMIENTO ===== */}
+          {/* ===== PLAN DE TRATAMIENTO (real) ===== */}
           <NCard variant="default">
             <SectionHeader
               title="Plan de tratamiento"
-              description="Cola operativa de procedimientos pendientes."
+              description="Tareas clínicas reales del expediente."
               icon={<ClipboardList size={14} />}
+              action={
+                <button
+                  type="button"
+                  onClick={() => setShowTareaForm((v) => !v)}
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-sky-500/30 bg-sky-500/10 text-sky-300 text-[10px] hover:bg-sky-500/20"
+                >
+                  {showTareaForm ? <X size={11} /> : <Plus size={11} />}
+                  {showTareaForm ? "Cancelar" : "Nueva tarea"}
+                </button>
+              }
             />
-            {plan.length === 0 ? (
-              <EmptyState compact tone="neutral" title="Sin procedimientos" description="No hay próximos pasos definidos para esta etapa." />
+            {showTareaForm && (
+              <NuevaTareaForm
+                profiles={profileList}
+                onCancel={() => setShowTareaForm(false)}
+                onSubmit={(v) => crearTareaM.mutate(v)}
+                submitting={crearTareaM.isPending}
+                error={crearTareaM.error ? (crearTareaM.error as Error).message : null}
+              />
+            )}
+            {tareasQuery.isLoading ? (
+              <div className="mt-3 text-[11px] text-[var(--nuvia-text-secondary)] inline-flex items-center gap-2">
+                <Loader2 size={12} className="animate-spin" /> Cargando tareas…
+              </div>
+            ) : tareas.length === 0 ? (
+              <EmptyState compact tone="neutral" title="Sin tareas registradas" description='Usa "Nueva tarea" para crear el primer procedimiento clínico.' />
             ) : (
-              <div className="mt-3 overflow-hidden rounded-md border border-[var(--nuvia-border)]">
-                <table className="w-full text-[11px]">
-                  <thead className="bg-white/[0.03] text-[10px] uppercase tracking-wider text-[var(--nuvia-text-secondary)]">
-                    <tr>
-                      <th className="text-left px-3 py-2 font-medium">#</th>
-                      <th className="text-left px-3 py-2 font-medium">Procedimiento</th>
-                      <th className="text-left px-3 py-2 font-medium">Responsable</th>
-                      <th className="text-left px-3 py-2 font-medium">Prioridad</th>
-                      <th className="text-left px-3 py-2 font-medium">Fecha objetivo</th>
-                      <th className="text-left px-3 py-2 font-medium">Estado</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[var(--nuvia-border)]">
-                    {plan.map((p, i) => (
-                      <tr key={i} className="hover:bg-white/[0.02]">
-                        <td className="px-3 py-2 font-mono text-[10px] text-[var(--nuvia-text-secondary)]">{(i + 1).toString().padStart(2, "0")}</td>
-                        <td className="px-3 py-2 text-[var(--nuvia-text-primary)]">{p.accion}</td>
-                        <td className="px-3 py-2 text-[var(--nuvia-text-secondary)]">{p.responsable}</td>
-                        <td className="px-3 py-2"><PriorityPill p={p.prioridad} /></td>
-                        <td className="px-3 py-2 tabular-nums text-[var(--nuvia-text-secondary)]">{p.fechaObjetivo}</td>
-                        <td className="px-3 py-2"><EstadoPill e={p.estado} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="mt-3 space-y-2">
+                {tareas.map((t) => (
+                  <TareaCard
+                    key={t.id}
+                    t={t}
+                    responsableNombre={t.responsable_id ? profilesById[t.responsable_id]?.nombre ?? null : null}
+                    profiles={profileList}
+                    onChangeEstado={(estado) => actualizarEstadoM.mutate({ id: t.id, estado })}
+                    onAsignar={(responsable_id) => asignarM.mutate({ id: t.id, responsable_id })}
+                    busy={actualizarEstadoM.isPending || asignarM.isPending}
+                  />
+                ))}
               </div>
             )}
+            <p className="mt-2 text-[10px] text-[var(--nuvia-text-secondary)] italic">
+              Tareas persistidas en <code>expediente_tareas</code> con RLS por expediente.
+            </p>
           </NCard>
+
 
           {/* ===== EVOLUCIÓN / TIMELINE ===== */}
           <NCard variant="default">
