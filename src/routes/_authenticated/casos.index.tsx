@@ -23,6 +23,14 @@ import {
   AlertTriangle,
   Clock,
 } from "lucide-react";
+import {
+  PageLayout,
+  ExecutiveHero,
+  KpiGrid,
+  KpiCard,
+  InsightCard,
+} from "@/components/nuvia";
+
 
 const ETAPA_IDS = ETAPAS_PIPELINE.map((e) => e.id) as [EtapaPipelineId, ...EtapaPipelineId[]];
 
@@ -409,40 +417,7 @@ function CasosPage() {
 
 /* ===== Helpers ===== */
 
-function KpiCard({
-  icon, color, label, value, sub, valueColor,
-}: { icon: React.ReactNode; color: string; label: string; value: string; sub: string; valueColor?: string }) {
-  return (
-    <div
-      className="group relative overflow-hidden rounded-[20px] p-6 transition-all duration-300 hover:-translate-y-1"
-      style={{
-        background: `linear-gradient(180deg, ${CARD}, ${CARD2})`,
-        border: `1px solid ${BORDER}`,
-        boxShadow: "0 10px 40px -15px rgba(0,0,0,0.6)",
-      }}
-    >
-      <div
-        className="absolute -top-12 -right-12 h-40 w-40 rounded-full opacity-0 transition-opacity duration-500 group-hover:opacity-100 blur-2xl"
-        style={{ background: color }}
-      />
-      <div className="relative flex items-center justify-between mb-4">
-        <div
-          className="flex h-12 w-12 items-center justify-center rounded-full"
-          style={{ background: `${color}1A`, color, border: `1px solid ${color}33` }}
-        >
-          {icon}
-        </div>
-        <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: TEXT2 }}>
-          {label}
-        </span>
-      </div>
-      <div className="relative">
-        <div className="text-4xl font-bold tracking-tight" style={{ color: valueColor ?? "#fff" }}>{value}</div>
-        <div className="text-xs mt-2" style={{ color: TEXT2 }}>{sub}</div>
-      </div>
-    </div>
-  );
-}
+
 
 function ExpedienteCard({ r, isDup = false }: { r: Expediente; isDup?: boolean }) {
   const theme = ESTADO_THEME[r.estado];
