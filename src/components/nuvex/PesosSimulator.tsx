@@ -472,6 +472,7 @@ export function PesosSimulator({
               valorDesembolsado: valorDesembolsadoNum,
               dineroPagado: dineroPagadoFecha,
               totalProyectadoPendiente: totalActualPendiente,
+              baseCredito: baseCreditoReferencia,
             }}
             puntosNeuralgicos={{
               tiempoMeses: cuotasPendientes,
