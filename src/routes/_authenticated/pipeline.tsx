@@ -312,7 +312,7 @@ function PipelinePage() {
   // P28 — Vistos recientemente (localStorage). Se refresca al cargar y al refrescar.
   const recents = useMemo(() => getRecentCases(), [lastUpdated]);
 
-  // P30 — Embudo ejecutivo E1→E14: conteo por etapa + conversión acumulada vs E1.
+  // P30 — Embudo ejecutivo E1→E15: conteo por etapa + conversión acumulada vs E1.
   const [showFunnel, setShowFunnel] = useState<boolean>(() => {
     if (typeof window === "undefined") return true;
     return localStorage.getItem("nuvex.pipeline.funnel") !== "0";
