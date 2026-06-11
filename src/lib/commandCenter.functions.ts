@@ -95,6 +95,7 @@ export interface HealthScorePayload {
     cartera: number;
     sla: number;
     actividad: number;
+    satisfaccion: number;
   };
   fresh: boolean;
 }
@@ -340,7 +341,7 @@ export const getHealthScore = createServerFn({ method: "POST" })
         score: 0,
         estado: "atencion",
         tendencia: null,
-        componentes: { produccion: 0, conversion: 0, cartera: 0, sla: 0, actividad: 0 },
+        componentes: { produccion: 0, conversion: 0, cartera: 0, sla: 0, actividad: 0, satisfaccion: 0 },
         fresh: false,
       };
       return payload;
@@ -357,6 +358,7 @@ export const getHealthScore = createServerFn({ method: "POST" })
         cartera: num(c.cartera),
         sla: num(c.sla),
         actividad: num(c.actividad),
+        satisfaccion: num(c.satisfaccion),
       },
       fresh: true,
     } satisfies HealthScorePayload;
