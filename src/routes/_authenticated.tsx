@@ -313,7 +313,7 @@ function AuthenticatedLayout() {
         label: "Apoderado",
         items: [
           { to: "/apoderado/mis-casos", label: "Mis casos", Icon: Briefcase },
-          { to: "/nuvex-ia", label: "NUVEX IA", Icon: Sparkles },
+          { to: "/nuvex-ia", label: "NUVIA IA", Icon: Sparkles },
           { to: "/colaboracion/dm", label: "Mensajería", Icon: MessageSquare, badge: dmUnread },
           { to: "/directorio", label: "Directorio", Icon: BookUser },
           { to: "/notificaciones", label: "Alertas", Icon: Bell, badge: unread },
@@ -324,8 +324,8 @@ function AuthenticatedLayout() {
         {
           label: "Operación",
           items: [
-            { to: "/", label: "Simulador", Icon: LayoutGrid, exact: true },
-            { to: "/nuvex-ia", label: "NUVEX IA", Icon: Sparkles },
+            { to: "/", label: "Inicio", Icon: LayoutGrid, exact: true },
+            { to: "/nuvex-ia", label: "NUVIA IA", Icon: Sparkles },
             { to: "/casos", label: "Casos", Icon: FolderKanban },
             ...(has("director_financiero_qa") && !hasAny("super_admin","admin","gerencia","licenciado","asesor","juridica","operaciones","cartera","contabilidad","director_juridico","auxiliar_operativo") ? [] : [{ to: "/pipeline", label: "Pipeline", Icon: Kanban }]),
             { to: "/expediente-maestro", label: "Expediente", Icon: UserSquare2 },
@@ -369,7 +369,7 @@ function AuthenticatedLayout() {
             ...(isSuperAdmin ? [{ to: "/super-admin/academia", label: "Admin Academia", Icon: GraduationCap }] : []),
             ...(isSuperAdmin ? [{ to: "/super-admin/accesos", label: "Accesos", Icon: Shield }] : []),
             ...(isSuperAdmin ? [{ to: "/super-admin/onboarding", label: "Onboarding", Icon: UserCircle }] : []),
-            ...(isSuperAdmin ? [{ to: "/super-admin/nuvex-ia-kb", label: "NUVEX IA · KB", Icon: Shield }] : []),
+            ...(isSuperAdmin ? [{ to: "/super-admin/nuvex-ia-kb", label: "NUVIA IA · KB", Icon: Shield }] : []),
             ...(isSuperAdmin ? [{ to: "/super-admin", label: "Super Admin", Icon: Shield }] : []),
           ],
         },
@@ -491,7 +491,7 @@ function AuthenticatedLayout() {
   );
 
   return (
-    <div className="min-h-screen flex" style={{ background: "#F7F9FB" }}>
+    <div className="min-h-screen flex" style={{ background: "#0A0B10" }}>
       {/* Sidebar desktop */}
       <div className="hidden lg:block sticky top-0 h-screen relative">
         {SidebarContent}
@@ -523,8 +523,9 @@ function AuthenticatedLayout() {
               >
                 <LayoutGrid size={16} />
               </button>
-              <div className="hidden md:block text-[12px] font-medium uppercase tracking-[0.18em] text-white/40">
-                {CORPORATIVO.nombre}
+              <div className="hidden md:flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.22em] text-white/50">
+                <span className="inline-flex h-1.5 w-1.5 rounded-full" style={{ background: `linear-gradient(135deg, ${AZUL}, ${VERDE})` }} />
+                NUVIA · Inteligencia Financiera
               </div>
             </div>
 
@@ -603,9 +604,10 @@ function AuthenticatedLayout() {
         <EtapaTransicionDialog />
 
 
-        <footer className="border-t border-[#E3E7EE] bg-white">
-          <div className="mx-auto max-w-7xl px-6 py-5 text-center text-[11px] text-[#242424]/60">
-            <span className="font-semibold text-[#242424]">{CORPORATIVO.nombre}</span> · {CORPORATIVO.telefono} · {CORPORATIVO.web}
+        <footer className="border-t border-white/[0.06]" style={{ background: "#070810" }}>
+          <div className="mx-auto max-w-7xl px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-white/40">
+            <span><span className="font-semibold text-white/70">NUVIA Systems</span> · Sistema operativo de inteligencia financiera</span>
+            <span className="tracking-[0.22em] uppercase">SOC 2 · ISO 27001 · {CORPORATIVO.web}</span>
           </div>
         </footer>
       </div>
