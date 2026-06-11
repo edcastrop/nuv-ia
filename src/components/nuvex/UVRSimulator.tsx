@@ -251,10 +251,16 @@ export function UVRSimulator({
 
   const cuotasBaseSimulacion = Math.max(0, cuotasPendientes);
   const totalActualPesos = calc?.escenarioActual.totalPagoPesos ?? 0;
-  const baseCredito =
-    valorDesembolsadoNum > 0 ? valorDesembolsadoNum : saldoPesosNum + dineroPagadoFecha;
-  const vecesActual = baseCredito > 0 ? (dineroPagadoFecha + totalActualPesos) / baseCredito : 0;
-  
+  // Base coherente del crédito: SOLO el valor desembolsado declarado. No
+  // reconstruimos con saldo+pagado porque mezcla capital con intereses.
+  const baseCredito = valorDesembolsadoNum > 0 ? valorDesembolsadoNum : 0;
+  // Para el múltiplo en UVR usamos el pendiente NOMINAL (cuota de hoy × cuotas
+  // pendientes) para comparar pesos de hoy contra pesos de hoy y no inflar
+  // artificialmente el ratio por la escalación UVR.
+  const totalActualNominal = input.cuotaActualPesos * cuotasBaseSimulacion;
+  const vecesActual =
+    baseCredito > 0 ? (dineroPagadoFecha + totalActualNominal) / baseCredito : 0;
+
   const vecesOpt =
     recomendada && baseCredito > 0
       ? (dineroPagadoFecha + recomendada.totalProyectado) / baseCredito
