@@ -451,7 +451,7 @@ function PipelineV2Page() {
         </PageLayout.Main>
         <PageLayout.Aside>
 
-        <>
+
           <NCard variant="default">
             <SectionHeader
               title="Cuellos de botella"
