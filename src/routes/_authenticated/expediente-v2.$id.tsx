@@ -394,7 +394,7 @@ function ExpedienteV2Page() {
             </span>
           )
         }
-        actions={
+        action={
           <Link
             to="/casos"
             className="glass-button inline-flex items-center gap-1.5 px-3 py-1.5 text-xs"
@@ -405,7 +405,7 @@ function ExpedienteV2Page() {
       />
 
       {/* ===== SIGNOS VITALES (6 KPI) ===== */}
-      <KpiGrid cols={6}>
+      <KpiGrid cols={3}>
         <KpiCard
           label="Días totales"
           value={`${diasTotales}d`}
@@ -458,7 +458,7 @@ function ExpedienteV2Page() {
               title="Diagnóstico"
               description="Hallazgos clasificados por severidad clínica."
               icon={<Activity size={14} />}
-              actions={
+              action={
                 <div className="flex items-center gap-1.5 text-[10px]">
                   <Pill tone="critico" count={conteoSeveridad.critico} label="Crítico" />
                   <Pill tone="alerta" count={conteoSeveridad.alerta} label="Alerta" />
@@ -587,7 +587,7 @@ function ExpedienteV2Page() {
               title="Documentos"
               description="Expediente documental del cliente."
               icon={<Folder size={14} />}
-              actions={
+              action={
                 <span className="text-[10px] text-[var(--nuvia-text-secondary)]">
                   {documentos.filter((d) => d.ok).length}/{documentos.length} cargados
                 </span>
