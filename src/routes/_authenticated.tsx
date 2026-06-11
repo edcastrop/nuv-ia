@@ -491,7 +491,7 @@ function AuthenticatedLayout() {
   );
 
   return (
-    <div className="min-h-screen flex" style={{ background: "#F7F9FB" }}>
+    <div className="min-h-screen flex" style={{ background: "#0A0B10" }}>
       {/* Sidebar desktop */}
       <div className="hidden lg:block sticky top-0 h-screen relative">
         {SidebarContent}
