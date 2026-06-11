@@ -53,6 +53,48 @@ import {
   SectionHeader,
   EmptyState,
 } from "@/components/nuvia";
+import {
+  listTareas,
+  crearTarea,
+  actualizarTareaEstado,
+  asignarTarea,
+  listBitacora,
+  agregarBitacora,
+  type TareaPrioridad,
+  type TareaEstado,
+  type BitacoraTipo,
+} from "@/lib/expedienteOperativo.functions";
+
+interface TareaRow {
+  id: string;
+  expediente_id: string;
+  responsable_id: string | null;
+  titulo: string;
+  descripcion: string | null;
+  prioridad: TareaPrioridad;
+  fecha_objetivo: string | null;
+  estado: TareaEstado;
+  completada_at: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface BitacoraRow {
+  id: string;
+  expediente_id: string;
+  usuario_id: string;
+  comentario: string;
+  tipo: BitacoraTipo;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+}
+
+interface ProfileLite {
+  id: string;
+  nombre: string | null;
+  email: string | null;
+}
 
 export const Route = createFileRoute("/_authenticated/expediente-v2/$id")({
   component: ExpedienteV2Page,
