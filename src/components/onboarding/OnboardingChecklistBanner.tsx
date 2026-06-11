@@ -77,16 +77,29 @@ export function OnboardingChecklistBanner() {
   const urgente = etapa === "pendiente_mfa";
 
   return (
-    <div className={`mb-4 rounded-xl border p-4 shadow-sm ${urgente ? "border-amber-400 bg-amber-50" : "border-blue-200 bg-blue-50"}`}>
+    <div
+      className="mb-4 glass-panel p-4"
+      style={{
+        borderColor: urgente
+          ? "rgba(246, 196, 83, 0.35)"
+          : "var(--nuvia-border)",
+        boxShadow: urgente
+          ? "0 0 0 1px rgba(246,196,83,0.18), var(--nuvia-shadow-md)"
+          : "var(--nuvia-shadow-sm)",
+      }}
+    >
       <div className="flex items-start gap-3">
-        <AlertCircle className={`h-5 w-5 mt-0.5 ${urgente ? "text-amber-600" : "text-blue-600"}`} />
+        <AlertCircle
+          className="h-5 w-5 mt-0.5"
+          style={{ color: urgente ? "var(--nuvia-warning)" : "var(--nuvia-accent-blue)" }}
+        />
         <div className="flex-1">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h3 className="font-semibold text-slate-900">
+              <h3 className="font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
                 {urgente ? "Activa tu doble factor para terminar" : "Termina de configurar tu cuenta"}
               </h3>
-              <p className="text-sm text-slate-600 mt-0.5">
+              <p className="text-sm mt-0.5" style={{ color: "var(--nuvia-text-secondary)" }}>
                 {urgente
                   ? "Es el último paso. Tu cuenta no estará totalmente activa hasta configurar MFA."
                   : "Solo te toma unos minutos. Recibirás recordatorios diarios hasta completar."}
@@ -94,21 +107,38 @@ export function OnboardingChecklistBanner() {
             </div>
             <Link
               to={cta.to}
-              className={`shrink-0 inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium ${urgente ? "bg-amber-600 text-white hover:bg-amber-700" : "bg-blue-600 text-white hover:bg-blue-700"}`}
+              className="shrink-0 inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold text-white transition hover:opacity-95"
+              style={{
+                background: urgente
+                  ? "var(--nuvia-warning)"
+                  : "var(--nuvia-gradient-primary)",
+                color: urgente ? "var(--nuvia-bg-primary)" : "#fff",
+                boxShadow: "var(--nuvia-shadow-sm)",
+              }}
             >
               {cta.label} <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
           <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm">
             {pasos.map((p) => (
-              <li key={p.id} className={`flex items-center gap-1.5 ${p.done ? "text-emerald-700" : "text-slate-500"}`}>
+              <li
+                key={p.id}
+                className="flex items-center gap-1.5"
+                style={{
+                  color: p.done ? "var(--nuvia-success)" : "var(--nuvia-text-secondary)",
+                }}
+              >
                 {p.done ? <CheckCircle2 className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
                 {p.label}
               </li>
             ))}
           </ul>
           {!urgente && (
-            <button onClick={() => setDismissed(true)} className="mt-2 text-xs text-slate-500 hover:underline">
+            <button
+              onClick={() => setDismissed(true)}
+              className="mt-2 text-xs hover:underline"
+              style={{ color: "var(--nuvia-text-secondary)" }}
+            >
               Ocultar hasta el próximo recordatorio
             </button>
           )}
@@ -117,3 +147,4 @@ export function OnboardingChecklistBanner() {
     </div>
   );
 }
+

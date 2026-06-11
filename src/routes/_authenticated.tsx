@@ -27,8 +27,10 @@ export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
 });
 
-const AZUL = "#445DA3";
-const VERDE = "#84B98F";
+const AZUL = "var(--nuvia-accent-blue)";
+const VERDE = "var(--nuvia-accent-green)";
+const GRADIENT = "var(--nuvia-gradient-primary)";
+
 
 type NavItem = { to: string; label: string; Icon: typeof LayoutGrid; exact?: boolean; badge?: number };
 type NavSection = { label: string; items: NavItem[] };
@@ -294,11 +296,15 @@ function AuthenticatedLayout() {
 
   if (loading || !session || gateState !== "ok") {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white/60 text-sm" style={{ background: "#050814" }}>
+      <div
+        className="min-h-screen flex items-center justify-center text-white/60 text-sm"
+        style={{ background: "var(--nuvia-bg-primary)" }}
+      >
         Verificando acceso…
       </div>
     );
   }
+
 
   const displayName: string = profileMeta.nombre || user?.user_metadata?.nombre || (user?.email?.split("@")[0] ?? "Usuario");
   const avatarUrl: string | null = profileMeta.avatar_url;
@@ -397,9 +403,10 @@ function AuthenticatedLayout() {
         style={
           active
             ? {
-                background: `linear-gradient(135deg, ${AZUL}, ${VERDE})`,
+                background: GRADIENT,
                 color: "#fff",
-                boxShadow: `0 8px 20px -10px ${AZUL}, 0 0 0 1px rgba(255,255,255,0.08) inset`,
+                boxShadow:
+                  "0 8px 20px -10px var(--nuvia-accent-blue), 0 0 0 1px rgba(255,255,255,0.08) inset",
               }
             : { color: "rgba(255,255,255,0.72)" }
         }
@@ -419,14 +426,18 @@ function AuthenticatedLayout() {
         {!collapsed && it.badge && it.badge > 0 ? (
           <span
             className="ml-auto inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold"
-            style={{ background: "#E11D48", color: "#fff" }}
+            style={{ background: "var(--nuvia-danger)", color: "#fff" }}
           >
             {it.badge > 99 ? "99+" : it.badge}
           </span>
         ) : null}
         {collapsed && it.badge && it.badge > 0 ? (
-          <span className="absolute top-1 right-1 h-2 w-2 rounded-full" style={{ background: "#E11D48" }} />
+          <span
+            className="absolute top-1 right-1 h-2 w-2 rounded-full"
+            style={{ background: "var(--nuvia-danger)" }}
+          />
         ) : null}
+
       </Link>
     );
   };
@@ -438,15 +449,23 @@ function AuthenticatedLayout() {
       className="flex h-full flex-col"
       style={{
         width: sidebarWidth,
-        background: "linear-gradient(180deg, #050814, #0A1226 60%, #07162D)",
-        borderRight: "1px solid rgba(255,255,255,0.06)",
+        background:
+          "linear-gradient(180deg, var(--nuvia-bg-primary), var(--nuvia-bg-secondary) 60%, var(--nuvia-bg-tertiary))",
+        borderRight: "1px solid var(--nuvia-border)",
         transition: "width 200ms ease",
       }}
     >
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 -left-10 h-48 w-[280px] rounded-full opacity-[0.10] blur-[100px]" style={{ background: AZUL }} />
-        <div className="absolute bottom-10 -right-10 h-48 w-[260px] rounded-full opacity-[0.08] blur-[100px]" style={{ background: VERDE }} />
+        <div
+          className="absolute -top-24 -left-10 h-48 w-[280px] rounded-full opacity-[0.10] blur-[100px]"
+          style={{ background: AZUL }}
+        />
+        <div
+          className="absolute bottom-10 -right-10 h-48 w-[260px] rounded-full opacity-[0.08] blur-[100px]"
+          style={{ background: VERDE }}
+        />
       </div>
+
 
       <div className="relative flex items-center justify-between px-4 py-5" style={{ minHeight: 76 }}>
         <Link to="/" className="flex items-center">
@@ -491,7 +510,7 @@ function AuthenticatedLayout() {
   );
 
   return (
-    <div className="min-h-screen flex" style={{ background: "#0A0B10" }}>
+    <div className="min-h-screen flex" style={{ background: "var(--nuvia-bg-primary)" }}>
       {/* Sidebar desktop */}
       <div className="hidden lg:block sticky top-0 h-screen relative">
         {SidebarContent}
@@ -500,7 +519,7 @@ function AuthenticatedLayout() {
       {/* Sidebar móvil (drawer) */}
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
           <div className="relative h-full">{SidebarContent}</div>
         </div>
       )}
@@ -510,8 +529,10 @@ function AuthenticatedLayout() {
         <header
           className="sticky top-0 z-40"
           style={{
-            background: "linear-gradient(90deg, #050814, #0A1226)",
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            background:
+              "linear-gradient(90deg, var(--nuvia-bg-primary), var(--nuvia-bg-secondary))",
+            borderBottom: "1px solid var(--nuvia-border)",
+
           }}
         >
           <div className="flex items-center justify-between gap-4 px-5" style={{ height: 64 }}>
@@ -524,7 +545,10 @@ function AuthenticatedLayout() {
                 <LayoutGrid size={16} />
               </button>
               <div className="hidden md:flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.22em] text-white/50">
-                <span className="inline-flex h-1.5 w-1.5 rounded-full" style={{ background: `linear-gradient(135deg, ${AZUL}, ${VERDE})` }} />
+                <span
+                  className="inline-flex h-1.5 w-1.5 rounded-full"
+                  style={{ background: GRADIENT }}
+                />
                 NUVIA · Inteligencia Financiera
               </div>
             </div>
@@ -540,26 +564,22 @@ function AuthenticatedLayout() {
                       metricasAutonomia.nivelAutonomia === 3
                         ? "rgba(132,185,143,0.18)"
                         : metricasAutonomia.nivelAutonomia === 2
-                          ? "rgba(255,236,179,0.18)"
-                          : "rgba(255,204,128,0.18)",
+                          ? "rgba(246,196,83,0.18)"
+                          : "rgba(255,107,107,0.18)",
                     color:
                       metricasAutonomia.nivelAutonomia === 3
-                        ? "#84B98F"
+                        ? "var(--nuvia-success)"
                         : metricasAutonomia.nivelAutonomia === 2
-                          ? "#FFE082"
-                          : "#FFCC80",
-                    border:
-                      metricasAutonomia.nivelAutonomia === 3
-                        ? "1px solid rgba(132,185,143,0.30)"
-                        : metricasAutonomia.nivelAutonomia === 2
-                          ? "1px solid rgba(255,236,179,0.30)"
-                          : "1px solid rgba(255,204,128,0.30)",
+                          ? "var(--nuvia-warning)"
+                          : "var(--nuvia-danger)",
+                    border: "1px solid var(--nuvia-border)",
                   }}
                 >
                   <Award size={12} />
                   N{metricasAutonomia.nivelAutonomia}
                 </Link>
               )}
+
               <button
                 onClick={handleReload}
                 disabled={reloading}
@@ -576,9 +596,10 @@ function AuthenticatedLayout() {
                 className="hidden sm:flex items-center gap-3 rounded-xl pl-1.5 pr-3 py-1 transition hover:bg-white/[0.07]"
                 style={{
                   background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.08)",
+                  border: "1px solid var(--nuvia-border)",
                 }}
               >
+
                 <UserAvatar userId={user?.id} url={avatarUrl} name={displayName} email={user?.email} size="sm" ring />
                 <div className="leading-tight text-right">
                   <div className="text-[12px] font-semibold text-white truncate max-w-[160px]">{displayName}</div>
@@ -604,7 +625,7 @@ function AuthenticatedLayout() {
         <EtapaTransicionDialog />
 
 
-        <footer className="border-t border-white/[0.06]" style={{ background: "#070810" }}>
+        <footer style={{ background: "var(--nuvia-bg-primary)", borderTop: "1px solid var(--nuvia-border)" }}>
           <div className="mx-auto max-w-7xl px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-white/40">
             <span><span className="font-semibold text-white/70">NUVIA Systems</span> · Sistema operativo de inteligencia financiera</span>
             <span className="tracking-[0.22em] uppercase">SOC 2 · ISO 27001 · {CORPORATIVO.web}</span>
