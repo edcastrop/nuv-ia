@@ -4,7 +4,7 @@ import { z } from "zod";
 import { ModeSelector } from "@/components/nuvex/ModeSelector";
 import { PesosSimulator } from "@/components/nuvex/PesosSimulator";
 import { UVRSimulator } from "@/components/nuvex/UVRSimulator";
-import { NuviaHome } from "@/components/home/NuviaHome";
+import { RoleHome } from "@/components/home/RoleHome";
 import { getMaestro, maestroToExpediente } from "@/lib/expedienteMaestro";
 import type { Expediente } from "@/lib/expedientes";
 
@@ -50,7 +50,7 @@ function Home() {
   }, [maestroId]);
 
   if (!showSimulator) {
-    return <NuviaHome onLanzarSimulador={() => setShowSimulator(true)} />;
+    return <RoleHome onLanzarSimulador={() => setShowSimulator(true)} />;
   }
 
   if (maestroId && loadingMaestro) {
