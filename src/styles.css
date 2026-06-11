@@ -242,19 +242,51 @@
   }
 }
 
-@utility glass {
+/* ──────────────────────────────────────────────────────────
+   NUVIA · GLASSMORPHISM UTILITIES (Fase 3)
+   Cuatro variantes oficiales — usar siempre estas clases
+   en lugar de hardcodear background+border+blur en TSX.
+   ────────────────────────────────────────────────────────── */
+
+/* Card de contenido (tarjetas de listado, widgets compactos) */
+@utility glass-card {
   background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015));
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--nuvia-border);
   backdrop-filter: blur(14px);
-  border-radius: 16px;
+  border-radius: var(--nuvia-radius-md);
+  box-shadow: var(--nuvia-shadow-sm);
 }
 
-@utility glass-strong {
-  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(18px);
-  border-radius: 18px;
+/* Panel grande (secciones de página, contenedores principales) */
+@utility glass-panel {
+  background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+  border: 1px solid var(--nuvia-border);
+  backdrop-filter: blur(16px);
+  border-radius: var(--nuvia-radius-lg);
+  box-shadow: var(--nuvia-shadow-md);
 }
+
+/* Modal / dialog / drawer */
+@utility glass-modal {
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  border: 1px solid var(--nuvia-border-strong);
+  backdrop-filter: blur(22px);
+  border-radius: var(--nuvia-radius-xl);
+  box-shadow: var(--nuvia-shadow-lg);
+}
+
+/* Widget pequeño (KPIs, chips, badges glass) */
+@utility glass-widget {
+  background: rgba(255,255,255,0.035);
+  border: 1px solid var(--nuvia-border);
+  backdrop-filter: blur(10px);
+  border-radius: var(--nuvia-radius-sm);
+}
+
+/* ── Aliases legacy ── */
+@utility glass        { @apply glass-card; }
+@utility glass-strong { @apply glass-panel; }
+
 
 /* ==========================================================
    NUVIA · PRIMITIVAS VISUALES (Fase 1)
