@@ -260,7 +260,14 @@ export function PesosSimulator({
 
   const cuotasBaseSimulacion = Math.max(0, cuotasPendientes);
   const totalActualPendiente = input.cuotaActual * cuotasBaseSimulacion;
-  const vecesActual = saldoCapitalNum > 0 ? totalActualPendiente / saldoCapitalNum : 0;
+  // Base coherente del crédito: valor desembolsado declarado, o reconstrucción
+  // a partir del saldo actual + lo ya pagado (aproximación al monto original).
+  const baseCreditoReferencia =
+    valorDesembolsadoNum > 0 ? valorDesembolsadoNum : saldoCapitalNum + dineroPagadoFecha;
+  const vecesActual =
+    baseCreditoReferencia > 0
+      ? (dineroPagadoFecha + totalActualPendiente) / baseCreditoReferencia
+      : 0;
   
 
   const metrics = [
