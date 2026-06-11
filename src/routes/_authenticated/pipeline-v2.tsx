@@ -273,7 +273,7 @@ function PipelineV2Page() {
         </KpiGrid>
       }
       main={
-        <NCard variant="glass" className="p-0 overflow-hidden">
+        <NCard variant="default" className="p-0 overflow-hidden">
           {/* Filtros */}
           <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--nuvia-border)]">
             <div className="relative flex-1 max-w-md">
@@ -451,7 +451,7 @@ function PipelineV2Page() {
       }
       aside={
         <>
-          <NCard variant="glass">
+          <NCard variant="default">
             <SectionHeader
               title="Cuellos de botella"
               description="Etapas con peor cumplimiento de SLA."
@@ -498,7 +498,7 @@ function PipelineV2Page() {
             )}
           </NCard>
 
-          <NCard variant="glass">
+          <NCard variant="default">
             <SectionHeader
               title="Casos críticos"
               description="Mayor exceso sobre el SLA de su etapa."
@@ -544,7 +544,7 @@ function PipelineV2Page() {
 
           {totales.cuellos > 0 && (
             <NCard
-              variant="glass"
+              variant="default"
               className="border-rose-500/30"
               style={{
                 background:
