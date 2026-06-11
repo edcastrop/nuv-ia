@@ -340,7 +340,7 @@ function LoginPage() {
           </div>
 
           <p className="mt-5 text-center text-[11px] text-white/30">
-            Protected by enterprise-grade encryption · NUVIA Systems
+            Protegido con cifrado de grado empresarial · NUVIA Systems
           </p>
         </motion.div>
       </main>
