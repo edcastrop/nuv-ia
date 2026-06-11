@@ -315,7 +315,7 @@ function LoginPage() {
 
             <div className="my-6 flex items-center gap-3">
               <div className="flex-1 h-px bg-white/10" />
-              <span className="text-[10px] tracking-[0.22em] uppercase text-white/35">or continue with</span>
+              <span className="text-[10px] tracking-[0.22em] uppercase text-white/35">o continúa con</span>
               <div className="flex-1 h-px bg-white/10" />
             </div>
 
