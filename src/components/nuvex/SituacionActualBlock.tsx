@@ -369,21 +369,38 @@ function CostoTotalEjecutivo({
   costo: CostoTotalCredito;
   vecesPagadoFallback: number;
 }) {
-  const { valorDesembolsado, dineroPagado, totalProyectadoPendiente, baseCredito } = costo;
+  const { valorDesembolsado, dineroPagado, totalProyectadoPendiente, baseCredito, saldoActual } =
+    costo;
   const costoTotalCredito = dineroPagado + totalProyectadoPendiente;
-  // Base de cálculo: SOLO el valor desembolsado real (declarado por el banco).
-  // Si no está disponible, NO inventamos un múltiplo; lo mostramos como
-  // "no disponible" para no engañar al cliente.
-  const base =
+  // Base de cálculo preferida: el valor desembolsado real (declarado por el banco).
+  // Si no está disponible, usamos el SALDO ACTUAL como base alternativa y lo
+  // decimos explícitamente: veces = total proyectado pendiente / saldo actual.
+  const baseDesembolso =
     baseCredito && baseCredito > 0
       ? baseCredito
       : valorDesembolsado > 0
         ? valorDesembolsado
         : 0;
+  const usaSaldo = baseDesembolso <= 0 && (saldoActual ?? 0) > 0;
+  const base = baseDesembolso > 0 ? baseDesembolso : usaSaldo ? (saldoActual as number) : 0;
   const baseDisponible = base > 0;
-  const veces = baseDisponible ? costoTotalCredito / base : 0;
-  const interesesYCostos = baseDisponible ? Math.max(0, costoTotalCredito - base) : 0;
-  const s = semaforo(baseDisponible ? veces : 0, baseDisponible ? { vecesValor: veces } : undefined);
+  // Con desembolso: (pagado + pendiente) / desembolso.
+  // Con saldo: pendiente / saldo (mirada hacia adelante, sin mezclar lo ya pagado).
+  const veces = !baseDisponible
+    ? 0
+    : usaSaldo
+      ? totalProyectadoPendiente / base
+      : costoTotalCredito / base;
+  const interesesYCostos = !baseDisponible
+    ? 0
+    : usaSaldo
+      ? Math.max(0, totalProyectadoPendiente - base)
+      : Math.max(0, costoTotalCredito - base);
+  const baseLabel = usaSaldo ? "lo que debes hoy (saldo actual)" : "el valor de tu crédito";
+  const s = semaforo(
+    baseDisponible ? veces : 0,
+    baseDisponible ? { vecesValor: veces, baseLabel } : undefined,
+  );
   const vecesTxt = baseDisponible && isFinite(veces) ? veces.toFixed(2).replace(".", ",") : "—";
 
   return (
