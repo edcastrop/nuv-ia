@@ -244,14 +244,14 @@ function LoginPage() {
               </Field>
 
               <Field
-                label="Password"
+                label="Contraseña"
                 right={
                   <button
                     type="button"
                     onClick={forgot}
                     className="text-[11px] font-medium text-white/55 hover:text-white transition"
                   >
-                    Forgot password?
+                    ¿Olvidaste tu contraseña?
                   </button>
                 }
               >
@@ -263,14 +263,14 @@ function LoginPage() {
                     required
                     minLength={6}
                     autoComplete="current-password"
-                    placeholder="Enter your password"
+                    placeholder="Ingresa tu contraseña"
                     className="nuvia-input pr-10"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPwd((v) => !v)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80 transition"
-                    aria-label={showPwd ? "Hide password" : "Show password"}
+                    aria-label={showPwd ? "Ocultar contraseña" : "Mostrar contraseña"}
                   >
                     {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
