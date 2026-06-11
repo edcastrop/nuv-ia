@@ -610,7 +610,7 @@ function AuthenticatedLayout() {
           </div>
         </header>
 
-        <main className="flex-1">
+        <main className="flex-1 bg-[#F4F6FB] text-[#0A1226]">
           {!isApoderado && (
             <>
               <div className="px-4 pt-4"><OnboardingChecklistBanner /></div>
