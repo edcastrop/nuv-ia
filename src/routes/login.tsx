@@ -148,7 +148,7 @@ function LoginPage() {
             <Mark />
             <div className="leading-tight">
               <div className="text-[15px] font-semibold tracking-[0.22em]">NUVIA</div>
-              <div className="text-[10px] uppercase tracking-[0.28em] text-white/45">Financial Intelligence OS</div>
+              <div className="text-[10px] uppercase tracking-[0.28em] text-white/45">Inteligencia Financiera</div>
             </div>
           </motion.div>
 
