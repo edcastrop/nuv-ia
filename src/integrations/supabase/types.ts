@@ -5233,6 +5233,9 @@ export type Database = {
         | "email"
         | "whatsapp"
         | "sistema"
+        | "auditoria"
+        | "seguimiento"
+        | "alerta"
       cartera_estado:
         | "pendiente_cobro"
         | "cuenta_cobro_generada"
@@ -5526,6 +5529,9 @@ export const Constants = {
         "email",
         "whatsapp",
         "sistema",
+        "auditoria",
+        "seguimiento",
+        "alerta",
       ],
       cartera_estado: [
         "pendiente_cobro",
