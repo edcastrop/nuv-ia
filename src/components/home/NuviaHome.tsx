@@ -112,7 +112,7 @@ export function NuviaHome({ onLanzarSimulador }: { onLanzarSimulador: () => void
   const rolePrincipal = roles[0] ? roleLabel(roles[0]) : "Miembro NUVIA";
 
   return (
-    <div className="min-h-screen w-full text-white" style={{ background: "#0A0B10" }}>
+    <div className="relative w-full text-white overflow-hidden" style={{ background: "#0A0B10", minHeight: "calc(100vh - 64px)" }}>
       {/* Fondo */}
       <div
         className="absolute inset-0 pointer-events-none"
