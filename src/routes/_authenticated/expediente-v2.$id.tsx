@@ -394,7 +394,7 @@ function ExpedienteV2Page() {
             </span>
           )
         }
-        action={
+        actions={
           <Link
             to="/casos"
             className="glass-button inline-flex items-center gap-1.5 px-3 py-1.5 text-xs"
