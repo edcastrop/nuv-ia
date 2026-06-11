@@ -306,51 +306,7 @@ export const Route = createFileRoute("/api/public/hooks/recompute-snapshots")({
               .upsert(slaInserts, { onConflict: "banco,fecha" });
           }
 
-              const fin = new Date(c.fecha_respuesta_banco).getTime();
-              return Math.max(0, (fin - ini) / 86400000);
-            });
-            const muestra = tiempos.length;
-            const prom = muestra > 0 ? tiempos.reduce((s, t) => s + t, 0) / muestra : null;
-            const max = muestra > 0 ? Math.round(Math.max(...tiempos)) : null;
-            const min = muestra > 0 ? Math.round(Math.min(...tiempos)) : null;
-            const abiertos = casos.filter(
-              (c: any) =>
-                c.fecha_radicacion &&
-                !c.fecha_respuesta_banco &&
-                !["perdido", "cerrado", "finalizado"].includes((c.estado_caso as string) ?? ""),
-            ).length;
-            const vencidos = casos.filter(
-              (c: any) =>
-                c.fecha_sla &&
-                new Date(c.fecha_sla as string).getTime() < Date.now() &&
-                !c.fecha_respuesta_banco,
-            ).length;
-            const totalCasos = casos.length || 1;
-            const tasaReq = ((reqsByBanco.get(banco) ?? 0) / totalCasos) * 100;
-            const favorables = casos.filter((c: any) =>
-              ["aprobado", "favorable", "implementado", "finalizado"].includes(
-                (c.estado_caso as string) ?? "",
-              ),
-            ).length;
-            const tasaFav = (favorables / totalCasos) * 100;
-            slaInserts.push({
-              banco,
-              fecha: hoy,
-              casos_abiertos: abiertos,
-              casos_vencidos: vencidos,
-              tiempo_promedio_dias: prom != null ? Math.round(prom * 100) / 100 : null,
-              tiempo_max_dias: max,
-              tiempo_min_dias: min,
-              tasa_requerimientos: Math.round(tasaReq * 100) / 100,
-              tasa_favorable: Math.round(tasaFav * 100) / 100,
-              muestra,
-            });
-          }
-          if (slaInserts.length) {
-            await supabaseAdmin
-              .from("banco_sla_metricas")
-              .upsert(slaInserts, { onConflict: "banco,fecha" });
-          }
+
 
 
           // ---------- 3) Scoreboard por área ----------
