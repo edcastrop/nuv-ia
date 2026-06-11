@@ -17,6 +17,15 @@ export interface CostoTotalCredito {
   dineroPagado: number;
   /** Total proyectado pendiente por pagar bajo el escenario actual. */
   totalProyectadoPendiente: number;
+  /**
+   * Base de referencia del crédito para calcular el múltiplo "veces el valor
+   * del crédito". Si no se provee, se usa `valorDesembolsado`, y si éste es 0
+   * se reconstruye como `dineroPagado + (totalProyectadoPendiente - intereses)`
+   * usando la base que el llamador haya podido inferir. Mantener esta base
+   * coherente garantiza que el número grande del hero coincida con el rango
+   * del semáforo y con el mensaje mostrado.
+   */
+  baseCredito?: number;
 }
 
 interface Props {
