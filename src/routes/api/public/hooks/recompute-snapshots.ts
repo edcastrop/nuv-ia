@@ -157,12 +157,38 @@ export const Route = createFileRoute("/api/public/hooks/recompute-snapshots")({
           ).length;
           const actividadScore = clamp((activos7d / total) * 100);
 
+          // 10% Satisfacción Cliente = 50% NPS_norm + 25% tasa_testimonios + 25% tasa_referidos
+          const [clientesAll, testimoniosOk, referidosCount, clientesCerrados] = await Promise.all([
+            supabaseAdmin.from("clientes").select("nps_ultimo"),
+            supabaseAdmin
+              .from("testimonios")
+              .select("id", { count: "exact", head: true })
+              .eq("consentimiento_uso", true),
+            supabaseAdmin.from("casos_referidos").select("id", { count: "exact", head: true }),
+            supabaseAdmin.from("clientes").select("id", { count: "exact", head: true }),
+          ]);
+          const npsValues = (clientesAll.data ?? [])
+            .map((c: any) => Number(c.nps_ultimo))
+            .filter((n) => Number.isFinite(n));
+          // NPS normalizado a 0-100 (NPS va de -100 a 100; aquí asumimos 0-10 escala individual)
+          const npsAvg =
+            npsValues.length > 0
+              ? npsValues.reduce((s, n) => s + n, 0) / npsValues.length
+              : 7; // neutral mientras no haya data
+          const npsNorm = clamp((npsAvg / 10) * 100);
+          const cerradosCount = clientesCerrados.count ?? 0;
+          const tasaTestimonios = cerradosCount > 0 ? clamp(((testimoniosOk.count ?? 0) / cerradosCount) * 100) : 0;
+          const tasaReferidos = cerradosCount > 0 ? clamp(((referidosCount.count ?? 0) / cerradosCount) * 100) : 0;
+          const satisfaccionScore = clamp(0.5 * npsNorm + 0.25 * tasaTestimonios + 0.25 * tasaReferidos);
+
+          // Health Score v2 (Fase 7.6.1)
           const healthScore =
             0.25 * produccionScore +
-            0.25 * conversionScore +
+            0.20 * conversionScore +
             0.20 * carteraScore +
             0.15 * slaScore +
-            0.15 * actividadScore;
+            0.10 * actividadScore +
+            0.10 * satisfaccionScore;
 
           const estado: "excelente" | "saludable" | "atencion" | "riesgo" | "critico" =
             healthScore >= 90
@@ -199,11 +225,86 @@ export const Route = createFileRoute("/api/public/hooks/recompute-snapshots")({
               cartera: Math.round(carteraScore),
               sla: Math.round(slaScore),
               actividad: Math.round(actividadScore),
+              satisfaccion: Math.round(satisfaccionScore),
             },
             estado,
             tendencia,
             calculated_at: new Date().toISOString(),
           });
+
+          // ---------- 2b) SLA dinámico por banco (Fase 7.6.1) ----------
+          const { data: expBancos } = await supabaseAdmin
+            .from("expedientes")
+            .select("id, banco, estado_caso, fecha_radicacion, fecha_respuesta_banco, fecha_sla, created_at");
+          const byBanco = new Map<string, any[]>();
+          for (const e of expBancos ?? []) {
+            const b = ((e as any).banco as string)?.trim();
+            if (!b) continue;
+            if (!byBanco.has(b)) byBanco.set(b, []);
+            byBanco.get(b)!.push(e);
+          }
+          const { data: reqsAll } = await supabaseAdmin
+            .from("banco_requerimientos")
+            .select("banco, expediente_id");
+          const reqsByBanco = new Map<string, number>();
+          for (const r of reqsAll ?? []) {
+            const b = ((r as any).banco as string)?.trim();
+            if (!b) continue;
+            reqsByBanco.set(b, (reqsByBanco.get(b) ?? 0) + 1);
+          }
+          const slaInserts: any[] = [];
+          for (const [banco, casos] of byBanco.entries()) {
+            const conRespuesta = casos.filter(
+              (c: any) => c.fecha_radicacion && c.fecha_respuesta_banco,
+            );
+            const tiempos = conRespuesta.map((c: any) => {
+              const ini = new Date(c.fecha_radicacion).getTime();
+              const fin = new Date(c.fecha_respuesta_banco).getTime();
+              return Math.max(0, (fin - ini) / 86400000);
+            });
+            const muestra = tiempos.length;
+            const prom = muestra > 0 ? tiempos.reduce((s, t) => s + t, 0) / muestra : null;
+            const max = muestra > 0 ? Math.round(Math.max(...tiempos)) : null;
+            const min = muestra > 0 ? Math.round(Math.min(...tiempos)) : null;
+            const abiertos = casos.filter(
+              (c: any) =>
+                c.fecha_radicacion &&
+                !c.fecha_respuesta_banco &&
+                !["perdido", "cerrado", "finalizado"].includes((c.estado_caso as string) ?? ""),
+            ).length;
+            const vencidos = casos.filter(
+              (c: any) =>
+                c.fecha_sla &&
+                new Date(c.fecha_sla as string).getTime() < Date.now() &&
+                !c.fecha_respuesta_banco,
+            ).length;
+            const totalCasos = casos.length || 1;
+            const tasaReq = ((reqsByBanco.get(banco) ?? 0) / totalCasos) * 100;
+            const favorables = casos.filter((c: any) =>
+              ["aprobado", "favorable", "implementado", "finalizado"].includes(
+                (c.estado_caso as string) ?? "",
+              ),
+            ).length;
+            const tasaFav = (favorables / totalCasos) * 100;
+            slaInserts.push({
+              banco,
+              fecha: hoy,
+              casos_abiertos: abiertos,
+              casos_vencidos: vencidos,
+              tiempo_promedio_dias: prom != null ? Math.round(prom * 100) / 100 : null,
+              tiempo_max_dias: max,
+              tiempo_min_dias: min,
+              tasa_requerimientos: Math.round(tasaReq * 100) / 100,
+              tasa_favorable: Math.round(tasaFav * 100) / 100,
+              muestra,
+            });
+          }
+          if (slaInserts.length) {
+            await supabaseAdmin
+              .from("banco_sla_metricas")
+              .upsert(slaInserts, { onConflict: "banco,fecha" });
+          }
+
 
           // ---------- 3) Scoreboard por área ----------
           // Mapear usuarios → área
