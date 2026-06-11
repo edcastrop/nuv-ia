@@ -159,6 +159,7 @@ function HeroKpi({
 }
 
 function SecondaryKpi({ label, value }: SituacionMetric) {
+
   return (
     <div className="rounded-xl border border-[#E3E7EE] bg-white p-4">
       <div className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[#6B7480]">
