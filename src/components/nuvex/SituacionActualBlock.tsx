@@ -600,6 +600,11 @@ export function SituacionActualBlock({
           <HeroKpi label="Total proyectado por pagar" value={hero.totalProyectado} accent="primary" />
         </div>
 
+        {/* Alerta TEA semaforizada */}
+        {typeof tea === "number" && tea > 0 && (
+          <TeaAlertCard tea={tea} umbral={teaUmbral ?? 10} />
+        )}
+
         {/* Puntos neurálgicos — Tiempo · Intereses · Seguros */}
         {puntosNeuralgicos && (
           <div className="mt-6">
