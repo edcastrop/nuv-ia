@@ -1,11 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Card, MetricCard } from "@/components/nuvex/ui";
+import {
+  PageLayout,
+  ExecutiveHero,
+  KpiGrid,
+  KpiCard,
+  InsightCard,
+  NCard,
+  SectionHeader,
+} from "@/components/nuvia";
 import { supabase } from "@/integrations/supabase/client";
+import { Banknote, Wallet, Receipt, AlertTriangle, TrendingUp, TrendingDown, PiggyBank } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/finanzas/")({
   component: FinanzasDashboard,
-  head: () => ({ meta: [{ title: "Dashboard financiero · NUVEX" }] }),
+  head: () => ({ meta: [{ title: "Dashboard financiero · NUVIA" }] }),
 });
 
 const money = (n: number) => "$" + Math.round(n).toLocaleString("es-CO");
@@ -42,72 +51,70 @@ function FinanzasDashboard() {
         const saldo = Number(c.honorarios_totales) - Number(c.pagado);
         if (saldo > 0 && new Date(c.fecha_vencimiento) < hoy) ven += saldo;
       }
-
       const comRows = (com.data ?? []) as unknown as Array<{ valor: number; estado: string }>;
       const comGen = comRows.filter((r) => r.estado !== "pagada").reduce((a, b) => a + Number(b.valor), 0);
       const comPag = comRows.filter((r) => r.estado === "pagada").reduce((a, b) => a + Number(b.valor), 0);
-
       const ccRows = (cc.data ?? []) as unknown as Array<{ total: number; estado: string }>;
       const ccPend = ccRows.filter((r) => ["borrador", "enviada", "aprobada"].includes(r.estado)).reduce((a, b) => a + Number(b.total), 0);
       const ccPag = ccRows.filter((r) => r.estado === "pagada").reduce((a, b) => a + Number(b.total), 0);
-
       const tesRows = (tes.data ?? []) as unknown as Array<{ tipo: string; valor: number }>;
       const ing = tesRows.filter((r) => r.tipo === "ingreso").reduce((a, b) => a + Number(b.valor), 0);
       const egr = tesRows.filter((r) => r.tipo === "egreso").reduce((a, b) => a + Number(b.valor), 0);
 
       setM({
         honorarios: hon, recaudado: pag, cartera: hon - pag, vencida: ven,
-        comisionesGen: comGen, comisionesPag: comPag,
-        ccPend, ccPag,
-        ingMes: ing, egrMes: egr,
-        alertas: (al.data ?? []).length,
+        comisionesGen: comGen, comisionesPag: comPag, ccPend, ccPag,
+        ingMes: ing, egrMes: egr, alertas: (al.data ?? []).length,
       });
       setLoading(false);
     })();
   }, []);
 
-  if (loading) return <Card><p className="text-sm text-[#242424]/60">Cargando dashboard…</p></Card>;
+  if (loading) {
+    return (
+      <PageLayout>
+        <div className="py-20 text-center text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>Cargando dashboard financiero…</div>
+      </PageLayout>
+    );
+  }
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <h1 className="text-xl font-semibold text-[#0A1226]">Dashboard financiero NUVEX</h1>
-        <p className="text-[12px] text-[#242424]/60">Visión consolidada: cartera, comisiones, tesorería y alertas.</p>
-      </Card>
+    <PageLayout>
+      <ExecutiveHero
+        badge={{ icon: <Banknote size={12} />, label: "Dirección Financiera", tone: "blue" }}
+        title="Dashboard Financiero"
+        description="Visión consolidada: cartera, comisiones, tesorería y alertas."
+      />
 
-      <section>
-        <h2 className="text-[12px] uppercase tracking-wider text-[#242424]/60 mb-2">Cartera</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <MetricCard label="Honorarios totales" value={money(m.honorarios)} accent="dark" />
-          <MetricCard label="Recaudado" value={money(m.recaudado)} accent="green" />
-          <MetricCard label="Cartera pendiente" value={money(m.cartera)} accent="blue" />
-          <MetricCard label="Vencida" value={money(m.vencida)} accent="default" />
-        </div>
-      </section>
+      <SectionHeader title="Cartera" icon={<Wallet size={14} />} />
+      <KpiGrid cols={4}>
+        <KpiCard label="Honorarios totales" value={money(m.honorarios)} tone="neutral" />
+        <KpiCard label="Recaudado" value={money(m.recaudado)} tone="green" />
+        <KpiCard label="Cartera pendiente" value={money(m.cartera)} tone="blue" />
+        <KpiCard label="Vencida" value={money(m.vencida)} tone={m.vencida > 0 ? "danger" : "neutral"} />
+      </KpiGrid>
 
-      <section>
-        <h2 className="text-[12px] uppercase tracking-wider text-[#242424]/60 mb-2">Comisiones &amp; cuentas de cobro</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <MetricCard label="Comisiones por pagar" value={money(m.comisionesGen)} accent="blue" />
-          <MetricCard label="Comisiones pagadas" value={money(m.comisionesPag)} accent="green" />
-          <MetricCard label="CC en trámite" value={money(m.ccPend)} accent="default" />
-          <MetricCard label="CC pagadas" value={money(m.ccPag)} accent="dark" />
-        </div>
-      </section>
+      <SectionHeader title="Comisiones y cuentas de cobro" icon={<Receipt size={14} />} />
+      <KpiGrid cols={4}>
+        <KpiCard label="Comisiones por pagar" value={money(m.comisionesGen)} tone="blue" />
+        <KpiCard label="Comisiones pagadas" value={money(m.comisionesPag)} tone="green" />
+        <KpiCard label="CC en trámite" value={money(m.ccPend)} tone="neutral" />
+        <KpiCard label="CC pagadas" value={money(m.ccPag)} tone="green" />
+      </KpiGrid>
 
-      <section>
-        <h2 className="text-[12px] uppercase tracking-wider text-[#242424]/60 mb-2">Tesorería del mes</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <MetricCard label="Ingresos mes" value={money(m.ingMes)} accent="green" />
-          <MetricCard label="Egresos mes" value={money(m.egrMes)} accent="default" />
-          <MetricCard label="Neto mes" value={money(m.ingMes - m.egrMes)} accent="blue" />
-          <MetricCard label="Alertas activas" value={String(m.alertas)} accent="dark" />
-        </div>
-      </section>
+      <SectionHeader title="Tesorería del mes" icon={<PiggyBank size={14} />} />
+      <KpiGrid cols={4}>
+        <KpiCard label="Ingresos mes" value={money(m.ingMes)} tone="green" icon={<TrendingUp size={16} />} />
+        <KpiCard label="Egresos mes" value={money(m.egrMes)} tone="danger" icon={<TrendingDown size={16} />} />
+        <KpiCard label="Neto mes" value={money(m.ingMes - m.egrMes)} tone={m.ingMes - m.egrMes >= 0 ? "blue" : "danger"} />
+        <KpiCard label="Alertas activas" value={String(m.alertas)} tone={m.alertas > 0 ? "warning" : "neutral"} icon={<AlertTriangle size={16} />} />
+      </KpiGrid>
 
-      <Card>
-        <h2 className="text-sm font-semibold text-[#0A1226] mb-2">Accesos rápidos</h2>
-        <div className="flex flex-wrap gap-2 text-[12.5px]">
+      <InsightCard scope="finanzas" />
+
+      <NCard padding="md">
+        <SectionHeader title="Accesos rápidos" description="Operaciones financieras frecuentes." />
+        <div className="flex flex-wrap gap-2">
           <Quick to="/finanzas/recaudos">Registrar recaudo</Quick>
           <Quick to="/finanzas/cuentas-cobro">Cuentas de cobro</Quick>
           <Quick to="/finanzas/comisiones">Comisiones</Quick>
@@ -116,14 +123,22 @@ function FinanzasDashboard() {
           <Quick to="/finanzas/alertas">Alertas IA</Quick>
           <Quick to="/finanzas/auditoria">Auditoría</Quick>
         </div>
-      </Card>
-    </div>
+      </NCard>
+    </PageLayout>
   );
 }
 
 function Quick({ to, children }: { to: string; children: React.ReactNode }) {
   return (
-    <Link to={to} className="rounded-lg border border-[#E5E7EB] px-3 py-1.5 hover:border-[#445DA3] hover:bg-[#F5F7FF] text-[#242424]">
+    <Link
+      to={to}
+      className="rounded-lg px-3 py-2 text-[12px] font-medium transition"
+      style={{
+        border: "1px solid var(--nuvia-border)",
+        background: "rgba(255,255,255,0.03)",
+        color: "var(--nuvia-text-primary)",
+      }}
+    >
       {children}
     </Link>
   );

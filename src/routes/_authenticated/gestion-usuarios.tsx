@@ -1,15 +1,24 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/nuvex/ui";
+import {
+  PageLayout,
+  ExecutiveHero,
+  KpiGrid,
+  KpiCard,
+  InsightCard,
+  NCard,
+  SectionHeader,
+  EmptyState,
+} from "@/components/nuvia";
 import { NUVEX } from "@/components/nuvex/constants";
 import { useUserRole } from "@/hooks/useUserRole";
 import { roleLabel } from "@/lib/roleLabels";
-import { Users, ArrowRightLeft, X } from "lucide-react";
+import { Users, ArrowRightLeft, X, AlertTriangle, UserCheck, UserMinus } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/gestion-usuarios")({
   component: GestionUsuariosPage,
-  head: () => ({ meta: [{ title: "Gestión operativa de usuarios · NUVEX" }] }),
+  head: () => ({ meta: [{ title: "Gestión operativa de usuarios · NUVIA" }] }),
 });
 
 interface UsuarioRow {
@@ -84,41 +93,44 @@ function GestionUsuariosPage() {
   }), [rows]);
 
   if (!autorizado) {
-    return <div className="mx-auto max-w-3xl px-6 py-10 text-sm text-[#242424]/65">No tienes permiso para acceder a esta sección.</div>;
+    return (
+      <PageLayout>
+        <EmptyState title="Sin acceso" description="Esta sección es exclusiva para Gerencia y Super Admin." />
+      </PageLayout>
+    );
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-6 space-y-4">
-      <Card>
-        <div className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: NUVEX.azul }}>
-          NUVEX · Gerencia Administrativa y Operaciones
-        </div>
-        <h1 className="text-2xl font-semibold text-[#242424] flex items-center gap-2">
-          <Users size={22} style={{ color: NUVEX.azul }} /> Gestión operativa de usuarios
-        </h1>
-        <p className="text-sm text-[#242424]/65 mt-1">
-          Carga operativa por colaborador, roles asignados y reasignación de casos.
-          La gestión de roles, permisos y aprobación de accesos se mantiene en Super Admin.
-        </p>
-      </Card>
+    <PageLayout>
+      <ExecutiveHero
+        badge={{ icon: <Users size={12} />, label: "Gerencia · Operaciones", tone: "blue" }}
+        title="Gestión Operativa de Usuarios"
+        description="Carga operativa por colaborador, roles asignados y reasignación de casos."
+      />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Kpi label="Usuarios activos" value={totales.usuarios} />
-        <Kpi label="Casos activos" value={totales.activos} />
-        <Kpi label="Sin casos asignados" value={totales.sinCasos} />
-        <Kpi label="Sobrecargados (>15)" value={totales.sobrecargados} color="#9A3412" />
-      </div>
+      <KpiGrid cols={4}>
+        <KpiCard icon={<Users size={16} />} tone="blue" label="Usuarios activos" value={totales.usuarios} />
+        <KpiCard icon={<UserCheck size={16} />} tone="green" label="Casos activos" value={totales.activos} />
+        <KpiCard icon={<UserMinus size={16} />} tone="neutral" label="Sin casos asignados" value={totales.sinCasos} />
+        <KpiCard icon={<AlertTriangle size={16} />} tone={totales.sobrecargados > 0 ? "warning" : "neutral"} label="Sobrecargados (>15)" value={totales.sobrecargados} />
+      </KpiGrid>
 
-      <Card>
-        {loading && <div className="py-6 text-center text-sm text-[#242424]/60">Cargando usuarios…</div>}
-        {err && <div className="py-6 text-center text-sm text-[#B42318]">{err}</div>}
-        {!loading && !err && (
+      <InsightCard scope="productividad" />
+
+      <NCard padding="md">
+        <SectionHeader title="Carga por colaborador" description="Ordenado por casos activos descendente." />
+        {loading && <div className="py-8 text-center text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>Cargando usuarios…</div>}
+        {err && <div className="py-8 text-center text-sm" style={{ color: "var(--nuvia-danger)" }}>{err}</div>}
+        {!loading && !err && rows.length === 0 && (
+          <EmptyState title="Sin usuarios" description="Aún no hay colaboradores aprobados." />
+        )}
+        {!loading && !err && rows.length > 0 && (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full" style={{ fontSize: "var(--nuvia-text-body)" }}>
               <thead>
-                <tr className="text-left text-[11px] uppercase tracking-wider text-[#242424]/55 border-b border-[#E3E7EE]">
-                  <th className="py-2 pr-4">Usuario</th>
-                  <th className="py-2 pr-4">Roles</th>
+                <tr>
+                  <th className="text-left py-2 pr-4">Usuario</th>
+                  <th className="text-left py-2 pr-4">Roles</th>
                   <th className="py-2 pr-4 text-right">Casos activos</th>
                   <th className="py-2 pr-4 text-right">Casos totales</th>
                   <th className="py-2 pr-2"></th>
@@ -126,29 +138,30 @@ function GestionUsuariosPage() {
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={r.id} className="border-b border-[#F0F2F6] hover:bg-[#F7F9FB]">
+                  <tr key={r.id}>
                     <td className="py-2 pr-4">
-                      <div className="font-medium text-[#242424]">{r.nombre || "—"}</div>
-                      <div className="text-[11px] text-[#242424]/55">{r.email}</div>
+                      <div className="font-medium">{r.nombre || "—"}</div>
+                      <div className="text-[11px]" style={{ color: "var(--nuvia-text-secondary)" }}>{r.email}</div>
                     </td>
-                    <td className="py-2 pr-4 text-[12px] text-[#242424]/75">
-                      {r.roles.length === 0 ? <span className="text-[#242424]/40">Sin rol</span> :
+                    <td className="py-2 pr-4">
+                      {r.roles.length === 0 ? <span style={{ color: "var(--nuvia-text-secondary)", opacity: 0.6 }}>Sin rol</span> :
                         r.roles.map((rr) => (
-                          <span key={rr} className="inline-block mr-1 mb-1 rounded-full px-2 py-0.5 text-[10px] font-semibold border"
-                            style={{ background: "#EEF2FF", color: "#3730A3", borderColor: "#C7D2FE" }}>
+                          <span key={rr} className="inline-block mr-1 mb-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                            style={{ background: "rgba(68,93,163,0.14)", color: "#A5B5E0", border: "1px solid rgba(68,93,163,0.40)" }}>
                             {roleLabel(rr, true)}
                           </span>
                         ))}
                     </td>
                     <td className="py-2 pr-4 text-right font-semibold"
-                      style={{ color: r.casosActivos > 15 ? "#9A3412" : r.casosActivos === 0 ? "#9CA3AF" : "#242424" }}>
+                      style={{ color: r.casosActivos > 15 ? "var(--nuvia-warning)" : r.casosActivos === 0 ? "var(--nuvia-text-secondary)" : "var(--nuvia-text-primary)" }}>
                       {r.casosActivos}
                     </td>
-                    <td className="py-2 pr-4 text-right text-[#242424]/70">{r.casosTotales}</td>
+                    <td className="py-2 pr-4 text-right" style={{ color: "var(--nuvia-text-secondary)" }}>{r.casosTotales}</td>
                     <td className="py-2 pr-2 text-right">
                       {r.casosActivos > 0 && (
                         <button onClick={() => setReasignar(r)}
-                          className="inline-flex items-center gap-1 text-[11px] text-[#445DA3] hover:underline">
+                          className="inline-flex items-center gap-1 text-[11px] hover:underline"
+                          style={{ color: "var(--nuvia-accent-blue)" }}>
                           <ArrowRightLeft size={12} /> Reasignar
                         </button>
                       )}
@@ -159,7 +172,7 @@ function GestionUsuariosPage() {
             </table>
           </div>
         )}
-      </Card>
+      </NCard>
 
       {reasignar && (
         <ReasignarModal
@@ -170,19 +183,13 @@ function GestionUsuariosPage() {
         />
       )}
 
-      <div className="text-[11px] text-[#242424]/55">
-        ¿Necesitas aprobar accesos o cambiar roles? <Link to="/super-admin/accesos" className="text-[#445DA3] hover:underline">Ir a Super Admin · Accesos</Link>
+      <div className="text-[11px]" style={{ color: "var(--nuvia-text-secondary)" }}>
+        ¿Necesitas aprobar accesos o cambiar roles?{" "}
+        <Link to="/super-admin/accesos" className="hover:underline" style={{ color: "var(--nuvia-accent-blue)" }}>
+          Ir a Super Admin · Accesos
+        </Link>
       </div>
-    </div>
-  );
-}
-
-function Kpi({ label, value, color = "#242424" }: { label: string; value: number; color?: string }) {
-  return (
-    <Card>
-      <div className="text-[11px] uppercase tracking-wider text-[#242424]/55">{label}</div>
-      <div className="text-2xl font-semibold mt-1" style={{ color }}>{value}</div>
-    </Card>
+    </PageLayout>
   );
 }
 
@@ -224,7 +231,6 @@ function ReasignarModal({ origen, usuarios, onClose, onDone }: {
       const ids = Array.from(seleccion);
       const { error: e } = await supabase.from("expedientes").update({ asesor_id: destino } as never).in("id", ids);
       if (e) throw e;
-      // Auditoría
       const { data: auth } = await supabase.auth.getUser();
       await supabase.from("auditoria_global").insert(
         ids.map((eid) => ({
@@ -242,50 +248,44 @@ function ReasignarModal({ origen, usuarios, onClose, onDone }: {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-3 border-b border-[#E3E7EE]">
-          <h2 className="text-base font-semibold text-[#242424]">Reasignar casos de {origen.nombre || origen.email}</h2>
-          <button onClick={onClose} className="text-[#242424]/60 hover:text-[#242424]"><X size={18} /></button>
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="glass-modal max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: "1px solid var(--nuvia-border)" }}>
+          <h2 className="text-base font-semibold">Reasignar casos de {origen.nombre || origen.email}</h2>
+          <button onClick={onClose} style={{ color: "var(--nuvia-text-secondary)" }}><X size={18} /></button>
         </div>
         <div className="p-5 space-y-3">
           <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#242424]/60 mb-1">Reasignar a</label>
-            <select value={destino} onChange={(e) => setDestino(e.target.value)}
-              className="w-full rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm">
+            <label className="nuvia-label block mb-1">Reasignar a</label>
+            <select value={destino} onChange={(e) => setDestino(e.target.value)} className="nuvia-input">
               <option value="">— Selecciona destinatario —</option>
               {usuarios.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.nombre || u.email} ({u.casosActivos} activos)
-                </option>
+                <option key={u.id} value={u.id}>{u.nombre || u.email} ({u.casosActivos} activos)</option>
               ))}
             </select>
           </div>
-
           <div className="flex items-center justify-between">
-            <span className="text-[12px] text-[#242424]/70">{casos.length} casos activos · {seleccion.size} seleccionados</span>
-            <button onClick={toggleAll} className="text-[11px] text-[#445DA3] hover:underline">
+            <span className="text-[12px]" style={{ color: "var(--nuvia-text-secondary)" }}>{casos.length} casos activos · {seleccion.size} seleccionados</span>
+            <button onClick={toggleAll} className="text-[11px] hover:underline" style={{ color: "var(--nuvia-accent-blue)" }}>
               {seleccion.size === casos.length ? "Quitar todos" : "Seleccionar todos"}
             </button>
           </div>
-
-          <div className="max-h-64 overflow-y-auto border border-[#E3E7EE] rounded-lg">
-            {casos.length === 0 && <div className="p-4 text-[12px] text-[#242424]/55 text-center">Este usuario no tiene casos activos.</div>}
+          <div className="max-h-64 overflow-y-auto rounded-lg" style={{ border: "1px solid var(--nuvia-border)" }}>
+            {casos.length === 0 && <div className="p-4 text-[12px] text-center" style={{ color: "var(--nuvia-text-secondary)" }}>Este usuario no tiene casos activos.</div>}
             {casos.map((c) => (
-              <label key={c.id} className="flex items-center gap-2 px-3 py-2 border-b border-[#F0F2F6] hover:bg-[#F7F9FB] cursor-pointer">
+              <label key={c.id} className="flex items-center gap-2 px-3 py-2 cursor-pointer" style={{ borderBottom: "1px solid var(--nuvia-border)" }}>
                 <input type="checkbox" checked={seleccion.has(c.id)} onChange={() => toggle(c.id)} />
                 <div className="flex-1">
-                  <div className="text-[13px] text-[#242424]">{c.cliente_nombre}</div>
-                  <div className="text-[10px] text-[#242424]/55">{c.estado_caso}</div>
+                  <div className="text-[13px]">{c.cliente_nombre}</div>
+                  <div className="text-[10px]" style={{ color: "var(--nuvia-text-secondary)" }}>{c.estado_caso}</div>
                 </div>
               </label>
             ))}
           </div>
-
-          {error && <div className="text-[12px] text-[#B42318]">{error}</div>}
+          {error && <div className="text-[12px]" style={{ color: "var(--nuvia-danger)" }}>{error}</div>}
         </div>
-        <div className="flex justify-end gap-2 px-5 py-3 border-t border-[#E3E7EE] bg-[#FAFBFC]">
-          <button onClick={onClose} className="rounded-lg border border-[#E3E7EE] px-3 py-1.5 text-sm">Cancelar</button>
+        <div className="flex justify-end gap-2 px-5 py-3" style={{ borderTop: "1px solid var(--nuvia-border)" }}>
+          <button onClick={onClose} className="rounded-lg px-3 py-1.5 text-sm" style={{ border: "1px solid var(--nuvia-border)" }}>Cancelar</button>
           <button onClick={reasignar} disabled={busy || !destino || seleccion.size === 0}
             className="rounded-lg px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-60"
             style={{ background: NUVEX.azul }}>

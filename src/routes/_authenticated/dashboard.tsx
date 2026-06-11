@@ -41,6 +41,14 @@ import {
 } from "lucide-react";
 import { KpisPipeline14 } from "@/components/pipeline/KpisPipeline14";
 import { AlertasEstancamientoPanel } from "@/components/pipeline/AlertasEstancamientoPanel";
+import {
+  PageLayout,
+  ExecutiveHero,
+  KpiGrid,
+  KpiCard as NKpiCard,
+  InsightCard,
+} from "@/components/nuvia";
+
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
@@ -134,96 +142,71 @@ function DashboardPage() {
     : 0;
 
   return (
-    <div
-      className="min-h-screen -mt-px"
-      style={{ background: BG, color: "#fff", fontFamily: "Inter, system-ui, sans-serif" }}
-    >
-      {/* Fondo decorativo */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div
-          className="absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full opacity-[0.18] blur-[140px]"
-          style={{ background: AZUL }}
-        />
-        <div
-          className="absolute top-40 -right-40 h-[500px] w-[500px] rounded-full opacity-[0.14] blur-[140px]"
-          style={{ background: VERDE }}
-        />
-      </div>
-
-      <div className="relative mx-auto max-w-7xl px-6 py-10 space-y-8 animate-fade-in">
-        {loading || roleLoading ? (
-          <div className="py-24 text-center text-sm" style={{ color: TEXT2 }}>
-            Cargando indicadores…
-          </div>
-        ) : err || !metrics ? (
-          <div className="py-24 text-center text-sm text-red-400">{err}</div>
-        ) : (
-          <>
-            {/* HERO */}
-            <section className="space-y-4">
-              <span
-                className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em]"
-                style={{
-                  background: "rgba(132,185,143,0.12)",
-                  color: VERDE,
-                  border: `1px solid ${VERDE}40`,
-                }}
-              >
-                <Activity size={12} />
-                {isManager ? "Gerencia General" : "Analista Financiero Comercial"}
-              </span>
-              <div className="flex items-end justify-between gap-6 flex-wrap">
-                <div>
-                  <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-                    Dashboard Ejecutivo
-                  </h1>
-                  <p className="mt-2 text-base max-w-2xl" style={{ color: TEXT2 }}>
-                    {isManager
-                      ? "Control financiero y operativo de toda la red de Analistas Financieros Comerciales NUVEX."
-                      : "Indicadores personales de tu producción NUVEX."}
-                  </p>
-                </div>
-                <div className="hidden md:flex items-center gap-2 text-xs" style={{ color: TEXT2 }}>
-                  <span className="h-2 w-2 rounded-full animate-pulse" style={{ background: VERDE }} />
-                  Datos en tiempo real
-                </div>
+    <PageLayout>
+      {loading || roleLoading ? (
+        <div className="py-24 text-center text-sm" style={{ color: TEXT2 }}>
+          Cargando indicadores…
+        </div>
+      ) : err || !metrics ? (
+        <div className="py-24 text-center text-sm text-red-400">{err}</div>
+      ) : (
+        <>
+          <ExecutiveHero
+            badge={{
+              icon: <Activity size={12} />,
+              label: isManager ? "Gerencia General" : "Analista Financiero Comercial",
+              tone: "green",
+            }}
+            title="Dashboard Ejecutivo"
+            description={
+              isManager
+                ? "Control financiero y operativo de toda la red de Analistas Financieros Comerciales NUVEX."
+                : "Indicadores personales de tu producción NUVEX."
+            }
+            meta={
+              <div className="flex items-center gap-2 text-xs" style={{ color: "var(--nuvia-text-secondary)" }}>
+                <span className="h-2 w-2 rounded-full animate-pulse" style={{ background: VERDE }} />
+                Datos en tiempo real
               </div>
-            </section>
+            }
+          />
 
-            {/* KPIs */}
-            <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Kpi
-                icon={<Folder size={20} />}
-                color={AZUL}
-                label="Expedientes Totales"
-                value={String(metrics.total)}
-                hint={`${totalAprobados} aprobados`}
-              />
-              <Kpi
-                icon={<ShieldCheck size={20} />}
-                color={VERDE}
-                label="Tasa de Aprobación"
-                value={`${formatNumber(metrics.tasaAprobacion, 1)}%`}
-                hint="Sobre radicados"
-                hero
-              />
-              <Kpi
-                icon={<Target size={20} />}
-                color={AZUL}
-                label="Acertividad Promedio"
-                value={`${formatNumber(metrics.acertividadPromedio, 1)}%`}
-                hint="Proyección vs aprobado"
-              />
-              <Kpi
-                icon={<TrendingUp size={20} />}
-                color={VERDE}
-                label="Tasa de Cierre"
-                value={`${formatNumber(metrics.tasaCierre, 1)}%`}
-                hint="Pagados / totales"
-              />
-            </section>
+          <KpiGrid cols={4}>
+            <NKpiCard
+              icon={<Folder size={16} />}
+              tone="blue"
+              label="Expedientes totales"
+              value={String(metrics.total)}
+              hint={`${totalAprobados} aprobados`}
+            />
+            <NKpiCard
+              icon={<ShieldCheck size={16} />}
+              tone="green"
+              label="Tasa de aprobación"
+              value={`${formatNumber(metrics.tasaAprobacion, 1)}%`}
+              hint="Sobre radicados"
+            />
+            <NKpiCard
+              icon={<Target size={16} />}
+              tone="blue"
+              label="Acertividad promedio"
+              value={`${formatNumber(metrics.acertividadPromedio, 1)}%`}
+              hint="Proyección vs aprobado"
+            />
+            <NKpiCard
+              icon={<TrendingUp size={16} />}
+              tone="green"
+              label="Tasa de cierre"
+              value={`${formatNumber(metrics.tasaCierre, 1)}%`}
+              hint="Pagados / totales"
+            />
+          </KpiGrid>
 
-            {isManager && <KpisPipeline14 />}
+          <InsightCard scope="dashboard" />
+
+          {isManager && <KpisPipeline14 />}
+
+
 
             {isManager && <AlertasEstancamientoPanel />}
 
@@ -590,10 +573,10 @@ function DashboardPage() {
             </footer>
           </>
         )}
-      </div>
-    </div>
+    </PageLayout>
   );
 }
+
 
 /* ============== Helpers ============== */
 
