@@ -58,7 +58,7 @@ export function CriticalAlertList({
             const { color, Icon } = severityMap[a.severity];
             const Body = (
               <div
-                className="flex items-start gap-3 rounded-xl px-3 py-2.5 transition hover:bg-white/[0.03]"
+                className="flex items-start gap-3 rounded-xl px-3 py-2.5 transition hover:[background:var(--nuvia-bg-secondary)]"
                 style={{
                   background: "rgba(5,8,22,0.35)",
                   border: "1px solid var(--nuvia-border)",
