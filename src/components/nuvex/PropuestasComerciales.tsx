@@ -263,7 +263,17 @@ export function PropuestasComerciales(props: Props) {
                         />
                         <FranjaRow
                           label="Nuevo plazo"
-                          value={`${c.nuevoPlazo} meses`}
+                          value={`${c.nuevoPlazo} m · ${(c.nuevoPlazo / 12).toFixed(1)} a`}
+                          highlight={isRec}
+                        />
+                        <FranjaRow
+                          label="Plazo actual → nuevo"
+                          value={`${props.cuotasPendientes} → ${c.nuevoPlazo} m`}
+                          highlight={isRec}
+                        />
+                        <FranjaRow
+                          label="Honorarios"
+                          value={formatCOP(c.honorarios)}
                           highlight={isRec}
                         />
                         <div className="mt-1 border-t pt-1.5" style={{ borderColor: "#ECEFF3" }}>
