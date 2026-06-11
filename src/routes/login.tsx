@@ -160,19 +160,19 @@ function LoginPage() {
           >
             <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] backdrop-blur px-3 py-1 text-[11px] tracking-widest uppercase text-white/60 mb-6">
               <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ background: GREEN }} />
-              Intelligence layer · online
+              Capa de inteligencia · en línea
             </div>
             <h1 className="text-5xl xl:text-6xl font-semibold leading-[1.05] tracking-tight">
-              Intelligence that{" "}
+              Inteligencia que{" "}
               <span
                 className="bg-clip-text text-transparent"
                 style={{ backgroundImage: `linear-gradient(90deg, ${BLUE}, ${GREEN})` }}
               >
-                moves finance.
+                mueve las finanzas.
               </span>
             </h1>
             <p className="mt-6 text-base xl:text-lg text-white/55 leading-relaxed max-w-lg font-light">
-              The operating system for high-performance financial teams. Autonomous decisions, real-time signals, zero noise.
+              El sistema operativo para equipos financieros de alto rendimiento. Decisiones autónomas, señales en tiempo real, cero ruido.
             </p>
 
             <div className="mt-10 grid grid-cols-3 gap-3 max-w-md">
