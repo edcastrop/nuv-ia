@@ -260,7 +260,14 @@ export function PesosSimulator({
 
   const cuotasBaseSimulacion = Math.max(0, cuotasPendientes);
   const totalActualPendiente = input.cuotaActual * cuotasBaseSimulacion;
-  const vecesActual = saldoCapitalNum > 0 ? totalActualPendiente / saldoCapitalNum : 0;
+  // Base coherente del crédito: valor desembolsado declarado, o reconstrucción
+  // a partir del saldo actual + lo ya pagado (aproximación al monto original).
+  const baseCreditoReferencia =
+    valorDesembolsadoNum > 0 ? valorDesembolsadoNum : saldoCapitalNum + dineroPagadoFecha;
+  const vecesActual =
+    baseCreditoReferencia > 0
+      ? (dineroPagadoFecha + totalActualPendiente) / baseCreditoReferencia
+      : 0;
   
 
   const metrics = [
@@ -283,7 +290,9 @@ export function PesosSimulator({
   ];
 
   const vecesOpt =
-    recomendada && saldoCapitalNum > 0 ? recomendada.totalProyectado / saldoCapitalNum : 0;
+    recomendada && baseCreditoReferencia > 0
+      ? (dineroPagadoFecha + recomendada.totalProyectado) / baseCreditoReferencia
+      : 0;
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-6 py-6">
@@ -463,6 +472,7 @@ export function PesosSimulator({
               valorDesembolsado: valorDesembolsadoNum,
               dineroPagado: dineroPagadoFecha,
               totalProyectadoPendiente: totalActualPendiente,
+              baseCredito: baseCreditoReferencia,
             }}
             puntosNeuralgicos={{
               tiempoMeses: cuotasPendientes,
