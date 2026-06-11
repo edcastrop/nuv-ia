@@ -324,8 +324,8 @@ function AuthenticatedLayout() {
         {
           label: "Operación",
           items: [
-            { to: "/", label: "Simulador", Icon: LayoutGrid, exact: true },
-            { to: "/nuvex-ia", label: "NUVEX IA", Icon: Sparkles },
+            { to: "/", label: "Inicio", Icon: LayoutGrid, exact: true },
+            { to: "/nuvex-ia", label: "NUVIA IA", Icon: Sparkles },
             { to: "/casos", label: "Casos", Icon: FolderKanban },
             ...(has("director_financiero_qa") && !hasAny("super_admin","admin","gerencia","licenciado","asesor","juridica","operaciones","cartera","contabilidad","director_juridico","auxiliar_operativo") ? [] : [{ to: "/pipeline", label: "Pipeline", Icon: Kanban }]),
             { to: "/expediente-maestro", label: "Expediente", Icon: UserSquare2 },
