@@ -556,6 +556,8 @@ export function SituacionActualBlock({
           )}
         </div>
       )}
+      </div>
     </Card>
+
   );
 }
