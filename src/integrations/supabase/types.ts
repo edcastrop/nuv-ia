@@ -2666,6 +2666,186 @@ export type Database = {
           },
         ]
       }
+      honorarios_aprobaciones: {
+        Row: {
+          aprobado_por: string | null
+          calculo_id: string
+          comentarios_aprobador: string | null
+          created_at: string
+          decidido_at: string | null
+          decision: Database["public"]["Enums"]["honorarios_decision"] | null
+          honorario_contraoferta: number | null
+          honorario_recomendado: number
+          honorario_solicitado: number
+          id: string
+          motivo_solicitud: string
+          solicitado_por: string
+        }
+        Insert: {
+          aprobado_por?: string | null
+          calculo_id: string
+          comentarios_aprobador?: string | null
+          created_at?: string
+          decidido_at?: string | null
+          decision?: Database["public"]["Enums"]["honorarios_decision"] | null
+          honorario_contraoferta?: number | null
+          honorario_recomendado: number
+          honorario_solicitado: number
+          id?: string
+          motivo_solicitud: string
+          solicitado_por?: string
+        }
+        Update: {
+          aprobado_por?: string | null
+          calculo_id?: string
+          comentarios_aprobador?: string | null
+          created_at?: string
+          decidido_at?: string | null
+          decision?: Database["public"]["Enums"]["honorarios_decision"] | null
+          honorario_contraoferta?: number | null
+          honorario_recomendado?: number
+          honorario_solicitado?: number
+          id?: string
+          motivo_solicitud?: string
+          solicitado_por?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "honorarios_aprobaciones_calculo_id_fkey"
+            columns: ["calculo_id"]
+            isOneToOne: false
+            referencedRelation: "honorarios_calculos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      honorarios_auditoria: {
+        Row: {
+          accion: string
+          calculo_id: string | null
+          created_at: string
+          id: string
+          user_id: string | null
+          valor_anterior: Json | null
+          valor_nuevo: Json | null
+        }
+        Insert: {
+          accion: string
+          calculo_id?: string | null
+          created_at?: string
+          id?: string
+          user_id?: string | null
+          valor_anterior?: Json | null
+          valor_nuevo?: Json | null
+        }
+        Update: {
+          accion?: string
+          calculo_id?: string | null
+          created_at?: string
+          id?: string
+          user_id?: string | null
+          valor_anterior?: Json | null
+          valor_nuevo?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "honorarios_auditoria_calculo_id_fkey"
+            columns: ["calculo_id"]
+            isOneToOne: false
+            referencedRelation: "honorarios_calculos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      honorarios_calculos: {
+        Row: {
+          ahorro_intereses: number
+          ahorro_seguros: number
+          ahorro_total: number
+          alerta_tope: boolean
+          banco: string | null
+          cedula: string | null
+          clasificacion: Database["public"]["Enums"]["honorarios_clasificacion"]
+          cliente_nombre: string
+          created_at: string
+          created_by: string
+          descuento_aplicado_pct: number | null
+          estado: Database["public"]["Enums"]["honorarios_estado"]
+          expediente_id: string | null
+          honorario_ofertado: number | null
+          honorario_teorico: number
+          honorario_topado: number
+          id: string
+          notas: string | null
+          plazo_original_meses: number | null
+          porcentaje_aplicado: number
+          rentabilidad_pct: number | null
+          saldo_capital: number | null
+          tipo_credito: string
+          updated_at: string
+        }
+        Insert: {
+          ahorro_intereses?: number
+          ahorro_seguros?: number
+          ahorro_total?: number
+          alerta_tope?: boolean
+          banco?: string | null
+          cedula?: string | null
+          clasificacion: Database["public"]["Enums"]["honorarios_clasificacion"]
+          cliente_nombre: string
+          created_at?: string
+          created_by?: string
+          descuento_aplicado_pct?: number | null
+          estado?: Database["public"]["Enums"]["honorarios_estado"]
+          expediente_id?: string | null
+          honorario_ofertado?: number | null
+          honorario_teorico: number
+          honorario_topado: number
+          id?: string
+          notas?: string | null
+          plazo_original_meses?: number | null
+          porcentaje_aplicado: number
+          rentabilidad_pct?: number | null
+          saldo_capital?: number | null
+          tipo_credito?: string
+          updated_at?: string
+        }
+        Update: {
+          ahorro_intereses?: number
+          ahorro_seguros?: number
+          ahorro_total?: number
+          alerta_tope?: boolean
+          banco?: string | null
+          cedula?: string | null
+          clasificacion?: Database["public"]["Enums"]["honorarios_clasificacion"]
+          cliente_nombre?: string
+          created_at?: string
+          created_by?: string
+          descuento_aplicado_pct?: number | null
+          estado?: Database["public"]["Enums"]["honorarios_estado"]
+          expediente_id?: string | null
+          honorario_ofertado?: number | null
+          honorario_teorico?: number
+          honorario_topado?: number
+          id?: string
+          notas?: string | null
+          plazo_original_meses?: number | null
+          porcentaje_aplicado?: number
+          rentabilidad_pct?: number | null
+          saldo_capital?: number | null
+          tipo_credito?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "honorarios_calculos_expediente_id_fkey"
+            columns: ["expediente_id"]
+            isOneToOne: false
+            referencedRelation: "expedientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incidentes_operativos: {
         Row: {
           asignado_a: string | null
@@ -3953,9 +4133,11 @@ export type Database = {
         Returns: Database["public"]["Enums"]["academia_rol"]
       }
       calcular_etapa_onboarding: { Args: { _user_id: string }; Returns: string }
+      can_aprobar_honorarios: { Args: { _uid: string }; Returns: boolean }
       can_manage_cartera: { Args: { _uid: string }; Returns: boolean }
       can_manage_finanzas: { Args: { _uid: string }; Returns: boolean }
       can_use_checklist_docs: { Args: { _uid: string }; Returns: boolean }
+      can_use_motor_honorarios: { Args: { _uid: string }; Returns: boolean }
       can_use_proyeccion_financiera: {
         Args: { _uid: string }
         Returns: boolean
@@ -4229,6 +4411,21 @@ export type Database = {
         | "ENVIADO_CONTRATACION"
         | "CONDICIONES_APLICADAS"
       expediente_modo: "pesos" | "uvr"
+      honorarios_clasificacion:
+        | "estandar"
+        | "intermedio"
+        | "premium"
+        | "corporativo"
+        | "uvr_360"
+      honorarios_decision: "aprobado" | "rechazado" | "contraofertado"
+      honorarios_estado:
+        | "borrador"
+        | "ofertado"
+        | "pendiente_aprobacion"
+        | "aprobado"
+        | "rechazado"
+        | "contraofertado"
+        | "cerrado"
       incidente_estado: "abierto" | "en_gestion" | "resuelto" | "cerrado"
       incidente_severidad: "baja" | "media" | "alta" | "critica"
       incidente_tipo:
@@ -4488,6 +4685,23 @@ export const Constants = {
         "CONDICIONES_APLICADAS",
       ],
       expediente_modo: ["pesos", "uvr"],
+      honorarios_clasificacion: [
+        "estandar",
+        "intermedio",
+        "premium",
+        "corporativo",
+        "uvr_360",
+      ],
+      honorarios_decision: ["aprobado", "rechazado", "contraofertado"],
+      honorarios_estado: [
+        "borrador",
+        "ofertado",
+        "pendiente_aprobacion",
+        "aprobado",
+        "rechazado",
+        "contraofertado",
+        "cerrado",
+      ],
       incidente_estado: ["abierto", "en_gestion", "resuelto", "cerrado"],
       incidente_severidad: ["baja", "media", "alta", "critica"],
       incidente_tipo: [

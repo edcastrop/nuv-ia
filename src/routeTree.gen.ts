@@ -31,6 +31,7 @@ import { Route as AuthenticatedNotificacionesRouteImport } from './routes/_authe
 import { Route as AuthenticatedMiPerfilRouteImport } from './routes/_authenticated/mi-perfil'
 import { Route as AuthenticatedMensajeriaRouteImport } from './routes/_authenticated/mensajeria'
 import { Route as AuthenticatedIncidentesRouteImport } from './routes/_authenticated/incidentes'
+import { Route as AuthenticatedHonorariosMotorRouteImport } from './routes/_authenticated/honorarios-motor'
 import { Route as AuthenticatedHerramientasRouteImport } from './routes/_authenticated/herramientas'
 import { Route as AuthenticatedGestionUsuariosRouteImport } from './routes/_authenticated/gestion-usuarios'
 import { Route as AuthenticatedFinanzasRouteImport } from './routes/_authenticated/finanzas'
@@ -202,6 +203,12 @@ const AuthenticatedIncidentesRoute = AuthenticatedIncidentesRouteImport.update({
   path: '/incidentes',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedHonorariosMotorRoute =
+  AuthenticatedHonorariosMotorRouteImport.update({
+    id: '/honorarios-motor',
+    path: '/honorarios-motor',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedHerramientasRoute =
   AuthenticatedHerramientasRouteImport.update({
     id: '/herramientas',
@@ -553,6 +560,7 @@ export interface FileRoutesByFullPath {
   '/finanzas': typeof AuthenticatedFinanzasRouteWithChildren
   '/gestion-usuarios': typeof AuthenticatedGestionUsuariosRoute
   '/herramientas': typeof AuthenticatedHerramientasRouteWithChildren
+  '/honorarios-motor': typeof AuthenticatedHonorariosMotorRoute
   '/incidentes': typeof AuthenticatedIncidentesRoute
   '/mensajeria': typeof AuthenticatedMensajeriaRoute
   '/mi-perfil': typeof AuthenticatedMiPerfilRoute
@@ -629,6 +637,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/directorio': typeof AuthenticatedDirectorioRoute
   '/gestion-usuarios': typeof AuthenticatedGestionUsuariosRoute
+  '/honorarios-motor': typeof AuthenticatedHonorariosMotorRoute
   '/incidentes': typeof AuthenticatedIncidentesRoute
   '/mensajeria': typeof AuthenticatedMensajeriaRoute
   '/mi-perfil': typeof AuthenticatedMiPerfilRoute
@@ -711,6 +720,7 @@ export interface FileRoutesById {
   '/_authenticated/finanzas': typeof AuthenticatedFinanzasRouteWithChildren
   '/_authenticated/gestion-usuarios': typeof AuthenticatedGestionUsuariosRoute
   '/_authenticated/herramientas': typeof AuthenticatedHerramientasRouteWithChildren
+  '/_authenticated/honorarios-motor': typeof AuthenticatedHonorariosMotorRoute
   '/_authenticated/incidentes': typeof AuthenticatedIncidentesRoute
   '/_authenticated/mensajeria': typeof AuthenticatedMensajeriaRoute
   '/_authenticated/mi-perfil': typeof AuthenticatedMiPerfilRoute
@@ -794,6 +804,7 @@ export interface FileRouteTypes {
     | '/finanzas'
     | '/gestion-usuarios'
     | '/herramientas'
+    | '/honorarios-motor'
     | '/incidentes'
     | '/mensajeria'
     | '/mi-perfil'
@@ -870,6 +881,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/directorio'
     | '/gestion-usuarios'
+    | '/honorarios-motor'
     | '/incidentes'
     | '/mensajeria'
     | '/mi-perfil'
@@ -951,6 +963,7 @@ export interface FileRouteTypes {
     | '/_authenticated/finanzas'
     | '/_authenticated/gestion-usuarios'
     | '/_authenticated/herramientas'
+    | '/_authenticated/honorarios-motor'
     | '/_authenticated/incidentes'
     | '/_authenticated/mensajeria'
     | '/_authenticated/mi-perfil'
@@ -1188,6 +1201,13 @@ declare module '@tanstack/react-router' {
       path: '/incidentes'
       fullPath: '/incidentes'
       preLoaderRoute: typeof AuthenticatedIncidentesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/honorarios-motor': {
+      id: '/_authenticated/honorarios-motor'
+      path: '/honorarios-motor'
+      fullPath: '/honorarios-motor'
+      preLoaderRoute: typeof AuthenticatedHonorariosMotorRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/herramientas': {
@@ -1683,6 +1703,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedFinanzasRoute: typeof AuthenticatedFinanzasRouteWithChildren
   AuthenticatedGestionUsuariosRoute: typeof AuthenticatedGestionUsuariosRoute
   AuthenticatedHerramientasRoute: typeof AuthenticatedHerramientasRouteWithChildren
+  AuthenticatedHonorariosMotorRoute: typeof AuthenticatedHonorariosMotorRoute
   AuthenticatedIncidentesRoute: typeof AuthenticatedIncidentesRoute
   AuthenticatedMensajeriaRoute: typeof AuthenticatedMensajeriaRoute
   AuthenticatedMiPerfilRoute: typeof AuthenticatedMiPerfilRoute
@@ -1732,6 +1753,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedFinanzasRoute: AuthenticatedFinanzasRouteWithChildren,
   AuthenticatedGestionUsuariosRoute: AuthenticatedGestionUsuariosRoute,
   AuthenticatedHerramientasRoute: AuthenticatedHerramientasRouteWithChildren,
+  AuthenticatedHonorariosMotorRoute: AuthenticatedHonorariosMotorRoute,
   AuthenticatedIncidentesRoute: AuthenticatedIncidentesRoute,
   AuthenticatedMensajeriaRoute: AuthenticatedMensajeriaRoute,
   AuthenticatedMiPerfilRoute: AuthenticatedMiPerfilRoute,
@@ -1803,13 +1825,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
