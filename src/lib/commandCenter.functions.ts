@@ -409,7 +409,7 @@ export const getScoreboard = createServerFn({ method: "POST" })
 
     if (isExec) {
       // Modo nominal
-      await auditNominalAccess(supabase, userId, "scoreboard_nominal", `area=${area},fecha=${fecha}`);
+      await auditNominalAccess(supabase, userId, "scoreboard_nominal", { area, fecha });
       const ids = all.map((r) => r.usuario_id as string).filter(Boolean);
       let nombreMap: Record<string, string> = {};
       if (ids.length) {
