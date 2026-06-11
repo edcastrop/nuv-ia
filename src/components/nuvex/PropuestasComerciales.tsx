@@ -28,7 +28,9 @@ export interface RecomendadaSeleccionada {
 
 type Common = {
   cuotasPendientes: number;
-  baseCredito: number; // para "veces pagado"
+  baseCredito: number; // para "veces pagado" (desembolsado o, en su defecto, saldo actual)
+  /** Dinero ya pagado a la fecha. Solo se suma cuando la base es el valor desembolsado. */
+  dineroPagado?: number;
   onRecomendadaChange: (r: RecomendadaSeleccionada | null) => void;
 };
 
@@ -312,7 +314,9 @@ export function PropuestasComerciales(props: Props) {
           const isRecomendada = idx === effectiveIdx;
           const isMaxAhorro = idx === maxAhorroIdx;
           const veces =
-            props.baseCredito > 0 && c.valid ? c.totalProyectado / props.baseCredito : 0;
+            props.baseCredito > 0 && c.valid
+              ? ((props.dineroPagado ?? 0) + c.totalProyectado) / props.baseCredito
+              : 0;
 
           let badgeLabel = "";
           let badgeIcon = "";
