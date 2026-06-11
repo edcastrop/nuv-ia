@@ -352,6 +352,7 @@ function AuthenticatedLayout() {
         {
           label: "Finanzas",
           items: [
+            ...(hasAny("super_admin","admin","gerencia","licenciado","asesor","director_financiero_qa") ? [{ to: "/honorarios-motor", label: "Motor de Honorarios", Icon: DollarSign }] : []),
             ...(hasAny("super_admin","admin","gerencia","cartera","juridica","licenciado","asesor") ? [{ to: "/cartera", label: "Cartera", Icon: Wallet }] : []),
             ...(hasAny("super_admin","admin","gerencia","licenciado","asesor","juridica","director_juridico","contabilidad") ? [{ to: "/wallet", label: "Mi Wallet", Icon: Wallet }] : []),
             ...(has("director_financiero_qa") && !hasAny("super_admin","admin","gerencia","licenciado","asesor","juridica","operaciones","cartera","contabilidad","director_juridico","auxiliar_operativo") ? [] : [{ to: "/comisiones", label: "Comisiones", Icon: CircleDollarSign }]),
