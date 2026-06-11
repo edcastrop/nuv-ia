@@ -65,7 +65,7 @@ function LoginPage() {
     }
   };
 
-  const oauth = async (provider: "google" | "azure" | "apple") => {
+  const oauth = async (provider: "google" | "microsoft" | "apple") => {
     setErr(null); setBusy(true);
     try {
       const r = await lovable.auth.signInWithOAuth(provider, { redirect_uri: window.location.origin });
