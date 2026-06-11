@@ -765,8 +765,8 @@ export const askCopilot = createServerFn({ method: "POST" })
     await supabase.from("executive_copilot_log").insert({
       usuario_id: userId,
       prompt: data.prompt,
-      contexto_json: snapshot,
-      recomendaciones_json: recomendaciones,
+      contexto_json: snapshot as any,
+      recomendaciones_json: recomendaciones as any,
       modelo,
     });
 
