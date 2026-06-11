@@ -77,15 +77,27 @@ export function NuviaHome({ onLanzarSimulador }: { onLanzarSimulador: () => void
     if (!user) return;
     let cancel = false;
     (async () => {
-      const [{ data: prof }, { count: casos }, { count: notif }] = await Promise.all([
-        supabase.from("profiles" as never).select("nombre").eq("id", user.id).maybeSingle(),
-        supabase.from("expedientes" as never).select("id", { count: "exact", head: true }).eq("asesor_id", user.id),
-        supabase.from("notificaciones" as never).select("id", { count: "exact", head: true }).eq("user_id", user.id).is("leida_at", null),
+      const safe = async <T,>(p: PromiseLike<T>, fallback: T): Promise<T> => {
+        try { return await Promise.resolve(p); } catch { return fallback; }
+      };
+      const [profRes, casosRes, notifRes] = await Promise.all([
+        safe<{ data: { nombre?: string } | null }>(
+          supabase.from("profiles" as never).select("nombre").eq("id", user.id).maybeSingle() as unknown as PromiseLike<{ data: { nombre?: string } | null }>,
+          { data: null },
+        ),
+        safe<{ count: number | null }>(
+          supabase.from("expedientes" as never).select("id", { count: "exact", head: true }).eq("asesor_id", user.id) as unknown as PromiseLike<{ count: number | null }>,
+          { count: 0 },
+        ),
+        safe<{ count: number | null }>(
+          supabase.from("notificaciones" as never).select("id", { count: "exact", head: true }).eq("user_id", user.id).is("leida_at", null) as unknown as PromiseLike<{ count: number | null }>,
+          { count: 0 },
+        ),
       ]);
       if (cancel) return;
-      const p = prof as { nombre?: string } | null;
+      const p = profRes.data as { nombre?: string } | null;
       setNombre(p?.nombre?.split(" ")[0] ?? "");
-      setStats({ casos: casos ?? 0, pendientes: 0, notif: notif ?? 0 });
+      setStats({ casos: casosRes.count ?? 0, pendientes: 0, notif: notifRes.count ?? 0 });
     })();
     return () => { cancel = true; };
   }, [user]);
@@ -100,7 +112,7 @@ export function NuviaHome({ onLanzarSimulador }: { onLanzarSimulador: () => void
   const rolePrincipal = roles[0] ? roleLabel(roles[0]) : "Miembro NUVIA";
 
   return (
-    <div className="min-h-screen w-full text-white" style={{ background: "#0A0B10" }}>
+    <div className="relative w-full text-white overflow-hidden" style={{ background: "#0A0B10", minHeight: "calc(100vh - 64px)" }}>
       {/* Fondo */}
       <div
         className="absolute inset-0 pointer-events-none"
