@@ -41,6 +41,14 @@ import {
 } from "lucide-react";
 import { KpisPipeline14 } from "@/components/pipeline/KpisPipeline14";
 import { AlertasEstancamientoPanel } from "@/components/pipeline/AlertasEstancamientoPanel";
+import {
+  PageLayout,
+  ExecutiveHero,
+  KpiGrid,
+  KpiCard as NKpiCard,
+  InsightCard,
+} from "@/components/nuvia";
+
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
