@@ -61,75 +61,89 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* ==========================================================
+   NUVIA · DARK-MODE-FIRST DESIGN SYSTEM
+   Paleta operativa: #050816 / #0D1224 / #131B33 / #1B2542
+   Bordes: rgba(255,255,255,0.08)
+   Estética: Stripe + Linear + Palantir · Glassmorphism
+   ========================================================== */
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
+  --radius: 0.75rem;
+
+  --nuvia-bg-0: #050816;
+  --nuvia-bg-1: #0D1224;
+  --nuvia-bg-2: #131B33;
+  --nuvia-bg-3: #1B2542;
+  --nuvia-line: rgba(255, 255, 255, 0.08);
+  --nuvia-line-strong: rgba(255, 255, 255, 0.14);
+  --nuvia-text: #E6ECF5;
+  --nuvia-text-muted: rgba(230, 236, 245, 0.62);
+  --nuvia-text-dim: rgba(230, 236, 245, 0.42);
+  --nuvia-blue: #445DA3;
+  --nuvia-green: #84B98F;
+
+  --background: #050816;
+  --foreground: #E6ECF5;
+  --card: #131B33;
+  --card-foreground: #E6ECF5;
+  --popover: #131B33;
+  --popover-foreground: #E6ECF5;
+  --primary: #445DA3;
+  --primary-foreground: #FFFFFF;
+  --secondary: #1B2542;
+  --secondary-foreground: #E6ECF5;
+  --muted: #0D1224;
+  --muted-foreground: rgba(230, 236, 245, 0.62);
+  --accent: #1B2542;
+  --accent-foreground: #E6ECF5;
+  --destructive: #E11D48;
+  --destructive-foreground: #FFFFFF;
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.06);
+  --ring: #445DA3;
+  --chart-1: #445DA3;
+  --chart-2: #84B98F;
+  --chart-3: #7C9CFF;
+  --chart-4: #C7D2FE;
+  --chart-5: #4FA974;
+  --sidebar: #050816;
+  --sidebar-foreground: #E6ECF5;
+  --sidebar-primary: #445DA3;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #131B33;
+  --sidebar-accent-foreground: #E6ECF5;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: #445DA3;
 }
 
 .dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  --background: #050816;
+  --foreground: #E6ECF5;
+  --card: #131B33;
+  --card-foreground: #E6ECF5;
+  --popover: #131B33;
+  --popover-foreground: #E6ECF5;
+  --primary: #445DA3;
+  --primary-foreground: #FFFFFF;
+  --secondary: #1B2542;
+  --secondary-foreground: #E6ECF5;
+  --muted: #0D1224;
+  --muted-foreground: rgba(230, 236, 245, 0.62);
+  --accent: #1B2542;
+  --accent-foreground: #E6ECF5;
+  --destructive: #E11D48;
+  --destructive-foreground: #FFFFFF;
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.06);
+  --ring: #445DA3;
+  --sidebar: #050816;
+  --sidebar-foreground: #E6ECF5;
+  --sidebar-primary: #445DA3;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #131B33;
+  --sidebar-accent-foreground: #E6ECF5;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: #445DA3;
 }
 
 @layer base {
@@ -137,13 +151,62 @@
     border-color: var(--color-border);
   }
 
-  body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
+  html, body {
+    background-color: #050816;
+    color: var(--nuvia-text);
     letter-spacing: normal;
     word-spacing: normal;
     line-height: 1.45;
   }
+
+  /* PROHIBIDO superficies blancas: cualquier bg-white se reescribe a glass NUVIA */
+  .bg-white {
+    background-color: var(--nuvia-bg-2) !important;
+    color: var(--nuvia-text);
+  }
+
+  /* Tablas oscuras por defecto */
+  table { color: var(--nuvia-text); }
+  thead, thead tr, thead th {
+    background-color: var(--nuvia-bg-1) !important;
+    color: var(--nuvia-text-muted) !important;
+    border-color: var(--nuvia-line) !important;
+  }
+  tbody tr {
+    border-color: var(--nuvia-line) !important;
+  }
+  tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+  }
+
+  /* Cards shadcn → glass NUVIA */
+  .bg-card {
+    background-color: var(--nuvia-bg-2) !important;
+    background-image: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015)) !important;
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--nuvia-line);
+  }
+
+  input, textarea, select { color-scheme: dark; }
+
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.08); border-radius: 6px;
+  }
+}
+
+@utility glass {
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px);
+  border-radius: 16px;
+}
+
+@utility glass-strong {
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(18px);
+  border-radius: 18px;
 }
 
 @layer components {
