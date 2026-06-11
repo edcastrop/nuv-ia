@@ -604,9 +604,10 @@ function AuthenticatedLayout() {
         <EtapaTransicionDialog />
 
 
-        <footer className="border-t border-[#E3E7EE] bg-white">
-          <div className="mx-auto max-w-7xl px-6 py-5 text-center text-[11px] text-[#242424]/60">
-            <span className="font-semibold text-[#242424]">{CORPORATIVO.nombre}</span> · {CORPORATIVO.telefono} · {CORPORATIVO.web}
+        <footer className="border-t border-white/[0.06]" style={{ background: "#070810" }}>
+          <div className="mx-auto max-w-7xl px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-white/40">
+            <span><span className="font-semibold text-white/70">NUVIA Systems</span> · Sistema operativo de inteligencia financiera</span>
+            <span className="tracking-[0.22em] uppercase">SOC 2 · ISO 27001 · {CORPORATIVO.web}</span>
           </div>
         </footer>
       </div>
