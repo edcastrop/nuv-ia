@@ -112,7 +112,7 @@ export function OnboardingChecklistBanner() {
                 background: urgente
                   ? "var(--nuvia-warning)"
                   : "var(--nuvia-gradient-primary)",
-                color: urgente ? "#0B0F1F" : "#fff",
+                color: urgente ? "var(--nuvia-bg-primary)" : "#fff",
                 boxShadow: "var(--nuvia-shadow-sm)",
               }}
             >
