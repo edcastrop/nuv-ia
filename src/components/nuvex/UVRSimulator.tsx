@@ -251,7 +251,8 @@ export function UVRSimulator({
 
   const cuotasBaseSimulacion = Math.max(0, cuotasPendientes);
   const totalActualPesos = calc?.escenarioActual.totalPagoPesos ?? 0;
-  const baseCredito = valorDesembolsadoNum > 0 ? valorDesembolsadoNum : saldoPesosNum;
+  const baseCredito =
+    valorDesembolsadoNum > 0 ? valorDesembolsadoNum : saldoPesosNum + dineroPagadoFecha;
   const vecesActual = baseCredito > 0 ? (dineroPagadoFecha + totalActualPesos) / baseCredito : 0;
   
   const vecesOpt =
