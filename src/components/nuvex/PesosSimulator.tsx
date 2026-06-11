@@ -260,10 +260,10 @@ export function PesosSimulator({
 
   const cuotasBaseSimulacion = Math.max(0, cuotasPendientes);
   const totalActualPendiente = input.cuotaActual * cuotasBaseSimulacion;
-  // Base coherente del crédito: valor desembolsado declarado, o reconstrucción
-  // a partir del saldo actual + lo ya pagado (aproximación al monto original).
-  const baseCreditoReferencia =
-    valorDesembolsadoNum > 0 ? valorDesembolsadoNum : saldoCapitalNum + dineroPagadoFecha;
+  // Base coherente del crédito: SOLO el valor desembolsado declarado por el
+  // banco. Sin ese dato no fabricamos una base (saldo+pagado mezcla capital
+  // con intereses y produce un múltiplo engañoso).
+  const baseCreditoReferencia = valorDesembolsadoNum > 0 ? valorDesembolsadoNum : 0;
   const vecesActual =
     baseCreditoReferencia > 0
       ? (dineroPagadoFecha + totalActualPendiente) / baseCreditoReferencia
