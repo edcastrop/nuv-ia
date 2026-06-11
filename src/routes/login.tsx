@@ -79,7 +79,7 @@ function LoginPage() {
   const forgot = async () => {
     setErr(null); setInfo(null);
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setErr("Enter your email above to receive the reset link.");
+      setErr("Ingresa tu email arriba para recibir el enlace de recuperación.");
       return;
     }
     setBusy(true);
