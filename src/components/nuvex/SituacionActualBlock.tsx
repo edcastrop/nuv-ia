@@ -532,6 +532,8 @@ export function SituacionActualBlock({
   vecesPagado,
   costoTotal,
   puntosNeuralgicos,
+  tea,
+  teaUmbral,
   secundarios,
   detalle,
 }: Props) {
