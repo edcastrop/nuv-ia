@@ -449,15 +449,23 @@ function AuthenticatedLayout() {
       className="flex h-full flex-col"
       style={{
         width: sidebarWidth,
-        background: "linear-gradient(180deg, #050814, #0A1226 60%, #07162D)",
-        borderRight: "1px solid rgba(255,255,255,0.06)",
+        background:
+          "linear-gradient(180deg, var(--nuvia-bg-primary), var(--nuvia-bg-secondary) 60%, var(--nuvia-bg-tertiary))",
+        borderRight: "1px solid var(--nuvia-border)",
         transition: "width 200ms ease",
       }}
     >
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 -left-10 h-48 w-[280px] rounded-full opacity-[0.10] blur-[100px]" style={{ background: AZUL }} />
-        <div className="absolute bottom-10 -right-10 h-48 w-[260px] rounded-full opacity-[0.08] blur-[100px]" style={{ background: VERDE }} />
+        <div
+          className="absolute -top-24 -left-10 h-48 w-[280px] rounded-full opacity-[0.10] blur-[100px]"
+          style={{ background: AZUL }}
+        />
+        <div
+          className="absolute bottom-10 -right-10 h-48 w-[260px] rounded-full opacity-[0.08] blur-[100px]"
+          style={{ background: VERDE }}
+        />
       </div>
+
 
       <div className="relative flex items-center justify-between px-4 py-5" style={{ minHeight: 76 }}>
         <Link to="/" className="flex items-center">
@@ -502,7 +510,7 @@ function AuthenticatedLayout() {
   );
 
   return (
-    <div className="min-h-screen flex" style={{ background: "#0A0B10" }}>
+    <div className="min-h-screen flex" style={{ background: "var(--nuvia-bg-primary)" }}>
       {/* Sidebar desktop */}
       <div className="hidden lg:block sticky top-0 h-screen relative">
         {SidebarContent}
@@ -511,7 +519,7 @@ function AuthenticatedLayout() {
       {/* Sidebar móvil (drawer) */}
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
           <div className="relative h-full">{SidebarContent}</div>
         </div>
       )}
@@ -521,8 +529,10 @@ function AuthenticatedLayout() {
         <header
           className="sticky top-0 z-40"
           style={{
-            background: "linear-gradient(90deg, #050814, #0A1226)",
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            background:
+              "linear-gradient(90deg, var(--nuvia-bg-primary), var(--nuvia-bg-secondary))",
+            borderBottom: "1px solid var(--nuvia-border)",
+
           }}
         >
           <div className="flex items-center justify-between gap-4 px-5" style={{ height: 64 }}>
