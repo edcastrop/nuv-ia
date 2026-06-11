@@ -99,7 +99,7 @@ export const actualizarTareaEstado = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const patch: Record<string, unknown> = { estado: data.estado };
     if (data.estado === "completada") patch.completada_at = new Date().toISOString();
-    else if (data.estado !== "completada") patch.completada_at = null;
+    else patch.completada_at = null;
     const { data: row, error } = await context.supabase
       .from("expediente_tareas")
       .update(patch as never)
