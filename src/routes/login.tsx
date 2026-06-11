@@ -332,9 +332,9 @@ function LoginPage() {
             </div>
 
             <div className="mt-7 text-center text-sm text-white/55">
-              Don't have an account?{" "}
+              ¿No tienes una cuenta?{" "}
               <Link to="/registro" className="font-semibold text-white hover:underline inline-flex items-center gap-1">
-                Create Workspace <Sparkles size={12} style={{ color: GREEN }} />
+                Crear espacio de trabajo <Sparkles size={12} style={{ color: GREEN }} />
               </Link>
             </div>
           </div>
