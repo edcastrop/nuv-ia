@@ -105,6 +105,26 @@
   --nuvia-radius-lg: 20px;
   --nuvia-radius-xl: 24px;
 
+  /* Espaciado oficial (escala 4-8-12-16-24-32-48-64) — Fase 7.6.1B */
+  --nuvia-space-1: 4px;
+  --nuvia-space-2: 8px;
+  --nuvia-space-3: 12px;
+  --nuvia-space-4: 16px;
+  --nuvia-space-5: 24px;
+  --nuvia-space-6: 32px;
+  --nuvia-space-7: 48px;
+  --nuvia-space-8: 64px;
+
+  /* Tipografía oficial — Fase 7.6.1B */
+  --nuvia-text-display:  32px;  --nuvia-leading-display: 40px;
+  --nuvia-text-h1:       24px;  --nuvia-leading-h1:      32px;
+  --nuvia-text-h2:       20px;  --nuvia-leading-h2:      28px;
+  --nuvia-text-h3:       16px;  --nuvia-leading-h3:      24px;
+  --nuvia-text-body:     14px;  --nuvia-leading-body:    20px;
+  --nuvia-text-caption:  12px;  --nuvia-leading-caption: 16px;
+  --nuvia-text-badge:    11px;  --nuvia-leading-badge:   14px;
+
+
   /* Sombras */
   --nuvia-shadow-sm: 0 1px 2px rgba(0,0,0,0.35);
   --nuvia-shadow-md: 0 10px 30px -10px rgba(5,8,22,0.65);
