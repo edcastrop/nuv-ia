@@ -1,17 +1,19 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent, type ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import logoNuvex from "@/assets/logo-nuvex.png";
-import { CitySelect } from "@/components/ui/CitySelect";
+import { motion } from "framer-motion";
 import {
-  ArrowRight, ShieldCheck, Lock, User, Mail, Phone, MapPin, Building2,
-  UserCog, Eye, EyeOff, Sparkles, Zap, CheckCircle2, MapPinned, PhoneCall, Globe, KeyRound,
+  ArrowRight, ShieldCheck, Lock, Eye, EyeOff, Sparkles, CheckCircle2,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { CitySelect } from "@/components/ui/CitySelect";
 
 export const Route = createFileRoute("/registro")({
   component: RegistroPage,
-  head: () => ({ meta: [{ title: "Solicitar acceso · NUVEX" }] }),
+  head: () => ({ meta: [{ title: "Solicitar acceso · NUVIA — Inteligencia Financiera" }] }),
 });
+
+const BLUE = "#445DA3";
+const GREEN = "#84B98F";
 
 const ROLES_SOLICITABLES = [
   { v: "licenciado", label: "Analista Financiero Comercial" },
@@ -41,8 +43,6 @@ function RegistroPage() {
     try {
       if (form.password.length < 8) throw new Error("La contraseña debe tener al menos 8 caracteres.");
 
-      // 1) Pre-check: si el correo corresponde a un usuario DESVINCULADO,
-      //    no crear cuenta nueva: generar solicitud de reactivación.
       try {
         const { data: pre, error: preErr } = await supabase.rpc(
           "solicitar_reactivacion_por_email" as never,
@@ -61,11 +61,10 @@ function RegistroPage() {
             return;
           }
           if (status === "exists_not_desvinculado") {
-            throw new Error("Este correo ya está registrado en NUVEX. Inicia sesión o contacta al administrador.");
+            throw new Error("Este correo ya está registrado en NUVIA. Inicia sesión o contacta al administrador.");
           }
         }
       } catch (preCheckErr) {
-        // Si la RPC indicó conflicto, abortamos; si fue un error de red genérico, continuamos al signUp normal.
         if (preCheckErr instanceof Error && preCheckErr.message.includes("ya está registrado")) throw preCheckErr;
       }
 
@@ -94,149 +93,241 @@ function RegistroPage() {
     }
   };
 
-
   if (done) {
     const esReactivacion = doneMode === "reactivacion";
     return (
-      <main className="nuvex-register-shell">
-        <div className="nuvex-register-right" style={{ minHeight: "100vh" }}>
-          <section className="nuvex-register-card nuvex-register-card--success">
-            <div className="nrx-status-icon mb-5"><ShieldCheck className="w-7 h-7" strokeWidth={2.5} /></div>
-            <h1 className="nuvex-register-title">
-              {esReactivacion ? "Solicitud de reactivación enviada" : "Solicitud enviada"}
-            </h1>
-            <p className="nuvex-register-copy mx-auto mt-3">
-              {esReactivacion
-                ? "Tu cuenta ya existe en NUVEX y se encuentra desvinculada. Hemos enviado una solicitud de reactivación al administrador. Recibirás una notificación cuando tu acceso sea restaurado."
-                : <>Tu cuenta quedó en <b>estado pendiente</b>. Un administrador NUVEX revisará y aprobará tu acceso. Recibirás una notificación cuando puedas iniciar sesión.</>}
-            </p>
-            <button onClick={() => navigate({ to: "/login" })} className="nuvex-register-submit mt-7">
-              Volver al login
-            </button>
-          </section>
-        </div>
-      </main>
+      <div className="min-h-screen w-full grid place-items-center text-white p-6" style={{ background: "#0A0B10" }}>
+        <BgOrbs />
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="relative z-10 w-full max-w-md rounded-[24px] border border-white/[0.08] p-10 text-center"
+          style={{
+            background: "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)",
+            backdropFilter: "blur(18px)",
+            WebkitBackdropFilter: "blur(18px)",
+          }}
+        >
+          <div
+            className="mx-auto grid place-items-center w-14 h-14 rounded-2xl mb-5"
+            style={{
+              background: `linear-gradient(135deg, ${BLUE}, ${GREEN})`,
+              boxShadow: "0 12px 30px -10px rgba(132,185,143,0.5)",
+            }}
+          >
+            <ShieldCheck className="w-7 h-7" strokeWidth={2.4} />
+          </div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {esReactivacion ? "Solicitud de reactivación enviada" : "Solicitud enviada"}
+          </h1>
+          <p className="mt-3 text-sm text-white/60 leading-relaxed">
+            {esReactivacion
+              ? "Tu cuenta ya existe en NUVIA y se encuentra desvinculada. Enviamos una solicitud de reactivación al administrador. Recibirás una notificación cuando tu acceso sea restaurado."
+              : <>Tu cuenta quedó en <b className="text-white">estado pendiente</b>. Un administrador NUVIA revisará y aprobará tu acceso. Recibirás una notificación cuando puedas iniciar sesión.</>}
+          </p>
+          <button
+            onClick={() => navigate({ to: "/login" })}
+            className="mt-7 w-full rounded-xl py-3 text-sm font-semibold text-white"
+            style={{ background: `linear-gradient(135deg, ${BLUE}, ${GREEN})` }}
+          >
+            Volver al inicio de sesión
+          </button>
+        </motion.div>
+      </div>
     );
   }
 
-
   return (
-    <main className="nuvex-register-shell">
-      <div className="nuvex-register-grid">
-        {/* ===== PANEL IZQUIERDO ===== */}
-        <aside className="nuvex-register-brand-panel">
-          {/* Ondas decorativas SVG */}
-          <svg className="nrx-waves" viewBox="0 0 600 1000" preserveAspectRatio="none" aria-hidden="true">
-            <defs>
-              <linearGradient id="nrxWaveA" x1="0" x2="1" y1="0" y2="1">
-                <stop offset="0%" stopColor="#445DA3" stopOpacity="0.0" />
-                <stop offset="50%" stopColor="#445DA3" stopOpacity="0.35" />
-                <stop offset="100%" stopColor="#84B98F" stopOpacity="0.0" />
-              </linearGradient>
-              <linearGradient id="nrxWaveB" x1="0" x2="1" y1="0" y2="0">
-                <stop offset="0%" stopColor="#84B98F" stopOpacity="0.0" />
-                <stop offset="60%" stopColor="#84B98F" stopOpacity="0.45" />
-                <stop offset="100%" stopColor="#84B98F" stopOpacity="0.0" />
-              </linearGradient>
-            </defs>
-            <path d="M 0 720 C 160 660, 300 820, 600 700 L 600 1000 L 0 1000 Z" fill="url(#nrxWaveA)" />
-            <path d="M 0 820 C 200 780, 360 900, 600 820" stroke="url(#nrxWaveB)" strokeWidth="1.2" fill="none" />
-            <path d="M 0 870 C 220 840, 380 940, 600 870" stroke="url(#nrxWaveB)" strokeWidth="1" fill="none" opacity="0.7" />
-            <path d="M 0 920 C 240 890, 400 970, 600 920" stroke="url(#nrxWaveB)" strokeWidth="0.8" fill="none" opacity="0.5" />
-          </svg>
+    <div className="min-h-screen w-full flex flex-col lg:flex-row text-white" style={{ background: "#0A0B10" }}>
+      {/* LEFT — Brand */}
+      <aside
+        className="relative overflow-hidden lg:w-[45%] min-h-[36vh] lg:min-h-screen"
+        style={{
+          background:
+            "radial-gradient(1100px 700px at 20% 10%, rgba(68,93,163,0.28), transparent 60%), radial-gradient(900px 600px at 90% 90%, rgba(132,185,143,0.22), transparent 55%), linear-gradient(160deg, #0A0B10 0%, #0F121C 55%, #0A0B10 100%)",
+        }}
+      >
+        <div
+          className="absolute inset-0 opacity-[0.05] pointer-events-none"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)",
+            backgroundSize: "56px 56px",
+            maskImage: "radial-gradient(ellipse at center, black 40%, transparent 80%)",
+          }}
+        />
+        <BgOrbs />
 
-          <img src={logoNuvex} alt="NUVEX" className="nrx-logo" style={{ filter: "brightness(0) invert(1)" }} draggable={false} />
-
-          <div className="nuvex-register-brand-content">
-            <div className="nrx-kicker">
-              <ShieldCheck className="w-3.5 h-3.5" strokeWidth={2.4} />
-              Acceso corporativo NUVEX
+        <div className="relative z-10 flex flex-col justify-between h-full p-8 lg:p-14">
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="flex items-center gap-3"
+          >
+            <Mark />
+            <div className="leading-tight">
+              <div className="text-[15px] font-semibold tracking-[0.22em]">NUVIA</div>
+              <div className="text-[10px] uppercase tracking-[0.28em] text-white/45">Inteligencia Financiera</div>
             </div>
-            <h1 className="nrx-hero-title">
-              Crear
-              <span className="nrx-accent">cuenta</span>
-              NUVEX
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.15 }}
+            className="hidden lg:block max-w-xl"
+          >
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] backdrop-blur px-3 py-1 text-[11px] tracking-widest uppercase text-white/60 mb-6">
+              <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ background: GREEN }} />
+              Acceso corporativo
+            </div>
+            <h1 className="text-5xl xl:text-6xl font-semibold leading-[1.05] tracking-tight">
+              Únete a la red de{" "}
+              <span
+                className="bg-clip-text text-transparent"
+                style={{ backgroundImage: `linear-gradient(90deg, ${BLUE}, ${GREEN})` }}
+              >
+                inteligencia financiera.
+              </span>
             </h1>
-            <p className="nrx-hero-copy">
-              Solicita acceso a la plataforma financiera y operativa NUVEX. Tu perfil será validado por
-              administración antes de activar el acceso.
+            <p className="mt-6 text-base xl:text-lg text-white/55 leading-relaxed max-w-lg font-light">
+              Solicita acceso al sistema operativo NUVIA. Tu perfil será validado por administración antes de activar tu workspace.
             </p>
 
-            <div className="nrx-benefits">
-              <div className="nrx-benefit">
-                <div className="nrx-benefit-icon"><ShieldCheck className="w-4 h-4" strokeWidth={2.4} /></div>
-                <div>
-                  <div className="nrx-benefit-title">Seguro y confiable</div>
-                  <div className="nrx-benefit-copy">Tus datos protegidos bajo estándares corporativos.</div>
+            <div className="mt-10 space-y-3 max-w-md">
+              {[
+                { t: "Cifrado de grado empresarial", c: "Tus datos protegidos con estándares bancarios." },
+                { t: "Validación administrativa", c: "Cada acceso es revisado por el equipo NUVIA." },
+                { t: "Plataforma especializada", c: "Herramientas exclusivas para analistas financieros." },
+              ].map((b) => (
+                <div
+                  key={b.t}
+                  className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-md p-3.5"
+                >
+                  <div
+                    className="shrink-0 grid place-items-center w-8 h-8 rounded-lg"
+                    style={{ background: `linear-gradient(135deg, ${BLUE}33, ${GREEN}33)`, border: "1px solid rgba(255,255,255,0.06)" }}
+                  >
+                    <CheckCircle2 className="w-4 h-4" style={{ color: GREEN }} strokeWidth={2.4} />
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium">{b.t}</div>
+                    <div className="text-[12px] text-white/50">{b.c}</div>
+                  </div>
                 </div>
-              </div>
-              <div className="nrx-benefit">
-                <div className="nrx-benefit-icon"><CheckCircle2 className="w-4 h-4" strokeWidth={2.4} /></div>
-                <div>
-                  <div className="nrx-benefit-title">Validación administrativa</div>
-                  <div className="nrx-benefit-copy">Cada acceso es aprobado por el equipo NUVEX.</div>
-                </div>
-              </div>
-              <div className="nrx-benefit">
-                <div className="nrx-benefit-icon"><Zap className="w-4 h-4" strokeWidth={2.4} /></div>
-                <div>
-                  <div className="nrx-benefit-title">Plataforma especializada</div>
-                  <div className="nrx-benefit-copy">Herramientas financieras exclusivas para licenciados.</div>
-                </div>
-              </div>
+              ))}
             </div>
-          </div>
+          </motion.div>
 
-          <div className="nrx-footer">
-            <span className="nrx-footer-row"><MapPinned className="w-4 h-4" strokeWidth={2.2} /> Bogotá · Bucaramanga</span>
-            <span className="nrx-footer-row"><PhoneCall className="w-4 h-4" strokeWidth={2.2} /> +57 316 4023779</span>
-            <span className="nrx-footer-row"><Globe className="w-4 h-4" strokeWidth={2.2} /> www.nuvex.com.co</span>
+          <div className="hidden lg:flex items-center justify-between text-[11px] text-white/35">
+            <span>© {new Date().getFullYear()} NUVIA Systems</span>
+            <span className="tracking-widest uppercase">SOC 2 · ISO 27001</span>
           </div>
-        </aside>
+        </div>
+      </aside>
 
-        {/* ===== PANEL DERECHO ===== */}
-        <section className="nuvex-register-right">
-          <div className="nuvex-register-card">
-            <div className="nuvex-register-card-header">
+      {/* RIGHT — Form */}
+      <main className="flex-1 flex items-center justify-center p-6 sm:p-10 lg:p-14 relative">
+        <div className="absolute top-6 left-6 lg:hidden flex items-center gap-2">
+          <Mark size={28} />
+          <span className="text-sm font-semibold tracking-[0.2em]">NUVIA</span>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="w-full max-w-2xl"
+        >
+          <div
+            className="rounded-[24px] border border-white/[0.08] p-8 sm:p-10 shadow-[0_30px_90px_-30px_rgba(0,0,0,0.8)] relative overflow-hidden"
+            style={{
+              background: "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)",
+              backdropFilter: "blur(18px)",
+              WebkitBackdropFilter: "blur(18px)",
+            }}
+          >
+            <div
+              className="absolute inset-x-0 -top-px h-px"
+              style={{ background: `linear-gradient(90deg, transparent, ${BLUE}, ${GREEN}, transparent)` }}
+            />
+
+            <div className="flex items-start justify-between gap-4">
               <div>
-                <div className="nrx-status-badge">Solicitud de acceso</div>
-                <h2 className="nuvex-register-title">Completa tus datos</h2>
-                <p className="nuvex-register-copy">
-                  Conservamos el flujo actual de registro: la cuenta quedará pendiente hasta aprobación interna.
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-[10px] uppercase tracking-[0.2em] text-white/55">
+                  Solicitud de acceso
+                </div>
+                <h2 className="mt-3 text-[28px] font-semibold tracking-tight">Crea tu workspace</h2>
+                <p className="mt-1.5 text-sm text-white/50">
+                  Tu cuenta quedará pendiente hasta la aprobación interna del equipo NUVIA.
                 </p>
               </div>
-              <div className="nrx-lock-mark" aria-hidden="true">
-                <Lock className="w-6 h-6" strokeWidth={2.3} />
+              <div
+                className="hidden sm:grid place-items-center w-11 h-11 rounded-xl shrink-0"
+                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+              >
+                <Lock className="w-5 h-5 text-white/70" strokeWidth={2.2} />
               </div>
             </div>
 
-            <form onSubmit={submit} className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <Field label="Nombre completo *" icon={<User className="w-4 h-4" />}>
-                <input className="nuvex-register-control" value={form.nombre}
-                  onChange={(e) => setForm({ ...form, nombre: e.target.value })} required />
+            <form onSubmit={submit} className="mt-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Nombre completo *">
+                <input
+                  className="nuvia-input"
+                  value={form.nombre}
+                  onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+                  required
+                  placeholder="Ej. Andrés Gómez"
+                />
               </Field>
-              <Field label="Correo corporativo *" icon={<Mail className="w-4 h-4" />}>
-                <input type="email" className="nuvex-register-control" value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+              <Field label="Correo corporativo *">
+                <input
+                  type="email"
+                  className="nuvia-input"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  required
+                  placeholder="tu@empresa.com"
+                  autoComplete="email"
+                />
               </Field>
 
-              <Field label="Contraseña *" icon={<KeyRound className="w-4 h-4" />}
-                trailing={
-                  <button type="button" className="nrx-field-trailing" onClick={() => setShowPwd((s) => !s)} aria-label="Mostrar contraseña">
-                    {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              <Field label="Contraseña *">
+                <div className="relative">
+                  <input
+                    type={showPwd ? "text" : "password"}
+                    className="nuvia-input pr-10"
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    required
+                    minLength={8}
+                    placeholder="Mínimo 8 caracteres"
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPwd((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80 transition"
+                    aria-label={showPwd ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  >
+                    {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
-                }>
-                <input type={showPwd ? "text" : "password"} className="nuvex-register-control" value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })} required />
+                </div>
               </Field>
-              <Field label="Teléfono / WhatsApp *" icon={<Phone className="w-4 h-4" />}>
-                <input className="nuvex-register-control" value={form.telefono}
-                  onChange={(e) => setForm({ ...form, telefono: e.target.value })} required placeholder="+57 3XX XXX XXXX" />
+              <Field label="Teléfono / WhatsApp *">
+                <input
+                  className="nuvia-input"
+                  value={form.telefono}
+                  onChange={(e) => setForm({ ...form, telefono: e.target.value })}
+                  required
+                  placeholder="+57 3XX XXX XXXX"
+                />
               </Field>
 
-              <label className="block">
-                <span className="nuvex-register-label">Ciudad *</span>
-                <div className="mt-2">
+              <Field label="Ciudad *">
+                <div className="nuvia-input-wrap">
                   <CitySelect
                     value={form.ciudad}
                     onChange={(v) => setForm({ ...form, ciudad: v })}
@@ -244,80 +335,179 @@ function RegistroPage() {
                     placeholder="Selecciona municipio…"
                   />
                 </div>
-              </label>
-              <Field label="Equipo / Sede" icon={<Building2 className="w-4 h-4" />}>
-                <input className="nuvex-register-control" value={form.equipo}
-                  onChange={(e) => setForm({ ...form, equipo: e.target.value })} placeholder="Ej. Bogotá Norte" />
+              </Field>
+              <Field label="Equipo / Sede">
+                <input
+                  className="nuvia-input"
+                  value={form.equipo}
+                  onChange={(e) => setForm({ ...form, equipo: e.target.value })}
+                  placeholder="Ej. Bogotá Norte"
+                />
               </Field>
 
               <div className="sm:col-span-2">
-                <Field label="Rol solicitado *" icon={<UserCog className="w-4 h-4" />}>
-                  <select value={form.rol_solicitado}
+                <Field label="Rol solicitado *">
+                  <select
+                    value={form.rol_solicitado}
                     onChange={(e) => setForm({ ...form, rol_solicitado: e.target.value })}
-                    className="nuvex-register-control nuvex-register-select">
-                    {ROLES_SOLICITABLES.map((r) => <option key={r.v} value={r.v}>{r.label}</option>)}
+                    className="nuvia-input"
+                  >
+                    {ROLES_SOLICITABLES.map((r) => (
+                      <option key={r.v} value={r.v} className="bg-[#0F121C]">{r.label}</option>
+                    ))}
                   </select>
                 </Field>
               </div>
 
-              {err && <div className="nuvex-register-error sm:col-span-2">{err}</div>}
+              {err && (
+                <div className="sm:col-span-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+                  {err}
+                </div>
+              )}
 
-              {/* Bloque de verificación de identidad */}
-              <div className="nrx-security-block sm:col-span-2">
-                <div className="nrx-security-title">
-                  <ShieldCheck className="w-4 h-4" strokeWidth={2.4} />
+              <div
+                className="sm:col-span-2 rounded-xl border border-white/10 p-4"
+                style={{ background: "rgba(255,255,255,0.025)" }}
+              >
+                <div className="flex items-center gap-2 text-sm font-medium text-white/85">
+                  <ShieldCheck className="w-4 h-4" style={{ color: GREEN }} strokeWidth={2.4} />
                   Verificación de identidad
                 </div>
-                <p className="nrx-security-copy">
-                  Para proteger la información financiera de NUVEX, todos los accesos nuevos deben completar:
+                <p className="mt-1.5 text-[12.5px] text-white/50 leading-relaxed">
+                  Para proteger la información financiera, todos los accesos nuevos deben completar:
                 </p>
-                <ul className="nrx-security-list">
-                  <li><CheckCircle2 className="w-4 h-4" strokeWidth={2.4} /> Verificación de correo electrónico</li>
-                  <li><CheckCircle2 className="w-4 h-4" strokeWidth={2.4} /> Código OTP vía SMS o WhatsApp</li>
-                  <li><CheckCircle2 className="w-4 h-4" strokeWidth={2.4} /> Aprobación administrativa</li>
+                <ul className="mt-3 grid sm:grid-cols-3 gap-2 text-[12px] text-white/70">
+                  {[
+                    "Verificación de correo",
+                    "Código OTP por SMS/WhatsApp",
+                    "Aprobación administrativa",
+                  ].map((t) => (
+                    <li key={t} className="flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5" style={{ color: GREEN }} strokeWidth={2.5} />
+                      {t}
+                    </li>
+                  ))}
                 </ul>
               </div>
 
-              <button type="submit" disabled={busy} className="nuvex-register-submit sm:col-span-2">
-                {busy ? (
-                  <span className="inline-flex items-center gap-2">
-                    <span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
-                    Enviando…
-                  </span>
-                ) : (
-                  <>
-                    <Lock className="w-4 h-4" strokeWidth={2.6} />
-                    Solicitar acceso
-                    <ArrowRight className="w-4 h-4" strokeWidth={2.6} />
-                  </>
-                )}
-              </button>
+              <motion.button
+                type="submit"
+                disabled={busy}
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.99 }}
+                className="sm:col-span-2 group relative w-full overflow-hidden rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-[0_10px_30px_-10px_rgba(68,93,163,0.7)] hover:shadow-[0_18px_50px_-12px_rgba(132,185,143,0.5)] disabled:opacity-60 disabled:cursor-not-allowed transition-shadow"
+                style={{ background: `linear-gradient(135deg, ${BLUE} 0%, ${GREEN} 100%)` }}
+              >
+                <span className="relative z-10 inline-flex items-center justify-center gap-2">
+                  {busy ? (
+                    <>
+                      <span className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                      Enviando…
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-4 h-4" strokeWidth={2.4} />
+                      Solicitar acceso
+                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" strokeWidth={2.4} />
+                    </>
+                  )}
+                </span>
+                <span
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ background: `linear-gradient(135deg, ${GREEN}, ${BLUE})` }}
+                />
+              </motion.button>
             </form>
 
-            <div className="nuvex-register-note">
-              <ShieldCheck className="w-4 h-4" strokeWidth={2.4} />
-              <span>Tu solicitud será revisada por el equipo administrador de NUVEX antes de habilitar el acceso.</span>
+            <div className="mt-6 flex items-center gap-2 text-[12px] text-white/45">
+              <ShieldCheck className="w-3.5 h-3.5" strokeWidth={2.4} />
+              <span>Tu solicitud será revisada por el equipo administrador antes de habilitar el acceso.</span>
             </div>
 
-            <div className="nuvex-register-login-link">
-              ¿Ya tienes cuenta? <Link to="/login">Iniciar sesión</Link>
+            <div className="mt-5 text-center text-sm text-white/55">
+              ¿Ya tienes cuenta?{" "}
+              <Link to="/login" className="font-semibold text-white hover:underline inline-flex items-center gap-1">
+                Iniciar sesión <Sparkles size={12} style={{ color: GREEN }} />
+              </Link>
             </div>
           </div>
-        </section>
-      </div>
-    </main>
+
+          <p className="mt-5 text-center text-[11px] text-white/30">
+            Protegido con cifrado de grado empresarial · NUVIA Systems
+          </p>
+        </motion.div>
+      </main>
+
+      <style>{`
+        .nuvia-input {
+          width: 100%;
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.08);
+          color: #fff;
+          padding: 0.7rem 0.9rem;
+          border-radius: 0.75rem;
+          font-size: 0.875rem;
+          outline: none;
+          transition: all 0.18s ease;
+        }
+        .nuvia-input::placeholder { color: rgba(255,255,255,0.3); }
+        .nuvia-input:focus {
+          border-color: rgba(68,93,163,0.65);
+          background: rgba(255,255,255,0.05);
+          box-shadow: 0 0 0 4px rgba(68,93,163,0.18);
+        }
+        .nuvia-input:-webkit-autofill {
+          -webkit-text-fill-color: #fff;
+          -webkit-box-shadow: 0 0 0 1000px rgba(20,22,32,0.95) inset;
+          caret-color: #fff;
+        }
+        select.nuvia-input { appearance: none; background-image: linear-gradient(45deg, transparent 50%, rgba(255,255,255,0.5) 50%), linear-gradient(135deg, rgba(255,255,255,0.5) 50%, transparent 50%); background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; padding-right: 2rem; }
+      `}</style>
+    </div>
   );
 }
 
-function Field({ label, icon, trailing, children }: { label: string; icon?: ReactNode; trailing?: ReactNode; children: ReactNode }) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="block">
-      <span className="nuvex-register-label">{label}</span>
-      <div className="nrx-field mt-2">
-        {icon && <span className="nrx-field-icon">{icon}</span>}
-        {children}
-        {trailing}
-      </div>
+      <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-white/55">{label}</span>
+      <div className="mt-1.5">{children}</div>
     </label>
+  );
+}
+
+function Mark({ size = 34 }: { size?: number }) {
+  return (
+    <div
+      className="grid place-items-center rounded-xl shrink-0"
+      style={{
+        width: size, height: size,
+        background: `linear-gradient(135deg, ${BLUE}, ${GREEN})`,
+        boxShadow: "0 8px 24px -8px rgba(68,93,163,0.6)",
+      }}
+    >
+      <svg width={size * 0.55} height={size * 0.55} viewBox="0 0 24 24" fill="none">
+        <path d="M5 19V5l14 14V5" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  );
+}
+
+function BgOrbs() {
+  return (
+    <>
+      <motion.div
+        className="absolute -top-40 -left-40 h-[28rem] w-[28rem] rounded-full blur-[120px] opacity-40 pointer-events-none"
+        style={{ background: BLUE }}
+        animate={{ x: [0, 30, 0], y: [0, 20, 0] }}
+        transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute -bottom-48 right-0 h-[32rem] w-[32rem] rounded-full blur-[140px] opacity-30 pointer-events-none"
+        style={{ background: GREEN }}
+        animate={{ x: [0, -40, 0], y: [0, -20, 0] }}
+        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+      />
+    </>
   );
 }
