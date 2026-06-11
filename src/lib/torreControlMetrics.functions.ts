@@ -237,10 +237,10 @@ export const getTorreMetrics = createServerFn({ method: "POST" })
     const ahorroCurr = (honCurr.data ?? []).reduce((s, r) => s + num(r.ahorro_total), 0);
     const ahorroPrev = (honPrev.data ?? []).reduce((s, r) => s + num(r.ahorro_total), 0);
     const honFactCurr = (honCurr.data ?? [])
-      .filter((r) => r.estado === "aprobado" || r.estado === "facturado" || r.estado === "pagado")
+      .filter((r) => r.estado === "aprobado" || r.estado === "ofertado")
       .reduce((s, r) => s + num(r.honorario_ofertado), 0);
     const honFactPrev = (honPrev.data ?? [])
-      .filter((r) => r.estado === "aprobado" || r.estado === "facturado" || r.estado === "pagado")
+      .filter((r) => r.estado === "aprobado" || r.estado === "ofertado")
       .reduce((s, r) => s + num(r.honorario_ofertado), 0);
 
     const activosCount = casosActivos.count ?? (casosActivos.data ?? []).length;
