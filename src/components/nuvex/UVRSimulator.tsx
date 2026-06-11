@@ -525,6 +525,7 @@ export function UVRSimulator({
               valorDesembolsado: valorDesembolsadoNum,
               dineroPagado: dineroPagadoFecha,
               totalProyectadoPendiente: calc ? calc.escenarioActual.totalPagoPesos : 0,
+              baseCredito,
             }}
             puntosNeuralgicos={{
               tiempoMeses: cuotasPendientes,
