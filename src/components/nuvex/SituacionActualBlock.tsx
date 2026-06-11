@@ -61,13 +61,34 @@ interface Props {
 
 type RiesgoNivel = "verde" | "amarillo" | "naranja" | "rojo";
 
-function semaforo(n: number) {
+function semaforo(n: number, opts?: { vecesValor?: number }) {
   const safe = isFinite(n) ? n : 0;
   let nivel: RiesgoNivel;
   if (safe < 1.5) nivel = "verde";
   else if (safe < 2.0) nivel = "amarillo";
   else if (safe < 2.5) nivel = "naranja";
   else nivel = "rojo";
+
+  const vecesTxt = (() => {
+    const v = opts?.vecesValor;
+    if (v === undefined || !isFinite(v)) return null;
+    return v.toFixed(2).replace(".", ",");
+  })();
+
+  const mensajes: Record<RiesgoNivel, string> = {
+    verde: vecesTxt
+      ? `Vas a pagar ${vecesTxt} veces el valor de tu crédito. Tu crédito está dentro de un rango financiero saludable.`
+      : "Tu crédito está dentro de un rango financiero saludable. Aún existen oportunidades menores de optimización.",
+    amarillo: vecesTxt
+      ? `Vas a pagar ${vecesTxt} veces el valor de tu crédito. Existe una oportunidad clara de restructuración.`
+      : "Estás pagando entre 1,5 y 2 veces el valor de tu crédito. Existe una oportunidad clara de restructuración.",
+    naranja: vecesTxt
+      ? `Vas a pagar ${vecesTxt} veces el valor de tu crédito. Se recomienda restructurar para reducir intereses.`
+      : "Vas a pagar entre 2 y 2,5 veces lo prestado. Se recomienda restructurar el crédito para reducir intereses.",
+    rojo: vecesTxt
+      ? `Vas a pagar ${vecesTxt} veces el valor de tu crédito. La intervención financiera es urgente.`
+      : "Estás pagando más de 2,5 veces el valor de tu crédito. La intervención financiera es urgente.",
+  };
 
   const paletas: Record<
     RiesgoNivel,
@@ -80,7 +101,6 @@ function semaforo(n: number) {
       ribbon: string;
       icon: string;
       label: string;
-      mensaje: string;
     }
   > = {
     verde: {
@@ -92,8 +112,6 @@ function semaforo(n: number) {
       ribbon: "#1F7A45",
       icon: "🟢",
       label: "SOBREPAGO SALUDABLE",
-      mensaje:
-        "Tu crédito está dentro de un rango financiero saludable. Aún existen oportunidades menores de optimización.",
     },
     amarillo: {
       bg: "linear-gradient(135deg, #2B1F08 0%, #3E2D0C 55%, #2B1F08 100%)",
@@ -104,8 +122,6 @@ function semaforo(n: number) {
       ribbon: "#A77C16",
       icon: "🟡",
       label: "SOBREPAGO MODERADO",
-      mensaje:
-        "Estás pagando entre 1,5 y 2 veces el valor de tu crédito. Existe una oportunidad clara de restructuración.",
     },
     naranja: {
       bg: "linear-gradient(135deg, #2E1808 0%, #46210C 55%, #2E1808 100%)",
@@ -116,8 +132,6 @@ function semaforo(n: number) {
       ribbon: "#C25812",
       icon: "🟠",
       label: "SOBREPAGO ALTO",
-      mensaje:
-        "Vas a pagar entre 2 y 2,5 veces lo prestado. Se recomienda restructurar el crédito para reducir intereses.",
     },
     rojo: {
       bg: "linear-gradient(135deg, #2A0B0B 0%, #401010 55%, #2A0B0B 100%)",
@@ -128,11 +142,9 @@ function semaforo(n: number) {
       ribbon: "#B42318",
       icon: "🔴",
       label: "RIESGO CRÍTICO DE SOBREPAGO",
-      mensaje:
-        "Estás pagando más de 2,5 veces el valor de tu crédito. La intervención financiera es urgente.",
     },
   };
-  return { nivel, ...paletas[nivel] };
+  return { nivel, ...paletas[nivel], mensaje: mensajes[nivel] };
 }
 
 function HeroKpi({
