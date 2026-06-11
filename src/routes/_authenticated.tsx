@@ -403,9 +403,10 @@ function AuthenticatedLayout() {
         style={
           active
             ? {
-                background: `linear-gradient(135deg, ${AZUL}, ${VERDE})`,
+                background: GRADIENT,
                 color: "#fff",
-                boxShadow: `0 8px 20px -10px ${AZUL}, 0 0 0 1px rgba(255,255,255,0.08) inset`,
+                boxShadow:
+                  "0 8px 20px -10px var(--nuvia-accent-blue), 0 0 0 1px rgba(255,255,255,0.08) inset",
               }
             : { color: "rgba(255,255,255,0.72)" }
         }
@@ -425,14 +426,18 @@ function AuthenticatedLayout() {
         {!collapsed && it.badge && it.badge > 0 ? (
           <span
             className="ml-auto inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold"
-            style={{ background: "#E11D48", color: "#fff" }}
+            style={{ background: "var(--nuvia-danger)", color: "#fff" }}
           >
             {it.badge > 99 ? "99+" : it.badge}
           </span>
         ) : null}
         {collapsed && it.badge && it.badge > 0 ? (
-          <span className="absolute top-1 right-1 h-2 w-2 rounded-full" style={{ background: "#E11D48" }} />
+          <span
+            className="absolute top-1 right-1 h-2 w-2 rounded-full"
+            style={{ background: "var(--nuvia-danger)" }}
+          />
         ) : null}
+
       </Link>
     );
   };
