@@ -17,7 +17,7 @@ import {
   type CriticalAlert,
   type ActivityItem,
 } from "@/components/home/widgets";
-import { NuviaHome } from "@/components/home/NuviaHome";
+
 
 interface RoleHomeProps {
   onLanzarSimulador: () => void;
@@ -148,7 +148,14 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
   }
 
   if (!config) {
-    return <NuviaHome onLanzarSimulador={onLanzarSimulador} />;
+    return (
+      <div
+        className="flex min-h-[60vh] items-center justify-center text-sm"
+        style={{ color: "var(--nuvia-text-secondary)" }}
+      >
+        Tu rol aún no tiene un Home configurado. Contacta a un administrador.
+      </div>
+    );
   }
 
   const handleAsk = (prompt: string) => {
