@@ -77,15 +77,18 @@ export function NuviaHome({ onLanzarSimulador }: { onLanzarSimulador: () => void
     if (!user) return;
     let cancel = false;
     (async () => {
-      const [{ data: prof }, { count: casos }, { count: notif }] = await Promise.all([
-        supabase.from("profiles" as never).select("nombre").eq("id", user.id).maybeSingle(),
-        supabase.from("expedientes" as never).select("id", { count: "exact", head: true }).eq("asesor_id", user.id),
-        supabase.from("notificaciones" as never).select("id", { count: "exact", head: true }).eq("user_id", user.id).is("leida_at", null),
+      const safe = async <T,>(p: Promise<T>, fallback: T): Promise<T> => {
+        try { return await p; } catch { return fallback; }
+      };
+      const [profRes, casosRes, notifRes] = await Promise.all([
+        safe(supabase.from("profiles" as never).select("nombre").eq("id", user.id).maybeSingle(), { data: null as { nombre?: string } | null }),
+        safe(supabase.from("expedientes" as never).select("id", { count: "exact", head: true }).eq("asesor_id", user.id), { count: 0 as number | null }),
+        safe(supabase.from("notificaciones" as never).select("id", { count: "exact", head: true }).eq("user_id", user.id).is("leida_at", null), { count: 0 as number | null }),
       ]);
       if (cancel) return;
-      const p = prof as { nombre?: string } | null;
+      const p = profRes.data as { nombre?: string } | null;
       setNombre(p?.nombre?.split(" ")[0] ?? "");
-      setStats({ casos: casos ?? 0, pendientes: 0, notif: notif ?? 0 });
+      setStats({ casos: casosRes.count ?? 0, pendientes: 0, notif: notifRes.count ?? 0 });
     })();
     return () => { cancel = true; };
   }, [user]);
