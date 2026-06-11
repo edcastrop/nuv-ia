@@ -488,7 +488,7 @@ function CostoTotalEjecutivo({
             className="mt-2 text-[12px] font-semibold uppercase tracking-[0.2em]"
             style={{ color: "rgba(255,255,255,0.6)" }}
           >
-            {baseDisponible ? "el valor de tu crédito" : "no disponible"}
+            {baseDisponible ? baseLabel : "no disponible"}
           </div>
 
           {baseDisponible && (
@@ -513,13 +513,35 @@ function CostoTotalEjecutivo({
               ? s.mensaje
               : "Para calcular cuántas veces vas a pagar tu crédito necesitamos el valor desembolsado original por el banco. Cárgalo en los datos del crédito para activar el diagnóstico ejecutivo completo."}
           </p>
+
+          {usaSaldo && (
+            <p
+              className="mt-2 max-w-md text-[11.5px] leading-relaxed"
+              style={{ color: "rgba(255,255,255,0.55)" }}
+            >
+              Múltiplo calculado sobre tu saldo actual ({formatCOP(base)}) porque el extracto
+              no reporta el valor desembolsado original.
+            </p>
+          )}
         </div>
 
         {/* Bloque derecho — Cifras ejecutivas */}
         <div className="grid grid-cols-2 gap-3">
           <ExecTile
-            label={valorDesembolsado > 0 ? "Valor desembolsado" : "Valor desembolsado (no disponible)"}
-            value={valorDesembolsado > 0 ? formatCOP(valorDesembolsado) : "—"}
+            label={
+              valorDesembolsado > 0
+                ? "Valor desembolsado"
+                : usaSaldo
+                  ? "Base del cálculo · Saldo actual"
+                  : "Valor desembolsado (no disponible)"
+            }
+            value={
+              valorDesembolsado > 0
+                ? formatCOP(valorDesembolsado)
+                : usaSaldo
+                  ? formatCOP(base)
+                  : "—"
+            }
           />
           <ExecTile label="Dinero pagado a la fecha" value={formatCOP(dineroPagado)} />
           <ExecTile
