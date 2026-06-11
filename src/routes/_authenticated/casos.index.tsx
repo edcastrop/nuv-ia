@@ -206,101 +206,62 @@ function CasosPage() {
   };
 
   return (
-    <div
-      className="min-h-screen"
-      style={{ background: BG, color: "#fff", fontFamily: "Inter, system-ui, sans-serif" }}
-    >
-      {/* Fondo decorativo */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div
-          className="absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full opacity-[0.18] blur-[140px]"
-          style={{ background: AZUL }}
-        />
-        <div
-          className="absolute top-1/3 -right-40 h-[500px] w-[500px] rounded-full opacity-[0.14] blur-[140px]"
-          style={{ background: VERDE }}
-        />
-      </div>
-
-      <div className="relative mx-auto max-w-7xl px-6 py-10 space-y-8 animate-fade-in">
-        {/* HERO */}
-        <section className="space-y-4">
-          <div className="flex items-start justify-between gap-6 flex-wrap">
-            <div>
-              <span
-                className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] mb-4"
-                style={{
-                  background: "rgba(68,93,163,0.12)",
-                  color: AZUL,
-                  border: `1px solid ${AZUL}40`,
-                }}
-              >
-                <Sparkles size={12} />
-                Gestión de Casos
-              </span>
-              <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-                Expedientes <span style={{ background: `linear-gradient(135deg, ${AZUL}, ${VERDE})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>NUVEX</span>
-              </h1>
-              <p className="mt-3 text-base max-w-2xl" style={{ color: TEXT2 }}>
-                Administra, consulta y realiza seguimiento a cada simulación generada.
-              </p>
-              <div className="mt-4 h-px w-32" style={{ background: `linear-gradient(90deg, ${AZUL}, ${VERDE}, transparent)` }} />
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={exportarCSV}
-                disabled={loading || filteredRows.length === 0}
-                className="inline-flex items-center gap-2 rounded-[18px] px-5 py-4 text-xs font-bold uppercase tracking-wider transition-all duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
-                style={{
-                  background: "rgba(255,255,255,0.04)",
-                  border: `1px solid ${BORDER}`,
-                  color: "#fff",
-                }}
-                title="Exportar la lista filtrada a CSV"
-              >
-                <ArrowRight size={14} className="-rotate-90" />
-                Exportar CSV
-              </button>
-              <Link
-                to="/"
-                className="group relative inline-flex items-center gap-2 rounded-[18px] px-6 py-4 text-sm font-bold uppercase tracking-wider text-white transition-all duration-300 hover:-translate-y-0.5"
-                style={{
-                  background: `linear-gradient(135deg, ${AZUL}, ${VERDE})`,
-                  boxShadow: `0 10px 30px -10px ${AZUL}, 0 0 0 1px rgba(255,255,255,0.05)`,
-                }}
-              >
-              <span
-                className="absolute inset-0 rounded-[18px] opacity-0 transition-opacity duration-300 group-hover:opacity-100 blur-xl"
-                style={{ background: `linear-gradient(135deg, ${AZUL}, ${VERDE})` }}
-              />
-              <Plus size={18} className="relative" />
-              <span className="relative">Nueva Simulación</span>
+    <PageLayout>
+      <ExecutiveHero
+        badge={{ icon: <Sparkles size={12} />, label: "Gestión de Casos", tone: "blue" }}
+        title="Expedientes NUVEX"
+        description="Administra, consulta y realiza seguimiento a cada simulación generada."
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={exportarCSV}
+              disabled={loading || filteredRows.length === 0}
+              className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-wider transition disabled:cursor-not-allowed disabled:opacity-50"
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: `1px solid ${BORDER}`,
+                color: "#fff",
+              }}
+            >
+              <ArrowRight size={14} className="-rotate-90" />
+              Exportar CSV
+            </button>
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 rounded-lg px-5 py-2 text-xs font-bold uppercase tracking-wider text-white transition"
+              style={{
+                background: `linear-gradient(135deg, ${AZUL}, ${VERDE})`,
+                boxShadow: `0 8px 24px -8px ${AZUL}`,
+              }}
+            >
+              <Plus size={14} />
+              Nueva simulación
             </Link>
-            </div>
-          </div>
-        </section>
+          </>
+        }
+      />
+
+      <KpiGrid cols={2}>
+        <KpiCard
+          icon={<FolderOpen size={16} />}
+          tone="blue"
+          label="Expedientes activos"
+          value={String(totals.total)}
+          hint="Casos registrados"
+        />
+        <KpiCard
+          icon={<Wallet size={16} />}
+          tone="green"
+          label="Honorarios proyectados"
+          value={formatCOP(totals.honorarios)}
+          hint="Pipeline acumulado"
+        />
+      </KpiGrid>
+
+      <InsightCard scope="casos" />
 
 
-        {/* KPIs */}
-        <section className="grid gap-4 md:grid-cols-2">
-          <KpiCard
-            icon={<FolderOpen size={20} />}
-            color={AZUL}
-            label="Expedientes Activos"
-            value={String(totals.total)}
-            sub="Casos registrados"
-          />
-          <KpiCard
-            icon={<Wallet size={20} />}
-            color={VERDE}
-            label="Honorarios Proyectados"
-            value={formatCOP(totals.honorarios)}
-            sub="Pipeline acumulado"
-            valueColor={VERDE}
-          />
-        </section>
 
         {/* FILTROS */}
         <section className="grid gap-4 md:grid-cols-[1fr_200px_200px]">
