@@ -323,7 +323,7 @@ function LoginPage() {
               <SocialBtn label="Google" onClick={() => oauth("google")} disabled={busy}>
                 <GoogleIcon />
               </SocialBtn>
-              <SocialBtn label="Microsoft" onClick={() => oauth("azure")} disabled={busy}>
+              <SocialBtn label="Microsoft" onClick={() => oauth("microsoft")} disabled={busy}>
                 <MicrosoftIcon />
               </SocialBtn>
               <SocialBtn label="Apple" onClick={() => oauth("apple")} disabled={busy}>
