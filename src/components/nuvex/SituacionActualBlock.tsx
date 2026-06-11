@@ -350,16 +350,25 @@ function CostoTotalEjecutivo({
   costo: CostoTotalCredito;
   vecesPagadoFallback: number;
 }) {
-  const { valorDesembolsado, dineroPagado, totalProyectadoPendiente } = costo;
+  const { valorDesembolsado, dineroPagado, totalProyectadoPendiente, baseCredito } = costo;
   const costoTotalCredito = dineroPagado + totalProyectadoPendiente;
+  // Base de cálculo coherente: priorizamos baseCredito (que el simulador
+  // reconstruye), luego valorDesembolsado. Si ninguno está disponible,
+  // recurrimos al fallback heredado.
+  const base =
+    baseCredito && baseCredito > 0
+      ? baseCredito
+      : valorDesembolsado > 0
+        ? valorDesembolsado
+        : 0;
   const veces =
-    valorDesembolsado > 0
-      ? costoTotalCredito / valorDesembolsado
+    base > 0
+      ? costoTotalCredito / base
       : isFinite(vecesPagadoFallback)
         ? vecesPagadoFallback
         : 0;
-  const interesesYCostos = Math.max(0, costoTotalCredito - valorDesembolsado);
-  const s = semaforo(veces);
+  const interesesYCostos = Math.max(0, costoTotalCredito - base);
+  const s = semaforo(veces, { vecesValor: veces });
   const vecesTxt = isFinite(veces) ? veces.toFixed(2).replace(".", ",") : "0,00";
 
   return (
