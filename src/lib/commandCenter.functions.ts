@@ -150,15 +150,15 @@ function healthEstado(score: number): HealthScorePayload["estado"] {
 async function auditNominalAccess(
   supabase: any,
   userId: string,
-  recurso: string,
-  detalle: string,
+  accion: string,
+  detalle: Record<string, unknown>,
 ) {
   try {
     await supabase.from("acceso_auditoria").insert({
       user_id: userId,
-      recurso,
-      detalle,
-      created_at: new Date().toISOString(),
+      actor_id: userId,
+      accion,
+      detalle: detalle as any,
     });
   } catch {
     // auditoría best-effort; no bloquea
