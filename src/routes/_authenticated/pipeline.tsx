@@ -592,7 +592,7 @@ function PipelinePage() {
         </div>
       ) : (
         <div className="overflow-x-auto pb-4 scrollbar-thin">
-          <div className="flex min-w-max gap-3">
+          <div className="flex min-w-max gap-2.5">
             {ETAPAS_PIPELINE.filter((etapa) => !fase || FASE_ETAPAS[fase as FaseId].includes(etapa.id)).map((etapa) => {
               const items = grupos.get(etapa.id) ?? [];
               const umbral = UMBRAL_DIAS[etapa.id] ?? 0;
@@ -611,7 +611,7 @@ function PipelinePage() {
               return (
                 <div
                   key={etapa.id}
-                  className="w-[310px] flex-shrink-0 rounded-2xl border p-3 shadow-[var(--nuvia-shadow-sm)]"
+                  className="w-[292px] flex-shrink-0 rounded-2xl border p-3 shadow-[var(--nuvia-shadow-sm)]"
                   style={heatStyle}
                 >
                   <div className="mb-3 flex items-start justify-between gap-2 px-1">
@@ -622,7 +622,7 @@ function PipelinePage() {
                       <div className="truncate text-base font-semibold text-[var(--nuvia-text-primary)]">
                         {etapa.titulo}
                       </div>
-                      <div className="mt-1 line-clamp-2 min-h-[32px] text-xs leading-4 text-[var(--nuvia-text-secondary)]">
+                      <div className="mt-1 line-clamp-2 min-h-[32px] text-[11px] leading-4 text-[var(--nuvia-text-secondary)]">
                         {etapa.descripcion}
                       </div>
                     </div>
@@ -682,8 +682,8 @@ function PipelinePage() {
                             <div className="mt-1 text-[11px] text-[rgba(170,179,197,0.72)]">
                               act. {r.updated_at ? new Date(r.updated_at).toLocaleDateString("es-CO", { day: "2-digit", month: "short" }) : "—"}
                             </div>
-                            <div className="mt-2 flex items-center justify-between">
-                              <span className="inline-flex max-w-[180px] items-center gap-1 truncate rounded-md px-1.5 py-0.5 text-[10px] font-medium text-[var(--nuvia-accent-green)]" style={{ background: "color-mix(in oklab, var(--nuvia-accent-green) 12%, transparent)" }}>
+                            <div className="mt-2 flex items-center justify-between gap-2">
+                              <span className="inline-flex min-w-0 max-w-[170px] items-center gap-1 truncate rounded-md px-1.5 py-0.5 text-[10px] font-medium text-[var(--nuvia-accent-green)]" style={{ background: "color-mix(in oklab, var(--nuvia-accent-green) 12%, transparent)" }}>
                                 <Flag className="h-3 w-3" /> {r.estado}
                               </span>
                               <span
