@@ -11,7 +11,10 @@ export type BitacoraTipo =
   | "llamada"
   | "email"
   | "whatsapp"
-  | "sistema";
+  | "sistema"
+  | "auditoria"
+  | "seguimiento"
+  | "alerta";
 
 const PRIORIDADES = ["baja", "media", "alta", "critica"] as const;
 const ESTADOS = ["pendiente", "en_progreso", "completada", "cancelada"] as const;
@@ -22,6 +25,9 @@ const TIPOS_BITACORA = [
   "email",
   "whatsapp",
   "sistema",
+  "auditoria",
+  "seguimiento",
+  "alerta",
 ] as const;
 
 const ORDEN_PRIORIDAD: Record<TareaPrioridad, number> = {
