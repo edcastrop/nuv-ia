@@ -26,6 +26,8 @@ import {
   MessageSquare,
   Paperclip,
   Phone,
+  Plus,
+  Send,
   ShieldAlert,
   Sparkles,
   Stethoscope,
@@ -33,6 +35,7 @@ import {
   TrendingUp,
   User,
   Users,
+  X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getExpediente, type Expediente } from "@/lib/expedientes";
