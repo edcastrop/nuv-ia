@@ -8,7 +8,8 @@ export function AcademiaBanner() {
   const { user } = useAuth();
   const [hidden, setHidden] = useState(() => {
     if (typeof window === "undefined") return false;
-    return sessionStorage.getItem("nuvex.acad.banner.hidden") === "1";
+    return sessionStorage.getItem("nuvia.acad.banner.hidden") === "1"
+      || sessionStorage.getItem("nuvex.acad.banner.hidden") === "1";
   });
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
 
@@ -34,39 +35,48 @@ export function AcademiaBanner() {
 
   return (
     <div
-      className="relative flex items-center gap-3 px-4 py-2.5 text-xs text-white border-b border-white/10 overflow-hidden"
+      className="relative flex items-center gap-3 px-4 py-2.5 text-xs overflow-hidden"
       style={{
-        background: "linear-gradient(90deg, #0E1A38 0%, #122448 50%, #0E1A38 100%)",
-        boxShadow: "inset 0 -1px 0 rgba(132,185,143,0.25)",
+        background: "var(--nuvia-bg-secondary)",
+        color: "var(--nuvia-text-primary)",
+        borderBottom: "1px solid var(--nuvia-border)",
+        boxShadow: "inset 0 -1px 0 rgba(132,185,143,0.20)",
       }}
     >
-      {/* Barra de progreso de fondo */}
       <div
-        className="absolute inset-y-0 left-0 transition-all duration-700"
+        className="absolute inset-y-0 left-0 transition-all duration-700 opacity-70"
         style={{
           width: `${Math.max(pct, 2)}%`,
-          background: "linear-gradient(90deg, rgba(68,93,163,0.55), rgba(132,185,143,0.45))",
-          boxShadow: "0 0 24px rgba(132,185,143,0.35)",
+          background: "var(--nuvia-gradient-primary)",
         }}
       />
       <div className="relative flex items-center gap-2.5 flex-1 min-w-0">
-        <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-white/10 ring-1 ring-white/15">
-          <GraduationCap size={13} className="text-[#A7D3AE]" />
+        <span
+          className="inline-flex h-6 w-6 items-center justify-center rounded-md"
+          style={{ background: "rgba(255,255,255,0.08)", border: "1px solid var(--nuvia-border)" }}
+        >
+          <GraduationCap size={13} style={{ color: "var(--nuvia-accent-green)" }} />
         </span>
         <span className="truncate">
           <b className="font-semibold">Capacitación en progreso</b>
-          <span className="text-white/70"> · {pct}% completado</span>
-          <span className="text-white/50"> ({progress.done}/{progress.total} lecciones)</span>
+          <span style={{ color: "var(--nuvia-text-secondary)" }}> · {pct}% completado</span>
+          <span style={{ color: "var(--nuvia-text-muted)" }}> ({progress.done}/{progress.total} lecciones)</span>
         </span>
         <Link
           to="/academia"
-          className="ml-2 inline-flex items-center gap-1 rounded-md bg-white/10 hover:bg-white/20 px-2.5 py-1 text-[11px] font-medium text-white ring-1 ring-white/15 transition"
+          className="ml-2 inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-medium transition"
+          style={{
+            background: "rgba(255,255,255,0.08)",
+            border: "1px solid var(--nuvia-border)",
+            color: "var(--nuvia-text-primary)",
+          }}
         >
           Continuar →
         </Link>
         <button
-          onClick={() => { sessionStorage.setItem("nuvex.acad.banner.hidden", "1"); setHidden(true); }}
-          className="ml-auto text-white/40 hover:text-white transition"
+          onClick={() => { sessionStorage.setItem("nuvia.acad.banner.hidden", "1"); setHidden(true); }}
+          className="ml-auto transition"
+          style={{ color: "var(--nuvia-text-muted)" }}
           aria-label="Ocultar"
         >
           <X size={14} />
