@@ -70,51 +70,98 @@
 :root {
   --radius: 0.75rem;
 
-  --nuvia-bg-0: #050816;
-  --nuvia-bg-1: #0D1224;
-  --nuvia-bg-2: #131B33;
-  --nuvia-bg-3: #1B2542;
-  --nuvia-line: rgba(255, 255, 255, 0.08);
-  --nuvia-line-strong: rgba(255, 255, 255, 0.14);
-  --nuvia-text: #E6ECF5;
-  --nuvia-text-muted: rgba(230, 236, 245, 0.62);
-  --nuvia-text-dim: rgba(230, 236, 245, 0.42);
-  --nuvia-blue: #445DA3;
-  --nuvia-green: #84B98F;
+  /* ──────────────────────────────────────────────────────────
+     NUVIA · DESIGN TOKENS (Fase 3) — SOURCE OF TRUTH
+     Cualquier color/sombra/gradiente/borde/radio del ERP
+     debe consumirse desde aquí. Prohibido hex inline en TSX.
+     ────────────────────────────────────────────────────────── */
 
-  --background: #050816;
-  --foreground: #E6ECF5;
-  --card: #131B33;
-  --card-foreground: #E6ECF5;
-  --popover: #131B33;
-  --popover-foreground: #E6ECF5;
-  --primary: #445DA3;
+  /* Color — superficies */
+  --nuvia-bg-primary:   #050816;
+  --nuvia-bg-secondary: #0D1224;
+  --nuvia-bg-tertiary:  #131B33;
+  --nuvia-bg-card:      #1B2542;
+
+  /* Color — texto */
+  --nuvia-text-primary:   #FFFFFF;
+  --nuvia-text-secondary: #AAB3C5;
+
+  /* Color — acentos */
+  --nuvia-accent-blue:  #445DA3;
+  --nuvia-accent-green: #84B98F;
+
+  /* Color — feedback */
+  --nuvia-success: #84B98F;
+  --nuvia-warning: #F6C453;
+  --nuvia-danger:  #FF6B6B;
+
+  /* Bordes */
+  --nuvia-border:        rgba(255, 255, 255, 0.08);
+  --nuvia-border-strong: rgba(255, 255, 255, 0.14);
+
+  /* Radios */
+  --nuvia-radius-sm: 8px;
+  --nuvia-radius-md: 12px;
+  --nuvia-radius-lg: 20px;
+  --nuvia-radius-xl: 24px;
+
+  /* Sombras */
+  --nuvia-shadow-sm: 0 1px 2px rgba(0,0,0,0.35);
+  --nuvia-shadow-md: 0 10px 30px -10px rgba(5,8,22,0.65);
+  --nuvia-shadow-lg: 0 30px 90px -30px rgba(0,0,0,0.8);
+
+  /* Gradientes */
+  --nuvia-gradient-primary: linear-gradient(135deg, #445DA3 0%, #84B98F 100%);
+  --nuvia-gradient-dark:    linear-gradient(180deg, #050816 0%, #0D1224 100%);
+
+  /* ── Aliases legacy (no romper código existente) ── */
+  --nuvia-bg-0: var(--nuvia-bg-primary);
+  --nuvia-bg-1: var(--nuvia-bg-secondary);
+  --nuvia-bg-2: var(--nuvia-bg-tertiary);
+  --nuvia-bg-3: var(--nuvia-bg-card);
+  --nuvia-line: var(--nuvia-border);
+  --nuvia-line-strong: var(--nuvia-border-strong);
+  --nuvia-text:       var(--nuvia-text-primary);
+  --nuvia-text-muted: var(--nuvia-text-secondary);
+  --nuvia-text-dim:   rgba(170, 179, 197, 0.65);
+  --nuvia-blue:  var(--nuvia-accent-blue);
+  --nuvia-green: var(--nuvia-accent-green);
+
+  /* ── Puente a tokens shadcn ── */
+  --background: var(--nuvia-bg-primary);
+  --foreground: var(--nuvia-text-primary);
+  --card: var(--nuvia-bg-tertiary);
+  --card-foreground: var(--nuvia-text-primary);
+  --popover: var(--nuvia-bg-tertiary);
+  --popover-foreground: var(--nuvia-text-primary);
+  --primary: var(--nuvia-accent-blue);
   --primary-foreground: #FFFFFF;
-  --secondary: #1B2542;
-  --secondary-foreground: #E6ECF5;
-  --muted: #0D1224;
-  --muted-foreground: rgba(230, 236, 245, 0.62);
-  --accent: #1B2542;
-  --accent-foreground: #E6ECF5;
-  --destructive: #E11D48;
+  --secondary: var(--nuvia-bg-card);
+  --secondary-foreground: var(--nuvia-text-primary);
+  --muted: var(--nuvia-bg-secondary);
+  --muted-foreground: var(--nuvia-text-secondary);
+  --accent: var(--nuvia-bg-card);
+  --accent-foreground: var(--nuvia-text-primary);
+  --destructive: var(--nuvia-danger);
   --destructive-foreground: #FFFFFF;
-  --border: rgba(255, 255, 255, 0.08);
+  --border: var(--nuvia-border);
   --input: rgba(255, 255, 255, 0.06);
-  --ring: #445DA3;
-  --chart-1: #445DA3;
-  --chart-2: #84B98F;
+  --ring: var(--nuvia-accent-blue);
+  --chart-1: var(--nuvia-accent-blue);
+  --chart-2: var(--nuvia-accent-green);
   --chart-3: #7C9CFF;
   --chart-4: #C7D2FE;
   --chart-5: #4FA974;
-  --sidebar: #050816;
-  --sidebar-foreground: #E6ECF5;
-  --sidebar-primary: #445DA3;
+  --sidebar: var(--nuvia-bg-primary);
+  --sidebar-foreground: var(--nuvia-text-primary);
+  --sidebar-primary: var(--nuvia-accent-blue);
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #131B33;
-  --sidebar-accent-foreground: #E6ECF5;
-  --sidebar-border: rgba(255, 255, 255, 0.08);
-  --sidebar-ring: #445DA3;
+  --sidebar-accent: var(--nuvia-bg-tertiary);
+  --sidebar-accent-foreground: var(--nuvia-text-primary);
+  --sidebar-border: var(--nuvia-border);
+  --sidebar-ring: var(--nuvia-accent-blue);
 }
+
 
 .dark {
   --background: #050816;
@@ -195,19 +242,62 @@
   }
 }
 
-@utility glass {
+/* ──────────────────────────────────────────────────────────
+   NUVIA · GLASSMORPHISM UTILITIES (Fase 3)
+   Cuatro variantes oficiales — usar siempre estas clases
+   en lugar de hardcodear background+border+blur en TSX.
+   ────────────────────────────────────────────────────────── */
+
+/* Card de contenido (tarjetas de listado, widgets compactos) */
+@utility glass-card {
   background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015));
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--nuvia-border);
   backdrop-filter: blur(14px);
-  border-radius: 16px;
+  border-radius: var(--nuvia-radius-md);
+  box-shadow: var(--nuvia-shadow-sm);
 }
 
-@utility glass-strong {
-  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(18px);
-  border-radius: 18px;
+/* Panel grande (secciones de página, contenedores principales) */
+@utility glass-panel {
+  background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+  border: 1px solid var(--nuvia-border);
+  backdrop-filter: blur(16px);
+  border-radius: var(--nuvia-radius-lg);
+  box-shadow: var(--nuvia-shadow-md);
 }
+
+/* Modal / dialog / drawer */
+@utility glass-modal {
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  border: 1px solid var(--nuvia-border-strong);
+  backdrop-filter: blur(22px);
+  border-radius: var(--nuvia-radius-xl);
+  box-shadow: var(--nuvia-shadow-lg);
+}
+
+/* Widget pequeño (KPIs, chips, badges glass) */
+@utility glass-widget {
+  background: rgba(255,255,255,0.035);
+  border: 1px solid var(--nuvia-border);
+  backdrop-filter: blur(10px);
+  border-radius: var(--nuvia-radius-sm);
+}
+
+/* ── Aliases legacy ── */
+@utility glass {
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015));
+  border: 1px solid var(--nuvia-border);
+  backdrop-filter: blur(14px);
+  border-radius: var(--nuvia-radius-md);
+}
+@utility glass-strong {
+  background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+  border: 1px solid var(--nuvia-border);
+  backdrop-filter: blur(16px);
+  border-radius: var(--nuvia-radius-lg);
+}
+
+
 
 /* ==========================================================
    NUVIA · PRIMITIVAS VISUALES (Fase 1)
@@ -235,15 +325,15 @@
 
 /* Card glassmorphism canónica (Login/Registro) */
 .nuvia-glass-card {
-  border-radius: 24px;
-  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--nuvia-radius-xl);
+  border: 1px solid var(--nuvia-border);
   background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%);
-  -webkit-backdrop-filter: blur(18px);
-          backdrop-filter: blur(18px);
-  box-shadow: 0 30px 90px -30px rgba(0,0,0,0.8);
+  backdrop-filter: blur(18px);
+  box-shadow: var(--nuvia-shadow-lg);
   position: relative;
   overflow: hidden;
 }
+
 .nuvia-glass-card::before {
   content: "";
   position: absolute;
