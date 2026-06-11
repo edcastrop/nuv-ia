@@ -260,15 +260,19 @@ export function PesosSimulator({
 
   const cuotasBaseSimulacion = Math.max(0, cuotasPendientes);
   const totalActualPendiente = input.cuotaActual * cuotasBaseSimulacion;
-  // Base coherente del crédito: SOLO el valor desembolsado declarado por el
-  // banco. Sin ese dato no fabricamos una base (saldo+pagado mezcla capital
-  // con intereses y produce un múltiplo engañoso).
+  // Base coherente del crédito: el valor desembolsado declarado por el banco.
+  // Si no está disponible, usamos el SALDO ACTUAL como base alternativa
+  // (total proyectado pendiente / saldo actual), la MISMA fórmula del bloque
+  // ejecutivo para que todos los números coincidan.
   const baseCreditoReferencia = valorDesembolsadoNum > 0 ? valorDesembolsadoNum : 0;
+  const saldoBase = input.saldoCapital > 0 ? input.saldoCapital : 0;
   const vecesActual =
     baseCreditoReferencia > 0
       ? (dineroPagadoFecha + totalActualPendiente) / baseCreditoReferencia
-      : 0;
-  
+      : saldoBase > 0
+        ? totalActualPendiente / saldoBase
+        : 0;
+
 
   const metrics = [
     { label: "Valor desembolsado", value: formatCOP(valorDesembolsadoNum) },
@@ -279,7 +283,13 @@ export function PesosSimulator({
     { label: "Cuotas pagadas", value: String(cuotasPagadas) },
     { label: "Cuotas pendientes", value: String(cuotasPendientes) },
     { label: "Dinero pagado a la fecha", value: formatCOP(dineroPagadoFecha) },
-    { label: "N° veces pagado el crédito", value: `${formatNumber(vecesActual, 2)} veces` },
+    {
+      label:
+        baseCreditoReferencia > 0
+          ? "N° veces pagado el crédito"
+          : "N° veces (sobre saldo actual)",
+      value: `${formatNumber(vecesActual, 2)} veces`,
+    },
     { label: "Plazo inicial", value: `${plazoInicial} meses` },
     { label: "TEA", value: formatPercentage(input.tea) },
     {
@@ -289,10 +299,13 @@ export function PesosSimulator({
     { label: "Total por pagar", value: formatCOP(totalActualPendiente) },
   ];
 
-  const vecesOpt =
-    recomendada && baseCreditoReferencia > 0
+  const vecesOpt = recomendada
+    ? baseCreditoReferencia > 0
       ? (dineroPagadoFecha + recomendada.totalProyectado) / baseCreditoReferencia
-      : 0;
+      : saldoBase > 0
+        ? recomendada.totalProyectado / saldoBase
+        : 0
+    : 0;
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-6 py-6">
@@ -473,6 +486,7 @@ export function PesosSimulator({
               dineroPagado: dineroPagadoFecha,
               totalProyectadoPendiente: totalActualPendiente,
               baseCredito: baseCreditoReferencia,
+              saldoActual: input.saldoCapital,
             }}
             puntosNeuralgicos={{
               tiempoMeses: cuotasPendientes,

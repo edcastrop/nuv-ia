@@ -251,20 +251,27 @@ export function UVRSimulator({
 
   const cuotasBaseSimulacion = Math.max(0, cuotasPendientes);
   const totalActualPesos = calc?.escenarioActual.totalPagoPesos ?? 0;
-  // Base coherente del crédito: SOLO el valor desembolsado declarado. No
-  // reconstruimos con saldo+pagado porque mezcla capital con intereses.
+  // Base coherente del crédito: el valor desembolsado declarado. Si no está
+  // disponible, usamos el SALDO ACTUAL como base alternativa (mirada hacia
+  // adelante: total proyectado pendiente / saldo actual). Es la MISMA fórmula
+  // que usa el bloque ejecutivo, así el número grande, el semáforo y la tabla
+  // siempre coinciden.
   const baseCredito = valorDesembolsadoNum > 0 ? valorDesembolsadoNum : 0;
-  // Para el múltiplo en UVR usamos el pendiente NOMINAL (cuota de hoy × cuotas
-  // pendientes) para comparar pesos de hoy contra pesos de hoy y no inflar
-  // artificialmente el ratio por la escalación UVR.
-  const totalActualNominal = input.cuotaActualPesos * cuotasBaseSimulacion;
+  const saldoBase = input.saldoPesos > 0 ? input.saldoPesos : 0;
   const vecesActual =
-    baseCredito > 0 ? (dineroPagadoFecha + totalActualNominal) / baseCredito : 0;
+    baseCredito > 0
+      ? (dineroPagadoFecha + totalActualPesos) / baseCredito
+      : saldoBase > 0
+        ? totalActualPesos / saldoBase
+        : 0;
 
-  const vecesOpt =
-    recomendada && baseCredito > 0
+  const vecesOpt = recomendada
+    ? baseCredito > 0
       ? (dineroPagadoFecha + recomendada.totalProyectado) / baseCredito
-      : 0;
+      : saldoBase > 0
+        ? recomendada.totalProyectado / saldoBase
+        : 0
+    : 0;
 
   const metrics = [
     { label: "Valor desembolsado", value: formatCOP(valorDesembolsadoNum) },
@@ -532,6 +539,7 @@ export function UVRSimulator({
               dineroPagado: dineroPagadoFecha,
               totalProyectadoPendiente: calc ? calc.escenarioActual.totalPagoPesos : 0,
               baseCredito,
+              saldoActual: input.saldoPesos,
             }}
             puntosNeuralgicos={{
               tiempoMeses: cuotasPendientes,
