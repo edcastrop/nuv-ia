@@ -526,7 +526,8 @@ export function PesosSimulator({
               mode="pesos"
               input={input}
               cuotasPendientes={cuotasBaseSimulacion}
-              baseCredito={saldoCapitalNum}
+              baseCredito={baseCreditoReferencia > 0 ? baseCreditoReferencia : saldoBase}
+              dineroPagado={baseCreditoReferencia > 0 ? dineroPagadoFecha : 0}
               onRecomendadaChange={setRecomendadaPicked}
             />
           )}

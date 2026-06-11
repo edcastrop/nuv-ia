@@ -590,7 +590,8 @@ export function UVRSimulator({
               escenarioActual={calc.escenarioActual}
               plazoInicial={plazoInicial}
               cuotasPendientes={cuotasBaseSimulacion}
-              baseCredito={baseCredito}
+              baseCredito={baseCredito > 0 ? baseCredito : saldoBase}
+              dineroPagado={baseCredito > 0 ? dineroPagadoFecha : 0}
               onRecomendadaChange={setRecomendadaPicked}
             />
           )}
