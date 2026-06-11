@@ -69,12 +69,12 @@ export function KpiCard({
     <div
       className="glass-card relative overflow-hidden"
       style={{
-        padding: "var(--nuvia-space-5)",
-        minHeight: 132,
+        padding: "14px 16px",
+        minHeight: 96,
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        gap: "var(--nuvia-space-3)",
+        gap: "8px",
       }}
     >
       {/* Borde superior con tono */}
@@ -83,24 +83,24 @@ export function KpiCard({
         style={{ background: accent, opacity: 0.55 }}
       />
 
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-2">
         <div
           className="uppercase font-semibold"
           style={{
             color: "var(--nuvia-text-secondary)",
-            fontSize: "var(--nuvia-text-badge)",
-            letterSpacing: "0.14em",
-            lineHeight: "var(--nuvia-leading-badge)",
+            fontSize: "10px",
+            letterSpacing: "0.12em",
+            lineHeight: 1.2,
           }}
         >
           {label}
         </div>
         {icon && (
           <div
-            className="grid place-items-center rounded-lg shrink-0"
+            className="grid place-items-center rounded-md shrink-0"
             style={{
-              width: 32,
-              height: 32,
+              width: 26,
+              height: 26,
               background: `${accent}1F`,
               color: accent,
             }}
@@ -113,22 +113,22 @@ export function KpiCard({
       <div
         className="font-bold tabular-nums"
         style={{
-          fontSize: "var(--nuvia-text-h1)",
-          lineHeight: "var(--nuvia-leading-h1)",
+          fontSize: "clamp(20px, 2vw, 24px)",
+          lineHeight: 1.1,
           color: "var(--nuvia-text-primary)",
         }}
       >
         {value}
       </div>
 
-      <div className="flex items-center justify-between gap-3 min-h-[20px]">
-        <div className="flex items-center gap-3 min-w-0">
+      <div className="flex items-center justify-between gap-2 min-h-[16px]">
+        <div className="flex items-center gap-2 min-w-0">
           {delta !== undefined && (
             <span
               className="inline-flex items-center gap-1 font-semibold tabular-nums"
-              style={{ color: deltaColor, fontSize: "var(--nuvia-text-caption)" }}
+              style={{ color: deltaColor, fontSize: "11px" }}
             >
-              <DeltaIcon size={12} />
+              <DeltaIcon size={11} />
               {Math.abs(delta).toFixed(1)}%
               {deltaLabel && (
                 <span className="font-normal" style={{ color: "var(--nuvia-text-secondary)" }}>
@@ -142,7 +142,7 @@ export function KpiCard({
               className="truncate"
               style={{
                 color: "var(--nuvia-text-secondary)",
-                fontSize: "var(--nuvia-text-caption)",
+                fontSize: "11px",
               }}
             >
               {hint}

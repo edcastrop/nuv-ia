@@ -44,19 +44,19 @@ export function ExecutiveHero({
 
   return (
     <section
-      className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-6"
-      style={{ paddingBlock: "var(--nuvia-space-2)" }}
+      className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4"
+      style={{ paddingBlock: "var(--nuvia-space-1)" }}
     >
-      <div className="min-w-0 space-y-3">
+      <div className="min-w-0 space-y-1.5">
         {badge && (
           <span
-            className="inline-flex items-center gap-2 rounded-full px-3 py-1 font-bold uppercase"
+            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-bold uppercase"
             style={{
               background: toneColors.bg,
               color: toneColors.fg,
               border: `1px solid ${toneColors.bd}`,
-              fontSize: "var(--nuvia-text-badge)",
-              letterSpacing: "0.16em",
+              fontSize: "10px",
+              letterSpacing: "0.14em",
             }}
           >
             {badge.icon}
@@ -66,8 +66,8 @@ export function ExecutiveHero({
         <h1
           className="font-bold tracking-tight truncate"
           style={{
-            fontSize: "var(--nuvia-text-display)",
-            lineHeight: "var(--nuvia-leading-display)",
+            fontSize: "clamp(20px, 2.2vw, 26px)",
+            lineHeight: 1.15,
             color: "var(--nuvia-text-primary)",
           }}
         >
@@ -77,8 +77,8 @@ export function ExecutiveHero({
           <p
             className="max-w-2xl"
             style={{
-              fontSize: "var(--nuvia-text-body)",
-              lineHeight: "var(--nuvia-leading-body)",
+              fontSize: "13px",
+              lineHeight: 1.4,
               color: "var(--nuvia-text-secondary)",
             }}
           >
@@ -87,7 +87,7 @@ export function ExecutiveHero({
         )}
       </div>
 
-      <div className="flex flex-col items-end gap-3 shrink-0">
+      <div className="flex flex-col items-end gap-2 shrink-0">
         {meta}
         {actions && <div className="flex items-center gap-2 flex-wrap justify-end">{actions}</div>}
       </div>
