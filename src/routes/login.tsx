@@ -231,14 +231,14 @@ function LoginPage() {
             </p>
 
             <form onSubmit={submit} className="mt-8 space-y-4">
-              <Field label="Email">
+              <Field label="Correo">
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="email"
-                  placeholder="Enter your email"
+                  placeholder="Ingresa tu correo"
                   className="nuvia-input"
                 />
               </Field>
