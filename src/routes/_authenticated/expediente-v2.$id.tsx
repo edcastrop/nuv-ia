@@ -3,6 +3,8 @@
 // NO migra producción. NO crea tablas. NO toca RLS. Solo evolución visual/UX.
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
   AlertTriangle,
