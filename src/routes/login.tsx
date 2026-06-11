@@ -59,7 +59,7 @@ function LoginPage() {
       }
       navigate({ to: "/" });
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Unexpected error");
+      setErr(e instanceof Error ? e.message : "Error inesperado");
     } finally {
       setBusy(false);
     }
