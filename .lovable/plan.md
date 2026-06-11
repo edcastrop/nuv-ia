@@ -1,191 +1,214 @@
-# FASE 7.6 — NUVIA Operating Model
+# FASE 7.6.1D-1 — Arquitectura técnica
 
-Propuesta de arquitectura. **No se implementa hasta aprobación.**
-
----
-
-## 1. Principios del modelo
-
-1. Un caso tiene **un único estado oficial** en `expedientes.estado_caso` y un **subestado operativo** en `expedientes.subestado` (nuevo). Todo lo demás es derivado.
-2. Cada transición de estado se registra en `expediente_historial` y dispara eventos (notificación, SLA, métrica).
-3. Cada etapa tiene **responsable primario** (single accountable owner) y responsables consultados.
-4. SLA por etapa se mide en **días hábiles Colombia** (`diasHabiles.ts`).
-5. Etapas 14 (Pipeline Maestro actual) se mantienen — esta fase **agrega 15 Referido y 16 Promotor** como ciclo de relación post-cierre.
-6. Command Center mide cada etapa con 3 dimensiones: **volumen, velocidad, conversión**.
+Objetivo: persistir lo mínimo necesario para que el Expediente Maestro V2 funcione como sistema operativo real. **No** se toca la capa visual del preview todavía. **No** se incluyen promotores, recompra, embajadores, cross-sell, customer success ni E18–E20.
 
 ---
 
-## 2. Mapa maestro del ciclo de vida
+## 1. Hallazgo previo — Cliente Maestro ya existe
+
+La tabla `public.clientes` **ya está creada** en la base de datos y `expedientes.cliente_id` ya tiene FK hacia ella (`ON DELETE SET NULL`, con índice). Estructura actual:
+
+- `id, cedula (UNIQUE), nombre_completo, email, telefono, ciudad, fecha_primer_caso, fecha_ultimo_caso, total_expedientes, total_ahorro_generado, total_honorarios_pagados, nps_ultimo, es_promotor, metadata, created_at, updated_at`
+- RLS: lectura para todo `authenticated`, escritura sólo `super_admin / admin / gerencia`.
+
+**Decisión:** no se recrea la tabla. La fase D-1 sobre Cliente Maestro se reduce a **backfill + sincronización**, no a un `CREATE TABLE`. Los campos pedidos (`cedula, nombre, email, telefono`) ya existen (`nombre_completo` cumple el rol de `nombre`).
+
+Si prefieres una tabla nueva `clientes_maestro` separada de la actual, indícalo y lo agregamos al plan; lo recomendado es reutilizar.
+
+---
+
+## 2. Modelo entidad-relación (sólo lo nuevo)
 
 ```text
-                           CICLO COMERCIAL
-                          ┌────────────────────────────────┐
-   E1 Lead ──► E2 Diagnóstico ──► E3 Análisis Financiero ──► E4 Auditoría Financiera
-                                                                       │
-                            CICLO DE CIERRE COMERCIAL                  ▼
-                          ┌──────────────────────── E5 Presentación Cliente
-                          ▼
-                   E6 Firma / Contratación
-                          │
-                          ▼              CICLO OPERATIVO JURÍDICO
-                   E7 Radicación ──► E8 Seguimiento ──► E9 Respuesta Banco
-                                                              │
-                                                              ▼
-                                                    E10 Informe Final
-                                                              │
-                          CICLO FINANCIERO                    ▼
-                          ┌────────────── E11 Cuenta de Cobro
-                          ▼
-                   E12 Pago Honorarios ──► E13 Paz y Salvo ──► E14 Finalizado
-                                                                       │
-                          CICLO DE RELACIÓN (NUEVO)                    ▼
-                                            E15 Referido ──► E16 Promotor
+clientes (ya existe)
+  └── 1:N ──> expedientes (vía cliente_id, ya existe)
+                  ├── 1:N ──> expediente_tareas      (NUEVA)
+                  └── 1:N ──> expediente_bitacora    (NUEVA)
+
+profiles (auth)
+  ├── responsable_id ──> expediente_tareas
+  └── usuario_id     ──> expediente_bitacora
+```
+
+Sólo se crean dos tablas. Ninguna otra relación se modifica en D-1.
+
+---
+
+## 3. Migración SQL propuesta (una sola migración)
+
+### 3.1 `expediente_tareas`
+
+```sql
+CREATE TYPE public.tarea_prioridad AS ENUM ('baja','media','alta','critica');
+CREATE TYPE public.tarea_estado    AS ENUM ('pendiente','en_progreso','completada','cancelada');
+
+CREATE TABLE public.expediente_tareas (
+  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  expediente_id   uuid NOT NULL REFERENCES public.expedientes(id) ON DELETE CASCADE,
+  responsable_id  uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  titulo          text NOT NULL,
+  descripcion     text,
+  prioridad       public.tarea_prioridad NOT NULL DEFAULT 'media',
+  fecha_objetivo  date,
+  estado          public.tarea_estado   NOT NULL DEFAULT 'pendiente',
+  completada_at   timestamptz,
+  created_by      uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at      timestamptz NOT NULL DEFAULT now(),
+  updated_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_tareas_expediente ON public.expediente_tareas(expediente_id);
+CREATE INDEX idx_tareas_responsable ON public.expediente_tareas(responsable_id) WHERE estado IN ('pendiente','en_progreso');
+```
+
+### 3.2 `expediente_bitacora`
+
+```sql
+CREATE TYPE public.bitacora_tipo AS ENUM ('comentario','evidencia','llamada','email','whatsapp','sistema');
+
+CREATE TABLE public.expediente_bitacora (
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  expediente_id uuid NOT NULL REFERENCES public.expedientes(id) ON DELETE CASCADE,
+  usuario_id    uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  comentario    text NOT NULL,
+  tipo          public.bitacora_tipo NOT NULL DEFAULT 'comentario',
+  metadata      jsonb NOT NULL DEFAULT '{}',
+  created_at    timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_bitacora_expediente_created
+  ON public.expediente_bitacora(expediente_id, created_at DESC);
+```
+
+### 3.3 GRANTS + triggers
+
+```sql
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.expediente_tareas    TO authenticated;
+GRANT SELECT, INSERT                  ON public.expediente_bitacora TO authenticated;
+GRANT ALL ON public.expediente_tareas, public.expediente_bitacora TO service_role;
+
+CREATE TRIGGER tg_tareas_updated BEFORE UPDATE ON public.expediente_tareas
+  FOR EACH ROW EXECUTE FUNCTION public.tg_updated_at();
+```
+
+Bitácora es **append-only** (no se otorga UPDATE/DELETE a `authenticated`). Sólo `service_role` puede corregir errores.
+
+---
+
+## 4. RLS
+
+Patrón: alineado con `expedientes` — el dueño del caso (`asesor_id`), el responsable de la tarea, y los roles de gestión pueden ver/escribir.
+
+```sql
+ALTER TABLE public.expediente_tareas    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.expediente_bitacora  ENABLE ROW LEVEL SECURITY;
+
+-- Función helper reutilizable
+CREATE OR REPLACE FUNCTION public.can_access_expediente(_uid uuid, _exp uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
+  SELECT has_role(_uid,'super_admin') OR has_role(_uid,'admin')
+      OR has_role(_uid,'gerencia')    OR has_role(_uid,'director_financiero_qa')
+      OR has_role(_uid,'director_juridico') OR has_role(_uid,'operaciones')
+      OR has_role(_uid,'juridica')
+      OR EXISTS (SELECT 1 FROM public.expedientes e
+                  WHERE e.id = _exp AND e.asesor_id = _uid);
+$$;
+
+-- Tareas: lectura/escritura para quien accede al expediente o es el responsable
+CREATE POLICY tareas_read  ON public.expediente_tareas FOR SELECT TO authenticated
+  USING (public.can_access_expediente(auth.uid(), expediente_id)
+      OR responsable_id = auth.uid());
+CREATE POLICY tareas_write ON public.expediente_tareas FOR ALL TO authenticated
+  USING (public.can_access_expediente(auth.uid(), expediente_id))
+  WITH CHECK (public.can_access_expediente(auth.uid(), expediente_id));
+
+-- Bitácora: lectura amplia (auditoría), inserción sólo si accede al expediente
+CREATE POLICY bitacora_read   ON public.expediente_bitacora FOR SELECT TO authenticated
+  USING (public.can_access_expediente(auth.uid(), expediente_id));
+CREATE POLICY bitacora_insert ON public.expediente_bitacora FOR INSERT TO authenticated
+  WITH CHECK (public.can_access_expediente(auth.uid(), expediente_id)
+              AND usuario_id = auth.uid());
 ```
 
 ---
 
-## 3. Tabla operativa por etapa
+## 5. ServerFns nuevas (`src/lib/expedienteOperativo.functions.ts`)
 
-| # | Etapa | Estado oficial | Subestados | Responsable primario | SLA (días háb.) | Evento que dispara salida | Riesgos clave | KPI etapa | Automatización | Command Center mide |
-|---|-------|----------------|------------|----------------------|-----------------|---------------------------|---------------|-----------|----------------|---------------------|
-| 1 | Lead | `lead` | nuevo, contactado, calificado, descartado | Asesor Comercial | 2 | Cliente acepta diagnóstico | Lead frío, sin respuesta | Tasa contacto 24h, % calificados | Auto-asignación, recordatorio 24/48h | Volumen entrada, % calificación |
-| 2 | Diagnóstico | `diagnostico` | datos_básicos, datos_crédito, completo | Asesor Comercial | 3 | Expediente Maestro completo | Datos incompletos, banco no soportado | % completitud, tiempo medio | Validación cédula, autocompletar banco | Tiempo medio diagnóstico |
-| 3 | Análisis Financiero | `analisis` | capacidad_pago, simulación, propuesta_borrador | Analista Financiero | 3 | Propuesta lista para auditoría | Capacidad insuficiente, error de simulación | % aprobación interna, error promedio | Motor capacidad pago, simulación automática | Throughput por analista |
-| 4 | Auditoría Financiera | `auditoria` | en_revisión, observaciones, aprobada, rechazada | Auditor Financiero | 2 | Auditoría aprobada | Reproceso, demora QA | % aprobada 1ra vez, días en QA | Audit Engine, alertas estancamiento | % rechazo, tiempo en QA |
-| 5 | Presentación Cliente | `presentacion` | agendada, presentada, en_decisión, aceptada, rechazada | Asesor Comercial | 5 | Cliente acepta propuesta | No-show, objeción precio | Tasa cierre, ciclo decisión | Recordatorio reunión, plantilla PDF | Conversión presentación→firma |
-| 6 | Firma / Contratación | `contratacion` | enviado, firmado_cliente, firmado_apoderado, contratado | Apoderado / Jurídica | 3 | Contrato + poderes firmados | Cliente desiste, firma incompleta | % firma <72h, % desistimiento | Envío firma electrónica, checklist envíos | Funnel firma |
-| 7 | Radicación | `radicacion` | preparado, radicado_banco, acuse_recibido | Apoderado | 2 | Acuse del banco | Banco rechaza radicación, documento faltante | % radicado <48h post-firma | Validación radicación, packaging PDF | Tiempo firma→radicación |
-| 8 | Seguimiento | `seguimiento` | esperando_banco, gestión_activa, escalado | Apoderado | 30 | Banco responde | Silencio banco, pérdida trazabilidad | Días promedio, % escalados | Recordatorios, alertas estancamiento | Edad promedio, casos estancados |
-| 9 | Respuesta Banco | `respuesta_banco` | recibida, favorable, parcial, desfavorable | Apoderado + Auditor | 2 | Respuesta cargada y validada | Lectura incorrecta, respuesta ambigua | % favorable, ahorro real vs proyectado | Motor extractos, comparación auto vs proyección | % favorable por banco/producto |
-| 10 | Informe Final | `informe_final` | borrador, validado, enviado_cliente | Analista Financiero | 3 | Cliente recibe informe | Discrepancia ahorro, retraso entrega | Precisión histórica, días emisión | Generación PDF, comparativa auto | Precisión proyectado vs real |
-| 11 | Cuenta de Cobro | `cuenta_cobro` | generada, enviada, aceptada_cliente | Cartera / Contabilidad | 2 | Cuenta aceptada | Cliente disputa monto, dato fiscal errado | Días informe→cuenta, % aceptadas 1ra | Generación automática desde honorarios calc | Tiempo emisión cuenta |
-| 12 | Pago Honorarios | `pago_honorarios` | esperando, parcial, pagado | Cartera | 15 | Pago confirmado | Mora, pago parcial, disputa | DSO, % en mora, recaudo MTD | Recordatorios cartera, conciliación tesorería | DSO, cartera vencida |
-| 13 | Paz y Salvo | `paz_salvo` | en_emisión, emitido, entregado | Jurídica | 3 | Cliente confirma recepción | Olvido emisión, dato erróneo | Días pago→paz y salvo | Plantilla automática, envío firmado | Tiempo cierre financiero→operativo |
-| 14 | Finalizado | `finalizado` | archivado | Operaciones | 1 | Archivo + métricas consolidadas | Métricas no consolidadas | Casos cerrados/mes, ciclo total | Consolidación métricas, encuesta NPS auto | Lead→Finalizado, NPS |
-| 15 | Referido | `referido` | encuesta_enviada, referidos_recibidos, contactados | Asesor Comercial | 30 | Referido convertido a Lead | Cliente no refiere, contacto frío | # referidos/cliente, tasa conversión | NPS auto + solicitud referidos, link único | Referral rate, LTV ampliado |
-| 16 | Promotor | `promotor` | activo, embajador, inactivo | Gerencia Comercial | continuo | (sin salida — relación continua) | Promotor se enfría, churn de marca | # promotores activos, NPS sostenido, casos generados | Programa lealtad, contenido VIP, reactivación auto | Promotores activos, casos originados por promotor |
+Todas con `requireSupabaseAuth`. RLS hace la seguridad real; las server fns sólo validan input con Zod y normalizan.
+
+| Función | Método | Propósito |
+|---|---|---|
+| `listTareas({expediente_id})` | GET | Lista tareas del expediente ordenadas por prioridad + fecha. |
+| `crearTarea(input)` | POST | Inserta tarea (valida título 1–200, prioridad enum, fecha_objetivo opcional). |
+| `actualizarTareaEstado({id, estado})` | POST | Cambia estado; setea `completada_at` cuando pasa a `completada`. |
+| `asignarTarea({id, responsable_id})` | POST | Reasigna responsable. |
+| `listBitacora({expediente_id, limit, before})` | GET | Lectura paginada DESC. |
+| `agregarBitacora({expediente_id, comentario, tipo})` | POST | Inserta con `usuario_id = auth.uid()`. |
+
+No se crean rutas API públicas. No hay edge functions.
 
 ---
 
-## 4. Modelo de datos (sin crear todavía)
+## 6. Impacto sobre Expediente Maestro V2
 
-Cambios mínimos al esquema actual — todo aditivo, no rompe lo existente:
+La capa visual **no se toca en D-1**. El preview `/expediente-v2/$id` seguirá funcionando con los placeholders actuales. En D-2 (siguiente fase) reemplazaremos:
 
-1. `expedientes.subestado TEXT NULL` — subestado granular dentro del estado oficial.
-2. `expedientes.responsable_primario_id UUID NULL` — owner único por etapa actual.
-3. `expedientes.sla_vence_at TIMESTAMPTZ NULL` — calculado al entrar a la etapa.
-4. Nueva tabla `etapa_sla_config` — SLA configurable por (estado, subestado).
-5. Nueva tabla `casos_referidos` — `caso_origen_id`, `caso_referido_id`, `cliente_referente_id`, `fecha`, `convertido`.
-6. Nueva tabla `clientes_promotores` — `cliente_id`, `nivel` (activo/embajador/inactivo), `nps_ultimo`, `casos_originados`, `fecha_alta`.
-7. Nueva vista `v_caso_etapa_actual` — denormaliza estado + subestado + responsable + SLA + días en etapa.
+- Sección **Plan de Tratamiento** → leerá `expediente_tareas` real.
+- Sección **Bitácora Clínica** → leerá `expediente_bitacora` real + composer de comentarios.
+- Hero seguirá leyendo `expedientes` + `clientes` vía join (ya disponible hoy).
+
+Ningún componente NUVIA cambia. Ninguna ruta productiva (`/casos/$id`, `/expediente-maestro/$id`) se modifica.
 
 ---
 
-## 5. Motor de transiciones (extender `pipelineTransiciones.ts`)
+## 7. Estrategia de migración de datos existentes
 
-Cada transición declara:
+1. **Cliente Maestro:** ya hay `expedientes.cliente_id`. Se ejecutará un **backfill idempotente** dentro de la migración:
+   ```sql
+   -- Crear clientes faltantes a partir de expedientes sin cliente_id
+   INSERT INTO public.clientes (cedula, nombre_completo, ...)
+   SELECT DISTINCT ON (cedula) cedula, cliente_nombre, ...
+     FROM public.expedientes
+    WHERE cliente_id IS NULL AND cedula IS NOT NULL AND cedula <> ''
+   ON CONFLICT (cedula) DO NOTHING;
 
-```text
-{
-  from: { estado, subestado? },
-  to:   { estado, subestado },
-  requires: ["radicacion_validada", "auditoria_aprobada", ...],
-  onEnter: ["set_sla", "asignar_responsable", "notificar"],
-  onExit:  ["registrar_historial", "emitir_evento"],
-  blockIf: ["cartera_vencida_critica", ...]
-}
-```
-
-Beneficio: única fuente de verdad para flujos, validaciones, automatizaciones y auditoría.
-
----
-
-## 6. Eventos del sistema (event bus interno)
-
-Lista de eventos canónicos que el resto de NUVIA escucha:
-
-- `caso.estado_cambiado`
-- `caso.sla_vencido`
-- `caso.estancado_7d` / `caso.estancado_15d` / `caso.estancado_30d`
-- `caso.documento_faltante`
-- `caso.respuesta_banco_recibida`
-- `caso.cuenta_cobro_generada`
-- `caso.pago_recibido`
-- `caso.paz_salvo_emitido`
-- `caso.finalizado`
-- `cliente.nps_respondido`
-- `cliente.referido_generado`
-- `cliente.promotor_activado`
-
-Cada evento alimenta: notificaciones, Command Center, IA Copilot, auditoría.
+   UPDATE public.expedientes e
+      SET cliente_id = c.id
+     FROM public.clientes c
+    WHERE e.cliente_id IS NULL AND e.cedula = c.cedula;
+   ```
+2. **Tareas:** no hay datos preexistentes — tabla nace vacía.
+3. **Bitácora:** se mantiene `expediente_historial` (sistema de auditoría de cambios de estado, automático). `expediente_bitacora` es **complementaria** (comentarios manuales del operador). En D-2 el timeline las une visualmente. **No se migran filas** entre ellas.
 
 ---
 
-## 7. Integración con NUVIA IA
+## 8. Riesgos detectados
 
-| Etapa | Uso de IA |
-|-------|-----------|
-| Lead | Scoring de probabilidad de cierre |
-| Diagnóstico | Sugerir banco/producto + autocompletar |
-| Análisis | Detectar inconsistencias capacidad pago |
-| Auditoría | Pre-flagging de anomalías antes del auditor humano |
-| Presentación | Generar guion personalizado por cliente |
-| Seguimiento | Predecir días restantes hasta respuesta banco |
-| Respuesta Banco | Clasificar respuesta (favorable/parcial/desfavorable) desde texto |
-| Informe Final | Redacción ejecutiva automática |
-| Cartera | Priorizar gestión de cobro |
-| Referido | Identificar clientes con alta probabilidad de referir |
-| Promotor | Detectar promotores en riesgo de churn |
-
-Toda IA respeta la política Command Center: **recomienda, no ejecuta** en MVP.
+| Riesgo | Mitigación |
+|---|---|
+| Duplicación conceptual entre `expediente_historial` (auditoría auto) y `expediente_bitacora` (comentarios manuales). | Documentar contrato: historial = sistema, bitácora = humano. Tipos disjuntos. |
+| Expedientes con `cedula` vacía o malformada quedan sin `cliente_id` tras backfill. | Backfill es best-effort; reporte post-migración con conteo de huérfanos. No bloquea. |
+| RLS de tareas requiere helper `can_access_expediente` nuevo — posible solape con políticas existentes. | Función `SECURITY DEFINER` aislada, sólo lectura, no recursiva (no consulta tareas/bitácora). |
+| Cliente Maestro actual tiene campos agregados (`total_ahorro_generado`, etc.) no en el spec. | Se ignoran en D-1; se mantienen para no romper código existente (`caso_eventos`, `testimonios`, `casos_referidos` ya los referencian). |
+| `expediente_tareas` con `ON DELETE CASCADE` borra tareas al borrar expediente. | Coherente con modelo operativo; bitácora idem. |
+| Bitácora append-only: si un usuario sube un comentario erróneo, no puede borrarlo. | Aceptado por diseño (trazabilidad). Corrección vía nuevo comentario o `service_role`. |
 
 ---
 
-## 8. Qué mide Command Center por etapa
+## 9. Entregables de D-1 (al ejecutar)
 
-Cada etapa expone al Command Center:
-
-- **Volumen**: # casos en la etapa, entrada/salida del mes.
-- **Velocidad**: tiempo promedio en etapa, % dentro de SLA, casos estancados.
-- **Conversión**: % que avanza vs % que retrocede o se pierde.
-- **Salud**: aporta al Health Score global (peso configurable por etapa).
-- **Owner**: responsable primario y carga relativa (para Scoreboard).
-
-Vista nueva propuesta para Command Center: **"Mapa del Pipeline en vivo"** — heatmap de las 16 etapas con volumen, SLA y cuellos de botella.
+1. Una migración SQL única (tablas + enums + grants + RLS + helper + triggers + backfill clientes).
+2. Archivo `src/lib/expedienteOperativo.functions.ts` con las 6 server fns.
+3. **Ningún cambio visual.** El preview V2 sigue idéntico.
 
 ---
 
-## 9. Riesgos globales del modelo
+## 10. Fuera de alcance (confirmado)
 
-1. **Migración de datos**: casos antiguos sin `subestado` requieren backfill conservador.
-2. **Sobre-modelado**: 16 etapas × 4 subestados ≈ 60 combinaciones. Mitigar con motor declarativo, no `if` anidados.
-3. **SLA mal calibrado**: empezar con valores conservadores y ajustar con histórico de 30 días.
-4. **Etapas 15-16 dependen de NPS**: requiere encuesta automatizada antes de activarlas.
-5. **Eventos no idempotentes**: doble disparo puede inflar métricas — usar `evento_id` único.
-6. **Romper Pipeline Maestro actual**: la fase es 100% aditiva, etapas 1-14 mantienen IDs actuales (`pipelineEtapas.ts` intacto).
-
----
-
-## 10. Plan de implementación sugerido (cuando se apruebe)
-
-1. **7.6.1** — Migración aditiva (subestado, responsable_primario, sla_vence_at) + backfill.
-2. **7.6.2** — `etapa_sla_config` + motor de transiciones declarativo.
-3. **7.6.3** — Event bus interno + auditoría idempotente.
-4. **7.6.4** — Vista "Mapa del Pipeline" en Command Center.
-5. **7.6.5** — Etapas 15 Referido + 16 Promotor (tablas + UI mínima).
-6. **7.6.6** — Integración IA por etapa (incremental, no bloqueante).
-
-Todo **sin tocar** módulos congelados, Pipeline Maestro 1-14, Home por roles, Torre de Control, Command Center.
+- Promotores, recompra, embajadores, cross-sell, customer success, programa de referidos avanzado.
+- E18, E19, E20 del pipeline.
+- Tabla `clientes_maestro` separada (se reutiliza `clientes`).
+- Cambios visuales en Expediente V2 (se hacen en D-2).
+- Migración del expediente productivo (`/expediente-maestro`).
 
 ---
 
-## 11. Qué NO incluye esta fase
-
-- Portal Cliente (Fase 8).
-- Ejecución de workflows por IA.
-- Programa formal de lealtad para Promotores (queda como Fase 9+).
-- Reescritura del Pipeline Maestro existente.
-
----
-
-**Esperando aprobación para pasar a 7.6.1.** Si quieres ajustar SLAs, responsables, subestados o el alcance de las etapas 15-16 antes de implementar, este es el momento.
+**Esperando aprobación para ejecutar D-1.** Si quieres ajustes (ej. crear `clientes_maestro` aparte, agregar campos, cambiar RLS, otra estrategia de bitácora vs historial), indícalo y replanteo antes de tocar la base.
