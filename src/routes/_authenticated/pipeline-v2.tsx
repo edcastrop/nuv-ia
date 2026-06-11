@@ -207,73 +207,73 @@ function PipelineV2Page() {
   }
 
   return (
-    <PageLayout
-      hero={
-        <ExecutiveHero
-          badge={{ icon: <Activity size={11} />, label: "Pipeline V2 · Operations", tone: "blue" }}
-          title="Operations Center"
-          description="Velocidad operativa · SLA en tiempo real · cuellos de botella · dinero en riesgo."
-          meta={
-            <span className="inline-flex items-center gap-1.5 text-[11px] text-[var(--nuvia-text-secondary)]">
-              <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Live · {haceLabel}
-            </span>
-          }
-          actions={
-            <>
-              <button
-                onClick={() => cargar(true)}
-                className="glass-button inline-flex items-center gap-1.5 px-3 py-1.5 text-xs"
-                disabled={refreshing}
-              >
-                <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} />
-                Refrescar
-              </button>
-              <Link
-                to="/pipeline"
-                className="glass-button inline-flex items-center gap-1.5 px-3 py-1.5 text-xs"
-              >
-                Vista Kanban
-                <ArrowUpRight size={12} />
-              </Link>
-            </>
-          }
+    <PageLayout>
+      <ExecutiveHero
+        badge={{ icon: <Activity size={11} />, label: "Pipeline V2 · Operations", tone: "blue" }}
+        title="Operations Center"
+        description="Velocidad operativa · SLA en tiempo real · cuellos de botella · dinero en riesgo."
+        meta={
+          <span className="inline-flex items-center gap-1.5 text-[11px] text-[var(--nuvia-text-secondary)]">
+            <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            Live · {haceLabel}
+          </span>
+        }
+        actions={
+          <>
+            <button
+              onClick={() => cargar(true)}
+              className="glass-button inline-flex items-center gap-1.5 px-3 py-1.5 text-xs"
+              disabled={refreshing}
+            >
+              <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} />
+              Refrescar
+            </button>
+            <Link
+              to="/pipeline"
+              className="glass-button inline-flex items-center gap-1.5 px-3 py-1.5 text-xs"
+            >
+              Vista Kanban
+              <ArrowUpRight size={12} />
+            </Link>
+          </>
+        }
+      />
+
+      <KpiGrid cols={4}>
+        <KpiCard
+          label="Casos activos"
+          value={totales.activos}
+          tone="blue"
+          icon={<Users size={14} />}
+          hint={`${filtered.length} totales tras filtro`}
         />
-      }
-      kpis={
-        <KpiGrid cols={4}>
-          <KpiCard
-            label="Casos activos"
-            value={totales.activos}
-            tone="blue"
-            icon={<Users size={14} />}
-            hint={`${filtered.length} totales tras filtro`}
-          />
-          <KpiCard
-            label="SLA cumplido"
-            value={`${totales.slaGlobal.toFixed(0)}%`}
-            tone={totales.slaGlobal >= 80 ? "green" : totales.slaGlobal >= 50 ? "warning" : "danger"}
-            icon={<Gauge size={14} />}
-            hint={`${totales.enRiesgo} fuera de SLA`}
-          />
-          <KpiCard
-            label="Dinero en riesgo"
-            value={fmtCOP(totales.dinero)}
-            tone="danger"
-            icon={<DollarSign size={14} />}
-            hint="honorarios sobre SLA"
-          />
-          <KpiCard
-            label="Cuellos de botella"
-            value={totales.cuellos}
-            tone={totales.cuellos === 0 ? "green" : totales.cuellos <= 2 ? "warning" : "danger"}
-            icon={<Flame size={14} />}
-            hint="etapas en estado crítico"
-          />
-        </KpiGrid>
-      }
-      main={
-        <NCard variant="default" className="p-0 overflow-hidden">
+        <KpiCard
+          label="SLA cumplido"
+          value={`${totales.slaGlobal.toFixed(0)}%`}
+          tone={totales.slaGlobal >= 80 ? "green" : totales.slaGlobal >= 50 ? "warning" : "danger"}
+          icon={<Gauge size={14} />}
+          hint={`${totales.enRiesgo} fuera de SLA`}
+        />
+        <KpiCard
+          label="Dinero en riesgo"
+          value={fmtCOP(totales.dinero)}
+          tone="danger"
+          icon={<DollarSign size={14} />}
+          hint="honorarios sobre SLA"
+        />
+        <KpiCard
+          label="Cuellos de botella"
+          value={totales.cuellos}
+          tone={totales.cuellos === 0 ? "green" : totales.cuellos <= 2 ? "warning" : "danger"}
+          icon={<Flame size={14} />}
+          hint="etapas en estado crítico"
+        />
+      </KpiGrid>
+
+      <PageLayout.BodyWithAside>
+        <PageLayout.Main>
+        <NCard variant="default" padding="none" className="overflow-hidden">
+
           {/* Filtros */}
           <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--nuvia-border)]">
             <div className="relative flex-1 max-w-md">
@@ -448,8 +448,9 @@ function PipelineV2Page() {
             </table>
           </div>
         </NCard>
-      }
-      aside={
+        </PageLayout.Main>
+        <PageLayout.Aside>
+
         <>
           <NCard variant="default">
             <SectionHeader
@@ -565,8 +566,9 @@ function PipelineV2Page() {
               </div>
             </NCard>
           )}
-        </>
-      }
-    />
+        </PageLayout.Aside>
+      </PageLayout.BodyWithAside>
+    </PageLayout>
   );
 }
+
