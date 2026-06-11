@@ -303,7 +303,7 @@ function LoginPage() {
                 style={{ background: `linear-gradient(135deg, ${BLUE} 0%, ${GREEN} 100%)` }}
               >
                 <span className="relative z-10 inline-flex items-center justify-center gap-2">
-                  {busy ? "Signing in…" : "Sign In"}
+                  {busy ? "Iniciando sesión…" : "Iniciar sesión"}
                   {!busy && <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />}
                 </span>
                 <span
