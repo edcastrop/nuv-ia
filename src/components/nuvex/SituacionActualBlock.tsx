@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, SectionTitle } from "./ui";
+import { Card } from "./ui";
 import { NUVEX } from "./constants";
 import { formatCOP } from "@/lib/format";
 import { NUVEX_BRAND } from "@/lib/brandConfig";
