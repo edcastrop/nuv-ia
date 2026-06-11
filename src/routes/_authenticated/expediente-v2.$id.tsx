@@ -1048,17 +1048,6 @@ function ForecastBar({ label, value, tone }: { label: string; value: number; ton
   );
 }
 
-function BitacoraSlot({ icon, label, desc }: { icon: React.ReactNode; label: string; desc: string }) {
-  return (
-    <div className="px-3 py-2 rounded-md border border-dashed border-[var(--nuvia-border)] bg-white/[0.02]">
-      <div className="inline-flex items-center gap-1.5 text-[11px] text-[var(--nuvia-text-primary)] font-semibold">
-        {icon} {label}
-      </div>
-      <div className="text-[10px] text-[var(--nuvia-text-secondary)] mt-0.5">{desc}</div>
-      <div className="mt-1 text-[9px] uppercase tracking-wider text-[var(--nuvia-text-secondary)]/60">Espacio reservado</div>
-    </div>
-  );
-}
 
 function Row({ label, value, highlight }: { label: string; value: React.ReactNode; highlight?: boolean }) {
   return (
