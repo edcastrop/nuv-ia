@@ -263,7 +263,17 @@ export function PropuestasComerciales(props: Props) {
                         />
                         <FranjaRow
                           label="Nuevo plazo"
-                          value={`${c.nuevoPlazo} meses`}
+                          value={`${c.nuevoPlazo} m · ${(c.nuevoPlazo / 12).toFixed(1)} a`}
+                          highlight={isRec}
+                        />
+                        <FranjaRow
+                          label="Plazo actual → nuevo"
+                          value={`${props.cuotasPendientes} → ${c.nuevoPlazo} m`}
+                          highlight={isRec}
+                        />
+                        <FranjaRow
+                          label="Honorarios"
+                          value={formatCOP(c.honorarios)}
                           highlight={isRec}
                         />
                         <div className="mt-1 border-t pt-1.5" style={{ borderColor: "#ECEFF3" }}>
@@ -432,7 +442,7 @@ export function PropuestasComerciales(props: Props) {
                     />
                     <HeroMetric
                       label="Nuevo plazo"
-                      value={`${c.nuevoPlazo} meses`}
+                      value={`${c.nuevoPlazo} meses · ${(c.nuevoPlazo / 12).toFixed(1)} años`}
                       color={NUVEX.negro}
                     />
                     <div>
@@ -452,6 +462,31 @@ export function PropuestasComerciales(props: Props) {
                       />
                     </div>
                   </div>
+
+                  {/* Comparativo tiempo actual vs nuevo */}
+                  <div
+                    className="mx-5 mt-4 rounded-xl border px-3 py-2.5"
+                    style={{ borderColor: "#E6F2EA", backgroundColor: "#F4FBF6" }}
+                  >
+                    <div
+                      className="text-[9px] font-semibold uppercase tracking-[0.16em]"
+                      style={{ color: "#1F7A45" }}
+                    >
+                      Tiempo: actual vs nuevo
+                    </div>
+                    <div className="mt-1 flex items-baseline justify-between gap-2">
+                      <span className="text-[12px] font-semibold text-[#6B7480] line-through">
+                        {props.cuotasPendientes} m · {(props.cuotasPendientes / 12).toFixed(1)} a
+                      </span>
+                      <span className="text-[14px] font-extrabold" style={{ color: "#1F7A45" }}>
+                        {c.nuevoPlazo} m · {(c.nuevoPlazo / 12).toFixed(1)} a
+                      </span>
+                    </div>
+                    <div className="mt-0.5 text-right text-[10px] font-semibold" style={{ color: "#1F7A45" }}>
+                      −{c.cuotasEliminadas} cuotas (−{(c.cuotasEliminadas / 12).toFixed(1)} años)
+                    </div>
+                  </div>
+
 
                   {/* Sección secundaria: honorarios y veces pagado */}
                   <div
