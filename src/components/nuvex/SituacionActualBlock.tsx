@@ -20,6 +20,8 @@ export interface CostoTotalCredito {
 }
 
 interface Props {
+  /** Nombre del titular para personalizar el encabezado. */
+  clienteNombre?: string;
   /** KPIs principales (4 tarjetas hero). */
   hero: {
     saldoActual: string;
@@ -31,11 +33,18 @@ interface Props {
   vecesPagado: number;
   /** Datos crudos para el bloque ejecutivo Costo Total del Crédito. */
   costoTotal?: CostoTotalCredito;
+  /** Puntos neurálgicos del crédito (Tiempo, intereses, seguros). */
+  puntosNeuralgicos?: {
+    tiempoMeses: number;
+    interesesProyectados: number;
+    segurosProyectados: number;
+  };
   /** Fila secundaria — 4 tarjetas medianas. */
   secundarios: SituacionMetric[];
   /** Detalle completo dentro del acordeón. */
   detalle: SituacionMetric[];
 }
+
 
 type RiesgoNivel = "verde" | "amarillo" | "naranja" | "rojo";
 
