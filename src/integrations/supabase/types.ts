@@ -816,6 +816,101 @@ export type Database = {
         }
         Relationships: []
       }
+      banco_requerimientos: {
+        Row: {
+          banco: string
+          created_at: string
+          descripcion: string | null
+          dias_resolucion: number | null
+          etapa_destino: string | null
+          expediente_id: string
+          id: string
+          resuelto_at: string | null
+          resuelto_por: string | null
+          solicitado_at: string
+          tipo: string
+        }
+        Insert: {
+          banco: string
+          created_at?: string
+          descripcion?: string | null
+          dias_resolucion?: number | null
+          etapa_destino?: string | null
+          expediente_id: string
+          id?: string
+          resuelto_at?: string | null
+          resuelto_por?: string | null
+          solicitado_at?: string
+          tipo: string
+        }
+        Update: {
+          banco?: string
+          created_at?: string
+          descripcion?: string | null
+          dias_resolucion?: number | null
+          etapa_destino?: string | null
+          expediente_id?: string
+          id?: string
+          resuelto_at?: string | null
+          resuelto_por?: string | null
+          solicitado_at?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "banco_requerimientos_expediente_id_fkey"
+            columns: ["expediente_id"]
+            isOneToOne: false
+            referencedRelation: "expedientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      banco_sla_metricas: {
+        Row: {
+          banco: string
+          calculated_at: string
+          casos_abiertos: number
+          casos_vencidos: number
+          fecha: string
+          id: string
+          muestra: number
+          tasa_favorable: number | null
+          tasa_requerimientos: number | null
+          tiempo_max_dias: number | null
+          tiempo_min_dias: number | null
+          tiempo_promedio_dias: number | null
+        }
+        Insert: {
+          banco: string
+          calculated_at?: string
+          casos_abiertos?: number
+          casos_vencidos?: number
+          fecha: string
+          id?: string
+          muestra?: number
+          tasa_favorable?: number | null
+          tasa_requerimientos?: number | null
+          tiempo_max_dias?: number | null
+          tiempo_min_dias?: number | null
+          tiempo_promedio_dias?: number | null
+        }
+        Update: {
+          banco?: string
+          calculated_at?: string
+          casos_abiertos?: number
+          casos_vencidos?: number
+          fecha?: string
+          id?: string
+          muestra?: number
+          tasa_favorable?: number | null
+          tasa_requerimientos?: number | null
+          tiempo_max_dias?: number | null
+          tiempo_min_dias?: number | null
+          tiempo_promedio_dias?: number | null
+        }
+        Relationships: []
+      }
       brand_config: {
         Row: {
           color_azul: string
@@ -1202,6 +1297,60 @@ export type Database = {
         }
         Relationships: []
       }
+      caso_eventos: {
+        Row: {
+          cliente_id: string | null
+          created_at: string
+          expediente_id: string | null
+          id: string
+          idempotency_key: string | null
+          origen: string | null
+          payload_json: Json
+          procesado: boolean
+          procesado_at: string | null
+          tipo_evento: string
+        }
+        Insert: {
+          cliente_id?: string | null
+          created_at?: string
+          expediente_id?: string | null
+          id?: string
+          idempotency_key?: string | null
+          origen?: string | null
+          payload_json?: Json
+          procesado?: boolean
+          procesado_at?: string | null
+          tipo_evento: string
+        }
+        Update: {
+          cliente_id?: string | null
+          created_at?: string
+          expediente_id?: string | null
+          id?: string
+          idempotency_key?: string | null
+          origen?: string | null
+          payload_json?: Json
+          procesado?: boolean
+          procesado_at?: string | null
+          tipo_evento?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caso_eventos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "caso_eventos_expediente_id_fkey"
+            columns: ["expediente_id"]
+            isOneToOne: false
+            referencedRelation: "expedientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       caso_submotivos: {
         Row: {
           created_at: string
@@ -1231,6 +1380,192 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      casos_referidos: {
+        Row: {
+          caso_origen_id: string | null
+          caso_referido_id: string | null
+          cliente_referente_id: string | null
+          convertido: boolean
+          created_at: string
+          estado: string
+          fecha_contacto: string | null
+          fecha_conversion: string | null
+          fecha_solicitud: string
+          id: string
+          link_unico: string | null
+          metadata: Json
+          updated_at: string
+          valor_generado: number | null
+        }
+        Insert: {
+          caso_origen_id?: string | null
+          caso_referido_id?: string | null
+          cliente_referente_id?: string | null
+          convertido?: boolean
+          created_at?: string
+          estado?: string
+          fecha_contacto?: string | null
+          fecha_conversion?: string | null
+          fecha_solicitud?: string
+          id?: string
+          link_unico?: string | null
+          metadata?: Json
+          updated_at?: string
+          valor_generado?: number | null
+        }
+        Update: {
+          caso_origen_id?: string | null
+          caso_referido_id?: string | null
+          cliente_referente_id?: string | null
+          convertido?: boolean
+          created_at?: string
+          estado?: string
+          fecha_contacto?: string | null
+          fecha_conversion?: string | null
+          fecha_solicitud?: string
+          id?: string
+          link_unico?: string | null
+          metadata?: Json
+          updated_at?: string
+          valor_generado?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "casos_referidos_caso_origen_id_fkey"
+            columns: ["caso_origen_id"]
+            isOneToOne: false
+            referencedRelation: "expedientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "casos_referidos_caso_referido_id_fkey"
+            columns: ["caso_referido_id"]
+            isOneToOne: false
+            referencedRelation: "expedientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "casos_referidos_cliente_referente_id_fkey"
+            columns: ["cliente_referente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clientes: {
+        Row: {
+          cedula: string
+          ciudad: string | null
+          created_at: string
+          email: string | null
+          es_promotor: boolean
+          fecha_primer_caso: string | null
+          fecha_ultimo_caso: string | null
+          id: string
+          metadata: Json
+          nombre_completo: string
+          nps_ultimo: number | null
+          telefono: string | null
+          total_ahorro_generado: number
+          total_expedientes: number
+          total_honorarios_pagados: number
+          updated_at: string
+        }
+        Insert: {
+          cedula: string
+          ciudad?: string | null
+          created_at?: string
+          email?: string | null
+          es_promotor?: boolean
+          fecha_primer_caso?: string | null
+          fecha_ultimo_caso?: string | null
+          id?: string
+          metadata?: Json
+          nombre_completo: string
+          nps_ultimo?: number | null
+          telefono?: string | null
+          total_ahorro_generado?: number
+          total_expedientes?: number
+          total_honorarios_pagados?: number
+          updated_at?: string
+        }
+        Update: {
+          cedula?: string
+          ciudad?: string | null
+          created_at?: string
+          email?: string | null
+          es_promotor?: boolean
+          fecha_primer_caso?: string | null
+          fecha_ultimo_caso?: string | null
+          id?: string
+          metadata?: Json
+          nombre_completo?: string
+          nps_ultimo?: number | null
+          telefono?: string | null
+          total_ahorro_generado?: number
+          total_expedientes?: number
+          total_honorarios_pagados?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      clientes_promotores: {
+        Row: {
+          casos_originados: number
+          cliente_id: string
+          created_at: string
+          fecha_alta: string
+          fecha_ultima_actividad: string | null
+          id: string
+          metadata: Json
+          nivel: string
+          nps_ultimo: number | null
+          referidos_count: number
+          testimonios_count: number
+          updated_at: string
+          valor_generado: number
+        }
+        Insert: {
+          casos_originados?: number
+          cliente_id: string
+          created_at?: string
+          fecha_alta?: string
+          fecha_ultima_actividad?: string | null
+          id?: string
+          metadata?: Json
+          nivel?: string
+          nps_ultimo?: number | null
+          referidos_count?: number
+          testimonios_count?: number
+          updated_at?: string
+          valor_generado?: number
+        }
+        Update: {
+          casos_originados?: number
+          cliente_id?: string
+          created_at?: string
+          fecha_alta?: string
+          fecha_ultima_actividad?: string | null
+          id?: string
+          metadata?: Json
+          nivel?: string
+          nps_ultimo?: number | null
+          referidos_count?: number
+          testimonios_count?: number
+          updated_at?: string
+          valor_generado?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clientes_promotores_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: true
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       colab_auditoria: {
         Row: {
@@ -1849,6 +2184,95 @@ export type Database = {
           },
         ]
       }
+      etapa_definicion: {
+        Row: {
+          activa: boolean
+          ciclo: string
+          created_at: string
+          id: string
+          metadata: Json
+          nombre: string
+          numero: number
+          objetivo: string | null
+          orden_visual: number
+          responsable_default: string | null
+          sla_dias_habiles: number | null
+          updated_at: string
+        }
+        Insert: {
+          activa?: boolean
+          ciclo: string
+          created_at?: string
+          id: string
+          metadata?: Json
+          nombre: string
+          numero: number
+          objetivo?: string | null
+          orden_visual: number
+          responsable_default?: string | null
+          sla_dias_habiles?: number | null
+          updated_at?: string
+        }
+        Update: {
+          activa?: boolean
+          ciclo?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          nombre?: string
+          numero?: number
+          objetivo?: string | null
+          orden_visual?: number
+          responsable_default?: string | null
+          sla_dias_habiles?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      etapa_subestado_catalogo: {
+        Row: {
+          created_at: string
+          descripcion: string | null
+          es_bloqueante: boolean
+          es_final: boolean
+          es_inicial: boolean
+          etapa_id: string
+          id: string
+          orden: number
+          subestado: string
+        }
+        Insert: {
+          created_at?: string
+          descripcion?: string | null
+          es_bloqueante?: boolean
+          es_final?: boolean
+          es_inicial?: boolean
+          etapa_id: string
+          id?: string
+          orden?: number
+          subestado: string
+        }
+        Update: {
+          created_at?: string
+          descripcion?: string | null
+          es_bloqueante?: boolean
+          es_final?: boolean
+          es_inicial?: boolean
+          etapa_id?: string
+          id?: string
+          orden?: number
+          subestado?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "etapa_subestado_catalogo_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "etapa_definicion"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       executive_copilot_log: {
         Row: {
           contexto_json: Json
@@ -2326,6 +2750,7 @@ export type Database = {
           banco: string | null
           cedula: string | null
           cliente_data: Json
+          cliente_id: string | null
           cliente_nombre: string
           codigo: string | null
           created_at: string
@@ -2351,6 +2776,9 @@ export type Database = {
           radicado_id_banco: string | null
           recalculo_at: string | null
           recalculo_user_id: string | null
+          responsable_primario_id: string | null
+          sla_vence_at: string | null
+          subestado: string | null
           updated_at: string
           validacion_aprobado_at: string | null
           validacion_aprobado_por: string | null
@@ -2371,6 +2799,7 @@ export type Database = {
           banco?: string | null
           cedula?: string | null
           cliente_data?: Json
+          cliente_id?: string | null
           cliente_nombre: string
           codigo?: string | null
           created_at?: string
@@ -2396,6 +2825,9 @@ export type Database = {
           radicado_id_banco?: string | null
           recalculo_at?: string | null
           recalculo_user_id?: string | null
+          responsable_primario_id?: string | null
+          sla_vence_at?: string | null
+          subestado?: string | null
           updated_at?: string
           validacion_aprobado_at?: string | null
           validacion_aprobado_por?: string | null
@@ -2416,6 +2848,7 @@ export type Database = {
           banco?: string | null
           cedula?: string | null
           cliente_data?: Json
+          cliente_id?: string | null
           cliente_nombre?: string
           codigo?: string | null
           created_at?: string
@@ -2441,6 +2874,9 @@ export type Database = {
           radicado_id_banco?: string | null
           recalculo_at?: string | null
           recalculo_user_id?: string | null
+          responsable_primario_id?: string | null
+          sla_vence_at?: string | null
+          subestado?: string | null
           updated_at?: string
           validacion_aprobado_at?: string | null
           validacion_aprobado_por?: string | null
@@ -2452,6 +2888,13 @@ export type Database = {
           validacion_version?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "expedientes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "expedientes_producto_bancario_id_fkey"
             columns: ["producto_bancario_id"]
@@ -3412,6 +3855,65 @@ export type Database = {
           },
         ]
       }
+      pago_conciliacion: {
+        Row: {
+          conciliado_at: string | null
+          created_at: string
+          cuenta_cobro_id: string | null
+          diferencia: number | null
+          estado: string
+          expediente_id: string | null
+          id: string
+          monto_conciliado: number | null
+          monto_reportado: number | null
+          notas: string | null
+          reportado_at: string | null
+          soporte_url: string | null
+          tesoreria_user_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          conciliado_at?: string | null
+          created_at?: string
+          cuenta_cobro_id?: string | null
+          diferencia?: number | null
+          estado?: string
+          expediente_id?: string | null
+          id?: string
+          monto_conciliado?: number | null
+          monto_reportado?: number | null
+          notas?: string | null
+          reportado_at?: string | null
+          soporte_url?: string | null
+          tesoreria_user_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          conciliado_at?: string | null
+          created_at?: string
+          cuenta_cobro_id?: string | null
+          diferencia?: number | null
+          estado?: string
+          expediente_id?: string | null
+          id?: string
+          monto_conciliado?: number | null
+          monto_reportado?: number | null
+          notas?: string | null
+          reportado_at?: string | null
+          soporte_url?: string | null
+          tesoreria_user_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pago_conciliacion_expediente_id_fkey"
+            columns: ["expediente_id"]
+            isOneToOne: false
+            referencedRelation: "expedientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       parametros_financieros: {
         Row: {
           clave: string
@@ -4070,6 +4572,69 @@ export type Database = {
         }
         Relationships: []
       }
+      testimonios: {
+        Row: {
+          capturado_por: string | null
+          cliente_id: string | null
+          consentimiento_uso: boolean
+          contenido_texto: string | null
+          created_at: string
+          estado: string
+          expediente_id: string | null
+          id: string
+          nps_asociado: number | null
+          publicable: boolean
+          tipo: string
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          capturado_por?: string | null
+          cliente_id?: string | null
+          consentimiento_uso?: boolean
+          contenido_texto?: string | null
+          created_at?: string
+          estado?: string
+          expediente_id?: string | null
+          id?: string
+          nps_asociado?: number | null
+          publicable?: boolean
+          tipo: string
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          capturado_por?: string | null
+          cliente_id?: string | null
+          consentimiento_uso?: boolean
+          contenido_texto?: string | null
+          created_at?: string
+          estado?: string
+          expediente_id?: string | null
+          id?: string
+          nps_asociado?: number | null
+          publicable?: boolean
+          tipo?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testimonios_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "testimonios_expediente_id_fkey"
+            columns: ["expediente_id"]
+            isOneToOne: false
+            referencedRelation: "expedientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -4090,6 +4655,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      validacion_operativa: {
+        Row: {
+          checklist_json: Json
+          created_at: string
+          etapa_destino_si_rechazo: string | null
+          expediente_id: string
+          id: string
+          motivo_rechazo: string | null
+          observaciones: string | null
+          resultado: string
+          updated_at: string
+          validado_por: string | null
+        }
+        Insert: {
+          checklist_json?: Json
+          created_at?: string
+          etapa_destino_si_rechazo?: string | null
+          expediente_id: string
+          id?: string
+          motivo_rechazo?: string | null
+          observaciones?: string | null
+          resultado: string
+          updated_at?: string
+          validado_por?: string | null
+        }
+        Update: {
+          checklist_json?: Json
+          created_at?: string
+          etapa_destino_si_rechazo?: string | null
+          expediente_id?: string
+          id?: string
+          motivo_rechazo?: string | null
+          observaciones?: string | null
+          resultado?: string
+          updated_at?: string
+          validado_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "validacion_operativa_expediente_id_fkey"
+            columns: ["expediente_id"]
+            isOneToOne: false
+            referencedRelation: "expedientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       validaciones_qa: {
         Row: {
