@@ -491,7 +491,10 @@ function CostoTotalEjecutivo({
 
         {/* Bloque derecho — Cifras ejecutivas */}
         <div className="grid grid-cols-2 gap-3">
-          <ExecTile label="Valor desembolsado" value={formatCOP(valorDesembolsado)} />
+          <ExecTile
+            label={valorDesembolsado > 0 ? "Valor desembolsado" : "Base del crédito (estimada)"}
+            value={formatCOP(valorDesembolsado > 0 ? valorDesembolsado : base)}
+          />
           <ExecTile label="Dinero pagado a la fecha" value={formatCOP(dineroPagado)} />
           <ExecTile
             label="Total proyectado pendiente"
