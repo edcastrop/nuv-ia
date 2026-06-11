@@ -209,6 +209,103 @@
   border-radius: 18px;
 }
 
+/* ==========================================================
+   NUVIA · PRIMITIVAS VISUALES (Fase 1)
+   Source of truth: /login y /registro
+   Reutilizables en TODOS los módulos del ERP.
+   ========================================================== */
+
+/* Fondo base de pantallas tipo auth / shell oscuro */
+.nuvia-auth-bg {
+  background:
+    radial-gradient(1100px 700px at 20% 10%, rgba(68,93,163,0.28), transparent 60%),
+    radial-gradient(900px 600px at 90% 90%, rgba(132,185,143,0.22), transparent 55%),
+    linear-gradient(160deg, #0A0B10 0%, #0F121C 55%, #0A0B10 100%);
+}
+
+/* Grid sutil para canvas */
+.nuvia-grid-overlay {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
+          mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
+}
+
+/* Card glassmorphism canónica (Login/Registro) */
+.nuvia-glass-card {
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%);
+  -webkit-backdrop-filter: blur(18px);
+          backdrop-filter: blur(18px);
+  box-shadow: 0 30px 90px -30px rgba(0,0,0,0.8);
+  position: relative;
+  overflow: hidden;
+}
+.nuvia-glass-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #445DA3, #84B98F, transparent);
+}
+
+/* Input estándar NUVIA */
+.nuvia-input {
+  width: 100%;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #fff;
+  padding: 0.75rem 0.95rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  outline: none;
+  transition: all 0.18s ease;
+}
+.nuvia-input::placeholder { color: rgba(255,255,255,0.3); }
+.nuvia-input:focus {
+  border-color: rgba(68,93,163,0.65);
+  background: rgba(255,255,255,0.05);
+  box-shadow: 0 0 0 4px rgba(68,93,163,0.18);
+}
+.nuvia-input:-webkit-autofill {
+  -webkit-text-fill-color: #fff;
+  -webkit-box-shadow: 0 0 0 1000px rgba(20,22,32,0.95) inset;
+  caret-color: #fff;
+}
+
+/* Botón submit gradient NUVIA */
+.nuvia-submit {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #445DA3 0%, #84B98F 100%);
+  box-shadow: 0 10px 30px -10px rgba(68,93,163,0.7);
+  transition: box-shadow .2s ease, transform .15s ease;
+}
+.nuvia-submit:hover:not(:disabled) {
+  box-shadow: 0 18px 50px -12px rgba(132,185,143,0.5);
+}
+.nuvia-submit:disabled { opacity: .6; cursor: not-allowed; }
+
+/* Label compacto NUVIA */
+.nuvia-label {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgba(255,255,255,0.55);
+}
+
+
+
 @layer components {
   /* ==========================================================
      NUVEX · Pantalla CREAR CUENTA / Solicitud de acceso
