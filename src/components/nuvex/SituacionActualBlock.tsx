@@ -39,6 +39,10 @@ interface Props {
     interesesProyectados: number;
     segurosProyectados: number;
   };
+  /** TEA del crédito para semaforización. */
+  tea?: number;
+  /** Umbral de TEA a partir del cual se considera crítica (default 10% Pesos, 6% UVR). */
+  teaUmbral?: number;
   /** Fila secundaria — 4 tarjetas medianas. */
   secundarios: SituacionMetric[];
   /** Detalle completo dentro del acordeón. */
