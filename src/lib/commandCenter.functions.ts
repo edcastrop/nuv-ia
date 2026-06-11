@@ -279,7 +279,7 @@ export const upsertGoal = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     if (!(await assertExecutive(supabase, userId))) throw new Error("Forbidden");
 
-    const payload: Record<string, unknown> = {
+    const base = {
       periodo: data.periodo,
       nivel: data.nivel,
       area: data.area ?? null,
@@ -291,14 +291,13 @@ export const upsertGoal = createServerFn({ method: "POST" })
     };
 
     if (data.id) {
-      const { error } = await supabase.from("monthly_goals").update(payload).eq("id", data.id);
+      const { error } = await supabase.from("monthly_goals").update(base).eq("id", data.id);
       if (error) throw new Error(error.message);
       return { ok: true, id: data.id };
     }
-    payload.created_by = userId;
     const { data: ins, error } = await supabase
       .from("monthly_goals")
-      .insert(payload)
+      .insert({ ...base, created_by: userId })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
