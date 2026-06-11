@@ -72,6 +72,7 @@ import { Route as AuthenticatedFinanzasComisionesRouteImport } from './routes/_a
 import { Route as AuthenticatedFinanzasCarteraRouteImport } from './routes/_authenticated/finanzas.cartera'
 import { Route as AuthenticatedFinanzasAuditoriaRouteImport } from './routes/_authenticated/finanzas.auditoria'
 import { Route as AuthenticatedFinanzasAlertasRouteImport } from './routes/_authenticated/finanzas.alertas'
+import { Route as AuthenticatedExpedienteV2IdRouteImport } from './routes/_authenticated/expediente-v2.$id'
 import { Route as AuthenticatedExpedienteMaestroIdRouteImport } from './routes/_authenticated/expediente-maestro.$id'
 import { Route as AuthenticatedContratacionValidacionRouteImport } from './routes/_authenticated/contratacion.validacion'
 import { Route as AuthenticatedContabilidadCuentasCobroRouteImport } from './routes/_authenticated/contabilidad.cuentas-cobro'
@@ -445,6 +446,12 @@ const AuthenticatedFinanzasAlertasRoute =
     path: '/alertas',
     getParentRoute: () => AuthenticatedFinanzasRoute,
   } as any)
+const AuthenticatedExpedienteV2IdRoute =
+  AuthenticatedExpedienteV2IdRouteImport.update({
+    id: '/expediente-v2/$id',
+    path: '/expediente-v2/$id',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedExpedienteMaestroIdRoute =
   AuthenticatedExpedienteMaestroIdRouteImport.update({
     id: '/expediente-maestro/$id',
@@ -597,6 +604,7 @@ export interface FileRoutesByFullPath {
   '/contabilidad/cuentas-cobro': typeof AuthenticatedContabilidadCuentasCobroRoute
   '/contratacion/validacion': typeof AuthenticatedContratacionValidacionRoute
   '/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
+  '/expediente-v2/$id': typeof AuthenticatedExpedienteV2IdRoute
   '/finanzas/alertas': typeof AuthenticatedFinanzasAlertasRoute
   '/finanzas/auditoria': typeof AuthenticatedFinanzasAuditoriaRoute
   '/finanzas/cartera': typeof AuthenticatedFinanzasCarteraRoute
@@ -677,6 +685,7 @@ export interface FileRoutesByTo {
   '/contabilidad/cuentas-cobro': typeof AuthenticatedContabilidadCuentasCobroRoute
   '/contratacion/validacion': typeof AuthenticatedContratacionValidacionRoute
   '/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
+  '/expediente-v2/$id': typeof AuthenticatedExpedienteV2IdRoute
   '/finanzas/alertas': typeof AuthenticatedFinanzasAlertasRoute
   '/finanzas/auditoria': typeof AuthenticatedFinanzasAuditoriaRoute
   '/finanzas/cartera': typeof AuthenticatedFinanzasCarteraRoute
@@ -762,6 +771,7 @@ export interface FileRoutesById {
   '/_authenticated/contabilidad/cuentas-cobro': typeof AuthenticatedContabilidadCuentasCobroRoute
   '/_authenticated/contratacion/validacion': typeof AuthenticatedContratacionValidacionRoute
   '/_authenticated/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
+  '/_authenticated/expediente-v2/$id': typeof AuthenticatedExpedienteV2IdRoute
   '/_authenticated/finanzas/alertas': typeof AuthenticatedFinanzasAlertasRoute
   '/_authenticated/finanzas/auditoria': typeof AuthenticatedFinanzasAuditoriaRoute
   '/_authenticated/finanzas/cartera': typeof AuthenticatedFinanzasCarteraRoute
@@ -847,6 +857,7 @@ export interface FileRouteTypes {
     | '/contabilidad/cuentas-cobro'
     | '/contratacion/validacion'
     | '/expediente-maestro/$id'
+    | '/expediente-v2/$id'
     | '/finanzas/alertas'
     | '/finanzas/auditoria'
     | '/finanzas/cartera'
@@ -927,6 +938,7 @@ export interface FileRouteTypes {
     | '/contabilidad/cuentas-cobro'
     | '/contratacion/validacion'
     | '/expediente-maestro/$id'
+    | '/expediente-v2/$id'
     | '/finanzas/alertas'
     | '/finanzas/auditoria'
     | '/finanzas/cartera'
@@ -1011,6 +1023,7 @@ export interface FileRouteTypes {
     | '/_authenticated/contabilidad/cuentas-cobro'
     | '/_authenticated/contratacion/validacion'
     | '/_authenticated/expediente-maestro/$id'
+    | '/_authenticated/expediente-v2/$id'
     | '/_authenticated/finanzas/alertas'
     | '/_authenticated/finanzas/auditoria'
     | '/_authenticated/finanzas/cartera'
@@ -1516,6 +1529,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanzasAlertasRouteImport
       parentRoute: typeof AuthenticatedFinanzasRoute
     }
+    '/_authenticated/expediente-v2/$id': {
+      id: '/_authenticated/expediente-v2/$id'
+      path: '/expediente-v2/$id'
+      fullPath: '/expediente-v2/$id'
+      preLoaderRoute: typeof AuthenticatedExpedienteV2IdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/expediente-maestro/$id': {
       id: '/_authenticated/expediente-maestro/$id'
       path: '/expediente-maestro/$id'
@@ -1766,6 +1786,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedContabilidadCuentasCobroRoute: typeof AuthenticatedContabilidadCuentasCobroRoute
   AuthenticatedContratacionValidacionRoute: typeof AuthenticatedContratacionValidacionRoute
   AuthenticatedExpedienteMaestroIdRoute: typeof AuthenticatedExpedienteMaestroIdRoute
+  AuthenticatedExpedienteV2IdRoute: typeof AuthenticatedExpedienteV2IdRoute
   AuthenticatedSuperAdminAcademiaRoute: typeof AuthenticatedSuperAdminAcademiaRoute
   AuthenticatedSuperAdminAccesosRoute: typeof AuthenticatedSuperAdminAccesosRoute
   AuthenticatedSuperAdminAuditoriaRoute: typeof AuthenticatedSuperAdminAuditoriaRoute
@@ -1820,6 +1841,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedContratacionValidacionRoute:
     AuthenticatedContratacionValidacionRoute,
   AuthenticatedExpedienteMaestroIdRoute: AuthenticatedExpedienteMaestroIdRoute,
+  AuthenticatedExpedienteV2IdRoute: AuthenticatedExpedienteV2IdRoute,
   AuthenticatedSuperAdminAcademiaRoute: AuthenticatedSuperAdminAcademiaRoute,
   AuthenticatedSuperAdminAccesosRoute: AuthenticatedSuperAdminAccesosRoute,
   AuthenticatedSuperAdminAuditoriaRoute: AuthenticatedSuperAdminAuditoriaRoute,
