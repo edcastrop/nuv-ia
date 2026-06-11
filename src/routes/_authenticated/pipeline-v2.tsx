@@ -229,6 +229,46 @@ function PipelineV2Page() {
               <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} />
               Refrescar
             </button>
+            <button
+              onClick={async () => {
+                const XLSX = await import("xlsx");
+                const wb = XLSX.utils.book_new();
+                const resumen = stages.map((s) => ({
+                  Etapa: `E${s.numero} ${s.titulo}`,
+                  Casos: s.count,
+                  "Días prom": Number(s.diasProm.toFixed(1)),
+                  "SLA (días)": s.slaDias,
+                  "SLA %": Number(s.slaCumplido.toFixed(0)),
+                  "En riesgo": s.enRiesgo.length,
+                  "$ en riesgo": s.dineroEnRiesgo,
+                  Semáforo: s.semaforo,
+                  Responsable: s.responsables.join(", "),
+                }));
+                const detalle = stages.flatMap((s) =>
+                  s.casos.map((c) => {
+                    const d = diasDesde(c.updated_at);
+                    return {
+                      Etapa: `E${s.numero} ${s.titulo}`,
+                      Cliente: c.cliente_nombre,
+                      Cédula: c.cedula ?? "",
+                      Banco: c.banco ?? "",
+                      Crédito: c.numero_credito ?? "",
+                      "Días en etapa": d,
+                      "SLA": s.slaDias,
+                      "Exceso": Math.max(0, d - s.slaDias),
+                      Honorarios: Number(c.honorarios_final) || Number(c.honorarios_base) || 0,
+                      Estado: c.estado,
+                    };
+                  }),
+                );
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumen), "Resumen SLA");
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(detalle), "Detalle casos");
+                XLSX.writeFile(wb, `pipeline-v2-${new Date().toISOString().slice(0, 10)}.xlsx`);
+              }}
+              className="glass-button inline-flex items-center gap-1.5 px-3 py-1.5 text-xs"
+            >
+              <Download size={12} /> Excel
+            </button>
             <Link
               to="/pipeline"
               className="glass-button inline-flex items-center gap-1.5 px-3 py-1.5 text-xs"
