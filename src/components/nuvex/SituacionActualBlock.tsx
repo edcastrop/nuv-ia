@@ -436,7 +436,7 @@ function CostoTotalEjecutivo({
             className="text-[10.5px] font-semibold uppercase tracking-[0.24em]"
             style={{ color: "rgba(255,255,255,0.55)" }}
           >
-            Vas a pagar
+            {baseDisponible ? "Vas a pagar" : "Múltiplo del crédito"}
           </div>
           <div
             className="mt-2 flex items-baseline gap-3 leading-none"
@@ -445,51 +445,57 @@ function CostoTotalEjecutivo({
             <span
               className="font-extrabold tracking-tight"
               style={{
-                fontSize: "clamp(72px, 11vw, 128px)",
+                fontSize: baseDisponible ? "clamp(72px, 11vw, 128px)" : "clamp(40px, 6vw, 64px)",
                 textShadow: `0 0 40px ${s.ring}`,
               }}
             >
               {vecesTxt}
             </span>
-            <span
-              className="font-bold"
-              style={{ fontSize: "clamp(22px, 2.4vw, 32px)", opacity: 0.9 }}
-            >
-              veces
-            </span>
+            {baseDisponible && (
+              <span
+                className="font-bold"
+                style={{ fontSize: "clamp(22px, 2.4vw, 32px)", opacity: 0.9 }}
+              >
+                veces
+              </span>
+            )}
           </div>
           <div
             className="mt-2 text-[12px] font-semibold uppercase tracking-[0.2em]"
             style={{ color: "rgba(255,255,255,0.6)" }}
           >
-            el valor de tu crédito
+            {baseDisponible ? "el valor de tu crédito" : "no disponible"}
           </div>
 
-          <div
-            className="mt-4 inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em]"
-            style={{
-              background: s.chipBg,
-              color: s.chipText,
-              border: `1px solid ${s.ring}`,
-            }}
-          >
-            <span aria-hidden>{s.icon}</span>
-            {s.label}
-          </div>
+          {baseDisponible && (
+            <div
+              className="mt-4 inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em]"
+              style={{
+                background: s.chipBg,
+                color: s.chipText,
+                border: `1px solid ${s.ring}`,
+              }}
+            >
+              <span aria-hidden>{s.icon}</span>
+              {s.label}
+            </div>
+          )}
 
           <p
             className="mt-4 max-w-md text-[13.5px] leading-relaxed"
             style={{ color: "rgba(255,255,255,0.78)" }}
           >
-            {s.mensaje}
+            {baseDisponible
+              ? s.mensaje
+              : "Para calcular cuántas veces vas a pagar tu crédito necesitamos el valor desembolsado original por el banco. Cárgalo en los datos del crédito para activar el diagnóstico ejecutivo completo."}
           </p>
         </div>
 
         {/* Bloque derecho — Cifras ejecutivas */}
         <div className="grid grid-cols-2 gap-3">
           <ExecTile
-            label={valorDesembolsado > 0 ? "Valor desembolsado" : "Base del crédito (estimada)"}
-            value={formatCOP(valorDesembolsado > 0 ? valorDesembolsado : base)}
+            label={valorDesembolsado > 0 ? "Valor desembolsado" : "Valor desembolsado (no disponible)"}
+            value={valorDesembolsado > 0 ? formatCOP(valorDesembolsado) : "—"}
           />
           <ExecTile label="Dinero pagado a la fecha" value={formatCOP(dineroPagado)} />
           <ExecTile
@@ -498,7 +504,7 @@ function CostoTotalEjecutivo({
           />
           <ExecTile
             label="Intereses y costos proyectados"
-            value={formatCOP(interesesYCostos)}
+            value={baseDisponible ? formatCOP(interesesYCostos) : "—"}
             textColor={s.text}
           />
           <div className="col-span-2">
