@@ -284,7 +284,7 @@ function LoginPage() {
                   onChange={(e) => setRemember(e.target.checked)}
                   className="h-4 w-4 rounded border-white/20 bg-white/5 accent-[#445DA3]"
                 />
-                Remember me
+                Recordarme
               </label>
 
               {err && (
