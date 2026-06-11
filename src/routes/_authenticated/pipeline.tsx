@@ -263,12 +263,12 @@ function PipelinePage() {
     let totalDias = 0;
     let estancados = 0;
     let total = 0;
-    const fases: Array<{ id: string; label: string; etapas: EtapaPipelineId[]; count: number; color: string }> = [
-      { id: "comercial", label: "Comercial · E1-3", etapas: ["lead", "extracto", "proyeccion"], count: 0, color: "bg-blue-50 text-blue-700 ring-blue-200" },
-      { id: "operativa", label: "Operativa · E4-7", etapas: ["presentacion", "cierre", "contratacion", "radicacion"], count: 0, color: "bg-indigo-50 text-indigo-700 ring-indigo-200" },
-      { id: "banco",     label: "Banco · E8",       etapas: ["banco"], count: 0, color: "bg-amber-50 text-amber-700 ring-amber-200" },
-      { id: "cobro",     label: "Cobro · E9-13",    etapas: ["informe", "cuenta", "pago", "comision", "paz_salvo"], count: 0, color: "bg-emerald-50 text-emerald-700 ring-emerald-200" },
-      { id: "fin",       label: "Finalizado · E14", etapas: ["finalizado"], count: 0, color: "bg-zinc-100 text-zinc-700 ring-zinc-200" },
+    const fases: Array<{ id: string; label: string; etapas: EtapaPipelineId[]; count: number }> = [
+      { id: "comercial", label: "Comercial · E1-5", etapas: ["lead", "extracto", "proyeccion", "presentacion", "cierre"], count: 0 },
+      { id: "operativa", label: "Operativa · E6-7", etapas: ["contratacion", "radicacion"], count: 0 },
+      { id: "banco",     label: "Banco · E8-10",    etapas: ["banco", "resultado_banco", "aceptacion_cliente"], count: 0 },
+      { id: "cobro",     label: "Cobro · E11-14",   etapas: ["informe", "cuenta", "pago", "paz_salvo"], count: 0 },
+      { id: "fin",       label: "Cierre · E15",     etapas: ["finalizado"], count: 0 },
     ];
     let honorarios = 0;
     ETAPAS_PIPELINE.forEach((etapa) => {
