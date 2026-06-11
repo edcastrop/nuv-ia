@@ -88,9 +88,9 @@ function LoginPage() {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       if (error) throw error;
-      setInfo("We've sent you a password reset link. Please check your inbox.");
+      setInfo("Te enviamos un enlace para restablecer tu contraseña. Revisa tu bandeja de entrada.");
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Couldn't send the link.");
+      setErr(e instanceof Error ? e.message : "No pudimos enviar el enlace.");
     } finally {
       setBusy(false);
     }
