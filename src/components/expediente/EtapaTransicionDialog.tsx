@@ -113,16 +113,18 @@ export function EtapaTransicionDialog() {
       aria-modal="true"
     >
       <div
-        className="absolute inset-0 bg-black/55 backdrop-blur-sm animate-in fade-in"
+        className="absolute inset-0 backdrop-blur-sm animate-in fade-in"
+        style={{ background: "rgba(5,8,22,0.72)" }}
         onClick={close}
       />
       <div
-        className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-[0_30px_80px_-20px_rgba(0,0,0,0.55)] animate-in fade-in zoom-in-95 duration-200"
-        style={{ border: "1px solid rgba(0,0,0,0.06)" }}
+        className="glass-modal relative w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        style={{ color: "var(--nuvia-text-primary)" }}
       >
         <button
           onClick={close}
-          className="absolute right-3 top-3 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full text-[#5C6770] hover:bg-[#F2F4F8] hover:text-[#0F1115]"
+          className="absolute right-3 top-3 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full transition"
+          style={{ color: "var(--nuvia-text-muted)", background: "rgba(255,255,255,0.04)" }}
           aria-label="Cerrar"
         >
           <X size={16} />
@@ -165,31 +167,36 @@ function SuccessBody({
 
   return (
     <div>
-      {/* Cabecera celebrativa */}
       <div
-        className="relative px-7 pt-8 pb-6 text-white"
+        className="relative px-7 pt-8 pb-6"
         style={{
           background:
-            "linear-gradient(135deg, #0F2419 0%, #1F7A45 55%, #14361F 100%)",
+            "linear-gradient(135deg, var(--nuvia-bg-secondary) 0%, rgba(132,185,143,0.18) 55%, var(--nuvia-bg-tertiary) 100%)",
+          borderBottom: "1px solid var(--nuvia-border)",
+          color: "var(--nuvia-text-primary)",
         }}
       >
         <div
           aria-hidden
           className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full blur-3xl"
-          style={{ background: "rgba(115,230,156,0.35)" }}
+          style={{ background: "rgba(132,185,143,0.25)" }}
         />
         <div className="relative flex items-start gap-4">
           <div
             className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
             style={{
-              background: "rgba(255,255,255,0.14)",
-              border: "1px solid rgba(255,255,255,0.25)",
+              background: "rgba(132,185,143,0.18)",
+              border: "1px solid var(--nuvia-border)",
+              color: "var(--nuvia-accent-green)",
             }}
           >
             {esCierreFinal ? <Sparkles size={22} /> : <CheckCircle2 size={26} />}
           </div>
           <div className="min-w-0">
-            <div className="text-[10.5px] font-bold uppercase tracking-[0.22em] opacity-80">
+            <div
+              className="text-[10.5px] font-bold uppercase tracking-[0.22em]"
+              style={{ color: "var(--nuvia-text-secondary)" }}
+            >
               {esCierreFinal ? "Caso cerrado con éxito" : "Etapa completada con éxito"}
             </div>
             <h2 className="mt-1 text-[20px] font-bold leading-tight">
@@ -197,7 +204,10 @@ function SuccessBody({
                 ? `¡Felicitaciones, cerraste el caso!`
                 : `¡Acabas de finalizar ${anterior.titulo}!`}
             </h2>
-            <p className="mt-1 text-[13px] leading-relaxed text-white/80">
+            <p
+              className="mt-1 text-[13px] leading-relaxed"
+              style={{ color: "var(--nuvia-text-secondary)" }}
+            >
               {esCierreFinal
                 ? "Todas las etapas del pipeline quedaron completadas. El expediente queda archivado."
                 : `Avanzaste al paso ${actual.numero} de 15.`}
@@ -206,27 +216,34 @@ function SuccessBody({
         </div>
       </div>
 
-      {/* Cuerpo — siguiente etapa */}
       <div className="px-7 py-6">
         {siguiente && !esCierreFinal && (
           <div
             className="rounded-xl p-4"
-            style={{ background: "#F4F7FB", border: "1px solid #E3E7EE" }}
+            style={{
+              background: "var(--nuvia-bg-tertiary)",
+              border: "1px solid var(--nuvia-border)",
+            }}
           >
-            <div className="flex items-center gap-2 text-[10.5px] font-bold uppercase tracking-[0.18em] text-[#445DA3]">
+            <div
+              className="flex items-center gap-2 text-[10.5px] font-bold uppercase tracking-[0.18em]"
+              style={{ color: "var(--nuvia-accent-blue)" }}
+            >
               <ArrowRight size={13} />
               Continúas con
             </div>
-            <div className="mt-1.5 text-[16px] font-bold text-[#0F1115]">
+            <div className="mt-1.5 text-[16px] font-bold" style={{ color: "var(--nuvia-text-primary)" }}>
               Etapa {siguiente.numero} · {siguiente.titulo}
             </div>
-            <div className="mt-0.5 text-[12.5px] text-[#5C6770]">
+            <div className="mt-0.5 text-[12.5px]" style={{ color: "var(--nuvia-text-secondary)" }}>
               {siguiente.descripcion}
             </div>
             {responsableSiguiente && (
               <div className="mt-2 text-[11.5px]">
-                <span className="font-semibold text-[#5C6770]">Responsable: </span>
-                <span className="text-[#0F1115]">{responsableSiguiente}</span>
+                <span className="font-semibold" style={{ color: "var(--nuvia-text-secondary)" }}>
+                  Responsable:{" "}
+                </span>
+                <span style={{ color: "var(--nuvia-text-primary)" }}>{responsableSiguiente}</span>
               </div>
             )}
           </div>
@@ -234,18 +251,22 @@ function SuccessBody({
 
         {acciones.length > 0 && (
           <div className="mt-4">
-            <div className="text-[10.5px] font-bold uppercase tracking-[0.16em] text-[#5C6770]">
+            <div
+              className="text-[10.5px] font-bold uppercase tracking-[0.16em]"
+              style={{ color: "var(--nuvia-text-secondary)" }}
+            >
               {esCierreFinal ? "Cierre operativo" : "Acciones sugeridas"}
             </div>
             <ul className="mt-2 space-y-1.5">
               {acciones.map((a) => (
                 <li
                   key={a}
-                  className="flex items-start gap-2 text-[13px] text-[#242424]"
+                  className="flex items-start gap-2 text-[13px]"
+                  style={{ color: "var(--nuvia-text-primary)" }}
                 >
                   <span
                     className="mt-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full"
-                    style={{ background: "#84B98F" }}
+                    style={{ background: "var(--nuvia-accent-green)" }}
                   />
                   <span>{a}</span>
                 </li>
@@ -255,12 +276,19 @@ function SuccessBody({
         )}
       </div>
 
-      <div className="flex items-center justify-end gap-2 border-t border-[#E3E7EE] bg-[#FAFBFD] px-7 py-4">
+      <div
+        className="flex items-center justify-end gap-2 px-7 py-4"
+        style={{
+          borderTop: "1px solid var(--nuvia-border)",
+          background: "rgba(5,8,22,0.35)",
+        }}
+      >
         <button
           onClick={onClose}
-          className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[13px] font-semibold text-white transition-all hover:opacity-95"
+          className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[13px] font-semibold transition-all hover:opacity-95"
           style={{
-            background: "linear-gradient(135deg, #445DA3 0%, #84B98F 100%)",
+            background: "var(--nuvia-gradient-primary)",
+            color: "var(--nuvia-text-primary)",
             boxShadow: "0 10px 24px -10px rgba(68,93,163,0.55)",
           }}
         >
@@ -291,35 +319,44 @@ function ErrorBody({
   return (
     <div>
       <div
-        className="relative px-7 pt-8 pb-6 text-white"
+        className="relative px-7 pt-8 pb-6"
         style={{
           background:
-            "linear-gradient(135deg, #3A1F08 0%, #B45309 55%, #2E1808 100%)",
+            "linear-gradient(135deg, var(--nuvia-bg-secondary) 0%, rgba(245,158,11,0.18) 55%, var(--nuvia-bg-tertiary) 100%)",
+          borderBottom: "1px solid var(--nuvia-border)",
+          color: "var(--nuvia-text-primary)",
         }}
       >
         <div
           aria-hidden
           className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full blur-3xl"
-          style={{ background: "rgba(255,180,80,0.35)" }}
+          style={{ background: "rgba(245,158,11,0.22)" }}
         />
         <div className="relative flex items-start gap-4">
           <div
             className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
             style={{
-              background: "rgba(255,255,255,0.14)",
-              border: "1px solid rgba(255,255,255,0.25)",
+              background: "rgba(245,158,11,0.18)",
+              border: "1px solid var(--nuvia-border)",
+              color: "var(--nuvia-warning)",
             }}
           >
             <AlertTriangle size={24} />
           </div>
           <div className="min-w-0">
-            <div className="text-[10.5px] font-bold uppercase tracking-[0.22em] opacity-80">
+            <div
+              className="text-[10.5px] font-bold uppercase tracking-[0.22em]"
+              style={{ color: "var(--nuvia-text-secondary)" }}
+            >
               Aún no puedes avanzar
             </div>
             <h2 className="mt-1 text-[20px] font-bold leading-tight">
               No se pudo cerrar la etapa
             </h2>
-            <p className="mt-1 text-[13px] leading-relaxed text-white/85">
+            <p
+              className="mt-1 text-[13px] leading-relaxed"
+              style={{ color: "var(--nuvia-text-secondary)" }}
+            >
               {destino
                 ? `Intentaste pasar de ${actual.titulo} a ${destino.titulo}.`
                 : `Etapa actual: ${actual.titulo}.`}
@@ -331,28 +368,38 @@ function ErrorBody({
       <div className="px-7 py-6">
         <div
           className="rounded-xl p-4"
-          style={{ background: "#FEF6EB", border: "1px solid #F3D9A8" }}
+          style={{
+            background: "rgba(245,158,11,0.08)",
+            border: "1px solid rgba(245,158,11,0.30)",
+          }}
         >
-          <div className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-[#8A4B0A]">
+          <div
+            className="text-[10.5px] font-bold uppercase tracking-[0.18em]"
+            style={{ color: "var(--nuvia-warning)" }}
+          >
             Motivo
           </div>
-          <div className="mt-1 text-[13.5px] leading-relaxed text-[#3A1F08]">
+          <div className="mt-1 text-[13.5px] leading-relaxed" style={{ color: "var(--nuvia-text-primary)" }}>
             {razon}
           </div>
         </div>
 
         {faltantes.length > 0 && (
           <div className="mt-4">
-            <div className="text-[10.5px] font-bold uppercase tracking-[0.16em] text-[#5C6770]">
+            <div
+              className="text-[10.5px] font-bold uppercase tracking-[0.16em]"
+              style={{ color: "var(--nuvia-text-secondary)" }}
+            >
               Para completar esta etapa te falta
             </div>
             <ul className="mt-2 space-y-1.5">
               {faltantes.map((f) => (
                 <li
                   key={f}
-                  className="flex items-start gap-2 text-[13px] text-[#242424]"
+                  className="flex items-start gap-2 text-[13px]"
+                  style={{ color: "var(--nuvia-text-primary)" }}
                 >
-                  <span className="mt-0.5 text-[#C2410C]">✗</span>
+                  <span className="mt-0.5" style={{ color: "var(--nuvia-danger)" }}>✗</span>
                   <span>{f}</span>
                 </li>
               ))}
@@ -361,10 +408,21 @@ function ErrorBody({
         )}
       </div>
 
-      <div className="flex items-center justify-end gap-2 border-t border-[#E3E7EE] bg-[#FAFBFD] px-7 py-4">
+      <div
+        className="flex items-center justify-end gap-2 px-7 py-4"
+        style={{
+          borderTop: "1px solid var(--nuvia-border)",
+          background: "rgba(5,8,22,0.35)",
+        }}
+      >
         <button
           onClick={onClose}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#0F1115] px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-[#1F2329]"
+          className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[13px] font-semibold transition"
+          style={{
+            background: "var(--nuvia-bg-tertiary)",
+            border: "1px solid var(--nuvia-border)",
+            color: "var(--nuvia-text-primary)",
+          }}
         >
           Entendido
         </button>
