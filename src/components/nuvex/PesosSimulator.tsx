@@ -290,7 +290,9 @@ export function PesosSimulator({
   ];
 
   const vecesOpt =
-    recomendada && saldoCapitalNum > 0 ? recomendada.totalProyectado / saldoCapitalNum : 0;
+    recomendada && baseCreditoReferencia > 0
+      ? (dineroPagadoFecha + recomendada.totalProyectado) / baseCreditoReferencia
+      : 0;
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-6 py-6">
