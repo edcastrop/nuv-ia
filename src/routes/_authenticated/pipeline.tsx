@@ -1,4 +1,4 @@
-// P14 — Vista Kanban del Pipeline Maestro NUVEX (14 columnas E1→E14).
+// P14 — Vista Kanban del Pipeline Maestro NUVEX (15 etapas E1→E15).
 // P15 — Filtros (búsqueda, banco, solo estancados).
 // P16 — Filtros persistidos en URL via search params (compartibles).
 
@@ -13,7 +13,6 @@ import {
   computeEtapaActual,
   type EtapaPipelineId,
 } from "@/lib/pipelineEtapas";
-import { Card } from "@/components/nuvex/ui";
 import { BANCOS } from "@/components/nuvex/constants";
 import { useAuth } from "@/hooks/useAuth";
 import { getRecentCases } from "@/lib/recentCases";
@@ -32,10 +31,10 @@ const pipelineSearchSchema = z.object({
 });
 
 const FASE_ETAPAS: Record<FaseId, EtapaPipelineId[]> = {
-  comercial: ["lead", "extracto", "proyeccion"],
-  operativa: ["presentacion", "cierre", "contratacion", "radicacion"],
-  banco: ["banco"],
-  cobro: ["informe", "cuenta", "pago", "comision", "paz_salvo"],
+  comercial: ["lead", "extracto", "proyeccion", "presentacion", "cierre"],
+  operativa: ["contratacion", "radicacion"],
+  banco: ["banco", "resultado_banco", "aceptacion_cliente"],
+  cobro: ["informe", "cuenta", "pago", "paz_salvo"],
   fin: ["finalizado"],
 };
 
@@ -46,7 +45,7 @@ export const Route = createFileRoute("/_authenticated/pipeline")({
 
 const UMBRAL_DIAS: Partial<Record<EtapaPipelineId, number>> = {
   lead: 3, extracto: 5, proyeccion: 5, presentacion: 7, cierre: 7,
-  contratacion: 10, radicacion: 7, banco: 21, informe: 5, cuenta: 5,
+  contratacion: 10, radicacion: 7, banco: 21, resultado_banco: 5, aceptacion_cliente: 5, informe: 5, cuenta: 5,
   pago: 10, comision: 7, paz_salvo: 5, finalizado: 0,
 };
 
