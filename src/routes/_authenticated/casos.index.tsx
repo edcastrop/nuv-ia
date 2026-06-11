@@ -402,10 +402,10 @@ function CasosPage() {
             © {new Date().getFullYear()} NUVEX Finanzas Inteligentes · El ahorro no es un lujo, es un derecho.
           </div>
         </footer>
-      </div>
-    </div>
+    </PageLayout>
   );
 }
+
 
 /* ===== Helpers ===== */
 
