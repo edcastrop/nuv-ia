@@ -1,70 +1,96 @@
-# Integración de entrega documental por banco
+# Motor de Honorarios NUVEX
 
-Sub-flujo dentro de la etapa **Radicación** que aplica reglas diferentes según el banco del expediente, con días hábiles, gate duro en Bogotá y PDF consolidado imprimible.
+Módulo nuevo de pricing engine que calcula, controla y audita los honorarios de cada caso de optimización, eliminando la negociación arbitraria y protegiendo el margen de NUVEX.
 
-## Matriz de reglas por banco
+## 1. Acceso y navegación
 
-| Banco | Al radicar | Documentación financiera | Disparador |
-|---|---|---|---|
-| Davivienda | Solo poder | Por correo a Jurídica del banco | Inmediato (botón) |
-| Banco de Bogotá | Poder + cédulas + checklist completo | Física, en el mismo acto | **Gate duro**: no permite radicar si falta algo |
-| Davibank | Solo poder | Física | Tarea programada **T+4 días hábiles** |
-| AV Villas | Solo poder | Física | Tarea programada **T+8 días hábiles** |
+- Nueva entrada en el menú lateral: **Motor de Honorarios** (icono `DollarSign`).
+- Nueva ruta: `/_authenticated/honorarios-motor` (vista principal) + `/_authenticated/honorarios-motor/$id` (detalle/oferta de un cálculo).
+- Roles con acceso:
+  - **Analista / Licenciado / Director Financiero**: calcular, simular, solicitar aprobación.
+  - **Dirección Comercial / Gerencia / Super Admin**: aprobar / rechazar / contraofertar + ver reportes ejecutivos.
+  - Resto: sin acceso.
 
-## Componentes a construir
+## 2. Motor de cálculo (`src/lib/motorHonorarios.ts`)
 
-### 1. Tabla `expediente_entrega_documental`
-Sub-estado por expediente para la entrega de documentación financiera.
-- `expediente_id`, `banco`, `modalidad` (correo | fisica), `estado` (pendiente | programada | enviada_correo | entregada_fisica), `fecha_programada` (hábil), `fecha_completada`, `notas`.
-- RLS: asesor del caso + roles operativos. GRANT estándar.
+Función pura, testeable, sin dependencias de UI:
 
-### 2. Helper `src/lib/diasHabiles.ts`
-- `sumarDiasHabiles(fecha, n)` — excluye sábado/domingo y festivos Colombia (lista estática de festivos 2026 ya cubre V1).
+- **Inputs**: `ahorroIntereses`, `ahorroSeguros`, `tipoCredito` ("pesos" | "uvr"), `plazoOriginalMeses`, opcionalmente `saldoCapital`, `banco`, `cliente`.
+- **Clasificación automática**:
+  - UVR + plazo 360 → `uvr_360` (3%)
+  - Ahorro ≤ 100M → `estandar` (6%)
+  - 100M < ahorro ≤ 200M → `intermedio` (5%)
+  - 200M < ahorro ≤ 400M → `premium` (4%)
+  - > 400M → `corporativo` (3.5%)
+- **Honorario teórico** = `ahorroTotal × %`
+- **Reglas de tope**: piso $2.000.000, techo $14.000.000 (con flag `alertaTope` cuando se topa).
+- **Matriz de descuento máximo**:
+  - 2M–5M → 10%
+  - 5M–10M → 20%
+  - >10M → 30%
+- **Generador de ofertas**: base + Pronta firma 10/20/30%.
+- **Semáforo de autorización** sobre un descuento propuesto: verde / amarillo (≥80% del límite) / rojo (excede).
+- **Índice de rentabilidad** = `vendido / recomendado × 100` con semáforo (≥90 verde, 80–89 amarillo, <80 rojo).
 
-### 3. Reglas por banco `src/lib/reglasEntregaBanco.ts`
-- `getReglaEntrega(banco)` → `{ modalidad, diasHabiles, requiereChecklistCompleto, requierePoderFirmado }`.
+## 3. Base de datos (Lovable Cloud)
 
-### 4. Gate Banco de Bogotá
-Extender `src/lib/validacionRadicacion.ts`:
-- Si `banco === "Banco de Bogotá"`, exigir checklist 100% completo antes de permitir `radicado_banco` (bloqueo, no warning).
-- Mensaje claro listando lo que falta.
+### `honorarios_calculos`
+Cada cálculo guardado desde una simulación.
+- `expediente_id` (FK, nullable), `simulacion_id`, `cliente_nombre`, `banco`, `tipo_credito`, `plazo_original`, `saldo_capital`
+- `ahorro_intereses`, `ahorro_seguros`, `ahorro_total`
+- `clasificacion` (enum), `porcentaje_aplicado`, `honorario_teorico`, `honorario_topado`, `alerta_tope`
+- `honorario_ofertado`, `descuento_aplicado_pct`, `rentabilidad_pct`
+- `estado` (enum: `borrador` | `ofertado` | `pendiente_aprobacion` | `aprobado` | `rechazado` | `contraofertado` | `cerrado`)
+- `created_by`, `created_at`, `updated_at`
 
-### 5. Trigger al marcar `radicado_banco`
-En `src/hooks/useEstadoSugerido.ts` (post-confirmación), si la acción es radicación:
-- Lee la regla del banco.
-- Crea fila en `expediente_entrega_documental` con la fecha programada (T+N hábiles) o `pendiente` inmediato (Davivienda/Bogotá).
-- Bogotá queda `entregada_fisica` automática (se entregó en el mismo acto).
+### `honorarios_aprobaciones`
+- `calculo_id` FK, `solicitado_por`, `aprobado_por`, `decision` (`aprobado`|`rechazado`|`contraofertado`)
+- `honorario_solicitado`, `honorario_contraoferta`, `motivo_solicitud`, `comentarios_aprobador`
+- timestamps
 
-### 6. Bloque UI `EntregaDocumentalBlock`
-`src/components/expediente/EntregaDocumentalBlock.tsx` dentro de la pestaña de Radicación del caso. Muestra:
-- Banco, modalidad y fecha programada/vencida (badge rojo si pasó).
-- **Davivienda**: botón "Enviar documentación a Jurídica del banco" → abre modal que reutiliza `enviarSolicitudPlazoBanco` y adjunta poder + cédulas + financieros + cuerpo Ley 546.
-- **Bogotá**: estado "Entregada con el poder" (auto).
-- **Davibank / AV Villas**: contador "Faltan X días hábiles para entrega física" + botón "Generar paquete imprimible" + botón "Marcar entregada".
+### `honorarios_auditoria` (append-only)
+- `calculo_id`, `user_id`, `accion`, `valor_anterior` jsonb, `valor_nuevo` jsonb, `created_at`
+- Sin DELETE permitido (RLS bloquea).
 
-### 7. PDF consolidado imprimible
-`src/lib/paqueteDocumentalPdf.ts` (cliente, usa `pdf-lib` que ya existe en proyecto):
-- Carátula con datos del caso + banco + checklist de lo que va dentro.
-- Concatena: poder, cédula apoderado, cédulas titular(es) y codeudor, documentos financieros del análisis de capacidad.
-- Descarga `Paquete_<cliente>_<banco>.pdf`.
+RLS + GRANT estándar. Trigger de auditoría en INSERT/UPDATE de `honorarios_calculos`.
 
-### 8. Alertas en pipeline
-Insertar fila en `caso_alertas` cuando la fecha programada sea hoy o esté vencida (lo recoge `AlertasEstancamientoPanel` existente).
+## 4. UI — Vista principal `/honorarios-motor`
+
+Layout estética premium NUVEX (#242424, #445DA3, #84B98F), tarjetas tipo Stripe/Revolut.
+
+### Pestañas
+1. **Calculadora** — selector de simulación existente (autocompleta desde `proyecciones_financieras` / casos) o entrada manual. Al calcular muestra el **Dashboard de Honorarios**:
+   - Tarjetas: Ahorro Total · Honorario Teórico · % Aplicado · Honorario Comercial · Clasificación · Descuento Máx · Rentabilidad Esperada
+   - Bloque **Generador de Ofertas** (4 tarjetas: Base, P.F. 10/20/30%)
+   - Slider/Input de "Honorario a ofertar" con semáforo en vivo
+   - Si rojo → botón **Solicitar Aprobación** abre modal (Cliente, Ahorro Total, Recomendado, Solicitado, Motivo, Comentarios)
+2. **Mis cálculos** — tabla con filtros por estado, banco, clasificación, fecha.
+3. **Aprobaciones** (solo Dirección Comercial / Gerencia) — bandeja de solicitudes con botones Aprobar / Rechazar / Contraofertar.
+4. **Reportes** (solo gerencia) — dashboard ejecutivo: honorarios vendidos por mes, % descuento promedio, top analistas, tasa de aprobación, rentabilidad promedio. Recharts.
+
+## 5. Integración con simulaciones existentes
+
+Sin tocar la lógica de simulación. Solo añadir un botón **"Calcular honorarios NUVEX"** en `PropuestasComerciales.tsx` que abre la calculadora prellenada con los ahorros del caso actual. No se rompe ningún flujo existente.
+
+## 6. Auditoría
+
+Cada acción (cálculo, oferta enviada, descuento aplicado, solicitud, decisión) genera fila en `honorarios_auditoria` con snapshot antes/después. RLS impide `DELETE`. Visualización en pestaña interna del detalle del cálculo.
+
+## 7. Orden de implementación
+
+1. Migración (3 tablas + RLS + GRANT + trigger auditoría).
+2. Motor puro `src/lib/motorHonorarios.ts` + tipos.
+3. Capa de datos `src/lib/honorariosMotor.functions.ts` (serverFn con `requireSupabaseAuth`).
+4. Vista principal + 4 pestañas, componentes de tarjetas y generador de ofertas.
+5. Bandeja de aprobaciones + modal de solicitud.
+6. Reportes con Recharts.
+7. Botón de integración en `PropuestasComerciales.tsx`.
+8. Entrada de menú lateral.
 
 ## Lo que NO cambia
 
-- Estados oficiales del pipeline (`radicado_banco` sigue igual).
-- Motor de capacidad de pago.
-- Motor de envío de correo (solo se reutiliza desde el nuevo botón Davivienda).
+- Lógica de simuladores (Pesos / UVR).
+- Honorarios pactados en `expedientes` (este motor es la fuente recomendada; la sincronización al expediente queda como acción explícita "Aplicar al caso", no automática, para no romper recálculos a éxito ya existentes).
+- Cartera, comisiones, wallet.
 
-## Orden de implementación
-
-1. Migración tabla + RLS + GRANT.
-2. Helpers (`diasHabiles`, `reglasEntregaBanco`).
-3. Extender `validacionRadicacion.ts` con gate Bogotá.
-4. Trigger en `useEstadoSugerido`.
-5. Bloque UI + integración en pestaña Radicación.
-6. PDF consolidado.
-7. Notificación de vencimiento.
-
-¿Procedo así o ajustamos algo antes de construir?
+¿Apruebo y construyo así, o ajustamos algo (por ejemplo: queremos que al aprobar se escriba automáticamente en `expedientes.honorarios_base` / `honorarios_final`)?
