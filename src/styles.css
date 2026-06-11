@@ -219,42 +219,47 @@
   }
 
   html, body {
-    background-color: #050816;
-    color: var(--nuvia-text);
     letter-spacing: normal;
     word-spacing: normal;
     line-height: 1.45;
   }
 
-  /* PROHIBIDO superficies blancas: cualquier bg-white se reescribe a glass NUVIA */
-  .bg-white {
+  /* NUVIA dark shell scoped — sólo dentro de .dark (área autenticada) */
+  .dark {
+    background-color: #050816;
+    color: var(--nuvia-text);
+  }
+
+  /* PROHIBIDO superficies blancas DENTRO del shell oscuro */
+  .dark .bg-white {
     background-color: var(--nuvia-bg-2) !important;
     color: var(--nuvia-text);
   }
 
-  /* Tablas oscuras por defecto */
-  table { color: var(--nuvia-text); }
-  thead, thead tr, thead th {
+  /* Tablas oscuras por defecto (sólo dentro del shell) */
+  .dark table { color: var(--nuvia-text); }
+  .dark thead, .dark thead tr, .dark thead th {
     background-color: var(--nuvia-bg-1) !important;
     color: var(--nuvia-text-muted) !important;
     border-color: var(--nuvia-line) !important;
-  }
-  tbody tr {
     border-color: var(--nuvia-line) !important;
   }
-  tbody tr:hover {
+  .dark tbody tr {
+    border-color: var(--nuvia-line) !important;
+  }
+  .dark tbody tr:hover {
     background-color: rgba(255, 255, 255, 0.03) !important;
   }
 
-  /* Cards shadcn → glass NUVIA */
-  .bg-card {
+  /* Cards shadcn → glass NUVIA (sólo dentro del shell) */
+  .dark .bg-card {
     background-color: var(--nuvia-bg-2) !important;
     background-image: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015)) !important;
     backdrop-filter: blur(14px);
     border: 1px solid var(--nuvia-line);
   }
 
-  input, textarea, select { color-scheme: dark; }
+  .dark input, .dark textarea, .dark select { color-scheme: dark; }
 
   .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
   .scrollbar-thin::-webkit-scrollbar-thumb {
