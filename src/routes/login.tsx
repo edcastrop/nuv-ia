@@ -177,9 +177,9 @@ function LoginPage() {
 
             <div className="mt-10 grid grid-cols-3 gap-3 max-w-md">
               {[
-                { k: "Decisions / mo", v: "4.2M" },
-                { k: "Models live", v: "128" },
-                { k: "Latency p50", v: "38ms" },
+                { k: "Decisiones / mes", v: "4.2M" },
+                { k: "Modelos activos", v: "128" },
+                { k: "Latencia p50", v: "38ms" },
               ].map((m) => (
                 <div key={m.k} className="rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-md p-3">
                   <div className="text-[10px] uppercase tracking-widest text-white/40">{m.k}</div>
