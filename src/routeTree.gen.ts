@@ -80,6 +80,7 @@ import { Route as AuthenticatedCarteraIdRouteImport } from './routes/_authentica
 import { Route as AuthenticatedApoderadoMisCasosRouteImport } from './routes/_authenticated/apoderado.mis-casos'
 import { Route as AuthenticatedColaboracionDmIndexRouteImport } from './routes/_authenticated/colaboracion.dm.index'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as ApiPublicHooksRecomputeSnapshotsRouteImport } from './routes/api/public/hooks/recompute-snapshots'
 import { Route as ApiPublicHooksOnboardingRecordatoriosRouteImport } from './routes/api/public/hooks/onboarding-recordatorios'
 import { Route as ApiPublicHooksFinanzasCronRouteImport } from './routes/api/public/hooks/finanzas-cron'
 import { Route as ApiPublicHooksCasosAlertasRouteImport } from './routes/api/public/hooks/casos-alertas'
@@ -490,6 +491,12 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksRecomputeSnapshotsRoute =
+  ApiPublicHooksRecomputeSnapshotsRouteImport.update({
+    id: '/api/public/hooks/recompute-snapshots',
+    path: '/api/public/hooks/recompute-snapshots',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksOnboardingRecordatoriosRoute =
   ApiPublicHooksOnboardingRecordatoriosRouteImport.update({
     id: '/api/public/hooks/onboarding-recordatorios',
@@ -623,6 +630,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
   '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
   '/api/public/hooks/onboarding-recordatorios': typeof ApiPublicHooksOnboardingRecordatoriosRoute
+  '/api/public/hooks/recompute-snapshots': typeof ApiPublicHooksRecomputeSnapshotsRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/colaboracion/dm/': typeof AuthenticatedColaboracionDmIndexRoute
 }
@@ -701,6 +709,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
   '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
   '/api/public/hooks/onboarding-recordatorios': typeof ApiPublicHooksOnboardingRecordatoriosRoute
+  '/api/public/hooks/recompute-snapshots': typeof ApiPublicHooksRecomputeSnapshotsRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/colaboracion/dm': typeof AuthenticatedColaboracionDmIndexRoute
 }
@@ -784,6 +793,7 @@ export interface FileRoutesById {
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
   '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
   '/api/public/hooks/onboarding-recordatorios': typeof ApiPublicHooksOnboardingRecordatoriosRoute
+  '/api/public/hooks/recompute-snapshots': typeof ApiPublicHooksRecomputeSnapshotsRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/colaboracion/dm/': typeof AuthenticatedColaboracionDmIndexRoute
 }
@@ -867,6 +877,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/casos-alertas'
     | '/api/public/hooks/finanzas-cron'
     | '/api/public/hooks/onboarding-recordatorios'
+    | '/api/public/hooks/recompute-snapshots'
     | '/lovable/email/queue/process'
     | '/colaboracion/dm/'
   fileRoutesByTo: FileRoutesByTo
@@ -945,6 +956,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/casos-alertas'
     | '/api/public/hooks/finanzas-cron'
     | '/api/public/hooks/onboarding-recordatorios'
+    | '/api/public/hooks/recompute-snapshots'
     | '/lovable/email/queue/process'
     | '/colaboracion/dm'
   id:
@@ -1027,6 +1039,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/casos-alertas'
     | '/api/public/hooks/finanzas-cron'
     | '/api/public/hooks/onboarding-recordatorios'
+    | '/api/public/hooks/recompute-snapshots'
     | '/lovable/email/queue/process'
     | '/_authenticated/colaboracion/dm/'
   fileRoutesById: FileRoutesById
@@ -1044,6 +1057,7 @@ export interface RootRouteChildren {
   ApiPublicHooksCasosAlertasRoute: typeof ApiPublicHooksCasosAlertasRoute
   ApiPublicHooksFinanzasCronRoute: typeof ApiPublicHooksFinanzasCronRoute
   ApiPublicHooksOnboardingRecordatoriosRoute: typeof ApiPublicHooksOnboardingRecordatoriosRoute
+  ApiPublicHooksRecomputeSnapshotsRoute: typeof ApiPublicHooksRecomputeSnapshotsRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
@@ -1546,6 +1560,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/recompute-snapshots': {
+      id: '/api/public/hooks/recompute-snapshots'
+      path: '/api/public/hooks/recompute-snapshots'
+      fullPath: '/api/public/hooks/recompute-snapshots'
+      preLoaderRoute: typeof ApiPublicHooksRecomputeSnapshotsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/onboarding-recordatorios': {
       id: '/api/public/hooks/onboarding-recordatorios'
       path: '/api/public/hooks/onboarding-recordatorios'
@@ -1820,6 +1841,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksFinanzasCronRoute: ApiPublicHooksFinanzasCronRoute,
   ApiPublicHooksOnboardingRecordatoriosRoute:
     ApiPublicHooksOnboardingRecordatoriosRoute,
+  ApiPublicHooksRecomputeSnapshotsRoute: ApiPublicHooksRecomputeSnapshotsRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport

@@ -10,6 +10,9 @@ import {
   ExecutiveHero, KpiStripCard, FunnelChart, AgingStackedBar,
   AreaProductivityBars, ProjectedRevenueChart, ExecutiveInsightsCard, RiskTable, KpiDetailModal,
 } from "@/components/torre-control/widgets";
+import {
+  CommandCenterTabs, HealthScoreGauge,
+} from "@/components/torre-control/command-center/CommandCenter";
 
 const ROLES_TORRE = ["super_admin", "admin", "gerencia", "director_financiero_qa", "director_juridico"];
 
@@ -73,16 +76,8 @@ function TorreControlPage() {
   const starValue = ahorroKpi ? fmtCOP(ahorroKpi.value) : "—";
   const starLabel = "Ahorro generado en el periodo";
 
-  return (
-    <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-[1400px] mx-auto space-y-6">
-      <ExecutiveHero
-        nombre={nombre}
-        period={period}
-        onPeriodChange={setPeriod}
-        starValue={starValue}
-        starLabel={starLabel}
-      />
-
+  const resumenSlot = (
+    <div className="space-y-6">
       {metricsQuery.isError && (
         <div className="glass-card rounded-2xl p-5" style={{ border: "1px solid var(--nuvia-danger)" }}>
           <p className="text-sm" style={{ color: "var(--nuvia-text-primary)" }}>
@@ -125,6 +120,23 @@ function TorreControlPage() {
 
       {/* Riesgos */}
       {m && <RiskTable rows={m.risks} />}
+    </div>
+  );
+
+  return (
+    <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-[1400px] mx-auto space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 items-stretch">
+        <ExecutiveHero
+          nombre={nombre}
+          period={period}
+          onPeriodChange={setPeriod}
+          starValue={starValue}
+          starLabel={starLabel}
+        />
+        <HealthScoreGauge />
+      </div>
+
+      <CommandCenterTabs resumenSlot={resumenSlot} isExecutive={autorizado} />
 
       <KpiDetailModal kpi={activeKpi} onClose={() => setActiveKpi(null)} />
     </div>
