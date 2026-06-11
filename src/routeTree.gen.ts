@@ -24,6 +24,7 @@ import { Route as AuthenticatedQaRouteImport } from './routes/_authenticated/qa'
 import { Route as AuthenticatedProyeccionFinancieraRouteImport } from './routes/_authenticated/proyeccion-financiera'
 import { Route as AuthenticatedProyeccionRouteImport } from './routes/_authenticated/proyeccion'
 import { Route as AuthenticatedProductividadRouteImport } from './routes/_authenticated/productividad'
+import { Route as AuthenticatedPipelineV2RouteImport } from './routes/_authenticated/pipeline-v2'
 import { Route as AuthenticatedPipelineRouteImport } from './routes/_authenticated/pipeline'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedNuvexIaRouteImport } from './routes/_authenticated/nuvex-ia'
@@ -168,6 +169,11 @@ const AuthenticatedProductividadRoute =
     path: '/productividad',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedPipelineV2Route = AuthenticatedPipelineV2RouteImport.update({
+  id: '/pipeline-v2',
+  path: '/pipeline-v2',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedPipelineRoute = AuthenticatedPipelineRouteImport.update({
   id: '/pipeline',
   path: '/pipeline',
@@ -575,6 +581,7 @@ export interface FileRoutesByFullPath {
   '/nuvex-ia': typeof AuthenticatedNuvexIaRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
+  '/pipeline-v2': typeof AuthenticatedPipelineV2Route
   '/productividad': typeof AuthenticatedProductividadRoute
   '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/proyeccion-financiera': typeof AuthenticatedProyeccionFinancieraRoute
@@ -653,6 +660,7 @@ export interface FileRoutesByTo {
   '/nuvex-ia': typeof AuthenticatedNuvexIaRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/pipeline': typeof AuthenticatedPipelineRoute
+  '/pipeline-v2': typeof AuthenticatedPipelineV2Route
   '/productividad': typeof AuthenticatedProductividadRoute
   '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/proyeccion-financiera': typeof AuthenticatedProyeccionFinancieraRoute
@@ -737,6 +745,7 @@ export interface FileRoutesById {
   '/_authenticated/nuvex-ia': typeof AuthenticatedNuvexIaRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/pipeline': typeof AuthenticatedPipelineRoute
+  '/_authenticated/pipeline-v2': typeof AuthenticatedPipelineV2Route
   '/_authenticated/productividad': typeof AuthenticatedProductividadRoute
   '/_authenticated/proyeccion': typeof AuthenticatedProyeccionRoute
   '/_authenticated/proyeccion-financiera': typeof AuthenticatedProyeccionFinancieraRoute
@@ -822,6 +831,7 @@ export interface FileRouteTypes {
     | '/nuvex-ia'
     | '/onboarding'
     | '/pipeline'
+    | '/pipeline-v2'
     | '/productividad'
     | '/proyeccion'
     | '/proyeccion-financiera'
@@ -900,6 +910,7 @@ export interface FileRouteTypes {
     | '/nuvex-ia'
     | '/onboarding'
     | '/pipeline'
+    | '/pipeline-v2'
     | '/productividad'
     | '/proyeccion'
     | '/proyeccion-financiera'
@@ -983,6 +994,7 @@ export interface FileRouteTypes {
     | '/_authenticated/nuvex-ia'
     | '/_authenticated/onboarding'
     | '/_authenticated/pipeline'
+    | '/_authenticated/pipeline-v2'
     | '/_authenticated/productividad'
     | '/_authenticated/proyeccion'
     | '/_authenticated/proyeccion-financiera'
@@ -1166,6 +1178,13 @@ declare module '@tanstack/react-router' {
       path: '/productividad'
       fullPath: '/productividad'
       preLoaderRoute: typeof AuthenticatedProductividadRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/pipeline-v2': {
+      id: '/_authenticated/pipeline-v2'
+      path: '/pipeline-v2'
+      fullPath: '/pipeline-v2'
+      preLoaderRoute: typeof AuthenticatedPipelineV2RouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/pipeline': {
@@ -1732,6 +1751,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedNuvexIaRoute: typeof AuthenticatedNuvexIaRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPipelineRoute: typeof AuthenticatedPipelineRoute
+  AuthenticatedPipelineV2Route: typeof AuthenticatedPipelineV2Route
   AuthenticatedProductividadRoute: typeof AuthenticatedProductividadRoute
   AuthenticatedProyeccionRoute: typeof AuthenticatedProyeccionRoute
   AuthenticatedProyeccionFinancieraRoute: typeof AuthenticatedProyeccionFinancieraRoute
@@ -1782,6 +1802,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedNuvexIaRoute: AuthenticatedNuvexIaRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPipelineRoute: AuthenticatedPipelineRoute,
+  AuthenticatedPipelineV2Route: AuthenticatedPipelineV2Route,
   AuthenticatedProductividadRoute: AuthenticatedProductividadRoute,
   AuthenticatedProyeccionRoute: AuthenticatedProyeccionRoute,
   AuthenticatedProyeccionFinancieraRoute:
