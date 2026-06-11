@@ -358,6 +358,7 @@ export const getHealthScore = createServerFn({ method: "POST" })
         cartera: num(c.cartera),
         sla: num(c.sla),
         actividad: num(c.actividad),
+        satisfaccion: num(c.satisfaccion),
       },
       fresh: true,
     } satisfies HealthScorePayload;
