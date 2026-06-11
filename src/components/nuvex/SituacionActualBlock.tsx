@@ -403,9 +403,11 @@ function CostoTotalEjecutivo({
 }
 
 export function SituacionActualBlock({
+  clienteNombre,
   hero,
   vecesPagado,
   costoTotal,
+  puntosNeuralgicos,
   secundarios,
   detalle,
 }: Props) {
@@ -420,22 +422,99 @@ export function SituacionActualBlock({
       totalProyectadoPendiente: 0,
     };
 
-  return (
-    <Card className="!p-6 md:!p-8">
-      <SectionTitle sub="Diagnóstico financiero ejecutivo del crédito actual">
-        Situación actual del crédito
-      </SectionTitle>
+  const nombre = (clienteNombre ?? "").trim();
+  const tituloSituacion = nombre
+    ? `Situación actual del crédito de: ${nombre}`
+    : "Situación actual del crédito";
 
-      {/* Fila hero — 4 KPI principales */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <HeroKpi label="Saldo actual" value={hero.saldoActual} accent="dark" />
-        <HeroKpi label="Cuota actual con seguros" value={hero.cuotaActual} />
-        <HeroKpi label="Cuotas pendientes" value={hero.cuotasPendientes} />
-        <HeroKpi label="Total proyectado por pagar" value={hero.totalProyectado} accent="primary" />
+  const tiempoMeses = puntosNeuralgicos?.tiempoMeses ?? 0;
+  const tiempoAnios = tiempoMeses / 12;
+
+  return (
+    <Card className="!p-0 overflow-hidden">
+      {/* Encabezado institucional NUVEX */}
+      <div
+        className="flex flex-wrap items-center justify-between gap-4 px-6 py-5 md:px-8"
+        style={{
+          background: `linear-gradient(135deg, ${NUVEX.azul} 0%, #2F4585 55%, #1B2A55 100%)`,
+        }}
+      >
+        <div className="flex min-w-0 items-center gap-3">
+          <img
+            src={NUVEX_BRAND.logo.principal}
+            alt="NUVEX"
+            className="h-10 w-auto shrink-0 rounded bg-white/95 px-2 py-1"
+            style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.15)" }}
+          />
+          <div className="min-w-0">
+            <div className="text-[10.5px] font-bold uppercase tracking-[0.22em] text-white/70">
+              {NUVEX_BRAND.nombreComercial}
+            </div>
+            <h2 className="truncate text-[18px] md:text-[20px] font-extrabold leading-tight text-white">
+              {tituloSituacion}
+            </h2>
+          </div>
+        </div>
+        <div className="hidden md:block text-right">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/60">
+            Informe ejecutivo
+          </div>
+          <div className="text-[12px] font-semibold text-white/90">
+            Diagnóstico financiero del crédito actual
+          </div>
+        </div>
       </div>
 
-      {/* Bloque ejecutivo premium — Costo total del crédito */}
-      <CostoTotalEjecutivo costo={costoEfectivo} vecesPagadoFallback={vecesPagado} />
+      <div className="p-6 md:p-8">
+        {/* Fila hero — 4 KPI principales */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <HeroKpi label="Saldo actual" value={hero.saldoActual} accent="dark" />
+          <HeroKpi label="Cuota actual con seguros" value={hero.cuotaActual} />
+          <HeroKpi label="Cuotas pendientes" value={hero.cuotasPendientes} />
+          <HeroKpi label="Total proyectado por pagar" value={hero.totalProyectado} accent="primary" />
+        </div>
+
+        {/* Puntos neurálgicos — Tiempo · Intereses · Seguros */}
+        {puntosNeuralgicos && (
+          <div className="mt-6">
+            <div className="mb-3 flex items-center gap-2">
+              <span
+                className="inline-block h-2 w-2 rounded-full"
+                style={{ background: NUVEX.azul }}
+              />
+              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#445DA3]">
+                Puntos neurálgicos del crédito
+              </span>
+            </div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+              <NeuralgicoCard
+                icon="⏱️"
+                label="Tiempo restante"
+                value={`${tiempoMeses} meses`}
+                hint={`≈ ${tiempoAnios.toFixed(1).replace(".", ",")} años hasta finalizar`}
+                accent="#445DA3"
+              />
+              <NeuralgicoCard
+                icon="📈"
+                label="Intereses proyectados"
+                value={formatCOP(puntosNeuralgicos.interesesProyectados)}
+                hint="Lo que pagarías de más al banco"
+                accent="#B42318"
+              />
+              <NeuralgicoCard
+                icon="🛡️"
+                label="Seguros proyectados"
+                value={formatCOP(puntosNeuralgicos.segurosProyectados)}
+                hint="Seguros que pagarías hasta el final"
+                accent="#A77C16"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Bloque ejecutivo premium — Costo total del crédito (semaforización) */}
+        <CostoTotalEjecutivo costo={costoEfectivo} vecesPagadoFallback={vecesPagado} />
+
 
       {/* Segunda fila — secundarios */}
       {secundarios.length > 0 && (
