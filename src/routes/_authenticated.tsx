@@ -625,7 +625,7 @@ function AuthenticatedLayout() {
         <EtapaTransicionDialog />
 
 
-        <footer className="border-t border-white/[0.06]" style={{ background: "#070810" }}>
+        <footer style={{ background: "var(--nuvia-bg-primary)", borderTop: "1px solid var(--nuvia-border)" }}>
           <div className="mx-auto max-w-7xl px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-white/40">
             <span><span className="font-semibold text-white/70">NUVIA Systems</span> · Sistema operativo de inteligencia financiera</span>
             <span className="tracking-[0.22em] uppercase">SOC 2 · ISO 27001 · {CORPORATIVO.web}</span>
