@@ -545,7 +545,10 @@ function AuthenticatedLayout() {
                 <LayoutGrid size={16} />
               </button>
               <div className="hidden md:flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.22em] text-white/50">
-                <span className="inline-flex h-1.5 w-1.5 rounded-full" style={{ background: `linear-gradient(135deg, ${AZUL}, ${VERDE})` }} />
+                <span
+                  className="inline-flex h-1.5 w-1.5 rounded-full"
+                  style={{ background: GRADIENT }}
+                />
                 NUVIA · Inteligencia Financiera
               </div>
             </div>
@@ -561,26 +564,22 @@ function AuthenticatedLayout() {
                       metricasAutonomia.nivelAutonomia === 3
                         ? "rgba(132,185,143,0.18)"
                         : metricasAutonomia.nivelAutonomia === 2
-                          ? "rgba(255,236,179,0.18)"
-                          : "rgba(255,204,128,0.18)",
+                          ? "rgba(246,196,83,0.18)"
+                          : "rgba(255,107,107,0.18)",
                     color:
                       metricasAutonomia.nivelAutonomia === 3
-                        ? "#84B98F"
+                        ? "var(--nuvia-success)"
                         : metricasAutonomia.nivelAutonomia === 2
-                          ? "#FFE082"
-                          : "#FFCC80",
-                    border:
-                      metricasAutonomia.nivelAutonomia === 3
-                        ? "1px solid rgba(132,185,143,0.30)"
-                        : metricasAutonomia.nivelAutonomia === 2
-                          ? "1px solid rgba(255,236,179,0.30)"
-                          : "1px solid rgba(255,204,128,0.30)",
+                          ? "var(--nuvia-warning)"
+                          : "var(--nuvia-danger)",
+                    border: "1px solid var(--nuvia-border)",
                   }}
                 >
                   <Award size={12} />
                   N{metricasAutonomia.nivelAutonomia}
                 </Link>
               )}
+
               <button
                 onClick={handleReload}
                 disabled={reloading}
@@ -597,9 +596,10 @@ function AuthenticatedLayout() {
                 className="hidden sm:flex items-center gap-3 rounded-xl pl-1.5 pr-3 py-1 transition hover:bg-white/[0.07]"
                 style={{
                   background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.08)",
+                  border: "1px solid var(--nuvia-border)",
                 }}
               >
+
                 <UserAvatar userId={user?.id} url={avatarUrl} name={displayName} email={user?.email} size="sm" ring />
                 <div className="leading-tight text-right">
                   <div className="text-[12px] font-semibold text-white truncate max-w-[160px]">{displayName}</div>
