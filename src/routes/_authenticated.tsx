@@ -510,7 +510,7 @@ function AuthenticatedLayout() {
   );
 
   return (
-    <div className="min-h-screen flex" style={{ background: "var(--nuvia-bg-primary)" }}>
+    <div className="dark min-h-screen flex" style={{ background: "var(--nuvia-bg-primary)" }}>
       {/* Sidebar desktop */}
       <div className="hidden lg:block sticky top-0 h-screen relative">
         {SidebarContent}
