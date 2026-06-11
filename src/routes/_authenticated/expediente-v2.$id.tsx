@@ -168,6 +168,9 @@ function ExpedienteV2Page() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [commTab, setCommTab] = useState<"whatsapp" | "email" | "llamada" | "nota">("whatsapp");
+  const [profilesById, setProfilesById] = useState<Record<string, ProfileLite>>({});
+  const [profileList, setProfileList] = useState<ProfileLite[]>([]);
+  const [showTareaForm, setShowTareaForm] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -181,6 +184,15 @@ function ExpedienteV2Page() {
           .order("created_at", { ascending: false })
           .limit(50);
         setHist((data as HistorialRow[]) ?? []);
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("id, nombre, email")
+          .eq("activo", true)
+          .order("nombre", { ascending: true })
+          .limit(200);
+        const list = (profs as ProfileLite[]) ?? [];
+        setProfileList(list);
+        setProfilesById(Object.fromEntries(list.map((p) => [p.id, p])));
       } catch (e) {
         setErr((e as Error).message);
       } finally {
@@ -188,6 +200,59 @@ function ExpedienteV2Page() {
       }
     })();
   }, [id]);
+
+  // ===== Tareas y Bitácora reales (D-2) =====
+  const fetchTareas = useServerFn(listTareas);
+  const fetchBitacora = useServerFn(listBitacora);
+  const crearTareaFn = useServerFn(crearTarea);
+  const actualizarEstadoFn = useServerFn(actualizarTareaEstado);
+  const asignarFn = useServerFn(asignarTarea);
+  const agregarBitacoraFn = useServerFn(agregarBitacora);
+  const qc = useQueryClient();
+
+  const tareasQuery = useQuery({
+    queryKey: ["expediente-tareas", id],
+    queryFn: () => fetchTareas({ data: { expediente_id: id } }),
+  });
+  const bitacoraQuery = useQuery({
+    queryKey: ["expediente-bitacora", id],
+    queryFn: () => fetchBitacora({ data: { expediente_id: id, limit: 100 } }),
+  });
+
+  const tareas = (tareasQuery.data?.tareas ?? []) as TareaRow[];
+  const bitacora = (bitacoraQuery.data?.entradas ?? []) as BitacoraRow[];
+
+  const invalidarTareas = () => qc.invalidateQueries({ queryKey: ["expediente-tareas", id] });
+  const invalidarBitacora = () => qc.invalidateQueries({ queryKey: ["expediente-bitacora", id] });
+
+  const crearTareaM = useMutation({
+    mutationFn: (input: {
+      titulo: string;
+      descripcion?: string | null;
+      prioridad: TareaPrioridad;
+      fecha_objetivo?: string | null;
+      responsable_id?: string | null;
+    }) => crearTareaFn({ data: { expediente_id: id, ...input } }),
+    onSuccess: () => {
+      invalidarTareas();
+      setShowTareaForm(false);
+    },
+  });
+  const actualizarEstadoM = useMutation({
+    mutationFn: (input: { id: string; estado: TareaEstado }) =>
+      actualizarEstadoFn({ data: input }),
+    onSuccess: invalidarTareas,
+  });
+  const asignarM = useMutation({
+    mutationFn: (input: { id: string; responsable_id: string | null }) =>
+      asignarFn({ data: input }),
+    onSuccess: invalidarTareas,
+  });
+  const agregarBitacoraM = useMutation({
+    mutationFn: (input: { comentario: string; tipo: BitacoraTipo }) =>
+      agregarBitacoraFn({ data: { expediente_id: id, ...input } }),
+    onSuccess: invalidarBitacora,
+  });
 
   const etapa = useMemo(() => {
     if (!exp) return null;
