@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
-  head: () => ({ meta: [{ title: "Sign in · NUVIA — Financial Intelligence OS" }] }),
+  head: () => ({ meta: [{ title: "Iniciar sesión · NUVIA — Sistema Operativo de Inteligencia Financiera" }] }),
 });
 
 const BLUE = "#445DA3";
