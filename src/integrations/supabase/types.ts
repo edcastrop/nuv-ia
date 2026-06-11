@@ -2327,6 +2327,44 @@ export type Database = {
         }
         Relationships: []
       }
+      expediente_bitacora: {
+        Row: {
+          comentario: string
+          created_at: string
+          expediente_id: string
+          id: string
+          metadata: Json
+          tipo: Database["public"]["Enums"]["bitacora_tipo"]
+          usuario_id: string | null
+        }
+        Insert: {
+          comentario: string
+          created_at?: string
+          expediente_id: string
+          id?: string
+          metadata?: Json
+          tipo?: Database["public"]["Enums"]["bitacora_tipo"]
+          usuario_id?: string | null
+        }
+        Update: {
+          comentario?: string
+          created_at?: string
+          expediente_id?: string
+          id?: string
+          metadata?: Json
+          tipo?: Database["public"]["Enums"]["bitacora_tipo"]
+          usuario_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expediente_bitacora_expediente_id_fkey"
+            columns: ["expediente_id"]
+            isOneToOne: false
+            referencedRelation: "expedientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expediente_checklist_auditoria: {
         Row: {
           created_at: string
@@ -2708,6 +2746,59 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      expediente_tareas: {
+        Row: {
+          completada_at: string | null
+          created_at: string
+          created_by: string | null
+          descripcion: string | null
+          estado: Database["public"]["Enums"]["tarea_estado"]
+          expediente_id: string
+          fecha_objetivo: string | null
+          id: string
+          prioridad: Database["public"]["Enums"]["tarea_prioridad"]
+          responsable_id: string | null
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          completada_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string | null
+          estado?: Database["public"]["Enums"]["tarea_estado"]
+          expediente_id: string
+          fecha_objetivo?: string | null
+          id?: string
+          prioridad?: Database["public"]["Enums"]["tarea_prioridad"]
+          responsable_id?: string | null
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          completada_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          descripcion?: string | null
+          estado?: Database["public"]["Enums"]["tarea_estado"]
+          expediente_id?: string
+          fecha_objetivo?: string | null
+          id?: string
+          prioridad?: Database["public"]["Enums"]["tarea_prioridad"]
+          responsable_id?: string | null
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expediente_tareas_expediente_id_fkey"
+            columns: ["expediente_id"]
+            isOneToOne: false
+            referencedRelation: "expedientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       expediente_validacion_historial: {
         Row: {
@@ -4913,6 +5004,10 @@ export type Database = {
         Returns: Database["public"]["Enums"]["academia_rol"]
       }
       calcular_etapa_onboarding: { Args: { _user_id: string }; Returns: string }
+      can_access_expediente: {
+        Args: { _exp: string; _uid: string }
+        Returns: boolean
+      }
       can_aprobar_honorarios: { Args: { _uid: string }; Returns: boolean }
       can_manage_cartera: { Args: { _uid: string }; Returns: boolean }
       can_manage_finanzas: { Args: { _uid: string }; Returns: boolean }
@@ -5131,6 +5226,13 @@ export type Database = {
         | "auxiliar_operativo"
         | "apoderado"
       ayuda_tipo: "guia" | "video" | "faq" | "checklist"
+      bitacora_tipo:
+        | "comentario"
+        | "evidencia"
+        | "llamada"
+        | "email"
+        | "whatsapp"
+        | "sistema"
       cartera_estado:
         | "pendiente_cobro"
         | "cuenta_cobro_generada"
@@ -5243,6 +5345,8 @@ export type Database = {
         | "faq"
       mfa_metodo: "ninguno" | "email" | "totp"
       pregunta_tipo: "unica" | "multiple" | "verdadero_falso"
+      tarea_estado: "pendiente" | "en_progreso" | "completada" | "cancelada"
+      tarea_prioridad: "baja" | "media" | "alta" | "critica"
       wallet_mov_tipo:
         | "comision_generada"
         | "comision_liberada"
@@ -5415,6 +5519,14 @@ export const Constants = {
         "apoderado",
       ],
       ayuda_tipo: ["guia", "video", "faq", "checklist"],
+      bitacora_tipo: [
+        "comentario",
+        "evidencia",
+        "llamada",
+        "email",
+        "whatsapp",
+        "sistema",
+      ],
       cartera_estado: [
         "pendiente_cobro",
         "cuenta_cobro_generada",
@@ -5536,6 +5648,8 @@ export const Constants = {
       ],
       mfa_metodo: ["ninguno", "email", "totp"],
       pregunta_tipo: ["unica", "multiple", "verdadero_falso"],
+      tarea_estado: ["pendiente", "en_progreso", "completada", "cancelada"],
+      tarea_prioridad: ["baja", "media", "alta", "critica"],
       wallet_mov_tipo: [
         "comision_generada",
         "comision_liberada",
