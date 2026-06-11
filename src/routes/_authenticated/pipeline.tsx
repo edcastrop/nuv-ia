@@ -205,7 +205,6 @@ function PipelinePage() {
     filtered.forEach((r) => {
       const etapa = computeEtapaActual({
         estado_caso: (r as unknown as { estado_caso?: string | null }).estado_caso ?? null,
-        etapa_pipeline: r.etapa_pipeline ?? null,
       } as Parameters<typeof computeEtapaActual>[0]);
       const dias = diasDesde(r.updated_at);
       const umbral = UMBRAL_DIAS[etapa] ?? 0;
