@@ -1849,6 +1849,60 @@ export type Database = {
           },
         ]
       }
+      executive_copilot_log: {
+        Row: {
+          contexto_json: Json
+          created_at: string
+          id: string
+          modelo: string | null
+          prompt: string
+          recomendaciones_json: Json
+          tokens_input: number | null
+          tokens_output: number | null
+          usuario_id: string
+        }
+        Insert: {
+          contexto_json?: Json
+          created_at?: string
+          id?: string
+          modelo?: string | null
+          prompt: string
+          recomendaciones_json?: Json
+          tokens_input?: number | null
+          tokens_output?: number | null
+          usuario_id: string
+        }
+        Update: {
+          contexto_json?: Json
+          created_at?: string
+          id?: string
+          modelo?: string | null
+          prompt?: string
+          recomendaciones_json?: Json
+          tokens_input?: number | null
+          tokens_output?: number | null
+          usuario_id?: string
+        }
+        Relationships: []
+      }
+      executive_metrics_daily: {
+        Row: {
+          calculated_at: string
+          fecha: string
+          metrics_json: Json
+        }
+        Insert: {
+          calculated_at?: string
+          fecha: string
+          metrics_json?: Json
+        }
+        Update: {
+          calculated_at?: string
+          fecha?: string
+          metrics_json?: Json
+        }
+        Relationships: []
+      }
       expediente_checklist_auditoria: {
         Row: {
           created_at: string
@@ -2666,6 +2720,33 @@ export type Database = {
           },
         ]
       }
+      health_score_daily: {
+        Row: {
+          calculated_at: string
+          componentes_json: Json
+          estado: Database["public"]["Enums"]["health_estado"]
+          fecha: string
+          score: number
+          tendencia: string | null
+        }
+        Insert: {
+          calculated_at?: string
+          componentes_json?: Json
+          estado: Database["public"]["Enums"]["health_estado"]
+          fecha: string
+          score: number
+          tendencia?: string | null
+        }
+        Update: {
+          calculated_at?: string
+          componentes_json?: Json
+          estado?: Database["public"]["Enums"]["health_estado"]
+          fecha?: string
+          score?: number
+          tendencia?: string | null
+        }
+        Relationships: []
+      }
       honorarios_aprobaciones: {
         Row: {
           aprobado_por: string | null
@@ -2957,6 +3038,51 @@ export type Database = {
           tipo?: Database["public"]["Enums"]["ayuda_tipo"]
           titulo?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      monthly_goals: {
+        Row: {
+          area: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          nivel: Database["public"]["Enums"]["goal_nivel"]
+          notas: string | null
+          periodo: string
+          responsable_id: string | null
+          tipo: Database["public"]["Enums"]["goal_tipo"]
+          unidad: string
+          updated_at: string
+          valor_meta: number
+        }
+        Insert: {
+          area?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nivel: Database["public"]["Enums"]["goal_nivel"]
+          notas?: string | null
+          periodo: string
+          responsable_id?: string | null
+          tipo: Database["public"]["Enums"]["goal_tipo"]
+          unidad?: string
+          updated_at?: string
+          valor_meta: number
+        }
+        Update: {
+          area?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nivel?: Database["public"]["Enums"]["goal_nivel"]
+          notas?: string | null
+          periodo?: string
+          responsable_id?: string | null
+          tipo?: Database["public"]["Enums"]["goal_tipo"]
+          unidad?: string
+          updated_at?: string
+          valor_meta?: number
         }
         Relationships: []
       }
@@ -3750,6 +3876,48 @@ export type Database = {
         }
         Relationships: []
       }
+      scoreboard_snapshot_daily: {
+        Row: {
+          area: string
+          calculated_at: string
+          fecha: string
+          id: string
+          kpis_json: Json
+          percentil: number
+          posicion: number
+          promedio_area: number | null
+          score: number
+          tendencia: string | null
+          usuario_id: string
+        }
+        Insert: {
+          area: string
+          calculated_at?: string
+          fecha: string
+          id?: string
+          kpis_json?: Json
+          percentil: number
+          posicion: number
+          promedio_area?: number | null
+          score: number
+          tendencia?: string | null
+          usuario_id: string
+        }
+        Update: {
+          area?: string
+          calculated_at?: string
+          fecha?: string
+          id?: string
+          kpis_json?: Json
+          percentil?: number
+          posicion?: number
+          promedio_area?: number | null
+          score?: number
+          tendencia?: string | null
+          usuario_id?: string
+        }
+        Relationships: []
+      }
       solicitudes_reactivacion: {
         Row: {
           aprobado_por: string | null
@@ -4204,6 +4372,10 @@ export type Database = {
         Returns: string
       }
       is_apoderado: { Args: { _uid: string }; Returns: boolean }
+      is_command_center_executive: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       is_director_juridico: { Args: { _uid: string }; Returns: boolean }
       is_director_qa: { Args: { _uid: string }; Returns: boolean }
       is_super_admin: { Args: { _uid: string }; Returns: boolean }
@@ -4411,6 +4583,19 @@ export type Database = {
         | "ENVIADO_CONTRATACION"
         | "CONDICIONES_APLICADAS"
       expediente_modo: "pesos" | "uvr"
+      goal_nivel: "empresa" | "area" | "persona"
+      goal_tipo:
+        | "honorarios"
+        | "ahorro"
+        | "casos_cerrados"
+        | "conversion"
+        | "cartera_recuperada"
+      health_estado:
+        | "excelente"
+        | "saludable"
+        | "atencion"
+        | "riesgo"
+        | "critico"
       honorarios_clasificacion:
         | "estandar"
         | "intermedio"
@@ -4685,6 +4870,21 @@ export const Constants = {
         "CONDICIONES_APLICADAS",
       ],
       expediente_modo: ["pesos", "uvr"],
+      goal_nivel: ["empresa", "area", "persona"],
+      goal_tipo: [
+        "honorarios",
+        "ahorro",
+        "casos_cerrados",
+        "conversion",
+        "cartera_recuperada",
+      ],
+      health_estado: [
+        "excelente",
+        "saludable",
+        "atencion",
+        "riesgo",
+        "critico",
+      ],
       honorarios_clasificacion: [
         "estandar",
         "intermedio",
