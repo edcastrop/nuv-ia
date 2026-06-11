@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
-  head: () => ({ meta: [{ title: "Sign in · NUVIA — Financial Intelligence OS" }] }),
+  head: () => ({ meta: [{ title: "Iniciar sesión · NUVIA — Sistema Operativo de Inteligencia Financiera" }] }),
 });
 
 const BLUE = "#445DA3";
@@ -46,11 +46,11 @@ function LoginPage() {
         if (!isSuperAdmin && p && p.estado_acceso !== "aprobado") {
           await supabase.auth.signOut();
           const msgs: Record<string, string> = {
-            pendiente: "Your account is pending administrator approval.",
-            rechazado: `Access denied. ${p.rechazado_motivo ?? ""}`.trim(),
-            bloqueado: "Your account is blocked. Please contact your administrator.",
+            pendiente: "Tu cuenta está pendiente de aprobación por un administrador.",
+            rechazado: `Acceso denegado. ${p.rechazado_motivo ?? ""}`.trim(),
+            bloqueado: "Tu cuenta está bloqueada. Contacta a tu administrador.",
           };
-          throw new Error(msgs[p.estado_acceso ?? "pendiente"] ?? "Access not authorized.");
+          throw new Error(msgs[p.estado_acceso ?? "pendiente"] ?? "Acceso no autorizado.");
         }
         await supabase.from("profiles" as never).update({ ultimo_login_at: new Date().toISOString(), intentos_fallidos: 0 } as never).eq("id", uid);
         await supabase.from("acceso_auditoria" as never).insert({ user_id: uid, actor_id: uid, accion: "login_ok", detalle: {} } as never);
@@ -59,7 +59,7 @@ function LoginPage() {
       }
       navigate({ to: "/" });
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Unexpected error");
+      setErr(e instanceof Error ? e.message : "Error inesperado");
     } finally {
       setBusy(false);
     }
@@ -71,7 +71,7 @@ function LoginPage() {
       const r = await lovable.auth.signInWithOAuth(provider, { redirect_uri: window.location.origin });
       if (r.error) throw r.error;
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : `Error signing in with ${provider}`);
+      setErr(e instanceof Error ? e.message : `Error al iniciar sesión con ${provider}`);
       setBusy(false);
     }
   };
@@ -79,7 +79,7 @@ function LoginPage() {
   const forgot = async () => {
     setErr(null); setInfo(null);
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setErr("Enter your email above to receive the reset link.");
+      setErr("Ingresa tu email arriba para recibir el enlace de recuperación.");
       return;
     }
     setBusy(true);
@@ -88,9 +88,9 @@ function LoginPage() {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       if (error) throw error;
-      setInfo("We've sent you a password reset link. Please check your inbox.");
+      setInfo("Te enviamos un enlace para restablecer tu contraseña. Revisa tu bandeja de entrada.");
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Couldn't send the link.");
+      setErr(e instanceof Error ? e.message : "No pudimos enviar el enlace.");
     } finally {
       setBusy(false);
     }
@@ -148,7 +148,7 @@ function LoginPage() {
             <Mark />
             <div className="leading-tight">
               <div className="text-[15px] font-semibold tracking-[0.22em]">NUVIA</div>
-              <div className="text-[10px] uppercase tracking-[0.28em] text-white/45">Financial Intelligence OS</div>
+              <div className="text-[10px] uppercase tracking-[0.28em] text-white/45">Inteligencia Financiera</div>
             </div>
           </motion.div>
 
@@ -160,26 +160,26 @@ function LoginPage() {
           >
             <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] backdrop-blur px-3 py-1 text-[11px] tracking-widest uppercase text-white/60 mb-6">
               <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ background: GREEN }} />
-              Intelligence layer · online
+              Capa de inteligencia · en línea
             </div>
             <h1 className="text-5xl xl:text-6xl font-semibold leading-[1.05] tracking-tight">
-              Intelligence that{" "}
+              Inteligencia que{" "}
               <span
                 className="bg-clip-text text-transparent"
                 style={{ backgroundImage: `linear-gradient(90deg, ${BLUE}, ${GREEN})` }}
               >
-                moves finance.
+                mueve las finanzas.
               </span>
             </h1>
             <p className="mt-6 text-base xl:text-lg text-white/55 leading-relaxed max-w-lg font-light">
-              The operating system for high-performance financial teams. Autonomous decisions, real-time signals, zero noise.
+              El sistema operativo para equipos financieros de alto rendimiento. Decisiones autónomas, señales en tiempo real, cero ruido.
             </p>
 
             <div className="mt-10 grid grid-cols-3 gap-3 max-w-md">
               {[
-                { k: "Decisions / mo", v: "4.2M" },
-                { k: "Models live", v: "128" },
-                { k: "Latency p50", v: "38ms" },
+                { k: "Decisiones / mes", v: "4.2M" },
+                { k: "Modelos activos", v: "128" },
+                { k: "Latencia p50", v: "38ms" },
               ].map((m) => (
                 <div key={m.k} className="rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-md p-3">
                   <div className="text-[10px] uppercase tracking-widest text-white/40">{m.k}</div>
@@ -225,33 +225,33 @@ function LoginPage() {
               style={{ background: `linear-gradient(90deg, transparent, ${BLUE}, ${GREEN}, transparent)` }}
             />
 
-            <h2 className="text-[28px] font-semibold tracking-tight">Welcome back</h2>
+            <h2 className="text-[28px] font-semibold tracking-tight">Bienvenido de vuelta</h2>
             <p className="mt-1.5 text-sm text-white/50">
-              Access your financial intelligence workspace.
+              Accede a tu espacio de inteligencia financiera.
             </p>
 
             <form onSubmit={submit} className="mt-8 space-y-4">
-              <Field label="Email">
+              <Field label="Correo">
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="email"
-                  placeholder="Enter your email"
+                  placeholder="Ingresa tu correo"
                   className="nuvia-input"
                 />
               </Field>
 
               <Field
-                label="Password"
+                label="Contraseña"
                 right={
                   <button
                     type="button"
                     onClick={forgot}
                     className="text-[11px] font-medium text-white/55 hover:text-white transition"
                   >
-                    Forgot password?
+                    ¿Olvidaste tu contraseña?
                   </button>
                 }
               >
@@ -263,14 +263,14 @@ function LoginPage() {
                     required
                     minLength={6}
                     autoComplete="current-password"
-                    placeholder="Enter your password"
+                    placeholder="Ingresa tu contraseña"
                     className="nuvia-input pr-10"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPwd((v) => !v)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80 transition"
-                    aria-label={showPwd ? "Hide password" : "Show password"}
+                    aria-label={showPwd ? "Ocultar contraseña" : "Mostrar contraseña"}
                   >
                     {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
@@ -284,7 +284,7 @@ function LoginPage() {
                   onChange={(e) => setRemember(e.target.checked)}
                   className="h-4 w-4 rounded border-white/20 bg-white/5 accent-[#445DA3]"
                 />
-                Remember me
+                Recordarme
               </label>
 
               {err && (
@@ -303,7 +303,7 @@ function LoginPage() {
                 style={{ background: `linear-gradient(135deg, ${BLUE} 0%, ${GREEN} 100%)` }}
               >
                 <span className="relative z-10 inline-flex items-center justify-center gap-2">
-                  {busy ? "Signing in…" : "Sign In"}
+                  {busy ? "Iniciando sesión…" : "Iniciar sesión"}
                   {!busy && <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />}
                 </span>
                 <span
@@ -315,7 +315,7 @@ function LoginPage() {
 
             <div className="my-6 flex items-center gap-3">
               <div className="flex-1 h-px bg-white/10" />
-              <span className="text-[10px] tracking-[0.22em] uppercase text-white/35">or continue with</span>
+              <span className="text-[10px] tracking-[0.22em] uppercase text-white/35">o continúa con</span>
               <div className="flex-1 h-px bg-white/10" />
             </div>
 
@@ -332,15 +332,15 @@ function LoginPage() {
             </div>
 
             <div className="mt-7 text-center text-sm text-white/55">
-              Don't have an account?{" "}
+              ¿No tienes una cuenta?{" "}
               <Link to="/registro" className="font-semibold text-white hover:underline inline-flex items-center gap-1">
-                Create Workspace <Sparkles size={12} style={{ color: GREEN }} />
+                Crear espacio de trabajo <Sparkles size={12} style={{ color: GREEN }} />
               </Link>
             </div>
           </div>
 
           <p className="mt-5 text-center text-[11px] text-white/30">
-            Protected by enterprise-grade encryption · NUVIA Systems
+            Protegido con cifrado de grado empresarial · NUVIA Systems
           </p>
         </motion.div>
       </main>
@@ -395,7 +395,7 @@ function SocialBtn({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      aria-label={`Continue with ${label}`}
+      aria-label={`Continuar con ${label}`}
       className="group inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] hover:border-white/20 transition px-3 py-2.5 text-sm text-white/85 disabled:opacity-50"
     >
       {children}
