@@ -298,7 +298,8 @@ export function UVRSimulator({
       value: formatCOP(calc.escenarioActual.totalPagoPesos),
     });
     metrics.push({
-      label: "N° veces pagado el crédito",
+      label:
+        baseCredito > 0 ? "N° veces pagado el crédito" : "N° veces (sobre saldo actual)",
       value: `${formatNumber(vecesActual, 2)} veces`,
     });
   }
