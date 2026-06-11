@@ -314,15 +314,15 @@
 
 /* Card glassmorphism canónica (Login/Registro) */
 .nuvia-glass-card {
-  border-radius: 24px;
-  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--nuvia-radius-xl);
+  border: 1px solid var(--nuvia-border);
   background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%);
-  -webkit-backdrop-filter: blur(18px);
-          backdrop-filter: blur(18px);
-  box-shadow: 0 30px 90px -30px rgba(0,0,0,0.8);
+  backdrop-filter: blur(18px);
+  box-shadow: var(--nuvia-shadow-lg);
   position: relative;
   overflow: hidden;
 }
+
 .nuvia-glass-card::before {
   content: "";
   position: absolute;
