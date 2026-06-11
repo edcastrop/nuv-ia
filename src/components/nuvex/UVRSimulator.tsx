@@ -512,6 +512,7 @@ export function UVRSimulator({
       {datosCompletos && (
         <>
           <SituacionActualBlock
+            clienteNombre={client.nombre}
             hero={{
               saldoActual: formatCOP(input.saldoPesos),
               cuotaActual: formatCOP(input.cuotaActualPesos),
@@ -524,6 +525,19 @@ export function UVRSimulator({
               dineroPagado: dineroPagadoFecha,
               totalProyectadoPendiente: calc ? calc.escenarioActual.totalPagoPesos : 0,
             }}
+            puntosNeuralgicos={{
+              tiempoMeses: cuotasPendientes,
+              segurosProyectados: (input.seguros || 0) * cuotasPendientes,
+              interesesProyectados: calc
+                ? Math.max(
+                    0,
+                    calc.escenarioActual.totalPagoPesos -
+                      input.saldoPesos -
+                      (input.seguros || 0) * cuotasPendientes,
+                  )
+                : 0,
+            }}
+
             secundarios={[
               { label: "Variación UVR EA", value: formatPercentage(input.variacionUVR) },
               {

@@ -451,6 +451,7 @@ export function PesosSimulator({
       {datosCompletos && (
         <>
           <SituacionActualBlock
+            clienteNombre={client.nombre}
             hero={{
               saldoActual: formatCOP(input.saldoCapital),
               cuotaActual: formatCOP(input.cuotaActual),
@@ -463,6 +464,15 @@ export function PesosSimulator({
               dineroPagado: dineroPagadoFecha,
               totalProyectadoPendiente: totalActualPendiente,
             }}
+            puntosNeuralgicos={{
+              tiempoMeses: cuotasPendientes,
+              segurosProyectados: (input.seguros || 0) * cuotasPendientes,
+              interesesProyectados: Math.max(
+                0,
+                totalActualPendiente - input.saldoCapital - (input.seguros || 0) * cuotasPendientes,
+              ),
+            }}
+
             secundarios={[
               { label: "TEA", value: formatPercentage(input.tea) },
               {

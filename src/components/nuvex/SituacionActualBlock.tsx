@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Card, SectionTitle } from "./ui";
+import { Card } from "./ui";
 import { NUVEX } from "./constants";
 import { formatCOP } from "@/lib/format";
+import { NUVEX_BRAND } from "@/lib/brandConfig";
+
 
 export interface SituacionMetric {
   label: string;
@@ -18,6 +20,8 @@ export interface CostoTotalCredito {
 }
 
 interface Props {
+  /** Nombre del titular para personalizar el encabezado. */
+  clienteNombre?: string;
   /** KPIs principales (4 tarjetas hero). */
   hero: {
     saldoActual: string;
@@ -29,11 +33,18 @@ interface Props {
   vecesPagado: number;
   /** Datos crudos para el bloque ejecutivo Costo Total del Crédito. */
   costoTotal?: CostoTotalCredito;
+  /** Puntos neurálgicos del crédito (Tiempo, intereses, seguros). */
+  puntosNeuralgicos?: {
+    tiempoMeses: number;
+    interesesProyectados: number;
+    segurosProyectados: number;
+  };
   /** Fila secundaria — 4 tarjetas medianas. */
   secundarios: SituacionMetric[];
   /** Detalle completo dentro del acordeón. */
   detalle: SituacionMetric[];
 }
+
 
 type RiesgoNivel = "verde" | "amarillo" | "naranja" | "rojo";
 
@@ -147,7 +158,56 @@ function HeroKpi({
   );
 }
 
+function NeuralgicoCard({
+  icon,
+  label,
+  value,
+  hint,
+  accent,
+}: {
+  icon: string;
+  label: string;
+  value: string;
+  hint?: string;
+  accent: string;
+}) {
+  return (
+    <div
+      className="relative overflow-hidden rounded-2xl border bg-white p-5 transition-shadow hover:shadow-[0_10px_30px_rgba(36,36,36,0.08)]"
+      style={{ borderColor: accent }}
+    >
+      <div
+        aria-hidden
+        className="absolute left-0 top-0 h-full w-1.5"
+        style={{ background: accent }}
+      />
+      <div className="flex items-start justify-between gap-2 pl-2">
+        <div
+          className="text-[10.5px] font-bold uppercase tracking-[0.16em]"
+          style={{ color: accent }}
+        >
+          {label}
+        </div>
+        <span className="text-lg leading-none" aria-hidden>
+          {icon}
+        </span>
+      </div>
+      <div
+        className="mt-2 pl-2 text-[22px] md:text-[24px] font-extrabold leading-tight tracking-tight"
+        style={{ color: "#0F1115" }}
+      >
+        {value}
+      </div>
+      {hint && (
+        <div className="mt-1 pl-2 text-[11.5px] font-medium text-[#6B7480]">{hint}</div>
+      )}
+    </div>
+  );
+}
+
 function SecondaryKpi({ label, value }: SituacionMetric) {
+
+
   return (
     <div className="rounded-xl border border-[#E3E7EE] bg-white p-4">
       <div className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[#6B7480]">
@@ -392,9 +452,11 @@ function CostoTotalEjecutivo({
 }
 
 export function SituacionActualBlock({
+  clienteNombre,
   hero,
   vecesPagado,
   costoTotal,
+  puntosNeuralgicos,
   secundarios,
   detalle,
 }: Props) {
@@ -409,22 +471,99 @@ export function SituacionActualBlock({
       totalProyectadoPendiente: 0,
     };
 
-  return (
-    <Card className="!p-6 md:!p-8">
-      <SectionTitle sub="Diagnóstico financiero ejecutivo del crédito actual">
-        Situación actual del crédito
-      </SectionTitle>
+  const nombre = (clienteNombre ?? "").trim();
+  const tituloSituacion = nombre
+    ? `Situación actual del crédito de: ${nombre}`
+    : "Situación actual del crédito";
 
-      {/* Fila hero — 4 KPI principales */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <HeroKpi label="Saldo actual" value={hero.saldoActual} accent="dark" />
-        <HeroKpi label="Cuota actual con seguros" value={hero.cuotaActual} />
-        <HeroKpi label="Cuotas pendientes" value={hero.cuotasPendientes} />
-        <HeroKpi label="Total proyectado por pagar" value={hero.totalProyectado} accent="primary" />
+  const tiempoMeses = puntosNeuralgicos?.tiempoMeses ?? 0;
+  const tiempoAnios = tiempoMeses / 12;
+
+  return (
+    <Card className="!p-0 overflow-hidden">
+      {/* Encabezado institucional NUVEX */}
+      <div
+        className="flex flex-wrap items-center justify-between gap-4 px-6 py-5 md:px-8"
+        style={{
+          background: `linear-gradient(135deg, ${NUVEX.azul} 0%, #2F4585 55%, #1B2A55 100%)`,
+        }}
+      >
+        <div className="flex min-w-0 items-center gap-3">
+          <img
+            src={NUVEX_BRAND.logo.principal}
+            alt="NUVEX"
+            className="h-10 w-auto shrink-0 rounded bg-white/95 px-2 py-1"
+            style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.15)" }}
+          />
+          <div className="min-w-0">
+            <div className="text-[10.5px] font-bold uppercase tracking-[0.22em] text-white/70">
+              {NUVEX_BRAND.nombreComercial}
+            </div>
+            <h2 className="truncate text-[18px] md:text-[20px] font-extrabold leading-tight text-white">
+              {tituloSituacion}
+            </h2>
+          </div>
+        </div>
+        <div className="hidden md:block text-right">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/60">
+            Informe ejecutivo
+          </div>
+          <div className="text-[12px] font-semibold text-white/90">
+            Diagnóstico financiero del crédito actual
+          </div>
+        </div>
       </div>
 
-      {/* Bloque ejecutivo premium — Costo total del crédito */}
-      <CostoTotalEjecutivo costo={costoEfectivo} vecesPagadoFallback={vecesPagado} />
+      <div className="p-6 md:p-8">
+        {/* Fila hero — 4 KPI principales */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <HeroKpi label="Saldo actual" value={hero.saldoActual} accent="dark" />
+          <HeroKpi label="Cuota actual con seguros" value={hero.cuotaActual} />
+          <HeroKpi label="Cuotas pendientes" value={hero.cuotasPendientes} />
+          <HeroKpi label="Total proyectado por pagar" value={hero.totalProyectado} accent="primary" />
+        </div>
+
+        {/* Puntos neurálgicos — Tiempo · Intereses · Seguros */}
+        {puntosNeuralgicos && (
+          <div className="mt-6">
+            <div className="mb-3 flex items-center gap-2">
+              <span
+                className="inline-block h-2 w-2 rounded-full"
+                style={{ background: NUVEX.azul }}
+              />
+              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#445DA3]">
+                Puntos neurálgicos del crédito
+              </span>
+            </div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+              <NeuralgicoCard
+                icon="⏱️"
+                label="Tiempo restante"
+                value={`${tiempoMeses} meses`}
+                hint={`≈ ${tiempoAnios.toFixed(1).replace(".", ",")} años hasta finalizar`}
+                accent="#445DA3"
+              />
+              <NeuralgicoCard
+                icon="📈"
+                label="Intereses proyectados"
+                value={formatCOP(puntosNeuralgicos.interesesProyectados)}
+                hint="Lo que pagarías de más al banco"
+                accent="#B42318"
+              />
+              <NeuralgicoCard
+                icon="🛡️"
+                label="Seguros proyectados"
+                value={formatCOP(puntosNeuralgicos.segurosProyectados)}
+                hint="Seguros que pagarías hasta el final"
+                accent="#A77C16"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Bloque ejecutivo premium — Costo total del crédito (semaforización) */}
+        <CostoTotalEjecutivo costo={costoEfectivo} vecesPagadoFallback={vecesPagado} />
+
 
       {/* Segunda fila — secundarios */}
       {secundarios.length > 0 && (
@@ -466,6 +605,8 @@ export function SituacionActualBlock({
           )}
         </div>
       )}
+      </div>
     </Card>
+
   );
 }
