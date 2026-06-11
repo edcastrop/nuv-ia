@@ -158,7 +158,55 @@ function HeroKpi({
   );
 }
 
+function NeuralgicoCard({
+  icon,
+  label,
+  value,
+  hint,
+  accent,
+}: {
+  icon: string;
+  label: string;
+  value: string;
+  hint?: string;
+  accent: string;
+}) {
+  return (
+    <div
+      className="relative overflow-hidden rounded-2xl border bg-white p-5 transition-shadow hover:shadow-[0_10px_30px_rgba(36,36,36,0.08)]"
+      style={{ borderColor: accent }}
+    >
+      <div
+        aria-hidden
+        className="absolute left-0 top-0 h-full w-1.5"
+        style={{ background: accent }}
+      />
+      <div className="flex items-start justify-between gap-2 pl-2">
+        <div
+          className="text-[10.5px] font-bold uppercase tracking-[0.16em]"
+          style={{ color: accent }}
+        >
+          {label}
+        </div>
+        <span className="text-lg leading-none" aria-hidden>
+          {icon}
+        </span>
+      </div>
+      <div
+        className="mt-2 pl-2 text-[22px] md:text-[24px] font-extrabold leading-tight tracking-tight"
+        style={{ color: "#0F1115" }}
+      >
+        {value}
+      </div>
+      {hint && (
+        <div className="mt-1 pl-2 text-[11.5px] font-medium text-[#6B7480]">{hint}</div>
+      )}
+    </div>
+  );
+}
+
 function SecondaryKpi({ label, value }: SituacionMetric) {
+
 
   return (
     <div className="rounded-xl border border-[#E3E7EE] bg-white p-4">
