@@ -341,7 +341,7 @@ export const getHealthScore = createServerFn({ method: "POST" })
         score: 0,
         estado: "atencion",
         tendencia: null,
-        componentes: { produccion: 0, conversion: 0, cartera: 0, sla: 0, actividad: 0 },
+        componentes: { produccion: 0, conversion: 0, cartera: 0, sla: 0, actividad: 0, satisfaccion: 0 },
         fresh: false,
       };
       return payload;
