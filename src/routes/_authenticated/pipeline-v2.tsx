@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Clock,
   DollarSign,
+  Download,
   Flame,
   Gauge,
   Loader2,
