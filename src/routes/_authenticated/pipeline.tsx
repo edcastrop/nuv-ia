@@ -353,7 +353,7 @@ function PipelinePage() {
 
   return (
     <div className="mx-auto max-w-[1400px] p-3 md:p-4">
-      <div className="space-y-4 rounded-2xl border border-[#E3E7EE] bg-[#F7F9FC] p-4 shadow-sm">
+      <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-[#0A1226]">Pipeline Maestro</h1>
