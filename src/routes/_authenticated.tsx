@@ -27,8 +27,10 @@ export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
 });
 
-const AZUL = "#445DA3";
-const VERDE = "#84B98F";
+const AZUL = "var(--nuvia-accent-blue)";
+const VERDE = "var(--nuvia-accent-green)";
+const GRADIENT = "var(--nuvia-gradient-primary)";
+
 
 type NavItem = { to: string; label: string; Icon: typeof LayoutGrid; exact?: boolean; badge?: number };
 type NavSection = { label: string; items: NavItem[] };
@@ -294,11 +296,15 @@ function AuthenticatedLayout() {
 
   if (loading || !session || gateState !== "ok") {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white/60 text-sm" style={{ background: "#050814" }}>
+      <div
+        className="min-h-screen flex items-center justify-center text-white/60 text-sm"
+        style={{ background: "var(--nuvia-bg-primary)" }}
+      >
         Verificando acceso…
       </div>
     );
   }
+
 
   const displayName: string = profileMeta.nombre || user?.user_metadata?.nombre || (user?.email?.split("@")[0] ?? "Usuario");
   const avatarUrl: string | null = profileMeta.avatar_url;
