@@ -472,21 +472,21 @@ export function PesosSimulator({
                 totalActualPendiente - input.saldoCapital - (input.seguros || 0) * cuotasPendientes,
               ),
             }}
-
+            tea={input.tea}
             secundarios={[
-              { label: "TEA", value: formatPercentage(input.tea) },
               {
                 label: "Tasa mensual utilizada",
                 value: calc ? formatPercentage(calc.tasaMensual * 100, 4) : "—",
               },
               { label: "Seguros mensuales", value: formatCOP(input.seguros) },
               { label: "Cuota sin seguros", value: formatCOP(cuotaSinSegurosNum) },
+              { label: "Cuotas pagadas", value: String(cuotasPagadas) },
             ]}
             detalle={[
               { label: "Valor desembolsado", value: formatCOP(valorDesembolsadoNum) },
               { label: "Dinero pagado a la fecha", value: formatCOP(dineroPagadoFecha) },
               { label: "Plazo inicial", value: `${plazoInicial} meses` },
-              { label: "Cuotas pagadas", value: String(cuotasPagadas) },
+              { label: "TEA", value: formatPercentage(input.tea) },
             ]}
           />
 

@@ -537,7 +537,8 @@ export function UVRSimulator({
                   )
                 : 0,
             }}
-
+            tea={input.teaCobrada}
+            teaUmbral={6}
             secundarios={[
               { label: "Variación UVR EA", value: formatPercentage(input.variacionUVR) },
               {
@@ -554,6 +555,7 @@ export function UVRSimulator({
               { label: "Cuotas pagadas", value: String(cuotasPagadas) },
               { label: "Saldo actual en UVR", value: formatNumber(input.saldoUVR, 4) },
               { label: "Valor UVR actual", value: formatUVR(input.valorUVR) },
+              { label: "TEA cobrada", value: formatPercentage(input.teaCobrada) },
             ]}
           />
 
