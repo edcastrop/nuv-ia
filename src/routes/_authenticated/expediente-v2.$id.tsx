@@ -795,21 +795,39 @@ function ExpedienteV2Page() {
             </div>
           </NCard>
 
-          {/* ===== BITÁCORA ===== */}
+          {/* ===== BITÁCORA CLÍNICA (real) ===== */}
           <NCard variant="default">
             <SectionHeader
               title="Bitácora clínica"
-              description="Comentarios, evidencias y auditoría del expediente."
+              description="Notas, evidencias, auditoría, seguimiento y alertas del expediente."
               icon={<FileText size={14} />}
             />
-            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
-              <BitacoraSlot icon={<MessageSquare size={14} />} label="Comentarios" desc="Anotaciones libres del equipo." />
-              <BitacoraSlot icon={<Paperclip size={14} />} label="Evidencias" desc="Capturas, soportes y adjuntos." />
-              <BitacoraSlot icon={<Folder size={14} />} label="Adjuntos" desc="Documentos complementarios." />
-              <BitacoraSlot icon={<ShieldAlert size={14} />} label="Auditoría" desc="Cambios sensibles y aprobaciones." />
-            </div>
-            <div className="mt-3 border-t border-[var(--nuvia-border)] pt-3">
-              <div className="text-[10px] uppercase tracking-wider text-[var(--nuvia-text-secondary)] mb-2">Movimientos reales (estado_caso)</div>
+            <BitacoraComposer
+              onSubmit={(v) => agregarBitacoraM.mutate(v)}
+              submitting={agregarBitacoraM.isPending}
+              error={agregarBitacoraM.error ? (agregarBitacoraM.error as Error).message : null}
+            />
+            {bitacoraQuery.isLoading ? (
+              <div className="mt-3 text-[11px] text-[var(--nuvia-text-secondary)] inline-flex items-center gap-2">
+                <Loader2 size={12} className="animate-spin" /> Cargando bitácora…
+              </div>
+            ) : bitacora.length === 0 ? (
+              <div className="mt-3">
+                <EmptyState compact tone="neutral" title="Bitácora vacía" description="Aún no hay notas clínicas registradas en este expediente." />
+              </div>
+            ) : (
+              <div className="mt-3 space-y-1.5">
+                {bitacora.map((b) => (
+                  <BitacoraEntry
+                    key={b.id}
+                    b={b}
+                    autorNombre={profilesById[b.usuario_id]?.nombre ?? profilesById[b.usuario_id]?.email ?? null}
+                  />
+                ))}
+              </div>
+            )}
+            <div className="mt-4 border-t border-[var(--nuvia-border)] pt-3">
+              <div className="text-[10px] uppercase tracking-wider text-[var(--nuvia-text-secondary)] mb-2">Movimientos automáticos (estado_caso)</div>
               {hist.length === 0 ? (
                 <EmptyState compact tone="neutral" title="Sin movimientos" description="Aún no hay cambios registrados." />
               ) : (
@@ -840,6 +858,7 @@ function ExpedienteV2Page() {
               )}
             </div>
           </NCard>
+
         </PageLayout.Main>
 
         <PageLayout.Aside>
