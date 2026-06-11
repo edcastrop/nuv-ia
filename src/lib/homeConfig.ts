@@ -43,7 +43,7 @@ export interface RoleHomeConfig {
 }
 
 // ─── Quick-action helpers compartidos ───────────────────────────────────────
-const NUVIA_IA: QuickAction = { to: "/nuvia-ia", label: "NUVIA IA", desc: "Copiloto operativo", icon: Bot, tone: "green" };
+const NUVIA_IA: QuickAction = { to: "/nuvex-ia", label: "NUVIA IA", desc: "Copiloto operativo", icon: Bot, tone: "green" };
 const MENSAJERIA: QuickAction = { to: "/mensajeria", label: "Mensajería", desc: "Conversa con tu equipo", icon: MessageSquare, tone: "blue" };
 const ACADEMIA: QuickAction = { to: "/academia", label: "Academia NUVIA", desc: "Capacitación y certificados", icon: GraduationCap, tone: "green" };
 
