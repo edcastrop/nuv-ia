@@ -26,7 +26,7 @@ import {
 } from "@/lib/motorHonorarios";
 import {
   crearCalculo, listarMisCalculos, listarAprobaciones,
-  solicitarAprobacion, decidirAprobacion, actualizarOferta,
+  solicitarAprobacion, decidirAprobacion,
   type HonorarioCalculoRow, type AprobacionRow,
 } from "@/lib/honorariosMotor";
 import { formatCOP, parseCurrency } from "@/lib/format";
