@@ -683,6 +683,7 @@ function PipelinePage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
