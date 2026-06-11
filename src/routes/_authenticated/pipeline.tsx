@@ -1,4 +1,4 @@
-// P14 — Vista Kanban del Pipeline Maestro NUVEX (14 columnas E1→E14).
+// P14 — Vista Kanban del Pipeline Maestro NUVEX (15 etapas E1→E15).
 // P15 — Filtros (búsqueda, banco, solo estancados).
 // P16 — Filtros persistidos en URL via search params (compartibles).
 
@@ -13,7 +13,6 @@ import {
   computeEtapaActual,
   type EtapaPipelineId,
 } from "@/lib/pipelineEtapas";
-import { Card } from "@/components/nuvex/ui";
 import { BANCOS } from "@/components/nuvex/constants";
 import { useAuth } from "@/hooks/useAuth";
 import { getRecentCases } from "@/lib/recentCases";
@@ -32,10 +31,10 @@ const pipelineSearchSchema = z.object({
 });
 
 const FASE_ETAPAS: Record<FaseId, EtapaPipelineId[]> = {
-  comercial: ["lead", "extracto", "proyeccion"],
-  operativa: ["presentacion", "cierre", "contratacion", "radicacion"],
-  banco: ["banco"],
-  cobro: ["informe", "cuenta", "pago", "comision", "paz_salvo"],
+  comercial: ["lead", "extracto", "proyeccion", "presentacion", "cierre"],
+  operativa: ["contratacion", "radicacion"],
+  banco: ["banco", "resultado_banco", "aceptacion_cliente"],
+  cobro: ["informe", "cuenta", "pago", "paz_salvo"],
   fin: ["finalizado"],
 };
 
@@ -46,7 +45,7 @@ export const Route = createFileRoute("/_authenticated/pipeline")({
 
 const UMBRAL_DIAS: Partial<Record<EtapaPipelineId, number>> = {
   lead: 3, extracto: 5, proyeccion: 5, presentacion: 7, cierre: 7,
-  contratacion: 10, radicacion: 7, banco: 21, informe: 5, cuenta: 5,
+  contratacion: 10, radicacion: 7, banco: 21, resultado_banco: 5, aceptacion_cliente: 5, informe: 5, cuenta: 5,
   pago: 10, comision: 7, paz_salvo: 5, finalizado: 0,
 };
 
@@ -264,12 +263,12 @@ function PipelinePage() {
     let totalDias = 0;
     let estancados = 0;
     let total = 0;
-    const fases: Array<{ id: string; label: string; etapas: EtapaPipelineId[]; count: number; color: string }> = [
-      { id: "comercial", label: "Comercial · E1-3", etapas: ["lead", "extracto", "proyeccion"], count: 0, color: "bg-blue-50 text-blue-700 ring-blue-200" },
-      { id: "operativa", label: "Operativa · E4-7", etapas: ["presentacion", "cierre", "contratacion", "radicacion"], count: 0, color: "bg-indigo-50 text-indigo-700 ring-indigo-200" },
-      { id: "banco",     label: "Banco · E8",       etapas: ["banco"], count: 0, color: "bg-amber-50 text-amber-700 ring-amber-200" },
-      { id: "cobro",     label: "Cobro · E9-13",    etapas: ["informe", "cuenta", "pago", "comision", "paz_salvo"], count: 0, color: "bg-emerald-50 text-emerald-700 ring-emerald-200" },
-      { id: "fin",       label: "Finalizado · E14", etapas: ["finalizado"], count: 0, color: "bg-zinc-100 text-zinc-700 ring-zinc-200" },
+    const fases: Array<{ id: string; label: string; etapas: EtapaPipelineId[]; count: number }> = [
+      { id: "comercial", label: "Comercial · E1-5", etapas: ["lead", "extracto", "proyeccion", "presentacion", "cierre"], count: 0 },
+      { id: "operativa", label: "Operativa · E6-7", etapas: ["contratacion", "radicacion"], count: 0 },
+      { id: "banco",     label: "Banco · E8-10",    etapas: ["banco", "resultado_banco", "aceptacion_cliente"], count: 0 },
+      { id: "cobro",     label: "Cobro · E11-14",   etapas: ["informe", "cuenta", "pago", "paz_salvo"], count: 0 },
+      { id: "fin",       label: "Cierre · E15",     etapas: ["finalizado"], count: 0 },
     ];
     let honorarios = 0;
     ETAPAS_PIPELINE.forEach((etapa) => {
@@ -313,7 +312,7 @@ function PipelinePage() {
   // P28 — Vistos recientemente (localStorage). Se refresca al cargar y al refrescar.
   const recents = useMemo(() => getRecentCases(), [lastUpdated]);
 
-  // P30 — Embudo ejecutivo E1→E14: conteo por etapa + conversión acumulada vs E1.
+  // P30 — Embudo ejecutivo E1→E15: conteo por etapa + conversión acumulada vs E1.
   const [showFunnel, setShowFunnel] = useState<boolean>(() => {
     if (typeof window === "undefined") return true;
     return localStorage.getItem("nuvex.pipeline.funnel") !== "0";
@@ -352,96 +351,111 @@ function PipelinePage() {
 
 
   return (
-    <div className="mx-auto max-w-[1400px] p-3 md:p-4">
-      <div className="space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold text-[#0A1226]">Pipeline Maestro</h1>
-          <div className="text-[12px] text-[#242424]/60">
-            {totalVisible} de {rows.length} casos · 14 etapas
+    <div
+      className="min-h-[calc(100vh-72px)] px-3 py-4 text-[var(--nuvia-text-primary)] md:px-5"
+      style={{
+        background:
+          "linear-gradient(180deg, var(--nuvia-bg-primary) 0%, var(--nuvia-bg-secondary) 54%, var(--nuvia-bg-primary) 100%)",
+      }}
+    >
+      <div className="mx-auto max-w-[1680px] space-y-4">
+        <section className="glass-panel overflow-hidden p-4 md:p-5">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+            <div className="min-w-0">
+              <div className="text-[11px] font-semibold uppercase text-[var(--nuvia-accent-green)]">
+                NUVIA · Control operativo
+              </div>
+              <h1 className="mt-1 text-2xl font-semibold leading-tight text-[var(--nuvia-text-primary)]">
+                Pipeline Maestro
+              </h1>
+              <div className="mt-1 text-sm text-[var(--nuvia-text-secondary)]">
+                {totalVisible} de {rows.length} casos visibles · {ETAPAS_PIPELINE.length} etapas activas
+              </div>
+            </div>
+
+            <div className="flex flex-1 flex-wrap items-center gap-2 xl:justify-end">
+              <input
+                ref={searchInputRef}
+                value={qLocal}
+                onChange={(e) => setQLocal(e.target.value)}
+                placeholder="Buscar cliente, cédula o crédito…"
+                className="h-10 w-full rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-3 text-sm text-[var(--nuvia-text-primary)] outline-none placeholder:text-[rgba(170,179,197,0.55)] focus:border-[var(--nuvia-accent-blue)] focus:ring-2 focus:ring-[rgba(68,93,163,0.22)] sm:w-[280px]"
+              />
+              <select
+                value={banco}
+                onChange={(e) => setBanco(e.target.value)}
+                className="h-10 rounded-lg border border-[var(--nuvia-border)] bg-[var(--nuvia-bg-tertiary)] px-3 text-sm text-[var(--nuvia-text-primary)] outline-none focus:border-[var(--nuvia-accent-blue)]"
+              >
+                <option value="">Todos los bancos</option>
+                {bancos.map((b) => (
+                  <option key={b} value={b}>{b}</option>
+                ))}
+              </select>
+              <select
+                value={asesor}
+                onChange={(e) => setAsesor(e.target.value)}
+                title="Filtrar por analista financiero"
+                className="h-10 max-w-[230px] rounded-lg border border-[var(--nuvia-border)] bg-[var(--nuvia-bg-tertiary)] px-3 text-sm text-[var(--nuvia-text-primary)] outline-none focus:border-[var(--nuvia-accent-blue)]"
+              >
+                <option value="">Todos los analistas</option>
+                {analistas.map((a) => (
+                  <option key={a.id} value={a.id}>{a.nombre || a.email || a.id.slice(0, 8)}</option>
+                ))}
+              </select>
+              <button
+                onClick={() => cargar(true)}
+                disabled={loading || refreshing}
+                title={`Actualizado hace ${haceLabel}`}
+                className="inline-flex h-10 items-center gap-2 rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-3 text-sm text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-border-strong)] hover:bg-[rgba(255,255,255,0.06)] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <RefreshCw className={`h-4 w-4 text-[var(--nuvia-accent-green)] ${refreshing ? "animate-spin" : ""}`} />
+                hace {haceLabel}
+              </button>
+              <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-3 text-sm text-[var(--nuvia-text-secondary)]">
+                <input
+                  type="checkbox"
+                  checked={mios}
+                  onChange={(e) => setMios(e.target.checked)}
+                  disabled={!user?.id}
+                  className="h-4 w-4 accent-[var(--nuvia-accent-blue)]"
+                />
+                Mis casos
+              </label>
+              <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-3 text-sm text-[var(--nuvia-text-secondary)]">
+                <input
+                  type="checkbox"
+                  checked={soloStuck}
+                  onChange={(e) => setSoloStuck(e.target.checked)}
+                  className="h-4 w-4 accent-[var(--nuvia-danger)]"
+                />
+                Estancados
+              </label>
+              {(q || banco || soloStuck || fase || mios || asesor) && (
+                <button
+                  onClick={clearAll}
+                  className="h-10 rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-3 text-sm text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-border-strong)]"
+                >
+                  Limpiar
+                </button>
+              )}
+              <button
+                onClick={exportarCSV}
+                disabled={loading || totalVisible === 0}
+                className="h-10 rounded-lg border border-transparent px-3 text-sm font-semibold text-[var(--nuvia-text-primary)] shadow-[var(--nuvia-shadow-sm)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                style={{ background: "var(--nuvia-gradient-primary)" }}
+              >
+                Exportar CSV
+              </button>
+              <Link to="/casos" className="text-sm font-medium text-[var(--nuvia-accent-green)] hover:underline">
+                Ver lista →
+              </Link>
+            </div>
           </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <input
-            ref={searchInputRef}
-            value={qLocal}
-            onChange={(e) => setQLocal(e.target.value)}
-            placeholder='Buscar cliente, cédula, crédito…  ( / )'
-            className="h-8 w-[240px] rounded-md border border-[#E3E7EE] bg-white px-2 text-[12px] text-[#0A1226] placeholder:text-[#9CA3AF] focus:border-[#445DA3] focus:outline-none"
-          />
-          <select
-            value={banco}
-            onChange={(e) => setBanco(e.target.value)}
-            className="h-8 rounded-md border border-[#E3E7EE] bg-white px-2 text-[12px] text-[#0A1226] focus:border-[#445DA3] focus:outline-none"
-          >
-            <option value="">Todos los bancos</option>
-            {bancos.map((b) => (
-              <option key={b} value={b}>{b}</option>
-            ))}
-          </select>
-          <select
-            value={asesor}
-            onChange={(e) => setAsesor(e.target.value)}
-            title="Filtrar por analista financiero"
-            className="h-8 max-w-[200px] rounded-md border border-[#E3E7EE] bg-white px-2 text-[12px] text-[#0A1226] focus:border-[#445DA3] focus:outline-none"
-          >
-            <option value="">Todos los analistas</option>
-            {analistas.map((a) => (
-              <option key={a.id} value={a.id}>{a.nombre || a.email || a.id.slice(0, 8)}</option>
-            ))}
-          </select>
-          <button
-            onClick={() => cargar(true)}
-            disabled={loading || refreshing}
-            title={`Actualizado hace ${haceLabel}`}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#E3E7EE] bg-white px-2 text-[12px] text-[#445DA3] hover:bg-[#F1F3F8] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
-            <span className="text-[#242424]/60">hace {haceLabel}</span>
-          </button>
-          <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-[#E3E7EE] bg-white px-2 py-1 text-[12px] text-[#0A1226]">
-            <input
-              type="checkbox"
-              checked={mios}
-              onChange={(e) => setMios(e.target.checked)}
-              disabled={!user?.id}
-              className="h-3.5 w-3.5"
-            />
-            Mis casos
-          </label>
-          <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-[#E3E7EE] bg-white px-2 py-1 text-[12px] text-[#0A1226]">
-            <input
-              type="checkbox"
-              checked={soloStuck}
-              onChange={(e) => setSoloStuck(e.target.checked)}
-              className="h-3.5 w-3.5"
-            />
-            Solo estancados
-          </label>
-          {(q || banco || soloStuck || fase || mios || asesor) && (
-            <button
-              onClick={clearAll}
-              className="h-8 rounded-md border border-[#E3E7EE] bg-white px-2 text-[12px] text-[#445DA3] hover:bg-[#F1F3F8]"
-            >
-              Limpiar
-            </button>
-          )}
-          <button
-            onClick={exportarCSV}
-            disabled={loading || totalVisible === 0}
-            className="h-8 rounded-md border border-[#445DA3] bg-[#445DA3] px-2 text-[12px] font-medium text-white hover:bg-[#3a4f8c] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Exportar CSV
-          </button>
-          <Link to="/casos" className="text-[12px] text-[#445DA3] hover:underline">
-            Ver lista →
-          </Link>
-        </div>
-      </div>
+        </section>
 
       {recents.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#242424]/40">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[11px] font-semibold uppercase text-[var(--nuvia-text-secondary)]">
             Vistos recientemente
           </span>
           {recents.map((rc) => (
@@ -449,7 +463,7 @@ function PipelinePage() {
               key={rc.id}
               to="/casos/$id"
               params={{ id: rc.id }}
-              className="inline-flex max-w-[180px] items-center gap-1 rounded-full border border-[#E3E7EE] bg-white px-2 py-0.5 text-[11px] text-[#0A1226] hover:border-[#445DA3] hover:text-[#445DA3]"
+              className="inline-flex max-w-[190px] items-center gap-1 rounded-full border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-3 py-1 text-xs text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-accent-blue)] hover:text-[var(--nuvia-text-primary)]"
               title={rc.nombre}
             >
               <span className="truncate">{rc.nombre}</span>
@@ -460,26 +474,26 @@ function PipelinePage() {
 
 
       {!loading && kpis.total > 0 && (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
-          <div className="rounded-xl border border-[#E3E7EE] bg-white p-2.5">
-            <div className="text-[10px] uppercase tracking-wider text-[#242424]/50">Total</div>
-            <div className="mt-0.5 text-lg font-semibold text-[#0A1226]">{kpis.total}</div>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-9">
+          <div className="glass-card p-3">
+            <div className="text-[11px] uppercase text-[var(--nuvia-text-secondary)]">Total</div>
+            <div className="mt-1 text-2xl font-semibold text-[var(--nuvia-text-primary)]">{kpis.total}</div>
           </div>
-          <div className="rounded-xl border border-rose-200 bg-rose-50 p-2.5">
-            <div className="text-[10px] uppercase tracking-wider text-rose-600/70">Estancados</div>
-            <div className="mt-0.5 flex items-center gap-1 text-lg font-semibold text-rose-700">
+          <div className="rounded-xl border p-3" style={{ borderColor: "color-mix(in oklab, var(--nuvia-danger) 36%, transparent)", background: "color-mix(in oklab, var(--nuvia-danger) 11%, transparent)" }}>
+            <div className="text-[11px] uppercase text-[var(--nuvia-text-secondary)]">Estancados</div>
+            <div className="mt-1 flex items-center gap-1 text-2xl font-semibold text-[var(--nuvia-danger)]">
               <AlertTriangle className="h-4 w-4" /> {kpis.estancados}
             </div>
           </div>
-          <div className="rounded-xl border border-[#E3E7EE] bg-white p-2.5">
-            <div className="text-[10px] uppercase tracking-wider text-[#242424]/50">Días prom.</div>
-            <div className="mt-0.5 flex items-center gap-1 text-lg font-semibold text-[#0A1226]">
-              <Clock className="h-4 w-4 text-[#445DA3]" /> {kpis.promedio}
+          <div className="glass-card p-3">
+            <div className="text-[11px] uppercase text-[var(--nuvia-text-secondary)]">Días prom.</div>
+            <div className="mt-1 flex items-center gap-1 text-2xl font-semibold text-[var(--nuvia-text-primary)]">
+              <Clock className="h-4 w-4 text-[var(--nuvia-accent-blue)]" /> {kpis.promedio}
             </div>
           </div>
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-2.5" title="Suma de honorarios_final de los casos visibles">
-            <div className="text-[10px] uppercase tracking-wider text-emerald-700/70">Honorarios</div>
-            <div className="mt-0.5 text-lg font-semibold text-emerald-800">{fmtCOP(kpis.honorarios)}</div>
+          <div className="rounded-xl border p-3" title="Suma de honorarios_final de los casos visibles" style={{ borderColor: "color-mix(in oklab, var(--nuvia-accent-green) 34%, transparent)", background: "color-mix(in oklab, var(--nuvia-accent-green) 10%, transparent)" }}>
+            <div className="text-[11px] uppercase text-[var(--nuvia-text-secondary)]">Honorarios</div>
+            <div className="mt-1 truncate text-2xl font-semibold text-[var(--nuvia-accent-green)]">{fmtCOP(kpis.honorarios)}</div>
           </div>
           {kpis.fases.map((f) => {
             const active = fase === f.id;
@@ -488,11 +502,11 @@ function PipelinePage() {
                 key={f.id}
                 type="button"
                 onClick={() => toggleFase(f.id as FaseId)}
-                className={`rounded-xl p-2.5 text-left ring-1 transition hover:brightness-95 ${f.color} ${active ? "ring-2 ring-offset-1 ring-[#445DA3]" : ""}`}
+                className={`rounded-xl border p-3 text-left transition hover:border-[var(--nuvia-accent-blue)] ${active ? "border-[var(--nuvia-accent-blue)] bg-[rgba(68,93,163,0.18)]" : "border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)]"}`}
                 title={active ? "Quitar filtro de fase" : "Filtrar por esta fase"}
               >
-                <div className="text-[10px] uppercase tracking-wider opacity-70">{f.label}</div>
-                <div className="mt-0.5 text-lg font-semibold">{f.count}</div>
+                <div className="text-[11px] uppercase text-[var(--nuvia-text-secondary)]">{f.label}</div>
+                <div className="mt-1 text-2xl font-semibold text-[var(--nuvia-text-primary)]">{f.count}</div>
               </button>
             );
           })}
@@ -500,59 +514,62 @@ function PipelinePage() {
       )}
 
       {!loading && funnel[0]?.passed > 0 && (
-        <div className="rounded-2xl border border-[#E3E7EE] bg-white p-3">
+        <section className="glass-panel p-4">
           <div className="mb-2 flex items-center justify-between">
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-[#445DA3]">
-                Embudo ejecutivo · E1 → E14
+              <div className="text-[11px] font-semibold uppercase text-[var(--nuvia-accent-green)]">
+                Embudo ejecutivo · E1 → E{ETAPAS_PIPELINE.length}
               </div>
-              <div className="text-[11px] text-[#242424]/60">
+              <div className="text-xs text-[var(--nuvia-text-secondary)]">
                 Conversión acumulada de casos visibles vs. E1 ({funnel[0].passed}).
               </div>
             </div>
             <button
               type="button"
               onClick={() => setShowFunnel((v) => !v)}
-              className="h-7 rounded-md border border-[#E3E7EE] bg-white px-2 text-[11px] text-[#445DA3] hover:bg-[#F1F3F8]"
+              className="h-8 rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-3 text-xs text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-border-strong)]"
             >
               {showFunnel ? "Ocultar" : "Mostrar"}
             </button>
           </div>
           {showFunnel && (
-            <div className="space-y-1">
+            <div className="space-y-2">
               {funnel.map((f) => {
                 const widthPct = Math.max(2, f.pct);
                 const isStuck = f.drop >= 30 && f.numero > 1;
                 return (
-                  <div key={f.id} className="grid grid-cols-[64px_1fr_140px] items-center gap-2">
-                    <div className="text-[11px] font-semibold text-[#0A1226]">
+                  <div key={f.id} className="grid grid-cols-[44px_minmax(150px,1fr)_112px] items-center gap-2 md:grid-cols-[64px_1fr_140px]">
+                    <div className="text-xs font-semibold text-[var(--nuvia-text-primary)]">
                       E{f.numero}
                     </div>
-                    <div className="relative h-5 overflow-hidden rounded bg-[#F1F3F8]">
+                    <div className="relative h-7 overflow-hidden rounded-lg bg-[rgba(255,255,255,0.05)] ring-1 ring-[var(--nuvia-border)]">
                       <div
-                        className={`h-full rounded transition-all ${
-                          isStuck ? "bg-rose-400" : "bg-[#445DA3]"
-                        }`}
-                        style={{ width: `${widthPct}%` }}
+                        className="h-full rounded-lg transition-all"
+                        style={{
+                          width: `${widthPct}%`,
+                          background: isStuck ? "var(--nuvia-danger)" : "var(--nuvia-gradient-primary)",
+                        }}
                         title={`${f.passed} casos · ${f.pct}%`}
                       />
-                      <div className="pointer-events-none absolute inset-0 flex items-center px-2 text-[10px] font-medium text-white mix-blend-difference">
+                      <div className="pointer-events-none absolute inset-0 flex items-center px-3 text-xs font-semibold text-[var(--nuvia-text-primary)]">
                         {f.titulo}
                       </div>
                     </div>
-                    <div className="flex items-center justify-end gap-2 text-[11px] tabular-nums">
-                      <span className="font-semibold text-[#0A1226]">{f.passed}</span>
-                      <span className="text-[#242424]/50">·</span>
-                      <span className="text-[#242424]/70">{f.pct}%</span>
+                    <div className="flex items-center justify-end gap-2 text-xs tabular-nums text-[var(--nuvia-text-secondary)]">
+                      <span className="font-semibold text-[var(--nuvia-text-primary)]">{f.passed}</span>
+                      <span>·</span>
+                      <span>{f.pct}%</span>
                       {f.numero > 1 && (
                         <span
-                          className={`rounded px-1 py-0.5 text-[9px] font-semibold ${
-                            f.drop >= 30
-                              ? "bg-rose-50 text-rose-700"
+                          className="rounded px-1.5 py-0.5 text-[10px] font-semibold"
+                          style={{
+                            color: f.drop >= 30 ? "var(--nuvia-danger)" : f.drop > 0 ? "var(--nuvia-warning)" : "var(--nuvia-accent-green)",
+                            background: f.drop >= 30
+                              ? "color-mix(in oklab, var(--nuvia-danger) 13%, transparent)"
                               : f.drop > 0
-                              ? "bg-amber-50 text-amber-700"
-                              : "bg-emerald-50 text-emerald-700"
-                          }`}
+                                ? "color-mix(in oklab, var(--nuvia-warning) 13%, transparent)"
+                                : "color-mix(in oklab, var(--nuvia-accent-green) 13%, transparent)",
+                          }}
                           title="Caída vs. etapa anterior"
                         >
                           -{f.drop}%
@@ -564,52 +581,62 @@ function PipelinePage() {
               })}
             </div>
           )}
-        </div>
+        </section>
       )}
 
 
       {loading ? (
-        <Card>
-          <div className="flex items-center gap-2 text-sm text-[#242424]/70">
-            <Loader2 className="h-4 w-4 animate-spin" /> Cargando pipeline…
-          </div>
-        </Card>
+        <div className="glass-panel flex items-center gap-2 p-5 text-sm text-[var(--nuvia-text-secondary)]">
+          <Loader2 className="h-4 w-4 animate-spin text-[var(--nuvia-accent-green)]" /> Cargando pipeline…
+        </div>
       ) : (
-        <div className="overflow-x-auto pb-3">
-          <div className="flex min-w-max gap-3">
+        <div className="overflow-x-auto pb-4 scrollbar-thin">
+          <div className="flex min-w-max gap-2.5">
             {ETAPAS_PIPELINE.filter((etapa) => !fase || FASE_ETAPAS[fase as FaseId].includes(etapa.id)).map((etapa) => {
               const items = grupos.get(etapa.id) ?? [];
               const umbral = UMBRAL_DIAS[etapa.id] ?? 0;
               const diasArr = items.map((r) => diasDesde(r.updated_at));
               const stuckCount = umbral > 0 ? diasArr.filter((d) => d > umbral).length : 0;
               const avgDias = diasArr.length > 0 ? Math.round(diasArr.reduce((a, b) => a + b, 0) / diasArr.length) : 0;
-              const heatBorder = stuckCount > 0 ? "border-rose-300 bg-rose-50/40" : "border-[#E3E7EE] bg-[#F7F9FC]";
+              const heatStyle = stuckCount > 0
+                ? {
+                    borderColor: "color-mix(in oklab, var(--nuvia-danger) 36%, transparent)",
+                    background: "linear-gradient(180deg, color-mix(in oklab, var(--nuvia-danger) 10%, var(--nuvia-bg-tertiary)), var(--nuvia-bg-secondary))",
+                  }
+                : {
+                    borderColor: "var(--nuvia-border)",
+                    background: "linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.018))",
+                  };
               return (
                 <div
                   key={etapa.id}
-                  className={`w-[280px] flex-shrink-0 rounded-2xl border p-2.5 ${heatBorder}`}
+                  className="w-[292px] flex-shrink-0 rounded-2xl border p-3 shadow-[var(--nuvia-shadow-sm)]"
+                  style={heatStyle}
                 >
-                  <div className="mb-2 flex items-center justify-between px-1">
+                  <div className="mb-3 flex items-start justify-between gap-2 px-1">
                     <div className="min-w-0">
-                      <div className="text-[10px] font-semibold uppercase tracking-wider text-[#445DA3]">
+                      <div className="text-[11px] font-semibold uppercase text-[var(--nuvia-accent-green)]">
                         E{etapa.numero}
                       </div>
-                      <div className="truncate text-sm font-semibold text-[#0A1226]">
+                      <div className="truncate text-base font-semibold text-[var(--nuvia-text-primary)]">
                         {etapa.titulo}
                       </div>
+                      <div className="mt-1 line-clamp-2 min-h-[32px] text-[11px] leading-4 text-[var(--nuvia-text-secondary)]">
+                        {etapa.descripcion}
+                      </div>
                     </div>
-                    <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-[#242424]/70 ring-1 ring-[#E3E7EE]">
+                    <span className="shrink-0 rounded-full border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.045)] px-2.5 py-1 text-xs font-semibold text-[var(--nuvia-text-primary)]">
                       {items.length}
                     </span>
                   </div>
                   {items.length > 0 && (
-                    <div className="mb-2 flex items-center justify-between gap-2 px-1 text-[10px]">
-                      <span className="inline-flex items-center gap-1 text-[#242424]/60">
+                    <div className="mb-3 flex items-center justify-between gap-2 px-1 text-xs">
+                      <span className="inline-flex items-center gap-1 text-[var(--nuvia-text-secondary)]">
                         <Clock className="h-3 w-3" /> prom. {avgDias}d
-                        {umbral > 0 && <span className="text-[#242424]/40">· umbral {umbral}d</span>}
+                        {umbral > 0 && <span className="opacity-70">· SLA {umbral}d</span>}
                       </span>
                       {stuckCount > 0 && (
-                        <span className="inline-flex items-center gap-1 rounded bg-rose-100 px-1.5 py-0.5 font-semibold text-rose-700">
+                        <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-semibold text-[var(--nuvia-danger)]" style={{ background: "color-mix(in oklab, var(--nuvia-danger) 13%, transparent)" }}>
                           <AlertTriangle className="h-3 w-3" /> {stuckCount}
                         </span>
                       )}
@@ -619,7 +646,7 @@ function PipelinePage() {
 
                   <div className="space-y-2">
                     {items.length === 0 ? (
-                      <div className="rounded-lg border border-dashed border-[#E3E7EE] bg-white/60 px-2 py-3 text-center text-[11px] text-[#9CA3AF]">
+                      <div className="rounded-xl border border-dashed border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.02)] px-3 py-5 text-center text-xs text-[var(--nuvia-text-secondary)]">
                         Sin casos
                       </div>
                     ) : (
@@ -632,37 +659,40 @@ function PipelinePage() {
                             key={r.id}
                             to="/casos/$id"
                             params={{ id: r.id }}
-                            className="block rounded-lg border border-[#E3E7EE] bg-white p-2.5 text-left transition hover:border-[#445DA3] hover:shadow-sm"
+                            className="block rounded-xl border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.04)] p-3 text-left transition hover:border-[var(--nuvia-accent-blue)] hover:bg-[rgba(255,255,255,0.065)]"
                           >
                             <div className="flex items-center gap-1.5">
-                              <div className="flex-1 truncate text-sm font-medium text-[#0A1226]">
+                              <div className="flex-1 truncate text-sm font-semibold text-[var(--nuvia-text-primary)]">
                                 {r.cliente_nombre}
                               </div>
                               {isDup && (
                                 <span
                                   title="Esta cédula tiene más de un expediente activo"
-                                  className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-amber-800"
+                                  className="shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase text-[var(--nuvia-warning)]"
+                                  style={{ background: "color-mix(in oklab, var(--nuvia-warning) 14%, transparent)" }}
                                 >
                                   Dup
                                 </span>
                               )}
                             </div>
-                            <div className="mt-0.5 truncate text-[11px] text-[#242424]/60">
+                            <div className="mt-1 truncate text-xs text-[var(--nuvia-text-secondary)]">
                               {r.banco ?? "—"} · {r.cedula ?? "s/cédula"}
                             </div>
-                            <div className="mt-0.5 text-[10px] text-[#242424]/45">
+                            <div className="mt-1 text-[11px] text-[rgba(170,179,197,0.72)]">
                               act. {r.updated_at ? new Date(r.updated_at).toLocaleDateString("es-CO", { day: "2-digit", month: "short" }) : "—"}
                             </div>
-                            <div className="mt-2 flex items-center justify-between">
-                              <span className="inline-flex items-center gap-1 rounded bg-[#F1F3F8] px-1.5 py-0.5 text-[10px] font-medium text-[#445DA3]">
+                            <div className="mt-2 flex items-center justify-between gap-2">
+                              <span className="inline-flex min-w-0 max-w-[170px] items-center gap-1 truncate rounded-md px-1.5 py-0.5 text-[10px] font-medium text-[var(--nuvia-accent-green)]" style={{ background: "color-mix(in oklab, var(--nuvia-accent-green) 12%, transparent)" }}>
                                 <Flag className="h-3 w-3" /> {r.estado}
                               </span>
                               <span
-                                className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium ${
-                                  stuck
-                                    ? "bg-rose-50 text-rose-700"
-                                    : "bg-emerald-50 text-emerald-700"
-                                }`}
+                                className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
+                                style={{
+                                  color: stuck ? "var(--nuvia-danger)" : "var(--nuvia-text-secondary)",
+                                  background: stuck
+                                    ? "color-mix(in oklab, var(--nuvia-danger) 12%, transparent)"
+                                    : "rgba(255,255,255,0.045)",
+                                }}
                               >
                                 {stuck ? (
                                   <AlertTriangle className="h-3 w-3" />
