@@ -26,6 +26,11 @@ export interface CostoTotalCredito {
    * del semáforo y con el mensaje mostrado.
    */
   baseCredito?: number;
+  /**
+   * Saldo de capital actual. Se usa como base de cálculo alternativa cuando
+   * el valor desembolsado no está disponible: veces = totalProyectadoPendiente / saldoActual.
+   */
+  saldoActual?: number;
 }
 
 interface Props {
@@ -61,7 +66,7 @@ interface Props {
 
 type RiesgoNivel = "verde" | "amarillo" | "naranja" | "rojo";
 
-function semaforo(n: number, opts?: { vecesValor?: number }) {
+function semaforo(n: number, opts?: { vecesValor?: number; baseLabel?: string }) {
   const safe = isFinite(n) ? n : 0;
   let nivel: RiesgoNivel;
   if (safe < 1.5) nivel = "verde";
@@ -75,18 +80,20 @@ function semaforo(n: number, opts?: { vecesValor?: number }) {
     return v.toFixed(2).replace(".", ",");
   })();
 
+  const baseLabel = opts?.baseLabel ?? "el valor de tu crédito";
+
   const mensajes: Record<RiesgoNivel, string> = {
     verde: vecesTxt
-      ? `Vas a pagar ${vecesTxt} veces el valor de tu crédito. Tu crédito está dentro de un rango financiero saludable.`
+      ? `Vas a pagar ${vecesTxt} veces ${baseLabel}. Tu crédito está dentro de un rango financiero saludable.`
       : "Tu crédito está dentro de un rango financiero saludable. Aún existen oportunidades menores de optimización.",
     amarillo: vecesTxt
-      ? `Vas a pagar ${vecesTxt} veces el valor de tu crédito. Existe una oportunidad clara de restructuración.`
+      ? `Vas a pagar ${vecesTxt} veces ${baseLabel}. Existe una oportunidad clara de restructuración.`
       : "Estás pagando entre 1,5 y 2 veces el valor de tu crédito. Existe una oportunidad clara de restructuración.",
     naranja: vecesTxt
-      ? `Vas a pagar ${vecesTxt} veces el valor de tu crédito. Se recomienda restructurar para reducir intereses.`
+      ? `Vas a pagar ${vecesTxt} veces ${baseLabel}. Se recomienda restructurar para reducir intereses.`
       : "Vas a pagar entre 2 y 2,5 veces lo prestado. Se recomienda restructurar el crédito para reducir intereses.",
     rojo: vecesTxt
-      ? `Vas a pagar ${vecesTxt} veces el valor de tu crédito. La intervención financiera es urgente.`
+      ? `Vas a pagar ${vecesTxt} veces ${baseLabel}. La intervención financiera es urgente.`
       : "Estás pagando más de 2,5 veces el valor de tu crédito. La intervención financiera es urgente.",
   };
 
