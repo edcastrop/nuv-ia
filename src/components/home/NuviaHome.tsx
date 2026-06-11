@@ -77,13 +77,22 @@ export function NuviaHome({ onLanzarSimulador }: { onLanzarSimulador: () => void
     if (!user) return;
     let cancel = false;
     (async () => {
-      const safe = async <T,>(p: Promise<T>, fallback: T): Promise<T> => {
-        try { return await p; } catch { return fallback; }
+      const safe = async <T,>(p: PromiseLike<T>, fallback: T): Promise<T> => {
+        try { return await Promise.resolve(p); } catch { return fallback; }
       };
       const [profRes, casosRes, notifRes] = await Promise.all([
-        safe(supabase.from("profiles" as never).select("nombre").eq("id", user.id).maybeSingle(), { data: null as { nombre?: string } | null }),
-        safe(supabase.from("expedientes" as never).select("id", { count: "exact", head: true }).eq("asesor_id", user.id), { count: 0 as number | null }),
-        safe(supabase.from("notificaciones" as never).select("id", { count: "exact", head: true }).eq("user_id", user.id).is("leida_at", null), { count: 0 as number | null }),
+        safe<{ data: { nombre?: string } | null }>(
+          supabase.from("profiles" as never).select("nombre").eq("id", user.id).maybeSingle() as unknown as PromiseLike<{ data: { nombre?: string } | null }>,
+          { data: null },
+        ),
+        safe<{ count: number | null }>(
+          supabase.from("expedientes" as never).select("id", { count: "exact", head: true }).eq("asesor_id", user.id) as unknown as PromiseLike<{ count: number | null }>,
+          { count: 0 },
+        ),
+        safe<{ count: number | null }>(
+          supabase.from("notificaciones" as never).select("id", { count: "exact", head: true }).eq("user_id", user.id).is("leida_at", null) as unknown as PromiseLike<{ count: number | null }>,
+          { count: 0 },
+        ),
       ]);
       if (cancel) return;
       const p = profRes.data as { nombre?: string } | null;
