@@ -4,8 +4,6 @@ import { Link, useRouter } from "@tanstack/react-router";
 import { useNotificaciones } from "@/hooks/useNotificaciones";
 import type { Notificacion } from "@/lib/notificaciones";
 
-const AZUL = "#445DA3";
-
 const TIPO_LABEL: Record<string, string> = {
   usuario_aprobado: "Usuario aprobado",
   usuario_bloqueado: "Usuario bloqueado",
@@ -22,8 +20,10 @@ const TIPO_LABEL: Record<string, string> = {
   mensaje_interno: "Mensaje interno",
 };
 
-function sevColor(s: string) {
-  return s === "alta" ? "#991B1B" : s === "media" ? "#8A5A00" : "#1F7A45";
+function sevColor(s: string): string {
+  if (s === "alta") return "var(--nuvia-danger)";
+  if (s === "media") return "var(--nuvia-warning)";
+  return "var(--nuvia-success)";
 }
 
 function sevLabel(s: string) {
@@ -46,25 +46,18 @@ export function NotificationBell() {
   }, []);
 
   const abrirDetalle = (n: Notificacion) => {
-    // Marca como leída inmediatamente y, si hay link, navega directo al origen.
-    if (!n.leida) {
-      void leer(n.id);
-    }
+    if (!n.leida) void leer(n.id);
     setOpen(false);
     if (n.link) {
       const link = n.link;
       try {
-        if (/^https?:\/\//i.test(link)) {
-          window.location.href = link;
-        } else {
-          router.navigate({ to: link });
-        }
+        if (/^https?:\/\//i.test(link)) window.location.href = link;
+        else router.navigate({ to: link });
       } catch {
         window.location.href = link;
       }
       return;
     }
-    // Solo cuando no hay destino, mostramos un detalle informativo.
     setDetalle(n);
   };
 
@@ -73,16 +66,12 @@ export function NotificationBell() {
     const link = detalle.link;
     setDetalle(null);
     try {
-      if (/^https?:\/\//i.test(link)) {
-        window.location.href = link;
-      } else {
-        router.navigate({ to: link });
-      }
+      if (/^https?:\/\//i.test(link)) window.location.href = link;
+      else router.navigate({ to: link });
     } catch {
       window.location.href = link;
     }
   };
-
 
   return (
     <>
@@ -90,47 +79,63 @@ export function NotificationBell() {
         <button
           onClick={() => setOpen((o) => !o)}
           className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl text-white/80 transition hover:text-white"
-          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.10)" }}
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid var(--nuvia-border)",
+          }}
           aria-label="Notificaciones"
         >
           <Bell size={16} />
           {unread > 0 && (
             <span
               className="absolute -top-1 -right-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white"
-              style={{ background: "#E11D48" }}
+              style={{ background: "var(--nuvia-danger)" }}
             >
               {unread > 99 ? "99+" : unread}
             </span>
           )}
         </button>
+
         {open && (
           <div
-            className="absolute right-0 mt-2 w-[380px] max-h-[480px] overflow-hidden rounded-2xl bg-white shadow-2xl z-50 flex flex-col"
-            style={{ border: "1px solid #E3E7EE" }}
+            className="glass-modal absolute right-0 mt-2 w-[380px] max-h-[480px] overflow-hidden z-50 flex flex-col"
+            style={{ color: "var(--nuvia-text-primary)" }}
           >
-            <div className="flex items-center justify-between border-b border-[#E3E7EE] px-4 py-3">
-              <div className="text-sm font-semibold text-[#0A1226]">Notificaciones</div>
+            <div
+              className="flex items-center justify-between px-4 py-3"
+              style={{ borderBottom: "1px solid var(--nuvia-border)" }}
+            >
+              <div className="text-sm font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
+                Notificaciones
+              </div>
               <button
                 onClick={leerTodas}
-                className="inline-flex items-center gap-1 text-[11px] font-medium text-[#445DA3] hover:underline disabled:opacity-40"
+                className="inline-flex items-center gap-1 text-[11px] font-medium hover:underline disabled:opacity-40"
+                style={{ color: "var(--nuvia-accent-blue)" }}
                 disabled={unread === 0}
               >
                 <CheckCheck size={12} /> Marcar todas
               </button>
             </div>
-            <div className="overflow-y-auto">
+            <div className="overflow-y-auto scrollbar-thin">
               {items.length === 0 ? (
-                <div className="p-8 text-center text-[12px] text-[#242424]/60">Sin notificaciones</div>
+                <div
+                  className="p-8 text-center text-[12px]"
+                  style={{ color: "var(--nuvia-text-secondary)" }}
+                >
+                  Sin notificaciones
+                </div>
               ) : (
-                <ul className="divide-y divide-[#F1F3F8]">
+                <ul style={{ borderColor: "var(--nuvia-border)" }} className="divide-y divide-white/[0.06]">
                   {items.slice(0, 30).map((n) => (
                     <li key={n.id}>
                       <button
                         type="button"
                         onClick={() => abrirDetalle(n)}
-                        className={`w-full text-left px-4 py-3 transition hover:bg-[#F1F5FB] ${
-                          !n.leida ? "bg-[#F7F9FB]" : ""
-                        }`}
+                        className="w-full text-left px-4 py-3 transition hover:bg-white/[0.04]"
+                        style={{
+                          background: !n.leida ? "rgba(68,93,163,0.08)" : "transparent",
+                        }}
                       >
                         <div className="flex items-start gap-2">
                           <span
@@ -139,24 +144,33 @@ export function NotificationBell() {
                           />
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-[12.5px] font-semibold text-[#0A1226] truncate">
+                              <span
+                                className="text-[12.5px] font-semibold truncate"
+                                style={{ color: "var(--nuvia-text-primary)" }}
+                              >
                                 {n.titulo}
                               </span>
                               {!n.leida && (
                                 <span
                                   className="rounded-full px-1.5 py-0.5 text-[9px] font-bold text-white"
-                                  style={{ background: "#E11D48" }}
+                                  style={{ background: "var(--nuvia-danger)" }}
                                 >
                                   NUEVO
                                 </span>
                               )}
                             </div>
                             {n.mensaje && (
-                              <div className="mt-0.5 text-[11.5px] text-[#242424]/70 line-clamp-2">
+                              <div
+                                className="mt-0.5 text-[11.5px] line-clamp-2"
+                                style={{ color: "var(--nuvia-text-secondary)" }}
+                              >
                                 {n.mensaje}
                               </div>
                             )}
-                            <div className="mt-1 text-[10px] text-[#242424]/50">
+                            <div
+                              className="mt-1 text-[10px]"
+                              style={{ color: "var(--nuvia-text-secondary)", opacity: 0.7 }}
+                            >
                               {new Date(n.created_at).toLocaleString()}
                             </div>
                           </div>
@@ -167,12 +181,15 @@ export function NotificationBell() {
                 </ul>
               )}
             </div>
-            <div className="border-t border-[#E3E7EE] p-2 text-center">
+            <div
+              className="p-2 text-center"
+              style={{ borderTop: "1px solid var(--nuvia-border)" }}
+            >
               <Link
                 to="/notificaciones"
                 onClick={() => setOpen(false)}
                 className="text-[11px] font-medium hover:underline"
-                style={{ color: AZUL }}
+                style={{ color: "var(--nuvia-accent-blue)" }}
               >
                 Ver todo el centro de alertas →
               </Link>
@@ -183,16 +200,17 @@ export function NotificationBell() {
 
       {detalle && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
           onClick={() => setDetalle(null)}
         >
           <div
-            className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl"
+            className="glass-modal w-full max-w-lg overflow-hidden"
+            style={{ color: "var(--nuvia-text-primary)" }}
             onClick={(e) => e.stopPropagation()}
           >
             <div
               className="flex items-start justify-between gap-3 px-5 py-4"
-              style={{ background: "linear-gradient(135deg,#445DA3,#84B98F)" }}
+              style={{ background: "var(--nuvia-gradient-primary)" }}
             >
               <div className="min-w-0 flex-1 text-white">
                 <div className="flex items-center gap-2">
@@ -200,7 +218,7 @@ export function NotificationBell() {
                     className="inline-block h-2 w-2 rounded-full"
                     style={{ background: sevColor(detalle.severidad) }}
                   />
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-white/80">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-white/85">
                     {TIPO_LABEL[detalle.tipo] ?? detalle.tipo} · {sevLabel(detalle.severidad)}
                   </span>
                 </div>
@@ -208,7 +226,7 @@ export function NotificationBell() {
               </div>
               <button
                 onClick={() => setDetalle(null)}
-                className="rounded-lg p-1 text-white/80 transition hover:bg-white/15 hover:text-white"
+                className="rounded-lg p-1 text-white/85 transition hover:bg-white/15 hover:text-white"
                 aria-label="Cerrar"
               >
                 <X size={18} />
@@ -217,16 +235,32 @@ export function NotificationBell() {
 
             <div className="space-y-4 px-5 py-4">
               <div>
-                <div className="text-[10px] font-semibold uppercase text-[#242424]/50">Fecha y hora</div>
-                <div className="mt-0.5 text-[13px] text-[#0A1226]">
+                <div
+                  className="text-[10px] font-semibold uppercase"
+                  style={{ color: "var(--nuvia-text-secondary)" }}
+                >
+                  Fecha y hora
+                </div>
+                <div
+                  className="mt-0.5 text-[13px]"
+                  style={{ color: "var(--nuvia-text-primary)" }}
+                >
                   {new Date(detalle.created_at).toLocaleString()}
                 </div>
               </div>
 
               {detalle.mensaje && (
                 <div>
-                  <div className="text-[10px] font-semibold uppercase text-[#242424]/50">Descripción</div>
-                  <div className="mt-0.5 whitespace-pre-wrap text-[13px] text-[#0A1226]">
+                  <div
+                    className="text-[10px] font-semibold uppercase"
+                    style={{ color: "var(--nuvia-text-secondary)" }}
+                  >
+                    Descripción
+                  </div>
+                  <div
+                    className="mt-0.5 whitespace-pre-wrap text-[13px]"
+                    style={{ color: "var(--nuvia-text-primary)" }}
+                  >
                     {detalle.mensaje}
                   </div>
                 </div>
@@ -236,8 +270,13 @@ export function NotificationBell() {
                 <span
                   className="rounded-full px-2 py-0.5 font-semibold"
                   style={{
-                    background: detalle.leida ? "#EAF7EE" : "#FEF2F2",
-                    color: detalle.leida ? "#1F7A45" : "#991B1B",
+                    background: detalle.leida
+                      ? "rgba(132,185,143,0.16)"
+                      : "rgba(255,107,107,0.16)",
+                    color: detalle.leida
+                      ? "var(--nuvia-success)"
+                      : "var(--nuvia-danger)",
+                    border: "1px solid var(--nuvia-border)",
                   }}
                 >
                   {detalle.leida ? "Leída" : "No leída"}
@@ -246,28 +285,52 @@ export function NotificationBell() {
 
               {detalle.metadata && Object.keys(detalle.metadata).length > 0 && (
                 <div>
-                  <div className="text-[10px] font-semibold uppercase text-[#242424]/50">
+                  <div
+                    className="text-[10px] font-semibold uppercase"
+                    style={{ color: "var(--nuvia-text-secondary)" }}
+                  >
                     Información adicional
                   </div>
-                  <pre className="mt-1 max-h-40 overflow-auto rounded-lg bg-[#F7F9FB] p-3 text-[11px] text-[#0A1226]">
+                  <pre
+                    className="mt-1 max-h-40 overflow-auto rounded-lg p-3 text-[11px] scrollbar-thin"
+                    style={{
+                      background: "rgba(255,255,255,0.03)",
+                      border: "1px solid var(--nuvia-border)",
+                      color: "var(--nuvia-text-primary)",
+                    }}
+                  >
                     {JSON.stringify(detalle.metadata, null, 2)}
                   </pre>
                 </div>
               )}
             </div>
 
-            <div className="flex items-center justify-end gap-2 border-t border-[#E3E7EE] bg-[#F7F9FB] px-5 py-3">
+            <div
+              className="flex items-center justify-end gap-2 px-5 py-3"
+              style={{
+                background: "rgba(255,255,255,0.02)",
+                borderTop: "1px solid var(--nuvia-border)",
+              }}
+            >
               <button
                 onClick={() => setDetalle(null)}
-                className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 text-[12px] font-medium text-[#0A1226] hover:bg-[#F1F3F8]"
+                className="rounded-lg px-3 py-1.5 text-[12px] font-medium transition hover:bg-white/[0.06]"
+                style={{
+                  border: "1px solid var(--nuvia-border)",
+                  background: "rgba(255,255,255,0.03)",
+                  color: "var(--nuvia-text-primary)",
+                }}
               >
                 Cerrar
               </button>
               {detalle.link && (
                 <button
                   onClick={irAlEnlace}
-                  className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[12px] font-semibold text-white"
-                  style={{ background: AZUL }}
+                  className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[12px] font-semibold text-white transition hover:opacity-95"
+                  style={{
+                    background: "var(--nuvia-gradient-primary)",
+                    boxShadow: "var(--nuvia-shadow-sm)",
+                  }}
                 >
                   <ExternalLink size={12} /> Ir al detalle
                 </button>
