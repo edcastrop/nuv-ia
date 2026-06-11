@@ -11,28 +11,34 @@ import { saveTurn } from "@/lib/nuvex-gpt.functions";
 import { EscalarTicketDialog } from "./EscalarTicketDialog";
 import { toast } from "sonner";
 
-export function NuvexGptButton() {
+/**
+ * NUVIA IA — Copiloto operativo (rebranded de NUVEX GPT).
+ * Se conservan los nombres `NuvexGptButton` / `NuvexGptPanel` como aliases
+ * legacy para no romper las importaciones existentes.
+ */
+export function NuviaIAButton() {
   const [open, setOpen] = useState(false);
   return (
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full px-4 py-3 text-white shadow-2xl transition hover:scale-105"
+        className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full px-4 py-3 shadow-2xl transition hover:scale-105"
         style={{
-          background: "linear-gradient(135deg, #445DA3, #84B98F)",
+          background: "var(--nuvia-gradient-primary)",
+          color: "var(--nuvia-text-primary)",
           boxShadow: "0 10px 30px -8px rgba(68,93,163,0.55)",
         }}
-        aria-label="Abrir NUVEX GPT"
+        aria-label="Abrir NUVIA IA"
       >
         <Brain size={20} />
-        <span className="hidden sm:inline text-sm font-semibold">NUVEX GPT</span>
+        <span className="hidden sm:inline text-sm font-semibold">NUVIA IA</span>
       </button>
-      <NuvexGptPanel open={open} onOpenChange={setOpen} />
+      <NuviaIAPanel open={open} onOpenChange={setOpen} />
     </>
   );
 }
 
-function NuvexGptPanel({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+function NuviaIAPanel({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const location = useLocation();
   const modulo = modulosDesdePath(location.pathname);
   const [messages, setMessages] = useState<ChatMsg[]>([]);
@@ -88,7 +94,7 @@ function NuvexGptPanel({ open, onOpenChange }: { open: boolean; onOpenChange: (v
         // ignorar fallo de guardado, no romper UX
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Error al consultar NUVEX GPT");
+      toast.error(e instanceof Error ? e.message : "Error al consultar NUVIA IA");
       setMessages((prev) => prev.slice(0, -1));
     } finally {
       setLoading(false);
@@ -98,39 +104,66 @@ function NuvexGptPanel({ open, onOpenChange }: { open: boolean; onOpenChange: (v
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col">
+        <SheetContent
+          side="right"
+          className="w-full sm:max-w-md p-0 flex flex-col border-0"
+          style={{
+            background: "var(--nuvia-bg-primary)",
+            color: "var(--nuvia-text-primary)",
+            borderLeft: "1px solid var(--nuvia-border)",
+          }}
+        >
           <SheetHeader
-            className="px-5 py-4 border-b"
-            style={{ background: "linear-gradient(135deg, #050814, #0A1226)" }}
+            className="px-5 py-4"
+            style={{
+              background:
+                "linear-gradient(135deg, var(--nuvia-bg-secondary), var(--nuvia-bg-tertiary))",
+              borderBottom: "1px solid var(--nuvia-border)",
+            }}
           >
-            <SheetTitle className="flex items-center gap-2 text-white">
-              <Sparkles size={18} style={{ color: "#84B98F" }} />
+            <SheetTitle className="flex items-center gap-2" style={{ color: "var(--nuvia-text-primary)" }}>
+              <Sparkles size={18} style={{ color: "var(--nuvia-accent-green)" }} />
               <div className="flex flex-col items-start">
-                <span className="text-base font-bold">NUVEX GPT</span>
-                <span className="text-[10px] font-normal text-white/60 uppercase tracking-wider">
+                <span className="text-base font-bold">NUVIA IA</span>
+                <span
+                  className="text-[10px] font-normal uppercase tracking-wider"
+                  style={{ color: "var(--nuvia-text-muted)" }}
+                >
                   Copiloto Operativo Corporativo
                 </span>
               </div>
             </SheetTitle>
             {modulo && (
-              <div className="text-[10px] text-white/50 uppercase tracking-wider mt-1">
+              <div
+                className="text-[10px] uppercase tracking-wider mt-1"
+                style={{ color: "var(--nuvia-text-muted)" }}
+              >
                 Contexto: {modulo}
               </div>
             )}
           </SheetHeader>
 
-          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-[#F7F9FB]">
+          <div
+            ref={scrollRef}
+            className="flex-1 overflow-y-auto px-4 py-4 space-y-3"
+            style={{ background: "var(--nuvia-bg-primary)" }}
+          >
             {messages.length === 0 && (
               <div className="space-y-3">
-                <div className="text-sm text-[#242424]/70">
-                  Hola 👋, soy tu copiloto NUVEX. ¿En qué te ayudo hoy?
+                <div className="text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>
+                  Hola 👋, soy tu copiloto NUVIA IA. ¿En qué te ayudo hoy?
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {PREGUNTAS_SUGERIDAS.map((p) => (
                     <button
                       key={p}
                       onClick={() => send(p)}
-                      className="rounded-full border border-[#445DA3]/20 bg-white px-3 py-1.5 text-[11px] text-[#445DA3] hover:bg-[#445DA3]/5"
+                      className="rounded-full px-3 py-1.5 text-[11px] transition"
+                      style={{
+                        background: "var(--nuvia-bg-card)",
+                        border: "1px solid var(--nuvia-border)",
+                        color: "var(--nuvia-accent-blue)",
+                      }}
                     >
                       {p}
                     </button>
@@ -143,13 +176,23 @@ function NuvexGptPanel({ open, onOpenChange }: { open: boolean; onOpenChange: (v
               <div
                 key={i}
                 className={`rounded-xl px-3 py-2 text-sm ${
-                  m.role === "user"
-                    ? "ml-auto max-w-[85%] bg-[#445DA3] text-white"
-                    : "mr-auto max-w-[92%] bg-white text-[#242424] border border-[#E3E7EE]"
+                  m.role === "user" ? "ml-auto max-w-[85%]" : "mr-auto max-w-[92%]"
                 }`}
+                style={
+                  m.role === "user"
+                    ? {
+                        background: "var(--nuvia-gradient-primary)",
+                        color: "var(--nuvia-text-primary)",
+                      }
+                    : {
+                        background: "var(--nuvia-bg-card)",
+                        color: "var(--nuvia-text-primary)",
+                        border: "1px solid var(--nuvia-border)",
+                      }
+                }
               >
                 {m.role === "assistant" ? (
-                  <div className="prose prose-sm max-w-none prose-headings:mt-1 prose-headings:mb-2 prose-p:my-1 prose-ul:my-1 prose-ol:my-1">
+                  <div className="prose prose-sm prose-invert max-w-none prose-headings:mt-1 prose-headings:mb-2 prose-p:my-1 prose-ul:my-1 prose-ol:my-1">
                     <ReactMarkdown>{m.content || "…"}</ReactMarkdown>
                   </div>
                 ) : (
@@ -159,7 +202,14 @@ function NuvexGptPanel({ open, onOpenChange }: { open: boolean; onOpenChange: (v
             ))}
 
             {loading && messages[messages.length - 1]?.role === "user" && (
-              <div className="mr-auto max-w-[80%] bg-white border border-[#E3E7EE] rounded-xl px-3 py-2 text-sm text-[#242424]/50">
+              <div
+                className="mr-auto max-w-[80%] rounded-xl px-3 py-2 text-sm"
+                style={{
+                  background: "var(--nuvia-bg-card)",
+                  color: "var(--nuvia-text-muted)",
+                  border: "1px solid var(--nuvia-border)",
+                }}
+              >
                 Pensando…
               </div>
             )}
@@ -168,7 +218,8 @@ function NuvexGptPanel({ open, onOpenChange }: { open: boolean; onOpenChange: (v
               <div className="pt-1">
                 <button
                   onClick={() => setEscalarOpen(true)}
-                  className="inline-flex items-center gap-1.5 text-[11px] text-[#445DA3] hover:underline"
+                  className="inline-flex items-center gap-1.5 text-[11px] hover:underline"
+                  style={{ color: "var(--nuvia-accent-blue)" }}
                 >
                   <AlertCircle size={12} /> Escalar a un ticket
                 </button>
@@ -176,7 +227,13 @@ function NuvexGptPanel({ open, onOpenChange }: { open: boolean; onOpenChange: (v
             )}
           </div>
 
-          <div className="border-t bg-white px-3 py-3">
+          <div
+            className="px-3 py-3"
+            style={{
+              background: "var(--nuvia-bg-secondary)",
+              borderTop: "1px solid var(--nuvia-border)",
+            }}
+          >
             <form
               className="flex items-center gap-2"
               onSubmit={(e) => {
@@ -195,8 +252,11 @@ function NuvexGptPanel({ open, onOpenChange }: { open: boolean; onOpenChange: (v
                 <Send size={16} />
               </Button>
             </form>
-            <div className="mt-1 text-[10px] text-[#242424]/40 text-center">
-              NUVEX GPT puede equivocarse. Verifica información crítica.
+            <div
+              className="mt-1 text-[10px] text-center"
+              style={{ color: "var(--nuvia-text-muted)" }}
+            >
+              NUVIA IA puede equivocarse. Verifica información crítica.
             </div>
           </div>
         </SheetContent>
@@ -208,10 +268,13 @@ function NuvexGptPanel({ open, onOpenChange }: { open: boolean; onOpenChange: (v
         conversacionId={convId}
         preFillDescripcion={
           lastAssistant
-            ? `Consulta original:\n${messages[messages.length - 2]?.content ?? ""}\n\nRespuesta NUVEX GPT:\n${lastAssistant}`
+            ? `Consulta original:\n${messages[messages.length - 2]?.content ?? ""}\n\nRespuesta NUVIA IA:\n${lastAssistant}`
             : ""
         }
       />
     </>
   );
 }
+
+// ─── Aliases legacy (no usar en código nuevo) ──────────────────────────────
+export const NuvexGptButton = NuviaIAButton;
