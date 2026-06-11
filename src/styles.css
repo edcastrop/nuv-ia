@@ -284,8 +284,19 @@
 }
 
 /* ── Aliases legacy ── */
-@utility glass        { @apply glass-card; }
-@utility glass-strong { @apply glass-panel; }
+@utility glass {
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015));
+  border: 1px solid var(--nuvia-border);
+  backdrop-filter: blur(14px);
+  border-radius: var(--nuvia-radius-md);
+}
+@utility glass-strong {
+  background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+  border: 1px solid var(--nuvia-border);
+  backdrop-filter: blur(16px);
+  border-radius: var(--nuvia-radius-lg);
+}
+
 
 
 /* ==========================================================
