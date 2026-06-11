@@ -442,7 +442,7 @@ export function PropuestasComerciales(props: Props) {
                     />
                     <HeroMetric
                       label="Nuevo plazo"
-                      value={`${c.nuevoPlazo} meses`}
+                      value={`${c.nuevoPlazo} meses · ${(c.nuevoPlazo / 12).toFixed(1)} años`}
                       color={NUVEX.negro}
                     />
                     <div>
