@@ -573,10 +573,10 @@ function DashboardPage() {
             </footer>
           </>
         )}
-      </div>
-    </div>
+    </PageLayout>
   );
 }
+
 
 /* ============== Helpers ============== */
 
