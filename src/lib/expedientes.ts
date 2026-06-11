@@ -85,6 +85,7 @@ export interface Expediente {
   descuento: number;
   estado: EstadoExpediente;
   estado_caso?: string | null;
+  etapa_pipeline?: EtapaPipelineId | null;
   fecha_simulacion: string;
   aprobado_data: AprobadoData | null;
   acertividad_global: number | null;
