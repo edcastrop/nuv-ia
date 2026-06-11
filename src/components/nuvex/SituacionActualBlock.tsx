@@ -26,6 +26,11 @@ export interface CostoTotalCredito {
    * del semáforo y con el mensaje mostrado.
    */
   baseCredito?: number;
+  /**
+   * Saldo de capital actual. Se usa como base de cálculo alternativa cuando
+   * el valor desembolsado no está disponible: veces = totalProyectadoPendiente / saldoActual.
+   */
+  saldoActual?: number;
 }
 
 interface Props {
@@ -61,7 +66,7 @@ interface Props {
 
 type RiesgoNivel = "verde" | "amarillo" | "naranja" | "rojo";
 
-function semaforo(n: number, opts?: { vecesValor?: number }) {
+function semaforo(n: number, opts?: { vecesValor?: number; baseLabel?: string }) {
   const safe = isFinite(n) ? n : 0;
   let nivel: RiesgoNivel;
   if (safe < 1.5) nivel = "verde";
@@ -75,18 +80,20 @@ function semaforo(n: number, opts?: { vecesValor?: number }) {
     return v.toFixed(2).replace(".", ",");
   })();
 
+  const baseLabel = opts?.baseLabel ?? "el valor de tu crédito";
+
   const mensajes: Record<RiesgoNivel, string> = {
     verde: vecesTxt
-      ? `Vas a pagar ${vecesTxt} veces el valor de tu crédito. Tu crédito está dentro de un rango financiero saludable.`
+      ? `Vas a pagar ${vecesTxt} veces ${baseLabel}. Tu crédito está dentro de un rango financiero saludable.`
       : "Tu crédito está dentro de un rango financiero saludable. Aún existen oportunidades menores de optimización.",
     amarillo: vecesTxt
-      ? `Vas a pagar ${vecesTxt} veces el valor de tu crédito. Existe una oportunidad clara de restructuración.`
+      ? `Vas a pagar ${vecesTxt} veces ${baseLabel}. Existe una oportunidad clara de restructuración.`
       : "Estás pagando entre 1,5 y 2 veces el valor de tu crédito. Existe una oportunidad clara de restructuración.",
     naranja: vecesTxt
-      ? `Vas a pagar ${vecesTxt} veces el valor de tu crédito. Se recomienda restructurar para reducir intereses.`
+      ? `Vas a pagar ${vecesTxt} veces ${baseLabel}. Se recomienda restructurar para reducir intereses.`
       : "Vas a pagar entre 2 y 2,5 veces lo prestado. Se recomienda restructurar el crédito para reducir intereses.",
     rojo: vecesTxt
-      ? `Vas a pagar ${vecesTxt} veces el valor de tu crédito. La intervención financiera es urgente.`
+      ? `Vas a pagar ${vecesTxt} veces ${baseLabel}. La intervención financiera es urgente.`
       : "Estás pagando más de 2,5 veces el valor de tu crédito. La intervención financiera es urgente.",
   };
 
@@ -362,21 +369,38 @@ function CostoTotalEjecutivo({
   costo: CostoTotalCredito;
   vecesPagadoFallback: number;
 }) {
-  const { valorDesembolsado, dineroPagado, totalProyectadoPendiente, baseCredito } = costo;
+  const { valorDesembolsado, dineroPagado, totalProyectadoPendiente, baseCredito, saldoActual } =
+    costo;
   const costoTotalCredito = dineroPagado + totalProyectadoPendiente;
-  // Base de cálculo: SOLO el valor desembolsado real (declarado por el banco).
-  // Si no está disponible, NO inventamos un múltiplo; lo mostramos como
-  // "no disponible" para no engañar al cliente.
-  const base =
+  // Base de cálculo preferida: el valor desembolsado real (declarado por el banco).
+  // Si no está disponible, usamos el SALDO ACTUAL como base alternativa y lo
+  // decimos explícitamente: veces = total proyectado pendiente / saldo actual.
+  const baseDesembolso =
     baseCredito && baseCredito > 0
       ? baseCredito
       : valorDesembolsado > 0
         ? valorDesembolsado
         : 0;
+  const usaSaldo = baseDesembolso <= 0 && (saldoActual ?? 0) > 0;
+  const base = baseDesembolso > 0 ? baseDesembolso : usaSaldo ? (saldoActual as number) : 0;
   const baseDisponible = base > 0;
-  const veces = baseDisponible ? costoTotalCredito / base : 0;
-  const interesesYCostos = baseDisponible ? Math.max(0, costoTotalCredito - base) : 0;
-  const s = semaforo(baseDisponible ? veces : 0, baseDisponible ? { vecesValor: veces } : undefined);
+  // Con desembolso: (pagado + pendiente) / desembolso.
+  // Con saldo: pendiente / saldo (mirada hacia adelante, sin mezclar lo ya pagado).
+  const veces = !baseDisponible
+    ? 0
+    : usaSaldo
+      ? totalProyectadoPendiente / base
+      : costoTotalCredito / base;
+  const interesesYCostos = !baseDisponible
+    ? 0
+    : usaSaldo
+      ? Math.max(0, totalProyectadoPendiente - base)
+      : Math.max(0, costoTotalCredito - base);
+  const baseLabel = usaSaldo ? "lo que debes hoy (saldo actual)" : "el valor de tu crédito";
+  const s = semaforo(
+    baseDisponible ? veces : 0,
+    baseDisponible ? { vecesValor: veces, baseLabel } : undefined,
+  );
   const vecesTxt = baseDisponible && isFinite(veces) ? veces.toFixed(2).replace(".", ",") : "—";
 
   return (
@@ -464,7 +488,7 @@ function CostoTotalEjecutivo({
             className="mt-2 text-[12px] font-semibold uppercase tracking-[0.2em]"
             style={{ color: "rgba(255,255,255,0.6)" }}
           >
-            {baseDisponible ? "el valor de tu crédito" : "no disponible"}
+            {baseDisponible ? baseLabel : "no disponible"}
           </div>
 
           {baseDisponible && (
@@ -489,13 +513,35 @@ function CostoTotalEjecutivo({
               ? s.mensaje
               : "Para calcular cuántas veces vas a pagar tu crédito necesitamos el valor desembolsado original por el banco. Cárgalo en los datos del crédito para activar el diagnóstico ejecutivo completo."}
           </p>
+
+          {usaSaldo && (
+            <p
+              className="mt-2 max-w-md text-[11.5px] leading-relaxed"
+              style={{ color: "rgba(255,255,255,0.55)" }}
+            >
+              Múltiplo calculado sobre tu saldo actual ({formatCOP(base)}) porque el extracto
+              no reporta el valor desembolsado original.
+            </p>
+          )}
         </div>
 
         {/* Bloque derecho — Cifras ejecutivas */}
         <div className="grid grid-cols-2 gap-3">
           <ExecTile
-            label={valorDesembolsado > 0 ? "Valor desembolsado" : "Valor desembolsado (no disponible)"}
-            value={valorDesembolsado > 0 ? formatCOP(valorDesembolsado) : "—"}
+            label={
+              valorDesembolsado > 0
+                ? "Valor desembolsado"
+                : usaSaldo
+                  ? "Base del cálculo · Saldo actual"
+                  : "Valor desembolsado (no disponible)"
+            }
+            value={
+              valorDesembolsado > 0
+                ? formatCOP(valorDesembolsado)
+                : usaSaldo
+                  ? formatCOP(base)
+                  : "—"
+            }
           />
           <ExecTile label="Dinero pagado a la fecha" value={formatCOP(dineroPagado)} />
           <ExecTile
