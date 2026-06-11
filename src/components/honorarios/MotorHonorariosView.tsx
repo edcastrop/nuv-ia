@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
+
 import {
   DollarSign, Calculator, ListChecks, ShieldCheck, BarChart3,
   TrendingUp, AlertTriangle, CheckCircle2, XCircle, Send, RefreshCw,
