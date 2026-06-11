@@ -46,11 +46,11 @@ function LoginPage() {
         if (!isSuperAdmin && p && p.estado_acceso !== "aprobado") {
           await supabase.auth.signOut();
           const msgs: Record<string, string> = {
-            pendiente: "Your account is pending administrator approval.",
-            rechazado: `Access denied. ${p.rechazado_motivo ?? ""}`.trim(),
-            bloqueado: "Your account is blocked. Please contact your administrator.",
+            pendiente: "Tu cuenta está pendiente de aprobación por un administrador.",
+            rechazado: `Acceso denegado. ${p.rechazado_motivo ?? ""}`.trim(),
+            bloqueado: "Tu cuenta está bloqueada. Contacta a tu administrador.",
           };
-          throw new Error(msgs[p.estado_acceso ?? "pendiente"] ?? "Access not authorized.");
+          throw new Error(msgs[p.estado_acceso ?? "pendiente"] ?? "Acceso no autorizado.");
         }
         await supabase.from("profiles" as never).update({ ultimo_login_at: new Date().toISOString(), intentos_fallidos: 0 } as never).eq("id", uid);
         await supabase.from("acceso_auditoria" as never).insert({ user_id: uid, actor_id: uid, accion: "login_ok", detalle: {} } as never);
