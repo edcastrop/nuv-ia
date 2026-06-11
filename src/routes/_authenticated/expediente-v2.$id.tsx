@@ -1068,3 +1068,338 @@ function Row({ label, value, highlight }: { label: string; value: React.ReactNod
     </div>
   );
 }
+
+// ===== D-2 · Tareas + Bitácora subcomponents =====
+
+const PRIORIDAD_OPTIONS: { value: TareaPrioridad; label: string }[] = [
+  { value: "baja", label: "Baja" },
+  { value: "media", label: "Media" },
+  { value: "alta", label: "Alta" },
+  { value: "critica", label: "Crítica" },
+];
+
+const ESTADO_OPTIONS: { value: TareaEstado; label: string }[] = [
+  { value: "pendiente", label: "Pendiente" },
+  { value: "en_progreso", label: "En progreso" },
+  { value: "completada", label: "Completada" },
+  { value: "cancelada", label: "Cancelada" },
+];
+
+const BITACORA_TIPOS: { value: BitacoraTipo; label: string; cls: string }[] = [
+  { value: "comentario", label: "Comentario", cls: "border-slate-500/30 bg-slate-500/10 text-slate-300" },
+  { value: "evidencia", label: "Evidencia", cls: "border-sky-500/30 bg-sky-500/10 text-sky-300" },
+  { value: "auditoria", label: "Auditoría", cls: "border-violet-500/30 bg-violet-500/10 text-violet-300" },
+  { value: "seguimiento", label: "Seguimiento", cls: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" },
+  { value: "alerta", label: "Alerta", cls: "border-rose-500/30 bg-rose-500/10 text-rose-300" },
+];
+
+function prioridadCls(p: TareaPrioridad): string {
+  switch (p) {
+    case "critica": return "border-rose-500/40 bg-rose-500/15 text-rose-300";
+    case "alta": return "border-amber-500/40 bg-amber-500/15 text-amber-300";
+    case "media": return "border-sky-500/40 bg-sky-500/15 text-sky-300";
+    default: return "border-slate-500/40 bg-slate-500/15 text-slate-300";
+  }
+}
+
+function estadoCls(e: TareaEstado): string {
+  switch (e) {
+    case "completada": return "border-emerald-500/30 bg-emerald-500/10 text-emerald-300";
+    case "en_progreso": return "border-sky-500/30 bg-sky-500/10 text-sky-300";
+    case "cancelada": return "border-slate-500/30 bg-slate-500/10 text-slate-400";
+    default: return "border-amber-500/30 bg-amber-500/10 text-amber-300";
+  }
+}
+
+function NuevaTareaForm({
+  profiles,
+  onCancel,
+  onSubmit,
+  submitting,
+  error,
+}: {
+  profiles: ProfileLite[];
+  onCancel: () => void;
+  onSubmit: (v: {
+    titulo: string;
+    descripcion?: string | null;
+    prioridad: TareaPrioridad;
+    fecha_objetivo?: string | null;
+    responsable_id?: string | null;
+  }) => void;
+  submitting: boolean;
+  error: string | null;
+}) {
+  const [titulo, setTitulo] = useState("");
+  const [descripcion, setDescripcion] = useState("");
+  const [prioridad, setPrioridad] = useState<TareaPrioridad>("media");
+  const [fecha, setFecha] = useState("");
+  const [responsable, setResponsable] = useState<string>("");
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!titulo.trim()) return;
+        onSubmit({
+          titulo: titulo.trim(),
+          descripcion: descripcion.trim() || null,
+          prioridad,
+          fecha_objetivo: fecha || null,
+          responsable_id: responsable || null,
+        });
+      }}
+      className="mt-3 p-3 rounded-md border border-sky-500/20 bg-sky-500/[0.04] space-y-2"
+    >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <label className="text-[10px] uppercase tracking-wider text-[var(--nuvia-text-secondary)] md:col-span-2">
+          Título *
+          <input
+            value={titulo}
+            onChange={(e) => setTitulo(e.target.value)}
+            maxLength={200}
+            required
+            className="mt-1 w-full px-2 py-1.5 rounded-md bg-white/[0.03] border border-[var(--nuvia-border)] text-[12px] text-[var(--nuvia-text-primary)] normal-case tracking-normal"
+            placeholder="Ej. Solicitar extracto bancario al cliente"
+          />
+        </label>
+        <label className="text-[10px] uppercase tracking-wider text-[var(--nuvia-text-secondary)] md:col-span-2">
+          Descripción
+          <textarea
+            value={descripcion}
+            onChange={(e) => setDescripcion(e.target.value)}
+            maxLength={2000}
+            rows={2}
+            className="mt-1 w-full px-2 py-1.5 rounded-md bg-white/[0.03] border border-[var(--nuvia-border)] text-[12px] text-[var(--nuvia-text-primary)] normal-case tracking-normal resize-none"
+            placeholder="Contexto clínico, criterios de éxito…"
+          />
+        </label>
+        <label className="text-[10px] uppercase tracking-wider text-[var(--nuvia-text-secondary)]">
+          Prioridad
+          <select
+            value={prioridad}
+            onChange={(e) => setPrioridad(e.target.value as TareaPrioridad)}
+            className="mt-1 w-full px-2 py-1.5 rounded-md bg-white/[0.03] border border-[var(--nuvia-border)] text-[12px] text-[var(--nuvia-text-primary)] normal-case tracking-normal"
+          >
+            {PRIORIDAD_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+        </label>
+        <label className="text-[10px] uppercase tracking-wider text-[var(--nuvia-text-secondary)]">
+          Fecha objetivo
+          <input
+            type="date"
+            value={fecha}
+            onChange={(e) => setFecha(e.target.value)}
+            className="mt-1 w-full px-2 py-1.5 rounded-md bg-white/[0.03] border border-[var(--nuvia-border)] text-[12px] text-[var(--nuvia-text-primary)] normal-case tracking-normal"
+          />
+        </label>
+        <label className="text-[10px] uppercase tracking-wider text-[var(--nuvia-text-secondary)] md:col-span-2">
+          Responsable
+          <select
+            value={responsable}
+            onChange={(e) => setResponsable(e.target.value)}
+            className="mt-1 w-full px-2 py-1.5 rounded-md bg-white/[0.03] border border-[var(--nuvia-border)] text-[12px] text-[var(--nuvia-text-primary)] normal-case tracking-normal"
+          >
+            <option value="">Sin asignar</option>
+            {profiles.map((p) => (
+              <option key={p.id} value={p.id}>{p.nombre ?? p.email ?? p.id.slice(0, 8)}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      {error && <div className="text-[11px] text-rose-300">{error}</div>}
+      <div className="flex items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={submitting}
+          className="px-3 py-1 rounded-md border border-[var(--nuvia-border)] text-[11px] text-[var(--nuvia-text-secondary)] hover:text-[var(--nuvia-text-primary)]"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          disabled={submitting || !titulo.trim()}
+          className="inline-flex items-center gap-1 px-3 py-1 rounded-md border border-sky-500/40 bg-sky-500/20 text-sky-200 text-[11px] hover:bg-sky-500/30 disabled:opacity-50"
+        >
+          {submitting ? <Loader2 size={11} className="animate-spin" /> : <Plus size={11} />}
+          Crear tarea
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function TareaCard({
+  t,
+  responsableNombre,
+  profiles,
+  onChangeEstado,
+  onAsignar,
+  busy,
+}: {
+  t: TareaRow;
+  responsableNombre: string | null;
+  profiles: ProfileLite[];
+  onChangeEstado: (e: TareaEstado) => void;
+  onAsignar: (id: string | null) => void;
+  busy: boolean;
+}) {
+  const vencida = t.fecha_objetivo && t.estado !== "completada" && t.estado !== "cancelada"
+    ? new Date(t.fecha_objetivo).getTime() < Date.now() - 86400000
+    : false;
+  return (
+    <div className={`rounded-md border px-3 py-2 ${vencida ? "border-rose-500/30 bg-rose-500/[0.04]" : "border-[var(--nuvia-border)] bg-white/[0.02]"}`}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full border text-[10px] capitalize ${prioridadCls(t.prioridad)}`}>
+              {t.prioridad}
+            </span>
+            <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full border text-[10px] ${estadoCls(t.estado)}`}>
+              {t.estado.replace("_", " ")}
+            </span>
+            {vencida && (
+              <span className="inline-flex items-center gap-1 text-[10px] text-rose-300">
+                <AlertTriangle size={10} /> Vencida
+              </span>
+            )}
+          </div>
+          <div className="mt-1 text-[12px] font-semibold text-[var(--nuvia-text-primary)]">{t.titulo}</div>
+          {t.descripcion && (
+            <div className="text-[11px] text-[var(--nuvia-text-secondary)] mt-0.5 leading-snug">{t.descripcion}</div>
+          )}
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-[var(--nuvia-text-secondary)]">
+            <span className="inline-flex items-center gap-1"><CalendarClock size={10} /> {t.fecha_objetivo ? fmtDate(t.fecha_objetivo) : "Sin fecha"}</span>
+            <span className="inline-flex items-center gap-1"><User size={10} /> {responsableNombre ?? "Sin asignar"}</span>
+            <span className="tabular-nums">Creada {fmtDateTime(t.created_at)}</span>
+          </div>
+        </div>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--nuvia-border)]">
+        <label className="text-[10px] uppercase tracking-wider text-[var(--nuvia-text-secondary)] inline-flex items-center gap-1">
+          Estado
+          <select
+            disabled={busy}
+            value={t.estado}
+            onChange={(e) => onChangeEstado(e.target.value as TareaEstado)}
+            className="px-1.5 py-0.5 rounded-md bg-white/[0.04] border border-[var(--nuvia-border)] text-[11px] text-[var(--nuvia-text-primary)] normal-case tracking-normal"
+          >
+            {ESTADO_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+        </label>
+        <label className="text-[10px] uppercase tracking-wider text-[var(--nuvia-text-secondary)] inline-flex items-center gap-1">
+          Responsable
+          <select
+            disabled={busy}
+            value={t.responsable_id ?? ""}
+            onChange={(e) => onAsignar(e.target.value || null)}
+            className="px-1.5 py-0.5 rounded-md bg-white/[0.04] border border-[var(--nuvia-border)] text-[11px] text-[var(--nuvia-text-primary)] normal-case tracking-normal max-w-[200px]"
+          >
+            <option value="">Sin asignar</option>
+            {profiles.map((p) => (
+              <option key={p.id} value={p.id}>{p.nombre ?? p.email ?? p.id.slice(0, 8)}</option>
+            ))}
+          </select>
+        </label>
+        {t.estado !== "completada" && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => onChangeEstado("completada")}
+            className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 text-[10px] hover:bg-emerald-500/20 disabled:opacity-50"
+          >
+            <CheckCircle2 size={11} /> Marcar completada
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function BitacoraComposer({
+  onSubmit,
+  submitting,
+  error,
+}: {
+  onSubmit: (v: { comentario: string; tipo: BitacoraTipo }) => void;
+  submitting: boolean;
+  error: string | null;
+}) {
+  const [comentario, setComentario] = useState("");
+  const [tipo, setTipo] = useState<BitacoraTipo>("comentario");
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const c = comentario.trim();
+        if (!c) return;
+        onSubmit({ comentario: c, tipo });
+        setComentario("");
+      }}
+      className="mt-3 p-3 rounded-md border border-[var(--nuvia-border)] bg-white/[0.02] space-y-2"
+    >
+      <div className="text-[10px] uppercase tracking-wider text-[var(--nuvia-text-secondary)]">Agregar nota clínica</div>
+      <div className="flex flex-wrap items-center gap-1.5">
+        {BITACORA_TIPOS.map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            onClick={() => setTipo(o.value)}
+            className={`px-2 py-0.5 rounded-full border text-[10px] capitalize transition ${
+              tipo === o.value ? o.cls : "border-[var(--nuvia-border)] text-[var(--nuvia-text-secondary)] hover:text-[var(--nuvia-text-primary)]"
+            }`}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+      <textarea
+        value={comentario}
+        onChange={(e) => setComentario(e.target.value)}
+        maxLength={4000}
+        rows={2}
+        placeholder="Escribe una observación, evidencia, auditoría, seguimiento o alerta…"
+        className="w-full px-2 py-1.5 rounded-md bg-white/[0.03] border border-[var(--nuvia-border)] text-[12px] text-[var(--nuvia-text-primary)] resize-none"
+      />
+      {error && <div className="text-[11px] text-rose-300">{error}</div>}
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[10px] text-[var(--nuvia-text-secondary)] tabular-nums">{comentario.length}/4000</span>
+        <button
+          type="submit"
+          disabled={submitting || !comentario.trim()}
+          className="inline-flex items-center gap-1 px-3 py-1 rounded-md border border-sky-500/40 bg-sky-500/20 text-sky-200 text-[11px] hover:bg-sky-500/30 disabled:opacity-50"
+        >
+          {submitting ? <Loader2 size={11} className="animate-spin" /> : <Send size={11} />}
+          Registrar
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function BitacoraEntry({ b, autorNombre }: { b: BitacoraRow; autorNombre: string | null }) {
+  const cfg = BITACORA_TIPOS.find((t) => t.value === b.tipo) ?? BITACORA_TIPOS[0];
+  return (
+    <div className="px-3 py-2 rounded-md border border-[var(--nuvia-border)] bg-white/[0.02]">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full border text-[10px] capitalize ${cfg.cls}`}>
+              {cfg.label}
+            </span>
+            <span className="text-[10px] text-[var(--nuvia-text-secondary)] inline-flex items-center gap-1">
+              <User size={10} /> {autorNombre ?? "Usuario"}
+            </span>
+          </div>
+          <div className="mt-1 text-[12px] text-[var(--nuvia-text-primary)] leading-snug whitespace-pre-wrap">{b.comentario}</div>
+        </div>
+        <span className="text-[10px] text-[var(--nuvia-text-secondary)] shrink-0 tabular-nums">{fmtDateTime(b.created_at)}</span>
+      </div>
+    </div>
+  );
+}
