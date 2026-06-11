@@ -10,6 +10,9 @@ import {
   ExecutiveHero, KpiStripCard, FunnelChart, AgingStackedBar,
   AreaProductivityBars, ProjectedRevenueChart, ExecutiveInsightsCard, RiskTable, KpiDetailModal,
 } from "@/components/torre-control/widgets";
+import {
+  CommandCenterTabs, HealthScoreGauge,
+} from "@/components/torre-control/command-center/CommandCenter";
 
 const ROLES_TORRE = ["super_admin", "admin", "gerencia", "director_financiero_qa", "director_juridico"];
 
