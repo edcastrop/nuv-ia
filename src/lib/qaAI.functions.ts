@@ -69,6 +69,7 @@ const AuditarInputSchema = z.object({
     cuotasPendientes: z.number().int().nonnegative(),
     seguros: z.number().nonnegative().default(0),
     coberturaFrechPp: z.number().nonnegative().optional(),
+    coberturaFrechCuotasRestantes: z.number().int().nonnegative().optional(),
     valorDesembolsado: z.number().nonnegative().optional(),
   }),
   extracto: z.object({
