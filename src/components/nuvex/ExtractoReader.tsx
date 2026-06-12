@@ -74,7 +74,7 @@ export type ExtractoApplyPayload = {
 
 interface Props {
   modo: Modo;
-  onApply: (data: ExtractoApplyPayload) => void;
+  onApply: (data: ExtractoApplyPayload) => void | Promise<void>;
   existingArchivoPath?: string | null;
 }
 
@@ -289,7 +289,12 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
   const [archivoPath, setArchivoPath] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [portalReady, setPortalReady] = useState(false);
   const { data: catalogoProductos = [] } = useProductosBancarios();
+
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
 
   // Evita que el navegador abra el archivo si el usuario suelta fuera de la zona
   useEffect(() => {
@@ -871,12 +876,12 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
         requiereVerificacion: get("requiereVerificacionBeneficio").toLowerCase() === "si",
       };
     }
-    onApply(payload);
+    void onApply(payload);
     setStage("applied");
+    setOpen(false);
     setTimeout(() => {
-      setOpen(false);
       reset();
-    }, 1200);
+    }, 250);
   };
 
   // Campos a mostrar según modo
