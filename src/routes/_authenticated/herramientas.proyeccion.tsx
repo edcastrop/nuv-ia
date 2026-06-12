@@ -26,11 +26,11 @@ function AmbientBg() {
         className="pointer-events-none absolute inset-0 z-0"
         style={{
           background:
-            "radial-gradient(circle at 20% 10%, rgba(68,93,163,0.35), transparent 55%), radial-gradient(circle at 80% 85%, rgba(132,185,143,0.28), transparent 55%), #050816",
+            "radial-gradient(circle at 18% 8%, rgba(68,93,163,0.18), transparent 56%), radial-gradient(circle at 82% 86%, rgba(132,185,143,0.14), transparent 58%), #050816",
         }}
       />
       <div
-        className="pointer-events-none absolute inset-0 z-0 opacity-50"
+        className="pointer-events-none absolute inset-0 z-0 opacity-25"
         aria-hidden="true"
       >
         <svg className="h-full w-full" preserveAspectRatio="none">
@@ -60,24 +60,15 @@ function AmbientBg() {
       </div>
       <motion.div
         className="pointer-events-none absolute top-[-10rem] left-[-8rem] z-0 h-[36rem] w-[36rem] rounded-full blur-3xl"
-        style={{ background: "radial-gradient(circle, #445DA3, transparent 70%)", opacity: 0.55 }}
+        style={{ background: "radial-gradient(circle, #445DA3, transparent 70%)", opacity: 0.22 }}
         animate={{ x: [0, 60, 0], y: [0, 40, 0], scale: [1, 1.1, 1] }}
         transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
         className="pointer-events-none absolute bottom-[-10rem] right-[-8rem] z-0 h-[40rem] w-[40rem] rounded-full blur-3xl"
-        style={{ background: "radial-gradient(circle, #84B98F, transparent 70%)", opacity: 0.5 }}
+        style={{ background: "radial-gradient(circle, #84B98F, transparent 70%)", opacity: 0.18 }}
         animate={{ x: [0, -70, 0], y: [0, -40, 0], scale: [1, 1.15, 1] }}
         transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="pointer-events-none absolute top-1/3 left-1/2 z-0 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full blur-3xl"
-        style={{
-          background: "radial-gradient(circle, #9333EA, transparent 70%)",
-          opacity: 0.22,
-        }}
-        animate={{ x: [-40, 40, -40], y: [-20, 20, -20] }}
-        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
       />
     </>
   );
