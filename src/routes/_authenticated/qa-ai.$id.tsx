@@ -95,11 +95,39 @@ function ResultadoQaAi() {
         title={`Dictamen: ${dictamenLabel[a.dictamen] ?? a.dictamen}`}
         description={`Modalidad ${a.modalidad} · ejecutado ${new Date(a.ejecutado_at).toLocaleString("es-CO")}`}
         actions={
-          <Link to="/qa-ai">
-            <button className="nuvia-input nuvia-input-sm" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer" }}>
-              <ArrowLeft size={14} /> Volver
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => setCopilotoOpen(true)}
+              className="nuvia-input nuvia-input-sm"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer" }}
+            >
+              <Sparkles size={14} /> Copiloto QA
             </button>
-          </Link>
+            <button
+              onClick={() => exportarDictamenPDF({
+                auditoriaId: id,
+                modalidad: a.modalidad,
+                motorVersion: a.motor_version,
+                ejecutadoAt: a.ejecutado_at,
+                qaScore: score,
+                categoria: a.categoria,
+                dictamen: a.dictamen,
+                outputs: o,
+                inputs: (a as Record<string, unknown>).inputs as { reconstruccion?: Record<string, unknown>; extracto?: Record<string, unknown>; simulacion?: Record<string, unknown> },
+                penalizaciones: penalizaciones,
+                inconsistencias: data.inconsistencias,
+              })}
+              className="nuvia-input nuvia-input-sm"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer", background: "var(--nuvia-accent)", color: "#fff", border: "none" }}
+            >
+              <FileDown size={14} /> Exportar PDF
+            </button>
+            <Link to="/qa-ai">
+              <button className="nuvia-input nuvia-input-sm" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer" }}>
+                <ArrowLeft size={14} /> Volver
+              </button>
+            </Link>
+          </div>
         }
       />
 
