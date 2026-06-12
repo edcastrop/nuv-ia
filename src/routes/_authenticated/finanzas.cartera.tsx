@@ -4,9 +4,9 @@ import { CarteraDashboardView } from "@/components/cartera/CarteraDashboardView"
 export const Route = createFileRoute("/_authenticated/finanzas/cartera")({
   component: () => (
     <CarteraDashboardView
-      titulo="Cartera clientes — Finanzas"
-      subtitulo="Honorarios por cobrar, días de mora, estado y responsable contable."
+      titulo="Cartera y recaudo"
+      subtitulo="Control financiero de honorarios, días de mora y responsables contables."
     />
   ),
-  head: () => ({ meta: [{ title: "Cartera clientes · NUVEX" }] }),
+  head: () => ({ meta: [{ title: "Cartera y recaudo · NUVIA" }] }),
 });
