@@ -109,6 +109,7 @@ function ResultadoQaAi() {
   };
   const o = (a.outputs ?? {}) as Record<string, number | unknown[]>;
   const score = Number(a.qa_score);
+  const isUvr = a.modalidad === "uvr";
   const scoreColor = score >= 95 ? "var(--nuvia-success)" : score >= 85 ? "var(--nuvia-warning)" : "var(--nuvia-danger)";
   const dictColor = a.dictamen === "aprobado" ? "var(--nuvia-success)"
     : a.dictamen === "aprobado_obs" ? "var(--nuvia-warning)"
@@ -218,7 +219,7 @@ function ResultadoQaAi() {
       </NCard>
 
       <KpiGrid cols={4}>
-        <KpiCard label="Cuota teórica" value={`$${fmt(o.cuotaTeorica as number, 0)}`} icon={<Calculator size={14} />} tone="blue" />
+        <KpiCard label={isUvr ? "Cuota sin subsidio" : "Cuota teórica"} value={`$${fmt(o.cuotaTeorica as number, 0)}`} icon={<Calculator size={14} />} tone="blue" />
         <KpiCard label="Cuota total c/seguros" value={`$${fmt(o.cuotaTotalConSeguros as number, 0)}`} icon={<Coins size={14} />} tone="blue" />
         <KpiCard label="Beneficio FRECH/mes" value={`$${fmt(o.beneficioMensualFrech as number, 0)}`} icon={<Gauge size={14} />} tone="green" />
         <KpiCard label="Veces pagado" value={(o.vecesPagado as number ?? 0).toFixed(2)} icon={<Gauge size={14} />} tone="warning" />
@@ -226,6 +227,7 @@ function ResultadoQaAi() {
       <KpiGrid cols={2}>
         <KpiCard label="Costo total proyectado" value={`$${fmt(o.costoTotal as number, 0)}`} icon={<Coins size={14} />} tone="blue" />
         <KpiCard label="Total intereses" value={`$${fmt(o.totalIntereses as number, 0)}`} icon={<Coins size={14} />} tone="warning" />
+        {isUvr && <KpiCard label="Corrección UVR" value={`$${fmt(o.totalCorreccionUvr as number, 0)}`} icon={<Gauge size={14} />} tone="warning" />}
       </KpiGrid>
 
       {/* PANEL: Penalizaciones aplicadas */}
