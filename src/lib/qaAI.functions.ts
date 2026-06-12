@@ -69,6 +69,7 @@ const AuditarInputSchema = z.object({
     cuotasPendientes: z.number().int().nonnegative(),
     seguros: z.number().nonnegative().default(0),
     coberturaFrechPp: z.number().nonnegative().optional(),
+    coberturaFrechValorMensual: z.number().nonnegative().optional(),
     coberturaFrechCuotasRestantes: z.number().int().nonnegative().optional(),
     valorDesembolsado: z.number().nonnegative().optional(),
   }),
@@ -78,6 +79,7 @@ const AuditarInputSchema = z.object({
     cuota: z.number().nonnegative().optional(),
     seguros: z.number().nonnegative().optional(),
     coberturaFrechPp: z.number().nonnegative().optional(),
+    coberturaFrechValorMensual: z.number().nonnegative().optional(),
   }).default({}),
   simulacion: z.object({
     cuotasEliminadas: z.number().optional(),
@@ -101,6 +103,7 @@ export const auditarCaso = createServerFn({ method: "POST" })
         cuotasPendientes: data.reconstruccion.cuotasPendientes,
         seguros: data.reconstruccion.seguros,
         coberturaFrechPp: data.reconstruccion.coberturaFrechPp,
+        coberturaFrechValorMensual: data.reconstruccion.coberturaFrechValorMensual,
         coberturaFrechCuotasRestantes: data.reconstruccion.coberturaFrechCuotasRestantes,
         valorDesembolsado: data.reconstruccion.valorDesembolsado,
       },
@@ -204,9 +207,72 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
     const { data: aud, error } = await context.supabase
       .from("qa_auditorias").select("*").eq("id", data.id).single();
     if (error) throw new Error(error.message);
+    let auditoria = aud;
+    const inputs = (auditoria.inputs ?? {}) as Record<string, unknown>;
+    const rec = (inputs.reconstruccion ?? {}) as Record<string, unknown>;
+    const extSnap = (inputs.extracto ?? {}) as Record<string, unknown>;
+    if (!(Number(rec.coberturaFrechValorMensual ?? 0) > 0) && auditoria.extracto_id) {
+      const { data: ext } = await context.supabase
+        .from("extractos_lecturas")
+        .select("datos")
+        .eq("id", auditoria.extracto_id as string)
+        .single();
+      const d = (ext?.datos ?? {}) as Record<string, unknown>;
+      const valorFrech = parseNum(d.valorCobertura) ?? parseNum(d.valorSubsidioGobierno);
+      const tasaFrech = parseNum(d.tasaCobertura);
+      if ((valorFrech && valorFrech > 0) || (tasaFrech && tasaFrech > 0)) {
+        const cuotasPend = Number(rec.cuotasPendientes ?? 0);
+        const cuotasPag = Number(rec.cuotasPagadas ?? 0);
+        const frechCuotasRestantes = Math.max(0, Math.min(cuotasPend, 84 - cuotasPag));
+        const modalidadFinal = (inputs.modalidad as Modalidad | undefined) ?? (auditoria.modalidad as Modalidad);
+        const nextInputs: Record<string, unknown> = {
+          ...inputs,
+          reconstruccion: {
+            ...rec,
+            coberturaFrechPp: rec.coberturaFrechPp ?? tasaFrech,
+            coberturaFrechValorMensual: rec.coberturaFrechValorMensual ?? valorFrech,
+            coberturaFrechCuotasRestantes: rec.coberturaFrechCuotasRestantes ?? frechCuotasRestantes,
+          },
+          extracto: {
+            ...extSnap,
+            cuota: valorFrech && valorFrech > 0
+              ? parseNum(d.cuotaPagadaCliente) ?? parseNum(d.valorAPagar) ?? extSnap.cuota
+              : extSnap.cuota,
+            coberturaFrechPp: extSnap.coberturaFrechPp ?? tasaFrech,
+            coberturaFrechValorMensual: extSnap.coberturaFrechValorMensual ?? valorFrech,
+          },
+        };
+        try {
+          const result = auditar({
+            modalidad: modalidadFinal,
+            reconstruccion: { ...(nextInputs.reconstruccion as Record<string, unknown>), modalidad: modalidadFinal } as never,
+            extracto: nextInputs.extracto as never,
+          });
+          auditoria = ({
+            ...auditoria,
+            inputs: nextInputs,
+            outputs: {
+              ...(auditoria.outputs as Record<string, unknown> | null ?? {}),
+              cuotaTeorica: result.reconstruccion.cuotaTeorica,
+              cuotaConSubsidio: result.reconstruccion.cuotaConSubsidio,
+              cuotaTotalConSeguros: result.reconstruccion.cuotaTotalConSeguros,
+              beneficioMensualFrech: result.reconstruccion.beneficioMensualFrech,
+              costoTotal: result.reconstruccion.costoTotal,
+              vecesPagado: result.reconstruccion.vecesPagado,
+              totalIntereses: result.reconstruccion.totalIntereses,
+              iMv: result.reconstruccion.iMv,
+              primerasCuotas: result.reconstruccion.primerasCuotas,
+              ultimasCuotas: result.reconstruccion.ultimasCuotas,
+            },
+          } as unknown) as typeof aud;
+        } catch {
+          auditoria = { ...auditoria, inputs: nextInputs } as typeof aud;
+        }
+      }
+    }
     const { data: incs } = await context.supabase
       .from("qa_inconsistencias").select("*").eq("auditoria_id", data.id);
-    return { auditoria: aud, inconsistencias: incs ?? [] };
+    return { auditoria, inconsistencias: incs ?? [] };
   });
 
 export const qaKpis = createServerFn({ method: "POST" })
@@ -587,13 +653,17 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
     const cuotasPag = parseNum(d.cuotasPagadas) ?? 0;
     const seguros = parseNum(d.seguros) ?? 0;
     const frech = parseNum(d.tasaCobertura);
+    const frechValorMensual = parseNum(d.valorCobertura) ?? parseNum(d.valorSubsidioGobierno);
     const desemb = parseNum(d.valorDesembolsado);
-    const cuotaExt = parseNum(d.cuotaActual);
+    const cuotaExt = ((frech && frech > 0) || (frechValorMensual && frechValorMensual > 0))
+      ? parseNum(d.cuotaPagadaCliente) ?? parseNum(d.valorAPagar) ?? parseNum(d.cuotaActual)
+      : parseNum(d.cuotaActual);
 
     // FRECH/Fresh cubre máximo 84 cuotas (7 años) en total.
     // Las cuotas restantes con cobertura = max(0, 84 − cuotasPagadas), acotadas a las pendientes.
     const FRECH_MAX = 84;
-    const frechCuotasRestantes = frech && frech > 0
+    const tieneFrech = (frech && frech > 0) || (frechValorMensual && frechValorMensual > 0);
+    const frechCuotasRestantes = tieneFrech
       ? Math.max(0, Math.min(cuotasPend, FRECH_MAX - cuotasPag))
       : undefined;
 
@@ -607,6 +677,7 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
         cuotasPendientes: cuotasPend,
         seguros,
         coberturaFrechPp: frech,
+        coberturaFrechValorMensual: frechValorMensual,
         coberturaFrechCuotasRestantes: frechCuotasRestantes,
         valorDesembolsado: desemb,
       },
@@ -616,6 +687,7 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
         cuota: cuotaExt,
         seguros: seguros || undefined,
         coberturaFrechPp: frech,
+        coberturaFrechValorMensual: frechValorMensual,
       },
       tolerancias: overrides,
     });
@@ -624,8 +696,8 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
       modalidad,
       extractoLecturaId: ext.id,
       expedienteId: ext.expediente_id,
-      reconstruccion: { saldoCapital: saldo, tasaEa: tasa, cuotasPendientes: cuotasPend, cuotasPagadas: cuotasPag, seguros, coberturaFrechPp: frech, coberturaFrechCuotasRestantes: frechCuotasRestantes, valorDesembolsado: desemb },
-      extracto: { saldoCapital: saldo, tasaEa: tasa, cuota: cuotaExt, seguros, coberturaFrechPp: frech },
+      reconstruccion: { saldoCapital: saldo, tasaEa: tasa, cuotasPendientes: cuotasPend, cuotasPagadas: cuotasPag, seguros, coberturaFrechPp: frech, coberturaFrechValorMensual: frechValorMensual, coberturaFrechCuotasRestantes: frechCuotasRestantes, valorDesembolsado: desemb },
+      extracto: { saldoCapital: saldo, tasaEa: tasa, cuota: cuotaExt, seguros, coberturaFrechPp: frech, coberturaFrechValorMensual: frechValorMensual },
     };
 
     const { data: aud, error: errAud } = await supabase

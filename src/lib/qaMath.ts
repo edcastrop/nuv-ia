@@ -71,6 +71,7 @@ export interface FilaAmort {
   interes: number;
   capital: number;
   seguros: number;
+  fresh: number;        // descuento/cobertura FRECH/Fresh aplicado al pago del cliente
   cuotaTotal: number;   // cuota + seguros
   saldo: number;
   subsidioActivo: boolean; // true mientras aplique FRECH/Fresh
@@ -81,10 +82,11 @@ export function amortizacion(
   iPeriodica: number,
   n: number,
   seguros: number = 0,
-  opts?: { iPostSubsidio?: number; cuotasSubsidio?: number },
+  opts?: { iPostSubsidio?: number; cuotasSubsidio?: number; subsidioMensual?: number },
 ): FilaAmort[] {
   const seg = Math.max(0, seguros || 0);
   const cuotasSub = Math.max(0, Math.min(n, Math.round(opts?.cuotasSubsidio ?? 0)));
+  const subsidioMensual = Math.max(0, opts?.subsidioMensual ?? 0);
   const hasSwitch = !!opts && opts.iPostSubsidio !== undefined && opts.iPostSubsidio !== iPeriodica && cuotasSub > 0 && cuotasSub < n;
   const C1 = cuotaTeorica(saldo, iPeriodica, n);
   const filas: FilaAmort[] = [];
@@ -101,7 +103,8 @@ export function amortizacion(
     const capital = C - interes;
     s = Math.max(0, s - capital);
     const subsidioActivo = hasSwitch ? k <= cuotasSub : (opts?.cuotasSubsidio ?? 0) > 0 && k <= (opts?.cuotasSubsidio ?? 0);
-    filas.push({ k, cuota: C, interes, capital, seguros: seg, cuotaTotal: C + seg, saldo: s, subsidioActivo });
+    const fresh = subsidioActivo ? Math.min(subsidioMensual, C + seg) : 0;
+    filas.push({ k, cuota: C, interes, capital, seguros: seg, fresh, cuotaTotal: C + seg - fresh, saldo: s, subsidioActivo });
   }
   return filas;
 }
@@ -116,6 +119,7 @@ export interface ReconstruccionInput {
   cuotasPendientes: number;
   seguros: number;          // COP / mes (total)
   coberturaFrechPp?: number; // pp anuales EA descontados
+  coberturaFrechValorMensual?: number; // COP / mes descontados mientras aplique FRECH/Fresh
   /** Cuotas restantes con cobertura FRECH/Fresh. Si se omite y hay cobertura,
    *  se asume el tope duro FRECH_MAX_CUOTAS (84) acotado a las pendientes. */
   coberturaFrechCuotasRestantes?: number;
@@ -146,22 +150,29 @@ export function reconstruir(input: ReconstruccionInput): Reconstruccion {
   const cob = input.coberturaFrechPp ? input.coberturaFrechPp / 100 : 0;
   const iSub = cob > 0 ? eaToMv(Math.max(0, ea - cob)) : iMv;
   const CSub = cob > 0 ? cuotaTeorica(input.saldoCapital, iSub, n) : C;
-  const beneficio = Math.max(0, C - CSub);
+  const beneficioPorTasa = Math.max(0, C - CSub);
+  const beneficioMensual = Math.max(0, input.coberturaFrechValorMensual ?? 0);
+  const beneficio = beneficioMensual > 0 ? beneficioMensual : beneficioPorTasa;
 
   const seguros = Math.max(0, input.seguros || 0);
-  const cuotaTotal = (cob > 0 ? CSub : C) + seguros;
+  const cuotaFinancieraBase = beneficioMensual > 0 ? C : (cob > 0 ? CSub : C);
+  const cuotaTotal = cuotaFinancieraBase + seguros - (beneficioMensual > 0 ? beneficioMensual : 0);
 
   // Tope FRECH (84 cuotas) — si no llega override, asumimos cobertura completa hasta el tope.
-  const cuotasFrechAplicadas = cob > 0
+  const hayFrech = cob > 0 || beneficioMensual > 0;
+  const cuotasFrechAplicadas = hayFrech
     ? Math.max(0, Math.min(n, Math.round(input.coberturaFrechCuotasRestantes ?? FRECH_MAX_CUOTAS)))
     : 0;
 
   const tabla = amortizacion(
     input.saldoCapital,
-    cob > 0 ? iSub : iMv,
+    beneficioMensual > 0 ? iMv : (cob > 0 ? iSub : iMv),
     n,
     seguros,
-    cob > 0 ? { iPostSubsidio: iMv, cuotasSubsidio: cuotasFrechAplicadas } : undefined,
+    hayFrech ? (beneficioMensual > 0
+      ? { cuotasSubsidio: cuotasFrechAplicadas, subsidioMensual: beneficioMensual }
+      : { iPostSubsidio: iMv, cuotasSubsidio: cuotasFrechAplicadas, subsidioMensual: beneficioMensual })
+      : undefined,
   );
   const totalIntereses = tabla.reduce((s, f) => s + f.interes, 0);
   // Costo total real teniendo en cuenta el switch de tasa.
@@ -194,6 +205,7 @@ export interface ExtractoSnapshot {
   cuota?: number;
   seguros?: number;
   coberturaFrechPp?: number;
+  coberturaFrechValorMensual?: number;
 }
 
 export interface Inconsistencia {

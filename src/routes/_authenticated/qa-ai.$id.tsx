@@ -63,31 +63,33 @@ function ResultadoQaAi() {
 
   // Reconstrucción COMPLETA del plan amortizado (todas las cuotas pendientes)
   const filasCompletas = useMemo(() => {
-    if (!data?.auditoria) return [] as Array<{ k: number; cuota: number; interes: number; capital: number; seguros: number; cuotaTotal: number; saldo: number; subsidioActivo: boolean }>;
+    if (!data?.auditoria) return [] as Array<{ k: number; cuota: number; interes: number; capital: number; seguros: number; fresh: number; cuotaTotal: number; saldo: number; subsidioActivo: boolean }>;
     const inputs = (data.auditoria as Record<string, unknown>).inputs as
-      | { reconstruccion?: { saldoCapital?: number; tasaEa?: number; cuotasPendientes?: number; cuotasPagadas?: number; coberturaFrechPp?: number; coberturaFrechCuotasRestantes?: number; seguros?: number } }
+      | { reconstruccion?: { saldoCapital?: number; tasaEa?: number; cuotasPendientes?: number; cuotasPagadas?: number; coberturaFrechPp?: number; coberturaFrechValorMensual?: number; coberturaFrechCuotasRestantes?: number; seguros?: number } }
       | undefined;
     const r = inputs?.reconstruccion;
     if (!r || !r.saldoCapital || !r.tasaEa || !r.cuotasPendientes) return [];
     try {
       const ea = (r.tasaEa || 0) / 100;
       const cob = r.coberturaFrechPp ? r.coberturaFrechPp / 100 : 0;
+      const freshMensual = Math.max(0, r.coberturaFrechValorMensual || 0);
       const iMv = eaToMv(ea);
       const iSub = cob > 0 ? eaToMv(Math.max(0, ea - cob)) : iMv;
       const n = Math.max(0, Math.round(r.cuotasPendientes));
       const seg = Math.max(0, r.seguros || 0);
       const FRECH_MAX = 84;
-      const cuotasSub = cob > 0
+      const hayFrech = cob > 0 || freshMensual > 0;
+      const cuotasSub = hayFrech
         ? Math.max(0, Math.min(n, Math.round(
             r.coberturaFrechCuotasRestantes ?? (FRECH_MAX - (r.cuotasPagadas ?? 0)),
           )))
         : 0;
       return amortizacion(
         r.saldoCapital,
-        cob > 0 ? iSub : iMv,
+        freshMensual > 0 ? iMv : (cob > 0 ? iSub : iMv),
         n,
         seg,
-        cob > 0 ? { iPostSubsidio: iMv, cuotasSubsidio: cuotasSub } : undefined,
+        hayFrech ? { iPostSubsidio: freshMensual > 0 ? undefined : iMv, cuotasSubsidio: cuotasSub, subsidioMensual: freshMensual } : undefined,
       );
     } catch { return []; }
   }, [data]);
@@ -95,21 +97,23 @@ function ResultadoQaAi() {
   // Metadatos para encabezado (tasa aplicada, FRECH, seguros)
   const reconMeta = useMemo(() => {
     const inputs = (data?.auditoria as Record<string, unknown> | undefined)?.inputs as
-      | { reconstruccion?: { tasaEa?: number; coberturaFrechPp?: number; coberturaFrechCuotasRestantes?: number; cuotasPagadas?: number; cuotasPendientes?: number; seguros?: number } }
+      | { reconstruccion?: { tasaEa?: number; coberturaFrechPp?: number; coberturaFrechValorMensual?: number; coberturaFrechCuotasRestantes?: number; cuotasPagadas?: number; cuotasPendientes?: number; seguros?: number } }
       | undefined;
     const r = inputs?.reconstruccion;
     const tasaEa = r?.tasaEa ?? 0;
     const cob = r?.coberturaFrechPp ?? 0;
+    const freshMensual = Math.max(0, r?.coberturaFrechValorMensual ?? 0);
     const tasaAplicada = Math.max(0, tasaEa - cob);
     const seguros = Math.max(0, r?.seguros ?? 0);
     const FRECH_MAX = 84;
     const n = Math.max(0, Math.round(r?.cuotasPendientes ?? 0));
-    const frechRestantes = cob > 0
+    const hasFrech = cob > 0 || freshMensual > 0;
+    const frechRestantes = hasFrech
       ? Math.max(0, Math.min(n, Math.round(
           r?.coberturaFrechCuotasRestantes ?? (FRECH_MAX - (r?.cuotasPagadas ?? 0)),
         )))
       : 0;
-    return { tasaEa, cob, tasaAplicada, seguros, hasFrech: cob > 0, frechRestantes, frechMax: FRECH_MAX };
+    return { tasaEa, cob, freshMensual, tasaAplicada, seguros, hasFrech, frechRestantes, frechMax: FRECH_MAX };
   }, [data]);
 
   if (!data?.auditoria) {
@@ -128,15 +132,16 @@ function ResultadoQaAi() {
 
   const sevTone = (s: string) => s === "critica" ? "var(--nuvia-danger)" : s === "warning" ? "var(--nuvia-warning)" : "var(--nuvia-text-secondary)";
 
-  type FilaUI = { k: number; cuota: number; interes: number; capital: number; seguros: number; cuotaTotal: number; saldo: number; subsidioActivo: boolean };
-  const enriquecer = (f: { k: number; cuota: number; interes: number; capital: number; saldo: number; seguros?: number; cuotaTotal?: number; subsidioActivo?: boolean }): FilaUI => ({
+  type FilaUI = { k: number; cuota: number; interes: number; capital: number; seguros: number; fresh: number; cuotaTotal: number; saldo: number; subsidioActivo: boolean };
+  const enriquecer = (f: { k: number; cuota: number; interes: number; capital: number; saldo: number; seguros?: number; fresh?: number; cuotaTotal?: number; subsidioActivo?: boolean }): FilaUI => ({
     k: f.k, cuota: f.cuota, interes: f.interes, capital: f.capital, saldo: f.saldo,
     seguros: f.seguros ?? reconMeta.seguros,
-    cuotaTotal: f.cuotaTotal ?? (f.cuota + (f.seguros ?? reconMeta.seguros)),
+    fresh: f.fresh ?? (reconMeta.hasFrech && f.k <= reconMeta.frechRestantes ? reconMeta.freshMensual : 0),
+    cuotaTotal: f.cuotaTotal ?? (f.cuota + (f.seguros ?? reconMeta.seguros) - (f.fresh ?? (reconMeta.hasFrech && f.k <= reconMeta.frechRestantes ? reconMeta.freshMensual : 0))),
     subsidioActivo: f.subsidioActivo ?? (reconMeta.hasFrech && f.k <= reconMeta.frechRestantes),
   });
-  const primeras = ((o.primerasCuotas as Array<{ k: number; cuota: number; interes: number; capital: number; saldo: number; seguros?: number; cuotaTotal?: number; subsidioActivo?: boolean }>) ?? []).map(enriquecer);
-  const ultimas = ((o.ultimasCuotas as Array<{ k: number; cuota: number; interes: number; capital: number; saldo: number; seguros?: number; cuotaTotal?: number; subsidioActivo?: boolean }>) ?? []).map(enriquecer);
+  const primeras = ((o.primerasCuotas as Array<{ k: number; cuota: number; interes: number; capital: number; saldo: number; seguros?: number; fresh?: number; cuotaTotal?: number; subsidioActivo?: boolean }>) ?? []).map(enriquecer);
+  const ultimas = ((o.ultimasCuotas as Array<{ k: number; cuota: number; interes: number; capital: number; saldo: number; seguros?: number; fresh?: number; cuotaTotal?: number; subsidioActivo?: boolean }>) ?? []).map(enriquecer);
   const ksPrimeras = new Set(primeras.map((f) => f.k));
   const filasResumen: FilaUI[] = [
     ...primeras,
@@ -392,12 +397,21 @@ function ResultadoQaAi() {
           </span>
           {reconMeta.hasFrech && (
             <>
-              <span className="rounded-md px-2 py-1" style={{ background: "rgba(132,185,143,0.10)", border: "1px solid rgba(132,185,143,0.35)", color: "var(--nuvia-success)" }}>
-                FRECH: −{reconMeta.cob.toFixed(2)} pp
-              </span>
-              <span className="rounded-md px-2 py-1" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--nuvia-border)", color: "var(--nuvia-text-secondary)" }}>
-                Tasa con FRECH: <b style={{ color: "var(--nuvia-text-primary)" }}>{reconMeta.tasaAplicada.toFixed(2)}%</b> EA
-              </span>
+              {reconMeta.cob > 0 && (
+                <span className="rounded-md px-2 py-1" style={{ background: "rgba(132,185,143,0.10)", border: "1px solid rgba(132,185,143,0.35)", color: "var(--nuvia-success)" }}>
+                  FRECH: −{reconMeta.cob.toFixed(2)} pp
+                </span>
+              )}
+              {reconMeta.freshMensual > 0 && (
+                <span className="rounded-md px-2 py-1" style={{ background: "rgba(132,185,143,0.10)", border: "1px solid rgba(132,185,143,0.35)", color: "var(--nuvia-success)" }}>
+                  Fresh mensual: −${fmt(reconMeta.freshMensual, 0)}
+                </span>
+              )}
+              {reconMeta.cob > 0 && (
+                <span className="rounded-md px-2 py-1" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--nuvia-border)", color: "var(--nuvia-text-secondary)" }}>
+                  Tasa con FRECH: <b style={{ color: "var(--nuvia-text-primary)" }}>{reconMeta.tasaAplicada.toFixed(2)}%</b> EA
+                </span>
+              )}
               <span className="rounded-md px-2 py-1" style={{ background: "rgba(132,185,143,0.10)", border: "1px solid rgba(132,185,143,0.35)", color: "var(--nuvia-success)" }}>
                 Cobertura restante: <b>{reconMeta.frechRestantes}</b> / {reconMeta.frechMax} cuotas
               </span>
@@ -412,7 +426,7 @@ function ResultadoQaAi() {
           <table className="w-full text-[12.5px]">
             <thead>
               <tr style={{ background: "rgba(255,255,255,0.03)" }}>
-                {["#", "Cuota", "Interés", "Capital", "Seguros", "Cuota total", "Saldo"].map((h) => (
+                {["#", "Cuota", "Interés", "Capital", "Seguros", "Fresh", "Cuota total", "Saldo"].map((h) => (
                   <th key={h} className="text-right px-4 py-2 font-medium" style={{ color: "var(--nuvia-text-secondary)", borderBottom: "1px solid var(--nuvia-border)" }}>{h}</th>
                 ))}
               </tr>
@@ -432,6 +446,7 @@ function ResultadoQaAi() {
                   <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>${fmt(f.interes, 0)}</td>
                   <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>${fmt(f.capital, 0)}</td>
                   <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>${fmt(f.seguros, 0)}</td>
+                  <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: f.fresh > 0 ? "var(--nuvia-success)" : "var(--nuvia-text-secondary)" }}>{f.fresh > 0 ? `−$${fmt(f.fresh, 0)}` : "$0"}</td>
                   <td className="px-4 py-1.5 text-right tabular-nums font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>${fmt(f.cuotaTotal, 0)}</td>
                   <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>${fmt(f.saldo, 0)}</td>
                 </tr>
