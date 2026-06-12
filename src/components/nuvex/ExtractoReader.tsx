@@ -1010,8 +1010,8 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           }
         }}
         style={{
-          background: "linear-gradient(145deg, rgba(255,255,255,0.15), rgba(255,255,255,0.055) 42%, rgba(68,93,163,0.035) 72%, rgba(132,185,143,0.024))",
-          border: `1px solid ${dragActive ? "rgba(132,185,143,0.42)" : "rgba(230,238,248,0.30)"}`,
+          background: "linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.075) 42%, rgba(255,255,255,0.035))",
+          border: `1px solid ${dragActive ? "rgba(132,185,143,0.42)" : "rgba(238,245,255,0.36)"}`,
           backdropFilter: "blur(24px) saturate(135%)",
           boxShadow: dragActive
             ? "0 24px 60px -26px rgba(132,185,143,0.36), inset 0 1px 0 rgba(255,255,255,0.20)"
@@ -1159,7 +1159,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
             className="relative flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl"
             style={{
               background: "linear-gradient(145deg, rgba(255,255,255,0.13), rgba(255,255,255,0.048) 44%, rgba(68,93,163,0.05) 76%, rgba(132,185,143,0.035))",
-              border: "1px solid rgba(210,222,240,0.22)",
+              border: "1px solid rgba(238,245,255,0.36)",
               boxShadow: "0 46px 110px -46px rgba(0,0,0,0.95), inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -1px 0 rgba(255,255,255,0.06)",
               backdropFilter: "blur(24px) saturate(135%)",
               maxHeight: "92vh",
