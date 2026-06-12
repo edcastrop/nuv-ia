@@ -716,6 +716,7 @@ export function PesosSimulator({
         </>
       )}
       {monedaAlerta.dialog}
+      </div>
     </div>
   );
 }
