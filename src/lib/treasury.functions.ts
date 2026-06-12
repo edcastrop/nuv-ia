@@ -804,5 +804,194 @@ export const listAuditoria = createServerFn({ method: "GET" })
       user_id: string | null;
       created_at: string;
     }>;
-
   });
+
+// ─────────────────────────── Fase 2 · Cartera IA ───────────────────────────
+type CarteraRow = {
+  id: string;
+  expediente_id: string;
+  estado_cartera: string;
+  forma_pago: string;
+  fecha_vencimiento: string;
+  fecha_cuenta_cobro: string | null;
+  honorarios_totales: number;
+  pagado: number;
+  responsable_id: string | null;
+};
+type ExpRow = { id: string; cliente_nombre: string; cedula: string | null; banco: string | null; estado_caso: string | null };
+
+function bucketDias(d: number): "alDia" | "b1_30" | "b31_60" | "b61_90" | "b90plus" {
+  if (d <= 0) return "alDia";
+  if (d <= 30) return "b1_30";
+  if (d <= 60) return "b31_60";
+  if (d <= 90) return "b61_90";
+  return "b90plus";
+}
+
+export const carteraAging = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+    const { data: cartera } = await supabase.from("cartera" as never).select("*");
+    const rows = ((cartera ?? []) as unknown) as CarteraRow[];
+    const expIds = Array.from(new Set(rows.map((r) => r.expediente_id)));
+    let expMap = new Map<string, ExpRow>();
+    if (expIds.length) {
+      const { data: exps } = await supabase
+        .from("expedientes")
+        .select("id,cliente_nombre,cedula,banco,estado_caso")
+        .in("id", expIds);
+      expMap = new Map(((exps ?? []) as unknown as ExpRow[]).map((e) => [e.id, e]));
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const items = rows
+      .map((r) => {
+        const saldo = Math.max(0, Number(r.honorarios_totales) - Number(r.pagado));
+        const vence = new Date(r.fecha_vencimiento + "T00:00:00");
+        const dias = Math.floor((today.getTime() - vence.getTime()) / 86400000);
+        const exp = expMap.get(r.expediente_id);
+        const flags: string[] = [];
+        if (Number(r.pagado) > 0 && saldo > 0) flags.push("pago_parcial");
+        if (exp?.estado_caso === "aprobado" && Number(r.pagado) === 0) flags.push("aprobado_sin_pago");
+        if (r.estado_cartera === "cuenta_cobro_enviada" && Number(r.pagado) === 0) flags.push("cc_sin_recaudo");
+        if (r.estado_cartera === "acuerdo_pago" && dias > 0) flags.push("promesa_vencida");
+        return {
+          id: r.id,
+          expediente_id: r.expediente_id,
+          cliente: exp?.cliente_nombre ?? "—",
+          cedula: exp?.cedula ?? null,
+          banco: exp?.banco ?? null,
+          estado_cartera: r.estado_cartera,
+          forma_pago: r.forma_pago,
+          fecha_vencimiento: r.fecha_vencimiento,
+          honorarios_totales: Number(r.honorarios_totales),
+          pagado: Number(r.pagado),
+          saldo,
+          dias,
+          bucket: bucketDias(dias),
+          flags,
+        };
+      })
+      .filter((x) => x.saldo > 0)
+      .sort((a, b) => b.dias - a.dias);
+
+    const buckets: Record<string, number> = { alDia: 0, b1_30: 0, b31_60: 0, b61_90: 0, b90plus: 0 };
+    const counts: Record<string, number> = { alDia: 0, b1_30: 0, b31_60: 0, b61_90: 0, b90plus: 0 };
+    for (const it of items) {
+      buckets[it.bucket] += it.saldo;
+      counts[it.bucket] += 1;
+    }
+    const alertas = {
+      pago_parcial: items.filter((i) => i.flags.includes("pago_parcial")).length,
+      aprobado_sin_pago: items.filter((i) => i.flags.includes("aprobado_sin_pago")).length,
+      cc_sin_recaudo: items.filter((i) => i.flags.includes("cc_sin_recaudo")).length,
+      promesa_vencida: items.filter((i) => i.flags.includes("promesa_vencida")).length,
+    };
+    return { items, buckets, counts, alertas, total: items.reduce((a, b) => a + b.saldo, 0) };
+  });
+
+// ─────────────────────────── Fase 2 · Flujo de Caja IA ───────────────────────────
+function probabilidadEstado(estado: string, diasMora: number): "alta" | "media" | "baja" {
+  if (estado === "pago_total" || estado === "pago_parcial" || estado === "acuerdo_pago") return "alta";
+  if (estado === "vencido" || estado === "prejuridico") return "baja";
+  if (diasMora > 30) return "baja";
+  if (diasMora > 0) return "media";
+  return "media";
+}
+
+export const flujoCajaForecast = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const [{ data: cartera }, { data: ccs }] = await Promise.all([
+      supabase.from("cartera" as never).select("*"),
+      supabase
+        .from("cuentas_cobro" as never)
+        .select("id,numero,total,estado,fecha_programada_pago,fecha_envio")
+        .in("estado", ["enviada", "aprobada", "pendiente"]),
+    ]);
+
+    type Item = {
+      id: string;
+      origen: "cartera" | "cuenta_cobro";
+      label: string;
+      fecha: string;
+      valor: number;
+      probabilidad: "alta" | "media" | "baja";
+      dias: number;
+    };
+    const items: Item[] = [];
+
+    for (const r of (cartera ?? []) as unknown as CarteraRow[]) {
+      const saldo = Math.max(0, Number(r.honorarios_totales) - Number(r.pagado));
+      if (saldo <= 0) continue;
+      const fecha = r.fecha_vencimiento;
+      const fechaD = new Date(fecha + "T00:00:00");
+      const dias = Math.floor((fechaD.getTime() - today.getTime()) / 86400000);
+      items.push({
+        id: r.id,
+        origen: "cartera",
+        label: `Cartera · ${r.estado_cartera}`,
+        fecha,
+        valor: saldo,
+        probabilidad: probabilidadEstado(r.estado_cartera, -dias),
+        dias,
+      });
+    }
+
+    for (const cc of (ccs ?? []) as unknown as Array<{
+      id: string; numero: string; total: number; estado: string;
+      fecha_programada_pago: string | null; fecha_envio: string | null;
+    }>) {
+      const fechaStr =
+        cc.fecha_programada_pago ??
+        (cc.fecha_envio ? cc.fecha_envio.slice(0, 10) : today.toISOString().slice(0, 10));
+      const fechaD = new Date(fechaStr + "T00:00:00");
+      const dias = Math.floor((fechaD.getTime() - today.getTime()) / 86400000);
+      items.push({
+        id: cc.id,
+        origen: "cuenta_cobro",
+        label: `CC ${cc.numero} · ${cc.estado}`,
+        fecha: fechaStr,
+        valor: Number(cc.total),
+        probabilidad: cc.estado === "aprobada" ? "alta" : "media",
+        dias,
+      });
+    }
+
+    const horizonte = items.filter((i) => i.dias <= 90 && i.dias >= -30);
+
+    const totales = {
+      alta: horizonte.filter((i) => i.probabilidad === "alta").reduce((a, b) => a + b.valor, 0),
+      media: horizonte.filter((i) => i.probabilidad === "media").reduce((a, b) => a + b.valor, 0),
+      baja: horizonte.filter((i) => i.probabilidad === "baja").reduce((a, b) => a + b.valor, 0),
+    };
+
+    const ventanas = {
+      d30: horizonte.filter((i) => i.dias <= 30 && i.dias >= 0).reduce((a, b) => a + b.valor, 0),
+      d60: horizonte.filter((i) => i.dias <= 60 && i.dias >= 0).reduce((a, b) => a + b.valor, 0),
+      d90: horizonte.filter((i) => i.dias <= 90 && i.dias >= 0).reduce((a, b) => a + b.valor, 0),
+      vencido: horizonte.filter((i) => i.dias < 0).reduce((a, b) => a + b.valor, 0),
+    };
+
+    // Serie semanal (12 semanas desde hoy), ponderada por probabilidad
+    const peso = { alta: 1, media: 0.6, baja: 0.25 } as const;
+    const semanas: Array<{ label: string; bruto: number; ponderado: number }> = [];
+    for (let w = 0; w < 12; w++) {
+      const ini = w * 7;
+      const fin = ini + 7;
+      const inWindow = horizonte.filter((i) => i.dias >= ini && i.dias < fin);
+      const bruto = inWindow.reduce((a, b) => a + b.valor, 0);
+      const ponderado = inWindow.reduce((a, b) => a + b.valor * peso[b.probabilidad], 0);
+      semanas.push({ label: `S${w + 1}`, bruto, ponderado });
+    }
+
+    horizonte.sort((a, b) => a.dias - b.dias);
+    return { items: horizonte, totales, ventanas, semanas };
+  });
+
