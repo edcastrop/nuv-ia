@@ -396,40 +396,62 @@
 
 /* ==========================================================
    NUVIA · SHELL SOFT SCOPE
-   Tono intermedio: ni blanco brillante, ni dark profundo.
-   Superficies en slate-cálido (#E8ECF4 / #DDE3EE) sobre canvas
-   NUVIA. Texto sigue oscuro para legibilidad. Pensado para
-   módulos densos como detalle de caso donde el dark cansa.
+   Paleta del Kanban del Pipeline: canvas navy + cards en
+   glass navy (#1B2542 con gradiente sutil), texto claro,
+   bordes glass. Replica el screenshot aprobado.
    ========================================================== */
 .nuvia-shell-soft {
-  --soft-surface:     #E6EAF2;   /* tarjeta */
-  --soft-surface-2:   #DCE2EC;   /* tabla / encabezados */
-  --soft-surface-3:   #CFD6E2;   /* hover / acentos */
-  --soft-border:      #B9C2D2;
-  --soft-text:        #1B2542;
-  --soft-text-muted:  #4A5570;
+  --soft-card-bg:     linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.018));
+  --soft-card-bg-2:   linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.025));
+  --soft-border:      rgba(255,255,255,0.10);
+  --soft-border-2:    rgba(255,255,255,0.16);
+  --soft-text:        #E6E9F2;
+  --soft-text-muted:  #AAB3C5;
+  --soft-input-bg:    rgba(255,255,255,0.04);
+
+  color: var(--soft-text);
 }
 
-/* Superficies blancas/grises claras → slate suave */
+/* Tarjetas blancas → glass navy del Kanban */
 .nuvia-shell-soft .bg-white,
 .nuvia-shell-soft [class*="bg-[#fff"],
 .nuvia-shell-soft [class*="bg-[#FFF"],
 .nuvia-shell-soft [class*="bg-[#FAFBFC"] {
-  background-color: var(--soft-surface) !important;
+  background-color: var(--nuvia-bg-card) !important;
+  background-image: var(--soft-card-bg) !important;
   color: var(--soft-text);
   border-color: var(--soft-border) !important;
+  backdrop-filter: blur(12px);
 }
+
+/* Superficies grises (zebra, hovers, secundarias) un toque más claras */
 .nuvia-shell-soft [class*="bg-[#F7F9FB"],
 .nuvia-shell-soft [class*="bg-[#FBFCFD"],
 .nuvia-shell-soft [class*="bg-[#EEF1F5"],
 .nuvia-shell-soft [class*="bg-[#F4F6FB"],
 .nuvia-shell-soft [class*="bg-[#F0F2F6"] {
-  background-color: var(--soft-surface-2) !important;
+  background-color: transparent !important;
+  background-image: var(--soft-card-bg-2) !important;
   color: var(--soft-text);
   border-color: var(--soft-border) !important;
 }
 
-/* Bordes claros → border slate */
+/* Tipografía oscura → clara */
+.nuvia-shell-soft [class*="text-[#242424"],
+.nuvia-shell-soft [class*="text-[#0A1226"],
+.nuvia-shell-soft [class*="text-[#1F2937"],
+.nuvia-shell-soft [class*="text-[#374151"] {
+  color: var(--soft-text) !important;
+}
+.nuvia-shell-soft [class*="text-[#242424]/55"],
+.nuvia-shell-soft [class*="text-[#242424]/60"],
+.nuvia-shell-soft [class*="text-[#242424]/65"],
+.nuvia-shell-soft [class*="text-[#242424]/70"],
+.nuvia-shell-soft [class*="text-[#242424]/75"] {
+  color: var(--soft-text-muted) !important;
+}
+
+/* Bordes claros → border glass */
 .nuvia-shell-soft [class*="border-[#E3E7EE"],
 .nuvia-shell-soft [class*="border-[#EEF1F5"],
 .nuvia-shell-soft [class*="border-[#E5E7EB"],
@@ -442,23 +464,37 @@
 .nuvia-shell-soft input:not([type="checkbox"]):not([type="radio"]),
 .nuvia-shell-soft select,
 .nuvia-shell-soft textarea {
-  background-color: #F1F4F9 !important;
+  background-color: var(--soft-input-bg) !important;
   color: var(--soft-text) !important;
   border-color: var(--soft-border) !important;
 }
+.nuvia-shell-soft input::placeholder,
+.nuvia-shell-soft textarea::placeholder {
+  color: rgba(170,179,197,0.55) !important;
+}
+.nuvia-shell-soft select option {
+  background-color: var(--nuvia-bg-tertiary);
+  color: var(--soft-text);
+}
 
 /* Tablas */
+.nuvia-shell-soft table {
+  color: var(--soft-text);
+}
 .nuvia-shell-soft thead tr,
 .nuvia-shell-soft th {
-  background-color: var(--soft-surface-2) !important;
+  color: var(--soft-text-muted) !important;
   border-color: var(--soft-border) !important;
+  background-color: transparent !important;
 }
 .nuvia-shell-soft tbody tr {
   border-color: var(--soft-border) !important;
 }
 .nuvia-shell-soft tbody tr:hover {
-  background-color: var(--soft-surface-3) !important;
+  background-color: rgba(255,255,255,0.05) !important;
 }
+
+
 
 
 
