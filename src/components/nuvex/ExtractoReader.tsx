@@ -1149,7 +1149,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       />
 
       {/* Modal */}
-      {open && (
+      {open && portalReady && createPortal(
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ background: "rgba(5,8,20,0.78)", backdropFilter: "blur(8px)" }}
@@ -1724,7 +1724,8 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );
