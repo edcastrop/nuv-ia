@@ -1016,12 +1016,13 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           }
         }}
         style={{
-          background: "linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.075) 42%, rgba(255,255,255,0.035))",
-          border: `1px solid ${dragActive ? "rgba(132,185,143,0.42)" : "rgba(238,245,255,0.36)"}`,
-          backdropFilter: "blur(24px) saturate(135%)",
+          background: "linear-gradient(145deg, rgba(238,245,255,0.28), rgba(238,245,255,0.12) 42%, rgba(238,245,255,0.055))",
+          border: `1px solid ${dragActive ? "rgba(132,185,143,0.58)" : "rgba(238,245,255,0.50)"}`,
+          backdropFilter: "blur(34px) saturate(155%)",
+          WebkitBackdropFilter: "blur(34px) saturate(155%)",
           boxShadow: dragActive
-            ? "0 24px 60px -26px rgba(132,185,143,0.36), inset 0 1px 0 rgba(255,255,255,0.20)"
-            : "0 34px 90px -50px rgba(0,0,0,0.94), inset 0 1px 0 rgba(255,255,255,0.20), inset 0 -1px 0 rgba(255,255,255,0.05)",
+            ? "0 24px 60px -26px rgba(132,185,143,0.36), inset 0 1px 0 rgba(255,255,255,0.55)"
+            : "0 34px 90px -50px rgba(0,0,0,0.94), inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -1px 0 rgba(255,255,255,0.14)",
           transform: dragActive ? "scale(1.005)" : "scale(1)",
         }}
       >
@@ -1029,7 +1030,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              "linear-gradient(112deg, rgba(255,255,255,0.23) 0%, transparent 15%, transparent 74%, rgba(255,255,255,0.07) 100%)",
+              "linear-gradient(112deg, rgba(255,255,255,0.42) 0%, transparent 18%, transparent 70%, rgba(255,255,255,0.12) 100%)",
           }}
         />
         {/* glow */}
@@ -1095,8 +1096,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
             <button
               onClick={() => {
                 reset();
-                setOpen(true);
-                window.setTimeout(() => fileRef.current?.click(), 0);
+                fileRef.current?.click();
               }}
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white transition-transform hover:scale-[1.02]"
               style={{
