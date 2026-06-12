@@ -1,18 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Card } from "@/components/nuvex/ui";
+import { useState } from "react";
+import {
+  PageLayout,
+  ExecutiveHero,
+  NCard,
+  SectionHeader,
+} from "@/components/nuvia";
 import { supabase } from "@/integrations/supabase/client";
-import { Download, FileText } from "lucide-react";
+import { Download, FileText, FileBarChart2 } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 export const Route = createFileRoute("/_authenticated/finanzas/reportes")({
   component: ReportesPage,
-  head: () => ({ meta: [{ title: "Reportes · Finanzas NUVEX" }] }),
+  head: () => ({ meta: [{ title: "Reportes · Finanzas NUVIA" }] }),
 });
 
-const AZUL = "#445DA3";
-const VERDE = "#84B98F";
 const money = (n: number) => "$" + Math.round(n).toLocaleString("es-CO");
 
 type ReporteId = "cartera" | "recaudos" | "comisiones" | "cuentas_cobro" | "nomina" | "tesoreria";
@@ -28,7 +31,8 @@ const REPORTES: Array<{ id: ReporteId; label: string; descripcion: string }> = [
 
 function ReportesPage() {
   const [desde, setDesde] = useState(() => {
-    const d = new Date(); d.setDate(1);
+    const d = new Date();
+    d.setDate(1);
     return d.toISOString().slice(0, 10);
   });
   const [hasta, setHasta] = useState(new Date().toISOString().slice(0, 10));
@@ -37,7 +41,8 @@ function ReportesPage() {
   const [error, setError] = useState<string | null>(null);
 
   async function cargar(id: ReporteId) {
-    setLoading(id); setError(null);
+    setLoading(id);
+    setError(null);
     try {
       const rows = await fetchReporte(id, desde, hasta);
       setLast({ id, rows });
@@ -55,14 +60,14 @@ function ReportesPage() {
       headers.join(","),
       ...last.rows.map((r) => headers.map((h) => csvCell(r[h])).join(",")),
     ].join("\n");
-    download(`nuvex-${last.id}-${desde}_${hasta}.csv`, csv, "text/csv;charset=utf-8");
+    download(`nuvia-${last.id}-${desde}_${hasta}.csv`, csv, "text/csv;charset=utf-8");
   }
 
   function descargarPDF() {
     if (!last) return;
     const doc = new jsPDF({ orientation: "landscape" });
     doc.setFontSize(14);
-    doc.text(`NUVEX · Reporte: ${last.id.toUpperCase()}`, 14, 14);
+    doc.text(`NUVIA · Reporte: ${last.id.toUpperCase()}`, 14, 14);
     doc.setFontSize(9);
     doc.text(`Periodo: ${desde}  →  ${hasta}    Generado: ${new Date().toLocaleString("es-CO")}`, 14, 20);
 
@@ -75,93 +80,159 @@ function ReportesPage() {
       styles: { fontSize: 7, cellPadding: 1.5 },
       headStyles: { fillColor: [68, 93, 163], textColor: 255 },
     });
-    doc.save(`nuvex-${last.id}-${desde}_${hasta}.pdf`);
+    doc.save(`nuvia-${last.id}-${desde}_${hasta}.pdf`);
   }
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <div className="flex flex-wrap items-end gap-3 justify-between">
-          <div>
-            <h1 className="text-xl font-semibold text-[#0A1226]">Reportes financieros</h1>
-            <p className="text-[12px] text-[#242424]/60">Genera y exporta reportes en CSV o PDF institucional NUVEX.</p>
-          </div>
-          <div className="flex gap-2 items-end">
-            <Inp label="Desde" type="date" value={desde} onChange={setDesde} />
-            <Inp label="Hasta" type="date" value={hasta} onChange={setHasta} />
-          </div>
+    <PageLayout>
+      <ExecutiveHero
+        badge={{ icon: <FileBarChart2 size={12} />, label: "Finanzas", tone: "blue" }}
+        title="Reportes financieros"
+        description="Genera y exporta reportes en CSV o PDF institucional NUVIA."
+      />
+
+      <NCard padding="md">
+        <SectionHeader title="Periodo del reporte" />
+        <div className="flex flex-wrap items-end gap-3">
+          <Field label="Desde">
+            <input
+              type="date"
+              value={desde}
+              onChange={(e) => setDesde(e.target.value)}
+              className="nuvia-input nuvia-input-sm"
+            />
+          </Field>
+          <Field label="Hasta">
+            <input
+              type="date"
+              value={hasta}
+              onChange={(e) => setHasta(e.target.value)}
+              className="nuvia-input nuvia-input-sm"
+            />
+          </Field>
         </div>
-      </Card>
+      </NCard>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {REPORTES.map((r) => (
-          <Card key={r.id} className="flex flex-col">
+          <NCard key={r.id} padding="md">
             <div className="flex items-start gap-2">
-              <FileText size={16} className="mt-0.5" style={{ color: AZUL }} />
-              <div className="flex-1">
-                <h3 className="text-sm font-semibold text-[#0A1226]">{r.label}</h3>
-                <p className="text-[11.5px] text-[#242424]/60 mt-0.5">{r.descripcion}</p>
+              <FileText size={16} className="mt-0.5" style={{ color: "var(--nuvia-accent-blue)" }} />
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
+                  {r.label}
+                </h3>
+                <p className="text-[11.5px] mt-0.5" style={{ color: "var(--nuvia-text-secondary)" }}>
+                  {r.descripcion}
+                </p>
               </div>
             </div>
             <button
               onClick={() => cargar(r.id)}
               disabled={loading !== null}
-              className="mt-3 self-start rounded-lg px-3 py-1.5 text-[11.5px] font-semibold text-white disabled:opacity-60"
-              style={{ background: `linear-gradient(135deg, ${AZUL}, ${VERDE})` }}
+              className="mt-3 inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[11.5px] font-semibold text-white disabled:opacity-60"
+              style={{ background: "linear-gradient(135deg,#445DA3,#84B98F)" }}
             >
               {loading === r.id ? "Generando…" : "Generar"}
             </button>
-          </Card>
+          </NCard>
         ))}
       </div>
 
-      {error && <Card><div className="text-[12px] text-[#B42318]">{error}</div></Card>}
+      {error && (
+        <NCard padding="md">
+          <div className="text-[12px]" style={{ color: "var(--nuvia-danger)" }}>{error}</div>
+        </NCard>
+      )}
 
       {last && (
-        <Card>
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-sm font-semibold text-[#0A1226]">
+        <NCard padding="md">
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <h2 className="text-sm font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
               {REPORTES.find((r) => r.id === last.id)?.label} — {last.rows.length} filas
             </h2>
             <div className="flex gap-2">
-              <button onClick={descargarCSV} disabled={last.rows.length === 0} className="inline-flex items-center gap-1 rounded-lg border border-[#445DA3] px-3 py-1.5 text-[11.5px] font-semibold text-[#445DA3] hover:bg-[#F5F7FF] disabled:opacity-50">
+              <button
+                onClick={descargarCSV}
+                disabled={last.rows.length === 0}
+                className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[11.5px] font-semibold disabled:opacity-50"
+                style={{
+                  border: "1px solid var(--nuvia-accent-blue)",
+                  color: "var(--nuvia-accent-blue)",
+                  background: "rgba(68,93,163,0.08)",
+                }}
+              >
                 <Download size={12} /> CSV
               </button>
-              <button onClick={descargarPDF} disabled={last.rows.length === 0} className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[11.5px] font-semibold text-white disabled:opacity-50" style={{ background: `linear-gradient(135deg, ${AZUL}, ${VERDE})` }}>
+              <button
+                onClick={descargarPDF}
+                disabled={last.rows.length === 0}
+                className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[11.5px] font-semibold text-white disabled:opacity-50"
+                style={{ background: "linear-gradient(135deg,#445DA3,#84B98F)" }}
+              >
                 <Download size={12} /> PDF
               </button>
             </div>
           </div>
           {last.rows.length === 0 ? (
-            <div className="py-6 text-center text-[12px] text-[#242424]/60">Sin datos en el rango.</div>
+            <div className="py-8 text-center text-[12px]" style={{ color: "var(--nuvia-text-muted)" }}>
+              Sin datos en el rango.
+            </div>
           ) : (
             <div className="overflow-x-auto max-h-[480px]">
-              <table className="w-full text-[12px]">
-                <thead className="text-[10.5px] uppercase tracking-wider text-[#242424]/60 sticky top-0 bg-white">
-                  <tr className="border-b border-[#E5E7EB]">
+              <table className="w-full text-[12px]" style={{ color: "var(--nuvia-text-primary)" }}>
+                <thead className="sticky top-0" style={{ background: "var(--nuvia-surface, #0B1226)" }}>
+                  <tr>
                     {Object.keys(last.rows[0]).map((h) => (
-                      <th key={h} className="text-left py-2 pr-3">{h}</th>
+                      <th
+                        key={h}
+                        className="text-left px-3 py-2.5 font-semibold uppercase"
+                        style={{
+                          fontSize: "10.5px",
+                          letterSpacing: "0.12em",
+                          color: "var(--nuvia-text-secondary)",
+                          borderBottom: "1px solid var(--nuvia-border)",
+                        }}
+                      >
+                        {h}
+                      </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {last.rows.slice(0, 200).map((r, i) => (
-                    <tr key={i} className="border-b border-[#F3F4F6]">
-                      {Object.keys(last.rows[0]).map((h) => (
-                        <td key={h} className="py-1.5 pr-3 align-top">{formatCell(r[h])}</td>
-                      ))}
+                    <tr
+                      key={i}
+                      className="hover:bg-white/[0.03]"
+                      style={{ borderBottom: "1px solid var(--nuvia-border)" }}
+                    >
+                      {Object.keys(last.rows[0]).map((h) => {
+                        const v = r[h];
+                        const numeric = typeof v === "number" && Math.abs(v) >= 1000;
+                        return (
+                          <td
+                            key={h}
+                            className={`px-3 py-2 align-top ${numeric ? "text-right tabular-nums" : ""}`}
+                            style={{ color: "var(--nuvia-text-secondary)" }}
+                          >
+                            {formatCell(v)}
+                          </td>
+                        );
+                      })}
                     </tr>
                   ))}
                 </tbody>
               </table>
               {last.rows.length > 200 && (
-                <div className="mt-2 text-[11px] text-[#242424]/60 italic">Mostrando 200 de {last.rows.length} filas (CSV/PDF incluyen todas).</div>
+                <div className="mt-2 text-[11px] italic" style={{ color: "var(--nuvia-text-muted)" }}>
+                  Mostrando 200 de {last.rows.length} filas (CSV/PDF incluyen todas).
+                </div>
               )}
             </div>
           )}
-        </Card>
+        </NCard>
       )}
-    </div>
+    </PageLayout>
   );
 }
 
@@ -326,15 +397,22 @@ function download(filename: string, content: string, mime: string) {
   const blob = new Blob([content], { type: mime });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = filename; a.click();
+  a.href = url;
+  a.download = filename;
+  a.click();
   URL.revokeObjectURL(url);
 }
 
-function Inp({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-[10.5px] uppercase tracking-wider text-[#242424]/60">{label}</span>
-      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} className="text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white" />
+      <span
+        className="text-[10.5px] uppercase tracking-wider"
+        style={{ color: "var(--nuvia-text-muted)" }}
+      >
+        {label}
+      </span>
+      {children}
     </label>
   );
 }
