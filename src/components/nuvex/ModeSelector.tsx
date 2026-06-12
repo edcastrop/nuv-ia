@@ -130,48 +130,54 @@ function SimCard({
   Icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
 }) {
   return (
-    <button
-      onClick={onClick}
-      className="group relative overflow-hidden rounded-3xl bg-white p-7 text-left shadow-[0_20px_60px_-20px_rgba(0,0,0,0.45)] ring-1 ring-white/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)]"
-    >
-      {/* Borde inferior color */}
-      <span className="absolute inset-x-0 bottom-0 h-1.5" style={{ background: color }} />
-      {/* Glow hover */}
+    <button onClick={onClick} className="group relative block text-left">
+      {/* Glow exterior en hover */}
       <span
-        className="pointer-events-none absolute -inset-px rounded-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-        style={{ boxShadow: `0 0 0 1px ${color}55, 0 0 40px ${color}33` }}
+        className="pointer-events-none absolute -inset-0.5 rounded-[32px] opacity-0 blur transition-opacity duration-500 group-hover:opacity-100"
+        style={{ background: `${color}33` }}
       />
+      <div
+        className="relative flex h-full flex-col rounded-[32px] border border-white/10 bg-white/[0.03] p-8 backdrop-blur-2xl transition-all duration-300 group-hover:-translate-y-1 group-hover:border-white/20 group-hover:bg-white/[0.06] sm:p-10"
+      >
+        {/* Acento superior */}
+        <span
+          className="absolute inset-x-8 top-0 h-px opacity-60"
+          style={{ background: `linear-gradient(90deg, transparent, ${color}, transparent)` }}
+        />
 
-      <div className="flex items-start justify-between">
-        <div
-          className="flex h-14 w-14 items-center justify-center rounded-2xl"
-          style={{ background: `${color}15`, color }}
-        >
-          <Icon className="h-7 w-7" strokeWidth={2} />
+        <div className="mb-10 flex items-start justify-between">
+          <div
+            className="flex h-14 w-14 items-center justify-center rounded-2xl border transition-transform duration-300 group-hover:scale-105"
+            style={{ background: `${color}1A`, borderColor: `${color}33`, color }}
+          >
+            <Icon className="h-6 w-6" strokeWidth={1.8} />
+          </div>
+          <span
+            className="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em]"
+            style={{ background: `${color}1A`, borderColor: `${color}55`, color }}
+          >
+            {badge}
+          </span>
         </div>
-        <span
-          className="rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white"
-          style={{ background: color }}
-        >
-          {badge}
-        </span>
-      </div>
 
-      <h2 className="mt-6 text-xl font-semibold tracking-tight" style={{ color: NUVEX.negro }}>
-        {title}
-      </h2>
-      <p className="mt-2 text-sm leading-relaxed text-[#242424]/65">{description}</p>
+        <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-[26px]">
+          {title}
+        </h2>
+        <p className="mt-3 flex-grow text-sm leading-relaxed text-white/50">
+          {description}
+        </p>
 
-      <div className="mt-6 flex items-center justify-between">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.16em]" style={{ color }}>
-          Iniciar simulación
-        </span>
-        <span
-          className="flex h-11 w-11 items-center justify-center rounded-full text-white shadow-md transition-transform duration-300 group-hover:scale-110 group-hover:translate-x-1"
-          style={{ background: color }}
-        >
-          <ArrowRight className="h-5 w-5" />
-        </span>
+        <div className="mt-10 flex items-center justify-between">
+          <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/70 transition-colors group-hover:text-white">
+            Iniciar simulación
+          </span>
+          <span
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition-all duration-300 group-hover:translate-x-1 group-hover:scale-105"
+            style={{ background: color, borderColor: color, boxShadow: `0 10px 30px -10px ${color}` }}
+          >
+            <ArrowRight className="h-5 w-5" />
+          </span>
+        </div>
       </div>
     </button>
   );
