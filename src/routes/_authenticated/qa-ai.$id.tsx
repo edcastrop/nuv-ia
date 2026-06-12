@@ -2,11 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { PageLayout, ExecutiveHero, KpiGrid, KpiCard, NCard, SectionHeader } from "@/components/nuvia";
 import { useServerFn } from "@tanstack/react-start";
-import { obtenerAuditoriaQA } from "@/lib/qaAI.functions";
+import { obtenerAuditoriaQA, reejecutarAuditoriaQA } from "@/lib/qaAI.functions";
 import { auditar, amortizacion, eaToMv, type AuditarInput } from "@/lib/qaMath";
 import { exportarDictamenPDF } from "@/lib/qaPdf";
 import { CopilotoQADrawer } from "@/components/qa-ai/CopilotoQADrawer";
-import { Brain, Gauge, ArrowLeft, AlertTriangle, CheckCircle2, Coins, Calculator, Sigma, ShieldAlert, Minus, FileDown, Sparkles } from "lucide-react";
+import { Brain, Gauge, ArrowLeft, AlertTriangle, CheckCircle2, Coins, Calculator, Sigma, ShieldAlert, Minus, FileDown, Sparkles, RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/qa-ai/$id")({
   component: ResultadoQaAi,
@@ -39,9 +39,11 @@ const fmt = (n: number | null | undefined, d = 0) =>
 function ResultadoQaAi() {
   const { id } = Route.useParams();
   const fetchAud = useServerFn(obtenerAuditoriaQA);
+  const doReejecutar = useServerFn(reejecutarAuditoriaQA);
   const [data, setData] = useState<{ auditoria: Record<string, unknown> | null; inconsistencias: Inc[] } | null>(null);
   const [copilotoOpen, setCopilotoOpen] = useState(false);
   const [verTodas, setVerTodas] = useState(false);
+  const [reloading, setReloading] = useState(false);
 
   useEffect(() => { (async () => setData(await fetchAud({ data: { id } })))(); }, [id, fetchAud]);
 
@@ -164,6 +166,23 @@ function ResultadoQaAi() {
         description={`Modalidad ${a.modalidad} · ejecutado ${new Date(a.ejecutado_at).toLocaleString("es-CO")}`}
         actions={
           <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={async () => {
+                if (reloading) return;
+                setReloading(true);
+                try {
+                  await doReejecutar({ data: { id } });
+                  setData(await fetchAud({ data: { id } }));
+                } finally {
+                  setReloading(false);
+                }
+              }}
+              disabled={reloading}
+              className="nuvia-input nuvia-input-sm"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: reloading ? "not-allowed" : "pointer", opacity: reloading ? 0.6 : 1 }}
+            >
+              <RefreshCw size={14} className={reloading ? "animate-spin" : ""} /> {reloading ? "Reejecutando…" : "Reejecutar auditoría"}
+            </button>
             <button
               onClick={() => setCopilotoOpen(true)}
               className="nuvia-input nuvia-input-sm"

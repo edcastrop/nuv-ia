@@ -811,3 +811,137 @@ export const ultimaAuditoriaQAPorExpediente = createServerFn({ method: "POST" })
       .eq("estado", "abierta");
     return { auditoria: aud, inconsistencias: incs ?? [], alertasAbiertas: count ?? 0 };
   });
+
+// ─────────────────────────────────────────────────────────────
+// Re-ejecutar auditoría existente (recalcula con motor actual)
+// ─────────────────────────────────────────────────────────────
+export const reejecutarAuditoriaQA = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: aud, error } = await supabase
+      .from("qa_auditorias")
+      .select("*")
+      .eq("id", data.id)
+      .single();
+    if (error) throw new Error(error.message);
+
+    const inputs = (aud.inputs ?? {}) as Record<string, unknown>;
+    const rec = (inputs.reconstruccion ?? {}) as Record<string, unknown>;
+    const extSnap = (inputs.extracto ?? {}) as Record<string, unknown>;
+
+    // Backfill FRESH desde extracto (igual que obtenerAuditoriaQA)
+    if (!(Number(rec.coberturaFrechValorMensual ?? 0) > 0) && aud.extracto_id) {
+      const { data: ext } = await supabase
+        .from("extractos_lecturas")
+        .select("datos")
+        .eq("id", aud.extracto_id as string)
+        .single();
+      const d = (ext?.datos ?? {}) as Record<string, unknown>;
+      const valorFrech = parseNum(d.valorCobertura) ?? parseNum(d.valorSubsidioGobierno);
+      const tasaFrech = parseNum(d.tasaCobertura);
+      if ((valorFrech && valorFrech > 0) || (tasaFrech && tasaFrech > 0)) {
+        const cuotasPend = Number(rec.cuotasPendientes ?? 0);
+        const cuotasPag = Number(rec.cuotasPagadas ?? 0);
+        const frechCuotasRestantes = Math.max(0, Math.min(cuotasPend, 84 - cuotasPag));
+        inputs.reconstruccion = {
+          ...rec,
+          coberturaFrechPp: rec.coberturaFrechPp ?? tasaFrech,
+          coberturaFrechValorMensual: rec.coberturaFrechValorMensual ?? valorFrech,
+          coberturaFrechCuotasRestantes: rec.coberturaFrechCuotasRestantes ?? frechCuotasRestantes,
+        };
+        inputs.extracto = {
+          ...extSnap,
+          cuota: valorFrech && valorFrech > 0
+            ? parseNum(d.cuotaPagadaCliente) ?? parseNum(d.valorAPagar) ?? extSnap.cuota
+            : extSnap.cuota,
+          coberturaFrechPp: extSnap.coberturaFrechPp ?? tasaFrech,
+          coberturaFrechValorMensual: extSnap.coberturaFrechValorMensual ?? valorFrech,
+        };
+      }
+    }
+
+    const modalidadFinal = (inputs.modalidad as Modalidad | undefined) ?? (aud.modalidad as Modalidad);
+    const overrides = await cargarToleranciasActivasInterno(supabase as never);
+
+    const result = auditar({
+      modalidad: modalidadFinal,
+      reconstruccion: { ...(inputs.reconstruccion as Record<string, unknown>), modalidad: modalidadFinal } as never,
+      extracto: inputs.extracto as never,
+      simulacion: inputs.simulacion as never,
+      tolerancias: overrides,
+    });
+
+    // Actualizar registro existente
+    const { error: updErr } = await supabase
+      .from("qa_auditorias")
+      .update({
+        motor_version: QA_MOTOR_VERSION,
+        qa_score: result.score.score,
+        categoria: result.score.categoria,
+        dictamen: result.score.dictamen,
+        inputs: JSON.parse(JSON.stringify(inputs)),
+        outputs: JSON.parse(JSON.stringify({
+          cuotaTeorica: result.reconstruccion.cuotaTeorica,
+          cuotaConSubsidio: result.reconstruccion.cuotaConSubsidio,
+          cuotaTotalConSeguros: result.reconstruccion.cuotaTotalConSeguros,
+          beneficioMensualFrech: result.reconstruccion.beneficioMensualFrech,
+          costoTotal: result.reconstruccion.costoTotal,
+          vecesPagado: result.reconstruccion.vecesPagado,
+          totalIntereses: result.reconstruccion.totalIntereses,
+          iMv: result.reconstruccion.iMv,
+          primerasCuotas: result.reconstruccion.primerasCuotas,
+          ultimasCuotas: result.reconstruccion.ultimasCuotas,
+        })),
+        diferencias: JSON.parse(JSON.stringify(result.inconsistencias)),
+        alertas: JSON.parse(JSON.stringify(result.inconsistencias.filter((i) => i.severidad === "critica"))),
+        ejecutado_at: new Date().toISOString(),
+        ejecutado_by: userId,
+      })
+      .eq("id", data.id);
+    if (updErr) throw new Error(updErr.message);
+
+    // Borrar inconsistencias viejas e insertar nuevas
+    await supabase.from("qa_inconsistencias").delete().eq("auditoria_id", data.id);
+    if (result.inconsistencias.length) {
+      await supabase.from("qa_inconsistencias").insert(
+        result.inconsistencias.map((i) => ({
+          auditoria_id: data.id,
+          tipo: i.tipo,
+          severidad: i.severidad,
+          campo: i.campo ?? null,
+          valor_extracto: i.valorExtracto ?? null,
+          valor_calculado: i.valorCalculado ?? null,
+          diferencia: i.diferencia ?? null,
+          mensaje: i.mensaje,
+          sugerencia: i.sugerencia ?? null,
+        })),
+      );
+    }
+
+    // Borrar alertas viejas e insertar nuevas críticas
+    await supabase.from("qa_alertas").delete().eq("auditoria_id", data.id);
+    const criticas = result.inconsistencias.filter((i) => i.severidad === "critica");
+    if (criticas.length) {
+      await supabase.from("qa_alertas").insert(
+        criticas.map((i) => ({
+          auditoria_id: data.id,
+          expediente_id: aud.expediente_id,
+          tipo: i.tipo,
+          severidad: i.severidad,
+          mensaje: i.mensaje,
+        })),
+      );
+    }
+
+    await supabase.from("qa_auditoria_log").insert({
+      auditoria_id: data.id,
+      accion: "recalcular",
+      payload: { score: result.score.score, dictamen: result.score.dictamen, motor_version: QA_MOTOR_VERSION },
+      user_id: userId,
+    });
+
+    return { ok: true, score: result.score.score, dictamen: result.score.dictamen };
+  });
