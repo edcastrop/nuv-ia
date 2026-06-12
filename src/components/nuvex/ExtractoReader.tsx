@@ -958,15 +958,6 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
     const n = parseInt(v.replace(/[^\d]/g, ""), 10);
     return Number.isFinite(n) ? n : 0;
   };
-  const _cuotasPagadasNum = _intStrParsed("cuotasPagadas");
-  const _plazoInicialNum = _intStrParsed("plazoInicial");
-  const _cuotaActualNumeroNum = _intStrParsed("cuotaActualNumero");
-  const _cuotasPendientesNum = _intStrParsed("cuotasPendientes");
-  const _esDaviviendaLeasing = /davivienda/i.test(String(parsed?.banco ?? "")) && /leasing/i.test(`${String(parsed?.producto ?? "")} ${String(parsed?.tipoCredito ?? "")}`);
-  const _cuotasPagadasEnCero = _cuotasPagadasNum <= 0 && _cuotaActualNumeroNum > 0;
-  const _faltanDatosBase = _esDaviviendaLeasing
-    ? _plazoInicialNum <= 0 || _cuotasPendientesNum <= 0
-    : _plazoInicialNum <= 0 || _cuotasPagadasNum <= 0;
   const tieneMinimoSimulacion =
     parseMontoExtracto((parsed?.saldoCapital as string) ?? "") > 0 &&
     parseMontoExtracto(((parsed?.cuotaBaseSimulacion as string) || (parsed?.cuotaMensual as string) || "")) > 0;
