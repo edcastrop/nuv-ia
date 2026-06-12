@@ -1012,13 +1012,14 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           }
         }}
         style={{
-          background: "linear-gradient(145deg, rgba(238,245,255,0.28), rgba(238,245,255,0.12) 42%, rgba(238,245,255,0.055))",
-          border: `1px solid ${dragActive ? "rgba(132,185,143,0.58)" : "rgba(238,245,255,0.50)"}`,
-          backdropFilter: "blur(34px) saturate(155%)",
-          WebkitBackdropFilter: "blur(34px) saturate(155%)",
+          background:
+            "linear-gradient(135deg, rgba(31,42,68,0.88) 0%, rgba(46,67,118,0.82) 45%, rgba(58,99,96,0.82) 100%)",
+          border: `1px solid ${dragActive ? "rgba(132,185,143,0.65)" : "rgba(255,255,255,0.18)"}`,
+          backdropFilter: "blur(28px) saturate(160%)",
+          WebkitBackdropFilter: "blur(28px) saturate(160%)",
           boxShadow: dragActive
-            ? "0 24px 60px -26px rgba(132,185,143,0.36), inset 0 1px 0 rgba(255,255,255,0.55)"
-            : "0 34px 90px -50px rgba(0,0,0,0.94), inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -1px 0 rgba(255,255,255,0.14)",
+            ? "0 24px 60px -26px rgba(132,185,143,0.45), inset 0 1px 0 rgba(255,255,255,0.22)"
+            : "0 28px 70px -30px rgba(31,42,68,0.55), inset 0 1px 0 rgba(255,255,255,0.18)",
           transform: dragActive ? "scale(1.005)" : "scale(1)",
         }}
       >
