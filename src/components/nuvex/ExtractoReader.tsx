@@ -1163,7 +1163,8 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
               boxShadow: "0 46px 110px -48px rgba(0,0,0,0.98), inset 0 1px 0 rgba(255,255,255,0.56), inset 0 -1px 0 rgba(255,255,255,0.14)",
               backdropFilter: "blur(34px) saturate(155%)",
               WebkitBackdropFilter: "blur(34px) saturate(155%)",
-              maxHeight: "92vh",
+              height: "min(92dvh, 860px)",
+              maxHeight: "calc(100dvh - 2rem)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1175,7 +1176,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
               }}
             />
             <div
-              className="relative flex items-center justify-between border-b px-6 py-4"
+              className="relative flex shrink-0 items-center justify-between border-b px-6 py-4"
               style={{ borderColor: "rgba(255,255,255,0.08)" }}
             >
               <div className="flex items-center gap-3">
@@ -1199,7 +1200,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
             </div>
 
             {/* Progress */}
-            <div className="relative border-b px-6 py-4" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+            <div className="relative shrink-0 border-b px-6 py-4" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
               <div className="flex items-center gap-2">
                 {STAGES.map((s, i) => {
                   const active = i <= progressIdx;
@@ -1684,7 +1685,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
 
             {stage === "review" && (
               <div
-                className="flex items-center justify-between gap-3 border-t px-6 py-4"
+                  className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t px-6 py-4"
                 style={{ borderColor: "rgba(255,255,255,0.08)" }}
               >
                 <button
