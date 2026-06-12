@@ -4,9 +4,10 @@ import { PageLayout, ExecutiveHero, NCard, SectionHeader, NSelect, KpiGrid, KpiC
 import { useServerFn } from "@tanstack/react-start";
 import { listAlertasQA, actualizarAlertaQA } from "@/lib/qaAI.functions";
 import { useUserRole } from "@/hooks/useUserRole";
-import { AlertTriangle, Bell, CheckCircle2, Inbox, ArrowRight, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Bell, CheckCircle2, Inbox, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { CopilotoQADrawer } from "@/components/qa-ai/CopilotoQADrawer";
 
 export const Route = createFileRoute("/_authenticated/qa-ai/alertas")({
   component: AlertasQA,
