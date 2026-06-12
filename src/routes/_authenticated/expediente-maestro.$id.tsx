@@ -289,37 +289,54 @@ function MaestroDetail() {
   };
 
   if (loading)
-    return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando expediente…</div>;
+    return (
+      <div
+        className="min-h-[calc(100vh-72px)] p-12 text-center text-sm text-[var(--nuvia-text-secondary)]"
+        style={{ background: "linear-gradient(180deg, var(--nuvia-bg-primary) 0%, var(--nuvia-bg-secondary) 54%, var(--nuvia-bg-primary) 100%)" }}
+      >
+        Cargando expediente…
+      </div>
+    );
   if (err || !exp)
-    return <div className="p-12 text-center text-sm text-[#B42318]">{err || "No encontrado"}</div>;
+    return (
+      <div
+        className="min-h-[calc(100vh-72px)] p-12 text-center text-sm text-[var(--nuvia-danger)]"
+        style={{ background: "linear-gradient(180deg, var(--nuvia-bg-primary) 0%, var(--nuvia-bg-secondary) 54%, var(--nuvia-bg-primary) 100%)" }}
+      >
+        {err || "No encontrado"}
+      </div>
+    );
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4 px-3 py-4 sm:px-6 sm:py-6">
-      <Card>
+    <div
+      className="min-h-[calc(100vh-72px)] px-3 py-4 text-[var(--nuvia-text-primary)] sm:px-5 sm:py-6"
+      style={{
+        background:
+          "linear-gradient(180deg, var(--nuvia-bg-primary) 0%, var(--nuvia-bg-secondary) 54%, var(--nuvia-bg-primary) 100%)",
+      }}
+    >
+      <div className="mx-auto max-w-[1680px] space-y-4">
+      <section className="glass-panel overflow-hidden p-4 md:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-start lg:justify-between">
           <div className="min-w-0">
-            <div
-              className="text-[11px] uppercase tracking-wider font-semibold"
-              style={{ color: NUVEX.azul }}
-            >
-              Expediente Maestro
+            <div className="text-[11px] font-semibold uppercase text-[var(--nuvia-accent-green)]">
+              NUVIA · Expediente Maestro
             </div>
-            <h1 className="break-words text-2xl font-semibold leading-tight text-[#242424]">
+            <h1 className="mt-1 break-words text-2xl font-semibold leading-tight text-[var(--nuvia-text-primary)]">
               {cliente.nombre || "Sin nombre"}
             </h1>
-            <div className="mt-1 break-words text-sm text-[#242424]/70">
+            <div className="mt-1 break-words text-sm text-[var(--nuvia-text-secondary)]">
               {cliente.cedula && <>CC {cliente.cedula} · </>}
               {credito.banco && <>{credito.banco} · </>}
               Actualizado {new Date(exp.updated_at).toLocaleString("es-CO")}
             </div>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center lg:justify-end">
-            {msg && <span className="text-xs text-[#242424]/70 mr-2">{msg}</span>}
+            {msg && <span className="mr-2 text-xs text-[var(--nuvia-text-secondary)]">{msg}</span>}
             <Link
               to="/"
               search={{ maestroId: id, modo: "pesos" as const }}
-              className="rounded-lg border px-3 py-2 text-center text-xs font-semibold"
-              style={{ borderColor: NUVEX.azul, color: NUVEX.azul, backgroundColor: "#fff" }}
+              className="inline-flex h-10 items-center rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-3 text-xs font-semibold text-[var(--nuvia-text-primary)] transition hover:border-[var(--nuvia-accent-blue)] hover:bg-[rgba(255,255,255,0.06)]"
               title="Abre el simulador en pesos con los datos del expediente"
             >
               Simular en Pesos
@@ -327,8 +344,7 @@ function MaestroDetail() {
             <Link
               to="/"
               search={{ maestroId: id, modo: "uvr" as const }}
-              className="rounded-lg border px-3 py-2 text-center text-xs font-semibold"
-              style={{ borderColor: NUVEX.azul, color: NUVEX.azul, backgroundColor: "#fff" }}
+              className="inline-flex h-10 items-center rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-3 text-xs font-semibold text-[var(--nuvia-text-primary)] transition hover:border-[var(--nuvia-accent-blue)] hover:bg-[rgba(255,255,255,0.06)]"
               title="Abre el simulador en UVR con los datos del expediente"
             >
               Simular en UVR
@@ -336,20 +352,20 @@ function MaestroDetail() {
             <button
               onClick={guardar}
               disabled={saving}
-              className="rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow disabled:opacity-50"
-              style={{ backgroundColor: NUVEX.azul }}
+              className="inline-flex h-10 items-center rounded-lg border border-transparent px-5 text-sm font-semibold text-[var(--nuvia-text-primary)] shadow-[var(--nuvia-shadow-sm)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+              style={{ background: "var(--nuvia-gradient-primary)" }}
             >
               {saving ? "Guardando…" : "Guardar todo"}
             </button>
             <Link
               to="/expediente-maestro"
-              className="text-[11px] text-[#445DA3] hover:underline ml-1"
+              className="ml-1 text-[11px] text-[var(--nuvia-accent-green)] hover:underline"
             >
               ← Volver
             </Link>
           </div>
         </div>
-      </Card>
+      </section>
 
       {/* Capa guiada NUVEX (13 etapas + Siguiente acción + Qué falta + Checklist por rol).
           Solo se muestra si existe un caso operativo asociado a la cédula. */}
@@ -517,9 +533,9 @@ function MaestroDetail() {
         </div>
       )}
 
-      <Card>
+      <section className="glass-panel p-4">
         <div className="flex items-center justify-between">
-          <div className="text-sm text-[#242424]/70">¿Eliminar este expediente maestro?</div>
+          <div className="text-sm text-[var(--nuvia-text-secondary)]">¿Eliminar este expediente maestro?</div>
           <button
             onClick={async () => {
               if (!confirm("¿Eliminar definitivamente?")) return;
@@ -530,13 +546,18 @@ function MaestroDetail() {
                 alert((e as Error).message);
               }
             }}
-            className="rounded-lg border px-3 py-1.5 text-xs font-medium"
-            style={{ borderColor: "#F5C2C2", color: "#B42318", backgroundColor: "#FDECEC" }}
+            className="rounded-lg border px-3 py-1.5 text-xs font-medium transition hover:brightness-110"
+            style={{
+              borderColor: "color-mix(in oklab, var(--nuvia-danger) 40%, transparent)",
+              background: "color-mix(in oklab, var(--nuvia-danger) 14%, transparent)",
+              color: "var(--nuvia-danger)",
+            }}
           >
             Eliminar
           </button>
         </div>
-      </Card>
+      </section>
+      </div>
     </div>
   );
 }
