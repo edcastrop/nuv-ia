@@ -1,7 +1,7 @@
 // NUVIA Financial QA AI — Motor matemático determinístico
 // 100% TypeScript puro · sin dependencias externas · testeable
 
-export const QA_MOTOR_VERSION = "1.0.0";
+export const QA_MOTOR_VERSION = "1.1.0";
 export const DEFAULT_VARIACION_UVR_EA = 5.5;
 
 export type Modalidad = "hipotecario" | "leasing" | "uvr";
@@ -224,13 +224,19 @@ export function reconstruir(input: ReconstruccionInput): Reconstruccion {
   const hayCobertura = cob > 0 || beneficioMensual > 0;
   const n = Math.max(0, Math.round(input.cuotasPendientes));
   const seguros = Math.max(0, input.seguros || 0);
+  const valorUvrDerivado = (input.valorUVR ?? 0) > 0
+    ? input.valorUVR!
+    : ((input.saldoUVR ?? 0) > 0 && input.saldoCapital > 0 ? input.saldoCapital / input.saldoUVR! : 0);
+  const saldoUvrDerivado = (input.saldoUVR ?? 0) > 0
+    ? input.saldoUVR!
+    : (valorUvrDerivado > 0 && input.saldoCapital > 0 ? input.saldoCapital / valorUvrDerivado : 0);
 
-  if (input.modalidad === "uvr" && (input.saldoUVR ?? 0) > 0 && (input.valorUVR ?? 0) > 0) {
+  if (input.modalidad === "uvr" && saldoUvrDerivado > 0 && valorUvrDerivado > 0) {
     // UVR NO se liquida como pesos. El saldo se amortiza en UVR, la UVR se
     // reajusta mes a mes y el saldo en COP puede crecer aunque baje en UVR.
     // La tasa de interés SIEMPRE es la TE cobrada del extracto, no la pactada.
-    const saldoUvr = Math.max(0, input.saldoUVR ?? 0);
-    const valorUvr = Math.max(0, input.valorUVR ?? 0);
+    const saldoUvr = Math.max(0, saldoUvrDerivado);
+    const valorUvr = Math.max(0, valorUvrDerivado);
     const iMvUvr = eaToMv(eaCobrada);
     const variacionEa = Math.max(0, input.variacionUvrEa ?? DEFAULT_VARIACION_UVR_EA) / 100;
     const variacionMensual = eaToMv(variacionEa);
