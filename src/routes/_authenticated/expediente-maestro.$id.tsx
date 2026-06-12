@@ -38,6 +38,7 @@ import { ExpedienteStepper13 } from "@/components/expediente/ExpedienteStepper13
 import { SiguienteAccionPanel } from "@/components/expediente/SiguienteAccionPanel";
 import { QueFaltaPanel } from "@/components/expediente/QueFaltaPanel";
 import { ChecklistRolPanel } from "@/components/expediente/ChecklistRolPanel";
+import { QABadge } from "@/components/qa-ai/QABadge";
 
 
 export const Route = createFileRoute("/_authenticated/expediente-maestro/$id")({
@@ -80,10 +81,16 @@ function MaestroDetail() {
         setAsesor({ ...emptyAsesor(), ...(e.asesor || {}) });
         setLicenciado({ ...emptyLicenciado(), ...(e.licenciado || {}) });
         setApoderado({ ...emptyApoderado(), ...(e.apoderado || {}) });
-        // Pipeline (P1): mejor-esfuerzo. Busca el expediente operativo más
-        // reciente por cédula para mostrar la etapa actual del caso.
-        // Cuando P4 unifique el modelo, esto se reemplaza por un join directo.
-        if (e.cedula_cliente) {
+        // Pipeline / QA: primero busca el expediente operativo homólogo por el
+        // mismo id del Maestro; si no existe, conserva el fallback histórico por cédula.
+        try {
+          const full = await getExpediente(id);
+          setExpOperativo(full);
+          setEtapaActual(computeEtapaActual({ estado_caso: full.estado_caso }));
+        } catch {
+          // fallback histórico por cédula
+        }
+        if (!expOperativo && e.cedula_cliente) {
           const { data: exps } = await supabase
             .from("expedientes")
             .select("id, estado_caso, updated_at")
@@ -331,6 +338,19 @@ function MaestroDetail() {
               {credito.banco && <>{credito.banco} · </>}
               Actualizado {new Date(exp.updated_at).toLocaleString("es-CO")}
             </div>
+            {expOperativo?.qa_auditoria_id && (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <QABadge
+                  categoria={expOperativo.qa_categoria ?? null}
+                  score={expOperativo.qa_score ?? null}
+                  auditoriaId={expOperativo.qa_auditoria_id}
+                  size="md"
+                />
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--nuvia-accent-green)]">
+                  Auto-QA asociado al expediente
+                </span>
+              </div>
+            )}
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center lg:justify-end">
             {msg && <span className="mr-2 text-xs text-[var(--nuvia-text-secondary)]">{msg}</span>}
