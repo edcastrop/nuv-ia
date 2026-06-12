@@ -42,8 +42,9 @@ export async function triggerSimuladorAutoQA(opts: {
       .from("extractos_lecturas")
       .insert({
         expediente_id: expedienteId,
-        asesor_id: user?.id ?? null,
-        aprobado_por: user?.id ?? null,
+        asesor_id: user?.id ?? undefined,
+        aprobado_por: user?.id ?? undefined,
+
         banco: raw.banco ?? undefined,
         producto: raw.producto ?? undefined,
         moneda: raw.moneda ?? undefined,
