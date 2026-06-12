@@ -329,6 +329,51 @@ REGLAS ESTRICTAS:
 export type ExtractoData = Record<string, string | Record<string, string>>;
 export type ExtractoResponse = { error: string | null; data: ExtractoData | null };
 
+const EXTRACTO_FIELDS = [
+  "banco", "cliente", "cedula", "numeroCredito", "producto", "tipoCredito", "moneda",
+  "saldoCapital", "valorDesembolsado", "cuotaMensual", "seguros", "cuotaSinSeguros",
+  "cuotaConInteresSinSeguros", "plazoInicial", "cuotasPagadas", "cuotasPendientes", "tea",
+  "teaCobrada", "teaPactada", "tasaMensual", "interesCuota", "capitalCuota", "valorUVR",
+  "saldoUVR", "valorCobertura", "tasaCobertura", "tieneCobertura", "tipoBeneficio",
+  "cuotaPagadaCliente", "cuotaSinSubsidio", "valorAPagar", "valorSeguroVida",
+  "valorSeguroIncendio", "valorSeguroTerremoto", "valorCuotaSinSubsidioGobierno",
+  "valorSubsidioGobierno", "valorCuotaConSubsidio", "valorAseguradoInmueble",
+  "cuotaActualNumero", "fechaExtracto",
+] as const;
+
+const CONFIDENCE_FIELDS = [
+  "banco", "cliente", "cedula", "numeroCredito", "producto", "moneda", "saldoCapital",
+  "cuotaMensual", "seguros", "plazoInicial", "cuotasPagadas", "tea", "teaCobrada",
+  "teaPactada", "valorUVR", "saldoUVR", "valorCobertura", "tasaCobertura", "valorDesembolsado",
+] as const;
+
+function normalizeAiPayload(value: unknown): ExtractoData {
+  const source = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+  const parsed: ExtractoData = {};
+  for (const key of EXTRACTO_FIELDS) {
+    const raw = source[key];
+    parsed[key] = typeof raw === "string" ? raw : raw == null ? "" : String(raw);
+  }
+  const rawConfidence = source.confianza && typeof source.confianza === "object"
+    ? (source.confianza as Record<string, unknown>)
+    : {};
+  const confianza: Record<string, string> = {};
+  for (const key of CONFIDENCE_FIELDS) {
+    const value = rawConfidence[key];
+    confianza[key] = value === "alta" || value === "media" || value === "baja" ? value : "baja";
+  }
+  parsed.confianza = confianza;
+  return parsed;
+}
+
+function parseJsonObject(text: string): unknown {
+  const cleaned = text.replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim();
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start >= 0 && end > start) return JSON.parse(cleaned.slice(start, end + 1));
+  return JSON.parse(cleaned);
+}
+
 export const extractStatement = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => InputSchema.parse(data))
   .handler(async ({ data }): Promise<ExtractoResponse> => {
