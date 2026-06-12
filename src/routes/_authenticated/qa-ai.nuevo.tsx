@@ -14,6 +14,8 @@ type ModalidadOpt = "hipotecario" | "leasing" | "uvr";
 
 function NuevoQaAi() {
   const run = useServerFn(auditarCaso);
+  const fetchList = useServerFn(listExpedientesConExtracto);
+  const fetchExtracto = useServerFn(obtenerExtractoQA);
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,14 +27,47 @@ function NuevoQaAi() {
   const [seguros, setSeguros] = useState("");
   const [frech, setFrech] = useState("");
   const [desemb, setDesemb] = useState("");
-  // extracto
   const [extSaldo, setExtSaldo] = useState("");
   const [extTasa, setExtTasa] = useState("");
   const [extCuota, setExtCuota] = useState("");
   const [extSeguros, setExtSeguros] = useState("");
-  // simulación
   const [simAhorro, setSimAhorro] = useState("");
   const [simPlazo, setSimPlazo] = useState("");
+
+  // Reuso desde extractos_lecturas
+  const [extractos, setExtractos] = useState<Array<{ extractoId: string; expedienteId: string | null; banco: string; producto: string; codigo: string | null; cliente: string | null; fecha: string }>>([]);
+  const [extractoSel, setExtractoSel] = useState<string>("");
+  const [precarga, setPrecarga] = useState<{ banco: string; producto: string; titular: string; expedienteId: string | null } | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try { const r = await fetchList(); setExtractos(r.rows); } catch { /* ignore */ }
+    })();
+  }, [fetchList]);
+
+  const cargarExtracto = async (id: string) => {
+    setExtractoSel(id);
+    if (!id) { setPrecarga(null); return; }
+    try {
+      const { extracto: e } = await fetchExtracto({ data: { extractoId: id } });
+      setModalidad(e.modalidad);
+      if (e.saldoCapital !== undefined) setSaldo(String(e.saldoCapital));
+      if (e.tasaEa !== undefined) setTasa(String(e.tasaEa));
+      if (e.cuotasPendientes !== undefined) setCuotas(String(e.cuotasPendientes));
+      if (e.seguros !== undefined) setSeguros(String(e.seguros));
+      if (e.coberturaFrechPp !== undefined) setFrech(String(e.coberturaFrechPp));
+      if (e.valorDesembolsado !== undefined) setDesemb(String(e.valorDesembolsado));
+      if (e.saldoCapital !== undefined) setExtSaldo(String(e.saldoCapital));
+      if (e.tasaEa !== undefined) setExtTasa(String(e.tasaEa));
+      if (e.cuotaActual !== undefined) setExtCuota(String(e.cuotaActual));
+      if (e.seguros !== undefined) setExtSeguros(String(e.seguros));
+      setPrecarga({ banco: e.banco, producto: e.producto, titular: e.titular, expedienteId: e.expedienteId });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo cargar el extracto");
+    }
+  };
+
+
 
   const num = (v: string) => (v === "" ? undefined : Number(v));
 
