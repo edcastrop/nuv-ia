@@ -73,6 +73,11 @@ export function UVRSimulator({
   const [extractoArchivoPath, setExtractoArchivoPath] = useState<string>(() =>
     typeof initCred.archivoPath === "string" ? initCred.archivoPath : "",
   );
+  const [autoQA, setAutoQA] = useState<AutoQAResult | null>(null);
+  const [autoQALoading, setAutoQALoading] = useState(false);
+  // sentinel
+    typeof initCred.archivoPath === "string" ? initCred.archivoPath : "",
+  );
   const [discount, setDiscount] = useState<DiscountState>(() =>
     init?.discount_data && Object.keys(init.discount_data).length
       ? (init.discount_data as unknown as DiscountState)
