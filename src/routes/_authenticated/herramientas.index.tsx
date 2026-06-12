@@ -105,8 +105,8 @@ function HerramientasLanding() {
             <Wrench className="h-6 w-6 text-white" />
           </div>
           <div>
-            <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] font-bold text-[#84B98F] whitespace-nowrap">
-              <Sparkles size={11} className="shrink-0" /> NUVIA · Motores
+            <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.15em] font-bold text-[#84B98F] whitespace-nowrap">
+              <Sparkles size={14} className="shrink-0" /> NUVIA · Motores
             </div>
             <h1 className="text-3xl font-semibold tracking-tight mt-1">Herramientas NUVEX</h1>
           </div>
