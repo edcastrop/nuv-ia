@@ -243,15 +243,15 @@ function confColor(c: Confianza, value: string) {
     };
   if (c === "alta")
     return {
-      bg: "rgba(132,185,143,0.10)",
-      border: "rgba(132,185,143,0.35)",
+      bg: "rgba(74,222,128,0.10)",
+      border: "rgba(74,222,128,0.35)",
       label: "Alta confianza",
-      labelColor: "#84B98F",
+      labelColor: "#4ADE80",
     };
   if (c === "media")
     return {
-      bg: "rgba(68,93,163,0.10)",
-      border: "rgba(68,93,163,0.35)",
+      bg: "rgba(34,211,238,0.10)",
+      border: "rgba(34,211,238,0.35)",
       label: "Media confianza",
       labelColor: "#7B8FCB",
     };
@@ -462,7 +462,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       if (calc >= 0) {
         if (cuotasPendientesExt > 0 && cuotasPendientesExt !== calc) {
           advert.push(
-            "Las cuotas pendientes del extracto no coinciden con el cálculo NUVEX. Se usará plazo inicial menos cuotas pagadas.",
+            "Las cuotas pendientes del extracto no coinciden con el cálculo NUVIA. Se usará plazo inicial menos cuotas pagadas.",
           );
         }
         out.cuotasPendientes = String(calc);
@@ -982,31 +982,31 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
         }}
         style={{
           background: "linear-gradient(135deg, rgba(10,18,38,0.92), rgba(7,22,45,0.92))",
-          border: `1px solid ${dragActive ? "rgba(132,185,143,0.6)" : "rgba(255,255,255,0.08)"}`,
+          border: `1px solid ${dragActive ? "rgba(74,222,128,0.6)" : "rgba(255,255,255,0.08)"}`,
           boxShadow: dragActive
-            ? "0 24px 60px -20px rgba(132,185,143,0.55)"
-            : "0 24px 60px -30px rgba(68,93,163,0.45)",
+            ? "0 24px 60px -20px rgba(74,222,128,0.55)"
+            : "0 24px 60px -30px rgba(34,211,238,0.45)",
           transform: dragActive ? "scale(1.005)" : "scale(1)",
         }}
       >
         {/* glow */}
         <div
           className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full blur-3xl"
-          style={{ background: "radial-gradient(circle, rgba(68,93,163,0.35), transparent 70%)" }}
+          style={{ background: "radial-gradient(circle, rgba(34,211,238,0.35), transparent 70%)" }}
         />
         <div
           className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full blur-3xl"
-          style={{ background: "radial-gradient(circle, rgba(132,185,143,0.28), transparent 70%)" }}
+          style={{ background: "radial-gradient(circle, rgba(74,222,128,0.28), transparent 70%)" }}
         />
         {dragActive && (
           <div
             className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl"
             style={{
-              background: "rgba(132,185,143,0.10)",
-              border: "2px dashed rgba(132,185,143,0.7)",
+              background: "rgba(74,222,128,0.10)",
+              border: "2px dashed rgba(74,222,128,0.7)",
             }}
           >
-            <div className="flex flex-col items-center gap-2 text-[#84B98F]">
+            <div className="flex flex-col items-center gap-2 text-[#4ADE80]">
               <Upload className="h-10 w-10" />
               <span className="text-sm font-semibold">Suelta el extracto para analizarlo</span>
             </div>
@@ -1018,8 +1018,8 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
             <div
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
               style={{
-                background: "linear-gradient(135deg, #445DA3, #84B98F)",
-                boxShadow: "0 12px 32px -12px rgba(132,185,143,0.6)",
+                background: "linear-gradient(135deg, #22D3EE 0%, #2563EB 46%, #4ADE80 100%)",
+                boxShadow: "0 12px 32px -12px rgba(74,222,128,0.6)",
               }}
             >
               <Sparkles className="h-5 w-5 text-white" />
@@ -1032,16 +1032,16 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                 <span
                   className="shrink-0 rounded-full px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider"
                   style={{
-                    background: "rgba(132,185,143,0.15)",
-                    color: "#84B98F",
-                    border: "1px solid rgba(132,185,143,0.35)",
+                    background: "rgba(74,222,128,0.15)",
+                    color: "#4ADE80",
+                    border: "1px solid rgba(74,222,128,0.35)",
                   }}
                 >
-                  NUVEX IA
+                  NUVIA IA
                 </span>
               </div>
               <p className="mt-1.5 text-[12px] leading-relaxed text-white/65 break-words">
-                Sube el extracto del cliente y NUVEX IA intentará identificar los datos principales
+                Sube el extracto del cliente y NUVIA IA intentará identificar los datos principales
                 para prellenar el simulador. Siempre podrás revisar y corregir antes de generar la
                 propuesta.
               </p>
@@ -1056,8 +1056,8 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
               }}
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white transition-transform hover:scale-[1.02]"
               style={{
-                background: "linear-gradient(135deg, #445DA3, #84B98F)",
-                boxShadow: "0 10px 28px -10px rgba(68,93,163,0.7)",
+                background: "linear-gradient(135deg, #22D3EE 0%, #2563EB 46%, #4ADE80 100%)",
+                boxShadow: "0 10px 28px -10px rgba(34,211,238,0.7)",
               }}
             >
               <Upload className="h-4 w-4 shrink-0" />
@@ -1069,7 +1069,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                 className="inline-flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-[13px] font-semibold text-white/85 transition hover:text-white"
                 style={{
                   background: "rgba(255,255,255,0.06)",
-                  borderColor: "rgba(132,185,143,0.35)",
+                  borderColor: "rgba(74,222,128,0.35)",
                 }}
               >
                 <FileText className="h-4 w-4 shrink-0" />
@@ -1163,10 +1163,10 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
                         style={{
                           background: active
-                            ? "linear-gradient(135deg, #445DA3, #84B98F)"
+                            ? "linear-gradient(135deg, #22D3EE 0%, #2563EB 46%, #4ADE80 100%)"
                             : "rgba(255,255,255,0.05)",
                           color: active ? "#fff" : "rgba(255,255,255,0.5)",
-                          boxShadow: current ? "0 0 0 4px rgba(132,185,143,0.18)" : undefined,
+                          boxShadow: current ? "0 0 0 4px rgba(74,222,128,0.18)" : undefined,
                         }}
                       >
                         {i + 1}
@@ -1179,7 +1179,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                           className="mx-2 h-px flex-1"
                           style={{
                             background: active
-                              ? "linear-gradient(90deg,#445DA3,#84B98F)"
+                              ? "linear-gradient(90deg,#22D3EE,#2563EB,#4ADE80)"
                               : "rgba(255,255,255,0.08)",
                           }}
                         />
@@ -1221,11 +1221,11 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                     dragActive ? "scale-[1.01]" : ""
                   }`}
                   style={{
-                    borderColor: dragActive ? "#84B98F" : "rgba(255,255,255,0.15)",
-                    background: dragActive ? "rgba(132,185,143,0.08)" : "transparent",
+                    borderColor: dragActive ? "#4ADE80" : "rgba(255,255,255,0.15)",
+                    background: dragActive ? "rgba(74,222,128,0.08)" : "transparent",
                   }}
                 >
-                  <Upload className={`h-10 w-10 ${dragActive ? "text-[#84B98F]" : "text-white/40"}`} />
+                  <Upload className={`h-10 w-10 ${dragActive ? "text-[#4ADE80]" : "text-white/40"}`} />
                   <div className="text-sm text-white/70 pointer-events-none">
                     {dragActive ? "Suelta el archivo aquí" : "Arrastra el extracto o haz clic para seleccionar"}
                   </div>
@@ -1236,7 +1236,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                       fileRef.current?.click();
                     }}
                     className="rounded-lg px-4 py-2 text-xs font-semibold text-white"
-                    style={{ background: "linear-gradient(135deg, #445DA3, #84B98F)" }}
+                    style={{ background: "linear-gradient(135deg, #22D3EE 0%, #2563EB 46%, #4ADE80 100%)" }}
                   >
                     Seleccionar archivo
                   </button>
@@ -1247,9 +1247,9 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
 
               {stage === "reading" && (
                 <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-                  <Loader2 className="h-10 w-10 animate-spin text-[#84B98F]" />
+                  <Loader2 className="h-10 w-10 animate-spin text-[#4ADE80]" />
                   <div className="text-sm font-semibold text-white">
-                    NUVEX IA está leyendo el extracto…
+                    NUVIA IA está leyendo el extracto…
                   </div>
                   <div className="text-xs text-white/50">
                     Esto puede tardar entre 10 y 30 segundos.
@@ -1294,7 +1294,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                     onClick={() => file && password && processFile(file, password)}
                     disabled={!password}
                     className="mt-4 w-full rounded-xl px-5 py-3 text-sm font-semibold text-white disabled:opacity-40"
-                    style={{ background: "linear-gradient(135deg, #445DA3, #84B98F)" }}
+                    style={{ background: "linear-gradient(135deg, #22D3EE 0%, #2563EB 46%, #4ADE80 100%)" }}
                   >
                     Leer extracto
                   </button>
@@ -1326,11 +1326,11 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                   <div
                     className="mb-4 flex items-center gap-2 rounded-xl px-4 py-3"
                     style={{
-                      background: "rgba(132,185,143,0.08)",
-                      border: "1px solid rgba(132,185,143,0.30)",
+                      background: "rgba(74,222,128,0.08)",
+                      border: "1px solid rgba(74,222,128,0.30)",
                     }}
                   >
-                    <ShieldCheck className="h-5 w-5 text-[#84B98F]" />
+                    <ShieldCheck className="h-5 w-5 text-[#4ADE80]" />
                     <div className="text-xs text-white/80">
                       Datos detectados por IA. Revisa y corrige antes de llenar el simulador. Tu
                       validación es obligatoria.
@@ -1342,8 +1342,8 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                     <div
                       className="mb-4 rounded-xl px-4 py-3"
                       style={{
-                        background: soloPactada ? "rgba(244,162,97,0.10)" : "rgba(68,93,163,0.10)",
-                        border: `1px solid ${soloPactada ? "rgba(244,162,97,0.40)" : "rgba(68,93,163,0.30)"}`,
+                        background: soloPactada ? "rgba(244,162,97,0.10)" : "rgba(34,211,238,0.10)",
+                        border: `1px solid ${soloPactada ? "rgba(244,162,97,0.40)" : "rgba(34,211,238,0.30)"}`,
                       }}
                     >
                       <div className="grid gap-2 text-xs text-white/85 md:grid-cols-3">
@@ -1369,7 +1369,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                           </div>
                           <div
                             className="mt-0.5 font-semibold"
-                            style={{ color: teaUsada ? "#84B98F" : "#F4A261" }}
+                            style={{ color: teaUsada ? "#4ADE80" : "#F4A261" }}
                           >
                             {teaUsada ? `${teaUsada}%` : "— pendiente"}
                           </div>
@@ -1397,13 +1397,13 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                     className="mb-4 rounded-xl p-4"
                     style={{
                       background: tieneBeneficio
-                        ? "linear-gradient(135deg, rgba(132,185,143,0.10), rgba(68,93,163,0.08))"
+                        ? "linear-gradient(135deg, rgba(74,222,128,0.10), rgba(34,211,238,0.08))"
                         : "rgba(255,255,255,0.03)",
-                      border: `1px solid ${tieneBeneficio ? "rgba(132,185,143,0.45)" : "rgba(255,255,255,0.10)"}`,
+                      border: `1px solid ${tieneBeneficio ? "rgba(74,222,128,0.45)" : "rgba(255,255,255,0.10)"}`,
                     }}
                   >
                     <div className="mb-3 flex items-center gap-2">
-                      <Sparkles className="h-4 w-4" style={{ color: "#84B98F" }} />
+                      <Sparkles className="h-4 w-4" style={{ color: "#4ADE80" }} />
                       <div className="text-[12px] font-bold uppercase tracking-wider text-white">
                         Resumen de interpretación del crédito
                       </div>
@@ -1411,9 +1411,9 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                         <span
                           className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase"
                           style={{
-                            background: "rgba(132,185,143,0.18)",
-                            color: "#84B98F",
-                            border: "1px solid rgba(132,185,143,0.45)",
+                            background: "rgba(74,222,128,0.18)",
+                            color: "#4ADE80",
+                            border: "1px solid rgba(74,222,128,0.45)",
                           }}
                         >
                           Beneficio: {tipoBeneficio || "Cobertura detectada"}
@@ -1531,13 +1531,13 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                       <div
                         className="rounded-lg p-2.5"
                         style={{
-                          background: "rgba(132,185,143,0.12)",
-                          border: "1px solid rgba(132,185,143,0.45)",
+                          background: "rgba(74,222,128,0.12)",
+                          border: "1px solid rgba(74,222,128,0.45)",
                         }}
                       >
                         <div
                           className="text-[10px] uppercase tracking-wider"
-                          style={{ color: "#84B98F" }}
+                          style={{ color: "#4ADE80" }}
                         >
                           Cuota base de simulación (editable)
                         </div>
@@ -1552,7 +1552,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                           }
                           placeholder="0"
                           className="mt-1 w-full rounded-md bg-transparent px-2 py-1 text-sm font-bold text-white outline-none"
-                          style={{ border: "1px solid rgba(132,185,143,0.45)" }}
+                          style={{ border: "1px solid rgba(74,222,128,0.45)" }}
                         />
                       </div>
                       <div
@@ -1624,7 +1624,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
 
               {stage === "applied" && (
                 <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-                  <CheckCircle2 className="h-12 w-12 text-[#84B98F]" />
+                  <CheckCircle2 className="h-12 w-12 text-[#4ADE80]" />
                   <div className="text-sm font-semibold text-white">
                     Simulador prellenado correctamente
                   </div>
@@ -1666,8 +1666,8 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                     disabled={confirmDisabled}
                     className="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:scale-100"
                     style={{
-                      background: "linear-gradient(135deg, #445DA3, #84B98F)",
-                      boxShadow: "0 10px 28px -10px rgba(132,185,143,0.6)",
+                      background: "linear-gradient(135deg, #22D3EE 0%, #2563EB 46%, #4ADE80 100%)",
+                      boxShadow: "0 10px 28px -10px rgba(74,222,128,0.6)",
                     }}
                   >
                     <CheckCircle2 className="h-4 w-4" />
