@@ -1487,7 +1487,7 @@ export function ProyeccionFinancieraView() {
                       <div
                         className="hidden h-12 w-12 items-center justify-center rounded-2xl md:flex"
                         style={{
-                          background: "NUVIA_GRADIENT",
+                          background: NUVIA_GRADIENT,
                           boxShadow: "0 12px 28px -10px rgba(34,211,238,0.70)",
                         }}
                       >
@@ -1635,7 +1635,7 @@ export function ProyeccionFinancieraView() {
                               {formatCOP(c.cuotaConExtra)}
                             </td>
                             <td className="px-4 py-2.5 text-right text-cyan-100">{formatCOP(c.capital)}</td>
-                            <td className="px-4 py-2.5 text-right text-[#E89B8E]">{formatCOP(c.interes)}</td>
+                            <td className="px-4 py-2.5 text-right text-rose-300">{formatCOP(c.interes)}</td>
                             <td className="px-4 py-2.5 text-right text-white/55">{formatCOP(c.seguros)}</td>
                             <td className="px-4 py-2.5 text-right font-medium text-white">
                               {formatCOP(c.saldoFinal)}
@@ -1662,7 +1662,7 @@ export function ProyeccionFinancieraView() {
                 onClick={openGuardarCaso}
                 className="mt-2 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:scale-[1.02]"
                 style={{
-                  background: "NUVIA_GRADIENT",
+                  background: NUVIA_GRADIENT,
                   boxShadow: "0 14px 30px -12px rgba(34,211,238,0.68)",
                 }}
               >
