@@ -35,14 +35,14 @@ function AmbientBg() {
         }
       `}</style>
       <div
-        className="pointer-events-none fixed inset-0 z-0"
+        className="pointer-events-none absolute inset-0 z-0"
         style={{
           background:
             "radial-gradient(circle at 18% 12%, rgba(34,211,238,0.34), transparent 28%), radial-gradient(circle at 78% 18%, rgba(74,222,128,0.24), transparent 30%), radial-gradient(circle at 52% 76%, rgba(37,99,235,0.32), transparent 34%), #05070D",
         }}
       />
       <div
-        className="pointer-events-none fixed inset-[-22%] z-0 blur-3xl"
+        className="pointer-events-none absolute inset-[-22%] z-0 blur-3xl"
         style={{
           background:
             "conic-gradient(from 120deg at 50% 50%, rgba(34,211,238,0.0), rgba(34,211,238,0.42), rgba(74,222,128,0.30), rgba(59,130,246,0.38), rgba(34,211,238,0.0))",
@@ -51,19 +51,19 @@ function AmbientBg() {
         }}
       />
       <motion.div
-        className="pointer-events-none fixed top-[-10rem] left-[-9rem] z-0 h-[36rem] w-[36rem] rounded-full blur-3xl"
+        className="pointer-events-none absolute top-[-10rem] left-[-9rem] z-0 h-[36rem] w-[36rem] rounded-full blur-3xl"
         style={{ background: "radial-gradient(circle, rgba(34,211,238,0.65), transparent 68%)", opacity: 0.82 }}
         animate={{ x: [0, 130, 30, 0], y: [0, 58, 112, 0], scale: [1, 1.24, 1.08, 1] }}
         transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
-        className="pointer-events-none fixed bottom-[-12rem] right-[-10rem] z-0 h-[42rem] w-[42rem] rounded-full blur-3xl"
+        className="pointer-events-none absolute bottom-[-12rem] right-[-10rem] z-0 h-[42rem] w-[42rem] rounded-full blur-3xl"
         style={{ background: "radial-gradient(circle, rgba(74,222,128,0.52), transparent 68%)", opacity: 0.76 }}
         animate={{ x: [0, -120, -32, 0], y: [0, -55, -110, 0], scale: [1, 1.2, 1.05, 1] }}
         transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
       />
       <div
-        className="pointer-events-none fixed top-[-20%] bottom-[-20%] z-0 w-[28rem] blur-2xl"
+        className="pointer-events-none absolute top-[-20%] bottom-[-20%] z-0 w-[28rem] blur-2xl"
         style={{
           left: "10%",
           background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.16), rgba(34,211,238,0.18), transparent)",
@@ -71,7 +71,7 @@ function AmbientBg() {
         }}
       />
       <div
-        className="pointer-events-none fixed inset-0 z-0"
+        className="pointer-events-none absolute inset-0 z-0"
         style={{
           backgroundImage:
             "linear-gradient(rgba(255,255,255,0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.055) 1px, transparent 1px)",
