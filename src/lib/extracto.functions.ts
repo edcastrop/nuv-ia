@@ -613,7 +613,7 @@ export const extractStatement = createServerFn({ method: "POST" })
       let valorBenef = monto("valorCobertura");
       const cuotaMensual = monto("cuotaMensual");
       let segurosNum = monto("seguros");
-      let cuotaConInteresSinSeguros =
+      const cuotaConInteresSinSeguros =
         monto("cuotaConInteresSinSeguros") || monto("cuotaSinSeguros");
       const tieneCobPorDiferencia =
         monto("cuotaSinSubsidio") > 0 && cuotaCliente > 0 && monto("cuotaSinSubsidio") > cuotaCliente;
