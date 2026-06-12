@@ -91,11 +91,20 @@ function AlertasQA() {
         title="Panel de Alertas QA"
         description="Inconsistencias críticas detectadas por el motor matemático. Reconoce y resuelve cada alerta antes de avanzar el caso."
         actions={
-          <Link to="/qa-ai">
-            <button className="nuvia-input nuvia-input-sm" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer" }}>
-              <ShieldCheck size={14} /> Volver al dashboard
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => setCopilotoOpen(true)}
+              className="nuvia-input nuvia-input-sm"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer" }}
+            >
+              <Sparkles size={14} /> Copiloto QA
             </button>
-          </Link>
+            <Link to="/qa-ai">
+              <button className="nuvia-input nuvia-input-sm" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer" }}>
+                <ShieldCheck size={14} /> Volver al dashboard
+              </button>
+            </Link>
+          </div>
         }
       />
 
