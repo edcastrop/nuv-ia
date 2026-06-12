@@ -951,13 +951,6 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
   const hayErrores = erroresValidacion.length > 0;
   const cuotaBaseLista = parseMontoExtracto((parsed?.cuotaBaseSimulacion as string) ?? "") > 0;
 
-  // Validación dura antes de confirmar
-  const _intStrParsed = (k: string) => {
-    const v = parsed?.[k];
-    if (typeof v !== "string") return 0;
-    const n = parseInt(v.replace(/[^\d]/g, ""), 10);
-    return Number.isFinite(n) ? n : 0;
-  };
   const tieneMinimoSimulacion =
     parseMontoExtracto((parsed?.saldoCapital as string) ?? "") > 0 &&
     parseMontoExtracto(((parsed?.cuotaBaseSimulacion as string) || (parsed?.cuotaMensual as string) || "")) > 0;
