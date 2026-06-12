@@ -929,11 +929,13 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
   const _faltanDatosBase = _esDaviviendaLeasing
     ? _plazoInicialNum <= 0 || _cuotasPendientesNum <= 0
     : _plazoInicialNum <= 0 || _cuotasPagadasNum <= 0;
+  const tieneMinimoSimulacion =
+    parseMontoExtracto((parsed?.saldoCapital as string) ?? "") > 0 &&
+    parseMontoExtracto(((parsed?.cuotaBaseSimulacion as string) || (parsed?.cuotaMensual as string) || "")) > 0;
   const confirmDisabled =
     (hayErrores && !_esDaviviendaLeasing) ||
     (tieneBeneficio && !cuotaBaseLista) ||
-    (!_esDaviviendaLeasing && _cuotasPagadasEnCero) ||
-    _faltanDatosBase;
+    (!tieneMinimoSimulacion && (_cuotasPagadasEnCero || _faltanDatosBase));
 
   const fmtCO = (raw: string) => {
     const n = parseMontoExtracto(raw);
@@ -1053,6 +1055,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
               onClick={() => {
                 reset();
                 setOpen(true);
+                window.setTimeout(() => fileRef.current?.click(), 0);
               }}
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white transition-transform hover:scale-[1.02]"
               style={{
@@ -1120,9 +1123,11 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           <div
             className="relative flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl"
             style={{
-              background: "linear-gradient(180deg, #0A1226, #07162D)",
-              border: "1px solid rgba(255,255,255,0.10)",
-              boxShadow: "0 40px 80px -20px rgba(0,0,0,0.7)",
+              background: "linear-gradient(145deg, rgba(255,255,255,0.065), rgba(68,93,163,0.075) 48%, rgba(132,185,143,0.045))",
+              border: "1px solid rgba(255,255,255,0.12)",
+              boxShadow: "0 44px 90px -38px rgba(0,0,0,0.92), inset 0 1px 0 rgba(255,255,255,0.10)",
+              backdropFilter: "blur(32px) saturate(160%)",
+              WebkitBackdropFilter: "blur(32px) saturate(160%)",
               maxHeight: "92vh",
             }}
             onClick={(e) => e.stopPropagation()}
