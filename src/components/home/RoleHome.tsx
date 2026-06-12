@@ -14,9 +14,12 @@ import {
   CriticalAlertList,
   ActivityFeed,
   IARecomendacionesCard,
+  MotivationalQuote,
+  AnimatedBackground,
   type CriticalAlert,
   type ActivityItem,
 } from "@/components/home/widgets";
+import { Rocket } from "lucide-react";
 
 
 interface RoleHomeProps {
