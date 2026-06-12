@@ -69,6 +69,7 @@ const AuditarInputSchema = z.object({
     cuotasPendientes: z.number().int().nonnegative(),
     seguros: z.number().nonnegative().default(0),
     coberturaFrechPp: z.number().nonnegative().optional(),
+    coberturaFrechCuotasRestantes: z.number().int().nonnegative().optional(),
     valorDesembolsado: z.number().nonnegative().optional(),
   }),
   extracto: z.object({
@@ -100,6 +101,7 @@ export const auditarCaso = createServerFn({ method: "POST" })
         cuotasPendientes: data.reconstruccion.cuotasPendientes,
         seguros: data.reconstruccion.seguros,
         coberturaFrechPp: data.reconstruccion.coberturaFrechPp,
+        coberturaFrechCuotasRestantes: data.reconstruccion.coberturaFrechCuotasRestantes,
         valorDesembolsado: data.reconstruccion.valorDesembolsado,
       },
       extracto: data.extracto,
@@ -582,10 +584,18 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
     const saldo = parseNum(d.saldoCapital) ?? 0;
     const tasa = parseNum(d.tasaEA) ?? 0;
     const cuotasPend = parseNum(d.cuotasPendientes) ?? 0;
+    const cuotasPag = parseNum(d.cuotasPagadas) ?? 0;
     const seguros = parseNum(d.seguros) ?? 0;
     const frech = parseNum(d.tasaCobertura);
     const desemb = parseNum(d.valorDesembolsado);
     const cuotaExt = parseNum(d.cuotaActual);
+
+    // FRECH/Fresh cubre máximo 84 cuotas (7 años) en total.
+    // Las cuotas restantes con cobertura = max(0, 84 − cuotasPagadas), acotadas a las pendientes.
+    const FRECH_MAX = 84;
+    const frechCuotasRestantes = frech && frech > 0
+      ? Math.max(0, Math.min(cuotasPend, FRECH_MAX - cuotasPag))
+      : undefined;
 
     const overrides = await cargarToleranciasActivasInterno(supabase as never);
     const result = auditar({
@@ -597,6 +607,7 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
         cuotasPendientes: cuotasPend,
         seguros,
         coberturaFrechPp: frech,
+        coberturaFrechCuotasRestantes: frechCuotasRestantes,
         valorDesembolsado: desemb,
       },
       extracto: {
@@ -613,7 +624,7 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
       modalidad,
       extractoLecturaId: ext.id,
       expedienteId: ext.expediente_id,
-      reconstruccion: { saldoCapital: saldo, tasaEa: tasa, cuotasPendientes: cuotasPend, seguros, coberturaFrechPp: frech, valorDesembolsado: desemb },
+      reconstruccion: { saldoCapital: saldo, tasaEa: tasa, cuotasPendientes: cuotasPend, cuotasPagadas: cuotasPag, seguros, coberturaFrechPp: frech, coberturaFrechCuotasRestantes: frechCuotasRestantes, valorDesembolsado: desemb },
       extracto: { saldoCapital: saldo, tasaEa: tasa, cuota: cuotaExt, seguros, coberturaFrechPp: frech },
     };
 

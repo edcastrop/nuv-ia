@@ -63,33 +63,53 @@ function ResultadoQaAi() {
 
   // Reconstrucción COMPLETA del plan amortizado (todas las cuotas pendientes)
   const filasCompletas = useMemo(() => {
-    if (!data?.auditoria) return [] as Array<{ k: number; cuota: number; interes: number; capital: number; seguros: number; cuotaTotal: number; saldo: number }>;
+    if (!data?.auditoria) return [] as Array<{ k: number; cuota: number; interes: number; capital: number; seguros: number; cuotaTotal: number; saldo: number; subsidioActivo: boolean }>;
     const inputs = (data.auditoria as Record<string, unknown>).inputs as
-      | { reconstruccion?: { saldoCapital?: number; tasaEa?: number; cuotasPendientes?: number; coberturaFrechPp?: number; seguros?: number } }
+      | { reconstruccion?: { saldoCapital?: number; tasaEa?: number; cuotasPendientes?: number; cuotasPagadas?: number; coberturaFrechPp?: number; coberturaFrechCuotasRestantes?: number; seguros?: number } }
       | undefined;
     const r = inputs?.reconstruccion;
     if (!r || !r.saldoCapital || !r.tasaEa || !r.cuotasPendientes) return [];
     try {
       const ea = (r.tasaEa || 0) / 100;
       const cob = r.coberturaFrechPp ? r.coberturaFrechPp / 100 : 0;
-      const i = cob > 0 ? eaToMv(Math.max(0, ea - cob)) : eaToMv(ea);
+      const iMv = eaToMv(ea);
+      const iSub = cob > 0 ? eaToMv(Math.max(0, ea - cob)) : iMv;
       const n = Math.max(0, Math.round(r.cuotasPendientes));
       const seg = Math.max(0, r.seguros || 0);
-      return amortizacion(r.saldoCapital, i, n, seg);
+      const FRECH_MAX = 84;
+      const cuotasSub = cob > 0
+        ? Math.max(0, Math.min(n, Math.round(
+            r.coberturaFrechCuotasRestantes ?? (FRECH_MAX - (r.cuotasPagadas ?? 0)),
+          )))
+        : 0;
+      return amortizacion(
+        r.saldoCapital,
+        cob > 0 ? iSub : iMv,
+        n,
+        seg,
+        cob > 0 ? { iPostSubsidio: iMv, cuotasSubsidio: cuotasSub } : undefined,
+      );
     } catch { return []; }
   }, [data]);
 
   // Metadatos para encabezado (tasa aplicada, FRECH, seguros)
   const reconMeta = useMemo(() => {
     const inputs = (data?.auditoria as Record<string, unknown> | undefined)?.inputs as
-      | { reconstruccion?: { tasaEa?: number; coberturaFrechPp?: number; seguros?: number } }
+      | { reconstruccion?: { tasaEa?: number; coberturaFrechPp?: number; coberturaFrechCuotasRestantes?: number; cuotasPagadas?: number; cuotasPendientes?: number; seguros?: number } }
       | undefined;
     const r = inputs?.reconstruccion;
     const tasaEa = r?.tasaEa ?? 0;
     const cob = r?.coberturaFrechPp ?? 0;
     const tasaAplicada = Math.max(0, tasaEa - cob);
     const seguros = Math.max(0, r?.seguros ?? 0);
-    return { tasaEa, cob, tasaAplicada, seguros, hasFrech: cob > 0 };
+    const FRECH_MAX = 84;
+    const n = Math.max(0, Math.round(r?.cuotasPendientes ?? 0));
+    const frechRestantes = cob > 0
+      ? Math.max(0, Math.min(n, Math.round(
+          r?.coberturaFrechCuotasRestantes ?? (FRECH_MAX - (r?.cuotasPagadas ?? 0)),
+        )))
+      : 0;
+    return { tasaEa, cob, tasaAplicada, seguros, hasFrech: cob > 0, frechRestantes, frechMax: FRECH_MAX };
   }, [data]);
 
   if (!data?.auditoria) {
@@ -108,14 +128,15 @@ function ResultadoQaAi() {
 
   const sevTone = (s: string) => s === "critica" ? "var(--nuvia-danger)" : s === "warning" ? "var(--nuvia-warning)" : "var(--nuvia-text-secondary)";
 
-  type FilaUI = { k: number; cuota: number; interes: number; capital: number; seguros: number; cuotaTotal: number; saldo: number };
-  const enriquecer = (f: { k: number; cuota: number; interes: number; capital: number; saldo: number; seguros?: number; cuotaTotal?: number }): FilaUI => ({
+  type FilaUI = { k: number; cuota: number; interes: number; capital: number; seguros: number; cuotaTotal: number; saldo: number; subsidioActivo: boolean };
+  const enriquecer = (f: { k: number; cuota: number; interes: number; capital: number; saldo: number; seguros?: number; cuotaTotal?: number; subsidioActivo?: boolean }): FilaUI => ({
     k: f.k, cuota: f.cuota, interes: f.interes, capital: f.capital, saldo: f.saldo,
     seguros: f.seguros ?? reconMeta.seguros,
     cuotaTotal: f.cuotaTotal ?? (f.cuota + (f.seguros ?? reconMeta.seguros)),
+    subsidioActivo: f.subsidioActivo ?? (reconMeta.hasFrech && f.k <= reconMeta.frechRestantes),
   });
-  const primeras = ((o.primerasCuotas as Array<{ k: number; cuota: number; interes: number; capital: number; saldo: number; seguros?: number; cuotaTotal?: number }>) ?? []).map(enriquecer);
-  const ultimas = ((o.ultimasCuotas as Array<{ k: number; cuota: number; interes: number; capital: number; saldo: number; seguros?: number; cuotaTotal?: number }>) ?? []).map(enriquecer);
+  const primeras = ((o.primerasCuotas as Array<{ k: number; cuota: number; interes: number; capital: number; saldo: number; seguros?: number; cuotaTotal?: number; subsidioActivo?: boolean }>) ?? []).map(enriquecer);
+  const ultimas = ((o.ultimasCuotas as Array<{ k: number; cuota: number; interes: number; capital: number; saldo: number; seguros?: number; cuotaTotal?: number; subsidioActivo?: boolean }>) ?? []).map(enriquecer);
   const ksPrimeras = new Set(primeras.map((f) => f.k));
   const filasResumen: FilaUI[] = [
     ...primeras,
@@ -375,7 +396,10 @@ function ResultadoQaAi() {
                 FRECH: −{reconMeta.cob.toFixed(2)} pp
               </span>
               <span className="rounded-md px-2 py-1" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--nuvia-border)", color: "var(--nuvia-text-secondary)" }}>
-                Tasa aplicada: <b style={{ color: "var(--nuvia-text-primary)" }}>{reconMeta.tasaAplicada.toFixed(2)}%</b> EA
+                Tasa con FRECH: <b style={{ color: "var(--nuvia-text-primary)" }}>{reconMeta.tasaAplicada.toFixed(2)}%</b> EA
+              </span>
+              <span className="rounded-md px-2 py-1" style={{ background: "rgba(132,185,143,0.10)", border: "1px solid rgba(132,185,143,0.35)", color: "var(--nuvia-success)" }}>
+                Cobertura restante: <b>{reconMeta.frechRestantes}</b> / {reconMeta.frechMax} cuotas
               </span>
             </>
           )}
@@ -383,6 +407,7 @@ function ResultadoQaAi() {
             Seguros mensuales: <b style={{ color: "var(--nuvia-text-primary)" }}>${fmt(reconMeta.seguros, 0)}</b>
           </span>
         </div>
+
         <div className="overflow-x-auto">
           <table className="w-full text-[12.5px]">
             <thead>
@@ -395,7 +420,14 @@ function ResultadoQaAi() {
             <tbody>
               {filasAmort.map((f) => (
                 <tr key={f.k} style={{ borderBottom: "1px solid var(--nuvia-border)" }}>
-                  <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>{f.k}</td>
+                  <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>
+                    <span className="inline-flex items-center gap-1.5 justify-end">
+                      {f.subsidioActivo && (
+                        <span title="Cuota con FRECH/Fresh" style={{ width: 6, height: 6, borderRadius: 999, background: "var(--nuvia-success)", display: "inline-block" }} />
+                      )}
+                      {f.k}
+                    </span>
+                  </td>
                   <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-primary)" }}>${fmt(f.cuota, 0)}</td>
                   <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>${fmt(f.interes, 0)}</td>
                   <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>${fmt(f.capital, 0)}</td>

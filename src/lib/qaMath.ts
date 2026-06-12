@@ -61,14 +61,19 @@ export function cuotaTeorica(saldo: number, iPeriodica: number, n: number): numb
 // ──────────────────────────────────────────────────────────────
 // 3. Tabla de amortización
 // ──────────────────────────────────────────────────────────────
+// Tope duro de cobertura FRECH / Tasa Fresh: 84 cuotas (7 años).
+// Pasada esa marca el crédito vuelve a la tasa pactada completa.
+export const FRECH_MAX_CUOTAS = 84;
+
 export interface FilaAmort {
   k: number;
-  cuota: number;        // cuota financiera (capital + interés)
+  cuota: number;        // cuota financiera (capital + interés) del período
   interes: number;
   capital: number;
-  seguros: number;      // seguros mensuales aplicados
-  cuotaTotal: number;   // cuota + seguros (lo que realmente paga el cliente)
+  seguros: number;
+  cuotaTotal: number;   // cuota + seguros
   saldo: number;
+  subsidioActivo: boolean; // true mientras aplique FRECH/Fresh
 }
 
 export function amortizacion(
@@ -76,16 +81,27 @@ export function amortizacion(
   iPeriodica: number,
   n: number,
   seguros: number = 0,
+  opts?: { iPostSubsidio?: number; cuotasSubsidio?: number },
 ): FilaAmort[] {
-  const C = cuotaTeorica(saldo, iPeriodica, n);
   const seg = Math.max(0, seguros || 0);
+  const cuotasSub = Math.max(0, Math.min(n, Math.round(opts?.cuotasSubsidio ?? 0)));
+  const hasSwitch = !!opts && opts.iPostSubsidio !== undefined && opts.iPostSubsidio !== iPeriodica && cuotasSub > 0 && cuotasSub < n;
+  const C1 = cuotaTeorica(saldo, iPeriodica, n);
   const filas: FilaAmort[] = [];
   let s = saldo;
+  let C = C1;
+  let currI = iPeriodica;
   for (let k = 1; k <= n; k++) {
-    const interes = s * iPeriodica;
+    if (hasSwitch && k === cuotasSub + 1) {
+      // Termina el subsidio: re-amortiza saldo residual a tasa post-subsidio sobre cuotas restantes.
+      currI = opts!.iPostSubsidio!;
+      C = cuotaTeorica(s, currI, n - k + 1);
+    }
+    const interes = s * currI;
     const capital = C - interes;
     s = Math.max(0, s - capital);
-    filas.push({ k, cuota: C, interes, capital, seguros: seg, cuotaTotal: C + seg, saldo: s });
+    const subsidioActivo = hasSwitch ? k <= cuotasSub : (opts?.cuotasSubsidio ?? 0) > 0 && k <= (opts?.cuotasSubsidio ?? 0);
+    filas.push({ k, cuota: C, interes, capital, seguros: seg, cuotaTotal: C + seg, saldo: s, subsidioActivo });
   }
   return filas;
 }
@@ -100,6 +116,9 @@ export interface ReconstruccionInput {
   cuotasPendientes: number;
   seguros: number;          // COP / mes (total)
   coberturaFrechPp?: number; // pp anuales EA descontados
+  /** Cuotas restantes con cobertura FRECH/Fresh. Si se omite y hay cobertura,
+   *  se asume el tope duro FRECH_MAX_CUOTAS (84) acotado a las pendientes. */
+  coberturaFrechCuotasRestantes?: number;
   valorDesembolsado?: number;
 }
 
@@ -114,6 +133,8 @@ export interface Reconstruccion {
   primerasCuotas: FilaAmort[];  // 12
   ultimasCuotas: FilaAmort[];   // 12
   totalIntereses: number;
+  /** Cuotas efectivas con subsidio aplicadas en la reconstrucción. */
+  cuotasFrechAplicadas: number;
 }
 
 export function reconstruir(input: ReconstruccionInput): Reconstruccion {
@@ -130,9 +151,21 @@ export function reconstruir(input: ReconstruccionInput): Reconstruccion {
   const seguros = Math.max(0, input.seguros || 0);
   const cuotaTotal = (cob > 0 ? CSub : C) + seguros;
 
-  const tabla = amortizacion(input.saldoCapital, cob > 0 ? iSub : iMv, n, seguros);
+  // Tope FRECH (84 cuotas) — si no llega override, asumimos cobertura completa hasta el tope.
+  const cuotasFrechAplicadas = cob > 0
+    ? Math.max(0, Math.min(n, Math.round(input.coberturaFrechCuotasRestantes ?? FRECH_MAX_CUOTAS)))
+    : 0;
+
+  const tabla = amortizacion(
+    input.saldoCapital,
+    cob > 0 ? iSub : iMv,
+    n,
+    seguros,
+    cob > 0 ? { iPostSubsidio: iMv, cuotasSubsidio: cuotasFrechAplicadas } : undefined,
+  );
   const totalIntereses = tabla.reduce((s, f) => s + f.interes, 0);
-  const costoTotal = (cob > 0 ? CSub : C) * n + seguros * n;
+  // Costo total real teniendo en cuenta el switch de tasa.
+  const costoTotal = tabla.reduce((s, f) => s + f.cuotaTotal, 0);
   const desembolso = input.valorDesembolsado && input.valorDesembolsado > 0
     ? input.valorDesembolsado : input.saldoCapital;
   const veces = desembolso > 0 ? costoTotal / desembolso : 0;
@@ -148,6 +181,7 @@ export function reconstruir(input: ReconstruccionInput): Reconstruccion {
     primerasCuotas: tabla.slice(0, 12),
     ultimasCuotas: tabla.slice(-12),
     totalIntereses,
+    cuotasFrechAplicadas,
   };
 }
 
