@@ -218,6 +218,7 @@ function EtapaPanel({
   expedienteId,
   qaEstado,
   validacion,
+  autoQA,
   loadingQA,
   enviandoQA,
   errQA,
@@ -229,6 +230,7 @@ function EtapaPanel({
   expedienteId: string;
   qaEstado: "pendiente" | "aprobada" | "devuelta" | null;
   validacion: ValidacionQA | null;
+  autoQA: AutoQAEstado | null;
   loadingQA: boolean;
   enviandoQA: boolean;
   errQA: string | null;
@@ -329,6 +331,26 @@ function EtapaPanel({
             >
               Ver tablero QA →
             </Link>
+
+            {autoQA && (
+              <div className="basis-full mt-2 flex flex-wrap items-center gap-2 rounded-md border border-[#D9E3F0] bg-white px-2.5 py-2 text-[11px] text-[#242424]">
+                <QABadge
+                  categoria={autoQA.qa_categoria}
+                  score={autoQA.qa_score}
+                  auditoriaId={autoQA.qa_auditoria_id}
+                  size="xs"
+                />
+                <span className="font-semibold">
+                  Auto-QA ejecutada
+                  {autoQA.qa_dictamen ? ` · ${dictamenAutoLabel[autoQA.qa_dictamen] ?? autoQA.qa_dictamen}` : ""}
+                </span>
+                {autoQA.qa_ejecutada_at && (
+                  <span className="text-[#242424]/55">
+                    {new Date(autoQA.qa_ejecutada_at).toLocaleString("es-CO")}
+                  </span>
+                )}
+              </div>
+            )}
 
             {loadingQA ? (
               <span className="text-[11px] text-[#242424]/50">Consultando QA…</span>
