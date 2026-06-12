@@ -960,6 +960,10 @@ export function ProyeccionFinancieraView() {
                         }
                         return next;
                       });
+                      setTimeout(() => {
+                        document.getElementById("sec-escenarios")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }, 220);
+                      toast.success("Extracto aplicado. Ahora simula tus escenarios.");
                     }}
                   />
                 </div>
