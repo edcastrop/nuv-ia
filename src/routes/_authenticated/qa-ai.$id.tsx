@@ -81,7 +81,7 @@ function ResultadoQaAi() {
   // Metadatos para encabezado (tasa aplicada, FRECH, seguros)
   const reconMeta = useMemo(() => {
     const inputs = (data?.auditoria as Record<string, unknown> | undefined)?.inputs as
-      | { reconstruccion?: { tasaEa?: number; coberturaFrechPp?: number; coberturaFrechValorMensual?: number; coberturaFrechCuotasRestantes?: number; cuotasPagadas?: number; cuotasPendientes?: number; seguros?: number } }
+      | { modalidad?: string; reconstruccion?: { tasaEa?: number; coberturaFrechPp?: number; coberturaFrechValorMensual?: number; coberturaFrechCuotasRestantes?: number; cuotasPagadas?: number; cuotasPendientes?: number; seguros?: number; variacionUvrEa?: number; valorUVR?: number } }
       | undefined;
     const r = inputs?.reconstruccion;
     const tasaEa = r?.tasaEa ?? 0;
@@ -97,7 +97,7 @@ function ResultadoQaAi() {
           r?.coberturaFrechCuotasRestantes ?? (FRECH_MAX - (r?.cuotasPagadas ?? 0)),
         )))
       : 0;
-    return { tasaEa, cob, freshMensual, tasaAplicada, seguros, hasFrech, frechRestantes, frechMax: FRECH_MAX };
+    return { modalidad: inputs?.modalidad ?? "", tasaEa, cob, freshMensual, tasaAplicada, seguros, hasFrech, frechRestantes, frechMax: FRECH_MAX, variacionUvrEa: r?.variacionUvrEa ?? 5.5, valorUVR: r?.valorUVR ?? 0 };
   }, [data]);
 
   if (!data?.auditoria) {
@@ -116,13 +116,16 @@ function ResultadoQaAi() {
 
   const sevTone = (s: string) => s === "critica" ? "var(--nuvia-danger)" : s === "warning" ? "var(--nuvia-warning)" : "var(--nuvia-text-secondary)";
 
-  type FilaUI = { k: number; cuota: number; interes: number; capital: number; seguros: number; fresh: number; cuotaTotal: number; saldo: number; subsidioActivo: boolean };
+  type FilaUI = { k: number; cuota: number; interes: number; capital: number; seguros: number; fresh: number; cuotaTotal: number; saldo: number; subsidioActivo: boolean; saldoUvr?: number; valorUvr?: number; correccionUvr?: number };
   const enriquecer = (f: { k: number; cuota: number; interes: number; capital: number; saldo: number; seguros?: number; fresh?: number; cuotaTotal?: number; subsidioActivo?: boolean }): FilaUI => ({
     k: f.k, cuota: f.cuota, interes: f.interes, capital: f.capital, saldo: f.saldo,
     seguros: f.seguros ?? reconMeta.seguros,
     fresh: f.fresh ?? (reconMeta.hasFrech && f.k <= reconMeta.frechRestantes ? reconMeta.freshMensual : 0),
     cuotaTotal: f.cuotaTotal ?? (f.cuota + (f.seguros ?? reconMeta.seguros) - (f.fresh ?? (reconMeta.hasFrech && f.k <= reconMeta.frechRestantes ? reconMeta.freshMensual : 0))),
     subsidioActivo: f.subsidioActivo ?? (reconMeta.hasFrech && f.k <= reconMeta.frechRestantes),
+    saldoUvr: (f as FilaUI).saldoUvr,
+    valorUvr: (f as FilaUI).valorUvr,
+    correccionUvr: (f as FilaUI).correccionUvr,
   });
   const primeras = ((o.primerasCuotas as Array<{ k: number; cuota: number; interes: number; capital: number; saldo: number; seguros?: number; fresh?: number; cuotaTotal?: number; subsidioActivo?: boolean }>) ?? []).map(enriquecer);
   const ultimas = ((o.ultimasCuotas as Array<{ k: number; cuota: number; interes: number; capital: number; saldo: number; seguros?: number; fresh?: number; cuotaTotal?: number; subsidioActivo?: boolean }>) ?? []).map(enriquecer);
