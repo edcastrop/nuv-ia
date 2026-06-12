@@ -93,7 +93,7 @@ function HerramientasLanding() {
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="mb-10 flex items-center gap-4"
+          className="flex items-center gap-4"
         >
           <div
             className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/15 backdrop-blur-xl"
@@ -141,7 +141,7 @@ function HerramientasLanding() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.6 }}
-          className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-2xl p-5"
+          className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-2xl p-5"
         >
           <div className="flex items-start gap-3">
             <Sparkles className="h-5 w-5 text-[#84B98F] mt-0.5" />
@@ -155,7 +155,7 @@ function HerramientasLanding() {
           initial="hidden"
           animate="show"
           variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1, delayChildren: 0.8 } } }}
-          className="mt-8 grid gap-3 md:grid-cols-3 text-xs text-white/40"
+          className="grid gap-3 md:grid-cols-3 text-xs text-white/40"
         >
           <Meta Icon={FileBarChart} title="Gemini 2.5 Pro" sub="Lectura de extractos y nóminas" />
           <Meta Icon={ShieldCheck} title="Superfinanciera" sub="30% No VIS · 40% VIS" />
