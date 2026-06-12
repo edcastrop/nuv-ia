@@ -353,7 +353,16 @@ function ResultadoQaAi() {
           icon={<Sigma size={16} />}
         />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 text-[13px]">
-          {[
+          {(isUvr ? [
+            { t: "Tasa mensual cobrada", f: "i = (1 + TE_Cobrada)^(1/12) − 1" },
+            { t: "Variación mensual UVR", f: "v = (1 + Variación_UVR_EA)^(1/12) − 1" },
+            { t: "Cuota financiera UVR", f: "C_uvr = Cuota_sin_seguros_COP / Valor_UVR_corte" },
+            { t: "Interés UVR", f: "I_uvr,k = Saldo_uvr,k−1 · i" },
+            { t: "Capital UVR", f: "K_uvr,k = C_uvr − I_uvr,k" },
+            { t: "Saldo COP", f: "Saldo_COP,k = (Saldo_uvr,k−1 − K_uvr,k) · Valor_UVR_k" },
+            { t: "Corrección UVR", f: "Corrección_k = Saldo_uvr,k−1 · (Valor_UVR_k − Valor_UVR_k−1)" },
+            { t: "Pago cliente", f: "Pago = Cuota_sin_subsidio − Beneficio_FRECH" },
+          ] : [
             { t: "Tasa mensual vencida (i_mv)", f: "i_mv = (1 + EA)^(1/12) − 1" },
             { t: "Cuota teórica (sistema francés)", f: "C = S · i_mv / (1 − (1 + i_mv)^−n)" },
             { t: "Cuota con subsidio FRECH", f: "i_sub = (1 + (EA − cob))^(1/12) − 1  →  C_sub = S · i_sub / (1 − (1+i_sub)^−n)" },
@@ -364,7 +373,7 @@ function ResultadoQaAi() {
             { t: "Costo total proyectado", f: "Costo = C_sub · n + Seguros · n" },
             { t: "Veces pagado vs desembolso", f: "Veces = Costo / Desembolso" },
             { t: "QA Score", f: "Score = 100 − Σ penalizaciones (info×1, warn×5, crit×15 + diff_cuota + diff_sim + faltantes)" },
-          ].map((x, i) => (
+          ]).map((x, i) => (
             <div key={i} className="px-3 py-2 rounded" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--nuvia-border)" }}>
               <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--nuvia-text-secondary)" }}>{x.t}</p>
               <code className="font-mono text-[12px]" style={{ color: "var(--nuvia-accent)" }}>{x.f}</code>
