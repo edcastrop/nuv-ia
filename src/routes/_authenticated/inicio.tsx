@@ -5,7 +5,7 @@ import { ModeSelector } from "@/components/nuvex/ModeSelector";
 import { PesosSimulator } from "@/components/nuvex/PesosSimulator";
 import { UVRSimulator } from "@/components/nuvex/UVRSimulator";
 import { RoleHome } from "@/components/home/RoleHome";
-import { getMaestro, maestroToExpediente } from "@/lib/expedienteMaestro";
+import { ensureOperativeExpedienteForMaestro, getMaestro } from "@/lib/expedienteMaestro";
 import type { Expediente } from "@/lib/expedientes";
 
 const homeSearchSchema = z.object({
@@ -39,8 +39,8 @@ function Home() {
     setLoadingMaestro(true);
     setMaestroErr(null);
     getMaestro(maestroId)
-      .then((m) => {
-        const exp = maestroToExpediente(m) as unknown as Expediente;
+      .then(async (m) => {
+        const exp = await ensureOperativeExpedienteForMaestro(m);
         setMaestroExp(exp);
         setMode((current) => current ?? exp.modo);
         setShowSimulator(true);
