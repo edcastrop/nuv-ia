@@ -13,15 +13,15 @@ interface FieldProps {
 
 export function TextField({ label, value, onChange, placeholder, readOnly, hint, className }: FieldProps) {
   return (
-    <label className={`flex flex-col gap-1 ${className ?? ""}`}>
-      <span className="text-xs font-medium tracking-wide text-[#242424]/70 uppercase">{label}</span>
+    <label className={`flex flex-col gap-1.5 ${className ?? ""}`}>
+      <span className="text-[11px] font-semibold tracking-[0.08em] text-[#3A4660]/75 uppercase">{label}</span>
       <input
         type="text"
         value={value}
         readOnly={readOnly}
         onChange={(e) => onChange?.(e.target.value)}
         placeholder={placeholder}
-        className={`rounded-lg border border-[#E3E7EE] bg-white px-3 py-2.5 text-sm text-[#242424] outline-none transition-all focus:border-[#445DA3] focus:ring-2 focus:ring-[#445DA3]/15 ${readOnly ? "bg-[#F7F9FB] cursor-not-allowed text-[#242424]/70" : ""}`}
+        className={`rounded-xl border border-white/60 bg-white/55 backdrop-blur-md px-3.5 py-2.5 text-sm text-[#1F2A44] placeholder:text-[#1F2A44]/35 outline-none shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(36,52,92,0.04)] transition-all focus:border-[#445DA3]/60 focus:bg-white/80 focus:ring-2 focus:ring-[#445DA3]/15 ${readOnly ? "bg-white/35 cursor-not-allowed text-[#1F2A44]/60" : ""}`}
       />
       {hint && <span className="text-[11px] text-[#445DA3]">{hint}</span>}
     </label>
@@ -39,12 +39,12 @@ interface SelectProps {
 
 export function SelectField({ label, value, onChange, options, placeholder, className }: SelectProps) {
   return (
-    <label className={`flex flex-col gap-1 ${className ?? ""}`}>
-      <span className="text-xs font-medium tracking-wide text-[#242424]/70 uppercase">{label}</span>
+    <label className={`flex flex-col gap-1.5 ${className ?? ""}`}>
+      <span className="text-[11px] font-semibold tracking-[0.08em] text-[#3A4660]/75 uppercase">{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-2.5 text-sm text-[#242424] outline-none transition-all focus:border-[#445DA3] focus:ring-2 focus:ring-[#445DA3]/15"
+        className="rounded-xl border border-white/60 bg-white/55 backdrop-blur-md px-3.5 py-2.5 text-sm text-[#1F2A44] outline-none shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(36,52,92,0.04)] transition-all focus:border-[#445DA3]/60 focus:bg-white/80 focus:ring-2 focus:ring-[#445DA3]/15"
       >
         <option value="" disabled>{placeholder ?? "Seleccione..."}</option>
         {options.map((o) => (
@@ -58,7 +58,7 @@ export function SelectField({ label, value, onChange, options, placeholder, clas
 export function Card({ children, className, style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
   return (
     <div
-      className={`rounded-2xl border border-[#E3E7EE] bg-white p-4 shadow-[0_1px_3px_rgba(36,36,36,0.04),0_8px_24px_rgba(36,36,36,0.04)] sm:p-5 ${className ?? ""}`}
+      className={`relative rounded-2xl border border-white/55 bg-white/55 backdrop-blur-xl p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_18px_44px_-22px_rgba(36,52,92,0.18),0_2px_8px_rgba(36,52,92,0.05)] sm:p-5 ${className ?? ""}`}
       style={style}
     >
       {children}
