@@ -494,6 +494,84 @@
   background-color: rgba(255,255,255,0.05) !important;
 }
 
+/* ==========================================================
+   NUVIA · OPT-OUT: Financiero conserva el estilo claro
+   Revierte los overrides de .nuvia-shell-soft dentro de
+   .nuvia-financiero-light para preservar la versión blanca
+   aprobada del simulador financiero.
+   ========================================================== */
+.nuvia-shell-soft .nuvia-financiero-light {
+  color: #242424;
+}
+.nuvia-shell-soft .nuvia-financiero-light .bg-white,
+.nuvia-shell-soft .nuvia-financiero-light [class*="bg-[#fff"],
+.nuvia-shell-soft .nuvia-financiero-light [class*="bg-[#FFF"],
+.nuvia-shell-soft .nuvia-financiero-light [class*="bg-[#FAFBFC"] {
+  background-color: #ffffff !important;
+  background-image: none !important;
+  color: #242424 !important;
+  border-color: #E3E7EE !important;
+  backdrop-filter: none;
+}
+.nuvia-shell-soft .nuvia-financiero-light [class*="bg-[#F7F9FB"],
+.nuvia-shell-soft .nuvia-financiero-light [class*="bg-[#FBFCFD"],
+.nuvia-shell-soft .nuvia-financiero-light [class*="bg-[#EEF1F5"],
+.nuvia-shell-soft .nuvia-financiero-light [class*="bg-[#F4F6FB"],
+.nuvia-shell-soft .nuvia-financiero-light [class*="bg-[#F0F2F6"] {
+  background-color: #F7F9FB !important;
+  background-image: none !important;
+  color: #242424 !important;
+  border-color: #E3E7EE !important;
+}
+.nuvia-shell-soft .nuvia-financiero-light [class*="text-[#242424"],
+.nuvia-shell-soft .nuvia-financiero-light [class*="text-[#0A1226"],
+.nuvia-shell-soft .nuvia-financiero-light [class*="text-[#1F2937"],
+.nuvia-shell-soft .nuvia-financiero-light [class*="text-[#374151"] {
+  color: #242424 !important;
+}
+.nuvia-shell-soft .nuvia-financiero-light [class*="text-[#242424]/55"],
+.nuvia-shell-soft .nuvia-financiero-light [class*="text-[#242424]/60"],
+.nuvia-shell-soft .nuvia-financiero-light [class*="text-[#242424]/65"],
+.nuvia-shell-soft .nuvia-financiero-light [class*="text-[#242424]/70"],
+.nuvia-shell-soft .nuvia-financiero-light [class*="text-[#242424]/75"] {
+  color: rgba(36,36,36,0.65) !important;
+}
+.nuvia-shell-soft .nuvia-financiero-light [class*="border-[#E3E7EE"],
+.nuvia-shell-soft .nuvia-financiero-light [class*="border-[#EEF1F5"],
+.nuvia-shell-soft .nuvia-financiero-light [class*="border-[#E5E7EB"],
+.nuvia-shell-soft .nuvia-financiero-light [class*="border-[#F0F2F6"],
+.nuvia-shell-soft .nuvia-financiero-light [class*="border-[#D1D5DB"] {
+  border-color: #E3E7EE !important;
+}
+.nuvia-shell-soft .nuvia-financiero-light input:not([type="checkbox"]):not([type="radio"]),
+.nuvia-shell-soft .nuvia-financiero-light select,
+.nuvia-shell-soft .nuvia-financiero-light textarea {
+  background-color: #ffffff !important;
+  color: #242424 !important;
+  border-color: #E3E7EE !important;
+}
+.nuvia-shell-soft .nuvia-financiero-light input::placeholder,
+.nuvia-shell-soft .nuvia-financiero-light textarea::placeholder {
+  color: rgba(36,36,36,0.4) !important;
+}
+.nuvia-shell-soft .nuvia-financiero-light select option {
+  background-color: #ffffff;
+  color: #242424;
+}
+.nuvia-shell-soft .nuvia-financiero-light table { color: #242424; }
+.nuvia-shell-soft .nuvia-financiero-light thead tr,
+.nuvia-shell-soft .nuvia-financiero-light th {
+  color: rgba(36,36,36,0.6) !important;
+  border-color: #E3E7EE !important;
+  background-color: #F7F9FB !important;
+}
+.nuvia-shell-soft .nuvia-financiero-light tbody tr {
+  border-color: #EEF1F5 !important;
+}
+.nuvia-shell-soft .nuvia-financiero-light tbody tr:hover {
+  background-color: #F7F9FB !important;
+}
+
 
 
 
