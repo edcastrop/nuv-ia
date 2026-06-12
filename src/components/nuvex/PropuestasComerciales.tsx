@@ -357,30 +357,73 @@ export function PropuestasComerciales(props: Props) {
           return (
             <div
               key={idx}
-              className="relative flex min-w-0 flex-col rounded-2xl border bg-white transition"
+              className="relative flex min-w-0 flex-col overflow-hidden rounded-2xl border backdrop-blur-xl transition hover:-translate-y-0.5"
               style={{
-                borderColor: isRecomendada ? "#5CA875" : "#ECEFF3",
+                background: isRecomendada
+                  ? "linear-gradient(155deg, rgba(255,255,255,0.85) 0%, rgba(232,245,236,0.78) 60%, rgba(214,232,255,0.72) 100%)"
+                  : "linear-gradient(155deg, rgba(255,255,255,0.78), rgba(244,247,251,0.7))",
+                borderColor: isRecomendada ? "rgba(132,185,143,0.6)" : "rgba(255,255,255,0.65)",
                 boxShadow: isRecomendada
-                  ? "0 12px 32px -14px rgba(92,168,117,0.35)"
-                  : "0 1px 2px rgba(36,36,36,0.03)",
+                  ? "0 22px 48px -20px rgba(68,93,163,0.35), 0 10px 28px -16px rgba(132,185,143,0.4), inset 0 1px 0 rgba(255,255,255,0.75)"
+                  : "0 14px 36px -22px rgba(36,52,92,0.18), inset 0 1px 0 rgba(255,255,255,0.7)",
               }}
             >
+              {/* Glow halos */}
+              <span
+                aria-hidden
+                className="pointer-events-none absolute -top-20 -right-20 h-56 w-56 rounded-full blur-3xl"
+                style={{
+                  background: isRecomendada
+                    ? "radial-gradient(circle, rgba(132,185,143,0.45), transparent 70%)"
+                    : "radial-gradient(circle, rgba(68,93,163,0.18), transparent 70%)",
+                }}
+              />
+              <span
+                aria-hidden
+                className="pointer-events-none absolute -bottom-24 -left-16 h-56 w-56 rounded-full blur-3xl"
+                style={{
+                  background: "radial-gradient(circle, rgba(68,93,163,0.18), transparent 70%)",
+                }}
+              />
+
+              {/* Top accent line for recommended */}
+              {isRecomendada && (
+                <div
+                  aria-hidden
+                  className="absolute inset-x-0 top-0 h-[3px]"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, #445DA3 0%, #6E8AD6 50%, #84B98F 100%)",
+                  }}
+                />
+              )}
+
               {/* Header escenario */}
-              <div className="flex items-start justify-between gap-2 px-5 pt-5">
+              <div className="relative flex items-start justify-between gap-2 px-5 pt-5">
                 <div className="flex flex-col gap-2">
                   <div
                     className="text-[10px] font-semibold uppercase tracking-[0.18em]"
-                    style={{ color: "#8893A0" }}
+                    style={{ color: "#5C6B85" }}
                   >
                     Escenario {idx + 1}
                   </div>
                   {badgeLabel && (
                     <div
-                      className="inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider"
-                      style={{
-                        backgroundColor: isRecomendada ? "#E8F5EC" : "#FFF8E1",
-                        color: isRecomendada ? "#1F7A45" : "#8A6D00",
-                      }}
+                      className="inline-flex w-fit items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur-md"
+                      style={
+                        isRecomendada
+                          ? {
+                              background:
+                                "linear-gradient(135deg, rgba(132,185,143,0.28), rgba(68,93,163,0.22))",
+                              color: "#1F5A3A",
+                              borderColor: "rgba(132,185,143,0.5)",
+                            }
+                          : {
+                              background: "rgba(255,248,225,0.85)",
+                              color: "#8A6D00",
+                              borderColor: "rgba(201,168,76,0.45)",
+                            }
+                      }
                     >
                       <span>{badgeIcon}</span>
                       {isRecomendada ? "⭐ " : ""}{badgeLabel}
@@ -390,7 +433,7 @@ export function PropuestasComerciales(props: Props) {
                 <button
                   type="button"
                   onClick={() => removePropuesta(idx)}
-                  className="text-[#242424]/30 transition hover:text-[#C0392B]"
+                  className="text-[#5C6B85]/50 transition hover:text-[#C0392B]"
                   title="Eliminar escenario"
                 >
                   <Trash2 size={14} />
@@ -398,13 +441,13 @@ export function PropuestasComerciales(props: Props) {
               </div>
 
               {/* Cuotas eliminadas - Prioridad 2 */}
-              <div className="px-5 pt-4">
+              <div className="relative px-5 pt-4">
                 <div
                   className="text-[11px] font-bold uppercase tracking-[0.18em]"
                   style={{ color: NUVEX.azul }}
                 >
                   Elimina{" "}
-                  <span className="text-[15px]" style={{ color: NUVEX.negro }}>
+                  <span className="text-[15px]" style={{ color: "#1F2A44" }}>
                     {c.valid ? c.cuotasEliminadas : cuotas}
                   </span>{" "}
                   cuotas
@@ -412,14 +455,14 @@ export function PropuestasComerciales(props: Props) {
               </div>
 
               {!c.valid ? (
-                <div className="px-5 pb-5 pt-3">
+                <div className="relative px-5 pb-5 pt-3">
                   <Alert tone="error">
                     <span className="inline-flex items-center gap-1.5">
                       <AlertTriangle size={12} /> {c.motivo ?? "No es viable con estos datos."}
                     </span>
                   </Alert>
                   <div className="mt-3">
-                    <label className="text-[10px] font-semibold uppercase tracking-wider text-[#242424]/65">
+                    <label className="text-[10px] font-semibold uppercase tracking-wider text-[#3A4660]/75">
                       Cuotas a eliminar
                     </label>
                     <input
@@ -431,24 +474,26 @@ export function PropuestasComerciales(props: Props) {
                         const v = parseInt(e.target.value, 10);
                         setCuotas(idx, Number.isFinite(v) ? v : 0);
                       }}
-                      className="mt-1 w-full rounded-lg border border-[#E3E7EE] bg-white px-3 py-2 text-base font-bold text-[#242424] outline-none focus:border-[#445DA3] focus:ring-2 focus:ring-[#445DA3]/15"
+                      className="mt-1 w-full rounded-xl border border-white/70 bg-white/70 px-3 py-2 text-base font-bold text-[#1F2A44] outline-none backdrop-blur-md focus:border-[#445DA3]/60 focus:ring-2 focus:ring-[#445DA3]/15"
                     />
                   </div>
                 </div>
               ) : (
                 <>
-                  {/* AHORRO TOTAL - Prioridad 1 (héroe) */}
-                  <div className="px-5 pt-4">
+                  {/* AHORRO TOTAL - héroe con gradiente */}
+                  <div className="relative px-5 pt-4">
                     <div
                       className="text-[10px] font-semibold uppercase tracking-[0.18em]"
-                      style={{ color: "#1F7A45" }}
+                      style={{ color: "#1F5A3A" }}
                     >
                       Ahorro total
                     </div>
                     <div
-                      className="mt-1 break-words text-[26px] font-extrabold leading-none sm:text-[34px]"
+                      className="mt-1 bg-clip-text text-[26px] font-extrabold leading-none text-transparent break-words sm:text-[34px]"
                       style={{
-                        color: "#1F7A45",
+                        backgroundImage:
+                          "linear-gradient(135deg, #1F7A45 0%, #2EA866 55%, #5BC889 100%)",
+                        letterSpacing: "-0.02em",
                       }}
                     >
                       {formatCOP(c.ahorroTotal)}
@@ -456,7 +501,7 @@ export function PropuestasComerciales(props: Props) {
                   </div>
 
                   {/* Métricas principales */}
-                  <div className="grid min-w-0 grid-cols-1 gap-x-5 gap-y-3 px-5 pt-5 min-[380px]:grid-cols-2">
+                  <div className="relative grid min-w-0 grid-cols-1 gap-x-5 gap-y-3 px-5 pt-5 min-[380px]:grid-cols-2">
                     <HeroMetric
                       label="Incremento mensual"
                       value={`+${formatCOP(c.incrementoMensual)}`}
@@ -465,15 +510,15 @@ export function PropuestasComerciales(props: Props) {
                     <HeroMetric
                       label="Nueva cuota"
                       value={formatCOP(c.nuevaCuota)}
-                      color={NUVEX.negro}
+                      color="#1F2A44"
                     />
                     <HeroMetric
                       label="Nuevo plazo"
                       value={`${c.nuevoPlazo} meses · ${(c.nuevoPlazo / 12).toFixed(1)} años`}
-                      color={NUVEX.negro}
+                      color="#1F2A44"
                     />
                     <div>
-                      <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[#8893A0]">
+                      <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[#5C6B85]">
                         Cuotas a eliminar
                       </div>
                       <input
@@ -485,66 +530,83 @@ export function PropuestasComerciales(props: Props) {
                           const v = parseInt(e.target.value, 10);
                           setCuotas(idx, Number.isFinite(v) ? v : 0);
                         }}
-                        className="mt-1 w-20 rounded-md border border-[#E3E7EE] bg-white px-2 py-1 text-base font-bold text-[#242424] outline-none focus:border-[#445DA3] focus:ring-2 focus:ring-[#445DA3]/15"
+                        className="mt-1 w-20 rounded-lg border border-white/70 bg-white/75 px-2 py-1 text-base font-bold text-[#1F2A44] outline-none backdrop-blur-md focus:border-[#445DA3]/60 focus:ring-2 focus:ring-[#445DA3]/15"
                       />
                     </div>
                   </div>
 
-                  {/* Comparativo tiempo actual vs nuevo */}
+                  {/* Comparativo tiempo actual vs nuevo - glass */}
                   <div
-                    className="mx-5 mt-4 rounded-xl border px-3 py-2.5"
-                    style={{ borderColor: "#E6F2EA", backgroundColor: "#F4FBF6" }}
+                    className="relative mx-5 mt-4 overflow-hidden rounded-xl border px-3 py-2.5 backdrop-blur-md"
+                    style={{
+                      borderColor: "rgba(132,185,143,0.4)",
+                      background:
+                        "linear-gradient(135deg, rgba(132,185,143,0.18), rgba(255,255,255,0.45))",
+                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.6)",
+                    }}
                   >
                     <div
                       className="text-[9px] font-semibold uppercase tracking-[0.16em]"
-                      style={{ color: "#1F7A45" }}
+                      style={{ color: "#1F5A3A" }}
                     >
                       Tiempo: actual vs nuevo
                     </div>
                     <div className="mt-1 flex items-baseline justify-between gap-2">
-                      <span className="text-[12px] font-semibold text-[#6B7480] line-through">
+                      <span className="text-[12px] font-semibold text-[#5C6B85] line-through">
                         {props.cuotasPendientes} m · {(props.cuotasPendientes / 12).toFixed(1)} a
                       </span>
-                      <span className="text-[14px] font-extrabold" style={{ color: "#1F7A45" }}>
+                      <span className="text-[14px] font-extrabold" style={{ color: "#1F5A3A" }}>
                         {c.nuevoPlazo} m · {(c.nuevoPlazo / 12).toFixed(1)} a
                       </span>
                     </div>
-                    <div className="mt-0.5 text-right text-[10px] font-semibold" style={{ color: "#1F7A45" }}>
+                    <div className="mt-0.5 text-right text-[10px] font-semibold" style={{ color: "#1F5A3A" }}>
                       −{c.cuotasEliminadas} cuotas (−{(c.cuotasEliminadas / 12).toFixed(1)} años)
                     </div>
                   </div>
 
-
                   {/* Sección secundaria: honorarios y veces pagado */}
                   <div
-                    className="mt-5 flex flex-col gap-3 border-t px-5 py-3 text-[11px] min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between"
-                    style={{ borderColor: "#F0F2F5", color: "#6B7480" }}
+                    className="relative mt-5 flex flex-col gap-3 border-t px-5 py-3 text-[11px] min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between"
+                    style={{ borderColor: "rgba(255,255,255,0.7)", color: "#5C6B85" }}
                   >
                     <div className="flex flex-col">
                       <span className="text-[9px] font-semibold uppercase tracking-wider opacity-70">
                         Honorarios
                       </span>
-                      <span className="font-semibold text-[#242424]">{formatCOP(c.honorarios)}</span>
+                      <span className="font-semibold text-[#1F2A44]">{formatCOP(c.honorarios)}</span>
                     </div>
                     <div className="flex flex-col min-[380px]:items-end">
                       <span className="text-[9px] font-semibold uppercase tracking-wider opacity-70">
                         Veces pagado
                       </span>
-                      <span className="font-semibold text-[#242424]">{formatNumber(veces, 2)}x</span>
+                      <span className="font-semibold text-[#1F2A44]">{formatNumber(veces, 2)}x</span>
                     </div>
                   </div>
 
                   {/* CTA */}
-                  <div className="px-5 pb-5">
+                  <div className="relative px-5 pb-5">
                     <button
                       type="button"
                       onClick={() => setRecomendadaIdx(idx)}
                       disabled={isRecomendada}
-                      className="w-full rounded-lg px-3 py-2.5 text-[11px] font-semibold tracking-wide transition"
+                      className="w-full rounded-xl px-3 py-2.5 text-[12px] font-semibold tracking-wide transition hover:scale-[1.01]"
                       style={
                         isRecomendada
-                          ? { backgroundColor: "#E6F2EA", color: "#1F7A45", cursor: "default" }
-                          : { backgroundColor: NUVEX.negro, color: "#fff" }
+                          ? {
+                              background:
+                                "linear-gradient(135deg, rgba(132,185,143,0.32), rgba(68,93,163,0.22))",
+                              color: "#1F5A3A",
+                              border: "1px solid rgba(132,185,143,0.55)",
+                              cursor: "default",
+                              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.65)",
+                            }
+                          : {
+                              background:
+                                "linear-gradient(135deg, #1F2A44 0%, #445DA3 60%, #5B7DC8 100%)",
+                              color: "#fff",
+                              border: "1px solid rgba(255,255,255,0.18)",
+                              boxShadow: "0 10px 24px -14px rgba(68,93,163,0.55)",
+                            }
                       }
                     >
                       {isRecomendada ? "✓ Escenario recomendado" : "Marcar como recomendado"}
@@ -558,7 +620,7 @@ export function PropuestasComerciales(props: Props) {
       </div>
 
       {cuotasList.length === 0 && (
-        <div className="rounded-lg border border-dashed border-[#E3E7EE] p-6 text-center text-sm text-[#242424]/60">
+        <div className="rounded-xl border border-dashed border-white/70 bg-white/40 p-6 text-center text-sm text-[#3A4660]/75 backdrop-blur-md">
           No hay escenarios. Usa “Nuevo escenario” para agregar uno.
         </div>
       )}
