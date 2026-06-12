@@ -6,6 +6,7 @@ import { NSelect } from "@/components/nuvia/NSelect";
 import { supabase } from "@/integrations/supabase/client";
 import { listCarteras, type CarteraConExpediente } from "@/lib/cartera";
 import { registrarPago } from "@/lib/cartera.functions";
+import { listCuentasReceptoras, type CuentaReceptora } from "@/lib/cuentasReceptoras";
 import { Receipt } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/finanzas/recaudos")({
@@ -32,6 +33,7 @@ type PagoRecent = {
 function RecaudosPage() {
   const [carteras, setCarteras] = useState<CarteraConExpediente[]>([]);
   const [pagos, setPagos] = useState<PagoRecent[]>([]);
+  const [cuentas, setCuentas] = useState<CuentaReceptora[]>([]);
   const [reloadKey, setReloadKey] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -40,6 +42,7 @@ function RecaudosPage() {
     listCarteras()
       .then(setCarteras)
       .finally(() => setLoading(false));
+    listCuentasReceptoras(true).then(setCuentas).catch(() => setCuentas([]));
   }, [reloadKey]);
 
   useEffect(() => {
@@ -86,6 +89,7 @@ function RecaudosPage() {
       <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-4">
         <NuevoRecaudo
           carteras={carteras}
+          cuentas={cuentas}
           loading={loading}
           onSaved={() => setReloadKey((k) => k + 1)}
         />
@@ -145,10 +149,12 @@ const METODO_OPTS = [
 
 function NuevoRecaudo({
   carteras,
+  cuentas,
   loading,
   onSaved,
 }: {
   carteras: CarteraConExpediente[];
+  cuentas: CuentaReceptora[];
   loading: boolean;
   onSaved: () => void;
 }) {
@@ -302,7 +308,27 @@ function NuevoRecaudo({
             <NSelect value={metodo} onValueChange={setMetodo} options={METODO_OPTS} compact />
           </Field>
           <Field label="Banco receptor">
-            <input value={bancoReceptor} onChange={(e) => setBancoReceptor(e.target.value)} className="nuvia-input nuvia-input-sm w-full" />
+            {cuentas.length > 0 ? (
+              <NSelect
+                value={bancoReceptor || "__none__"}
+                onValueChange={(v) => setBancoReceptor(v === "__none__" ? "" : v)}
+                options={[
+                  { value: "__none__", label: "— Selecciona cuenta —" },
+                  ...cuentas.map((c) => ({
+                    value: `${c.banco}${c.numero ? ` · ${c.numero}` : ""}`,
+                    label: `${c.banco}${c.tipo ? ` (${c.tipo})` : ""}${c.numero ? ` · ${c.numero}` : ""}`,
+                  })),
+                ]}
+                compact
+              />
+            ) : (
+              <input
+                value={bancoReceptor}
+                onChange={(e) => setBancoReceptor(e.target.value)}
+                placeholder="Sin cuentas parametrizadas"
+                className="nuvia-input nuvia-input-sm w-full"
+              />
+            )}
           </Field>
         </div>
 
