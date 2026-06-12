@@ -208,6 +208,7 @@ export interface Reconstruccion {
   vecesPagado: number;
   primerasCuotas: FilaAmort[];  // 12
   ultimasCuotas: FilaAmort[];   // 12
+  todasCuotas: FilaAmort[];
   totalIntereses: number;
   /** Cuotas efectivas con subsidio aplicadas en la reconstrucción. */
   cuotasFrechAplicadas: number;
@@ -268,6 +269,7 @@ export function reconstruir(input: ReconstruccionInput): Reconstruccion {
       vecesPagado: desembolso > 0 ? costoTotal / desembolso : 0,
       primerasCuotas: tabla.slice(0, 12),
       ultimasCuotas: tabla.slice(-12),
+      todasCuotas: tabla,
       totalIntereses,
       cuotasFrechAplicadas,
       totalCorreccionUvr,
@@ -330,6 +332,7 @@ export function reconstruir(input: ReconstruccionInput): Reconstruccion {
     vecesPagado: veces,
     primerasCuotas: tabla.slice(0, 12),
     ultimasCuotas: tabla.slice(-12),
+    todasCuotas: tabla,
     totalIntereses,
     cuotasFrechAplicadas,
   };
