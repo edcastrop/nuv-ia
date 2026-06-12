@@ -105,7 +105,7 @@ function CasoDetail() {
           "linear-gradient(180deg, var(--nuvia-bg-primary) 0%, var(--nuvia-bg-secondary) 54%, var(--nuvia-bg-primary) 100%)",
       }}
     >
-      <div className="nuvia-shell-dark mx-auto max-w-[1680px] space-y-4">
+      <div className="mx-auto max-w-[1680px] space-y-4">
       {/* Header */}
       <section className="glass-panel overflow-hidden p-4 md:p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
