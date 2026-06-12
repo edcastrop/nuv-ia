@@ -205,7 +205,7 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      const { error: insErr } = await supabase.from("extractos_lecturas").insert({
+      const { data: inserted, error: insErr } = await supabase.from("extractos_lecturas").insert({
         expediente_id: expedienteId ?? null,
         asesor_id: user?.id,
         aprobado_por: user?.id,
@@ -219,10 +219,31 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
         confianza_global: result.confianzaGlobal,
         estado: "aprobado",
         motor_version: "v1",
-      });
+      }).select("id").single();
       if (insErr) throw insErr;
       onConfirm?.({ ...result, datos: datosFinales as Record<CampoMotor, string> });
       setStage("saved");
+
+      // Disparo automático de NUVIA Financial QA AI (sólo si hay expediente)
+      if (expedienteId && inserted?.id) {
+        setAutoQaState("running");
+        setAutoQaError(null);
+        try {
+          const r = await autoAudit({ data: { extractoLecturaId: inserted.id } });
+          setAutoQa({
+            auditoriaId: r.auditoriaId,
+            score: r.score,
+            categoria: r.categoria as QACategoria,
+            dictamen: r.dictamen,
+            hallazgos: r.hallazgos,
+            criticos: r.criticos,
+          });
+          setAutoQaState("done");
+        } catch (qaErr) {
+          setAutoQaError(qaErr instanceof Error ? qaErr.message : "No se pudo ejecutar la auditoría QA");
+          setAutoQaState("error");
+        }
+      }
     } catch (e) {
       setError((e as Error).message);
       setStage("error");
