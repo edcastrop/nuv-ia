@@ -40,15 +40,15 @@ function cargoDe(p: DirectorioPersona): string {
 function NeuralBg() {
   return (
     <>
-      <div className="pointer-events-none absolute inset-0 -z-10" style={{ background: "radial-gradient(circle at 20% 10%, rgba(68,93,163,0.18), transparent 50%), radial-gradient(circle at 80% 80%, rgba(132,185,143,0.14), transparent 55%)" }} />
+      <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(circle at 20% 10%, rgba(68,93,163,0.18), transparent 50%), radial-gradient(circle at 80% 80%, rgba(132,185,143,0.14), transparent 55%)" }} />
       <motion.div
-        className="pointer-events-none absolute -top-40 -left-32 h-[28rem] w-[28rem] rounded-full blur-3xl -z-10"
+        className="pointer-events-none absolute -top-40 -left-32 h-[28rem] w-[28rem] rounded-full blur-3xl"
         style={{ background: `radial-gradient(circle, ${NUVEX.azul}40, transparent 70%)` }}
         animate={{ x: [0, 30, 0], y: [0, 20, 0] }}
         transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
-        className="pointer-events-none absolute -bottom-40 -right-32 h-[32rem] w-[32rem] rounded-full blur-3xl -z-10"
+        className="pointer-events-none absolute -bottom-40 -right-32 h-[32rem] w-[32rem] rounded-full blur-3xl"
         style={{ background: `radial-gradient(circle, ${NUVEX.verde}35, transparent 70%)` }}
         animate={{ x: [0, -40, 0], y: [0, -20, 0] }}
         transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
