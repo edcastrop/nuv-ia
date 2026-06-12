@@ -1055,8 +1055,8 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
             <div
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
               style={{
-                background: "linear-gradient(135deg, rgba(68,93,163,0.68), rgba(132,185,143,0.62))",
-                boxShadow: "0 12px 32px -16px rgba(132,185,143,0.42)",
+                background: "linear-gradient(135deg, rgba(68,93,163,0.58), rgba(132,185,143,0.52))",
+                boxShadow: "0 12px 32px -18px rgba(132,185,143,0.34)",
               }}
             >
               <Sparkles className="h-5 w-5 text-white" />
@@ -1094,8 +1094,8 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
               }}
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white transition-transform hover:scale-[1.02]"
               style={{
-                background: "linear-gradient(135deg, rgba(68,93,163,0.70), rgba(132,185,143,0.62))",
-                boxShadow: "0 10px 28px -14px rgba(68,93,163,0.52)",
+                background: "linear-gradient(135deg, rgba(68,93,163,0.58), rgba(132,185,143,0.52))",
+                boxShadow: "0 10px 28px -16px rgba(68,93,163,0.42)",
               }}
             >
               <Upload className="h-4 w-4 shrink-0" />
