@@ -30,6 +30,7 @@ function QaAiDashboard() {
   const [kpis, setKpis] = useState<{ total: number; aprobados: number; obs: number; rechazados: number; pendientesRevision: number; promedio: number; alertasAbiertas: number; alertasCriticasAbiertas: number; topTipo: string | null; topCount: number } | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
+  const [copilotoOpen, setCopilotoOpen] = useState(false);
 
   useEffect(() => {
     if (rolesLoading || !canValidarProyeccion) { setLoading(false); return; }
