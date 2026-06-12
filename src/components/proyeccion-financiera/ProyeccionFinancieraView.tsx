@@ -970,6 +970,26 @@ export function ProyeccionFinancieraView() {
               )}
             </section>
 
+            {/* Atajo: ir directo a simular escenarios */}
+            <div className="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan-100/10 bg-white/[0.03] px-5 py-4 backdrop-blur-xl">
+              <div className="min-w-0">
+                <div className="text-[13.5px] font-semibold text-white">¿Listo para simular?</div>
+                <div className="text-[12px] text-white/55">Crea y compara escenarios sobre el crédito cargado.</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => document.getElementById("sec-escenarios")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[12.5px] font-semibold text-white transition hover:scale-[1.02]"
+                style={{
+                  background: "linear-gradient(135deg, #22D3EE 0%, #2563EB 46%, #4ADE80 100%)",
+                  boxShadow: "0 10px 28px -10px rgba(74,222,128,0.55)",
+                }}
+              >
+                <Layers className="h-4 w-4" /> Simular escenarios
+              </button>
+            </div>
+
+
             {/* ─── KPI ZONE (Costo de no actuar = protagonista) ─── */}
             <section className="mb-8 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
               <HeroKpi
