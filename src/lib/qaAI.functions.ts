@@ -254,6 +254,16 @@ export const listAlertasQA = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => AlertaFilterSchema.parse(input ?? {}))
   .handler(async ({ data, context }) => {
+    // Si hay filtro por banco, pre-resolvemos expediente_ids en servidor para
+    // evitar traer alertas que luego se descartan en cliente.
+    let expedienteIdsBanco: string[] | null = null;
+    if (data.banco) {
+      const { data: expsB } = await context.supabase
+        .from("expedientes").select("id").ilike("banco", `%${data.banco}%`).limit(2000);
+      expedienteIdsBanco = (expsB ?? []).map((e) => e.id);
+      if (expedienteIdsBanco.length === 0) return { rows: [] };
+    }
+
     let q = context.supabase
       .from("qa_alertas")
       .select("id,auditoria_id,expediente_id,tipo,severidad,mensaje,estado,reconocida_by,reconocida_at,resuelta_by,resuelta_at,notas,created_at")
@@ -261,6 +271,7 @@ export const listAlertasQA = createServerFn({ method: "POST" })
       .limit(500);
     if (data.severidad) q = q.eq("severidad", data.severidad);
     if (data.estado) q = q.eq("estado", data.estado);
+    if (expedienteIdsBanco) q = q.in("expediente_id", expedienteIdsBanco);
     const { data: alertas, error } = await q;
     if (error) throw new Error(error.message);
     const audIds = Array.from(new Set((alertas ?? []).map((a) => a.auditoria_id).filter(Boolean))) as string[];
@@ -299,10 +310,10 @@ export const listAlertasQA = createServerFn({ method: "POST" })
         banco: exp?.banco ?? null,
       };
     });
-    if (data.banco) rows = rows.filter((r) => (r.banco ?? "").toLowerCase().includes(data.banco!.toLowerCase()));
     if (data.analistaId) rows = rows.filter((r) => r.analistaId === data.analistaId);
     return { rows };
   });
+
 
 const ActualizarAlertaSchema = z.object({
   id: z.string().uuid(),
@@ -365,6 +376,27 @@ export const listReglasQA = createServerFn({ method: "POST" })
     return { rows: data ?? [] };
   });
 
+// Esquemas por código de regla (Fase 3): valida que el payload entregue
+// las llaves correctas con tipos correctos según el código de regla.
+const PAYLOAD_SCHEMAS: Record<string, z.ZodTypeAny> = {
+  "tol.cuota": z.object({ abs: z.number().nonnegative().optional(), pct: z.number().nonnegative().max(1).optional() }),
+  "tol.saldo": z.object({ abs: z.number().nonnegative() }),
+  "tol.tasa_ea": z.object({ abs: z.number().nonnegative().max(1) }),
+  "tol.seguros": z.object({ abs: z.number().nonnegative() }),
+  "tol.frech": z.object({ abs: z.number().nonnegative().max(1) }),
+  "umb.sim_cuotas": z.object({ max: z.number().nonnegative() }),
+  "umb.sim_ahorro": z.object({ abs: z.number().nonnegative() }),
+  "umb.score.excelente": z.object({ min: z.number().min(0).max(100) }),
+  "umb.score.aprobado": z.object({ min: z.number().min(0).max(100) }),
+  "umb.score.revisar": z.object({ min: z.number().min(0).max(100) }),
+  "pen.info": z.object({ value: z.number().nonnegative().max(100) }),
+  "pen.warning": z.object({ value: z.number().nonnegative().max(100) }),
+  "pen.critica": z.object({ value: z.number().nonnegative().max(100) }),
+  "pen.diff_cuota": z.object({ max: z.number().nonnegative().max(100) }),
+  "pen.diff_sim": z.object({ max: z.number().nonnegative().max(100) }),
+  "pen.faltantes": z.object({ max: z.number().nonnegative().max(100) }),
+};
+
 const ActualizarReglaSchema = z.object({
   id: z.string().uuid(),
   payload: z.record(z.string(), z.union([z.number(), z.string(), z.boolean()])),
@@ -376,16 +408,29 @@ export const actualizarReglaQA = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => ActualizarReglaSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    // Server-side role check (RLS también lo aplica, pero validamos explícito)
     const { data: canEdit } = await supabase.rpc("can_use_qa_ai", { _uid: userId });
     if (!canEdit) throw new Error("Forbidden: rol no autorizado para editar reglas QA");
 
-    // Coerce numeric strings → numbers para mantener forma consistente
+    // Cargar la regla para conocer su código (driver de la validación por esquema)
+    const { data: reglaActual, error: errLoad } = await supabase
+      .from("qa_reglas").select("codigo").eq("id", data.id).single();
+    if (errLoad) throw new Error(errLoad.message);
+
+    // Coerce numeric strings → numbers
     const cleanPayload: Record<string, number | string | boolean> = {};
     Object.entries(data.payload).forEach(([k, v]) => {
       if (typeof v === "string" && v !== "" && !Number.isNaN(Number(v))) cleanPayload[k] = Number(v);
       else cleanPayload[k] = v;
     });
+
+    // Validar contra el esquema específico del código de regla
+    const schema = PAYLOAD_SCHEMAS[reglaActual.codigo];
+    if (schema) {
+      const parsed = schema.safeParse(cleanPayload);
+      if (!parsed.success) {
+        throw new Error(`Payload inválido para ${reglaActual.codigo}: ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`);
+      }
+    }
 
     const patch: { payload: Record<string, number | string | boolean>; activa?: boolean } = { payload: cleanPayload };
     if (data.activa !== undefined) patch.activa = data.activa;
@@ -406,8 +451,19 @@ export const listHistorialReglaQA = createServerFn({ method: "POST" })
       .order("changed_at", { ascending: false })
       .limit(data.limit);
     if (error) throw new Error(error.message);
-    return { rows: rows ?? [] };
+    // Join con profiles para mostrar nombre del autor del cambio
+    const userIds = Array.from(new Set((rows ?? []).map((r) => r.changed_by).filter(Boolean))) as string[];
+    const { data: profs } = userIds.length
+      ? await context.supabase.from("profiles").select("id,nombre,email").in("id", userIds)
+      : { data: [] as Array<{ id: string; nombre: string | null; email: string | null }> };
+    const pMap = new Map((profs ?? []).map((p) => [p.id, p]));
+    const enriched = (rows ?? []).map((r) => {
+      const p = r.changed_by ? pMap.get(r.changed_by) : null;
+      return { ...r, changedByNombre: p?.nombre ?? null, changedByEmail: p?.email ?? null };
+    });
+    return { rows: enriched };
   });
+
 
 export const cargarToleranciasActivas = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

@@ -7,9 +7,10 @@ import {
 import { useServerFn } from "@tanstack/react-start";
 import { qaKpis, listAuditoriasQA } from "@/lib/qaAI.functions";
 import { useUserRole } from "@/hooks/useUserRole";
+import { CopilotoQADrawer } from "@/components/qa-ai/CopilotoQADrawer";
 import {
   Brain, ShieldCheck, CheckCircle2, AlertTriangle, XCircle,
-  Gauge, Inbox, ArrowRight, Plus, Bell, Settings, Activity,
+  Gauge, Inbox, ArrowRight, Plus, Bell, Settings, Activity, Sparkles,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/qa-ai/")({
@@ -29,6 +30,7 @@ function QaAiDashboard() {
   const [kpis, setKpis] = useState<{ total: number; aprobados: number; obs: number; rechazados: number; pendientesRevision: number; promedio: number; alertasAbiertas: number; alertasCriticasAbiertas: number; topTipo: string | null; topCount: number } | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
+  const [copilotoOpen, setCopilotoOpen] = useState(false);
 
   useEffect(() => {
     if (rolesLoading || !canValidarProyeccion) { setLoading(false); return; }
@@ -58,6 +60,13 @@ function QaAiDashboard() {
         description="Auditor matemático autónomo: reconstruye cada simulación desde cero, la contrasta con el extracto bancario y emite dictamen automático."
         actions={
           <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => setCopilotoOpen(true)}
+              className="nuvia-input nuvia-input-sm"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer" }}
+            >
+              <Sparkles size={14} /> Copiloto QA
+            </button>
             <Link to="/qa-ai/nuevo">
               <button className="nuvia-input nuvia-input-sm" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer", background: "var(--nuvia-accent)", color: "#fff", border: "none" }}>
                 <Plus size={14} /> Auditar nuevo
@@ -127,6 +136,8 @@ function QaAiDashboard() {
           </div>
         )}
       </NCard>
+
+      <CopilotoQADrawer open={copilotoOpen} onClose={() => setCopilotoOpen(false)} />
     </PageLayout>
   );
 }

@@ -4,9 +4,10 @@ import { PageLayout, ExecutiveHero, NCard, SectionHeader, NSelect, KpiGrid, KpiC
 import { useServerFn } from "@tanstack/react-start";
 import { listAlertasQA, actualizarAlertaQA } from "@/lib/qaAI.functions";
 import { useUserRole } from "@/hooks/useUserRole";
-import { AlertTriangle, Bell, CheckCircle2, Inbox, ArrowRight, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Bell, CheckCircle2, Inbox, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { CopilotoQADrawer } from "@/components/qa-ai/CopilotoQADrawer";
 
 export const Route = createFileRoute("/_authenticated/qa-ai/alertas")({
   component: AlertasQA,
@@ -40,6 +41,7 @@ function AlertasQA() {
   const [dlg, setDlg] = useState<{ alerta: Alerta; accion: "reconocer" | "resolver" } | null>(null);
   const [notas, setNotas] = useState("");
   const [busy, setBusy] = useState(false);
+  const [copilotoOpen, setCopilotoOpen] = useState(false);
 
   const fetchRows = useCallback(async () => {
     setLoading(true);
@@ -89,11 +91,20 @@ function AlertasQA() {
         title="Panel de Alertas QA"
         description="Inconsistencias críticas detectadas por el motor matemático. Reconoce y resuelve cada alerta antes de avanzar el caso."
         actions={
-          <Link to="/qa-ai">
-            <button className="nuvia-input nuvia-input-sm" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer" }}>
-              <ShieldCheck size={14} /> Volver al dashboard
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => setCopilotoOpen(true)}
+              className="nuvia-input nuvia-input-sm"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer" }}
+            >
+              <Sparkles size={14} /> Copiloto QA
             </button>
-          </Link>
+            <Link to="/qa-ai">
+              <button className="nuvia-input nuvia-input-sm" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer" }}>
+                <ShieldCheck size={14} /> Volver al dashboard
+              </button>
+            </Link>
+          </div>
         }
       />
 
@@ -197,6 +208,8 @@ function AlertasQA() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CopilotoQADrawer open={copilotoOpen} onClose={() => setCopilotoOpen(false)} />
     </PageLayout>
   );
 }
