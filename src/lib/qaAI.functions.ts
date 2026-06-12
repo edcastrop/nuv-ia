@@ -681,7 +681,7 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
 
     await supabase.from("qa_auditoria_log").insert({
       auditoria_id: auditoriaId,
-      accion: "crear_auto",
+      accion: "crear",
       payload: { score: result.score.score, dictamen: result.score.dictamen, fuente: "lector_extractos" },
       user_id: userId,
     });
