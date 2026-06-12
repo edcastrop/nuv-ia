@@ -107,15 +107,16 @@ function CarteraIAPage() {
           <NSelect
             value={bucket}
             onValueChange={setBucket}
-            placeholder="Todos los buckets"
-            options={[{ value: "", label: "Todos los buckets" }, ...BUCKETS.map((b) => ({ value: b.key, label: b.label }))]}
+            options={[
+              { value: "__all__", label: "Todos los buckets" },
+              ...BUCKETS.map((b) => ({ value: b.key, label: b.label })),
+            ]}
           />
           <NSelect
             value={flag}
             onValueChange={setFlag}
-            placeholder="Todas las alertas"
             options={[
-              { value: "", label: "Todas las alertas" },
+              { value: "__all__", label: "Todas las alertas" },
               { value: "pago_parcial", label: "Pago parcial" },
               { value: "aprobado_sin_pago", label: "Aprobado sin pago" },
               { value: "cc_sin_recaudo", label: "CC sin recaudo" },
