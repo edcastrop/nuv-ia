@@ -205,7 +205,7 @@ function Calculadora({ initial }: { initial?: InitialData }) {
                     className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 text-left transition hover:border-[#84B98F]/50 hover:bg-white/[0.05]"
                   >
                     <div className="text-[10px] uppercase tracking-wider" style={{ color: COLORS.muted }}>{o.etiqueta}</div>
-                    <div className="mt-1 text-lg font-semibold">{formatCOP(o.valor)}</div>
+                    <div className="mt-1 text-lg font-semibold" style={{ color: "#FFFFFF" }}>{formatCOP(o.valor)}</div>
                     <div className="mt-1 text-xs" style={{ color: COLORS.green }}>{o.descuentoPct > 0 ? `-${o.descuentoPct}% descuento` : "Sin descuento"}</div>
                   </button>
                 ))}
@@ -634,17 +634,18 @@ function Field({ label, value, onChange, placeholder }: { label: string; value: 
 function Kpi({ label, value, accent, icon: Icon, highlight }: { label: string; value: string; accent: string; icon?: React.ComponentType<{ className?: string }>; highlight?: boolean }) {
   return (
     <div
-      className="rounded-2xl p-4 transition"
+      className="rounded-2xl p-4 transition relative overflow-hidden"
       style={{
         background: highlight ? "linear-gradient(135deg, rgba(132,185,143,0.12), rgba(68,93,163,0.08))" : "rgba(255,255,255,0.03)",
         border: `1px solid ${highlight ? "rgba(132,185,143,0.3)" : COLORS.line}`,
       }}
     >
+      <span aria-hidden style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: accent }} />
       <div className="flex items-center justify-between">
         <div className="text-[10px] uppercase tracking-wider" style={{ color: COLORS.muted }}>{label}</div>
-        {Icon && <Icon className="h-3.5 w-3.5" />}
+        {Icon && <span style={{ color: accent }}><Icon className="h-3.5 w-3.5" /></span>}
       </div>
-      <div className="mt-2 text-lg font-semibold" style={{ color: accent }}>{value}</div>
+      <div className="mt-2 text-lg font-semibold" style={{ color: "#FFFFFF" }}>{value}</div>
     </div>
   );
 }
