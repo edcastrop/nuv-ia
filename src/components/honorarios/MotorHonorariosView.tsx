@@ -643,7 +643,7 @@ function Kpi({ label, value, accent, icon: Icon, highlight }: { label: string; v
       <span aria-hidden style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: accent }} />
       <div className="flex items-center justify-between">
         <div className="text-[10px] uppercase tracking-wider" style={{ color: COLORS.muted }}>{label}</div>
-        {Icon && <Icon className="h-3.5 w-3.5" style={{ color: accent }} />}
+        {Icon && <span style={{ color: accent }}><Icon className="h-3.5 w-3.5" /></span>}
       </div>
       <div className="mt-2 text-lg font-semibold" style={{ color: "#FFFFFF" }}>{value}</div>
     </div>
