@@ -205,6 +205,28 @@ export async function cambiarEstadoConValidacion(
   const etapaAnterior = computeEtapaActual({ estado_caso: anterior ?? null });
   const etapaNueva = computeEtapaActual({ estado_caso: nuevoEstado });
 
+  // Fase 4 — QA Guard: si la última auditoría QA es FAILED, bloquear cualquier avance de etapa.
+  const delta = indexOfEtapa(etapaNueva) - indexOfEtapa(etapaAnterior);
+  if (delta > 0) {
+    const guard = await evaluarQaGuard(expedienteId);
+    if (!guard.ok) {
+      notifyEtapaError({
+        etapaActualId: etapaAnterior,
+        etapaDestinoId: etapaNueva,
+        razon: guard.reason,
+        faltantes: ["Corregir hallazgos del dictamen QA y reauditar el caso"],
+      });
+      throw new TransicionInvalidaError({
+        ok: false,
+        reason: guard.reason,
+        etapaAnterior,
+        etapaNueva,
+        delta,
+      });
+    }
+  }
+
+
   if (etapaAnterior === "resultado_banco" && etapaNueva === "informe") {
     const result: TransicionResult = {
       ok: !!aceptacionAt,
