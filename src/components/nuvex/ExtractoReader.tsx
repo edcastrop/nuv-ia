@@ -1164,10 +1164,11 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           <div
             className="relative flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl"
             style={{
-              background: "linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.075) 42%, rgba(255,255,255,0.035))",
-              border: "1px solid rgba(238,245,255,0.36)",
-              boxShadow: "0 46px 110px -48px rgba(0,0,0,0.98), inset 0 1px 0 rgba(255,255,255,0.36), inset 0 -1px 0 rgba(255,255,255,0.10)",
-              backdropFilter: "blur(24px) saturate(135%)",
+              background: "linear-gradient(145deg, rgba(238,245,255,0.26), rgba(238,245,255,0.13) 42%, rgba(238,245,255,0.06))",
+              border: "1px solid rgba(238,245,255,0.52)",
+              boxShadow: "0 46px 110px -48px rgba(0,0,0,0.98), inset 0 1px 0 rgba(255,255,255,0.56), inset 0 -1px 0 rgba(255,255,255,0.14)",
+              backdropFilter: "blur(34px) saturate(155%)",
+              WebkitBackdropFilter: "blur(34px) saturate(155%)",
               maxHeight: "92vh",
             }}
             onClick={(e) => e.stopPropagation()}
