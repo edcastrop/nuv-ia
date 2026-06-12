@@ -115,7 +115,10 @@ export function amortizacion(
 export interface ReconstruccionInput {
   modalidad: Modalidad;
   saldoCapital: number;
-  tasaEa: number;           // % anual efectiva
+  tasaEa: number;           // % anual efectiva — tasa que el cliente paga (cobrada / vigente)
+  /** Tasa pactada / contractual sin beneficios. Se usa como BASE para la cuota
+   *  teórica sin subsidio cuando hay cobertura FRECH/Fresh activa. */
+  tasaEaPactada?: number;
   cuotasPendientes: number;
   seguros: number;          // COP / mes (total)
   coberturaFrechPp?: number; // pp anuales EA descontados
@@ -128,6 +131,8 @@ export interface ReconstruccionInput {
 
 export interface Reconstruccion {
   iMv: number;
+  /** Tasa EA usada como base para la cuota teórica sin beneficio. */
+  tasaEaBase: number;
   cuotaTeorica: number;
   cuotaConSubsidio: number;
   cuotaTotalConSeguros: number;
@@ -142,16 +147,29 @@ export interface Reconstruccion {
 }
 
 export function reconstruir(input: ReconstruccionInput): Reconstruccion {
-  const ea = (input.tasaEa || 0) / 100;
-  const iMv = eaToMv(ea);
+  const eaCobrada = (input.tasaEa || 0) / 100;
+  const eaPactada = (input.tasaEaPactada || 0) / 100;
+  const cob = input.coberturaFrechPp ? input.coberturaFrechPp / 100 : 0;
+  const beneficioMensual = Math.max(0, input.coberturaFrechValorMensual ?? 0);
+  const hayCobertura = cob > 0 || beneficioMensual > 0;
+
+  // BASE para la cuota teórica SIN beneficio:
+  // - Si hay cobertura y existe tasa pactada > cobrada → usar pactada
+  //   (la cobrada ya viene neta del subsidio y subestima la cuota teórica real).
+  // - En cualquier otro caso → usar la tasa cobrada / única reportada.
+  const eaBase = hayCobertura && eaPactada > eaCobrada ? eaPactada : eaCobrada;
+  const iMv = eaToMv(eaBase);
   const n = Math.max(0, Math.round(input.cuotasPendientes));
   const C = cuotaTeorica(input.saldoCapital, iMv, n);
 
-  const cob = input.coberturaFrechPp ? input.coberturaFrechPp / 100 : 0;
-  const iSub = cob > 0 ? eaToMv(Math.max(0, ea - cob)) : iMv;
-  const CSub = cob > 0 ? cuotaTeorica(input.saldoCapital, iSub, n) : C;
+  // Cuota con subsidio:
+  // - Si cobertura en pp → descontar de la base (pactada − pp).
+  // - Si solo es valor mensual → mantener la cuota teórica y restar el COP.
+  const iSub = cob > 0 ? eaToMv(Math.max(0, eaBase - cob)) : eaToMv(eaCobrada);
+  const CSub = cob > 0
+    ? cuotaTeorica(input.saldoCapital, iSub, n)
+    : (beneficioMensual > 0 ? Math.max(0, C - beneficioMensual) : C);
   const beneficioPorTasa = Math.max(0, C - CSub);
-  const beneficioMensual = Math.max(0, input.coberturaFrechValorMensual ?? 0);
   const beneficio = beneficioMensual > 0 ? beneficioMensual : beneficioPorTasa;
 
   const seguros = Math.max(0, input.seguros || 0);
@@ -159,23 +177,23 @@ export function reconstruir(input: ReconstruccionInput): Reconstruccion {
   const cuotaTotal = cuotaFinancieraBase + seguros - (beneficioMensual > 0 ? beneficioMensual : 0);
 
   // Tope FRECH (84 cuotas) — si no llega override, asumimos cobertura completa hasta el tope.
-  const hayFrech = cob > 0 || beneficioMensual > 0;
-  const cuotasFrechAplicadas = hayFrech
+  const cuotasFrechAplicadas = hayCobertura
     ? Math.max(0, Math.min(n, Math.round(input.coberturaFrechCuotasRestantes ?? FRECH_MAX_CUOTAS)))
     : 0;
 
+  // Amortización: arranca con subsidio activo (tasa subsidiada o descuento COP);
+  // tras `cuotasFrechAplicadas` cambia a la tasa base sin beneficio.
+  const iArranque = beneficioMensual > 0 ? iMv : (cob > 0 ? iSub : iMv);
   const tabla = amortizacion(
     input.saldoCapital,
-    beneficioMensual > 0 ? iMv : (cob > 0 ? iSub : iMv),
+    iArranque,
     n,
     seguros,
-    hayFrech ? (beneficioMensual > 0
-      ? { cuotasSubsidio: cuotasFrechAplicadas, subsidioMensual: beneficioMensual }
-      : { iPostSubsidio: iMv, cuotasSubsidio: cuotasFrechAplicadas, subsidioMensual: beneficioMensual })
+    hayCobertura
+      ? { iPostSubsidio: iMv, cuotasSubsidio: cuotasFrechAplicadas, subsidioMensual: beneficioMensual }
       : undefined,
   );
   const totalIntereses = tabla.reduce((s, f) => s + f.interes, 0);
-  // Costo total real teniendo en cuenta el switch de tasa.
   const costoTotal = tabla.reduce((s, f) => s + f.cuotaTotal, 0);
   const desembolso = input.valorDesembolsado && input.valorDesembolsado > 0
     ? input.valorDesembolsado : input.saldoCapital;
@@ -183,6 +201,7 @@ export function reconstruir(input: ReconstruccionInput): Reconstruccion {
 
   return {
     iMv,
+    tasaEaBase: eaBase * 100,
     cuotaTeorica: C,
     cuotaConSubsidio: CSub,
     cuotaTotalConSeguros: cuotaTotal,

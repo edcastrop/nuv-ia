@@ -66,6 +66,7 @@ const AuditarInputSchema = z.object({
   reconstruccion: z.object({
     saldoCapital: z.number().nonnegative(),
     tasaEa: z.number().nonnegative(),
+    tasaEaPactada: z.number().nonnegative().optional(),
     cuotasPendientes: z.number().int().nonnegative(),
     seguros: z.number().nonnegative().default(0),
     coberturaFrechPp: z.number().nonnegative().optional(),
@@ -100,6 +101,7 @@ export const auditarCaso = createServerFn({ method: "POST" })
         modalidad: data.modalidad as Modalidad,
         saldoCapital: data.reconstruccion.saldoCapital,
         tasaEa: data.reconstruccion.tasaEa,
+        tasaEaPactada: data.reconstruccion.tasaEaPactada,
         cuotasPendientes: data.reconstruccion.cuotasPendientes,
         seguros: data.reconstruccion.seguros,
         coberturaFrechPp: data.reconstruccion.coberturaFrechPp,
@@ -648,7 +650,8 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
       : (d.saldoUVR || d.valorUVR) ? "uvr" : "hipotecario";
 
     const saldo = parseNum(d.saldoCapital) ?? 0;
-    const tasa = parseNum(d.tasaEA) ?? 0;
+    const tasa = parseNum(d.tasaEA) ?? parseNum(d.teaCobrada) ?? 0;
+    const tasaPactada = parseNum(d.teaPactada);
     const cuotasPend = parseNum(d.cuotasPendientes) ?? 0;
     const cuotasPag = parseNum(d.cuotasPagadas) ?? 0;
     const seguros = parseNum(d.seguros) ?? 0;
@@ -674,6 +677,7 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
         modalidad,
         saldoCapital: saldo,
         tasaEa: tasa,
+        tasaEaPactada: tasaPactada,
         cuotasPendientes: cuotasPend,
         seguros,
         coberturaFrechPp: frech,
@@ -696,7 +700,7 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
       modalidad,
       extractoLecturaId: ext.id,
       expedienteId: ext.expediente_id,
-      reconstruccion: { saldoCapital: saldo, tasaEa: tasa, cuotasPendientes: cuotasPend, cuotasPagadas: cuotasPag, seguros, coberturaFrechPp: frech, coberturaFrechValorMensual: frechValorMensual, coberturaFrechCuotasRestantes: frechCuotasRestantes, valorDesembolsado: desemb },
+      reconstruccion: { saldoCapital: saldo, tasaEa: tasa, tasaEaPactada: tasaPactada, cuotasPendientes: cuotasPend, cuotasPagadas: cuotasPag, seguros, coberturaFrechPp: frech, coberturaFrechValorMensual: frechValorMensual, coberturaFrechCuotasRestantes: frechCuotasRestantes, valorDesembolsado: desemb },
       extracto: { saldoCapital: saldo, tasaEa: tasa, cuota: cuotaExt, seguros, coberturaFrechPp: frech, coberturaFrechValorMensual: frechValorMensual },
     };
 
