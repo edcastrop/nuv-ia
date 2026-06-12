@@ -424,22 +424,27 @@ function CasoDetail() {
       </Tabs>
 
       {/* Zona peligro */}
-      <Card>
+      <section className="glass-panel p-4">
         <div className="flex items-center justify-between">
-          <div className="text-sm text-[#242424]/70">¿Eliminar este expediente?</div>
+          <div className="text-sm text-[var(--nuvia-text-secondary)]">¿Eliminar este expediente?</div>
           <button
             onClick={async () => {
               if (!confirm("¿Eliminar definitivamente este expediente?")) return;
               try { await deleteExpediente(exp.id); navigate({ to: "/casos" }); }
               catch (e) { alert((e as Error).message); }
             }}
-            className="rounded-lg border px-3 py-1.5 text-xs font-medium"
-            style={{ borderColor: "#F5C2C2", color: "#B42318", backgroundColor: "#FDECEC" }}
+            className="rounded-lg border px-3 py-1.5 text-xs font-medium transition hover:brightness-110"
+            style={{
+              borderColor: "color-mix(in oklab, var(--nuvia-danger) 40%, transparent)",
+              background: "color-mix(in oklab, var(--nuvia-danger) 14%, transparent)",
+              color: "var(--nuvia-danger)",
+            }}
           >
             Eliminar
           </button>
         </div>
-      </Card>
+      </section>
+      </div>
     </div>
   );
 }
