@@ -9,7 +9,7 @@ import { qaKpis, listAuditoriasQA } from "@/lib/qaAI.functions";
 import { useUserRole } from "@/hooks/useUserRole";
 import {
   Brain, ShieldCheck, CheckCircle2, AlertTriangle, XCircle,
-  Gauge, Inbox, ArrowRight, Plus,
+  Gauge, Inbox, ArrowRight, Plus, Bell, Settings, Activity,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/qa-ai/")({
@@ -26,7 +26,7 @@ function QaAiDashboard() {
   const { canValidarProyeccion, loading: rolesLoading } = useUserRole();
   const fetchKpis = useServerFn(qaKpis);
   const fetchList = useServerFn(listAuditoriasQA);
-  const [kpis, setKpis] = useState<{ total: number; aprobados: number; obs: number; rechazados: number; promedio: number; alertasAbiertas: number } | null>(null);
+  const [kpis, setKpis] = useState<{ total: number; aprobados: number; obs: number; rechazados: number; pendientesRevision: number; promedio: number; alertasAbiertas: number; alertasCriticasAbiertas: number; topTipo: string | null; topCount: number } | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -57,11 +57,25 @@ function QaAiDashboard() {
         title="NUVIA Financial QA AI"
         description="Auditor matemático autónomo: reconstruye cada simulación desde cero, la contrasta con el extracto bancario y emite dictamen automático."
         actions={
-          <Link to="/qa-ai/nuevo">
-            <button className="nuvia-input nuvia-input-sm" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer", background: "var(--nuvia-accent)", color: "#fff", border: "none" }}>
-              <Plus size={14} /> Auditar nuevo caso
-            </button>
-          </Link>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Link to="/qa-ai/nuevo">
+              <button className="nuvia-input nuvia-input-sm" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer", background: "var(--nuvia-accent)", color: "#fff", border: "none" }}>
+                <Plus size={14} /> Auditar nuevo
+              </button>
+            </Link>
+            <Link to="/qa-ai/alertas">
+              <button className="nuvia-input nuvia-input-sm" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer" }}>
+                <Bell size={14} /> Ver alertas
+              </button>
+            </Link>
+            {canValidarProyeccion && (
+              <Link to="/qa-ai/config">
+                <button className="nuvia-input nuvia-input-sm" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer" }}>
+                  <Settings size={14} /> Configurar reglas
+                </button>
+              </Link>
+            )}
+          </div>
         }
       />
 
@@ -71,9 +85,11 @@ function QaAiDashboard() {
         <KpiCard label="Con observaciones" value={kpis?.obs ?? 0} icon={<AlertTriangle size={14} />} tone="warning" />
         <KpiCard label="Rechazados" value={kpis?.rechazados ?? 0} icon={<XCircle size={14} />} tone="danger" />
       </KpiGrid>
-      <KpiGrid cols={2}>
+      <KpiGrid cols={4}>
         <KpiCard label="QA Score promedio" value={`${(kpis?.promedio ?? 0).toFixed(1)} / 100`} icon={<Gauge size={14} />} tone="blue" />
-        <KpiCard label="Alertas críticas abiertas" value={kpis?.alertasAbiertas ?? 0} icon={<AlertTriangle size={14} />} tone="danger" />
+        <KpiCard label="Alertas críticas abiertas" value={kpis?.alertasCriticasAbiertas ?? 0} icon={<AlertTriangle size={14} />} tone="danger" />
+        <KpiCard label="Pendientes revisión" value={kpis?.pendientesRevision ?? 0} icon={<Activity size={14} />} tone="warning" />
+        <KpiCard label="Inconsistencia top" value={kpis?.topTipo ? `${kpis.topTipo} (${kpis.topCount})` : "—"} icon={<Inbox size={14} />} tone="blue" />
       </KpiGrid>
 
       <NCard padding="none">
