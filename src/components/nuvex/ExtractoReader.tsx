@@ -246,7 +246,7 @@ function confColor(c: Confianza, value: string) {
       bg: "rgba(74,222,128,0.10)",
       border: "rgba(74,222,128,0.35)",
       label: "Alta confianza",
-      labelColor: "#4ADE80",
+      labelColor: "#84B98F",
     };
   if (c === "media")
     return {
@@ -1006,7 +1006,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
               border: "2px dashed rgba(74,222,128,0.7)",
             }}
           >
-            <div className="flex flex-col items-center gap-2 text-[#4ADE80]">
+            <div className="flex flex-col items-center gap-2 text-[#84B98F]">
               <Upload className="h-10 w-10" />
               <span className="text-sm font-semibold">Suelta el extracto para analizarlo</span>
             </div>
@@ -1018,7 +1018,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
             <div
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
               style={{
-                background: "linear-gradient(135deg, #22D3EE 0%, #2563EB 46%, #4ADE80 100%)",
+                background: "linear-gradient(135deg, #445DA3 0%, #445DA3 46%, #84B98F 100%)",
                 boxShadow: "0 12px 32px -12px rgba(74,222,128,0.6)",
               }}
             >
@@ -1033,7 +1033,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                   className="shrink-0 rounded-full px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider"
                   style={{
                     background: "rgba(74,222,128,0.15)",
-                    color: "#4ADE80",
+                    color: "#84B98F",
                     border: "1px solid rgba(74,222,128,0.35)",
                   }}
                 >
@@ -1056,7 +1056,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
               }}
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white transition-transform hover:scale-[1.02]"
               style={{
-                background: "linear-gradient(135deg, #22D3EE 0%, #2563EB 46%, #4ADE80 100%)",
+                background: "linear-gradient(135deg, #445DA3 0%, #445DA3 46%, #84B98F 100%)",
                 boxShadow: "0 10px 28px -10px rgba(34,211,238,0.7)",
               }}
             >
@@ -1163,7 +1163,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
                         style={{
                           background: active
-                            ? "linear-gradient(135deg, #22D3EE 0%, #2563EB 46%, #4ADE80 100%)"
+                            ? "linear-gradient(135deg, #445DA3 0%, #445DA3 46%, #84B98F 100%)"
                             : "rgba(255,255,255,0.05)",
                           color: active ? "#fff" : "rgba(255,255,255,0.5)",
                           boxShadow: current ? "0 0 0 4px rgba(74,222,128,0.18)" : undefined,
@@ -1179,7 +1179,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                           className="mx-2 h-px flex-1"
                           style={{
                             background: active
-                              ? "linear-gradient(90deg,#22D3EE,#2563EB,#4ADE80)"
+                              ? "linear-gradient(90deg,#445DA3,#445DA3,#84B98F)"
                               : "rgba(255,255,255,0.08)",
                           }}
                         />
@@ -1221,11 +1221,11 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                     dragActive ? "scale-[1.01]" : ""
                   }`}
                   style={{
-                    borderColor: dragActive ? "#4ADE80" : "rgba(255,255,255,0.15)",
+                    borderColor: dragActive ? "#84B98F" : "rgba(255,255,255,0.15)",
                     background: dragActive ? "rgba(74,222,128,0.08)" : "transparent",
                   }}
                 >
-                  <Upload className={`h-10 w-10 ${dragActive ? "text-[#4ADE80]" : "text-white/40"}`} />
+                  <Upload className={`h-10 w-10 ${dragActive ? "text-[#84B98F]" : "text-white/40"}`} />
                   <div className="text-sm text-white/70 pointer-events-none">
                     {dragActive ? "Suelta el archivo aquí" : "Arrastra el extracto o haz clic para seleccionar"}
                   </div>
@@ -1236,7 +1236,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                       fileRef.current?.click();
                     }}
                     className="rounded-lg px-4 py-2 text-xs font-semibold text-white"
-                    style={{ background: "linear-gradient(135deg, #22D3EE 0%, #2563EB 46%, #4ADE80 100%)" }}
+                    style={{ background: "linear-gradient(135deg, #445DA3 0%, #445DA3 46%, #84B98F 100%)" }}
                   >
                     Seleccionar archivo
                   </button>
@@ -1247,7 +1247,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
 
               {stage === "reading" && (
                 <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-                  <Loader2 className="h-10 w-10 animate-spin text-[#4ADE80]" />
+                  <Loader2 className="h-10 w-10 animate-spin text-[#84B98F]" />
                   <div className="text-sm font-semibold text-white">
                     NUVIA IA está leyendo el extracto…
                   </div>
@@ -1294,7 +1294,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                     onClick={() => file && password && processFile(file, password)}
                     disabled={!password}
                     className="mt-4 w-full rounded-xl px-5 py-3 text-sm font-semibold text-white disabled:opacity-40"
-                    style={{ background: "linear-gradient(135deg, #22D3EE 0%, #2563EB 46%, #4ADE80 100%)" }}
+                    style={{ background: "linear-gradient(135deg, #445DA3 0%, #445DA3 46%, #84B98F 100%)" }}
                   >
                     Leer extracto
                   </button>
@@ -1330,7 +1330,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                       border: "1px solid rgba(74,222,128,0.30)",
                     }}
                   >
-                    <ShieldCheck className="h-5 w-5 text-[#4ADE80]" />
+                    <ShieldCheck className="h-5 w-5 text-[#84B98F]" />
                     <div className="text-xs text-white/80">
                       Datos detectados por IA. Revisa y corrige antes de llenar el simulador. Tu
                       validación es obligatoria.
@@ -1369,7 +1369,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                           </div>
                           <div
                             className="mt-0.5 font-semibold"
-                            style={{ color: teaUsada ? "#4ADE80" : "#F4A261" }}
+                            style={{ color: teaUsada ? "#84B98F" : "#F4A261" }}
                           >
                             {teaUsada ? `${teaUsada}%` : "— pendiente"}
                           </div>
@@ -1403,7 +1403,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                     }}
                   >
                     <div className="mb-3 flex items-center gap-2">
-                      <Sparkles className="h-4 w-4" style={{ color: "#4ADE80" }} />
+                      <Sparkles className="h-4 w-4" style={{ color: "#84B98F" }} />
                       <div className="text-[12px] font-bold uppercase tracking-wider text-white">
                         Resumen de interpretación del crédito
                       </div>
@@ -1412,7 +1412,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                           className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase"
                           style={{
                             background: "rgba(74,222,128,0.18)",
-                            color: "#4ADE80",
+                            color: "#84B98F",
                             border: "1px solid rgba(74,222,128,0.45)",
                           }}
                         >
@@ -1537,7 +1537,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                       >
                         <div
                           className="text-[10px] uppercase tracking-wider"
-                          style={{ color: "#4ADE80" }}
+                          style={{ color: "#84B98F" }}
                         >
                           Cuota base de simulación (editable)
                         </div>
@@ -1624,7 +1624,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
 
               {stage === "applied" && (
                 <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-                  <CheckCircle2 className="h-12 w-12 text-[#4ADE80]" />
+                  <CheckCircle2 className="h-12 w-12 text-[#84B98F]" />
                   <div className="text-sm font-semibold text-white">
                     Simulador prellenado correctamente
                   </div>
@@ -1666,7 +1666,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                     disabled={confirmDisabled}
                     className="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:scale-100"
                     style={{
-                      background: "linear-gradient(135deg, #22D3EE 0%, #2563EB 46%, #4ADE80 100%)",
+                      background: "linear-gradient(135deg, #445DA3 0%, #445DA3 46%, #84B98F 100%)",
                       boxShadow: "0 10px 28px -10px rgba(74,222,128,0.6)",
                     }}
                   >
