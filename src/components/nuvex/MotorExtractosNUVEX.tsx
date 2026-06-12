@@ -461,6 +461,45 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
           >
             <CheckCircle2 className="h-4 w-4" /> Lectura aprobada y guardada en trazabilidad.
           </div>
+
+          {expedienteId && (
+            <div className="mt-3 rounded-md bg-white/70 border border-white px-3 py-2 text-[12px]">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-3.5 w-3.5" style={{ color: NUVEX.azul }} />
+                <span className="font-semibold text-[#242424]">NUVIA Financial QA AI</span>
+                {autoQaState === "running" && (
+                  <span className="text-[#445DA3] inline-flex items-center gap-1">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Auditando automáticamente…
+                  </span>
+                )}
+                {autoQaState === "done" && autoQa && (
+                  <QABadge
+                    categoria={autoQa.categoria}
+                    score={autoQa.score}
+                    auditoriaId={autoQa.auditoriaId}
+                    size="sm"
+                  />
+                )}
+                {autoQaState === "error" && (
+                  <span className="text-[#991B1B]">Auditoría QA falló (la lectura quedó guardada).</span>
+                )}
+              </div>
+              {autoQaState === "done" && autoQa && (
+                <div className="mt-1 text-[11px] text-[#242424]/70">
+                  {autoQa.hallazgos} hallazgo(s) · {autoQa.criticos} crítico(s)
+                  {autoQa.categoria === "rechazado" && (
+                    <span className="ml-2 text-[#991B1B] font-semibold">
+                      Caso bloqueado para avanzar. Corrija y reauditar.
+                    </span>
+                  )}
+                </div>
+              )}
+              {autoQaState === "error" && autoQaError && (
+                <div className="mt-1 text-[11px] text-[#991B1B]/80">{autoQaError}</div>
+              )}
+            </div>
+          )}
+
           <button
             onClick={reset}
             className="mt-3 text-xs underline"
@@ -470,6 +509,7 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
           </button>
         </div>
       )}
+
 
       {(stage === "review" || stage === "saving") && result && (
         <div className="space-y-4">
