@@ -3,18 +3,21 @@ import { Activity, ChevronDown } from "lucide-react";
 import type { AppRole } from "@/hooks/useUserRole";
 
 export interface HeroRolCardProps {
-  saludo: string;            // "Buenos días, Juan"
-  rolLabel: string;          // "Gerencia General"
-  subtitle: string;          // descripción contextual
+  saludo: string;
+  rolLabel: string;
+  subtitle: string;
   metricaEstrella?: {
     label: string;
     value: ReactNode;
     tone?: "blue" | "green" | "warning" | "danger";
   };
-  roles?: AppRole[];                       // todos los roles del usuario
-  activeRole?: AppRole;                    // rol actualmente seleccionado
-  onChangeRole?: (r: AppRole) => void;     // setter del selector
+  roles?: AppRole[];
+  activeRole?: AppRole;
+  onChangeRole?: (r: AppRole) => void;
   roleLabelFor?: (r: AppRole) => string;
+  ctaLabel?: string;
+  ctaIcon?: ReactNode;
+  onCta?: () => void;
 }
 
 export function HeroRolCard({
@@ -26,8 +29,12 @@ export function HeroRolCard({
   activeRole,
   onChangeRole,
   roleLabelFor,
+  ctaLabel,
+  ctaIcon,
+  onCta,
 }: HeroRolCardProps) {
   const multiRol = roles.length > 1;
+
 
   return (
     <section
