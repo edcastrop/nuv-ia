@@ -487,6 +487,12 @@ function ExpedienteCard({ r, isDup = false }: { r: Expediente; isDup?: boolean }
                   Dup
                 </span>
               )}
+              <QABadge
+                categoria={r.qa_categoria ?? null}
+                score={r.qa_score ?? null}
+                auditoriaId={r.qa_auditoria_id ?? null}
+                size="xs"
+              />
             </div>
             <div className="text-xs mt-0.5" style={{ color: TEXT2 }}>
               CC {r.cedula || "—"}
