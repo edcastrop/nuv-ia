@@ -699,10 +699,13 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       const n = parseInt(v.replace(/[^\d]/g, ""), 10);
       return Number.isFinite(n) ? n : 0;
     };
-    if (_ip("cuotasPagadas") <= 0 && _ip("cuotaActualNumero") > 0) {
+    const tieneMinimoParaSimular =
+      parseMontoExtracto(get("saldoCapital")) > 0 &&
+      parseMontoExtracto(get("cuotaBaseSimulacion") || get("cuotaMensual")) > 0;
+    if (!tieneMinimoParaSimular && _ip("cuotasPagadas") <= 0 && _ip("cuotaActualNumero") > 0) {
       return;
     }
-    if (_ip("plazoInicial") <= 0 || _ip("cuotasPagadas") <= 0) {
+    if (!tieneMinimoParaSimular && (_ip("plazoInicial") <= 0 || _ip("cuotasPagadas") <= 0)) {
       return;
     }
 
@@ -983,11 +986,13 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           }
         }}
         style={{
-          background: "linear-gradient(135deg, rgba(10,18,38,0.92), rgba(7,22,45,0.92))",
-          border: `1px solid ${dragActive ? "rgba(132,185,143,0.6)" : "rgba(255,255,255,0.08)"}`,
+          background: "linear-gradient(145deg, rgba(255,255,255,0.055), rgba(68,93,163,0.060) 48%, rgba(132,185,143,0.040))",
+          border: `1px solid ${dragActive ? "rgba(132,185,143,0.6)" : "rgba(255,255,255,0.10)"}`,
+          backdropFilter: "blur(32px) saturate(160%)",
+          WebkitBackdropFilter: "blur(32px) saturate(160%)",
           boxShadow: dragActive
             ? "0 24px 60px -20px rgba(132,185,143,0.55)"
-            : "0 24px 60px -30px rgba(68,93,163,0.45)",
+            : "0 30px 60px -40px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.08)",
           transform: dragActive ? "scale(1.005)" : "scale(1)",
         }}
       >
