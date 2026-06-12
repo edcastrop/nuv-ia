@@ -37,8 +37,14 @@ export function NSelect({
   className = "",
   minWidth,
 }: NSelectProps) {
+  const EMPTY_SENTINEL = "__nuvia_empty__";
+  const selectValue = value === "" ? EMPTY_SENTINEL : value;
+
   return (
-    <Select value={value} onValueChange={onValueChange}>
+    <Select
+      value={selectValue}
+      onValueChange={(next) => onValueChange(next === EMPTY_SENTINEL ? "" : next)}
+    >
       <SelectTrigger
         className={`nuvia-select-trigger ${compact ? "nuvia-select-trigger-sm" : ""} ${className}`}
         style={minWidth ? { minWidth } : undefined}
@@ -47,7 +53,11 @@ export function NSelect({
       </SelectTrigger>
       <SelectContent className="nuvia-select-content">
         {options.map((opt) => (
-          <SelectItem key={opt.value} value={opt.value} className="nuvia-select-item">
+          <SelectItem
+            key={opt.value || EMPTY_SENTINEL}
+            value={opt.value === "" ? EMPTY_SENTINEL : opt.value}
+            className="nuvia-select-item"
+          >
             {opt.label}
           </SelectItem>
         ))}
