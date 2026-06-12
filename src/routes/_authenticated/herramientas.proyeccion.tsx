@@ -18,19 +18,19 @@ function AmbientBg() {
     <>
       <motion.div
         className="pointer-events-none fixed top-[-12rem] left-[-10rem] h-[40rem] w-[40rem] rounded-full blur-3xl"
-        style={{ background: "radial-gradient(circle, #445DA3, transparent 70%)", opacity: 0.35 }}
+        style={{ background: "radial-gradient(circle, #445DA3, transparent 70%)", opacity: 0.55 }}
         animate={{ x: [0, 80, 0], y: [0, 50, 0], scale: [1, 1.15, 1] }}
         transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
         className="pointer-events-none fixed bottom-[-12rem] right-[-10rem] h-[44rem] w-[44rem] rounded-full blur-3xl"
-        style={{ background: "radial-gradient(circle, #84B98F, transparent 70%)", opacity: 0.30 }}
+        style={{ background: "radial-gradient(circle, #84B98F, transparent 70%)", opacity: 0.50 }}
         animate={{ x: [0, -80, 0], y: [0, -40, 0], scale: [1, 1.2, 1] }}
         transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
         className="pointer-events-none fixed top-1/2 left-1/2 h-[28rem] w-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl"
-        style={{ background: "radial-gradient(circle, #9333EA, transparent 70%)", opacity: 0.18 }}
+        style={{ background: "radial-gradient(circle, #9333EA, transparent 70%)", opacity: 0.30 }}
         animate={{ x: [-40, 40, -40], y: [-20, 20, -20] }}
         transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
       />
