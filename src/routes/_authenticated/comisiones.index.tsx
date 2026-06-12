@@ -3,7 +3,16 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Card } from "@/components/nuvex/ui";
+import {
+  PageLayout,
+  ExecutiveHero,
+  KpiGrid,
+  KpiCard,
+  NCard,
+  SectionHeader,
+  EmptyState,
+  InsightCard,
+} from "@/components/nuvia";
 import { formatCOP } from "@/lib/format";
 import {
   listMisComisiones,
@@ -15,25 +24,38 @@ import {
   type Comision,
   type CuentaCobro,
 } from "@/lib/comisiones";
-import { AlertTriangle, BellRing, CircleDollarSign, FileText, Plus } from "lucide-react";
+import {
+  AlertTriangle,
+  BellRing,
+  CircleDollarSign,
+  FileText,
+  Plus,
+  TrendingUp,
+  Wallet,
+  Clock,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/comisiones/")({
   component: ComisionesPage,
-  head: () => ({ meta: [{ title: "Mis comisiones · NUVEX" }] }),
+  head: () => ({ meta: [{ title: "Mis comisiones · NUVIA" }] }),
 });
 
-const ESTADO_BADGE: Record<string, { bg: string; color: string; label: string }> = {
-  generada: { bg: "#EEF1FA", color: "#445DA3", label: "Generada" },
-  pendiente: { bg: "#FFF7E6", color: "#8A5A00", label: "En cuenta de cobro" },
-  aprobada: { bg: "#EAF7EE", color: "#1F7A45", label: "Aprobada" },
-  pagada: { bg: "#DDF4E3", color: "#1F7A45", label: "Pagada" },
-  rechazada: { bg: "#FEE2E2", color: "#991B1B", label: "Rechazada" },
+const ESTADO_CC: Record<string, { bg: string; color: string; label: string }> = {
+  borrador: { bg: "rgba(68,93,163,0.18)", color: "#A5B5E0", label: "Borrador" },
+  enviada: { bg: "rgba(68,93,163,0.22)", color: "#A5B5E0", label: "Enviada" },
+  aprobada: { bg: "rgba(132,185,143,0.20)", color: "#B6D9BD", label: "Aprobada" },
+  devuelta_correccion: { bg: "rgba(245,158,11,0.18)", color: "#FACC15", label: "Devuelta" },
+  rechazada: { bg: "rgba(239,68,68,0.18)", color: "#FCA5A5", label: "Rechazada" },
+  programada_pago: { bg: "rgba(99,102,241,0.18)", color: "#A5B4FC", label: "Programada" },
+  pagada: { bg: "rgba(132,185,143,0.28)", color: "#B6D9BD", label: "Pagada" },
 };
 
 function ComisionesPage() {
   const { user } = useAuth();
   const { roles } = useUserRole();
-  const esManager = roles.some((r) => ["admin", "gerencia", "super_admin", "cartera", "contabilidad"].includes(r));
+  const esManager = roles.some((r) =>
+    ["admin", "gerencia", "super_admin", "cartera", "contabilidad"].includes(r),
+  );
   const [comisiones, setComisiones] = useState<Comision[]>([]);
   const [cuentas, setCuentas] = useState<CuentaCobro[]>([]);
   const [expedientes, setExpedientes] = useState<Map<string, { cliente: string; banco: string | null }>>(new Map());
@@ -68,7 +90,6 @@ function ComisionesPage() {
     if (user) cargar();
   }, [user]);
 
-  // Disponibles para CC = liberado > pagado y sin CC activa
   const disponibles = useMemo(
     () => comisiones.filter((c) => saldoDisponibleComision(c) > 0),
     [comisiones],
@@ -83,11 +104,7 @@ function ComisionesPage() {
   );
 
   const totales = useMemo(() => {
-    let potencial = 0,
-      liberada = 0,
-      pagada = 0,
-      recaudado = 0,
-      contratado = 0;
+    let potencial = 0, liberada = 0, pagada = 0, recaudado = 0, contratado = 0;
     for (const c of comisiones) {
       potencial += Number(c.comision_potencial || 0);
       liberada += Number(c.comision_liberada || 0);
@@ -135,83 +152,142 @@ function ComisionesPage() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-8">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-[#0A1226]">
-            {esManager ? "Comisiones (todas)" : "Mis comisiones"}
-          </h1>
-          <p className="text-sm text-[#242424]/60">
-            Las comisiones se liberan únicamente sobre el dinero efectivamente recaudado por NUVEX en cartera.
-          </p>
-        </div>
-        {esManager && (
-          <Link
-            to="/contabilidad/cuentas-cobro"
-            className="rounded-lg border border-[#E3E7EE] px-4 py-2 text-sm font-medium text-[#445DA3] hover:bg-[#F7F9FB]"
-          >
-            Panel contabilidad →
-          </Link>
-        )}
-      </div>
+    <PageLayout>
+      <ExecutiveHero
+        badge={{ icon: <CircleDollarSign size={12} />, label: esManager ? "Comisiones · Vista global" : "Mis comisiones", tone: "blue" }}
+        title={esManager ? "Comisiones (todas)" : "Mis comisiones"}
+        description="Las comisiones se liberan únicamente sobre el dinero efectivamente recaudado por NUVIA en cartera."
+        actions={
+          esManager ? (
+            <Link
+              to="/contabilidad/cuentas-cobro"
+              className="text-[12px] font-semibold px-3 py-2 rounded-lg border transition-colors"
+              style={{
+                color: "var(--nuvia-accent-blue)",
+                borderColor: "var(--nuvia-border)",
+                background: "rgba(68,93,163,0.10)",
+              }}
+            >
+              Panel contabilidad →
+            </Link>
+          ) : undefined
+        }
+      />
 
-      <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-5">
-        <Stat label="Comisión potencial" value={formatCOP(totales.potencial)} color="#445DA3" />
-        <Stat label="Comisión liberada" value={formatCOP(totales.liberada)} color="#1F7A45" />
-        <Stat label="Comisión pagada" value={formatCOP(totales.pagada)} color="#1F7A45" />
-        <Stat label="Pendiente de pago" value={formatCOP(totales.pendiente)} color="#8A5A00" />
-        <Stat label="Por recaudar" value={formatCOP(totales.por_recaudar)} color="#6B7280" />
-      </div>
+      <KpiGrid cols={5}>
+        <KpiCard
+          icon={<TrendingUp size={16} />}
+          tone="blue"
+          label="Comisión potencial"
+          value={formatCOP(totales.potencial)}
+        />
+        <KpiCard
+          icon={<CircleDollarSign size={16} />}
+          tone="green"
+          label="Comisión liberada"
+          value={formatCOP(totales.liberada)}
+        />
+        <KpiCard
+          icon={<Wallet size={16} />}
+          tone="green"
+          label="Comisión pagada"
+          value={formatCOP(totales.pagada)}
+        />
+        <KpiCard
+          icon={<Clock size={16} />}
+          tone="warning"
+          label="Pendiente de pago"
+          value={formatCOP(totales.pendiente)}
+        />
+        <KpiCard
+          icon={<TrendingUp size={16} />}
+          tone="neutral"
+          label="Por recaudar"
+          value={formatCOP(totales.por_recaudar)}
+        />
+      </KpiGrid>
 
-      {disponibles.length > 0 && (
-        <div className="mb-4 flex items-start gap-3 rounded-xl border border-[#84B98F]/40 bg-[#EAF7EE] px-4 py-3 text-sm text-[#1F4D2C]">
-          <BellRing size={18} className="mt-0.5 text-[#1F7A45]" />
-          <div>
-            <div className="font-semibold">Tienes comisión disponible para generar cuenta de cobro.</div>
-            <div className="text-[12px] text-[#1F4D2C]/80">
-              {disponibles.length} caso{disponibles.length !== 1 ? "s" : ""} con saldo liberado por recaudo real ·{" "}
-              <strong>{formatCOP(totales.pendiente)}</strong> disponible.
+      {(disponibles.length > 0 || ccDevueltas.length > 0) && (
+        <div className="flex flex-col gap-2">
+          {disponibles.length > 0 && (
+            <div
+              className="flex items-start gap-3 rounded-xl px-4 py-3 text-[12.5px]"
+              style={{
+                border: "1px solid rgba(132,185,143,0.30)",
+                background: "rgba(132,185,143,0.08)",
+                color: "#D7EBDB",
+              }}
+            >
+              <BellRing size={16} className="mt-0.5" style={{ color: "var(--nuvia-success)" }} />
+              <div>
+                <div className="font-semibold" style={{ color: "#E8F4EB" }}>
+                  Tienes comisión disponible para generar cuenta de cobro.
+                </div>
+                <div className="text-[11.5px] mt-0.5" style={{ color: "rgba(215,235,219,0.85)" }}>
+                  {disponibles.length} caso{disponibles.length !== 1 ? "s" : ""} con saldo liberado por recaudo real ·{" "}
+                  <strong>{formatCOP(totales.pendiente)}</strong> disponible.
+                </div>
+              </div>
             </div>
-          </div>
+          )}
+          {ccDevueltas.length > 0 && (
+            <div
+              className="flex items-start gap-3 rounded-xl px-4 py-3 text-[12.5px]"
+              style={{
+                border: "1px solid rgba(250,204,21,0.35)",
+                background: "rgba(250,204,21,0.08)",
+                color: "#FDE68A",
+              }}
+            >
+              <AlertTriangle size={16} className="mt-0.5" style={{ color: "#FACC15" }} />
+              <div>
+                <div className="font-semibold">
+                  {ccDevueltas.length} cuenta{ccDevueltas.length !== 1 ? "s" : ""} devuelta
+                  {ccDevueltas.length !== 1 ? "s" : ""} para corrección
+                </div>
+                <div className="text-[11.5px] mt-0.5" style={{ color: "rgba(253,230,138,0.85)" }}>
+                  Revisa el detalle y vuelve a enviarla a Contabilidad.
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-      {ccDevueltas.length > 0 && (
-        <div className="mb-4 flex items-start gap-3 rounded-xl border border-[#FACC15]/50 bg-[#FEF3C7] px-4 py-3 text-sm text-[#7C5700]">
-          <AlertTriangle size={18} className="mt-0.5" />
-          <div>
-            <div className="font-semibold">
-              {ccDevueltas.length} cuenta{ccDevueltas.length !== 1 ? "s" : ""} devuelta
-              {ccDevueltas.length !== 1 ? "s" : ""} para corrección
-            </div>
-            <div className="text-[12px]">Revisa el detalle y vuelve a enviarla a Contabilidad.</div>
-          </div>
-        </div>
-      )}
+      <InsightCard scope="comisiones" />
 
       {/* Comisiones disponibles para generar cuenta */}
-      <Card className="mb-6">
-        <div className="border-b border-[#E3E7EE] px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm font-semibold text-[#0A1226]">
-            <CircleDollarSign size={15} className="text-[#445DA3]" />
-            Comisiones disponibles ({disponibles.length})
-          </div>
+      <NCard padding="md">
+        <div className="flex items-start justify-between gap-4 flex-wrap mb-3">
+          <SectionHeader
+            icon={<CircleDollarSign size={14} />}
+            title={`Comisiones disponibles (${disponibles.length})`}
+            description="Selecciona los casos con saldo cobrable para emitir una cuenta de cobro."
+          />
           {selected.size > 0 && (
-            <div className="flex items-center gap-3">
-              <span className="text-[12px] text-[#242424]/70">
-                {selected.size} seleccionadas · <strong>{formatCOP(totalSeleccionado)}</strong>
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className="text-[11.5px]"
+                style={{ color: "var(--nuvia-text-secondary)" }}
+              >
+                {selected.size} seleccionadas ·{" "}
+                <strong style={{ color: "var(--nuvia-text-primary)" }}>{formatCOP(totalSeleccionado)}</strong>
               </span>
               <input
                 value={observ}
                 onChange={(e) => setObserv(e.target.value)}
                 placeholder="Observaciones (opcional)"
-                className="rounded-lg border border-[#E3E7EE] px-3 py-1.5 text-[12px] outline-none focus:border-[#445DA3]"
+                className="nuvia-input nuvia-input-sm"
+                style={{ minWidth: 220 }}
               />
               <button
                 onClick={generar}
                 disabled={creating}
-                className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[12px] font-semibold text-white disabled:opacity-50"
-                style={{ background: "linear-gradient(135deg,#445DA3,#84B98F)" }}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-white disabled:opacity-50 transition-shadow"
+                style={{
+                  background: "linear-gradient(135deg,#445DA3,#84B98F)",
+                  boxShadow: "0 10px 26px -12px rgba(132,185,143,0.55)",
+                }}
               >
                 <Plus size={13} /> Generar cuenta de cobro
               </button>
@@ -219,63 +295,102 @@ function ComisionesPage() {
           )}
         </div>
         {loading ? (
-          <div className="p-8 text-center text-sm text-[#242424]/60">Cargando…</div>
-        ) : disponibles.length === 0 ? (
-          <div className="p-8 text-center text-sm text-[#242424]/60">
-            Aún no hay comisión liberada. Las comisiones se liberan a medida que cartera registra los pagos del cliente.
+          <div className="py-10 text-center text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>
+            Cargando comisiones…
           </div>
+        ) : disponibles.length === 0 ? (
+          <EmptyState
+            title="Sin comisión liberada aún"
+            description="Las comisiones se liberan a medida que cartera registra los pagos efectivos del cliente."
+          />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[980px]">
-              <thead className="bg-[#F7F9FB] text-[11px] uppercase tracking-wide text-[#242424]/60">
-                <tr>
-                  <th className="px-3 py-2 text-left w-10"></th>
-                  <th className="px-3 py-2 text-left">Cliente</th>
-                  <th className="px-3 py-2 text-left">Banco</th>
-                  <th className="px-3 py-2 text-right">Honorarios contratados</th>
-                  <th className="px-3 py-2 text-right">Recaudado</th>
-                  <th className="px-3 py-2 text-right">%</th>
-                  <th className="px-3 py-2 text-right">Potencial</th>
-                  <th className="px-3 py-2 text-right">Liberada</th>
-                  <th className="px-3 py-2 text-right">Pagada</th>
-                  <th className="px-3 py-2 text-right">Saldo cobrable</th>
-                  <th className="px-3 py-2 text-right">Por recaudar</th>
+            <table className="w-full text-[12.5px] min-w-[1040px]" style={{ color: "var(--nuvia-text-primary)" }}>
+              <thead>
+                <tr style={{ background: "rgba(255,255,255,0.02)" }}>
+                  {[
+                    { l: "", a: "left", w: "36px" },
+                    { l: "Cliente", a: "left" },
+                    { l: "Banco", a: "left" },
+                    { l: "Honorarios contratados", a: "right" },
+                    { l: "Recaudado", a: "right" },
+                    { l: "%", a: "right" },
+                    { l: "Potencial", a: "right" },
+                    { l: "Liberada", a: "right" },
+                    { l: "Pagada", a: "right" },
+                    { l: "Saldo cobrable", a: "right" },
+                    { l: "Por recaudar", a: "right" },
+                  ].map((h, i) => (
+                    <th
+                      key={i}
+                      className="px-3 py-2.5 font-semibold uppercase"
+                      style={{
+                        textAlign: h.a as "left" | "right",
+                        fontSize: "10.5px",
+                        letterSpacing: "0.12em",
+                        color: "var(--nuvia-text-secondary)",
+                        borderBottom: "1px solid var(--nuvia-border)",
+                        width: h.w,
+                      }}
+                    >
+                      {h.l}
+                    </th>
+                  ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E3E7EE]">
+              <tbody>
                 {disponibles.map((c) => {
                   const exp = expedientes.get(c.expediente_id);
                   const disp = saldoDisponibleComision(c);
                   const pendRec = pendienteRecaudoComision(c);
+                  const isSel = selected.has(c.id);
                   return (
-                    <tr key={c.id} className="hover:bg-[#F7F9FB]">
-                      <td className="px-3 py-2">
+                    <tr
+                      key={c.id}
+                      className="transition-colors hover:bg-white/[0.03]"
+                      style={{
+                        borderBottom: "1px solid var(--nuvia-border)",
+                        background: isSel ? "rgba(68,93,163,0.08)" : undefined,
+                      }}
+                    >
+                      <td className="px-3 py-2.5">
                         <input
                           type="checkbox"
-                          checked={selected.has(c.id)}
+                          checked={isSel}
                           onChange={() => toggle(c.id)}
+                          style={{ accentColor: "var(--nuvia-accent-blue)" }}
                         />
                       </td>
-                      <td className="px-3 py-2 text-[#0A1226]">{exp?.cliente ?? "—"}</td>
-                      <td className="px-3 py-2 text-[#242424]/70">{exp?.banco ?? "—"}</td>
-                      <td className="px-3 py-2 text-right">
+                      <td className="px-3 py-2.5 font-medium" style={{ color: "var(--nuvia-text-primary)" }}>
+                        {exp?.cliente ?? "—"}
+                      </td>
+                      <td className="px-3 py-2.5" style={{ color: "var(--nuvia-text-secondary)" }}>
+                        {exp?.banco ?? "—"}
+                      </td>
+                      <td className="px-3 py-2.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-primary)" }}>
                         {formatCOP(Number(c.honorarios_contratados ?? c.base ?? 0))}
                       </td>
-                      <td className="px-3 py-2 text-right">{formatCOP(Number(c.recaudado || 0))}</td>
-                      <td className="px-3 py-2 text-right">{Number(c.porcentaje).toFixed(2)}%</td>
-                      <td className="px-3 py-2 text-right text-[#445DA3]">
+                      <td className="px-3 py-2.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>
+                        {formatCOP(Number(c.recaudado || 0))}
+                      </td>
+                      <td className="px-3 py-2.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>
+                        {Number(c.porcentaje).toFixed(2)}%
+                      </td>
+                      <td className="px-3 py-2.5 text-right tabular-nums" style={{ color: "var(--nuvia-accent-blue)" }}>
                         {formatCOP(Number(c.comision_potencial || 0))}
                       </td>
-                      <td className="px-3 py-2 text-right text-[#1F7A45]">
+                      <td className="px-3 py-2.5 text-right tabular-nums" style={{ color: "var(--nuvia-success)" }}>
                         {formatCOP(Number(c.comision_liberada || 0))}
                       </td>
-                      <td className="px-3 py-2 text-right text-[#242424]/70">
+                      <td className="px-3 py-2.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>
                         {formatCOP(Number(c.comision_pagada || 0))}
                       </td>
-                      <td className="px-3 py-2 text-right font-semibold text-[#1F7A45]">
+                      <td className="px-3 py-2.5 text-right font-semibold tabular-nums" style={{ color: "var(--nuvia-success)" }}>
                         {formatCOP(disp)}
                       </td>
-                      <td className="px-3 py-2 text-right text-[#8A5A00]">{formatCOP(pendRec)}</td>
+                      <td className="px-3 py-2.5 text-right tabular-nums" style={{ color: "#FACC15" }}>
+                        {formatCOP(pendRec)}
+                      </td>
                     </tr>
                   );
                 })}
@@ -283,82 +398,92 @@ function ComisionesPage() {
             </table>
           </div>
         )}
-      </Card>
+      </NCard>
 
-      {/* Mis cuentas de cobro */}
-      <Card>
-        <div className="border-b border-[#E3E7EE] px-4 py-3 flex items-center gap-2 text-sm font-semibold text-[#0A1226]">
-          <FileText size={15} className="text-[#445DA3]" />
-          Cuentas de cobro
-        </div>
+      {/* Cuentas de cobro */}
+      <NCard padding="md">
+        <SectionHeader
+          icon={<FileText size={14} />}
+          title="Cuentas de cobro"
+          description={`${cuentas.length} registro${cuentas.length === 1 ? "" : "s"}`}
+        />
         {cuentas.length === 0 ? (
-          <div className="p-8 text-center text-sm text-[#242424]/60">No hay cuentas creadas.</div>
+          <EmptyState
+            title="No hay cuentas creadas"
+            description="Cuando selecciones comisiones disponibles y emitas una cuenta, aparecerá aquí."
+          />
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-[#F7F9FB] text-[11px] uppercase tracking-wide text-[#242424]/60">
-              <tr>
-                <th className="px-4 py-2 text-left">Número</th>
-                <th className="px-4 py-2 text-left">Fecha</th>
-                <th className="px-4 py-2 text-left">Estado</th>
-                <th className="px-4 py-2 text-right">Total</th>
-                <th className="px-4 py-2"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#E3E7EE]">
-              {cuentas.map((cc) => {
-                const b = ESTADO_CC[cc.estado];
-                return (
-                  <tr key={cc.id} className="hover:bg-[#F7F9FB]">
-                    <td className="px-4 py-2 font-mono text-[12px] text-[#0A1226]">{cc.numero}</td>
-                    <td className="px-4 py-2 text-[#242424]/70">
-                      {new Date(cc.created_at).toLocaleDateString("es-CO")}
-                    </td>
-                    <td className="px-4 py-2">
-                      <span
-                        className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-                        style={{ background: b.bg, color: b.color }}
-                      >
-                        {b.label}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2 text-right font-semibold">{formatCOP(Number(cc.total))}</td>
-                    <td className="px-4 py-2 text-right">
-                      <Link
-                        to="/comisiones/$id"
-                        params={{ id: cc.id }}
-                        className="text-[12px] font-medium text-[#445DA3] hover:underline"
-                      >
-                        Ver detalle →
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-[12.5px]" style={{ color: "var(--nuvia-text-primary)" }}>
+              <thead>
+                <tr style={{ background: "rgba(255,255,255,0.02)" }}>
+                  {[
+                    { l: "Número", a: "left" },
+                    { l: "Fecha", a: "left" },
+                    { l: "Estado", a: "left" },
+                    { l: "Total", a: "right" },
+                    { l: "", a: "right" },
+                  ].map((h, i) => (
+                    <th
+                      key={i}
+                      className="px-3 py-2.5 font-semibold uppercase"
+                      style={{
+                        textAlign: h.a as "left" | "right",
+                        fontSize: "10.5px",
+                        letterSpacing: "0.12em",
+                        color: "var(--nuvia-text-secondary)",
+                        borderBottom: "1px solid var(--nuvia-border)",
+                      }}
+                    >
+                      {h.l}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {cuentas.map((cc) => {
+                  const b = ESTADO_CC[cc.estado] ?? { bg: "rgba(255,255,255,0.06)", color: "var(--nuvia-text-secondary)", label: cc.estado };
+                  return (
+                    <tr
+                      key={cc.id}
+                      className="transition-colors hover:bg-white/[0.03]"
+                      style={{ borderBottom: "1px solid var(--nuvia-border)" }}
+                    >
+                      <td className="px-3 py-2.5 font-mono text-[11.5px]" style={{ color: "var(--nuvia-text-primary)" }}>
+                        {cc.numero}
+                      </td>
+                      <td className="px-3 py-2.5" style={{ color: "var(--nuvia-text-secondary)" }}>
+                        {new Date(cc.created_at).toLocaleDateString("es-CO")}
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <span
+                          className="text-[10.5px] font-semibold px-2 py-0.5 rounded"
+                          style={{ color: b.color, background: b.bg }}
+                        >
+                          {b.label}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2.5 text-right font-semibold tabular-nums" style={{ color: "var(--nuvia-text-primary)" }}>
+                        {formatCOP(Number(cc.total))}
+                      </td>
+                      <td className="px-3 py-2.5 text-right">
+                        <Link
+                          to="/comisiones/$id"
+                          params={{ id: cc.id }}
+                          className="text-[11px] font-semibold hover:underline"
+                          style={{ color: "var(--nuvia-accent-blue)" }}
+                        >
+                          Ver detalle →
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
-      </Card>
-    </div>
-  );
-}
-
-const ESTADO_CC: Record<string, { bg: string; color: string; label: string }> = {
-  borrador: { bg: "#F1F3F8", color: "#445DA3", label: "Borrador" },
-  enviada: { bg: "#EEF1FA", color: "#445DA3", label: "Enviada" },
-  aprobada: { bg: "#EAF7EE", color: "#1F7A45", label: "Aprobada" },
-  devuelta_correccion: { bg: "#FEF3C7", color: "#8A5A00", label: "Devuelta" },
-  rechazada: { bg: "#FEE2E2", color: "#991B1B", label: "Rechazada" },
-  programada_pago: { bg: "#E0E7FF", color: "#3730A3", label: "Programada" },
-  pagada: { bg: "#DDF4E3", color: "#1F7A45", label: "Pagada" },
-};
-
-function Stat({ label, value, color }: { label: string; value: string; color: string }) {
-  return (
-    <div className="rounded-xl border border-[#E3E7EE] bg-white p-4">
-      <div className="text-[11px] uppercase tracking-wide text-[#242424]/60">{label}</div>
-      <div className="mt-1 text-lg font-semibold" style={{ color }}>
-        {value}
-      </div>
-    </div>
+      </NCard>
+    </PageLayout>
   );
 }
