@@ -6,3 +6,5 @@ export * from "./CriticalAlertList";
 export * from "./ActivityFeed";
 export * from "./IARecomendacionesCard";
 export * from "./Sparkline";
+export * from "./MotivationalQuote";
+export * from "./AnimatedBackground";

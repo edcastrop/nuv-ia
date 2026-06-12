@@ -14,9 +14,12 @@ import {
   CriticalAlertList,
   ActivityFeed,
   IARecomendacionesCard,
+  MotivationalQuote,
+  AnimatedBackground,
   type CriticalAlert,
   type ActivityItem,
 } from "@/components/home/widgets";
+import { Rocket } from "lucide-react";
 
 
 interface RoleHomeProps {
@@ -109,8 +112,10 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
   const saludo = useMemo(() => {
     const hora = new Date().getHours();
     const greet = hora < 12 ? "Buenos días" : hora < 19 ? "Buenas tardes" : "Buenas noches";
-    const display = nombre || user?.email?.split("@")[0] || "Bienvenido";
-    return `${greet}, ${display}`;
+    const base = nombre || user?.email?.split("@")[0] || "Bienvenido";
+    // Solo el primer nombre
+    const primer = base.split(/\s+/)[0];
+    return `${greet}, ${primer}`;
   }, [nombre, user]);
 
   const resolveValue = (k: RoleHomeKpi) => {
@@ -174,22 +179,13 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
 
   return (
     <div
-      className="min-h-screen"
+      className="relative min-h-screen"
       style={{ background: "var(--nuvia-bg-primary)", color: "var(--nuvia-text-primary)" }}
     >
-      {/* Fondo decorativo */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div
-          className="absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full opacity-[0.16] blur-[140px]"
-          style={{ background: "var(--nuvia-accent-blue)" }}
-        />
-        <div
-          className="absolute top-40 -right-40 h-[500px] w-[500px] rounded-full opacity-[0.12] blur-[140px]"
-          style={{ background: "var(--nuvia-accent-green)" }}
-        />
-      </div>
+      {/* Fondo animado NUVIA */}
+      <AnimatedBackground />
 
-      <div className="relative mx-auto max-w-7xl px-6 py-10 space-y-8 animate-fade-in">
+      <div className="relative z-10 mx-auto max-w-7xl px-6 py-10 space-y-8 animate-fade-in">
         {/* ZONA 1 — HERO */}
         <HeroRolCard
           saludo={saludo}
@@ -202,6 +198,9 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
           roleLabelFor={(r) => roleLabel(r)}
         />
 
+        {/* Frase motivacional dinámica */}
+        <MotivationalQuote />
+
         {/* ZONA 2 — NUVIA IA PROMPT */}
         <NuviaIAPromptCard
           prompt={config.iaPrompt.prompt}
@@ -211,6 +210,7 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
 
         {/* ZONA 3 — KPIs */}
         <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+
           {config.kpis.map((k) => (
             <KpiCard
               key={k.id}
@@ -239,16 +239,39 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
           </div>
         </div>
 
-        {/* Acceso al simulador clásico (preserva flujo previo) */}
-        <div className="pt-4 text-center">
+        {/* Acceso al simulador — CTA agresivo */}
+        <div className="pt-6 flex justify-center">
           <button
             onClick={onLanzarSimulador}
-            className="text-[11.5px] uppercase tracking-[0.18em] hover:underline"
-            style={{ color: "var(--nuvia-text-muted)" }}
+            className="group relative inline-flex items-center gap-3 rounded-2xl px-7 py-4 text-[13px] font-bold uppercase tracking-[0.18em] transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
+            style={{
+              background:
+                "linear-gradient(135deg, var(--nuvia-accent-blue) 0%, var(--nuvia-accent-green) 100%)",
+              color: "#0a0f1f",
+              border: "1px solid rgba(238,245,255,0.22)",
+              boxShadow:
+                "0 18px 48px -16px rgba(68,93,163,0.65), 0 0 0 1px rgba(238,245,255,0.06) inset",
+            }}
           >
-            Abrir simulador clásico →
+            <span
+              aria-hidden
+              className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 60%)",
+              }}
+            />
+            <Rocket size={18} className="relative" />
+            <span className="relative">Lanzar simulador</span>
+            <span
+              aria-hidden
+              className="relative transition-transform group-hover:translate-x-1"
+            >
+              →
+            </span>
           </button>
         </div>
+
 
         {config.excluye.length > 0 && (
           <div
