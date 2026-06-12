@@ -125,7 +125,7 @@ export function VoiceRecorder({ onSend, disabled }: Props) {
         type="button"
         onClick={start}
         disabled={disabled}
-        className="rounded-lg border p-2 transition hover:bg-white/[0.06] shrink-0 disabled:opacity-50"
+        className="rounded-lg border p-2 transition hover:[background:var(--nuvia-bg-card)] shrink-0 disabled:opacity-50"
         style={{ borderColor: "var(--nuvia-border)", color: "var(--nuvia-text-secondary)" }}
         title="Grabar nota de voz"
         aria-label="Grabar nota de voz"
