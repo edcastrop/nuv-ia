@@ -840,20 +840,21 @@ export function ProyeccionFinancieraView() {
               className="relative mb-8 overflow-hidden rounded-3xl"
               style={{
                 background:
-                  "linear-gradient(180deg, rgba(10,18,38,0.85), rgba(7,22,45,0.85))",
-                border: "1px solid rgba(132,185,143,0.22)",
+                  "linear-gradient(135deg, rgba(255,255,255,0.13), rgba(34,211,238,0.075) 44%, rgba(74,222,128,0.070))",
+                border: "1px solid rgba(207,250,254,0.24)",
                 boxShadow:
-                  "0 1px 0 rgba(255,255,255,0.06) inset, 0 40px 80px -30px rgba(68,93,163,0.55)",
-                backdropFilter: "blur(24px)",
+                  "0 1px 0 rgba(255,255,255,0.16) inset, 0 46px 100px -38px rgba(34,211,238,0.48), 0 24px 70px -44px rgba(74,222,128,0.34)",
+                backdropFilter: "blur(30px) saturate(165%)",
+                WebkitBackdropFilter: "blur(30px) saturate(165%)",
               }}
             >
               <div
                 className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 animate-pulse rounded-full blur-3xl"
-                style={{ background: "radial-gradient(circle, rgba(68,93,163,0.45), transparent 70%)", animationDuration: "6s" }}
+                style={{ background: "radial-gradient(circle, rgba(34,211,238,0.46), transparent 70%)", animationDuration: "6s" }}
               />
               <div
                 className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 animate-pulse rounded-full blur-3xl"
-                style={{ background: "radial-gradient(circle, rgba(132,185,143,0.40), transparent 70%)", animationDuration: "8s" }}
+                style={{ background: "radial-gradient(circle, rgba(74,222,128,0.38), transparent 70%)", animationDuration: "8s" }}
               />
               <button
                 type="button"
@@ -864,8 +865,8 @@ export function ProyeccionFinancieraView() {
                   <div
                     className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl"
                     style={{
-                      background: "linear-gradient(135deg, #445DA3, #84B98F)",
-                      boxShadow: "0 16px 40px -12px rgba(132,185,143,0.7)",
+                      background: NUVIA_GRADIENT,
+                      boxShadow: "0 16px 40px -12px rgba(34,211,238,0.76)",
                     }}
                   >
                     <Sparkles className="h-6 w-6 text-white" />
@@ -876,9 +877,9 @@ export function ProyeccionFinancieraView() {
                       <span
                         className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
                         style={{
-                          background: "rgba(132,185,143,0.18)",
-                          color: "#A8D1B0",
-                          border: "1px solid rgba(132,185,143,0.35)",
+                          background: "rgba(34,211,238,0.15)",
+                          color: "#A5F3FC",
+                          border: "1px solid rgba(103,232,249,0.34)",
                         }}
                       >
                         NUVIA · IA
