@@ -396,7 +396,10 @@ function ResultadoQaAi() {
                 FRECH: −{reconMeta.cob.toFixed(2)} pp
               </span>
               <span className="rounded-md px-2 py-1" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--nuvia-border)", color: "var(--nuvia-text-secondary)" }}>
-                Tasa aplicada: <b style={{ color: "var(--nuvia-text-primary)" }}>{reconMeta.tasaAplicada.toFixed(2)}%</b> EA
+                Tasa con FRECH: <b style={{ color: "var(--nuvia-text-primary)" }}>{reconMeta.tasaAplicada.toFixed(2)}%</b> EA
+              </span>
+              <span className="rounded-md px-2 py-1" style={{ background: "rgba(132,185,143,0.10)", border: "1px solid rgba(132,185,143,0.35)", color: "var(--nuvia-success)" }}>
+                Cobertura restante: <b>{reconMeta.frechRestantes}</b> / {reconMeta.frechMax} cuotas
               </span>
             </>
           )}
@@ -404,6 +407,7 @@ function ResultadoQaAi() {
             Seguros mensuales: <b style={{ color: "var(--nuvia-text-primary)" }}>${fmt(reconMeta.seguros, 0)}</b>
           </span>
         </div>
+
         <div className="overflow-x-auto">
           <table className="w-full text-[12.5px]">
             <thead>
