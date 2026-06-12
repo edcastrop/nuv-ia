@@ -1,16 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Card } from "@/components/nuvex/ui";
+import {
+  PageLayout,
+  ExecutiveHero,
+  KpiGrid,
+  KpiCard,
+  NCard,
+  SectionHeader,
+} from "@/components/nuvia";
+import { NSelect } from "@/components/nuvia/NSelect";
 import { supabase } from "@/integrations/supabase/client";
 import { upsertEmpleado, pagarNomina } from "@/lib/finanzas.functions";
+import { Users2, Wallet, UserPlus, UploadCloud, FileText, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/finanzas/nomina")({
   component: NominaPage,
-  head: () => ({ meta: [{ title: "Nómina · NUVEX" }] }),
+  head: () => ({ meta: [{ title: "Nómina · NUVIA" }] }),
 });
 
-const AZUL = "#445DA3";
 const money = (n: number) => "$" + Math.round(n).toLocaleString("es-CO");
 
 type Empleado = {
@@ -54,85 +62,179 @@ function NominaPage() {
     })();
   }, [tick]);
 
-  const totalNomina = empleados.filter((e) => e.activo).reduce((a, b) => a + Number(b.valor_mensual), 0);
+  const activos = useMemo(() => empleados.filter((e) => e.activo), [empleados]);
+  const totalNomina = activos.reduce((a, b) => a + Number(b.valor_mensual), 0);
+  const pagadoMes = useMemo(() => {
+    const mes = new Date().toISOString().slice(0, 7);
+    return pagos.filter((p) => p.periodo === mes).reduce((a, b) => a + Number(b.valor), 0);
+  }, [pagos]);
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-semibold text-[#0A1226]">Nómina</h1>
-            <p className="text-[12px] text-[#242424]/60">Empleados activos y pagos mensuales con comprobante.</p>
-          </div>
-          <div className="text-right">
-            <div className="text-[10.5px] uppercase tracking-wider text-[#242424]/60">Costo mensual activo</div>
-            <div className="text-lg font-semibold" style={{ color: AZUL }}>{money(totalNomina)}</div>
-          </div>
-        </div>
-      </Card>
+    <PageLayout>
+      <ExecutiveHero
+        badge={{ icon: <Users2 size={12} />, label: "Finanzas", tone: "blue" }}
+        title="Nómina"
+        description="Empleados activos y pagos mensuales con comprobante. Cada pago genera un movimiento en tesorería."
+      />
+
+      <KpiGrid cols={4}>
+        <KpiCard icon={<Users2 size={16} />} tone="blue" label="Activos" value={String(activos.length)} hint={`${empleados.length} totales`} />
+        <KpiCard icon={<Wallet size={16} />} tone="neutral" label="Costo mensual" value={money(totalNomina)} />
+        <KpiCard icon={<Wallet size={16} />} tone="green" label="Pagado este mes" value={money(pagadoMes)} />
+        <KpiCard
+          icon={<Wallet size={16} />}
+          tone={totalNomina - pagadoMes > 0 ? "warning" : "neutral"}
+          label="Pendiente del mes"
+          value={money(Math.max(0, totalNomina - pagadoMes))}
+        />
+      </KpiGrid>
 
       <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-4">
         <FormEmpleado onSaved={() => setTick((t) => t + 1)} />
-        <Card>
-          <h2 className="text-sm font-semibold text-[#0A1226] mb-2">Empleados ({empleados.length})</h2>
+        <NCard padding="md">
+          <SectionHeader title={`Empleados (${empleados.length})`} description="Plantilla registrada" />
           <div className="overflow-x-auto">
-            <table className="w-full text-[12.5px]">
-              <thead className="text-[11px] uppercase tracking-wider text-[#242424]/60">
-                <tr className="border-b border-[#E5E7EB]">
-                  <th className="text-left py-2 pr-3">Nombre</th>
-                  <th className="text-left pr-3">Cargo</th>
-                  <th className="text-left pr-3">Contrato</th>
-                  <th className="text-right pr-3">Valor mes</th>
-                  <th></th>
+            <table className="w-full text-[12.5px]" style={{ color: "var(--nuvia-text-primary)" }}>
+              <thead>
+                <tr style={{ background: "rgba(255,255,255,0.02)" }}>
+                  {[
+                    { l: "Nombre", a: "left" },
+                    { l: "Cargo", a: "left" },
+                    { l: "Contrato", a: "left" },
+                    { l: "Valor mes", a: "right" },
+                    { l: "Estado", a: "left" },
+                  ].map((h, i) => (
+                    <th
+                      key={i}
+                      className="px-3 py-2.5 font-semibold uppercase"
+                      style={{
+                        textAlign: h.a as "left" | "right",
+                        fontSize: "10.5px",
+                        letterSpacing: "0.12em",
+                        color: "var(--nuvia-text-secondary)",
+                        borderBottom: "1px solid var(--nuvia-border)",
+                      }}
+                    >
+                      {h.l}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {empleados.map((e) => (
-                  <tr key={e.id} className="border-b border-[#F3F4F6]">
-                    <td className="py-2 pr-3 font-medium">{e.nombre}</td>
-                    <td className="pr-3">{e.cargo ?? "—"}</td>
-                    <td className="pr-3">{e.tipo_contrato}</td>
-                    <td className="pr-3 text-right">{money(Number(e.valor_mensual))}</td>
-                    <td>{e.activo ? <span className="text-[10px] text-[#1F7A45]">Activo</span> : <span className="text-[10px] text-[#B42318]">Inactivo</span>}</td>
+                  <tr
+                    key={e.id}
+                    className="hover:bg-white/[0.03]"
+                    style={{ borderBottom: "1px solid var(--nuvia-border)" }}
+                  >
+                    <td className="px-3 py-2.5 font-medium" style={{ color: "var(--nuvia-text-primary)" }}>
+                      {e.nombre}
+                    </td>
+                    <td className="px-3 py-2.5" style={{ color: "var(--nuvia-text-secondary)" }}>
+                      {e.cargo ?? "—"}
+                    </td>
+                    <td className="px-3 py-2.5" style={{ color: "var(--nuvia-text-secondary)" }}>
+                      {e.tipo_contrato}
+                    </td>
+                    <td
+                      className="px-3 py-2.5 text-right font-semibold tabular-nums"
+                      style={{ color: "var(--nuvia-text-primary)" }}
+                    >
+                      {money(Number(e.valor_mensual))}
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <span
+                        className="text-[10.5px] font-semibold px-2 py-0.5 rounded"
+                        style={{
+                          color: e.activo ? "var(--nuvia-success)" : "var(--nuvia-danger)",
+                          background: e.activo ? "rgba(132,185,143,0.12)" : "rgba(180,35,24,0.12)",
+                        }}
+                      >
+                        {e.activo ? "Activo" : "Inactivo"}
+                      </span>
+                    </td>
                   </tr>
                 ))}
                 {empleados.length === 0 && (
-                  <tr><td colSpan={5} className="py-4 text-center text-[12px] text-[#242424]/60">Sin empleados registrados.</td></tr>
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="py-6 text-center text-[12px]"
+                      style={{ color: "var(--nuvia-text-muted)" }}
+                    >
+                      Sin empleados registrados.
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
           </div>
-        </Card>
+        </NCard>
       </div>
 
-      <FormPago empleados={empleados.filter((e) => e.activo)} onSaved={() => setTick((t) => t + 1)} />
+      <FormPago empleados={activos} onSaved={() => setTick((t) => t + 1)} />
 
-      <Card>
-        <h2 className="text-sm font-semibold text-[#0A1226] mb-2">Pagos recientes</h2>
+      <NCard padding="md">
+        <SectionHeader title="Pagos recientes" description={`${pagos.length} últimos pagos`} />
         {pagos.length === 0 ? (
-          <div className="py-4 text-center text-[12px] text-[#242424]/60">Sin pagos registrados.</div>
+          <div className="py-6 text-center text-[12px]" style={{ color: "var(--nuvia-text-muted)" }}>
+            Sin pagos registrados.
+          </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-[12.5px]">
-              <thead className="text-[11px] uppercase tracking-wider text-[#242424]/60">
-                <tr className="border-b border-[#E5E7EB]">
-                  <th className="text-left py-2 pr-3">Fecha</th>
-                  <th className="text-left pr-3">Empleado</th>
-                  <th className="text-left pr-3">Periodo</th>
-                  <th className="text-right pr-3">Valor</th>
-                  <th className="text-left pr-3">Estado</th>
+            <table className="w-full text-[12.5px]" style={{ color: "var(--nuvia-text-primary)" }}>
+              <thead>
+                <tr style={{ background: "rgba(255,255,255,0.02)" }}>
+                  {[
+                    { l: "Fecha", a: "left" },
+                    { l: "Empleado", a: "left" },
+                    { l: "Periodo", a: "left" },
+                    { l: "Valor", a: "right" },
+                    { l: "Estado", a: "left" },
+                  ].map((h, i) => (
+                    <th
+                      key={i}
+                      className="px-3 py-2.5 font-semibold uppercase"
+                      style={{
+                        textAlign: h.a as "left" | "right",
+                        fontSize: "10.5px",
+                        letterSpacing: "0.12em",
+                        color: "var(--nuvia-text-secondary)",
+                        borderBottom: "1px solid var(--nuvia-border)",
+                      }}
+                    >
+                      {h.l}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {pagos.map((p) => {
                   const emp = empleados.find((e) => e.id === p.empleado_id);
                   return (
-                    <tr key={p.id} className="border-b border-[#F3F4F6]">
-                      <td className="py-2 pr-3">{p.fecha_pago ?? "—"}</td>
-                      <td className="pr-3 font-medium">{emp?.nombre ?? "—"}</td>
-                      <td className="pr-3">{p.periodo}</td>
-                      <td className="pr-3 text-right text-[#1F7A45] font-semibold">{money(Number(p.valor))}</td>
-                      <td className="pr-3">{p.estado}</td>
+                    <tr
+                      key={p.id}
+                      className="hover:bg-white/[0.03]"
+                      style={{ borderBottom: "1px solid var(--nuvia-border)" }}
+                    >
+                      <td className="px-3 py-2.5" style={{ color: "var(--nuvia-text-secondary)" }}>
+                        {p.fecha_pago ?? "—"}
+                      </td>
+                      <td className="px-3 py-2.5 font-medium" style={{ color: "var(--nuvia-text-primary)" }}>
+                        {emp?.nombre ?? "—"}
+                      </td>
+                      <td className="px-3 py-2.5" style={{ color: "var(--nuvia-text-secondary)" }}>
+                        {p.periodo}
+                      </td>
+                      <td
+                        className="px-3 py-2.5 text-right font-semibold tabular-nums"
+                        style={{ color: "var(--nuvia-success)" }}
+                      >
+                        {money(Number(p.valor))}
+                      </td>
+                      <td className="px-3 py-2.5" style={{ color: "var(--nuvia-text-secondary)" }}>
+                        {p.estado}
+                      </td>
                     </tr>
                   );
                 })}
@@ -140,10 +242,17 @@ function NominaPage() {
             </table>
           </div>
         )}
-      </Card>
-    </div>
+      </NCard>
+    </PageLayout>
   );
 }
+
+const CONTRATO_OPTS = [
+  { value: "indefinido", label: "Indefinido" },
+  { value: "fijo", label: "Fijo" },
+  { value: "prestacion", label: "Prestación servicios" },
+  { value: "obra_labor", label: "Obra labor" },
+];
 
 function FormEmpleado({ onSaved }: { onSaved: () => void }) {
   const guardar = useServerFn(upsertEmpleado);
@@ -160,42 +269,85 @@ function FormEmpleado({ onSaved }: { onSaved: () => void }) {
     e.preventDefault();
     setError(null);
     const v = Number(valor);
-    if (!nombre.trim() || !v || v <= 0) { setError("Nombre y valor mensual son obligatorios."); return; }
+    if (!nombre.trim() || !v || v <= 0) {
+      setError("Nombre y valor mensual son obligatorios.");
+      return;
+    }
     setSaving(true);
     try {
-      await guardar({ data: { nombre, documento: documento || undefined, cargo: cargo || undefined, area: area || undefined, tipo_contrato: tipo, valor_mensual: v, activo: true } });
-      setNombre(""); setDocumento(""); setCargo(""); setArea(""); setValor("");
+      await guardar({
+        data: {
+          nombre,
+          documento: documento || undefined,
+          cargo: cargo || undefined,
+          area: area || undefined,
+          tipo_contrato: tipo,
+          valor_mensual: v,
+          activo: true,
+        },
+      });
+      setNombre("");
+      setDocumento("");
+      setCargo("");
+      setArea("");
+      setValor("");
       onSaved();
-    } catch (err) { setError(err instanceof Error ? err.message : "Error"); }
-    finally { setSaving(false); }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
-    <Card>
-      <h2 className="text-sm font-semibold text-[#0A1226] mb-3">Registrar empleado</h2>
-      <form onSubmit={onSubmit} className="space-y-2">
-        <Inp label="Nombre" value={nombre} onChange={setNombre} />
+    <NCard padding="md">
+      <SectionHeader icon={<UserPlus size={14} />} title="Registrar empleado" />
+      <form onSubmit={onSubmit} className="space-y-2.5">
+        <Field label="Nombre">
+          <input value={nombre} onChange={(e) => setNombre(e.target.value)} className="nuvia-input nuvia-input-sm w-full" />
+        </Field>
         <div className="grid grid-cols-2 gap-2">
-          <Inp label="Documento" value={documento} onChange={setDocumento} />
-          <Inp label="Cargo" value={cargo} onChange={setCargo} />
-          <Inp label="Área" value={area} onChange={setArea} />
-          <label className="flex flex-col gap-1">
-            <span className="text-[10.5px] uppercase tracking-wider text-[#242424]/60">Contrato</span>
-            <select value={tipo} onChange={(e) => setTipo(e.target.value as typeof tipo)} className="text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white">
-              <option value="indefinido">Indefinido</option>
-              <option value="fijo">Fijo</option>
-              <option value="prestacion">Prestación servicios</option>
-              <option value="obra_labor">Obra labor</option>
-            </select>
-          </label>
+          <Field label="Documento">
+            <input value={documento} onChange={(e) => setDocumento(e.target.value)} className="nuvia-input nuvia-input-sm w-full" />
+          </Field>
+          <Field label="Cargo">
+            <input value={cargo} onChange={(e) => setCargo(e.target.value)} className="nuvia-input nuvia-input-sm w-full" />
+          </Field>
+          <Field label="Área">
+            <input value={area} onChange={(e) => setArea(e.target.value)} className="nuvia-input nuvia-input-sm w-full" />
+          </Field>
+          <Field label="Contrato">
+            <NSelect
+              value={tipo}
+              onValueChange={(v) => setTipo(v as typeof tipo)}
+              options={CONTRATO_OPTS}
+              compact
+            />
+          </Field>
         </div>
-        <Inp label="Valor mensual (COP)" value={valor} onChange={setValor} type="number" />
-        {error && <div className="text-[12px] text-[#B42318]">{error}</div>}
-        <button type="submit" disabled={saving} className="w-full rounded-lg px-3 py-2 text-[12.5px] font-semibold text-white disabled:opacity-60" style={{ background: `linear-gradient(135deg, ${AZUL}, #84B98F)` }}>
+        <Field label="Valor mensual (COP)">
+          <input
+            type="number"
+            value={valor}
+            onChange={(e) => setValor(e.target.value)}
+            className="nuvia-input nuvia-input-sm w-full"
+          />
+        </Field>
+        {error && (
+          <div className="text-[12px]" style={{ color: "var(--nuvia-danger)" }}>
+            {error}
+          </div>
+        )}
+        <button
+          type="submit"
+          disabled={saving}
+          className="w-full rounded-lg px-3 py-2 text-[12.5px] font-semibold text-white disabled:opacity-60"
+          style={{ background: "linear-gradient(135deg,#445DA3,#84B98F)" }}
+        >
           {saving ? "Guardando…" : "Guardar empleado"}
         </button>
       </form>
-    </Card>
+    </NCard>
   );
 }
 
@@ -210,6 +362,7 @@ function FormPago({ empleados, onSaved }: { empleados: Empleado[]; onSaved: () =
   const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10));
   const [num, setNum] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [dragOver, setDragOver] = useState(false);
   const [obs, setObs] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -222,67 +375,200 @@ function FormPago({ empleados, onSaved }: { empleados: Empleado[]; onSaved: () =
 
   async function fileToBase64(f: File) {
     const buf = await f.arrayBuffer();
-    let bin = ""; const bytes = new Uint8Array(buf);
+    let bin = "";
+    const bytes = new Uint8Array(buf);
     for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
     return btoa(bin);
   }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null); setOk(null);
+    setError(null);
+    setOk(null);
     const v = Number(valor);
-    if (!empleadoId || !v || v <= 0 || !file) { setError("Empleado, valor y comprobante son obligatorios."); return; }
+    if (!empleadoId || !v || v <= 0 || !file) {
+      setError("Empleado, valor y comprobante son obligatorios.");
+      return;
+    }
     setSaving(true);
     try {
       const b64 = await fileToBase64(file);
-      await pagar({ data: { empleado_id: empleadoId, periodo, valor: v, fecha_pago: fecha, comprobante_num: num || undefined, comprobanteBase64: b64, comprobanteFilename: file.name, observaciones: obs || undefined } });
+      await pagar({
+        data: {
+          empleado_id: empleadoId,
+          periodo,
+          valor: v,
+          fecha_pago: fecha,
+          comprobante_num: num || undefined,
+          comprobanteBase64: b64,
+          comprobanteFilename: file.name,
+          observaciones: obs || undefined,
+        },
+      });
       setOk("Pago registrado y movimiento creado en tesorería.");
-      setFile(null); setObs(""); setNum("");
+      setFile(null);
+      setObs("");
+      setNum("");
       onSaved();
-    } catch (err) { setError(err instanceof Error ? err.message : "Error"); }
-    finally { setSaving(false); }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
+    } finally {
+      setSaving(false);
+    }
   }
 
+  const empOpts = [
+    { value: "__none__", label: "— Selecciona —" },
+    ...empleados.map((e) => ({ value: e.id, label: e.nombre })),
+  ];
+
   return (
-    <Card>
-      <h2 className="text-sm font-semibold text-[#0A1226] mb-3">Registrar pago de nómina</h2>
+    <NCard padding="md">
+      <SectionHeader title="Registrar pago de nómina" description="Genera movimiento de egreso en tesorería" />
       <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <label className="flex flex-col gap-1 md:col-span-1">
-          <span className="text-[10.5px] uppercase tracking-wider text-[#242424]/60">Empleado</span>
-          <select value={empleadoId} onChange={(e) => setEmpleadoId(e.target.value)} className="text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white">
-            <option value="">— Selecciona —</option>
-            {empleados.map((e) => <option key={e.id} value={e.id}>{e.nombre}</option>)}
-          </select>
-        </label>
-        <Inp label="Periodo (YYYY-MM)" value={periodo} onChange={setPeriodo} />
-        <Inp label="Fecha de pago" type="date" value={fecha} onChange={setFecha} />
-        <Inp label="Valor (COP)" type="number" value={valor} onChange={setValor} />
-        <Inp label="N° comprobante" value={num} onChange={setNum} />
-        <label className="flex flex-col gap-1">
-          <span className="text-[10.5px] uppercase tracking-wider text-[#242424]/60">Comprobante (PDF/imagen)*</span>
-          <input type="file" accept="image/*,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="text-[12px]" />
-        </label>
-        <label className="flex flex-col gap-1 md:col-span-3">
-          <span className="text-[10.5px] uppercase tracking-wider text-[#242424]/60">Observaciones</span>
-          <textarea value={obs} onChange={(e) => setObs(e.target.value)} rows={2} className="text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white" />
-        </label>
-        {error && <div className="md:col-span-3 text-[12px] text-[#B42318]">{error}</div>}
-        {ok && <div className="md:col-span-3 text-[12px] text-[#1F7A45]">{ok}</div>}
+        <Field label="Empleado">
+          <NSelect
+            value={empleadoId || "__none__"}
+            onValueChange={(v) => setEmpleadoId(v === "__none__" ? "" : v)}
+            options={empOpts}
+            compact
+          />
+        </Field>
+        <Field label="Periodo (YYYY-MM)">
+          <input value={periodo} onChange={(e) => setPeriodo(e.target.value)} className="nuvia-input nuvia-input-sm w-full" />
+        </Field>
+        <Field label="Fecha de pago">
+          <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className="nuvia-input nuvia-input-sm w-full" />
+        </Field>
+        <Field label="Valor (COP)">
+          <input
+            type="number"
+            value={valor}
+            onChange={(e) => setValor(e.target.value)}
+            className="nuvia-input nuvia-input-sm w-full"
+          />
+        </Field>
+        <Field label="N° comprobante">
+          <input value={num} onChange={(e) => setNum(e.target.value)} className="nuvia-input nuvia-input-sm w-full" />
+        </Field>
+        <Field label="Comprobante (PDF/imagen) *">
+          <Dropzone file={file} setFile={setFile} dragOver={dragOver} setDragOver={setDragOver} />
+        </Field>
         <div className="md:col-span-3">
-          <button type="submit" disabled={saving} className="rounded-lg px-4 py-2 text-[12.5px] font-semibold text-white disabled:opacity-60" style={{ background: `linear-gradient(135deg, ${AZUL}, #84B98F)` }}>
+          <Field label="Observaciones">
+            <textarea
+              value={obs}
+              onChange={(e) => setObs(e.target.value)}
+              rows={2}
+              className="nuvia-input nuvia-input-sm w-full"
+            />
+          </Field>
+        </div>
+        {error && (
+          <div className="md:col-span-3 text-[12px]" style={{ color: "var(--nuvia-danger)" }}>
+            {error}
+          </div>
+        )}
+        {ok && (
+          <div className="md:col-span-3 text-[12px]" style={{ color: "var(--nuvia-success)" }}>
+            {ok}
+          </div>
+        )}
+        <div className="md:col-span-3">
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-lg px-4 py-2 text-[12.5px] font-semibold text-white disabled:opacity-60"
+            style={{ background: "linear-gradient(135deg,#445DA3,#84B98F)" }}
+          >
             {saving ? "Registrando…" : "Pagar nómina"}
           </button>
         </div>
       </form>
-    </Card>
+    </NCard>
   );
 }
 
-function Inp({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
+function Dropzone({
+  file,
+  setFile,
+  dragOver,
+  setDragOver,
+}: {
+  file: File | null;
+  setFile: (f: File | null) => void;
+  dragOver: boolean;
+  setDragOver: (v: boolean) => void;
+}) {
+  return (
+    <label
+      onDragOver={(e) => {
+        e.preventDefault();
+        setDragOver(true);
+      }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDragOver(false);
+        const f = e.dataTransfer.files?.[0];
+        if (f) setFile(f);
+      }}
+      className="flex flex-col items-center justify-center gap-1.5 rounded-lg cursor-pointer transition-colors px-3 py-4 text-center"
+      style={{
+        border: `1.5px dashed ${dragOver ? "var(--nuvia-accent-blue)" : "var(--nuvia-border)"}`,
+        background: dragOver ? "rgba(68,93,163,0.08)" : "rgba(255,255,255,0.02)",
+        color: "var(--nuvia-text-secondary)",
+      }}
+    >
+      <input
+        type="file"
+        accept="image/*,application/pdf"
+        onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+        className="hidden"
+      />
+      {file ? (
+        <div className="flex items-center gap-2 text-[12px]" style={{ color: "var(--nuvia-text-primary)" }}>
+          <FileText size={14} style={{ color: "var(--nuvia-accent-blue)" }} />
+          <span className="truncate max-w-[220px]">{file.name}</span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setFile(null);
+            }}
+            className="ml-1 rounded p-0.5 hover:bg-white/10"
+            style={{ color: "var(--nuvia-text-muted)" }}
+            aria-label="Quitar archivo"
+          >
+            <X size={12} />
+          </button>
+        </div>
+      ) : (
+        <>
+          <UploadCloud size={18} style={{ color: "var(--nuvia-accent-blue)" }} />
+          <div className="text-[12px]" style={{ color: "var(--nuvia-text-primary)" }}>
+            Arrastra el comprobante aquí
+          </div>
+          <div className="text-[10.5px]" style={{ color: "var(--nuvia-text-muted)" }}>
+            o haz clic para seleccionar · PDF o imagen
+          </div>
+        </>
+      )}
+    </label>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-[10.5px] uppercase tracking-wider text-[#242424]/60">{label}</span>
-      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} className="text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white" />
+      <span
+        className="text-[10.5px] uppercase tracking-wider"
+        style={{ color: "var(--nuvia-text-muted)" }}
+      >
+        {label}
+      </span>
+      {children}
     </label>
   );
 }
