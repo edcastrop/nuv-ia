@@ -41,6 +41,7 @@ function ResultadoQaAi() {
   const fetchAud = useServerFn(obtenerAuditoriaQA);
   const [data, setData] = useState<{ auditoria: Record<string, unknown> | null; inconsistencias: Inc[] } | null>(null);
   const [copilotoOpen, setCopilotoOpen] = useState(false);
+  const [verTodas, setVerTodas] = useState(false);
 
   useEffect(() => { (async () => setData(await fetchAud({ data: { id } })))(); }, [id, fetchAud]);
 
@@ -58,6 +59,23 @@ function ResultadoQaAi() {
       };
       return auditar(normalizado);
     } catch { return null; }
+  }, [data]);
+
+  // Reconstrucción COMPLETA del plan amortizado (todas las cuotas pendientes)
+  const filasCompletas = useMemo(() => {
+    if (!data?.auditoria) return [] as Array<{ k: number; cuota: number; interes: number; capital: number; saldo: number }>;
+    const inputs = (data.auditoria as Record<string, unknown>).inputs as
+      | { reconstruccion?: { saldoCapital?: number; tasaEa?: number; cuotasPendientes?: number; coberturaFrechPp?: number } }
+      | undefined;
+    const r = inputs?.reconstruccion;
+    if (!r || !r.saldoCapital || !r.tasaEa || !r.cuotasPendientes) return [];
+    try {
+      const ea = (r.tasaEa || 0) / 100;
+      const cob = r.coberturaFrechPp ? r.coberturaFrechPp / 100 : 0;
+      const i = cob > 0 ? eaToMv(Math.max(0, ea - cob)) : eaToMv(ea);
+      const n = Math.max(0, Math.round(r.cuotasPendientes));
+      return amortizacion(r.saldoCapital, i, n);
+    } catch { return []; }
   }, [data]);
 
   if (!data?.auditoria) {
@@ -78,35 +96,19 @@ function ResultadoQaAi() {
 
   const primeras = (o.primerasCuotas as Array<{ k: number; cuota: number; interes: number; capital: number; saldo: number }>) ?? [];
   const ultimas = (o.ultimasCuotas as Array<{ k: number; cuota: number; interes: number; capital: number; saldo: number }>) ?? [];
-  // Fix créditos cortos: si primeras y últimas se solapan (n ≤ 24), mostrar solo primeras (cubre toda la tabla)
   const ksPrimeras = new Set(primeras.map((f) => f.k));
   const filasResumen = [
     ...primeras,
     ...ultimas.filter((f) => !ksPrimeras.has(f.k)),
   ];
 
-  // Reconstrucción COMPLETA del plan amortizado (todas las cuotas pendientes)
-  const filasCompletas = useMemo(() => {
-    const inputs = (data.auditoria as Record<string, unknown>).inputs as
-      | { reconstruccion?: { saldoCapital?: number; tasaEa?: number; cuotasPendientes?: number; coberturaFrechPp?: number } }
-      | undefined;
-    const r = inputs?.reconstruccion;
-    if (!r || !r.saldoCapital || !r.tasaEa || !r.cuotasPendientes) return [] as typeof filasResumen;
-    try {
-      const ea = (r.tasaEa || 0) / 100;
-      const cob = r.coberturaFrechPp ? r.coberturaFrechPp / 100 : 0;
-      const i = cob > 0 ? eaToMv(Math.max(0, ea - cob)) : eaToMv(ea);
-      const n = Math.max(0, Math.round(r.cuotasPendientes));
-      return amortizacion(r.saldoCapital, i, n);
-    } catch { return []; }
-  }, [data]);
-
-  const [verTodas, setVerTodas] = useState(false);
-  const filasAmort = verTodas && filasCompletas.length > 0 ? filasCompletas : filasResumen;
+  const puedeVerTodas = filasCompletas.length > filasResumen.length;
+  const filasAmort = verTodas && puedeVerTodas ? filasCompletas : filasResumen;
   const nTotal = filasCompletas.length || filasResumen.length;
 
   const penalizaciones = recomputo?.score.penalizaciones ?? [];
   const alertasCriticas = data.inconsistencias.filter((i) => i.severidad === "critica");
+
 
   return (
     <PageLayout>
