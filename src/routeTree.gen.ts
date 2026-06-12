@@ -90,6 +90,7 @@ import { Route as ApiPublicHooksOnboardingRecordatoriosRouteImport } from './rou
 import { Route as ApiPublicHooksFinanzasCronRouteImport } from './routes/api/public/hooks/finanzas-cron'
 import { Route as ApiPublicHooksCasosAlertasRouteImport } from './routes/api/public/hooks/casos-alertas'
 import { Route as ApiPublicHooksCarteraRecordatoriosRouteImport } from './routes/api/public/hooks/cartera-recordatorios'
+import { Route as AuthenticatedFinanzasTreasuryConciliacionRouteImport } from './routes/_authenticated/finanzas.treasury.conciliacion'
 import { Route as AuthenticatedColaboracionDmConversationIdRouteImport } from './routes/_authenticated/colaboracion.dm.$conversationId'
 import { Route as AuthenticatedAcademiaModulosModuloIdRouteImport } from './routes/_authenticated/academia.modulos.$moduloId'
 import { Route as AuthenticatedAcademiaLeccionesLeccionIdRouteImport } from './routes/_authenticated/academia.lecciones.$leccionId'
@@ -554,6 +555,12 @@ const ApiPublicHooksCarteraRecordatoriosRoute =
     path: '/api/public/hooks/cartera-recordatorios',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedFinanzasTreasuryConciliacionRoute =
+  AuthenticatedFinanzasTreasuryConciliacionRouteImport.update({
+    id: '/conciliacion',
+    path: '/conciliacion',
+    getParentRoute: () => AuthenticatedFinanzasTreasuryRoute,
+  } as any)
 const AuthenticatedColaboracionDmConversationIdRoute =
   AuthenticatedColaboracionDmConversationIdRouteImport.update({
     id: '/colaboracion/dm/$conversationId',
@@ -663,6 +670,7 @@ export interface FileRoutesByFullPath {
   '/academia/lecciones/$leccionId': typeof AuthenticatedAcademiaLeccionesLeccionIdRoute
   '/academia/modulos/$moduloId': typeof AuthenticatedAcademiaModulosModuloIdRoute
   '/colaboracion/dm/$conversationId': typeof AuthenticatedColaboracionDmConversationIdRoute
+  '/finanzas/treasury/conciliacion': typeof AuthenticatedFinanzasTreasuryConciliacionRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
   '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
@@ -746,6 +754,7 @@ export interface FileRoutesByTo {
   '/academia/lecciones/$leccionId': typeof AuthenticatedAcademiaLeccionesLeccionIdRoute
   '/academia/modulos/$moduloId': typeof AuthenticatedAcademiaModulosModuloIdRoute
   '/colaboracion/dm/$conversationId': typeof AuthenticatedColaboracionDmConversationIdRoute
+  '/finanzas/treasury/conciliacion': typeof AuthenticatedFinanzasTreasuryConciliacionRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
   '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
@@ -835,6 +844,7 @@ export interface FileRoutesById {
   '/_authenticated/academia/lecciones/$leccionId': typeof AuthenticatedAcademiaLeccionesLeccionIdRoute
   '/_authenticated/academia/modulos/$moduloId': typeof AuthenticatedAcademiaModulosModuloIdRoute
   '/_authenticated/colaboracion/dm/$conversationId': typeof AuthenticatedColaboracionDmConversationIdRoute
+  '/_authenticated/finanzas/treasury/conciliacion': typeof AuthenticatedFinanzasTreasuryConciliacionRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
   '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
@@ -924,6 +934,7 @@ export interface FileRouteTypes {
     | '/academia/lecciones/$leccionId'
     | '/academia/modulos/$moduloId'
     | '/colaboracion/dm/$conversationId'
+    | '/finanzas/treasury/conciliacion'
     | '/api/public/hooks/cartera-recordatorios'
     | '/api/public/hooks/casos-alertas'
     | '/api/public/hooks/finanzas-cron'
@@ -1007,6 +1018,7 @@ export interface FileRouteTypes {
     | '/academia/lecciones/$leccionId'
     | '/academia/modulos/$moduloId'
     | '/colaboracion/dm/$conversationId'
+    | '/finanzas/treasury/conciliacion'
     | '/api/public/hooks/cartera-recordatorios'
     | '/api/public/hooks/casos-alertas'
     | '/api/public/hooks/finanzas-cron'
@@ -1095,6 +1107,7 @@ export interface FileRouteTypes {
     | '/_authenticated/academia/lecciones/$leccionId'
     | '/_authenticated/academia/modulos/$moduloId'
     | '/_authenticated/colaboracion/dm/$conversationId'
+    | '/_authenticated/finanzas/treasury/conciliacion'
     | '/api/public/hooks/cartera-recordatorios'
     | '/api/public/hooks/casos-alertas'
     | '/api/public/hooks/finanzas-cron'
@@ -1692,6 +1705,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksCarteraRecordatoriosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/finanzas/treasury/conciliacion': {
+      id: '/_authenticated/finanzas/treasury/conciliacion'
+      path: '/conciliacion'
+      fullPath: '/finanzas/treasury/conciliacion'
+      preLoaderRoute: typeof AuthenticatedFinanzasTreasuryConciliacionRouteImport
+      parentRoute: typeof AuthenticatedFinanzasTreasuryRoute
+    }
     '/_authenticated/colaboracion/dm/$conversationId': {
       id: '/_authenticated/colaboracion/dm/$conversationId'
       path: '/colaboracion/dm/$conversationId'
@@ -1756,11 +1776,14 @@ const AuthenticatedAcademiaRouteWithChildren =
   )
 
 interface AuthenticatedFinanzasTreasuryRouteChildren {
+  AuthenticatedFinanzasTreasuryConciliacionRoute: typeof AuthenticatedFinanzasTreasuryConciliacionRoute
   AuthenticatedFinanzasTreasuryIndexRoute: typeof AuthenticatedFinanzasTreasuryIndexRoute
 }
 
 const AuthenticatedFinanzasTreasuryRouteChildren: AuthenticatedFinanzasTreasuryRouteChildren =
   {
+    AuthenticatedFinanzasTreasuryConciliacionRoute:
+      AuthenticatedFinanzasTreasuryConciliacionRoute,
     AuthenticatedFinanzasTreasuryIndexRoute:
       AuthenticatedFinanzasTreasuryIndexRoute,
   }
