@@ -147,7 +147,7 @@ function CarteraDashboard() {
             <NSelect
               value={responsableId}
               onValueChange={(v) => setResponsableId(v === "__all__" ? "" : v)}
-              options={[{ value: "__all__", label: "Todos" }, ...responsables.map((r) => ({ value: r.id, label: r.nombre || r.email }))]}
+              options={[{ value: "__all__", label: "Todos" }, ...responsables.map((r) => ({ value: r.id, label: r.nombre || r.email || "—" }))]}
               minWidth={200}
             />
           </Field>
