@@ -11,8 +11,6 @@ import { EmojiPickerPopover } from "@/components/colaboracion/EmojiPicker";
 import { VoiceRecorder } from "@/components/colaboracion/VoiceRecorder";
 import { VoiceNotePlayer } from "@/components/colaboracion/VoiceNotePlayer";
 
-const AZUL = "#445DA3";
-
 export function CanalChat({ canal }: { canal: Canal }) {
   const { user } = useAuth();
   const [msgs, setMsgs] = useState<Mensaje[]>([]);
@@ -68,44 +66,44 @@ export function CanalChat({ canal }: { canal: Canal }) {
 
 
   return (
-    <div className="flex flex-col h-full bg-white">
-      <div className="border-b border-[#E3E7EE] px-3 md:px-5 py-3 flex items-center justify-between gap-2">
+    <div className="flex flex-col h-full" style={{ background: "var(--nuvia-bg-tertiary)", color: "var(--nuvia-text-primary)" }}>
+      <div className="border-b px-3 md:px-5 py-3 flex items-center justify-between gap-2" style={{ borderColor: "var(--nuvia-border)", background: "var(--nuvia-bg-secondary)" }}>
         <div className="min-w-0">
-          <div className="flex items-center gap-2 text-[14px] md:text-[15px] font-semibold text-[#242424]">
-            {canal.tipo === "area" || canal.tipo === "custom" ? <Hash size={16} className="text-[#445DA3] shrink-0" /> : <UsersIcon size={16} className="text-[#445DA3] shrink-0" />}
+          <div className="flex items-center gap-2 text-[14px] md:text-[15px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
+            {canal.tipo === "area" || canal.tipo === "custom" ? <Hash size={16} className="shrink-0" style={{ color: "var(--nuvia-accent-blue)" }} /> : <UsersIcon size={16} className="shrink-0" style={{ color: "var(--nuvia-accent-blue)" }} />}
             <span className="truncate">{canal.nombre}</span>
           </div>
-          {canal.descripcion && <div className="text-[12px] text-[#242424]/55 mt-0.5 truncate">{canal.descripcion}</div>}
+          {canal.descripcion && <div className="text-[12px] mt-0.5 truncate" style={{ color: "var(--nuvia-text-secondary)" }}>{canal.descripcion}</div>}
         </div>
         {!canal.privado && (
-          <button onClick={() => unirseCanal(canal.id)} className="inline-flex items-center gap-1.5 rounded-lg border border-[#E3E7EE] px-2.5 md:px-3 py-1.5 text-[11px] md:text-[12px] font-medium hover:bg-[#F7F9FB] shrink-0">
+          <button onClick={() => unirseCanal(canal.id)} className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 md:px-3 py-1.5 text-[11px] md:text-[12px] font-medium transition hover:bg-white/[0.06] shrink-0" style={{ borderColor: "var(--nuvia-border)", color: "var(--nuvia-text-primary)" }}>
             <UserPlus size={13} /> <span className="hidden sm:inline">Unirme</span>
           </button>
         )}
       </div>
 
-      <div ref={scrollerRef} className="flex-1 overflow-y-auto px-3 md:px-5 py-3 md:py-4 space-y-3">
+      <div ref={scrollerRef} className="flex-1 overflow-y-auto px-3 md:px-5 py-3 md:py-4 space-y-3" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.03))" }}>
         {msgs.length === 0 && (
-          <div className="text-center text-sm text-[#242424]/50 py-10">Sin mensajes aún. Empieza la conversación.</div>
+          <div className="text-center text-sm py-10" style={{ color: "var(--nuvia-text-secondary)" }}>Sin mensajes aún. Empieza la conversación.</div>
         )}
         {msgs.map((m) => <MensajeItem key={m.id} m={m} esMio={m.user_id === user?.id} />)}
         <div ref={endRef} />
       </div>
 
       {adjs.length > 0 && (
-        <div className="border-t border-[#E3E7EE] px-5 py-2 flex gap-2 flex-wrap bg-[#F7F9FB]">
+        <div className="border-t px-5 py-2 flex gap-2 flex-wrap" style={{ borderColor: "var(--nuvia-border)", background: "var(--nuvia-bg-secondary)" }}>
           {adjs.map((a, i) => (
-            <div key={i} className="text-[11px] bg-white border border-[#E3E7EE] rounded px-2 py-1 flex items-center gap-1">
+            <div key={i} className="text-[11px] border rounded px-2 py-1 flex items-center gap-1" style={{ background: "var(--nuvia-bg-tertiary)", borderColor: "var(--nuvia-border)", color: "var(--nuvia-text-primary)" }}>
               📎 {a.nombre}
-              <button onClick={() => setAdjs((p) => p.filter((_, j) => j !== i))} className="text-[#B42318] ml-1">×</button>
+              <button onClick={() => setAdjs((p) => p.filter((_, j) => j !== i))} className="ml-1" style={{ color: "var(--nuvia-danger)" }}>×</button>
             </div>
           ))}
         </div>
       )}
 
-      <div className="border-t border-[#E3E7EE] px-2 md:px-4 py-2 md:py-3 flex items-end gap-1.5 md:gap-2" style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}>
-        <button onClick={() => fileRef.current?.click()} className="rounded-lg border border-[#E3E7EE] p-2 hover:bg-[#F7F9FB] shrink-0" title="Adjuntar archivo / imagen / PDF">
-          <Paperclip size={16} className="text-[#242424]/70" />
+      <div className="border-t px-2 md:px-4 py-2 md:py-3 flex items-end gap-1.5 md:gap-2" style={{ borderColor: "var(--nuvia-border)", background: "var(--nuvia-bg-secondary)", paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}>
+        <button onClick={() => fileRef.current?.click()} className="rounded-lg border p-2 transition hover:bg-white/[0.06] shrink-0" style={{ borderColor: "var(--nuvia-border)", color: "var(--nuvia-text-secondary)" }} title="Adjuntar archivo / imagen / PDF">
+          <Paperclip size={16} />
         </button>
         <input
           ref={fileRef}
@@ -125,9 +123,9 @@ export function CanalChat({ canal }: { canal: Canal }) {
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onEnviar(); } }}
           rows={1}
           placeholder={`Mensaje en ${canal.nombre}…`}
-          className="flex-1 min-w-0 rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm resize-none outline-none focus:border-[#445DA3]"
+          className="nuvia-input nuvia-input-sm flex-1 min-w-0 resize-none"
         />
-        <button onClick={onEnviar} disabled={enviando} className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 md:px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 shrink-0" style={{ background: AZUL }} aria-label="Enviar">
+        <button onClick={onEnviar} disabled={enviando} className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 md:px-4 py-2 text-sm font-semibold disabled:opacity-50 shrink-0" style={{ background: "var(--nuvia-gradient-primary)", color: "var(--nuvia-text-primary)" }} aria-label="Enviar">
           <Send size={14} /> <span className="hidden sm:inline">Enviar</span>
         </button>
       </div>
@@ -137,29 +135,29 @@ export function CanalChat({ canal }: { canal: Canal }) {
 
 function MensajeItem({ m, esMio }: { m: Mensaje; esMio: boolean }) {
   if (m.borrado) {
-    return <div className="text-[11px] italic text-[#242424]/40 pl-12">— mensaje eliminado —</div>;
+    return <div className="text-[11px] italic pl-12" style={{ color: "var(--nuvia-text-secondary)" }}>— mensaje eliminado —</div>;
   }
   return (
     <div className="flex gap-3 group">
       <UserAvatar userId={m.user_id} size="sm" />
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 text-[11px] text-[#242424]/55">
-          <span className="font-semibold text-[#242424]">{esMio ? "Tú" : "Usuario"}</span>
+        <div className="flex items-center gap-2 text-[11px]" style={{ color: "var(--nuvia-text-secondary)" }}>
+          <span className="font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{esMio ? "Tú" : "Usuario"}</span>
           <span>{new Date(m.created_at).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}</span>
           {esMio && (
-            <button onClick={() => { if (confirm("¿Eliminar mensaje?")) borrarMensaje(m.id); }} className="opacity-0 group-hover:opacity-100 text-[#B42318]">
+            <button onClick={() => { if (confirm("¿Eliminar mensaje?")) borrarMensaje(m.id); }} className="opacity-0 group-hover:opacity-100" style={{ color: "var(--nuvia-danger)" }}>
               <Trash2 size={11} />
             </button>
           )}
         </div>
-        {m.texto && <div className="text-sm text-[#242424] whitespace-pre-wrap break-words">{m.texto}</div>}
+        {m.texto && <div className="text-sm whitespace-pre-wrap break-words" style={{ color: "var(--nuvia-text-primary)" }}>{m.texto}</div>}
         {m.adjuntos?.length > 0 && (
           <div className="mt-1 flex flex-wrap gap-2">
             {m.adjuntos.map((a, i) => (
               a.mime?.startsWith("audio/") ? (
                 <VoiceNotePlayer key={i} path={a.path} mime={a.mime} nombre={a.nombre} />
               ) : (
-                <button key={i} onClick={async () => { const url = await getAdjuntoUrl(a.path); window.open(url, "_blank"); }} className="inline-flex items-center gap-1 rounded-md border border-[#E3E7EE] bg-[#F7F9FB] px-2 py-1 text-[11px] hover:bg-white">
+                <button key={i} onClick={async () => { const url = await getAdjuntoUrl(a.path); window.open(url, "_blank"); }} className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] transition hover:bg-white/[0.06]" style={{ borderColor: "var(--nuvia-border)", background: "rgba(255,255,255,0.04)", color: "var(--nuvia-text-primary)" }}>
                   <Download size={11} /> {a.nombre}
                 </button>
               )
