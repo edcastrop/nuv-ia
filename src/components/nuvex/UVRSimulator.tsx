@@ -782,6 +782,7 @@ export function UVRSimulator({
         </>
       )}
       {monedaAlerta.dialog}
+      </div>
     </div>
   );
 }
