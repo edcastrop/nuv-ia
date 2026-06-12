@@ -1699,7 +1699,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                 >
                   Cargar otro extracto
                 </button>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center justify-end gap-2">
                   <button
                     onClick={() => cuotaBaseInputRef.current?.focus()}
                     className="rounded-xl px-5 py-3 text-sm font-semibold text-white/85 transition hover:text-white"
@@ -1720,7 +1720,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                     }}
                   >
                     <CheckCircle2 className="h-4 w-4" />
-                    CONFIRMAR DATOS
+                    APLICAR AL SIMULADOR
                   </button>
                 </div>
               </div>
