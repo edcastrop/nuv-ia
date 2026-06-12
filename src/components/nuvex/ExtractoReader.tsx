@@ -1158,17 +1158,23 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           <div
             className="relative flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl"
             style={{
-              background: "linear-gradient(145deg, rgba(255,255,255,0.065), rgba(68,93,163,0.075) 48%, rgba(132,185,143,0.045))",
-              border: "1px solid rgba(255,255,255,0.12)",
-              boxShadow: "0 44px 90px -38px rgba(0,0,0,0.92), inset 0 1px 0 rgba(255,255,255,0.10)",
-              backdropFilter: "blur(32px) saturate(160%)",
-              WebkitBackdropFilter: "blur(32px) saturate(160%)",
+              background: "linear-gradient(145deg, rgba(255,255,255,0.13), rgba(255,255,255,0.048) 44%, rgba(68,93,163,0.05) 76%, rgba(132,185,143,0.035))",
+              border: "1px solid rgba(210,222,240,0.22)",
+              boxShadow: "0 46px 110px -46px rgba(0,0,0,0.95), inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -1px 0 rgba(255,255,255,0.06)",
+              backdropFilter: "blur(24px) saturate(135%)",
               maxHeight: "92vh",
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <div
-              className="flex items-center justify-between border-b px-6 py-4"
+              className="pointer-events-none absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(112deg, rgba(255,255,255,0.15) 0%, transparent 18%, transparent 76%, rgba(255,255,255,0.05) 100%)",
+              }}
+            />
+            <div
+              className="relative flex items-center justify-between border-b px-6 py-4"
               style={{ borderColor: "rgba(255,255,255,0.08)" }}
             >
               <div className="flex items-center gap-3">
@@ -1192,7 +1198,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
             </div>
 
             {/* Progress */}
-            <div className="border-b px-6 py-4" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+            <div className="relative border-b px-6 py-4" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
               <div className="flex items-center gap-2">
                 {STAGES.map((s, i) => {
                   const active = i <= progressIdx;
@@ -1230,7 +1236,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
               </div>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+            <div className="relative min-h-0 flex-1 overflow-y-auto px-6 py-5">
               {stage === "idle" && (
                 <div
                   onDragOver={(e) => {
