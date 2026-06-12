@@ -57,7 +57,13 @@ function ConciliacionPage() {
         contenido_texto = await file.text();
       } else if (formato === "pdf") {
         const buf = await file.arrayBuffer();
-        contenido_base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+        const bytes = new Uint8Array(buf);
+        let binary = "";
+        const CHUNK = 0x8000;
+        for (let i = 0; i < bytes.length; i += CHUNK) {
+          binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)) as any);
+        }
+        contenido_base64 = btoa(binary);
       } else {
         throw new Error("XLSX no soportado en MVP. Conviértelo a CSV.");
       }
