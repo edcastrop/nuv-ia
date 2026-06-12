@@ -2,6 +2,7 @@
 // 100% TypeScript puro · sin dependencias externas · testeable
 
 export const QA_MOTOR_VERSION = "1.0.0";
+export const DEFAULT_VARIACION_UVR_EA = 5.5;
 
 export type Modalidad = "hipotecario" | "leasing" | "uvr";
 export type Severidad = "info" | "warning" | "critica";
@@ -75,6 +76,12 @@ export interface FilaAmort {
   cuotaTotal: number;   // cuota + seguros
   saldo: number;
   subsidioActivo: boolean; // true mientras aplique FRECH/Fresh
+  saldoUvr?: number;
+  valorUvr?: number;
+  cuotaUvr?: number;
+  interesUvr?: number;
+  capitalUvr?: number;
+  correccionUvr?: number;
 }
 
 export function amortizacion(
@@ -109,6 +116,61 @@ export function amortizacion(
   return filas;
 }
 
+export function amortizacionUvr(
+  saldoUvrInicial: number,
+  valorUvrInicial: number,
+  iPeriodica: number,
+  variacionMensualUvr: number,
+  cuotaUvr: number,
+  n: number,
+  seguros: number = 0,
+  opts?: { cuotasSubsidio?: number; subsidioMensual?: number },
+): FilaAmort[] {
+  const filas: FilaAmort[] = [];
+  const seg = Math.max(0, seguros || 0);
+  const cuotasSub = Math.max(0, Math.min(n, Math.round(opts?.cuotasSubsidio ?? 0)));
+  const subsidioMensual = Math.max(0, opts?.subsidioMensual ?? 0);
+  let saldoUvr = Math.max(0, saldoUvrInicial || 0);
+  let valorUvr = Math.max(0, valorUvrInicial || 0);
+
+  for (let k = 1; k <= n && saldoUvr > 0.000001 && valorUvr > 0 && cuotaUvr > 0; k++) {
+    const valorUvrProy = valorUvr * (1 + variacionMensualUvr);
+    const interesUvr = saldoUvr * iPeriodica;
+    let capitalUvr = cuotaUvr - interesUvr;
+    if (capitalUvr > saldoUvr) capitalUvr = saldoUvr;
+    const saldoUvrFinal = Math.max(0, saldoUvr - capitalUvr);
+    const cuotaPesos = cuotaUvr * valorUvrProy;
+    const interesPesos = interesUvr * valorUvrProy;
+    const capitalPesos = capitalUvr * valorUvrProy;
+    const saldoFinalPesos = saldoUvrFinal * valorUvrProy;
+    const correccionUvr = saldoUvr * (valorUvrProy - valorUvr);
+    const subsidioActivo = k <= cuotasSub;
+    const fresh = subsidioActivo ? Math.min(subsidioMensual, cuotaPesos + seg) : 0;
+
+    filas.push({
+      k,
+      cuota: cuotaPesos,
+      interes: interesPesos,
+      capital: capitalPesos,
+      seguros: seg,
+      fresh,
+      cuotaTotal: cuotaPesos + seg - fresh,
+      saldo: saldoFinalPesos,
+      subsidioActivo,
+      saldoUvr: saldoUvrFinal,
+      valorUvr: valorUvrProy,
+      cuotaUvr,
+      interesUvr,
+      capitalUvr,
+      correccionUvr,
+    });
+
+    saldoUvr = saldoUvrFinal;
+    valorUvr = valorUvrProy;
+  }
+  return filas;
+}
+
 // ──────────────────────────────────────────────────────────────
 // 4. Reconstrucción matemática del crédito
 // ──────────────────────────────────────────────────────────────
@@ -127,6 +189,11 @@ export interface ReconstruccionInput {
    *  se asume el tope duro FRECH_MAX_CUOTAS (84) acotado a las pendientes. */
   coberturaFrechCuotasRestantes?: number;
   valorDesembolsado?: number;
+  saldoUVR?: number;
+  valorUVR?: number;
+  variacionUvrEa?: number;
+  cuotaBaseSinSubsidio?: number;
+  cuotaFinancieraSinSeguros?: number;
 }
 
 export interface Reconstruccion {
@@ -141,9 +208,12 @@ export interface Reconstruccion {
   vecesPagado: number;
   primerasCuotas: FilaAmort[];  // 12
   ultimasCuotas: FilaAmort[];   // 12
+  todasCuotas: FilaAmort[];
   totalIntereses: number;
   /** Cuotas efectivas con subsidio aplicadas en la reconstrucción. */
   cuotasFrechAplicadas: number;
+  totalCorreccionUvr?: number;
+  saldoFinalPesosPrimerMes?: number;
 }
 
 export function reconstruir(input: ReconstruccionInput): Reconstruccion {
@@ -152,6 +222,60 @@ export function reconstruir(input: ReconstruccionInput): Reconstruccion {
   const cob = input.coberturaFrechPp ? input.coberturaFrechPp / 100 : 0;
   const beneficioMensual = Math.max(0, input.coberturaFrechValorMensual ?? 0);
   const hayCobertura = cob > 0 || beneficioMensual > 0;
+  const n = Math.max(0, Math.round(input.cuotasPendientes));
+  const seguros = Math.max(0, input.seguros || 0);
+
+  if (input.modalidad === "uvr" && (input.saldoUVR ?? 0) > 0 && (input.valorUVR ?? 0) > 0) {
+    // UVR NO se liquida como pesos. El saldo se amortiza en UVR, la UVR se
+    // reajusta mes a mes y el saldo en COP puede crecer aunque baje en UVR.
+    // La tasa de interés SIEMPRE es la TE cobrada del extracto, no la pactada.
+    const saldoUvr = Math.max(0, input.saldoUVR ?? 0);
+    const valorUvr = Math.max(0, input.valorUVR ?? 0);
+    const iMvUvr = eaToMv(eaCobrada);
+    const variacionEa = Math.max(0, input.variacionUvrEa ?? DEFAULT_VARIACION_UVR_EA) / 100;
+    const variacionMensual = eaToMv(variacionEa);
+    const cuotaFinancieraActual = Math.max(0, input.cuotaFinancieraSinSeguros ?? 0);
+    const cuotaUvr = cuotaTeorica(saldoUvr, iMvUvr, n) || (cuotaFinancieraActual > 0 ? cuotaFinancieraActual / valorUvr : 0);
+    const cuotaFinancieraBase = cuotaUvr * valorUvr;
+    const cuotaSinSubsidioOficial = Math.max(0, input.cuotaBaseSinSubsidio ?? 0);
+    const cuotaTeoricaActual = cuotaSinSubsidioOficial > 0 ? cuotaSinSubsidioOficial : cuotaFinancieraBase + seguros;
+    const cuotaTotal = Math.max(0, cuotaTeoricaActual - beneficioMensual);
+    const cuotasFrechAplicadas = hayCobertura
+      ? Math.max(0, Math.min(n, Math.round(input.coberturaFrechCuotasRestantes ?? FRECH_MAX_CUOTAS)))
+      : 0;
+    const tabla = amortizacionUvr(
+      saldoUvr,
+      valorUvr,
+      iMvUvr,
+      variacionMensual,
+      cuotaUvr,
+      n,
+      seguros,
+      hayCobertura ? { cuotasSubsidio: cuotasFrechAplicadas, subsidioMensual: beneficioMensual } : undefined,
+    );
+    const totalIntereses = tabla.reduce((s, f) => s + f.interes, 0);
+    const totalCorreccionUvr = tabla.reduce((s, f) => s + (f.correccionUvr ?? 0), 0);
+    const costoTotal = tabla.reduce((s, f) => s + f.cuotaTotal, 0);
+    const desembolso = input.valorDesembolsado && input.valorDesembolsado > 0 ? input.valorDesembolsado : input.saldoCapital;
+
+    return {
+      iMv: iMvUvr,
+      tasaEaBase: eaCobrada * 100,
+      cuotaTeorica: cuotaTeoricaActual,
+      cuotaConSubsidio: cuotaTotal,
+      cuotaTotalConSeguros: cuotaTotal,
+      beneficioMensualFrech: beneficioMensual,
+      costoTotal,
+      vecesPagado: desembolso > 0 ? costoTotal / desembolso : 0,
+      primerasCuotas: tabla.slice(0, 12),
+      ultimasCuotas: tabla.slice(-12),
+      todasCuotas: tabla,
+      totalIntereses,
+      cuotasFrechAplicadas,
+      totalCorreccionUvr,
+      saldoFinalPesosPrimerMes: tabla[0]?.saldo,
+    };
+  }
 
   // BASE para la cuota teórica SIN beneficio:
   // - Si hay cobertura y existe tasa pactada > cobrada → usar pactada
@@ -159,7 +283,6 @@ export function reconstruir(input: ReconstruccionInput): Reconstruccion {
   // - En cualquier otro caso → usar la tasa cobrada / única reportada.
   const eaBase = hayCobertura && eaPactada > eaCobrada ? eaPactada : eaCobrada;
   const iMv = eaToMv(eaBase);
-  const n = Math.max(0, Math.round(input.cuotasPendientes));
   const C = cuotaTeorica(input.saldoCapital, iMv, n);
 
   // Cuota con subsidio:
@@ -172,7 +295,6 @@ export function reconstruir(input: ReconstruccionInput): Reconstruccion {
   const beneficioPorTasa = Math.max(0, C - CSub);
   const beneficio = beneficioMensual > 0 ? beneficioMensual : beneficioPorTasa;
 
-  const seguros = Math.max(0, input.seguros || 0);
   const cuotaFinancieraBase = beneficioMensual > 0 ? C : (cob > 0 ? CSub : C);
   const cuotaTotal = cuotaFinancieraBase + seguros - (beneficioMensual > 0 ? beneficioMensual : 0);
 
@@ -210,6 +332,7 @@ export function reconstruir(input: ReconstruccionInput): Reconstruccion {
     vecesPagado: veces,
     primerasCuotas: tabla.slice(0, 12),
     ultimasCuotas: tabla.slice(-12),
+    todasCuotas: tabla,
     totalIntereses,
     cuotasFrechAplicadas,
   };

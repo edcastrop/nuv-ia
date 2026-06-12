@@ -1,7 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-type AmortRow = { k: number; cuota: number; interes: number; capital: number; saldo: number };
+type AmortRow = { k: number; cuota: number; interes: number; capital: number; saldo: number; correccionUvr?: number; saldoUvr?: number; valorUvr?: number };
 type Penalizacion = { tipo: string; valor: number };
 type Inconsistencia = {
   tipo: string; severidad: string; campo: string | null;
@@ -113,6 +113,7 @@ export function exportarDictamenPDF(d: DictamenPdfData) {
   const ext = (d.inputs.extracto ?? {}) as Record<string, unknown>;
   const rec = (d.inputs.reconstruccion ?? {}) as Record<string, unknown>;
   const o = d.outputs;
+  const isUvr = d.modalidad === "uvr";
   doc.setFont("helvetica", "bold"); doc.setFontSize(11);
   doc.text("Extracto bancario vs Reconstrucción NUVIA", 48, y); y += 4;
   autoTable(doc, {
@@ -124,9 +125,9 @@ export function exportarDictamenPDF(d: DictamenPdfData) {
         `$${fmt(rec.saldoCapital as number, 0)}`,
         fmt(Number(rec.saldoCapital ?? 0) - Number(ext.saldoCapital ?? 0), 0)],
       ["Tasa EA",
-        `${fmt(Number(ext.tasaEa ?? 0) * 100, 4)}%`,
-        `${fmt(Number(rec.tasaEa ?? 0) * 100, 4)}%`,
-        fmt((Number(rec.tasaEa ?? 0) - Number(ext.tasaEa ?? 0)) * 100, 4)],
+        `${fmt(Number(ext.tasaEa ?? 0), 4)}%`,
+        `${fmt(Number(rec.tasaEa ?? 0), 4)}%`,
+        fmt(Number(rec.tasaEa ?? 0) - Number(ext.tasaEa ?? 0), 4)],
       ["Cuota mensual",
         `$${fmt(ext.cuota as number, 0)}`,
         `$${fmt(o.cuotaTotalConSeguros as number, 0)}`,
@@ -176,17 +177,25 @@ export function exportarDictamenPDF(d: DictamenPdfData) {
     startY: y + 4,
     head: [["Concepto", "Fórmula"]],
     body: [
-      ["Tasa mensual vencida", "i_mv = (1 + EA)^(1/12) - 1"],
-      ["Cuota teórica (francés)", "C = S * i_mv / (1 - (1 + i_mv)^-n)"],
-      ["Cuota con FRECH", "i_sub = (1+(EA-cob))^(1/12)-1 ; C_sub = S*i_sub/(1-(1+i_sub)^-n)"],
-      ["Beneficio mensual FRECH", "Beneficio = C - C_sub"],
-      ["Cuota total mensual", "Cuota_total = C_sub + Seguros"],
-      ["Interés cuota k", "I_k = Saldo_{k-1} * i_periodica"],
-      ["Capital cuota k", "K_k = C - I_k"],
-      ["Costo total proyectado", "Costo = C_sub * n + Seguros * n"],
-      ["Veces pagado vs desembolso", "Veces = Costo / Desembolso"],
+      ...(isUvr ? [
+        ["Tasa mensual cobrada", "i = (1 + TE_Cobrada)^(1/12) - 1"],
+        ["Variación mensual UVR", "v = (1 + Variacion_UVR_EA)^(1/12) - 1"],
+        ["Cuota financiera UVR", "C_uvr = Cuota_sin_seguros_COP / Valor_UVR_corte"],
+        ["Interés UVR", "I_uvr,k = Saldo_uvr,k-1 * i"],
+        ["Capital UVR", "K_uvr,k = C_uvr - I_uvr,k"],
+        ["Saldo COP", "Saldo_COP,k = (Saldo_uvr,k-1 - K_uvr,k) * Valor_UVR_k"],
+        ["Corrección UVR", "Correccion_k = Saldo_uvr,k-1 * (Valor_UVR_k - Valor_UVR_k-1)"],
+      ] : [
+        ["Tasa mensual vencida", "i_mv = (1 + EA)^(1/12) - 1"],
+        ["Cuota teórica (francés)", "C = S * i_mv / (1 - (1 + i_mv)^-n)"],
+        ["Cuota con FRECH", "i_sub = (1+(EA-cob))^(1/12)-1 ; C_sub = S*i_sub/(1-(1+i_sub)^-n)"],
+        ["Beneficio mensual FRECH", "Beneficio = C - C_sub"],
+        ["Cuota total mensual", "Cuota_total = C_sub + Seguros"],
+        ["Interés cuota k", "I_k = Saldo_{k-1} * i_periodica"],
+        ["Capital cuota k", "K_k = C - I_k"],
+      ]),
       ["QA Score", "Score = 100 - Sum(penalizaciones)"],
-    ],
+    ] as string[][],
     styles: { fontSize: 9, font: "courier" },
     headStyles: { fillColor: [30, 41, 59], textColor: 255, font: "helvetica" },
     columnStyles: { 0: { cellWidth: 180, font: "helvetica" }, 1: { cellWidth: 330 } },
@@ -205,11 +214,10 @@ export function exportarDictamenPDF(d: DictamenPdfData) {
   doc.text(`Plan amortizado (${filas.length} filas)`, 48, y); y += 4;
   autoTable(doc, {
     startY: y + 4,
-    head: [["#", "Cuota", "Interés", "Capital", "Saldo"]],
-    body: filas.map((f) => [
-      String(f.k), `$${fmt(f.cuota, 0)}`, `$${fmt(f.interes, 0)}`,
-      `$${fmt(f.capital, 0)}`, `$${fmt(f.saldo, 0)}`,
-    ]),
+    head: [isUvr ? ["#", "Cuota", "Interés", "Capital", "Corrección", "Saldo COP", "Saldo UVR"] : ["#", "Cuota", "Interés", "Capital", "Saldo"]],
+    body: filas.map((f) => isUvr
+      ? [String(f.k), `$${fmt(f.cuota, 0)}`, `$${fmt(f.interes, 0)}`, `$${fmt(f.capital, 0)}`, `$${fmt(f.correccionUvr, 0)}`, `$${fmt(f.saldo, 0)}`, fmt(f.saldoUvr, 4)]
+      : [String(f.k), `$${fmt(f.cuota, 0)}`, `$${fmt(f.interes, 0)}`, `$${fmt(f.capital, 0)}`, `$${fmt(f.saldo, 0)}`]),
     styles: { fontSize: 8, halign: "right" },
     headStyles: { fillColor: [30, 41, 59], textColor: 255, halign: "right" },
     margin: { left: 48, right: 48 },

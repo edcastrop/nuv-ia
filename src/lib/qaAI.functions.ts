@@ -73,6 +73,11 @@ const AuditarInputSchema = z.object({
     coberturaFrechValorMensual: z.number().nonnegative().optional(),
     coberturaFrechCuotasRestantes: z.number().int().nonnegative().optional(),
     valorDesembolsado: z.number().nonnegative().optional(),
+    saldoUVR: z.number().nonnegative().optional(),
+    valorUVR: z.number().nonnegative().optional(),
+    variacionUvrEa: z.number().nonnegative().optional(),
+    cuotaBaseSinSubsidio: z.number().nonnegative().optional(),
+    cuotaFinancieraSinSeguros: z.number().nonnegative().optional(),
   }),
   extracto: z.object({
     saldoCapital: z.number().nonnegative().optional(),
@@ -108,6 +113,11 @@ export const auditarCaso = createServerFn({ method: "POST" })
         coberturaFrechValorMensual: data.reconstruccion.coberturaFrechValorMensual,
         coberturaFrechCuotasRestantes: data.reconstruccion.coberturaFrechCuotasRestantes,
         valorDesembolsado: data.reconstruccion.valorDesembolsado,
+        saldoUVR: data.reconstruccion.saldoUVR,
+        valorUVR: data.reconstruccion.valorUVR,
+        variacionUvrEa: data.reconstruccion.variacionUvrEa,
+        cuotaBaseSinSubsidio: data.reconstruccion.cuotaBaseSinSubsidio,
+        cuotaFinancieraSinSeguros: data.reconstruccion.cuotaFinancieraSinSeguros,
       },
       extracto: data.extracto,
       simulacion: data.simulacion,
@@ -137,9 +147,11 @@ export const auditarCaso = createServerFn({ method: "POST" })
           costoTotal: result.reconstruccion.costoTotal,
           vecesPagado: result.reconstruccion.vecesPagado,
           totalIntereses: result.reconstruccion.totalIntereses,
+          totalCorreccionUvr: result.reconstruccion.totalCorreccionUvr,
           iMv: result.reconstruccion.iMv,
           primerasCuotas: result.reconstruccion.primerasCuotas,
           ultimasCuotas: result.reconstruccion.ultimasCuotas,
+          todasCuotas: result.reconstruccion.todasCuotas,
         })),
         diferencias: JSON.parse(JSON.stringify(result.inconsistencias)),
         alertas: JSON.parse(JSON.stringify(result.inconsistencias.filter((i) => i.severidad === "critica"))),
@@ -213,7 +225,12 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
     const inputs = (auditoria.inputs ?? {}) as Record<string, unknown>;
     const rec = (inputs.reconstruccion ?? {}) as Record<string, unknown>;
     const extSnap = (inputs.extracto ?? {}) as Record<string, unknown>;
-    if (!(Number(rec.coberturaFrechValorMensual ?? 0) > 0) && auditoria.extracto_id) {
+    const needsFrechView = !(Number(rec.coberturaFrechValorMensual ?? 0) > 0);
+    const needsUvrView = String(inputs.modalidad ?? auditoria.modalidad) === "uvr" && (
+      !(Number(rec.saldoUVR ?? 0) > 0) || !(Number(rec.valorUVR ?? 0) > 0) ||
+      !(Number(rec.cuotaBaseSinSubsidio ?? 0) > 0) || !(Number(rec.cuotaFinancieraSinSeguros ?? 0) > 0)
+    );
+    if ((needsFrechView || needsUvrView) && auditoria.extracto_id) {
       const { data: ext } = await context.supabase
         .from("extractos_lecturas")
         .select("datos")
@@ -222,7 +239,10 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
       const d = (ext?.datos ?? {}) as Record<string, unknown>;
       const valorFrech = parseNum(d.valorCobertura) ?? parseNum(d.valorSubsidioGobierno);
       const tasaFrech = parseNum(d.tasaCobertura);
-      if ((valorFrech && valorFrech > 0) || (tasaFrech && tasaFrech > 0)) {
+      const cuotaBaseSinSubsidio = parseNum(d.cuotaSinSubsidio) ?? parseNum(d.cuotaBaseSimulacion) ?? parseNum(d.cuotaActual);
+      const seguros = parseNum(d.seguros) ?? Number(rec.seguros ?? 0);
+      const cuotaFinancieraSinSeguros = parseNum(d.cuotaConInteresSinSeguros) ?? parseNum(d.cuotaSinSeguros) ?? (cuotaBaseSinSubsidio ? Math.max(0, cuotaBaseSinSubsidio - seguros) : undefined);
+      if ((valorFrech && valorFrech > 0) || (tasaFrech && tasaFrech > 0) || needsUvrView) {
         const cuotasPend = Number(rec.cuotasPendientes ?? 0);
         const cuotasPag = Number(rec.cuotasPagadas ?? 0);
         const frechCuotasRestantes = Math.max(0, Math.min(cuotasPend, 84 - cuotasPag));
@@ -234,6 +254,10 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
             coberturaFrechPp: rec.coberturaFrechPp ?? tasaFrech,
             coberturaFrechValorMensual: rec.coberturaFrechValorMensual ?? valorFrech,
             coberturaFrechCuotasRestantes: rec.coberturaFrechCuotasRestantes ?? frechCuotasRestantes,
+            saldoUVR: rec.saldoUVR ?? parseNum(d.saldoUVR),
+            valorUVR: rec.valorUVR ?? parseNum(d.valorUVR),
+            cuotaBaseSinSubsidio: rec.cuotaBaseSinSubsidio ?? cuotaBaseSinSubsidio,
+            cuotaFinancieraSinSeguros: rec.cuotaFinancieraSinSeguros ?? cuotaFinancieraSinSeguros,
           },
           extracto: {
             ...extSnap,
@@ -262,9 +286,11 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
               costoTotal: result.reconstruccion.costoTotal,
               vecesPagado: result.reconstruccion.vecesPagado,
               totalIntereses: result.reconstruccion.totalIntereses,
+              totalCorreccionUvr: result.reconstruccion.totalCorreccionUvr,
               iMv: result.reconstruccion.iMv,
               primerasCuotas: result.reconstruccion.primerasCuotas,
               ultimasCuotas: result.reconstruccion.ultimasCuotas,
+              todasCuotas: result.reconstruccion.todasCuotas,
             },
           } as unknown) as typeof aud;
         } catch {
@@ -658,6 +684,10 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
     const frech = parseNum(d.tasaCobertura);
     const frechValorMensual = parseNum(d.valorCobertura) ?? parseNum(d.valorSubsidioGobierno);
     const desemb = parseNum(d.valorDesembolsado);
+    const saldoUVR = parseNum(d.saldoUVR);
+    const valorUVR = parseNum(d.valorUVR);
+    const cuotaBaseSinSubsidio = parseNum(d.cuotaSinSubsidio) ?? parseNum(d.cuotaBaseSimulacion) ?? parseNum(d.cuotaActual);
+    const cuotaFinancieraSinSeguros = parseNum(d.cuotaConInteresSinSeguros) ?? parseNum(d.cuotaSinSeguros) ?? (cuotaBaseSinSubsidio ? Math.max(0, cuotaBaseSinSubsidio - seguros) : undefined);
     const cuotaExt = ((frech && frech > 0) || (frechValorMensual && frechValorMensual > 0))
       ? parseNum(d.cuotaPagadaCliente) ?? parseNum(d.valorAPagar) ?? parseNum(d.cuotaActual)
       : parseNum(d.cuotaActual);
@@ -684,6 +714,10 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
         coberturaFrechValorMensual: frechValorMensual,
         coberturaFrechCuotasRestantes: frechCuotasRestantes,
         valorDesembolsado: desemb,
+        saldoUVR,
+        valorUVR,
+        cuotaBaseSinSubsidio,
+        cuotaFinancieraSinSeguros,
       },
       extracto: {
         saldoCapital: saldo || undefined,
@@ -700,7 +734,7 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
       modalidad,
       extractoLecturaId: ext.id,
       expedienteId: ext.expediente_id,
-      reconstruccion: { saldoCapital: saldo, tasaEa: tasa, tasaEaPactada: tasaPactada, cuotasPendientes: cuotasPend, cuotasPagadas: cuotasPag, seguros, coberturaFrechPp: frech, coberturaFrechValorMensual: frechValorMensual, coberturaFrechCuotasRestantes: frechCuotasRestantes, valorDesembolsado: desemb },
+      reconstruccion: { saldoCapital: saldo, tasaEa: tasa, tasaEaPactada: tasaPactada, cuotasPendientes: cuotasPend, cuotasPagadas: cuotasPag, seguros, coberturaFrechPp: frech, coberturaFrechValorMensual: frechValorMensual, coberturaFrechCuotasRestantes: frechCuotasRestantes, valorDesembolsado: desemb, saldoUVR, valorUVR, cuotaBaseSinSubsidio, cuotaFinancieraSinSeguros },
       extracto: { saldoCapital: saldo, tasaEa: tasa, cuota: cuotaExt, seguros, coberturaFrechPp: frech, coberturaFrechValorMensual: frechValorMensual },
     };
 
@@ -725,9 +759,11 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
           costoTotal: result.reconstruccion.costoTotal,
           vecesPagado: result.reconstruccion.vecesPagado,
           totalIntereses: result.reconstruccion.totalIntereses,
+          totalCorreccionUvr: result.reconstruccion.totalCorreccionUvr,
           iMv: result.reconstruccion.iMv,
           primerasCuotas: result.reconstruccion.primerasCuotas,
           ultimasCuotas: result.reconstruccion.ultimasCuotas,
+          todasCuotas: result.reconstruccion.todasCuotas,
         })),
         diferencias: JSON.parse(JSON.stringify(result.inconsistencias)),
         alertas: JSON.parse(JSON.stringify(result.inconsistencias.filter((i) => i.severidad === "critica"))),
@@ -848,17 +884,30 @@ export const reejecutarAuditoriaQA = createServerFn({ method: "POST" })
       const tasaPactada = parseNum(d.teaPactada);
       const valorFrech = parseNum(d.valorCobertura) ?? parseNum(d.valorSubsidioGobierno);
       const tasaFrech = parseNum(d.tasaCobertura);
+      const cuotaBaseSinSubsidio = parseNum(d.cuotaSinSubsidio) ?? parseNum(d.cuotaBaseSimulacion) ?? parseNum(d.cuotaActual);
+      const seguros = parseNum(d.seguros) ?? Number(rec.seguros ?? 0);
+      const cuotaFinancieraSinSeguros = parseNum(d.cuotaConInteresSinSeguros) ?? parseNum(d.cuotaSinSeguros) ?? (cuotaBaseSinSubsidio ? Math.max(0, cuotaBaseSinSubsidio - seguros) : undefined);
       const cuotasPend = Number(rec.cuotasPendientes ?? 0);
       const cuotasPag = Number(rec.cuotasPagadas ?? 0);
       const frechCuotasRestantes = Math.max(0, Math.min(cuotasPend, 84 - cuotasPag));
 
       const needsFrech = !(Number(rec.coberturaFrechValorMensual ?? 0) > 0) && ((valorFrech && valorFrech > 0) || (tasaFrech && tasaFrech > 0));
       const needsPactada = !(Number(rec.tasaEaPactada ?? 0) > 0) && tasaPactada && tasaPactada > 0;
+      const needsUvr = (String(inputs.modalidad ?? aud.modalidad) === "uvr") && (
+        !(Number(rec.saldoUVR ?? 0) > 0) || !(Number(rec.valorUVR ?? 0) > 0) ||
+        !(Number(rec.cuotaBaseSinSubsidio ?? 0) > 0) || !(Number(rec.cuotaFinancieraSinSeguros ?? 0) > 0)
+      );
 
-      if (needsFrech || needsPactada) {
+      if (needsFrech || needsPactada || needsUvr) {
         inputs.reconstruccion = {
           ...rec,
           ...(needsPactada ? { tasaEaPactada: tasaPactada } : {}),
+          ...(needsUvr ? {
+            saldoUVR: rec.saldoUVR ?? parseNum(d.saldoUVR),
+            valorUVR: rec.valorUVR ?? parseNum(d.valorUVR),
+            cuotaBaseSinSubsidio: rec.cuotaBaseSinSubsidio ?? cuotaBaseSinSubsidio,
+            cuotaFinancieraSinSeguros: rec.cuotaFinancieraSinSeguros ?? cuotaFinancieraSinSeguros,
+          } : {}),
           ...(needsFrech ? {
             coberturaFrechPp: rec.coberturaFrechPp ?? tasaFrech,
             coberturaFrechValorMensual: rec.coberturaFrechValorMensual ?? valorFrech,
@@ -907,9 +956,11 @@ export const reejecutarAuditoriaQA = createServerFn({ method: "POST" })
           costoTotal: result.reconstruccion.costoTotal,
           vecesPagado: result.reconstruccion.vecesPagado,
           totalIntereses: result.reconstruccion.totalIntereses,
+          totalCorreccionUvr: result.reconstruccion.totalCorreccionUvr,
           iMv: result.reconstruccion.iMv,
           primerasCuotas: result.reconstruccion.primerasCuotas,
           ultimasCuotas: result.reconstruccion.ultimasCuotas,
+          todasCuotas: result.reconstruccion.todasCuotas,
         })),
         diferencias: JSON.parse(JSON.stringify(result.inconsistencias)),
         alertas: JSON.parse(JSON.stringify(result.inconsistencias.filter((i) => i.severidad === "critica"))),
