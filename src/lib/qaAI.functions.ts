@@ -938,7 +938,7 @@ export const reejecutarAuditoriaQA = createServerFn({ method: "POST" })
 
     await supabase.from("qa_auditoria_log").insert({
       auditoria_id: data.id,
-      accion: "reejecutar",
+      accion: "recalcular",
       payload: { score: result.score.score, dictamen: result.score.dictamen, motor_version: QA_MOTOR_VERSION },
       user_id: userId,
     });
