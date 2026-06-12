@@ -20,30 +20,36 @@ function NeuralBg() {
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(circle at 20% 10%, rgba(68,93,163,0.18), transparent 50%), radial-gradient(circle at 80% 80%, rgba(132,185,143,0.14), transparent 55%)",
+            "radial-gradient(circle at 20% 10%, rgba(68,93,163,0.35), transparent 55%), radial-gradient(circle at 80% 85%, rgba(132,185,143,0.28), transparent 55%)",
         }}
       />
       <motion.div
-        className="pointer-events-none absolute -top-40 -left-32 h-[28rem] w-[28rem] rounded-full blur-3xl"
-        style={{ background: `radial-gradient(circle, ${NUVEX.azul}45, transparent 70%)` }}
-        animate={{ x: [0, 30, 0], y: [0, 20, 0] }}
-        transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
+        className="pointer-events-none absolute top-[-10rem] left-[-8rem] h-[36rem] w-[36rem] rounded-full blur-3xl"
+        style={{ background: `radial-gradient(circle, ${NUVEX.azul}, transparent 70%)`, opacity: 0.55 }}
+        animate={{ x: [0, 60, 0], y: [0, 40, 0], scale: [1, 1.1, 1] }}
+        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
-        className="pointer-events-none absolute -bottom-40 -right-32 h-[32rem] w-[32rem] rounded-full blur-3xl"
-        style={{ background: `radial-gradient(circle, ${NUVEX.verde}40, transparent 70%)` }}
-        animate={{ x: [0, -40, 0], y: [0, -20, 0] }}
-        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+        className="pointer-events-none absolute bottom-[-10rem] right-[-8rem] h-[40rem] w-[40rem] rounded-full blur-3xl"
+        style={{ background: `radial-gradient(circle, ${NUVEX.verde}, transparent 70%)`, opacity: 0.5 }}
+        animate={{ x: [0, -70, 0], y: [0, -40, 0], scale: [1, 1.15, 1] }}
+        transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="pointer-events-none absolute top-1/3 left-1/2 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full blur-3xl"
+        style={{ background: `radial-gradient(circle, #9333EA, transparent 70%)`, opacity: 0.25 }}
+        animate={{ x: [-40, 40, -40], y: [-20, 20, -20] }}
+        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
       />
       {/* Neural canvas SVG */}
-      <svg className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.18]" preserveAspectRatio="none">
+      <svg className="pointer-events-none absolute inset-0 h-full w-full opacity-50" preserveAspectRatio="none">
         <defs>
           <linearGradient id="herr-link" x1="0" x2="1">
             <stop offset="0%" stopColor={NUVEX.azul} />
             <stop offset="100%" stopColor={NUVEX.verde} />
           </linearGradient>
         </defs>
-        {Array.from({ length: 18 }).map((_, i) => {
+        {Array.from({ length: 26 }).map((_, i) => {
           const x1 = (i * 137) % 100;
           const y1 = (i * 71) % 100;
           const x2 = (x1 + 17 + (i % 7) * 4) % 100;
@@ -56,18 +62,19 @@ function NeuralBg() {
               x2={`${x2}%`}
               y2={`${y2}%`}
               stroke="url(#herr-link)"
-              strokeWidth="0.4"
+              strokeWidth="0.6"
             >
-              <animate attributeName="opacity" values="0.15;0.7;0.15" dur={`${6 + (i % 5)}s`} repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.2;0.9;0.2" dur={`${5 + (i % 5)}s`} repeatCount="indefinite" />
             </line>
           );
         })}
-        {Array.from({ length: 22 }).map((_, i) => {
+        {Array.from({ length: 34 }).map((_, i) => {
           const cx = (i * 53) % 100;
           const cy = (i * 89) % 100;
           return (
-            <circle key={`n${i}`} cx={`${cx}%`} cy={`${cy}%`} r="1.4" fill={i % 2 === 0 ? NUVEX.azul : NUVEX.verde}>
-              <animate attributeName="r" values="1.2;2;1.2" dur={`${4 + (i % 4)}s`} repeatCount="indefinite" />
+            <circle key={`n${i}`} cx={`${cx}%`} cy={`${cy}%`} r="1.6" fill={i % 2 === 0 ? NUVEX.azul : NUVEX.verde}>
+              <animate attributeName="r" values="1.4;3;1.4" dur={`${3 + (i % 4)}s`} repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.4;1;0.4" dur={`${3 + (i % 4)}s`} repeatCount="indefinite" />
             </circle>
           );
         })}
@@ -78,9 +85,10 @@ function NeuralBg() {
 
 function HerramientasLanding() {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#050816] text-white">
+    <div className="relative min-h-screen overflow-hidden bg-[#050816] text-white flex flex-col">
       <NeuralBg />
-      <div className="relative mx-auto max-w-6xl px-6 py-12">
+      <div className="relative mx-auto w-full max-w-6xl px-6 py-10 flex-1 flex flex-col justify-center gap-10">
+
         <motion.header
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
