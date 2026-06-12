@@ -16,6 +16,7 @@ import { Route as MfaVerificarRouteImport } from './routes/mfa-verificar'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiTreasuryCopilotRouteImport } from './routes/api/treasury-copilot'
 import { Route as ApiNuvexIaStreamRouteImport } from './routes/api/nuvex-ia-stream'
 import { Route as ApiNuvexGptChatRouteImport } from './routes/api/nuvex-gpt-chat'
 import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
@@ -91,6 +92,8 @@ import { Route as ApiPublicHooksFinanzasCronRouteImport } from './routes/api/pub
 import { Route as ApiPublicHooksCasosAlertasRouteImport } from './routes/api/public/hooks/casos-alertas'
 import { Route as ApiPublicHooksCarteraRecordatoriosRouteImport } from './routes/api/public/hooks/cartera-recordatorios'
 import { Route as AuthenticatedFinanzasTreasuryFlujoCajaRouteImport } from './routes/_authenticated/finanzas.treasury.flujo-caja'
+import { Route as AuthenticatedFinanzasTreasuryCopilotoRouteImport } from './routes/_authenticated/finanzas.treasury.copiloto'
+import { Route as AuthenticatedFinanzasTreasuryConfigRouteImport } from './routes/_authenticated/finanzas.treasury.config'
 import { Route as AuthenticatedFinanzasTreasuryConciliacionRouteImport } from './routes/_authenticated/finanzas.treasury.conciliacion'
 import { Route as AuthenticatedFinanzasTreasuryCarteraRouteImport } from './routes/_authenticated/finanzas.treasury.cartera'
 import { Route as AuthenticatedFinanzasTreasuryAuditoriaRouteImport } from './routes/_authenticated/finanzas.treasury.auditoria'
@@ -132,6 +135,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTreasuryCopilotRoute = ApiTreasuryCopilotRouteImport.update({
+  id: '/api/treasury-copilot',
+  path: '/api/treasury-copilot',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiNuvexIaStreamRoute = ApiNuvexIaStreamRouteImport.update({
@@ -564,6 +572,18 @@ const AuthenticatedFinanzasTreasuryFlujoCajaRoute =
     path: '/flujo-caja',
     getParentRoute: () => AuthenticatedFinanzasTreasuryRoute,
   } as any)
+const AuthenticatedFinanzasTreasuryCopilotoRoute =
+  AuthenticatedFinanzasTreasuryCopilotoRouteImport.update({
+    id: '/copiloto',
+    path: '/copiloto',
+    getParentRoute: () => AuthenticatedFinanzasTreasuryRoute,
+  } as any)
+const AuthenticatedFinanzasTreasuryConfigRoute =
+  AuthenticatedFinanzasTreasuryConfigRouteImport.update({
+    id: '/config',
+    path: '/config',
+    getParentRoute: () => AuthenticatedFinanzasTreasuryRoute,
+  } as any)
 const AuthenticatedFinanzasTreasuryConciliacionRoute =
   AuthenticatedFinanzasTreasuryConciliacionRouteImport.update({
     id: '/conciliacion',
@@ -646,6 +666,7 @@ export interface FileRoutesByFullPath {
   '/wallet': typeof AuthenticatedWalletRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
   '/api/nuvex-ia-stream': typeof ApiNuvexIaStreamRoute
+  '/api/treasury-copilot': typeof ApiTreasuryCopilotRoute
   '/apoderado/mis-casos': typeof AuthenticatedApoderadoMisCasosRoute
   '/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
@@ -694,6 +715,8 @@ export interface FileRoutesByFullPath {
   '/finanzas/treasury/auditoria': typeof AuthenticatedFinanzasTreasuryAuditoriaRoute
   '/finanzas/treasury/cartera': typeof AuthenticatedFinanzasTreasuryCarteraRoute
   '/finanzas/treasury/conciliacion': typeof AuthenticatedFinanzasTreasuryConciliacionRoute
+  '/finanzas/treasury/config': typeof AuthenticatedFinanzasTreasuryConfigRoute
+  '/finanzas/treasury/copiloto': typeof AuthenticatedFinanzasTreasuryCopilotoRoute
   '/finanzas/treasury/flujo-caja': typeof AuthenticatedFinanzasTreasuryFlujoCajaRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
@@ -734,6 +757,7 @@ export interface FileRoutesByTo {
   '/wallet': typeof AuthenticatedWalletRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
   '/api/nuvex-ia-stream': typeof ApiNuvexIaStreamRoute
+  '/api/treasury-copilot': typeof ApiTreasuryCopilotRoute
   '/apoderado/mis-casos': typeof AuthenticatedApoderadoMisCasosRoute
   '/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
@@ -781,6 +805,8 @@ export interface FileRoutesByTo {
   '/finanzas/treasury/auditoria': typeof AuthenticatedFinanzasTreasuryAuditoriaRoute
   '/finanzas/treasury/cartera': typeof AuthenticatedFinanzasTreasuryCarteraRoute
   '/finanzas/treasury/conciliacion': typeof AuthenticatedFinanzasTreasuryConciliacionRoute
+  '/finanzas/treasury/config': typeof AuthenticatedFinanzasTreasuryConfigRoute
+  '/finanzas/treasury/copiloto': typeof AuthenticatedFinanzasTreasuryCopilotoRoute
   '/finanzas/treasury/flujo-caja': typeof AuthenticatedFinanzasTreasuryFlujoCajaRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
@@ -826,6 +852,7 @@ export interface FileRoutesById {
   '/_authenticated/wallet': typeof AuthenticatedWalletRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
   '/api/nuvex-ia-stream': typeof ApiNuvexIaStreamRoute
+  '/api/treasury-copilot': typeof ApiTreasuryCopilotRoute
   '/_authenticated/apoderado/mis-casos': typeof AuthenticatedApoderadoMisCasosRoute
   '/_authenticated/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/_authenticated/casos/$id': typeof AuthenticatedCasosIdRoute
@@ -874,6 +901,8 @@ export interface FileRoutesById {
   '/_authenticated/finanzas/treasury/auditoria': typeof AuthenticatedFinanzasTreasuryAuditoriaRoute
   '/_authenticated/finanzas/treasury/cartera': typeof AuthenticatedFinanzasTreasuryCarteraRoute
   '/_authenticated/finanzas/treasury/conciliacion': typeof AuthenticatedFinanzasTreasuryConciliacionRoute
+  '/_authenticated/finanzas/treasury/config': typeof AuthenticatedFinanzasTreasuryConfigRoute
+  '/_authenticated/finanzas/treasury/copiloto': typeof AuthenticatedFinanzasTreasuryCopilotoRoute
   '/_authenticated/finanzas/treasury/flujo-caja': typeof AuthenticatedFinanzasTreasuryFlujoCajaRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
@@ -919,6 +948,7 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/api/nuvex-gpt-chat'
     | '/api/nuvex-ia-stream'
+    | '/api/treasury-copilot'
     | '/apoderado/mis-casos'
     | '/cartera/$id'
     | '/casos/$id'
@@ -967,6 +997,8 @@ export interface FileRouteTypes {
     | '/finanzas/treasury/auditoria'
     | '/finanzas/treasury/cartera'
     | '/finanzas/treasury/conciliacion'
+    | '/finanzas/treasury/config'
+    | '/finanzas/treasury/copiloto'
     | '/finanzas/treasury/flujo-caja'
     | '/api/public/hooks/cartera-recordatorios'
     | '/api/public/hooks/casos-alertas'
@@ -1007,6 +1039,7 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/api/nuvex-gpt-chat'
     | '/api/nuvex-ia-stream'
+    | '/api/treasury-copilot'
     | '/apoderado/mis-casos'
     | '/cartera/$id'
     | '/casos/$id'
@@ -1054,6 +1087,8 @@ export interface FileRouteTypes {
     | '/finanzas/treasury/auditoria'
     | '/finanzas/treasury/cartera'
     | '/finanzas/treasury/conciliacion'
+    | '/finanzas/treasury/config'
+    | '/finanzas/treasury/copiloto'
     | '/finanzas/treasury/flujo-caja'
     | '/api/public/hooks/cartera-recordatorios'
     | '/api/public/hooks/casos-alertas'
@@ -1098,6 +1133,7 @@ export interface FileRouteTypes {
     | '/_authenticated/wallet'
     | '/api/nuvex-gpt-chat'
     | '/api/nuvex-ia-stream'
+    | '/api/treasury-copilot'
     | '/_authenticated/apoderado/mis-casos'
     | '/_authenticated/cartera/$id'
     | '/_authenticated/casos/$id'
@@ -1146,6 +1182,8 @@ export interface FileRouteTypes {
     | '/_authenticated/finanzas/treasury/auditoria'
     | '/_authenticated/finanzas/treasury/cartera'
     | '/_authenticated/finanzas/treasury/conciliacion'
+    | '/_authenticated/finanzas/treasury/config'
+    | '/_authenticated/finanzas/treasury/copiloto'
     | '/_authenticated/finanzas/treasury/flujo-caja'
     | '/api/public/hooks/cartera-recordatorios'
     | '/api/public/hooks/casos-alertas'
@@ -1167,6 +1205,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiNuvexGptChatRoute: typeof ApiNuvexGptChatRoute
   ApiNuvexIaStreamRoute: typeof ApiNuvexIaStreamRoute
+  ApiTreasuryCopilotRoute: typeof ApiTreasuryCopilotRoute
   ApiPublicHooksCarteraRecordatoriosRoute: typeof ApiPublicHooksCarteraRecordatoriosRoute
   ApiPublicHooksCasosAlertasRoute: typeof ApiPublicHooksCasosAlertasRoute
   ApiPublicHooksFinanzasCronRoute: typeof ApiPublicHooksFinanzasCronRoute
@@ -1224,6 +1263,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/treasury-copilot': {
+      id: '/api/treasury-copilot'
+      path: '/api/treasury-copilot'
+      fullPath: '/api/treasury-copilot'
+      preLoaderRoute: typeof ApiTreasuryCopilotRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/nuvex-ia-stream': {
@@ -1751,6 +1797,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanzasTreasuryFlujoCajaRouteImport
       parentRoute: typeof AuthenticatedFinanzasTreasuryRoute
     }
+    '/_authenticated/finanzas/treasury/copiloto': {
+      id: '/_authenticated/finanzas/treasury/copiloto'
+      path: '/copiloto'
+      fullPath: '/finanzas/treasury/copiloto'
+      preLoaderRoute: typeof AuthenticatedFinanzasTreasuryCopilotoRouteImport
+      parentRoute: typeof AuthenticatedFinanzasTreasuryRoute
+    }
+    '/_authenticated/finanzas/treasury/config': {
+      id: '/_authenticated/finanzas/treasury/config'
+      path: '/config'
+      fullPath: '/finanzas/treasury/config'
+      preLoaderRoute: typeof AuthenticatedFinanzasTreasuryConfigRouteImport
+      parentRoute: typeof AuthenticatedFinanzasTreasuryRoute
+    }
     '/_authenticated/finanzas/treasury/conciliacion': {
       id: '/_authenticated/finanzas/treasury/conciliacion'
       path: '/conciliacion'
@@ -1839,6 +1899,8 @@ interface AuthenticatedFinanzasTreasuryRouteChildren {
   AuthenticatedFinanzasTreasuryAuditoriaRoute: typeof AuthenticatedFinanzasTreasuryAuditoriaRoute
   AuthenticatedFinanzasTreasuryCarteraRoute: typeof AuthenticatedFinanzasTreasuryCarteraRoute
   AuthenticatedFinanzasTreasuryConciliacionRoute: typeof AuthenticatedFinanzasTreasuryConciliacionRoute
+  AuthenticatedFinanzasTreasuryConfigRoute: typeof AuthenticatedFinanzasTreasuryConfigRoute
+  AuthenticatedFinanzasTreasuryCopilotoRoute: typeof AuthenticatedFinanzasTreasuryCopilotoRoute
   AuthenticatedFinanzasTreasuryFlujoCajaRoute: typeof AuthenticatedFinanzasTreasuryFlujoCajaRoute
   AuthenticatedFinanzasTreasuryIndexRoute: typeof AuthenticatedFinanzasTreasuryIndexRoute
 }
@@ -1851,6 +1913,10 @@ const AuthenticatedFinanzasTreasuryRouteChildren: AuthenticatedFinanzasTreasuryR
       AuthenticatedFinanzasTreasuryCarteraRoute,
     AuthenticatedFinanzasTreasuryConciliacionRoute:
       AuthenticatedFinanzasTreasuryConciliacionRoute,
+    AuthenticatedFinanzasTreasuryConfigRoute:
+      AuthenticatedFinanzasTreasuryConfigRoute,
+    AuthenticatedFinanzasTreasuryCopilotoRoute:
+      AuthenticatedFinanzasTreasuryCopilotoRoute,
     AuthenticatedFinanzasTreasuryFlujoCajaRoute:
       AuthenticatedFinanzasTreasuryFlujoCajaRoute,
     AuthenticatedFinanzasTreasuryIndexRoute:
@@ -2047,6 +2113,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   ApiNuvexGptChatRoute: ApiNuvexGptChatRoute,
   ApiNuvexIaStreamRoute: ApiNuvexIaStreamRoute,
+  ApiTreasuryCopilotRoute: ApiTreasuryCopilotRoute,
   ApiPublicHooksCarteraRecordatoriosRoute:
     ApiPublicHooksCarteraRecordatoriosRoute,
   ApiPublicHooksCasosAlertasRoute: ApiPublicHooksCasosAlertasRoute,
@@ -2059,13 +2126,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

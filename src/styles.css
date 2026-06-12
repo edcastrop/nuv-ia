@@ -829,3 +829,47 @@ select.nuvia-input-sm optgroup {
   }
 }
 
+
+/* Treasury Copilot — Markdown rendering */
+.copilot-prose { font-size: 13px; line-height: 1.55; color: var(--nuvia-text-primary); }
+.copilot-prose p { margin: 0 0 6px; }
+.copilot-prose p:last-child { margin-bottom: 0; }
+.copilot-prose strong { color: #DCE2F0; font-weight: 600; }
+.copilot-prose ul, .copilot-prose ol { margin: 4px 0 6px; padding-left: 18px; }
+.copilot-prose li { margin: 2px 0; }
+.copilot-prose code {
+  background: rgba(165,181,224,0.12);
+  color: #A5B5E0;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.copilot-prose pre {
+  background: rgba(8,12,22,0.6);
+  border: 1px solid var(--nuvia-border);
+  border-radius: 8px;
+  padding: 10px;
+  overflow-x: auto;
+  margin: 6px 0;
+}
+.copilot-prose pre code { background: none; padding: 0; color: var(--nuvia-text-primary); }
+.copilot-prose table { width: 100%; border-collapse: collapse; margin: 6px 0; font-size: 12px; }
+.copilot-prose th, .copilot-prose td {
+  border: 1px solid var(--nuvia-border);
+  padding: 5px 8px;
+  text-align: left;
+  color: var(--nuvia-text-primary);
+}
+.copilot-prose th { background: rgba(165,181,224,0.08); color: #A5B5E0; font-weight: 600; }
+.copilot-prose h1, .copilot-prose h2, .copilot-prose h3 {
+  color: var(--nuvia-text-primary);
+  font-weight: 600;
+  margin: 8px 0 4px;
+}
+.copilot-prose h3 { font-size: 13px; }
+.copilot-prose blockquote {
+  border-left: 3px solid rgba(165,181,224,0.45);
+  padding-left: 10px;
+  color: var(--nuvia-text-secondary);
+  margin: 6px 0;
+}

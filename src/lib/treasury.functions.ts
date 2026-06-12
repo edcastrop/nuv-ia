@@ -997,3 +997,208 @@ export const flujoCajaForecast = createServerFn({ method: "GET" })
     return { items: horizonte, totales, ventanas, semanas };
   });
 
+
+// ─────────────────────────── Fase 3 · Config (umbrales) ───────────────────────────
+export const treasuryConfigGet = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+    const { data } = await supabase.from("treasury_config" as never).select("key,value");
+    const rows = ((data ?? []) as Array<{ key: string; value: unknown }>);
+    const map: Record<string, number> = {};
+    for (const r of rows) {
+      const v = typeof r.value === "number" ? r.value : Number(r.value as never);
+      if (!Number.isNaN(v)) map[r.key] = v;
+    }
+    return {
+      umbral_auto_conciliar: map.umbral_auto_conciliar ?? 92,
+      umbral_sugerir: map.umbral_sugerir ?? 70,
+      tolerancia_pct: map.tolerancia_pct ?? 1.5,
+    };
+  });
+
+export const treasuryConfigSet = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        umbral_auto_conciliar: z.number().min(50).max(100),
+        umbral_sugerir: z.number().min(20).max(99),
+        tolerancia_pct: z.number().min(0).max(20),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const rows = [
+      { key: "umbral_auto_conciliar", value: data.umbral_auto_conciliar, updated_by: userId },
+      { key: "umbral_sugerir", value: data.umbral_sugerir, updated_by: userId },
+      { key: "tolerancia_pct", value: data.tolerancia_pct, updated_by: userId },
+    ];
+    for (const r of rows) {
+      await supabase
+        .from("treasury_config" as never)
+        .upsert({ ...r, updated_at: new Date().toISOString() } as never, { onConflict: "key" });
+    }
+    await audit(supabase, userId, "treasury_config", null, "actualizar_umbrales", null, data);
+    return { ok: true };
+  });
+
+// ─────────────────────────── Fase 3 · Reglas de match ───────────────────────────
+export const treasuryRulesList = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+    const { data } = await supabase
+      .from("treasury_match_rules" as never)
+      .select("*")
+      .order("activa", { ascending: false })
+      .order("veces_aplicada", { ascending: false });
+    return { items: (data ?? []) as unknown as Array<{
+      id: string; patron: string; canal: string | null; contraparte_hint: string | null;
+      match_tipo: string; activa: boolean; veces_aplicada: number; ultimo_uso: string | null;
+      created_at: string;
+    }> };
+  });
+
+export const treasuryRuleUpsert = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        id: z.string().uuid().nullable().optional(),
+        patron: z.string().min(2).max(200),
+        canal: z.string().max(50).nullable().optional(),
+        contraparte_hint: z.string().max(200).nullable().optional(),
+        match_tipo: z.enum(["cartera", "cuenta_cobro", "honorario", "comision", "otro"]),
+        activa: z.boolean().default(true),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const payload = {
+      patron: data.patron,
+      canal: data.canal ?? null,
+      contraparte_hint: data.contraparte_hint ?? null,
+      match_tipo: data.match_tipo,
+      activa: data.activa,
+    };
+    if (data.id) {
+      await supabase.from("treasury_match_rules" as never).update(payload as never).eq("id", data.id);
+      await audit(supabase, userId, "treasury_match_rules", data.id, "actualizar", null, payload);
+      return { ok: true, id: data.id };
+    }
+    const { data: ins } = await supabase
+      .from("treasury_match_rules" as never)
+      .insert({ ...payload, created_by: userId } as never)
+      .select("id")
+      .single();
+    const id = (ins as { id: string } | null)?.id ?? null;
+    await audit(supabase, userId, "treasury_match_rules", id, "crear", null, payload);
+    return { ok: true, id };
+  });
+
+export const treasuryRuleDelete = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    await supabase.from("treasury_match_rules" as never).delete().eq("id", data.id);
+    await audit(supabase, userId, "treasury_match_rules", data.id, "eliminar", null, null);
+    return { ok: true };
+  });
+
+// ─────────────────────────── Fase 3 · Copiloto · Snapshot contextual ───────────────────────────
+export const treasuryCopilotContext = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
+    const UMBRAL = 100;
+
+    const [bancos, movsMes, cartera, ccs, alertas] = await Promise.all([
+      supabase.from("treasury_bancos" as never).select("nombre,saldo_actual,activo").eq("activo", true),
+      supabase.from("treasury_movimientos" as never).select("valor,tipo").gte("fecha", firstOfMonth),
+      supabase.from("cartera" as never).select("*"),
+      supabase.from("cuentas_cobro" as never).select("id,numero,total,estado,fecha_programada_pago,fecha_envio")
+        .in("estado", ["enviada", "aprobada", "pendiente"]),
+      supabase.from("treasury_movimientos" as never).select("id", { count: "exact", head: true })
+        .eq("estado_match", "no_identificado"),
+    ]);
+
+    const carteraRows = (cartera.data ?? []) as Array<{
+      honorarios_totales: number; pagado: number; estado_cartera: string;
+      fecha_vencimiento: string; expediente_id: string;
+    }>;
+    const expIds = Array.from(new Set(carteraRows.map((r) => r.expediente_id)));
+    let expMap = new Map<string, { cliente_nombre: string; banco: string | null }>();
+    if (expIds.length) {
+      const { data: exps } = await supabase
+        .from("expedientes").select("id,cliente_nombre,banco").in("id", expIds);
+      expMap = new Map(((exps ?? []) as Array<{ id: string; cliente_nombre: string; banco: string | null }>)
+        .map((e) => [e.id, { cliente_nombre: e.cliente_nombre, banco: e.banco }]));
+    }
+
+    const bucketsArr = { alDia: 0, b1_30: 0, b31_60: 0, b61_90: 0, b90plus: 0 };
+    let totalPorCobrar = 0;
+    let countPorCobrar = 0;
+    const topVencidos: Array<{ cliente: string; banco: string | null; saldo: number; dias: number }> = [];
+    for (const r of carteraRows) {
+      const saldo = Math.max(0, Number(r.honorarios_totales) - Number(r.pagado));
+      if (saldo <= UMBRAL) continue;
+      const vence = new Date(r.fecha_vencimiento + "T00:00:00");
+      const dias = Math.floor((today.getTime() - vence.getTime()) / 86400000);
+      totalPorCobrar += saldo;
+      countPorCobrar++;
+      if (dias <= 0) bucketsArr.alDia += saldo;
+      else if (dias <= 30) bucketsArr.b1_30 += saldo;
+      else if (dias <= 60) bucketsArr.b31_60 += saldo;
+      else if (dias <= 90) bucketsArr.b61_90 += saldo;
+      else bucketsArr.b90plus += saldo;
+      const exp = expMap.get(r.expediente_id);
+      topVencidos.push({
+        cliente: exp?.cliente_nombre ?? "—", banco: exp?.banco ?? null, saldo, dias,
+      });
+    }
+    topVencidos.sort((a, b) => b.dias - a.dias || b.saldo - a.saldo);
+
+    const ccArr = (ccs.data ?? []) as Array<{
+      total: number; estado: string; fecha_programada_pago: string | null; fecha_envio: string | null;
+    }>;
+    const horizonte = ccArr.map((c) => {
+      const f = c.fecha_programada_pago ?? (c.fecha_envio ? c.fecha_envio.slice(0, 10) : today.toISOString().slice(0, 10));
+      const d = Math.floor((new Date(f + "T00:00:00").getTime() - today.getTime()) / 86400000);
+      return { total: Number(c.total), dias: d, estado: c.estado };
+    });
+    const ingresosMes = ((movsMes.data ?? []) as Array<{ valor: number; tipo: string }>)
+      .filter((m) => m.tipo === "credito").reduce((a, b) => a + Number(b.valor), 0);
+
+    const proy30 = horizonte.filter((h) => h.dias >= 0 && h.dias <= 30).reduce((a, b) => a + b.total, 0)
+      + carteraRows.filter((r) => {
+        const s = Math.max(0, Number(r.honorarios_totales) - Number(r.pagado));
+        if (s <= UMBRAL) return false;
+        const d = Math.floor((new Date(r.fecha_vencimiento + "T00:00:00").getTime() - today.getTime()) / 86400000);
+        return d >= 0 && d <= 30;
+      }).reduce((a, b) => a + Math.max(0, Number(b.honorarios_totales) - Number(b.pagado)), 0);
+    const proy60 = horizonte.filter((h) => h.dias >= 0 && h.dias <= 60).reduce((a, b) => a + b.total, 0);
+    const proy90 = horizonte.filter((h) => h.dias >= 0 && h.dias <= 90).reduce((a, b) => a + b.total, 0);
+
+    return {
+      fecha: today.toISOString().slice(0, 10),
+      bancos: (bancos.data ?? []) as Array<{ nombre: string; saldo_actual: number }>,
+      ingresos_mes: ingresosMes,
+      cartera: {
+        total_por_cobrar: totalPorCobrar,
+        casos: countPorCobrar,
+        aging: bucketsArr,
+        top_vencidos: topVencidos.slice(0, 10),
+      },
+      cuentas_cobro_pendientes: ccArr.length,
+      cuentas_cobro_total: ccArr.reduce((a, b) => a + Number(b.total), 0),
+      flujo_caja: { proy30, proy60, proy90 },
+      mov_no_identificados: alertas.count ?? 0,
+    };
+  });
