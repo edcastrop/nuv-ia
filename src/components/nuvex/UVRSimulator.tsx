@@ -633,6 +633,7 @@ export function UVRSimulator({
                 <SaveExpedienteButton
                   expedienteId={init?.id}
                   onSaved={onSaved}
+                  enviarAuditoriaManual={!init?.id}
                   payload={{
                     modo: "uvr",
                     cliente: { ...client, intervinientes, cobertura },
@@ -677,7 +678,7 @@ export function UVRSimulator({
               );
             })()}
 
-          {recomendada && (
+          {recomendada && !init?.id && (
             <AuditPanel
               nivelAutonomia={metricasAutonomia.nivelAutonomia}
               expedienteId={init?.id}

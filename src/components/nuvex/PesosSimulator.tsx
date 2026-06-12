@@ -572,6 +572,7 @@ export function PesosSimulator({
                 <SaveExpedienteButton
                   expedienteId={init?.id}
                   onSaved={onSaved}
+                  enviarAuditoriaManual={!init?.id}
                   payload={{
                     modo: "pesos",
                     cliente: { ...client, intervinientes, cobertura },
@@ -613,7 +614,7 @@ export function PesosSimulator({
               );
             })()}
 
-          {recomendada && (
+          {recomendada && !init?.id && (
             <AuditPanel
               nivelAutonomia={metricasAutonomia.nivelAutonomia}
               expedienteId={init?.id}
