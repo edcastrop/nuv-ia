@@ -2,13 +2,20 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Card } from "@/components/nuvex/ui";
+import {
+  PageLayout,
+  ExecutiveHero,
+  KpiGrid,
+  KpiCard,
+  NCard,
+} from "@/components/nuvia";
 import { formatCOP } from "@/lib/format";
 import { listCuentasCobro, type CuentaCobro } from "@/lib/comisiones";
+import { Receipt, Clock, CheckCircle2, Wallet } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/contabilidad/cuentas-cobro")({
   component: ContabilidadPage,
-  head: () => ({ meta: [{ title: "Contabilidad · Cuentas de cobro" }] }),
+  head: () => ({ meta: [{ title: "Contabilidad · Cuentas de cobro · NUVIA" }] }),
 });
 
 const FILTROS: { key: CuentaCobro["estado"] | "todas"; label: string }[] = [
@@ -20,6 +27,16 @@ const FILTROS: { key: CuentaCobro["estado"] | "todas"; label: string }[] = [
   { key: "rechazada", label: "Rechazadas" },
   { key: "todas", label: "Todas" },
 ];
+
+const ESTADO_CC: Record<string, { bg: string; color: string; border: string; label: string }> = {
+  borrador: { bg: "rgba(165,181,224,0.10)", color: "#A5B5E0", border: "rgba(165,181,224,0.35)", label: "Borrador" },
+  enviada: { bg: "rgba(68,93,163,0.16)", color: "#A5B5E0", border: "rgba(68,93,163,0.45)", label: "Enviada" },
+  aprobada: { bg: "rgba(132,185,143,0.16)", color: "#9BCB9F", border: "rgba(132,185,143,0.45)", label: "Aprobada" },
+  devuelta_correccion: { bg: "rgba(246,196,83,0.16)", color: "#F6C453", border: "rgba(246,196,83,0.45)", label: "Devuelta" },
+  rechazada: { bg: "rgba(255,107,107,0.16)", color: "#FF8585", border: "rgba(255,107,107,0.45)", label: "Rechazada" },
+  programada_pago: { bg: "rgba(165,181,224,0.16)", color: "#A5B5E0", border: "rgba(165,181,224,0.45)", label: "Programada" },
+  pagada: { bg: "rgba(132,185,143,0.18)", color: "#9BCB9F", border: "rgba(132,185,143,0.45)", label: "Pagada" },
+};
 
 function ContabilidadPage() {
   const { roles, loading: rolesLoading } = useUserRole();
@@ -60,113 +77,119 @@ function ContabilidadPage() {
     [cuentas],
   );
 
-  if (rolesLoading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>;
-  if (!autorizado) return <div className="p-12 text-center text-sm text-[#991B1B]">No autorizado.</div>;
+  if (rolesLoading) {
+    return (
+      <PageLayout>
+        <div className="py-16 text-center text-[13px]" style={{ color: "var(--nuvia-text-muted)" }}>
+          Cargando…
+        </div>
+      </PageLayout>
+    );
+  }
+  if (!autorizado) {
+    return (
+      <PageLayout>
+        <div className="py-16 text-center text-[13px]" style={{ color: "var(--nuvia-danger)" }}>
+          No autorizado.
+        </div>
+      </PageLayout>
+    );
+  }
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-8">
-      <h1 className="mb-1 text-2xl font-semibold text-[#0A1226]">Contabilidad · Cuentas de cobro</h1>
-      <p className="mb-6 text-sm text-[#242424]/60">Aprueba, rechaza o registra el pago de las cuentas enviadas.</p>
+    <PageLayout>
+      <ExecutiveHero
+        badge={{ icon: <Receipt size={12} />, label: "Contabilidad", tone: "blue" }}
+        title="Cuentas de cobro"
+        description="Aprueba, rechaza o registra el pago de las cuentas enviadas."
+      />
 
-      <div className="mb-5 grid grid-cols-1 gap-3 md:grid-cols-3">
-        <Stat label="Por aprobar" value={formatCOP(totales.porAprobar)} color="#8A5A00" />
-        <Stat label="Pendientes de pago" value={formatCOP(totales.aprobadas)} color="#445DA3" />
-        <Stat label="Pagadas" value={formatCOP(totales.pagadas)} color="#1F7A45" />
-      </div>
+      <KpiGrid cols={3}>
+        <KpiCard icon={<Clock size={14} />} tone="warning" label="Por aprobar" value={formatCOP(totales.porAprobar)} />
+        <KpiCard icon={<Wallet size={14} />} tone="blue" label="Pendientes de pago" value={formatCOP(totales.aprobadas)} />
+        <KpiCard icon={<CheckCircle2 size={14} />} tone="green" label="Pagadas" value={formatCOP(totales.pagadas)} />
+      </KpiGrid>
 
-      <div className="mb-4 flex flex-wrap gap-2">
-        {FILTROS.map((f) => {
-          const active = filtro === f.key;
-          return (
-            <button
-              key={f.key}
-              onClick={() => setFiltro(f.key)}
-              className="rounded-xl border px-3.5 py-1.5 text-[12px] font-medium transition"
-              style={{
-                background: active ? "linear-gradient(135deg,#445DA3,#84B98F)" : "#fff",
-                color: active ? "#fff" : "#0A1226",
-                borderColor: active ? "transparent" : "#E3E7EE",
-              }}
-            >
-              {f.label}
-            </button>
-          );
-        })}
-      </div>
+      <NCard padding="md">
+        <div className="flex flex-wrap gap-2 mb-4">
+          {FILTROS.map((f) => {
+            const active = filtro === f.key;
+            return (
+              <button
+                key={f.key}
+                onClick={() => setFiltro(f.key)}
+                className="rounded-full px-3 py-1 text-[11px] font-semibold transition"
+                style={{
+                  border: `1px solid ${active ? "var(--nuvia-accent-blue)" : "var(--nuvia-border)"}`,
+                  background: active ? "rgba(68,93,163,0.18)" : "rgba(255,255,255,0.02)",
+                  color: active ? "#A5B5E0" : "var(--nuvia-text-secondary)",
+                }}
+              >
+                {f.label}
+              </button>
+            );
+          })}
+        </div>
 
-      <Card>
         {loading ? (
-          <div className="p-8 text-center text-sm text-[#242424]/60">Cargando…</div>
+          <div className="py-8 text-center text-[12px]" style={{ color: "var(--nuvia-text-muted)" }}>Cargando…</div>
         ) : filtradas.length === 0 ? (
-          <div className="p-8 text-center text-sm text-[#242424]/60">Sin cuentas en este estado.</div>
+          <div className="py-8 text-center text-[12px]" style={{ color: "var(--nuvia-text-muted)" }}>Sin cuentas en este estado.</div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-[#F7F9FB] text-[11px] uppercase tracking-wide text-[#242424]/60">
-              <tr>
-                <th className="px-4 py-2 text-left">Número</th>
-                <th className="px-4 py-2 text-left">Analista F. Comercial</th>
-                <th className="px-4 py-2 text-left">Enviada</th>
-                <th className="px-4 py-2 text-right">Total</th>
-                <th className="px-4 py-2 text-left">Estado</th>
-                <th className="px-4 py-2"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#E3E7EE]">
-              {filtradas.map((cc) => {
-                const b = ESTADO_CC[cc.estado];
-                return (
-                  <tr key={cc.id} className="hover:bg-[#F7F9FB]">
-                    <td className="px-4 py-2 font-mono text-[12px] text-[#0A1226]">{cc.numero}</td>
-                    <td className="px-4 py-2 text-[#0A1226]">{nombres.get(cc.user_id) ?? "—"}</td>
-                    <td className="px-4 py-2 text-[12px] text-[#242424]/70">
-                      {cc.fecha_envio ? new Date(cc.fecha_envio).toLocaleDateString("es-CO") : "—"}
-                    </td>
-                    <td className="px-4 py-2 text-right font-semibold">{formatCOP(Number(cc.total))}</td>
-                    <td className="px-4 py-2">
-                      <span
-                        className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-                        style={{ background: b.bg, color: b.color }}
-                      >
-                        {b.label}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      <Link
-                        to="/comisiones/$id"
-                        params={{ id: cc.id }}
-                        className="text-[12px] font-medium text-[#445DA3] hover:underline"
-                      >
-                        Gestionar →
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-[12px]">
+              <thead>
+                <tr style={{ borderBottom: "1px solid var(--nuvia-border)" }}>
+                  {["Número", "Analista F. Comercial", "Enviada", "Total", "Estado", ""].map((h, i) => (
+                    <th
+                      key={i}
+                      className={`py-2 px-3 text-[10px] font-semibold uppercase tracking-wider ${h === "Total" ? "text-right" : "text-left"}`}
+                      style={{ color: "var(--nuvia-text-muted)" }}
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtradas.map((cc) => {
+                  const b = ESTADO_CC[cc.estado];
+                  return (
+                    <tr key={cc.id} style={{ borderBottom: "1px solid var(--nuvia-border)" }}>
+                      <td className="py-2 px-3 font-mono text-[11.5px]" style={{ color: "var(--nuvia-text-primary)" }}>{cc.numero}</td>
+                      <td className="py-2 px-3" style={{ color: "var(--nuvia-text-primary)" }}>{nombres.get(cc.user_id) ?? "—"}</td>
+                      <td className="py-2 px-3" style={{ color: "var(--nuvia-text-secondary)" }}>
+                        {cc.fecha_envio ? new Date(cc.fecha_envio).toLocaleDateString("es-CO") : "—"}
+                      </td>
+                      <td className="py-2 px-3 text-right font-semibold tabular-nums" style={{ color: "var(--nuvia-text-primary)" }}>
+                        {formatCOP(Number(cc.total))}
+                      </td>
+                      <td className="py-2 px-3">
+                        <span
+                          className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                          style={{ background: b.bg, color: b.color, border: `1px solid ${b.border}` }}
+                        >
+                          {b.label}
+                        </span>
+                      </td>
+                      <td className="py-2 px-3 text-right">
+                        <Link
+                          to="/comisiones/$id"
+                          params={{ id: cc.id }}
+                          className="text-[11.5px] font-semibold hover:underline"
+                          style={{ color: "#A5B5E0" }}
+                        >
+                          Gestionar →
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
-      </Card>
-    </div>
-  );
-}
-
-const ESTADO_CC: Record<string, { bg: string; color: string; label: string }> = {
-  borrador: { bg: "#F1F3F8", color: "#445DA3", label: "Borrador" },
-  enviada: { bg: "#EEF1FA", color: "#445DA3", label: "Enviada" },
-  aprobada: { bg: "#EAF7EE", color: "#1F7A45", label: "Aprobada" },
-  devuelta_correccion: { bg: "#FEF3C7", color: "#8A5A00", label: "Devuelta" },
-  rechazada: { bg: "#FEE2E2", color: "#991B1B", label: "Rechazada" },
-  programada_pago: { bg: "#E0E7FF", color: "#3730A3", label: "Programada" },
-  pagada: { bg: "#DDF4E3", color: "#1F7A45", label: "Pagada" },
-};
-
-function Stat({ label, value, color }: { label: string; value: string; color: string }) {
-  return (
-    <div className="rounded-xl border border-[#E3E7EE] bg-white p-4">
-      <div className="text-[11px] uppercase tracking-wide text-[#242424]/60">{label}</div>
-      <div className="mt-1 text-lg font-semibold" style={{ color }}>
-        {value}
-      </div>
-    </div>
+      </NCard>
+    </PageLayout>
   );
 }

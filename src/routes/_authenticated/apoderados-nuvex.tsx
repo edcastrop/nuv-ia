@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { PageLayout, ExecutiveHero, NCard } from "@/components/nuvia";
 import { Card } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
 import {
@@ -7,41 +8,52 @@ import {
   BANCOS_DISPONIBLES,
   type ApoderadoNuvex, type ApoderadoInput,
 } from "@/lib/apoderados";
-import { Pencil, Trash2, Plus, X, Star, Building2, ShieldAlert } from "lucide-react";
+import { Pencil, Trash2, Plus, X, Star, Building2, ShieldAlert, Users } from "lucide-react";
 import { CitySelect } from "@/components/ui/CitySelect";
 import { useUserRole } from "@/hooks/useUserRole";
 
 export const Route = createFileRoute("/_authenticated/apoderados-nuvex")({
   component: ApoderadosPageGuard,
-  head: () => ({ meta: [{ title: "Apoderados NUVEX" }] }),
+  head: () => ({ meta: [{ title: "Apoderados · NUVIA" }] }),
 });
 
 function ApoderadosPageGuard() {
   const { isSuperAdmin, loading } = useUserRole();
   if (loading) {
-    return <div className="p-10 text-center text-sm text-[#242424]/60">Verificando permisos…</div>;
+    return (
+      <PageLayout>
+        <div className="py-16 text-center text-[13px]" style={{ color: "var(--nuvia-text-muted)" }}>
+          Verificando permisos…
+        </div>
+      </PageLayout>
+    );
   }
   if (!isSuperAdmin) {
     return (
-      <div className="mx-auto max-w-xl px-6 py-16">
-        <Card>
+      <PageLayout maxWidth="5xl">
+        <NCard padding="lg">
           <div className="flex flex-col items-center text-center gap-3 py-8">
-            <ShieldAlert size={36} className="text-[#B42318]" />
-            <h2 className="text-lg font-semibold text-[#242424]">Acceso restringido</h2>
-            <p className="text-sm text-[#242424]/70">
+            <ShieldAlert size={36} style={{ color: "var(--nuvia-danger)" }} />
+            <h2 className="text-lg font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
+              Acceso restringido
+            </h2>
+            <p className="text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>
               No tienes permiso para acceder a este módulo. La configuración de Apoderados es exclusiva del Super Admin.
             </p>
-            <Link to="/inicio" className="rounded-lg px-4 py-2 text-sm font-semibold text-white" style={{ background: NUVEX.azul }}>
+            <Link
+              to="/inicio"
+              className="rounded-lg px-4 py-2 text-sm font-semibold text-white"
+              style={{ background: "linear-gradient(135deg,#445DA3,#84B98F)" }}
+            >
               Volver al inicio
             </Link>
           </div>
-        </Card>
-      </div>
+        </NCard>
+      </PageLayout>
     );
   }
   return <ApoderadosPage />;
 }
-
 
 const empty: ApoderadoInput = {
   nombre: "", cedula: "", lugar_expedicion: "", ciudad: "", celular: "", correo: "", activo: true,
@@ -110,92 +122,89 @@ function ApoderadosPage() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-6 space-y-4">
-      <Card>
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: NUVEX.azul }}>
-              Módulo administrativo
-            </div>
-            <h1 className="text-2xl font-semibold text-[#242424]">Apoderados NUVEX</h1>
-            <p className="text-sm text-[#242424]/70 mt-1">
-              Listado de apoderados disponibles para el Poder Especial. Marca un predeterminado para FNA y otro general.
-            </p>
-          </div>
+    <PageLayout maxWidth="6xl">
+      <ExecutiveHero
+        badge={{ icon: <Users size={12} />, label: "Módulo administrativo", tone: "blue" }}
+        title="Apoderados NUVEX"
+        description="Listado de apoderados disponibles para el Poder Especial. Marca un predeterminado para FNA y otro general."
+        actions={
           <button
             onClick={openNew}
-            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-white"
-            style={{ backgroundColor: NUVEX.azul }}
+            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12.5px] font-semibold text-white"
+            style={{ background: "linear-gradient(135deg,#445DA3,#84B98F)" }}
           >
-            <Plus size={15} /> Nuevo
+            <Plus size={14} /> Nuevo
           </button>
-        </div>
-      </Card>
+        }
+      />
 
-      <Card>
+      <NCard padding="md">
         {loading ? (
-          <div className="py-8 text-center text-sm text-[#242424]/60">Cargando…</div>
+          <div className="py-8 text-center text-[12px]" style={{ color: "var(--nuvia-text-muted)" }}>Cargando…</div>
         ) : err ? (
-          <div className="py-8 text-center text-sm text-[#B42318]">{err}</div>
+          <div className="py-8 text-center text-[12px]" style={{ color: "var(--nuvia-danger)" }}>{err}</div>
         ) : rows.length === 0 ? (
-          <div className="py-8 text-center text-sm text-[#242424]/60">
-            Aún no hay apoderados. Crea el primero con el botón “Nuevo”.
+          <div className="py-8 text-center text-[12px]" style={{ color: "var(--nuvia-text-muted)" }}>
+            Aún no hay apoderados. Crea el primero con el botón "Nuevo".
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-left text-[11px] uppercase tracking-wider text-[#242424]/60 border-b border-[#E3E7EE]">
-                <tr>
-                  <th className="py-2 pr-3">Nombre</th>
-                  <th className="py-2 pr-3">Cédula</th>
-                  <th className="py-2 pr-3">Predet.</th>
-                  <th className="py-2 pr-3">Bancos asignados</th>
-                  <th className="py-2 pr-3">Estado</th>
-                  <th className="py-2 pr-3 text-right">Acciones</th>
+            <table className="w-full text-[12px]">
+              <thead>
+                <tr style={{ borderBottom: "1px solid var(--nuvia-border)" }}>
+                  {["Nombre", "Cédula", "Predet.", "Bancos asignados", "Estado", "Acciones"].map((h, i) => (
+                    <th
+                      key={i}
+                      className={`py-2 pr-3 text-[10px] font-semibold uppercase tracking-wider ${h === "Acciones" ? "text-right" : "text-left"}`}
+                      style={{ color: "var(--nuvia-text-muted)" }}
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {rows.map((a) => (
-                  <tr key={a.id} className="border-b border-[#F0F2F7] last:border-0">
-                    <td className="py-2 pr-3 font-medium text-[#242424]">
+                  <tr key={a.id} style={{ borderBottom: "1px solid var(--nuvia-border)" }}>
+                    <td className="py-2 pr-3 font-medium" style={{ color: "var(--nuvia-text-primary)" }}>
                       {a.nombre}
-                      <div className="text-[11px] text-[#242424]/60">
+                      <div className="text-[10.5px] mt-0.5" style={{ color: "var(--nuvia-text-muted)" }}>
                         {a.lugar_expedicion ?? "—"} · {a.ciudad ?? "—"}
                       </div>
                     </td>
-                    <td className="py-2 pr-3">{a.cedula}</td>
+                    <td className="py-2 pr-3" style={{ color: "var(--nuvia-text-secondary)" }}>{a.cedula}</td>
                     <td className="py-2 pr-3">
                       <div className="flex flex-col gap-1">
                         {a.predeterminado_general && (
                           <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
-                            style={{ background: NUVEX.verdeClaro, color: NUVEX.verdeTextoFuerte }}>
+                            style={{ background: "rgba(132,185,143,0.18)", color: "#9BCB9F", border: "1px solid rgba(132,185,143,0.45)" }}>
                             <Star size={10} /> General
                           </span>
                         )}
                         {a.predeterminado_fna && (
                           <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
-                            style={{ background: "#FEF3C7", color: "#854D0E" }}>
+                            style={{ background: "rgba(246,196,83,0.18)", color: "#F6C453", border: "1px solid rgba(246,196,83,0.45)" }}>
                             <Star size={10} /> FNA
                           </span>
                         )}
                         {!a.predeterminado_general && !a.predeterminado_fna && (
-                          <span className="text-[11px] text-[#242424]/40">—</span>
+                          <span className="text-[11px]" style={{ color: "var(--nuvia-text-muted)" }}>—</span>
                         )}
                       </div>
                     </td>
-                    <td className="py-2 pr-3 text-[#242424]/70">
+                    <td className="py-2 pr-3" style={{ color: "var(--nuvia-text-secondary)" }}>
                       {a.bancos_asignados && a.bancos_asignados.length > 0
                         ? <span className="text-[11px]">{a.bancos_asignados.join(", ")}</span>
-                        : <span className="text-[11px] text-[#242424]/40">Todos</span>}
+                        : <span className="text-[11px]" style={{ color: "var(--nuvia-text-muted)" }}>Todos</span>}
                     </td>
                     <td className="py-2 pr-3">
                       <button
                         onClick={() => toggleActivo(a)}
-                        className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+                        className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold"
                         style={
                           a.activo
-                            ? { background: NUVEX.verdeClaro, color: NUVEX.verdeTextoFuerte }
-                            : { background: "#F0F2F7", color: "#6B7280" }
+                            ? { background: "rgba(132,185,143,0.18)", color: "#9BCB9F", border: "1px solid rgba(132,185,143,0.45)" }
+                            : { background: "rgba(255,255,255,0.05)", color: "var(--nuvia-text-muted)", border: "1px solid var(--nuvia-border)" }
                         }
                       >
                         {a.activo ? "Activo" : "Inactivo"}
@@ -203,11 +212,11 @@ function ApoderadosPage() {
                     </td>
                     <td className="py-2 pr-0 text-right">
                       <div className="inline-flex gap-1">
-                        <button onClick={() => openEdit(a)} className="p-1.5 rounded hover:bg-[#F7F9FB]" title="Editar">
-                          <Pencil size={14} style={{ color: NUVEX.azul }} />
+                        <button onClick={() => openEdit(a)} className="p-1.5 rounded hover:bg-white/5" title="Editar">
+                          <Pencil size={14} style={{ color: "#A5B5E0" }} />
                         </button>
-                        <button onClick={() => remove(a)} className="p-1.5 rounded hover:bg-[#FDECEC]" title="Eliminar">
-                          <Trash2 size={14} style={{ color: NUVEX.rojoTexto }} />
+                        <button onClick={() => remove(a)} className="p-1.5 rounded hover:bg-white/5" title="Eliminar">
+                          <Trash2 size={14} style={{ color: "#FF8585" }} />
                         </button>
                       </div>
                     </td>
@@ -217,10 +226,10 @@ function ApoderadosPage() {
             </table>
           </div>
         )}
-      </Card>
+      </NCard>
 
       {editing !== null && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={close}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4" onClick={close}>
           <div className="bg-white rounded-2xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-[#242424]">
@@ -308,7 +317,7 @@ function ApoderadosPage() {
           </div>
         </div>
       )}
-    </div>
+    </PageLayout>
   );
 }
 
@@ -324,3 +333,5 @@ function Field({ label, value, onChange, className }: { label: string; value: st
     </label>
   );
 }
+// preserve Card import compat (avoids unused warning for nuvex Card if needed elsewhere)
+void Card;

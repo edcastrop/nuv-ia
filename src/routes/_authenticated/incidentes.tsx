@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Card } from "@/components/nuvex/ui";
+import { PageLayout, ExecutiveHero, KpiGrid, KpiCard, NCard, NSelect } from "@/components/nuvia";
 import { NUVEX } from "@/components/nuvex/constants";
 import { useUserRole } from "@/hooks/useUserRole";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,11 +17,11 @@ import {
   type IncidenteSeveridad,
   type IncidenteTipo,
 } from "@/lib/incidentes";
-import { ShieldCheck, Plus, X, AlertTriangle, Trash2 } from "lucide-react";
+import { ShieldCheck, Plus, X, AlertTriangle, Trash2, CheckCircle2, Activity } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/incidentes")({
   component: IncidentesPage,
-  head: () => ({ meta: [{ title: "Centro de Incidentes · NUVEX" }] }),
+  head: () => ({ meta: [{ title: "Centro de Incidentes · NUVIA" }] }),
 });
 
 interface Usuario { id: string; nombre: string | null; email: string | null }
@@ -36,7 +36,6 @@ function IncidentesPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
-  // filtros
   const [fEstado, setFEstado] = useState<IncidenteEstado | "todos">("todos");
   const [fSeveridad, setFSeveridad] = useState<IncidenteSeveridad | "todas">("todas");
   const [fTipo, setFTipo] = useState<IncidenteTipo | "todos">("todos");
@@ -72,71 +71,96 @@ function IncidentesPage() {
     criticos: items.filter((i) => i.severidad === "critica" && i.estado !== "cerrado").length,
   }), [items]);
 
-  const userMap = useMemo(() => new Map(usuarios.map((u) => [u.id, u.nombre || u.email || u.id.slice(0,8)])), [usuarios]);
+  const userMap = useMemo(() => new Map(usuarios.map((u) => [u.id, u.nombre || u.email || u.id.slice(0, 8)])), [usuarios]);
   const expMap = useMemo(() => new Map(expedientes.map((e) => [e.id, e.cliente_nombre])), [expedientes]);
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-6 space-y-4">
-      <Card>
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <div className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: NUVEX.azul }}>
-              NUVEX · Gerencia Administrativa y Operaciones
-            </div>
-            <h1 className="text-2xl font-semibold text-[#242424] flex items-center gap-2">
-              <ShieldCheck size={22} style={{ color: NUVEX.azul }} /> Centro de Incidentes Operativos
-            </h1>
-            <p className="text-sm text-[#242424]/65 mt-1">
-              Reporta, asigna y resuelve incidentes detectados en cualquier expediente o proceso interno.
-            </p>
-          </div>
+    <PageLayout>
+      <ExecutiveHero
+        badge={{ icon: <ShieldCheck size={12} />, label: "Gerencia · Operaciones", tone: "blue" }}
+        title="Centro de Incidentes Operativos"
+        description="Reporta, asigna y resuelve incidentes detectados en cualquier expediente o proceso interno."
+        actions={
           <button
             onClick={() => setOpenNew(true)}
-            className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-white"
-            style={{ background: NUVEX.azul }}
+            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12.5px] font-semibold text-white"
+            style={{ background: "linear-gradient(135deg,#445DA3,#84B98F)" }}
           >
-            <Plus size={16} /> Reportar incidente
+            <Plus size={14} /> Reportar incidente
           </button>
+        }
+      />
+
+      <KpiGrid cols={4}>
+        <KpiCard icon={<AlertTriangle size={14} />} tone="danger" label="Abiertos" value={String(kpis.abiertos)} />
+        <KpiCard icon={<Activity size={14} />} tone="warning" label="En gestión" value={String(kpis.enGestion)} />
+        <KpiCard icon={<CheckCircle2 size={14} />} tone="green" label="Resueltos" value={String(kpis.resueltos)} />
+        <KpiCard icon={<AlertTriangle size={14} />} tone="danger" label="Críticos activos" value={String(kpis.criticos)} />
+      </KpiGrid>
+
+      <NCard padding="md">
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <NSelect
+            value={fEstado}
+            onValueChange={(v) => setFEstado(v as IncidenteEstado | "todos")}
+            options={[
+              { value: "todos", label: "Todos los estados" },
+              { value: "abierto", label: "Abierto" },
+              { value: "en_gestion", label: "En gestión" },
+              { value: "resuelto", label: "Resuelto" },
+              { value: "cerrado", label: "Cerrado" },
+            ]}
+          />
+          <NSelect
+            value={fSeveridad}
+            onValueChange={(v) => setFSeveridad(v as IncidenteSeveridad | "todas")}
+            options={[
+              { value: "todas", label: "Toda severidad" },
+              { value: "critica", label: "Crítica" },
+              { value: "alta", label: "Alta" },
+              { value: "media", label: "Media" },
+              { value: "baja", label: "Baja" },
+            ]}
+          />
+          <NSelect
+            value={fTipo}
+            onValueChange={(v) => setFTipo(v as IncidenteTipo | "todos")}
+            options={[
+              { value: "todos", label: "Todos los tipos" },
+              { value: "documental", label: "Documental" },
+              { value: "juridico", label: "Jurídico" },
+              { value: "financiero", label: "Financiero" },
+              { value: "banco", label: "Banco" },
+              { value: "cliente", label: "Cliente" },
+              { value: "sistema", label: "Sistema" },
+              { value: "otro", label: "Otro" },
+            ]}
+          />
         </div>
-      </Card>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Kpi label="Abiertos" value={kpis.abiertos} color="#991B1B" />
-        <Kpi label="En gestión" value={kpis.enGestion} color="#8A5A00" />
-        <Kpi label="Resueltos" value={kpis.resueltos} color="#1F7A45" />
-        <Kpi label="Críticos activos" value={kpis.criticos} color="#7A0E0E" icon={<AlertTriangle size={16} />} />
-      </div>
-
-      <Card>
-        <div className="flex flex-wrap items-center gap-2 mb-3">
-          <Select value={fEstado} onChange={(v) => setFEstado(v as IncidenteEstado | "todos")}
-            options={[["todos","Todos los estados"],["abierto","Abierto"],["en_gestion","En gestión"],["resuelto","Resuelto"],["cerrado","Cerrado"]]} />
-          <Select value={fSeveridad} onChange={(v) => setFSeveridad(v as IncidenteSeveridad | "todas")}
-            options={[["todas","Toda severidad"],["critica","Crítica"],["alta","Alta"],["media","Media"],["baja","Baja"]]} />
-          <Select value={fTipo} onChange={(v) => setFTipo(v as IncidenteTipo | "todos")}
-            options={[["todos","Todos los tipos"],["documental","Documental"],["juridico","Jurídico"],["financiero","Financiero"],["banco","Banco"],["cliente","Cliente"],["sistema","Sistema"],["otro","Otro"]]} />
-        </div>
-
-        {loading && <div className="py-6 text-center text-sm text-[#242424]/60">Cargando incidentes…</div>}
-        {err && <div className="py-6 text-center text-sm text-[#B42318]">{err}</div>}
+        {loading && <div className="py-6 text-center text-[12px]" style={{ color: "var(--nuvia-text-muted)" }}>Cargando incidentes…</div>}
+        {err && <div className="py-6 text-center text-[12px]" style={{ color: "var(--nuvia-danger)" }}>{err}</div>}
 
         {!loading && !err && items.length === 0 && (
-          <div className="py-10 text-center text-sm text-[#242424]/60">No hay incidentes con esos filtros.</div>
+          <div className="py-10 text-center text-[12px]" style={{ color: "var(--nuvia-text-muted)" }}>
+            No hay incidentes con esos filtros.
+          </div>
         )}
 
         {!loading && !err && items.length > 0 && (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-[12px]">
               <thead>
-                <tr className="text-left text-[11px] uppercase tracking-wider text-[#242424]/55 border-b border-[#E3E7EE]">
-                  <th className="py-2 pr-4">Título</th>
-                  <th className="py-2 pr-4">Tipo</th>
-                  <th className="py-2 pr-4">Severidad</th>
-                  <th className="py-2 pr-4">Estado</th>
-                  <th className="py-2 pr-4">Expediente</th>
-                  <th className="py-2 pr-4">Asignado</th>
-                  <th className="py-2 pr-4">Reportado</th>
-                  <th className="py-2 pr-2"></th>
+                <tr style={{ borderBottom: "1px solid var(--nuvia-border)" }}>
+                  {["Título", "Tipo", "Severidad", "Estado", "Expediente", "Asignado", "Reportado", ""].map((h, i) => (
+                    <th
+                      key={i}
+                      className="py-2 pr-4 text-left text-[10px] font-semibold uppercase tracking-wider"
+                      style={{ color: "var(--nuvia-text-muted)" }}
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -144,26 +168,26 @@ function IncidentesPage() {
                   const sev = SEVERIDAD_STYLE[i.severidad];
                   const est = ESTADO_STYLE[i.estado];
                   return (
-                    <tr key={i.id} className="border-b border-[#F0F2F6] hover:bg-[#F7F9FB]">
-                      <td className="py-2 pr-4 font-medium text-[#242424]">
+                    <tr key={i.id} style={{ borderBottom: "1px solid var(--nuvia-border)" }}>
+                      <td className="py-2 pr-4 font-medium" style={{ color: "var(--nuvia-text-primary)" }}>
                         <button onClick={() => setEditing(i)} className="text-left hover:underline">{i.titulo}</button>
                       </td>
-                      <td className="py-2 pr-4 text-[#242424]/70">{TIPO_LABEL[i.tipo]}</td>
-                      <td className="py-2 pr-4">
-                        <Pill style={sev} />
-                      </td>
-                      <td className="py-2 pr-4">
-                        <Pill style={est} />
-                      </td>
+                      <td className="py-2 pr-4" style={{ color: "var(--nuvia-text-secondary)" }}>{TIPO_LABEL[i.tipo]}</td>
+                      <td className="py-2 pr-4"><Pill style={sev} /></td>
+                      <td className="py-2 pr-4"><Pill style={est} /></td>
                       <td className="py-2 pr-4">
                         {i.expediente_id ? (
-                          <Link to="/casos/$id" params={{ id: i.expediente_id }} className="text-[#445DA3] hover:underline">
+                          <Link to="/casos/$id" params={{ id: i.expediente_id }} className="hover:underline" style={{ color: "#A5B5E0" }}>
                             {expMap.get(i.expediente_id) || i.expediente_id.slice(0, 8)}
                           </Link>
-                        ) : <span className="text-[#242424]/45">—</span>}
+                        ) : <span style={{ color: "var(--nuvia-text-muted)" }}>—</span>}
                       </td>
-                      <td className="py-2 pr-4 text-[#242424]/75">{i.asignado_a ? (userMap.get(i.asignado_a) || "—") : <span className="text-[#242424]/45">Sin asignar</span>}</td>
-                      <td className="py-2 pr-4 text-[#242424]/60 text-[11px]">{new Date(i.created_at).toLocaleString("es-CO")}</td>
+                      <td className="py-2 pr-4" style={{ color: "var(--nuvia-text-secondary)" }}>
+                        {i.asignado_a ? (userMap.get(i.asignado_a) || "—") : <span style={{ color: "var(--nuvia-text-muted)" }}>Sin asignar</span>}
+                      </td>
+                      <td className="py-2 pr-4 text-[11px]" style={{ color: "var(--nuvia-text-muted)" }}>
+                        {new Date(i.created_at).toLocaleString("es-CO")}
+                      </td>
                       <td className="py-2 pr-2 text-right">
                         {isSuperAdmin && (
                           <button
@@ -172,9 +196,9 @@ function IncidentesPage() {
                               await eliminarIncidente(i.id);
                               await refresh();
                             }}
-                            className="text-[#B42318] hover:bg-[#FEE2E2] p-1 rounded"
+                            className="p-1 rounded hover:bg-white/5"
                             title="Eliminar"
-                          ><Trash2 size={14} /></button>
+                          ><Trash2 size={14} style={{ color: "#FF8585" }} /></button>
                         )}
                       </td>
                     </tr>
@@ -184,7 +208,7 @@ function IncidentesPage() {
             </table>
           </div>
         )}
-      </Card>
+      </NCard>
 
       {openNew && (
         <IncidenteModal
@@ -206,36 +230,18 @@ function IncidentesPage() {
           onSaved={async () => { setEditing(null); await refresh(); }}
         />
       )}
-    </div>
-  );
-}
-
-function Kpi({ label, value, color, icon }: { label: string; value: number; color: string; icon?: React.ReactNode }) {
-  return (
-    <Card>
-      <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-[#242424]/55">
-        {icon}<span>{label}</span>
-      </div>
-      <div className="text-2xl font-semibold mt-1" style={{ color }}>{value}</div>
-    </Card>
+    </PageLayout>
   );
 }
 
 function Pill({ style }: { style: { bg: string; color: string; border: string; label: string } }) {
   return (
-    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold border"
-      style={{ background: style.bg, color: style.color, borderColor: style.border }}>
+    <span
+      className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+      style={{ background: style.bg, color: style.color, border: `1px solid ${style.border}` }}
+    >
       {style.label}
     </span>
-  );
-}
-
-function Select({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: Array<[string,string]> }) {
-  return (
-    <select value={value} onChange={(e) => onChange(e.target.value)}
-      className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 text-[12px] text-[#242424]">
-      {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-    </select>
   );
 }
 
@@ -282,7 +288,7 @@ function IncidenteModal({ mode, incidente, usuarios, expedientes, canManage = tr
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 py-3 border-b border-[#E3E7EE]">
           <h2 className="text-base font-semibold text-[#242424]">
@@ -304,14 +310,14 @@ function IncidenteModal({ mode, incidente, usuarios, expedientes, canManage = tr
             <Field label="Tipo">
               <select value={tipo} onChange={(e) => setTipo(e.target.value as IncidenteTipo)}
                 disabled={!canManage && mode === "editar"}
-                className="w-full rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm">
+                className="w-full rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm bg-white">
                 {(Object.keys(TIPO_LABEL) as IncidenteTipo[]).map((t) => <option key={t} value={t}>{TIPO_LABEL[t]}</option>)}
               </select>
             </Field>
             <Field label="Severidad">
               <select value={severidad} onChange={(e) => setSeveridad(e.target.value as IncidenteSeveridad)}
                 disabled={!canManage && mode === "editar"}
-                className="w-full rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm">
+                className="w-full rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm bg-white">
                 {(Object.keys(SEVERIDAD_STYLE) as IncidenteSeveridad[]).map((s) => <option key={s} value={s}>{SEVERIDAD_STYLE[s].label}</option>)}
               </select>
             </Field>
@@ -319,14 +325,14 @@ function IncidenteModal({ mode, incidente, usuarios, expedientes, canManage = tr
           <Field label="Expediente relacionado (opcional)">
             <select value={expedienteId} onChange={(e) => setExpedienteId(e.target.value)}
               disabled={mode === "editar"}
-              className="w-full rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm">
+              className="w-full rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm bg-white">
               <option value="">— Sin expediente —</option>
               {expedientes.map((x) => <option key={x.id} value={x.id}>{x.cliente_nombre}</option>)}
             </select>
           </Field>
           <Field label="Asignar a">
             <select value={asignadoA} onChange={(e) => setAsignadoA(e.target.value)}
-              className="w-full rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm">
+              className="w-full rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm bg-white">
               <option value="">— Sin asignar —</option>
               {usuarios.map((u) => <option key={u.id} value={u.id}>{u.nombre || u.email}</option>)}
             </select>
@@ -335,7 +341,7 @@ function IncidenteModal({ mode, incidente, usuarios, expedientes, canManage = tr
             <>
               <Field label="Estado">
                 <select value={estado} onChange={(e) => setEstado(e.target.value as IncidenteEstado)}
-                  className="w-full rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm">
+                  className="w-full rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm bg-white">
                   {(Object.keys(ESTADO_STYLE) as IncidenteEstado[]).map((s) => <option key={s} value={s}>{ESTADO_STYLE[s].label}</option>)}
                 </select>
               </Field>
