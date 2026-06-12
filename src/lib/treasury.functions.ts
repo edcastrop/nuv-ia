@@ -584,7 +584,7 @@ export const listMovimientos = createServerFn({ method: "GET" })
       .order("score", { ascending: false });
 
     return {
-      movimientos: (rows ?? []) as Array<{
+      movimientos: ((rows ?? []) as unknown) as Array<{
         id: string;
         fecha: string;
         valor: number;
@@ -596,17 +596,18 @@ export const listMovimientos = createServerFn({ method: "GET" })
         match_tipo: string | null;
         match_id: string | null;
       }>,
-      candidatos: (cands ?? []) as Array<{
+      candidatos: ((cands ?? []) as unknown) as Array<{
         id: string;
         movimiento_id: string;
         score: number;
         match_tipo: string;
         match_id: string;
-        motivo: Record<string, unknown>;
+        motivo: Record<string, string | number | boolean | null>;
         posicion: number;
       }>,
     };
   });
+
 
 // ─────────────────────────── Confirmar / Descartar / Asignar ───────────────────────────
 export const confirmarMatch = createServerFn({ method: "POST" })
