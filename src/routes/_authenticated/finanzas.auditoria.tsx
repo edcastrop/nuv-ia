@@ -1,13 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Card } from "@/components/nuvex/ui";
+import {
+  PageLayout,
+  ExecutiveHero,
+  NCard,
+  SectionHeader,
+} from "@/components/nuvia";
+import { NSelect } from "@/components/nuvia/NSelect";
 import { supabase } from "@/integrations/supabase/client";
 import { obtenerUrlComprobante } from "@/lib/auditoria.functions";
+import { ShieldCheck, Download, Paperclip } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/finanzas/auditoria")({
   component: AuditoriaPage,
-  head: () => ({ meta: [{ title: "Auditoría · Finanzas NUVEX" }] }),
+  head: () => ({ meta: [{ title: "Auditoría · Finanzas NUVIA" }] }),
 });
 
 type Row = {
@@ -50,7 +57,9 @@ function AuditoriaPage() {
       if (uids.length > 0) {
         const { data: profs } = await supabase.from("profiles").select("id, nombre").in("id", uids);
         const map: Record<string, string> = {};
-        (profs ?? []).forEach((p) => { map[p.id] = p.nombre ?? p.id.slice(0, 8); });
+        (profs ?? []).forEach((p) => {
+          map[p.id] = p.nombre ?? p.id.slice(0, 8);
+        });
         setProfMap(map);
       }
     })();
@@ -58,114 +67,179 @@ function AuditoriaPage() {
 
   const entidades = useMemo(() => Array.from(new Set(rows.map((r) => r.entidad))).sort(), [rows]);
   const acciones = useMemo(() => Array.from(new Set(rows.map((r) => r.accion))).sort(), [rows]);
-  const filtradas = rows.filter((r) => (!filtroEnt || r.entidad === filtroEnt) && (!filtroAcc || r.accion === filtroAcc));
+  const filtradas = rows.filter(
+    (r) => (!filtroEnt || r.entidad === filtroEnt) && (!filtroAcc || r.accion === filtroAcc),
+  );
 
   async function handleDownload(path: string) {
     setLoadingDoc(path);
     try {
       const { url } = await fetchUrl({ data: { path } });
       window.open(url, "_blank", "noopener,noreferrer");
-    } catch (e) {
+    } catch {
       alert("No se pudo abrir el comprobante.");
     } finally {
       setLoadingDoc(null);
     }
   }
 
-  return (
-    <div className="space-y-4">
-      <Card>
-        <div className="flex items-end justify-between gap-3 flex-wrap">
-          <div>
-            <h1 className="text-xl font-semibold text-[#0A1226]">Auditoría financiera</h1>
-            <p className="text-[12px] text-[#242424]/60">Trazabilidad completa de cada acción en el módulo de finanzas.</p>
-          </div>
-          <div className="flex gap-2 items-center">
-            <select value={filtroEnt} onChange={(e) => setFiltroEnt(e.target.value)} className="text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white">
-              <option value="">Todas las entidades</option>
-              {entidades.map((e) => <option key={e} value={e}>{e}</option>)}
-            </select>
-            <select value={filtroAcc} onChange={(e) => setFiltroAcc(e.target.value)} className="text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white">
-              <option value="">Todas las acciones</option>
-              {acciones.map((a) => <option key={a} value={a}>{a}</option>)}
-            </select>
-            <button
-              onClick={() => {
-                const headers = ["Fecha", "Entidad", "Entidad ID", "Acción", "Usuario", "Motivo", "Valor anterior", "Valor nuevo", "Documento"];
-                const rows = filtradas.map((r) => [
-                  new Date(r.created_at).toLocaleString("es-CO"),
-                  r.entidad,
-                  r.entidad_id ?? "",
-                  r.accion,
-                  r.user_id ? (profMap[r.user_id] ?? r.user_id) : "",
-                  (r.motivo ?? "").replace(/"/g, '""'),
-                  r.valor_anterior ? JSON.stringify(r.valor_anterior) : "",
-                  r.valor_nuevo ? JSON.stringify(r.valor_nuevo) : "",
-                  r.documento_url ?? "",
-                ]);
-                const csv = [headers, ...rows]
-                  .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
-                  .join("\n");
-                const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = `auditoria-nuvex-${new Date().toISOString().slice(0, 10)}.csv`;
-                a.click();
-                URL.revokeObjectURL(url);
-              }}
-              className="text-[12px] rounded px-3 py-1.5 font-semibold text-white"
-              style={{ background: "linear-gradient(135deg,#445DA3,#84B98F)" }}
-            >
-              ⬇ Exportar CSV
-            </button>
-          </div>
-        </div>
-      </Card>
+  function exportarCSV() {
+    const headers = [
+      "Fecha", "Entidad", "Entidad ID", "Acción", "Usuario", "Motivo",
+      "Valor anterior", "Valor nuevo", "Documento",
+    ];
+    const data = filtradas.map((r) => [
+      new Date(r.created_at).toLocaleString("es-CO"),
+      r.entidad,
+      r.entidad_id ?? "",
+      r.accion,
+      r.user_id ? profMap[r.user_id] ?? r.user_id : "",
+      (r.motivo ?? "").replace(/"/g, '""'),
+      r.valor_anterior ? JSON.stringify(r.valor_anterior) : "",
+      r.valor_nuevo ? JSON.stringify(r.valor_nuevo) : "",
+      r.documento_url ?? "",
+    ]);
+    const csv = [headers, ...data]
+      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `auditoria-nuvia-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
-      <Card>
+  return (
+    <PageLayout>
+      <ExecutiveHero
+        badge={{ icon: <ShieldCheck size={12} />, label: "Finanzas", tone: "blue" }}
+        title="Auditoría financiera"
+        description="Trazabilidad completa de cada acción en el módulo de finanzas."
+        actions={
+          <button
+            onClick={exportarCSV}
+            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12.5px] font-semibold text-white"
+            style={{ background: "linear-gradient(135deg,#445DA3,#84B98F)" }}
+          >
+            <Download size={14} />
+            Exportar CSV
+          </button>
+        }
+      />
+
+      <NCard padding="md">
+        <SectionHeader title="Filtros" description={`${filtradas.length} de ${rows.length} registros`} />
+        <div className="flex flex-wrap items-end gap-3">
+          <Field label="Entidad">
+            <NSelect
+              value={filtroEnt || "__all__"}
+              onValueChange={(v) => setFiltroEnt(v === "__all__" ? "" : v)}
+              options={[{ value: "__all__", label: "Todas las entidades" }, ...entidades.map((e) => ({ value: e, label: e }))]}
+              minWidth={200}
+            />
+          </Field>
+          <Field label="Acción">
+            <NSelect
+              value={filtroAcc || "__all__"}
+              onValueChange={(v) => setFiltroAcc(v === "__all__" ? "" : v)}
+              options={[{ value: "__all__", label: "Todas las acciones" }, ...acciones.map((a) => ({ value: a, label: a }))]}
+              minWidth={200}
+            />
+          </Field>
+          {(filtroEnt || filtroAcc) && (
+            <button
+              onClick={() => { setFiltroEnt(""); setFiltroAcc(""); }}
+              className="text-[11px] font-semibold pb-2"
+              style={{ color: "var(--nuvia-accent-blue)" }}
+            >
+              Limpiar filtros
+            </button>
+          )}
+        </div>
+      </NCard>
+
+      <NCard padding="md">
+        <SectionHeader title="Trazabilidad" description="Últimos 500 eventos" />
         {filtradas.length === 0 ? (
-          <div className="py-6 text-center text-[12px] text-[#242424]/60">Sin registros de auditoría.</div>
+          <div className="py-8 text-center text-[12px]" style={{ color: "var(--nuvia-text-muted)" }}>
+            Sin registros de auditoría.
+          </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-[12.5px]">
-              <thead className="text-[11px] uppercase tracking-wider text-[#242424]/60">
-                <tr className="border-b border-[#E5E7EB]">
-                  <th className="text-left py-2 pr-3">Fecha</th>
-                  <th className="text-left pr-3">Entidad</th>
-                  <th className="text-left pr-3">Acción</th>
-                  <th className="text-left pr-3">Usuario</th>
-                  <th className="text-left pr-3">Detalle</th>
+            <table className="w-full text-[12.5px]" style={{ color: "var(--nuvia-text-primary)" }}>
+              <thead>
+                <tr style={{ background: "rgba(255,255,255,0.02)" }}>
+                  {["Fecha", "Entidad", "Acción", "Usuario", "Detalle"].map((h) => (
+                    <th
+                      key={h}
+                      className="text-left px-3 py-2.5 font-semibold uppercase"
+                      style={{
+                        fontSize: "10.5px",
+                        letterSpacing: "0.12em",
+                        color: "var(--nuvia-text-secondary)",
+                        borderBottom: "1px solid var(--nuvia-border)",
+                      }}
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {filtradas.map((r) => (
-                  <tr key={r.id} className="border-b border-[#F3F4F6] align-top">
-                    <td className="py-2 pr-3 whitespace-nowrap">{new Date(r.created_at).toLocaleString("es-CO")}</td>
-                    <td className="pr-3">{r.entidad}</td>
-                    <td className="pr-3 font-medium">{r.accion}</td>
-                    <td className="pr-3">{r.user_id ? (profMap[r.user_id] ?? r.user_id.slice(0, 8)) : "—"}</td>
-                    <td className="pr-3 text-[#242424]/80">
-                      {r.motivo && <div className="italic">{r.motivo}</div>}
+                  <tr
+                    key={r.id}
+                    className="hover:bg-white/[0.03] align-top"
+                    style={{ borderBottom: "1px solid var(--nuvia-border)" }}
+                  >
+                    <td className="px-3 py-2.5 whitespace-nowrap" style={{ color: "var(--nuvia-text-secondary)" }}>
+                      {new Date(r.created_at).toLocaleString("es-CO")}
+                    </td>
+                    <td className="px-3 py-2.5" style={{ color: "var(--nuvia-text-primary)" }}>
+                      {r.entidad}
+                    </td>
+                    <td className="px-3 py-2.5 font-medium" style={{ color: "var(--nuvia-accent-blue)" }}>
+                      {r.accion}
+                    </td>
+                    <td className="px-3 py-2.5" style={{ color: "var(--nuvia-text-secondary)" }}>
+                      {r.user_id ? profMap[r.user_id] ?? r.user_id.slice(0, 8) : "—"}
+                    </td>
+                    <td className="px-3 py-2.5" style={{ color: "var(--nuvia-text-secondary)" }}>
+                      {r.motivo && (
+                        <div className="italic" style={{ color: "var(--nuvia-text-primary)" }}>
+                          {r.motivo}
+                        </div>
+                      )}
                       {r.valor_anterior && (
-                        <div className="text-[10.5px] text-[#991B1B]">
-                          <b>Antes:</b> <code>{JSON.stringify(r.valor_anterior)}</code>
+                        <div className="text-[10.5px] mt-0.5" style={{ color: "var(--nuvia-danger)" }}>
+                          <b>Antes:</b>{" "}
+                          <code style={{ color: "var(--nuvia-text-secondary)" }}>
+                            {JSON.stringify(r.valor_anterior)}
+                          </code>
                         </div>
                       )}
                       {r.valor_nuevo && (
-                        <div className="text-[10.5px] text-[#445DA3]">
-                          <b>Nuevo:</b> <code>{JSON.stringify(r.valor_nuevo)}</code>
+                        <div className="text-[10.5px] mt-0.5" style={{ color: "var(--nuvia-accent-blue)" }}>
+                          <b>Nuevo:</b>{" "}
+                          <code style={{ color: "var(--nuvia-text-secondary)" }}>
+                            {JSON.stringify(r.valor_nuevo)}
+                          </code>
                         </div>
                       )}
                       {r.documento_url && (
                         <button
                           onClick={() => handleDownload(r.documento_url!)}
                           disabled={loadingDoc === r.documento_url}
-                          className="mt-1 text-[10.5px] text-[#1F7A45] hover:underline cursor-pointer flex items-center gap-1 disabled:opacity-50"
+                          className="mt-1.5 inline-flex items-center gap-1 text-[10.5px] hover:underline disabled:opacity-50"
+                          style={{ color: "var(--nuvia-success)" }}
                           type="button"
                         >
-                          <span>📎</span>
-                          {loadingDoc === r.documento_url ? "Abriendo…" : extractFilenameFromPath(r.documento_url)}
+                          <Paperclip size={11} />
+                          {loadingDoc === r.documento_url
+                            ? "Abriendo…"
+                            : extractFilenameFromPath(r.documento_url)}
                         </button>
                       )}
                     </td>
@@ -175,7 +249,21 @@ function AuditoriaPage() {
             </table>
           </div>
         )}
-      </Card>
-    </div>
+      </NCard>
+    </PageLayout>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="flex flex-col gap-1">
+      <span
+        className="text-[10.5px] uppercase tracking-wider"
+        style={{ color: "var(--nuvia-text-muted)" }}
+      >
+        {label}
+      </span>
+      {children}
+    </label>
   );
 }
