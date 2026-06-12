@@ -173,6 +173,8 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
     const dests = Array.from(selected);
     if (dests.length === 0) { setError("Selecciona al menos un destinatario."); return; }
     if (!ctx.poderDoc || !ctx.datosDoc) { setError("Faltan documentos por generar."); return; }
+    const guard = await evaluarQaGuard(ctx.expedienteId);
+    if (!guard.ok) { setError(guard.reason); return; }
     setSending(true);
     try {
       const [poderPdf, poderDocx, datosPdf, datosDocx] = await Promise.all([
