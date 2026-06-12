@@ -89,6 +89,7 @@ function RecaudosPage() {
       <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-4">
         <NuevoRecaudo
           carteras={carteras}
+          cuentas={cuentas}
           loading={loading}
           onSaved={() => setReloadKey((k) => k + 1)}
         />
