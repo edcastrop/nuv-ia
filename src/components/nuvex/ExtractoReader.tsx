@@ -5,7 +5,7 @@ import {
   Upload,
   Sparkles,
   FileText,
-  Loader2,
+  // Loader2 replaced by NuviaReadingAnimation
   ShieldCheck,
   AlertTriangle,
   X,
