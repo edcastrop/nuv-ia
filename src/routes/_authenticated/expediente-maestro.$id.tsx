@@ -561,7 +561,6 @@ function MaestroDetail() {
     </div>
   );
 }
-}
 
 function ResumenItem({ label, value }: { label: string; value: string }) {
   return (
