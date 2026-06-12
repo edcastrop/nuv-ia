@@ -69,6 +69,7 @@ const AuditarInputSchema = z.object({
     cuotasPendientes: z.number().int().nonnegative(),
     seguros: z.number().nonnegative().default(0),
     coberturaFrechPp: z.number().nonnegative().optional(),
+    coberturaFrechValorMensual: z.number().nonnegative().optional(),
     coberturaFrechCuotasRestantes: z.number().int().nonnegative().optional(),
     valorDesembolsado: z.number().nonnegative().optional(),
   }),
@@ -78,6 +79,7 @@ const AuditarInputSchema = z.object({
     cuota: z.number().nonnegative().optional(),
     seguros: z.number().nonnegative().optional(),
     coberturaFrechPp: z.number().nonnegative().optional(),
+    coberturaFrechValorMensual: z.number().nonnegative().optional(),
   }).default({}),
   simulacion: z.object({
     cuotasEliminadas: z.number().optional(),
@@ -101,6 +103,7 @@ export const auditarCaso = createServerFn({ method: "POST" })
         cuotasPendientes: data.reconstruccion.cuotasPendientes,
         seguros: data.reconstruccion.seguros,
         coberturaFrechPp: data.reconstruccion.coberturaFrechPp,
+        coberturaFrechValorMensual: data.reconstruccion.coberturaFrechValorMensual,
         coberturaFrechCuotasRestantes: data.reconstruccion.coberturaFrechCuotasRestantes,
         valorDesembolsado: data.reconstruccion.valorDesembolsado,
       },
