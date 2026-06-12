@@ -307,26 +307,26 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
 function ChatHeader({ dms, canal, onBack }: { dms: DMResumen[]; canal: Canal; onBack: () => void }) {
   const d = dms.find((x) => x.canal.id === canal.id);
   const BackBtn = (
-    <button onClick={onBack} className="md:hidden rounded-lg p-1.5 -ml-1 hover:bg-[#F0F4FB] text-[#242424]/70 shrink-0" aria-label="Volver">
+    <button onClick={onBack} className="md:hidden rounded-lg p-1.5 -ml-1 transition hover:bg-white/[0.06] shrink-0" style={{ color: "var(--nuvia-text-secondary)" }} aria-label="Volver">
       <ArrowLeft size={18} />
     </button>
   );
   if (!d) return (
-    <div className="border-b border-[#E3E7EE] px-3 md:px-5 py-3 flex items-center gap-2 text-sm font-semibold text-[#242424]">
+    <div className="border-b px-3 md:px-5 py-3 flex items-center gap-2 text-sm font-semibold" style={{ borderColor: "var(--nuvia-border)", color: "var(--nuvia-text-primary)", background: "var(--nuvia-bg-secondary)" }}>
       {BackBtn}
       {canal.nombre}
     </div>
   );
   return (
-    <div className="border-b border-[#E3E7EE] px-3 md:px-5 py-3 flex items-center gap-2 md:gap-3">
+    <div className="border-b px-3 md:px-5 py-3 flex items-center gap-2 md:gap-3" style={{ borderColor: "var(--nuvia-border)", background: "var(--nuvia-bg-secondary)" }}>
       {BackBtn}
       <UserAvatar userId={d.otro.user_id} name={d.otro.nombre} size="md" />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <div className="text-[14px] font-semibold text-[#242424] truncate">{d.otro.nombre}</div>
+          <div className="text-[14px] font-semibold truncate" style={{ color: "var(--nuvia-text-primary)" }}>{d.otro.nombre}</div>
           <PresenceDot userId={d.otro.user_id} lastSeenAt={d.otro.last_seen_at} visible={d.otro.presencia_visible} />
         </div>
-        <div className="text-[11px] text-[#242424]/55 truncate">
+        <div className="text-[11px] truncate" style={{ color: "var(--nuvia-text-secondary)" }}>
           <PresenceDot userId={d.otro.user_id} lastSeenAt={d.otro.last_seen_at} visible={d.otro.presencia_visible} showText />
           {d.otro.roles.length > 0 && <span className="ml-2 hidden sm:inline">· {d.otro.roles.join(", ")}</span>}
         </div>
@@ -337,12 +337,17 @@ function ChatHeader({ dms, canal, onBack }: { dms: DMResumen[]; canal: Canal; on
 
 function MensajeBurbuja({ m, esMio, otroLectura }: { m: Mensaje; esMio: boolean; otroLectura: string | null }) {
   if (m.borrado) {
-    return <div className={`text-[11px] italic text-[#242424]/40 ${esMio ? "text-right" : ""}`}>— mensaje eliminado —</div>;
+    return <div className={`text-[11px] italic ${esMio ? "text-right" : ""}`} style={{ color: "var(--nuvia-text-secondary)" }}>— mensaje eliminado —</div>;
   }
   const leido = esMio && otroLectura && new Date(m.created_at) <= new Date(otroLectura);
   return (
     <div className={`flex ${esMio ? "justify-end" : "justify-start"}`}>
-      <div className="max-w-[85%] md:max-w-[72%] rounded-2xl px-3 py-2 text-sm" style={esMio ? { background: AZUL, color: "#fff" } : { background: "#F0F2F6", color: "#242424" }}>
+      <div
+        className="max-w-[85%] md:max-w-[72%] rounded-2xl px-3 py-2 text-sm"
+        style={esMio
+          ? { background: "var(--nuvia-gradient-primary)", color: "var(--nuvia-text-primary)", boxShadow: "var(--nuvia-shadow-sm)" }
+          : { background: "var(--nuvia-bg-card)", color: "var(--nuvia-text-primary)", border: "1px solid var(--nuvia-border)" }}
+      >
         {m.texto && <div className="whitespace-pre-wrap break-words">{m.texto}</div>}
         {m.adjuntos?.length > 0 && (
           <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -350,16 +355,16 @@ function MensajeBurbuja({ m, esMio, otroLectura }: { m: Mensaje; esMio: boolean;
               a.mime?.startsWith("audio/") ? (
                 <VoiceNotePlayer key={i} path={a.path} mime={a.mime} nombre={a.nombre} esMio={esMio} />
               ) : (
-                <button key={i} onClick={async () => { const url = await getAdjuntoUrl(a.path); window.open(url, "_blank"); }} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px]" style={esMio ? { background: "rgba(255,255,255,0.18)", color: "#fff" } : { background: "#fff", border: "1px solid #E3E7EE", color: "#242424" }}>
+                <button key={i} onClick={async () => { const url = await getAdjuntoUrl(a.path); window.open(url, "_blank"); }} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px]" style={esMio ? { background: "rgba(255,255,255,0.18)", color: "var(--nuvia-text-primary)" } : { background: "rgba(255,255,255,0.05)", border: "1px solid var(--nuvia-border)", color: "var(--nuvia-text-primary)" }}>
                   {iconAdj(a.mime)} <span className="truncate max-w-[180px]">{a.nombre}</span> <Download size={10} />
                 </button>
               )
             ))}
           </div>
         )}
-        <div className={`mt-1 flex items-center gap-1 text-[10px] ${esMio ? "text-white/75 justify-end" : "text-[#242424]/50"}`}>
+        <div className={`mt-1 flex items-center gap-1 text-[10px] ${esMio ? "justify-end" : ""}`} style={{ color: esMio ? "rgba(255,255,255,0.76)" : "var(--nuvia-text-secondary)" }}>
           <span>{new Date(m.created_at).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}</span>
-          {esMio && (leido ? <CheckCheck size={12} className="text-[#A8D5B3]" /> : <Check size={12} />)}
+          {esMio && (leido ? <CheckCheck size={12} style={{ color: "var(--nuvia-success)" }} /> : <Check size={12} />)}
         </div>
       </div>
     </div>
