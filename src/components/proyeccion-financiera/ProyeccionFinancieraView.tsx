@@ -70,10 +70,10 @@ const NUVIA = {
   rojo: "#FB7185",
 };
 
-const NUVIA_GRADIENT = "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))";
-const NUVIA_GLASS = "linear-gradient(145deg, rgba(255,255,255,0.055), rgba(68,93,163,0.055) 48%, rgba(132,185,143,0.035))";
-const NUVIA_GLASS_BORDER = "1px solid rgba(255,255,255,0.10)";
-const NUVIA_GLASS_SHADOW = "0 30px 60px -40px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.08)";
+const NUVIA_GRADIENT = "linear-gradient(135deg, rgba(68,93,163,0.68), rgba(132,185,143,0.62))";
+const NUVIA_GLASS = "linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.045) 36%, rgba(68,93,163,0.052) 68%, rgba(132,185,143,0.036))";
+const NUVIA_GLASS_BORDER = "1px solid rgba(210,222,240,0.22)";
+const NUVIA_GLASS_SHADOW = "0 34px 90px -48px rgba(0,0,0,0.95), inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -1px 0 rgba(255,255,255,0.05)";
 
 const blankInput: ProyeccionFinancieraInput = {
   clienteNombre: "",
@@ -161,7 +161,7 @@ function Field({
         value={value as string}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-xl border border-white/10 bg-white/[0.055] px-3.5 py-2.5 text-sm font-medium text-white placeholder-white/30 outline-none transition focus:border-[#84B98F]/60 focus:bg-white/[0.08] focus:ring-2 focus:ring-[#84B98F]/25"
+        className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm font-medium text-white placeholder-white/30 outline-none transition focus:border-[#84B98F]/50 focus:bg-white/[0.06] focus:ring-2 focus:ring-[#84B98F]/18"
       />
     </label>
   );
@@ -187,7 +187,7 @@ function SelectField({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full appearance-none rounded-xl border border-white/10 bg-white/[0.055] px-3.5 py-2.5 pr-9 text-sm font-medium text-white outline-none transition focus:border-[#84B98F]/60 focus:bg-white/[0.08] focus:ring-2 focus:ring-[#84B98F]/25"
+          className="w-full appearance-none rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 pr-9 text-sm font-medium text-white outline-none transition focus:border-[#84B98F]/50 focus:bg-white/[0.06] focus:ring-2 focus:ring-[#84B98F]/18"
         >
           {options.map((o) => (
             <option key={o.value} value={o.value} className="bg-[#07111D] text-white">
@@ -225,11 +225,17 @@ function Surface({
       style={{
         background: NUVIA_GLASS,
         border: NUVIA_GLASS_BORDER,
-        backdropFilter: "blur(32px) saturate(160%)",
-        WebkitBackdropFilter: "blur(32px) saturate(160%)",
+        backdropFilter: "blur(24px) saturate(135%)",
         boxShadow: NUVIA_GLASS_SHADOW,
       }}
     >
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(115deg, rgba(255,255,255,0.16) 0%, transparent 18%, transparent 72%, rgba(255,255,255,0.055) 100%)",
+        }}
+      />
       {glow && (
         <>
           <div
