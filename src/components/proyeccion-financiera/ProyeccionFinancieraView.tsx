@@ -512,7 +512,7 @@ function Sidebar({ active, onJump }: { active: string; onJump: (id: string) => v
 // ──────────────────────────────────────────────────────────────────────────
 export function ProyeccionFinancieraView() {
   const [input, setInput] = useState<ProyeccionFinancieraInput>(blankInput);
-  const [lectorOpen, setLectorOpen] = useState(false);
+  const [lectorOpen, setLectorOpen] = useState(true);
   const [escenarios, setEscenarios] = useState<EscenarioState[]>([
     { id: crypto.randomUUID(), ...escenarioActual() },
     {
