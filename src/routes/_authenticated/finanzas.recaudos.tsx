@@ -33,6 +33,7 @@ type PagoRecent = {
 function RecaudosPage() {
   const [carteras, setCarteras] = useState<CarteraConExpediente[]>([]);
   const [pagos, setPagos] = useState<PagoRecent[]>([]);
+  const [cuentas, setCuentas] = useState<CuentaReceptora[]>([]);
   const [reloadKey, setReloadKey] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -41,6 +42,7 @@ function RecaudosPage() {
     listCarteras()
       .then(setCarteras)
       .finally(() => setLoading(false));
+    listCuentasReceptoras(true).then(setCuentas).catch(() => setCuentas([]));
   }, [reloadKey]);
 
   useEffect(() => {
