@@ -847,17 +847,17 @@ export function ProyeccionFinancieraView() {
             >
               <div
                 className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 animate-pulse rounded-full blur-3xl"
-                style={{ background: "radial-gradient(circle, rgba(68,93,163,0.18), transparent 70%)", animationDuration: "6s" }}
+                style={{ background: "radial-gradient(circle, rgba(68,93,163,0.08), transparent 70%)", animationDuration: "6s" }}
               />
               <div
                 className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 animate-pulse rounded-full blur-3xl"
-                style={{ background: "radial-gradient(circle, rgba(132,185,143,0.16), transparent 70%)", animationDuration: "8s" }}
+                style={{ background: "radial-gradient(circle, rgba(132,185,143,0.08), transparent 70%)", animationDuration: "8s" }}
               />
               <div
                 className="pointer-events-none absolute inset-0"
                 style={{
                   background:
-                    "linear-gradient(112deg, rgba(255,255,255,0.15) 0%, transparent 16%, transparent 74%, rgba(255,255,255,0.055) 100%)",
+                    "linear-gradient(112deg, rgba(255,255,255,0.24) 0%, transparent 13%, transparent 74%, rgba(255,255,255,0.075) 100%)",
                 }}
               />
               <button
