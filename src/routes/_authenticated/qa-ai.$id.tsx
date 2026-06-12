@@ -420,7 +420,14 @@ function ResultadoQaAi() {
             <tbody>
               {filasAmort.map((f) => (
                 <tr key={f.k} style={{ borderBottom: "1px solid var(--nuvia-border)" }}>
-                  <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>{f.k}</td>
+                  <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>
+                    <span className="inline-flex items-center gap-1.5 justify-end">
+                      {f.subsidioActivo && (
+                        <span title="Cuota con FRECH/Fresh" style={{ width: 6, height: 6, borderRadius: 999, background: "var(--nuvia-success)", display: "inline-block" }} />
+                      )}
+                      {f.k}
+                    </span>
+                  </td>
                   <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-primary)" }}>${fmt(f.cuota, 0)}</td>
                   <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>${fmt(f.interes, 0)}</td>
                   <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>${fmt(f.capital, 0)}</td>
