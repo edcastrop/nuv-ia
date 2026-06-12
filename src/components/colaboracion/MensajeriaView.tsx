@@ -3,6 +3,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
 import { UserAvatar } from "@/components/nuvex/UserAvatar";
+import { ExecutiveHero } from "@/components/nuvia";
+import { MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   type Canal, type Mensaje, type DMResumen,
@@ -126,27 +128,36 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
 
   return (
     <div className="mx-auto max-w-[1500px] px-3 py-3 md:px-6 md:py-6 space-y-3 md:space-y-4">
-      <Card className="!p-3 md:!p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="text-[10px] md:text-[11px] uppercase tracking-wider font-semibold" style={{ color: AZUL }}>NUVEX</div>
-            <h1 className="text-lg md:text-2xl font-semibold text-[#242424]">Mensajería Directa</h1>
-            <p className="hidden md:block text-sm text-[#242424]/60 mt-1">
-              Conversaciones 1 a 1 entre colaboradores. Mensajes con estados de envío y lectura, adjuntos e historial completo.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {totalNoLeidos > 0 && (
-              <span className="rounded-full px-2 py-0.5 md:py-1 text-[10px] md:text-[11px] font-semibold text-white" style={{ background: "#B42318" }}>
-                {totalNoLeidos} sin leer
-              </span>
-            )}
-            <button onClick={() => setShowNuevo(true)} className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 md:px-3 md:py-2 text-[11px] md:text-[12px] font-semibold text-white" style={{ background: AZUL }}>
-              <Plus size={13} /> <span className="hidden xs:inline">Nuevo</span><span className="hidden sm:inline"> mensaje</span>
-            </button>
-          </div>
-        </div>
-      </Card>
+      <ExecutiveHero
+        badge={{ icon: <MessageCircle size={12} />, label: "NUVEX · Mensajería", tone: "blue" }}
+        title="Mensajería Directa"
+        description="Conversaciones 1 a 1 entre colaboradores. Mensajes con estados de envío y lectura, adjuntos e historial completo."
+        meta={
+          totalNoLeidos > 0 ? (
+            <span
+              className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+              style={{
+                background: "rgba(255,107,107,0.14)",
+                border: "1px solid rgba(255,107,107,0.40)",
+                color: "var(--nuvia-danger)",
+              }}
+            >
+              {totalNoLeidos} sin leer
+            </span>
+          ) : undefined
+        }
+        actions={
+          <button
+            onClick={() => setShowNuevo(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-white transition hover:opacity-95"
+            style={{ background: "var(--nuvia-gradient-primary)", boxShadow: "var(--nuvia-shadow-sm)" }}
+          >
+            <Plus size={13} /> Nuevo mensaje
+          </button>
+        }
+      />
+      {/* keep AZUL referenced for legacy chat surfaces below */}
+      <span aria-hidden className="hidden" style={{ color: AZUL }} />
 
       {accesoError && (
         <Card className="border-l-4 border-l-[#B42318]">
