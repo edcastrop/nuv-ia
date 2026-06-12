@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PageLayout, ExecutiveHero, NCard, SectionHeader, NSelect } from "@/components/nuvia";
 import { useServerFn } from "@tanstack/react-start";
-import { auditarCaso } from "@/lib/qaAI.functions";
-import { Brain, Play } from "lucide-react";
+import { auditarCaso, listExpedientesConExtracto, obtenerExtractoQA } from "@/lib/qaAI.functions";
+import { Brain, Play, FileDown } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/qa-ai/nuevo")({
   component: NuevoQaAi,
