@@ -63,21 +63,29 @@ export function cuotaTeorica(saldo: number, iPeriodica: number, n: number): numb
 // ──────────────────────────────────────────────────────────────
 export interface FilaAmort {
   k: number;
-  cuota: number;
+  cuota: number;        // cuota financiera (capital + interés)
   interes: number;
   capital: number;
+  seguros: number;      // seguros mensuales aplicados
+  cuotaTotal: number;   // cuota + seguros (lo que realmente paga el cliente)
   saldo: number;
 }
 
-export function amortizacion(saldo: number, iPeriodica: number, n: number): FilaAmort[] {
+export function amortizacion(
+  saldo: number,
+  iPeriodica: number,
+  n: number,
+  seguros: number = 0,
+): FilaAmort[] {
   const C = cuotaTeorica(saldo, iPeriodica, n);
+  const seg = Math.max(0, seguros || 0);
   const filas: FilaAmort[] = [];
   let s = saldo;
   for (let k = 1; k <= n; k++) {
     const interes = s * iPeriodica;
     const capital = C - interes;
     s = Math.max(0, s - capital);
-    filas.push({ k, cuota: C, interes, capital, saldo: s });
+    filas.push({ k, cuota: C, interes, capital, seguros: seg, cuotaTotal: C + seg, saldo: s });
   }
   return filas;
 }
