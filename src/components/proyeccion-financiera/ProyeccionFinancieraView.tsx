@@ -1285,7 +1285,7 @@ export function ProyeccionFinancieraView() {
                               <td
                                 className={`py-3 text-right font-semibold ${
                                   diff < 0
-                                    ? "text-[#A8D1B0]"
+                                    ? "text-cyan-100"
                                     : diff > 0
                                       ? "text-[#E89B8E]"
                                       : "text-white/30"
@@ -1304,7 +1304,7 @@ export function ProyeccionFinancieraView() {
                           <td className="py-3 font-semibold text-white">
                             {fmtFecha(selected.res.fechaFinalizacion)}
                           </td>
-                          <td className="py-3 text-right font-semibold text-[#A8D1B0]">
+                          <td className="py-3 text-right font-semibold text-cyan-100">
                             {kpis.mesesEliminados} meses antes
                           </td>
                         </tr>
@@ -1465,21 +1465,21 @@ export function ProyeccionFinancieraView() {
                   className="relative overflow-hidden rounded-3xl"
                   style={{
                     background:
-                      "linear-gradient(180deg, rgba(36,36,36,0.7), rgba(16,16,16,0.7))",
-                    border: "1px solid rgba(132,185,143,0.18)",
+                      "linear-gradient(180deg, rgba(255,255,255,0.10), rgba(34,211,238,0.045))",
+                    border: "1px solid rgba(103,232,249,0.20)",
                     boxShadow:
                       "0 1px 0 rgba(255,255,255,0.05) inset, 0 40px 80px -30px rgba(0,0,0,0.85)",
                   }}
                 >
                   <div
                     className="pointer-events-none absolute -top-32 -right-32 h-72 w-72 rounded-full blur-3xl"
-                    style={{ background: "radial-gradient(circle, rgba(132,185,143,0.20), transparent 70%)" }}
+                    style={{ background: "radial-gradient(circle, rgba(34,211,238,0.22), transparent 70%)" }}
                   />
                   <div className="relative p-7 md:p-9">
                     <div className="mb-6 flex items-center justify-between gap-4">
                       <div>
-                        <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#A8D1B0]">
-                          NUVEX · Informe Ejecutivo
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-cyan-100">
+                          NUVIA · Informe Ejecutivo
                         </div>
                         <h2 className="mt-2 text-[22px] font-semibold tracking-tight text-white">
                           Resumen para el cliente
@@ -1491,8 +1491,8 @@ export function ProyeccionFinancieraView() {
                       <div
                         className="hidden h-12 w-12 items-center justify-center rounded-2xl md:flex"
                         style={{
-                          background: "linear-gradient(135deg, #445DA3, #84B98F)",
-                          boxShadow: "0 12px 28px -10px rgba(132,185,143,0.6)",
+                          background: "NUVIA_GRADIENT",
+                          boxShadow: "0 12px 28px -10px rgba(34,211,238,0.70)",
                         }}
                       >
                         <FileText className="h-5 w-5 text-white" />
@@ -1539,10 +1539,10 @@ export function ProyeccionFinancieraView() {
                           className="rounded-2xl p-4"
                           style={{
                             background: r.warn
-                              ? "linear-gradient(135deg, rgba(192,57,43,0.18), rgba(224,145,58,0.08))"
+                              ? "linear-gradient(135deg, rgba(34,211,238,0.16), rgba(74,222,128,0.09))"
                               : "rgba(255,255,255,0.025)",
                             border: r.warn
-                              ? "1px solid rgba(192,57,43,0.25)"
+                              ? "1px solid rgba(103,232,249,0.24)"
                               : "1px solid rgba(255,255,255,0.04)",
                           }}
                         >
@@ -1561,12 +1561,12 @@ export function ProyeccionFinancieraView() {
                       className="mt-6 rounded-2xl p-5"
                       style={{
                         background:
-                          "linear-gradient(135deg, rgba(68,93,163,0.18), rgba(132,185,143,0.10))",
-                        border: "1px solid rgba(132,185,143,0.22)",
+                          "linear-gradient(135deg, rgba(34,211,238,0.16), rgba(74,222,128,0.10))",
+                        border: "1px solid rgba(103,232,249,0.24)",
                       }}
                     >
-                      <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#A8D1B0]">
-                        Recomendación NUVEX
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-100">
+                        Recomendación NUVIA
                       </div>
                       <p className="mt-2 text-[14px] leading-relaxed text-white/85">
                         Con un aporte adicional de{" "}
@@ -1585,7 +1585,7 @@ export function ProyeccionFinancieraView() {
                         en lugar del{" "}
                         <strong className="text-white">{fmtFecha(resActual.res.fechaFinalizacion)}</strong>,
                         con un ROI proyectado del{" "}
-                        <strong className="text-[#A8D1B0]">
+                        <strong className="text-cyan-100">
                           {(kpis.roiCliente * 100).toFixed(0)}%
                         </strong>{" "}
                         sobre el aporte total.
@@ -1638,7 +1638,7 @@ export function ProyeccionFinancieraView() {
                             <td className="px-4 py-2.5 text-right text-white">
                               {formatCOP(c.cuotaConExtra)}
                             </td>
-                            <td className="px-4 py-2.5 text-right text-[#A8D1B0]">{formatCOP(c.capital)}</td>
+                            <td className="px-4 py-2.5 text-right text-cyan-100">{formatCOP(c.capital)}</td>
                             <td className="px-4 py-2.5 text-right text-[#E89B8E]">{formatCOP(c.interes)}</td>
                             <td className="px-4 py-2.5 text-right text-white/55">{formatCOP(c.seguros)}</td>
                             <td className="px-4 py-2.5 text-right font-medium text-white">
@@ -1666,8 +1666,8 @@ export function ProyeccionFinancieraView() {
                 onClick={openGuardarCaso}
                 className="mt-2 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:scale-[1.02]"
                 style={{
-                  background: "linear-gradient(135deg, #445DA3, #84B98F)",
-                  boxShadow: "0 14px 30px -12px rgba(68,93,163,0.65)",
+                  background: "NUVIA_GRADIENT",
+                  boxShadow: "0 14px 30px -12px rgba(34,211,238,0.68)",
                 }}
               >
                 <Save className="h-4 w-4" />
@@ -1677,7 +1677,7 @@ export function ProyeccionFinancieraView() {
 
             <div className="mt-6 flex items-center justify-center gap-2 text-[11px] text-white/30">
               <Sparkles className="h-3.5 w-3.5" />
-              NUVEX Wealth Studio · Proyecciones referenciales basadas en los datos ingresados
+              NUVIA Wealth Studio · Proyecciones referenciales basadas en los datos ingresados
             </div>
           </div>
         </main>
