@@ -60,7 +60,7 @@ import { GuardarCasoModal } from "./GuardarCasoModal";
 // ──────────────────────────────────────────────────────────────────────────
 // Brand tokens
 // ──────────────────────────────────────────────────────────────────────────
-const NUVEX = {
+const NUVIA = {
   azul: "#22D3EE",
   azulSoft: "#67E8F9",
   verde: "#4ADE80",
@@ -639,9 +639,9 @@ export function ProyeccionFinancieraView() {
     const c = selected.res.cuotas[0];
     if (!c) return [];
     return [
-      { name: "Capital", value: Math.round(c.capital), color: NUVEX.azul },
-      { name: "Intereses", value: Math.round(c.interes), color: NUVEX.rojo },
-      { name: "Seguros", value: Math.round(c.seguros), color: NUVEX.ambar },
+      { name: "Capital", value: Math.round(c.capital), color: NUVIA.azul },
+      { name: "Intereses", value: Math.round(c.interes), color: NUVIA.rojo },
+      { name: "Seguros", value: Math.round(c.seguros), color: NUVIA.ambar },
     ];
   })();
 
@@ -1284,11 +1284,7 @@ export function ProyeccionFinancieraView() {
                               </td>
                               <td
                                 className={`py-3 text-right font-semibold ${
-                                  diff < 0
-                                    ? "text-cyan-100"
-                                    : diff > 0
-                                      ? "text-[#E89B8E]"
-                                      : "text-white/30"
+                                    diff < 0 ? "text-cyan-100" : diff > 0 ? "text-rose-300" : "text-white/30"
                                 }`}
                               >
                                 {isInt
