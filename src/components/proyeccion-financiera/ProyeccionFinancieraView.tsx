@@ -421,10 +421,10 @@ function Sidebar({ active, onJump }: { active: string; onJump: (id: string) => v
       className="sticky top-0 hidden h-screen w-[252px] shrink-0 flex-col lg:flex"
       style={{
         background:
-          "linear-gradient(180deg, rgba(36,36,36,0.55) 0%, rgba(16,16,16,0.55) 100%)",
-        borderRight: "1px solid rgba(255,255,255,0.06)",
-        backdropFilter: "blur(24px)",
-        WebkitBackdropFilter: "blur(24px)",
+          "linear-gradient(180deg, rgba(5,10,19,0.58) 0%, rgba(3,7,18,0.50) 100%)",
+        borderRight: "1px solid rgba(207,250,254,0.12)",
+        backdropFilter: "blur(28px) saturate(150%)",
+        WebkitBackdropFilter: "blur(28px) saturate(150%)",
       }}
     >
       {/* Logo */}
@@ -432,14 +432,14 @@ function Sidebar({ active, onJump }: { active: string; onJump: (id: string) => v
         <div
           className="flex h-10 w-10 items-center justify-center rounded-2xl"
           style={{
-            background: "linear-gradient(135deg, #445DA3, #84B98F)",
-            boxShadow: "0 10px 30px -10px rgba(132,185,143,0.55)",
+            background: NUVIA_GRADIENT,
+            boxShadow: "0 12px 34px -12px rgba(34,211,238,0.72)",
           }}
         >
           <Sparkles className="h-5 w-5 text-white" />
         </div>
         <div className="leading-tight">
-          <div className="text-[15px] font-semibold tracking-tight text-white">NUVEX</div>
+          <div className="text-[15px] font-semibold tracking-tight text-white">NUVIA</div>
           <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/40">
             Wealth Studio
           </div>
@@ -471,7 +471,7 @@ function Sidebar({ active, onJump }: { active: string; onJump: (id: string) => v
                     isActive && !item.soon
                       ? {
                           background:
-                            "linear-gradient(90deg, rgba(68,93,163,0.18), rgba(132,185,143,0.08))",
+                            "linear-gradient(90deg, rgba(34,211,238,0.20), rgba(74,222,128,0.10))",
                           boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)",
                         }
                       : undefined
@@ -481,7 +481,7 @@ function Sidebar({ active, onJump }: { active: string; onJump: (id: string) => v
                     <span
                       className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full"
                       style={{
-                        background: "linear-gradient(180deg, #445DA3, #84B98F)",
+                        background: NUVIA_GRADIENT,
                       }}
                     />
                   )}
@@ -503,10 +503,10 @@ function Sidebar({ active, onJump }: { active: string; onJump: (id: string) => v
       <div className="mx-3 mb-4 rounded-2xl p-3" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
         <div className="flex items-center gap-2">
           <div className="relative flex h-2 w-2 items-center justify-center">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#84B98F]/60" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-[#84B98F]" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-300/70" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-300" />
           </div>
-          <span className="text-[11px] font-medium text-white/60">Motor NUVEX activo</span>
+          <span className="text-[11px] font-medium text-white/60">Motor NUVIA activo</span>
         </div>
         <p className="mt-1 text-[10.5px] leading-snug text-white/35">
           Cálculos en vivo · Privado
@@ -526,7 +526,7 @@ export function ProyeccionFinancieraView() {
     { id: crypto.randomUUID(), ...escenarioActual() },
     {
       id: crypto.randomUUID(),
-      nombre: "Optimizado NUVEX",
+      nombre: "Optimizado NUVIA",
       tipo: "nuvex",
       aporteMensualExtra: 300000,
       abonoExtraordinario: 0,
@@ -586,7 +586,7 @@ export function ProyeccionFinancieraView() {
           : preset === "agresivo"
             ? "Agresivo"
             : preset === "nuvex"
-              ? "Optimizado NUVEX"
+              ? "Optimizado NUVIA"
               : "Personalizado",
       tipo: preset ?? "personalizado",
       aporteMensualExtra:
