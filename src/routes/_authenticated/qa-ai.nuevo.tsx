@@ -120,6 +120,34 @@ function NuevoQaAi() {
       />
 
       <NCard>
+        <SectionHeader
+          title="Cargar desde extracto existente"
+          description="Reutiliza datos ya leídos por NUVIA — evita recapturar saldo, tasa, cuota, seguros, FRECH, banco y producto."
+          icon={<FileDown size={16} />}
+        />
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 mt-3 items-end">
+          <label className="flex flex-col gap-1 text-xs" style={{ color: "var(--nuvia-text-secondary)" }}>
+            Extracto bancario ({extractos.length} disponibles)
+            <NSelect
+              value={extractoSel}
+              onValueChange={cargarExtracto}
+              placeholder="— Capturar manualmente —"
+              options={extractos.map((e) => ({
+                value: e.extractoId,
+                label: `${e.codigo ?? "s/c"} · ${e.cliente ?? "Sin cliente"} · ${e.banco ?? "?"} · ${e.producto ?? "?"}`,
+              }))}
+            />
+          </label>
+          {precarga && (
+            <div className="text-xs px-3 py-2 rounded" style={{ background: "rgba(34,197,94,0.08)", color: "var(--nuvia-success)", border: "1px solid rgba(34,197,94,0.25)" }}>
+              ✓ Precargado: {precarga.titular || "—"} · {precarga.banco} · {precarga.producto}
+            </div>
+          )}
+        </div>
+      </NCard>
+
+
+      <NCard>
         <SectionHeader title="Modalidad y datos del crédito" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
           <label className="flex flex-col gap-1 text-xs" style={{ color: "var(--nuvia-text-secondary)" }}>
