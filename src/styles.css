@@ -632,10 +632,11 @@
   padding: 0.75rem 0.95rem;
   border-radius: 0.75rem;
   font-size: 0.875rem;
+  line-height: 1.25;
   outline: none;
   transition: all 0.18s ease;
 }
-.nuvia-input::placeholder { color: rgba(255,255,255,0.3); }
+.nuvia-input::placeholder { color: rgba(255,255,255,0.45); }
 .nuvia-input:focus {
   border-color: rgba(68,93,163,0.65);
   background: rgba(255,255,255,0.05);
@@ -646,6 +647,37 @@
   -webkit-box-shadow: 0 0 0 1000px rgba(20,22,32,0.95) inset;
   caret-color: #fff;
 }
+
+/* Variante compacta para barras de filtro (NUNCA forzar height inline) */
+.nuvia-input-sm {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  border-radius: 0.625rem;
+  line-height: 1.3;
+}
+
+/* Select NUVIA dark — caret SVG, options con fondo oscuro */
+select.nuvia-input,
+select.nuvia-input-sm {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'><path d='M1 1.5L6 6.5L11 1.5' stroke='%23A5B5E0' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  padding-right: 2rem;
+  cursor: pointer;
+}
+
+/* Dropdown nativo: fondo oscuro NUVIA (Chrome/Edge/Firefox) */
+select.nuvia-input option,
+select.nuvia-input-sm option,
+select.nuvia-input optgroup,
+select.nuvia-input-sm optgroup {
+  background-color: #0B1226;
+  color: #fff;
+}
+
 
 /* Botón submit gradient NUVIA */
 .nuvia-submit {

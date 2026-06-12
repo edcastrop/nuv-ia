@@ -135,26 +135,26 @@ function CarteraDashboard() {
         />
         <div className="flex flex-wrap gap-3 items-end">
           <Field label="Estado">
-            <select value={estado} onChange={(e) => setEstado(e.target.value as CarteraEstado | "")} className="nuvia-input" style={{ height: 36 }}>
+            <select value={estado} onChange={(e) => setEstado(e.target.value as CarteraEstado | "")} className="nuvia-input nuvia-input-sm">
               <option value="">Todos</option>
               {CARTERA_ESTADOS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
             </select>
           </Field>
           <Field label="Responsable">
-            <select value={responsableId} onChange={(e) => setResponsableId(e.target.value)} className="nuvia-input" style={{ height: 36 }}>
+            <select value={responsableId} onChange={(e) => setResponsableId(e.target.value)} className="nuvia-input nuvia-input-sm">
               <option value="">Todos</option>
               {responsables.map((r) => <option key={r.id} value={r.id}>{r.nombre || r.email}</option>)}
             </select>
           </Field>
           <Field label="Banco">
-            <input value={banco} onChange={(e) => setBanco(e.target.value)} placeholder="p.ej. Davivienda" className="nuvia-input" style={{ height: 36 }} />
+            <input value={banco} onChange={(e) => setBanco(e.target.value)} placeholder="p.ej. Davivienda" className="nuvia-input nuvia-input-sm" />
           </Field>
           <Field label="Mora mínima (días)">
-            <input type="number" min={0} value={moraMin} onChange={(e) => setMoraMin(e.target.value)} className="nuvia-input" style={{ height: 36, width: 120 }} />
+            <input type="number" min={0} value={moraMin} onChange={(e) => setMoraMin(e.target.value)} className="nuvia-input nuvia-input-sm" style={{ width: 120 }} />
           </Field>
           <button
             onClick={() => { setEstado(""); setResponsableId(""); setBanco(""); setMoraMin(""); }}
-            className="text-[11px] font-semibold"
+            className="text-[11px] font-semibold pb-2"
             style={{ color: "var(--nuvia-accent-blue)" }}
           >Limpiar filtros</button>
         </div>
