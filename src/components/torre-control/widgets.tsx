@@ -227,10 +227,10 @@ export function FunnelChart({ stages }: { stages: FunnelStage[] }) {
                   {s.count} {conv && <span style={{ color: "var(--nuvia-text-muted)" }}>· conv {conv}</span>}
                 </span>
               </div>
-              <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--nuvia-bg-secondary)" }}>
+              <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
                 <div
                   className="h-full rounded-full transition-all"
-                  style={{ width: `${Math.max(pct, 4)}%`, background: "var(--nuvia-gradient-primary)" }}
+                  style={{ width: `${Math.max(pct, 4)}%`, background: "var(--nuvia-accent-blue)" }}
                 />
               </div>
             </div>
@@ -310,8 +310,8 @@ export function AreaProductivityBars({ rows }: { rows: ProductivityRow[] }) {
                   <span style={{ color: slaColor }} className="font-semibold">SLA {r.sla_pct}%</span>
                 </span>
               </div>
-              <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--nuvia-bg-secondary)" }}>
-                <div className="h-full" style={{ width: `${(r.casos / max) * 100}%`, background: "var(--nuvia-gradient-primary)" }} />
+              <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
+                <div className="h-full" style={{ width: `${(r.casos / max) * 100}%`, background: "var(--nuvia-accent-blue)" }} />
               </div>
             </div>
           );
@@ -386,9 +386,14 @@ export function ExecutiveInsightsCard({
         <button
           onClick={onAnalyze}
           disabled={loading}
-          className="text-xs font-medium px-3 py-1.5 rounded-lg transition disabled:opacity-50"
-          style={{ background: "var(--nuvia-gradient-primary)", color: "var(--nuvia-text-primary)", border: "1px solid var(--nuvia-border-strong)" }}
+          className="inline-flex items-center gap-1.5 text-[11.5px] font-semibold px-3 py-1.5 rounded-lg transition disabled:opacity-50 hover:opacity-90"
+          style={{
+            background: "color-mix(in oklab, var(--nuvia-accent-green) 14%, transparent)",
+            color: "var(--nuvia-accent-green)",
+            border: "1px solid color-mix(in oklab, var(--nuvia-accent-green) 32%, transparent)",
+          }}
         >
+          <Sparkles className="h-3 w-3" />
           {loading ? "Analizando…" : insights ? "Re-analizar" : "Analizar con NUVIA IA"}
         </button>
       </div>
