@@ -54,6 +54,7 @@ import { normalizeCreditMoneyInput } from "@/lib/creditoSanity";
 import { AuditPanel } from "./AuditPanel";
 import { useNivelAutonomia } from "@/hooks/useNivelAutonomia";
 import { triggerSimuladorAutoQA } from "@/lib/simuladorAutoQA";
+import { AutoQAPanel, type AutoQAResult } from "./AutoQAPanel";
 
 
 export function PesosSimulator({
@@ -68,6 +69,8 @@ export function PesosSimulator({
   const init = initialExpediente;
   const initCred = (init?.credito_data ?? {}) as Record<string, string>;
   const monedaAlerta = useMonedaMismatchAlert();
+  const [autoQA, setAutoQA] = useState<AutoQAResult | null>(null);
+  const [autoQALoading, setAutoQALoading] = useState(false);
   const [extractoArchivoPath, setExtractoArchivoPath] = useState<string>(() =>
     typeof initCred.archivoPath === "string" ? initCred.archivoPath : "",
   );
@@ -381,11 +384,17 @@ export function PesosSimulator({
             void triggerSimuladorAutoQA({
               expedienteId: init.id,
               raw: { ...p.raw, archivoPath: p.archivoPath ?? null },
+              onStart: () => { setAutoQALoading(true); setAutoQA(null); },
+              onResult: (r) => { setAutoQA(r); setAutoQALoading(false); },
+              onError: () => setAutoQALoading(false),
             });
           }
         }}
 
       />
+      {init?.id && (autoQALoading || autoQA) && (
+        <AutoQAPanel loading={autoQALoading} result={autoQA} />
+      )}
       <Card>
         <div id="datos-cliente-card" />
         <SectionTitle sub="Información general del cliente y del crédito">

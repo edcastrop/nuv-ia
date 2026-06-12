@@ -55,6 +55,7 @@ import { Settings2 } from "lucide-react";
 import { AuditPanel } from "./AuditPanel";
 import { useNivelAutonomia } from "@/hooks/useNivelAutonomia";
 import { triggerSimuladorAutoQA } from "@/lib/simuladorAutoQA";
+import { AutoQAPanel, type AutoQAResult } from "./AutoQAPanel";
 
 
 export function UVRSimulator({
@@ -72,6 +73,8 @@ export function UVRSimulator({
   const [extractoArchivoPath, setExtractoArchivoPath] = useState<string>(() =>
     typeof initCred.archivoPath === "string" ? initCred.archivoPath : "",
   );
+  const [autoQA, setAutoQA] = useState<AutoQAResult | null>(null);
+  const [autoQALoading, setAutoQALoading] = useState(false);
   const [discount, setDiscount] = useState<DiscountState>(() =>
     init?.discount_data && Object.keys(init.discount_data).length
       ? (init.discount_data as unknown as DiscountState)
@@ -379,11 +382,17 @@ export function UVRSimulator({
             void triggerSimuladorAutoQA({
               expedienteId: init.id,
               raw: { ...p.raw, archivoPath: p.archivoPath ?? null },
+              onStart: () => { setAutoQALoading(true); setAutoQA(null); },
+              onResult: (r) => { setAutoQA(r); setAutoQALoading(false); },
+              onError: () => setAutoQALoading(false),
             });
           }
         }}
 
       />
+      {init?.id && (autoQALoading || autoQA) && (
+        <AutoQAPanel loading={autoQALoading} result={autoQA} />
+      )}
       <Card>
         <div id="datos-cliente-card" />
         <SectionTitle sub="Información general del cliente y del crédito en UVR">
