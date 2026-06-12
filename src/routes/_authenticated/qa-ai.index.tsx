@@ -60,6 +60,13 @@ function QaAiDashboard() {
         description="Auditor matemático autónomo: reconstruye cada simulación desde cero, la contrasta con el extracto bancario y emite dictamen automático."
         actions={
           <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => setCopilotoOpen(true)}
+              className="nuvia-input nuvia-input-sm"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer" }}
+            >
+              <Sparkles size={14} /> Copiloto QA
+            </button>
             <Link to="/qa-ai/nuevo">
               <button className="nuvia-input nuvia-input-sm" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer", background: "var(--nuvia-accent)", color: "#fff", border: "none" }}>
                 <Plus size={14} /> Auditar nuevo
