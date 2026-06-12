@@ -294,7 +294,7 @@ export function GuardarCasoModal({ open, onClose, autoSave = false, input, resul
                 className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-[13px] font-semibold text-white shadow-lg transition hover:scale-[1.02] disabled:opacity-60"
                 style={{
                   background: "linear-gradient(135deg, rgba(68,93,163,0.95), rgba(132,185,143,0.9))",
-                  boxShadow: "0 14px 30px -12px rgba(34,211,238,0.68)",
+                  boxShadow: "0 14px 30px -12px rgba(68,93,163,0.68)",
                 }}
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <FolderPlus className="h-4 w-4" />}
@@ -420,7 +420,7 @@ function DoneBlock({
           className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:scale-[1.02] disabled:opacity-60"
           style={{
             background: "linear-gradient(135deg, rgba(68,93,163,0.95), rgba(132,185,143,0.9))",
-            boxShadow: "0 14px 30px -12px rgba(34,211,238,0.68)",
+            boxShadow: "0 14px 30px -12px rgba(68,93,163,0.68)",
           }}
         >
           {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}

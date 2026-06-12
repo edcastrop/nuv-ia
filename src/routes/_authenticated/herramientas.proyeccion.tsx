@@ -38,27 +38,27 @@ function AmbientBg() {
         className="pointer-events-none absolute inset-0 z-0"
         style={{
           background:
-            "radial-gradient(circle at 18% 12%, rgba(34,211,238,0.34), transparent 28%), radial-gradient(circle at 78% 18%, rgba(74,222,128,0.24), transparent 30%), radial-gradient(circle at 52% 76%, rgba(37,99,235,0.32), transparent 34%), #05070D",
+            "radial-gradient(circle at 18% 12%, rgba(68,93,163,0.34), transparent 28%), radial-gradient(circle at 78% 18%, rgba(132,185,143,0.24), transparent 30%), radial-gradient(circle at 52% 76%, rgba(68,93,163,0.32), transparent 34%), #05070D",
         }}
       />
       <div
         className="pointer-events-none absolute inset-[-22%] z-0 blur-3xl"
         style={{
           background:
-            "conic-gradient(from 120deg at 50% 50%, rgba(34,211,238,0.0), rgba(34,211,238,0.42), rgba(74,222,128,0.30), rgba(59,130,246,0.38), rgba(34,211,238,0.0))",
+            "conic-gradient(from 120deg at 50% 50%, rgba(68,93,163,0.0), rgba(68,93,163,0.42), rgba(132,185,143,0.30), rgba(68,93,163,0.38), rgba(68,93,163,0.0))",
           animation: "nuviaAuroraFlow 11s ease-in-out infinite",
           opacity: 0.86,
         }}
       />
       <motion.div
         className="pointer-events-none absolute top-[-10rem] left-[-9rem] z-0 h-[36rem] w-[36rem] rounded-full blur-3xl"
-        style={{ background: "radial-gradient(circle, rgba(34,211,238,0.65), transparent 68%)", opacity: 0.82 }}
+        style={{ background: "radial-gradient(circle, rgba(68,93,163,0.65), transparent 68%)", opacity: 0.82 }}
         animate={{ x: [0, 130, 30, 0], y: [0, 58, 112, 0], scale: [1, 1.24, 1.08, 1] }}
         transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
         className="pointer-events-none absolute bottom-[-12rem] right-[-10rem] z-0 h-[42rem] w-[42rem] rounded-full blur-3xl"
-        style={{ background: "radial-gradient(circle, rgba(74,222,128,0.52), transparent 68%)", opacity: 0.76 }}
+        style={{ background: "radial-gradient(circle, rgba(132,185,143,0.52), transparent 68%)", opacity: 0.76 }}
         animate={{ x: [0, -120, -32, 0], y: [0, -55, -110, 0], scale: [1, 1.2, 1.05, 1] }}
         transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
       />
@@ -66,7 +66,7 @@ function AmbientBg() {
         className="pointer-events-none absolute top-[-20%] bottom-[-20%] z-0 w-[28rem] blur-2xl"
         style={{
           left: "10%",
-          background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.16), rgba(34,211,238,0.18), transparent)",
+          background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.16), rgba(68,93,163,0.18), transparent)",
           animation: "nuviaSweep 5.5s ease-in-out infinite",
         }}
       />

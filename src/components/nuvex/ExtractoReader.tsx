@@ -243,15 +243,15 @@ function confColor(c: Confianza, value: string) {
     };
   if (c === "alta")
     return {
-      bg: "rgba(74,222,128,0.10)",
-      border: "rgba(74,222,128,0.35)",
+      bg: "rgba(132,185,143,0.10)",
+      border: "rgba(132,185,143,0.35)",
       label: "Alta confianza",
       labelColor: "#84B98F",
     };
   if (c === "media")
     return {
-      bg: "rgba(34,211,238,0.10)",
-      border: "rgba(34,211,238,0.35)",
+      bg: "rgba(68,93,163,0.10)",
+      border: "rgba(68,93,163,0.35)",
       label: "Media confianza",
       labelColor: "#7B8FCB",
     };
@@ -982,28 +982,28 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
         }}
         style={{
           background: "linear-gradient(135deg, rgba(10,18,38,0.92), rgba(7,22,45,0.92))",
-          border: `1px solid ${dragActive ? "rgba(74,222,128,0.6)" : "rgba(255,255,255,0.08)"}`,
+          border: `1px solid ${dragActive ? "rgba(132,185,143,0.6)" : "rgba(255,255,255,0.08)"}`,
           boxShadow: dragActive
-            ? "0 24px 60px -20px rgba(74,222,128,0.55)"
-            : "0 24px 60px -30px rgba(34,211,238,0.45)",
+            ? "0 24px 60px -20px rgba(132,185,143,0.55)"
+            : "0 24px 60px -30px rgba(68,93,163,0.45)",
           transform: dragActive ? "scale(1.005)" : "scale(1)",
         }}
       >
         {/* glow */}
         <div
           className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full blur-3xl"
-          style={{ background: "radial-gradient(circle, rgba(34,211,238,0.35), transparent 70%)" }}
+          style={{ background: "radial-gradient(circle, rgba(68,93,163,0.35), transparent 70%)" }}
         />
         <div
           className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full blur-3xl"
-          style={{ background: "radial-gradient(circle, rgba(74,222,128,0.28), transparent 70%)" }}
+          style={{ background: "radial-gradient(circle, rgba(132,185,143,0.28), transparent 70%)" }}
         />
         {dragActive && (
           <div
             className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl"
             style={{
-              background: "rgba(74,222,128,0.10)",
-              border: "2px dashed rgba(74,222,128,0.7)",
+              background: "rgba(132,185,143,0.10)",
+              border: "2px dashed rgba(132,185,143,0.7)",
             }}
           >
             <div className="flex flex-col items-center gap-2 text-[#84B98F]">
@@ -1019,7 +1019,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
               style={{
                 background: "linear-gradient(135deg, rgba(68,93,163,0.95) 0%, rgba(132,185,143,0.9) 100%)",
-                boxShadow: "0 12px 32px -12px rgba(74,222,128,0.6)",
+                boxShadow: "0 12px 32px -12px rgba(132,185,143,0.6)",
               }}
             >
               <Sparkles className="h-5 w-5 text-white" />
@@ -1032,9 +1032,9 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                 <span
                   className="shrink-0 rounded-full px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider"
                   style={{
-                    background: "rgba(74,222,128,0.15)",
+                    background: "rgba(132,185,143,0.15)",
                     color: "#84B98F",
-                    border: "1px solid rgba(74,222,128,0.35)",
+                    border: "1px solid rgba(132,185,143,0.35)",
                   }}
                 >
                   NUVIA IA
@@ -1057,7 +1057,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white transition-transform hover:scale-[1.02]"
               style={{
                 background: "linear-gradient(135deg, rgba(68,93,163,0.95) 0%, rgba(132,185,143,0.9) 100%)",
-                boxShadow: "0 10px 28px -10px rgba(34,211,238,0.7)",
+                boxShadow: "0 10px 28px -10px rgba(68,93,163,0.7)",
               }}
             >
               <Upload className="h-4 w-4 shrink-0" />
@@ -1069,7 +1069,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                 className="inline-flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-[13px] font-semibold text-white/85 transition hover:text-white"
                 style={{
                   background: "rgba(255,255,255,0.06)",
-                  borderColor: "rgba(74,222,128,0.35)",
+                  borderColor: "rgba(132,185,143,0.35)",
                 }}
               >
                 <FileText className="h-4 w-4 shrink-0" />
@@ -1166,7 +1166,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                             ? "linear-gradient(135deg, rgba(68,93,163,0.95) 0%, rgba(132,185,143,0.9) 100%)"
                             : "rgba(255,255,255,0.05)",
                           color: active ? "#fff" : "rgba(255,255,255,0.5)",
-                          boxShadow: current ? "0 0 0 4px rgba(74,222,128,0.18)" : undefined,
+                          boxShadow: current ? "0 0 0 4px rgba(132,185,143,0.18)" : undefined,
                         }}
                       >
                         {i + 1}
@@ -1222,7 +1222,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                   }`}
                   style={{
                     borderColor: dragActive ? "#84B98F" : "rgba(255,255,255,0.15)",
-                    background: dragActive ? "rgba(74,222,128,0.08)" : "transparent",
+                    background: dragActive ? "rgba(132,185,143,0.08)" : "transparent",
                   }}
                 >
                   <Upload className={`h-10 w-10 ${dragActive ? "text-[#84B98F]" : "text-white/40"}`} />
@@ -1326,8 +1326,8 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                   <div
                     className="mb-4 flex items-center gap-2 rounded-xl px-4 py-3"
                     style={{
-                      background: "rgba(74,222,128,0.08)",
-                      border: "1px solid rgba(74,222,128,0.30)",
+                      background: "rgba(132,185,143,0.08)",
+                      border: "1px solid rgba(132,185,143,0.30)",
                     }}
                   >
                     <ShieldCheck className="h-5 w-5 text-[#84B98F]" />
@@ -1342,8 +1342,8 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                     <div
                       className="mb-4 rounded-xl px-4 py-3"
                       style={{
-                        background: soloPactada ? "rgba(244,162,97,0.10)" : "rgba(34,211,238,0.10)",
-                        border: `1px solid ${soloPactada ? "rgba(244,162,97,0.40)" : "rgba(34,211,238,0.30)"}`,
+                        background: soloPactada ? "rgba(244,162,97,0.10)" : "rgba(68,93,163,0.10)",
+                        border: `1px solid ${soloPactada ? "rgba(244,162,97,0.40)" : "rgba(68,93,163,0.30)"}`,
                       }}
                     >
                       <div className="grid gap-2 text-xs text-white/85 md:grid-cols-3">
@@ -1397,9 +1397,9 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                     className="mb-4 rounded-xl p-4"
                     style={{
                       background: tieneBeneficio
-                        ? "linear-gradient(135deg, rgba(74,222,128,0.10), rgba(34,211,238,0.08))"
+                        ? "linear-gradient(135deg, rgba(132,185,143,0.10), rgba(68,93,163,0.08))"
                         : "rgba(255,255,255,0.03)",
-                      border: `1px solid ${tieneBeneficio ? "rgba(74,222,128,0.45)" : "rgba(255,255,255,0.10)"}`,
+                      border: `1px solid ${tieneBeneficio ? "rgba(132,185,143,0.45)" : "rgba(255,255,255,0.10)"}`,
                     }}
                   >
                     <div className="mb-3 flex items-center gap-2">
@@ -1411,9 +1411,9 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                         <span
                           className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase"
                           style={{
-                            background: "rgba(74,222,128,0.18)",
+                            background: "rgba(132,185,143,0.18)",
                             color: "#84B98F",
-                            border: "1px solid rgba(74,222,128,0.45)",
+                            border: "1px solid rgba(132,185,143,0.45)",
                           }}
                         >
                           Beneficio: {tipoBeneficio || "Cobertura detectada"}
@@ -1531,8 +1531,8 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                       <div
                         className="rounded-lg p-2.5"
                         style={{
-                          background: "rgba(74,222,128,0.12)",
-                          border: "1px solid rgba(74,222,128,0.45)",
+                          background: "rgba(132,185,143,0.12)",
+                          border: "1px solid rgba(132,185,143,0.45)",
                         }}
                       >
                         <div
@@ -1552,7 +1552,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                           }
                           placeholder="0"
                           className="mt-1 w-full rounded-md bg-transparent px-2 py-1 text-sm font-bold text-white outline-none"
-                          style={{ border: "1px solid rgba(74,222,128,0.45)" }}
+                          style={{ border: "1px solid rgba(132,185,143,0.45)" }}
                         />
                       </div>
                       <div
@@ -1667,7 +1667,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                     className="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:scale-100"
                     style={{
                       background: "linear-gradient(135deg, rgba(68,93,163,0.95) 0%, rgba(132,185,143,0.9) 100%)",
-                      boxShadow: "0 10px 28px -10px rgba(74,222,128,0.6)",
+                      boxShadow: "0 10px 28px -10px rgba(132,185,143,0.6)",
                     }}
                   >
                     <CheckCircle2 className="h-4 w-4" />

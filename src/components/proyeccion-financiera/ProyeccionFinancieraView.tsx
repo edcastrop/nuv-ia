@@ -64,14 +64,14 @@ const NUVIA = {
   azul: "#445DA3",
   azulSoft: "#67E8F9",
   verde: "#84B98F",
-  verdeSoft: "#BBF7D0",
+  verdeSoft: "#C8E4CE",
   oscuro: "#05070D",
   ambar: "#F8D36A",
   rojo: "#FB7185",
 };
 
 const NUVIA_GRADIENT = "linear-gradient(135deg, rgba(68,93,163,0.95) 0%, rgba(132,185,143,0.9) 100%)";
-const NUVIA_GLASS = "linear-gradient(145deg, rgba(255,255,255,0.105), rgba(34,211,238,0.045) 46%, rgba(74,222,128,0.055))";
+const NUVIA_GLASS = "linear-gradient(145deg, rgba(255,255,255,0.105), rgba(68,93,163,0.045) 46%, rgba(132,185,143,0.055))";
 
 const blankInput: ProyeccionFinancieraInput = {
   clienteNombre: "",
@@ -222,11 +222,11 @@ function Surface({
       className="relative overflow-hidden rounded-3xl"
       style={{
         background: NUVIA_GLASS,
-        border: "1px solid rgba(207,250,254,0.16)",
+        border: "1px solid rgba(210,222,240,0.16)",
         backdropFilter: "blur(28px) saturate(150%)",
         WebkitBackdropFilter: "blur(28px) saturate(150%)",
         boxShadow:
-          "0 1px 0 rgba(255,255,255,0.14) inset, 0 36px 90px -38px rgba(34,211,238,0.36), 0 24px 70px -42px rgba(0,0,0,0.88)",
+          "0 1px 0 rgba(255,255,255,0.14) inset, 0 36px 90px -38px rgba(68,93,163,0.36), 0 24px 70px -42px rgba(0,0,0,0.88)",
       }}
     >
       {glow && (
@@ -235,14 +235,14 @@ function Surface({
             className="pointer-events-none absolute -top-32 -right-32 h-64 w-64 rounded-full blur-3xl"
             style={{
               background:
-                "radial-gradient(circle, rgba(34,211,238,0.28), transparent 70%)",
+                "radial-gradient(circle, rgba(68,93,163,0.28), transparent 70%)",
             }}
           />
           <div
             className="pointer-events-none absolute -bottom-32 -left-32 h-64 w-64 rounded-full blur-3xl"
             style={{
               background:
-                "radial-gradient(circle, rgba(74,222,128,0.20), transparent 70%)",
+                "radial-gradient(circle, rgba(132,185,143,0.20), transparent 70%)",
             }}
           />
         </>
@@ -285,8 +285,8 @@ function Kpi({
   tone?: "neutral" | "positive" | "warn";
 }) {
   const toneStyles = {
-    neutral: { color: "#FFFFFF", accent: "rgba(103,232,249,0.95)" },
-    positive: { color: "#BBF7D0", accent: "rgba(74,222,128,0.95)" },
+    neutral: { color: "#FFFFFF", accent: "rgba(132,185,143,0.95)" },
+    positive: { color: "#C8E4CE", accent: "rgba(132,185,143,0.95)" },
     warn: { color: "#F8D36A", accent: "rgba(248,211,106,0.9)" },
   }[tone];
 
@@ -295,11 +295,11 @@ function Kpi({
       className="group relative h-full overflow-hidden rounded-2xl p-5 transition-all hover:translate-y-[-1px]"
       style={{
         background:
-          "linear-gradient(145deg, rgba(255,255,255,0.11), rgba(34,211,238,0.055) 52%, rgba(74,222,128,0.05))",
-        border: "1px solid rgba(207,250,254,0.16)",
+          "linear-gradient(145deg, rgba(255,255,255,0.11), rgba(68,93,163,0.055) 52%, rgba(132,185,143,0.05))",
+        border: "1px solid rgba(210,222,240,0.16)",
         backdropFilter: "blur(24px) saturate(150%)",
         WebkitBackdropFilter: "blur(24px) saturate(150%)",
-        boxShadow: "0 1px 0 rgba(255,255,255,0.10) inset, 0 22px 55px -32px rgba(34,211,238,0.34)",
+        boxShadow: "0 1px 0 rgba(255,255,255,0.10) inset, 0 22px 55px -32px rgba(68,93,163,0.34)",
       }}
     >
       <div className="flex items-center gap-2">
@@ -350,18 +350,18 @@ function HeroKpi({
       className="relative overflow-hidden rounded-3xl p-7 md:p-8"
       style={{
         background:
-          "linear-gradient(135deg, rgba(34,211,238,0.20) 0%, rgba(37,99,235,0.18) 48%, rgba(74,222,128,0.14) 100%)",
-        border: "1px solid rgba(103,232,249,0.30)",
+          "linear-gradient(135deg, rgba(68,93,163,0.20) 0%, rgba(68,93,163,0.18) 48%, rgba(132,185,143,0.14) 100%)",
+        border: "1px solid rgba(132,185,143,0.30)",
         backdropFilter: "blur(28px) saturate(165%)",
         WebkitBackdropFilter: "blur(28px) saturate(165%)",
         boxShadow:
-          "0 1px 0 rgba(255,255,255,0.16) inset, 0 40px 90px -34px rgba(34,211,238,0.48), 0 26px 80px -48px rgba(74,222,128,0.45)",
+          "0 1px 0 rgba(255,255,255,0.16) inset, 0 40px 90px -34px rgba(68,93,163,0.48), 0 26px 80px -48px rgba(132,185,143,0.45)",
       }}
     >
       <div
         className="pointer-events-none absolute -top-24 -right-16 h-72 w-72 rounded-full blur-3xl"
         style={{
-          background: "radial-gradient(circle, rgba(34,211,238,0.42), transparent 70%)",
+          background: "radial-gradient(circle, rgba(68,93,163,0.42), transparent 70%)",
         }}
       />
       <div className="relative flex flex-col gap-2">
@@ -422,7 +422,7 @@ function Sidebar({ active, onJump }: { active: string; onJump: (id: string) => v
       style={{
         background:
           "linear-gradient(180deg, rgba(5,10,19,0.58) 0%, rgba(3,7,18,0.50) 100%)",
-        borderRight: "1px solid rgba(207,250,254,0.12)",
+        borderRight: "1px solid rgba(210,222,240,0.12)",
         backdropFilter: "blur(28px) saturate(150%)",
         WebkitBackdropFilter: "blur(28px) saturate(150%)",
       }}
@@ -433,7 +433,7 @@ function Sidebar({ active, onJump }: { active: string; onJump: (id: string) => v
           className="flex h-10 w-10 items-center justify-center rounded-2xl"
           style={{
             background: NUVIA_GRADIENT,
-            boxShadow: "0 12px 34px -12px rgba(34,211,238,0.72)",
+            boxShadow: "0 12px 34px -12px rgba(68,93,163,0.72)",
           }}
         >
           <Sparkles className="h-5 w-5 text-white" />
@@ -471,7 +471,7 @@ function Sidebar({ active, onJump }: { active: string; onJump: (id: string) => v
                     isActive && !item.soon
                       ? {
                           background:
-                            "linear-gradient(90deg, rgba(34,211,238,0.20), rgba(74,222,128,0.10))",
+                            "linear-gradient(90deg, rgba(68,93,163,0.20), rgba(132,185,143,0.10))",
                           boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)",
                         }
                       : undefined
@@ -775,7 +775,7 @@ export function ProyeccionFinancieraView() {
                                   background:
                                     NUVIA_GRADIENT,
                                   boxShadow:
-                                    "0 8px 20px -10px rgba(34,211,238,0.7)",
+                                    "0 8px 20px -10px rgba(68,93,163,0.7)",
                                 }
                               : undefined
                           }
@@ -825,7 +825,7 @@ export function ProyeccionFinancieraView() {
                   className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-[12.5px] font-semibold text-white transition hover:scale-[1.02]"
                   style={{
                     background: NUVIA_GRADIENT,
-                    boxShadow: "0 16px 34px -12px rgba(34,211,238,0.68)",
+                    boxShadow: "0 16px 34px -12px rgba(68,93,163,0.68)",
                   }}
                 >
                   <FileText className="h-3.5 w-3.5" /> Exportar PDF
@@ -838,21 +838,21 @@ export function ProyeccionFinancieraView() {
               className="relative mb-8 overflow-hidden rounded-3xl"
               style={{
                 background:
-                  "linear-gradient(135deg, rgba(255,255,255,0.13), rgba(34,211,238,0.075) 44%, rgba(74,222,128,0.070))",
-                border: "1px solid rgba(207,250,254,0.24)",
+                  "linear-gradient(135deg, rgba(255,255,255,0.13), rgba(68,93,163,0.075) 44%, rgba(132,185,143,0.070))",
+                border: "1px solid rgba(210,222,240,0.24)",
                 boxShadow:
-                  "0 1px 0 rgba(255,255,255,0.16) inset, 0 46px 100px -38px rgba(34,211,238,0.48), 0 24px 70px -44px rgba(74,222,128,0.34)",
+                  "0 1px 0 rgba(255,255,255,0.16) inset, 0 46px 100px -38px rgba(68,93,163,0.48), 0 24px 70px -44px rgba(132,185,143,0.34)",
                 backdropFilter: "blur(30px) saturate(165%)",
                 WebkitBackdropFilter: "blur(30px) saturate(165%)",
               }}
             >
               <div
                 className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 animate-pulse rounded-full blur-3xl"
-                style={{ background: "radial-gradient(circle, rgba(34,211,238,0.46), transparent 70%)", animationDuration: "6s" }}
+                style={{ background: "radial-gradient(circle, rgba(68,93,163,0.46), transparent 70%)", animationDuration: "6s" }}
               />
               <div
                 className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 animate-pulse rounded-full blur-3xl"
-                style={{ background: "radial-gradient(circle, rgba(74,222,128,0.38), transparent 70%)", animationDuration: "8s" }}
+                style={{ background: "radial-gradient(circle, rgba(132,185,143,0.38), transparent 70%)", animationDuration: "8s" }}
               />
               <button
                 type="button"
@@ -864,7 +864,7 @@ export function ProyeccionFinancieraView() {
                     className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl"
                     style={{
                       background: NUVIA_GRADIENT,
-                      boxShadow: "0 16px 40px -12px rgba(34,211,238,0.76)",
+                      boxShadow: "0 16px 40px -12px rgba(68,93,163,0.76)",
                     }}
                   >
                     <Sparkles className="h-6 w-6 text-white" />
@@ -875,9 +875,9 @@ export function ProyeccionFinancieraView() {
                       <span
                         className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
                         style={{
-                          background: "rgba(34,211,238,0.15)",
+                          background: "rgba(68,93,163,0.15)",
                           color: "#A5F3FC",
-                          border: "1px solid rgba(103,232,249,0.34)",
+                          border: "1px solid rgba(132,185,143,0.34)",
                         }}
                       >
                         NUVIA · IA
@@ -982,7 +982,7 @@ export function ProyeccionFinancieraView() {
                 className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[12.5px] font-semibold text-white transition hover:scale-[1.02]"
                 style={{
                   background: "linear-gradient(135deg, rgba(68,93,163,0.95) 0%, rgba(132,185,143,0.9) 100%)",
-                  boxShadow: "0 10px 28px -10px rgba(74,222,128,0.55)",
+                  boxShadow: "0 10px 28px -10px rgba(132,185,143,0.55)",
                 }}
               >
                 <Layers className="h-4 w-4" /> Simular escenarios
@@ -1181,10 +1181,10 @@ export function ProyeccionFinancieraView() {
                           }`}
                           style={{
                             background: isActive
-                              ? "linear-gradient(135deg, rgba(34,211,238,0.22), rgba(74,222,128,0.14))"
+                              ? "linear-gradient(135deg, rgba(68,93,163,0.22), rgba(132,185,143,0.14))"
                               : "rgba(255,255,255,0.025)",
                             border: `1px solid ${
-                              isActive ? "rgba(103,232,249,0.35)" : "rgba(255,255,255,0.06)"
+                              isActive ? "rgba(132,185,143,0.35)" : "rgba(255,255,255,0.06)"
                             }`,
                           }}
                         >
@@ -1254,8 +1254,8 @@ export function ProyeccionFinancieraView() {
                               onClick={() => updateEscenario(selected.id, { aporteMensualExtra: v })}
                               className="rounded-full px-3 py-1.5 text-[11.5px] font-semibold text-[#A6CDAE] transition hover:scale-[1.03]"
                               style={{
-                                background: "rgba(34,211,238,0.12)",
-                                border: "1px solid rgba(103,232,249,0.28)",
+                                background: "rgba(68,93,163,0.12)",
+                                border: "1px solid rgba(132,185,143,0.28)",
                               }}
                             >
                               +{formatCOP(v)}
@@ -1483,15 +1483,15 @@ export function ProyeccionFinancieraView() {
                   className="relative overflow-hidden rounded-3xl"
                   style={{
                     background:
-                      "linear-gradient(180deg, rgba(255,255,255,0.10), rgba(34,211,238,0.045))",
-                    border: "1px solid rgba(103,232,249,0.20)",
+                      "linear-gradient(180deg, rgba(255,255,255,0.10), rgba(68,93,163,0.045))",
+                    border: "1px solid rgba(132,185,143,0.20)",
                     boxShadow:
                       "0 1px 0 rgba(255,255,255,0.05) inset, 0 40px 80px -30px rgba(0,0,0,0.85)",
                   }}
                 >
                   <div
                     className="pointer-events-none absolute -top-32 -right-32 h-72 w-72 rounded-full blur-3xl"
-                    style={{ background: "radial-gradient(circle, rgba(34,211,238,0.22), transparent 70%)" }}
+                    style={{ background: "radial-gradient(circle, rgba(68,93,163,0.22), transparent 70%)" }}
                   />
                   <div className="relative p-7 md:p-9">
                     <div className="mb-6 flex items-center justify-between gap-4">
@@ -1510,7 +1510,7 @@ export function ProyeccionFinancieraView() {
                         className="hidden h-12 w-12 items-center justify-center rounded-2xl md:flex"
                         style={{
                           background: NUVIA_GRADIENT,
-                          boxShadow: "0 12px 28px -10px rgba(34,211,238,0.70)",
+                          boxShadow: "0 12px 28px -10px rgba(68,93,163,0.70)",
                         }}
                       >
                         <FileText className="h-5 w-5 text-white" />
@@ -1557,10 +1557,10 @@ export function ProyeccionFinancieraView() {
                           className="rounded-2xl p-4"
                           style={{
                             background: r.warn
-                              ? "linear-gradient(135deg, rgba(34,211,238,0.16), rgba(74,222,128,0.09))"
+                              ? "linear-gradient(135deg, rgba(68,93,163,0.16), rgba(132,185,143,0.09))"
                               : "rgba(255,255,255,0.025)",
                             border: r.warn
-                              ? "1px solid rgba(103,232,249,0.24)"
+                              ? "1px solid rgba(132,185,143,0.24)"
                               : "1px solid rgba(255,255,255,0.04)",
                           }}
                         >
@@ -1579,8 +1579,8 @@ export function ProyeccionFinancieraView() {
                       className="mt-6 rounded-2xl p-5"
                       style={{
                         background:
-                          "linear-gradient(135deg, rgba(34,211,238,0.16), rgba(74,222,128,0.10))",
-                        border: "1px solid rgba(103,232,249,0.24)",
+                          "linear-gradient(135deg, rgba(68,93,163,0.16), rgba(132,185,143,0.10))",
+                        border: "1px solid rgba(132,185,143,0.24)",
                       }}
                     >
                       <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#A6CDAE]">
@@ -1685,7 +1685,7 @@ export function ProyeccionFinancieraView() {
                 className="mt-2 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:scale-[1.02]"
                 style={{
                   background: NUVIA_GRADIENT,
-                  boxShadow: "0 14px 30px -12px rgba(34,211,238,0.68)",
+                  boxShadow: "0 14px 30px -12px rgba(68,93,163,0.68)",
                 }}
               >
                 <Save className="h-4 w-4" />
