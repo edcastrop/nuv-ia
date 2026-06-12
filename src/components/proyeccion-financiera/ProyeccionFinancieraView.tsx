@@ -919,7 +919,7 @@ export function ProyeccionFinancieraView() {
                             `Carga cancelada: el extracto está en ${tipoExtracto} y el simulador en ${tipoSim}.`,
                             { duration: 6000 },
                           );
-                          return;
+                          return false;
                         }
                         toast.warning(
                           `Simulador cambiado a ${tipoExtracto} para coincidir con el extracto.`,
@@ -971,6 +971,7 @@ export function ProyeccionFinancieraView() {
                         document.getElementById("sec-escenarios")?.scrollIntoView({ behavior: "smooth", block: "start" });
                       }, 220);
                       toast.success("Extracto aplicado. Ahora simula tus escenarios.");
+                      return true;
                     }}
                   />
                 </div>

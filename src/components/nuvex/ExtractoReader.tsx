@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Upload,
@@ -73,7 +74,7 @@ export type ExtractoApplyPayload = {
 
 interface Props {
   modo: Modo;
-  onApply: (data: ExtractoApplyPayload) => void;
+  onApply: (data: ExtractoApplyPayload) => boolean | void | Promise<boolean | void>;
   existingArchivoPath?: string | null;
 }
 
@@ -288,7 +289,12 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
   const [archivoPath, setArchivoPath] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [portalReady, setPortalReady] = useState(false);
   const { data: catalogoProductos = [] } = useProductosBancarios();
+
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
 
   // Evita que el navegador abra el archivo si el usuario suelta fuera de la zona
   useEffect(() => {
@@ -724,7 +730,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
   };
 
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!parsed) return;
     const get = (k: string) => (typeof parsed[k] === "string" ? (parsed[k] as string) : "");
     // Validación dura: cuotasPagadas no puede ser 0 si hay número de cuota
@@ -870,12 +876,13 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
         requiereVerificacion: get("requiereVerificacionBeneficio").toLowerCase() === "si",
       };
     }
-    onApply(payload);
+    const applied = await onApply(payload);
+    if (applied === false) return;
     setStage("applied");
+    setOpen(false);
     setTimeout(() => {
-      setOpen(false);
       reset();
-    }, 1200);
+    }, 250);
   };
 
   // Campos a mostrar según modo
@@ -1143,7 +1150,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       />
 
       {/* Modal */}
-      {open && (
+      {open && portalReady && createPortal(
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ background: "rgba(5,8,20,0.78)", backdropFilter: "blur(8px)" }}
@@ -1157,7 +1164,8 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
               boxShadow: "0 46px 110px -48px rgba(0,0,0,0.98), inset 0 1px 0 rgba(255,255,255,0.56), inset 0 -1px 0 rgba(255,255,255,0.14)",
               backdropFilter: "blur(34px) saturate(155%)",
               WebkitBackdropFilter: "blur(34px) saturate(155%)",
-              maxHeight: "92vh",
+              height: "min(92dvh, 860px)",
+              maxHeight: "calc(100dvh - 2rem)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1169,7 +1177,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
               }}
             />
             <div
-              className="relative flex items-center justify-between border-b px-6 py-4"
+              className="relative flex shrink-0 items-center justify-between border-b px-6 py-4"
               style={{ borderColor: "rgba(255,255,255,0.08)" }}
             >
               <div className="flex items-center gap-3">
@@ -1193,7 +1201,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
             </div>
 
             {/* Progress */}
-            <div className="relative border-b px-6 py-4" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+            <div className="relative shrink-0 border-b px-6 py-4" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
               <div className="flex items-center gap-2">
                 {STAGES.map((s, i) => {
                   const active = i <= progressIdx;
@@ -1678,7 +1686,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
 
             {stage === "review" && (
               <div
-                className="flex items-center justify-between gap-3 border-t px-6 py-4"
+                  className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t px-6 py-4"
                 style={{ borderColor: "rgba(255,255,255,0.08)" }}
               >
                 <button
@@ -1691,7 +1699,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                 >
                   Cargar otro extracto
                 </button>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center justify-end gap-2">
                   <button
                     onClick={() => cuotaBaseInputRef.current?.focus()}
                     className="rounded-xl px-5 py-3 text-sm font-semibold text-white/85 transition hover:text-white"
@@ -1712,13 +1720,14 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                     }}
                   >
                     <CheckCircle2 className="h-4 w-4" />
-                    CONFIRMAR DATOS
+                    APLICAR AL SIMULADOR
                   </button>
                 </div>
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );
