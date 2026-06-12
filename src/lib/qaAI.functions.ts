@@ -315,15 +315,24 @@ export const actualizarAlertaQA = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => ActualizarAlertaSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    const nowIso = new Date().toISOString();
+    const patch: {
+      updated_at: string;
+      estado?: "abierta" | "reconocida" | "resuelta";
+      reconocida_by?: string | null;
+      reconocida_at?: string | null;
+      resuelta_by?: string | null;
+      resuelta_at?: string | null;
+      notas?: string | null;
+    } = { updated_at: nowIso };
     if (data.accion === "reconocer") {
       patch.estado = "reconocida";
       patch.reconocida_by = userId;
-      patch.reconocida_at = new Date().toISOString();
+      patch.reconocida_at = nowIso;
     } else {
       patch.estado = "resuelta";
       patch.resuelta_by = userId;
-      patch.resuelta_at = new Date().toISOString();
+      patch.resuelta_at = nowIso;
       if (data.notas) patch.notas = data.notas;
     }
     const { data: row, error } = await supabase
@@ -332,11 +341,12 @@ export const actualizarAlertaQA = createServerFn({ method: "POST" })
     if (row?.auditoria_id) {
       await supabase.from("qa_auditoria_log").insert({
         auditoria_id: row.auditoria_id,
-        accion: data.accion === "reconocer" ? "alerta_reconocida" : "alerta_resuelta",
+        accion: data.accion === "reconocer" ? "reconocer_alerta" : "cerrar",
         payload: { alertaId: data.id, notas: data.notas ?? null },
         user_id: userId,
       });
     }
+
     return { ok: true, alerta: row };
   });
 
@@ -377,7 +387,7 @@ export const actualizarReglaQA = createServerFn({ method: "POST" })
       else cleanPayload[k] = v;
     });
 
-    const patch: Record<string, unknown> = { payload: cleanPayload };
+    const patch: { payload: Record<string, number | string | boolean>; activa?: boolean } = { payload: cleanPayload };
     if (data.activa !== undefined) patch.activa = data.activa;
     const { data: row, error } = await supabase
       .from("qa_reglas").update(patch).eq("id", data.id).select("*").single();
