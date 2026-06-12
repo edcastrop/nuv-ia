@@ -6,7 +6,7 @@ import { NSelect } from "@/components/nuvia/NSelect";
 import { supabase } from "@/integrations/supabase/client";
 import { listCarteras, type CarteraConExpediente } from "@/lib/cartera";
 import { registrarPago } from "@/lib/cartera.functions";
-import { listCuentasReceptoras, type CuentaReceptora } from "@/lib/cuentasReceptoras";
+import { listCuentasReceptoras, METODOS_PAGO, type CuentaReceptora } from "@/lib/cuentasReceptoras";
 import { Receipt } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/finanzas/recaudos")({
@@ -139,12 +139,8 @@ function RecaudosPage() {
 }
 
 const METODO_OPTS = [
-  { value: "__none__",      label: "—" },
-  { value: "transferencia", label: "Transferencia" },
-  { value: "consignacion",  label: "Consignación" },
-  { value: "efectivo",      label: "Efectivo" },
-  { value: "pse",           label: "PSE" },
-  { value: "otro",          label: "Otro" },
+  { value: "__none__", label: "—" },
+  ...METODOS_PAGO.map((m) => ({ value: m.key, label: m.label })),
 ];
 
 function NuevoRecaudo({
