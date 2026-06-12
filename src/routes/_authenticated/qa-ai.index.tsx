@@ -136,6 +136,8 @@ function QaAiDashboard() {
           </div>
         )}
       </NCard>
+
+      <CopilotoQADrawer open={copilotoOpen} onClose={() => setCopilotoOpen(false)} />
     </PageLayout>
   );
 }
