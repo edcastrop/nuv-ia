@@ -34,22 +34,31 @@ export function HeroRolCard({
       className="relative overflow-hidden rounded-[var(--nuvia-radius-xl)] p-7 md:p-9"
       style={{
         background:
-          "linear-gradient(135deg, var(--nuvia-bg-secondary) 0%, var(--nuvia-bg-tertiary) 60%, rgba(68,93,163,0.18) 100%)",
-        border: "1px solid var(--nuvia-border)",
-        boxShadow: "var(--nuvia-shadow-md)",
+          "linear-gradient(135deg, rgba(20,28,52,0.55) 0%, rgba(28,42,78,0.42) 60%, rgba(68,93,163,0.28) 100%)",
+        border: "1px solid rgba(238,245,255,0.12)",
+        backdropFilter: "blur(34px) saturate(155%)",
+        WebkitBackdropFilter: "blur(34px) saturate(155%)",
+        boxShadow: "0 24px 60px -28px rgba(0,0,0,0.65), inset 0 1px 0 rgba(238,245,255,0.06)",
         color: "var(--nuvia-text-primary)",
       }}
     >
+      {/* Gloss superior */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-px"
+        style={{ background: "linear-gradient(90deg, transparent, rgba(238,245,255,0.45), transparent)" }}
+      />
       <div
         aria-hidden
         className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full blur-3xl"
-        style={{ background: "rgba(132,185,143,0.18)" }}
+        style={{ background: "rgba(132,185,143,0.20)" }}
       />
       <div
         aria-hidden
         className="pointer-events-none absolute -left-10 bottom-0 h-44 w-44 rounded-full blur-3xl"
-        style={{ background: "rgba(68,93,163,0.22)" }}
+        style={{ background: "rgba(68,93,163,0.26)" }}
       />
+
 
       <div className="relative flex items-start justify-between gap-6 flex-wrap">
         <div className="min-w-0 flex-1">
