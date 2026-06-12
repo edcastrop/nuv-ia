@@ -80,17 +80,17 @@ function ToolCard({ to, title, Icon, tagline, description, bullets }: {
 }) {
   return (
     <Link to={to}
-      className="group relative overflow-hidden rounded-3xl p-7 transition-all hover:translate-y-[-2px]"
-      style={{
-        background: "linear-gradient(180deg, rgba(36,36,36,0.65), rgba(16,16,16,0.65))",
-        border: "1px solid rgba(255,255,255,0.06)",
-        boxShadow: "0 30px 60px -40px rgba(0,0,0,0.9)",
-      }}>
-      <div className="pointer-events-none absolute -top-32 -right-32 h-64 w-64 rounded-full blur-3xl"
-        style={{ background: "radial-gradient(circle, rgba(68,93,163,0.25), transparent 70%)" }} />
+      className="group relative overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.03] p-8 backdrop-blur-2xl transition-all duration-500 hover:-translate-y-1 hover:bg-white/[0.06]"
+      style={{ boxShadow: "0 30px 60px -40px rgba(0,0,0,0.9)" }}>
+      <span className="pointer-events-none absolute inset-x-8 top-0 h-px"
+        style={{ background: "linear-gradient(90deg, transparent, rgba(132,185,143,0.6), transparent)" }} />
+      <div className="pointer-events-none absolute -top-32 -right-32 h-64 w-64 rounded-full blur-3xl opacity-60"
+        style={{ background: "radial-gradient(circle, rgba(68,93,163,0.35), transparent 70%)" }} />
+      <span className="pointer-events-none absolute -inset-px rounded-[32px] opacity-0 transition-opacity duration-500 group-hover:opacity-100 blur"
+        style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.25), rgba(132,185,143,0.25))" }} />
       <div className="relative">
-        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl"
-          style={{ background: "linear-gradient(135deg, #445DA3, #84B98F)" }}>
+        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-white/15 backdrop-blur-xl transition-transform group-hover:scale-110 group-hover:-rotate-2"
+          style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))" }}>
           <Icon className="h-6 w-6 text-white" />
         </div>
         <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#84B98F]">{tagline}</div>
@@ -105,12 +105,13 @@ function ToolCard({ to, title, Icon, tagline, description, bullets }: {
           ))}
         </ul>
         <div className="mt-5 inline-flex items-center gap-1.5 text-[13px] font-medium text-white/80 group-hover:text-white">
-          Abrir herramienta <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
+          Abrir herramienta <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-1" />
         </div>
       </div>
     </Link>
   );
 }
+
 
 function Meta({ Icon, title, sub }: { Icon: React.ComponentType<{ className?: string }>; title: string; sub: string }) {
   return (
