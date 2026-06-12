@@ -26,6 +26,32 @@ const dictamenMsg: Record<string, string> = {
   rechazado: "QA FAILED",
 };
 
+function normalizeQaDatos(raw: ExtractoRawSnapshot): Record<string, unknown> {
+  const d = { ...(raw.datos ?? {}) } as Record<string, unknown>;
+  const first = (...keys: string[]) => keys.map((k) => d[k]).find((v) => v !== undefined && v !== null && String(v) !== "");
+  const cuota = first("cuotaActual", "cuotaBaseSimulacion", "cuotaMensual", "cuotaPagadaCliente");
+  const tasa = first("tasaEA", "tea", "teaCobrada", "tasaCobrada", "tasa");
+  const producto = first("producto") ?? raw.producto;
+  const banco = first("banco") ?? raw.banco;
+  const moneda = first("moneda") ?? raw.moneda;
+
+  return {
+    ...d,
+    banco,
+    producto,
+    moneda,
+    cuotaActual: first("cuotaActual") ?? cuota,
+    tasaEA: first("tasaEA") ?? tasa,
+    saldoCapital: first("saldoCapital", "saldoPesos"),
+    seguros: first("seguros", "segurosMensuales"),
+    cuotasPendientes: first("cuotasPendientes"),
+    valorDesembolsado: first("valorDesembolsado"),
+    valorUVR: first("valorUVR"),
+    saldoUVR: first("saldoUVR"),
+    tasaCobertura: first("tasaCobertura"),
+  };
+}
+
 /**
  * Inserta el extracto leído y dispara la auto-auditoría QA.
  * No lanza: cualquier error se reporta vía toast y se loguea.
@@ -38,19 +64,21 @@ export async function triggerSimuladorAutoQA(opts: {
   if (!expedienteId) return;
   try {
     const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("No autenticado");
+    const datos = normalizeQaDatos(raw);
     const { data: inserted, error: insErr } = await supabase
       .from("extractos_lecturas")
       .insert({
         expediente_id: expedienteId,
-        asesor_id: user?.id ?? undefined,
-        aprobado_por: user?.id ?? undefined,
+        asesor_id: user.id,
+        aprobado_por: user.id,
 
-        banco: raw.banco ?? undefined,
-        producto: raw.producto ?? undefined,
-        moneda: raw.moneda ?? undefined,
+        banco: raw.banco ?? (typeof datos.banco === "string" ? datos.banco : undefined),
+        producto: raw.producto ?? (typeof datos.producto === "string" ? datos.producto : undefined),
+        moneda: raw.moneda ?? (typeof datos.moneda === "string" ? datos.moneda : undefined),
         archivo_path: raw.archivoPath ?? undefined,
         archivo_nombre: raw.archivoNombre ?? undefined,
-        datos: (raw.datos ?? {}) as never,
+        datos: datos as never,
         estado: "aprobado",
         motor_version: "simulador-v1",
       })
