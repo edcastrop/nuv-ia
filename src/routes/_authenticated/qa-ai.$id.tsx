@@ -4,7 +4,9 @@ import { PageLayout, ExecutiveHero, KpiGrid, KpiCard, NCard, SectionHeader } fro
 import { useServerFn } from "@tanstack/react-start";
 import { obtenerAuditoriaQA } from "@/lib/qaAI.functions";
 import { auditar, type AuditarInput } from "@/lib/qaMath";
-import { Brain, Gauge, ArrowLeft, AlertTriangle, CheckCircle2, Coins, Calculator, Sigma, ShieldAlert, Minus } from "lucide-react";
+import { exportarDictamenPDF } from "@/lib/qaPdf";
+import { CopilotoQADrawer } from "@/components/qa-ai/CopilotoQADrawer";
+import { Brain, Gauge, ArrowLeft, AlertTriangle, CheckCircle2, Coins, Calculator, Sigma, ShieldAlert, Minus, FileDown, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/qa-ai/$id")({
   component: ResultadoQaAi,
