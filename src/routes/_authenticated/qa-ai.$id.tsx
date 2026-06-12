@@ -408,8 +408,13 @@ function ResultadoQaAi() {
         </div>
         <div style={{ padding: "0 20px 12px" }} className="flex flex-wrap gap-2 text-[11px]">
           <span className="rounded-md px-2 py-1" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--nuvia-border)", color: "var(--nuvia-text-secondary)" }}>
-            Tasa EA pactada: <b style={{ color: "var(--nuvia-text-primary)" }}>{reconMeta.tasaEa.toFixed(2)}%</b>
+            {isUvr ? "TE cobrada" : "Tasa EA pactada"}: <b style={{ color: "var(--nuvia-text-primary)" }}>{reconMeta.tasaEa.toFixed(2)}%</b>
           </span>
+          {isUvr && (
+            <span className="rounded-md px-2 py-1" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--nuvia-border)", color: "var(--nuvia-text-secondary)" }}>
+              Variación UVR EA: <b style={{ color: "var(--nuvia-text-primary)" }}>{reconMeta.variacionUvrEa.toFixed(2)}%</b>
+            </span>
+          )}
           {reconMeta.hasFrech && (
             <>
               {reconMeta.cob > 0 && (
@@ -441,7 +446,10 @@ function ResultadoQaAi() {
           <table className="w-full text-[12.5px]">
             <thead>
               <tr style={{ background: "rgba(255,255,255,0.03)" }}>
-                {["#", "Cuota", "Interés", "Capital", "Seguros", "Fresh", "Cuota total", "Saldo"].map((h) => (
+                {(isUvr
+                  ? ["#", "Cuota", "Interés", "Capital", "Corrección", "Seguros", "Fresh", "Cuota total", "Saldo COP", "Saldo UVR", "Valor UVR"]
+                  : ["#", "Cuota", "Interés", "Capital", "Seguros", "Fresh", "Cuota total", "Saldo"]
+                ).map((h) => (
                   <th key={h} className="text-right px-4 py-2 font-medium" style={{ color: "var(--nuvia-text-secondary)", borderBottom: "1px solid var(--nuvia-border)" }}>{h}</th>
                 ))}
               </tr>
@@ -460,10 +468,13 @@ function ResultadoQaAi() {
                   <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-primary)" }}>${fmt(f.cuota, 0)}</td>
                   <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>${fmt(f.interes, 0)}</td>
                   <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>${fmt(f.capital, 0)}</td>
+                  {isUvr && <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-warning)" }}>${fmt(f.correccionUvr, 0)}</td>}
                   <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>${fmt(f.seguros, 0)}</td>
                   <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: f.fresh > 0 ? "var(--nuvia-success)" : "var(--nuvia-text-secondary)" }}>{f.fresh > 0 ? `−$${fmt(f.fresh, 0)}` : "$0"}</td>
                   <td className="px-4 py-1.5 text-right tabular-nums font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>${fmt(f.cuotaTotal, 0)}</td>
                   <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>${fmt(f.saldo, 0)}</td>
+                  {isUvr && <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>{fmt(f.saldoUvr, 4)}</td>}
+                  {isUvr && <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>{fmt(f.valorUvr, 4)}</td>}
                 </tr>
               ))}
             </tbody>
