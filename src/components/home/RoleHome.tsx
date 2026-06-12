@@ -179,14 +179,14 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
 
   return (
     <div
-      className="relative min-h-screen"
+      className="relative min-h-screen overflow-hidden"
       style={{ background: "var(--nuvia-bg-primary)", color: "var(--nuvia-text-primary)" }}
     >
-      {/* Fondo animado NUVIA */}
+      {/* Fondo animado NUVIA (orbes flotantes + grid) */}
       <AnimatedBackground />
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 py-10 space-y-8 animate-fade-in">
-        {/* ZONA 1 — HERO */}
+      <div className="relative z-10 mx-auto max-w-7xl px-6 py-10 space-y-6 animate-fade-in">
+        {/* === BLOQUE 1 — HERO + CTA SIMULADOR === */}
         <HeroRolCard
           saludo={saludo}
           rolLabel={config.rolLabel}
@@ -196,82 +196,59 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
           activeRole={activeRole ?? undefined}
           onChangeRole={multiRol ? setActiveRole : undefined}
           roleLabelFor={(r) => roleLabel(r)}
+          ctaLabel="Lanzar simulador"
+          ctaIcon={<Rocket size={18} />}
+          onCta={onLanzarSimulador}
         />
 
-        {/* Frase motivacional dinámica */}
+        {/* === BLOQUE 2 — FRASE DEL DÍA === */}
         <MotivationalQuote />
 
-        {/* ZONA 2 — NUVIA IA PROMPT */}
+        {/* === BLOQUE 3 — NUVIA IA + KPIs === */}
         <NuviaIAPromptCard
           prompt={config.iaPrompt.prompt}
           hint={config.iaPrompt.hint}
           onAsk={handleAsk}
         />
 
-        {/* ZONA 3 — KPIs */}
-        <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-
-          {config.kpis.map((k) => (
-            <KpiCard
-              key={k.id}
-              icon={k.icon}
-              label={k.label}
-              value={resolveValue(k)}
-              hint={k.hint}
-              tone={k.tone}
-            />
-          ))}
+        <section>
+          <SectionTitle>Indicadores clave</SectionTitle>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {config.kpis.map((k) => (
+              <KpiCard
+                key={k.id}
+                icon={k.icon}
+                label={k.label}
+                value={resolveValue(k)}
+                hint={k.hint}
+                tone={k.tone}
+              />
+            ))}
+          </div>
         </section>
 
-        {/* ZONA 4 — ACCESOS RÁPIDOS */}
-        <QuickActionGrid actions={config.quickActions} />
+        {/* === BLOQUE 4 — ACCESOS RÁPIDOS === */}
+        <section>
+          <SectionTitle>Accesos rápidos</SectionTitle>
+          <QuickActionGrid actions={config.quickActions} />
+        </section>
 
-        {/* ZONA 5 — PENDIENTES CRÍTICOS */}
-        <CriticalAlertList alerts={alerts} emptyLabel="Sin pendientes críticos por ahora." />
+        {/* === BLOQUE 5 — PENDIENTES + ACTIVIDAD + RECOMENDACIONES === */}
+        <section>
+          <SectionTitle>Pendientes críticos</SectionTitle>
+          <CriticalAlertList alerts={alerts} emptyLabel="Sin pendientes críticos por ahora." />
+        </section>
 
-        {/* ZONAS 6 + 7 — ACTIVIDAD + RECOMENDACIONES */}
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-1">
+            <SectionTitle>Actividad reciente</SectionTitle>
             <ActivityFeed items={activity} />
           </div>
           <div className="lg:col-span-2">
+            <SectionTitle>Recomendaciones NUVIA</SectionTitle>
             <IARecomendacionesCard items={config.recomendaciones} onOpenIA={() => handleAsk(config.iaPrompt.prompt)} />
           </div>
         </div>
-
-        {/* Acceso al simulador — CTA agresivo */}
-        <div className="pt-6 flex justify-center">
-          <button
-            onClick={onLanzarSimulador}
-            className="group relative inline-flex items-center gap-3 rounded-2xl px-7 py-4 text-[13px] font-bold uppercase tracking-[0.18em] transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
-            style={{
-              background:
-                "linear-gradient(135deg, var(--nuvia-accent-blue) 0%, var(--nuvia-accent-green) 100%)",
-              color: "#0a0f1f",
-              border: "1px solid rgba(238,245,255,0.22)",
-              boxShadow:
-                "0 18px 48px -16px rgba(68,93,163,0.65), 0 0 0 1px rgba(238,245,255,0.06) inset",
-            }}
-          >
-            <span
-              aria-hidden
-              className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"
-              style={{
-                background:
-                  "linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 60%)",
-              }}
-            />
-            <Rocket size={18} className="relative" />
-            <span className="relative">Lanzar simulador</span>
-            <span
-              aria-hidden
-              className="relative transition-transform group-hover:translate-x-1"
-            >
-              →
-            </span>
-          </button>
-        </div>
-
 
         {config.excluye.length > 0 && (
           <div
@@ -287,6 +264,17 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="mb-3 text-[10.5px] font-bold uppercase tracking-[0.22em]"
+      style={{ color: "var(--nuvia-text-muted)" }}
+    >
+      {children}
     </div>
   );
 }
