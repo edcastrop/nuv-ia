@@ -44,6 +44,7 @@ import { Route as AuthenticatedAuditoriaFinancieraRouteImport } from './routes/_
 import { Route as AuthenticatedApoderadosNuvexRouteImport } from './routes/_authenticated/apoderados-nuvex'
 import { Route as AuthenticatedAcademiaRouteImport } from './routes/_authenticated/academia'
 import { Route as AuthenticatedSuperAdminIndexRouteImport } from './routes/_authenticated/super-admin.index'
+import { Route as AuthenticatedQaAiIndexRouteImport } from './routes/_authenticated/qa-ai.index'
 import { Route as AuthenticatedHerramientasIndexRouteImport } from './routes/_authenticated/herramientas.index'
 import { Route as AuthenticatedFinanzasIndexRouteImport } from './routes/_authenticated/finanzas.index'
 import { Route as AuthenticatedExpedienteMaestroIndexRouteImport } from './routes/_authenticated/expediente-maestro.index'
@@ -287,6 +288,11 @@ const AuthenticatedSuperAdminIndexRoute =
     path: '/super-admin/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedQaAiIndexRoute = AuthenticatedQaAiIndexRouteImport.update({
+  id: '/qa-ai/',
+  path: '/qa-ai/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedHerramientasIndexRoute =
   AuthenticatedHerramientasIndexRouteImport.update({
     id: '/',
@@ -706,6 +712,7 @@ export interface FileRoutesByFullPath {
   '/expediente-maestro/': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/finanzas/': typeof AuthenticatedFinanzasIndexRoute
   '/herramientas/': typeof AuthenticatedHerramientasIndexRoute
+  '/qa-ai/': typeof AuthenticatedQaAiIndexRoute
   '/super-admin/': typeof AuthenticatedSuperAdminIndexRoute
   '/academia/certificados/$codigo': typeof AuthenticatedAcademiaCertificadosCodigoRoute
   '/academia/evaluaciones/$evaluacionId': typeof AuthenticatedAcademiaEvaluacionesEvaluacionIdRoute
@@ -796,6 +803,7 @@ export interface FileRoutesByTo {
   '/expediente-maestro': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/finanzas': typeof AuthenticatedFinanzasIndexRoute
   '/herramientas': typeof AuthenticatedHerramientasIndexRoute
+  '/qa-ai': typeof AuthenticatedQaAiIndexRoute
   '/super-admin': typeof AuthenticatedSuperAdminIndexRoute
   '/academia/certificados/$codigo': typeof AuthenticatedAcademiaCertificadosCodigoRoute
   '/academia/evaluaciones/$evaluacionId': typeof AuthenticatedAcademiaEvaluacionesEvaluacionIdRoute
@@ -892,6 +900,7 @@ export interface FileRoutesById {
   '/_authenticated/expediente-maestro/': typeof AuthenticatedExpedienteMaestroIndexRoute
   '/_authenticated/finanzas/': typeof AuthenticatedFinanzasIndexRoute
   '/_authenticated/herramientas/': typeof AuthenticatedHerramientasIndexRoute
+  '/_authenticated/qa-ai/': typeof AuthenticatedQaAiIndexRoute
   '/_authenticated/super-admin/': typeof AuthenticatedSuperAdminIndexRoute
   '/_authenticated/academia/certificados/$codigo': typeof AuthenticatedAcademiaCertificadosCodigoRoute
   '/_authenticated/academia/evaluaciones/$evaluacionId': typeof AuthenticatedAcademiaEvaluacionesEvaluacionIdRoute
@@ -988,6 +997,7 @@ export interface FileRouteTypes {
     | '/expediente-maestro/'
     | '/finanzas/'
     | '/herramientas/'
+    | '/qa-ai/'
     | '/super-admin/'
     | '/academia/certificados/$codigo'
     | '/academia/evaluaciones/$evaluacionId'
@@ -1078,6 +1088,7 @@ export interface FileRouteTypes {
     | '/expediente-maestro'
     | '/finanzas'
     | '/herramientas'
+    | '/qa-ai'
     | '/super-admin'
     | '/academia/certificados/$codigo'
     | '/academia/evaluaciones/$evaluacionId'
@@ -1173,6 +1184,7 @@ export interface FileRouteTypes {
     | '/_authenticated/expediente-maestro/'
     | '/_authenticated/finanzas/'
     | '/_authenticated/herramientas/'
+    | '/_authenticated/qa-ai/'
     | '/_authenticated/super-admin/'
     | '/_authenticated/academia/certificados/$codigo'
     | '/_authenticated/academia/evaluaciones/$evaluacionId'
@@ -1459,6 +1471,13 @@ declare module '@tanstack/react-router' {
       path: '/super-admin'
       fullPath: '/super-admin/'
       preLoaderRoute: typeof AuthenticatedSuperAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/qa-ai/': {
+      id: '/_authenticated/qa-ai/'
+      path: '/qa-ai'
+      fullPath: '/qa-ai/'
+      preLoaderRoute: typeof AuthenticatedQaAiIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/herramientas/': {
@@ -2035,6 +2054,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedColaboracionIndexRoute: typeof AuthenticatedColaboracionIndexRoute
   AuthenticatedComisionesIndexRoute: typeof AuthenticatedComisionesIndexRoute
   AuthenticatedExpedienteMaestroIndexRoute: typeof AuthenticatedExpedienteMaestroIndexRoute
+  AuthenticatedQaAiIndexRoute: typeof AuthenticatedQaAiIndexRoute
   AuthenticatedSuperAdminIndexRoute: typeof AuthenticatedSuperAdminIndexRoute
   AuthenticatedColaboracionDmConversationIdRoute: typeof AuthenticatedColaboracionDmConversationIdRoute
   AuthenticatedColaboracionDmIndexRoute: typeof AuthenticatedColaboracionDmIndexRoute
@@ -2093,6 +2113,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedComisionesIndexRoute: AuthenticatedComisionesIndexRoute,
   AuthenticatedExpedienteMaestroIndexRoute:
     AuthenticatedExpedienteMaestroIndexRoute,
+  AuthenticatedQaAiIndexRoute: AuthenticatedQaAiIndexRoute,
   AuthenticatedSuperAdminIndexRoute: AuthenticatedSuperAdminIndexRoute,
   AuthenticatedColaboracionDmConversationIdRoute:
     AuthenticatedColaboracionDmConversationIdRoute,
