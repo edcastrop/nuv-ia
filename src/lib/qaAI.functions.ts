@@ -254,6 +254,16 @@ export const listAlertasQA = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => AlertaFilterSchema.parse(input ?? {}))
   .handler(async ({ data, context }) => {
+    // Si hay filtro por banco, pre-resolvemos expediente_ids en servidor para
+    // evitar traer alertas que luego se descartan en cliente.
+    let expedienteIdsBanco: string[] | null = null;
+    if (data.banco) {
+      const { data: expsB } = await context.supabase
+        .from("expedientes").select("id").ilike("banco", `%${data.banco}%`).limit(2000);
+      expedienteIdsBanco = (expsB ?? []).map((e) => e.id);
+      if (expedienteIdsBanco.length === 0) return { rows: [] };
+    }
+
     let q = context.supabase
       .from("qa_alertas")
       .select("id,auditoria_id,expediente_id,tipo,severidad,mensaje,estado,reconocida_by,reconocida_at,resuelta_by,resuelta_at,notas,created_at")
@@ -261,6 +271,7 @@ export const listAlertasQA = createServerFn({ method: "POST" })
       .limit(500);
     if (data.severidad) q = q.eq("severidad", data.severidad);
     if (data.estado) q = q.eq("estado", data.estado);
+    if (expedienteIdsBanco) q = q.in("expediente_id", expedienteIdsBanco);
     const { data: alertas, error } = await q;
     if (error) throw new Error(error.message);
     const audIds = Array.from(new Set((alertas ?? []).map((a) => a.auditoria_id).filter(Boolean))) as string[];
@@ -299,10 +310,10 @@ export const listAlertasQA = createServerFn({ method: "POST" })
         banco: exp?.banco ?? null,
       };
     });
-    if (data.banco) rows = rows.filter((r) => (r.banco ?? "").toLowerCase().includes(data.banco!.toLowerCase()));
     if (data.analistaId) rows = rows.filter((r) => r.analistaId === data.analistaId);
     return { rows };
   });
+
 
 const ActualizarAlertaSchema = z.object({
   id: z.string().uuid(),
