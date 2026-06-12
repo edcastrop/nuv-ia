@@ -704,8 +704,7 @@ export function ProyeccionFinancieraView() {
       style={{
         fontFamily:
           "'Inter','SF Pro Display','Plus Jakarta Sans',system-ui,sans-serif",
-        background:
-          "radial-gradient(1200px 600px at 80% -10%, rgba(68,93,163,0.18), transparent 60%), radial-gradient(900px 500px at 10% 110%, rgba(132,185,143,0.10), transparent 60%), #0B0B0C",
+        background: "transparent",
       }}
     >
       <div className="flex">
