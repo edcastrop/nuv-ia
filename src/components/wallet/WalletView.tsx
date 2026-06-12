@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card } from "@/components/nuvex/ui";
+import { NCard, KpiGrid, KpiCard, EmptyState } from "@/components/nuvia";
 import { formatCOP } from "@/lib/format";
 import {
   getWalletSaldos,
@@ -11,13 +11,11 @@ import {
   WALLET_MOV_LABEL,
   signoMov,
 } from "@/lib/wallet";
-import { Wallet, TrendingUp, Clock, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Wallet, TrendingUp, Clock, CheckCircle2, AlertTriangle, Inbox } from "lucide-react";
 
 interface Props {
   userId: string;
-  /** Acciones extra (p.ej. botón Solicitar pago, ajuste manual). */
   actions?: React.ReactNode;
-  /** Compacto: oculta historial y ajustes. */
   compact?: boolean;
 }
 
@@ -53,116 +51,173 @@ export function WalletView({ userId, actions, compact = false }: Props) {
     return () => { cancel = true; };
   }, [userId]);
 
-  if (loading) return <Card><p className="text-sm text-[#242424]/60">Cargando wallet…</p></Card>;
-  if (error) return <Card><p className="text-sm text-red-600">{error}</p></Card>;
+  if (loading) {
+    return (
+      <NCard>
+        <p className="text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>Cargando wallet…</p>
+      </NCard>
+    );
+  }
+  if (error) {
+    return (
+      <NCard>
+        <p className="text-sm" style={{ color: "var(--nuvia-danger)" }}>{error}</p>
+      </NCard>
+    );
+  }
   if (!saldos) return null;
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Saldo label="Disponible" value={saldos.disponible} color="#1F7A45" Icon={Wallet} hint="Liberado · listo para CC" />
-        <Saldo label="En trámite" value={saldos.en_tramite} color="#445DA3" Icon={Clock} hint="Cuentas de cobro activas" />
-        <Saldo label="Pendiente recaudo" value={saldos.pendiente_recaudo} color="#8A5A00" Icon={TrendingUp} hint="Por recaudar al cliente" />
-        <Saldo label="Pagado histórico" value={saldos.pagado_historico} color="#0A1226" Icon={CheckCircle2} hint="Acumulado pagado" />
-      </div>
+    <div className="space-y-5">
+      <KpiGrid cols={4}>
+        <KpiCard
+          label="Disponible"
+          value={formatCOP(saldos.disponible)}
+          icon={<Wallet size={14} />}
+          tone="green"
+          hint="Liberado · listo para CC"
+        />
+        <KpiCard
+          label="En trámite"
+          value={formatCOP(saldos.en_tramite)}
+          icon={<Clock size={14} />}
+          tone="blue"
+          hint="Cuentas de cobro activas"
+        />
+        <KpiCard
+          label="Pendiente recaudo"
+          value={formatCOP(saldos.pendiente_recaudo)}
+          icon={<TrendingUp size={14} />}
+          tone="warning"
+          hint="Por recaudar al cliente"
+        />
+        <KpiCard
+          label="Pagado histórico"
+          value={formatCOP(saldos.pagado_historico)}
+          icon={<CheckCircle2 size={14} />}
+          tone="neutral"
+          hint="Acumulado pagado"
+        />
+      </KpiGrid>
 
       {(saldos.retenido > 0 || saldos.ajustes_credito > 0 || saldos.ajustes_debito > 0) && (
-        <Card>
-          <div className="flex flex-wrap gap-6 px-1 py-1 text-[12.5px]">
+        <NCard padding="sm">
+          <div className="flex flex-wrap gap-6 text-[12.5px]" style={{ color: "var(--nuvia-text-primary)" }}>
             {saldos.retenido > 0 && (
-              <div className="flex items-center gap-2 text-[#991B1B]">
+              <div className="flex items-center gap-2" style={{ color: "var(--nuvia-danger)" }}>
                 <AlertTriangle size={14} />
                 <span>Retenido: <b>{formatCOP(saldos.retenido)}</b></span>
               </div>
             )}
             {saldos.ajustes_credito > 0 && (
-              <div className="text-[#1F7A45]">Ajustes a favor: <b>{formatCOP(saldos.ajustes_credito)}</b></div>
+              <div style={{ color: "var(--nuvia-success)" }}>
+                Ajustes a favor: <b>{formatCOP(saldos.ajustes_credito)}</b>
+              </div>
             )}
             {saldos.ajustes_debito > 0 && (
-              <div className="text-[#991B1B]">Ajustes en contra: <b>{formatCOP(saldos.ajustes_debito)}</b></div>
+              <div style={{ color: "var(--nuvia-danger)" }}>
+                Ajustes en contra: <b>{formatCOP(saldos.ajustes_debito)}</b>
+              </div>
             )}
           </div>
-        </Card>
+        </NCard>
       )}
 
-      {actions && <Card>{actions}</Card>}
+      {actions && <NCard padding="sm">{actions}</NCard>}
 
       {!compact && (
         <>
-          <Card>
-            <div className="border-b border-[#E3E7EE] px-4 py-3 text-sm font-semibold text-[#0A1226]">
+          <NCard padding="none">
+            <div
+              className="px-5 py-3 text-sm font-semibold"
+              style={{
+                borderBottom: "1px solid var(--nuvia-border)",
+                color: "var(--nuvia-text-primary)",
+              }}
+            >
               Movimientos recientes
             </div>
             {movs.length === 0 ? (
-              <div className="p-6 text-center text-sm text-[#242424]/60">Sin movimientos.</div>
+              <EmptyState
+                icon={<Inbox size={28} />}
+                title="Sin movimientos"
+                description="Aún no se han registrado movimientos en tu wallet."
+                hint="NUVIA IA: cuando se libere tu primera comisión, aparecerá aquí automáticamente."
+              />
             ) : (
-              <table className="w-full text-[12.5px]">
-                <thead className="bg-[#F7F9FB] text-[11px] uppercase tracking-wide text-[#242424]/60">
-                  <tr>
-                    <th className="px-4 py-2 text-left">Fecha</th>
-                    <th className="px-4 py-2 text-left">Tipo</th>
-                    <th className="px-4 py-2 text-left">Descripción</th>
-                    <th className="px-4 py-2 text-right">Monto</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#E3E7EE]">
-                  {movs.map((m) => {
-                    const s = signoMov(m.tipo);
-                    const color = s === "+" ? "#1F7A45" : s === "-" ? "#991B1B" : "#242424";
-                    return (
-                      <tr key={m.id} className="hover:bg-[#F7F9FB]">
-                        <td className="px-4 py-2 text-[#242424]/70 whitespace-nowrap">
-                          {new Date(m.created_at).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "2-digit" })}
-                        </td>
-                        <td className="px-4 py-2">{WALLET_MOV_LABEL[m.tipo]}</td>
-                        <td className="px-4 py-2 text-[#242424]/70">{m.descripcion || "—"}</td>
-                        <td className="px-4 py-2 text-right font-semibold" style={{ color }}>
-                          {s !== "·" ? s : ""} {formatCOP(Number(m.monto))}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
-          </Card>
-
-          {ajustes.length > 0 && (
-            <Card>
-              <div className="border-b border-[#E3E7EE] px-4 py-3 text-sm font-semibold text-[#0A1226]">
-                Ajustes manuales
-              </div>
-              <table className="w-full text-[12.5px]">
-                <thead className="bg-[#F7F9FB] text-[11px] uppercase tracking-wide text-[#242424]/60">
-                  <tr>
-                    <th className="px-4 py-2 text-left">Fecha</th>
-                    <th className="px-4 py-2 text-left">Tipo</th>
-                    <th className="px-4 py-2 text-left">Motivo</th>
-                    <th className="px-4 py-2 text-right">Monto</th>
-                    <th className="px-4 py-2 text-left">Estado</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#E3E7EE]">
-                  {ajustes.map((a) => (
-                    <tr key={a.id} className={a.anulado ? "opacity-50" : "hover:bg-[#F7F9FB]"}>
-                      <td className="px-4 py-2 text-[#242424]/70 whitespace-nowrap">
-                        {new Date(a.created_at).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "2-digit" })}
+              <DataTable
+                head={["Fecha", "Tipo", "Descripción", "Monto"]}
+                aligns={["left", "left", "left", "right"]}
+              >
+                {movs.map((m) => {
+                  const s = signoMov(m.tipo);
+                  const color =
+                    s === "+"
+                      ? "var(--nuvia-success)"
+                      : s === "-"
+                        ? "var(--nuvia-danger)"
+                        : "var(--nuvia-text-primary)";
+                  return (
+                    <tr
+                      key={m.id}
+                      className="transition-colors"
+                      style={{ borderTop: "1px solid var(--nuvia-border)" }}
+                    >
+                      <td className="px-5 py-2.5 whitespace-nowrap" style={{ color: "var(--nuvia-text-secondary)" }}>
+                        {new Date(m.created_at).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "2-digit" })}
                       </td>
-                      <td className="px-4 py-2">{WALLET_MOV_LABEL[a.tipo]}</td>
-                      <td className="px-4 py-2 text-[#242424]/70">{a.motivo}</td>
-                      <td className="px-4 py-2 text-right font-semibold">{formatCOP(Number(a.monto))}</td>
-                      <td className="px-4 py-2">
-                        {a.anulado ? (
-                          <span className="text-[#991B1B]">Anulado</span>
-                        ) : (
-                          <span className="text-[#1F7A45]">Vigente</span>
-                        )}
+                      <td className="px-5 py-2.5" style={{ color: "var(--nuvia-text-primary)" }}>{WALLET_MOV_LABEL[m.tipo]}</td>
+                      <td className="px-5 py-2.5" style={{ color: "var(--nuvia-text-secondary)" }}>{m.descripcion || "—"}</td>
+                      <td className="px-5 py-2.5 text-right font-semibold tabular-nums" style={{ color }}>
+                        {s !== "·" ? s : ""} {formatCOP(Number(m.monto))}
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </Card>
+                  );
+                })}
+              </DataTable>
+            )}
+          </NCard>
+
+          {ajustes.length > 0 && (
+            <NCard padding="none">
+              <div
+                className="px-5 py-3 text-sm font-semibold"
+                style={{
+                  borderBottom: "1px solid var(--nuvia-border)",
+                  color: "var(--nuvia-text-primary)",
+                }}
+              >
+                Ajustes manuales
+              </div>
+              <DataTable
+                head={["Fecha", "Tipo", "Motivo", "Monto", "Estado"]}
+                aligns={["left", "left", "left", "right", "left"]}
+              >
+                {ajustes.map((a) => (
+                  <tr
+                    key={a.id}
+                    className={a.anulado ? "opacity-50" : ""}
+                    style={{ borderTop: "1px solid var(--nuvia-border)" }}
+                  >
+                    <td className="px-5 py-2.5 whitespace-nowrap" style={{ color: "var(--nuvia-text-secondary)" }}>
+                      {new Date(a.created_at).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "2-digit" })}
+                    </td>
+                    <td className="px-5 py-2.5" style={{ color: "var(--nuvia-text-primary)" }}>{WALLET_MOV_LABEL[a.tipo]}</td>
+                    <td className="px-5 py-2.5" style={{ color: "var(--nuvia-text-secondary)" }}>{a.motivo}</td>
+                    <td className="px-5 py-2.5 text-right font-semibold tabular-nums" style={{ color: "var(--nuvia-text-primary)" }}>
+                      {formatCOP(Number(a.monto))}
+                    </td>
+                    <td className="px-5 py-2.5">
+                      {a.anulado ? (
+                        <span style={{ color: "var(--nuvia-danger)" }}>Anulado</span>
+                      ) : (
+                        <span style={{ color: "var(--nuvia-success)" }}>Vigente</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </DataTable>
+            </NCard>
           )}
         </>
       )}
@@ -170,17 +225,38 @@ export function WalletView({ userId, actions, compact = false }: Props) {
   );
 }
 
-function Saldo({
-  label, value, color, Icon, hint,
-}: { label: string; value: number; color: string; Icon: typeof Wallet; hint?: string }) {
+function DataTable({
+  head,
+  aligns,
+  children,
+}: {
+  head: string[];
+  aligns: ("left" | "right")[];
+  children: React.ReactNode;
+}) {
   return (
-    <div className="rounded-xl border border-[#E3E7EE] bg-white p-4">
-      <div className="flex items-center gap-2 text-[11px] uppercase tracking-wide text-[#242424]/60">
-        <Icon size={14} style={{ color }} />
-        {label}
-      </div>
-      <div className="mt-1 text-lg font-semibold" style={{ color }}>{formatCOP(value)}</div>
-      {hint && <div className="mt-0.5 text-[10.5px] text-[#242424]/50">{hint}</div>}
+    <div className="overflow-x-auto">
+      <table className="w-full text-[12.5px]">
+        <thead>
+          <tr style={{ background: "rgba(255,255,255,0.02)" }}>
+            {head.map((h, i) => (
+              <th
+                key={h}
+                className="px-5 py-2.5 font-semibold uppercase"
+                style={{
+                  textAlign: aligns[i],
+                  fontSize: "10.5px",
+                  letterSpacing: "0.12em",
+                  color: "var(--nuvia-text-secondary)",
+                }}
+              >
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>{children}</tbody>
+      </table>
     </div>
   );
 }
