@@ -204,14 +204,17 @@ export function exportarDictamenPDF(d: DictamenPdfData) {
   // @ts-expect-error autotable
   y = doc.lastAutoTable.finalY + 18;
 
-  // Plan de amortización (primeras 12 + últimas 12)
+  // Plan de amortización completo (usa todasCuotas si está disponible).
   if (y > 580) { doc.addPage(); y = 48; }
+  const todas = (o.todasCuotas as AmortRow[] | undefined) ?? [];
   const primeras = (o.primerasCuotas as AmortRow[]) ?? [];
   const ultimas = (o.ultimasCuotas as AmortRow[]) ?? [];
   const ks = new Set(primeras.map((f) => f.k));
-  const filas = [...primeras, ...ultimas.filter((f) => !ks.has(f.k))];
+  const filas = todas.length > 0
+    ? todas
+    : [...primeras, ...ultimas.filter((f) => !ks.has(f.k))];
   doc.setFont("helvetica", "bold"); doc.setFontSize(11);
-  doc.text(`Plan amortizado (${filas.length} filas)`, 48, y); y += 4;
+  doc.text(`Plan amortizado completo (${filas.length} cuotas)`, 48, y); y += 4;
   autoTable(doc, {
     startY: y + 4,
     head: [isUvr ? ["#", "Cuota", "Interés", "Capital", "Corrección", "Saldo COP", "Saldo UVR"] : ["#", "Cuota", "Interés", "Capital", "Saldo"]],
