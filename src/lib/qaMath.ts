@@ -116,6 +116,9 @@ export interface ReconstruccionInput {
   cuotasPendientes: number;
   seguros: number;          // COP / mes (total)
   coberturaFrechPp?: number; // pp anuales EA descontados
+  /** Cuotas restantes con cobertura FRECH/Fresh. Si se omite y hay cobertura,
+   *  se asume el tope duro FRECH_MAX_CUOTAS (84) acotado a las pendientes. */
+  coberturaFrechCuotasRestantes?: number;
   valorDesembolsado?: number;
 }
 
@@ -130,6 +133,8 @@ export interface Reconstruccion {
   primerasCuotas: FilaAmort[];  // 12
   ultimasCuotas: FilaAmort[];   // 12
   totalIntereses: number;
+  /** Cuotas efectivas con subsidio aplicadas en la reconstrucción. */
+  cuotasFrechAplicadas: number;
 }
 
 export function reconstruir(input: ReconstruccionInput): Reconstruccion {
@@ -146,9 +151,21 @@ export function reconstruir(input: ReconstruccionInput): Reconstruccion {
   const seguros = Math.max(0, input.seguros || 0);
   const cuotaTotal = (cob > 0 ? CSub : C) + seguros;
 
-  const tabla = amortizacion(input.saldoCapital, cob > 0 ? iSub : iMv, n, seguros);
+  // Tope FRECH (84 cuotas) — si no llega override, asumimos cobertura completa hasta el tope.
+  const cuotasFrechAplicadas = cob > 0
+    ? Math.max(0, Math.min(n, Math.round(input.coberturaFrechCuotasRestantes ?? FRECH_MAX_CUOTAS)))
+    : 0;
+
+  const tabla = amortizacion(
+    input.saldoCapital,
+    cob > 0 ? iSub : iMv,
+    n,
+    seguros,
+    cob > 0 ? { iPostSubsidio: iMv, cuotasSubsidio: cuotasFrechAplicadas } : undefined,
+  );
   const totalIntereses = tabla.reduce((s, f) => s + f.interes, 0);
-  const costoTotal = (cob > 0 ? CSub : C) * n + seguros * n;
+  // Costo total real teniendo en cuenta el switch de tasa.
+  const costoTotal = tabla.reduce((s, f) => s + f.cuotaTotal, 0);
   const desembolso = input.valorDesembolsado && input.valorDesembolsado > 0
     ? input.valorDesembolsado : input.saldoCapital;
   const veces = desembolso > 0 ? costoTotal / desembolso : 0;
