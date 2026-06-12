@@ -236,7 +236,7 @@ function CasosPage() {
               Exportar CSV
             </button>
             <Link
-              to="/"
+              to="/inicio"
               className="inline-flex items-center gap-2 rounded-lg px-5 py-2 text-xs font-bold uppercase tracking-wider text-white transition"
               style={{
                 background: `linear-gradient(135deg, ${AZUL}, ${VERDE})`,
