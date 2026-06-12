@@ -117,6 +117,40 @@ export function HeroRolCard({
           >
             {subtitle}
           </p>
+          <h1 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight">{saludo}</h1>
+          <p
+            className="mt-2 max-w-2xl text-[14.5px] leading-relaxed"
+            style={{ color: "var(--nuvia-text-secondary)" }}
+          >
+            {subtitle}
+          </p>
+
+          {ctaLabel && onCta && (
+            <button
+              onClick={onCta}
+              className="group relative mt-5 inline-flex items-center gap-2.5 rounded-xl px-5 py-3 text-[12.5px] font-bold uppercase tracking-[0.16em] transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] overflow-hidden"
+              style={{
+                background:
+                  "linear-gradient(135deg, var(--nuvia-accent-blue) 0%, var(--nuvia-accent-green) 100%)",
+                color: "#0a0f1f",
+                border: "1px solid rgba(238,245,255,0.22)",
+                boxShadow:
+                  "0 14px 36px -12px rgba(68,93,163,0.7), inset 0 1px 0 rgba(255,255,255,0.18)",
+              }}
+            >
+              <span
+                aria-hidden
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(255,255,255,0.22) 0%, transparent 60%)",
+                }}
+              />
+              {ctaIcon && <span className="relative">{ctaIcon}</span>}
+              <span className="relative">{ctaLabel}</span>
+              <span aria-hidden className="relative transition-transform group-hover:translate-x-1">→</span>
+            </button>
+          )}
         </div>
 
         {metricaEstrella && (
@@ -124,6 +158,7 @@ export function HeroRolCard({
             className="shrink-0 rounded-2xl px-5 py-4 text-right"
             style={{
               background: "rgba(8,12,28,0.55)",
+
               border: "1px solid rgba(238,245,255,0.14)",
               backdropFilter: "blur(20px) saturate(150%)",
               WebkitBackdropFilter: "blur(20px) saturate(150%)",
