@@ -70,10 +70,10 @@ const NUVIA = {
   rojo: "#FB7185",
 };
 
-const NUVIA_GRADIENT = "linear-gradient(135deg, rgba(68,93,163,0.68), rgba(132,185,143,0.62))";
-const NUVIA_GLASS = "linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.045) 36%, rgba(68,93,163,0.052) 68%, rgba(132,185,143,0.036))";
-const NUVIA_GLASS_BORDER = "1px solid rgba(210,222,240,0.22)";
-const NUVIA_GLASS_SHADOW = "0 34px 90px -48px rgba(0,0,0,0.95), inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -1px 0 rgba(255,255,255,0.05)";
+const NUVIA_GRADIENT = "linear-gradient(135deg, rgba(68,93,163,0.58), rgba(132,185,143,0.52))";
+const NUVIA_GLASS = "linear-gradient(145deg, rgba(255,255,255,0.155), rgba(255,255,255,0.055) 38%, rgba(68,93,163,0.035) 72%, rgba(132,185,143,0.026))";
+const NUVIA_GLASS_BORDER = "1px solid rgba(230,238,248,0.30)";
+const NUVIA_GLASS_SHADOW = "0 36px 100px -52px rgba(0,0,0,0.96), inset 0 1px 0 rgba(255,255,255,0.30), inset 0 -1px 0 rgba(255,255,255,0.08)";
 
 const blankInput: ProyeccionFinancieraInput = {
   clienteNombre: "",
