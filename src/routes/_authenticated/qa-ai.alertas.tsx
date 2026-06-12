@@ -208,6 +208,8 @@ function AlertasQA() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CopilotoQADrawer open={copilotoOpen} onClose={() => setCopilotoOpen(false)} />
     </PageLayout>
   );
 }
