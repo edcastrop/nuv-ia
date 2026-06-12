@@ -219,11 +219,12 @@ function Surface({
       className="relative overflow-hidden rounded-3xl"
       style={{
         background:
-          "linear-gradient(180deg, rgba(36,36,36,0.55), rgba(16,16,16,0.55))",
-        border: "1px solid rgba(255,255,255,0.04)",
-        backdropFilter: "blur(20px)",
+          "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.025))",
+        border: "1px solid rgba(255,255,255,0.08)",
+        backdropFilter: "blur(24px)",
+        WebkitBackdropFilter: "blur(24px)",
         boxShadow:
-          "0 1px 0 rgba(255,255,255,0.04) inset, 0 30px 60px -40px rgba(0,0,0,0.9)",
+          "0 1px 0 rgba(255,255,255,0.06) inset, 0 30px 60px -30px rgba(0,0,0,0.7)",
       }}
     >
       {glow && (
