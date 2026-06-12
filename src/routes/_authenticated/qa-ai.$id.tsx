@@ -72,9 +72,9 @@ function ResultadoQaAi() {
     const r = inputs?.reconstruccion;
     if (!r || !r.saldoCapital || !r.tasaEa || !r.cuotasPendientes) return [];
     try {
-      return reconstruir({ ...r, modalidad: inputs?.modalidad ?? "hipotecario" }).primerasCuotas.concat(
-        reconstruir({ ...r, modalidad: inputs?.modalidad ?? "hipotecario" }).ultimasCuotas,
-      );
+      const saved = ((data.auditoria as Record<string, unknown>).outputs as Record<string, unknown> | undefined)?.todasCuotas;
+      if (Array.isArray(saved) && saved.length) return saved as never;
+      return reconstruir({ ...r, modalidad: inputs?.modalidad ?? "hipotecario" }).todasCuotas;
     } catch { return []; }
   }, [data]);
 
