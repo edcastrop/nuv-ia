@@ -71,9 +71,9 @@ const NUVIA = {
 };
 
 const NUVIA_GRADIENT = "linear-gradient(135deg, rgba(68,93,163,0.58), rgba(132,185,143,0.52))";
-const NUVIA_GLASS = "linear-gradient(145deg, rgba(255,255,255,0.155), rgba(255,255,255,0.055) 38%, rgba(68,93,163,0.035) 72%, rgba(132,185,143,0.026))";
-const NUVIA_GLASS_BORDER = "1px solid rgba(230,238,248,0.30)";
-const NUVIA_GLASS_SHADOW = "0 36px 100px -52px rgba(0,0,0,0.96), inset 0 1px 0 rgba(255,255,255,0.30), inset 0 -1px 0 rgba(255,255,255,0.08)";
+const NUVIA_GLASS = "linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.075) 42%, rgba(255,255,255,0.035))";
+const NUVIA_GLASS_BORDER = "1px solid rgba(238,245,255,0.36)";
+const NUVIA_GLASS_SHADOW = "0 36px 100px -54px rgba(0,0,0,0.98), inset 0 1px 0 rgba(255,255,255,0.38), inset 0 -1px 0 rgba(255,255,255,0.10)";
 
 const blankInput: ProyeccionFinancieraInput = {
   clienteNombre: "",
