@@ -225,7 +225,12 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
     const inputs = (auditoria.inputs ?? {}) as Record<string, unknown>;
     const rec = (inputs.reconstruccion ?? {}) as Record<string, unknown>;
     const extSnap = (inputs.extracto ?? {}) as Record<string, unknown>;
-    if (!(Number(rec.coberturaFrechValorMensual ?? 0) > 0) && auditoria.extracto_id) {
+    const needsFrechView = !(Number(rec.coberturaFrechValorMensual ?? 0) > 0);
+    const needsUvrView = String(inputs.modalidad ?? auditoria.modalidad) === "uvr" && (
+      !(Number(rec.saldoUVR ?? 0) > 0) || !(Number(rec.valorUVR ?? 0) > 0) ||
+      !(Number(rec.cuotaBaseSinSubsidio ?? 0) > 0) || !(Number(rec.cuotaFinancieraSinSeguros ?? 0) > 0)
+    );
+    if ((needsFrechView || needsUvrView) && auditoria.extracto_id) {
       const { data: ext } = await context.supabase
         .from("extractos_lecturas")
         .select("datos")
@@ -237,7 +242,7 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
       const cuotaBaseSinSubsidio = parseNum(d.cuotaSinSubsidio) ?? parseNum(d.cuotaBaseSimulacion) ?? parseNum(d.cuotaActual);
       const seguros = parseNum(d.seguros) ?? Number(rec.seguros ?? 0);
       const cuotaFinancieraSinSeguros = parseNum(d.cuotaConInteresSinSeguros) ?? parseNum(d.cuotaSinSeguros) ?? (cuotaBaseSinSubsidio ? Math.max(0, cuotaBaseSinSubsidio - seguros) : undefined);
-      if ((valorFrech && valorFrech > 0) || (tasaFrech && tasaFrech > 0)) {
+      if ((valorFrech && valorFrech > 0) || (tasaFrech && tasaFrech > 0) || needsUvrView) {
         const cuotasPend = Number(rec.cuotasPendientes ?? 0);
         const cuotasPag = Number(rec.cuotasPagadas ?? 0);
         const frechCuotasRestantes = Math.max(0, Math.min(cuotasPend, 84 - cuotasPag));
