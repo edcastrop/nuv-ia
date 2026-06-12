@@ -239,16 +239,39 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
           </div>
         </div>
 
-        {/* Acceso al simulador clásico (preserva flujo previo) */}
-        <div className="pt-4 text-center">
+        {/* Acceso al simulador — CTA agresivo */}
+        <div className="pt-6 flex justify-center">
           <button
             onClick={onLanzarSimulador}
-            className="text-[11.5px] uppercase tracking-[0.18em] hover:underline"
-            style={{ color: "var(--nuvia-text-muted)" }}
+            className="group relative inline-flex items-center gap-3 rounded-2xl px-7 py-4 text-[13px] font-bold uppercase tracking-[0.18em] transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
+            style={{
+              background:
+                "linear-gradient(135deg, var(--nuvia-accent-blue) 0%, var(--nuvia-accent-green) 100%)",
+              color: "#0a0f1f",
+              border: "1px solid rgba(238,245,255,0.22)",
+              boxShadow:
+                "0 18px 48px -16px rgba(68,93,163,0.65), 0 0 0 1px rgba(238,245,255,0.06) inset",
+            }}
           >
-            Abrir simulador clásico →
+            <span
+              aria-hidden
+              className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 60%)",
+              }}
+            />
+            <Rocket size={18} className="relative" />
+            <span className="relative">Lanzar simulador</span>
+            <span
+              aria-hidden
+              className="relative transition-transform group-hover:translate-x-1"
+            >
+              →
+            </span>
           </button>
         </div>
+
 
         {config.excluye.length > 0 && (
           <div
