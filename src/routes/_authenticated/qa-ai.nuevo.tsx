@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PageLayout, ExecutiveHero, NCard, SectionHeader, NSelect } from "@/components/nuvia";
 import { useServerFn } from "@tanstack/react-start";
-import { auditarCaso } from "@/lib/qaAI.functions";
-import { Brain, Play } from "lucide-react";
+import { auditarCaso, listExpedientesConExtracto, obtenerExtractoQA } from "@/lib/qaAI.functions";
+import { Brain, Play, FileDown } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/qa-ai/nuevo")({
   component: NuevoQaAi,
@@ -14,6 +14,8 @@ type ModalidadOpt = "hipotecario" | "leasing" | "uvr";
 
 function NuevoQaAi() {
   const run = useServerFn(auditarCaso);
+  const fetchList = useServerFn(listExpedientesConExtracto);
+  const fetchExtracto = useServerFn(obtenerExtractoQA);
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,14 +27,47 @@ function NuevoQaAi() {
   const [seguros, setSeguros] = useState("");
   const [frech, setFrech] = useState("");
   const [desemb, setDesemb] = useState("");
-  // extracto
   const [extSaldo, setExtSaldo] = useState("");
   const [extTasa, setExtTasa] = useState("");
   const [extCuota, setExtCuota] = useState("");
   const [extSeguros, setExtSeguros] = useState("");
-  // simulación
   const [simAhorro, setSimAhorro] = useState("");
   const [simPlazo, setSimPlazo] = useState("");
+
+  // Reuso desde extractos_lecturas
+  const [extractos, setExtractos] = useState<Array<{ extractoId: string; expedienteId: string | null; banco: string | null; producto: string | null; codigo: string | null; cliente: string | null; fecha: string }>>([]);
+  const [extractoSel, setExtractoSel] = useState<string>("");
+  const [precarga, setPrecarga] = useState<{ banco: string; producto: string; titular: string; expedienteId: string | null } | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try { const r = await fetchList(); setExtractos(r.rows); } catch { /* ignore */ }
+    })();
+  }, [fetchList]);
+
+  const cargarExtracto = async (id: string) => {
+    setExtractoSel(id);
+    if (!id) { setPrecarga(null); return; }
+    try {
+      const { extracto: e } = await fetchExtracto({ data: { extractoId: id } });
+      setModalidad(e.modalidad);
+      if (e.saldoCapital !== undefined) setSaldo(String(e.saldoCapital));
+      if (e.tasaEa !== undefined) setTasa(String(e.tasaEa));
+      if (e.cuotasPendientes !== undefined) setCuotas(String(e.cuotasPendientes));
+      if (e.seguros !== undefined) setSeguros(String(e.seguros));
+      if (e.coberturaFrechPp !== undefined) setFrech(String(e.coberturaFrechPp));
+      if (e.valorDesembolsado !== undefined) setDesemb(String(e.valorDesembolsado));
+      if (e.saldoCapital !== undefined) setExtSaldo(String(e.saldoCapital));
+      if (e.tasaEa !== undefined) setExtTasa(String(e.tasaEa));
+      if (e.cuotaActual !== undefined) setExtCuota(String(e.cuotaActual));
+      if (e.seguros !== undefined) setExtSeguros(String(e.seguros));
+      setPrecarga({ banco: e.banco, producto: e.producto, titular: e.titular, expedienteId: e.expedienteId });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo cargar el extracto");
+    }
+  };
+
+
 
   const num = (v: string) => (v === "" ? undefined : Number(v));
 
@@ -83,6 +118,34 @@ function NuevoQaAi() {
         title="Auditar caso · NUVIA QA AI"
         description="Captura los datos del crédito y del extracto. El motor reconstruye matemáticamente y emite dictamen."
       />
+
+      <NCard>
+        <SectionHeader
+          title="Cargar desde extracto existente"
+          description="Reutiliza datos ya leídos por NUVIA — evita recapturar saldo, tasa, cuota, seguros, FRECH, banco y producto."
+          icon={<FileDown size={16} />}
+        />
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 mt-3 items-end">
+          <label className="flex flex-col gap-1 text-xs" style={{ color: "var(--nuvia-text-secondary)" }}>
+            Extracto bancario ({extractos.length} disponibles)
+            <NSelect
+              value={extractoSel}
+              onValueChange={cargarExtracto}
+              placeholder="— Capturar manualmente —"
+              options={extractos.map((e) => ({
+                value: e.extractoId,
+                label: `${e.codigo ?? "s/c"} · ${e.cliente ?? "Sin cliente"} · ${e.banco ?? "?"} · ${e.producto ?? "?"}`,
+              }))}
+            />
+          </label>
+          {precarga && (
+            <div className="text-xs px-3 py-2 rounded" style={{ background: "rgba(34,197,94,0.08)", color: "var(--nuvia-success)", border: "1px solid rgba(34,197,94,0.25)" }}>
+              ✓ Precargado: {precarga.titular || "—"} · {precarga.banco} · {precarga.producto}
+            </div>
+          )}
+        </div>
+      </NCard>
+
 
       <NCard>
         <SectionHeader title="Modalidad y datos del crédito" />
