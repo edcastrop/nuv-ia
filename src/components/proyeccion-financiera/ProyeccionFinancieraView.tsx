@@ -827,6 +827,138 @@ export function ProyeccionFinancieraView() {
               </div>
             </header>
 
+            {/* ─── LECTOR IA (protagonista — primera acción) ─── */}
+            <section
+              className="relative mb-8 overflow-hidden rounded-3xl"
+              style={{
+                background:
+                  "linear-gradient(180deg, rgba(10,18,38,0.85), rgba(7,22,45,0.85))",
+                border: "1px solid rgba(132,185,143,0.22)",
+                boxShadow:
+                  "0 1px 0 rgba(255,255,255,0.06) inset, 0 40px 80px -30px rgba(68,93,163,0.55)",
+                backdropFilter: "blur(24px)",
+              }}
+            >
+              <div
+                className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 animate-pulse rounded-full blur-3xl"
+                style={{ background: "radial-gradient(circle, rgba(68,93,163,0.45), transparent 70%)", animationDuration: "6s" }}
+              />
+              <div
+                className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 animate-pulse rounded-full blur-3xl"
+                style={{ background: "radial-gradient(circle, rgba(132,185,143,0.40), transparent 70%)", animationDuration: "8s" }}
+              />
+              <button
+                type="button"
+                onClick={() => setLectorOpen((o) => !o)}
+                className="relative flex w-full items-center justify-between gap-3 px-6 py-5 text-left transition hover:bg-white/[0.03]"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <div
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl"
+                    style={{
+                      background: "linear-gradient(135deg, #445DA3, #84B98F)",
+                      boxShadow: "0 16px 40px -12px rgba(132,185,143,0.7)",
+                    }}
+                  >
+                    <Sparkles className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 text-[15px] font-semibold text-white">
+                      Lectura automática de extracto
+                      <span
+                        className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                        style={{
+                          background: "rgba(132,185,143,0.18)",
+                          color: "#A8D1B0",
+                          border: "1px solid rgba(132,185,143,0.35)",
+                        }}
+                      >
+                        NUVIA · IA
+                      </span>
+                    </div>
+                    <p className="mt-1 truncate text-[12.5px] text-white/65">
+                      Sube el extracto del banco y NUVIA llena Banco · Saldo · Tasa · Cuota · Seguros · UVR · Plazo
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown
+                  className={`h-5 w-5 shrink-0 text-white/70 transition-transform ${lectorOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+              {lectorOpen && (
+                <div className="relative border-t border-white/[0.08] p-6">
+                  <ExtractoReader
+                    modo={input.moneda === "uvr" ? "uvr" : "pesos"}
+                    onApply={async (d: ExtractoApplyPayload) => {
+                      const simMoneda: "uvr" | "pesos" = input.moneda === "uvr" ? "uvr" : "pesos";
+                      const detectada = d.monedaDetectada;
+                      const mismatch = !!detectada && detectada !== simMoneda;
+                      if (mismatch && detectada) {
+                        const tipoExtracto = detectada === "uvr" ? "UVR" : "Pesos";
+                        const tipoSim = simMoneda === "uvr" ? "UVR" : "Pesos";
+                        const continuar = await monedaAlerta.confirm({
+                          detectada,
+                          simulador: simMoneda,
+                        });
+                        if (!continuar) {
+                          toast.error(
+                            `Carga cancelada: el extracto está en ${tipoExtracto} y el simulador en ${tipoSim}.`,
+                            { duration: 6000 },
+                          );
+                          return;
+                        }
+                        toast.warning(
+                          `Simulador cambiado a ${tipoExtracto} para coincidir con el extracto.`,
+                        );
+                      }
+                      setInput((p) => {
+                        const next = { ...p };
+                        const num = (s?: string) => {
+                          if (!s) return 0;
+                          const n = parseFloat(
+                            String(s)
+                              .replace(/[^\d.,-]/g, "")
+                              .replace(/\.(?=\d{3}(\D|$))/g, "")
+                              .replace(",", "."),
+                          );
+                          return Number.isFinite(n) ? n : 0;
+                        };
+                        if (d.cliente?.nombre) next.clienteNombre = d.cliente.nombre;
+                        if (d.cliente?.banco) next.banco = d.cliente.banco;
+                        if (d.cliente?.cedula) next.cedula = d.cliente.cedula;
+                        if (d.cliente?.numeroCredito) next.numeroCredito = d.cliente.numeroCredito;
+                        if (d.cliente?.plazoInicial) next.cuotasTotales = num(d.cliente.plazoInicial);
+                        if (d.cliente?.cuotasPagadas) {
+                          next.cuotasPagadas = num(d.cliente.cuotasPagadas);
+                          if (next.cuotasTotales)
+                            next.cuotasPendientes = Math.max(0, next.cuotasTotales - next.cuotasPagadas);
+                        }
+                        if (d.pesos) {
+                          next.moneda = "pesos";
+                          if (d.pesos.saldoCapital) next.saldoCapital = num(d.pesos.saldoCapital);
+                          if (d.pesos.cuotaActual) next.cuotaActual = num(d.pesos.cuotaActual);
+                          if (d.pesos.seguros) next.seguroVida = num(d.pesos.seguros);
+                          if (d.pesos.tea) next.teaPct = num(d.pesos.tea);
+                          if (d.pesos.valorDesembolsado) next.valorDesembolsado = num(d.pesos.valorDesembolsado);
+                        }
+                        if (d.uvr) {
+                          next.moneda = "uvr";
+                          if (d.uvr.saldoPesos) next.saldoCapital = num(d.uvr.saldoPesos);
+                          if (d.uvr.cuotaActualPesos) next.cuotaActual = num(d.uvr.cuotaActualPesos);
+                          if (d.uvr.seguros) next.seguroVida = num(d.uvr.seguros);
+                          if (d.uvr.teaCobrada) next.teaPct = num(d.uvr.teaCobrada);
+                          if (d.uvr.valorDesembolsado) next.valorDesembolsado = num(d.uvr.valorDesembolsado);
+                          if (d.uvr.valorUVR) next.uvrValor = num(d.uvr.valorUVR);
+                          if (d.uvr.saldoUVR) next.saldoUvr = num(d.uvr.saldoUVR);
+                        }
+                        return next;
+                      });
+                    }}
+                  />
+                </div>
+              )}
+            </section>
+
             {/* ─── KPI ZONE (Costo de no actuar = protagonista) ─── */}
             <section className="mb-8 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
               <HeroKpi
