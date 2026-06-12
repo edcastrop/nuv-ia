@@ -92,7 +92,7 @@ function ProyeccionHerramientaPage() {
         <div className="mx-auto max-w-7xl px-6 pt-6">
           <Link
             to="/herramientas"
-            className="inline-flex items-center gap-1.5 text-sm text-cyan-50/70 transition hover:text-cyan-50"
+            className="inline-flex items-center gap-1.5 text-sm text-white/70 transition hover:text-white"
           >
             <ArrowLeft className="h-4 w-4" /> Volver a Herramientas
           </Link>

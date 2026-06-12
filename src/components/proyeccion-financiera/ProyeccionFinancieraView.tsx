@@ -61,16 +61,16 @@ import { GuardarCasoModal } from "./GuardarCasoModal";
 // Brand tokens
 // ──────────────────────────────────────────────────────────────────────────
 const NUVIA = {
-  azul: "#22D3EE",
+  azul: "#445DA3",
   azulSoft: "#67E8F9",
-  verde: "#4ADE80",
+  verde: "#84B98F",
   verdeSoft: "#BBF7D0",
   oscuro: "#05070D",
   ambar: "#F8D36A",
   rojo: "#FB7185",
 };
 
-const NUVIA_GRADIENT = "linear-gradient(135deg, #22D3EE 0%, #2563EB 46%, #4ADE80 100%)";
+const NUVIA_GRADIENT = "linear-gradient(135deg, #445DA3 0%, #445DA3 46%, #84B98F 100%)";
 const NUVIA_GLASS = "linear-gradient(145deg, rgba(255,255,255,0.105), rgba(34,211,238,0.045) 46%, rgba(74,222,128,0.055))";
 
 const blankInput: ProyeccionFinancieraInput = {
@@ -159,7 +159,7 @@ function Field({
         value={value as string}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-xl border border-cyan-100/10 bg-white/[0.055] px-3.5 py-2.5 text-sm font-medium text-white placeholder-white/30 outline-none transition focus:border-cyan-300/60 focus:bg-white/[0.08] focus:ring-2 focus:ring-cyan-300/20"
+        className="rounded-xl border border-white/10 bg-white/[0.055] px-3.5 py-2.5 text-sm font-medium text-white placeholder-white/30 outline-none transition focus:border-emerald-300/60 focus:bg-white/[0.08] focus:ring-2 focus:ring-emerald-300/20"
       />
     </label>
   );
@@ -185,7 +185,7 @@ function SelectField({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full appearance-none rounded-xl border border-cyan-100/10 bg-white/[0.055] px-3.5 py-2.5 pr-9 text-sm font-medium text-white outline-none transition focus:border-cyan-300/60 focus:bg-white/[0.08] focus:ring-2 focus:ring-cyan-300/20"
+          className="w-full appearance-none rounded-xl border border-white/10 bg-white/[0.055] px-3.5 py-2.5 pr-9 text-sm font-medium text-white outline-none transition focus:border-emerald-300/60 focus:bg-white/[0.08] focus:ring-2 focus:ring-emerald-300/20"
         >
           {options.map((o) => (
             <option key={o.value} value={o.value} className="bg-[#07111D] text-white">
@@ -503,8 +503,8 @@ function Sidebar({ active, onJump }: { active: string; onJump: (id: string) => v
       <div className="mx-3 mb-4 rounded-2xl p-3" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
         <div className="flex items-center gap-2">
           <div className="relative flex h-2 w-2 items-center justify-center">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-300/70" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-300" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300/70" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-300" />
           </div>
           <span className="text-[11px] font-medium text-white/60">Motor NUVIA activo</span>
         </div>
@@ -723,7 +723,7 @@ export function ProyeccionFinancieraView() {
             <header id="sec-dashboard" className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <div className="flex items-center gap-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-white/45">
-                  <Activity className="h-3.5 w-3.5 text-cyan-300" />
+                  <Activity className="h-3.5 w-3.5 text-emerald-300" />
                   NUVIA · Wealth Intelligence
                 </div>
                 <h1 className="mt-2 text-[34px] font-semibold leading-none tracking-tight text-white lg:text-[44px]">
@@ -971,7 +971,7 @@ export function ProyeccionFinancieraView() {
             </section>
 
             {/* Atajo: ir directo a simular escenarios */}
-            <div className="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan-100/10 bg-white/[0.03] px-5 py-4 backdrop-blur-xl">
+            <div className="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-4 backdrop-blur-xl">
               <div className="min-w-0">
                 <div className="text-[13.5px] font-semibold text-white">¿Listo para simular?</div>
                 <div className="text-[12px] text-white/55">Crea y compara escenarios sobre el crédito cargado.</div>
@@ -981,7 +981,7 @@ export function ProyeccionFinancieraView() {
                 onClick={() => document.getElementById("sec-escenarios")?.scrollIntoView({ behavior: "smooth", block: "start" })}
                 className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[12.5px] font-semibold text-white transition hover:scale-[1.02]"
                 style={{
-                  background: "linear-gradient(135deg, #22D3EE 0%, #2563EB 46%, #4ADE80 100%)",
+                  background: "linear-gradient(135deg, #445DA3 0%, #445DA3 46%, #84B98F 100%)",
                   boxShadow: "0 10px 28px -10px rgba(74,222,128,0.55)",
                 }}
               >
@@ -1139,7 +1139,7 @@ export function ProyeccionFinancieraView() {
                   {input.cuotaActual > 0 && segurosMes > 0 && (
                     <p className="mt-3 text-[11px] text-white/40">
                       Seguros representan{" "}
-                      <span className="font-semibold text-cyan-200">
+                      <span className="font-semibold text-emerald-200">
                         {((segurosMes / input.cuotaActual) * 100).toFixed(1)}%
                       </span>{" "}
                       de la cuota
@@ -1191,7 +1191,7 @@ export function ProyeccionFinancieraView() {
                           <span
                             className="h-1.5 w-1.5 rounded-full"
                             style={{
-                              background: isActual ? "#FB7185" : "#4ADE80",
+                              background: isActual ? "#FB7185" : "#84B98F",
                             }}
                           />
                           {e.nombre}
@@ -1200,7 +1200,7 @@ export function ProyeccionFinancieraView() {
                     })}
                     <button
                       onClick={() => addEscenario("personalizado")}
-                      className="inline-flex items-center gap-1 rounded-xl border border-dashed border-white/15 px-3.5 py-2 text-[12.5px] font-medium text-white/55 transition hover:border-cyan-300/45 hover:text-cyan-100"
+                      className="inline-flex items-center gap-1 rounded-xl border border-dashed border-white/15 px-3.5 py-2 text-[12.5px] font-medium text-white/55 transition hover:border-emerald-300/45 hover:text-emerald-200"
                     >
                       <Plus className="h-3.5 w-3.5" /> Nuevo escenario
                     </button>
@@ -1252,7 +1252,7 @@ export function ProyeccionFinancieraView() {
                             <button
                               key={v}
                               onClick={() => updateEscenario(selected.id, { aporteMensualExtra: v })}
-                              className="rounded-full px-3 py-1.5 text-[11.5px] font-semibold text-cyan-100 transition hover:scale-[1.03]"
+                              className="rounded-full px-3 py-1.5 text-[11.5px] font-semibold text-emerald-200 transition hover:scale-[1.03]"
                               style={{
                                 background: "rgba(34,211,238,0.12)",
                                 border: "1px solid rgba(103,232,249,0.28)",
@@ -1306,7 +1306,7 @@ export function ProyeccionFinancieraView() {
                               </td>
                               <td
                                 className={`py-3 text-right font-semibold ${
-                                    diff < 0 ? "text-cyan-100" : diff > 0 ? "text-rose-300" : "text-white/30"
+                                    diff < 0 ? "text-emerald-200" : diff > 0 ? "text-rose-300" : "text-white/30"
                                 }`}
                               >
                                 {isInt
@@ -1322,7 +1322,7 @@ export function ProyeccionFinancieraView() {
                           <td className="py-3 font-semibold text-white">
                             {fmtFecha(selected.res.fechaFinalizacion)}
                           </td>
-                          <td className="py-3 text-right font-semibold text-cyan-100">
+                          <td className="py-3 text-right font-semibold text-emerald-200">
                             {kpis.mesesEliminados} meses antes
                           </td>
                         </tr>
@@ -1496,7 +1496,7 @@ export function ProyeccionFinancieraView() {
                   <div className="relative p-7 md:p-9">
                     <div className="mb-6 flex items-center justify-between gap-4">
                       <div>
-                        <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-cyan-100">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-emerald-200">
                           NUVIA · Informe Ejecutivo
                         </div>
                         <h2 className="mt-2 text-[22px] font-semibold tracking-tight text-white">
@@ -1583,7 +1583,7 @@ export function ProyeccionFinancieraView() {
                         border: "1px solid rgba(103,232,249,0.24)",
                       }}
                     >
-                      <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-100">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-emerald-200">
                         Recomendación NUVIA
                       </div>
                       <p className="mt-2 text-[14px] leading-relaxed text-white/85">
@@ -1603,7 +1603,7 @@ export function ProyeccionFinancieraView() {
                         en lugar del{" "}
                         <strong className="text-white">{fmtFecha(resActual.res.fechaFinalizacion)}</strong>,
                         con un ROI proyectado del{" "}
-                        <strong className="text-cyan-100">
+                        <strong className="text-emerald-200">
                           {(kpis.roiCliente * 100).toFixed(0)}%
                         </strong>{" "}
                         sobre el aporte total.
@@ -1656,7 +1656,7 @@ export function ProyeccionFinancieraView() {
                             <td className="px-4 py-2.5 text-right text-white">
                               {formatCOP(c.cuotaConExtra)}
                             </td>
-                            <td className="px-4 py-2.5 text-right text-cyan-100">{formatCOP(c.capital)}</td>
+                            <td className="px-4 py-2.5 text-right text-emerald-200">{formatCOP(c.capital)}</td>
                             <td className="px-4 py-2.5 text-right text-rose-300">{formatCOP(c.interes)}</td>
                             <td className="px-4 py-2.5 text-right text-white/55">{formatCOP(c.seguros)}</td>
                             <td className="px-4 py-2.5 text-right font-medium text-white">
