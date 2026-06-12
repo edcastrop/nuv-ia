@@ -34,7 +34,7 @@ function ConciliacionPage() {
   const { data: bancos, refetch: refetchBancos } = useQuery({ queryKey: ["tBancos"], queryFn: () => bancosFn() });
   const { data: extractos, refetch: refetchExt } = useQuery({ queryKey: ["tExt"], queryFn: () => extractosFn() });
 
-  const [bancoId, setBancoId] = useState<string>("");
+  const [bancoId, setBancoId] = useState<string>("__none__");
   const [file, setFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -63,7 +63,7 @@ function ConciliacionPage() {
       }
       const r = await ingestFn({
         data: {
-          banco_id: bancoId || null,
+          banco_id: bancoId && bancoId !== "__none__" ? bancoId : null,
           archivo_nombre: file.name,
           formato,
           contenido_texto,
@@ -84,7 +84,7 @@ function ConciliacionPage() {
   }
 
   const bancoOptions = useMemo(
-    () => [{ value: "", label: "— Sin banco —" }, ...(bancos ?? []).map((b) => ({ value: b.id, label: b.nombre }))],
+    () => [{ value: "__none__", label: "— Sin banco —" }, ...(bancos ?? []).map((b) => ({ value: b.id, label: b.nombre }))],
     [bancos],
   );
 
