@@ -139,12 +139,8 @@ function RecaudosPage() {
 }
 
 const METODO_OPTS = [
-  { value: "__none__",      label: "—" },
-  { value: "transferencia", label: "Transferencia" },
-  { value: "consignacion",  label: "Consignación" },
-  { value: "efectivo",      label: "Efectivo" },
-  { value: "pse",           label: "PSE" },
-  { value: "otro",          label: "Otro" },
+  { value: "__none__", label: "—" },
+  ...METODOS_PAGO.map((m) => ({ value: m.key, label: m.label })),
 ];
 
 function NuevoRecaudo({
