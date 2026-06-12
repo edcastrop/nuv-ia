@@ -270,8 +270,10 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
     const { data: incs } = await context.supabase
       .from("qa_inconsistencias").select("*").eq("auditoria_id", data.id);
     return JSON.parse(JSON.stringify({ auditoria, inconsistencias: incs ?? [] })) as {
-      auditoria: Record<string, never> | null;
-      inconsistencias: Array<Record<string, never>>;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      auditoria: any;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      inconsistencias: any[];
     };
   });
 
