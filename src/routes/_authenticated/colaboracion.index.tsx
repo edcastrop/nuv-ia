@@ -123,7 +123,7 @@ function ColaboracionPage() {
           <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--nuvia-text-primary)" }}>Iniciar mensaje directo</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
             {dir.filter((p) => p.user_id !== user?.id).map((p) => (
-              <button key={p.user_id} onClick={async () => { const c = await getOrCreateDM(p.user_id); await reload(); setTabAndSync("canales"); setCanal(c.id); }} className="flex items-center gap-3 rounded-xl border p-3 text-left transition hover:bg-white/[0.05]" style={{ borderColor: "var(--nuvia-border)", background: "rgba(255,255,255,0.03)" }}>
+              <button key={p.user_id} onClick={async () => { const c = await getOrCreateDM(p.user_id); await reload(); setTabAndSync("canales"); setCanal(c.id); }} className="flex items-center gap-3 rounded-xl border p-3 text-left transition hover:[background:var(--nuvia-bg-card)]" style={{ borderColor: "var(--nuvia-border)", background: "rgba(255,255,255,0.03)" }}>
                 <UserAvatar userId={p.user_id} name={p.nombre} size="md" />
                 <div className="min-w-0">
                   <div className="text-sm font-semibold truncate" style={{ color: "var(--nuvia-text-primary)" }}>{p.nombre}</div>
@@ -215,7 +215,7 @@ function ListCanales({ items, activeId, onPick, icon: Icon }: { items: Canal[]; 
   return (
     <div className="py-1">
       {items.map((c) => (
-        <button key={c.id} onClick={() => onPick(c.id)} className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-left transition hover:bg-white/[0.04]" style={activeId === c.id ? { background: "rgba(68,93,163,0.18)", color: "var(--nuvia-text-primary)", fontWeight: 600 } : { color: "var(--nuvia-text-secondary)" }}>
+        <button key={c.id} onClick={() => onPick(c.id)} className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-left transition hover:[background:var(--nuvia-bg-card)]" style={activeId === c.id ? { background: "rgba(68,93,163,0.18)", color: "var(--nuvia-text-primary)", fontWeight: 600 } : { color: "var(--nuvia-text-secondary)" }}>
           <Icon size={13} className="shrink-0" />
           <span className="truncate">{c.nombre}</span>
           {c.privado && <span className="ml-auto text-[9px] uppercase" style={{ color: "var(--nuvia-text-secondary)" }}>priv</span>}

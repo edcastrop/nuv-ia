@@ -188,7 +188,7 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
                 <button
                   key={d.canal.id}
                   onClick={() => setCanal(d.canal)}
-                  className="w-full flex items-start gap-3 px-3 py-2.5 text-left border-b transition hover:bg-white/[0.04]"
+                  className="w-full flex items-start gap-3 px-3 py-2.5 text-left border-b transition hover:[background:var(--nuvia-bg-card)]"
                   style={{
                     borderColor: "var(--nuvia-border)",
                     background: activo ? "rgba(68,93,163,0.18)" : "transparent",
@@ -250,7 +250,7 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
               )}
 
               <div className="border-t px-2 md:px-4 py-2 md:py-3 flex items-end gap-1.5 md:gap-2" style={{ borderColor: "var(--nuvia-border)", background: "var(--nuvia-bg-secondary)", paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}>
-                <button onClick={() => fileRef.current?.click()} className="rounded-lg border p-2 transition hover:bg-white/[0.06] shrink-0" style={{ borderColor: "var(--nuvia-border)", color: "var(--nuvia-text-secondary)" }} title="Adjuntar archivo / imagen / PDF">
+                <button onClick={() => fileRef.current?.click()} className="rounded-lg border p-2 transition hover:[background:var(--nuvia-bg-card)] shrink-0" style={{ borderColor: "var(--nuvia-border)", color: "var(--nuvia-text-secondary)" }} title="Adjuntar archivo / imagen / PDF">
                   <Paperclip size={16} />
                 </button>
                 <input ref={fileRef} type="file" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt" className="hidden" onChange={(e) => { onFile(e.target.files?.[0]); if (fileRef.current) fileRef.current.value = ""; }} />
@@ -282,7 +282,7 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {dir.filter((p) => p.user_id !== user?.id).map((p) => (
-                <button key={p.user_id} onClick={() => abrirConUsuario(p.user_id)} className="flex items-center gap-3 rounded-xl border p-3 text-left transition hover:bg-white/[0.05]" style={{ borderColor: "var(--nuvia-border)", background: "rgba(255,255,255,0.03)" }}>
+                <button key={p.user_id} onClick={() => abrirConUsuario(p.user_id)} className="flex items-center gap-3 rounded-xl border p-3 text-left transition hover:[background:var(--nuvia-bg-card)]" style={{ borderColor: "var(--nuvia-border)", background: "rgba(255,255,255,0.03)" }}>
                   <UserAvatar userId={p.user_id} name={p.nombre} size="md" />
                   <div className="min-w-0">
                     <div className="text-sm font-semibold truncate" style={{ color: "var(--nuvia-text-primary)" }}>{p.nombre}</div>
@@ -301,7 +301,7 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
 function ChatHeader({ dms, canal, onBack }: { dms: DMResumen[]; canal: Canal; onBack: () => void }) {
   const d = dms.find((x) => x.canal.id === canal.id);
   const BackBtn = (
-    <button onClick={onBack} className="md:hidden rounded-lg p-1.5 -ml-1 transition hover:bg-white/[0.06] shrink-0" style={{ color: "var(--nuvia-text-secondary)" }} aria-label="Volver">
+    <button onClick={onBack} className="md:hidden rounded-lg p-1.5 -ml-1 transition hover:[background:var(--nuvia-bg-card)] shrink-0" style={{ color: "var(--nuvia-text-secondary)" }} aria-label="Volver">
       <ArrowLeft size={18} />
     </button>
   );

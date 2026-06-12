@@ -41,7 +41,7 @@ export function EmojiPickerPopover({ onPick, align = "left" }: Props) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="rounded-lg border p-2 transition hover:bg-white/[0.06]"
+        className="rounded-lg border p-2 transition hover:[background:var(--nuvia-bg-card)]"
         style={{ borderColor: "var(--nuvia-border)", background: "rgba(255,255,255,0.03)" }}
         title="Insertar emoji"
       >
@@ -73,7 +73,7 @@ export function EmojiPickerPopover({ onPick, align = "left" }: Props) {
                 key={e}
                 type="button"
                 onClick={() => { onPick(e); }}
-                className="text-xl rounded p-1 leading-none transition hover:bg-white/[0.06]"
+                className="text-xl rounded p-1 leading-none transition hover:[background:var(--nuvia-bg-card)]"
               >
                 {e}
               </button>

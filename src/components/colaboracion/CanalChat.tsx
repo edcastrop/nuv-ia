@@ -76,7 +76,7 @@ export function CanalChat({ canal }: { canal: Canal }) {
           {canal.descripcion && <div className="text-[12px] mt-0.5 truncate" style={{ color: "var(--nuvia-text-secondary)" }}>{canal.descripcion}</div>}
         </div>
         {!canal.privado && (
-          <button onClick={() => unirseCanal(canal.id)} className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 md:px-3 py-1.5 text-[11px] md:text-[12px] font-medium transition hover:bg-white/[0.06] shrink-0" style={{ borderColor: "var(--nuvia-border)", color: "var(--nuvia-text-primary)" }}>
+          <button onClick={() => unirseCanal(canal.id)} className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 md:px-3 py-1.5 text-[11px] md:text-[12px] font-medium transition hover:[background:var(--nuvia-bg-card)] shrink-0" style={{ borderColor: "var(--nuvia-border)", color: "var(--nuvia-text-primary)" }}>
             <UserPlus size={13} /> <span className="hidden sm:inline">Unirme</span>
           </button>
         )}
@@ -102,7 +102,7 @@ export function CanalChat({ canal }: { canal: Canal }) {
       )}
 
       <div className="border-t px-2 md:px-4 py-2 md:py-3 flex items-end gap-1.5 md:gap-2" style={{ borderColor: "var(--nuvia-border)", background: "var(--nuvia-bg-secondary)", paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}>
-        <button onClick={() => fileRef.current?.click()} className="rounded-lg border p-2 transition hover:bg-white/[0.06] shrink-0" style={{ borderColor: "var(--nuvia-border)", color: "var(--nuvia-text-secondary)" }} title="Adjuntar archivo / imagen / PDF">
+        <button onClick={() => fileRef.current?.click()} className="rounded-lg border p-2 transition hover:[background:var(--nuvia-bg-card)] shrink-0" style={{ borderColor: "var(--nuvia-border)", color: "var(--nuvia-text-secondary)" }} title="Adjuntar archivo / imagen / PDF">
           <Paperclip size={16} />
         </button>
         <input
@@ -157,7 +157,7 @@ function MensajeItem({ m, esMio }: { m: Mensaje; esMio: boolean }) {
               a.mime?.startsWith("audio/") ? (
                 <VoiceNotePlayer key={i} path={a.path} mime={a.mime} nombre={a.nombre} />
               ) : (
-                <button key={i} onClick={async () => { const url = await getAdjuntoUrl(a.path); window.open(url, "_blank"); }} className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] transition hover:bg-white/[0.06]" style={{ borderColor: "var(--nuvia-border)", background: "rgba(255,255,255,0.04)", color: "var(--nuvia-text-primary)" }}>
+                <button key={i} onClick={async () => { const url = await getAdjuntoUrl(a.path); window.open(url, "_blank"); }} className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] transition hover:[background:var(--nuvia-bg-card)]" style={{ borderColor: "var(--nuvia-border)", background: "rgba(255,255,255,0.04)", color: "var(--nuvia-text-primary)" }}>
                   <Download size={11} /> {a.nombre}
                 </button>
               )
