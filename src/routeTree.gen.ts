@@ -63,6 +63,7 @@ import { Route as AuthenticatedSuperAdminAcademiaRouteImport } from './routes/_a
 import { Route as AuthenticatedHerramientasProyeccionRouteImport } from './routes/_authenticated/herramientas.proyeccion'
 import { Route as AuthenticatedHerramientasCapacidadPagoRouteImport } from './routes/_authenticated/herramientas.capacidad-pago'
 import { Route as AuthenticatedFinanzasWalletsRouteImport } from './routes/_authenticated/finanzas.wallets'
+import { Route as AuthenticatedFinanzasTreasuryRouteImport } from './routes/_authenticated/finanzas.treasury'
 import { Route as AuthenticatedFinanzasTesoreriaRouteImport } from './routes/_authenticated/finanzas.tesoreria'
 import { Route as AuthenticatedFinanzasReportesRouteImport } from './routes/_authenticated/finanzas.reportes'
 import { Route as AuthenticatedFinanzasRecaudosRouteImport } from './routes/_authenticated/finanzas.recaudos'
@@ -81,6 +82,7 @@ import { Route as AuthenticatedComisionesIdRouteImport } from './routes/_authent
 import { Route as AuthenticatedCasosIdRouteImport } from './routes/_authenticated/casos.$id'
 import { Route as AuthenticatedCarteraIdRouteImport } from './routes/_authenticated/cartera.$id'
 import { Route as AuthenticatedApoderadoMisCasosRouteImport } from './routes/_authenticated/apoderado.mis-casos'
+import { Route as AuthenticatedFinanzasTreasuryIndexRouteImport } from './routes/_authenticated/finanzas.treasury.index'
 import { Route as AuthenticatedColaboracionDmIndexRouteImport } from './routes/_authenticated/colaboracion.dm.index'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicHooksRecomputeSnapshotsRouteImport } from './routes/api/public/hooks/recompute-snapshots'
@@ -88,6 +90,8 @@ import { Route as ApiPublicHooksOnboardingRecordatoriosRouteImport } from './rou
 import { Route as ApiPublicHooksFinanzasCronRouteImport } from './routes/api/public/hooks/finanzas-cron'
 import { Route as ApiPublicHooksCasosAlertasRouteImport } from './routes/api/public/hooks/casos-alertas'
 import { Route as ApiPublicHooksCarteraRecordatoriosRouteImport } from './routes/api/public/hooks/cartera-recordatorios'
+import { Route as AuthenticatedFinanzasTreasuryConciliacionRouteImport } from './routes/_authenticated/finanzas.treasury.conciliacion'
+import { Route as AuthenticatedFinanzasTreasuryAuditoriaRouteImport } from './routes/_authenticated/finanzas.treasury.auditoria'
 import { Route as AuthenticatedColaboracionDmConversationIdRouteImport } from './routes/_authenticated/colaboracion.dm.$conversationId'
 import { Route as AuthenticatedAcademiaModulosModuloIdRouteImport } from './routes/_authenticated/academia.modulos.$moduloId'
 import { Route as AuthenticatedAcademiaLeccionesLeccionIdRouteImport } from './routes/_authenticated/academia.lecciones.$leccionId'
@@ -392,6 +396,12 @@ const AuthenticatedFinanzasWalletsRoute =
     path: '/wallets',
     getParentRoute: () => AuthenticatedFinanzasRoute,
   } as any)
+const AuthenticatedFinanzasTreasuryRoute =
+  AuthenticatedFinanzasTreasuryRouteImport.update({
+    id: '/treasury',
+    path: '/treasury',
+    getParentRoute: () => AuthenticatedFinanzasRoute,
+  } as any)
 const AuthenticatedFinanzasTesoreriaRoute =
   AuthenticatedFinanzasTesoreriaRouteImport.update({
     id: '/tesoreria',
@@ -498,6 +508,12 @@ const AuthenticatedApoderadoMisCasosRoute =
     path: '/apoderado/mis-casos',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedFinanzasTreasuryIndexRoute =
+  AuthenticatedFinanzasTreasuryIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedFinanzasTreasuryRoute,
+  } as any)
 const AuthenticatedColaboracionDmIndexRoute =
   AuthenticatedColaboracionDmIndexRouteImport.update({
     id: '/colaboracion/dm/',
@@ -539,6 +555,18 @@ const ApiPublicHooksCarteraRecordatoriosRoute =
     id: '/api/public/hooks/cartera-recordatorios',
     path: '/api/public/hooks/cartera-recordatorios',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedFinanzasTreasuryConciliacionRoute =
+  AuthenticatedFinanzasTreasuryConciliacionRouteImport.update({
+    id: '/conciliacion',
+    path: '/conciliacion',
+    getParentRoute: () => AuthenticatedFinanzasTreasuryRoute,
+  } as any)
+const AuthenticatedFinanzasTreasuryAuditoriaRoute =
+  AuthenticatedFinanzasTreasuryAuditoriaRouteImport.update({
+    id: '/auditoria',
+    path: '/auditoria',
+    getParentRoute: () => AuthenticatedFinanzasTreasuryRoute,
   } as any)
 const AuthenticatedColaboracionDmConversationIdRoute =
   AuthenticatedColaboracionDmConversationIdRouteImport.update({
@@ -622,6 +650,7 @@ export interface FileRoutesByFullPath {
   '/finanzas/recaudos': typeof AuthenticatedFinanzasRecaudosRoute
   '/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
+  '/finanzas/treasury': typeof AuthenticatedFinanzasTreasuryRouteWithChildren
   '/finanzas/wallets': typeof AuthenticatedFinanzasWalletsRoute
   '/herramientas/capacidad-pago': typeof AuthenticatedHerramientasCapacidadPagoRoute
   '/herramientas/proyeccion': typeof AuthenticatedHerramientasProyeccionRoute
@@ -648,6 +677,8 @@ export interface FileRoutesByFullPath {
   '/academia/lecciones/$leccionId': typeof AuthenticatedAcademiaLeccionesLeccionIdRoute
   '/academia/modulos/$moduloId': typeof AuthenticatedAcademiaModulosModuloIdRoute
   '/colaboracion/dm/$conversationId': typeof AuthenticatedColaboracionDmConversationIdRoute
+  '/finanzas/treasury/auditoria': typeof AuthenticatedFinanzasTreasuryAuditoriaRoute
+  '/finanzas/treasury/conciliacion': typeof AuthenticatedFinanzasTreasuryConciliacionRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
   '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
@@ -655,6 +686,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/recompute-snapshots': typeof ApiPublicHooksRecomputeSnapshotsRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/colaboracion/dm/': typeof AuthenticatedColaboracionDmIndexRoute
+  '/finanzas/treasury/': typeof AuthenticatedFinanzasTreasuryIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -730,6 +762,8 @@ export interface FileRoutesByTo {
   '/academia/lecciones/$leccionId': typeof AuthenticatedAcademiaLeccionesLeccionIdRoute
   '/academia/modulos/$moduloId': typeof AuthenticatedAcademiaModulosModuloIdRoute
   '/colaboracion/dm/$conversationId': typeof AuthenticatedColaboracionDmConversationIdRoute
+  '/finanzas/treasury/auditoria': typeof AuthenticatedFinanzasTreasuryAuditoriaRoute
+  '/finanzas/treasury/conciliacion': typeof AuthenticatedFinanzasTreasuryConciliacionRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
   '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
@@ -737,6 +771,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/recompute-snapshots': typeof ApiPublicHooksRecomputeSnapshotsRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/colaboracion/dm': typeof AuthenticatedColaboracionDmIndexRoute
+  '/finanzas/treasury': typeof AuthenticatedFinanzasTreasuryIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -791,6 +826,7 @@ export interface FileRoutesById {
   '/_authenticated/finanzas/recaudos': typeof AuthenticatedFinanzasRecaudosRoute
   '/_authenticated/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/_authenticated/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
+  '/_authenticated/finanzas/treasury': typeof AuthenticatedFinanzasTreasuryRouteWithChildren
   '/_authenticated/finanzas/wallets': typeof AuthenticatedFinanzasWalletsRoute
   '/_authenticated/herramientas/capacidad-pago': typeof AuthenticatedHerramientasCapacidadPagoRoute
   '/_authenticated/herramientas/proyeccion': typeof AuthenticatedHerramientasProyeccionRoute
@@ -817,6 +853,8 @@ export interface FileRoutesById {
   '/_authenticated/academia/lecciones/$leccionId': typeof AuthenticatedAcademiaLeccionesLeccionIdRoute
   '/_authenticated/academia/modulos/$moduloId': typeof AuthenticatedAcademiaModulosModuloIdRoute
   '/_authenticated/colaboracion/dm/$conversationId': typeof AuthenticatedColaboracionDmConversationIdRoute
+  '/_authenticated/finanzas/treasury/auditoria': typeof AuthenticatedFinanzasTreasuryAuditoriaRoute
+  '/_authenticated/finanzas/treasury/conciliacion': typeof AuthenticatedFinanzasTreasuryConciliacionRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
   '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
@@ -824,6 +862,7 @@ export interface FileRoutesById {
   '/api/public/hooks/recompute-snapshots': typeof ApiPublicHooksRecomputeSnapshotsRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/colaboracion/dm/': typeof AuthenticatedColaboracionDmIndexRoute
+  '/_authenticated/finanzas/treasury/': typeof AuthenticatedFinanzasTreasuryIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -878,6 +917,7 @@ export interface FileRouteTypes {
     | '/finanzas/recaudos'
     | '/finanzas/reportes'
     | '/finanzas/tesoreria'
+    | '/finanzas/treasury'
     | '/finanzas/wallets'
     | '/herramientas/capacidad-pago'
     | '/herramientas/proyeccion'
@@ -904,6 +944,8 @@ export interface FileRouteTypes {
     | '/academia/lecciones/$leccionId'
     | '/academia/modulos/$moduloId'
     | '/colaboracion/dm/$conversationId'
+    | '/finanzas/treasury/auditoria'
+    | '/finanzas/treasury/conciliacion'
     | '/api/public/hooks/cartera-recordatorios'
     | '/api/public/hooks/casos-alertas'
     | '/api/public/hooks/finanzas-cron'
@@ -911,6 +953,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/recompute-snapshots'
     | '/lovable/email/queue/process'
     | '/colaboracion/dm/'
+    | '/finanzas/treasury/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -986,6 +1029,8 @@ export interface FileRouteTypes {
     | '/academia/lecciones/$leccionId'
     | '/academia/modulos/$moduloId'
     | '/colaboracion/dm/$conversationId'
+    | '/finanzas/treasury/auditoria'
+    | '/finanzas/treasury/conciliacion'
     | '/api/public/hooks/cartera-recordatorios'
     | '/api/public/hooks/casos-alertas'
     | '/api/public/hooks/finanzas-cron'
@@ -993,6 +1038,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/recompute-snapshots'
     | '/lovable/email/queue/process'
     | '/colaboracion/dm'
+    | '/finanzas/treasury'
   id:
     | '__root__'
     | '/'
@@ -1046,6 +1092,7 @@ export interface FileRouteTypes {
     | '/_authenticated/finanzas/recaudos'
     | '/_authenticated/finanzas/reportes'
     | '/_authenticated/finanzas/tesoreria'
+    | '/_authenticated/finanzas/treasury'
     | '/_authenticated/finanzas/wallets'
     | '/_authenticated/herramientas/capacidad-pago'
     | '/_authenticated/herramientas/proyeccion'
@@ -1072,6 +1119,8 @@ export interface FileRouteTypes {
     | '/_authenticated/academia/lecciones/$leccionId'
     | '/_authenticated/academia/modulos/$moduloId'
     | '/_authenticated/colaboracion/dm/$conversationId'
+    | '/_authenticated/finanzas/treasury/auditoria'
+    | '/_authenticated/finanzas/treasury/conciliacion'
     | '/api/public/hooks/cartera-recordatorios'
     | '/api/public/hooks/casos-alertas'
     | '/api/public/hooks/finanzas-cron'
@@ -1079,6 +1128,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/recompute-snapshots'
     | '/lovable/email/queue/process'
     | '/_authenticated/colaboracion/dm/'
+    | '/_authenticated/finanzas/treasury/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1479,6 +1529,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanzasWalletsRouteImport
       parentRoute: typeof AuthenticatedFinanzasRoute
     }
+    '/_authenticated/finanzas/treasury': {
+      id: '/_authenticated/finanzas/treasury'
+      path: '/treasury'
+      fullPath: '/finanzas/treasury'
+      preLoaderRoute: typeof AuthenticatedFinanzasTreasuryRouteImport
+      parentRoute: typeof AuthenticatedFinanzasRoute
+    }
     '/_authenticated/finanzas/tesoreria': {
       id: '/_authenticated/finanzas/tesoreria'
       path: '/tesoreria'
@@ -1605,6 +1662,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApoderadoMisCasosRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/finanzas/treasury/': {
+      id: '/_authenticated/finanzas/treasury/'
+      path: '/'
+      fullPath: '/finanzas/treasury/'
+      preLoaderRoute: typeof AuthenticatedFinanzasTreasuryIndexRouteImport
+      parentRoute: typeof AuthenticatedFinanzasTreasuryRoute
+    }
     '/_authenticated/colaboracion/dm/': {
       id: '/_authenticated/colaboracion/dm/'
       path: '/colaboracion/dm'
@@ -1653,6 +1717,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/hooks/cartera-recordatorios'
       preLoaderRoute: typeof ApiPublicHooksCarteraRecordatoriosRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/finanzas/treasury/conciliacion': {
+      id: '/_authenticated/finanzas/treasury/conciliacion'
+      path: '/conciliacion'
+      fullPath: '/finanzas/treasury/conciliacion'
+      preLoaderRoute: typeof AuthenticatedFinanzasTreasuryConciliacionRouteImport
+      parentRoute: typeof AuthenticatedFinanzasTreasuryRoute
+    }
+    '/_authenticated/finanzas/treasury/auditoria': {
+      id: '/_authenticated/finanzas/treasury/auditoria'
+      path: '/auditoria'
+      fullPath: '/finanzas/treasury/auditoria'
+      preLoaderRoute: typeof AuthenticatedFinanzasTreasuryAuditoriaRouteImport
+      parentRoute: typeof AuthenticatedFinanzasTreasuryRoute
     }
     '/_authenticated/colaboracion/dm/$conversationId': {
       id: '/_authenticated/colaboracion/dm/$conversationId'
@@ -1717,6 +1795,27 @@ const AuthenticatedAcademiaRouteWithChildren =
     AuthenticatedAcademiaRouteChildren,
   )
 
+interface AuthenticatedFinanzasTreasuryRouteChildren {
+  AuthenticatedFinanzasTreasuryAuditoriaRoute: typeof AuthenticatedFinanzasTreasuryAuditoriaRoute
+  AuthenticatedFinanzasTreasuryConciliacionRoute: typeof AuthenticatedFinanzasTreasuryConciliacionRoute
+  AuthenticatedFinanzasTreasuryIndexRoute: typeof AuthenticatedFinanzasTreasuryIndexRoute
+}
+
+const AuthenticatedFinanzasTreasuryRouteChildren: AuthenticatedFinanzasTreasuryRouteChildren =
+  {
+    AuthenticatedFinanzasTreasuryAuditoriaRoute:
+      AuthenticatedFinanzasTreasuryAuditoriaRoute,
+    AuthenticatedFinanzasTreasuryConciliacionRoute:
+      AuthenticatedFinanzasTreasuryConciliacionRoute,
+    AuthenticatedFinanzasTreasuryIndexRoute:
+      AuthenticatedFinanzasTreasuryIndexRoute,
+  }
+
+const AuthenticatedFinanzasTreasuryRouteWithChildren =
+  AuthenticatedFinanzasTreasuryRoute._addFileChildren(
+    AuthenticatedFinanzasTreasuryRouteChildren,
+  )
+
 interface AuthenticatedFinanzasRouteChildren {
   AuthenticatedFinanzasAlertasRoute: typeof AuthenticatedFinanzasAlertasRoute
   AuthenticatedFinanzasAuditoriaRoute: typeof AuthenticatedFinanzasAuditoriaRoute
@@ -1728,6 +1827,7 @@ interface AuthenticatedFinanzasRouteChildren {
   AuthenticatedFinanzasRecaudosRoute: typeof AuthenticatedFinanzasRecaudosRoute
   AuthenticatedFinanzasReportesRoute: typeof AuthenticatedFinanzasReportesRoute
   AuthenticatedFinanzasTesoreriaRoute: typeof AuthenticatedFinanzasTesoreriaRoute
+  AuthenticatedFinanzasTreasuryRoute: typeof AuthenticatedFinanzasTreasuryRouteWithChildren
   AuthenticatedFinanzasWalletsRoute: typeof AuthenticatedFinanzasWalletsRoute
   AuthenticatedFinanzasIndexRoute: typeof AuthenticatedFinanzasIndexRoute
 }
@@ -1745,6 +1845,8 @@ const AuthenticatedFinanzasRouteChildren: AuthenticatedFinanzasRouteChildren = {
   AuthenticatedFinanzasRecaudosRoute: AuthenticatedFinanzasRecaudosRoute,
   AuthenticatedFinanzasReportesRoute: AuthenticatedFinanzasReportesRoute,
   AuthenticatedFinanzasTesoreriaRoute: AuthenticatedFinanzasTesoreriaRoute,
+  AuthenticatedFinanzasTreasuryRoute:
+    AuthenticatedFinanzasTreasuryRouteWithChildren,
   AuthenticatedFinanzasWalletsRoute: AuthenticatedFinanzasWalletsRoute,
   AuthenticatedFinanzasIndexRoute: AuthenticatedFinanzasIndexRoute,
 }

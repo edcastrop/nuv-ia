@@ -4726,6 +4726,356 @@ export type Database = {
           },
         ]
       }
+      treasury_ajustes: {
+        Row: {
+          accion: string
+          created_at: string
+          id: string
+          movimiento_id: string
+          payload: Json
+          user_id: string | null
+        }
+        Insert: {
+          accion: string
+          created_at?: string
+          id?: string
+          movimiento_id: string
+          payload?: Json
+          user_id?: string | null
+        }
+        Update: {
+          accion?: string
+          created_at?: string
+          id?: string
+          movimiento_id?: string
+          payload?: Json
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treasury_ajustes_movimiento_id_fkey"
+            columns: ["movimiento_id"]
+            isOneToOne: false
+            referencedRelation: "treasury_movimientos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treasury_auditoria: {
+        Row: {
+          accion: string
+          created_at: string
+          entidad: string
+          entidad_id: string | null
+          id: string
+          user_id: string | null
+          valor_anterior: Json | null
+          valor_nuevo: Json | null
+        }
+        Insert: {
+          accion: string
+          created_at?: string
+          entidad: string
+          entidad_id?: string | null
+          id?: string
+          user_id?: string | null
+          valor_anterior?: Json | null
+          valor_nuevo?: Json | null
+        }
+        Update: {
+          accion?: string
+          created_at?: string
+          entidad?: string
+          entidad_id?: string | null
+          id?: string
+          user_id?: string | null
+          valor_anterior?: Json | null
+          valor_nuevo?: Json | null
+        }
+        Relationships: []
+      }
+      treasury_bancos: {
+        Row: {
+          activo: boolean
+          alias: string | null
+          created_at: string
+          id: string
+          moneda: string
+          nombre: string
+          numero_cuenta: string | null
+          parser_profile: string | null
+          saldo_actual: number
+          tipo_cuenta: string | null
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          alias?: string | null
+          created_at?: string
+          id?: string
+          moneda?: string
+          nombre: string
+          numero_cuenta?: string | null
+          parser_profile?: string | null
+          saldo_actual?: number
+          tipo_cuenta?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          alias?: string | null
+          created_at?: string
+          id?: string
+          moneda?: string
+          nombre?: string
+          numero_cuenta?: string | null
+          parser_profile?: string | null
+          saldo_actual?: number
+          tipo_cuenta?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      treasury_config: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
+      treasury_extractos: {
+        Row: {
+          archivo_nombre: string | null
+          archivo_url: string | null
+          banco_id: string | null
+          created_at: string
+          estado: Database["public"]["Enums"]["treasury_extracto_estado"]
+          formato: string
+          id: string
+          parse_log: Json
+          periodo_fin: string | null
+          periodo_inicio: string | null
+          total_egresos: number
+          total_ingresos: number
+          total_movs: number
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          archivo_nombre?: string | null
+          archivo_url?: string | null
+          banco_id?: string | null
+          created_at?: string
+          estado?: Database["public"]["Enums"]["treasury_extracto_estado"]
+          formato: string
+          id?: string
+          parse_log?: Json
+          periodo_fin?: string | null
+          periodo_inicio?: string | null
+          total_egresos?: number
+          total_ingresos?: number
+          total_movs?: number
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          archivo_nombre?: string | null
+          archivo_url?: string | null
+          banco_id?: string | null
+          created_at?: string
+          estado?: Database["public"]["Enums"]["treasury_extracto_estado"]
+          formato?: string
+          id?: string
+          parse_log?: Json
+          periodo_fin?: string | null
+          periodo_inicio?: string | null
+          total_egresos?: number
+          total_ingresos?: number
+          total_movs?: number
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treasury_extractos_banco_id_fkey"
+            columns: ["banco_id"]
+            isOneToOne: false
+            referencedRelation: "treasury_bancos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treasury_match_candidatos: {
+        Row: {
+          created_at: string
+          id: string
+          match_id: string
+          match_tipo: Database["public"]["Enums"]["treasury_match_tipo"]
+          motivo: Json
+          movimiento_id: string
+          posicion: number
+          score: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          match_id: string
+          match_tipo: Database["public"]["Enums"]["treasury_match_tipo"]
+          motivo?: Json
+          movimiento_id: string
+          posicion?: number
+          score: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          match_id?: string
+          match_tipo?: Database["public"]["Enums"]["treasury_match_tipo"]
+          motivo?: Json
+          movimiento_id?: string
+          posicion?: number
+          score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treasury_match_candidatos_movimiento_id_fkey"
+            columns: ["movimiento_id"]
+            isOneToOne: false
+            referencedRelation: "treasury_movimientos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treasury_match_rules: {
+        Row: {
+          activa: boolean
+          canal: string | null
+          cliente_id_default: string | null
+          contraparte_hint: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          match_id_default: string | null
+          match_tipo: Database["public"]["Enums"]["treasury_match_tipo"]
+          patron: string
+          ultimo_uso: string | null
+          veces_aplicada: number
+        }
+        Insert: {
+          activa?: boolean
+          canal?: string | null
+          cliente_id_default?: string | null
+          contraparte_hint?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          match_id_default?: string | null
+          match_tipo: Database["public"]["Enums"]["treasury_match_tipo"]
+          patron: string
+          ultimo_uso?: string | null
+          veces_aplicada?: number
+        }
+        Update: {
+          activa?: boolean
+          canal?: string | null
+          cliente_id_default?: string | null
+          contraparte_hint?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          match_id_default?: string | null
+          match_tipo?: Database["public"]["Enums"]["treasury_match_tipo"]
+          patron?: string
+          ultimo_uso?: string | null
+          veces_aplicada?: number
+        }
+        Relationships: []
+      }
+      treasury_movimientos: {
+        Row: {
+          canal: string | null
+          conciliado_at: string | null
+          conciliado_by: string | null
+          confianza: number
+          contraparte: string | null
+          created_at: string
+          descripcion_raw: string | null
+          estado_match: Database["public"]["Enums"]["treasury_mov_estado"]
+          extracto_id: string
+          fecha: string
+          id: string
+          match_id: string | null
+          match_tipo: Database["public"]["Enums"]["treasury_match_tipo"] | null
+          notas: string | null
+          referencia: string | null
+          tipo: Database["public"]["Enums"]["treasury_mov_tipo"]
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          canal?: string | null
+          conciliado_at?: string | null
+          conciliado_by?: string | null
+          confianza?: number
+          contraparte?: string | null
+          created_at?: string
+          descripcion_raw?: string | null
+          estado_match?: Database["public"]["Enums"]["treasury_mov_estado"]
+          extracto_id: string
+          fecha: string
+          id?: string
+          match_id?: string | null
+          match_tipo?: Database["public"]["Enums"]["treasury_match_tipo"] | null
+          notas?: string | null
+          referencia?: string | null
+          tipo: Database["public"]["Enums"]["treasury_mov_tipo"]
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          canal?: string | null
+          conciliado_at?: string | null
+          conciliado_by?: string | null
+          confianza?: number
+          contraparte?: string | null
+          created_at?: string
+          descripcion_raw?: string | null
+          estado_match?: Database["public"]["Enums"]["treasury_mov_estado"]
+          extracto_id?: string
+          fecha?: string
+          id?: string
+          match_id?: string | null
+          match_tipo?: Database["public"]["Enums"]["treasury_match_tipo"] | null
+          notas?: string | null
+          referencia?: string | null
+          tipo?: Database["public"]["Enums"]["treasury_mov_tipo"]
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treasury_movimientos_extracto_id_fkey"
+            columns: ["extracto_id"]
+            isOneToOne: false
+            referencedRelation: "treasury_extractos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -5350,6 +5700,19 @@ export type Database = {
       pregunta_tipo: "unica" | "multiple" | "verdadero_falso"
       tarea_estado: "pendiente" | "en_progreso" | "completada" | "cancelada"
       tarea_prioridad: "baja" | "media" | "alta" | "critica"
+      treasury_extracto_estado: "procesando" | "listo" | "error"
+      treasury_match_tipo:
+        | "cartera"
+        | "cuenta_cobro"
+        | "honorario"
+        | "comision"
+        | "otro"
+      treasury_mov_estado:
+        | "no_identificado"
+        | "sugerido"
+        | "conciliado"
+        | "descartado"
+      treasury_mov_tipo: "credito" | "debito"
       wallet_mov_tipo:
         | "comision_generada"
         | "comision_liberada"
@@ -5656,6 +6019,21 @@ export const Constants = {
       pregunta_tipo: ["unica", "multiple", "verdadero_falso"],
       tarea_estado: ["pendiente", "en_progreso", "completada", "cancelada"],
       tarea_prioridad: ["baja", "media", "alta", "critica"],
+      treasury_extracto_estado: ["procesando", "listo", "error"],
+      treasury_match_tipo: [
+        "cartera",
+        "cuenta_cobro",
+        "honorario",
+        "comision",
+        "otro",
+      ],
+      treasury_mov_estado: [
+        "no_identificado",
+        "sugerido",
+        "conciliado",
+        "descartado",
+      ],
+      treasury_mov_tipo: ["credito", "debito"],
       wallet_mov_tipo: [
         "comision_generada",
         "comision_liberada",

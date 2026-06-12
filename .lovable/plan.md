@@ -1,214 +1,252 @@
-# FASE 7.6.1D-1 — Arquitectura técnica
+# NUVIA TREASURY AI 1.0 — Arquitectura propuesta
 
-Objetivo: persistir lo mínimo necesario para que el Expediente Maestro V2 funcione como sistema operativo real. **No** se toca la capa visual del preview todavía. **No** se incluyen promotores, recompra, embajadores, cross-sell, customer success ni E18–E20.
-
----
-
-## 1. Hallazgo previo — Cliente Maestro ya existe
-
-La tabla `public.clientes` **ya está creada** en la base de datos y `expedientes.cliente_id` ya tiene FK hacia ella (`ON DELETE SET NULL`, con índice). Estructura actual:
-
-- `id, cedula (UNIQUE), nombre_completo, email, telefono, ciudad, fecha_primer_caso, fecha_ultimo_caso, total_expedientes, total_ahorro_generado, total_honorarios_pagados, nps_ultimo, es_promotor, metadata, created_at, updated_at`
-- RLS: lectura para todo `authenticated`, escritura sólo `super_admin / admin / gerencia`.
-
-**Decisión:** no se recrea la tabla. La fase D-1 sobre Cliente Maestro se reduce a **backfill + sincronización**, no a un `CREATE TABLE`. Los campos pedidos (`cedula, nombre, email, telefono`) ya existen (`nombre_completo` cumple el rol de `nombre`).
-
-Si prefieres una tabla nueva `clientes_maestro` separada de la actual, indícalo y lo agregamos al plan; lo recomendado es reutilizar.
+Motor inteligente de tesorería y conciliación bancaria. Se construye como **nueva capacidad aditiva** dentro de Finanzas. **Cero impacto** sobre Pipeline, Expedientes, Simuladores, Contratación, QA, Motor Honorarios, Comisiones ni módulos existentes.
 
 ---
 
-## 2. Modelo entidad-relación (sólo lo nuevo)
+## 1. Arquitectura funcional
 
 ```text
-clientes (ya existe)
-  └── 1:N ──> expedientes (vía cliente_id, ya existe)
-                  ├── 1:N ──> expediente_tareas      (NUEVA)
-                  └── 1:N ──> expediente_bitacora    (NUEVA)
-
-profiles (auth)
-  ├── responsable_id ──> expediente_tareas
-  └── usuario_id     ──> expediente_bitacora
+                  ┌─────────────────────────────────────┐
+                  │     /finanzas/treasury (nuevo)      │
+                  │   NUVIA TREASURY AI — Shell         │
+                  └────────────────┬────────────────────┘
+                                   │
+   ┌──────────┬────────────┬───────┴───────┬───────────┬────────────┐
+   ▼          ▼            ▼               ▼           ▼            ▼
+Dashboard  Concilia-     Cartera        Flujo de   Auditoría   Config
+Tesorería  ción IA        IA             Caja IA   Financiera  Bancos/Reglas
+   │          │            │               │           │            │
+   └────┬─────┴─────┬──────┴───────┬───────┴─────┬─────┴────────┬───┘
+        ▼           ▼              ▼             ▼              ▼
+   serverFn:    serverFn:      serverFn:     serverFn:     serverFn:
+   treasuryKpis ingestExtracto carteraAging  forecastCaja  auditTreasury
+                matchEngine                                 configReglas
+                aprenderRegla
+                                   │
+                                   ▼
+                       ┌───────────────────────┐
+                       │  Lovable AI Gateway   │
+                       │  (gemini-3-flash)     │
+                       │  - parse PDF/Excel    │
+                       │  - clasificar movs    │
+                       │  - copiloto preguntas │
+                       └───────────────────────┘
 ```
 
-Sólo se crean dos tablas. Ninguna otra relación se modifica en D-1.
+**Principios:**
+- Sólo **lectura** sobre tablas existentes (`cartera`, `cuentas_cobro`, `honorarios_calculos`, `comisiones`, `expedientes`, `clientes`, `pago_conciliacion`).
+- **Escritura exclusiva** sobre tablas nuevas (`treasury_*`).
+- Toda conciliación confirmada se **propaga** a `pago_conciliacion` y `cartera_pagos` vía serverFn explícita (no mutamos esas tablas en frecuencia automática sin aprobación humana).
+- Aprendizaje supervisado: cada corrección del usuario → fila en `treasury_match_rules`.
 
 ---
 
-## 3. Migración SQL propuesta (una sola migración)
+## 2. Modelo de datos propuesto (8 tablas nuevas, todas prefijo `treasury_`)
 
-### 3.1 `expediente_tareas`
+```text
+treasury_bancos
+  id, nombre, alias, tipo_cuenta, numero_cuenta, moneda, saldo_actual,
+  activo, parser_profile (text), created_at, updated_at
 
-```sql
-CREATE TYPE public.tarea_prioridad AS ENUM ('baja','media','alta','critica');
-CREATE TYPE public.tarea_estado    AS ENUM ('pendiente','en_progreso','completada','cancelada');
+treasury_extractos                     (cada archivo cargado)
+  id, banco_id → treasury_bancos, archivo_url, formato (pdf|xlsx|csv|txt),
+  periodo_inicio, periodo_fin, total_movs, total_ingresos, total_egresos,
+  estado (procesando|listo|error), parse_log jsonb,
+  uploaded_by, created_at
 
-CREATE TABLE public.expediente_tareas (
-  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  expediente_id   uuid NOT NULL REFERENCES public.expedientes(id) ON DELETE CASCADE,
-  responsable_id  uuid REFERENCES auth.users(id) ON DELETE SET NULL,
-  titulo          text NOT NULL,
-  descripcion     text,
-  prioridad       public.tarea_prioridad NOT NULL DEFAULT 'media',
-  fecha_objetivo  date,
-  estado          public.tarea_estado   NOT NULL DEFAULT 'pendiente',
-  completada_at   timestamptz,
-  created_by      uuid REFERENCES auth.users(id) ON DELETE SET NULL,
-  created_at      timestamptz NOT NULL DEFAULT now(),
-  updated_at      timestamptz NOT NULL DEFAULT now()
-);
-CREATE INDEX idx_tareas_expediente ON public.expediente_tareas(expediente_id);
-CREATE INDEX idx_tareas_responsable ON public.expediente_tareas(responsable_id) WHERE estado IN ('pendiente','en_progreso');
+treasury_movimientos                   (cada línea del extracto)
+  id, extracto_id → treasury_extractos, fecha, valor, tipo (credito|debito),
+  descripcion_raw, referencia, contraparte, canal (nequi|pse|trans|...),
+  estado_match (no_identificado|sugerido|conciliado|descartado),
+  confianza numeric(5,2),               -- 0..100
+  match_tipo (cartera|cuenta_cobro|honorario|comision|otro|null),
+  match_id uuid,                        -- polimórfico
+  conciliado_by, conciliado_at, notas, created_at, updated_at
+
+treasury_match_candidatos              (top-N candidatos por movimiento)
+  id, movimiento_id → treasury_movimientos, score numeric(5,2),
+  match_tipo, match_id, motivo jsonb,   -- razones del score
+  posicion smallint, created_at
+
+treasury_match_rules                   (aprendizaje supervisado)
+  id, patron text,                      -- regex sobre descripcion_raw / referencia
+  canal text, contraparte_hint text,
+  match_tipo, match_id_default uuid null,
+  cliente_id_default uuid null,
+  veces_aplicada int, ultimo_uso, created_by, created_at
+
+treasury_ajustes                       (correcciones manuales)
+  id, movimiento_id, accion (asignar|descartar|dividir|fusionar),
+  payload jsonb, user_id, created_at
+
+treasury_auditoria                     (trazabilidad completa)
+  id, entidad (extracto|movimiento|regla|ajuste|config),
+  entidad_id, accion, valor_anterior jsonb, valor_nuevo jsonb,
+  user_id, created_at
+
+treasury_config                        (kv para reglas globales)
+  key text PK, value jsonb, updated_by, updated_at
+  -- ej: { tolerancia_pct: 1.5, umbral_auto_conciliar: 92, umbral_sugerir: 70 }
 ```
 
-### 3.2 `expediente_bitacora`
+**RLS y grants** (todas las tablas):
+- `GRANT SELECT, INSERT, UPDATE, DELETE … TO authenticated; GRANT ALL … TO service_role`.
+- Política: `can_manage_finanzas(auth.uid())` para lectura/escritura (mismo helper que ya usa `tesoreria_movimientos`). Bitácora `treasury_auditoria`: append-only para `authenticated`.
 
-```sql
-CREATE TYPE public.bitacora_tipo AS ENUM ('comentario','evidencia','llamada','email','whatsapp','sistema');
+**Reutilización (sin modificar):**
+- `cartera`, `cartera_pagos`, `cartera_cuotas` → lectura para matching + insert de pagos cuando el usuario confirma.
+- `cuentas_cobro` → lectura para matching.
+- `honorarios_calculos`, `comisiones` → lectura para matching.
+- `clientes`, `expedientes` → lectura para enriquecer contraparte.
+- `pago_conciliacion` → insert/update sólo cuando el usuario confirma conciliación.
 
-CREATE TABLE public.expediente_bitacora (
-  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  expediente_id uuid NOT NULL REFERENCES public.expedientes(id) ON DELETE CASCADE,
-  usuario_id    uuid REFERENCES auth.users(id) ON DELETE SET NULL,
-  comentario    text NOT NULL,
-  tipo          public.bitacora_tipo NOT NULL DEFAULT 'comentario',
-  metadata      jsonb NOT NULL DEFAULT '{}',
-  created_at    timestamptz NOT NULL DEFAULT now()
-);
-CREATE INDEX idx_bitacora_expediente_created
-  ON public.expediente_bitacora(expediente_id, created_at DESC);
+---
+
+## 3. Pantallas propuestas (NUVIA Design System)
+
+Todas montadas en rutas nuevas bajo `/finanzas/treasury/*`. Ninguna ruta existente se renombra ni elimina.
+
+### 3.1 `/finanzas/treasury` — Dashboard Tesorería
+- `ExecutiveHero` "NUVIA Treasury AI · Motor de tesorería".
+- `KpiGrid` (8 KPIs):
+  Saldo bancario · Ingresos mes · Conciliados · Pendientes · Cartera por cobrar · Honorarios pendientes · Flujo 30 días · Alertas activas.
+- 2 columnas: timeline últimos extractos · panel `InsightCard` con resumen IA.
+
+### 3.2 `/finanzas/treasury/conciliacion`
+- Dropzone para PDF/XLSX/CSV/TXT (drag-and-drop nuvia).
+- Lista de extractos cargados (estado, totales, % conciliado).
+- Al abrir un extracto → 3 paneles tipo Kanban:
+  - **Conciliados** (verde) — N movs, $X, confianza promedio.
+  - **Sugeridos** (amber) — N movs, lista con top-3 candidatos + botón "Aceptar"/"Cambiar".
+  - **No identificados** (rojo) — N movs, asignación manual (buscador de expediente/cuenta de cobro/cliente).
+- Cada acción manual dispara `aprenderRegla()`.
+
+### 3.3 `/finanzas/treasury/cartera`
+- Aging buckets: al día / 30 / 60 / 90+.
+- Alertas: aprobado sin pago · pago parcial · promesa vencida · cuenta de cobro emitida sin recaudo.
+- Tabla con `tabular-nums`, NSelect filtros, export.
+
+### 3.4 `/finanzas/treasury/flujo-caja`
+- KPI: ingresos esperados 30d.
+- 3 columnas (Alta / Media / Baja probabilidad) alimentadas desde pipeline + cartera + cuentas de cobro.
+- Gráfico de barras semanal (sin libs nuevas, SVG inline al estilo NUVIA).
+
+### 3.5 `/finanzas/treasury/auditoria`
+- Tabla de `treasury_auditoria` con filtros entidad/usuario/acción y diff JSON (mismo patrón que `finanzas.auditoria`).
+
+### 3.6 `/finanzas/treasury/config`
+- Bancos activos (CRUD `treasury_bancos`).
+- Reglas globales (`treasury_config`): tolerancia %, umbrales de auto-conciliar / sugerir.
+- Lista de reglas aprendidas (`treasury_match_rules`) con activar/desactivar.
+
+### 3.7 Copiloto IA (drawer global del módulo)
+- Panel lateral con preguntas predefinidas + input libre.
+- Llama serverFn `treasuryCopiloto({pregunta})` → AI Gateway `google/gemini-3-flash-preview` con contexto agregado (KPIs + aging + flujo).
+
+---
+
+## 4. Flujo completo de conciliación
+
+```text
+[Usuario] sube extracto (PDF/XLSX/CSV/TXT)
+    │
+    ▼
+serverFn ingestExtracto:
+  1. Sube archivo a Storage (bucket treasury-extractos, privado)
+  2. INSERT treasury_extractos (estado=procesando)
+  3. Parseo:
+       - CSV/XLSX → parser nativo (papaparse/xlsx ya disponibles)
+       - PDF/TXT → AI Gateway (gemini-3-flash) con prompt estructurado
+                    → output JSON {movimientos: [...]}
+  4. INSERT bulk treasury_movimientos
+  5. estado=listo
+    │
+    ▼
+serverFn matchEngine(extracto_id):
+  Para cada movimiento:
+    Genera candidatos cruzando:
+      - cartera (saldo pendiente, cliente, expediente)
+      - cuentas_cobro (monto, cliente, número)
+      - honorarios_calculos (monto neto, expediente)
+      - treasury_match_rules (patrón sobre descripcion_raw)
+    Score (0..100) ponderando:
+      valor exacto (35) · cliente/cedula match (25) · referencia (15) ·
+      fecha cercana ±5d (10) · regla aprendida previa (15)
+    INSERT top-3 en treasury_match_candidatos
+    Si score >= umbral_auto_conciliar (def 92): estado=conciliado
+    Si score >= umbral_sugerir       (def 70): estado=sugerido
+    Else: estado=no_identificado
+    │
+    ▼
+[Usuario] revisa en /conciliacion:
+    - Acepta sugerencia  → confirmarMatch()
+    - Cambia a otro      → asignarManual() + aprenderRegla()
+    - Descarta           → descartarMovimiento()
+    │
+    ▼
+serverFn confirmarMatch:
+  - UPDATE treasury_movimientos (estado=conciliado, conciliado_by/at)
+  - Según match_tipo:
+      cartera        → INSERT cartera_pagos
+      cuenta_cobro   → UPDATE cuentas_cobro (estado, pagado_at)
+      honorario      → marcar honorario pagado
+  - INSERT pago_conciliacion (estado=pagado) si aplica
+  - INSERT treasury_auditoria
+  - Si vino de corrección manual → INSERT/UPDATE treasury_match_rules
 ```
 
-### 3.3 GRANTS + triggers
-
-```sql
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.expediente_tareas    TO authenticated;
-GRANT SELECT, INSERT                  ON public.expediente_bitacora TO authenticated;
-GRANT ALL ON public.expediente_tareas, public.expediente_bitacora TO service_role;
-
-CREATE TRIGGER tg_tareas_updated BEFORE UPDATE ON public.expediente_tareas
-  FOR EACH ROW EXECUTE FUNCTION public.tg_updated_at();
-```
-
-Bitácora es **append-only** (no se otorga UPDATE/DELETE a `authenticated`). Sólo `service_role` puede corregir errores.
+**Aprendizaje:** la regla guardada usa `patron` (regex sobre `descripcion_raw`) + `contraparte_hint`. En la próxima ingesta, `matchEngine` consulta `treasury_match_rules` ANTES del cruce general; si hay hit ⇒ score +15 y `match_id_default` precargado.
 
 ---
 
-## 4. RLS
+## 5. Plan de implementación por fases
 
-Patrón: alineado con `expedientes` — el dueño del caso (`asesor_id`), el responsable de la tarea, y los roles de gestión pueden ver/escribir.
+### Fase 1 — MVP (este sprint, **lo único a construir ahora**)
+- Migración SQL con 8 tablas + RLS + grants + bucket storage `treasury-extractos`.
+- serverFns: `treasuryKpis`, `listExtractos`, `ingestExtracto` (CSV/XLSX nativo + PDF vía IA), `matchEngine`, `confirmarMatch`, `asignarManual`, `descartarMovimiento`, `aprenderRegla`, `listMovimientos`.
+- Rutas:
+  - `/finanzas/treasury` (dashboard)
+  - `/finanzas/treasury/conciliacion` (carga + 3 paneles)
+  - `/finanzas/treasury/auditoria`
+- Entry en sidebar Finanzas: **"Treasury AI"** (badge "Beta").
+- Alertas básicas en dashboard.
 
-```sql
-ALTER TABLE public.expediente_tareas    ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.expediente_bitacora  ENABLE ROW LEVEL SECURITY;
+### Fase 2 — Cartera IA + Flujo de Caja
+- Rutas `/cartera` y `/flujo-caja` con aging real y forecast determinístico (no ML).
+- Alertas avanzadas (promesa vencida, pago parcial).
 
--- Función helper reutilizable
-CREATE OR REPLACE FUNCTION public.can_access_expediente(_uid uuid, _exp uuid)
-RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
-  SELECT has_role(_uid,'super_admin') OR has_role(_uid,'admin')
-      OR has_role(_uid,'gerencia')    OR has_role(_uid,'director_financiero_qa')
-      OR has_role(_uid,'director_juridico') OR has_role(_uid,'operaciones')
-      OR has_role(_uid,'juridica')
-      OR EXISTS (SELECT 1 FROM public.expedientes e
-                  WHERE e.id = _exp AND e.asesor_id = _uid);
-$$;
+### Fase 3 — Copiloto IA + Configuración avanzada
+- Drawer copiloto con AI Gateway + contexto agregado.
+- CRUD bancos, reglas globales, gestión de reglas aprendidas.
 
--- Tareas: lectura/escritura para quien accede al expediente o es el responsable
-CREATE POLICY tareas_read  ON public.expediente_tareas FOR SELECT TO authenticated
-  USING (public.can_access_expediente(auth.uid(), expediente_id)
-      OR responsable_id = auth.uid());
-CREATE POLICY tareas_write ON public.expediente_tareas FOR ALL TO authenticated
-  USING (public.can_access_expediente(auth.uid(), expediente_id))
-  WITH CHECK (public.can_access_expediente(auth.uid(), expediente_id));
-
--- Bitácora: lectura amplia (auditoría), inserción sólo si accede al expediente
-CREATE POLICY bitacora_read   ON public.expediente_bitacora FOR SELECT TO authenticated
-  USING (public.can_access_expediente(auth.uid(), expediente_id));
-CREATE POLICY bitacora_insert ON public.expediente_bitacora FOR INSERT TO authenticated
-  WITH CHECK (public.can_access_expediente(auth.uid(), expediente_id)
-              AND usuario_id = auth.uid());
-```
+### Fase 4 — Inteligencia avanzada (no en alcance ahora)
+- Forecast ML, detección de anomalías, modelos externos.
 
 ---
 
-## 5. ServerFns nuevas (`src/lib/expedienteOperativo.functions.ts`)
+## 6. Garantías de no-impacto
 
-Todas con `requireSupabaseAuth`. RLS hace la seguridad real; las server fns sólo validan input con Zod y normalizan.
-
-| Función | Método | Propósito |
-|---|---|---|
-| `listTareas({expediente_id})` | GET | Lista tareas del expediente ordenadas por prioridad + fecha. |
-| `crearTarea(input)` | POST | Inserta tarea (valida título 1–200, prioridad enum, fecha_objetivo opcional). |
-| `actualizarTareaEstado({id, estado})` | POST | Cambia estado; setea `completada_at` cuando pasa a `completada`. |
-| `asignarTarea({id, responsable_id})` | POST | Reasigna responsable. |
-| `listBitacora({expediente_id, limit, before})` | GET | Lectura paginada DESC. |
-| `agregarBitacora({expediente_id, comentario, tipo})` | POST | Inserta con `usuario_id = auth.uid()`. |
-
-No se crean rutas API públicas. No hay edge functions.
+| Módulo | Acción |
+|---|---|
+| Pipeline, Expedientes, Simuladores, Contratación, QA, Honorarios, Comisiones | Sólo lectura (SELECT). Cero ALTER, cero nuevos triggers. |
+| `cartera_pagos`, `pago_conciliacion`, `cuentas_cobro` | Sólo INSERT/UPDATE explícito en `confirmarMatch`, con auditoría. |
+| `tesoreria_movimientos`, `finanzas.*` actuales | Sin cambios. Treasury vive en rutas y tablas nuevas. |
+| Diseño | NUVIA Design System 1.0 (ExecutiveHero, KpiGrid, NCard, NSelect, .nuvia-input). |
 
 ---
 
-## 6. Impacto sobre Expediente Maestro V2
-
-La capa visual **no se toca en D-1**. El preview `/expediente-v2/$id` seguirá funcionando con los placeholders actuales. En D-2 (siguiente fase) reemplazaremos:
-
-- Sección **Plan de Tratamiento** → leerá `expediente_tareas` real.
-- Sección **Bitácora Clínica** → leerá `expediente_bitacora` real + composer de comentarios.
-- Hero seguirá leyendo `expedientes` + `clientes` vía join (ya disponible hoy).
-
-Ningún componente NUVIA cambia. Ninguna ruta productiva (`/casos/$id`, `/expediente-maestro/$id`) se modifica.
-
----
-
-## 7. Estrategia de migración de datos existentes
-
-1. **Cliente Maestro:** ya hay `expedientes.cliente_id`. Se ejecutará un **backfill idempotente** dentro de la migración:
-   ```sql
-   -- Crear clientes faltantes a partir de expedientes sin cliente_id
-   INSERT INTO public.clientes (cedula, nombre_completo, ...)
-   SELECT DISTINCT ON (cedula) cedula, cliente_nombre, ...
-     FROM public.expedientes
-    WHERE cliente_id IS NULL AND cedula IS NOT NULL AND cedula <> ''
-   ON CONFLICT (cedula) DO NOTHING;
-
-   UPDATE public.expedientes e
-      SET cliente_id = c.id
-     FROM public.clientes c
-    WHERE e.cliente_id IS NULL AND e.cedula = c.cedula;
-   ```
-2. **Tareas:** no hay datos preexistentes — tabla nace vacía.
-3. **Bitácora:** se mantiene `expediente_historial` (sistema de auditoría de cambios de estado, automático). `expediente_bitacora` es **complementaria** (comentarios manuales del operador). En D-2 el timeline las une visualmente. **No se migran filas** entre ellas.
-
----
-
-## 8. Riesgos detectados
+## 7. Riesgos y mitigaciones
 
 | Riesgo | Mitigación |
 |---|---|
-| Duplicación conceptual entre `expediente_historial` (auditoría auto) y `expediente_bitacora` (comentarios manuales). | Documentar contrato: historial = sistema, bitácora = humano. Tipos disjuntos. |
-| Expedientes con `cedula` vacía o malformada quedan sin `cliente_id` tras backfill. | Backfill es best-effort; reporte post-migración con conteo de huérfanos. No bloquea. |
-| RLS de tareas requiere helper `can_access_expediente` nuevo — posible solape con políticas existentes. | Función `SECURITY DEFINER` aislada, sólo lectura, no recursiva (no consulta tareas/bitácora). |
-| Cliente Maestro actual tiene campos agregados (`total_ahorro_generado`, etc.) no en el spec. | Se ignoran en D-1; se mantienen para no romper código existente (`caso_eventos`, `testimonios`, `casos_referidos` ya los referencian). |
-| `expediente_tareas` con `ON DELETE CASCADE` borra tareas al borrar expediente. | Coherente con modelo operativo; bitácora idem. |
-| Bitácora append-only: si un usuario sube un comentario erróneo, no puede borrarlo. | Aceptado por diseño (trazabilidad). Corrección vía nuevo comentario o `service_role`. |
+| Parseo PDF poco confiable | Fallback manual; mostrar `parse_log`; permitir re-subir como XLSX. |
+| Falsos positivos en auto-conciliación | Umbral conservador 92; toda auto-conciliación queda en auditoría y es reversible. |
+| Reglas aprendidas mal entrenadas | Pantalla en `/config` para revisar, desactivar o borrar reglas. |
+| Costo AI Gateway por extractos grandes | Parser nativo para CSV/XLSX (mayoría); IA sólo PDF/TXT. |
+| RLS demasiado abierta | Helper `can_manage_finanzas` ya restringe a roles financieros existentes. |
 
 ---
 
-## 9. Entregables de D-1 (al ejecutar)
-
-1. Una migración SQL única (tablas + enums + grants + RLS + helper + triggers + backfill clientes).
-2. Archivo `src/lib/expedienteOperativo.functions.ts` con las 6 server fns.
-3. **Ningún cambio visual.** El preview V2 sigue idéntico.
-
----
-
-## 10. Fuera de alcance (confirmado)
-
-- Promotores, recompra, embajadores, cross-sell, customer success, programa de referidos avanzado.
-- E18, E19, E20 del pipeline.
-- Tabla `clientes_maestro` separada (se reutiliza `clientes`).
-- Cambios visuales en Expediente V2 (se hacen en D-2).
-- Migración del expediente productivo (`/expediente-maestro`).
-
----
-
-**Esperando aprobación para ejecutar D-1.** Si quieres ajustes (ej. crear `clientes_maestro` aparte, agregar campos, cambiar RLS, otra estrategia de bitácora vs historial), indícalo y replanteo antes de tocar la base.
+**Esperando aprobación para ejecutar Fase 1.**
+Si quieres ajustes (más/menos tablas, otro alcance de MVP, otro orden de pantallas, mover el copiloto a Fase 1, etc.) lo replanteo antes de tocar la base.

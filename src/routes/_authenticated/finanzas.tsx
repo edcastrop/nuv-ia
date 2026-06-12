@@ -11,7 +11,9 @@ import {
   BellRing,
   ShieldCheck,
   FileBarChart2,
+  Brain,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/finanzas")({
   component: FinanzasLayout,
@@ -32,7 +34,9 @@ const SUBMODULOS = [
   { to: "/finanzas/tesoreria", label: "Tesorería", Icon: Landmark },
   { to: "/finanzas/alertas", label: "Alertas IA", Icon: BellRing },
   { to: "/finanzas/reportes", label: "Reportes", Icon: FileBarChart2 },
+  { to: "/finanzas/treasury", label: "Treasury AI", Icon: Brain },
   { to: "/finanzas/auditoria", label: "Auditoría", Icon: ShieldCheck },
+
 ];
 
 function FinanzasLayout() {
