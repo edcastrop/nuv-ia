@@ -179,22 +179,13 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
 
   return (
     <div
-      className="min-h-screen"
+      className="relative min-h-screen"
       style={{ background: "var(--nuvia-bg-primary)", color: "var(--nuvia-text-primary)" }}
     >
-      {/* Fondo decorativo */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div
-          className="absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full opacity-[0.16] blur-[140px]"
-          style={{ background: "var(--nuvia-accent-blue)" }}
-        />
-        <div
-          className="absolute top-40 -right-40 h-[500px] w-[500px] rounded-full opacity-[0.12] blur-[140px]"
-          style={{ background: "var(--nuvia-accent-green)" }}
-        />
-      </div>
+      {/* Fondo animado NUVIA */}
+      <AnimatedBackground />
 
-      <div className="relative mx-auto max-w-7xl px-6 py-10 space-y-8 animate-fade-in">
+      <div className="relative z-10 mx-auto max-w-7xl px-6 py-10 space-y-8 animate-fade-in">
         {/* ZONA 1 — HERO */}
         <HeroRolCard
           saludo={saludo}
@@ -207,6 +198,9 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
           roleLabelFor={(r) => roleLabel(r)}
         />
 
+        {/* Frase motivacional dinámica */}
+        <MotivationalQuote />
+
         {/* ZONA 2 — NUVIA IA PROMPT */}
         <NuviaIAPromptCard
           prompt={config.iaPrompt.prompt}
@@ -216,6 +210,7 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
 
         {/* ZONA 3 — KPIs */}
         <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+
           {config.kpis.map((k) => (
             <KpiCard
               key={k.id}
