@@ -1118,7 +1118,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           onClick={() => stage !== "reading" && setOpen(false)}
         >
           <div
-            className="relative w-full max-w-4xl overflow-hidden rounded-2xl"
+            className="relative flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl"
             style={{
               background: "linear-gradient(180deg, #0A1226, #07162D)",
               border: "1px solid rgba(255,255,255,0.10)",
