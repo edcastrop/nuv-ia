@@ -35,7 +35,7 @@ function NuevoQaAi() {
   const [simPlazo, setSimPlazo] = useState("");
 
   // Reuso desde extractos_lecturas
-  const [extractos, setExtractos] = useState<Array<{ extractoId: string; expedienteId: string | null; banco: string; producto: string; codigo: string | null; cliente: string | null; fecha: string }>>([]);
+  const [extractos, setExtractos] = useState<Array<{ extractoId: string; expedienteId: string | null; banco: string | null; producto: string | null; codigo: string | null; cliente: string | null; fecha: string }>>([]);
   const [extractoSel, setExtractoSel] = useState<string>("");
   const [precarga, setPrecarga] = useState<{ banco: string; producto: string; titular: string; expedienteId: string | null } | null>(null);
 
