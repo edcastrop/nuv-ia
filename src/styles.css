@@ -394,6 +394,76 @@
 
 
 
+/* ==========================================================
+   NUVIA · SHELL SOFT SCOPE
+   Tono intermedio: ni blanco brillante, ni dark profundo.
+   Superficies en slate-cálido (#E8ECF4 / #DDE3EE) sobre canvas
+   NUVIA. Texto sigue oscuro para legibilidad. Pensado para
+   módulos densos como detalle de caso donde el dark cansa.
+   ========================================================== */
+.nuvia-shell-soft {
+  --soft-surface:     #E6EAF2;   /* tarjeta */
+  --soft-surface-2:   #DCE2EC;   /* tabla / encabezados */
+  --soft-surface-3:   #CFD6E2;   /* hover / acentos */
+  --soft-border:      #B9C2D2;
+  --soft-text:        #1B2542;
+  --soft-text-muted:  #4A5570;
+}
+
+/* Superficies blancas/grises claras → slate suave */
+.nuvia-shell-soft .bg-white,
+.nuvia-shell-soft [class*="bg-[#fff"],
+.nuvia-shell-soft [class*="bg-[#FFF"],
+.nuvia-shell-soft [class*="bg-[#FAFBFC"] {
+  background-color: var(--soft-surface) !important;
+  color: var(--soft-text);
+  border-color: var(--soft-border) !important;
+}
+.nuvia-shell-soft [class*="bg-[#F7F9FB"],
+.nuvia-shell-soft [class*="bg-[#FBFCFD"],
+.nuvia-shell-soft [class*="bg-[#EEF1F5"],
+.nuvia-shell-soft [class*="bg-[#F4F6FB"],
+.nuvia-shell-soft [class*="bg-[#F0F2F6"] {
+  background-color: var(--soft-surface-2) !important;
+  color: var(--soft-text);
+  border-color: var(--soft-border) !important;
+}
+
+/* Bordes claros → border slate */
+.nuvia-shell-soft [class*="border-[#E3E7EE"],
+.nuvia-shell-soft [class*="border-[#EEF1F5"],
+.nuvia-shell-soft [class*="border-[#E5E7EB"],
+.nuvia-shell-soft [class*="border-[#F0F2F6"],
+.nuvia-shell-soft [class*="border-[#D1D5DB"] {
+  border-color: var(--soft-border) !important;
+}
+
+/* Inputs / selects / textareas */
+.nuvia-shell-soft input:not([type="checkbox"]):not([type="radio"]),
+.nuvia-shell-soft select,
+.nuvia-shell-soft textarea {
+  background-color: #F1F4F9 !important;
+  color: var(--soft-text) !important;
+  border-color: var(--soft-border) !important;
+}
+
+/* Tablas */
+.nuvia-shell-soft thead tr,
+.nuvia-shell-soft th {
+  background-color: var(--soft-surface-2) !important;
+  border-color: var(--soft-border) !important;
+}
+.nuvia-shell-soft tbody tr {
+  border-color: var(--soft-border) !important;
+}
+.nuvia-shell-soft tbody tr:hover {
+  background-color: var(--soft-surface-3) !important;
+}
+
+
+
+
+
 
 
 /* ==========================================================
