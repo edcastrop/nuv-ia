@@ -2,6 +2,7 @@
 // 100% TypeScript puro · sin dependencias externas · testeable
 
 export const QA_MOTOR_VERSION = "1.0.0";
+export const DEFAULT_VARIACION_UVR_EA = 5.5;
 
 export type Modalidad = "hipotecario" | "leasing" | "uvr";
 export type Severidad = "info" | "warning" | "critica";
@@ -75,6 +76,12 @@ export interface FilaAmort {
   cuotaTotal: number;   // cuota + seguros
   saldo: number;
   subsidioActivo: boolean; // true mientras aplique FRECH/Fresh
+  saldoUvr?: number;
+  valorUvr?: number;
+  cuotaUvr?: number;
+  interesUvr?: number;
+  capitalUvr?: number;
+  correccionUvr?: number;
 }
 
 export function amortizacion(
@@ -105,6 +112,61 @@ export function amortizacion(
     const subsidioActivo = hasSwitch ? k <= cuotasSub : (opts?.cuotasSubsidio ?? 0) > 0 && k <= (opts?.cuotasSubsidio ?? 0);
     const fresh = subsidioActivo ? Math.min(subsidioMensual, C + seg) : 0;
     filas.push({ k, cuota: C, interes, capital, seguros: seg, fresh, cuotaTotal: C + seg - fresh, saldo: s, subsidioActivo });
+  }
+  return filas;
+}
+
+export function amortizacionUvr(
+  saldoUvrInicial: number,
+  valorUvrInicial: number,
+  iPeriodica: number,
+  variacionMensualUvr: number,
+  cuotaUvr: number,
+  n: number,
+  seguros: number = 0,
+  opts?: { cuotasSubsidio?: number; subsidioMensual?: number },
+): FilaAmort[] {
+  const filas: FilaAmort[] = [];
+  const seg = Math.max(0, seguros || 0);
+  const cuotasSub = Math.max(0, Math.min(n, Math.round(opts?.cuotasSubsidio ?? 0)));
+  const subsidioMensual = Math.max(0, opts?.subsidioMensual ?? 0);
+  let saldoUvr = Math.max(0, saldoUvrInicial || 0);
+  let valorUvr = Math.max(0, valorUvrInicial || 0);
+
+  for (let k = 1; k <= n && saldoUvr > 0.000001 && valorUvr > 0 && cuotaUvr > 0; k++) {
+    const valorUvrProy = valorUvr * (1 + variacionMensualUvr);
+    const interesUvr = saldoUvr * iPeriodica;
+    let capitalUvr = cuotaUvr - interesUvr;
+    if (capitalUvr > saldoUvr) capitalUvr = saldoUvr;
+    const saldoUvrFinal = Math.max(0, saldoUvr - capitalUvr);
+    const cuotaPesos = cuotaUvr * valorUvrProy;
+    const interesPesos = interesUvr * valorUvrProy;
+    const capitalPesos = capitalUvr * valorUvrProy;
+    const saldoFinalPesos = saldoUvrFinal * valorUvrProy;
+    const correccionUvr = saldoUvr * (valorUvrProy - valorUvr);
+    const subsidioActivo = k <= cuotasSub;
+    const fresh = subsidioActivo ? Math.min(subsidioMensual, cuotaPesos + seg) : 0;
+
+    filas.push({
+      k,
+      cuota: cuotaPesos,
+      interes: interesPesos,
+      capital: capitalPesos,
+      seguros: seg,
+      fresh,
+      cuotaTotal: cuotaPesos + seg - fresh,
+      saldo: saldoFinalPesos,
+      subsidioActivo,
+      saldoUvr: saldoUvrFinal,
+      valorUvr: valorUvrProy,
+      cuotaUvr,
+      interesUvr,
+      capitalUvr,
+      correccionUvr,
+    });
+
+    saldoUvr = saldoUvrFinal;
+    valorUvr = valorUvrProy;
   }
   return filas;
 }
