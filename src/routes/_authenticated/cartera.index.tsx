@@ -10,6 +10,7 @@ import {
   SectionHeader,
   EmptyState,
 } from "@/components/nuvia";
+import { NSelect } from "@/components/nuvia/NSelect";
 import {
   listCarteras,
   CARTERA_ESTADO_BY_KEY,
@@ -135,16 +136,20 @@ function CarteraDashboard() {
         />
         <div className="flex flex-wrap gap-3 items-end">
           <Field label="Estado">
-            <select value={estado} onChange={(e) => setEstado(e.target.value as CarteraEstado | "")} className="nuvia-input nuvia-input-sm">
-              <option value="">Todos</option>
-              {CARTERA_ESTADOS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
-            </select>
+            <NSelect
+              value={estado}
+              onValueChange={(v) => setEstado((v === "__all__" ? "" : v) as CarteraEstado | "")}
+              options={[{ value: "__all__", label: "Todos" }, ...CARTERA_ESTADOS.map((s) => ({ value: s.key, label: s.label }))]}
+              minWidth={200}
+            />
           </Field>
           <Field label="Responsable">
-            <select value={responsableId} onChange={(e) => setResponsableId(e.target.value)} className="nuvia-input nuvia-input-sm">
-              <option value="">Todos</option>
-              {responsables.map((r) => <option key={r.id} value={r.id}>{r.nombre || r.email}</option>)}
-            </select>
+            <NSelect
+              value={responsableId}
+              onValueChange={(v) => setResponsableId(v === "__all__" ? "" : v)}
+              options={[{ value: "__all__", label: "Todos" }, ...responsables.map((r) => ({ value: r.id, label: r.nombre || r.email || "—" }))]}
+              minWidth={200}
+            />
           </Field>
           <Field label="Banco">
             <input value={banco} onChange={(e) => setBanco(e.target.value)} placeholder="p.ej. Davivienda" className="nuvia-input nuvia-input-sm" />
