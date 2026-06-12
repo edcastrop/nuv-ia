@@ -16,6 +16,7 @@ import {
   type EtapaPipelineId,
 } from "@/lib/pipelineEtapas";
 import { notifyEtapaExito, notifyEtapaError } from "@/lib/etapaFeedback";
+import { evaluarQaGuard } from "@/lib/qaGuard";
 
 export interface TransicionResult {
   ok: boolean;
