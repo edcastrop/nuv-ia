@@ -1010,24 +1010,30 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           }
         }}
         style={{
-          background: "linear-gradient(145deg, rgba(255,255,255,0.055), rgba(68,93,163,0.060) 48%, rgba(132,185,143,0.040))",
-          border: `1px solid ${dragActive ? "rgba(132,185,143,0.6)" : "rgba(255,255,255,0.10)"}`,
-          backdropFilter: "blur(32px) saturate(160%)",
-          WebkitBackdropFilter: "blur(32px) saturate(160%)",
+          background: "linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.045) 42%, rgba(68,93,163,0.045) 72%, rgba(132,185,143,0.032))",
+          border: `1px solid ${dragActive ? "rgba(132,185,143,0.48)" : "rgba(210,222,240,0.20)"}`,
+          backdropFilter: "blur(24px) saturate(135%)",
           boxShadow: dragActive
-            ? "0 24px 60px -20px rgba(132,185,143,0.55)"
-            : "0 30px 60px -40px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.08)",
+            ? "0 24px 60px -26px rgba(132,185,143,0.36), inset 0 1px 0 rgba(255,255,255,0.20)"
+            : "0 34px 90px -50px rgba(0,0,0,0.94), inset 0 1px 0 rgba(255,255,255,0.20), inset 0 -1px 0 rgba(255,255,255,0.05)",
           transform: dragActive ? "scale(1.005)" : "scale(1)",
         }}
       >
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(112deg, rgba(255,255,255,0.14) 0%, transparent 18%, transparent 74%, rgba(255,255,255,0.05) 100%)",
+          }}
+        />
         {/* glow */}
         <div
           className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full blur-3xl"
-          style={{ background: "radial-gradient(circle, rgba(68,93,163,0.35), transparent 70%)" }}
+          style={{ background: "radial-gradient(circle, rgba(68,93,163,0.16), transparent 70%)" }}
         />
         <div
           className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full blur-3xl"
-          style={{ background: "radial-gradient(circle, rgba(132,185,143,0.28), transparent 70%)" }}
+          style={{ background: "radial-gradient(circle, rgba(132,185,143,0.14), transparent 70%)" }}
         />
         {dragActive && (
           <div
