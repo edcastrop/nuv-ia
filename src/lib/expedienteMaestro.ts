@@ -239,7 +239,7 @@ export function modoFromMaestro(m: ExpedienteMaestro): "pesos" | "uvr" {
  * Los simuladores ya derivan Resultado Final, Cuenta de Cobro y Paz y Salvo a partir
  * de estos datos, por lo que toda la cadena queda alimentada automáticamente.
  */
-export function maestroToExpediente(m: ExpedienteMaestro) {
+export function maestroToExpediente(m: ExpedienteMaestro, expedienteId = "") {
   const modo = modoFromMaestro(m);
   const fresh = m.fresh;
   const sane = normalizeCreditMoneyInput({
@@ -301,7 +301,7 @@ export function maestroToExpediente(m: ExpedienteMaestro) {
     nuevaCuotaManual: "",
   };
   return {
-    id: "",
+    id: expedienteId,
     asesor_id: m.asesor_id,
     modo,
     cliente_nombre: cliente_data.nombre || "Sin nombre",
@@ -323,6 +323,56 @@ export function maestroToExpediente(m: ExpedienteMaestro) {
     created_at: m.created_at,
     updated_at: m.updated_at,
   } as never;
+}
+
+/**
+ * Garantiza que un Expediente Maestro tenga una fila operativa homóloga en
+ * `expedientes` usando el MISMO id. Esto permite que extractos, QA automático,
+ * semaforización y QABadge usen un expediente_id válido sin cambiar el
+ * simulador ni reemplazar componentes.
+ */
+export async function ensureOperativeExpedienteForMaestro(
+  m: ExpedienteMaestro,
+): Promise<Expediente> {
+  const { data: existing, error: existingError } = await supabase
+    .from("expedientes")
+    .select("*")
+    .eq("id", m.id)
+    .maybeSingle();
+  if (existingError) throw existingError;
+  if (existing) return existing as unknown as Expediente;
+
+  const { data: u } = await supabase.auth.getUser();
+  if (!u.user) throw new Error("No autenticado");
+
+  const exp = maestroToExpediente(m, m.id) as unknown as Expediente;
+  const { data, error } = await supabase
+    .from("expedientes")
+    .insert({
+      id: m.id,
+      asesor_id: u.user.id,
+      modo: exp.modo,
+      cliente_nombre: exp.cliente_nombre,
+      cedula: exp.cedula,
+      banco: exp.banco,
+      numero_credito: exp.numero_credito,
+      producto: exp.producto,
+      cliente_data: exp.cliente_data as unknown as never,
+      credito_data: exp.credito_data as unknown as never,
+      propuesta_data: exp.propuesta_data as unknown as never,
+      discount_data: exp.discount_data as unknown as never,
+      honorarios_base: exp.honorarios_base,
+      honorarios_final: exp.honorarios_final,
+      descuento: exp.descuento,
+    } as never)
+    .select("*")
+    .single();
+  if (error) {
+    const { data: raced } = await supabase.from("expedientes").select("*").eq("id", m.id).maybeSingle();
+    if (raced) return raced as unknown as Expediente;
+    throw error;
+  }
+  return data as unknown as Expediente;
 }
 
 /**
