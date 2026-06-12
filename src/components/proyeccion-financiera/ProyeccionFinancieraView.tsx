@@ -293,9 +293,11 @@ function Kpi({
       className="group relative h-full overflow-hidden rounded-2xl p-5 transition-all hover:translate-y-[-1px]"
       style={{
         background:
-          "linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01))",
-        border: "1px solid rgba(255,255,255,0.04)",
-        boxShadow: "0 20px 40px -30px rgba(0,0,0,0.8)",
+          "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+        border: "1px solid rgba(255,255,255,0.08)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        boxShadow: "0 20px 40px -30px rgba(0,0,0,0.7)",
       }}
     >
       <div className="flex items-center gap-2">
