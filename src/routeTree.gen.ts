@@ -14,6 +14,7 @@ import { Route as RegistroRouteImport } from './routes/registro'
 import { Route as PendienteAprobacionRouteImport } from './routes/pendiente-aprobacion'
 import { Route as MfaVerificarRouteImport } from './routes/mfa-verificar'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as LandingRouteImport } from './routes/landing'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as ApiNuvexIaStreamRouteImport } from './routes/api/nuvex-ia-stream'
@@ -116,6 +117,11 @@ const MfaVerificarRoute = MfaVerificarRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LandingRoute = LandingRouteImport.update({
+  id: '/landing',
+  path: '/landing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -567,6 +573,7 @@ const AuthenticatedAcademiaCertificadosCodigoRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
+  '/landing': typeof LandingRoute
   '/login': typeof LoginRoute
   '/mfa-verificar': typeof MfaVerificarRoute
   '/pendiente-aprobacion': typeof PendienteAprobacionRoute
@@ -650,6 +657,7 @@ export interface FileRoutesByFullPath {
   '/colaboracion/dm/': typeof AuthenticatedColaboracionDmIndexRoute
 }
 export interface FileRoutesByTo {
+  '/landing': typeof LandingRoute
   '/login': typeof LoginRoute
   '/mfa-verificar': typeof MfaVerificarRoute
   '/pendiente-aprobacion': typeof PendienteAprobacionRoute
@@ -733,6 +741,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/landing': typeof LandingRoute
   '/login': typeof LoginRoute
   '/mfa-verificar': typeof MfaVerificarRoute
   '/pendiente-aprobacion': typeof PendienteAprobacionRoute
@@ -820,6 +829,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/landing'
     | '/login'
     | '/mfa-verificar'
     | '/pendiente-aprobacion'
@@ -903,6 +913,7 @@ export interface FileRouteTypes {
     | '/colaboracion/dm/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/landing'
     | '/login'
     | '/mfa-verificar'
     | '/pendiente-aprobacion'
@@ -985,6 +996,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_authenticated'
+    | '/landing'
     | '/login'
     | '/mfa-verificar'
     | '/pendiente-aprobacion'
@@ -1071,6 +1083,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  LandingRoute: typeof LandingRoute
   LoginRoute: typeof LoginRoute
   MfaVerificarRoute: typeof MfaVerificarRoute
   PendienteAprobacionRoute: typeof PendienteAprobacionRoute
@@ -1121,6 +1134,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/landing': {
+      id: '/landing'
+      path: '/landing'
+      fullPath: '/landing'
+      preLoaderRoute: typeof LandingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -1871,6 +1891,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  LandingRoute: LandingRoute,
   LoginRoute: LoginRoute,
   MfaVerificarRoute: MfaVerificarRoute,
   PendienteAprobacionRoute: PendienteAprobacionRoute,
@@ -1890,13 +1911,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
