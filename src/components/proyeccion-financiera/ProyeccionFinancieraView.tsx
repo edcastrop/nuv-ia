@@ -61,14 +61,17 @@ import { GuardarCasoModal } from "./GuardarCasoModal";
 // Brand tokens
 // ──────────────────────────────────────────────────────────────────────────
 const NUVEX = {
-  azul: "#445DA3",
-  azulSoft: "#7B8FCB",
-  verde: "#84B98F",
-  verdeSoft: "#A8D1B0",
-  oscuro: "#242424",
-  ambar: "#E0913A",
-  rojo: "#C0392B",
+  azul: "#22D3EE",
+  azulSoft: "#67E8F9",
+  verde: "#4ADE80",
+  verdeSoft: "#BBF7D0",
+  oscuro: "#05070D",
+  ambar: "#F8D36A",
+  rojo: "#FB7185",
 };
+
+const NUVIA_GRADIENT = "linear-gradient(135deg, #22D3EE 0%, #2563EB 46%, #4ADE80 100%)";
+const NUVIA_GLASS = "linear-gradient(145deg, rgba(255,255,255,0.105), rgba(34,211,238,0.045) 46%, rgba(74,222,128,0.055))";
 
 const blankInput: ProyeccionFinancieraInput = {
   clienteNombre: "",
@@ -156,7 +159,7 @@ function Field({
         value={value as string}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3.5 py-2.5 text-sm font-medium text-white placeholder-white/25 outline-none transition focus:border-[#445DA3]/60 focus:bg-white/[0.05] focus:ring-2 focus:ring-[#445DA3]/20"
+        className="rounded-xl border border-cyan-100/10 bg-white/[0.055] px-3.5 py-2.5 text-sm font-medium text-white placeholder-white/30 outline-none transition focus:border-cyan-300/60 focus:bg-white/[0.08] focus:ring-2 focus:ring-cyan-300/20"
       />
     </label>
   );
@@ -182,10 +185,10 @@ function SelectField({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full appearance-none rounded-xl border border-white/[0.06] bg-white/[0.03] px-3.5 py-2.5 pr-9 text-sm font-medium text-white outline-none transition focus:border-[#445DA3]/60 focus:bg-white/[0.05] focus:ring-2 focus:ring-[#445DA3]/20"
+          className="w-full appearance-none rounded-xl border border-cyan-100/10 bg-white/[0.055] px-3.5 py-2.5 pr-9 text-sm font-medium text-white outline-none transition focus:border-cyan-300/60 focus:bg-white/[0.08] focus:ring-2 focus:ring-cyan-300/20"
         >
           {options.map((o) => (
-            <option key={o.value} value={o.value} className="bg-[#1B1B1B] text-white">
+            <option key={o.value} value={o.value} className="bg-[#07111D] text-white">
               {o.label}
             </option>
           ))}
