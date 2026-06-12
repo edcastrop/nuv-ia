@@ -348,10 +348,12 @@ function HeroKpi({
       className="relative overflow-hidden rounded-3xl p-7 md:p-8"
       style={{
         background:
-          "linear-gradient(135deg, rgba(192,57,43,0.28) 0%, rgba(224,145,58,0.22) 60%, rgba(36,36,36,0.4) 100%)",
-        border: "1px solid rgba(224,145,58,0.25)",
+          "linear-gradient(135deg, rgba(192,57,43,0.30) 0%, rgba(224,145,58,0.22) 60%, rgba(255,255,255,0.04) 100%)",
+        border: "1px solid rgba(224,145,58,0.30)",
+        backdropFilter: "blur(24px)",
+        WebkitBackdropFilter: "blur(24px)",
         boxShadow:
-          "0 1px 0 rgba(255,255,255,0.06) inset, 0 40px 80px -30px rgba(192,57,43,0.45)",
+          "0 1px 0 rgba(255,255,255,0.08) inset, 0 40px 80px -30px rgba(192,57,43,0.45)",
       }}
     >
       <div
