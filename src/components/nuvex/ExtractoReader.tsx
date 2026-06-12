@@ -971,9 +971,8 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
     parseMontoExtracto((parsed?.saldoCapital as string) ?? "") > 0 &&
     parseMontoExtracto(((parsed?.cuotaBaseSimulacion as string) || (parsed?.cuotaMensual as string) || "")) > 0;
   const confirmDisabled =
-    (hayErrores && !_esDaviviendaLeasing) ||
     (tieneBeneficio && !cuotaBaseLista) ||
-    (!tieneMinimoSimulacion && (_cuotasPagadasEnCero || _faltanDatosBase));
+    !tieneMinimoSimulacion;
 
   const fmtCO = (raw: string) => {
     const n = parseMontoExtracto(raw);
