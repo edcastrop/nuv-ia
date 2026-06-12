@@ -322,8 +322,28 @@ function ResultadoQaAi() {
       </NCard>
 
       <NCard padding="none">
-        <div style={{ padding: "16px 20px 12px" }}>
-          <SectionHeader title={`Reconstrucción matemática (${filasAmort.length} filas)`} description="Plan amortizado: primeras 12 + últimas 12. Para créditos ≤ 24 cuotas se muestra la tabla completa sin duplicados." />
+        <div style={{ padding: "16px 20px 12px" }} className="flex items-start justify-between gap-3 flex-wrap">
+          <SectionHeader
+            title={`Reconstrucción matemática (${filasAmort.length} de ${nTotal} filas)`}
+            description={
+              verTodas && puedeVerTodas
+                ? `Plan amortizado completo — ${nTotal} cuotas pendientes.`
+                : "Plan amortizado: primeras 12 + últimas 12. Para créditos ≤ 24 cuotas se muestra la tabla completa sin duplicados."
+            }
+          />
+          {puedeVerTodas && (
+            <button
+              onClick={() => setVerTodas((v) => !v)}
+              className="shrink-0 rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition hover:opacity-90"
+              style={{
+                borderColor: "var(--nuvia-border)",
+                background: verTodas ? "var(--nuvia-accent)" : "rgba(255,255,255,0.04)",
+                color: verTodas ? "#0B1220" : "var(--nuvia-text-primary)",
+              }}
+            >
+              {verTodas ? `Ver resumen (${filasResumen.length})` : `Ver todas (${nTotal})`}
+            </button>
+          )}
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-[12.5px]">
