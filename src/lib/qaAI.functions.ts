@@ -669,6 +669,10 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
     const frech = parseNum(d.tasaCobertura);
     const frechValorMensual = parseNum(d.valorCobertura) ?? parseNum(d.valorSubsidioGobierno);
     const desemb = parseNum(d.valorDesembolsado);
+    const saldoUVR = parseNum(d.saldoUVR);
+    const valorUVR = parseNum(d.valorUVR);
+    const cuotaBaseSinSubsidio = parseNum(d.cuotaSinSubsidio) ?? parseNum(d.cuotaBaseSimulacion) ?? parseNum(d.cuotaActual);
+    const cuotaFinancieraSinSeguros = parseNum(d.cuotaConInteresSinSeguros) ?? parseNum(d.cuotaSinSeguros) ?? (cuotaBaseSinSubsidio ? Math.max(0, cuotaBaseSinSubsidio - seguros) : undefined);
     const cuotaExt = ((frech && frech > 0) || (frechValorMensual && frechValorMensual > 0))
       ? parseNum(d.cuotaPagadaCliente) ?? parseNum(d.valorAPagar) ?? parseNum(d.cuotaActual)
       : parseNum(d.cuotaActual);
@@ -695,6 +699,10 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
         coberturaFrechValorMensual: frechValorMensual,
         coberturaFrechCuotasRestantes: frechCuotasRestantes,
         valorDesembolsado: desemb,
+        saldoUVR,
+        valorUVR,
+        cuotaBaseSinSubsidio,
+        cuotaFinancieraSinSeguros,
       },
       extracto: {
         saldoCapital: saldo || undefined,
@@ -711,7 +719,7 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
       modalidad,
       extractoLecturaId: ext.id,
       expedienteId: ext.expediente_id,
-      reconstruccion: { saldoCapital: saldo, tasaEa: tasa, tasaEaPactada: tasaPactada, cuotasPendientes: cuotasPend, cuotasPagadas: cuotasPag, seguros, coberturaFrechPp: frech, coberturaFrechValorMensual: frechValorMensual, coberturaFrechCuotasRestantes: frechCuotasRestantes, valorDesembolsado: desemb },
+      reconstruccion: { saldoCapital: saldo, tasaEa: tasa, tasaEaPactada: tasaPactada, cuotasPendientes: cuotasPend, cuotasPagadas: cuotasPag, seguros, coberturaFrechPp: frech, coberturaFrechValorMensual: frechValorMensual, coberturaFrechCuotasRestantes: frechCuotasRestantes, valorDesembolsado: desemb, saldoUVR, valorUVR, cuotaBaseSinSubsidio, cuotaFinancieraSinSeguros },
       extracto: { saldoCapital: saldo, tasaEa: tasa, cuota: cuotaExt, seguros, coberturaFrechPp: frech, coberturaFrechValorMensual: frechValorMensual },
     };
 
@@ -736,6 +744,7 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
           costoTotal: result.reconstruccion.costoTotal,
           vecesPagado: result.reconstruccion.vecesPagado,
           totalIntereses: result.reconstruccion.totalIntereses,
+          totalCorreccionUvr: result.reconstruccion.totalCorreccionUvr,
           iMv: result.reconstruccion.iMv,
           primerasCuotas: result.reconstruccion.primerasCuotas,
           ultimasCuotas: result.reconstruccion.ultimasCuotas,
