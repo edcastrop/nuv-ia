@@ -63,7 +63,7 @@ function ConciliacionPage() {
       }
       const r = await ingestFn({
         data: {
-          banco_id: bancoId || null,
+          banco_id: bancoId && bancoId !== "__none__" ? bancoId : null,
           archivo_nombre: file.name,
           formato,
           contenido_texto,
