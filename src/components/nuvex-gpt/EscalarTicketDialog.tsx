@@ -4,9 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useServerFn } from "@tanstack/react-start";
-import { crearTicket } from "@/lib/nuvex-gpt.functions";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export function EscalarTicketDialog({
   open,
@@ -24,7 +23,6 @@ export function EscalarTicketDialog({
   const [descripcion, setDescripcion] = useState(preFillDescripcion ?? "");
   const [prioridad, setPrioridad] = useState<"baja" | "media" | "alta" | "urgente">("media");
   const [saving, setSaving] = useState(false);
-  const crear = useServerFn(crearTicket);
 
   const submit = async () => {
     if (asunto.trim().length < 3 || descripcion.trim().length < 3) {
@@ -33,7 +31,18 @@ export function EscalarTicketDialog({
     }
     setSaving(true);
     try {
-      await crear({ data: { area, asunto, descripcion, prioridad, conversacion_id: conversacionId ?? null } });
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      if (!userId) throw new Error("Sesión no disponible");
+      const { error } = await supabase.from("gpt_tickets").insert({
+        user_id: userId,
+        conversacion_id: conversacionId ?? null,
+        area,
+        asunto,
+        descripcion,
+        prioridad,
+      });
+      if (error) throw error;
       toast.success("Ticket creado correctamente");
       onOpenChange(false);
       setAsunto("");

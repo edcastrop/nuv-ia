@@ -329,6 +329,51 @@ REGLAS ESTRICTAS:
 export type ExtractoData = Record<string, string | Record<string, string>>;
 export type ExtractoResponse = { error: string | null; data: ExtractoData | null };
 
+const EXTRACTO_FIELDS = [
+  "banco", "cliente", "cedula", "numeroCredito", "producto", "tipoCredito", "moneda",
+  "saldoCapital", "valorDesembolsado", "cuotaMensual", "seguros", "cuotaSinSeguros",
+  "cuotaConInteresSinSeguros", "plazoInicial", "cuotasPagadas", "cuotasPendientes", "tea",
+  "teaCobrada", "teaPactada", "tasaMensual", "interesCuota", "capitalCuota", "valorUVR",
+  "saldoUVR", "valorCobertura", "tasaCobertura", "tieneCobertura", "tipoBeneficio",
+  "cuotaPagadaCliente", "cuotaSinSubsidio", "valorAPagar", "valorSeguroVida",
+  "valorSeguroIncendio", "valorSeguroTerremoto", "valorCuotaSinSubsidioGobierno",
+  "valorSubsidioGobierno", "valorCuotaConSubsidio", "valorAseguradoInmueble",
+  "cuotaActualNumero", "fechaExtracto",
+] as const;
+
+const CONFIDENCE_FIELDS = [
+  "banco", "cliente", "cedula", "numeroCredito", "producto", "moneda", "saldoCapital",
+  "cuotaMensual", "seguros", "plazoInicial", "cuotasPagadas", "tea", "teaCobrada",
+  "teaPactada", "valorUVR", "saldoUVR", "valorCobertura", "tasaCobertura", "valorDesembolsado",
+] as const;
+
+function normalizeAiPayload(value: unknown): ExtractoData {
+  const source = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+  const parsed: ExtractoData = {};
+  for (const key of EXTRACTO_FIELDS) {
+    const raw = source[key];
+    parsed[key] = typeof raw === "string" ? raw : raw == null ? "" : String(raw);
+  }
+  const rawConfidence = source.confianza && typeof source.confianza === "object"
+    ? (source.confianza as Record<string, unknown>)
+    : {};
+  const confianza: Record<string, string> = {};
+  for (const key of CONFIDENCE_FIELDS) {
+    const value = rawConfidence[key];
+    confianza[key] = value === "alta" || value === "media" || value === "baja" ? value : "baja";
+  }
+  parsed.confianza = confianza;
+  return parsed;
+}
+
+function parseJsonObject(text: string): unknown {
+  const cleaned = text.replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim();
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start >= 0 && end > start) return JSON.parse(cleaned.slice(start, end + 1));
+  return JSON.parse(cleaned);
+}
+
 export const extractStatement = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => InputSchema.parse(data))
   .handler(async ({ data }): Promise<ExtractoResponse> => {
@@ -346,12 +391,14 @@ export const extractStatement = createServerFn({ method: "POST" })
       return { error: "LOVABLE_API_KEY no está configurada en el servidor.", data: null };
     }
 
-    const userContent = [
+    const buildUserContent = (mode: "tool" | "json") => [
       {
         type: "text" as const,
         text: data.rawText?.trim()
-          ? `Analiza el texto extraído del PDF y las imágenes disponibles. Llama la función extract_extracto con los datos detectados. Si el texto contiene saltos de línea o columnas desordenadas, usa las etiquetas literales y no inventes valores.\n\nTEXTO EXTRAÍDO DEL PDF:\n${data.rawText.slice(0, 180_000)}`
-          : "Analiza estas páginas del extracto bancario y llama la función extract_extracto con los datos detectados.",
+          ? `${mode === "tool" ? "Llama la función extract_extracto" : "Devuelve exclusivamente JSON válido"} con los datos detectados. Si el texto contiene saltos de línea o columnas desordenadas, usa las etiquetas literales y no inventes valores.\n\nTEXTO EXTRAÍDO DEL PDF:\n${data.rawText.slice(0, 180_000)}`
+          : mode === "tool"
+            ? "Analiza estas páginas del extracto bancario y llama la función extract_extracto con los datos detectados."
+            : `Analiza estas páginas/capturas del extracto bancario. Devuelve exclusivamente un objeto JSON válido, sin markdown, con todas estas claves: ${EXTRACTO_FIELDS.join(", ")} y confianza. Todas las claves deben existir; usa cadena vacía si no hay dato. confianza debe ser un objeto con valores alta/media/baja para: ${CONFIDENCE_FIELDS.join(", ")}.`,
       },
       ...data.images.map((img) => ({
         type: "image_url" as const,
@@ -359,7 +406,7 @@ export const extractStatement = createServerFn({ method: "POST" })
       })),
     ];
 
-    const callModel = async (model: string) => {
+    const callModel = async (model: string, mode: "tool" | "json" = "tool") => {
       return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -369,11 +416,17 @@ export const extractStatement = createServerFn({ method: "POST" })
         body: JSON.stringify({
           model,
           messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            { role: "user", content: userContent },
+            {
+              role: "system",
+              content: mode === "tool"
+                ? SYSTEM_PROMPT
+                : `${SYSTEM_PROMPT}\n\nDevuelve únicamente JSON válido. No uses herramientas ni markdown.`,
+            },
+            { role: "user", content: buildUserContent(mode) },
           ],
-          tools: [tool],
-          tool_choice: { type: "function", function: { name: "extract_extracto" } },
+          ...(mode === "tool"
+            ? { tools: [tool], tool_choice: { type: "function", function: { name: "extract_extracto" } } }
+            : { response_format: { type: "json_object" }, max_tokens: 4000 }),
         }),
       });
     };
@@ -391,6 +444,14 @@ export const extractStatement = createServerFn({ method: "POST" })
         // Ignorar: solo intentamos drenar el cuerpo antes del fallback.
       }
       resp = await callModel("google/gemini-2.5-pro");
+    }
+    if (!resp.ok && resp.status === 400 && data.images.length > 0) {
+      try {
+        await resp.text();
+      } catch {
+        // Ignorar: drenamos el cuerpo antes del respaldo JSON.
+      }
+      resp = await callModel("google/gemini-3-flash-preview", "json");
     }
 
     if (!resp.ok) {
@@ -419,11 +480,13 @@ export const extractStatement = createServerFn({ method: "POST" })
       choices?: Array<{
         message?: {
           tool_calls?: Array<{ function?: { arguments?: string } }>;
+          content?: string | null;
         };
       }>;
     };
 
-    const argsRaw = json.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ?? "";
+    const message = json.choices?.[0]?.message;
+    const argsRaw = message?.tool_calls?.[0]?.function?.arguments ?? message?.content ?? "";
     if (!argsRaw) {
       return {
         error: "La IA no devolvió datos estructurados. Intenta con otra imagen.",
@@ -432,7 +495,7 @@ export const extractStatement = createServerFn({ method: "POST" })
     }
 
     try {
-      const parsed = JSON.parse(argsRaw) as ExtractoData;
+      const parsed = normalizeAiPayload(parseJsonObject(argsRaw));
       // Normalizar banco: Colpatria ahora es Davibank
       const bancoRaw = typeof parsed.banco === "string" ? parsed.banco : "";
       const _esBancolombiaNorm = /bancolombia/i.test(bancoRaw);
@@ -550,7 +613,7 @@ export const extractStatement = createServerFn({ method: "POST" })
       let valorBenef = monto("valorCobertura");
       const cuotaMensual = monto("cuotaMensual");
       let segurosNum = monto("seguros");
-      let cuotaConInteresSinSeguros =
+      const cuotaConInteresSinSeguros =
         monto("cuotaConInteresSinSeguros") || monto("cuotaSinSeguros");
       const tieneCobPorDiferencia =
         monto("cuotaSinSubsidio") > 0 && cuotaCliente > 0 && monto("cuotaSinSubsidio") > cuotaCliente;
