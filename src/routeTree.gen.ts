@@ -91,6 +91,7 @@ import { Route as ApiPublicHooksFinanzasCronRouteImport } from './routes/api/pub
 import { Route as ApiPublicHooksCasosAlertasRouteImport } from './routes/api/public/hooks/casos-alertas'
 import { Route as ApiPublicHooksCarteraRecordatoriosRouteImport } from './routes/api/public/hooks/cartera-recordatorios'
 import { Route as AuthenticatedFinanzasTreasuryConciliacionRouteImport } from './routes/_authenticated/finanzas.treasury.conciliacion'
+import { Route as AuthenticatedFinanzasTreasuryCarteraRouteImport } from './routes/_authenticated/finanzas.treasury.cartera'
 import { Route as AuthenticatedFinanzasTreasuryAuditoriaRouteImport } from './routes/_authenticated/finanzas.treasury.auditoria'
 import { Route as AuthenticatedColaboracionDmConversationIdRouteImport } from './routes/_authenticated/colaboracion.dm.$conversationId'
 import { Route as AuthenticatedAcademiaModulosModuloIdRouteImport } from './routes/_authenticated/academia.modulos.$moduloId'
@@ -562,6 +563,12 @@ const AuthenticatedFinanzasTreasuryConciliacionRoute =
     path: '/conciliacion',
     getParentRoute: () => AuthenticatedFinanzasTreasuryRoute,
   } as any)
+const AuthenticatedFinanzasTreasuryCarteraRoute =
+  AuthenticatedFinanzasTreasuryCarteraRouteImport.update({
+    id: '/cartera',
+    path: '/cartera',
+    getParentRoute: () => AuthenticatedFinanzasTreasuryRoute,
+  } as any)
 const AuthenticatedFinanzasTreasuryAuditoriaRoute =
   AuthenticatedFinanzasTreasuryAuditoriaRouteImport.update({
     id: '/auditoria',
@@ -678,6 +685,7 @@ export interface FileRoutesByFullPath {
   '/academia/modulos/$moduloId': typeof AuthenticatedAcademiaModulosModuloIdRoute
   '/colaboracion/dm/$conversationId': typeof AuthenticatedColaboracionDmConversationIdRoute
   '/finanzas/treasury/auditoria': typeof AuthenticatedFinanzasTreasuryAuditoriaRoute
+  '/finanzas/treasury/cartera': typeof AuthenticatedFinanzasTreasuryCarteraRoute
   '/finanzas/treasury/conciliacion': typeof AuthenticatedFinanzasTreasuryConciliacionRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
@@ -763,6 +771,7 @@ export interface FileRoutesByTo {
   '/academia/modulos/$moduloId': typeof AuthenticatedAcademiaModulosModuloIdRoute
   '/colaboracion/dm/$conversationId': typeof AuthenticatedColaboracionDmConversationIdRoute
   '/finanzas/treasury/auditoria': typeof AuthenticatedFinanzasTreasuryAuditoriaRoute
+  '/finanzas/treasury/cartera': typeof AuthenticatedFinanzasTreasuryCarteraRoute
   '/finanzas/treasury/conciliacion': typeof AuthenticatedFinanzasTreasuryConciliacionRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
@@ -854,6 +863,7 @@ export interface FileRoutesById {
   '/_authenticated/academia/modulos/$moduloId': typeof AuthenticatedAcademiaModulosModuloIdRoute
   '/_authenticated/colaboracion/dm/$conversationId': typeof AuthenticatedColaboracionDmConversationIdRoute
   '/_authenticated/finanzas/treasury/auditoria': typeof AuthenticatedFinanzasTreasuryAuditoriaRoute
+  '/_authenticated/finanzas/treasury/cartera': typeof AuthenticatedFinanzasTreasuryCarteraRoute
   '/_authenticated/finanzas/treasury/conciliacion': typeof AuthenticatedFinanzasTreasuryConciliacionRoute
   '/api/public/hooks/cartera-recordatorios': typeof ApiPublicHooksCarteraRecordatoriosRoute
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
@@ -945,6 +955,7 @@ export interface FileRouteTypes {
     | '/academia/modulos/$moduloId'
     | '/colaboracion/dm/$conversationId'
     | '/finanzas/treasury/auditoria'
+    | '/finanzas/treasury/cartera'
     | '/finanzas/treasury/conciliacion'
     | '/api/public/hooks/cartera-recordatorios'
     | '/api/public/hooks/casos-alertas'
@@ -1030,6 +1041,7 @@ export interface FileRouteTypes {
     | '/academia/modulos/$moduloId'
     | '/colaboracion/dm/$conversationId'
     | '/finanzas/treasury/auditoria'
+    | '/finanzas/treasury/cartera'
     | '/finanzas/treasury/conciliacion'
     | '/api/public/hooks/cartera-recordatorios'
     | '/api/public/hooks/casos-alertas'
@@ -1120,6 +1132,7 @@ export interface FileRouteTypes {
     | '/_authenticated/academia/modulos/$moduloId'
     | '/_authenticated/colaboracion/dm/$conversationId'
     | '/_authenticated/finanzas/treasury/auditoria'
+    | '/_authenticated/finanzas/treasury/cartera'
     | '/_authenticated/finanzas/treasury/conciliacion'
     | '/api/public/hooks/cartera-recordatorios'
     | '/api/public/hooks/casos-alertas'
@@ -1725,6 +1738,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanzasTreasuryConciliacionRouteImport
       parentRoute: typeof AuthenticatedFinanzasTreasuryRoute
     }
+    '/_authenticated/finanzas/treasury/cartera': {
+      id: '/_authenticated/finanzas/treasury/cartera'
+      path: '/cartera'
+      fullPath: '/finanzas/treasury/cartera'
+      preLoaderRoute: typeof AuthenticatedFinanzasTreasuryCarteraRouteImport
+      parentRoute: typeof AuthenticatedFinanzasTreasuryRoute
+    }
     '/_authenticated/finanzas/treasury/auditoria': {
       id: '/_authenticated/finanzas/treasury/auditoria'
       path: '/auditoria'
@@ -1797,6 +1817,7 @@ const AuthenticatedAcademiaRouteWithChildren =
 
 interface AuthenticatedFinanzasTreasuryRouteChildren {
   AuthenticatedFinanzasTreasuryAuditoriaRoute: typeof AuthenticatedFinanzasTreasuryAuditoriaRoute
+  AuthenticatedFinanzasTreasuryCarteraRoute: typeof AuthenticatedFinanzasTreasuryCarteraRoute
   AuthenticatedFinanzasTreasuryConciliacionRoute: typeof AuthenticatedFinanzasTreasuryConciliacionRoute
   AuthenticatedFinanzasTreasuryIndexRoute: typeof AuthenticatedFinanzasTreasuryIndexRoute
 }
@@ -1805,6 +1826,8 @@ const AuthenticatedFinanzasTreasuryRouteChildren: AuthenticatedFinanzasTreasuryR
   {
     AuthenticatedFinanzasTreasuryAuditoriaRoute:
       AuthenticatedFinanzasTreasuryAuditoriaRoute,
+    AuthenticatedFinanzasTreasuryCarteraRoute:
+      AuthenticatedFinanzasTreasuryCarteraRoute,
     AuthenticatedFinanzasTreasuryConciliacionRoute:
       AuthenticatedFinanzasTreasuryConciliacionRoute,
     AuthenticatedFinanzasTreasuryIndexRoute:
