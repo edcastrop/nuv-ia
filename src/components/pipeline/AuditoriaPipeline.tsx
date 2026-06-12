@@ -55,23 +55,23 @@ export function AuditoriaPipeline({ expedienteId }: Props) {
   const visibles = open ? cambios : cambios.slice(0, 8);
 
   return (
-    <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
+    <section className="rounded-2xl border border-[#E3E7EE] bg-white p-5 shadow-[0_1px_3px_rgba(36,36,36,0.04),0_8px_24px_rgba(36,36,36,0.04)]">
       <header className="mb-4 flex items-center justify-between gap-3">
         <div>
-          <h3 className="text-base font-semibold">Auditoría del pipeline</h3>
-          <p className="text-xs text-muted-foreground">
+          <h3 className="text-base font-semibold text-[#242424]">Auditoría del pipeline</h3>
+          <p className="text-xs text-[#242424]/60">
             Histórico de cambios de estado y etapas del expediente.
           </p>
         </div>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs text-[#242424]/60">
           {cambios.length} {cambios.length === 1 ? "evento" : "eventos"}
         </span>
       </header>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Cargando historial…</p>
+        <p className="text-sm text-[#242424]/60">Cargando historial…</p>
       ) : cambios.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Sin cambios registrados aún.</p>
+        <p className="text-sm text-[#242424]/60">Sin cambios registrados aún.</p>
       ) : (
         <ol className="space-y-2">
           {visibles.map((r) => {
@@ -88,32 +88,32 @@ export function AuditoriaPipeline({ expedienteId }: Props) {
                   ? { label: `Retroceso ${delta}`, cls: "bg-rose-100 text-rose-900" }
                   : delta === 1
                     ? { label: "Avance", cls: "bg-emerald-100 text-emerald-900" }
-                    : { label: "Lateral", cls: "bg-muted text-muted-foreground" };
+                    : { label: "Lateral", cls: "bg-[#F1F3F8] text-[#242424]/70" };
 
             return (
               <li
                 key={r.id}
-                className="rounded-lg border border-border/60 bg-background px-3 py-2"
+                className="rounded-lg border border-[#E3E7EE] bg-[#F7F9FB] px-3 py-2"
               >
                 <div className="flex flex-wrap items-center gap-2 text-xs">
-                  <span className="font-mono text-muted-foreground">
+                  <span className="font-mono text-[#242424]/60">
                     {fmt(r.created_at)}
                   </span>
                   <span className={`rounded-full px-2 py-0.5 font-medium ${flag.cls}`}>
                     {flag.label}
                   </span>
-                  <span className="rounded bg-muted px-2 py-0.5">
+                  <span className="rounded bg-white px-2 py-0.5 text-[#242424]/70 ring-1 ring-[#E3E7EE]">
                     E{ant.numero} {ant.titulo}
                   </span>
-                  <span className="text-muted-foreground">→</span>
-                  <span className="rounded bg-primary/10 px-2 py-0.5 font-medium text-primary">
+                  <span className="text-[#242424]/45">→</span>
+                  <span className="rounded bg-[#EEF1FA] px-2 py-0.5 font-medium text-[#445DA3]">
                     E{nue.numero} {nue.titulo}
                   </span>
                 </div>
-                <div className="mt-1 text-xs text-muted-foreground">
+                <div className="mt-1 text-xs text-[#242424]/60">
                   {labelEstado(r.estado_caso_anterior)} → {labelEstado(r.estado_caso_nuevo)}
                   {r.accion_origen ? (
-                    <span className="ml-2 rounded bg-muted px-1.5 py-0.5 font-mono">
+                    <span className="ml-2 rounded bg-white px-1.5 py-0.5 font-mono ring-1 ring-[#E3E7EE]">
                       {r.accion_origen}
                     </span>
                   ) : null}
@@ -122,7 +122,7 @@ export function AuditoriaPipeline({ expedienteId }: Props) {
                   ) : null}
                 </div>
                 {r.observacion ? (
-                  <p className="mt-1 text-xs text-foreground/80">{r.observacion}</p>
+                  <p className="mt-1 text-xs text-[#242424]/80">{r.observacion}</p>
                 ) : null}
               </li>
             );
@@ -134,7 +134,7 @@ export function AuditoriaPipeline({ expedienteId }: Props) {
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="mt-3 text-xs font-medium text-primary hover:underline"
+          className="mt-3 text-xs font-medium text-[#445DA3] hover:underline"
         >
           {open ? "Ver menos" : `Ver todos (${cambios.length})`}
         </button>
