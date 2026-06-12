@@ -717,10 +717,8 @@ export function ProyeccionFinancieraView() {
       }}
     >
       <div className="flex">
-        <Sidebar active={activeNav} onJump={jumpTo} />
-
         <main className="min-w-0 flex-1">
-          <div className="mx-auto max-w-[1480px] px-5 py-7 lg:px-10 lg:py-9">
+          <div className="mx-auto w-full max-w-[1480px] px-5 py-7 lg:px-10 lg:py-9">
             {/* ─── HEADER EJECUTIVO ─── */}
             <header id="sec-dashboard" className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div>
