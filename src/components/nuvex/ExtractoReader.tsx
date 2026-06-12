@@ -71,7 +71,20 @@ export type ExtractoApplyPayload = {
   archivoPath?: string;
   /** Moneda detectada en el extracto (independiente del modo del simulador). */
   monedaDetectada?: "uvr" | "pesos";
+  /**
+   * Snapshot crudo del extracto (datos OCR + banco/producto/moneda) para que el
+   * consumidor pueda persistir el extracto y disparar QA si corresponde. No se
+   * usa por la lógica de simulación; sólo para auto-auditoría QA contextual.
+   */
+  raw?: {
+    banco?: string;
+    producto?: string;
+    moneda?: string;
+    datos?: Record<string, unknown>;
+    archivoNombre?: string;
+  };
 };
+
 
 interface Props {
   modo: Modo;
@@ -869,7 +882,15 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       },
       archivoPath: archivoPath ?? undefined,
       monedaDetectada,
+      raw: {
+        banco: bancoCanon,
+        producto,
+        moneda: monedaDetectada,
+        datos: parsed as unknown as Record<string, unknown>,
+        archivoNombre: file?.name,
+      },
     };
+
     if (modo === "pesos") {
       payload.pesos = {
         saldoCapital: get("saldoCapital"),
