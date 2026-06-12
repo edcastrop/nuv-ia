@@ -391,12 +391,14 @@ export const extractStatement = createServerFn({ method: "POST" })
       return { error: "LOVABLE_API_KEY no está configurada en el servidor.", data: null };
     }
 
-    const userContent = [
+    const buildUserContent = (mode: "tool" | "json") => [
       {
         type: "text" as const,
         text: data.rawText?.trim()
-          ? `Analiza el texto extraído del PDF y las imágenes disponibles. Llama la función extract_extracto con los datos detectados. Si el texto contiene saltos de línea o columnas desordenadas, usa las etiquetas literales y no inventes valores.\n\nTEXTO EXTRAÍDO DEL PDF:\n${data.rawText.slice(0, 180_000)}`
-          : "Analiza estas páginas del extracto bancario y llama la función extract_extracto con los datos detectados.",
+          ? `${mode === "tool" ? "Llama la función extract_extracto" : "Devuelve exclusivamente JSON válido"} con los datos detectados. Si el texto contiene saltos de línea o columnas desordenadas, usa las etiquetas literales y no inventes valores.\n\nTEXTO EXTRAÍDO DEL PDF:\n${data.rawText.slice(0, 180_000)}`
+          : mode === "tool"
+            ? "Analiza estas páginas del extracto bancario y llama la función extract_extracto con los datos detectados."
+            : `Analiza estas páginas/capturas del extracto bancario. Devuelve exclusivamente un objeto JSON válido, sin markdown, con todas estas claves: ${EXTRACTO_FIELDS.join(", ")} y confianza. Todas las claves deben existir; usa cadena vacía si no hay dato. confianza debe ser un objeto con valores alta/media/baja para: ${CONFIDENCE_FIELDS.join(", ")}.`,
       },
       ...data.images.map((img) => ({
         type: "image_url" as const,
@@ -404,7 +406,7 @@ export const extractStatement = createServerFn({ method: "POST" })
       })),
     ];
 
-    const callModel = async (model: string) => {
+    const callModel = async (model: string, mode: "tool" | "json" = "tool") => {
       return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -414,11 +416,17 @@ export const extractStatement = createServerFn({ method: "POST" })
         body: JSON.stringify({
           model,
           messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            { role: "user", content: userContent },
+            {
+              role: "system",
+              content: mode === "tool"
+                ? SYSTEM_PROMPT
+                : `${SYSTEM_PROMPT}\n\nDevuelve únicamente JSON válido. No uses herramientas ni markdown.`,
+            },
+            { role: "user", content: buildUserContent(mode) },
           ],
-          tools: [tool],
-          tool_choice: { type: "function", function: { name: "extract_extracto" } },
+          ...(mode === "tool"
+            ? { tools: [tool], tool_choice: { type: "function", function: { name: "extract_extracto" } } }
+            : { response_format: { type: "json_object" }, max_tokens: 4000 }),
         }),
       });
     };
