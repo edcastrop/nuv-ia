@@ -300,11 +300,10 @@ function Kpi({
       className="group relative h-full overflow-hidden rounded-2xl p-5 transition-all hover:translate-y-[-1px]"
       style={{
         background:
-          "linear-gradient(145deg, rgba(255,255,255,0.11), rgba(68,93,163,0.055) 52%, rgba(132,185,143,0.05))",
-        border: "1px solid rgba(210,222,240,0.16)",
-        backdropFilter: "blur(24px) saturate(150%)",
-        WebkitBackdropFilter: "blur(24px) saturate(150%)",
-        boxShadow: "0 1px 0 rgba(255,255,255,0.10) inset, 0 22px 55px -32px rgba(68,93,163,0.34)",
+          "linear-gradient(145deg, rgba(255,255,255,0.115), rgba(255,255,255,0.045) 46%, rgba(68,93,163,0.035))",
+        border: "1px solid rgba(210,222,240,0.18)",
+        backdropFilter: "blur(20px) saturate(132%)",
+        boxShadow: "0 1px 0 rgba(255,255,255,0.16) inset, 0 22px 55px -36px rgba(0,0,0,0.72)",
       }}
     >
       <div className="flex items-center gap-2">
@@ -355,12 +354,11 @@ function HeroKpi({
       className="relative overflow-hidden rounded-3xl p-7 md:p-8"
       style={{
         background:
-          "linear-gradient(135deg, rgba(68,93,163,0.20) 0%, rgba(68,93,163,0.18) 48%, rgba(132,185,143,0.14) 100%)",
-        border: "1px solid rgba(132,185,143,0.30)",
-        backdropFilter: "blur(28px) saturate(165%)",
-        WebkitBackdropFilter: "blur(28px) saturate(165%)",
+          "linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(68,93,163,0.09) 52%, rgba(132,185,143,0.07) 100%)",
+        border: "1px solid rgba(210,222,240,0.20)",
+        backdropFilter: "blur(22px) saturate(135%)",
         boxShadow:
-          "0 1px 0 rgba(255,255,255,0.16) inset, 0 40px 90px -34px rgba(68,93,163,0.48), 0 26px 80px -48px rgba(132,185,143,0.45)",
+          "0 1px 0 rgba(255,255,255,0.18) inset, 0 40px 90px -44px rgba(0,0,0,0.84), 0 26px 80px -58px rgba(132,185,143,0.28)",
       }}
     >
       <div
@@ -428,8 +426,7 @@ function Sidebar({ active, onJump }: { active: string; onJump: (id: string) => v
         background:
           "linear-gradient(180deg, rgba(5,10,19,0.58) 0%, rgba(3,7,18,0.50) 100%)",
         borderRight: "1px solid rgba(210,222,240,0.12)",
-        backdropFilter: "blur(28px) saturate(150%)",
-        WebkitBackdropFilter: "blur(28px) saturate(150%)",
+        backdropFilter: "blur(22px) saturate(130%)",
       }}
     >
       {/* Logo */}
