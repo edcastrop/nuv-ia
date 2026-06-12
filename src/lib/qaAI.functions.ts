@@ -169,3 +169,76 @@ export const qaKpis = createServerFn({ method: "POST" })
       .from("qa_alertas").select("id", { count: "exact", head: true }).eq("estado", "abierta");
     return { total, aprobados, obs, rechazados, promedio, alertasAbiertas: alertasAbiertas ?? 0 };
   });
+
+// ─────────────────────────────────────────────────────────────
+// Reuso de extractos existentes (no recapturar datos)
+// ─────────────────────────────────────────────────────────────
+export const listExpedientesConExtracto = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: extractos, error } = await context.supabase
+      .from("extractos_lecturas")
+      .select("id,expediente_id,banco,producto,created_at")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (error) throw new Error(error.message);
+    const ids = Array.from(new Set((extractos ?? []).map((e) => e.expediente_id).filter(Boolean))) as string[];
+    const { data: exps } = ids.length
+      ? await context.supabase.from("expedientes").select("id,codigo,cliente_nombre").in("id", ids)
+      : { data: [] as Array<{ id: string; codigo: string | null; cliente_nombre: string | null }> };
+    const map = new Map((exps ?? []).map((e) => [e.id, e]));
+    return {
+      rows: (extractos ?? []).map((e) => ({
+        extractoId: e.id,
+        expedienteId: e.expediente_id,
+        banco: e.banco,
+        producto: e.producto,
+        codigo: map.get(e.expediente_id!)?.codigo ?? null,
+        cliente: map.get(e.expediente_id!)?.cliente_nombre ?? null,
+        fecha: e.created_at,
+      })),
+    };
+  });
+
+export const obtenerExtractoQA = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ extractoId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: ext, error } = await context.supabase
+      .from("extractos_lecturas")
+      .select("id,expediente_id,banco,producto,datos")
+      .eq("id", data.extractoId)
+      .single();
+    if (error) throw new Error(error.message);
+    const d = (ext.datos ?? {}) as Record<string, unknown>;
+    const num = (v: unknown): number | undefined => {
+      if (v === null || v === undefined || v === "") return undefined;
+      const cleaned = String(v).replace(/[^\d.,-]/g, "").replace(/\.(?=\d{3}(\D|$))/g, "").replace(",", ".");
+      const n = Number(cleaned);
+      return Number.isFinite(n) ? n : undefined;
+    };
+    const productoStr = String(d.producto ?? ext.producto ?? "").toUpperCase();
+    const modalidad: "hipotecario" | "leasing" | "uvr" =
+      productoStr.includes("LEASING") ? "leasing"
+      : (d.saldoUVR || d.valorUVR) ? "uvr" : "hipotecario";
+    return {
+      extracto: {
+        id: ext.id,
+        expedienteId: ext.expediente_id,
+        banco: String(d.banco ?? ext.banco ?? ""),
+        producto: productoStr,
+        modalidad,
+        saldoCapital: num(d.saldoCapital),
+        tasaEa: num(d.tasaEA),
+        cuotaActual: num(d.cuotaActual),
+        seguros: num(d.seguros),
+        cuotasPagadas: num(d.cuotasPagadas),
+        cuotasPendientes: num(d.cuotasPendientes),
+        valorDesembolsado: num(d.valorDesembolsado),
+        valorUVR: num(d.valorUVR),
+        saldoUVR: num(d.saldoUVR),
+        coberturaFrechPp: num(d.tasaCobertura),
+        titular: String(d.titular ?? ""),
+      },
+    };
+  });
