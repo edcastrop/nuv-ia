@@ -794,14 +794,15 @@ export const listAuditoria = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(200);
     if (error) throw new Error(error.message);
-    return (data ?? []) as Array<{
+    return ((data ?? []) as unknown) as Array<{
       id: string;
       entidad: string;
       entidad_id: string | null;
       accion: string;
-      valor_anterior: unknown;
-      valor_nuevo: unknown;
+      valor_anterior: Record<string, string | number | boolean | null> | null;
+      valor_nuevo: Record<string, string | number | boolean | null> | null;
       user_id: string | null;
       created_at: string;
     }>;
+
   });
