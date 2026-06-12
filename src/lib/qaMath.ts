@@ -1,7 +1,7 @@
 // NUVIA Financial QA AI — Motor matemático determinístico
 // 100% TypeScript puro · sin dependencias externas · testeable
 
-export const QA_MOTOR_VERSION = "1.0.0";
+export const QA_MOTOR_VERSION = "1.1.0";
 export const DEFAULT_VARIACION_UVR_EA = 5.5;
 
 export type Modalidad = "hipotecario" | "leasing" | "uvr";

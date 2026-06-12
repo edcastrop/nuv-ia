@@ -180,7 +180,7 @@ export function exportarDictamenPDF(d: DictamenPdfData) {
       ...(isUvr ? [
         ["Tasa mensual cobrada", "i = (1 + TE_Cobrada)^(1/12) - 1"],
         ["Variación mensual UVR", "v = (1 + Variacion_UVR_EA)^(1/12) - 1"],
-        ["Cuota financiera UVR", "C_uvr = Cuota_sin_seguros_COP / Valor_UVR_corte"],
+        ["Cuota financiera UVR", "C_uvr = PMT(TE_Cobrada_mes, cuotas_pendientes, saldo_uvr)"],
         ["Interés UVR", "I_uvr,k = Saldo_uvr,k-1 * i"],
         ["Capital UVR", "K_uvr,k = C_uvr - I_uvr,k"],
         ["Saldo COP", "Saldo_COP,k = (Saldo_uvr,k-1 - K_uvr,k) * Valor_UVR_k"],

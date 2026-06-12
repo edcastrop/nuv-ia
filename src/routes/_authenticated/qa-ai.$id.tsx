@@ -356,7 +356,7 @@ function ResultadoQaAi() {
           {(isUvr ? [
             { t: "Tasa mensual cobrada", f: "i = (1 + TE_Cobrada)^(1/12) − 1" },
             { t: "Variación mensual UVR", f: "v = (1 + Variación_UVR_EA)^(1/12) − 1" },
-            { t: "Cuota financiera UVR", f: "C_uvr = Cuota_sin_seguros_COP / Valor_UVR_corte" },
+            { t: "Cuota financiera UVR", f: "C_uvr = PMT(TE_Cobrada_mes, cuotas_pendientes, saldo_uvr)" },
             { t: "Interés UVR", f: "I_uvr,k = Saldo_uvr,k−1 · i" },
             { t: "Capital UVR", f: "K_uvr,k = C_uvr − I_uvr,k" },
             { t: "Saldo COP", f: "Saldo_COP,k = (Saldo_uvr,k−1 − K_uvr,k) · Valor_UVR_k" },

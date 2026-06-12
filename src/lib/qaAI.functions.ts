@@ -225,10 +225,15 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
     const inputs = (auditoria.inputs ?? {}) as Record<string, unknown>;
     const rec = (inputs.reconstruccion ?? {}) as Record<string, unknown>;
     const extSnap = (inputs.extracto ?? {}) as Record<string, unknown>;
+    const savedOutputs = (auditoria.outputs ?? {}) as Record<string, unknown>;
+    const firstSaved = Array.isArray(savedOutputs.primerasCuotas) ? savedOutputs.primerasCuotas[0] as Record<string, unknown> | undefined : undefined;
+    const staleUvrOutputs = String(inputs.modalidad ?? auditoria.modalidad) === "uvr" && (
+      !firstSaved || !(Number(firstSaved.saldoUvr ?? 0) > 0) || !(Number(firstSaved.valorUvr ?? 0) > 0) || firstSaved.correccionUvr === undefined
+    );
     const needsFrechView = !(Number(rec.coberturaFrechValorMensual ?? 0) > 0);
     const needsUvrView = String(inputs.modalidad ?? auditoria.modalidad) === "uvr" && (
       !(Number(rec.saldoUVR ?? 0) > 0) || !(Number(rec.valorUVR ?? 0) > 0) ||
-      !(Number(rec.cuotaBaseSinSubsidio ?? 0) > 0) || !(Number(rec.cuotaFinancieraSinSeguros ?? 0) > 0)
+      !(Number(rec.cuotaBaseSinSubsidio ?? 0) > 0) || !(Number(rec.cuotaFinancieraSinSeguros ?? 0) > 0) || staleUvrOutputs
     );
     if ((needsFrechView || needsUvrView) && auditoria.extracto_id) {
       const { data: ext } = await context.supabase
