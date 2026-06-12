@@ -74,7 +74,7 @@ export type ExtractoApplyPayload = {
 
 interface Props {
   modo: Modo;
-  onApply: (data: ExtractoApplyPayload) => void | Promise<void>;
+  onApply: (data: ExtractoApplyPayload) => boolean | void | Promise<boolean | void>;
   existingArchivoPath?: string | null;
 }
 
@@ -730,7 +730,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
   };
 
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!parsed) return;
     const get = (k: string) => (typeof parsed[k] === "string" ? (parsed[k] as string) : "");
     // Validación dura: cuotasPagadas no puede ser 0 si hay número de cuota
@@ -876,7 +876,8 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
         requiereVerificacion: get("requiereVerificacionBeneficio").toLowerCase() === "si",
       };
     }
-    void onApply(payload);
+    const applied = await onApply(payload);
+    if (applied === false) return;
     setStage("applied");
     setOpen(false);
     setTimeout(() => {
