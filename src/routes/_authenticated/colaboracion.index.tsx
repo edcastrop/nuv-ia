@@ -1,8 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Hash, MessageSquare, Users, Bell, Plus, FolderKanban, ArrowLeft } from "lucide-react";
+import { Hash, MessageSquare, Users, Bell, Plus, FolderKanban, ArrowLeft, MessagesSquare } from "lucide-react";
 import { Card } from "@/components/nuvex/ui";
 import { NUVEX } from "@/components/nuvex/constants";
+import { ExecutiveHero } from "@/components/nuvia";
 import { CanalChat } from "@/components/colaboracion/CanalChat";
 import {
   type Canal, listCanales, crearCanal, listDirectorio, getOrCreateDM,
