@@ -6,10 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Send, Sparkles, AlertCircle, Brain } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { streamNuvexGpt, modulosDesdePath, PREGUNTAS_SUGERIDAS, type ChatMsg } from "@/lib/nuvex-gpt";
-import { useServerFn } from "@tanstack/react-start";
-import { saveTurn } from "@/lib/nuvex-gpt.functions";
 import { EscalarTicketDialog } from "./EscalarTicketDialog";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * NUVIA IA — Copiloto operativo (rebranded de NUVEX GPT).
@@ -48,7 +47,41 @@ function NuviaIAPanel({ open, onOpenChange }: { open: boolean; onOpenChange: (v:
   const [escalarOpen, setEscalarOpen] = useState(false);
   const [lastAssistant, setLastAssistant] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
-  const save = useServerFn(saveTurn);
+
+  const saveTurnClient = async (payload: {
+    conversacion_id: string | null;
+    modulo_contexto: string | null;
+    user_content: string;
+    assistant_content: string;
+  }) => {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    if (!userId) throw new Error("Sesión no disponible");
+
+    let nextConvId = payload.conversacion_id;
+    if (!nextConvId) {
+      const { data: conv, error } = await supabase
+        .from("gpt_conversaciones")
+        .insert({
+          user_id: userId,
+          titulo: payload.user_content.slice(0, 80),
+          modulo_contexto: payload.modulo_contexto,
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      nextConvId = conv.id;
+    } else {
+      await supabase.from("gpt_conversaciones").update({ updated_at: new Date().toISOString() }).eq("id", nextConvId);
+    }
+
+    const { error: msgErr } = await supabase.from("gpt_mensajes").insert([
+      { conversacion_id: nextConvId, role: "user", content: payload.user_content },
+      { conversacion_id: nextConvId, role: "assistant", content: payload.assistant_content },
+    ]);
+    if (msgErr) throw msgErr;
+    return { conversacion_id: nextConvId };
+  };
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -81,13 +114,11 @@ function NuviaIAPanel({ open, onOpenChange }: { open: boolean; onOpenChange: (v:
       });
       setLastAssistant(acc);
       try {
-        const res = await save({
-          data: {
-            conversacion_id: convId,
-            modulo_contexto: modulo,
-            user_content: q,
-            assistant_content: acc || "(sin respuesta)",
-          },
+        const res = await saveTurnClient({
+          conversacion_id: convId,
+          modulo_contexto: modulo,
+          user_content: q,
+          assistant_content: acc || "(sin respuesta)",
         });
         if (!convId) setConvId(res.conversacion_id);
       } catch {
