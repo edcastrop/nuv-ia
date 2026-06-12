@@ -978,7 +978,7 @@ export function ProyeccionFinancieraView() {
                 onClick={() => document.getElementById("sec-escenarios")?.scrollIntoView({ behavior: "smooth", block: "start" })}
                 className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[12.5px] font-semibold text-white transition hover:scale-[1.02]"
                 style={{
-                  background: "linear-gradient(135deg, rgba(68,93,163,0.95) 0%, rgba(132,185,143,0.9) 100%)",
+                  background: "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))",
                   boxShadow: "0 10px 28px -10px rgba(132,185,143,0.55)",
                 }}
               >

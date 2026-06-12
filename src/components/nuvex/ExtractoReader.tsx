@@ -1025,7 +1025,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
             <div
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
               style={{
-                background: "linear-gradient(135deg, rgba(68,93,163,0.95) 0%, rgba(132,185,143,0.9) 100%)",
+                background: "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))",
                 boxShadow: "0 12px 32px -12px rgba(132,185,143,0.6)",
               }}
             >
@@ -1064,7 +1064,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
               }}
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white transition-transform hover:scale-[1.02]"
               style={{
-                background: "linear-gradient(135deg, rgba(68,93,163,0.95) 0%, rgba(132,185,143,0.9) 100%)",
+                background: "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))",
                 boxShadow: "0 10px 28px -10px rgba(68,93,163,0.7)",
               }}
             >
@@ -1173,7 +1173,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
                         style={{
                           background: active
-                            ? "linear-gradient(135deg, rgba(68,93,163,0.95) 0%, rgba(132,185,143,0.9) 100%)"
+                            ? "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))"
                             : "rgba(255,255,255,0.05)",
                           color: active ? "#fff" : "rgba(255,255,255,0.5)",
                           boxShadow: current ? "0 0 0 4px rgba(132,185,143,0.18)" : undefined,
@@ -1189,7 +1189,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                           className="mx-2 h-px flex-1"
                           style={{
                             background: active
-                              ? "linear-gradient(90deg, rgba(68,93,163,0.95), rgba(132,185,143,0.9))"
+                              ? "linear-gradient(90deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))"
                               : "rgba(255,255,255,0.08)",
                           }}
                         />
@@ -1246,7 +1246,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                       fileRef.current?.click();
                     }}
                     className="rounded-lg px-4 py-2 text-xs font-semibold text-white"
-                    style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.95) 0%, rgba(132,185,143,0.9) 100%)" }}
+                    style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))" }}
                   >
                     Seleccionar archivo
                   </button>
@@ -1304,7 +1304,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                     onClick={() => file && password && processFile(file, password)}
                     disabled={!password}
                     className="mt-4 w-full rounded-xl px-5 py-3 text-sm font-semibold text-white disabled:opacity-40"
-                    style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.95) 0%, rgba(132,185,143,0.9) 100%)" }}
+                    style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))" }}
                   >
                     Leer extracto
                   </button>
@@ -1676,7 +1676,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                     disabled={confirmDisabled}
                     className="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:scale-100"
                     style={{
-                      background: "linear-gradient(135deg, rgba(68,93,163,0.95) 0%, rgba(132,185,143,0.9) 100%)",
+                      background: "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))",
                       boxShadow: "0 10px 28px -10px rgba(132,185,143,0.6)",
                     }}
                   >
