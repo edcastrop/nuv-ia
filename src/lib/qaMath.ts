@@ -169,11 +169,10 @@ export function reconstruir(input: ReconstruccionInput): Reconstruccion {
     beneficioMensual > 0 ? iMv : (cob > 0 ? iSub : iMv),
     n,
     seguros,
-    hayFrech ? {
-      iPostSubsidio: beneficioMensual > 0 ? undefined : iMv,
-      cuotasSubsidio: cuotasFrechAplicadas,
-      subsidioMensual: beneficioMensual,
-    } : undefined,
+    hayFrech ? (beneficioMensual > 0
+      ? { cuotasSubsidio: cuotasFrechAplicadas, subsidioMensual: beneficioMensual }
+      : { iPostSubsidio: iMv, cuotasSubsidio: cuotasFrechAplicadas, subsidioMensual: beneficioMensual })
+      : undefined,
   );
   const totalIntereses = tabla.reduce((s, f) => s + f.interes, 0);
   // Costo total real teniendo en cuenta el switch de tasa.
