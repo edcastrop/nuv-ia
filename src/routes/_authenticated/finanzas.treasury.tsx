@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
-import { Brain, LayoutDashboard, ShieldCheck, Sparkles, UploadCloud } from "lucide-react";
+import { Brain, LayoutDashboard, ShieldCheck, Sparkles, UploadCloud, Wallet, LineChart } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/finanzas/treasury")({
   component: TreasuryLayout,
@@ -9,6 +9,8 @@ export const Route = createFileRoute("/_authenticated/finanzas/treasury")({
 const SUB = [
   { to: "/finanzas/treasury", label: "Dashboard", Icon: LayoutDashboard, exact: true },
   { to: "/finanzas/treasury/conciliacion", label: "Conciliación IA", Icon: UploadCloud },
+  { to: "/finanzas/treasury/cartera", label: "Cartera IA", Icon: Wallet },
+  { to: "/finanzas/treasury/flujo-caja", label: "Flujo de Caja", Icon: LineChart },
   { to: "/finanzas/treasury/auditoria", label: "Auditoría", Icon: ShieldCheck },
 ];
 
