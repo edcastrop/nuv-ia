@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { extractStatementMotor, type MotorResultado } from "@/lib/motorExtractos.functions";
+import { auditarLecturaAutomatica } from "@/lib/qaAI.functions";
+import { QABadge, type QACategoria } from "@/components/qa-ai/QABadge";
 import {
   CAMPOS_MOTOR,
   CAMPOS_CRITICOS,
@@ -20,6 +22,7 @@ import {
   type CampoMotor,
 } from "@/lib/motorExtractos/bankProfiles";
 import { NUVEX } from "@/components/nuvex/constants";
+
 
 interface Props {
   expedienteId?: string | null;
