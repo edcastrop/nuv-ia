@@ -63,9 +63,9 @@ function ResultadoQaAi() {
 
   // Reconstrucción COMPLETA del plan amortizado (todas las cuotas pendientes)
   const filasCompletas = useMemo(() => {
-    if (!data?.auditoria) return [] as Array<{ k: number; cuota: number; interes: number; capital: number; saldo: number }>;
+    if (!data?.auditoria) return [] as Array<{ k: number; cuota: number; interes: number; capital: number; seguros: number; cuotaTotal: number; saldo: number }>;
     const inputs = (data.auditoria as Record<string, unknown>).inputs as
-      | { reconstruccion?: { saldoCapital?: number; tasaEa?: number; cuotasPendientes?: number; coberturaFrechPp?: number } }
+      | { reconstruccion?: { saldoCapital?: number; tasaEa?: number; cuotasPendientes?: number; coberturaFrechPp?: number; seguros?: number } }
       | undefined;
     const r = inputs?.reconstruccion;
     if (!r || !r.saldoCapital || !r.tasaEa || !r.cuotasPendientes) return [];
@@ -74,8 +74,22 @@ function ResultadoQaAi() {
       const cob = r.coberturaFrechPp ? r.coberturaFrechPp / 100 : 0;
       const i = cob > 0 ? eaToMv(Math.max(0, ea - cob)) : eaToMv(ea);
       const n = Math.max(0, Math.round(r.cuotasPendientes));
-      return amortizacion(r.saldoCapital, i, n);
+      const seg = Math.max(0, r.seguros || 0);
+      return amortizacion(r.saldoCapital, i, n, seg);
     } catch { return []; }
+  }, [data]);
+
+  // Metadatos para encabezado (tasa aplicada, FRECH, seguros)
+  const reconMeta = useMemo(() => {
+    const inputs = (data?.auditoria as Record<string, unknown> | undefined)?.inputs as
+      | { reconstruccion?: { tasaEa?: number; coberturaFrechPp?: number; seguros?: number } }
+      | undefined;
+    const r = inputs?.reconstruccion;
+    const tasaEa = r?.tasaEa ?? 0;
+    const cob = r?.coberturaFrechPp ?? 0;
+    const tasaAplicada = Math.max(0, tasaEa - cob);
+    const seguros = Math.max(0, r?.seguros ?? 0);
+    return { tasaEa, cob, tasaAplicada, seguros, hasFrech: cob > 0 };
   }, [data]);
 
   if (!data?.auditoria) {
@@ -94,16 +108,22 @@ function ResultadoQaAi() {
 
   const sevTone = (s: string) => s === "critica" ? "var(--nuvia-danger)" : s === "warning" ? "var(--nuvia-warning)" : "var(--nuvia-text-secondary)";
 
-  const primeras = (o.primerasCuotas as Array<{ k: number; cuota: number; interes: number; capital: number; saldo: number }>) ?? [];
-  const ultimas = (o.ultimasCuotas as Array<{ k: number; cuota: number; interes: number; capital: number; saldo: number }>) ?? [];
+  type FilaUI = { k: number; cuota: number; interes: number; capital: number; seguros: number; cuotaTotal: number; saldo: number };
+  const enriquecer = (f: { k: number; cuota: number; interes: number; capital: number; saldo: number; seguros?: number; cuotaTotal?: number }): FilaUI => ({
+    k: f.k, cuota: f.cuota, interes: f.interes, capital: f.capital, saldo: f.saldo,
+    seguros: f.seguros ?? reconMeta.seguros,
+    cuotaTotal: f.cuotaTotal ?? (f.cuota + (f.seguros ?? reconMeta.seguros)),
+  });
+  const primeras = ((o.primerasCuotas as Array<{ k: number; cuota: number; interes: number; capital: number; saldo: number; seguros?: number; cuotaTotal?: number }>) ?? []).map(enriquecer);
+  const ultimas = ((o.ultimasCuotas as Array<{ k: number; cuota: number; interes: number; capital: number; saldo: number; seguros?: number; cuotaTotal?: number }>) ?? []).map(enriquecer);
   const ksPrimeras = new Set(primeras.map((f) => f.k));
-  const filasResumen = [
+  const filasResumen: FilaUI[] = [
     ...primeras,
     ...ultimas.filter((f) => !ksPrimeras.has(f.k)),
   ];
 
   const puedeVerTodas = filasCompletas.length > filasResumen.length;
-  const filasAmort = verTodas && puedeVerTodas ? filasCompletas : filasResumen;
+  const filasAmort: FilaUI[] = verTodas && puedeVerTodas ? (filasCompletas as FilaUI[]) : filasResumen;
   const nTotal = filasCompletas.length || filasResumen.length;
 
   const penalizaciones = recomputo?.score.penalizaciones ?? [];
