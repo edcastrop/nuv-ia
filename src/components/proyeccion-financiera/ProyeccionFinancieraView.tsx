@@ -652,7 +652,7 @@ export function ProyeccionFinancieraView() {
 
   const costoNoActuarChart = [
     { tipo: "Si continúa igual", Total: Math.round(resActual.res.totalPagado) },
-    { tipo: "Con NUVEX", Total: Math.round(selected.res.totalPagado) },
+    { tipo: "Con NUVIA", Total: Math.round(selected.res.totalPagado) },
   ];
 
   const exportCsv = () => {
@@ -725,8 +725,8 @@ export function ProyeccionFinancieraView() {
             <header id="sec-dashboard" className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <div className="flex items-center gap-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-white/45">
-                  <Activity className="h-3.5 w-3.5 text-[#84B98F]" />
-                  NUVEX · Wealth Intelligence
+                  <Activity className="h-3.5 w-3.5 text-cyan-300" />
+                  NUVIA · Wealth Intelligence
                 </div>
                 <h1 className="mt-2 text-[34px] font-semibold leading-none tracking-tight text-white lg:text-[44px]">
                   Proyección Financiera
@@ -775,9 +775,9 @@ export function ProyeccionFinancieraView() {
                             active
                               ? {
                                   background:
-                                    "linear-gradient(135deg, #445DA3, #84B98F)",
+                                    NUVIA_GRADIENT,
                                   boxShadow:
-                                    "0 8px 20px -10px rgba(132,185,143,0.6)",
+                                    "0 8px 20px -10px rgba(34,211,238,0.7)",
                                 }
                               : undefined
                           }
@@ -791,9 +791,9 @@ export function ProyeccionFinancieraView() {
                     <span
                       className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10.5px] font-semibold"
                       style={{
-                        background: "rgba(224,145,58,0.12)",
-                        color: "#E0913A",
-                        border: "1px solid rgba(224,145,58,0.3)",
+                        background: "rgba(248,211,106,0.12)",
+                        color: "#F8D36A",
+                        border: "1px solid rgba(248,211,106,0.34)",
                       }}
                       title="Tasa anual usada para escalar saldo y cuota mes a mes"
                     >
@@ -826,8 +826,8 @@ export function ProyeccionFinancieraView() {
                   onClick={exportPdf}
                   className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-[12.5px] font-semibold text-white transition hover:scale-[1.02]"
                   style={{
-                    background: "linear-gradient(135deg, #445DA3, #84B98F)",
-                    boxShadow: "0 14px 30px -12px rgba(68,93,163,0.65)",
+                    background: NUVIA_GRADIENT,
+                    boxShadow: "0 16px 34px -12px rgba(34,211,238,0.68)",
                   }}
                 >
                   <FileText className="h-3.5 w-3.5" /> Exportar PDF
