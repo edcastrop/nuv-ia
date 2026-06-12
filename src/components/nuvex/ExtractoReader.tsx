@@ -699,10 +699,13 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       const n = parseInt(v.replace(/[^\d]/g, ""), 10);
       return Number.isFinite(n) ? n : 0;
     };
-    if (_ip("cuotasPagadas") <= 0 && _ip("cuotaActualNumero") > 0) {
+    const tieneMinimoParaSimular =
+      parseMontoExtracto(get("saldoCapital")) > 0 &&
+      parseMontoExtracto(get("cuotaBaseSimulacion") || get("cuotaMensual")) > 0;
+    if (!tieneMinimoParaSimular && _ip("cuotasPagadas") <= 0 && _ip("cuotaActualNumero") > 0) {
       return;
     }
-    if (_ip("plazoInicial") <= 0 || _ip("cuotasPagadas") <= 0) {
+    if (!tieneMinimoParaSimular && (_ip("plazoInicial") <= 0 || _ip("cuotasPagadas") <= 0)) {
       return;
     }
 
@@ -929,11 +932,13 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
   const _faltanDatosBase = _esDaviviendaLeasing
     ? _plazoInicialNum <= 0 || _cuotasPendientesNum <= 0
     : _plazoInicialNum <= 0 || _cuotasPagadasNum <= 0;
+  const tieneMinimoSimulacion =
+    parseMontoExtracto((parsed?.saldoCapital as string) ?? "") > 0 &&
+    parseMontoExtracto(((parsed?.cuotaBaseSimulacion as string) || (parsed?.cuotaMensual as string) || "")) > 0;
   const confirmDisabled =
     (hayErrores && !_esDaviviendaLeasing) ||
     (tieneBeneficio && !cuotaBaseLista) ||
-    (!_esDaviviendaLeasing && _cuotasPagadasEnCero) ||
-    _faltanDatosBase;
+    (!tieneMinimoSimulacion && (_cuotasPagadasEnCero || _faltanDatosBase));
 
   const fmtCO = (raw: string) => {
     const n = parseMontoExtracto(raw);
@@ -981,11 +986,13 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           }
         }}
         style={{
-          background: "linear-gradient(135deg, rgba(10,18,38,0.92), rgba(7,22,45,0.92))",
-          border: `1px solid ${dragActive ? "rgba(132,185,143,0.6)" : "rgba(255,255,255,0.08)"}`,
+          background: "linear-gradient(145deg, rgba(255,255,255,0.055), rgba(68,93,163,0.060) 48%, rgba(132,185,143,0.040))",
+          border: `1px solid ${dragActive ? "rgba(132,185,143,0.6)" : "rgba(255,255,255,0.10)"}`,
+          backdropFilter: "blur(32px) saturate(160%)",
+          WebkitBackdropFilter: "blur(32px) saturate(160%)",
           boxShadow: dragActive
             ? "0 24px 60px -20px rgba(132,185,143,0.55)"
-            : "0 24px 60px -30px rgba(68,93,163,0.45)",
+            : "0 30px 60px -40px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.08)",
           transform: dragActive ? "scale(1.005)" : "scale(1)",
         }}
       >
@@ -1018,7 +1025,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
             <div
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
               style={{
-                background: "linear-gradient(135deg, rgba(68,93,163,0.95) 0%, rgba(132,185,143,0.9) 100%)",
+                background: "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))",
                 boxShadow: "0 12px 32px -12px rgba(132,185,143,0.6)",
               }}
             >
@@ -1053,10 +1060,11 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
               onClick={() => {
                 reset();
                 setOpen(true);
+                window.setTimeout(() => fileRef.current?.click(), 0);
               }}
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white transition-transform hover:scale-[1.02]"
               style={{
-                background: "linear-gradient(135deg, rgba(68,93,163,0.95) 0%, rgba(132,185,143,0.9) 100%)",
+                background: "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))",
                 boxShadow: "0 10px 28px -10px rgba(68,93,163,0.7)",
               }}
             >
@@ -1120,9 +1128,11 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           <div
             className="relative flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl"
             style={{
-              background: "linear-gradient(180deg, #0A1226, #07162D)",
-              border: "1px solid rgba(255,255,255,0.10)",
-              boxShadow: "0 40px 80px -20px rgba(0,0,0,0.7)",
+              background: "linear-gradient(145deg, rgba(255,255,255,0.065), rgba(68,93,163,0.075) 48%, rgba(132,185,143,0.045))",
+              border: "1px solid rgba(255,255,255,0.12)",
+              boxShadow: "0 44px 90px -38px rgba(0,0,0,0.92), inset 0 1px 0 rgba(255,255,255,0.10)",
+              backdropFilter: "blur(32px) saturate(160%)",
+              WebkitBackdropFilter: "blur(32px) saturate(160%)",
               maxHeight: "92vh",
             }}
             onClick={(e) => e.stopPropagation()}
@@ -1163,7 +1173,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
                         style={{
                           background: active
-                            ? "linear-gradient(135deg, rgba(68,93,163,0.95) 0%, rgba(132,185,143,0.9) 100%)"
+                            ? "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))"
                             : "rgba(255,255,255,0.05)",
                           color: active ? "#fff" : "rgba(255,255,255,0.5)",
                           boxShadow: current ? "0 0 0 4px rgba(132,185,143,0.18)" : undefined,
@@ -1179,7 +1189,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                           className="mx-2 h-px flex-1"
                           style={{
                             background: active
-                              ? "linear-gradient(90deg, rgba(68,93,163,0.95), rgba(132,185,143,0.9))"
+                              ? "linear-gradient(90deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))"
                               : "rgba(255,255,255,0.08)",
                           }}
                         />
@@ -1236,7 +1246,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                       fileRef.current?.click();
                     }}
                     className="rounded-lg px-4 py-2 text-xs font-semibold text-white"
-                    style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.95) 0%, rgba(132,185,143,0.9) 100%)" }}
+                    style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))" }}
                   >
                     Seleccionar archivo
                   </button>
@@ -1294,7 +1304,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                     onClick={() => file && password && processFile(file, password)}
                     disabled={!password}
                     className="mt-4 w-full rounded-xl px-5 py-3 text-sm font-semibold text-white disabled:opacity-40"
-                    style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.95) 0%, rgba(132,185,143,0.9) 100%)" }}
+                    style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))" }}
                   >
                     Leer extracto
                   </button>
@@ -1666,7 +1676,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                     disabled={confirmDisabled}
                     className="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:scale-100"
                     style={{
-                      background: "linear-gradient(135deg, rgba(68,93,163,0.95) 0%, rgba(132,185,143,0.9) 100%)",
+                      background: "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))",
                       boxShadow: "0 10px 28px -10px rgba(132,185,143,0.6)",
                     }}
                   >

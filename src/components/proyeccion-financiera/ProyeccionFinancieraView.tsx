@@ -62,16 +62,18 @@ import { GuardarCasoModal } from "./GuardarCasoModal";
 // ──────────────────────────────────────────────────────────────────────────
 const NUVIA = {
   azul: "#445DA3",
-  azulSoft: "#67E8F9",
+  azulSoft: "#8EA0D4",
   verde: "#84B98F",
   verdeSoft: "#C8E4CE",
-  oscuro: "#05070D",
+  oscuro: "#050816",
   ambar: "#F8D36A",
   rojo: "#FB7185",
 };
 
-const NUVIA_GRADIENT = "linear-gradient(135deg, rgba(68,93,163,0.95) 0%, rgba(132,185,143,0.9) 100%)";
-const NUVIA_GLASS = "linear-gradient(145deg, rgba(255,255,255,0.105), rgba(68,93,163,0.045) 46%, rgba(132,185,143,0.055))";
+const NUVIA_GRADIENT = "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))";
+const NUVIA_GLASS = "linear-gradient(145deg, rgba(255,255,255,0.055), rgba(68,93,163,0.055) 48%, rgba(132,185,143,0.035))";
+const NUVIA_GLASS_BORDER = "1px solid rgba(255,255,255,0.10)";
+const NUVIA_GLASS_SHADOW = "0 30px 60px -40px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.08)";
 
 const blankInput: ProyeccionFinancieraInput = {
   clienteNombre: "",
@@ -222,11 +224,10 @@ function Surface({
       className="relative overflow-hidden rounded-3xl"
       style={{
         background: NUVIA_GLASS,
-        border: "1px solid rgba(210,222,240,0.16)",
-        backdropFilter: "blur(28px) saturate(150%)",
-        WebkitBackdropFilter: "blur(28px) saturate(150%)",
-        boxShadow:
-          "0 1px 0 rgba(255,255,255,0.14) inset, 0 36px 90px -38px rgba(68,93,163,0.36), 0 24px 70px -42px rgba(0,0,0,0.88)",
+        border: NUVIA_GLASS_BORDER,
+        backdropFilter: "blur(32px) saturate(160%)",
+        WebkitBackdropFilter: "blur(32px) saturate(160%)",
+        boxShadow: NUVIA_GLASS_SHADOW,
       }}
     >
       {glow && (
@@ -234,15 +235,13 @@ function Surface({
           <div
             className="pointer-events-none absolute -top-32 -right-32 h-64 w-64 rounded-full blur-3xl"
             style={{
-              background:
-                "radial-gradient(circle, rgba(68,93,163,0.28), transparent 70%)",
+              background: "radial-gradient(circle, rgba(68,93,163,0.24), transparent 70%)",
             }}
           />
           <div
             className="pointer-events-none absolute -bottom-32 -left-32 h-64 w-64 rounded-full blur-3xl"
             style={{
-              background:
-                "radial-gradient(circle, rgba(132,185,143,0.20), transparent 70%)",
+              background: "radial-gradient(circle, rgba(132,185,143,0.18), transparent 70%)",
             }}
           />
         </>
@@ -837,13 +836,11 @@ export function ProyeccionFinancieraView() {
             <section
               className="relative mb-8 overflow-hidden rounded-3xl"
               style={{
-                background:
-                  "linear-gradient(135deg, rgba(255,255,255,0.13), rgba(68,93,163,0.075) 44%, rgba(132,185,143,0.070))",
-                border: "1px solid rgba(210,222,240,0.24)",
-                boxShadow:
-                  "0 1px 0 rgba(255,255,255,0.16) inset, 0 46px 100px -38px rgba(68,93,163,0.48), 0 24px 70px -44px rgba(132,185,143,0.34)",
-                backdropFilter: "blur(30px) saturate(165%)",
-                WebkitBackdropFilter: "blur(30px) saturate(165%)",
+                background: NUVIA_GLASS,
+                border: NUVIA_GLASS_BORDER,
+                boxShadow: NUVIA_GLASS_SHADOW,
+                backdropFilter: "blur(32px) saturate(160%)",
+                WebkitBackdropFilter: "blur(32px) saturate(160%)",
               }}
             >
               <div
@@ -875,8 +872,8 @@ export function ProyeccionFinancieraView() {
                       <span
                         className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
                         style={{
-                          background: "rgba(68,93,163,0.15)",
-                          color: "#A5F3FC",
+                          background: "rgba(132,185,143,0.14)",
+                          color: NUVIA.verde,
                           border: "1px solid rgba(132,185,143,0.34)",
                         }}
                       >
@@ -981,7 +978,7 @@ export function ProyeccionFinancieraView() {
                 onClick={() => document.getElementById("sec-escenarios")?.scrollIntoView({ behavior: "smooth", block: "start" })}
                 className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[12.5px] font-semibold text-white transition hover:scale-[1.02]"
                 style={{
-                  background: "linear-gradient(135deg, rgba(68,93,163,0.95) 0%, rgba(132,185,143,0.9) 100%)",
+                  background: "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))",
                   boxShadow: "0 10px 28px -10px rgba(132,185,143,0.55)",
                 }}
               >
