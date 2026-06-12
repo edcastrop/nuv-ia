@@ -235,7 +235,7 @@ export function reconstruir(input: ReconstruccionInput): Reconstruccion {
     const variacionEa = Math.max(0, input.variacionUvrEa ?? DEFAULT_VARIACION_UVR_EA) / 100;
     const variacionMensual = eaToMv(variacionEa);
     const cuotaFinancieraActual = Math.max(0, input.cuotaFinancieraSinSeguros ?? 0);
-    const cuotaUvr = cuotaFinancieraActual > 0 ? cuotaFinancieraActual / valorUvr : cuotaTeorica(saldoUvr, iMvUvr, n);
+    const cuotaUvr = cuotaTeorica(saldoUvr, iMvUvr, n) || (cuotaFinancieraActual > 0 ? cuotaFinancieraActual / valorUvr : 0);
     const cuotaFinancieraBase = cuotaUvr * valorUvr;
     const cuotaSinSubsidioOficial = Math.max(0, input.cuotaBaseSinSubsidio ?? 0);
     const cuotaTeoricaActual = cuotaSinSubsidioOficial > 0 ? cuotaSinSubsidioOficial : cuotaFinancieraBase + seguros;
