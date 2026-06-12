@@ -147,6 +147,13 @@ function QADashboard() {
         badge={{ icon: <ShieldCheck size={12} />, label: "Control de calidad", tone: "blue" }}
         title="Validación financiera QA"
         description="Dashboard de control de calidad sobre las proyecciones presentadas por los licenciados."
+        actions={
+          <Link to="/qa-ai">
+            <button className="nuvia-input nuvia-input-sm" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer", background: "var(--nuvia-accent)", color: "#fff", border: "none" }}>
+              NUVIA QA AI · Beta <ArrowRight size={12} />
+            </button>
+          </Link>
+        }
       />
 
       <KpiGrid cols={4}>
