@@ -1190,7 +1190,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
               </div>
             </div>
 
-            <div className="max-h-[68vh] overflow-y-auto px-6 py-5">
+            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
               {stage === "idle" && (
                 <div
                   onDragOver={(e) => {
