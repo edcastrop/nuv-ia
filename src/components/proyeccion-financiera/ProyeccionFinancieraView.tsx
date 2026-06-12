@@ -842,17 +842,23 @@ export function ProyeccionFinancieraView() {
                 background: NUVIA_GLASS,
                 border: NUVIA_GLASS_BORDER,
                 boxShadow: NUVIA_GLASS_SHADOW,
-                backdropFilter: "blur(32px) saturate(160%)",
-                WebkitBackdropFilter: "blur(32px) saturate(160%)",
+                backdropFilter: "blur(24px) saturate(135%)",
               }}
             >
               <div
                 className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 animate-pulse rounded-full blur-3xl"
-                style={{ background: "radial-gradient(circle, rgba(68,93,163,0.46), transparent 70%)", animationDuration: "6s" }}
+                style={{ background: "radial-gradient(circle, rgba(68,93,163,0.18), transparent 70%)", animationDuration: "6s" }}
               />
               <div
                 className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 animate-pulse rounded-full blur-3xl"
-                style={{ background: "radial-gradient(circle, rgba(132,185,143,0.38), transparent 70%)", animationDuration: "8s" }}
+                style={{ background: "radial-gradient(circle, rgba(132,185,143,0.16), transparent 70%)", animationDuration: "8s" }}
+              />
+              <div
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  background:
+                    "linear-gradient(112deg, rgba(255,255,255,0.15) 0%, transparent 16%, transparent 74%, rgba(255,255,255,0.055) 100%)",
+                }}
               />
               <button
                 type="button"
