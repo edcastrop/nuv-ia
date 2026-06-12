@@ -1158,9 +1158,9 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           <div
             className="relative flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl"
             style={{
-              background: "linear-gradient(145deg, rgba(255,255,255,0.13), rgba(255,255,255,0.048) 44%, rgba(68,93,163,0.05) 76%, rgba(132,185,143,0.035))",
+              background: "linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.075) 42%, rgba(255,255,255,0.035))",
               border: "1px solid rgba(238,245,255,0.36)",
-              boxShadow: "0 46px 110px -46px rgba(0,0,0,0.95), inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -1px 0 rgba(255,255,255,0.06)",
+              boxShadow: "0 46px 110px -48px rgba(0,0,0,0.98), inset 0 1px 0 rgba(255,255,255,0.36), inset 0 -1px 0 rgba(255,255,255,0.10)",
               backdropFilter: "blur(24px) saturate(135%)",
               maxHeight: "92vh",
             }}
@@ -1170,7 +1170,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
               className="pointer-events-none absolute inset-0"
               style={{
                 background:
-                  "linear-gradient(112deg, rgba(255,255,255,0.15) 0%, transparent 18%, transparent 76%, rgba(255,255,255,0.05) 100%)",
+                  "linear-gradient(112deg, rgba(255,255,255,0.24) 0%, transparent 15%, transparent 76%, rgba(255,255,255,0.075) 100%)",
               }}
             />
             <div
