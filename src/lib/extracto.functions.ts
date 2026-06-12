@@ -341,14 +341,6 @@ export const extractStatement = createServerFn({ method: "POST" })
       return { error: null, data: deterministicData };
     }
 
-    if (data.images.length === 0) {
-      return {
-        error:
-          "No se reconoció el banco en el texto del PDF. Intenta subir el PDF completo o una imagen clara del extracto.",
-        data: null,
-      };
-    }
-
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return { error: "LOVABLE_API_KEY no está configurada en el servidor.", data: null };
@@ -357,7 +349,9 @@ export const extractStatement = createServerFn({ method: "POST" })
     const userContent = [
       {
         type: "text" as const,
-        text: "Analiza estas páginas del extracto bancario y llama la función extract_extracto con los datos detectados.",
+        text: data.rawText?.trim()
+          ? `Analiza el texto extraído del PDF y las imágenes disponibles. Llama la función extract_extracto con los datos detectados. Si el texto contiene saltos de línea o columnas desordenadas, usa las etiquetas literales y no inventes valores.\n\nTEXTO EXTRAÍDO DEL PDF:\n${data.rawText.slice(0, 180_000)}`
+          : "Analiza estas páginas del extracto bancario y llama la función extract_extracto con los datos detectados.",
       },
       ...data.images.map((img) => ({
         type: "image_url" as const,
@@ -386,7 +380,7 @@ export const extractStatement = createServerFn({ method: "POST" })
 
     // Estrategia: primero Flash (mucho más rápido, evita timeouts con varias
     // páginas/imágenes). Si falla por timeout/5xx, reintentamos con Pro.
-    let resp = await callModel("google/gemini-2.5-flash");
+    let resp = await callModel("google/gemini-3-flash-preview");
     if (
       !resp.ok &&
       (resp.status === 504 || resp.status === 408 || resp.status === 524 || resp.status >= 500)

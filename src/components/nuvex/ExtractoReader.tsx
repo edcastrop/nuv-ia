@@ -366,7 +366,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       if (f.type === "application/pdf" || lowerName.endsWith(".pdf")) {
         try {
           rawText = await extractTextFromPdf(f, pwd);
-          if (rawText.trim().length > 500) {
+          if (rawText.trim().length > 250) {
             const deterministicResp = await callExtract({ data: { images: [], rawText } });
             if (deterministicResp.data) {
               await uploadOriginal(f);
@@ -390,13 +390,21 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           }
           console.warn("No se pudo extraer texto estructural del PDF:", textErr);
         }
-        const result = await renderPdfToImages(f, pwd);
-        if (result.needsPassword) {
-          setWrongPassword(result.wrongPassword);
-          setStage("password");
-          return;
+        try {
+          const result = await renderPdfToImages(f, pwd);
+          if (result.needsPassword) {
+            setWrongPassword(result.wrongPassword);
+            setStage("password");
+            return;
+          }
+          images = result.images;
+        } catch (imageErr) {
+          if (rawText.trim().length <= 250) throw imageErr;
+          console.warn("No se pudieron generar imágenes del PDF; se usará texto extraído:", imageErr);
         }
-        images = result.images;
+        if (images.length === 0 && rawText.trim().length === 0) {
+          throw new Error("No pude leer texto ni generar imágenes del PDF. Verifica que no esté dañado o sube una captura clara del extracto.");
+        }
       } else if (f.type.startsWith("image/")) {
         const url = await fileToDataUrl(f);
         images = [{ mime: f.type, dataUrl: url }];
@@ -414,7 +422,10 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       // Llamar IA
       const resp = await callExtract({ data: { images, rawText } });
       if (resp.error || !resp.data) {
-        setErrorMsg(resp.error || "No se pudieron extraer datos.");
+        setErrorMsg(
+          resp.error ||
+            `No se pudieron extraer datos. Archivo: ${f.name}. Texto leído: ${rawText.trim().length} caracteres. Imágenes generadas: ${images.length}.`,
+        );
         setStage("error");
         return;
       }
@@ -940,29 +951,12 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
   const hayErrores = erroresValidacion.length > 0;
   const cuotaBaseLista = parseMontoExtracto((parsed?.cuotaBaseSimulacion as string) ?? "") > 0;
 
-  // Validación dura antes de confirmar
-  const _intStrParsed = (k: string) => {
-    const v = parsed?.[k];
-    if (typeof v !== "string") return 0;
-    const n = parseInt(v.replace(/[^\d]/g, ""), 10);
-    return Number.isFinite(n) ? n : 0;
-  };
-  const _cuotasPagadasNum = _intStrParsed("cuotasPagadas");
-  const _plazoInicialNum = _intStrParsed("plazoInicial");
-  const _cuotaActualNumeroNum = _intStrParsed("cuotaActualNumero");
-  const _cuotasPendientesNum = _intStrParsed("cuotasPendientes");
-  const _esDaviviendaLeasing = /davivienda/i.test(String(parsed?.banco ?? "")) && /leasing/i.test(`${String(parsed?.producto ?? "")} ${String(parsed?.tipoCredito ?? "")}`);
-  const _cuotasPagadasEnCero = _cuotasPagadasNum <= 0 && _cuotaActualNumeroNum > 0;
-  const _faltanDatosBase = _esDaviviendaLeasing
-    ? _plazoInicialNum <= 0 || _cuotasPendientesNum <= 0
-    : _plazoInicialNum <= 0 || _cuotasPagadasNum <= 0;
   const tieneMinimoSimulacion =
     parseMontoExtracto((parsed?.saldoCapital as string) ?? "") > 0 &&
     parseMontoExtracto(((parsed?.cuotaBaseSimulacion as string) || (parsed?.cuotaMensual as string) || "")) > 0;
   const confirmDisabled =
-    (hayErrores && !_esDaviviendaLeasing) ||
     (tieneBeneficio && !cuotaBaseLista) ||
-    (!tieneMinimoSimulacion && (_cuotasPagadasEnCero || _faltanDatosBase));
+    !tieneMinimoSimulacion;
 
   const fmtCO = (raw: string) => {
     const n = parseMontoExtracto(raw);
@@ -1010,12 +1004,13 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           }
         }}
         style={{
-          background: "linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.075) 42%, rgba(255,255,255,0.035))",
-          border: `1px solid ${dragActive ? "rgba(132,185,143,0.42)" : "rgba(238,245,255,0.36)"}`,
-          backdropFilter: "blur(24px) saturate(135%)",
+          background: "linear-gradient(145deg, rgba(238,245,255,0.28), rgba(238,245,255,0.12) 42%, rgba(238,245,255,0.055))",
+          border: `1px solid ${dragActive ? "rgba(132,185,143,0.58)" : "rgba(238,245,255,0.50)"}`,
+          backdropFilter: "blur(34px) saturate(155%)",
+          WebkitBackdropFilter: "blur(34px) saturate(155%)",
           boxShadow: dragActive
-            ? "0 24px 60px -26px rgba(132,185,143,0.36), inset 0 1px 0 rgba(255,255,255,0.20)"
-            : "0 34px 90px -50px rgba(0,0,0,0.94), inset 0 1px 0 rgba(255,255,255,0.20), inset 0 -1px 0 rgba(255,255,255,0.05)",
+            ? "0 24px 60px -26px rgba(132,185,143,0.36), inset 0 1px 0 rgba(255,255,255,0.55)"
+            : "0 34px 90px -50px rgba(0,0,0,0.94), inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -1px 0 rgba(255,255,255,0.14)",
           transform: dragActive ? "scale(1.005)" : "scale(1)",
         }}
       >
@@ -1023,7 +1018,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              "linear-gradient(112deg, rgba(255,255,255,0.23) 0%, transparent 15%, transparent 74%, rgba(255,255,255,0.07) 100%)",
+              "linear-gradient(112deg, rgba(255,255,255,0.42) 0%, transparent 18%, transparent 70%, rgba(255,255,255,0.12) 100%)",
           }}
         />
         {/* glow */}
@@ -1055,7 +1050,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
             <div
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
               style={{
-                background: "linear-gradient(135deg, rgba(68,93,163,0.58), rgba(132,185,143,0.52))",
+                background: "linear-gradient(135deg, rgba(68,93,163,0.48), rgba(132,185,143,0.42))",
                 boxShadow: "0 12px 32px -18px rgba(132,185,143,0.34)",
               }}
             >
@@ -1089,12 +1084,11 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
             <button
               onClick={() => {
                 reset();
-                setOpen(true);
-                window.setTimeout(() => fileRef.current?.click(), 0);
+                fileRef.current?.click();
               }}
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white transition-transform hover:scale-[1.02]"
               style={{
-                background: "linear-gradient(135deg, rgba(68,93,163,0.58), rgba(132,185,143,0.52))",
+                background: "linear-gradient(135deg, rgba(68,93,163,0.48), rgba(132,185,143,0.42))",
                 boxShadow: "0 10px 28px -16px rgba(68,93,163,0.42)",
               }}
             >
@@ -1158,10 +1152,11 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           <div
             className="relative flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl"
             style={{
-              background: "linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.075) 42%, rgba(255,255,255,0.035))",
-              border: "1px solid rgba(238,245,255,0.36)",
-              boxShadow: "0 46px 110px -48px rgba(0,0,0,0.98), inset 0 1px 0 rgba(255,255,255,0.36), inset 0 -1px 0 rgba(255,255,255,0.10)",
-              backdropFilter: "blur(24px) saturate(135%)",
+              background: "linear-gradient(145deg, rgba(238,245,255,0.26), rgba(238,245,255,0.13) 42%, rgba(238,245,255,0.06))",
+              border: "1px solid rgba(238,245,255,0.52)",
+              boxShadow: "0 46px 110px -48px rgba(0,0,0,0.98), inset 0 1px 0 rgba(255,255,255,0.56), inset 0 -1px 0 rgba(255,255,255,0.14)",
+              backdropFilter: "blur(34px) saturate(155%)",
+              WebkitBackdropFilter: "blur(34px) saturate(155%)",
               maxHeight: "92vh",
             }}
             onClick={(e) => e.stopPropagation()}
@@ -1282,7 +1277,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                       fileRef.current?.click();
                     }}
                     className="rounded-lg px-4 py-2 text-xs font-semibold text-white"
-                    style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.70), rgba(132,185,143,0.62))" }}
+                    style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.56), rgba(132,185,143,0.48))" }}
                   >
                     Seleccionar archivo
                   </button>
@@ -1340,7 +1335,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                     onClick={() => file && password && processFile(file, password)}
                     disabled={!password}
                     className="mt-4 w-full rounded-xl px-5 py-3 text-sm font-semibold text-white disabled:opacity-40"
-                    style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.70), rgba(132,185,143,0.62))" }}
+                    style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.56), rgba(132,185,143,0.48))" }}
                   >
                     Leer extracto
                   </button>
@@ -1712,7 +1707,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                     disabled={confirmDisabled}
                     className="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:scale-100"
                     style={{
-                      background: "linear-gradient(135deg, rgba(68,93,163,0.70), rgba(132,185,143,0.62))",
+                      background: "linear-gradient(135deg, rgba(68,93,163,0.56), rgba(132,185,143,0.48))",
                       boxShadow: "0 10px 28px -14px rgba(132,185,143,0.42)",
                     }}
                   >

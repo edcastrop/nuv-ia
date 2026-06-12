@@ -71,9 +71,9 @@ const NUVIA = {
 };
 
 const NUVIA_GRADIENT = "linear-gradient(135deg, rgba(68,93,163,0.58), rgba(132,185,143,0.52))";
-const NUVIA_GLASS = "linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.075) 42%, rgba(255,255,255,0.035))";
-const NUVIA_GLASS_BORDER = "1px solid rgba(238,245,255,0.36)";
-const NUVIA_GLASS_SHADOW = "0 36px 100px -54px rgba(0,0,0,0.98), inset 0 1px 0 rgba(255,255,255,0.38), inset 0 -1px 0 rgba(255,255,255,0.10)";
+const NUVIA_GLASS = "linear-gradient(145deg, rgba(238,245,255,0.24), rgba(238,245,255,0.105) 42%, rgba(238,245,255,0.05))";
+const NUVIA_GLASS_BORDER = "1px solid rgba(238,245,255,0.48)";
+const NUVIA_GLASS_SHADOW = "0 36px 100px -54px rgba(0,0,0,0.98), inset 0 1px 0 rgba(255,255,255,0.54), inset 0 -1px 0 rgba(255,255,255,0.14)";
 
 const blankInput: ProyeccionFinancieraInput = {
   clienteNombre: "",
@@ -225,7 +225,8 @@ function Surface({
       style={{
         background: NUVIA_GLASS,
         border: NUVIA_GLASS_BORDER,
-        backdropFilter: "blur(24px) saturate(135%)",
+        backdropFilter: "blur(34px) saturate(155%)",
+        WebkitBackdropFilter: "blur(34px) saturate(155%)",
         boxShadow: NUVIA_GLASS_SHADOW,
       }}
     >
@@ -233,7 +234,7 @@ function Surface({
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "linear-gradient(115deg, rgba(255,255,255,0.16) 0%, transparent 18%, transparent 72%, rgba(255,255,255,0.055) 100%)",
+            "linear-gradient(115deg, rgba(255,255,255,0.34) 0%, transparent 19%, transparent 70%, rgba(255,255,255,0.12) 100%)",
         }}
       />
       {glow && (
