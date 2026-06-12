@@ -16,6 +16,7 @@ export { ExecutiveHero } from "./ExecutiveHero";
 export { KpiGrid, KpiCard } from "./KpiGrid";
 export { InsightCard } from "./InsightCard";
 export { NCard } from "./NCard";
+export { NSelect, type NSelectOption } from "./NSelect";
 export { SectionHeader } from "./SectionHeader";
 export { FilterBar } from "./FilterBar";
 export { ActionBar } from "./ActionBar";
