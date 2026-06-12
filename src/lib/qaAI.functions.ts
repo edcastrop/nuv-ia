@@ -66,8 +66,8 @@ export const auditarCaso = createServerFn({ method: "POST" })
         qa_score: result.score.score,
         categoria: result.score.categoria,
         dictamen: result.score.dictamen,
-        inputs: data as unknown as Record<string, unknown>,
-        outputs: {
+        inputs: JSON.parse(JSON.stringify(data)),
+        outputs: JSON.parse(JSON.stringify({
           cuotaTeorica: result.reconstruccion.cuotaTeorica,
           cuotaConSubsidio: result.reconstruccion.cuotaConSubsidio,
           cuotaTotalConSeguros: result.reconstruccion.cuotaTotalConSeguros,
@@ -78,9 +78,9 @@ export const auditarCaso = createServerFn({ method: "POST" })
           iMv: result.reconstruccion.iMv,
           primerasCuotas: result.reconstruccion.primerasCuotas,
           ultimasCuotas: result.reconstruccion.ultimasCuotas,
-        },
-        diferencias: result.inconsistencias,
-        alertas: result.inconsistencias.filter((i) => i.severidad === "critica"),
+        })),
+        diferencias: JSON.parse(JSON.stringify(result.inconsistencias)),
+        alertas: JSON.parse(JSON.stringify(result.inconsistencias.filter((i) => i.severidad === "critica"))),
         ejecutado_by: userId,
       })
       .select("id")
