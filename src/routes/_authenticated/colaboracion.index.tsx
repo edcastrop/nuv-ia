@@ -57,22 +57,30 @@ function ColaboracionPage() {
 
   return (
     <div className="mx-auto max-w-[1500px] px-3 py-3 md:px-6 md:py-6 space-y-3 md:space-y-4">
-      <Card className="!p-3 md:!p-5">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
-          <div className="min-w-0">
-            <div className="text-[10px] md:text-[11px] uppercase tracking-wider font-semibold" style={{ color: NUVEX.azul }}>NUVEX</div>
-            <h1 className="text-lg md:text-2xl font-semibold text-[#242424]">Centro de Colaboración</h1>
-            <p className="hidden md:block text-sm text-[#242424]/60 mt-1">Conversaciones por caso, canales por área, mensajería directa y notificaciones internas.</p>
-          </div>
-          <div className="flex items-center gap-1.5 overflow-x-auto -mx-3 px-3 md:mx-0 md:px-0 pb-1 md:pb-0 scrollbar-hide">
-            {(["canales","dm","notificaciones","directorio"] as const).map((t) => (
-              <button key={t} onClick={() => setTabAndSync(t)} className="shrink-0 rounded-lg px-3 py-1.5 text-[12px] font-medium border" style={tab === t ? { background: NUVEX.azul, color: "#fff", borderColor: NUVEX.azul } : { borderColor: "#E3E7EE", color: "#242424", background: "#fff" }}>
+      <ExecutiveHero
+        badge={{ icon: <MessagesSquare size={12} />, label: "NUVEX · Colaboración", tone: "blue" }}
+        title="Centro de Colaboración"
+        description="Conversaciones por caso, canales por área, mensajería directa y notificaciones internas."
+        actions={
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
+            {(["canales", "dm", "notificaciones", "directorio"] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setTabAndSync(t)}
+                className="shrink-0 rounded-lg px-3 py-1.5 text-[12px] font-medium border"
+                style={
+                  tab === t
+                    ? { background: NUVEX.azul, color: "#fff", borderColor: NUVEX.azul }
+                    : { borderColor: "var(--nuvia-border)", color: "var(--nuvia-text-secondary)", background: "rgba(255,255,255,0.02)" }
+                }
+              >
                 {t === "canales" ? "Canales" : t === "dm" ? "Directos" : t === "notificaciones" ? "Notif." : "Directorio"}
               </button>
             ))}
           </div>
-        </div>
-      </Card>
+        }
+      />
+
 
       {tab === "canales" && (
         <div
