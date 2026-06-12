@@ -19,7 +19,7 @@ export function PresenceDot({ userId, lastSeenAt, visible = true, size = "sm", s
   const online = usePresenciaOnline();
   const isOnline = visible && online.has(userId);
   const dim = size === "sm" ? 8 : 10;
-  const color = isOnline ? "#22c55e" : "#9ca3af";
+  const color = isOnline ? "var(--nuvia-success)" : "var(--nuvia-text-secondary)";
   const titulo = !visible
     ? "Estado oculto"
     : isOnline
@@ -40,7 +40,7 @@ export function PresenceDot({ userId, lastSeenAt, visible = true, size = "sm", s
         }}
       />
       {showText && (
-        <span className="text-[11px] text-[#242424]/60">
+        <span className="text-[11px]" style={{ color: "currentColor" }}>
           {!visible ? "Estado oculto" : isOnline ? "En línea" : formatUltimaVez(lastSeenAt)}
         </span>
       )}
