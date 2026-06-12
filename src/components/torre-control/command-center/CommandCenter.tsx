@@ -69,40 +69,51 @@ export function HealthScoreGauge() {
   const dash = (score / 100) * 251.2;
   return (
     <div
-      className="glass-card rounded-2xl p-5 flex items-center gap-5"
-      style={{ border: "1px solid var(--nuvia-border)" }}
+      className="relative h-full overflow-hidden rounded-2xl p-5 flex items-center gap-5"
+      style={{
+        background: "linear-gradient(160deg, rgba(8,12,28,0.65) 0%, rgba(18,26,50,0.55) 100%)",
+        border: "1px solid rgba(238,245,255,0.12)",
+        backdropFilter: "blur(28px) saturate(150%)",
+        boxShadow: "0 24px 60px -28px rgba(0,0,0,0.65), inset 0 1px 0 rgba(238,245,255,0.06)",
+      }}
     >
-      <div className="relative w-24 h-24 shrink-0">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-12 -bottom-12 h-40 w-40 rounded-full blur-3xl"
+        style={{ background: `color-mix(in oklab, ${color} 22%, transparent)` }}
+      />
+      <div className="relative w-28 h-28 shrink-0">
         <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
           <circle cx="50" cy="50" r="40" fill="none" strokeWidth="8"
-            stroke="var(--nuvia-bg-secondary)" />
+            stroke="rgba(255,255,255,0.06)" />
           <circle cx="50" cy="50" r="40" fill="none" strokeWidth="8"
-            stroke={color} strokeDasharray={`${dash} 251.2`} strokeLinecap="round" />
+            stroke={color} strokeDasharray={`${dash} 251.2`} strokeLinecap="round"
+            style={{ filter: `drop-shadow(0 0 8px color-mix(in oklab, ${color} 45%, transparent))` }} />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
+          <span className="text-3xl font-bold tabular-nums" style={{ color: "var(--nuvia-text-primary)" }}>
             {q.isLoading ? "…" : Math.round(score)}
           </span>
-          <span className="text-[10px] uppercase tracking-wide" style={{ color: "var(--nuvia-text-muted)" }}>
+          <span className="text-[10px] uppercase tracking-wider" style={{ color: "var(--nuvia-text-muted)" }}>
             /100
           </span>
         </div>
       </div>
-      <div className="min-w-0">
-        <div className="text-xs uppercase tracking-wider" style={{ color: "var(--nuvia-text-muted)" }}>
+      <div className="min-w-0 relative">
+        <div className="text-[10px] font-bold uppercase tracking-[0.22em]" style={{ color: "var(--nuvia-text-muted)" }}>
           Health Score NUVEX
         </div>
-        <div className="text-base font-semibold mt-0.5" style={{ color }}>
+        <div className="text-lg font-bold mt-1" style={{ color }}>
           {hs ? HEALTH_LABEL[hs.estado] : "—"}
         </div>
         {hs?.fresh && (
-          <div className="text-[11px] mt-1" style={{ color: "var(--nuvia-text-muted)" }}>
+          <div className="text-[11px] mt-1.5" style={{ color: "var(--nuvia-text-muted)" }}>
             Actualizado: {hs.fecha}
           </div>
         )}
         {!hs?.fresh && q.isFetched && (
-          <div className="text-[11px] mt-1" style={{ color: "var(--nuvia-text-muted)" }}>
-            Sin snapshot diario aún. El cron corre 03:00 COL.
+          <div className="text-[11px] mt-1.5" style={{ color: "var(--nuvia-text-muted)" }}>
+            Sin snapshot diario aún. Cron 03:00 COL.
           </div>
         )}
       </div>

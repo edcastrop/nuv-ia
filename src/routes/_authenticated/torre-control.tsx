@@ -86,8 +86,8 @@ function TorreControlPage() {
         </div>
       )}
 
-      {/* KPI strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      {/* KPI strip — 3 cols para mejor lectura ejecutiva (2 filas de 3) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {(m?.kpis ?? Array.from({ length: 6 })).map((kpi, i) =>
           kpi ? (
             <KpiStripCard key={(kpi as TorreKpi).key} kpi={kpi as TorreKpi} onClick={() => setActiveKpi(kpi as TorreKpi)} />
@@ -124,21 +124,33 @@ function TorreControlPage() {
   );
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-[1400px] mx-auto space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 items-stretch">
-        <ExecutiveHero
-          nombre={nombre}
-          period={period}
-          onPeriodChange={setPeriod}
-          starValue={starValue}
-          starLabel={starLabel}
-        />
-        <HealthScoreGauge />
+    <div
+      className="relative min-h-screen overflow-hidden"
+      style={{ background: "var(--nuvia-bg-primary)", color: "var(--nuvia-text-primary)" }}
+    >
+      {/* halo decorativo sutil de fondo */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 h-[420px] w-[820px] rounded-full blur-3xl opacity-50"
+        style={{ background: "radial-gradient(circle, rgba(68,93,163,0.18) 0%, transparent 70%)" }}
+      />
+
+      <div className="relative z-10 px-4 sm:px-6 lg:px-8 py-6 max-w-[1400px] mx-auto space-y-5">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4 items-stretch">
+          <ExecutiveHero
+            nombre={nombre}
+            period={period}
+            onPeriodChange={setPeriod}
+            starValue={starValue}
+            starLabel={starLabel}
+          />
+          <HealthScoreGauge />
+        </div>
+
+        <CommandCenterTabs resumenSlot={resumenSlot} isExecutive={autorizado} />
+
+        <KpiDetailModal kpi={activeKpi} onClose={() => setActiveKpi(null)} />
       </div>
-
-      <CommandCenterTabs resumenSlot={resumenSlot} isExecutive={autorizado} />
-
-      <KpiDetailModal kpi={activeKpi} onClose={() => setActiveKpi(null)} />
     </div>
   );
 }
