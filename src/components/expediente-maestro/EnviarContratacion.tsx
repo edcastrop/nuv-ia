@@ -13,6 +13,7 @@ import {
 } from "@/lib/contratacion";
 import { enviarContratacion } from "@/lib/contratacion.functions";
 import { cambiarEstadoConValidacion } from "@/lib/pipelineTransiciones";
+import { evaluarQaGuard } from "@/lib/qaGuard";
 
 export interface ContratacionContext {
   expedienteId: string;
