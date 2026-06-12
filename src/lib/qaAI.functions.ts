@@ -66,6 +66,7 @@ const AuditarInputSchema = z.object({
   reconstruccion: z.object({
     saldoCapital: z.number().nonnegative(),
     tasaEa: z.number().nonnegative(),
+    tasaEaPactada: z.number().nonnegative().optional(),
     cuotasPendientes: z.number().int().nonnegative(),
     seguros: z.number().nonnegative().default(0),
     coberturaFrechPp: z.number().nonnegative().optional(),
