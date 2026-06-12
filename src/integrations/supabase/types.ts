@@ -2863,6 +2863,11 @@ export type Database = {
           producto: string | null
           producto_bancario_id: string | null
           propuesta_data: Json
+          qa_auditoria_id: string | null
+          qa_categoria: Database["public"]["Enums"]["qa_categoria"] | null
+          qa_dictamen: Database["public"]["Enums"]["qa_dictamen"] | null
+          qa_ejecutada_at: string | null
+          qa_score: number | null
           radicado_fecha: string | null
           radicado_id_banco: string | null
           recalculo_at: string | null
@@ -2912,6 +2917,11 @@ export type Database = {
           producto?: string | null
           producto_bancario_id?: string | null
           propuesta_data?: Json
+          qa_auditoria_id?: string | null
+          qa_categoria?: Database["public"]["Enums"]["qa_categoria"] | null
+          qa_dictamen?: Database["public"]["Enums"]["qa_dictamen"] | null
+          qa_ejecutada_at?: string | null
+          qa_score?: number | null
           radicado_fecha?: string | null
           radicado_id_banco?: string | null
           recalculo_at?: string | null
@@ -2961,6 +2971,11 @@ export type Database = {
           producto?: string | null
           producto_bancario_id?: string | null
           propuesta_data?: Json
+          qa_auditoria_id?: string | null
+          qa_categoria?: Database["public"]["Enums"]["qa_categoria"] | null
+          qa_dictamen?: Database["public"]["Enums"]["qa_dictamen"] | null
+          qa_ejecutada_at?: string | null
+          qa_score?: number | null
           radicado_fecha?: string | null
           radicado_id_banco?: string | null
           recalculo_at?: string | null
@@ -2991,6 +3006,13 @@ export type Database = {
             columns: ["producto_bancario_id"]
             isOneToOne: false
             referencedRelation: "productos_bancarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expedientes_qa_auditoria_id_fkey"
+            columns: ["qa_auditoria_id"]
+            isOneToOne: false
+            referencedRelation: "qa_auditorias"
             referencedColumns: ["id"]
           },
         ]
@@ -4544,6 +4566,7 @@ export type Database = {
         Row: {
           alertas: Json
           analista_id: string | null
+          auto_ejecutada: boolean
           categoria: Database["public"]["Enums"]["qa_categoria"]
           created_at: string
           dictamen: Database["public"]["Enums"]["qa_dictamen"]
@@ -4564,6 +4587,7 @@ export type Database = {
         Insert: {
           alertas?: Json
           analista_id?: string | null
+          auto_ejecutada?: boolean
           categoria: Database["public"]["Enums"]["qa_categoria"]
           created_at?: string
           dictamen: Database["public"]["Enums"]["qa_dictamen"]
@@ -4584,6 +4608,7 @@ export type Database = {
         Update: {
           alertas?: Json
           analista_id?: string | null
+          auto_ejecutada?: boolean
           categoria?: Database["public"]["Enums"]["qa_categoria"]
           created_at?: string
           dictamen?: Database["public"]["Enums"]["qa_dictamen"]
@@ -5819,6 +5844,7 @@ export type Database = {
       }
       preview_desvinculacion: { Args: { _target: string }; Returns: Json }
       procesar_recordatorios_onboarding: { Args: never; Returns: Json }
+      qa_bloquea_avance: { Args: { _expediente_id: string }; Returns: boolean }
       reactivar_usuario_solicitud: {
         Args: {
           _nuevo_rol?: Database["public"]["Enums"]["app_role"]

@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { extractStatementMotor, type MotorResultado } from "@/lib/motorExtractos.functions";
+import { auditarLecturaAutomatica } from "@/lib/qaAI.functions";
+import { QABadge, type QACategoria } from "@/components/qa-ai/QABadge";
 import {
   CAMPOS_MOTOR,
   CAMPOS_CRITICOS,
@@ -20,6 +22,7 @@ import {
   type CampoMotor,
 } from "@/lib/motorExtractos/bankProfiles";
 import { NUVEX } from "@/components/nuvex/constants";
+
 
 interface Props {
   expedienteId?: string | null;
@@ -92,6 +95,10 @@ const fmtSize = (b: number) =>
 export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const motor = useServerFn(extractStatementMotor);
+  const autoAudit = useServerFn(auditarLecturaAutomatica);
+  const [autoQa, setAutoQa] = useState<null | { auditoriaId: string; score: number; categoria: QACategoria; dictamen: string; hallazgos: number; criticos: number }>(null);
+  const [autoQaState, setAutoQaState] = useState<"idle" | "running" | "done" | "error">("idle");
+  const [autoQaError, setAutoQaError] = useState<string | null>(null);
   const [stage, setStage] = useState<Stage>("idle");
   const [file, setFile] = useState<File | null>(null);
   const [archivoPath, setArchivoPath] = useState<string | null>(null);
@@ -198,7 +205,7 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      const { error: insErr } = await supabase.from("extractos_lecturas").insert({
+      const { data: inserted, error: insErr } = await supabase.from("extractos_lecturas").insert({
         expediente_id: expedienteId ?? null,
         asesor_id: user?.id,
         aprobado_por: user?.id,
@@ -212,10 +219,31 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
         confianza_global: result.confianzaGlobal,
         estado: "aprobado",
         motor_version: "v1",
-      });
+      }).select("id").single();
       if (insErr) throw insErr;
       onConfirm?.({ ...result, datos: datosFinales as Record<CampoMotor, string> });
       setStage("saved");
+
+      // Disparo automático de NUVIA Financial QA AI (sólo si hay expediente)
+      if (expedienteId && inserted?.id) {
+        setAutoQaState("running");
+        setAutoQaError(null);
+        try {
+          const r = await autoAudit({ data: { extractoLecturaId: inserted.id } });
+          setAutoQa({
+            auditoriaId: r.auditoriaId,
+            score: r.score,
+            categoria: r.categoria as QACategoria,
+            dictamen: r.dictamen,
+            hallazgos: r.hallazgos,
+            criticos: r.criticos,
+          });
+          setAutoQaState("done");
+        } catch (qaErr) {
+          setAutoQaError(qaErr instanceof Error ? qaErr.message : "No se pudo ejecutar la auditoría QA");
+          setAutoQaState("error");
+        }
+      }
     } catch (e) {
       setError((e as Error).message);
       setStage("error");
@@ -433,6 +461,45 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
           >
             <CheckCircle2 className="h-4 w-4" /> Lectura aprobada y guardada en trazabilidad.
           </div>
+
+          {expedienteId && (
+            <div className="mt-3 rounded-md bg-white/70 border border-white px-3 py-2 text-[12px]">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-3.5 w-3.5" style={{ color: NUVEX.azul }} />
+                <span className="font-semibold text-[#242424]">NUVIA Financial QA AI</span>
+                {autoQaState === "running" && (
+                  <span className="text-[#445DA3] inline-flex items-center gap-1">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Auditando automáticamente…
+                  </span>
+                )}
+                {autoQaState === "done" && autoQa && (
+                  <QABadge
+                    categoria={autoQa.categoria}
+                    score={autoQa.score}
+                    auditoriaId={autoQa.auditoriaId}
+                    size="sm"
+                  />
+                )}
+                {autoQaState === "error" && (
+                  <span className="text-[#991B1B]">Auditoría QA falló (la lectura quedó guardada).</span>
+                )}
+              </div>
+              {autoQaState === "done" && autoQa && (
+                <div className="mt-1 text-[11px] text-[#242424]/70">
+                  {autoQa.hallazgos} hallazgo(s) · {autoQa.criticos} crítico(s)
+                  {autoQa.categoria === "rechazado" && (
+                    <span className="ml-2 text-[#991B1B] font-semibold">
+                      Caso bloqueado para avanzar. Corrija y reauditar.
+                    </span>
+                  )}
+                </div>
+              )}
+              {autoQaState === "error" && autoQaError && (
+                <div className="mt-1 text-[11px] text-[#991B1B]/80">{autoQaError}</div>
+              )}
+            </div>
+          )}
+
           <button
             onClick={reset}
             className="mt-3 text-xs underline"
@@ -442,6 +509,7 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
           </button>
         </div>
       )}
+
 
       {(stage === "review" || stage === "saving") && result && (
         <div className="space-y-4">
