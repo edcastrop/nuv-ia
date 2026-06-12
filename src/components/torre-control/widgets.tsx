@@ -34,41 +34,83 @@ export function ExecutiveHero({
     { k: "today", label: "Hoy" }, { k: "7d", label: "7d" },
     { k: "mtd", label: "MTD" }, { k: "qtd", label: "QTD" }, { k: "ytd", label: "YTD" },
   ];
+  const hora = new Date().getHours();
+  const greet = hora < 12 ? "Buenos días" : hora < 19 ? "Buenas tardes" : "Buenas noches";
   return (
     <div
-      className="relative overflow-hidden rounded-2xl px-6 py-7 sm:px-8 sm:py-9"
+      className="relative h-full overflow-hidden rounded-2xl px-6 py-6 sm:px-7 sm:py-7"
       style={{
-        background: "var(--nuvia-gradient-primary)",
-        border: "1px solid var(--nuvia-border)",
-        boxShadow: "var(--nuvia-shadow-lg)",
+        background:
+          "linear-gradient(135deg, rgba(20,28,52,0.6) 0%, rgba(28,42,78,0.45) 60%, rgba(68,93,163,0.30) 100%)",
+        border: "1px solid rgba(238,245,255,0.12)",
+        backdropFilter: "blur(34px) saturate(155%)",
+        boxShadow: "0 24px 60px -28px rgba(0,0,0,0.65), inset 0 1px 0 rgba(238,245,255,0.06)",
       }}
     >
-      <div className="relative z-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[10px] tracking-[0.22em] uppercase"
-            style={{ border: "1px solid var(--nuvia-border-strong)", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.75)" }}>
-            <Sparkles className="h-3 w-3" /> Torre de Control · NUVIA
+      {/* Gloss superior */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-px"
+        style={{ background: "linear-gradient(90deg, transparent, rgba(238,245,255,0.45), transparent)" }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-20 -top-16 h-56 w-56 rounded-full blur-3xl"
+        style={{ background: "rgba(132,185,143,0.18)" }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -left-10 -bottom-12 h-44 w-44 rounded-full blur-3xl"
+        style={{ background: "rgba(68,93,163,0.24)" }}
+      />
+
+      <div className="relative z-10 flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <div className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold tracking-[0.22em] uppercase"
+            style={{
+              background: "rgba(132,185,143,0.14)",
+              color: "var(--nuvia-accent-green)",
+              border: "1px solid color-mix(in oklab, var(--nuvia-accent-green) 28%, transparent)",
+            }}>
+            <Sparkles className="h-3 w-3" /> Torre de Control
           </div>
-          <h1 className="mt-3 text-2xl sm:text-3xl font-semibold tracking-tight" style={{ color: "var(--nuvia-text-primary)" }}>
-            Buenos días, {nombre || "Dirección"}
+          <h1 className="mt-3 text-2xl sm:text-[28px] font-bold tracking-tight" style={{ color: "var(--nuvia-text-primary)" }}>
+            {greet}, {nombre || "Dirección"}
           </h1>
-          <p className="mt-2 text-sm sm:text-base max-w-xl" style={{ color: "var(--nuvia-text-secondary)" }}>
-            {starLabel}: <span style={{ color: "var(--nuvia-text-primary)" }} className="font-semibold">{starValue}</span>
+          <p className="mt-1.5 text-[13px] max-w-xl leading-relaxed" style={{ color: "var(--nuvia-text-secondary)" }}>
+            Visión 360° del negocio NUVIA — KPIs consolidados, salud operativa y alertas en tiempo real.
           </p>
+
+          <div
+            className="mt-4 inline-flex items-baseline gap-2.5 rounded-xl px-3.5 py-2.5"
+            style={{
+              background: "rgba(8,12,28,0.5)",
+              border: "1px solid var(--nuvia-border)",
+            }}
+          >
+            <span className="text-[10px] uppercase tracking-[0.18em] font-semibold" style={{ color: "var(--nuvia-text-muted)" }}>
+              {starLabel}
+            </span>
+            <span className="text-lg font-bold tabular-nums" style={{ color: "var(--nuvia-accent-green)" }}>
+              {starValue}
+            </span>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5 rounded-xl p-1"
-          style={{ background: "rgba(0,0,0,0.25)", border: "1px solid var(--nuvia-border)" }}>
+
+        <div className="flex items-center gap-1 rounded-xl p-1 shrink-0"
+          style={{ background: "rgba(5,8,22,0.45)", border: "1px solid var(--nuvia-border)" }}>
           {opts.map((o) => {
             const active = o.k === period;
             return (
               <button
                 key={o.k}
                 onClick={() => onPeriodChange(o.k)}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium transition"
+                className="px-3 py-1.5 rounded-lg text-[11px] font-semibold transition"
                 style={{
-                  background: active ? "var(--nuvia-bg-card)" : "transparent",
-                  color: active ? "var(--nuvia-text-primary)" : "var(--nuvia-text-secondary)",
-                  border: active ? "1px solid var(--nuvia-border-strong)" : "1px solid transparent",
+                  background: active ? "var(--nuvia-accent-blue)" : "transparent",
+                  color: active ? "#fff" : "var(--nuvia-text-secondary)",
+                  border: active ? "1px solid color-mix(in oklab, var(--nuvia-accent-blue) 60%, transparent)" : "1px solid transparent",
+                  boxShadow: active ? "0 4px 14px -4px color-mix(in oklab, var(--nuvia-accent-blue) 60%, transparent)" : undefined,
                 }}
               >
                 {o.label}
@@ -108,33 +150,53 @@ const KPI_ICON: Record<TorreKpi["key"], React.ComponentType<{ className?: string
 
 export function KpiStripCard({ kpi, onClick }: { kpi: TorreKpi; onClick?: () => void }) {
   const Icon = KPI_ICON[kpi.key];
+  const hasDelta = kpi.delta != null;
   const deltaPositive = (kpi.delta ?? 0) >= 0;
-  const DeltaIcon = kpi.delta == null ? Minus : deltaPositive ? TrendingUp : TrendingDown;
-  const deltaColor = kpi.delta == null
-    ? "var(--nuvia-text-muted)"
+  const DeltaIcon = !hasDelta ? Minus : deltaPositive ? TrendingUp : TrendingDown;
+  const accent = !hasDelta
+    ? "var(--nuvia-accent-blue)"
     : deltaPositive ? "var(--nuvia-accent-green)" : "var(--nuvia-danger)";
   return (
     <button
       type="button"
       onClick={onClick}
-      className="glass-card text-left w-full p-5 rounded-2xl transition hover:[transform:translateY(-1px)]"
+      className="group relative overflow-hidden glass-card text-left w-full p-5 rounded-2xl transition-all duration-200 hover:-translate-y-0.5"
       style={{ border: "1px solid var(--nuvia-border)" }}
     >
+      {/* acento superior */}
+      <div
+        className="absolute inset-x-0 top-0 h-px transition-opacity"
+        style={{ background: accent, opacity: 0.55 }}
+      />
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2 text-xs uppercase tracking-wider" style={{ color: "var(--nuvia-text-muted)" }}>
-          <Icon className="h-3.5 w-3.5" />
-          {kpi.label}
+        <div className="flex items-center gap-2 text-[10.5px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--nuvia-text-muted)" }}>
+          <span
+            className="grid h-7 w-7 place-items-center rounded-lg"
+            style={{
+              background: `color-mix(in oklab, ${accent} 14%, transparent)`,
+              color: accent,
+            }}
+          >
+            <Icon className="h-3.5 w-3.5" />
+          </span>
+          <span className="truncate">{kpi.label}</span>
         </div>
-        <div className="inline-flex items-center gap-1 text-xs font-medium" style={{ color: deltaColor }}>
+        <div
+          className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10.5px] font-bold tabular-nums"
+          style={{
+            color: accent,
+            background: `color-mix(in oklab, ${accent} 10%, transparent)`,
+          }}
+        >
           <DeltaIcon className="h-3 w-3" />
-          {kpi.delta == null ? "—" : `${deltaPositive ? "+" : ""}${kpi.delta}%`}
+          {!hasDelta ? "—" : `${deltaPositive ? "+" : ""}${kpi.delta}%`}
         </div>
       </div>
-      <div className="mt-3 text-2xl font-semibold tracking-tight" style={{ color: "var(--nuvia-text-primary)" }}>
+      <div className="mt-3 text-[26px] font-bold tracking-tight tabular-nums leading-none" style={{ color: "var(--nuvia-text-primary)" }}>
         {fmtKpi(kpi)}
       </div>
-      <div className="mt-3 opacity-80">
-        <Sparkline data={kpi.spark} color="var(--nuvia-accent-blue)" />
+      <div className="mt-3 opacity-90">
+        <Sparkline data={kpi.spark} color={accent} />
       </div>
     </button>
   );
