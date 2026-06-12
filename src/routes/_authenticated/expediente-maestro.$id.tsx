@@ -83,14 +83,16 @@ function MaestroDetail() {
         setApoderado({ ...emptyApoderado(), ...(e.apoderado || {}) });
         // Pipeline / QA: primero busca el expediente operativo homólogo por el
         // mismo id del Maestro; si no existe, conserva el fallback histórico por cédula.
+        let loadedOperativo = false;
         try {
           const full = await getExpediente(id);
           setExpOperativo(full);
           setEtapaActual(computeEtapaActual({ estado_caso: full.estado_caso }));
+          loadedOperativo = true;
         } catch {
           // fallback histórico por cédula
         }
-        if (!expOperativo && e.cedula_cliente) {
+        if (!loadedOperativo && e.cedula_cliente) {
           const { data: exps } = await supabase
             .from("expedientes")
             .select("id, estado_caso, updated_at")
