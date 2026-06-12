@@ -248,7 +248,7 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
             reconstruccion: { ...(nextInputs.reconstruccion as Record<string, unknown>), modalidad: modalidadFinal } as never,
             extracto: nextInputs.extracto as never,
           });
-          auditoria = {
+          auditoria = ({
             ...auditoria,
             inputs: nextInputs,
             outputs: {
@@ -264,7 +264,7 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
               primerasCuotas: result.reconstruccion.primerasCuotas,
               ultimasCuotas: result.reconstruccion.ultimasCuotas,
             },
-          } as typeof aud;
+          } as unknown) as typeof aud;
         } catch {
           auditoria = { ...auditoria, inputs: nextInputs } as typeof aud;
         }
