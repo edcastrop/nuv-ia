@@ -326,6 +326,8 @@ function ResultadoQaAi() {
           </table>
         </div>
       </NCard>
+
+      <CopilotoQADrawer open={copilotoOpen} onClose={() => setCopilotoOpen(false)} auditoriaId={id} />
     </PageLayout>
   );
 }
