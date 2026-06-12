@@ -174,12 +174,13 @@ function ComisionesPage() {
         }
       />
 
-      <KpiGrid cols={5}>
+      <KpiGrid cols={4}>
         <KpiCard
           icon={<TrendingUp size={16} />}
           tone="blue"
           label="Comisión potencial"
           value={formatCOP(totales.potencial)}
+          hint={`Por recaudar ${formatCOP(totales.por_recaudar)}`}
         />
         <KpiCard
           icon={<CircleDollarSign size={16} />}
@@ -198,12 +199,6 @@ function ComisionesPage() {
           tone="warning"
           label="Pendiente de pago"
           value={formatCOP(totales.pendiente)}
-        />
-        <KpiCard
-          icon={<TrendingUp size={16} />}
-          tone="neutral"
-          label="Por recaudar"
-          value={formatCOP(totales.por_recaudar)}
         />
       </KpiGrid>
 
@@ -254,7 +249,7 @@ function ComisionesPage() {
         </div>
       )}
 
-      <InsightCard scope="comisiones" />
+      <InsightCard scope="finanzas" />
 
       {/* Comisiones disponibles para generar cuenta */}
       <NCard padding="md">
