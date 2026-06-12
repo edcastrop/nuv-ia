@@ -207,7 +207,7 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
     const { data: aud, error } = await context.supabase
       .from("qa_auditorias").select("*").eq("id", data.id).single();
     if (error) throw new Error(error.message);
-    let auditoria = aud as Record<string, unknown>;
+    let auditoria = aud;
     const inputs = (auditoria.inputs ?? {}) as Record<string, unknown>;
     const rec = (inputs.reconstruccion ?? {}) as Record<string, unknown>;
     const extSnap = (inputs.extracto ?? {}) as Record<string, unknown>;
@@ -264,20 +264,15 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
               primerasCuotas: result.reconstruccion.primerasCuotas,
               ultimasCuotas: result.reconstruccion.ultimasCuotas,
             },
-          };
+          } as typeof aud;
         } catch {
-          auditoria = { ...auditoria, inputs: nextInputs };
+          auditoria = { ...auditoria, inputs: nextInputs } as typeof aud;
         }
       }
     }
     const { data: incs } = await context.supabase
       .from("qa_inconsistencias").select("*").eq("auditoria_id", data.id);
-    return JSON.parse(JSON.stringify({ auditoria, inconsistencias: incs ?? [] })) as {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      auditoria: any;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      inconsistencias: any[];
-    };
+    return { auditoria, inconsistencias: incs ?? [] };
   });
 
 export const qaKpis = createServerFn({ method: "POST" })
