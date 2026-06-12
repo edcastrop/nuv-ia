@@ -116,11 +116,14 @@ export function HeroRolCard({
           <div
             className="shrink-0 rounded-2xl px-5 py-4 text-right"
             style={{
-              background: "rgba(5,8,22,0.45)",
-              border: "1px solid var(--nuvia-border)",
-              backdropFilter: "blur(8px)",
+              background: "rgba(8,12,28,0.55)",
+              border: "1px solid rgba(238,245,255,0.14)",
+              backdropFilter: "blur(20px) saturate(150%)",
+              WebkitBackdropFilter: "blur(20px) saturate(150%)",
+              boxShadow: "inset 0 1px 0 rgba(238,245,255,0.08)",
             }}
           >
+
             <div
               className="text-[10px] font-bold uppercase tracking-[0.22em]"
               style={{ color: "var(--nuvia-text-muted)" }}
