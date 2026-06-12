@@ -206,6 +206,7 @@ export interface ExtractoSnapshot {
   cuota?: number;
   seguros?: number;
   coberturaFrechPp?: number;
+  coberturaFrechValorMensual?: number;
 }
 
 export interface Inconsistencia {
