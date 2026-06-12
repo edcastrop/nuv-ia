@@ -16,6 +16,7 @@ import { Route as MfaVerificarRouteImport } from './routes/mfa-verificar'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiTreasuryCopilotRouteImport } from './routes/api/treasury-copilot'
 import { Route as ApiNuvexIaStreamRouteImport } from './routes/api/nuvex-ia-stream'
 import { Route as ApiNuvexGptChatRouteImport } from './routes/api/nuvex-gpt-chat'
 import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
@@ -132,6 +133,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTreasuryCopilotRoute = ApiTreasuryCopilotRouteImport.update({
+  id: '/api/treasury-copilot',
+  path: '/api/treasury-copilot',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiNuvexIaStreamRoute = ApiNuvexIaStreamRouteImport.update({
@@ -646,6 +652,7 @@ export interface FileRoutesByFullPath {
   '/wallet': typeof AuthenticatedWalletRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
   '/api/nuvex-ia-stream': typeof ApiNuvexIaStreamRoute
+  '/api/treasury-copilot': typeof ApiTreasuryCopilotRoute
   '/apoderado/mis-casos': typeof AuthenticatedApoderadoMisCasosRoute
   '/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
@@ -734,6 +741,7 @@ export interface FileRoutesByTo {
   '/wallet': typeof AuthenticatedWalletRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
   '/api/nuvex-ia-stream': typeof ApiNuvexIaStreamRoute
+  '/api/treasury-copilot': typeof ApiTreasuryCopilotRoute
   '/apoderado/mis-casos': typeof AuthenticatedApoderadoMisCasosRoute
   '/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
@@ -826,6 +834,7 @@ export interface FileRoutesById {
   '/_authenticated/wallet': typeof AuthenticatedWalletRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
   '/api/nuvex-ia-stream': typeof ApiNuvexIaStreamRoute
+  '/api/treasury-copilot': typeof ApiTreasuryCopilotRoute
   '/_authenticated/apoderado/mis-casos': typeof AuthenticatedApoderadoMisCasosRoute
   '/_authenticated/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/_authenticated/casos/$id': typeof AuthenticatedCasosIdRoute
@@ -919,6 +928,7 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/api/nuvex-gpt-chat'
     | '/api/nuvex-ia-stream'
+    | '/api/treasury-copilot'
     | '/apoderado/mis-casos'
     | '/cartera/$id'
     | '/casos/$id'
@@ -1007,6 +1017,7 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/api/nuvex-gpt-chat'
     | '/api/nuvex-ia-stream'
+    | '/api/treasury-copilot'
     | '/apoderado/mis-casos'
     | '/cartera/$id'
     | '/casos/$id'
@@ -1098,6 +1109,7 @@ export interface FileRouteTypes {
     | '/_authenticated/wallet'
     | '/api/nuvex-gpt-chat'
     | '/api/nuvex-ia-stream'
+    | '/api/treasury-copilot'
     | '/_authenticated/apoderado/mis-casos'
     | '/_authenticated/cartera/$id'
     | '/_authenticated/casos/$id'
@@ -1167,6 +1179,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiNuvexGptChatRoute: typeof ApiNuvexGptChatRoute
   ApiNuvexIaStreamRoute: typeof ApiNuvexIaStreamRoute
+  ApiTreasuryCopilotRoute: typeof ApiTreasuryCopilotRoute
   ApiPublicHooksCarteraRecordatoriosRoute: typeof ApiPublicHooksCarteraRecordatoriosRoute
   ApiPublicHooksCasosAlertasRoute: typeof ApiPublicHooksCasosAlertasRoute
   ApiPublicHooksFinanzasCronRoute: typeof ApiPublicHooksFinanzasCronRoute
@@ -1224,6 +1237,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/treasury-copilot': {
+      id: '/api/treasury-copilot'
+      path: '/api/treasury-copilot'
+      fullPath: '/api/treasury-copilot'
+      preLoaderRoute: typeof ApiTreasuryCopilotRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/nuvex-ia-stream': {
@@ -2047,6 +2067,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   ApiNuvexGptChatRoute: ApiNuvexGptChatRoute,
   ApiNuvexIaStreamRoute: ApiNuvexIaStreamRoute,
+  ApiTreasuryCopilotRoute: ApiTreasuryCopilotRoute,
   ApiPublicHooksCarteraRecordatoriosRoute:
     ApiPublicHooksCarteraRecordatoriosRoute,
   ApiPublicHooksCasosAlertasRoute: ApiPublicHooksCasosAlertasRoute,
@@ -2059,13 +2080,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
