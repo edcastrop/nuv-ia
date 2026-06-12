@@ -181,6 +181,7 @@ export function reconstruir(input: ReconstruccionInput): Reconstruccion {
     primerasCuotas: tabla.slice(0, 12),
     ultimasCuotas: tabla.slice(-12),
     totalIntereses,
+    cuotasFrechAplicadas,
   };
 }
 
