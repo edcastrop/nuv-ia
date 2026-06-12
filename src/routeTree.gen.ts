@@ -63,6 +63,7 @@ import { Route as AuthenticatedSuperAdminAcademiaRouteImport } from './routes/_a
 import { Route as AuthenticatedHerramientasProyeccionRouteImport } from './routes/_authenticated/herramientas.proyeccion'
 import { Route as AuthenticatedHerramientasCapacidadPagoRouteImport } from './routes/_authenticated/herramientas.capacidad-pago'
 import { Route as AuthenticatedFinanzasWalletsRouteImport } from './routes/_authenticated/finanzas.wallets'
+import { Route as AuthenticatedFinanzasTreasuryRouteImport } from './routes/_authenticated/finanzas.treasury'
 import { Route as AuthenticatedFinanzasTesoreriaRouteImport } from './routes/_authenticated/finanzas.tesoreria'
 import { Route as AuthenticatedFinanzasReportesRouteImport } from './routes/_authenticated/finanzas.reportes'
 import { Route as AuthenticatedFinanzasRecaudosRouteImport } from './routes/_authenticated/finanzas.recaudos'
@@ -392,6 +393,12 @@ const AuthenticatedFinanzasWalletsRoute =
     path: '/wallets',
     getParentRoute: () => AuthenticatedFinanzasRoute,
   } as any)
+const AuthenticatedFinanzasTreasuryRoute =
+  AuthenticatedFinanzasTreasuryRouteImport.update({
+    id: '/treasury',
+    path: '/treasury',
+    getParentRoute: () => AuthenticatedFinanzasRoute,
+  } as any)
 const AuthenticatedFinanzasTesoreriaRoute =
   AuthenticatedFinanzasTesoreriaRouteImport.update({
     id: '/tesoreria',
@@ -622,6 +629,7 @@ export interface FileRoutesByFullPath {
   '/finanzas/recaudos': typeof AuthenticatedFinanzasRecaudosRoute
   '/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
+  '/finanzas/treasury': typeof AuthenticatedFinanzasTreasuryRoute
   '/finanzas/wallets': typeof AuthenticatedFinanzasWalletsRoute
   '/herramientas/capacidad-pago': typeof AuthenticatedHerramientasCapacidadPagoRoute
   '/herramientas/proyeccion': typeof AuthenticatedHerramientasProyeccionRoute
@@ -704,6 +712,7 @@ export interface FileRoutesByTo {
   '/finanzas/recaudos': typeof AuthenticatedFinanzasRecaudosRoute
   '/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
+  '/finanzas/treasury': typeof AuthenticatedFinanzasTreasuryRoute
   '/finanzas/wallets': typeof AuthenticatedFinanzasWalletsRoute
   '/herramientas/capacidad-pago': typeof AuthenticatedHerramientasCapacidadPagoRoute
   '/herramientas/proyeccion': typeof AuthenticatedHerramientasProyeccionRoute
@@ -791,6 +800,7 @@ export interface FileRoutesById {
   '/_authenticated/finanzas/recaudos': typeof AuthenticatedFinanzasRecaudosRoute
   '/_authenticated/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/_authenticated/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
+  '/_authenticated/finanzas/treasury': typeof AuthenticatedFinanzasTreasuryRoute
   '/_authenticated/finanzas/wallets': typeof AuthenticatedFinanzasWalletsRoute
   '/_authenticated/herramientas/capacidad-pago': typeof AuthenticatedHerramientasCapacidadPagoRoute
   '/_authenticated/herramientas/proyeccion': typeof AuthenticatedHerramientasProyeccionRoute
@@ -878,6 +888,7 @@ export interface FileRouteTypes {
     | '/finanzas/recaudos'
     | '/finanzas/reportes'
     | '/finanzas/tesoreria'
+    | '/finanzas/treasury'
     | '/finanzas/wallets'
     | '/herramientas/capacidad-pago'
     | '/herramientas/proyeccion'
@@ -960,6 +971,7 @@ export interface FileRouteTypes {
     | '/finanzas/recaudos'
     | '/finanzas/reportes'
     | '/finanzas/tesoreria'
+    | '/finanzas/treasury'
     | '/finanzas/wallets'
     | '/herramientas/capacidad-pago'
     | '/herramientas/proyeccion'
@@ -1046,6 +1058,7 @@ export interface FileRouteTypes {
     | '/_authenticated/finanzas/recaudos'
     | '/_authenticated/finanzas/reportes'
     | '/_authenticated/finanzas/tesoreria'
+    | '/_authenticated/finanzas/treasury'
     | '/_authenticated/finanzas/wallets'
     | '/_authenticated/herramientas/capacidad-pago'
     | '/_authenticated/herramientas/proyeccion'
@@ -1479,6 +1492,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanzasWalletsRouteImport
       parentRoute: typeof AuthenticatedFinanzasRoute
     }
+    '/_authenticated/finanzas/treasury': {
+      id: '/_authenticated/finanzas/treasury'
+      path: '/treasury'
+      fullPath: '/finanzas/treasury'
+      preLoaderRoute: typeof AuthenticatedFinanzasTreasuryRouteImport
+      parentRoute: typeof AuthenticatedFinanzasRoute
+    }
     '/_authenticated/finanzas/tesoreria': {
       id: '/_authenticated/finanzas/tesoreria'
       path: '/tesoreria'
@@ -1728,6 +1748,7 @@ interface AuthenticatedFinanzasRouteChildren {
   AuthenticatedFinanzasRecaudosRoute: typeof AuthenticatedFinanzasRecaudosRoute
   AuthenticatedFinanzasReportesRoute: typeof AuthenticatedFinanzasReportesRoute
   AuthenticatedFinanzasTesoreriaRoute: typeof AuthenticatedFinanzasTesoreriaRoute
+  AuthenticatedFinanzasTreasuryRoute: typeof AuthenticatedFinanzasTreasuryRoute
   AuthenticatedFinanzasWalletsRoute: typeof AuthenticatedFinanzasWalletsRoute
   AuthenticatedFinanzasIndexRoute: typeof AuthenticatedFinanzasIndexRoute
 }
@@ -1745,6 +1766,7 @@ const AuthenticatedFinanzasRouteChildren: AuthenticatedFinanzasRouteChildren = {
   AuthenticatedFinanzasRecaudosRoute: AuthenticatedFinanzasRecaudosRoute,
   AuthenticatedFinanzasReportesRoute: AuthenticatedFinanzasReportesRoute,
   AuthenticatedFinanzasTesoreriaRoute: AuthenticatedFinanzasTesoreriaRoute,
+  AuthenticatedFinanzasTreasuryRoute: AuthenticatedFinanzasTreasuryRoute,
   AuthenticatedFinanzasWalletsRoute: AuthenticatedFinanzasWalletsRoute,
   AuthenticatedFinanzasIndexRoute: AuthenticatedFinanzasIndexRoute,
 }
