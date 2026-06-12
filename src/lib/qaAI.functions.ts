@@ -235,6 +235,9 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
           },
           extracto: {
             ...extSnap,
+            cuota: valorFrech && valorFrech > 0
+              ? parseNum(d.cuotaPagadaCliente) ?? parseNum(d.valorAPagar) ?? extSnap.cuota
+              : extSnap.cuota,
             coberturaFrechPp: extSnap.coberturaFrechPp ?? tasaFrech,
             coberturaFrechValorMensual: extSnap.coberturaFrechValorMensual ?? valorFrech,
           },
