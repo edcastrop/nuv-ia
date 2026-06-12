@@ -414,8 +414,10 @@ function Sidebar({ active, onJump }: { active: string; onJump: (id: string) => v
       className="sticky top-0 hidden h-screen w-[252px] shrink-0 flex-col lg:flex"
       style={{
         background:
-          "linear-gradient(180deg, #242424 0%, #1B1B1B 50%, #101010 100%)",
-        backdropFilter: "blur(20px)",
+          "linear-gradient(180deg, rgba(36,36,36,0.55) 0%, rgba(16,16,16,0.55) 100%)",
+        borderRight: "1px solid rgba(255,255,255,0.06)",
+        backdropFilter: "blur(24px)",
+        WebkitBackdropFilter: "blur(24px)",
       }}
     >
       {/* Logo */}
