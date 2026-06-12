@@ -117,13 +117,6 @@ export function HeroRolCard({
           >
             {subtitle}
           </p>
-          <h1 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight">{saludo}</h1>
-          <p
-            className="mt-2 max-w-2xl text-[14.5px] leading-relaxed"
-            style={{ color: "var(--nuvia-text-secondary)" }}
-          >
-            {subtitle}
-          </p>
 
           {ctaLabel && onCta && (
             <button
