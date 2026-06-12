@@ -171,19 +171,35 @@ function CarteraDashboard() {
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full" style={{ fontSize: "var(--nuvia-text-body)" }}>
+            <table className="w-full text-[12.5px]" style={{ color: "var(--nuvia-text-primary)" }}>
               <thead>
-                <tr>
-                  <th className="text-left py-2 pr-3">Cliente</th>
-                  <th className="text-left pr-3">Banco</th>
-                  <th className="text-right pr-3">Honorarios</th>
-                  <th className="text-right pr-3">Pagado</th>
-                  <th className="text-right pr-3">Saldo</th>
-                  <th className="text-left pr-3">Vencimiento</th>
-                  <th className="text-left pr-3">Mora</th>
-                  <th className="text-left pr-3">Estado</th>
-                  <th className="text-left pr-3">Responsable</th>
-                  <th></th>
+                <tr style={{ background: "rgba(255,255,255,0.02)" }}>
+                  {[
+                    { l: "Cliente", a: "left" },
+                    { l: "Banco", a: "left" },
+                    { l: "Honorarios", a: "right" },
+                    { l: "Pagado", a: "right" },
+                    { l: "Saldo", a: "right" },
+                    { l: "Vencimiento", a: "left" },
+                    { l: "Mora", a: "left" },
+                    { l: "Estado", a: "left" },
+                    { l: "Responsable", a: "left" },
+                    { l: "", a: "left" },
+                  ].map((h, i) => (
+                    <th
+                      key={i}
+                      className="px-3 py-2.5 font-semibold uppercase"
+                      style={{
+                        textAlign: h.a as "left" | "right",
+                        fontSize: "10.5px",
+                        letterSpacing: "0.12em",
+                        color: "var(--nuvia-text-secondary)",
+                        borderBottom: "1px solid var(--nuvia-border)",
+                      }}
+                    >
+                      {h.l}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -192,20 +208,52 @@ function CarteraDashboard() {
                   const dm = diasMora(c.fecha_vencimiento);
                   const def = CARTERA_ESTADO_BY_KEY[c.estado_cartera];
                   return (
-                    <tr key={c.id}>
-                      <td className="py-2 pr-3 font-medium">{c.expediente?.cliente_nombre}</td>
-                      <td className="pr-3">{c.expediente?.banco ?? "—"}</td>
-                      <td className="text-right pr-3">{money(Number(c.honorarios_totales))}</td>
-                      <td className="text-right pr-3" style={{ color: "var(--nuvia-success)" }}>{money(Number(c.pagado))}</td>
-                      <td className="text-right pr-3 font-semibold">{money(saldo)}</td>
-                      <td className="pr-3">{c.fecha_vencimiento}</td>
-                      <td className="pr-3" style={{ color: dm > 0 ? "var(--nuvia-danger)" : "inherit" }}>{dm > 0 ? `${dm} días` : "—"}</td>
-                      <td className="pr-3">
-                        <span className="text-[10.5px] font-semibold px-2 py-0.5 rounded" style={{ color: def.color, background: def.bg }}>{def.label}</span>
+                    <tr
+                      key={c.id}
+                      className="transition-colors hover:bg-white/[0.03]"
+                      style={{ borderBottom: "1px solid var(--nuvia-border)" }}
+                    >
+                      <td className="px-3 py-2.5 font-medium" style={{ color: "var(--nuvia-text-primary)" }}>
+                        {c.expediente?.cliente_nombre ?? "—"}
                       </td>
-                      <td className="pr-3 text-[11.5px]">{c.responsable?.nombre || c.responsable?.email || "—"}</td>
-                      <td>
-                        <Link to="/cartera/$id" params={{ id: c.id }} className="text-[11px] hover:underline" style={{ color: "var(--nuvia-accent-blue)" }}>Abrir →</Link>
+                      <td className="px-3 py-2.5" style={{ color: "var(--nuvia-text-secondary)" }}>
+                        {c.expediente?.banco ?? "—"}
+                      </td>
+                      <td className="px-3 py-2.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-primary)" }}>
+                        {money(Number(c.honorarios_totales))}
+                      </td>
+                      <td className="px-3 py-2.5 text-right tabular-nums" style={{ color: "var(--nuvia-success)" }}>
+                        {money(Number(c.pagado))}
+                      </td>
+                      <td className="px-3 py-2.5 text-right font-semibold tabular-nums" style={{ color: "var(--nuvia-text-primary)" }}>
+                        {money(saldo)}
+                      </td>
+                      <td className="px-3 py-2.5" style={{ color: "var(--nuvia-text-secondary)" }}>
+                        {c.fecha_vencimiento}
+                      </td>
+                      <td className="px-3 py-2.5" style={{ color: dm > 0 ? "var(--nuvia-danger)" : "var(--nuvia-text-secondary)" }}>
+                        {dm > 0 ? `${dm} días` : "—"}
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <span
+                          className="text-[10.5px] font-semibold px-2 py-0.5 rounded"
+                          style={{ color: def.color, background: def.bg }}
+                        >
+                          {def.label}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2.5 text-[11.5px]" style={{ color: "var(--nuvia-text-secondary)" }}>
+                        {c.responsable?.nombre || c.responsable?.email || "—"}
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <Link
+                          to="/cartera/$id"
+                          params={{ id: c.id }}
+                          className="text-[11px] font-semibold hover:underline"
+                          style={{ color: "var(--nuvia-accent-blue)" }}
+                        >
+                          Abrir →
+                        </Link>
                       </td>
                     </tr>
                   );
