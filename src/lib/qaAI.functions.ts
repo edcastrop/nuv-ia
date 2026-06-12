@@ -101,6 +101,7 @@ export const auditarCaso = createServerFn({ method: "POST" })
         cuotasPendientes: data.reconstruccion.cuotasPendientes,
         seguros: data.reconstruccion.seguros,
         coberturaFrechPp: data.reconstruccion.coberturaFrechPp,
+        coberturaFrechCuotasRestantes: data.reconstruccion.coberturaFrechCuotasRestantes,
         valorDesembolsado: data.reconstruccion.valorDesembolsado,
       },
       extracto: data.extracto,
