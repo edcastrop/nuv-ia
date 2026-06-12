@@ -6,6 +6,7 @@ import { listExpedientes, ESTADOS, type EstadoExpediente, type Expediente } from
 import { formatCOP } from "@/lib/format";
 import { computeEtapaActual, getEtapaById, ETAPAS_PIPELINE, type EtapaPipelineId } from "@/lib/pipelineEtapas";
 import { useAuth } from "@/hooks/useAuth";
+import { QABadge } from "@/components/qa-ai/QABadge";
 import {
   Search,
   Plus,
