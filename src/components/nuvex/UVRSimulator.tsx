@@ -54,6 +54,8 @@ import { freshFromCobertura } from "@/lib/cobertura";
 import { Settings2 } from "lucide-react";
 import { AuditPanel } from "./AuditPanel";
 import { useNivelAutonomia } from "@/hooks/useNivelAutonomia";
+import { triggerSimuladorAutoQA } from "@/lib/simuladorAutoQA";
+
 
 export function UVRSimulator({
   initialExpediente,
@@ -371,7 +373,16 @@ export function UVRSimulator({
           } else {
             setCobertura(defaultCobertura);
           }
+          // Auto-QA condicional: sólo cuando el simulador fue abierto desde un
+          // Expediente Maestro (init?.id). En modo standalone no se ejecuta.
+          if (init?.id && p.raw) {
+            void triggerSimuladorAutoQA({
+              expedienteId: init.id,
+              raw: { ...p.raw, archivoPath: p.archivoPath ?? null },
+            });
+          }
         }}
+
       />
       <Card>
         <div id="datos-cliente-card" />
