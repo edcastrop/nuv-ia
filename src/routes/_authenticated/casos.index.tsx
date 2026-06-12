@@ -566,11 +566,12 @@ function ExpedienteCard({ r, isDup = false }: { r: Expediente; isDup?: boolean }
 function Tag({ icon, text, accent }: { icon: React.ReactNode; text: string; accent?: string }) {
   return (
     <span
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium"
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium backdrop-blur-xl"
       style={{
-        background: CARD2,
+        background: "rgba(255,255,255,0.04)",
         color: accent ?? TEXT2,
-        border: `1px solid ${BORDER}`,
+        border: "1px solid rgba(255,255,255,0.10)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
       }}
     >
       <span style={{ color: accent ?? TEXT2 }}>{icon}</span>
@@ -578,6 +579,7 @@ function Tag({ icon, text, accent }: { icon: React.ReactNode; text: string; acce
     </span>
   );
 }
+
 
 function FooterBlock({ icon, title, lines }: { icon: React.ReactNode; title: string; lines: string[] }) {
   return (
