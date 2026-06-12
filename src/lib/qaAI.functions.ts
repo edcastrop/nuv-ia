@@ -224,7 +224,8 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
         const cuotasPend = Number(rec.cuotasPendientes ?? 0);
         const cuotasPag = Number(rec.cuotasPagadas ?? 0);
         const frechCuotasRestantes = Math.max(0, Math.min(cuotasPend, 84 - cuotasPag));
-        const nextInputs = {
+        const modalidadFinal = (inputs.modalidad as Modalidad | undefined) ?? (auditoria.modalidad as Modalidad);
+        const nextInputs: Record<string, unknown> = {
           ...inputs,
           reconstruccion: {
             ...rec,
@@ -240,8 +241,8 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
         };
         try {
           const result = auditar({
-            modalidad: (nextInputs.modalidad as Modalidad) ?? (auditoria.modalidad as Modalidad),
-            reconstruccion: { ...(nextInputs.reconstruccion as Record<string, unknown>), modalidad: (nextInputs.modalidad as Modalidad) ?? (auditoria.modalidad as Modalidad) } as never,
+            modalidad: modalidadFinal,
+            reconstruccion: { ...(nextInputs.reconstruccion as Record<string, unknown>), modalidad: modalidadFinal } as never,
             extracto: nextInputs.extracto as never,
           });
           auditoria = {
@@ -268,7 +269,10 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
     }
     const { data: incs } = await context.supabase
       .from("qa_inconsistencias").select("*").eq("auditoria_id", data.id);
-    return { auditoria, inconsistencias: incs ?? [] };
+    return JSON.parse(JSON.stringify({ auditoria, inconsistencias: incs ?? [] })) as {
+      auditoria: Record<string, never> | null;
+      inconsistencias: Array<Record<string, never>>;
+    };
   });
 
 export const qaKpis = createServerFn({ method: "POST" })
