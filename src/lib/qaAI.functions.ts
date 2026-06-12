@@ -207,9 +207,68 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
     const { data: aud, error } = await context.supabase
       .from("qa_auditorias").select("*").eq("id", data.id).single();
     if (error) throw new Error(error.message);
+    let auditoria = aud as Record<string, unknown>;
+    const inputs = (auditoria.inputs ?? {}) as Record<string, unknown>;
+    const rec = (inputs.reconstruccion ?? {}) as Record<string, unknown>;
+    const extSnap = (inputs.extracto ?? {}) as Record<string, unknown>;
+    if (!(Number(rec.coberturaFrechValorMensual ?? 0) > 0) && auditoria.extracto_id) {
+      const { data: ext } = await context.supabase
+        .from("extractos_lecturas")
+        .select("datos")
+        .eq("id", auditoria.extracto_id as string)
+        .single();
+      const d = (ext?.datos ?? {}) as Record<string, unknown>;
+      const valorFrech = parseNum(d.valorCobertura) ?? parseNum(d.valorSubsidioGobierno);
+      const tasaFrech = parseNum(d.tasaCobertura);
+      if ((valorFrech && valorFrech > 0) || (tasaFrech && tasaFrech > 0)) {
+        const cuotasPend = Number(rec.cuotasPendientes ?? 0);
+        const cuotasPag = Number(rec.cuotasPagadas ?? 0);
+        const frechCuotasRestantes = Math.max(0, Math.min(cuotasPend, 84 - cuotasPag));
+        const nextInputs = {
+          ...inputs,
+          reconstruccion: {
+            ...rec,
+            coberturaFrechPp: rec.coberturaFrechPp ?? tasaFrech,
+            coberturaFrechValorMensual: rec.coberturaFrechValorMensual ?? valorFrech,
+            coberturaFrechCuotasRestantes: rec.coberturaFrechCuotasRestantes ?? frechCuotasRestantes,
+          },
+          extracto: {
+            ...extSnap,
+            coberturaFrechPp: extSnap.coberturaFrechPp ?? tasaFrech,
+            coberturaFrechValorMensual: extSnap.coberturaFrechValorMensual ?? valorFrech,
+          },
+        };
+        try {
+          const result = auditar({
+            modalidad: (nextInputs.modalidad as Modalidad) ?? (auditoria.modalidad as Modalidad),
+            reconstruccion: { ...(nextInputs.reconstruccion as Record<string, unknown>), modalidad: (nextInputs.modalidad as Modalidad) ?? (auditoria.modalidad as Modalidad) } as never,
+            extracto: nextInputs.extracto as never,
+          });
+          auditoria = {
+            ...auditoria,
+            inputs: nextInputs,
+            outputs: {
+              ...(auditoria.outputs as Record<string, unknown> | null ?? {}),
+              cuotaTeorica: result.reconstruccion.cuotaTeorica,
+              cuotaConSubsidio: result.reconstruccion.cuotaConSubsidio,
+              cuotaTotalConSeguros: result.reconstruccion.cuotaTotalConSeguros,
+              beneficioMensualFrech: result.reconstruccion.beneficioMensualFrech,
+              costoTotal: result.reconstruccion.costoTotal,
+              vecesPagado: result.reconstruccion.vecesPagado,
+              totalIntereses: result.reconstruccion.totalIntereses,
+              iMv: result.reconstruccion.iMv,
+              primerasCuotas: result.reconstruccion.primerasCuotas,
+              ultimasCuotas: result.reconstruccion.ultimasCuotas,
+            },
+          };
+        } catch {
+          auditoria = { ...auditoria, inputs: nextInputs };
+        }
+      }
+    }
     const { data: incs } = await context.supabase
       .from("qa_inconsistencias").select("*").eq("auditoria_id", data.id);
-    return { auditoria: aud, inconsistencias: incs ?? [] };
+    return { auditoria, inconsistencias: incs ?? [] };
   });
 
 export const qaKpis = createServerFn({ method: "POST" })
