@@ -221,13 +221,12 @@ function Surface({
       id={id}
       className="relative overflow-hidden rounded-3xl"
       style={{
-        background:
-          "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.025))",
-        border: "1px solid rgba(255,255,255,0.08)",
-        backdropFilter: "blur(24px)",
-        WebkitBackdropFilter: "blur(24px)",
+        background: NUVIA_GLASS,
+        border: "1px solid rgba(207,250,254,0.16)",
+        backdropFilter: "blur(28px) saturate(150%)",
+        WebkitBackdropFilter: "blur(28px) saturate(150%)",
         boxShadow:
-          "0 1px 0 rgba(255,255,255,0.06) inset, 0 30px 60px -30px rgba(0,0,0,0.7)",
+          "0 1px 0 rgba(255,255,255,0.14) inset, 0 36px 90px -38px rgba(34,211,238,0.36), 0 24px 70px -42px rgba(0,0,0,0.88)",
       }}
     >
       {glow && (
@@ -236,14 +235,14 @@ function Surface({
             className="pointer-events-none absolute -top-32 -right-32 h-64 w-64 rounded-full blur-3xl"
             style={{
               background:
-                "radial-gradient(circle, rgba(68,93,163,0.22), transparent 70%)",
+                "radial-gradient(circle, rgba(34,211,238,0.28), transparent 70%)",
             }}
           />
           <div
             className="pointer-events-none absolute -bottom-32 -left-32 h-64 w-64 rounded-full blur-3xl"
             style={{
               background:
-                "radial-gradient(circle, rgba(132,185,143,0.16), transparent 70%)",
+                "radial-gradient(circle, rgba(74,222,128,0.20), transparent 70%)",
             }}
           />
         </>
@@ -286,9 +285,9 @@ function Kpi({
   tone?: "neutral" | "positive" | "warn";
 }) {
   const toneStyles = {
-    neutral: { color: "#FFFFFF", accent: "rgba(123,143,203,0.9)" },
-    positive: { color: "#A8D1B0", accent: "rgba(168,209,176,0.9)" },
-    warn: { color: "#E0913A", accent: "rgba(224,145,58,0.9)" },
+    neutral: { color: "#FFFFFF", accent: "rgba(103,232,249,0.95)" },
+    positive: { color: "#BBF7D0", accent: "rgba(74,222,128,0.95)" },
+    warn: { color: "#F8D36A", accent: "rgba(248,211,106,0.9)" },
   }[tone];
 
   return (
@@ -296,11 +295,11 @@ function Kpi({
       className="group relative h-full overflow-hidden rounded-2xl p-5 transition-all hover:translate-y-[-1px]"
       style={{
         background:
-          "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
-        border: "1px solid rgba(255,255,255,0.08)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        boxShadow: "0 20px 40px -30px rgba(0,0,0,0.7)",
+          "linear-gradient(145deg, rgba(255,255,255,0.11), rgba(34,211,238,0.055) 52%, rgba(74,222,128,0.05))",
+        border: "1px solid rgba(207,250,254,0.16)",
+        backdropFilter: "blur(24px) saturate(150%)",
+        WebkitBackdropFilter: "blur(24px) saturate(150%)",
+        boxShadow: "0 1px 0 rgba(255,255,255,0.10) inset, 0 22px 55px -32px rgba(34,211,238,0.34)",
       }}
     >
       <div className="flex items-center gap-2">
@@ -351,18 +350,18 @@ function HeroKpi({
       className="relative overflow-hidden rounded-3xl p-7 md:p-8"
       style={{
         background:
-          "linear-gradient(135deg, rgba(192,57,43,0.30) 0%, rgba(224,145,58,0.22) 60%, rgba(255,255,255,0.04) 100%)",
-        border: "1px solid rgba(224,145,58,0.30)",
-        backdropFilter: "blur(24px)",
-        WebkitBackdropFilter: "blur(24px)",
+          "linear-gradient(135deg, rgba(34,211,238,0.20) 0%, rgba(37,99,235,0.18) 48%, rgba(74,222,128,0.14) 100%)",
+        border: "1px solid rgba(103,232,249,0.30)",
+        backdropFilter: "blur(28px) saturate(165%)",
+        WebkitBackdropFilter: "blur(28px) saturate(165%)",
         boxShadow:
-          "0 1px 0 rgba(255,255,255,0.08) inset, 0 40px 80px -30px rgba(192,57,43,0.45)",
+          "0 1px 0 rgba(255,255,255,0.16) inset, 0 40px 90px -34px rgba(34,211,238,0.48), 0 26px 80px -48px rgba(74,222,128,0.45)",
       }}
     >
       <div
         className="pointer-events-none absolute -top-24 -right-16 h-72 w-72 rounded-full blur-3xl"
         style={{
-          background: "radial-gradient(circle, rgba(192,57,43,0.45), transparent 70%)",
+          background: "radial-gradient(circle, rgba(34,211,238,0.42), transparent 70%)",
         }}
       />
       <div className="relative flex flex-col gap-2">
