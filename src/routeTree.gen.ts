@@ -14,9 +14,8 @@ import { Route as RegistroRouteImport } from './routes/registro'
 import { Route as PendienteAprobacionRouteImport } from './routes/pendiente-aprobacion'
 import { Route as MfaVerificarRouteImport } from './routes/mfa-verificar'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as LandingRouteImport } from './routes/landing'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
-import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiNuvexIaStreamRouteImport } from './routes/api/nuvex-ia-stream'
 import { Route as ApiNuvexGptChatRouteImport } from './routes/api/nuvex-gpt-chat'
 import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
@@ -32,6 +31,7 @@ import { Route as AuthenticatedNuvexIaRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedNotificacionesRouteImport } from './routes/_authenticated/notificaciones'
 import { Route as AuthenticatedMiPerfilRouteImport } from './routes/_authenticated/mi-perfil'
 import { Route as AuthenticatedMensajeriaRouteImport } from './routes/_authenticated/mensajeria'
+import { Route as AuthenticatedInicioRouteImport } from './routes/_authenticated/inicio'
 import { Route as AuthenticatedIncidentesRouteImport } from './routes/_authenticated/incidentes'
 import { Route as AuthenticatedHonorariosMotorRouteImport } from './routes/_authenticated/honorarios-motor'
 import { Route as AuthenticatedHerramientasRouteImport } from './routes/_authenticated/herramientas'
@@ -119,19 +119,14 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LandingRoute = LandingRouteImport.update({
-  id: '/landing',
-  path: '/landing',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AuthenticatedRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiNuvexIaStreamRoute = ApiNuvexIaStreamRouteImport.update({
   id: '/api/nuvex-ia-stream',
@@ -210,6 +205,11 @@ const AuthenticatedMiPerfilRoute = AuthenticatedMiPerfilRouteImport.update({
 const AuthenticatedMensajeriaRoute = AuthenticatedMensajeriaRouteImport.update({
   id: '/mensajeria',
   path: '/mensajeria',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedInicioRoute = AuthenticatedInicioRouteImport.update({
+  id: '/inicio',
+  path: '/inicio',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedIncidentesRoute = AuthenticatedIncidentesRouteImport.update({
@@ -572,8 +572,7 @@ const AuthenticatedAcademiaCertificadosCodigoRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AuthenticatedIndexRoute
-  '/landing': typeof LandingRoute
+  '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/mfa-verificar': typeof MfaVerificarRoute
   '/pendiente-aprobacion': typeof PendienteAprobacionRoute
@@ -589,6 +588,7 @@ export interface FileRoutesByFullPath {
   '/herramientas': typeof AuthenticatedHerramientasRouteWithChildren
   '/honorarios-motor': typeof AuthenticatedHonorariosMotorRoute
   '/incidentes': typeof AuthenticatedIncidentesRoute
+  '/inicio': typeof AuthenticatedInicioRoute
   '/mensajeria': typeof AuthenticatedMensajeriaRoute
   '/mi-perfil': typeof AuthenticatedMiPerfilRoute
   '/notificaciones': typeof AuthenticatedNotificacionesRoute
@@ -657,7 +657,7 @@ export interface FileRoutesByFullPath {
   '/colaboracion/dm/': typeof AuthenticatedColaboracionDmIndexRoute
 }
 export interface FileRoutesByTo {
-  '/landing': typeof LandingRoute
+  '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/mfa-verificar': typeof MfaVerificarRoute
   '/pendiente-aprobacion': typeof PendienteAprobacionRoute
@@ -670,6 +670,7 @@ export interface FileRoutesByTo {
   '/gestion-usuarios': typeof AuthenticatedGestionUsuariosRoute
   '/honorarios-motor': typeof AuthenticatedHonorariosMotorRoute
   '/incidentes': typeof AuthenticatedIncidentesRoute
+  '/inicio': typeof AuthenticatedInicioRoute
   '/mensajeria': typeof AuthenticatedMensajeriaRoute
   '/mi-perfil': typeof AuthenticatedMiPerfilRoute
   '/notificaciones': typeof AuthenticatedNotificacionesRoute
@@ -685,7 +686,6 @@ export interface FileRoutesByTo {
   '/wallet': typeof AuthenticatedWalletRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
   '/api/nuvex-ia-stream': typeof ApiNuvexIaStreamRoute
-  '/': typeof AuthenticatedIndexRoute
   '/apoderado/mis-casos': typeof AuthenticatedApoderadoMisCasosRoute
   '/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/casos/$id': typeof AuthenticatedCasosIdRoute
@@ -740,8 +740,8 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
-  '/landing': typeof LandingRoute
   '/login': typeof LoginRoute
   '/mfa-verificar': typeof MfaVerificarRoute
   '/pendiente-aprobacion': typeof PendienteAprobacionRoute
@@ -757,6 +757,7 @@ export interface FileRoutesById {
   '/_authenticated/herramientas': typeof AuthenticatedHerramientasRouteWithChildren
   '/_authenticated/honorarios-motor': typeof AuthenticatedHonorariosMotorRoute
   '/_authenticated/incidentes': typeof AuthenticatedIncidentesRoute
+  '/_authenticated/inicio': typeof AuthenticatedInicioRoute
   '/_authenticated/mensajeria': typeof AuthenticatedMensajeriaRoute
   '/_authenticated/mi-perfil': typeof AuthenticatedMiPerfilRoute
   '/_authenticated/notificaciones': typeof AuthenticatedNotificacionesRoute
@@ -772,7 +773,6 @@ export interface FileRoutesById {
   '/_authenticated/wallet': typeof AuthenticatedWalletRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
   '/api/nuvex-ia-stream': typeof ApiNuvexIaStreamRoute
-  '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/apoderado/mis-casos': typeof AuthenticatedApoderadoMisCasosRoute
   '/_authenticated/cartera/$id': typeof AuthenticatedCarteraIdRoute
   '/_authenticated/casos/$id': typeof AuthenticatedCasosIdRoute
@@ -829,7 +829,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/landing'
     | '/login'
     | '/mfa-verificar'
     | '/pendiente-aprobacion'
@@ -845,6 +844,7 @@ export interface FileRouteTypes {
     | '/herramientas'
     | '/honorarios-motor'
     | '/incidentes'
+    | '/inicio'
     | '/mensajeria'
     | '/mi-perfil'
     | '/notificaciones'
@@ -913,7 +913,7 @@ export interface FileRouteTypes {
     | '/colaboracion/dm/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/landing'
+    | '/'
     | '/login'
     | '/mfa-verificar'
     | '/pendiente-aprobacion'
@@ -926,6 +926,7 @@ export interface FileRouteTypes {
     | '/gestion-usuarios'
     | '/honorarios-motor'
     | '/incidentes'
+    | '/inicio'
     | '/mensajeria'
     | '/mi-perfil'
     | '/notificaciones'
@@ -941,7 +942,6 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/api/nuvex-gpt-chat'
     | '/api/nuvex-ia-stream'
-    | '/'
     | '/apoderado/mis-casos'
     | '/cartera/$id'
     | '/casos/$id'
@@ -995,8 +995,8 @@ export interface FileRouteTypes {
     | '/colaboracion/dm'
   id:
     | '__root__'
+    | '/'
     | '/_authenticated'
-    | '/landing'
     | '/login'
     | '/mfa-verificar'
     | '/pendiente-aprobacion'
@@ -1012,6 +1012,7 @@ export interface FileRouteTypes {
     | '/_authenticated/herramientas'
     | '/_authenticated/honorarios-motor'
     | '/_authenticated/incidentes'
+    | '/_authenticated/inicio'
     | '/_authenticated/mensajeria'
     | '/_authenticated/mi-perfil'
     | '/_authenticated/notificaciones'
@@ -1027,7 +1028,6 @@ export interface FileRouteTypes {
     | '/_authenticated/wallet'
     | '/api/nuvex-gpt-chat'
     | '/api/nuvex-ia-stream'
-    | '/_authenticated/'
     | '/_authenticated/apoderado/mis-casos'
     | '/_authenticated/cartera/$id'
     | '/_authenticated/casos/$id'
@@ -1082,8 +1082,8 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
-  LandingRoute: typeof LandingRoute
   LoginRoute: typeof LoginRoute
   MfaVerificarRoute: typeof MfaVerificarRoute
   PendienteAprobacionRoute: typeof PendienteAprobacionRoute
@@ -1136,13 +1136,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/landing': {
-      id: '/landing'
-      path: '/landing'
-      fullPath: '/landing'
-      preLoaderRoute: typeof LandingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -1150,12 +1143,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/': {
-      id: '/_authenticated/'
+    '/': {
+      id: '/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/nuvex-ia-stream': {
       id: '/api/nuvex-ia-stream'
@@ -1260,6 +1253,13 @@ declare module '@tanstack/react-router' {
       path: '/mensajeria'
       fullPath: '/mensajeria'
       preLoaderRoute: typeof AuthenticatedMensajeriaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/inicio': {
+      id: '/_authenticated/inicio'
+      path: '/inicio'
+      fullPath: '/inicio'
+      preLoaderRoute: typeof AuthenticatedInicioRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/incidentes': {
@@ -1785,6 +1785,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedHerramientasRoute: typeof AuthenticatedHerramientasRouteWithChildren
   AuthenticatedHonorariosMotorRoute: typeof AuthenticatedHonorariosMotorRoute
   AuthenticatedIncidentesRoute: typeof AuthenticatedIncidentesRoute
+  AuthenticatedInicioRoute: typeof AuthenticatedInicioRoute
   AuthenticatedMensajeriaRoute: typeof AuthenticatedMensajeriaRoute
   AuthenticatedMiPerfilRoute: typeof AuthenticatedMiPerfilRoute
   AuthenticatedNotificacionesRoute: typeof AuthenticatedNotificacionesRoute
@@ -1798,7 +1799,6 @@ interface AuthenticatedRouteChildren {
   AuthenticatedQaRoute: typeof AuthenticatedQaRoute
   AuthenticatedTorreControlRoute: typeof AuthenticatedTorreControlRoute
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
-  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedApoderadoMisCasosRoute: typeof AuthenticatedApoderadoMisCasosRoute
   AuthenticatedCarteraIdRoute: typeof AuthenticatedCarteraIdRoute
   AuthenticatedCasosIdRoute: typeof AuthenticatedCasosIdRoute
@@ -1837,6 +1837,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedHerramientasRoute: AuthenticatedHerramientasRouteWithChildren,
   AuthenticatedHonorariosMotorRoute: AuthenticatedHonorariosMotorRoute,
   AuthenticatedIncidentesRoute: AuthenticatedIncidentesRoute,
+  AuthenticatedInicioRoute: AuthenticatedInicioRoute,
   AuthenticatedMensajeriaRoute: AuthenticatedMensajeriaRoute,
   AuthenticatedMiPerfilRoute: AuthenticatedMiPerfilRoute,
   AuthenticatedNotificacionesRoute: AuthenticatedNotificacionesRoute,
@@ -1851,7 +1852,6 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedQaRoute: AuthenticatedQaRoute,
   AuthenticatedTorreControlRoute: AuthenticatedTorreControlRoute,
   AuthenticatedWalletRoute: AuthenticatedWalletRoute,
-  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedApoderadoMisCasosRoute: AuthenticatedApoderadoMisCasosRoute,
   AuthenticatedCarteraIdRoute: AuthenticatedCarteraIdRoute,
   AuthenticatedCasosIdRoute: AuthenticatedCasosIdRoute,
@@ -1890,8 +1890,8 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
-  LandingRoute: LandingRoute,
   LoginRoute: LoginRoute,
   MfaVerificarRoute: MfaVerificarRoute,
   PendienteAprobacionRoute: PendienteAprobacionRoute,

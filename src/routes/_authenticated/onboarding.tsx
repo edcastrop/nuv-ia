@@ -57,7 +57,7 @@ function OnboardingPage() {
     <div className="min-h-screen text-white" style={{ background: "linear-gradient(135deg, #050814, #0A1226 60%, #07162D)" }}>
       <header className="border-b border-white/5 px-6 py-4 flex items-center justify-between">
         <Logo variant="white" height={28} />
-        <button onClick={() => navigate({ to: "/" })} className="text-xs text-white/50 hover:text-white">Saltar onboarding →</button>
+        <button onClick={() => navigate({ to: "/inicio" })} className="text-xs text-white/50 hover:text-white">Saltar onboarding →</button>
       </header>
 
       <div className="max-w-5xl mx-auto px-6 py-8">
@@ -93,7 +93,7 @@ function OnboardingPage() {
               onboarding_paso: 5,
             } as never);
             await logOnboarding(user.id, "fin_onboarding");
-            navigate({ to: "/" });
+            navigate({ to: "/inicio" });
           }} />}
         </section>
 
@@ -262,7 +262,7 @@ function Field({ label, value, onChange }: { label: string; value: string; onCha
 }
 
 const TOUR_ITEMS = [
-  { to: "/", label: "Simulador", desc: "Proyecta y simula casos en segundos." },
+  { to: "/inicio", label: "Simulador", desc: "Proyecta y simula casos en segundos." },
   { to: "/casos", label: "Casos", desc: "Tu pipeline comercial y operativo." },
   { to: "/expediente-maestro", label: "Expediente", desc: "Toda la información del cliente centralizada." },
   { to: "/proyeccion", label: "Proyección", desc: "Análisis financiero detallado." },

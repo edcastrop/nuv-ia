@@ -26,7 +26,7 @@ function LoginPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!loading && session) navigate({ to: "/" });
+    if (!loading && session) navigate({ to: "/inicio" });
   }, [session, loading, navigate]);
 
   const submit = async (e: FormEvent) => {
@@ -57,7 +57,7 @@ function LoginPage() {
         const mfaOk = !!(p?.mfa_verificado_at && (Date.now() - new Date(p.mfa_verificado_at).getTime()) < 24 * 3600 * 1000);
         if (!mfaOk) { navigate({ to: "/mfa-verificar" }); return; }
       }
-      navigate({ to: "/" });
+      navigate({ to: "/inicio" });
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : "Error inesperado");
     } finally {

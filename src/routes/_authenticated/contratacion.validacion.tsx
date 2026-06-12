@@ -49,7 +49,7 @@ function BandejaValidacion() {
      
   }, [filtro, allowed]);
 
-  if (!rolesLoading && !allowed) return <Navigate to="/" />;
+  if (!rolesLoading && !allowed) return <Navigate to="/inicio" />;
 
 
 

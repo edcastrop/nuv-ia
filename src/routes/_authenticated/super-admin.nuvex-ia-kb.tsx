@@ -27,7 +27,7 @@ function AdminKB() {
   const [tab, setTab] = useState<Tab>("kb");
 
   if (loading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>;
-  if (!isSuperAdmin) return <Navigate to="/" />;
+  if (!isSuperAdmin) return <Navigate to="/inicio" />;
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-8">

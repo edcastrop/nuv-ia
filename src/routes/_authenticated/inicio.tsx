@@ -14,7 +14,7 @@ const homeSearchSchema = z.object({
   vista: z.enum(["simulador"]).optional(),
 });
 
-export const Route = createFileRoute("/_authenticated/")({
+export const Route = createFileRoute("/_authenticated/inicio")({
   component: Home,
   validateSearch: homeSearchSchema,
   head: () => ({

@@ -20,7 +20,7 @@ function MotorHonorariosPage() {
   const navigate = useNavigate();
   useEffect(() => {
     if (loading) return;
-    if (!roles.some((r) => ALLOWED.includes(r))) navigate({ to: "/" });
+    if (!roles.some((r) => ALLOWED.includes(r))) navigate({ to: "/inicio" });
   }, [loading, roles, navigate]);
   return <MotorHonorariosView />;
 }

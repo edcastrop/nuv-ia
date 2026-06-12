@@ -31,7 +31,7 @@ function ApoderadosPageGuard() {
             <p className="text-sm text-[#242424]/70">
               No tienes permiso para acceder a este módulo. La configuración de Apoderados es exclusiva del Super Admin.
             </p>
-            <Link to="/" className="rounded-lg px-4 py-2 text-sm font-semibold text-white" style={{ background: NUVEX.azul }}>
+            <Link to="/inicio" className="rounded-lg px-4 py-2 text-sm font-semibold text-white" style={{ background: NUVEX.azul }}>
               Volver al inicio
             </Link>
           </div>

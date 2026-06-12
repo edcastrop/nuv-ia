@@ -175,7 +175,7 @@ export function EtapasMedias456({ expedienteId, cliente, scrollContratacionId }:
             {tab === "presentacion" && (
               <>
                 <Link
-                  to="/"
+                  to="/inicio"
                   search={{ maestroId: expedienteId, modo: "pesos" as const }}
                   className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-white shadow"
                   style={{ background: NUVEX.azul }}

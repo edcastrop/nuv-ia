@@ -139,7 +139,7 @@ function AccesosPage() {
   }, [usuarios, busqueda]);
 
   if (rolesLoading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>;
-  if (!isAdmin) return <Navigate to="/" />;
+  if (!isAdmin) return <Navigate to="/inicio" />;
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-6 space-y-5">

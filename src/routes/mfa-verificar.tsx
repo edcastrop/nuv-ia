@@ -59,7 +59,7 @@ function MfaPage() {
       } else {
         await verificar({ data: { codigo } });
       }
-      navigate({ to: "/" });
+      navigate({ to: "/inicio" });
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : "Código inválido");
     } finally { setBusy(false); }

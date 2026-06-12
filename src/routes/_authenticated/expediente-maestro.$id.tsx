@@ -334,7 +334,7 @@ function MaestroDetail() {
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center lg:justify-end">
             {msg && <span className="mr-2 text-xs text-[var(--nuvia-text-secondary)]">{msg}</span>}
             <Link
-              to="/"
+              to="/inicio"
               search={{ maestroId: id, modo: "pesos" as const }}
               className="inline-flex h-10 items-center rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-3 text-xs font-semibold text-[var(--nuvia-text-primary)] transition hover:border-[var(--nuvia-accent-blue)] hover:bg-[rgba(255,255,255,0.06)]"
               title="Abre el simulador en pesos con los datos del expediente"
@@ -342,7 +342,7 @@ function MaestroDetail() {
               Simular en Pesos
             </Link>
             <Link
-              to="/"
+              to="/inicio"
               search={{ maestroId: id, modo: "uvr" as const }}
               className="inline-flex h-10 items-center rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-3 text-xs font-semibold text-[var(--nuvia-text-primary)] transition hover:border-[var(--nuvia-accent-blue)] hover:bg-[rgba(255,255,255,0.06)]"
               title="Abre el simulador en UVR con los datos del expediente"
@@ -508,7 +508,7 @@ function MaestroDetail() {
                   </div>
                   <div className="flex gap-2">
                     <Link
-                      to="/"
+                      to="/inicio"
                       search={{ maestroId: id, modo: "pesos" as const }}
                       className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow hover:opacity-90"
                       style={{ background: NUVEX.verde }}
@@ -518,7 +518,7 @@ function MaestroDetail() {
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                     <Link
-                      to="/"
+                      to="/inicio"
                       search={{ maestroId: id, modo: "uvr" as const }}
                       className="inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold"
                       style={{ borderColor: NUVEX.azul, color: NUVEX.azul, background: "#fff" }}

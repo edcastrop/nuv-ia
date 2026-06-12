@@ -49,7 +49,7 @@ function SuperAdminDashboard() {
   }, [rolesLoading, isSuperAdmin]);
 
   if (rolesLoading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>;
-  if (!rolesLoading && !isSuperAdmin) return <Navigate to="/" />;
+  if (!rolesLoading && !isSuperAdmin) return <Navigate to="/inicio" />;
 
   const total = rows.length;
   const porEstado = CASO_ESTADOS.map((e) => ({

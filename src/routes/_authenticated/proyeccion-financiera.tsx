@@ -28,7 +28,7 @@ function ProyeccionFinancieraPage() {
   useEffect(() => {
     if (loading) return;
     const allowed = roles.some((r) => ALLOWED.includes(r));
-    if (!allowed) navigate({ to: "/" });
+    if (!allowed) navigate({ to: "/inicio" });
   }, [loading, roles, navigate]);
 
   return <ProyeccionFinancieraView />;
