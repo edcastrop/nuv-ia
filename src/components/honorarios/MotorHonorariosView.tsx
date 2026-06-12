@@ -205,7 +205,7 @@ function Calculadora({ initial }: { initial?: InitialData }) {
                     className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 text-left transition hover:border-[#84B98F]/50 hover:bg-white/[0.05]"
                   >
                     <div className="text-[10px] uppercase tracking-wider" style={{ color: COLORS.muted }}>{o.etiqueta}</div>
-                    <div className="mt-1 text-lg font-semibold">{formatCOP(o.valor)}</div>
+                    <div className="mt-1 text-lg font-semibold" style={{ color: "#FFFFFF" }}>{formatCOP(o.valor)}</div>
                     <div className="mt-1 text-xs" style={{ color: COLORS.green }}>{o.descuentoPct > 0 ? `-${o.descuentoPct}% descuento` : "Sin descuento"}</div>
                   </button>
                 ))}
