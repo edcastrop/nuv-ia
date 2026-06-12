@@ -1010,8 +1010,8 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           }
         }}
         style={{
-          background: "linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.045) 42%, rgba(68,93,163,0.045) 72%, rgba(132,185,143,0.032))",
-          border: `1px solid ${dragActive ? "rgba(132,185,143,0.48)" : "rgba(210,222,240,0.20)"}`,
+          background: "linear-gradient(145deg, rgba(255,255,255,0.15), rgba(255,255,255,0.055) 42%, rgba(68,93,163,0.035) 72%, rgba(132,185,143,0.024))",
+          border: `1px solid ${dragActive ? "rgba(132,185,143,0.42)" : "rgba(230,238,248,0.30)"}`,
           backdropFilter: "blur(24px) saturate(135%)",
           boxShadow: dragActive
             ? "0 24px 60px -26px rgba(132,185,143,0.36), inset 0 1px 0 rgba(255,255,255,0.20)"
@@ -1023,17 +1023,17 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              "linear-gradient(112deg, rgba(255,255,255,0.14) 0%, transparent 18%, transparent 74%, rgba(255,255,255,0.05) 100%)",
+              "linear-gradient(112deg, rgba(255,255,255,0.23) 0%, transparent 15%, transparent 74%, rgba(255,255,255,0.07) 100%)",
           }}
         />
         {/* glow */}
         <div
           className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full blur-3xl"
-          style={{ background: "radial-gradient(circle, rgba(68,93,163,0.16), transparent 70%)" }}
+          style={{ background: "radial-gradient(circle, rgba(68,93,163,0.08), transparent 70%)" }}
         />
         <div
           className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full blur-3xl"
-          style={{ background: "radial-gradient(circle, rgba(132,185,143,0.14), transparent 70%)" }}
+          style={{ background: "radial-gradient(circle, rgba(132,185,143,0.08), transparent 70%)" }}
         />
         {dragActive && (
           <div
