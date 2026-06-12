@@ -158,6 +158,31 @@ async function extractTextFromPdf(file: File, password?: string): Promise<string
 }
 
 async function fileToDataUrl(file: File | Blob, forceMime?: string): Promise<string> {
+  const targetMime = forceMime || file.type;
+  if (targetMime?.startsWith("image/")) {
+    const objectUrl = URL.createObjectURL(file);
+    try {
+      const img = new Image();
+      img.decoding = "async";
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error("No se pudo preparar la captura para lectura."));
+        img.src = objectUrl;
+      });
+      const maxSide = 1900;
+      const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+      const ctx = canvas.getContext("2d")!;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL("image/jpeg", 0.86);
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
+  }
   return new Promise((resolve, reject) => {
     const r = new FileReader();
     r.onload = () => {
