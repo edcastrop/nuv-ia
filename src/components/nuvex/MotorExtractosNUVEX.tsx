@@ -95,6 +95,10 @@ const fmtSize = (b: number) =>
 export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const motor = useServerFn(extractStatementMotor);
+  const autoAudit = useServerFn(auditarLecturaAutomatica);
+  const [autoQa, setAutoQa] = useState<null | { auditoriaId: string; score: number; categoria: QACategoria; dictamen: string; hallazgos: number; criticos: number }>(null);
+  const [autoQaState, setAutoQaState] = useState<"idle" | "running" | "done" | "error">("idle");
+  const [autoQaError, setAutoQaError] = useState<string | null>(null);
   const [stage, setStage] = useState<Stage>("idle");
   const [file, setFile] = useState<File | null>(null);
   const [archivoPath, setArchivoPath] = useState<string | null>(null);
