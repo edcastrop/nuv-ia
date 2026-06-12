@@ -390,13 +390,18 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           }
           console.warn("No se pudo extraer texto estructural del PDF:", textErr);
         }
-        const result = await renderPdfToImages(f, pwd);
-        if (result.needsPassword) {
-          setWrongPassword(result.wrongPassword);
-          setStage("password");
-          return;
+        try {
+          const result = await renderPdfToImages(f, pwd);
+          if (result.needsPassword) {
+            setWrongPassword(result.wrongPassword);
+            setStage("password");
+            return;
+          }
+          images = result.images;
+        } catch (imageErr) {
+          if (rawText.trim().length <= 250) throw imageErr;
+          console.warn("No se pudieron generar imágenes del PDF; se usará texto extraído:", imageErr);
         }
-        images = result.images;
         if (images.length === 0 && rawText.trim().length === 0) {
           throw new Error("No pude leer texto ni generar imágenes del PDF. Verifica que no esté dañado o sube una captura clara del extracto.");
         }
