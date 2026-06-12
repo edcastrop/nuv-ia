@@ -4447,8 +4447,11 @@ export type Database = {
           expediente_id: string | null
           id: string
           mensaje: string
+          notas: string | null
           reconocida_at: string | null
           reconocida_by: string | null
+          resuelta_at: string | null
+          resuelta_by: string | null
           severidad: Database["public"]["Enums"]["qa_severidad"]
           tipo: Database["public"]["Enums"]["qa_inconsistencia_tipo"]
           updated_at: string
@@ -4460,8 +4463,11 @@ export type Database = {
           expediente_id?: string | null
           id?: string
           mensaje: string
+          notas?: string | null
           reconocida_at?: string | null
           reconocida_by?: string | null
+          resuelta_at?: string | null
+          resuelta_by?: string | null
           severidad: Database["public"]["Enums"]["qa_severidad"]
           tipo: Database["public"]["Enums"]["qa_inconsistencia_tipo"]
           updated_at?: string
@@ -4473,8 +4479,11 @@ export type Database = {
           expediente_id?: string | null
           id?: string
           mensaje?: string
+          notas?: string | null
           reconocida_at?: string | null
           reconocida_by?: string | null
+          resuelta_at?: string | null
+          resuelta_by?: string | null
           severidad?: Database["public"]["Enums"]["qa_severidad"]
           tipo?: Database["public"]["Enums"]["qa_inconsistencia_tipo"]
           updated_at?: string
@@ -4718,6 +4727,56 @@ export type Database = {
           version?: number
         }
         Relationships: []
+      }
+      qa_reglas_historial: {
+        Row: {
+          activa_anterior: boolean | null
+          activa_nueva: boolean | null
+          changed_at: string
+          changed_by: string | null
+          codigo: string
+          id: string
+          payload_anterior: Json | null
+          payload_nuevo: Json | null
+          regla_id: string
+          version_anterior: number
+          version_nueva: number
+        }
+        Insert: {
+          activa_anterior?: boolean | null
+          activa_nueva?: boolean | null
+          changed_at?: string
+          changed_by?: string | null
+          codigo: string
+          id?: string
+          payload_anterior?: Json | null
+          payload_nuevo?: Json | null
+          regla_id: string
+          version_anterior: number
+          version_nueva: number
+        }
+        Update: {
+          activa_anterior?: boolean | null
+          activa_nueva?: boolean | null
+          changed_at?: string
+          changed_by?: string | null
+          codigo?: string
+          id?: string
+          payload_anterior?: Json | null
+          payload_nuevo?: Json | null
+          regla_id?: string
+          version_anterior?: number
+          version_nueva?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_reglas_historial_regla_id_fkey"
+            columns: ["regla_id"]
+            isOneToOne: false
+            referencedRelation: "qa_reglas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rol_permisos: {
         Row: {

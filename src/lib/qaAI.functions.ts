@@ -1,7 +1,59 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { auditar, QA_MOTOR_VERSION, type Modalidad } from "./qaMath";
+import { auditar, QA_MOTOR_VERSION, TOLERANCIAS_DEFAULT, type Modalidad, type Tolerancias } from "./qaMath";
+
+// ─────────────────────────────────────────────────────────────
+// Fase 2 — Carga de reglas activas desde qa_reglas
+// ─────────────────────────────────────────────────────────────
+async function cargarToleranciasActivasInterno(
+  supabase: { from: (t: string) => { select: (c: string) => { eq: (k: string, v: boolean) => Promise<{ data: Array<{ codigo: string; payload: Record<string, unknown> }> | null }> } } },
+): Promise<Partial<Tolerancias>> {
+  const { data } = await supabase.from("qa_reglas").select("codigo,payload").eq("activa", true);
+  const map = new Map<string, Record<string, unknown>>((data ?? []).map((r) => [r.codigo, (r.payload ?? {}) as Record<string, unknown>]));
+  const num = (v: unknown): number | undefined => {
+    if (v === null || v === undefined || v === "") return undefined;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : undefined;
+  };
+  const out: Partial<Tolerancias> = {};
+  const tCuota = map.get("tol.cuota") ?? {};
+  if (num(tCuota.abs) !== undefined) out.cuotaAbs = num(tCuota.abs);
+  if (num(tCuota.pct) !== undefined) out.cuotaPct = num(tCuota.pct);
+  const tSaldo = map.get("tol.saldo") ?? {};
+  if (num(tSaldo.abs) !== undefined) out.saldoAbs = num(tSaldo.abs);
+  const tTasa = map.get("tol.tasa_ea") ?? {};
+  if (num(tTasa.abs) !== undefined) out.tasaEaAbs = num(tTasa.abs);
+  const tSeg = map.get("tol.seguros") ?? {};
+  if (num(tSeg.abs) !== undefined) out.segurosAbs = num(tSeg.abs);
+  const tFrech = map.get("tol.frech") ?? {};
+  if (num(tFrech.abs) !== undefined) out.frechAbs = num(tFrech.abs);
+  const uSimC = map.get("umb.sim_cuotas") ?? {};
+  if (num(uSimC.max) !== undefined) out.simCuotasMax = num(uSimC.max);
+  const uSimA = map.get("umb.sim_ahorro") ?? {};
+  if (num(uSimA.abs) !== undefined) out.simAhorroAbs = num(uSimA.abs);
+  const uExc = map.get("umb.score.excelente") ?? {};
+  if (num(uExc.min) !== undefined) out.umbScoreExcelente = num(uExc.min);
+  const uApr = map.get("umb.score.aprobado") ?? {};
+  if (num(uApr.min) !== undefined) out.umbScoreAprobado = num(uApr.min);
+  const uRev = map.get("umb.score.revisar") ?? {};
+  if (num(uRev.min) !== undefined) out.umbScoreRevisar = num(uRev.min);
+  const pI = map.get("pen.info") ?? {};
+  if (num(pI.value) !== undefined) out.penInfo = num(pI.value);
+  const pW = map.get("pen.warning") ?? {};
+  if (num(pW.value) !== undefined) out.penWarning = num(pW.value);
+  const pC = map.get("pen.critica") ?? {};
+  if (num(pC.value) !== undefined) out.penCritica = num(pC.value);
+  const pDC = map.get("pen.diff_cuota") ?? {};
+  if (num(pDC.max) !== undefined) out.penDiffCuotaMax = num(pDC.max);
+  const pDS = map.get("pen.diff_sim") ?? {};
+  if (num(pDS.max) !== undefined) out.penDiffSimMax = num(pDS.max);
+  const pF = map.get("pen.faltantes") ?? {};
+  if (num(pF.max) !== undefined) out.penFaltantesMax = num(pF.max);
+  return out;
+}
+
+
 
 const ModalidadEnum = z.enum(["hipotecario", "leasing", "uvr"]);
 
@@ -37,6 +89,8 @@ export const auditarCaso = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => AuditarInputSchema.parse(input))
   .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const overrides = await cargarToleranciasActivasInterno(supabase as never);
     const result = auditar({
       modalidad: data.modalidad as Modalidad,
       reconstruccion: {
@@ -50,9 +104,9 @@ export const auditarCaso = createServerFn({ method: "POST" })
       },
       extracto: data.extracto,
       simulacion: data.simulacion,
+      tolerancias: overrides,
     });
 
-    const { supabase, userId } = context;
 
     const { data: aud, error: errAud } = await supabase
       .from("qa_auditorias")
@@ -164,11 +218,204 @@ export const qaKpis = createServerFn({ method: "POST" })
     const aprobados = r.filter((x) => x.dictamen === "aprobado").length;
     const obs = r.filter((x) => x.dictamen === "aprobado_obs").length;
     const rechazados = r.filter((x) => x.dictamen === "rechazado").length;
+    const pendientesRevision = r.filter((x) => x.dictamen === "requiere_revision").length;
     const promedio = total ? r.reduce((s, x) => s + Number(x.qa_score || 0), 0) / total : 0;
     const { count: alertasAbiertas } = await context.supabase
       .from("qa_alertas").select("id", { count: "exact", head: true }).eq("estado", "abierta");
-    return { total, aprobados, obs, rechazados, promedio, alertasAbiertas: alertasAbiertas ?? 0 };
+    const { count: alertasCriticasAbiertas } = await context.supabase
+      .from("qa_alertas").select("id", { count: "exact", head: true })
+      .eq("estado", "abierta").eq("severidad", "critica");
+    const { data: incs } = await context.supabase
+      .from("qa_inconsistencias").select("tipo").limit(2000);
+    const counts = new Map<string, number>();
+    (incs ?? []).forEach((i) => counts.set(i.tipo, (counts.get(i.tipo) ?? 0) + 1));
+    let topTipo: string | null = null;
+    let topCount = 0;
+    counts.forEach((c, t) => { if (c > topCount) { topCount = c; topTipo = t; } });
+    return {
+      total, aprobados, obs, rechazados, pendientesRevision, promedio,
+      alertasAbiertas: alertasAbiertas ?? 0,
+      alertasCriticasAbiertas: alertasCriticasAbiertas ?? 0,
+      topTipo, topCount,
+    };
   });
+
+// ─────────────────────────────────────────────────────────────
+// FASE 2 — Panel de Alertas QA
+// ─────────────────────────────────────────────────────────────
+const AlertaFilterSchema = z.object({
+  severidad: z.enum(["info", "warning", "critica"]).optional(),
+  estado: z.enum(["abierta", "reconocida", "resuelta"]).optional(),
+  banco: z.string().optional(),
+  analistaId: z.string().uuid().optional(),
+}).default({});
+
+export const listAlertasQA = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => AlertaFilterSchema.parse(input ?? {}))
+  .handler(async ({ data, context }) => {
+    let q = context.supabase
+      .from("qa_alertas")
+      .select("id,auditoria_id,expediente_id,tipo,severidad,mensaje,estado,reconocida_by,reconocida_at,resuelta_by,resuelta_at,notas,created_at")
+      .order("created_at", { ascending: false })
+      .limit(500);
+    if (data.severidad) q = q.eq("severidad", data.severidad);
+    if (data.estado) q = q.eq("estado", data.estado);
+    const { data: alertas, error } = await q;
+    if (error) throw new Error(error.message);
+    const audIds = Array.from(new Set((alertas ?? []).map((a) => a.auditoria_id).filter(Boolean))) as string[];
+    const expIds = Array.from(new Set((alertas ?? []).map((a) => a.expediente_id).filter(Boolean))) as string[];
+    const [auds, exps] = await Promise.all([
+      audIds.length
+        ? context.supabase.from("qa_auditorias").select("id,qa_score,dictamen,modalidad,analista_id").in("id", audIds)
+        : Promise.resolve({ data: [] as Array<{ id: string; qa_score: number; dictamen: string; modalidad: string; analista_id: string | null }> }),
+      expIds.length
+        ? context.supabase.from("expedientes").select("id,codigo,cliente_nombre,banco,asesor_id").in("id", expIds)
+        : Promise.resolve({ data: [] as Array<{ id: string; codigo: string | null; cliente_nombre: string | null; banco: string | null; asesor_id: string | null }> }),
+    ]);
+    const audMap = new Map((auds.data ?? []).map((a) => [a.id, a]));
+    const expMap = new Map((exps.data ?? []).map((e) => [e.id, e]));
+    let rows = (alertas ?? []).map((a) => {
+      const aud = audMap.get(a.auditoria_id!);
+      const exp = expMap.get(a.expediente_id!);
+      return {
+        id: a.id,
+        auditoriaId: a.auditoria_id,
+        expedienteId: a.expediente_id,
+        tipo: a.tipo,
+        severidad: a.severidad,
+        mensaje: a.mensaje,
+        estado: a.estado,
+        notas: a.notas ?? null,
+        createdAt: a.created_at,
+        reconocidaAt: a.reconocida_at,
+        resueltaAt: a.resuelta_at,
+        score: aud?.qa_score ?? null,
+        dictamen: aud?.dictamen ?? null,
+        modalidad: aud?.modalidad ?? null,
+        analistaId: aud?.analista_id ?? exp?.asesor_id ?? null,
+        codigo: exp?.codigo ?? null,
+        cliente: exp?.cliente_nombre ?? null,
+        banco: exp?.banco ?? null,
+      };
+    });
+    if (data.banco) rows = rows.filter((r) => (r.banco ?? "").toLowerCase().includes(data.banco!.toLowerCase()));
+    if (data.analistaId) rows = rows.filter((r) => r.analistaId === data.analistaId);
+    return { rows };
+  });
+
+const ActualizarAlertaSchema = z.object({
+  id: z.string().uuid(),
+  accion: z.enum(["reconocer", "resolver"]),
+  notas: z.string().max(2000).optional(),
+});
+
+export const actualizarAlertaQA = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => ActualizarAlertaSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const nowIso = new Date().toISOString();
+    const patch: {
+      updated_at: string;
+      estado?: "abierta" | "reconocida" | "resuelta";
+      reconocida_by?: string | null;
+      reconocida_at?: string | null;
+      resuelta_by?: string | null;
+      resuelta_at?: string | null;
+      notas?: string | null;
+    } = { updated_at: nowIso };
+    if (data.accion === "reconocer") {
+      patch.estado = "reconocida";
+      patch.reconocida_by = userId;
+      patch.reconocida_at = nowIso;
+    } else {
+      patch.estado = "resuelta";
+      patch.resuelta_by = userId;
+      patch.resuelta_at = nowIso;
+      if (data.notas) patch.notas = data.notas;
+    }
+    const { data: row, error } = await supabase
+      .from("qa_alertas").update(patch).eq("id", data.id).select("*").single();
+    if (error) throw new Error(error.message);
+    if (row?.auditoria_id) {
+      await supabase.from("qa_auditoria_log").insert({
+        auditoria_id: row.auditoria_id,
+        accion: data.accion === "reconocer" ? "reconocer_alerta" : "cerrar",
+        payload: { alertaId: data.id, notas: data.notas ?? null },
+        user_id: userId,
+      });
+    }
+
+    return { ok: true, alerta: row };
+  });
+
+// ─────────────────────────────────────────────────────────────
+// FASE 2 — Configuración de reglas QA
+// ─────────────────────────────────────────────────────────────
+export const listReglasQA = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("qa_reglas")
+      .select("id,codigo,descripcion,tipo,payload,activa,version,updated_by,updated_at")
+      .order("tipo", { ascending: true })
+      .order("codigo", { ascending: true });
+    if (error) throw new Error(error.message);
+    return { rows: data ?? [] };
+  });
+
+const ActualizarReglaSchema = z.object({
+  id: z.string().uuid(),
+  payload: z.record(z.string(), z.union([z.number(), z.string(), z.boolean()])),
+  activa: z.boolean().optional(),
+});
+
+export const actualizarReglaQA = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => ActualizarReglaSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    // Server-side role check (RLS también lo aplica, pero validamos explícito)
+    const { data: canEdit } = await supabase.rpc("can_use_qa_ai", { _uid: userId });
+    if (!canEdit) throw new Error("Forbidden: rol no autorizado para editar reglas QA");
+
+    // Coerce numeric strings → numbers para mantener forma consistente
+    const cleanPayload: Record<string, number | string | boolean> = {};
+    Object.entries(data.payload).forEach(([k, v]) => {
+      if (typeof v === "string" && v !== "" && !Number.isNaN(Number(v))) cleanPayload[k] = Number(v);
+      else cleanPayload[k] = v;
+    });
+
+    const patch: { payload: Record<string, number | string | boolean>; activa?: boolean } = { payload: cleanPayload };
+    if (data.activa !== undefined) patch.activa = data.activa;
+    const { data: row, error } = await supabase
+      .from("qa_reglas").update(patch).eq("id", data.id).select("*").single();
+    if (error) throw new Error(error.message);
+    return { ok: true, regla: row };
+  });
+
+export const listHistorialReglaQA = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ reglaId: z.string().uuid(), limit: z.number().int().positive().max(50).default(10) }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("qa_reglas_historial")
+      .select("id,codigo,version_anterior,version_nueva,payload_anterior,payload_nuevo,activa_anterior,activa_nueva,changed_by,changed_at")
+      .eq("regla_id", data.reglaId)
+      .order("changed_at", { ascending: false })
+      .limit(data.limit);
+    if (error) throw new Error(error.message);
+    return { rows: rows ?? [] };
+  });
+
+export const cargarToleranciasActivas = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const overrides = await cargarToleranciasActivasInterno(context.supabase as never);
+    return { defaults: TOLERANCIAS_DEFAULT, activas: overrides, merged: { ...TOLERANCIAS_DEFAULT, ...overrides } };
+  });
+
 
 // ─────────────────────────────────────────────────────────────
 // Reuso de extractos existentes (no recapturar datos)
