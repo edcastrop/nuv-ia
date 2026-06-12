@@ -325,7 +325,7 @@ function NotificacionesPage() {
           </ListaRows>
         )}
       </NCard>
-    </div>
+    </PageLayout>
   );
 }
 
