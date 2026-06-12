@@ -170,9 +170,27 @@ function NuevoRecaudo({
   const [comprobanteNum, setComprobanteNum] = useState("");
   const [observaciones, setObservaciones] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [dragOver, setDragOver] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
+  const [wompiFee, setWompiFee] = useState<number>(2.99);
+  const [wompiIva, setWompiIva] = useState<number>(19);
+
+  useEffect(() => {
+    getParametrosFinancieros()
+      .then((p) => {
+        if (typeof p.fee_wompi_porcentaje === "number") setWompiFee(p.fee_wompi_porcentaje);
+        if (typeof p.iva_fee_wompi_porcentaje === "number") setWompiIva(p.iva_fee_wompi_porcentaje);
+      })
+      .catch(() => {});
+  }, []);
+
+  const desgloseWompi = useMemo(() => {
+    const v = Number(valor);
+    if (metodo !== "wompi" || !v || v <= 0) return null;
+    return calcularDesgloseWompi(v, wompiFee, wompiIva);
+  }, [metodo, valor, wompiFee, wompiIva]);
 
   const candidatos = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
