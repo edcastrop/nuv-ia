@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { NUVEX } from "@/components/nuvex/constants";
 import { UserAvatar } from "@/components/nuvex/UserAvatar";
 import { ExecutiveHero, NCard, PageLayout } from "@/components/nuvia";
 import { MessageCircle } from "lucide-react";
@@ -15,8 +14,6 @@ import { EmojiPickerPopover } from "@/components/colaboracion/EmojiPicker";
 import { PresenceDot } from "@/components/presencia/PresenceDot";
 import { VoiceRecorder } from "@/components/colaboracion/VoiceRecorder";
 import { VoiceNotePlayer } from "@/components/colaboracion/VoiceNotePlayer";
-
-const AZUL = NUVEX.azul;
 
 interface Props {
   initialCanalId?: string;
@@ -155,9 +152,6 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
           </button>
         }
       />
-      {/* keep AZUL referenced for legacy chat surfaces below */}
-      <span aria-hidden className="hidden" style={{ color: AZUL }} />
-
       {accesoError && (
         <NCard className="border-l-4" style={{ borderLeftColor: "var(--nuvia-danger)" }}>
           <div className="flex items-start gap-2 text-sm" style={{ color: "var(--nuvia-text-primary)" }}>

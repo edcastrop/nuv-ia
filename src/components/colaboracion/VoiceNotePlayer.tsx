@@ -27,9 +27,9 @@ export function VoiceNotePlayer({ path, esMio }: Props) {
       className="mt-1.5 inline-flex items-center gap-2 rounded-xl px-2 py-1.5 max-w-full"
       style={esMio
         ? { background: "rgba(255,255,255,0.18)" }
-        : { background: "#fff", border: "1px solid #E3E7EE" }}
+        : { background: "rgba(255,255,255,0.05)", border: "1px solid var(--nuvia-border)" }}
     >
-      <Mic size={14} className={esMio ? "text-white" : "text-[#445DA3]"} />
+      <Mic size={14} style={{ color: esMio ? "var(--nuvia-text-primary)" : "var(--nuvia-accent-green)" }} />
       {url ? (
         <audio
           src={url}
@@ -38,9 +38,9 @@ export function VoiceNotePlayer({ path, esMio }: Props) {
           className="h-8 max-w-[220px] sm:max-w-[280px]"
         />
       ) : err ? (
-        <span className={`text-[11px] ${esMio ? "text-white/80" : "text-[#B42318]"}`}>No se pudo cargar</span>
+        <span className="text-[11px]" style={{ color: esMio ? "rgba(255,255,255,0.8)" : "var(--nuvia-danger)" }}>No se pudo cargar</span>
       ) : (
-        <span className={`text-[11px] ${esMio ? "text-white/80" : "text-[#242424]/60"}`}>Cargando…</span>
+        <span className="text-[11px]" style={{ color: esMio ? "rgba(255,255,255,0.8)" : "var(--nuvia-text-secondary)" }}>Cargando…</span>
       )}
     </div>
   );
