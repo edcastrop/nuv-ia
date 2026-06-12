@@ -151,6 +151,7 @@ export const auditarCaso = createServerFn({ method: "POST" })
           iMv: result.reconstruccion.iMv,
           primerasCuotas: result.reconstruccion.primerasCuotas,
           ultimasCuotas: result.reconstruccion.ultimasCuotas,
+          todasCuotas: result.reconstruccion.todasCuotas,
         })),
         diferencias: JSON.parse(JSON.stringify(result.inconsistencias)),
         alertas: JSON.parse(JSON.stringify(result.inconsistencias.filter((i) => i.severidad === "critica"))),
@@ -284,6 +285,7 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
               iMv: result.reconstruccion.iMv,
               primerasCuotas: result.reconstruccion.primerasCuotas,
               ultimasCuotas: result.reconstruccion.ultimasCuotas,
+              todasCuotas: result.reconstruccion.todasCuotas,
             },
           } as unknown) as typeof aud;
         } catch {
@@ -756,6 +758,7 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
           iMv: result.reconstruccion.iMv,
           primerasCuotas: result.reconstruccion.primerasCuotas,
           ultimasCuotas: result.reconstruccion.ultimasCuotas,
+          todasCuotas: result.reconstruccion.todasCuotas,
         })),
         diferencias: JSON.parse(JSON.stringify(result.inconsistencias)),
         alertas: JSON.parse(JSON.stringify(result.inconsistencias.filter((i) => i.severidad === "critica"))),
@@ -952,6 +955,7 @@ export const reejecutarAuditoriaQA = createServerFn({ method: "POST" })
           iMv: result.reconstruccion.iMv,
           primerasCuotas: result.reconstruccion.primerasCuotas,
           ultimasCuotas: result.reconstruccion.ultimasCuotas,
+          todasCuotas: result.reconstruccion.todasCuotas,
         })),
         diferencias: JSON.parse(JSON.stringify(result.inconsistencias)),
         alertas: JSON.parse(JSON.stringify(result.inconsistencias.filter((i) => i.severidad === "critica"))),
