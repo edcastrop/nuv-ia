@@ -836,13 +836,11 @@ export function ProyeccionFinancieraView() {
             <section
               className="relative mb-8 overflow-hidden rounded-3xl"
               style={{
-                background:
-                  "linear-gradient(135deg, rgba(255,255,255,0.13), rgba(68,93,163,0.075) 44%, rgba(132,185,143,0.070))",
-                border: "1px solid rgba(210,222,240,0.24)",
-                boxShadow:
-                  "0 1px 0 rgba(255,255,255,0.16) inset, 0 46px 100px -38px rgba(68,93,163,0.48), 0 24px 70px -44px rgba(132,185,143,0.34)",
-                backdropFilter: "blur(30px) saturate(165%)",
-                WebkitBackdropFilter: "blur(30px) saturate(165%)",
+                background: NUVIA_GLASS,
+                border: NUVIA_GLASS_BORDER,
+                boxShadow: NUVIA_GLASS_SHADOW,
+                backdropFilter: "blur(32px) saturate(160%)",
+                WebkitBackdropFilter: "blur(32px) saturate(160%)",
               }}
             >
               <div
@@ -874,8 +872,8 @@ export function ProyeccionFinancieraView() {
                       <span
                         className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
                         style={{
-                          background: "rgba(68,93,163,0.15)",
-                          color: "#A5F3FC",
+                          background: "rgba(132,185,143,0.14)",
+                          color: NUVIA.verde,
                           border: "1px solid rgba(132,185,143,0.34)",
                         }}
                       >
