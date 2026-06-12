@@ -1050,7 +1050,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
             <div
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
               style={{
-                background: "linear-gradient(135deg, rgba(68,93,163,0.58), rgba(132,185,143,0.52))",
+                background: "linear-gradient(135deg, rgba(68,93,163,0.48), rgba(132,185,143,0.42))",
                 boxShadow: "0 12px 32px -18px rgba(132,185,143,0.34)",
               }}
             >
@@ -1088,7 +1088,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
               }}
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white transition-transform hover:scale-[1.02]"
               style={{
-                background: "linear-gradient(135deg, rgba(68,93,163,0.58), rgba(132,185,143,0.52))",
+                background: "linear-gradient(135deg, rgba(68,93,163,0.48), rgba(132,185,143,0.42))",
                 boxShadow: "0 10px 28px -16px rgba(68,93,163,0.42)",
               }}
             >
@@ -1277,7 +1277,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                       fileRef.current?.click();
                     }}
                     className="rounded-lg px-4 py-2 text-xs font-semibold text-white"
-                    style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.70), rgba(132,185,143,0.62))" }}
+                    style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.56), rgba(132,185,143,0.48))" }}
                   >
                     Seleccionar archivo
                   </button>
@@ -1335,7 +1335,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                     onClick={() => file && password && processFile(file, password)}
                     disabled={!password}
                     className="mt-4 w-full rounded-xl px-5 py-3 text-sm font-semibold text-white disabled:opacity-40"
-                    style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.70), rgba(132,185,143,0.62))" }}
+                    style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.56), rgba(132,185,143,0.48))" }}
                   >
                     Leer extracto
                   </button>
@@ -1707,7 +1707,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                     disabled={confirmDisabled}
                     className="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:scale-100"
                     style={{
-                      background: "linear-gradient(135deg, rgba(68,93,163,0.70), rgba(132,185,143,0.62))",
+                      background: "linear-gradient(135deg, rgba(68,93,163,0.56), rgba(132,185,143,0.48))",
                       boxShadow: "0 10px 28px -14px rgba(132,185,143,0.42)",
                     }}
                   >
