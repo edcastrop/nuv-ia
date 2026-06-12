@@ -128,34 +128,43 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
 
   return (
     <div className="mx-auto max-w-[1500px] px-3 py-3 md:px-6 md:py-6 space-y-3 md:space-y-4">
-      <ExecutiveHero
-        badge={{ icon: <MessageCircle size={12} />, label: "NUVEX · Mensajería", tone: "blue" }}
-        title="Mensajería Directa"
-        description="Conversaciones 1 a 1 entre colaboradores. Mensajes con estados de envío y lectura, adjuntos e historial completo."
-        meta={
-          totalNoLeidos > 0 ? (
-            <span
-              className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
-              style={{
-                background: "rgba(255,107,107,0.14)",
-                border: "1px solid rgba(255,107,107,0.40)",
-                color: "var(--nuvia-danger)",
-              }}
+      <div
+        className="rounded-2xl px-4 py-4 md:px-6 md:py-5"
+        style={{
+          background: "var(--nuvia-bg-primary)",
+          border: "1px solid var(--nuvia-border)",
+          boxShadow: "var(--nuvia-shadow-sm)",
+        }}
+      >
+        <ExecutiveHero
+          badge={{ icon: <MessageCircle size={12} />, label: "NUVEX · Mensajería", tone: "blue" }}
+          title="Mensajería Directa"
+          description="Conversaciones 1 a 1 entre colaboradores. Mensajes con estados de envío y lectura, adjuntos e historial completo."
+          meta={
+            totalNoLeidos > 0 ? (
+              <span
+                className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+                style={{
+                  background: "rgba(255,107,107,0.14)",
+                  border: "1px solid rgba(255,107,107,0.40)",
+                  color: "var(--nuvia-danger)",
+                }}
+              >
+                {totalNoLeidos} sin leer
+              </span>
+            ) : undefined
+          }
+          actions={
+            <button
+              onClick={() => setShowNuevo(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-white transition hover:opacity-95"
+              style={{ background: "var(--nuvia-gradient-primary)", boxShadow: "var(--nuvia-shadow-sm)" }}
             >
-              {totalNoLeidos} sin leer
-            </span>
-          ) : undefined
-        }
-        actions={
-          <button
-            onClick={() => setShowNuevo(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-white transition hover:opacity-95"
-            style={{ background: "var(--nuvia-gradient-primary)", boxShadow: "var(--nuvia-shadow-sm)" }}
-          >
-            <Plus size={13} /> Nuevo mensaje
-          </button>
-        }
-      />
+              <Plus size={13} /> Nuevo mensaje
+            </button>
+          }
+        />
+      </div>
       {/* keep AZUL referenced for legacy chat surfaces below */}
       <span aria-hidden className="hidden" style={{ color: AZUL }} />
 

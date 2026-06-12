@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { labelEstado, type CasoEstado } from "@/lib/casoEstados";
 import {
+  PageLayout,
   ExecutiveHero,
   KpiGrid,
   KpiCard,
@@ -133,7 +134,7 @@ function NotificacionesPage() {
   const honorariosTotal = honorariosPend.reduce((s, e) => s + (e.honorarios_final ?? 0), 0);
 
   return (
-    <div className="mx-auto max-w-[1500px] px-3 py-3 md:px-6 md:py-6 space-y-4">
+    <PageLayout>
       <ExecutiveHero
         badge={{ icon: <BellRing size={12} />, label: "NUVEX · Alertas", tone: "warning" }}
         title="Centro de Alertas"
@@ -324,7 +325,7 @@ function NotificacionesPage() {
           </ListaRows>
         )}
       </NCard>
-    </div>
+    </PageLayout>
   );
 }
 
