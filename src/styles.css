@@ -298,6 +298,105 @@
 
 
 /* ==========================================================
+   NUVIA · SHELL DARK SCOPE
+   Aplica acabado glass oscuro a tarjetas/tablas/inputs internos
+   solo cuando un contenedor lleva la clase `.nuvia-shell-dark`.
+   No afecta el resto de la plataforma.
+   ========================================================== */
+.nuvia-shell-dark {
+  color: var(--nuvia-text-primary);
+}
+
+/* Superficies blancas/grises claras → glass oscuro */
+.nuvia-shell-dark .bg-white,
+.nuvia-shell-dark [class*="bg-[#fff"],
+.nuvia-shell-dark [class*="bg-[#FFF"],
+.nuvia-shell-dark [class*="bg-[#F7F9FB"],
+.nuvia-shell-dark [class*="bg-[#FBFCFD"],
+.nuvia-shell-dark [class*="bg-[#EEF1F5"],
+.nuvia-shell-dark [class*="bg-[#F4F6FB"],
+.nuvia-shell-dark [class*="bg-[#F0F2F6"],
+.nuvia-shell-dark [class*="bg-[#FAFBFC"],
+.nuvia-shell-dark [style*="background:#fff"],
+.nuvia-shell-dark [style*="background: #fff"],
+.nuvia-shell-dark [style*="background-color:#fff"],
+.nuvia-shell-dark [style*="background-color: #fff"] {
+  background-color: transparent !important;
+  background-image: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.018)) !important;
+  color: var(--nuvia-text-primary);
+  border-color: var(--nuvia-border) !important;
+  backdrop-filter: blur(12px);
+}
+
+/* Card NUVEX (componente Card de ui.tsx) */
+.nuvia-shell-dark .rounded-2xl.bg-white,
+.nuvia-shell-dark .rounded-xl.bg-white,
+.nuvia-shell-dark .rounded-lg.bg-white {
+  box-shadow: var(--nuvia-shadow-sm);
+}
+
+/* Tipografía oscura → clara */
+.nuvia-shell-dark [class*="text-[#242424"],
+.nuvia-shell-dark [class*="text-[#0A1226"],
+.nuvia-shell-dark [class*="text-[#1F2937"],
+.nuvia-shell-dark [class*="text-[#374151"] {
+  color: var(--nuvia-text-primary) !important;
+}
+.nuvia-shell-dark [class*="text-[#242424]/55"],
+.nuvia-shell-dark [class*="text-[#242424]/60"],
+.nuvia-shell-dark [class*="text-[#242424]/65"],
+.nuvia-shell-dark [class*="text-[#242424]/70"],
+.nuvia-shell-dark [class*="text-[#242424]/75"] {
+  color: var(--nuvia-text-secondary) !important;
+}
+
+/* Bordes claros → border NUVIA */
+.nuvia-shell-dark [class*="border-[#E3E7EE"],
+.nuvia-shell-dark [class*="border-[#EEF1F5"],
+.nuvia-shell-dark [class*="border-[#E5E7EB"],
+.nuvia-shell-dark [class*="border-[#F0F2F6"],
+.nuvia-shell-dark [class*="border-[#D1D5DB"] {
+  border-color: var(--nuvia-border) !important;
+}
+
+/* Inputs / selects / textareas dentro de la shell oscura */
+.nuvia-shell-dark input:not([type="checkbox"]):not([type="radio"]),
+.nuvia-shell-dark select,
+.nuvia-shell-dark textarea {
+  background-color: rgba(255,255,255,0.035) !important;
+  color: var(--nuvia-text-primary) !important;
+  border-color: var(--nuvia-border) !important;
+}
+.nuvia-shell-dark input::placeholder,
+.nuvia-shell-dark textarea::placeholder {
+  color: rgba(170,179,197,0.55) !important;
+}
+.nuvia-shell-dark select option {
+  background-color: var(--nuvia-bg-tertiary);
+  color: var(--nuvia-text-primary);
+}
+
+/* Tablas */
+.nuvia-shell-dark table {
+  color: var(--nuvia-text-primary);
+}
+.nuvia-shell-dark thead tr,
+.nuvia-shell-dark th {
+  color: var(--nuvia-text-secondary) !important;
+  border-color: var(--nuvia-border) !important;
+}
+.nuvia-shell-dark tbody tr {
+  border-color: var(--nuvia-border) !important;
+}
+.nuvia-shell-dark tbody tr:hover {
+  background-color: rgba(255,255,255,0.04) !important;
+}
+
+
+
+
+
+/* ==========================================================
    NUVIA · PRIMITIVAS VISUALES (Fase 1)
    Source of truth: /login y /registro
    Reutilizables en TODOS los módulos del ERP.
