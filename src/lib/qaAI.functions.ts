@@ -832,36 +832,52 @@ export const reejecutarAuditoriaQA = createServerFn({ method: "POST" })
     const rec = (inputs.reconstruccion ?? {}) as Record<string, unknown>;
     const extSnap = (inputs.extracto ?? {}) as Record<string, unknown>;
 
-    // Backfill FRESH desde extracto (igual que obtenerAuditoriaQA)
-    if (!(Number(rec.coberturaFrechValorMensual ?? 0) > 0) && aud.extracto_id) {
+    // Backfill desde extracto (FRESH + tasaEaPactada)
+    let extDatos: Record<string, unknown> | null = null;
+    if (aud.extracto_id) {
       const { data: ext } = await supabase
         .from("extractos_lecturas")
         .select("datos")
         .eq("id", aud.extracto_id as string)
         .single();
-      const d = (ext?.datos ?? {}) as Record<string, unknown>;
+      extDatos = (ext?.datos ?? null) as Record<string, unknown> | null;
+    }
+
+    if (extDatos) {
+      const d = extDatos;
+      const tasaPactada = parseNum(d.teaPactada);
       const valorFrech = parseNum(d.valorCobertura) ?? parseNum(d.valorSubsidioGobierno);
       const tasaFrech = parseNum(d.tasaCobertura);
-      if ((valorFrech && valorFrech > 0) || (tasaFrech && tasaFrech > 0)) {
-        const cuotasPend = Number(rec.cuotasPendientes ?? 0);
-        const cuotasPag = Number(rec.cuotasPagadas ?? 0);
-        const frechCuotasRestantes = Math.max(0, Math.min(cuotasPend, 84 - cuotasPag));
+      const cuotasPend = Number(rec.cuotasPendientes ?? 0);
+      const cuotasPag = Number(rec.cuotasPagadas ?? 0);
+      const frechCuotasRestantes = Math.max(0, Math.min(cuotasPend, 84 - cuotasPag));
+
+      const needsFrech = !(Number(rec.coberturaFrechValorMensual ?? 0) > 0) && ((valorFrech && valorFrech > 0) || (tasaFrech && tasaFrech > 0));
+      const needsPactada = !(Number(rec.tasaEaPactada ?? 0) > 0) && tasaPactada && tasaPactada > 0;
+
+      if (needsFrech || needsPactada) {
         inputs.reconstruccion = {
           ...rec,
-          coberturaFrechPp: rec.coberturaFrechPp ?? tasaFrech,
-          coberturaFrechValorMensual: rec.coberturaFrechValorMensual ?? valorFrech,
-          coberturaFrechCuotasRestantes: rec.coberturaFrechCuotasRestantes ?? frechCuotasRestantes,
+          ...(needsPactada ? { tasaEaPactada: tasaPactada } : {}),
+          ...(needsFrech ? {
+            coberturaFrechPp: rec.coberturaFrechPp ?? tasaFrech,
+            coberturaFrechValorMensual: rec.coberturaFrechValorMensual ?? valorFrech,
+            coberturaFrechCuotasRestantes: rec.coberturaFrechCuotasRestantes ?? frechCuotasRestantes,
+          } : {}),
         };
-        inputs.extracto = {
-          ...extSnap,
-          cuota: valorFrech && valorFrech > 0
-            ? parseNum(d.cuotaPagadaCliente) ?? parseNum(d.valorAPagar) ?? extSnap.cuota
-            : extSnap.cuota,
-          coberturaFrechPp: extSnap.coberturaFrechPp ?? tasaFrech,
-          coberturaFrechValorMensual: extSnap.coberturaFrechValorMensual ?? valorFrech,
-        };
+        if (needsFrech) {
+          inputs.extracto = {
+            ...extSnap,
+            cuota: valorFrech && valorFrech > 0
+              ? parseNum(d.cuotaPagadaCliente) ?? parseNum(d.valorAPagar) ?? extSnap.cuota
+              : extSnap.cuota,
+            coberturaFrechPp: extSnap.coberturaFrechPp ?? tasaFrech,
+            coberturaFrechValorMensual: extSnap.coberturaFrechValorMensual ?? valorFrech,
+          };
+        }
       }
     }
+
 
     const modalidadFinal = (inputs.modalidad as Modalidad | undefined) ?? (aud.modalidad as Modalidad);
     const overrides = await cargarToleranciasActivasInterno(supabase as never);
