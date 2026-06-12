@@ -476,7 +476,7 @@ function ExpedienteCard({ r, isDup = false }: { r: Expediente; isDup?: boolean }
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <div className="font-semibold text-base truncate">{r.cliente_nombre}</div>
+              <div className="font-semibold text-base truncate" style={{ color: "#F1F5F9" }}>{r.cliente_nombre || "Sin nombre"}</div>
               {isDup && (
                 <span
                   title="Esta cédula tiene más de un expediente activo"
