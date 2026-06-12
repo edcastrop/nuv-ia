@@ -34,12 +34,16 @@ const FLAG_LABEL: Record<string, { label: string; bg: string; fg: string }> = {
 function CarteraIAPage() {
   const fn = useServerFn(carteraAging);
   const { data, isLoading } = useQuery({ queryKey: ["tCarteraAging"], queryFn: () => fn() });
-  const [bucket, setBucket] = useState<string>("");
-  const [flag, setFlag] = useState<string>("");
+  const [bucket, setBucket] = useState<string>("__all__");
+  const [flag, setFlag] = useState<string>("__all__");
 
   const items = useMemo(() => {
     const xs = data?.items ?? [];
-    return xs.filter((i) => (!bucket || i.bucket === bucket) && (!flag || i.flags.includes(flag)));
+    return xs.filter(
+      (i) =>
+        (bucket === "__all__" || i.bucket === bucket) &&
+        (flag === "__all__" || i.flags.includes(flag)),
+    );
   }, [data, bucket, flag]);
 
   return (
