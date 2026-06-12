@@ -120,6 +120,7 @@ export const auditarCaso = createServerFn({ method: "POST" })
         qa_score: result.score.score,
         categoria: result.score.categoria,
         dictamen: result.score.dictamen,
+        auto_ejecutada: false,
         inputs: JSON.parse(JSON.stringify(data)),
         outputs: JSON.parse(JSON.stringify({
           cuotaTeorica: result.reconstruccion.cuotaTeorica,
@@ -140,6 +141,7 @@ export const auditarCaso = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (errAud) throw new Error(errAud.message);
+
     const auditoriaId = aud!.id;
 
     if (result.inconsistencias.length) {
