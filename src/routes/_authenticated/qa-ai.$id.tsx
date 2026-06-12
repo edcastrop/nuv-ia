@@ -40,6 +40,7 @@ function ResultadoQaAi() {
   const { id } = Route.useParams();
   const fetchAud = useServerFn(obtenerAuditoriaQA);
   const [data, setData] = useState<{ auditoria: Record<string, unknown> | null; inconsistencias: Inc[] } | null>(null);
+  const [copilotoOpen, setCopilotoOpen] = useState(false);
 
   useEffect(() => { (async () => setData(await fetchAud({ data: { id } })))(); }, [id, fetchAud]);
 
