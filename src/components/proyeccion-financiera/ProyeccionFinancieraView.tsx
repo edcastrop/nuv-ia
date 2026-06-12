@@ -70,7 +70,7 @@ const NUVIA = {
   rojo: "#FB7185",
 };
 
-const NUVIA_GRADIENT = "linear-gradient(135deg, #445DA3 0%, #445DA3 46%, #84B98F 100%)";
+const NUVIA_GRADIENT = "linear-gradient(135deg, rgba(68,93,163,0.95) 0%, rgba(132,185,143,0.9) 100%)";
 const NUVIA_GLASS = "linear-gradient(145deg, rgba(255,255,255,0.105), rgba(34,211,238,0.045) 46%, rgba(74,222,128,0.055))";
 
 const blankInput: ProyeccionFinancieraInput = {
@@ -981,7 +981,7 @@ export function ProyeccionFinancieraView() {
                 onClick={() => document.getElementById("sec-escenarios")?.scrollIntoView({ behavior: "smooth", block: "start" })}
                 className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[12.5px] font-semibold text-white transition hover:scale-[1.02]"
                 style={{
-                  background: "linear-gradient(135deg, #445DA3 0%, #445DA3 46%, #84B98F 100%)",
+                  background: "linear-gradient(135deg, rgba(68,93,163,0.95) 0%, rgba(132,185,143,0.9) 100%)",
                   boxShadow: "0 10px 28px -10px rgba(74,222,128,0.55)",
                 }}
               >
