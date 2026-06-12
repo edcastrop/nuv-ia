@@ -167,6 +167,23 @@ function ResultadoQaAi() {
         actions={
           <div className="flex items-center gap-2 flex-wrap">
             <button
+              onClick={async () => {
+                if (reloading) return;
+                setReloading(true);
+                try {
+                  await doReejecutar({ data: { id } });
+                  setData(await fetchAud({ data: { id } }));
+                } finally {
+                  setReloading(false);
+                }
+              }}
+              disabled={reloading}
+              className="nuvia-input nuvia-input-sm"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: reloading ? "not-allowed" : "pointer", opacity: reloading ? 0.6 : 1 }}
+            >
+              <RefreshCw size={14} className={reloading ? "animate-spin" : ""} /> {reloading ? "Reejecutando…" : "Reejecutar auditoría"}
+            </button>
+            <button
               onClick={() => setCopilotoOpen(true)}
               className="nuvia-input nuvia-input-sm"
               style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer" }}
