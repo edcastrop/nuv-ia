@@ -6,8 +6,14 @@ import { NSelect } from "@/components/nuvia/NSelect";
 import { supabase } from "@/integrations/supabase/client";
 import { listCarteras, type CarteraConExpediente } from "@/lib/cartera";
 import { registrarPago } from "@/lib/cartera.functions";
-import { listCuentasReceptoras, METODOS_PAGO, type CuentaReceptora } from "@/lib/cuentasReceptoras";
-import { Receipt } from "lucide-react";
+import {
+  listCuentasReceptoras,
+  METODOS_PAGO,
+  getParametrosFinancieros,
+  calcularDesgloseWompi,
+  type CuentaReceptora,
+} from "@/lib/cuentasReceptoras";
+import { Receipt, UploadCloud, FileText, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/finanzas/recaudos")({
   component: RecaudosPage,
