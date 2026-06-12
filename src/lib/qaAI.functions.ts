@@ -657,7 +657,9 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
     const frech = parseNum(d.tasaCobertura);
     const frechValorMensual = parseNum(d.valorCobertura) ?? parseNum(d.valorSubsidioGobierno);
     const desemb = parseNum(d.valorDesembolsado);
-    const cuotaExt = parseNum(d.cuotaActual);
+    const cuotaExt = ((frech && frech > 0) || (frechValorMensual && frechValorMensual > 0))
+      ? parseNum(d.cuotaPagadaCliente) ?? parseNum(d.valorAPagar) ?? parseNum(d.cuotaActual)
+      : parseNum(d.cuotaActual);
 
     // FRECH/Fresh cubre máximo 84 cuotas (7 años) en total.
     // Las cuotas restantes con cobertura = max(0, 84 − cuotasPagadas), acotadas a las pendientes.
