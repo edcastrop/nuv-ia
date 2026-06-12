@@ -1,55 +1,61 @@
 /**
- * AnimatedBackground — fondo NUVIA con orbes flotantes y gradiente sutil.
- * No intrusivo, paleta suave alineada a NUVIA Home.
+ * AnimatedBackground — fondo NUVIA con orbes flotantes.
+ * Usa absolute dentro del contenedor padre (que debe ser relative + overflow-hidden).
  */
 export function AnimatedBackground() {
   return (
-    <div className="pointer-events-none fixed inset-0 overflow-hidden -z-0">
-      {/* Capa base con grid sutil */}
+    <>
+      {/* Grid sutil */}
       <div
-        className="absolute inset-0 opacity-[0.04]"
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.05]"
         style={{
           backgroundImage:
-            "linear-gradient(rgba(238,245,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(238,245,255,0.4) 1px, transparent 1px)",
+            "linear-gradient(rgba(238,245,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(238,245,255,0.5) 1px, transparent 1px)",
           backgroundSize: "56px 56px",
           maskImage:
-            "radial-gradient(ellipse at 50% 0%, rgba(0,0,0,0.9), transparent 70%)",
+            "radial-gradient(ellipse at 50% 0%, rgba(0,0,0,0.85), transparent 70%)",
+          WebkitMaskImage:
+            "radial-gradient(ellipse at 50% 0%, rgba(0,0,0,0.85), transparent 70%)",
         }}
       />
 
-      {/* Orbe azul flotante */}
+      {/* Orbe azul */}
       <div
-        className="absolute h-[520px] w-[520px] rounded-full opacity-[0.18] blur-[140px] animate-orb-1"
-        style={{ background: "var(--nuvia-accent-blue)" }}
+        aria-hidden
+        className="pointer-events-none absolute h-[560px] w-[560px] rounded-full blur-[120px] animate-nuvia-orb-1"
+        style={{ background: "rgba(68,93,163,0.42)", top: "-120px", left: "-160px" }}
       />
-      {/* Orbe verde flotante */}
+      {/* Orbe verde */}
       <div
-        className="absolute h-[480px] w-[480px] rounded-full opacity-[0.14] blur-[140px] animate-orb-2"
-        style={{ background: "var(--nuvia-accent-green)" }}
+        aria-hidden
+        className="pointer-events-none absolute h-[520px] w-[520px] rounded-full blur-[120px] animate-nuvia-orb-2"
+        style={{ background: "rgba(132,185,143,0.32)", top: "-80px", right: "-160px" }}
       />
-      {/* Orbe cálido sutil */}
+      {/* Orbe dorado sutil */}
       <div
-        className="absolute h-[360px] w-[360px] rounded-full opacity-[0.08] blur-[120px] animate-orb-3"
-        style={{ background: "#c9a84c" }}
+        aria-hidden
+        className="pointer-events-none absolute h-[420px] w-[420px] rounded-full blur-[120px] animate-nuvia-orb-3"
+        style={{ background: "rgba(201,168,76,0.18)", bottom: "-160px", left: "30%" }}
       />
 
       <style>{`
-        @keyframes nuviaOrb1 {
-          0%, 100% { transform: translate(-10%, -10%); }
-          50%      { transform: translate(8%, 14%); }
+        @keyframes nuviaOrbFloat1 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50%      { transform: translate(80px, 60px) scale(1.08); }
         }
-        @keyframes nuviaOrb2 {
-          0%, 100% { transform: translate(70%, -5%); }
-          50%      { transform: translate(55%, 25%); }
+        @keyframes nuviaOrbFloat2 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50%      { transform: translate(-60px, 80px) scale(1.05); }
         }
-        @keyframes nuviaOrb3 {
-          0%, 100% { transform: translate(30%, 80%); }
-          50%      { transform: translate(50%, 60%); }
+        @keyframes nuviaOrbFloat3 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50%      { transform: translate(40px, -60px) scale(1.1); }
         }
-        .animate-orb-1 { top: 0; left: 0; animation: nuviaOrb1 22s ease-in-out infinite; }
-        .animate-orb-2 { top: 0; left: 0; animation: nuviaOrb2 28s ease-in-out infinite; }
-        .animate-orb-3 { top: 0; left: 0; animation: nuviaOrb3 34s ease-in-out infinite; }
+        .animate-nuvia-orb-1 { animation: nuviaOrbFloat1 18s ease-in-out infinite; }
+        .animate-nuvia-orb-2 { animation: nuviaOrbFloat2 24s ease-in-out infinite; }
+        .animate-nuvia-orb-3 { animation: nuviaOrbFloat3 30s ease-in-out infinite; }
       `}</style>
-    </div>
+    </>
   );
 }
