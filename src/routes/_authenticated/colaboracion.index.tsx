@@ -1,9 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Hash, MessageSquare, Users, Bell, Plus, FolderKanban, ArrowLeft, MessagesSquare } from "lucide-react";
-import { Card } from "@/components/nuvex/ui";
-import { NUVEX } from "@/components/nuvex/constants";
-import { ExecutiveHero } from "@/components/nuvia";
+import { ExecutiveHero, NCard, PageLayout } from "@/components/nuvia";
 import { CanalChat } from "@/components/colaboracion/CanalChat";
 import {
   type Canal, listCanales, crearCanal, listDirectorio, getOrCreateDM,
@@ -56,7 +54,7 @@ function ColaboracionPage() {
   const hasCanal = !!canalActivo;
 
   return (
-    <div className="mx-auto max-w-[1500px] px-3 py-3 md:px-6 md:py-6 space-y-3 md:space-y-4">
+    <PageLayout maxWidth="full">
       <ExecutiveHero
         badge={{ icon: <MessagesSquare size={12} />, label: "NUVEX · Colaboración", tone: "blue" }}
         title="Centro de Colaboración"
@@ -70,7 +68,7 @@ function ColaboracionPage() {
                 className="shrink-0 rounded-lg px-3 py-1.5 text-[12px] font-medium border"
                 style={
                   tab === t
-                    ? { background: NUVEX.azul, color: "#fff", borderColor: NUVEX.azul }
+                    ? { background: "var(--nuvia-gradient-primary)", color: "var(--nuvia-text-primary)", borderColor: "transparent" }
                     : { borderColor: "var(--nuvia-border)", color: "var(--nuvia-text-secondary)", background: "rgba(255,255,255,0.02)" }
                 }
               >
@@ -87,10 +85,10 @@ function ColaboracionPage() {
           className="flex flex-col md:grid md:grid-cols-12 gap-3 md:gap-4"
           style={{ height: "calc(100dvh - 200px)" }}
         >
-          <Card className={`md:col-span-3 p-0 overflow-y-auto flex-col ${hasCanal ? "hidden md:flex" : "flex flex-1"}`}>
-            <div className="p-3 border-b border-[#E3E7EE] flex items-center justify-between">
-              <div className="text-[11px] uppercase tracking-wider font-semibold text-[#242424]/60">Áreas</div>
-              <button onClick={() => setShowNew(true)} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold text-white" style={{ background: NUVEX.azul }}>
+          <NCard padding="none" className={`md:col-span-3 p-0 overflow-y-auto flex-col ${hasCanal ? "hidden md:flex" : "flex flex-1"}`}>
+            <div className="p-3 border-b flex items-center justify-between" style={{ borderColor: "var(--nuvia-border)" }}>
+              <div className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: "var(--nuvia-text-secondary)" }}>Áreas</div>
+              <button onClick={() => setShowNew(true)} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold" style={{ background: "var(--nuvia-gradient-primary)", color: "var(--nuvia-text-primary)" }}>
                 <Plus size={11} /> Nuevo
               </button>
             </div>
@@ -101,12 +99,12 @@ function ColaboracionPage() {
             <ListCanales icon={FolderKanban} items={canalesCaso} activeId={canalActivo?.id} onPick={setCanal} />
             {dms.length > 0 && <SectionTitle label="Directos" />}
             <ListCanales icon={MessageSquare} items={dms} activeId={canalActivo?.id} onPick={setCanal} />
-          </Card>
+          </NCard>
 
-          <Card className={`md:col-span-9 p-0 overflow-hidden flex-col ${hasCanal ? "flex flex-1" : "hidden md:flex"}`}>
+          <NCard padding="none" className={`md:col-span-9 p-0 overflow-hidden flex-col ${hasCanal ? "flex flex-1" : "hidden md:flex"}`}>
             {canalActivo ? (
               <div className="flex flex-col h-full">
-                <button onClick={clearCanal} className="md:hidden inline-flex items-center gap-1.5 text-[12px] text-[#242424]/70 px-3 py-2 border-b border-[#E3E7EE] bg-[#F7F9FB]">
+                <button onClick={clearCanal} className="md:hidden inline-flex items-center gap-1.5 text-[12px] px-3 py-2 border-b" style={{ color: "var(--nuvia-text-secondary)", borderColor: "var(--nuvia-border)", background: "var(--nuvia-bg-secondary)" }}>
                   <ArrowLeft size={14} /> Canales
                 </button>
                 <div className="flex-1 min-h-0">
@@ -114,113 +112,113 @@ function ColaboracionPage() {
                 </div>
               </div>
             ) : (
-              <div className="p-10 text-center text-sm text-[#242424]/50">Selecciona un canal.</div>
+              <div className="p-10 text-center text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>Selecciona un canal.</div>
             )}
-          </Card>
+          </NCard>
         </div>
       )}
 
       {tab === "dm" && (
-        <Card className="!p-3 md:!p-5">
-          <h3 className="text-sm font-semibold text-[#242424] mb-3">Iniciar mensaje directo</h3>
+        <NCard padding="md">
+          <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--nuvia-text-primary)" }}>Iniciar mensaje directo</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
             {dir.filter((p) => p.user_id !== user?.id).map((p) => (
-              <button key={p.user_id} onClick={async () => { const c = await getOrCreateDM(p.user_id); await reload(); setTabAndSync("canales"); setCanal(c.id); }} className="flex items-center gap-3 rounded-xl border border-[#E3E7EE] p-3 text-left hover:bg-[#F7F9FB] active:bg-[#F0F4FB]">
+              <button key={p.user_id} onClick={async () => { const c = await getOrCreateDM(p.user_id); await reload(); setTabAndSync("canales"); setCanal(c.id); }} className="flex items-center gap-3 rounded-xl border p-3 text-left transition hover:[background:var(--nuvia-bg-card)]" style={{ borderColor: "var(--nuvia-border)", background: "rgba(255,255,255,0.03)" }}>
                 <UserAvatar userId={p.user_id} name={p.nombre} size="md" />
                 <div className="min-w-0">
-                  <div className="text-sm font-semibold text-[#242424] truncate">{p.nombre}</div>
-                  <div className="text-[11px] text-[#242424]/55 truncate">{p.roles.join(", ") || "—"}</div>
+                  <div className="text-sm font-semibold truncate" style={{ color: "var(--nuvia-text-primary)" }}>{p.nombre}</div>
+                  <div className="text-[11px] truncate" style={{ color: "var(--nuvia-text-secondary)" }}>{p.roles.join(", ") || "—"}</div>
                 </div>
               </button>
             ))}
           </div>
-        </Card>
+        </NCard>
       )}
 
       {tab === "notificaciones" && (
-        <Card className="!p-3 md:!p-5">
+        <NCard padding="md">
           <div className="flex items-center justify-between mb-3 gap-2">
-            <h3 className="text-sm font-semibold text-[#242424] inline-flex items-center gap-2"><Bell size={14} /> Mis notificaciones</h3>
-            <button onClick={async () => { await marcarTodasNotifLeidas(); listMisNotifColab().then(setNotifs); }} className="text-[11px] md:text-[12px] font-medium text-right" style={{ color: NUVEX.azul }}>
+            <h3 className="text-sm font-semibold inline-flex items-center gap-2" style={{ color: "var(--nuvia-text-primary)" }}><Bell size={14} /> Mis notificaciones</h3>
+            <button onClick={async () => { await marcarTodasNotifLeidas(); listMisNotifColab().then(setNotifs); }} className="text-[11px] md:text-[12px] font-medium text-right" style={{ color: "var(--nuvia-accent-green)" }}>
               Marcar todas leídas
             </button>
           </div>
           {notifs.length === 0 ? (
-            <div className="text-center text-sm text-[#242424]/50 py-6">Sin notificaciones.</div>
+            <div className="text-center text-sm py-6" style={{ color: "var(--nuvia-text-secondary)" }}>Sin notificaciones.</div>
           ) : (
             <div className="space-y-1">
               {notifs.map((n) => (
-                <div key={n.id} className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm ${n.leida ? "bg-white" : "bg-[#F0F4FB]"}`}>
+                <div key={n.id} className="flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm" style={{ background: n.leida ? "rgba(255,255,255,0.025)" : "rgba(68,93,163,0.18)", borderColor: "var(--nuvia-border)", color: "var(--nuvia-text-primary)" }}>
                   <div className="min-w-0">
                     <div className="font-medium truncate">{n.tipo === "mencion" ? "Te mencionaron" : "Nuevo mensaje"}</div>
-                    <div className="text-[11px] text-[#242424]/55">{new Date(n.created_at).toLocaleString("es-CO")}</div>
+                    <div className="text-[11px]" style={{ color: "var(--nuvia-text-secondary)" }}>{new Date(n.created_at).toLocaleString("es-CO")}</div>
                   </div>
-                  {n.canal_id && <button onClick={() => { setTabAndSync("canales"); setCanal(n.canal_id!); }} className="text-[12px] font-semibold shrink-0" style={{ color: NUVEX.azul }}>Abrir</button>}
+                  {n.canal_id && <button onClick={() => { setTabAndSync("canales"); setCanal(n.canal_id!); }} className="text-[12px] font-semibold shrink-0" style={{ color: "var(--nuvia-accent-green)" }}>Abrir</button>}
                 </div>
               ))}
             </div>
           )}
-        </Card>
+        </NCard>
       )}
 
       {tab === "directorio" && (
-        <Card className="!p-3 md:!p-5">
-          <h3 className="text-sm font-semibold text-[#242424] inline-flex items-center gap-2 mb-3"><Users size={14} /> Directorio interno</h3>
+        <NCard padding="md">
+          <h3 className="text-sm font-semibold inline-flex items-center gap-2 mb-3" style={{ color: "var(--nuvia-text-primary)" }}><Users size={14} /> Directorio interno</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
             {dir.map((p) => (
-              <div key={p.user_id} className="flex items-center gap-3 rounded-xl border border-[#E3E7EE] p-3">
+              <div key={p.user_id} className="flex items-center gap-3 rounded-xl border p-3" style={{ borderColor: "var(--nuvia-border)", background: "rgba(255,255,255,0.03)" }}>
                 <UserAvatar userId={p.user_id} name={p.nombre} size="md" />
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-semibold text-[#242424] truncate">{p.nombre}</div>
-                  <div className="text-[11px] text-[#242424]/55 truncate">{p.correo || "—"}</div>
-                  <div className="text-[10px] text-[#242424]/55 truncate">{p.roles.join(", ") || "—"}</div>
+                  <div className="text-sm font-semibold truncate" style={{ color: "var(--nuvia-text-primary)" }}>{p.nombre}</div>
+                  <div className="text-[11px] truncate" style={{ color: "var(--nuvia-text-secondary)" }}>{p.correo || "—"}</div>
+                  <div className="text-[10px] truncate" style={{ color: "var(--nuvia-text-secondary)" }}>{p.roles.join(", ") || "—"}</div>
                 </div>
                 {p.user_id !== user?.id && (
-                  <button onClick={async () => { const c = await getOrCreateDM(p.user_id); await reload(); setTabAndSync("canales"); setCanal(c.id); }} className="rounded-md px-2 py-1 text-[11px] font-semibold text-white shrink-0" style={{ background: NUVEX.azul }}>
+                  <button onClick={async () => { const c = await getOrCreateDM(p.user_id); await reload(); setTabAndSync("canales"); setCanal(c.id); }} className="rounded-md px-2 py-1 text-[11px] font-semibold shrink-0" style={{ background: "var(--nuvia-gradient-primary)", color: "var(--nuvia-text-primary)" }}>
                     Mensaje
                   </button>
                 )}
               </div>
             ))}
           </div>
-        </Card>
+        </NCard>
       )}
 
       {showNew && (
         <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40" onClick={() => setShowNew(false)}>
-          <div className="bg-white w-full md:max-w-md md:rounded-2xl rounded-t-2xl p-4 md:p-5" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full md:max-w-md md:rounded-2xl rounded-t-2xl p-4 md:p-5" style={{ background: "var(--nuvia-bg-tertiary)", border: "1px solid var(--nuvia-border)", color: "var(--nuvia-text-primary)" }} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-base font-semibold text-[#242424]">Nuevo canal</h3>
-              <button onClick={() => setShowNew(false)} className="text-[#242424]/50 text-xl leading-none px-2">×</button>
+              <h3 className="text-base font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>Nuevo canal</h3>
+              <button onClick={() => setShowNew(false)} className="text-xl leading-none px-2" style={{ color: "var(--nuvia-text-secondary)" }}>×</button>
             </div>
-            <input value={nuevoNombre} onChange={(e) => setNuevoNombre(e.target.value)} placeholder="# nombre-canal" className="w-full rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm mb-2" />
-            <textarea value={nuevoDesc} onChange={(e) => setNuevoDesc(e.target.value)} placeholder="Descripción (opcional)" rows={2} className="w-full rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm mb-2" />
-            <label className="flex items-center gap-2 text-sm text-[#242424] mb-4">
+            <input value={nuevoNombre} onChange={(e) => setNuevoNombre(e.target.value)} placeholder="# nombre-canal" className="nuvia-input mb-2" />
+            <textarea value={nuevoDesc} onChange={(e) => setNuevoDesc(e.target.value)} placeholder="Descripción (opcional)" rows={2} className="nuvia-input mb-2" />
+            <label className="flex items-center gap-2 text-sm mb-4" style={{ color: "var(--nuvia-text-primary)" }}>
               <input type="checkbox" checked={nuevoPriv} onChange={(e) => setNuevoPriv(e.target.checked)} /> Canal privado (solo miembros invitados)
             </label>
             <div className="flex justify-end gap-2">
-              <button onClick={() => setShowNew(false)} className="rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm">Cancelar</button>
-              <button onClick={crear} className="rounded-lg px-4 py-2 text-sm font-semibold text-white" style={{ background: NUVEX.azul }}>Crear</button>
+              <button onClick={() => setShowNew(false)} className="rounded-lg border px-3 py-2 text-sm" style={{ borderColor: "var(--nuvia-border)", color: "var(--nuvia-text-secondary)" }}>Cancelar</button>
+              <button onClick={crear} className="rounded-lg px-4 py-2 text-sm font-semibold" style={{ background: "var(--nuvia-gradient-primary)", color: "var(--nuvia-text-primary)" }}>Crear</button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </PageLayout>
   );
 }
 
 function SectionTitle({ label }: { label: string }) {
-  return <div className="px-3 pt-3 pb-1 text-[10px] uppercase tracking-wider font-semibold text-[#242424]/50 border-t border-[#E3E7EE]">{label}</div>;
+  return <div className="px-3 pt-3 pb-1 text-[10px] uppercase tracking-wider font-semibold border-t" style={{ color: "var(--nuvia-text-secondary)", borderColor: "var(--nuvia-border)" }}>{label}</div>;
 }
 
 function ListCanales({ items, activeId, onPick, icon: Icon }: { items: Canal[]; activeId?: string; onPick: (id: string) => void; icon: typeof Hash }) {
   return (
     <div className="py-1">
       {items.map((c) => (
-        <button key={c.id} onClick={() => onPick(c.id)} className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-left active:bg-[#F0F4FB]" style={activeId === c.id ? { background: "#F0F4FB", color: NUVEX.azul, fontWeight: 600 } : { color: "#242424" }}>
+        <button key={c.id} onClick={() => onPick(c.id)} className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-left transition hover:[background:var(--nuvia-bg-card)]" style={activeId === c.id ? { background: "rgba(68,93,163,0.18)", color: "var(--nuvia-text-primary)", fontWeight: 600 } : { color: "var(--nuvia-text-secondary)" }}>
           <Icon size={13} className="shrink-0" />
           <span className="truncate">{c.nombre}</span>
-          {c.privado && <span className="ml-auto text-[9px] uppercase text-[#242424]/40">priv</span>}
+          {c.privado && <span className="ml-auto text-[9px] uppercase" style={{ color: "var(--nuvia-text-secondary)" }}>priv</span>}
         </button>
       ))}
     </div>
