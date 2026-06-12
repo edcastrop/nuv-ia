@@ -17,68 +17,67 @@ function AmbientBg() {
   return (
     <>
       <style>{`
-        @keyframes nuviaAuroraFlow {
-          0% { transform: translate3d(-8%, -6%, 0) rotate(0deg) scale(1); filter: hue-rotate(0deg); }
-          35% { transform: translate3d(8%, 4%, 0) rotate(12deg) scale(1.08); filter: hue-rotate(12deg); }
-          70% { transform: translate3d(-2%, 9%, 0) rotate(-10deg) scale(1.16); filter: hue-rotate(-8deg); }
-          100% { transform: translate3d(-8%, -6%, 0) rotate(0deg) scale(1); filter: hue-rotate(0deg); }
-        }
-        @keyframes nuviaSweep {
-          0% { transform: translateX(-130%) rotate(16deg); opacity: 0; }
-          18% { opacity: .42; }
-          52% { opacity: .18; }
-          100% { transform: translateX(130%) rotate(16deg); opacity: 0; }
-        }
-        @keyframes nuviaPulseGrid {
-          0%, 100% { opacity: .12; transform: scale(1); }
-          50% { opacity: .26; transform: scale(1.015); }
+        @keyframes nuviaNodePulse {
+          0%, 100% { opacity: .38; r: 1.4px; }
+          50% { opacity: .95; r: 3px; }
         }
       `}</style>
       <div
         className="pointer-events-none absolute inset-0 z-0"
         style={{
           background:
-            "radial-gradient(circle at 18% 12%, rgba(68,93,163,0.34), transparent 28%), radial-gradient(circle at 78% 18%, rgba(132,185,143,0.24), transparent 30%), radial-gradient(circle at 52% 76%, rgba(68,93,163,0.32), transparent 34%), #05070D",
+            "radial-gradient(circle at 20% 10%, rgba(68,93,163,0.35), transparent 55%), radial-gradient(circle at 80% 85%, rgba(132,185,143,0.28), transparent 55%), #050816",
         }}
       />
       <div
-        className="pointer-events-none absolute inset-[-22%] z-0 blur-3xl"
-        style={{
-          background:
-            "conic-gradient(from 120deg at 50% 50%, rgba(68,93,163,0.0), rgba(68,93,163,0.42), rgba(132,185,143,0.30), rgba(68,93,163,0.38), rgba(68,93,163,0.0))",
-          animation: "nuviaAuroraFlow 11s ease-in-out infinite",
-          opacity: 0.86,
-        }}
-      />
+        className="pointer-events-none absolute inset-0 z-0 opacity-50"
+        aria-hidden="true"
+      >
+        <svg className="h-full w-full" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="proyeccion-link" x1="0" x2="1">
+              <stop offset="0%" stopColor="#445DA3" />
+              <stop offset="100%" stopColor="#84B98F" />
+            </linearGradient>
+          </defs>
+          {Array.from({ length: 26 }).map((_, i) => {
+            const x1 = (i * 137) % 100;
+            const y1 = (i * 71) % 100;
+            const x2 = (x1 + 17 + (i % 7) * 4) % 100;
+            const y2 = (y1 + 23 + (i % 5) * 5) % 100;
+            return (
+              <line key={`l${i}`} x1={`${x1}%`} y1={`${y1}%`} x2={`${x2}%`} y2={`${y2}%`} stroke="url(#proyeccion-link)" strokeWidth="0.6">
+                <animate attributeName="opacity" values="0.2;0.9;0.2" dur={`${5 + (i % 5)}s`} repeatCount="indefinite" />
+              </line>
+            );
+          })}
+          {Array.from({ length: 34 }).map((_, i) => {
+            const cx = (i * 53) % 100;
+            const cy = (i * 89) % 100;
+            return <circle key={`n${i}`} cx={`${cx}%`} cy={`${cy}%`} r="1.6" fill={i % 2 === 0 ? "#445DA3" : "#84B98F"} style={{ animation: `nuviaNodePulse ${3 + (i % 4)}s ease-in-out infinite` }} />;
+          })}
+        </svg>
+      </div>
       <motion.div
-        className="pointer-events-none absolute top-[-10rem] left-[-9rem] z-0 h-[36rem] w-[36rem] rounded-full blur-3xl"
-        style={{ background: "radial-gradient(circle, rgba(68,93,163,0.65), transparent 68%)", opacity: 0.82 }}
-        animate={{ x: [0, 130, 30, 0], y: [0, 58, 112, 0], scale: [1, 1.24, 1.08, 1] }}
-        transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="pointer-events-none absolute bottom-[-12rem] right-[-10rem] z-0 h-[42rem] w-[42rem] rounded-full blur-3xl"
-        style={{ background: "radial-gradient(circle, rgba(132,185,143,0.52), transparent 68%)", opacity: 0.76 }}
-        animate={{ x: [0, -120, -32, 0], y: [0, -55, -110, 0], scale: [1, 1.2, 1.05, 1] }}
+        className="pointer-events-none absolute top-[-10rem] left-[-8rem] z-0 h-[36rem] w-[36rem] rounded-full blur-3xl"
+        style={{ background: "radial-gradient(circle, #445DA3, transparent 70%)", opacity: 0.55 }}
+        animate={{ x: [0, 60, 0], y: [0, 40, 0], scale: [1, 1.1, 1] }}
         transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
       />
-      <div
-        className="pointer-events-none absolute top-[-20%] bottom-[-20%] z-0 w-[28rem] blur-2xl"
-        style={{
-          left: "10%",
-          background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.16), rgba(68,93,163,0.18), transparent)",
-          animation: "nuviaSweep 5.5s ease-in-out infinite",
-        }}
+      <motion.div
+        className="pointer-events-none absolute bottom-[-10rem] right-[-8rem] z-0 h-[40rem] w-[40rem] rounded-full blur-3xl"
+        style={{ background: "radial-gradient(circle, #84B98F, transparent 70%)", opacity: 0.5 }}
+        animate={{ x: [0, -70, 0], y: [0, -40, 0], scale: [1, 1.15, 1] }}
+        transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
       />
-      <div
-        className="pointer-events-none absolute inset-0 z-0"
+      <motion.div
+        className="pointer-events-none absolute top-1/3 left-1/2 z-0 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full blur-3xl"
         style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.055) 1px, transparent 1px)",
-          backgroundSize: "72px 72px",
-          maskImage: "radial-gradient(circle at 50% 18%, black 0%, transparent 62%)",
-          animation: "nuviaPulseGrid 4s ease-in-out infinite",
+          background: "radial-gradient(circle, #9333EA, transparent 70%)",
+          opacity: 0.22,
         }}
+        animate={{ x: [-40, 40, -40], y: [-20, 20, -20] }}
+        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
       />
     </>
   );
@@ -86,7 +85,7 @@ function AmbientBg() {
 
 function ProyeccionHerramientaPage() {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#05070D]">
+    <div className="relative min-h-screen overflow-hidden bg-[#050816]">
       <AmbientBg />
       <div className="relative z-10">
         <div className="mx-auto max-w-7xl px-6 pt-6">
