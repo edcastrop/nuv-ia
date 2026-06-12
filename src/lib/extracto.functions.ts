@@ -445,6 +445,14 @@ export const extractStatement = createServerFn({ method: "POST" })
       }
       resp = await callModel("google/gemini-2.5-pro");
     }
+    if (!resp.ok && resp.status === 400 && data.images.length > 0) {
+      try {
+        await resp.text();
+      } catch {
+        // Ignorar: drenamos el cuerpo antes del respaldo JSON.
+      }
+      resp = await callModel("google/gemini-3-flash-preview", "json");
+    }
 
     if (!resp.ok) {
       if (resp.status === 429) {
@@ -472,11 +480,13 @@ export const extractStatement = createServerFn({ method: "POST" })
       choices?: Array<{
         message?: {
           tool_calls?: Array<{ function?: { arguments?: string } }>;
+          content?: string | null;
         };
       }>;
     };
 
-    const argsRaw = json.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ?? "";
+    const message = json.choices?.[0]?.message;
+    const argsRaw = message?.tool_calls?.[0]?.function?.arguments ?? message?.content ?? "";
     if (!argsRaw) {
       return {
         error: "La IA no devolvió datos estructurados. Intenta con otra imagen.",
@@ -485,7 +495,7 @@ export const extractStatement = createServerFn({ method: "POST" })
     }
 
     try {
-      const parsed = JSON.parse(argsRaw) as ExtractoData;
+      const parsed = normalizeAiPayload(parseJsonObject(argsRaw));
       // Normalizar banco: Colpatria ahora es Davibank
       const bancoRaw = typeof parsed.banco === "string" ? parsed.banco : "";
       const _esBancolombiaNorm = /bancolombia/i.test(bancoRaw);
