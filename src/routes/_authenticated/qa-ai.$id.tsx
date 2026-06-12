@@ -39,12 +39,11 @@ const fmt = (n: number | null | undefined, d = 0) =>
 function ResultadoQaAi() {
   const { id } = Route.useParams();
   const fetchAud = useServerFn(obtenerAuditoriaQA);
+  const doReejecutar = useServerFn(reejecutarAuditoriaQA);
   const [data, setData] = useState<{ auditoria: Record<string, unknown> | null; inconsistencias: Inc[] } | null>(null);
   const [copilotoOpen, setCopilotoOpen] = useState(false);
   const [verTodas, setVerTodas] = useState(false);
   const [reloading, setReloading] = useState(false);
-  const fetchAud = useServerFn(obtenerAuditoriaQA);
-  const doReejecutar = useServerFn(reejecutarAuditoriaQA);
 
   useEffect(() => { (async () => setData(await fetchAud({ data: { id } })))(); }, [id, fetchAud]);
 
