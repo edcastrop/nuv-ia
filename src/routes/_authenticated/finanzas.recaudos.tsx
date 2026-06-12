@@ -308,7 +308,27 @@ function NuevoRecaudo({
             <NSelect value={metodo} onValueChange={setMetodo} options={METODO_OPTS} compact />
           </Field>
           <Field label="Banco receptor">
-            <input value={bancoReceptor} onChange={(e) => setBancoReceptor(e.target.value)} className="nuvia-input nuvia-input-sm w-full" />
+            {cuentas.length > 0 ? (
+              <NSelect
+                value={bancoReceptor || "__none__"}
+                onValueChange={(v) => setBancoReceptor(v === "__none__" ? "" : v)}
+                options={[
+                  { value: "__none__", label: "— Selecciona cuenta —" },
+                  ...cuentas.map((c) => ({
+                    value: `${c.banco}${c.numero ? ` · ${c.numero}` : ""}`,
+                    label: `${c.banco}${c.tipo ? ` (${c.tipo})` : ""}${c.numero ? ` · ${c.numero}` : ""}`,
+                  })),
+                ]}
+                compact
+              />
+            ) : (
+              <input
+                value={bancoReceptor}
+                onChange={(e) => setBancoReceptor(e.target.value)}
+                placeholder="Sin cuentas parametrizadas"
+                className="nuvia-input nuvia-input-sm w-full"
+              />
+            )}
           </Field>
         </div>
 
