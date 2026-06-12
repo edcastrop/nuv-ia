@@ -1,7 +1,59 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { auditar, QA_MOTOR_VERSION, type Modalidad } from "./qaMath";
+import { auditar, QA_MOTOR_VERSION, TOLERANCIAS_DEFAULT, type Modalidad, type Tolerancias } from "./qaMath";
+
+// ─────────────────────────────────────────────────────────────
+// Fase 2 — Carga de reglas activas desde qa_reglas
+// ─────────────────────────────────────────────────────────────
+async function cargarToleranciasActivasInterno(
+  supabase: { from: (t: string) => { select: (c: string) => { eq: (k: string, v: boolean) => Promise<{ data: Array<{ codigo: string; payload: Record<string, unknown> }> | null }> } } },
+): Promise<Partial<Tolerancias>> {
+  const { data } = await supabase.from("qa_reglas").select("codigo,payload").eq("activa", true);
+  const map = new Map<string, Record<string, unknown>>((data ?? []).map((r) => [r.codigo, (r.payload ?? {}) as Record<string, unknown>]));
+  const num = (v: unknown): number | undefined => {
+    if (v === null || v === undefined || v === "") return undefined;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : undefined;
+  };
+  const out: Partial<Tolerancias> = {};
+  const tCuota = map.get("tol.cuota") ?? {};
+  if (num(tCuota.abs) !== undefined) out.cuotaAbs = num(tCuota.abs);
+  if (num(tCuota.pct) !== undefined) out.cuotaPct = num(tCuota.pct);
+  const tSaldo = map.get("tol.saldo") ?? {};
+  if (num(tSaldo.abs) !== undefined) out.saldoAbs = num(tSaldo.abs);
+  const tTasa = map.get("tol.tasa_ea") ?? {};
+  if (num(tTasa.abs) !== undefined) out.tasaEaAbs = num(tTasa.abs);
+  const tSeg = map.get("tol.seguros") ?? {};
+  if (num(tSeg.abs) !== undefined) out.segurosAbs = num(tSeg.abs);
+  const tFrech = map.get("tol.frech") ?? {};
+  if (num(tFrech.abs) !== undefined) out.frechAbs = num(tFrech.abs);
+  const uSimC = map.get("umb.sim_cuotas") ?? {};
+  if (num(uSimC.max) !== undefined) out.simCuotasMax = num(uSimC.max);
+  const uSimA = map.get("umb.sim_ahorro") ?? {};
+  if (num(uSimA.abs) !== undefined) out.simAhorroAbs = num(uSimA.abs);
+  const uExc = map.get("umb.score.excelente") ?? {};
+  if (num(uExc.min) !== undefined) out.umbScoreExcelente = num(uExc.min);
+  const uApr = map.get("umb.score.aprobado") ?? {};
+  if (num(uApr.min) !== undefined) out.umbScoreAprobado = num(uApr.min);
+  const uRev = map.get("umb.score.revisar") ?? {};
+  if (num(uRev.min) !== undefined) out.umbScoreRevisar = num(uRev.min);
+  const pI = map.get("pen.info") ?? {};
+  if (num(pI.value) !== undefined) out.penInfo = num(pI.value);
+  const pW = map.get("pen.warning") ?? {};
+  if (num(pW.value) !== undefined) out.penWarning = num(pW.value);
+  const pC = map.get("pen.critica") ?? {};
+  if (num(pC.value) !== undefined) out.penCritica = num(pC.value);
+  const pDC = map.get("pen.diff_cuota") ?? {};
+  if (num(pDC.max) !== undefined) out.penDiffCuotaMax = num(pDC.max);
+  const pDS = map.get("pen.diff_sim") ?? {};
+  if (num(pDS.max) !== undefined) out.penDiffSimMax = num(pDS.max);
+  const pF = map.get("pen.faltantes") ?? {};
+  if (num(pF.max) !== undefined) out.penFaltantesMax = num(pF.max);
+  return out;
+}
+
+
 
 const ModalidadEnum = z.enum(["hipotecario", "leasing", "uvr"]);
 
@@ -37,6 +89,8 @@ export const auditarCaso = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => AuditarInputSchema.parse(input))
   .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const overrides = await cargarToleranciasActivasInterno(supabase as never);
     const result = auditar({
       modalidad: data.modalidad as Modalidad,
       reconstruccion: {
@@ -50,9 +104,9 @@ export const auditarCaso = createServerFn({ method: "POST" })
       },
       extracto: data.extracto,
       simulacion: data.simulacion,
+      tolerancias: overrides,
     });
 
-    const { supabase, userId } = context;
 
     const { data: aud, error: errAud } = await supabase
       .from("qa_auditorias")
