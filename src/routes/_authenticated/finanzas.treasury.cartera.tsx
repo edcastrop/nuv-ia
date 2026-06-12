@@ -76,7 +76,7 @@ function CarteraIAPage() {
             return (
               <button
                 key={b.key}
-                onClick={() => setBucket(bucket === b.key ? "" : b.key)}
+                onClick={() => setBucket(bucket === b.key ? "__all__" : b.key)}
                 className="text-left rounded-lg p-3 transition"
                 style={{
                   background: bucket === b.key ? "rgba(165,181,224,0.10)" : "rgba(255,255,255,0.02)",
