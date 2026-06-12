@@ -74,26 +74,53 @@ function CasoDetail() {
     [exp],
   );
 
-  if (loading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando expediente…</div>;
-  if (err || !exp) return <div className="p-12 text-center text-sm text-[#B42318]">{err || "No encontrado"}</div>;
+  if (loading)
+    return (
+      <div
+        className="min-h-[calc(100vh-72px)] p-12 text-center text-sm text-[var(--nuvia-text-secondary)]"
+        style={{ background: "linear-gradient(180deg, var(--nuvia-bg-primary) 0%, var(--nuvia-bg-secondary) 54%, var(--nuvia-bg-primary) 100%)" }}
+      >
+        Cargando expediente…
+      </div>
+    );
+  if (err || !exp)
+    return (
+      <div
+        className="min-h-[calc(100vh-72px)] p-12 text-center text-sm text-[var(--nuvia-danger)]"
+        style={{ background: "linear-gradient(180deg, var(--nuvia-bg-primary) 0%, var(--nuvia-bg-secondary) 54%, var(--nuvia-bg-primary) 100%)" }}
+      >
+        {err || "No encontrado"}
+      </div>
+    );
 
   const estadoCaso = (exp as unknown as { estado_caso?: string }).estado_caso ?? "";
   const validacionIdentidad = readValidacion(exp as never);
   const puedeDocs = puedeGenerarDocumentos(validacionIdentidad);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4 px-3 py-4 sm:px-6 sm:py-6">
+    <div
+      className="min-h-[calc(100vh-72px)] px-3 py-4 text-[var(--nuvia-text-primary)] sm:px-5 sm:py-6"
+      style={{
+        background:
+          "linear-gradient(180deg, var(--nuvia-bg-primary) 0%, var(--nuvia-bg-secondary) 54%, var(--nuvia-bg-primary) 100%)",
+      }}
+    >
+      <div className="mx-auto max-w-[1680px] space-y-4">
       {/* Header */}
-      <Card>
+      <section className="glass-panel overflow-hidden p-4 md:p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
           <div className="min-w-0">
-            <div className="text-[11px] uppercase tracking-wider text-[#242424]/55">Expediente Guiado NUVEX</div>
-            <h1 className="break-words text-2xl font-semibold leading-tight text-[#242424]">{exp.cliente_nombre}</h1>
-            <div className="mt-1 break-words text-sm text-[#242424]/70">
+            <div className="text-[11px] font-semibold uppercase text-[var(--nuvia-accent-green)]">
+              NUVIA · Expediente Guiado
+            </div>
+            <h1 className="mt-1 break-words text-2xl font-semibold leading-tight text-[var(--nuvia-text-primary)]">
+              {exp.cliente_nombre}
+            </h1>
+            <div className="mt-1 break-words text-sm text-[var(--nuvia-text-secondary)]">
               {exp.cedula && <>CC {exp.cedula} · </>}
               {exp.banco && <>{exp.banco} · </>}
               {exp.numero_credito && <>Crédito {exp.numero_credito} · </>}
-              Modo <span className="uppercase font-semibold">{exp.modo}</span> · Simulado {exp.fecha_simulacion}
+              Modo <span className="font-semibold uppercase text-[var(--nuvia-text-primary)]">{exp.modo}</span> · Simulado {exp.fecha_simulacion}
             </div>
           </div>
           <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:items-end">
@@ -105,14 +132,14 @@ function CasoDetail() {
                 try { await updateEstado(exp.id, nuevo); reload(); }
                 catch (err) { alert((err as Error).message); }
               }}
-              className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 text-xs font-medium"
+              className="h-9 rounded-lg border border-[var(--nuvia-border)] bg-[var(--nuvia-bg-tertiary)] px-3 text-xs font-medium text-[var(--nuvia-text-primary)] outline-none focus:border-[var(--nuvia-accent-blue)]"
             >
               {ESTADOS.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
-            <Link to="/casos" className="text-[11px] text-[#445DA3] hover:underline">← Volver a casos</Link>
+            <Link to="/casos" className="text-[11px] text-[var(--nuvia-accent-green)] hover:underline">← Volver a casos</Link>
           </div>
         </div>
-      </Card>
+      </section>
 
       {/* Stepper 13 etapas — clic salta a la pestaña y bloque correspondiente */}
       <ExpedienteStepper13
@@ -136,7 +163,7 @@ function CasoDetail() {
 
       {/* Tabs */}
       <Tabs value={tab} onValueChange={(v) => setTab(v as TabId)} className="space-y-4">
-        <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 bg-[#F7F9FB] p-1">
+        <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 rounded-xl border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.04)] p-1">
           <TabsTrigger value="resumen">Resumen</TabsTrigger>
           <TabsTrigger value="tareas">Tareas</TabsTrigger>
           <TabsTrigger value="documentos">Documentos</TabsTrigger>
@@ -146,6 +173,7 @@ function CasoDetail() {
           <TabsTrigger value="auditoria">Auditoría</TabsTrigger>
           <TabsTrigger value="historial">Historial</TabsTrigger>
         </TabsList>
+
 
         {/* RESUMEN */}
         <TabsContent value="resumen" className="space-y-4">
