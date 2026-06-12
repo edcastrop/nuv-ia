@@ -82,18 +82,18 @@ function nuevaPersona(rol: Rol): PersonaForm {
 
 function MinDocsHint({ tipo }: { tipo: TipoPersona }) {
   if (tipo === "empleado_mensual")
-    return <p className="text-xs text-muted-foreground">Requeridos: <b>3 últimas nóminas mensuales</b> + carta laboral + última declaración de renta.</p>;
+    return <p className="text-xs text-white/60">Requeridos: <b className="text-white/90">3 últimas nóminas mensuales</b> + carta laboral + última declaración de renta.</p>;
   if (tipo === "empleado_quincenal")
-    return <p className="text-xs text-muted-foreground">Requeridos: <b>6 últimas nóminas quincenales</b> + carta laboral + última declaración de renta.</p>;
-  return <p className="text-xs text-muted-foreground">Requeridos: <b>3 últimos extractos bancarios</b> + última declaración de renta.</p>;
+    return <p className="text-xs text-white/60">Requeridos: <b className="text-white/90">6 últimas nóminas quincenales</b> + carta laboral + última declaración de renta.</p>;
+  return <p className="text-xs text-white/60">Requeridos: <b className="text-white/90">3 últimos extractos bancarios</b> + última declaración de renta.</p>;
 }
 
 function SemaforoBadge({ s }: { s: "verde" | "amarillo" | "rojo" | "sin_datos" }) {
   const map = {
-    verde: { bg: "bg-emerald-500", label: "🟢 Aprobado por regla", Icon: ShieldCheck },
-    amarillo: { bg: "bg-amber-500", label: "🟡 Marginal", Icon: AlertTriangle },
-    rojo: { bg: "bg-red-600", label: "🔴 Excede política", Icon: AlertOctagon },
-    sin_datos: { bg: "bg-slate-400", label: "Sin datos", Icon: FileText },
+    verde: { bg: "bg-emerald-500/90", label: "🟢 Aprobado por regla", Icon: ShieldCheck },
+    amarillo: { bg: "bg-amber-500/90", label: "🟡 Marginal", Icon: AlertTriangle },
+    rojo: { bg: "bg-red-600/90", label: "🔴 Excede política", Icon: AlertOctagon },
+    sin_datos: { bg: "bg-white/20", label: "Sin datos", Icon: FileText },
   } as const;
   const { bg, label, Icon } = map[s];
   return (
