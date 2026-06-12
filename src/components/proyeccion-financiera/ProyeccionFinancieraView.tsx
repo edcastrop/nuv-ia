@@ -1321,12 +1321,12 @@ export function ProyeccionFinancieraView() {
                         <AreaChart data={chartCapitalInteres} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                           <defs>
                             <linearGradient id="gradCap" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor={NUVEX.azul} stopOpacity={0.6} />
-                              <stop offset="100%" stopColor={NUVEX.azul} stopOpacity={0.05} />
+                              <stop offset="0%" stopColor={NUVIA.azul} stopOpacity={0.6} />
+                              <stop offset="100%" stopColor={NUVIA.azul} stopOpacity={0.05} />
                             </linearGradient>
                             <linearGradient id="gradInt" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor={NUVEX.rojo} stopOpacity={0.5} />
-                              <stop offset="100%" stopColor={NUVEX.rojo} stopOpacity={0.05} />
+                              <stop offset="0%" stopColor={NUVIA.rojo} stopOpacity={0.5} />
+                              <stop offset="100%" stopColor={NUVIA.rojo} stopOpacity={0.05} />
                             </linearGradient>
                           </defs>
                           <CartesianGrid strokeDasharray="2 4" stroke={gridColor} vertical={false} />
@@ -1339,8 +1339,8 @@ export function ProyeccionFinancieraView() {
                           />
                           <Tooltip formatter={(v: number) => formatCOP(v)} contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} wrapperStyle={{ outline: "none" }} />
                           <Legend wrapperStyle={{ fontSize: 11, color: "rgba(255,255,255,0.6)" }} />
-                          <Area type="monotone" dataKey="Capital" stackId="1" stroke={NUVEX.azul} strokeWidth={2} fill="url(#gradCap)" />
-                          <Area type="monotone" dataKey="Interés" stackId="1" stroke={NUVEX.rojo} strokeWidth={2} fill="url(#gradInt)" />
+                          <Area type="monotone" dataKey="Capital" stackId="1" stroke={NUVIA.azul} strokeWidth={2} fill="url(#gradCap)" />
+                          <Area type="monotone" dataKey="Interés" stackId="1" stroke={NUVIA.rojo} strokeWidth={2} fill="url(#gradInt)" />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
@@ -1355,8 +1355,8 @@ export function ProyeccionFinancieraView() {
                           <YAxis tick={axisTick} axisLine={false} tickLine={false} />
                           <Tooltip contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} wrapperStyle={{ outline: "none" }} />
                           <Bar dataKey="Meses" radius={[10, 10, 0, 0]} barSize={70}>
-                            <Cell fill={NUVEX.rojo} fillOpacity={0.85} />
-                            <Cell fill={NUVEX.verde} fillOpacity={0.95} />
+                            <Cell fill={NUVIA.rojo} fillOpacity={0.85} />
+                            <Cell fill={NUVIA.verde} fillOpacity={0.95} />
                           </Bar>
                         </BarChart>
                       </ResponsiveContainer>
