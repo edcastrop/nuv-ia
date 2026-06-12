@@ -384,11 +384,17 @@ export function PesosSimulator({
             void triggerSimuladorAutoQA({
               expedienteId: init.id,
               raw: { ...p.raw, archivoPath: p.archivoPath ?? null },
+              onStart: () => { setAutoQALoading(true); setAutoQA(null); },
+              onResult: (r) => { setAutoQA(r); setAutoQALoading(false); },
+              onError: () => setAutoQALoading(false),
             });
           }
         }}
 
       />
+      {init?.id && (autoQALoading || autoQA) && (
+        <AutoQAPanel loading={autoQALoading} result={autoQA} />
+      )}
       <Card>
         <div id="datos-cliente-card" />
         <SectionTitle sub="Información general del cliente y del crédito">
