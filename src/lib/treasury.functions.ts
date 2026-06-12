@@ -928,9 +928,10 @@ export const flujoCajaForecast = createServerFn({ method: "GET" })
     };
     const items: Item[] = [];
 
+    const UMBRAL_SALDO = 100;
     for (const r of (cartera ?? []) as unknown as CarteraRow[]) {
       const saldo = Math.max(0, Number(r.honorarios_totales) - Number(r.pagado));
-      if (saldo <= 0) continue;
+      if (saldo <= UMBRAL_SALDO) continue;
       const fecha = r.fecha_vencimiento;
       const fechaD = new Date(fecha + "T00:00:00");
       const dias = Math.floor((fechaD.getTime() - today.getTime()) / 86400000);
