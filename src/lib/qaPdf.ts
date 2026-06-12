@@ -214,11 +214,10 @@ export function exportarDictamenPDF(d: DictamenPdfData) {
   doc.text(`Plan amortizado (${filas.length} filas)`, 48, y); y += 4;
   autoTable(doc, {
     startY: y + 4,
-    head: [["#", "Cuota", "Interés", "Capital", "Saldo"]],
-    body: filas.map((f) => [
-      String(f.k), `$${fmt(f.cuota, 0)}`, `$${fmt(f.interes, 0)}`,
-      `$${fmt(f.capital, 0)}`, `$${fmt(f.saldo, 0)}`,
-    ]),
+    head: [isUvr ? ["#", "Cuota", "Interés", "Capital", "Corrección", "Saldo COP", "Saldo UVR"] : ["#", "Cuota", "Interés", "Capital", "Saldo"]],
+    body: filas.map((f) => isUvr
+      ? [String(f.k), `$${fmt(f.cuota, 0)}`, `$${fmt(f.interes, 0)}`, `$${fmt(f.capital, 0)}`, `$${fmt(f.correccionUvr, 0)}`, `$${fmt(f.saldo, 0)}`, fmt(f.saldoUvr, 4)]
+      : [String(f.k), `$${fmt(f.cuota, 0)}`, `$${fmt(f.interes, 0)}`, `$${fmt(f.capital, 0)}`, `$${fmt(f.saldo, 0)}`]),
     styles: { fontSize: 8, halign: "right" },
     headStyles: { fillColor: [30, 41, 59], textColor: 255, halign: "right" },
     margin: { left: 48, right: 48 },
