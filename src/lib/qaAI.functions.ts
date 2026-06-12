@@ -590,13 +590,15 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
     const cuotasPag = parseNum(d.cuotasPagadas) ?? 0;
     const seguros = parseNum(d.seguros) ?? 0;
     const frech = parseNum(d.tasaCobertura);
+    const frechValorMensual = parseNum(d.valorCobertura) ?? parseNum(d.valorSubsidioGobierno);
     const desemb = parseNum(d.valorDesembolsado);
     const cuotaExt = parseNum(d.cuotaActual);
 
     // FRECH/Fresh cubre máximo 84 cuotas (7 años) en total.
     // Las cuotas restantes con cobertura = max(0, 84 − cuotasPagadas), acotadas a las pendientes.
     const FRECH_MAX = 84;
-    const frechCuotasRestantes = frech && frech > 0
+    const tieneFrech = (frech && frech > 0) || (frechValorMensual && frechValorMensual > 0);
+    const frechCuotasRestantes = tieneFrech
       ? Math.max(0, Math.min(cuotasPend, FRECH_MAX - cuotasPag))
       : undefined;
 
@@ -610,6 +612,7 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
         cuotasPendientes: cuotasPend,
         seguros,
         coberturaFrechPp: frech,
+        coberturaFrechValorMensual: frechValorMensual,
         coberturaFrechCuotasRestantes: frechCuotasRestantes,
         valorDesembolsado: desemb,
       },
@@ -619,6 +622,7 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
         cuota: cuotaExt,
         seguros: seguros || undefined,
         coberturaFrechPp: frech,
+        coberturaFrechValorMensual: frechValorMensual,
       },
       tolerancias: overrides,
     });
@@ -627,8 +631,8 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
       modalidad,
       extractoLecturaId: ext.id,
       expedienteId: ext.expediente_id,
-      reconstruccion: { saldoCapital: saldo, tasaEa: tasa, cuotasPendientes: cuotasPend, cuotasPagadas: cuotasPag, seguros, coberturaFrechPp: frech, coberturaFrechCuotasRestantes: frechCuotasRestantes, valorDesembolsado: desemb },
-      extracto: { saldoCapital: saldo, tasaEa: tasa, cuota: cuotaExt, seguros, coberturaFrechPp: frech },
+      reconstruccion: { saldoCapital: saldo, tasaEa: tasa, cuotasPendientes: cuotasPend, cuotasPagadas: cuotasPag, seguros, coberturaFrechPp: frech, coberturaFrechValorMensual: frechValorMensual, coberturaFrechCuotasRestantes: frechCuotasRestantes, valorDesembolsado: desemb },
+      extracto: { saldoCapital: saldo, tasaEa: tasa, cuota: cuotaExt, seguros, coberturaFrechPp: frech, coberturaFrechValorMensual: frechValorMensual },
     };
 
     const { data: aud, error: errAud } = await supabase
