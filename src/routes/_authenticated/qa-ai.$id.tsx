@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { PageLayout, ExecutiveHero, KpiGrid, KpiCard, NCard, SectionHeader } from "@/components/nuvia";
 import { useServerFn } from "@tanstack/react-start";
 import { obtenerAuditoriaQA } from "@/lib/qaAI.functions";
-import { auditar, type AuditarInput } from "@/lib/qaMath";
+import { auditar, amortizacion, eaToMv, type AuditarInput } from "@/lib/qaMath";
 import { exportarDictamenPDF } from "@/lib/qaPdf";
 import { CopilotoQADrawer } from "@/components/qa-ai/CopilotoQADrawer";
 import { Brain, Gauge, ArrowLeft, AlertTriangle, CheckCircle2, Coins, Calculator, Sigma, ShieldAlert, Minus, FileDown, Sparkles } from "lucide-react";
@@ -41,6 +41,7 @@ function ResultadoQaAi() {
   const fetchAud = useServerFn(obtenerAuditoriaQA);
   const [data, setData] = useState<{ auditoria: Record<string, unknown> | null; inconsistencias: Inc[] } | null>(null);
   const [copilotoOpen, setCopilotoOpen] = useState(false);
+  const [verTodas, setVerTodas] = useState(false);
 
   useEffect(() => { (async () => setData(await fetchAud({ data: { id } })))(); }, [id, fetchAud]);
 
@@ -58,6 +59,23 @@ function ResultadoQaAi() {
       };
       return auditar(normalizado);
     } catch { return null; }
+  }, [data]);
+
+  // Reconstrucción COMPLETA del plan amortizado (todas las cuotas pendientes)
+  const filasCompletas = useMemo(() => {
+    if (!data?.auditoria) return [] as Array<{ k: number; cuota: number; interes: number; capital: number; saldo: number }>;
+    const inputs = (data.auditoria as Record<string, unknown>).inputs as
+      | { reconstruccion?: { saldoCapital?: number; tasaEa?: number; cuotasPendientes?: number; coberturaFrechPp?: number } }
+      | undefined;
+    const r = inputs?.reconstruccion;
+    if (!r || !r.saldoCapital || !r.tasaEa || !r.cuotasPendientes) return [];
+    try {
+      const ea = (r.tasaEa || 0) / 100;
+      const cob = r.coberturaFrechPp ? r.coberturaFrechPp / 100 : 0;
+      const i = cob > 0 ? eaToMv(Math.max(0, ea - cob)) : eaToMv(ea);
+      const n = Math.max(0, Math.round(r.cuotasPendientes));
+      return amortizacion(r.saldoCapital, i, n);
+    } catch { return []; }
   }, [data]);
 
   if (!data?.auditoria) {
@@ -78,15 +96,19 @@ function ResultadoQaAi() {
 
   const primeras = (o.primerasCuotas as Array<{ k: number; cuota: number; interes: number; capital: number; saldo: number }>) ?? [];
   const ultimas = (o.ultimasCuotas as Array<{ k: number; cuota: number; interes: number; capital: number; saldo: number }>) ?? [];
-  // Fix créditos cortos: si primeras y últimas se solapan (n ≤ 24), mostrar solo primeras (cubre toda la tabla)
   const ksPrimeras = new Set(primeras.map((f) => f.k));
-  const filasAmort = [
+  const filasResumen = [
     ...primeras,
     ...ultimas.filter((f) => !ksPrimeras.has(f.k)),
   ];
 
+  const puedeVerTodas = filasCompletas.length > filasResumen.length;
+  const filasAmort = verTodas && puedeVerTodas ? filasCompletas : filasResumen;
+  const nTotal = filasCompletas.length || filasResumen.length;
+
   const penalizaciones = recomputo?.score.penalizaciones ?? [];
   const alertasCriticas = data.inconsistencias.filter((i) => i.severidad === "critica");
+
 
   return (
     <PageLayout>
@@ -300,8 +322,28 @@ function ResultadoQaAi() {
       </NCard>
 
       <NCard padding="none">
-        <div style={{ padding: "16px 20px 12px" }}>
-          <SectionHeader title={`Reconstrucción matemática (${filasAmort.length} filas)`} description="Plan amortizado: primeras 12 + últimas 12. Para créditos ≤ 24 cuotas se muestra la tabla completa sin duplicados." />
+        <div style={{ padding: "16px 20px 12px" }} className="flex items-start justify-between gap-3 flex-wrap">
+          <SectionHeader
+            title={`Reconstrucción matemática (${filasAmort.length} de ${nTotal} filas)`}
+            description={
+              verTodas && puedeVerTodas
+                ? `Plan amortizado completo — ${nTotal} cuotas pendientes.`
+                : "Plan amortizado: primeras 12 + últimas 12. Para créditos ≤ 24 cuotas se muestra la tabla completa sin duplicados."
+            }
+          />
+          {puedeVerTodas && (
+            <button
+              onClick={() => setVerTodas((v) => !v)}
+              className="shrink-0 rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition hover:opacity-90"
+              style={{
+                borderColor: "var(--nuvia-border)",
+                background: verTodas ? "var(--nuvia-accent)" : "rgba(255,255,255,0.04)",
+                color: verTodas ? "#0B1220" : "var(--nuvia-text-primary)",
+              }}
+            >
+              {verTodas ? `Ver resumen (${filasResumen.length})` : `Ver todas (${nTotal})`}
+            </button>
+          )}
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-[12.5px]">
