@@ -189,6 +189,11 @@ export interface ReconstruccionInput {
    *  se asume el tope duro FRECH_MAX_CUOTAS (84) acotado a las pendientes. */
   coberturaFrechCuotasRestantes?: number;
   valorDesembolsado?: number;
+  saldoUVR?: number;
+  valorUVR?: number;
+  variacionUvrEa?: number;
+  cuotaBaseSinSubsidio?: number;
+  cuotaFinancieraSinSeguros?: number;
 }
 
 export interface Reconstruccion {
@@ -206,6 +211,8 @@ export interface Reconstruccion {
   totalIntereses: number;
   /** Cuotas efectivas con subsidio aplicadas en la reconstrucción. */
   cuotasFrechAplicadas: number;
+  totalCorreccionUvr?: number;
+  saldoFinalPesosPrimerMes?: number;
 }
 
 export function reconstruir(input: ReconstruccionInput): Reconstruccion {
