@@ -1,23 +1,40 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Card } from "@/components/nuvex/ui";
+import {
+  PageLayout,
+  ExecutiveHero,
+  KpiGrid,
+  KpiCard,
+  NCard,
+  SectionHeader,
+  EmptyState,
+} from "@/components/nuvia";
 import { supabase } from "@/integrations/supabase/client";
 import { listValidaciones, type ValidacionQA } from "@/lib/validacionQA";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Link } from "@tanstack/react-router";
+import {
+  ShieldCheck,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Timer,
+  Inbox,
+  ArrowRight,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/qa")({
   component: QADashboard,
-  head: () => ({ meta: [{ title: "Validación Financiera QA · NUVEX" }] }),
+  head: () => ({ meta: [{ title: "Validación Financiera QA · NUVIA" }] }),
 });
 
 function QADashboard() {
   const { canValidarProyeccion, loading: rolesLoading } = useUserRole();
   const [items, setItems] = useState<ValidacionQA[]>([]);
   const [nombres, setNombres] = useState<Map<string, string>>(new Map());
-  const [expedientes, setExpedientes] = useState<Map<string, { existe: boolean; cliente?: string | null; estadoCaso?: string | null }>>(new Map());
+  const [expedientes, setExpedientes] = useState<
+    Map<string, { existe: boolean; cliente?: string | null; estadoCaso?: string | null }>
+  >(new Map());
   const [loading, setLoading] = useState(true);
-
 
   useEffect(() => {
     (async () => {
@@ -43,7 +60,9 @@ function QADashboard() {
       } else {
         setExpedientes(new Map());
       }
-      const ids = Array.from(new Set(all.flatMap((v) => [v.solicitada_por, v.validada_por]).filter(Boolean) as string[]));
+      const ids = Array.from(
+        new Set(all.flatMap((v) => [v.solicitada_por, v.validada_por]).filter(Boolean) as string[]),
+      );
       if (ids.length) {
         const { data } = await supabase.from("profiles").select("id,nombre,email").in("id", ids);
         const m = new Map<string, string>();
@@ -89,113 +108,228 @@ function QADashboard() {
       .sort((a, b) => b.total - a.total);
   }, [items, nombres]);
 
-  if (rolesLoading || loading) return <div className="p-8 text-center text-sm text-[#242424]/60">Cargando…</div>;
-  if (!canValidarProyeccion)
-    return <div className="p-8 text-center text-sm text-[#B42318]">Acceso restringido a Director Financiero QA.</div>;
+  if (rolesLoading || loading) {
+    return (
+      <PageLayout>
+        <NCard>
+          <p className="text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>
+            Cargando validaciones…
+          </p>
+        </NCard>
+      </PageLayout>
+    );
+  }
+  if (!canValidarProyeccion) {
+    return (
+      <PageLayout>
+        <NCard>
+          <p className="text-sm" style={{ color: "var(--nuvia-danger)" }}>
+            Acceso restringido a Director Financiero QA.
+          </p>
+        </NCard>
+      </PageLayout>
+    );
+  }
 
-  const colorCalidad = (q: number) => (q >= 95 ? "#1F7A45" : q >= 85 ? "#8A5A00" : "#991B1B");
-  const bgCalidad = (q: number) => (q >= 95 ? "#EAF7EE" : q >= 85 ? "#FFF7E6" : "#FEE2E2");
+  const calidadTone = (q: number) => (q >= 95 ? "var(--nuvia-success)" : q >= 85 ? "var(--nuvia-warning)" : "var(--nuvia-danger)");
+  const calidadBg = (q: number) =>
+    q >= 95
+      ? "rgba(132,185,143,0.14)"
+      : q >= 85
+        ? "rgba(246,196,83,0.14)"
+        : "rgba(255,107,107,0.14)";
 
   const pendientes = items.filter((v) => !v.resultado && expedientes.get(v.expediente_id)?.existe !== false);
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-6 space-y-4">
-      <Card>
-        <h1 className="text-xl font-semibold text-[#0A1226]">Validación financiera QA</h1>
-        <p className="text-[12px] text-[#242424]/60 mt-0.5">
-          Dashboard de control de calidad sobre las proyecciones presentadas por los licenciados.
-        </p>
-      </Card>
+    <PageLayout>
+      <ExecutiveHero
+        badge={{ icon: <ShieldCheck size={12} />, label: "Control de calidad", tone: "blue" }}
+        title="Validación financiera QA"
+        description="Dashboard de control de calidad sobre las proyecciones presentadas por los licenciados."
+      />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Stat label="Pendientes por validar" value={stats.pendientes} color="#8A5A00" />
-        <Stat label="Aprobadas hoy" value={stats.aprobadasHoy} color="#1F7A45" />
-        <Stat label="Devueltas hoy" value={stats.devueltasHoy} color="#991B1B" />
-        <Stat label="Tiempo prom. (min)" value={stats.promedio} color="#445DA3" />
-      </div>
+      <KpiGrid cols={4}>
+        <KpiCard
+          label="Pendientes por validar"
+          value={stats.pendientes}
+          icon={<Clock size={14} />}
+          tone="warning"
+          hint="En cola del Director QA"
+        />
+        <KpiCard
+          label="Aprobadas hoy"
+          value={stats.aprobadasHoy}
+          icon={<CheckCircle2 size={14} />}
+          tone="green"
+          hint="Validaciones cerradas hoy"
+        />
+        <KpiCard
+          label="Devueltas hoy"
+          value={stats.devueltasHoy}
+          icon={<XCircle size={14} />}
+          tone="danger"
+          hint="Reenviadas al analista"
+        />
+        <KpiCard
+          label="Tiempo prom. (min)"
+          value={stats.promedio}
+          icon={<Timer size={14} />}
+          tone="blue"
+          hint="Desde solicitud a cierre"
+        />
+      </KpiGrid>
 
-      <Card>
-        <div className="border-b border-[#E3E7EE] pb-2 mb-3 text-sm font-semibold text-[#0A1226]">
-          Proyecciones pendientes ({pendientes.length})
+      <NCard padding="none">
+        <div style={{ padding: "16px 20px 12px" }}>
+          <SectionHeader
+            title={`Proyecciones pendientes (${pendientes.length})`}
+            description="Casos en espera de validación financiera."
+          />
         </div>
         {pendientes.length === 0 ? (
-          <div className="p-4 text-center text-sm text-[#242424]/60">Sin pendientes 🎉</div>
+          <EmptyState
+            icon={<Inbox size={28} />}
+            title="Sin pendientes"
+            description="No hay proyecciones esperando validación en este momento."
+            hint="NUVIA IA: cuando un Analista F. Comercial solicite validación, aparecerá aquí."
+          />
         ) : (
-          <table className="w-full text-[12.5px]">
-            <thead className="bg-[#F7F9FB] text-[11px] uppercase tracking-wide text-[#242424]/60">
-              <tr>
-                <th className="px-3 py-2 text-left">Solicitada</th>
-                <th className="px-3 py-2 text-left">Analista F. Comercial</th>
-                <th className="px-3 py-2 text-left">Expediente</th>
-                <th className="px-3 py-2"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#E3E7EE]">
-              {pendientes.map((v) => (
-                <tr key={v.id} className="hover:bg-[#F7F9FB]">
-                  <td className="px-3 py-2">{new Date(v.solicitada_at).toLocaleString()}</td>
-                  <td className="px-3 py-2">{nombres.get(v.solicitada_por) ?? "—"}</td>
-                  <td className="px-3 py-2">
-                    <div className="font-medium text-[#242424]">
-                      {expedientes.get(v.expediente_id)?.cliente ?? "Expediente"}
-                    </div>
-                    <div className="font-mono text-[11px] text-[#242424]/55">{v.expediente_id.slice(0, 8)}…</div>
-                  </td>
-                  <td className="px-3 py-2 text-right">
-                    <Link to="/casos/$id" params={{ id: v.expediente_id }} className="text-[12px] text-[#445DA3] hover:underline">
-                      Abrir →
-                    </Link>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-[12.5px]">
+              <thead>
+                <tr style={{ background: "rgba(255,255,255,0.02)" }}>
+                  <Th>Solicitada</Th>
+                  <Th>Analista F. Comercial</Th>
+                  <Th>Expediente</Th>
+                  <Th align="right"> </Th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {pendientes.map((v) => (
+                  <tr key={v.id} style={{ borderTop: "1px solid var(--nuvia-border)" }}>
+                    <td
+                      className="px-5 py-2.5 whitespace-nowrap"
+                      style={{ color: "var(--nuvia-text-secondary)" }}
+                    >
+                      {new Date(v.solicitada_at).toLocaleString()}
+                    </td>
+                    <td className="px-5 py-2.5" style={{ color: "var(--nuvia-text-primary)" }}>
+                      {nombres.get(v.solicitada_por) ?? "—"}
+                    </td>
+                    <td className="px-5 py-2.5">
+                      <div className="font-medium" style={{ color: "var(--nuvia-text-primary)" }}>
+                        {expedientes.get(v.expediente_id)?.cliente ?? "Expediente"}
+                      </div>
+                      <div
+                        className="font-mono text-[11px]"
+                        style={{ color: "var(--nuvia-text-secondary)" }}
+                      >
+                        {v.expediente_id.slice(0, 8)}…
+                      </div>
+                    </td>
+                    <td className="px-5 py-2.5 text-right">
+                      <Link
+                        to="/casos/$id"
+                        params={{ id: v.expediente_id }}
+                        className="inline-flex items-center gap-1 text-[12px] font-semibold hover:underline"
+                        style={{ color: "var(--nuvia-accent-blue)" }}
+                      >
+                        Abrir <ArrowRight size={12} />
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
-      </Card>
+      </NCard>
 
-      <Card>
-        <div className="border-b border-[#E3E7EE] pb-2 mb-3 text-sm font-semibold text-[#0A1226]">
-          Ranking de licenciados — Calidad
+      <NCard padding="none">
+        <div style={{ padding: "16px 20px 12px" }}>
+          <SectionHeader
+            title="Ranking de licenciados — Calidad"
+            description="Aprobadas en primera revisión sobre el total de simulaciones."
+          />
         </div>
-        <table className="w-full text-[12.5px]">
-          <thead className="bg-[#F7F9FB] text-[11px] uppercase tracking-wide text-[#242424]/60">
-            <tr>
-              <th className="px-3 py-2 text-left">Analista F. Comercial</th>
-              <th className="px-3 py-2 text-right">Simulaciones</th>
-              <th className="px-3 py-2 text-right">Aprobadas</th>
-              <th className="px-3 py-2 text-right">Devueltas</th>
-              <th className="px-3 py-2 text-right">Calidad %</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#E3E7EE]">
-            {ranking.map((r) => (
-              <tr key={r.uid}>
-                <td className="px-3 py-2">{r.nombre}</td>
-                <td className="px-3 py-2 text-right">{r.total}</td>
-                <td className="px-3 py-2 text-right">{r.aprobadas}</td>
-                <td className="px-3 py-2 text-right">{r.devueltas}</td>
-                <td className="px-3 py-2 text-right">
-                  <span
-                    className="rounded-full px-2 py-0.5 text-[11px] font-bold"
-                    style={{ background: bgCalidad(r.calidad), color: colorCalidad(r.calidad) }}
-                  >
-                    {r.calidad}%
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Card>
-    </div>
+        {ranking.length === 0 ? (
+          <EmptyState
+            icon={<Inbox size={28} />}
+            title="Sin datos aún"
+            description="Aún no hay simulaciones registradas para calcular el ranking."
+          />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-[12.5px]">
+              <thead>
+                <tr style={{ background: "rgba(255,255,255,0.02)" }}>
+                  <Th>Analista F. Comercial</Th>
+                  <Th align="right">Simulaciones</Th>
+                  <Th align="right">Aprobadas</Th>
+                  <Th align="right">Devueltas</Th>
+                  <Th align="right">Calidad %</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {ranking.map((r) => (
+                  <tr key={r.uid} style={{ borderTop: "1px solid var(--nuvia-border)" }}>
+                    <td className="px-5 py-2.5" style={{ color: "var(--nuvia-text-primary)" }}>
+                      {r.nombre}
+                    </td>
+                    <td
+                      className="px-5 py-2.5 text-right tabular-nums"
+                      style={{ color: "var(--nuvia-text-primary)" }}
+                    >
+                      {r.total}
+                    </td>
+                    <td
+                      className="px-5 py-2.5 text-right tabular-nums"
+                      style={{ color: "var(--nuvia-success)" }}
+                    >
+                      {r.aprobadas}
+                    </td>
+                    <td
+                      className="px-5 py-2.5 text-right tabular-nums"
+                      style={{ color: "var(--nuvia-danger)" }}
+                    >
+                      {r.devueltas}
+                    </td>
+                    <td className="px-5 py-2.5 text-right">
+                      <span
+                        className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums"
+                        style={{
+                          background: calidadBg(r.calidad),
+                          color: calidadTone(r.calidad),
+                          border: `1px solid ${calidadTone(r.calidad)}33`,
+                        }}
+                      >
+                        {r.calidad}%
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </NCard>
+    </PageLayout>
   );
 }
 
-function Stat({ label, value, color }: { label: string; value: number; color: string }) {
+function Th({ children, align = "left" }: { children: React.ReactNode; align?: "left" | "right" }) {
   return (
-    <div className="rounded-xl border border-[#E3E7EE] bg-white p-4">
-      <div className="text-[11px] uppercase tracking-wide text-[#242424]/60">{label}</div>
-      <div className="mt-1 text-2xl font-bold" style={{ color }}>{value}</div>
-    </div>
+    <th
+      className="px-5 py-2.5 font-semibold uppercase"
+      style={{
+        textAlign: align,
+        fontSize: "10.5px",
+        letterSpacing: "0.12em",
+        color: "var(--nuvia-text-secondary)",
+      }}
+    >
+      {children}
+    </th>
   );
 }
