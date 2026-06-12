@@ -88,6 +88,11 @@ export interface Expediente {
   fecha_simulacion: string;
   aprobado_data: AprobadoData | null;
   acertividad_global: number | null;
+  qa_score?: number | null;
+  qa_dictamen?: string | null;
+  qa_categoria?: "excelente" | "aprobado" | "revisar" | "rechazado" | null;
+  qa_auditoria_id?: string | null;
+  qa_ejecutada_at?: string | null;
   created_at: string;
   updated_at: string;
 }
