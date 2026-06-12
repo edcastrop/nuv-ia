@@ -101,6 +101,7 @@ export const auditarCaso = createServerFn({ method: "POST" })
         modalidad: data.modalidad as Modalidad,
         saldoCapital: data.reconstruccion.saldoCapital,
         tasaEa: data.reconstruccion.tasaEa,
+        tasaEaPactada: data.reconstruccion.tasaEaPactada,
         cuotasPendientes: data.reconstruccion.cuotasPendientes,
         seguros: data.reconstruccion.seguros,
         coberturaFrechPp: data.reconstruccion.coberturaFrechPp,
