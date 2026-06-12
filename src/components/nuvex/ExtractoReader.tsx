@@ -366,7 +366,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       if (f.type === "application/pdf" || lowerName.endsWith(".pdf")) {
         try {
           rawText = await extractTextFromPdf(f, pwd);
-          if (rawText.trim().length > 500) {
+          if (rawText.trim().length > 250) {
             const deterministicResp = await callExtract({ data: { images: [], rawText } });
             if (deterministicResp.data) {
               await uploadOriginal(f);
@@ -397,6 +397,9 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           return;
         }
         images = result.images;
+        if (images.length === 0 && rawText.trim().length === 0) {
+          throw new Error("No pude leer texto ni generar imágenes del PDF. Verifica que no esté dañado o sube una captura clara del extracto.");
+        }
       } else if (f.type.startsWith("image/")) {
         const url = await fileToDataUrl(f);
         images = [{ mime: f.type, dataUrl: url }];
@@ -414,7 +417,10 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       // Llamar IA
       const resp = await callExtract({ data: { images, rawText } });
       if (resp.error || !resp.data) {
-        setErrorMsg(resp.error || "No se pudieron extraer datos.");
+        setErrorMsg(
+          resp.error ||
+            `No se pudieron extraer datos. Archivo: ${f.name}. Texto leído: ${rawText.trim().length} caracteres. Imágenes generadas: ${images.length}.`,
+        );
         setStage("error");
         return;
       }
