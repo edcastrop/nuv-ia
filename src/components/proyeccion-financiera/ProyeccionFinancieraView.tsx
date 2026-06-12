@@ -1117,7 +1117,7 @@ export function ProyeccionFinancieraView() {
                   {input.cuotaActual > 0 && segurosMes > 0 && (
                     <p className="mt-3 text-[11px] text-white/40">
                       Seguros representan{" "}
-                      <span className="font-semibold text-[#84B98F]">
+                      <span className="font-semibold text-cyan-200">
                         {((segurosMes / input.cuotaActual) * 100).toFixed(1)}%
                       </span>{" "}
                       de la cuota
@@ -1159,17 +1159,17 @@ export function ProyeccionFinancieraView() {
                           }`}
                           style={{
                             background: isActive
-                              ? "linear-gradient(135deg, rgba(68,93,163,0.30), rgba(132,185,143,0.18))"
+                              ? "linear-gradient(135deg, rgba(34,211,238,0.22), rgba(74,222,128,0.14))"
                               : "rgba(255,255,255,0.025)",
                             border: `1px solid ${
-                              isActive ? "rgba(132,185,143,0.35)" : "rgba(255,255,255,0.05)"
+                              isActive ? "rgba(103,232,249,0.35)" : "rgba(255,255,255,0.06)"
                             }`,
                           }}
                         >
                           <span
                             className="h-1.5 w-1.5 rounded-full"
                             style={{
-                              background: isActual ? "#C0392B" : "#84B98F",
+                              background: isActual ? "#FB7185" : "#4ADE80",
                             }}
                           />
                           {e.nombre}
@@ -1178,7 +1178,7 @@ export function ProyeccionFinancieraView() {
                     })}
                     <button
                       onClick={() => addEscenario("personalizado")}
-                      className="inline-flex items-center gap-1 rounded-xl border border-dashed border-white/15 px-3.5 py-2 text-[12.5px] font-medium text-white/55 transition hover:border-[#84B98F]/40 hover:text-[#A8D1B0]"
+                      className="inline-flex items-center gap-1 rounded-xl border border-dashed border-white/15 px-3.5 py-2 text-[12.5px] font-medium text-white/55 transition hover:border-cyan-300/45 hover:text-cyan-100"
                     >
                       <Plus className="h-3.5 w-3.5" /> Nuevo escenario
                     </button>
@@ -1223,17 +1223,17 @@ export function ProyeccionFinancieraView() {
                       </div>
                       <div className="md:col-span-4">
                         <div className="text-[10px] font-medium uppercase tracking-[0.16em] text-white/40">
-                          Motor NUVEX · aporte rápido
+                          Motor NUVIA · aporte rápido
                         </div>
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           {presetExtras.map((v) => (
                             <button
                               key={v}
                               onClick={() => updateEscenario(selected.id, { aporteMensualExtra: v })}
-                              className="rounded-full px-3 py-1.5 text-[11.5px] font-semibold text-[#A8D1B0] transition hover:scale-[1.03]"
+                              className="rounded-full px-3 py-1.5 text-[11.5px] font-semibold text-cyan-100 transition hover:scale-[1.03]"
                               style={{
-                                background: "rgba(132,185,143,0.10)",
-                                border: "1px solid rgba(132,185,143,0.25)",
+                                background: "rgba(34,211,238,0.12)",
+                                border: "1px solid rgba(103,232,249,0.28)",
                               }}
                             >
                               +{formatCOP(v)}
