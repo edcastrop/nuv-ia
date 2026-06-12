@@ -309,12 +309,12 @@ export function PesosSimulator({
     : 0;
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-screen isolate overflow-hidden">
       {/* Fondo animado NUVIA (estilo login) */}
-      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+      <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <AnimatedBackground />
       </div>
-      <div className="mx-auto max-w-7xl space-y-4 px-6 py-6">
+      <div className="relative z-10 mx-auto max-w-7xl space-y-4 px-6 py-6">
       {onReset && (
         <div className="flex justify-end">
           <button onClick={onReset} className="text-xs font-medium text-[#445DA3] hover:underline">
