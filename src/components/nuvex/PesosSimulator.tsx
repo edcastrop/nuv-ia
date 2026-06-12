@@ -309,12 +309,9 @@ export function PesosSimulator({
 
   return (
     <div className="relative min-h-screen">
-      {/* Ambient background for glassmorphism */}
+      {/* Fondo animado NUVIA (estilo login) */}
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(135deg,#F4F7FB_0%,#EEF3F8_40%,#EAF1F0_100%)]" />
-        <div className="absolute -top-32 -left-24 h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle,rgba(68,93,163,0.18),transparent_70%)] blur-3xl" />
-        <div className="absolute top-1/3 -right-32 h-[480px] w-[480px] rounded-full bg-[radial-gradient(circle,rgba(132,185,143,0.18),transparent_70%)] blur-3xl" />
-        <div className="absolute bottom-0 left-1/3 h-[380px] w-[380px] rounded-full bg-[radial-gradient(circle,rgba(201,168,76,0.10),transparent_70%)] blur-3xl" />
+        <AnimatedBackground />
       </div>
       <div className="mx-auto max-w-7xl space-y-4 px-6 py-6">
       {onReset && (
