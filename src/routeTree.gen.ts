@@ -63,6 +63,8 @@ import { Route as AuthenticatedSuperAdminAuditoriaRouteImport } from './routes/_
 import { Route as AuthenticatedSuperAdminAccesosRouteImport } from './routes/_authenticated/super-admin.accesos'
 import { Route as AuthenticatedSuperAdminAcademiaRouteImport } from './routes/_authenticated/super-admin.academia'
 import { Route as AuthenticatedQaAiNuevoRouteImport } from './routes/_authenticated/qa-ai.nuevo'
+import { Route as AuthenticatedQaAiConfigRouteImport } from './routes/_authenticated/qa-ai.config'
+import { Route as AuthenticatedQaAiAlertasRouteImport } from './routes/_authenticated/qa-ai.alertas'
 import { Route as AuthenticatedQaAiIdRouteImport } from './routes/_authenticated/qa-ai.$id'
 import { Route as AuthenticatedHerramientasProyeccionRouteImport } from './routes/_authenticated/herramientas.proyeccion'
 import { Route as AuthenticatedHerramientasCapacidadPagoRouteImport } from './routes/_authenticated/herramientas.capacidad-pago'
@@ -401,6 +403,17 @@ const AuthenticatedQaAiNuevoRoute = AuthenticatedQaAiNuevoRouteImport.update({
   path: '/qa-ai/nuevo',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedQaAiConfigRoute = AuthenticatedQaAiConfigRouteImport.update({
+  id: '/qa-ai/config',
+  path: '/qa-ai/config',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedQaAiAlertasRoute =
+  AuthenticatedQaAiAlertasRouteImport.update({
+    id: '/qa-ai/alertas',
+    path: '/qa-ai/alertas',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedQaAiIdRoute = AuthenticatedQaAiIdRouteImport.update({
   id: '/qa-ai/$id',
   path: '/qa-ai/$id',
@@ -708,6 +721,8 @@ export interface FileRoutesByFullPath {
   '/herramientas/capacidad-pago': typeof AuthenticatedHerramientasCapacidadPagoRoute
   '/herramientas/proyeccion': typeof AuthenticatedHerramientasProyeccionRoute
   '/qa-ai/$id': typeof AuthenticatedQaAiIdRoute
+  '/qa-ai/alertas': typeof AuthenticatedQaAiAlertasRoute
+  '/qa-ai/config': typeof AuthenticatedQaAiConfigRoute
   '/qa-ai/nuevo': typeof AuthenticatedQaAiNuevoRoute
   '/super-admin/academia': typeof AuthenticatedSuperAdminAcademiaRoute
   '/super-admin/accesos': typeof AuthenticatedSuperAdminAccesosRoute
@@ -801,6 +816,8 @@ export interface FileRoutesByTo {
   '/herramientas/capacidad-pago': typeof AuthenticatedHerramientasCapacidadPagoRoute
   '/herramientas/proyeccion': typeof AuthenticatedHerramientasProyeccionRoute
   '/qa-ai/$id': typeof AuthenticatedQaAiIdRoute
+  '/qa-ai/alertas': typeof AuthenticatedQaAiAlertasRoute
+  '/qa-ai/config': typeof AuthenticatedQaAiConfigRoute
   '/qa-ai/nuevo': typeof AuthenticatedQaAiNuevoRoute
   '/super-admin/academia': typeof AuthenticatedSuperAdminAcademiaRoute
   '/super-admin/accesos': typeof AuthenticatedSuperAdminAccesosRoute
@@ -900,6 +917,8 @@ export interface FileRoutesById {
   '/_authenticated/herramientas/capacidad-pago': typeof AuthenticatedHerramientasCapacidadPagoRoute
   '/_authenticated/herramientas/proyeccion': typeof AuthenticatedHerramientasProyeccionRoute
   '/_authenticated/qa-ai/$id': typeof AuthenticatedQaAiIdRoute
+  '/_authenticated/qa-ai/alertas': typeof AuthenticatedQaAiAlertasRoute
+  '/_authenticated/qa-ai/config': typeof AuthenticatedQaAiConfigRoute
   '/_authenticated/qa-ai/nuevo': typeof AuthenticatedQaAiNuevoRoute
   '/_authenticated/super-admin/academia': typeof AuthenticatedSuperAdminAcademiaRoute
   '/_authenticated/super-admin/accesos': typeof AuthenticatedSuperAdminAccesosRoute
@@ -999,6 +1018,8 @@ export interface FileRouteTypes {
     | '/herramientas/capacidad-pago'
     | '/herramientas/proyeccion'
     | '/qa-ai/$id'
+    | '/qa-ai/alertas'
+    | '/qa-ai/config'
     | '/qa-ai/nuevo'
     | '/super-admin/academia'
     | '/super-admin/accesos'
@@ -1092,6 +1113,8 @@ export interface FileRouteTypes {
     | '/herramientas/capacidad-pago'
     | '/herramientas/proyeccion'
     | '/qa-ai/$id'
+    | '/qa-ai/alertas'
+    | '/qa-ai/config'
     | '/qa-ai/nuevo'
     | '/super-admin/academia'
     | '/super-admin/accesos'
@@ -1190,6 +1213,8 @@ export interface FileRouteTypes {
     | '/_authenticated/herramientas/capacidad-pago'
     | '/_authenticated/herramientas/proyeccion'
     | '/_authenticated/qa-ai/$id'
+    | '/_authenticated/qa-ai/alertas'
+    | '/_authenticated/qa-ai/config'
     | '/_authenticated/qa-ai/nuevo'
     | '/_authenticated/super-admin/academia'
     | '/_authenticated/super-admin/accesos'
@@ -1628,6 +1653,20 @@ declare module '@tanstack/react-router' {
       path: '/qa-ai/nuevo'
       fullPath: '/qa-ai/nuevo'
       preLoaderRoute: typeof AuthenticatedQaAiNuevoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/qa-ai/config': {
+      id: '/_authenticated/qa-ai/config'
+      path: '/qa-ai/config'
+      fullPath: '/qa-ai/config'
+      preLoaderRoute: typeof AuthenticatedQaAiConfigRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/qa-ai/alertas': {
+      id: '/_authenticated/qa-ai/alertas'
+      path: '/qa-ai/alertas'
+      fullPath: '/qa-ai/alertas'
+      preLoaderRoute: typeof AuthenticatedQaAiAlertasRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/qa-ai/$id': {
@@ -2079,6 +2118,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedExpedienteMaestroIdRoute: typeof AuthenticatedExpedienteMaestroIdRoute
   AuthenticatedExpedienteV2IdRoute: typeof AuthenticatedExpedienteV2IdRoute
   AuthenticatedQaAiIdRoute: typeof AuthenticatedQaAiIdRoute
+  AuthenticatedQaAiAlertasRoute: typeof AuthenticatedQaAiAlertasRoute
+  AuthenticatedQaAiConfigRoute: typeof AuthenticatedQaAiConfigRoute
   AuthenticatedQaAiNuevoRoute: typeof AuthenticatedQaAiNuevoRoute
   AuthenticatedSuperAdminAcademiaRoute: typeof AuthenticatedSuperAdminAcademiaRoute
   AuthenticatedSuperAdminAccesosRoute: typeof AuthenticatedSuperAdminAccesosRoute
@@ -2137,6 +2178,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedExpedienteMaestroIdRoute: AuthenticatedExpedienteMaestroIdRoute,
   AuthenticatedExpedienteV2IdRoute: AuthenticatedExpedienteV2IdRoute,
   AuthenticatedQaAiIdRoute: AuthenticatedQaAiIdRoute,
+  AuthenticatedQaAiAlertasRoute: AuthenticatedQaAiAlertasRoute,
+  AuthenticatedQaAiConfigRoute: AuthenticatedQaAiConfigRoute,
   AuthenticatedQaAiNuevoRoute: AuthenticatedQaAiNuevoRoute,
   AuthenticatedSuperAdminAcademiaRoute: AuthenticatedSuperAdminAcademiaRoute,
   AuthenticatedSuperAdminAccesosRoute: AuthenticatedSuperAdminAccesosRoute,
