@@ -69,7 +69,7 @@ function MarcaPage() {
   });
 
   if (loading) return null;
-  if (!isSuperAdmin) return <Navigate to="/" />;
+  if (!isSuperAdmin) return <Navigate to="/inicio" />;
 
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm((f) => ({ ...f, [k]: v }));
 

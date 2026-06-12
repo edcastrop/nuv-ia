@@ -34,7 +34,7 @@ function PendienteAprobacionPage() {
     setRefreshing(false);
     const isSuperAdmin = ((roleRows ?? []) as Array<{ role?: string }>).some((r) => r.role === "super_admin");
     if (isSuperAdmin) {
-      navigate({ to: "/" });
+      navigate({ to: "/inicio" });
       return;
     }
     if (!data) return;

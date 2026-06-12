@@ -70,7 +70,7 @@ function SuperAdminOnboarding() {
     setSaved(true); setTimeout(() => setSaved(false), 2000);
   };
 
-  if (!isSuperAdmin) return <Navigate to="/" />;
+  if (!isSuperAdmin) return <Navigate to="/inicio" />;
 
   return (
     <div className="p-6 md:p-8 text-white">

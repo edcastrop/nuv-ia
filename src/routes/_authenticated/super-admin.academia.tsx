@@ -31,7 +31,7 @@ function AdminAcademia() {
   useEffect(() => { (async () => { await reload(); setLoading(false); })(); }, []);
 
   if (rolesLoading || loading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>;
-  if (!isSuperAdmin) return <Navigate to="/" />;
+  if (!isSuperAdmin) return <Navigate to="/inicio" />;
 
   const tabs: { id: Tab; label: string; icon: typeof Layers }[] = [
     { id: "contenido", label: "Contenido", icon: Layers },
