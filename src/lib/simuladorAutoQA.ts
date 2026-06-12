@@ -44,15 +44,16 @@ export async function triggerSimuladorAutoQA(opts: {
         expediente_id: expedienteId,
         asesor_id: user?.id ?? null,
         aprobado_por: user?.id ?? null,
-        banco: raw.banco ?? null,
-        producto: raw.producto ?? null,
-        moneda: raw.moneda ?? null,
-        archivo_path: raw.archivoPath ?? null,
-        archivo_nombre: raw.archivoNombre ?? null,
+        banco: raw.banco ?? undefined,
+        producto: raw.producto ?? undefined,
+        moneda: raw.moneda ?? undefined,
+        archivo_path: raw.archivoPath ?? undefined,
+        archivo_nombre: raw.archivoNombre ?? undefined,
         datos: (raw.datos ?? {}) as never,
         estado: "aprobado",
         motor_version: "simulador-v1",
       })
+
       .select("id")
       .single();
     if (insErr) throw insErr;
