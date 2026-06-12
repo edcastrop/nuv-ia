@@ -1,17 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Card } from "@/components/nuvex/ui";
+import { PageLayout, ExecutiveHero, NCard } from "@/components/nuvia";
+import { NSelect } from "@/components/nuvia/NSelect";
 import { supabase } from "@/integrations/supabase/client";
 import { listCarteras, type CarteraConExpediente } from "@/lib/cartera";
 import { registrarPago } from "@/lib/cartera.functions";
+import { Receipt } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/finanzas/recaudos")({
   component: RecaudosPage,
-  head: () => ({ meta: [{ title: "Recaudos · NUVEX" }] }),
+  head: () => ({ meta: [{ title: "Recaudos · NUVIA" }] }),
 });
 
-const AZUL = "#445DA3";
 const money = (n: number) => "$" + Math.round(n).toLocaleString("es-CO");
 
 type PagoRecent = {
@@ -75,13 +76,12 @@ function RecaudosPage() {
   }, [reloadKey]);
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <h1 className="text-xl font-semibold text-[#0A1226]">Recaudos</h1>
-        <p className="text-[12px] text-[#242424]/60">
-          Registra pagos de clientes. El sistema recalcula saldo y cierra la cartera automáticamente cuando el pagado iguala los honorarios.
-        </p>
-      </Card>
+    <PageLayout>
+      <ExecutiveHero
+        badge={{ icon: <Receipt size={12} />, label: "Finanzas", tone: "green" }}
+        title="Recaudos"
+        description="Registra pagos de clientes. El sistema recalcula saldo y cierra la cartera automáticamente cuando el pagado iguala los honorarios."
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-4">
         <NuevoRecaudo
@@ -90,35 +90,37 @@ function RecaudosPage() {
           onSaved={() => setReloadKey((k) => k + 1)}
         />
 
-        <Card>
-          <h2 className="text-sm font-semibold text-[#0A1226] mb-2">Últimos 50 recaudos</h2>
+        <NCard padding="none">
+          <div className="px-4 py-3 text-sm font-semibold" style={{ borderBottom: "1px solid var(--nuvia-border)", color: "var(--nuvia-text-primary)" }}>
+            Últimos 50 recaudos
+          </div>
           {pagos.length === 0 ? (
-            <div className="py-6 text-center text-sm text-[#242424]/60">Sin recaudos registrados aún.</div>
+            <div className="py-8 text-center text-sm" style={{ color: "var(--nuvia-text-muted)" }}>Sin recaudos registrados aún.</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-[12.5px]">
-                <thead className="text-[11px] uppercase tracking-wider text-[#242424]/60">
-                  <tr className="border-b border-[#E5E7EB]">
-                    <th className="text-left py-2 pr-3">Fecha</th>
-                    <th className="text-left pr-3">Cliente</th>
-                    <th className="text-left pr-3">Banco</th>
-                    <th className="text-right pr-3">Valor</th>
-                    <th className="text-left pr-3">Método</th>
-                    <th className="text-left pr-3">Comp. #</th>
-                    <th></th>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid var(--nuvia-border)" }}>
+                    <th className="text-left px-4 py-3 text-[11px] uppercase tracking-wide"  style={{ color: "var(--nuvia-text-muted)" }}>Fecha</th>
+                    <th className="text-left px-4 py-3 text-[11px] uppercase tracking-wide"  style={{ color: "var(--nuvia-text-muted)" }}>Cliente</th>
+                    <th className="text-left px-4 py-3 text-[11px] uppercase tracking-wide"  style={{ color: "var(--nuvia-text-muted)" }}>Banco</th>
+                    <th className="text-right px-4 py-3 text-[11px] uppercase tracking-wide" style={{ color: "var(--nuvia-text-muted)" }}>Valor</th>
+                    <th className="text-left px-4 py-3 text-[11px] uppercase tracking-wide"  style={{ color: "var(--nuvia-text-muted)" }}>Método</th>
+                    <th className="text-left px-4 py-3 text-[11px] uppercase tracking-wide"  style={{ color: "var(--nuvia-text-muted)" }}>Comp. #</th>
+                    <th className="px-4 py-3"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {pagos.map((p) => (
-                    <tr key={p.id} className="border-b border-[#F3F4F6]">
-                      <td className="py-2 pr-3">{p.fecha}</td>
-                      <td className="pr-3 font-medium text-[#242424]">{p.cliente}</td>
-                      <td className="pr-3">{p.banco ?? "—"}</td>
-                      <td className="text-right pr-3 text-[#1F7A45] font-semibold">{money(Number(p.valor))}</td>
-                      <td className="pr-3">{p.metodo ?? "—"}</td>
-                      <td className="pr-3">{p.comprobante_num ?? "—"}</td>
-                      <td>
-                        <Link to="/cartera/$id" params={{ id: p.cartera_id }} className="text-[11px] text-[#445DA3] hover:underline">Ver →</Link>
+                    <tr key={p.id} className="hover:bg-white/[0.03]" style={{ borderBottom: "1px solid var(--nuvia-border)" }}>
+                      <td className="px-4 py-2.5" style={{ color: "var(--nuvia-text-secondary)" }}>{p.fecha}</td>
+                      <td className="px-4 py-2.5 font-medium" style={{ color: "var(--nuvia-text-primary)" }}>{p.cliente}</td>
+                      <td className="px-4 py-2.5" style={{ color: "var(--nuvia-text-secondary)" }}>{p.banco ?? "—"}</td>
+                      <td className="px-4 py-2.5 text-right font-semibold tabular-nums" style={{ color: "var(--nuvia-accent-green)" }}>{money(Number(p.valor))}</td>
+                      <td className="px-4 py-2.5" style={{ color: "var(--nuvia-text-secondary)" }}>{p.metodo ?? "—"}</td>
+                      <td className="px-4 py-2.5" style={{ color: "var(--nuvia-text-secondary)" }}>{p.comprobante_num ?? "—"}</td>
+                      <td className="px-4 py-2.5">
+                        <Link to="/cartera/$id" params={{ id: p.cartera_id }} className="text-[11px] hover:underline" style={{ color: "var(--nuvia-accent-blue)" }}>Ver →</Link>
                       </td>
                     </tr>
                   ))}
@@ -126,11 +128,20 @@ function RecaudosPage() {
               </table>
             </div>
           )}
-        </Card>
+        </NCard>
       </div>
-    </div>
+    </PageLayout>
   );
 }
+
+const METODO_OPTS = [
+  { value: "__none__",      label: "—" },
+  { value: "transferencia", label: "Transferencia" },
+  { value: "consignacion",  label: "Consignación" },
+  { value: "efectivo",      label: "Efectivo" },
+  { value: "pse",           label: "PSE" },
+  { value: "otro",          label: "Otro" },
+];
 
 function NuevoRecaudo({
   carteras,
@@ -146,7 +157,7 @@ function NuevoRecaudo({
   const [carteraId, setCarteraId] = useState("");
   const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10));
   const [valor, setValor] = useState("");
-  const [metodo, setMetodo] = useState("");
+  const [metodo, setMetodo] = useState("__none__");
   const [bancoReceptor, setBancoReceptor] = useState("");
   const [comprobanteNum, setComprobanteNum] = useState("");
   const [observaciones, setObservaciones] = useState("");
@@ -168,6 +179,18 @@ function NuevoRecaudo({
       )
       .slice(0, 25);
   }, [carteras, busqueda]);
+
+  const carteraOpts = useMemo(() => {
+    const opts = [{ value: "__none__", label: loading ? "Cargando…" : "— Selecciona —" }];
+    for (const c of candidatos) {
+      const s = Number(c.honorarios_totales) - Number(c.pagado);
+      opts.push({
+        value: c.id,
+        label: `${c.expediente?.cliente_nombre ?? "—"} · ${c.expediente?.banco ?? "—"} · saldo ${money(s)}`,
+      });
+    }
+    return opts;
+  }, [candidatos, loading]);
 
   const seleccionada = carteras.find((c) => c.id === carteraId);
   const saldo = seleccionada ? Number(seleccionada.honorarios_totales) - Number(seleccionada.pagado) : 0;
@@ -209,7 +232,7 @@ function NuevoRecaudo({
           carteraId,
           fecha,
           valor: v,
-          metodo: metodo || undefined,
+          metodo: metodo !== "__none__" ? metodo : undefined,
           bancoReceptor: bancoReceptor || undefined,
           comprobanteNum: comprobanteNum || undefined,
           comprobanteBase64,
@@ -219,7 +242,7 @@ function NuevoRecaudo({
       });
       setOk("Recaudo registrado correctamente.");
       setValor("");
-      setMetodo("");
+      setMetodo("__none__");
       setBancoReceptor("");
       setComprobanteNum("");
       setObservaciones("");
@@ -233,67 +256,58 @@ function NuevoRecaudo({
   }
 
   return (
-    <Card>
-      <h2 className="text-sm font-semibold text-[#0A1226] mb-3">Registrar recaudo</h2>
+    <NCard>
+      <h2 className="text-sm font-semibold mb-3" style={{ color: "var(--nuvia-text-primary)" }}>Registrar recaudo</h2>
       <form onSubmit={onSubmit} className="space-y-3">
         <Field label="Buscar cliente / cédula / banco">
           <input
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             placeholder="Escribe para filtrar carteras con saldo"
-            className="w-full text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white"
+            className="nuvia-input nuvia-input-sm w-full"
           />
         </Field>
         <Field label="Cartera">
-          <select
-            value={carteraId}
-            onChange={(e) => setCarteraId(e.target.value)}
-            className="w-full text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white"
-          >
-            <option value="">{loading ? "Cargando…" : "— Selecciona —"}</option>
-            {candidatos.map((c) => {
-              const s = Number(c.honorarios_totales) - Number(c.pagado);
-              return (
-                <option key={c.id} value={c.id}>
-                  {c.expediente?.cliente_nombre} · {c.expediente?.banco ?? "—"} · saldo {money(s)}
-                </option>
-              );
-            })}
-          </select>
+          <NSelect
+            value={carteraId || "__none__"}
+            onValueChange={(v) => setCarteraId(v === "__none__" ? "" : v)}
+            options={carteraOpts}
+            compact
+          />
         </Field>
 
         {seleccionada && (
-          <div className="rounded-lg border border-[#E0E7FF] bg-[#F5F7FF] p-2 text-[11.5px] text-[#242424]/80">
-            Honorarios: <b>{money(Number(seleccionada.honorarios_totales))}</b> · Pagado:{" "}
-            <b className="text-[#1F7A45]">{money(Number(seleccionada.pagado))}</b> · Saldo:{" "}
-            <b style={{ color: AZUL }}>{money(saldo)}</b>
+          <div
+            className="rounded-lg p-2.5 text-[11.5px]"
+            style={{
+              background: "rgba(68,93,163,0.10)",
+              border: "1px solid rgba(68,93,163,0.30)",
+              color: "var(--nuvia-text-secondary)",
+            }}
+          >
+            Honorarios: <b style={{ color: "var(--nuvia-text-primary)" }}>{money(Number(seleccionada.honorarios_totales))}</b> · Pagado:{" "}
+            <b style={{ color: "var(--nuvia-accent-green)" }}>{money(Number(seleccionada.pagado))}</b> · Saldo:{" "}
+            <b style={{ color: "var(--nuvia-accent-blue)" }}>{money(saldo)}</b>
           </div>
         )}
 
         <div className="grid grid-cols-2 gap-2">
           <Field label="Fecha">
-            <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className="w-full text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white" />
+            <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className="nuvia-input nuvia-input-sm w-full" />
           </Field>
           <Field label="Valor (COP)">
-            <input type="number" min={0} value={valor} onChange={(e) => setValor(e.target.value)} className="w-full text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white" />
+            <input type="number" min={0} value={valor} onChange={(e) => setValor(e.target.value)} className="nuvia-input nuvia-input-sm w-full" />
           </Field>
           <Field label="Método">
-            <select value={metodo} onChange={(e) => setMetodo(e.target.value)} className="w-full text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white">
-              <option value="">—</option>
-              <option value="transferencia">Transferencia</option>
-              <option value="consignacion">Consignación</option>
-              <option value="efectivo">Efectivo</option>
-              <option value="pse">PSE</option>
-              <option value="otro">Otro</option>
-            </select>
+            <NSelect value={metodo} onValueChange={setMetodo} options={METODO_OPTS} compact />
           </Field>
           <Field label="Banco receptor">
-            <input value={bancoReceptor} onChange={(e) => setBancoReceptor(e.target.value)} className="w-full text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white" />
+            <input value={bancoReceptor} onChange={(e) => setBancoReceptor(e.target.value)} className="nuvia-input nuvia-input-sm w-full" />
           </Field>
         </div>
 
         <Field label="N° comprobante">
-          <input value={comprobanteNum} onChange={(e) => setComprobanteNum(e.target.value)} className="w-full text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white" />
+          <input value={comprobanteNum} onChange={(e) => setComprobanteNum(e.target.value)} className="nuvia-input nuvia-input-sm w-full" />
         </Field>
         <Field label="Comprobante (PDF/imagen)">
           <input
@@ -301,32 +315,38 @@ function NuevoRecaudo({
             accept="image/*,application/pdf"
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             className="w-full text-[12px]"
+            style={{ color: "var(--nuvia-text-secondary)" }}
           />
         </Field>
         <Field label="Observaciones">
-          <textarea value={observaciones} onChange={(e) => setObservaciones(e.target.value)} rows={2} className="w-full text-[12px] border border-[#E5E7EB] rounded px-2 py-1.5 bg-white" />
+          <textarea
+            value={observaciones}
+            onChange={(e) => setObservaciones(e.target.value)}
+            rows={2}
+            className="nuvia-input nuvia-input-sm w-full"
+          />
         </Field>
 
-        {error && <div className="text-[12px] text-[#B42318]">{error}</div>}
-        {ok && <div className="text-[12px] text-[#1F7A45]">{ok}</div>}
+        {error && <div className="text-[12px]" style={{ color: "var(--nuvia-danger)" }}>{error}</div>}
+        {ok && <div className="text-[12px]" style={{ color: "var(--nuvia-accent-green)" }}>{ok}</div>}
 
         <button
           type="submit"
           disabled={saving}
           className="w-full rounded-lg px-3 py-2 text-[12.5px] font-semibold text-white disabled:opacity-60"
-          style={{ background: `linear-gradient(135deg, ${AZUL}, #84B98F)` }}
+          style={{ background: "linear-gradient(135deg,#445DA3,#84B98F)" }}
         >
           {saving ? "Registrando…" : "Registrar recaudo"}
         </button>
       </form>
-    </Card>
+    </NCard>
   );
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-[10.5px] uppercase tracking-wider text-[#242424]/60">{label}</span>
+      <span className="text-[10.5px] uppercase tracking-wider" style={{ color: "var(--nuvia-text-muted)" }}>{label}</span>
       {children}
     </label>
   );

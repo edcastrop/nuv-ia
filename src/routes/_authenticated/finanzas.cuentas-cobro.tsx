@@ -1,13 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/nuvex/ui";
+import { PageLayout, ExecutiveHero, KpiGrid, KpiCard, NCard } from "@/components/nuvia";
 import { formatCOP } from "@/lib/format";
 import { listCuentasCobro, type CuentaCobro } from "@/lib/comisiones";
+import { FileSpreadsheet, Clock, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/finanzas/cuentas-cobro")({
   component: FinanzasCuentasCobroPage,
-  head: () => ({ meta: [{ title: "Cuentas de cobro · Finanzas NUVEX" }] }),
+  head: () => ({ meta: [{ title: "Cuentas de cobro · Finanzas NUVIA" }] }),
 });
 
 const FILTROS: { key: CuentaCobro["estado"] | "todas"; label: string }[] = [
@@ -18,6 +19,16 @@ const FILTROS: { key: CuentaCobro["estado"] | "todas"; label: string }[] = [
   { key: "borrador", label: "Borrador (AFC)" },
   { key: "todas", label: "Todas" },
 ];
+
+const ESTADO_CC: Record<string, { bg: string; color: string; label: string }> = {
+  borrador:            { bg: "rgba(148,163,184,0.16)", color: "#CBD5E1", label: "Borrador" },
+  enviada:             { bg: "rgba(68,93,163,0.18)",   color: "#A5B5E0", label: "Enviada" },
+  aprobada:            { bg: "rgba(132,185,143,0.16)", color: "#9BCB9F", label: "Aprobada" },
+  devuelta_correccion: { bg: "rgba(246,196,83,0.16)",  color: "#F6C453", label: "Devuelta" },
+  rechazada:           { bg: "rgba(255,107,107,0.16)", color: "#FF8585", label: "Rechazada" },
+  programada_pago:     { bg: "rgba(99,102,241,0.18)",  color: "#A5B4FC", label: "Programada" },
+  pagada:              { bg: "rgba(132,185,143,0.22)", color: "#9BCB9F", label: "Pagada" },
+};
 
 function FinanzasCuentasCobroPage() {
   const [cuentas, setCuentas] = useState<CuentaCobro[]>([]);
@@ -48,26 +59,25 @@ function FinanzasCuentasCobroPage() {
   const totales = useMemo(
     () => ({
       porAprobar: cuentas.filter((c) => c.estado === "enviada").reduce((s, c) => s + Number(c.total), 0),
-      aprobadas: cuentas.filter((c) => c.estado === "aprobada").reduce((s, c) => s + Number(c.total), 0),
-      pagadas: cuentas.filter((c) => c.estado === "pagada").reduce((s, c) => s + Number(c.total), 0),
+      aprobadas:  cuentas.filter((c) => c.estado === "aprobada").reduce((s, c) => s + Number(c.total), 0),
+      pagadas:    cuentas.filter((c) => c.estado === "pagada").reduce((s, c) => s + Number(c.total), 0),
     }),
     [cuentas],
   );
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <h1 className="text-xl font-semibold text-[#0A1226]">Cuentas de cobro — Finanzas</h1>
-        <p className="text-[12px] text-[#242424]/60">
-          Aprueba, rechaza (con motivo) o registra el pago con comprobante. Cada acción queda auditada.
-        </p>
-      </Card>
+    <PageLayout>
+      <ExecutiveHero
+        badge={{ icon: <FileSpreadsheet size={12} />, label: "Finanzas", tone: "blue" }}
+        title="Cuentas de cobro"
+        description="Aprueba, rechaza (con motivo) o registra el pago con comprobante. Cada acción queda auditada."
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <Stat label="Por aprobar" value={formatCOP(totales.porAprobar)} color="#8A5A00" />
-        <Stat label="Pendientes de pago" value={formatCOP(totales.aprobadas)} color="#445DA3" />
-        <Stat label="Pagadas" value={formatCOP(totales.pagadas)} color="#1F7A45" />
-      </div>
+      <KpiGrid cols={3}>
+        <KpiCard label="Por aprobar"        value={formatCOP(totales.porAprobar)} tone="warning" icon={<Clock size={14} />} />
+        <KpiCard label="Pendientes de pago" value={formatCOP(totales.aprobadas)}  tone="blue"    icon={<FileSpreadsheet size={14} />} />
+        <KpiCard label="Pagadas"            value={formatCOP(totales.pagadas)}    tone="green"   icon={<CheckCircle2 size={14} />} />
+      </KpiGrid>
 
       <div className="flex flex-wrap gap-2">
         {FILTROS.map((f) => {
@@ -76,12 +86,16 @@ function FinanzasCuentasCobroPage() {
             <button
               key={f.key}
               onClick={() => setFiltro(f.key)}
-              className="rounded-xl border px-3.5 py-1.5 text-[12px] font-medium transition"
-              style={{
-                background: active ? "linear-gradient(135deg,#445DA3,#84B98F)" : "#fff",
-                color: active ? "#fff" : "#0A1226",
-                borderColor: active ? "transparent" : "#E3E7EE",
-              }}
+              className="rounded-xl px-3.5 py-1.5 text-[12px] font-medium transition"
+              style={
+                active
+                  ? { background: "linear-gradient(135deg,#445DA3,#84B98F)", color: "#fff", border: "1px solid transparent" }
+                  : {
+                      background: "rgba(255,255,255,0.04)",
+                      color: "var(--nuvia-text-secondary)",
+                      border: "1px solid var(--nuvia-border)",
+                    }
+              }
             >
               {f.label}
             </button>
@@ -89,77 +103,53 @@ function FinanzasCuentasCobroPage() {
         })}
       </div>
 
-      <Card>
+      <NCard padding="none">
         {loading ? (
-          <div className="p-8 text-center text-sm text-[#242424]/60">Cargando…</div>
+          <div className="p-8 text-center text-sm" style={{ color: "var(--nuvia-text-muted)" }}>Cargando…</div>
         ) : filtradas.length === 0 ? (
-          <div className="p-8 text-center text-sm text-[#242424]/60">Sin cuentas en este estado.</div>
+          <div className="p-8 text-center text-sm" style={{ color: "var(--nuvia-text-muted)" }}>Sin cuentas en este estado.</div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-[#F7F9FB] text-[11px] uppercase tracking-wide text-[#242424]/60">
-              <tr>
-                <th className="px-4 py-2 text-left">Número</th>
-                <th className="px-4 py-2 text-left">Analista F. Comercial</th>
-                <th className="px-4 py-2 text-left">Enviada</th>
-                <th className="px-4 py-2 text-right">Total</th>
-                <th className="px-4 py-2 text-left">Estado</th>
-                <th className="px-4 py-2"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#E3E7EE]">
-              {filtradas.map((cc) => {
-                const b = ESTADO_CC[cc.estado];
-                return (
-                  <tr key={cc.id} className="hover:bg-[#F7F9FB]">
-                    <td className="px-4 py-2 font-mono text-[12px] text-[#0A1226]">{cc.numero}</td>
-                    <td className="px-4 py-2 text-[#0A1226]">{nombres.get(cc.user_id) ?? "—"}</td>
-                    <td className="px-4 py-2 text-[12px] text-[#242424]/70">
-                      {cc.fecha_envio ? new Date(cc.fecha_envio).toLocaleDateString("es-CO") : "—"}
-                    </td>
-                    <td className="px-4 py-2 text-right font-semibold">{formatCOP(Number(cc.total))}</td>
-                    <td className="px-4 py-2">
-                      <span
-                        className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-                        style={{ background: b.bg, color: b.color }}
-                      >
-                        {b.label}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      <Link
-                        to="/comisiones/$id"
-                        params={{ id: cc.id }}
-                        className="text-[12px] font-medium text-[#445DA3] hover:underline"
-                      >
-                        Gestionar →
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ borderBottom: "1px solid var(--nuvia-border)" }}>
+                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wide" style={{ color: "var(--nuvia-text-muted)" }}>Número</th>
+                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wide" style={{ color: "var(--nuvia-text-muted)" }}>Analista F. Comercial</th>
+                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wide" style={{ color: "var(--nuvia-text-muted)" }}>Enviada</th>
+                  <th className="px-4 py-3 text-right text-[11px] uppercase tracking-wide" style={{ color: "var(--nuvia-text-muted)" }}>Total</th>
+                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wide" style={{ color: "var(--nuvia-text-muted)" }}>Estado</th>
+                  <th className="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtradas.map((cc) => {
+                  const b = ESTADO_CC[cc.estado] ?? ESTADO_CC.borrador;
+                  return (
+                    <tr key={cc.id} className="hover:bg-white/[0.03]" style={{ borderBottom: "1px solid var(--nuvia-border)" }}>
+                      <td className="px-4 py-2.5 font-mono text-[12px]" style={{ color: "var(--nuvia-text-primary)" }}>{cc.numero}</td>
+                      <td className="px-4 py-2.5" style={{ color: "var(--nuvia-text-primary)" }}>{nombres.get(cc.user_id) ?? "—"}</td>
+                      <td className="px-4 py-2.5 text-[12px]" style={{ color: "var(--nuvia-text-secondary)" }}>
+                        {cc.fecha_envio ? new Date(cc.fecha_envio).toLocaleDateString("es-CO") : "—"}
+                      </td>
+                      <td className="px-4 py-2.5 text-right font-semibold tabular-nums" style={{ color: "var(--nuvia-text-primary)" }}>{formatCOP(Number(cc.total))}</td>
+                      <td className="px-4 py-2.5">
+                        <span className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold" style={{ background: b.bg, color: b.color }}>
+                          {b.label}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5 text-right">
+                        <Link to="/comisiones/$id" params={{ id: cc.id }} className="text-[12px] font-medium hover:underline" style={{ color: "var(--nuvia-accent-blue)" }}>
+                          Gestionar →
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
-      </Card>
-    </div>
-  );
-}
-
-const ESTADO_CC: Record<string, { bg: string; color: string; label: string }> = {
-  borrador: { bg: "#F1F3F8", color: "#445DA3", label: "Borrador" },
-  enviada: { bg: "#EEF1FA", color: "#445DA3", label: "Enviada" },
-  aprobada: { bg: "#EAF7EE", color: "#1F7A45", label: "Aprobada" },
-  devuelta_correccion: { bg: "#FEF3C7", color: "#8A5A00", label: "Devuelta" },
-  rechazada: { bg: "#FEE2E2", color: "#991B1B", label: "Rechazada" },
-  programada_pago: { bg: "#E0E7FF", color: "#3730A3", label: "Programada" },
-  pagada: { bg: "#DDF4E3", color: "#1F7A45", label: "Pagada" },
-};
-
-function Stat({ label, value, color }: { label: string; value: string; color: string }) {
-  return (
-    <div className="rounded-xl border border-[#E3E7EE] bg-white p-4">
-      <div className="text-[11px] uppercase tracking-wide text-[#242424]/60">{label}</div>
-      <div className="mt-1 text-lg font-semibold" style={{ color }}>{value}</div>
-    </div>
+      </NCard>
+    </PageLayout>
   );
 }
