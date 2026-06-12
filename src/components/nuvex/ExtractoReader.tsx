@@ -1111,6 +1111,16 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                 para prellenar el simulador. Siempre podrás revisar y corregir antes de generar la
                 propuesta.
               </p>
+              <div
+                className="mt-2 rounded-md px-2.5 py-1.5 text-[11px] leading-snug"
+                style={{
+                  background: "rgba(68,93,163,0.18)",
+                  color: "#C9D6F2",
+                  border: "1px solid rgba(132,185,143,0.28)",
+                }}
+              >
+                ℹ️ La auditoría QA automática se ejecuta desde el Expediente Maestro cuando el extracto queda asociado a un expediente.
+              </div>
             </div>
           </div>
 
