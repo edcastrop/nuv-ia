@@ -1,0 +1,10 @@
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.qa_auditorias TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.qa_inconsistencias TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.qa_alertas TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.qa_reglas TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.qa_auditoria_log TO authenticated;
+GRANT ALL ON public.qa_auditorias TO service_role;
+GRANT ALL ON public.qa_inconsistencias TO service_role;
+GRANT ALL ON public.qa_alertas TO service_role;
+GRANT ALL ON public.qa_reglas TO service_role;
+GRANT ALL ON public.qa_auditoria_log TO service_role;
