@@ -91,7 +91,7 @@ function NuevoQaAi() {
             Modalidad
             <NSelect
               value={modalidad}
-              onChange={(v) => setModalidad(v as ModalidadOpt)}
+              onValueChange={(v) => setModalidad(v as ModalidadOpt)}
               options={[
                 { value: "hipotecario", label: "Hipotecario" },
                 { value: "leasing", label: "Leasing habitacional" },
