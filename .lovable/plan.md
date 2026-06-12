@@ -1,88 +1,101 @@
-## Fase 2 NUVIA QA AI — Operacionalización
+# Fase 4 — Integración automática QA
 
-### 1. Migración correctiva (única migración SQL)
+Objetivo: que NUVIA Financial QA AI se ejecute automáticamente al finalizar la lectura de un extracto, persista el dictamen en el expediente, exponga badges en Pipeline/Expediente/Torre/Dashboard y bloquee transiciones cuando el dictamen sea **QA FAILED**. Sin nuevos módulos, sin nuevos formularios, sin duplicar datos.
 
-**`qa_alertas`** — agregar columnas para cierre auditable:
-- `resuelta_by uuid`, `resuelta_at timestamptz`, `notas text`
+## Alcance autorizado
 
-**Nueva tabla `qa_reglas_historial`** — versionado de cambios de reglas:
-- `regla_id`, `codigo`, `version_anterior`, `version_nueva`, `payload_anterior jsonb`, `payload_nuevo jsonb`, `changed_by uuid`, `changed_at timestamptz`
-- GRANTs a `authenticated`/`service_role` + RLS:
-  - SELECT: `can_use_qa_ai(auth.uid())` (cualquier autorizado QA puede leer historial)
-  - INSERT: `can_use_qa_ai(auth.uid())`
-  - sin UPDATE/DELETE (inmutable, append-only)
+- Modificar `MotorExtractosNUVEX` (lector de extractos) para disparar `auditarCaso` automáticamente al confirmar la lectura.
+- Modificar pantalla del Expediente para añadir sección **QA FINANCIERO** y badge.
+- Modificar Pipeline / Torre de Control / Dashboard sólo para mostrar badges y un nuevo widget "Salud del Pipeline QA".
+- Añadir guardas operativas que impidan avanzar etapas cuando `dictamen = QA FAILED`.
 
-**Trigger `qa_reglas_audit`** sobre `qa_reglas BEFORE UPDATE`:
-- Si cambia `payload`, incrementa `version`, copia `auth.uid()` a `updated_by`, refresca `updated_at`, y registra fila en `qa_reglas_historial`.
+## Fuera de alcance (no se toca)
 
-### 2. Server functions (`src/lib/qaAI.functions.ts`)
+Simuladores PESOS/UVR, Honorarios, Contratación, Treasury AI, Cartera, Mensajería, NUVIA IA. Tampoco se crean rutas nuevas en `/qa-ai`.
 
-Nuevas, todas protegidas por `requireSupabaseAuth`. Las de escritura validan `can_use_qa_ai` server-side antes de ejecutar:
+---
 
-- `listAlertasQA({ severidad?, estado?, banco?, analistaId? })` — JOIN con `qa_auditorias` para mapear `analista_id`/`modalidad` + JOIN opcional con `expedientes` para `banco`/`codigo`/`cliente_nombre`.
-- `obtenerAlertaQA(id)` — detalle + datos de la auditoría asociada (link al dictamen).
-- `actualizarAlertaQA({ id, accion: "reconocer" | "resolver", notas? })` — cambia estado, registra `reconocida_by/at` o `resuelta_by/at`. Inserta entry en `qa_auditoria_log`.
-- `listReglasQA()` — lectura de las 16 reglas seed agrupadas por `tipo` (tolerancia / umbral / penalizacion).
-- `actualizarReglaQA({ id, payload })` — chequea rol vía `has_role`, UPDATE → el trigger maneja versión + historial.
-- `listHistorialReglaQA(id)` — últimas N entradas de `qa_reglas_historial`.
-- `cargarToleranciasActivas()` — lee `qa_reglas where activa=true`, devuelve objeto `Partial<Tolerancias>` listo para inyectar en `qaMath.auditar()`.
-- `qaKpis` (extender) — agrega `pendientesRevision` (dictamen `requiere_revision`), `topTipoInconsistencia` (agregación count por `tipo` de `qa_inconsistencias`).
+## Cambios técnicos
 
-**`auditarCaso` (modificar):** antes de llamar `auditar(...)`, carga reglas activas y las pasa como `tolerancias` override. El default `TOLERANCIAS_DEFAULT` queda como fallback si la regla está inactiva o falta.
+### 1. Base de datos (1 migración)
 
-### 3. Rutas nuevas (2)
+- `qa_auditorias`: agregar columnas `extracto_lectura_id uuid REFERENCES extractos_lecturas(id)`, `categoria text` (QA_CERTIFIED / APROBADO_OBS / REQUIERE_REVISION / QA_FAILED), `auto_ejecutada boolean default false`.
+- `expedientes`: agregar columnas denormalizadas `qa_score numeric`, `qa_dictamen text`, `qa_categoria text`, `qa_auditoria_id uuid`, `qa_ejecutada_at timestamptz`. Sirven para badges en pipeline/torre sin joins costosos.
+- Trigger `trg_qa_sync_expediente` en `qa_auditorias AFTER INSERT/UPDATE`: copia score, dictamen, categoría e id al `expedientes` correspondiente.
+- Función `public.qa_bloquea_avance(_expediente_id uuid) RETURNS boolean` (SECURITY DEFINER): `true` si la última auditoría es `QA_FAILED`.
+- RLS: políticas existentes ya cubren lectura por `can_access_expediente`; sólo añadir `GRANT` para nuevas columnas (heredan).
 
-**`/qa-ai/alertas`** (`src/routes/_authenticated/qa-ai.alertas.tsx`):
-- `ExecutiveHero` + `KpiGrid` (abiertas / reconocidas / resueltas hoy).
-- `FilterBar` con `NSelect` para severidad, estado, banco, analista.
-- Tabla NUVIA dark con columnas: fecha, severidad (badge color), tipo, mensaje, expediente (link), score auditoría, estado, acciones.
-- Acciones por fila: "Reconocer" (estado abierta → reconocida) y "Resolver" (cualquier → resuelta con textarea para notas), modal `dialog`.
-- Click en fila → drawer/modal con detalle + link "Ver dictamen" → `/qa-ai/$id`.
-- Acciones deshabilitadas si rol no autorizado.
+### 2. Disparo automático tras lectura de extracto
 
-**`/qa-ai/config`** (`src/routes/_authenticated/qa-ai.config.tsx`):
-- `ExecutiveHero` con badge "Reglas y tolerancias · v{maxVersion}".
-- 3 `NCard` separadas: **Tolerancias** (5 reglas), **Umbrales** (4 reglas), **Penalizaciones** (6 reglas).
-- Cada regla = fila con descripción + inputs `.nuvia-input-sm` por key de payload (ej. `abs`, `pct`).
-- Botón "Guardar" por regla → llama `actualizarReglaQA` → mensaje "Versión bumped a N".
-- Sub-card "Historial reciente" desplegable por regla (últimas 5 entradas con `changed_by`/`changed_at`).
-- **Lectura abierta para todos los roles QA; edición solo si `canValidarProyeccion` (super_admin / director_financiero_qa / gerencia)** — inputs deshabilitados y banner "Solo lectura — contacta a Dirección QA" para roles menores.
+`src/components/nuvex/MotorExtractosNUVEX.tsx` → en `confirmar()`, después del `insert` exitoso:
+- Si hay `expedienteId`: obtener `id` del registro recién creado en `extractos_lecturas`.
+- Invocar `auditarCaso({ expedienteId, extractoLecturaId, auto: true })`.
+- Mostrar inline (no modal) el resultado: chip con score + categoría + link a `/qa-ai/:id` para detalle.
+- Manejo de error tolerante: si la auditoría falla, mostrar aviso pero NO revertir la lectura.
 
-### 4. Dashboard `/qa-ai` (extender)
+### 3. `src/lib/qaAI.functions.ts` — `auditarCaso`
 
-En `qa-ai.index.tsx`:
-- 2 KPIs nuevos: "Pendientes revisión" + "Tipo inconsistencia más frecuente".
-- 3 botones en `ExecutiveHero.actions`: "Auditar nuevo" (existente) + "Ver alertas" + "Configurar reglas" (este último solo visible si `canValidarProyeccion`).
+- Aceptar nuevo input opcional `extractoLecturaId` y bandera `auto`.
+- Cuando se llama con `extractoLecturaId`, leer directamente ese registro (en vez de la última lectura del expediente). Reutiliza el resto del motor sin recálculos.
+- Persistir `extracto_lectura_id`, `auto_ejecutada=true`, `categoria` derivada del score con los umbrales configurables existentes.
+- Crear/actualizar alertas QA como ya hace hoy.
 
-### 5. Seguridad / RLS
+### 4. Sección "QA Financiero" en Expediente
 
-| Acción | Roles autorizados |
-|---|---|
-| Ver alertas | Cualquier rol con acceso a QA AI (RLS existente `qa_alertas_select`) |
-| Reconocer/resolver alerta | `can_use_qa_ai` (existente `qa_alertas_write`) |
-| Leer reglas | Todos los autenticados (RLS existente `qa_reglas_select USING (true)`) |
-| Editar reglas | `can_use_qa_ai` (existente `qa_reglas_write`) — además check server-side en `actualizarReglaQA` |
-| Leer historial | `can_use_qa_ai` (nueva policy) |
+`src/components/expediente/QAFinancieroBlock.tsx` (nuevo, componente puro):
+- Lee `qa_auditorias` por `expediente_id` ordenado desc, `limit 1`.
+- Muestra: badge categoría, Score, dictamen, fecha, top 5 hallazgos (`qa_inconsistencias`), responsable, alertas abiertas (`qa_alertas`), botón "Ver dictamen completo" → `/qa-ai/:id` (ya existe), botón "Reejecutar auditoría" (sólo roles `can_use_qa_ai`).
+- Montar el bloque en la página del expediente justo después del bloque de extractos.
 
-Analistas (`asesor`, `licenciado`, etc.) ven resultados y alertas pero NO pueden editar tolerancias — bloqueo doble: UI deshabilita inputs + server fn rechaza.
+### 5. Badges visuales globales
 
-### Fuera de alcance (Fase 2)
-- Copiloto IA, export PDF, bloqueo automático de pipeline, ML, corrección automática.
-- Cero cambios a: Pipeline, Expedientes, Simuladores, Honorarios, Contratación, Treasury, Cartera.
+Componente compartido `src/components/qa-ai/QABadge.tsx`:
+- Input: `categoria | null`.
+- Salida: chip con color (🟢 CERTIFIED / 🟡 OBSERVADO / 🟠 REVISIÓN / 🔴 FAILED) y tooltip con score.
+- Integrar en:
+  - Tarjeta de caso del **Pipeline** (`KpisPipeline14` lista de expedientes).
+  - Encabezado del **Expediente**.
+  - Tabla del **Torre de Control** (CommandCenter widget de casos).
+  - **Dashboard** `/inicio` (RoleHome) al lado de cada caso reciente.
+- Todos consumen las columnas denormalizadas en `expedientes`.
 
-### Riesgos detectados
+### 6. Guardas operativas (bloqueo QA FAILED)
 
-1. **Trigger de versionado puede generar loops** si `updated_at` se incluye en el chequeo de cambio — el trigger comparará solo `payload` y `activa`, no metadatos. Mitigación: condición `OLD.payload IS DISTINCT FROM NEW.payload OR OLD.activa IS DISTINCT FROM NEW.activa`.
-2. **Reglas con payload incompatible** (ej. `tol.cuota` sin `abs`) → motor caerá a fallback `TOLERANCIAS_DEFAULT`. Mitigación: validación Zod en `actualizarReglaQA` por código (`tol.cuota` exige `abs` y `pct`).
-3. **Race condition** si dos directores editan la misma regla en simultáneo — el trigger incrementa versión secuencial, el último gana. No es crítico, el historial preserva ambos. No se implementa optimistic locking en Fase 2.
-4. **Alertas huérfanas** (auditoría borrada) — FK con `ON DELETE CASCADE` ya existe; no requiere acción.
-5. **Cambio de tolerancias retroactivo** — auditorías históricas conservan el score con tolerancias del momento (ya guardado en `qa_auditorias.outputs`), no se recalculan. Comportamiento esperado y deseable.
-6. **UI de config con 15 reglas en una sola pantalla** puede saturarse — mitigado con 3 secciones agrupadas + `NCard` con scroll independiente.
+- Helper `src/lib/qaGuard.ts`: `requireQaOk(expedienteId)` → consulta `qa_categoria` y lanza error UX si `QA_FAILED`.
+- Aplicar en los puntos de transición que ya existen, sin tocar lógica de negocio:
+  - Botón "Enviar a Director Financiero" / "Solicitar validación QA proyección".
+  - Botón "Enviar a Contratación" en `EnviarContratacion`.
+  - Botón "Avanzar etapa" en `EtapaTransicionDialog`.
+- Mensaje uniforme: "El caso debe corregirse antes de continuar. Última auditoría QA falló (score X)".
 
-### Entregables al finalizar
-- Archivos modificados: `qaAI.functions.ts`, `qa-ai.index.tsx`
-- Archivos nuevos: `qa-ai.alertas.tsx`, `qa-ai.config.tsx`
-- Migración: 1 sola con columnas qa_alertas + tabla historial + trigger + RLS
-- Confirmación: `auditarCaso` carga `cargarToleranciasActivas()` antes de ejecutar el motor
-- Validación funcional: crear alerta de prueba → reconocerla → resolverla; editar `tol.cuota` → ver versión bumped a 2 → confirmar que próxima auditoría usa nuevo umbral
-- Riesgos arriba documentados
+### 7. Métricas y widget Torre de Control
+
+- Extender `src/lib/qaAI.functions.ts` con `qaKpisGlobales()`:
+  - Casos auditados hoy, errores detectados/corregidos, promedio score, % aprobados/observados/rechazados, tiempo ahorrado estimado (count auditorías auto × 4 min).
+- Nuevo widget `src/components/torre-control/widgets/SaludPipelineQA.tsx`:
+  - KPIs anteriores + listado top 5 tipos de inconsistencia + top analistas con más errores (group by `expedientes.asesor_id`).
+- Integrarlo en el grid existente del Command Center (sin reorganizarlo).
+
+---
+
+## Riesgos
+
+- **Latencia en confirmar lectura**: la auditoría puede tardar varios segundos. Mitigación: ejecutar `auditarCaso` en background, mostrar estado "Auditando…" en la UI del lector y permitir cerrar el modal.
+- **Auditorías con datos faltantes**: si el extracto no trae cuota/tasa, el motor genera `QA_FAILED` automáticamente. Es comportamiento deseado, pero se documenta en el bloque con sugerencia "Completar campos críticos antes de reauditar".
+- **Bloqueo retroactivo**: expedientes existentes sin auditoría no se bloquean (qa_categoria null = permitido). Sólo bloquea cuando explícitamente es FAILED.
+- **Permisos**: la inserción en `qa_auditorias` desde el motor de extractos requiere que cualquier analista pueda crear auditorías. Las políticas actuales lo permiten vía `can_use_qa_ai` extendida a roles operativos — se ajusta la policy de INSERT a `auth.uid() = asesor_id` del expediente para no abrir demasiado.
+- **Trigger sync**: si una auditoría se borra, las columnas denormalizadas pueden quedar desactualizadas. Se incluye `AFTER DELETE` para recomputar a la auditoría previa o limpiar.
+
+---
+
+## Entregables al finalizar
+
+- Migración aplicada (columnas, trigger, función guard).
+- `MotorExtractosNUVEX` con disparo automático verificado.
+- Componente `QAFinancieroBlock` montado en Expediente.
+- `QABadge` integrado en Pipeline, Expediente, Torre, Dashboard.
+- Guardas operativas en los 3 puntos de transición listados.
+- Widget Salud Pipeline QA en Torre de Control.
+- Reporte de QA funcional: flujo end-to-end (subir extracto → ver dictamen → bloqueo si FAILED).
+
+¿Apruebas la Fase 4 con este alcance?
