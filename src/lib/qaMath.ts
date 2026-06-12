@@ -26,6 +26,10 @@ export interface Tolerancias {
   penDiffCuotaMax: number;
   penDiffSimMax: number;
   penFaltantesMax: number;
+  // Umbrales de dictamen (Fase 2 — configurables vía qa_reglas)
+  umbScoreExcelente: number;  // >= excelente → APROBADO
+  umbScoreAprobado: number;   // >= aprobado  → APROBADO C/OBS
+  umbScoreRevisar: number;    // >= revisar   → REQUIERE REVISIÓN, < → RECHAZADO
 }
 
 export const TOLERANCIAS_DEFAULT: Tolerancias = {
@@ -34,7 +38,9 @@ export const TOLERANCIAS_DEFAULT: Tolerancias = {
   simCuotasMax: 2, simAhorroAbs: 500_000,
   penInfo: 1, penWarning: 5, penCritica: 15,
   penDiffCuotaMax: 10, penDiffSimMax: 25, penFaltantesMax: 10,
+  umbScoreExcelente: 95, umbScoreAprobado: 85, umbScoreRevisar: 70,
 };
+
 
 // ──────────────────────────────────────────────────────────────
 // 1. Conversiones de tasa
@@ -315,16 +321,16 @@ export function calcularScore(
   score = Math.max(0, Math.min(100, Math.round(score * 100) / 100));
 
   let categoria: Categoria;
-  if (score >= 95) categoria = "excelente";
-  else if (score >= 85) categoria = "aprobado";
-  else if (score >= 70) categoria = "revisar";
+  if (score >= tol.umbScoreExcelente) categoria = "excelente";
+  else if (score >= tol.umbScoreAprobado) categoria = "aprobado";
+  else if (score >= tol.umbScoreRevisar) categoria = "revisar";
   else categoria = "rechazado";
 
   let dictamen: Dictamen;
   if (crit > 0) dictamen = "rechazado";
-  else if (score >= 95) dictamen = "aprobado";
-  else if (score >= 85) dictamen = "aprobado_obs";
-  else if (score >= 70) dictamen = "requiere_revision";
+  else if (score >= tol.umbScoreExcelente) dictamen = "aprobado";
+  else if (score >= tol.umbScoreAprobado) dictamen = "aprobado_obs";
+  else if (score >= tol.umbScoreRevisar) dictamen = "requiere_revision";
   else dictamen = "rechazado";
 
   return { score, categoria, dictamen, penalizaciones: pen };
