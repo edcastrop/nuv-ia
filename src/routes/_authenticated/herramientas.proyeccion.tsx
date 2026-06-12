@@ -6,7 +6,7 @@ import { ProyeccionFinancieraView } from "@/components/proyeccion-financiera/Pro
 export const Route = createFileRoute("/_authenticated/herramientas/proyeccion")({
   head: () => ({
     meta: [
-      { title: "Proyección financiera · Herramientas NUVEX" },
+      { title: "Proyección financiera · Herramientas NUVIA" },
       { name: "description", content: "Lectura IA del extracto + escenarios ilimitados sin crear caso." },
     ],
   }),
