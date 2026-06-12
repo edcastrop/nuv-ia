@@ -10,11 +10,13 @@ export function SaveExpedienteButton({
   expedienteId,
   onSaved,
   onSeguirSimulando,
+  enviarAuditoriaManual = true,
 }: {
   payload: UpsertPayload;
   expedienteId?: string;
   onSaved?: (e: Expediente) => void;
   onSeguirSimulando?: () => void;
+  enviarAuditoriaManual?: boolean;
 }) {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -34,13 +36,17 @@ export function SaveExpedienteButton({
           console.warn("[estado] simulado", err);
         }
       }
-      // ENVÍO AUTOMÁTICO A AUDITORÍA QA (un solo clic)
+      // ENVÍO AUTOMÁTICO A AUDITORÍA QA manual/director (un solo clic).
+      // Cuando el simulador viene desde Expediente Maestro, este envío se
+      // desactiva para no duplicar la ruta antigua: allí manda la Auto-QA.
       let qaOk = false;
-      try {
-        await enviarAValidacionQA(e.id);
-        qaOk = true;
-      } catch (err) {
-        console.warn("[qa] envío automático falló", err);
+      if (enviarAuditoriaManual) {
+        try {
+          await enviarAValidacionQA(e.id);
+          qaOk = true;
+        } catch (err) {
+          console.warn("[qa] envío automático falló", err);
+        }
       }
       setQaEnviada(qaOk);
       setMsg(
@@ -68,9 +74,11 @@ export function SaveExpedienteButton({
         >
           {saving
             ? "Enviando…"
-            : expedienteId
-              ? "Actualizar y enviar a auditoría QA"
-              : "Crear expediente y enviar a auditoría QA"}
+            : expedienteId && !enviarAuditoriaManual
+              ? "Actualizar expediente"
+              : expedienteId
+                ? "Actualizar y enviar a auditoría QA"
+                : "Crear expediente y enviar a auditoría QA"}
         </button>
       </div>
       {creado && (

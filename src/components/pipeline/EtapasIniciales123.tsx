@@ -7,6 +7,8 @@ import { Link } from "@tanstack/react-router";
 import { CheckCircle2, Circle, AlertCircle, ArrowRight, FileSpreadsheet, Sparkles, User, Loader2 } from "lucide-react";
 import { NUVEX } from "@/components/nuvex/constants";
 import { Card } from "@/components/nuvex/ui";
+import { QABadge, type QACategoria } from "@/components/qa-ai/QABadge";
+import { supabase } from "@/integrations/supabase/client";
 import { ETAPAS_PIPELINE, type EtapaPipelineId } from "@/lib/pipelineEtapas";
 import { roleLabel } from "@/lib/roleLabels";
 import {
@@ -36,6 +38,21 @@ interface Props {
 
 type EtapaKey = "lead" | "extracto" | "proyeccion";
 
+type AutoQAEstado = {
+  qa_score: number | null;
+  qa_categoria: QACategoria;
+  qa_dictamen: string | null;
+  qa_auditoria_id: string | null;
+  qa_ejecutada_at: string | null;
+};
+
+const dictamenAutoLabel: Record<string, string> = {
+  aprobado: "APROBADO",
+  aprobado_obs: "APROBADO CON OBSERVACIONES",
+  requiere_revision: "REQUIERE REVISIÓN",
+  rechazado: "RECHAZADO",
+};
+
 interface CheckItem {
   label: string;
   ok: boolean;
@@ -50,6 +67,7 @@ export function EtapasIniciales123({ expedienteId, cliente, credito, etapaActual
   });
 
   const [validacion, setValidacion] = useState<ValidacionQA | null>(null);
+  const [autoQA, setAutoQA] = useState<AutoQAEstado | null>(null);
   const [loadingQA, setLoadingQA] = useState(true);
   const [enviandoQA, setEnviandoQA] = useState(false);
   const [errQA, setErrQA] = useState<string | null>(null);
@@ -57,8 +75,17 @@ export function EtapasIniciales123({ expedienteId, cliente, credito, etapaActual
   const cargarQA = useCallback(async () => {
     setLoadingQA(true);
     try {
-      const v = await obtenerUltimaValidacion(expedienteId);
+      const [v, auto] = await Promise.all([
+        obtenerUltimaValidacion(expedienteId),
+        supabase
+          .from("expedientes")
+          .select("qa_score,qa_categoria,qa_dictamen,qa_auditoria_id,qa_ejecutada_at")
+          .eq("id", expedienteId)
+          .maybeSingle(),
+      ]);
       setValidacion(v);
+      const row = auto.data as AutoQAEstado | null;
+      setAutoQA(row?.qa_auditoria_id ? row : null);
     } catch (e) {
       setErrQA((e as Error).message);
     } finally {
@@ -73,6 +100,8 @@ export function EtapasIniciales123({ expedienteId, cliente, credito, etapaActual
   const qaEstadoCalc: "pendiente" | "aprobada" | "devuelta" | null = validacion
     ? validacion.resultado ?? "pendiente"
     : null;
+  const autoQaEjecutada = !!autoQA?.qa_auditoria_id;
+  const autoQaHabilita = autoQaEjecutada && autoQA.qa_categoria !== "rechazado";
 
   const handleEnviarQA = async () => {
     setEnviandoQA(true);
@@ -105,10 +134,10 @@ export function EtapasIniciales123({ expedienteId, cliente, credito, etapaActual
     ] as CheckItem[],
     proyeccion: [
       { label: "Datos de crédito completos", ok: datosCreditoOk },
-      { label: "Proyección enviada a QA", ok: !!validacion, hint: "Envía la proyección a validación QA." },
-      { label: "QA aprobado", ok: qaEstadoCalc === "aprobada", hint: "La proyección no avanza a Presentación sin QA aprobado." },
+      { label: "Auto-QA financiero ejecutado", ok: autoQaEjecutada || !!validacion, hint: "Carga o aplica el extracto asociado al expediente para activar la auditoría automática." },
+      { label: "Resultado QA habilitante", ok: autoQaHabilita || qaEstadoCalc === "aprobada", hint: "Si QA falla, corrige los hallazgos antes de avanzar." },
     ] as CheckItem[],
-  }), [cliente, credito, datosCreditoOk, validacion, qaEstadoCalc]);
+  }), [cliente, credito, datosCreditoOk, validacion, qaEstadoCalc, autoQaEjecutada, autoQaHabilita]);
 
   const completar = (items: CheckItem[]) => items.filter((i) => i.ok).length;
   const total = (items: CheckItem[]) => items.length;
@@ -171,6 +200,7 @@ export function EtapasIniciales123({ expedienteId, cliente, credito, etapaActual
           expedienteId={expedienteId}
           qaEstado={qaEstadoCalc}
           validacion={validacion}
+          autoQA={autoQA}
           loadingQA={loadingQA}
           enviandoQA={enviandoQA}
           errQA={errQA}
@@ -188,6 +218,7 @@ function EtapaPanel({
   expedienteId,
   qaEstado,
   validacion,
+  autoQA,
   loadingQA,
   enviandoQA,
   errQA,
@@ -199,6 +230,7 @@ function EtapaPanel({
   expedienteId: string;
   qaEstado: "pendiente" | "aprobada" | "devuelta" | null;
   validacion: ValidacionQA | null;
+  autoQA: AutoQAEstado | null;
   loadingQA: boolean;
   enviandoQA: boolean;
   errQA: string | null;
@@ -299,6 +331,26 @@ function EtapaPanel({
             >
               Ver tablero QA →
             </Link>
+
+            {autoQA && (
+              <div className="basis-full mt-2 flex flex-wrap items-center gap-2 rounded-md border border-[#D9E3F0] bg-white px-2.5 py-2 text-[11px] text-[#242424]">
+                <QABadge
+                  categoria={autoQA.qa_categoria}
+                  score={autoQA.qa_score}
+                  auditoriaId={autoQA.qa_auditoria_id}
+                  size="xs"
+                />
+                <span className="font-semibold">
+                  Auto-QA ejecutada
+                  {autoQA.qa_dictamen ? ` · ${dictamenAutoLabel[autoQA.qa_dictamen] ?? autoQA.qa_dictamen}` : ""}
+                </span>
+                {autoQA.qa_ejecutada_at && (
+                  <span className="text-[#242424]/55">
+                    {new Date(autoQA.qa_ejecutada_at).toLocaleString("es-CO")}
+                  </span>
+                )}
+              </div>
+            )}
 
             {loadingQA ? (
               <span className="text-[11px] text-[#242424]/50">Consultando QA…</span>
