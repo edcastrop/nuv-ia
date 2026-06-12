@@ -336,6 +336,23 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
     await processFile(f, undefined);
   };
 
+  const uploadOriginal = async (f: File) => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData?.user?.id;
+      if (!uid) return;
+      const path = `${uid}/${Date.now()}_${f.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+      const { error: upErr } = await supabase.storage.from("extractos").upload(path, f, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: f.type || "application/octet-stream",
+      });
+      if (!upErr) setArchivoPath(path);
+    } catch (e) {
+      console.warn("No se pudo subir el archivo a storage:", e);
+    }
+  };
+
   const processFile = async (f: File, pwd: string | undefined) => {
     setStage("reading");
     try {
@@ -347,6 +364,33 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
         f.type === "application/x-zip-compressed" ||
         lowerName.endsWith(".zip");
       if (f.type === "application/pdf" || lowerName.endsWith(".pdf")) {
+        images = result.images;
+        try {
+          rawText = await extractTextFromPdf(f, pwd);
+          if (rawText.trim().length > 500) {
+            const deterministicResp = await callExtract({ data: { images: [], rawText } });
+            if (deterministicResp.data) {
+              await uploadOriginal(f);
+              setParsed(
+                normalizeExtractData(
+                  recomputeDaviviendaHipotecario(
+                    recomputeDaviviendaLeasing(recomputeBancolombia(deterministicResp.data)),
+                  ),
+                ),
+              );
+              setStage("review");
+              return;
+            }
+          }
+        } catch (textErr) {
+          const e = textErr as { name?: string; code?: number };
+          if (e?.name === "PasswordException") {
+            setWrongPassword(e.code === 2);
+            setStage("password");
+            return;
+          }
+          console.warn("No se pudo extraer texto estructural del PDF:", textErr);
+        }
         const result = await renderPdfToImages(f, pwd);
         if (result.needsPassword) {
           setWrongPassword(result.wrongPassword);
@@ -354,11 +398,6 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           return;
         }
         images = result.images;
-        try {
-          rawText = await extractTextFromPdf(f, pwd);
-        } catch (textErr) {
-          console.warn("No se pudo extraer texto estructural del PDF:", textErr);
-        }
       } else if (f.type.startsWith("image/")) {
         const url = await fileToDataUrl(f);
         images = [{ mime: f.type, dataUrl: url }];
@@ -371,21 +410,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       }
 
       // Subir archivo original a Supabase Storage (privado)
-      try {
-        const { data: userData } = await supabase.auth.getUser();
-        const uid = userData?.user?.id;
-        if (uid) {
-          const path = `${uid}/${Date.now()}_${f.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-          const { error: upErr } = await supabase.storage.from("extractos").upload(path, f, {
-            cacheControl: "3600",
-            upsert: false,
-            contentType: f.type || "application/octet-stream",
-          });
-          if (!upErr) setArchivoPath(path);
-        }
-      } catch (e) {
-        console.warn("No se pudo subir el archivo a storage:", e);
-      }
+      await uploadOriginal(f);
 
       // Llamar IA
       const resp = await callExtract({ data: { images, rawText } });
