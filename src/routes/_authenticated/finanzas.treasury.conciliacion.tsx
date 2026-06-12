@@ -84,7 +84,7 @@ function ConciliacionPage() {
   }
 
   const bancoOptions = useMemo(
-    () => [{ value: "", label: "— Sin banco —" }, ...(bancos ?? []).map((b) => ({ value: b.id, label: b.nombre }))],
+    () => [{ value: "__none__", label: "— Sin banco —" }, ...(bancos ?? []).map((b) => ({ value: b.id, label: b.nombre }))],
     [bancos],
   );
 
