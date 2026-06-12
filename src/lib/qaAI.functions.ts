@@ -233,6 +233,9 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
       const d = (ext?.datos ?? {}) as Record<string, unknown>;
       const valorFrech = parseNum(d.valorCobertura) ?? parseNum(d.valorSubsidioGobierno);
       const tasaFrech = parseNum(d.tasaCobertura);
+      const cuotaBaseSinSubsidio = parseNum(d.cuotaSinSubsidio) ?? parseNum(d.cuotaBaseSimulacion) ?? parseNum(d.cuotaActual);
+      const seguros = parseNum(d.seguros) ?? Number(rec.seguros ?? 0);
+      const cuotaFinancieraSinSeguros = parseNum(d.cuotaConInteresSinSeguros) ?? parseNum(d.cuotaSinSeguros) ?? (cuotaBaseSinSubsidio ? Math.max(0, cuotaBaseSinSubsidio - seguros) : undefined);
       if ((valorFrech && valorFrech > 0) || (tasaFrech && tasaFrech > 0)) {
         const cuotasPend = Number(rec.cuotasPendientes ?? 0);
         const cuotasPag = Number(rec.cuotasPagadas ?? 0);
@@ -245,6 +248,10 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
             coberturaFrechPp: rec.coberturaFrechPp ?? tasaFrech,
             coberturaFrechValorMensual: rec.coberturaFrechValorMensual ?? valorFrech,
             coberturaFrechCuotasRestantes: rec.coberturaFrechCuotasRestantes ?? frechCuotasRestantes,
+            saldoUVR: rec.saldoUVR ?? parseNum(d.saldoUVR),
+            valorUVR: rec.valorUVR ?? parseNum(d.valorUVR),
+            cuotaBaseSinSubsidio: rec.cuotaBaseSinSubsidio ?? cuotaBaseSinSubsidio,
+            cuotaFinancieraSinSeguros: rec.cuotaFinancieraSinSeguros ?? cuotaFinancieraSinSeguros,
           },
           extracto: {
             ...extSnap,
@@ -273,6 +280,7 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
               costoTotal: result.reconstruccion.costoTotal,
               vecesPagado: result.reconstruccion.vecesPagado,
               totalIntereses: result.reconstruccion.totalIntereses,
+              totalCorreccionUvr: result.reconstruccion.totalCorreccionUvr,
               iMv: result.reconstruccion.iMv,
               primerasCuotas: result.reconstruccion.primerasCuotas,
               ultimasCuotas: result.reconstruccion.ultimasCuotas,
