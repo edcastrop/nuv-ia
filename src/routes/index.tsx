@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { AnimatedBackground } from "@/components/home/widgets/AnimatedBackground";
 
-export const Route = createFileRoute("/landing")({
+export const Route = createFileRoute("/")({
   component: LandingPage,
   head: () => ({
     meta: [
