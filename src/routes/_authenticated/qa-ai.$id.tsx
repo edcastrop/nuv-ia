@@ -347,8 +347,8 @@ function ResultadoQaAi() {
             title={`Reconstrucción matemática (${filasAmort.length} de ${nTotal} filas)`}
             description={
               verTodas && puedeVerTodas
-                ? `Plan amortizado completo — ${nTotal} cuotas pendientes.`
-                : "Plan amortizado: primeras 12 + últimas 12. Para créditos ≤ 24 cuotas se muestra la tabla completa sin duplicados."
+                ? `Plan amortizado completo — ${nTotal} cuotas pendientes. Incluye capital, interés y seguros${reconMeta.hasFrech ? " · tasa FRECH aplicada" : ""}.`
+                : `Plan amortizado: primeras 12 + últimas 12. Incluye capital, interés y seguros${reconMeta.hasFrech ? " · tasa FRECH aplicada" : ""}.`
             }
           />
           {puedeVerTodas && (
@@ -365,11 +365,29 @@ function ResultadoQaAi() {
             </button>
           )}
         </div>
+        <div style={{ padding: "0 20px 12px" }} className="flex flex-wrap gap-2 text-[11px]">
+          <span className="rounded-md px-2 py-1" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--nuvia-border)", color: "var(--nuvia-text-secondary)" }}>
+            Tasa EA pactada: <b style={{ color: "var(--nuvia-text-primary)" }}>{reconMeta.tasaEa.toFixed(2)}%</b>
+          </span>
+          {reconMeta.hasFrech && (
+            <>
+              <span className="rounded-md px-2 py-1" style={{ background: "rgba(132,185,143,0.10)", border: "1px solid rgba(132,185,143,0.35)", color: "var(--nuvia-success)" }}>
+                FRECH: −{reconMeta.cob.toFixed(2)} pp
+              </span>
+              <span className="rounded-md px-2 py-1" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--nuvia-border)", color: "var(--nuvia-text-secondary)" }}>
+                Tasa aplicada: <b style={{ color: "var(--nuvia-text-primary)" }}>{reconMeta.tasaAplicada.toFixed(2)}%</b> EA
+              </span>
+            </>
+          )}
+          <span className="rounded-md px-2 py-1" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--nuvia-border)", color: "var(--nuvia-text-secondary)" }}>
+            Seguros mensuales: <b style={{ color: "var(--nuvia-text-primary)" }}>${fmt(reconMeta.seguros, 0)}</b>
+          </span>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-[12.5px]">
             <thead>
               <tr style={{ background: "rgba(255,255,255,0.03)" }}>
-                {["#", "Cuota", "Interés", "Capital", "Saldo"].map((h) => (
+                {["#", "Cuota", "Interés", "Capital", "Seguros", "Cuota total", "Saldo"].map((h) => (
                   <th key={h} className="text-right px-4 py-2 font-medium" style={{ color: "var(--nuvia-text-secondary)", borderBottom: "1px solid var(--nuvia-border)" }}>{h}</th>
                 ))}
               </tr>
@@ -381,6 +399,8 @@ function ResultadoQaAi() {
                   <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-primary)" }}>${fmt(f.cuota, 0)}</td>
                   <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>${fmt(f.interes, 0)}</td>
                   <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>${fmt(f.capital, 0)}</td>
+                  <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>${fmt(f.seguros, 0)}</td>
+                  <td className="px-4 py-1.5 text-right tabular-nums font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>${fmt(f.cuotaTotal, 0)}</td>
                   <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>${fmt(f.saldo, 0)}</td>
                 </tr>
               ))}
@@ -388,6 +408,7 @@ function ResultadoQaAi() {
           </table>
         </div>
       </NCard>
+
 
       <CopilotoQADrawer open={copilotoOpen} onClose={() => setCopilotoOpen(false)} auditoriaId={id} />
     </PageLayout>
