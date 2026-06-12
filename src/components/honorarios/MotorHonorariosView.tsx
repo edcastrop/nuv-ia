@@ -52,40 +52,25 @@ export function MotorHonorariosView({ initial }: { initial?: InitialData }) {
   const [tab, setTab] = useState("calculadora");
 
   return (
-    <div className="min-h-screen" style={{ background: COLORS.bg, color: COLORS.text }}>
-      <div className="mx-auto max-w-7xl px-6 py-8">
-        <Header />
-        <Tabs value={tab} onValueChange={setTab} className="mt-6">
-          <TabsList className="bg-white/[0.04] border border-white/[0.06]">
-            <TabsTrigger value="calculadora"><Calculator className="h-4 w-4 mr-2" />Calculadora</TabsTrigger>
-            <TabsTrigger value="mis"><ListChecks className="h-4 w-4 mr-2" />Mis cálculos</TabsTrigger>
-            {isAprobador && <TabsTrigger value="aprob"><ShieldCheck className="h-4 w-4 mr-2" />Aprobaciones</TabsTrigger>}
-            {isAprobador && <TabsTrigger value="reportes"><BarChart3 className="h-4 w-4 mr-2" />Reportes</TabsTrigger>}
-          </TabsList>
-          <TabsContent value="calculadora" className="mt-6"><Calculadora initial={initial} /></TabsContent>
-          <TabsContent value="mis" className="mt-6"><MisCalculos /></TabsContent>
-          {isAprobador && <TabsContent value="aprob" className="mt-6"><Aprobaciones /></TabsContent>}
-          {isAprobador && <TabsContent value="reportes" className="mt-6"><Reportes /></TabsContent>}
-        </Tabs>
-      </div>
-    </div>
-  );
-}
-
-function Header() {
-  return (
-    <div className="flex items-center gap-4">
-      <div className="flex h-14 w-14 items-center justify-center rounded-2xl"
-        style={{ background: "linear-gradient(135deg, #445DA3, #84B98F)", boxShadow: "0 18px 40px -16px rgba(132,185,143,0.5)" }}>
-        <DollarSign className="h-7 w-7 text-white" />
-      </div>
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Motor de Honorarios NUVEX</h1>
-        <p className="text-sm" style={{ color: COLORS.muted }}>
-          Pricing engine empresarial — calcula, controla, audita y protege la rentabilidad.
-        </p>
-      </div>
-    </div>
+    <PageLayout>
+      <ExecutiveHero
+        badge={{ icon: <DollarSign size={12} />, label: "Pricing engine NUVIA", tone: "blue" }}
+        title="Motor de Honorarios"
+        description="Calcula, controla, audita y protege la rentabilidad — pricing engine empresarial."
+      />
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="bg-white/[0.04] border border-white/[0.06]">
+          <TabsTrigger value="calculadora"><Calculator className="h-4 w-4 mr-2" />Calculadora</TabsTrigger>
+          <TabsTrigger value="mis"><ListChecks className="h-4 w-4 mr-2" />Mis cálculos</TabsTrigger>
+          {isAprobador && <TabsTrigger value="aprob"><ShieldCheck className="h-4 w-4 mr-2" />Aprobaciones</TabsTrigger>}
+          {isAprobador && <TabsTrigger value="reportes"><BarChart3 className="h-4 w-4 mr-2" />Reportes</TabsTrigger>}
+        </TabsList>
+        <TabsContent value="calculadora" className="mt-6"><Calculadora initial={initial} /></TabsContent>
+        <TabsContent value="mis" className="mt-6"><MisCalculos /></TabsContent>
+        {isAprobador && <TabsContent value="aprob" className="mt-6"><Aprobaciones /></TabsContent>}
+        {isAprobador && <TabsContent value="reportes" className="mt-6"><Reportes /></TabsContent>}
+      </Tabs>
+    </PageLayout>
   );
 }
 
