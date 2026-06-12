@@ -112,8 +112,10 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
   const saludo = useMemo(() => {
     const hora = new Date().getHours();
     const greet = hora < 12 ? "Buenos días" : hora < 19 ? "Buenas tardes" : "Buenas noches";
-    const display = nombre || user?.email?.split("@")[0] || "Bienvenido";
-    return `${greet}, ${display}`;
+    const base = nombre || user?.email?.split("@")[0] || "Bienvenido";
+    // Solo el primer nombre
+    const primer = base.split(/\s+/)[0];
+    return `${greet}, ${primer}`;
   }, [nombre, user]);
 
   const resolveValue = (k: RoleHomeKpi) => {
