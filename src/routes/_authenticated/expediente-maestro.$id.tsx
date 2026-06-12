@@ -439,6 +439,8 @@ function MaestroDetail() {
 
       <MotorExtractosNUVEX expedienteId={id} onConfirm={aplicarExtracto} />
 
+      <QAFinancieroBlock expedienteId={id} />
+
       {(aplicandoExtracto || extractoAplicado) && (
         <div ref={resumenRef}>
           <Card>
