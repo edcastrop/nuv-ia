@@ -1294,17 +1294,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
               )}
 
 
-              {stage === "reading" && (
-                <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-                  <Loader2 className="h-10 w-10 animate-spin text-[#84B98F]" />
-                  <div className="text-sm font-semibold text-white">
-                    NUVIA IA está leyendo el extracto…
-                  </div>
-                  <div className="text-xs text-white/50">
-                    Esto puede tardar entre 10 y 30 segundos.
-                  </div>
-                </div>
-              )}
+              {stage === "reading" && <NuviaReadingAnimation />}
 
               {stage === "password" && (
                 <div className="mx-auto max-w-md py-6">
