@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { PageLayout, ExecutiveHero, KpiGrid, KpiCard, NCard, SectionHeader } from "@/components/nuvia";
 import { useServerFn } from "@tanstack/react-start";
 import { obtenerAuditoriaQA, reejecutarAuditoriaQA } from "@/lib/qaAI.functions";
-import { auditar, amortizacion, eaToMv, type AuditarInput } from "@/lib/qaMath";
+import { auditar, reconstruir, type AuditarInput } from "@/lib/qaMath";
 import { exportarDictamenPDF } from "@/lib/qaPdf";
 import { CopilotoQADrawer } from "@/components/qa-ai/CopilotoQADrawer";
 import { Brain, Gauge, ArrowLeft, AlertTriangle, CheckCircle2, Coins, Calculator, Sigma, ShieldAlert, Minus, FileDown, Sparkles, RefreshCw } from "lucide-react";
@@ -65,33 +65,15 @@ function ResultadoQaAi() {
 
   // Reconstrucción COMPLETA del plan amortizado (todas las cuotas pendientes)
   const filasCompletas = useMemo(() => {
-    if (!data?.auditoria) return [] as Array<{ k: number; cuota: number; interes: number; capital: number; seguros: number; fresh: number; cuotaTotal: number; saldo: number; subsidioActivo: boolean }>;
+    if (!data?.auditoria) return [] as Array<{ k: number; cuota: number; interes: number; capital: number; seguros: number; fresh: number; cuotaTotal: number; saldo: number; subsidioActivo: boolean; saldoUvr?: number; valorUvr?: number; correccionUvr?: number }>;
     const inputs = (data.auditoria as Record<string, unknown>).inputs as
-      | { reconstruccion?: { saldoCapital?: number; tasaEa?: number; cuotasPendientes?: number; cuotasPagadas?: number; coberturaFrechPp?: number; coberturaFrechValorMensual?: number; coberturaFrechCuotasRestantes?: number; seguros?: number } }
+      | { modalidad?: AuditarInput["modalidad"]; reconstruccion?: AuditarInput["reconstruccion"] & { cuotasPagadas?: number } }
       | undefined;
     const r = inputs?.reconstruccion;
     if (!r || !r.saldoCapital || !r.tasaEa || !r.cuotasPendientes) return [];
     try {
-      const ea = (r.tasaEa || 0) / 100;
-      const cob = r.coberturaFrechPp ? r.coberturaFrechPp / 100 : 0;
-      const freshMensual = Math.max(0, r.coberturaFrechValorMensual || 0);
-      const iMv = eaToMv(ea);
-      const iSub = cob > 0 ? eaToMv(Math.max(0, ea - cob)) : iMv;
-      const n = Math.max(0, Math.round(r.cuotasPendientes));
-      const seg = Math.max(0, r.seguros || 0);
-      const FRECH_MAX = 84;
-      const hayFrech = cob > 0 || freshMensual > 0;
-      const cuotasSub = hayFrech
-        ? Math.max(0, Math.min(n, Math.round(
-            r.coberturaFrechCuotasRestantes ?? (FRECH_MAX - (r.cuotasPagadas ?? 0)),
-          )))
-        : 0;
-      return amortizacion(
-        r.saldoCapital,
-        freshMensual > 0 ? iMv : (cob > 0 ? iSub : iMv),
-        n,
-        seg,
-        hayFrech ? { iPostSubsidio: freshMensual > 0 ? undefined : iMv, cuotasSubsidio: cuotasSub, subsidioMensual: freshMensual } : undefined,
+      return reconstruir({ ...r, modalidad: inputs?.modalidad ?? "hipotecario" }).primerasCuotas.concat(
+        reconstruir({ ...r, modalidad: inputs?.modalidad ?? "hipotecario" }).ultimasCuotas,
       );
     } catch { return []; }
   }, [data]);
