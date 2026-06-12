@@ -54,6 +54,7 @@ import { normalizeCreditMoneyInput } from "@/lib/creditoSanity";
 import { AuditPanel } from "./AuditPanel";
 import { useNivelAutonomia } from "@/hooks/useNivelAutonomia";
 import { triggerSimuladorAutoQA } from "@/lib/simuladorAutoQA";
+import { AutoQAPanel, type AutoQAResult } from "./AutoQAPanel";
 
 
 export function PesosSimulator({
