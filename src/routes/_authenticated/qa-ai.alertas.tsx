@@ -41,6 +41,7 @@ function AlertasQA() {
   const [dlg, setDlg] = useState<{ alerta: Alerta; accion: "reconocer" | "resolver" } | null>(null);
   const [notas, setNotas] = useState("");
   const [busy, setBusy] = useState(false);
+  const [copilotoOpen, setCopilotoOpen] = useState(false);
 
   const fetchRows = useCallback(async () => {
     setLoading(true);
