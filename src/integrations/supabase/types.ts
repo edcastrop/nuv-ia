@@ -4439,6 +4439,286 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_alertas: {
+        Row: {
+          auditoria_id: string
+          created_at: string
+          estado: Database["public"]["Enums"]["qa_alerta_estado"]
+          expediente_id: string | null
+          id: string
+          mensaje: string
+          reconocida_at: string | null
+          reconocida_by: string | null
+          severidad: Database["public"]["Enums"]["qa_severidad"]
+          tipo: Database["public"]["Enums"]["qa_inconsistencia_tipo"]
+          updated_at: string
+        }
+        Insert: {
+          auditoria_id: string
+          created_at?: string
+          estado?: Database["public"]["Enums"]["qa_alerta_estado"]
+          expediente_id?: string | null
+          id?: string
+          mensaje: string
+          reconocida_at?: string | null
+          reconocida_by?: string | null
+          severidad: Database["public"]["Enums"]["qa_severidad"]
+          tipo: Database["public"]["Enums"]["qa_inconsistencia_tipo"]
+          updated_at?: string
+        }
+        Update: {
+          auditoria_id?: string
+          created_at?: string
+          estado?: Database["public"]["Enums"]["qa_alerta_estado"]
+          expediente_id?: string | null
+          id?: string
+          mensaje?: string
+          reconocida_at?: string | null
+          reconocida_by?: string | null
+          severidad?: Database["public"]["Enums"]["qa_severidad"]
+          tipo?: Database["public"]["Enums"]["qa_inconsistencia_tipo"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_alertas_auditoria_id_fkey"
+            columns: ["auditoria_id"]
+            isOneToOne: false
+            referencedRelation: "qa_auditorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_alertas_expediente_id_fkey"
+            columns: ["expediente_id"]
+            isOneToOne: false
+            referencedRelation: "expedientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_auditoria_log: {
+        Row: {
+          accion: Database["public"]["Enums"]["qa_log_accion"]
+          auditoria_id: string
+          created_at: string
+          id: string
+          payload: Json
+          user_id: string | null
+        }
+        Insert: {
+          accion: Database["public"]["Enums"]["qa_log_accion"]
+          auditoria_id: string
+          created_at?: string
+          id?: string
+          payload?: Json
+          user_id?: string | null
+        }
+        Update: {
+          accion?: Database["public"]["Enums"]["qa_log_accion"]
+          auditoria_id?: string
+          created_at?: string
+          id?: string
+          payload?: Json
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_auditoria_log_auditoria_id_fkey"
+            columns: ["auditoria_id"]
+            isOneToOne: false
+            referencedRelation: "qa_auditorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_auditorias: {
+        Row: {
+          alertas: Json
+          analista_id: string | null
+          categoria: Database["public"]["Enums"]["qa_categoria"]
+          created_at: string
+          dictamen: Database["public"]["Enums"]["qa_dictamen"]
+          diferencias: Json
+          ejecutado_at: string
+          ejecutado_by: string | null
+          expediente_id: string | null
+          extracto_id: string | null
+          id: string
+          inputs: Json
+          modalidad: Database["public"]["Enums"]["qa_modalidad"]
+          motor_version: string
+          outputs: Json
+          qa_score: number
+          simulacion_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          alertas?: Json
+          analista_id?: string | null
+          categoria: Database["public"]["Enums"]["qa_categoria"]
+          created_at?: string
+          dictamen: Database["public"]["Enums"]["qa_dictamen"]
+          diferencias?: Json
+          ejecutado_at?: string
+          ejecutado_by?: string | null
+          expediente_id?: string | null
+          extracto_id?: string | null
+          id?: string
+          inputs?: Json
+          modalidad: Database["public"]["Enums"]["qa_modalidad"]
+          motor_version?: string
+          outputs?: Json
+          qa_score?: number
+          simulacion_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          alertas?: Json
+          analista_id?: string | null
+          categoria?: Database["public"]["Enums"]["qa_categoria"]
+          created_at?: string
+          dictamen?: Database["public"]["Enums"]["qa_dictamen"]
+          diferencias?: Json
+          ejecutado_at?: string
+          ejecutado_by?: string | null
+          expediente_id?: string | null
+          extracto_id?: string | null
+          id?: string
+          inputs?: Json
+          modalidad?: Database["public"]["Enums"]["qa_modalidad"]
+          motor_version?: string
+          outputs?: Json
+          qa_score?: number
+          simulacion_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_auditorias_analista_id_fkey"
+            columns: ["analista_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_auditorias_analista_id_fkey"
+            columns: ["analista_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_publicos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_auditorias_expediente_id_fkey"
+            columns: ["expediente_id"]
+            isOneToOne: false
+            referencedRelation: "expedientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_auditorias_extracto_id_fkey"
+            columns: ["extracto_id"]
+            isOneToOne: false
+            referencedRelation: "extractos_lecturas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_auditorias_simulacion_id_fkey"
+            columns: ["simulacion_id"]
+            isOneToOne: false
+            referencedRelation: "audit_simulaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_inconsistencias: {
+        Row: {
+          auditoria_id: string
+          campo: string | null
+          created_at: string
+          diferencia: number | null
+          id: string
+          mensaje: string
+          severidad: Database["public"]["Enums"]["qa_severidad"]
+          sugerencia: string | null
+          tipo: Database["public"]["Enums"]["qa_inconsistencia_tipo"]
+          valor_calculado: number | null
+          valor_extracto: number | null
+        }
+        Insert: {
+          auditoria_id: string
+          campo?: string | null
+          created_at?: string
+          diferencia?: number | null
+          id?: string
+          mensaje: string
+          severidad: Database["public"]["Enums"]["qa_severidad"]
+          sugerencia?: string | null
+          tipo: Database["public"]["Enums"]["qa_inconsistencia_tipo"]
+          valor_calculado?: number | null
+          valor_extracto?: number | null
+        }
+        Update: {
+          auditoria_id?: string
+          campo?: string | null
+          created_at?: string
+          diferencia?: number | null
+          id?: string
+          mensaje?: string
+          severidad?: Database["public"]["Enums"]["qa_severidad"]
+          sugerencia?: string | null
+          tipo?: Database["public"]["Enums"]["qa_inconsistencia_tipo"]
+          valor_calculado?: number | null
+          valor_extracto?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_inconsistencias_auditoria_id_fkey"
+            columns: ["auditoria_id"]
+            isOneToOne: false
+            referencedRelation: "qa_auditorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_reglas: {
+        Row: {
+          activa: boolean
+          codigo: string
+          created_at: string
+          descripcion: string
+          id: string
+          payload: Json
+          tipo: Database["public"]["Enums"]["qa_regla_tipo"]
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          activa?: boolean
+          codigo: string
+          created_at?: string
+          descripcion: string
+          id?: string
+          payload?: Json
+          tipo: Database["public"]["Enums"]["qa_regla_tipo"]
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Update: {
+          activa?: boolean
+          codigo?: string
+          created_at?: string
+          descripcion?: string
+          id?: string
+          payload?: Json
+          tipo?: Database["public"]["Enums"]["qa_regla_tipo"]
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Relationships: []
+      }
       rol_permisos: {
         Row: {
           accion: string
@@ -5367,6 +5647,7 @@ export type Database = {
         Args: { _uid: string }
         Returns: boolean
       }
+      can_use_qa_ai: { Args: { _uid: string }; Returns: boolean }
       can_validar_identidad: { Args: { _uid: string }; Returns: boolean }
       can_validar_proyeccion: { Args: { _uid: string }; Returns: boolean }
       can_view_cartera_row: {
@@ -5698,6 +5979,34 @@ export type Database = {
         | "faq"
       mfa_metodo: "ninguno" | "email" | "totp"
       pregunta_tipo: "unica" | "multiple" | "verdadero_falso"
+      qa_alerta_estado: "abierta" | "reconocida" | "resuelta"
+      qa_categoria: "excelente" | "aprobado" | "revisar" | "rechazado"
+      qa_dictamen:
+        | "aprobado"
+        | "aprobado_obs"
+        | "requiere_revision"
+        | "rechazado"
+      qa_inconsistencia_tipo:
+        | "tasa"
+        | "seguros"
+        | "cuota"
+        | "frech"
+        | "uvr"
+        | "flujo"
+        | "simulacion"
+        | "extracto"
+        | "honorario"
+        | "plazo"
+        | "saldo"
+      qa_log_accion:
+        | "crear"
+        | "recalcular"
+        | "reconocer_alerta"
+        | "cerrar"
+        | "exportar"
+      qa_modalidad: "hipotecario" | "leasing" | "uvr"
+      qa_regla_tipo: "tolerancia" | "umbral" | "penalizacion"
+      qa_severidad: "info" | "warning" | "critica"
       tarea_estado: "pendiente" | "en_progreso" | "completada" | "cancelada"
       tarea_prioridad: "baja" | "media" | "alta" | "critica"
       treasury_extracto_estado: "procesando" | "listo" | "error"
@@ -6017,6 +6326,37 @@ export const Constants = {
       ],
       mfa_metodo: ["ninguno", "email", "totp"],
       pregunta_tipo: ["unica", "multiple", "verdadero_falso"],
+      qa_alerta_estado: ["abierta", "reconocida", "resuelta"],
+      qa_categoria: ["excelente", "aprobado", "revisar", "rechazado"],
+      qa_dictamen: [
+        "aprobado",
+        "aprobado_obs",
+        "requiere_revision",
+        "rechazado",
+      ],
+      qa_inconsistencia_tipo: [
+        "tasa",
+        "seguros",
+        "cuota",
+        "frech",
+        "uvr",
+        "flujo",
+        "simulacion",
+        "extracto",
+        "honorario",
+        "plazo",
+        "saldo",
+      ],
+      qa_log_accion: [
+        "crear",
+        "recalcular",
+        "reconocer_alerta",
+        "cerrar",
+        "exportar",
+      ],
+      qa_modalidad: ["hipotecario", "leasing", "uvr"],
+      qa_regla_tipo: ["tolerancia", "umbral", "penalizacion"],
+      qa_severidad: ["info", "warning", "critica"],
       tarea_estado: ["pendiente", "en_progreso", "completada", "cancelada"],
       tarea_prioridad: ["baja", "media", "alta", "critica"],
       treasury_extracto_estado: ["procesando", "listo", "error"],
