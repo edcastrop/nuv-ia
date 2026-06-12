@@ -96,7 +96,7 @@ export function modulosDesdePath(pathname: string): string | null {
   if (p.startsWith("/notificaciones")) return "alertas";
   if (p.startsWith("/mi-perfil")) return "perfil";
   if (p.startsWith("/super-admin")) return "administración";
-  if (p === "/" || p.startsWith("/simulador")) return "simulador";
+  if (p === "/inicio" || p === "/" || p.startsWith("/simulador")) return "simulador";
   return null;
 }
 

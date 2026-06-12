@@ -262,7 +262,7 @@ function Field({ label, value, onChange }: { label: string; value: string; onCha
 }
 
 const TOUR_ITEMS = [
-  { to: "/", label: "Simulador", desc: "Proyecta y simula casos en segundos." },
+  { to: "/inicio", label: "Simulador", desc: "Proyecta y simula casos en segundos." },
   { to: "/casos", label: "Casos", desc: "Tu pipeline comercial y operativo." },
   { to: "/expediente-maestro", label: "Expediente", desc: "Toda la información del cliente centralizada." },
   { to: "/proyeccion", label: "Proyección", desc: "Análisis financiero detallado." },

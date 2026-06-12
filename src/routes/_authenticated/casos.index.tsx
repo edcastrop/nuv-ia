@@ -379,7 +379,7 @@ function CasosPage() {
               {!search && !estado && !mios && (
                 <>
                   {" "}Crea tu primer caso desde el{" "}
-                  <Link to="/" className="font-semibold hover:underline" style={{ color: VERDE }}>simulador</Link>.
+                  <Link to="/inicio" className="font-semibold hover:underline" style={{ color: VERDE }}>simulador</Link>.
                 </>
               )}
             </div>

@@ -114,7 +114,7 @@ function AuthenticatedLayout() {
         setGateState("ok");
         setGateChecked(true);
         if (path === "/pendiente-aprobacion" || path.startsWith("/onboarding")) {
-          navigate({ to: "/" });
+          navigate({ to: "/inicio" });
         }
         return;
       }
@@ -142,7 +142,7 @@ function AuthenticatedLayout() {
         navigate({ to: "/onboarding" });
         return;
       }
-      if (isApoderadoOnly && (path === "/" || path.startsWith("/onboarding") || path === "/pendiente-aprobacion")) {
+      if (isApoderadoOnly && (path === "/inicio" || path === "/" || path.startsWith("/onboarding") || path === "/pendiente-aprobacion")) {
         setGateState("ok");
         setGateChecked(true);
         navigate({ to: "/apoderado/mis-casos" });
@@ -330,7 +330,7 @@ function AuthenticatedLayout() {
         {
           label: "Operación",
           items: [
-            { to: "/", label: "Inicio", Icon: LayoutGrid, exact: true },
+            { to: "/inicio", label: "Inicio", Icon: LayoutGrid, exact: true },
             { to: "/nuvex-ia", label: "NUVIA IA", Icon: Sparkles },
             { to: "/casos", label: "Casos", Icon: FolderKanban },
             ...(has("director_financiero_qa") && !hasAny("super_admin","admin","gerencia","licenciado","asesor","juridica","operaciones","cartera","contabilidad","director_juridico","auxiliar_operativo") ? [] : [{ to: "/pipeline", label: "Pipeline", Icon: Kanban }]),
@@ -468,7 +468,7 @@ function AuthenticatedLayout() {
 
 
       <div className="relative flex items-center justify-between px-4 py-5" style={{ minHeight: 76 }}>
-        <Link to="/" className="flex items-center">
+        <Link to="/inicio" className="flex items-center">
           <Logo variant="white" height={collapsed ? 24 : 32} className={collapsed ? "max-w-[40px] object-contain" : ""} />
         </Link>
         <button
