@@ -13,6 +13,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { NuviaReadingAnimation } from "./NuviaReadingAnimation";
 import { extractStatement, type ExtractoData } from "@/lib/extracto.functions";
 import { parseMontoExtracto } from "@/lib/cuotaBase";
 import {
