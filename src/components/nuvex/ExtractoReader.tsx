@@ -364,7 +364,6 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
         f.type === "application/x-zip-compressed" ||
         lowerName.endsWith(".zip");
       if (f.type === "application/pdf" || lowerName.endsWith(".pdf")) {
-        images = result.images;
         try {
           rawText = await extractTextFromPdf(f, pwd);
           if (rawText.trim().length > 500) {
