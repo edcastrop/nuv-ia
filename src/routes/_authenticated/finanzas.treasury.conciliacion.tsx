@@ -34,7 +34,7 @@ function ConciliacionPage() {
   const { data: bancos, refetch: refetchBancos } = useQuery({ queryKey: ["tBancos"], queryFn: () => bancosFn() });
   const { data: extractos, refetch: refetchExt } = useQuery({ queryKey: ["tExt"], queryFn: () => extractosFn() });
 
-  const [bancoId, setBancoId] = useState<string>("");
+  const [bancoId, setBancoId] = useState<string>("__none__");
   const [file, setFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
