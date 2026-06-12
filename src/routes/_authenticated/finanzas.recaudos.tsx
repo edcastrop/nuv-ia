@@ -352,17 +352,80 @@ function NuevoRecaudo({
           </Field>
         </div>
 
+        {desgloseWompi && (
+          <div
+            className="rounded-lg p-2.5 text-[11.5px] space-y-1"
+            style={{
+              background: "rgba(132,185,143,0.08)",
+              border: "1px solid rgba(132,185,143,0.30)",
+              color: "var(--nuvia-text-secondary)",
+            }}
+          >
+            <div className="font-semibold text-[11px] uppercase tracking-wider" style={{ color: "var(--nuvia-accent-green)" }}>
+              Desglose Wompi · fee {wompiFee}% + IVA {wompiIva}%
+            </div>
+            <div className="flex justify-between"><span>Bruto recibido</span><b style={{ color: "var(--nuvia-text-primary)" }}>{money(Number(valor))}</b></div>
+            <div className="flex justify-between"><span>Fee Wompi</span><span style={{ color: "var(--nuvia-danger)" }}>− {money(desgloseWompi.fee)}</span></div>
+            <div className="flex justify-between"><span>IVA sobre fee</span><span style={{ color: "var(--nuvia-danger)" }}>− {money(desgloseWompi.iva)}</span></div>
+            <div className="flex justify-between pt-1" style={{ borderTop: "1px solid rgba(132,185,143,0.25)" }}>
+              <span className="font-semibold">Neto a recibir</span>
+              <b style={{ color: "var(--nuvia-accent-green)" }}>{money(desgloseWompi.neto)}</b>
+            </div>
+          </div>
+        )}
+
         <Field label="N° comprobante">
           <input value={comprobanteNum} onChange={(e) => setComprobanteNum(e.target.value)} className="nuvia-input nuvia-input-sm w-full" />
         </Field>
         <Field label="Comprobante (PDF/imagen)">
-          <input
-            type="file"
-            accept="image/*,application/pdf"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            className="w-full text-[12px]"
-            style={{ color: "var(--nuvia-text-secondary)" }}
-          />
+          <label
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOver(false);
+              const f = e.dataTransfer.files?.[0];
+              if (f) setFile(f);
+            }}
+            className="flex flex-col items-center justify-center gap-1.5 rounded-lg cursor-pointer transition-colors px-3 py-5 text-center"
+            style={{
+              border: `1.5px dashed ${dragOver ? "var(--nuvia-accent-blue)" : "var(--nuvia-border)"}`,
+              background: dragOver ? "rgba(68,93,163,0.08)" : "rgba(255,255,255,0.02)",
+              color: "var(--nuvia-text-secondary)",
+            }}
+          >
+            <input
+              type="file"
+              accept="image/*,application/pdf"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              className="hidden"
+            />
+            {file ? (
+              <div className="flex items-center gap-2 text-[12px]" style={{ color: "var(--nuvia-text-primary)" }}>
+                <FileText size={14} style={{ color: "var(--nuvia-accent-blue)" }} />
+                <span className="truncate max-w-[220px]">{file.name}</span>
+                <button
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setFile(null); }}
+                  className="ml-1 rounded p-0.5 hover:bg-white/10"
+                  style={{ color: "var(--nuvia-text-muted)" }}
+                  aria-label="Quitar archivo"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ) : (
+              <>
+                <UploadCloud size={20} style={{ color: "var(--nuvia-accent-blue)" }} />
+                <div className="text-[12px]" style={{ color: "var(--nuvia-text-primary)" }}>
+                  Arrastra el comprobante aquí
+                </div>
+                <div className="text-[10.5px]" style={{ color: "var(--nuvia-text-muted)" }}>
+                  o haz clic para seleccionar · PDF o imagen
+                </div>
+              </>
+            )}
+          </label>
         </Field>
         <Field label="Observaciones">
           <textarea
