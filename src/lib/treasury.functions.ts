@@ -846,6 +846,7 @@ export const carteraAging = createServerFn({ method: "GET" })
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const UMBRAL_SALDO = 100; // ignora saldos residuales < $100
     const items = rows
       .map((r) => {
         const saldo = Math.max(0, Number(r.honorarios_totales) - Number(r.pagado));
@@ -853,10 +854,10 @@ export const carteraAging = createServerFn({ method: "GET" })
         const dias = Math.floor((today.getTime() - vence.getTime()) / 86400000);
         const exp = expMap.get(r.expediente_id);
         const flags: string[] = [];
-        if (Number(r.pagado) > 0 && saldo > 0) flags.push("pago_parcial");
-        if (exp?.estado_caso === "aprobado" && Number(r.pagado) === 0) flags.push("aprobado_sin_pago");
-        if (r.estado_cartera === "cuenta_cobro_enviada" && Number(r.pagado) === 0) flags.push("cc_sin_recaudo");
-        if (r.estado_cartera === "acuerdo_pago" && dias > 0) flags.push("promesa_vencida");
+        if (Number(r.pagado) > 0 && saldo > UMBRAL_SALDO) flags.push("pago_parcial");
+        if (exp?.estado_caso === "aprobado" && Number(r.pagado) === 0 && saldo > UMBRAL_SALDO) flags.push("aprobado_sin_pago");
+        if (r.estado_cartera === "cuenta_cobro_enviada" && Number(r.pagado) === 0 && saldo > UMBRAL_SALDO) flags.push("cc_sin_recaudo");
+        if (r.estado_cartera === "acuerdo_pago" && dias > 0 && saldo > UMBRAL_SALDO) flags.push("promesa_vencida");
         return {
           id: r.id,
           expediente_id: r.expediente_id,
@@ -874,7 +875,7 @@ export const carteraAging = createServerFn({ method: "GET" })
           flags,
         };
       })
-      .filter((x) => x.saldo > 0)
+      .filter((x) => x.saldo > UMBRAL_SALDO)
       .sort((a, b) => b.dias - a.dias);
 
     const buckets: Record<string, number> = { alDia: 0, b1_30: 0, b31_60: 0, b61_90: 0, b90plus: 0 };
