@@ -11,7 +11,9 @@ import {
   BellRing,
   ShieldCheck,
   FileBarChart2,
+  Brain,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/finanzas")({
   component: FinanzasLayout,
