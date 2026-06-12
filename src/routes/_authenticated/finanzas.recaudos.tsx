@@ -149,10 +149,12 @@ const METODO_OPTS = [
 
 function NuevoRecaudo({
   carteras,
+  cuentas,
   loading,
   onSaved,
 }: {
   carteras: CarteraConExpediente[];
+  cuentas: CuentaReceptora[];
   loading: boolean;
   onSaved: () => void;
 }) {
