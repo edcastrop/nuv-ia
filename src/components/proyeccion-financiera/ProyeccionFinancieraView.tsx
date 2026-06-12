@@ -70,10 +70,10 @@ const NUVIA = {
   rojo: "#FB7185",
 };
 
-const NUVIA_GRADIENT = "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))";
-const NUVIA_GLASS = "linear-gradient(145deg, rgba(255,255,255,0.055), rgba(68,93,163,0.055) 48%, rgba(132,185,143,0.035))";
-const NUVIA_GLASS_BORDER = "1px solid rgba(255,255,255,0.10)";
-const NUVIA_GLASS_SHADOW = "0 30px 60px -40px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.08)";
+const NUVIA_GRADIENT = "linear-gradient(135deg, rgba(68,93,163,0.58), rgba(132,185,143,0.52))";
+const NUVIA_GLASS = "linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.075) 42%, rgba(255,255,255,0.035))";
+const NUVIA_GLASS_BORDER = "1px solid rgba(238,245,255,0.36)";
+const NUVIA_GLASS_SHADOW = "0 36px 100px -54px rgba(0,0,0,0.98), inset 0 1px 0 rgba(255,255,255,0.38), inset 0 -1px 0 rgba(255,255,255,0.10)";
 
 const blankInput: ProyeccionFinancieraInput = {
   clienteNombre: "",
@@ -161,7 +161,7 @@ function Field({
         value={value as string}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-xl border border-white/10 bg-white/[0.055] px-3.5 py-2.5 text-sm font-medium text-white placeholder-white/30 outline-none transition focus:border-[#84B98F]/60 focus:bg-white/[0.08] focus:ring-2 focus:ring-[#84B98F]/25"
+        className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm font-medium text-white placeholder-white/30 outline-none transition focus:border-[#84B98F]/50 focus:bg-white/[0.06] focus:ring-2 focus:ring-[#84B98F]/18"
       />
     </label>
   );
@@ -187,7 +187,7 @@ function SelectField({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full appearance-none rounded-xl border border-white/10 bg-white/[0.055] px-3.5 py-2.5 pr-9 text-sm font-medium text-white outline-none transition focus:border-[#84B98F]/60 focus:bg-white/[0.08] focus:ring-2 focus:ring-[#84B98F]/25"
+          className="w-full appearance-none rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 pr-9 text-sm font-medium text-white outline-none transition focus:border-[#84B98F]/50 focus:bg-white/[0.06] focus:ring-2 focus:ring-[#84B98F]/18"
         >
           {options.map((o) => (
             <option key={o.value} value={o.value} className="bg-[#07111D] text-white">
@@ -225,11 +225,17 @@ function Surface({
       style={{
         background: NUVIA_GLASS,
         border: NUVIA_GLASS_BORDER,
-        backdropFilter: "blur(32px) saturate(160%)",
-        WebkitBackdropFilter: "blur(32px) saturate(160%)",
+        backdropFilter: "blur(24px) saturate(135%)",
         boxShadow: NUVIA_GLASS_SHADOW,
       }}
     >
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(115deg, rgba(255,255,255,0.16) 0%, transparent 18%, transparent 72%, rgba(255,255,255,0.055) 100%)",
+        }}
+      />
       {glow && (
         <>
           <div
@@ -294,11 +300,10 @@ function Kpi({
       className="group relative h-full overflow-hidden rounded-2xl p-5 transition-all hover:translate-y-[-1px]"
       style={{
         background:
-          "linear-gradient(145deg, rgba(255,255,255,0.11), rgba(68,93,163,0.055) 52%, rgba(132,185,143,0.05))",
-        border: "1px solid rgba(210,222,240,0.16)",
-        backdropFilter: "blur(24px) saturate(150%)",
-        WebkitBackdropFilter: "blur(24px) saturate(150%)",
-        boxShadow: "0 1px 0 rgba(255,255,255,0.10) inset, 0 22px 55px -32px rgba(68,93,163,0.34)",
+          "linear-gradient(145deg, rgba(255,255,255,0.115), rgba(255,255,255,0.045) 46%, rgba(68,93,163,0.035))",
+        border: "1px solid rgba(210,222,240,0.18)",
+        backdropFilter: "blur(20px) saturate(132%)",
+        boxShadow: "0 1px 0 rgba(255,255,255,0.16) inset, 0 22px 55px -36px rgba(0,0,0,0.72)",
       }}
     >
       <div className="flex items-center gap-2">
@@ -349,12 +354,11 @@ function HeroKpi({
       className="relative overflow-hidden rounded-3xl p-7 md:p-8"
       style={{
         background:
-          "linear-gradient(135deg, rgba(68,93,163,0.20) 0%, rgba(68,93,163,0.18) 48%, rgba(132,185,143,0.14) 100%)",
-        border: "1px solid rgba(132,185,143,0.30)",
-        backdropFilter: "blur(28px) saturate(165%)",
-        WebkitBackdropFilter: "blur(28px) saturate(165%)",
+          "linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(68,93,163,0.09) 52%, rgba(132,185,143,0.07) 100%)",
+        border: "1px solid rgba(210,222,240,0.20)",
+        backdropFilter: "blur(22px) saturate(135%)",
         boxShadow:
-          "0 1px 0 rgba(255,255,255,0.16) inset, 0 40px 90px -34px rgba(68,93,163,0.48), 0 26px 80px -48px rgba(132,185,143,0.45)",
+          "0 1px 0 rgba(255,255,255,0.18) inset, 0 40px 90px -44px rgba(0,0,0,0.84), 0 26px 80px -58px rgba(132,185,143,0.28)",
       }}
     >
       <div
@@ -422,8 +426,7 @@ function Sidebar({ active, onJump }: { active: string; onJump: (id: string) => v
         background:
           "linear-gradient(180deg, rgba(5,10,19,0.58) 0%, rgba(3,7,18,0.50) 100%)",
         borderRight: "1px solid rgba(210,222,240,0.12)",
-        backdropFilter: "blur(28px) saturate(150%)",
-        WebkitBackdropFilter: "blur(28px) saturate(150%)",
+        backdropFilter: "blur(22px) saturate(130%)",
       }}
     >
       {/* Logo */}
@@ -839,17 +842,23 @@ export function ProyeccionFinancieraView() {
                 background: NUVIA_GLASS,
                 border: NUVIA_GLASS_BORDER,
                 boxShadow: NUVIA_GLASS_SHADOW,
-                backdropFilter: "blur(32px) saturate(160%)",
-                WebkitBackdropFilter: "blur(32px) saturate(160%)",
+                backdropFilter: "blur(24px) saturate(135%)",
               }}
             >
               <div
                 className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 animate-pulse rounded-full blur-3xl"
-                style={{ background: "radial-gradient(circle, rgba(68,93,163,0.46), transparent 70%)", animationDuration: "6s" }}
+                style={{ background: "radial-gradient(circle, rgba(68,93,163,0.08), transparent 70%)", animationDuration: "6s" }}
               />
               <div
                 className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 animate-pulse rounded-full blur-3xl"
-                style={{ background: "radial-gradient(circle, rgba(132,185,143,0.38), transparent 70%)", animationDuration: "8s" }}
+                style={{ background: "radial-gradient(circle, rgba(132,185,143,0.08), transparent 70%)", animationDuration: "8s" }}
+              />
+              <div
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  background:
+                    "linear-gradient(112deg, rgba(255,255,255,0.24) 0%, transparent 13%, transparent 74%, rgba(255,255,255,0.075) 100%)",
+                }}
               />
               <button
                 type="button"
@@ -978,8 +987,8 @@ export function ProyeccionFinancieraView() {
                 onClick={() => document.getElementById("sec-escenarios")?.scrollIntoView({ behavior: "smooth", block: "start" })}
                 className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[12.5px] font-semibold text-white transition hover:scale-[1.02]"
                 style={{
-                  background: "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))",
-                  boxShadow: "0 10px 28px -10px rgba(132,185,143,0.55)",
+                  background: "linear-gradient(135deg, rgba(68,93,163,0.70), rgba(132,185,143,0.62))",
+                  boxShadow: "0 10px 28px -14px rgba(132,185,143,0.40)",
                 }}
               >
                 <Layers className="h-4 w-4" /> Simular escenarios

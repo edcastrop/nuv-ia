@@ -236,7 +236,7 @@ export function GuardarCasoModal({ open, onClose, autoSave = false, input, resul
               <div className="flex items-center gap-3">
                 <div
                   className="flex h-10 w-10 items-center justify-center rounded-2xl"
-                  style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))" }}
+                  style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.70), rgba(132,185,143,0.62))" }}
                 >
                   <FolderPlus className="h-5 w-5 text-white" />
                 </div>
@@ -293,8 +293,8 @@ export function GuardarCasoModal({ open, onClose, autoSave = false, input, resul
                 disabled={saving}
                 className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-[13px] font-semibold text-white shadow-lg transition hover:scale-[1.02] disabled:opacity-60"
                 style={{
-                  background: "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))",
-                  boxShadow: "0 14px 30px -12px rgba(68,93,163,0.68)",
+                  background: "linear-gradient(135deg, rgba(68,93,163,0.70), rgba(132,185,143,0.62))",
+                  boxShadow: "0 14px 30px -16px rgba(68,93,163,0.50)",
                 }}
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <FolderPlus className="h-4 w-4" />}
@@ -400,7 +400,7 @@ function DoneBlock({
     <div className="flex flex-col items-center gap-4 px-8 py-10 text-center">
       <div
         className="flex h-16 w-16 items-center justify-center rounded-2xl"
-        style={{ background: "linear-gradient(135deg, rgba(132,185,143,0.85), rgba(68,93,163,0.85))" }}
+        style={{ background: "linear-gradient(135deg, rgba(132,185,143,0.62), rgba(68,93,163,0.70))" }}
       >
         <CheckCircle2 className="h-8 w-8 text-white" />
       </div>
@@ -419,8 +419,8 @@ function DoneBlock({
           disabled={sending}
           className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:scale-[1.02] disabled:opacity-60"
           style={{
-            background: "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))",
-            boxShadow: "0 14px 30px -12px rgba(68,93,163,0.68)",
+            background: "linear-gradient(135deg, rgba(68,93,163,0.70), rgba(132,185,143,0.62))",
+            boxShadow: "0 14px 30px -16px rgba(68,93,163,0.50)",
           }}
         >
           {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}

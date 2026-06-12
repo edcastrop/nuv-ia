@@ -336,6 +336,23 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
     await processFile(f, undefined);
   };
 
+  const uploadOriginal = async (f: File) => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData?.user?.id;
+      if (!uid) return;
+      const path = `${uid}/${Date.now()}_${f.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+      const { error: upErr } = await supabase.storage.from("extractos").upload(path, f, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: f.type || "application/octet-stream",
+      });
+      if (!upErr) setArchivoPath(path);
+    } catch (e) {
+      console.warn("No se pudo subir el archivo a storage:", e);
+    }
+  };
+
   const processFile = async (f: File, pwd: string | undefined) => {
     setStage("reading");
     try {
@@ -347,6 +364,32 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
         f.type === "application/x-zip-compressed" ||
         lowerName.endsWith(".zip");
       if (f.type === "application/pdf" || lowerName.endsWith(".pdf")) {
+        try {
+          rawText = await extractTextFromPdf(f, pwd);
+          if (rawText.trim().length > 500) {
+            const deterministicResp = await callExtract({ data: { images: [], rawText } });
+            if (deterministicResp.data) {
+              await uploadOriginal(f);
+              setParsed(
+                normalizeExtractData(
+                  recomputeDaviviendaHipotecario(
+                    recomputeDaviviendaLeasing(recomputeBancolombia(deterministicResp.data)),
+                  ),
+                ),
+              );
+              setStage("review");
+              return;
+            }
+          }
+        } catch (textErr) {
+          const e = textErr as { name?: string; code?: number };
+          if (e?.name === "PasswordException") {
+            setWrongPassword(e.code === 2);
+            setStage("password");
+            return;
+          }
+          console.warn("No se pudo extraer texto estructural del PDF:", textErr);
+        }
         const result = await renderPdfToImages(f, pwd);
         if (result.needsPassword) {
           setWrongPassword(result.wrongPassword);
@@ -354,11 +397,6 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           return;
         }
         images = result.images;
-        try {
-          rawText = await extractTextFromPdf(f, pwd);
-        } catch (textErr) {
-          console.warn("No se pudo extraer texto estructural del PDF:", textErr);
-        }
       } else if (f.type.startsWith("image/")) {
         const url = await fileToDataUrl(f);
         images = [{ mime: f.type, dataUrl: url }];
@@ -371,21 +409,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       }
 
       // Subir archivo original a Supabase Storage (privado)
-      try {
-        const { data: userData } = await supabase.auth.getUser();
-        const uid = userData?.user?.id;
-        if (uid) {
-          const path = `${uid}/${Date.now()}_${f.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-          const { error: upErr } = await supabase.storage.from("extractos").upload(path, f, {
-            cacheControl: "3600",
-            upsert: false,
-            contentType: f.type || "application/octet-stream",
-          });
-          if (!upErr) setArchivoPath(path);
-        }
-      } catch (e) {
-        console.warn("No se pudo subir el archivo a storage:", e);
-      }
+      await uploadOriginal(f);
 
       // Llamar IA
       const resp = await callExtract({ data: { images, rawText } });
@@ -986,24 +1010,30 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           }
         }}
         style={{
-          background: "linear-gradient(145deg, rgba(255,255,255,0.055), rgba(68,93,163,0.060) 48%, rgba(132,185,143,0.040))",
-          border: `1px solid ${dragActive ? "rgba(132,185,143,0.6)" : "rgba(255,255,255,0.10)"}`,
-          backdropFilter: "blur(32px) saturate(160%)",
-          WebkitBackdropFilter: "blur(32px) saturate(160%)",
+          background: "linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.075) 42%, rgba(255,255,255,0.035))",
+          border: `1px solid ${dragActive ? "rgba(132,185,143,0.42)" : "rgba(238,245,255,0.36)"}`,
+          backdropFilter: "blur(24px) saturate(135%)",
           boxShadow: dragActive
-            ? "0 24px 60px -20px rgba(132,185,143,0.55)"
-            : "0 30px 60px -40px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.08)",
+            ? "0 24px 60px -26px rgba(132,185,143,0.36), inset 0 1px 0 rgba(255,255,255,0.20)"
+            : "0 34px 90px -50px rgba(0,0,0,0.94), inset 0 1px 0 rgba(255,255,255,0.20), inset 0 -1px 0 rgba(255,255,255,0.05)",
           transform: dragActive ? "scale(1.005)" : "scale(1)",
         }}
       >
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(112deg, rgba(255,255,255,0.23) 0%, transparent 15%, transparent 74%, rgba(255,255,255,0.07) 100%)",
+          }}
+        />
         {/* glow */}
         <div
           className="pointer-events-none absolute -top-24 -right-24 h-72 w-72 rounded-full blur-3xl"
-          style={{ background: "radial-gradient(circle, rgba(68,93,163,0.35), transparent 70%)" }}
+          style={{ background: "radial-gradient(circle, rgba(68,93,163,0.08), transparent 70%)" }}
         />
         <div
           className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full blur-3xl"
-          style={{ background: "radial-gradient(circle, rgba(132,185,143,0.28), transparent 70%)" }}
+          style={{ background: "radial-gradient(circle, rgba(132,185,143,0.08), transparent 70%)" }}
         />
         {dragActive && (
           <div
@@ -1025,8 +1055,8 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
             <div
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
               style={{
-                background: "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))",
-                boxShadow: "0 12px 32px -12px rgba(132,185,143,0.6)",
+                background: "linear-gradient(135deg, rgba(68,93,163,0.58), rgba(132,185,143,0.52))",
+                boxShadow: "0 12px 32px -18px rgba(132,185,143,0.34)",
               }}
             >
               <Sparkles className="h-5 w-5 text-white" />
@@ -1064,8 +1094,8 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
               }}
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-semibold text-white transition-transform hover:scale-[1.02]"
               style={{
-                background: "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))",
-                boxShadow: "0 10px 28px -10px rgba(68,93,163,0.7)",
+                background: "linear-gradient(135deg, rgba(68,93,163,0.58), rgba(132,185,143,0.52))",
+                boxShadow: "0 10px 28px -16px rgba(68,93,163,0.42)",
               }}
             >
               <Upload className="h-4 w-4 shrink-0" />
@@ -1128,17 +1158,23 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           <div
             className="relative flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl"
             style={{
-              background: "linear-gradient(145deg, rgba(255,255,255,0.065), rgba(68,93,163,0.075) 48%, rgba(132,185,143,0.045))",
-              border: "1px solid rgba(255,255,255,0.12)",
-              boxShadow: "0 44px 90px -38px rgba(0,0,0,0.92), inset 0 1px 0 rgba(255,255,255,0.10)",
-              backdropFilter: "blur(32px) saturate(160%)",
-              WebkitBackdropFilter: "blur(32px) saturate(160%)",
+              background: "linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.075) 42%, rgba(255,255,255,0.035))",
+              border: "1px solid rgba(238,245,255,0.36)",
+              boxShadow: "0 46px 110px -48px rgba(0,0,0,0.98), inset 0 1px 0 rgba(255,255,255,0.36), inset 0 -1px 0 rgba(255,255,255,0.10)",
+              backdropFilter: "blur(24px) saturate(135%)",
               maxHeight: "92vh",
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <div
-              className="flex items-center justify-between border-b px-6 py-4"
+              className="pointer-events-none absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(112deg, rgba(255,255,255,0.24) 0%, transparent 15%, transparent 76%, rgba(255,255,255,0.075) 100%)",
+              }}
+            />
+            <div
+              className="relative flex items-center justify-between border-b px-6 py-4"
               style={{ borderColor: "rgba(255,255,255,0.08)" }}
             >
               <div className="flex items-center gap-3">
@@ -1162,7 +1198,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
             </div>
 
             {/* Progress */}
-            <div className="border-b px-6 py-4" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+            <div className="relative border-b px-6 py-4" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
               <div className="flex items-center gap-2">
                 {STAGES.map((s, i) => {
                   const active = i <= progressIdx;
@@ -1173,7 +1209,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
                         style={{
                           background: active
-                            ? "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))"
+                            ? "linear-gradient(135deg, rgba(68,93,163,0.68), rgba(132,185,143,0.62))"
                             : "rgba(255,255,255,0.05)",
                           color: active ? "#fff" : "rgba(255,255,255,0.5)",
                           boxShadow: current ? "0 0 0 4px rgba(132,185,143,0.18)" : undefined,
@@ -1189,7 +1225,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                           className="mx-2 h-px flex-1"
                           style={{
                             background: active
-                              ? "linear-gradient(90deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))"
+                              ? "linear-gradient(90deg, rgba(68,93,163,0.68), rgba(132,185,143,0.62))"
                               : "rgba(255,255,255,0.08)",
                           }}
                         />
@@ -1200,7 +1236,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
               </div>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+            <div className="relative min-h-0 flex-1 overflow-y-auto px-6 py-5">
               {stage === "idle" && (
                 <div
                   onDragOver={(e) => {
@@ -1246,7 +1282,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                       fileRef.current?.click();
                     }}
                     className="rounded-lg px-4 py-2 text-xs font-semibold text-white"
-                    style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))" }}
+                    style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.70), rgba(132,185,143,0.62))" }}
                   >
                     Seleccionar archivo
                   </button>
@@ -1304,7 +1340,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                     onClick={() => file && password && processFile(file, password)}
                     disabled={!password}
                     className="mt-4 w-full rounded-xl px-5 py-3 text-sm font-semibold text-white disabled:opacity-40"
-                    style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))" }}
+                    style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.70), rgba(132,185,143,0.62))" }}
                   >
                     Leer extracto
                   </button>
@@ -1676,8 +1712,8 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                     disabled={confirmDisabled}
                     className="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:scale-100"
                     style={{
-                      background: "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))",
-                      boxShadow: "0 10px 28px -10px rgba(132,185,143,0.6)",
+                      background: "linear-gradient(135deg, rgba(68,93,163,0.70), rgba(132,185,143,0.62))",
+                      boxShadow: "0 10px 28px -14px rgba(132,185,143,0.42)",
                     }}
                   >
                     <CheckCircle2 className="h-4 w-4" />

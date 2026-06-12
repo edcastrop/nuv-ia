@@ -20,8 +20,11 @@ const InputSchema = z.object({
         dataUrl: z.string().min(20).max(15_000_000),
       }),
     )
-    .min(1)
-    .max(10),
+    .max(10)
+    .optional()
+    .default([]),
+}).refine((value) => Boolean(value.rawText?.trim()) || value.images.length > 0, {
+  message: "Debes enviar texto extraído o imágenes del extracto.",
 });
 
 const tool = {
@@ -336,6 +339,14 @@ export const extractStatement = createServerFn({ method: "POST" })
       : null;
     if (deterministicData) {
       return { error: null, data: deterministicData };
+    }
+
+    if (data.images.length === 0) {
+      return {
+        error:
+          "No se reconoció el banco en el texto del PDF. Intenta subir el PDF completo o una imagen clara del extracto.",
+        data: null,
+      };
     }
 
     const apiKey = process.env.LOVABLE_API_KEY;
