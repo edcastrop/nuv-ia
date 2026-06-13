@@ -800,8 +800,9 @@ function AlternativaCard(props: {
   return (
     <div style={{
       background: "#fff", border: `1px solid ${C.hairline}`,
-      borderRadius: 12, padding: "12px 16px",
+      borderRadius: 10, padding: "9px 14px",
     }}>
+
       {/* Header card */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
