@@ -328,7 +328,8 @@ REGLAS ESTRICTAS:
   * "BASE DE CALCULO 360" / "DIAS CALCULO" son días de año comercial, NUNCA plazo del crédito.
   * plazoInicial se calcula por FECHA APERTURA → VENCIMIENTO FINAL o por matemática financiera; típicamente 240 en créditos a 20 años.
   * cuotasPagadas ← "CUOTAS FACTURADAS". cuotasPendientes debe ser el número de cuotas restantes de amortización; si la cuota actual está incluida en el recibo, usa plazoInicial - cuotasPagadas + 1.
-  * "VALOR CUOTA" en DISCRIMINACION DEL VALOR A PAGAR es cuota financiera sin seguros. "VALOR SEGURO" es seguro mensual. "VALOR TOTAL A PAGAR" es cuota total con seguros.
+  * "VALOR CUOTA" en DISCRIMINACION DEL VALOR A PAGAR es cuota financiera sin seguros: ponlo en cuotaConInteresSinSeguros / cuotaSinSeguros.
+  * "VALOR SEGURO" es seguro mensual. "VALOR TOTAL A PAGAR" es cuota total con seguros: ponlo en cuotaMensual y cuotaPagadaCliente.
   * tasaEA / teaCobrada ← "TASA INTERES ACTUAL".
 - Confianza "alta" solo si el dato es 100% explícito en el extracto. "media" si requiere inferencia simple. "baja" si dudoso o ausente.`;
 
@@ -882,7 +883,22 @@ export const extractStatement = createServerFn({ method: "POST" })
         const saldoFna = monto("saldoCapital");
         const tasaFna = num("tea") || num("teaCobrada") || num("teaPactada");
         const pagadasFna = _intStr("cuotasPagadas") || _intStr("cuotaActualNumero");
-        const cuotaFinancieraFna = cuotaConInteresSinSeguros || (cuotaMensual > 0 ? Math.max(0, cuotaMensual - segurosNum) : 0);
+        const pickCuotaFinancieraFna = () => {
+          if (cuotaConInteresSinSeguros > 0) return cuotaConInteresSinSeguros;
+          if (!(cuotaMensual > 0)) return 0;
+          const directa = cuotaMensual;
+          const sinSeguro = segurosNum > 0 ? Math.max(0, cuotaMensual - segurosNum) : 0;
+          if (!(sinSeguro > 0)) return directa;
+          const nDirecta = inferRemainingByPmt(saldoFna, tasaFna, directa);
+          const nSinSeguro = inferRemainingByPmt(saldoFna, tasaFna, sinSeguro);
+          const score = (n: number) => {
+            if (!(n > 0) || !(pagadasFna > 0)) return Number.POSITIVE_INFINITY;
+            const total = pagadasFna + n - 1;
+            return Math.abs(nearestStandardTerm(total) - total);
+          };
+          return score(nDirecta) <= score(nSinSeguro) ? directa : sinSeguro;
+        };
+        const cuotaFinancieraFna = pickCuotaFinancieraFna();
         const restantesInferidas = inferRemainingByPmt(saldoFna, tasaFna, cuotaFinancieraFna);
         const plazoLeido = _intStr("plazoInicial");
         const pendientesLeidas = _intStr("cuotasPendientes");
