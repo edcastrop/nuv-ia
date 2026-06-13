@@ -500,13 +500,13 @@ export function PrintDocument(props: Props) {
             <div style={{
               fontSize: 22, fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em",
             }}>
-              OTRAS PROYECCIONES GENERADAS
+              ALTERNATIVAS ANALIZADAS
             </div>
             <div style={{
-              marginTop: 3, fontSize: 10, color: "rgba(255,255,255,0.82)", lineHeight: 1.3, maxWidth: 460,
+              marginTop: 3, fontSize: 10, color: "rgba(255,255,255,0.82)", lineHeight: 1.3, maxWidth: 480,
             }}>
-              Estas alternativas también fueron analizadas por nuestro sistema
-              para que las tengas como referencia.
+              Estas alternativas fueron evaluadas por nuestro sistema para ayudarte
+              a comparar distintos niveles de optimización financiera.
             </div>
           </div>
           <img
