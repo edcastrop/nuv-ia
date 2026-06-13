@@ -6,6 +6,8 @@ import { obtenerAuditoriaQA, reejecutarAuditoriaQA } from "@/lib/qaAI.functions"
 import { auditar, reconstruir, type AuditarInput } from "@/lib/qaMath";
 import { exportarDictamenPDF } from "@/lib/qaPdf";
 import { CopilotoQADrawer } from "@/components/qa-ai/CopilotoQADrawer";
+import { VeredictoBlock } from "@/components/qa-ai/VeredictoBlock";
+import type { Veredicto } from "@/lib/qaMath";
 import { Brain, Gauge, ArrowLeft, AlertTriangle, CheckCircle2, Coins, Calculator, Sigma, ShieldAlert, Minus, FileDown, Sparkles, RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/qa-ai/$id")({
@@ -217,6 +219,12 @@ function ResultadoQaAi() {
           </div>
         </div>
       </NCard>
+
+      <VeredictoBlock
+        veredicto={
+          ((o.veredicto as unknown as Veredicto | undefined) ?? recomputo?.veredicto) as Veredicto | undefined
+        }
+      />
 
       <KpiGrid cols={4}>
         <KpiCard label={isUvr ? "Cuota sin subsidio" : "Cuota teórica"} value={`$${fmt(o.cuotaTeorica as number, 0)}`} icon={<Calculator size={14} />} tone="blue" />
