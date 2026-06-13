@@ -503,8 +503,8 @@ export function PrintDocument(props: Props) {
           />
         </div>
 
-        {/* 3 proyecciones */}
-        <div style={{ padding: "16px 24px 0 24px", display: "flex", flexDirection: "column", gap: 12 }}>
+        {/* 3 proyecciones — compactas (secundarias) */}
+        <div style={{ padding: "12px 24px 0 24px", display: "flex", flexDirection: "column", gap: 8 }}>
           {alternativas.slice(0, 3).map((alt, i) => {
             const palette = ALT_PALETTES[i % ALT_PALETTES.length];
             return (
@@ -531,15 +531,15 @@ export function PrintDocument(props: Props) {
           })}
         </div>
 
-        {/* CTA final */}
-        <div style={{ padding: "16px 24px 0 24px", flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+        {/* CTA final — sin QR */}
+        <div style={{ padding: "12px 24px 0 24px", flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
           <div style={{
             background: C.bgSoft, border: `1px solid ${C.hairline}`,
-            borderRadius: 12, padding: "14px 18px",
+            borderRadius: 12, padding: "12px 18px",
             display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 16, alignItems: "center",
           }}>
             <div style={{
-              width: 46, height: 46, borderRadius: 12,
+              width: 40, height: 40, borderRadius: 10,
               background: C.green,
               display: "flex", alignItems: "center", justifyContent: "center",
               color: "#fff",
@@ -547,19 +547,26 @@ export function PrintDocument(props: Props) {
               <CalIconBig />
             </div>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 900, color: C.black, lineHeight: 1.2 }}>
-                ¿Listo para dar el siguiente paso?
+              <div style={{ fontSize: 13, fontWeight: 900, color: C.black, lineHeight: 1.2 }}>
+                ¿Listo para dar el siguiente paso, {primerNombre}?
               </div>
               <div style={{
-                marginTop: 4, fontSize: 10.5, color: C.muted, lineHeight: 1.45,
+                marginTop: 3, fontSize: 10, color: C.muted, lineHeight: 1.4,
               }}>
-                Esta propuesta personalizada está lista para ti.<br />
-                Agenda tu asesoría hoy y comencemos a optimizar tu crédito.
+                Esta propuesta personalizada está lista para ti.
+                Agenda tu asesoría y comencemos a optimizar tu crédito.
               </div>
             </div>
-            <QRPlaceholder />
+            <div style={{
+              background: C.black, color: "#fff",
+              padding: "8px 14px", borderRadius: 8,
+              fontSize: 11, fontWeight: 800, letterSpacing: "0.04em",
+            }}>
+              CONTACTA A {analista.split(" ")[0].toUpperCase()}
+            </div>
           </div>
         </div>
+
 
         <FooterStrip />
       </section>
