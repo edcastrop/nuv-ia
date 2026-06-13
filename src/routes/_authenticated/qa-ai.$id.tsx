@@ -10,6 +10,7 @@ import { VeredictoBlock } from "@/components/qa-ai/VeredictoBlock";
 import { ProyeccionesDropzone } from "@/components/proyecciones/ProyeccionesDropzone";
 import { VerificacionCierreBlock } from "@/components/proyecciones/VerificacionCierreBlock";
 import { bancoGeneraProyeccionesCierre, motivoSinProyecciones } from "@/lib/bancosProyecciones";
+import { MotivacionNuvia } from "@/components/qa-ai/MotivacionNuvia";
 import type { Veredicto } from "@/lib/qaMath";
 import { Brain, Gauge, ArrowLeft, AlertTriangle, CheckCircle2, Coins, Calculator, Sigma, ShieldAlert, Minus, FileDown, Sparkles, RefreshCw } from "lucide-react";
 
