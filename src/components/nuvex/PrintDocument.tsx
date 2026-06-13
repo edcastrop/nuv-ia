@@ -203,8 +203,8 @@ export function PrintDocument(props: Props) {
             <p style={{
               marginTop: 7, fontSize: 10.5, lineHeight: 1.4, color: C.muted, maxWidth: 420,
             }}>
-              {primerNombre}, encontramos una oportunidad real
-              de optimizar tu crédito sin cambiar de banco.
+              Encontramos una oportunidad real de optimizar tu crédito
+              sin cambiar de banco.
             </p>
           </div>
           <div style={{
