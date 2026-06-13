@@ -1,7 +1,7 @@
 // NUVIA Financial QA AI — Motor matemático determinístico
 // 100% TypeScript puro · sin dependencias externas · testeable
 
-export const QA_MOTOR_VERSION = "1.1.0";
+export const QA_MOTOR_VERSION = "1.1.1";
 export const DEFAULT_VARIACION_UVR_EA = 5.5;
 
 export type Modalidad = "hipotecario" | "leasing" | "uvr";
@@ -240,8 +240,7 @@ export function reconstruir(input: ReconstruccionInput): Reconstruccion {
     const iMvUvr = eaToMv(eaCobrada);
     const variacionEa = Math.max(0, input.variacionUvrEa ?? DEFAULT_VARIACION_UVR_EA) / 100;
     const variacionMensual = eaToMv(variacionEa);
-    const cuotaFinancieraActual = Math.max(0, input.cuotaFinancieraSinSeguros ?? 0);
-    const cuotaUvr = cuotaFinancieraActual > 0 ? cuotaFinancieraActual / valorUvr : cuotaTeorica(saldoUvr, iMvUvr, n);
+    const cuotaUvr = cuotaTeorica(saldoUvr, iMvUvr, n);
     const cuotaFinancieraBase = cuotaUvr * valorUvr;
     const cuotaSinSubsidioOficial = Math.max(0, input.cuotaBaseSinSubsidio ?? 0);
     const cuotaTeoricaActual = cuotaSinSubsidioOficial > 0 ? cuotaSinSubsidioOficial : cuotaFinancieraBase + seguros;
@@ -386,6 +385,27 @@ export function compararExtracto(
 ): Inconsistencia[] {
   const out: Inconsistencia[] = [];
 
+  if (inputRec.modalidad === "uvr" && inputRec.saldoUVR && inputRec.valorUVR && inputRec.cuotaFinancieraSinSeguros && inputRec.tasaEa && inputRec.cuotasPendientes) {
+    const iUvr = eaToMv(inputRec.tasaEa / 100);
+    const cuotaUvrOficial = inputRec.cuotaFinancieraSinSeguros / inputRec.valorUVR;
+    if (iUvr > 0 && cuotaUvrOficial > inputRec.saldoUVR * iUvr) {
+      const nInferido = Math.log(cuotaUvrOficial / (cuotaUvrOficial - inputRec.saldoUVR * iUvr)) / Math.log(1 + iUvr);
+      if (Number.isFinite(nInferido) && Math.abs(nInferido - inputRec.cuotasPendientes) > tol.simCuotasMax) {
+        const diferencia = Math.round(nInferido) - inputRec.cuotasPendientes;
+        out.push({
+          tipo: "plazo",
+          severidad: Math.abs(diferencia) > 24 ? "critica" : "warning",
+          campo: "cuotas_pendientes_uvr",
+          valorExtracto: inputRec.cuotasPendientes,
+          valorCalculado: Math.round(nInferido),
+          diferencia,
+          mensaje: `La cuota financiera UVR oficial amortiza en ${Math.round(nInferido)} cuotas, pero el extracto reporta ${inputRec.cuotasPendientes} pendientes.`,
+          sugerencia: "Mantener el plazo del extracto para proyección comercial y validar con el banco si la cuota UVR será recalculada o si tasa/cuota/plazo fueron leídos con otro criterio.",
+        });
+      }
+    }
+  }
+
   if (ext.cuota && ext.cuota > 0) {
     const diff = ext.cuota - rec.cuotaTotalConSeguros;
     const sev = severidadCuota(diff, ext.cuota, tol);
@@ -525,18 +545,19 @@ export function calcularScore(
 
   score = Math.max(0, Math.min(100, Math.round(score * 100) / 100));
 
-  let categoria: Categoria;
-  if (score >= tol.umbScoreExcelente) categoria = "excelente";
-  else if (score >= tol.umbScoreAprobado) categoria = "aprobado";
-  else if (score >= tol.umbScoreRevisar) categoria = "revisar";
-  else categoria = "rechazado";
-
   let dictamen: Dictamen;
   if (crit > 0) dictamen = "rechazado";
   else if (score >= tol.umbScoreExcelente) dictamen = "aprobado";
   else if (score >= tol.umbScoreAprobado) dictamen = "aprobado_obs";
   else if (score >= tol.umbScoreRevisar) dictamen = "requiere_revision";
   else dictamen = "rechazado";
+
+  let categoria: Categoria;
+  if (dictamen === "rechazado") categoria = "rechazado";
+  else if (score >= tol.umbScoreExcelente) categoria = "excelente";
+  else if (score >= tol.umbScoreAprobado) categoria = "aprobado";
+  else if (score >= tol.umbScoreRevisar) categoria = "revisar";
+  else categoria = "rechazado";
 
   return { score, categoria, dictamen, penalizaciones: pen };
 }

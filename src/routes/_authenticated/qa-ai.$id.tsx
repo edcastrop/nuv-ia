@@ -45,7 +45,7 @@ function ResultadoQaAi() {
   const [verTodas, setVerTodas] = useState(false);
   const [reloading, setReloading] = useState(false);
 
-  useEffect(() => { (async () => setData(await fetchAud({ data: { id } })))(); }, [id, fetchAud]);
+  useEffect(() => { (async () => setData(await fetchAud({ data: { id } }) as { auditoria: Record<string, unknown> | null; inconsistencias: Inc[] }))(); }, [id, fetchAud]);
 
   // Recomputar score+penalizaciones desde los inputs guardados (determinístico)
   const recomputo = useMemo(() => {
@@ -158,7 +158,7 @@ function ResultadoQaAi() {
                 setReloading(true);
                 try {
                   await doReejecutar({ data: { id } });
-                  setData(await fetchAud({ data: { id } }));
+                  setData(await fetchAud({ data: { id } }) as { auditoria: Record<string, unknown> | null; inconsistencias: Inc[] });
                 } finally {
                   setReloading(false);
                 }
