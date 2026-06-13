@@ -1122,7 +1122,6 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           setDragActive(false);
           const f = e.dataTransfer?.files?.[0];
           if (f) {
-            reset();
             setOpen(true);
             handleFileSelect(f);
           }
