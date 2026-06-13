@@ -6,6 +6,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { VerificacionCierre } from "./bancosProyecciones";
 
 const CrearRegistroSchema = z.object({
   expedienteId: z.string().uuid(),
