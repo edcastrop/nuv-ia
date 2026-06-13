@@ -754,14 +754,32 @@ function ResumenRow({
 /* ════════════════════════════════════════════════════════════
    ALTERNATIVAS — paletas + builder
 ════════════════════════════════════════════════════════════ */
-const ALT_PALETTES = [
-  { label: "Escenario balanceado",  accent: NUVEX.verde, soft: "#E8F4EA", deep: "#3F8C57",
-    ideal: "Para quienes buscan un equilibrio entre incrementar su cuota y recuperar tiempo de deuda con un impacto financiero significativo." },
-  { label: "Escenario agresivo",    accent: NUVEX.azul, soft: "#E3E8F5", deep: "#2F4380",
-    ideal: "Para quienes desean reducir el tiempo de su crédito al máximo y generar el mayor ahorro posible en intereses y seguros." },
-  { label: "Escenario conservador", accent: "#7C5BB7", soft: "#EDE5F7", deep: "#553B86",
-    ideal: "Para quienes prefieren un incremento moderado en su cuota y una recuperación de tiempo más gradual." },
-];
+type ScenarioMeta = { label: string; accent: string; soft: string; deep: string; ideal: string };
+
+const SCENARIO_CONSERVADOR: ScenarioMeta = {
+  label: "Escenario conservador", accent: "#7C5BB7", soft: "#EDE5F7", deep: "#553B86",
+  ideal: "Incremento mínimo en cuota y recuperación gradual de tiempo.",
+};
+const SCENARIO_BALANCEADO: ScenarioMeta = {
+  label: "Escenario balanceado", accent: NUVEX.verde, soft: "#E8F4EA", deep: "#3F8C57",
+  ideal: "Equilibrio entre aumento de cuota, ahorro financiero y reducción de plazo.",
+};
+const SCENARIO_AGRESIVO: ScenarioMeta = {
+  label: "Escenario agresivo", accent: NUVEX.azul, soft: "#E3E8F5", deep: "#2F4380",
+  ideal: "Mayor recuperación de tiempo y ahorro financiero mediante un incremento superior en cuota.",
+};
+
+/**
+ * Clasifica dinámicamente los escenarios alternativos según su posición
+ * (ya vienen ordenados de menor a mayor agresividad).
+ */
+function dynamicScenarioMeta(index: number, total: number): ScenarioMeta {
+  if (total <= 1) return SCENARIO_BALANCEADO;
+  if (total === 2) return index === 0 ? SCENARIO_CONSERVADOR : SCENARIO_AGRESIVO;
+  if (index === 0) return SCENARIO_CONSERVADOR;
+  if (index === 1) return SCENARIO_BALANCEADO;
+  return SCENARIO_AGRESIVO;
+}
 
 interface AltRow {
   nuevaCuota: number;
