@@ -216,7 +216,7 @@ export const fusionarConExtractoYReauditar = createServerFn({ method: "POST" })
 
     const { error: errU } = await supabase
       .from("extractos_lecturas")
-      .update({ datos: datosNuevos })
+      .update({ datos: JSON.parse(JSON.stringify(datosNuevos)) })
       .eq("id", ext.id);
     if (errU) throw new Error(errU.message);
 
