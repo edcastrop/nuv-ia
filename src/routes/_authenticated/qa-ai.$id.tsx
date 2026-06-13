@@ -220,6 +220,12 @@ function ResultadoQaAi() {
         </div>
       </NCard>
 
+      <VeredictoBlock
+        veredicto={
+          ((o.veredicto as Veredicto | undefined) ?? recomputo?.veredicto) as Veredicto | undefined
+        }
+      />
+
       <KpiGrid cols={4}>
         <KpiCard label={isUvr ? "Cuota sin subsidio" : "Cuota teórica"} value={`$${fmt(o.cuotaTeorica as number, 0)}`} icon={<Calculator size={14} />} tone="blue" />
         <KpiCard label="Cuota total c/seguros" value={`$${fmt(o.cuotaTotalConSeguros as number, 0)}`} icon={<Coins size={14} />} tone="blue" />
