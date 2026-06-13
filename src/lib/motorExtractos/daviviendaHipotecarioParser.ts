@@ -70,17 +70,26 @@ function extractDaviviendaPaymentDetail(text: string) {
  * mention tasa/aseguradora/valor asegurado/costo/prima (those are not the monthly value).
  */
 function moneyFromLine(text: string, rx: RegExp) {
-  const line = text
+  const lines = text
     .split(/\r?\n/)
     .map((item) => compactSpaces(item).trim())
-    .find(
+    .filter(
       (item) =>
         rx.test(item) &&
         /\$\s*[0-9]/.test(item) &&
         !/tasa|aseguradora|valor\s+asegurado|costo|prima/i.test(item),
-    ) ?? "";
-  const value = line.match(/\$\s*([0-9][0-9.,]*)/)?.[1] ?? "";
-  return moneyToNumber(value);
+    );
+  for (const line of lines) {
+    // Capturar el $monto que aparece DESPUÉS del rótulo (no el primer $ de la línea),
+    // porque algunos extractos Davivienda agrupan varios conceptos con sus montos en una sola línea.
+    const m = rx.exec(line);
+    if (!m) continue;
+    const tail = line.slice(m.index + m[0].length);
+    const value = tail.match(/\$\s*([0-9][0-9.,]*)/)?.[1];
+    if (value) return moneyToNumber(value);
+  }
+  const fallback = lines[0]?.match(/\$\s*([0-9][0-9.,]*)/)?.[1] ?? "";
+  return moneyToNumber(fallback);
 }
 
 /**
