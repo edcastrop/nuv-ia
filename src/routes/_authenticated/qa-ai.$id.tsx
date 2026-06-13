@@ -229,17 +229,46 @@ function ResultadoQaAi() {
         }
       />
 
-      {typeof a.expediente_id === "string" ? (
-        <ProyeccionesDropzone
-          expedienteId={a.expediente_id}
-          variant="qa"
-          onReauditoria={async () => {
-            setReloading(true);
-            try { setData(await fetchAud({ data: { id } }) as { auditoria: Record<string, unknown> | null; inconsistencias: Inc[] }); }
-            finally { setReloading(false); }
-          }}
-        />
-      ) : (
+      {typeof a.expediente_id === "string" ? (() => {
+        const banco =
+          (((a as Record<string, unknown>).inputs as Record<string, unknown> | undefined)?.extracto as Record<string, unknown> | undefined)?.banco as string | undefined ?? "";
+        const aplicaCierre = bancoGeneraProyeccionesCierre(banco);
+        const motivo = !aplicaCierre ? motivoSinProyecciones(banco) : null;
+        const expId = a.expediente_id;
+        return (
+          <>
+            <ProyeccionesDropzone
+              expedienteId={expId}
+              variant="qa"
+              momento="auditoria"
+              onReauditoria={async () => {
+                setReloading(true);
+                try { setData(await fetchAud({ data: { id } }) as { auditoria: Record<string, unknown> | null; inconsistencias: Inc[] }); }
+                finally { setReloading(false); }
+              }}
+            />
+            {aplicaCierre ? (
+              <>
+                <ProyeccionesDropzone
+                  expedienteId={expId}
+                  variant="qa"
+                  momento="cierre"
+                />
+                <VerificacionCierreBlock expedienteId={expId} bancoHint={banco} variant="qa" />
+              </>
+            ) : banco ? (
+              <NCard>
+                <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--nuvia-text-secondary)" }}>
+                  Verificación de cierre
+                </p>
+                <p className="text-[13px]" style={{ color: "var(--nuvia-text-primary)" }}>
+                  {motivo ?? "Este banco no emite proyecciones formales al cierre. NUVIA verificará contra el próximo extracto post-ejecución."}
+                </p>
+              </NCard>
+            ) : null}
+          </>
+        );
+      })() : (
         <NCard>
           <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--nuvia-text-secondary)" }}>
             Proyecciones del banco
