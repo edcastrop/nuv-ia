@@ -716,7 +716,7 @@ export function construirVeredicto(
       severidad: "warning",
       titulo: `Pequeña diferencia de plazo: ${Math.abs(desfasePlazo!)} meses`,
       detalle: `La matemática dice que la cuota actual termina el crédito en ${plazoImplicito} meses, y el extracto reporta ${plazoReportado}. La diferencia es pequeña pero conviene confirmarla.`,
-      pista: "Antes de proponer una refinanciación, confirme con el banco cuántas cuotas le quedan exactamente al cliente.",
+      pista: "Antes de proponer una optimización del crédito, confirme con el banco cuántas cuotas le quedan exactamente al cliente.",
     });
   }
 
