@@ -515,21 +515,22 @@ export function PrintDocument(props: Props) {
           />
         </div>
 
-        {/* 3 proyecciones — con más respiración visual (+18%) */}
+        {/* 3 proyecciones — clasificación dinámica por incremento de cuota */}
         <div style={{
           padding: "12px 22px 0 22px",
           display: "flex", flexDirection: "column", gap: 9,
         }}>
           {alternativas.slice(0, 3).map((alt, i) => {
-            const palette = ALT_PALETTES[i % ALT_PALETTES.length];
+            const total = Math.min(3, alternativas.length);
+            const dyn = dynamicScenarioMeta(i, total);
             return (
               <AlternativaCard
                 key={i}
                 index={i + 1}
-                label={palette.label}
-                accent={palette.accent}
-                soft={palette.soft}
-                deep={palette.deep}
+                label={dyn.label}
+                accent={dyn.accent}
+                soft={dyn.soft}
+                deep={dyn.deep}
                 cuota={alt.nuevaCuota}
                 cuotaPct={alt.incrementoPct}
                 ahorroAños={alt.añosEliminados}
@@ -540,7 +541,7 @@ export function PrintDocument(props: Props) {
                 añoHoy={añoHoy}
                 añosActuales={añosActual}
                 añosOpt={alt.añosOpt}
-                quienIdeal={palette.ideal}
+                quienIdeal={dyn.ideal}
               />
             );
           })}
