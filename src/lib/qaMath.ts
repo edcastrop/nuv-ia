@@ -1,7 +1,7 @@
 // NUVIA Financial QA AI — Motor matemático determinístico
 // 100% TypeScript puro · sin dependencias externas · testeable
 
-export const QA_MOTOR_VERSION = "1.2.0";
+export const QA_MOTOR_VERSION = "1.2.1";
 export const DEFAULT_VARIACION_UVR_EA = 5.5;
 
 export type Modalidad = "hipotecario" | "leasing" | "uvr";
@@ -655,6 +655,7 @@ export function construirVeredicto(
   const ext = input.extracto ?? {};
   const sim = input.simulacion;
   const isUvr = input.modalidad === "uvr";
+  const tieneFresh = (r.coberturaFrechValorMensual ?? 0) > 0 || (r.coberturaFrechPp ?? 0) > 0;
   const hayExcel = !!sim && Object.values(sim).some((v) => v !== undefined && v !== null);
   const hallazgos: VeredictoHallazgo[] = [];
 
@@ -794,7 +795,9 @@ export function construirVeredicto(
         severidad: pct > 0.15 ? "critica" : "warning",
         titulo: `La cuota del extracto difiere ${(pct * 100).toFixed(1)}% de lo que debería ser`,
         detalle: `El extracto cobra ${fmtCop(ext.cuota)}, pero según el saldo, la tasa y el plazo la cuota debería ser ${fmtCop(rec.cuotaTotalConSeguros)}. Diferencia: ${fmtCop(Math.abs(diff))}.`,
-        pista: "Verifique si la cuota del extracto incluye cuota de manejo, comisiones u otros cobros. También confirme si el seguro o el FRECH están bien registrados.",
+        pista: tieneFresh
+          ? "Verifique si la cuota del extracto incluye cuota de manejo, comisiones u otros cobros. También confirme si el seguro y el beneficio FRECH/Fresh están bien registrados."
+          : "Verifique si la cuota del extracto incluye cuota de manejo, comisiones u otros cobros. También confirme si el seguro, la tasa o el plazo están bien registrados.",
       });
     }
   }
@@ -816,7 +819,9 @@ export function construirVeredicto(
       ? "warning"
       : "ok";
   const extractoDet = hallazgos.length === 0
-    ? "Saldo, tasa, plazo, FRECH y cuota cuadran entre sí. El extracto está internamente sano."
+    ? (tieneFresh
+      ? "Saldo, tasa, plazo, beneficio y cuota cuadran entre sí. El extracto está internamente sano."
+      : "Saldo, tasa, plazo, seguros y cuota cuadran entre sí. El extracto está internamente sano.")
     : `NUVIA encontró ${hallazgos.length} dato(s) que no cuadran (ver lista abajo).`;
 
   const simDet = `Proyecta el crédito usando las ${plazoReportado ?? r.cuotasPendientes} cuotas que el extracto dice que faltan, respetando la cuota oficial. No inventa ni recorta plazos.`;
@@ -856,13 +861,14 @@ export function construirVeredicto(
     causas.push("Otra opción: hubo un cambio de tasa o una reliquidación previa y el banco no recalculó la cuota.");
   } else if (desfaseGrande && desfasePlazo! > 0) {
     causas.push("La cuota es demasiado baja para el plazo que dice el extracto. Si el cliente sigue pagando así, va a quedar debiendo dinero al final.");
-    causas.push("Es posible que el subsidio FRECH o los seguros estén mal aplicados en la cuota.");
+    causas.push(tieneFresh
+      ? "Es posible que el beneficio FRECH/Fresh o los seguros estén mal aplicados en la cuota."
+      : "Es posible que los seguros, la tasa o la cantidad de cuotas estén mal registrados en el extracto.");
   }
   if (!frechConsistente) causas.push("El subsidio FRECH no está reflejado correctamente en la cuota que paga el cliente.");
   if (!saldoUvrConsistente) causas.push("El valor de la UVR que se usó para convertir el saldo no corresponde a la fecha del extracto.");
 
   // ── Recomendaciones (lenguaje sencillo, ajustadas al tipo de crédito) ──
-  const tieneFresh = (r.coberturaFrechValorMensual ?? 0) > 0 || (r.coberturaFrechPp ?? 0) > 0;
   const recs: string[] = hallazgos.map((h) => h.pista);
 
   if (recs.length === 0) {

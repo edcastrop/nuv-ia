@@ -114,6 +114,7 @@ export function exportarDictamenPDF(d: DictamenPdfData) {
   const rec = (d.inputs.reconstruccion ?? {}) as Record<string, unknown>;
   const o = d.outputs;
   const isUvr = d.modalidad === "uvr";
+  const hasFrech = Number(rec.coberturaFrechPp ?? 0) > 0 || Number(rec.coberturaFrechValorMensual ?? 0) > 0;
   doc.setFont("helvetica", "bold"); doc.setFontSize(11);
   doc.text("Extracto bancario vs Reconstrucción NUVIA", 48, y); y += 4;
   autoTable(doc, {
@@ -136,10 +137,10 @@ export function exportarDictamenPDF(d: DictamenPdfData) {
         `$${fmt(ext.seguros as number, 0)}`,
         `$${fmt(rec.seguros as number, 0)}`,
         fmt(Number(rec.seguros ?? 0) - Number(ext.seguros ?? 0), 0)],
-      ["Cobertura FRECH (pp)",
+      ...(hasFrech ? [["Cobertura FRECH (pp)",
         fmt(Number(ext.coberturaFrechPp ?? 0), 4),
         fmt(Number(rec.coberturaFrechPp ?? 0), 4),
-        fmt(Number(rec.coberturaFrechPp ?? 0) - Number(ext.coberturaFrechPp ?? 0), 4)],
+        fmt(Number(rec.coberturaFrechPp ?? 0) - Number(ext.coberturaFrechPp ?? 0), 4)] as string[]] : []),
     ],
     styles: { fontSize: 9 },
     headStyles: { fillColor: [30, 41, 59], textColor: 255 },
@@ -188,9 +189,13 @@ export function exportarDictamenPDF(d: DictamenPdfData) {
       ] : [
         ["Tasa mensual vencida", "i_mv = (1 + EA)^(1/12) - 1"],
         ["Cuota teórica (francés)", "C = S * i_mv / (1 - (1 + i_mv)^-n)"],
-        ["Cuota con FRECH", "i_sub = (1+(EA-cob))^(1/12)-1 ; C_sub = S*i_sub/(1-(1+i_sub)^-n)"],
-        ["Beneficio mensual FRECH", "Beneficio = C - C_sub"],
-        ["Cuota total mensual", "Cuota_total = C_sub + Seguros"],
+        ...(hasFrech ? [
+          ["Cuota con FRECH", "i_sub = (1+(EA-cob))^(1/12)-1 ; C_sub = S*i_sub/(1-(1+i_sub)^-n)"],
+          ["Beneficio mensual FRECH", "Beneficio = C - C_sub"],
+          ["Cuota total mensual", "Cuota_total = C_sub + Seguros"],
+        ] : [
+          ["Cuota total mensual", "Cuota_total = C + Seguros"],
+        ]),
         ["Interés cuota k", "I_k = Saldo_{k-1} * i_periodica"],
         ["Capital cuota k", "K_k = C - I_k"],
       ]),
