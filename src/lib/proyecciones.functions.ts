@@ -33,6 +33,7 @@ export const crearRegistroProyeccion = createServerFn({ method: "POST" })
         size_bytes: data.sizeBytes ?? null,
         origen_zip: data.origenZip ?? null,
         password_usada: data.passwordUsada,
+        momento: data.momento,
         status: "pendiente",
         uploaded_by: userId,
       })
