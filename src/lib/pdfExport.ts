@@ -32,12 +32,12 @@ interface PageReport {
   overflowPx: number;
 }
 
-const MARGIN_TOP_PX = 40;
-const MARGIN_BOTTOM_PX = 50;
-const MARGIN_SIDE_PX = 40;
-const FOOTER_SAFE_GAP_PX = 30;
+const MARGIN_TOP_PX = 0;
+const MARGIN_BOTTOM_PX = 0;
+const MARGIN_SIDE_PX = 0;
+const FOOTER_SAFE_GAP_PX = 0;
 const MIN_USE_PCT = 75;
-const MAX_USE_PCT = 92;
+const MAX_USE_PCT = 100;
 
 export function validatePdfLayout(elementId: string): LayoutValidationResult {
   const root = document.getElementById(elementId);
