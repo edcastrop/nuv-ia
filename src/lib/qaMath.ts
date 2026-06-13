@@ -904,7 +904,7 @@ export function construirVeredicto(
     filas,
     extractoTieneErrores,
     causasProbables: causas.slice(0, 3),
-    recomendaciones: dedupe(recs).slice(0, 5),
+    recomendaciones: dedupe(recs).slice(0, 8),
     hallazgos,
     plazoImplicito,
     plazoReportado,
