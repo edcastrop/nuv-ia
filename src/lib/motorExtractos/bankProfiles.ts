@@ -194,11 +194,18 @@ sistemaAmortizacion ← texto literal junto a "Sistema de Amortización"
     banco: "FNA",
     productos: ["CREDITO_HIPOTECARIO", "LEASING_HABITACIONAL"],
     matchAny: [/fondo\s+nacional\s+del\s+ahorro/i, /\bfna\b/i],
-    hints: `FNA (Fondo Nacional del Ahorro):
-- Estructura multipágina. Busca "Saldo deuda" → saldoCapital.
-- "Valor cuota" → cuotaActual. "Valor total a pagar" NO es cuota mensual, ignorar.
-- "Cotización UVR" → valorUVR si aplica. Si menciona UVR, moneda=UVR.
-- Plazo en meses bajo "Plazo del crédito" / "Plazo pactado".`,
+    hints: `FNA (Fondo Nacional del Ahorro) — Estado de Cuenta DIVISION DE CARTERA HIPOTECARIA:
+- saldoCapital ← "SALDO CAPITAL FINANCIADO" o "SALDO TOTAL CAPITAL" (columna PESO).
+- cuotaActual ← "VALOR CUOTA" en la sección "DISCRIMINACION DEL VALOR A PAGAR" (NO uses "VALOR PRIMERA CUOTA" ni "VALOR TOTAL A PAGAR").
+- seguros ← "VALOR SEGURO" en "DISCRIMINACION DEL VALOR A PAGAR" (NO uses "SEGUROS" del bloque SALDO DEUDA, que es saldo acumulado de seguros, no el seguro mensual).
+- tasaEA / teaCobrada ← "TASA INTERES ACTUAL" (campo "X.X E.A").
+- teaPactada ← misma "TASA INTERES ACTUAL" cuando no hay pactada distinta.
+- valorDesembolsado ← "VALOR PRESTAMO" en el encabezado.
+- numeroCredito ← "CREDITO No" / "No. CREDITO".
+- cuotasPagadas ← "CUOTAS FACTURADAS".
+- plazoInicial (CRÍTICO): es el plazo TOTAL en MESES del crédito. Calcúlalo como meses entre "FECHA APERTURA" y "VENCIMIENTO FINAL" (típicamente 240 para 20 años). NUNCA uses "BASE DE CALCULO" (360 = días año comercial, NO es plazo) ni "DIAS CALCULO".
+- cuotasPendientes = plazoInicial - cuotasPagadas (con esto score=70 si no es explícito).
+- moneda: "MONEDA OP PESO" → PESOS. Solo UVR si el encabezado explícitamente lo dice.`,
   },
   {
     id: "banco_popular",
