@@ -414,78 +414,128 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
     }
   };
 
-  const processFile = async (f: File, pwd: string | undefined) => {
+  // Procesa un archivo y devuelve sus páginas (imágenes) + texto extraído
+  // sin disparar la lectura IA. Las páginas se acumulan en `staging`.
+  const fileToPages = async (
+    f: File,
+    pwd: string | undefined,
+  ): Promise<{
+    images: { mime: string; dataUrl: string }[];
+    rawText: string;
+    needsPassword?: boolean;
+    wrongPassword?: boolean;
+  }> => {
+    const lowerName = f.name.toLowerCase();
+    const isZip =
+      f.type === "application/zip" ||
+      f.type === "application/x-zip-compressed" ||
+      lowerName.endsWith(".zip");
+    if (f.type === "application/pdf" || lowerName.endsWith(".pdf")) {
+      let rawText = "";
+      try {
+        rawText = await extractTextFromPdf(f, pwd);
+      } catch (textErr) {
+        const e = textErr as { name?: string; code?: number };
+        if (e?.name === "PasswordException") {
+          return { images: [], rawText: "", needsPassword: true, wrongPassword: e.code === 2 };
+        }
+        console.warn("No se pudo extraer texto estructural del PDF:", textErr);
+      }
+      try {
+        const result = await renderPdfToImages(f, pwd);
+        if (result.needsPassword) {
+          return { images: [], rawText: "", needsPassword: true, wrongPassword: result.wrongPassword };
+        }
+        return { images: result.images, rawText };
+      } catch (imageErr) {
+        if (rawText.trim().length > 250) return { images: [], rawText };
+        throw imageErr;
+      }
+    }
+    if (f.type.startsWith("image/")) {
+      const url = await fileToDataUrl(f);
+      return { images: [{ mime: f.type, dataUrl: url }], rawText: "" };
+    }
+    if (isZip) {
+      const imgs = await extractImagesFromZip(f);
+      return { images: imgs, rawText: "" };
+    }
+    throw new Error(
+      "Formato no soportado. Sube un PDF, imagen (JPG/PNG) o un ZIP con esos archivos.",
+    );
+  };
+
+  const addFileToStaging = async (f: File, pwd: string | undefined) => {
+    setErrorMsg(null);
+    setStagingNotice(null);
+    if (staging.length >= MAX_PAGES) {
+      setStagingNotice(`Ya llegaste al máximo de ${MAX_PAGES} páginas. Elimina alguna para añadir más.`);
+      return;
+    }
     setStage("reading");
     try {
-      let images: { mime: string; dataUrl: string }[] = [];
-      let rawText = "";
-      const lowerName = f.name.toLowerCase();
-      const isZip =
-        f.type === "application/zip" ||
-        f.type === "application/x-zip-compressed" ||
-        lowerName.endsWith(".zip");
-      if (f.type === "application/pdf" || lowerName.endsWith(".pdf")) {
-        try {
-          rawText = await extractTextFromPdf(f, pwd);
-          if (rawText.trim().length > 250) {
-            const deterministicResp = await callExtract({ data: { images: [], rawText } });
-            if (deterministicResp.data) {
-              await uploadOriginal(f);
-              setParsed(
-                normalizeExtractData(
-                  recomputeDaviviendaHipotecario(
-                    recomputeDaviviendaLeasing(recomputeBancolombia(deterministicResp.data)),
-                  ),
-                ),
-              );
-              setStage("review");
-              return;
-            }
-          }
-        } catch (textErr) {
-          const e = textErr as { name?: string; code?: number };
-          if (e?.name === "PasswordException") {
-            setWrongPassword(e.code === 2);
-            setStage("password");
-            return;
-          }
-          console.warn("No se pudo extraer texto estructural del PDF:", textErr);
-        }
-        try {
-          const result = await renderPdfToImages(f, pwd);
-          if (result.needsPassword) {
-            setWrongPassword(result.wrongPassword);
-            setStage("password");
-            return;
-          }
-          images = result.images;
-        } catch (imageErr) {
-          if (rawText.trim().length <= 250) throw imageErr;
-          console.warn("No se pudieron generar imágenes del PDF; se usará texto extraído:", imageErr);
-        }
-        if (images.length === 0 && rawText.trim().length === 0) {
-          throw new Error("No pude leer texto ni generar imágenes del PDF. Verifica que no esté dañado o sube una captura clara del extracto.");
-        }
-      } else if (f.type.startsWith("image/")) {
-        const url = await fileToDataUrl(f);
-        images = [{ mime: f.type, dataUrl: url }];
-      } else if (isZip) {
-        images = await extractImagesFromZip(f);
-      } else {
-        throw new Error(
-          "Formato no soportado. Sube un PDF, imagen (JPG/PNG) o un ZIP con esos archivos.",
+      const res = await fileToPages(f, pwd);
+      if (res.needsPassword) {
+        setPendingFile(f);
+        setFile(f);
+        setWrongPassword(!!res.wrongPassword);
+        setStage("password");
+        return;
+      }
+      const remaining = MAX_PAGES - staging.length;
+      const slice = res.images.slice(0, remaining).map((img) => ({ ...img, sourceName: f.name }));
+      if (slice.length === 0 && res.rawText.trim().length === 0) {
+        throw new Error("No pude leer páginas del archivo. Verifica que no esté dañado.");
+      }
+      setStaging((prev) => [...prev, ...slice]);
+      setStagingRawText((prev) => (prev ? `${prev}\n\n${res.rawText}` : res.rawText));
+      if (!archivoPath) await uploadOriginal(f);
+      setFile(f);
+      setPendingFile(null);
+      setPassword("");
+      if (res.images.length > remaining) {
+        setStagingNotice(
+          `Se añadieron ${remaining} páginas. El extracto ya alcanzó el límite de ${MAX_PAGES}.`,
         );
       }
+      setStage("idle");
+    } catch (err) {
+      console.error(err);
+      setErrorMsg(err instanceof Error ? err.message : "Error procesando el archivo.");
+      setStage("error");
+    }
+  };
 
-      // Subir archivo original a Supabase Storage (privado)
-      await uploadOriginal(f);
-
-      // Llamar IA
-      const resp = await callExtract({ data: { images, rawText } });
+  const runReading = async () => {
+    if (staging.length === 0) return;
+    setErrorMsg(null);
+    setStage("reading");
+    try {
+      const uniqueSources = new Set(staging.map((s) => s.sourceName));
+      const onlyOneSource = uniqueSources.size === 1;
+      const lowerName = (file?.name ?? "").toLowerCase();
+      const isPdf = !!file && (file.type === "application/pdf" || lowerName.endsWith(".pdf"));
+      // Fast deterministic path para PDFs con texto fuerte y un solo archivo
+      if (onlyOneSource && isPdf && stagingRawText.trim().length > 250) {
+        const det = await callExtract({ data: { images: [], rawText: stagingRawText } });
+        if (det.data) {
+          setParsed(
+            normalizeExtractData(
+              recomputeDaviviendaHipotecario(
+                recomputeDaviviendaLeasing(recomputeBancolombia(det.data)),
+              ),
+            ),
+          );
+          setStage("review");
+          return;
+        }
+      }
+      const images = staging.map(({ mime, dataUrl }) => ({ mime, dataUrl }));
+      const resp = await callExtract({ data: { images, rawText: stagingRawText } });
       if (resp.error || !resp.data) {
         setErrorMsg(
           resp.error ||
-            `No se pudieron extraer datos. Archivo: ${f.name}. Texto leído: ${rawText.trim().length} caracteres. Imágenes generadas: ${images.length}.`,
+            `No se pudieron extraer datos del extracto (${images.length} páginas, ${stagingRawText.trim().length} caracteres de texto).`,
         );
         setStage("error");
         return;
@@ -498,7 +548,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       setStage("review");
     } catch (err) {
       console.error(err);
-      setErrorMsg(err instanceof Error ? err.message : "Error procesando el archivo.");
+      setErrorMsg(err instanceof Error ? err.message : "Error procesando el extracto.");
       setStage("error");
     }
   };
