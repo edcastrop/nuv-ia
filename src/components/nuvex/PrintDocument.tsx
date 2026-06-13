@@ -130,6 +130,9 @@ export function PrintDocument(props: Props) {
     cuotaActual, añoHoy, añoFinActual, añosActual,
   });
 
+  // Todas las propuestas (incluyendo la recomendada) para el resumen comparativo
+  const allPropuestas = mapPropuestasToAltRow(mode, pesosPropuestas, uvrPropuestas, cuotaActual);
+
   return (
     <div
       id={containerId}
@@ -542,12 +545,8 @@ export function PrintDocument(props: Props) {
         {/* ───── RESUMEN DE ESCENARIOS ───── */}
         <div style={{ padding: "12px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <ResumenEscenarios
-            alternativas={alternativas.slice(0, 3)}
-            recommended={{
-              nuevaCuota: recommended.nuevaCuota,
-              añosEliminados: añosEliminadosEntero,
-              ahorroTotal: recommended.ahorroTotal,
-            }}
+            allPropuestas={allPropuestas}
+            bestIndex={bestIndex}
           />
         </div>
 
@@ -615,22 +614,25 @@ export function PrintDocument(props: Props) {
 
 /* ════════════════════════════════════════════════════════════
    RESUMEN DE ESCENARIOS — comparativa final
-════════════════════════════════════════════════════════════ */
+   ════════════════════════════════════════════════════════════ */
 function ResumenEscenarios({
-  alternativas, recommended,
+  allPropuestas,
+  bestIndex,
 }: {
-  alternativas: AltRow[];
-  recommended: { nuevaCuota: number; añosEliminados: number; ahorroTotal: number };
+  allPropuestas: AltRow[];
+  bestIndex: number;
 }) {
-  // ALT_PALETTES: 0=balanceado, 1=agresivo, 2=conservador
-  const balanceado = alternativas[0];
-  const agresivo = alternativas[1];
-  const conservador = alternativas[2];
+  // Orden: recomendada primero, luego las demás numeradas
+  const rec = allPropuestas[bestIndex];
+  const others = allPropuestas.filter((_, i) => i !== bestIndex);
 
   const rows = [
-    { key: "cons", label: "Conservador", color: C.purple, data: conservador },
-    { key: "bal",  label: "Balanceado",  color: C.greenDeep, data: balanceado },
-    { key: "agr",  label: "Agresivo",    color: C.azul, data: agresivo },
+    { isRecommended: true, label: "Propuesta Recomendada", data: rec },
+    ...others.map((alt, idx) => ({
+      isRecommended: false,
+      label: `Propuesta ${idx + 1}`,
+      data: alt,
+    })),
   ].filter((r) => r.data);
 
   return (
@@ -655,55 +657,71 @@ function ResumenEscenarios({
         background: C.bgSoft,
         fontSize: 8.5, fontWeight: 800, color: C.muted, letterSpacing: "0.16em",
       }}>
-        <div style={{ padding: "7px 12px" }}>ESCENARIO</div>
+        <div style={{ padding: "7px 12px" }}>ALTERNATIVA</div>
         <div style={{ padding: "7px 12px", textAlign: "right" }}>NUEVA CUOTA</div>
-        <div style={{ padding: "7px 12px", textAlign: "right" }}>AHORRO TIEMPO</div>
-        <div style={{ padding: "7px 12px", textAlign: "right" }}>AHORRO DINERO</div>
+        <div style={{ padding: "7px 12px", textAlign: "right" }}>TIEMPO RECUPERADO</div>
+        <div style={{ padding: "7px 12px", textAlign: "right" }}>AHORRO ECONÓMICO</div>
       </div>
-      {rows.map((r) => (
+      {rows.map((r, i) => (
         <ResumenRow
-          key={r.key}
+          key={i}
+          isRecommended={r.isRecommended}
           label={r.label}
-          color={r.color}
-          cuota={r.data!.nuevaCuota}
-          años={Math.round(r.data!.añosEliminados)}
-          dinero={r.data!.ahorroTotal}
+          cuota={r.data.nuevaCuota}
+          años={Math.round(r.data.añosEliminados)}
+          dinero={r.data.ahorroTotal}
         />
       ))}
-      {/* Recomendado destacado */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "1.15fr 1fr 1fr 1fr",
-        background: `linear-gradient(90deg, ${C.greenSoft} 0%, #fff 100%)`,
-        borderTop: `2px solid ${C.green}`,
-        alignItems: "center",
-      }}>
-        <div style={{ padding: "9px 12px", display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{
-            background: C.greenDeep, color: "#fff",
-            padding: "3px 8px", borderRadius: 4,
-            fontSize: 8.5, fontWeight: 900, letterSpacing: "0.14em",
-          }}>★ RECOMENDADO</div>
-        </div>
-        <div style={{ padding: "9px 12px", textAlign: "right", fontSize: 12.5, fontWeight: 900, color: C.greenDeep }}>
-          {formatCOP(recommended.nuevaCuota)}
-        </div>
-        <div style={{ padding: "9px 12px", textAlign: "right", fontSize: 12.5, fontWeight: 900, color: C.greenDeep }}>
-          {recommended.añosEliminados} AÑOS
-        </div>
-        <div style={{ padding: "9px 12px", textAlign: "right", fontSize: 12.5, fontWeight: 900, color: C.greenDeep }}>
-          {formatCOP(recommended.ahorroTotal)}
-        </div>
-      </div>
     </div>
   );
 }
 
 function ResumenRow({
-  label, color, cuota, años, dinero,
+  isRecommended = false,
+  label,
+  cuota,
+  años,
+  dinero,
 }: {
-  label: string; color: string; cuota: number; años: number; dinero: number;
+  isRecommended?: boolean;
+  label: string;
+  cuota: number;
+  años: number;
+  dinero: number;
 }) {
+  if (isRecommended) {
+    return (
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "1.15fr 1fr 1fr 1fr",
+        borderTop: `2px solid ${C.green}`,
+        background: `linear-gradient(90deg, ${C.greenSoft} 0%, #fff 100%)`,
+        alignItems: "center",
+      }}>
+        <div style={{ padding: "10px 12px", display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{
+            background: C.greenDeep, color: "#fff",
+            padding: "3px 8px", borderRadius: 4,
+            fontSize: 8.5, fontWeight: 900, letterSpacing: "0.14em",
+            display: "flex", alignItems: "center", gap: 4,
+          }}>
+            <span>★</span>
+            <span>RECOMENDADA POR NUVEX</span>
+          </div>
+        </div>
+        <div style={{ padding: "10px 12px", textAlign: "right", fontSize: 12.5, fontWeight: 900, color: C.greenDeep }}>
+          {formatCOP(cuota)}
+        </div>
+        <div style={{ padding: "10px 12px", textAlign: "right", fontSize: 12.5, fontWeight: 900, color: C.greenDeep }}>
+          {años} AÑOS
+        </div>
+        <div style={{ padding: "10px 12px", textAlign: "right", fontSize: 12.5, fontWeight: 900, color: C.greenDeep }}>
+          {formatCOP(dinero)}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{
       display: "grid",
@@ -712,7 +730,7 @@ function ResumenRow({
       alignItems: "center",
     }}>
       <div style={{ padding: "7px 12px", display: "flex", alignItems: "center", gap: 8 }}>
-        <div style={{ width: 8, height: 8, borderRadius: "50%", background: color }} />
+        <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.muted }} />
         <div style={{ fontSize: 11, fontWeight: 800, color: C.ink }}>{label}</div>
       </div>
       <div style={{ padding: "7px 12px", textAlign: "right", fontSize: 11, fontWeight: 700, color: C.ink }}>
@@ -807,6 +825,46 @@ function buildAlternativas(args: {
     };
   }
 }
+
+function mapPropuestasToAltRow(
+  mode: "pesos" | "uvr",
+  pesosPropuestas: PesosPropuesta[] | undefined,
+  uvrPropuestas: UVRPropuesta[] | undefined,
+  cuotaActual: number,
+): AltRow[] {
+  const fechaBase = new Date();
+  if (mode === "uvr") {
+    return (uvrPropuestas || []).map((p) => {
+      const cuota = p.nuevaCuotaConSeguroAprox;
+      const fechaFin = new Date(fechaBase);
+      fechaFin.setMonth(fechaFin.getMonth() + p.nuevoPlazo);
+      return {
+        nuevaCuota: cuota,
+        incrementoPct: cuotaActual > 0 ? ((cuota - cuotaActual) / cuotaActual) * 100 : 0,
+        añosEliminados: p.añosEliminados,
+        cuotasEliminadas: p.cuotasEliminadas,
+        ahorroTotal: p.ahorroTotal,
+        añoFinOpt: fechaFin.getFullYear(),
+        añosOpt: p.nuevoPlazo / 12,
+      };
+    });
+  }
+  return (pesosPropuestas || []).map((p) => {
+    const cuota = p.nuevaCuotaConSeguro;
+    const fechaFin = new Date(fechaBase);
+    fechaFin.setMonth(fechaFin.getMonth() + p.nuevoPlazo);
+    return {
+      nuevaCuota: cuota,
+      incrementoPct: cuotaActual > 0 ? ((cuota - cuotaActual) / cuotaActual) * 100 : 0,
+      añosEliminados: p.añosEliminados,
+      cuotasEliminadas: p.cuotasEliminadas,
+      ahorroTotal: p.ahorroTotal,
+      añoFinOpt: fechaFin.getFullYear(),
+      añosOpt: p.nuevoPlazo / 12,
+    };
+  });
+}
+
 
 /* ════════════════════════════════════════════════════════════
    SUBCOMPONENTES
