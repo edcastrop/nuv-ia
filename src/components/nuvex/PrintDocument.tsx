@@ -566,7 +566,7 @@ export function PrintDocument(props: Props) {
               padding: "8px 14px", borderRadius: 8,
               fontSize: 11, fontWeight: 800, letterSpacing: "0.04em",
             }}>
-              CONTACTA A {analista.split(" ")[0].toUpperCase()}
+              CONTACTA A {analista.toUpperCase()}
             </div>
           </div>
         </div>
