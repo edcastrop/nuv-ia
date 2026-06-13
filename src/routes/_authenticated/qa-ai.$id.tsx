@@ -227,6 +227,18 @@ function ResultadoQaAi() {
         }
       />
 
+      {typeof a.expediente_id === "string" && (
+        <ProyeccionesDropzone
+          expedienteId={a.expediente_id}
+          variant="qa"
+          onReauditoria={async () => {
+            setReloading(true);
+            try { setData(await fetchAud({ data: { id } }) as { auditoria: Record<string, unknown> | null; inconsistencias: Inc[] }); }
+            finally { setReloading(false); }
+          }}
+        />
+      )}
+
       <KpiGrid cols={reconMeta.hasFrech ? 4 : 3}>
         <KpiCard label={isUvr ? "Cuota sin subsidio" : "Cuota teórica"} value={`$${fmt(o.cuotaTeorica as number, 0)}`} icon={<Calculator size={14} />} tone="blue" />
         <KpiCard label="Cuota total c/seguros" value={`$${fmt(o.cuotaTotalConSeguros as number, 0)}`} icon={<Coins size={14} />} tone="blue" />
