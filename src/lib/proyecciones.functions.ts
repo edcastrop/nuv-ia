@@ -15,6 +15,7 @@ const CrearRegistroSchema = z.object({
   sizeBytes: z.number().int().nonnegative().nullable().optional(),
   origenZip: z.string().max(300).nullable().optional(),
   passwordUsada: z.boolean().default(false),
+  momento: z.enum(["auditoria", "cierre"]).default("auditoria"),
 });
 
 export const crearRegistroProyeccion = createServerFn({ method: "POST" })
