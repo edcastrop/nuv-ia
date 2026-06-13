@@ -1,6 +1,6 @@
 import { NCard, SectionHeader } from "@/components/nuvia";
 import { Gavel, CheckCircle2, AlertTriangle, XCircle, Minus, FileText, Calculator, Sparkles, Brain, Lightbulb } from "lucide-react";
-import type { Veredicto, VeredictoEstado, VeredictoFila } from "@/lib/qaMath";
+import type { Veredicto, VeredictoEstado, VeredictoFila, VeredictoHallazgo } from "@/lib/qaMath";
 
 const TONO: Record<VeredictoEstado, { color: string; bg: string; label: string }> = {
   ok:      { color: "var(--nuvia-success)", bg: "rgba(34,197,94,0.10)",  label: "OK" },
