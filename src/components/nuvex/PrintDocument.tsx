@@ -353,19 +353,19 @@ export function PrintDocument(props: Props) {
 
         {/* ───── 3. INVERSIÓN POR ÉXITO + 72H ───── */}
         <div style={{ padding: "14px 24px 0 24px" }}>
-          <SectionTitle index="3" title="Inversión por éxito" />
+          <SectionTitle index="3" title="Beneficio económico autorizado" />
           <div style={{
             marginTop: 10,
             display: "grid", gridTemplateColumns: "1.55fr 1fr", gap: 12,
           }}>
-            {/* Honorarios card */}
+            {/* Beneficio económico card */}
             <div style={{
               background: "#fff", border: `1px solid ${C.hairline}`,
               borderRadius: 12, padding: "12px 16px",
             }}>
-              <PriceRow label="Honorarios normales" value={formatCOP(honorariosBase)} strike />
+              <PriceRow label="Tarifa estándar" value={formatCOP(honorariosBase)} strike />
               <div style={{ height: 1, background: C.hairline, margin: "10px 0" }} />
-              <PriceRow label="Precio actual autorizado" value={formatCOP(honorariosFinales)} />
+              <PriceRow label="Tarifa aprobada para este caso" value={formatCOP(honorariosFinales)} />
               <div style={{
                 marginTop: 10, background: C.greenSoft,
                 borderRadius: 10, padding: "10px 14px",
@@ -374,7 +374,7 @@ export function PrintDocument(props: Props) {
                 <div style={{
                   fontSize: 11, fontWeight: 800, color: C.greenDeep,
                   letterSpacing: "0.12em",
-                }}>AHORRAS</div>
+                }}>AHORRO OBTENIDO</div>
                 <div style={{
                   fontSize: 22, fontWeight: 900, color: C.greenDeep,
                   letterSpacing: "-0.02em",
@@ -384,31 +384,35 @@ export function PrintDocument(props: Props) {
               </div>
             </div>
 
-            {/* 72 horas */}
+            {/* Urgencia con fecha exacta */}
             <div style={{
               background: C.red, color: "#fff", borderRadius: 12,
               padding: "12px 14px", display: "flex", flexDirection: "column",
               justifyContent: "center", textAlign: "center",
             }}>
               <div style={{
-                fontSize: 9.5, letterSpacing: "0.22em", fontWeight: 700, opacity: 0.95,
-              }}>OFERTA VÁLIDA POR</div>
+                fontSize: 9, letterSpacing: "0.22em", fontWeight: 700, opacity: 0.95,
+              }}>BENEFICIO VÁLIDO HASTA</div>
+              <div style={{
+                fontSize: 15, fontWeight: 900, marginTop: 4, letterSpacing: "-0.005em",
+                textTransform: "uppercase",
+              }}>
+                {fechaLimiteStr}
+              </div>
               <div style={{
                 display: "flex", alignItems: "center", justifyContent: "center",
-                gap: 8, marginTop: 4,
+                gap: 6, marginTop: 6,
+                borderTop: "1px solid rgba(255,255,255,0.25)", paddingTop: 6,
               }}>
-                <ClockIcon color="#fff" size={22} />
-                <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: "-0.02em" }}>
+                <ClockIcon color="#fff" size={16} />
+                <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: "-0.02em" }}>
                   72 HORAS
                 </div>
-              </div>
-              <div style={{ fontSize: 9, marginTop: 4, opacity: 0.92, lineHeight: 1.4 }}>
-                Después de este plazo,<br />
-                la propuesta vuelve a<br />su tarifa estándar.
               </div>
             </div>
           </div>
         </div>
+
 
         {/* ───── CIERRE ───── */}
         <div style={{ padding: "14px 24px 0 24px", flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
