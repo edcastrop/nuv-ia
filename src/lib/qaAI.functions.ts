@@ -659,6 +659,19 @@ const parseNum = (v: unknown): number | undefined => {
   return Number.isFinite(n) ? n : undefined;
 };
 
+const inferRemainingPayments = (saldo: number, tasaEaPct: number, cuotaFinanciera: number): number => {
+  if (!(saldo > 0 && tasaEaPct > 0 && cuotaFinanciera > 0)) return 0;
+  const i = Math.pow(1 + tasaEaPct / 100, 1 / 12) - 1;
+  if (!(i > 0) || cuotaFinanciera <= saldo * i) return 0;
+  const n = Math.log(cuotaFinanciera / (cuotaFinanciera - saldo * i)) / Math.log(1 + i);
+  return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
+};
+
+const nearestStandardTerm = (months: number): number => {
+  const standards = [60, 84, 120, 180, 240, 300, 360];
+  return standards.reduce((best, cur) => Math.abs(cur - months) < Math.abs(best - months) ? cur : best, standards[0]);
+};
+
 export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
@@ -683,7 +696,7 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
     const saldo = parseNum(d.saldoCapital) ?? 0;
     const tasa = parseNum(d.tasaEA) ?? parseNum(d.teaCobrada) ?? 0;
     const tasaPactada = parseNum(d.teaPactada);
-    const cuotasPend = parseNum(d.cuotasPendientes) ?? 0;
+    let cuotasPend = parseNum(d.cuotasPendientes) ?? 0;
     const cuotasPag = parseNum(d.cuotasPagadas) ?? 0;
     const seguros = parseNum(d.seguros) ?? 0;
     const frech = parseNum(d.tasaCobertura);
@@ -693,6 +706,21 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
     const valorUVR = parseNum(d.valorUVR);
     const cuotaBaseSinSubsidio = parseNum(d.cuotaSinSubsidio) ?? parseNum(d.cuotaBaseSimulacion) ?? parseNum(d.cuotaActual);
     const cuotaFinancieraSinSeguros = parseNum(d.cuotaConInteresSinSeguros) ?? parseNum(d.cuotaSinSeguros) ?? (cuotaBaseSinSubsidio ? Math.max(0, cuotaBaseSinSubsidio - seguros) : undefined);
+    const bancoProducto = `${String(d.banco ?? ext.banco ?? "")} ${String(d.producto ?? ext.producto ?? "")}`;
+    if (/fondo\s+nacional\s+del\s+ahorro|\bfna\b/i.test(bancoProducto)) {
+      const inferred = inferRemainingPayments(saldo, tasa, cuotaFinancieraSinSeguros ?? 0);
+      const plazoLeido = parseNum(d.plazoInicial) ?? 0;
+      if (inferred > 0 && cuotasPag > 0) {
+        const totalIncluyendoActual = cuotasPag + inferred - 1;
+        const plazoEstandar = nearestStandardTerm(totalIncluyendoActual);
+        const plazoCorregido = Math.abs(plazoEstandar - totalIncluyendoActual) <= 2 ? plazoEstandar : totalIncluyendoActual;
+        if (plazoLeido >= 300 && plazoLeido <= 366 && plazoCorregido < plazoLeido - 24) {
+          cuotasPend = inferred;
+        } else if (!cuotasPend || Math.abs(cuotasPend - inferred) > 12) {
+          cuotasPend = inferred;
+        }
+      }
+    }
     const cuotaExt = ((frech && frech > 0) || (frechValorMensual && frechValorMensual > 0))
       ? parseNum(d.cuotaPagadaCliente) ?? parseNum(d.valorAPagar) ?? parseNum(d.cuotaActual)
       : parseNum(d.cuotaActual);
@@ -892,8 +920,23 @@ export const reejecutarAuditoriaQA = createServerFn({ method: "POST" })
       const cuotaBaseSinSubsidio = parseNum(d.cuotaSinSubsidio) ?? parseNum(d.cuotaBaseSimulacion) ?? parseNum(d.cuotaActual);
       const seguros = parseNum(d.seguros) ?? Number(rec.seguros ?? 0);
       const cuotaFinancieraSinSeguros = parseNum(d.cuotaConInteresSinSeguros) ?? parseNum(d.cuotaSinSeguros) ?? (cuotaBaseSinSubsidio ? Math.max(0, cuotaBaseSinSubsidio - seguros) : undefined);
-      const cuotasPend = Number(rec.cuotasPendientes ?? 0);
+      let cuotasPend = Number(rec.cuotasPendientes ?? 0);
       const cuotasPag = Number(rec.cuotasPagadas ?? 0);
+      const bancoProducto = `${String(d.banco ?? "")} ${String(d.producto ?? "")}`;
+      const isFna = /fondo\s+nacional\s+del\s+ahorro|\bfna\b/i.test(bancoProducto);
+      const cuotasFnaInferidas = isFna
+        ? inferRemainingPayments(Number(rec.saldoCapital ?? 0), Number(rec.tasaEa ?? 0), cuotaFinancieraSinSeguros ?? 0)
+        : 0;
+      const plazoLeidoFna = parseNum(d.plazoInicial) ?? 0;
+      const totalFna = cuotasPag > 0 && cuotasFnaInferidas > 0 ? cuotasPag + cuotasFnaInferidas - 1 : 0;
+      const plazoFnaEstandar = totalFna > 0 ? nearestStandardTerm(totalFna) : 0;
+      const plazoFnaCorregido = totalFna > 0 && Math.abs(plazoFnaEstandar - totalFna) <= 2 ? plazoFnaEstandar : totalFna;
+      const needsFnaPlazo = isFna && cuotasFnaInferidas > 0 && cuotasPag > 0 && (
+        (plazoLeidoFna >= 300 && plazoLeidoFna <= 366 && plazoFnaCorregido < plazoLeidoFna - 24) ||
+        !cuotasPend ||
+        Math.abs(cuotasPend - cuotasFnaInferidas) > 12
+      );
+      if (needsFnaPlazo) cuotasPend = cuotasFnaInferidas;
       const frechCuotasRestantes = Math.max(0, Math.min(cuotasPend, 84 - cuotasPag));
 
       const needsFrech = !(Number(rec.coberturaFrechValorMensual ?? 0) > 0) && ((valorFrech && valorFrech > 0) || (tasaFrech && tasaFrech > 0));
@@ -903,9 +946,10 @@ export const reejecutarAuditoriaQA = createServerFn({ method: "POST" })
         !(Number(rec.cuotaBaseSinSubsidio ?? 0) > 0) || !(Number(rec.cuotaFinancieraSinSeguros ?? 0) > 0)
       );
 
-      if (needsFrech || needsPactada || needsUvr) {
+      if (needsFrech || needsPactada || needsUvr || needsFnaPlazo) {
         inputs.reconstruccion = {
           ...rec,
+          ...(needsFnaPlazo ? { cuotasPendientes: cuotasFnaInferidas, cuotaFinancieraSinSeguros } : {}),
           ...(needsPactada ? { tasaEaPactada: tasaPactada } : {}),
           ...(needsUvr ? {
             saldoUVR: rec.saldoUVR ?? parseNum(d.saldoUVR),

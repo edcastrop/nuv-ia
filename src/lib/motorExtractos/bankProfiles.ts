@@ -204,7 +204,7 @@ sistemaAmortizacion ← texto literal junto a "Sistema de Amortización"
 - numeroCredito ← "CREDITO No" / "No. CREDITO".
 - cuotasPagadas ← "CUOTAS FACTURADAS".
 - plazoInicial (CRÍTICO): es el plazo TOTAL en MESES del crédito. Calcúlalo como meses entre "FECHA APERTURA" y "VENCIMIENTO FINAL" (típicamente 240 para 20 años). NUNCA uses "BASE DE CALCULO" (360 = días año comercial, NO es plazo) ni "DIAS CALCULO".
-- cuotasPendientes = plazoInicial - cuotasPagadas (con esto score=70 si no es explícito).
+- cuotasPendientes = plazoInicial - cuotasPagadas + 1 cuando "CUOTAS FACTURADAS" corresponde a la cuota actual del recibo; si el banco muestra saldo posterior al pago, usa plazoInicial - cuotasPagadas.
 - moneda: "MONEDA OP PESO" → PESOS. Solo UVR si el encabezado explícitamente lo dice.`,
   },
   {

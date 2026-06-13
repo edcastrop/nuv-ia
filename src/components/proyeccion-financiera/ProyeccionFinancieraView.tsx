@@ -1000,8 +1000,12 @@ export function ProyeccionFinancieraView() {
                         if (d.cliente?.plazoInicial) next.cuotasTotales = num(d.cliente.plazoInicial);
                         if (d.cliente?.cuotasPagadas) {
                           next.cuotasPagadas = num(d.cliente.cuotasPagadas);
-                          if (next.cuotasTotales)
-                            next.cuotasPendientes = Math.max(0, next.cuotasTotales - next.cuotasPagadas);
+                          if (d.cliente?.cuotasPendientes) {
+                            next.cuotasPendientes = num(d.cliente.cuotasPendientes);
+                          } else if (next.cuotasTotales) {
+                            const esFna = /fondo\s+nacional\s+del\s+ahorro|\bfna\b/i.test(`${d.cliente?.banco ?? ""} ${d.cliente?.tipoProducto ?? ""}`);
+                            next.cuotasPendientes = Math.max(0, next.cuotasTotales - next.cuotasPagadas + (esFna ? 1 : 0));
+                          }
                         }
                         if (d.pesos) {
                           next.moneda = "pesos";

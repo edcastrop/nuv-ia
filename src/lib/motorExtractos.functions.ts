@@ -388,6 +388,48 @@ function formatNumeric(value: number): string {
     : rounded.toFixed(2).replace(/0$/, "").replace(/\.0$/, "");
 }
 
+function inferRemainingPayments(saldo: number, tasaEaPct: number, cuotaFinanciera: number): number {
+  if (!(saldo > 0 && tasaEaPct > 0 && cuotaFinanciera > 0)) return 0;
+  const i = Math.pow(1 + tasaEaPct / 100, 1 / 12) - 1;
+  if (!(i > 0) || cuotaFinanciera <= saldo * i) return 0;
+  const n = Math.log(cuotaFinanciera / (cuotaFinanciera - saldo * i)) / Math.log(1 + i);
+  return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
+}
+
+function nearestStandardTerm(months: number): number {
+  const standards = [60, 84, 120, 180, 240, 300, 360];
+  return standards.reduce((best, cur) => Math.abs(cur - months) < Math.abs(best - months) ? cur : best, standards[0]);
+}
+
+function applyFnaDeterministicCorrections(
+  profile: BankProfile,
+  datos: Record<CampoMotor, string>,
+  scores: Record<CampoMotor, number>,
+): string[] {
+  if (profile.id !== "fna") return [];
+  const alertas: string[] = [];
+  const saldo = toNumber(datos.saldoCapital);
+  const tasa = toNumber(datos.tasaEA);
+  const cuotaFinanciera = toNumber(datos.cuotaActual);
+  const pagadas = Math.round(toNumber(datos.cuotasPagadas));
+  const plazoLeido = Math.round(toNumber(datos.plazoInicial));
+  const pendientesLeidas = Math.round(toNumber(datos.cuotasPendientes));
+  const inferidas = inferRemainingPayments(saldo, tasa, cuotaFinanciera);
+  if (inferidas > 0 && pagadas > 0) {
+    const total = pagadas + inferidas - 1;
+    const estandar = nearestStandardTerm(total);
+    const plazo = Math.abs(estandar - total) <= 2 ? estandar : total;
+    if ((plazoLeido >= 300 && plazoLeido <= 366 && plazo < plazoLeido - 24) || Math.abs(pendientesLeidas - inferidas) > 12) {
+      datos.plazoInicial = formatNumeric(plazo);
+      datos.cuotasPendientes = formatNumeric(inferidas);
+      scores.plazoInicial = Math.max(scores.plazoInicial, 85);
+      scores.cuotasPendientes = Math.max(scores.cuotasPendientes, 85);
+      alertas.push("FNA: plazo/cuotas corregidos; 360 corresponde a base de cálculo anual, no a meses del crédito.");
+    }
+  }
+  return alertas;
+}
+
 function applyBancolombiaDeterministicCorrections(
   profile: BankProfile,
   datos: Record<CampoMotor, string>,
@@ -656,7 +698,10 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
     }
 
     const { datos, scores } = normalizeParsedMotor(parsed, det, profile);
-    const deterministicAlerts = applyBancolombiaDeterministicCorrections(profile, datos, scores);
+    const deterministicAlerts = [
+      ...applyBancolombiaDeterministicCorrections(profile, datos, scores),
+      ...applyFnaDeterministicCorrections(profile, datos, scores),
+    ];
     // Nota: se removió el reintento adicional con Pro para evitar timeouts del gateway.
     const finalValidation = validateMotorConsistency(profile, datos);
 

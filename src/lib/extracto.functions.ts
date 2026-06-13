@@ -324,6 +324,13 @@ REGLAS ESTRICTAS:
   * "Intereses Corrientes" → interesCuota. "Abonos a Capital" → capitalCuota. Abonos a Capital NO es beneficio/cobertura/subsidio.
   * No marques beneficio por la sola palabra cobertura. Solo tieneCobertura="si" si "Interés Cte. Cobertura", "Valor Beneficio", "Valor subsidio" o "Cobertura FRECH" tienen valor > 0. Si no, tieneCobertura="no", tipoBeneficio="", valorCobertura="", tasaCobertura="".
   * Si "Documento No:" es "0000000000" o enmascarado, cedula="". Si no aparece valor desembolsado, valorDesembolsado="".
+- FNA / Fondo Nacional del Ahorro — mapeo LITERAL obligatorio:
+  * "BASE DE CALCULO 360" / "DIAS CALCULO" son días de año comercial, NUNCA plazo del crédito.
+  * plazoInicial se calcula por FECHA APERTURA → VENCIMIENTO FINAL o por matemática financiera; típicamente 240 en créditos a 20 años.
+  * cuotasPagadas ← "CUOTAS FACTURADAS". cuotasPendientes debe ser el número de cuotas restantes de amortización; si la cuota actual está incluida en el recibo, usa plazoInicial - cuotasPagadas + 1.
+  * "VALOR CUOTA" en DISCRIMINACION DEL VALOR A PAGAR es cuota financiera sin seguros: ponlo en cuotaConInteresSinSeguros / cuotaSinSeguros.
+  * "VALOR SEGURO" es seguro mensual. "VALOR TOTAL A PAGAR" es cuota total con seguros: ponlo en cuotaMensual y cuotaPagadaCliente.
+  * tasaEA / teaCobrada ← "TASA INTERES ACTUAL".
 - Confianza "alta" solo si el dato es 100% explícito en el extracto. "media" si requiere inferencia simple. "baja" si dudoso o ausente.`;
 
 export type ExtractoData = Record<string, string | Record<string, string>>;
@@ -607,6 +614,7 @@ export const extractStatement = createServerFn({ method: "POST" })
       const tipoLower = (typeof parsed.tipoCredito === "string" ? parsed.tipoCredito : "").toLowerCase();
       const esDaviviendaLeasing = /davivienda/.test(bancoLower) && /leasing/.test(`${productoLower} ${tipoLower}`);
       const esDaviviendaHipotecario = /davivienda/.test(bancoLower) && !esDaviviendaLeasing;
+      const esFna = /fondo\s+nacional\s+del\s+ahorro|\bfna\b/.test(`${bancoLower} ${productoLower}`);
       if (typeof parsed.cedula === "string" && /^0+$/.test(parsed.cedula.trim())) parsed.cedula = "";
 
       let cuotaCliente = monto("cuotaPagadaCliente");
@@ -626,6 +634,19 @@ export const extractStatement = createServerFn({ method: "POST" })
       let requiereVerificacion = false;
       const errores: string[] = [];
       let mapeoBanco: "bancolombia" | "davivienda_leasing" | "davivienda_hipotecario" | "generico" = "generico";
+      const inferRemainingByPmt = (saldo: number, tasaEaPct: number, cuotaFinanciera: number): number => {
+        if (!(saldo > 0 && tasaEaPct > 0 && cuotaFinanciera > 0)) return 0;
+        const i = Math.pow(1 + tasaEaPct / 100, 1 / 12) - 1;
+        if (!(i > 0)) return 0;
+        const interesMes = saldo * i;
+        if (cuotaFinanciera <= interesMes) return 0;
+        const n = Math.log(cuotaFinanciera / (cuotaFinanciera - interesMes)) / Math.log(1 + i);
+        return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
+      };
+      const nearestStandardTerm = (months: number): number => {
+        const standards = [60, 84, 120, 180, 240, 300, 360];
+        return standards.reduce((best, cur) => Math.abs(cur - months) < Math.abs(best - months) ? cur : best, standards[0]);
+      };
 
       if (esBancolombia) {
         // ----- BANCOLOMBIA: mapeo literal por campos del extracto -----
@@ -845,6 +866,66 @@ export const extractStatement = createServerFn({ method: "POST" })
         cuotaBase = cuotaSinSubDav || cuotaMensual;
         requiereVerificacion = false;
         parsed.cuotaPagadaCliente = cuotaClienteDav > 0 ? formatMontoExtracto(cuotaClienteDav) : parsed.cuotaPagadaCliente;
+        parsed.cuotaBaseSimulacion = cuotaBase > 0 ? formatMontoExtracto(cuotaBase) : "";
+      } else if (esFna) {
+        // ----- FNA: evitar confundir BASE DE CALCULO 360 (días) con plazo -----
+        parsed.banco = "FNA";
+        parsed.tipoCredito = "CREDITO_HIPOTECARIO";
+        parsed.moneda = /\buvr\b/i.test(`${parsed.moneda ?? ""} ${parsed.producto ?? ""}`) ? "UVR" : "PESOS";
+        parsed.producto = `Crédito Hipotecario FNA en ${parsed.moneda === "UVR" ? "UVR" : "pesos"}`;
+        parsed.tieneCobertura = "no";
+        parsed.valorCobertura = "";
+        parsed.tasaCobertura = "";
+        parsed.tipoBeneficio = "";
+        tieneCob = false;
+        valorBenef = 0;
+
+        const saldoFna = monto("saldoCapital");
+        const tasaFna = num("tea") || num("teaCobrada") || num("teaPactada");
+        const pagadasFna = _intStr("cuotasPagadas") || _intStr("cuotaActualNumero");
+        const pickCuotaFinancieraFna = () => {
+          if (cuotaConInteresSinSeguros > 0) return cuotaConInteresSinSeguros;
+          if (!(cuotaMensual > 0)) return 0;
+          const directa = cuotaMensual;
+          const sinSeguro = segurosNum > 0 ? Math.max(0, cuotaMensual - segurosNum) : 0;
+          if (!(sinSeguro > 0)) return directa;
+          const nDirecta = inferRemainingByPmt(saldoFna, tasaFna, directa);
+          const nSinSeguro = inferRemainingByPmt(saldoFna, tasaFna, sinSeguro);
+          const score = (n: number) => {
+            if (!(n > 0) || !(pagadasFna > 0)) return Number.POSITIVE_INFINITY;
+            const total = pagadasFna + n - 1;
+            return Math.abs(nearestStandardTerm(total) - total);
+          };
+          return score(nDirecta) <= score(nSinSeguro) ? directa : sinSeguro;
+        };
+        const cuotaFinancieraFna = pickCuotaFinancieraFna();
+        const restantesInferidas = inferRemainingByPmt(saldoFna, tasaFna, cuotaFinancieraFna);
+        const plazoLeido = _intStr("plazoInicial");
+        const pendientesLeidas = _intStr("cuotasPendientes");
+        if (restantesInferidas > 0 && pagadasFna > 0) {
+          const totalIncluyendoCuotaActual = pagadasFna + restantesInferidas - 1;
+          const estandar = nearestStandardTerm(totalIncluyendoCuotaActual);
+          const plazoCorregido = Math.abs(estandar - totalIncluyendoCuotaActual) <= 2 ? estandar : totalIncluyendoCuotaActual;
+          if (plazoLeido >= 300 && plazoLeido <= 366 && plazoCorregido < plazoLeido - 24) {
+            parsed.plazoInicial = String(plazoCorregido);
+            parsed.cuotasPendientes = String(restantesInferidas);
+            _advertenciasNorm.push("FNA: se corrigió plazo 360 porque corresponde a BASE DE CALCULO/días comerciales, no a meses del crédito.");
+          } else if (pendientesLeidas <= 0 || Math.abs(pendientesLeidas - restantesInferidas) > 12) {
+            parsed.cuotasPendientes = String(restantesInferidas);
+          }
+          parsed.cuotasPagadas = String(pagadasFna);
+        } else if (plazoLeido > 0 && pagadasFna > 0 && pendientesLeidas <= 0) {
+          parsed.cuotasPendientes = String(Math.max(0, plazoLeido - pagadasFna + 1));
+        }
+
+        const cuotaMensualPareceFinanciera = cuotaMensual > 0 && cuotaFinancieraFna > 0 &&
+          Math.abs(cuotaMensual - cuotaFinancieraFna) <= Math.max(2500, cuotaFinancieraFna * 0.005);
+        cuotaBase = cuotaMensualPareceFinanciera
+          ? cuotaFinancieraFna + segurosNum
+          : (cuotaMensual || (cuotaFinancieraFna + segurosNum));
+        requiereVerificacion = false;
+        if (cuotaFinancieraFna > 0) parsed.cuotaConInteresSinSeguros = formatMontoExtracto(cuotaFinancieraFna);
+        if (cuotaBase > 0) parsed.cuotaPagadaCliente = formatMontoExtracto(cuotaBase);
         parsed.cuotaBaseSimulacion = cuotaBase > 0 ? formatMontoExtracto(cuotaBase) : "";
       } else {
         // ----- Genérico (otros bancos) -----

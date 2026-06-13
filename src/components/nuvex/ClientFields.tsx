@@ -16,6 +16,7 @@ export interface ClientData {
   asesor: string;
   plazoInicial: string;
   cuotasPagadas: string;
+  cuotasPendientes?: string;
   porcentajeHonorarios: string;
   // Nuevos campos comerciales
   correo?: string;
@@ -265,6 +266,7 @@ export const defaultClient: ClientData = {
   asesor: "",
   plazoInicial: "",
   cuotasPagadas: "",
+  cuotasPendientes: "",
   porcentajeHonorarios: "6",
   correo: "",
   celular: "",

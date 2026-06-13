@@ -89,13 +89,13 @@ export function amortizacion(
   iPeriodica: number,
   n: number,
   seguros: number = 0,
-  opts?: { iPostSubsidio?: number; cuotasSubsidio?: number; subsidioMensual?: number },
+  opts?: { iPostSubsidio?: number; cuotasSubsidio?: number; subsidioMensual?: number; cuotaOverride?: number },
 ): FilaAmort[] {
   const seg = Math.max(0, seguros || 0);
   const cuotasSub = Math.max(0, Math.min(n, Math.round(opts?.cuotasSubsidio ?? 0)));
   const subsidioMensual = Math.max(0, opts?.subsidioMensual ?? 0);
   const hasSwitch = !!opts && opts.iPostSubsidio !== undefined && opts.iPostSubsidio !== iPeriodica && cuotasSub > 0 && cuotasSub < n;
-  const C1 = cuotaTeorica(saldo, iPeriodica, n);
+  const C1 = Math.max(0, opts?.cuotaOverride ?? 0) || cuotaTeorica(saldo, iPeriodica, n);
   const filas: FilaAmort[] = [];
   let s = saldo;
   let C = C1;
@@ -241,7 +241,7 @@ export function reconstruir(input: ReconstruccionInput): Reconstruccion {
     const variacionEa = Math.max(0, input.variacionUvrEa ?? DEFAULT_VARIACION_UVR_EA) / 100;
     const variacionMensual = eaToMv(variacionEa);
     const cuotaFinancieraActual = Math.max(0, input.cuotaFinancieraSinSeguros ?? 0);
-    const cuotaUvr = cuotaTeorica(saldoUvr, iMvUvr, n) || (cuotaFinancieraActual > 0 ? cuotaFinancieraActual / valorUvr : 0);
+    const cuotaUvr = cuotaFinancieraActual > 0 ? cuotaFinancieraActual / valorUvr : cuotaTeorica(saldoUvr, iMvUvr, n);
     const cuotaFinancieraBase = cuotaUvr * valorUvr;
     const cuotaSinSubsidioOficial = Math.max(0, input.cuotaBaseSinSubsidio ?? 0);
     const cuotaTeoricaActual = cuotaSinSubsidioOficial > 0 ? cuotaSinSubsidioOficial : cuotaFinancieraBase + seguros;
@@ -289,7 +289,10 @@ export function reconstruir(input: ReconstruccionInput): Reconstruccion {
   // - En cualquier otro caso → usar la tasa cobrada / única reportada.
   const eaBase = hayCobertura && eaPactada > eaCobrada ? eaPactada : eaCobrada;
   const iMv = eaToMv(eaBase);
-  const C = cuotaTeorica(input.saldoCapital, iMv, n);
+  const cuotaOficialSinSeguros = Math.max(0, input.cuotaFinancieraSinSeguros ?? 0);
+  const CFormula = cuotaTeorica(input.saldoCapital, iMv, n);
+  const usarCuotaOficial = !hayCobertura && cuotaOficialSinSeguros > 0 && Math.abs(cuotaOficialSinSeguros - CFormula) <= Math.max(2_500, CFormula * 0.005);
+  const C = usarCuotaOficial ? cuotaOficialSinSeguros : CFormula;
 
   // Cuota con subsidio:
   // - Si cobertura en pp → descontar de la base (pactada − pp).
@@ -319,7 +322,7 @@ export function reconstruir(input: ReconstruccionInput): Reconstruccion {
     seguros,
     hayCobertura
       ? { iPostSubsidio: iMv, cuotasSubsidio: cuotasFrechAplicadas, subsidioMensual: beneficioMensual }
-      : undefined,
+      : (usarCuotaOficial ? { cuotaOverride: cuotaOficialSinSeguros } : undefined),
   );
   const totalIntereses = tabla.reduce((s, f) => s + f.interes, 0);
   const costoTotal = tabla.reduce((s, f) => s + f.cuotaTotal, 0);

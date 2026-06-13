@@ -38,6 +38,7 @@ export type ExtractoApplyPayload = {
     productoBancarioId?: string | null;
     plazoInicial?: string;
     cuotasPagadas?: string;
+    cuotasPendientes?: string;
   };
   // Para pesos
   pesos?: {
@@ -533,16 +534,19 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       out.cuotasPagadas = String(cuotaActualNumero);
     }
     const esBancolombia = typeof out.banco === "string" && /bancolombia/i.test(out.banco);
+    const esFna = /fondo\s+nacional\s+del\s+ahorro|\bfna\b/i.test(`${out.banco ?? ""} ${out.producto ?? ""}`);
     if (cuotasPagadas <= 0 && plazoInicial > 0 && cuotasPendientesExt > 0) {
-      cuotasPagadas = Math.max(0, plazoInicial - cuotasPendientesExt);
+      cuotasPagadas = Math.max(0, plazoInicial - cuotasPendientesExt + (esFna ? 1 : 0));
       out.cuotasPagadas = String(cuotasPagadas);
     }
     if (plazoInicial > 0 && cuotasPagadas > 0 && !esBancolombia) {
-      const calc = plazoInicial - cuotasPagadas;
+      const calc = plazoInicial - cuotasPagadas + (esFna ? 1 : 0);
       if (calc >= 0) {
         if (cuotasPendientesExt > 0 && cuotasPendientesExt !== calc) {
           advert.push(
-            "Las cuotas pendientes del extracto no coinciden con el cálculo NUVIA. Se usará plazo inicial menos cuotas pagadas.",
+            esFna
+              ? "FNA: se usará plazo inicial menos cuota facturada más la cuota actual del recibo."
+              : "Las cuotas pendientes del extracto no coinciden con el cálculo NUVIA. Se usará plazo inicial menos cuotas pagadas.",
           );
         }
         out.cuotasPendientes = String(calc);
@@ -879,6 +883,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
         productoBancarioId: match?.id ?? null,
         plazoInicial: get("plazoInicial"),
         cuotasPagadas: get("cuotasPagadas"),
+        cuotasPendientes: get("cuotasPendientes"),
       },
       archivoPath: archivoPath ?? undefined,
       monedaDetectada,

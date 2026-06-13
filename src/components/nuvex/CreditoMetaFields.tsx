@@ -25,7 +25,7 @@ export function CreditoMetaFields({ data, onChange, cuotasPendientes, modalidad 
         producto={data.tipoProducto}
         filtrarPorModalidad={modalidad}
         onChange={({ banco, producto, productoId }) =>
-          onChange({ ...data, banco, tipoProducto: producto, productoBancarioId: productoId })
+          onChange({ ...data, banco, tipoProducto: producto, productoBancarioId: productoId, cuotasPendientes: "" })
         }
       />
       <div className="grid gap-4 md:grid-cols-4">
@@ -37,13 +37,13 @@ export function CreditoMetaFields({ data, onChange, cuotasPendientes, modalidad 
         <TextField
           label="Plazo inicial aprobado (meses)"
           value={data.plazoInicial}
-          onChange={(v) => set("plazoInicial", v)}
+          onChange={(v) => onChange({ ...data, plazoInicial: v, cuotasPendientes: "" })}
           placeholder="240"
         />
         <TextField
           label="Cuotas pagadas"
           value={data.cuotasPagadas}
-          onChange={(v) => set("cuotasPagadas", v)}
+          onChange={(v) => onChange({ ...data, cuotasPagadas: v, cuotasPendientes: "" })}
           placeholder="36"
         />
         <TextField
