@@ -701,7 +701,10 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
     }
 
     const { datos, scores } = normalizeParsedMotor(parsed, det, profile);
-    const deterministicAlerts = applyBancolombiaDeterministicCorrections(profile, datos, scores);
+    const deterministicAlerts = [
+      ...applyBancolombiaDeterministicCorrections(profile, datos, scores),
+      ...applyFnaDeterministicCorrections(profile, datos, scores),
+    ];
     // Nota: se removió el reintento adicional con Pro para evitar timeouts del gateway.
     const finalValidation = validateMotorConsistency(profile, datos);
 
