@@ -100,6 +100,26 @@ function pickCita(seed: string): Cita {
   return CITAS[h % CITAS.length]!;
 }
 
+const EMOTIVOS: ((n: string) => string)[] = [
+  (n) => `¡Vamos con toda, ${n}! Este cierre lleva tu firma.`,
+  (n) => `${n}, hoy le cambias el día a una familia. Dale con todo.`,
+  (n) => `Confío en ti, ${n}. Cierra este caso como solo tú sabes.`,
+  (n) => `${n}, el cliente está del otro lado esperando claridad. Vamos por él.`,
+  (n) => `Respira, ${n}, y firma. Tienes todo lo que se necesita.`,
+  (n) => `${n}, esto que estás haciendo importa. De verdad importa.`,
+  (n) => `Vamos, ${n}, un cierre más cerca de la mejor versión de NUVEX.`,
+  (n) => `${n}, hoy escribes una historia financiera. Hazla memorable.`,
+  (n) => `Tú puedes, ${n}. Y cuando termines, date el crédito que mereces.`,
+  (n) => `${n}, no es un caso más — es alguien confiando en tu criterio. Vamos.`,
+];
+
+function pickEmotivo(seed: string, nombre: string): string {
+  let h = 0;
+  const k = `emo|${seed}|${Math.floor(Date.now() / 60000)}`;
+  for (let i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) >>> 0;
+  return EMOTIVOS[h % EMOTIVOS.length]!(nombre);
+}
+
 function primerNombre(full?: string | null, email?: string | null): string {
   const base = (full ?? "").trim().split(/\s+/)[0];
   if (base) return base.charAt(0).toUpperCase() + base.slice(1).toLowerCase();
@@ -171,11 +191,8 @@ export function MotivacionNuvia({ seed }: { seed: string }) {
             className="text-[10px] font-bold uppercase tracking-[0.2em]"
             style={{ color: "var(--nuvia-text-muted)" }}
           >
-            NUVIA · Mensaje para el cierre
+            NUVIA · Un momento contigo
           </div>
-          <p className="mt-1 text-[15px] leading-snug">
-            <span className="font-semibold">{nombre}</span>, recuerda esto antes de cerrar:
-          </p>
 
           <div
             className="mt-3 rounded-lg p-3"
@@ -194,14 +211,17 @@ export function MotivacionNuvia({ seed }: { seed: string }) {
                   {cita.analogia}
                 </p>
                 <p
-                  className="mt-2 font-semibold"
+                  className="mt-3 font-semibold text-[14.5px]"
                   style={{
                     background: "linear-gradient(135deg, var(--nuvia-accent), var(--nuvia-accent-green))",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
                   }}
                 >
-                  {nombre}, {cita.cierre.charAt(0).toLowerCase() + cita.cierre.slice(1)}
+                  {pickEmotivo(seed, nombre)}
+                </p>
+                <p className="mt-1.5 text-[12.5px] italic" style={{ color: "var(--nuvia-text-secondary)" }}>
+                  — {cita.cierre}
                 </p>
               </div>
             </div>
