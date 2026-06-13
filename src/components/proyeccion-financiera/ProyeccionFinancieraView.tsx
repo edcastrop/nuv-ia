@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   Area,
@@ -161,6 +161,62 @@ function Field({
         value={value as string}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
+        className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm font-medium text-white placeholder-white/30 outline-none transition focus:border-[#84B98F]/50 focus:bg-white/[0.06] focus:ring-2 focus:ring-[#84B98F]/18"
+      />
+    </label>
+  );
+}
+
+/**
+ * DecimalField — buffer local de texto para permitir escribir separadores
+ * decimales ("." o ",") sin que el parseo a número los descarte mientras
+ * el usuario aún escribe (ej. "10." o "10,95").
+ */
+function DecimalField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: number | string;
+  onChange: (raw: string) => void;
+  placeholder?: string;
+}) {
+  const numericValue =
+    typeof value === "number"
+      ? value
+      : parseFloat(String(value ?? "").replace(",", ".")) || 0;
+  const [text, setText] = useState<string>(
+    numericValue ? String(numericValue).replace(".", ",") : "",
+  );
+  const [focused, setFocused] = useState(false);
+
+  useEffect(() => {
+    if (focused) return;
+    const parsed = parseFloat(text.replace(",", ".")) || 0;
+    if (parsed !== numericValue) {
+      setText(numericValue ? String(numericValue).replace(".", ",") : "");
+    }
+  }, [numericValue, focused, text]);
+
+  return (
+    <label className="group flex flex-col gap-1.5">
+      <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-white/40">
+        {label}
+      </span>
+      <input
+        type="text"
+        inputMode="decimal"
+        value={text}
+        placeholder={placeholder}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        onChange={(e) => {
+          const raw = e.target.value.replace(/[^\d.,]/g, "");
+          setText(raw);
+          onChange(raw);
+        }}
         className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm font-medium text-white placeholder-white/30 outline-none transition focus:border-[#84B98F]/50 focus:bg-white/[0.06] focus:ring-2 focus:ring-[#84B98F]/18"
       />
     </label>
@@ -1127,7 +1183,7 @@ export function ProyeccionFinancieraView() {
                     <Field label="Valor desembolsado" value={input.valorDesembolsado || ""} onChange={updNum("valorDesembolsado")} placeholder="220.000.000" />
                     <Field label="Saldo a capital" value={input.saldoCapital || ""} onChange={updNum("saldoCapital")} placeholder="180.000.000" />
                     <Field label="Cuota actual" value={input.cuotaActual || ""} onChange={updNum("cuotaActual")} placeholder="2.450.000" />
-                    <Field label="TEA %" value={input.teaPct || ""} onChange={updDec("teaPct")} placeholder="13,5" />
+                    <DecimalField label="TEA %" value={input.teaPct || ""} onChange={updDec("teaPct")} placeholder="13,5" />
                     <Field label="Cuotas totales" value={input.cuotasTotales || ""} onChange={updInt("cuotasTotales")} placeholder="240" />
                     <Field label="Cuotas pagadas" value={input.cuotasPagadas || ""} onChange={updInt("cuotasPagadas")} placeholder="36" />
                     <Field label="Cuotas pendientes" value={input.cuotasPendientes || ""} onChange={updInt("cuotasPendientes")} placeholder="204" />
@@ -1158,9 +1214,9 @@ export function ProyeccionFinancieraView() {
                 {input.moneda === "uvr" && (
                   <Surface title="Datos UVR">
                     <div className="grid grid-cols-2 gap-3">
-                      <Field label="Valor UVR" value={input.uvrValor || ""} onChange={updDec("uvrValor")} placeholder="380,12" />
-                      <Field label="Saldo UVR" value={input.saldoUvr || ""} onChange={updDec("saldoUvr")} placeholder="220.000,00" />
-                      <Field label="Variación UVR anual %" value={input.variacionUvrPct || ""} onChange={updDec("variacionUvrPct")} placeholder="6" />
+                      <DecimalField label="Valor UVR" value={input.uvrValor || ""} onChange={updDec("uvrValor")} placeholder="380,12" />
+                      <DecimalField label="Saldo UVR" value={input.saldoUvr || ""} onChange={updDec("saldoUvr")} placeholder="220.000,00" />
+                      <DecimalField label="Variación UVR anual %" value={input.variacionUvrPct || ""} onChange={updDec("variacionUvrPct")} placeholder="6" />
                     </div>
                   </Surface>
                 )}
