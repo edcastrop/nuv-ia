@@ -767,7 +767,7 @@ export function construirVeredicto(
         severidad: "info",
         titulo: `El plazo total del crédito no es uno de los típicos (${total} meses)`,
         detalle: `Sumando las ${cuotasPagadas} cuotas ya pagadas más las ${r.cuotasPendientes} pendientes dan ${total} meses. Los créditos hipotecarios normalmente son a 5, 10, 15, 20, 25 o 30 años (60 a 360 meses).`,
-        pista: "Pregúntele al cliente si en algún momento le reestructuraron el crédito. Si no, revise si la cantidad de cuotas pagadas o pendientes está leída correctamente del extracto.",
+        pista: "Pregúntele al cliente si en algún momento le aplicaron una optimización de plazos del crédito. Si no, revise si la cantidad de cuotas pagadas o pendientes está leída correctamente del extracto.",
       });
     }
   }
