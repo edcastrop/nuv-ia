@@ -1291,141 +1291,56 @@ function initialsOf(name: string): string {
 }
 
 /* ════════════════════════════════════════════════════════════
-   ICONOS
+   ICONOS — unificados con lucide-react (mismo grosor, mismo estilo)
 ════════════════════════════════════════════════════════════ */
 
+const ICON_STROKE = 1.8;
+
 function Arrow({ color }: { color: string }) {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-      <path d="M5 12h14M13 6l6 6-6 6" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+  return <ArrowRight size={14} color={color} strokeWidth={2.4} />;
 }
 function TrendUpInline({ color }: { color: string }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path d="M4 17l8-8 4 4 8-6M16 7h4v4" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+  return <TrendingUp size={22} color={color} strokeWidth={2.2} />;
 }
 function ClockIcon({ color = "#fff", size = 16 }: { color?: string; size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.8" />
-      <path d="M12 7v5l3.5 2.2" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
+  return <Clock size={size} color={color} strokeWidth={ICON_STROKE} />;
 }
 function ClockBig({ color }: { color: string }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.8" />
-      <path d="M12 7v5l3.5 2.2" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
+  return <Clock size={20} color={color} strokeWidth={ICON_STROKE} />;
 }
 function MoneyBig({ color }: { color: string }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.8" />
-      <path d="M9 9c0-1.1 1.3-2 3-2s3 .9 3 2-1.3 2-3 2-3 .9-3 2 1.3 2 3 2 3-.9 3-2M12 6.5v11" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
+  return <Wallet size={20} color={color} strokeWidth={ICON_STROKE} />;
 }
 function MoneyMini({ color }: { color: string }) {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.8" />
-      <path d="M9 9c0-1.1 1.3-2 3-2s3 .9 3 2-1.3 2-3 2-3 .9-3 2 1.3 2 3 2 3-.9 3-2M12 6.5v11" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
+  return <Wallet size={14} color={color} strokeWidth={ICON_STROKE} />;
 }
 function CalIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-      <rect x="3.5" y="5" width="17" height="15" rx="2" stroke="currentColor" strokeWidth="1.6" />
-      <path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
-}
-function CalIconBig() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <rect x="3.5" y="5" width="17" height="15" rx="2" stroke="#fff" strokeWidth="1.8" />
-      <path d="M3.5 10h17M8 3v4M16 3v4" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
+  return <CalendarDays size={14} color="currentColor" strokeWidth={ICON_STROKE} />;
 }
 function BankIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-      <path d="M3 10l9-6 9 6M5 10v8M19 10v8M3 20h18M9 10v8M15 10v8"
-        stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
+  return <Landmark size={14} color="currentColor" strokeWidth={ICON_STROKE} />;
 }
 function CardIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-      <rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="1.6" />
-      <path d="M3 10h18M7 15h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
+  return <CreditCard size={14} color="currentColor" strokeWidth={ICON_STROKE} />;
 }
 function CalendarOff() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-      <rect x="3.5" y="5" width="17" height="15" rx="2" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M3.5 10h17M8 3v4M16 3v4M9 16l6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
+  return <LCalendarOff size={16} color="currentColor" strokeWidth={ICON_STROKE} />;
 }
 function BagMoney() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-      <path d="M8 6h8l2 4c0 5-2.5 9-6 9s-6-4-6-9l2-4z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-      <path d="M12 11v4M10 13h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
+  return <PiggyBank size={16} color="currentColor" strokeWidth={ICON_STROKE} />;
 }
 function ShieldOk() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-      <path d="M12 3l8 3v6c0 5-3.5 8.3-8 9-4.5-.7-8-4-8-9V6l8-3z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-      <path d="M8.5 12.5l2.5 2.5 4.5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+  return <ShieldCheck size={16} color="currentColor" strokeWidth={ICON_STROKE} />;
 }
 function FamilyIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-      <circle cx="8" cy="8" r="2.4" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx="16" cy="8" r="2.4" stroke="currentColor" strokeWidth="1.6" />
-      <path d="M3 19c1-3 3-4.4 5-4.4S12 16 13 19M11 19c1-3 3-4.4 5-4.4S20 16 21 19" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
+  return <Users size={16} color="currentColor" strokeWidth={ICON_STROKE} />;
 }
 function PinIcon() {
-  return (
-    <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
-      <path d="M12 22s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z" stroke={C.green} strokeWidth="1.6" />
-      <circle cx="12" cy="10" r="2.5" stroke={C.green} strokeWidth="1.6" />
-    </svg>
-  );
+  return <MapPin size={11} color={C.green} strokeWidth={ICON_STROKE} />;
 }
 function PhoneIcon() {
-  return (
-    <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
-      <path d="M5 4h3l2 5-2 1c1 2.5 3 4.5 5.5 5.5l1-2 5 2v3a2 2 0 01-2 2C9.5 20 4 14.5 4 6a2 2 0 011-2z"
-        stroke={C.green} strokeWidth="1.6" strokeLinejoin="round" />
-    </svg>
-  );
+  return <Phone size={11} color={C.green} strokeWidth={ICON_STROKE} />;
 }
 function GlobeIcon() {
-  return (
-    <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="9" stroke={C.green} strokeWidth="1.6" />
-      <path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" stroke={C.green} strokeWidth="1.6" />
-    </svg>
-  );
+  return <Globe size={11} color={C.green} strokeWidth={ICON_STROKE} />;
 }
