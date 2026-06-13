@@ -706,8 +706,8 @@ function ImpactCard({
         }}>{eyebrow}</div>
       </div>
       <div style={{
-        marginTop: 8, fontSize: 32, fontWeight: 900, color: accent,
-        letterSpacing: "-0.025em", lineHeight: 1,
+        marginTop: 8, fontSize: 44, fontWeight: 900, color: accent,
+        letterSpacing: "-0.03em", lineHeight: 0.98,
       }}>
         {amount}
       </div>
