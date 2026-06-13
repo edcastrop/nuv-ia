@@ -312,6 +312,7 @@ export function calculateUVRProjection(input: UVRInput): {
   tasaMensual: number;
   variacionMensualUVR: number;
   cuotaUVRActual: number;
+  cuotasReales: number;
   escenarioActual: UVREscenarioActual;
   propuestas: UVRPropuesta[];
 } {
