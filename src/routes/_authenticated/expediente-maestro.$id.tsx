@@ -21,6 +21,7 @@ import { DocumentosLegales } from "@/components/expediente-maestro/DocumentosLeg
 import { ModuloJuridico } from "@/components/expediente-maestro/ModuloJuridico";
 import { MotorExtractosNUVEX } from "@/components/nuvex/MotorExtractosNUVEX";
 import { QAFinancieroBlock } from "@/components/expediente/QAFinancieroBlock";
+import { ProyeccionesDropzone } from "@/components/proyecciones/ProyeccionesDropzone";
 import type { MotorResultado } from "@/lib/motorExtractos.functions";
 import { withFreshDerivados, normalizeTipoBeneficio, FRESH_DEFAULT_TOTAL } from "@/lib/cobertura";
 import { normalizeCreditMoneyInput } from "@/lib/creditoSanity";
@@ -462,6 +463,8 @@ function MaestroDetail() {
       <MotorExtractosNUVEX expedienteId={id} onConfirm={aplicarExtracto} />
 
       <QAFinancieroBlock expedienteId={id} />
+
+      <ProyeccionesDropzone expedienteId={id} variant="expediente" />
 
       {(aplicandoExtracto || extractoAplicado) && (
         <div ref={resumenRef}>

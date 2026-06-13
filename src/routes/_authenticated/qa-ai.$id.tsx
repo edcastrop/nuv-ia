@@ -7,6 +7,7 @@ import { auditar, reconstruir, type AuditarInput } from "@/lib/qaMath";
 import { exportarDictamenPDF } from "@/lib/qaPdf";
 import { CopilotoQADrawer } from "@/components/qa-ai/CopilotoQADrawer";
 import { VeredictoBlock } from "@/components/qa-ai/VeredictoBlock";
+import { ProyeccionesDropzone } from "@/components/proyecciones/ProyeccionesDropzone";
 import type { Veredicto } from "@/lib/qaMath";
 import { Brain, Gauge, ArrowLeft, AlertTriangle, CheckCircle2, Coins, Calculator, Sigma, ShieldAlert, Minus, FileDown, Sparkles, RefreshCw } from "lucide-react";
 
@@ -225,6 +226,18 @@ function ResultadoQaAi() {
           (recomputo?.veredicto ?? (o.veredicto as unknown as Veredicto | undefined)) as Veredicto | undefined
         }
       />
+
+      {typeof a.expediente_id === "string" && (
+        <ProyeccionesDropzone
+          expedienteId={a.expediente_id}
+          variant="qa"
+          onReauditoria={async () => {
+            setReloading(true);
+            try { setData(await fetchAud({ data: { id } }) as { auditoria: Record<string, unknown> | null; inconsistencias: Inc[] }); }
+            finally { setReloading(false); }
+          }}
+        />
+      )}
 
       <KpiGrid cols={reconMeta.hasFrech ? 4 : 3}>
         <KpiCard label={isUvr ? "Cuota sin subsidio" : "Cuota teórica"} value={`$${fmt(o.cuotaTeorica as number, 0)}`} icon={<Calculator size={14} />} tone="blue" />

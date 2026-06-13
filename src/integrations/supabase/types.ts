@@ -2705,6 +2705,71 @@ export type Database = {
         }
         Relationships: []
       }
+      expediente_proyecciones: {
+        Row: {
+          archivo_nombre: string
+          archivo_path: string
+          auditoria_id: string | null
+          created_at: string
+          datos: Json | null
+          error: string | null
+          expediente_id: string
+          id: string
+          mime: string
+          origen_zip: string | null
+          parsed_at: string | null
+          password_usada: boolean
+          size_bytes: number | null
+          status: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          archivo_nombre: string
+          archivo_path: string
+          auditoria_id?: string | null
+          created_at?: string
+          datos?: Json | null
+          error?: string | null
+          expediente_id: string
+          id?: string
+          mime: string
+          origen_zip?: string | null
+          parsed_at?: string | null
+          password_usada?: boolean
+          size_bytes?: number | null
+          status?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          archivo_nombre?: string
+          archivo_path?: string
+          auditoria_id?: string | null
+          created_at?: string
+          datos?: Json | null
+          error?: string | null
+          expediente_id?: string
+          id?: string
+          mime?: string
+          origen_zip?: string | null
+          parsed_at?: string | null
+          password_usada?: boolean
+          size_bytes?: number | null
+          status?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expediente_proyecciones_expediente_id_fkey"
+            columns: ["expediente_id"]
+            isOneToOne: false
+            referencedRelation: "expedientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expediente_soportes: {
         Row: {
           archivo_nombre: string
