@@ -816,20 +816,20 @@ export function construirVeredicto(
       ? "warning"
       : "ok";
   const extractoDet = hallazgos.length === 0
-    ? "Saldo, tasa, plazo, FRECH y cuota se reconcilian entre sí."
-    : `${hallazgos.length} hallazgo(s) matemático(s) detectados (ver abajo).`;
+    ? "Saldo, tasa, plazo, FRECH y cuota cuadran entre sí. El extracto está internamente sano."
+    : `NUVIA encontró ${hallazgos.length} dato(s) que no cuadran (ver lista abajo).`;
 
-  const simDet = `Usa las ${plazoReportado ?? r.cuotasPendientes} cuotas pendientes del extracto sin recortarlas y respeta la cuota oficial.`;
+  const simDet = `Proyecta el crédito usando las ${plazoReportado ?? r.cuotasPendientes} cuotas que el extracto dice que faltan, respetando la cuota oficial. No inventa ni recorta plazos.`;
 
   let audEstado: VeredictoEstado;
   if (score.dictamen === "rechazado") audEstado = "error";
   else if (score.score >= 95) audEstado = "ok";
   else if (score.score >= 70) audEstado = "warning";
   else audEstado = "error";
-  const audDet = `Score ${score.score.toFixed(1)} · ${dictamenLabel[score.dictamen]}. ${
+  const audDet = `Calificación ${score.score.toFixed(1)} de 100 · ${dictamenLabel[score.dictamen]}. ${
     inconsistencias.length === 0
-      ? "Reconcilió saldo/tasa/cuota/plazo dentro de tolerancia."
-      : `Detectó ${inconsistencias.length} diferencia(s) frente a la reconstrucción.`
+      ? "Todos los números coinciden dentro del margen permitido."
+      : `Encontró ${inconsistencias.length} diferencia(s) frente a lo que debería ser.`
   }`;
 
   const filas: VeredictoFila[] = [
@@ -843,62 +843,64 @@ export function construirVeredicto(
       estado: "ok",
       titulo: "Excel del analista",
       detalle: desfaseGrande
-        ? `Si simula a ${plazoReportado} cuotas con la tasa del extracto, su cuota teórica es correcta — el banco está cobrando más para amortizar antes.`
-        : "El cálculo teórico francesa con (saldo, tasa, plazo) del extracto es matemáticamente correcto.",
+        ? `Su Excel está bien calculado: si usa el saldo, la tasa y las ${plazoReportado} cuotas del extracto, la cuota le da correcta. El problema es que el banco está cobrando una cuota distinta a la que ese plazo necesita.`
+        : "El Excel calcula la cuota correctamente con los datos del extracto.",
     });
   }
 
-  // ── Causas probables (heurística sobre hallazgos) ──
+  // ── Causas probables (en lenguaje claro) ──
   const causas: string[] = [];
   if (desfaseGrande && desfasePlazo! < 0) {
-    causas.push("La cuota fue recalculada con el plazo original del crédito, no con el remanente actual.");
-    causas.push("El cliente puede estar haciendo un sobreaporte implícito que amortiza más rápido el saldo.");
-    causas.push("El banco no recalculó la cuota tras un cambio de tasa, UVR o reliquidación previa.");
+    causas.push("Lo más probable: el banco calculó la cuota con el plazo ORIGINAL del crédito y no la actualizó cuando bajó el saldo. Por eso la cuota termina pagando antes de tiempo.");
+    causas.push("También puede ser que el cliente esté pagando un poco más cada mes sin saberlo (por ejemplo, por seguros más altos o por un abono automático).");
+    causas.push("Otra opción: hubo un cambio de tasa o una reliquidación previa y el banco no recalculó la cuota.");
   } else if (desfaseGrande && desfasePlazo! > 0) {
-    causas.push("La cuota está subdimensionada: con esta cuota habrá saldo residual al final del plazo.");
-    causas.push("Posible aplicación errónea del subsidio FRECH o de seguros en el cálculo.");
+    causas.push("La cuota es demasiado baja para el plazo que dice el extracto. Si el cliente sigue pagando así, va a quedar debiendo dinero al final.");
+    causas.push("Es posible que el subsidio FRECH o los seguros estén mal aplicados en la cuota.");
   }
-  if (!frechConsistente) causas.push("La aplicación del subsidio FRECH no se refleja correctamente en la cuota cliente.");
-  if (!saldoUvrConsistente) causas.push("El valor de la UVR usado en la conversión saldo UVR ↔ saldo pesos no es el de corte.");
+  if (!frechConsistente) causas.push("El subsidio FRECH no está reflejado correctamente en la cuota que paga el cliente.");
+  if (!saldoUvrConsistente) causas.push("El valor de la UVR que se usó para convertir el saldo no corresponde a la fecha del extracto.");
 
-  // ── Recomendaciones (siempre accionables, surgen de los hallazgos) ──
+  // ── Recomendaciones (lenguaje sencillo y accionable) ──
   const recs: string[] = hallazgos.map((h) => h.pista);
   if (recs.length === 0) {
-    recs.push("Caso reconciliado: puede continuar con la simulación y la oferta al cliente.");
+    recs.push("Todo cuadra: puede continuar tranquilo con la simulación y la propuesta al cliente.");
   } else {
-    // Pistas operativas universales cuando hay cualquier hallazgo o desfase
     recs.push(
-      "Pregunte al cliente si realizó abonos a capital en el pasado: muchas veces el banco no refleja el nuevo saldo en el extracto, lo que explica desfases entre cuota, saldo y plazo.",
+      "Primero, pregúntele al cliente: ¿ha hecho abonos extra a capital alguna vez? Muchas veces el banco recibe el abono pero no actualiza el saldo en el extracto, y eso explica casi todos los desfases.",
     );
     recs.push(
-      "Solicite al cliente las PROYECCIONES OFICIALES del crédito emitidas por el banco. Allí aparecen: saldo a capital actual, tasa vigente, valor UVR de corte, saldo en UVR, TEA cobrada, cuotas pendientes, valor de la cuota, valor de los seguros y la discriminación cuota (capital + interés + seguros). Con ese documento NUVIA puede emitir el dictamen final.",
+      "Después, pídale al cliente que solicite al banco las PROYECCIONES OFICIALES de su crédito. Es un documento donde aparece todo claro: saldo actual, tasa vigente, valor de la UVR del día, saldo en UVR, cuántas cuotas le faltan, valor exacto de la cuota, valor de los seguros y cómo se compone la cuota (capital + interés + seguros). Con ese documento NUVIA puede cerrar el dictamen final.",
     );
     recs.push(
-      "Una vez tenga las proyecciones del banco, súbalas al expediente y reejecute la auditoría: NUVIA cruzará el extracto contra las proyecciones y cerrará el dictamen.",
+      "Cuando el cliente le entregue las proyecciones del banco, súbalas al caso y vuelva a ejecutar la auditoría. NUVIA va a comparar el extracto contra las proyecciones y le dará el veredicto final del crédito.",
     );
   }
 
-  // ── Titular y resumen ──
+  // ── Titular y resumen (lenguaje claro) ──
   let titular: string;
   if (desfaseCritico) {
-    titular = `Extracto coherente, pero la cuota implica ${plazoImplicito} meses ≠ ${plazoReportado} reportados.`;
+    titular = desfasePlazo! < 0
+      ? `Cuidado: el extracto dice ${plazoReportado} cuotas, pero con la cuota actual el crédito se termina en ${plazoImplicito}. El cliente está pagando más de lo necesario.`
+      : `Cuidado: la cuota actual no alcanza a pagar el crédito en las ${plazoReportado} cuotas que dice el extracto.`;
   } else if (sevExtracto === "error") {
-    titular = `NUVIA detectó ${hallazgos.filter((h) => h.severidad === "critica").length} error(es) crítico(s) en el extracto.`;
+    titular = `NUVIA encontró ${hallazgos.filter((h) => h.severidad === "critica").length} error(es) graves en el extracto que debe validar con el banco.`;
   } else if (sevExtracto === "warning") {
-    titular = `NUVIA detectó ${hallazgos.length} hallazgo(s) que requieren atención del analista.`;
+    titular = `NUVIA encontró ${hallazgos.length} dato(s) que no cuadran y que el analista debe revisar.`;
   } else if (audEstado !== "ok") {
-    titular = `La auditoría detectó ${inconsistencias.length} hallazgo(s) que requieren revisión.`;
+    titular = `La auditoría encontró ${inconsistencias.length} diferencia(s) que vale la pena revisar antes de cerrar el caso.`;
   } else {
     titular = hayExcel
-      ? "Todas las fuentes (Excel, simulador, extracto) reconcilian dentro de tolerancia."
-      : "El extracto reconcilia internamente bajo matemática financiera estándar.";
+      ? "Todo coincide: el Excel, el simulador y el extracto dan los mismos números."
+      : "El extracto está sano: todos los números coinciden entre sí.";
   }
 
   const resumen = desfaseGrande
-    ? `El extracto reporta ${plazoReportado} meses, pero la cuota oficial amortiza el saldo en ${plazoImplicito} meses. NUVIA respeta el plazo formal en sus proyecciones; valide con el banco si la cuota debe recalcularse.`
+    ? `El extracto dice que al cliente le quedan ${plazoReportado} cuotas, pero pagando la cuota actual el crédito se acabaría en ${plazoImplicito} cuotas. NUVIA respeta lo que dice el extracto en sus proyecciones, pero antes de avanzar conviene confirmar con el banco si la cuota está bien calculada o si hubo abonos no registrados.`
     : sevExtracto !== "ok"
-      ? "El extracto presenta inconsistencias internas. Revise los hallazgos abajo y aplique las pistas antes de continuar."
-      : "Todas las cifras del extracto coinciden bajo el sistema francés y los parámetros del crédito están en rangos razonables.";
+      ? "El extracto tiene datos que no cuadran entre sí. Revise los hallazgos de abajo y siga las pistas — son cosas que el analista puede resolver hablando con el cliente o con el banco."
+      : "Todos los números del extracto coinciden y la tasa, el saldo y el plazo están en rangos normales. Puede continuar con tranquilidad.";
+
 
   const extractoTieneErrores: Veredicto["extractoTieneErrores"] =
     hallazgos.some((h) => h.severidad === "critica") && !desfaseCritico ? "si"
