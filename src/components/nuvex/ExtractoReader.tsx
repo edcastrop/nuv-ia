@@ -318,6 +318,9 @@ const STAGES: { id: Stage; label: string }[] = [
   { id: "applied", label: "Simulador completado" },
 ];
 
+type StagedItem = { mime: string; dataUrl: string; sourceName: string };
+const MAX_PAGES = 6;
+
 export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
   const [open, setOpen] = useState(false);
   const [stage, setStage] = useState<Stage>("idle");
@@ -330,6 +333,10 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const [portalReady, setPortalReady] = useState(false);
+  const [staging, setStaging] = useState<StagedItem[]>([]);
+  const [stagingRawText, setStagingRawText] = useState("");
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [stagingNotice, setStagingNotice] = useState<string | null>(null);
   const { data: catalogoProductos = [] } = useProductosBancarios();
 
   useEffect(() => {
