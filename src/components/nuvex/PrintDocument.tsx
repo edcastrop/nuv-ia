@@ -701,20 +701,21 @@ function CuotaCard({
 }: { eyebrow: string; sub: string; amount: number; footer: string; color: string; bg: string }) {
   return (
     <div style={{
-      background: bg, borderRadius: 12, padding: "12px 14px",
+      background: bg, borderRadius: 12, padding: "9px 12px",
       border: `1px solid ${C.hairline}`,
+      breakInside: "avoid", pageBreakInside: "avoid",
     }}>
       <div style={{
         fontSize: 8.5, letterSpacing: "0.2em", fontWeight: 800, color: C.muted,
       }}>{eyebrow}</div>
       <div style={{ fontSize: 9.5, color: C.muted, marginTop: 1 }}>{sub}</div>
       <div style={{
-        marginTop: 6, fontSize: 26, fontWeight: 900, color, letterSpacing: "-0.025em",
+        marginTop: 4, fontSize: 23, fontWeight: 900, color, letterSpacing: "-0.025em",
         lineHeight: 1,
       }}>
         {formatCOP(amount)}
       </div>
-      <div style={{ marginTop: 8, fontSize: 9, color: C.muted }}>{footer}</div>
+      <div style={{ marginTop: 5, fontSize: 8.5, color: C.muted }}>{footer}</div>
     </div>
   );
 }
@@ -727,8 +728,9 @@ function ImpactCard({
 }) {
   return (
     <div style={{
-      background: bg, borderRadius: 12, padding: "14px 16px",
+      background: bg, borderRadius: 12, padding: "10px 14px",
       border: `1px solid ${C.hairline}`,
+      breakInside: "avoid", pageBreakInside: "avoid",
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <div style={{
@@ -741,17 +743,17 @@ function ImpactCard({
         }}>{eyebrow}</div>
       </div>
       <div style={{
-        marginTop: 8, fontSize: 44, fontWeight: 900, color: accent,
+        marginTop: 5, fontSize: 38, fontWeight: 900, color: accent,
         letterSpacing: "-0.03em", lineHeight: 0.98,
       }}>
         {amount}
       </div>
       {sub && (
         <div style={{
-          fontSize: 11, fontWeight: 800, color: accent, marginTop: 2, letterSpacing: "0.04em",
+          fontSize: 10, fontWeight: 800, color: accent, marginTop: 1, letterSpacing: "0.04em",
         }}>{sub}</div>
       )}
-      <div style={{ marginTop: 8, fontSize: 10, color: C.text, lineHeight: 1.45 }}>
+      <div style={{ marginTop: 5, fontSize: 9.5, color: C.text, lineHeight: 1.3 }}>
         {note}
       </div>
     </div>
@@ -760,13 +762,13 @@ function ImpactCard({
 
 function BenefitItem({ icon, label }: { icon: React.ReactNode; label: React.ReactNode }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 4 }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 3 }}>
       <div style={{
-        width: 30, height: 30, borderRadius: "50%",
+        width: 24, height: 24, borderRadius: "50%",
         background: C.greenSoft, color: C.greenDeep,
         display: "flex", alignItems: "center", justifyContent: "center",
       }}>{icon}</div>
-      <div style={{ fontSize: 9.5, color: C.text, lineHeight: 1.3, fontWeight: 600 }}>
+      <div style={{ fontSize: 8.7, color: C.text, lineHeight: 1.18, fontWeight: 600 }}>
         {label}
       </div>
     </div>
@@ -804,7 +806,8 @@ function AlternativaCard(props: {
   return (
     <div style={{
       background: "#fff", border: `1px solid ${C.hairline}`,
-      borderRadius: 10, padding: "9px 14px",
+      borderRadius: 10, padding: "7px 12px",
+      breakInside: "avoid", pageBreakInside: "avoid",
     }}>
 
       {/* Header card */}
@@ -813,13 +816,13 @@ function AlternativaCard(props: {
       }}>
         <div style={{
           background: accent, color: "#fff",
-          padding: "4px 12px", borderRadius: 6,
-          fontSize: 10.5, fontWeight: 900, letterSpacing: "0.14em",
+          padding: "3px 10px", borderRadius: 6,
+          fontSize: 9.5, fontWeight: 900, letterSpacing: "0.14em",
         }}>
           PROYECCIÓN {index}
         </div>
         <div style={{
-          fontSize: 11, fontWeight: 800, color: deep, fontStyle: "italic",
+          fontSize: 10, fontWeight: 800, color: deep, fontStyle: "italic",
         }}>
           {label}
         </div>
@@ -827,14 +830,14 @@ function AlternativaCard(props: {
 
       {/* 4 cols compactas */}
       <div style={{
-        marginTop: 7, display: "grid", gridTemplateColumns: "1.15fr 1fr 1fr 1fr", gap: 10, alignItems: "start",
+        marginTop: 5, display: "grid", gridTemplateColumns: "1.15fr 1fr 1fr 1fr", gap: 8, alignItems: "start",
       }}>
         <div>
           <div style={{ fontSize: 7.5, letterSpacing: "0.18em", color: C.muted, fontWeight: 800 }}>
             NUEVA CUOTA
           </div>
           <div style={{
-            fontSize: 16, fontWeight: 900, color: accent,
+            fontSize: 14.5, fontWeight: 900, color: accent,
             letterSpacing: "-0.02em", lineHeight: 1.05, marginTop: 1,
           }}>
             {formatCOP(cuota)}
@@ -883,7 +886,7 @@ function AlternativaCard(props: {
       </div>
 
       {/* Timeline compacto */}
-      <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
+      <div style={{ marginTop: 5, display: "flex", flexDirection: "column", gap: 2 }}>
         <MiniTimeline
           label="SIN NUVEX" labelColor={C.muted}
           startYear={añoHoy} endYear={terminaActual}
@@ -902,10 +905,10 @@ function AlternativaCard(props: {
 
       {/* Ideal */}
       <div style={{
-        marginTop: 7, background: soft, borderRadius: 6,
-        padding: "5px 10px",
+        marginTop: 5, background: soft, borderRadius: 6,
+        padding: "4px 8px",
       }}>
-        <div style={{ fontSize: 8.5, color: C.text, lineHeight: 1.35 }}>
+        <div style={{ fontSize: 8, color: C.text, lineHeight: 1.15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           <span style={{ fontWeight: 800, color: deep, fontStyle: "italic" }}>Ideal para: </span>
           {quienIdeal}
         </div>
@@ -989,17 +992,18 @@ function FooterStrip() {
     <div
       data-pdf-footer="true"
       style={{
-        marginTop: 14,
+        marginTop: "auto",
         background: C.black, color: "#fff",
-        padding: "12px 22px",
+        padding: "8px 18px",
         display: "grid",
         gridTemplateColumns: "auto 1fr 1fr 1fr 1fr",
-        gap: 14, alignItems: "center",
+        gap: 10, alignItems: "center",
+        breakInside: "avoid", pageBreakInside: "avoid",
       }}
     >
       <img
         src={logoNuvex} alt="NUVEX" crossOrigin="anonymous"
-        style={{ height: 24, width: "auto", filter: "brightness(0) invert(1)" }}
+        style={{ height: 20, width: "auto", filter: "brightness(0) invert(1)" }}
       />
       <FooterItem icon={<PinIcon />} title="Bucaramanga" lines={["Carrera 16 # 37-48 Piso 4", "Centro"]} />
       <FooterItem icon={<PinIcon />} title="Bogotá" lines={["Calle 93 # 18 - 28", "Oficina 704"]} />
@@ -1011,13 +1015,13 @@ function FooterStrip() {
 
 function FooterItem({ icon, title, lines }: { icon: React.ReactNode; title: string; lines: string[] }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
       <div style={{
-        width: 24, height: 24, borderRadius: "50%",
+        width: 19, height: 19, borderRadius: "50%",
         border: "1px solid rgba(255,255,255,0.35)",
         display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
       }}>{icon}</div>
-      <div style={{ fontSize: 9, lineHeight: 1.4 }}>
+      <div style={{ fontSize: 7.8, lineHeight: 1.25 }}>
         {title && <div style={{ fontWeight: 800, color: "#fff" }}>{title}</div>}
         {lines.map((l, i) => (
           <div key={i} style={{ color: "rgba(255,255,255,0.85)" }}>{l}</div>
