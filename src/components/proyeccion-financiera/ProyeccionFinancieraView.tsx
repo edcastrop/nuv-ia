@@ -167,6 +167,62 @@ function Field({
   );
 }
 
+/**
+ * DecimalField — buffer local de texto para permitir escribir separadores
+ * decimales ("." o ",") sin que el parseo a número los descarte mientras
+ * el usuario aún escribe (ej. "10." o "10,95").
+ */
+function DecimalField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: number | string;
+  onChange: (raw: string) => void;
+  placeholder?: string;
+}) {
+  const numericValue =
+    typeof value === "number"
+      ? value
+      : parseFloat(String(value ?? "").replace(",", ".")) || 0;
+  const [text, setText] = React.useState<string>(
+    numericValue ? String(numericValue).replace(".", ",") : "",
+  );
+  const [focused, setFocused] = React.useState(false);
+
+  React.useEffect(() => {
+    if (focused) return;
+    const parsed = parseFloat(text.replace(",", ".")) || 0;
+    if (parsed !== numericValue) {
+      setText(numericValue ? String(numericValue).replace(".", ",") : "");
+    }
+  }, [numericValue, focused, text]);
+
+  return (
+    <label className="group flex flex-col gap-1.5">
+      <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-white/40">
+        {label}
+      </span>
+      <input
+        type="text"
+        inputMode="decimal"
+        value={text}
+        placeholder={placeholder}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        onChange={(e) => {
+          const raw = e.target.value.replace(/[^\d.,]/g, "");
+          setText(raw);
+          onChange(raw);
+        }}
+        className="rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-sm font-medium text-white placeholder-white/30 outline-none transition focus:border-[#84B98F]/50 focus:bg-white/[0.06] focus:ring-2 focus:ring-[#84B98F]/18"
+      />
+    </label>
+  );
+}
+
 function SelectField({
   label,
   value,
