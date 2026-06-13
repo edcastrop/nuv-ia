@@ -343,6 +343,16 @@ export function ProyeccionesDropzone({ expedienteId, onReauditoria, variant = "q
     } finally { setReauditando(false); }
   }, [items, fnFusionar, fnAuditar, expedienteId, onReauditoria]);
 
+  const verificarCierre = useCallback(async () => {
+    setReauditando(true); setErr(null);
+    try {
+      await fnVerificar({ data: { expedienteId } });
+      onVerificacionCierre?.();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "No se pudo verificar el cierre");
+    } finally { setReauditando(false); }
+  }, [fnVerificar, expedienteId, onVerificacionCierre]);
+
   // Tokens según contexto (dark dentro de QA, light dentro de Expediente)
   const tokens = isDark
     ? {
@@ -361,26 +371,33 @@ export function ProyeccionesDropzone({ expedienteId, onReauditoria, variant = "q
 
   const hayAnalizadas = items.some((i) => i.status === "analizado");
 
+  const titulo = esCierre ? "Proyecciones de cierre del banco" : "Proyecciones del banco";
+  const descripcion = esCierre
+    ? "Sube aquí las proyecciones que el banco emite cuando termina de ejecutar el caso. NUVIA verifica que lo aplicado coincida con la propuesta que escogió el cliente."
+    : "Suelta aquí PDF, Excel, imágenes o ZIP. NUVIA leerá saldo a capital, tasa, UVR, cuota, seguros y cuotas pendientes para continuar el dictamen.";
+
   return (
     <div style={{ background: tokens.cardBg, border: `1px solid ${tokens.border}`, borderRadius: 14, padding: 16 }}>
       <div className="flex items-start justify-between gap-3 mb-3">
         <div>
           <h3 className="text-sm font-semibold inline-flex items-center gap-2" style={{ color: tokens.text }}>
-            <UploadCloud size={16} style={{ color: tokens.accent }} /> Proyecciones del banco
+            <UploadCloud size={16} style={{ color: tokens.accent }} /> {titulo}
           </h3>
           <p className="text-[11px] mt-1" style={{ color: tokens.textDim }}>
-            Suelta aquí PDF, Excel, imágenes o ZIP. NUVIA leerá saldo a capital, tasa, UVR, cuota, seguros y cuotas pendientes para continuar el dictamen.
+            {descripcion}
           </p>
         </div>
         {hayAnalizadas && (
           <button
-            onClick={fusionarYReauditar}
+            onClick={esCierre ? verificarCierre : fusionarYReauditar}
             disabled={reauditando}
             className="text-[11px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md font-semibold"
             style={{ background: tokens.accent, color: "#FFFFFF", opacity: reauditando ? 0.6 : 1 }}
           >
             {reauditando ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
-            {reauditando ? "Reauditando…" : "Fusionar con extracto y reauditar"}
+            {reauditando
+              ? (esCierre ? "Verificando…" : "Reauditando…")
+              : (esCierre ? "Verificar cierre vs propuesta" : "Fusionar con extracto y reauditar")}
           </button>
         )}
       </div>
