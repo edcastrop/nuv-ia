@@ -47,32 +47,37 @@ interface Props {
 }
 
 /* ============================================================
-   NUVEX — Propuesta Financiera Personalizada (1 página A4)
-   Diseño basado en boceto cliente · jun 2026
+   NUVEX — Propuesta Comercial Premium (2 páginas A4)
+   Diseño: estilo Apple/Stripe/Notion — sensación de cierre
 ============================================================ */
 const C = {
-  navy: "#0B1E4A",        // header/footer/dark blocks
-  navyDeep: "#081539",
+  black: "#242424",
   ink: "#1A1F2E",
   text: "#2C3142",
   muted: "#6B7280",
   hairline: "#E5E9F0",
   paper: "#FFFFFF",
-  cream: "#F6F4EE",
-  greenNuvex: "#5BB76A",
+  bgSoft: "#F6F7F9",
+  green: NUVEX.verde,        // #84B98F
   greenSoft: "#E8F4EA",
   greenDeep: "#3F8C57",
+  azul: NUVEX.azul,          // #445DA3
+  azulSoft: "#E3E8F5",
+  purple: "#7C5BB7",
+  purpleSoft: "#EDE5F7",
   red: "#D94F4F",
   redSoft: "#FCE6E5",
   redDeep: "#B43A3A",
-  azul: NUVEX.azul,
 };
 
 const FONT = "'Inter','Manrope','SF Pro Display',ui-sans-serif,system-ui,sans-serif";
 const SCRIPT = "'Allura','Caveat','Brush Script MT',cursive";
 
 export function PrintDocument(props: Props) {
-  const { mode, client, recommended, scenario, commercial } = props;
+  const {
+    mode, client, recommended, scenario, commercial,
+    pesosPropuestas, uvrPropuestas, bestIndex,
+  } = props;
   const containerId = mode === "uvr" ? "pdf-content-uvr" : "pdf-content-pesos";
 
   const fecha = new Date().toLocaleDateString("es-CO", {
@@ -83,6 +88,7 @@ export function PrintDocument(props: Props) {
   const añosOpt = scenario.nuevoPlazo / 12;
   const añosEliminados = Math.max(0, añosActual - añosOpt);
   const añosEliminadosEntero = Math.max(0, Math.round(añosEliminados));
+  const cuotasEliminadas = Math.max(0, scenario.plazoActual - scenario.nuevoPlazo);
 
   const fechaBase = new Date();
   const fechaFinActual = new Date(fechaBase);
@@ -102,10 +108,20 @@ export function PrintDocument(props: Props) {
   const primerNombre = (client.nombre || "Cliente").trim().split(/\s+/)[0] || "Cliente";
   const analista = client.asesor || "Equipo NUVEX";
   const banco = client.banco || "—";
-  const producto = client.tipoProducto || "Crédito Hipotecario";
+  const productoLabel = client.tipoProducto === "leasing"
+    ? "Leasing Habitacional" : "Crédito Hipotecario";
+  const monedaLabel = mode === "uvr" ? "en UVR" : "en Pesos";
 
-  // Porcentaje visual de la barra CON NUVEX respecto a SIN NUVEX
-  const optBarPct = Math.max(20, Math.min(95, (añosOpt / Math.max(añosActual, 1)) * 100));
+  const cuotaActual = scenario.cuotaActual;
+  const nuevaCuota = scenario.nuevaCuota;
+  const incrementoMensual = Math.max(0, nuevaCuota - cuotaActual);
+  const incrementoPct = cuotaActual > 0 ? (incrementoMensual / cuotaActual) * 100 : 0;
+
+  // -------- Alternativas (página 2) — todas las propuestas menos la seleccionada
+  const alternativas = buildAlternativas({
+    mode, pesosPropuestas, uvrPropuestas, bestIndex,
+    cuotaActual, añoHoy, añoFinActual, añosActual,
+  });
 
   return (
     <div
@@ -120,602 +136,838 @@ export function PrintDocument(props: Props) {
         letterSpacing: "-0.005em",
       }}
     >
-      {/* ════════════ HEADER DARK NAVY ════════════ */}
-      <div
-        style={{
-          background: C.navy,
-          padding: "14px 22px 56px 22px",
-          color: "#fff",
-          position: "relative",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          {/* Logo + tag */}
-          <div style={{ display: "flex", alignItems: "center", gap: 18, minWidth: 0 }}>
-            <img
-              src={logoNuvex}
-              alt="NUVEX"
-              style={{ height: 36, width: "auto", filter: "brightness(0) invert(1)" }}
-              crossOrigin="anonymous"
-            />
-            <div
-              style={{
-                width: 1, height: 28, background: "rgba(255,255,255,0.18)",
-              }}
-            />
-            <div style={{ fontSize: 10.5, lineHeight: 1.3, color: "rgba(255,255,255,0.85)" }}>
-              Optimizamos tu crédito,
-              <br />
-              <span style={{ color: C.greenNuvex, fontWeight: 700 }}>recuperas tu tiempo y tu dinero.</span>
-            </div>
-          </div>
-
-          {/* Tag derecha */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <ShieldIcon />
-            <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: 9, letterSpacing: "0.22em", color: C.greenNuvex, fontWeight: 700 }}>
-                PROPUESTA FINANCIERA
-              </div>
-              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.18em", marginTop: 1 }}>
-                PERSONALIZADA
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ════════════ CARD CLIENTE (flotante) ════════════ */}
-      <div style={{ padding: "0 16px", marginTop: -42, position: "relative", zIndex: 2 }}>
-        <div
-          style={{
-            background: "#fff",
-            borderRadius: 12,
-            boxShadow: "0 18px 40px -22px rgba(11,30,74,0.35)",
-            padding: "16px 22px",
-            display: "grid",
-            gridTemplateColumns: "1.15fr 1fr 0.95fr",
-            gap: 18,
-            alignItems: "center",
-          }}
-        >
-          <ClientCol
-            kicker="CLIENTE"
-            avatarColor={C.greenNuvex}
-            title={nombreCliente}
-            titleSize={13.5}
-          />
-          <ClientCol
-            kicker="PREPARADO POR"
-            avatarColor={C.azul}
-            title={analista}
-            titleSize={12.5}
-            sub={
-              <>
-                <div style={{ fontSize: 9.5, color: C.muted, marginTop: 1 }}>Analista Financiero Senior</div>
-                <div style={{ fontSize: 10, color: C.azul, fontWeight: 700, marginTop: 1 }}>
-                  NUVEX Finanzas Inteligentes
-                </div>
-              </>
-            }
-          />
-          <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 9.5 }}>
-            <MetaRow icon={<CalIcon />} label="FECHA" value={fecha} />
-            <MetaRow icon={<BankIcon />} label="BANCO" value={banco} />
-            <MetaRow icon={<CardIcon />} label="PRODUCTO" value={producto} />
-          </div>
-        </div>
-      </div>
-
-      {/* ════════════ HERO ════════════ */}
+      {/* ============================================================
+          PÁGINA 1 — PROPUESTA RECOMENDADA
+      ============================================================ */}
       <section
+        className="nuvex-print-page"
         style={{
-          margin: "14px 16px 0 16px",
-          borderRadius: 12,
-          overflow: "hidden",
-          position: "relative",
-          minHeight: 285,
-          background: "#F2F2EE",
+          width: "210mm", minHeight: "297mm",
+          background: C.paper,
+          display: "flex", flexDirection: "column",
+          pageBreakAfter: "always", breakAfter: "page",
         }}
       >
-        <img
-          src={heroSunset}
-          alt=""
-          crossOrigin="anonymous"
-          style={{
-            position: "absolute", inset: 0, width: "100%", height: "100%",
-            objectFit: "cover", opacity: 0.95,
-          }}
-        />
-        {/* Gradiente para legibilidad lado izquierdo */}
-        <div
-          style={{
-            position: "absolute", inset: 0,
-            background: "linear-gradient(90deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.78) 38%, rgba(255,255,255,0.0) 62%)",
-          }}
-        />
-        <div style={{ position: "relative", padding: "22px 24px", display: "grid", gridTemplateColumns: "1.05fr 1fr", gap: 16 }}>
-          {/* Texto */}
+        {/* ───── HEADER NEGRO ───── */}
+        <div style={{
+          background: C.black, color: "#fff", padding: "16px 24px",
+          display: "grid", gridTemplateColumns: "auto 1fr", alignItems: "center", gap: 20,
+        }}>
+          <img
+            src={logoNuvex} alt="NUVEX" crossOrigin="anonymous"
+            style={{ height: 34, width: "auto", filter: "brightness(0) invert(1)" }}
+          />
+          <div style={{ fontSize: 11.5, lineHeight: 1.4, color: "rgba(255,255,255,0.92)" }}>
+            Transformamos tu crédito,
+            <br />
+            <span style={{ color: C.green, fontWeight: 700 }}>
+              recuperas tu tiempo y tu dinero.
+            </span>
+          </div>
+        </div>
+
+        {/* ───── HERO ───── */}
+        <div style={{
+          padding: "22px 24px 14px 24px",
+          display: "grid", gridTemplateColumns: "1fr 0.92fr", gap: 22, alignItems: "center",
+        }}>
           <div>
+            <div style={{ fontSize: 13, color: C.text, marginBottom: 4 }}>
+              Hola, <span style={{ color: C.azul, fontWeight: 800 }}>{nombreCliente}</span>
+            </div>
             <h1 style={{
-              margin: 0, fontSize: 50, lineHeight: 0.95, fontWeight: 900, color: C.ink,
-              letterSpacing: "-0.035em", textTransform: "uppercase",
+              margin: 0, fontSize: 44, lineHeight: 1.02, fontWeight: 900,
+              color: C.black, letterSpacing: "-0.035em",
             }}>
-              <div>Recupera</div>
-              <div style={{ color: C.greenNuvex }}>{añosEliminadosEntero} {añosEliminadosEntero === 1 ? "año" : "años"}</div>
-              <div>de tu vida</div>
-              <div>financiera</div>
+              Recupera parte de<br />
+              tu <span style={{ color: C.green }}>vida financiera</span>
             </h1>
             <p style={{
-              marginTop: 14, fontSize: 10.5, lineHeight: 1.55, color: C.text, maxWidth: 290,
+              marginTop: 12, fontSize: 11, lineHeight: 1.55, color: C.muted, maxWidth: 360,
             }}>
-              Con la optimización de tu crédito puedes reducir significativamente el tiempo de deuda
-              y ahorrar dinero para lo que realmente importa.
+              Analizamos tu crédito y encontramos una oportunidad real
+              de optimizarlo sin cambiar de banco.
             </p>
           </div>
-
-          {/* Tarjetas comparativas (CON / SIN NUVEX) */}
-          <div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <CompareCard
-                icon={<CheckCircle color={C.greenNuvex} />}
-                label="CON NUVEX"
-                year={añoFinOpt}
-                yearColor={C.greenDeep}
-                pill={`${formatNumber(añosOpt, 1)} años`}
-                pillBg={C.greenSoft}
-                pillFg={C.greenDeep}
-              />
-              <CompareCard
-                icon={<XCircle color={C.red} />}
-                label="SIN NUVEX"
-                year={añoFinActual}
-                yearColor={C.redDeep}
-                pill={`${formatNumber(añosActual, 1)} años`}
-                pillBg={C.redSoft}
-                pillFg={C.redDeep}
-              />
-            </div>
-            {/* Banda inferior recuperados */}
-            <div
+          <div style={{
+            position: "relative", borderRadius: 14, overflow: "hidden",
+            minHeight: 200, boxShadow: "0 18px 40px -22px rgba(0,0,0,0.35)",
+          }}>
+            <img
+              src={heroSunset} alt="" crossOrigin="anonymous"
               style={{
-                marginTop: 10,
-                background: C.navy, color: "#fff",
-                borderRadius: 10,
-                padding: "10px 14px",
-                display: "flex", alignItems: "center", gap: 10,
+                position: "absolute", inset: 0,
+                width: "100%", height: "100%", objectFit: "cover",
               }}
-            >
-              <div
-                style={{
-                  width: 30, height: 30, borderRadius: "50%",
-                  border: `2px solid ${C.greenNuvex}`,
-                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                }}
-              >
-                <ClockIcon color={C.greenNuvex} />
-              </div>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 900, color: C.greenNuvex, letterSpacing: "0.04em" }}>
-                  {añosEliminadosEntero} {añosEliminadosEntero === 1 ? "AÑO RECUPERADO" : "AÑOS RECUPERADOS"}
-                </div>
-                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.78)" }}>
-                  Más tiempo para lo que realmente importa.
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ════════════ LÍNEA DE TIEMPO ════════════ */}
-      <section style={{ margin: "16px 16px 0 16px" }}>
-        <div style={{
-          fontSize: 10, fontWeight: 800, letterSpacing: "0.22em", color: C.ink, textTransform: "uppercase",
-          marginBottom: 8,
-        }}>
-          Línea de tiempo comparativa
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 130px", gap: 14, alignItems: "center" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <TimelineRow
-              icon={<XCircle color={C.red} small />}
-              label="SIN NUVEX"
-              labelColor={C.text}
-              startYear={añoHoy}
-              endYear={añoFinActual}
-              pill={`${formatNumber(añosActual, 1)} años`}
-              pillBg={C.redSoft}
-              pillFg={C.redDeep}
-              barColor={C.red}
-              widthPct={100}
-            />
-            <TimelineRow
-              icon={<CheckCircle color={C.greenNuvex} small />}
-              label="CON NUVEX"
-              labelColor={C.text}
-              startYear={añoHoy}
-              endYear={añoFinOpt}
-              pill={`${formatNumber(añosOpt, 1)} años`}
-              pillBg={C.greenSoft}
-              pillFg={C.greenDeep}
-              barColor={C.greenNuvex}
-              widthPct={optBarPct}
             />
           </div>
-          {/* Card lateral diferencia */}
+        </div>
+
+        {/* ───── DATOS DEL CASO ───── */}
+        <div style={{ padding: "0 24px" }}>
           <div style={{
-            background: "#F6F7F9", border: `1px solid ${C.hairline}`, borderRadius: 10,
-            padding: "12px 10px", textAlign: "center",
+            background: C.bgSoft, borderRadius: 12,
+            padding: "14px 18px", display: "grid",
+            gridTemplateColumns: "1fr 1fr 1fr 1.2fr", gap: 18, alignItems: "center",
           }}>
-            <HourglassIcon />
-            <div style={{ fontSize: 22, fontWeight: 900, color: C.ink, marginTop: 4, letterSpacing: "-0.02em" }}>
-              {añosEliminadosEntero} {añosEliminadosEntero === 1 ? "AÑO" : "AÑOS"}
+            <MetaCol icon={<BankIcon />} label="BANCO" value={banco} />
+            <MetaCol icon={<CardIcon />} label="PRODUCTO" value={`${productoLabel} ${monedaLabel}`} />
+            <MetaCol icon={<CalIcon />} label="FECHA" value={fecha} />
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{
+                width: 42, height: 42, borderRadius: "50%",
+                background: `linear-gradient(135deg, ${C.azul}, ${C.green})`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: "#fff", fontSize: 13, fontWeight: 800, flexShrink: 0,
+              }}>
+                {initialsOf(analista)}
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{
+                  fontSize: 7.5, letterSpacing: "0.22em", color: C.muted,
+                  fontWeight: 800,
+                }}>PREPARADO POR</div>
+                <div style={{ fontSize: 12, fontWeight: 800, color: C.ink, lineHeight: 1.2 }}>
+                  {analista}
+                </div>
+                <div style={{ fontSize: 9, color: C.muted, lineHeight: 1.2 }}>
+                  Analista Financiero
+                </div>
+                <div style={{ fontSize: 9, color: C.green, fontWeight: 700, lineHeight: 1.2 }}>
+                  Certificado NUVEX
+                </div>
+              </div>
             </div>
-            <div style={{ fontSize: 10, color: C.muted, marginTop: -2 }}>de diferencia</div>
           </div>
         </div>
-      </section>
 
-      {/* ════════════ DINERO + BULLETS ════════════ */}
-      <section style={{
-        margin: "16px 16px 0 16px",
-        display: "grid", gridTemplateColumns: "1fr 1fr 0.78fr", gap: 12,
-      }}>
-        <MoneyCard
-          tone="red"
-          eyebrow="LO QUE ESTÁS DEJANDO DE AHORRAR"
-          sub="SIN NUVEX"
-          amount={ahorroTotal}
-          note="seguirán saliendo de tu bolsillo en intereses y seguros."
-          icon={<TrendDownIcon />}
-        />
-        <MoneyCard
-          tone="green"
-          eyebrow="LO QUE PUEDES AHORRAR"
-          sub="CON NUVEX"
-          amount={ahorroTotal}
-          note="se quedan para tu patrimonio y el de tu familia."
-          icon={<TrendUpIcon />}
-        />
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, justifyContent: "center", paddingLeft: 4 }}>
-          {[
-            "Menos intereses",
-            "Menos tiempo de deuda",
-            "Más patrimonio",
-            "Más tranquilidad financiera",
-          ].map((t) => (
-            <div key={t} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <CheckCircle color={C.greenNuvex} small />
-              <span style={{ fontSize: 11, color: C.text, fontWeight: 500 }}>{t}</span>
+        {/* ───── 1. CUOTA HOY VS OPTIMIZADA ───── */}
+        <div style={{ padding: "18px 24px 0 24px" }}>
+          <SectionTitle index="1" title="Tu cuota, hoy y con nuestra optimización" />
+          <div style={{
+            marginTop: 10,
+            display: "grid", gridTemplateColumns: "1fr 36px 1fr 110px", gap: 12, alignItems: "stretch",
+          }}>
+            <CuotaCard
+              eyebrow="VALOR ACTUAL DE TU CUOTA"
+              sub="Hoy pagas"
+              amount={cuotaActual}
+              footer="Cuota mensual actual"
+              color={C.ink}
+              bg="#F4F6F8"
+            />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{
+                width: 32, height: 32, borderRadius: "50%",
+                background: "#fff", border: `1px solid ${C.hairline}`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: "0 4px 10px -6px rgba(0,0,0,0.15)",
+              }}>
+                <Arrow color={C.muted} />
+              </div>
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ════════════ INVERSIÓN POR ÉXITO + 72H ════════════ */}
-      <section style={{
-        margin: "14px 16px 0 16px",
-        display: "grid", gridTemplateColumns: "1.55fr 1fr", gap: 12,
-      }}>
-        {/* Inversión por éxito (navy) */}
-        <div style={{
-          background: C.navy, color: "#fff", borderRadius: 12, padding: "16px 18px",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-            <DiamondIcon />
-            <div style={{ fontSize: 11.5, fontWeight: 800, letterSpacing: "0.18em" }}>INVERSIÓN POR ÉXITO</div>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr auto 1fr", alignItems: "center", gap: 6 }}>
-            <InvestCol
-              label="HONORARIOS NORMALES"
-              value={formatCOP(honorariosBase)}
-              strike
-              faded
+            <CuotaCard
+              eyebrow="NUEVO VALOR DE TU CUOTA"
+              sub="Con la optimización"
+              amount={nuevaCuota}
+              footer="Nueva cuota mensual propuesta"
+              color={C.greenDeep}
+              bg={C.greenSoft}
             />
-            <Arrow color="rgba(255,255,255,0.55)" />
-            <InvestCol
-              label={<>PRECIO PREFERENCIAL<br />AUTORIZADO</>}
-              value={formatCOP(honorariosFinales)}
-              accent={C.greenNuvex}
-            />
-            <Arrow color="rgba(255,255,255,0.55)" />
             <div style={{
-              background: C.greenNuvex, color: "#fff", borderRadius: 10, padding: "10px 8px",
-              textAlign: "center",
+              display: "flex", flexDirection: "column",
+              alignItems: "center", justifyContent: "center", gap: 4,
+              padding: "0 4px",
             }}>
-              <div style={{ fontSize: 9, letterSpacing: "0.18em", fontWeight: 700, opacity: 0.95 }}>AHORRAS</div>
-              <div style={{ fontSize: 18, fontWeight: 900, marginTop: 2, letterSpacing: "-0.02em" }}>
-                {formatCOP(descuento > 0 ? descuento : 0)}
+              <TrendUpInline color={C.green} />
+              <div style={{
+                fontSize: 24, fontWeight: 900, color: C.greenDeep,
+                letterSpacing: "-0.02em", lineHeight: 1,
+              }}>
+                +{formatNumber(incrementoPct, 1)}%
+              </div>
+              <div style={{ fontSize: 9, color: C.muted, textAlign: "center", lineHeight: 1.25 }}>
+                Aumento mensual<br />recomendado
               </div>
             </div>
           </div>
         </div>
 
-        {/* 72 horas */}
-        <div style={{
-          background: C.red, color: "#fff", borderRadius: 12, padding: "14px 16px",
-          display: "flex", flexDirection: "column", justifyContent: "center", textAlign: "center",
-        }}>
-          <div style={{ fontSize: 9.5, letterSpacing: "0.22em", fontWeight: 700, opacity: 0.95 }}>
-            OFERTA VÁLIDA SOLO POR
+        {/* ───── 2. IMPACTO FINANCIERO TOTAL ───── */}
+        <div style={{ padding: "16px 24px 0 24px" }}>
+          <SectionTitle index="2" title="Impacto financiero total" />
+          <div style={{
+            marginTop: 10,
+            display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12,
+          }}>
+            <ImpactCard
+              icon={<ClockBig color={C.greenDeep} />}
+              eyebrow="AHORRO EN TIEMPO"
+              amount={`${añosEliminadosEntero} AÑOS`}
+              sub={`${cuotasEliminadas} CUOTAS`}
+              note={
+                <>Pasas de terminar en <b>{añoFinActual}</b><br />a terminar en <b>{añoFinOpt}</b></>
+              }
+              accent={C.greenDeep}
+              bg={C.greenSoft}
+            />
+            <ImpactCard
+              icon={<MoneyBig color={C.azul} />}
+              eyebrow="AHORRO EN DINERO"
+              amount={formatCOP(ahorroTotal)}
+              note={<>Menos intereses y seguros<br />durante toda la vida del crédito</>}
+              accent={C.azul}
+              bg={C.azulSoft}
+            />
           </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 4 }}>
-            <ClockIcon color="#fff" size={22} />
-            <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: "-0.02em" }}>72 HORAS</div>
-          </div>
-          <div style={{ fontSize: 9, marginTop: 2, opacity: 0.92, lineHeight: 1.4 }}>
-            Después de este plazo la propuesta vuelve a tarifa estándar.
+
+          {/* Esto significa para ti y tu familia */}
+          <div style={{
+            marginTop: 12, background: "#fff",
+            border: `1px solid ${C.hairline}`, borderRadius: 12,
+            padding: "12px 16px",
+          }}>
+            <div style={{
+              fontSize: 10, letterSpacing: "0.22em", fontWeight: 800,
+              color: C.muted, textAlign: "center", marginBottom: 8,
+            }}>
+              ESTO SIGNIFICA PARA TI Y TU FAMILIA
+            </div>
+            <div style={{
+              display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12,
+            }}>
+              <BenefitItem icon={<CalendarOff />} label={<>Menos tiempo<br />endeudado</>} />
+              <BenefitItem icon={<BagMoney />} label={<>Más dinero en<br />tu bolsillo</>} />
+              <BenefitItem icon={<ShieldOk />} label={<>Más tranquilidad<br />financiera</>} />
+              <BenefitItem icon={<FamilyIcon />} label={<>Más oportunidades<br />para tu familia</>} />
+            </div>
           </div>
         </div>
+
+        {/* ───── 3. INVERSIÓN POR ÉXITO + 72H ───── */}
+        <div style={{ padding: "14px 24px 0 24px" }}>
+          <SectionTitle index="3" title="Inversión por éxito" />
+          <div style={{
+            marginTop: 10,
+            display: "grid", gridTemplateColumns: "1.55fr 1fr", gap: 12,
+          }}>
+            {/* Honorarios card */}
+            <div style={{
+              background: "#fff", border: `1px solid ${C.hairline}`,
+              borderRadius: 12, padding: "12px 16px",
+            }}>
+              <PriceRow label="Honorarios normales" value={formatCOP(honorariosBase)} strike />
+              <div style={{ height: 1, background: C.hairline, margin: "10px 0" }} />
+              <PriceRow label="Precio actual autorizado" value={formatCOP(honorariosFinales)} />
+              <div style={{
+                marginTop: 10, background: C.greenSoft,
+                borderRadius: 10, padding: "10px 14px",
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+              }}>
+                <div style={{
+                  fontSize: 11, fontWeight: 800, color: C.greenDeep,
+                  letterSpacing: "0.12em",
+                }}>AHORRAS</div>
+                <div style={{
+                  fontSize: 22, fontWeight: 900, color: C.greenDeep,
+                  letterSpacing: "-0.02em",
+                }}>
+                  {formatCOP(descuento > 0 ? descuento : 0)}
+                </div>
+              </div>
+            </div>
+
+            {/* 72 horas */}
+            <div style={{
+              background: C.red, color: "#fff", borderRadius: 12,
+              padding: "12px 14px", display: "flex", flexDirection: "column",
+              justifyContent: "center", textAlign: "center",
+            }}>
+              <div style={{
+                fontSize: 9.5, letterSpacing: "0.22em", fontWeight: 700, opacity: 0.95,
+              }}>OFERTA VÁLIDA POR</div>
+              <div style={{
+                display: "flex", alignItems: "center", justifyContent: "center",
+                gap: 8, marginTop: 4,
+              }}>
+                <ClockIcon color="#fff" size={22} />
+                <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: "-0.02em" }}>
+                  72 HORAS
+                </div>
+              </div>
+              <div style={{ fontSize: 9, marginTop: 4, opacity: 0.92, lineHeight: 1.4 }}>
+                Después de este plazo,<br />
+                la propuesta vuelve a<br />su tarifa estándar.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ───── CIERRE ───── */}
+        <div style={{ padding: "14px 24px 0 24px", flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+          <div style={{
+            background: C.black, color: "#fff",
+            borderRadius: 12, padding: "14px 18px",
+            display: "grid", gridTemplateColumns: "1fr auto", gap: 16, alignItems: "center",
+          }}>
+            <div>
+              <div style={{ fontSize: 22, color: C.green, lineHeight: 0.6, fontWeight: 900 }}>“</div>
+              <p style={{
+                margin: "2px 0 0 0", fontSize: 10.5, lineHeight: 1.55,
+                color: "rgba(255,255,255,0.92)",
+              }}>
+                Cada cuota que eliminas es tiempo que recuperas.<br />
+                Tiempo para tu familia. Tiempo para tus proyectos. Tiempo para tu patrimonio.
+              </p>
+              <div style={{
+                marginTop: 8, fontSize: 11, fontWeight: 800, color: "#fff",
+              }}>
+                La decisión siempre será tuya. Nosotros ya hicimos los cálculos.
+              </div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div style={{
+                fontFamily: SCRIPT, fontSize: 28, color: C.green, lineHeight: 1,
+              }}>{analista}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* ───── FOOTER ───── */}
+        <FooterStrip />
       </section>
 
-      {/* ════════════ CIERRE TRIPARTITO ════════════ */}
-      <section style={{
-        margin: "12px 16px 0 16px",
-        display: "grid", gridTemplateColumns: "1fr 1.05fr 0.9fr", gap: 12,
-      }}>
-        {/* Quote dark */}
+      {/* ============================================================
+          PÁGINA 2 — OTRAS PROYECCIONES GENERADAS
+      ============================================================ */}
+      <section
+        className="nuvex-print-page"
+        style={{
+          width: "210mm", minHeight: "297mm",
+          background: C.paper,
+          display: "flex", flexDirection: "column",
+        }}
+      >
+        {/* Header negro con título + logo */}
         <div style={{
-          background: C.navy, color: "#fff", borderRadius: 12, padding: "16px 16px",
+          background: C.black, color: "#fff", padding: "16px 24px",
+          display: "grid", gridTemplateColumns: "1fr auto", alignItems: "center", gap: 20,
         }}>
-          <div style={{ fontSize: 26, color: C.greenNuvex, lineHeight: 0.8, fontWeight: 900 }}>“</div>
-          <p style={{ margin: "2px 0 0 0", fontSize: 10.5, lineHeight: 1.5, color: "rgba(255,255,255,0.92)" }}>
-            La diferencia entre quienes transforman sus finanzas y quienes no lo hacen, suele ser
-            una sola decisión tomada a tiempo.
-          </p>
-          <div style={{
-            marginTop: 10, fontSize: 11, fontWeight: 900, color: C.greenNuvex,
-            letterSpacing: "0.06em", lineHeight: 1.3,
-          }}>
-            TÚ ESTÁS A UNA DECISIÓN<br />DE CAMBIAR TU FUTURO.
+          <div>
+            <div style={{
+              fontSize: 22, fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em",
+            }}>
+              OTRAS PROYECCIONES GENERADAS
+            </div>
+            <div style={{
+              marginTop: 4, fontSize: 10.5, color: "rgba(255,255,255,0.82)", lineHeight: 1.45, maxWidth: 460,
+            }}>
+              Estas alternativas también fueron analizadas por nuestro sistema
+              para que las tengas como referencia.
+            </div>
           </div>
-        </div>
-
-        {/* Mensaje personal */}
-        <div style={{ padding: "4px 4px 4px 0" }}>
-          <div style={{ fontSize: 13, fontWeight: 800, color: C.ink }}>{primerNombre},</div>
-          <p style={{ margin: "6px 0 0 0", fontSize: 10.5, lineHeight: 1.5, color: C.text }}>
-            Cada año que eliminas de tu crédito es un año que recuperas para tus proyectos, tu
-            familia y tu patrimonio.
-          </p>
-          <p style={{ margin: "6px 0 0 0", fontSize: 10.5, lineHeight: 1.5, color: C.text }}>
-            Hoy tienes una oportunidad real de optimizar tu crédito respaldada por análisis
-            financiero especializado.
-          </p>
-          <div style={{ marginTop: 8, fontSize: 11, fontWeight: 800, color: C.ink, lineHeight: 1.45 }}>
-            La decisión es tuya.<br />Nosotros ya hicimos los cálculos.
-          </div>
-        </div>
-
-        {/* Firma */}
-        <div style={{ textAlign: "right", paddingRight: 4 }}>
-          <div style={{ fontSize: 10, color: C.muted, fontStyle: "italic" }}>Atentamente,</div>
-          <div style={{
-            fontFamily: SCRIPT, fontSize: 30, color: C.azul, lineHeight: 1,
-            marginTop: 6, letterSpacing: "0.01em",
-          }}>
-            {analista}
-          </div>
-          <div style={{ height: 1, background: C.hairline, margin: "8px 0 6px auto", width: "82%" }} />
-          <div style={{ fontSize: 11, fontWeight: 800, color: C.ink }}>{analista}</div>
-          <div style={{ fontSize: 9.5, color: C.muted, marginTop: 1 }}>Analista Financiero Senior</div>
-          <div style={{ fontSize: 9.5, color: C.azul, fontWeight: 700 }}>NUVEX Finanzas Inteligentes</div>
-        </div>
-      </section>
-
-      {/* ════════════ FOOTER ════════════ */}
-      <div style={{
-        marginTop: 14,
-        background: C.navy, color: "#fff",
-        padding: "14px 22px",
-        display: "grid", gridTemplateColumns: "auto 1fr 1fr 1fr 1fr", gap: 14,
-        alignItems: "center",
-      }}>
-        <div>
           <img
-            src={logoNuvex}
-            alt="NUVEX"
-            style={{ height: 28, width: "auto", filter: "brightness(0) invert(1)" }}
-            crossOrigin="anonymous"
+            src={logoNuvex} alt="NUVEX" crossOrigin="anonymous"
+            style={{ height: 32, width: "auto", filter: "brightness(0) invert(1)" }}
           />
         </div>
-        <FooterItem icon={<PinIcon />} title="Bucaramanga" lines={["Carrera 16 # 37-48 Piso 4", "Centro"]} />
-        <FooterItem icon={<PinIcon />} title="Bogotá" lines={["Calle 93 # 18 - 28 Oficina 704"]} />
-        <FooterItem icon={<PhoneIcon />} title="" lines={["+57 316 402 3779"]} />
-        <FooterItem icon={<GlobeIcon />} title="" lines={["www.nuvex.com.co"]} />
-      </div>
-    </div>
-  );
-}
 
-/* ════════════ SUBCOMPONENTES ════════════ */
-
-function ClientCol({
-  kicker, avatarColor, title, titleSize = 13, sub,
-}: { kicker: string; avatarColor: string; title: string; titleSize?: number; sub?: React.ReactNode }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-      <div style={{
-        width: 38, height: 38, borderRadius: "50%",
-        border: `2px solid ${avatarColor}`,
-        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-      }}>
-        <PersonIcon color={avatarColor} />
-      </div>
-      <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 8.5, letterSpacing: "0.22em", color: C.muted, fontWeight: 800 }}>{kicker}</div>
-        <div style={{
-          fontSize: titleSize, fontWeight: 900, color: C.ink, lineHeight: 1.15, marginTop: 2,
-          letterSpacing: "-0.005em",
-        }}>
-          {title}
+        {/* 3 proyecciones */}
+        <div style={{ padding: "16px 24px 0 24px", display: "flex", flexDirection: "column", gap: 12 }}>
+          {alternativas.slice(0, 3).map((alt, i) => {
+            const palette = ALT_PALETTES[i % ALT_PALETTES.length];
+            return (
+              <AlternativaCard
+                key={i}
+                index={i + 1}
+                label={palette.label}
+                accent={palette.accent}
+                soft={palette.soft}
+                deep={palette.deep}
+                cuota={alt.nuevaCuota}
+                cuotaPct={alt.incrementoPct}
+                ahorroAños={alt.añosEliminados}
+                ahorroCuotas={alt.cuotasEliminadas}
+                ahorroDinero={alt.ahorroTotal}
+                terminaEn={alt.añoFinOpt}
+                terminaActual={añoFinActual}
+                añoHoy={añoHoy}
+                añosActuales={añosActual}
+                añosOpt={alt.añosOpt}
+                quienIdeal={palette.ideal}
+              />
+            );
+          })}
         </div>
-        {sub}
-      </div>
+
+        {/* CTA final */}
+        <div style={{ padding: "16px 24px 0 24px", flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+          <div style={{
+            background: C.bgSoft, border: `1px solid ${C.hairline}`,
+            borderRadius: 12, padding: "14px 18px",
+            display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 16, alignItems: "center",
+          }}>
+            <div style={{
+              width: 46, height: 46, borderRadius: 12,
+              background: C.green,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: "#fff",
+            }}>
+              <CalIconBig />
+            </div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 900, color: C.black, lineHeight: 1.2 }}>
+                ¿Listo para dar el siguiente paso?
+              </div>
+              <div style={{
+                marginTop: 4, fontSize: 10.5, color: C.muted, lineHeight: 1.45,
+              }}>
+                Esta propuesta personalizada está lista para ti.<br />
+                Agenda tu asesoría hoy y comencemos a optimizar tu crédito.
+              </div>
+            </div>
+            <QRPlaceholder />
+          </div>
+        </div>
+
+        <FooterStrip />
+      </section>
     </div>
   );
 }
 
-function MetaRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+/* ════════════════════════════════════════════════════════════
+   ALTERNATIVAS — paletas + builder
+════════════════════════════════════════════════════════════ */
+const ALT_PALETTES = [
+  { label: "Escenario balanceado",  accent: NUVEX.verde, soft: "#E8F4EA", deep: "#3F8C57",
+    ideal: "Para quienes buscan un equilibrio entre incrementar su cuota y recuperar tiempo de deuda con un impacto financiero significativo." },
+  { label: "Escenario agresivo",    accent: NUVEX.azul, soft: "#E3E8F5", deep: "#2F4380",
+    ideal: "Para quienes desean reducir el tiempo de su crédito al máximo y generar el mayor ahorro posible en intereses y seguros." },
+  { label: "Escenario conservador", accent: "#7C5BB7", soft: "#EDE5F7", deep: "#553B86",
+    ideal: "Para quienes prefieren un incremento moderado en su cuota y una recuperación de tiempo más gradual." },
+];
+
+interface AltRow {
+  nuevaCuota: number;
+  incrementoPct: number;
+  añosEliminados: number;
+  cuotasEliminadas: number;
+  ahorroTotal: number;
+  añoFinOpt: number;
+  añosOpt: number;
+}
+
+function buildAlternativas(args: {
+  mode: "pesos" | "uvr";
+  pesosPropuestas?: PesosPropuesta[];
+  uvrPropuestas?: UVRPropuesta[];
+  bestIndex: number;
+  cuotaActual: number;
+  añoHoy: number;
+  añoFinActual: number;
+  añosActual: number;
+}): AltRow[] {
+  const { mode, pesosPropuestas, uvrPropuestas, bestIndex, cuotaActual, añoHoy } = args;
+  const fechaBase = new Date();
+
+  if (mode === "uvr") {
+    const arr = uvrPropuestas || [];
+    return arr
+      .map((p, idx) => ({ p, idx }))
+      .filter(({ idx }) => idx !== bestIndex)
+      .map(({ p }) => mapUVR(p))
+      .sort((a, b) => a.añosEliminados - b.añosEliminados); // de menor a mayor agresividad
+  }
+  const arr = pesosPropuestas || [];
+  return arr
+    .map((p, idx) => ({ p, idx }))
+    .filter(({ idx }) => idx !== bestIndex)
+    .map(({ p }) => mapPesos(p))
+    .sort((a, b) => a.añosEliminados - b.añosEliminados);
+
+  function mapPesos(p: PesosPropuesta): AltRow {
+    const cuota = p.nuevaCuotaConSeguro;
+    const fechaFin = new Date(fechaBase);
+    fechaFin.setMonth(fechaFin.getMonth() + p.nuevoPlazo);
+    return {
+      nuevaCuota: cuota,
+      incrementoPct: cuotaActual > 0 ? ((cuota - cuotaActual) / cuotaActual) * 100 : 0,
+      añosEliminados: p.añosEliminados,
+      cuotasEliminadas: p.cuotasEliminadas,
+      ahorroTotal: p.ahorroTotal,
+      añoFinOpt: fechaFin.getFullYear(),
+      añosOpt: p.nuevoPlazo / 12,
+    };
+  }
+  function mapUVR(p: UVRPropuesta): AltRow {
+    const cuota = p.nuevaCuotaConSeguroAprox;
+    const fechaFin = new Date(fechaBase);
+    fechaFin.setMonth(fechaFin.getMonth() + p.nuevoPlazo);
+    return {
+      nuevaCuota: cuota,
+      incrementoPct: cuotaActual > 0 ? ((cuota - cuotaActual) / cuotaActual) * 100 : 0,
+      añosEliminados: p.añosEliminados,
+      cuotasEliminadas: p.cuotasEliminadas,
+      ahorroTotal: p.ahorroTotal,
+      añoFinOpt: fechaFin.getFullYear(),
+      añosOpt: p.nuevoPlazo / 12,
+    };
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   SUBCOMPONENTES
+════════════════════════════════════════════════════════════ */
+
+function SectionTitle({ index, title }: { index: string; title: string }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <div style={{ width: 18, display: "flex", justifyContent: "center", color: C.muted }}>{icon}</div>
+    <div style={{
+      display: "flex", alignItems: "center", gap: 8,
+      fontSize: 11, fontWeight: 900, color: C.black,
+      textTransform: "uppercase", letterSpacing: "0.06em",
+    }}>
+      <span>{index}.</span>
+      <span>{title}</span>
+    </div>
+  );
+}
+
+function MetaCol({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <div style={{
+        width: 30, height: 30, borderRadius: 8, background: "#fff",
+        border: `1px solid ${C.hairline}`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        color: C.azul, flexShrink: 0,
+      }}>{icon}</div>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 7.5, letterSpacing: "0.22em", color: C.muted, fontWeight: 800 }}>{label}</div>
-        <div style={{ fontSize: 10.5, fontWeight: 700, color: C.ink, lineHeight: 1.2 }}>{value}</div>
+        <div style={{
+          fontSize: 7.5, letterSpacing: "0.22em", color: C.muted, fontWeight: 800,
+        }}>{label}</div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: C.ink, lineHeight: 1.25 }}>
+          {value}
+        </div>
       </div>
     </div>
   );
 }
 
-function CompareCard({
-  icon, label, year, yearColor, pill, pillBg, pillFg,
+function CuotaCard({
+  eyebrow, sub, amount, footer, color, bg,
+}: { eyebrow: string; sub: string; amount: number; footer: string; color: string; bg: string }) {
+  return (
+    <div style={{
+      background: bg, borderRadius: 12, padding: "12px 14px",
+      border: `1px solid ${C.hairline}`,
+    }}>
+      <div style={{
+        fontSize: 8.5, letterSpacing: "0.2em", fontWeight: 800, color: C.muted,
+      }}>{eyebrow}</div>
+      <div style={{ fontSize: 9.5, color: C.muted, marginTop: 1 }}>{sub}</div>
+      <div style={{
+        marginTop: 6, fontSize: 26, fontWeight: 900, color, letterSpacing: "-0.025em",
+        lineHeight: 1,
+      }}>
+        {formatCOP(amount)}
+      </div>
+      <div style={{ marginTop: 8, fontSize: 9, color: C.muted }}>{footer}</div>
+    </div>
+  );
+}
+
+function ImpactCard({
+  icon, eyebrow, amount, sub, note, accent, bg,
 }: {
-  icon: React.ReactNode; label: string; year: number; yearColor: string;
-  pill: string; pillBg: string; pillFg: string;
+  icon: React.ReactNode; eyebrow: string; amount: string; sub?: string;
+  note: React.ReactNode; accent: string; bg: string;
 }) {
   return (
     <div style={{
-      background: "#fff", borderRadius: 12, padding: "12px 10px",
-      boxShadow: "0 10px 24px -16px rgba(11,30,74,0.35)",
-      textAlign: "center", position: "relative",
+      background: bg, borderRadius: 12, padding: "14px 16px",
+      border: `1px solid ${C.hairline}`,
     }}>
-      <div style={{ display: "flex", justifyContent: "center", marginTop: -22 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <div style={{
-          width: 34, height: 34, borderRadius: "50%", background: "#fff",
-          border: "1px solid #ECECEC", display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: "0 6px 14px -10px rgba(11,30,74,0.25)",
+          width: 36, height: 36, borderRadius: "50%", background: "#fff",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          border: `1.5px solid ${accent}`,
         }}>{icon}</div>
+        <div style={{
+          fontSize: 10, letterSpacing: "0.2em", fontWeight: 800, color: accent,
+        }}>{eyebrow}</div>
       </div>
-      <div style={{ fontSize: 9.5, letterSpacing: "0.18em", fontWeight: 800, color: C.muted, marginTop: 4 }}>
-        {label}
+      <div style={{
+        marginTop: 8, fontSize: 32, fontWeight: 900, color: accent,
+        letterSpacing: "-0.025em", lineHeight: 1,
+      }}>
+        {amount}
       </div>
-      <div style={{ fontSize: 32, fontWeight: 900, color: yearColor, lineHeight: 1, marginTop: 4, letterSpacing: "-0.02em" }}>
-        {year}
-      </div>
-      <div style={{ marginTop: 6, display: "inline-block",
-        background: pillBg, color: pillFg, fontSize: 9.5, fontWeight: 800,
-        borderRadius: 999, padding: "3px 10px",
-      }}>{pill}</div>
-      <div style={{ fontSize: 8, letterSpacing: "0.22em", color: C.muted, fontWeight: 700, marginTop: 6 }}>
-        TERMINAS EN
+      {sub && (
+        <div style={{
+          fontSize: 11, fontWeight: 800, color: accent, marginTop: 2, letterSpacing: "0.04em",
+        }}>{sub}</div>
+      )}
+      <div style={{ marginTop: 8, fontSize: 10, color: C.text, lineHeight: 1.45 }}>
+        {note}
       </div>
     </div>
   );
 }
 
-function TimelineRow({
-  icon, label, labelColor, startYear, endYear, pill, pillBg, pillFg, barColor, widthPct,
+function BenefitItem({ icon, label }: { icon: React.ReactNode; label: React.ReactNode }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 4 }}>
+      <div style={{
+        width: 30, height: 30, borderRadius: "50%",
+        background: C.greenSoft, color: C.greenDeep,
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>{icon}</div>
+      <div style={{ fontSize: 9.5, color: C.text, lineHeight: 1.3, fontWeight: 600 }}>
+        {label}
+      </div>
+    </div>
+  );
+}
+
+function PriceRow({ label, value, strike = false }: { label: string; value: string; strike?: boolean }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ fontSize: 10.5, color: C.text, fontWeight: 600 }}>{label}</div>
+      <div style={{
+        fontSize: 16, fontWeight: 800, color: strike ? C.muted : C.ink,
+        textDecoration: strike ? "line-through" : "none",
+        letterSpacing: "-0.01em",
+      }}>{value}</div>
+    </div>
+  );
+}
+
+function AlternativaCard(props: {
+  index: number; label: string; accent: string; soft: string; deep: string;
+  cuota: number; cuotaPct: number;
+  ahorroAños: number; ahorroCuotas: number; ahorroDinero: number;
+  terminaEn: number; terminaActual: number;
+  añoHoy: number; añosActuales: number; añosOpt: number;
+  quienIdeal: string;
+}) {
+  const {
+    index, label, accent, soft, deep,
+    cuota, cuotaPct, ahorroAños, ahorroCuotas, ahorroDinero,
+    terminaEn, terminaActual, añoHoy, añosActuales, añosOpt, quienIdeal,
+  } = props;
+  const barPct = Math.max(15, Math.min(95, (añosOpt / Math.max(añosActuales, 1)) * 100));
+
+  return (
+    <div style={{
+      background: "#fff", border: `1px solid ${C.hairline}`,
+      borderRadius: 12, padding: "12px 16px",
+    }}>
+      {/* Header card */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+      }}>
+        <div style={{
+          background: accent, color: "#fff",
+          padding: "4px 12px", borderRadius: 6,
+          fontSize: 10.5, fontWeight: 900, letterSpacing: "0.14em",
+        }}>
+          PROYECCIÓN {index}
+        </div>
+        <div style={{
+          fontSize: 11, fontWeight: 800, color: deep, fontStyle: "italic",
+        }}>
+          {label}
+        </div>
+      </div>
+
+      {/* 4 cols */}
+      <div style={{
+        marginTop: 10,
+        display: "grid", gridTemplateColumns: "1.15fr 1fr 1fr 1fr", gap: 14, alignItems: "start",
+      }}>
+        <div>
+          <div style={{ fontSize: 8.5, letterSpacing: "0.18em", color: C.muted, fontWeight: 800 }}>
+            NUEVA CUOTA MENSUAL
+          </div>
+          <div style={{
+            fontSize: 22, fontWeight: 900, color: accent,
+            letterSpacing: "-0.02em", lineHeight: 1.05, marginTop: 2,
+          }}>
+            {formatCOP(cuota)}
+          </div>
+          <div style={{
+            marginTop: 4, display: "inline-block",
+            background: soft, color: deep, fontSize: 9, fontWeight: 800,
+            padding: "2px 8px", borderRadius: 999,
+          }}>
+            +{formatNumber(cuotaPct, 1)}%
+          </div>
+          <div style={{ fontSize: 8.5, color: C.muted, marginTop: 3 }}>
+            vs. cuota actual
+          </div>
+        </div>
+
+        <AltMetric
+          icon={<ClockIcon color={accent} size={14} />}
+          label="AHORRO EN TIEMPO"
+          value={`${Math.round(ahorroAños)} AÑOS`}
+          sub={`${ahorroCuotas} cuotas`}
+          color={accent}
+        />
+
+        <AltMetric
+          icon={<MoneyMini color={accent} />}
+          label="AHORRO EN DINERO"
+          value={formatCOP(ahorroDinero)}
+          sub="Menos intereses y seguros"
+          color={accent}
+          valueSize={15}
+        />
+
+        <div>
+          <div style={{ fontSize: 8.5, letterSpacing: "0.18em", color: C.muted, fontWeight: 800 }}>
+            TERMINARÍAS EN
+          </div>
+          <div style={{
+            fontSize: 22, fontWeight: 900, color: accent,
+            letterSpacing: "-0.02em", marginTop: 2,
+          }}>
+            {terminaEn}
+          </div>
+          <div style={{ fontSize: 9, color: C.muted, marginTop: 3 }}>
+            Hoy terminas<br />en {terminaActual}
+          </div>
+        </div>
+      </div>
+
+      {/* Timeline */}
+      <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+        <MiniTimeline
+          label="SIN NUVEX" labelColor={C.muted}
+          startYear={añoHoy} endYear={terminaActual}
+          barColor="#CCD1D9" widthPct={100}
+          pill={`${formatNumber(añosActuales, 1)} años`}
+          pillBg="#F1F2F4" pillFg={C.muted}
+        />
+        <MiniTimeline
+          label={`CON PROYECCIÓN ${index}`} labelColor={deep}
+          startYear={añoHoy} endYear={terminaEn}
+          barColor={accent} widthPct={barPct}
+          pill={`${formatNumber(añosOpt, 1)} años`}
+          pillBg={soft} pillFg={deep}
+        />
+      </div>
+
+      {/* Ideal */}
+      <div style={{
+        marginTop: 10, background: soft, borderRadius: 8,
+        padding: "8px 12px",
+      }}>
+        <div style={{ fontSize: 10, fontWeight: 800, color: deep, fontStyle: "italic" }}>
+          ¿Para quién es ideal esta opción?
+        </div>
+        <div style={{ fontSize: 9.5, color: C.text, lineHeight: 1.4, marginTop: 2 }}>
+          {quienIdeal}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AltMetric({
+  icon, label, value, sub, color, valueSize = 18,
 }: {
-  icon: React.ReactNode; label: string; labelColor: string;
-  startYear: number; endYear: number;
-  pill: string; pillBg: string; pillFg: string;
-  barColor: string; widthPct: number;
+  icon: React.ReactNode; label: string; value: string; sub: string; color: string; valueSize?: number;
 }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "120px 50px 1fr 70px", alignItems: "center", gap: 8 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
         {icon}
-        <div style={{ fontSize: 11, fontWeight: 800, color: labelColor, letterSpacing: "0.06em" }}>{label}</div>
+        <div style={{ fontSize: 8.5, letterSpacing: "0.18em", color: C.muted, fontWeight: 800 }}>
+          {label}
+        </div>
       </div>
-      <div style={{ textAlign: "center" }}>
-        <div style={{ fontSize: 12, fontWeight: 800, color: C.ink, lineHeight: 1 }}>{startYear}</div>
-        <div style={{ fontSize: 8, color: C.muted, marginTop: 1 }}>Hoy</div>
+      <div style={{
+        fontSize: valueSize, fontWeight: 900, color, letterSpacing: "-0.02em",
+        marginTop: 2, lineHeight: 1.1,
+      }}>
+        {value}
       </div>
-      <div style={{ position: "relative", height: 22 }}>
-        {/* baseline */}
+      <div style={{ fontSize: 9, color: C.muted, marginTop: 3 }}>{sub}</div>
+    </div>
+  );
+}
+
+function MiniTimeline({
+  label, labelColor, startYear, endYear, barColor, widthPct, pill, pillBg, pillFg,
+}: {
+  label: string; labelColor: string; startYear: number; endYear: number;
+  barColor: string; widthPct: number; pill: string; pillBg: string; pillFg: string;
+}) {
+  return (
+    <div style={{
+      display: "grid", gridTemplateColumns: "130px 40px 1fr 60px 56px",
+      alignItems: "center", gap: 6,
+    }}>
+      <div style={{ fontSize: 9, fontWeight: 800, color: labelColor, letterSpacing: "0.08em" }}>
+        {label}
+      </div>
+      <div style={{ fontSize: 10, fontWeight: 700, color: C.ink, textAlign: "center" }}>
+        {startYear}
+      </div>
+      <div style={{ position: "relative", height: 12 }}>
         <div style={{
           position: "absolute", top: "50%", left: 0, right: 0, height: 2,
-          background: "repeating-linear-gradient(90deg, #D9DEE7 0 4px, transparent 4px 8px)",
-          transform: "translateY(-50%)",
+          background: "#EDEFF2", transform: "translateY(-50%)",
         }} />
-        {/* progress */}
         <div style={{
           position: "absolute", top: "50%", left: 0, height: 3,
           width: `${widthPct}%`, background: barColor, transform: "translateY(-50%)",
           borderRadius: 2,
         }} />
-        {/* end dot */}
         <div style={{
-          position: "absolute", top: "50%", left: `calc(${widthPct}% - 6px)`, transform: "translateY(-50%)",
-          width: 12, height: 12, borderRadius: "50%", background: barColor,
-          boxShadow: `0 0 0 3px ${barColor}26`,
+          position: "absolute", top: "50%", left: `calc(${widthPct}% - 4px)`,
+          width: 8, height: 8, borderRadius: "50%", background: barColor,
+          transform: "translateY(-50%)",
         }} />
-        {/* pill encima */}
-        <div style={{
-          position: "absolute", top: -4, left: `${Math.max(8, widthPct / 2 - 12)}%`,
-          background: pillBg, color: pillFg, fontSize: 9, fontWeight: 800,
-          borderRadius: 999, padding: "2px 8px",
-        }}>{pill}</div>
       </div>
-      <div style={{ textAlign: "center" }}>
-        <div style={{ fontSize: 12, fontWeight: 800, color: C.ink, lineHeight: 1 }}>{endYear}</div>
-        <div style={{ fontSize: 8, color: C.muted, marginTop: 1 }}>Fin del crédito</div>
-      </div>
-    </div>
-  );
-}
-
-function MoneyCard({
-  tone, eyebrow, sub, amount, note, icon,
-}: {
-  tone: "red" | "green"; eyebrow: string; sub: string; amount: number; note: string; icon: React.ReactNode;
-}) {
-  const isRed = tone === "red";
-  const bg = isRed ? "#FDECEC" : "#EAF6EE";
-  const border = isRed ? "#F6D2D0" : "#CFE8D6";
-  const accent = isRed ? C.redDeep : C.greenDeep;
-  return (
-    <div style={{
-      background: bg, border: `1px solid ${border}`, borderRadius: 12,
-      padding: "12px 14px", position: "relative", overflow: "hidden",
-    }}>
-      <div style={{ fontSize: 9, letterSpacing: "0.18em", fontWeight: 800, color: accent, textAlign: "center" }}>
-        {eyebrow}
-      </div>
-      <div style={{ fontSize: 11, letterSpacing: "0.18em", fontWeight: 800, color: accent, textAlign: "center", marginTop: 2 }}>
-        {sub}
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 6 }}>
-        <div style={{ flexShrink: 0, opacity: 0.85 }}>{icon}</div>
-        <div style={{ fontSize: 24, fontWeight: 900, color: accent, letterSpacing: "-0.02em", lineHeight: 1 }}>
-          {formatCOP(amount)}
-        </div>
-      </div>
-      <div style={{ fontSize: 9.5, color: C.text, lineHeight: 1.4, marginTop: 4 }}>{note}</div>
-    </div>
-  );
-}
-
-function InvestCol({
-  label, value, strike = false, faded = false, accent,
-}: { label: React.ReactNode; value: string; strike?: boolean; faded?: boolean; accent?: string }) {
-  return (
-    <div style={{ textAlign: "center" }}>
-      <div style={{
-        fontSize: 8.5, letterSpacing: "0.2em", fontWeight: 800,
-        color: faded ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.78)", lineHeight: 1.25,
-      }}>
-        {label}
+      <div style={{ fontSize: 10, fontWeight: 700, color: C.ink, textAlign: "center" }}>
+        {endYear}
       </div>
       <div style={{
-        fontSize: 19, fontWeight: 900, marginTop: 4, letterSpacing: "-0.02em",
-        color: accent ?? (faded ? "rgba(255,255,255,0.45)" : "#fff"),
-        textDecoration: strike ? "line-through" : "none",
+        background: pillBg, color: pillFg, fontSize: 9, fontWeight: 800,
+        padding: "2px 6px", borderRadius: 999, textAlign: "center",
       }}>
-        {value}
+        {pill}
       </div>
     </div>
   );
 }
 
-function Arrow({ color }: { color: string }) {
+function FooterStrip() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-      <path d="M5 12h14M13 6l6 6-6 6" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <div
+      data-pdf-footer="true"
+      style={{
+        marginTop: 14,
+        background: C.black, color: "#fff",
+        padding: "12px 22px",
+        display: "grid",
+        gridTemplateColumns: "auto 1fr 1fr 1fr 1fr",
+        gap: 14, alignItems: "center",
+      }}
+    >
+      <img
+        src={logoNuvex} alt="NUVEX" crossOrigin="anonymous"
+        style={{ height: 24, width: "auto", filter: "brightness(0) invert(1)" }}
+      />
+      <FooterItem icon={<PinIcon />} title="Bucaramanga" lines={["Carrera 16 # 37-48 Piso 4", "Centro"]} />
+      <FooterItem icon={<PinIcon />} title="Bogotá" lines={["Calle 93 # 18 - 28", "Oficina 704"]} />
+      <FooterItem icon={<PhoneIcon />} title="" lines={["+57 316 402 3779"]} />
+      <FooterItem icon={<GlobeIcon />} title="" lines={["www.nuvex.com.co"]} />
+    </div>
   );
 }
 
@@ -723,11 +975,11 @@ function FooterItem({ icon, title, lines }: { icon: React.ReactNode; title: stri
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
       <div style={{
-        width: 26, height: 26, borderRadius: "50%",
+        width: 24, height: 24, borderRadius: "50%",
         border: "1px solid rgba(255,255,255,0.35)",
         display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
       }}>{icon}</div>
-      <div style={{ fontSize: 9.5, lineHeight: 1.4 }}>
+      <div style={{ fontSize: 9, lineHeight: 1.4 }}>
         {title && <div style={{ fontWeight: 800, color: "#fff" }}>{title}</div>}
         {lines.map((l, i) => (
           <div key={i} style={{ color: "rgba(255,255,255,0.85)" }}>{l}</div>
@@ -737,44 +989,48 @@ function FooterItem({ icon, title, lines }: { icon: React.ReactNode; title: stri
   );
 }
 
-/* ════════════ ICONOS (inline SVG) ════════════ */
-
-function PersonIcon({ color }: { color: string }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="8" r="3.2" stroke={color} strokeWidth="1.8" />
-      <path d="M5 19c1.5-3.2 4-4.6 7-4.6S17.5 15.8 19 19" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-function ShieldIcon() {
+function QRPlaceholder() {
+  // Simple geometric QR-style placeholder so el bloque luzca completo
   return (
     <div style={{
-      width: 30, height: 30, borderRadius: "50%",
-      border: `2px solid ${C.greenNuvex}`,
-      display: "flex", alignItems: "center", justifyContent: "center",
+      width: 60, height: 60, background: "#fff",
+      border: `1px solid ${C.hairline}`, borderRadius: 8,
+      display: "grid", gridTemplateColumns: "repeat(7, 1fr)", padding: 4, gap: 1,
     }}>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-        <path d="M12 3l8 3v6c0 5-3.5 8.3-8 9-4.5-.7-8-4-8-9V6l8-3z" stroke={C.greenNuvex} strokeWidth="1.8" strokeLinejoin="round" />
-      </svg>
+      {Array.from({ length: 49 }).map((_, i) => {
+        const on = [0,1,2,5,6,7,8,9,13,14,16,18,19,21,23,25,28,31,33,35,37,39,42,44,45,46,47,48].includes(i);
+        return (
+          <div key={i} style={{ background: on ? C.black : "transparent" }} />
+        );
+      })}
     </div>
   );
 }
-function CheckCircle({ color, small = false }: { color: string; small?: boolean }) {
-  const s = small ? 18 : 22;
+
+function initialsOf(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("") || "NX";
+}
+
+/* ════════════════════════════════════════════════════════════
+   ICONOS
+════════════════════════════════════════════════════════════ */
+
+function Arrow({ color }: { color: string }) {
   return (
-    <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="10" stroke={color} strokeWidth="1.8" />
-      <path d="M7.5 12.3l3 3 6-6.2" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+      <path d="M5 12h14M13 6l6 6-6 6" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
-function XCircle({ color, small = false }: { color: string; small?: boolean }) {
-  const s = small ? 18 : 22;
+function TrendUpInline({ color }: { color: string }) {
   return (
-    <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="10" stroke={color} strokeWidth="1.8" />
-      <path d="M8.5 8.5l7 7M15.5 8.5l-7 7" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path d="M4 17l8-8 4 4 8-6M16 7h4v4" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -786,11 +1042,27 @@ function ClockIcon({ color = "#fff", size = 16 }: { color?: string; size?: numbe
     </svg>
   );
 }
-function HourglassIcon() {
+function ClockBig({ color }: { color: string }) {
   return (
-    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" style={{ margin: "0 auto" }}>
-      <path d="M7 3h10M7 21h10M8 3c0 5 8 5 8 10s-8 5-8 8M16 3c0 5-8 5-8 10s8 5 8 8"
-        stroke={C.ink} strokeWidth="1.6" strokeLinecap="round" />
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.8" />
+      <path d="M12 7v5l3.5 2.2" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+function MoneyBig({ color }: { color: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.8" />
+      <path d="M9 9c0-1.1 1.3-2 3-2s3 .9 3 2-1.3 2-3 2-3 .9-3 2 1.3 2 3 2 3-.9 3-2M12 6.5v11" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+function MoneyMini({ color }: { color: string }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.8" />
+      <path d="M9 9c0-1.1 1.3-2 3-2s3 .9 3 2-1.3 2-3 2-3 .9-3 2 1.3 2 3 2 3-.9 3-2M12 6.5v11" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
     </svg>
   );
 }
@@ -799,6 +1071,14 @@ function CalIcon() {
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
       <rect x="3.5" y="5" width="17" height="15" rx="2" stroke="currentColor" strokeWidth="1.6" />
       <path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+function CalIconBig() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <rect x="3.5" y="5" width="17" height="15" rx="2" stroke="#fff" strokeWidth="1.8" />
+      <path d="M3.5 10h17M8 3v4M16 3v4" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
 }
@@ -818,58 +1098,60 @@ function CardIcon() {
     </svg>
   );
 }
-function TrendDownIcon() {
-  return (
-    <div style={{
-      width: 36, height: 36, borderRadius: "50%", background: "#F8DAD8",
-      display: "flex", alignItems: "center", justifyContent: "center",
-    }}>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-        <path d="M4 7l8 8 4-4 8 6M16 17h4v-4" stroke={C.redDeep} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </div>
-  );
-}
-function TrendUpIcon() {
-  return (
-    <div style={{
-      width: 36, height: 36, borderRadius: "50%", background: "#D6EBDA",
-      display: "flex", alignItems: "center", justifyContent: "center",
-    }}>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-        <path d="M4 17l8-8 4 4 8-6M16 7h4v4" stroke={C.greenDeep} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </div>
-  );
-}
-function DiamondIcon() {
+function CalendarOff() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-      <path d="M12 3l4 5-4 13-4-13 4-5zM4 8h16" stroke={C.greenNuvex} strokeWidth="1.6" strokeLinejoin="round" />
+      <rect x="3.5" y="5" width="17" height="15" rx="2" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M3.5 10h17M8 3v4M16 3v4M9 16l6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+function BagMoney() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <path d="M8 6h8l2 4c0 5-2.5 9-6 9s-6-4-6-9l2-4z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M12 11v4M10 13h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+function ShieldOk() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <path d="M12 3l8 3v6c0 5-3.5 8.3-8 9-4.5-.7-8-4-8-9V6l8-3z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M8.5 12.5l2.5 2.5 4.5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function FamilyIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <circle cx="8" cy="8" r="2.4" stroke="currentColor" strokeWidth="1.6" />
+      <circle cx="16" cy="8" r="2.4" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M3 19c1-3 3-4.4 5-4.4S12 16 13 19M11 19c1-3 3-4.4 5-4.4S20 16 21 19" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
     </svg>
   );
 }
 function PinIcon() {
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-      <path d="M12 22s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z" stroke={C.greenNuvex} strokeWidth="1.6" />
-      <circle cx="12" cy="10" r="2.5" stroke={C.greenNuvex} strokeWidth="1.6" />
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+      <path d="M12 22s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z" stroke={C.green} strokeWidth="1.6" />
+      <circle cx="12" cy="10" r="2.5" stroke={C.green} strokeWidth="1.6" />
     </svg>
   );
 }
 function PhoneIcon() {
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
       <path d="M5 4h3l2 5-2 1c1 2.5 3 4.5 5.5 5.5l1-2 5 2v3a2 2 0 01-2 2C9.5 20 4 14.5 4 6a2 2 0 011-2z"
-        stroke={C.greenNuvex} strokeWidth="1.6" strokeLinejoin="round" />
+        stroke={C.green} strokeWidth="1.6" strokeLinejoin="round" />
     </svg>
   );
 }
 function GlobeIcon() {
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="9" stroke={C.greenNuvex} strokeWidth="1.6" />
-      <path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" stroke={C.greenNuvex} strokeWidth="1.6" />
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="9" stroke={C.green} strokeWidth="1.6" />
+      <path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" stroke={C.green} strokeWidth="1.6" />
     </svg>
   );
 }
