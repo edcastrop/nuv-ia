@@ -156,8 +156,9 @@ function fmtBytes(b: number | null) {
   return `${(b / 1024 / 1024).toFixed(2)} MB`;
 }
 
-export function ProyeccionesDropzone({ expedienteId, onReauditoria, variant = "qa" }: Props) {
+export function ProyeccionesDropzone({ expedienteId, onReauditoria, variant = "qa", momento = "auditoria", onVerificacionCierre }: Props) {
   const isDark = variant === "qa";
+  const esCierre = momento === "cierre";
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [items, setItems] = useState<ProyeccionRow[]>([]);
@@ -174,6 +175,7 @@ export function ProyeccionesDropzone({ expedienteId, onReauditoria, variant = "q
   const fnError = useServerFn(marcarErrorProyeccion);
   const fnDelete = useServerFn(eliminarProyeccion);
   const fnFusionar = useServerFn(fusionarConExtractoYReauditar);
+  const fnVerificar = useServerFn(verificarCierreContraPropuesta);
   const fnUrl = useServerFn(urlFirmadaProyeccion);
   const fnExtract = useServerFn(extractStatement);
   const fnAuditar = useServerFn(auditarLecturaAutomatica);
@@ -181,10 +183,10 @@ export function ProyeccionesDropzone({ expedienteId, onReauditoria, variant = "q
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const r = await fnList({ data: { expedienteId } });
+      const r = await fnList({ data: { expedienteId, momento } });
       setItems((r.items ?? []) as ProyeccionRow[]);
     } finally { setLoading(false); }
-  }, [expedienteId, fnList]);
+  }, [expedienteId, fnList, momento]);
 
   useEffect(() => { void load(); }, [load]);
 
