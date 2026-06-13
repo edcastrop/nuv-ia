@@ -639,6 +639,14 @@ export interface Veredicto {
   desfasePlazo?: number;
 }
 
+export interface VeredictoHallazgo {
+  codigo: string;
+  severidad: Severidad;
+  titulo: string;
+  detalle: string;
+  pista: string; // qué debe hacer el analista
+}
+
 export function construirVeredicto(
   input: AuditarInput,
   rec: Reconstruccion,
@@ -647,11 +655,16 @@ export function construirVeredicto(
 ): Veredicto {
   const r = input.reconstruccion;
   const ext = input.extracto ?? {};
+  const sim = input.simulacion;
   const isUvr = input.modalidad === "uvr";
+  const hayExcel = !!sim && Object.values(sim).some((v) => v !== undefined && v !== null);
+  const hallazgos: VeredictoHallazgo[] = [];
+
+  const pushH = (h: VeredictoHallazgo) => hallazgos.push(h);
 
   // ── Check 1: plazo implícito por cuota oficial vs plazo reportado ──
   let plazoImplicito: number | undefined;
-  let plazoReportado: number | undefined = r.cuotasPendientes;
+  const plazoReportado: number | undefined = r.cuotasPendientes;
   let desfasePlazo: number | undefined;
 
   try {
@@ -676,15 +689,46 @@ export function construirVeredicto(
     }
   } catch { /* noop */ }
 
-  if (plazoImplicito && plazoReportado) {
-    desfasePlazo = plazoImplicito - plazoReportado;
+  if (plazoImplicito && plazoReportado) desfasePlazo = plazoImplicito - plazoReportado;
+  const desfaseAbs = desfasePlazo !== undefined ? Math.abs(desfasePlazo) : 0;
+  const desfaseGrande = desfaseAbs > 6;
+  const desfaseCritico = desfaseAbs > 30;
+
+  if (desfaseCritico) {
+    pushH({
+      codigo: "PLAZO_IMPLICITO_VS_REPORTADO",
+      severidad: "critica",
+      titulo: `Plazo real ${plazoImplicito} ≠ ${plazoReportado} reportados`,
+      detalle: `Con la cuota oficial ($${Math.round(r.cuotaFinancieraSinSeguros ?? ext.cuota ?? 0).toLocaleString("es-CO")}) y tasa ${r.tasaEa}% EA, el saldo se amortiza en ${plazoImplicito} meses, no en ${plazoReportado}.`,
+      pista: desfasePlazo! < 0
+        ? "Pídale al banco la cuota recalculada con el plazo remanente; pregunte al cliente si hace un sobreaporte mensual fijo."
+        : "La cuota es insuficiente para el plazo reportado: pida al banco recalcular la cuota o aumentar el plazo.",
+    });
+  } else if (desfaseGrande) {
+    pushH({
+      codigo: "PLAZO_IMPLICITO_LEVE",
+      severidad: "warning",
+      titulo: `Pequeño desfase de plazo (${desfasePlazo! > 0 ? "+" : ""}${desfasePlazo} meses)`,
+      detalle: `La cuota oficial amortiza en ${plazoImplicito} meses vs ${plazoReportado} reportadas.`,
+      pista: "Tolerable, pero documente el dato exacto antes de simular escenarios de aceleración.",
+    });
   }
 
   // ── Check 2: saldo UVR × valor UVR ↔ saldo pesos ──
   let saldoUvrConsistente = true;
   if (isUvr && r.saldoUVR && r.valorUVR && r.saldoCapital) {
     const teor = r.saldoUVR * r.valorUVR;
-    saldoUvrConsistente = Math.abs(teor - r.saldoCapital) / r.saldoCapital < 0.005;
+    const diff = Math.abs(teor - r.saldoCapital);
+    saldoUvrConsistente = diff / r.saldoCapital < 0.005;
+    if (!saldoUvrConsistente) {
+      pushH({
+        codigo: "UVR_SALDO_MISMATCH",
+        severidad: "critica",
+        titulo: "Saldo UVR × valor UVR ≠ saldo en pesos",
+        detalle: `${r.saldoUVR.toFixed(2)} UVR × $${r.valorUVR.toFixed(2)} = $${Math.round(teor).toLocaleString("es-CO")}, pero el extracto reporta $${Math.round(r.saldoCapital).toLocaleString("es-CO")} (diferencia $${Math.round(diff).toLocaleString("es-CO")}).`,
+        pista: "El valor de la UVR usado no es el de la fecha de corte. Reprocese la lectura con la UVR oficial del día del extracto.",
+      });
+    }
   }
 
   // ── Check 3: FRECH coherente (cuotaBase − FRECH ≈ cuotaFinanciera) ──
@@ -694,39 +738,84 @@ export function construirVeredicto(
     const esperado = (r.cuotaBaseSinSubsidio ?? 0) - beneficio;
     const real = r.cuotaFinancieraSinSeguros ?? 0;
     frechConsistente = Math.abs(esperado - real) / Math.max(1, esperado) < 0.02;
+    if (!frechConsistente) {
+      pushH({
+        codigo: "FRECH_INCOHERENTE",
+        severidad: "warning",
+        titulo: "Aplicación del subsidio FRECH no cuadra",
+        detalle: `Cuota base $${Math.round(r.cuotaBaseSinSubsidio!).toLocaleString("es-CO")} − FRECH $${Math.round(beneficio).toLocaleString("es-CO")} = $${Math.round(esperado).toLocaleString("es-CO")}, pero la cuota financiera cliente es $${Math.round(real).toLocaleString("es-CO")}.`,
+        pista: "Confirme con el banco si el FRECH se aplica como descuento en pesos o como pp de tasa, y los meses restantes de cobertura.",
+      });
+    }
   }
 
-  const desfaseGrande = (desfasePlazo !== undefined) && Math.abs(desfasePlazo) > 6;
-  const desfaseCritico = (desfasePlazo !== undefined) && Math.abs(desfasePlazo) > 30;
-
-  // ── Estado del extracto ──
-  let extractoEstado: VeredictoEstado = "ok";
-  let extractoDet = "Saldo, tasa, plazo, FRECH y cuota se reconcilian entre sí.";
-  if (!saldoUvrConsistente) {
-    extractoEstado = "warning";
-    extractoDet = "El saldo UVR × valor UVR no coincide con el saldo en pesos reportado.";
-  } else if (!frechConsistente) {
-    extractoEstado = "warning";
-    extractoDet = "La cuota base menos el subsidio FRECH no coincide con la cuota financiera reportada.";
-  } else if (desfaseCritico) {
-    extractoEstado = "warning";
-    extractoDet = `La cuota oficial implica un plazo real de ${plazoImplicito} meses (${desfasePlazo! > 0 ? "+" : ""}${desfasePlazo} vs ${plazoReportado} reportados).`;
-  } else if (desfaseGrande) {
-    extractoEstado = "warning";
-    extractoDet = `La cuota oficial amortiza en ${plazoImplicito} meses, ligeramente distinto a las ${plazoReportado} reportadas.`;
+  // ── Check 4: cuotas pagadas + pendientes ↔ plazo original (si disponible) ──
+  // (no exigente — solo informativo si cuotasPagadas existe en input no estandar)
+  const cuotasPagadas = (r as unknown as { cuotasPagadas?: number }).cuotasPagadas;
+  if (cuotasPagadas && r.cuotasPendientes) {
+    const total = cuotasPagadas + r.cuotasPendientes;
+    const estandares = [60, 84, 120, 144, 180, 240, 300, 324, 360];
+    const cercano = estandares.find((s) => Math.abs(s - total) <= 2);
+    if (!cercano) {
+      pushH({
+        codigo: "PLAZO_TOTAL_ATIPICO",
+        severidad: "info",
+        titulo: `Plazo total atípico (${total} meses)`,
+        detalle: `Pagadas (${cuotasPagadas}) + pendientes (${r.cuotasPendientes}) = ${total} meses. No corresponde a plazos estándar (60/120/180/240/300/360).`,
+        pista: "Verifique si hubo reestructuración o si el dato de cuotas pagadas fue leído correctamente.",
+      });
+    }
   }
 
-  // ── Excel del analista (asumimos escenario teórico plazo formal) ──
-  const excelEstado: VeredictoEstado = extractoEstado === "ok" ? "ok" : "ok";
-  const excelDet = desfaseGrande
-    ? `Si simula a ${plazoReportado} cuotas con la tasa del extracto, su cuota teórica es correcta — el banco está cobrando más para amortizar antes.`
-    : "El cálculo teórico francesa con (saldo, tasa, plazo) del extracto es matemáticamente correcto.";
+  // ── Check 5: tasa fuera de rangos típicos ──
+  if (r.tasaEa && (r.tasaEa < 1 || r.tasaEa > 25)) {
+    pushH({
+      codigo: "TASA_FUERA_RANGO",
+      severidad: r.tasaEa < 0.5 || r.tasaEa > 30 ? "critica" : "warning",
+      titulo: `Tasa EA atípica (${r.tasaEa}%)`,
+      detalle: isUvr
+        ? "Tasas UVR típicas están entre 3% y 8% EA. Esta lectura está fuera del rango usual."
+        : "Tasas hipotecarias en pesos típicas están entre 8% y 20% EA.",
+      pista: "Reconfirme si la lectura del extracto es la TE pactada vigente y no la NA, NM o nominal.",
+    });
+  }
 
-  // ── Simulador NUVIA ──
-  const simEstado: VeredictoEstado = "ok";
+  // ── Check 6: cuota total cliente vs cuota teórica (caso sin override oficial) ──
+  if (ext.cuota && ext.cuota > 0 && rec.cuotaTotalConSeguros > 0) {
+    const diff = ext.cuota - rec.cuotaTotalConSeguros;
+    const pct = Math.abs(diff) / ext.cuota;
+    if (pct > 0.03) {
+      pushH({
+        codigo: "CUOTA_VS_TEORICA",
+        severidad: pct > 0.15 ? "critica" : "warning",
+        titulo: `Cuota extracto difiere ${(pct * 100).toFixed(1)}% de la teórica`,
+        detalle: `Extracto $${Math.round(ext.cuota).toLocaleString("es-CO")} vs reconstrucción $${Math.round(rec.cuotaTotalConSeguros).toLocaleString("es-CO")} (Δ $${Math.round(Math.abs(diff)).toLocaleString("es-CO")}).`,
+        pista: "Revise seguros, FRECH, tasa pactada vs cobrada y si la cuota incluye comisiones o cuota de manejo.",
+      });
+    }
+  }
+
+  // ── Check 7: campos críticos faltantes ──
+  if (!r.saldoCapital) pushH({ codigo: "FALTA_SALDO", severidad: "critica", titulo: "Falta saldo capital", detalle: "Sin saldo no se puede reconstruir el crédito.", pista: "Capture el saldo del último extracto disponible." });
+  if (!r.tasaEa) pushH({ codigo: "FALTA_TASA", severidad: "critica", titulo: "Falta tasa EA", detalle: "Sin tasa la auditoría no puede comparar la cuota.", pista: "Identifique la tasa EA vigente (no la pactada original)." });
+  if (!r.cuotasPendientes) pushH({ codigo: "FALTA_PLAZO", severidad: "critica", titulo: "Falta plazo remanente", detalle: "Sin cuotas pendientes la amortización es imposible.", pista: "Revise sección de plazo remanente del extracto." });
+
+  // ── Estado de fuentes ──
+  const sevPeor = (a: VeredictoEstado, b: VeredictoEstado): VeredictoEstado => {
+    const rank = { ok: 0, neutral: 0, warning: 1, error: 2 } as Record<VeredictoEstado, number>;
+    return rank[a] >= rank[b] ? a : b;
+  };
+  const sevExtracto: VeredictoEstado = hallazgos.some((h) => h.severidad === "critica" && h.codigo !== "PLAZO_IMPLICITO_VS_REPORTADO")
+    ? "error"
+    : hallazgos.some((h) => h.severidad === "warning") || desfaseGrande
+      ? "warning"
+      : "ok";
+  const extractoDet = hallazgos.length === 0
+    ? "Saldo, tasa, plazo, FRECH y cuota se reconcilian entre sí."
+    : `${hallazgos.length} hallazgo(s) matemático(s) detectados (ver abajo).`;
+
   const simDet = `Usa las ${plazoReportado ?? r.cuotasPendientes} cuotas pendientes del extracto sin recortarlas y respeta la cuota oficial.`;
 
-  // ── Auditoría NUVIA ──
   let audEstado: VeredictoEstado;
   if (score.dictamen === "rechazado") audEstado = "error";
   else if (score.score >= 95) audEstado = "ok";
@@ -735,13 +824,29 @@ export function construirVeredicto(
   const audDet = `Score ${score.score.toFixed(1)} · ${dictamenLabel[score.dictamen]}. ${
     inconsistencias.length === 0
       ? "Reconcilió saldo/tasa/cuota/plazo dentro de tolerancia."
-      : `Detectó ${inconsistencias.length} hallazgo(s) matemático(s).`
+      : `Detectó ${inconsistencias.length} diferencia(s) frente a la reconstrucción.`
   }`;
 
-  // ── Causas probables ──
+  const filas: VeredictoFila[] = [
+    { fuente: "extracto", estado: sevExtracto, titulo: "Extracto del banco", detalle: extractoDet },
+    { fuente: "simulador", estado: "ok", titulo: "Simulador NUVIA", detalle: simDet },
+    { fuente: "auditoria", estado: audEstado, titulo: "Auditoría NUVIA", detalle: audDet },
+  ];
+  if (hayExcel) {
+    filas.splice(1, 0, {
+      fuente: "excel",
+      estado: "ok",
+      titulo: "Excel del analista",
+      detalle: desfaseGrande
+        ? `Si simula a ${plazoReportado} cuotas con la tasa del extracto, su cuota teórica es correcta — el banco está cobrando más para amortizar antes.`
+        : "El cálculo teórico francesa con (saldo, tasa, plazo) del extracto es matemáticamente correcto.",
+    });
+  }
+
+  // ── Causas probables (heurística sobre hallazgos) ──
   const causas: string[] = [];
   if (desfaseGrande && desfasePlazo! < 0) {
-    causas.push("La cuota fue recalculada con el plazo original del crédito (no con el remanente actual).");
+    causas.push("La cuota fue recalculada con el plazo original del crédito, no con el remanente actual.");
     causas.push("El cliente puede estar haciendo un sobreaporte implícito que amortiza más rápido el saldo.");
     causas.push("El banco no recalculó la cuota tras un cambio de tasa, UVR o reliquidación previa.");
   } else if (desfaseGrande && desfasePlazo! > 0) {
@@ -751,55 +856,53 @@ export function construirVeredicto(
   if (!frechConsistente) causas.push("La aplicación del subsidio FRECH no se refleja correctamente en la cuota cliente.");
   if (!saldoUvrConsistente) causas.push("El valor de la UVR usado en la conversión saldo UVR ↔ saldo pesos no es el de corte.");
 
-  // ── Recomendaciones ──
-  const recs: string[] = [];
-  if (desfaseGrande) {
-    recs.push("Validar con el banco cuál es el plazo contractual remanente y cuál es la cuota recalculada vigente.");
-    recs.push("Consultar al cliente si está pagando una cuota fija superior a la teórica (sobreaporte o cuota antigua).");
-  }
-  if (!frechConsistente) recs.push("Confirmar con el banco el FRECH actualmente aplicado (pp o valor mensual COP).");
-  if (!saldoUvrConsistente) recs.push("Verificar la UVR de la fecha de corte del extracto y reprocesar la lectura.");
+  // ── Recomendaciones (siempre accionables, surgen de los hallazgos) ──
+  const recs: string[] = hallazgos.map((h) => h.pista);
   if (recs.length === 0) recs.push("Caso reconciliado: puede continuar con la simulación y la oferta al cliente.");
 
   // ── Titular y resumen ──
   let titular: string;
   if (desfaseCritico) {
-    titular = `El extracto es internamente coherente, pero la cuota implica un plazo real de ${plazoImplicito} meses ≠ ${plazoReportado} reportados.`;
-  } else if (extractoEstado === "warning") {
-    titular = `Hay una inconsistencia matemática menor en el extracto (${extractoDet.toLowerCase()})`;
+    titular = `Extracto coherente, pero la cuota implica ${plazoImplicito} meses ≠ ${plazoReportado} reportados.`;
+  } else if (sevExtracto === "error") {
+    titular = `NUVIA detectó ${hallazgos.filter((h) => h.severidad === "critica").length} error(es) crítico(s) en el extracto.`;
+  } else if (sevExtracto === "warning") {
+    titular = `NUVIA detectó ${hallazgos.length} hallazgo(s) que requieren atención del analista.`;
   } else if (audEstado !== "ok") {
     titular = `La auditoría detectó ${inconsistencias.length} hallazgo(s) que requieren revisión.`;
   } else {
-    titular = "Las tres fuentes (Excel, simulador y extracto) reconcilian dentro de tolerancia.";
+    titular = hayExcel
+      ? "Todas las fuentes (Excel, simulador, extracto) reconcilian dentro de tolerancia."
+      : "El extracto reconcilia internamente bajo matemática financiera estándar.";
   }
 
   const resumen = desfaseGrande
-    ? `Tu Excel y NUVIA simulan los ${plazoReportado} meses formales del extracto y son correctos en ese marco. El extracto cobra una cuota que matemáticamente amortiza el saldo en ${plazoImplicito} meses — el desfase suele explicarse por un recálculo del banco con el plazo original.`
-    : extractoEstado === "warning"
-      ? "El extracto presenta una pequeña inconsistencia interna. NUVIA y tu Excel siguen siendo correctos sobre los datos reportados; conviene validar el dato observado con el banco."
-      : "Todas las fuentes coinciden bajo la matemática financiera estándar (sistema francés).";
+    ? `El extracto reporta ${plazoReportado} meses, pero la cuota oficial amortiza el saldo en ${plazoImplicito} meses. NUVIA respeta el plazo formal en sus proyecciones; valide con el banco si la cuota debe recalcularse.`
+    : sevExtracto !== "ok"
+      ? "El extracto presenta inconsistencias internas. Revise los hallazgos abajo y aplique las pistas antes de continuar."
+      : "Todas las cifras del extracto coinciden bajo el sistema francés y los parámetros del crédito están en rangos razonables.";
 
   const extractoTieneErrores: Veredicto["extractoTieneErrores"] =
-    (!saldoUvrConsistente || !frechConsistente) ? "si"
-      : desfaseGrande ? "inconsistencia"
+    hallazgos.some((h) => h.severidad === "critica") && !desfaseCritico ? "si"
+      : (desfaseGrande || hallazgos.length > 0) ? "inconsistencia"
         : "no";
 
   return {
     titular,
     resumen,
-    filas: [
-      { fuente: "extracto", estado: extractoEstado, titulo: "Extracto del banco", detalle: extractoDet },
-      { fuente: "excel", estado: excelEstado, titulo: "Excel del analista", detalle: excelDet },
-      { fuente: "simulador", estado: simEstado, titulo: "Simulador NUVIA", detalle: simDet },
-      { fuente: "auditoria", estado: audEstado, titulo: "Auditoría NUVIA", detalle: audDet },
-    ],
+    filas,
     extractoTieneErrores,
     causasProbables: causas.slice(0, 3),
-    recomendaciones: recs.slice(0, 3),
+    recomendaciones: dedupe(recs).slice(0, 5),
+    hallazgos,
     plazoImplicito,
     plazoReportado,
     desfasePlazo,
   };
+
+  function dedupe(arr: string[]) { return Array.from(new Set(arr)); }
+  // sevPeor reservada para futuras combinaciones de fuentes
+  void sevPeor;
 }
 
 // Etiquetas amigables
