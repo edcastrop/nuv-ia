@@ -222,7 +222,7 @@ function ResultadoQaAi() {
 
       <VeredictoBlock
         veredicto={
-          ((o.veredicto as Veredicto | undefined) ?? recomputo?.veredicto) as Veredicto | undefined
+          ((o.veredicto as unknown as Veredicto | undefined) ?? recomputo?.veredicto) as Veredicto | undefined
         }
       />
 
