@@ -550,7 +550,7 @@ function ResultadoQaAi() {
           <div className="flex items-center gap-2 mb-3">
             <Sparkles size={15} style={{ color: "var(--nuvia-accent)" }} />
             <h3 className="text-[13.5px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
-              {nombre}, esto es lo que debes hacer
+              Basado en lo anterior, esta es mi recomendación
             </h3>
           </div>
           <ul className="space-y-2.5">
