@@ -410,10 +410,7 @@ function applyFnaDeterministicCorrections(
   const alertas: string[] = [];
   const saldo = toNumber(datos.saldoCapital);
   const tasa = toNumber(datos.tasaEA);
-  const seguros = toNumber(datos.seguros);
-  const cuotaFinanciera = toNumber(datos.cuotaActual) > 0 && seguros > 0
-    ? Math.max(0, toNumber(datos.cuotaActual) - seguros)
-    : toNumber(datos.cuotaActual);
+  const cuotaFinanciera = toNumber(datos.cuotaActual);
   const pagadas = Math.round(toNumber(datos.cuotasPagadas));
   const plazoLeido = Math.round(toNumber(datos.plazoInicial));
   const pendientesLeidas = Math.round(toNumber(datos.cuotasPendientes));
