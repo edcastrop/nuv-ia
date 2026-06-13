@@ -931,12 +931,12 @@ function AltMetric({
         </div>
       </div>
       <div style={{
-        fontSize: valueSize, fontWeight: 900, color, letterSpacing: "-0.02em",
-        marginTop: 2, lineHeight: 1.1,
+        fontSize: Math.max(10, valueSize - 1), fontWeight: 900, color, letterSpacing: "-0.02em",
+        marginTop: 1, lineHeight: 1.04,
       }}>
         {value}
       </div>
-      <div style={{ fontSize: 9, color: C.muted, marginTop: 3 }}>{sub}</div>
+      <div style={{ fontSize: 8, color: C.muted, marginTop: 1 }}>{sub}</div>
     </div>
   );
 }
@@ -949,16 +949,16 @@ function MiniTimeline({
 }) {
   return (
     <div style={{
-      display: "grid", gridTemplateColumns: "130px 40px 1fr 60px 56px",
-      alignItems: "center", gap: 6,
+      display: "grid", gridTemplateColumns: "112px 34px 1fr 48px 50px",
+      alignItems: "center", gap: 5,
     }}>
-      <div style={{ fontSize: 9, fontWeight: 800, color: labelColor, letterSpacing: "0.08em" }}>
+      <div style={{ fontSize: 8, fontWeight: 800, color: labelColor, letterSpacing: "0.06em" }}>
         {label}
       </div>
-      <div style={{ fontSize: 10, fontWeight: 700, color: C.ink, textAlign: "center" }}>
+      <div style={{ fontSize: 8.5, fontWeight: 700, color: C.ink, textAlign: "center" }}>
         {startYear}
       </div>
-      <div style={{ position: "relative", height: 12 }}>
+      <div style={{ position: "relative", height: 8 }}>
         <div style={{
           position: "absolute", top: "50%", left: 0, right: 0, height: 2,
           background: "#EDEFF2", transform: "translateY(-50%)",
@@ -974,12 +974,12 @@ function MiniTimeline({
           transform: "translateY(-50%)",
         }} />
       </div>
-      <div style={{ fontSize: 10, fontWeight: 700, color: C.ink, textAlign: "center" }}>
+      <div style={{ fontSize: 8.5, fontWeight: 700, color: C.ink, textAlign: "center" }}>
         {endYear}
       </div>
       <div style={{
-        background: pillBg, color: pillFg, fontSize: 9, fontWeight: 800,
-        padding: "2px 6px", borderRadius: 999, textAlign: "center",
+        background: pillBg, color: pillFg, fontSize: 7.5, fontWeight: 800,
+        padding: "1px 5px", borderRadius: 999, textAlign: "center",
       }}>
         {pill}
       </div>
