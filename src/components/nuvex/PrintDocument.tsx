@@ -477,15 +477,17 @@ export function PrintDocument(props: Props) {
       <section
         className="nuvex-print-page"
         style={{
-          width: "210mm", minHeight: "297mm",
+          width: "210mm", height: "297mm", maxHeight: "297mm",
           background: C.paper,
+          boxSizing: "border-box", overflow: "hidden",
           display: "flex", flexDirection: "column",
         }}
       >
         {/* Header negro con título + logo */}
         <div style={{
-          background: C.black, color: "#fff", padding: "16px 24px",
+          background: C.black, color: "#fff", padding: "12px 22px",
           display: "grid", gridTemplateColumns: "1fr auto", alignItems: "center", gap: 20,
+          breakInside: "avoid", pageBreakInside: "avoid",
         }}>
           <div>
             <div style={{
@@ -494,7 +496,7 @@ export function PrintDocument(props: Props) {
               OTRAS PROYECCIONES GENERADAS
             </div>
             <div style={{
-              marginTop: 4, fontSize: 10.5, color: "rgba(255,255,255,0.82)", lineHeight: 1.45, maxWidth: 460,
+              marginTop: 3, fontSize: 10, color: "rgba(255,255,255,0.82)", lineHeight: 1.3, maxWidth: 460,
             }}>
               Estas alternativas también fueron analizadas por nuestro sistema
               para que las tengas como referencia.
@@ -507,7 +509,7 @@ export function PrintDocument(props: Props) {
         </div>
 
         {/* 3 proyecciones — compactas (secundarias) */}
-        <div style={{ padding: "12px 24px 0 24px", display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ padding: "10px 22px 0 22px", display: "flex", flexDirection: "column", gap: 6 }}>
           {alternativas.slice(0, 3).map((alt, i) => {
             const palette = ALT_PALETTES[i % ALT_PALETTES.length];
             return (
@@ -535,14 +537,14 @@ export function PrintDocument(props: Props) {
         </div>
 
         {/* CTA final — sin QR */}
-        <div style={{ padding: "12px 24px 0 24px", flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+        <div style={{ padding: "8px 22px 0 22px", display: "flex", flexDirection: "column", justifyContent: "flex-start", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <div style={{
             background: C.bgSoft, border: `1px solid ${C.hairline}`,
-            borderRadius: 12, padding: "12px 18px",
+            borderRadius: 12, padding: "10px 16px",
             display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 16, alignItems: "center",
           }}>
             <div style={{
-              width: 40, height: 40, borderRadius: 10,
+              width: 36, height: 36, borderRadius: 10,
               background: C.green,
               display: "flex", alignItems: "center", justifyContent: "center",
               color: "#fff",
@@ -554,10 +556,9 @@ export function PrintDocument(props: Props) {
                 ¿Listo para dar el siguiente paso, {primerNombre}?
               </div>
               <div style={{
-                marginTop: 3, fontSize: 10, color: C.muted, lineHeight: 1.4,
+                marginTop: 2, fontSize: 10, color: C.muted, lineHeight: 1.25,
               }}>
-                Esta propuesta personalizada está lista para ti.
-                Agenda tu asesoría y comencemos a optimizar tu crédito.
+                Agenda tu asesoría y empecemos a optimizar tu crédito.
               </div>
             </div>
             <div style={{
