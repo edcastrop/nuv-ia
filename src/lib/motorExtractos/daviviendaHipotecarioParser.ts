@@ -253,14 +253,14 @@ export function parseDaviviendaHipotecarioText(rawText: string): ExtractoRecord 
     firstMatch(text, /Tasa\s+Inter[eé]s\s+Cte\.?\s*Pactada\s+([0-9]+(?:[.,][0-9]+)?)\s+Efectivo/i).replace(",", ".");
 
   // Seguros
-  const valorSeguroVida = moneyFromLine(rawText, /^Seguro\s+de\s+Vida\b/i);
-  const valorSeguroIncendio = moneyFromLine(rawText, /^Seguro\s+de\s+Incendio\s+y\s+Anexos/i);
-  const valorSeguroProteccion = moneyFromLine(rawText, /^Seguro\s+Protecci[oó]n\s+de\s+Pagos/i);
+  const valorSeguroVida = moneyFromLine(rawText, /Seguro\s+de\s+Vida\b/i);
+  const valorSeguroIncendio = moneyFromLine(rawText, /Seguro\s+de\s+Incendio\s+y\s+Anexos/i);
+  const valorSeguroProteccion = moneyFromLine(rawText, /Seguro\s+Protecci[oó]n\s+de\s+Pagos/i);
   const seguros = valorSeguroVida + valorSeguroIncendio + valorSeguroProteccion;
 
   // Intereses corrientes / abonos a capital del periodo
-  const interesCuota = moneyFromLine(rawText, /^Intereses\s+Corrientes\b/i);
-  const capitalCuota = moneyFromLine(rawText, /^Abonos?\s+a\s+Capital\b/i);
+  const interesCuota = moneyFromLine(rawText, /Intereses\s+Corrientes\b/i);
+  const capitalCuota = moneyFromLine(rawText, /Abonos?\s+a\s+Capital\b/i);
 
   const saldoCorte = extractSaldoCorte(rawText, text);
   // Saldo a la fecha de corte. Formatos Davivienda: pesos directo o UVR + pesos.
