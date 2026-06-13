@@ -318,6 +318,9 @@ const STAGES: { id: Stage; label: string }[] = [
   { id: "applied", label: "Simulador completado" },
 ];
 
+type StagedItem = { mime: string; dataUrl: string; sourceName: string };
+const MAX_PAGES = 6;
+
 export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
   const [open, setOpen] = useState(false);
   const [stage, setStage] = useState<Stage>("idle");
@@ -330,6 +333,10 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const [portalReady, setPortalReady] = useState(false);
+  const [staging, setStaging] = useState<StagedItem[]>([]);
+  const [stagingRawText, setStagingRawText] = useState("");
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [stagingNotice, setStagingNotice] = useState<string | null>(null);
   const { data: catalogoProductos = [] } = useProductosBancarios();
 
   useEffect(() => {
@@ -372,14 +379,22 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
     setWrongPassword(false);
     setParsed(null);
     setArchivoPath(null);
+    setStaging([]);
+    setStagingRawText("");
+    setPendingFile(null);
+    setStagingNotice(null);
     if (fileRef.current) fileRef.current.value = "";
   };
 
   const handleFileSelect = async (f: File) => {
-    setFile(f);
     setErrorMsg(null);
     setParsed(null);
-    await processFile(f, undefined);
+    await addFileToStaging(f, undefined);
+  };
+
+  const removeStaged = (idx: number) => {
+    setStaging((prev) => prev.filter((_, i) => i !== idx));
+    setStagingNotice(null);
   };
 
   const uploadOriginal = async (f: File) => {
@@ -399,78 +414,128 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
     }
   };
 
-  const processFile = async (f: File, pwd: string | undefined) => {
+  // Procesa un archivo y devuelve sus páginas (imágenes) + texto extraído
+  // sin disparar la lectura IA. Las páginas se acumulan en `staging`.
+  const fileToPages = async (
+    f: File,
+    pwd: string | undefined,
+  ): Promise<{
+    images: { mime: string; dataUrl: string }[];
+    rawText: string;
+    needsPassword?: boolean;
+    wrongPassword?: boolean;
+  }> => {
+    const lowerName = f.name.toLowerCase();
+    const isZip =
+      f.type === "application/zip" ||
+      f.type === "application/x-zip-compressed" ||
+      lowerName.endsWith(".zip");
+    if (f.type === "application/pdf" || lowerName.endsWith(".pdf")) {
+      let rawText = "";
+      try {
+        rawText = await extractTextFromPdf(f, pwd);
+      } catch (textErr) {
+        const e = textErr as { name?: string; code?: number };
+        if (e?.name === "PasswordException") {
+          return { images: [], rawText: "", needsPassword: true, wrongPassword: e.code === 2 };
+        }
+        console.warn("No se pudo extraer texto estructural del PDF:", textErr);
+      }
+      try {
+        const result = await renderPdfToImages(f, pwd);
+        if (result.needsPassword) {
+          return { images: [], rawText: "", needsPassword: true, wrongPassword: result.wrongPassword };
+        }
+        return { images: result.images, rawText };
+      } catch (imageErr) {
+        if (rawText.trim().length > 250) return { images: [], rawText };
+        throw imageErr;
+      }
+    }
+    if (f.type.startsWith("image/")) {
+      const url = await fileToDataUrl(f);
+      return { images: [{ mime: f.type, dataUrl: url }], rawText: "" };
+    }
+    if (isZip) {
+      const imgs = await extractImagesFromZip(f);
+      return { images: imgs, rawText: "" };
+    }
+    throw new Error(
+      "Formato no soportado. Sube un PDF, imagen (JPG/PNG) o un ZIP con esos archivos.",
+    );
+  };
+
+  const addFileToStaging = async (f: File, pwd: string | undefined) => {
+    setErrorMsg(null);
+    setStagingNotice(null);
+    if (staging.length >= MAX_PAGES) {
+      setStagingNotice(`Ya llegaste al máximo de ${MAX_PAGES} páginas. Elimina alguna para añadir más.`);
+      return;
+    }
     setStage("reading");
     try {
-      let images: { mime: string; dataUrl: string }[] = [];
-      let rawText = "";
-      const lowerName = f.name.toLowerCase();
-      const isZip =
-        f.type === "application/zip" ||
-        f.type === "application/x-zip-compressed" ||
-        lowerName.endsWith(".zip");
-      if (f.type === "application/pdf" || lowerName.endsWith(".pdf")) {
-        try {
-          rawText = await extractTextFromPdf(f, pwd);
-          if (rawText.trim().length > 250) {
-            const deterministicResp = await callExtract({ data: { images: [], rawText } });
-            if (deterministicResp.data) {
-              await uploadOriginal(f);
-              setParsed(
-                normalizeExtractData(
-                  recomputeDaviviendaHipotecario(
-                    recomputeDaviviendaLeasing(recomputeBancolombia(deterministicResp.data)),
-                  ),
-                ),
-              );
-              setStage("review");
-              return;
-            }
-          }
-        } catch (textErr) {
-          const e = textErr as { name?: string; code?: number };
-          if (e?.name === "PasswordException") {
-            setWrongPassword(e.code === 2);
-            setStage("password");
-            return;
-          }
-          console.warn("No se pudo extraer texto estructural del PDF:", textErr);
-        }
-        try {
-          const result = await renderPdfToImages(f, pwd);
-          if (result.needsPassword) {
-            setWrongPassword(result.wrongPassword);
-            setStage("password");
-            return;
-          }
-          images = result.images;
-        } catch (imageErr) {
-          if (rawText.trim().length <= 250) throw imageErr;
-          console.warn("No se pudieron generar imágenes del PDF; se usará texto extraído:", imageErr);
-        }
-        if (images.length === 0 && rawText.trim().length === 0) {
-          throw new Error("No pude leer texto ni generar imágenes del PDF. Verifica que no esté dañado o sube una captura clara del extracto.");
-        }
-      } else if (f.type.startsWith("image/")) {
-        const url = await fileToDataUrl(f);
-        images = [{ mime: f.type, dataUrl: url }];
-      } else if (isZip) {
-        images = await extractImagesFromZip(f);
-      } else {
-        throw new Error(
-          "Formato no soportado. Sube un PDF, imagen (JPG/PNG) o un ZIP con esos archivos.",
+      const res = await fileToPages(f, pwd);
+      if (res.needsPassword) {
+        setPendingFile(f);
+        setFile(f);
+        setWrongPassword(!!res.wrongPassword);
+        setStage("password");
+        return;
+      }
+      const remaining = MAX_PAGES - staging.length;
+      const slice = res.images.slice(0, remaining).map((img) => ({ ...img, sourceName: f.name }));
+      if (slice.length === 0 && res.rawText.trim().length === 0) {
+        throw new Error("No pude leer páginas del archivo. Verifica que no esté dañado.");
+      }
+      setStaging((prev) => [...prev, ...slice]);
+      setStagingRawText((prev) => (prev ? `${prev}\n\n${res.rawText}` : res.rawText));
+      if (!archivoPath) await uploadOriginal(f);
+      setFile(f);
+      setPendingFile(null);
+      setPassword("");
+      if (res.images.length > remaining) {
+        setStagingNotice(
+          `Se añadieron ${remaining} páginas. El extracto ya alcanzó el límite de ${MAX_PAGES}.`,
         );
       }
+      setStage("idle");
+    } catch (err) {
+      console.error(err);
+      setErrorMsg(err instanceof Error ? err.message : "Error procesando el archivo.");
+      setStage("error");
+    }
+  };
 
-      // Subir archivo original a Supabase Storage (privado)
-      await uploadOriginal(f);
-
-      // Llamar IA
-      const resp = await callExtract({ data: { images, rawText } });
+  const runReading = async () => {
+    if (staging.length === 0) return;
+    setErrorMsg(null);
+    setStage("reading");
+    try {
+      const uniqueSources = new Set(staging.map((s) => s.sourceName));
+      const onlyOneSource = uniqueSources.size === 1;
+      const lowerName = (file?.name ?? "").toLowerCase();
+      const isPdf = !!file && (file.type === "application/pdf" || lowerName.endsWith(".pdf"));
+      // Fast deterministic path para PDFs con texto fuerte y un solo archivo
+      if (onlyOneSource && isPdf && stagingRawText.trim().length > 250) {
+        const det = await callExtract({ data: { images: [], rawText: stagingRawText } });
+        if (det.data) {
+          setParsed(
+            normalizeExtractData(
+              recomputeDaviviendaHipotecario(
+                recomputeDaviviendaLeasing(recomputeBancolombia(det.data)),
+              ),
+            ),
+          );
+          setStage("review");
+          return;
+        }
+      }
+      const images = staging.map(({ mime, dataUrl }) => ({ mime, dataUrl }));
+      const resp = await callExtract({ data: { images, rawText: stagingRawText } });
       if (resp.error || !resp.data) {
         setErrorMsg(
           resp.error ||
-            `No se pudieron extraer datos. Archivo: ${f.name}. Texto leído: ${rawText.trim().length} caracteres. Imágenes generadas: ${images.length}.`,
+            `No se pudieron extraer datos del extracto (${images.length} páginas, ${stagingRawText.trim().length} caracteres de texto).`,
         );
         setStage("error");
         return;
@@ -483,7 +548,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       setStage("review");
     } catch (err) {
       console.error(err);
-      setErrorMsg(err instanceof Error ? err.message : "Error procesando el archivo.");
+      setErrorMsg(err instanceof Error ? err.message : "Error procesando el extracto.");
       setStage("error");
     }
   };
@@ -1057,7 +1122,6 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
           setDragActive(false);
           const f = e.dataTransfer?.files?.[0];
           if (f) {
-            reset();
             setOpen(true);
             handleFileSelect(f);
           }
@@ -1304,55 +1368,164 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
 
             <div className="relative min-h-0 flex-1 overflow-y-auto px-6 py-5">
               {stage === "idle" && (
-                <div
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (e.dataTransfer) e.dataTransfer.dropEffect = "copy";
-                    if (!dragActive) setDragActive(true);
-                  }}
-                  onDragEnter={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setDragActive(true);
-                  }}
-                  onDragLeave={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setDragActive(false);
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setDragActive(false);
-                    const f = e.dataTransfer.files?.[0];
-                    if (f) handleFileSelect(f);
-                  }}
-                  onClick={() => fileRef.current?.click()}
-                  className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed py-12 text-center transition-all ${
-                    dragActive ? "scale-[1.01]" : ""
-                  }`}
-                  style={{
-                    borderColor: dragActive ? "#84B98F" : "rgba(255,255,255,0.15)",
-                    background: dragActive ? "rgba(132,185,143,0.08)" : "transparent",
-                  }}
-                >
-                  <Upload className={`h-10 w-10 ${dragActive ? "text-[#84B98F]" : "text-white/40"}`} />
-                  <div className="text-sm text-white/70 pointer-events-none">
-                    {dragActive ? "Suelta el archivo aquí" : "Arrastra el extracto o haz clic para seleccionar"}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      fileRef.current?.click();
-                    }}
-                    className="rounded-lg px-4 py-2 text-xs font-semibold text-white"
-                    style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.56), rgba(132,185,143,0.48))" }}
-                  >
-                    Seleccionar archivo
-                  </button>
-                  <div className="text-[11px] text-white/40 pointer-events-none">PDF, JPG o PNG · hasta 6 páginas</div>
+                <div className="space-y-4">
+                  {staging.length === 0 ? (
+                    <div
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (e.dataTransfer) e.dataTransfer.dropEffect = "copy";
+                        if (!dragActive) setDragActive(true);
+                      }}
+                      onDragEnter={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setDragActive(true);
+                      }}
+                      onDragLeave={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setDragActive(false);
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setDragActive(false);
+                        const f = e.dataTransfer.files?.[0];
+                        if (f) handleFileSelect(f);
+                      }}
+                      onClick={() => fileRef.current?.click()}
+                      className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed py-12 text-center transition-all ${
+                        dragActive ? "scale-[1.01]" : ""
+                      }`}
+                      style={{
+                        borderColor: dragActive ? "#84B98F" : "rgba(255,255,255,0.15)",
+                        background: dragActive ? "rgba(132,185,143,0.08)" : "transparent",
+                      }}
+                    >
+                      <Upload className={`h-10 w-10 ${dragActive ? "text-[#84B98F]" : "text-white/40"}`} />
+                      <div className="text-sm text-white/70 pointer-events-none">
+                        {dragActive ? "Suelta el archivo aquí" : "Arrastra el extracto o haz clic para seleccionar"}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          fileRef.current?.click();
+                        }}
+                        className="rounded-lg px-4 py-2 text-xs font-semibold text-white"
+                        style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.56), rgba(132,185,143,0.48))" }}
+                      >
+                        Seleccionar archivo
+                      </button>
+                      <div className="text-[11px] text-white/40 pointer-events-none">
+                        PDF, JPG, PNG o ZIP · puedes añadir varias capturas (máx {MAX_PAGES} páginas en total)
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <div className="text-sm font-semibold text-white">
+                            Páginas listas para leer
+                          </div>
+                          <div className="text-[11px] text-white/55">
+                            {staging.length} / {MAX_PAGES} páginas · NUVIA leerá todas como un solo extracto.
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => fileRef.current?.click()}
+                            disabled={staging.length >= MAX_PAGES}
+                            className="rounded-lg border px-3 py-1.5 text-[12px] font-semibold text-white/85 transition hover:text-white disabled:opacity-40"
+                            style={{
+                              background: "rgba(255,255,255,0.04)",
+                              borderColor: "rgba(255,255,255,0.14)",
+                            }}
+                          >
+                            + Añadir página
+                          </button>
+                          <button
+                            type="button"
+                            onClick={reset}
+                            className="rounded-lg border px-3 py-1.5 text-[12px] font-semibold text-white/70 transition hover:text-white"
+                            style={{
+                              background: "rgba(255,255,255,0.03)",
+                              borderColor: "rgba(255,255,255,0.10)",
+                            }}
+                          >
+                            Limpiar
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                        {staging.map((item, idx) => (
+                          <div
+                            key={`${item.sourceName}-${idx}`}
+                            className="relative overflow-hidden rounded-lg border"
+                            style={{
+                              background: "rgba(255,255,255,0.03)",
+                              borderColor: "rgba(255,255,255,0.10)",
+                            }}
+                          >
+                            <div className="aspect-[3/4] w-full overflow-hidden bg-black/30">
+                              <img
+                                src={item.dataUrl}
+                                alt={`Página ${idx + 1}`}
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+                            <div
+                              className="absolute left-1.5 top-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-bold text-white"
+                              style={{ background: "rgba(68,93,163,0.85)" }}
+                            >
+                              {idx + 1}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeStaged(idx)}
+                              className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md text-white"
+                              style={{ background: "rgba(240,68,56,0.85)" }}
+                              aria-label="Eliminar página"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                            <div className="truncate px-2 py-1 text-[10px] text-white/60">
+                              {item.sourceName}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {stagingNotice && (
+                        <div
+                          className="rounded-lg px-3 py-2 text-[12px]"
+                          style={{
+                            background: "rgba(244,162,97,0.10)",
+                            border: "1px solid rgba(244,162,97,0.30)",
+                            color: "#F4A261",
+                          }}
+                        >
+                          {stagingNotice}
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={runReading}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white"
+                        style={{
+                          background: "linear-gradient(135deg, rgba(68,93,163,0.7), rgba(132,185,143,0.62))",
+                          boxShadow: "0 14px 32px -18px rgba(132,185,143,0.5)",
+                        }}
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        Leer extracto ({staging.length} {staging.length === 1 ? "página" : "páginas"})
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1389,16 +1562,16 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                       border: "1px solid rgba(255,255,255,0.12)",
                     }}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && file && password) processFile(file, password);
+                      if (e.key === "Enter" && pendingFile && password) addFileToStaging(pendingFile, password);
                     }}
                   />
                   <button
-                    onClick={() => file && password && processFile(file, password)}
+                    onClick={() => pendingFile && password && addFileToStaging(pendingFile, password)}
                     disabled={!password}
                     className="mt-4 w-full rounded-xl px-5 py-3 text-sm font-semibold text-white disabled:opacity-40"
                     style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.56), rgba(132,185,143,0.48))" }}
                   >
-                    Leer extracto
+                    Desbloquear y añadir páginas
                   </button>
                 </div>
               )}
