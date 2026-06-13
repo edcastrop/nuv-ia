@@ -307,7 +307,7 @@ export const obtenerVerificacionCierre = createServerFn({ method: "POST" })
       .maybeSingle();
     if (error) throw new Error(error.message);
     return {
-      verificacion: (row?.verificacion_cierre ?? null) as Record<string, unknown> | null,
+      verificacion: (row?.verificacion_cierre ?? null) as unknown,
       banco: row?.banco ?? null,
     };
   });
