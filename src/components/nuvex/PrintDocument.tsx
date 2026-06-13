@@ -176,29 +176,29 @@ export function PrintDocument(props: Props) {
         {/* ───── HERO ───── */}
         <div style={{
           padding: "22px 24px 14px 24px",
-          display: "grid", gridTemplateColumns: "1fr 0.92fr", gap: 22, alignItems: "center",
+          display: "grid", gridTemplateColumns: "1.55fr 0.45fr", gap: 22, alignItems: "center",
         }}>
           <div>
             <div style={{ fontSize: 13, color: C.text, marginBottom: 4 }}>
-              Hola, <span style={{ color: C.azul, fontWeight: 800 }}>{nombreCliente}</span>
+              Hola, <span style={{ color: C.azul, fontWeight: 800 }}>{primerNombre}</span>
             </div>
             <h1 style={{
-              margin: 0, fontSize: 44, lineHeight: 1.02, fontWeight: 900,
+              margin: 0, fontSize: 40, lineHeight: 1.02, fontWeight: 900,
               color: C.black, letterSpacing: "-0.035em",
             }}>
               Recupera parte de<br />
               tu <span style={{ color: C.green }}>vida financiera</span>
             </h1>
             <p style={{
-              marginTop: 12, fontSize: 11, lineHeight: 1.55, color: C.muted, maxWidth: 360,
+              marginTop: 10, fontSize: 11, lineHeight: 1.55, color: C.muted, maxWidth: 420,
             }}>
-              Analizamos tu crédito y encontramos una oportunidad real
-              de optimizarlo sin cambiar de banco.
+              {primerNombre}, encontramos una oportunidad real
+              de optimizar tu crédito sin cambiar de banco.
             </p>
           </div>
           <div style={{
-            position: "relative", borderRadius: 14, overflow: "hidden",
-            minHeight: 200, boxShadow: "0 18px 40px -22px rgba(0,0,0,0.35)",
+            position: "relative", borderRadius: 12, overflow: "hidden",
+            height: 120, boxShadow: "0 12px 28px -18px rgba(0,0,0,0.35)",
           }}>
             <img
               src={heroSunset} alt="" crossOrigin="anonymous"
