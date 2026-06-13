@@ -472,7 +472,7 @@ export function PrintDocument(props: Props) {
       </section>
 
       {/* ============================================================
-          PÁGINA 2 — OTRAS PROYECCIONES GENERADAS
+          PÁGINA 2 — OTRAS PROYECCIONES + RESUMEN + CIERRE
       ============================================================ */}
       <section
         className="nuvex-print-page"
@@ -485,7 +485,7 @@ export function PrintDocument(props: Props) {
       >
         {/* Header negro con título + logo */}
         <div style={{
-          background: C.black, color: "#fff", padding: "12px 22px",
+          background: C.black, color: "#fff", padding: "14px 22px",
           display: "grid", gridTemplateColumns: "1fr auto", alignItems: "center", gap: 20,
           breakInside: "avoid", pageBreakInside: "avoid",
         }}>
@@ -508,8 +508,11 @@ export function PrintDocument(props: Props) {
           />
         </div>
 
-        {/* 3 proyecciones — compactas (secundarias) */}
-        <div style={{ padding: "10px 22px 0 22px", display: "flex", flexDirection: "column", gap: 6 }}>
+        {/* 3 proyecciones — con más respiración visual (+18%) */}
+        <div style={{
+          padding: "12px 22px 0 22px",
+          display: "flex", flexDirection: "column", gap: 9,
+        }}>
           {alternativas.slice(0, 3).map((alt, i) => {
             const palette = ALT_PALETTES[i % ALT_PALETTES.length];
             return (
@@ -536,44 +539,191 @@ export function PrintDocument(props: Props) {
           })}
         </div>
 
-        {/* CTA final — sin QR */}
-        <div style={{ padding: "8px 22px 0 22px", display: "flex", flexDirection: "column", justifyContent: "flex-start", breakInside: "avoid", pageBreakInside: "avoid" }}>
+        {/* ───── RESUMEN DE ESCENARIOS ───── */}
+        <div style={{ padding: "12px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
+          <ResumenEscenarios
+            alternativas={alternativas.slice(0, 3)}
+            recommended={{
+              nuevaCuota: recommended.nuevaCuota,
+              añosEliminados: añosEliminadosEntero,
+              ahorroTotal: recommended.ahorroTotal,
+            }}
+          />
+        </div>
+
+        {/* Spacer flexible (evita página 3 y reparte el alto) */}
+        <div style={{ flex: "1 1 auto", minHeight: 4 }} />
+
+        {/* ───── HERO DE CIERRE (full width) ───── */}
+        <div style={{ padding: "0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <div style={{
-            background: C.bgSoft, border: `1px solid ${C.hairline}`,
-            borderRadius: 12, padding: "10px 16px",
-            display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 16, alignItems: "center",
+            background: `linear-gradient(135deg, ${C.black} 0%, #1a1a1a 60%, #1f2a4a 130%)`,
+            color: "#fff", borderRadius: 14, padding: "18px 22px",
+            display: "grid", gridTemplateColumns: "1fr auto", gap: 20, alignItems: "center",
+            boxShadow: "0 18px 40px -22px rgba(0,0,0,0.45)",
+            position: "relative", overflow: "hidden",
           }}>
             <div style={{
-              width: 36, height: 36, borderRadius: 10,
-              background: C.green,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              color: "#fff",
-            }}>
-              <CalIconBig />
-            </div>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 900, color: C.black, lineHeight: 1.2 }}>
-                ¿Listo para dar el siguiente paso, {primerNombre}?
+              position: "absolute", right: -20, top: -30, width: 180, height: 180,
+              borderRadius: "50%",
+              background: `radial-gradient(circle, ${C.green}44 0%, transparent 70%)`,
+            }} />
+            <div style={{ position: "relative" }}>
+              <div style={{
+                fontSize: 11, fontWeight: 900, color: C.green, letterSpacing: "0.18em",
+              }}>
+                {primerNombre.toUpperCase()},
               </div>
               <div style={{
-                marginTop: 2, fontSize: 10, color: C.muted, lineHeight: 1.25,
+                marginTop: 5, fontSize: 19, fontWeight: 900, lineHeight: 1.15,
+                letterSpacing: "-0.02em",
               }}>
-                Agenda tu asesoría y empecemos a optimizar tu crédito.
+                Tu crédito terminará de una u otra forma.
+              </div>
+              <div style={{
+                marginTop: 4, fontSize: 12, lineHeight: 1.4, color: "rgba(255,255,255,0.88)",
+                maxWidth: 480,
+              }}>
+                La diferencia es decidir si quieres recuperar parte de
+                <span style={{ color: C.green, fontWeight: 800 }}> tu tiempo financiero</span>.
               </div>
             </div>
             <div style={{
-              background: C.black, color: "#fff",
-              padding: "8px 14px", borderRadius: 8,
-              fontSize: 11, fontWeight: 800, letterSpacing: "0.04em",
+              display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6,
+              position: "relative",
             }}>
-              CONTACTA A {analista.toUpperCase()}
+              <div style={{
+                background: C.green, color: "#0E1F14",
+                padding: "12px 20px", borderRadius: 10,
+                fontSize: 12.5, fontWeight: 900, letterSpacing: "0.06em",
+                boxShadow: "0 10px 24px -10px rgba(132,185,143,0.6)",
+              }}>
+                CONTACTAR A {analista.toUpperCase()}
+              </div>
+              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.6)", letterSpacing: "0.16em", fontWeight: 700 }}>
+                ASESORÍA SIN COSTO · 72 HORAS
+              </div>
             </div>
           </div>
         </div>
 
-
         <FooterStrip />
       </section>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════
+   RESUMEN DE ESCENARIOS — comparativa final
+════════════════════════════════════════════════════════════ */
+function ResumenEscenarios({
+  alternativas, recommended,
+}: {
+  alternativas: AltRow[];
+  recommended: { nuevaCuota: number; añosEliminados: number; ahorroTotal: number };
+}) {
+  // ALT_PALETTES: 0=balanceado, 1=agresivo, 2=conservador
+  const balanceado = alternativas[0];
+  const agresivo = alternativas[1];
+  const conservador = alternativas[2];
+
+  const rows = [
+    { key: "cons", label: "Conservador", color: C.purple, data: conservador },
+    { key: "bal",  label: "Balanceado",  color: C.greenDeep, data: balanceado },
+    { key: "agr",  label: "Agresivo",    color: C.azul, data: agresivo },
+  ].filter((r) => r.data);
+
+  return (
+    <div style={{
+      background: "#fff", border: `1px solid ${C.hairline}`, borderRadius: 12,
+      overflow: "hidden",
+    }}>
+      <div style={{
+        background: C.black, color: "#fff", padding: "8px 14px",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+      }}>
+        <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: "0.18em" }}>
+          RESUMEN DE ESCENARIOS
+        </div>
+        <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", letterSpacing: "0.12em", fontWeight: 700 }}>
+          COMPARATIVA RÁPIDA
+        </div>
+      </div>
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "1.15fr 1fr 1fr 1fr",
+        background: C.bgSoft,
+        fontSize: 8.5, fontWeight: 800, color: C.muted, letterSpacing: "0.16em",
+      }}>
+        <div style={{ padding: "7px 12px" }}>ESCENARIO</div>
+        <div style={{ padding: "7px 12px", textAlign: "right" }}>NUEVA CUOTA</div>
+        <div style={{ padding: "7px 12px", textAlign: "right" }}>AHORRO TIEMPO</div>
+        <div style={{ padding: "7px 12px", textAlign: "right" }}>AHORRO DINERO</div>
+      </div>
+      {rows.map((r) => (
+        <ResumenRow
+          key={r.key}
+          label={r.label}
+          color={r.color}
+          cuota={r.data!.nuevaCuota}
+          años={Math.round(r.data!.añosEliminados)}
+          dinero={r.data!.ahorroTotal}
+        />
+      ))}
+      {/* Recomendado destacado */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "1.15fr 1fr 1fr 1fr",
+        background: `linear-gradient(90deg, ${C.greenSoft} 0%, #fff 100%)`,
+        borderTop: `2px solid ${C.green}`,
+        alignItems: "center",
+      }}>
+        <div style={{ padding: "9px 12px", display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{
+            background: C.greenDeep, color: "#fff",
+            padding: "3px 8px", borderRadius: 4,
+            fontSize: 8.5, fontWeight: 900, letterSpacing: "0.14em",
+          }}>★ RECOMENDADO</div>
+        </div>
+        <div style={{ padding: "9px 12px", textAlign: "right", fontSize: 12.5, fontWeight: 900, color: C.greenDeep }}>
+          {formatCOP(recommended.nuevaCuota)}
+        </div>
+        <div style={{ padding: "9px 12px", textAlign: "right", fontSize: 12.5, fontWeight: 900, color: C.greenDeep }}>
+          {recommended.añosEliminados} AÑOS
+        </div>
+        <div style={{ padding: "9px 12px", textAlign: "right", fontSize: 12.5, fontWeight: 900, color: C.greenDeep }}>
+          {formatCOP(recommended.ahorroTotal)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ResumenRow({
+  label, color, cuota, años, dinero,
+}: {
+  label: string; color: string; cuota: number; años: number; dinero: number;
+}) {
+  return (
+    <div style={{
+      display: "grid",
+      gridTemplateColumns: "1.15fr 1fr 1fr 1fr",
+      borderTop: `1px solid ${C.hairline}`,
+      alignItems: "center",
+    }}>
+      <div style={{ padding: "7px 12px", display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ width: 8, height: 8, borderRadius: "50%", background: color }} />
+        <div style={{ fontSize: 11, fontWeight: 800, color: C.ink }}>{label}</div>
+      </div>
+      <div style={{ padding: "7px 12px", textAlign: "right", fontSize: 11, fontWeight: 700, color: C.ink }}>
+        {formatCOP(cuota)}
+      </div>
+      <div style={{ padding: "7px 12px", textAlign: "right", fontSize: 11, fontWeight: 700, color: C.ink }}>
+        {años} años
+      </div>
+      <div style={{ padding: "7px 12px", textAlign: "right", fontSize: 11, fontWeight: 700, color: C.ink }}>
+        {formatCOP(dinero)}
+      </div>
     </div>
   );
 }
@@ -806,8 +956,9 @@ function AlternativaCard(props: {
   return (
     <div style={{
       background: "#fff", border: `1px solid ${C.hairline}`,
-      borderRadius: 10, padding: "7px 12px",
+      borderRadius: 12, padding: "10px 14px",
       breakInside: "avoid", pageBreakInside: "avoid",
+      boxShadow: "0 2px 8px -4px rgba(0,0,0,0.06)",
     }}>
 
       {/* Header card */}
@@ -816,48 +967,48 @@ function AlternativaCard(props: {
       }}>
         <div style={{
           background: accent, color: "#fff",
-          padding: "3px 10px", borderRadius: 6,
-          fontSize: 9.5, fontWeight: 900, letterSpacing: "0.14em",
+          padding: "4px 11px", borderRadius: 6,
+          fontSize: 10.5, fontWeight: 900, letterSpacing: "0.14em",
         }}>
           PROYECCIÓN {index}
         </div>
         <div style={{
-          fontSize: 10, fontWeight: 800, color: deep, fontStyle: "italic",
+          fontSize: 11, fontWeight: 800, color: deep, fontStyle: "italic",
         }}>
           {label}
         </div>
       </div>
 
-      {/* 4 cols compactas */}
+      {/* 4 cols */}
       <div style={{
-        marginTop: 5, display: "grid", gridTemplateColumns: "1.15fr 1fr 1fr 1fr", gap: 8, alignItems: "start",
+        marginTop: 7, display: "grid", gridTemplateColumns: "1.15fr 1fr 1fr 1fr", gap: 10, alignItems: "start",
       }}>
         <div>
-          <div style={{ fontSize: 7.5, letterSpacing: "0.18em", color: C.muted, fontWeight: 800 }}>
+          <div style={{ fontSize: 8.5, letterSpacing: "0.18em", color: C.muted, fontWeight: 800 }}>
             NUEVA CUOTA
           </div>
           <div style={{
-            fontSize: 14.5, fontWeight: 900, color: accent,
-            letterSpacing: "-0.02em", lineHeight: 1.05, marginTop: 1,
+            fontSize: 17, fontWeight: 900, color: accent,
+            letterSpacing: "-0.02em", lineHeight: 1.05, marginTop: 2,
           }}>
             {formatCOP(cuota)}
           </div>
           <div style={{
-            marginTop: 2, display: "inline-block",
-            background: soft, color: deep, fontSize: 8, fontWeight: 800,
-            padding: "1px 6px", borderRadius: 999,
+            marginTop: 3, display: "inline-block",
+            background: soft, color: deep, fontSize: 9, fontWeight: 800,
+            padding: "2px 7px", borderRadius: 999,
           }}>
             +{formatNumber(cuotaPct, 1)}%
           </div>
         </div>
 
         <AltMetric
-          icon={<ClockIcon color={accent} size={12} />}
+          icon={<ClockIcon color={accent} size={13} />}
           label="TIEMPO"
           value={`${Math.round(ahorroAños)} AÑOS`}
           sub={`${ahorroCuotas} cuotas`}
           color={accent}
-          valueSize={14}
+          valueSize={16}
         />
 
         <AltMetric
@@ -866,27 +1017,27 @@ function AlternativaCard(props: {
           value={formatCOP(ahorroDinero)}
           sub="Intereses + seguros"
           color={accent}
-          valueSize={12}
+          valueSize={14}
         />
 
         <div>
-          <div style={{ fontSize: 7.5, letterSpacing: "0.18em", color: C.muted, fontWeight: 800 }}>
+          <div style={{ fontSize: 8.5, letterSpacing: "0.18em", color: C.muted, fontWeight: 800 }}>
             TERMINA
           </div>
           <div style={{
-            fontSize: 16, fontWeight: 900, color: accent,
-            letterSpacing: "-0.02em", marginTop: 1,
+            fontSize: 18, fontWeight: 900, color: accent,
+            letterSpacing: "-0.02em", marginTop: 2,
           }}>
             {terminaEn}
           </div>
-          <div style={{ fontSize: 8, color: C.muted, marginTop: 1 }}>
+          <div style={{ fontSize: 8.5, color: C.muted, marginTop: 1 }}>
             Hoy: {terminaActual}
           </div>
         </div>
       </div>
 
-      {/* Timeline compacto */}
-      <div style={{ marginTop: 5, display: "flex", flexDirection: "column", gap: 2 }}>
+      {/* Timeline */}
+      <div style={{ marginTop: 7, display: "flex", flexDirection: "column", gap: 3 }}>
         <MiniTimeline
           label="SIN NUVEX" labelColor={C.muted}
           startYear={añoHoy} endYear={terminaActual}
@@ -905,10 +1056,10 @@ function AlternativaCard(props: {
 
       {/* Ideal */}
       <div style={{
-        marginTop: 5, background: soft, borderRadius: 6,
-        padding: "4px 8px",
+        marginTop: 6, background: soft, borderRadius: 8,
+        padding: "5px 10px",
       }}>
-        <div style={{ fontSize: 8, color: C.text, lineHeight: 1.15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <div style={{ fontSize: 8.8, color: C.text, lineHeight: 1.25, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           <span style={{ fontWeight: 800, color: deep, fontStyle: "italic" }}>Ideal para: </span>
           {quienIdeal}
         </div>
