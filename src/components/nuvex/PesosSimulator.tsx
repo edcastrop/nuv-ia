@@ -108,7 +108,11 @@ export function PesosSimulator({
 
   const plazoInicial = parseDecimal(client.plazoInicial);
   const cuotasPagadas = parseDecimal(client.cuotasPagadas);
-  const cuotasPendientes = Math.max(0, plazoInicial - cuotasPagadas);
+  const cuotasPendientesGuardadas = parseDecimal(client.cuotasPendientes ?? "");
+  const esFna = /fondo\s+nacional\s+del\s+ahorro|\bfna\b/i.test(`${client.banco} ${client.tipoProducto}`);
+  const cuotasPendientes = cuotasPendientesGuardadas > 0
+    ? cuotasPendientesGuardadas
+    : Math.max(0, plazoInicial - cuotasPagadas + (esFna ? 1 : 0));
   const honorariosPct = parsePercentage(client.porcentajeHonorarios) || 6;
 
   const saneCredito = normalizeCreditMoneyInput({
@@ -357,6 +361,7 @@ export function PesosSimulator({
             productoBancarioId: p.cliente.productoBancarioId ?? prev.productoBancarioId ?? null,
             plazoInicial: p.cliente.plazoInicial || prev.plazoInicial,
             cuotasPagadas: p.cliente.cuotasPagadas || prev.cuotasPagadas,
+            cuotasPendientes: p.cliente.cuotasPendientes || prev.cuotasPendientes,
           }));
           if (p.pesos?.saldoCapital) setSaldoCapital(p.pesos.saldoCapital);
           if (p.pesos && "valorDesembolsado" in p.pesos) setValorDesembolsado(p.pesos.valorDesembolsado || "");
