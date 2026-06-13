@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { PageLayout, ExecutiveHero, KpiGrid, KpiCard, NCard, SectionHeader } from "@/components/nuvia";
+import { PageLayout, ExecutiveHero, NCard, SectionHeader } from "@/components/nuvia";
 import { useServerFn } from "@tanstack/react-start";
 import { obtenerAuditoriaQA, reejecutarAuditoriaQA } from "@/lib/qaAI.functions";
 import { auditar, reconstruir, type AuditarInput } from "@/lib/qaMath";
