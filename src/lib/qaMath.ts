@@ -625,17 +625,15 @@ export interface VeredictoFila {
 }
 
 export interface Veredicto {
-  titular: string;                  // frase de cabecera
-  resumen: string;                  // 1–2 frases ejecutivas
-  filas: VeredictoFila[];           // tabla de responsables
+  titular: string;
+  resumen: string;
+  filas: VeredictoFila[];
   extractoTieneErrores: "no" | "inconsistencia" | "si";
-  causasProbables: string[];        // 0–3 viñetas
-  recomendaciones: string[];        // 0–3 viñetas
-  /** Plazo real implícito por la cuota oficial (meses), si calculable. */
+  causasProbables: string[];
+  recomendaciones: string[];
+  hallazgos?: VeredictoHallazgo[];
   plazoImplicito?: number;
-  /** Plazo reportado por el extracto. */
   plazoReportado?: number;
-  /** Diferencia (implícito − reportado). */
   desfasePlazo?: number;
 }
 
