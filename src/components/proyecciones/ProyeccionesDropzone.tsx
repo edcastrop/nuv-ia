@@ -253,7 +253,7 @@ export function ProyeccionesDropzone({ expedienteId, onReauditoria, variant = "q
       await fnError({ data: { id, error: e instanceof Error ? e.message : "Error al analizar" } });
     }
     return "ok";
-  }, [expedienteId, fnCrear, fnExtract, fnGuardar, fnError, subirArchivoAStorage]);
+  }, [expedienteId, fnCrear, fnExtract, fnGuardar, fnError, subirArchivoAStorage, momento]);
 
   const procesarZip = useCallback(async (zipFile: File) => {
     const JSZip = (await import("jszip")).default;
