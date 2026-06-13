@@ -821,68 +821,65 @@ function AlternativaCard(props: {
         </div>
       </div>
 
-      {/* 4 cols */}
+      {/* 4 cols compactas */}
       <div style={{
-        marginTop: 10,
-        display: "grid", gridTemplateColumns: "1.15fr 1fr 1fr 1fr", gap: 14, alignItems: "start",
+        marginTop: 7, display: "grid", gridTemplateColumns: "1.15fr 1fr 1fr 1fr", gap: 10, alignItems: "start",
       }}>
         <div>
-          <div style={{ fontSize: 8.5, letterSpacing: "0.18em", color: C.muted, fontWeight: 800 }}>
-            NUEVA CUOTA MENSUAL
+          <div style={{ fontSize: 7.5, letterSpacing: "0.18em", color: C.muted, fontWeight: 800 }}>
+            NUEVA CUOTA
           </div>
           <div style={{
-            fontSize: 22, fontWeight: 900, color: accent,
-            letterSpacing: "-0.02em", lineHeight: 1.05, marginTop: 2,
+            fontSize: 16, fontWeight: 900, color: accent,
+            letterSpacing: "-0.02em", lineHeight: 1.05, marginTop: 1,
           }}>
             {formatCOP(cuota)}
           </div>
           <div style={{
-            marginTop: 4, display: "inline-block",
-            background: soft, color: deep, fontSize: 9, fontWeight: 800,
-            padding: "2px 8px", borderRadius: 999,
+            marginTop: 2, display: "inline-block",
+            background: soft, color: deep, fontSize: 8, fontWeight: 800,
+            padding: "1px 6px", borderRadius: 999,
           }}>
             +{formatNumber(cuotaPct, 1)}%
-          </div>
-          <div style={{ fontSize: 8.5, color: C.muted, marginTop: 3 }}>
-            vs. cuota actual
           </div>
         </div>
 
         <AltMetric
-          icon={<ClockIcon color={accent} size={14} />}
-          label="AHORRO EN TIEMPO"
+          icon={<ClockIcon color={accent} size={12} />}
+          label="TIEMPO"
           value={`${Math.round(ahorroAños)} AÑOS`}
           sub={`${ahorroCuotas} cuotas`}
           color={accent}
+          valueSize={14}
         />
 
         <AltMetric
           icon={<MoneyMini color={accent} />}
-          label="AHORRO EN DINERO"
+          label="DINERO"
           value={formatCOP(ahorroDinero)}
-          sub="Menos intereses y seguros"
+          sub="Intereses + seguros"
           color={accent}
-          valueSize={15}
+          valueSize={12}
         />
 
         <div>
-          <div style={{ fontSize: 8.5, letterSpacing: "0.18em", color: C.muted, fontWeight: 800 }}>
-            TERMINARÍAS EN
+          <div style={{ fontSize: 7.5, letterSpacing: "0.18em", color: C.muted, fontWeight: 800 }}>
+            TERMINA
           </div>
           <div style={{
-            fontSize: 22, fontWeight: 900, color: accent,
-            letterSpacing: "-0.02em", marginTop: 2,
+            fontSize: 16, fontWeight: 900, color: accent,
+            letterSpacing: "-0.02em", marginTop: 1,
           }}>
             {terminaEn}
           </div>
-          <div style={{ fontSize: 9, color: C.muted, marginTop: 3 }}>
-            Hoy terminas<br />en {terminaActual}
+          <div style={{ fontSize: 8, color: C.muted, marginTop: 1 }}>
+            Hoy: {terminaActual}
           </div>
         </div>
       </div>
 
-      {/* Timeline */}
-      <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+      {/* Timeline compacto */}
+      <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
         <MiniTimeline
           label="SIN NUVEX" labelColor={C.muted}
           startYear={añoHoy} endYear={terminaActual}
@@ -901,13 +898,11 @@ function AlternativaCard(props: {
 
       {/* Ideal */}
       <div style={{
-        marginTop: 10, background: soft, borderRadius: 8,
-        padding: "8px 12px",
+        marginTop: 7, background: soft, borderRadius: 6,
+        padding: "5px 10px",
       }}>
-        <div style={{ fontSize: 10, fontWeight: 800, color: deep, fontStyle: "italic" }}>
-          ¿Para quién es ideal esta opción?
-        </div>
-        <div style={{ fontSize: 9.5, color: C.text, lineHeight: 1.4, marginTop: 2 }}>
+        <div style={{ fontSize: 8.5, color: C.text, lineHeight: 1.35 }}>
+          <span style={{ fontWeight: 800, color: deep, fontStyle: "italic" }}>Ideal para: </span>
           {quienIdeal}
         </div>
       </div>
