@@ -250,7 +250,7 @@ function TeaAlertCard({ tea, umbral = 10 }: { tea: number; umbral?: number }) {
   const icon = esRiesgo ? "🔴" : "🟢";
   const label = esRiesgo ? "TASA ALTA" : "TASA DENTRO DE RANGO";
   const mensaje = esRiesgo
-    ? `La TEA (${tea.toFixed(2).replace(".", ",")}%) supera el umbral crítico del ${umbral}%. Se recomienda revisar opciones de refinanciación.`
+    ? `La TEA (${tea.toFixed(2).replace(".", ",")}%) supera el umbral crítico del ${umbral}%. Se recomienda evaluar una optimización del crédito o leasing.`
     : `La TEA (${tea.toFixed(2).replace(".", ",")}%) se encuentra por debajo del umbral del ${umbral}%.`;
 
   return (
