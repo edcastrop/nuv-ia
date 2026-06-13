@@ -149,16 +149,18 @@ export function PrintDocument(props: Props) {
       <section
         className="nuvex-print-page"
         style={{
-          width: "210mm", minHeight: "297mm",
+          width: "210mm", height: "297mm", maxHeight: "297mm",
           background: C.paper,
+          boxSizing: "border-box", overflow: "hidden",
           display: "flex", flexDirection: "column",
           pageBreakAfter: "always", breakAfter: "page",
         }}
       >
         {/* ───── HEADER NEGRO ───── */}
         <div style={{
-          background: C.black, color: "#fff", padding: "16px 24px",
+          background: C.black, color: "#fff", padding: "12px 22px",
           display: "grid", gridTemplateColumns: "auto 1fr", alignItems: "center", gap: 20,
+          breakInside: "avoid", pageBreakInside: "avoid",
         }}>
           <img
             src={logoNuvex} alt="NUVEX" crossOrigin="anonymous"
@@ -175,22 +177,23 @@ export function PrintDocument(props: Props) {
 
         {/* ───── HERO ───── */}
         <div style={{
-          padding: "22px 24px 14px 24px",
-          display: "grid", gridTemplateColumns: "1.55fr 0.45fr", gap: 22, alignItems: "center",
+          padding: "16px 22px 9px 22px",
+          display: "grid", gridTemplateColumns: "1.62fr 0.38fr", gap: 18, alignItems: "center",
+          breakInside: "avoid", pageBreakInside: "avoid",
         }}>
           <div>
             <div style={{ fontSize: 13, color: C.text, marginBottom: 4 }}>
               Hola, <span style={{ color: C.azul, fontWeight: 800 }}>{primerNombre}</span>
             </div>
             <h1 style={{
-              margin: 0, fontSize: 40, lineHeight: 1.02, fontWeight: 900,
+              margin: 0, fontSize: 36, lineHeight: 1.01, fontWeight: 900,
               color: C.black, letterSpacing: "-0.035em",
             }}>
               Recupera parte de<br />
               tu <span style={{ color: C.green }}>vida financiera</span>
             </h1>
             <p style={{
-              marginTop: 10, fontSize: 11, lineHeight: 1.55, color: C.muted, maxWidth: 420,
+              marginTop: 7, fontSize: 10.5, lineHeight: 1.4, color: C.muted, maxWidth: 420,
             }}>
               {primerNombre}, encontramos una oportunidad real
               de optimizar tu crédito sin cambiar de banco.
@@ -198,7 +201,7 @@ export function PrintDocument(props: Props) {
           </div>
           <div style={{
             position: "relative", borderRadius: 12, overflow: "hidden",
-            height: 120, boxShadow: "0 12px 28px -18px rgba(0,0,0,0.35)",
+            height: 90, boxShadow: "0 12px 28px -18px rgba(0,0,0,0.35)",
           }}>
             <img
               src={heroSunset} alt="" crossOrigin="anonymous"
