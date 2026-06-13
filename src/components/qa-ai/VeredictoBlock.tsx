@@ -130,6 +130,45 @@ export function VeredictoBlock({ veredicto }: { veredicto: Veredicto | null | un
         </table>
       </div>
 
+      {/* Hallazgos detallados */}
+      {(veredicto.hallazgos?.length ?? 0) > 0 && (
+        <div style={{ padding: "16px 20px 0" }}>
+          <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "var(--nuvia-text-secondary)" }}>
+            Hallazgos detectados por NUVIA ({veredicto.hallazgos!.length})
+          </p>
+          <div className="space-y-2">
+            {veredicto.hallazgos!.map((h: VeredictoHallazgo) => {
+              const sevColor = h.severidad === "critica" ? TONO.error.color : h.severidad === "warning" ? TONO.warning.color : TONO.neutral.color;
+              const sevBg = h.severidad === "critica" ? TONO.error.bg : h.severidad === "warning" ? TONO.warning.bg : TONO.neutral.bg;
+              return (
+                <div
+                  key={h.codigo}
+                  style={{ background: sevBg, border: `1px solid ${sevColor}33`, borderRadius: 8, padding: "10px 12px" }}
+                >
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle size={14} style={{ color: sevColor, marginTop: 2, flexShrink: 0 }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
+                        {h.titulo}
+                        <span className="ml-2 text-[10px] uppercase tracking-wider" style={{ color: sevColor }}>
+                          {h.severidad}
+                        </span>
+                      </p>
+                      <p className="text-[12.5px] mt-1" style={{ color: "var(--nuvia-text-secondary)" }}>{h.detalle}</p>
+                      <p className="text-[12.5px] mt-1.5 flex gap-1.5" style={{ color: "var(--nuvia-text-primary)" }}>
+                        <Lightbulb size={12} style={{ color: "var(--nuvia-accent)", marginTop: 3, flexShrink: 0 }} />
+                        <span><strong style={{ color: "var(--nuvia-accent)" }}>Pista:</strong> {h.pista}</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+
       {/* ¿El extracto tiene errores? */}
       <div style={{ padding: "16px 20px 0" }}>
         <p className="text-xs uppercase tracking-wider" style={{ color: "var(--nuvia-text-secondary)" }}>
