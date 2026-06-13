@@ -1369,55 +1369,164 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
 
             <div className="relative min-h-0 flex-1 overflow-y-auto px-6 py-5">
               {stage === "idle" && (
-                <div
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (e.dataTransfer) e.dataTransfer.dropEffect = "copy";
-                    if (!dragActive) setDragActive(true);
-                  }}
-                  onDragEnter={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setDragActive(true);
-                  }}
-                  onDragLeave={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setDragActive(false);
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setDragActive(false);
-                    const f = e.dataTransfer.files?.[0];
-                    if (f) handleFileSelect(f);
-                  }}
-                  onClick={() => fileRef.current?.click()}
-                  className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed py-12 text-center transition-all ${
-                    dragActive ? "scale-[1.01]" : ""
-                  }`}
-                  style={{
-                    borderColor: dragActive ? "#84B98F" : "rgba(255,255,255,0.15)",
-                    background: dragActive ? "rgba(132,185,143,0.08)" : "transparent",
-                  }}
-                >
-                  <Upload className={`h-10 w-10 ${dragActive ? "text-[#84B98F]" : "text-white/40"}`} />
-                  <div className="text-sm text-white/70 pointer-events-none">
-                    {dragActive ? "Suelta el archivo aquí" : "Arrastra el extracto o haz clic para seleccionar"}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      fileRef.current?.click();
-                    }}
-                    className="rounded-lg px-4 py-2 text-xs font-semibold text-white"
-                    style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.56), rgba(132,185,143,0.48))" }}
-                  >
-                    Seleccionar archivo
-                  </button>
-                  <div className="text-[11px] text-white/40 pointer-events-none">PDF, JPG o PNG · hasta 6 páginas</div>
+                <div className="space-y-4">
+                  {staging.length === 0 ? (
+                    <div
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (e.dataTransfer) e.dataTransfer.dropEffect = "copy";
+                        if (!dragActive) setDragActive(true);
+                      }}
+                      onDragEnter={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setDragActive(true);
+                      }}
+                      onDragLeave={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setDragActive(false);
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setDragActive(false);
+                        const f = e.dataTransfer.files?.[0];
+                        if (f) handleFileSelect(f);
+                      }}
+                      onClick={() => fileRef.current?.click()}
+                      className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed py-12 text-center transition-all ${
+                        dragActive ? "scale-[1.01]" : ""
+                      }`}
+                      style={{
+                        borderColor: dragActive ? "#84B98F" : "rgba(255,255,255,0.15)",
+                        background: dragActive ? "rgba(132,185,143,0.08)" : "transparent",
+                      }}
+                    >
+                      <Upload className={`h-10 w-10 ${dragActive ? "text-[#84B98F]" : "text-white/40"}`} />
+                      <div className="text-sm text-white/70 pointer-events-none">
+                        {dragActive ? "Suelta el archivo aquí" : "Arrastra el extracto o haz clic para seleccionar"}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          fileRef.current?.click();
+                        }}
+                        className="rounded-lg px-4 py-2 text-xs font-semibold text-white"
+                        style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.56), rgba(132,185,143,0.48))" }}
+                      >
+                        Seleccionar archivo
+                      </button>
+                      <div className="text-[11px] text-white/40 pointer-events-none">
+                        PDF, JPG, PNG o ZIP · puedes añadir varias capturas (máx {MAX_PAGES} páginas en total)
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <div className="text-sm font-semibold text-white">
+                            Páginas listas para leer
+                          </div>
+                          <div className="text-[11px] text-white/55">
+                            {staging.length} / {MAX_PAGES} páginas · NUVIA leerá todas como un solo extracto.
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => fileRef.current?.click()}
+                            disabled={staging.length >= MAX_PAGES}
+                            className="rounded-lg border px-3 py-1.5 text-[12px] font-semibold text-white/85 transition hover:text-white disabled:opacity-40"
+                            style={{
+                              background: "rgba(255,255,255,0.04)",
+                              borderColor: "rgba(255,255,255,0.14)",
+                            }}
+                          >
+                            + Añadir página
+                          </button>
+                          <button
+                            type="button"
+                            onClick={reset}
+                            className="rounded-lg border px-3 py-1.5 text-[12px] font-semibold text-white/70 transition hover:text-white"
+                            style={{
+                              background: "rgba(255,255,255,0.03)",
+                              borderColor: "rgba(255,255,255,0.10)",
+                            }}
+                          >
+                            Limpiar
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                        {staging.map((item, idx) => (
+                          <div
+                            key={`${item.sourceName}-${idx}`}
+                            className="relative overflow-hidden rounded-lg border"
+                            style={{
+                              background: "rgba(255,255,255,0.03)",
+                              borderColor: "rgba(255,255,255,0.10)",
+                            }}
+                          >
+                            <div className="aspect-[3/4] w-full overflow-hidden bg-black/30">
+                              <img
+                                src={item.dataUrl}
+                                alt={`Página ${idx + 1}`}
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+                            <div
+                              className="absolute left-1.5 top-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-bold text-white"
+                              style={{ background: "rgba(68,93,163,0.85)" }}
+                            >
+                              {idx + 1}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeStaged(idx)}
+                              className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md text-white"
+                              style={{ background: "rgba(240,68,56,0.85)" }}
+                              aria-label="Eliminar página"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                            <div className="truncate px-2 py-1 text-[10px] text-white/60">
+                              {item.sourceName}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {stagingNotice && (
+                        <div
+                          className="rounded-lg px-3 py-2 text-[12px]"
+                          style={{
+                            background: "rgba(244,162,97,0.10)",
+                            border: "1px solid rgba(244,162,97,0.30)",
+                            color: "#F4A261",
+                          }}
+                        >
+                          {stagingNotice}
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={runReading}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white"
+                        style={{
+                          background: "linear-gradient(135deg, rgba(68,93,163,0.7), rgba(132,185,143,0.62))",
+                          boxShadow: "0 14px 32px -18px rgba(132,185,143,0.5)",
+                        }}
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        Leer extracto ({staging.length} {staging.length === 1 ? "página" : "páginas"})
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
