@@ -459,8 +459,8 @@ function ResultadoQaAi() {
             <thead>
               <tr style={{ background: "rgba(255,255,255,0.03)" }}>
                 {(isUvr
-                  ? ["#", "Cuota", "Interés", "Capital", "Corrección", "Seguros", "Fresh", "Cuota total", "Saldo COP", "Saldo UVR", "Valor UVR"]
-                  : ["#", "Cuota", "Interés", "Capital", "Seguros", "Fresh", "Cuota total", "Saldo"]
+                  ? ["#", "Cuota", "Interés", "Capital", "Corrección", "Seguros", ...(reconMeta.hasFrech ? ["Fresh"] : []), "Cuota total", "Saldo COP", "Saldo UVR", "Valor UVR"]
+                  : ["#", "Cuota", "Interés", "Capital", "Seguros", ...(reconMeta.hasFrech ? ["Fresh"] : []), "Cuota total", "Saldo"]
                 ).map((h) => (
                   <th key={h} className="text-right px-4 py-2 font-medium" style={{ color: "var(--nuvia-text-secondary)", borderBottom: "1px solid var(--nuvia-border)" }}>{h}</th>
                 ))}
@@ -482,7 +482,7 @@ function ResultadoQaAi() {
                   <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>${fmt(f.capital, 0)}</td>
                   {isUvr && <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-warning)" }}>${fmt(f.correccionUvr, 0)}</td>}
                   <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>${fmt(f.seguros, 0)}</td>
-                  <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: f.fresh > 0 ? "var(--nuvia-success)" : "var(--nuvia-text-secondary)" }}>{f.fresh > 0 ? `−$${fmt(f.fresh, 0)}` : "$0"}</td>
+                  {reconMeta.hasFrech && <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: f.fresh > 0 ? "var(--nuvia-success)" : "var(--nuvia-text-secondary)" }}>{f.fresh > 0 ? `−$${fmt(f.fresh, 0)}` : "$0"}</td>}
                   <td className="px-4 py-1.5 text-right tabular-nums font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>${fmt(f.cuotaTotal, 0)}</td>
                   <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>${fmt(f.saldo, 0)}</td>
                   {isUvr && <td className="px-4 py-1.5 text-right tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>{fmt(f.saldoUvr, 4)}</td>}
