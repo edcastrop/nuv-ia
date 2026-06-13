@@ -210,25 +210,12 @@ function ResultadoQaAi() {
         }
       />
 
-      <NCard>
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-wider" style={{ color: "var(--nuvia-text-secondary)" }}>QA Score</p>
-            <p className="text-5xl font-bold tabular-nums" style={{ color: scoreColor }}>{score.toFixed(1)}<span className="text-lg opacity-50"> / 100</span></p>
-          </div>
-          <div className="text-right">
-            <p className="text-xs uppercase tracking-wider" style={{ color: "var(--nuvia-text-secondary)" }}>Categoría</p>
-            <p className="text-2xl font-semibold uppercase" style={{ color: scoreColor }}>{a.categoria}</p>
-            <p className="text-xs mt-1" style={{ color: dictColor }}>{dictamenLabel[a.dictamen] ?? a.dictamen}</p>
-          </div>
-        </div>
-      </NCard>
-
       <VeredictoBlock
         veredicto={
           (recomputo?.veredicto ?? (o.veredicto as unknown as Veredicto | undefined)) as Veredicto | undefined
         }
       />
+
 
       {typeof a.expediente_id === "string" ? (() => {
         const banco =
