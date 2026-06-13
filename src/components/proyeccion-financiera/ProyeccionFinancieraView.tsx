@@ -1183,7 +1183,7 @@ export function ProyeccionFinancieraView() {
                     <Field label="Valor desembolsado" value={input.valorDesembolsado || ""} onChange={updNum("valorDesembolsado")} placeholder="220.000.000" />
                     <Field label="Saldo a capital" value={input.saldoCapital || ""} onChange={updNum("saldoCapital")} placeholder="180.000.000" />
                     <Field label="Cuota actual" value={input.cuotaActual || ""} onChange={updNum("cuotaActual")} placeholder="2.450.000" />
-                    <Field label="TEA %" value={input.teaPct || ""} onChange={updDec("teaPct")} placeholder="13,5" />
+                    <DecimalField label="TEA %" value={input.teaPct || ""} onChange={updDec("teaPct")} placeholder="13,5" />
                     <Field label="Cuotas totales" value={input.cuotasTotales || ""} onChange={updInt("cuotasTotales")} placeholder="240" />
                     <Field label="Cuotas pagadas" value={input.cuotasPagadas || ""} onChange={updInt("cuotasPagadas")} placeholder="36" />
                     <Field label="Cuotas pendientes" value={input.cuotasPendientes || ""} onChange={updInt("cuotasPendientes")} placeholder="204" />
