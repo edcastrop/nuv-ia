@@ -1263,23 +1263,6 @@ function FooterItem({ icon, title, lines }: { icon: React.ReactNode; title: stri
   );
 }
 
-function QRPlaceholder() {
-  // Simple geometric QR-style placeholder so el bloque luzca completo
-  return (
-    <div style={{
-      width: 60, height: 60, background: "#fff",
-      border: `1px solid ${C.hairline}`, borderRadius: 8,
-      display: "grid", gridTemplateColumns: "repeat(7, 1fr)", padding: 4, gap: 1,
-    }}>
-      {Array.from({ length: 49 }).map((_, i) => {
-        const on = [0,1,2,5,6,7,8,9,13,14,16,18,19,21,23,25,28,31,33,35,37,39,42,44,45,46,47,48].includes(i);
-        return (
-          <div key={i} style={{ background: on ? C.black : "transparent" }} />
-        );
-      })}
-    </div>
-  );
-}
 
 function initialsOf(name: string): string {
   return name
