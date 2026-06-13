@@ -1214,9 +1214,9 @@ export function ProyeccionFinancieraView() {
                 {input.moneda === "uvr" && (
                   <Surface title="Datos UVR">
                     <div className="grid grid-cols-2 gap-3">
-                      <Field label="Valor UVR" value={input.uvrValor || ""} onChange={updDec("uvrValor")} placeholder="380,12" />
-                      <Field label="Saldo UVR" value={input.saldoUvr || ""} onChange={updDec("saldoUvr")} placeholder="220.000,00" />
-                      <Field label="Variación UVR anual %" value={input.variacionUvrPct || ""} onChange={updDec("variacionUvrPct")} placeholder="6" />
+                      <DecimalField label="Valor UVR" value={input.uvrValor || ""} onChange={updDec("uvrValor")} placeholder="380,12" />
+                      <DecimalField label="Saldo UVR" value={input.saldoUvr || ""} onChange={updDec("saldoUvr")} placeholder="220.000,00" />
+                      <DecimalField label="Variación UVR anual %" value={input.variacionUvrPct || ""} onChange={updDec("variacionUvrPct")} placeholder="6" />
                     </div>
                   </Surface>
                 )}
