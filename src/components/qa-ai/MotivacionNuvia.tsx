@@ -171,11 +171,8 @@ export function MotivacionNuvia({ seed }: { seed: string }) {
             className="text-[10px] font-bold uppercase tracking-[0.2em]"
             style={{ color: "var(--nuvia-text-muted)" }}
           >
-            NUVIA · Mensaje para el cierre
+            NUVIA · Un momento contigo
           </div>
-          <p className="mt-1 text-[15px] leading-snug">
-            <span className="font-semibold">{nombre}</span>, recuerda esto antes de cerrar:
-          </p>
 
           <div
             className="mt-3 rounded-lg p-3"
@@ -194,14 +191,17 @@ export function MotivacionNuvia({ seed }: { seed: string }) {
                   {cita.analogia}
                 </p>
                 <p
-                  className="mt-2 font-semibold"
+                  className="mt-3 font-semibold text-[14.5px]"
                   style={{
                     background: "linear-gradient(135deg, var(--nuvia-accent), var(--nuvia-accent-green))",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
                   }}
                 >
-                  {nombre}, {cita.cierre.charAt(0).toLowerCase() + cita.cierre.slice(1)}
+                  {pickEmotivo(seed, nombre)}
+                </p>
+                <p className="mt-1.5 text-[12.5px] italic" style={{ color: "var(--nuvia-text-secondary)" }}>
+                  — {cita.cierre}
                 </p>
               </div>
             </div>
