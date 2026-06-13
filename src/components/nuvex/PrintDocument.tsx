@@ -414,35 +414,55 @@ export function PrintDocument(props: Props) {
         </div>
 
 
-        {/* ───── CIERRE ───── */}
-        <div style={{ padding: "14px 24px 0 24px", flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+        {/* ───── CIERRE EMOCIONAL PREMIUM (full width) ───── */}
+        <div style={{ padding: "16px 24px 0 24px", flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
           <div style={{
-            background: C.black, color: "#fff",
-            borderRadius: 12, padding: "14px 18px",
-            display: "grid", gridTemplateColumns: "1fr auto", gap: 16, alignItems: "center",
+            background: `linear-gradient(135deg, ${C.black} 0%, #1a1a1a 100%)`,
+            color: "#fff", borderRadius: 14, padding: "20px 26px",
+            position: "relative", overflow: "hidden",
           }}>
-            <div>
-              <div style={{ fontSize: 22, color: C.green, lineHeight: 0.6, fontWeight: 900 }}>“</div>
-              <p style={{
-                margin: "2px 0 0 0", fontSize: 10.5, lineHeight: 1.55,
-                color: "rgba(255,255,255,0.92)",
-              }}>
-                Cada cuota que eliminas es tiempo que recuperas.<br />
-                Tiempo para tu familia. Tiempo para tus proyectos. Tiempo para tu patrimonio.
-              </p>
-              <div style={{
-                marginTop: 8, fontSize: 11, fontWeight: 800, color: "#fff",
-              }}>
+            <div style={{
+              position: "absolute", top: -10, left: 18,
+              fontSize: 80, color: C.green, lineHeight: 1, fontWeight: 900, opacity: 0.35,
+            }}>“</div>
+            <div style={{
+              fontSize: 13, color: C.green, fontWeight: 800, letterSpacing: "0.04em",
+              marginBottom: 6, position: "relative",
+            }}>
+              {primerNombre}:
+            </div>
+            <p style={{
+              margin: 0, fontSize: 12, lineHeight: 1.6,
+              color: "rgba(255,255,255,0.94)", position: "relative", maxWidth: "92%",
+            }}>
+              Dentro de unos años este crédito se terminará de una u otra forma.
+              La diferencia es decidir si quieres seguir el camino actual
+              o <span style={{ color: C.green, fontWeight: 700 }}>recuperar parte de tu tiempo financiero</span>.
+              <br /><br />
+              Cada cuota eliminada es tiempo que vuelve a ti.
+              Tiempo para tu familia. Tiempo para tus proyectos.
+              Tiempo para construir patrimonio.
+            </p>
+            <div style={{
+              marginTop: 14, paddingTop: 12,
+              borderTop: "1px solid rgba(255,255,255,0.15)",
+              display: "grid", gridTemplateColumns: "1fr auto", gap: 16, alignItems: "center",
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.85)" }}>
                 La decisión siempre será tuya. Nosotros ya hicimos los cálculos.
               </div>
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <div style={{
-                fontFamily: SCRIPT, fontSize: 28, color: C.green, lineHeight: 1,
-              }}>{analista}</div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{
+                  fontFamily: SCRIPT, fontSize: 26, color: C.green, lineHeight: 1,
+                }}>{analista}</div>
+                <div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.6)", marginTop: 2, letterSpacing: "0.12em" }}>
+                  ANALISTA NUVEX
+                </div>
+              </div>
             </div>
           </div>
         </div>
+
 
         {/* ───── FOOTER ───── */}
         <FooterStrip />
