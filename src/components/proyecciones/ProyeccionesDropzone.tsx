@@ -236,6 +236,7 @@ export function ProyeccionesDropzone({ expedienteId, onReauditoria, variant = "q
       sizeBytes: file.size,
       origenZip: opts.origenZip ?? null,
       passwordUsada: Boolean(opts.password),
+      momento,
     } });
     // 3) llamar IA
     try {
