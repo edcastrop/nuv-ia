@@ -2716,6 +2716,7 @@ export type Database = {
           expediente_id: string
           id: string
           mime: string
+          momento: string
           origen_zip: string | null
           parsed_at: string | null
           password_usada: boolean
@@ -2734,6 +2735,7 @@ export type Database = {
           expediente_id: string
           id?: string
           mime: string
+          momento?: string
           origen_zip?: string | null
           parsed_at?: string | null
           password_usada?: boolean
@@ -2752,6 +2754,7 @@ export type Database = {
           expediente_id?: string
           id?: string
           mime?: string
+          momento?: string
           origen_zip?: string | null
           parsed_at?: string | null
           password_usada?: boolean
@@ -2949,6 +2952,7 @@ export type Database = {
           validacion_estado: string
           validacion_motivo_devolucion: string | null
           validacion_version: number
+          verificacion_cierre: Json | null
         }
         Insert: {
           aceptacion_cliente_at?: string | null
@@ -3003,6 +3007,7 @@ export type Database = {
           validacion_estado?: string
           validacion_motivo_devolucion?: string | null
           validacion_version?: number
+          verificacion_cierre?: Json | null
         }
         Update: {
           aceptacion_cliente_at?: string | null
@@ -3057,6 +3062,7 @@ export type Database = {
           validacion_estado?: string
           validacion_motivo_devolucion?: string | null
           validacion_version?: number
+          verificacion_cierre?: Json | null
         }
         Relationships: [
           {

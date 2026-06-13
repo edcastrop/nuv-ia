@@ -34,6 +34,7 @@ import {
   eliminarProyeccion,
   urlFirmadaProyeccion,
   fusionarConExtractoYReauditar,
+  verificarCierreContraPropuesta,
 } from "@/lib/proyecciones.functions";
 import { auditarLecturaAutomatica } from "@/lib/qaAI.functions";
 
@@ -45,6 +46,7 @@ type ProyeccionRow = {
   size_bytes: number | null;
   origen_zip: string | null;
   password_usada: boolean;
+  momento: string;
   status: string;
   error: string | null;
   datos: Record<string, unknown> | null;
@@ -54,9 +56,13 @@ type ProyeccionRow = {
 
 interface Props {
   expedienteId: string;
-  /** Cuando termina la fusión + reauditoría, refresca la vista que lo monta. */
+  /** Cuando termina la fusión + reauditoría (o verificación), refresca la vista que lo monta. */
   onReauditoria?: () => void;
   variant?: "expediente" | "qa";
+  /** "auditoria" = proyección inicial para auditar el extracto. "cierre" = proyección final que emite el banco al cerrar. */
+  momento?: "auditoria" | "cierre";
+  /** Callback opcional cuando termina la verificación de cierre. */
+  onVerificacionCierre?: () => void;
 }
 
 async function loadPdfJs() {
@@ -150,8 +156,9 @@ function fmtBytes(b: number | null) {
   return `${(b / 1024 / 1024).toFixed(2)} MB`;
 }
 
-export function ProyeccionesDropzone({ expedienteId, onReauditoria, variant = "qa" }: Props) {
+export function ProyeccionesDropzone({ expedienteId, onReauditoria, variant = "qa", momento = "auditoria", onVerificacionCierre }: Props) {
   const isDark = variant === "qa";
+  const esCierre = momento === "cierre";
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [items, setItems] = useState<ProyeccionRow[]>([]);
@@ -168,6 +175,7 @@ export function ProyeccionesDropzone({ expedienteId, onReauditoria, variant = "q
   const fnError = useServerFn(marcarErrorProyeccion);
   const fnDelete = useServerFn(eliminarProyeccion);
   const fnFusionar = useServerFn(fusionarConExtractoYReauditar);
+  const fnVerificar = useServerFn(verificarCierreContraPropuesta);
   const fnUrl = useServerFn(urlFirmadaProyeccion);
   const fnExtract = useServerFn(extractStatement);
   const fnAuditar = useServerFn(auditarLecturaAutomatica);
@@ -175,10 +183,10 @@ export function ProyeccionesDropzone({ expedienteId, onReauditoria, variant = "q
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const r = await fnList({ data: { expedienteId } });
+      const r = await fnList({ data: { expedienteId, momento } });
       setItems((r.items ?? []) as ProyeccionRow[]);
     } finally { setLoading(false); }
-  }, [expedienteId, fnList]);
+  }, [expedienteId, fnList, momento]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -228,6 +236,7 @@ export function ProyeccionesDropzone({ expedienteId, onReauditoria, variant = "q
       sizeBytes: file.size,
       origenZip: opts.origenZip ?? null,
       passwordUsada: Boolean(opts.password),
+      momento,
     } });
     // 3) llamar IA
     try {
@@ -244,7 +253,7 @@ export function ProyeccionesDropzone({ expedienteId, onReauditoria, variant = "q
       await fnError({ data: { id, error: e instanceof Error ? e.message : "Error al analizar" } });
     }
     return "ok";
-  }, [expedienteId, fnCrear, fnExtract, fnGuardar, fnError, subirArchivoAStorage]);
+  }, [expedienteId, fnCrear, fnExtract, fnGuardar, fnError, subirArchivoAStorage, momento]);
 
   const procesarZip = useCallback(async (zipFile: File) => {
     const JSZip = (await import("jszip")).default;
@@ -334,6 +343,16 @@ export function ProyeccionesDropzone({ expedienteId, onReauditoria, variant = "q
     } finally { setReauditando(false); }
   }, [items, fnFusionar, fnAuditar, expedienteId, onReauditoria]);
 
+  const verificarCierre = useCallback(async () => {
+    setReauditando(true); setErr(null);
+    try {
+      await fnVerificar({ data: { expedienteId } });
+      onVerificacionCierre?.();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "No se pudo verificar el cierre");
+    } finally { setReauditando(false); }
+  }, [fnVerificar, expedienteId, onVerificacionCierre]);
+
   // Tokens según contexto (dark dentro de QA, light dentro de Expediente)
   const tokens = isDark
     ? {
@@ -352,26 +371,33 @@ export function ProyeccionesDropzone({ expedienteId, onReauditoria, variant = "q
 
   const hayAnalizadas = items.some((i) => i.status === "analizado");
 
+  const titulo = esCierre ? "Proyecciones de cierre del banco" : "Proyecciones del banco";
+  const descripcion = esCierre
+    ? "Sube aquí las proyecciones que el banco emite cuando termina de ejecutar el caso. NUVIA verifica que lo aplicado coincida con la propuesta que escogió el cliente."
+    : "Suelta aquí PDF, Excel, imágenes o ZIP. NUVIA leerá saldo a capital, tasa, UVR, cuota, seguros y cuotas pendientes para continuar el dictamen.";
+
   return (
     <div style={{ background: tokens.cardBg, border: `1px solid ${tokens.border}`, borderRadius: 14, padding: 16 }}>
       <div className="flex items-start justify-between gap-3 mb-3">
         <div>
           <h3 className="text-sm font-semibold inline-flex items-center gap-2" style={{ color: tokens.text }}>
-            <UploadCloud size={16} style={{ color: tokens.accent }} /> Proyecciones del banco
+            <UploadCloud size={16} style={{ color: tokens.accent }} /> {titulo}
           </h3>
           <p className="text-[11px] mt-1" style={{ color: tokens.textDim }}>
-            Suelta aquí PDF, Excel, imágenes o ZIP. NUVIA leerá saldo a capital, tasa, UVR, cuota, seguros y cuotas pendientes para continuar el dictamen.
+            {descripcion}
           </p>
         </div>
         {hayAnalizadas && (
           <button
-            onClick={fusionarYReauditar}
+            onClick={esCierre ? verificarCierre : fusionarYReauditar}
             disabled={reauditando}
             className="text-[11px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md font-semibold"
             style={{ background: tokens.accent, color: "#FFFFFF", opacity: reauditando ? 0.6 : 1 }}
           >
             {reauditando ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
-            {reauditando ? "Reauditando…" : "Fusionar con extracto y reauditar"}
+            {reauditando
+              ? (esCierre ? "Verificando…" : "Reauditando…")
+              : (esCierre ? "Verificar cierre vs propuesta" : "Fusionar con extracto y reauditar")}
           </button>
         )}
       </div>

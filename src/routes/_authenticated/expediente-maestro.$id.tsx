@@ -22,6 +22,8 @@ import { ModuloJuridico } from "@/components/expediente-maestro/ModuloJuridico";
 import { MotorExtractosNUVEX } from "@/components/nuvex/MotorExtractosNUVEX";
 import { QAFinancieroBlock } from "@/components/expediente/QAFinancieroBlock";
 import { ProyeccionesDropzone } from "@/components/proyecciones/ProyeccionesDropzone";
+import { VerificacionCierreBlock } from "@/components/proyecciones/VerificacionCierreBlock";
+import { bancoGeneraProyeccionesCierre, motivoSinProyecciones } from "@/lib/bancosProyecciones";
 import type { MotorResultado } from "@/lib/motorExtractos.functions";
 import { withFreshDerivados, normalizeTipoBeneficio, FRESH_DEFAULT_TOTAL } from "@/lib/cobertura";
 import { normalizeCreditMoneyInput } from "@/lib/creditoSanity";
@@ -464,7 +466,19 @@ function MaestroDetail() {
 
       <QAFinancieroBlock expedienteId={id} />
 
-      <ProyeccionesDropzone expedienteId={id} variant="expediente" />
+      <ProyeccionesDropzone expedienteId={id} variant="expediente" momento="auditoria" />
+
+      {bancoGeneraProyeccionesCierre(credito.banco) ? (
+        <>
+          <ProyeccionesDropzone expedienteId={id} variant="expediente" momento="cierre" />
+          <VerificacionCierreBlock expedienteId={id} bancoHint={credito.banco} variant="expediente" />
+        </>
+      ) : credito.banco ? (
+        <div className="rounded-2xl border border-[#E5E7EB] bg-white p-4 text-[12.5px] text-[#475569]">
+          <strong className="text-[#242424]">Verificación de cierre:</strong>{" "}
+          {motivoSinProyecciones(credito.banco) ?? "Este banco no emite proyecciones formales al cierre. NUVIA verificará contra el próximo extracto post-ejecución."}
+        </div>
+      ) : null}
 
       {(aplicandoExtracto || extractoAplicado) && (
         <div ref={resumenRef}>

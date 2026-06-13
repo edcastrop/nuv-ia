@@ -6,6 +6,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { VerificacionCierre } from "./bancosProyecciones";
 
 const CrearRegistroSchema = z.object({
   expedienteId: z.string().uuid(),
@@ -15,6 +16,7 @@ const CrearRegistroSchema = z.object({
   sizeBytes: z.number().int().nonnegative().nullable().optional(),
   origenZip: z.string().max(300).nullable().optional(),
   passwordUsada: z.boolean().default(false),
+  momento: z.enum(["auditoria", "cierre"]).default("auditoria"),
 });
 
 export const crearRegistroProyeccion = createServerFn({ method: "POST" })
@@ -32,6 +34,7 @@ export const crearRegistroProyeccion = createServerFn({ method: "POST" })
         size_bytes: data.sizeBytes ?? null,
         origen_zip: data.origenZip ?? null,
         password_usada: data.passwordUsada,
+        momento: data.momento,
         status: "pendiente",
         uploaded_by: userId,
       })
@@ -80,14 +83,19 @@ export const marcarErrorProyeccion = createServerFn({ method: "POST" })
 export const listarProyecciones = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ expedienteId: z.string().uuid() }).parse(input),
+    z.object({
+      expedienteId: z.string().uuid(),
+      momento: z.enum(["auditoria", "cierre"]).optional(),
+    }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { data: rows, error } = await context.supabase
+    let q = context.supabase
       .from("expediente_proyecciones")
-      .select("id,archivo_nombre,archivo_path,mime,size_bytes,origen_zip,password_usada,status,error,datos,parsed_at,created_at")
+      .select("id,archivo_nombre,archivo_path,mime,size_bytes,origen_zip,password_usada,momento,status,error,datos,parsed_at,created_at")
       .eq("expediente_id", data.expedienteId)
       .order("created_at", { ascending: false });
+    if (data.momento) q = q.eq("momento", data.momento);
+    const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
     return { items: rows ?? [] };
   });
@@ -221,4 +229,90 @@ export const fusionarConExtractoYReauditar = createServerFn({ method: "POST" })
     if (errU) throw new Error(errU.message);
 
     return { ok: true, extractoLecturaId: ext.id as string, camposFusionados: Object.keys(fusion) };
+  });
+
+// ============================================================================
+// Verificación de cierre: compara la propuesta del cliente vs las proyecciones
+// de cierre que emitió el banco. Guarda el resultado en `expedientes.verificacion_cierre`.
+// ============================================================================
+
+export const verificarCierreContraPropuesta = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ expedienteId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { calcularVerificacionCierre, bancoGeneraProyeccionesCierre } = await import("./bancosProyecciones");
+
+    const { data: exp, error: errExp } = await supabase
+      .from("expedientes")
+      .select("id, banco, propuesta_data, aprobado_data")
+      .eq("id", data.expedienteId)
+      .maybeSingle();
+    if (errExp) throw new Error(errExp.message);
+    if (!exp) throw new Error("Expediente no encontrado.");
+
+    if (!bancoGeneraProyeccionesCierre(exp.banco)) {
+      throw new Error(
+        "Este banco no emite proyecciones de cierre. La verificación se hace contra el próximo extracto post-ejecución.",
+      );
+    }
+
+    const { data: proys, error: errP } = await supabase
+      .from("expediente_proyecciones")
+      .select("id, datos, status, momento")
+      .eq("expediente_id", data.expedienteId)
+      .eq("momento", "cierre")
+      .eq("status", "analizado");
+    if (errP) throw new Error(errP.message);
+    if (!proys?.length) {
+      throw new Error("Aún no hay proyecciones de cierre analizadas para verificar.");
+    }
+
+    const fusion: Record<string, unknown> = {};
+    for (const p of proys) {
+      const d = (p.datos ?? {}) as Record<string, unknown>;
+      for (const [k, v] of Object.entries(d)) {
+        if (v != null && v !== "") fusion[k] = v;
+      }
+    }
+
+    const propuesta = (exp.aprobado_data ?? exp.propuesta_data ?? {}) as Record<string, unknown>;
+
+    const verificacion = calcularVerificacionCierre({
+      banco: exp.banco ?? "",
+      propuestaData: propuesta,
+      proyeccionData: fusion,
+    });
+
+    const { error: errU } = await supabase
+      .from("expedientes")
+      .update({ verificacion_cierre: JSON.parse(JSON.stringify(verificacion)) })
+      .eq("id", data.expedienteId);
+    if (errU) throw new Error(errU.message);
+
+    return { ok: true, verificacion };
+  });
+
+export const obtenerVerificacionCierre = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ expedienteId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase
+      .from("expedientes")
+      .select("verificacion_cierre, banco")
+      .eq("id", data.expedienteId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    // Re-serializamos para que el envelope RPC reciba un JSON puro y no rechace el tipo.
+    const verif = (row?.verificacion_cierre
+      ? (JSON.parse(JSON.stringify(row.verificacion_cierre)) as VerificacionCierre)
+      : null) as VerificacionCierre | null;
+    return {
+      verificacion: verif,
+      banco: row?.banco ?? null,
+    };
   });
