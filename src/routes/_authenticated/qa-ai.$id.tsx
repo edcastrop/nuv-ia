@@ -281,17 +281,85 @@ function ResultadoQaAi() {
         </NCard>
       )}
 
-      <KpiGrid cols={reconMeta.hasFrech ? 4 : 3}>
-        <KpiCard label={isUvr ? "Cuota sin subsidio" : "Cuota teórica"} value={`$${fmt(o.cuotaTeorica as number, 0)}`} icon={<Calculator size={14} />} tone="blue" />
-        <KpiCard label="Cuota total c/seguros" value={`$${fmt(o.cuotaTotalConSeguros as number, 0)}`} icon={<Coins size={14} />} tone="blue" />
-        {reconMeta.hasFrech && <KpiCard label="Beneficio FRECH/mes" value={`$${fmt(o.beneficioMensualFrech as number, 0)}`} icon={<Gauge size={14} />} tone="green" />}
-        <KpiCard label="Veces pagado" value={(o.vecesPagado as number ?? 0).toFixed(2)} icon={<Gauge size={14} />} tone="warning" />
-      </KpiGrid>
-      <KpiGrid cols={2}>
-        <KpiCard label="Costo total proyectado" value={`$${fmt(o.costoTotal as number, 0)}`} icon={<Coins size={14} />} tone="blue" />
-        <KpiCard label="Total intereses" value={`$${fmt(o.totalIntereses as number, 0)}`} icon={<Coins size={14} />} tone="warning" />
-        {isUvr && <KpiCard label="Corrección UVR" value={`$${fmt(o.totalCorreccionUvr as number, 0)}`} icon={<Gauge size={14} />} tone="warning" />}
-      </KpiGrid>
+      {/* HERO DICTAMEN — score + dictamen + KPIs financieros en un solo bloque denso */}
+      <section
+        className="relative overflow-hidden rounded-[var(--nuvia-radius-lg)]"
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(68,93,163,0.18) 0%, var(--nuvia-bg-secondary) 55%, rgba(132,185,143,0.16) 100%)",
+          border: "1px solid var(--nuvia-border)",
+          boxShadow: "0 22px 48px -28px rgba(68,93,163,0.6)",
+        }}
+      >
+        <div aria-hidden className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full opacity-40 blur-3xl"
+          style={{ background: "radial-gradient(circle, rgba(68,93,163,0.55), transparent 60%)" }} />
+        <div aria-hidden className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full opacity-30 blur-3xl"
+          style={{ background: "radial-gradient(circle, rgba(132,185,143,0.55), transparent 60%)" }} />
+
+        <div className="relative grid grid-cols-1 lg:grid-cols-[1.1fr_2fr] gap-0">
+          {/* Score + dictamen */}
+          <div className="p-5 lg:p-6 lg:border-r" style={{ borderColor: "var(--nuvia-border)" }}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em]" style={{ color: "var(--nuvia-text-muted)" }}>
+              QA Score · NUVIA
+            </p>
+            <div className="mt-2 flex items-baseline gap-3">
+              <p className="text-6xl font-bold tabular-nums leading-none" style={{ color: scoreColor }}>
+                {score.toFixed(1)}
+              </p>
+              <span className="text-base opacity-50">/ 100</span>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider"
+                style={{ background: `${scoreColor}22`, color: scoreColor, border: `1px solid ${scoreColor}55` }}>
+                {a.categoria}
+              </span>
+              <span className="rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider"
+                style={{ background: `${dictColor}22`, color: dictColor, border: `1px solid ${dictColor}55` }}>
+                {dictamenLabel[a.dictamen] ?? a.dictamen}
+              </span>
+            </div>
+
+            {/* Mini-barra de score */}
+            <div className="mt-4 h-1.5 w-full rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+              <div className="h-full rounded-full" style={{ width: `${Math.max(0, Math.min(100, score))}%`, background: `linear-gradient(90deg, var(--nuvia-accent), ${scoreColor})` }} />
+            </div>
+          </div>
+
+          {/* KPIs financieros (denso, 3×2) */}
+          <div className="p-5 lg:p-6">
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] mb-3" style={{ color: "var(--nuvia-text-muted)" }}>
+              Visión financiera del crédito
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {[
+                { label: isUvr ? "Cuota sin subsidio" : "Cuota teórica", value: `$${fmt(o.cuotaTeorica as number, 0)}`, icon: <Calculator size={13} />, tone: "var(--nuvia-accent)" },
+                { label: "Cuota total c/seguros", value: `$${fmt(o.cuotaTotalConSeguros as number, 0)}`, icon: <Coins size={13} />, tone: "var(--nuvia-accent)" },
+                ...(reconMeta.hasFrech ? [{ label: "Beneficio FRECH/mes", value: `$${fmt(o.beneficioMensualFrech as number, 0)}`, icon: <Gauge size={13} />, tone: "var(--nuvia-accent-green)" }] : []),
+                { label: "Veces pagado", value: (o.vecesPagado as number ?? 0).toFixed(2), icon: <Gauge size={13} />, tone: "var(--nuvia-warning)" },
+                { label: "Costo total proyectado", value: `$${fmt(o.costoTotal as number, 0)}`, icon: <Coins size={13} />, tone: "var(--nuvia-accent)" },
+                { label: "Total intereses", value: `$${fmt(o.totalIntereses as number, 0)}`, icon: <Coins size={13} />, tone: "var(--nuvia-warning)" },
+                ...(isUvr ? [{ label: "Corrección UVR", value: `$${fmt(o.totalCorreccionUvr as number, 0)}`, icon: <Gauge size={13} />, tone: "var(--nuvia-warning)" }] : []),
+              ].map((k, i) => (
+                <div key={i} className="relative rounded-xl p-3"
+                  style={{ background: "rgba(0,0,0,0.22)", border: "1px solid var(--nuvia-border)" }}>
+                  <div className="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-[0.14em]"
+                    style={{ color: "var(--nuvia-text-muted)" }}>
+                    <span style={{ color: k.tone }}>{k.icon}</span>
+                    {k.label}
+                  </div>
+                  <p className="mt-1.5 text-lg font-bold tabular-nums leading-tight" style={{ color: "var(--nuvia-text-primary)" }}>
+                    {k.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Mensaje motivacional personalizado de NUVIA */}
+      <MotivacionNuvia seed={id} />
+
 
       {/* PANEL: Penalizaciones aplicadas */}
       <NCard padding="none">
