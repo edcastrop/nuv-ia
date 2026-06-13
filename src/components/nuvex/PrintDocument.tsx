@@ -440,19 +440,18 @@ export function PrintDocument(props: Props) {
               fontSize: 12, color: C.green, fontWeight: 800, letterSpacing: "0.04em",
               marginBottom: 4, position: "relative",
             }}>
-              {primerNombre}:
+              Una reflexión final
             </div>
             <p style={{
               margin: 0, fontSize: 11, lineHeight: 1.34,
               color: "rgba(255,255,255,0.94)", position: "relative", maxWidth: "92%",
             }}>
-              Dentro de unos años este crédito se terminará de una u otra forma.
-              La diferencia es decidir si quieres seguir el camino actual
+              Dentro de algunos años este crédito terminará de una u otra forma.
+              La diferencia es decidir si deseas continuar el camino actual
               o <span style={{ color: C.green, fontWeight: 700 }}>recuperar parte de tu tiempo financiero</span>.
               <br /><br />
-              Cada cuota eliminada es tiempo que vuelve a ti.
-              Tiempo para tu familia. Tiempo para tus proyectos.
-              Tiempo para construir patrimonio.
+              Cada cuota eliminada representa tiempo que vuelve a tu vida,
+              a tu familia y a tus proyectos.
             </p>
             <div style={{
               marginTop: 8, paddingTop: 7,
