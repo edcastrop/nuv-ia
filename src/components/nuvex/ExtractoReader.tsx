@@ -1454,16 +1454,16 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
                       border: "1px solid rgba(255,255,255,0.12)",
                     }}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && file && password) processFile(file, password);
+                      if (e.key === "Enter" && pendingFile && password) addFileToStaging(pendingFile, password);
                     }}
                   />
                   <button
-                    onClick={() => file && password && processFile(file, password)}
+                    onClick={() => pendingFile && password && addFileToStaging(pendingFile, password)}
                     disabled={!password}
                     className="mt-4 w-full rounded-xl px-5 py-3 text-sm font-semibold text-white disabled:opacity-40"
                     style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.56), rgba(132,185,143,0.48))" }}
                   >
-                    Leer extracto
+                    Desbloquear y añadir páginas
                   </button>
                 </div>
               )}
