@@ -918,7 +918,11 @@ export const extractStatement = createServerFn({ method: "POST" })
           parsed.cuotasPendientes = String(Math.max(0, plazoLeido - pagadasFna + 1));
         }
 
-        cuotaBase = cuotaMensual || (cuotaFinancieraFna + segurosNum);
+        const cuotaMensualPareceFinanciera = cuotaMensual > 0 && cuotaFinancieraFna > 0 &&
+          Math.abs(cuotaMensual - cuotaFinancieraFna) <= Math.max(2500, cuotaFinancieraFna * 0.005);
+        cuotaBase = cuotaMensualPareceFinanciera
+          ? cuotaFinancieraFna + segurosNum
+          : (cuotaMensual || (cuotaFinancieraFna + segurosNum));
         requiereVerificacion = false;
         if (cuotaFinancieraFna > 0) parsed.cuotaConInteresSinSeguros = formatMontoExtracto(cuotaFinancieraFna);
         if (cuotaBase > 0) parsed.cuotaPagadaCliente = formatMontoExtracto(cuotaBase);
