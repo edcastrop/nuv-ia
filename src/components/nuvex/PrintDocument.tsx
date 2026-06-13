@@ -575,7 +575,7 @@ export function PrintDocument(props: Props) {
               <div style={{
                 fontSize: 11, fontWeight: 900, color: C.green, letterSpacing: "0.18em",
               }}>
-                {primerNombre.toUpperCase()},
+                UNA DECISIÓN, DOS CAMINOS
               </div>
               <div style={{
                 marginTop: 5, fontSize: 19, fontWeight: 900, lineHeight: 1.15,
@@ -587,7 +587,7 @@ export function PrintDocument(props: Props) {
                 marginTop: 4, fontSize: 12, lineHeight: 1.4, color: "rgba(255,255,255,0.88)",
                 maxWidth: 480,
               }}>
-                La diferencia es decidir si quieres recuperar parte de
+                La diferencia es decidir si deseas recuperar parte de
                 <span style={{ color: C.green, fontWeight: 800 }}> tu tiempo financiero</span>.
               </div>
             </div>
