@@ -99,6 +99,13 @@ export function PrintDocument(props: Props) {
   const añoFinActual = fechaFinActual.getFullYear();
   const añoFinOpt = fechaFinOpt.getFullYear();
 
+  // Fecha límite del beneficio (72 horas a partir de hoy)
+  const fechaLimite = new Date(fechaBase);
+  fechaLimite.setHours(fechaLimite.getHours() + 72);
+  const fechaLimiteStr = fechaLimite.toLocaleDateString("es-CO", {
+    day: "2-digit", month: "long", year: "numeric",
+  });
+
   const ahorroTotal = recommended.ahorroTotal;
   const honorariosFinales = commercial?.hasDiscount ? commercial.finales : recommended.honorarios;
   const honorariosBase = commercial?.honorariosBase ?? recommended.honorarios;
