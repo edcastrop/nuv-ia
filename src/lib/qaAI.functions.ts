@@ -335,6 +335,7 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
               primerasCuotas: result.reconstruccion.primerasCuotas,
               ultimasCuotas: result.reconstruccion.ultimasCuotas,
               todasCuotas: result.reconstruccion.todasCuotas,
+              veredicto: result.veredicto,
             },
             diferencias: result.inconsistencias,
             alertas: result.inconsistencias.filter((i) => i.severidad === "critica"),
