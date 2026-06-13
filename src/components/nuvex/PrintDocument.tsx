@@ -364,14 +364,14 @@ export function PrintDocument(props: Props) {
             {/* Beneficio económico card */}
             <div style={{
               background: "#fff", border: `1px solid ${C.hairline}`,
-              borderRadius: 12, padding: "12px 16px",
+              borderRadius: 12, padding: "9px 14px",
             }}>
               <PriceRow label="Tarifa estándar" value={formatCOP(honorariosBase)} strike />
-              <div style={{ height: 1, background: C.hairline, margin: "10px 0" }} />
+              <div style={{ height: 1, background: C.hairline, margin: "7px 0" }} />
               <PriceRow label="Tarifa aprobada para este caso" value={formatCOP(honorariosFinales)} />
               <div style={{
-                marginTop: 10, background: C.greenSoft,
-                borderRadius: 10, padding: "10px 14px",
+                marginTop: 7, background: C.greenSoft,
+                borderRadius: 10, padding: "7px 12px",
                 display: "flex", alignItems: "center", justifyContent: "space-between",
               }}>
                 <div style={{
@@ -390,7 +390,7 @@ export function PrintDocument(props: Props) {
             {/* Urgencia con fecha exacta */}
             <div style={{
               background: C.red, color: "#fff", borderRadius: 12,
-              padding: "12px 14px", display: "flex", flexDirection: "column",
+              padding: "9px 12px", display: "flex", flexDirection: "column",
               justifyContent: "center", textAlign: "center",
             }}>
               <div style={{
@@ -418,24 +418,24 @@ export function PrintDocument(props: Props) {
 
 
         {/* ───── CIERRE EMOCIONAL PREMIUM (full width) ───── */}
-        <div style={{ padding: "16px 24px 0 24px", flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+        <div style={{ padding: "10px 22px 0 22px", flex: 1, minHeight: 0, display: "flex", flexDirection: "column", justifyContent: "flex-end", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <div style={{
             background: `linear-gradient(135deg, ${C.black} 0%, #1a1a1a 100%)`,
-            color: "#fff", borderRadius: 14, padding: "20px 26px",
+            color: "#fff", borderRadius: 14, padding: "13px 20px",
             position: "relative", overflow: "hidden",
           }}>
             <div style={{
               position: "absolute", top: -10, left: 18,
-              fontSize: 80, color: C.green, lineHeight: 1, fontWeight: 900, opacity: 0.35,
+              fontSize: 58, color: C.green, lineHeight: 1, fontWeight: 900, opacity: 0.28,
             }}>“</div>
             <div style={{
-              fontSize: 13, color: C.green, fontWeight: 800, letterSpacing: "0.04em",
-              marginBottom: 6, position: "relative",
+              fontSize: 12, color: C.green, fontWeight: 800, letterSpacing: "0.04em",
+              marginBottom: 4, position: "relative",
             }}>
               {primerNombre}:
             </div>
             <p style={{
-              margin: 0, fontSize: 12, lineHeight: 1.6,
+              margin: 0, fontSize: 11, lineHeight: 1.34,
               color: "rgba(255,255,255,0.94)", position: "relative", maxWidth: "92%",
             }}>
               Dentro de unos años este crédito se terminará de una u otra forma.
@@ -447,7 +447,7 @@ export function PrintDocument(props: Props) {
               Tiempo para construir patrimonio.
             </p>
             <div style={{
-              marginTop: 14, paddingTop: 12,
+              marginTop: 8, paddingTop: 7,
               borderTop: "1px solid rgba(255,255,255,0.15)",
               display: "grid", gridTemplateColumns: "1fr auto", gap: 16, alignItems: "center",
             }}>
