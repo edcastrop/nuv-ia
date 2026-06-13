@@ -187,12 +187,12 @@ function DecimalField({
     typeof value === "number"
       ? value
       : parseFloat(String(value ?? "").replace(",", ".")) || 0;
-  const [text, setText] = React.useState<string>(
+  const [text, setText] = useState<string>(
     numericValue ? String(numericValue).replace(".", ",") : "",
   );
-  const [focused, setFocused] = React.useState(false);
+  const [focused, setFocused] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (focused) return;
     const parsed = parseFloat(text.replace(",", ".")) || 0;
     if (parsed !== numericValue) {
