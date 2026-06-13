@@ -810,14 +810,14 @@ function buildAlternativas(args: {
       .map((p, idx) => ({ p, idx }))
       .filter(({ idx }) => idx !== bestIndex)
       .map(({ p }) => mapUVR(p))
-      .sort((a, b) => a.añosEliminados - b.añosEliminados); // de menor a mayor agresividad
+      .sort((a, b) => a.incrementoPct - b.incrementoPct); // menor aumento → conservador
   }
   const arr = pesosPropuestas || [];
   return arr
     .map((p, idx) => ({ p, idx }))
     .filter(({ idx }) => idx !== bestIndex)
     .map(({ p }) => mapPesos(p))
-    .sort((a, b) => a.añosEliminados - b.añosEliminados);
+    .sort((a, b) => a.incrementoPct - b.incrementoPct);
 
   function mapPesos(p: PesosPropuesta): AltRow {
     const cuota = p.nuevaCuotaConSeguro;
