@@ -19,7 +19,7 @@ interface Props {
   reloadKey?: number;
 }
 
-function colorEstado(estado: EstadoCheck): { bg: string; fg: string; icon: JSX.Element } {
+function colorEstado(estado: EstadoCheck): { bg: string; fg: string; icon: ReactNode } {
   switch (estado) {
     case "ok":
       return { bg: "rgba(34,197,94,0.12)", fg: "#15803D", icon: <CheckCircle2 size={14} /> };
