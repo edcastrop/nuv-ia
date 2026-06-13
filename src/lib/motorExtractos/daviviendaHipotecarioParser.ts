@@ -70,17 +70,26 @@ function extractDaviviendaPaymentDetail(text: string) {
  * mention tasa/aseguradora/valor asegurado/costo/prima (those are not the monthly value).
  */
 function moneyFromLine(text: string, rx: RegExp) {
-  const line = text
+  const lines = text
     .split(/\r?\n/)
     .map((item) => compactSpaces(item).trim())
-    .find(
+    .filter(
       (item) =>
         rx.test(item) &&
         /\$\s*[0-9]/.test(item) &&
         !/tasa|aseguradora|valor\s+asegurado|costo|prima/i.test(item),
-    ) ?? "";
-  const value = line.match(/\$\s*([0-9][0-9.,]*)/)?.[1] ?? "";
-  return moneyToNumber(value);
+    );
+  for (const line of lines) {
+    // Capturar el $monto que aparece DESPUÉS del rótulo (no el primer $ de la línea),
+    // porque algunos extractos Davivienda agrupan varios conceptos con sus montos en una sola línea.
+    const m = rx.exec(line);
+    if (!m) continue;
+    const tail = line.slice(m.index + m[0].length);
+    const value = tail.match(/\$\s*([0-9][0-9.,]*)/)?.[1];
+    if (value) return moneyToNumber(value);
+  }
+  const fallback = lines[0]?.match(/\$\s*([0-9][0-9.,]*)/)?.[1] ?? "";
+  return moneyToNumber(fallback);
 }
 
 /**
@@ -244,14 +253,14 @@ export function parseDaviviendaHipotecarioText(rawText: string): ExtractoRecord 
     firstMatch(text, /Tasa\s+Inter[eé]s\s+Cte\.?\s*Pactada\s+([0-9]+(?:[.,][0-9]+)?)\s+Efectivo/i).replace(",", ".");
 
   // Seguros
-  const valorSeguroVida = moneyFromLine(rawText, /^Seguro\s+de\s+Vida\b/i);
-  const valorSeguroIncendio = moneyFromLine(rawText, /^Seguro\s+de\s+Incendio\s+y\s+Anexos/i);
-  const valorSeguroProteccion = moneyFromLine(rawText, /^Seguro\s+Protecci[oó]n\s+de\s+Pagos/i);
+  const valorSeguroVida = moneyFromLine(rawText, /Seguro\s+de\s+Vida\b/i);
+  const valorSeguroIncendio = moneyFromLine(rawText, /Seguro\s+de\s+Incendio\s+y\s+Anexos/i);
+  const valorSeguroProteccion = moneyFromLine(rawText, /Seguro\s+Protecci[oó]n\s+de\s+Pagos/i);
   const seguros = valorSeguroVida + valorSeguroIncendio + valorSeguroProteccion;
 
   // Intereses corrientes / abonos a capital del periodo
-  const interesCuota = moneyFromLine(rawText, /^Intereses\s+Corrientes\b/i);
-  const capitalCuota = moneyFromLine(rawText, /^Abonos?\s+a\s+Capital\b/i);
+  const interesCuota = moneyFromLine(rawText, /Intereses\s+Corrientes\b/i);
+  const capitalCuota = moneyFromLine(rawText, /Abonos?\s+a\s+Capital\b/i);
 
   const saldoCorte = extractSaldoCorte(rawText, text);
   // Saldo a la fecha de corte. Formatos Davivienda: pesos directo o UVR + pesos.
