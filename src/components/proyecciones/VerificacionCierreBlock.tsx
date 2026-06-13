@@ -4,7 +4,7 @@
 // Diseñado para montarse tanto en el Expediente Maestro (light) como en el
 // dictamen QA (dark) — usa tokens NUVIA cuando va en oscuro.
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, AlertTriangle, XCircle, Info, ShieldCheck, RefreshCw, Loader2 } from "lucide-react";
 import { obtenerVerificacionCierre, verificarCierreContraPropuesta } from "@/lib/proyecciones.functions";
