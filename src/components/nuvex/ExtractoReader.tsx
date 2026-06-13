@@ -379,14 +379,22 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
     setWrongPassword(false);
     setParsed(null);
     setArchivoPath(null);
+    setStaging([]);
+    setStagingRawText("");
+    setPendingFile(null);
+    setStagingNotice(null);
     if (fileRef.current) fileRef.current.value = "";
   };
 
   const handleFileSelect = async (f: File) => {
-    setFile(f);
     setErrorMsg(null);
     setParsed(null);
-    await processFile(f, undefined);
+    await addFileToStaging(f, undefined);
+  };
+
+  const removeStaged = (idx: number) => {
+    setStaging((prev) => prev.filter((_, i) => i !== idx));
+    setStagingNotice(null);
   };
 
   const uploadOriginal = async (f: File) => {
