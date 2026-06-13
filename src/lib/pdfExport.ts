@@ -32,12 +32,12 @@ interface PageReport {
   overflowPx: number;
 }
 
-const MARGIN_TOP_PX = 40;
-const MARGIN_BOTTOM_PX = 50;
-const MARGIN_SIDE_PX = 40;
-const FOOTER_SAFE_GAP_PX = 30;
+const MARGIN_TOP_PX = 0;
+const MARGIN_BOTTOM_PX = 0;
+const MARGIN_SIDE_PX = 0;
+const FOOTER_SAFE_GAP_PX = 0;
 const MIN_USE_PCT = 75;
-const MAX_USE_PCT = 92;
+const MAX_USE_PCT = 100;
 
 export function validatePdfLayout(elementId: string): LayoutValidationResult {
   const root = document.getElementById(elementId);
@@ -211,6 +211,45 @@ async function renderElementToPdf(elementId: string): Promise<jsPDF | null> {
     console.warn("[NUVEX PDF] Logo no cargó correctamente — el PDF puede salir sin marca.");
   }
 
+  const pdf = new jsPDF("p", "mm", "a4");
+  const pageElements = Array.from(element.querySelectorAll<HTMLElement>(".nuvex-print-page"));
+  if (pageElements.length > 0) {
+    for (let i = 0; i < pageElements.length; i += 1) {
+      const pageEl = pageElements[i];
+      const pageCanvas = await html2canvas(pageEl, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+        windowWidth: 1200,
+        onclone: (doc) => {
+          const target = doc.getElementById(elementId) as HTMLElement | null;
+          if (target) {
+            target.style.position = "static";
+            target.style.left = "0";
+            target.style.top = "0";
+            target.style.right = "auto";
+            target.style.bottom = "auto";
+            target.style.margin = "0";
+            target.style.zIndex = "auto";
+            target.style.opacity = "1";
+            target.style.visibility = "visible";
+            target.style.transform = "none";
+            target.style.pointerEvents = "auto";
+            target.style.display = "block";
+          }
+        },
+      });
+      if (!pageCanvas.width || !pageCanvas.height) {
+        alert("No se pudo renderizar una página del PDF.");
+        return null;
+      }
+      if (i > 0) pdf.addPage();
+      pdf.addImage(pageCanvas.toDataURL("image/png"), "PNG", 0, 0, 210, 297);
+    }
+    return pdf;
+  }
+
   const canvas = await html2canvas(element, {
     scale: 2,
     useCORS: true,
@@ -242,7 +281,6 @@ async function renderElementToPdf(elementId: string): Promise<jsPDF | null> {
   }
 
   const imgData = canvas.toDataURL("image/png");
-  const pdf = new jsPDF("p", "mm", "a4");
   const imgWidth = 210;
   const pageHeight = 297;
   const imgHeight = (canvas.height * imgWidth) / canvas.width;

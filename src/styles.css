@@ -780,7 +780,7 @@ select.nuvia-input-sm optgroup {
 @media print {
   @page {
     size: A4;
-    margin: 14mm 12mm;
+    margin: 0;
   }
   html, body {
     background: #fff !important;
@@ -795,8 +795,15 @@ select.nuvia-input-sm optgroup {
   .nuvex-no-print { display: none !important; }
   .nuvex-print-only { display: block !important; }
   .nuvex-print-page {
+    width: 210mm !important;
+    height: 297mm !important;
+    max-height: 297mm !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
     page-break-after: always;
     break-after: page;
+    page-break-inside: avoid !important;
+    break-inside: avoid-page !important;
   }
   .nuvex-print-page:last-child {
     page-break-after: auto;
