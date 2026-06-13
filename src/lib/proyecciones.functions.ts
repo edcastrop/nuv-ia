@@ -53,7 +53,7 @@ export const guardarDatosProyeccion = createServerFn({ method: "POST" })
     const { error } = await context.supabase
       .from("expediente_proyecciones")
       .update({
-        datos: data.datos,
+        datos: JSON.parse(JSON.stringify(data.datos)),
         status: "analizado",
         parsed_at: new Date().toISOString(),
         error: null,
