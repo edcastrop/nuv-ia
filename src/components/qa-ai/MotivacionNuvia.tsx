@@ -210,16 +210,17 @@ export function MotivacionNuvia({ seed }: { seed: string }) {
                 <p className="mt-1.5" style={{ color: "var(--nuvia-text-secondary)" }}>
                   {cita.analogia}
                 </p>
-                <p
-                  className="mt-3 font-semibold text-[14.5px]"
+                <div
+                  className="mt-3 rounded-md px-3 py-2 font-semibold text-[14.5px] leading-snug"
                   style={{
-                    background: "linear-gradient(135deg, var(--nuvia-accent), var(--nuvia-accent-green))",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
+                    background: "linear-gradient(135deg, rgba(68,93,163,0.28), rgba(132,185,143,0.24))",
+                    border: "1px solid var(--nuvia-border)",
+                    color: "#EAF3EC",
+                    textShadow: "0 1px 0 rgba(0,0,0,0.25)",
                   }}
                 >
                   {pickEmotivo(seed, nombre)}
-                </p>
+                </div>
                 <p className="mt-1.5 text-[12.5px] italic" style={{ color: "var(--nuvia-text-secondary)" }}>
                   — {cita.cierre}
                 </p>
