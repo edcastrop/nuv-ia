@@ -226,10 +226,10 @@ function ResultadoQaAi() {
         }
       />
 
-      <KpiGrid cols={4}>
+      <KpiGrid cols={reconMeta.hasFrech ? 4 : 3}>
         <KpiCard label={isUvr ? "Cuota sin subsidio" : "Cuota teórica"} value={`$${fmt(o.cuotaTeorica as number, 0)}`} icon={<Calculator size={14} />} tone="blue" />
         <KpiCard label="Cuota total c/seguros" value={`$${fmt(o.cuotaTotalConSeguros as number, 0)}`} icon={<Coins size={14} />} tone="blue" />
-        <KpiCard label="Beneficio FRECH/mes" value={`$${fmt(o.beneficioMensualFrech as number, 0)}`} icon={<Gauge size={14} />} tone="green" />
+        {reconMeta.hasFrech && <KpiCard label="Beneficio FRECH/mes" value={`$${fmt(o.beneficioMensualFrech as number, 0)}`} icon={<Gauge size={14} />} tone="green" />}
         <KpiCard label="Veces pagado" value={(o.vecesPagado as number ?? 0).toFixed(2)} icon={<Gauge size={14} />} tone="warning" />
       </KpiGrid>
       <KpiGrid cols={2}>
@@ -369,16 +369,20 @@ function ResultadoQaAi() {
             { t: "Capital UVR", f: "K_uvr,k = C_uvr − I_uvr,k" },
             { t: "Saldo COP", f: "Saldo_COP,k = (Saldo_uvr,k−1 − K_uvr,k) · Valor_UVR_k" },
             { t: "Corrección UVR", f: "Corrección_k = Saldo_uvr,k−1 · (Valor_UVR_k − Valor_UVR_k−1)" },
-            { t: "Pago cliente", f: "Pago = Cuota_sin_subsidio − Beneficio_FRECH" },
+            ...(reconMeta.hasFrech ? [{ t: "Pago cliente", f: "Pago = Cuota_sin_subsidio − Beneficio_FRECH" }] : []),
           ] : [
             { t: "Tasa mensual vencida (i_mv)", f: "i_mv = (1 + EA)^(1/12) − 1" },
             { t: "Cuota teórica (sistema francés)", f: "C = S · i_mv / (1 − (1 + i_mv)^−n)" },
-            { t: "Cuota con subsidio FRECH", f: "i_sub = (1 + (EA − cob))^(1/12) − 1  →  C_sub = S · i_sub / (1 − (1+i_sub)^−n)" },
-            { t: "Beneficio mensual FRECH", f: "Beneficio = C − C_sub" },
-            { t: "Cuota total mensual", f: "Cuota_total = C_sub + Seguros" },
+            ...(reconMeta.hasFrech ? [
+              { t: "Cuota con subsidio FRECH", f: "i_sub = (1 + (EA − cob))^(1/12) − 1  →  C_sub = S · i_sub / (1 − (1+i_sub)^−n)" },
+              { t: "Beneficio mensual FRECH", f: "Beneficio = C − C_sub" },
+              { t: "Cuota total mensual", f: "Cuota_total = C_sub + Seguros" },
+            ] : [
+              { t: "Cuota total mensual", f: "Cuota_total = C + Seguros" },
+            ]),
             { t: "Interés de la cuota k", f: "I_k = Saldo_{k−1} · i_periodica" },
             { t: "Capital de la cuota k", f: "K_k = C − I_k" },
-            { t: "Costo total proyectado", f: "Costo = C_sub · n + Seguros · n" },
+            { t: "Costo total proyectado", f: reconMeta.hasFrech ? "Costo = C_sub · n + Seguros · n" : "Costo = C · n + Seguros · n" },
             { t: "Veces pagado vs desembolso", f: "Veces = Costo / Desembolso" },
             { t: "QA Score", f: "Score = 100 − Σ penalizaciones (info×1, warn×5, crit×15 + diff_cuota + diff_sim + faltantes)" },
           ]).map((x, i) => (
