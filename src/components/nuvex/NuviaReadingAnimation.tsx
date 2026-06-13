@@ -10,7 +10,7 @@ const STEPS = [
 
 const FACTS = [
   "Tip NUVIA: detectamos automáticamente seguros, TEA y cuotas pagadas.",
-  "¿Sabías? Los reestructuradores top revisan el extracto antes de simular.",
+  "¿Sabías? Los expertos en optimización de crédito top revisan el extracto antes de simular.",
   "NUVIA cruza el extracto con la base de productos bancarios de Colombia.",
   "El campo más sensible suele ser la TEA. NUVIA lo verifica dos veces.",
   "Cada segundo invertido aquí te ahorra minutos diligenciando manualmente.",
