@@ -402,7 +402,7 @@ export function calculateUVRProjection(input: UVRInput): {
       totalAproxPagar: prop.totalPagoPesos,
     });
   }
-  return { tasaMensual, variacionMensualUVR, cuotaUVRActual, escenarioActual, propuestas };
+  return { tasaMensual, variacionMensualUVR, cuotaUVRActual, cuotasReales: cuotasBase, escenarioActual, propuestas };
 }
 
 export interface UVRManualResult {
