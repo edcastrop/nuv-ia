@@ -418,7 +418,7 @@ export function PrintDocument(props: Props) {
 
 
         {/* ───── CIERRE EMOCIONAL PREMIUM (full width) ───── */}
-        <div style={{ padding: "10px 22px 0 22px", flex: 1, minHeight: 0, display: "flex", flexDirection: "column", justifyContent: "flex-end", breakInside: "avoid", pageBreakInside: "avoid" }}>
+        <div style={{ padding: "10px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <div style={{
             background: `linear-gradient(135deg, ${C.black} 0%, #1a1a1a 100%)`,
             color: "#fff", borderRadius: 14, padding: "13px 20px",
