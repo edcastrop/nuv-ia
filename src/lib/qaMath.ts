@@ -692,23 +692,30 @@ export function construirVeredicto(
   const desfaseGrande = desfaseAbs > 6;
   const desfaseCritico = desfaseAbs > 30;
 
+  const fmtCop = (v: number) => `$${Math.round(v).toLocaleString("es-CO")}`;
+
   if (desfaseCritico) {
+    const cuotaRef = Math.round(r.cuotaFinancieraSinSeguros ?? ext.cuota ?? 0);
     pushH({
       codigo: "PLAZO_IMPLICITO_VS_REPORTADO",
       severidad: "critica",
-      titulo: `Plazo real ${plazoImplicito} ≠ ${plazoReportado} reportados`,
-      detalle: `Con la cuota oficial ($${Math.round(r.cuotaFinancieraSinSeguros ?? ext.cuota ?? 0).toLocaleString("es-CO")}) y tasa ${r.tasaEa}% EA, el saldo se amortiza en ${plazoImplicito} meses, no en ${plazoReportado}.`,
+      titulo: desfasePlazo! < 0
+        ? `El extracto dice ${plazoReportado} cuotas, pero con esa cuota el crédito se acaba en ${plazoImplicito}`
+        : `La cuota es muy baja: con ${plazoReportado} cuotas no alcanza a pagar el crédito`,
+      detalle: desfasePlazo! < 0
+        ? `Si el cliente sigue pagando ${fmtCop(cuotaRef)} cada mes con la tasa actual (${r.tasaEa}% EA), terminaría de pagar en ${plazoImplicito} meses, no en los ${plazoReportado} que aparecen en el extracto. Está pagando más de lo necesario para ese plazo.`
+        : `Pagando ${fmtCop(cuotaRef)} al mes, en ${plazoReportado} meses NO se alcanza a pagar todo el saldo. Se necesitarían ${plazoImplicito} meses o una cuota más alta.`,
       pista: desfasePlazo! < 0
-        ? "Pídale al banco la cuota recalculada con el plazo remanente; pregunte al cliente si hace un sobreaporte mensual fijo."
-        : "La cuota es insuficiente para el plazo reportado: pida al banco recalcular la cuota o aumentar el plazo.",
+        ? "Pregúntele al cliente: ¿ha hecho abonos extra a capital en los últimos meses? Si NO, pídale al banco una proyección oficial — probablemente le están cobrando una cuota calculada con el plazo original y no con el plazo que realmente queda."
+        : "Pídale al banco recalcular la cuota o ampliar el plazo. La cuota actual no es suficiente y al final habría un saldo sin pagar.",
     });
   } else if (desfaseGrande) {
     pushH({
       codigo: "PLAZO_IMPLICITO_LEVE",
       severidad: "warning",
-      titulo: `Pequeño desfase de plazo (${desfasePlazo! > 0 ? "+" : ""}${desfasePlazo} meses)`,
-      detalle: `La cuota oficial amortiza en ${plazoImplicito} meses vs ${plazoReportado} reportadas.`,
-      pista: "Tolerable, pero documente el dato exacto antes de simular escenarios de aceleración.",
+      titulo: `Pequeña diferencia de plazo: ${Math.abs(desfasePlazo!)} meses`,
+      detalle: `La matemática dice que la cuota actual termina el crédito en ${plazoImplicito} meses, y el extracto reporta ${plazoReportado}. La diferencia es pequeña pero conviene confirmarla.`,
+      pista: "Antes de proponer una refinanciación, confirme con el banco cuántas cuotas le quedan exactamente al cliente.",
     });
   }
 
@@ -722,9 +729,9 @@ export function construirVeredicto(
       pushH({
         codigo: "UVR_SALDO_MISMATCH",
         severidad: "critica",
-        titulo: "Saldo UVR × valor UVR ≠ saldo en pesos",
-        detalle: `${r.saldoUVR.toFixed(2)} UVR × $${r.valorUVR.toFixed(2)} = $${Math.round(teor).toLocaleString("es-CO")}, pero el extracto reporta $${Math.round(r.saldoCapital).toLocaleString("es-CO")} (diferencia $${Math.round(diff).toLocaleString("es-CO")}).`,
-        pista: "El valor de la UVR usado no es el de la fecha de corte. Reprocese la lectura con la UVR oficial del día del extracto.",
+        titulo: "El saldo en UVR no coincide con el saldo en pesos del extracto",
+        detalle: `Multiplicando ${r.saldoUVR.toFixed(2)} UVR por el valor UVR de ${fmtCop(r.valorUVR)} debería dar ${fmtCop(teor)}, pero el extracto muestra ${fmtCop(r.saldoCapital)}. Hay una diferencia de ${fmtCop(diff)}.`,
+        pista: "El valor de la UVR que está usando NO es el del día del corte del extracto. Busque la UVR oficial publicada por el Banco de la República para esa fecha y vuelva a procesar el caso.",
       });
     }
   }
@@ -740,15 +747,14 @@ export function construirVeredicto(
       pushH({
         codigo: "FRECH_INCOHERENTE",
         severidad: "warning",
-        titulo: "Aplicación del subsidio FRECH no cuadra",
-        detalle: `Cuota base $${Math.round(r.cuotaBaseSinSubsidio!).toLocaleString("es-CO")} − FRECH $${Math.round(beneficio).toLocaleString("es-CO")} = $${Math.round(esperado).toLocaleString("es-CO")}, pero la cuota financiera cliente es $${Math.round(real).toLocaleString("es-CO")}.`,
-        pista: "Confirme con el banco si el FRECH se aplica como descuento en pesos o como pp de tasa, y los meses restantes de cobertura.",
+        titulo: "El descuento del subsidio FRECH no cuadra con la cuota que paga el cliente",
+        detalle: `La cuota sin subsidio es ${fmtCop(r.cuotaBaseSinSubsidio!)}; al restarle el FRECH de ${fmtCop(beneficio)} debería quedar ${fmtCop(esperado)}, pero el cliente está pagando ${fmtCop(real)}. No coincide.`,
+        pista: "Llame al banco y pregunte dos cosas: (1) ¿el subsidio FRECH se aplica como descuento en pesos o como rebaja en la tasa de interés? y (2) ¿cuántos meses de cobertura le quedan al cliente?",
       });
     }
   }
 
   // ── Check 4: cuotas pagadas + pendientes ↔ plazo original (si disponible) ──
-  // (no exigente — solo informativo si cuotasPagadas existe en input no estandar)
   const cuotasPagadas = (r as unknown as { cuotasPagadas?: number }).cuotasPagadas;
   if (cuotasPagadas && r.cuotasPendientes) {
     const total = cuotasPagadas + r.cuotasPendientes;
@@ -758,9 +764,9 @@ export function construirVeredicto(
       pushH({
         codigo: "PLAZO_TOTAL_ATIPICO",
         severidad: "info",
-        titulo: `Plazo total atípico (${total} meses)`,
-        detalle: `Pagadas (${cuotasPagadas}) + pendientes (${r.cuotasPendientes}) = ${total} meses. No corresponde a plazos estándar (60/120/180/240/300/360).`,
-        pista: "Verifique si hubo reestructuración o si el dato de cuotas pagadas fue leído correctamente.",
+        titulo: `El plazo total del crédito no es uno de los típicos (${total} meses)`,
+        detalle: `Sumando las ${cuotasPagadas} cuotas ya pagadas más las ${r.cuotasPendientes} pendientes dan ${total} meses. Los créditos hipotecarios normalmente son a 5, 10, 15, 20, 25 o 30 años (60 a 360 meses).`,
+        pista: "Pregúntele al cliente si en algún momento le reestructuraron el crédito. Si no, revise si la cantidad de cuotas pagadas o pendientes está leída correctamente del extracto.",
       });
     }
   }
@@ -770,11 +776,11 @@ export function construirVeredicto(
     pushH({
       codigo: "TASA_FUERA_RANGO",
       severidad: r.tasaEa < 0.5 || r.tasaEa > 30 ? "critica" : "warning",
-      titulo: `Tasa EA atípica (${r.tasaEa}%)`,
+      titulo: `Tasa de interés inusual: ${r.tasaEa}% EA`,
       detalle: isUvr
-        ? "Tasas UVR típicas están entre 3% y 8% EA. Esta lectura está fuera del rango usual."
-        : "Tasas hipotecarias en pesos típicas están entre 8% y 20% EA.",
-      pista: "Reconfirme si la lectura del extracto es la TE pactada vigente y no la NA, NM o nominal.",
+        ? "Los créditos UVR normalmente tienen tasa entre 3% y 8% EA. Esta tasa está fuera de ese rango."
+        : "Los créditos hipotecarios en pesos normalmente tienen tasa entre 8% y 20% EA. Esta tasa está fuera de ese rango.",
+      pista: "Revise el extracto: probablemente lo que leyó es una tasa nominal (mensual o anual) y no la tasa efectiva anual (EA). Asegúrese de tomar la tasa correcta.",
     });
   }
 
@@ -786,17 +792,18 @@ export function construirVeredicto(
       pushH({
         codigo: "CUOTA_VS_TEORICA",
         severidad: pct > 0.15 ? "critica" : "warning",
-        titulo: `Cuota extracto difiere ${(pct * 100).toFixed(1)}% de la teórica`,
-        detalle: `Extracto $${Math.round(ext.cuota).toLocaleString("es-CO")} vs reconstrucción $${Math.round(rec.cuotaTotalConSeguros).toLocaleString("es-CO")} (Δ $${Math.round(Math.abs(diff)).toLocaleString("es-CO")}).`,
-        pista: "Revise seguros, FRECH, tasa pactada vs cobrada y si la cuota incluye comisiones o cuota de manejo.",
+        titulo: `La cuota del extracto difiere ${(pct * 100).toFixed(1)}% de lo que debería ser`,
+        detalle: `El extracto cobra ${fmtCop(ext.cuota)}, pero según el saldo, la tasa y el plazo la cuota debería ser ${fmtCop(rec.cuotaTotalConSeguros)}. Diferencia: ${fmtCop(Math.abs(diff))}.`,
+        pista: "Verifique si la cuota del extracto incluye cuota de manejo, comisiones u otros cobros. También confirme si el seguro o el FRECH están bien registrados.",
       });
     }
   }
 
   // ── Check 7: campos críticos faltantes ──
-  if (!r.saldoCapital) pushH({ codigo: "FALTA_SALDO", severidad: "critica", titulo: "Falta saldo capital", detalle: "Sin saldo no se puede reconstruir el crédito.", pista: "Capture el saldo del último extracto disponible." });
-  if (!r.tasaEa) pushH({ codigo: "FALTA_TASA", severidad: "critica", titulo: "Falta tasa EA", detalle: "Sin tasa la auditoría no puede comparar la cuota.", pista: "Identifique la tasa EA vigente (no la pactada original)." });
-  if (!r.cuotasPendientes) pushH({ codigo: "FALTA_PLAZO", severidad: "critica", titulo: "Falta plazo remanente", detalle: "Sin cuotas pendientes la amortización es imposible.", pista: "Revise sección de plazo remanente del extracto." });
+  if (!r.saldoCapital) pushH({ codigo: "FALTA_SALDO", severidad: "critica", titulo: "Falta el saldo del crédito", detalle: "Sin saber cuánto debe el cliente hoy, NUVIA no puede revisar nada.", pista: "Tome el saldo a capital del último extracto disponible y vuelva a auditar." });
+  if (!r.tasaEa) pushH({ codigo: "FALTA_TASA", severidad: "critica", titulo: "Falta la tasa de interés", detalle: "Sin la tasa actual no se puede saber si la cuota está bien calculada.", pista: "Busque en el extracto la tasa efectiva anual (EA) vigente — no la del momento del desembolso." });
+  if (!r.cuotasPendientes) pushH({ codigo: "FALTA_PLAZO", severidad: "critica", titulo: "Falta el plazo que queda", detalle: "Sin saber cuántas cuotas faltan, no se puede simular el crédito.", pista: "Revise la sección del extracto que dice 'cuotas pendientes' o 'plazo remanente'." });
+
 
   // ── Estado de fuentes ──
   const sevPeor = (a: VeredictoEstado, b: VeredictoEstado): VeredictoEstado => {
