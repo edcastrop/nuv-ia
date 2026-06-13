@@ -82,14 +82,19 @@ export const marcarErrorProyeccion = createServerFn({ method: "POST" })
 export const listarProyecciones = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ expedienteId: z.string().uuid() }).parse(input),
+    z.object({
+      expedienteId: z.string().uuid(),
+      momento: z.enum(["auditoria", "cierre"]).optional(),
+    }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { data: rows, error } = await context.supabase
+    let q = context.supabase
       .from("expediente_proyecciones")
-      .select("id,archivo_nombre,archivo_path,mime,size_bytes,origen_zip,password_usada,status,error,datos,parsed_at,created_at")
+      .select("id,archivo_nombre,archivo_path,mime,size_bytes,origen_zip,password_usada,momento,status,error,datos,parsed_at,created_at")
       .eq("expediente_id", data.expedienteId)
       .order("created_at", { ascending: false });
+    if (data.momento) q = q.eq("momento", data.momento);
+    const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
     return { items: rows ?? [] };
   });
