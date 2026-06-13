@@ -227,7 +227,7 @@ function ResultadoQaAi() {
         }
       />
 
-      {typeof a.expediente_id === "string" && (
+      {typeof a.expediente_id === "string" ? (
         <ProyeccionesDropzone
           expedienteId={a.expediente_id}
           variant="qa"
@@ -237,6 +237,16 @@ function ResultadoQaAi() {
             finally { setReloading(false); }
           }}
         />
+      ) : (
+        <NCard>
+          <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--nuvia-text-secondary)" }}>
+            Proyecciones del banco
+          </p>
+          <p className="text-[13px]" style={{ color: "var(--nuvia-text-primary)" }}>
+            El cargue de proyecciones (ZIP / PDF / Excel / imágenes) está disponible cuando la auditoría está vinculada a un expediente.
+            Esta auditoría es una simulación independiente. Para subir proyecciones, ábrela desde el módulo Expediente del caso o ejecuta la auditoría desde un expediente.
+          </p>
+        </NCard>
       )}
 
       <KpiGrid cols={reconMeta.hasFrech ? 4 : 3}>
