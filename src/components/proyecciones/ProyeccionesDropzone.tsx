@@ -25,7 +25,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { extractStatement, type ExtractoData } from "@/lib/extracto.functions";
+import { extractStatement } from "@/lib/extracto.functions";
 import {
   crearRegistroProyeccion,
   guardarDatosProyeccion,
