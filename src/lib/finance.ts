@@ -317,8 +317,34 @@ export function calculateUVRProjection(input: UVRInput): {
 } {
   const tasaMensual = Math.pow(1 + input.teaCobrada / 100, 1 / 12) - 1;
   const variacionMensualUVR = Math.pow(1 + input.variacionUVR / 100, 1 / 12) - 1;
-  const cuotasBase = Math.max(0, input.cuotasPendientes);
-  const cuotaUVRActual = pmt(tasaMensual, cuotasBase, input.saldoUVR);
+  const cuotasPendientesExt = Math.max(0, input.cuotasPendientes);
+
+  // ── Reconciliación matemática UVR ─────────────────────────────────────────
+  // El extracto trae `cuotasPendientes` como plazo OBJETIVO del banco. En
+  // créditos UVR cuota-constante con cobertura (FRECH), Davivienda recalcula
+  // la cuota cada año para "estirar" o "encoger" el plazo. Si la cuota actual
+  // que paga el cliente (sin seguros) AMORTIZA el saldo en menos cuotas que
+  // las pendientes oficiales, la verdad financiera es n_real, no n_extracto.
+  // Esto alinea simulador con auditoría QA (que ya deriva n real).
+  const cuotaUvrReal = input.valorUVR > 0 && input.cuotaSinSeguros > 0
+    ? input.cuotaSinSeguros / input.valorUVR
+    : 0;
+  const cuotaUvrTeoricaExt = pmt(tasaMensual, cuotasPendientesExt, input.saldoUVR);
+  let cuotasBase = cuotasPendientesExt;
+  let cuotaUVRActual = cuotaUvrTeoricaExt;
+  if (
+    cuotaUvrReal > 0 &&
+    cuotaUvrTeoricaExt > 0 &&
+    cuotaUvrReal > cuotaUvrTeoricaExt * 1.02 &&
+    cuotaUvrReal > input.saldoUVR * tasaMensual
+  ) {
+    const nReal = Math.log(cuotaUvrReal / (cuotaUvrReal - input.saldoUVR * tasaMensual))
+      / Math.log(1 + tasaMensual);
+    if (Number.isFinite(nReal) && nReal > 0) {
+      cuotasBase = Math.min(cuotasPendientesExt, Math.round(nReal));
+      cuotaUVRActual = cuotaUvrReal;
+    }
+  }
 
   const actual = proyectarUVR(
     input.saldoUVR,
