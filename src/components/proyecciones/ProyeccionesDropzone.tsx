@@ -45,6 +45,7 @@ type ProyeccionRow = {
   size_bytes: number | null;
   origen_zip: string | null;
   password_usada: boolean;
+  momento: string;
   status: string;
   error: string | null;
   datos: Record<string, unknown> | null;
@@ -54,9 +55,13 @@ type ProyeccionRow = {
 
 interface Props {
   expedienteId: string;
-  /** Cuando termina la fusión + reauditoría, refresca la vista que lo monta. */
+  /** Cuando termina la fusión + reauditoría (o verificación), refresca la vista que lo monta. */
   onReauditoria?: () => void;
   variant?: "expediente" | "qa";
+  /** "auditoria" = proyección inicial para auditar el extracto. "cierre" = proyección final que emite el banco al cerrar. */
+  momento?: "auditoria" | "cierre";
+  /** Callback opcional cuando termina la verificación de cierre. */
+  onVerificacionCierre?: () => void;
 }
 
 async function loadPdfJs() {
