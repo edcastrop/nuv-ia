@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { PageLayout, ExecutiveHero, NCard, SectionHeader } from "@/components/nuvia";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { PageLayout, NCard, SectionHeader } from "@/components/nuvia";
 import { useServerFn } from "@tanstack/react-start";
 import { obtenerAuditoriaQA, reejecutarAuditoriaQA } from "@/lib/qaAI.functions";
 import { auditar, reconstruir, type AuditarInput } from "@/lib/qaMath";
@@ -11,23 +11,22 @@ import { ProyeccionesDropzone } from "@/components/proyecciones/ProyeccionesDrop
 import { VerificacionCierreBlock } from "@/components/proyecciones/VerificacionCierreBlock";
 import { bancoGeneraProyeccionesCierre, motivoSinProyecciones } from "@/lib/bancosProyecciones";
 import { MotivacionNuvia } from "@/components/qa-ai/MotivacionNuvia";
+import { supabase } from "@/integrations/supabase/client";
 import type { Veredicto } from "@/lib/qaMath";
-import { Brain, Gauge, ArrowLeft, AlertTriangle, CheckCircle2, Coins, Calculator, Sigma, ShieldAlert, Minus, FileDown, Sparkles, RefreshCw } from "lucide-react";
+import {
+  Brain, ArrowLeft, AlertTriangle, CheckCircle2, Calculator, Sigma, ShieldAlert,
+  Minus, FileDown, Sparkles, RefreshCw, Trophy, ChevronDown, MessageCircle, Coins, Gauge,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/qa-ai/$id")({
   component: ResultadoQaAi,
-  head: () => ({ meta: [{ title: "Resultado auditoría · QA AI" }] }),
+  head: () => ({ meta: [{ title: "Certificación Financiera · NUVIA" }] }),
 });
 
 type Inc = {
   id: string; tipo: string; severidad: string; campo: string | null;
   valor_extracto: number | null; valor_calculado: number | null; diferencia: number | null;
   mensaje: string; sugerencia: string | null;
-};
-
-const dictamenLabel: Record<string, string> = {
-  aprobado: "APROBADO", aprobado_obs: "APROBADO CON OBSERVACIONES",
-  requiere_revision: "REQUIERE REVISIÓN", rechazado: "RECHAZADO",
 };
 
 const penLabel: Record<string, string> = {
@@ -42,6 +41,124 @@ const penLabel: Record<string, string> = {
 const fmt = (n: number | null | undefined, d = 0) =>
   n == null ? "—" : Number(n).toLocaleString("es-CO", { minimumFractionDigits: d, maximumFractionDigits: d });
 
+function primerNombre(full?: string | null, email?: string | null): string {
+  const base = (full ?? "").trim().split(/\s+/)[0];
+  if (base) return base.charAt(0).toUpperCase() + base.slice(1).toLowerCase();
+  const local = (email ?? "").split("@")[0]?.split(/[.\-_]/)[0];
+  if (local) return local.charAt(0).toUpperCase() + local.slice(1).toLowerCase();
+  return "Analista";
+}
+
+/* ---------- Mensajes NUVIA (rotación dinámica) ---------- */
+
+const MSGS_APROBADO = [
+  "validamos matemáticamente este crédito. La optimización financiera está lista para avanzar.",
+  "la matemática financiera coincide con el extracto. Hoy ayudaste a una familia a estar más cerca de su patrimonio.",
+  "cada crédito optimizado representa una oportunidad real para una familia. Este caso está certificado.",
+];
+const MSGS_OBS = [
+  "encontramos una observación menor que vale la pena revisar antes de cerrar.",
+  "la matemática financiera nos está dando una señal importante. Vale la pena confirmarla con el banco.",
+  "detectar esto ahora evitará problemas más adelante. Estás haciendo bien tu trabajo.",
+];
+const MSGS_REVISION = [
+  "este caso requiere una validación adicional antes de continuar.",
+  "NUVIA encontró información que merece ser confirmada con el banco.",
+  "detenernos ahora evitará una decisión equivocada más adelante.",
+];
+const MSGS_RECHAZO = [
+  "este caso necesita una corrección importante antes de avanzar al cliente.",
+  "la información actual no nos permite certificar el crédito todavía.",
+  "demos un paso atrás para ajustar antes de presentar esta estrategia financiera.",
+];
+
+function pickMsg(arr: string[], seed: string): string {
+  let h = 0;
+  const k = `${seed}|${Math.floor(Date.now() / 60000)}`;
+  for (let i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) >>> 0;
+  return arr[h % arr.length]!;
+}
+
+/* ---------- Estado de certificación ---------- */
+
+type CertEstado = "certificado" | "certificado_obs" | "revision" | "no_certificado";
+
+function certificacion(dictamen: string): { estado: CertEstado; label: string; color: string; emoji: string } {
+  if (dictamen === "aprobado") return { estado: "certificado", label: "CERTIFICADO", color: "var(--nuvia-success)", emoji: "🟢" };
+  if (dictamen === "aprobado_obs") return { estado: "certificado_obs", label: "CERTIFICADO CON OBSERVACIONES", color: "var(--nuvia-warning)", emoji: "🟡" };
+  if (dictamen === "requiere_revision") return { estado: "revision", label: "REQUIERE REVISIÓN", color: "var(--nuvia-warning)", emoji: "🟡" };
+  return { estado: "no_certificado", label: "NO CERTIFICADO", color: "var(--nuvia-danger)", emoji: "🔴" };
+}
+
+function logro(score: number): { titulo: string; icono: string; color: string } {
+  if (score >= 95) return { titulo: "Auditor Financiero Elite", icono: "🏆", color: "var(--nuvia-success)" };
+  if (score >= 90) return { titulo: "Crédito Certificado", icono: "🥇", color: "var(--nuvia-success)" };
+  if (score >= 80) return { titulo: "Certificación Parcial", icono: "🥈", color: "var(--nuvia-warning)" };
+  return { titulo: "Requiere Corrección", icono: "⚠", color: "var(--nuvia-danger)" };
+}
+
+/* ---------- Accordion ---------- */
+
+function Accordion({ title, icon, count, children, defaultOpen = false }:
+  { title: string; icon?: ReactNode; count?: number | string; children: ReactNode; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <NCard padding="none">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between gap-3 px-5 py-3.5 text-left"
+        style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--nuvia-text-primary)" }}
+      >
+        <span className="flex items-center gap-2.5 text-[13.5px] font-semibold">
+          {icon}
+          {title}
+          {count !== undefined && (
+            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full"
+              style={{ background: "rgba(255,255,255,0.06)", color: "var(--nuvia-text-secondary)", border: "1px solid var(--nuvia-border)" }}>
+              {count}
+            </span>
+          )}
+        </span>
+        <ChevronDown size={16} style={{ color: "var(--nuvia-text-secondary)", transform: open ? "rotate(180deg)" : "none", transition: "transform .2s" }} />
+      </button>
+      {open && <div style={{ borderTop: "1px solid var(--nuvia-border)" }}>{children}</div>}
+    </NCard>
+  );
+}
+
+/* ---------- Sticky header ---------- */
+
+function StickyHeader({ cliente, banco, producto, fecha, score, scoreColor, certLabel, certColor }:
+  { cliente: string; banco: string; producto: string; fecha: string; score: number; scoreColor: string; certLabel: string; certColor: string }) {
+  return (
+    <div
+      className="sticky top-0 z-30 -mx-4 px-4 py-2 backdrop-blur-md"
+      style={{
+        background: "color-mix(in oklab, var(--nuvia-bg-secondary) 88%, transparent)",
+        borderBottom: "1px solid var(--nuvia-border)",
+      }}
+    >
+      <div className="flex items-center gap-3 flex-wrap text-[11.5px]">
+        <span className="font-bold uppercase tracking-[0.18em]" style={{ color: "var(--nuvia-accent)" }}>NUVIA · Certificación</span>
+        <span style={{ color: "var(--nuvia-border)" }}>·</span>
+        <span style={{ color: "var(--nuvia-text-primary)" }}><b>{cliente}</b></span>
+        <span style={{ color: "var(--nuvia-text-secondary)" }}>{banco}</span>
+        <span style={{ color: "var(--nuvia-text-muted)" }}>·</span>
+        <span style={{ color: "var(--nuvia-text-secondary)" }}>{producto}</span>
+        <span style={{ color: "var(--nuvia-text-muted)" }}>·</span>
+        <span style={{ color: "var(--nuvia-text-muted)" }}>{fecha}</span>
+        <span className="ml-auto flex items-center gap-2">
+          <span className="px-2 py-0.5 rounded-full font-bold uppercase tracking-wider text-[10px]"
+            style={{ background: `${certColor}22`, color: certColor, border: `1px solid ${certColor}55` }}>
+            {certLabel}
+          </span>
+          <span className="font-bold tabular-nums text-[13px]" style={{ color: scoreColor }}>{Math.round(score)}</span>
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function ResultadoQaAi() {
   const { id } = Route.useParams();
   const fetchAud = useServerFn(obtenerAuditoriaQA);
@@ -50,10 +167,24 @@ function ResultadoQaAi() {
   const [copilotoOpen, setCopilotoOpen] = useState(false);
   const [verTodas, setVerTodas] = useState(false);
   const [reloading, setReloading] = useState(false);
+  const [nombre, setNombre] = useState<string>("Analista");
+
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || cancel) return;
+        const { data: prof } = await supabase.from("profiles" as never).select("nombre").eq("id", user.id).maybeSingle();
+        const n = (prof as { nombre?: string } | null)?.nombre ?? user.user_metadata?.full_name ?? null;
+        if (!cancel) setNombre(primerNombre(n, user.email));
+      } catch { /* noop */ }
+    })();
+    return () => { cancel = true; };
+  }, []);
 
   useEffect(() => { (async () => setData(await fetchAud({ data: { id } }) as { auditoria: Record<string, unknown> | null; inconsistencias: Inc[] }))(); }, [id, fetchAud]);
 
-  // Recomputar score+penalizaciones desde los inputs guardados (determinístico)
   const recomputo = useMemo(() => {
     if (!data?.auditoria) return null;
     try {
@@ -69,7 +200,6 @@ function ResultadoQaAi() {
     } catch { return null; }
   }, [data]);
 
-  // Reconstrucción COMPLETA del plan amortizado (todas las cuotas pendientes)
   const filasCompletas = useMemo(() => {
     if (!data?.auditoria) return [] as Array<{ k: number; cuota: number; interes: number; capital: number; seguros: number; fresh: number; cuotaTotal: number; saldo: number; subsidioActivo: boolean; saldoUvr?: number; valorUvr?: number; correccionUvr?: number }>;
     const inputs = (data.auditoria as Record<string, unknown>).inputs as
@@ -84,7 +214,6 @@ function ResultadoQaAi() {
     } catch { return []; }
   }, [data]);
 
-  // Metadatos para encabezado (tasa aplicada, FRECH, seguros)
   const reconMeta = useMemo(() => {
     const inputs = (data?.auditoria as Record<string, unknown> | undefined)?.inputs as
       | { modalidad?: string; reconstruccion?: { tasaEa?: number; coberturaFrechPp?: number; coberturaFrechValorMensual?: number; coberturaFrechCuotasRestantes?: number; cuotasPagadas?: number; cuotasPendientes?: number; seguros?: number; variacionUvrEa?: number; valorUVR?: number } }
@@ -99,16 +228,15 @@ function ResultadoQaAi() {
     const n = Math.max(0, Math.round(r?.cuotasPendientes ?? 0));
     const hasFrech = cob > 0 || freshMensual > 0;
     const frechRestantes = hasFrech
-      ? Math.max(0, Math.min(n, Math.round(
-          r?.coberturaFrechCuotasRestantes ?? (FRECH_MAX - (r?.cuotasPagadas ?? 0)),
-        )))
+      ? Math.max(0, Math.min(n, Math.round(r?.coberturaFrechCuotasRestantes ?? (FRECH_MAX - (r?.cuotasPagadas ?? 0)))))
       : 0;
     return { modalidad: inputs?.modalidad ?? "", tasaEa, cob, freshMensual, tasaAplicada, seguros, hasFrech, frechRestantes, frechMax: FRECH_MAX, variacionUvrEa: r?.variacionUvrEa ?? 5.5, valorUVR: r?.valorUVR ?? 0 };
   }, [data]);
 
   if (!data?.auditoria) {
-    return <PageLayout><NCard><p className="text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>Cargando dictamen…</p></NCard></PageLayout>;
+    return <PageLayout><NCard><p className="text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>Cargando certificación…</p></NCard></PageLayout>;
   }
+
   const a = data.auditoria as Record<string, unknown> & {
     qa_score: number; categoria: string; dictamen: string; modalidad: string;
     motor_version: string; ejecutado_at: string; outputs: Record<string, number | unknown[]>;
@@ -117,12 +245,89 @@ function ResultadoQaAi() {
   const score = Number(a.qa_score);
   const isUvr = a.modalidad === "uvr";
   const scoreColor = score >= 95 ? "var(--nuvia-success)" : score >= 85 ? "var(--nuvia-warning)" : "var(--nuvia-danger)";
-  const dictColor = a.dictamen === "aprobado" ? "var(--nuvia-success)"
-    : a.dictamen === "aprobado_obs" ? "var(--nuvia-warning)"
-    : a.dictamen === "requiere_revision" ? "var(--nuvia-warning)" : "var(--nuvia-danger)";
-
+  const cert = certificacion(a.dictamen);
+  const trofeo = logro(score);
   const sevTone = (s: string) => s === "critica" ? "var(--nuvia-danger)" : s === "warning" ? "var(--nuvia-warning)" : "var(--nuvia-text-secondary)";
 
+  /* ----- Datos sticky header ----- */
+  const inputs = (a as Record<string, unknown>).inputs as { extracto?: Record<string, unknown>; reconstruccion?: Record<string, unknown>; simulacion?: Record<string, unknown> } | undefined;
+  const ex = (inputs?.extracto ?? {}) as Record<string, unknown>;
+  const cliente = (ex.cliente as string) || (ex.titular as string) || "Cliente";
+  const banco = (ex.banco as string) || "—";
+  const producto = a.modalidad === "uvr" ? "Hipotecario UVR" : a.modalidad === "hipotecario" ? "Hipotecario" : a.modalidad === "leasing" ? "Leasing" : String(a.modalidad ?? "Crédito");
+  const fecha = new Date(a.ejecutado_at).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" });
+
+  /* ----- Mensaje NUVIA al hero ----- */
+  const msgArr = cert.estado === "certificado" ? MSGS_APROBADO
+    : cert.estado === "certificado_obs" ? MSGS_OBS
+    : cert.estado === "revision" ? MSGS_REVISION
+    : MSGS_RECHAZO;
+  const mensajeHero = pickMsg(msgArr, id);
+
+  /* ----- Semáforo de confianza ----- */
+  const incCrit = data.inconsistencias.filter((i) => i.severidad === "critica").length;
+  const incWarn = data.inconsistencias.filter((i) => i.severidad === "warning").length;
+  const penTipos = new Set((recomputo?.score.penalizaciones ?? []).map((p) => p.tipo));
+  const semaforo: Array<{ titulo: string; estado: "ok" | "warn" | "err"; detalle: string }> = [
+    {
+      titulo: "Extracto Validado",
+      estado: penTipos.has("diff_cuota") ? "warn" : "ok",
+      detalle: penTipos.has("diff_cuota") ? "Diferencia en cuota detectada" : "Cuota y saldos coinciden",
+    },
+    {
+      titulo: "Simulación Consistente",
+      estado: penTipos.has("diff_simulacion") ? "warn" : "ok",
+      detalle: penTipos.has("diff_simulacion") ? "Difiere del cálculo NUVIA" : "Coincide con el motor",
+    },
+    {
+      titulo: "Matemática Financiera",
+      estado: incCrit > 0 ? "err" : incWarn > 0 ? "warn" : "ok",
+      detalle: incCrit > 0 ? `${incCrit} hallazgo(s) crítico(s)` : incWarn > 0 ? `${incWarn} observación(es)` : "Reconstrucción correcta",
+    },
+    {
+      titulo: "Información por Confirmar",
+      estado: penTipos.has("campos_faltantes") ? "warn" : "ok",
+      detalle: penTipos.has("campos_faltantes") ? "Faltan campos críticos" : "Captura completa",
+    },
+  ];
+  const tonoSem = (e: "ok" | "warn" | "err") =>
+    e === "ok" ? { c: "var(--nuvia-success)", emoji: "🟢" }
+    : e === "warn" ? { c: "var(--nuvia-warning)", emoji: "🟡" }
+    : { c: "var(--nuvia-danger)", emoji: "🔴" };
+
+  /* ----- Veredicto ejecutivo principal ----- */
+  const veredicto = (recomputo?.veredicto ?? (o.veredicto as unknown as Veredicto | undefined)) as Veredicto | undefined;
+  const tienePlazo = veredicto?.plazoImplicito !== undefined && veredicto?.plazoReportado !== undefined;
+  const desfase = veredicto?.desfasePlazo ?? 0;
+  const nivelDesfase = Math.abs(desfase) === 0 ? "OK" : Math.abs(desfase) <= 6 ? "BAJO" : Math.abs(desfase) <= 24 ? "MEDIO" : "ALTO";
+  const colorDesfase = nivelDesfase === "OK" ? "var(--nuvia-success)"
+    : nivelDesfase === "BAJO" ? "var(--nuvia-warning)"
+    : nivelDesfase === "MEDIO" ? "var(--nuvia-warning)" : "var(--nuvia-danger)";
+
+  /* ----- Acción recomendada (máx 3) ----- */
+  const acciones = (veredicto?.recomendaciones ?? []).slice(0, 3);
+  if (acciones.length === 0) {
+    if (cert.estado === "certificado") {
+      acciones.push("Avanza con la propuesta de optimización del crédito al cliente.");
+    } else if (cert.estado === "certificado_obs") {
+      acciones.push("Revisa la observación menor antes de presentar al cliente.");
+      acciones.push("Confirma los datos pendientes con el banco si aplica.");
+    } else {
+      acciones.push("Solicita las proyecciones oficiales al banco.");
+      acciones.push("Valida si existen abonos extraordinarios o cambios de tasa.");
+      acciones.push("Reejecuta la auditoría cuando tengas la información.");
+    }
+  }
+
+  /* ----- KPIs principales (4) ----- */
+  const kpisPrincipales = [
+    { label: "Cuota Real", value: `$${fmt(o.cuotaTotalConSeguros as number, 0)}`, icon: <Calculator size={14} /> },
+    { label: "Costo Total", value: `$${fmt(o.costoTotal as number, 0)}`, icon: <Coins size={14} /> },
+    { label: "Intereses Totales", value: `$${fmt(o.totalIntereses as number, 0)}`, icon: <Coins size={14} /> },
+    { label: "Veces Pagado", value: (o.vecesPagado as number ?? 0).toFixed(2), icon: <Gauge size={14} /> },
+  ];
+
+  /* ----- Reconstrucción tabla (ya existente) ----- */
   type FilaUI = { k: number; cuota: number; interes: number; capital: number; seguros: number; fresh: number; cuotaTotal: number; saldo: number; subsidioActivo: boolean; saldoUvr?: number; valorUvr?: number; correccionUvr?: number };
   const enriquecer = (f: { k: number; cuota: number; interes: number; capital: number; saldo: number; seguros?: number; fresh?: number; cuotaTotal?: number; subsidioActivo?: boolean }): FilaUI => ({
     k: f.k, cuota: f.cuota, interes: f.interes, capital: f.capital, saldo: f.saldo,
@@ -137,194 +342,247 @@ function ResultadoQaAi() {
   const primeras = ((o.primerasCuotas as Array<{ k: number; cuota: number; interes: number; capital: number; saldo: number; seguros?: number; fresh?: number; cuotaTotal?: number; subsidioActivo?: boolean }>) ?? []).map(enriquecer);
   const ultimas = ((o.ultimasCuotas as Array<{ k: number; cuota: number; interes: number; capital: number; saldo: number; seguros?: number; fresh?: number; cuotaTotal?: number; subsidioActivo?: boolean }>) ?? []).map(enriquecer);
   const ksPrimeras = new Set(primeras.map((f) => f.k));
-  const filasResumen: FilaUI[] = [
-    ...primeras,
-    ...ultimas.filter((f) => !ksPrimeras.has(f.k)),
-  ];
-
+  const filasResumen: FilaUI[] = [...primeras, ...ultimas.filter((f) => !ksPrimeras.has(f.k))];
   const puedeVerTodas = filasCompletas.length > filasResumen.length;
   const filasAmort: FilaUI[] = verTodas && puedeVerTodas ? (filasCompletas as FilaUI[]) : filasResumen;
   const nTotal = filasCompletas.length || filasResumen.length;
-
   const penalizaciones = recomputo?.score.penalizaciones ?? [];
   const alertasCriticas = data.inconsistencias.filter((i) => i.severidad === "critica");
 
+  const handleReejecutar = async () => {
+    if (reloading) return;
+    setReloading(true);
+    try {
+      await doReejecutar({ data: { id } });
+      setData(await fetchAud({ data: { id } }) as { auditoria: Record<string, unknown> | null; inconsistencias: Inc[] });
+    } finally { setReloading(false); }
+  };
+
+  const handlePdf = () => exportarDictamenPDF({
+    auditoriaId: id, modalidad: a.modalidad, motorVersion: a.motor_version, ejecutadoAt: a.ejecutado_at,
+    qaScore: score, categoria: a.categoria, dictamen: a.dictamen, outputs: o,
+    inputs: (a as Record<string, unknown>).inputs as { reconstruccion?: Record<string, unknown>; extracto?: Record<string, unknown>; simulacion?: Record<string, unknown> },
+    penalizaciones, inconsistencias: data.inconsistencias,
+  });
 
   return (
     <PageLayout>
-      <ExecutiveHero
-        badge={{ icon: <Brain size={12} />, label: `Motor v${a.motor_version}`, tone: "blue" }}
-        title={`Dictamen: ${dictamenLabel[a.dictamen] ?? a.dictamen}`}
-        description={`Modalidad ${a.modalidad} · ejecutado ${new Date(a.ejecutado_at).toLocaleString("es-CO")}`}
-        actions={
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={async () => {
-                if (reloading) return;
-                setReloading(true);
-                try {
-                  await doReejecutar({ data: { id } });
-                  setData(await fetchAud({ data: { id } }) as { auditoria: Record<string, unknown> | null; inconsistencias: Inc[] });
-                } finally {
-                  setReloading(false);
-                }
-              }}
-              disabled={reloading}
-              className="nuvia-input nuvia-input-sm"
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: reloading ? "not-allowed" : "pointer", opacity: reloading ? 0.6 : 1 }}
-            >
-              <RefreshCw size={14} className={reloading ? "animate-spin" : ""} /> {reloading ? "Reejecutando…" : "Reejecutar auditoría"}
-            </button>
-            <button
-              onClick={() => setCopilotoOpen(true)}
-              className="nuvia-input nuvia-input-sm"
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer" }}
-            >
-              <Sparkles size={14} /> Copiloto QA
-            </button>
-            <button
-              onClick={() => exportarDictamenPDF({
-                auditoriaId: id,
-                modalidad: a.modalidad,
-                motorVersion: a.motor_version,
-                ejecutadoAt: a.ejecutado_at,
-                qaScore: score,
-                categoria: a.categoria,
-                dictamen: a.dictamen,
-                outputs: o,
-                inputs: (a as Record<string, unknown>).inputs as { reconstruccion?: Record<string, unknown>; extracto?: Record<string, unknown>; simulacion?: Record<string, unknown> },
-                penalizaciones: penalizaciones,
-                inconsistencias: data.inconsistencias,
-              })}
-              className="nuvia-input nuvia-input-sm"
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer", background: "var(--nuvia-accent)", color: "#fff", border: "none" }}
-            >
-              <FileDown size={14} /> Exportar PDF
-            </button>
-            <Link to="/qa-ai">
-              <button className="nuvia-input nuvia-input-sm" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer" }}>
-                <ArrowLeft size={14} /> Volver
-              </button>
-            </Link>
-          </div>
-        }
+      <StickyHeader
+        cliente={cliente} banco={banco} producto={producto} fecha={fecha}
+        score={score} scoreColor={scoreColor} certLabel={cert.label} certColor={cert.color}
       />
 
-      {/* HERO DICTAMEN — score + dictamen + KPIs financieros en un solo bloque denso */}
+      {/* HERO DE CERTIFICACIÓN */}
       <section
         className="relative overflow-hidden rounded-[var(--nuvia-radius-lg)]"
         style={{
-          background:
-            "linear-gradient(135deg, rgba(68,93,163,0.18) 0%, var(--nuvia-bg-secondary) 55%, rgba(132,185,143,0.16) 100%)",
+          background: "linear-gradient(135deg, rgba(68,93,163,0.20) 0%, var(--nuvia-bg-secondary) 55%, rgba(132,185,143,0.18) 100%)",
           border: "1px solid var(--nuvia-border)",
-          boxShadow: "0 22px 48px -28px rgba(68,93,163,0.6)",
+          boxShadow: "0 24px 56px -30px rgba(68,93,163,0.7)",
         }}
       >
-        <div aria-hidden className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full opacity-40 blur-3xl"
+        <div aria-hidden className="pointer-events-none absolute -top-32 -left-24 h-80 w-80 rounded-full opacity-40 blur-3xl"
           style={{ background: "radial-gradient(circle, rgba(68,93,163,0.55), transparent 60%)" }} />
-        <div aria-hidden className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full opacity-30 blur-3xl"
+        <div aria-hidden className="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rounded-full opacity-35 blur-3xl"
           style={{ background: "radial-gradient(circle, rgba(132,185,143,0.55), transparent 60%)" }} />
 
-        <div className="relative grid grid-cols-1 lg:grid-cols-[1.1fr_2fr] gap-0">
-          <div className="p-5 lg:p-6 lg:border-r" style={{ borderColor: "var(--nuvia-border)" }}>
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em]" style={{ color: "var(--nuvia-text-muted)" }}>
-              QA Score · NUVIA
-            </p>
-            <div className="mt-2 flex items-baseline gap-3">
-              <p className="text-6xl font-bold tabular-nums leading-none" style={{ color: scoreColor }}>
-                {score.toFixed(1)}
+        <div className="relative grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-0">
+          {/* Score gigante */}
+          <div className="p-6 lg:p-8 lg:border-r" style={{ borderColor: "var(--nuvia-border)" }}>
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.24em]" style={{ color: "var(--nuvia-text-muted)" }}>
+              <Brain size={12} style={{ color: "var(--nuvia-accent)" }} />
+              Certificación Financiera · NUVIA
+            </div>
+            <div className="mt-3 flex items-end gap-4">
+              <p
+                className="font-bold tabular-nums leading-none"
+                style={{ color: scoreColor, fontSize: "clamp(96px, 14vw, 160px)", letterSpacing: "-0.04em" }}
+              >
+                {Math.round(score)}
               </p>
-              <span className="text-base opacity-50">/ 100</span>
+              <div className="pb-3 flex flex-col gap-1.5">
+                <span className="rounded-full px-3 py-1.5 text-[12px] font-bold uppercase tracking-wider whitespace-nowrap"
+                  style={{ background: `${cert.color}22`, color: cert.color, border: `1px solid ${cert.color}66` }}>
+                  {cert.emoji} {cert.label}
+                </span>
+                <span className="rounded-full px-3 py-1 text-[11px] font-semibold inline-flex items-center gap-1.5"
+                  style={{ background: `${trofeo.color}1a`, color: trofeo.color, border: `1px solid ${trofeo.color}44` }}>
+                  {trofeo.icono} {trofeo.titulo}
+                </span>
+              </div>
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider"
-                style={{ background: `${scoreColor}22`, color: scoreColor, border: `1px solid ${scoreColor}55` }}>
-                {a.categoria}
-              </span>
-              <span className="rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider"
-                style={{ background: `${dictColor}22`, color: dictColor, border: `1px solid ${dictColor}55` }}>
-                {dictamenLabel[a.dictamen] ?? a.dictamen}
-              </span>
-            </div>
-            <div className="mt-4 h-1.5 w-full rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-              <div className="h-full rounded-full" style={{ width: `${Math.max(0, Math.min(100, score))}%`, background: `linear-gradient(90deg, var(--nuvia-accent), ${scoreColor})` }} />
+
+            <p className="mt-5 text-[15px] leading-snug max-w-xl" style={{ color: "var(--nuvia-text-primary)" }}>
+              <span className="font-semibold">{nombre},</span>{" "}
+              <span style={{ color: "var(--nuvia-text-secondary)" }}>{mensajeHero}</span>
+            </p>
+
+            {/* Acciones premium */}
+            <div className="mt-5 flex flex-wrap items-center gap-2">
+              <button onClick={() => setCopilotoOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[12.5px] font-semibold transition hover:opacity-90"
+                style={{ background: "var(--nuvia-accent)", color: "#0B1220", border: "none", cursor: "pointer", boxShadow: "0 8px 20px -10px rgba(68,93,163,0.6)" }}>
+                <MessageCircle size={14} /> Explícame este dictamen
+              </button>
+              <button onClick={handlePdf}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[12.5px] font-semibold transition hover:opacity-90"
+                style={{ background: "rgba(255,255,255,0.06)", color: "var(--nuvia-text-primary)", border: "1px solid var(--nuvia-border)", cursor: "pointer" }}>
+                <FileDown size={14} /> Exportar PDF
+              </button>
+              <button onClick={handleReejecutar} disabled={reloading}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[12.5px] font-semibold transition hover:opacity-90"
+                style={{ background: "rgba(255,255,255,0.06)", color: "var(--nuvia-text-primary)", border: "1px solid var(--nuvia-border)", cursor: reloading ? "not-allowed" : "pointer", opacity: reloading ? 0.5 : 1 }}>
+                <RefreshCw size={14} className={reloading ? "animate-spin" : ""} /> {reloading ? "Reauditando…" : "Reauditar"}
+              </button>
+              <Link to="/qa-ai">
+                <button className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12.5px] font-semibold transition hover:opacity-90"
+                  style={{ background: "transparent", color: "var(--nuvia-text-secondary)", border: "1px solid var(--nuvia-border)", cursor: "pointer" }}>
+                  <ArrowLeft size={14} /> Volver
+                </button>
+              </Link>
             </div>
           </div>
 
-          <div className="p-5 lg:p-6">
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] mb-3" style={{ color: "var(--nuvia-text-muted)" }}>
-              Visión financiera del crédito
-            </p>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {[
-                { label: isUvr ? "Cuota sin subsidio" : "Cuota teórica", value: `$${fmt(o.cuotaTeorica as number, 0)}`, icon: <Calculator size={13} />, tone: "var(--nuvia-accent)" },
-                { label: "Cuota total c/seguros", value: `$${fmt(o.cuotaTotalConSeguros as number, 0)}`, icon: <Coins size={13} />, tone: "var(--nuvia-accent)" },
-                ...(reconMeta.hasFrech ? [{ label: "Beneficio FRECH/mes", value: `$${fmt(o.beneficioMensualFrech as number, 0)}`, icon: <Gauge size={13} />, tone: "var(--nuvia-accent-green)" }] : []),
-                { label: "Veces pagado", value: (o.vecesPagado as number ?? 0).toFixed(2), icon: <Gauge size={13} />, tone: "var(--nuvia-warning)" },
-                { label: "Costo total proyectado", value: `$${fmt(o.costoTotal as number, 0)}`, icon: <Coins size={13} />, tone: "var(--nuvia-accent)" },
-                { label: "Total intereses", value: `$${fmt(o.totalIntereses as number, 0)}`, icon: <Coins size={13} />, tone: "var(--nuvia-warning)" },
-                ...(isUvr ? [{ label: "Corrección UVR", value: `$${fmt(o.totalCorreccionUvr as number, 0)}`, icon: <Gauge size={13} />, tone: "var(--nuvia-warning)" }] : []),
-              ].map((k, i) => (
-                <div key={i} className="relative rounded-xl p-3"
-                  style={{ background: "rgba(0,0,0,0.22)", border: "1px solid var(--nuvia-border)" }}>
-                  <div className="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-[0.14em]"
-                    style={{ color: "var(--nuvia-text-muted)" }}>
-                    <span style={{ color: k.tone }}>{k.icon}</span>
-                    {k.label}
+          {/* Lado derecho: KPIs + Semáforo */}
+          <div className="p-6 lg:p-8 flex flex-col gap-5">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.22em] mb-2.5" style={{ color: "var(--nuvia-text-muted)" }}>
+                KPIs del crédito
+              </p>
+              <div className="grid grid-cols-2 gap-2.5">
+                {kpisPrincipales.map((k, i) => (
+                  <div key={i} className="rounded-xl px-3 py-2.5"
+                    style={{ background: "rgba(0,0,0,0.25)", border: "1px solid var(--nuvia-border)" }}>
+                    <div className="flex items-center gap-1.5 text-[9.5px] font-bold uppercase tracking-[0.14em]" style={{ color: "var(--nuvia-text-muted)" }}>
+                      <span style={{ color: "var(--nuvia-accent)" }}>{k.icon}</span>
+                      {k.label}
+                    </div>
+                    <p className="mt-1 text-[17px] font-bold tabular-nums leading-tight" style={{ color: "var(--nuvia-text-primary)" }}>
+                      {k.value}
+                    </p>
                   </div>
-                  <p className="mt-1.5 text-lg font-bold tabular-nums leading-tight" style={{ color: "var(--nuvia-text-primary)" }}>
-                    {k.value}
-                  </p>
-                </div>
-              ))}
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.22em] mb-2.5" style={{ color: "var(--nuvia-text-muted)" }}>
+                Semáforo de confianza
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {semaforo.map((s, i) => {
+                  const t = tonoSem(s.estado);
+                  return (
+                    <div key={i} className="rounded-lg px-3 py-2"
+                      style={{ background: `${t.c}10`, border: `1px solid ${t.c}33` }}>
+                      <div className="flex items-center gap-1.5 text-[11px] font-semibold" style={{ color: t.c }}>
+                        <span>{t.emoji}</span>
+                        {s.titulo}
+                      </div>
+                      <p className="text-[10.5px] mt-0.5 leading-snug" style={{ color: "var(--nuvia-text-secondary)" }}>
+                        {s.detalle}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Mensaje motivacional personalizado de NUVIA al analista */}
+      {/* VEREDICTO EJECUTIVO + ACCIÓN RECOMENDADA */}
+      <section className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-4">
+        {/* Veredicto */}
+        <NCard>
+          <div className="flex items-center gap-2 mb-3">
+            <AlertTriangle size={15} style={{ color: colorDesfase }} />
+            <h3 className="text-[13.5px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
+              ¿Qué encontró NUVIA?
+            </h3>
+            <span className="ml-auto text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+              style={{ background: `${colorDesfase}22`, color: colorDesfase, border: `1px solid ${colorDesfase}55` }}>
+              NIVEL {nivelDesfase}
+            </span>
+          </div>
+
+          {tienePlazo ? (
+            <>
+              <p className="text-[13px] leading-snug mb-3" style={{ color: "var(--nuvia-text-secondary)" }}>
+                {veredicto!.titular}
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="rounded-lg p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--nuvia-border)" }}>
+                  <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "var(--nuvia-text-muted)" }}>Plazo extracto</p>
+                  <p className="mt-1 text-[20px] font-bold tabular-nums" style={{ color: "var(--nuvia-text-primary)" }}>{veredicto!.plazoReportado}</p>
+                  <p className="text-[10px]" style={{ color: "var(--nuvia-text-muted)" }}>cuotas</p>
+                </div>
+                <div className="rounded-lg p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--nuvia-border)" }}>
+                  <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "var(--nuvia-text-muted)" }}>Plazo matemático</p>
+                  <p className="mt-1 text-[20px] font-bold tabular-nums" style={{ color: "var(--nuvia-text-primary)" }}>{veredicto!.plazoImplicito}</p>
+                  <p className="text-[10px]" style={{ color: "var(--nuvia-text-muted)" }}>cuotas</p>
+                </div>
+                <div className="rounded-lg p-3" style={{ background: `${colorDesfase}12`, border: `1px solid ${colorDesfase}44` }}>
+                  <p className="text-[10px] uppercase tracking-wider font-bold" style={{ color: colorDesfase }}>Diferencia</p>
+                  <p className="mt-1 text-[20px] font-bold tabular-nums" style={{ color: colorDesfase }}>
+                    {desfase > 0 ? "+" : ""}{desfase}
+                  </p>
+                  <p className="text-[10px]" style={{ color: colorDesfase }}>cuotas</p>
+                </div>
+              </div>
+            </>
+          ) : (
+            <p className="text-[13px] leading-snug" style={{ color: "var(--nuvia-text-secondary)" }}>
+              {veredicto?.resumen ?? "Sin diferencias materiales detectadas en la reconstrucción matemática."}
+            </p>
+          )}
+        </NCard>
+
+        {/* Acción recomendada */}
+        <NCard>
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles size={15} style={{ color: "var(--nuvia-accent)" }} />
+            <h3 className="text-[13.5px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
+              {nombre}, esto es lo que debes hacer
+            </h3>
+          </div>
+          <ul className="space-y-2.5">
+            {acciones.map((r, i) => (
+              <li key={i} className="flex items-start gap-2.5 rounded-lg px-3 py-2.5"
+                style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.10), rgba(132,185,143,0.08))", border: "1px solid var(--nuvia-border)" }}>
+                <span className="text-[14px] leading-none" style={{ color: "var(--nuvia-accent-green)" }}>👉</span>
+                <span className="text-[13px] leading-snug" style={{ color: "var(--nuvia-text-primary)" }}>{r}</span>
+              </li>
+            ))}
+          </ul>
+        </NCard>
+      </section>
+
+      {/* REFLEXIÓN NUVIA — motor de inspiración */}
       <MotivacionNuvia seed={id} />
 
-      <VeredictoBlock
-        veredicto={
-          (recomputo?.veredicto ?? (o.veredicto as unknown as Veredicto | undefined)) as Veredicto | undefined
-        }
-      />
-
-
-
+      {/* PROYECCIONES (sin cambios — comportamiento existente) */}
       {typeof a.expediente_id === "string" ? (() => {
-        const banco =
-          (((a as Record<string, unknown>).inputs as Record<string, unknown> | undefined)?.extracto as Record<string, unknown> | undefined)?.banco as string | undefined ?? "";
-        const aplicaCierre = bancoGeneraProyeccionesCierre(banco);
-        const motivo = !aplicaCierre ? motivoSinProyecciones(banco) : null;
+        const bancoExp = (((a as Record<string, unknown>).inputs as Record<string, unknown> | undefined)?.extracto as Record<string, unknown> | undefined)?.banco as string | undefined ?? "";
+        const aplicaCierre = bancoGeneraProyeccionesCierre(bancoExp);
+        const motivo = !aplicaCierre ? motivoSinProyecciones(bancoExp) : null;
         const expId = a.expediente_id;
         return (
           <>
-            <ProyeccionesDropzone
-              expedienteId={expId}
-              variant="qa"
-              momento="auditoria"
+            <ProyeccionesDropzone expedienteId={expId} variant="qa" momento="auditoria"
               onReauditoria={async () => {
                 setReloading(true);
                 try { setData(await fetchAud({ data: { id } }) as { auditoria: Record<string, unknown> | null; inconsistencias: Inc[] }); }
                 finally { setReloading(false); }
-              }}
-            />
+              }} />
             {aplicaCierre ? (
               <>
-                <ProyeccionesDropzone
-                  expedienteId={expId}
-                  variant="qa"
-                  momento="cierre"
-                />
-                <VerificacionCierreBlock expedienteId={expId} bancoHint={banco} variant="qa" />
+                <ProyeccionesDropzone expedienteId={expId} variant="qa" momento="cierre" />
+                <VerificacionCierreBlock expedienteId={expId} bancoHint={bancoExp} variant="qa" />
               </>
-            ) : banco ? (
+            ) : bancoExp ? (
               <NCard>
-                <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--nuvia-text-secondary)" }}>
-                  Verificación de cierre
-                </p>
+                <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--nuvia-text-secondary)" }}>Verificación de cierre</p>
                 <p className="text-[13px]" style={{ color: "var(--nuvia-text-primary)" }}>
                   {motivo ?? "Este banco no emite proyecciones formales al cierre. NUVIA verificará contra el próximo extracto post-ejecución."}
                 </p>
@@ -332,31 +590,29 @@ function ResultadoQaAi() {
             ) : null}
           </>
         );
-      })() : (
-        <NCard>
-          <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--nuvia-text-secondary)" }}>
-            Proyecciones del banco
-          </p>
-          <p className="text-[13px]" style={{ color: "var(--nuvia-text-primary)" }}>
-            El cargue de proyecciones (ZIP / PDF / Excel / imágenes) está disponible cuando la auditoría está vinculada a un expediente.
-            Esta auditoría es una simulación independiente. Para subir proyecciones, ábrela desde el módulo Expediente del caso o ejecuta la auditoría desde un expediente.
-          </p>
-        </NCard>
-      )}
+      })() : null}
 
+      {/* INFORMACIÓN TÉCNICA — todo en acordeones cerrados por defecto */}
+      <div className="flex items-center gap-2 mt-2 mb-1">
+        <Trophy size={14} style={{ color: "var(--nuvia-accent)" }} />
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em]" style={{ color: "var(--nuvia-text-muted)" }}>
+          Información técnica · Profundiza si lo necesitas
+        </p>
+      </div>
 
-
-      {/* PANEL: Penalizaciones aplicadas */}
-      <NCard padding="none">
-        <div style={{ padding: "16px 20px 12px" }}>
-          <SectionHeader
-            title="Penalizaciones aplicadas al QA Score"
-            description="Desglose determinístico: qué penalizó, cuánto y por qué. Score = 100 − Σ penalizaciones."
-            icon={<Minus size={16} />}
-          />
+      <Accordion title="Veredicto técnico completo" icon={<Brain size={15} style={{ color: "var(--nuvia-accent)" }} />}>
+        <div className="-mt-px">
+          <VeredictoBlock veredicto={veredicto} />
         </div>
+      </Accordion>
+
+      <Accordion
+        title="Penalizaciones aplicadas al QA Score"
+        icon={<Minus size={15} style={{ color: "var(--nuvia-warning)" }} />}
+        count={penalizaciones.length}
+      >
         {penalizaciones.length === 0 ? (
-          <div className="px-5 pb-5 flex items-center gap-2 text-sm" style={{ color: "var(--nuvia-success)" }}>
+          <div className="px-5 py-4 flex items-center gap-2 text-sm" style={{ color: "var(--nuvia-success)" }}>
             <CheckCircle2 size={16} /> Sin penalizaciones. Score perfecto: 100/100.
           </div>
         ) : (
@@ -390,23 +646,19 @@ function ResultadoQaAi() {
             </table>
           </div>
         )}
-      </NCard>
+      </Accordion>
 
-      {/* PANEL: Alertas críticas */}
-      <NCard padding="none">
-        <div style={{ padding: "16px 20px 12px" }}>
-          <SectionHeader
-            title={`Alertas críticas (${alertasCriticas.length})`}
-            description="Hallazgos de severidad crítica que disparan dictamen RECHAZADO automático."
-            icon={<ShieldAlert size={16} />}
-          />
-        </div>
+      <Accordion
+        title="Alertas críticas"
+        icon={<ShieldAlert size={15} style={{ color: "var(--nuvia-danger)" }} />}
+        count={alertasCriticas.length}
+      >
         {alertasCriticas.length === 0 ? (
-          <div className="px-5 pb-5 flex items-center gap-2 text-sm" style={{ color: "var(--nuvia-success)" }}>
+          <div className="px-5 py-4 flex items-center gap-2 text-sm" style={{ color: "var(--nuvia-success)" }}>
             <CheckCircle2 size={16} /> Sin alertas críticas.
           </div>
         ) : (
-          <div className="px-5 pb-5 space-y-2">
+          <div className="px-5 py-4 space-y-2">
             {alertasCriticas.map((al) => (
               <div key={al.id} className="flex items-start gap-3 px-3 py-2 rounded" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)" }}>
                 <AlertTriangle size={16} style={{ color: "var(--nuvia-danger)", flexShrink: 0, marginTop: 2 }} />
@@ -418,14 +670,15 @@ function ResultadoQaAi() {
             ))}
           </div>
         )}
-      </NCard>
+      </Accordion>
 
-      <NCard padding="none">
-        <div style={{ padding: "16px 20px 12px" }}>
-          <SectionHeader title={`Inconsistencias (${data.inconsistencias.length})`} description="Extracto vs reconstrucción · simulación analista vs motor NUVIA." />
-        </div>
+      <Accordion
+        title="Inconsistencias detectadas"
+        icon={<AlertTriangle size={15} style={{ color: "var(--nuvia-warning)" }} />}
+        count={data.inconsistencias.length}
+      >
         {data.inconsistencias.length === 0 ? (
-          <div className="px-5 pb-5 flex items-center gap-2 text-sm" style={{ color: "var(--nuvia-success)" }}>
+          <div className="px-5 py-4 flex items-center gap-2 text-sm" style={{ color: "var(--nuvia-success)" }}>
             <CheckCircle2 size={16} /> Sin inconsistencias matemáticas.
           </div>
         ) : (
@@ -459,74 +712,52 @@ function ResultadoQaAi() {
             </table>
           </div>
         )}
-      </NCard>
+      </Accordion>
 
-      {/* PANEL: Fórmulas aplicadas */}
-      <NCard>
-        <SectionHeader
-          title="Fórmulas aplicadas por el motor"
-          description="Modelo matemático determinístico — sin IA, sin estimaciones."
-          icon={<Sigma size={16} />}
-        />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 text-[13px]">
-          {(isUvr ? [
-            { t: "Tasa mensual cobrada", f: "i = (1 + TE_Cobrada)^(1/12) − 1" },
-            { t: "Variación mensual UVR", f: "v = (1 + Variación_UVR_EA)^(1/12) − 1" },
-            { t: "Cuota financiera UVR", f: "C_uvr = PMT(TE_Cobrada_mes, cuotas_pendientes, saldo_uvr)" },
-            { t: "Interés UVR", f: "I_uvr,k = Saldo_uvr,k−1 · i" },
-            { t: "Capital UVR", f: "K_uvr,k = C_uvr − I_uvr,k" },
-            { t: "Saldo COP", f: "Saldo_COP,k = (Saldo_uvr,k−1 − K_uvr,k) · Valor_UVR_k" },
-            { t: "Corrección UVR", f: "Corrección_k = Saldo_uvr,k−1 · (Valor_UVR_k − Valor_UVR_k−1)" },
-            ...(reconMeta.hasFrech ? [{ t: "Pago cliente", f: "Pago = Cuota_sin_subsidio − Beneficio_FRECH" }] : []),
-          ] : [
-            { t: "Tasa mensual vencida (i_mv)", f: "i_mv = (1 + EA)^(1/12) − 1" },
-            { t: "Cuota teórica (sistema francés)", f: "C = S · i_mv / (1 − (1 + i_mv)^−n)" },
-            ...(reconMeta.hasFrech ? [
-              { t: "Cuota con subsidio FRECH", f: "i_sub = (1 + (EA − cob))^(1/12) − 1  →  C_sub = S · i_sub / (1 − (1+i_sub)^−n)" },
-              { t: "Beneficio mensual FRECH", f: "Beneficio = C − C_sub" },
-              { t: "Cuota total mensual", f: "Cuota_total = C_sub + Seguros" },
+      <Accordion title="Fórmulas aplicadas por el motor" icon={<Sigma size={15} style={{ color: "var(--nuvia-accent)" }} />}>
+        <div className="p-5">
+          <SectionHeader title="Modelo matemático determinístico" description="Sin IA, sin estimaciones." icon={<Sigma size={14} />} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 text-[13px]">
+            {(isUvr ? [
+              { t: "Tasa mensual cobrada", f: "i = (1 + TE_Cobrada)^(1/12) − 1" },
+              { t: "Variación mensual UVR", f: "v = (1 + Variación_UVR_EA)^(1/12) − 1" },
+              { t: "Cuota financiera UVR", f: "C_uvr = PMT(TE_Cobrada_mes, cuotas_pendientes, saldo_uvr)" },
+              { t: "Interés UVR", f: "I_uvr,k = Saldo_uvr,k−1 · i" },
+              { t: "Capital UVR", f: "K_uvr,k = C_uvr − I_uvr,k" },
+              { t: "Saldo COP", f: "Saldo_COP,k = (Saldo_uvr,k−1 − K_uvr,k) · Valor_UVR_k" },
+              { t: "Corrección UVR", f: "Corrección_k = Saldo_uvr,k−1 · (Valor_UVR_k − Valor_UVR_k−1)" },
+              ...(reconMeta.hasFrech ? [{ t: "Pago cliente", f: "Pago = Cuota_sin_subsidio − Beneficio_FRECH" }] : []),
             ] : [
-              { t: "Cuota total mensual", f: "Cuota_total = C + Seguros" },
-            ]),
-            { t: "Interés de la cuota k", f: "I_k = Saldo_{k−1} · i_periodica" },
-            { t: "Capital de la cuota k", f: "K_k = C − I_k" },
-            { t: "Costo total proyectado", f: reconMeta.hasFrech ? "Costo = C_sub · n + Seguros · n" : "Costo = C · n + Seguros · n" },
-            { t: "Veces pagado vs desembolso", f: "Veces = Costo / Desembolso" },
-            { t: "QA Score", f: "Score = 100 − Σ penalizaciones (info×1, warn×5, crit×15 + diff_cuota + diff_sim + faltantes)" },
-          ]).map((x, i) => (
-            <div key={i} className="px-3 py-2 rounded" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--nuvia-border)" }}>
-              <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--nuvia-text-secondary)" }}>{x.t}</p>
-              <code className="font-mono text-[12px]" style={{ color: "var(--nuvia-accent)" }}>{x.f}</code>
-            </div>
-          ))}
+              { t: "Tasa mensual vencida (i_mv)", f: "i_mv = (1 + EA)^(1/12) − 1" },
+              { t: "Cuota teórica (sistema francés)", f: "C = S · i_mv / (1 − (1 + i_mv)^−n)" },
+              ...(reconMeta.hasFrech ? [
+                { t: "Cuota con subsidio FRECH", f: "i_sub = (1 + (EA − cob))^(1/12) − 1  →  C_sub = S · i_sub / (1 − (1+i_sub)^−n)" },
+                { t: "Beneficio mensual FRECH", f: "Beneficio = C − C_sub" },
+                { t: "Cuota total mensual", f: "Cuota_total = C_sub + Seguros" },
+              ] : [
+                { t: "Cuota total mensual", f: "Cuota_total = C + Seguros" },
+              ]),
+              { t: "Interés de la cuota k", f: "I_k = Saldo_{k−1} · i_periodica" },
+              { t: "Capital de la cuota k", f: "K_k = C − I_k" },
+              { t: "Costo total proyectado", f: reconMeta.hasFrech ? "Costo = C_sub · n + Seguros · n" : "Costo = C · n + Seguros · n" },
+              { t: "Veces pagado vs desembolso", f: "Veces = Costo / Desembolso" },
+              { t: "QA Score", f: "Score = 100 − Σ penalizaciones (info×1, warn×5, crit×15 + diff_cuota + diff_sim + faltantes)" },
+            ]).map((x, i) => (
+              <div key={i} className="px-3 py-2 rounded" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--nuvia-border)" }}>
+                <p className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--nuvia-text-secondary)" }}>{x.t}</p>
+                <code className="font-mono text-[12px]" style={{ color: "var(--nuvia-accent)" }}>{x.f}</code>
+              </div>
+            ))}
+          </div>
         </div>
-      </NCard>
+      </Accordion>
 
-      <NCard padding="none">
-        <div style={{ padding: "16px 20px 12px" }} className="flex items-start justify-between gap-3 flex-wrap">
-          <SectionHeader
-            title={`Reconstrucción matemática (${filasAmort.length} de ${nTotal} filas)`}
-            description={
-              verTodas && puedeVerTodas
-                ? `Plan amortizado completo — ${nTotal} cuotas pendientes. Incluye capital, interés y seguros${reconMeta.hasFrech ? " · tasa FRECH aplicada" : ""}.`
-                : `Plan amortizado: primeras 12 + últimas 12. Incluye capital, interés y seguros${reconMeta.hasFrech ? " · tasa FRECH aplicada" : ""}.`
-            }
-          />
-          {puedeVerTodas && (
-            <button
-              onClick={() => setVerTodas((v) => !v)}
-              className="shrink-0 rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition hover:opacity-90"
-              style={{
-                borderColor: "var(--nuvia-border)",
-                background: verTodas ? "var(--nuvia-accent)" : "rgba(255,255,255,0.04)",
-                color: verTodas ? "#0B1220" : "var(--nuvia-text-primary)",
-              }}
-            >
-              {verTodas ? `Ver resumen (${filasResumen.length})` : `Ver todas (${nTotal})`}
-            </button>
-          )}
-        </div>
-        <div style={{ padding: "0 20px 12px" }} className="flex flex-wrap gap-2 text-[11px]">
+      <Accordion
+        title="Plan de amortización"
+        icon={<Calculator size={15} style={{ color: "var(--nuvia-accent)" }} />}
+        count={`${filasAmort.length}/${nTotal}`}
+      >
+        <div style={{ padding: "12px 20px 0" }} className="flex flex-wrap gap-2 text-[11px] items-center">
           <span className="rounded-md px-2 py-1" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--nuvia-border)", color: "var(--nuvia-text-secondary)" }}>
             {isUvr ? "TE cobrada" : "Tasa EA pactada"}: <b style={{ color: "var(--nuvia-text-primary)" }}>{reconMeta.tasaEa.toFixed(2)}%</b>
           </span>
@@ -547,22 +778,28 @@ function ResultadoQaAi() {
                   Fresh mensual: −${fmt(reconMeta.freshMensual, 0)}
                 </span>
               )}
-              {reconMeta.cob > 0 && (
-                <span className="rounded-md px-2 py-1" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--nuvia-border)", color: "var(--nuvia-text-secondary)" }}>
-                  Tasa con FRECH: <b style={{ color: "var(--nuvia-text-primary)" }}>{reconMeta.tasaAplicada.toFixed(2)}%</b> EA
-                </span>
-              )}
-              <span className="rounded-md px-2 py-1" style={{ background: "rgba(132,185,143,0.10)", border: "1px solid rgba(132,185,143,0.35)", color: "var(--nuvia-success)" }}>
-                Cobertura restante: <b>{reconMeta.frechRestantes}</b> / {reconMeta.frechMax} cuotas
-              </span>
             </>
           )}
           <span className="rounded-md px-2 py-1" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--nuvia-border)", color: "var(--nuvia-text-secondary)" }}>
             Seguros mensuales: <b style={{ color: "var(--nuvia-text-primary)" }}>${fmt(reconMeta.seguros, 0)}</b>
           </span>
+          {puedeVerTodas && (
+            <button
+              onClick={() => setVerTodas((v) => !v)}
+              className="ml-auto rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition hover:opacity-90"
+              style={{
+                borderColor: "var(--nuvia-border)",
+                background: verTodas ? "var(--nuvia-accent)" : "rgba(255,255,255,0.04)",
+                color: verTodas ? "#0B1220" : "var(--nuvia-text-primary)",
+                cursor: "pointer",
+              }}
+            >
+              {verTodas ? `Ver resumen (${filasResumen.length})` : `Ver todas (${nTotal})`}
+            </button>
+          )}
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto mt-3">
           <table className="w-full text-[12.5px]">
             <thead>
               <tr style={{ background: "rgba(255,255,255,0.03)" }}>
@@ -600,8 +837,7 @@ function ResultadoQaAi() {
             </tbody>
           </table>
         </div>
-      </NCard>
-
+      </Accordion>
 
       <CopilotoQADrawer open={copilotoOpen} onClose={() => setCopilotoOpen(false)} auditoriaId={id} />
     </PageLayout>
