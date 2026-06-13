@@ -413,7 +413,14 @@ function ResultadoQaAi() {
             </div>
 
             <p className="mt-5 text-[15px] leading-snug max-w-xl" style={{ color: "var(--nuvia-text-primary)" }}>
-              <span className="font-semibold">{nombre},</span>{" "}
+              <span className="font-semibold">
+                {(() => {
+                  const h = new Date().getHours();
+                  if (h < 12) return "Buenos días";
+                  if (h < 19) return "Buenas tardes";
+                  return "Buenas noches";
+                })()}, {nombre}.
+              </span>{" "}
               <span style={{ color: "var(--nuvia-text-secondary)" }}>{mensajeHero}</span>
             </p>
 
