@@ -181,6 +181,7 @@ export const auditarCaso = createServerFn({ method: "POST" })
           primerasCuotas: result.reconstruccion.primerasCuotas,
           ultimasCuotas: result.reconstruccion.ultimasCuotas,
           todasCuotas: result.reconstruccion.todasCuotas,
+          veredicto: result.veredicto,
         })),
         diferencias: JSON.parse(JSON.stringify(result.inconsistencias)),
         alertas: JSON.parse(JSON.stringify(result.inconsistencias.filter((i) => i.severidad === "critica"))),
