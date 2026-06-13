@@ -99,6 +99,13 @@ export function PrintDocument(props: Props) {
   const añoFinActual = fechaFinActual.getFullYear();
   const añoFinOpt = fechaFinOpt.getFullYear();
 
+  // Fecha límite del beneficio (72 horas a partir de hoy)
+  const fechaLimite = new Date(fechaBase);
+  fechaLimite.setHours(fechaLimite.getHours() + 72);
+  const fechaLimiteStr = fechaLimite.toLocaleDateString("es-CO", {
+    day: "2-digit", month: "long", year: "numeric",
+  });
+
   const ahorroTotal = recommended.ahorroTotal;
   const honorariosFinales = commercial?.hasDiscount ? commercial.finales : recommended.honorarios;
   const honorariosBase = commercial?.honorariosBase ?? recommended.honorarios;
@@ -169,29 +176,29 @@ export function PrintDocument(props: Props) {
         {/* ───── HERO ───── */}
         <div style={{
           padding: "22px 24px 14px 24px",
-          display: "grid", gridTemplateColumns: "1fr 0.92fr", gap: 22, alignItems: "center",
+          display: "grid", gridTemplateColumns: "1.55fr 0.45fr", gap: 22, alignItems: "center",
         }}>
           <div>
             <div style={{ fontSize: 13, color: C.text, marginBottom: 4 }}>
-              Hola, <span style={{ color: C.azul, fontWeight: 800 }}>{nombreCliente}</span>
+              Hola, <span style={{ color: C.azul, fontWeight: 800 }}>{primerNombre}</span>
             </div>
             <h1 style={{
-              margin: 0, fontSize: 44, lineHeight: 1.02, fontWeight: 900,
+              margin: 0, fontSize: 40, lineHeight: 1.02, fontWeight: 900,
               color: C.black, letterSpacing: "-0.035em",
             }}>
               Recupera parte de<br />
               tu <span style={{ color: C.green }}>vida financiera</span>
             </h1>
             <p style={{
-              marginTop: 12, fontSize: 11, lineHeight: 1.55, color: C.muted, maxWidth: 360,
+              marginTop: 10, fontSize: 11, lineHeight: 1.55, color: C.muted, maxWidth: 420,
             }}>
-              Analizamos tu crédito y encontramos una oportunidad real
-              de optimizarlo sin cambiar de banco.
+              {primerNombre}, encontramos una oportunidad real
+              de optimizar tu crédito sin cambiar de banco.
             </p>
           </div>
           <div style={{
-            position: "relative", borderRadius: 14, overflow: "hidden",
-            minHeight: 200, boxShadow: "0 18px 40px -22px rgba(0,0,0,0.35)",
+            position: "relative", borderRadius: 12, overflow: "hidden",
+            height: 120, boxShadow: "0 12px 28px -18px rgba(0,0,0,0.35)",
           }}>
             <img
               src={heroSunset} alt="" crossOrigin="anonymous"
@@ -346,19 +353,19 @@ export function PrintDocument(props: Props) {
 
         {/* ───── 3. INVERSIÓN POR ÉXITO + 72H ───── */}
         <div style={{ padding: "14px 24px 0 24px" }}>
-          <SectionTitle index="3" title="Inversión por éxito" />
+          <SectionTitle index="3" title="Beneficio económico autorizado" />
           <div style={{
             marginTop: 10,
             display: "grid", gridTemplateColumns: "1.55fr 1fr", gap: 12,
           }}>
-            {/* Honorarios card */}
+            {/* Beneficio económico card */}
             <div style={{
               background: "#fff", border: `1px solid ${C.hairline}`,
               borderRadius: 12, padding: "12px 16px",
             }}>
-              <PriceRow label="Honorarios normales" value={formatCOP(honorariosBase)} strike />
+              <PriceRow label="Tarifa estándar" value={formatCOP(honorariosBase)} strike />
               <div style={{ height: 1, background: C.hairline, margin: "10px 0" }} />
-              <PriceRow label="Precio actual autorizado" value={formatCOP(honorariosFinales)} />
+              <PriceRow label="Tarifa aprobada para este caso" value={formatCOP(honorariosFinales)} />
               <div style={{
                 marginTop: 10, background: C.greenSoft,
                 borderRadius: 10, padding: "10px 14px",
@@ -367,7 +374,7 @@ export function PrintDocument(props: Props) {
                 <div style={{
                   fontSize: 11, fontWeight: 800, color: C.greenDeep,
                   letterSpacing: "0.12em",
-                }}>AHORRAS</div>
+                }}>AHORRO OBTENIDO</div>
                 <div style={{
                   fontSize: 22, fontWeight: 900, color: C.greenDeep,
                   letterSpacing: "-0.02em",
@@ -377,61 +384,85 @@ export function PrintDocument(props: Props) {
               </div>
             </div>
 
-            {/* 72 horas */}
+            {/* Urgencia con fecha exacta */}
             <div style={{
               background: C.red, color: "#fff", borderRadius: 12,
               padding: "12px 14px", display: "flex", flexDirection: "column",
               justifyContent: "center", textAlign: "center",
             }}>
               <div style={{
-                fontSize: 9.5, letterSpacing: "0.22em", fontWeight: 700, opacity: 0.95,
-              }}>OFERTA VÁLIDA POR</div>
+                fontSize: 9, letterSpacing: "0.22em", fontWeight: 700, opacity: 0.95,
+              }}>BENEFICIO VÁLIDO HASTA</div>
+              <div style={{
+                fontSize: 15, fontWeight: 900, marginTop: 4, letterSpacing: "-0.005em",
+                textTransform: "uppercase",
+              }}>
+                {fechaLimiteStr}
+              </div>
               <div style={{
                 display: "flex", alignItems: "center", justifyContent: "center",
-                gap: 8, marginTop: 4,
+                gap: 6, marginTop: 6,
+                borderTop: "1px solid rgba(255,255,255,0.25)", paddingTop: 6,
               }}>
-                <ClockIcon color="#fff" size={22} />
-                <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: "-0.02em" }}>
+                <ClockIcon color="#fff" size={16} />
+                <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: "-0.02em" }}>
                   72 HORAS
                 </div>
-              </div>
-              <div style={{ fontSize: 9, marginTop: 4, opacity: 0.92, lineHeight: 1.4 }}>
-                Después de este plazo,<br />
-                la propuesta vuelve a<br />su tarifa estándar.
               </div>
             </div>
           </div>
         </div>
 
-        {/* ───── CIERRE ───── */}
-        <div style={{ padding: "14px 24px 0 24px", flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+
+        {/* ───── CIERRE EMOCIONAL PREMIUM (full width) ───── */}
+        <div style={{ padding: "16px 24px 0 24px", flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
           <div style={{
-            background: C.black, color: "#fff",
-            borderRadius: 12, padding: "14px 18px",
-            display: "grid", gridTemplateColumns: "1fr auto", gap: 16, alignItems: "center",
+            background: `linear-gradient(135deg, ${C.black} 0%, #1a1a1a 100%)`,
+            color: "#fff", borderRadius: 14, padding: "20px 26px",
+            position: "relative", overflow: "hidden",
           }}>
-            <div>
-              <div style={{ fontSize: 22, color: C.green, lineHeight: 0.6, fontWeight: 900 }}>“</div>
-              <p style={{
-                margin: "2px 0 0 0", fontSize: 10.5, lineHeight: 1.55,
-                color: "rgba(255,255,255,0.92)",
-              }}>
-                Cada cuota que eliminas es tiempo que recuperas.<br />
-                Tiempo para tu familia. Tiempo para tus proyectos. Tiempo para tu patrimonio.
-              </p>
-              <div style={{
-                marginTop: 8, fontSize: 11, fontWeight: 800, color: "#fff",
-              }}>
+            <div style={{
+              position: "absolute", top: -10, left: 18,
+              fontSize: 80, color: C.green, lineHeight: 1, fontWeight: 900, opacity: 0.35,
+            }}>“</div>
+            <div style={{
+              fontSize: 13, color: C.green, fontWeight: 800, letterSpacing: "0.04em",
+              marginBottom: 6, position: "relative",
+            }}>
+              {primerNombre}:
+            </div>
+            <p style={{
+              margin: 0, fontSize: 12, lineHeight: 1.6,
+              color: "rgba(255,255,255,0.94)", position: "relative", maxWidth: "92%",
+            }}>
+              Dentro de unos años este crédito se terminará de una u otra forma.
+              La diferencia es decidir si quieres seguir el camino actual
+              o <span style={{ color: C.green, fontWeight: 700 }}>recuperar parte de tu tiempo financiero</span>.
+              <br /><br />
+              Cada cuota eliminada es tiempo que vuelve a ti.
+              Tiempo para tu familia. Tiempo para tus proyectos.
+              Tiempo para construir patrimonio.
+            </p>
+            <div style={{
+              marginTop: 14, paddingTop: 12,
+              borderTop: "1px solid rgba(255,255,255,0.15)",
+              display: "grid", gridTemplateColumns: "1fr auto", gap: 16, alignItems: "center",
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.85)" }}>
                 La decisión siempre será tuya. Nosotros ya hicimos los cálculos.
               </div>
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <div style={{
-                fontFamily: SCRIPT, fontSize: 28, color: C.green, lineHeight: 1,
-              }}>{analista}</div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{
+                  fontFamily: SCRIPT, fontSize: 26, color: C.green, lineHeight: 1,
+                }}>{analista}</div>
+                <div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.6)", marginTop: 2, letterSpacing: "0.12em" }}>
+                  ANALISTA NUVEX
+                </div>
+              </div>
             </div>
           </div>
         </div>
+
 
         {/* ───── FOOTER ───── */}
         <FooterStrip />
@@ -472,8 +503,8 @@ export function PrintDocument(props: Props) {
           />
         </div>
 
-        {/* 3 proyecciones */}
-        <div style={{ padding: "16px 24px 0 24px", display: "flex", flexDirection: "column", gap: 12 }}>
+        {/* 3 proyecciones — compactas (secundarias) */}
+        <div style={{ padding: "12px 24px 0 24px", display: "flex", flexDirection: "column", gap: 8 }}>
           {alternativas.slice(0, 3).map((alt, i) => {
             const palette = ALT_PALETTES[i % ALT_PALETTES.length];
             return (
@@ -500,15 +531,15 @@ export function PrintDocument(props: Props) {
           })}
         </div>
 
-        {/* CTA final */}
-        <div style={{ padding: "16px 24px 0 24px", flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+        {/* CTA final — sin QR */}
+        <div style={{ padding: "12px 24px 0 24px", flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
           <div style={{
             background: C.bgSoft, border: `1px solid ${C.hairline}`,
-            borderRadius: 12, padding: "14px 18px",
+            borderRadius: 12, padding: "12px 18px",
             display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 16, alignItems: "center",
           }}>
             <div style={{
-              width: 46, height: 46, borderRadius: 12,
+              width: 40, height: 40, borderRadius: 10,
               background: C.green,
               display: "flex", alignItems: "center", justifyContent: "center",
               color: "#fff",
@@ -516,19 +547,26 @@ export function PrintDocument(props: Props) {
               <CalIconBig />
             </div>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 900, color: C.black, lineHeight: 1.2 }}>
-                ¿Listo para dar el siguiente paso?
+              <div style={{ fontSize: 13, fontWeight: 900, color: C.black, lineHeight: 1.2 }}>
+                ¿Listo para dar el siguiente paso, {primerNombre}?
               </div>
               <div style={{
-                marginTop: 4, fontSize: 10.5, color: C.muted, lineHeight: 1.45,
+                marginTop: 3, fontSize: 10, color: C.muted, lineHeight: 1.4,
               }}>
-                Esta propuesta personalizada está lista para ti.<br />
-                Agenda tu asesoría hoy y comencemos a optimizar tu crédito.
+                Esta propuesta personalizada está lista para ti.
+                Agenda tu asesoría y comencemos a optimizar tu crédito.
               </div>
             </div>
-            <QRPlaceholder />
+            <div style={{
+              background: C.black, color: "#fff",
+              padding: "8px 14px", borderRadius: 8,
+              fontSize: 11, fontWeight: 800, letterSpacing: "0.04em",
+            }}>
+              CONTACTA A {analista.split(" ")[0].toUpperCase()}
+            </div>
           </div>
         </div>
+
 
         <FooterStrip />
       </section>
@@ -699,8 +737,8 @@ function ImpactCard({
         }}>{eyebrow}</div>
       </div>
       <div style={{
-        marginTop: 8, fontSize: 32, fontWeight: 900, color: accent,
-        letterSpacing: "-0.025em", lineHeight: 1,
+        marginTop: 8, fontSize: 44, fontWeight: 900, color: accent,
+        letterSpacing: "-0.03em", lineHeight: 0.98,
       }}>
         {amount}
       </div>
@@ -762,8 +800,9 @@ function AlternativaCard(props: {
   return (
     <div style={{
       background: "#fff", border: `1px solid ${C.hairline}`,
-      borderRadius: 12, padding: "12px 16px",
+      borderRadius: 10, padding: "9px 14px",
     }}>
+
       {/* Header card */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -782,68 +821,65 @@ function AlternativaCard(props: {
         </div>
       </div>
 
-      {/* 4 cols */}
+      {/* 4 cols compactas */}
       <div style={{
-        marginTop: 10,
-        display: "grid", gridTemplateColumns: "1.15fr 1fr 1fr 1fr", gap: 14, alignItems: "start",
+        marginTop: 7, display: "grid", gridTemplateColumns: "1.15fr 1fr 1fr 1fr", gap: 10, alignItems: "start",
       }}>
         <div>
-          <div style={{ fontSize: 8.5, letterSpacing: "0.18em", color: C.muted, fontWeight: 800 }}>
-            NUEVA CUOTA MENSUAL
+          <div style={{ fontSize: 7.5, letterSpacing: "0.18em", color: C.muted, fontWeight: 800 }}>
+            NUEVA CUOTA
           </div>
           <div style={{
-            fontSize: 22, fontWeight: 900, color: accent,
-            letterSpacing: "-0.02em", lineHeight: 1.05, marginTop: 2,
+            fontSize: 16, fontWeight: 900, color: accent,
+            letterSpacing: "-0.02em", lineHeight: 1.05, marginTop: 1,
           }}>
             {formatCOP(cuota)}
           </div>
           <div style={{
-            marginTop: 4, display: "inline-block",
-            background: soft, color: deep, fontSize: 9, fontWeight: 800,
-            padding: "2px 8px", borderRadius: 999,
+            marginTop: 2, display: "inline-block",
+            background: soft, color: deep, fontSize: 8, fontWeight: 800,
+            padding: "1px 6px", borderRadius: 999,
           }}>
             +{formatNumber(cuotaPct, 1)}%
-          </div>
-          <div style={{ fontSize: 8.5, color: C.muted, marginTop: 3 }}>
-            vs. cuota actual
           </div>
         </div>
 
         <AltMetric
-          icon={<ClockIcon color={accent} size={14} />}
-          label="AHORRO EN TIEMPO"
+          icon={<ClockIcon color={accent} size={12} />}
+          label="TIEMPO"
           value={`${Math.round(ahorroAños)} AÑOS`}
           sub={`${ahorroCuotas} cuotas`}
           color={accent}
+          valueSize={14}
         />
 
         <AltMetric
           icon={<MoneyMini color={accent} />}
-          label="AHORRO EN DINERO"
+          label="DINERO"
           value={formatCOP(ahorroDinero)}
-          sub="Menos intereses y seguros"
+          sub="Intereses + seguros"
           color={accent}
-          valueSize={15}
+          valueSize={12}
         />
 
         <div>
-          <div style={{ fontSize: 8.5, letterSpacing: "0.18em", color: C.muted, fontWeight: 800 }}>
-            TERMINARÍAS EN
+          <div style={{ fontSize: 7.5, letterSpacing: "0.18em", color: C.muted, fontWeight: 800 }}>
+            TERMINA
           </div>
           <div style={{
-            fontSize: 22, fontWeight: 900, color: accent,
-            letterSpacing: "-0.02em", marginTop: 2,
+            fontSize: 16, fontWeight: 900, color: accent,
+            letterSpacing: "-0.02em", marginTop: 1,
           }}>
             {terminaEn}
           </div>
-          <div style={{ fontSize: 9, color: C.muted, marginTop: 3 }}>
-            Hoy terminas<br />en {terminaActual}
+          <div style={{ fontSize: 8, color: C.muted, marginTop: 1 }}>
+            Hoy: {terminaActual}
           </div>
         </div>
       </div>
 
-      {/* Timeline */}
-      <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+      {/* Timeline compacto */}
+      <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
         <MiniTimeline
           label="SIN NUVEX" labelColor={C.muted}
           startYear={añoHoy} endYear={terminaActual}
@@ -862,13 +898,11 @@ function AlternativaCard(props: {
 
       {/* Ideal */}
       <div style={{
-        marginTop: 10, background: soft, borderRadius: 8,
-        padding: "8px 12px",
+        marginTop: 7, background: soft, borderRadius: 6,
+        padding: "5px 10px",
       }}>
-        <div style={{ fontSize: 10, fontWeight: 800, color: deep, fontStyle: "italic" }}>
-          ¿Para quién es ideal esta opción?
-        </div>
-        <div style={{ fontSize: 9.5, color: C.text, lineHeight: 1.4, marginTop: 2 }}>
+        <div style={{ fontSize: 8.5, color: C.text, lineHeight: 1.35 }}>
+          <span style={{ fontWeight: 800, color: deep, fontStyle: "italic" }}>Ideal para: </span>
           {quienIdeal}
         </div>
       </div>
