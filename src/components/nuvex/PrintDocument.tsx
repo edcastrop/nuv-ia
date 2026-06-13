@@ -956,8 +956,9 @@ function AlternativaCard(props: {
   return (
     <div style={{
       background: "#fff", border: `1px solid ${C.hairline}`,
-      borderRadius: 10, padding: "7px 12px",
+      borderRadius: 12, padding: "10px 14px",
       breakInside: "avoid", pageBreakInside: "avoid",
+      boxShadow: "0 2px 8px -4px rgba(0,0,0,0.06)",
     }}>
 
       {/* Header card */}
@@ -966,48 +967,48 @@ function AlternativaCard(props: {
       }}>
         <div style={{
           background: accent, color: "#fff",
-          padding: "3px 10px", borderRadius: 6,
-          fontSize: 9.5, fontWeight: 900, letterSpacing: "0.14em",
+          padding: "4px 11px", borderRadius: 6,
+          fontSize: 10.5, fontWeight: 900, letterSpacing: "0.14em",
         }}>
           PROYECCIÓN {index}
         </div>
         <div style={{
-          fontSize: 10, fontWeight: 800, color: deep, fontStyle: "italic",
+          fontSize: 11, fontWeight: 800, color: deep, fontStyle: "italic",
         }}>
           {label}
         </div>
       </div>
 
-      {/* 4 cols compactas */}
+      {/* 4 cols */}
       <div style={{
-        marginTop: 5, display: "grid", gridTemplateColumns: "1.15fr 1fr 1fr 1fr", gap: 8, alignItems: "start",
+        marginTop: 7, display: "grid", gridTemplateColumns: "1.15fr 1fr 1fr 1fr", gap: 10, alignItems: "start",
       }}>
         <div>
-          <div style={{ fontSize: 7.5, letterSpacing: "0.18em", color: C.muted, fontWeight: 800 }}>
+          <div style={{ fontSize: 8.5, letterSpacing: "0.18em", color: C.muted, fontWeight: 800 }}>
             NUEVA CUOTA
           </div>
           <div style={{
-            fontSize: 14.5, fontWeight: 900, color: accent,
-            letterSpacing: "-0.02em", lineHeight: 1.05, marginTop: 1,
+            fontSize: 17, fontWeight: 900, color: accent,
+            letterSpacing: "-0.02em", lineHeight: 1.05, marginTop: 2,
           }}>
             {formatCOP(cuota)}
           </div>
           <div style={{
-            marginTop: 2, display: "inline-block",
-            background: soft, color: deep, fontSize: 8, fontWeight: 800,
-            padding: "1px 6px", borderRadius: 999,
+            marginTop: 3, display: "inline-block",
+            background: soft, color: deep, fontSize: 9, fontWeight: 800,
+            padding: "2px 7px", borderRadius: 999,
           }}>
             +{formatNumber(cuotaPct, 1)}%
           </div>
         </div>
 
         <AltMetric
-          icon={<ClockIcon color={accent} size={12} />}
+          icon={<ClockIcon color={accent} size={13} />}
           label="TIEMPO"
           value={`${Math.round(ahorroAños)} AÑOS`}
           sub={`${ahorroCuotas} cuotas`}
           color={accent}
-          valueSize={14}
+          valueSize={16}
         />
 
         <AltMetric
@@ -1016,27 +1017,27 @@ function AlternativaCard(props: {
           value={formatCOP(ahorroDinero)}
           sub="Intereses + seguros"
           color={accent}
-          valueSize={12}
+          valueSize={14}
         />
 
         <div>
-          <div style={{ fontSize: 7.5, letterSpacing: "0.18em", color: C.muted, fontWeight: 800 }}>
+          <div style={{ fontSize: 8.5, letterSpacing: "0.18em", color: C.muted, fontWeight: 800 }}>
             TERMINA
           </div>
           <div style={{
-            fontSize: 16, fontWeight: 900, color: accent,
-            letterSpacing: "-0.02em", marginTop: 1,
+            fontSize: 18, fontWeight: 900, color: accent,
+            letterSpacing: "-0.02em", marginTop: 2,
           }}>
             {terminaEn}
           </div>
-          <div style={{ fontSize: 8, color: C.muted, marginTop: 1 }}>
+          <div style={{ fontSize: 8.5, color: C.muted, marginTop: 1 }}>
             Hoy: {terminaActual}
           </div>
         </div>
       </div>
 
-      {/* Timeline compacto */}
-      <div style={{ marginTop: 5, display: "flex", flexDirection: "column", gap: 2 }}>
+      {/* Timeline */}
+      <div style={{ marginTop: 7, display: "flex", flexDirection: "column", gap: 3 }}>
         <MiniTimeline
           label="SIN NUVEX" labelColor={C.muted}
           startYear={añoHoy} endYear={terminaActual}
@@ -1055,10 +1056,10 @@ function AlternativaCard(props: {
 
       {/* Ideal */}
       <div style={{
-        marginTop: 5, background: soft, borderRadius: 6,
-        padding: "4px 8px",
+        marginTop: 6, background: soft, borderRadius: 8,
+        padding: "5px 10px",
       }}>
-        <div style={{ fontSize: 8, color: C.text, lineHeight: 1.15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <div style={{ fontSize: 8.8, color: C.text, lineHeight: 1.25, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           <span style={{ fontWeight: 800, color: deep, fontStyle: "italic" }}>Ideal para: </span>
           {quienIdeal}
         </div>
