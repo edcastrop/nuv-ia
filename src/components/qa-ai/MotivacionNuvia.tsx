@@ -100,6 +100,26 @@ function pickCita(seed: string): Cita {
   return CITAS[h % CITAS.length]!;
 }
 
+const EMOTIVOS: ((n: string) => string)[] = [
+  (n) => `¡Vamos con toda, ${n}! Este cierre lleva tu firma.`,
+  (n) => `${n}, hoy le cambias el día a una familia. Dale con todo.`,
+  (n) => `Confío en ti, ${n}. Cierra este caso como solo tú sabes.`,
+  (n) => `${n}, el cliente está del otro lado esperando claridad. Vamos por él.`,
+  (n) => `Respira, ${n}, y firma. Tienes todo lo que se necesita.`,
+  (n) => `${n}, esto que estás haciendo importa. De verdad importa.`,
+  (n) => `Vamos, ${n}, un cierre más cerca de la mejor versión de NUVEX.`,
+  (n) => `${n}, hoy escribes una historia financiera. Hazla memorable.`,
+  (n) => `Tú puedes, ${n}. Y cuando termines, date el crédito que mereces.`,
+  (n) => `${n}, no es un caso más — es alguien confiando en tu criterio. Vamos.`,
+];
+
+function pickEmotivo(seed: string, nombre: string): string {
+  let h = 0;
+  const k = `emo|${seed}|${Math.floor(Date.now() / 60000)}`;
+  for (let i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) >>> 0;
+  return EMOTIVOS[h % EMOTIVOS.length]!(nombre);
+}
+
 function primerNombre(full?: string | null, email?: string | null): string {
   const base = (full ?? "").trim().split(/\s+/)[0];
   if (base) return base.charAt(0).toUpperCase() + base.slice(1).toLowerCase();
