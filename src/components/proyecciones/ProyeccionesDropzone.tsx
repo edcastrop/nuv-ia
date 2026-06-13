@@ -34,6 +34,7 @@ import {
   eliminarProyeccion,
   urlFirmadaProyeccion,
   fusionarConExtractoYReauditar,
+  verificarCierreContraPropuesta,
 } from "@/lib/proyecciones.functions";
 import { auditarLecturaAutomatica } from "@/lib/qaAI.functions";
 
