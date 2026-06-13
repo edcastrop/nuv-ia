@@ -856,7 +856,20 @@ export function construirVeredicto(
 
   // ── Recomendaciones (siempre accionables, surgen de los hallazgos) ──
   const recs: string[] = hallazgos.map((h) => h.pista);
-  if (recs.length === 0) recs.push("Caso reconciliado: puede continuar con la simulación y la oferta al cliente.");
+  if (recs.length === 0) {
+    recs.push("Caso reconciliado: puede continuar con la simulación y la oferta al cliente.");
+  } else {
+    // Pistas operativas universales cuando hay cualquier hallazgo o desfase
+    recs.push(
+      "Pregunte al cliente si realizó abonos a capital en el pasado: muchas veces el banco no refleja el nuevo saldo en el extracto, lo que explica desfases entre cuota, saldo y plazo.",
+    );
+    recs.push(
+      "Solicite al cliente las PROYECCIONES OFICIALES del crédito emitidas por el banco. Allí aparecen: saldo a capital actual, tasa vigente, valor UVR de corte, saldo en UVR, TEA cobrada, cuotas pendientes, valor de la cuota, valor de los seguros y la discriminación cuota (capital + interés + seguros). Con ese documento NUVIA puede emitir el dictamen final.",
+    );
+    recs.push(
+      "Una vez tenga las proyecciones del banco, súbalas al expediente y reejecute la auditoría: NUVIA cruzará el extracto contra las proyecciones y cerrará el dictamen.",
+    );
+  }
 
   // ── Titular y resumen ──
   let titular: string;
