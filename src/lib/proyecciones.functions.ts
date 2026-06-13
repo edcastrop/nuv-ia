@@ -308,9 +308,9 @@ export const obtenerVerificacionCierre = createServerFn({ method: "POST" })
       .maybeSingle();
     if (error) throw new Error(error.message);
     // Re-serializamos para que el envelope RPC reciba un JSON puro y no rechace el tipo.
-    const verif = row?.verificacion_cierre
-      ? (JSON.parse(JSON.stringify(row.verificacion_cierre)) as Record<string, unknown>)
-      : null;
+    const verif = (row?.verificacion_cierre
+      ? (JSON.parse(JSON.stringify(row.verificacion_cierre)) as VerificacionCierre)
+      : null) as VerificacionCierre | null;
     return {
       verificacion: verif,
       banco: row?.banco ?? null,
