@@ -214,10 +214,10 @@ export function PrintDocument(props: Props) {
         </div>
 
         {/* ───── DATOS DEL CASO ───── */}
-        <div style={{ padding: "0 24px" }}>
+        <div style={{ padding: "0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <div style={{
             background: C.bgSoft, borderRadius: 12,
-            padding: "14px 18px", display: "grid",
+            padding: "10px 14px", display: "grid",
             gridTemplateColumns: "1fr 1fr 1fr 1.2fr", gap: 18, alignItems: "center",
           }}>
             <MetaCol icon={<BankIcon />} label="BANCO" value={banco} />
@@ -252,10 +252,10 @@ export function PrintDocument(props: Props) {
         </div>
 
         {/* ───── 1. CUOTA HOY VS OPTIMIZADA ───── */}
-        <div style={{ padding: "18px 24px 0 24px" }}>
+        <div style={{ padding: "11px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <SectionTitle index="1" title="Tu cuota, hoy y con nuestra optimización" />
           <div style={{
-            marginTop: 10,
+            marginTop: 7,
             display: "grid", gridTemplateColumns: "1fr 36px 1fr 110px", gap: 12, alignItems: "stretch",
           }}>
             <CuotaCard
@@ -304,10 +304,10 @@ export function PrintDocument(props: Props) {
         </div>
 
         {/* ───── 2. IMPACTO FINANCIERO TOTAL ───── */}
-        <div style={{ padding: "16px 24px 0 24px" }}>
+        <div style={{ padding: "11px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <SectionTitle index="2" title="Impacto financiero total" />
           <div style={{
-            marginTop: 10,
+            marginTop: 7,
             display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12,
           }}>
             <ImpactCard
@@ -333,13 +333,13 @@ export function PrintDocument(props: Props) {
 
           {/* Esto significa para ti y tu familia */}
           <div style={{
-            marginTop: 12, background: "#fff",
+            marginTop: 8, background: "#fff",
             border: `1px solid ${C.hairline}`, borderRadius: 12,
-            padding: "12px 16px",
+            padding: "8px 14px",
           }}>
             <div style={{
               fontSize: 10, letterSpacing: "0.22em", fontWeight: 800,
-              color: C.muted, textAlign: "center", marginBottom: 8,
+              color: C.muted, textAlign: "center", marginBottom: 5,
             }}>
               ESTO SIGNIFICA PARA TI Y TU FAMILIA
             </div>
@@ -355,10 +355,10 @@ export function PrintDocument(props: Props) {
         </div>
 
         {/* ───── 3. INVERSIÓN POR ÉXITO + 72H ───── */}
-        <div style={{ padding: "14px 24px 0 24px" }}>
+        <div style={{ padding: "10px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <SectionTitle index="3" title="Beneficio económico autorizado" />
           <div style={{
-            marginTop: 10,
+            marginTop: 7,
             display: "grid", gridTemplateColumns: "1.55fr 1fr", gap: 12,
           }}>
             {/* Beneficio económico card */}
