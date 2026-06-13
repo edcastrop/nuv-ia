@@ -522,13 +522,13 @@ export function ProyeccionesDropzone({ expedienteId, onReauditoria, variant = "q
 }
 
 function ResumenDatos({ datos, tokens }: { datos: Record<string, unknown>; tokens: { text: string; textDim: string; chipBg: string; border: string } }) {
-  const data = datos as Partial<ExtractoData>;
+  const data = datos as Record<string, unknown>;
   const filas: Array<[string, string | undefined]> = [
     ["Saldo capital", fmtMoneda(data.saldoCapital)],
     ["Tasa EA cobrada", fmtPct(data.teaCobrada ?? data.tea)],
     ["UVR del día", fmtNumero(data.valorUVR)],
     ["Saldo en UVR", fmtNumero(data.saldoUVR)],
-    ["Cuotas pendientes", data.cuotasPendientes],
+    ["Cuotas pendientes", typeof data.cuotasPendientes === "string" ? data.cuotasPendientes : undefined],
     ["Cuota actual", fmtMoneda(data.cuotaPagadaCliente ?? data.valorAPagar ?? data.cuotaMensual)],
     ["Seguros", fmtMoneda(data.seguros)],
   ];
