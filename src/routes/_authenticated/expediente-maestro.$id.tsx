@@ -464,6 +464,8 @@ function MaestroDetail() {
 
       <QAFinancieroBlock expedienteId={id} />
 
+      <ProyeccionesDropzone expedienteId={id} variant="expediente" />
+
       {(aplicandoExtracto || extractoAplicado) && (
         <div ref={resumenRef}>
           <Card>
