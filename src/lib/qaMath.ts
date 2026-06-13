@@ -861,20 +861,64 @@ export function construirVeredicto(
   if (!frechConsistente) causas.push("El subsidio FRECH no está reflejado correctamente en la cuota que paga el cliente.");
   if (!saldoUvrConsistente) causas.push("El valor de la UVR que se usó para convertir el saldo no corresponde a la fecha del extracto.");
 
-  // ── Recomendaciones (lenguaje sencillo y accionable) ──
+  // ── Recomendaciones (lenguaje sencillo, ajustadas al tipo de crédito) ──
+  const tieneFresh = (r.coberturaFrechValorMensual ?? 0) > 0 || (r.coberturaFrechPp ?? 0) > 0;
   const recs: string[] = hallazgos.map((h) => h.pista);
+
   if (recs.length === 0) {
     recs.push("Todo cuadra: puede continuar tranquilo con la simulación y la propuesta al cliente.");
   } else {
+    // 1) Abonos a capital — matiz UVR
+    if (isUvr) {
+      recs.push(
+        "Primero, pregúntele al cliente: ¿ha hecho abonos extra a capital alguna vez? En créditos UVR los abonos bajan el saldo en UVR, pero muchas veces el banco no lo refleja a tiempo en el extracto y por eso aparecen desfases.",
+      );
+    } else {
+      recs.push(
+        "Primero, pregúntele al cliente: ¿ha hecho abonos extra a capital alguna vez? Muchas veces el banco recibe el abono pero no actualiza el saldo en el extracto, y eso explica casi todos los desfases.",
+      );
+    }
+
+    // 2) Proyecciones oficiales — campos según tipo
+    const campos = [
+      "saldo actual a capital",
+      "tasa vigente (EA)",
+      "cuántas cuotas le faltan",
+      "valor exacto de la cuota",
+      "valor de los seguros",
+      "cómo se compone la cuota (capital + interés + seguros)",
+      ...(isUvr ? [
+        "valor de la UVR del día del corte",
+        "saldo del crédito expresado en UVR",
+      ] : []),
+      ...(tieneFresh ? [
+        "valor mensual del beneficio Fresh / FRECH",
+        "cuántas cuotas de cobertura le quedan",
+        "si el beneficio se aplica como descuento en pesos o como rebaja en la tasa",
+      ] : []),
+    ];
     recs.push(
-      "Primero, pregúntele al cliente: ¿ha hecho abonos extra a capital alguna vez? Muchas veces el banco recibe el abono pero no actualiza el saldo en el extracto, y eso explica casi todos los desfases.",
+      `Después, pídale al cliente que solicite al banco las PROYECCIONES OFICIALES de su crédito. En ese documento debe quedar claro: ${campos.join(", ")}. Con eso NUVIA puede cerrar el dictamen final.`,
     );
-    recs.push(
-      "Después, pídale al cliente que solicite al banco las PROYECCIONES OFICIALES de su crédito. Es un documento donde aparece todo claro: saldo actual, tasa vigente, valor de la UVR del día, saldo en UVR, cuántas cuotas le faltan, valor exacto de la cuota, valor de los seguros y cómo se compone la cuota (capital + interés + seguros). Con ese documento NUVIA puede cerrar el dictamen final.",
-    );
-    recs.push(
-      "Cuando el cliente le entregue las proyecciones del banco, súbalas al caso y vuelva a ejecutar la auditoría. NUVIA va a comparar el extracto contra las proyecciones y le dará el veredicto final del crédito.",
-    );
+
+    // 3) Re-ejecutar — matiz UVR/Fresh
+    if (isUvr && tieneFresh) {
+      recs.push("Cuando llegue la proyección, súbala al caso y vuelva a ejecutar la auditoría. NUVIA va a validar la UVR del corte, la aplicación del beneficio Fresh / FRECH y la cuota real cobrada para emitir el veredicto final.");
+    } else if (isUvr) {
+      recs.push("Cuando llegue la proyección, súbala al caso y vuelva a ejecutar la auditoría. NUVIA va a validar la UVR del corte y la cuota en UVR para emitir el veredicto final.");
+    } else if (tieneFresh) {
+      recs.push("Cuando llegue la proyección, súbala al caso y vuelva a ejecutar la auditoría. NUVIA va a validar cómo se aplica el beneficio Fresh / FRECH y cuántas cuotas de cobertura quedan, y le dará el veredicto final.");
+    } else {
+      recs.push("Cuando el cliente le entregue las proyecciones del banco, súbalas al caso y vuelva a ejecutar la auditoría. NUVIA va a comparar el extracto contra las proyecciones y le dará el veredicto final del crédito.");
+    }
+
+    // 4) Tips específicos del producto
+    if (tieneFresh) {
+      recs.push("Como este crédito tiene beneficio Fresh / FRECH, confirme con el banco cuántos meses de cobertura le quedan al cliente y qué pasa con la cuota el día que se acabe el beneficio — ahí es donde suelen aparecer los desajustes.");
+    }
+    if (isUvr) {
+      recs.push("Como es un crédito en UVR, recuerde que el saldo en pesos puede subir aunque el cliente pague juiciosamente: lo que importa es que el saldo EN UVR baje cada mes. Verifíquelo en la proyección oficial.");
+    }
   }
 
   // ── Titular y resumen (lenguaje claro) ──
