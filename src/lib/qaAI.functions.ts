@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { auditar, QA_MOTOR_VERSION, TOLERANCIAS_DEFAULT, type Modalidad, type Tolerancias } from "./qaMath";
+import { auditar, QA_MOTOR_VERSION, TOLERANCIAS_DEFAULT, type Inconsistencia, type Modalidad, type Tolerancias } from "./qaMath";
 
 // ─────────────────────────────────────────────────────────────
 // Fase 2 — Carga de reglas activas desde qa_reglas
@@ -56,6 +56,35 @@ async function cargarToleranciasActivasInterno(
 
 
 const ModalidadEnum = z.enum(["hipotecario", "leasing", "uvr"]);
+
+type QAInconsistenciaView = {
+  id: string;
+  auditoria_id: string;
+  tipo: string;
+  severidad: string;
+  campo: string | null;
+  valor_extracto: number | null;
+  valor_calculado: number | null;
+  diferencia: number | null;
+  mensaje: string;
+  sugerencia: string | null;
+  created_at: string;
+};
+
+const mapInconsistencias = (auditoriaId: string, incs: Inconsistencia[]): QAInconsistenciaView[] =>
+  incs.map((i, idx) => ({
+    id: `runtime-${idx}`,
+    auditoria_id: auditoriaId,
+    tipo: i.tipo,
+    severidad: i.severidad,
+    campo: i.campo ?? null,
+    valor_extracto: i.valorExtracto ?? null,
+    valor_calculado: i.valorCalculado ?? null,
+    diferencia: i.diferencia ?? null,
+    mensaje: i.mensaje,
+    sugerencia: i.sugerencia ?? null,
+    created_at: new Date(0).toISOString(),
+  }));
 
 const AuditarInputSchema = z.object({
   expedienteId: z.string().uuid().nullable().optional(),
@@ -222,13 +251,17 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
       .from("qa_auditorias").select("*").eq("id", data.id).single();
     if (error) throw new Error(error.message);
     let auditoria = aud;
+    let inconsistenciasOverride: QAInconsistenciaView[] | null = null;
     const inputs = (auditoria.inputs ?? {}) as Record<string, unknown>;
     const rec = (inputs.reconstruccion ?? {}) as Record<string, unknown>;
     const extSnap = (inputs.extracto ?? {}) as Record<string, unknown>;
     const savedOutputs = (auditoria.outputs ?? {}) as Record<string, unknown>;
     const firstSaved = Array.isArray(savedOutputs.primerasCuotas) ? savedOutputs.primerasCuotas[0] as Record<string, unknown> | undefined : undefined;
+    const savedTodas = Array.isArray(savedOutputs.todasCuotas) ? savedOutputs.todasCuotas : [];
+    const cuotasRec = Math.max(0, Math.round(Number(rec.cuotasPendientes ?? 0)));
     const staleUvrOutputs = String(inputs.modalidad ?? auditoria.modalidad) === "uvr" && (
-      !firstSaved || !(Number(firstSaved.saldoUvr ?? 0) > 0) || !(Number(firstSaved.valorUvr ?? 0) > 0) || firstSaved.correccionUvr === undefined
+      !firstSaved || !(Number(firstSaved.saldoUvr ?? 0) > 0) || !(Number(firstSaved.valorUvr ?? 0) > 0) || firstSaved.correccionUvr === undefined ||
+      (cuotasRec > 0 && savedTodas.length > 0 && savedTodas.length !== cuotasRec)
     );
     const needsFrechView = !(Number(rec.coberturaFrechValorMensual ?? 0) > 0);
     const needsUvrView = String(inputs.modalidad ?? auditoria.modalidad) === "uvr" && (
@@ -279,8 +312,13 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
             reconstruccion: { ...(nextInputs.reconstruccion as Record<string, unknown>), modalidad: modalidadFinal } as never,
             extracto: nextInputs.extracto as never,
           });
+          inconsistenciasOverride = mapInconsistencias(data.id, result.inconsistencias);
           auditoria = ({
             ...auditoria,
+            motor_version: QA_MOTOR_VERSION,
+            qa_score: result.score.score,
+            categoria: result.score.categoria,
+            dictamen: result.score.dictamen,
             inputs: nextInputs,
             outputs: {
               ...(auditoria.outputs as Record<string, unknown> | null ?? {}),
@@ -297,6 +335,8 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
               ultimasCuotas: result.reconstruccion.ultimasCuotas,
               todasCuotas: result.reconstruccion.todasCuotas,
             },
+            diferencias: result.inconsistencias,
+            alertas: result.inconsistencias.filter((i) => i.severidad === "critica"),
           } as unknown) as typeof aud;
         } catch {
           auditoria = { ...auditoria, inputs: nextInputs } as typeof aud;
@@ -305,7 +345,20 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
     }
     const { data: incs } = await context.supabase
       .from("qa_inconsistencias").select("*").eq("auditoria_id", data.id);
-    return { auditoria, inconsistencias: incs ?? [] };
+    const inconsistenciasDb: QAInconsistenciaView[] = (incs ?? []).map((i) => ({
+      id: String(i.id),
+      auditoria_id: String(i.auditoria_id),
+      tipo: String(i.tipo),
+      severidad: String(i.severidad),
+      campo: i.campo ?? null,
+      valor_extracto: i.valor_extracto ?? null,
+      valor_calculado: i.valor_calculado ?? null,
+      diferencia: i.diferencia ?? null,
+      mensaje: String(i.mensaje),
+      sugerencia: i.sugerencia ?? null,
+      created_at: String(i.created_at),
+    }));
+    return { auditoria, inconsistencias: inconsistenciasOverride ?? inconsistenciasDb };
   });
 
 export const qaKpis = createServerFn({ method: "POST" })

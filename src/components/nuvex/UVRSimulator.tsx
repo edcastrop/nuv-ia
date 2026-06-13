@@ -556,16 +556,12 @@ export function UVRSimulator({
 
       {datosCompletos && (
         <>
-          {(() => null)()}
-          {/* En UVR, calc.cuotasReales refleja el plazo derivado de la cuota actual
-              cuando el banco aún no ha recalculado. Si difiere de cuotasPendientes
-              (lo que dice el extracto), reporta la verdad financiera. */}
           <SituacionActualBlock
             clienteNombre={client.nombre}
             hero={{
               saldoActual: formatCOP(input.saldoPesos),
               cuotaActual: formatCOP(input.cuotaActualPesos),
-              cuotasPendientes: String(calc?.cuotasReales ?? cuotasPendientes),
+              cuotasPendientes: String(cuotasPendientes),
               totalProyectado: calc ? formatCOP(calc.escenarioActual.totalPagoPesos) : "—",
             }}
             vecesPagado={vecesActual}
@@ -577,14 +573,14 @@ export function UVRSimulator({
               saldoActual: input.saldoPesos,
             }}
             puntosNeuralgicos={{
-              tiempoMeses: calc?.cuotasReales ?? cuotasPendientes,
-              segurosProyectados: (input.seguros || 0) * (calc?.cuotasReales ?? cuotasPendientes),
+              tiempoMeses: cuotasPendientes,
+              segurosProyectados: (input.seguros || 0) * cuotasPendientes,
               interesesProyectados: calc
                 ? Math.max(
                     0,
                     calc.escenarioActual.totalPagoPesos -
                       input.saldoPesos -
-                      (input.seguros || 0) * (calc.cuotasReales ?? cuotasPendientes),
+                      (input.seguros || 0) * cuotasPendientes,
                   )
                 : 0,
             }}
