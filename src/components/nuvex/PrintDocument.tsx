@@ -1250,14 +1250,37 @@ function AlternativaCard(props: {
         />
       </div>
 
-      {/* Ideal */}
+      {/* Ideal + Honorarios a éxito */}
       <div style={{
-        marginTop: 6, background: soft, borderRadius: 8,
-        padding: "5px 10px",
+        marginTop: 6, display: "grid", gridTemplateColumns: "1fr auto",
+        gap: 8, alignItems: "stretch",
       }}>
-        <div style={{ fontSize: 8.8, color: C.text, lineHeight: 1.25, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-          <span style={{ fontWeight: 800, color: deep, fontStyle: "italic" }}>Ideal para: </span>
-          {quienIdeal}
+        <div style={{
+          background: soft, borderRadius: 8, padding: "5px 10px",
+          display: "flex", alignItems: "center",
+        }}>
+          <div style={{ fontSize: 8.8, color: C.text, lineHeight: 1.25, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <span style={{ fontWeight: 800, color: deep, fontStyle: "italic" }}>Ideal para: </span>
+            {quienIdeal}
+          </div>
+        </div>
+        <div style={{
+          background: C.azulSoft, border: `1px solid ${C.azul}22`,
+          borderRadius: 8, padding: "4px 10px",
+          display: "flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "center",
+          minWidth: 130,
+        }}>
+          <div style={{ fontSize: 7.8, fontWeight: 800, color: C.azul, letterSpacing: "0.14em" }}>
+            HONORARIOS A ÉXITO
+          </div>
+          <div style={{ fontSize: 12.5, fontWeight: 900, color: C.azul, letterSpacing: "-0.01em", marginTop: 1 }}>
+            {formatCOP(honorarios)}
+          </div>
+          {honorariosTag && (
+            <div style={{ fontSize: 7.6, fontWeight: 700, color: C.muted, marginTop: 1 }}>
+              {honorariosTag}
+            </div>
+          )}
         </div>
       </div>
     </div>
