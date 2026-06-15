@@ -241,14 +241,14 @@ export function PrintDocument(props: Props) {
               margin: 0, fontSize: 32, lineHeight: 1.01, fontWeight: 900,
               color: C.black, letterSpacing: "-0.035em",
             }}>
-              Recupera parte de<br />
-              tu <span style={{ color: C.green }}>vida financiera</span>
+              TU CRÉDITO PUEDE<br />
+              TERMINAR <span style={{ color: C.green }}>ANTES</span>
             </h1>
             <p style={{
               marginTop: 7, fontSize: 10.5, lineHeight: 1.4, color: C.muted, maxWidth: 420,
             }}>
-              Encontramos una oportunidad real de optimizar tu crédito
-              sin cambiar de banco.
+              Analizamos tu caso y encontramos una oportunidad real para reducir
+              años de pago y mejorar el resultado financiero de tu crédito.
             </p>
           </div>
           <div style={{
@@ -371,9 +371,9 @@ export function PrintDocument(props: Props) {
         )}
 
 
-        {/* ───── 2. IMPACTO FINANCIERO TOTAL ───── */}
+        {/* ───── 2. APLICANDO NUESTRA PROPUESTA RECOMENDADA ───── */}
         <div style={{ padding: "8px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
-          <SectionTitle index="2" title="Impacto financiero total" />
+          <SectionTitle index="2" title="Aplicando nuestra propuesta recomendada" />
           <div style={{
             marginTop: 7,
             display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12,
