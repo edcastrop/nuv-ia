@@ -571,6 +571,8 @@ export function PrintDocument(props: Props) {
                 añosActuales={añosActual}
                 añosOpt={alt.añosOpt}
                 quienIdeal={dyn.ideal}
+                honorarios={alt.honorariosFinal}
+                honorariosTag={alt.minimoAplicado ? "Mínimo aplicado" : null}
               />
             );
           })}
