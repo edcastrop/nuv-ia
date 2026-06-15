@@ -144,6 +144,22 @@ export function PrintDocument(props: Props) {
   const recHonorariosFinal = honorariosFinales;
   const recHonorariosTieneDescuento = !!commercial?.hasDiscount;
 
+  // % de descuento comercial aprobado para esta propuesta — se aplica a TODAS las alternativas
+  // (limitado por el descuento máximo permitido por escala de honorarios).
+  const commercialDescuentoPct =
+    commercial?.hasDiscount && honorariosBase > 0
+      ? Math.max(0, Math.round(((honorariosBase - honorariosFinales) / honorariosBase) * 1000) / 10)
+      : 0;
+  const applyCommercialDiscount = (honor: number): { final: number; aplicado: boolean; pct: number } => {
+    if (commercialDescuentoPct <= 0 || honor <= 0) {
+      return { final: honor, aplicado: false, pct: 0 };
+    }
+    const maxPct = descuentoMaximoPct(honor);
+    const pct = Math.min(commercialDescuentoPct, maxPct);
+    if (pct <= 0) return { final: honor, aplicado: false, pct: 0 };
+    return { final: Math.round(honor * (1 - pct / 100)), aplicado: true, pct };
+  };
+
   return (
     <div
       id={containerId}
