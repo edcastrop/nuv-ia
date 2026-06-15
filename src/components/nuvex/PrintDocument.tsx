@@ -400,7 +400,21 @@ export function PrintDocument(props: Props) {
             />
           </div>
 
-          {/* Esto significa para ti y tu familia */}
+          {/* Bullets refuerzo decisión cliente */}
+          <div style={{
+            marginTop: 6, background: C.greenSoft,
+            border: `1px solid ${C.green}33`, borderRadius: 10,
+            padding: "6px 12px", display: "flex", flexWrap: "wrap",
+            gap: "4px 18px", justifyContent: "center", alignItems: "center",
+          }}>
+            <ReinforceBullet text={<>Recuperas <b>{añosEliminadosEntero} años</b> de vida financiera</>} />
+            <ReinforceBullet text={<>Ahorras <b>{formatCOP(ahorroTotal)}</b> durante la vida del crédito</>} />
+            {commercial?.hasDiscount && (
+              <ReinforceBullet text={<>Honorarios con <b>beneficio comercial</b> aplicado</>} />
+            )}
+          </div>
+
+
           <div style={{
             marginTop: 6, background: "#fff",
             border: `1px solid ${C.hairline}`, borderRadius: 12,
