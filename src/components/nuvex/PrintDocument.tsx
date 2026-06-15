@@ -621,7 +621,7 @@ export function PrintDocument(props: Props) {
         <div style={{ flex: "1 1 auto", minHeight: 4 }} />
 
         {/* ───── HERO DE CIERRE (full width) ───── */}
-        <div style={{ padding: "0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
+        <div style={{ padding: "0 22px 18px 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <div style={{
             background: `linear-gradient(135deg, ${C.black} 0%, #1a1a1a 60%, #1f2a4a 130%)`,
             color: "#fff", borderRadius: 14, padding: "18px 22px",
