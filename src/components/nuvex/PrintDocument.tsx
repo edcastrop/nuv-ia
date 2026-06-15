@@ -7,7 +7,7 @@ import { NUVEX } from "./constants";
 import type { ClientData } from "./ClientFields";
 import { formatCOP, formatNumber } from "../../lib/format";
 import type { PesosPropuesta, UVRPropuesta } from "../../lib/finance";
-import { calcularMotor } from "../../lib/motorHonorarios";
+import { calcularMotor, descuentoMaximoPct } from "../../lib/motorHonorarios";
 import logoNuvex from "@/assets/logo-nuvex.png";
 import heroSunset from "@/assets/nuvex-hero-sunset.jpg";
 
