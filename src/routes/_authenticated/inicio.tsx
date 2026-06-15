@@ -7,6 +7,7 @@ import { UVRSimulator } from "@/components/nuvex/UVRSimulator";
 import { RoleHome } from "@/components/home/RoleHome";
 import { ensureOperativeExpedienteForMaestro, getMaestro } from "@/lib/expedienteMaestro";
 import type { Expediente } from "@/lib/expedientes";
+import { hasSimulatorDraft } from "@/components/nuvex/useSimulatorDraft";
 
 const homeSearchSchema = z.object({
   maestroId: z.string().optional(),
@@ -24,8 +25,15 @@ export const Route = createFileRoute("/_authenticated/inicio")({
 
 function Home() {
   const { maestroId, modo: modoSearch, vista } = Route.useSearch();
-  const [showSimulator, setShowSimulator] = useState<boolean>(!!modoSearch || !!maestroId || vista === "simulador");
-  const [mode, setMode] = useState<null | "pesos" | "uvr">(modoSearch ?? null);
+  const draftMode = hasSimulatorDraft("pesos", maestroId)
+    ? "pesos"
+    : hasSimulatorDraft("uvr", maestroId)
+      ? "uvr"
+      : null;
+  const [showSimulator, setShowSimulator] = useState<boolean>(
+    !!modoSearch || !!maestroId || vista === "simulador" || !!draftMode,
+  );
+  const [mode, setMode] = useState<null | "pesos" | "uvr">(modoSearch ?? draftMode);
   const [maestroExp, setMaestroExp] = useState<Expediente | null>(null);
   const [loadingMaestro, setLoadingMaestro] = useState<boolean>(!!maestroId);
   const [maestroErr, setMaestroErr] = useState<string | null>(null);
@@ -54,7 +62,11 @@ function Home() {
   }
 
   if (maestroId && loadingMaestro) {
-    return <div className="p-12 text-center text-sm text-white/60">Cargando datos del expediente maestro…</div>;
+    return (
+      <div className="p-12 text-center text-sm text-white/60">
+        Cargando datos del expediente maestro…
+      </div>
+    );
   }
   if (maestroErr) {
     return <div className="p-12 text-center text-sm text-[#B42318]">{maestroErr}</div>;

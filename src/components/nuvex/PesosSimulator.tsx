@@ -38,10 +38,7 @@ import { AnimatedBackground } from "@/components/home/widgets/AnimatedBackground
 import { toast } from "sonner";
 import { useMonedaMismatchAlert } from "./MonedaMismatchDialog";
 import { FreshBlock } from "./FreshBlock";
-import {
-  PropuestasComerciales,
-  type RecomendadaSeleccionada,
-} from "./PropuestasComerciales";
+import { PropuestasComerciales, type RecomendadaSeleccionada } from "./PropuestasComerciales";
 import {
   defaultCobertura,
   defaultIntervinientes,
@@ -55,7 +52,7 @@ import { AuditPanel } from "./AuditPanel";
 import { useNivelAutonomia } from "@/hooks/useNivelAutonomia";
 import { triggerSimuladorAutoQA } from "@/lib/simuladorAutoQA";
 import { AutoQAPanel, type AutoQAResult } from "./AutoQAPanel";
-
+import { clearSimulatorDraft, readSimulatorDraft, useSimulatorDraft } from "./useSimulatorDraft";
 
 export function PesosSimulator({
   initialExpediente,
@@ -68,51 +65,107 @@ export function PesosSimulator({
 } = {}) {
   const init = initialExpediente;
   const initCred = (init?.credito_data ?? {}) as Record<string, string>;
+  const initClient = (init?.cliente_data as ClientData | undefined) ?? undefined;
+  const draft = readSimulatorDraft("pesos", init?.id, {
+    extractoArchivoPath: typeof initCred.archivoPath === "string" ? initCred.archivoPath : "",
+    discount:
+      init?.discount_data && Object.keys(init.discount_data).length
+        ? (init.discount_data as unknown as DiscountState)
+        : defaultDiscount,
+    client: initClient ?? defaultClient,
+    intervinientes:
+      initClient?.intervinientes && initClient.intervinientes.length > 0
+        ? initClient.intervinientes
+        : defaultIntervinientes(initClient?.tipoProducto),
+    cobertura: initClient?.cobertura ?? defaultCobertura,
+    valorDesembolsado: initCred.valorDesembolsado ?? "",
+    saldoCapital: initCred.saldoCapital ?? "",
+    cuotaActual: initCred.cuotaActual ?? "",
+    seguros: initCred.seguros ?? "",
+    tea: initCred.tea ?? "",
+    nuevaCuotaManual: initCred.nuevaCuotaManual ?? "",
+    cuotasEliminarManual: initCred.cuotasEliminarManual ?? "",
+    modoPersonalizada:
+      initCred.cuotasEliminarManual && !initCred.nuevaCuotaManual
+        ? ("cuotas" as const)
+        : ("cuota" as const),
+  });
   const monedaAlerta = useMonedaMismatchAlert();
   const [autoQA, setAutoQA] = useState<AutoQAResult | null>(null);
   const [autoQALoading, setAutoQALoading] = useState(false);
-  const [extractoArchivoPath, setExtractoArchivoPath] = useState<string>(() =>
-    typeof initCred.archivoPath === "string" ? initCred.archivoPath : "",
+  const [extractoArchivoPath, setExtractoArchivoPath] = useState<string>(
+    () => draft.extractoArchivoPath,
   );
-  const [discount, setDiscount] = useState<DiscountState>(() =>
-    init?.discount_data && Object.keys(init.discount_data).length
-      ? (init.discount_data as unknown as DiscountState)
-      : defaultDiscount,
-  );
-  const initClient = (init?.cliente_data as ClientData | undefined) ?? undefined;
-  const [client, setClient] = useState<ClientData>(() => initClient ?? defaultClient);
-  const [intervinientes, setIntervinientes] = useState<Interviniente[]>(() =>
-    initClient?.intervinientes && initClient.intervinientes.length > 0
-      ? initClient.intervinientes
-      : defaultIntervinientes(initClient?.tipoProducto),
-  );
-  const [cobertura, setCobertura] = useState<Cobertura>(
-    () => initClient?.cobertura ?? defaultCobertura,
-  );
-  const [valorDesembolsado, setValorDesembolsado] = useState(initCred.valorDesembolsado ?? "");
-  const [saldoCapital, setSaldoCapital] = useState(initCred.saldoCapital ?? "");
-  const [cuotaActual, setCuotaActual] = useState(initCred.cuotaActual ?? "");
-  const [seguros, setSeguros] = useState(initCred.seguros ?? "");
-  const [tea, setTea] = useState(initCred.tea ?? "");
-  const [nuevaCuotaManual, setNuevaCuotaManual] = useState(initCred.nuevaCuotaManual ?? "");
-  const [cuotasEliminarManual, setCuotasEliminarManual] = useState(
-    initCred.cuotasEliminarManual ?? "",
-  );
+  const [discount, setDiscount] = useState<DiscountState>(() => draft.discount);
+  const [client, setClient] = useState<ClientData>(() => draft.client);
+  const [intervinientes, setIntervinientes] = useState<Interviniente[]>(() => draft.intervinientes);
+  const [cobertura, setCobertura] = useState<Cobertura>(() => draft.cobertura);
+  const [valorDesembolsado, setValorDesembolsado] = useState(draft.valorDesembolsado);
+  const [saldoCapital, setSaldoCapital] = useState(draft.saldoCapital);
+  const [cuotaActual, setCuotaActual] = useState(draft.cuotaActual);
+  const [seguros, setSeguros] = useState(draft.seguros);
+  const [tea, setTea] = useState(draft.tea);
+  const [nuevaCuotaManual, setNuevaCuotaManual] = useState(draft.nuevaCuotaManual);
+  const [cuotasEliminarManual, setCuotasEliminarManual] = useState(draft.cuotasEliminarManual);
   const [modoPersonalizada, setModoPersonalizada] = useState<"cuota" | "cuotas">(
-    initCred.cuotasEliminarManual && !initCred.nuevaCuotaManual ? "cuotas" : "cuota",
+    draft.modoPersonalizada,
   );
 
   // Prellenar el campo "Asesor NUVEX" con el nombre del perfil autenticado
   useAsesorDefault(client.asesor, (nombre) => setClient((prev) => ({ ...prev, asesor: nombre })));
   const { metricas: metricasAutonomia } = useNivelAutonomia();
+  const currentDraft = useMemo(
+    () => ({
+      extractoArchivoPath,
+      discount,
+      client,
+      intervinientes,
+      cobertura,
+      valorDesembolsado,
+      saldoCapital,
+      cuotaActual,
+      seguros,
+      tea,
+      nuevaCuotaManual,
+      cuotasEliminarManual,
+      modoPersonalizada,
+    }),
+    [
+      extractoArchivoPath,
+      discount,
+      client,
+      intervinientes,
+      cobertura,
+      valorDesembolsado,
+      saldoCapital,
+      cuotaActual,
+      seguros,
+      tea,
+      nuevaCuotaManual,
+      cuotasEliminarManual,
+      modoPersonalizada,
+    ],
+  );
+  useSimulatorDraft("pesos", init?.id, currentDraft);
+  const handleSaved = (e: Expediente) => {
+    clearSimulatorDraft("pesos", init?.id);
+    onSaved?.(e);
+  };
+  const handleResetMode = () => {
+    clearSimulatorDraft("pesos", init?.id);
+    onReset?.();
+  };
 
   const plazoInicial = parseDecimal(client.plazoInicial);
   const cuotasPagadas = parseDecimal(client.cuotasPagadas);
   const cuotasPendientesGuardadas = parseDecimal(client.cuotasPendientes ?? "");
-  const esFna = /fondo\s+nacional\s+del\s+ahorro|\bfna\b/i.test(`${client.banco} ${client.tipoProducto}`);
-  const cuotasPendientes = cuotasPendientesGuardadas > 0
-    ? cuotasPendientesGuardadas
-    : Math.max(0, plazoInicial - cuotasPagadas + (esFna ? 1 : 0));
+  const esFna = /fondo\s+nacional\s+del\s+ahorro|\bfna\b/i.test(
+    `${client.banco} ${client.tipoProducto}`,
+  );
+  const cuotasPendientes =
+    cuotasPendientesGuardadas > 0
+      ? cuotasPendientesGuardadas
+      : Math.max(0, plazoInicial - cuotasPagadas + (esFna ? 1 : 0));
   const honorariosPct = parsePercentage(client.porcentajeHonorarios) || 6;
 
   const saneCredito = normalizeCreditMoneyInput({
@@ -283,7 +336,6 @@ export function PesosSimulator({
         ? totalActualPendiente / saldoBase
         : 0;
 
-
   const metrics = [
     { label: "Valor desembolsado", value: formatCOP(valorDesembolsadoNum) },
     { label: "Saldo actual", value: formatCOP(input.saldoCapital) },
@@ -295,9 +347,7 @@ export function PesosSimulator({
     { label: "Dinero pagado a la fecha", value: formatCOP(dineroPagadoFecha) },
     {
       label:
-        baseCreditoReferencia > 0
-          ? "N° veces pagado el crédito"
-          : "N° veces (sobre saldo actual)",
+        baseCreditoReferencia > 0 ? "N° veces pagado el crédito" : "N° veces (sobre saldo actual)",
       value: `${formatNumber(vecesActual, 2)} veces`,
     },
     { label: "Plazo inicial", value: `${plazoInicial} meses` },
@@ -324,422 +374,430 @@ export function PesosSimulator({
         <AnimatedBackground />
       </div>
       <div className="relative z-10 mx-auto max-w-7xl space-y-4 px-6 py-6">
-      {onReset && (
-        <div className="flex justify-end">
-          <button onClick={onReset} className="text-xs font-medium text-[#445DA3] hover:underline">
-            ← Cambiar modo
-          </button>
-        </div>
-      )}
-      <ExtractoReader
-        modo="pesos"
-        existingArchivoPath={extractoArchivoPath}
-        onApply={async (p: ExtractoApplyPayload) => {
-          // Alerta crítica: bloquear si el extracto está en UVR pero estamos en simulador de Pesos.
-          if (p.monedaDetectada && p.monedaDetectada !== "pesos") {
-            const continuar = await monedaAlerta.confirm({
-              detectada: p.monedaDetectada,
-              simulador: "pesos",
-            });
-            if (!continuar) {
-              toast.error(
-                "Carga cancelada: el extracto es UVR pero el simulador es Pesos. Usa el simulador UVR.",
-                { duration: 6000 },
-              );
-              return;
-            }
-            toast.warning("Aplicando extracto UVR en simulador de Pesos. Revisa los resultados.");
-          }
-          if (p.archivoPath) setExtractoArchivoPath(p.archivoPath);
-          setClient((prev) => ({
-            ...prev,
-            nombre: p.cliente.nombre || prev.nombre,
-            cedula: p.cliente.cedula || prev.cedula,
-            numeroCredito: p.cliente.numeroCredito || prev.numeroCredito,
-            banco: p.cliente.banco || prev.banco,
-            tipoProducto: p.cliente.tipoProducto || prev.tipoProducto,
-            productoBancarioId: p.cliente.productoBancarioId ?? prev.productoBancarioId ?? null,
-            plazoInicial: p.cliente.plazoInicial || prev.plazoInicial,
-            cuotasPagadas: p.cliente.cuotasPagadas || prev.cuotasPagadas,
-            cuotasPendientes: p.cliente.cuotasPendientes || prev.cuotasPendientes,
-          }));
-          if (p.pesos?.saldoCapital) setSaldoCapital(p.pesos.saldoCapital);
-          if (p.pesos && "valorDesembolsado" in p.pesos) setValorDesembolsado(p.pesos.valorDesembolsado || "");
-          if (p.pesos?.cuotaActual) setCuotaActual(p.pesos.cuotaActual);
-          if (p.pesos?.seguros) setSeguros(p.pesos.seguros);
-          if (p.pesos?.tea) setTea(p.pesos.tea);
-          if (p.cobertura?.activo) {
-            setCobertura({
-              activo: true,
-              valorCobertura: p.cobertura.valorCobertura || "",
-              tasaCobertura: p.cobertura.tasaCobertura || "",
-              tipoBeneficio: p.cobertura.tipoBeneficio || "",
-              cuotaPagadaCliente: p.cobertura.cuotaPagadaCliente || "",
-              cuotaConInteresSinSeguros: p.cobertura.cuotaConInteresSinSeguros || "",
-              segurosMensuales: p.cobertura.segurosMensuales || p.pesos?.seguros || "",
-              cuotaBaseSimulacion: p.cobertura.cuotaBaseSimulacion || "",
-              requiereVerificacion: !!p.cobertura.requiereVerificacion,
-            });
-          } else {
-            setCobertura(defaultCobertura);
-          }
-          // Auto-QA condicional: sólo cuando el simulador fue abierto desde un
-          // Expediente Maestro (init?.id). En modo standalone no se ejecuta.
-          if (init?.id && p.raw) {
-            void triggerSimuladorAutoQA({
-              expedienteId: init.id,
-              raw: { ...p.raw, archivoPath: p.archivoPath ?? null },
-              onStart: () => { setAutoQALoading(true); setAutoQA(null); },
-              onResult: (r) => { setAutoQA(r); setAutoQALoading(false); },
-              onError: () => setAutoQALoading(false),
-            });
-          }
-        }}
-
-      />
-      {init?.id && (autoQALoading || autoQA) && (
-        <AutoQAPanel loading={autoQALoading} result={autoQA} />
-      )}
-      <Card>
-        <div id="datos-cliente-card" />
-        <SectionTitle sub="Información general del cliente y del crédito">
-          Datos del cliente
-        </SectionTitle>
-
-        <ClientFields
-          data={client}
-          onChange={setClient}
-          modalidad="pesos"
-          cuotasPendientes={cuotasPendientes}
-          hideCreditFields
-        />
-
-
-        {validaciones.map((v, i) => (
-          <div key={i} className="mt-3">
-            <Alert tone="error">{v}</Alert>
-          </div>
-        ))}
-        {cuotasPendientes > 0 && cuotasPendientes <= 72 && (
-          <div className="mt-3">
-            <Alert>Cuotas pendientes ≤ 72. Revise viabilidad de la propuesta.</Alert>
+        {onReset && (
+          <div className="flex justify-end">
+            <button
+              onClick={handleResetMode}
+              className="text-xs font-medium text-[#445DA3] hover:underline"
+            >
+              ← Cambiar modo
+            </button>
           </div>
         )}
-      </Card>
-
-      <Card>
-        <SectionTitle sub="Información financiera del crédito en pesos">
-          Datos del crédito
-        </SectionTitle>
-        <CreditoMetaFields
-          data={client}
-          onChange={setClient}
-          modalidad="pesos"
-          cuotasPendientes={cuotasPendientes}
-        />
-        {cobertura.activo && (cobertura.tipoBeneficio || cobertura.cuotaBaseSimulacion) && (
-          <div
-            className="mt-4 mb-4 flex items-start gap-2 rounded-lg px-3 py-2 text-[12px]"
-            style={{
-              background: "rgba(132,185,143,0.10)",
-              border: "1px solid rgba(132,185,143,0.45)",
-              color: "#1F7A45",
-            }}
-          >
-            <span className="font-bold">Cuota base de simulación activa.</span>
-            <span>
-              Beneficio detectado: <strong>{cobertura.tipoBeneficio || "Cobertura"}</strong>. La
-              cuota mensual usada para simular es la cuota real del crédito (sin subsidio), no la
-              cuota que paga hoy el cliente.
-            </span>
-          </div>
-        )}
-        <div className="mt-4 grid gap-4 md:grid-cols-4">
-          <TextField
-            label="Valor desembolsado"
-            value={valorDesembolsado}
-            onChange={setValorDesembolsado}
-            placeholder="250.000.000"
-          />
-          <TextField
-            label="Saldo a capital"
-            value={saldoCapital}
-            onChange={setSaldoCapital}
-            placeholder="221.903.943"
-          />
-          <TextField
-            label="Cuota mensual actual con seguros"
-            value={cuotaActual}
-            onChange={setCuotaActual}
-            placeholder="2.260.000"
-            hint={
-              cobertura.activo && cobertura.cuotaBaseSimulacion
-                ? "Cuota BASE de simulación (sin subsidio)"
-                : undefined
-            }
-          />
-          <TextField
-            label="Seguros mensuales"
-            value={seguros}
-            onChange={setSeguros}
-            placeholder="180.000"
-          />
-          <TextField
-            label="Cuota mensual sin seguros"
-            value={cuotaSimulacionNum > 0 && segurosNum >= 0 ? formatCOP(cuotaSinSegurosNum) : ""}
-            readOnly
-            hint="Calculada automáticamente"
-          />
-          <TextField
-            label="Tasa Efectiva Anual (%)"
-            value={tea}
-            onChange={setTea}
-            placeholder="11,15"
-          />
-        </div>
-      </Card>
-
-      <FreshBlock data={cobertura} onChange={setCobertura} />
-
-      {datosCompletos && (
-        <>
-          <SituacionActualBlock
-            clienteNombre={client.nombre}
-            hero={{
-              saldoActual: formatCOP(input.saldoCapital),
-              cuotaActual: formatCOP(input.cuotaActual),
-              cuotasPendientes: String(cuotasPendientes),
-              totalProyectado: formatCOP(totalActualPendiente),
-            }}
-            vecesPagado={vecesActual}
-            costoTotal={{
-              valorDesembolsado: valorDesembolsadoNum,
-              dineroPagado: dineroPagadoFecha,
-              totalProyectadoPendiente: totalActualPendiente,
-              baseCredito: baseCreditoReferencia,
-              saldoActual: input.saldoCapital,
-            }}
-            puntosNeuralgicos={{
-              tiempoMeses: cuotasPendientes,
-              segurosProyectados: (input.seguros || 0) * cuotasPendientes,
-              interesesProyectados: Math.max(
-                0,
-                totalActualPendiente - input.saldoCapital - (input.seguros || 0) * cuotasPendientes,
-              ),
-            }}
-            tea={input.tea}
-            secundarios={[
-              {
-                label: "Tasa mensual utilizada",
-                value: calc ? formatPercentage(calc.tasaMensual * 100, 4) : "—",
-              },
-              { label: "Seguros mensuales", value: formatCOP(input.seguros) },
-              { label: "Cuota sin seguros", value: formatCOP(cuotaSinSegurosNum) },
-              { label: "Cuotas pagadas", value: String(cuotasPagadas) },
-            ]}
-            detalle={[
-              { label: "Valor desembolsado", value: formatCOP(valorDesembolsadoNum) },
-              { label: "Dinero pagado a la fecha", value: formatCOP(dineroPagadoFecha) },
-              { label: "Plazo inicial", value: `${plazoInicial} meses` },
-              { label: "TEA", value: formatPercentage(input.tea) },
-            ]}
-          />
-
-
-          {ahorroNegativo && (
-            <Alert tone="error">
-              Revisar datos. El ahorro u honorarios calculados son negativos.
-            </Alert>
-          )}
-
-          {datosCompletos && (
-            <PropuestasComerciales
-              mode="pesos"
-              input={input}
-              cuotasPendientes={cuotasBaseSimulacion}
-              baseCredito={baseCreditoReferencia > 0 ? baseCreditoReferencia : saldoBase}
-              dineroPagado={baseCreditoReferencia > 0 ? dineroPagadoFecha : 0}
-              onRecomendadaChange={setRecomendadaPicked}
-            />
-          )}
-
-          {recomendada && (
-            <DiscountModule
-              honorariosBase={recomendada.honorarios}
-              state={discount}
-              onChange={setDiscount}
-            />
-          )}
-
-          {recomendada &&
-            (() => {
-              const d = computeDiscount(recomendada.honorarios, discount);
-              // Centralización Fresh: derivamos y persistimos en credito_data
-              // para que TODOS los módulos lo reutilicen sin recapturar datos.
-              const coberturaFresh = freshFromCobertura(cobertura, {
-                cuotasPagadasCredito: cuotasPagadas,
-                saldoCapital: saldoCapitalNum,
-                fuente: cobertura.activo ? "ocr" : "manual",
-                detectadoOCR: !!cobertura.tipoBeneficio,
+        <ExtractoReader
+          modo="pesos"
+          existingArchivoPath={extractoArchivoPath}
+          onApply={async (p: ExtractoApplyPayload) => {
+            // Alerta crítica: bloquear si el extracto está en UVR pero estamos en simulador de Pesos.
+            if (p.monedaDetectada && p.monedaDetectada !== "pesos") {
+              const continuar = await monedaAlerta.confirm({
+                detectada: p.monedaDetectada,
+                simulador: "pesos",
               });
-              return (
-                <SaveExpedienteButton
+              if (!continuar) {
+                toast.error(
+                  "Carga cancelada: el extracto es UVR pero el simulador es Pesos. Usa el simulador UVR.",
+                  { duration: 6000 },
+                );
+                return;
+              }
+              toast.warning("Aplicando extracto UVR en simulador de Pesos. Revisa los resultados.");
+            }
+            if (p.archivoPath) setExtractoArchivoPath(p.archivoPath);
+            setClient((prev) => ({
+              ...prev,
+              nombre: p.cliente.nombre || prev.nombre,
+              cedula: p.cliente.cedula || prev.cedula,
+              numeroCredito: p.cliente.numeroCredito || prev.numeroCredito,
+              banco: p.cliente.banco || prev.banco,
+              tipoProducto: p.cliente.tipoProducto || prev.tipoProducto,
+              productoBancarioId: p.cliente.productoBancarioId ?? prev.productoBancarioId ?? null,
+              plazoInicial: p.cliente.plazoInicial || prev.plazoInicial,
+              cuotasPagadas: p.cliente.cuotasPagadas || prev.cuotasPagadas,
+              cuotasPendientes: p.cliente.cuotasPendientes || prev.cuotasPendientes,
+            }));
+            if (p.pesos?.saldoCapital) setSaldoCapital(p.pesos.saldoCapital);
+            if (p.pesos && "valorDesembolsado" in p.pesos)
+              setValorDesembolsado(p.pesos.valorDesembolsado || "");
+            if (p.pesos?.cuotaActual) setCuotaActual(p.pesos.cuotaActual);
+            if (p.pesos?.seguros) setSeguros(p.pesos.seguros);
+            if (p.pesos?.tea) setTea(p.pesos.tea);
+            if (p.cobertura?.activo) {
+              setCobertura({
+                activo: true,
+                valorCobertura: p.cobertura.valorCobertura || "",
+                tasaCobertura: p.cobertura.tasaCobertura || "",
+                tipoBeneficio: p.cobertura.tipoBeneficio || "",
+                cuotaPagadaCliente: p.cobertura.cuotaPagadaCliente || "",
+                cuotaConInteresSinSeguros: p.cobertura.cuotaConInteresSinSeguros || "",
+                segurosMensuales: p.cobertura.segurosMensuales || p.pesos?.seguros || "",
+                cuotaBaseSimulacion: p.cobertura.cuotaBaseSimulacion || "",
+                requiereVerificacion: !!p.cobertura.requiereVerificacion,
+              });
+            } else {
+              setCobertura(defaultCobertura);
+            }
+            // Auto-QA condicional: sólo cuando el simulador fue abierto desde un
+            // Expediente Maestro (init?.id). En modo standalone no se ejecuta.
+            if (init?.id && p.raw) {
+              void triggerSimuladorAutoQA({
+                expedienteId: init.id,
+                raw: { ...p.raw, archivoPath: p.archivoPath ?? null },
+                onStart: () => {
+                  setAutoQALoading(true);
+                  setAutoQA(null);
+                },
+                onResult: (r) => {
+                  setAutoQA(r);
+                  setAutoQALoading(false);
+                },
+                onError: () => setAutoQALoading(false),
+              });
+            }
+          }}
+        />
+        {init?.id && (autoQALoading || autoQA) && (
+          <AutoQAPanel loading={autoQALoading} result={autoQA} />
+        )}
+        <Card>
+          <div id="datos-cliente-card" />
+          <SectionTitle sub="Información general del cliente y del crédito">
+            Datos del cliente
+          </SectionTitle>
+
+          <ClientFields
+            data={client}
+            onChange={setClient}
+            modalidad="pesos"
+            cuotasPendientes={cuotasPendientes}
+            hideCreditFields
+          />
+
+          {validaciones.map((v, i) => (
+            <div key={i} className="mt-3">
+              <Alert tone="error">{v}</Alert>
+            </div>
+          ))}
+          {cuotasPendientes > 0 && cuotasPendientes <= 72 && (
+            <div className="mt-3">
+              <Alert>Cuotas pendientes ≤ 72. Revise viabilidad de la propuesta.</Alert>
+            </div>
+          )}
+        </Card>
+
+        <Card>
+          <SectionTitle sub="Información financiera del crédito en pesos">
+            Datos del crédito
+          </SectionTitle>
+          <CreditoMetaFields
+            data={client}
+            onChange={setClient}
+            modalidad="pesos"
+            cuotasPendientes={cuotasPendientes}
+          />
+          {cobertura.activo && (cobertura.tipoBeneficio || cobertura.cuotaBaseSimulacion) && (
+            <div
+              className="mt-4 mb-4 flex items-start gap-2 rounded-lg px-3 py-2 text-[12px]"
+              style={{
+                background: "rgba(132,185,143,0.10)",
+                border: "1px solid rgba(132,185,143,0.45)",
+                color: "#1F7A45",
+              }}
+            >
+              <span className="font-bold">Cuota base de simulación activa.</span>
+              <span>
+                Beneficio detectado: <strong>{cobertura.tipoBeneficio || "Cobertura"}</strong>. La
+                cuota mensual usada para simular es la cuota real del crédito (sin subsidio), no la
+                cuota que paga hoy el cliente.
+              </span>
+            </div>
+          )}
+          <div className="mt-4 grid gap-4 md:grid-cols-4">
+            <TextField
+              label="Valor desembolsado"
+              value={valorDesembolsado}
+              onChange={setValorDesembolsado}
+              placeholder="250.000.000"
+            />
+            <TextField
+              label="Saldo a capital"
+              value={saldoCapital}
+              onChange={setSaldoCapital}
+              placeholder="221.903.943"
+            />
+            <TextField
+              label="Cuota mensual actual con seguros"
+              value={cuotaActual}
+              onChange={setCuotaActual}
+              placeholder="2.260.000"
+              hint={
+                cobertura.activo && cobertura.cuotaBaseSimulacion
+                  ? "Cuota BASE de simulación (sin subsidio)"
+                  : undefined
+              }
+            />
+            <TextField
+              label="Seguros mensuales"
+              value={seguros}
+              onChange={setSeguros}
+              placeholder="180.000"
+            />
+            <TextField
+              label="Cuota mensual sin seguros"
+              value={cuotaSimulacionNum > 0 && segurosNum >= 0 ? formatCOP(cuotaSinSegurosNum) : ""}
+              readOnly
+              hint="Calculada automáticamente"
+            />
+            <TextField
+              label="Tasa Efectiva Anual (%)"
+              value={tea}
+              onChange={setTea}
+              placeholder="11,15"
+            />
+          </div>
+        </Card>
+
+        <FreshBlock data={cobertura} onChange={setCobertura} />
+
+        {datosCompletos && (
+          <>
+            <SituacionActualBlock
+              clienteNombre={client.nombre}
+              hero={{
+                saldoActual: formatCOP(input.saldoCapital),
+                cuotaActual: formatCOP(input.cuotaActual),
+                cuotasPendientes: String(cuotasPendientes),
+                totalProyectado: formatCOP(totalActualPendiente),
+              }}
+              vecesPagado={vecesActual}
+              costoTotal={{
+                valorDesembolsado: valorDesembolsadoNum,
+                dineroPagado: dineroPagadoFecha,
+                totalProyectadoPendiente: totalActualPendiente,
+                baseCredito: baseCreditoReferencia,
+                saldoActual: input.saldoCapital,
+              }}
+              puntosNeuralgicos={{
+                tiempoMeses: cuotasPendientes,
+                segurosProyectados: (input.seguros || 0) * cuotasPendientes,
+                interesesProyectados: Math.max(
+                  0,
+                  totalActualPendiente -
+                    input.saldoCapital -
+                    (input.seguros || 0) * cuotasPendientes,
+                ),
+              }}
+              tea={input.tea}
+              secundarios={[
+                {
+                  label: "Tasa mensual utilizada",
+                  value: calc ? formatPercentage(calc.tasaMensual * 100, 4) : "—",
+                },
+                { label: "Seguros mensuales", value: formatCOP(input.seguros) },
+                { label: "Cuota sin seguros", value: formatCOP(cuotaSinSegurosNum) },
+                { label: "Cuotas pagadas", value: String(cuotasPagadas) },
+              ]}
+              detalle={[
+                { label: "Valor desembolsado", value: formatCOP(valorDesembolsadoNum) },
+                { label: "Dinero pagado a la fecha", value: formatCOP(dineroPagadoFecha) },
+                { label: "Plazo inicial", value: `${plazoInicial} meses` },
+                { label: "TEA", value: formatPercentage(input.tea) },
+              ]}
+            />
+
+            {ahorroNegativo && (
+              <Alert tone="error">
+                Revisar datos. El ahorro u honorarios calculados son negativos.
+              </Alert>
+            )}
+
+            {datosCompletos && (
+              <PropuestasComerciales
+                mode="pesos"
+                input={input}
+                cuotasPendientes={cuotasBaseSimulacion}
+                baseCredito={baseCreditoReferencia > 0 ? baseCreditoReferencia : saldoBase}
+                dineroPagado={baseCreditoReferencia > 0 ? dineroPagadoFecha : 0}
+                onRecomendadaChange={setRecomendadaPicked}
+              />
+            )}
+
+            {recomendada && (
+              <DiscountModule
+                honorariosBase={recomendada.honorarios}
+                state={discount}
+                onChange={setDiscount}
+              />
+            )}
+
+            {recomendada &&
+              (() => {
+                const d = computeDiscount(recomendada.honorarios, discount);
+                // Centralización Fresh: derivamos y persistimos en credito_data
+                // para que TODOS los módulos lo reutilicen sin recapturar datos.
+                const coberturaFresh = freshFromCobertura(cobertura, {
+                  cuotasPagadasCredito: cuotasPagadas,
+                  saldoCapital: saldoCapitalNum,
+                  fuente: cobertura.activo ? "ocr" : "manual",
+                  detectadoOCR: !!cobertura.tipoBeneficio,
+                });
+                return (
+                  <SaveExpedienteButton
+                    expedienteId={init?.id}
+                    onSaved={handleSaved}
+                    enviarAuditoriaManual={!init?.id}
+                    payload={{
+                      modo: "pesos",
+                      cliente: { ...client, intervinientes, cobertura },
+                      credito: {
+                        valorDesembolsado,
+                        saldoCapital,
+                        cuotaActual,
+                        seguros,
+                        tea,
+                        nuevaCuotaManual,
+                        cuotasEliminarManual,
+                        cuotaPagadaCliente: cobertura.cuotaPagadaCliente || "",
+                        valorBeneficio: cobertura.valorCobertura || "",
+                        tipoBeneficio: cobertura.tipoBeneficio || "",
+                        cuotaConInteresSinSeguros: cobertura.cuotaConInteresSinSeguros || "",
+                        cuotaBaseSimulacion: cobertura.cuotaBaseSimulacion || cuotaActual,
+                        segurosMensuales: cobertura.segurosMensuales || seguros,
+                        tieneBeneficio: cobertura.activo ? "si" : "no",
+                        coberturaFresh: coberturaFresh as unknown as string,
+                        archivoPath: extractoArchivoPath,
+                      },
+                      propuesta: {
+                        nuevaCuota: recomendada.nuevaCuota,
+                        nuevoPlazo: recomendada.nuevoPlazo,
+                        añosEliminados: recomendada.añosEliminados,
+                        ahorroIntereses: recomendada.ahorroIntereses,
+                        ahorroSeguros: recomendada.ahorroSeguros,
+                        ahorroTotal: recomendada.ahorroTotal,
+                        honorarios: recomendada.honorarios,
+                        totalProyectado: recomendada.totalProyectado,
+                        fuente: manualValido ? "manual" : "automatica",
+                      },
+                      discountState: discount as unknown as Record<string, unknown>,
+                      honorariosBase: recomendada.honorarios,
+                      honorariosFinal: d.final,
+                      descuento: d.descuento,
+                    }}
+                  />
+                );
+              })()}
+
+            {recomendada && !init?.id && (
+              <AuditPanel
+                nivelAutonomia={metricasAutonomia.nivelAutonomia}
+                expedienteId={init?.id}
+                input={{
+                  moneda: "pesos",
+                  extracto: {},
+                  analista: {
+                    banco: client.banco,
+                    producto: client.tipoProducto,
+                    saldoCapital: saldoCapitalNum,
+                    cuotaActual: cuotaActualNum,
+                    seguros: parseCurrency(seguros),
+                    teaPct: parsePercentage(tea),
+                    plazoInicial,
+                    cuotasPagadas,
+                    cuotasPendientes,
+                  },
+                  propuesta: {
+                    cuotaActual: cuotaActualNum,
+                    cuotasPendientes,
+                    nuevaCuota: recomendada.nuevaCuota,
+                    nuevoPlazo: recomendada.nuevoPlazo,
+                    cuotasEliminadas: Math.max(0, cuotasPendientes - recomendada.nuevoPlazo),
+                    ahorroIntereses: recomendada.ahorroIntereses,
+                    ahorroSeguros: recomendada.ahorroSeguros,
+                    ahorroTotal: recomendada.ahorroTotal,
+                    honorarios: recomendada.honorarios,
+                  },
+                }}
+              />
+            )}
+
+            {recomendada && (
+              <div className="flex flex-wrap justify-end gap-2">
+                <button
+                  onClick={async () => {
+                    if (!recomendada || !calc || calc.propuestas.length === 0) {
+                      alert(
+                        "Primero debes calcular la simulación en pesos antes de exportar el PDF.",
+                      );
+                      return;
+                    }
+                    await exportElementToPdf(
+                      "pdf-content-pesos",
+                      `NUVEX_Propuesta_Pesos_${sanitizeFileName(client.nombre)}.pdf`,
+                    );
+                  }}
+                  className="rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow transition-transform hover:scale-[1.01]"
+                  style={{ backgroundColor: NUVEX.negro }}
+                >
+                  Exportar propuesta comercial
+                </button>
+                <EnviarDocumentoButton
                   expedienteId={init?.id}
-                  onSaved={onSaved}
-                  enviarAuditoriaManual={!init?.id}
-                  payload={{
-                    modo: "pesos",
-                    cliente: { ...client, intervinientes, cobertura },
-                    credito: {
-                      valorDesembolsado,
-                      saldoCapital,
-                      cuotaActual,
-                      seguros,
-                      tea,
-                      nuevaCuotaManual,
-                      cuotasEliminarManual,
-                      cuotaPagadaCliente: cobertura.cuotaPagadaCliente || "",
-                      valorBeneficio: cobertura.valorCobertura || "",
-                      tipoBeneficio: cobertura.tipoBeneficio || "",
-                      cuotaConInteresSinSeguros: cobertura.cuotaConInteresSinSeguros || "",
-                      cuotaBaseSimulacion: cobertura.cuotaBaseSimulacion || cuotaActual,
-                      segurosMensuales: cobertura.segurosMensuales || seguros,
-                      tieneBeneficio: cobertura.activo ? "si" : "no",
-                      coberturaFresh: coberturaFresh as unknown as string,
-                      archivoPath: extractoArchivoPath,
-                    },
-                    propuesta: {
-                      nuevaCuota: recomendada.nuevaCuota,
-                      nuevoPlazo: recomendada.nuevoPlazo,
+                  tipo="propuesta_comercial"
+                  elementId="pdf-content-pesos"
+                  filename={`NUVEX_Propuesta_Pesos_${sanitizeFileName(client.nombre)}.pdf`}
+                  disabled={!recomendada || !calc || calc.propuestas.length === 0}
+                  disabledReason="Primero calcula la simulación en pesos."
+                  label="Enviar propuesta al cliente"
+                />
+              </div>
+            )}
+
+            {recomendada &&
+              (() => {
+                const d = computeDiscount(recomendada.honorarios, discount);
+                return (
+                  <PrintDocument
+                    mode="pesos"
+                    client={{ ...client, intervinientes, cobertura }}
+                    cuotasPendientes={cuotasBaseSimulacion}
+                    metrics={metrics}
+                    pesosPropuestas={calc!.propuestas}
+                    bestIndex={bestIndex}
+                    honorariosPct={honorariosPct}
+                    personalizada={manualValido}
+                    recommended={{
                       añosEliminados: recomendada.añosEliminados,
                       ahorroIntereses: recomendada.ahorroIntereses,
                       ahorroSeguros: recomendada.ahorroSeguros,
                       ahorroTotal: recomendada.ahorroTotal,
                       honorarios: recomendada.honorarios,
-                      totalProyectado: recomendada.totalProyectado,
-                      fuente: manualValido ? "manual" : "automatica",
-                    },
-                    discountState: discount as unknown as Record<string, unknown>,
-                    honorariosBase: recomendada.honorarios,
-                    honorariosFinal: d.final,
-                    descuento: d.descuento,
-                  }}
-                />
-              );
-            })()}
+                      nuevaCuota: recomendada.nuevaCuota,
+                    }}
+                    scenario={{
+                      cuotaActual: input.cuotaActual,
+                      nuevaCuota: recomendada.nuevaCuota,
+                      plazoActual: cuotasBaseSimulacion,
+                      nuevoPlazo: recomendada.nuevoPlazo,
+                      totalActual: totalActualPendiente,
+                      totalOptimizado: recomendada.totalProyectado,
+                      vecesActual,
+                      vecesOptimizado: vecesOpt,
+                    }}
+                    commercial={{
+                      honorariosBase: recomendada.honorarios,
+                      descuento: d.descuento,
+                      finales: d.final,
+                      vigencia: discount.vigencia || undefined,
+                      hasDiscount: d.hasDiscount,
+                    }}
+                  />
+                );
+              })()}
 
-          {recomendada && !init?.id && (
-            <AuditPanel
-              nivelAutonomia={metricasAutonomia.nivelAutonomia}
-              expedienteId={init?.id}
-
-              input={{
-                moneda: "pesos",
-                extracto: {},
-                analista: {
-                  banco: client.banco,
-                  producto: client.tipoProducto,
-                  saldoCapital: saldoCapitalNum,
-                  cuotaActual: cuotaActualNum,
-                  seguros: parseCurrency(seguros),
-                  teaPct: parsePercentage(tea),
-                  plazoInicial,
-                  cuotasPagadas,
-                  cuotasPendientes,
-                },
-                propuesta: {
-                  cuotaActual: cuotaActualNum,
-                  cuotasPendientes,
-                  nuevaCuota: recomendada.nuevaCuota,
-                  nuevoPlazo: recomendada.nuevoPlazo,
-                  cuotasEliminadas: Math.max(0, cuotasPendientes - recomendada.nuevoPlazo),
-                  ahorroIntereses: recomendada.ahorroIntereses,
-                  ahorroSeguros: recomendada.ahorroSeguros,
-                  ahorroTotal: recomendada.ahorroTotal,
-                  honorarios: recomendada.honorarios,
-                },
-              }}
-            />
-          )}
-
-          {recomendada && (
-            <div className="flex flex-wrap justify-end gap-2">
-              <button
-                onClick={async () => {
-                  if (!recomendada || !calc || calc.propuestas.length === 0) {
-                    alert(
-                      "Primero debes calcular la simulación en pesos antes de exportar el PDF.",
-                    );
-                    return;
-                  }
-                  await exportElementToPdf(
-                    "pdf-content-pesos",
-                    `NUVEX_Propuesta_Pesos_${sanitizeFileName(client.nombre)}.pdf`,
-                  );
-                }}
-                className="rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow transition-transform hover:scale-[1.01]"
-                style={{ backgroundColor: NUVEX.negro }}
-              >
-                Exportar propuesta comercial
-              </button>
-              <EnviarDocumentoButton
-                expedienteId={init?.id}
-                tipo="propuesta_comercial"
-                elementId="pdf-content-pesos"
-                filename={`NUVEX_Propuesta_Pesos_${sanitizeFileName(client.nombre)}.pdf`}
-                disabled={!recomendada || !calc || calc.propuestas.length === 0}
-                disabledReason="Primero calcula la simulación en pesos."
-                label="Enviar propuesta al cliente"
-              />
-            </div>
-          )}
-
-          {recomendada &&
-            (() => {
-              const d = computeDiscount(recomendada.honorarios, discount);
-              return (
-                <PrintDocument
-                  mode="pesos"
-                  client={{ ...client, intervinientes, cobertura }}
-                  cuotasPendientes={cuotasBaseSimulacion}
-                  metrics={metrics}
-                  pesosPropuestas={calc!.propuestas}
-                  bestIndex={bestIndex}
-                  honorariosPct={honorariosPct}
-                  personalizada={manualValido}
-                  recommended={{
-                    añosEliminados: recomendada.añosEliminados,
-                    ahorroIntereses: recomendada.ahorroIntereses,
-                    ahorroSeguros: recomendada.ahorroSeguros,
-                    ahorroTotal: recomendada.ahorroTotal,
-                    honorarios: recomendada.honorarios,
-                    nuevaCuota: recomendada.nuevaCuota,
-                  }}
-                  scenario={{
-                    cuotaActual: input.cuotaActual,
-                    nuevaCuota: recomendada.nuevaCuota,
-                    plazoActual: cuotasBaseSimulacion,
-                    nuevoPlazo: recomendada.nuevoPlazo,
-                    totalActual: totalActualPendiente,
-                    totalOptimizado: recomendada.totalProyectado,
-                    vecesActual,
-                    vecesOptimizado: vecesOpt,
-                  }}
-                  commercial={{
-                    honorariosBase: recomendada.honorarios,
-                    descuento: d.descuento,
-                    finales: d.final,
-                    vigencia: discount.vigencia || undefined,
-                    hasDiscount: d.hasDiscount,
-                  }}
-                />
-              );
-            })()}
-
-          {/* Resultado bancario, otrosí, cuenta de cobro, paz y salvo: ahora viven en el Expediente. */}
-        </>
-      )}
-      {monedaAlerta.dialog}
+            {/* Resultado bancario, otrosí, cuenta de cobro, paz y salvo: ahora viven en el Expediente. */}
+          </>
+        )}
+        {monedaAlerta.dialog}
       </div>
     </div>
   );
