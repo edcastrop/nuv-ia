@@ -1519,19 +1519,19 @@ function FooterStrip() {
       style={{
         marginTop: "auto",
         background: C.black, color: "#fff",
-        padding: "8px 18px",
+        padding: "6px 22px",
         display: "grid",
         gridTemplateColumns: "auto 1fr 1fr 1fr 1fr",
-        gap: 10, alignItems: "center",
+        gap: 8, alignItems: "center",
         breakInside: "avoid", pageBreakInside: "avoid",
       }}
     >
       <img
         src={logoNuvex} alt="NUVEX" crossOrigin="anonymous"
-        style={{ height: 20, width: "auto", filter: "brightness(0) invert(1)" }}
+        style={{ height: 18, width: "auto", filter: "brightness(0) invert(1)" }}
       />
-      <FooterItem icon={<PinIcon />} title="Bucaramanga" lines={["Carrera 16 # 37-48 Piso 4", "Centro"]} />
-      <FooterItem icon={<PinIcon />} title="Bogotá" lines={["Calle 93 # 18 - 28", "Oficina 704"]} />
+      <FooterItem icon={<PinIcon />} title="Bucaramanga" lines={["Cra. 16 # 37-48 Piso 4", "Centro"]} />
+      <FooterItem icon={<PinIcon />} title="Bogotá" lines={["Calle 93 # 18-28", "Of. 704"]} />
       <FooterItem icon={<PhoneIcon />} title="" lines={["+57 316 402 3779"]} />
       <FooterItem icon={<GlobeIcon />} title="" lines={["www.nuvex.com.co"]} />
     </div>
@@ -1540,13 +1540,13 @@ function FooterStrip() {
 
 function FooterItem({ icon, title, lines }: { icon: React.ReactNode; title: string; lines: string[] }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
       <div style={{
-        width: 19, height: 19, borderRadius: "50%",
+        width: 17, height: 17, borderRadius: "50%",
         border: "1px solid rgba(255,255,255,0.35)",
         display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
       }}>{icon}</div>
-      <div style={{ fontSize: 7.8, lineHeight: 1.25 }}>
+      <div style={{ fontSize: 7.2, lineHeight: 1.2 }}>
         {title && <div style={{ fontWeight: 800, color: "#fff" }}>{title}</div>}
         {lines.map((l, i) => (
           <div key={i} style={{ color: "rgba(255,255,255,0.85)" }}>{l}</div>
