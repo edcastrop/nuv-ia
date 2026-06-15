@@ -95,6 +95,13 @@ type NavItem = {
   badge?: number;
 };
 type NavSection = { label: string; items: NavItem[] };
+type ColabNotifRow = { colab_canales?: { tipo?: string } | null };
+type ColabMemberRow = {
+  canal_id: string;
+  ultima_lectura: string | null;
+  colab_canales?: { tipo?: string; archivado?: boolean } | null;
+};
+type ColabMessageRow = { canal_id: string; user_id: string; created_at: string };
 
 function AuthenticatedLayout() {
   const { session, user, loading } = useAuth();
@@ -375,12 +382,12 @@ function AuthenticatedLayout() {
       ]);
       if (!active) return;
       // Excluir DMs del badge "Colaboración" — los DMs viven en su propio badge "Mensajería".
-      const colabNoDm = ((notifsCanal ?? []) as any[]).filter(
+      const colabNoDm = ((notifsCanal ?? []) as ColabNotifRow[]).filter(
         (n) => n.colab_canales?.tipo !== "dm",
       ).length;
       setColabUnread(colabNoDm);
 
-      const dmRows = ((miembros ?? []) as any[]).filter(
+      const dmRows = ((miembros ?? []) as ColabMemberRow[]).filter(
         (m) => m.colab_canales?.tipo === "dm" && !m.colab_canales?.archivado,
       );
       if (dmRows.length === 0) {
@@ -399,7 +406,7 @@ function AuthenticatedLayout() {
         .limit(ids.length * 30);
       if (!active) return;
       let total = 0;
-      ((msgs ?? []) as any[]).forEach((m) => {
+      ((msgs ?? []) as ColabMessageRow[]).forEach((m) => {
         if (m.user_id === uid) return;
         const last = readMap.get(m.canal_id);
         if (!last || new Date(m.created_at) > new Date(last)) total++;
