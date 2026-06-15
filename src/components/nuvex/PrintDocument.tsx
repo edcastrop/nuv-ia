@@ -366,38 +366,6 @@ export function PrintDocument(props: Props) {
                   tone="hero"
                 />
               </div>
-              <div style={{
-                marginTop: 7, display: "grid",
-                gridTemplateColumns: "1fr 1fr 1.05fr", gap: 8, alignItems: "stretch",
-              }}>
-                <CompareCell
-                  title="SIN NUVEX"
-                  big={`${formatNumber(vecesSin, 2)}×`}
-                  small={formatCOP(costoTotalSin)}
-                  bg="#F4F6F8" fg={C.ink} accent={C.muted}
-                />
-                <CompareCell
-                  title="CON NUVEX"
-                  big={`${formatNumber(vecesCon, 2)}×`}
-                  small={formatCOP(costoTotalCon)}
-                  bg={C.greenSoft} fg={C.greenDeep} accent={C.greenDeep}
-                />
-                <div style={{
-                  background: C.azulSoft, borderRadius: 10,
-                  padding: "6px 10px", display: "flex", flexDirection: "column",
-                  justifyContent: "center", alignItems: "center", textAlign: "center",
-                }}>
-                  <div style={{
-                    fontSize: 8, letterSpacing: "0.22em", color: C.azul, fontWeight: 800,
-                  }}>EVITAS PAGAR</div>
-                  <div style={{
-                    fontSize: 17, fontWeight: 900, color: C.azul,
-                    letterSpacing: "-0.02em", lineHeight: 1.1, marginTop: 2,
-                  }}>
-                    {formatCOP(evitasPagar)}
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         )}
