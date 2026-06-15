@@ -292,7 +292,7 @@ async function renderElementToPdf(elementId: string): Promise<jsPDF | null> {
   while (heightLeft > TOLERANCE_MM) {
     position = heightLeft - imgHeight;
     pdf.addPage();
-    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+    pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
     heightLeft -= pageHeight;
   }
   return pdf;
