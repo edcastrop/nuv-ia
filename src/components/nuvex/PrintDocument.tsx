@@ -105,17 +105,33 @@ export function PrintDocument(props: Props) {
   const añoFinActual = fechaFinActual.getFullYear();
   const añoFinOpt = fechaFinOpt.getFullYear();
 
-  // Fecha límite del beneficio (48 horas a partir de hoy)
-  const fechaLimite = new Date(fechaBase);
-  fechaLimite.setHours(fechaLimite.getHours() + 48);
-  const fechaLimiteStr = fechaLimite.toLocaleDateString("es-CO", {
-    day: "2-digit", month: "long", year: "numeric",
-  });
-
   const ahorroTotal = recommended.ahorroTotal;
   const honorariosFinales = commercial?.hasDiscount ? commercial.finales : recommended.honorarios;
   const honorariosBase = commercial?.honorariosBase ?? recommended.honorarios;
   const descuento = commercial?.hasDiscount ? Math.max(0, honorariosBase - honorariosFinales) : 0;
+
+  // ─── VALIDACIÓN DE CONSISTENCIA ───
+  // Los honorarios mostrados en el PDF deben provenir exactamente del escenario
+  // recomendado del simulador. Si la base comercial no coincide con la del
+  // escenario recomendado, bloqueamos la generación del PDF.
+  const consistenciaOk =
+    Math.abs((commercial?.honorariosBase ?? recommended.honorarios) - recommended.honorarios) < 1;
+  if (!consistenciaOk) {
+    return (
+      <div id={containerId} className="nuvex-print-only" style={{
+        background: "#fff", color: "#B43A3A", fontFamily: FONT,
+        width: "210mm", padding: "40mm 22mm", boxSizing: "border-box",
+      }}>
+        <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 12 }}>
+          Error de consistencia
+        </div>
+        <div style={{ fontSize: 12, lineHeight: 1.5, color: "#1A1F2E" }}>
+          Los honorarios no coinciden con el escenario seleccionado.<br />
+          Verifica el escenario recomendado en el simulador antes de generar el PDF.
+        </div>
+      </div>
+    );
+  }
 
   const nombreCliente = (client.nombre || "Cliente").toUpperCase();
   const primerNombre = (client.nombre || "Cliente").trim().split(/\s+/)[0] || "Cliente";
@@ -384,7 +400,21 @@ export function PrintDocument(props: Props) {
             />
           </div>
 
-          {/* Esto significa para ti y tu familia */}
+          {/* Bullets refuerzo decisión cliente */}
+          <div style={{
+            marginTop: 6, background: C.greenSoft,
+            border: `1px solid ${C.green}33`, borderRadius: 10,
+            padding: "6px 12px", display: "flex", flexWrap: "wrap",
+            gap: "4px 18px", justifyContent: "center", alignItems: "center",
+          }}>
+            <ReinforceBullet text={<>Recuperas <b>{añosEliminadosEntero} años</b> de vida financiera</>} />
+            <ReinforceBullet text={<>Ahorras <b>{formatCOP(ahorroTotal)}</b> durante la vida del crédito</>} />
+            {commercial?.hasDiscount && (
+              <ReinforceBullet text={<>Honorarios con <b>beneficio comercial</b> aplicado</>} />
+            )}
+          </div>
+
+
           <div style={{
             marginTop: 6, background: "#fff",
             border: `1px solid ${C.hairline}`, borderRadius: 12,
@@ -440,29 +470,22 @@ export function PrintDocument(props: Props) {
               </div>
             </div>
 
-            {/* Urgencia con fecha exacta */}
+            {/* Urgencia — beneficio comercial 48h sin fecha específica */}
             <div style={{
               background: C.red, color: "#fff", borderRadius: 12,
-              padding: "6px 10px", display: "flex", flexDirection: "column",
-              justifyContent: "center", textAlign: "center",
+              padding: "8px 10px", display: "flex", flexDirection: "column",
+              justifyContent: "center", alignItems: "center", textAlign: "center",
             }}>
               <div style={{
-                fontSize: 8.2, letterSpacing: "0.22em", fontWeight: 700, opacity: 0.95,
-              }}>BENEFICIO VÁLIDO HASTA</div>
-              <div style={{
-                fontSize: 13, fontWeight: 900, marginTop: 3, letterSpacing: "-0.005em",
-                textTransform: "uppercase",
-              }}>
-                {fechaLimiteStr}
-              </div>
+                fontSize: 8.5, letterSpacing: "0.22em", fontWeight: 700, opacity: 0.95,
+              }}>BENEFICIO COMERCIAL</div>
               <div style={{
                 display: "flex", alignItems: "center", justifyContent: "center",
-                gap: 5, marginTop: 4,
-                borderTop: "1px solid rgba(255,255,255,0.25)", paddingTop: 4,
+                gap: 6, marginTop: 6,
               }}>
-                <ClockIcon color="#fff" size={13} />
-                <div style={{ fontSize: 14, fontWeight: 900, letterSpacing: "-0.02em" }}>
-                  48 HORAS
+                <ClockIcon color="#fff" size={15} />
+                <div style={{ fontSize: 16, fontWeight: 900, letterSpacing: "-0.01em" }}>
+                  VÁLIDO POR 48 HORAS
                 </div>
               </div>
             </div>
@@ -592,6 +615,7 @@ export function PrintDocument(props: Props) {
                 añosOpt={alt.añosOpt}
                 quienIdeal={dyn.ideal}
                 honorarios={disc.final}
+                honorariosBase={alt.honorariosFinal}
                 honorariosTag={tag}
               />
             );
@@ -1162,6 +1186,24 @@ function PriceRow({ label, value, strike = false }: { label: string; value: stri
   );
 }
 
+function ReinforceBullet({ text }: { text: React.ReactNode }) {
+  return (
+    <div style={{
+      display: "inline-flex", alignItems: "center", gap: 6,
+      fontSize: 9.5, color: "#1A1F2E", lineHeight: 1.25,
+    }}>
+      <span style={{
+        width: 14, height: 14, borderRadius: "50%",
+        background: "#3F8C57", color: "#fff",
+        display: "inline-flex", alignItems: "center", justifyContent: "center",
+        fontSize: 9, fontWeight: 900, flexShrink: 0,
+      }}>✓</span>
+      <span>{text}</span>
+    </div>
+  );
+}
+
+
 function AlternativaCard(props: {
   index: number; label: string; accent: string; soft: string; deep: string;
   cuota: number; cuotaPct: number;
@@ -1170,13 +1212,14 @@ function AlternativaCard(props: {
   añoHoy: number; añosActuales: number; añosOpt: number;
   quienIdeal: string;
   honorarios: number;
+  honorariosBase: number;
   honorariosTag: string | null;
 }) {
   const {
     index, label, accent, soft, deep,
     cuota, cuotaPct, ahorroAños, ahorroCuotas, ahorroDinero,
     terminaEn, terminaActual, añoHoy, añosActuales, añosOpt, quienIdeal,
-    honorarios, honorariosTag,
+    honorarios, honorariosBase, honorariosTag,
   } = props;
   const barPct = Math.max(15, Math.min(95, (añosOpt / Math.max(añosActuales, 1)) * 100));
 
@@ -1299,13 +1342,21 @@ function AlternativaCard(props: {
           background: C.azulSoft, border: `1px solid ${C.azul}22`,
           borderRadius: 8, padding: "4px 10px",
           display: "flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "center",
-          minWidth: 130,
+          minWidth: 150,
         }}>
           <div style={{ fontSize: 7.8, fontWeight: 800, color: C.azul, letterSpacing: "0.14em" }}>
             HONORARIOS A ÉXITO
           </div>
+          {honorariosBase > honorarios && (
+            <div style={{
+              fontSize: 9, fontWeight: 700, color: C.muted,
+              textDecoration: "line-through", marginTop: 1,
+            }}>
+              Estándar {formatCOP(honorariosBase)}
+            </div>
+          )}
           <div style={{ fontSize: 12.5, fontWeight: 900, color: C.azul, letterSpacing: "-0.01em", marginTop: 1 }}>
-            {formatCOP(honorarios)}
+            {honorariosBase > honorarios ? "Con beneficio " : ""}{formatCOP(honorarios)}
           </div>
           {honorariosTag && (
             <div style={{ fontSize: 7.6, fontWeight: 700, color: C.muted, marginTop: 1 }}>
