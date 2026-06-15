@@ -13,6 +13,7 @@ import { NUVEX } from "./constants";
 import { Card, SectionTitle, Alert } from "./ui";
 
 export interface RecomendadaSeleccionada {
+  index: number;
   cuotasEliminadas: number;
   añosEliminados: number;
   nuevoPlazo: number;
@@ -26,11 +27,27 @@ export interface RecomendadaSeleccionada {
   fuente: "automatica" | "manual";
 }
 
+export interface PropuestasComercialesDraft {
+  cuotasList: number[];
+  recomendadaIdx: number;
+}
+
+export interface PropuestaComercialPdfRow extends RecomendadaSeleccionada {
+  fuente: "automatica" | "manual";
+}
+
+export interface PropuestasComercialesSnapshot extends PropuestasComercialesDraft {
+  recommendedIndex: number;
+  propuestas: PropuestaComercialPdfRow[];
+}
+
 type Common = {
   cuotasPendientes: number;
   baseCredito: number; // para "veces pagado" (desembolsado o, en su defecto, saldo actual)
   /** Dinero ya pagado a la fecha. Solo se suma cuando la base es el valor desembolsado. */
   dineroPagado?: number;
+  initialState?: PropuestasComercialesDraft;
+  onStateChange?: (s: PropuestasComercialesSnapshot) => void;
   onRecomendadaChange: (r: RecomendadaSeleccionada | null) => void;
 };
 
@@ -103,19 +120,39 @@ function defaultCuotas(props: Props): number[] {
   return [12, 24, 36, 48];
 }
 
+function propsSeed(props: Props): string {
+  return `${props.mode}::${props.mode === "uvr" ? props.plazoInicial : "p"}::${props.cuotasPendientes}`;
+}
+
+function toPdfRow(c: PropuestaCalc, index: number, fuente: "automatica" | "manual"): PropuestaComercialPdfRow {
+  return {
+    index,
+    cuotasEliminadas: c.cuotasEliminadas,
+    añosEliminados: c.añosEliminados,
+    nuevoPlazo: c.nuevoPlazo,
+    nuevaCuota: c.nuevaCuota,
+    ahorroIntereses: c.ahorroIntereses,
+    ahorroSeguros: c.ahorroSeguros,
+    ahorroTotal: c.ahorroTotal,
+    honorarios: c.honorarios,
+    totalProyectado: c.totalProyectado,
+    incrementoMensual: c.incrementoMensual,
+    fuente,
+  };
+}
+
 export function PropuestasComerciales(props: Props) {
-  const [cuotasList, setCuotasList] = useState<number[]>(() => defaultCuotas(props));
-  const [recomendadaIdx, setRecomendadaIdx] = useState<number>(-1);
+  const [cuotasList, setCuotasList] = useState<number[]>(() =>
+    props.initialState?.cuotasList?.length ? props.initialState.cuotasList : defaultCuotas(props),
+  );
+  const [recomendadaIdx, setRecomendadaIdx] = useState<number>(
+    props.initialState?.recomendadaIdx ?? -1,
+  );
 
   // Si cambia el "mode" o el plazo inicial UVR, rehacemos la lista por defecto.
-  const seedRef = useRef<string>("");
+  const seedRef = useRef<string>(propsSeed(props));
   useEffect(() => {
-    const seed =
-      props.mode +
-      "::" +
-      (props.mode === "uvr" ? props.plazoInicial : "p") +
-      "::" +
-      props.cuotasPendientes;
+    const seed = propsSeed(props);
     if (seedRef.current !== seed) {
       seedRef.current = seed;
       setCuotasList(defaultCuotas(props));
@@ -156,21 +193,15 @@ export function PropuestasComerciales(props: Props) {
       props.onRecomendadaChange(null);
       return;
     }
-    props.onRecomendadaChange({
-      cuotasEliminadas: c.cuotasEliminadas,
-      añosEliminados: c.añosEliminados,
-      nuevoPlazo: c.nuevoPlazo,
-      nuevaCuota: c.nuevaCuota,
-      ahorroIntereses: c.ahorroIntereses,
-      ahorroSeguros: c.ahorroSeguros,
-      ahorroTotal: c.ahorroTotal,
-      honorarios: c.honorarios,
-      totalProyectado: c.totalProyectado,
-      incrementoMensual: c.incrementoMensual,
-      fuente: recomendadaIdx >= 0 ? "manual" : "automatica",
-    });
+    const fuente = recomendadaIdx >= 0 ? "manual" : "automatica";
+    const validRows = calcs
+      .map((calc, idx) => (calc.valid ? toPdfRow(calc, idx, fuente) : null))
+      .filter((row): row is PropuestaComercialPdfRow => row !== null);
+    const recommendedIndex = Math.max(0, validRows.findIndex((row) => row.index === effectiveIdx));
+    props.onStateChange?.({ cuotasList, recomendadaIdx, recommendedIndex, propuestas: validRows });
+    props.onRecomendadaChange(toPdfRow(c, effectiveIdx, fuente));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [effectiveIdx, calcs, recomendadaIdx]);
+  }, [effectiveIdx, calcs, recomendadaIdx, cuotasList]);
 
   const setCuotas = (idx: number, val: number) => {
     setCuotasList((list) => list.map((c, i) => (i === idx ? val : c)));

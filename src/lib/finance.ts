@@ -1,5 +1,6 @@
 // Motores financieros NUVEX: PESOS y UVR
 // No exponer fórmulas al usuario final.
+import { calcularMotor, type TipoCreditoMH } from "./motorHonorarios";
 
 export const HONORARIOS_MIN_BASE = 2_000_000;
 export const HONORARIOS_MIN_FINAL = 1_800_000;
@@ -7,6 +8,20 @@ export const HONORARIOS_MIN_FINAL = 1_800_000;
 export function applyHonorariosFloor(calculado: number): number {
   if (!isFinite(calculado) || calculado <= 0) return calculado;
   return Math.max(HONORARIOS_MIN_BASE, calculado);
+}
+
+export function calculateHonorariosMotor(
+  ahorroIntereses: number,
+  ahorroSeguros: number,
+  tipoCredito: TipoCreditoMH,
+  plazoOriginalMeses?: number,
+): number {
+  return calcularMotor({
+    ahorroIntereses,
+    ahorroSeguros,
+    tipoCredito,
+    plazoOriginalMeses,
+  }).honorarioRecomendado;
 }
 
 export function pmt(rate: number, nper: number, pv: number): number {
@@ -85,7 +100,12 @@ function buildPesosPropuesta(
   const ahorroIntereses = interesesActuales - interesesProyectados;
   const ahorroSeguros = input.seguros * cuotasEliminadas;
   const ahorroTotal = ahorroIntereses + ahorroSeguros;
-  const honorariosNuvex = applyHonorariosFloor(ahorroTotal * (input.porcentajeHonorarios / 100));
+  const honorariosNuvex = calculateHonorariosMotor(
+    ahorroIntereses,
+    ahorroSeguros,
+    "pesos",
+    input.cuotasPendientes,
+  );
   return {
     cuotasEliminadas,
     añosEliminados: cuotasEliminadas / 12,
@@ -172,7 +192,12 @@ export function calculatePesosManual(
     ahorroIntereses,
     ahorroSeguros,
     ahorroTotal,
-    honorarios: applyHonorariosFloor(ahorroTotal * (input.porcentajeHonorarios / 100)),
+    honorarios: calculateHonorariosMotor(
+      ahorroIntereses,
+      ahorroSeguros,
+      "pesos",
+      input.cuotasPendientes,
+    ),
     incrementoMensual: nuevaCuotaConSeguro - input.cuotaActual,
     valid: true,
   };
@@ -376,7 +401,12 @@ export function calculateUVRProjection(input: UVRInput): {
       ahorroIntereses,
       ahorroSeguros,
       ahorroTotal,
-      honorariosNuvex: applyHonorariosFloor(ahorroTotal * (input.porcentajeHonorarios / 100)),
+      honorariosNuvex: calculateHonorariosMotor(
+        ahorroIntereses,
+        ahorroSeguros,
+        "uvr",
+        input.plazoInicial,
+      ),
       totalAproxPagar: prop.totalPagoPesos,
     });
   }
@@ -460,7 +490,12 @@ export function calculateUVRManual(
     ahorroIntereses,
     ahorroSeguros,
     ahorroTotal,
-    honorarios: applyHonorariosFloor(ahorroTotal * (input.porcentajeHonorarios / 100)),
+    honorarios: calculateHonorariosMotor(
+      ahorroIntereses,
+      ahorroSeguros,
+      "uvr",
+      input.plazoInicial,
+    ),
     valid: true,
   };
 }

@@ -64,7 +64,8 @@ type AccessGateCache = { ok: true; at: number };
 function getAccessGateCache(userId: string): AccessGateCache | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = sessionStorage.getItem(`${GATE_CACHE_PREFIX}${userId}`);
+    const key = `${GATE_CACHE_PREFIX}${userId}`;
+    const raw = sessionStorage.getItem(key) ?? localStorage.getItem(key);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as AccessGateCache;
     if (!parsed.ok || Date.now() - parsed.at > GATE_CACHE_TTL_MS) return null;
@@ -76,15 +77,17 @@ function getAccessGateCache(userId: string): AccessGateCache | null {
 
 function setAccessGateCache(userId: string) {
   if (typeof window === "undefined") return;
-  sessionStorage.setItem(
-    `${GATE_CACHE_PREFIX}${userId}`,
-    JSON.stringify({ ok: true, at: Date.now() }),
-  );
+  const key = `${GATE_CACHE_PREFIX}${userId}`;
+  const value = JSON.stringify({ ok: true, at: Date.now() });
+  sessionStorage.setItem(key, value);
+  localStorage.setItem(key, value);
 }
 
 function clearAccessGateCache(userId: string) {
   if (typeof window === "undefined") return;
-  sessionStorage.removeItem(`${GATE_CACHE_PREFIX}${userId}`);
+  const key = `${GATE_CACHE_PREFIX}${userId}`;
+  sessionStorage.removeItem(key);
+  localStorage.removeItem(key);
 }
 
 type NavItem = {
@@ -116,8 +119,12 @@ function AuthenticatedLayout() {
     nombre: string | null;
     avatar_url: string | null;
   }>({ nombre: null, avatar_url: null });
-  const [gateState, setGateState] = useState<"checking" | "ok" | "blocked">("checking");
-  const [gateChecked, setGateChecked] = useState(false);
+  const [gateState, setGateState] = useState<"checking" | "ok" | "blocked">(() =>
+    session?.user && getAccessGateCache(session.user.id) ? "ok" : "checking",
+  );
+  const [gateChecked, setGateChecked] = useState(() =>
+    !!(session?.user && getAccessGateCache(session.user.id)),
+  );
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem("nuvex.sidebar.collapsed") === "1";

@@ -4,6 +4,16 @@ type Mode = "pesos" | "uvr";
 
 const DRAFT_PREFIX = "nuvex.simulatorDraft";
 
+export function parseStoredJson<T>(value: unknown): T | undefined {
+  if (typeof value !== "string" || !value.trim()) return undefined;
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return parsed && typeof parsed === "object" ? (parsed as T) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function draftKey(mode: Mode, expedienteId?: string) {
   return `${DRAFT_PREFIX}.${mode}.${expedienteId ?? "standalone"}`;
 }
@@ -31,14 +41,11 @@ export function useSimulatorDraft<T extends object>(
 ) {
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const id = window.setTimeout(() => {
-      try {
-        sessionStorage.setItem(draftKey(mode, expedienteId), JSON.stringify(draft));
-      } catch {
-        // Si el navegador bloquea el almacenamiento, el simulador debe seguir funcionando.
-      }
-    }, 250);
-    return () => window.clearTimeout(id);
+    try {
+      sessionStorage.setItem(draftKey(mode, expedienteId), JSON.stringify(draft));
+    } catch {
+      // Si el navegador bloquea el almacenamiento, el simulador debe seguir funcionando.
+    }
   }, [mode, expedienteId, draft]);
 }
 
