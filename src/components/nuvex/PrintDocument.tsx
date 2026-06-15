@@ -229,7 +229,7 @@ export function PrintDocument(props: Props) {
 
         {/* ───── HERO ───── */}
         <div style={{
-          padding: "16px 22px 9px 22px",
+          padding: "12px 22px 6px 22px",
           display: "grid", gridTemplateColumns: "1.62fr 0.38fr", gap: 18, alignItems: "center",
           breakInside: "avoid", pageBreakInside: "avoid",
         }}>
