@@ -105,9 +105,9 @@ export function PrintDocument(props: Props) {
   const añoFinActual = fechaFinActual.getFullYear();
   const añoFinOpt = fechaFinOpt.getFullYear();
 
-  // Fecha límite del beneficio (72 horas a partir de hoy)
+  // Fecha límite del beneficio (48 horas a partir de hoy)
   const fechaLimite = new Date(fechaBase);
-  fechaLimite.setHours(fechaLimite.getHours() + 72);
+  fechaLimite.setHours(fechaLimite.getHours() + 48);
   const fechaLimiteStr = fechaLimite.toLocaleDateString("es-CO", {
     day: "2-digit", month: "long", year: "numeric",
   });
@@ -443,26 +443,26 @@ export function PrintDocument(props: Props) {
             {/* Urgencia con fecha exacta */}
             <div style={{
               background: C.red, color: "#fff", borderRadius: 12,
-              padding: "9px 12px", display: "flex", flexDirection: "column",
+              padding: "6px 10px", display: "flex", flexDirection: "column",
               justifyContent: "center", textAlign: "center",
             }}>
               <div style={{
-                fontSize: 9, letterSpacing: "0.22em", fontWeight: 700, opacity: 0.95,
+                fontSize: 8.2, letterSpacing: "0.22em", fontWeight: 700, opacity: 0.95,
               }}>BENEFICIO VÁLIDO HASTA</div>
               <div style={{
-                fontSize: 15, fontWeight: 900, marginTop: 4, letterSpacing: "-0.005em",
+                fontSize: 13, fontWeight: 900, marginTop: 3, letterSpacing: "-0.005em",
                 textTransform: "uppercase",
               }}>
                 {fechaLimiteStr}
               </div>
               <div style={{
                 display: "flex", alignItems: "center", justifyContent: "center",
-                gap: 6, marginTop: 6,
-                borderTop: "1px solid rgba(255,255,255,0.25)", paddingTop: 6,
+                gap: 5, marginTop: 4,
+                borderTop: "1px solid rgba(255,255,255,0.25)", paddingTop: 4,
               }}>
-                <ClockIcon color="#fff" size={16} />
-                <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: "-0.02em" }}>
-                  72 HORAS
+                <ClockIcon color="#fff" size={13} />
+                <div style={{ fontSize: 14, fontWeight: 900, letterSpacing: "-0.02em" }}>
+                  48 HORAS
                 </div>
               </div>
             </div>
@@ -621,7 +621,7 @@ export function PrintDocument(props: Props) {
         <div style={{ flex: "1 1 auto", minHeight: 4 }} />
 
         {/* ───── HERO DE CIERRE (full width) ───── */}
-        <div style={{ padding: "0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
+        <div style={{ padding: "0 22px 18px 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <div style={{
             background: `linear-gradient(135deg, ${C.black} 0%, #1a1a1a 60%, #1f2a4a 130%)`,
             color: "#fff", borderRadius: 14, padding: "18px 22px",
@@ -667,7 +667,7 @@ export function PrintDocument(props: Props) {
                 QUIERO RECUPERAR MI TIEMPO FINANCIERO
               </div>
               <div style={{ fontSize: 9, color: "rgba(255,255,255,0.6)", letterSpacing: "0.16em", fontWeight: 700 }}>
-                PROPUESTA COMERCIAL VÁLIDA POR 72 HORAS
+                PROPUESTA COMERCIAL VÁLIDA POR 48 HORAS
               </div>
             </div>
           </div>
@@ -1202,7 +1202,7 @@ function AlternativaCard(props: {
         <div style={{
           fontSize: 11, fontWeight: 800, color: deep, fontStyle: "italic",
         }}>
-          {label}
+          {`Propuesta ${index}`}
         </div>
       </div>
 
