@@ -818,6 +818,28 @@ interface AltRow {
   ahorroTotal: number;
   añoFinOpt: number;
   añosOpt: number;
+  honorariosFinal: number;
+  honorariosBase: number;
+  minimoAplicado: boolean;
+}
+
+function computeHonorarios(
+  ahorroIntereses: number,
+  ahorroSeguros: number,
+  mode: "pesos" | "uvr",
+  plazoOriginal: number,
+): { honorariosFinal: number; honorariosBase: number; minimoAplicado: boolean } {
+  const r = calcularMotor({
+    ahorroIntereses,
+    ahorroSeguros,
+    tipoCredito: mode,
+    plazoOriginalMeses: plazoOriginal,
+  });
+  return {
+    honorariosFinal: r.honorarioRecomendado,
+    honorariosBase: r.honorarioTeorico,
+    minimoAplicado: r.alertaTope === "minimo",
+  };
 }
 
 function buildAlternativas(args: {
@@ -829,8 +851,9 @@ function buildAlternativas(args: {
   añoHoy: number;
   añoFinActual: number;
   añosActual: number;
+  plazoOriginal: number;
 }): AltRow[] {
-  const { mode, pesosPropuestas, uvrPropuestas, bestIndex, cuotaActual, añoHoy } = args;
+  const { mode, pesosPropuestas, uvrPropuestas, bestIndex, cuotaActual, plazoOriginal } = args;
   const fechaBase = new Date();
 
   if (mode === "uvr") {
@@ -852,6 +875,7 @@ function buildAlternativas(args: {
     const cuota = p.nuevaCuotaConSeguro;
     const fechaFin = new Date(fechaBase);
     fechaFin.setMonth(fechaFin.getMonth() + p.nuevoPlazo);
+    const h = computeHonorarios(p.ahorroIntereses, p.ahorroSeguros, "pesos", plazoOriginal);
     return {
       nuevaCuota: cuota,
       incrementoPct: cuotaActual > 0 ? ((cuota - cuotaActual) / cuotaActual) * 100 : 0,
@@ -860,12 +884,14 @@ function buildAlternativas(args: {
       ahorroTotal: p.ahorroTotal,
       añoFinOpt: fechaFin.getFullYear(),
       añosOpt: p.nuevoPlazo / 12,
+      ...h,
     };
   }
   function mapUVR(p: UVRPropuesta): AltRow {
     const cuota = p.nuevaCuotaConSeguroAprox;
     const fechaFin = new Date(fechaBase);
     fechaFin.setMonth(fechaFin.getMonth() + p.nuevoPlazo);
+    const h = computeHonorarios(p.ahorroIntereses, p.ahorroSeguros, "uvr", plazoOriginal);
     return {
       nuevaCuota: cuota,
       incrementoPct: cuotaActual > 0 ? ((cuota - cuotaActual) / cuotaActual) * 100 : 0,
@@ -874,6 +900,7 @@ function buildAlternativas(args: {
       ahorroTotal: p.ahorroTotal,
       añoFinOpt: fechaFin.getFullYear(),
       añosOpt: p.nuevoPlazo / 12,
+      ...h,
     };
   }
 }
@@ -883,6 +910,7 @@ function mapPropuestasToAltRow(
   pesosPropuestas: PesosPropuesta[] | undefined,
   uvrPropuestas: UVRPropuesta[] | undefined,
   cuotaActual: number,
+  plazoOriginal: number,
 ): AltRow[] {
   const fechaBase = new Date();
   if (mode === "uvr") {
@@ -890,6 +918,7 @@ function mapPropuestasToAltRow(
       const cuota = p.nuevaCuotaConSeguroAprox;
       const fechaFin = new Date(fechaBase);
       fechaFin.setMonth(fechaFin.getMonth() + p.nuevoPlazo);
+      const h = computeHonorarios(p.ahorroIntereses, p.ahorroSeguros, "uvr", plazoOriginal);
       return {
         nuevaCuota: cuota,
         incrementoPct: cuotaActual > 0 ? ((cuota - cuotaActual) / cuotaActual) * 100 : 0,
@@ -898,6 +927,7 @@ function mapPropuestasToAltRow(
         ahorroTotal: p.ahorroTotal,
         añoFinOpt: fechaFin.getFullYear(),
         añosOpt: p.nuevoPlazo / 12,
+        ...h,
       };
     });
   }
@@ -905,6 +935,7 @@ function mapPropuestasToAltRow(
     const cuota = p.nuevaCuotaConSeguro;
     const fechaFin = new Date(fechaBase);
     fechaFin.setMonth(fechaFin.getMonth() + p.nuevoPlazo);
+    const h = computeHonorarios(p.ahorroIntereses, p.ahorroSeguros, "pesos", plazoOriginal);
     return {
       nuevaCuota: cuota,
       incrementoPct: cuotaActual > 0 ? ((cuota - cuotaActual) / cuotaActual) * 100 : 0,
@@ -913,9 +944,11 @@ function mapPropuestasToAltRow(
       ahorroTotal: p.ahorroTotal,
       añoFinOpt: fechaFin.getFullYear(),
       añosOpt: p.nuevoPlazo / 12,
+      ...h,
     };
   });
 }
+
 
 
 /* ════════════════════════════════════════════════════════════
