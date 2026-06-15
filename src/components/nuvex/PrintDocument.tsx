@@ -456,29 +456,22 @@ export function PrintDocument(props: Props) {
               </div>
             </div>
 
-            {/* Urgencia con fecha exacta */}
+            {/* Urgencia — beneficio comercial 48h sin fecha específica */}
             <div style={{
               background: C.red, color: "#fff", borderRadius: 12,
-              padding: "6px 10px", display: "flex", flexDirection: "column",
-              justifyContent: "center", textAlign: "center",
+              padding: "8px 10px", display: "flex", flexDirection: "column",
+              justifyContent: "center", alignItems: "center", textAlign: "center",
             }}>
               <div style={{
-                fontSize: 8.2, letterSpacing: "0.22em", fontWeight: 700, opacity: 0.95,
-              }}>BENEFICIO VÁLIDO HASTA</div>
-              <div style={{
-                fontSize: 13, fontWeight: 900, marginTop: 3, letterSpacing: "-0.005em",
-                textTransform: "uppercase",
-              }}>
-                {fechaLimiteStr}
-              </div>
+                fontSize: 8.5, letterSpacing: "0.22em", fontWeight: 700, opacity: 0.95,
+              }}>BENEFICIO COMERCIAL</div>
               <div style={{
                 display: "flex", alignItems: "center", justifyContent: "center",
-                gap: 5, marginTop: 4,
-                borderTop: "1px solid rgba(255,255,255,0.25)", paddingTop: 4,
+                gap: 6, marginTop: 6,
               }}>
-                <ClockIcon color="#fff" size={13} />
-                <div style={{ fontSize: 14, fontWeight: 900, letterSpacing: "-0.02em" }}>
-                  48 HORAS
+                <ClockIcon color="#fff" size={15} />
+                <div style={{ fontSize: 16, fontWeight: 900, letterSpacing: "-0.01em" }}>
+                  VÁLIDO POR 48 HORAS
                 </div>
               </div>
             </div>
