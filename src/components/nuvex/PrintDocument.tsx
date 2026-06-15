@@ -502,7 +502,7 @@ export function PrintDocument(props: Props) {
           }}>
             <div style={{
               position: "absolute", top: -10, left: 18,
-              fontSize: 58, color: C.green, lineHeight: 1, fontWeight: 900, opacity: 0.28,
+              fontSize: 48, color: C.green, lineHeight: 1, fontWeight: 900, opacity: 0.28,
             }}>“</div>
             <div style={{
               fontSize: 12, color: C.green, fontWeight: 800, letterSpacing: "0.04em",
