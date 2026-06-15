@@ -615,6 +615,7 @@ export function PrintDocument(props: Props) {
                 añosOpt={alt.añosOpt}
                 quienIdeal={dyn.ideal}
                 honorarios={disc.final}
+                honorariosBase={alt.honorariosFinal}
                 honorariosTag={tag}
               />
             );
