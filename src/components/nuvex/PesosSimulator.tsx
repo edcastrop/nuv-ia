@@ -822,7 +822,7 @@ export function PesosSimulator({
                       hasDiscount: d.hasDiscount,
                     }}
                     dineroPagadoFecha={dineroPagadoFecha}
-                    valorDesembolsado={valorDesembolsadoNum}
+                    valorDesembolsado={Math.max(valorDesembolsadoNum, saldoCapitalNum)}
                   />
                 );
               })()}
