@@ -1185,7 +1185,24 @@ function PriceRow({ label, value, strike = false }: { label: string; value: stri
   );
 }
 
-function AlternativaCard(props: {
+function ReinforceBullet({ text }: { text: React.ReactNode }) {
+  return (
+    <div style={{
+      display: "inline-flex", alignItems: "center", gap: 6,
+      fontSize: 9.5, color: "#1A1F2E", lineHeight: 1.25,
+    }}>
+      <span style={{
+        width: 14, height: 14, borderRadius: "50%",
+        background: "#3F8C57", color: "#fff",
+        display: "inline-flex", alignItems: "center", justifyContent: "center",
+        fontSize: 9, fontWeight: 900, flexShrink: 0,
+      }}>✓</span>
+      <span>{text}</span>
+    </div>
+  );
+}
+
+
   index: number; label: string; accent: string; soft: string; deep: string;
   cuota: number; cuotaPct: number;
   ahorroAños: number; ahorroCuotas: number; ahorroDinero: number;
