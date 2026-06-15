@@ -52,6 +52,10 @@ interface Props {
     vecesOptimizado: number;
   };
   commercial?: CommercialBenefit;
+  /** Dinero ya pagado por el cliente a la fecha (cuotaHoy × cuotasPagadas). */
+  dineroPagadoFecha?: number;
+  /** Valor inicial desembolsado del crédito. */
+  valorDesembolsado?: number;
 }
 
 /* ============================================================
