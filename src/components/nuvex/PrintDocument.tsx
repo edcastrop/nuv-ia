@@ -1203,6 +1203,7 @@ function ReinforceBullet({ text }: { text: React.ReactNode }) {
 }
 
 
+function AlternativaCard(props: {
   index: number; label: string; accent: string; soft: string; deep: string;
   cuota: number; cuotaPct: number;
   ahorroAños: number; ahorroCuotas: number; ahorroDinero: number;
@@ -1210,6 +1211,7 @@ function ReinforceBullet({ text }: { text: React.ReactNode }) {
   añoHoy: number; añosActuales: number; añosOpt: number;
   quienIdeal: string;
   honorarios: number;
+  honorariosBase: number;
   honorariosTag: string | null;
 }) {
   const {
