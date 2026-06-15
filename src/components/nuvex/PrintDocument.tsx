@@ -687,11 +687,13 @@ function ResumenEscenarios({
   bestIndex,
   recHonorariosFinal,
   recTieneDescuento,
+  applyCommercialDiscount,
 }: {
   allPropuestas: AltRow[];
   bestIndex: number;
   recHonorariosFinal: number;
   recTieneDescuento: boolean;
+  applyCommercialDiscount: (honor: number) => { final: number; aplicado: boolean; pct: number };
 }) {
   // Orden: recomendada primero, luego las demás numeradas
   const rec = allPropuestas[bestIndex];
@@ -735,10 +737,18 @@ function ResumenEscenarios({
         <div style={{ padding: "7px 10px", textAlign: "right" }}>HONORARIOS A ÉXITO</div>
       </div>
       {rows.map((r, i) => {
-        const honor = r.isRecommended ? recHonorariosFinal : r.data.honorariosFinal;
-        const honorTag = r.isRecommended
-          ? (recTieneDescuento ? "Descuento incluido" : null)
-          : (r.data.minimoAplicado ? "Mínimo aplicado" : null);
+        let honor: number;
+        let honorTag: string | null;
+        if (r.isRecommended) {
+          honor = recHonorariosFinal;
+          honorTag = recTieneDescuento ? "Descuento incluido" : null;
+        } else {
+          const disc = applyCommercialDiscount(r.data.honorariosFinal);
+          honor = disc.final;
+          honorTag = disc.aplicado
+            ? `Descuento ${disc.pct}% incluido`
+            : (r.data.minimoAplicado ? "Mínimo aplicado" : null);
+        }
         return (
           <ResumenRow
             key={i}
