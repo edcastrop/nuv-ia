@@ -522,7 +522,7 @@ export function PrintDocument(props: Props) {
               a tu familia y a tus proyectos.
             </p>
             <div style={{
-              marginTop: 8, paddingTop: 7,
+              marginTop: 6, paddingTop: 6,
               borderTop: "1px solid rgba(255,255,255,0.15)",
               display: "grid", gridTemplateColumns: "1fr auto", gap: 16, alignItems: "center",
             }}>
@@ -531,7 +531,7 @@ export function PrintDocument(props: Props) {
               </div>
               <div style={{ textAlign: "right" }}>
                 <div style={{
-                  fontFamily: SCRIPT, fontSize: 26, color: C.green, lineHeight: 1,
+                  fontFamily: SCRIPT, fontSize: 22, color: C.green, lineHeight: 1,
                 }}>{analista}</div>
                 <div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.6)", marginTop: 2, letterSpacing: "0.12em" }}>
                   ANALISTA NUVEX
