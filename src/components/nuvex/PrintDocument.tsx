@@ -7,7 +7,7 @@ import { NUVEX } from "./constants";
 import type { ClientData } from "./ClientFields";
 import { formatCOP, formatNumber } from "../../lib/format";
 import type { PesosPropuesta, UVRPropuesta } from "../../lib/finance";
-import { calcularMotor } from "../../lib/motorHonorarios";
+import { calcularMotor, descuentoMaximoPct } from "../../lib/motorHonorarios";
 import logoNuvex from "@/assets/logo-nuvex.png";
 import heroSunset from "@/assets/nuvex-hero-sunset.jpg";
 
@@ -143,6 +143,22 @@ export function PrintDocument(props: Props) {
   // Honorarios "a éxito" finales de la propuesta recomendada (con descuento comercial si aplica)
   const recHonorariosFinal = honorariosFinales;
   const recHonorariosTieneDescuento = !!commercial?.hasDiscount;
+
+  // % de descuento comercial aprobado para esta propuesta — se aplica a TODAS las alternativas
+  // (limitado por el descuento máximo permitido por escala de honorarios).
+  const commercialDescuentoPct =
+    commercial?.hasDiscount && honorariosBase > 0
+      ? Math.max(0, Math.round(((honorariosBase - honorariosFinales) / honorariosBase) * 1000) / 10)
+      : 0;
+  const applyCommercialDiscount = (honor: number): { final: number; aplicado: boolean; pct: number } => {
+    if (commercialDescuentoPct <= 0 || honor <= 0) {
+      return { final: honor, aplicado: false, pct: 0 };
+    }
+    const maxPct = descuentoMaximoPct(honor);
+    const pct = Math.min(commercialDescuentoPct, maxPct);
+    if (pct <= 0) return { final: honor, aplicado: false, pct: 0 };
+    return { final: Math.round(honor * (1 - pct / 100)), aplicado: true, pct };
+  };
 
   return (
     <div
@@ -552,6 +568,10 @@ export function PrintDocument(props: Props) {
           {alternativas.slice(0, 3).map((alt, i) => {
             const total = Math.min(3, alternativas.length);
             const dyn = dynamicScenarioMeta(i, total);
+            const disc = applyCommercialDiscount(alt.honorariosFinal);
+            const tag = disc.aplicado
+              ? `Descuento ${disc.pct}% incluido`
+              : (alt.minimoAplicado ? "Mínimo aplicado" : null);
             return (
               <AlternativaCard
                 key={i}
@@ -571,8 +591,8 @@ export function PrintDocument(props: Props) {
                 añosActuales={añosActual}
                 añosOpt={alt.añosOpt}
                 quienIdeal={dyn.ideal}
-                honorarios={alt.honorariosFinal}
-                honorariosTag={alt.minimoAplicado ? "Mínimo aplicado" : null}
+                honorarios={disc.final}
+                honorariosTag={tag}
               />
             );
           })}
@@ -585,6 +605,7 @@ export function PrintDocument(props: Props) {
             bestIndex={bestIndex}
             recHonorariosFinal={recHonorariosFinal}
             recTieneDescuento={recHonorariosTieneDescuento}
+            applyCommercialDiscount={applyCommercialDiscount}
           />
           <div style={{
             marginTop: 5, fontSize: 8.5, color: C.muted, lineHeight: 1.35,
@@ -666,11 +687,13 @@ function ResumenEscenarios({
   bestIndex,
   recHonorariosFinal,
   recTieneDescuento,
+  applyCommercialDiscount,
 }: {
   allPropuestas: AltRow[];
   bestIndex: number;
   recHonorariosFinal: number;
   recTieneDescuento: boolean;
+  applyCommercialDiscount: (honor: number) => { final: number; aplicado: boolean; pct: number };
 }) {
   // Orden: recomendada primero, luego las demás numeradas
   const rec = allPropuestas[bestIndex];
@@ -714,10 +737,18 @@ function ResumenEscenarios({
         <div style={{ padding: "7px 10px", textAlign: "right" }}>HONORARIOS A ÉXITO</div>
       </div>
       {rows.map((r, i) => {
-        const honor = r.isRecommended ? recHonorariosFinal : r.data.honorariosFinal;
-        const honorTag = r.isRecommended
-          ? (recTieneDescuento ? "Descuento incluido" : null)
-          : (r.data.minimoAplicado ? "Mínimo aplicado" : null);
+        let honor: number;
+        let honorTag: string | null;
+        if (r.isRecommended) {
+          honor = recHonorariosFinal;
+          honorTag = recTieneDescuento ? "Descuento incluido" : null;
+        } else {
+          const disc = applyCommercialDiscount(r.data.honorariosFinal);
+          honor = disc.final;
+          honorTag = disc.aplicado
+            ? `Descuento ${disc.pct}% incluido`
+            : (r.data.minimoAplicado ? "Mínimo aplicado" : null);
+        }
         return (
           <ResumenRow
             key={i}
