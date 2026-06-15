@@ -210,7 +210,7 @@ export function PrintDocument(props: Props) {
       >
         {/* ───── HEADER NEGRO ───── */}
         <div style={{
-          background: C.black, color: "#fff", padding: "12px 22px",
+          background: C.black, color: "#fff", padding: "10px 22px",
           display: "grid", gridTemplateColumns: "auto 1fr", alignItems: "center", gap: 20,
           breakInside: "avoid", pageBreakInside: "avoid",
         }}>
