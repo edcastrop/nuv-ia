@@ -105,17 +105,33 @@ export function PrintDocument(props: Props) {
   const añoFinActual = fechaFinActual.getFullYear();
   const añoFinOpt = fechaFinOpt.getFullYear();
 
-  // Fecha límite del beneficio (48 horas a partir de hoy)
-  const fechaLimite = new Date(fechaBase);
-  fechaLimite.setHours(fechaLimite.getHours() + 48);
-  const fechaLimiteStr = fechaLimite.toLocaleDateString("es-CO", {
-    day: "2-digit", month: "long", year: "numeric",
-  });
-
   const ahorroTotal = recommended.ahorroTotal;
   const honorariosFinales = commercial?.hasDiscount ? commercial.finales : recommended.honorarios;
   const honorariosBase = commercial?.honorariosBase ?? recommended.honorarios;
   const descuento = commercial?.hasDiscount ? Math.max(0, honorariosBase - honorariosFinales) : 0;
+
+  // ─── VALIDACIÓN DE CONSISTENCIA ───
+  // Los honorarios mostrados en el PDF deben provenir exactamente del escenario
+  // recomendado del simulador. Si la base comercial no coincide con la del
+  // escenario recomendado, bloqueamos la generación del PDF.
+  const consistenciaOk =
+    Math.abs((commercial?.honorariosBase ?? recommended.honorarios) - recommended.honorarios) < 1;
+  if (!consistenciaOk) {
+    return (
+      <div id={containerId} className="nuvex-print-only" style={{
+        background: "#fff", color: "#B43A3A", fontFamily: FONT,
+        width: "210mm", padding: "40mm 22mm", boxSizing: "border-box",
+      }}>
+        <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 12 }}>
+          Error de consistencia
+        </div>
+        <div style={{ fontSize: 12, lineHeight: 1.5, color: "#1A1F2E" }}>
+          Los honorarios no coinciden con el escenario seleccionado.<br />
+          Verifica el escenario recomendado en el simulador antes de generar el PDF.
+        </div>
+      </div>
+    );
+  }
 
   const nombreCliente = (client.nombre || "Cliente").toUpperCase();
   const primerNombre = (client.nombre || "Cliente").trim().split(/\s+/)[0] || "Cliente";
