@@ -46,3 +46,8 @@ export function clearSimulatorDraft(mode: Mode, expedienteId?: string) {
   if (typeof window === "undefined") return;
   sessionStorage.removeItem(draftKey(mode, expedienteId));
 }
+
+export function hasSimulatorDraft(mode: Mode, expedienteId?: string) {
+  if (typeof window === "undefined") return false;
+  return sessionStorage.getItem(draftKey(mode, expedienteId)) !== null;
+}
