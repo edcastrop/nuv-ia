@@ -308,7 +308,7 @@ export function PrintDocument(props: Props) {
           <SectionTitle index="1" title="Tu cuota, hoy y con nuestra optimización" />
           <div style={{
             marginTop: 7,
-            display: "grid", gridTemplateColumns: "1fr 36px 1fr 110px", gap: 12, alignItems: "stretch",
+            display: "grid", gridTemplateColumns: "1fr 36px 1fr", gap: 12, alignItems: "stretch",
           }}>
             <CuotaCard
               eyebrow="VALOR ACTUAL DE TU CUOTA"
@@ -332,28 +332,76 @@ export function PrintDocument(props: Props) {
               eyebrow="NUEVO VALOR DE TU CUOTA"
               sub="Con la optimización"
               amount={nuevaCuota}
-              footer="Nueva cuota mensual propuesta"
+              footer={`Nueva cuota mensual (+${formatNumber(incrementoPct, 1)}%)`}
               color={C.greenDeep}
               bg={C.greenSoft}
             />
+          </div>
+        </div>
+
+        {/* ───── 1B. RADIOGRAFÍA FINANCIERA DEL CRÉDITO ───── */}
+        {radiografiaOk && (
+          <div style={{ padding: "9px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
             <div style={{
-              display: "flex", flexDirection: "column",
-              alignItems: "center", justifyContent: "center", gap: 4,
-              padding: "0 4px",
+              background: "#fff", border: `1px solid ${C.hairline}`, borderRadius: 12,
+              padding: "8px 12px",
             }}>
-              <TrendUpInline color={C.green} />
               <div style={{
-                fontSize: 24, fontWeight: 900, color: C.greenDeep,
-                letterSpacing: "-0.02em", lineHeight: 1,
+                fontSize: 9.5, letterSpacing: "0.22em", fontWeight: 800,
+                color: C.muted, marginBottom: 6, textAlign: "center",
               }}>
-                +{formatNumber(incrementoPct, 1)}%
+                RADIOGRAFÍA FINANCIERA DEL CRÉDITO
               </div>
-              <div style={{ fontSize: 9, color: C.muted, textAlign: "center", lineHeight: 1.25 }}>
-                Aumento mensual<br />recomendado
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 1fr 1.25fr",
+                gap: 8, alignItems: "stretch",
+              }}>
+                <RadioMini label="YA HAS PAGADO" value={formatCOP(yaPagado)} tone="neutral" />
+                <RadioMini label="TE FALTA PAGAR" value={formatCOP(faltaPagarSin)} tone="neutral" />
+                <RadioMini label="COSTO TOTAL" value={formatCOP(costoTotalSin)} tone="neutral" />
+                <RadioMini
+                  label="VECES PAGADO"
+                  value={`${formatNumber(vecesSin, 2)}× `}
+                  tone="hero"
+                />
+              </div>
+              <div style={{
+                marginTop: 7, display: "grid",
+                gridTemplateColumns: "1fr 1fr 1.05fr", gap: 8, alignItems: "stretch",
+              }}>
+                <CompareCell
+                  title="SIN NUVEX"
+                  big={`${formatNumber(vecesSin, 2)}×`}
+                  small={formatCOP(costoTotalSin)}
+                  bg="#F4F6F8" fg={C.ink} accent={C.muted}
+                />
+                <CompareCell
+                  title="CON NUVEX"
+                  big={`${formatNumber(vecesCon, 2)}×`}
+                  small={formatCOP(costoTotalCon)}
+                  bg={C.greenSoft} fg={C.greenDeep} accent={C.greenDeep}
+                />
+                <div style={{
+                  background: C.azulSoft, borderRadius: 10,
+                  padding: "6px 10px", display: "flex", flexDirection: "column",
+                  justifyContent: "center", alignItems: "center", textAlign: "center",
+                }}>
+                  <div style={{
+                    fontSize: 8, letterSpacing: "0.22em", color: C.azul, fontWeight: 800,
+                  }}>EVITAS PAGAR</div>
+                  <div style={{
+                    fontSize: 17, fontWeight: 900, color: C.azul,
+                    letterSpacing: "-0.02em", lineHeight: 1.1, marginTop: 2,
+                  }}>
+                    {formatCOP(evitasPagar)}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
+
 
         {/* ───── 2. IMPACTO FINANCIERO TOTAL ───── */}
         <div style={{ padding: "11px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
