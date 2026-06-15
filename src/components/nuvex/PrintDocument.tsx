@@ -7,6 +7,7 @@ import { NUVEX } from "./constants";
 import type { ClientData } from "./ClientFields";
 import { formatCOP, formatNumber } from "../../lib/format";
 import type { PesosPropuesta, UVRPropuesta } from "../../lib/finance";
+import { calcularMotor } from "../../lib/motorHonorarios";
 import logoNuvex from "@/assets/logo-nuvex.png";
 import heroSunset from "@/assets/nuvex-hero-sunset.jpg";
 
@@ -133,10 +134,15 @@ export function PrintDocument(props: Props) {
   const alternativas = buildAlternativas({
     mode, pesosPropuestas, uvrPropuestas, bestIndex,
     cuotaActual, añoHoy, añoFinActual, añosActual,
+    plazoOriginal: scenario.plazoActual,
   });
 
   // Todas las propuestas (incluyendo la recomendada) para el resumen comparativo
-  const allPropuestas = mapPropuestasToAltRow(mode, pesosPropuestas, uvrPropuestas, cuotaActual);
+  const allPropuestas = mapPropuestasToAltRow(mode, pesosPropuestas, uvrPropuestas, cuotaActual, scenario.plazoActual);
+
+  // Honorarios "a éxito" finales de la propuesta recomendada (con descuento comercial si aplica)
+  const recHonorariosFinal = honorariosFinales;
+  const recHonorariosTieneDescuento = !!commercial?.hasDiscount;
 
   return (
     <div
@@ -565,6 +571,8 @@ export function PrintDocument(props: Props) {
                 añosActuales={añosActual}
                 añosOpt={alt.añosOpt}
                 quienIdeal={dyn.ideal}
+                honorarios={alt.honorariosFinal}
+                honorariosTag={alt.minimoAplicado ? "Mínimo aplicado" : null}
               />
             );
           })}
@@ -575,8 +583,18 @@ export function PrintDocument(props: Props) {
           <ResumenEscenarios
             allPropuestas={allPropuestas}
             bestIndex={bestIndex}
+            recHonorariosFinal={recHonorariosFinal}
+            recTieneDescuento={recHonorariosTieneDescuento}
           />
+          <div style={{
+            marginTop: 5, fontSize: 8.5, color: C.muted, lineHeight: 1.35,
+            fontStyle: "italic", textAlign: "center",
+          }}>
+            Cada alternativa genera un ahorro diferente y, por lo tanto, honorarios distintos.
+            Tú eliges el escenario que mejor se adapta a tus objetivos financieros.
+          </div>
         </div>
+
 
         {/* Spacer flexible (evita página 3 y reparte el alto) */}
         <div style={{ flex: "1 1 auto", minHeight: 4 }} />
@@ -646,9 +664,13 @@ export function PrintDocument(props: Props) {
 function ResumenEscenarios({
   allPropuestas,
   bestIndex,
+  recHonorariosFinal,
+  recTieneDescuento,
 }: {
   allPropuestas: AltRow[];
   bestIndex: number;
+  recHonorariosFinal: number;
+  recTieneDescuento: boolean;
 }) {
   // Orden: recomendada primero, luego las demás numeradas
   const rec = allPropuestas[bestIndex];
@@ -673,7 +695,7 @@ function ResumenEscenarios({
         display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
         <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: "0.18em" }}>
-          RESUMEN DE ESCENARIOS
+          RESUMEN DE ALTERNATIVAS
         </div>
         <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", letterSpacing: "0.12em", fontWeight: 700 }}>
           COMPARATIVA RÁPIDA
@@ -681,25 +703,34 @@ function ResumenEscenarios({
       </div>
       <div style={{
         display: "grid",
-        gridTemplateColumns: "1.15fr 1fr 1fr 1fr",
+        gridTemplateColumns: "1.05fr 0.9fr 0.9fr 0.95fr 1fr",
         background: C.bgSoft,
-        fontSize: 8.5, fontWeight: 800, color: C.muted, letterSpacing: "0.16em",
+        fontSize: 8.2, fontWeight: 800, color: C.muted, letterSpacing: "0.14em",
       }}>
-        <div style={{ padding: "7px 12px" }}>ALTERNATIVA</div>
-        <div style={{ padding: "7px 12px", textAlign: "right" }}>NUEVA CUOTA</div>
-        <div style={{ padding: "7px 12px", textAlign: "right" }}>TIEMPO RECUPERADO</div>
-        <div style={{ padding: "7px 12px", textAlign: "right" }}>AHORRO ECONÓMICO</div>
+        <div style={{ padding: "7px 10px" }}>ALTERNATIVA</div>
+        <div style={{ padding: "7px 10px", textAlign: "right" }}>NUEVA CUOTA</div>
+        <div style={{ padding: "7px 10px", textAlign: "right" }}>TIEMPO RECUP.</div>
+        <div style={{ padding: "7px 10px", textAlign: "right" }}>AHORRO ECON.</div>
+        <div style={{ padding: "7px 10px", textAlign: "right" }}>HONORARIOS A ÉXITO</div>
       </div>
-      {rows.map((r, i) => (
-        <ResumenRow
-          key={i}
-          isRecommended={r.isRecommended}
-          label={r.label}
-          cuota={r.data.nuevaCuota}
-          años={Math.round(r.data.añosEliminados)}
-          dinero={r.data.ahorroTotal}
-        />
-      ))}
+      {rows.map((r, i) => {
+        const honor = r.isRecommended ? recHonorariosFinal : r.data.honorariosFinal;
+        const honorTag = r.isRecommended
+          ? (recTieneDescuento ? "Descuento incluido" : null)
+          : (r.data.minimoAplicado ? "Mínimo aplicado" : null);
+        return (
+          <ResumenRow
+            key={i}
+            isRecommended={r.isRecommended}
+            label={r.label}
+            cuota={r.data.nuevaCuota}
+            años={Math.round(r.data.añosEliminados)}
+            dinero={r.data.ahorroTotal}
+            honorarios={honor}
+            honorariosTag={honorTag}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -710,41 +741,55 @@ function ResumenRow({
   cuota,
   años,
   dinero,
+  honorarios,
+  honorariosTag,
 }: {
   isRecommended?: boolean;
   label: string;
   cuota: number;
   años: number;
   dinero: number;
+  honorarios: number;
+  honorariosTag: string | null;
 }) {
   if (isRecommended) {
     return (
       <div style={{
         display: "grid",
-        gridTemplateColumns: "1.15fr 1fr 1fr 1fr",
+        gridTemplateColumns: "1.05fr 0.9fr 0.9fr 0.95fr 1fr",
         borderTop: `2px solid ${C.green}`,
         background: `linear-gradient(90deg, ${C.greenSoft} 0%, #fff 100%)`,
         alignItems: "center",
       }}>
-        <div style={{ padding: "10px 12px", display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ padding: "10px 10px", display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{
             background: C.greenDeep, color: "#fff",
             padding: "3px 8px", borderRadius: 4,
-            fontSize: 8.5, fontWeight: 900, letterSpacing: "0.14em",
+            fontSize: 8.2, fontWeight: 900, letterSpacing: "0.12em",
             display: "flex", alignItems: "center", gap: 4,
           }}>
             <span>★</span>
-            <span>RECOMENDADA POR NUVEX</span>
+            <span>RECOMENDADA</span>
           </div>
         </div>
-        <div style={{ padding: "10px 12px", textAlign: "right", fontSize: 12.5, fontWeight: 900, color: C.greenDeep }}>
+        <div style={{ padding: "10px 10px", textAlign: "right", fontSize: 12, fontWeight: 900, color: C.greenDeep }}>
           {formatCOP(cuota)}
         </div>
-        <div style={{ padding: "10px 12px", textAlign: "right", fontSize: 12.5, fontWeight: 900, color: C.greenDeep }}>
+        <div style={{ padding: "10px 10px", textAlign: "right", fontSize: 12, fontWeight: 900, color: C.greenDeep }}>
           {años} AÑOS
         </div>
-        <div style={{ padding: "10px 12px", textAlign: "right", fontSize: 12.5, fontWeight: 900, color: C.greenDeep }}>
+        <div style={{ padding: "10px 10px", textAlign: "right", fontSize: 12, fontWeight: 900, color: C.greenDeep }}>
           {formatCOP(dinero)}
+        </div>
+        <div style={{ padding: "8px 10px", textAlign: "right" }}>
+          <div style={{ fontSize: 11.5, fontWeight: 900, color: C.azul, letterSpacing: "-0.01em" }}>
+            {formatCOP(honorarios)}
+          </div>
+          {honorariosTag && (
+            <div style={{ fontSize: 7.8, color: C.muted, fontWeight: 700, marginTop: 1 }}>
+              {honorariosTag}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -753,26 +798,37 @@ function ResumenRow({
   return (
     <div style={{
       display: "grid",
-      gridTemplateColumns: "1.15fr 1fr 1fr 1fr",
+      gridTemplateColumns: "1.05fr 0.9fr 0.9fr 0.95fr 1fr",
       borderTop: `1px solid ${C.hairline}`,
       alignItems: "center",
     }}>
-      <div style={{ padding: "7px 12px", display: "flex", alignItems: "center", gap: 8 }}>
+      <div style={{ padding: "7px 10px", display: "flex", alignItems: "center", gap: 8 }}>
         <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.muted }} />
-        <div style={{ fontSize: 11, fontWeight: 800, color: C.ink }}>{label}</div>
+        <div style={{ fontSize: 10.5, fontWeight: 800, color: C.ink }}>{label}</div>
       </div>
-      <div style={{ padding: "7px 12px", textAlign: "right", fontSize: 11, fontWeight: 700, color: C.ink }}>
+      <div style={{ padding: "7px 10px", textAlign: "right", fontSize: 10.5, fontWeight: 700, color: C.ink }}>
         {formatCOP(cuota)}
       </div>
-      <div style={{ padding: "7px 12px", textAlign: "right", fontSize: 11, fontWeight: 700, color: C.ink }}>
+      <div style={{ padding: "7px 10px", textAlign: "right", fontSize: 10.5, fontWeight: 700, color: C.ink }}>
         {años} años
       </div>
-      <div style={{ padding: "7px 12px", textAlign: "right", fontSize: 11, fontWeight: 700, color: C.ink }}>
+      <div style={{ padding: "7px 10px", textAlign: "right", fontSize: 10.5, fontWeight: 700, color: C.ink }}>
         {formatCOP(dinero)}
+      </div>
+      <div style={{ padding: "6px 10px", textAlign: "right" }}>
+        <div style={{ fontSize: 10.8, fontWeight: 800, color: C.azul }}>
+          {formatCOP(honorarios)}
+        </div>
+        {honorariosTag && (
+          <div style={{ fontSize: 7.8, color: C.muted, fontWeight: 700, marginTop: 1 }}>
+            {honorariosTag}
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
 
 /* ════════════════════════════════════════════════════════════
    ALTERNATIVAS — paletas + builder
@@ -812,6 +868,28 @@ interface AltRow {
   ahorroTotal: number;
   añoFinOpt: number;
   añosOpt: number;
+  honorariosFinal: number;
+  honorariosBase: number;
+  minimoAplicado: boolean;
+}
+
+function computeHonorarios(
+  ahorroIntereses: number,
+  ahorroSeguros: number,
+  mode: "pesos" | "uvr",
+  plazoOriginal: number,
+): { honorariosFinal: number; honorariosBase: number; minimoAplicado: boolean } {
+  const r = calcularMotor({
+    ahorroIntereses,
+    ahorroSeguros,
+    tipoCredito: mode,
+    plazoOriginalMeses: plazoOriginal,
+  });
+  return {
+    honorariosFinal: r.honorarioRecomendado,
+    honorariosBase: r.honorarioTeorico,
+    minimoAplicado: r.alertaTope === "minimo",
+  };
 }
 
 function buildAlternativas(args: {
@@ -823,8 +901,9 @@ function buildAlternativas(args: {
   añoHoy: number;
   añoFinActual: number;
   añosActual: number;
+  plazoOriginal: number;
 }): AltRow[] {
-  const { mode, pesosPropuestas, uvrPropuestas, bestIndex, cuotaActual, añoHoy } = args;
+  const { mode, pesosPropuestas, uvrPropuestas, bestIndex, cuotaActual, plazoOriginal } = args;
   const fechaBase = new Date();
 
   if (mode === "uvr") {
@@ -846,6 +925,7 @@ function buildAlternativas(args: {
     const cuota = p.nuevaCuotaConSeguro;
     const fechaFin = new Date(fechaBase);
     fechaFin.setMonth(fechaFin.getMonth() + p.nuevoPlazo);
+    const h = computeHonorarios(p.ahorroIntereses, p.ahorroSeguros, "pesos", plazoOriginal);
     return {
       nuevaCuota: cuota,
       incrementoPct: cuotaActual > 0 ? ((cuota - cuotaActual) / cuotaActual) * 100 : 0,
@@ -854,12 +934,14 @@ function buildAlternativas(args: {
       ahorroTotal: p.ahorroTotal,
       añoFinOpt: fechaFin.getFullYear(),
       añosOpt: p.nuevoPlazo / 12,
+      ...h,
     };
   }
   function mapUVR(p: UVRPropuesta): AltRow {
     const cuota = p.nuevaCuotaConSeguroAprox;
     const fechaFin = new Date(fechaBase);
     fechaFin.setMonth(fechaFin.getMonth() + p.nuevoPlazo);
+    const h = computeHonorarios(p.ahorroIntereses, p.ahorroSeguros, "uvr", plazoOriginal);
     return {
       nuevaCuota: cuota,
       incrementoPct: cuotaActual > 0 ? ((cuota - cuotaActual) / cuotaActual) * 100 : 0,
@@ -868,6 +950,7 @@ function buildAlternativas(args: {
       ahorroTotal: p.ahorroTotal,
       añoFinOpt: fechaFin.getFullYear(),
       añosOpt: p.nuevoPlazo / 12,
+      ...h,
     };
   }
 }
@@ -877,6 +960,7 @@ function mapPropuestasToAltRow(
   pesosPropuestas: PesosPropuesta[] | undefined,
   uvrPropuestas: UVRPropuesta[] | undefined,
   cuotaActual: number,
+  plazoOriginal: number,
 ): AltRow[] {
   const fechaBase = new Date();
   if (mode === "uvr") {
@@ -884,6 +968,7 @@ function mapPropuestasToAltRow(
       const cuota = p.nuevaCuotaConSeguroAprox;
       const fechaFin = new Date(fechaBase);
       fechaFin.setMonth(fechaFin.getMonth() + p.nuevoPlazo);
+      const h = computeHonorarios(p.ahorroIntereses, p.ahorroSeguros, "uvr", plazoOriginal);
       return {
         nuevaCuota: cuota,
         incrementoPct: cuotaActual > 0 ? ((cuota - cuotaActual) / cuotaActual) * 100 : 0,
@@ -892,6 +977,7 @@ function mapPropuestasToAltRow(
         ahorroTotal: p.ahorroTotal,
         añoFinOpt: fechaFin.getFullYear(),
         añosOpt: p.nuevoPlazo / 12,
+        ...h,
       };
     });
   }
@@ -899,6 +985,7 @@ function mapPropuestasToAltRow(
     const cuota = p.nuevaCuotaConSeguro;
     const fechaFin = new Date(fechaBase);
     fechaFin.setMonth(fechaFin.getMonth() + p.nuevoPlazo);
+    const h = computeHonorarios(p.ahorroIntereses, p.ahorroSeguros, "pesos", plazoOriginal);
     return {
       nuevaCuota: cuota,
       incrementoPct: cuotaActual > 0 ? ((cuota - cuotaActual) / cuotaActual) * 100 : 0,
@@ -907,9 +994,11 @@ function mapPropuestasToAltRow(
       ahorroTotal: p.ahorroTotal,
       añoFinOpt: fechaFin.getFullYear(),
       añosOpt: p.nuevoPlazo / 12,
+      ...h,
     };
   });
 }
+
 
 
 /* ════════════════════════════════════════════════════════════
@@ -1049,11 +1138,14 @@ function AlternativaCard(props: {
   terminaEn: number; terminaActual: number;
   añoHoy: number; añosActuales: number; añosOpt: number;
   quienIdeal: string;
+  honorarios: number;
+  honorariosTag: string | null;
 }) {
   const {
     index, label, accent, soft, deep,
     cuota, cuotaPct, ahorroAños, ahorroCuotas, ahorroDinero,
     terminaEn, terminaActual, añoHoy, añosActuales, añosOpt, quienIdeal,
+    honorarios, honorariosTag,
   } = props;
   const barPct = Math.max(15, Math.min(95, (añosOpt / Math.max(añosActuales, 1)) * 100));
 
@@ -1158,14 +1250,37 @@ function AlternativaCard(props: {
         />
       </div>
 
-      {/* Ideal */}
+      {/* Ideal + Honorarios a éxito */}
       <div style={{
-        marginTop: 6, background: soft, borderRadius: 8,
-        padding: "5px 10px",
+        marginTop: 6, display: "grid", gridTemplateColumns: "1fr auto",
+        gap: 8, alignItems: "stretch",
       }}>
-        <div style={{ fontSize: 8.8, color: C.text, lineHeight: 1.25, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-          <span style={{ fontWeight: 800, color: deep, fontStyle: "italic" }}>Ideal para: </span>
-          {quienIdeal}
+        <div style={{
+          background: soft, borderRadius: 8, padding: "5px 10px",
+          display: "flex", alignItems: "center",
+        }}>
+          <div style={{ fontSize: 8.8, color: C.text, lineHeight: 1.25, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <span style={{ fontWeight: 800, color: deep, fontStyle: "italic" }}>Ideal para: </span>
+            {quienIdeal}
+          </div>
+        </div>
+        <div style={{
+          background: C.azulSoft, border: `1px solid ${C.azul}22`,
+          borderRadius: 8, padding: "4px 10px",
+          display: "flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "center",
+          minWidth: 130,
+        }}>
+          <div style={{ fontSize: 7.8, fontWeight: 800, color: C.azul, letterSpacing: "0.14em" }}>
+            HONORARIOS A ÉXITO
+          </div>
+          <div style={{ fontSize: 12.5, fontWeight: 900, color: C.azul, letterSpacing: "-0.01em", marginTop: 1 }}>
+            {formatCOP(honorarios)}
+          </div>
+          {honorariosTag && (
+            <div style={{ fontSize: 7.6, fontWeight: 700, color: C.muted, marginTop: 1 }}>
+              {honorariosTag}
+            </div>
+          )}
         </div>
       </div>
     </div>
