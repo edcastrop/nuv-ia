@@ -339,15 +339,38 @@ export function PrintDocument(props: Props) {
             />
           </div>
 
+          {/* Línea de tiempo recomendada — paridad visual con las 3 alternativas */}
+          <div style={{
+            marginTop: 6, background: "#fff",
+            border: `1px solid ${C.hairline}`, borderRadius: 10,
+            padding: "6px 12px", display: "flex", flexDirection: "column", gap: 3,
+          }}>
+            <MiniTimeline
+              label="SIN NUVEX" labelColor={C.muted}
+              startYear={añoHoy} endYear={añoFinActual}
+              barColor="#CCD1D9" widthPct={100}
+              pill={`${formatNumber(añosActual, 1)} años`}
+              pillBg="#F1F2F4" pillFg={C.muted}
+            />
+            <MiniTimeline
+              label="CON NUVEX (RECOMENDADA)" labelColor={C.greenDeep}
+              startYear={añoHoy} endYear={añoFinOpt}
+              barColor={C.greenDeep}
+              widthPct={añosActual > 0 ? Math.max(8, Math.min(100, (añosOpt / añosActual) * 100)) : 100}
+              pill={`${formatNumber(añosOpt, 1)} años`}
+              pillBg={C.greenSoft} pillFg={C.greenDeep}
+            />
+          </div>
+
           {/* Esto significa para ti y tu familia */}
           <div style={{
-            marginTop: 8, background: "#fff",
+            marginTop: 6, background: "#fff",
             border: `1px solid ${C.hairline}`, borderRadius: 12,
-            padding: "8px 14px",
+            padding: "6px 14px",
           }}>
             <div style={{
               fontSize: 10, letterSpacing: "0.22em", fontWeight: 800,
-              color: C.muted, textAlign: "center", marginBottom: 5,
+              color: C.muted, textAlign: "center", marginBottom: 4,
             }}>
               ESTO SIGNIFICA PARA TI Y TU FAMILIA
             </div>
