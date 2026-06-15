@@ -371,9 +371,9 @@ export function PrintDocument(props: Props) {
         )}
 
 
-        {/* ───── 2. IMPACTO FINANCIERO TOTAL ───── */}
+        {/* ───── 2. APLICANDO NUESTRA PROPUESTA RECOMENDADA ───── */}
         <div style={{ padding: "8px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
-          <SectionTitle index="2" title="Impacto financiero total" />
+          <SectionTitle index="2" title="Aplicando nuestra propuesta recomendada" />
           <div style={{
             marginTop: 7,
             display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12,
