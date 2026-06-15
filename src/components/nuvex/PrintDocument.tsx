@@ -605,7 +605,7 @@ export function PrintDocument(props: Props) {
                 CONTACTAR A {analista.toUpperCase()}
               </div>
               <div style={{ fontSize: 9, color: "rgba(255,255,255,0.6)", letterSpacing: "0.16em", fontWeight: 700 }}>
-                ASESORÍA SIN COSTO · 72 HORAS
+                PROPUESTA COMERCIAL VÁLIDA POR 72 HORAS
               </div>
             </div>
           </div>
