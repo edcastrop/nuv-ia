@@ -1202,7 +1202,7 @@ function AlternativaCard(props: {
         <div style={{
           fontSize: 11, fontWeight: 800, color: deep, fontStyle: "italic",
         }}>
-          {label}
+          {`Propuesta ${index}`}
         </div>
       </div>
 
