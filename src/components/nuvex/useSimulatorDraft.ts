@@ -8,7 +8,7 @@ function draftKey(mode: Mode, expedienteId?: string) {
   return `${DRAFT_PREFIX}.${mode}.${expedienteId ?? "standalone"}`;
 }
 
-export function readSimulatorDraft<T extends Record<string, unknown>>(
+export function readSimulatorDraft<T extends object>(
   mode: Mode,
   expedienteId: string | undefined,
   defaults: T,
@@ -24,7 +24,7 @@ export function readSimulatorDraft<T extends Record<string, unknown>>(
   }
 }
 
-export function useSimulatorDraft<T extends Record<string, unknown>>(
+export function useSimulatorDraft<T extends object>(
   mode: Mode,
   expedienteId: string | undefined,
   draft: T,
