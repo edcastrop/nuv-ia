@@ -229,8 +229,8 @@ export function PrintDocument(props: Props) {
 
         {/* ───── HERO ───── */}
         <div style={{
-          padding: "12px 22px 6px 22px",
-          display: "grid", gridTemplateColumns: "1.62fr 0.38fr", gap: 18, alignItems: "center",
+          padding: "10px 22px 4px 22px",
+          display: "grid", gridTemplateColumns: "1.62fr 0.38fr", gap: 14, alignItems: "center",
           breakInside: "avoid", pageBreakInside: "avoid",
         }}>
           <div>
@@ -238,7 +238,7 @@ export function PrintDocument(props: Props) {
               Hola, <span style={{ color: C.azul, fontWeight: 800 }}>{primerNombre}</span>
             </div>
             <h1 style={{
-              margin: 0, fontSize: 36, lineHeight: 1.01, fontWeight: 900,
+              margin: 0, fontSize: 32, lineHeight: 1.01, fontWeight: 900,
               color: C.black, letterSpacing: "-0.035em",
             }}>
               Recupera parte de<br />
@@ -269,7 +269,7 @@ export function PrintDocument(props: Props) {
         <div style={{ padding: "0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <div style={{
             background: C.bgSoft, borderRadius: 12,
-            padding: "10px 14px", display: "grid",
+            padding: "8px 12px", display: "grid",
             gridTemplateColumns: "1fr 1fr 1fr 1.2fr", gap: 18, alignItems: "center",
           }}>
             <MetaCol icon={<BankIcon />} label="BANCO" value={banco} />
@@ -342,10 +342,10 @@ export function PrintDocument(props: Props) {
         {/* ───── 1B. RADIOGRAFÍA FINANCIERA DEL CRÉDITO ───── */}
         {radiografiaOk && (
           <div style={{ padding: "6px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
-            <div style={{
-              background: "#fff", border: `1px solid ${C.hairline}`, borderRadius: 12,
-              padding: "8px 12px",
-            }}>
+          <div style={{
+            background: "#fff", border: `1px solid ${C.hairline}`, borderRadius: 12,
+            padding: "6px 10px",
+          }}>
               <div style={{
                 fontSize: 9.5, letterSpacing: "0.22em", fontWeight: 800,
                 color: C.muted, marginBottom: 6, textAlign: "center",
@@ -447,7 +447,7 @@ export function PrintDocument(props: Props) {
             {/* Beneficio económico card */}
             <div style={{
               background: "#fff", border: `1px solid ${C.hairline}`,
-              borderRadius: 12, padding: "9px 14px",
+              borderRadius: 12, padding: "7px 12px",
             }}>
               <PriceRow label="Tarifa estándar" value={formatCOP(honorariosBase)} strike />
               <div style={{ height: 1, background: C.hairline, margin: "7px 0" }} />
@@ -497,7 +497,7 @@ export function PrintDocument(props: Props) {
         <div style={{ padding: "6px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <div style={{
             background: `linear-gradient(135deg, ${C.black} 0%, #1a1a1a 100%)`,
-            color: "#fff", borderRadius: 14, padding: "10px 16px",
+            color: "#fff", borderRadius: 14, padding: "8px 14px",
             position: "relative", overflow: "hidden",
           }}>
             <div style={{
@@ -511,7 +511,7 @@ export function PrintDocument(props: Props) {
               Una reflexión final
             </div>
             <p style={{
-              margin: 0, fontSize: 11, lineHeight: 1.34,
+              margin: 0, fontSize: 11, lineHeight: 1.25,
               color: "rgba(255,255,255,0.94)", position: "relative", maxWidth: "92%",
             }}>
               Dentro de algunos años este crédito terminará de una u otra forma.
@@ -1519,10 +1519,10 @@ function FooterStrip() {
       style={{
         marginTop: "auto",
         background: C.black, color: "#fff",
-        padding: "6px 22px",
+        padding: "4px 22px",
         display: "grid",
         gridTemplateColumns: "auto 1fr 1fr 1fr 1fr",
-        gap: 8, alignItems: "center",
+        gap: 6, alignItems: "center",
         breakInside: "avoid", pageBreakInside: "avoid",
       }}
     >
