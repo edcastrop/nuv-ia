@@ -581,8 +581,18 @@ export function PrintDocument(props: Props) {
           <ResumenEscenarios
             allPropuestas={allPropuestas}
             bestIndex={bestIndex}
+            recHonorariosFinal={recHonorariosFinal}
+            recTieneDescuento={recHonorariosTieneDescuento}
           />
+          <div style={{
+            marginTop: 5, fontSize: 8.5, color: C.muted, lineHeight: 1.35,
+            fontStyle: "italic", textAlign: "center",
+          }}>
+            Cada alternativa genera un ahorro diferente y, por lo tanto, honorarios distintos.
+            Tú eliges el escenario que mejor se adapta a tus objetivos financieros.
+          </div>
         </div>
+
 
         {/* Spacer flexible (evita página 3 y reparte el alto) */}
         <div style={{ flex: "1 1 auto", minHeight: 4 }} />
