@@ -113,6 +113,47 @@ export function PesosSimulator({
   // Prellenar el campo "Asesor NUVEX" con el nombre del perfil autenticado
   useAsesorDefault(client.asesor, (nombre) => setClient((prev) => ({ ...prev, asesor: nombre })));
   const { metricas: metricasAutonomia } = useNivelAutonomia();
+  const currentDraft = useMemo(
+    () => ({
+      extractoArchivoPath,
+      discount,
+      client,
+      intervinientes,
+      cobertura,
+      valorDesembolsado,
+      saldoCapital,
+      cuotaActual,
+      seguros,
+      tea,
+      nuevaCuotaManual,
+      cuotasEliminarManual,
+      modoPersonalizada,
+    }),
+    [
+      extractoArchivoPath,
+      discount,
+      client,
+      intervinientes,
+      cobertura,
+      valorDesembolsado,
+      saldoCapital,
+      cuotaActual,
+      seguros,
+      tea,
+      nuevaCuotaManual,
+      cuotasEliminarManual,
+      modoPersonalizada,
+    ],
+  );
+  useSimulatorDraft("pesos", init?.id, currentDraft);
+  const handleSaved = (e: Expediente) => {
+    clearSimulatorDraft("pesos", init?.id);
+    onSaved?.(e);
+  };
+  const handleResetMode = () => {
+    clearSimulatorDraft("pesos", init?.id);
+    onReset?.();
+  };
 
   const plazoInicial = parseDecimal(client.plazoInicial);
   const cuotasPagadas = parseDecimal(client.cuotasPagadas);
@@ -334,7 +375,7 @@ export function PesosSimulator({
       <div className="relative z-10 mx-auto max-w-7xl space-y-4 px-6 py-6">
       {onReset && (
         <div className="flex justify-end">
-          <button onClick={onReset} className="text-xs font-medium text-[#445DA3] hover:underline">
+          <button onClick={handleResetMode} className="text-xs font-medium text-[#445DA3] hover:underline">
             ← Cambiar modo
           </button>
         </div>
@@ -593,7 +634,7 @@ export function PesosSimulator({
               return (
                 <SaveExpedienteButton
                   expedienteId={init?.id}
-                  onSaved={onSaved}
+                  onSaved={handleSaved}
                   enviarAuditoriaManual={!init?.id}
                   payload={{
                     modo: "pesos",
