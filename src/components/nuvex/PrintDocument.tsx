@@ -1219,7 +1219,7 @@ function AlternativaCard(props: {
     index, label, accent, soft, deep,
     cuota, cuotaPct, ahorroAños, ahorroCuotas, ahorroDinero,
     terminaEn, terminaActual, añoHoy, añosActuales, añosOpt, quienIdeal,
-    honorarios, honorariosTag,
+    honorarios, honorariosBase, honorariosTag,
   } = props;
   const barPct = Math.max(15, Math.min(95, (añosOpt / Math.max(añosActuales, 1)) * 100));
 
