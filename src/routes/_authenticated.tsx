@@ -31,6 +31,34 @@ const AZUL = "var(--nuvia-accent-blue)";
 const VERDE = "var(--nuvia-accent-green)";
 const GRADIENT = "var(--nuvia-gradient-primary)";
 
+const GATE_CACHE_PREFIX = "nuvex.accessGate.";
+const GATE_CACHE_TTL_MS = 30 * 60 * 1000;
+
+type AccessGateCache = { ok: true; at: number };
+
+function getAccessGateCache(userId: string): AccessGateCache | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(`${GATE_CACHE_PREFIX}${userId}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as AccessGateCache;
+    if (!parsed.ok || Date.now() - parsed.at > GATE_CACHE_TTL_MS) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function setAccessGateCache(userId: string) {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem(`${GATE_CACHE_PREFIX}${userId}`, JSON.stringify({ ok: true, at: Date.now() }));
+}
+
+function clearAccessGateCache(userId: string) {
+  if (typeof window === "undefined") return;
+  sessionStorage.removeItem(`${GATE_CACHE_PREFIX}${userId}`);
+}
+
 
 type NavItem = { to: string; label: string; Icon: typeof LayoutGrid; exact?: boolean; badge?: number };
 type NavSection = { label: string; items: NavItem[] };
