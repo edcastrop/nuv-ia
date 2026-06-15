@@ -217,7 +217,7 @@ async function renderElementToPdf(elementId: string): Promise<jsPDF | null> {
     for (let i = 0; i < pageElements.length; i += 1) {
       const pageEl = pageElements[i];
       const pageCanvas = await html2canvas(pageEl, {
-        scale: 2,
+        scale: 1.5,
         useCORS: true,
         backgroundColor: "#ffffff",
         logging: false,
@@ -245,13 +245,13 @@ async function renderElementToPdf(elementId: string): Promise<jsPDF | null> {
         return null;
       }
       if (i > 0) pdf.addPage();
-      pdf.addImage(pageCanvas.toDataURL("image/png"), "PNG", 0, 0, 210, 297);
+      pdf.addImage(pageCanvas.toDataURL("image/jpeg", 0.82), "JPEG", 0, 0, 210, 297);
     }
     return pdf;
   }
 
   const canvas = await html2canvas(element, {
-    scale: 2,
+    scale: 1.5,
     useCORS: true,
     backgroundColor: "#ffffff",
     logging: false,
@@ -280,19 +280,19 @@ async function renderElementToPdf(elementId: string): Promise<jsPDF | null> {
     return null;
   }
 
-  const imgData = canvas.toDataURL("image/png");
+  const imgData = canvas.toDataURL("image/jpeg", 0.82);
   const imgWidth = 210;
   const pageHeight = 297;
   const imgHeight = (canvas.height * imgWidth) / canvas.width;
   let heightLeft = imgHeight;
   let position = 0;
-  pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+  pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
   heightLeft -= pageHeight;
   const TOLERANCE_MM = 20;
   while (heightLeft > TOLERANCE_MM) {
     position = heightLeft - imgHeight;
     pdf.addPage();
-    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+    pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
     heightLeft -= pageHeight;
   }
   return pdf;
