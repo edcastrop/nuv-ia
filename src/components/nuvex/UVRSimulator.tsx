@@ -38,10 +38,7 @@ import { AnimatedBackground } from "@/components/home/widgets/AnimatedBackground
 import { toast } from "sonner";
 import { useMonedaMismatchAlert } from "./MonedaMismatchDialog";
 import { FreshBlock } from "./FreshBlock";
-import {
-  PropuestasComerciales,
-  type RecomendadaSeleccionada,
-} from "./PropuestasComerciales";
+import { PropuestasComerciales, type RecomendadaSeleccionada } from "./PropuestasComerciales";
 import {
   defaultCobertura,
   defaultIntervinientes,
@@ -57,7 +54,6 @@ import { useNivelAutonomia } from "@/hooks/useNivelAutonomia";
 import { triggerSimuladorAutoQA } from "@/lib/simuladorAutoQA";
 import { AutoQAPanel, type AutoQAResult } from "./AutoQAPanel";
 import { clearSimulatorDraft, readSimulatorDraft, useSimulatorDraft } from "./useSimulatorDraft";
-
 
 export function UVRSimulator({
   initialExpediente,
@@ -93,10 +89,15 @@ export function UVRSimulator({
     variacionUVR: initCred.variacionUVR ?? getDefaultVariacionUVR(),
     nuevaCuotaManual: initCred.nuevaCuotaManual ?? "",
     cuotasEliminarManual: initCred.cuotasEliminarManual ?? "",
-    modoPersonalizada: initCred.cuotasEliminarManual && !initCred.nuevaCuotaManual ? "cuotas" as const : "cuota" as const,
+    modoPersonalizada:
+      initCred.cuotasEliminarManual && !initCred.nuevaCuotaManual
+        ? ("cuotas" as const)
+        : ("cuota" as const),
   });
   const monedaAlerta = useMonedaMismatchAlert();
-  const [extractoArchivoPath, setExtractoArchivoPath] = useState<string>(() => draft.extractoArchivoPath);
+  const [extractoArchivoPath, setExtractoArchivoPath] = useState<string>(
+    () => draft.extractoArchivoPath,
+  );
   const [autoQA, setAutoQA] = useState<AutoQAResult | null>(null);
   const [autoQALoading, setAutoQALoading] = useState(false);
   const [discount, setDiscount] = useState<DiscountState>(() => draft.discount);
@@ -173,10 +174,13 @@ export function UVRSimulator({
   const plazoInicial = parseDecimal(client.plazoInicial);
   const cuotasPagadas = parseDecimal(client.cuotasPagadas);
   const cuotasPendientesGuardadas = parseDecimal(client.cuotasPendientes ?? "");
-  const esFna = /fondo\s+nacional\s+del\s+ahorro|\bfna\b/i.test(`${client.banco} ${client.tipoProducto}`);
-  const cuotasPendientes = cuotasPendientesGuardadas > 0
-    ? cuotasPendientesGuardadas
-    : Math.max(0, plazoInicial - cuotasPagadas + (esFna ? 1 : 0));
+  const esFna = /fondo\s+nacional\s+del\s+ahorro|\bfna\b/i.test(
+    `${client.banco} ${client.tipoProducto}`,
+  );
+  const cuotasPendientes =
+    cuotasPendientesGuardadas > 0
+      ? cuotasPendientesGuardadas
+      : Math.max(0, plazoInicial - cuotasPagadas + (esFna ? 1 : 0));
   const honorariosPct = parsePercentage(client.porcentajeHonorarios) || 6;
 
   const valorDesembolsadoNum = parseCurrency(valorDesembolsado);
@@ -185,7 +189,8 @@ export function UVRSimulator({
   const cuotaBaseSimulacionNum = parseCurrency(cobertura.cuotaBaseSimulacion);
   const cuotaSimulacionPesosNum =
     cuotaBaseSimulacionNum > 0 ? cuotaBaseSimulacionNum : cuotaActualPesosNum;
-  const cuotaClienteHoyNum = cuotaPagadaClienteNum > 0 ? cuotaPagadaClienteNum : cuotaActualPesosNum;
+  const cuotaClienteHoyNum =
+    cuotaPagadaClienteNum > 0 ? cuotaPagadaClienteNum : cuotaActualPesosNum;
   const segurosNum = parseCurrency(seguros);
   const cuotaSinSegurosNum = Math.max(0, cuotaSimulacionPesosNum - segurosNum);
   const saldoPesosNum = parseCurrency(saldoPesos);
@@ -296,7 +301,6 @@ export function UVRSimulator({
     return baseResult;
   }, [datosCompletos, input, calc, nuevaCuotaManual, cuotasEliminarManual, modoPersonalizada]);
 
-
   // Recomendada elegida desde el bloque comercial de Propuestas (cards editables)
   const [recomendadaPicked, setRecomendadaPicked] = useState<RecomendadaSeleccionada | null>(null);
   const manualValido = recomendadaPicked?.fuente === "manual";
@@ -364,8 +368,7 @@ export function UVRSimulator({
       value: formatCOP(calc.escenarioActual.totalPagoPesos),
     });
     metrics.push({
-      label:
-        baseCredito > 0 ? "N° veces pagado el crédito" : "N° veces (sobre saldo actual)",
+      label: baseCredito > 0 ? "N° veces pagado el crédito" : "N° veces (sobre saldo actual)",
       value: `${formatNumber(vecesActual, 2)} veces`,
     });
   }
@@ -376,492 +379,496 @@ export function UVRSimulator({
         <AnimatedBackground />
       </div>
       <div className="relative z-10 mx-auto max-w-7xl space-y-4 px-6 py-6">
-      {onReset && (
-        <div className="flex justify-end">
-          <button onClick={handleResetMode} className="text-xs font-medium text-[#445DA3] hover:underline">
-            ← Cambiar modo
-          </button>
-        </div>
-      )}
-      <ExtractoReader
-        modo="uvr"
-        existingArchivoPath={extractoArchivoPath}
-        onApply={async (p: ExtractoApplyPayload) => {
-          // Alerta crítica: bloquear si el extracto está en Pesos pero estamos en simulador UVR.
-          if (p.monedaDetectada && p.monedaDetectada !== "uvr") {
-            const continuar = await monedaAlerta.confirm({
-              detectada: p.monedaDetectada,
-              simulador: "uvr",
-            });
-            if (!continuar) {
-              toast.error(
-                "Carga cancelada: el extracto es Pesos pero el simulador es UVR. Usa el simulador de Pesos.",
-                { duration: 6000 },
-              );
-              return;
-            }
-            toast.warning("Aplicando extracto Pesos en simulador UVR. Revisa los resultados.");
-          }
-          if (p.archivoPath) setExtractoArchivoPath(p.archivoPath);
-          setClient((prev) => ({
-            ...prev,
-            nombre: p.cliente.nombre || prev.nombre,
-            cedula: p.cliente.cedula || prev.cedula,
-            numeroCredito: p.cliente.numeroCredito || prev.numeroCredito,
-            banco: p.cliente.banco || prev.banco,
-            tipoProducto: p.cliente.tipoProducto || prev.tipoProducto,
-            productoBancarioId: p.cliente.productoBancarioId ?? prev.productoBancarioId ?? null,
-            plazoInicial: p.cliente.plazoInicial || prev.plazoInicial,
-            cuotasPagadas: p.cliente.cuotasPagadas || prev.cuotasPagadas,
-            cuotasPendientes: p.cliente.cuotasPendientes || prev.cuotasPendientes,
-          }));
-          if (p.uvr?.saldoUVR) setSaldoUVR(p.uvr.saldoUVR);
-          if (p.uvr?.valorUVR) setValorUVR(p.uvr.valorUVR);
-          if (p.uvr?.saldoPesos) setSaldoPesos(p.uvr.saldoPesos);
-          if (p.uvr && "valorDesembolsado" in p.uvr) setValorDesembolsado(p.uvr.valorDesembolsado || "");
-          if (p.uvr?.cuotaActualPesos) setCuotaActualPesos(p.uvr.cuotaActualPesos);
-          if (p.uvr?.seguros) setSeguros(p.uvr.seguros);
-          if (p.uvr?.teaCobrada) setTeaCobrada(p.uvr.teaCobrada);
-          if (p.cobertura?.activo) {
-            setCobertura({
-              activo: true,
-              valorCobertura: p.cobertura.valorCobertura || "",
-              tasaCobertura: p.cobertura.tasaCobertura || "",
-              tipoBeneficio: p.cobertura.tipoBeneficio || "",
-              cuotaPagadaCliente: p.cobertura.cuotaPagadaCliente || "",
-              cuotaConInteresSinSeguros: p.cobertura.cuotaConInteresSinSeguros || "",
-              segurosMensuales: p.cobertura.segurosMensuales || p.uvr?.seguros || "",
-              cuotaBaseSimulacion: p.cobertura.cuotaBaseSimulacion || "",
-              requiereVerificacion: !!p.cobertura.requiereVerificacion,
-            });
-          } else {
-            setCobertura(defaultCobertura);
-          }
-          // Auto-QA condicional: sólo cuando el simulador fue abierto desde un
-          // Expediente Maestro (init?.id). En modo standalone no se ejecuta.
-          if (init?.id && p.raw) {
-            void triggerSimuladorAutoQA({
-              expedienteId: init.id,
-              raw: { ...p.raw, archivoPath: p.archivoPath ?? null },
-              onStart: () => { setAutoQALoading(true); setAutoQA(null); },
-              onResult: (r) => { setAutoQA(r); setAutoQALoading(false); },
-              onError: () => setAutoQALoading(false),
-            });
-          }
-        }}
-
-      />
-      {init?.id && (autoQALoading || autoQA) && (
-        <AutoQAPanel loading={autoQALoading} result={autoQA} />
-      )}
-      <Card>
-        <div id="datos-cliente-card" />
-        <SectionTitle sub="Información general del cliente y del crédito en UVR">
-          Datos del cliente
-        </SectionTitle>
-
-        <ClientFields
-          data={client}
-          onChange={setClient}
-          modalidad="uvr"
-          cuotasPendientes={cuotasPendientes}
-          hideCreditFields
-        />
-
-
-        {validaciones.map((v, i) => (
-          <div key={i} className="mt-3">
-            <Alert tone="error">{v}</Alert>
-          </div>
-        ))}
-        {cuotasPendientes > 0 && cuotasPendientes <= 72 && (
-          <div className="mt-3">
-            <Alert>Cuotas pendientes ≤ 72. Revise viabilidad de la propuesta.</Alert>
-          </div>
-        )}
-      </Card>
-
-      <FreshBlock data={cobertura} onChange={setCobertura} />
-
-      <Card>
-        <SectionTitle sub="Información financiera del crédito en UVR">
-          Datos del crédito
-        </SectionTitle>
-        <CreditoMetaFields
-          data={client}
-          onChange={setClient}
-          modalidad="uvr"
-          cuotasPendientes={cuotasPendientes}
-        />
-        {cobertura.activo && (cobertura.tipoBeneficio || cobertura.cuotaBaseSimulacion) && (
-          <div
-            className="mt-4 mb-4 flex items-start gap-2 rounded-lg px-3 py-2 text-[12px]"
-            style={{
-              background: "rgba(132,185,143,0.10)",
-              border: "1px solid rgba(132,185,143,0.45)",
-              color: "#1F7A45",
-            }}
-          >
-            <span className="font-bold">Cuota base de simulación activa.</span>
-            <span>
-              Beneficio detectado: <strong>{cobertura.tipoBeneficio || "Cobertura"}</strong>. La
-              cuota usada para simular es la cuota real del crédito (sin subsidio), no la cuota que
-              paga hoy el cliente.
-            </span>
-          </div>
-        )}
-        <div className="mt-4 grid gap-4 md:grid-cols-3">
-          <TextField
-            label="Valor desembolsado"
-            value={valorDesembolsado}
-            onChange={setValorDesembolsado}
-            placeholder="120.000.000"
-          />
-          <TextField
-            label="Saldo actual en pesos"
-            value={saldoPesos}
-            onChange={setSaldoPesos}
-            placeholder="98.500.000"
-          />
-          <TextField
-            label="Saldo actual en UVR"
-            value={saldoUVR}
-            onChange={setSaldoUVR}
-            placeholder="371029,7251"
-          />
-          <TextField
-            label="Valor UVR actual"
-            value={valorUVR}
-            onChange={setValorUVR}
-            placeholder="372,1234"
-          />
-          <TextField
-            label="Cuota actual en pesos con seguros"
-            value={cuotaActualPesos}
-            onChange={setCuotaActualPesos}
-            placeholder="1.480.000"
-          />
-          <TextField
-            label="Seguros mensuales"
-            value={seguros}
-            onChange={setSeguros}
-            placeholder="230.000"
-          />
-          <TextField
-            label="Cuota sin seguros"
-            value={cuotaSimulacionPesosNum > 0 && segurosNum >= 0 ? formatCOP(cuotaSinSegurosNum) : ""}
-            readOnly
-            hint="Calculada automáticamente"
-          />
-          <TextField
-            label="Tasa cobrada EA (%)"
-            value={teaCobrada}
-            onChange={setTeaCobrada}
-            placeholder="8,50"
-            hint="Solo la tasa cobrada. La tasa pactada nunca se usa para simular."
-          />
-          <div>
-            <TextField
-              label="Variación UVR EA (%) · utilizada para simulación"
-              value={variacionUVR}
-              onChange={setVariacionUVR}
-              placeholder="6,00"
-              hint="Editable por el analista. Se guarda en el expediente."
-            />
+        {onReset && (
+          <div className="flex justify-end">
             <button
-              type="button"
-              onClick={() => setShowConfigVariacion((v) => !v)}
-              className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-[#445DA3] hover:underline"
+              onClick={handleResetMode}
+              className="text-xs font-medium text-[#445DA3] hover:underline"
             >
-              <Settings2 className="h-3 w-3" />
-              {showConfigVariacion ? "Ocultar configuración" : "Configurar valor por defecto"}
+              ← Cambiar modo
             </button>
-            {showConfigVariacion && (
-              <div className="mt-2 rounded-lg border border-[#445DA3]/30 bg-[#445DA3]/5 p-3">
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-[#445DA3]">
-                  Configuración UVR · Variación por defecto
+          </div>
+        )}
+        <ExtractoReader
+          modo="uvr"
+          existingArchivoPath={extractoArchivoPath}
+          onApply={async (p: ExtractoApplyPayload) => {
+            // Alerta crítica: bloquear si el extracto está en Pesos pero estamos en simulador UVR.
+            if (p.monedaDetectada && p.monedaDetectada !== "uvr") {
+              const continuar = await monedaAlerta.confirm({
+                detectada: p.monedaDetectada,
+                simulador: "uvr",
+              });
+              if (!continuar) {
+                toast.error(
+                  "Carga cancelada: el extracto es Pesos pero el simulador es UVR. Usa el simulador de Pesos.",
+                  { duration: 6000 },
+                );
+                return;
+              }
+              toast.warning("Aplicando extracto Pesos en simulador UVR. Revisa los resultados.");
+            }
+            if (p.archivoPath) setExtractoArchivoPath(p.archivoPath);
+            setClient((prev) => ({
+              ...prev,
+              nombre: p.cliente.nombre || prev.nombre,
+              cedula: p.cliente.cedula || prev.cedula,
+              numeroCredito: p.cliente.numeroCredito || prev.numeroCredito,
+              banco: p.cliente.banco || prev.banco,
+              tipoProducto: p.cliente.tipoProducto || prev.tipoProducto,
+              productoBancarioId: p.cliente.productoBancarioId ?? prev.productoBancarioId ?? null,
+              plazoInicial: p.cliente.plazoInicial || prev.plazoInicial,
+              cuotasPagadas: p.cliente.cuotasPagadas || prev.cuotasPagadas,
+              cuotasPendientes: p.cliente.cuotasPendientes || prev.cuotasPendientes,
+            }));
+            if (p.uvr?.saldoUVR) setSaldoUVR(p.uvr.saldoUVR);
+            if (p.uvr?.valorUVR) setValorUVR(p.uvr.valorUVR);
+            if (p.uvr?.saldoPesos) setSaldoPesos(p.uvr.saldoPesos);
+            if (p.uvr && "valorDesembolsado" in p.uvr)
+              setValorDesembolsado(p.uvr.valorDesembolsado || "");
+            if (p.uvr?.cuotaActualPesos) setCuotaActualPesos(p.uvr.cuotaActualPesos);
+            if (p.uvr?.seguros) setSeguros(p.uvr.seguros);
+            if (p.uvr?.teaCobrada) setTeaCobrada(p.uvr.teaCobrada);
+            if (p.cobertura?.activo) {
+              setCobertura({
+                activo: true,
+                valorCobertura: p.cobertura.valorCobertura || "",
+                tasaCobertura: p.cobertura.tasaCobertura || "",
+                tipoBeneficio: p.cobertura.tipoBeneficio || "",
+                cuotaPagadaCliente: p.cobertura.cuotaPagadaCliente || "",
+                cuotaConInteresSinSeguros: p.cobertura.cuotaConInteresSinSeguros || "",
+                segurosMensuales: p.cobertura.segurosMensuales || p.uvr?.seguros || "",
+                cuotaBaseSimulacion: p.cobertura.cuotaBaseSimulacion || "",
+                requiereVerificacion: !!p.cobertura.requiereVerificacion,
+              });
+            } else {
+              setCobertura(defaultCobertura);
+            }
+            // Auto-QA condicional: sólo cuando el simulador fue abierto desde un
+            // Expediente Maestro (init?.id). En modo standalone no se ejecuta.
+            if (init?.id && p.raw) {
+              void triggerSimuladorAutoQA({
+                expedienteId: init.id,
+                raw: { ...p.raw, archivoPath: p.archivoPath ?? null },
+                onStart: () => {
+                  setAutoQALoading(true);
+                  setAutoQA(null);
+                },
+                onResult: (r) => {
+                  setAutoQA(r);
+                  setAutoQALoading(false);
+                },
+                onError: () => setAutoQALoading(false),
+              });
+            }
+          }}
+        />
+        {init?.id && (autoQALoading || autoQA) && (
+          <AutoQAPanel loading={autoQALoading} result={autoQA} />
+        )}
+        <Card>
+          <div id="datos-cliente-card" />
+          <SectionTitle sub="Información general del cliente y del crédito en UVR">
+            Datos del cliente
+          </SectionTitle>
+
+          <ClientFields
+            data={client}
+            onChange={setClient}
+            modalidad="uvr"
+            cuotasPendientes={cuotasPendientes}
+            hideCreditFields
+          />
+
+          {validaciones.map((v, i) => (
+            <div key={i} className="mt-3">
+              <Alert tone="error">{v}</Alert>
+            </div>
+          ))}
+          {cuotasPendientes > 0 && cuotasPendientes <= 72 && (
+            <div className="mt-3">
+              <Alert>Cuotas pendientes ≤ 72. Revise viabilidad de la propuesta.</Alert>
+            </div>
+          )}
+        </Card>
+
+        <FreshBlock data={cobertura} onChange={setCobertura} />
+
+        <Card>
+          <SectionTitle sub="Información financiera del crédito en UVR">
+            Datos del crédito
+          </SectionTitle>
+          <CreditoMetaFields
+            data={client}
+            onChange={setClient}
+            modalidad="uvr"
+            cuotasPendientes={cuotasPendientes}
+          />
+          {cobertura.activo && (cobertura.tipoBeneficio || cobertura.cuotaBaseSimulacion) && (
+            <div
+              className="mt-4 mb-4 flex items-start gap-2 rounded-lg px-3 py-2 text-[12px]"
+              style={{
+                background: "rgba(132,185,143,0.10)",
+                border: "1px solid rgba(132,185,143,0.45)",
+                color: "#1F7A45",
+              }}
+            >
+              <span className="font-bold">Cuota base de simulación activa.</span>
+              <span>
+                Beneficio detectado: <strong>{cobertura.tipoBeneficio || "Cobertura"}</strong>. La
+                cuota usada para simular es la cuota real del crédito (sin subsidio), no la cuota
+                que paga hoy el cliente.
+              </span>
+            </div>
+          )}
+          <div className="mt-4 grid gap-4 md:grid-cols-3">
+            <TextField
+              label="Valor desembolsado"
+              value={valorDesembolsado}
+              onChange={setValorDesembolsado}
+              placeholder="120.000.000"
+            />
+            <TextField
+              label="Saldo actual en pesos"
+              value={saldoPesos}
+              onChange={setSaldoPesos}
+              placeholder="98.500.000"
+            />
+            <TextField
+              label="Saldo actual en UVR"
+              value={saldoUVR}
+              onChange={setSaldoUVR}
+              placeholder="371029,7251"
+            />
+            <TextField
+              label="Valor UVR actual"
+              value={valorUVR}
+              onChange={setValorUVR}
+              placeholder="372,1234"
+            />
+            <TextField
+              label="Cuota actual en pesos con seguros"
+              value={cuotaActualPesos}
+              onChange={setCuotaActualPesos}
+              placeholder="1.480.000"
+            />
+            <TextField
+              label="Seguros mensuales"
+              value={seguros}
+              onChange={setSeguros}
+              placeholder="230.000"
+            />
+            <TextField
+              label="Cuota sin seguros"
+              value={
+                cuotaSimulacionPesosNum > 0 && segurosNum >= 0 ? formatCOP(cuotaSinSegurosNum) : ""
+              }
+              readOnly
+              hint="Calculada automáticamente"
+            />
+            <TextField
+              label="Tasa cobrada EA (%)"
+              value={teaCobrada}
+              onChange={setTeaCobrada}
+              placeholder="8,50"
+              hint="Solo la tasa cobrada. La tasa pactada nunca se usa para simular."
+            />
+            <div>
+              <TextField
+                label="Variación UVR EA (%) · utilizada para simulación"
+                value={variacionUVR}
+                onChange={setVariacionUVR}
+                placeholder="6,00"
+                hint="Editable por el analista. Se guarda en el expediente."
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfigVariacion((v) => !v)}
+                className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-[#445DA3] hover:underline"
+              >
+                <Settings2 className="h-3 w-3" />
+                {showConfigVariacion ? "Ocultar configuración" : "Configurar valor por defecto"}
+              </button>
+              {showConfigVariacion && (
+                <div className="mt-2 rounded-lg border border-[#445DA3]/30 bg-[#445DA3]/5 p-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-[#445DA3]">
+                    Configuración UVR · Variación por defecto
+                  </div>
+                  <p className="mt-1 text-[11px] text-slate-600">
+                    Este valor se usará automáticamente como respaldo en nuevas simulaciones cuando
+                    no haya un dato actualizado.
+                  </p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={variacionDefaultInput}
+                      onChange={(e) => setVariacionDefaultInput(e.target.value)}
+                      placeholder="6"
+                      className="w-24 rounded-md border border-slate-300 px-2 py-1 text-sm outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDefaultVariacionUVR(variacionDefaultInput);
+                        setShowConfigVariacion(false);
+                      }}
+                      className="rounded-md bg-[#445DA3] px-3 py-1 text-xs font-semibold text-white"
+                    >
+                      Guardar
+                    </button>
+                  </div>
                 </div>
-                <p className="mt-1 text-[11px] text-slate-600">
-                  Este valor se usará automáticamente como respaldo en nuevas simulaciones cuando no
-                  haya un dato actualizado.
-                </p>
-                <div className="mt-2 flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={variacionDefaultInput}
-                    onChange={(e) => setVariacionDefaultInput(e.target.value)}
-                    placeholder="6"
-                    className="w-24 rounded-md border border-slate-300 px-2 py-1 text-sm outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDefaultVariacionUVR(variacionDefaultInput);
-                      setShowConfigVariacion(false);
+              )}
+            </div>
+          </div>
+        </Card>
+
+        {datosCompletos && (
+          <>
+            <SituacionActualBlock
+              clienteNombre={client.nombre}
+              hero={{
+                saldoActual: formatCOP(input.saldoPesos),
+                cuotaActual: formatCOP(input.cuotaActualPesos),
+                cuotasPendientes: String(cuotasPendientes),
+                totalProyectado: calc ? formatCOP(calc.escenarioActual.totalPagoPesos) : "—",
+              }}
+              vecesPagado={vecesActual}
+              costoTotal={{
+                valorDesembolsado: valorDesembolsadoNum,
+                dineroPagado: dineroPagadoFecha,
+                totalProyectadoPendiente: calc ? calc.escenarioActual.totalPagoPesos : 0,
+                baseCredito,
+                saldoActual: input.saldoPesos,
+              }}
+              puntosNeuralgicos={{
+                tiempoMeses: cuotasPendientes,
+                segurosProyectados: (input.seguros || 0) * cuotasPendientes,
+                interesesProyectados: calc
+                  ? Math.max(
+                      0,
+                      calc.escenarioActual.totalPagoPesos -
+                        input.saldoPesos -
+                        (input.seguros || 0) * cuotasPendientes,
+                    )
+                  : 0,
+              }}
+              tea={input.teaCobrada}
+              teaUmbral={6}
+              secundarios={[
+                { label: "Variación UVR EA", value: formatPercentage(input.variacionUVR) },
+                {
+                  label: "Tasa mensual utilizada",
+                  value: calc ? formatPercentage(calc.tasaMensual * 100, 4) : "—",
+                },
+                { label: "Seguros mensuales", value: formatCOP(input.seguros) },
+                { label: "Cuota sin seguros", value: formatCOP(cuotaSinSegurosNum) },
+              ]}
+              detalle={[
+                { label: "Valor desembolsado", value: formatCOP(valorDesembolsadoNum) },
+                { label: "Dinero pagado a la fecha", value: formatCOP(dineroPagadoFecha) },
+                { label: "Plazo inicial", value: `${plazoInicial} meses` },
+                { label: "Cuotas pagadas", value: String(cuotasPagadas) },
+                { label: "Saldo actual en UVR", value: formatNumber(input.saldoUVR, 4) },
+                { label: "Valor UVR actual", value: formatUVR(input.valorUVR) },
+                { label: "TEA cobrada", value: formatPercentage(input.teaCobrada) },
+              ]}
+            />
+
+            {ahorroNegativo && (
+              <Alert tone="error">
+                Revisar datos. El ahorro u honorarios calculados son negativos.
+              </Alert>
+            )}
+
+            {datosCompletos && calc && (
+              <PropuestasComerciales
+                mode="uvr"
+                input={input}
+                escenarioActual={calc.escenarioActual}
+                plazoInicial={plazoInicial}
+                cuotasPendientes={cuotasBaseSimulacion}
+                baseCredito={baseCredito > 0 ? baseCredito : saldoBase}
+                dineroPagado={baseCredito > 0 ? dineroPagadoFecha : 0}
+                onRecomendadaChange={setRecomendadaPicked}
+              />
+            )}
+
+            {recomendada && (
+              <DiscountModule
+                honorariosBase={recomendada.honorarios}
+                state={discount}
+                onChange={setDiscount}
+              />
+            )}
+
+            {recomendada &&
+              (() => {
+                const d = computeDiscount(recomendada.honorarios, discount);
+                const coberturaFresh = freshFromCobertura(cobertura, {
+                  cuotasPagadasCredito: cuotasPagadas,
+                  saldoCapital: saldoPesosNum,
+                  fuente: cobertura.activo ? "ocr" : "manual",
+                  detectadoOCR: !!cobertura.tipoBeneficio,
+                });
+                return (
+                  <SaveExpedienteButton
+                    expedienteId={init?.id}
+                    onSaved={handleSaved}
+                    enviarAuditoriaManual={!init?.id}
+                    payload={{
+                      modo: "uvr",
+                      cliente: { ...client, intervinientes, cobertura },
+                      credito: {
+                        valorDesembolsado,
+                        saldoPesos,
+                        saldoUVR,
+                        valorUVR,
+                        cuotaActualPesos,
+                        seguros,
+                        teaCobrada,
+                        variacionUVR,
+                        nuevaCuotaManual,
+                        cuotasEliminarManual,
+                        cuotaPagadaCliente: cobertura.cuotaPagadaCliente || "",
+                        valorBeneficio: cobertura.valorCobertura || "",
+                        tipoBeneficio: cobertura.tipoBeneficio || "",
+                        cuotaConInteresSinSeguros: cobertura.cuotaConInteresSinSeguros || "",
+                        cuotaBaseSimulacion: cobertura.cuotaBaseSimulacion || cuotaActualPesos,
+                        segurosMensuales: cobertura.segurosMensuales || seguros,
+                        tieneBeneficio: cobertura.activo ? "si" : "no",
+                        coberturaFresh: coberturaFresh as unknown as string,
+                        archivoPath: extractoArchivoPath,
+                      },
+                      propuesta: {
+                        nuevaCuota: recomendada.nuevaCuota,
+                        nuevoPlazo: recomendada.nuevoPlazo,
+                        añosEliminados: recomendada.añosEliminados,
+                        ahorroIntereses: recomendada.ahorroIntereses,
+                        ahorroSeguros: recomendada.ahorroSeguros,
+                        ahorroTotal: recomendada.ahorroTotal,
+                        honorarios: recomendada.honorarios,
+                        totalProyectado: recomendada.totalProyectado,
+                        fuente: manualValido ? "manual" : "automatica",
+                      },
+                      discountState: discount as unknown as Record<string, unknown>,
+                      honorariosBase: recomendada.honorarios,
+                      honorariosFinal: d.final,
+                      descuento: d.descuento,
                     }}
-                    className="rounded-md bg-[#445DA3] px-3 py-1 text-xs font-semibold text-white"
-                  >
-                    Guardar
-                  </button>
-                </div>
+                  />
+                );
+              })()}
+
+            {recomendada && !init?.id && (
+              <AuditPanel
+                nivelAutonomia={metricasAutonomia.nivelAutonomia}
+                expedienteId={init?.id}
+                input={{
+                  moneda: "uvr",
+                  extracto: {},
+                  analista: {
+                    banco: client.banco,
+                    producto: client.tipoProducto,
+                    saldoCapital: saldoPesosNum,
+                    cuotaActual: cuotaSimulacionPesosNum,
+                    seguros: segurosNum,
+                    teaPct: parsePercentage(teaCobrada),
+                    plazoInicial,
+                    cuotasPagadas,
+                    cuotasPendientes,
+                  },
+                  propuesta: {
+                    cuotaActual: cuotaSimulacionPesosNum,
+                    cuotasPendientes,
+                    nuevaCuota: recomendada.nuevaCuota,
+                    nuevoPlazo: recomendada.nuevoPlazo,
+                    cuotasEliminadas: Math.max(0, cuotasPendientes - recomendada.nuevoPlazo),
+                    ahorroIntereses: recomendada.ahorroIntereses,
+                    ahorroSeguros: recomendada.ahorroSeguros,
+                    ahorroTotal: recomendada.ahorroTotal,
+                    honorarios: recomendada.honorarios,
+                  },
+                }}
+              />
+            )}
+
+            {recomendada && (
+              <div className="flex flex-wrap justify-end gap-2">
+                <button
+                  onClick={async () => {
+                    if (!recomendada || !calc || calc.propuestas.length === 0) {
+                      alert("Primero debes calcular la simulación UVR antes de exportar el PDF.");
+                      return;
+                    }
+                    await exportElementToPdf(
+                      "pdf-content-uvr",
+                      `NUVEX_Propuesta_UVR_${sanitizeFileName(client.nombre)}.pdf`,
+                    );
+                  }}
+                  className="rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow transition-transform hover:scale-[1.01]"
+                  style={{ backgroundColor: NUVEX.negro }}
+                >
+                  Exportar propuesta comercial
+                </button>
+                <EnviarDocumentoButton
+                  expedienteId={init?.id}
+                  tipo="propuesta_comercial"
+                  elementId="pdf-content-uvr"
+                  filename={`NUVEX_Propuesta_UVR_${sanitizeFileName(client.nombre)}.pdf`}
+                  disabled={!recomendada || !calc || calc.propuestas.length === 0}
+                  disabledReason="Primero calcula la simulación UVR."
+                  label="Enviar propuesta al cliente"
+                />
               </div>
             )}
-          </div>
-        </div>
-      </Card>
 
-      {datosCompletos && (
-        <>
-          <SituacionActualBlock
-            clienteNombre={client.nombre}
-            hero={{
-              saldoActual: formatCOP(input.saldoPesos),
-              cuotaActual: formatCOP(input.cuotaActualPesos),
-              cuotasPendientes: String(cuotasPendientes),
-              totalProyectado: calc ? formatCOP(calc.escenarioActual.totalPagoPesos) : "—",
-            }}
-            vecesPagado={vecesActual}
-            costoTotal={{
-              valorDesembolsado: valorDesembolsadoNum,
-              dineroPagado: dineroPagadoFecha,
-              totalProyectadoPendiente: calc ? calc.escenarioActual.totalPagoPesos : 0,
-              baseCredito,
-              saldoActual: input.saldoPesos,
-            }}
-            puntosNeuralgicos={{
-              tiempoMeses: cuotasPendientes,
-              segurosProyectados: (input.seguros || 0) * cuotasPendientes,
-              interesesProyectados: calc
-                ? Math.max(
-                    0,
-                    calc.escenarioActual.totalPagoPesos -
-                      input.saldoPesos -
-                      (input.seguros || 0) * cuotasPendientes,
-                  )
-                : 0,
-            }}
-            tea={input.teaCobrada}
-            teaUmbral={6}
-            secundarios={[
-              { label: "Variación UVR EA", value: formatPercentage(input.variacionUVR) },
-              {
-                label: "Tasa mensual utilizada",
-                value: calc ? formatPercentage(calc.tasaMensual * 100, 4) : "—",
-              },
-              { label: "Seguros mensuales", value: formatCOP(input.seguros) },
-              { label: "Cuota sin seguros", value: formatCOP(cuotaSinSegurosNum) },
-            ]}
-            detalle={[
-              { label: "Valor desembolsado", value: formatCOP(valorDesembolsadoNum) },
-              { label: "Dinero pagado a la fecha", value: formatCOP(dineroPagadoFecha) },
-              { label: "Plazo inicial", value: `${plazoInicial} meses` },
-              { label: "Cuotas pagadas", value: String(cuotasPagadas) },
-              { label: "Saldo actual en UVR", value: formatNumber(input.saldoUVR, 4) },
-              { label: "Valor UVR actual", value: formatUVR(input.valorUVR) },
-              { label: "TEA cobrada", value: formatPercentage(input.teaCobrada) },
-            ]}
-          />
-
-
-          {ahorroNegativo && (
-            <Alert tone="error">
-              Revisar datos. El ahorro u honorarios calculados son negativos.
-            </Alert>
-          )}
-
-          {datosCompletos && calc && (
-            <PropuestasComerciales
-              mode="uvr"
-              input={input}
-              escenarioActual={calc.escenarioActual}
-              plazoInicial={plazoInicial}
-              cuotasPendientes={cuotasBaseSimulacion}
-              baseCredito={baseCredito > 0 ? baseCredito : saldoBase}
-              dineroPagado={baseCredito > 0 ? dineroPagadoFecha : 0}
-              onRecomendadaChange={setRecomendadaPicked}
-            />
-          )}
-
-          {recomendada && (
-            <DiscountModule
-              honorariosBase={recomendada.honorarios}
-              state={discount}
-              onChange={setDiscount}
-            />
-          )}
-
-          {recomendada &&
-            (() => {
-              const d = computeDiscount(recomendada.honorarios, discount);
-              const coberturaFresh = freshFromCobertura(cobertura, {
-                cuotasPagadasCredito: cuotasPagadas,
-                saldoCapital: saldoPesosNum,
-                fuente: cobertura.activo ? "ocr" : "manual",
-                detectadoOCR: !!cobertura.tipoBeneficio,
-              });
-              return (
-                <SaveExpedienteButton
-                  expedienteId={init?.id}
-                  onSaved={handleSaved}
-                  enviarAuditoriaManual={!init?.id}
-                  payload={{
-                    modo: "uvr",
-                    cliente: { ...client, intervinientes, cobertura },
-                    credito: {
-                      valorDesembolsado,
-                      saldoPesos,
-                      saldoUVR,
-                      valorUVR,
-                      cuotaActualPesos,
-                      seguros,
-                      teaCobrada,
-                      variacionUVR,
-                      nuevaCuotaManual,
-                      cuotasEliminarManual,
-                      cuotaPagadaCliente: cobertura.cuotaPagadaCliente || "",
-                      valorBeneficio: cobertura.valorCobertura || "",
-                      tipoBeneficio: cobertura.tipoBeneficio || "",
-                      cuotaConInteresSinSeguros: cobertura.cuotaConInteresSinSeguros || "",
-                      cuotaBaseSimulacion: cobertura.cuotaBaseSimulacion || cuotaActualPesos,
-                      segurosMensuales: cobertura.segurosMensuales || seguros,
-                      tieneBeneficio: cobertura.activo ? "si" : "no",
-                      coberturaFresh: coberturaFresh as unknown as string,
-                      archivoPath: extractoArchivoPath,
-                    },
-                    propuesta: {
-                      nuevaCuota: recomendada.nuevaCuota,
-                      nuevoPlazo: recomendada.nuevoPlazo,
+            {recomendada &&
+              (() => {
+                const d = computeDiscount(recomendada.honorarios, discount);
+                return (
+                  <PrintDocument
+                    mode="uvr"
+                    client={{ ...client, intervinientes, cobertura }}
+                    cuotasPendientes={cuotasBaseSimulacion}
+                    metrics={metrics}
+                    uvrPropuestas={calc!.propuestas}
+                    bestIndex={bestIndex}
+                    honorariosPct={honorariosPct}
+                    personalizada={manualValido}
+                    recommended={{
                       añosEliminados: recomendada.añosEliminados,
                       ahorroIntereses: recomendada.ahorroIntereses,
                       ahorroSeguros: recomendada.ahorroSeguros,
                       ahorroTotal: recomendada.ahorroTotal,
                       honorarios: recomendada.honorarios,
-                      totalProyectado: recomendada.totalProyectado,
-                      fuente: manualValido ? "manual" : "automatica",
-                    },
-                    discountState: discount as unknown as Record<string, unknown>,
-                    honorariosBase: recomendada.honorarios,
-                    honorariosFinal: d.final,
-                    descuento: d.descuento,
-                  }}
-                />
-              );
-            })()}
+                      nuevaCuota: recomendada.nuevaCuota,
+                    }}
+                    scenario={{
+                      cuotaActual: input.cuotaActualPesos,
+                      nuevaCuota: recomendada.nuevaCuota,
+                      plazoActual: cuotasBaseSimulacion,
+                      nuevoPlazo: recomendada.nuevoPlazo,
+                      totalActual: totalActualPesos,
+                      totalOptimizado: recomendada.totalProyectado,
+                      vecesActual,
+                      vecesOptimizado: vecesOpt,
+                    }}
+                    commercial={{
+                      honorariosBase: recomendada.honorarios,
+                      descuento: d.descuento,
+                      finales: d.final,
+                      vigencia: discount.vigencia || undefined,
+                      hasDiscount: d.hasDiscount,
+                    }}
+                  />
+                );
+              })()}
 
-          {recomendada && !init?.id && (
-            <AuditPanel
-              nivelAutonomia={metricasAutonomia.nivelAutonomia}
-              expedienteId={init?.id}
-
-              input={{
-                moneda: "uvr",
-                extracto: {},
-                analista: {
-                  banco: client.banco,
-                  producto: client.tipoProducto,
-                  saldoCapital: saldoPesosNum,
-                  cuotaActual: cuotaSimulacionPesosNum,
-                  seguros: segurosNum,
-                  teaPct: parsePercentage(teaCobrada),
-                  plazoInicial,
-                  cuotasPagadas,
-                  cuotasPendientes,
-                },
-                propuesta: {
-                  cuotaActual: cuotaSimulacionPesosNum,
-                  cuotasPendientes,
-                  nuevaCuota: recomendada.nuevaCuota,
-                  nuevoPlazo: recomendada.nuevoPlazo,
-                  cuotasEliminadas: Math.max(0, cuotasPendientes - recomendada.nuevoPlazo),
-                  ahorroIntereses: recomendada.ahorroIntereses,
-                  ahorroSeguros: recomendada.ahorroSeguros,
-                  ahorroTotal: recomendada.ahorroTotal,
-                  honorarios: recomendada.honorarios,
-                },
-              }}
-            />
-          )}
-
-          {recomendada && (
-            <div className="flex flex-wrap justify-end gap-2">
-              <button
-                onClick={async () => {
-                  if (
-                    !recomendada ||
-                    !calc ||
-                    calc.propuestas.length === 0
-                  ) {
-                    alert("Primero debes calcular la simulación UVR antes de exportar el PDF.");
-                    return;
-                  }
-                  await exportElementToPdf(
-                    "pdf-content-uvr",
-                    `NUVEX_Propuesta_UVR_${sanitizeFileName(client.nombre)}.pdf`,
-                  );
-                }}
-                className="rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow transition-transform hover:scale-[1.01]"
-                style={{ backgroundColor: NUVEX.negro }}
-              >
-                Exportar propuesta comercial
-              </button>
-              <EnviarDocumentoButton
-                expedienteId={init?.id}
-                tipo="propuesta_comercial"
-                elementId="pdf-content-uvr"
-                filename={`NUVEX_Propuesta_UVR_${sanitizeFileName(client.nombre)}.pdf`}
-                disabled={!recomendada || !calc || calc.propuestas.length === 0}
-                disabledReason="Primero calcula la simulación UVR."
-                label="Enviar propuesta al cliente"
-              />
-            </div>
-          )}
-
-          {recomendada &&
-            (() => {
-              const d = computeDiscount(recomendada.honorarios, discount);
-              return (
-                <PrintDocument
-                  mode="uvr"
-                  client={{ ...client, intervinientes, cobertura }}
-                  cuotasPendientes={cuotasBaseSimulacion}
-                  metrics={metrics}
-                  uvrPropuestas={calc!.propuestas}
-                  bestIndex={bestIndex}
-                  honorariosPct={honorariosPct}
-                  personalizada={manualValido}
-                  recommended={{
-                    añosEliminados: recomendada.añosEliminados,
-                    ahorroIntereses: recomendada.ahorroIntereses,
-                    ahorroSeguros: recomendada.ahorroSeguros,
-                    ahorroTotal: recomendada.ahorroTotal,
-                    honorarios: recomendada.honorarios,
-                    nuevaCuota: recomendada.nuevaCuota,
-                  }}
-                  scenario={{
-                    cuotaActual: input.cuotaActualPesos,
-                    nuevaCuota: recomendada.nuevaCuota,
-                    plazoActual: cuotasBaseSimulacion,
-                    nuevoPlazo: recomendada.nuevoPlazo,
-                    totalActual: totalActualPesos,
-                    totalOptimizado: recomendada.totalProyectado,
-                    vecesActual,
-                    vecesOptimizado: vecesOpt,
-                  }}
-                  commercial={{
-                    honorariosBase: recomendada.honorarios,
-                    descuento: d.descuento,
-                    finales: d.final,
-                    vigencia: discount.vigencia || undefined,
-                    hasDiscount: d.hasDiscount,
-                  }}
-                />
-              );
-            })()}
-
-          {/* Resultado bancario, otrosí, cuenta de cobro, paz y salvo: ahora viven en el Expediente. */}
-        </>
-      )}
-      {monedaAlerta.dialog}
+            {/* Resultado bancario, otrosí, cuenta de cobro, paz y salvo: ahora viven en el Expediente. */}
+          </>
+        )}
+        {monedaAlerta.dialog}
       </div>
     </div>
   );
