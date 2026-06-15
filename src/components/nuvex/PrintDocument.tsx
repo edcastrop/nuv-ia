@@ -443,26 +443,26 @@ export function PrintDocument(props: Props) {
             {/* Urgencia con fecha exacta */}
             <div style={{
               background: C.red, color: "#fff", borderRadius: 12,
-              padding: "9px 12px", display: "flex", flexDirection: "column",
+              padding: "6px 10px", display: "flex", flexDirection: "column",
               justifyContent: "center", textAlign: "center",
             }}>
               <div style={{
-                fontSize: 9, letterSpacing: "0.22em", fontWeight: 700, opacity: 0.95,
+                fontSize: 8.2, letterSpacing: "0.22em", fontWeight: 700, opacity: 0.95,
               }}>BENEFICIO VÁLIDO HASTA</div>
               <div style={{
-                fontSize: 15, fontWeight: 900, marginTop: 4, letterSpacing: "-0.005em",
+                fontSize: 13, fontWeight: 900, marginTop: 3, letterSpacing: "-0.005em",
                 textTransform: "uppercase",
               }}>
                 {fechaLimiteStr}
               </div>
               <div style={{
                 display: "flex", alignItems: "center", justifyContent: "center",
-                gap: 6, marginTop: 6,
-                borderTop: "1px solid rgba(255,255,255,0.25)", paddingTop: 6,
+                gap: 5, marginTop: 4,
+                borderTop: "1px solid rgba(255,255,255,0.25)", paddingTop: 4,
               }}>
-                <ClockIcon color="#fff" size={16} />
-                <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: "-0.02em" }}>
-                  72 HORAS
+                <ClockIcon color="#fff" size={13} />
+                <div style={{ fontSize: 14, fontWeight: 900, letterSpacing: "-0.02em" }}>
+                  48 HORAS
                 </div>
               </div>
             </div>
