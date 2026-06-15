@@ -56,6 +56,7 @@ import { AuditPanel } from "./AuditPanel";
 import { useNivelAutonomia } from "@/hooks/useNivelAutonomia";
 import { triggerSimuladorAutoQA } from "@/lib/simuladorAutoQA";
 import { AutoQAPanel, type AutoQAResult } from "./AutoQAPanel";
+import { clearSimulatorDraft, readSimulatorDraft, useSimulatorDraft } from "./useSimulatorDraft";
 
 
 export function UVRSimulator({
@@ -69,43 +70,51 @@ export function UVRSimulator({
 } = {}) {
   const init = initialExpediente;
   const initCred = (init?.credito_data ?? {}) as Record<string, string>;
+  const initClient = (init?.cliente_data as ClientData | undefined) ?? undefined;
+  const draft = readSimulatorDraft("uvr", init?.id, {
+    extractoArchivoPath: typeof initCred.archivoPath === "string" ? initCred.archivoPath : "",
+    discount:
+      init?.discount_data && Object.keys(init.discount_data).length
+        ? (init.discount_data as unknown as DiscountState)
+        : defaultDiscount,
+    client: initClient ?? defaultClient,
+    intervinientes:
+      initClient?.intervinientes && initClient.intervinientes.length > 0
+        ? initClient.intervinientes
+        : defaultIntervinientes(initClient?.tipoProducto),
+    cobertura: initClient?.cobertura ?? defaultCobertura,
+    valorDesembolsado: initCred.valorDesembolsado ?? "",
+    saldoPesos: initCred.saldoPesos ?? "",
+    saldoUVR: initCred.saldoUVR ?? "",
+    valorUVR: initCred.valorUVR ?? "",
+    cuotaActualPesos: initCred.cuotaActualPesos ?? "",
+    seguros: initCred.seguros ?? "",
+    teaCobrada: initCred.teaCobrada ?? "",
+    variacionUVR: initCred.variacionUVR ?? getDefaultVariacionUVR(),
+    nuevaCuotaManual: initCred.nuevaCuotaManual ?? "",
+    cuotasEliminarManual: initCred.cuotasEliminarManual ?? "",
+    modoPersonalizada: initCred.cuotasEliminarManual && !initCred.nuevaCuotaManual ? "cuotas" as const : "cuota" as const,
+  });
   const monedaAlerta = useMonedaMismatchAlert();
-  const [extractoArchivoPath, setExtractoArchivoPath] = useState<string>(() =>
-    typeof initCred.archivoPath === "string" ? initCred.archivoPath : "",
-  );
+  const [extractoArchivoPath, setExtractoArchivoPath] = useState<string>(() => draft.extractoArchivoPath);
   const [autoQA, setAutoQA] = useState<AutoQAResult | null>(null);
   const [autoQALoading, setAutoQALoading] = useState(false);
-  const [discount, setDiscount] = useState<DiscountState>(() =>
-    init?.discount_data && Object.keys(init.discount_data).length
-      ? (init.discount_data as unknown as DiscountState)
-      : defaultDiscount,
-  );
-  const initClient = (init?.cliente_data as ClientData | undefined) ?? undefined;
-  const [client, setClient] = useState<ClientData>(() => initClient ?? defaultClient);
-  const [intervinientes, setIntervinientes] = useState<Interviniente[]>(() =>
-    initClient?.intervinientes && initClient.intervinientes.length > 0
-      ? initClient.intervinientes
-      : defaultIntervinientes(initClient?.tipoProducto),
-  );
-  const [cobertura, setCobertura] = useState<Cobertura>(
-    () => initClient?.cobertura ?? defaultCobertura,
-  );
-  const [valorDesembolsado, setValorDesembolsado] = useState(initCred.valorDesembolsado ?? "");
-  const [saldoPesos, setSaldoPesos] = useState(initCred.saldoPesos ?? "");
-  const [saldoUVR, setSaldoUVR] = useState(initCred.saldoUVR ?? "");
-  const [valorUVR, setValorUVR] = useState(initCred.valorUVR ?? "");
-  const [cuotaActualPesos, setCuotaActualPesos] = useState(initCred.cuotaActualPesos ?? "");
-  const [seguros, setSeguros] = useState(initCred.seguros ?? "");
-  const [teaCobrada, setTeaCobrada] = useState(initCred.teaCobrada ?? "");
-  const [variacionUVR, setVariacionUVR] = useState(
-    initCred.variacionUVR ?? getDefaultVariacionUVR(),
-  );
-  const [nuevaCuotaManual, setNuevaCuotaManual] = useState(initCred.nuevaCuotaManual ?? "");
-  const [cuotasEliminarManual, setCuotasEliminarManual] = useState(
-    initCred.cuotasEliminarManual ?? "",
-  );
+  const [discount, setDiscount] = useState<DiscountState>(() => draft.discount);
+  const [client, setClient] = useState<ClientData>(() => draft.client);
+  const [intervinientes, setIntervinientes] = useState<Interviniente[]>(() => draft.intervinientes);
+  const [cobertura, setCobertura] = useState<Cobertura>(() => draft.cobertura);
+  const [valorDesembolsado, setValorDesembolsado] = useState(draft.valorDesembolsado);
+  const [saldoPesos, setSaldoPesos] = useState(draft.saldoPesos);
+  const [saldoUVR, setSaldoUVR] = useState(draft.saldoUVR);
+  const [valorUVR, setValorUVR] = useState(draft.valorUVR);
+  const [cuotaActualPesos, setCuotaActualPesos] = useState(draft.cuotaActualPesos);
+  const [seguros, setSeguros] = useState(draft.seguros);
+  const [teaCobrada, setTeaCobrada] = useState(draft.teaCobrada);
+  const [variacionUVR, setVariacionUVR] = useState(draft.variacionUVR);
+  const [nuevaCuotaManual, setNuevaCuotaManual] = useState(draft.nuevaCuotaManual);
+  const [cuotasEliminarManual, setCuotasEliminarManual] = useState(draft.cuotasEliminarManual);
   const [modoPersonalizada, setModoPersonalizada] = useState<"cuota" | "cuotas">(
-    initCred.cuotasEliminarManual && !initCred.nuevaCuotaManual ? "cuotas" : "cuota",
+    draft.modoPersonalizada,
   );
   const [showConfigVariacion, setShowConfigVariacion] = useState(false);
   const [variacionDefaultInput, setVariacionDefaultInput] = useState(getDefaultVariacionUVR());
