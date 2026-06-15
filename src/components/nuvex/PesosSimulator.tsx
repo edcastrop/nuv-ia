@@ -55,6 +55,7 @@ import { AuditPanel } from "./AuditPanel";
 import { useNivelAutonomia } from "@/hooks/useNivelAutonomia";
 import { triggerSimuladorAutoQA } from "@/lib/simuladorAutoQA";
 import { AutoQAPanel, type AutoQAResult } from "./AutoQAPanel";
+import { clearSimulatorDraft, readSimulatorDraft, useSimulatorDraft } from "./useSimulatorDraft";
 
 
 export function PesosSimulator({
@@ -68,38 +69,45 @@ export function PesosSimulator({
 } = {}) {
   const init = initialExpediente;
   const initCred = (init?.credito_data ?? {}) as Record<string, string>;
+  const initClient = (init?.cliente_data as ClientData | undefined) ?? undefined;
+  const draft = readSimulatorDraft("pesos", init?.id, {
+    extractoArchivoPath: typeof initCred.archivoPath === "string" ? initCred.archivoPath : "",
+    discount:
+      init?.discount_data && Object.keys(init.discount_data).length
+        ? (init.discount_data as unknown as DiscountState)
+        : defaultDiscount,
+    client: initClient ?? defaultClient,
+    intervinientes:
+      initClient?.intervinientes && initClient.intervinientes.length > 0
+        ? initClient.intervinientes
+        : defaultIntervinientes(initClient?.tipoProducto),
+    cobertura: initClient?.cobertura ?? defaultCobertura,
+    valorDesembolsado: initCred.valorDesembolsado ?? "",
+    saldoCapital: initCred.saldoCapital ?? "",
+    cuotaActual: initCred.cuotaActual ?? "",
+    seguros: initCred.seguros ?? "",
+    tea: initCred.tea ?? "",
+    nuevaCuotaManual: initCred.nuevaCuotaManual ?? "",
+    cuotasEliminarManual: initCred.cuotasEliminarManual ?? "",
+    modoPersonalizada: initCred.cuotasEliminarManual && !initCred.nuevaCuotaManual ? "cuotas" as const : "cuota" as const,
+  });
   const monedaAlerta = useMonedaMismatchAlert();
   const [autoQA, setAutoQA] = useState<AutoQAResult | null>(null);
   const [autoQALoading, setAutoQALoading] = useState(false);
-  const [extractoArchivoPath, setExtractoArchivoPath] = useState<string>(() =>
-    typeof initCred.archivoPath === "string" ? initCred.archivoPath : "",
-  );
-  const [discount, setDiscount] = useState<DiscountState>(() =>
-    init?.discount_data && Object.keys(init.discount_data).length
-      ? (init.discount_data as unknown as DiscountState)
-      : defaultDiscount,
-  );
-  const initClient = (init?.cliente_data as ClientData | undefined) ?? undefined;
-  const [client, setClient] = useState<ClientData>(() => initClient ?? defaultClient);
-  const [intervinientes, setIntervinientes] = useState<Interviniente[]>(() =>
-    initClient?.intervinientes && initClient.intervinientes.length > 0
-      ? initClient.intervinientes
-      : defaultIntervinientes(initClient?.tipoProducto),
-  );
-  const [cobertura, setCobertura] = useState<Cobertura>(
-    () => initClient?.cobertura ?? defaultCobertura,
-  );
-  const [valorDesembolsado, setValorDesembolsado] = useState(initCred.valorDesembolsado ?? "");
-  const [saldoCapital, setSaldoCapital] = useState(initCred.saldoCapital ?? "");
-  const [cuotaActual, setCuotaActual] = useState(initCred.cuotaActual ?? "");
-  const [seguros, setSeguros] = useState(initCred.seguros ?? "");
-  const [tea, setTea] = useState(initCred.tea ?? "");
-  const [nuevaCuotaManual, setNuevaCuotaManual] = useState(initCred.nuevaCuotaManual ?? "");
-  const [cuotasEliminarManual, setCuotasEliminarManual] = useState(
-    initCred.cuotasEliminarManual ?? "",
-  );
+  const [extractoArchivoPath, setExtractoArchivoPath] = useState<string>(() => draft.extractoArchivoPath);
+  const [discount, setDiscount] = useState<DiscountState>(() => draft.discount);
+  const [client, setClient] = useState<ClientData>(() => draft.client);
+  const [intervinientes, setIntervinientes] = useState<Interviniente[]>(() => draft.intervinientes);
+  const [cobertura, setCobertura] = useState<Cobertura>(() => draft.cobertura);
+  const [valorDesembolsado, setValorDesembolsado] = useState(draft.valorDesembolsado);
+  const [saldoCapital, setSaldoCapital] = useState(draft.saldoCapital);
+  const [cuotaActual, setCuotaActual] = useState(draft.cuotaActual);
+  const [seguros, setSeguros] = useState(draft.seguros);
+  const [tea, setTea] = useState(draft.tea);
+  const [nuevaCuotaManual, setNuevaCuotaManual] = useState(draft.nuevaCuotaManual);
+  const [cuotasEliminarManual, setCuotasEliminarManual] = useState(draft.cuotasEliminarManual);
   const [modoPersonalizada, setModoPersonalizada] = useState<"cuota" | "cuotas">(
-    initCred.cuotasEliminarManual && !initCred.nuevaCuotaManual ? "cuotas" : "cuota",
+    draft.modoPersonalizada,
   );
 
   // Prellenar el campo "Asesor NUVEX" con el nombre del perfil autenticado
