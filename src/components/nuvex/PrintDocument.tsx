@@ -52,6 +52,10 @@ interface Props {
     vecesOptimizado: number;
   };
   commercial?: CommercialBenefit;
+  /** Dinero ya pagado por el cliente a la fecha (cuotaHoy × cuotasPagadas). */
+  dineroPagadoFecha?: number;
+  /** Valor inicial desembolsado del crédito. */
+  valorDesembolsado?: number;
 }
 
 /* ============================================================
@@ -85,6 +89,7 @@ export function PrintDocument(props: Props) {
   const {
     mode, client, recommended, scenario, commercial,
     pesosPropuestas, uvrPropuestas, propuestasComerciales, bestIndex,
+    dineroPagadoFecha = 0, valorDesembolsado = 0,
   } = props;
   const containerId = mode === "uvr" ? "pdf-content-uvr" : "pdf-content-pesos";
 
@@ -147,6 +152,19 @@ export function PrintDocument(props: Props) {
   const nuevaCuota = scenario.nuevaCuota;
   const incrementoMensual = Math.max(0, nuevaCuota - cuotaActual);
   const incrementoPct = cuotaActual > 0 ? (incrementoMensual / cuotaActual) * 100 : 0;
+
+  // ─── RADIOGRAFÍA FINANCIERA DEL CRÉDITO ───
+  const yaPagado = Math.max(0, dineroPagadoFecha);
+  const faltaPagarSin = Math.max(0, scenario.totalActual);
+  const faltaPagarCon = Math.max(0, scenario.totalOptimizado);
+  const costoTotalSin = yaPagado + faltaPagarSin;
+  const costoTotalCon = yaPagado + faltaPagarCon;
+  const desembolsoRef = valorDesembolsado > 0 ? valorDesembolsado : 0;
+  const vecesSin = desembolsoRef > 0 ? costoTotalSin / desembolsoRef : 0;
+  const vecesCon = desembolsoRef > 0 ? costoTotalCon / desembolsoRef : 0;
+  const evitasPagar = Math.max(0, costoTotalSin - costoTotalCon);
+  const radiografiaOk = desembolsoRef > 0 && (yaPagado > 0 || faltaPagarSin > 0);
+
 
   // -------- Alternativas (página 2) — todas las propuestas menos la seleccionada
   const alternativas = buildAlternativas({
@@ -290,7 +308,7 @@ export function PrintDocument(props: Props) {
           <SectionTitle index="1" title="Tu cuota, hoy y con nuestra optimización" />
           <div style={{
             marginTop: 7,
-            display: "grid", gridTemplateColumns: "1fr 36px 1fr 110px", gap: 12, alignItems: "stretch",
+            display: "grid", gridTemplateColumns: "1fr 36px 1fr", gap: 12, alignItems: "stretch",
           }}>
             <CuotaCard
               eyebrow="VALOR ACTUAL DE TU CUOTA"
@@ -314,28 +332,76 @@ export function PrintDocument(props: Props) {
               eyebrow="NUEVO VALOR DE TU CUOTA"
               sub="Con la optimización"
               amount={nuevaCuota}
-              footer="Nueva cuota mensual propuesta"
+              footer={`Nueva cuota mensual (+${formatNumber(incrementoPct, 1)}%)`}
               color={C.greenDeep}
               bg={C.greenSoft}
             />
+          </div>
+        </div>
+
+        {/* ───── 1B. RADIOGRAFÍA FINANCIERA DEL CRÉDITO ───── */}
+        {radiografiaOk && (
+          <div style={{ padding: "9px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
             <div style={{
-              display: "flex", flexDirection: "column",
-              alignItems: "center", justifyContent: "center", gap: 4,
-              padding: "0 4px",
+              background: "#fff", border: `1px solid ${C.hairline}`, borderRadius: 12,
+              padding: "8px 12px",
             }}>
-              <TrendUpInline color={C.green} />
               <div style={{
-                fontSize: 24, fontWeight: 900, color: C.greenDeep,
-                letterSpacing: "-0.02em", lineHeight: 1,
+                fontSize: 9.5, letterSpacing: "0.22em", fontWeight: 800,
+                color: C.muted, marginBottom: 6, textAlign: "center",
               }}>
-                +{formatNumber(incrementoPct, 1)}%
+                RADIOGRAFÍA FINANCIERA DEL CRÉDITO
               </div>
-              <div style={{ fontSize: 9, color: C.muted, textAlign: "center", lineHeight: 1.25 }}>
-                Aumento mensual<br />recomendado
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 1fr 1.25fr",
+                gap: 8, alignItems: "stretch",
+              }}>
+                <RadioMini label="YA HAS PAGADO" value={formatCOP(yaPagado)} tone="neutral" />
+                <RadioMini label="TE FALTA PAGAR" value={formatCOP(faltaPagarSin)} tone="neutral" />
+                <RadioMini label="COSTO TOTAL" value={formatCOP(costoTotalSin)} tone="neutral" />
+                <RadioMini
+                  label="VECES PAGADO"
+                  value={`${formatNumber(vecesSin, 2)}× `}
+                  tone="hero"
+                />
+              </div>
+              <div style={{
+                marginTop: 7, display: "grid",
+                gridTemplateColumns: "1fr 1fr 1.05fr", gap: 8, alignItems: "stretch",
+              }}>
+                <CompareCell
+                  title="SIN NUVEX"
+                  big={`${formatNumber(vecesSin, 2)}×`}
+                  small={formatCOP(costoTotalSin)}
+                  bg="#F4F6F8" fg={C.ink} accent={C.muted}
+                />
+                <CompareCell
+                  title="CON NUVEX"
+                  big={`${formatNumber(vecesCon, 2)}×`}
+                  small={formatCOP(costoTotalCon)}
+                  bg={C.greenSoft} fg={C.greenDeep} accent={C.greenDeep}
+                />
+                <div style={{
+                  background: C.azulSoft, borderRadius: 10,
+                  padding: "6px 10px", display: "flex", flexDirection: "column",
+                  justifyContent: "center", alignItems: "center", textAlign: "center",
+                }}>
+                  <div style={{
+                    fontSize: 8, letterSpacing: "0.22em", color: C.azul, fontWeight: 800,
+                  }}>EVITAS PAGAR</div>
+                  <div style={{
+                    fontSize: 17, fontWeight: 900, color: C.azul,
+                    letterSpacing: "-0.02em", lineHeight: 1.1, marginTop: 2,
+                  }}>
+                    {formatCOP(evitasPagar)}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
+
 
         {/* ───── 2. IMPACTO FINANCIERO TOTAL ───── */}
         <div style={{ padding: "11px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
@@ -400,28 +466,6 @@ export function PrintDocument(props: Props) {
             {commercial?.hasDiscount && (
               <ReinforceBullet text={<>Honorarios con <b>beneficio comercial</b> aplicado</>} />
             )}
-          </div>
-
-
-          <div style={{
-            marginTop: 6, background: "#fff",
-            border: `1px solid ${C.hairline}`, borderRadius: 12,
-            padding: "6px 14px",
-          }}>
-            <div style={{
-              fontSize: 10, letterSpacing: "0.22em", fontWeight: 800,
-              color: C.muted, textAlign: "center", marginBottom: 4,
-            }}>
-              ESTO SIGNIFICA PARA TI Y TU FAMILIA
-            </div>
-            <div style={{
-              display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12,
-            }}>
-              <BenefitItem icon={<CalendarOff />} label={<>Menos tiempo<br />endeudado</>} />
-              <BenefitItem icon={<BagMoney />} label={<>Más dinero en<br />tu bolsillo</>} />
-              <BenefitItem icon={<ShieldOk />} label={<>Más tranquilidad<br />financiera</>} />
-              <BenefitItem icon={<FamilyIcon />} label={<>Más oportunidades<br />para tu familia</>} />
-            </div>
           </div>
         </div>
 
@@ -1182,6 +1226,53 @@ function BenefitItem({ icon, label }: { icon: React.ReactNode; label: React.Reac
       }}>{icon}</div>
       <div style={{ fontSize: 8.7, color: C.text, lineHeight: 1.18, fontWeight: 600 }}>
         {label}
+      </div>
+    </div>
+  );
+}
+
+function RadioMini({
+  label, value, tone,
+}: { label: string; value: string; tone: "neutral" | "hero" }) {
+  const isHero = tone === "hero";
+  return (
+    <div style={{
+      background: isHero ? C.greenSoft : "#F4F6F8",
+      border: isHero ? `1px solid ${C.green}55` : `1px solid ${C.hairline}`,
+      borderRadius: 10, padding: "6px 10px",
+      display: "flex", flexDirection: "column", justifyContent: "center",
+    }}>
+      <div style={{
+        fontSize: 7.8, letterSpacing: "0.2em", fontWeight: 800,
+        color: isHero ? C.greenDeep : C.muted, marginBottom: 2,
+      }}>{label}</div>
+      <div style={{
+        fontSize: isHero ? 17 : 13.5, fontWeight: 900,
+        color: isHero ? C.greenDeep : C.ink,
+        letterSpacing: "-0.02em", lineHeight: 1.05,
+      }}>{value}</div>
+    </div>
+  );
+}
+
+function CompareCell({
+  title, big, small, bg, fg, accent,
+}: { title: string; big: string; small: string; bg: string; fg: string; accent: string }) {
+  return (
+    <div style={{
+      background: bg, borderRadius: 10, padding: "5px 10px",
+      display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
+    }}>
+      <div style={{
+        fontSize: 8, letterSpacing: "0.22em", fontWeight: 800, color: accent,
+      }}>{title}</div>
+      <div style={{ textAlign: "right" }}>
+        <div style={{ fontSize: 14, fontWeight: 900, color: fg, lineHeight: 1, letterSpacing: "-0.02em" }}>
+          {big}
+        </div>
+        <div style={{ fontSize: 8.5, color: fg, opacity: 0.75, lineHeight: 1.1, marginTop: 1 }}>
+          {small}
+        </div>
       </div>
     </div>
   );

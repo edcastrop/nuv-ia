@@ -821,6 +821,8 @@ export function PesosSimulator({
                       vigencia: discount.vigencia || undefined,
                       hasDiscount: d.hasDiscount,
                     }}
+                    dineroPagadoFecha={dineroPagadoFecha}
+                    valorDesembolsado={valorDesembolsadoNum}
                   />
                 );
               })()}
