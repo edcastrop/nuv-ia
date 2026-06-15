@@ -210,7 +210,7 @@ export function PrintDocument(props: Props) {
       >
         {/* ───── HEADER NEGRO ───── */}
         <div style={{
-          background: C.black, color: "#fff", padding: "12px 22px",
+          background: C.black, color: "#fff", padding: "10px 22px",
           display: "grid", gridTemplateColumns: "auto 1fr", alignItems: "center", gap: 20,
           breakInside: "avoid", pageBreakInside: "avoid",
         }}>
@@ -229,8 +229,8 @@ export function PrintDocument(props: Props) {
 
         {/* ───── HERO ───── */}
         <div style={{
-          padding: "16px 22px 9px 22px",
-          display: "grid", gridTemplateColumns: "1.62fr 0.38fr", gap: 18, alignItems: "center",
+          padding: "10px 22px 4px 22px",
+          display: "grid", gridTemplateColumns: "1.62fr 0.38fr", gap: 14, alignItems: "center",
           breakInside: "avoid", pageBreakInside: "avoid",
         }}>
           <div>
@@ -238,7 +238,7 @@ export function PrintDocument(props: Props) {
               Hola, <span style={{ color: C.azul, fontWeight: 800 }}>{primerNombre}</span>
             </div>
             <h1 style={{
-              margin: 0, fontSize: 36, lineHeight: 1.01, fontWeight: 900,
+              margin: 0, fontSize: 32, lineHeight: 1.01, fontWeight: 900,
               color: C.black, letterSpacing: "-0.035em",
             }}>
               Recupera parte de<br />
@@ -269,7 +269,7 @@ export function PrintDocument(props: Props) {
         <div style={{ padding: "0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <div style={{
             background: C.bgSoft, borderRadius: 12,
-            padding: "10px 14px", display: "grid",
+            padding: "8px 12px", display: "grid",
             gridTemplateColumns: "1fr 1fr 1fr 1.2fr", gap: 18, alignItems: "center",
           }}>
             <MetaCol icon={<BankIcon />} label="BANCO" value={banco} />
@@ -304,7 +304,7 @@ export function PrintDocument(props: Props) {
         </div>
 
         {/* ───── 1. CUOTA HOY VS OPTIMIZADA ───── */}
-        <div style={{ padding: "11px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
+        <div style={{ padding: "8px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <SectionTitle index="1" title="Tu cuota, hoy y con nuestra optimización" />
           <div style={{
             marginTop: 7,
@@ -341,11 +341,11 @@ export function PrintDocument(props: Props) {
 
         {/* ───── 1B. RADIOGRAFÍA FINANCIERA DEL CRÉDITO ───── */}
         {radiografiaOk && (
-          <div style={{ padding: "9px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
-            <div style={{
-              background: "#fff", border: `1px solid ${C.hairline}`, borderRadius: 12,
-              padding: "8px 12px",
-            }}>
+          <div style={{ padding: "6px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
+          <div style={{
+            background: "#fff", border: `1px solid ${C.hairline}`, borderRadius: 12,
+            padding: "6px 10px",
+          }}>
               <div style={{
                 fontSize: 9.5, letterSpacing: "0.22em", fontWeight: 800,
                 color: C.muted, marginBottom: 6, textAlign: "center",
@@ -372,7 +372,7 @@ export function PrintDocument(props: Props) {
 
 
         {/* ───── 2. IMPACTO FINANCIERO TOTAL ───── */}
-        <div style={{ padding: "11px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
+        <div style={{ padding: "8px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <SectionTitle index="2" title="Impacto financiero total" />
           <div style={{
             marginTop: 7,
@@ -401,9 +401,9 @@ export function PrintDocument(props: Props) {
 
           {/* Línea de tiempo recomendada — paridad visual con las 3 alternativas */}
           <div style={{
-            marginTop: 6, background: "#fff",
+            marginTop: 4, background: "#fff",
             border: `1px solid ${C.hairline}`, borderRadius: 10,
-            padding: "6px 12px", display: "flex", flexDirection: "column", gap: 3,
+            padding: "4px 10px", display: "flex", flexDirection: "column", gap: 3,
           }}>
             <MiniTimeline
               label="SIN NUVEX" labelColor={C.muted}
@@ -424,9 +424,9 @@ export function PrintDocument(props: Props) {
 
           {/* Bullets refuerzo decisión cliente */}
           <div style={{
-            marginTop: 6, background: C.greenSoft,
+            marginTop: 4, background: C.greenSoft,
             border: `1px solid ${C.green}33`, borderRadius: 10,
-            padding: "6px 12px", display: "flex", flexWrap: "wrap",
+            padding: "4px 10px", display: "flex", flexWrap: "wrap",
             gap: "4px 18px", justifyContent: "center", alignItems: "center",
           }}>
             <ReinforceBullet text={<>Recuperas <b>{añosEliminadosEntero} años</b> de vida financiera</>} />
@@ -438,7 +438,7 @@ export function PrintDocument(props: Props) {
         </div>
 
         {/* ───── 3. INVERSIÓN POR ÉXITO + 72H ───── */}
-        <div style={{ padding: "10px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
+        <div style={{ padding: "6px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <SectionTitle index="3" title="Beneficio económico autorizado" />
           <div style={{
             marginTop: 7,
@@ -447,7 +447,7 @@ export function PrintDocument(props: Props) {
             {/* Beneficio económico card */}
             <div style={{
               background: "#fff", border: `1px solid ${C.hairline}`,
-              borderRadius: 12, padding: "9px 14px",
+              borderRadius: 12, padding: "7px 12px",
             }}>
               <PriceRow label="Tarifa estándar" value={formatCOP(honorariosBase)} strike />
               <div style={{ height: 1, background: C.hairline, margin: "7px 0" }} />
@@ -473,7 +473,7 @@ export function PrintDocument(props: Props) {
             {/* Urgencia — beneficio comercial 48h sin fecha específica */}
             <div style={{
               background: C.red, color: "#fff", borderRadius: 12,
-              padding: "8px 10px", display: "flex", flexDirection: "column",
+              padding: "6px 8px", display: "flex", flexDirection: "column",
               justifyContent: "center", alignItems: "center", textAlign: "center",
             }}>
               <div style={{
@@ -494,15 +494,15 @@ export function PrintDocument(props: Props) {
 
 
         {/* ───── CIERRE EMOCIONAL PREMIUM (full width) ───── */}
-        <div style={{ padding: "10px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
+        <div style={{ padding: "6px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <div style={{
             background: `linear-gradient(135deg, ${C.black} 0%, #1a1a1a 100%)`,
-            color: "#fff", borderRadius: 14, padding: "13px 20px",
+            color: "#fff", borderRadius: 14, padding: "8px 14px",
             position: "relative", overflow: "hidden",
           }}>
             <div style={{
               position: "absolute", top: -10, left: 18,
-              fontSize: 58, color: C.green, lineHeight: 1, fontWeight: 900, opacity: 0.28,
+              fontSize: 48, color: C.green, lineHeight: 1, fontWeight: 900, opacity: 0.28,
             }}>“</div>
             <div style={{
               fontSize: 12, color: C.green, fontWeight: 800, letterSpacing: "0.04em",
@@ -511,7 +511,7 @@ export function PrintDocument(props: Props) {
               Una reflexión final
             </div>
             <p style={{
-              margin: 0, fontSize: 11, lineHeight: 1.34,
+              margin: 0, fontSize: 11, lineHeight: 1.25,
               color: "rgba(255,255,255,0.94)", position: "relative", maxWidth: "92%",
             }}>
               Dentro de algunos años este crédito terminará de una u otra forma.
@@ -522,7 +522,7 @@ export function PrintDocument(props: Props) {
               a tu familia y a tus proyectos.
             </p>
             <div style={{
-              marginTop: 8, paddingTop: 7,
+              marginTop: 6, paddingTop: 6,
               borderTop: "1px solid rgba(255,255,255,0.15)",
               display: "grid", gridTemplateColumns: "1fr auto", gap: 16, alignItems: "center",
             }}>
@@ -531,7 +531,7 @@ export function PrintDocument(props: Props) {
               </div>
               <div style={{ textAlign: "right" }}>
                 <div style={{
-                  fontFamily: SCRIPT, fontSize: 26, color: C.green, lineHeight: 1,
+                  fontFamily: SCRIPT, fontSize: 22, color: C.green, lineHeight: 1,
                 }}>{analista}</div>
                 <div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.6)", marginTop: 2, letterSpacing: "0.12em" }}>
                   ANALISTA NUVEX
@@ -1519,19 +1519,19 @@ function FooterStrip() {
       style={{
         marginTop: "auto",
         background: C.black, color: "#fff",
-        padding: "8px 18px",
+        padding: "4px 22px",
         display: "grid",
         gridTemplateColumns: "auto 1fr 1fr 1fr 1fr",
-        gap: 10, alignItems: "center",
+        gap: 6, alignItems: "center",
         breakInside: "avoid", pageBreakInside: "avoid",
       }}
     >
       <img
         src={logoNuvex} alt="NUVEX" crossOrigin="anonymous"
-        style={{ height: 20, width: "auto", filter: "brightness(0) invert(1)" }}
+        style={{ height: 18, width: "auto", filter: "brightness(0) invert(1)" }}
       />
-      <FooterItem icon={<PinIcon />} title="Bucaramanga" lines={["Carrera 16 # 37-48 Piso 4", "Centro"]} />
-      <FooterItem icon={<PinIcon />} title="Bogotá" lines={["Calle 93 # 18 - 28", "Oficina 704"]} />
+      <FooterItem icon={<PinIcon />} title="Bucaramanga" lines={["Cra. 16 # 37-48 Piso 4", "Centro"]} />
+      <FooterItem icon={<PinIcon />} title="Bogotá" lines={["Calle 93 # 18-28", "Of. 704"]} />
       <FooterItem icon={<PhoneIcon />} title="" lines={["+57 316 402 3779"]} />
       <FooterItem icon={<GlobeIcon />} title="" lines={["www.nuvex.com.co"]} />
     </div>
@@ -1540,13 +1540,13 @@ function FooterStrip() {
 
 function FooterItem({ icon, title, lines }: { icon: React.ReactNode; title: string; lines: string[] }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
       <div style={{
-        width: 19, height: 19, borderRadius: "50%",
+        width: 17, height: 17, borderRadius: "50%",
         border: "1px solid rgba(255,255,255,0.35)",
         display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
       }}>{icon}</div>
-      <div style={{ fontSize: 7.8, lineHeight: 1.25 }}>
+      <div style={{ fontSize: 7.2, lineHeight: 1.2 }}>
         {title && <div style={{ fontWeight: 800, color: "#fff" }}>{title}</div>}
         {lines.map((l, i) => (
           <div key={i} style={{ color: "rgba(255,255,255,0.85)" }}>{l}</div>
