@@ -217,7 +217,7 @@ async function renderElementToPdf(elementId: string): Promise<jsPDF | null> {
     for (let i = 0; i < pageElements.length; i += 1) {
       const pageEl = pageElements[i];
       const pageCanvas = await html2canvas(pageEl, {
-        scale: 2,
+        scale: 1.5,
         useCORS: true,
         backgroundColor: "#ffffff",
         logging: false,
@@ -245,7 +245,7 @@ async function renderElementToPdf(elementId: string): Promise<jsPDF | null> {
         return null;
       }
       if (i > 0) pdf.addPage();
-      pdf.addImage(pageCanvas.toDataURL("image/png"), "PNG", 0, 0, 210, 297);
+      pdf.addImage(pageCanvas.toDataURL("image/jpeg", 0.82), "JPEG", 0, 0, 210, 297);
     }
     return pdf;
   }
