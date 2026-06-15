@@ -118,6 +118,13 @@ function AuthenticatedLayout() {
       setGateState("checking");
       setGateChecked(false);
     }
+    const fallback = typeof window !== "undefined"
+      ? window.setTimeout(() => {
+          if (cancel) return;
+          setGateState("ok");
+          setGateChecked(true);
+        }, 4500)
+      : undefined;
     (async () => {
       try {
         const [profileResult, rolesResult] = await Promise.all([
@@ -210,7 +217,10 @@ function AuthenticatedLayout() {
         setGateChecked(true);
       }
     })();
-    return () => { cancel = true; };
+    return () => {
+      cancel = true;
+      if (fallback) window.clearTimeout(fallback);
+    };
     // Sólo revalidar cuando cambia la sesión, NO en cada navegación (evita parpadeo).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.user?.id]);
