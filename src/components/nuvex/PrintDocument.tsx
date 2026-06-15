@@ -664,7 +664,7 @@ export function PrintDocument(props: Props) {
                 fontSize: 12.5, fontWeight: 900, letterSpacing: "0.06em",
                 boxShadow: "0 10px 24px -10px rgba(132,185,143,0.6)",
               }}>
-                CONTACTAR A {analista.toUpperCase()}
+                RECUPERAR MI TIEMPO FINANCIERO
               </div>
               <div style={{ fontSize: 9, color: "rgba(255,255,255,0.6)", letterSpacing: "0.16em", fontWeight: 700 }}>
                 PROPUESTA COMERCIAL VÁLIDA POR 72 HORAS
