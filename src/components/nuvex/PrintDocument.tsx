@@ -153,6 +153,19 @@ export function PrintDocument(props: Props) {
   const incrementoMensual = Math.max(0, nuevaCuota - cuotaActual);
   const incrementoPct = cuotaActual > 0 ? (incrementoMensual / cuotaActual) * 100 : 0;
 
+  // ─── RADIOGRAFÍA FINANCIERA DEL CRÉDITO ───
+  const yaPagado = Math.max(0, dineroPagadoFecha);
+  const faltaPagarSin = Math.max(0, scenario.totalActual);
+  const faltaPagarCon = Math.max(0, scenario.totalOptimizado);
+  const costoTotalSin = yaPagado + faltaPagarSin;
+  const costoTotalCon = yaPagado + faltaPagarCon;
+  const desembolsoRef = valorDesembolsado > 0 ? valorDesembolsado : 0;
+  const vecesSin = desembolsoRef > 0 ? costoTotalSin / desembolsoRef : 0;
+  const vecesCon = desembolsoRef > 0 ? costoTotalCon / desembolsoRef : 0;
+  const evitasPagar = Math.max(0, costoTotalSin - costoTotalCon);
+  const radiografiaOk = desembolsoRef > 0 && (yaPagado > 0 || faltaPagarSin > 0);
+
+
   // -------- Alternativas (página 2) — todas las propuestas menos la seleccionada
   const alternativas = buildAlternativas({
     mode, pesosPropuestas, uvrPropuestas, propuestasComerciales, bestIndex,
