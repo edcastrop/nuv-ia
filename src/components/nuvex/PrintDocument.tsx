@@ -1342,13 +1342,21 @@ function AlternativaCard(props: {
           background: C.azulSoft, border: `1px solid ${C.azul}22`,
           borderRadius: 8, padding: "4px 10px",
           display: "flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "center",
-          minWidth: 130,
+          minWidth: 150,
         }}>
           <div style={{ fontSize: 7.8, fontWeight: 800, color: C.azul, letterSpacing: "0.14em" }}>
             HONORARIOS A ÉXITO
           </div>
+          {honorariosBase > honorarios && (
+            <div style={{
+              fontSize: 9, fontWeight: 700, color: C.muted,
+              textDecoration: "line-through", marginTop: 1,
+            }}>
+              Estándar {formatCOP(honorariosBase)}
+            </div>
+          )}
           <div style={{ fontSize: 12.5, fontWeight: 900, color: C.azul, letterSpacing: "-0.01em", marginTop: 1 }}>
-            {formatCOP(honorarios)}
+            {honorariosBase > honorarios ? "Con beneficio " : ""}{formatCOP(honorarios)}
           </div>
           {honorariosTag && (
             <div style={{ fontSize: 7.6, fontWeight: 700, color: C.muted, marginTop: 1 }}>
