@@ -568,6 +568,10 @@ export function PrintDocument(props: Props) {
           {alternativas.slice(0, 3).map((alt, i) => {
             const total = Math.min(3, alternativas.length);
             const dyn = dynamicScenarioMeta(i, total);
+            const disc = applyCommercialDiscount(alt.honorariosFinal);
+            const tag = disc.aplicado
+              ? `Descuento ${disc.pct}% incluido`
+              : (alt.minimoAplicado ? "Mínimo aplicado" : null);
             return (
               <AlternativaCard
                 key={i}
@@ -587,8 +591,8 @@ export function PrintDocument(props: Props) {
                 añosActuales={añosActual}
                 añosOpt={alt.añosOpt}
                 quienIdeal={dyn.ideal}
-                honorarios={alt.honorariosFinal}
-                honorariosTag={alt.minimoAplicado ? "Mínimo aplicado" : null}
+                honorarios={disc.final}
+                honorariosTag={tag}
               />
             );
           })}
@@ -601,6 +605,7 @@ export function PrintDocument(props: Props) {
             bestIndex={bestIndex}
             recHonorariosFinal={recHonorariosFinal}
             recTieneDescuento={recHonorariosTieneDescuento}
+            applyCommercialDiscount={applyCommercialDiscount}
           />
           <div style={{
             marginTop: 5, fontSize: 8.5, color: C.muted, lineHeight: 1.35,
