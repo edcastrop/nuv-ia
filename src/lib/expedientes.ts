@@ -35,14 +35,17 @@ export const ESTADO_COLORS: Record<EstadoExpediente, { bg: string; color: string
 };
 
 export interface PropuestaData {
+  index?: number;
   nuevaCuota: number;
   nuevoPlazo: number;
+  cuotasEliminadas?: number;
   añosEliminados: number;
   ahorroIntereses: number;
   ahorroSeguros: number;
   ahorroTotal: number;
   honorarios: number;
   totalProyectado: number;
+  incrementoMensual?: number;
   fuente: "manual" | "automatica";
 }
 

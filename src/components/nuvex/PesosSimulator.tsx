@@ -38,7 +38,12 @@ import { AnimatedBackground } from "@/components/home/widgets/AnimatedBackground
 import { toast } from "sonner";
 import { useMonedaMismatchAlert } from "./MonedaMismatchDialog";
 import { FreshBlock } from "./FreshBlock";
-import { PropuestasComerciales, type RecomendadaSeleccionada } from "./PropuestasComerciales";
+import {
+  PropuestasComerciales,
+  type PropuestasComercialesDraft,
+  type PropuestasComercialesSnapshot,
+  type RecomendadaSeleccionada,
+} from "./PropuestasComerciales";
 import {
   defaultCobertura,
   defaultIntervinientes,
@@ -52,7 +57,12 @@ import { AuditPanel } from "./AuditPanel";
 import { useNivelAutonomia } from "@/hooks/useNivelAutonomia";
 import { triggerSimuladorAutoQA } from "@/lib/simuladorAutoQA";
 import { AutoQAPanel, type AutoQAResult } from "./AutoQAPanel";
-import { clearSimulatorDraft, readSimulatorDraft, useSimulatorDraft } from "./useSimulatorDraft";
+import {
+  clearSimulatorDraft,
+  parseStoredJson,
+  readSimulatorDraft,
+  useSimulatorDraft,
+} from "./useSimulatorDraft";
 
 export function PesosSimulator({
   initialExpediente,
@@ -89,6 +99,7 @@ export function PesosSimulator({
       initCred.cuotasEliminarManual && !initCred.nuevaCuotaManual
         ? ("cuotas" as const)
         : ("cuota" as const),
+    propuestasComerciales: parseStoredJson<PropuestasComercialesDraft>(initCred.propuestasComerciales),
   });
   const monedaAlerta = useMonedaMismatchAlert();
   const [autoQA, setAutoQA] = useState<AutoQAResult | null>(null);
@@ -110,6 +121,10 @@ export function PesosSimulator({
   const [modoPersonalizada, setModoPersonalizada] = useState<"cuota" | "cuotas">(
     draft.modoPersonalizada,
   );
+  const [propuestasComercialesDraft, setPropuestasComercialesDraft] =
+    useState<PropuestasComercialesDraft | undefined>(() => draft.propuestasComerciales);
+  const [propuestasComercialesSnapshot, setPropuestasComercialesSnapshot] =
+    useState<PropuestasComercialesSnapshot | null>(null);
 
   // Prellenar el campo "Asesor NUVEX" con el nombre del perfil autenticado
   useAsesorDefault(client.asesor, (nombre) => setClient((prev) => ({ ...prev, asesor: nombre })));
@@ -129,6 +144,7 @@ export function PesosSimulator({
       nuevaCuotaManual,
       cuotasEliminarManual,
       modoPersonalizada,
+      propuestasComerciales: propuestasComercialesDraft,
     }),
     [
       extractoArchivoPath,
@@ -144,6 +160,7 @@ export function PesosSimulator({
       nuevaCuotaManual,
       cuotasEliminarManual,
       modoPersonalizada,
+      propuestasComercialesDraft,
     ],
   );
   useSimulatorDraft("pesos", init?.id, currentDraft);
@@ -308,6 +325,8 @@ export function PesosSimulator({
   const manualValido = recomendadaPicked?.fuente === "manual";
   const recomendada = recomendadaPicked
     ? {
+        index: recomendadaPicked.index,
+        cuotasEliminadas: recomendadaPicked.cuotasEliminadas,
         añosEliminados: recomendadaPicked.añosEliminados,
         ahorroIntereses: recomendadaPicked.ahorroIntereses,
         ahorroSeguros: recomendadaPicked.ahorroSeguros,
@@ -618,6 +637,14 @@ export function PesosSimulator({
                 cuotasPendientes={cuotasBaseSimulacion}
                 baseCredito={baseCreditoReferencia > 0 ? baseCreditoReferencia : saldoBase}
                 dineroPagado={baseCreditoReferencia > 0 ? dineroPagadoFecha : 0}
+                initialState={propuestasComercialesDraft}
+                onStateChange={(snapshot) => {
+                  setPropuestasComercialesDraft({
+                    cuotasList: snapshot.cuotasList,
+                    recomendadaIdx: snapshot.recomendadaIdx,
+                  });
+                  setPropuestasComercialesSnapshot(snapshot);
+                }}
                 onRecomendadaChange={setRecomendadaPicked}
               />
             )}
@@ -657,6 +684,7 @@ export function PesosSimulator({
                         tea,
                         nuevaCuotaManual,
                         cuotasEliminarManual,
+                        propuestasComerciales: JSON.stringify(propuestasComercialesDraft ?? null),
                         cuotaPagadaCliente: cobertura.cuotaPagadaCliente || "",
                         valorBeneficio: cobertura.valorCobertura || "",
                         tipoBeneficio: cobertura.tipoBeneficio || "",
@@ -670,6 +698,8 @@ export function PesosSimulator({
                       propuesta: {
                         nuevaCuota: recomendada.nuevaCuota,
                         nuevoPlazo: recomendada.nuevoPlazo,
+                        index: recomendada.index,
+                        cuotasEliminadas: recomendada.cuotasEliminadas,
                         añosEliminados: recomendada.añosEliminados,
                         ahorroIntereses: recomendada.ahorroIntereses,
                         ahorroSeguros: recomendada.ahorroSeguros,
@@ -762,7 +792,8 @@ export function PesosSimulator({
                     cuotasPendientes={cuotasBaseSimulacion}
                     metrics={metrics}
                     pesosPropuestas={calc!.propuestas}
-                    bestIndex={bestIndex}
+                    propuestasComerciales={propuestasComercialesSnapshot?.propuestas}
+                    bestIndex={propuestasComercialesSnapshot?.recommendedIndex ?? bestIndex}
                     honorariosPct={honorariosPct}
                     personalizada={manualValido}
                     recommended={{

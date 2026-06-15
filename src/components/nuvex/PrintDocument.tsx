@@ -7,7 +7,8 @@ import { NUVEX } from "./constants";
 import type { ClientData } from "./ClientFields";
 import { formatCOP, formatNumber } from "../../lib/format";
 import type { PesosPropuesta, UVRPropuesta } from "../../lib/finance";
-import { calcularMotor, descuentoMaximoPct } from "../../lib/motorHonorarios";
+import type { PropuestaComercialPdfRow } from "./PropuestasComerciales";
+import { calcularMotor } from "../../lib/motorHonorarios";
 import logoNuvex from "@/assets/logo-nuvex.png";
 import heroSunset from "@/assets/nuvex-hero-sunset.jpg";
 
@@ -28,6 +29,7 @@ interface Props {
   metrics: MetricItem[];
   pesosPropuestas?: PesosPropuesta[];
   uvrPropuestas?: UVRPropuesta[];
+  propuestasComerciales?: PropuestaComercialPdfRow[];
   bestIndex: number;
   honorariosPct: number;
   personalizada?: boolean;
@@ -82,7 +84,7 @@ const SCRIPT = "'Allura','Caveat','Brush Script MT',cursive";
 export function PrintDocument(props: Props) {
   const {
     mode, client, recommended, scenario, commercial,
-    pesosPropuestas, uvrPropuestas, bestIndex,
+    pesosPropuestas, uvrPropuestas, propuestasComerciales, bestIndex,
   } = props;
   const containerId = mode === "uvr" ? "pdf-content-uvr" : "pdf-content-pesos";
 
@@ -148,33 +150,19 @@ export function PrintDocument(props: Props) {
 
   // -------- Alternativas (página 2) — todas las propuestas menos la seleccionada
   const alternativas = buildAlternativas({
-    mode, pesosPropuestas, uvrPropuestas, bestIndex,
+    mode, pesosPropuestas, uvrPropuestas, propuestasComerciales, bestIndex,
     cuotaActual, añoHoy, añoFinActual, añosActual,
     plazoOriginal: scenario.plazoActual,
   });
 
   // Todas las propuestas (incluyendo la recomendada) para el resumen comparativo
-  const allPropuestas = mapPropuestasToAltRow(mode, pesosPropuestas, uvrPropuestas, cuotaActual, scenario.plazoActual);
+  const allPropuestas = propuestasComerciales?.length
+    ? mapComercialesToAltRow(propuestasComerciales, cuotaActual)
+    : mapPropuestasToAltRow(mode, pesosPropuestas, uvrPropuestas, cuotaActual, scenario.plazoActual);
 
   // Honorarios "a éxito" finales de la propuesta recomendada (con descuento comercial si aplica)
   const recHonorariosFinal = honorariosFinales;
   const recHonorariosTieneDescuento = !!commercial?.hasDiscount;
-
-  // % de descuento comercial aprobado para esta propuesta — se aplica a TODAS las alternativas
-  // (limitado por el descuento máximo permitido por escala de honorarios).
-  const commercialDescuentoPct =
-    commercial?.hasDiscount && honorariosBase > 0
-      ? Math.max(0, Math.round(((honorariosBase - honorariosFinales) / honorariosBase) * 1000) / 10)
-      : 0;
-  const applyCommercialDiscount = (honor: number): { final: number; aplicado: boolean; pct: number } => {
-    if (commercialDescuentoPct <= 0 || honor <= 0) {
-      return { final: honor, aplicado: false, pct: 0 };
-    }
-    const maxPct = descuentoMaximoPct(honor);
-    const pct = Math.min(commercialDescuentoPct, maxPct);
-    if (pct <= 0) return { final: honor, aplicado: false, pct: 0 };
-    return { final: Math.round(honor * (1 - pct / 100)), aplicado: true, pct };
-  };
 
   return (
     <div
@@ -591,10 +579,7 @@ export function PrintDocument(props: Props) {
           {alternativas.slice(0, 3).map((alt, i) => {
             const total = Math.min(3, alternativas.length);
             const dyn = dynamicScenarioMeta(i, total);
-            const disc = applyCommercialDiscount(alt.honorariosFinal);
-            const tag = disc.aplicado
-              ? `Descuento ${disc.pct}% incluido`
-              : (alt.minimoAplicado ? "Mínimo aplicado" : null);
+            const tag = alt.minimoAplicado ? "Mínimo aplicado" : null;
             return (
               <AlternativaCard
                 key={i}
@@ -614,7 +599,7 @@ export function PrintDocument(props: Props) {
                 añosActuales={añosActual}
                 añosOpt={alt.añosOpt}
                 quienIdeal={dyn.ideal}
-                honorarios={disc.final}
+                honorarios={alt.honorariosFinal}
                 honorariosBase={alt.honorariosFinal}
                 honorariosTag={tag}
               />
@@ -629,7 +614,6 @@ export function PrintDocument(props: Props) {
             bestIndex={bestIndex}
             recHonorariosFinal={recHonorariosFinal}
             recTieneDescuento={recHonorariosTieneDescuento}
-            applyCommercialDiscount={applyCommercialDiscount}
           />
           <div style={{
             marginTop: 5, fontSize: 8.5, color: C.muted, lineHeight: 1.35,
@@ -711,13 +695,11 @@ function ResumenEscenarios({
   bestIndex,
   recHonorariosFinal,
   recTieneDescuento,
-  applyCommercialDiscount,
 }: {
   allPropuestas: AltRow[];
   bestIndex: number;
   recHonorariosFinal: number;
   recTieneDescuento: boolean;
-  applyCommercialDiscount: (honor: number) => { final: number; aplicado: boolean; pct: number };
 }) {
   // Orden: recomendada primero, luego las demás numeradas
   const rec = allPropuestas[bestIndex];
@@ -767,11 +749,8 @@ function ResumenEscenarios({
           honor = recHonorariosFinal;
           honorTag = recTieneDescuento ? "Descuento incluido" : null;
         } else {
-          const disc = applyCommercialDiscount(r.data.honorariosFinal);
-          honor = disc.final;
-          honorTag = disc.aplicado
-            ? `Descuento ${disc.pct}% incluido`
-            : (r.data.minimoAplicado ? "Mínimo aplicado" : null);
+          honor = r.data.honorariosFinal;
+          honorTag = r.data.minimoAplicado ? "Mínimo aplicado" : null;
         }
         return (
           <ResumenRow
@@ -951,6 +930,7 @@ function buildAlternativas(args: {
   mode: "pesos" | "uvr";
   pesosPropuestas?: PesosPropuesta[];
   uvrPropuestas?: UVRPropuesta[];
+  propuestasComerciales?: PropuestaComercialPdfRow[];
   bestIndex: number;
   cuotaActual: number;
   añoHoy: number;
@@ -958,8 +938,14 @@ function buildAlternativas(args: {
   añosActual: number;
   plazoOriginal: number;
 }): AltRow[] {
-  const { mode, pesosPropuestas, uvrPropuestas, bestIndex, cuotaActual, plazoOriginal } = args;
+  const { mode, pesosPropuestas, uvrPropuestas, propuestasComerciales, bestIndex, cuotaActual, plazoOriginal } = args;
   const fechaBase = new Date();
+
+  if (propuestasComerciales?.length) {
+    return mapComercialesToAltRow(propuestasComerciales, cuotaActual)
+      .filter((_, idx) => idx !== bestIndex)
+      .sort((a, b) => a.incrementoPct - b.incrementoPct);
+  }
 
   if (mode === "uvr") {
     const arr = uvrPropuestas || [];
@@ -1008,6 +994,34 @@ function buildAlternativas(args: {
       ...h,
     };
   }
+}
+
+function mapComercialesToAltRow(
+  propuestas: PropuestaComercialPdfRow[],
+  cuotaActual: number,
+): AltRow[] {
+  const fechaBase = new Date();
+  return propuestas.map((p) => {
+    const fechaFin = new Date(fechaBase);
+    fechaFin.setMonth(fechaFin.getMonth() + p.nuevoPlazo);
+    return {
+      nuevaCuota: p.nuevaCuota,
+      incrementoPct:
+        typeof p.incrementoMensual === "number" && cuotaActual > 0
+          ? (p.incrementoMensual / cuotaActual) * 100
+          : cuotaActual > 0
+            ? ((p.nuevaCuota - cuotaActual) / cuotaActual) * 100
+            : 0,
+      añosEliminados: p.añosEliminados,
+      cuotasEliminadas: p.cuotasEliminadas,
+      ahorroTotal: p.ahorroTotal,
+      añoFinOpt: fechaFin.getFullYear(),
+      añosOpt: p.nuevoPlazo / 12,
+      honorariosFinal: p.honorarios,
+      honorariosBase: p.honorarios,
+      minimoAplicado: p.honorarios <= 2_000_000,
+    };
+  });
 }
 
 function mapPropuestasToAltRow(
