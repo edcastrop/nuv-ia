@@ -304,7 +304,7 @@ export function PrintDocument(props: Props) {
         </div>
 
         {/* ───── 1. CUOTA HOY VS OPTIMIZADA ───── */}
-        <div style={{ padding: "11px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
+        <div style={{ padding: "8px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <SectionTitle index="1" title="Tu cuota, hoy y con nuestra optimización" />
           <div style={{
             marginTop: 7,
@@ -341,7 +341,7 @@ export function PrintDocument(props: Props) {
 
         {/* ───── 1B. RADIOGRAFÍA FINANCIERA DEL CRÉDITO ───── */}
         {radiografiaOk && (
-          <div style={{ padding: "9px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
+          <div style={{ padding: "6px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
             <div style={{
               background: "#fff", border: `1px solid ${C.hairline}`, borderRadius: 12,
               padding: "8px 12px",
@@ -372,7 +372,7 @@ export function PrintDocument(props: Props) {
 
 
         {/* ───── 2. IMPACTO FINANCIERO TOTAL ───── */}
-        <div style={{ padding: "11px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
+        <div style={{ padding: "8px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <SectionTitle index="2" title="Impacto financiero total" />
           <div style={{
             marginTop: 7,
@@ -401,9 +401,9 @@ export function PrintDocument(props: Props) {
 
           {/* Línea de tiempo recomendada — paridad visual con las 3 alternativas */}
           <div style={{
-            marginTop: 6, background: "#fff",
+            marginTop: 4, background: "#fff",
             border: `1px solid ${C.hairline}`, borderRadius: 10,
-            padding: "6px 12px", display: "flex", flexDirection: "column", gap: 3,
+            padding: "4px 10px", display: "flex", flexDirection: "column", gap: 3,
           }}>
             <MiniTimeline
               label="SIN NUVEX" labelColor={C.muted}
@@ -424,9 +424,9 @@ export function PrintDocument(props: Props) {
 
           {/* Bullets refuerzo decisión cliente */}
           <div style={{
-            marginTop: 6, background: C.greenSoft,
+            marginTop: 4, background: C.greenSoft,
             border: `1px solid ${C.green}33`, borderRadius: 10,
-            padding: "6px 12px", display: "flex", flexWrap: "wrap",
+            padding: "4px 10px", display: "flex", flexWrap: "wrap",
             gap: "4px 18px", justifyContent: "center", alignItems: "center",
           }}>
             <ReinforceBullet text={<>Recuperas <b>{añosEliminadosEntero} años</b> de vida financiera</>} />
@@ -438,7 +438,7 @@ export function PrintDocument(props: Props) {
         </div>
 
         {/* ───── 3. INVERSIÓN POR ÉXITO + 72H ───── */}
-        <div style={{ padding: "10px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
+        <div style={{ padding: "6px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <SectionTitle index="3" title="Beneficio económico autorizado" />
           <div style={{
             marginTop: 7,
@@ -473,7 +473,7 @@ export function PrintDocument(props: Props) {
             {/* Urgencia — beneficio comercial 48h sin fecha específica */}
             <div style={{
               background: C.red, color: "#fff", borderRadius: 12,
-              padding: "8px 10px", display: "flex", flexDirection: "column",
+              padding: "6px 8px", display: "flex", flexDirection: "column",
               justifyContent: "center", alignItems: "center", textAlign: "center",
             }}>
               <div style={{
@@ -494,10 +494,10 @@ export function PrintDocument(props: Props) {
 
 
         {/* ───── CIERRE EMOCIONAL PREMIUM (full width) ───── */}
-        <div style={{ padding: "10px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
+        <div style={{ padding: "6px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <div style={{
             background: `linear-gradient(135deg, ${C.black} 0%, #1a1a1a 100%)`,
-            color: "#fff", borderRadius: 14, padding: "13px 20px",
+            color: "#fff", borderRadius: 14, padding: "10px 16px",
             position: "relative", overflow: "hidden",
           }}>
             <div style={{
