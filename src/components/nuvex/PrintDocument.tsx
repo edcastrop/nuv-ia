@@ -467,28 +467,6 @@ export function PrintDocument(props: Props) {
               <ReinforceBullet text={<>Honorarios con <b>beneficio comercial</b> aplicado</>} />
             )}
           </div>
-
-
-          <div style={{
-            marginTop: 6, background: "#fff",
-            border: `1px solid ${C.hairline}`, borderRadius: 12,
-            padding: "6px 14px",
-          }}>
-            <div style={{
-              fontSize: 10, letterSpacing: "0.22em", fontWeight: 800,
-              color: C.muted, textAlign: "center", marginBottom: 4,
-            }}>
-              ESTO SIGNIFICA PARA TI Y TU FAMILIA
-            </div>
-            <div style={{
-              display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12,
-            }}>
-              <BenefitItem icon={<CalendarOff />} label={<>Menos tiempo<br />endeudado</>} />
-              <BenefitItem icon={<BagMoney />} label={<>Más dinero en<br />tu bolsillo</>} />
-              <BenefitItem icon={<ShieldOk />} label={<>Más tranquilidad<br />financiera</>} />
-              <BenefitItem icon={<FamilyIcon />} label={<>Más oportunidades<br />para tu familia</>} />
-            </div>
-          </div>
         </div>
 
         {/* ───── 3. INVERSIÓN POR ÉXITO + 72H ───── */}
