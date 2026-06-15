@@ -892,6 +892,8 @@ export function UVRSimulator({
                       vigencia: discount.vigencia || undefined,
                       hasDiscount: d.hasDiscount,
                     }}
+                    dineroPagadoFecha={dineroPagadoFecha}
+                    valorDesembolsado={valorDesembolsadoNum}
                   />
                 );
               })()}
