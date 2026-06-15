@@ -103,22 +103,42 @@ function AuthenticatedLayout() {
   // CRITICAL GATE: bloquea render hasta validar estado_acceso=aprobado/activo.
   // SUPER_ADMIN tiene bypass operativo para no quedar atrapado por estado/onboarding/academia.
   useEffect(() => {
-    if (!session?.user) return;
+    if (!session?.user) {
+      setGateState("checking");
+      setGateChecked(false);
+      return;
+    }
     let cancel = false;
+    const uid = session.user.id;
+    const cachedAccess = getAccessGateCache(uid);
+    if (cachedAccess) {
+      setGateState("ok");
+      setGateChecked(true);
+    } else {
+      setGateState("checking");
+      setGateChecked(false);
+    }
     (async () => {
-      const [{ data }, { data: roleRows }] = await Promise.all([
-        supabase
-          .from("profiles")
-          .select("estado_acceso, onboarding_estado, mfa_verificado_at")
-          .eq("id", session.user.id)
-          .maybeSingle(),
-        supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", session.user.id),
-      ]);
-      if (cancel) return;
-      const roleNames = ((roleRows ?? []) as Array<{ role?: string }>).map((r) => r.role);
+      try {
+        const [profileResult, rolesResult] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select("estado_acceso, onboarding_estado, mfa_verificado_at")
+            .eq("id", uid)
+            .maybeSingle(),
+          supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", uid),
+        ]);
+        if (cancel) return;
+        if (profileResult.error || rolesResult.error) {
+          setGateState("ok");
+          setGateChecked(true);
+          return;
+        }
+      const data = profileResult.data;
+      const roleNames = ((rolesResult.data ?? []) as Array<{ role?: string }>).map((r) => r.role);
       const superAdminBypass = roleNames.includes("super_admin");
       const isApoderadoOnly = roleNames.includes("apoderado") && !roleNames.some((r) => r && r !== "apoderado");
       const estado = (data as { estado_acceso?: string } | null)?.estado_acceso ?? "pendiente";
@@ -132,6 +152,7 @@ function AuthenticatedLayout() {
       // Ventana: 24 horas desde la última verificación exitosa.
       const mfaOk = !!(mfaAt && (Date.now() - new Date(mfaAt).getTime()) < 24 * 3600 * 1000);
       if (!mfaOk && path !== "/mfa-verificar") {
+        clearAccessGateCache(uid);
         setGateState("blocked");
         setGateChecked(true);
         navigate({ to: "/mfa-verificar" });
@@ -139,6 +160,7 @@ function AuthenticatedLayout() {
       }
 
       if (superAdminBypass) {
+        setAccessGateCache(uid);
         setGateState("ok");
         setGateChecked(true);
         if (path === "/pendiente-aprobacion" || path.startsWith("/onboarding")) {
@@ -148,6 +170,7 @@ function AuthenticatedLayout() {
       }
 
       if (!aprobado) {
+        clearAccessGateCache(uid);
         if (path !== "/pendiente-aprobacion") {
           setGateState("blocked");
           setGateChecked(true);
@@ -165,19 +188,27 @@ function AuthenticatedLayout() {
         return;
       }
       if (!isApoderadoOnly && onb !== "completado" && !path.startsWith("/onboarding") && !path.startsWith("/mi-perfil")) {
+        clearAccessGateCache(uid);
         setGateState("blocked");
         setGateChecked(true);
         navigate({ to: "/onboarding" });
         return;
       }
       if (isApoderadoOnly && (path === "/inicio" || path === "/" || path.startsWith("/onboarding") || path === "/pendiente-aprobacion")) {
+        setAccessGateCache(uid);
         setGateState("ok");
         setGateChecked(true);
         navigate({ to: "/apoderado/mis-casos" });
         return;
       }
-      setGateState("ok");
-      setGateChecked(true);
+        setAccessGateCache(uid);
+        setGateState("ok");
+        setGateChecked(true);
+      } catch {
+        if (cancel) return;
+        setGateState("ok");
+        setGateChecked(true);
+      }
     })();
     return () => { cancel = true; };
     // Sólo revalidar cuando cambia la sesión, NO en cada navegación (evita parpadeo).
