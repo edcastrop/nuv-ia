@@ -893,7 +893,7 @@ export function UVRSimulator({
                       hasDiscount: d.hasDiscount,
                     }}
                     dineroPagadoFecha={dineroPagadoFecha}
-                    valorDesembolsado={valorDesembolsadoNum}
+                    valorDesembolsado={Math.max(valorDesembolsadoNum, saldoPesosNum)}
                   />
                 );
               })()}
