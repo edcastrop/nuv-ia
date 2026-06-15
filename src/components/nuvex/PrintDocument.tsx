@@ -216,7 +216,7 @@ export function PrintDocument(props: Props) {
         }}>
           <img
             src={logoNuvex} alt="NUVEX" crossOrigin="anonymous"
-            style={{ height: 34, width: "auto", filter: "brightness(0) invert(1)" }}
+            style={{ height: 48, width: "auto", filter: "brightness(0) invert(1)" }}
           />
           <div style={{ fontSize: 11.5, lineHeight: 1.4, color: "rgba(255,255,255,0.92)" }}>
             Transformamos tu crédito,
