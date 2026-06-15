@@ -1231,6 +1231,53 @@ function BenefitItem({ icon, label }: { icon: React.ReactNode; label: React.Reac
   );
 }
 
+function RadioMini({
+  label, value, tone,
+}: { label: string; value: string; tone: "neutral" | "hero" }) {
+  const isHero = tone === "hero";
+  return (
+    <div style={{
+      background: isHero ? C.greenSoft : "#F4F6F8",
+      border: isHero ? `1px solid ${C.green}55` : `1px solid ${C.hairline}`,
+      borderRadius: 10, padding: "6px 10px",
+      display: "flex", flexDirection: "column", justifyContent: "center",
+    }}>
+      <div style={{
+        fontSize: 7.8, letterSpacing: "0.2em", fontWeight: 800,
+        color: isHero ? C.greenDeep : C.muted, marginBottom: 2,
+      }}>{label}</div>
+      <div style={{
+        fontSize: isHero ? 17 : 13.5, fontWeight: 900,
+        color: isHero ? C.greenDeep : C.ink,
+        letterSpacing: "-0.02em", lineHeight: 1.05,
+      }}>{value}</div>
+    </div>
+  );
+}
+
+function CompareCell({
+  title, big, small, bg, fg, accent,
+}: { title: string; big: string; small: string; bg: string; fg: string; accent: string }) {
+  return (
+    <div style={{
+      background: bg, borderRadius: 10, padding: "5px 10px",
+      display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
+    }}>
+      <div style={{
+        fontSize: 8, letterSpacing: "0.22em", fontWeight: 800, color: accent,
+      }}>{title}</div>
+      <div style={{ textAlign: "right" }}>
+        <div style={{ fontSize: 14, fontWeight: 900, color: fg, lineHeight: 1, letterSpacing: "-0.02em" }}>
+          {big}
+        </div>
+        <div style={{ fontSize: 8.5, color: fg, opacity: 0.75, lineHeight: 1.1, marginTop: 1 }}>
+          {small}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PriceRow({ label, value, strike = false }: { label: string; value: string; strike?: boolean }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
