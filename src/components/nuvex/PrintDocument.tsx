@@ -134,10 +134,15 @@ export function PrintDocument(props: Props) {
   const alternativas = buildAlternativas({
     mode, pesosPropuestas, uvrPropuestas, bestIndex,
     cuotaActual, añoHoy, añoFinActual, añosActual,
+    plazoOriginal: scenario.plazoActual,
   });
 
   // Todas las propuestas (incluyendo la recomendada) para el resumen comparativo
-  const allPropuestas = mapPropuestasToAltRow(mode, pesosPropuestas, uvrPropuestas, cuotaActual);
+  const allPropuestas = mapPropuestasToAltRow(mode, pesosPropuestas, uvrPropuestas, cuotaActual, scenario.plazoActual);
+
+  // Honorarios "a éxito" finales de la propuesta recomendada (con descuento comercial si aplica)
+  const recHonorariosFinal = honorariosFinales;
+  const recHonorariosTieneDescuento = !!commercial?.hasDiscount;
 
   return (
     <div
