@@ -1138,11 +1138,14 @@ function AlternativaCard(props: {
   terminaEn: number; terminaActual: number;
   añoHoy: number; añosActuales: number; añosOpt: number;
   quienIdeal: string;
+  honorarios: number;
+  honorariosTag: string | null;
 }) {
   const {
     index, label, accent, soft, deep,
     cuota, cuotaPct, ahorroAños, ahorroCuotas, ahorroDinero,
     terminaEn, terminaActual, añoHoy, añosActuales, añosOpt, quienIdeal,
+    honorarios, honorariosTag,
   } = props;
   const barPct = Math.max(15, Math.min(95, (añosOpt / Math.max(añosActuales, 1)) * 100));
 
