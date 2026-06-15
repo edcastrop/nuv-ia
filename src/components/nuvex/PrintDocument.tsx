@@ -667,7 +667,7 @@ export function PrintDocument(props: Props) {
                 QUIERO RECUPERAR MI TIEMPO FINANCIERO
               </div>
               <div style={{ fontSize: 9, color: "rgba(255,255,255,0.6)", letterSpacing: "0.16em", fontWeight: 700 }}>
-                PROPUESTA COMERCIAL VÁLIDA POR 72 HORAS
+                PROPUESTA COMERCIAL VÁLIDA POR 48 HORAS
               </div>
             </div>
           </div>
