@@ -662,9 +662,13 @@ export function PrintDocument(props: Props) {
 function ResumenEscenarios({
   allPropuestas,
   bestIndex,
+  recHonorariosFinal,
+  recTieneDescuento,
 }: {
   allPropuestas: AltRow[];
   bestIndex: number;
+  recHonorariosFinal: number;
+  recTieneDescuento: boolean;
 }) {
   // Orden: recomendada primero, luego las demás numeradas
   const rec = allPropuestas[bestIndex];
@@ -689,7 +693,7 @@ function ResumenEscenarios({
         display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
         <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: "0.18em" }}>
-          RESUMEN DE ESCENARIOS
+          RESUMEN DE ALTERNATIVAS
         </div>
         <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", letterSpacing: "0.12em", fontWeight: 700 }}>
           COMPARATIVA RÁPIDA
@@ -697,25 +701,34 @@ function ResumenEscenarios({
       </div>
       <div style={{
         display: "grid",
-        gridTemplateColumns: "1.15fr 1fr 1fr 1fr",
+        gridTemplateColumns: "1.05fr 0.9fr 0.9fr 0.95fr 1fr",
         background: C.bgSoft,
-        fontSize: 8.5, fontWeight: 800, color: C.muted, letterSpacing: "0.16em",
+        fontSize: 8.2, fontWeight: 800, color: C.muted, letterSpacing: "0.14em",
       }}>
-        <div style={{ padding: "7px 12px" }}>ALTERNATIVA</div>
-        <div style={{ padding: "7px 12px", textAlign: "right" }}>NUEVA CUOTA</div>
-        <div style={{ padding: "7px 12px", textAlign: "right" }}>TIEMPO RECUPERADO</div>
-        <div style={{ padding: "7px 12px", textAlign: "right" }}>AHORRO ECONÓMICO</div>
+        <div style={{ padding: "7px 10px" }}>ALTERNATIVA</div>
+        <div style={{ padding: "7px 10px", textAlign: "right" }}>NUEVA CUOTA</div>
+        <div style={{ padding: "7px 10px", textAlign: "right" }}>TIEMPO RECUP.</div>
+        <div style={{ padding: "7px 10px", textAlign: "right" }}>AHORRO ECON.</div>
+        <div style={{ padding: "7px 10px", textAlign: "right" }}>HONORARIOS A ÉXITO</div>
       </div>
-      {rows.map((r, i) => (
-        <ResumenRow
-          key={i}
-          isRecommended={r.isRecommended}
-          label={r.label}
-          cuota={r.data.nuevaCuota}
-          años={Math.round(r.data.añosEliminados)}
-          dinero={r.data.ahorroTotal}
-        />
-      ))}
+      {rows.map((r, i) => {
+        const honor = r.isRecommended ? recHonorariosFinal : r.data.honorariosFinal;
+        const honorTag = r.isRecommended
+          ? (recTieneDescuento ? "Descuento incluido" : null)
+          : (r.data.minimoAplicado ? "Mínimo aplicado" : null);
+        return (
+          <ResumenRow
+            key={i}
+            isRecommended={r.isRecommended}
+            label={r.label}
+            cuota={r.data.nuevaCuota}
+            años={Math.round(r.data.añosEliminados)}
+            dinero={r.data.ahorroTotal}
+            honorarios={honor}
+            honorariosTag={honorTag}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -726,41 +739,55 @@ function ResumenRow({
   cuota,
   años,
   dinero,
+  honorarios,
+  honorariosTag,
 }: {
   isRecommended?: boolean;
   label: string;
   cuota: number;
   años: number;
   dinero: number;
+  honorarios: number;
+  honorariosTag: string | null;
 }) {
   if (isRecommended) {
     return (
       <div style={{
         display: "grid",
-        gridTemplateColumns: "1.15fr 1fr 1fr 1fr",
+        gridTemplateColumns: "1.05fr 0.9fr 0.9fr 0.95fr 1fr",
         borderTop: `2px solid ${C.green}`,
         background: `linear-gradient(90deg, ${C.greenSoft} 0%, #fff 100%)`,
         alignItems: "center",
       }}>
-        <div style={{ padding: "10px 12px", display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ padding: "10px 10px", display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{
             background: C.greenDeep, color: "#fff",
             padding: "3px 8px", borderRadius: 4,
-            fontSize: 8.5, fontWeight: 900, letterSpacing: "0.14em",
+            fontSize: 8.2, fontWeight: 900, letterSpacing: "0.12em",
             display: "flex", alignItems: "center", gap: 4,
           }}>
             <span>★</span>
-            <span>RECOMENDADA POR NUVEX</span>
+            <span>RECOMENDADA</span>
           </div>
         </div>
-        <div style={{ padding: "10px 12px", textAlign: "right", fontSize: 12.5, fontWeight: 900, color: C.greenDeep }}>
+        <div style={{ padding: "10px 10px", textAlign: "right", fontSize: 12, fontWeight: 900, color: C.greenDeep }}>
           {formatCOP(cuota)}
         </div>
-        <div style={{ padding: "10px 12px", textAlign: "right", fontSize: 12.5, fontWeight: 900, color: C.greenDeep }}>
+        <div style={{ padding: "10px 10px", textAlign: "right", fontSize: 12, fontWeight: 900, color: C.greenDeep }}>
           {años} AÑOS
         </div>
-        <div style={{ padding: "10px 12px", textAlign: "right", fontSize: 12.5, fontWeight: 900, color: C.greenDeep }}>
+        <div style={{ padding: "10px 10px", textAlign: "right", fontSize: 12, fontWeight: 900, color: C.greenDeep }}>
           {formatCOP(dinero)}
+        </div>
+        <div style={{ padding: "8px 10px", textAlign: "right" }}>
+          <div style={{ fontSize: 11.5, fontWeight: 900, color: C.azul, letterSpacing: "-0.01em" }}>
+            {formatCOP(honorarios)}
+          </div>
+          {honorariosTag && (
+            <div style={{ fontSize: 7.8, color: C.muted, fontWeight: 700, marginTop: 1 }}>
+              {honorariosTag}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -769,26 +796,37 @@ function ResumenRow({
   return (
     <div style={{
       display: "grid",
-      gridTemplateColumns: "1.15fr 1fr 1fr 1fr",
+      gridTemplateColumns: "1.05fr 0.9fr 0.9fr 0.95fr 1fr",
       borderTop: `1px solid ${C.hairline}`,
       alignItems: "center",
     }}>
-      <div style={{ padding: "7px 12px", display: "flex", alignItems: "center", gap: 8 }}>
+      <div style={{ padding: "7px 10px", display: "flex", alignItems: "center", gap: 8 }}>
         <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.muted }} />
-        <div style={{ fontSize: 11, fontWeight: 800, color: C.ink }}>{label}</div>
+        <div style={{ fontSize: 10.5, fontWeight: 800, color: C.ink }}>{label}</div>
       </div>
-      <div style={{ padding: "7px 12px", textAlign: "right", fontSize: 11, fontWeight: 700, color: C.ink }}>
+      <div style={{ padding: "7px 10px", textAlign: "right", fontSize: 10.5, fontWeight: 700, color: C.ink }}>
         {formatCOP(cuota)}
       </div>
-      <div style={{ padding: "7px 12px", textAlign: "right", fontSize: 11, fontWeight: 700, color: C.ink }}>
+      <div style={{ padding: "7px 10px", textAlign: "right", fontSize: 10.5, fontWeight: 700, color: C.ink }}>
         {años} años
       </div>
-      <div style={{ padding: "7px 12px", textAlign: "right", fontSize: 11, fontWeight: 700, color: C.ink }}>
+      <div style={{ padding: "7px 10px", textAlign: "right", fontSize: 10.5, fontWeight: 700, color: C.ink }}>
         {formatCOP(dinero)}
+      </div>
+      <div style={{ padding: "6px 10px", textAlign: "right" }}>
+        <div style={{ fontSize: 10.8, fontWeight: 800, color: C.azul }}>
+          {formatCOP(honorarios)}
+        </div>
+        {honorariosTag && (
+          <div style={{ fontSize: 7.8, color: C.muted, fontWeight: 700, marginTop: 1 }}>
+            {honorariosTag}
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
 
 /* ════════════════════════════════════════════════════════════
    ALTERNATIVAS — paletas + builder
