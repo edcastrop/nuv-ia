@@ -588,6 +588,7 @@ function PremiumCard({ children, className }: { children: React.ReactNode; class
         background: `linear-gradient(180deg, ${CARD} 0%, ${CARD2} 100%)`,
         border: `1px solid ${BORDER}`,
         boxShadow: "0 10px 40px -10px rgba(0,0,0,0.5)",
+        color: "#F1F5F9",
       }}
     >
       {children}
