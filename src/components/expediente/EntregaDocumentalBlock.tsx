@@ -20,8 +20,9 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { Card } from "@/components/nuvex/ui";
-import { NUVEX } from "@/components/nuvex/constants";
+import { NCard } from "@/components/nuvia/NCard";
+import { SectionHeader } from "@/components/nuvia/SectionHeader";
+
 import { supabase } from "@/integrations/supabase/client";
 import { getReglaEntrega } from "@/lib/reglasEntregaBanco";
 import {
@@ -204,9 +205,9 @@ export function EntregaDocumentalBlock({ expedienteId, onIrAFinanciero }: Props)
 
   if (loading) {
     return (
-      <Card>
-        <div className="py-3 text-[12px] text-[#242424]/60">Cargando entrega documental…</div>
-      </Card>
+      <NCard variant="elevated">
+        <div className="py-3 text-[12px] text-[rgba(170,179,197,0.6)]">Cargando entrega documental…</div>
+      </NCard>
     );
   }
 
@@ -215,39 +216,39 @@ export function EntregaDocumentalBlock({ expedienteId, onIrAFinanciero }: Props)
   const vencida = diasFaltantes !== null && diasFaltantes < 0 && !completada;
 
   return (
-    <Card>
+    <NCard variant="elevated">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Landmark size={18} style={{ color: NUVEX.azul }} />
-          <h3 className="text-sm font-semibold text-[#242424]">
+          <Landmark size={18} style={{ color: "var(--nuvia-accent-blue)" }} />
+          <h3 className="text-sm font-semibold text-white">
             Entrega documentación financiera al banco
           </h3>
         </div>
         <button
           onClick={() => void load()}
-          className="text-[11px] text-[#445DA3] hover:underline inline-flex items-center gap-1"
+          className="text-[11px] text-[var(--nuvia-accent-blue)] hover:underline inline-flex items-center gap-1"
         >
           <RefreshCw size={12} /> Recargar
         </button>
       </div>
 
       {/* Banner: regla del banco detectada */}
-      <div className="mb-3 rounded-lg border border-[#E3E7EE] bg-[#F7F9FB] p-3 text-[12px] text-[#242424]">
-        <div className="font-semibold mb-1" style={{ color: NUVEX.azul }}>
+      <div className="mb-3 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-3 text-[12px] text-white">
+        <div className="font-semibold mb-1" style={{ color: "var(--nuvia-accent-blue)" }}>
           Regla detectada · {regla.bancoLabel}
         </div>
-        <div className="text-[#242424]/80">{regla.descripcion}</div>
+        <div className="text-[rgba(170,179,197,0.9)]">{regla.descripcion}</div>
         <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
-          <span className="rounded bg-white border border-[#E3E7EE] px-2 py-0.5">
+          <span className="rounded bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] px-2 py-0.5">
             Modalidad: <strong className="capitalize">{regla.modalidad}</strong>
           </span>
           {regla.modalidad === "fisica" && (
-            <span className="rounded bg-white border border-[#E3E7EE] px-2 py-0.5">
+            <span className="rounded bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] px-2 py-0.5">
               Plazo: <strong>{regla.diasHabilesEntrega} días hábiles</strong>
             </span>
           )}
           {regla.requiereChecklistCompletoAlRadicar && (
-            <span className="rounded bg-[#FEE2E2] border border-[#FCA5A5] px-2 py-0.5 text-[#991B1B] font-semibold inline-flex items-center gap-1">
+            <span className="rounded bg-[rgba(255,107,107,0.14)] border border-[rgba(255,107,107,0.4)] px-2 py-0.5 text-[var(--nuvia-danger)] font-semibold inline-flex items-center gap-1">
               <AlertTriangle size={11} /> Bloqueo: checklist 100 % al radicar
             </span>
           )}
@@ -256,8 +257,8 @@ export function EntregaDocumentalBlock({ expedienteId, onIrAFinanciero }: Props)
 
       {/* Si no existe fila aún */}
       {!row && (
-        <div className="rounded-lg border border-dashed border-[#E3E7EE] p-4 text-center">
-          <p className="text-[12px] text-[#242424]/70 mb-2">
+        <div className="rounded-lg border border-dashed border-[rgba(255,255,255,0.08)] p-4 text-center">
+          <p className="text-[12px] text-[rgba(170,179,197,0.8)] mb-2">
             La entrega documental aún no está inicializada. Se creará automáticamente al
             registrar el radicado en banco. También puedes inicializarla ahora.
           </p>
@@ -265,7 +266,7 @@ export function EntregaDocumentalBlock({ expedienteId, onIrAFinanciero }: Props)
             type="button"
             onClick={inicializar}
             className="rounded-lg px-3 py-2 text-xs font-semibold text-white"
-            style={{ background: NUVEX.azul }}
+            style={{ background: "var(--nuvia-accent-blue)" }}
           >
             Inicializar entrega documental
           </button>
@@ -278,7 +279,7 @@ export function EntregaDocumentalBlock({ expedienteId, onIrAFinanciero }: Props)
           <EstadoBanner row={row} diasFaltantes={diasFaltantes} vencida={vencida} />
 
           {row.estado === "no_aplica" && (
-            <p className="text-[12px] text-[#242424]/70">
+            <p className="text-[12px] text-[rgba(170,179,197,0.8)]">
               El banco asociado no tiene una regla específica de entrega documental
               configurada. Coordina manualmente.
             </p>
@@ -286,11 +287,11 @@ export function EntregaDocumentalBlock({ expedienteId, onIrAFinanciero }: Props)
 
           {/* Davivienda: correo */}
           {regla.modalidad === "correo" && !completada && (
-            <div className="rounded-lg border border-[#E3E7EE] bg-white p-3">
-              <div className="text-[11px] uppercase tracking-wider font-semibold mb-1" style={{ color: NUVEX.azul }}>
+            <div className="rounded-lg border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] p-3">
+              <div className="text-[11px] uppercase tracking-wider font-semibold mb-1" style={{ color: "var(--nuvia-accent-blue)" }}>
                 Acción · Davivienda (correo a Jurídica del banco)
               </div>
-              <p className="text-[12px] text-[#242424]/75 mb-2">
+              <p className="text-[12px] text-[rgba(170,179,197,0.85)] mb-2">
                 Construye el correo desde el módulo <strong>Financiero → Análisis de
                 capacidad de pago → Construir solicitud al banco</strong>. Adjunta poder,
                 cédulas y documentos financieros. Cuando lo hayas enviado, márcalo aquí.
@@ -300,7 +301,7 @@ export function EntregaDocumentalBlock({ expedienteId, onIrAFinanciero }: Props)
                   <button
                     type="button"
                     onClick={onIrAFinanciero}
-                    className="rounded-lg px-3 py-2 text-xs font-semibold inline-flex items-center gap-2 border border-[#E3E7EE] bg-white text-[#445DA3] hover:bg-[#EEF1FA]"
+                    className="rounded-lg px-3 py-2 text-xs font-semibold inline-flex items-center gap-2 border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] text-[var(--nuvia-accent-blue)] hover:bg-[rgba(68,93,163,0.18)]"
                   >
                     <Mail size={14} /> Ir a Financiero (drag &amp; drop)
                   </button>
@@ -310,7 +311,7 @@ export function EntregaDocumentalBlock({ expedienteId, onIrAFinanciero }: Props)
                   onClick={marcarEnviadaCorreo}
                   disabled={marcando}
                   className="rounded-lg px-3 py-2 text-xs font-semibold text-white inline-flex items-center gap-2 disabled:opacity-50"
-                  style={{ background: "#1F7A45" }}
+                  style={{ background: "var(--nuvia-accent-green)" }}
                 >
                   <Send size={14} /> Marcar enviada por correo
                 </button>
@@ -320,12 +321,12 @@ export function EntregaDocumentalBlock({ expedienteId, onIrAFinanciero }: Props)
 
           {/* Física diferida (Davibank / AV Villas / otros con plazo) */}
           {regla.modalidad === "fisica" && regla.diasHabilesEntrega > 0 && !completada && (
-            <div className="rounded-lg border border-[#E3E7EE] bg-white p-3 space-y-3">
+            <div className="rounded-lg border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] p-3 space-y-3">
               <div>
-                <div className="text-[11px] uppercase tracking-wider font-semibold mb-1" style={{ color: NUVEX.azul }}>
+                <div className="text-[11px] uppercase tracking-wider font-semibold mb-1" style={{ color: "var(--nuvia-accent-blue)" }}>
                   Acción · Entrega física programada
                 </div>
-                <p className="text-[12px] text-[#242424]/75">
+                <p className="text-[12px] text-[rgba(170,179,197,0.85)]">
                   Prepara el paquete físico (poder, cédulas, financieros) y entrégalo en
                   ventanilla del banco en la fecha programada.
                 </p>
@@ -343,7 +344,7 @@ export function EntregaDocumentalBlock({ expedienteId, onIrAFinanciero }: Props)
                   type="button"
                   onClick={generarPaquete}
                   disabled={generandoPdf}
-                  className="rounded-lg px-3 py-2 text-xs font-semibold inline-flex items-center gap-2 border border-[#E3E7EE] bg-white text-[#242424] hover:bg-[#F7F9FB] disabled:opacity-50"
+                  className="rounded-lg px-3 py-2 text-xs font-semibold inline-flex items-center gap-2 border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] text-white hover:bg-[rgba(255,255,255,0.03)] disabled:opacity-50"
                 >
                   <FileDown size={14} /> {generandoPdf ? "Generando…" : "Generar paquete PDF"}
                 </button>
@@ -352,7 +353,7 @@ export function EntregaDocumentalBlock({ expedienteId, onIrAFinanciero }: Props)
                   onClick={marcarEntregadaFisica}
                   disabled={marcando}
                   className="rounded-lg px-3 py-2 text-xs font-semibold text-white inline-flex items-center gap-2 disabled:opacity-50"
-                  style={{ background: "#1F7A45" }}
+                  style={{ background: "var(--nuvia-accent-green)" }}
                 >
                   <Package size={14} /> Marcar entregada físicamente
                 </button>
@@ -362,7 +363,7 @@ export function EntregaDocumentalBlock({ expedienteId, onIrAFinanciero }: Props)
 
           {/* Bogotá: entregada en el mismo acto (estado ya viene en entregada_fisica) */}
           {regla.modalidad === "fisica" && regla.diasHabilesEntrega === 0 && (
-            <p className="text-[12px] text-[#242424]/70 mt-2">
+            <p className="text-[12px] text-[rgba(170,179,197,0.8)] mt-2">
               En {regla.bancoLabel} la documentación se entrega <strong>en el mismo acto
               de radicación</strong>. Si necesitas reimprimir el paquete:
             </p>
@@ -373,7 +374,7 @@ export function EntregaDocumentalBlock({ expedienteId, onIrAFinanciero }: Props)
                 type="button"
                 onClick={generarPaquete}
                 disabled={generandoPdf}
-                className="rounded-lg px-3 py-2 text-xs font-semibold inline-flex items-center gap-2 border border-[#E3E7EE] bg-white text-[#242424] hover:bg-[#F7F9FB] disabled:opacity-50"
+                className="rounded-lg px-3 py-2 text-xs font-semibold inline-flex items-center gap-2 border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] text-white hover:bg-[rgba(255,255,255,0.03)] disabled:opacity-50"
               >
                 <FileDown size={14} /> {generandoPdf ? "Generando…" : "Reimprimir paquete PDF"}
               </button>
@@ -381,7 +382,7 @@ export function EntregaDocumentalBlock({ expedienteId, onIrAFinanciero }: Props)
           )}
         </>
       )}
-    </Card>
+    </NCard>
   );
 }
 
@@ -396,7 +397,7 @@ function EstadoBanner({
 }) {
   if (row.estado === "enviada_correo") {
     return (
-      <div className="mb-3 rounded-lg border border-[#A6E2B6] bg-[#DDF4E3] px-3 py-2 text-[12px] text-[#1F7A45] inline-flex items-center gap-2">
+      <div className="mb-3 rounded-lg border border-[rgba(132,185,143,0.4)] bg-[rgba(132,185,143,0.14)] px-3 py-2 text-[12px] text-[var(--nuvia-accent-green)] inline-flex items-center gap-2">
         <CheckCircle2 size={14} />
         <span><strong>Enviada por correo</strong> · {row.fecha_completada ? new Date(row.fecha_completada).toLocaleString("es-CO") : ""}</span>
       </div>
@@ -404,7 +405,7 @@ function EstadoBanner({
   }
   if (row.estado === "entregada_fisica") {
     return (
-      <div className="mb-3 rounded-lg border border-[#A6E2B6] bg-[#DDF4E3] px-3 py-2 text-[12px] text-[#1F7A45] inline-flex items-center gap-2">
+      <div className="mb-3 rounded-lg border border-[rgba(132,185,143,0.4)] bg-[rgba(132,185,143,0.14)] px-3 py-2 text-[12px] text-[var(--nuvia-accent-green)] inline-flex items-center gap-2">
         <CheckCircle2 size={14} />
         <span><strong>Entregada físicamente</strong>{row.fecha_completada ? ` · ${new Date(row.fecha_completada).toLocaleString("es-CO")}` : ""}</span>
       </div>
@@ -412,7 +413,7 @@ function EstadoBanner({
   }
   if (row.estado === "programada") {
     return (
-      <div className={`mb-3 rounded-lg border px-3 py-2 text-[12px] inline-flex items-center gap-2 ${vencida ? "border-[#FCA5A5] bg-[#FEE2E2] text-[#991B1B]" : "border-[#FCD34D] bg-[#FEF3C7] text-[#92400E]"}`}>
+      <div className={`mb-3 rounded-lg border px-3 py-2 text-[12px] inline-flex items-center gap-2 ${vencida ? "border-[rgba(255,107,107,0.4)] bg-[rgba(255,107,107,0.14)] text-[var(--nuvia-danger)]" : "border-[rgba(246,196,83,0.4)] bg-[rgba(246,196,83,0.14)] text-[var(--nuvia-warning)]"}`}>
         <Clock size={14} />
         <span>
           <strong>{vencida ? "Entrega vencida" : "Entrega programada"}</strong>
@@ -426,7 +427,7 @@ function EstadoBanner({
   }
   if (row.estado === "pendiente") {
     return (
-      <div className="mb-3 rounded-lg border border-[#E3E7EE] bg-[#F7F9FB] px-3 py-2 text-[12px] text-[#242424] inline-flex items-center gap-2">
+      <div className="mb-3 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-[12px] text-white inline-flex items-center gap-2">
         <Mail size={14} />
         <span><strong>Pendiente de envío</strong> · construye y envía el correo a Jurídica del banco</span>
       </div>
@@ -447,15 +448,15 @@ function PaqueteSection({
   inputRef: React.RefObject<HTMLInputElement | null>;
 }) {
   return (
-    <div className="rounded-lg border border-dashed border-[#E3E7EE] bg-[#F7F9FB] p-3">
+    <div className="rounded-lg border border-dashed border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] p-3">
       <div className="flex items-center justify-between mb-2">
-        <div className="text-[11px] uppercase tracking-wider font-semibold text-[#242424]/70">
+        <div className="text-[11px] uppercase tracking-wider font-semibold text-[rgba(170,179,197,0.8)]">
           Anexos opcionales para el paquete PDF
         </div>
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="text-[11px] inline-flex items-center gap-1 rounded border border-[#E3E7EE] bg-white px-2 py-1 hover:bg-[#EEF1FA] text-[#445DA3]"
+          className="text-[11px] inline-flex items-center gap-1 rounded border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] px-2 py-1 hover:bg-[rgba(68,93,163,0.18)] text-[var(--nuvia-accent-blue)]"
         >
           <Upload size={12} /> Agregar PDFs / imágenes
         </button>
@@ -469,19 +470,19 @@ function PaqueteSection({
         />
       </div>
       {archivos.length === 0 ? (
-        <p className="text-[11px] text-[#242424]/55">
+        <p className="text-[11px] text-[rgba(170,179,197,0.55)]">
           Si no agregas anexos, el PDF se generará solo con la carátula (lista
           de documentos que llevarás al banco).
         </p>
       ) : (
         <ul className="space-y-1">
           {archivos.map((a) => (
-            <li key={a.id} className="flex items-center justify-between text-[11px] bg-white border border-[#E3E7EE] rounded px-2 py-1">
+            <li key={a.id} className="flex items-center justify-between text-[11px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded px-2 py-1">
               <span className="truncate">{a.nombre} · {(a.size / 1024).toFixed(0)} KB</span>
               <button
                 type="button"
                 onClick={() => onRemove(a.id)}
-                className="text-[#B42318] hover:bg-[#FEE2E2] rounded p-0.5"
+                className="text-[var(--nuvia-danger)] hover:bg-[rgba(255,107,107,0.14)] rounded p-0.5"
                 title="Quitar"
               >
                 <X size={12} />

@@ -8,11 +8,17 @@
 
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { Flag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { NCard } from "@/components/nuvia/NCard";
+import { SectionHeader } from "@/components/nuvia/SectionHeader";
 import { cambiarEstadoConValidacion } from "@/lib/pipelineTransiciones";
 import { computeEtapaActual, indexOfEtapa, type EtapaPipelineId } from "@/lib/pipelineEtapas";
 import { ACCION_A_ESTADO, type AccionOrigen } from "@/lib/casoEstados";
 import { useUserRole } from "@/hooks/useUserRole";
+import { NSelect } from "@/components/nuvia/NSelect";
+
+
 
 interface Props {
   expedienteId: string;
@@ -52,17 +58,14 @@ export function EtapasFinalesBlock({
   })();
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
-      <header>
-        <div className="text-[11px] uppercase tracking-wider font-semibold text-emerald-700">
-          Cierre operativo del caso
-        </div>
-        <h3 className="text-base font-semibold text-slate-900">Etapas 10 – 15 · Expediente</h3>
-        <p className="text-xs text-slate-500 mt-0.5">
-          Una vez registrado el resultado bancario, el caso avanza de la aceptación del cliente
-          hasta el cierre con paz y salvo.
-        </p>
-      </header>
+    <NCard variant="elevated">
+      <SectionHeader
+        icon={<Flag size={16} />}
+        title="Etapas 10 – 15 · Cierre operativo"
+        description="Una vez registrado el resultado bancario, el caso avanza de la aceptación del cliente hasta el cierre con paz y salvo."
+      />
+      <div className="space-y-3">
+
 
       <AceptacionCliente
         expedienteId={expedienteId}
@@ -155,7 +158,9 @@ export function EtapasFinalesBlock({
         expedienteId={expedienteId}
         onChanged={onChanged}
       />
-    </div>
+      </div>
+    </NCard>
+
   );
 }
 
@@ -229,13 +234,20 @@ function AceptacionCliente({
 
   return (
     <EtapaShell numero={10} titulo="Aceptación del cliente" estado={estado}>
-      <p className="text-xs text-slate-500">
+      <p className="text-xs" style={{ color: "var(--nuvia-text-secondary)" }}>
         Registra el medio y la fecha en que el cliente aceptó expresamente las condiciones
         aprobadas por el banco (WhatsApp, correo o carta firmada).
       </p>
 
       {yaRegistrada && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-900">
+        <div
+          className="rounded-lg p-3 text-xs"
+          style={{
+            background: "rgba(132,185,143,0.12)",
+            border: "1px solid rgba(132,185,143,0.35)",
+            color: "var(--nuvia-accent-green)",
+          }}
+        >
           <strong>Registrada:</strong> {new Date(aceptacionAt!).toLocaleString()} · medio{" "}
           <span className="font-semibold uppercase">{aceptacionMedio ?? "-"}</span>
           {aceptacionObservaciones && <div className="mt-1 opacity-80">{aceptacionObservaciones}</div>}
@@ -244,23 +256,26 @@ function AceptacionCliente({
 
       {puedeEditar && (
         <div className="grid gap-2 sm:grid-cols-[160px_1fr]">
+          <div className="text-xs">
+            <div style={{ color: "var(--nuvia-text-secondary)" }}>Medio</div>
+            <div className="mt-1">
+              <NSelect
+                value={medio}
+                onValueChange={setMedio}
+                options={[
+                  { value: "whatsapp", label: "WhatsApp" },
+                  { value: "correo", label: "Correo electrónico" },
+                  { value: "carta", label: "Carta firmada" },
+                  { value: "llamada_grabada", label: "Llamada grabada" },
+                ]}
+              />
+            </div>
+          </div>
+
           <label className="text-xs">
-            <span className="text-slate-600">Medio</span>
-            <select
-              className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
-              value={medio}
-              onChange={(e) => setMedio(e.target.value)}
-            >
-              <option value="whatsapp">WhatsApp</option>
-              <option value="correo">Correo electrónico</option>
-              <option value="carta">Carta firmada</option>
-              <option value="llamada_grabada">Llamada grabada</option>
-            </select>
-          </label>
-          <label className="text-xs">
-            <span className="text-slate-600">Observaciones</span>
+            <span style={{ color: "var(--nuvia-text-secondary)" }}>Observaciones</span>
             <textarea
-              className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+              className="nuvia-input nuvia-input-sm mt-1 w-full"
               rows={2}
               value={obs}
               onChange={(e) => setObs(e.target.value)}
@@ -270,12 +285,13 @@ function AceptacionCliente({
       )}
 
       <div className="flex items-center justify-end gap-2">
-        {msg && <span className="text-[11px] text-slate-500">{msg}</span>}
+        {msg && <span className="text-[11px]" style={{ color: "var(--nuvia-text-secondary)" }}>{msg}</span>}
         {puedeEditar && (
           <button
             onClick={guardar}
             disabled={saving}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white disabled:opacity-40"
+            className="rounded-lg px-4 py-2 text-xs font-semibold text-white disabled:opacity-40"
+            style={{ background: "var(--nuvia-accent-blue)" }}
           >
             {saving ? "Guardando…" : yaRegistrada ? "Actualizar aceptación" : "Registrar aceptación"}
           </button>
@@ -284,6 +300,7 @@ function AceptacionCliente({
     </EtapaShell>
   );
 }
+
 
 /* ───────── Etapas 11-15 – Avance simple por acción ───────── */
 
@@ -329,16 +346,17 @@ function EtapaAvance({
 
   return (
     <EtapaShell numero={numero} titulo={titulo} estado={estado}>
-      <p className="text-xs text-slate-500">{descripcion}</p>
+      <p className="text-xs" style={{ color: "var(--nuvia-text-secondary)" }}>{descripcion}</p>
       <div className="flex items-center justify-end gap-2">
-        {msg && <span className="text-[11px] text-slate-500">{msg}</span>}
+        {msg && <span className="text-[11px]" style={{ color: "var(--nuvia-text-secondary)" }}>{msg}</span>}
         {extra}
         {!soloLectura && (
           <button
             onClick={avanzar}
             disabled={saving || estado === "futura"}
             title={estado === "futura" ? "Avanza primero las etapas previas" : ""}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white disabled:opacity-40"
+            className="rounded-lg px-4 py-2 text-xs font-semibold text-white disabled:opacity-40"
+            style={{ background: "var(--nuvia-accent-blue)" }}
           >
             {saving ? "Guardando…" : estado === "completada" ? "Re-confirmar" : "Marcar completada"}
           </button>
@@ -347,6 +365,7 @@ function EtapaAvance({
     </EtapaShell>
   );
 }
+
 
 /* ───────── Helpers visuales ───────── */
 
@@ -371,20 +390,26 @@ function EtapaShell({
 }) {
   const palette =
     estado === "completada"
-      ? { bg: "bg-emerald-50/60", border: "border-emerald-200", chip: "bg-emerald-100 text-emerald-800" }
+      ? { bg: "rgba(132,185,143,0.10)", border: "rgba(132,185,143,0.35)", chipBg: "rgba(132,185,143,0.18)", chipFg: "var(--nuvia-accent-green)" }
       : estado === "actual"
-        ? { bg: "bg-amber-50/60", border: "border-amber-200", chip: "bg-amber-100 text-amber-900" }
-        : { bg: "bg-slate-50", border: "border-slate-200", chip: "bg-slate-200 text-slate-600" };
+        ? { bg: "rgba(246,196,83,0.10)", border: "rgba(246,196,83,0.35)", chipBg: "rgba(246,196,83,0.18)", chipFg: "var(--nuvia-warning)" }
+        : { bg: "rgba(255,255,255,0.03)", border: "var(--nuvia-border)", chipBg: "rgba(255,255,255,0.06)", chipFg: "var(--nuvia-text-secondary)" };
 
   const label = estado === "completada" ? "Completada" : estado === "actual" ? "En curso" : "Pendiente";
 
   return (
-    <section className={`rounded-xl border ${palette.border} ${palette.bg} p-4 space-y-2`}>
+    <section
+      className="rounded-xl p-4 space-y-2"
+      style={{ background: palette.bg, border: `1px solid ${palette.border}` }}
+    >
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold text-slate-900">
+        <h4 className="text-sm font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
           Etapa {numero} · {titulo}
         </h4>
-        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${palette.chip}`}>
+        <span
+          className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+          style={{ background: palette.chipBg, color: palette.chipFg }}
+        >
           {label}
         </span>
       </div>
@@ -392,4 +417,5 @@ function EtapaShell({
     </section>
   );
 }
+
 

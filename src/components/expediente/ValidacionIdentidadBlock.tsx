@@ -5,8 +5,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ShieldCheck, AlertTriangle, CheckCircle2, Send, RotateCcw, Lock, Unlock, History, Save, X } from "lucide-react";
-import { Card } from "@/components/nuvex/ui";
-import { NUVEX } from "@/components/nuvex/constants";
+import { NCard } from "@/components/nuvia/NCard";
+import { NSelect } from "@/components/nuvia/NSelect";
+
+
 import type { Expediente } from "@/lib/expedientes";
 import { CitySelect } from "@/components/ui/CitySelect";
 import {
@@ -100,21 +102,21 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
   };
 
   return (
-    <Card>
+    <NCard variant="elevated">
       <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div className="flex items-start gap-3">
           <div
             className="flex h-10 w-10 items-center justify-center rounded-lg text-white shrink-0"
-            style={{ background: `linear-gradient(135deg, ${NUVEX.azul}, ${NUVEX.negro})` }}
+            style={{ background: `linear-gradient(135deg, ${"var(--nuvia-accent-blue)"}, ${"var(--nuvia-bg-primary)"})` }}
           >
             <ShieldCheck size={18} />
           </div>
           <div>
-            <div className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: NUVEX.azul }}>
+            <div className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: "var(--nuvia-accent-blue)" }}>
               Validación de identidad
             </div>
-            <h3 className="text-lg font-semibold text-[#242424]">Control contractual NUVEX</h3>
-            <p className="text-xs text-[#242424]/60 mt-0.5">
+            <h3 className="text-lg font-semibold text-white">Control contractual NUVEX</h3>
+            <p className="text-xs text-[var(--nuvia-text-secondary)] mt-0.5">
               Contratación debe aprobar los datos antes de generar cualquier documento jurídico.
             </p>
           </div>
@@ -146,8 +148,8 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
 
       {/* Edición directa de campos críticos */}
       <div className="flex items-center justify-between mb-2">
-        <div className="text-[11px] uppercase tracking-wider font-semibold text-[#242424]/60">
-          Datos críticos del cliente {puedeEditar && <span className="ml-1 normal-case font-normal text-[#242424]/50">— edita directamente y pulsa Guardar</span>}
+        <div className="text-[11px] uppercase tracking-wider font-semibold text-[var(--nuvia-text-secondary)]">
+          Datos críticos del cliente {puedeEditar && <span className="ml-1 normal-case font-normal text-[rgba(170,179,197,0.55)]">— edita directamente y pulsa Guardar</span>}
         </div>
         {puedeEditar && (
           <div className="flex gap-1.5">
@@ -155,7 +157,7 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
               <button
                 onClick={() => setDraft(campos)}
                 disabled={busy}
-                className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[11px] font-semibold text-[#242424] hover:bg-[#F7F9FB]"
+                className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-[rgba(255,255,255,0.03)]"
                 style={{ borderColor: "#E3E7EE" }}
               >
                 <X size={12} /> Descartar
@@ -165,7 +167,7 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
               onClick={() => run(async () => { await actualizarCamposCriticos(exp.id, draft); })}
               disabled={busy || !hayCambios}
               className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-semibold text-white disabled:opacity-50"
-              style={{ backgroundColor: NUVEX.azul }}
+              style={{ backgroundColor: "var(--nuvia-accent-blue)" }}
             >
               <Save size={12} /> Guardar cambios
             </button>
@@ -198,7 +200,7 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
       {/* Inconsistencias */}
       {inconsistencias.length > 0 && (
         <div className="mb-4 rounded-lg border p-3 text-xs"
-          style={{ borderColor: "#FAD491", background: "#FFF7E6", color: "#8A5A00" }}>
+          style={{ borderColor: "rgba(246,196,83,0.4)", background: "rgba(246,196,83,0.14)", color: "var(--nuvia-warning)" }}>
           <div className="font-semibold mb-1 flex items-center gap-1.5">
             <AlertTriangle size={13} /> Posibles inconsistencias detectadas
           </div>
@@ -220,8 +222,8 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
 
       {/* Acciones del licenciado */}
       {esLicenciado && (v.validacion_estado === "pendiente_validacion" || v.validacion_estado === "devuelto_datos_incorrectos") && (
-        <div className="rounded-lg border bg-[#F7F9FB] p-3 mb-3" style={{ borderColor: "#E3E7EE" }}>
-          <label className="flex items-start gap-2 text-xs text-[#242424]">
+        <div className="rounded-lg border bg-[rgba(255,255,255,0.03)] p-3 mb-3" style={{ borderColor: "#E3E7EE" }}>
+          <label className="flex items-start gap-2 text-xs text-white">
             <input
               type="checkbox"
               checked={v.validacion_confirmado_licenciado}
@@ -238,7 +240,7 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
               onClick={() => run(() => enviarAValidacion(exp.id))}
               disabled={!puedeEnviar || busy}
               className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
-              style={{ backgroundColor: NUVEX.azul }}
+              style={{ backgroundColor: "var(--nuvia-accent-blue)" }}
             >
               <Send size={13} /> Enviar a validación de Contratación
             </button>
@@ -248,8 +250,8 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
 
       {/* Acciones de contratación */}
       {esContratacion && v.validacion_estado === "en_revision_contratacion" && (
-        <div className="rounded-lg border bg-[#F7F9FB] p-3 mb-3 space-y-3" style={{ borderColor: "#E3E7EE" }}>
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/70">
+        <div className="rounded-lg border bg-[rgba(255,255,255,0.03)] p-3 mb-3 space-y-3" style={{ borderColor: "#E3E7EE" }}>
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--nuvia-text-secondary)]">
             Revisión de Contratación
           </div>
           <div className="flex flex-wrap gap-2">
@@ -257,7 +259,7 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
               onClick={() => run(() => aprobarValidacion(exp.id))}
               disabled={busy}
               className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold text-white"
-              style={{ backgroundColor: "#1F6F4A" }}
+              style={{ backgroundColor: "var(--nuvia-accent-green)" }}
             >
               <CheckCircle2 size={13} /> Aprobar datos
             </button>
@@ -265,24 +267,21 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
 
           <div className="grid md:grid-cols-[1fr_auto] gap-2 items-end">
             <div>
-              <label className="block text-[10px] uppercase font-semibold text-[#242424]/60 mb-1">
+              <label className="block text-[10px] uppercase font-semibold text-[var(--nuvia-text-secondary)] mb-1">
                 Motivo de devolución
               </label>
-              <select
+              <NSelect
                 value={motivoDev}
-                onChange={(e) => setMotivoDev(e.target.value)}
-                className="w-full rounded-lg border border-[#E3E7EE] bg-white px-2 py-1.5 text-xs"
-              >
-                {MOTIVOS_DEVOLUCION.map((m) => (
-                  <option key={m} value={m}>{m}</option>
-                ))}
-              </select>
+                onValueChange={setMotivoDev}
+                options={MOTIVOS_DEVOLUCION.map((m) => ({ value: m, label: m }))}
+              />
+
               {motivoDev === "Otro" && (
                 <input
                   value={motivoOtro}
                   onChange={(e) => setMotivoOtro(e.target.value)}
                   placeholder="Describe el motivo…"
-                  className="mt-1 w-full rounded-lg border border-[#E3E7EE] bg-white px-2 py-1.5 text-xs"
+                  className="mt-1 w-full rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.04)] px-2 py-1.5 text-xs"
                 />
               )}
             </div>
@@ -293,7 +292,7 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
               }}
               disabled={busy}
               className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold text-white"
-              style={{ backgroundColor: NUVEX.rojoTexto }}
+              style={{ backgroundColor: "var(--nuvia-danger)" }}
             >
               <RotateCcw size={13} /> Devolver
             </button>
@@ -301,21 +300,21 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
 
           <div className="grid md:grid-cols-[1fr_auto] gap-2 items-end">
             <div>
-              <label className="block text-[10px] uppercase font-semibold text-[#242424]/60 mb-1">
+              <label className="block text-[10px] uppercase font-semibold text-[var(--nuvia-text-secondary)] mb-1">
                 Inconsistencia crítica (bloqueo)
               </label>
               <input
                 value={motivoBloqueo}
                 onChange={(e) => setMotivoBloqueo(e.target.value)}
                 placeholder="Describe la inconsistencia crítica…"
-                className="w-full rounded-lg border border-[#E3E7EE] bg-white px-2 py-1.5 text-xs"
+                className="w-full rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.04)] px-2 py-1.5 text-xs"
               />
             </div>
             <button
               onClick={() => run(() => bloquearInconsistencia(exp.id, motivoBloqueo))}
               disabled={busy || motivoBloqueo.trim().length < 4}
               className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
-              style={{ backgroundColor: "#7A0E0E" }}
+              style={{ backgroundColor: "var(--nuvia-danger)" }}
             >
               <Lock size={13} /> Bloquear
             </button>
@@ -325,18 +324,18 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
 
       {/* Desbloqueo super admin */}
       {isSuperAdmin && v.validacion_estado === "bloqueado_inconsistencia" && (
-        <div className="rounded-lg border bg-[#F7F9FB] p-3 mb-3 grid md:grid-cols-[1fr_auto] gap-2 items-end" style={{ borderColor: "#E3E7EE" }}>
+        <div className="rounded-lg border bg-[rgba(255,255,255,0.03)] p-3 mb-3 grid md:grid-cols-[1fr_auto] gap-2 items-end" style={{ borderColor: "#E3E7EE" }}>
           <input
             value={motivoDesb}
             onChange={(e) => setMotivoDesb(e.target.value)}
             placeholder="Motivo del desbloqueo excepcional…"
-            className="w-full rounded-lg border border-[#E3E7EE] bg-white px-2 py-1.5 text-xs"
+            className="w-full rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.04)] px-2 py-1.5 text-xs"
           />
           <button
             onClick={() => run(() => desbloquearExcepcional(exp.id, motivoDesb))}
             disabled={busy || motivoDesb.trim().length < 6}
             className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
-            style={{ backgroundColor: NUVEX.azul }}
+            style={{ backgroundColor: "var(--nuvia-accent-blue)" }}
           >
             <Unlock size={13} /> Desbloquear
           </button>
@@ -345,30 +344,30 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
 
       {error && (
         <div className="mb-3 rounded-lg border p-2 text-xs"
-          style={{ borderColor: "#F5C2C2", background: NUVEX.rojoBg, color: NUVEX.rojoTexto }}>
+          style={{ borderColor: "rgba(255,107,107,0.4)", background: "rgba(255,107,107,0.14)", color: "var(--nuvia-danger)" }}>
           {error}
         </div>
       )}
 
       <button
         onClick={() => setShowHist((s) => !s)}
-        className="inline-flex items-center gap-1.5 text-[11px] text-[#445DA3] hover:underline"
+        className="inline-flex items-center gap-1.5 text-[11px] text-[var(--nuvia-accent-blue)] hover:underline"
       >
         <History size={12} /> {showHist ? "Ocultar" : "Ver"} historial de validación
       </button>
       {showHist && (
         <div className="mt-2 rounded-lg border p-2 text-xs space-y-1" style={{ borderColor: "#E3E7EE" }}>
-          {historial.length === 0 && <div className="text-[#242424]/60">Sin movimientos.</div>}
+          {historial.length === 0 && <div className="text-[var(--nuvia-text-secondary)]">Sin movimientos.</div>}
           {historial.map((h) => (
-            <div key={h.id} className="flex flex-wrap gap-2 border-b border-dashed border-[#E3E7EE] pb-1 last:border-0">
-              <span className="font-semibold uppercase text-[10px]" style={{ color: NUVEX.azul }}>{h.accion}</span>
-              <span className="text-[#242424]/80 flex-1">{h.motivo || "—"}</span>
-              <span className="text-[#242424]/50">{new Date(h.created_at).toLocaleString("es-CO")}</span>
+            <div key={h.id} className="flex flex-wrap gap-2 border-b border-dashed border-[var(--nuvia-border)] pb-1 last:border-0">
+              <span className="font-semibold uppercase text-[10px]" style={{ color: "var(--nuvia-accent-blue)" }}>{h.accion}</span>
+              <span className="text-white/80 flex-1">{h.motivo || "—"}</span>
+              <span className="text-[rgba(170,179,197,0.55)]">{new Date(h.created_at).toLocaleString("es-CO")}</span>
             </div>
           ))}
         </div>
       )}
-    </Card>
+    </NCard>
   );
 }
 
@@ -388,8 +387,8 @@ function EditField({
   kind?: "text" | "city";
 }) {
   return (
-    <div className={`rounded-lg border bg-white px-2 py-1.5 ${className || ""}`} style={{ borderColor: editing ? "#B6CEFF" : "#E3E7EE" }}>
-      <div className="text-[10px] uppercase font-semibold text-[#242424]/60">{label}</div>
+    <div className={`rounded-lg border bg-[rgba(255,255,255,0.04)] px-2 py-1.5 ${className || ""}`} style={{ borderColor: editing ? "var(--nuvia-accent-blue)" : "#E3E7EE" }}>
+      <div className="text-[10px] uppercase font-semibold text-[var(--nuvia-text-secondary)]">{label}</div>
       {editing ? (
         kind === "city" ? (
           <div className="-mx-1">
@@ -399,11 +398,11 @@ function EditField({
           <input
             value={value || ""}
             onChange={(e) => onChange(e.target.value)}
-            className="w-full bg-transparent text-[12px] text-[#242424] outline-none focus:ring-0 border-0 p-0"
+            className="w-full bg-transparent text-[12px] text-white outline-none focus:ring-0 border-0 p-0"
           />
         )
       ) : (
-        <div className="text-[12px] text-[#242424] truncate" title={value}>{value || "—"}</div>
+        <div className="text-[12px] text-white truncate" title={value}>{value || "—"}</div>
       )}
     </div>
   );
