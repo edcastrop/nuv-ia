@@ -251,15 +251,16 @@ export function PropuestasComerciales(props: Props) {
         </button>
       </div>
 
-      {/* Franja de comparación rápida — glass tiles */}
+      {/* Franja de comparación rápida — glass dark NUVIA */}
       {cuotasList.length > 0 && (
         <div
-          className="rounded-2xl border border-white/55 p-2 backdrop-blur-xl"
+          className="rounded-2xl border p-2 backdrop-blur-xl"
           style={{
             background:
-              "linear-gradient(135deg, rgba(255,255,255,0.55), rgba(238,245,255,0.35))",
+              "linear-gradient(135deg, rgba(20,28,54,0.65), rgba(13,18,36,0.6))",
+            borderColor: "var(--nuvia-border, rgba(122,160,255,0.18))",
             boxShadow:
-              "inset 0 1px 0 rgba(255,255,255,0.7), 0 10px 28px -20px rgba(36,52,92,0.18)",
+              "inset 0 1px 0 rgba(255,255,255,0.04), 0 16px 40px -22px rgba(0,0,0,0.55)",
           }}
         >
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
@@ -274,12 +275,12 @@ export function PropuestasComerciales(props: Props) {
                     className="group relative flex min-w-0 flex-col items-center gap-1 overflow-hidden rounded-xl border px-3 py-3 text-center backdrop-blur-md transition hover:-translate-y-0.5"
                     style={{
                       background: isRec
-                        ? "linear-gradient(135deg, rgba(132,185,143,0.22), rgba(68,93,163,0.16))"
-                        : "rgba(255,255,255,0.65)",
-                      borderColor: isRec ? "rgba(132,185,143,0.55)" : "rgba(255,255,255,0.7)",
+                        ? "linear-gradient(135deg, rgba(132,185,143,0.22), rgba(68,93,163,0.20))"
+                        : "rgba(20,28,54,0.55)",
+                      borderColor: isRec ? "rgba(132,185,143,0.55)" : "rgba(255,255,255,0.10)",
                       boxShadow: isRec
-                        ? "0 12px 28px -16px rgba(132,185,143,0.45), inset 0 1px 0 rgba(255,255,255,0.65)"
-                        : "inset 0 1px 0 rgba(255,255,255,0.8), 0 2px 8px rgba(36,52,92,0.04)",
+                        ? "0 12px 28px -16px rgba(132,185,143,0.45), inset 0 1px 0 rgba(255,255,255,0.06)"
+                        : "inset 0 1px 0 rgba(255,255,255,0.04), 0 2px 8px rgba(0,0,0,0.25)",
                       cursor: c.valid ? "pointer" : "default",
                     }}
                   >
@@ -292,7 +293,7 @@ export function PropuestasComerciales(props: Props) {
                     )}
                     <div
                       className="relative text-[9px] font-semibold uppercase tracking-[0.14em]"
-                      style={{ color: isRec ? "#1F5A3A" : "#5C6B85" }}
+                      style={{ color: isRec ? "#A7E0B8" : "rgba(230,236,255,0.55)" }}
                     >
                       Escenario {idx + 1}
                     </div>
@@ -328,10 +329,10 @@ export function PropuestasComerciales(props: Props) {
                           value={formatCOP(c.honorarios)}
                           highlight={isRec}
                         />
-                        <div className="mt-1 border-t pt-1.5" style={{ borderColor: "rgba(255,255,255,0.6)" }}>
+                        <div className="mt-1 border-t pt-1.5" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
                           <div
                             className="text-[8px] font-semibold uppercase tracking-[0.14em]"
-                            style={{ color: isRec ? "#1F5A3A" : "#5C6B85" }}
+                            style={{ color: isRec ? "#A7E0B8" : "rgba(230,236,255,0.55)" }}
                           >
                             Ahorro total
                           </div>
@@ -339,7 +340,7 @@ export function PropuestasComerciales(props: Props) {
                             className="bg-clip-text text-[14px] font-extrabold leading-tight text-transparent break-words"
                             style={{
                               backgroundImage:
-                                "linear-gradient(135deg, #1F7A45 0%, #2EA866 100%)",
+                                "linear-gradient(135deg, #84B98F 0%, #A7E0B8 100%)",
                             }}
                           >
                             {formatCOP(c.ahorroTotal)}
@@ -349,7 +350,7 @@ export function PropuestasComerciales(props: Props) {
                     ) : (
                       <div
                         className="text-[13px] font-extrabold leading-none"
-                        style={{ color: "#C0392B" }}
+                        style={{ color: "#FF7878" }}
                       >
                         No viable
                       </div>
@@ -360,6 +361,7 @@ export function PropuestasComerciales(props: Props) {
           </div>
         </div>
       )}
+
 
 
       <div className="grid min-w-0 gap-5 md:grid-cols-2 xl:grid-cols-3">
