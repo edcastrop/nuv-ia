@@ -8,11 +8,15 @@
 
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { Flag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { NCard } from "@/components/nuvia/NCard";
+import { SectionHeader } from "@/components/nuvia/SectionHeader";
 import { cambiarEstadoConValidacion } from "@/lib/pipelineTransiciones";
 import { computeEtapaActual, indexOfEtapa, type EtapaPipelineId } from "@/lib/pipelineEtapas";
 import { ACCION_A_ESTADO, type AccionOrigen } from "@/lib/casoEstados";
 import { useUserRole } from "@/hooks/useUserRole";
+
 
 interface Props {
   expedienteId: string;
@@ -52,17 +56,14 @@ export function EtapasFinalesBlock({
   })();
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
-      <header>
-        <div className="text-[11px] uppercase tracking-wider font-semibold text-emerald-700">
-          Cierre operativo del caso
-        </div>
-        <h3 className="text-base font-semibold text-slate-900">Etapas 10 – 15 · Expediente</h3>
-        <p className="text-xs text-slate-500 mt-0.5">
-          Una vez registrado el resultado bancario, el caso avanza de la aceptación del cliente
-          hasta el cierre con paz y salvo.
-        </p>
-      </header>
+    <NCard variant="elevated">
+      <SectionHeader
+        icon={<Flag size={16} />}
+        title="Etapas 10 – 15 · Cierre operativo"
+        description="Una vez registrado el resultado bancario, el caso avanza de la aceptación del cliente hasta el cierre con paz y salvo."
+      />
+      <div className="space-y-3">
+
 
       <AceptacionCliente
         expedienteId={expedienteId}
