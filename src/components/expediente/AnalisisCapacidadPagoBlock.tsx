@@ -508,9 +508,9 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
                 const files = e.dataTransfer?.files;
                 if (files && files.length) handleFiles(idx, files);
               }}
-              className={`flex flex-col items-center justify-center gap-1 border-2 border-dashed rounded-lg p-5 cursor-pointer transition ${
-                dragIdx === idx ? "border-[#445DA3] bg-[#445DA3]/10" : "border-slate-300 hover:bg-slate-50"
-              }`}
+            className={`flex flex-col items-center justify-center gap-1 border-2 border-dashed rounded-lg p-5 cursor-pointer transition ${
+              dragIdx === idx ? "border-[color:var(--nuvia-accent-primary)] bg-[rgba(122,160,255,0.12)]" : "border-[color:var(--nuvia-border-medium)] hover:bg-[rgba(255,255,255,0.04)]"
+            }`}
             >
               <div className="flex items-center gap-2">
                 <Upload className="w-4 h-4" />
