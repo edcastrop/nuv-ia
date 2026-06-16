@@ -73,7 +73,7 @@ export function ConfirmEstadoModal({ open, nuevoEstado, onConfirm, onCancel }: P
                 onValueChange={(v) => setSubmotivo(v)}
                 placeholder="Seleccionar submotivo…"
                 options={opciones.map((o) => ({ value: o, label: o }))}
-                size="sm"
+                compact
               />
             </div>
           </div>
