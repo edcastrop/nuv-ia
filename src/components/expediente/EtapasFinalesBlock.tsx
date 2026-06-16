@@ -16,6 +16,8 @@ import { cambiarEstadoConValidacion } from "@/lib/pipelineTransiciones";
 import { computeEtapaActual, indexOfEtapa, type EtapaPipelineId } from "@/lib/pipelineEtapas";
 import { ACCION_A_ESTADO, type AccionOrigen } from "@/lib/casoEstados";
 import { useUserRole } from "@/hooks/useUserRole";
+import { NSelect } from "@/components/nuvia/NSelect";
+
 
 
 interface Props {
@@ -254,19 +256,22 @@ function AceptacionCliente({
 
       {puedeEditar && (
         <div className="grid gap-2 sm:grid-cols-[160px_1fr]">
-          <label className="text-xs">
-            <span style={{ color: "var(--nuvia-text-secondary)" }}>Medio</span>
-            <select
-              className="nuvia-input nuvia-input-sm mt-1 w-full"
-              value={medio}
-              onChange={(e) => setMedio(e.target.value)}
-            >
-              <option value="whatsapp">WhatsApp</option>
-              <option value="correo">Correo electrónico</option>
-              <option value="carta">Carta firmada</option>
-              <option value="llamada_grabada">Llamada grabada</option>
-            </select>
-          </label>
+          <div className="text-xs">
+            <div style={{ color: "var(--nuvia-text-secondary)" }}>Medio</div>
+            <div className="mt-1">
+              <NSelect
+                value={medio}
+                onValueChange={setMedio}
+                options={[
+                  { value: "whatsapp", label: "WhatsApp" },
+                  { value: "correo", label: "Correo electrónico" },
+                  { value: "carta", label: "Carta firmada" },
+                  { value: "llamada_grabada", label: "Llamada grabada" },
+                ]}
+              />
+            </div>
+          </div>
+
           <label className="text-xs">
             <span style={{ color: "var(--nuvia-text-secondary)" }}>Observaciones</span>
             <textarea
