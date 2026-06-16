@@ -1,6 +1,7 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Plus, Trash2, ToggleLeft, ToggleRight, ChevronDown, ChevronRight, Save, ArrowLeft, Layers, BarChart3, Award } from "lucide-react";
+import { Plus, Trash2, ToggleLeft, ToggleRight, ChevronDown, ChevronRight, Save, ArrowLeft, Layers, BarChart3, Award, GraduationCap } from "lucide-react";
+import { PageLayout, ExecutiveHero } from "@/components/nuvia";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import {
