@@ -135,7 +135,7 @@ function CursoCard({ curso, onChanged }: { curso: Curso; onChanged: () => void }
         <button onClick={async () => { await sb.from("academia_cursos").update({ activo: !curso.activo }).eq("id", curso.id); onChanged(); }} title={curso.activo ? "Activo" : "Inactivo"}>
           {curso.activo ? <ToggleRight size={20} className="text-[#1F7A45]" /> : <ToggleLeft size={20} className="text-[var(--nuvia-text-primary)]/40" />}
         </button>
-        <button onClick={async () => { await sb.from("academia_cursos").update({ titulo, descripcion: desc }).eq("id", curso.id); onChanged(); }} className="inline-flex items-center gap-1 rounded-lg bg-[#0A1226] px-3 py-1.5 text-xs font-semibold text-white"><Save size={12} /> Guardar</button>
+        <button onClick={async () => { await sb.from("academia_cursos").update({ titulo, descripcion: desc }).eq("id", curso.id); onChanged(); }} className="inline-flex items-center gap-1 rounded-lg bg-[var(--nuvia-accent-blue)] px-3 py-1.5 text-xs font-semibold text-white"><Save size={12} /> Guardar</button>
         <button onClick={async () => { if (confirm("¿Eliminar curso completo? Esto borra módulos, lecciones y evaluaciones.")) { await sb.from("academia_cursos").delete().eq("id", curso.id); onChanged(); } }}><Trash2 size={14} className="text-[#B42318]" /></button>
       </div>
       {open && (
@@ -266,7 +266,7 @@ function LeccionEditor({ leccion, onChanged }: { leccion: Leccion; onChanged: ()
           <LessonContentEditor leccionId={leccion.id} tipo={tipo} value={contenido} onChange={setContenido} />
 
           <div className="flex items-center justify-end">
-            <button onClick={guardar} disabled={guardando} className="inline-flex items-center gap-1 rounded bg-[#0A1226] px-3 py-1.5 text-[11px] font-semibold text-white disabled:opacity-50">
+            <button onClick={guardar} disabled={guardando} className="inline-flex items-center gap-1 rounded bg-[var(--nuvia-accent-blue)] px-3 py-1.5 text-[11px] font-semibold text-white disabled:opacity-50">
               <Save size={11} /> {guardando ? "Guardando…" : "Guardar lección"}
             </button>
           </div>
@@ -345,7 +345,7 @@ function PreguntaEditor({ pregunta, onChanged }: { pregunta: Pregunta; onChanged
   return (
     <div className="rounded border border-[var(--nuvia-border)] bg-[var(--nuvia-bg-card)] p-2 space-y-1">
       <div className="flex items-center gap-2">
-        <span className="rounded bg-[#0A1226]/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase">{pregunta.tipo}</span>
+        <span className="rounded bg-[rgba(255,255,255,0.10)] px-1.5 py-0.5 text-[9px] font-semibold uppercase">{pregunta.tipo}</span>
         <input value={enunciado} onChange={(e) => setEnunciado(e.target.value)} className="flex-1 rounded border border-[var(--nuvia-border)] px-2 py-1 text-[11px]" />
         <button onClick={async () => { if (confirm("¿Eliminar?")) { await sb.from("academia_preguntas").delete().eq("id", pregunta.id); onChanged(); } }}><Trash2 size={11} className="text-[#B42318]" /></button>
       </div>
@@ -360,7 +360,7 @@ function PreguntaEditor({ pregunta, onChanged }: { pregunta: Pregunta; onChanged
           const opcs = pregunta.tipo === "verdadero_falso" ? [] : opciones.split("\n").map((s) => s.trim()).filter(Boolean);
           await sb.from("academia_preguntas").update({ enunciado, opciones: opcs, respuesta_correcta: parsed }).eq("id", pregunta.id);
           onChanged();
-        }} className="inline-flex items-center gap-1 rounded bg-[#0A1226] px-2 py-1 text-[11px] font-semibold text-white"><Save size={10} /> Guardar</button>
+        }} className="inline-flex items-center gap-1 rounded bg-[var(--nuvia-accent-blue)] px-2 py-1 text-[11px] font-semibold text-white"><Save size={10} /> Guardar</button>
       </div>
     </div>
   );
