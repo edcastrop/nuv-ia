@@ -216,21 +216,41 @@ function MiPerfilPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-6 space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-[#242424]">Mi Perfil</h1>
-          <div className="text-sm text-[#242424]/60">Gestiona tu información personal, contacto y foto de perfil</div>
+      {/* NUVIA branded hero (light) */}
+      <div
+        className="relative overflow-hidden rounded-2xl border px-6 py-5"
+        style={{
+          background: "linear-gradient(135deg, rgba(68,93,163,0.06), rgba(132,185,143,0.06))",
+          borderColor: "#E3E7EE",
+        }}
+      >
+        <span
+          className="pointer-events-none absolute inset-y-0 left-0 w-1.5"
+          style={{ background: "linear-gradient(180deg, #445DA3, #84B98F)" }}
+        />
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <div
+              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] mb-1.5"
+              style={{ background: "rgba(68,93,163,0.10)", color: "#445DA3", border: "1px solid rgba(68,93,163,0.25)" }}
+            >
+              Perfil personal NUVIA
+            </div>
+            <h1 className="text-2xl font-semibold text-[#0A1226]">Mi Perfil</h1>
+            <div className="text-sm text-[#242424]/60">Gestiona tu información personal, contacto y foto de perfil</div>
+          </div>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow disabled:opacity-60 shrink-0"
+            style={{ background: "linear-gradient(135deg, #445DA3, #84B98F)" }}
+          >
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+            Guardar cambios
+          </button>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow disabled:opacity-60"
-          style={{ background: "linear-gradient(135deg, #445DA3, #84B98F)" }}
-        >
-          {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-          Guardar cambios
-        </button>
       </div>
+
 
       {/* Foto */}
       <Card>
