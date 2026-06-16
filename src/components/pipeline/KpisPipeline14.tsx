@@ -156,7 +156,10 @@ export function KpisPipeline14() {
                     className="h-full rounded"
                     style={{
                       width: `${pct}%`,
-                      background: s.count > 0 ? "#445DA3" : "transparent",
+                      background:
+                        s.count > 0
+                          ? "linear-gradient(90deg, color-mix(in oklab, var(--nuvia-accent-blue) 75%, transparent), color-mix(in oklab, var(--nuvia-accent-green) 75%, transparent))"
+                          : "transparent",
                     }}
                   />
                 </div>
