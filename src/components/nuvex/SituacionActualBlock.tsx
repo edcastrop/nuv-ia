@@ -165,14 +165,17 @@ function HeroKpi({
 }) {
   const pal =
     accent === "primary"
-      ? { border: NUVEX.azul, label: NUVEX.azul, value: NUVEX.azul }
+      ? { border: "rgba(122,160,255,0.45)", label: "#9DB6FF", value: "#E8EDFB" }
       : accent === "dark"
-        ? { border: "#0F1115", label: "#6B7480", value: "#0F1115" }
-        : { border: "#E3E7EE", label: "#6B7480", value: "#0F1115" };
+        ? { border: "rgba(255,255,255,0.18)", label: "rgba(255,255,255,0.55)", value: "#FFFFFF" }
+        : { border: "var(--nuvia-border)", label: "var(--nuvia-text-secondary)", value: "var(--nuvia-text-primary)" };
   return (
     <div
-      className="rounded-2xl border bg-white p-5 transition-shadow hover:shadow-[0_10px_30px_rgba(36,36,36,0.06)]"
-      style={{ borderColor: pal.border }}
+      className="rounded-2xl border p-5 transition-shadow hover:shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
+      style={{
+        borderColor: pal.border,
+        background: "linear-gradient(135deg, rgba(20,28,54,0.7) 0%, rgba(13,18,36,0.7) 100%)",
+      }}
     >
       <div
         className="text-[11px] font-semibold uppercase tracking-[0.14em]"
@@ -205,8 +208,11 @@ function NeuralgicoCard({
 }) {
   return (
     <div
-      className="relative overflow-hidden rounded-2xl border bg-white p-5 transition-shadow hover:shadow-[0_10px_30px_rgba(36,36,36,0.08)]"
-      style={{ borderColor: accent }}
+      className="relative overflow-hidden rounded-2xl border p-5 transition-shadow hover:shadow-[0_10px_30px_rgba(0,0,0,0.45)]"
+      style={{
+        borderColor: "rgba(255,255,255,0.10)",
+        background: "linear-gradient(135deg, rgba(20,28,54,0.7) 0%, rgba(13,18,36,0.7) 100%)",
+      }}
     >
       <div
         aria-hidden
@@ -226,12 +232,12 @@ function NeuralgicoCard({
       </div>
       <div
         className="mt-2 pl-2 text-[22px] md:text-[24px] font-extrabold leading-tight tracking-tight"
-        style={{ color: "#0F1115" }}
+        style={{ color: "var(--nuvia-text-primary)" }}
       >
         {value}
       </div>
       {hint && (
-        <div className="mt-1 pl-2 text-[11.5px] font-medium text-[#6B7480]">{hint}</div>
+        <div className="mt-1 pl-2 text-[11.5px] font-medium" style={{ color: "var(--nuvia-text-secondary)" }}>{hint}</div>
       )}
     </div>
   );
@@ -312,11 +318,20 @@ function SecondaryKpi({ label, value }: SituacionMetric) {
 
 
   return (
-    <div className="rounded-xl border border-[#E3E7EE] bg-white p-4">
-      <div className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[#6B7480]">
+    <div
+      className="rounded-xl border p-4"
+      style={{
+        borderColor: "var(--nuvia-border)",
+        background: "rgba(20,28,54,0.5)",
+      }}
+    >
+      <div
+        className="text-[10.5px] font-semibold uppercase tracking-[0.14em]"
+        style={{ color: "var(--nuvia-text-secondary)" }}
+      >
         {label}
       </div>
-      <div className="mt-1.5 text-base font-semibold text-[#0F1115]">{value}</div>
+      <div className="mt-1.5 text-base font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{value}</div>
     </div>
   );
 }
