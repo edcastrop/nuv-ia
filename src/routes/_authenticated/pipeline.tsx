@@ -21,7 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 const FASE_IDS = ["comercial", "operativa", "banco", "cobro", "fin"] as const;
 type FaseId = (typeof FASE_IDS)[number];
 
-const pipelineSearchSchema = z.object({
+export const pipelineSearchSchema = z.object({
   q: fallback(z.string(), "").default(""),
   banco: fallback(z.string(), "").default(""),
   stuck: fallback(z.boolean(), false).default(false),
