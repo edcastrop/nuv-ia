@@ -1,13 +1,12 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { ArrowLeft, Palette } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Logo } from "@/components/nuvex/Logo";
 import { getBrandConfig, updateBrandConfig } from "@/lib/brand.functions";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { PageLayout, ExecutiveHero } from "@/components/nuvia";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/super-admin/marca")({
@@ -74,31 +73,31 @@ function MarcaPage() {
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm((f) => ({ ...f, [k]: v }));
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-10 space-y-8">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight" style={{ color: form.color_negro }}>
-          Configuración de Marca NUVEX
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Identidad institucional única. Visible solo para Super Admin. Los cambios afectan correos y plantillas globales.
-        </p>
-      </header>
+    <PageLayout maxWidth="6xl">
+      <ExecutiveHero
+        badge={{ icon: <Palette size={12} />, label: "Identidad NUVIA", tone: "blue" }}
+        title="Configuración de Marca NUVEX"
+        description="Identidad institucional única. Visible solo para Super Admin. Los cambios afectan correos y plantillas globales."
+        meta={
+          <Link to="/super-admin" className="inline-flex items-center gap-1 text-[11px]" style={{ color: "var(--nuvia-accent-blue)" }}>
+            <ArrowLeft size={12} /> Super Admin
+          </Link>
+        }
+      />
 
-      {/* Logos */}
-      <Section title="Logos institucionales" color={form.color_azul}>
+      <Section title="Logos institucionales">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <LogoCard label="Principal (fondos claros)" bg="#ffffff"><Logo variant="color" height={60} /></LogoCard>
           <LogoCard label="Blanco (fondos oscuros)" bg={form.color_negro}><Logo variant="white" height={60} /></LogoCard>
           <LogoCard label="Corporativo" bg="#F4F6FB"><Logo variant="color" height={60} /></LogoCard>
         </div>
         <div className="mt-4">
-          <Label className="text-xs">URL del logo (usado en correos)</Label>
-          <Input value={form.logo_url} onChange={(e) => set("logo_url", e.target.value)} placeholder="https://..." />
+          <LabelN>URL del logo (usado en correos)</LabelN>
+          <input className="nuvia-input" value={form.logo_url} onChange={(e) => set("logo_url", e.target.value)} placeholder="https://..." />
         </div>
       </Section>
 
-      {/* Paleta */}
-      <Section title="Paleta corporativa" color={form.color_azul}>
+      <Section title="Paleta corporativa">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <ColorField label="Azul" value={form.color_azul} onChange={(v) => set("color_azul", v)} />
           <ColorField label="Verde" value={form.color_verde} onChange={(v) => set("color_verde", v)} />
@@ -106,8 +105,7 @@ function MarcaPage() {
         </div>
       </Section>
 
-      {/* Datos */}
-      <Section title="Datos institucionales" color={form.color_azul}>
+      <Section title="Datos institucionales">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <TextField label="Nombre comercial" value={form.nombre_comercial} onChange={(v) => set("nombre_comercial", v)} />
           <TextField label="Tagline" value={form.tagline} onChange={(v) => set("tagline", v)} />
@@ -121,50 +119,101 @@ function MarcaPage() {
       </Section>
 
       <div className="flex justify-end gap-3">
-        <Button
-          variant="outline"
+        <button
+          type="button"
           onClick={() => data && setForm({ ...EMPTY, ...(data as Partial<Form>) })}
           disabled={isLoading || mut.isPending}
+          className="rounded-lg px-4 py-2 text-sm font-medium transition disabled:opacity-50"
+          style={{
+            border: "1px solid var(--nuvia-border)",
+            background: "transparent",
+            color: "var(--nuvia-text-secondary)",
+          }}
         >
           Descartar cambios
-        </Button>
-        <Button
+        </button>
+        <button
+          type="button"
           onClick={() => mut.mutate(form)}
           disabled={isLoading || mut.isPending}
-          style={{ background: form.color_azul, color: "#fff" }}
+          className="rounded-lg px-4 py-2 text-sm font-semibold transition disabled:opacity-50"
+          style={{
+            background: "linear-gradient(135deg, var(--nuvia-accent-blue), var(--nuvia-accent-green))",
+            color: "#fff",
+          }}
         >
           {mut.isPending ? "Guardando…" : "Guardar configuración"}
-        </Button>
+        </button>
       </div>
-    </div>
+    </PageLayout>
   );
 }
 
-function Section({ title, color, children }: { title: string; color: string; children: React.ReactNode }) {
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-xl border bg-card p-6">
-      <h2 className="text-sm font-bold uppercase tracking-wider mb-4" style={{ color }}>{title}</h2>
+    <section
+      className="rounded-2xl p-6"
+      style={{
+        background: "var(--nuvia-bg-card)",
+        border: "1px solid var(--nuvia-border)",
+      }}
+    >
+      <h2
+        className="text-[11px] font-bold uppercase tracking-[0.18em] mb-4"
+        style={{ color: "var(--nuvia-accent-blue)" }}
+      >
+        {title}
+      </h2>
       {children}
     </section>
   );
 }
 
+function LabelN({ children }: { children: React.ReactNode }) {
+  return (
+    <label
+      className="block text-[10px] uppercase tracking-[0.14em] mb-1.5 font-semibold"
+      style={{ color: "var(--nuvia-text-secondary)" }}
+    >
+      {children}
+    </label>
+  );
+}
+
 function LogoCard({ label, bg, children }: { label: string; bg: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border overflow-hidden">
+    <div
+      className="rounded-xl overflow-hidden"
+      style={{ border: "1px solid var(--nuvia-border)" }}
+    >
       <div className="flex h-32 items-center justify-center" style={{ background: bg }}>{children}</div>
-      <div className="px-3 py-2 text-xs text-center text-muted-foreground">{label}</div>
+      <div
+        className="px-3 py-2 text-xs text-center"
+        style={{
+          color: "var(--nuvia-text-secondary)",
+          background: "rgba(255,255,255,0.02)",
+        }}
+      >
+        {label}
+      </div>
     </div>
   );
 }
 
 function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
-    <div className="rounded-lg border overflow-hidden">
+    <div
+      className="rounded-xl overflow-hidden"
+      style={{ border: "1px solid var(--nuvia-border)" }}
+    >
       <div className="h-20" style={{ background: value }} />
-      <div className="p-3 space-y-1">
-        <Label className="text-[10px] uppercase tracking-wider">{label}</Label>
-        <Input value={value} onChange={(e) => onChange(e.target.value)} className="font-mono text-xs" />
+      <div className="p-3 space-y-1.5" style={{ background: "rgba(255,255,255,0.02)" }}>
+        <LabelN>{label}</LabelN>
+        <input
+          className="nuvia-input nuvia-input-sm font-mono"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
       </div>
     </div>
   );
@@ -172,9 +221,9 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
 
 function TextField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
-    <div className="space-y-1">
-      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</Label>
-      <Input value={value} onChange={(e) => onChange(e.target.value)} />
+    <div className="space-y-1.5">
+      <LabelN>{label}</LabelN>
+      <input className="nuvia-input" value={value} onChange={(e) => onChange(e.target.value)} />
     </div>
   );
 }
