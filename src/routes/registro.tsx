@@ -158,6 +158,7 @@ function RegistroPage() {
           }}
         />
         <BgOrbs />
+        <NeuralCanvas />
 
         <div className="relative z-10 flex flex-col justify-between h-full p-8 lg:p-14">
           <motion.div
