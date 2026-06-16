@@ -1,7 +1,7 @@
 // Pipeline Maestro V2 — Linear Operations Center
 // Foco: SLA, dinero en riesgo, cuellos de botella, responsables.
 // Fase 7.6.1B (Opción B aprobada).
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Activity,
@@ -380,9 +380,8 @@ function PipelineV2Page() {
                         ? "text-amber-400"
                         : "text-rose-400";
                   return (
-                    <>
+                    <Fragment key={s.id}>
                       <tr
-                        key={s.id}
                         onClick={() => setExpanded(isOpen ? null : s.id)}
                         className="border-t border-[var(--nuvia-border)] cursor-pointer hover:bg-white/5 transition-colors"
                       >
@@ -447,7 +446,7 @@ function PipelineV2Page() {
                                   return (
                                     <Link
                                       key={c.id}
-                                      to="/expediente/$id"
+                                      to="/casos/$id"
                                       params={{ id: c.id }}
                                       className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md bg-white/[0.03] border border-[var(--nuvia-border)] hover:bg-white/[0.06]"
                                     >
@@ -482,7 +481,8 @@ function PipelineV2Page() {
                           </td>
                         </tr>
                       )}
-                    </>
+                    </Fragment>
+
                   );
                 })}
               </tbody>
@@ -558,7 +558,7 @@ function PipelineV2Page() {
                 {casosCriticos.map(({ caso, etapa, dias, exceso }) => (
                   <Link
                     key={caso.id}
-                    to="/expediente/$id"
+                    to="/casos/$id"
                     params={{ id: caso.id }}
                     className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md bg-white/[0.03] border border-[var(--nuvia-border)] hover:bg-white/[0.06]"
                   >
