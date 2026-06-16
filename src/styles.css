@@ -504,6 +504,7 @@
   color: var(--nuvia-text-primary, #E6ECFF);
 }
 .nuvia-financiero-dark .bg-white,
+.nuvia-financiero-dark [class*="bg-white/"],
 .nuvia-financiero-dark [class*="bg-[#fff"],
 .nuvia-financiero-dark [class*="bg-[#FFF"],
 .nuvia-financiero-dark [class*="bg-[#FAFBFC"],
@@ -511,12 +512,21 @@
 .nuvia-financiero-dark [class*="bg-[#FBFCFD"],
 .nuvia-financiero-dark [class*="bg-[#EEF1F5"],
 .nuvia-financiero-dark [class*="bg-[#F4F6FB"],
-.nuvia-financiero-dark [class*="bg-[#F0F2F6"] {
+.nuvia-financiero-dark [class*="bg-[#F0F2F6"],
+.nuvia-financiero-dark [class*="bg-[#EEF1FA"],
+.nuvia-financiero-dark [class*="bg-slate-50"],
+.nuvia-financiero-dark [class*="bg-slate-100"],
+.nuvia-financiero-dark [class*="bg-gray-50"],
+.nuvia-financiero-dark [class*="bg-gray-100"] {
   background-color: rgba(20, 28, 54, 0.55) !important;
   background-image: none !important;
   color: var(--nuvia-text-primary, #E6ECFF) !important;
   border-color: var(--nuvia-border, rgba(122,160,255,0.18)) !important;
   backdrop-filter: blur(10px);
+}
+.nuvia-financiero-dark [class*="border-white/"],
+.nuvia-financiero-dark [class*="border-white"] {
+  border-color: var(--nuvia-border, rgba(122,160,255,0.18)) !important;
 }
 .nuvia-financiero-dark [class*="text-[#242424"],
 .nuvia-financiero-dark [class*="text-[#0A1226"],
