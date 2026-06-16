@@ -31,7 +31,7 @@ export function PageLayout({ children, maxWidth = "7xl" }: PageLayoutProps) {
           : "max-w-7xl";
 
   return (
-    <div className="min-h-screen relative" style={{ background: "var(--nuvia-bg-primary)" }}>
+    <div className="min-h-screen relative" style={{ background: "var(--nuvia-bg-primary)", color: "var(--nuvia-text-primary)" }}>
       {/* Halo decorativo único compartido por todas las pantallas */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div
