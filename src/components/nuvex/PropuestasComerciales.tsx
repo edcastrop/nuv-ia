@@ -251,15 +251,16 @@ export function PropuestasComerciales(props: Props) {
         </button>
       </div>
 
-      {/* Franja de comparación rápida — glass tiles */}
+      {/* Franja de comparación rápida — glass dark NUVIA */}
       {cuotasList.length > 0 && (
         <div
-          className="rounded-2xl border border-white/55 p-2 backdrop-blur-xl"
+          className="rounded-2xl border p-2 backdrop-blur-xl"
           style={{
             background:
-              "linear-gradient(135deg, rgba(255,255,255,0.55), rgba(238,245,255,0.35))",
+              "linear-gradient(135deg, rgba(20,28,54,0.65), rgba(13,18,36,0.6))",
+            borderColor: "var(--nuvia-border, rgba(122,160,255,0.18))",
             boxShadow:
-              "inset 0 1px 0 rgba(255,255,255,0.7), 0 10px 28px -20px rgba(36,52,92,0.18)",
+              "inset 0 1px 0 rgba(255,255,255,0.04), 0 16px 40px -22px rgba(0,0,0,0.55)",
           }}
         >
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
@@ -274,12 +275,12 @@ export function PropuestasComerciales(props: Props) {
                     className="group relative flex min-w-0 flex-col items-center gap-1 overflow-hidden rounded-xl border px-3 py-3 text-center backdrop-blur-md transition hover:-translate-y-0.5"
                     style={{
                       background: isRec
-                        ? "linear-gradient(135deg, rgba(132,185,143,0.22), rgba(68,93,163,0.16))"
-                        : "rgba(255,255,255,0.65)",
-                      borderColor: isRec ? "rgba(132,185,143,0.55)" : "rgba(255,255,255,0.7)",
+                        ? "linear-gradient(135deg, rgba(132,185,143,0.22), rgba(68,93,163,0.20))"
+                        : "rgba(20,28,54,0.55)",
+                      borderColor: isRec ? "rgba(132,185,143,0.55)" : "rgba(255,255,255,0.10)",
                       boxShadow: isRec
-                        ? "0 12px 28px -16px rgba(132,185,143,0.45), inset 0 1px 0 rgba(255,255,255,0.65)"
-                        : "inset 0 1px 0 rgba(255,255,255,0.8), 0 2px 8px rgba(36,52,92,0.04)",
+                        ? "0 12px 28px -16px rgba(132,185,143,0.45), inset 0 1px 0 rgba(255,255,255,0.06)"
+                        : "inset 0 1px 0 rgba(255,255,255,0.04), 0 2px 8px rgba(0,0,0,0.25)",
                       cursor: c.valid ? "pointer" : "default",
                     }}
                   >
@@ -292,7 +293,7 @@ export function PropuestasComerciales(props: Props) {
                     )}
                     <div
                       className="relative text-[9px] font-semibold uppercase tracking-[0.14em]"
-                      style={{ color: isRec ? "#1F5A3A" : "#5C6B85" }}
+                      style={{ color: isRec ? "#A7E0B8" : "rgba(230,236,255,0.55)" }}
                     >
                       Escenario {idx + 1}
                     </div>
@@ -328,10 +329,10 @@ export function PropuestasComerciales(props: Props) {
                           value={formatCOP(c.honorarios)}
                           highlight={isRec}
                         />
-                        <div className="mt-1 border-t pt-1.5" style={{ borderColor: "rgba(255,255,255,0.6)" }}>
+                        <div className="mt-1 border-t pt-1.5" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
                           <div
                             className="text-[8px] font-semibold uppercase tracking-[0.14em]"
-                            style={{ color: isRec ? "#1F5A3A" : "#5C6B85" }}
+                            style={{ color: isRec ? "#A7E0B8" : "rgba(230,236,255,0.55)" }}
                           >
                             Ahorro total
                           </div>
@@ -339,7 +340,7 @@ export function PropuestasComerciales(props: Props) {
                             className="bg-clip-text text-[14px] font-extrabold leading-tight text-transparent break-words"
                             style={{
                               backgroundImage:
-                                "linear-gradient(135deg, #1F7A45 0%, #2EA866 100%)",
+                                "linear-gradient(135deg, #84B98F 0%, #A7E0B8 100%)",
                             }}
                           >
                             {formatCOP(c.ahorroTotal)}
@@ -349,7 +350,7 @@ export function PropuestasComerciales(props: Props) {
                     ) : (
                       <div
                         className="text-[13px] font-extrabold leading-none"
-                        style={{ color: "#C0392B" }}
+                        style={{ color: "#FF7878" }}
                       >
                         No viable
                       </div>
@@ -360,6 +361,7 @@ export function PropuestasComerciales(props: Props) {
           </div>
         </div>
       )}
+
 
 
       <div className="grid min-w-0 gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -391,12 +393,12 @@ export function PropuestasComerciales(props: Props) {
               className="relative flex min-w-0 flex-col overflow-hidden rounded-2xl border backdrop-blur-xl transition hover:-translate-y-0.5"
               style={{
                 background: isRecomendada
-                  ? "linear-gradient(155deg, rgba(255,255,255,0.85) 0%, rgba(232,245,236,0.78) 60%, rgba(214,232,255,0.72) 100%)"
-                  : "linear-gradient(155deg, rgba(255,255,255,0.78), rgba(244,247,251,0.7))",
-                borderColor: isRecomendada ? "rgba(132,185,143,0.6)" : "rgba(255,255,255,0.65)",
+                  ? "linear-gradient(155deg, rgba(20,28,54,0.85) 0%, rgba(28,55,42,0.78) 60%, rgba(20,40,80,0.78) 100%)"
+                  : "linear-gradient(155deg, rgba(20,28,54,0.78), rgba(13,18,36,0.7))",
+                borderColor: isRecomendada ? "rgba(132,185,143,0.6)" : "rgba(255,255,255,0.10)",
                 boxShadow: isRecomendada
-                  ? "0 22px 48px -20px rgba(68,93,163,0.35), 0 10px 28px -16px rgba(132,185,143,0.4), inset 0 1px 0 rgba(255,255,255,0.75)"
-                  : "0 14px 36px -22px rgba(36,52,92,0.18), inset 0 1px 0 rgba(255,255,255,0.7)",
+                  ? "0 22px 48px -20px rgba(0,0,0,0.65), 0 10px 28px -16px rgba(132,185,143,0.35), inset 0 1px 0 rgba(255,255,255,0.06)"
+                  : "0 14px 36px -22px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.04)",
               }}
             >
               {/* Glow halos */}
@@ -405,15 +407,15 @@ export function PropuestasComerciales(props: Props) {
                 className="pointer-events-none absolute -top-20 -right-20 h-56 w-56 rounded-full blur-3xl"
                 style={{
                   background: isRecomendada
-                    ? "radial-gradient(circle, rgba(132,185,143,0.45), transparent 70%)"
-                    : "radial-gradient(circle, rgba(68,93,163,0.18), transparent 70%)",
+                    ? "radial-gradient(circle, rgba(132,185,143,0.40), transparent 70%)"
+                    : "radial-gradient(circle, rgba(122,160,255,0.18), transparent 70%)",
                 }}
               />
               <span
                 aria-hidden
                 className="pointer-events-none absolute -bottom-24 -left-16 h-56 w-56 rounded-full blur-3xl"
                 style={{
-                  background: "radial-gradient(circle, rgba(68,93,163,0.18), transparent 70%)",
+                  background: "radial-gradient(circle, rgba(122,160,255,0.16), transparent 70%)",
                 }}
               />
 
@@ -424,7 +426,7 @@ export function PropuestasComerciales(props: Props) {
                   className="absolute inset-x-0 top-0 h-[3px]"
                   style={{
                     background:
-                      "linear-gradient(90deg, #445DA3 0%, #6E8AD6 50%, #84B98F 100%)",
+                      "linear-gradient(90deg, #445DA3 0%, #7AA0FF 50%, #84B98F 100%)",
                   }}
                 />
               )}
@@ -434,7 +436,7 @@ export function PropuestasComerciales(props: Props) {
                 <div className="flex flex-col gap-2">
                   <div
                     className="text-[10px] font-semibold uppercase tracking-[0.18em]"
-                    style={{ color: "#5C6B85" }}
+                    style={{ color: "rgba(230,236,255,0.55)" }}
                   >
                     Escenario {idx + 1}
                   </div>
@@ -445,14 +447,14 @@ export function PropuestasComerciales(props: Props) {
                         isRecomendada
                           ? {
                               background:
-                                "linear-gradient(135deg, rgba(132,185,143,0.28), rgba(68,93,163,0.22))",
-                              color: "#1F5A3A",
+                                "linear-gradient(135deg, rgba(132,185,143,0.28), rgba(68,93,163,0.28))",
+                              color: "#A7E0B8",
                               borderColor: "rgba(132,185,143,0.5)",
                             }
                           : {
-                              background: "rgba(255,248,225,0.85)",
-                              color: "#8A6D00",
-                              borderColor: "rgba(201,168,76,0.45)",
+                              background: "rgba(246,196,83,0.15)",
+                              color: "#F6C453",
+                              borderColor: "rgba(246,196,83,0.45)",
                             }
                       }
                     >
@@ -464,21 +466,23 @@ export function PropuestasComerciales(props: Props) {
                 <button
                   type="button"
                   onClick={() => removePropuesta(idx)}
-                  className="text-[#5C6B85]/50 transition hover:text-[#C0392B]"
+                  className="transition"
+                  style={{ color: "rgba(230,236,255,0.4)" }}
                   title="Eliminar escenario"
                 >
                   <Trash2 size={14} />
                 </button>
               </div>
 
+
               {/* Cuotas eliminadas - Prioridad 2 */}
               <div className="relative px-5 pt-4">
                 <div
                   className="text-[11px] font-bold uppercase tracking-[0.18em]"
-                  style={{ color: NUVEX.azul }}
+                  style={{ color: "#9DB6FF" }}
                 >
                   Elimina{" "}
-                  <span className="text-[15px]" style={{ color: "#1F2A44" }}>
+                  <span className="text-[15px]" style={{ color: "#FFFFFF" }}>
                     {c.valid ? c.cuotasEliminadas : cuotas}
                   </span>{" "}
                   cuotas
@@ -493,7 +497,10 @@ export function PropuestasComerciales(props: Props) {
                     </span>
                   </Alert>
                   <div className="mt-3">
-                    <label className="text-[10px] font-semibold uppercase tracking-wider text-[#3A4660]/75">
+                    <label
+                      className="text-[10px] font-semibold uppercase tracking-wider"
+                      style={{ color: "rgba(230,236,255,0.6)" }}
+                    >
                       Cuotas a eliminar
                     </label>
                     <input
@@ -505,7 +512,7 @@ export function PropuestasComerciales(props: Props) {
                         const v = parseInt(e.target.value, 10);
                         setCuotas(idx, Number.isFinite(v) ? v : 0);
                       }}
-                      className="mt-1 w-full rounded-xl border border-white/70 bg-white/70 px-3 py-2 text-base font-bold text-[#1F2A44] outline-none backdrop-blur-md focus:border-[#445DA3]/60 focus:ring-2 focus:ring-[#445DA3]/15"
+                      className="nuvia-input mt-1 w-full text-base font-bold outline-none"
                     />
                   </div>
                 </div>
@@ -515,7 +522,7 @@ export function PropuestasComerciales(props: Props) {
                   <div className="relative px-5 pt-4">
                     <div
                       className="text-[10px] font-semibold uppercase tracking-[0.18em]"
-                      style={{ color: "#1F5A3A" }}
+                      style={{ color: "#A7E0B8" }}
                     >
                       Ahorro total
                     </div>
@@ -523,7 +530,7 @@ export function PropuestasComerciales(props: Props) {
                       className="mt-1 bg-clip-text text-[26px] font-extrabold leading-none text-transparent break-words sm:text-[34px]"
                       style={{
                         backgroundImage:
-                          "linear-gradient(135deg, #1F7A45 0%, #2EA866 55%, #5BC889 100%)",
+                          "linear-gradient(135deg, #84B98F 0%, #A7E0B8 55%, #C8F0D2 100%)",
                         letterSpacing: "-0.02em",
                       }}
                     >
@@ -536,20 +543,23 @@ export function PropuestasComerciales(props: Props) {
                     <HeroMetric
                       label="Incremento mensual"
                       value={`+${formatCOP(c.incrementoMensual)}`}
-                      color={NUVEX.azul}
+                      color="#9DB6FF"
                     />
                     <HeroMetric
                       label="Nueva cuota"
                       value={formatCOP(c.nuevaCuota)}
-                      color="#1F2A44"
+                      color="#FFFFFF"
                     />
                     <HeroMetric
                       label="Nuevo plazo"
                       value={`${c.nuevoPlazo} meses · ${(c.nuevoPlazo / 12).toFixed(1)} años`}
-                      color="#1F2A44"
+                      color="#FFFFFF"
                     />
                     <div>
-                      <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[#5C6B85]">
+                      <div
+                        className="text-[9px] font-semibold uppercase tracking-[0.16em]"
+                        style={{ color: "rgba(230,236,255,0.55)" }}
+                      >
                         Cuotas a eliminar
                       </div>
                       <input
@@ -561,36 +571,39 @@ export function PropuestasComerciales(props: Props) {
                           const v = parseInt(e.target.value, 10);
                           setCuotas(idx, Number.isFinite(v) ? v : 0);
                         }}
-                        className="mt-1 w-20 rounded-lg border border-white/70 bg-white/75 px-2 py-1 text-base font-bold text-[#1F2A44] outline-none backdrop-blur-md focus:border-[#445DA3]/60 focus:ring-2 focus:ring-[#445DA3]/15"
+                        className="nuvia-input nuvia-input-sm mt-1 w-20 text-base font-bold outline-none"
                       />
                     </div>
                   </div>
 
-                  {/* Comparativo tiempo actual vs nuevo - glass */}
+                  {/* Comparativo tiempo actual vs nuevo - glass dark */}
                   <div
                     className="relative mx-5 mt-4 overflow-hidden rounded-xl border px-3 py-2.5 backdrop-blur-md"
                     style={{
                       borderColor: "rgba(132,185,143,0.4)",
                       background:
-                        "linear-gradient(135deg, rgba(132,185,143,0.18), rgba(255,255,255,0.45))",
-                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.6)",
+                        "linear-gradient(135deg, rgba(132,185,143,0.18), rgba(20,28,54,0.55))",
+                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
                     }}
                   >
                     <div
                       className="text-[9px] font-semibold uppercase tracking-[0.16em]"
-                      style={{ color: "#1F5A3A" }}
+                      style={{ color: "#A7E0B8" }}
                     >
                       Tiempo: actual vs nuevo
                     </div>
                     <div className="mt-1 flex items-baseline justify-between gap-2">
-                      <span className="text-[12px] font-semibold text-[#5C6B85] line-through">
+                      <span
+                        className="text-[12px] font-semibold line-through"
+                        style={{ color: "rgba(230,236,255,0.5)" }}
+                      >
                         {props.cuotasPendientes} m · {(props.cuotasPendientes / 12).toFixed(1)} a
                       </span>
-                      <span className="text-[14px] font-extrabold" style={{ color: "#1F5A3A" }}>
+                      <span className="text-[14px] font-extrabold" style={{ color: "#A7E0B8" }}>
                         {c.nuevoPlazo} m · {(c.nuevoPlazo / 12).toFixed(1)} a
                       </span>
                     </div>
-                    <div className="mt-0.5 text-right text-[10px] font-semibold" style={{ color: "#1F5A3A" }}>
+                    <div className="mt-0.5 text-right text-[10px] font-semibold" style={{ color: "#A7E0B8" }}>
                       −{c.cuotasEliminadas} cuotas (−{(c.cuotasEliminadas / 12).toFixed(1)} años)
                     </div>
                   </div>
@@ -598,19 +611,19 @@ export function PropuestasComerciales(props: Props) {
                   {/* Sección secundaria: honorarios y veces pagado */}
                   <div
                     className="relative mt-5 flex flex-col gap-3 border-t px-5 py-3 text-[11px] min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between"
-                    style={{ borderColor: "rgba(255,255,255,0.7)", color: "#5C6B85" }}
+                    style={{ borderColor: "rgba(255,255,255,0.08)", color: "rgba(230,236,255,0.6)" }}
                   >
                     <div className="flex flex-col">
                       <span className="text-[9px] font-semibold uppercase tracking-wider opacity-70">
                         Honorarios
                       </span>
-                      <span className="font-semibold text-[#1F2A44]">{formatCOP(c.honorarios)}</span>
+                      <span className="font-semibold" style={{ color: "#FFFFFF" }}>{formatCOP(c.honorarios)}</span>
                     </div>
                     <div className="flex flex-col min-[380px]:items-end">
                       <span className="text-[9px] font-semibold uppercase tracking-wider opacity-70">
                         Veces pagado
                       </span>
-                      <span className="font-semibold text-[#1F2A44]">{formatNumber(veces, 2)}x</span>
+                      <span className="font-semibold" style={{ color: "#FFFFFF" }}>{formatNumber(veces, 2)}x</span>
                     </div>
                   </div>
 
@@ -625,15 +638,15 @@ export function PropuestasComerciales(props: Props) {
                         isRecomendada
                           ? {
                               background:
-                                "linear-gradient(135deg, rgba(132,185,143,0.32), rgba(68,93,163,0.22))",
-                              color: "#1F5A3A",
+                                "linear-gradient(135deg, rgba(132,185,143,0.32), rgba(68,93,163,0.28))",
+                              color: "#A7E0B8",
                               border: "1px solid rgba(132,185,143,0.55)",
                               cursor: "default",
-                              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.65)",
+                              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
                             }
                           : {
                               background:
-                                "linear-gradient(135deg, #1F2A44 0%, #445DA3 60%, #5B7DC8 100%)",
+                                "linear-gradient(135deg, #445DA3 0%, #5B7DC8 60%, #7AA0FF 100%)",
                               color: "#fff",
                               border: "1px solid rgba(255,255,255,0.18)",
                               boxShadow: "0 10px 24px -14px rgba(68,93,163,0.55)",
@@ -651,8 +664,15 @@ export function PropuestasComerciales(props: Props) {
       </div>
 
       {cuotasList.length === 0 && (
-        <div className="rounded-xl border border-dashed border-white/70 bg-white/40 p-6 text-center text-sm text-[#3A4660]/75 backdrop-blur-md">
-          No hay escenarios. Usa “Nuevo escenario” para agregar uno.
+        <div
+          className="rounded-xl border border-dashed p-6 text-center text-sm backdrop-blur-md"
+          style={{
+            borderColor: "rgba(255,255,255,0.15)",
+            background: "rgba(20,28,54,0.4)",
+            color: "rgba(230,236,255,0.6)",
+          }}
+        >
+          No hay escenarios. Usa "Nuevo escenario" para agregar uno.
         </div>
       )}
     </Card>
@@ -662,7 +682,10 @@ export function PropuestasComerciales(props: Props) {
 function HeroMetric({ label, value, color }: { label: string; value: string; color: string }) {
   return (
     <div>
-      <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[#8893A0]">
+      <div
+        className="text-[9px] font-semibold uppercase tracking-[0.16em]"
+        style={{ color: "rgba(230,236,255,0.55)" }}
+      >
         {label}
       </div>
       <div
@@ -680,13 +703,13 @@ function FranjaRow({ label, value, highlight }: { label: string; value: string; 
     <div className="flex items-baseline justify-between gap-2">
       <span
         className="text-[8.5px] font-semibold uppercase tracking-[0.12em]"
-        style={{ color: highlight ? "#1F7A45" : "#8893A0" }}
+        style={{ color: highlight ? "#A7E0B8" : "rgba(230,236,255,0.5)" }}
       >
         {label}
       </span>
       <span
         className="text-[11px] font-bold tabular-nums"
-        style={{ color: highlight ? "#1F7A45" : "#242424" }}
+        style={{ color: highlight ? "#A7E0B8" : "#FFFFFF" }}
       >
         {value}
       </span>
