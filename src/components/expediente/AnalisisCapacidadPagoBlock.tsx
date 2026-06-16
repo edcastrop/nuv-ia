@@ -401,7 +401,7 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
   if (!bancoRequiereAnalisisCapacidad(banco)) return null;
 
   return (
-    <Card className="p-6 border-2 border-[#445DA3]/20 bg-gradient-to-br from-white to-slate-50">
+    <Card className="p-6 glass-panel">
       <div className="flex items-start justify-between gap-4 mb-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
