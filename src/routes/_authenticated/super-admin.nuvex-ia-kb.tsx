@@ -28,19 +28,24 @@ function AdminKB() {
   const { isSuperAdmin, loading } = useUserRole();
   const [tab, setTab] = useState<Tab>("kb");
 
-  if (loading) return <div className="p-12 text-center text-sm text-[var(--nuvia-text-secondary)]">Cargando…</div>;
+  if (loading) {
+    return (
+      <PageLayout>
+        <div className="p-12 text-center text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>Cargando…</div>
+      </PageLayout>
+    );
+  }
   if (!isSuperAdmin) return <Navigate to="/inicio" />;
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[var(--nuvia-text-primary)]">NUVEX IA · Base de Conocimiento</h1>
-        <p className="text-sm text-[var(--nuvia-text-secondary)]">
-          Cerebro único de NUVEX IA. Cada respuesta de KB se entrega con cero tokens.
-        </p>
-      </div>
+    <PageLayout>
+      <ExecutiveHero
+        badge={{ icon: <BrainCircuit size={12} />, label: "NUVEX IA", tone: "blue" }}
+        title="Base de Conocimiento"
+        description="Cerebro único de NUVEX IA. Cada respuesta de KB se entrega con cero tokens."
+      />
 
-      <div className="flex gap-2 border-b border-[var(--nuvia-border)] mb-6">
+      <div className="flex gap-2 border-b border-[var(--nuvia-border)]">
         {[
           { k: "kb", label: "Artículos" },
           { k: "analitica", label: "Analítica" },
@@ -50,8 +55,8 @@ function AdminKB() {
             onClick={() => setTab(t.k as Tab)}
             className="px-4 py-2 text-sm font-medium border-b-2 -mb-px transition"
             style={{
-              color: tab === t.k ? "#445DA3" : "rgba(36,36,36,0.6)",
-              borderColor: tab === t.k ? "#445DA3" : "transparent",
+              color: tab === t.k ? "var(--nuvia-accent-blue)" : "var(--nuvia-text-secondary)",
+              borderColor: tab === t.k ? "var(--nuvia-accent-blue)" : "transparent",
             }}
           >
             {t.label}
@@ -61,9 +66,10 @@ function AdminKB() {
 
       {tab === "kb" && <KbTab />}
       {tab === "analitica" && <AnaliticaTab />}
-    </div>
+    </PageLayout>
   );
 }
+
 
 function KbTab() {
   const listFn = useServerFn(kbList);
