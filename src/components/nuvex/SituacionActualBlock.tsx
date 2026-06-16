@@ -318,11 +318,20 @@ function SecondaryKpi({ label, value }: SituacionMetric) {
 
 
   return (
-    <div className="rounded-xl border border-[#E3E7EE] bg-white p-4">
-      <div className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[#6B7480]">
+    <div
+      className="rounded-xl border p-4"
+      style={{
+        borderColor: "var(--nuvia-border)",
+        background: "rgba(20,28,54,0.5)",
+      }}
+    >
+      <div
+        className="text-[10.5px] font-semibold uppercase tracking-[0.14em]"
+        style={{ color: "var(--nuvia-text-secondary)" }}
+      >
         {label}
       </div>
-      <div className="mt-1.5 text-base font-semibold text-[#0F1115]">{value}</div>
+      <div className="mt-1.5 text-base font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{value}</div>
     </div>
   );
 }
