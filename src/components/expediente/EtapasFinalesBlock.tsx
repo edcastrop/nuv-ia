@@ -374,20 +374,26 @@ function EtapaShell({
 }) {
   const palette =
     estado === "completada"
-      ? { bg: "bg-emerald-50/60", border: "border-emerald-200", chip: "bg-emerald-100 text-emerald-800" }
+      ? { bg: "rgba(132,185,143,0.10)", border: "rgba(132,185,143,0.35)", chipBg: "rgba(132,185,143,0.18)", chipFg: "var(--nuvia-accent-green)" }
       : estado === "actual"
-        ? { bg: "bg-amber-50/60", border: "border-amber-200", chip: "bg-amber-100 text-amber-900" }
-        : { bg: "bg-slate-50", border: "border-slate-200", chip: "bg-slate-200 text-slate-600" };
+        ? { bg: "rgba(246,196,83,0.10)", border: "rgba(246,196,83,0.35)", chipBg: "rgba(246,196,83,0.18)", chipFg: "var(--nuvia-warning)" }
+        : { bg: "rgba(255,255,255,0.03)", border: "var(--nuvia-border)", chipBg: "rgba(255,255,255,0.06)", chipFg: "var(--nuvia-text-secondary)" };
 
   const label = estado === "completada" ? "Completada" : estado === "actual" ? "En curso" : "Pendiente";
 
   return (
-    <section className={`rounded-xl border ${palette.border} ${palette.bg} p-4 space-y-2`}>
+    <section
+      className="rounded-xl p-4 space-y-2"
+      style={{ background: palette.bg, border: `1px solid ${palette.border}` }}
+    >
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold text-slate-900">
+        <h4 className="text-sm font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
           Etapa {numero} · {titulo}
         </h4>
-        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${palette.chip}`}>
+        <span
+          className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+          style={{ background: palette.chipBg, color: palette.chipFg }}
+        >
           {label}
         </span>
       </div>
@@ -395,4 +401,5 @@ function EtapaShell({
     </section>
   );
 }
+
 
