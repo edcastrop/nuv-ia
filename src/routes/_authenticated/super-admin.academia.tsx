@@ -1,6 +1,7 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Plus, Trash2, ToggleLeft, ToggleRight, ChevronDown, ChevronRight, Save, ArrowLeft, Layers, BarChart3, Award } from "lucide-react";
+import { Plus, Trash2, ToggleLeft, ToggleRight, ChevronDown, ChevronRight, Save, ArrowLeft, Layers, BarChart3, Award, GraduationCap } from "lucide-react";
+import { PageLayout, ExecutiveHero } from "@/components/nuvia";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import {
@@ -30,7 +31,14 @@ function AdminAcademia() {
   const reload = async () => { setCursos(await listCursos()); };
   useEffect(() => { (async () => { await reload(); setLoading(false); })(); }, []);
 
-  if (rolesLoading || loading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>;
+  if (rolesLoading || loading) return <div className="p-12 text-center text-sm text-[var(--nuvia-text-secondary)]">Cargando…</div>;
+  if (rolesLoading || loading) {
+    return (
+      <PageLayout>
+        <div className="p-12 text-center text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>Cargando…</div>
+      </PageLayout>
+    );
+  }
   if (!isSuperAdmin) return <Navigate to="/inicio" />;
 
   const tabs: { id: Tab; label: string; icon: typeof Layers }[] = [
@@ -40,23 +48,33 @@ function AdminAcademia() {
   ];
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-6 space-y-5">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <Link to="/super-admin" className="inline-flex items-center gap-1 text-[11px] text-[#445DA3] mb-1"><ArrowLeft size={12} /> Super Admin</Link>
-          <h1 className="text-2xl font-semibold text-[#0A1226]">Administración de la Academia</h1>
-          <div className="text-sm text-[#242424]/60">Gestiona cursos, módulos, lecciones, evaluaciones, inscritos y certificados por rol.</div>
-        </div>
-        {tab === "contenido" && <CrearCursoButton onCreated={reload} />}
-      </div>
+    <PageLayout>
+      <ExecutiveHero
+        badge={{ icon: <GraduationCap size={12} />, label: "Academia NUVEX", tone: "blue" }}
+        title="Administración de la Academia"
+        description="Gestiona cursos, módulos, lecciones, evaluaciones, inscritos y certificados por rol."
+        meta={
+          <Link to="/super-admin" className="inline-flex items-center gap-1 text-[11px]" style={{ color: "var(--nuvia-accent-blue)" }}>
+            <ArrowLeft size={12} /> Super Admin
+          </Link>
+        }
+        actions={tab === "contenido" ? <CrearCursoButton onCreated={reload} /> : undefined}
+      />
 
-      <div className="flex items-center gap-1 border-b border-[#E3E7EE]">
+      <div className="flex items-center gap-1 border-b border-[var(--nuvia-border)]">
         {tabs.map((t) => {
           const Icon = t.icon;
           const active = tab === t.id;
           return (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className={`inline-flex items-center gap-1.5 border-b-2 px-3 py-2 text-[12px] font-semibold transition ${active ? "border-[#445DA3] text-[#0A1226]" : "border-transparent text-[#242424]/55 hover:text-[#0A1226]"}`}>
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className="inline-flex items-center gap-1.5 border-b-2 px-3 py-2 text-[12px] font-semibold transition"
+              style={{
+                color: active ? "var(--nuvia-text-primary)" : "var(--nuvia-text-secondary)",
+                borderColor: active ? "var(--nuvia-accent-blue)" : "transparent",
+              }}
+            >
               <Icon size={13} /> {t.label}
             </button>
           );
@@ -70,19 +88,20 @@ function AdminAcademia() {
       )}
       {tab === "seguimiento" && <SeguimientoPanel cursos={cursos} />}
       {tab === "certificados" && <CertificadosPanel cursos={cursos} />}
-    </div>
+    </PageLayout>
   );
 }
+
 
 function CrearCursoButton({ onCreated }: { onCreated: () => void }) {
   const [rol, setRol] = useState<AcademiaRol>("licenciado");
   const [titulo, setTitulo] = useState("");
   return (
     <div className="flex items-center gap-2">
-      <select value={rol} onChange={(e) => setRol(e.target.value as AcademiaRol)} className="rounded-lg border border-[#E3E7EE] bg-white px-2 py-1.5 text-xs">
+      <select value={rol} onChange={(e) => setRol(e.target.value as AcademiaRol)} className="rounded-lg border border-[var(--nuvia-border)] bg-[var(--nuvia-bg-card)] px-2 py-1.5 text-xs">
         {ROL_LIST.map((r) => <option key={r} value={r}>{ROL_LABEL[r]}</option>)}
       </select>
-      <input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Nuevo curso…" className="rounded-lg border border-[#E3E7EE] bg-white px-2 py-1.5 text-xs w-56" />
+      <input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Nuevo curso…" className="rounded-lg border border-[var(--nuvia-border)] bg-[var(--nuvia-bg-card)] px-2 py-1.5 text-xs w-56" />
       <button
         onClick={async () => {
           if (!titulo.trim()) return;
@@ -108,23 +127,23 @@ function CursoCard({ curso, onChanged }: { curso: Curso; onChanged: () => void }
   useEffect(() => { if (open) loadMods(); }, [open]);
 
   return (
-    <div className="rounded-xl border border-[#E3E7EE] bg-white">
+    <div className="rounded-xl border border-[var(--nuvia-border)] bg-[var(--nuvia-bg-card)]">
       <div className="flex items-center gap-3 p-4">
         <button onClick={() => setOpen((o) => !o)}>{open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</button>
         <div className="rounded-md bg-[#445DA3]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#445DA3]">{curso.rol_destino}</div>
-        <input value={titulo} onChange={(e) => setTitulo(e.target.value)} className="flex-1 rounded-lg border border-[#E3E7EE] px-2 py-1 text-sm font-semibold" />
+        <input value={titulo} onChange={(e) => setTitulo(e.target.value)} className="flex-1 rounded-lg border border-[var(--nuvia-border)] px-2 py-1 text-sm font-semibold" />
         <button onClick={async () => { await sb.from("academia_cursos").update({ activo: !curso.activo }).eq("id", curso.id); onChanged(); }} title={curso.activo ? "Activo" : "Inactivo"}>
-          {curso.activo ? <ToggleRight size={20} className="text-[#1F7A45]" /> : <ToggleLeft size={20} className="text-[#242424]/40" />}
+          {curso.activo ? <ToggleRight size={20} className="text-[#1F7A45]" /> : <ToggleLeft size={20} className="text-[var(--nuvia-text-primary)]/40" />}
         </button>
-        <button onClick={async () => { await sb.from("academia_cursos").update({ titulo, descripcion: desc }).eq("id", curso.id); onChanged(); }} className="inline-flex items-center gap-1 rounded-lg bg-[#0A1226] px-3 py-1.5 text-xs font-semibold text-white"><Save size={12} /> Guardar</button>
+        <button onClick={async () => { await sb.from("academia_cursos").update({ titulo, descripcion: desc }).eq("id", curso.id); onChanged(); }} className="inline-flex items-center gap-1 rounded-lg bg-[var(--nuvia-accent-blue)] px-3 py-1.5 text-xs font-semibold text-white"><Save size={12} /> Guardar</button>
         <button onClick={async () => { if (confirm("¿Eliminar curso completo? Esto borra módulos, lecciones y evaluaciones.")) { await sb.from("academia_cursos").delete().eq("id", curso.id); onChanged(); } }}><Trash2 size={14} className="text-[#B42318]" /></button>
       </div>
       {open && (
-        <div className="border-t border-[#E3E7EE] p-4 space-y-3 bg-[#F7F9FB]">
-          <textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Descripción del curso" className="w-full rounded-lg border border-[#E3E7EE] bg-white px-2 py-1.5 text-xs" rows={2} />
+        <div className="border-t border-[var(--nuvia-border)] p-4 space-y-3 bg-[rgba(255,255,255,0.04)]">
+          <textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Descripción del curso" className="w-full rounded-lg border border-[var(--nuvia-border)] bg-[var(--nuvia-bg-card)] px-2 py-1.5 text-xs" rows={2} />
 
           <div className="flex items-center gap-2">
-            <input value={nuevoModulo} onChange={(e) => setNuevoModulo(e.target.value)} placeholder="Nuevo módulo…" className="flex-1 rounded-lg border border-[#E3E7EE] bg-white px-2 py-1.5 text-xs" />
+            <input value={nuevoModulo} onChange={(e) => setNuevoModulo(e.target.value)} placeholder="Nuevo módulo…" className="flex-1 rounded-lg border border-[var(--nuvia-border)] bg-[var(--nuvia-bg-card)] px-2 py-1.5 text-xs" />
             <button onClick={async () => {
               if (!nuevoModulo.trim()) return;
               await sb.from("academia_modulos").insert({ curso_id: curso.id, titulo: nuevoModulo.trim(), orden: modulos.length + 1 });
@@ -153,25 +172,25 @@ function ModuloEditor({ modulo, onChanged }: { modulo: Modulo; onChanged: () => 
   useEffect(() => { if (open) load(); }, [open]);
 
   return (
-    <div className="rounded-lg border border-[#E3E7EE] bg-white">
+    <div className="rounded-lg border border-[var(--nuvia-border)] bg-[var(--nuvia-bg-card)]">
       <div className="flex items-center gap-2 p-3">
         <button onClick={() => setOpen((o) => !o)}>{open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}</button>
-        <input value={titulo} onChange={(e) => setTitulo(e.target.value)} className="flex-1 rounded border border-[#E3E7EE] px-2 py-1 text-xs" />
+        <input value={titulo} onChange={(e) => setTitulo(e.target.value)} className="flex-1 rounded border border-[var(--nuvia-border)] px-2 py-1 text-xs" />
         <button onClick={async () => { await sb.from("academia_modulos").update({ titulo, descripcion: desc }).eq("id", modulo.id); onChanged(); }} className="text-[11px] text-[#445DA3] font-semibold">Guardar</button>
         <button onClick={async () => { if (confirm("¿Eliminar módulo?")) { await sb.from("academia_modulos").delete().eq("id", modulo.id); onChanged(); } }}><Trash2 size={12} className="text-[#B42318]" /></button>
       </div>
       {open && (
-        <div className="border-t border-[#E3E7EE] p-3 space-y-3 bg-[#FAFBFD]">
-          <input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Descripción" className="w-full rounded border border-[#E3E7EE] px-2 py-1 text-xs" />
+        <div className="border-t border-[var(--nuvia-border)] p-3 space-y-3 bg-[#FAFBFD]">
+          <input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Descripción" className="w-full rounded border border-[var(--nuvia-border)] px-2 py-1 text-xs" />
 
           <div className="space-y-1">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-[#242424]/60">Lecciones</div>
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-[var(--nuvia-text-secondary)]">Lecciones</div>
             {lecciones.map((l) => <LeccionEditor key={l.id} leccion={l} onChanged={load} />)}
             <NuevaLeccion moduloId={modulo.id} onCreated={load} />
           </div>
 
           <div className="space-y-1">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-[#242424]/60">Evaluaciones</div>
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-[var(--nuvia-text-secondary)]">Evaluaciones</div>
             {evals.map((e) => <EvalEditor key={e.id} evaluacion={e} onChanged={load} />)}
             <NuevaEvaluacion moduloId={modulo.id} onCreated={load} />
           </div>
@@ -186,8 +205,8 @@ function NuevaLeccion({ moduloId, onCreated }: { moduloId: string; onCreated: ()
   const [tipo, setTipo] = useState<LeccionTipo>("texto");
   return (
     <div className="flex items-center gap-2 pt-1">
-      <input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Nueva lección…" className="flex-1 rounded border border-[#E3E7EE] px-2 py-1 text-xs" />
-      <select value={tipo} onChange={(e) => setTipo(e.target.value as LeccionTipo)} className="rounded border border-[#E3E7EE] px-2 py-1 text-xs">
+      <input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Nueva lección…" className="flex-1 rounded border border-[var(--nuvia-border)] px-2 py-1 text-xs" />
+      <select value={tipo} onChange={(e) => setTipo(e.target.value as LeccionTipo)} className="rounded border border-[var(--nuvia-border)] px-2 py-1 text-xs">
         {["texto","pdf","video","imagen","checklist","enlace","faq"].map((t) => <option key={t} value={t}>{t}</option>)}
       </select>
       <button onClick={async () => {
@@ -215,19 +234,19 @@ function LeccionEditor({ leccion, onChanged }: { leccion: Leccion; onChanged: ()
   };
 
   return (
-    <div className="rounded border border-[#E3E7EE] bg-white">
+    <div className="rounded border border-[var(--nuvia-border)] bg-[var(--nuvia-bg-card)]">
       <div className="flex items-center gap-2 px-2 py-1.5">
         <button onClick={() => setOpen((o) => !o)}>{open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}</button>
         <span className="rounded bg-[#445DA3]/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-[#445DA3]">{leccion.tipo}</span>
-        <input value={titulo} onChange={(e) => setTitulo(e.target.value)} className="flex-1 rounded border border-[#E3E7EE] px-1 py-0.5 text-[11px]" />
+        <input value={titulo} onChange={(e) => setTitulo(e.target.value)} className="flex-1 rounded border border-[var(--nuvia-border)] px-1 py-0.5 text-[11px]" />
         <button onClick={async () => { if (confirm("¿Eliminar lección?")) { await sb.from("academia_lecciones").delete().eq("id", leccion.id); onChanged(); } }}><Trash2 size={11} className="text-[#B42318]" /></button>
       </div>
       {open && (
-        <div className="space-y-3 border-t border-[#E3E7EE] p-3 bg-[#FAFBFD]">
+        <div className="space-y-3 border-t border-[var(--nuvia-border)] p-3 bg-[#FAFBFD]">
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1">
-              <span className="text-[10px] font-semibold uppercase text-[#242424]/55">Tipo</span>
-              <select value={tipo} onChange={(e) => { setTipo(e.target.value as LeccionTipo); setContenido({}); }} className="rounded border border-[#E3E7EE] px-2 py-1 text-[11px]">
+              <span className="text-[10px] font-semibold uppercase text-[var(--nuvia-text-primary)]/55">Tipo</span>
+              <select value={tipo} onChange={(e) => { setTipo(e.target.value as LeccionTipo); setContenido({}); }} className="rounded border border-[var(--nuvia-border)] px-2 py-1 text-[11px]">
                 <option value="video">Video</option>
                 <option value="pdf">PDF</option>
                 <option value="imagen">Imagen</option>
@@ -238,16 +257,16 @@ function LeccionEditor({ leccion, onChanged }: { leccion: Leccion; onChanged: ()
               </select>
             </div>
             <div className="flex items-center gap-1">
-              <span className="text-[10px] font-semibold uppercase text-[#242424]/55">Duración</span>
-              <input type="number" value={duracion} onChange={(e) => setDuracion(Number(e.target.value) || 0)} className="w-16 rounded border border-[#E3E7EE] px-2 py-1 text-[11px]" />
-              <span className="text-[10px] text-[#242424]/50">min</span>
+              <span className="text-[10px] font-semibold uppercase text-[var(--nuvia-text-primary)]/55">Duración</span>
+              <input type="number" value={duracion} onChange={(e) => setDuracion(Number(e.target.value) || 0)} className="w-16 rounded border border-[var(--nuvia-border)] px-2 py-1 text-[11px]" />
+              <span className="text-[10px] text-[var(--nuvia-text-secondary)]">min</span>
             </div>
           </div>
 
           <LessonContentEditor leccionId={leccion.id} tipo={tipo} value={contenido} onChange={setContenido} />
 
           <div className="flex items-center justify-end">
-            <button onClick={guardar} disabled={guardando} className="inline-flex items-center gap-1 rounded bg-[#0A1226] px-3 py-1.5 text-[11px] font-semibold text-white disabled:opacity-50">
+            <button onClick={guardar} disabled={guardando} className="inline-flex items-center gap-1 rounded bg-[var(--nuvia-accent-blue)] px-3 py-1.5 text-[11px] font-semibold text-white disabled:opacity-50">
               <Save size={11} /> {guardando ? "Guardando…" : "Guardar lección"}
             </button>
           </div>
@@ -261,7 +280,7 @@ function NuevaEvaluacion({ moduloId, onCreated }: { moduloId: string; onCreated:
   const [titulo, setTitulo] = useState("");
   return (
     <div className="flex items-center gap-2 pt-1">
-      <input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Nueva evaluación…" className="flex-1 rounded border border-[#E3E7EE] px-2 py-1 text-xs" />
+      <input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Nueva evaluación…" className="flex-1 rounded border border-[var(--nuvia-border)] px-2 py-1 text-xs" />
       <button onClick={async () => {
         if (!titulo.trim()) return;
         await sb.from("academia_evaluaciones").insert({ modulo_id: moduloId, titulo: titulo.trim() });
@@ -281,17 +300,17 @@ function EvalEditor({ evaluacion, onChanged }: { evaluacion: Evaluacion; onChang
   useEffect(() => { if (open) load(); }, [open]);
 
   return (
-    <div className="rounded border border-[#E3E7EE] bg-white">
+    <div className="rounded border border-[var(--nuvia-border)] bg-[var(--nuvia-bg-card)]">
       <div className="flex items-center gap-2 px-2 py-1.5">
         <button onClick={() => setOpen((o) => !o)}>{open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}</button>
-        <input value={titulo} onChange={(e) => setTitulo(e.target.value)} className="flex-1 rounded border border-[#E3E7EE] px-1 py-0.5 text-[11px]" />
-        <input type="number" value={nota} onChange={(e) => setNota(Number(e.target.value) || 0)} className="w-16 rounded border border-[#E3E7EE] px-1 py-0.5 text-[11px]" />
-        <span className="text-[10px] text-[#242424]/50">%</span>
+        <input value={titulo} onChange={(e) => setTitulo(e.target.value)} className="flex-1 rounded border border-[var(--nuvia-border)] px-1 py-0.5 text-[11px]" />
+        <input type="number" value={nota} onChange={(e) => setNota(Number(e.target.value) || 0)} className="w-16 rounded border border-[var(--nuvia-border)] px-1 py-0.5 text-[11px]" />
+        <span className="text-[10px] text-[var(--nuvia-text-secondary)]">%</span>
         <button onClick={async () => { await sb.from("academia_evaluaciones").update({ titulo, nota_minima: nota }).eq("id", evaluacion.id); onChanged(); }} className="text-[10px] text-[#445DA3] font-semibold">Guardar</button>
         <button onClick={async () => { if (confirm("¿Eliminar evaluación?")) { await sb.from("academia_evaluaciones").delete().eq("id", evaluacion.id); onChanged(); } }}><Trash2 size={11} className="text-[#B42318]" /></button>
       </div>
       {open && (
-        <div className="space-y-2 border-t border-[#E3E7EE] p-2 bg-[#FAFBFD]">
+        <div className="space-y-2 border-t border-[var(--nuvia-border)] p-2 bg-[#FAFBFD]">
           {preguntas.map((p) => <PreguntaEditor key={p.id} pregunta={p} onChanged={load} />)}
           <NuevaPregunta evaluacionId={evaluacion.id} onCreated={load} />
         </div>
@@ -304,7 +323,7 @@ function NuevaPregunta({ evaluacionId, onCreated }: { evaluacionId: string; onCr
   const [tipo, setTipo] = useState<PreguntaTipo>("unica");
   return (
     <div className="flex items-center gap-2">
-      <select value={tipo} onChange={(e) => setTipo(e.target.value as PreguntaTipo)} className="rounded border border-[#E3E7EE] px-2 py-1 text-[11px]">
+      <select value={tipo} onChange={(e) => setTipo(e.target.value as PreguntaTipo)} className="rounded border border-[var(--nuvia-border)] px-2 py-1 text-[11px]">
         <option value="unica">Única</option>
         <option value="multiple">Múltiple</option>
         <option value="verdadero_falso">V/F</option>
@@ -324,24 +343,24 @@ function PreguntaEditor({ pregunta, onChanged }: { pregunta: Pregunta; onChanged
   const [correcta, setCorrecta] = useState(JSON.stringify(pregunta.respuesta_correcta ?? []));
 
   return (
-    <div className="rounded border border-[#E3E7EE] bg-white p-2 space-y-1">
+    <div className="rounded border border-[var(--nuvia-border)] bg-[var(--nuvia-bg-card)] p-2 space-y-1">
       <div className="flex items-center gap-2">
-        <span className="rounded bg-[#0A1226]/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase">{pregunta.tipo}</span>
-        <input value={enunciado} onChange={(e) => setEnunciado(e.target.value)} className="flex-1 rounded border border-[#E3E7EE] px-2 py-1 text-[11px]" />
+        <span className="rounded bg-[rgba(255,255,255,0.10)] px-1.5 py-0.5 text-[9px] font-semibold uppercase">{pregunta.tipo}</span>
+        <input value={enunciado} onChange={(e) => setEnunciado(e.target.value)} className="flex-1 rounded border border-[var(--nuvia-border)] px-2 py-1 text-[11px]" />
         <button onClick={async () => { if (confirm("¿Eliminar?")) { await sb.from("academia_preguntas").delete().eq("id", pregunta.id); onChanged(); } }}><Trash2 size={11} className="text-[#B42318]" /></button>
       </div>
       {pregunta.tipo !== "verdadero_falso" && (
-        <textarea value={opciones} onChange={(e) => setOpciones(e.target.value)} rows={3} className="w-full rounded border border-[#E3E7EE] px-2 py-1 text-[11px]" placeholder="Una opción por línea" />
+        <textarea value={opciones} onChange={(e) => setOpciones(e.target.value)} rows={3} className="w-full rounded border border-[var(--nuvia-border)] px-2 py-1 text-[11px]" placeholder="Una opción por línea" />
       )}
       <div className="flex items-center gap-2">
-        <input value={correcta} onChange={(e) => setCorrecta(e.target.value)} className="flex-1 rounded border border-[#E3E7EE] px-2 py-1 text-[11px] font-mono" placeholder={pregunta.tipo === "verdadero_falso" ? '["true"] o ["false"]' : '[0] o [0,2]'} />
+        <input value={correcta} onChange={(e) => setCorrecta(e.target.value)} className="flex-1 rounded border border-[var(--nuvia-border)] px-2 py-1 text-[11px] font-mono" placeholder={pregunta.tipo === "verdadero_falso" ? '["true"] o ["false"]' : '[0] o [0,2]'} />
         <button onClick={async () => {
           let parsed: (string | number)[] = [];
           try { parsed = JSON.parse(correcta); } catch { alert("Respuesta correcta inválida"); return; }
           const opcs = pregunta.tipo === "verdadero_falso" ? [] : opciones.split("\n").map((s) => s.trim()).filter(Boolean);
           await sb.from("academia_preguntas").update({ enunciado, opciones: opcs, respuesta_correcta: parsed }).eq("id", pregunta.id);
           onChanged();
-        }} className="inline-flex items-center gap-1 rounded bg-[#0A1226] px-2 py-1 text-[11px] font-semibold text-white"><Save size={10} /> Guardar</button>
+        }} className="inline-flex items-center gap-1 rounded bg-[var(--nuvia-accent-blue)] px-2 py-1 text-[11px] font-semibold text-white"><Save size={10} /> Guardar</button>
       </div>
     </div>
   );

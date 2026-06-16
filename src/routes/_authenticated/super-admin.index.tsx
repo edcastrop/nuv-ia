@@ -1,6 +1,7 @@
-import { createFileRoute, Link, Navigate, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Card } from "@/components/nuvex/ui";
+import { Shield, Users, FolderOpen, Key, Activity, Palette } from "lucide-react";
+import { PageLayout, ExecutiveHero, NCard } from "@/components/nuvia";
 import { supabase } from "@/integrations/supabase/client";
 import { CASO_ESTADOS, labelEstado, type CasoEstado } from "@/lib/casoEstados";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -48,8 +49,14 @@ function SuperAdminDashboard() {
     })();
   }, [rolesLoading, isSuperAdmin]);
 
-  if (rolesLoading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>;
-  if (!rolesLoading && !isSuperAdmin) return <Navigate to="/inicio" />;
+  if (rolesLoading) {
+    return (
+      <PageLayout>
+        <div className="p-12 text-center text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>Cargando…</div>
+      </PageLayout>
+    );
+  }
+  if (!isSuperAdmin) return <Navigate to="/inicio" />;
 
   const total = rows.length;
   const porEstado = CASO_ESTADOS.map((e) => ({
@@ -76,82 +83,117 @@ function SuperAdminDashboard() {
 
   const fmt = (n: number) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 
-  return (
-    <div className="mx-auto max-w-7xl px-6 py-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-[#242424]">Super Admin</h1>
-          <div className="text-sm text-[#242424]/60">Panel global de control NUVEX</div>
-        </div>
-        <div className="flex flex-wrap gap-2 text-xs">
-         <Link to="/super-admin/usuarios" className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 font-medium">Usuarios</Link>
-         <Link to="/super-admin/expedientes" className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 font-medium">Expedientes</Link>
-         <Link to="/super-admin/permisos" className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 font-medium">Permisos</Link>
-         <Link to="/super-admin/auditoria" className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 font-medium">Auditoría</Link>
-         <Link to="/super-admin/marca" className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 font-medium">Marca</Link>
-        </div>
-      </div>
+  const navLinks = [
+    { to: "/super-admin/usuarios", label: "Usuarios", icon: Users },
+    { to: "/super-admin/expedientes", label: "Expedientes", icon: FolderOpen },
+    { to: "/super-admin/permisos", label: "Permisos", icon: Key },
+    { to: "/super-admin/auditoria", label: "Auditoría", icon: Activity },
+    { to: "/super-admin/marca", label: "Marca", icon: Palette },
+  ] as const;
 
-      {loading ? <Card><div className="text-sm text-[#242424]/60">Cargando métricas…</div></Card> : (
+  return (
+    <PageLayout>
+      <ExecutiveHero
+        badge={{ icon: <Shield size={12} />, label: "Control global", tone: "blue" }}
+        title="Super Admin"
+        description="Panel global de control NUVEX: usuarios, expedientes, permisos y auditoría."
+        actions={
+          <div className="flex flex-wrap gap-2 text-xs">
+            {navLinks.map((l) => (
+              <Link
+                key={l.to}
+                to={l.to}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-medium transition-colors"
+                style={{
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid var(--nuvia-border)",
+                  color: "var(--nuvia-text-primary)",
+                }}
+              >
+                <l.icon size={12} /> {l.label}
+              </Link>
+            ))}
+          </div>
+        }
+      />
+
+      {loading ? (
+        <NCard><div className="text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>Cargando métricas…</div></NCard>
+      ) : (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Stat label="Total expedientes" value={total.toString()} />
-            <Stat label="Aprobados" value={aprobados.toString()} />
+            <Stat label="Aprobados" value={aprobados.toString()} accent="green" />
             <Stat label="Honorarios proyectados" value={fmt(honProyectados)} />
-            <Stat label="Honorarios cobrados" value={fmt(honCobrados)} />
+            <Stat label="Honorarios cobrados" value={fmt(honCobrados)} accent="green" />
             <Stat label="Pendiente contratación" value={pendContratacion.toString()} />
             <Stat label="Pendiente radicación" value={pendRadicacion.toString()} />
-            <Stat label="En mora (>30d)" value={enMora.toString()} />
-            <Stat label="Analistas F. Comerciales activos" value={porLicenciado.size.toString()} />
+            <Stat label="En mora (>30d)" value={enMora.toString()} accent="danger" />
+            <Stat label="Analistas F. Comerciales activos" value={porLicenciado.size.toString()} accent="blue" />
           </div>
 
-          <Card>
-            <h3 className="mb-3 text-base font-semibold text-[#242424]">Expedientes por estado</h3>
+          <NCard>
+            <h3 className="mb-3 text-base font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
+              Expedientes por estado
+            </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
               {porEstado.map((e) => (
-                <div key={e.key} className="flex items-center justify-between rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm">
+                <div
+                  key={e.key}
+                  className="flex items-center justify-between rounded-lg px-3 py-2 text-sm"
+                  style={{
+                    border: "1px solid var(--nuvia-border)",
+                    background: "rgba(255,255,255,0.02)",
+                  }}
+                >
                   <span style={{ color: e.color }}>{e.label}</span>
-                  <span className="font-semibold">{e.count}</span>
+                  <span className="font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{e.count}</span>
                 </div>
               ))}
             </div>
-          </Card>
+          </NCard>
 
-          <Card>
-            <h3 className="mb-3 text-base font-semibold text-[#242424]">Expedientes por Analista Financiero Comercial</h3>
+          <NCard>
+            <h3 className="mb-3 text-base font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
+              Expedientes por Analista Financiero Comercial
+            </h3>
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-[11px] uppercase tracking-wider text-[#242424]/60">
-                  <th className="text-left py-2">Analista F. Comercial</th>
-                  <th className="text-right">Casos</th>
-                  <th className="text-right">Honorarios</th>
+                <tr className="text-[11px] uppercase tracking-wider" style={{ color: "var(--nuvia-text-secondary)" }}>
+                  <th className="text-left py-2" style={{ color: "var(--nuvia-text-secondary)" }}>Analista F. Comercial</th>
+                  <th className="text-right" style={{ color: "var(--nuvia-text-secondary)" }}>Casos</th>
+                  <th className="text-right" style={{ color: "var(--nuvia-text-secondary)" }}>Honorarios</th>
                 </tr>
               </thead>
               <tbody>
                 {Array.from(porLicenciado.values()).sort((a, b) => b.honorarios - a.honorarios).map((l, i) => (
-                  <tr key={i} className="border-t border-[#E3E7EE]">
-                    <td className="py-2">{l.nombre}</td>
-                    <td className="text-right">{l.total}</td>
-                    <td className="text-right">{fmt(l.honorarios)}</td>
+                  <tr key={i} style={{ borderTop: "1px solid var(--nuvia-border)" }}>
+                    <td className="py-2" style={{ color: "var(--nuvia-text-primary)" }}>{l.nombre}</td>
+                    <td className="text-right" style={{ color: "var(--nuvia-text-primary)" }}>{l.total}</td>
+                    <td className="text-right font-semibold" style={{ color: "var(--nuvia-accent-green)" }}>{fmt(l.honorarios)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </Card>
+          </NCard>
         </>
       )}
-    </div>
+    </PageLayout>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, accent }: { label: string; value: string; accent?: "green" | "blue" | "danger" }) {
+  const valueColor =
+    accent === "green" ? "var(--nuvia-accent-green)" :
+    accent === "blue" ? "var(--nuvia-accent-blue)" :
+    accent === "danger" ? "var(--nuvia-danger)" :
+    "var(--nuvia-text-primary)";
   return (
-    <Card>
-      <div className="text-[11px] uppercase tracking-wider text-[#242424]/60">{label}</div>
-      <div className="mt-1 text-xl font-semibold text-[#242424]">{value}</div>
-    </Card>
+    <NCard>
+      <div className="text-[11px] uppercase tracking-wider" style={{ color: "var(--nuvia-text-secondary)" }}>{label}</div>
+      <div className="mt-1 text-xl font-semibold" style={{ color: valueColor }}>{value}</div>
+    </NCard>
   );
 }
 
-// Re-export for typing consistency
 export { labelEstado };
