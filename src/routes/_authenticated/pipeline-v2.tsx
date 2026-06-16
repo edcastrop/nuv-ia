@@ -446,7 +446,7 @@ function PipelineV2Page() {
                                   return (
                                     <Link
                                       key={c.id}
-                                      to="/expediente/$id"
+                                      to="/casos/$id"
                                       params={{ id: c.id }}
                                       className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md bg-white/[0.03] border border-[var(--nuvia-border)] hover:bg-white/[0.06]"
                                     >
@@ -558,7 +558,7 @@ function PipelineV2Page() {
                 {casosCriticos.map(({ caso, etapa, dias, exceso }) => (
                   <Link
                     key={caso.id}
-                    to="/expediente/$id"
+                    to="/casos/$id"
                     params={{ id: caso.id }}
                     className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md bg-white/[0.03] border border-[var(--nuvia-border)] hover:bg-white/[0.06]"
                   >
