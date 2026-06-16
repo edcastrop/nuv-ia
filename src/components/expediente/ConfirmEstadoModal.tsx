@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { NSelect } from "@/components/nuvia/NSelect";
 import { labelEstado, requiereSubmotivo, submotivosPara, type CasoEstado } from "@/lib/casoEstados";
 
 export interface ConfirmEstadoExtras {
