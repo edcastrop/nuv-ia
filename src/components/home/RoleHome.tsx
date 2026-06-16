@@ -133,15 +133,9 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
   }, [config, counts]);
 
   if (loading) {
-    return (
-      <div
-        className="min-h-[60vh] flex items-center justify-center text-sm"
-        style={{ color: "var(--nuvia-text-muted)" }}
-      >
-        Cargando tu espacio NUVIA…
-      </div>
-    );
+    return <WorkspaceLoader label="Cargando tu workspace NUVIA" />;
   }
+
 
   if (!config) {
     return (
