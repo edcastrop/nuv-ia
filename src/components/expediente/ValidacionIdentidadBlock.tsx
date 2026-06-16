@@ -5,8 +5,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ShieldCheck, AlertTriangle, CheckCircle2, Send, RotateCcw, Lock, Unlock, History, Save, X } from "lucide-react";
-import { Card } from "@/components/nuvex/ui";
-import { NUVEX } from "@/components/nuvex/constants";
+import { NCard } from "@/components/nuvia/NCard";
+
 import type { Expediente } from "@/lib/expedientes";
 import { CitySelect } from "@/components/ui/CitySelect";
 import {
