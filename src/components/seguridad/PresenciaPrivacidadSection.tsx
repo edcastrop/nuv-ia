@@ -40,14 +40,14 @@ export function PresenciaPrivacidadSection() {
   if (visible === null) return null;
 
   return (
-    <div className="rounded-2xl border border-[#E3E7EE] bg-white p-5">
+    <div className="rounded-2xl border border-white/10 p-5 nuvia-dark-card">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            {visible ? <Eye size={16} className="text-[#445DA3]" /> : <EyeOff size={16} className="text-[#242424]/50" />}
-            <h3 className="text-[14px] font-semibold text-[#242424]">Estado en línea</h3>
+            {visible ? <Eye size={16} className="text-[#445DA3]" /> : <EyeOff size={16} className="text-white/50" />}
+            <h3 className="text-[14px] font-semibold text-white">Estado en línea</h3>
           </div>
-          <p className="mt-1.5 text-[12px] text-[#242424]/65 leading-relaxed">
+          <p className="mt-1.5 text-[12px] text-white/65 leading-relaxed">
             {visible
               ? "El equipo puede ver cuándo estás en línea y tu última conexión, similar a WhatsApp."
               : "Tu estado está oculto. El equipo siempre te verá como desconectado."}
@@ -56,7 +56,7 @@ export function PresenciaPrivacidadSection() {
         <button
           onClick={toggle}
           disabled={saving}
-          className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-[#E3E7EE] px-3 py-1.5 text-[12px] font-semibold hover:bg-[#F7F9FB] disabled:opacity-50"
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-[12px] font-semibold hover:bg-white/[0.05] disabled:opacity-50"
         >
           {visible ? "Ocultar mi estado" : "Mostrar mi estado"}
         </button>

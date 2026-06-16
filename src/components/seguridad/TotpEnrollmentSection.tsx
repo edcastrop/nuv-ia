@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Card } from "@/components/nuvex/ui";
+function Card({ children }: { children: React.ReactNode }) {
+  return <div className="rounded-2xl border border-white/10 p-5 nuvia-dark-card">{children}</div>;
+}
 import { Smartphone, QrCode, ShieldCheck, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -76,56 +78,56 @@ export function TotpEnrollmentSection() {
           className="inline-flex h-6 w-6 items-center justify-center rounded-md text-white"
           style={{ background: `linear-gradient(135deg, ${AZUL}, ${VERDE})` }}
         ><ShieldCheck size={14} /></span>
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-[#242424]">Doble factor (MFA)</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-white">Doble factor (MFA)</h2>
         <span className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-medium border"
           style={{
-            background: estado === "totp" ? "#EAF7EE" : "#FFF7E6",
-            color: estado === "totp" ? "#1F6D3D" : "#92560A",
-            borderColor: estado === "totp" ? "#84B98F" : "#FFD89A",
+            background: estado === "totp" ? "rgba(132,185,143,0.18)" : "rgba(246,196,83,0.16)",
+            color: estado === "totp" ? "#9BCB9F" : "#F6C453",
+            borderColor: estado === "totp" ? "rgba(132,185,143,0.45)" : "rgba(246,196,83,0.45)",
           }}>
           {estado === "totp" ? "App autenticadora activa" : "Solo código por correo"}
         </span>
       </div>
 
       {loading ? (
-        <div className="flex items-center gap-2 text-sm text-[#242424]/60">
+        <div className="flex items-center gap-2 text-sm text-white/60">
           <Loader2 size={14} className="animate-spin" /> Cargando…
         </div>
       ) : estado === "totp" ? (
         <div className="space-y-3">
-          <p className="text-sm text-[#242424]/75">
+          <p className="text-sm text-white/75">
             Estás usando una app autenticadora (Google Authenticator / Authy / 1Password) para verificar tu acceso. Se te pedirá el código una vez cada 24 horas.
           </p>
           <button
             onClick={handleDesactivar}
             disabled={busy}
-            className="inline-flex items-center gap-2 rounded-lg border border-[#F5C2C2] bg-[#FDECEC] px-3 py-2 text-xs font-semibold text-[#B42318] hover:bg-[#FBDADA] disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-lg border border-[#FF6B6B]/30 bg-[#FF6B6B]/10 px-3 py-2 text-xs font-semibold text-[#FF8585] hover:bg-[#FF6B6B]/20 disabled:opacity-60"
           ><Trash2 size={13} /> Desactivar app autenticadora</button>
         </div>
       ) : qr ? (
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row gap-4 items-center">
-            <img src={qr.qrDataUrl} alt="QR TOTP" className="h-44 w-44 rounded-lg border border-[#E3E7EE] bg-white p-2" />
+            <img src={qr.qrDataUrl} alt="QR TOTP" className="h-44 w-44 rounded-lg border border-white/10 bg-white p-2" />
             <div className="flex-1 space-y-2">
-              <div className="text-xs font-semibold uppercase tracking-wider text-[#242424]/65 flex items-center gap-1.5">
+              <div className="text-xs font-semibold uppercase tracking-wider text-white/65 flex items-center gap-1.5">
                 <QrCode size={13} /> Escanea con tu app
               </div>
-              <p className="text-[12px] text-[#242424]/70">
+              <p className="text-[12px] text-white/70">
                 Abre Google Authenticator, Authy o 1Password y escanea el QR. Si no puedes escanear, ingresa este código manualmente:
               </p>
-              <div className="rounded-md border border-[#E3E7EE] bg-[#F7F9FB] px-3 py-2 text-[12px] font-mono break-all text-[#242424]">
+              <div className="rounded-md border border-white/10 bg-white/[0.05] px-3 py-2 text-[12px] font-mono break-all text-white">
                 {qr.secret}
               </div>
             </div>
           </div>
           <label className="block">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Código de 6 dígitos generado por la app</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-white/65">Código de 6 dígitos generado por la app</span>
             <input
               value={codigo}
               onChange={(e) => setCodigo(e.target.value.replace(/\D/g, "").slice(0, 6))}
               inputMode="numeric"
               placeholder="••••••"
-              className="mt-1.5 w-full rounded-[10px] border border-[#E1E5EE] bg-[#FAFBFD] px-3 py-3 text-center text-2xl tracking-[0.4em] font-semibold outline-none focus:border-[#445DA3] focus:bg-white"
+              className="mt-1.5 w-full rounded-[10px] border border-white/10 bg-white/[0.05] px-3 py-3 text-center text-2xl tracking-[0.4em] font-semibold outline-none focus:border-[#445DA3] focus:bg-white/[0.10] text-white"
             />
           </label>
           <div className="flex gap-2">
@@ -138,13 +140,13 @@ export function TotpEnrollmentSection() {
             <button
               onClick={() => { setQr(null); setCodigo(""); }}
               disabled={busy}
-              className="rounded-xl border border-[#E1E5EE] bg-white px-4 py-2.5 text-sm font-medium text-[#242424]/75 hover:bg-[#F7F9FB]"
+              className="rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2.5 text-sm font-medium text-white/75 hover:bg-white/[0.05]"
             >Cancelar</button>
           </div>
         </div>
       ) : (
         <div className="space-y-3">
-          <p className="text-sm text-[#242424]/75">
+          <p className="text-sm text-white/75">
             Por defecto usamos código por correo. Activa una app autenticadora para verificar tu acceso de forma más rápida y segura — sin depender del correo.
           </p>
           <button

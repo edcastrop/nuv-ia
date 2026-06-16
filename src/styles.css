@@ -898,3 +898,11 @@ select.nuvia-input-sm optgroup {
   color: var(--nuvia-text-secondary);
   margin: 6px 0;
 }
+
+/* NUVIA dark card (Mi Perfil sub-sections) */
+.nuvia-dark-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.018));
+  color: var(--nuvia-text-primary);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 18px 44px -22px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.04);
+}

@@ -61,12 +61,12 @@ function Row({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 py-3 border-b border-[#EEF1F6] last:border-0">
+    <div className="flex items-start justify-between gap-4 py-3 border-b border-white/10 last:border-0">
       <div className="flex items-start gap-3 min-w-0">
-        <div className="rounded-lg p-2 bg-[#EAF1FF] text-[#445DA3]">{icon}</div>
+        <div className="rounded-lg p-2 bg-[rgba(68,93,163,0.20)] text-[#A5B5E0]">{icon}</div>
         <div className="min-w-0">
-          <div className="text-sm font-semibold text-[#242424]">{title}</div>
-          <div className="text-xs text-[#242424]/60">{desc}</div>
+          <div className="text-sm font-semibold text-white">{title}</div>
+          <div className="text-xs text-white/60">{desc}</div>
         </div>
       </div>
       <div className="shrink-0">{children}</div>
@@ -79,7 +79,7 @@ function Switch({ checked, onChange }: { checked: boolean; onChange: (v: boolean
     <button
       onClick={() => onChange(!checked)}
       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-        checked ? "bg-[#445DA3]" : "bg-[#D6DDE8]"
+        checked ? "bg-[#445DA3]" : "bg-white/15"
       }`}
       aria-pressed={checked}
     >
@@ -129,12 +129,12 @@ export function NotificacionesPrefsSection() {
   };
 
   return (
-    <section className="rounded-2xl bg-white border border-[#E3E7EE] p-5 shadow-sm">
+    <section className="rounded-2xl border border-white/10 p-5 nuvia-dark-card">
       <div className="flex items-center gap-2 mb-2">
         <Bell size={16} className="text-[#445DA3]" />
-        <h3 className="text-sm font-bold text-[#242424]">Notificaciones</h3>
+        <h3 className="text-sm font-bold text-white">Notificaciones</h3>
       </div>
-      <p className="text-xs text-[#242424]/60 mb-3">
+      <p className="text-xs text-white/60 mb-3">
         Controla cómo te avisamos cuando recibes mensajes y alertas. No invasivo: respeta tu modo "no molestar"
         y silencia automáticamente si ya estás viendo el chat.
       </p>
@@ -155,7 +155,7 @@ export function NotificacionesPrefsSection() {
         <div className="flex items-center gap-2">
           <button
             onClick={probarSonido}
-            className="inline-flex items-center gap-1 rounded-lg border border-[#E3E7EE] bg-white px-2 py-1 text-[11px] font-medium text-[#445DA3] hover:bg-[#F7F9FB]"
+            className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.05] px-2 py-1 text-[11px] font-medium text-[#A5B5E0] hover:bg-white/[0.10]"
           >
             <PlayCircle size={12} /> Probar
           </button>
@@ -165,7 +165,7 @@ export function NotificacionesPrefsSection() {
 
       {prefs.sonido && (
         <div className="flex items-center justify-between gap-4 py-2 pl-12">
-          <span className="text-xs text-[#242424]/70">Volumen</span>
+          <span className="text-xs text-white/70">Volumen</span>
           <input
             type="range"
             min={0}
@@ -196,7 +196,7 @@ export function NotificacionesPrefsSection() {
         ) : permiso === "default" ? (
           <button
             onClick={pedirPermiso}
-            className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 text-xs font-semibold text-[#445DA3] hover:bg-[#F7F9FB]"
+            className="rounded-lg border border-white/10 bg-white/[0.05] px-3 py-1.5 text-xs font-semibold text-[#A5B5E0] hover:bg-white/[0.10]"
           >
             Activar
           </button>
@@ -208,7 +208,7 @@ export function NotificacionesPrefsSection() {
               if (p === "granted") toast.success("Notificaciones desbloqueadas");
               else toast.info("Si ya desbloqueaste el permiso, recarga la página.");
             }}
-            className="inline-flex items-center gap-1 rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 text-xs font-semibold text-[#445DA3] hover:bg-[#F7F9FB]"
+            className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.05] px-3 py-1.5 text-xs font-semibold text-[#A5B5E0] hover:bg-white/[0.10]"
           >
             <RefreshCw size={12} /> Reintentar
           </button>
@@ -218,7 +218,7 @@ export function NotificacionesPrefsSection() {
       </Row>
 
       {permiso === "denied" && (
-        <div className="mx-12 mt-1 mb-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+        <div className="mx-12 mt-1 mb-2 rounded-lg border border-[rgba(246,196,83,0.40)] bg-[rgba(246,196,83,0.10)] p-3 text-xs text-[#F6C453]">
           <div className="flex items-start gap-2">
             <Info size={14} className="mt-0.5 shrink-0" />
             <div className="space-y-1">
@@ -228,7 +228,7 @@ export function NotificacionesPrefsSection() {
                   <li key={i}>{p}</li>
                 ))}
               </ol>
-              <div className="pt-1 text-[11px] text-amber-800/80">
+              <div className="pt-1 text-[11px] text-[#F6C453]/80">
                 Nota: en la app móvil, activa las notificaciones desde los ajustes del sistema operativo para esta app.
               </div>
             </div>
@@ -250,14 +250,14 @@ export function NotificacionesPrefsSection() {
             type="time"
             value={prefs.dndStart}
             onChange={(e) => upd("dndStart", e.target.value)}
-            className="rounded-md border border-[#E3E7EE] px-2 py-1 text-xs"
+            className="rounded-md border border-white/10 px-2 py-1 text-xs"
           />
-          <span className="text-xs text-[#242424]/60">a</span>
+          <span className="text-xs text-white/60">a</span>
           <input
             type="time"
             value={prefs.dndEnd}
             onChange={(e) => upd("dndEnd", e.target.value)}
-            className="rounded-md border border-[#E3E7EE] px-2 py-1 text-xs"
+            className="rounded-md border border-white/10 px-2 py-1 text-xs"
           />
         </div>
       )}
