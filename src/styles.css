@@ -531,9 +531,14 @@
 .nuvia-financiero-dark [class*="text-[#242424"],
 .nuvia-financiero-dark [class*="text-[#0A1226"],
 .nuvia-financiero-dark [class*="text-[#1F2937"],
+.nuvia-financiero-dark [class*="text-[#1F2A44"],
+.nuvia-financiero-dark [class*="text-[#3A4660"],
 .nuvia-financiero-dark [class*="text-[#374151"],
 .nuvia-financiero-dark [class*="text-slate-9"],
-.nuvia-financiero-dark [class*="text-gray-9"] {
+.nuvia-financiero-dark [class*="text-slate-8"],
+.nuvia-financiero-dark [class*="text-slate-7"],
+.nuvia-financiero-dark [class*="text-gray-9"],
+.nuvia-financiero-dark [class*="text-gray-8"] {
   color: var(--nuvia-text-primary, #E6ECFF) !important;
 }
 .nuvia-financiero-dark [class*="text-[#242424]/55"],
