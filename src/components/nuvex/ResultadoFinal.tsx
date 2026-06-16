@@ -576,6 +576,50 @@ export function ResultadoFinal({
   );
 }
 
+function NuviaRecalcField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <label className="flex flex-col gap-1.5">
+      <span className="nuvia-label" style={{ color: "var(--nuvia-text-secondary)" }}>{label}</span>
+      <input
+        className="nuvia-input nuvia-input-sm"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+      />
+    </label>
+  );
+}
+
+function NuviaRecalcMetric({ label, value, accent }: { label: string; value: string | number; accent?: boolean }) {
+  return (
+    <div
+      className="rounded-lg border p-3"
+      style={{
+        background: accent ? "rgba(132,185,143,0.12)" : "rgba(255,255,255,0.035)",
+        borderColor: accent ? "rgba(132,185,143,0.35)" : "var(--nuvia-border)",
+      }}
+    >
+      <div className="text-[10px] uppercase tracking-wider" style={{ color: "var(--nuvia-text-secondary)" }}>{label}</div>
+      <div
+        className={accent ? "text-base font-extrabold" : "font-semibold"}
+        style={{ color: accent ? "var(--nuvia-accent-green)" : "var(--nuvia-text-primary)" }}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
 function DashCard({ label, value, accent }: { label: string; value: string; accent?: "green" }) {
   const isGreen = accent === "green";
   return (
