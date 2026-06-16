@@ -532,17 +532,29 @@ function MiPerfilPage() {
 
 function Section({ icon, title, badge, children }: { icon: React.ReactNode; title: string; badge?: string; children: React.ReactNode }) {
   return (
-    <Card>
-      <div className="mb-3 flex items-center gap-2">
-        <span className="inline-flex h-6 w-6 items-center justify-center rounded-md text-white"
-          style={{ background: "linear-gradient(135deg, #445DA3, #84B98F)" }}>{icon}</span>
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-[#242424]">{title}</h2>
-        {badge && (
-          <span className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-medium bg-[#F7F9FB] text-[#242424]/60 border border-[#E3E7EE]">{badge}</span>
-        )}
-      </div>
-      {children}
-    </Card>
+    <div className="relative">
+      <div
+        className="absolute left-0 top-3 bottom-3 w-1 rounded-full"
+        style={{ background: "linear-gradient(180deg, #445DA3, #84B98F)" }}
+        aria-hidden
+      />
+      <Card>
+        <div className="mb-3 flex items-center gap-2">
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-md text-white"
+            style={{ background: "linear-gradient(135deg, #445DA3, #84B98F)" }}>{icon}</span>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-[#242424]">{title}</h2>
+          <span
+            className="ml-2 h-px flex-1"
+            style={{ background: "linear-gradient(90deg, rgba(68,93,163,0.35), rgba(132,185,143,0.05))" }}
+            aria-hidden
+          />
+          {badge && (
+            <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-[#F7F9FB] text-[#242424]/60 border border-[#E3E7EE]">{badge}</span>
+          )}
+        </div>
+        {children}
+      </Card>
+    </div>
   );
 }
 
