@@ -213,7 +213,7 @@ export function ClientFields({
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-[#242424]/70 mb-1">
+          <label className="block text-xs font-medium mb-1" style={{ color: "rgba(225,232,248,0.65)" }}>
             Departamento
           </label>
           <DepartamentoSelect
@@ -224,7 +224,7 @@ export function ClientFields({
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-[#242424]/70 mb-1">
+          <label className="block text-xs font-medium mb-1" style={{ color: "rgba(225,232,248,0.65)" }}>
             Ciudad
           </label>
           <MunicipioSelect
@@ -238,7 +238,7 @@ export function ClientFields({
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-[#242424]/70 mb-1">
+          <label className="block text-xs font-medium mb-1" style={{ color: "rgba(225,232,248,0.65)" }}>
             Municipio
           </label>
           <MunicipioSelect
