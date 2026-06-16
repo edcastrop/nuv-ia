@@ -346,16 +346,17 @@ function EtapaAvance({
 
   return (
     <EtapaShell numero={numero} titulo={titulo} estado={estado}>
-      <p className="text-xs text-slate-500">{descripcion}</p>
+      <p className="text-xs" style={{ color: "var(--nuvia-text-secondary)" }}>{descripcion}</p>
       <div className="flex items-center justify-end gap-2">
-        {msg && <span className="text-[11px] text-slate-500">{msg}</span>}
+        {msg && <span className="text-[11px]" style={{ color: "var(--nuvia-text-secondary)" }}>{msg}</span>}
         {extra}
         {!soloLectura && (
           <button
             onClick={avanzar}
             disabled={saving || estado === "futura"}
             title={estado === "futura" ? "Avanza primero las etapas previas" : ""}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white disabled:opacity-40"
+            className="rounded-lg px-4 py-2 text-xs font-semibold text-white disabled:opacity-40"
+            style={{ background: "var(--nuvia-accent-blue)" }}
           >
             {saving ? "Guardando…" : estado === "completada" ? "Re-confirmar" : "Marcar completada"}
           </button>
@@ -364,6 +365,7 @@ function EtapaAvance({
     </EtapaShell>
   );
 }
+
 
 /* ───────── Helpers visuales ───────── */
 
