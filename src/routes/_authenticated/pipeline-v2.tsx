@@ -1,7 +1,7 @@
 // Pipeline Maestro V2 — Linear Operations Center
 // Foco: SLA, dinero en riesgo, cuellos de botella, responsables.
 // Fase 7.6.1B (Opción B aprobada).
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Activity,
