@@ -1,17 +1,16 @@
-import { motion } from "framer-motion";
-
+/**
+ * AnimatedBackground — fondo NUVIA optimizado.
+ * Reemplaza framer-motion + <animate> SVG por animaciones CSS GPU-friendly
+ * (transform/opacity). Respeta prefers-reduced-motion: render estático.
+ * Debe ir dentro de un contenedor `relative overflow-hidden`.
+ */
 const BLUE = "#445DA3";
 const GREEN = "#84B98F";
 
-/**
- * AnimatedBackground — fondo NUVIA animado al estilo del login.
- * Orbes flotantes con framer-motion + red neuronal SVG.
- * Debe ir dentro de un contenedor `relative overflow-hidden`.
- */
 export function AnimatedBackground() {
   return (
     <>
-      {/* Capa base con gradientes radiales */}
+      {/* Capa base con gradientes radiales (estática, cero costo) */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
@@ -21,7 +20,7 @@ export function AnimatedBackground() {
         }}
       />
 
-      {/* Grid sutil */}
+      {/* Grid sutil (estático) */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 opacity-[0.05]"
@@ -34,38 +33,38 @@ export function AnimatedBackground() {
         }}
       />
 
-      {/* Orbes flotantes animados (framer-motion) */}
-      <motion.div
+      {/* Orbes CSS-only (transform/opacity, GPU). Respetan reduced-motion */}
+      <div
         aria-hidden
-        className="pointer-events-none absolute -top-40 -left-40 h-[28rem] w-[28rem] rounded-full blur-[120px] opacity-50"
+        className="pointer-events-none absolute -top-40 -left-40 h-[28rem] w-[28rem] rounded-full blur-[120px] opacity-50 nuvia-orb nuvia-orb-a"
         style={{ background: BLUE }}
-        animate={{ x: [0, 40, 0], y: [0, 30, 0] }}
-        transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
       />
-      <motion.div
+      <div
         aria-hidden
-        className="pointer-events-none absolute -top-20 right-[-10rem] h-[26rem] w-[26rem] rounded-full blur-[120px] opacity-40"
+        className="pointer-events-none absolute -top-20 right-[-10rem] h-[26rem] w-[26rem] rounded-full blur-[120px] opacity-40 nuvia-orb nuvia-orb-b"
         style={{ background: GREEN }}
-        animate={{ x: [0, -50, 0], y: [0, 25, 0] }}
-        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
       />
-      <motion.div
+      <div
         aria-hidden
-        className="pointer-events-none absolute top-[40%] left-[35%] h-[24rem] w-[24rem] rounded-full blur-[130px] opacity-35"
+        className="pointer-events-none absolute top-[40%] left-[35%] h-[24rem] w-[24rem] rounded-full blur-[130px] opacity-30 nuvia-orb nuvia-orb-c"
         style={{ background: "#705AB8" }}
-        animate={{ x: [0, 60, 0], y: [0, -40, 0], scale: [1, 1.1, 1] }}
-        transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        aria-hidden
-        className="pointer-events-none absolute bottom-[-10rem] right-[10%] h-[22rem] w-[22rem] rounded-full blur-[120px] opacity-30"
-        style={{ background: "#C9A84C" }}
-        animate={{ x: [0, -40, 0], y: [0, -30, 0] }}
-        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      {/* Red neuronal SVG animada */}
+      {/* Red neuronal SVG estática (sin <animate>) */}
       <NeuralCanvas />
+
+      <style>{`
+        @keyframes nuvia-orb-a { 0%,100% { transform: translate3d(0,0,0); } 50% { transform: translate3d(40px,30px,0); } }
+        @keyframes nuvia-orb-b { 0%,100% { transform: translate3d(0,0,0); } 50% { transform: translate3d(-50px,25px,0); } }
+        @keyframes nuvia-orb-c { 0%,100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(60px,-40px,0) scale(1.08); } }
+        .nuvia-orb { will-change: transform; }
+        .nuvia-orb-a { animation: nuvia-orb-a 14s ease-in-out infinite; }
+        .nuvia-orb-b { animation: nuvia-orb-b 18s ease-in-out infinite; }
+        .nuvia-orb-c { animation: nuvia-orb-c 22s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) {
+          .nuvia-orb-a, .nuvia-orb-b, .nuvia-orb-c { animation: none !important; }
+        }
+      `}</style>
     </>
   );
 }
@@ -75,7 +74,6 @@ function NeuralCanvas() {
     { x: 8, y: 18 }, { x: 22, y: 10 }, { x: 38, y: 24 }, { x: 56, y: 14 }, { x: 74, y: 28 }, { x: 92, y: 16 },
     { x: 14, y: 42 }, { x: 32, y: 50 }, { x: 50, y: 38 }, { x: 68, y: 52 }, { x: 86, y: 44 },
     { x: 18, y: 70 }, { x: 36, y: 78 }, { x: 54, y: 66 }, { x: 72, y: 80 }, { x: 90, y: 68 },
-    { x: 26, y: 92 }, { x: 48, y: 96 }, { x: 70, y: 92 },
   ];
   const links: Array<[number, number]> = [
     [0,1],[1,2],[2,3],[3,4],[4,5],
@@ -83,14 +81,12 @@ function NeuralCanvas() {
     [6,7],[7,8],[8,9],[9,10],
     [6,11],[7,12],[8,13],[9,14],[10,15],
     [11,12],[12,13],[13,14],[14,15],
-    [11,16],[12,17],[13,17],[14,18],[15,18],
-    [2,8],[8,13],[3,9],[9,14],
   ];
   return (
     <svg
       viewBox="0 0 100 100"
       preserveAspectRatio="xMidYMid slice"
-      className="pointer-events-none absolute inset-0 w-full h-full opacity-70"
+      className="pointer-events-none absolute inset-0 w-full h-full opacity-50"
       aria-hidden
     >
       <defs>
@@ -103,13 +99,8 @@ function NeuralCanvas() {
           <stop offset="60%" stopColor={GREEN} stopOpacity="0.7" />
           <stop offset="100%" stopColor={BLUE} stopOpacity="0" />
         </radialGradient>
-        <filter id="nv-home-glow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="0.8" result="b" />
-          <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
       </defs>
-
-      <g filter="url(#nv-home-glow)">
+      <g>
         {links.map(([a, b], i) => {
           const A = nodes[a]; const B = nodes[b];
           return (
@@ -119,33 +110,16 @@ function NeuralCanvas() {
               stroke="url(#nv-home-link)"
               strokeWidth="0.16"
               opacity={0.45}
-            >
-              <animate attributeName="opacity" values="0.1;0.65;0.1" dur={`${4 + (i % 5)}s`} repeatCount="indefinite" />
-            </line>
+            />
           );
         })}
       </g>
-
       {nodes.map((n, i) => (
         <g key={i}>
-          <circle cx={n.x} cy={n.y} r="1.4" fill="url(#nv-home-node)">
-            <animate attributeName="r" values="1.0;1.9;1.0" dur={`${3 + (i % 4)}s`} repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.55;1;0.55" dur={`${3 + (i % 4)}s`} repeatCount="indefinite" />
-          </circle>
+          <circle cx={n.x} cy={n.y} r="1.4" fill="url(#nv-home-node)" />
           <circle cx={n.x} cy={n.y} r="0.45" fill="#fff" opacity="0.9" />
         </g>
       ))}
-
-      {links.slice(0, 10).map(([a, b], i) => {
-        const A = nodes[a]; const B = nodes[b];
-        return (
-          <circle key={`p${i}`} r="0.5" fill={GREEN} opacity="0.95">
-            <animate attributeName="cx" values={`${A.x};${B.x}`} dur={`${3 + (i % 3)}s`} repeatCount="indefinite" />
-            <animate attributeName="cy" values={`${A.y};${B.y}`} dur={`${3 + (i % 3)}s`} repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0;1;0" dur={`${3 + (i % 3)}s`} repeatCount="indefinite" />
-          </circle>
-        );
-      })}
     </svg>
   );
 }

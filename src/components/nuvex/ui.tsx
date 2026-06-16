@@ -14,16 +14,16 @@ interface FieldProps {
 export function TextField({ label, value, onChange, placeholder, readOnly, hint, className }: FieldProps) {
   return (
     <label className={`flex flex-col gap-1.5 ${className ?? ""}`}>
-      <span className="text-[11px] font-semibold tracking-[0.08em] text-[#3A4660]/75 uppercase">{label}</span>
+      <span className="text-[11px] font-semibold tracking-[0.08em] uppercase" style={{ color: "rgba(225,232,248,0.65)" }}>{label}</span>
       <input
         type="text"
         value={value}
         readOnly={readOnly}
         onChange={(e) => onChange?.(e.target.value)}
         placeholder={placeholder}
-        className={`rounded-xl border border-white/60 bg-white/55 backdrop-blur-md px-3.5 py-2.5 text-sm text-[#1F2A44] placeholder:text-[#1F2A44]/35 outline-none shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(36,52,92,0.04)] transition-all focus:border-[#445DA3]/60 focus:bg-white/80 focus:ring-2 focus:ring-[#445DA3]/15 ${readOnly ? "bg-white/35 cursor-not-allowed text-[#1F2A44]/60" : ""}`}
+        className={`nuvia-input ${readOnly ? "opacity-70 cursor-not-allowed" : ""}`}
       />
-      {hint && <span className="text-[11px] text-[#445DA3]">{hint}</span>}
+      {hint && <span className="text-[11px]" style={{ color: "#84B98F" }}>{hint}</span>}
     </label>
   );
 }
@@ -40,11 +40,11 @@ interface SelectProps {
 export function SelectField({ label, value, onChange, options, placeholder, className }: SelectProps) {
   return (
     <label className={`flex flex-col gap-1.5 ${className ?? ""}`}>
-      <span className="text-[11px] font-semibold tracking-[0.08em] text-[#3A4660]/75 uppercase">{label}</span>
+      <span className="text-[11px] font-semibold tracking-[0.08em] uppercase" style={{ color: "rgba(225,232,248,0.65)" }}>{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-xl border border-white/60 bg-white/55 backdrop-blur-md px-3.5 py-2.5 text-sm text-[#1F2A44] outline-none shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(36,52,92,0.04)] transition-all focus:border-[#445DA3]/60 focus:bg-white/80 focus:ring-2 focus:ring-[#445DA3]/15"
+        className="nuvia-input"
       >
         <option value="" disabled>{placeholder ?? "Seleccione..."}</option>
         {options.map((o) => (
@@ -58,8 +58,14 @@ export function SelectField({ label, value, onChange, options, placeholder, clas
 export function Card({ children, className, style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
   return (
     <div
-      className={`relative rounded-2xl border border-white/55 bg-white/55 backdrop-blur-xl p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_18px_44px_-22px_rgba(36,52,92,0.18),0_2px_8px_rgba(36,52,92,0.05)] sm:p-5 ${className ?? ""}`}
-      style={style}
+      className={`relative rounded-2xl p-4 sm:p-5 ${className ?? ""}`}
+      style={{
+        background: "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        backdropFilter: "blur(18px)",
+        boxShadow: "0 22px 55px -36px rgba(0,0,0,0.72), inset 0 1px 0 rgba(255,255,255,0.06)",
+        ...style,
+      }}
     >
       {children}
     </div>
@@ -69,12 +75,12 @@ export function Card({ children, className, style }: { children: React.ReactNode
 export function MetricCard({ label, value, accent }: { label: string; value: string; accent?: "default" | "green" | "blue" | "dark" }) {
   const palette =
     accent === "green"
-      ? { bg: NUVEX.verdeClaro, border: NUVEX.verde, text: NUVEX.verdeTextoFuerte }
+      ? { bg: "rgba(132,185,143,0.14)", border: "rgba(132,185,143,0.40)", text: "#C8E4CE" }
       : accent === "blue"
-        ? { bg: "#EEF1FA", border: NUVEX.azul, text: NUVEX.azul }
+        ? { bg: "rgba(68,93,163,0.18)", border: "rgba(68,93,163,0.45)", text: "#B8C7EF" }
         : accent === "dark"
-          ? { bg: NUVEX.negro, border: NUVEX.negro, text: "#fff" }
-          : { bg: "#fff", border: "#E3E7EE", text: NUVEX.negro };
+          ? { bg: "rgba(10,12,22,0.6)", border: "rgba(255,255,255,0.12)", text: "#fff" }
+          : { bg: "rgba(255,255,255,0.04)", border: "rgba(255,255,255,0.10)", text: "#fff" };
   return (
     <div
       className="rounded-xl border p-4"
@@ -89,8 +95,8 @@ export function MetricCard({ label, value, accent }: { label: string; value: str
 export function SectionTitle({ children, sub }: { children: React.ReactNode; sub?: string }) {
   return (
     <div className="mb-4">
-      <h2 className="text-xl font-semibold text-[#242424]">{children}</h2>
-      {sub && <p className="text-sm text-[#242424]/60 mt-1">{sub}</p>}
+      <h2 className="text-xl font-semibold" style={{ color: "#fff" }}>{children}</h2>
+      {sub && <p className="text-sm mt-1" style={{ color: "rgba(225,232,248,0.55)" }}>{sub}</p>}
     </div>
   );
 }
@@ -98,10 +104,10 @@ export function SectionTitle({ children, sub }: { children: React.ReactNode; sub
 export function Alert({ children, tone = "warn" }: { children: React.ReactNode; tone?: "warn" | "error" | "info" }) {
   const styles =
     tone === "error"
-      ? { bg: NUVEX.rojoBg, border: NUVEX.rojoBorde, text: NUVEX.rojoTexto }
+      ? { bg: "rgba(251,113,133,0.10)", border: "rgba(251,113,133,0.45)", text: "#FCA5B0" }
       : tone === "info"
-        ? { bg: "#EEF1FA", border: NUVEX.azul, text: NUVEX.azul }
-        : { bg: "#FFF7E6", border: "#F0B429", text: "#8A5A00" };
+        ? { bg: "rgba(68,93,163,0.14)", border: "rgba(68,93,163,0.45)", text: "#B8C7EF" }
+        : { bg: "rgba(248,211,106,0.10)", border: "rgba(248,211,106,0.40)", text: "#F8D36A" };
   return (
     <div
       className="rounded-lg border px-3 py-2 text-sm"

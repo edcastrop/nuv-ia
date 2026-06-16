@@ -48,28 +48,39 @@ function ListCombo({ value, onChange, placeholder, disabled, options, emptyHint 
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setOpen((s) => !s)}
-        className="w-full inline-flex items-center justify-between gap-2 rounded-lg border bg-white px-2 py-1.5 text-sm text-left disabled:opacity-50 disabled:cursor-not-allowed"
-        style={{ borderColor: "#E3E7EE" }}
+        className="w-full inline-flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm text-left disabled:opacity-50 disabled:cursor-not-allowed transition"
+        style={{
+          background: "rgba(255,255,255,0.03)",
+          border: "1px solid rgba(255,255,255,0.10)",
+          color: "#fff",
+        }}
       >
         <span className="flex items-center gap-2 truncate">
-          <MapPin size={13} className="text-[#445DA3] shrink-0" />
-          <span className={value ? "text-[#242424]" : "text-[#242424]/40"}>
+          <MapPin size={13} style={{ color: "#84B98F" }} className="shrink-0" />
+          <span style={{ color: value ? "#fff" : "rgba(225,232,248,0.45)" }}>
             {value || placeholder}
           </span>
         </span>
-        <ChevronDown size={14} className="text-[#242424]/50 shrink-0" />
+        <ChevronDown size={14} style={{ color: "rgba(225,232,248,0.55)" }} className="shrink-0" />
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-1 w-full rounded-lg border border-[#E3E7EE] bg-white shadow-xl overflow-hidden">
-          <div className="flex items-center gap-2 border-b border-[#E3E7EE] px-2 py-1.5">
-            <Search size={13} className="text-[#242424]/40" />
+        <div
+          className="absolute z-50 mt-1 w-full rounded-lg overflow-hidden shadow-2xl"
+          style={{
+            background: "#0B1226",
+            border: "1px solid rgba(255,255,255,0.12)",
+          }}
+        >
+          <div className="flex items-center gap-2 px-2 py-1.5" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+            <Search size={13} style={{ color: "rgba(225,232,248,0.45)" }} />
             <input
               autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar…"
               className="w-full bg-transparent text-sm outline-none"
+              style={{ color: "#fff" }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && results[0]) select(results[0]);
                 if (e.key === "Escape") setOpen(false);
@@ -78,11 +89,11 @@ function ListCombo({ value, onChange, placeholder, disabled, options, emptyHint 
           </div>
           <ul className="max-h-64 overflow-y-auto py-1">
             {options.length === 0 ? (
-              <li className="px-3 py-2 text-xs text-[#242424]/60">
+              <li className="px-3 py-2 text-xs" style={{ color: "rgba(225,232,248,0.55)" }}>
                 {emptyHint ?? "Selecciona primero el departamento."}
               </li>
             ) : results.length === 0 ? (
-              <li className="px-3 py-2 text-xs text-[#242424]/60">Sin resultados.</li>
+              <li className="px-3 py-2 text-xs" style={{ color: "rgba(225,232,248,0.55)" }}>Sin resultados.</li>
             ) : (
               results.map((item) => {
                 const selected = item === value;
@@ -91,17 +102,18 @@ function ListCombo({ value, onChange, placeholder, disabled, options, emptyHint 
                     <button
                       type="button"
                       onClick={() => select(item)}
-                      className="w-full flex items-center justify-between gap-2 px-3 py-1.5 text-sm hover:bg-[#F7F9FB] text-left"
+                      className="w-full flex items-center justify-between gap-2 px-3 py-1.5 text-sm text-left transition hover:bg-white/[0.06]"
+                      style={{ color: "#fff" }}
                     >
-                      <span className="text-[#242424]">{item}</span>
-                      {selected && <Check size={13} className="text-[#1F6D3D]" />}
+                      <span>{item}</span>
+                      {selected && <Check size={13} style={{ color: "#84B98F" }} />}
                     </button>
                   </li>
                 );
               })
             )}
           </ul>
-          <div className="border-t border-[#E3E7EE] px-3 py-1 text-[10px] text-[#242424]/50">
+          <div className="px-3 py-1 text-[10px]" style={{ color: "rgba(225,232,248,0.45)", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
             Catálogo oficial DANE · {COLOMBIA_DEPARTAMENTOS.length} departamentos
           </div>
         </div>

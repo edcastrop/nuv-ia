@@ -56,15 +56,17 @@ export function ProductoBancarioSelect({ banco, producto, onChange, filtrarPorMo
     onChange({ banco: bancoCanonico, producto: nombre, productoId: found?.id ?? null });
   };
 
+  const labelCls = "text-xs font-medium tracking-wide uppercase";
+  const labelStyle = { color: "rgba(225,232,248,0.65)" } as const;
   return (
     <div className={`grid gap-4 md:grid-cols-2 ${className ?? ""}`}>
       <label className="flex flex-col gap-1">
-        <span className="text-xs font-medium tracking-wide text-[#242424]/70 uppercase">Banco</span>
+        <span className={labelCls} style={labelStyle}>Banco</span>
         <select
           value={bancoCanonico}
           onChange={(e) => handleBanco(e.target.value)}
           disabled={isLoading}
-          className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-2.5 text-sm text-[#242424] outline-none transition-all focus:border-[#445DA3] focus:ring-2 focus:ring-[#445DA3]/15"
+          className="nuvia-input"
         >
           <option value="" disabled>{isLoading ? "Cargando…" : "Seleccione…"}</option>
           {bancos.map((b) => (
@@ -77,12 +79,12 @@ export function ProductoBancarioSelect({ banco, producto, onChange, filtrarPorMo
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="text-xs font-medium tracking-wide text-[#242424]/70 uppercase">Tipo de producto</span>
+        <span className={labelCls} style={labelStyle}>Tipo de producto</span>
         <select
           value={producto}
           onChange={(e) => handleProducto(e.target.value)}
           disabled={!banco || isLoading}
-          className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-2.5 text-sm text-[#242424] outline-none transition-all focus:border-[#445DA3] focus:ring-2 focus:ring-[#445DA3]/15 disabled:bg-[#F7F9FB]"
+          className="nuvia-input disabled:opacity-60"
         >
           <option value="" disabled>{banco ? "Seleccione producto…" : "Primero elija un banco"}</option>
           {productosDelBanco.map((p) => (
