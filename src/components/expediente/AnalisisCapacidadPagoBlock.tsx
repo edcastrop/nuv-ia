@@ -405,11 +405,11 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
       <div className="flex items-start justify-between gap-4 mb-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Sparkles className="w-5 h-5 text-[#445DA3]" />
-            <h3 className="text-xl font-bold text-slate-900">Análisis de capacidad de pago</h3>
+            <Sparkles className="w-5 h-5" style={{ color: "var(--nuvia-accent-primary)" }} />
+            <h3 className="text-xl font-bold" style={{ color: "var(--nuvia-text-primary)" }}>Análisis de capacidad de pago</h3>
             <Badge variant="outline" className="text-xs">{banco}</Badge>
           </div>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>
             Sustentación obligatoria para radicar. Regla del banco: la nueva cuota no debe superar el <b>{esVis ? "40%" : "30%"}</b> de los ingresos
             ({esVis ? "crédito VIS" : "crédito No VIS"}).
           </p>
@@ -417,8 +417,8 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
       </div>
 
       {/* Selector tipo de crédito (prominente) */}
-      <div className="mb-4 p-3 rounded-lg border-2 border-[#445DA3]/30 bg-white">
-        <Label className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Tipo de crédito (define la regla aplicable)</Label>
+      <div className="mb-4 p-3 rounded-lg glass-panel" style={{ border: "1px solid var(--nuvia-border-medium)" }}>
+        <Label className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--nuvia-text-secondary)" }}>Tipo de crédito (define la regla aplicable)</Label>
         <div className="mt-2 grid grid-cols-2 gap-2">
           <button
             type="button"
@@ -426,12 +426,15 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
               if (resultado && esVis) toast.info("Cambiaste a No VIS. Vuelve a ejecutar el análisis para recalcular con el límite del 30%.");
               setEsVis(false);
             }}
-            className={`px-4 py-3 rounded-lg border-2 text-left transition ${
-              !esVis ? "border-[#445DA3] bg-[#445DA3] text-white shadow" : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
-            }`}
+            className="px-4 py-3 rounded-lg border text-left transition"
+            style={{
+              borderColor: !esVis ? "var(--nuvia-accent-primary)" : "var(--nuvia-border-soft)",
+              background: !esVis ? "rgba(122,160,255,0.16)" : "rgba(255,255,255,0.02)",
+              color: "var(--nuvia-text-primary)",
+            }}
           >
             <div className="text-sm font-bold">No VIS</div>
-            <div className={`text-xs ${!esVis ? "text-white/80" : "text-slate-500"}`}>Límite del 30% de ingresos</div>
+            <div className="text-xs" style={{ color: "var(--nuvia-text-tertiary)" }}>Límite del 30% de ingresos</div>
           </button>
           <button
             type="button"
@@ -439,37 +442,40 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
               if (resultado && !esVis) toast.info("Cambiaste a VIS. Vuelve a ejecutar el análisis para recalcular con el límite del 40%.");
               setEsVis(true);
             }}
-            className={`px-4 py-3 rounded-lg border-2 text-left transition ${
-              esVis ? "border-emerald-600 bg-emerald-600 text-white shadow" : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
-            }`}
+            className="px-4 py-3 rounded-lg border text-left transition"
+            style={{
+              borderColor: esVis ? "rgba(132,185,143,0.6)" : "var(--nuvia-border-soft)",
+              background: esVis ? "rgba(132,185,143,0.16)" : "rgba(255,255,255,0.02)",
+              color: "var(--nuvia-text-primary)",
+            }}
           >
             <div className="text-sm font-bold">VIS</div>
-            <div className={`text-xs ${esVis ? "text-white/80" : "text-slate-500"}`}>Límite del 40% de ingresos</div>
+            <div className="text-xs" style={{ color: "var(--nuvia-text-tertiary)" }}>Límite del 40% de ingresos</div>
           </button>
         </div>
       </div>
 
       {/* Cuota a validar */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5 p-4 bg-slate-100/60 rounded-lg">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5 p-4 rounded-lg" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--nuvia-border-soft)" }}>
         <div>
-          <Label className="text-xs text-slate-600">Cuota propuesta al banco</Label>
-          <Input type="number" value={cuota || ""} onChange={(e) => setCuota(Number(e.target.value))} className="font-bold" />
-          <p className="text-xs text-muted-foreground mt-1">Tomada del simulador NUVEX.</p>
+          <Label className="text-xs" style={{ color: "var(--nuvia-text-secondary)" }}>Cuota propuesta al banco</Label>
+          <Input type="number" value={cuota || ""} onChange={(e) => setCuota(Number(e.target.value))} className="nuvia-input font-bold" />
+          <p className="text-xs mt-1" style={{ color: "var(--nuvia-text-tertiary)" }}>Tomada del simulador NUVEX.</p>
         </div>
         <div>
-          <Label className="text-xs text-slate-600">Límite aplicable</Label>
-          <div className={`text-2xl font-bold ${esVis ? "text-emerald-600" : "text-[#445DA3]"}`}>{Math.round(limiteAplicable * 100)}% <span className="text-sm font-medium">({esVis ? "VIS" : "No VIS"})</span></div>
+          <Label className="text-xs" style={{ color: "var(--nuvia-text-secondary)" }}>Límite aplicable</Label>
+          <div className="text-2xl font-bold" style={{ color: esVis ? "rgb(132,185,143)" : "var(--nuvia-accent-primary)" }}>{Math.round(limiteAplicable * 100)}% <span className="text-sm font-medium">({esVis ? "VIS" : "No VIS"})</span></div>
         </div>
         <div>
-          <Label className="text-xs text-slate-600">Ingreso mínimo requerido</Label>
-          <div className="text-2xl font-bold text-slate-900">{cuota > 0 ? formatCOP(cuota / limiteAplicable) : "—"}</div>
+          <Label className="text-xs" style={{ color: "var(--nuvia-text-secondary)" }}>Ingreso mínimo requerido</Label>
+          <div className="text-2xl font-bold" style={{ color: "var(--nuvia-text-primary)" }}>{cuota > 0 ? formatCOP(cuota / limiteAplicable) : "—"}</div>
         </div>
       </div>
 
 
       {/* Personas */}
       {personas.map((p, idx) => (
-        <div key={p.rol} className="mb-5 p-4 border rounded-lg bg-white">
+        <div key={p.rol} className="mb-5 p-4 rounded-lg" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--nuvia-border-soft)" }}>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
               <Badge className={p.rol === "titular" ? "bg-[#445DA3]" : "bg-slate-600"}>
@@ -502,9 +508,9 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
                 const files = e.dataTransfer?.files;
                 if (files && files.length) handleFiles(idx, files);
               }}
-              className={`flex flex-col items-center justify-center gap-1 border-2 border-dashed rounded-lg p-5 cursor-pointer transition ${
-                dragIdx === idx ? "border-[#445DA3] bg-[#445DA3]/10" : "border-slate-300 hover:bg-slate-50"
-              }`}
+            className={`flex flex-col items-center justify-center gap-1 border-2 border-dashed rounded-lg p-5 cursor-pointer transition ${
+              dragIdx === idx ? "border-[color:var(--nuvia-accent-primary)] bg-[rgba(122,160,255,0.12)]" : "border-[color:var(--nuvia-border-medium)] hover:bg-[rgba(255,255,255,0.04)]"
+            }`}
             >
               <div className="flex items-center gap-2">
                 <Upload className="w-4 h-4" />
@@ -529,8 +535,8 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
           {p.archivos.length > 0 && (
             <ul className="mt-3 space-y-1">
               {p.archivos.map((a) => (
-                <li key={a.id} className="flex items-center gap-2 text-sm p-2 bg-slate-50 rounded">
-                  <FileText className="w-4 h-4 text-slate-500" />
+                <li key={a.id} className="flex items-center gap-2 text-sm p-2 rounded" style={{ background: "rgba(255,255,255,0.04)", color: "var(--nuvia-text-secondary)" }}>
+                  <FileText className="w-4 h-4" style={{ color: "var(--nuvia-text-tertiary)" }} />
                   <span className="truncate flex-1">{a.nombre}</span>
                   <Select value={a.tipo} onValueChange={(v) => setTipoDoc(idx, a.id, v as TipoDoc)}>
                     <SelectTrigger className="w-[150px] h-7 text-xs"><SelectValue /></SelectTrigger>
@@ -574,62 +580,62 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
 
       {/* Resultado */}
       {cargandoUltimo ? null : resultado && (
-        <div className="border-t pt-5">
+        <div className="border-t pt-5" style={{ borderColor: "var(--nuvia-border-soft)" }}>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-            <div className="md:col-span-2 p-5 rounded-xl bg-slate-900 text-white">
-              <div className="text-xs uppercase tracking-wide opacity-70 mb-1">% Endeudamiento</div>
+            <div className="md:col-span-2 p-5 rounded-xl" style={{ background: "rgba(0,0,0,0.35)", border: "1px solid var(--nuvia-border-medium)", color: "var(--nuvia-text-primary)" }}>
+              <div className="text-xs uppercase tracking-wide mb-1" style={{ color: "var(--nuvia-text-tertiary)" }}>% Endeudamiento</div>
               <div className="text-5xl font-bold">{(resultado.porcentajeEndeudamiento * 100).toFixed(1)}%</div>
-              <div className="text-sm opacity-80 mt-1">Límite del banco: {Math.round(resultado.limiteAplicable * 100)}%</div>
+              <div className="text-sm mt-1" style={{ color: "var(--nuvia-text-secondary)" }}>Límite del banco: {Math.round(resultado.limiteAplicable * 100)}%</div>
               <div className="mt-3"><SemaforoBadge s={resultado.semaforo} /></div>
             </div>
-            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200">
-              <div className="text-xs text-emerald-700 uppercase">Ingreso total detectado</div>
-              <div className="text-2xl font-bold text-emerald-900">{formatCOP(resultado.ingresoTotal)}</div>
-              <div className="text-xs text-emerald-700 mt-1">Titular + codeudor</div>
+            <div className="p-4 rounded-xl" style={{ background: "rgba(132,185,143,0.12)", border: "1px solid rgba(132,185,143,0.35)" }}>
+              <div className="text-xs uppercase" style={{ color: "rgb(132,185,143)" }}>Ingreso total detectado</div>
+              <div className="text-2xl font-bold" style={{ color: "var(--nuvia-text-primary)" }}>{formatCOP(resultado.ingresoTotal)}</div>
+              <div className="text-xs mt-1" style={{ color: "var(--nuvia-text-secondary)" }}>Titular + codeudor</div>
             </div>
-            <div className="p-4 rounded-xl bg-blue-50 border border-blue-200">
-              <div className="text-xs text-blue-700 uppercase">Cuota propuesta</div>
-              <div className="text-2xl font-bold text-blue-900">{formatCOP(resultado.cuotaPropuesta)}</div>
-              <div className="text-xs text-blue-700 mt-1">{resultado.esVis ? "Crédito VIS" : "Crédito No VIS"}</div>
+            <div className="p-4 rounded-xl" style={{ background: "rgba(122,160,255,0.12)", border: "1px solid rgba(122,160,255,0.35)" }}>
+              <div className="text-xs uppercase" style={{ color: "var(--nuvia-accent-primary)" }}>Cuota propuesta</div>
+              <div className="text-2xl font-bold" style={{ color: "var(--nuvia-text-primary)" }}>{formatCOP(resultado.cuotaPropuesta)}</div>
+              <div className="text-xs mt-1" style={{ color: "var(--nuvia-text-secondary)" }}>{resultado.esVis ? "Crédito VIS" : "Crédito No VIS"}</div>
             </div>
           </div>
 
-          <div className={`p-4 rounded-lg mb-4 ${
-            resultado.semaforo === "verde" ? "bg-emerald-50 text-emerald-900 border border-emerald-200"
-            : resultado.semaforo === "amarillo" ? "bg-amber-50 text-amber-900 border border-amber-200"
-            : "bg-red-50 text-red-900 border border-red-200"
-          }`}>
+          <div className="p-4 rounded-lg mb-4" style={
+            resultado.semaforo === "verde" ? { background: "rgba(132,185,143,0.14)", border: "1px solid rgba(132,185,143,0.4)", color: "var(--nuvia-text-primary)" }
+            : resultado.semaforo === "amarillo" ? { background: "rgba(245,200,128,0.14)", border: "1px solid rgba(245,200,128,0.4)", color: "var(--nuvia-text-primary)" }
+            : { background: "rgba(255,107,107,0.16)", border: "1px solid rgba(255,107,107,0.4)", color: "var(--nuvia-text-primary)" }
+          }>
             <p className="text-sm font-medium">{resultado.mensaje}</p>
           </div>
 
           {resultado.personas.map((per) => (
-            <div key={per.rol} className="mb-3 p-3 border rounded-lg">
+            <div key={per.rol} className="mb-3 p-3 rounded-lg" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--nuvia-border-soft)" }}>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">{per.rol.toUpperCase()}</Badge>
-                  <span className="text-sm font-semibold">{formatCOP(per.ingresoMensualPromedio)} / mes</span>
+                  <span className="text-sm font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{formatCOP(per.ingresoMensualPromedio)} / mes</span>
                   <Badge variant="secondary" className="text-xs">Confianza {per.confianza}</Badge>
                 </div>
               </div>
               {per.ingresosDetectados.length > 0 && (
                 <table className="w-full text-xs">
-                  <thead className="text-slate-500">
+                  <thead style={{ color: "var(--nuvia-text-tertiary)" }}>
                     <tr><th className="text-left">Documento</th><th className="text-left">Periodo</th><th className="text-left">Tipo</th><th className="text-right">Valor</th></tr>
                   </thead>
                   <tbody>
                     {per.ingresosDetectados.map((d, i) => (
-                      <tr key={i} className="border-t">
+                      <tr key={i} style={{ borderTop: "1px solid var(--nuvia-border-soft)", color: "var(--nuvia-text-secondary)" }}>
                         <td className="py-1">{d.documento}</td>
                         <td>{d.periodo || "—"}</td>
                         <td>{d.tipo}</td>
-                        <td className="text-right font-mono">{formatCOP(d.valor)}</td>
+                        <td className="text-right font-mono" style={{ color: "var(--nuvia-text-primary)" }}>{formatCOP(d.valor)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               )}
               {per.observaciones.length > 0 && (
-                <ul className="mt-2 text-xs text-slate-600 list-disc pl-5">
+                <ul className="mt-2 text-xs list-disc pl-5" style={{ color: "var(--nuvia-text-tertiary)" }}>
                   {per.observaciones.map((o, i) => <li key={i}>{o}</li>)}
                 </ul>
               )}

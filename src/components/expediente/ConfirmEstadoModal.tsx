@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { NSelect } from "@/components/nuvia/NSelect";
 import { labelEstado, requiereSubmotivo, submotivosPara, type CasoEstado } from "@/lib/casoEstados";
 
 export interface ConfirmEstadoExtras {
@@ -63,44 +64,45 @@ export function ConfirmEstadoModal({ open, nuevoEstado, onConfirm, onCancel }: P
 
         {needsSubmotivo && (
           <div>
-            <label className="text-[11px] uppercase tracking-wider text-[#242424]/60">
-              Submotivo <span className="text-[#B42318]">*</span>
+            <label className="text-[11px] uppercase tracking-wider" style={{ color: "var(--nuvia-text-tertiary)" }}>
+              Submotivo <span style={{ color: "rgb(255,107,107)" }}>*</span>
             </label>
-            <select
-              value={submotivo}
-              onChange={(e) => setSubmotivo(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm bg-white"
-            >
-              <option value="">Seleccionar submotivo…</option>
-              {opciones.map((o) => <option key={o} value={o}>{o}</option>)}
-            </select>
+            <div className="mt-1">
+              <NSelect
+                value={submotivo}
+                onValueChange={(v) => setSubmotivo(v)}
+                placeholder="Seleccionar submotivo…"
+                options={opciones.map((o) => ({ value: o, label: o }))}
+                compact
+              />
+            </div>
           </div>
         )}
 
         {needsRadicadoId && (
           <div>
-            <label className="text-[11px] uppercase tracking-wider text-[#242424]/60">
-              ID de radicado en banco <span className="text-[#B42318]">*</span>
+            <label className="text-[11px] uppercase tracking-wider" style={{ color: "var(--nuvia-text-tertiary)" }}>
+              ID de radicado en banco <span style={{ color: "rgb(255,107,107)" }}>*</span>
             </label>
             <input
               type="text"
               value={radicadoId}
               onChange={(e) => setRadicadoId(e.target.value)}
               placeholder="Ej: 2026-RAD-987654"
-              className="mt-1 w-full rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm"
+              className="nuvia-input nuvia-input-sm mt-1 w-full"
               maxLength={120}
               autoFocus
             />
-            <p className="mt-1 text-[11px] text-[#242424]/60">
+            <p className="mt-1 text-[11px]" style={{ color: "var(--nuvia-text-tertiary)" }}>
               Número o código entregado por el banco al radicar la solicitud.
             </p>
           </div>
         )}
 
         <div>
-          <label className="text-[11px] uppercase tracking-wider text-[#242424]/60">
+          <label className="text-[11px] uppercase tracking-wider" style={{ color: "var(--nuvia-text-tertiary)" }}>
             {needsRadicadoId ? (
-              <>Observación del banco <span className="text-[#B42318]">*</span></>
+              <>Observación del banco <span style={{ color: "rgb(255,107,107)" }}>*</span></>
             ) : (
               <>Observación (opcional)</>
             )}
@@ -109,7 +111,7 @@ export function ConfirmEstadoModal({ open, nuevoEstado, onConfirm, onCancel }: P
             value={obs}
             onChange={(e) => setObs(e.target.value)}
             rows={3}
-            className="mt-1 w-full rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm"
+            className="nuvia-input mt-1 w-full"
             placeholder={
               needsRadicadoId
                 ? "¿Cómo fue la radicación? Asesor que atendió, tiempos, observaciones del banco, etc."
@@ -123,13 +125,14 @@ export function ConfirmEstadoModal({ open, nuevoEstado, onConfirm, onCancel }: P
           <button
             onClick={() => { onCancel(); reset(); }}
             disabled={busy}
-            className="rounded-lg border border-[#E3E7EE] px-4 py-2 text-xs font-medium bg-white"
+            className="rounded-lg px-4 py-2 text-xs font-medium transition"
+            style={{ border: "1px solid var(--nuvia-border-medium)", background: "rgba(255,255,255,0.04)", color: "var(--nuvia-text-secondary)" }}
           >Cancelar</button>
           <button
             onClick={handle}
             disabled={busy || !canConfirm}
-            className="rounded-lg px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
-            style={{ background: "#445DA3" }}
+            className="rounded-lg px-4 py-2 text-xs font-semibold disabled:opacity-50"
+            style={{ background: "var(--nuvia-accent-primary)", color: "var(--nuvia-bg-base)" }}
           >{busy ? "Guardando…" : "Confirmar"}</button>
         </DialogFooter>
       </DialogContent>
