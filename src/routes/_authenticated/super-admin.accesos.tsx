@@ -879,7 +879,7 @@ function AccesosPage() {
           </div>
         </Modal>
       )}
-    </div>
+    </PageLayout>
   );
 }
 
