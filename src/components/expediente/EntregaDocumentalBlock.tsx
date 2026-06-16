@@ -20,8 +20,9 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { Card } from "@/components/nuvex/ui";
-import { NUVEX } from "@/components/nuvex/constants";
+import { NCard } from "@/components/nuvia/NCard";
+import { SectionHeader } from "@/components/nuvia/SectionHeader";
+
 import { supabase } from "@/integrations/supabase/client";
 import { getReglaEntrega } from "@/lib/reglasEntregaBanco";
 import {
