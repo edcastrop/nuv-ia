@@ -86,26 +86,26 @@ function NeuralCanvas() {
     <svg
       viewBox="0 0 100 100"
       preserveAspectRatio="xMidYMid slice"
-      className="pointer-events-none absolute inset-0 w-full h-full opacity-60"
+      className="pointer-events-none absolute inset-0 w-full h-full opacity-95"
       aria-hidden
     >
       <defs>
         <linearGradient id="nv-home-link" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor={BLUE} stopOpacity="0.55" />
-          <stop offset="100%" stopColor={GREEN} stopOpacity="0.55" />
+          <stop offset="0%" stopColor={BLUE} stopOpacity="0.95" />
+          <stop offset="100%" stopColor={GREEN} stopOpacity="0.95" />
         </linearGradient>
         <radialGradient id="nv-home-node">
-          <stop offset="0%" stopColor="#fff" stopOpacity="0.95" />
-          <stop offset="60%" stopColor={GREEN} stopOpacity="0.7" />
+          <stop offset="0%" stopColor="#fff" stopOpacity="1" />
+          <stop offset="55%" stopColor={GREEN} stopOpacity="0.95" />
           <stop offset="100%" stopColor={BLUE} stopOpacity="0" />
         </radialGradient>
         <filter id="nv-home-glow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="0.8" result="b" />
+          <feGaussianBlur stdDeviation="1.4" result="b" />
           <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
       </defs>
 
-      {/* Links con pulso */}
+      {/* Links con pulso visible */}
       <g filter="url(#nv-home-glow)">
         {links.map(([a, b], i) => {
           const A = nodes[a]; const B = nodes[b];
@@ -114,34 +114,37 @@ function NeuralCanvas() {
               key={i}
               x1={A.x} y1={A.y} x2={B.x} y2={B.y}
               stroke="url(#nv-home-link)"
-              strokeWidth="0.18"
-              opacity={0.5}
+              strokeWidth="0.35"
+              opacity={0.85}
             >
-              <animate attributeName="opacity" values="0.15;0.7;0.15" dur={`${4 + (i % 5)}s`} repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.25;0.95;0.25" dur={`${2.5 + (i % 4) * 0.6}s`} repeatCount="indefinite" />
+              <animate attributeName="stroke-width" values="0.2;0.55;0.2" dur={`${2.5 + (i % 4) * 0.6}s`} repeatCount="indefinite" />
             </line>
           );
         })}
       </g>
 
-      {/* Nodos pulsantes */}
+      {/* Nodos pulsantes brillantes */}
       {nodes.map((n, i) => (
-        <g key={i}>
-          <circle cx={n.x} cy={n.y} r="1.6" fill="url(#nv-home-node)">
-            <animate attributeName="r" values="1.2;2;1.2" dur={`${3 + (i % 4)}s`} repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.6;1;0.6" dur={`${3 + (i % 4)}s`} repeatCount="indefinite" />
+        <g key={i} filter="url(#nv-home-glow)">
+          <circle cx={n.x} cy={n.y} r="2" fill="url(#nv-home-node)">
+            <animate attributeName="r" values="1.6;3.2;1.6" dur={`${2 + (i % 4) * 0.5}s`} repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.7;1;0.7" dur={`${2 + (i % 4) * 0.5}s`} repeatCount="indefinite" />
           </circle>
-          <circle cx={n.x} cy={n.y} r="0.5" fill="#fff" opacity="0.9" />
+          <circle cx={n.x} cy={n.y} r="0.7" fill="#fff" opacity="1" />
         </g>
       ))}
 
-      {/* Paquetes de datos viajando por los enlaces */}
-      {links.slice(0, 8).map(([a, b], i) => {
+      {/* Paquetes de datos viajando — más, más grandes, más rápidos */}
+      {links.map(([a, b], i) => {
         const A = nodes[a]; const B = nodes[b];
+        const dur = 1.8 + (i % 5) * 0.4;
+        const delay = (i % 7) * 0.3;
         return (
-          <circle key={`p${i}`} r="0.55" fill={GREEN} opacity="0.95">
-            <animate attributeName="cx" values={`${A.x};${B.x}`} dur={`${3 + (i % 3)}s`} repeatCount="indefinite" />
-            <animate attributeName="cy" values={`${A.y};${B.y}`} dur={`${3 + (i % 3)}s`} repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0;1;0" dur={`${3 + (i % 3)}s`} repeatCount="indefinite" />
+          <circle key={`p${i}`} r="0.85" fill={i % 2 === 0 ? GREEN : "#9ECDA8"} opacity="0">
+            <animate attributeName="cx" values={`${A.x};${B.x}`} dur={`${dur}s`} begin={`${delay}s`} repeatCount="indefinite" />
+            <animate attributeName="cy" values={`${A.y};${B.y}`} dur={`${dur}s`} begin={`${delay}s`} repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.15;0.85;1" dur={`${dur}s`} begin={`${delay}s`} repeatCount="indefinite" />
           </circle>
         );
       })}
