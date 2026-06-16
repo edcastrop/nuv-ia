@@ -526,6 +526,7 @@ function MiPerfilPage() {
         <Shield size={12} /> Toda modificación queda registrada para auditoría.
       </div>
     </div>
+    </div>
   );
 }
 
