@@ -263,8 +263,11 @@ function NuvexIAPage() {
                   key={s}
                   onClick={() => enviar(s)}
                   disabled={enviando}
-                  className="text-[11px] px-2.5 py-1.5 rounded-full text-white/75 hover:text-white transition disabled:opacity-40"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
+                  className="text-[11px] px-2.5 py-1.5 rounded-full text-white/85 hover:text-white transition disabled:opacity-40"
+                  style={{
+                    background: `linear-gradient(135deg, ${AZUL}22, ${VERDE}1A)`,
+                    border: `1px solid ${AZUL}55`,
+                  }}
                 >
                   {s}
                 </button>
@@ -313,9 +316,9 @@ function NuvexIAPage() {
                       }}
                       className="mt-3 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold transition hover:scale-[1.02]"
                       style={{
-                        background: "linear-gradient(135deg, #E11D48, #f0d78c)",
+                        background: `linear-gradient(135deg, ${AZUL}, ${VERDE})`,
                         color: "white",
-                        boxShadow: "0 6px 18px -6px rgba(225,29,72,0.55)",
+                        boxShadow: `0 6px 18px -6px ${AZUL}99`,
                       }}
                     >
                       <AlertCircle size={12} /> Escalar a ticket

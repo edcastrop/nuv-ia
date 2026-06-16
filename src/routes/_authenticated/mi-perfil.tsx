@@ -215,6 +215,13 @@ function MiPerfilPage() {
   }
 
   return (
+    <div
+      className="relative min-h-[calc(100vh-64px)]"
+      style={{
+        background:
+          "radial-gradient(1100px 520px at 0% -10%, rgba(68,93,163,0.10), transparent 60%), radial-gradient(900px 480px at 100% 10%, rgba(132,185,143,0.10), transparent 65%), #F4F6FB",
+      }}
+    >
     <div className="mx-auto max-w-5xl px-6 py-6 space-y-5">
       {/* NUVIA branded hero */}
       <div
@@ -519,22 +526,35 @@ function MiPerfilPage() {
         <Shield size={12} /> Toda modificación queda registrada para auditoría.
       </div>
     </div>
+    </div>
   );
 }
 
 function Section({ icon, title, badge, children }: { icon: React.ReactNode; title: string; badge?: string; children: React.ReactNode }) {
   return (
-    <Card>
-      <div className="mb-3 flex items-center gap-2">
-        <span className="inline-flex h-6 w-6 items-center justify-center rounded-md text-white"
-          style={{ background: "linear-gradient(135deg, #445DA3, #84B98F)" }}>{icon}</span>
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-[#242424]">{title}</h2>
-        {badge && (
-          <span className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-medium bg-[#F7F9FB] text-[#242424]/60 border border-[#E3E7EE]">{badge}</span>
-        )}
-      </div>
-      {children}
-    </Card>
+    <div className="relative">
+      <div
+        className="absolute left-0 top-3 bottom-3 w-1 rounded-full"
+        style={{ background: "linear-gradient(180deg, #445DA3, #84B98F)" }}
+        aria-hidden
+      />
+      <Card>
+        <div className="mb-3 flex items-center gap-2">
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-md text-white"
+            style={{ background: "linear-gradient(135deg, #445DA3, #84B98F)" }}>{icon}</span>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-[#242424]">{title}</h2>
+          <span
+            className="ml-2 h-px flex-1"
+            style={{ background: "linear-gradient(90deg, rgba(68,93,163,0.35), rgba(132,185,143,0.05))" }}
+            aria-hidden
+          />
+          {badge && (
+            <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-[#F7F9FB] text-[#242424]/60 border border-[#E3E7EE]">{badge}</span>
+          )}
+        </div>
+        {children}
+      </Card>
+    </div>
   );
 }
 
