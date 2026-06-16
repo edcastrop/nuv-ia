@@ -443,7 +443,7 @@ function DecisionDialog({ aprobacion, onClose, onDone }: { aprobacion: Aprobacio
 
   return (
     <Dialog open={!!aprobacion} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="bg-[#161616] text-white border-white/[0.08]">
+      <DialogContent className="bg-[var(--nuvia-bg-card)] text-white border-white/[0.08]">
         <DialogHeader>
           <DialogTitle>Revisar solicitud</DialogTitle>
           <DialogDescription className="text-white/55">
@@ -466,7 +466,7 @@ function DecisionDialog({ aprobacion, onClose, onDone }: { aprobacion: Aprobacio
           <Button variant="outline" onClick={() => decidir("rechazado")} className="border-red-500/40 text-red-300 hover:bg-red-500/10">
             <XCircle className="h-4 w-4 mr-2" />Rechazar
           </Button>
-          <Button variant="outline" onClick={() => decidir("contraofertado")} disabled={!contraoferta} className="border-blue-500/40 text-blue-300 hover:bg-blue-500/10">
+          <Button variant="outline" onClick={() => decidir("contraofertado")} disabled={!contraoferta} className="border-[color:var(--nuvia-accent-blue)]/40 text-[color:var(--nuvia-accent-blue)] hover:bg-[color:var(--nuvia-accent-blue)]/10">
             Contraofertar
           </Button>
           <Button onClick={() => decidir("aprobado")} style={{ background: "#84B98F", color: "#0E0E0E" }}>
@@ -528,7 +528,7 @@ function Reportes() {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
               <XAxis dataKey="mes" stroke="rgba(255,255,255,0.4)" fontSize={12} />
               <YAxis stroke="rgba(255,255,255,0.4)" fontSize={12} tickFormatter={(v) => `$${(v / 1_000_000).toFixed(0)}M`} />
-              <Tooltip formatter={(v: number) => formatCOP(v)} contentStyle={{ background: "#161616", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }} />
+              <Tooltip formatter={(v: number) => formatCOP(v)} contentStyle={{ background: "var(--nuvia-bg-card)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }} />
               <Bar dataKey="total" fill={COLORS.green} radius={[8, 8, 0, 0]}>
                 {porMes.map((_, i) => <Cell key={i} fill={COLORS.green} />)}
               </Bar>
@@ -582,7 +582,7 @@ function SolicitudAprobacionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#161616] text-white border-white/[0.08]">
+      <DialogContent className="bg-[var(--nuvia-bg-card)] text-white border-white/[0.08]">
         <DialogHeader>
           <DialogTitle>Solicitud de aprobación</DialogTitle>
           <DialogDescription className="text-white/55">
