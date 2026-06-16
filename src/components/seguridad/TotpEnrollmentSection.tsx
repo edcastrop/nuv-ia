@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Card } from "@/components/nuvex/ui";
+function Card({ children }: { children: React.ReactNode }) {
+  return <div className="rounded-2xl border border-white/10 p-5 nuvia-dark-card">{children}</div>;
+}
 import { Smartphone, QrCode, ShieldCheck, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
