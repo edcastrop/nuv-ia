@@ -7,6 +7,7 @@ import { useResolvedHomeRole } from "@/hooks/useResolvedHomeRole";
 import { roleLabel } from "@/lib/roleLabels";
 import { supabase } from "@/integrations/supabase/client";
 import { HOME_CONFIG, type RoleHomeKpi } from "@/lib/homeConfig";
+import { WorkspaceLoader } from "./WorkspaceLoader";
 import {
   NuviaIAPromptCard,
   KpiCard,
