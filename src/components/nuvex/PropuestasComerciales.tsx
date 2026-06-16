@@ -646,10 +646,10 @@ export function PropuestasComerciales(props: Props) {
                             }
                           : {
                               background:
-                                "linear-gradient(135deg, #445DA3 0%, #5B7DC8 60%, #7AA0FF 100%)",
-                              color: "#fff",
-                              border: "1px solid rgba(255,255,255,0.18)",
-                              boxShadow: "0 10px 24px -14px rgba(68,93,163,0.55)",
+                                "linear-gradient(135deg, rgba(132,185,143,0.18) 0%, rgba(68,93,163,0.22) 100%)",
+                              color: "#E8EDFB",
+                              border: "1px solid rgba(132,185,143,0.35)",
+                              boxShadow: "0 10px 24px -16px rgba(0,0,0,0.55)",
                             }
                       }
                     >

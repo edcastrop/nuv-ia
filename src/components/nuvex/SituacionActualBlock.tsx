@@ -658,7 +658,9 @@ export function SituacionActualBlock({
       <div
         className="flex flex-wrap items-center justify-between gap-4 px-6 py-5 md:px-8"
         style={{
-          background: `linear-gradient(135deg, ${NUVEX.azul} 0%, #2F4585 55%, #1B2A55 100%)`,
+          background:
+            "linear-gradient(135deg, #0D1224 0%, #131B33 55%, #1B2542 100%)",
+          borderBottom: "1px solid var(--nuvia-border)",
         }}
       >
         <div className="flex min-w-0 items-center gap-3">
@@ -666,22 +668,34 @@ export function SituacionActualBlock({
             src={NUVEX_BRAND.logo.principal}
             alt="NUVEX"
             className="h-10 w-auto shrink-0 rounded bg-white/95 px-2 py-1"
-            style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.15)" }}
+            style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.35)" }}
           />
           <div className="min-w-0">
-            <div className="text-[10.5px] font-bold uppercase tracking-[0.22em] text-white/70">
+            <div
+              className="text-[10.5px] font-bold uppercase tracking-[0.22em]"
+              style={{ color: "rgba(230,236,255,0.55)" }}
+            >
               {NUVEX_BRAND.nombreComercial}
             </div>
-            <h2 className="truncate text-[18px] md:text-[20px] font-extrabold leading-tight text-white">
+            <h2
+              className="truncate text-[18px] md:text-[20px] font-extrabold leading-tight"
+              style={{ color: "var(--nuvia-text-primary)" }}
+            >
               {tituloSituacion}
             </h2>
           </div>
         </div>
         <div className="hidden md:block text-right">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/60">
+          <div
+            className="text-[10px] font-semibold uppercase tracking-[0.2em]"
+            style={{ color: "rgba(230,236,255,0.45)" }}
+          >
             Informe ejecutivo
           </div>
-          <div className="text-[12px] font-semibold text-white/90">
+          <div
+            className="text-[12px] font-semibold"
+            style={{ color: "rgba(230,236,255,0.85)" }}
+          >
             Diagnóstico financiero del crédito actual
           </div>
         </div>
