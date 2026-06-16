@@ -609,33 +609,33 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
           </div>
 
           {resultado.personas.map((per) => (
-            <div key={per.rol} className="mb-3 p-3 border rounded-lg">
+            <div key={per.rol} className="mb-3 p-3 rounded-lg" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--nuvia-border-soft)" }}>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">{per.rol.toUpperCase()}</Badge>
-                  <span className="text-sm font-semibold">{formatCOP(per.ingresoMensualPromedio)} / mes</span>
+                  <span className="text-sm font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{formatCOP(per.ingresoMensualPromedio)} / mes</span>
                   <Badge variant="secondary" className="text-xs">Confianza {per.confianza}</Badge>
                 </div>
               </div>
               {per.ingresosDetectados.length > 0 && (
                 <table className="w-full text-xs">
-                  <thead className="text-slate-500">
+                  <thead style={{ color: "var(--nuvia-text-tertiary)" }}>
                     <tr><th className="text-left">Documento</th><th className="text-left">Periodo</th><th className="text-left">Tipo</th><th className="text-right">Valor</th></tr>
                   </thead>
                   <tbody>
                     {per.ingresosDetectados.map((d, i) => (
-                      <tr key={i} className="border-t">
+                      <tr key={i} style={{ borderTop: "1px solid var(--nuvia-border-soft)", color: "var(--nuvia-text-secondary)" }}>
                         <td className="py-1">{d.documento}</td>
                         <td>{d.periodo || "—"}</td>
                         <td>{d.tipo}</td>
-                        <td className="text-right font-mono">{formatCOP(d.valor)}</td>
+                        <td className="text-right font-mono" style={{ color: "var(--nuvia-text-primary)" }}>{formatCOP(d.valor)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               )}
               {per.observaciones.length > 0 && (
-                <ul className="mt-2 text-xs text-slate-600 list-disc pl-5">
+                <ul className="mt-2 text-xs list-disc pl-5" style={{ color: "var(--nuvia-text-tertiary)" }}>
                   {per.observaciones.map((o, i) => <li key={i}>{o}</li>)}
                 </ul>
               )}
