@@ -165,14 +165,17 @@ function HeroKpi({
 }) {
   const pal =
     accent === "primary"
-      ? { border: NUVEX.azul, label: NUVEX.azul, value: NUVEX.azul }
+      ? { border: "rgba(122,160,255,0.45)", label: "#9DB6FF", value: "#E8EDFB" }
       : accent === "dark"
-        ? { border: "#0F1115", label: "#6B7480", value: "#0F1115" }
-        : { border: "#E3E7EE", label: "#6B7480", value: "#0F1115" };
+        ? { border: "rgba(255,255,255,0.18)", label: "rgba(255,255,255,0.55)", value: "#FFFFFF" }
+        : { border: "var(--nuvia-border)", label: "var(--nuvia-text-secondary)", value: "var(--nuvia-text-primary)" };
   return (
     <div
-      className="rounded-2xl border bg-white p-5 transition-shadow hover:shadow-[0_10px_30px_rgba(36,36,36,0.06)]"
-      style={{ borderColor: pal.border }}
+      className="rounded-2xl border p-5 transition-shadow hover:shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
+      style={{
+        borderColor: pal.border,
+        background: "linear-gradient(135deg, rgba(20,28,54,0.7) 0%, rgba(13,18,36,0.7) 100%)",
+      }}
     >
       <div
         className="text-[11px] font-semibold uppercase tracking-[0.14em]"
