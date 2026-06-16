@@ -81,9 +81,9 @@ export function TotpEnrollmentSection() {
         <h2 className="text-sm font-semibold uppercase tracking-wider text-white">Doble factor (MFA)</h2>
         <span className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-medium border"
           style={{
-            background: estado === "totp" ? "#EAF7EE" : "#FFF7E6",
-            color: estado === "totp" ? "#1F6D3D" : "#92560A",
-            borderColor: estado === "totp" ? "#84B98F" : "#FFD89A",
+            background: estado === "totp" ? "rgba(132,185,143,0.18)" : "rgba(246,196,83,0.16)",
+            color: estado === "totp" ? "#9BCB9F" : "#F6C453",
+            borderColor: estado === "totp" ? "rgba(132,185,143,0.45)" : "rgba(246,196,83,0.45)",
           }}>
           {estado === "totp" ? "App autenticadora activa" : "Solo código por correo"}
         </span>
@@ -101,7 +101,7 @@ export function TotpEnrollmentSection() {
           <button
             onClick={handleDesactivar}
             disabled={busy}
-            className="inline-flex items-center gap-2 rounded-lg border border-[#F5C2C2] bg-[#FDECEC] px-3 py-2 text-xs font-semibold text-[#B42318] hover:bg-[#FBDADA] disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-lg border border-[#FF6B6B]/30 bg-[#FF6B6B]/10 px-3 py-2 text-xs font-semibold text-[#FF8585] hover:bg-[#FF6B6B]/20 disabled:opacity-60"
           ><Trash2 size={13} /> Desactivar app autenticadora</button>
         </div>
       ) : qr ? (
@@ -140,7 +140,7 @@ export function TotpEnrollmentSection() {
             <button
               onClick={() => { setQr(null); setCodigo(""); }}
               disabled={busy}
-              className="rounded-xl border border-white/10 bg-white px-4 py-2.5 text-sm font-medium text-white/75 hover:bg-white/[0.05]"
+              className="rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2.5 text-sm font-medium text-white/75 hover:bg-white/[0.05]"
             >Cancelar</button>
           </div>
         </div>
