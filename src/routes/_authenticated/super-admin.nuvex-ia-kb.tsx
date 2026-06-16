@@ -26,19 +26,19 @@ function AdminKB() {
   const { isSuperAdmin, loading } = useUserRole();
   const [tab, setTab] = useState<Tab>("kb");
 
-  if (loading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>;
+  if (loading) return <div className="p-12 text-center text-sm text-[var(--nuvia-text-secondary)]">Cargando…</div>;
   if (!isSuperAdmin) return <Navigate to="/inicio" />;
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#050814]">NUVEX IA · Base de Conocimiento</h1>
-        <p className="text-sm text-[#242424]/60">
+        <h1 className="text-2xl font-bold text-[var(--nuvia-text-primary)]">NUVEX IA · Base de Conocimiento</h1>
+        <p className="text-sm text-[var(--nuvia-text-secondary)]">
           Cerebro único de NUVEX IA. Cada respuesta de KB se entrega con cero tokens.
         </p>
       </div>
 
-      <div className="flex gap-2 border-b border-[#E3E7EE] mb-6">
+      <div className="flex gap-2 border-b border-[var(--nuvia-border)] mb-6">
         {[
           { k: "kb", label: "Artículos" },
           { k: "analitica", label: "Analítica" },
@@ -115,13 +115,13 @@ function KbTab() {
 
   return (
     <div className="grid lg:grid-cols-[1fr_440px] gap-6">
-      <div className="bg-white rounded-2xl border border-[#E3E7EE] overflow-hidden">
-        <div className="p-4 border-b border-[#E3E7EE] flex items-center gap-3">
+      <div className="bg-[var(--nuvia-bg-card)] rounded-2xl border border-[var(--nuvia-border)] overflow-hidden">
+        <div className="p-4 border-b border-[var(--nuvia-border)] flex items-center gap-3">
           <input
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             placeholder="Buscar por pregunta, categoría o tag…"
-            className="flex-1 px-3 py-2 rounded-lg border border-[#E3E7EE] text-sm"
+            className="flex-1 px-3 py-2 rounded-lg border border-[var(--nuvia-border)] text-sm"
           />
           <button
             onClick={() => setEditing({
@@ -141,10 +141,10 @@ function KbTab() {
         </div>
         <div className="max-h-[70vh] overflow-y-auto divide-y divide-[#E3E7EE]">
           {filtered.length === 0 && (
-            <div className="p-8 text-center text-sm text-[#242424]/50">Sin artículos.</div>
+            <div className="p-8 text-center text-sm text-[var(--nuvia-text-secondary)]">Sin artículos.</div>
           )}
           {filtered.map((a) => (
-            <div key={a.id} className="p-4 hover:bg-[#F7F9FB]">
+            <div key={a.id} className="p-4 hover:bg-[rgba(255,255,255,0.04)]">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
@@ -165,8 +165,8 @@ function KbTab() {
                     </span>
                     <span className="text-[11px] text-[#445DA3] font-semibold">{a.categoria}</span>
                   </div>
-                  <div className="font-semibold text-[#050814] text-sm mt-1">{a.pregunta}</div>
-                  <div className="text-[11px] text-[#242424]/50 mt-0.5">
+                  <div className="font-semibold text-[var(--nuvia-text-primary)] text-sm mt-1">{a.pregunta}</div>
+                  <div className="text-[11px] text-[var(--nuvia-text-secondary)] mt-0.5">
                     {(a.tags ?? []).join(" · ") || "sin tags"}
                   </div>
                 </div>
@@ -182,7 +182,7 @@ function KbTab() {
                       estado: a.estado as "activo" | "borrador" | "archivado",
                     })}
 
-                    className="text-xs px-3 py-1.5 rounded-lg border border-[#E3E7EE] hover:bg-white"
+                    className="text-xs px-3 py-1.5 rounded-lg border border-[var(--nuvia-border)] hover:bg-[var(--nuvia-bg-card)]"
                   >
                     Editar
                   </button>
@@ -204,8 +204,8 @@ function KbTab() {
       </div>
 
       {editing && (
-        <div className="bg-white rounded-2xl border border-[#E3E7EE] p-5 h-fit sticky top-20">
-          <h3 className="font-bold text-[#050814] mb-4">
+        <div className="bg-[var(--nuvia-bg-card)] rounded-2xl border border-[var(--nuvia-border)] p-5 h-fit sticky top-20">
+          <h3 className="font-bold text-[var(--nuvia-text-primary)] mb-4">
             {editing.id ? "Editar artículo" : "Nuevo artículo"}
           </h3>
           <div className="space-y-3">
@@ -214,7 +214,7 @@ function KbTab() {
                 list="kb-categorias"
                 value={editing.categoria}
                 onChange={(e) => setEditing({ ...editing, categoria: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-[#E3E7EE] text-sm"
+                className="w-full px-3 py-2 rounded-lg border border-[var(--nuvia-border)] text-sm"
               />
               <datalist id="kb-categorias">
                 {CATEGORIAS_SUGERIDAS.map((c) => <option key={c} value={c} />)}
@@ -224,7 +224,7 @@ function KbTab() {
               <input
                 value={editing.pregunta}
                 onChange={(e) => setEditing({ ...editing, pregunta: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-[#E3E7EE] text-sm"
+                className="w-full px-3 py-2 rounded-lg border border-[var(--nuvia-border)] text-sm"
               />
             </Field>
             <Field label="Respuesta (markdown)">
@@ -232,14 +232,14 @@ function KbTab() {
                 value={editing.respuesta}
                 onChange={(e) => setEditing({ ...editing, respuesta: e.target.value })}
                 rows={10}
-                className="w-full px-3 py-2 rounded-lg border border-[#E3E7EE] text-sm font-mono"
+                className="w-full px-3 py-2 rounded-lg border border-[var(--nuvia-border)] text-sm font-mono"
               />
             </Field>
             <Field label="Tags (separados por coma)">
               <input
                 value={editing.tags}
                 onChange={(e) => setEditing({ ...editing, tags: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-[#E3E7EE] text-sm"
+                className="w-full px-3 py-2 rounded-lg border border-[var(--nuvia-border)] text-sm"
               />
             </Field>
             <Field label="Audiencias (quién puede ver este artículo)">
@@ -254,7 +254,7 @@ function KbTab() {
                   return (
                     <label
                       key={aud}
-                      className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-[#E3E7EE] cursor-pointer hover:bg-[#F7F9FB] text-xs"
+                      className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-[var(--nuvia-border)] cursor-pointer hover:bg-[rgba(255,255,255,0.04)] text-xs"
                       style={{ background: checked ? "rgba(68,93,163,0.08)" : "white", borderColor: checked ? "#445DA3" : "#E3E7EE" }}
                     >
                       <input
@@ -268,12 +268,12 @@ function KbTab() {
                         }}
                         className="accent-[#445DA3]"
                       />
-                      <span className="font-medium text-[#050814]">{label}</span>
+                      <span className="font-medium text-[var(--nuvia-text-primary)]">{label}</span>
                     </label>
                   );
                 })}
               </div>
-              <p className="text-[10px] text-[#242424]/50 mt-1">
+              <p className="text-[10px] text-[var(--nuvia-text-secondary)] mt-1">
                 Si marcas "Público", el artículo será visible para todas las audiencias.
               </p>
             </Field>
@@ -281,7 +281,7 @@ function KbTab() {
               <select
                 value={editing.estado}
                 onChange={(e) => setEditing({ ...editing, estado: e.target.value as "activo" | "borrador" | "archivado" })}
-                className="w-full px-3 py-2 rounded-lg border border-[#E3E7EE] text-sm"
+                className="w-full px-3 py-2 rounded-lg border border-[var(--nuvia-border)] text-sm"
               >
                 <option value="activo">Activo</option>
                 <option value="borrador">Borrador</option>
@@ -299,7 +299,7 @@ function KbTab() {
               </button>
               <button
                 onClick={() => setEditing(null)}
-                className="px-4 py-2 rounded-lg border border-[#E3E7EE] text-sm"
+                className="px-4 py-2 rounded-lg border border-[var(--nuvia-border)] text-sm"
               >
                 Cancelar
               </button>
@@ -314,7 +314,7 @@ function KbTab() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/60 mb-1">{label}</div>
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--nuvia-text-secondary)] mb-1">{label}</div>
       {children}
     </div>
   );
@@ -381,15 +381,15 @@ function AnaliticaTab() {
     setAudiencia(""); setModulo(""); setRol("");
   };
 
-  const inputCls = "px-3 py-2 rounded-lg border border-[#E3E7EE] text-sm bg-white";
+  const inputCls = "px-3 py-2 rounded-lg border border-[var(--nuvia-border)] text-sm bg-[var(--nuvia-bg-card)]";
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-2xl border border-[#E3E7EE] p-5">
+      <div className="bg-[var(--nuvia-bg-card)] rounded-2xl border border-[var(--nuvia-border)] p-5">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-[#050814]">Filtros</h3>
+          <h3 className="font-bold text-[var(--nuvia-text-primary)]">Filtros</h3>
           <div className="flex gap-2">
-            <button onClick={limpiar} className="px-3 py-2 rounded-lg border border-[#E3E7EE] text-sm">Limpiar</button>
+            <button onClick={limpiar} className="px-3 py-2 rounded-lg border border-[var(--nuvia-border)] text-sm">Limpiar</button>
             <button onClick={cargar} disabled={loading}
               className="px-3 py-2 rounded-lg text-sm text-white"
               style={{ background: "#445DA3" }}>
@@ -436,7 +436,7 @@ function AnaliticaTab() {
       </div>
 
       {!data ? (
-        <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>
+        <div className="p-12 text-center text-sm text-[var(--nuvia-text-secondary)]">Cargando…</div>
       ) : (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -454,19 +454,19 @@ function AnaliticaTab() {
             <RankList title="Por audiencia" rows={data.top_audiencia} />
           </div>
 
-          <div className="bg-white rounded-2xl border border-[#E3E7EE] p-5">
-            <h3 className="font-bold text-[#050814] mb-3">Últimas consultas escaladas</h3>
+          <div className="bg-[var(--nuvia-bg-card)] rounded-2xl border border-[var(--nuvia-border)] p-5">
+            <h3 className="font-bold text-[var(--nuvia-text-primary)] mb-3">Últimas consultas escaladas</h3>
             <div className="space-y-2">
               {data.ultimas_escaladas.length === 0 && (
-                <div className="text-sm text-[#242424]/50">Sin escalamientos recientes.</div>
+                <div className="text-sm text-[var(--nuvia-text-secondary)]">Sin escalamientos recientes.</div>
               )}
               {data.ultimas_escaladas.map((r, i) => (
-                <div key={i} className="flex items-center justify-between text-sm border-b border-[#E3E7EE] pb-2 last:border-0">
+                <div key={i} className="flex items-center justify-between text-sm border-b border-[var(--nuvia-border)] pb-2 last:border-0">
                   <div className="truncate">
                     <span className="text-[11px] text-[#445DA3] font-semibold uppercase mr-2">{r.modulo ?? "—"}</span>
                     {r.pregunta}
                   </div>
-                  <div className="text-[11px] text-[#242424]/50 shrink-0 ml-3">
+                  <div className="text-[11px] text-[var(--nuvia-text-secondary)] shrink-0 ml-3">
                     {new Date(r.created_at).toLocaleString()}
                   </div>
                 </div>
@@ -481,8 +481,8 @@ function AnaliticaTab() {
 
 function Stat({ label, value, tone }: { label: string; value: number | string; tone?: "ok" | "warn" }) {
   return (
-    <div className="bg-white rounded-2xl border border-[#E3E7EE] p-4">
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/60">{label}</div>
+    <div className="bg-[var(--nuvia-bg-card)] rounded-2xl border border-[var(--nuvia-border)] p-4">
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--nuvia-text-secondary)]">{label}</div>
       <div
         className="text-2xl font-bold mt-1"
         style={{ color: tone === "warn" ? "#B42318" : tone === "ok" ? "#2E7D45" : "#050814" }}
@@ -496,17 +496,17 @@ function Stat({ label, value, tone }: { label: string; value: number | string; t
 function RankList({ title, rows }: { title: string; rows: { nombre: string; count: number }[] }) {
   const max = Math.max(1, ...rows.map((r) => r.count));
   return (
-    <div className="bg-white rounded-2xl border border-[#E3E7EE] p-5">
-      <h3 className="font-bold text-[#050814] mb-3">{title}</h3>
+    <div className="bg-[var(--nuvia-bg-card)] rounded-2xl border border-[var(--nuvia-border)] p-5">
+      <h3 className="font-bold text-[var(--nuvia-text-primary)] mb-3">{title}</h3>
       <div className="space-y-2">
-        {rows.length === 0 && <div className="text-sm text-[#242424]/50">Sin datos.</div>}
+        {rows.length === 0 && <div className="text-sm text-[var(--nuvia-text-secondary)]">Sin datos.</div>}
         {rows.map((r) => (
           <div key={r.nombre}>
             <div className="flex justify-between text-xs mb-1">
-              <span className="text-[#050814] font-medium">{r.nombre}</span>
-              <span className="text-[#242424]/60">{r.count}</span>
+              <span className="text-[var(--nuvia-text-primary)] font-medium">{r.nombre}</span>
+              <span className="text-[var(--nuvia-text-secondary)]">{r.count}</span>
             </div>
-            <div className="h-1.5 bg-[#F7F9FB] rounded overflow-hidden">
+            <div className="h-1.5 bg-[rgba(255,255,255,0.04)] rounded overflow-hidden">
               <div
                 className="h-full"
                 style={{ width: `${(r.count / max) * 100}%`, background: "#445DA3" }}

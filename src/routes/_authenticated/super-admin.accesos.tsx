@@ -138,7 +138,7 @@ function AccesosPage() {
     );
   }, [usuarios, busqueda]);
 
-  if (rolesLoading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>;
+  if (rolesLoading) return <div className="p-12 text-center text-sm text-[var(--nuvia-text-secondary)]">Cargando…</div>;
   if (!isAdmin) return <Navigate to="/inicio" />;
 
   return (
@@ -150,13 +150,13 @@ function AccesosPage() {
             <ShieldCheck size={12} /> Centro de seguridad
           </div>
           <h1 className="text-2xl font-semibold" style={{ color: NEGRO }}>Gestión de Accesos</h1>
-          <div className="text-sm text-[#242424]/60">Aprueba, rechaza, reactiva y administra el acceso a la plataforma NUVEX</div>
+          <div className="text-sm text-[var(--nuvia-text-secondary)]">Aprueba, rechaza, reactiva y administra el acceso a la plataforma NUVEX</div>
         </div>
       </div>
 
       {/* Selector de vista (Usuarios / Reactivaciones) */}
       {isSuperAdmin && (
-        <div className="flex gap-2 border-b border-[#E3E7EE]">
+        <div className="flex gap-2 border-b border-[var(--nuvia-border)]">
           <button
             onClick={() => setVista("usuarios")}
             className="px-4 py-2 text-sm font-semibold border-b-2 transition -mb-px"
@@ -205,7 +205,7 @@ function AccesosPage() {
                 : { background: "#fff", color: NEGRO, borderColor: "#E3E7EE" }}
             >
               <t.Icon size={14} /> {t.label}
-              {tab === t.v && count !== null && <span className="text-[10px] rounded-full bg-white/25 px-1.5">{count}</span>}
+              {tab === t.v && count !== null && <span className="text-[10px] rounded-full bg-[var(--nuvia-bg-card)]/25 px-1.5">{count}</span>}
             </button>
           );
         })}
@@ -213,12 +213,12 @@ function AccesosPage() {
 
       {/* Buscador */}
       <div className="relative">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#242424]/40" />
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--nuvia-text-primary)]/40" />
         <input
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
           placeholder="Buscar por nombre, correo, ciudad o rol…"
-          className="w-full rounded-xl border border-[#E3E7EE] bg-white pl-9 pr-3 py-2.5 text-sm outline-none focus:border-[#445DA3]"
+          className="w-full rounded-xl border border-[var(--nuvia-border)] bg-[var(--nuvia-bg-card)] pl-9 pr-3 py-2.5 text-sm outline-none focus:border-[#445DA3]"
         />
       </div>
 
@@ -226,9 +226,9 @@ function AccesosPage() {
         {/* Lista */}
         <div className="lg:col-span-2 space-y-3">
           {loading ? (
-            <div className="p-12 text-center text-sm text-[#242424]/60">Cargando usuarios…</div>
+            <div className="p-12 text-center text-sm text-[var(--nuvia-text-secondary)]">Cargando usuarios…</div>
           ) : filtrados.length === 0 ? (
-            <Card><div className="py-10 text-center text-sm text-[#242424]/60">No hay usuarios en este estado.</div></Card>
+            <Card><div className="py-10 text-center text-sm text-[var(--nuvia-text-secondary)]">No hay usuarios en este estado.</div></Card>
           ) : (
             filtrados.map((u) => (
               <Card key={u.id}>
@@ -240,14 +240,14 @@ function AccesosPage() {
                         <div className="text-[15px] font-semibold truncate" style={{ color: NEGRO }}>{u.nombre || "—"}</div>
                         {badge(u.estado_acceso)}
                       </div>
-                      <div className="text-xs text-[#242424]/60 truncate">{u.email}</div>
-                      <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-[#242424]/70">
-                        <div><b className="font-semibold text-[#242424]/55 uppercase tracking-wider">Rol solicitado:</b> {roleLabel(u.rol_solicitado)}</div>
-                        <div><b className="font-semibold text-[#242424]/55 uppercase tracking-wider">Teléfono:</b> {u.telefono_registro || "—"}</div>
-                        <div><b className="font-semibold text-[#242424]/55 uppercase tracking-wider">Ciudad:</b> {u.ciudad_registro || "—"}</div>
-                        <div><b className="font-semibold text-[#242424]/55 uppercase tracking-wider">Equipo:</b> {u.equipo_registro || "—"}</div>
-                        <div><b className="font-semibold text-[#242424]/55 uppercase tracking-wider">Creado:</b> {new Date(u.created_at).toLocaleDateString("es-CO")}</div>
-                        <div><b className="font-semibold text-[#242424]/55 uppercase tracking-wider">Último login:</b> {u.ultimo_login_at ? new Date(u.ultimo_login_at).toLocaleDateString("es-CO") : "Nunca"}</div>
+                      <div className="text-xs text-[var(--nuvia-text-secondary)] truncate">{u.email}</div>
+                      <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-[var(--nuvia-text-secondary)]">
+                        <div><b className="font-semibold text-[var(--nuvia-text-primary)]/55 uppercase tracking-wider">Rol solicitado:</b> {roleLabel(u.rol_solicitado)}</div>
+                        <div><b className="font-semibold text-[var(--nuvia-text-primary)]/55 uppercase tracking-wider">Teléfono:</b> {u.telefono_registro || "—"}</div>
+                        <div><b className="font-semibold text-[var(--nuvia-text-primary)]/55 uppercase tracking-wider">Ciudad:</b> {u.ciudad_registro || "—"}</div>
+                        <div><b className="font-semibold text-[var(--nuvia-text-primary)]/55 uppercase tracking-wider">Equipo:</b> {u.equipo_registro || "—"}</div>
+                        <div><b className="font-semibold text-[var(--nuvia-text-primary)]/55 uppercase tracking-wider">Creado:</b> {new Date(u.created_at).toLocaleDateString("es-CO")}</div>
+                        <div><b className="font-semibold text-[var(--nuvia-text-primary)]/55 uppercase tracking-wider">Último login:</b> {u.ultimo_login_at ? new Date(u.ultimo_login_at).toLocaleDateString("es-CO") : "Nunca"}</div>
                       </div>
                       {u.rechazado_motivo && (
                         <div className="mt-2 rounded-lg bg-[#FDECEC] border border-[#F5C2C2] px-2 py-1.5 text-[11px] text-[#B42318]">
@@ -258,7 +258,7 @@ function AccesosPage() {
                   </div>
                 </div>
 
-                <div className="mt-3 flex flex-wrap gap-2 border-t border-[#E3E7EE] pt-3">
+                <div className="mt-3 flex flex-wrap gap-2 border-t border-[var(--nuvia-border)] pt-3">
                   {u.estado_acceso === "pendiente" && (
                     <>
                       <button
@@ -327,7 +327,7 @@ function AccesosPage() {
                   )}
                   <button
                     onClick={() => setSeleccionado(u)}
-                    className="ml-auto rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 text-xs font-semibold"
+                    className="ml-auto rounded-lg border border-[var(--nuvia-border)] bg-[var(--nuvia-bg-card)] px-3 py-1.5 text-xs font-semibold"
                     style={{ color: AZUL }}
                   ><History size={12} className="inline mr-1" />Auditoría</button>
                 </div>
@@ -344,19 +344,19 @@ function AccesosPage() {
               <h3 className="font-semibold text-sm" style={{ color: NEGRO }}>Historial de auditoría</h3>
             </div>
             {!seleccionado ? (
-              <div className="text-sm text-[#242424]/55 py-6 text-center">Selecciona un usuario para ver su historial.</div>
+              <div className="text-sm text-[var(--nuvia-text-primary)]/55 py-6 text-center">Selecciona un usuario para ver su historial.</div>
             ) : auditoria.length === 0 ? (
-              <div className="text-sm text-[#242424]/55 py-6 text-center">Sin eventos.</div>
+              <div className="text-sm text-[var(--nuvia-text-primary)]/55 py-6 text-center">Sin eventos.</div>
             ) : (
               <div className="space-y-2 max-h-[500px] overflow-y-auto">
                 {auditoria.map((a) => (
-                  <div key={a.id} className="rounded-lg border border-[#E3E7EE] bg-[#FAFBFD] p-2.5">
+                  <div key={a.id} className="rounded-lg border border-[var(--nuvia-border)] bg-[#FAFBFD] p-2.5">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: AZUL }}>{a.accion}</span>
-                      <span className="text-[10px] text-[#242424]/55">{new Date(a.created_at).toLocaleString("es-CO")}</span>
+                      <span className="text-[10px] text-[var(--nuvia-text-primary)]/55">{new Date(a.created_at).toLocaleString("es-CO")}</span>
                     </div>
                     {Object.keys(a.detalle).length > 0 && (
-                      <pre className="mt-1 text-[10px] text-[#242424]/70 whitespace-pre-wrap break-all">{JSON.stringify(a.detalle, null, 0)}</pre>
+                      <pre className="mt-1 text-[10px] text-[var(--nuvia-text-secondary)] whitespace-pre-wrap break-all">{JSON.stringify(a.detalle, null, 0)}</pre>
                     )}
                   </div>
                 ))}
@@ -369,7 +369,7 @@ function AccesosPage() {
       {/* Modal Aprobar */}
       {showAprobar && seleccionado && (
         <Modal onClose={() => setShowAprobar(false)} title={`Aprobar acceso · ${seleccionado.nombre}`}>
-          <p className="text-sm text-[#242424]/70 mb-3">Selecciona los roles que tendrá este usuario:</p>
+          <p className="text-sm text-[var(--nuvia-text-secondary)] mb-3">Selecciona los roles que tendrá este usuario:</p>
           <div className="flex flex-wrap gap-2 mb-4">
             {ROLES_DISPONIBLES.map((r) => {
               const sel = rolesAsignar.includes(r);
@@ -386,7 +386,7 @@ function AccesosPage() {
             })}
           </div>
           <div className="flex justify-end gap-2">
-            <button onClick={() => setShowAprobar(false)} className="rounded-lg border border-[#E3E7EE] px-4 py-2 text-sm font-medium">Cancelar</button>
+            <button onClick={() => setShowAprobar(false)} className="rounded-lg border border-[var(--nuvia-border)] px-4 py-2 text-sm font-medium">Cancelar</button>
             <button
               onClick={async () => {
                 if (rolesAsignar.length === 0) return;
@@ -407,7 +407,7 @@ function AccesosPage() {
       {showRechazar && seleccionado && (
         <Modal onClose={() => setShowRechazar(false)} title={`Rechazar acceso · ${seleccionado.nombre}`}>
           <label className="block mb-4">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Motivo del rechazo</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--nuvia-text-primary)]/65">Motivo del rechazo</span>
             <textarea
               value={motivoRechazo}
               onChange={(e) => setMotivoRechazo(e.target.value)}
@@ -417,7 +417,7 @@ function AccesosPage() {
             />
           </label>
           <div className="flex justify-end gap-2">
-            <button onClick={() => setShowRechazar(false)} className="rounded-lg border border-[#E3E7EE] px-4 py-2 text-sm font-medium">Cancelar</button>
+            <button onClick={() => setShowRechazar(false)} className="rounded-lg border border-[var(--nuvia-border)] px-4 py-2 text-sm font-medium">Cancelar</button>
             <button
               onClick={async () => {
                 if (motivoRechazo.trim().length < 3) return;
@@ -444,12 +444,12 @@ function AccesosPage() {
       {/* Modal Bloquear */}
       {showBloquear && seleccionado && (
         <Modal onClose={() => !bloqueando && setShowBloquear(false)} title={`Bloquear · ${seleccionado.nombre}`}>
-          <p className="mb-3 text-sm text-[#242424]/80">
+          <p className="mb-3 text-sm text-[var(--nuvia-text-primary)]">
             ¿Estás seguro de bloquear este usuario? El usuario perderá acceso inmediato a la plataforma,
             pero su historial, auditoría y procesos se conservarán.
           </p>
           <label className="block mb-3">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Motivo del bloqueo (obligatorio)</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--nuvia-text-primary)]/65">Motivo del bloqueo (obligatorio)</span>
             <textarea
               value={motivoBloqueo}
               onChange={(e) => setMotivoBloqueo(e.target.value)}
@@ -464,7 +464,7 @@ function AccesosPage() {
           </label>
           {bloqueoError && <div className="mb-3 rounded-md bg-[#FDECEC] px-3 py-2 text-xs text-[#B42318]">{bloqueoError}</div>}
           <div className="flex justify-end gap-2">
-            <button disabled={bloqueando} onClick={() => setShowBloquear(false)} className="rounded-lg border border-[#E3E7EE] px-4 py-2 text-sm font-medium">Cancelar</button>
+            <button disabled={bloqueando} onClick={() => setShowBloquear(false)} className="rounded-lg border border-[var(--nuvia-border)] px-4 py-2 text-sm font-medium">Cancelar</button>
             <button
               disabled={bloqueando || motivoBloqueo.trim().length < 5 || !confirmarBloqueo}
               onClick={async () => {
@@ -493,11 +493,11 @@ function AccesosPage() {
       {/* Modal Desbloquear */}
       {showDesbloquear && seleccionado && (
         <Modal onClose={() => !desbloqueando && setShowDesbloquear(false)} title={`Desbloquear · ${seleccionado.nombre}`}>
-          <p className="mb-3 text-sm text-[#242424]/80">
+          <p className="mb-3 text-sm text-[var(--nuvia-text-primary)]">
             El usuario recuperará acceso inmediato a la plataforma. Esta acción quedará registrada en auditoría.
           </p>
           <label className="block mb-3">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Motivo (opcional)</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--nuvia-text-primary)]/65">Motivo (opcional)</span>
             <textarea
               value={motivoDesbloqueo}
               onChange={(e) => setMotivoDesbloqueo(e.target.value)}
@@ -508,7 +508,7 @@ function AccesosPage() {
           </label>
           {desbloqueoError && <div className="mb-3 rounded-md bg-[#FDECEC] px-3 py-2 text-xs text-[#B42318]">{desbloqueoError}</div>}
           <div className="flex justify-end gap-2">
-            <button disabled={desbloqueando} onClick={() => setShowDesbloquear(false)} className="rounded-lg border border-[#E3E7EE] px-4 py-2 text-sm font-medium">Cancelar</button>
+            <button disabled={desbloqueando} onClick={() => setShowDesbloquear(false)} className="rounded-lg border border-[var(--nuvia-border)] px-4 py-2 text-sm font-medium">Cancelar</button>
             <button
               disabled={desbloqueando}
               onClick={async () => {
@@ -551,7 +551,7 @@ function AccesosPage() {
             >
               <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#1F6D3D" }}>Recomendado</div>
               <div className="text-sm font-semibold mt-0.5" style={{ color: NEGRO }}>Con traslado</div>
-              <div className="text-[11px] text-[#242424]/65 mt-1">Transfiere casos, expedientes, cartera y responsabilidades a un usuario reemplazo.</div>
+              <div className="text-[11px] text-[var(--nuvia-text-primary)]/65 mt-1">Transfiere casos, expedientes, cartera y responsabilidades a un usuario reemplazo.</div>
             </button>
             <button
               type="button"
@@ -563,7 +563,7 @@ function AccesosPage() {
             >
               <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#B42318" }}>No recomendado</div>
               <div className="text-sm font-semibold mt-0.5" style={{ color: NEGRO }}>Sin traslado</div>
-              <div className="text-[11px] text-[#242424]/65 mt-1">El usuario se desvincula sin reasignar. Casos y procesos pueden quedar sin responsable operativo.</div>
+              <div className="text-[11px] text-[var(--nuvia-text-primary)]/65 mt-1">El usuario se desvincula sin reasignar. Casos y procesos pueden quedar sin responsable operativo.</div>
             </button>
           </div>
 
@@ -575,7 +575,7 @@ function AccesosPage() {
           </div>
 
           {previewLoading ? (
-            <div className="py-6 text-center text-sm text-[#242424]/60">Analizando dependencias…</div>
+            <div className="py-6 text-center text-sm text-[var(--nuvia-text-secondary)]">Analizando dependencias…</div>
           ) : preview ? (
             <div className="space-y-4">
               <div>
@@ -609,7 +609,7 @@ function AccesosPage() {
                     />
                     <span>
                       <b>¿Transferir comisiones pendientes al reemplazo?</b>
-                      <div className="text-[11px] text-[#242424]/60">Si no marcas esta opción, las reglas del usuario se desactivan y las comisiones pendientes quedan a su nombre (histórico).</div>
+                      <div className="text-[11px] text-[var(--nuvia-text-secondary)]">Si no marcas esta opción, las reglas del usuario se desactivan y las comisiones pendientes quedan a su nombre (histórico).</div>
                     </span>
                   </label>
                 )}
@@ -630,11 +630,11 @@ function AccesosPage() {
                 <>
                   <div>
                     <label className="block">
-                      <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Usuario de reemplazo (obligatorio)</span>
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--nuvia-text-primary)]/65">Usuario de reemplazo (obligatorio)</span>
                       <select
                         value={reemplazoId}
                         onChange={(e) => setReemplazoId(e.target.value)}
-                        className="mt-1.5 w-full rounded-[10px] border border-[#E1E5EE] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#445DA3]"
+                        className="mt-1.5 w-full rounded-[10px] border border-[#E1E5EE] bg-[var(--nuvia-bg-card)] px-3 py-2.5 text-sm outline-none focus:border-[#445DA3]"
                       >
                         <option value="">— Selecciona un usuario aprobado —</option>
                         {usuarios
@@ -651,7 +651,7 @@ function AccesosPage() {
 
                   <div>
                     <label className="block">
-                      <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Escribe DESVINCULAR para confirmar</span>
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--nuvia-text-primary)]/65">Escribe DESVINCULAR para confirmar</span>
                       <input
                         value={confirmText}
                         onChange={(e) => setConfirmText(e.target.value)}
@@ -675,7 +675,7 @@ function AccesosPage() {
 
                   <div>
                     <label className="block">
-                      <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Motivo de la desvinculación sin traslado (obligatorio)</span>
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--nuvia-text-primary)]/65">Motivo de la desvinculación sin traslado (obligatorio)</span>
                       <textarea
                         value={sinTrasladoMotivo}
                         onChange={(e) => setSinTrasladoMotivo(e.target.value)}
@@ -698,7 +698,7 @@ function AccesosPage() {
 
                   <div>
                     <label className="block">
-                      <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Escribe DESVINCULAR SIN TRASLADO para confirmar</span>
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--nuvia-text-primary)]/65">Escribe DESVINCULAR SIN TRASLADO para confirmar</span>
                       <input
                         value={confirmText}
                         onChange={(e) => setConfirmText(e.target.value)}
@@ -747,7 +747,7 @@ function AccesosPage() {
             <button
               onClick={() => setShowDesvincular(false)}
               disabled={desvinculando}
-              className="rounded-lg border border-[#E3E7EE] px-4 py-2 text-sm font-medium disabled:opacity-50"
+              className="rounded-lg border border-[var(--nuvia-border)] px-4 py-2 text-sm font-medium disabled:opacity-50"
             >Cancelar</button>
             {modoDesvinc === "con_traslado" ? (
               <button
@@ -805,29 +805,29 @@ function AccesosPage() {
       {/* Modal Aprobar Reactivación */}
       {showAprobarSol && solSel && (
         <Modal onClose={() => !solBusy && setShowAprobarSol(false)} title={`Reactivar acceso · ${solSel.nombre || solSel.correo}`}>
-          <p className="mb-3 text-sm text-[#242424]/75">
+          <p className="mb-3 text-sm text-[var(--nuvia-text-primary)]/75">
             El usuario recuperará acceso completo a NUVEX conservando todo su historial (auditoría, academia, expedientes, comisiones, colaboración).
           </p>
           <div className="mb-3 grid grid-cols-2 gap-2 text-[11px]">
-            <div className="rounded-md bg-[#FAFBFD] border border-[#E3E7EE] p-2"><b className="block uppercase tracking-wider text-[#242424]/55">Rol anterior</b>{roleLabel(solSel.rol_actual)}</div>
-            <div className="rounded-md bg-[#FAFBFD] border border-[#E3E7EE] p-2"><b className="block uppercase tracking-wider text-[#242424]/55">Rol solicitado</b>{roleLabel(solSel.rol_solicitado)}</div>
+            <div className="rounded-md bg-[#FAFBFD] border border-[var(--nuvia-border)] p-2"><b className="block uppercase tracking-wider text-[var(--nuvia-text-primary)]/55">Rol anterior</b>{roleLabel(solSel.rol_actual)}</div>
+            <div className="rounded-md bg-[#FAFBFD] border border-[var(--nuvia-border)] p-2"><b className="block uppercase tracking-wider text-[var(--nuvia-text-primary)]/55">Rol solicitado</b>{roleLabel(solSel.rol_solicitado)}</div>
           </div>
           <label className="block mb-3">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Rol a asignar al reactivar</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--nuvia-text-primary)]/65">Rol a asignar al reactivar</span>
             <select value={solRolAsign} onChange={(e) => setSolRolAsign(e.target.value as AppRole | "")}
-              className="mt-1.5 w-full rounded-[10px] border border-[#E1E5EE] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#445DA3]">
+              className="mt-1.5 w-full rounded-[10px] border border-[#E1E5EE] bg-[var(--nuvia-bg-card)] px-3 py-2.5 text-sm outline-none focus:border-[#445DA3]">
               <option value="">— Mantener / sin rol —</option>
               {ROLES_DISPONIBLES.map((r) => <option key={r} value={r}>{roleLabel(r)}</option>)}
             </select>
           </label>
           <label className="block mb-3">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Observación (opcional)</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--nuvia-text-primary)]/65">Observación (opcional)</span>
             <textarea value={solObs} onChange={(e) => setSolObs(e.target.value)} rows={2}
               className="mt-1.5 w-full rounded-[10px] border border-[#E1E5EE] bg-[#FAFBFD] px-3 py-2.5 text-sm outline-none focus:border-[#445DA3]" />
           </label>
           {solError && <div className="mb-3 rounded-md bg-[#FDECEC] px-3 py-2 text-xs text-[#B42318]">{solError}</div>}
           <div className="flex justify-end gap-2">
-            <button disabled={solBusy} onClick={() => setShowAprobarSol(false)} className="rounded-lg border border-[#E3E7EE] px-4 py-2 text-sm font-medium">Cancelar</button>
+            <button disabled={solBusy} onClick={() => setShowAprobarSol(false)} className="rounded-lg border border-[var(--nuvia-border)] px-4 py-2 text-sm font-medium">Cancelar</button>
             <button
               disabled={solBusy}
               onClick={async () => {
@@ -851,13 +851,13 @@ function AccesosPage() {
       {showRechazarSol && solSel && (
         <Modal onClose={() => !solBusy && setShowRechazarSol(false)} title={`Rechazar reactivación · ${solSel.nombre || solSel.correo}`}>
           <label className="block mb-3">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#242424]/65">Motivo del rechazo (obligatorio, mín. 5)</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--nuvia-text-primary)]/65">Motivo del rechazo (obligatorio, mín. 5)</span>
             <textarea value={solMotivoRech} onChange={(e) => setSolMotivoRech(e.target.value)} rows={4}
               className="mt-1.5 w-full rounded-[10px] border border-[#E1E5EE] bg-[#FAFBFD] px-3 py-2.5 text-sm outline-none focus:border-[#B42318]" />
           </label>
           {solError && <div className="mb-3 rounded-md bg-[#FDECEC] px-3 py-2 text-xs text-[#B42318]">{solError}</div>}
           <div className="flex justify-end gap-2">
-            <button disabled={solBusy} onClick={() => setShowRechazarSol(false)} className="rounded-lg border border-[#E3E7EE] px-4 py-2 text-sm font-medium">Cancelar</button>
+            <button disabled={solBusy} onClick={() => setShowRechazarSol(false)} className="rounded-lg border border-[var(--nuvia-border)] px-4 py-2 text-sm font-medium">Cancelar</button>
             <button
               disabled={solBusy || solMotivoRech.trim().length < 5}
               onClick={async () => {
@@ -915,15 +915,15 @@ function ReactivacionesPanel({
         ))}
       </div>
       {loading ? (
-        <div className="p-12 text-center text-sm text-[#242424]/60">Cargando solicitudes…</div>
+        <div className="p-12 text-center text-sm text-[var(--nuvia-text-secondary)]">Cargando solicitudes…</div>
       ) : solicitudes.length === 0 ? (
-        <Card><div className="py-10 text-center text-sm text-[#242424]/60">No hay solicitudes en este estado.</div></Card>
+        <Card><div className="py-10 text-center text-sm text-[var(--nuvia-text-secondary)]">No hay solicitudes en este estado.</div></Card>
       ) : (
         <Card>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-[10px] uppercase tracking-wider text-[#242424]/60 text-left border-b border-[#E3E7EE]">
+                <tr className="text-[10px] uppercase tracking-wider text-[var(--nuvia-text-secondary)] text-left border-b border-[var(--nuvia-border)]">
                   <th className="py-2">Nombre</th>
                   <th>Correo</th>
                   <th>Rol actual</th>
@@ -935,12 +935,12 @@ function ReactivacionesPanel({
               </thead>
               <tbody>
                 {solicitudes.map((s) => (
-                  <tr key={s.id} className="border-b border-[#E3E7EE] last:border-0 align-top">
+                  <tr key={s.id} className="border-b border-[var(--nuvia-border)] last:border-0 align-top">
                     <td className="py-3 pr-2">{s.nombre || "—"}</td>
-                    <td className="py-3 pr-2 text-[#242424]/75">{s.correo}</td>
+                    <td className="py-3 pr-2 text-[var(--nuvia-text-primary)]/75">{s.correo}</td>
                     <td className="py-3 pr-2 text-xs">{roleLabel(s.rol_actual)}</td>
                     <td className="py-3 pr-2 text-xs">{roleLabel(s.rol_solicitado)}</td>
-                    <td className="py-3 pr-2 text-xs text-[#242424]/70">{new Date(s.fecha_solicitud).toLocaleString("es-CO")}</td>
+                    <td className="py-3 pr-2 text-xs text-[var(--nuvia-text-secondary)]">{new Date(s.fecha_solicitud).toLocaleString("es-CO")}</td>
                     <td className="py-3 pr-2">
                       <span className="inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
                         style={{ background: estBadge[s.estado].bg, color: estBadge[s.estado].fg }}>{s.estado}</span>
@@ -952,12 +952,12 @@ function ReactivacionesPanel({
                           <button onClick={() => onRechazar(s)} className="rounded-md px-2.5 py-1 text-[11px] font-semibold text-white" style={{ background: "#B42318" }}>Rechazar</button>
                         </div>
                       ) : (
-                        <span className="text-[10px] text-[#242424]/55">
+                        <span className="text-[10px] text-[var(--nuvia-text-primary)]/55">
                           {s.fecha_aprobacion ? new Date(s.fecha_aprobacion).toLocaleDateString("es-CO") : "—"}
                         </span>
                       )}
                       {s.observacion_admin && (
-                        <div className="mt-1 text-[10px] text-[#242424]/60 italic max-w-[200px] truncate" title={s.observacion_admin}>{s.observacion_admin}</div>
+                        <div className="mt-1 text-[10px] text-[var(--nuvia-text-secondary)] italic max-w-[200px] truncate" title={s.observacion_admin}>{s.observacion_admin}</div>
                       )}
                     </td>
                   </tr>
@@ -974,8 +974,8 @@ function ReactivacionesPanel({
 
 function Stat({ label, v, muted }: { label: string; v: number; muted?: boolean }) {
   return (
-    <div className="rounded-lg border border-[#E3E7EE] bg-white px-2.5 py-2 flex items-center justify-between">
-      <span className="text-[11px] text-[#242424]/70">{label}</span>
+    <div className="rounded-lg border border-[var(--nuvia-border)] bg-[var(--nuvia-bg-card)] px-2.5 py-2 flex items-center justify-between">
+      <span className="text-[11px] text-[var(--nuvia-text-secondary)]">{label}</span>
       <span className="text-sm font-bold" style={{ color: muted ? "#6B7280" : "#242424" }}>{v}</span>
     </div>
   );
@@ -984,7 +984,7 @@ function Stat({ label, v, muted }: { label: string; v: number; muted?: boolean }
 function Modal({ title, children, onClose, wide }: { title: string; children: React.ReactNode; onClose: () => void; wide?: boolean }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto" onClick={onClose}>
-      <div className={`w-full ${wide ? "max-w-2xl" : "max-w-md"} rounded-2xl bg-white p-6 shadow-2xl my-8`} onClick={(e) => e.stopPropagation()}>
+      <div className={`w-full ${wide ? "max-w-2xl" : "max-w-md"} rounded-2xl bg-[var(--nuvia-bg-card)] p-6 shadow-2xl my-8`} onClick={(e) => e.stopPropagation()}>
         <h3 className="text-lg font-semibold mb-4" style={{ color: NEGRO }}>{title}</h3>
         {children}
       </div>
