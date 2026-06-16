@@ -119,16 +119,13 @@ function AuthenticatedLayout() {
     nombre: string | null;
     avatar_url: string | null;
   }>({ nombre: null, avatar_url: null });
-  const [gateState, setGateState] = useState<"checking" | "ok" | "blocked">(() =>
-    session?.user && getAccessGateCache(session.user.id) ? "ok" : "checking",
-  );
-  const [gateChecked, setGateChecked] = useState(() =>
-    !!(session?.user && getAccessGateCache(session.user.id)),
-  );
-  const [collapsed, setCollapsed] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem("nuvex.sidebar.collapsed") === "1";
-  });
+  const [gateState, setGateState] = useState<"checking" | "ok" | "blocked">("checking");
+  const [gateChecked, setGateChecked] = useState(false);
+  const [collapsed, setCollapsed] = useState<boolean>(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setCollapsed(localStorage.getItem("nuvex.sidebar.collapsed") === "1");
+  }, []);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [reloading, setReloading] = useState(false);
   const router = useRouter();
