@@ -97,6 +97,20 @@ function CasoDetail() {
   const validacionIdentidad = readValidacion(exp as never);
   const puedeDocs = puedeGenerarDocumentos(validacionIdentidad);
 
+  // Iniciales del titular para el avatar
+  const iniciales = (exp.cliente_nombre || "?")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((s) => s[0]!.toUpperCase())
+    .join("");
+
+  const TAB_TRIGGER =
+    "inline-flex items-center justify-center whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer " +
+    "text-[var(--nuvia-text-secondary)] hover:text-[var(--nuvia-text-primary)] hover:bg-[rgba(255,255,255,0.05)] " +
+    "data-[state=active]:bg-[rgba(68,93,163,0.22)] data-[state=active]:text-[var(--nuvia-text-primary)] data-[state=active]:shadow-[0_0_0_1px_rgba(68,93,163,0.45)] " +
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--nuvia-accent-blue)] focus-visible:ring-offset-0";
+
   return (
     <div
       className="min-h-[calc(100vh-72px)] px-3 py-4 text-[var(--nuvia-text-primary)] sm:px-5 sm:py-6"
@@ -106,25 +120,106 @@ function CasoDetail() {
       }}
     >
       <div className="nuvia-shell-soft mx-auto max-w-[1680px] space-y-4">
-      {/* Header */}
-      <section className="glass-panel overflow-hidden p-4 md:p-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <div className="text-[11px] font-semibold uppercase text-[var(--nuvia-accent-green)]">
-              NUVIA · Expediente Guiado
+      {/* Hero ejecutivo */}
+      <section
+        className="glass-panel overflow-hidden"
+        style={{ padding: "var(--nuvia-space-5)" }}
+      >
+        <Link
+          to="/casos"
+          className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--nuvia-text-secondary)] hover:text-[var(--nuvia-accent-green)] transition"
+        >
+          ← Casos
+        </Link>
+        <div className="mt-2 grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+          {/* Identidad del titular */}
+          <div className="flex items-start gap-4 min-w-0">
+            <div
+              className="grid place-items-center rounded-2xl text-base font-bold shrink-0"
+              style={{
+                width: 56,
+                height: 56,
+                background: "linear-gradient(135deg, rgba(68,93,163,0.45), rgba(132,185,143,0.35))",
+                color: "var(--nuvia-text-primary)",
+                border: "1px solid var(--nuvia-border-strong)",
+              }}
+              aria-hidden
+            >
+              {iniciales || "·"}
             </div>
-            <h1 className="mt-1 break-words text-2xl font-semibold leading-tight text-[var(--nuvia-text-primary)]">
-              {exp.cliente_nombre}
-            </h1>
-            <div className="mt-1 break-words text-sm text-[var(--nuvia-text-secondary)]">
-              {exp.cedula && <>CC {exp.cedula} · </>}
-              {exp.banco && <>{exp.banco} · </>}
-              {exp.numero_credito && <>Crédito {exp.numero_credito} · </>}
-              Modo <span className="font-semibold uppercase text-[var(--nuvia-text-primary)]">{exp.modo}</span> · Simulado {exp.fecha_simulacion}
+            <div className="min-w-0">
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-bold uppercase"
+                style={{
+                  background: "rgba(132,185,143,0.16)",
+                  color: "#9BCB9F",
+                  border: "1px solid rgba(132,185,143,0.40)",
+                  fontSize: "10px",
+                  letterSpacing: "0.14em",
+                }}
+              >
+                NUVEX · Expediente Guiado
+              </span>
+              <h1
+                className="mt-1.5 font-bold tracking-tight break-words"
+                style={{
+                  fontSize: "clamp(20px, 2.2vw, 26px)",
+                  lineHeight: 1.15,
+                  color: "var(--nuvia-text-primary)",
+                }}
+              >
+                {exp.cliente_nombre}
+              </h1>
+              <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-[var(--nuvia-text-secondary)]">
+                {exp.cedula && (
+                  <span className="inline-flex items-center gap-1">
+                    <span className="opacity-60">CC</span>
+                    <span className="font-semibold text-[var(--nuvia-text-primary)]">{exp.cedula}</span>
+                  </span>
+                )}
+                {exp.banco && (
+                  <>
+                    <span className="opacity-30">·</span>
+                    <span className="font-semibold text-[var(--nuvia-text-primary)]">{exp.banco}</span>
+                  </>
+                )}
+                {exp.numero_credito && (
+                  <>
+                    <span className="opacity-30">·</span>
+                    <span className="inline-flex items-center gap-1">
+                      <span className="opacity-60">Crédito</span>
+                      <span className="font-semibold text-[var(--nuvia-text-primary)]">{exp.numero_credito}</span>
+                    </span>
+                  </>
+                )}
+                <span className="opacity-30">·</span>
+                <span
+                  className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase"
+                  style={{
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid var(--nuvia-border)",
+                    letterSpacing: "0.08em",
+                  }}
+                >
+                  {exp.modo}
+                </span>
+                <span className="opacity-30">·</span>
+                <span>
+                  <span className="opacity-60">Simulado</span>{" "}
+                  <span className="font-semibold text-[var(--nuvia-text-primary)]">{exp.fecha_simulacion}</span>
+                </span>
+              </div>
             </div>
           </div>
-          <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:items-end">
-            <EstadoBadge estado={exp.estado} />
+
+          {/* Estado + cambio de estado */}
+          <div className="flex flex-col items-stretch gap-2 lg:items-end shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--nuvia-text-secondary)]">
+                Estado
+              </span>
+              <EstadoBadge estado={exp.estado} />
+            </div>
             <select
               value={exp.estado}
               onChange={async (e) => {
@@ -132,11 +227,15 @@ function CasoDetail() {
                 try { await updateEstado(exp.id, nuevo); reload(); }
                 catch (err) { alert((err as Error).message); }
               }}
-              className="h-9 rounded-lg border border-[var(--nuvia-border)] bg-[var(--nuvia-bg-tertiary)] px-3 text-xs font-medium text-[var(--nuvia-text-primary)] outline-none focus:border-[var(--nuvia-accent-blue)]"
+              className="h-9 min-w-[200px] rounded-lg border px-3 text-xs font-medium outline-none transition focus:ring-2"
+              style={{
+                background: "var(--nuvia-bg-tertiary)",
+                borderColor: "var(--nuvia-border-strong)",
+                color: "var(--nuvia-text-primary)",
+              }}
             >
-              {ESTADOS.map((s) => <option key={s} value={s}>{s}</option>)}
+              {ESTADOS.map((s) => <option key={s} value={s} style={{ background: "var(--nuvia-bg-card)", color: "var(--nuvia-text-primary)" }}>{s}</option>)}
             </select>
-            <Link to="/casos" className="text-[11px] text-[var(--nuvia-accent-green)] hover:underline">← Volver a casos</Link>
           </div>
         </div>
       </section>
@@ -163,16 +262,24 @@ function CasoDetail() {
 
       {/* Tabs */}
       <Tabs value={tab} onValueChange={(v) => setTab(v as TabId)} className="space-y-4">
-        <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 rounded-xl border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.04)] p-1">
-          <TabsTrigger value="resumen">Resumen</TabsTrigger>
-          <TabsTrigger value="tareas">Tareas</TabsTrigger>
-          <TabsTrigger value="documentos">Documentos</TabsTrigger>
-          <TabsTrigger value="comunicaciones">Comunicaciones</TabsTrigger>
-          <TabsTrigger value="financiero">Financiero</TabsTrigger>
-          <TabsTrigger value="juridico">Jurídico</TabsTrigger>
-          <TabsTrigger value="auditoria">Auditoría</TabsTrigger>
-          <TabsTrigger value="historial">Historial</TabsTrigger>
+        <TabsList
+          className="flex h-auto w-full flex-wrap justify-start gap-1 rounded-xl border p-1.5"
+          style={{
+            background: "rgba(13,18,36,0.55)",
+            borderColor: "var(--nuvia-border)",
+            backdropFilter: "blur(12px)",
+          }}
+        >
+          <TabsTrigger value="resumen" className={TAB_TRIGGER}>Resumen</TabsTrigger>
+          <TabsTrigger value="tareas" className={TAB_TRIGGER}>Tareas</TabsTrigger>
+          <TabsTrigger value="documentos" className={TAB_TRIGGER}>Documentos</TabsTrigger>
+          <TabsTrigger value="comunicaciones" className={TAB_TRIGGER}>Comunicaciones</TabsTrigger>
+          <TabsTrigger value="financiero" className={TAB_TRIGGER}>Financiero</TabsTrigger>
+          <TabsTrigger value="juridico" className={TAB_TRIGGER}>Jurídico</TabsTrigger>
+          <TabsTrigger value="auditoria" className={TAB_TRIGGER}>Auditoría</TabsTrigger>
+          <TabsTrigger value="historial" className={TAB_TRIGGER}>Historial</TabsTrigger>
         </TabsList>
+
 
 
         {/* RESUMEN */}
