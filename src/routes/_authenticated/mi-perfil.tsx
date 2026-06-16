@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Card, TextField, SelectField } from "@/components/nuvex/ui";
+import { Card as LightCard, TextField as LightTextField, SelectField as LightSelectField } from "@/components/nuvex/ui";
 import { CityField } from "@/components/ui/CityField";
 import { cityDepartment } from "@/lib/colombiaCities";
 import { UserAvatar, clearAvatarCache } from "@/components/nuvex/UserAvatar";
@@ -27,6 +27,61 @@ import { TotpEnrollmentSection } from "@/components/seguridad/TotpEnrollmentSect
 import { PresenciaPrivacidadSection } from "@/components/seguridad/PresenciaPrivacidadSection";
 import { NotificacionesPrefsSection } from "@/components/seguridad/NotificacionesPrefsSection";
 import { roleLabel, roleLabels } from "@/lib/roleLabels";
+
+// ── Dark NUVIA wrappers (override light Card/TextField/SelectField) ──
+function Card({ children, className, style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
+  void LightCard;
+  return (
+    <div
+      className={`relative rounded-2xl border p-4 sm:p-5 ${className ?? ""}`}
+      style={{
+        background: "linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.018))",
+        borderColor: "rgba(255,255,255,0.10)",
+        color: "var(--nuvia-text-primary)",
+        boxShadow: "0 18px 44px -22px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.04)",
+        backdropFilter: "blur(12px)",
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+function TextField(props: React.ComponentProps<typeof LightTextField>) {
+  return (
+    <label className={`flex flex-col gap-1.5 ${props.className ?? ""}`}>
+      <span className="text-[11px] font-semibold tracking-[0.08em] uppercase" style={{ color: "var(--nuvia-text-secondary)" }}>{props.label}</span>
+      <input
+        type="text"
+        value={props.value}
+        readOnly={props.readOnly}
+        onChange={(e) => props.onChange?.(e.target.value)}
+        placeholder={props.placeholder}
+        className="nuvia-input"
+        style={{ opacity: props.readOnly ? 0.6 : 1 }}
+      />
+      {props.hint && <span className="text-[11px]" style={{ color: "#9BCB9F" }}>{props.hint}</span>}
+    </label>
+  );
+}
+function SelectField(props: React.ComponentProps<typeof LightSelectField>) {
+  return (
+    <label className={`flex flex-col gap-1.5 ${props.className ?? ""}`}>
+      <span className="text-[11px] font-semibold tracking-[0.08em] uppercase" style={{ color: "var(--nuvia-text-secondary)" }}>{props.label}</span>
+      <select
+        value={props.value}
+        onChange={(e) => props.onChange(e.target.value)}
+        className="nuvia-input"
+      >
+        <option value="" disabled>{props.placeholder ?? "Seleccione..."}</option>
+        {props.options.map((o) => (
+          <option key={o} value={o} style={{ background: "#0A1226", color: "#FFFFFF" }}>{o}</option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 
 export const Route = createFileRoute("/_authenticated/mi-perfil")({
   component: MiPerfilPage,
@@ -208,7 +263,7 @@ function MiPerfilPage() {
   const upd = <K extends keyof ProfileRow>(k: K, v: ProfileRow[K]) => setForm((f) => ({ ...f, [k]: v }));
 
   if (loading) {
-    return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando perfil…</div>;
+    return <div className="p-12 text-center text-sm text-white/55">Cargando perfil…</div>;
   }
   if (!profile) {
     return <div className="p-12 text-center text-sm text-[#B42318]">No se pudo cargar tu perfil.</div>;
@@ -219,7 +274,8 @@ function MiPerfilPage() {
       className="relative min-h-[calc(100vh-64px)]"
       style={{
         background:
-          "radial-gradient(1100px 520px at 0% -10%, rgba(68,93,163,0.10), transparent 60%), radial-gradient(900px 480px at 100% 10%, rgba(132,185,143,0.10), transparent 65%), #F4F6FB",
+          "radial-gradient(900px 480px at 0% -10%, rgba(68,93,163,0.22), transparent 60%), radial-gradient(900px 480px at 100% 10%, rgba(132,185,143,0.18), transparent 65%), linear-gradient(180deg, #050816 0%, #0A1226 100%)",
+        color: "var(--nuvia-text-primary)",
       }}
     >
     <div className="mx-auto max-w-5xl px-6 py-6 space-y-5">
@@ -278,29 +334,29 @@ function MiPerfilPage() {
             ring
           />
           <div className="flex-1 space-y-2 text-center sm:text-left">
-            <div className="text-lg font-semibold text-[#242424]">{profile.nombre || "Sin nombre"}</div>
-            <div className="text-sm text-[#242424]/70">{profile.email}</div>
+            <div className="text-lg font-semibold text-white">{profile.nombre || "Sin nombre"}</div>
+            <div className="text-sm text-white/70">{profile.email}</div>
             <div className="flex flex-wrap justify-center sm:justify-start gap-1.5 pt-1">
               {roles.map((r) => (
                 <span key={r} className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
-                  style={{ background: "#EAF1FF", color: "#445DA3", border: "1px solid #C9D7F1" }}>{roleLabel(r, true)}</span>
+                  style={{ background: "rgba(68,93,163,0.20)", color: "#A5B5E0", border: "1px solid rgba(68,93,163,0.45)" }}>{roleLabel(r, true)}</span>
               ))}
             </div>
           </div>
           <div className="flex flex-col gap-2">
             <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={onFileChange} className="hidden" />
             <button onClick={onPickFile} disabled={uploading}
-              className="inline-flex items-center gap-2 rounded-lg border border-[#E3E7EE] bg-white px-3 py-2 text-sm font-medium text-[#242424] hover:bg-[#F7F9FB]">
+              className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.05] px-3 py-2 text-sm font-medium text-white hover:bg-white/[0.05]">
               {uploading ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
               {profile.avatar_url ? "Reemplazar foto" : "Subir foto"}
             </button>
             {profile.avatar_url && (
               <button onClick={onDeletePhoto} disabled={uploading}
-                className="inline-flex items-center gap-2 rounded-lg border border-[#F5C2C2] bg-white px-3 py-2 text-sm font-medium text-[#B42318] hover:bg-[#FDECEC]">
+                className="inline-flex items-center gap-2 rounded-lg border border-[#FF6B6B]/30 bg-[#FF6B6B]/10 px-3 py-2 text-sm font-medium text-[#FF8585] hover:bg-[#FF6B6B]/20">
                 <Trash2 size={14} /> Eliminar
               </button>
             )}
-            <div className="text-[10px] text-[#242424]/50 text-right">JPG/PNG/WEBP · máx. 5 MB</div>
+            <div className="text-[10px] text-white/45 text-right">JPG/PNG/WEBP · máx. 5 MB</div>
           </div>
         </div>
       </Card>
@@ -346,7 +402,7 @@ function MiPerfilPage() {
           <ReadOnlyField label="Equipo" value={profile.equipo || profile.equipo_registro || "Sin equipo asignado"} />
           <ReadOnlyField label="Sede" value={profile.sede || profile.ciudad || profile.ciudad_registro || "Sin sede asignada"} />
         </div>
-        <div className="mt-3 text-[11px] text-[#242424]/60">
+        <div className="mt-3 text-[11px] text-white/55">
           Estos campos los administra Gerencia o Super Admin desde el módulo de Usuarios.
         </div>
       </Section>
@@ -378,7 +434,7 @@ function MiPerfilPage() {
       {/* Licencia de Autonomía NUVEX */}
       <Section icon={<Award size={14} />} title="Licencia de Autonomía NUVEX" badge={loadingAutonomia ? "Cargando…" : undefined}>
         {loadingAutonomia ? (
-          <div className="text-sm text-[#242424]/60">Cargando métricas de calidad…</div>
+          <div className="text-sm text-white/55">Cargando métricas de calidad…</div>
         ) : (
           <div className="space-y-4">
             {/* Badge de nivel + semáforo */}
@@ -429,7 +485,7 @@ function MiPerfilPage() {
               </div>
 
               <div className="flex-1 space-y-2">
-                <div className="flex items-center gap-2 text-sm text-[#242424]/80">
+                <div className="flex items-center gap-2 text-sm text-white/80">
                   <TrendingUp size={14} className="text-[#445DA3]" />
                   <span>
                     {metricasAutonomia.nivelAutonomia === 3
@@ -441,11 +497,11 @@ function MiPerfilPage() {
                 </div>
                 {metricasAutonomia.nivelAutonomia < 3 && (
                   <div className="space-y-1">
-                    <div className="flex items-center justify-between text-[11px] text-[#242424]/60">
+                    <div className="flex items-center justify-between text-[11px] text-white/55">
                       <span>Progreso hacia Nivel {metricasAutonomia.nivelAutonomia + 1}</span>
                       <span>{progresoNivel(metricasAutonomia).toFixed(0)}%</span>
                     </div>
-                    <div className="h-2 w-full rounded-full bg-[#E3E7EE] overflow-hidden">
+                    <div className="h-2 w-full rounded-full bg-white/10 overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-700"
                         style={{
@@ -454,7 +510,7 @@ function MiPerfilPage() {
                         }}
                       />
                     </div>
-                    <div className="text-[10px] text-[#242424]/50">
+                    <div className="text-[10px] text-white/45">
                       {metricasAutonomia.nivelAutonomia === 1
                         ? `Requiere ≥30 simulaciones y score promedio ≥85 (tienes ${metricasAutonomia.totalSimulaciones} sims · score ${metricasAutonomia.scorePromedio.toFixed(1)})`
                         : `Requiere ≥100 simulaciones y score promedio ≥95 (tienes ${metricasAutonomia.totalSimulaciones} sims · score ${metricasAutonomia.scorePromedio.toFixed(1)})`}
@@ -478,12 +534,12 @@ function MiPerfilPage() {
       {/* Auditoría */}
       <Section icon={<History size={14} />} title="Historial de cambios">
         {aud.length === 0 ? (
-          <div className="text-sm text-[#242424]/60">Sin eventos aún.</div>
+          <div className="text-sm text-white/55">Sin eventos aún.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-[10px] uppercase tracking-wider text-[#242424]/60">
+                <tr className="text-[10px] uppercase tracking-wider text-white/55">
                   <th className="text-left py-2">Acción</th>
                   <th className="text-left">Fecha</th>
                   <th className="text-left">Hora</th>
@@ -494,7 +550,7 @@ function MiPerfilPage() {
                 {aud.map((a) => {
                   const d = new Date(a.created_at);
                   return (
-                    <tr key={a.id} className="border-t border-[#E3E7EE]">
+                    <tr key={a.id} className="border-t border-white/10">
                       <td className="py-2 pr-2">
                         <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
                           style={{ background: "#EAF7EE", color: "#1F7A45", border: "1px solid #B7D8C0" }}>
@@ -503,7 +559,7 @@ function MiPerfilPage() {
                       </td>
                       <td className="py-2 pr-2">{d.toLocaleDateString("es-CO")}</td>
                       <td className="py-2 pr-2">{d.toLocaleTimeString("es-CO")}</td>
-                      <td className="py-2 pr-2 text-[12px] text-[#242424]/70">
+                      <td className="py-2 pr-2 text-[12px] text-white/70">
                         <code className="text-[10px]">{JSON.stringify(a.valor_nuevo ?? a.valor_anterior ?? {})}</code>
                       </td>
                     </tr>
@@ -522,7 +578,7 @@ function MiPerfilPage() {
 
 
 
-      <div className="flex items-center gap-2 text-[11px] text-[#242424]/50">
+      <div className="flex items-center gap-2 text-[11px] text-white/45">
         <Shield size={12} /> Toda modificación queda registrada para auditoría.
       </div>
     </div>
@@ -542,14 +598,14 @@ function Section({ icon, title, badge, children }: { icon: React.ReactNode; titl
         <div className="mb-3 flex items-center gap-2">
           <span className="inline-flex h-6 w-6 items-center justify-center rounded-md text-white"
             style={{ background: "linear-gradient(135deg, #445DA3, #84B98F)" }}>{icon}</span>
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-[#242424]">{title}</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-white">{title}</h2>
           <span
             className="ml-2 h-px flex-1"
             style={{ background: "linear-gradient(90deg, rgba(68,93,163,0.35), rgba(132,185,143,0.05))" }}
             aria-hidden
           />
           {badge && (
-            <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-[#F7F9FB] text-[#242424]/60 border border-[#E3E7EE]">{badge}</span>
+            <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-white/[0.05] text-white/55 border border-white/10">{badge}</span>
           )}
         </div>
         {children}
@@ -561,8 +617,8 @@ function Section({ icon, title, badge, children }: { icon: React.ReactNode; titl
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-xs font-medium tracking-wide text-[#242424]/70 uppercase">{label}</span>
-      <div className="rounded-lg border border-[#E3E7EE] bg-[#F7F9FB] px-3 py-2.5 text-sm text-[#242424]/80">{value}</div>
+      <span className="text-xs font-medium tracking-wide text-white/70 uppercase">{label}</span>
+      <div className="rounded-lg border border-white/10 bg-white/[0.05] px-3 py-2.5 text-sm text-white/80">{value}</div>
     </div>
   );
 }
@@ -576,8 +632,8 @@ function formatDate(value?: string | null): string {
 
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-xl border border-[#E3E7EE] bg-white p-3">
-      <div className="text-[10px] uppercase tracking-wider text-[#242424]/60">{label}</div>
+    <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3">
+      <div className="text-[10px] uppercase tracking-wider text-white/55">{label}</div>
       <div className="mt-1 text-xl font-semibold text-[#445DA3]">{value}</div>
     </div>
   );
