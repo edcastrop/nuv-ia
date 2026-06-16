@@ -1,6 +1,7 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Card } from "@/components/nuvex/ui";
+import { ArrowLeft, FolderOpen } from "lucide-react";
+import { PageLayout, ExecutiveHero, NSelect } from "@/components/nuvia";
 import { supabase } from "@/integrations/supabase/client";
 import { CASO_ESTADOS, CASO_ESTADO_BY_KEY, labelEstado, type CasoEstado } from "@/lib/casoEstados";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -81,54 +82,74 @@ function SuperAdminExpedientes() {
 
   const fmt = (n: number) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 
-  if (rolesLoading || loading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>;
+  if (rolesLoading || loading) {
+    return (
+      <PageLayout>
+        <div className="p-12 text-center text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>Cargando…</div>
+      </PageLayout>
+    );
+  }
   if (!isSuperAdmin) return <Navigate to="/inicio" />;
 
+  const cardCls = "rounded-2xl p-5";
+  const cardStyle = { background: "var(--nuvia-bg-card)", border: "1px solid var(--nuvia-border)" } as const;
+
   return (
-    <div className="mx-auto max-w-7xl px-6 py-6 space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold text-[#242424]">Expedientes globales</h1>
-        <div className="text-sm text-[#242424]/60">{filtrados.length} de {rows.length}</div>
-      </div>
+    <PageLayout>
+      <ExecutiveHero
+        badge={{ icon: <FolderOpen size={12} />, label: "Vista global", tone: "blue" }}
+        title="Expedientes globales"
+        description={`${filtrados.length} de ${rows.length} expedientes`}
+        meta={
+          <Link to="/super-admin" className="inline-flex items-center gap-1 text-[11px]" style={{ color: "var(--nuvia-accent-blue)" }}>
+            <ArrowLeft size={12} /> Super Admin
+          </Link>
+        }
+      />
 
-      <Card>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-          <select value={fLic} onChange={(e) => setFLic(e.target.value)} className="rounded-lg border border-[#E3E7EE] px-2 py-1.5 bg-white">
-            <option value="">Todos los licenciados</option>
-            {licenciados.map((l) => <option key={l.id} value={l.id}>{l.nombre}</option>)}
-          </select>
-          <select value={fBanco} onChange={(e) => setFBanco(e.target.value)} className="rounded-lg border border-[#E3E7EE] px-2 py-1.5 bg-white">
-            <option value="">Todos los bancos</option>
-            {BANCOS_DISPONIBLES.map((b) => <option key={b} value={b}>{b}</option>)}
-          </select>
-          <select value={fEstado} onChange={(e) => setFEstado(e.target.value as CasoEstado | "")} className="rounded-lg border border-[#E3E7EE] px-2 py-1.5 bg-white">
-            <option value="">Todos los estados</option>
-            {CASO_ESTADOS.map((e) => <option key={e.key} value={e.key}>{e.label}</option>)}
-          </select>
-          <select value={fProducto} onChange={(e) => setFProducto(e.target.value)} className="rounded-lg border border-[#E3E7EE] px-2 py-1.5 bg-white">
-            <option value="">Todos los productos</option>
-            {productos.map((p) => <option key={p} value={p}>{p}</option>)}
-          </select>
-          <select value={fCiudad} onChange={(e) => setFCiudad(e.target.value)} className="rounded-lg border border-[#E3E7EE] px-2 py-1.5 bg-white">
-            <option value="">Todas las ciudades</option>
-            {ciudades.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <input type="date" value={fFechaDesde} onChange={(e) => setFFechaDesde(e.target.value)} className="rounded-lg border border-[#E3E7EE] px-2 py-1.5 bg-white" placeholder="Creado desde" />
-          <input type="number" value={fHonMin} onChange={(e) => setFHonMin(e.target.value)} placeholder="Honorarios mín." className="rounded-lg border border-[#E3E7EE] px-2 py-1.5 bg-white" />
-          <input type="number" value={fHonMax} onChange={(e) => setFHonMax(e.target.value)} placeholder="Honorarios máx." className="rounded-lg border border-[#E3E7EE] px-2 py-1.5 bg-white" />
+      <section className={cardCls} style={cardStyle}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <NSelect
+            value={fLic}
+            onValueChange={setFLic}
+            options={[{ value: "", label: "Todos los licenciados" }, ...licenciados.map((l) => ({ value: l.id, label: l.nombre }))]}
+          />
+          <NSelect
+            value={fBanco}
+            onValueChange={setFBanco}
+            options={[{ value: "", label: "Todos los bancos" }, ...BANCOS_DISPONIBLES.map((b) => ({ value: b, label: b }))]}
+          />
+          <NSelect
+            value={fEstado}
+            onValueChange={(v) => setFEstado(v as CasoEstado | "")}
+            options={[{ value: "", label: "Todos los estados" }, ...CASO_ESTADOS.map((e) => ({ value: e.key, label: e.label }))]}
+          />
+          <NSelect
+            value={fProducto}
+            onValueChange={setFProducto}
+            options={[{ value: "", label: "Todos los productos" }, ...productos.map((p) => ({ value: p, label: p }))]}
+          />
+          <NSelect
+            value={fCiudad}
+            onValueChange={setFCiudad}
+            options={[{ value: "", label: "Todas las ciudades" }, ...ciudades.map((c) => ({ value: c, label: c }))]}
+          />
+          <input type="date" value={fFechaDesde} onChange={(e) => setFFechaDesde(e.target.value)} className="nuvia-input nuvia-input-sm" />
+          <input type="number" value={fHonMin} onChange={(e) => setFHonMin(e.target.value)} placeholder="Honorarios mín." className="nuvia-input nuvia-input-sm" />
+          <input type="number" value={fHonMax} onChange={(e) => setFHonMax(e.target.value)} placeholder="Honorarios máx." className="nuvia-input nuvia-input-sm" />
         </div>
-      </Card>
+      </section>
 
-      <Card>
+      <section className={cardCls} style={cardStyle}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-[11px] uppercase tracking-wider text-[#242424]/60">
-                <th className="text-left py-2">Cliente</th>
-                <th className="text-left">Analista F. Comercial</th>
-                <th className="text-left">Banco</th>
-                <th className="text-left">Estado del caso</th>
-                <th className="text-right">Honorarios</th>
+              <tr className="text-[11px] uppercase tracking-[0.14em]">
+                <th className="text-left py-2 font-semibold" style={{ color: "var(--nuvia-text-secondary)" }}>Cliente</th>
+                <th className="text-left font-semibold" style={{ color: "var(--nuvia-text-secondary)" }}>Analista F. Comercial</th>
+                <th className="text-left font-semibold" style={{ color: "var(--nuvia-text-secondary)" }}>Banco</th>
+                <th className="text-left font-semibold" style={{ color: "var(--nuvia-text-secondary)" }}>Estado del caso</th>
+                <th className="text-right font-semibold" style={{ color: "var(--nuvia-text-secondary)" }}>Honorarios</th>
                 <th></th>
               </tr>
             </thead>
@@ -136,22 +157,31 @@ function SuperAdminExpedientes() {
               {filtrados.map((r) => {
                 const def = r.estado_caso ? CASO_ESTADO_BY_KEY[r.estado_caso] : null;
                 return (
-                  <tr key={r.id} className="border-t border-[#E3E7EE]">
-                    <td className="py-2">
-                      <div className="font-medium">{r.cliente_nombre}</div>
-                      <div className="text-[11px] text-[#242424]/60">{r.cedula ?? "—"}</div>
+                  <tr key={r.id} style={{ borderTop: "1px solid var(--nuvia-border)" }}>
+                    <td className="py-2.5">
+                      <div className="font-medium" style={{ color: "var(--nuvia-text-primary)" }}>{r.cliente_nombre}</div>
+                      <div className="text-[11px]" style={{ color: "var(--nuvia-text-secondary)" }}>{r.cedula ?? "—"}</div>
                     </td>
-                    <td className="py-2">{nombres.get(r.asesor_id) ?? "—"}</td>
-                    <td className="py-2">{r.banco ?? "—"}</td>
-                    <td className="py-2">
-                      <span className="rounded-full px-2 py-0.5 text-[10px] font-medium"
-                        style={def ? { background: def.bg, color: def.color } : { background: "#F1F2F4", color: "#242424" }}>
+                    <td className="py-2.5" style={{ color: "var(--nuvia-text-secondary)" }}>{nombres.get(r.asesor_id) ?? "—"}</td>
+                    <td className="py-2.5" style={{ color: "var(--nuvia-text-secondary)" }}>{r.banco ?? "—"}</td>
+                    <td className="py-2.5">
+                      <span
+                        className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                        style={def ? { background: def.bg, color: def.color } : { background: "rgba(255,255,255,0.06)", color: "var(--nuvia-text-secondary)" }}
+                      >
                         {labelEstado(r.estado_caso)}
                       </span>
                     </td>
-                    <td className="py-2 text-right">{fmt(Number(r.honorarios_final) || 0)}</td>
-                    <td className="py-2 text-right">
-                      <Link to="/casos/$id" params={{ id: r.id }} className="text-[11px] text-[#445DA3] hover:underline">Abrir</Link>
+                    <td className="py-2.5 text-right" style={{ color: "var(--nuvia-text-primary)" }}>{fmt(Number(r.honorarios_final) || 0)}</td>
+                    <td className="py-2.5 text-right">
+                      <Link
+                        to="/casos/$id"
+                        params={{ id: r.id }}
+                        className="text-[11px] hover:underline"
+                        style={{ color: "var(--nuvia-accent-blue)" }}
+                      >
+                        Abrir
+                      </Link>
                     </td>
                   </tr>
                 );
@@ -159,7 +189,7 @@ function SuperAdminExpedientes() {
             </tbody>
           </table>
         </div>
-      </Card>
-    </div>
+      </section>
+    </PageLayout>
   );
 }
