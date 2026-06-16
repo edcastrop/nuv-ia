@@ -215,6 +215,13 @@ function MiPerfilPage() {
   }
 
   return (
+    <div
+      className="relative min-h-[calc(100vh-64px)]"
+      style={{
+        background:
+          "radial-gradient(1100px 520px at 0% -10%, rgba(68,93,163,0.10), transparent 60%), radial-gradient(900px 480px at 100% 10%, rgba(132,185,143,0.10), transparent 65%), #F4F6FB",
+      }}
+    >
     <div className="mx-auto max-w-5xl px-6 py-6 space-y-5">
       {/* NUVIA branded hero */}
       <div
