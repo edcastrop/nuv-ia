@@ -272,17 +272,29 @@ export function ResultadoFinal({
           Resultado final del proceso
         </SectionTitle>
 
-        <div className="rounded-xl border p-3 mb-4" style={{ borderColor: "#E3E7EE", backgroundColor: NUVEX.gris }}>
-          <div className="text-[11px] font-bold uppercase tracking-wider text-[#242424]/70">Proyección NUVEX (origen: {proyeccion.fuente === "manual" ? "propuesta manual" : "propuesta recomendada"})</div>
+        <div
+          className="rounded-xl border p-3 mb-4"
+          style={{
+            borderColor: "var(--nuvia-border)",
+            background:
+              "linear-gradient(155deg, rgba(20,28,54,0.92) 0%, rgba(13,18,36,0.96) 58%, rgba(5,8,22,0.98) 100%)",
+          }}
+        >
+          <div
+            className="text-[11px] font-bold uppercase tracking-wider"
+            style={{ color: "rgba(230,236,255,0.55)" }}
+          >
+            Proyección NUVEX (origen: {proyeccion.fuente === "manual" ? "propuesta manual" : "propuesta recomendada"})
+          </div>
           <div className="mt-2 grid gap-2 md:grid-cols-4 text-xs">
-            <div><span className="text-[#242424]/60">Cuota proyectada</span><div className="font-semibold">{formatCOP(proyeccion.cuotaProyectada)}</div></div>
-            <div><span className="text-[#242424]/60">Plazo proyectado</span><div className="font-semibold">{proyeccion.plazoProyectado} meses</div></div>
-            <div><span className="text-[#242424]/60">Ahorro proyectado</span><div className="font-semibold">{formatCOP(proyeccion.ahorroProyectado)}</div></div>
-            <div><span className="text-[#242424]/60">Honorarios finales</span><div className="font-semibold">{formatCOP(proyeccion.honorariosFinales)}</div></div>
+            <div><span style={{ color: "var(--nuvia-text-secondary)" }}>Cuota proyectada</span><div className="font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{formatCOP(proyeccion.cuotaProyectada)}</div></div>
+            <div><span style={{ color: "var(--nuvia-text-secondary)" }}>Plazo proyectado</span><div className="font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{proyeccion.plazoProyectado} meses</div></div>
+            <div><span style={{ color: "var(--nuvia-text-secondary)" }}>Ahorro proyectado</span><div className="font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{formatCOP(proyeccion.ahorroProyectado)}</div></div>
+            <div><span style={{ color: "var(--nuvia-text-secondary)" }}>Honorarios finales</span><div className="font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{formatCOP(proyeccion.honorariosFinales)}</div></div>
           </div>
         </div>
 
-        <h3 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: NUVEX.azul }}>
+        <h3 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: "var(--nuvia-text-primary)" }}>
           Resultado aprobado por el banco
         </h3>
         <div className="grid gap-4 md:grid-cols-3">
