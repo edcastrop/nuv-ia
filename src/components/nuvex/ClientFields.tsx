@@ -78,10 +78,10 @@ export function ClientFields({
         <TextField label="Número de cédula" value={data.cedula} onChange={(v) => set("cedula", v)} />
 
         <div>
-          <label className="block text-xs font-medium text-[#242424]/70 mb-1">
+          <label className="block text-xs font-medium mb-1" style={{ color: "rgba(225,232,248,0.65)" }}>
             Lugar de expedición de la cédula
           </label>
-          <div className="space-y-1.5 rounded-lg border border-[#E3E7EE] bg-[#F7F9FB] p-2">
+          <div className="space-y-1.5 rounded-lg p-2" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)" }}>
             <DepartamentoSelect
               value={data.lugarExpedicionDepartamento ?? ""}
               onChange={(v) =>
