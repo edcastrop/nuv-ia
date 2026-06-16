@@ -132,7 +132,12 @@ export function EtapasFinalesBlock({
               e.preventDefault();
               document.getElementById("cartera-expediente")?.scrollIntoView({ behavior: "smooth", block: "start" });
             }}
-            className="rounded-lg bg-[#1F7A45] px-3 py-1.5 text-[11px] font-semibold text-white hover:opacity-90"
+            className="rounded-lg border px-3 py-1.5 text-[11px] font-semibold transition hover:opacity-90"
+            style={{
+              background: "rgba(132,185,143,0.16)",
+              borderColor: "rgba(132,185,143,0.35)",
+              color: "var(--nuvia-accent-green)",
+            }}
           >
             Ir a cartera para registrar pago ↓
           </a>
@@ -290,8 +295,7 @@ function AceptacionCliente({
           <button
             onClick={guardar}
             disabled={saving}
-            className="rounded-lg px-4 py-2 text-xs font-semibold text-white disabled:opacity-40"
-            style={{ background: "var(--nuvia-accent-blue)" }}
+            className="nuvia-submit !w-auto px-4 py-2 text-xs disabled:opacity-40"
           >
             {saving ? "Guardando…" : yaRegistrada ? "Actualizar aceptación" : "Registrar aceptación"}
           </button>
@@ -355,8 +359,7 @@ function EtapaAvance({
             onClick={avanzar}
             disabled={saving || estado === "futura"}
             title={estado === "futura" ? "Avanza primero las etapas previas" : ""}
-            className="rounded-lg px-4 py-2 text-xs font-semibold text-white disabled:opacity-40"
-            style={{ background: "var(--nuvia-accent-blue)" }}
+            className="nuvia-submit !w-auto px-4 py-2 text-xs disabled:opacity-40"
           >
             {saving ? "Guardando…" : estado === "completada" ? "Re-confirmar" : "Marcar completada"}
           </button>
