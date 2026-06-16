@@ -205,9 +205,9 @@ export function EntregaDocumentalBlock({ expedienteId, onIrAFinanciero }: Props)
 
   if (loading) {
     return (
-      <Card>
+      <NCard variant="elevated">
         <div className="py-3 text-[12px] text-[#242424]/60">Cargando entrega documental…</div>
-      </Card>
+      </NCard>
     );
   }
 
@@ -216,10 +216,10 @@ export function EntregaDocumentalBlock({ expedienteId, onIrAFinanciero }: Props)
   const vencida = diasFaltantes !== null && diasFaltantes < 0 && !completada;
 
   return (
-    <Card>
+    <NCard variant="elevated">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Landmark size={18} style={{ color: NUVEX.azul }} />
+          <Landmark size={18} style={{ color: "var(--nuvia-accent-blue)" }} />
           <h3 className="text-sm font-semibold text-[#242424]">
             Entrega documentación financiera al banco
           </h3>
@@ -234,7 +234,7 @@ export function EntregaDocumentalBlock({ expedienteId, onIrAFinanciero }: Props)
 
       {/* Banner: regla del banco detectada */}
       <div className="mb-3 rounded-lg border border-[#E3E7EE] bg-[#F7F9FB] p-3 text-[12px] text-[#242424]">
-        <div className="font-semibold mb-1" style={{ color: NUVEX.azul }}>
+        <div className="font-semibold mb-1" style={{ color: "var(--nuvia-accent-blue)" }}>
           Regla detectada · {regla.bancoLabel}
         </div>
         <div className="text-[#242424]/80">{regla.descripcion}</div>
@@ -266,7 +266,7 @@ export function EntregaDocumentalBlock({ expedienteId, onIrAFinanciero }: Props)
             type="button"
             onClick={inicializar}
             className="rounded-lg px-3 py-2 text-xs font-semibold text-white"
-            style={{ background: NUVEX.azul }}
+            style={{ background: "var(--nuvia-accent-blue)" }}
           >
             Inicializar entrega documental
           </button>
@@ -288,7 +288,7 @@ export function EntregaDocumentalBlock({ expedienteId, onIrAFinanciero }: Props)
           {/* Davivienda: correo */}
           {regla.modalidad === "correo" && !completada && (
             <div className="rounded-lg border border-[#E3E7EE] bg-white p-3">
-              <div className="text-[11px] uppercase tracking-wider font-semibold mb-1" style={{ color: NUVEX.azul }}>
+              <div className="text-[11px] uppercase tracking-wider font-semibold mb-1" style={{ color: "var(--nuvia-accent-blue)" }}>
                 Acción · Davivienda (correo a Jurídica del banco)
               </div>
               <p className="text-[12px] text-[#242424]/75 mb-2">
@@ -323,7 +323,7 @@ export function EntregaDocumentalBlock({ expedienteId, onIrAFinanciero }: Props)
           {regla.modalidad === "fisica" && regla.diasHabilesEntrega > 0 && !completada && (
             <div className="rounded-lg border border-[#E3E7EE] bg-white p-3 space-y-3">
               <div>
-                <div className="text-[11px] uppercase tracking-wider font-semibold mb-1" style={{ color: NUVEX.azul }}>
+                <div className="text-[11px] uppercase tracking-wider font-semibold mb-1" style={{ color: "var(--nuvia-accent-blue)" }}>
                   Acción · Entrega física programada
                 </div>
                 <p className="text-[12px] text-[#242424]/75">
@@ -382,7 +382,7 @@ export function EntregaDocumentalBlock({ expedienteId, onIrAFinanciero }: Props)
           )}
         </>
       )}
-    </Card>
+    </NCard>
   );
 }
 
