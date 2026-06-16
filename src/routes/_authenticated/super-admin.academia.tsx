@@ -32,6 +32,13 @@ function AdminAcademia() {
   useEffect(() => { (async () => { await reload(); setLoading(false); })(); }, []);
 
   if (rolesLoading || loading) return <div className="p-12 text-center text-sm text-[var(--nuvia-text-secondary)]">Cargando…</div>;
+  if (rolesLoading || loading) {
+    return (
+      <PageLayout>
+        <div className="p-12 text-center text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>Cargando…</div>
+      </PageLayout>
+    );
+  }
   if (!isSuperAdmin) return <Navigate to="/inicio" />;
 
   const tabs: { id: Tab; label: string; icon: typeof Layers }[] = [
@@ -41,23 +48,33 @@ function AdminAcademia() {
   ];
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-6 space-y-5">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <Link to="/super-admin" className="inline-flex items-center gap-1 text-[11px] text-[#445DA3] mb-1"><ArrowLeft size={12} /> Super Admin</Link>
-          <h1 className="text-2xl font-semibold text-[#0A1226]">Administración de la Academia</h1>
-          <div className="text-sm text-[var(--nuvia-text-secondary)]">Gestiona cursos, módulos, lecciones, evaluaciones, inscritos y certificados por rol.</div>
-        </div>
-        {tab === "contenido" && <CrearCursoButton onCreated={reload} />}
-      </div>
+    <PageLayout>
+      <ExecutiveHero
+        badge={{ icon: <GraduationCap size={12} />, label: "Academia NUVEX", tone: "blue" }}
+        title="Administración de la Academia"
+        description="Gestiona cursos, módulos, lecciones, evaluaciones, inscritos y certificados por rol."
+        meta={
+          <Link to="/super-admin" className="inline-flex items-center gap-1 text-[11px]" style={{ color: "var(--nuvia-accent-blue)" }}>
+            <ArrowLeft size={12} /> Super Admin
+          </Link>
+        }
+        actions={tab === "contenido" ? <CrearCursoButton onCreated={reload} /> : undefined}
+      />
 
       <div className="flex items-center gap-1 border-b border-[var(--nuvia-border)]">
         {tabs.map((t) => {
           const Icon = t.icon;
           const active = tab === t.id;
           return (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className={`inline-flex items-center gap-1.5 border-b-2 px-3 py-2 text-[12px] font-semibold transition ${active ? "border-[#445DA3] text-[#0A1226]" : "border-transparent text-[var(--nuvia-text-primary)]/55 hover:text-[#0A1226]"}`}>
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className="inline-flex items-center gap-1.5 border-b-2 px-3 py-2 text-[12px] font-semibold transition"
+              style={{
+                color: active ? "var(--nuvia-text-primary)" : "var(--nuvia-text-secondary)",
+                borderColor: active ? "var(--nuvia-accent-blue)" : "transparent",
+              }}
+            >
               <Icon size={13} /> {t.label}
             </button>
           );
@@ -71,9 +88,10 @@ function AdminAcademia() {
       )}
       {tab === "seguimiento" && <SeguimientoPanel cursos={cursos} />}
       {tab === "certificados" && <CertificadosPanel cursos={cursos} />}
-    </div>
+    </PageLayout>
   );
 }
+
 
 function CrearCursoButton({ onCreated }: { onCreated: () => void }) {
   const [rol, setRol] = useState<AcademiaRol>("licenciado");
