@@ -86,7 +86,7 @@ function NeuralCanvas() {
     <svg
       viewBox="0 0 100 100"
       preserveAspectRatio="xMidYMid slice"
-      className="pointer-events-none absolute inset-0 w-full h-full opacity-50"
+      className="pointer-events-none absolute inset-0 w-full h-full opacity-60"
       aria-hidden
     >
       <defs>
@@ -99,8 +99,14 @@ function NeuralCanvas() {
           <stop offset="60%" stopColor={GREEN} stopOpacity="0.7" />
           <stop offset="100%" stopColor={BLUE} stopOpacity="0" />
         </radialGradient>
+        <filter id="nv-home-glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="0.8" result="b" />
+          <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
       </defs>
-      <g>
+
+      {/* Links con pulso */}
+      <g filter="url(#nv-home-glow)">
         {links.map(([a, b], i) => {
           const A = nodes[a]; const B = nodes[b];
           return (
@@ -108,18 +114,37 @@ function NeuralCanvas() {
               key={i}
               x1={A.x} y1={A.y} x2={B.x} y2={B.y}
               stroke="url(#nv-home-link)"
-              strokeWidth="0.16"
-              opacity={0.45}
-            />
+              strokeWidth="0.18"
+              opacity={0.5}
+            >
+              <animate attributeName="opacity" values="0.15;0.7;0.15" dur={`${4 + (i % 5)}s`} repeatCount="indefinite" />
+            </line>
           );
         })}
       </g>
+
+      {/* Nodos pulsantes */}
       {nodes.map((n, i) => (
         <g key={i}>
-          <circle cx={n.x} cy={n.y} r="1.4" fill="url(#nv-home-node)" />
-          <circle cx={n.x} cy={n.y} r="0.45" fill="#fff" opacity="0.9" />
+          <circle cx={n.x} cy={n.y} r="1.6" fill="url(#nv-home-node)">
+            <animate attributeName="r" values="1.2;2;1.2" dur={`${3 + (i % 4)}s`} repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.6;1;0.6" dur={`${3 + (i % 4)}s`} repeatCount="indefinite" />
+          </circle>
+          <circle cx={n.x} cy={n.y} r="0.5" fill="#fff" opacity="0.9" />
         </g>
       ))}
+
+      {/* Paquetes de datos viajando por los enlaces */}
+      {links.slice(0, 8).map(([a, b], i) => {
+        const A = nodes[a]; const B = nodes[b];
+        return (
+          <circle key={`p${i}`} r="0.55" fill={GREEN} opacity="0.95">
+            <animate attributeName="cx" values={`${A.x};${B.x}`} dur={`${3 + (i % 3)}s`} repeatCount="indefinite" />
+            <animate attributeName="cy" values={`${A.y};${B.y}`} dur={`${3 + (i % 3)}s`} repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0;1;0" dur={`${3 + (i % 3)}s`} repeatCount="indefinite" />
+          </circle>
+        );
+      })}
     </svg>
   );
 }
