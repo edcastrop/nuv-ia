@@ -380,9 +380,8 @@ function PipelineV2Page() {
                         ? "text-amber-400"
                         : "text-rose-400";
                   return (
-                    <>
+                    <Fragment key={s.id}>
                       <tr
-                        key={s.id}
                         onClick={() => setExpanded(isOpen ? null : s.id)}
                         className="border-t border-[var(--nuvia-border)] cursor-pointer hover:bg-white/5 transition-colors"
                       >
