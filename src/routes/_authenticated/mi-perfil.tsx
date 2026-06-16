@@ -216,40 +216,48 @@ function MiPerfilPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-6 space-y-5">
-      {/* NUVIA branded hero (light) */}
+      {/* NUVIA branded hero */}
       <div
-        className="relative overflow-hidden rounded-2xl border px-6 py-5"
+        className="relative overflow-hidden rounded-2xl px-7 py-6 text-white shadow-lg"
         style={{
-          background: "linear-gradient(135deg, rgba(68,93,163,0.06), rgba(132,185,143,0.06))",
-          borderColor: "#E3E7EE",
+          background: "linear-gradient(135deg, #0A1226 0%, #1E3A5F 45%, #2D5A4A 100%)",
         }}
       >
-        <span
-          className="pointer-events-none absolute inset-y-0 left-0 w-1.5"
-          style={{ background: "linear-gradient(180deg, #445DA3, #84B98F)" }}
+        <div
+          className="pointer-events-none absolute -top-16 -right-10 h-56 w-56 rounded-full opacity-40 blur-3xl"
+          style={{ background: "#445DA3" }}
         />
-        <div className="flex items-center justify-between gap-4">
+        <div
+          className="pointer-events-none absolute -bottom-20 left-20 h-48 w-48 rounded-full opacity-30 blur-3xl"
+          style={{ background: "#84B98F" }}
+        />
+        <div className="relative flex items-center justify-between gap-4">
           <div className="min-w-0">
             <div
-              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] mb-1.5"
-              style={{ background: "rgba(68,93,163,0.10)", color: "#445DA3", border: "1px solid rgba(68,93,163,0.25)" }}
+              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] mb-2"
+              style={{
+                background: "rgba(132,185,143,0.18)",
+                color: "#9BCB9F",
+                border: "1px solid rgba(132,185,143,0.45)",
+              }}
             >
               Perfil personal NUVIA
             </div>
-            <h1 className="text-2xl font-semibold text-[#0A1226]">Mi Perfil</h1>
-            <div className="text-sm text-[#242424]/60">Gestiona tu información personal, contacto y foto de perfil</div>
+            <h1 className="text-2xl font-semibold text-white">Mi Perfil</h1>
+            <div className="text-sm text-white/70">Gestiona tu información personal, contacto y foto de perfil</div>
           </div>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow disabled:opacity-60 shrink-0"
-            style={{ background: "linear-gradient(135deg, #445DA3, #84B98F)" }}
+            className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-[#0A1226] shadow disabled:opacity-60 shrink-0"
+            style={{ background: "linear-gradient(135deg, #9BCB9F, #84B98F)" }}
           >
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
             Guardar cambios
           </button>
         </div>
       </div>
+
 
 
       {/* Foto */}
