@@ -22,7 +22,7 @@ type Row = {
 };
 
 function SuperAdminOnboarding() {
-  const { isSuperAdmin } = useUserRole();
+  const { isSuperAdmin, loading: roleLoading } = useUserRole();
   const [kpi, setKpi] = useState<KPI | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
   const [cfg, setCfg] = useState({ video_bienvenida_url: "", mensaje_bienvenida: "", descripcion_empresa: "" });
