@@ -70,6 +70,7 @@ function SuperAdminOnboarding() {
     setSaved(true); setTimeout(() => setSaved(false), 2000);
   };
 
+  if (roleLoading) return <div className="p-8 text-white/60 text-sm">Cargando…</div>;
   if (!isSuperAdmin) return <Navigate to="/inicio" />;
 
   return (
