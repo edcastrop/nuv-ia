@@ -158,6 +158,7 @@ function RegistroPage() {
           }}
         />
         <BgOrbs />
+        <NeuralCanvas />
 
         <div className="relative z-10 flex flex-col justify-between h-full p-8 lg:p-14">
           <motion.div
@@ -509,5 +510,71 @@ function BgOrbs() {
         transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
       />
     </>
+  );
+}
+
+function NeuralCanvas() {
+  const nodes = [
+    { x: 12, y: 22 }, { x: 28, y: 14 }, { x: 44, y: 28 }, { x: 62, y: 18 }, { x: 80, y: 32 },
+    { x: 18, y: 48 }, { x: 36, y: 56 }, { x: 54, y: 44 }, { x: 72, y: 58 }, { x: 88, y: 50 },
+    { x: 22, y: 76 }, { x: 40, y: 84 }, { x: 58, y: 72 }, { x: 76, y: 86 }, { x: 90, y: 74 },
+  ];
+  const links: Array<[number, number]> = [
+    [0,1],[1,2],[2,3],[3,4],[0,5],[1,6],[2,7],[3,8],[4,9],
+    [5,6],[6,7],[7,8],[8,9],[5,10],[6,11],[7,12],[8,13],[9,14],
+    [10,11],[11,12],[12,13],[13,14],[2,8],[1,7],[6,12],[7,13],
+  ];
+  return (
+    <svg
+      viewBox="0 0 100 100"
+      preserveAspectRatio="xMidYMid slice"
+      className="absolute inset-0 w-full h-full pointer-events-none"
+      aria-hidden
+    >
+      <defs>
+        <linearGradient id="reg-nv-link" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor={BLUE} stopOpacity="0.55" />
+          <stop offset="100%" stopColor={GREEN} stopOpacity="0.55" />
+        </linearGradient>
+        <radialGradient id="reg-nv-node">
+          <stop offset="0%" stopColor="#fff" stopOpacity="0.95" />
+          <stop offset="60%" stopColor={GREEN} stopOpacity="0.7" />
+          <stop offset="100%" stopColor={BLUE} stopOpacity="0" />
+        </radialGradient>
+        <filter id="reg-nv-glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="0.8" result="b" />
+          <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+      </defs>
+      <g filter="url(#reg-nv-glow)">
+        {links.map(([a, b], i) => {
+          const A = nodes[a]; const B = nodes[b];
+          return (
+            <line key={i} x1={A.x} y1={A.y} x2={B.x} y2={B.y} stroke="url(#reg-nv-link)" strokeWidth="0.18" opacity={0.5}>
+              <animate attributeName="opacity" values="0.15;0.7;0.15" dur={`${4 + (i % 5)}s`} repeatCount="indefinite" />
+            </line>
+          );
+        })}
+      </g>
+      {nodes.map((n, i) => (
+        <g key={i}>
+          <circle cx={n.x} cy={n.y} r="1.6" fill="url(#reg-nv-node)">
+            <animate attributeName="r" values="1.2;2;1.2" dur={`${3 + (i % 4)}s`} repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.6;1;0.6" dur={`${3 + (i % 4)}s`} repeatCount="indefinite" />
+          </circle>
+          <circle cx={n.x} cy={n.y} r="0.5" fill="#fff" opacity="0.9" />
+        </g>
+      ))}
+      {links.slice(0, 8).map(([a, b], i) => {
+        const A = nodes[a]; const B = nodes[b];
+        return (
+          <circle key={`p${i}`} r="0.55" fill={GREEN} opacity="0.95">
+            <animate attributeName="cx" values={`${A.x};${B.x}`} dur={`${3 + (i % 3)}s`} repeatCount="indefinite" />
+            <animate attributeName="cy" values={`${A.y};${B.y}`} dur={`${3 + (i % 3)}s`} repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0;1;0" dur={`${3 + (i % 3)}s`} repeatCount="indefinite" />
+          </circle>
+        );
+      })}
+    </svg>
   );
 }
