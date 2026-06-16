@@ -8,15 +8,21 @@ interface Props {
   required?: boolean;
   className?: string;
   placeholder?: string;
+  variant?: "light" | "dark";
 }
 
-export function CityField({ label, value, onChange, required, className, placeholder }: Props) {
+export function CityField({ label, value, onChange, required, className, placeholder, variant = "light" }: Props) {
+  const dark = variant === "dark";
   return (
     <label className={`flex flex-col gap-1 ${className ?? ""}`}>
-      <span className="text-xs font-medium tracking-wide text-[#242424]/70 uppercase">
-        {label}{required && <span className="text-[#C0392B]"> *</span>}
+      <span
+        className="text-xs font-medium tracking-wide uppercase"
+        style={{ color: dark ? "var(--nuvia-text-secondary)" : undefined }}
+      >
+        <span className={dark ? "" : "text-[#242424]/70"}>{label}</span>
+        {required && <span className="text-[#C0392B]"> *</span>}
       </span>
-      <CitySelect value={value || ""} onChange={onChange} required={required} placeholder={placeholder} />
+      <CitySelect value={value || ""} onChange={onChange} required={required} placeholder={placeholder} variant={variant} />
     </label>
   );
 }
