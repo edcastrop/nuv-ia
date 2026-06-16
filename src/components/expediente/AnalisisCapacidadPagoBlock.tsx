@@ -405,11 +405,11 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
       <div className="flex items-start justify-between gap-4 mb-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Sparkles className="w-5 h-5 text-[#445DA3]" />
-            <h3 className="text-xl font-bold text-slate-900">Análisis de capacidad de pago</h3>
+            <Sparkles className="w-5 h-5" style={{ color: "var(--nuvia-accent-primary)" }} />
+            <h3 className="text-xl font-bold" style={{ color: "var(--nuvia-text-primary)" }}>Análisis de capacidad de pago</h3>
             <Badge variant="outline" className="text-xs">{banco}</Badge>
           </div>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>
             Sustentación obligatoria para radicar. Regla del banco: la nueva cuota no debe superar el <b>{esVis ? "40%" : "30%"}</b> de los ingresos
             ({esVis ? "crédito VIS" : "crédito No VIS"}).
           </p>
