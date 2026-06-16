@@ -232,13 +232,20 @@ function AceptacionCliente({
 
   return (
     <EtapaShell numero={10} titulo="Aceptación del cliente" estado={estado}>
-      <p className="text-xs text-slate-500">
+      <p className="text-xs" style={{ color: "var(--nuvia-text-secondary)" }}>
         Registra el medio y la fecha en que el cliente aceptó expresamente las condiciones
         aprobadas por el banco (WhatsApp, correo o carta firmada).
       </p>
 
       {yaRegistrada && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-900">
+        <div
+          className="rounded-lg p-3 text-xs"
+          style={{
+            background: "rgba(132,185,143,0.12)",
+            border: "1px solid rgba(132,185,143,0.35)",
+            color: "var(--nuvia-accent-green)",
+          }}
+        >
           <strong>Registrada:</strong> {new Date(aceptacionAt!).toLocaleString()} · medio{" "}
           <span className="font-semibold uppercase">{aceptacionMedio ?? "-"}</span>
           {aceptacionObservaciones && <div className="mt-1 opacity-80">{aceptacionObservaciones}</div>}
@@ -248,9 +255,9 @@ function AceptacionCliente({
       {puedeEditar && (
         <div className="grid gap-2 sm:grid-cols-[160px_1fr]">
           <label className="text-xs">
-            <span className="text-slate-600">Medio</span>
+            <span style={{ color: "var(--nuvia-text-secondary)" }}>Medio</span>
             <select
-              className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+              className="nuvia-input nuvia-input-sm mt-1 w-full"
               value={medio}
               onChange={(e) => setMedio(e.target.value)}
             >
@@ -261,9 +268,9 @@ function AceptacionCliente({
             </select>
           </label>
           <label className="text-xs">
-            <span className="text-slate-600">Observaciones</span>
+            <span style={{ color: "var(--nuvia-text-secondary)" }}>Observaciones</span>
             <textarea
-              className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+              className="nuvia-input nuvia-input-sm mt-1 w-full"
               rows={2}
               value={obs}
               onChange={(e) => setObs(e.target.value)}
@@ -273,12 +280,13 @@ function AceptacionCliente({
       )}
 
       <div className="flex items-center justify-end gap-2">
-        {msg && <span className="text-[11px] text-slate-500">{msg}</span>}
+        {msg && <span className="text-[11px]" style={{ color: "var(--nuvia-text-secondary)" }}>{msg}</span>}
         {puedeEditar && (
           <button
             onClick={guardar}
             disabled={saving}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white disabled:opacity-40"
+            className="rounded-lg px-4 py-2 text-xs font-semibold text-white disabled:opacity-40"
+            style={{ background: "var(--nuvia-accent-blue)" }}
           >
             {saving ? "Guardando…" : yaRegistrada ? "Actualizar aceptación" : "Registrar aceptación"}
           </button>
@@ -287,6 +295,7 @@ function AceptacionCliente({
     </EtapaShell>
   );
 }
+
 
 /* ───────── Etapas 11-15 – Avance simple por acción ───────── */
 
