@@ -1,6 +1,7 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/nuvex/ui";
+import { PageLayout, ExecutiveHero } from "@/components/nuvia";
 import { useUserRole, type AppRole } from "@/hooks/useUserRole";
 import {
   listUsuariosAcceso, aprobarUsuario, rechazarUsuario,
