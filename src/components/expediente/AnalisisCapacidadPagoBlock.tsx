@@ -417,8 +417,8 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
       </div>
 
       {/* Selector tipo de crédito (prominente) */}
-      <div className="mb-4 p-3 rounded-lg border-2 border-[#445DA3]/30 bg-white">
-        <Label className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Tipo de crédito (define la regla aplicable)</Label>
+      <div className="mb-4 p-3 rounded-lg glass-panel" style={{ border: "1px solid var(--nuvia-border-medium)" }}>
+        <Label className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--nuvia-text-secondary)" }}>Tipo de crédito (define la regla aplicable)</Label>
         <div className="mt-2 grid grid-cols-2 gap-2">
           <button
             type="button"
@@ -426,12 +426,15 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
               if (resultado && esVis) toast.info("Cambiaste a No VIS. Vuelve a ejecutar el análisis para recalcular con el límite del 30%.");
               setEsVis(false);
             }}
-            className={`px-4 py-3 rounded-lg border-2 text-left transition ${
-              !esVis ? "border-[#445DA3] bg-[#445DA3] text-white shadow" : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
-            }`}
+            className="px-4 py-3 rounded-lg border text-left transition"
+            style={{
+              borderColor: !esVis ? "var(--nuvia-accent-primary)" : "var(--nuvia-border-soft)",
+              background: !esVis ? "rgba(122,160,255,0.16)" : "rgba(255,255,255,0.02)",
+              color: "var(--nuvia-text-primary)",
+            }}
           >
             <div className="text-sm font-bold">No VIS</div>
-            <div className={`text-xs ${!esVis ? "text-white/80" : "text-slate-500"}`}>Límite del 30% de ingresos</div>
+            <div className="text-xs" style={{ color: "var(--nuvia-text-tertiary)" }}>Límite del 30% de ingresos</div>
           </button>
           <button
             type="button"
@@ -439,30 +442,33 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
               if (resultado && !esVis) toast.info("Cambiaste a VIS. Vuelve a ejecutar el análisis para recalcular con el límite del 40%.");
               setEsVis(true);
             }}
-            className={`px-4 py-3 rounded-lg border-2 text-left transition ${
-              esVis ? "border-emerald-600 bg-emerald-600 text-white shadow" : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
-            }`}
+            className="px-4 py-3 rounded-lg border text-left transition"
+            style={{
+              borderColor: esVis ? "rgba(132,185,143,0.6)" : "var(--nuvia-border-soft)",
+              background: esVis ? "rgba(132,185,143,0.16)" : "rgba(255,255,255,0.02)",
+              color: "var(--nuvia-text-primary)",
+            }}
           >
             <div className="text-sm font-bold">VIS</div>
-            <div className={`text-xs ${esVis ? "text-white/80" : "text-slate-500"}`}>Límite del 40% de ingresos</div>
+            <div className="text-xs" style={{ color: "var(--nuvia-text-tertiary)" }}>Límite del 40% de ingresos</div>
           </button>
         </div>
       </div>
 
       {/* Cuota a validar */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5 p-4 bg-slate-100/60 rounded-lg">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5 p-4 rounded-lg" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--nuvia-border-soft)" }}>
         <div>
-          <Label className="text-xs text-slate-600">Cuota propuesta al banco</Label>
-          <Input type="number" value={cuota || ""} onChange={(e) => setCuota(Number(e.target.value))} className="font-bold" />
-          <p className="text-xs text-muted-foreground mt-1">Tomada del simulador NUVEX.</p>
+          <Label className="text-xs" style={{ color: "var(--nuvia-text-secondary)" }}>Cuota propuesta al banco</Label>
+          <Input type="number" value={cuota || ""} onChange={(e) => setCuota(Number(e.target.value))} className="nuvia-input font-bold" />
+          <p className="text-xs mt-1" style={{ color: "var(--nuvia-text-tertiary)" }}>Tomada del simulador NUVEX.</p>
         </div>
         <div>
-          <Label className="text-xs text-slate-600">Límite aplicable</Label>
-          <div className={`text-2xl font-bold ${esVis ? "text-emerald-600" : "text-[#445DA3]"}`}>{Math.round(limiteAplicable * 100)}% <span className="text-sm font-medium">({esVis ? "VIS" : "No VIS"})</span></div>
+          <Label className="text-xs" style={{ color: "var(--nuvia-text-secondary)" }}>Límite aplicable</Label>
+          <div className="text-2xl font-bold" style={{ color: esVis ? "rgb(132,185,143)" : "var(--nuvia-accent-primary)" }}>{Math.round(limiteAplicable * 100)}% <span className="text-sm font-medium">({esVis ? "VIS" : "No VIS"})</span></div>
         </div>
         <div>
-          <Label className="text-xs text-slate-600">Ingreso mínimo requerido</Label>
-          <div className="text-2xl font-bold text-slate-900">{cuota > 0 ? formatCOP(cuota / limiteAplicable) : "—"}</div>
+          <Label className="text-xs" style={{ color: "var(--nuvia-text-secondary)" }}>Ingreso mínimo requerido</Label>
+          <div className="text-2xl font-bold" style={{ color: "var(--nuvia-text-primary)" }}>{cuota > 0 ? formatCOP(cuota / limiteAplicable) : "—"}</div>
         </div>
       </div>
 
