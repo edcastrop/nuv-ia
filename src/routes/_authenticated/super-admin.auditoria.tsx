@@ -1,9 +1,9 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Card } from "@/components/nuvex/ui";
+import { ArrowLeft, Search, FileText, Download } from "lucide-react";
+import { PageLayout, ExecutiveHero, NSelect } from "@/components/nuvia";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Search, FileText, Download } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/super-admin/auditoria")({
   component: AuditoriaGlobal,
@@ -69,91 +69,117 @@ function AuditoriaGlobal() {
     });
   }, [rows, q, accion, nombres]);
 
-  if (rolesLoading || loading) return <div className="p-8 text-center text-sm text-[#242424]/60">Cargando…</div>;
+  if (rolesLoading || loading) {
+    return (
+      <PageLayout>
+        <div className="p-8 text-center text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>Cargando…</div>
+      </PageLayout>
+    );
+  }
   if (!allow) return <Navigate to="/inicio" />;
 
+  const cardStyle = { background: "var(--nuvia-bg-card)", border: "1px solid var(--nuvia-border)" } as const;
+  const headBg = "rgba(255,255,255,0.04)";
+
   return (
-    <div className="mx-auto max-w-[1400px] px-6 py-6 space-y-4">
-      <Card>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <FileText size={20} className="text-[#445DA3]" />
-            <div>
-              <h1 className="text-lg font-semibold text-[#0A1226]">Auditoría global</h1>
-              <p className="text-[12px] text-[#242424]/60">Últimos 500 eventos del sistema.</p>
-            </div>
-          </div>
+    <PageLayout maxWidth="full">
+      <ExecutiveHero
+        badge={{ icon: <FileText size={12} />, label: "Trazabilidad NUVIA", tone: "blue" }}
+        title="Auditoría global"
+        description="Últimos 500 eventos del sistema."
+        meta={
+          <Link to="/super-admin" className="inline-flex items-center gap-1 text-[11px]" style={{ color: "var(--nuvia-accent-blue)" }}>
+            <ArrowLeft size={12} /> Super Admin
+          </Link>
+        }
+        actions={
           <a
             href="/auditoria-simuladores-nuvex.pdf"
             download
-            className="inline-flex items-center gap-2 rounded-lg bg-[#445DA3] px-3 py-2 text-[12.5px] font-medium text-white hover:bg-[#3a4f8d] transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-[12.5px] font-semibold transition"
+            style={{
+              background: "linear-gradient(135deg, var(--nuvia-accent-blue), var(--nuvia-accent-green))",
+              color: "#fff",
+            }}
           >
             <Download size={14} />
-            Descargar informe de auditoría (PDF)
+            Descargar informe PDF
           </a>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <div className="flex items-center gap-2 rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 flex-1 min-w-[240px]">
-            <Search size={13} className="text-[#445DA3]" />
+        }
+      />
+
+      <section className="rounded-2xl p-5" style={cardStyle}>
+        <div className="flex flex-wrap gap-2">
+          <div
+            className="flex items-center gap-2 rounded-lg px-3 py-1.5 flex-1 min-w-[240px]"
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--nuvia-border)" }}
+          >
+            <Search size={13} style={{ color: "var(--nuvia-accent-blue)" }} />
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Buscar usuario, acción, expediente…"
               className="w-full bg-transparent text-[12.5px] outline-none"
+              style={{ color: "var(--nuvia-text-primary)" }}
             />
           </div>
-          <select
+          <NSelect
             value={accion}
-            onChange={(e) => setAccion(e.target.value)}
-            className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 text-[12.5px]"
-          >
-            <option value="">Todas las acciones</option>
-            {acciones.map((a) => <option key={a} value={a}>{a}</option>)}
-          </select>
+            onValueChange={setAccion}
+            options={[{ value: "", label: "Todas las acciones" }, ...acciones.map((a) => ({ value: a, label: a }))]}
+            minWidth={220}
+          />
         </div>
-      </Card>
+      </section>
 
-      <Card>
-        <table className="w-full text-[12px]">
-          <thead className="bg-[#F7F9FB] text-[10.5px] uppercase tracking-wide text-[#242424]/60">
-            <tr>
-              <th className="px-3 py-2 text-left">Fecha</th>
-              <th className="px-3 py-2 text-left">Usuario</th>
-              <th className="px-3 py-2 text-left">Acción</th>
-              <th className="px-3 py-2 text-left">Entidad</th>
-              <th className="px-3 py-2 text-left">Expediente</th>
-              <th className="px-3 py-2 text-left">Detalle</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#E3E7EE]">
-            {filtered.map((r) => (
-              <tr key={r.id} className="hover:bg-[#F7F9FB] align-top">
-                <td className="px-3 py-2 whitespace-nowrap">{new Date(r.created_at).toLocaleString()}</td>
-                <td className="px-3 py-2">{nombres.get(r.user_id ?? "") ?? "—"}</td>
-                <td className="px-3 py-2 font-mono text-[11px]">{r.accion}</td>
-                <td className="px-3 py-2">{r.entidad}</td>
-                <td className="px-3 py-2">
-                  {r.expediente_id ? (
-                    <Link to="/casos/$id" params={{ id: r.expediente_id }} className="text-[#445DA3] hover:underline font-mono text-[11px]">
-                      {r.expediente_id.slice(0, 8)}…
-                    </Link>
-                  ) : "—"}
-                </td>
-                <td className="px-3 py-2 max-w-[360px]">
-                  {r.valor_nuevo ? (
-                    <code className="text-[10.5px] text-[#242424]/70 break-all line-clamp-2">
-                      {JSON.stringify(r.valor_nuevo)}
-                    </code>
-                  ) : "—"}
-                </td>
+      <section className="rounded-2xl p-5" style={cardStyle}>
+        <div className="overflow-x-auto">
+          <table className="w-full text-[12px]">
+            <thead className="text-[10.5px] uppercase tracking-wide" style={{ background: headBg }}>
+              <tr>
+                <th className="px-3 py-2 text-left font-semibold" style={{ color: "var(--nuvia-text-secondary)" }}>Fecha</th>
+                <th className="px-3 py-2 text-left font-semibold" style={{ color: "var(--nuvia-text-secondary)" }}>Usuario</th>
+                <th className="px-3 py-2 text-left font-semibold" style={{ color: "var(--nuvia-text-secondary)" }}>Acción</th>
+                <th className="px-3 py-2 text-left font-semibold" style={{ color: "var(--nuvia-text-secondary)" }}>Entidad</th>
+                <th className="px-3 py-2 text-left font-semibold" style={{ color: "var(--nuvia-text-secondary)" }}>Expediente</th>
+                <th className="px-3 py-2 text-left font-semibold" style={{ color: "var(--nuvia-text-secondary)" }}>Detalle</th>
               </tr>
-            ))}
-            {filtered.length === 0 && (
-              <tr><td colSpan={6} className="p-8 text-center text-[#242424]/60">Sin resultados.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </Card>
-    </div>
+            </thead>
+            <tbody>
+              {filtered.map((r) => (
+                <tr key={r.id} className="align-top transition" style={{ borderTop: "1px solid var(--nuvia-border)" }}>
+                  <td className="px-3 py-2 whitespace-nowrap" style={{ color: "var(--nuvia-text-secondary)" }}>{new Date(r.created_at).toLocaleString()}</td>
+                  <td className="px-3 py-2" style={{ color: "var(--nuvia-text-primary)" }}>{nombres.get(r.user_id ?? "") ?? "—"}</td>
+                  <td className="px-3 py-2 font-mono text-[11px]" style={{ color: "var(--nuvia-accent-blue)" }}>{r.accion}</td>
+                  <td className="px-3 py-2" style={{ color: "var(--nuvia-text-secondary)" }}>{r.entidad}</td>
+                  <td className="px-3 py-2">
+                    {r.expediente_id ? (
+                      <Link
+                        to="/casos/$id"
+                        params={{ id: r.expediente_id }}
+                        className="hover:underline font-mono text-[11px]"
+                        style={{ color: "var(--nuvia-accent-blue)" }}
+                      >
+                        {r.expediente_id.slice(0, 8)}…
+                      </Link>
+                    ) : <span style={{ color: "var(--nuvia-text-secondary)" }}>—</span>}
+                  </td>
+                  <td className="px-3 py-2 max-w-[360px]">
+                    {r.valor_nuevo ? (
+                      <code className="text-[10.5px] break-all line-clamp-2" style={{ color: "var(--nuvia-text-secondary)" }}>
+                        {JSON.stringify(r.valor_nuevo)}
+                      </code>
+                    ) : <span style={{ color: "var(--nuvia-text-secondary)" }}>—</span>}
+                  </td>
+                </tr>
+              ))}
+              {filtered.length === 0 && (
+                <tr><td colSpan={6} className="p-8 text-center" style={{ color: "var(--nuvia-text-secondary)" }}>Sin resultados.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </PageLayout>
   );
 }

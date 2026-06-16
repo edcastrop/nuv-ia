@@ -2,7 +2,8 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Users, UserCheck, UserX, Clock, CheckCircle2, Activity, Save } from "lucide-react";
+import { ArrowLeft, Users, UserCheck, UserX, Clock, CheckCircle2, Activity, Save, Rocket } from "lucide-react";
+import { PageLayout, ExecutiveHero } from "@/components/nuvia";
 
 export const Route = createFileRoute("/_authenticated/super-admin/onboarding")({
   component: SuperAdminOnboarding,
@@ -70,96 +71,122 @@ function SuperAdminOnboarding() {
     setSaved(true); setTimeout(() => setSaved(false), 2000);
   };
 
-  if (roleLoading) return <div className="p-8 text-white/60 text-sm">Cargando…</div>;
+  if (roleLoading) {
+    return (
+      <PageLayout>
+        <div className="p-8 text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>Cargando…</div>
+      </PageLayout>
+    );
+  }
   if (!isSuperAdmin) return <Navigate to="/inicio" />;
 
+  const cardStyle = { background: "var(--nuvia-bg-card)", border: "1px solid var(--nuvia-border)" } as const;
+
   return (
-    <div className="p-6 md:p-8 text-white">
-      <h1 className="text-2xl font-semibold mb-1">Onboarding NUVEX</h1>
-      <p className="text-white/60 text-sm mb-6">Seguimiento del ingreso y formación de colaboradores.</p>
+    <PageLayout>
+      <ExecutiveHero
+        badge={{ icon: <Rocket size={12} />, label: "Adopción NUVIA", tone: "blue" }}
+        title="Onboarding NUVEX"
+        description="Seguimiento del ingreso y formación de colaboradores."
+        meta={
+          <Link to="/super-admin" className="inline-flex items-center gap-1 text-[11px]" style={{ color: "var(--nuvia-accent-blue)" }}>
+            <ArrowLeft size={12} /> Super Admin
+          </Link>
+        }
+      />
 
       {kpi && (
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-8">
-          <Kpi label="Pendientes" value={kpi.pendientes} Icon={Clock} color="#F59E0B" />
-          <Kpi label="Aprobados" value={kpi.aprobados} Icon={UserCheck} color="#84B98F" />
-          <Kpi label="Rechazados" value={kpi.rechazados} Icon={UserX} color="#E11D48" />
-          <Kpi label="Onb. en progreso" value={kpi.onb_en_progreso} Icon={Activity} color="#445DA3" />
-          <Kpi label="Onb. completado" value={kpi.onb_completado} Icon={CheckCircle2} color="#84B98F" />
-          <Kpi label="Activos" value={kpi.activos} Icon={Users} color="#94A3B8" />
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+          <Kpi label="Pendientes" value={kpi.pendientes} Icon={Clock} color="#F6C453" />
+          <Kpi label="Aprobados" value={kpi.aprobados} Icon={UserCheck} color="var(--nuvia-accent-green)" />
+          <Kpi label="Rechazados" value={kpi.rechazados} Icon={UserX} color="#FF8585" />
+          <Kpi label="Onb. en progreso" value={kpi.onb_en_progreso} Icon={Activity} color="var(--nuvia-accent-blue)" />
+          <Kpi label="Onb. completado" value={kpi.onb_completado} Icon={CheckCircle2} color="var(--nuvia-accent-green)" />
+          <Kpi label="Activos" value={kpi.activos} Icon={Users} color="var(--nuvia-text-secondary)" />
         </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <section className="lg:col-span-2 rounded-2xl p-5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+        <section className="lg:col-span-2 rounded-2xl p-5" style={cardStyle}>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold">Últimos registros</h2>
-            <Link to="/super-admin/accesos" className="text-xs text-[#84B98F] hover:underline">Ir a bandeja de aprobación →</Link>
+            <h2 className="font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>Últimos registros</h2>
+            <Link to="/super-admin/accesos" className="text-xs hover:underline" style={{ color: "var(--nuvia-accent-green)" }}>Ir a bandeja de aprobación →</Link>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-white/50 text-xs">
-                <tr><th className="text-left py-2">Usuario</th><th className="text-left">Rol</th><th className="text-left">Estado</th><th className="text-left">Onboarding</th><th className="text-right">Registro</th></tr>
+              <thead className="text-xs">
+                <tr>
+                  <th className="text-left py-2 font-semibold" style={{ color: "var(--nuvia-text-secondary)" }}>Usuario</th>
+                  <th className="text-left font-semibold" style={{ color: "var(--nuvia-text-secondary)" }}>Rol</th>
+                  <th className="text-left font-semibold" style={{ color: "var(--nuvia-text-secondary)" }}>Estado</th>
+                  <th className="text-left font-semibold" style={{ color: "var(--nuvia-text-secondary)" }}>Onboarding</th>
+                  <th className="text-right font-semibold" style={{ color: "var(--nuvia-text-secondary)" }}>Registro</th>
+                </tr>
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={r.id} className="border-t border-white/5">
+                  <tr key={r.id} style={{ borderTop: "1px solid var(--nuvia-border)" }}>
                     <td className="py-2">
-                      <div className="font-medium">{r.nombre ?? "—"}</div>
-                      <div className="text-xs text-white/50">{r.email}</div>
+                      <div className="font-medium" style={{ color: "var(--nuvia-text-primary)" }}>{r.nombre ?? "—"}</div>
+                      <div className="text-xs" style={{ color: "var(--nuvia-text-secondary)" }}>{r.email}</div>
                     </td>
-                    <td className="text-xs text-white/70">{r.rol_solicitado ?? "—"}</td>
+                    <td className="text-xs" style={{ color: "var(--nuvia-text-secondary)" }}>{r.rol_solicitado ?? "—"}</td>
                     <td><Badge text={r.estado_acceso} /></td>
                     <td><Badge text={`${r.onboarding_estado} (${r.onboarding_paso}/5)`} /></td>
-                    <td className="text-xs text-right text-white/50">{new Date(r.created_at).toLocaleDateString()}</td>
+                    <td className="text-xs text-right" style={{ color: "var(--nuvia-text-secondary)" }}>{new Date(r.created_at).toLocaleDateString()}</td>
                   </tr>
                 ))}
-                {rows.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-white/40 text-sm">Sin registros aún.</td></tr>}
+                {rows.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>Sin registros aún.</td></tr>}
               </tbody>
             </table>
           </div>
         </section>
 
-        <section className="rounded-2xl p-5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-          <h2 className="font-semibold mb-4">Configuración de bienvenida</h2>
+        <section className="rounded-2xl p-5" style={cardStyle}>
+          <h2 className="font-semibold mb-4" style={{ color: "var(--nuvia-text-primary)" }}>Configuración de bienvenida</h2>
           <label className="block mb-3">
-            <span className="text-xs text-white/60 mb-1 block">Video de bienvenida (URL)</span>
+            <span className="text-xs mb-1.5 block font-semibold uppercase tracking-[0.12em]" style={{ color: "var(--nuvia-text-secondary)" }}>Video de bienvenida (URL)</span>
             <input value={cfg.video_bienvenida_url} onChange={(e) => setCfg({ ...cfg, video_bienvenida_url: e.target.value })}
-              placeholder="https://youtu.be/..." className="w-full rounded-lg px-3 py-2 text-sm bg-white/5 border border-white/10 outline-none" />
+              placeholder="https://youtu.be/..." className="nuvia-input" />
           </label>
           <label className="block mb-3">
-            <span className="text-xs text-white/60 mb-1 block">Mensaje de bienvenida</span>
+            <span className="text-xs mb-1.5 block font-semibold uppercase tracking-[0.12em]" style={{ color: "var(--nuvia-text-secondary)" }}>Mensaje de bienvenida</span>
             <textarea value={cfg.mensaje_bienvenida} onChange={(e) => setCfg({ ...cfg, mensaje_bienvenida: e.target.value })}
-              rows={2} className="w-full rounded-lg px-3 py-2 text-sm bg-white/5 border border-white/10 outline-none" />
+              rows={2} className="nuvia-input" style={{ resize: "vertical" }} />
           </label>
           <label className="block mb-3">
-            <span className="text-xs text-white/60 mb-1 block">Descripción de la empresa</span>
+            <span className="text-xs mb-1.5 block font-semibold uppercase tracking-[0.12em]" style={{ color: "var(--nuvia-text-secondary)" }}>Descripción de la empresa</span>
             <textarea value={cfg.descripcion_empresa} onChange={(e) => setCfg({ ...cfg, descripcion_empresa: e.target.value })}
-              rows={4} className="w-full rounded-lg px-3 py-2 text-sm bg-white/5 border border-white/10 outline-none" />
+              rows={4} className="nuvia-input" style={{ resize: "vertical" }} />
           </label>
-          <button onClick={saveConfig} className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white" style={{ background: "linear-gradient(135deg, #445DA3, #84B98F)" }}>
+          <button
+            onClick={saveConfig}
+            className="mt-2 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white"
+            style={{ background: "linear-gradient(135deg, var(--nuvia-accent-blue), var(--nuvia-accent-green))" }}
+          >
             <Save size={14} /> {saved ? "Guardado ✓" : "Guardar"}
           </button>
         </section>
       </div>
-    </div>
+    </PageLayout>
   );
 }
 
 function Kpi({ label, value, Icon, color }: { label: string; value: number; Icon: typeof Users; color: string }) {
   return (
-    <div className="rounded-xl p-4" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+    <div className="rounded-xl p-4" style={{ background: "var(--nuvia-bg-card)", border: "1px solid var(--nuvia-border)" }}>
       <div className="flex items-center justify-between mb-2"><Icon size={16} style={{ color }} /></div>
-      <div className="text-2xl font-semibold">{value}</div>
-      <div className="text-xs text-white/60 mt-1">{label}</div>
+      <div className="text-2xl font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{value}</div>
+      <div className="text-xs mt-1" style={{ color: "var(--nuvia-text-secondary)" }}>{label}</div>
     </div>
   );
 }
 
 function Badge({ text }: { text: string }) {
   const colors: Record<string, string> = {
-    pendiente: "#F59E0B", aprobado: "#84B98F", rechazado: "#E11D48", bloqueado: "#94A3B8",
-    completado: "#84B98F", en_progreso: "#445DA3",
+    pendiente: "#F6C453", aprobado: "#9BCB9F", rechazado: "#FF8585", bloqueado: "#A5B5E0",
+    completado: "#9BCB9F", en_progreso: "#A5B5E0",
   };
-  const c = colors[text.split(" ")[0]] ?? "#94A3B8";
-  return <span className="inline-block rounded-md px-2 py-0.5 text-[11px]" style={{ background: `${c}25`, color: c, border: `1px solid ${c}55` }}>{text}</span>;
+  const c = colors[text.split(" ")[0]] ?? "#A5B5E0";
+  return <span className="inline-block rounded-md px-2 py-0.5 text-[11px] font-medium" style={{ background: `${c}22`, color: c, border: `1px solid ${c}55` }}>{text}</span>;
 }

@@ -1,6 +1,7 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Card } from "@/components/nuvex/ui";
+import { ArrowLeft, Users } from "lucide-react";
+import { PageLayout, ExecutiveHero } from "@/components/nuvia";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole, type AppRole } from "@/hooks/useUserRole";
 import { roleLabel } from "@/lib/roleLabels";
@@ -47,7 +48,13 @@ function SuperAdminUsuarios() {
 
   useEffect(() => { if (!rolesLoading && isSuperAdmin) reload(); else if (!rolesLoading) setLoading(false); }, [rolesLoading, isSuperAdmin]);
 
-  if (rolesLoading || loading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>;
+  if (rolesLoading || loading) {
+    return (
+      <PageLayout>
+        <div className="p-12 text-center text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>Cargando…</div>
+      </PageLayout>
+    );
+  }
   if (!isSuperAdmin) return <Navigate to="/inicio" />;
 
   const toggleActivo = async (p: Profile) => {
@@ -71,30 +78,40 @@ function SuperAdminUsuarios() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-6 space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold text-[#242424]">Usuarios</h1>
-        <div className="text-sm text-[#242424]/60">Activar / desactivar y asignar roles</div>
-      </div>
-      <Card>
+    <PageLayout>
+      <ExecutiveHero
+        badge={{ icon: <Users size={12} />, label: "Gestión de identidad", tone: "blue" }}
+        title="Usuarios"
+        description="Activa, desactiva y asigna roles a los usuarios registrados en NUVIA."
+        meta={
+          <Link to="/super-admin" className="inline-flex items-center gap-1 text-[11px]" style={{ color: "var(--nuvia-accent-blue)" }}>
+            <ArrowLeft size={12} /> Super Admin
+          </Link>
+        }
+      />
+
+      <section
+        className="rounded-2xl p-5"
+        style={{ background: "var(--nuvia-bg-card)", border: "1px solid var(--nuvia-border)" }}
+      >
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-[11px] uppercase tracking-wider text-[#242424]/60">
-                <th className="text-left py-2">Nombre</th>
-                <th className="text-left">Email</th>
-                <th className="text-left">Roles</th>
-                <th className="text-right">Activo</th>
+              <tr className="text-[11px] uppercase tracking-[0.14em]" style={{ color: "var(--nuvia-text-secondary)" }}>
+                <th className="text-left py-2 font-semibold" style={{ color: "var(--nuvia-text-secondary)" }}>Nombre</th>
+                <th className="text-left font-semibold" style={{ color: "var(--nuvia-text-secondary)" }}>Email</th>
+                <th className="text-left font-semibold" style={{ color: "var(--nuvia-text-secondary)" }}>Roles</th>
+                <th className="text-right font-semibold" style={{ color: "var(--nuvia-text-secondary)" }}>Activo</th>
               </tr>
             </thead>
             <tbody>
               {profiles.map((p) => {
                 const rs = rolesByUser.get(p.id) ?? [];
                 return (
-                  <tr key={p.id} className="border-t border-[#E3E7EE] align-top">
-                    <td className="py-2 pr-2">{p.nombre || "—"}</td>
-                    <td className="py-2 pr-2 text-[#242424]/70">{p.email || "—"}</td>
-                    <td className="py-2 pr-2">
+                  <tr key={p.id} className="align-top" style={{ borderTop: "1px solid var(--nuvia-border)" }}>
+                    <td className="py-2.5 pr-2" style={{ color: "var(--nuvia-text-primary)" }}>{p.nombre || "—"}</td>
+                    <td className="py-2.5 pr-2" style={{ color: "var(--nuvia-text-secondary)" }}>{p.email || "—"}</td>
+                    <td className="py-2.5 pr-2">
                       <div className="flex flex-wrap gap-1">
                         {ROLES.map((r) => {
                           const has = rs.includes(r);
@@ -103,23 +120,23 @@ function SuperAdminUsuarios() {
                               key={r}
                               onClick={() => toggleRole(p.id, r, has)}
                               disabled={busyId === p.id}
-                              className="rounded-full px-2 py-0.5 text-[10px] font-medium border"
+                              className="rounded-full px-2 py-0.5 text-[10px] font-medium transition disabled:opacity-50"
                               style={has
-                                ? { background: "#445DA3", color: "#fff", borderColor: "#445DA3" }
-                                : { background: "#fff", color: "#242424", borderColor: "#E3E7EE" }}
+                                ? { background: "var(--nuvia-accent-blue)", color: "#fff", border: "1px solid var(--nuvia-accent-blue)" }
+                                : { background: "rgba(255,255,255,0.03)", color: "var(--nuvia-text-secondary)", border: "1px solid var(--nuvia-border)" }}
                             >{roleLabel(r, true)}</button>
                           );
                         })}
                       </div>
                     </td>
-                    <td className="py-2 text-right">
+                    <td className="py-2.5 text-right">
                       <button
                         onClick={() => toggleActivo(p)}
                         disabled={busyId === p.id}
-                        className="rounded-lg border px-2 py-1 text-[11px] font-medium"
+                        className="rounded-lg px-2.5 py-1 text-[11px] font-semibold transition disabled:opacity-50"
                         style={p.activo
-                          ? { background: "#EAF7EE", color: "#1F7A45", borderColor: "#84B98F" }
-                          : { background: "#FDECEC", color: "#B42318", borderColor: "#F5C2C2" }}
+                          ? { background: "rgba(132,185,143,0.15)", color: "#9BCB9F", border: "1px solid rgba(132,185,143,0.45)" }
+                          : { background: "rgba(255,107,107,0.12)", color: "#FF8585", border: "1px solid rgba(255,107,107,0.40)" }}
                       >{p.activo ? "Activo" : "Inactivo"}</button>
                     </td>
                   </tr>
@@ -128,10 +145,10 @@ function SuperAdminUsuarios() {
             </tbody>
           </table>
         </div>
-        <div className="mt-3 text-[11px] text-[#242424]/60">
+        <div className="mt-3 text-[11px]" style={{ color: "var(--nuvia-text-secondary)" }}>
           Los usuarios se registran a través de la pantalla de inicio de sesión. Desde aquí asignas roles y los activas o desactivas.
         </div>
-      </Card>
-    </div>
+      </section>
+    </PageLayout>
   );
 }
