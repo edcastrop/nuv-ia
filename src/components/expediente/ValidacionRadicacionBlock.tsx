@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
-import { Card } from "@/components/nuvex/ui";
+import { NCard } from "@/components/nuvia/NCard";
+import { SectionHeader } from "@/components/nuvia/SectionHeader";
 import { ShieldCheck, CheckCircle2, XCircle, RefreshCw, Landmark, Lock, Save } from "lucide-react";
 import { toast } from "sonner";
 import { evaluarRequisitosRadicacion, type ResultadoValidacionRadicacion } from "@/lib/validacionRadicacion";
-import { NUVEX } from "@/components/nuvex/constants";
 import { supabase } from "@/integrations/supabase/client";
 import { useEstadoSugerido } from "@/hooks/useEstadoSugerido";
 import { ConfirmEstadoModal } from "./ConfirmEstadoModal";
 import type { CasoEstado } from "@/lib/casoEstados";
 import { labelEstado } from "@/lib/casoEstados";
+
 
 const ESTADOS_PERMITEN_RADICAR: CasoEstado[] = [
   "documentacion_completa",
@@ -114,88 +115,127 @@ export function ValidacionRadicacionBlock({ expedienteId }: { expedienteId: stri
   };
 
   return (
-    <Card>
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <ShieldCheck size={18} style={{ color: NUVEX.azul }} />
-          <h3 className="text-sm font-semibold text-[#242424]">
-            Radicación en banco · control de calidad y registro
-          </h3>
-        </div>
-        <button onClick={() => void load()} className="text-[11px] text-[#445DA3] hover:underline inline-flex items-center gap-1">
-          <RefreshCw size={12} /> Reevaluar
-        </button>
-      </div>
+    <NCard variant="elevated">
+      <SectionHeader
+        icon={<ShieldCheck size={16} />}
+        title="Radicación en banco"
+        description="Control de calidad y registro"
+        action={
+          <button
+            onClick={() => void load()}
+            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid var(--nuvia-border)",
+              color: "var(--nuvia-accent-blue)",
+            }}
+          >
+            <RefreshCw size={12} /> Reevaluar
+          </button>
+        }
+      />
 
-      {loading && <div className="py-3 text-[12px] text-[#242424]/60">Evaluando requisitos…</div>}
+      {loading && (
+        <div className="py-3 text-[12px]" style={{ color: "var(--nuvia-text-secondary)" }}>
+          Evaluando requisitos…
+        </div>
+      )}
 
       {!loading && data && (
         <>
           <div className="mb-3">
             {yaRadicado ? (
-              <div className="rounded-lg border border-[#A6E2B6] bg-[#DDF4E3] px-3 py-2 text-[12px] text-[#1F7A45]">
+              <div
+                className="rounded-lg px-3 py-2 text-[12px]"
+                style={{
+                  background: "rgba(132,185,143,0.14)",
+                  border: "1px solid rgba(132,185,143,0.35)",
+                  color: "var(--nuvia-accent-green)",
+                }}
+              >
                 <div className="font-semibold">✓ Caso radicado en el banco</div>
                 {info?.radicado_id_banco && (
-                  <div className="mt-0.5 text-[11px] text-[#1F7A45]/90">
+                  <div className="mt-0.5 text-[11px] opacity-90">
                     Radicado: <strong>{info.radicado_id_banco}</strong>
-                    {info.radicado_fecha && (
-                      <> · {new Date(info.radicado_fecha).toLocaleString("es-CO")}</>
-                    )}
+                    {info.radicado_fecha && <> · {new Date(info.radicado_fecha).toLocaleString("es-CO")}</>}
                   </div>
                 )}
                 {estado && (
-                  <div className="mt-0.5 text-[11px] text-[#1F7A45]/80">
+                  <div className="mt-0.5 text-[11px] opacity-80">
                     Estado actual: {labelEstado(estado)}
                   </div>
                 )}
               </div>
             ) : faltaCapturarDatos ? (
-              <div className="rounded-lg border border-[#FBBF24] bg-[#FEF3C7] px-3 py-2 text-[12px] text-[#92400E] font-semibold">
+              <div
+                className="rounded-lg px-3 py-2 text-[12px] font-semibold"
+                style={{
+                  background: "rgba(246,196,83,0.16)",
+                  border: "1px solid rgba(246,196,83,0.4)",
+                  color: "var(--nuvia-warning)",
+                }}
+              >
                 ⚠ El caso figura como <strong>{estado ? labelEstado(estado) : "radicado"}</strong> pero falta capturar el ID y la fecha de radicación. Complétalos abajo.
               </div>
             ) : data.puedeRadicar ? (
-              <div className="rounded-lg border border-[#A6E2B6] bg-[#DDF4E3] px-3 py-2 text-[12px] text-[#1F7A45] font-semibold">
+              <div
+                className="rounded-lg px-3 py-2 text-[12px] font-semibold"
+                style={{
+                  background: "rgba(132,185,143,0.14)",
+                  border: "1px solid rgba(132,185,143,0.35)",
+                  color: "var(--nuvia-accent-green)",
+                }}
+              >
                 ✓ El expediente cumple los requisitos. Ya puede radicarse en el banco.
               </div>
             ) : (
-              <div className="rounded-lg border border-[#FCA5A5] bg-[#FEE2E2] px-3 py-2 text-[12px] text-[#991B1B] font-semibold">
+              <div
+                className="rounded-lg px-3 py-2 text-[12px] font-semibold"
+                style={{
+                  background: "rgba(255,107,107,0.16)",
+                  border: "1px solid rgba(255,107,107,0.4)",
+                  color: "var(--nuvia-danger)",
+                }}
+              >
                 Radicación bloqueada · Faltan {data.pendientes.length} requisito(s).
               </div>
             )}
           </div>
 
-          {/* Form inline para completar datos cuando el estado ya avanzó pero faltan datos */}
           {faltaCapturarDatos && (
-            <div className="mb-4 rounded-lg border border-[#E3E7EE] bg-[#F7F9FB] p-3">
-              <div className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: NUVEX.azul }}>
+            <div
+              className="mb-4 rounded-lg p-3"
+              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--nuvia-border)" }}
+            >
+              <div className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: "var(--nuvia-accent-blue)" }}>
                 Completar datos de radicación
               </div>
-              <div className="text-sm font-semibold text-[#242424] mt-0.5">
+              <div className="text-sm font-semibold mt-0.5" style={{ color: "var(--nuvia-text-primary)" }}>
                 ID/código y fecha entregados por el banco
               </div>
               <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_220px_auto] items-end">
                 <div>
-                  <label className="text-[11px] uppercase tracking-wider text-[#242424]/60">
-                    ID de radicado <span className="text-[#B42318]">*</span>
+                  <label className="text-[11px] uppercase tracking-wider" style={{ color: "var(--nuvia-text-secondary)" }}>
+                    ID de radicado <span style={{ color: "var(--nuvia-danger)" }}>*</span>
                   </label>
                   <input
                     type="text"
                     value={radicadoIdInput}
                     onChange={(e) => setRadicadoIdInput(e.target.value)}
                     placeholder="Ej: 2026-RAD-987654"
-                    className="mt-1 w-full rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm bg-white"
+                    className="nuvia-input nuvia-input-sm mt-1 w-full"
                     maxLength={120}
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] uppercase tracking-wider text-[#242424]/60">
+                  <label className="text-[11px] uppercase tracking-wider" style={{ color: "var(--nuvia-text-secondary)" }}>
                     Fecha de radicación
                   </label>
                   <input
                     type="datetime-local"
                     value={fechaInput}
                     onChange={(e) => setFechaInput(e.target.value)}
-                    className="mt-1 w-full rounded-lg border border-[#E3E7EE] px-3 py-2 text-sm bg-white"
+                    className="nuvia-input nuvia-input-sm mt-1 w-full"
                   />
                 </div>
                 <button
@@ -203,7 +243,7 @@ export function ValidacionRadicacionBlock({ expedienteId }: { expedienteId: stri
                   onClick={guardarDatosRadicacion}
                   disabled={savingDatos || radicadoIdInput.trim().length < 3}
                   className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ background: NUVEX.azul }}
+                  style={{ background: "var(--nuvia-accent-blue)" }}
                 >
                   <Save size={14} />
                   {savingDatos ? "Guardando…" : "Guardar"}
@@ -212,18 +252,20 @@ export function ValidacionRadicacionBlock({ expedienteId }: { expedienteId: stri
             </div>
           )}
 
-          {/* Acción: registrar radicado en banco (transición de estado) */}
           {!yaRadicado && !faltaCapturarDatos && (
-            <div className="mb-4 rounded-lg border border-[#E3E7EE] bg-[#F7F9FB] p-3">
+            <div
+              className="mb-4 rounded-lg p-3"
+              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--nuvia-border)" }}
+            >
               <div className="flex items-start justify-between gap-3 flex-wrap">
                 <div>
-                  <div className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: NUVEX.azul }}>
+                  <div className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: "var(--nuvia-accent-blue)" }}>
                     Acción · Operaciones / Apoderado
                   </div>
-                  <div className="text-sm font-semibold text-[#242424] mt-0.5">
+                  <div className="text-sm font-semibold mt-0.5" style={{ color: "var(--nuvia-text-primary)" }}>
                     Registrar radicación en el banco
                   </div>
-                  <p className="text-[11px] text-[#242424]/65 mt-0.5 max-w-md">
+                  <p className="text-[11px] mt-0.5 max-w-md" style={{ color: "var(--nuvia-text-secondary)" }}>
                     Cuando radiques físicamente en el banco, registra aquí el ID/código entregado y observaciones del asesor que atendió.
                   </p>
                 </div>
@@ -232,7 +274,7 @@ export function ValidacionRadicacionBlock({ expedienteId }: { expedienteId: stri
                   onClick={() => sugerir("radicado_confirmado")}
                   disabled={!puedeAccionar}
                   className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ background: NUVEX.azul }}
+                  style={{ background: "var(--nuvia-accent-blue)" }}
                   title={
                     !data.puedeRadicar
                       ? "Faltan requisitos por cumplir"
@@ -246,7 +288,7 @@ export function ValidacionRadicacionBlock({ expedienteId }: { expedienteId: stri
                 </button>
               </div>
               {!data.puedeRadicar && (
-                <div className="mt-2 text-[11px] text-[#991B1B]">
+                <div className="mt-2 text-[11px]" style={{ color: "var(--nuvia-danger)" }}>
                   Resuelve los requisitos pendientes listados abajo antes de radicar.
                 </div>
               )}
@@ -257,11 +299,18 @@ export function ValidacionRadicacionBlock({ expedienteId }: { expedienteId: stri
             {data.requisitos.map((r) => (
               <li key={r.key} className="flex items-start gap-2 text-[12px]">
                 {r.cumple
-                  ? <CheckCircle2 size={16} className="mt-[1px]" style={{ color: "#1F7A45" }} />
-                  : <XCircle size={16} className="mt-[1px]" style={{ color: "#B42318" }} />}
+                  ? <CheckCircle2 size={16} className="mt-[1px]" style={{ color: "var(--nuvia-accent-green)" }} />
+                  : <XCircle size={16} className="mt-[1px]" style={{ color: "var(--nuvia-danger)" }} />}
                 <div>
-                  <div className={r.cumple ? "text-[#242424]" : "text-[#991B1B] font-semibold"}>{r.label}</div>
-                  {!r.cumple && r.detalle && <div className="text-[11px] text-[#242424]/65">{r.detalle}</div>}
+                  <div
+                    className={r.cumple ? "" : "font-semibold"}
+                    style={{ color: r.cumple ? "var(--nuvia-text-primary)" : "var(--nuvia-danger)" }}
+                  >
+                    {r.label}
+                  </div>
+                  {!r.cumple && r.detalle && (
+                    <div className="text-[11px]" style={{ color: "var(--nuvia-text-secondary)" }}>{r.detalle}</div>
+                  )}
                 </div>
               </li>
             ))}
@@ -275,6 +324,7 @@ export function ValidacionRadicacionBlock({ expedienteId }: { expedienteId: stri
         onConfirm={async (obs, submotivo, extras) => { await confirmar(obs, submotivo, extras); }}
         onCancel={cancelar}
       />
-    </Card>
+    </NCard>
   );
 }
+
