@@ -22,7 +22,7 @@ type Row = {
 };
 
 function SuperAdminOnboarding() {
-  const { isSuperAdmin } = useUserRole();
+  const { isSuperAdmin, loading: roleLoading } = useUserRole();
   const [kpi, setKpi] = useState<KPI | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
   const [cfg, setCfg] = useState({ video_bienvenida_url: "", mensaje_bienvenida: "", descripcion_empresa: "" });
@@ -70,6 +70,7 @@ function SuperAdminOnboarding() {
     setSaved(true); setTimeout(() => setSaved(false), 2000);
   };
 
+  if (roleLoading) return <div className="p-8 text-white/60 text-sm">Cargando…</div>;
   if (!isSuperAdmin) return <Navigate to="/inicio" />;
 
   return (
