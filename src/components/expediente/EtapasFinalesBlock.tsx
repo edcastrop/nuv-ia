@@ -91,7 +91,7 @@ export function EtapasFinalesBlock({
               e.preventDefault();
               document.getElementById("informe-final")?.scrollIntoView({ behavior: "smooth", block: "start" });
             }}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50"
+            className="rounded-lg border border-[color:var(--nuvia-border-medium)] bg-[rgba(255,255,255,0.03)] px-3 py-1.5 text-[11px] font-medium text-[color:var(--nuvia-text-secondary)] hover:bg-[rgba(255,255,255,0.06)]"
           >
             Abrir constructor de informe ↓
           </a>
@@ -109,7 +109,7 @@ export function EtapasFinalesBlock({
         extra={
           <Link
             to="/contabilidad/cuentas-cobro"
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50"
+            className="rounded-lg border border-[color:var(--nuvia-border-medium)] bg-[rgba(255,255,255,0.03)] px-3 py-1.5 text-[11px] font-medium text-[color:var(--nuvia-text-secondary)] hover:bg-[rgba(255,255,255,0.06)]"
           >
             Abrir contabilidad →
           </Link>
