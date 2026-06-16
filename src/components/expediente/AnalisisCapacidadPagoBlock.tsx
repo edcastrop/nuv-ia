@@ -535,8 +535,8 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
           {p.archivos.length > 0 && (
             <ul className="mt-3 space-y-1">
               {p.archivos.map((a) => (
-                <li key={a.id} className="flex items-center gap-2 text-sm p-2 bg-slate-50 rounded">
-                  <FileText className="w-4 h-4 text-slate-500" />
+                <li key={a.id} className="flex items-center gap-2 text-sm p-2 rounded" style={{ background: "rgba(255,255,255,0.04)", color: "var(--nuvia-text-secondary)" }}>
+                  <FileText className="w-4 h-4" style={{ color: "var(--nuvia-text-tertiary)" }} />
                   <span className="truncate flex-1">{a.nombre}</span>
                   <Select value={a.tipo} onValueChange={(v) => setTipoDoc(idx, a.id, v as TipoDoc)}>
                     <SelectTrigger className="w-[150px] h-7 text-xs"><SelectValue /></SelectTrigger>
