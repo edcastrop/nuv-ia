@@ -479,10 +479,10 @@ export function PropuestasComerciales(props: Props) {
               <div className="relative px-5 pt-4">
                 <div
                   className="text-[11px] font-bold uppercase tracking-[0.18em]"
-                  style={{ color: NUVEX.azul }}
+                  style={{ color: "#9DB6FF" }}
                 >
                   Elimina{" "}
-                  <span className="text-[15px]" style={{ color: "#1F2A44" }}>
+                  <span className="text-[15px]" style={{ color: "#FFFFFF" }}>
                     {c.valid ? c.cuotasEliminadas : cuotas}
                   </span>{" "}
                   cuotas
@@ -497,7 +497,10 @@ export function PropuestasComerciales(props: Props) {
                     </span>
                   </Alert>
                   <div className="mt-3">
-                    <label className="text-[10px] font-semibold uppercase tracking-wider text-[#3A4660]/75">
+                    <label
+                      className="text-[10px] font-semibold uppercase tracking-wider"
+                      style={{ color: "rgba(230,236,255,0.6)" }}
+                    >
                       Cuotas a eliminar
                     </label>
                     <input
@@ -509,7 +512,7 @@ export function PropuestasComerciales(props: Props) {
                         const v = parseInt(e.target.value, 10);
                         setCuotas(idx, Number.isFinite(v) ? v : 0);
                       }}
-                      className="mt-1 w-full rounded-xl border border-white/70 bg-white/70 px-3 py-2 text-base font-bold text-[#1F2A44] outline-none backdrop-blur-md focus:border-[#445DA3]/60 focus:ring-2 focus:ring-[#445DA3]/15"
+                      className="nuvia-input mt-1 w-full text-base font-bold outline-none"
                     />
                   </div>
                 </div>
@@ -519,7 +522,7 @@ export function PropuestasComerciales(props: Props) {
                   <div className="relative px-5 pt-4">
                     <div
                       className="text-[10px] font-semibold uppercase tracking-[0.18em]"
-                      style={{ color: "#1F5A3A" }}
+                      style={{ color: "#A7E0B8" }}
                     >
                       Ahorro total
                     </div>
@@ -527,7 +530,7 @@ export function PropuestasComerciales(props: Props) {
                       className="mt-1 bg-clip-text text-[26px] font-extrabold leading-none text-transparent break-words sm:text-[34px]"
                       style={{
                         backgroundImage:
-                          "linear-gradient(135deg, #1F7A45 0%, #2EA866 55%, #5BC889 100%)",
+                          "linear-gradient(135deg, #84B98F 0%, #A7E0B8 55%, #C8F0D2 100%)",
                         letterSpacing: "-0.02em",
                       }}
                     >
@@ -540,20 +543,23 @@ export function PropuestasComerciales(props: Props) {
                     <HeroMetric
                       label="Incremento mensual"
                       value={`+${formatCOP(c.incrementoMensual)}`}
-                      color={NUVEX.azul}
+                      color="#9DB6FF"
                     />
                     <HeroMetric
                       label="Nueva cuota"
                       value={formatCOP(c.nuevaCuota)}
-                      color="#1F2A44"
+                      color="#FFFFFF"
                     />
                     <HeroMetric
                       label="Nuevo plazo"
                       value={`${c.nuevoPlazo} meses · ${(c.nuevoPlazo / 12).toFixed(1)} años`}
-                      color="#1F2A44"
+                      color="#FFFFFF"
                     />
                     <div>
-                      <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[#5C6B85]">
+                      <div
+                        className="text-[9px] font-semibold uppercase tracking-[0.16em]"
+                        style={{ color: "rgba(230,236,255,0.55)" }}
+                      >
                         Cuotas a eliminar
                       </div>
                       <input
@@ -565,36 +571,39 @@ export function PropuestasComerciales(props: Props) {
                           const v = parseInt(e.target.value, 10);
                           setCuotas(idx, Number.isFinite(v) ? v : 0);
                         }}
-                        className="mt-1 w-20 rounded-lg border border-white/70 bg-white/75 px-2 py-1 text-base font-bold text-[#1F2A44] outline-none backdrop-blur-md focus:border-[#445DA3]/60 focus:ring-2 focus:ring-[#445DA3]/15"
+                        className="nuvia-input nuvia-input-sm mt-1 w-20 text-base font-bold outline-none"
                       />
                     </div>
                   </div>
 
-                  {/* Comparativo tiempo actual vs nuevo - glass */}
+                  {/* Comparativo tiempo actual vs nuevo - glass dark */}
                   <div
                     className="relative mx-5 mt-4 overflow-hidden rounded-xl border px-3 py-2.5 backdrop-blur-md"
                     style={{
                       borderColor: "rgba(132,185,143,0.4)",
                       background:
-                        "linear-gradient(135deg, rgba(132,185,143,0.18), rgba(255,255,255,0.45))",
-                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.6)",
+                        "linear-gradient(135deg, rgba(132,185,143,0.18), rgba(20,28,54,0.55))",
+                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
                     }}
                   >
                     <div
                       className="text-[9px] font-semibold uppercase tracking-[0.16em]"
-                      style={{ color: "#1F5A3A" }}
+                      style={{ color: "#A7E0B8" }}
                     >
                       Tiempo: actual vs nuevo
                     </div>
                     <div className="mt-1 flex items-baseline justify-between gap-2">
-                      <span className="text-[12px] font-semibold text-[#5C6B85] line-through">
+                      <span
+                        className="text-[12px] font-semibold line-through"
+                        style={{ color: "rgba(230,236,255,0.5)" }}
+                      >
                         {props.cuotasPendientes} m · {(props.cuotasPendientes / 12).toFixed(1)} a
                       </span>
-                      <span className="text-[14px] font-extrabold" style={{ color: "#1F5A3A" }}>
+                      <span className="text-[14px] font-extrabold" style={{ color: "#A7E0B8" }}>
                         {c.nuevoPlazo} m · {(c.nuevoPlazo / 12).toFixed(1)} a
                       </span>
                     </div>
-                    <div className="mt-0.5 text-right text-[10px] font-semibold" style={{ color: "#1F5A3A" }}>
+                    <div className="mt-0.5 text-right text-[10px] font-semibold" style={{ color: "#A7E0B8" }}>
                       −{c.cuotasEliminadas} cuotas (−{(c.cuotasEliminadas / 12).toFixed(1)} años)
                     </div>
                   </div>
@@ -602,19 +611,19 @@ export function PropuestasComerciales(props: Props) {
                   {/* Sección secundaria: honorarios y veces pagado */}
                   <div
                     className="relative mt-5 flex flex-col gap-3 border-t px-5 py-3 text-[11px] min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between"
-                    style={{ borderColor: "rgba(255,255,255,0.7)", color: "#5C6B85" }}
+                    style={{ borderColor: "rgba(255,255,255,0.08)", color: "rgba(230,236,255,0.6)" }}
                   >
                     <div className="flex flex-col">
                       <span className="text-[9px] font-semibold uppercase tracking-wider opacity-70">
                         Honorarios
                       </span>
-                      <span className="font-semibold text-[#1F2A44]">{formatCOP(c.honorarios)}</span>
+                      <span className="font-semibold" style={{ color: "#FFFFFF" }}>{formatCOP(c.honorarios)}</span>
                     </div>
                     <div className="flex flex-col min-[380px]:items-end">
                       <span className="text-[9px] font-semibold uppercase tracking-wider opacity-70">
                         Veces pagado
                       </span>
-                      <span className="font-semibold text-[#1F2A44]">{formatNumber(veces, 2)}x</span>
+                      <span className="font-semibold" style={{ color: "#FFFFFF" }}>{formatNumber(veces, 2)}x</span>
                     </div>
                   </div>
 
@@ -629,15 +638,15 @@ export function PropuestasComerciales(props: Props) {
                         isRecomendada
                           ? {
                               background:
-                                "linear-gradient(135deg, rgba(132,185,143,0.32), rgba(68,93,163,0.22))",
-                              color: "#1F5A3A",
+                                "linear-gradient(135deg, rgba(132,185,143,0.32), rgba(68,93,163,0.28))",
+                              color: "#A7E0B8",
                               border: "1px solid rgba(132,185,143,0.55)",
                               cursor: "default",
-                              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.65)",
+                              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
                             }
                           : {
                               background:
-                                "linear-gradient(135deg, #1F2A44 0%, #445DA3 60%, #5B7DC8 100%)",
+                                "linear-gradient(135deg, #445DA3 0%, #5B7DC8 60%, #7AA0FF 100%)",
                               color: "#fff",
                               border: "1px solid rgba(255,255,255,0.18)",
                               boxShadow: "0 10px 24px -14px rgba(68,93,163,0.55)",
@@ -655,8 +664,15 @@ export function PropuestasComerciales(props: Props) {
       </div>
 
       {cuotasList.length === 0 && (
-        <div className="rounded-xl border border-dashed border-white/70 bg-white/40 p-6 text-center text-sm text-[#3A4660]/75 backdrop-blur-md">
-          No hay escenarios. Usa “Nuevo escenario” para agregar uno.
+        <div
+          className="rounded-xl border border-dashed p-6 text-center text-sm backdrop-blur-md"
+          style={{
+            borderColor: "rgba(255,255,255,0.15)",
+            background: "rgba(20,28,54,0.4)",
+            color: "rgba(230,236,255,0.6)",
+          }}
+        >
+          No hay escenarios. Usa "Nuevo escenario" para agregar uno.
         </div>
       )}
     </Card>
