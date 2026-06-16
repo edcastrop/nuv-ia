@@ -40,7 +40,7 @@ export function PresenciaPrivacidadSection() {
   if (visible === null) return null;
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white p-5">
+    <div className="rounded-2xl border border-white/10 p-5 nuvia-dark-card">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
           <div className="flex items-center gap-2">

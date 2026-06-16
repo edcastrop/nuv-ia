@@ -129,7 +129,7 @@ export function NotificacionesPrefsSection() {
   };
 
   return (
-    <section className="rounded-2xl bg-white border border-white/10 p-5 shadow-sm">
+    <section className="rounded-2xl border border-white/10 p-5 nuvia-dark-card">
       <div className="flex items-center gap-2 mb-2">
         <Bell size={16} className="text-[#445DA3]" />
         <h3 className="text-sm font-bold text-white">Notificaciones</h3>
@@ -155,7 +155,7 @@ export function NotificacionesPrefsSection() {
         <div className="flex items-center gap-2">
           <button
             onClick={probarSonido}
-            className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white px-2 py-1 text-[11px] font-medium text-[#445DA3] hover:bg-white/[0.05]"
+            className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.05] px-2 py-1 text-[11px] font-medium text-[#A5B5E0] hover:bg-white/[0.10]"
           >
             <PlayCircle size={12} /> Probar
           </button>
@@ -196,7 +196,7 @@ export function NotificacionesPrefsSection() {
         ) : permiso === "default" ? (
           <button
             onClick={pedirPermiso}
-            className="rounded-lg border border-white/10 bg-white px-3 py-1.5 text-xs font-semibold text-[#445DA3] hover:bg-white/[0.05]"
+            className="rounded-lg border border-white/10 bg-white/[0.05] px-3 py-1.5 text-xs font-semibold text-[#A5B5E0] hover:bg-white/[0.10]"
           >
             Activar
           </button>
@@ -208,7 +208,7 @@ export function NotificacionesPrefsSection() {
               if (p === "granted") toast.success("Notificaciones desbloqueadas");
               else toast.info("Si ya desbloqueaste el permiso, recarga la página.");
             }}
-            className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white px-3 py-1.5 text-xs font-semibold text-[#445DA3] hover:bg-white/[0.05]"
+            className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.05] px-3 py-1.5 text-xs font-semibold text-[#A5B5E0] hover:bg-white/[0.10]"
           >
             <RefreshCw size={12} /> Reintentar
           </button>
