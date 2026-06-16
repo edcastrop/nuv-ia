@@ -377,6 +377,7 @@ function MiPerfilPage() {
               setForm((prev) => ({ ...prev, ciudad: v, ...(dep ? { departamento: dep } : {}) }));
             }}
             required
+            variant="dark"
           />
           <TextField label="Dirección" value={form.direccion ?? ""} onChange={(v) => upd("direccion", v)} className="sm:col-span-2" />
         </div>
