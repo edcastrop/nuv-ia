@@ -393,12 +393,12 @@ export function PropuestasComerciales(props: Props) {
               className="relative flex min-w-0 flex-col overflow-hidden rounded-2xl border backdrop-blur-xl transition hover:-translate-y-0.5"
               style={{
                 background: isRecomendada
-                  ? "linear-gradient(155deg, rgba(255,255,255,0.85) 0%, rgba(232,245,236,0.78) 60%, rgba(214,232,255,0.72) 100%)"
-                  : "linear-gradient(155deg, rgba(255,255,255,0.78), rgba(244,247,251,0.7))",
-                borderColor: isRecomendada ? "rgba(132,185,143,0.6)" : "rgba(255,255,255,0.65)",
+                  ? "linear-gradient(155deg, rgba(20,28,54,0.85) 0%, rgba(28,55,42,0.78) 60%, rgba(20,40,80,0.78) 100%)"
+                  : "linear-gradient(155deg, rgba(20,28,54,0.78), rgba(13,18,36,0.7))",
+                borderColor: isRecomendada ? "rgba(132,185,143,0.6)" : "rgba(255,255,255,0.10)",
                 boxShadow: isRecomendada
-                  ? "0 22px 48px -20px rgba(68,93,163,0.35), 0 10px 28px -16px rgba(132,185,143,0.4), inset 0 1px 0 rgba(255,255,255,0.75)"
-                  : "0 14px 36px -22px rgba(36,52,92,0.18), inset 0 1px 0 rgba(255,255,255,0.7)",
+                  ? "0 22px 48px -20px rgba(0,0,0,0.65), 0 10px 28px -16px rgba(132,185,143,0.35), inset 0 1px 0 rgba(255,255,255,0.06)"
+                  : "0 14px 36px -22px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.04)",
               }}
             >
               {/* Glow halos */}
@@ -407,15 +407,15 @@ export function PropuestasComerciales(props: Props) {
                 className="pointer-events-none absolute -top-20 -right-20 h-56 w-56 rounded-full blur-3xl"
                 style={{
                   background: isRecomendada
-                    ? "radial-gradient(circle, rgba(132,185,143,0.45), transparent 70%)"
-                    : "radial-gradient(circle, rgba(68,93,163,0.18), transparent 70%)",
+                    ? "radial-gradient(circle, rgba(132,185,143,0.40), transparent 70%)"
+                    : "radial-gradient(circle, rgba(122,160,255,0.18), transparent 70%)",
                 }}
               />
               <span
                 aria-hidden
                 className="pointer-events-none absolute -bottom-24 -left-16 h-56 w-56 rounded-full blur-3xl"
                 style={{
-                  background: "radial-gradient(circle, rgba(68,93,163,0.18), transparent 70%)",
+                  background: "radial-gradient(circle, rgba(122,160,255,0.16), transparent 70%)",
                 }}
               />
 
@@ -426,7 +426,7 @@ export function PropuestasComerciales(props: Props) {
                   className="absolute inset-x-0 top-0 h-[3px]"
                   style={{
                     background:
-                      "linear-gradient(90deg, #445DA3 0%, #6E8AD6 50%, #84B98F 100%)",
+                      "linear-gradient(90deg, #445DA3 0%, #7AA0FF 50%, #84B98F 100%)",
                   }}
                 />
               )}
@@ -436,7 +436,7 @@ export function PropuestasComerciales(props: Props) {
                 <div className="flex flex-col gap-2">
                   <div
                     className="text-[10px] font-semibold uppercase tracking-[0.18em]"
-                    style={{ color: "#5C6B85" }}
+                    style={{ color: "rgba(230,236,255,0.55)" }}
                   >
                     Escenario {idx + 1}
                   </div>
@@ -447,14 +447,14 @@ export function PropuestasComerciales(props: Props) {
                         isRecomendada
                           ? {
                               background:
-                                "linear-gradient(135deg, rgba(132,185,143,0.28), rgba(68,93,163,0.22))",
-                              color: "#1F5A3A",
+                                "linear-gradient(135deg, rgba(132,185,143,0.28), rgba(68,93,163,0.28))",
+                              color: "#A7E0B8",
                               borderColor: "rgba(132,185,143,0.5)",
                             }
                           : {
-                              background: "rgba(255,248,225,0.85)",
-                              color: "#8A6D00",
-                              borderColor: "rgba(201,168,76,0.45)",
+                              background: "rgba(246,196,83,0.15)",
+                              color: "#F6C453",
+                              borderColor: "rgba(246,196,83,0.45)",
                             }
                       }
                     >
@@ -466,12 +466,14 @@ export function PropuestasComerciales(props: Props) {
                 <button
                   type="button"
                   onClick={() => removePropuesta(idx)}
-                  className="text-[#5C6B85]/50 transition hover:text-[#C0392B]"
+                  className="transition"
+                  style={{ color: "rgba(230,236,255,0.4)" }}
                   title="Eliminar escenario"
                 >
                   <Trash2 size={14} />
                 </button>
               </div>
+
 
               {/* Cuotas eliminadas - Prioridad 2 */}
               <div className="relative px-5 pt-4">
