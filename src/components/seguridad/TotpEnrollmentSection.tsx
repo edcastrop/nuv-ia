@@ -127,7 +127,7 @@ export function TotpEnrollmentSection() {
               onChange={(e) => setCodigo(e.target.value.replace(/\D/g, "").slice(0, 6))}
               inputMode="numeric"
               placeholder="••••••"
-              className="mt-1.5 w-full rounded-[10px] border border-white/10 bg-white/[0.05] px-3 py-3 text-center text-2xl tracking-[0.4em] font-semibold outline-none focus:border-[#445DA3] focus:bg-white"
+              className="mt-1.5 w-full rounded-[10px] border border-white/10 bg-white/[0.05] px-3 py-3 text-center text-2xl tracking-[0.4em] font-semibold outline-none focus:border-[#445DA3] focus:bg-white/[0.10] text-white"
             />
           </label>
           <div className="flex gap-2">
