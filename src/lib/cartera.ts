@@ -157,11 +157,20 @@ export async function getCarteraByExpediente(expedienteId: string): Promise<Cart
 }
 
 export async function getCartera(id: string): Promise<CarteraConExpediente | null> {
-  const { data } = await supabase
+  // Resolver por id de cartera o por expediente_id (deep-link tolerante)
+  let { data } = await supabase
     .from("cartera" as never)
     .select("*")
     .eq("id", id)
     .maybeSingle();
+  if (!data) {
+    const fallback = await supabase
+      .from("cartera" as never)
+      .select("*")
+      .eq("expediente_id", id)
+      .maybeSingle();
+    data = fallback.data;
+  }
   if (!data) return null;
   const c = data as unknown as Cartera;
   const { data: exp } = await supabase
