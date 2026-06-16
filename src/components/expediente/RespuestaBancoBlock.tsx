@@ -313,8 +313,8 @@ export function RespuestaBancoBlock({
 
   if (soloLectura) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600">
-        <h3 className="text-base font-semibold text-slate-900">Respuesta del banco</h3>
+      <div className="rounded-2xl glass-card p-5 text-sm text-[var(--nuvia-text-secondary)]">
+        <h3 className="text-base font-semibold text-white">Respuesta del banco</h3>
         <p className="mt-2">
           Solo Dirección Financiera y Apoderado pueden registrar respuestas. Recibirás notificación
           cuando se cargue.
@@ -322,11 +322,11 @@ export function RespuestaBancoBlock({
         {respuesta.id && (
           <dl className="mt-3 grid grid-cols-2 gap-3 text-xs">
             <div>
-              <dt className="text-slate-500">Cuota aprobada</dt>
+              <dt className="text-[var(--nuvia-text-secondary)]">Cuota aprobada</dt>
               <dd className="font-semibold">{formatCOP(cuotaAprob)}</dd>
             </div>
             <div>
-              <dt className="text-slate-500">Plazo aprobado</dt>
+              <dt className="text-[var(--nuvia-text-secondary)]">Plazo aprobado</dt>
               <dd className="font-semibold">{plazoAprob} meses</dd>
             </div>
           </dl>
@@ -336,10 +336,10 @@ export function RespuestaBancoBlock({
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5">
+    <div className="rounded-2xl glass-card p-5">
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold text-slate-900">Respuesta oficial del banco</h3>
-        <div className="flex gap-1 rounded-lg bg-slate-100 p-1 text-xs">
+        <h3 className="text-base font-semibold text-white">Respuesta oficial del banco</h3>
+        <div className="flex gap-1 rounded-lg bg-[rgba(255,255,255,0.04)] p-1 text-xs">
           {puedeEditarFinanciero && (
             <button
               onClick={() => setTab("financiero")}
@@ -385,9 +385,9 @@ export function RespuestaBancoBlock({
             onChange={(v) => setRespuesta((r) => ({ ...r, fechaAprobacion: v }))}
           />
           <label className="block text-xs">
-            <span className="text-slate-600">Observaciones</span>
+            <span className="text-[var(--nuvia-text-secondary)]">Observaciones</span>
             <textarea
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-lg border border-[var(--nuvia-border)] px-3 py-2 text-sm"
               rows={3}
               value={respuesta.observaciones}
               onChange={(e) => setRespuesta((r) => ({ ...r, observaciones: e.target.value }))}
@@ -396,25 +396,25 @@ export function RespuestaBancoBlock({
 
           {(cuotaAprob > 0 || plazoAprob > 0) && (
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs">
-                <strong className="block text-slate-700">Comparativo NUVEX vs Banco</strong>
+              <div className="rounded-xl border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.03)] p-3 text-xs">
+                <strong className="block text-white/85">Comparativo NUVEX vs Banco</strong>
                 <ul className="mt-1 space-y-1">
                   <li>Δ Cuota: {diffs.dCuota >= 0 ? "+" : ""}{diffs.dCuota.toFixed(2)}%</li>
                   <li>Δ Plazo: {diffs.dPlazo} meses</li>
                   <li>Δ Cuotas eliminadas: {diffs.dEliminadas}</li>
                 </ul>
               </div>
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3 text-xs">
-                <strong className="block text-emerald-800">Precisión histórica</strong>
-                <ul className="mt-1 space-y-1 text-emerald-900">
+              <div className="rounded-xl border border-[rgba(132,185,143,0.35)] bg-[rgba(132,185,143,0.10)] p-3 text-xs">
+                <strong className="block text-[var(--nuvia-accent-green)]">Precisión histórica</strong>
+                <ul className="mt-1 space-y-1 text-[var(--nuvia-accent-green)]">
                   <li>Cuota: {(precision.precisionCuota * 100).toFixed(1)}%</li>
                   <li>Plazo: {(precision.precisionPlazo * 100).toFixed(1)}%</li>
                   <li>Ahorro: {(precision.precisionAhorro * 100).toFixed(1)}%</li>
                 </ul>
               </div>
-              <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3 text-xs">
-                <strong className="block text-amber-800">Reajuste de honorarios</strong>
-                <ul className="mt-1 space-y-1 text-amber-900">
+              <div className="rounded-xl border border-[rgba(246,196,83,0.35)] bg-[rgba(246,196,83,0.10)] p-3 text-xs">
+                <strong className="block text-[var(--nuvia-warning)]">Reajuste de honorarios</strong>
+                <ul className="mt-1 space-y-1 text-[var(--nuvia-warning)]">
                   <li>Pactados: {formatCOP(reajuste.honorariosPactados)}</li>
                   <li>Recalculados: {formatCOP(reajuste.honorariosRecalculados)}</li>
                   <li>Diferencia: {formatCOP(reajuste.diferencia)}</li>
@@ -424,14 +424,14 @@ export function RespuestaBancoBlock({
           )}
 
           {requiereOtrosi && (
-            <div className="flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-900">
+            <div className="flex items-center justify-between rounded-xl border border-[rgba(255,107,107,0.4)] bg-[rgba(255,107,107,0.12)] p-3 text-xs text-[var(--nuvia-danger)]">
               <span>
                 <strong>Otrosí requerido.</strong> Las condiciones aprobadas difieren de las
                 presentadas al cliente.
               </span>
               <button
                 onClick={generarOtrosi}
-                className="rounded-lg bg-rose-700 px-3 py-1.5 text-xs font-semibold text-white"
+                className="rounded-lg bg-[var(--nuvia-danger)] px-3 py-1.5 text-xs font-semibold text-white"
               >
                 Generar otrosí
               </button>
@@ -439,11 +439,11 @@ export function RespuestaBancoBlock({
           )}
 
           <div className="flex items-center justify-end gap-2">
-            {msg && <span className="text-xs text-slate-500">{msg}</span>}
+            {msg && <span className="text-xs text-[var(--nuvia-text-secondary)]">{msg}</span>}
             <button
               onClick={guardarFinanciero}
               disabled={saving}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white disabled:opacity-40"
+              className="rounded-lg bg-[var(--nuvia-accent-blue)] px-4 py-2 text-xs font-semibold text-white disabled:opacity-40"
             >
               {saving ? "Guardando…" : "Guardar respuesta financiera"}
             </button>
@@ -452,7 +452,7 @@ export function RespuestaBancoBlock({
       )}
 
       {tab === "juridico" && puedeEditarJuridico && (
-        <div className="mt-4 space-y-3 text-sm text-slate-600">
+        <div className="mt-4 space-y-3 text-sm text-[var(--nuvia-text-secondary)]">
           <p>
             Adjunta los soportes oficiales del banco (oficio, correo, acta) en el módulo de Soportes
             del expediente. Esta sección registra la aprobación jurídica para activar el flujo de
@@ -460,7 +460,7 @@ export function RespuestaBancoBlock({
           </p>
           <button
             disabled
-            className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-500"
+            className="rounded-lg border border-[var(--nuvia-border)] px-4 py-2 text-xs font-semibold text-[var(--nuvia-text-secondary)]"
             title="Pendiente integración con módulo de soportes"
           >
             Aprobar resultado jurídico (próximamente)
@@ -484,10 +484,10 @@ function Field({
 }) {
   return (
     <label className="block text-xs">
-      <span className="text-slate-600">{label}</span>
+      <span className="text-[var(--nuvia-text-secondary)]">{label}</span>
       <input
         type={type}
-        className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+        className="mt-1 w-full rounded-lg border border-[var(--nuvia-border)] px-3 py-2 text-sm"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
