@@ -74,7 +74,7 @@ export function ExecutiveHero({
           {title}
         </h1>
         {description && (
-          <p
+          <div
             className="max-w-2xl"
             style={{
               fontSize: "13px",
@@ -83,7 +83,7 @@ export function ExecutiveHero({
             }}
           >
             {description}
-          </p>
+          </div>
         )}
       </div>
 
