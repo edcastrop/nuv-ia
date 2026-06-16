@@ -63,7 +63,7 @@ export function MotorHonorariosView({ initial }: { initial?: InitialData }) {
   return (
     <PageLayout>
       <ExecutiveHero
-        badge={{ icon: <DollarSign size={12} />, label: "Pricing engine NUVIA", tone: "blue" }}
+        badge={{ icon: <DollarSign size={12} />, label: "Pricing engine NUVIA", tone: "green" }}
         title="Motor de Honorarios"
         description="Calcula, controla, audita y protege la rentabilidad — pricing engine empresarial."
       />
@@ -621,12 +621,29 @@ function SolicitudAprobacionDialog({
 
 function Panel({ title, children, right }: { title: string; children: React.ReactNode; right?: React.ReactNode }) {
   return (
-    <div className="rounded-3xl p-6" style={{ background: COLORS.panel, border: `1px solid ${COLORS.line}` }}>
-      <div className="mb-4 flex items-center justify-between">
+    <div
+      className="relative overflow-hidden rounded-3xl p-6"
+      style={{
+        background:
+          "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015))",
+        border: `1px solid ${COLORS.line}`,
+      }}
+    >
+      <span
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "radial-gradient(420px 180px at 0% 0%, rgba(68,93,163,0.10), transparent 60%), radial-gradient(420px 180px at 100% 100%, rgba(132,185,143,0.08), transparent 60%)",
+          pointerEvents: "none",
+        }}
+      />
+      <div className="relative mb-4 flex items-center justify-between">
         <h3 className="text-sm font-semibold tracking-wide uppercase" style={{ color: COLORS.muted }}>{title}</h3>
         {right}
       </div>
-      {children}
+      <div className="relative">{children}</div>
     </div>
   );
 }
