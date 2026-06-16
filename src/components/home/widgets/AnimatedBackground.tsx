@@ -1,29 +1,35 @@
 /**
- * AnimatedBackground — fondo NUVIA optimizado.
- * Reemplaza framer-motion + <animate> SVG por animaciones CSS GPU-friendly
- * (transform/opacity). Respeta prefers-reduced-motion: render estático.
+ * AnimatedBackground — fondo NUVIA "Soft ambient glow".
+ *
+ * Tres auras grandes con blur extremo y opacidad muy baja (5–10%) que
+ * se desplazan lentamente (25–35 s) por los bordes de la pantalla.
+ * Nada de nodos, links, ni paquetes de datos. Solo luz que respira.
+ *
+ * CSS: keyframes `nuvia-drift` / `nuvia-drift-slow` en src/styles.css.
+ * Respeta prefers-reduced-motion: las auras se quedan estáticas.
  * Debe ir dentro de un contenedor `relative overflow-hidden`.
  */
 const BLUE = "#445DA3";
 const GREEN = "#84B98F";
+const VIOLET = "#2A3B6A";
 
 export function AnimatedBackground() {
   return (
     <>
-      {/* Capa base con gradientes radiales (estática, cero costo) */}
+      {/* Capa base — gradiente NUVIA oscuro (estático) */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(1100px 700px at 20% 10%, rgba(68,93,163,0.32), transparent 60%), radial-gradient(900px 600px at 90% 90%, rgba(132,185,143,0.26), transparent 55%), linear-gradient(160deg, #0A0B10 0%, #0F121C 55%, #0A0B10 100%)",
+            "radial-gradient(1100px 700px at 20% 10%, rgba(68,93,163,0.28), transparent 60%), radial-gradient(900px 600px at 90% 90%, rgba(132,185,143,0.22), transparent 55%), linear-gradient(160deg, #0A0B10 0%, #0F121C 55%, #0A0B10 100%)",
         }}
       />
 
       {/* Grid sutil (estático) */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.05]"
+        className="pointer-events-none absolute inset-0 opacity-[0.04]"
         style={{
           backgroundImage:
             "linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)",
@@ -33,121 +39,45 @@ export function AnimatedBackground() {
         }}
       />
 
-      {/* Orbes CSS-only (transform/opacity, GPU). Respetan reduced-motion */}
+      {/* ── Auras borrosas que se desplazan lentamente ── */}
+      {/* Aura 1 — Blue, arriba-izquierda, 25s */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -top-40 -left-40 h-[28rem] w-[28rem] rounded-full blur-[120px] opacity-50 nuvia-orb nuvia-orb-a"
-        style={{ background: BLUE }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-20 right-[-10rem] h-[26rem] w-[26rem] rounded-full blur-[120px] opacity-40 nuvia-orb nuvia-orb-b"
-        style={{ background: GREEN }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute top-[40%] left-[35%] h-[24rem] w-[24rem] rounded-full blur-[130px] opacity-30 nuvia-orb nuvia-orb-c"
-        style={{ background: "#705AB8" }}
+        className="pointer-events-none absolute -top-[10%] -left-[10%] h-[60%] w-[60%] rounded-full blur-[120px] nuvia-drift"
+        style={{
+          background: BLUE,
+          opacity: 0.08,
+        }}
       />
 
-      {/* Red neuronal SVG estática (sin <animate>) */}
-      <NeuralCanvas />
+      {/* Aura 2 — Green, abajo-derecha, 35s (reverse) */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-[10%] -right-[10%] h-[50%] w-[50%] rounded-full blur-[100px] nuvia-drift-slow"
+        style={{
+          background: GREEN,
+          opacity: 0.05,
+        }}
+      />
 
-      <style>{`
-        @keyframes nuvia-orb-a { 0%,100% { transform: translate3d(0,0,0); } 50% { transform: translate3d(40px,30px,0); } }
-        @keyframes nuvia-orb-b { 0%,100% { transform: translate3d(0,0,0); } 50% { transform: translate3d(-50px,25px,0); } }
-        @keyframes nuvia-orb-c { 0%,100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(60px,-40px,0) scale(1.08); } }
-        .nuvia-orb { will-change: transform; }
-        .nuvia-orb-a { animation: nuvia-orb-a 14s ease-in-out infinite; }
-        .nuvia-orb-b { animation: nuvia-orb-b 18s ease-in-out infinite; }
-        .nuvia-orb-c { animation: nuvia-orb-c 22s ease-in-out infinite; }
-        @media (prefers-reduced-motion: reduce) {
-          .nuvia-orb-a, .nuvia-orb-b, .nuvia-orb-c { animation: none !important; }
-        }
-      `}</style>
+      {/* Aura 3 — Violet, centro, estática (sin drift) para anclaje */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[40%] w-[40%] rounded-full blur-[150px]"
+        style={{
+          background: VIOLET,
+          opacity: 0.06,
+        }}
+      />
+
+      {/* Vignette sutil para oscurecer bordes y centrar la atención */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: "radial-gradient(ellipse at center, transparent 40%, rgba(10,11,16,0.35) 100%)",
+        }}
+      />
     </>
-  );
-}
-
-function NeuralCanvas() {
-  const nodes = [
-    { x: 8, y: 18 }, { x: 22, y: 10 }, { x: 38, y: 24 }, { x: 56, y: 14 }, { x: 74, y: 28 }, { x: 92, y: 16 },
-    { x: 14, y: 42 }, { x: 32, y: 50 }, { x: 50, y: 38 }, { x: 68, y: 52 }, { x: 86, y: 44 },
-    { x: 18, y: 70 }, { x: 36, y: 78 }, { x: 54, y: 66 }, { x: 72, y: 80 }, { x: 90, y: 68 },
-  ];
-  const links: Array<[number, number]> = [
-    [0,1],[1,2],[2,3],[3,4],[4,5],
-    [0,6],[1,7],[2,8],[3,9],[4,10],[5,10],
-    [6,7],[7,8],[8,9],[9,10],
-    [6,11],[7,12],[8,13],[9,14],[10,15],
-    [11,12],[12,13],[13,14],[14,15],
-  ];
-  return (
-    <svg
-      viewBox="0 0 100 100"
-      preserveAspectRatio="xMidYMid slice"
-      className="pointer-events-none absolute inset-0 w-full h-full opacity-95"
-      aria-hidden
-    >
-      <defs>
-        <linearGradient id="nv-home-link" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor={BLUE} stopOpacity="0.95" />
-          <stop offset="100%" stopColor={GREEN} stopOpacity="0.95" />
-        </linearGradient>
-        <radialGradient id="nv-home-node">
-          <stop offset="0%" stopColor="#fff" stopOpacity="1" />
-          <stop offset="55%" stopColor={GREEN} stopOpacity="0.95" />
-          <stop offset="100%" stopColor={BLUE} stopOpacity="0" />
-        </radialGradient>
-        <filter id="nv-home-glow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="1.4" result="b" />
-          <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
-        </filter>
-      </defs>
-
-      {/* Links con pulso visible */}
-      <g filter="url(#nv-home-glow)">
-        {links.map(([a, b], i) => {
-          const A = nodes[a]; const B = nodes[b];
-          return (
-            <line
-              key={i}
-              x1={A.x} y1={A.y} x2={B.x} y2={B.y}
-              stroke="url(#nv-home-link)"
-              strokeWidth="0.35"
-              opacity={0.85}
-            >
-              <animate attributeName="opacity" values="0.25;0.95;0.25" dur={`${2.5 + (i % 4) * 0.6}s`} repeatCount="indefinite" />
-              <animate attributeName="stroke-width" values="0.2;0.55;0.2" dur={`${2.5 + (i % 4) * 0.6}s`} repeatCount="indefinite" />
-            </line>
-          );
-        })}
-      </g>
-
-      {/* Nodos pulsantes brillantes */}
-      {nodes.map((n, i) => (
-        <g key={i} filter="url(#nv-home-glow)">
-          <circle cx={n.x} cy={n.y} r="2" fill="url(#nv-home-node)">
-            <animate attributeName="r" values="1.6;3.2;1.6" dur={`${2 + (i % 4) * 0.5}s`} repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.7;1;0.7" dur={`${2 + (i % 4) * 0.5}s`} repeatCount="indefinite" />
-          </circle>
-          <circle cx={n.x} cy={n.y} r="0.7" fill="#fff" opacity="1" />
-        </g>
-      ))}
-
-      {/* Paquetes de datos viajando — más, más grandes, más rápidos */}
-      {links.map(([a, b], i) => {
-        const A = nodes[a]; const B = nodes[b];
-        const dur = 1.8 + (i % 5) * 0.4;
-        const delay = (i % 7) * 0.3;
-        return (
-          <circle key={`p${i}`} r="0.85" fill={i % 2 === 0 ? GREEN : "#9ECDA8"} opacity="0">
-            <animate attributeName="cx" values={`${A.x};${B.x}`} dur={`${dur}s`} begin={`${delay}s`} repeatCount="indefinite" />
-            <animate attributeName="cy" values={`${A.y};${B.y}`} dur={`${dur}s`} begin={`${delay}s`} repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.15;0.85;1" dur={`${dur}s`} begin={`${delay}s`} repeatCount="indefinite" />
-          </circle>
-        );
-      })}
-    </svg>
   );
 }
