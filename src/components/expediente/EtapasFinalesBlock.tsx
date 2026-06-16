@@ -156,7 +156,9 @@ export function EtapasFinalesBlock({
         expedienteId={expedienteId}
         onChanged={onChanged}
       />
-    </div>
+      </div>
+    </NCard>
+
   );
 }
 
