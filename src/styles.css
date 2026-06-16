@@ -495,81 +495,99 @@
 }
 
 /* ==========================================================
-   NUVIA · OPT-OUT: Financiero conserva el estilo claro
-   Revierte los overrides de .nuvia-shell-soft dentro de
-   .nuvia-financiero-light para preservar la versión blanca
-   aprobada del simulador financiero.
+   NUVIA · Financiero DARK scope
+   Mapea superficies/inputs claros del simulador financiero a
+   tokens NUVIA oscuros para mantener coherencia con el resto
+   del expediente rediseñado.
    ========================================================== */
-.nuvia-shell-soft .nuvia-financiero-light {
-  color: #242424;
+.nuvia-financiero-dark {
+  color: var(--nuvia-text-primary, #E6ECFF);
 }
-.nuvia-shell-soft .nuvia-financiero-light .bg-white,
-.nuvia-shell-soft .nuvia-financiero-light [class*="bg-[#fff"],
-.nuvia-shell-soft .nuvia-financiero-light [class*="bg-[#FFF"],
-.nuvia-shell-soft .nuvia-financiero-light [class*="bg-[#FAFBFC"] {
-  background-color: #ffffff !important;
+.nuvia-financiero-dark .bg-white,
+.nuvia-financiero-dark [class*="bg-white/"],
+.nuvia-financiero-dark [class*="bg-[#fff"],
+.nuvia-financiero-dark [class*="bg-[#FFF"],
+.nuvia-financiero-dark [class*="bg-[#FAFBFC"],
+.nuvia-financiero-dark [class*="bg-[#F7F9FB"],
+.nuvia-financiero-dark [class*="bg-[#FBFCFD"],
+.nuvia-financiero-dark [class*="bg-[#EEF1F5"],
+.nuvia-financiero-dark [class*="bg-[#F4F6FB"],
+.nuvia-financiero-dark [class*="bg-[#F0F2F6"],
+.nuvia-financiero-dark [class*="bg-[#EEF1FA"],
+.nuvia-financiero-dark [class*="bg-slate-50"],
+.nuvia-financiero-dark [class*="bg-slate-100"],
+.nuvia-financiero-dark [class*="bg-gray-50"],
+.nuvia-financiero-dark [class*="bg-gray-100"] {
+  background-color: rgba(20, 28, 54, 0.55) !important;
   background-image: none !important;
-  color: #242424 !important;
-  border-color: #E3E7EE !important;
-  backdrop-filter: none;
+  color: var(--nuvia-text-primary, #E6ECFF) !important;
+  border-color: var(--nuvia-border, rgba(122,160,255,0.18)) !important;
+  backdrop-filter: blur(10px);
 }
-.nuvia-shell-soft .nuvia-financiero-light [class*="bg-[#F7F9FB"],
-.nuvia-shell-soft .nuvia-financiero-light [class*="bg-[#FBFCFD"],
-.nuvia-shell-soft .nuvia-financiero-light [class*="bg-[#EEF1F5"],
-.nuvia-shell-soft .nuvia-financiero-light [class*="bg-[#F4F6FB"],
-.nuvia-shell-soft .nuvia-financiero-light [class*="bg-[#F0F2F6"] {
-  background-color: #F7F9FB !important;
-  background-image: none !important;
-  color: #242424 !important;
-  border-color: #E3E7EE !important;
+.nuvia-financiero-dark [class*="border-white/"],
+.nuvia-financiero-dark [class*="border-white"] {
+  border-color: var(--nuvia-border, rgba(122,160,255,0.18)) !important;
 }
-.nuvia-shell-soft .nuvia-financiero-light [class*="text-[#242424"],
-.nuvia-shell-soft .nuvia-financiero-light [class*="text-[#0A1226"],
-.nuvia-shell-soft .nuvia-financiero-light [class*="text-[#1F2937"],
-.nuvia-shell-soft .nuvia-financiero-light [class*="text-[#374151"] {
-  color: #242424 !important;
+.nuvia-financiero-dark [class*="text-[#242424"],
+.nuvia-financiero-dark [class*="text-[#0A1226"],
+.nuvia-financiero-dark [class*="text-[#1F2937"],
+.nuvia-financiero-dark [class*="text-[#1F2A44"],
+.nuvia-financiero-dark [class*="text-[#3A4660"],
+.nuvia-financiero-dark [class*="text-[#374151"],
+.nuvia-financiero-dark [class*="text-slate-9"],
+.nuvia-financiero-dark [class*="text-slate-8"],
+.nuvia-financiero-dark [class*="text-slate-7"],
+.nuvia-financiero-dark [class*="text-gray-9"],
+.nuvia-financiero-dark [class*="text-gray-8"] {
+  color: var(--nuvia-text-primary, #E6ECFF) !important;
 }
-.nuvia-shell-soft .nuvia-financiero-light [class*="text-[#242424]/55"],
-.nuvia-shell-soft .nuvia-financiero-light [class*="text-[#242424]/60"],
-.nuvia-shell-soft .nuvia-financiero-light [class*="text-[#242424]/65"],
-.nuvia-shell-soft .nuvia-financiero-light [class*="text-[#242424]/70"],
-.nuvia-shell-soft .nuvia-financiero-light [class*="text-[#242424]/75"] {
-  color: rgba(36,36,36,0.65) !important;
+.nuvia-financiero-dark [class*="text-[#242424]/55"],
+.nuvia-financiero-dark [class*="text-[#242424]/60"],
+.nuvia-financiero-dark [class*="text-[#242424]/65"],
+.nuvia-financiero-dark [class*="text-[#242424]/70"],
+.nuvia-financiero-dark [class*="text-[#242424]/75"],
+.nuvia-financiero-dark .text-muted-foreground {
+  color: var(--nuvia-text-secondary, rgba(230,236,255,0.65)) !important;
 }
-.nuvia-shell-soft .nuvia-financiero-light [class*="border-[#E3E7EE"],
-.nuvia-shell-soft .nuvia-financiero-light [class*="border-[#EEF1F5"],
-.nuvia-shell-soft .nuvia-financiero-light [class*="border-[#E5E7EB"],
-.nuvia-shell-soft .nuvia-financiero-light [class*="border-[#F0F2F6"],
-.nuvia-shell-soft .nuvia-financiero-light [class*="border-[#D1D5DB"] {
-  border-color: #E3E7EE !important;
+.nuvia-financiero-dark [class*="border-[#E3E7EE"],
+.nuvia-financiero-dark [class*="border-[#EEF1F5"],
+.nuvia-financiero-dark [class*="border-[#E5E7EB"],
+.nuvia-financiero-dark [class*="border-[#F0F2F6"],
+.nuvia-financiero-dark [class*="border-[#D1D5DB"],
+.nuvia-financiero-dark [class*="border-slate-2"],
+.nuvia-financiero-dark [class*="border-gray-2"] {
+  border-color: var(--nuvia-border, rgba(122,160,255,0.18)) !important;
 }
-.nuvia-shell-soft .nuvia-financiero-light input:not([type="checkbox"]):not([type="radio"]),
-.nuvia-shell-soft .nuvia-financiero-light select,
-.nuvia-shell-soft .nuvia-financiero-light textarea {
-  background-color: #ffffff !important;
-  color: #242424 !important;
-  border-color: #E3E7EE !important;
+.nuvia-financiero-dark input:not([type="checkbox"]):not([type="radio"]),
+.nuvia-financiero-dark select,
+.nuvia-financiero-dark textarea {
+  background-color: rgba(10, 16, 36, 0.6) !important;
+  color: var(--nuvia-text-primary, #E6ECFF) !important;
+  border-color: var(--nuvia-border, rgba(122,160,255,0.18)) !important;
 }
-.nuvia-shell-soft .nuvia-financiero-light input::placeholder,
-.nuvia-shell-soft .nuvia-financiero-light textarea::placeholder {
-  color: rgba(36,36,36,0.4) !important;
+.nuvia-financiero-dark input::placeholder,
+.nuvia-financiero-dark textarea::placeholder {
+  color: rgba(230,236,255,0.4) !important;
 }
-.nuvia-shell-soft .nuvia-financiero-light select option {
-  background-color: #ffffff;
-  color: #242424;
+.nuvia-financiero-dark select option {
+  background-color: #0F1733;
+  color: #E6ECFF;
 }
-.nuvia-shell-soft .nuvia-financiero-light table { color: #242424; }
-.nuvia-shell-soft .nuvia-financiero-light thead tr,
-.nuvia-shell-soft .nuvia-financiero-light th {
-  color: rgba(36,36,36,0.6) !important;
-  border-color: #E3E7EE !important;
-  background-color: #F7F9FB !important;
+.nuvia-financiero-dark table { color: var(--nuvia-text-primary, #E6ECFF); }
+.nuvia-financiero-dark thead tr,
+.nuvia-financiero-dark th {
+  color: var(--nuvia-text-secondary, rgba(230,236,255,0.65)) !important;
+  border-color: var(--nuvia-border, rgba(122,160,255,0.18)) !important;
+  background-color: rgba(13,18,36,0.6) !important;
 }
-.nuvia-shell-soft .nuvia-financiero-light tbody tr {
-  border-color: #EEF1F5 !important;
+.nuvia-financiero-dark tbody tr {
+  border-color: var(--nuvia-border-soft, rgba(122,160,255,0.10)) !important;
 }
-.nuvia-shell-soft .nuvia-financiero-light tbody tr:hover {
-  background-color: #F7F9FB !important;
+.nuvia-financiero-dark tbody tr td {
+  color: var(--nuvia-text-primary, #E6ECFF) !important;
+}
+.nuvia-financiero-dark tbody tr:hover {
+  background-color: rgba(122,160,255,0.06) !important;
 }
 
 

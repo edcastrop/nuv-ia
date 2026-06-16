@@ -369,7 +369,7 @@ function CasoDetail() {
         </TabsContent>
 
         {/* FINANCIERO */}
-        <TabsContent value="financiero" className="space-y-4 nuvia-financiero-light">
+        <TabsContent value="financiero" className="space-y-4 nuvia-financiero-dark">
           <div id="simulador-financiero-qa" className="scroll-mt-6">
             {exp.modo === "pesos" ? (
               <PesosSimulator initialExpediente={exp} onSaved={reload} />
