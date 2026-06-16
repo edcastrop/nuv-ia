@@ -263,8 +263,11 @@ function NuvexIAPage() {
                   key={s}
                   onClick={() => enviar(s)}
                   disabled={enviando}
-                  className="text-[11px] px-2.5 py-1.5 rounded-full text-white/75 hover:text-white transition disabled:opacity-40"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
+                  className="text-[11px] px-2.5 py-1.5 rounded-full text-white/85 hover:text-white transition disabled:opacity-40"
+                  style={{
+                    background: `linear-gradient(135deg, ${AZUL}22, ${VERDE}1A)`,
+                    border: `1px solid ${AZUL}55`,
+                  }}
                 >
                   {s}
                 </button>
