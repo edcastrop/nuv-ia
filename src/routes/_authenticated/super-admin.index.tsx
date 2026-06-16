@@ -146,7 +146,12 @@ function SuperAdminDashboard() {
                     background: "rgba(255,255,255,0.02)",
                   }}
                 >
-                  <span style={{ color: e.color }}>{e.label}</span>
+                  <span
+                    className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                    style={{ background: e.bg, color: e.color }}
+                  >
+                    {e.label}
+                  </span>
                   <span className="font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{e.count}</span>
                 </div>
               ))}
