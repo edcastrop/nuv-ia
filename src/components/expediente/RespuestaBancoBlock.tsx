@@ -343,7 +343,10 @@ export function RespuestaBancoBlock({
           {puedeEditarFinanciero && (
             <button
               onClick={() => setTab("financiero")}
-              className={`rounded px-3 py-1 ${tab === "financiero" ? "bg-white shadow font-semibold" : ""}`}
+              className="rounded px-3 py-1 transition"
+              style={tab === "financiero"
+                ? { background: "rgba(122,160,255,0.18)", color: "var(--nuvia-text-primary)", fontWeight: 600 }
+                : { color: "var(--nuvia-text-secondary)" }}
             >
               Financiero
             </button>
@@ -351,7 +354,10 @@ export function RespuestaBancoBlock({
           {puedeEditarJuridico && (
             <button
               onClick={() => setTab("juridico")}
-              className={`rounded px-3 py-1 ${tab === "juridico" ? "bg-white shadow font-semibold" : ""}`}
+              className="rounded px-3 py-1 transition"
+              style={tab === "juridico"
+                ? { background: "rgba(122,160,255,0.18)", color: "var(--nuvia-text-primary)", fontWeight: 600 }
+                : { color: "var(--nuvia-text-secondary)" }}
             >
               Jurídico
             </button>
