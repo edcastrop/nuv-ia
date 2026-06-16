@@ -542,12 +542,15 @@ function PipelinePage() {
                     <div className="text-xs font-semibold text-[var(--nuvia-text-primary)]">
                       E{f.numero}
                     </div>
-                    <div className="relative h-7 overflow-hidden rounded-lg bg-[rgba(255,255,255,0.05)] ring-1 ring-[var(--nuvia-border)]">
+                    <div className="relative h-7 overflow-hidden rounded-lg bg-[rgba(255,255,255,0.03)] ring-1 ring-[var(--nuvia-border)]">
                       <div
                         className="h-full rounded-lg transition-all"
                         style={{
                           width: `${widthPct}%`,
-                          background: isStuck ? "var(--nuvia-danger)" : "var(--nuvia-gradient-primary)",
+                          background: isStuck
+                            ? "color-mix(in oklab, var(--nuvia-danger) 32%, transparent)"
+                            : "linear-gradient(90deg, color-mix(in oklab, var(--nuvia-accent-blue) 38%, transparent), color-mix(in oklab, var(--nuvia-accent-green) 38%, transparent))",
+                          borderRight: `1px solid ${isStuck ? "color-mix(in oklab, var(--nuvia-danger) 55%, transparent)" : "color-mix(in oklab, var(--nuvia-accent-green) 55%, transparent)"}`,
                         }}
                         title={`${f.passed} casos · ${f.pct}%`}
                       />
