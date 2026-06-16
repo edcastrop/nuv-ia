@@ -475,7 +475,7 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
 
       {/* Personas */}
       {personas.map((p, idx) => (
-        <div key={p.rol} className="mb-5 p-4 border rounded-lg bg-white">
+        <div key={p.rol} className="mb-5 p-4 rounded-lg" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--nuvia-border-soft)" }}>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
               <Badge className={p.rol === "titular" ? "bg-[#445DA3]" : "bg-slate-600"}>
