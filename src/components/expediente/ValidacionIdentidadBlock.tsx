@@ -100,7 +100,7 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
   };
 
   return (
-    <Card>
+    <NCard variant="elevated">
       <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div className="flex items-start gap-3">
           <div
