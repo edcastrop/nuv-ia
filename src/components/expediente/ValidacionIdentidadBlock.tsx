@@ -368,7 +368,7 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
           ))}
         </div>
       )}
-    </Card>
+    </NCard>
   );
 }
 
