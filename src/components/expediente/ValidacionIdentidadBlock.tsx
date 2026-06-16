@@ -6,6 +6,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { ShieldCheck, AlertTriangle, CheckCircle2, Send, RotateCcw, Lock, Unlock, History, Save, X } from "lucide-react";
 import { NCard } from "@/components/nuvia/NCard";
+import { NSelect } from "@/components/nuvia/NSelect";
+
 
 import type { Expediente } from "@/lib/expedientes";
 import { CitySelect } from "@/components/ui/CitySelect";
@@ -268,15 +270,12 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
               <label className="block text-[10px] uppercase font-semibold text-[var(--nuvia-text-secondary)] mb-1">
                 Motivo de devolución
               </label>
-              <select
+              <NSelect
                 value={motivoDev}
-                onChange={(e) => setMotivoDev(e.target.value)}
-                className="w-full rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.04)] px-2 py-1.5 text-xs"
-              >
-                {MOTIVOS_DEVOLUCION.map((m) => (
-                  <option key={m} value={m}>{m}</option>
-                ))}
-              </select>
+                onValueChange={setMotivoDev}
+                options={MOTIVOS_DEVOLUCION.map((m) => ({ value: m, label: m }))}
+              />
+
               {motivoDev === "Otro" && (
                 <input
                   value={motivoOtro}
