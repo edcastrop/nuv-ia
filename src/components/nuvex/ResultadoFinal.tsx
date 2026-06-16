@@ -295,51 +295,62 @@ export function ResultadoFinal({
         </div>
 
         {/* ====== Reajuste de honorarios a éxito ====== */}
-        <div className="mt-6 rounded-xl border-2 p-4" style={{ borderColor: "#F0B429", backgroundColor: "#FFFBEB" }}>
+        <div
+          className="nuvia-shell-dark mt-6 rounded-xl border p-4 shadow-2xl"
+          style={{
+            background:
+              "linear-gradient(155deg, rgba(20,28,54,0.92) 0%, rgba(13,18,36,0.96) 58%, rgba(5,8,22,0.98) 100%)",
+            borderColor: "var(--nuvia-border-strong)",
+          }}
+        >
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: "#8A5A00" }}>
-              Reajuste de honorarios a éxito
-            </h3>
+            <div>
+              <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: "var(--nuvia-text-primary)" }}>
+                Reajuste de honorarios a éxito
+              </h3>
+              <p className="mt-1 text-[11px]" style={{ color: "var(--nuvia-text-secondary)" }}>
+                Si el banco aprueba menos cuotas eliminadas que las pactadas, los honorarios se recalculan por regla de 3.
+              </p>
+            </div>
             {recalculo.huboRecalculo && (
-              <span className="rounded-full px-3 py-1 text-[11px] font-bold" style={{ background: "#F0B429", color: "#2C1810" }}>
+              <span
+                className="rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-wider"
+                style={{
+                  background: "rgba(246,196,83,0.14)",
+                  borderColor: "rgba(246,196,83,0.32)",
+                  color: "var(--nuvia-warning)",
+                }}
+              >
                 Honorarios recalculados
               </span>
             )}
           </div>
-          <p className="mt-1 text-[11px] text-[#8A5A00]/80">
-            NUVEX trabaja a éxito. Si el banco aprueba menos cuotas eliminadas que las pactadas, los honorarios se recalculan por regla de 3.
-          </p>
-          <div className="mt-3 grid gap-3 md:grid-cols-3">
-            <TextField label="Cuotas pactadas en contrato" value={cuotasPactadas} onChange={setCuotasPactadas} placeholder="60" />
-            <TextField label="Honorarios pactados" value={honorariosPactados} onChange={setHonorariosPactados} placeholder="3.000.000" />
-            <TextField label="Cuotas aprobadas por banco" value={cuotasAprobadasBanco} onChange={setCuotasAprobadasBanco} placeholder="55" />
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <NuviaRecalcField label="Cuotas pactadas en contrato" value={cuotasPactadas} onChange={setCuotasPactadas} placeholder="60" />
+            <NuviaRecalcField label="Honorarios pactados" value={honorariosPactados} onChange={setHonorariosPactados} placeholder="3.000.000" />
+            <NuviaRecalcField label="Cuotas aprobadas por banco" value={cuotasAprobadasBanco} onChange={setCuotasAprobadasBanco} placeholder="55" />
           </div>
-          <div className="mt-3 grid gap-2 md:grid-cols-4 text-xs">
-            <div className="rounded-lg bg-white p-2 border border-[#F0B429]/40">
-              <div className="text-[10px] uppercase tracking-wider text-[#242424]/60">Cuotas pactadas</div>
-              <div className="font-semibold">{recalculo.cuotasPactadas || "—"}</div>
-            </div>
-            <div className="rounded-lg bg-white p-2 border border-[#F0B429]/40">
-              <div className="text-[10px] uppercase tracking-wider text-[#242424]/60">Cuotas aprobadas</div>
-              <div className="font-semibold">{recalculo.cuotasAprobadasBanco || "—"}</div>
-            </div>
-            <div className="rounded-lg bg-white p-2 border border-[#F0B429]/40">
-              <div className="text-[10px] uppercase tracking-wider text-[#242424]/60">Honorarios pactados</div>
-              <div className="font-semibold">{formatCOP(recalculo.honorariosPactados)}</div>
-            </div>
-            <div className="rounded-lg p-2 border-2" style={{ borderColor: NUVEX.verde, backgroundColor: "#EAF7EE" }}>
-              <div className="text-[10px] uppercase tracking-wider" style={{ color: "#1F7A45" }}>Honorarios recalculados</div>
-              <div className="font-extrabold text-base" style={{ color: "#1F7A45" }}>{formatCOP(recalculo.honorariosRecalculados)}</div>
-            </div>
+          <div className="mt-4 grid gap-2 md:grid-cols-4 text-xs">
+            <NuviaRecalcMetric label="Cuotas pactadas" value={recalculo.cuotasPactadas || "—"} />
+            <NuviaRecalcMetric label="Cuotas aprobadas" value={recalculo.cuotasAprobadasBanco || "—"} />
+            <NuviaRecalcMetric label="Honorarios pactados" value={formatCOP(recalculo.honorariosPactados)} />
+            <NuviaRecalcMetric label="Honorarios recalculados" value={formatCOP(recalculo.honorariosRecalculados)} accent />
           </div>
           {recalculo.huboRecalculo && (
-            <div className="mt-3 rounded-lg bg-amber-100 border border-amber-300 p-2 text-xs text-[#8A5A00]">
+            <div
+              className="mt-3 rounded-lg border p-3 text-xs"
+              style={{
+                background: "rgba(246,196,83,0.10)",
+                borderColor: "rgba(246,196,83,0.28)",
+                color: "var(--nuvia-warning)",
+              }}
+            >
               Los honorarios fueron recalculados porque el banco aprobó menos cuotas de las pactadas. Diferencia a favor del cliente: <strong>{formatCOP(recalculo.diferencia)}</strong>.
             </div>
           )}
           {expedienteId && (
-            <div className="mt-3 flex items-center justify-end gap-3">
-              {recalcMsg && <span className="text-xs text-[#242424]/70">{recalcMsg}</span>}
+            <div className="mt-4 flex items-center justify-end gap-3">
+              {recalcMsg && <span className="text-xs" style={{ color: "var(--nuvia-text-secondary)" }}>{recalcMsg}</span>}
               <button
                 disabled={savingRecalc || recalculo.cuotasPactadas <= 0 || recalculo.honorariosPactados <= 0 || recalculo.cuotasAprobadasBanco <= 0}
                 onClick={async () => {
@@ -358,8 +369,7 @@ export function ResultadoFinal({
                     setSavingRecalc(false);
                   }
                 }}
-                className="rounded-lg px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
-                style={{ backgroundColor: "#8A5A00" }}
+                className="nuvia-submit !w-auto px-4 py-2 text-xs disabled:opacity-50"
               >
                 {savingRecalc ? "Guardando…" : "Guardar recálculo"}
               </button>
@@ -563,6 +573,50 @@ export function ResultadoFinal({
         </>
       )}
     </>
+  );
+}
+
+function NuviaRecalcField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <label className="flex flex-col gap-1.5">
+      <span className="nuvia-label" style={{ color: "var(--nuvia-text-secondary)" }}>{label}</span>
+      <input
+        className="nuvia-input nuvia-input-sm"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+      />
+    </label>
+  );
+}
+
+function NuviaRecalcMetric({ label, value, accent }: { label: string; value: string | number; accent?: boolean }) {
+  return (
+    <div
+      className="rounded-lg border p-3"
+      style={{
+        background: accent ? "rgba(132,185,143,0.12)" : "rgba(255,255,255,0.035)",
+        borderColor: accent ? "rgba(132,185,143,0.35)" : "var(--nuvia-border)",
+      }}
+    >
+      <div className="text-[10px] uppercase tracking-wider" style={{ color: "var(--nuvia-text-secondary)" }}>{label}</div>
+      <div
+        className={accent ? "text-base font-extrabold" : "font-semibold"}
+        style={{ color: accent ? "var(--nuvia-accent-green)" : "var(--nuvia-text-primary)" }}
+      >
+        {value}
+      </div>
+    </div>
   );
 }
 

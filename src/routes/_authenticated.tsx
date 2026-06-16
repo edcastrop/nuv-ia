@@ -49,6 +49,7 @@ import { etiquetaNivel } from "@/lib/autonomia";
 import { EtapaTransicionDialog } from "@/components/expediente/EtapaTransicionDialog";
 
 export const Route = createFileRoute("/_authenticated")({
+  ssr: false,
   component: AuthenticatedLayout,
 });
 
@@ -119,8 +120,11 @@ function AuthenticatedLayout() {
     nombre: string | null;
     avatar_url: string | null;
   }>({ nombre: null, avatar_url: null });
-  const [gateState, setGateState] = useState<"checking" | "ok" | "blocked">("checking");
-  const [gateChecked, setGateChecked] = useState(false);
+  const [gateState, setGateState] = useState<"checking" | "ok" | "blocked">(() => {
+    const cached = session?.user?.id ? getAccessGateCache(session.user.id) : null;
+    return cached ? "ok" : "checking";
+  });
+  const [gateChecked, setGateChecked] = useState(() => !!(session?.user?.id && getAccessGateCache(session.user.id)));
   const [collapsed, setCollapsed] = useState<boolean>(false);
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -466,7 +470,7 @@ function AuthenticatedLayout() {
     };
   }, [session?.user?.id, gateState]);
 
-  if (loading || !session || gateState !== "ok") {
+  if (loading || !session) {
     return (
       <div
         className="min-h-screen flex items-center justify-center text-white/60 text-sm"
@@ -476,6 +480,8 @@ function AuthenticatedLayout() {
       </div>
     );
   }
+
+  const showGateOverlay = gateState !== "ok";
 
   const displayName: string =
     profileMeta.nombre || user?.user_metadata?.nombre || (user?.email?.split("@")[0] ?? "Usuario");
@@ -836,6 +842,23 @@ function AuthenticatedLayout() {
 
   return (
     <div className="dark min-h-screen flex" style={{ background: "var(--nuvia-bg-primary)" }}>
+      {showGateOverlay && (
+        <div
+          className="pointer-events-none fixed inset-x-0 top-0 z-[80] flex justify-center px-4 pt-3"
+          aria-live="polite"
+        >
+          <div
+            className="rounded-full border px-4 py-2 text-xs font-medium shadow-2xl backdrop-blur-xl"
+            style={{
+              background: "rgba(13,18,36,0.86)",
+              borderColor: "var(--nuvia-border-strong)",
+              color: "var(--nuvia-text-secondary)",
+            }}
+          >
+            Verificando acceso…
+          </div>
+        </div>
+      )}
       {/* Sidebar desktop */}
       <div className="hidden lg:block sticky top-0 h-screen relative">{SidebarContent}</div>
 
