@@ -364,7 +364,7 @@ export function PropuestasComerciales(props: Props) {
 
 
 
-      <div className="grid min-w-0 gap-5 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid min-w-0 gap-5 md:grid-cols-2 xl:grid-cols-4">
         {cuotasList.map((cuotas, idx) => {
           const c = calcs[idx];
           const isRecomendada = idx === effectiveIdx;
