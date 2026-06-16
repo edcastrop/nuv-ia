@@ -294,7 +294,7 @@ export function ResultadoFinal({
           </div>
         </div>
 
-        <h3 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: NUVEX.azul }}>
+        <h3 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: "var(--nuvia-text-primary)" }}>
           Resultado aprobado por el banco
         </h3>
         <div className="grid gap-4 md:grid-cols-3">
