@@ -32,7 +32,16 @@ import {
 } from "@/lib/honorariosMotor";
 import { formatCOP, parseCurrency } from "@/lib/format";
 
-const COLORS = { bg: "#0E0E0E", panel: "#161616", line: "rgba(255,255,255,0.06)", text: "#FFFFFF", muted: "rgba(255,255,255,0.55)", brand: "#445DA3", green: "#84B98F", dark: "#242424" };
+const COLORS = {
+  bg: "var(--nuvia-bg-primary)",
+  panel: "var(--nuvia-bg-card)",
+  line: "var(--nuvia-border)",
+  text: "var(--nuvia-text-primary)",
+  muted: "var(--nuvia-text-secondary)",
+  brand: "var(--nuvia-accent-blue)",
+  green: "var(--nuvia-accent-green)",
+  dark: "var(--nuvia-bg-secondary)",
+};
 
 interface InitialData {
   expedienteId?: string;
