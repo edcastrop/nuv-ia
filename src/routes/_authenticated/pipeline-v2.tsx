@@ -481,7 +481,8 @@ function PipelineV2Page() {
                           </td>
                         </tr>
                       )}
-                    </>
+                    </Fragment>
+
                   );
                 })}
               </tbody>
