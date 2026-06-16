@@ -139,21 +139,23 @@ function AccesosPage() {
     );
   }, [usuarios, busqueda]);
 
-  if (rolesLoading) return <div className="p-12 text-center text-sm text-[var(--nuvia-text-secondary)]">Cargando…</div>;
+  if (rolesLoading) {
+    return (
+      <PageLayout>
+        <div className="p-12 text-center text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>Cargando…</div>
+      </PageLayout>
+    );
+  }
   if (!isAdmin) return <Navigate to="/inicio" />;
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-6 space-y-5">
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[10px] uppercase tracking-widest font-semibold mb-2"
-               style={{ background: `${AZUL}15`, color: AZUL }}>
-            <ShieldCheck size={12} /> Centro de seguridad
-          </div>
-          <h1 className="text-2xl font-semibold" style={{ color: NEGRO }}>Gestión de Accesos</h1>
-          <div className="text-sm text-[var(--nuvia-text-secondary)]">Aprueba, rechaza, reactiva y administra el acceso a la plataforma NUVEX</div>
-        </div>
-      </div>
+    <PageLayout>
+      <ExecutiveHero
+        badge={{ icon: <ShieldCheck size={12} />, label: "Centro de seguridad", tone: "blue" }}
+        title="Gestión de Accesos"
+        description="Aprueba, rechaza, reactiva y administra el acceso a la plataforma NUVEX."
+      />
+
 
       {/* Selector de vista (Usuarios / Reactivaciones) */}
       {isSuperAdmin && (
