@@ -580,31 +580,31 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
 
       {/* Resultado */}
       {cargandoUltimo ? null : resultado && (
-        <div className="border-t pt-5">
+        <div className="border-t pt-5" style={{ borderColor: "var(--nuvia-border-soft)" }}>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-            <div className="md:col-span-2 p-5 rounded-xl bg-slate-900 text-white">
-              <div className="text-xs uppercase tracking-wide opacity-70 mb-1">% Endeudamiento</div>
+            <div className="md:col-span-2 p-5 rounded-xl" style={{ background: "rgba(0,0,0,0.35)", border: "1px solid var(--nuvia-border-medium)", color: "var(--nuvia-text-primary)" }}>
+              <div className="text-xs uppercase tracking-wide mb-1" style={{ color: "var(--nuvia-text-tertiary)" }}>% Endeudamiento</div>
               <div className="text-5xl font-bold">{(resultado.porcentajeEndeudamiento * 100).toFixed(1)}%</div>
-              <div className="text-sm opacity-80 mt-1">Límite del banco: {Math.round(resultado.limiteAplicable * 100)}%</div>
+              <div className="text-sm mt-1" style={{ color: "var(--nuvia-text-secondary)" }}>Límite del banco: {Math.round(resultado.limiteAplicable * 100)}%</div>
               <div className="mt-3"><SemaforoBadge s={resultado.semaforo} /></div>
             </div>
-            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200">
-              <div className="text-xs text-emerald-700 uppercase">Ingreso total detectado</div>
-              <div className="text-2xl font-bold text-emerald-900">{formatCOP(resultado.ingresoTotal)}</div>
-              <div className="text-xs text-emerald-700 mt-1">Titular + codeudor</div>
+            <div className="p-4 rounded-xl" style={{ background: "rgba(132,185,143,0.12)", border: "1px solid rgba(132,185,143,0.35)" }}>
+              <div className="text-xs uppercase" style={{ color: "rgb(132,185,143)" }}>Ingreso total detectado</div>
+              <div className="text-2xl font-bold" style={{ color: "var(--nuvia-text-primary)" }}>{formatCOP(resultado.ingresoTotal)}</div>
+              <div className="text-xs mt-1" style={{ color: "var(--nuvia-text-secondary)" }}>Titular + codeudor</div>
             </div>
-            <div className="p-4 rounded-xl bg-blue-50 border border-blue-200">
-              <div className="text-xs text-blue-700 uppercase">Cuota propuesta</div>
-              <div className="text-2xl font-bold text-blue-900">{formatCOP(resultado.cuotaPropuesta)}</div>
-              <div className="text-xs text-blue-700 mt-1">{resultado.esVis ? "Crédito VIS" : "Crédito No VIS"}</div>
+            <div className="p-4 rounded-xl" style={{ background: "rgba(122,160,255,0.12)", border: "1px solid rgba(122,160,255,0.35)" }}>
+              <div className="text-xs uppercase" style={{ color: "var(--nuvia-accent-primary)" }}>Cuota propuesta</div>
+              <div className="text-2xl font-bold" style={{ color: "var(--nuvia-text-primary)" }}>{formatCOP(resultado.cuotaPropuesta)}</div>
+              <div className="text-xs mt-1" style={{ color: "var(--nuvia-text-secondary)" }}>{resultado.esVis ? "Crédito VIS" : "Crédito No VIS"}</div>
             </div>
           </div>
 
-          <div className={`p-4 rounded-lg mb-4 ${
-            resultado.semaforo === "verde" ? "bg-emerald-50 text-emerald-900 border border-emerald-200"
-            : resultado.semaforo === "amarillo" ? "bg-amber-50 text-amber-900 border border-amber-200"
-            : "bg-red-50 text-red-900 border border-red-200"
-          }`}>
+          <div className="p-4 rounded-lg mb-4" style={
+            resultado.semaforo === "verde" ? { background: "rgba(132,185,143,0.14)", border: "1px solid rgba(132,185,143,0.4)", color: "var(--nuvia-text-primary)" }
+            : resultado.semaforo === "amarillo" ? { background: "rgba(245,200,128,0.14)", border: "1px solid rgba(245,200,128,0.4)", color: "var(--nuvia-text-primary)" }
+            : { background: "rgba(255,107,107,0.16)", border: "1px solid rgba(255,107,107,0.4)", color: "var(--nuvia-text-primary)" }
+          }>
             <p className="text-sm font-medium">{resultado.mensaje}</p>
           </div>
 
