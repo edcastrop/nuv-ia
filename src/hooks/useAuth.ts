@@ -36,9 +36,14 @@ export function useAuth(): State {
     let active = true;
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_e, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active) return;
-      setState({ session, user: session?.user ?? null, loading: false });
+      if (session) {
+        setState({ session, user: session.user, loading: false });
+        return;
+      }
+      const cached = event === "SIGNED_OUT" ? null : readCachedSession();
+      setState({ session: cached, user: cached?.user ?? null, loading: false });
     });
     supabase.auth
       .getSession()
