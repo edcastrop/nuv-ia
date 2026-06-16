@@ -205,7 +205,7 @@ function AccesosPage() {
               className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition border"
               style={active
                 ? { background: `linear-gradient(135deg,${AZUL},${VERDE})`, color: "#fff", borderColor: AZUL }
-                : { background: "#fff", color: NEGRO, borderColor: "#E3E7EE" }}
+                : { background: "var(--nuvia-bg-card)", color: "var(--nuvia-text-primary)", borderColor: "#E3E7EE" }}
             >
               <t.Icon size={14} /> {t.label}
               {tab === t.v && count !== null && <span className="text-[10px] rounded-full bg-[var(--nuvia-bg-card)]/25 px-1.5">{count}</span>}
@@ -240,7 +240,7 @@ function AccesosPage() {
                     <UserAvatar userId={u.id} name={u.nombre ?? ""} email={u.email ?? ""} size="md" />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <div className="text-[15px] font-semibold truncate" style={{ color: NEGRO }}>{u.nombre || "—"}</div>
+                        <div className="text-[15px] font-semibold truncate" style={{ color: "var(--nuvia-text-primary)" }}>{u.nombre || "—"}</div>
                         {badge(u.estado_acceso)}
                       </div>
                       <div className="text-xs text-[var(--nuvia-text-secondary)] truncate">{u.email}</div>
@@ -344,7 +344,7 @@ function AccesosPage() {
           <Card>
             <div className="flex items-center gap-2 mb-3">
               <ShieldAlert size={16} style={{ color: AZUL }} />
-              <h3 className="font-semibold text-sm" style={{ color: NEGRO }}>Historial de auditoría</h3>
+              <h3 className="font-semibold text-sm" style={{ color: "var(--nuvia-text-primary)" }}>Historial de auditoría</h3>
             </div>
             {!seleccionado ? (
               <div className="text-sm text-[var(--nuvia-text-primary)]/55 py-6 text-center">Selecciona un usuario para ver su historial.</div>
@@ -383,7 +383,7 @@ function AccesosPage() {
                   className="rounded-full px-3 py-1 text-xs font-medium border"
                   style={sel
                     ? { background: AZUL, color: "#fff", borderColor: AZUL }
-                    : { background: "#fff", color: NEGRO, borderColor: "#E3E7EE" }}
+                    : { background: "var(--nuvia-bg-card)", color: "var(--nuvia-text-primary)", borderColor: "#E3E7EE" }}
                 >{roleLabel(r)}</button>
               );
             })}
@@ -550,10 +550,10 @@ function AccesosPage() {
               className="rounded-xl border p-3 text-left transition"
               style={modoDesvinc === "con_traslado"
                 ? { borderColor: VERDE, background: "#EAF7EE" }
-                : { borderColor: "#E3E7EE", background: "#fff" }}
+                : { borderColor: "#E3E7EE", background: "var(--nuvia-bg-card)" }}
             >
               <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#1F6D3D" }}>Recomendado</div>
-              <div className="text-sm font-semibold mt-0.5" style={{ color: NEGRO }}>Con traslado</div>
+              <div className="text-sm font-semibold mt-0.5" style={{ color: "var(--nuvia-text-primary)" }}>Con traslado</div>
               <div className="text-[11px] text-[var(--nuvia-text-primary)]/65 mt-1">Transfiere casos, expedientes, cartera y responsabilidades a un usuario reemplazo.</div>
             </button>
             <button
@@ -562,10 +562,10 @@ function AccesosPage() {
               className="rounded-xl border p-3 text-left transition"
               style={modoDesvinc === "sin_traslado"
                 ? { borderColor: "#B42318", background: "#FDF2F2" }
-                : { borderColor: "#E3E7EE", background: "#fff" }}
+                : { borderColor: "#E3E7EE", background: "var(--nuvia-bg-card)" }}
             >
               <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#B42318" }}>No recomendado</div>
-              <div className="text-sm font-semibold mt-0.5" style={{ color: NEGRO }}>Sin traslado</div>
+              <div className="text-sm font-semibold mt-0.5" style={{ color: "var(--nuvia-text-primary)" }}>Sin traslado</div>
               <div className="text-[11px] text-[var(--nuvia-text-primary)]/65 mt-1">El usuario se desvincula sin reasignar. Casos y procesos pueden quedar sin responsable operativo.</div>
             </button>
           </div>
@@ -619,7 +619,7 @@ function AccesosPage() {
               </div>
 
               <div>
-                <div className="text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: NEGRO }}>Se conserva como histórico</div>
+                <div className="text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: "var(--nuvia-text-primary)" }}>Se conserva como histórico</div>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <Stat label="Mensajes" v={preview.historico.mensajes} muted />
                   <Stat label="Notificaciones" v={preview.historico.notificaciones} muted />
@@ -912,7 +912,7 @@ function ReactivacionesPanel({
             className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium border"
             style={tab === t.v
               ? { background: `linear-gradient(135deg,${AZUL},${VERDE})`, color: "#fff", borderColor: AZUL }
-              : { background: "#fff", color: NEGRO, borderColor: "#E3E7EE" }}>
+              : { background: "var(--nuvia-bg-card)", color: "var(--nuvia-text-primary)", borderColor: "#E3E7EE" }}>
             {t.label}
           </button>
         ))}
@@ -988,7 +988,7 @@ function Modal({ title, children, onClose, wide }: { title: string; children: Re
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto" onClick={onClose}>
       <div className={`w-full ${wide ? "max-w-2xl" : "max-w-md"} rounded-2xl bg-[var(--nuvia-bg-card)] p-6 shadow-2xl my-8`} onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-lg font-semibold mb-4" style={{ color: NEGRO }}>{title}</h3>
+        <h3 className="text-lg font-semibold mb-4" style={{ color: "var(--nuvia-text-primary)" }}>{title}</h3>
         {children}
       </div>
     </div>
