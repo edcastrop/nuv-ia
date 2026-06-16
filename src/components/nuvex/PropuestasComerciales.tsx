@@ -682,7 +682,10 @@ export function PropuestasComerciales(props: Props) {
 function HeroMetric({ label, value, color }: { label: string; value: string; color: string }) {
   return (
     <div>
-      <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[#8893A0]">
+      <div
+        className="text-[9px] font-semibold uppercase tracking-[0.16em]"
+        style={{ color: "rgba(230,236,255,0.55)" }}
+      >
         {label}
       </div>
       <div
@@ -700,13 +703,13 @@ function FranjaRow({ label, value, highlight }: { label: string; value: string; 
     <div className="flex items-baseline justify-between gap-2">
       <span
         className="text-[8.5px] font-semibold uppercase tracking-[0.12em]"
-        style={{ color: highlight ? "#1F7A45" : "#8893A0" }}
+        style={{ color: highlight ? "#A7E0B8" : "rgba(230,236,255,0.5)" }}
       >
         {label}
       </span>
       <span
         className="text-[11px] font-bold tabular-nums"
-        style={{ color: highlight ? "#1F7A45" : "#242424" }}
+        style={{ color: highlight ? "#A7E0B8" : "#FFFFFF" }}
       >
         {value}
       </span>
