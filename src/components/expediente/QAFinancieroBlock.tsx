@@ -1,9 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
-import { Card } from "@/components/nuvex/ui";
+import { NCard, SectionHeader } from "@/components/nuvia";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Brain, RefreshCw, AlertTriangle, ExternalLink } from "lucide-react";
-import { NUVEX } from "@/components/nuvex/constants";
 import { QABadge, type QACategoria } from "@/components/qa-ai/QABadge";
 import {
   ultimaAuditoriaQAPorExpediente,
@@ -70,28 +69,40 @@ export function QAFinancieroBlock({ expedienteId }: { expedienteId: string }) {
   };
 
   return (
-    <Card>
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex items-center gap-2">
-          <Brain size={18} style={{ color: NUVEX.azul }} />
-          <h3 className="text-sm font-semibold text-[#242424]">QA Financiero · NUVIA</h3>
-        </div>
-        <div className="flex items-center gap-2">
+    <NCard variant="elevated">
+      <SectionHeader
+        icon={<Brain size={16} />}
+        title="QA Financiero · NUVIA"
+        description="Auditoría automática de la lectura del extracto."
+        action={
           <button
             onClick={reejecutar}
             disabled={running}
-            className="text-[11px] text-[#445DA3] hover:underline inline-flex items-center gap-1 disabled:opacity-50"
+            className="text-[11px] inline-flex items-center gap-1 hover:underline disabled:opacity-50"
+            style={{ color: "var(--nuvia-accent-blue)" }}
           >
-            <RefreshCw size={12} className={running ? "animate-spin" : ""} /> {running ? "Auditando…" : "Reejecutar auditoría"}
+            <RefreshCw size={12} className={running ? "animate-spin" : ""} />
+            {running ? "Auditando…" : "Reejecutar auditoría"}
           </button>
-        </div>
-      </div>
+        }
+      />
 
-      {loading && <div className="py-3 text-[12px] text-[#242424]/60">Cargando auditoría…</div>}
-      {err && <div className="mb-2 text-[12px] text-[#991B1B]">{err}</div>}
+      {loading && (
+        <div className="py-3 text-[12px]" style={{ color: "var(--nuvia-text-secondary)" }}>
+          Cargando auditoría…
+        </div>
+      )}
+      {err && <div className="mb-2 text-[12px]" style={{ color: "#FFB4B4" }}>{err}</div>}
 
       {!loading && data && !data.auditoria && (
-        <div className="rounded-lg border border-[#E5E7EB] bg-[#F8FAFC] px-3 py-3 text-[12px] text-[#475569]">
+        <div
+          className="rounded-lg px-3 py-3 text-[12px]"
+          style={{
+            background: "rgba(255,255,255,0.03)",
+            border: "1px solid var(--nuvia-border)",
+            color: "var(--nuvia-text-secondary)",
+          }}
+        >
           Este expediente aún no tiene auditoría QA. Sube un extracto bancario para ejecutarla automáticamente.
         </div>
       )}
@@ -105,36 +116,83 @@ export function QAFinancieroBlock({ expedienteId }: { expedienteId: string }) {
               auditoriaId={data.auditoria.id}
               size="md"
             />
-            <span className="text-[12px] text-[#242424]/70">
+            <span className="text-[12px]" style={{ color: "var(--nuvia-text-secondary)" }}>
               {dictamenLabel[data.auditoria.dictamen] ?? data.auditoria.dictamen}
             </span>
             {data.auditoria.auto_ejecutada && (
-              <span className="text-[10px] uppercase tracking-wide text-[#445DA3] bg-[#EEF2FF] border border-[#C7D2FE] rounded px-1.5 py-[1px]">
+              <span
+                className="text-[10px] uppercase tracking-wide rounded px-1.5 py-[1px]"
+                style={{
+                  background: "rgba(68,93,163,0.18)",
+                  border: "1px solid rgba(68,93,163,0.32)",
+                  color: "var(--nuvia-accent-blue)",
+                }}
+              >
                 Automática
               </span>
             )}
-            <span className="text-[11px] text-[#242424]/50 ml-auto">
+            <span
+              className="text-[11px] ml-auto"
+              style={{ color: "var(--nuvia-text-secondary)", opacity: 0.7 }}
+            >
               {new Date(data.auditoria.ejecutado_at).toLocaleString("es-CO")}
             </span>
           </div>
 
           {data.alertasAbiertas > 0 && (
-            <div className="rounded-lg border border-[#FCA5A5] bg-[#FEE2E2] px-3 py-2 text-[12px] text-[#991B1B] font-semibold mb-3 inline-flex items-center gap-2">
+            <div
+              className="rounded-lg px-3 py-2 text-[12px] font-semibold mb-3 inline-flex items-center gap-2"
+              style={{
+                background: "rgba(255,107,107,0.16)",
+                border: "1px solid rgba(255,107,107,0.32)",
+                color: "#FFB4B4",
+              }}
+            >
               <AlertTriangle size={14} /> {data.alertasAbiertas} alerta(s) QA abierta(s)
             </div>
           )}
 
           {data.inconsistencias.length > 0 && (
             <div className="mb-3">
-              <div className="text-[11px] uppercase tracking-wide text-[#242424]/60 mb-1">Hallazgos</div>
+              <div
+                className="text-[11px] uppercase tracking-wide mb-1"
+                style={{ color: "var(--nuvia-text-secondary)" }}
+              >
+                Hallazgos
+              </div>
               <ul className="space-y-1.5">
                 {data.inconsistencias.slice(0, 5).map((i, idx) => (
-                  <li key={idx} className="rounded border border-[#E5E7EB] bg-white px-2.5 py-1.5 text-[12px] text-[#242424]">
-                    <span className="font-semibold uppercase text-[10px] mr-2" style={{ color: i.severidad === "critica" ? "#991B1B" : i.severidad === "warning" ? "#92400E" : "#475569" }}>
+                  <li
+                    key={idx}
+                    className="rounded px-2.5 py-1.5 text-[12px]"
+                    style={{
+                      background: "rgba(255,255,255,0.03)",
+                      border: "1px solid var(--nuvia-border)",
+                      color: "var(--nuvia-text-primary)",
+                    }}
+                  >
+                    <span
+                      className="font-semibold uppercase text-[10px] mr-2"
+                      style={{
+                        color:
+                          i.severidad === "critica"
+                            ? "#FFB4B4"
+                            : i.severidad === "warning"
+                              ? "#F5C77A"
+                              : "var(--nuvia-text-secondary)",
+                      }}
+                    >
                       {i.severidad}
                     </span>
                     {i.mensaje}
-                    {i.sugerencia && <span className="block text-[11px] text-[#242424]/60 mt-0.5">→ {i.sugerencia}</span>}
+                    {i.sugerencia && (
+                      <span
+                        className="block text-[11px] mt-0.5"
+                        style={{ color: "var(--nuvia-text-secondary)" }}
+                      >
+                        → {i.sugerencia}
+                      </span>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -145,18 +203,19 @@ export function QAFinancieroBlock({ expedienteId }: { expedienteId: string }) {
             <Link
               to="/qa-ai/$id"
               params={{ id: data.auditoria.id }}
-              className="text-[#445DA3] hover:underline inline-flex items-center gap-1"
+              className="inline-flex items-center gap-1 hover:underline"
+              style={{ color: "var(--nuvia-accent-blue)" }}
             >
               Ver dictamen completo <ExternalLink size={11} />
             </Link>
             {data.auditoria.categoria === "rechazado" && (
-              <span className="text-[#991B1B] font-semibold">
+              <span className="font-semibold" style={{ color: "#FFB4B4" }}>
                 Caso bloqueado para avanzar. Corrija los hallazgos y reejecute.
               </span>
             )}
           </div>
         </>
       )}
-    </Card>
+    </NCard>
   );
 }

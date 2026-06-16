@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { FileClock, Plus } from "lucide-react";
-import { Card } from "@/components/nuvex/ui";
-import { NUVEX } from "@/components/nuvex/constants";
+import { NCard, SectionHeader } from "@/components/nuvia";
 import {
   listVersionesDocumentos,
   registrarVersionDocumento,
@@ -20,9 +19,7 @@ const TIPOS: Array<{ key: Parameters<typeof registrarVersionDocumento>[1]; label
   { key: "radicacion", label: "Radicación banco" },
 ];
 
-interface Props {
-  exp: Expediente;
-}
+interface Props { exp: Expediente }
 
 export function VersionesDocumentalesBlock({ exp }: Props) {
   const [items, setItems] = useState<VersionDoc[]>([]);
@@ -59,24 +56,12 @@ export function VersionesDocumentalesBlock({ exp }: Props) {
   };
 
   return (
-    <Card>
-      <div className="flex items-start gap-3 mb-4">
-        <div
-          className="flex h-10 w-10 items-center justify-center rounded-lg text-white shrink-0"
-          style={{ background: `linear-gradient(135deg, ${NUVEX.azul}, ${NUVEX.negro})` }}
-        >
-          <FileClock size={18} />
-        </div>
-        <div>
-          <div className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: NUVEX.azul }}>
-            Trazabilidad
-          </div>
-          <h3 className="text-lg font-semibold text-[#242424]">Versiones documentales</h3>
-          <p className="text-xs text-[#242424]/60 mt-0.5">
-            Cada vez que cambien datos críticos del expediente, las versiones previas quedarán marcadas como OBSOLETAS.
-          </p>
-        </div>
-      </div>
+    <NCard variant="elevated">
+      <SectionHeader
+        icon={<FileClock size={16} />}
+        title="Versiones documentales"
+        description="Trazabilidad — cuando cambian datos críticos las versiones previas quedan marcadas como OBSOLETAS."
+      />
 
       <div className="flex flex-wrap gap-2 mb-3">
         {TIPOS.map((t) => (
@@ -84,19 +69,25 @@ export function VersionesDocumentalesBlock({ exp }: Props) {
             key={t.key}
             onClick={() => registrar(t.key)}
             disabled={busy}
-            className="inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[11px] font-medium disabled:opacity-50"
-            style={{ borderColor: "#E3E7EE" }}
+            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-medium disabled:opacity-50 transition-colors"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid var(--nuvia-border)",
+              color: "var(--nuvia-text-secondary)",
+            }}
           >
             <Plus size={11} /> {t.label}
           </button>
         ))}
       </div>
 
-      {err && <div className="text-xs text-[#B42318] mb-2">{err}</div>}
-      {loading && <div className="text-xs text-[#242424]/60">Cargando versiones…</div>}
+      {err && <div className="text-xs mb-2" style={{ color: "#FFB4B4" }}>{err}</div>}
+      {loading && <div className="text-xs" style={{ color: "var(--nuvia-text-secondary)" }}>Cargando versiones…</div>}
 
       {!loading && items.length === 0 && (
-        <div className="text-xs text-[#242424]/60">Aún no se han registrado versiones documentales.</div>
+        <div className="text-xs" style={{ color: "var(--nuvia-text-secondary)" }}>
+          Aún no se han registrado versiones documentales.
+        </div>
       )}
 
       {!loading && items.length > 0 && (
@@ -104,30 +95,40 @@ export function VersionesDocumentalesBlock({ exp }: Props) {
           {items.map((v) => (
             <div
               key={v.id}
-              className="flex flex-wrap items-center gap-2 border-b border-dashed border-[#E3E7EE] pb-1 last:border-0 text-xs"
+              className="flex flex-wrap items-center gap-2 pb-1.5 last:border-0 text-xs"
+              style={{ borderBottom: "1px dashed var(--nuvia-border)" }}
             >
-              <span className="font-semibold uppercase text-[10px]" style={{ color: NUVEX.azul }}>
+              <span
+                className="font-semibold uppercase text-[10px]"
+                style={{ color: "var(--nuvia-accent-blue)" }}
+              >
                 {v.tipo}
               </span>
-              <span className="font-medium">v{v.version}</span>
+              <span className="font-medium" style={{ color: "var(--nuvia-text-primary)" }}>
+                v{v.version}
+              </span>
               {v.obsoleto && (
                 <span
-                  className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase"
-                  style={{ background: "#FDECEC", color: "#7A0E0E", borderColor: "#F5A8A8" }}
+                  className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase"
+                  style={{
+                    background: "rgba(255,107,107,0.16)",
+                    color: "#FFB4B4",
+                    border: "1px solid rgba(255,107,107,0.32)",
+                  }}
                 >
                   OBSOLETO
                 </span>
               )}
-              <span className="text-[#242424]/60 flex-1 truncate">
+              <span className="flex-1 truncate" style={{ color: "var(--nuvia-text-secondary)" }}>
                 {v.motivo_obsoleto || ""}
               </span>
-              <span className="text-[#242424]/50">
+              <span style={{ color: "var(--nuvia-text-secondary)", opacity: 0.7 }}>
                 {new Date(v.created_at).toLocaleString("es-CO")}
               </span>
             </div>
           ))}
         </div>
       )}
-    </Card>
+    </NCard>
   );
 }
