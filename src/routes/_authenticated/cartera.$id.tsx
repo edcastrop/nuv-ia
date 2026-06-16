@@ -50,8 +50,19 @@ function CarteraDetail() {
   };
   useEffect(() => { reload(); }, [id]);
 
-  if (loading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando cartera…</div>;
-  if (!c) return <div className="p-12 text-center text-sm text-[#B42318]">No encontrada.</div>;
+  if (loading) return <div className="p-12 text-center text-sm text-[var(--nuvia-text-secondary)]">Cargando cartera…</div>;
+  if (!c) return (
+    <div className="mx-auto max-w-2xl px-6 py-12 text-center space-y-3">
+      <div className="text-sm font-semibold text-[var(--nuvia-text-primary)]">Este caso aún no llegó a cartera</div>
+      <div className="text-xs text-[var(--nuvia-text-secondary)]">
+        La cartera se genera cuando el banco aplica el crédito y se emite la cuenta de cobro.
+      </div>
+      <div className="pt-2 flex justify-center gap-3 text-xs">
+        <Link to="/cartera" className="text-[var(--nuvia-accent-blue)] hover:underline">← Volver a Cartera</Link>
+        <Link to="/casos/$id" params={{ id }} className="text-[var(--nuvia-accent-blue)] hover:underline">Ver expediente →</Link>
+      </div>
+    </div>
+  );
 
   const saldo = Number(c.honorarios_totales) - Number(c.pagado);
   const dm = diasMora(c.fecha_vencimiento);

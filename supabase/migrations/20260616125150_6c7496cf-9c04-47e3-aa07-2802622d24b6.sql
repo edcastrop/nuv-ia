@@ -1,0 +1,2 @@
+GRANT USAGE ON SCHEMA audit TO PUBLIC;
+GRANT EXECUTE ON FUNCTION audit.rls_counts_as(uuid) TO PUBLIC;
