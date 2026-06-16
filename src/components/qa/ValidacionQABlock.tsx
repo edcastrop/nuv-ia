@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card } from "@/components/nuvex/ui";
+import { NCard, SectionHeader, NSelect } from "@/components/nuvia";
 import { useUserRole } from "@/hooks/useUserRole";
 import {
   aprobarQA,
@@ -103,39 +103,41 @@ export function ValidacionQABlock({ expedienteId, estadoCaso, onChanged }: Props
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  const statusBadge = pendiente
+    ? { bg: "rgba(245,199,122,0.16)", border: "rgba(245,199,122,0.32)", color: "#F5C77A", label: "Pendiente de validación" }
+    : aprobada
+      ? { bg: "rgba(125,232,176,0.16)", border: "rgba(125,232,176,0.32)", color: "#7DE8B0", label: "✓ Proyección aprobada" }
+      : devuelta
+        ? { bg: "rgba(255,107,107,0.16)", border: "rgba(255,107,107,0.32)", color: "#FFB4B4", label: "Devuelta — corregir" }
+        : null;
+
   return (
-    <Card>
-      <div className="flex items-start justify-between flex-wrap gap-3">
-        <div className="flex items-start gap-3">
-          <ClipboardCheck size={20} className="text-[#445DA3] mt-0.5" />
-          <div>
-            <div className="text-sm font-semibold text-[#0A1226]">Validación financiera QA</div>
-            <div className="text-[12px] text-[#242424]/70 mt-0.5">
-              Toda proyección requiere aprobación del Director Financiero QA antes de presentarse al cliente.
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {pendiente && (
-            <span className="rounded-full px-3 py-1 text-[11px] font-semibold" style={{ background: "#FFF7E6", color: "#8A5A00" }}>
-              Pendiente de validación
+    <NCard variant="elevated">
+      <SectionHeader
+        icon={<ClipboardCheck size={16} />}
+        title="Validación financiera QA"
+        description="Toda proyección requiere aprobación del Director Financiero QA antes de presentarse al cliente."
+        action={
+          statusBadge ? (
+            <span
+              className="rounded-full px-3 py-1 text-[11px] font-semibold"
+              style={{ background: statusBadge.bg, border: `1px solid ${statusBadge.border}`, color: statusBadge.color }}
+            >
+              {statusBadge.label}
             </span>
-          )}
-          {aprobada && (
-            <span className="rounded-full px-3 py-1 text-[11px] font-semibold" style={{ background: "#EAF7EE", color: "#1F7A45" }}>
-              ✓ Proyección aprobada
-            </span>
-          )}
-          {devuelta && (
-            <span className="rounded-full px-3 py-1 text-[11px] font-semibold" style={{ background: "#FEE2E2", color: "#991B1B" }}>
-              Devuelta — corregir
-            </span>
-          )}
-        </div>
-      </div>
+          ) : undefined
+        }
+      />
 
       {devuelta && ultima?.observacion && (
-        <div className="mt-3 rounded-lg border border-[#FCA5A5] bg-[#FEF2F2] p-3 text-[12px] text-[#7F1D1D]">
+        <div
+          className="mb-3 rounded-lg p-3 text-[12px]"
+          style={{
+            background: "rgba(255,107,107,0.12)",
+            border: "1px solid rgba(255,107,107,0.32)",
+            color: "#FFB4B4",
+          }}
+        >
           <div className="flex items-start gap-2">
             <AlertTriangle size={14} className="mt-0.5" />
             <div>
@@ -148,13 +150,17 @@ export function ValidacionQABlock({ expedienteId, estadoCaso, onChanged }: Props
         </div>
       )}
 
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2">
         {puedeEnviar && (
           <button
             disabled={busy}
             onClick={handleEnviar}
-            className="inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
-            style={{ background: "#445DA3" }}
+            className="inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-[12px] font-semibold disabled:opacity-50"
+            style={{
+              background: "rgba(68,93,163,0.28)",
+              border: "1px solid rgba(68,93,163,0.5)",
+              color: "var(--nuvia-text-primary)",
+            }}
           >
             <Send size={13} /> Enviar a validación financiera
           </button>
@@ -164,14 +170,24 @@ export function ValidacionQABlock({ expedienteId, estadoCaso, onChanged }: Props
             <button
               type="button"
               onClick={() => scrollToQaSection("lector-extracto-qa")}
-              className="inline-flex items-center gap-2 rounded-lg border border-[#C9D7F1] bg-white px-3.5 py-2 text-[12px] font-semibold text-[#445DA3] hover:bg-[#F7F9FB]"
+              className="inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-[12px] font-semibold"
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid var(--nuvia-border)",
+                color: "var(--nuvia-text-primary)",
+              }}
             >
               Ver / subir extracto
             </button>
             <button
               type="button"
               onClick={() => scrollToQaSection("simulador-financiero-qa")}
-              className="inline-flex items-center gap-2 rounded-lg border border-[#C9D7F1] bg-white px-3.5 py-2 text-[12px] font-semibold text-[#445DA3] hover:bg-[#F7F9FB]"
+              className="inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-[12px] font-semibold"
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid var(--nuvia-border)",
+                color: "var(--nuvia-text-primary)",
+              }}
             >
               Revisar / editar simulación
             </button>
@@ -182,67 +198,100 @@ export function ValidacionQABlock({ expedienteId, estadoCaso, onChanged }: Props
             <button
               disabled={busy}
               onClick={handleAprobar}
-              className="inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
-              style={{ background: "#1F7A45" }}
+              className="inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-[12px] font-semibold disabled:opacity-50"
+              style={{
+                background: "rgba(125,232,176,0.2)",
+                border: "1px solid rgba(125,232,176,0.4)",
+                color: "#7DE8B0",
+              }}
             >
               <CheckCircle2 size={13} /> Aprobar proyección
             </button>
             <button
               disabled={busy}
               onClick={() => setShowDevolver(true)}
-              className="inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
-              style={{ background: "#991B1B" }}
+              className="inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-[12px] font-semibold disabled:opacity-50"
+              style={{
+                background: "rgba(255,107,107,0.2)",
+                border: "1px solid rgba(255,107,107,0.4)",
+                color: "#FFB4B4",
+              }}
             >
               <XCircle size={13} /> Devolver
             </button>
           </>
         )}
         {!puedeEnviar && !pendiente && !aprobada && !devuelta && puedeSolicitarRol && (
-          <div className="text-[11px] text-[#242424]/60">
-            Estado actual del caso: <b>{String(estadoCaso)}</b>. Completa la simulación (estado <i>simulacion_realizada</i>) para habilitar el envío a validación.
+          <div className="text-[11px]" style={{ color: "var(--nuvia-text-secondary)" }}>
+            Estado actual: <b style={{ color: "var(--nuvia-text-primary)" }}>{String(estadoCaso)}</b>. Completa la simulación (estado <i>simulacion_realizada</i>) para habilitar el envío a validación.
           </div>
         )}
       </div>
 
       {showDevolver && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
-            <div className="text-sm font-semibold text-[#0A1226]">Devolver proyección</div>
-            <label className="mt-3 block text-[11px] uppercase tracking-wider text-[#242424]/60">Motivo</label>
-            <select
-              value={motivo}
-              onChange={(e) => setMotivo(e.target.value as MotivoDevolucionQA)}
-              className="mt-1 w-full rounded-lg border border-[#E3E7EE] bg-white px-3 py-2 text-sm"
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div
+            className="w-full max-w-md rounded-2xl p-5"
+            style={{
+              background: "var(--nuvia-bg-card)",
+              border: "1px solid var(--nuvia-border-strong)",
+              boxShadow: "0 24px 60px rgba(0,0,0,0.5)",
+            }}
+          >
+            <div className="text-sm font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
+              Devolver proyección
+            </div>
+            <label
+              className="mt-3 block text-[11px] uppercase tracking-wider"
+              style={{ color: "var(--nuvia-text-secondary)" }}
             >
-              {MOTIVOS_QA.map((m) => (
-                <option key={m.value} value={m.value}>{m.label}</option>
-              ))}
-            </select>
-            <label className="mt-3 block text-[11px] uppercase tracking-wider text-[#242424]/60">
+              Motivo
+            </label>
+            <div className="mt-1">
+              <NSelect
+                value={motivo}
+                onValueChange={(v) => setMotivo(v as MotivoDevolucionQA)}
+                options={MOTIVOS_QA.map((m) => ({ value: m.value, label: m.label }))}
+                compact={false}
+              />
+            </div>
+            <label
+              className="mt-3 block text-[11px] uppercase tracking-wider"
+              style={{ color: "var(--nuvia-text-secondary)" }}
+            >
               Observación (obligatoria)
             </label>
             <textarea
               value={observacion}
               onChange={(e) => setObservacion(e.target.value)}
               rows={4}
-              className="mt-1 w-full rounded-lg border border-[#E3E7EE] bg-white px-3 py-2 text-sm"
+              className="nuvia-input mt-1 w-full"
               placeholder="Explique qué debe corregir el Analista Financiero Comercial…"
             />
             <div className="mt-4 flex justify-end gap-2">
               <button
                 onClick={() => setShowDevolver(false)}
-                className="rounded-lg border border-[#E3E7EE] px-3 py-1.5 text-xs font-medium"
+                className="rounded-lg px-3 py-1.5 text-xs font-medium"
+                style={{
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid var(--nuvia-border)",
+                  color: "var(--nuvia-text-primary)",
+                }}
               >Cancelar</button>
               <button
                 onClick={handleDevolver}
                 disabled={busy || !observacion.trim()}
-                className="rounded-lg px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
-                style={{ background: "#991B1B" }}
+                className="rounded-lg px-3 py-1.5 text-xs font-semibold disabled:opacity-50"
+                style={{
+                  background: "rgba(255,107,107,0.22)",
+                  border: "1px solid rgba(255,107,107,0.4)",
+                  color: "#FFB4B4",
+                }}
               >Confirmar devolución</button>
             </div>
           </div>
         </div>
       )}
-    </Card>
+    </NCard>
   );
 }

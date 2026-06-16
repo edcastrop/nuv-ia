@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/nuvex/ui";
+import { NCard, SectionHeader } from "@/components/nuvia";
+import { Paperclip } from "lucide-react";
 
 const BUCKET = "soportes-banco";
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -132,42 +133,46 @@ export function SoportesBanco({ expedienteId, estadoCaso, allowUploadForQA = fal
   };
 
   return (
-    <Card>
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
-          <div className="text-[11px] uppercase tracking-wider text-[#242424]/60">Soportes del Banco</div>
-          <h3 className="text-base font-semibold text-[#242424]">Aprobación banco</h3>
-          <p className="mt-1 text-xs text-[#242424]/65 max-w-xl">
-            Adjunta aquí la captura del correo, PDF o evidencia enviada por el banco. Este
-            soporte no es obligatorio por ahora, pero se recomienda cargarlo para dejar
-            trazabilidad del expediente.
-          </p>
-        </div>
-        {showUploader && (
-          <div>
-            <input
-              ref={inputRef}
-              type="file"
-              accept=".png,.jpg,.jpeg,.pdf,image/png,image/jpeg,application/pdf"
-              className="hidden"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f); }}
-            />
-            <button
-              onClick={() => inputRef.current?.click()}
-              disabled={uploading}
-              className="rounded-lg px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
-              style={{ background: "#445DA3" }}
-            >
-              {uploading ? "Subiendo…" : aprobacionItems.length > 0 ? "Agregar otro soporte" : "Adjuntar soporte"}
-            </button>
-          </div>
-        )}
-      </div>
+    <NCard variant="elevated">
+      <SectionHeader
+        icon={<Paperclip size={16} />}
+        title="Soportes del banco · aprobación"
+        description="Adjunta la captura del correo, PDF o evidencia enviada por el banco. Recomendado para trazabilidad."
+        action={
+          showUploader ? (
+            <>
+              <input
+                ref={inputRef}
+                type="file"
+                accept=".png,.jpg,.jpeg,.pdf,image/png,image/jpeg,application/pdf"
+                className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f); }}
+              />
+              <button
+                onClick={() => inputRef.current?.click()}
+                disabled={uploading}
+                className="rounded-lg px-3 py-2 text-xs font-semibold disabled:opacity-50"
+                style={{
+                  background: "rgba(68,93,163,0.22)",
+                  border: "1px solid rgba(68,93,163,0.4)",
+                  color: "var(--nuvia-text-primary)",
+                }}
+              >
+                {uploading ? "Subiendo…" : aprobacionItems.length > 0 ? "Agregar otro" : "Adjuntar soporte"}
+              </button>
+            </>
+          ) : undefined
+        }
+      />
 
       {sinSoporte && (
         <div
-          className="mt-3 rounded-lg border px-3 py-2 text-xs"
-          style={{ background: "#FFF7E6", borderColor: "#F0B429", color: "#8A5A00" }}
+          className="mb-3 rounded-lg px-3 py-2 text-xs"
+          style={{
+            background: "rgba(245,199,122,0.14)",
+            border: "1px solid rgba(245,199,122,0.32)",
+            color: "#F5C77A",
+          }}
         >
           ⚠ Estado aprobado sin soporte adjunto.
         </div>
@@ -175,25 +180,44 @@ export function SoportesBanco({ expedienteId, estadoCaso, allowUploadForQA = fal
 
       {err && (
         <div
-          className="mt-3 rounded-lg border px-3 py-2 text-xs"
-          style={{ background: "#FDECEC", borderColor: "#F5C2C2", color: "#B42318" }}
+          className="mb-3 rounded-lg px-3 py-2 text-xs"
+          style={{
+            background: "rgba(255,107,107,0.14)",
+            border: "1px solid rgba(255,107,107,0.32)",
+            color: "#FFB4B4",
+          }}
         >
           {err}
         </div>
       )}
 
-      <div className="mt-4">
+      <div>
         {loading ? (
-          <div className="text-xs text-[#242424]/60">Cargando soportes…</div>
+          <div className="text-xs" style={{ color: "var(--nuvia-text-secondary)" }}>Cargando soportes…</div>
         ) : items.length === 0 ? (
-          <div className="text-xs text-[#242424]/60">Aún no hay soportes cargados.</div>
+          <div className="text-xs" style={{ color: "var(--nuvia-text-secondary)" }}>Aún no hay soportes cargados.</div>
         ) : (
-          <div className="divide-y divide-[#E3E7EE] rounded-lg border border-[#E3E7EE] bg-white">
-            {items.map((s) => (
-              <div key={s.id} className="flex items-center justify-between gap-3 px-3 py-2">
+          <div
+            className="rounded-lg overflow-hidden"
+            style={{
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid var(--nuvia-border)",
+            }}
+          >
+            {items.map((s, idx) => (
+              <div
+                key={s.id}
+                className="flex items-center justify-between gap-3 px-3 py-2"
+                style={idx > 0 ? { borderTop: "1px solid var(--nuvia-border)" } : undefined}
+              >
                 <div className="min-w-0">
-                  <div className="text-xs font-semibold text-[#242424] truncate">{s.archivo_nombre}</div>
-                  <div className="text-[10px] text-[#242424]/60">
+                  <div
+                    className="text-xs font-semibold truncate"
+                    style={{ color: "var(--nuvia-text-primary)" }}
+                  >
+                    {s.archivo_nombre}
+                  </div>
+                  <div className="text-[10px]" style={{ color: "var(--nuvia-text-secondary)" }}>
                     {new Date(s.created_at).toLocaleString()}
                     {s.user_nombre ? ` · ${s.user_nombre}` : ""}
                     {s.estado_relacionado ? ` · ${s.estado_relacionado}` : ""}
@@ -203,12 +227,21 @@ export function SoportesBanco({ expedienteId, estadoCaso, allowUploadForQA = fal
                 <div className="flex shrink-0 gap-1">
                   <button
                     onClick={() => handleView(s)}
-                    className="rounded-md border border-[#E3E7EE] bg-white px-2.5 py-1 text-[11px] font-medium hover:border-[#445DA3]/40"
+                    className="rounded-md px-2.5 py-1 text-[11px] font-medium"
+                    style={{
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid var(--nuvia-border)",
+                      color: "var(--nuvia-text-primary)",
+                    }}
                   >Ver</button>
                   <button
                     onClick={() => handleDelete(s)}
-                    className="rounded-md border px-2.5 py-1 text-[11px] font-medium"
-                    style={{ borderColor: "#F5C2C2", color: "#B42318", background: "#FDECEC" }}
+                    className="rounded-md px-2.5 py-1 text-[11px] font-medium"
+                    style={{
+                      background: "rgba(255,107,107,0.14)",
+                      border: "1px solid rgba(255,107,107,0.32)",
+                      color: "#FFB4B4",
+                    }}
                   >Eliminar</button>
                 </div>
               </div>
@@ -216,6 +249,6 @@ export function SoportesBanco({ expedienteId, estadoCaso, allowUploadForQA = fal
           </div>
         )}
       </div>
-    </Card>
+    </NCard>
   );
 }

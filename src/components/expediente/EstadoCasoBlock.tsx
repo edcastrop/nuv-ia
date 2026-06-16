@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/nuvex/ui";
+import { NCard, SectionHeader, NSelect } from "@/components/nuvia";
+import { Activity, AlertTriangle } from "lucide-react";
 import { CASO_ESTADOS, CASO_ESTADO_BY_KEY, labelEstado, type AccionOrigen, type CasoEstado } from "@/lib/casoEstados";
 import { useEstadoSugerido } from "@/hooks/useEstadoSugerido";
 import { ConfirmEstadoModal } from "./ConfirmEstadoModal";
@@ -23,7 +24,6 @@ export function EstadoCasoBlock({ expedienteId, onChanged }: Props) {
     setLoading(true);
     const { data } = await supabase.from("expedientes").select("estado_caso" as never).eq("id", expedienteId).single();
     setActual((data as unknown as { estado_caso?: CasoEstado })?.estado_caso ?? "lead_creado");
-    // Alerta de estancamiento sin leer
     const { data: alertas } = await supabase
       .from("caso_alertas" as never)
       .select("dias_estancado,tipo")
@@ -55,49 +55,82 @@ export function EstadoCasoBlock({ expedienteId, onChanged }: Props) {
 
   return (
     <>
-      <Card>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <div className="text-[11px] uppercase tracking-wider text-[#242424]/60">Estado del caso</div>
-            <div className="mt-1 flex items-center gap-2 flex-wrap">
-              <span className="rounded-full px-3 py-1 text-xs font-semibold"
-                style={def ? { background: def.bg, color: def.color } : { background: "#F1F2F4", color: "#242424" }}>
-                {loading ? "Cargando…" : labelEstado(actual)}
-              </span>
-              {alerta && (
-                <span
-                  className="rounded-full px-3 py-1 text-xs font-semibold"
-                  style={{ background: "#FEE2E2", color: "#991B1B" }}
-                  title={alerta.tipo}
-                >
-                  ⚠ Estancado {alerta.dias} días
-                </span>
-              )}
+      <NCard variant="elevated">
+        <SectionHeader
+          icon={<Activity size={16} />}
+          title="Estado del caso"
+          description="Estado vigente, alertas de estancamiento y transiciones rápidas."
+          action={
+            <div className="w-[260px]">
+              <NSelect
+                value=""
+                onValueChange={(v) => { if (v) sugerirManual(v as CasoEstado); }}
+                options={[
+                  { value: "", label: "Cambiar estado…" },
+                  ...CASO_ESTADOS.map((s) => ({ value: s.key, label: s.label })),
+                ]}
+                placeholder="Cambiar estado…"
+              />
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <label className="text-[11px] text-[#242424]/60">Cambiar a:</label>
-            <select
-              value=""
-              onChange={(e) => { if (e.target.value) sugerirManual(e.target.value as CasoEstado); }}
-              className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 text-xs font-medium"
+          }
+        />
+
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className="rounded-full px-3 py-1 text-xs font-semibold"
+            style={
+              def
+                ? {
+                    background: "rgba(68,93,163,0.18)",
+                    color: "var(--nuvia-text-primary)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                  }
+                : {
+                    background: "rgba(255,255,255,0.06)",
+                    color: "var(--nuvia-text-secondary)",
+                  }
+            }
+          >
+            {loading ? "Cargando…" : labelEstado(actual)}
+          </span>
+          {alerta && (
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
+              style={{
+                background: "rgba(255,107,107,0.18)",
+                color: "#FFB4B4",
+                border: "1px solid rgba(255,107,107,0.32)",
+              }}
+              title={alerta.tipo}
             >
-              <option value="">Seleccionar estado…</option>
-              {CASO_ESTADOS.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
-            </select>
-          </div>
+              <AlertTriangle size={12} /> Estancado {alerta.dias} días
+            </span>
+          )}
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-4 flex flex-wrap gap-2">
           {acciones.map((a) => (
             <button
               key={a.accion}
               onClick={() => sugerir(a.accion)}
-              className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 text-[11px] font-medium hover:border-[#445DA3]/40"
+              className="rounded-lg px-3 py-1.5 text-[11px] font-medium transition-colors"
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid var(--nuvia-border)",
+                color: "var(--nuvia-text-secondary)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(68,93,163,0.18)";
+                e.currentTarget.style.color = "var(--nuvia-text-primary)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+                e.currentTarget.style.color = "var(--nuvia-text-secondary)";
+              }}
             >{a.label}</button>
           ))}
         </div>
-      </Card>
+      </NCard>
 
       <ConfirmEstadoModal
         open={!!pendiente}
@@ -105,7 +138,6 @@ export function EstadoCasoBlock({ expedienteId, onChanged }: Props) {
         onConfirm={async (obs, submotivo, extras) => { await confirmar(obs, submotivo, extras); }}
         onCancel={cancelar}
       />
-
     </>
   );
 }
