@@ -208,8 +208,11 @@ function NeuralgicoCard({
 }) {
   return (
     <div
-      className="relative overflow-hidden rounded-2xl border bg-white p-5 transition-shadow hover:shadow-[0_10px_30px_rgba(36,36,36,0.08)]"
-      style={{ borderColor: accent }}
+      className="relative overflow-hidden rounded-2xl border p-5 transition-shadow hover:shadow-[0_10px_30px_rgba(0,0,0,0.45)]"
+      style={{
+        borderColor: "rgba(255,255,255,0.10)",
+        background: "linear-gradient(135deg, rgba(20,28,54,0.7) 0%, rgba(13,18,36,0.7) 100%)",
+      }}
     >
       <div
         aria-hidden
@@ -229,12 +232,12 @@ function NeuralgicoCard({
       </div>
       <div
         className="mt-2 pl-2 text-[22px] md:text-[24px] font-extrabold leading-tight tracking-tight"
-        style={{ color: "#0F1115" }}
+        style={{ color: "var(--nuvia-text-primary)" }}
       >
         {value}
       </div>
       {hint && (
-        <div className="mt-1 pl-2 text-[11.5px] font-medium text-[#6B7480]">{hint}</div>
+        <div className="mt-1 pl-2 text-[11.5px] font-medium" style={{ color: "var(--nuvia-text-secondary)" }}>{hint}</div>
       )}
     </div>
   );
