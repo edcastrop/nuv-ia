@@ -246,7 +246,11 @@ export const fusionarConExtractoYReauditar = createServerFn({ method: "POST" })
       if (noVacio(v)) datosNuevos[k] = v;
     }
     const saldoFusionado = firstNum(datosNuevos.saldoCapital, datosNuevos.saldoPesos);
-    const tasaFusionada = firstNum(datosNuevos.tasaEA, datosNuevos.tea, datosNuevos.teaCobrada, datosNuevos.tasaCobrada);
+    const interesCuotaFusionado = firstNum(datosNuevos.interesCuota);
+    const tasaDerivadaPorInteres = saldoFusionado && interesCuotaFusionado
+      ? (Math.pow(1 + interesCuotaFusionado / saldoFusionado, 12) - 1) * 100
+      : undefined;
+    const tasaFusionada = firstNum(fusion.tasaEA, fusion.tea, fusion.teaCobrada, fusion.tasaCobrada, tasaDerivadaPorInteres, datosNuevos.tasaEA, datosNuevos.tea, datosNuevos.teaCobrada, datosNuevos.tasaCobrada);
     const segurosFusionados = firstNum(datosNuevos.seguros, datosNuevos.segurosMensuales) ?? 0;
     const cuotaClienteFusionada = firstNum(
       datosNuevos.cuotaPagadaCliente,
@@ -260,7 +264,9 @@ export const fusionarConExtractoYReauditar = createServerFn({ method: "POST" })
       cuotaClienteFusionada !== undefined ? Math.max(0, cuotaClienteFusionada - segurosFusionados) : undefined,
     );
     const saldoUvrFusionado = firstNum(datosNuevos.saldoUVR);
-    const valorUvrFusionado = firstNum(datosNuevos.valorUVR);
+    const valorUvrActual = firstNum(datosNuevos.valorUVR);
+    const valorUvrDerivado = saldoFusionado && saldoUvrFusionado ? saldoFusionado / saldoUvrFusionado : undefined;
+    const valorUvrFusionado = firstNum(fusion.valorUVR, valorUvrDerivado, valorUvrActual);
     const cuotasInferidas = saldoUvrFusionado && valorUvrFusionado && cuotaFinancieraFusionada
       ? inferRemainingPayments(saldoUvrFusionado, tasaFusionada ?? 0, cuotaFinancieraFusionada / valorUvrFusionado)
       : inferRemainingPayments(saldoFusionado ?? 0, tasaFusionada ?? 0, cuotaFinancieraFusionada ?? 0);
@@ -268,6 +274,14 @@ export const fusionarConExtractoYReauditar = createServerFn({ method: "POST" })
       datosNuevos.cuotasPendientesExtracto = datosBase.cuotasPendientes ?? null;
       datosNuevos.cuotasPendientes = String(cuotasInferidas);
       datosNuevos.plazoRecalculadoPorProyeccion = true;
+    }
+    if (tasaFusionada !== undefined) {
+      datosNuevos.tasaEA = String(tasaFusionada);
+      datosNuevos.tea = String(tasaFusionada);
+      datosNuevos.teaCobrada = String(tasaFusionada);
+    }
+    if (valorUvrFusionado !== undefined) {
+      datosNuevos.valorUVR = String(valorUvrFusionado);
     }
     if (cuotaClienteFusionada !== undefined) {
       datosNuevos.cuotaActual = String(cuotaClienteFusionada);
