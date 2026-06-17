@@ -37,7 +37,15 @@ const sevDot = (s?: AutoQASeveridad) => {
   }
 };
 
-export function AutoQAPanel({ loading, result }: { loading?: boolean; result?: AutoQAResult | null }) {
+export function AutoQAPanel({
+  loading,
+  result,
+  simuladorReturn,
+}: {
+  loading?: boolean;
+  result?: AutoQAResult | null;
+  simuladorReturn?: { maestroId?: string; modo?: "pesos" | "uvr" };
+}) {
   if (loading) {
     return (
       <motion.div
