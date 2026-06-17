@@ -56,14 +56,17 @@ type ProyeccionRow = {
 
 interface Props {
   expedienteId: string;
-  /** Cuando termina la fusión + reauditoría (o verificación), refresca la vista que lo monta. */
-  onReauditoria?: () => void;
+  /** Cuando termina la fusión + reauditoría (o verificación), refresca la vista que lo monta.
+   *  Recibe el `auditoriaId` recién generado por la reauditoría para que la vista pueda
+   *  navegar/refrescar al nuevo dictamen (el anterior queda intacto en histórico). */
+  onReauditoria?: (auditoriaId: string) => void;
   variant?: "expediente" | "qa";
   /** "auditoria" = proyección inicial para auditar el extracto. "cierre" = proyección final que emite el banco al cerrar. */
   momento?: "auditoria" | "cierre";
   /** Callback opcional cuando termina la verificación de cierre. */
   onVerificacionCierre?: () => void;
 }
+
 
 async function loadPdfJs() {
   const pdfjs = await import("pdfjs-dist");
