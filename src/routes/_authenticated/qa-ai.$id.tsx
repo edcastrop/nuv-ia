@@ -514,6 +514,13 @@ function ResultadoQaAi() {
                     <Rocket size={14} /> Volver al simulador · Crear caso
                   </button>
                 </Link>
+              ) : puedeConstruirPropuesta && expedienteIdCert ? (
+                <Link to="/casos/$id" params={{ id: expedienteIdCert }}>
+                  <button className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[12.5px] font-semibold transition hover:opacity-90"
+                    style={{ background: "var(--nuvia-success)", color: "#0B1220", border: "none", cursor: "pointer", boxShadow: "0 8px 20px -10px rgba(132,185,143,0.6)" }}>
+                    <Rocket size={14} /> Construir propuestas comerciales
+                  </button>
+                </Link>
               ) : (
                 <Link to="/qa-ai">
                   <button className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12.5px] font-semibold transition hover:opacity-90"
@@ -524,6 +531,7 @@ function ResultadoQaAi() {
               )}
             </div>
           </div>
+
 
           {/* Lado derecho: KPIs + Semáforo */}
           <div className="p-6 lg:p-8 flex flex-col gap-5">
