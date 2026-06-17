@@ -557,58 +557,57 @@ export function PrintDocument(props: Props) {
 
 
 
-        {/* ───── HERO DE CIERRE (full width) ───── */}
-        <div style={{ padding: "0 22px 18px 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
+        {/* ───── CTA FINAL SIMPLIFICADO ───── */}
+        <div style={{ padding: "0 22px 16px 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <div style={{
             background: `linear-gradient(135deg, ${C.black} 0%, #1a1a1a 60%, #1f2a4a 130%)`,
-            color: "#fff", borderRadius: 14, padding: "18px 22px",
-            display: "grid", gridTemplateColumns: "1fr auto", gap: 20, alignItems: "center",
-            boxShadow: "0 18px 40px -22px rgba(0,0,0,0.45)",
+            color: "#fff", borderRadius: 14, padding: "16px 22px",
             position: "relative", overflow: "hidden",
+            boxShadow: "0 18px 40px -22px rgba(0,0,0,0.45)",
           }}>
             <div style={{
               position: "absolute", right: -20, top: -30, width: 180, height: 180,
               borderRadius: "50%",
               background: `radial-gradient(circle, ${C.green}44 0%, transparent 70%)`,
             }} />
-            <div style={{ position: "relative" }}>
-              <div style={{
-                fontSize: 11, fontWeight: 900, color: C.green, letterSpacing: "0.18em",
-              }}>
-                UNA DECISIÓN, DOS CAMINOS
-              </div>
-              <div style={{
-                marginTop: 5, fontSize: 19, fontWeight: 900, lineHeight: 1.15,
-                letterSpacing: "-0.02em",
-              }}>
-                Tu crédito terminará de una u otra forma.
-              </div>
-              <div style={{
-                marginTop: 4, fontSize: 12, lineHeight: 1.4, color: "rgba(255,255,255,0.88)",
-                maxWidth: 480,
-              }}>
-                La diferencia es decidir si deseas recuperar parte de
-                <span style={{ color: C.green, fontWeight: 800 }}> tu tiempo financiero</span>.
-              </div>
-            </div>
             <div style={{
-              display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6,
+              display: "grid", gridTemplateColumns: "1fr auto", gap: 20, alignItems: "center",
               position: "relative",
             }}>
-              <div style={{
-                background: C.green, color: "#0E1F14",
-                padding: "12px 20px", borderRadius: 10,
-                fontSize: 12.5, fontWeight: 900, letterSpacing: "0.06em",
-                boxShadow: "0 10px 24px -10px rgba(132,185,143,0.6)",
-              }}>
-                QUIERO RECUPERAR MI TIEMPO FINANCIERO
+              <div>
+                <div style={{
+                  fontSize: 11, fontWeight: 900, color: C.green, letterSpacing: "0.22em",
+                }}>
+                  UNA DECISIÓN. DOS CAMINOS.
+                </div>
+                <div style={{
+                  marginTop: 6, fontSize: 14, lineHeight: 1.35,
+                  color: "rgba(255,255,255,0.92)", maxWidth: 460,
+                }}>
+                  Tu crédito terminará de cualquier forma.<br />
+                  La diferencia es decidir si deseas
+                  <span style={{ color: C.green, fontWeight: 800 }}> recuperar parte de tu tiempo financiero</span>.
+                </div>
               </div>
-              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.6)", letterSpacing: "0.16em", fontWeight: 700 }}>
-                PROPUESTA COMERCIAL VÁLIDA POR 48 HORAS
+              <div style={{
+                display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6,
+              }}>
+                <div style={{
+                  background: C.green, color: "#0E1F14",
+                  padding: "12px 20px", borderRadius: 10,
+                  fontSize: 12.5, fontWeight: 900, letterSpacing: "0.06em",
+                  boxShadow: "0 10px 24px -10px rgba(132,185,143,0.6)",
+                }}>
+                  QUIERO RECUPERAR MI TIEMPO FINANCIERO
+                </div>
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.6)", letterSpacing: "0.16em", fontWeight: 700 }}>
+                  PROPUESTA COMERCIAL VÁLIDA POR 48 HORAS
+                </div>
               </div>
             </div>
           </div>
         </div>
+
 
         <FooterStrip />
       </section>
