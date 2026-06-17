@@ -1,10 +1,22 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
+import { toast } from "sonner";
 import { ModeSelector } from "@/components/nuvex/ModeSelector";
 import { PesosSimulator } from "@/components/nuvex/PesosSimulator";
 import { UVRSimulator } from "@/components/nuvex/UVRSimulator";
-import { ensureOperativeExpedienteForMaestro, getMaestro } from "@/lib/expedienteMaestro";
+import {
+  ensureOperativeExpedienteForMaestro,
+  getMaestro,
+  upsertMaestro,
+  emptyCliente,
+  emptyCotitular,
+  emptyCredito,
+  emptyFresh,
+  emptyAsesor,
+  emptyLicenciado,
+  emptyApoderado,
+} from "@/lib/expedienteMaestro";
 import type { Expediente } from "@/lib/expedientes";
 
 const simSearchSchema = z.object({
@@ -23,14 +35,15 @@ export const Route = createFileRoute("/_authenticated/simulador")({
 function SimuladorPage() {
   const { maestroId, modo: modoSearch } = Route.useSearch();
   const navigate = useNavigate();
-  // El modo se elige explícitamente por el usuario o viene del expediente maestro / URL.
-  // No se autoselecciona desde drafts en sessionStorage: el usuario debe poder ver
-  // el ModeSelector cada vez que entra a /simulador sin params.
+  // El modo se elige explícitamente por el usuario o viene de la URL / expediente maestro.
+  // No se autoselecciona desde drafts en sessionStorage.
   const [mode, setMode] = useState<null | "pesos" | "uvr">(modoSearch ?? null);
   const [maestroExp, setMaestroExp] = useState<Expediente | null>(null);
   const [loadingMaestro, setLoadingMaestro] = useState<boolean>(!!maestroId);
+  const [creating, setCreating] = useState<boolean>(false);
   const [maestroErr, setMaestroErr] = useState<string | null>(null);
 
+  // Carga del maestro existente (si llegó por URL desde Expediente Maestro).
   useEffect(() => {
     if (!maestroId) {
       setMaestroExp(null);
@@ -49,10 +62,55 @@ function SimuladorPage() {
       .finally(() => setLoadingMaestro(false));
   }, [maestroId]);
 
+  // Cuando el usuario elige un modo SIN maestroId previo, creamos un expediente
+  // maestro vacío y su expediente operativo, y redirigimos con los params en la URL.
+  // Esto habilita el mismo flujo que "Expediente / Nuevo expediente / Simulador":
+  // el AutoQA se dispara al subir el extracto porque hay expediente_id.
+  const handlePickMode = async (m: "pesos" | "uvr") => {
+    if (maestroId) {
+      setMode(m);
+      return;
+    }
+    if (creating) return;
+    setCreating(true);
+    try {
+      const maestro = await upsertMaestro({
+        cliente: emptyCliente(),
+        cotitular: emptyCotitular(),
+        credito: emptyCredito(),
+        fresh: emptyFresh(),
+        asesor: emptyAsesor(),
+        licenciado: emptyLicenciado(),
+        apoderado: emptyApoderado(),
+      });
+      const exp = await ensureOperativeExpedienteForMaestro(maestro);
+      setMaestroExp(exp);
+      setMode(m);
+      navigate({
+        to: "/simulador",
+        search: { maestroId: maestro.id, modo: m },
+        replace: true,
+      });
+    } catch (e) {
+      toast.error(
+        `No se pudo iniciar el expediente: ${e instanceof Error ? e.message : "error"}`,
+      );
+    } finally {
+      setCreating(false);
+    }
+  };
+
   if (maestroId && loadingMaestro) {
     return (
       <div className="p-12 text-center text-sm text-white/60">
         Cargando datos del expediente maestro…
+      </div>
+    );
+  }
+  if (creating) {
+    return (
+      <div className="p-12 text-center text-sm text-white/60">
+        Inicializando expediente para auditoría…
       </div>
     );
   }
@@ -63,12 +121,13 @@ function SimuladorPage() {
   const initial = maestroExp ?? undefined;
   const handleReset = () => {
     setMode(null);
+    setMaestroExp(null);
     navigate({ to: "/simulador", search: {} });
   };
 
   return (
     <div>
-      {!mode && <ModeSelector onPick={setMode} />}
+      {!mode && <ModeSelector onPick={handlePickMode} />}
       {mode === "pesos" && <PesosSimulator initialExpediente={initial} onReset={handleReset} />}
       {mode === "uvr" && <UVRSimulator initialExpediente={initial} onReset={handleReset} />}
     </div>
