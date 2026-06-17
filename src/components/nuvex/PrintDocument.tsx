@@ -670,13 +670,13 @@ function Step({ n, icon, title, desc, highlight = false }: {
         fontSize: 10, fontWeight: 900, marginBottom: 8,
       }}>{n}</div>
       <div style={{
-        height: 50, display: "flex", alignItems: "center", justifyContent: "center",
+        height: 44, display: "flex", alignItems: "center", justifyContent: "center",
         background: highlight ? `linear-gradient(135deg, ${C.greenDeep}, ${C.greenBtnDeep})` : "#fff",
         border: `1px solid ${highlight ? C.greenDeep : C.hairline}`,
         borderRadius: 10, marginBottom: 7,
       }}>{icon}</div>
-      <div style={{ fontSize: 8.8, fontWeight: 900, color: C.ink, lineHeight: 1.15 }}>{title}</div>
-      <div style={{ fontSize: 7.5, color: C.muted, marginTop: 3, lineHeight: 1.2, whiteSpace: "pre-line" }}>{desc}</div>
+      <div style={{ fontSize: 8.2, fontWeight: 900, color: C.ink, lineHeight: 1.12 }}>{title}</div>
+      <div style={{ fontSize: 7, color: C.muted, marginTop: 2, lineHeight: 1.15, whiteSpace: "pre-line" }}>{desc}</div>
     </div>
   );
 }
