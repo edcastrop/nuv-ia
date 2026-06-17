@@ -386,49 +386,53 @@ function AuthenticatedLayout() {
     let active = true;
     const uid = session.user.id;
     const load = async () => {
-      const [{ data: notifsCanal }, { data: miembros }] = await Promise.all([
-        supabase
-          .from("colab_notificaciones" as never)
-          .select("id, colab_canales!inner(tipo)")
-          .eq("user_id", uid)
-          .eq("leida", false),
-        supabase
-          .from("colab_miembros" as never)
-          .select("canal_id, ultima_lectura, colab_canales!inner(id,tipo,archivado)")
-          .eq("user_id", uid),
-      ]);
-      if (!active) return;
-      // Excluir DMs del badge "Colaboración" — los DMs viven en su propio badge "Mensajería".
-      const colabNoDm = ((notifsCanal ?? []) as ColabNotifRow[]).filter(
-        (n) => n.colab_canales?.tipo !== "dm",
-      ).length;
-      setColabUnread(colabNoDm);
+      try {
+        const [{ data: notifsCanal }, { data: miembros }] = await Promise.all([
+          supabase
+            .from("colab_notificaciones" as never)
+            .select("id, colab_canales!inner(tipo)")
+            .eq("user_id", uid)
+            .eq("leida", false),
+          supabase
+            .from("colab_miembros" as never)
+            .select("canal_id, ultima_lectura, colab_canales!inner(id,tipo,archivado)")
+            .eq("user_id", uid),
+        ]);
+        if (!active) return;
+        // Excluir DMs del badge "Colaboración" — los DMs viven en su propio badge "Mensajería".
+        const colabNoDm = ((notifsCanal ?? []) as ColabNotifRow[]).filter(
+          (n) => n.colab_canales?.tipo !== "dm",
+        ).length;
+        setColabUnread(colabNoDm);
 
-      const dmRows = ((miembros ?? []) as ColabMemberRow[]).filter(
-        (m) => m.colab_canales?.tipo === "dm" && !m.colab_canales?.archivado,
-      );
-      if (dmRows.length === 0) {
-        setDmUnread(0);
-        return;
+        const dmRows = ((miembros ?? []) as ColabMemberRow[]).filter(
+          (m) => m.colab_canales?.tipo === "dm" && !m.colab_canales?.archivado,
+        );
+        if (dmRows.length === 0) {
+          setDmUnread(0);
+          return;
+        }
+        const ids = dmRows.map((r) => r.canal_id);
+        const readMap = new Map<string, string | null>(
+          dmRows.map((r) => [r.canal_id, r.ultima_lectura]),
+        );
+        const { data: msgs } = await supabase
+          .from("colab_mensajes" as never)
+          .select("canal_id, user_id, created_at")
+          .in("canal_id", ids)
+          .order("created_at", { ascending: false })
+          .limit(ids.length * 30);
+        if (!active) return;
+        let total = 0;
+        ((msgs ?? []) as ColabMessageRow[]).forEach((m) => {
+          if (m.user_id === uid) return;
+          const last = readMap.get(m.canal_id);
+          if (!last || new Date(m.created_at) > new Date(last)) total++;
+        });
+        setDmUnread(total);
+      } catch {
+        // Los badges colaborativos no deben romper la sesión si hay caída de red.
       }
-      const ids = dmRows.map((r) => r.canal_id);
-      const readMap = new Map<string, string | null>(
-        dmRows.map((r) => [r.canal_id, r.ultima_lectura]),
-      );
-      const { data: msgs } = await supabase
-        .from("colab_mensajes" as never)
-        .select("canal_id, user_id, created_at")
-        .in("canal_id", ids)
-        .order("created_at", { ascending: false })
-        .limit(ids.length * 30);
-      if (!active) return;
-      let total = 0;
-      ((msgs ?? []) as ColabMessageRow[]).forEach((m) => {
-        if (m.user_id === uid) return;
-        const last = readMap.get(m.canal_id);
-        if (!last || new Date(m.created_at) > new Date(last)) total++;
-      });
-      setDmUnread(total);
     };
     load();
     const ch = supabase
@@ -464,14 +468,18 @@ function AuthenticatedLayout() {
     const uid = session.user.id;
     let cancel = false;
     (async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("presencia_visible")
-        .eq("id", uid)
-        .maybeSingle();
-      if (cancel) return;
-      const visible = (data as { presencia_visible?: boolean } | null)?.presencia_visible !== false;
-      iniciarPresenciaPropia(uid, visible);
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("presencia_visible")
+          .eq("id", uid)
+          .maybeSingle();
+        if (cancel) return;
+        const visible = (data as { presencia_visible?: boolean } | null)?.presencia_visible !== false;
+        await iniciarPresenciaPropia(uid, visible);
+      } catch {
+        // Presencia es auxiliar; nunca debe dejar la app en blanco.
+      }
     })();
     return () => {
       cancel = true;
