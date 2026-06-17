@@ -1868,7 +1868,7 @@ function ComparisonTable(props: {
           background: ri % 2 === 0 ? "#fff" : C.bgSoft,
         }}>
           <div style={{
-            padding: "7px 12px", fontSize: 9.5, fontWeight: 700, color: C.text,
+            padding: "5px 12px", fontSize: 9.5, fontWeight: 700, color: C.text,
           }}>
             {r.label}
           </div>
@@ -1877,7 +1877,7 @@ function ComparisonTable(props: {
             const isCurrent = c.isCurrent;
             return (
               <div key={c.key} style={{
-                padding: "7px 8px", textAlign: "center",
+                padding: "5px 8px", textAlign: "center",
                 fontSize: r.emphasize ? 10.5 : 9.5,
                 fontWeight: isRec || r.emphasize ? 900 : 700,
                 color: isCurrent
