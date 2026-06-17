@@ -317,7 +317,7 @@ export function PrintDocument(props: Props) {
             <Impact icon={<CalendarDays />} label="NUEVA FECHA FIN" value={`${añoFinOpt}`} sub={`antes de ${añoFinActual}`} blue />
           </div>
 
-          <div style={{ marginTop: 13, border: `1px solid ${C.line}`, borderRadius: 10, background: C.panel, padding: "13px 16px", display: "grid", gridTemplateColumns: "1.25fr 0.72fr 0.16fr 0.9fr 0.9fr", gap: 12, alignItems: "center" }}>
+          <div style={{ marginTop: 13, border: `1px solid ${C.line}`, borderRadius: 10, background: C.panel, padding: "16px 16px", display: "grid", gridTemplateColumns: "1.25fr 0.72fr 0.16fr 0.9fr 0.9fr", gap: 12, alignItems: "center" }}>
             <div>
               <div style={{ color: C.greenDeep, fontWeight: 950, fontSize: 14, letterSpacing: "0.06em" }}>BENEFICIO ECONÓMICO</div>
               <div style={{ marginTop: 8, fontSize: 12.5, fontWeight: 900, color: C.ink }}>Honorarios a Éxito NUVEX</div>
@@ -342,7 +342,7 @@ export function PrintDocument(props: Props) {
             <Step n={5} icon={<Smile />} title="Disfrutas tu optimización" desc="Menos cuotas, más tiempo y más tranquilidad." />
           </div>
 
-          <div style={{ marginTop: "auto", minHeight: 104, background: C.navy, borderRadius: 9, padding: "18px 24px", display: "grid", gridTemplateColumns: "1fr 1.55fr", gap: 22, alignItems: "center", color: "#fff" }}>
+          <div style={{ marginTop: 13, minHeight: 112, background: C.navy, borderRadius: 9, padding: "18px 24px", display: "grid", gridTemplateColumns: "1fr 1.55fr", gap: 22, alignItems: "center", color: "#fff" }}>
             <div>
               <div style={{ color: C.green, fontSize: 11, fontWeight: 950, letterSpacing: "0.22em" }}>UNA DECISIÓN · DOS CAMINOS</div>
               <div style={{ marginTop: 7, fontSize: 12, fontWeight: 700 }}>Ya hicimos los cálculos. <span style={{ color: C.green }}>La decisión es tuya.</span></div>
