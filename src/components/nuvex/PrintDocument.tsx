@@ -316,15 +316,15 @@ export function PrintDocument(props: Props) {
       >
         <TopBar pageLabel="Página 2 de 2" title="PROPUESTA RECOMENDADA" subtitle="Escenario óptimo construido con metodología financiera NUVEX" />
 
-        <div style={{ padding: "18px 24px 0 24px" }}>
-          <div style={{ borderRadius: 16, background: C.ink, color: "#fff", padding: "17px 22px", position: "relative", overflow: "hidden" }}>
+        <div style={{ padding: "15px 24px 0 24px" }}>
+          <div style={{ borderRadius: 16, background: C.ink, color: "#fff", padding: "14px 20px", position: "relative", overflow: "hidden" }}>
             <div style={{ position: "absolute", right: -38, top: -46, width: 160, height: 160, borderRadius: "50%", background: "rgba(132,185,143,0.16)" }} />
             <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 18, alignItems: "start", position: "relative" }}>
               <div>
                 <div style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "5px 10px", borderRadius: 999, background: "rgba(132,185,143,0.16)", color: C.green, fontSize: 8.5, fontWeight: 900, letterSpacing: "0.16em" }}>
                   <Rocket size={14} /> NUVEX RECOMENDADO
                 </div>
-                <h2 style={{ margin: "8px 0 0 0", fontSize: 26, lineHeight: 1, fontWeight: 900, letterSpacing: "-0.025em", color: "#fff" }}>
+                <h2 style={{ margin: "7px 0 0 0", fontSize: 24, lineHeight: 0.98, fontWeight: 900, letterSpacing: "-0.025em", color: "#fff" }}>
                   Optimización diseñada<br />para recuperar {añosEliminadosEntero} años
                 </h2>
               </div>
@@ -334,7 +334,7 @@ export function PrintDocument(props: Props) {
                 <div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.72)", marginTop: 2 }}>Intereses + seguros</div>
               </div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 9, marginTop: 13, position: "relative" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginTop: 10, position: "relative" }}>
               <HeroFeature icon={<CreditCard />} label="Nueva cuota estimada" value={formatCOP(nuevaCuota)} />
               <HeroFeature icon={<Clock />} label="Nuevo plazo" value={`${scenario.nuevoPlazo} meses`} />
               <HeroFeature icon={<Scissors />} label="Cuotas eliminadas" value={`${cuotasEliminadas}`} />
@@ -345,7 +345,7 @@ export function PrintDocument(props: Props) {
           </div>
         </div>
 
-        <div style={{ padding: "12px 24px 0 24px" }}>
+        <div style={{ padding: "10px 24px 0 24px" }}>
           <PanelTitle number="04" title="ANTES VS DESPUÉS" />
           <BeforeAfterTable rows={[
             { label: "Cuota", before: formatCOP(cuotaActual), after: formatCOP(nuevaCuota), icon: <CreditCard /> },
@@ -357,7 +357,7 @@ export function PrintDocument(props: Props) {
           ]} />
         </div>
 
-        <div style={{ padding: "11px 24px 0 24px" }}>
+        <div style={{ padding: "9px 24px 0 24px" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div style={{ border: `1px solid ${C.hairline}`, borderRadius: 14, padding: "14px 16px", background: "#fff" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 9, letterSpacing: "0.2em", color: C.greenDeep, fontWeight: 900 }}>
@@ -386,7 +386,7 @@ export function PrintDocument(props: Props) {
           </div>
         </div>
 
-        <div style={{ padding: "11px 24px 0 24px" }}>
+        <div style={{ padding: "9px 24px 0 24px" }}>
           <PanelTitle number="05" title="¿QUÉ SUCEDE AHORA?" />
           <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 9, marginTop: 7 }}>
             <Step n={1} icon={<FileSignature size={23} color={C.ink} strokeWidth={1.7} />} title="Firma de autorización" desc="Autorizas la gestión." />
@@ -399,8 +399,8 @@ export function PrintDocument(props: Props) {
 
         <div style={{ flex: "1 1 auto" }} />
 
-        <div style={{ padding: "0 24px 10px 24px" }}>
-          <div style={{ background: C.ink, color: "#fff", borderRadius: 14, padding: "12px 18px", display: "grid", gridTemplateColumns: "1fr auto", gap: 18, alignItems: "center" }}>
+        <div style={{ padding: "0 24px 8px 24px" }}>
+          <div style={{ background: C.ink, color: "#fff", borderRadius: 14, padding: "10px 18px", display: "grid", gridTemplateColumns: "1fr auto", gap: 18, alignItems: "center" }}>
             <div>
               <div style={{ fontSize: 9, letterSpacing: "0.22em", fontWeight: 900, color: C.green }}>METODOLOGÍA FINANCIERA NUVEX</div>
               <div style={{ marginTop: 4, fontSize: 9.8, lineHeight: 1.35, color: "rgba(255,255,255,0.82)" }}>
