@@ -485,7 +485,7 @@ export function UVRSimulator({
           }}
         />
         {init?.id && (autoQALoading || autoQA) && (
-          <AutoQAPanel loading={autoQALoading} result={autoQA} />
+          <AutoQAPanel loading={autoQALoading} result={autoQA} simuladorReturn={simuladorReturn} />
         )}
         <Card>
           <div id="datos-cliente-card" />
