@@ -104,7 +104,7 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
     };
   }, [user]);
 
-  const config = activeRole ? HOME_CONFIG[activeRole] : null;
+  const config = activeRole ? (HOME_CONFIG[activeRole] ?? HOME_CONFIG.gerencia) : HOME_CONFIG.gerencia;
 
   const saludo = useMemo(() => {
     const hora = new Date().getHours();
