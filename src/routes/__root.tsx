@@ -139,7 +139,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "manifest", href: "/manifest.json" },
     ],
   }),
-  scripts: () => [{ children: NUVIA_STABILITY_SCRIPT }],
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -153,6 +152,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body style={{ background: "#F4F6FB", color: "#0A1226" }}>
+        <script suppressHydrationWarning dangerouslySetInnerHTML={{ __html: NUVIA_STABILITY_SCRIPT }} />
         {children}
         <Scripts />
       </body>
