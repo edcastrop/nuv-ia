@@ -11,12 +11,14 @@ export function SaveExpedienteButton({
   onSaved,
   onSeguirSimulando,
   enviarAuditoriaManual = true,
+  fromSimulador = false,
 }: {
   payload: UpsertPayload;
   expedienteId?: string;
   onSaved?: (e: Expediente) => void;
   onSeguirSimulando?: () => void;
   enviarAuditoriaManual?: boolean;
+  fromSimulador?: boolean;
 }) {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
