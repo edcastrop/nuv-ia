@@ -152,7 +152,7 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
   const [enviandoSolicitud, setEnviandoSolicitud] = useState(false);
 
   useEffect(() => {
-    setCuota(cuotaPropuesta || 0);
+    setCuota(Math.round(cuotaPropuesta || 0));
   }, [cuotaPropuesta]);
 
   // Cargar último análisis guardado
