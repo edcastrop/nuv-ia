@@ -245,6 +245,32 @@ export const fusionarConExtractoYReauditar = createServerFn({ method: "POST" })
     for (const [k, v] of Object.entries(fusion)) {
       if (noVacio(v)) datosNuevos[k] = v;
     }
+    const saldoFusionado = firstNum(datosNuevos.saldoCapital, datosNuevos.saldoPesos);
+    const tasaFusionada = firstNum(datosNuevos.tasaEA, datosNuevos.tea, datosNuevos.teaCobrada, datosNuevos.tasaCobrada);
+    const segurosFusionados = firstNum(datosNuevos.seguros, datosNuevos.segurosMensuales) ?? 0;
+    const cuotaClienteFusionada = firstNum(
+      datosNuevos.cuotaPagadaCliente,
+      datosNuevos.valorAPagar,
+      datosNuevos.cuotaMensual,
+      datosNuevos.cuotaActual,
+    );
+    const cuotaFinancieraFusionada = firstNum(
+      datosNuevos.cuotaConInteresSinSeguros,
+      datosNuevos.cuotaSinSeguros,
+      cuotaClienteFusionada !== undefined ? Math.max(0, cuotaClienteFusionada - segurosFusionados) : undefined,
+    );
+    const cuotasInferidas = inferRemainingPayments(saldoFusionado ?? 0, tasaFusionada ?? 0, cuotaFinancieraFusionada ?? 0);
+    if (cuotasInferidas !== undefined) {
+      datosNuevos.cuotasPendientesExtracto = datosBase.cuotasPendientes ?? null;
+      datosNuevos.cuotasPendientes = String(cuotasInferidas);
+      datosNuevos.plazoRecalculadoPorProyeccion = true;
+    }
+    if (cuotaClienteFusionada !== undefined) {
+      datosNuevos.cuotaActual = String(cuotaClienteFusionada);
+    }
+    if (cuotaFinancieraFusionada !== undefined) {
+      datosNuevos.cuotaConInteresSinSeguros = String(cuotaFinancieraFusionada);
+    }
     datosNuevos.proyeccionesAplicadas = data.proyeccionIds;
     datosNuevos.proyeccionesAplicadasAt = new Date().toISOString();
 
