@@ -376,88 +376,95 @@ export function PrintDocument(props: Props) {
         </div>
 
         {/* ═══════════════════════════════════════════════
-            SECCIÓN 3 — BENEFICIO COMERCIAL APROBADO
+            LÍNEA DE TIEMPO — banda horizontal full-width
         ═══════════════════════════════════════════════ */}
-        <div style={{
-          padding: "10px 22px 0 22px",
-          display: "grid", gridTemplateColumns: "1fr 220px", gap: 12,
-          breakInside: "avoid", pageBreakInside: "avoid",
-        }}>
+        <div style={{ padding: "10px 22px 0 22px" }}>
+          <TimelineBand
+            añoHoy={añoHoy}
+            añoFinActual={añoFinActual}
+            añoFinOpt={añoFinOpt}
+            añosActual={añosActual}
+            añosOpt={añosOpt}
+            añosRecuperados={añosEliminadosEntero}
+          />
+        </div>
+
+        {/* ═══════════════════════════════════════════════
+            SECCIÓN 3 — BENEFICIO COMERCIAL APROBADO (unificado)
+        ═══════════════════════════════════════════════ */}
+        <div style={{ padding: "10px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <div style={{
             background: `linear-gradient(135deg, ${C.ink} 0%, #1f2a4a 100%)`,
-            borderRadius: 12, padding: "10px 14px", color: "#fff",
-            display: "flex", flexDirection: "column", gap: 8,
+            borderRadius: 14, padding: "14px 18px", color: "#fff",
+            display: "grid", gridTemplateColumns: "auto 1fr 1fr 1fr auto", gap: 18, alignItems: "center",
+            boxShadow: "0 18px 40px -22px rgba(26,31,46,0.55)",
           }}>
-            <div style={{
-              fontSize: 9.5, letterSpacing: "0.22em", fontWeight: 900, color: "#fff",
-            }}>
-              3. BENEFICIO COMERCIAL APROBADO
-            </div>
-            <div style={{
-              display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, alignItems: "center",
-            }}>
-              <div>
-                <div style={{ fontSize: 7.6, color: "rgba(255,255,255,0.6)", letterSpacing: "0.16em", fontWeight: 800 }}>
-                  HONORARIOS ESTÁNDAR
-                </div>
-                <div style={{
-                  fontSize: 13.5, fontWeight: 800, color: "rgba(255,255,255,0.55)",
-                  textDecoration: "line-through", marginTop: 2,
-                }}>
-                  {formatCOP(honorariosBase)}
-                </div>
+            <div style={{ paddingRight: 14, borderRight: "1px solid rgba(255,255,255,0.16)" }}>
+              <div style={{
+                fontSize: 8.5, letterSpacing: "0.22em", fontWeight: 900,
+                color: "rgba(255,255,255,0.7)",
+              }}>
+                3. BENEFICIO
               </div>
-              <div>
-                <div style={{ fontSize: 7.6, color: "rgba(255,255,255,0.6)", letterSpacing: "0.16em", fontWeight: 800 }}>
-                  HONORARIOS APROBADOS
-                </div>
-                <div style={{
-                  fontSize: 16, fontWeight: 900, color: "#fff",
-                  letterSpacing: "-0.02em", marginTop: 2,
-                }}>
-                  {formatCOP(honorariosFinales)}
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: 7.6, color: C.green, letterSpacing: "0.16em", fontWeight: 800 }}>
-                  AHORRO INMEDIATO
-                </div>
-                <div style={{
-                  fontSize: 16, fontWeight: 900, color: C.green,
-                  letterSpacing: "-0.02em", marginTop: 2,
-                }}>
-                  {formatCOP(descuento > 0 ? descuento : 0)}
-                </div>
+              <div style={{
+                fontSize: 14, fontWeight: 900, color: "#fff", letterSpacing: "-0.01em", marginTop: 2,
+              }}>
+                COMERCIAL<br />APROBADO
               </div>
             </div>
-          </div>
-          <div style={{
-            background: C.black, color: "#fff", borderRadius: 12,
-            padding: "10px 14px", display: "flex", flexDirection: "column",
-            alignItems: "center", justifyContent: "center", textAlign: "center", gap: 2,
-          }}>
-            <div style={{
-              fontSize: 7.6, letterSpacing: "0.2em", fontWeight: 800,
-              color: "rgba(255,255,255,0.65)",
-            }}>
-              BENEFICIO COMERCIAL
+            <div>
+              <div style={{ fontSize: 7.6, color: "rgba(255,255,255,0.6)", letterSpacing: "0.16em", fontWeight: 800 }}>
+                ESTÁNDAR
+              </div>
+              <div style={{
+                fontSize: 13.5, fontWeight: 800, color: "rgba(255,255,255,0.55)",
+                textDecoration: "line-through", marginTop: 2,
+              }}>
+                {formatCOP(honorariosBase)}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: 7.6, color: "rgba(255,255,255,0.6)", letterSpacing: "0.16em", fontWeight: 800 }}>
+                APROBADOS
+              </div>
+              <div style={{
+                fontSize: 17, fontWeight: 900, color: "#fff",
+                letterSpacing: "-0.02em", marginTop: 2,
+              }}>
+                {formatCOP(honorariosFinales)}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: 7.6, color: C.green, letterSpacing: "0.16em", fontWeight: 800 }}>
+                AHORRO INMEDIATO
+              </div>
+              <div style={{
+                fontSize: 17, fontWeight: 900, color: C.green,
+                letterSpacing: "-0.02em", marginTop: 2,
+              }}>
+                {formatCOP(descuento > 0 ? descuento : 0)}
+              </div>
             </div>
             <div style={{
-              fontSize: 13.5, fontWeight: 900, color: C.green,
-              letterSpacing: "-0.01em", lineHeight: 1.15, marginTop: 2,
+              background: "rgba(132,185,143,0.14)",
+              border: `1px solid ${C.green}66`, borderRadius: 10,
+              padding: "8px 12px", textAlign: "center", minWidth: 88,
             }}>
-              ⏱ VÁLIDO POR
-            </div>
-            <div style={{
-              fontSize: 13.5, fontWeight: 900, color: C.green, letterSpacing: "-0.01em",
-            }}>
-              48 HORAS
-            </div>
-            <div style={{ fontSize: 7.6, color: "rgba(255,255,255,0.65)", marginTop: 3 }}>
-              Propuesta exclusiva<br />para este caso.
+              <div style={{
+                fontSize: 7.6, letterSpacing: "0.2em", fontWeight: 900, color: C.green,
+              }}>
+                VÁLIDO POR
+              </div>
+              <div style={{
+                fontSize: 16, fontWeight: 900, color: "#fff",
+                letterSpacing: "-0.01em", lineHeight: 1.05, marginTop: 2,
+              }}>
+                48 HORAS
+              </div>
             </div>
           </div>
         </div>
+
 
         {/* ═══════════════════════════════════════════════
             CITA DEL ANALISTA — Eduard Castro
