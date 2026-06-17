@@ -499,6 +499,15 @@ function InfoTile({ icon, label, value, compact = false, featured = false }: {
   );
 }
 
+function IndicatorPill({ label, value, tone = C.ink }: { label: string; value: string; tone?: string }) {
+  return (
+    <div style={{ background: "rgba(255,255,255,0.72)", border: `1px solid ${tone}22`, borderRadius: 10, padding: "10px 12px" }}>
+      <div style={{ fontSize: 7.2, letterSpacing: "0.18em", fontWeight: 900, color: C.muted, textTransform: "uppercase" }}>{label}</div>
+      <div style={{ marginTop: 4, fontSize: 12.6, lineHeight: 1.05, fontWeight: 900, color: tone, letterSpacing: "-0.015em" }}>{value}</div>
+    </div>
+  );
+}
+
 function HeroFeature({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: "8px 12px", minHeight: 58 }}>
