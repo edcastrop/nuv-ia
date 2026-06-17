@@ -1,7 +1,7 @@
 // NUVIA Financial QA AI — Motor matemático determinístico
 // 100% TypeScript puro · sin dependencias externas · testeable
 
-export const QA_MOTOR_VERSION = "1.2.1";
+export const QA_MOTOR_VERSION = "1.2.2";
 export const DEFAULT_VARIACION_UVR_EA = 5.5;
 
 export type Modalidad = "hipotecario" | "leasing" | "uvr";
@@ -242,9 +242,15 @@ export function reconstruir(input: ReconstruccionInput): Reconstruccion {
     const variacionMensual = eaToMv(variacionEa);
     const cuotaUvr = cuotaTeorica(saldoUvr, iMvUvr, n);
     const cuotaFinancieraBase = cuotaUvr * valorUvr;
+    const cuotaFinancieraOficial = Math.max(0, input.cuotaFinancieraSinSeguros ?? 0);
+    const cuotaTotalOficial = cuotaFinancieraOficial > 0 ? cuotaFinancieraOficial + seguros : 0;
     const cuotaSinSubsidioOficial = Math.max(0, input.cuotaBaseSinSubsidio ?? 0);
-    const cuotaTeoricaActual = cuotaSinSubsidioOficial > 0 ? cuotaSinSubsidioOficial : cuotaFinancieraBase + seguros;
-    const cuotaTotal = Math.max(0, cuotaTeoricaActual - beneficioMensual);
+    const cuotaTeoricaActual = hayCobertura && cuotaSinSubsidioOficial > 0
+      ? cuotaSinSubsidioOficial
+      : (cuotaTotalOficial > 0 ? cuotaTotalOficial : cuotaFinancieraBase + seguros);
+    const cuotaTotal = hayCobertura
+      ? Math.max(0, cuotaTeoricaActual - beneficioMensual)
+      : cuotaTeoricaActual;
     const cuotasFrechAplicadas = hayCobertura
       ? Math.max(0, Math.min(n, Math.round(input.coberturaFrechCuotasRestantes ?? FRECH_MAX_CUOTAS)))
       : 0;
@@ -818,11 +824,12 @@ export function construirVeredicto(
     : hallazgos.some((h) => h.severidad === "warning") || desfaseGrande
       ? "warning"
       : "ok";
-  const extractoDet = hallazgos.length === 0
+  const hallazgosMateriales = hallazgos.filter((h) => h.severidad !== "info");
+  const extractoDet = hallazgosMateriales.length === 0
     ? (tieneFresh
       ? "Saldo, tasa, plazo, beneficio y cuota cuadran entre sí. El extracto está internamente sano."
       : "Saldo, tasa, plazo, seguros y cuota cuadran entre sí. El extracto está internamente sano.")
-    : `NUVIA encontró ${hallazgos.length} dato(s) que no cuadran (ver lista abajo).`;
+    : `NUVIA encontró ${hallazgosMateriales.length} dato(s) material(es) que no cuadran (ver lista abajo).`;
 
   const simDet = `Proyecta el crédito usando las ${plazoReportado ?? r.cuotasPendientes} cuotas que el extracto dice que faltan, respetando la cuota oficial. No inventa ni recorta plazos.`;
 
@@ -954,7 +961,7 @@ export function construirVeredicto(
 
   const extractoTieneErrores: Veredicto["extractoTieneErrores"] =
     hallazgos.some((h) => h.severidad === "critica") && !desfaseCritico ? "si"
-      : (desfaseGrande || hallazgos.length > 0) ? "inconsistencia"
+      : (desfaseGrande || hallazgosMateriales.length > 0) ? "inconsistencia"
         : "no";
 
   return {
