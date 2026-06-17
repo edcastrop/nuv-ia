@@ -21,28 +21,16 @@ const NUVIA_STABILITY_SCRIPT = `
     if (document.getElementById("nuvia-stability-notice")) return;
     const el = document.createElement("div");
     el.id = "nuvia-stability-notice";
-    el.setAttribute("role", "status");
-    el.style.cssText = "position:fixed;z-index:2147483647;left:50%;top:16px;transform:translateX(-50%);max-width:calc(100vw - 32px);border:1px solid rgba(255,255,255,.18);border-radius:999px;background:rgba(5,8,22,.94);color:#e5edf9;padding:10px 16px;font:600 12px/1.3 system-ui,-apple-system,sans-serif;box-shadow:0 18px 50px rgba(0,0,0,.28);backdrop-filter:blur(16px)";
-    el.textContent = "Reconectando NUVIA sin perder la pantalla actual…";
+    el.setAttribute("role", "alert");
+    el.style.cssText = "position:fixed;z-index:2147483647;left:50%;top:16px;transform:translateX(-50%);max-width:calc(100vw - 32px);border:1px solid rgba(255,255,255,.18);border-radius:14px;background:rgba(5,8,22,.96);color:#e5edf9;padding:12px 14px;font:500 12px/1.35 system-ui,-apple-system,sans-serif;box-shadow:0 18px 50px rgba(0,0,0,.30);backdrop-filter:blur(16px);display:flex;align-items:center;gap:12px";
+    el.innerHTML = '<span>La conexión de la vista se interrumpió. La pantalla queda estable; recarga solo si necesitas reconectar.</span><button type="button" style="border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#fff;border-radius:10px;padding:7px 10px;font:700 11px system-ui,-apple-system,sans-serif;cursor:pointer">Reintentar</button>';
+    el.querySelector("button")?.addEventListener("click", () => window.location.reload());
     document.body.appendChild(el);
   };
   const recover = (event, reason) => {
     if (event && typeof event.preventDefault === "function") event.preventDefault();
     if (!isImportFailure(reason || event)) return;
     showNotice();
-    let attempts = 0;
-    const retry = () => {
-      attempts += 1;
-      fetch(window.location.href, { method: "HEAD", cache: "no-store" })
-        .then((response) => {
-          if (response.ok || response.status < 500) window.location.reload();
-          else if (attempts < 24) window.setTimeout(retry, 1250);
-        })
-        .catch(() => {
-          if (attempts < 24) window.setTimeout(retry, 1250);
-        });
-    };
-    window.setTimeout(retry, 750);
   };
   window.addEventListener("vite:preloadError", (event) => recover(event, event && event.payload));
   window.addEventListener("unhandledrejection", (event) => {
