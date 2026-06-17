@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { z } from "zod";
 import { PageLayout, NCard, SectionHeader } from "@/components/nuvia";
 import { useServerFn } from "@tanstack/react-start";
 import { obtenerAuditoriaQA, reejecutarAuditoriaQA } from "@/lib/qaAI.functions";
@@ -16,10 +17,18 @@ import type { Veredicto } from "@/lib/qaMath";
 import {
   Brain, ArrowLeft, AlertTriangle, CheckCircle2, Calculator, Sigma, ShieldAlert,
   Minus, FileDown, Sparkles, RefreshCw, Trophy, ChevronDown, MessageCircle, Coins, Gauge,
+  Rocket,
 } from "lucide-react";
+
+const qaSearchSchema = z.object({
+  from: z.enum(["simulador"]).optional(),
+  maestroId: z.string().optional(),
+  modo: z.enum(["pesos", "uvr"]).optional(),
+});
 
 export const Route = createFileRoute("/_authenticated/qa-ai/$id")({
   component: ResultadoQaAi,
+  validateSearch: qaSearchSchema,
   head: () => ({ meta: [{ title: "Certificación Financiera · NUVIA" }] }),
 });
 
