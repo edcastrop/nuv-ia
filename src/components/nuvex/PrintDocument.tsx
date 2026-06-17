@@ -1848,17 +1848,14 @@ function EstadoActualCard(props: {
       breakInside: "avoid", pageBreakInside: "avoid",
     }}>
       <div style={{
-        display: "flex", justifyContent: "space-between", alignItems: "center",
-        paddingBottom: 5, borderBottom: `1px solid ${C.hairline}`,
+        background: C.ink, color: "#fff", borderRadius: 8,
+        padding: "5px 10px", display: "flex", justifyContent: "space-between", alignItems: "center",
       }}>
         <div style={{
-          fontSize: 9, letterSpacing: "0.22em", fontWeight: 900, color: C.ink,
-        }}>ESTADO ACTUAL DEL CRÉDITO</div>
-        <div style={{
-          background: C.ink, color: "#fff", fontSize: 7, fontWeight: 800,
-          letterSpacing: "0.14em", padding: "2px 6px", borderRadius: 3,
-        }}>DASHBOARD</div>
+          fontSize: 9, letterSpacing: "0.22em", fontWeight: 900, color: "#fff",
+        }}>1. ESTADO ACTUAL DEL CRÉDITO</div>
       </div>
+
 
       <StateGroup title="Producto">
         <StateRow label="Banco" value={banco} />
