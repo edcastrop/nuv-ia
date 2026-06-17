@@ -31,7 +31,9 @@ export function SaveExpedienteButton({
     try {
       const wasNew = !expedienteId;
       const e = await upsertExpediente({ ...payload, id: expedienteId });
-      if (wasNew) {
+      // En el simulador corto el expediente ya existe como cascarón operativo;
+      // al "crear" desde el simulador lo formalizamos igual que si fuera nuevo.
+      if (wasNew || fromSimulador) {
         try {
           await cambiarEstadoConValidacion(e.id, "simulado", "simulacion_guardada");
         } catch (err) {
@@ -52,11 +54,11 @@ export function SaveExpedienteButton({
       }
       setQaEnviada(qaOk);
       setMsg(
-        (expedienteId ? "Expediente actualizado" : "Expediente creado") +
+        (fromSimulador ? "Expediente creado" : expedienteId ? "Expediente actualizado" : "Expediente creado") +
           (qaOk ? " · enviado a auditoría QA" : ""),
       );
       onSaved?.(e);
-      if (wasNew) setCreado(e);
+      if (wasNew || fromSimulador) setCreado(e);
     } catch (err) {
       setMsg((err as Error).message);
     } finally {
