@@ -360,6 +360,13 @@ function ResultadoQaAi() {
 
   /* ----- Acción recomendada (máx 3) ----- */
   const acciones = (veredicto?.recomendaciones ?? []).slice(0, 3);
+  if (proyectoresAplicadas && incCrit === 0 && incWarn === 0) {
+    acciones.splice(0, acciones.length,
+      `Construye la propuesta comercial con ${Math.round(proyInfo?.cuotasPendientesRecalculadas ?? veredicto?.plazoImplicito ?? 0)} meses reales, no con las ${Math.round(proyInfo?.cuotasPendientesExtractoOriginal ?? 0)} cuotas del extracto inicial.`,
+      `Usa como base: saldo $${fmt(proySaldoAplicado, 0)}, cuota actual $${fmt(proyCuotaCliente, 0)} y TEA ${fmt(proyTasaEa, 4)}%.`,
+      "El caso queda matemáticamente certificado: avanza al simulador/propuesta y conserva la proyección oficial como soporte.",
+    );
+  }
   if (acciones.length === 0) {
     if (cert.estado === "certificado") {
       acciones.push("Avanza con la propuesta de optimización del crédito al cliente.");
