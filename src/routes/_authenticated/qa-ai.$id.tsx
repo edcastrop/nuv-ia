@@ -258,7 +258,8 @@ function ResultadoQaAi() {
   const scoreColor = score >= 95 ? "var(--nuvia-success)" : score >= 85 ? "var(--nuvia-warning)" : "var(--nuvia-danger)";
   const cert = certificacion(a.dictamen);
   const trofeo = logro(score);
-  const puedeVolverAlSimulador = fromSimulador && cert.estado === "certificado" && !!maestroId && !!modo;
+  const certAprobada = cert.estado === "certificado" || cert.estado === "certificado_obs";
+  const puedeVolverAlSimulador = fromSimulador && certAprobada && !!maestroId && !!modo;
   const sevTone = (s: string) => s === "critica" ? "var(--nuvia-danger)" : s === "warning" ? "var(--nuvia-warning)" : "var(--nuvia-text-secondary)";
 
   /* ----- Datos sticky header ----- */
