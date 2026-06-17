@@ -566,7 +566,8 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
         <Button
           onClick={correrAnalisis}
           disabled={analizando || totalArchivos === 0 || cuota <= 0}
-          className="bg-[#445DA3] hover:bg-[#3a4f8a] ml-auto"
+          className="ml-auto border-0 text-white"
+          style={{ background: "var(--nuvia-accent-primary)" }}
         >
           {analizando ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Analizando con IA…</>) : (<><Sparkles className="w-4 h-4 mr-2" />Ejecutar análisis</>)}
         </Button>
@@ -574,7 +575,8 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
           onClick={() => { setPlazoNuevo(0); setOpenSolicitud(true); }}
           disabled={!resultado || totalArchivos === 0}
           variant="outline"
-          className="border-emerald-600 text-emerald-700 hover:bg-emerald-50"
+          className="border-0 text-white disabled:opacity-50"
+          style={{ background: "rgba(132,185,143,0.22)", borderColor: "rgba(132,185,143,0.5)" }}
           title={!resultado ? "Ejecuta primero el análisis" : "Construir y enviar a Jurídica"}
         >
           <Mail className="w-4 h-4 mr-2" /> Construir solicitud al banco
