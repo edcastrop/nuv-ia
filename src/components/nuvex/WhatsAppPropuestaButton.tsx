@@ -1,4 +1,5 @@
-import { MessageCircle } from "lucide-react";
+import { useState, useCallback } from "react";
+import { MessageCircle, Copy, X, Check } from "lucide-react";
 import { formatCOP } from "../../lib/format";
 
 export interface WhatsAppPropuestaItem {
@@ -30,15 +31,6 @@ function compactCOP(n: number): string {
     return `$${v}M`;
   }
   return formatCOP(n);
-}
-
-function sanitizePhone(raw?: string): string {
-  if (!raw) return "";
-  const digits = raw.replace(/\D+/g, "");
-  if (!digits) return "";
-  if (digits.startsWith("57")) return digits;
-  if (digits.length === 10) return `57${digits}`;
-  return digits;
 }
 
 export function buildWhatsAppMessage(p: {
@@ -95,9 +87,11 @@ export function buildWhatsAppMessage(p: {
 }
 
 export function WhatsAppPropuestaButton(props: Props) {
-  const { telefono, disabled, disabledReason } = props;
+  const { disabled, disabledReason } = props;
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  const handleClick = () => {
+  const handleOpen = () => {
     if (disabled) {
       if (disabledReason) alert(disabledReason);
       return;
@@ -106,25 +100,111 @@ export function WhatsAppPropuestaButton(props: Props) {
       alert("Primero calcula las propuestas antes de generar el mensaje.");
       return;
     }
-    const msg = buildWhatsAppMessage(props);
-    const phone = sanitizePhone(telefono);
-    const url = phone
-      ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`
-      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
-    window.open(url, "_blank", "noopener,noreferrer");
+    setOpen(true);
+    setCopied(false);
   };
 
+  const message = open ? buildWhatsAppMessage(props) : "";
+
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(message);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback for older browsers
+      const textarea = document.createElement("textarea");
+      textarea.value = message;
+      textarea.style.position = "fixed";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      try {
+        document.execCommand("copy");
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch {
+        alert("No se pudo copiar automáticamente. Selecciona el texto y usa Ctrl+C / Cmd+C.");
+      }
+      document.body.removeChild(textarea);
+    }
+  }, [message]);
+
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      disabled={disabled}
-      title={disabled ? disabledReason : "Abrir WhatsApp con el mensaje de la propuesta"}
-      className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
-      style={{ backgroundColor: "#25D366" }}
-    >
-      <MessageCircle size={16} strokeWidth={2.4} />
-      Mensaje WhatsApp
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={handleOpen}
+        disabled={disabled}
+        title={disabled ? disabledReason : "Generar mensaje de WhatsApp"}
+        className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow transition-transform hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
+        style={{ backgroundColor: "#25D366" }}
+      >
+        <MessageCircle size={16} strokeWidth={2.4} />
+        Mensaje WhatsApp
+      </button>
+
+      {open && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setOpen(false);
+          }}
+        >
+          <div className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="absolute right-4 top-4 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              aria-label="Cerrar"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="mb-4 flex items-center gap-2">
+              <div
+                className="grid h-8 w-8 place-items-center rounded-lg"
+                style={{ backgroundColor: "#25D366" }}
+              >
+                <MessageCircle size={16} className="text-white" strokeWidth={2.4} />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">Mensaje para WhatsApp</h3>
+            </div>
+
+            <p className="mb-3 text-sm text-gray-500">
+              Copia el texto y pégalo en tu chat de WhatsApp.
+            </p>
+
+            <textarea
+              readOnly
+              value={message}
+              className="mb-4 w-full resize-none rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm leading-relaxed text-gray-800 outline-none focus:ring-2 focus:ring-[#25D366]/30"
+              rows={14}
+              onFocus={(e) => e.currentTarget.select()}
+            />
+
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
+              >
+                Cerrar
+              </button>
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow transition-transform hover:scale-[1.01]"
+                style={{ backgroundColor: "#25D366" }}
+              >
+                {copied ? <Check size={16} strokeWidth={2.4} /> : <Copy size={16} strokeWidth={2.4} />}
+                {copied ? "Copiado" : "Copiar mensaje"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
