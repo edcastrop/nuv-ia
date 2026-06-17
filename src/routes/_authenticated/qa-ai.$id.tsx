@@ -564,6 +564,44 @@ function ResultadoQaAi() {
         </section>
       )}
 
+      {/* BANNER: NUVIA revisó proyecciones del banco */}
+      {proyectoresAplicadas && (() => {
+        const n = proyInfo?.count ?? proyInfo?.aplicadas?.length ?? 0;
+        const fechaProy = proyInfo?.aplicadasAt ? new Date(proyInfo.aplicadasAt).toLocaleString("es-CO", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : null;
+        const recalculo = proyInfo?.plazoRecalculadoPorProyeccion === true;
+        const cuotasAntes = proyInfo?.cuotasPendientesExtractoOriginal;
+        const cuotasDespues = proyInfo?.cuotasPendientesRecalculadas;
+        const resolvio = incCrit === 0 && incWarn === 0;
+        const tono = resolvio ? "var(--nuvia-success)" : "var(--nuvia-warning)";
+        return (
+          <section className="rounded-[var(--nuvia-radius-lg)] p-4 lg:p-5"
+            style={{ background: `linear-gradient(135deg, ${tono}18, rgba(255,255,255,0.03))`, border: `1px solid ${tono}55` }}>
+            <div className="flex items-start gap-3">
+              <div className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                style={{ background: `${tono}22`, color: tono, border: `1px solid ${tono}66` }}>
+                NUVIA · Proyecciones revisadas
+              </div>
+              {fechaProy && (
+                <span className="text-[11px]" style={{ color: "var(--nuvia-text-muted)" }}>{fechaProy}</span>
+              )}
+            </div>
+            <p className="mt-2 text-[13.5px] leading-snug" style={{ color: "var(--nuvia-text-primary)" }}>
+              NUVIA leyó <strong>{n}</strong> proyección{n === 1 ? "" : "es"} oficial{n === 1 ? "" : "es"} entregada{n === 1 ? "" : "s"} por el banco, las fusionó con el extracto y volvió a auditar el crédito desde la matemática financiera.
+            </p>
+            {recalculo && cuotasAntes && cuotasDespues && (
+              <p className="mt-1 text-[12.5px]" style={{ color: "var(--nuvia-text-secondary)" }}>
+                Plazo real recalculado a partir del saldo, cuota e interés de la proyección: pasó de <strong>{Math.round(cuotasAntes)}</strong> cuotas reportadas en el extracto a <strong>{Math.round(cuotasDespues)}</strong> cuotas matemáticamente reales.
+              </p>
+            )}
+            <p className="mt-2 text-[13px] font-semibold" style={{ color: tono }}>
+              {resolvio
+                ? "✅ Con las proyecciones aplicadas, la inconsistencia quedó resuelta: las cifras del banco ahora cuadran con la matemática financiera."
+                : `⚠️ Aún con las proyecciones del banco aplicadas, persisten ${incCrit + incWarn} hallazgo(s) (${incCrit} crítico${incCrit === 1 ? "" : "s"}, ${incWarn} observación${incWarn === 1 ? "" : "es"}). La inconsistencia NO es por falta de información: es real en los datos del banco.`}
+            </p>
+          </section>
+        );
+      })()}
+
       {/* VEREDICTO EJECUTIVO + ACCIÓN RECOMENDADA */}
       <section className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-4">
         {/* Veredicto */}
