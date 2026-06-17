@@ -459,7 +459,7 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5 p-4 rounded-lg" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--nuvia-border-soft)" }}>
         <div>
           <Label className="text-xs" style={{ color: "var(--nuvia-text-secondary)" }}>Cuota propuesta al banco</Label>
-          <Input type="number" value={cuota || ""} onChange={(e) => setCuota(Number(e.target.value))} className="nuvia-input font-bold" />
+          <Input type="number" step={1} value={cuota || ""} onChange={(e) => setCuota(Math.round(Number(e.target.value) || 0))} className="nuvia-input font-bold" />
           <p className="text-xs mt-1" style={{ color: "var(--nuvia-text-tertiary)" }}>Tomada del simulador NUVEX.</p>
         </div>
         <div>
