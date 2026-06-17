@@ -140,7 +140,7 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
   const enviarSolicitud = useServerFn(enviarSolicitudPlazoBanco);
 
   const [esVis, setEsVis] = useState(false);
-  const [cuota, setCuota] = useState<number>(cuotaPropuesta || 0);
+  const [cuota, setCuota] = useState<number>(Math.round(cuotaPropuesta || 0));
   const [personas, setPersonas] = useState<PersonaForm[]>([nuevaPersona("titular")]);
   const [analizando, setAnalizando] = useState(false);
   const [resultado, setResultado] = useState<AnalisisCapacidadResultado["data"] | null>(null);
