@@ -1,13 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { z } from "zod";
-import { ModeSelector } from "@/components/nuvex/ModeSelector";
-import { PesosSimulator } from "@/components/nuvex/PesosSimulator";
-import { UVRSimulator } from "@/components/nuvex/UVRSimulator";
 import { RoleHome } from "@/components/home/RoleHome";
-import { ensureOperativeExpedienteForMaestro, getMaestro } from "@/lib/expedienteMaestro";
-import type { Expediente } from "@/lib/expedientes";
 import { hasSimulatorDraft } from "@/components/nuvex/useSimulatorDraft";
+
 
 const homeSearchSchema = z.object({
   maestroId: z.string().optional(),
@@ -56,13 +52,4 @@ function Home() {
   return <RoleHome onLanzarSimulador={() => navigate({ to: "/simulador" })} />;
 }
 
-// Mantiene los componentes importados para que el bundler no los descarte
-// (se usan en /simulador). No-op a nivel runtime.
-void ModeSelector;
-void PesosSimulator;
-void UVRSimulator;
-void ensureOperativeExpedienteForMaestro;
-void getMaestro;
-const _typeKeep: Expediente | null = null;
-void _typeKeep;
 
