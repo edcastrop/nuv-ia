@@ -132,6 +132,7 @@ function AuthenticatedLayout() {
   }, []);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [reloading, setReloading] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const queryClient = useQueryClient();
   const handleReload = async () => {
@@ -145,6 +146,10 @@ function AuthenticatedLayout() {
       setTimeout(() => setReloading(false), 400);
     }
   };
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/login" });
@@ -491,7 +496,7 @@ function AuthenticatedLayout() {
     };
   }, [session?.user?.id, gateState]);
 
-  if (loading || !session) {
+  if (!mounted || loading || !session) {
     return (
       <div
         className="min-h-screen flex items-center justify-center text-white/60 text-sm"
