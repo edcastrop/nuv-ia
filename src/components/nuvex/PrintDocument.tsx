@@ -1699,6 +1699,9 @@ function SummaryKpi({
       )}
     </div>
   );
+}
+
+
 
 function TimelineStat({ label, value, color }: { label: string; value: string; color: string }) {
   return (
