@@ -835,6 +835,16 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
         plazoRecalculadoPorProyeccion,
         cuotasPendientesExtractoOriginal: cuotasPendientesExtractoOriginal ?? null,
         cuotasPendientesRecalculadas: cuotasPend,
+        saldoCapitalAplicado: saldo || null,
+        cuotaClienteAplicada: cuotaExt ?? null,
+        cuotaFinancieraAplicada: cuotaFinancieraSinSeguros ?? null,
+        segurosAplicados: seguros || null,
+        tasaEaAplicada: tasa || null,
+        saldoUvrAplicado: saldoUVR ?? null,
+        valorUvrAplicado: valorUVR ?? null,
+        formulaPlazo: modalidad === "uvr"
+          ? "n = ln(C_UVR / (C_UVR - Saldo_UVR × i)) / ln(1 + i)"
+          : "n = ln(C / (C - Saldo × i)) / ln(1 + i)",
         count: proyeccionesAplicadasIds.length,
       },
     };
@@ -1043,6 +1053,27 @@ export const reejecutarAuditoriaQA = createServerFn({ method: "POST" })
           };
         }
       }
+    }
+
+
+    const recFinalSnap = (inputs.reconstruccion ?? {}) as Record<string, unknown>;
+    const extFinalSnap = (inputs.extracto ?? {}) as Record<string, unknown>;
+    const proySnap = (inputs.proyecciones ?? {}) as Record<string, unknown>;
+    const proyCount = Number(proySnap.count ?? (Array.isArray(proySnap.aplicadas) ? proySnap.aplicadas.length : 0));
+    if (proyCount > 0) {
+      inputs.proyecciones = {
+        ...proySnap,
+        saldoCapitalAplicado: parseNum(recFinalSnap.saldoCapital) ?? null,
+        cuotaClienteAplicada: parseNum(extFinalSnap.cuota) ?? null,
+        cuotaFinancieraAplicada: parseNum(recFinalSnap.cuotaFinancieraSinSeguros) ?? null,
+        segurosAplicados: parseNum(recFinalSnap.seguros) ?? null,
+        tasaEaAplicada: parseNum(recFinalSnap.tasaEa) ?? null,
+        saldoUvrAplicado: parseNum(recFinalSnap.saldoUVR) ?? null,
+        valorUvrAplicado: parseNum(recFinalSnap.valorUVR) ?? null,
+        formulaPlazo: ((inputs.modalidad as Modalidad | undefined) ?? (aud.modalidad as Modalidad)) === "uvr"
+          ? "n = ln(C_UVR / (C_UVR - Saldo_UVR × i)) / ln(1 + i)"
+          : "n = ln(C / (C - Saldo × i)) / ln(1 + i)",
+      };
     }
 
 

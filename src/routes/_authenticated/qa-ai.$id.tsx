@@ -252,21 +252,47 @@ function ResultadoQaAi() {
     qa_score: number; categoria: string; dictamen: string; modalidad: string;
     motor_version: string; ejecutado_at: string; outputs: Record<string, number | unknown[]>;
   };
-  const o = (a.outputs ?? {}) as Record<string, number | unknown[]>;
-  const score = Number(a.qa_score);
+  const o = ({ ...(a.outputs ?? {}), ...(recomputo?.reconstruccion ? {
+    cuotaTeorica: recomputo.reconstruccion.cuotaTeorica,
+    cuotaConSubsidio: recomputo.reconstruccion.cuotaConSubsidio,
+    cuotaTotalConSeguros: recomputo.reconstruccion.cuotaTotalConSeguros,
+    beneficioMensualFrech: recomputo.reconstruccion.beneficioMensualFrech,
+    costoTotal: recomputo.reconstruccion.costoTotal,
+    totalIntereses: recomputo.reconstruccion.totalIntereses,
+    totalCorreccionUvr: recomputo.reconstruccion.totalCorreccionUvr,
+    vecesPagado: recomputo.reconstruccion.vecesPagado,
+    primerasCuotas: recomputo.reconstruccion.primerasCuotas,
+    ultimasCuotas: recomputo.reconstruccion.ultimasCuotas,
+    todasCuotas: recomputo.reconstruccion.todasCuotas,
+    veredicto: recomputo.veredicto,
+  } : {}) }) as Record<string, number | unknown[]>;
+  const score = Number(recomputo?.score.score ?? a.qa_score);
+  const dictamenEfectivo = recomputo?.score.dictamen ?? a.dictamen;
+  const categoriaEfectiva = recomputo?.score.categoria ?? a.categoria;
   const isUvr = a.modalidad === "uvr";
   const scoreColor = score >= 95 ? "var(--nuvia-success)" : score >= 85 ? "var(--nuvia-warning)" : "var(--nuvia-danger)";
-  const cert = certificacion(a.dictamen);
+  const cert = certificacion(dictamenEfectivo);
   const trofeo = logro(score);
   const certAprobada = cert.estado === "certificado" || cert.estado === "certificado_obs";
   const puedeVolverAlSimulador = fromSimulador && certAprobada && !!maestroId && !!modo;
   const sevTone = (s: string) => s === "critica" ? "var(--nuvia-danger)" : s === "warning" ? "var(--nuvia-warning)" : "var(--nuvia-text-secondary)";
 
   /* ----- Datos sticky header ----- */
-  const inputs = (a as Record<string, unknown>).inputs as { extracto?: Record<string, unknown>; reconstruccion?: Record<string, unknown>; simulacion?: Record<string, unknown>; proyecciones?: { aplicadas?: string[]; aplicadasAt?: string | null; plazoRecalculadoPorProyeccion?: boolean; cuotasPendientesExtractoOriginal?: number | null; cuotasPendientesRecalculadas?: number | null; count?: number } } | undefined;
+  const inputs = (a as Record<string, unknown>).inputs as { extracto?: Record<string, unknown>; reconstruccion?: Record<string, unknown>; simulacion?: Record<string, unknown>; proyecciones?: { aplicadas?: string[]; aplicadasAt?: string | null; plazoRecalculadoPorProyeccion?: boolean; cuotasPendientesExtractoOriginal?: number | null; cuotasPendientesRecalculadas?: number | null; saldoCapitalAplicado?: number | null; cuotaClienteAplicada?: number | null; cuotaFinancieraAplicada?: number | null; segurosAplicados?: number | null; tasaEaAplicada?: number | null; saldoUvrAplicado?: number | null; valorUvrAplicado?: number | null; formulaPlazo?: string | null; count?: number } } | undefined;
   const proyInfo = inputs?.proyecciones;
   const proyectoresAplicadas = (proyInfo?.count ?? proyInfo?.aplicadas?.length ?? 0) > 0;
   const ex = (inputs?.extracto ?? {}) as Record<string, unknown>;
+  const recSnap = (inputs?.reconstruccion ?? {}) as Record<string, unknown>;
+  const numDato = (v: unknown): number | undefined => {
+    if (typeof v === "number" && Number.isFinite(v)) return v;
+    if (v == null || v === "") return undefined;
+    const n = Number(String(v).replace(/[^0-9.,-]/g, "").replace(/\.(?=\d{3}(\D|$))/g, "").replace(",", "."));
+    return Number.isFinite(n) ? n : undefined;
+  };
+  const proySaldoAplicado = numDato(proyInfo?.saldoCapitalAplicado) ?? numDato(recSnap.saldoCapital);
+  const proyCuotaCliente = numDato(proyInfo?.cuotaClienteAplicada) ?? numDato(ex.cuota);
+  const proyCuotaFinanciera = numDato(proyInfo?.cuotaFinancieraAplicada) ?? numDato(recSnap.cuotaFinancieraSinSeguros);
+  const proyTasaEa = numDato(proyInfo?.tasaEaAplicada) ?? numDato(recSnap.tasaEa);
   const cliente = (ex.cliente as string) || (ex.titular as string) || "Cliente";
   const banco = (ex.banco as string) || "—";
   const producto = a.modalidad === "uvr" ? "Hipotecario UVR" : a.modalidad === "hipotecario" ? "Hipotecario" : a.modalidad === "leasing" ? "Leasing" : String(a.modalidad ?? "Crédito");
@@ -280,8 +306,21 @@ function ResultadoQaAi() {
   const mensajeHero = pickMsg(msgArr, id);
 
   /* ----- Semáforo de confianza ----- */
-  const incCrit = data.inconsistencias.filter((i) => i.severidad === "critica").length;
-  const incWarn = data.inconsistencias.filter((i) => i.severidad === "warning").length;
+  const inconsistenciasEfectivas: Inc[] = recomputo?.inconsistencias
+    ? recomputo.inconsistencias.map((i, idx) => ({
+      id: `recalc-${idx}`,
+      tipo: i.tipo,
+      severidad: i.severidad,
+      campo: i.campo ?? null,
+      valor_extracto: i.valorExtracto ?? null,
+      valor_calculado: i.valorCalculado ?? null,
+      diferencia: i.diferencia ?? null,
+      mensaje: i.mensaje,
+      sugerencia: i.sugerencia ?? null,
+    }))
+    : data.inconsistencias;
+  const incCrit = inconsistenciasEfectivas.filter((i) => i.severidad === "critica").length;
+  const incWarn = inconsistenciasEfectivas.filter((i) => i.severidad === "warning").length;
   const penTipos = new Set((recomputo?.score.penalizaciones ?? []).map((p) => p.tipo));
   const semaforo: Array<{ titulo: string; estado: "ok" | "warn" | "err"; detalle: string }> = [
     {
@@ -362,7 +401,7 @@ function ResultadoQaAi() {
   const filasAmort: FilaUI[] = verTodas && puedeVerTodas ? (filasCompletas as FilaUI[]) : filasResumen;
   const nTotal = filasCompletas.length || filasResumen.length;
   const penalizaciones = recomputo?.score.penalizaciones ?? [];
-  const alertasCriticas = data.inconsistencias.filter((i) => i.severidad === "critica");
+  const alertasCriticas = inconsistenciasEfectivas.filter((i) => i.severidad === "critica");
 
   const handleReejecutar = async () => {
     if (reloading) return;
@@ -375,9 +414,9 @@ function ResultadoQaAi() {
 
   const handlePdf = () => exportarDictamenPDF({
     auditoriaId: id, modalidad: a.modalidad, motorVersion: a.motor_version, ejecutadoAt: a.ejecutado_at,
-    qaScore: score, categoria: a.categoria, dictamen: a.dictamen, outputs: o,
+    qaScore: score, categoria: categoriaEfectiva, dictamen: dictamenEfectivo, outputs: o,
     inputs: (a as Record<string, unknown>).inputs as { reconstruccion?: Record<string, unknown>; extracto?: Record<string, unknown>; simulacion?: Record<string, unknown> },
-    penalizaciones, inconsistencias: data.inconsistencias,
+    penalizaciones, inconsistencias: inconsistenciasEfectivas as Inc[],
   });
 
   return (
@@ -589,14 +628,29 @@ function ResultadoQaAi() {
               NUVIA leyó <strong>{n}</strong> proyección{n === 1 ? "" : "es"} oficial{n === 1 ? "" : "es"} entregada{n === 1 ? "" : "s"} por el banco, las fusionó con el extracto y volvió a auditar el crédito desde la matemática financiera.
             </p>
             {recalculo && cuotasAntes && cuotasDespues && (
-              <p className="mt-1 text-[12.5px]" style={{ color: "var(--nuvia-text-secondary)" }}>
-                Plazo real recalculado a partir del saldo, cuota e interés de la proyección: pasó de <strong>{Math.round(cuotasAntes)}</strong> cuotas reportadas en el extracto a <strong>{Math.round(cuotasDespues)}</strong> cuotas matemáticamente reales.
+              <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
+                {[
+                  ["Extracto inicial", `${Math.round(cuotasAntes)} cuotas reportadas`],
+                  ["Proyección banco", `$${fmt(proyInfo?.saldoCapitalAplicado, 0)} · cuota $${fmt(proyInfo?.cuotaClienteAplicada, 0)}`],
+                  ["Cuota financiera", `$${fmt(proyInfo?.cuotaFinancieraAplicada, 0)} sin seguros · TEA ${fmt(proyInfo?.tasaEaAplicada, 4)}%`],
+                  ["Resultado NUVIA", `${Math.round(cuotasDespues)} meses reales`],
+                ].map(([k, v]) => (
+                  <div key={k} className="rounded-lg px-3 py-2" style={{ background: "rgba(0,0,0,0.18)", border: "1px solid var(--nuvia-border)" }}>
+                    <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--nuvia-text-muted)" }}>{k}</p>
+                    <p className="mt-1 text-[12px] font-semibold tabular-nums" style={{ color: "var(--nuvia-text-primary)" }}>{v}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+            {recalculo && (
+              <p className="mt-2 text-[12.5px] leading-snug" style={{ color: "var(--nuvia-text-secondary)" }}>
+                Fórmula aplicada: <strong>{proyInfo?.formulaPlazo ?? (isUvr ? "n = ln(C_UVR / (C_UVR − Saldo_UVR × i)) / ln(1 + i)" : "n = ln(C / (C − Saldo × i)) / ln(1 + i)")}</strong>. NUVIA reconstruyó el crédito con saldo a capital, cuota financiera sin seguros y TEA derivada de la proyección oficial.
               </p>
             )}
             <p className="mt-2 text-[13px] font-semibold" style={{ color: tono }}>
               {resolvio
-                ? "✅ Con las proyecciones aplicadas, la inconsistencia quedó resuelta: las cifras del banco ahora cuadran con la matemática financiera."
-                : `⚠️ Aún con las proyecciones del banco aplicadas, persisten ${incCrit + incWarn} hallazgo(s) (${incCrit} crítico${incCrit === 1 ? "" : "s"}, ${incWarn} observación${incWarn === 1 ? "" : "es"}). La inconsistencia NO es por falta de información: es real en los datos del banco.`}
+                ? "✅ Con las proyecciones aplicadas, la inconsistencia queda resuelta: el plazo comercial de trabajo es el recalculado por NUVIA. Paso siguiente: construir propuesta sobre ese plazo real y no sobre las 320 cuotas del extracto."
+                : `⚠️ Aún con las proyecciones del banco aplicadas, persisten ${incCrit + incWarn} hallazgo(s) (${incCrit} crítico${incCrit === 1 ? "" : "s"}, ${incWarn} observación${incWarn === 1 ? "" : "es"}). Paso siguiente: pedir aclaración formal al banco sobre esos datos.`}
             </p>
           </section>
         );
@@ -797,9 +851,9 @@ function ResultadoQaAi() {
       <Accordion
         title="Inconsistencias detectadas"
         icon={<AlertTriangle size={15} style={{ color: "var(--nuvia-warning)" }} />}
-        count={data.inconsistencias.length}
+        count={inconsistenciasEfectivas.length}
       >
-        {data.inconsistencias.length === 0 ? (
+        {inconsistenciasEfectivas.length === 0 ? (
           <div className="px-5 py-4 flex items-center gap-2 text-sm" style={{ color: "var(--nuvia-success)" }}>
             <CheckCircle2 size={16} /> Sin inconsistencias matemáticas.
           </div>
@@ -814,7 +868,7 @@ function ResultadoQaAi() {
                 </tr>
               </thead>
               <tbody>
-                {data.inconsistencias.map((i) => (
+                {inconsistenciasEfectivas.map((i) => (
                   <tr key={i.id} style={{ borderBottom: "1px solid var(--nuvia-border)" }}>
                     <td className="px-4 py-2 capitalize" style={{ color: "var(--nuvia-text-primary)" }}>{i.tipo}</td>
                     <td className="px-4 py-2 font-semibold uppercase" style={{ color: sevTone(i.severidad) }}>
