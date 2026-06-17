@@ -138,6 +138,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "apple-touch-icon", href: "/icon-192.png" },
       { rel: "manifest", href: "/manifest.json" },
     ],
+    scripts: [{ children: NUVIA_STABILITY_SCRIPT }],
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -150,7 +151,6 @@ function RootShell({ children }: { children: React.ReactNode }) {
     <html lang="es">
       <head>
         <HeadContent />
-        <script dangerouslySetInnerHTML={{ __html: NUVIA_STABILITY_SCRIPT }} />
       </head>
       <body style={{ background: "#F4F6FB", color: "#0A1226" }}>
         {children}
