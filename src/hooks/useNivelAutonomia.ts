@@ -41,6 +41,11 @@ export function useNivelAutonomia() {
           setMetricas(m);
         }
         setLoading(false);
+      })
+      .catch(() => {
+        if (cancel) return;
+        setMetricas(metricasIniciales);
+        setLoading(false);
       });
     return () => {
       cancel = true;

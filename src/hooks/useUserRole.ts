@@ -70,6 +70,11 @@ export function useUserRole() {
         if (cancel) return;
         setRoles((data ?? []).map((r) => r.role as AppRole));
         setLoading(false);
+      })
+      .catch(() => {
+        if (cancel) return;
+        setRoles([]);
+        setLoading(false);
       });
     return () => { cancel = true; };
   }, [user, authLoading]);

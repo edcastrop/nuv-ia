@@ -41,12 +41,16 @@ export function OnboardingChecklistBanner() {
     if (!user) return;
     let cancel = false;
     (async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("estado_acceso, perfil_completo, mfa_metodo, onboarding_estado, nombre, celular, ciudad, pais")
-        .eq("id", user.id)
-        .maybeSingle();
-      if (!cancel) setP(data as Profile | null);
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("estado_acceso, perfil_completo, mfa_metodo, onboarding_estado, nombre, celular, ciudad, pais")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (!cancel) setP(data as Profile | null);
+      } catch {
+        if (!cancel) setP(null);
+      }
     })();
 
     const ch = supabase
