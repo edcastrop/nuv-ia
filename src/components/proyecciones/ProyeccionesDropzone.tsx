@@ -56,14 +56,17 @@ type ProyeccionRow = {
 
 interface Props {
   expedienteId: string;
-  /** Cuando termina la fusión + reauditoría (o verificación), refresca la vista que lo monta. */
-  onReauditoria?: () => void;
+  /** Cuando termina la fusión + reauditoría (o verificación), refresca la vista que lo monta.
+   *  Recibe el `auditoriaId` recién generado por la reauditoría para que la vista pueda
+   *  navegar/refrescar al nuevo dictamen (el anterior queda intacto en histórico). */
+  onReauditoria?: (auditoriaId: string) => void;
   variant?: "expediente" | "qa";
   /** "auditoria" = proyección inicial para auditar el extracto. "cierre" = proyección final que emite el banco al cerrar. */
   momento?: "auditoria" | "cierre";
   /** Callback opcional cuando termina la verificación de cierre. */
   onVerificacionCierre?: () => void;
 }
+
 
 async function loadPdfJs() {
   const pdfjs = await import("pdfjs-dist");
@@ -336,12 +339,13 @@ export function ProyeccionesDropzone({ expedienteId, onReauditoria, variant = "q
         return;
       }
       const r = await fnFusionar({ data: { expedienteId, proyeccionIds: analizadas } });
-      await fnAuditar({ data: { extractoLecturaId: r.extractoLecturaId } });
-      onReauditoria?.();
+      const aud = await fnAuditar({ data: { extractoLecturaId: r.extractoLecturaId } });
+      onReauditoria?.(aud.auditoriaId);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "No se pudo reauditar");
     } finally { setReauditando(false); }
   }, [items, fnFusionar, fnAuditar, expedienteId, onReauditoria]);
+
 
   const verificarCierre = useCallback(async () => {
     setReauditando(true); setErr(null);
