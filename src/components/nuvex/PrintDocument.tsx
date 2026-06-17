@@ -1573,8 +1573,250 @@ function FooterItem({ icon, title, lines }: { icon: React.ReactNode; title: stri
 
 
 /* ════════════════════════════════════════════════════════════
+   PROPUESTA RECOMENDADA — Panel derecho de página 1
+════════════════════════════════════════════════════════════ */
+function PropuestaRecomendadaPanel(props: {
+  nuevaCuota: number;
+  añosRecuperados: number;
+  ahorroTotal: number;
+  nuevoPlazoMeses: number;
+  nuevoPlazoAños: number;
+  incrementoPct: number;
+  incrementoMensual: number;
+  cuotasEliminadas: number;
+  añoHoy: number;
+  añoFinActual: number;
+  añoFinOpt: number;
+  añosActual: number;
+  añosOpt: number;
+}) {
+  const {
+    nuevaCuota, añosRecuperados, ahorroTotal, nuevoPlazoMeses, nuevoPlazoAños,
+    incrementoPct, incrementoMensual, cuotasEliminadas,
+    añoHoy, añoFinActual, añoFinOpt, añosActual, añosOpt,
+  } = props;
+  const sinPct = 100;
+  const conPct = Math.max(20, Math.min(100, (añosOpt / Math.max(añosActual, 1)) * 100));
+
+  return (
+    <div style={{
+      background: `linear-gradient(155deg, ${C.greenSoft} 0%, #fff 100%)`,
+      border: `1px solid ${C.green}55`, borderRadius: 12,
+      padding: "10px 12px", display: "flex", flexDirection: "column", gap: 8,
+      breakInside: "avoid", pageBreakInside: "avoid",
+    }}>
+      {/* Header */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        paddingBottom: 5, borderBottom: `1px solid ${C.green}33`,
+      }}>
+        <div style={{
+          fontSize: 9.5, letterSpacing: "0.22em", fontWeight: 900, color: C.greenDeep,
+        }}>2. PROPUESTA RECOMENDADA POR NUVEX</div>
+        <div style={{
+          background: C.greenDeep, color: "#fff",
+          fontSize: 8, fontWeight: 900, letterSpacing: "0.14em",
+          padding: "2px 6px", borderRadius: 3,
+        }}>★</div>
+      </div>
+
+      {/* 4 KPIs en fila */}
+      <div style={{
+        display: "grid", gridTemplateColumns: "1.1fr 1fr 1.15fr 0.9fr", gap: 10,
+      }}>
+        <div>
+          <div style={{ fontSize: 7.5, color: C.muted, fontWeight: 800, letterSpacing: "0.16em" }}>
+            ⟁ NUEVA CUOTA
+          </div>
+          <div style={{
+            fontSize: 16, fontWeight: 900, color: C.greenDeep,
+            letterSpacing: "-0.025em", lineHeight: 1, marginTop: 2,
+          }}>
+            {formatCOP(nuevaCuota)}
+          </div>
+          <div style={{ marginTop: 4, fontSize: 8, color: C.muted, fontWeight: 700, letterSpacing: "0.04em" }}>
+            Incremento mensual
+          </div>
+          <div style={{ fontSize: 11, fontWeight: 900, color: C.azul, letterSpacing: "-0.01em" }}>
+            +{formatNumber(incrementoPct, 1)}%
+          </div>
+          <div style={{ fontSize: 8.5, color: C.muted }}>
+            + {formatCOP(incrementoMensual)}
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: 7.5, color: C.muted, fontWeight: 800, letterSpacing: "0.16em" }}>
+            ⏱ TIEMPO RECUPERADO
+          </div>
+          <div style={{
+            fontSize: 22, fontWeight: 900, color: C.greenDeep,
+            letterSpacing: "-0.025em", lineHeight: 1, marginTop: 2,
+          }}>
+            {añosRecuperados} AÑOS
+          </div>
+          <div style={{ marginTop: 6, fontSize: 8, color: C.muted, fontWeight: 700, letterSpacing: "0.04em" }}>
+            Cuotas eliminadas
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 900, color: C.ink, letterSpacing: "-0.01em" }}>
+            {cuotasEliminadas}
+          </div>
+          <div style={{ fontSize: 8.5, color: C.muted }}>menos pagos</div>
+        </div>
+        <div>
+          <div style={{ fontSize: 7.5, color: C.muted, fontWeight: 800, letterSpacing: "0.16em" }}>
+            💰 AHORRO
+          </div>
+          <div style={{
+            fontSize: 16, fontWeight: 900, color: C.greenDeep,
+            letterSpacing: "-0.025em", lineHeight: 1, marginTop: 2,
+          }}>
+            {formatCOP(ahorroTotal)}
+          </div>
+          <div style={{
+            marginTop: 4, fontSize: 8.2, color: C.text, lineHeight: 1.3,
+          }}>
+            Menos intereses y seguros<br />durante la vida del crédito
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: 7.5, color: C.muted, fontWeight: 800, letterSpacing: "0.16em" }}>
+            📅 NUEVO PLAZO
+          </div>
+          <div style={{
+            fontSize: 22, fontWeight: 900, color: C.ink,
+            letterSpacing: "-0.025em", lineHeight: 1, marginTop: 2,
+          }}>
+            {nuevoPlazoMeses}
+          </div>
+          <div style={{ fontSize: 9.5, color: C.text, fontWeight: 700 }}>
+            meses
+          </div>
+          <div style={{ fontSize: 8.5, color: C.muted, marginTop: 2 }}>
+            {formatNumber(nuevoPlazoAños, 1)} años
+          </div>
+        </div>
+      </div>
+
+      {/* Línea de tiempo + side panel recuperación */}
+      <div style={{
+        display: "grid", gridTemplateColumns: "1fr 130px", gap: 10, alignItems: "stretch",
+        marginTop: 2,
+      }}>
+        <div style={{
+          background: "#fff", border: `1px solid ${C.hairline}`, borderRadius: 10,
+          padding: "8px 10px", display: "flex", flexDirection: "column", gap: 5,
+        }}>
+          <div style={{
+            fontSize: 7.8, letterSpacing: "0.2em", fontWeight: 800, color: C.muted,
+          }}>
+            LÍNEA DE TIEMPO
+          </div>
+          <TimelineRow
+            label="SIN NUVEX"
+            startYear={añoHoy}
+            endYear={añoFinActual}
+            barColor="#CFD3DB"
+            widthPct={sinPct}
+            pill={`${formatNumber(añosActual, 1)} años`}
+            pillBg="#F1F2F4"
+            pillFg={C.muted}
+          />
+          <TimelineRow
+            label={<>CON NUVEX<br /><span style={{ fontWeight: 600 }}>(RECOMENDADA)</span></>}
+            startYear={añoHoy}
+            endYear={añoFinOpt}
+            barColor={C.greenDeep}
+            widthPct={conPct}
+            pill={`${formatNumber(nuevoPlazoAños, 1)} años`}
+            pillBg={C.greenSoft}
+            pillFg={C.greenDeep}
+          />
+        </div>
+        <div style={{
+          background: `linear-gradient(135deg, ${C.greenSoft} 0%, #fff 100%)`,
+          border: `1px solid ${C.green}66`, borderRadius: 10,
+          padding: "8px 10px", display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center", textAlign: "center", gap: 2,
+        }}>
+          <div style={{
+            fontSize: 16, fontWeight: 900, color: C.greenDeep, letterSpacing: "-0.02em", lineHeight: 1,
+          }}>
+            {añosRecuperados} AÑOS
+          </div>
+          <div style={{
+            fontSize: 7.5, letterSpacing: "0.18em", fontWeight: 900, color: C.greenDeep,
+          }}>
+            RECUPERADOS
+          </div>
+          <div style={{
+            marginTop: 4, paddingTop: 4, borderTop: `1px solid ${C.green}44`,
+            fontSize: 13, fontWeight: 900, color: C.ink, letterSpacing: "-0.01em",
+          }}>
+            {cuotasEliminadas} CUOTAS
+          </div>
+          <div style={{
+            fontSize: 7.5, letterSpacing: "0.18em", fontWeight: 900, color: C.muted,
+          }}>
+            ELIMINADAS
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TimelineRow({
+  label, startYear, endYear, barColor, widthPct, pill, pillBg, pillFg,
+}: {
+  label: React.ReactNode; startYear: number; endYear: number;
+  barColor: string; widthPct: number; pill: string; pillBg: string; pillFg: string;
+}) {
+  return (
+    <div style={{
+      display: "grid", gridTemplateColumns: "70px 32px 1fr 36px 60px",
+      alignItems: "center", gap: 5,
+    }}>
+      <div style={{ fontSize: 7.5, fontWeight: 800, color: C.text, letterSpacing: "0.06em", lineHeight: 1.1 }}>
+        {label}
+      </div>
+      <div style={{ fontSize: 8.5, fontWeight: 700, color: C.ink, textAlign: "center" }}>
+        {startYear}
+      </div>
+      <div style={{ position: "relative", height: 8 }}>
+        <div style={{
+          position: "absolute", top: "50%", left: 0, right: 0, height: 3,
+          background: "#EDEFF2", transform: "translateY(-50%)", borderRadius: 2,
+        }} />
+        <div style={{
+          position: "absolute", top: "50%", left: 0, height: 3,
+          width: `${widthPct}%`, background: barColor, transform: "translateY(-50%)",
+          borderRadius: 2,
+        }} />
+        <div style={{
+          position: "absolute", top: "50%", left: `calc(${widthPct}% - 5px)`,
+          width: 10, height: 10, borderRadius: "50%", background: barColor,
+          transform: "translateY(-50%)",
+          boxShadow: `0 0 0 2px #fff`,
+        }} />
+      </div>
+      <div style={{ fontSize: 8.5, fontWeight: 700, color: C.ink, textAlign: "center" }}>
+        {endYear}
+      </div>
+      <div style={{
+        background: pillBg, color: pillFg, fontSize: 7.8, fontWeight: 800,
+        padding: "2px 6px", borderRadius: 999, textAlign: "center",
+      }}>
+        {pill}
+      </div>
+    </div>
+  );
+}
+
+
+/* ════════════════════════════════════════════════════════════
    NUEVA ARQUITECTURA — ESTADO ACTUAL · KPI · TIMELINE · TABLA
 ════════════════════════════════════════════════════════════ */
+
 
 function EstadoActualCard(props: {
   banco: string; producto: string;
