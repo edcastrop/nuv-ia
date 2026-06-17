@@ -140,6 +140,8 @@ function AuthenticatedLayout() {
     setReloading(true);
     try {
       await Promise.all([queryClient.invalidateQueries(), router.invalidate()]);
+    } catch {
+      // No propagar un fallo transitorio de red al árbol React.
     } finally {
       setTimeout(() => setReloading(false), 400);
     }
@@ -239,7 +241,8 @@ function AuthenticatedLayout() {
                 actor_id: session.user.id,
                 detalle: { path, estado_acceso: estado },
               } as never)
-              .then(() => {});
+              .then(() => {})
+              .catch(() => {});
             navigate({ to: "/pendiente-aprobacion" });
           } else {
             setGateState("ok");
