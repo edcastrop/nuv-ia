@@ -1,7 +1,8 @@
 import {
   Landmark, CreditCard, CalendarDays, Clock, Wallet, TrendingUp,
   CalendarOff as LCalendarOff, ShieldCheck, Users, MapPin, Phone, Globe,
-  ArrowRight, PiggyBank,
+  ArrowRight, PiggyBank, FileText, CheckCircle2, Hourglass, Banknote,
+  Coins, Receipt, Target, Rocket, Scissors, Trophy, TrendingDown, Award,
 } from "lucide-react";
 import { NUVEX } from "./constants";
 import type { ClientData } from "./ClientFields";
