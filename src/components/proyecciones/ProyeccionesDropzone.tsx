@@ -339,12 +339,13 @@ export function ProyeccionesDropzone({ expedienteId, onReauditoria, variant = "q
         return;
       }
       const r = await fnFusionar({ data: { expedienteId, proyeccionIds: analizadas } });
-      await fnAuditar({ data: { extractoLecturaId: r.extractoLecturaId } });
-      onReauditoria?.();
+      const aud = await fnAuditar({ data: { extractoLecturaId: r.extractoLecturaId } });
+      onReauditoria?.(aud.auditoriaId);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "No se pudo reauditar");
     } finally { setReauditando(false); }
   }, [items, fnFusionar, fnAuditar, expedienteId, onReauditoria]);
+
 
   const verificarCierre = useCallback(async () => {
     setReauditando(true); setErr(null);
