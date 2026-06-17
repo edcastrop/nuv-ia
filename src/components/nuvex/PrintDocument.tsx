@@ -324,156 +324,92 @@ export function PrintDocument(props: Props) {
             valorDesembolsado={valorDesembolsado}
           />
 
-          {/* ═══ COLUMNA DERECHA — PROPUESTA + TIMELINE + BENEFICIO + MENSAJE ═══ */}
+          {/* ═══ COLUMNA DERECHA — PROPUESTA RECOMENDADA (foco único) ═══ */}
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-
-            {/* Propuesta recomendada — KPIs */}
             <div style={{
               background: `linear-gradient(155deg, ${C.greenSoft} 0%, #fff 100%)`,
               border: `1px solid ${C.green}55`, borderRadius: 12,
-              padding: "9px 12px",
+              padding: "12px 14px", height: "100%",
+              display: "flex", flexDirection: "column", gap: 10,
             }}>
               <div style={{
                 display: "flex", alignItems: "center", justifyContent: "space-between",
-                marginBottom: 6,
               }}>
                 <div style={{
-                  fontSize: 9, letterSpacing: "0.22em", fontWeight: 900, color: C.greenDeep,
+                  fontSize: 9.5, letterSpacing: "0.22em", fontWeight: 900, color: C.greenDeep,
                 }}>PROPUESTA RECOMENDADA</div>
                 <div style={{
                   background: C.greenDeep, color: "#fff",
-                  fontSize: 7.5, fontWeight: 900, letterSpacing: "0.14em",
-                  padding: "2px 7px", borderRadius: 4,
+                  fontSize: 8, fontWeight: 900, letterSpacing: "0.14em",
+                  padding: "3px 8px", borderRadius: 4,
                 }}>★ NUVEX</div>
               </div>
 
-              <div style={{
-                display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7,
-              }}>
-                <KpiTile label="NUEVA CUOTA" value={formatCOP(nuevaCuota)} accent={C.greenDeep} big />
-                <KpiTile label="INCREMENTO" value={`+${formatNumber(incrementoPct, 1)}%`} sub={`+${formatCOP(incrementoMensual)}`} accent={C.azul} />
-                <KpiTile label="NUEVO PLAZO" value={`${scenario.nuevoPlazo} meses`} sub={`${formatNumber(añosOpt, 1)} años`} accent={C.ink} />
-                <KpiTile label="CUOTAS ELIMINADAS" value={`${cuotasEliminadas}`} sub="menos pagos" accent={C.greenDeep} />
-                <KpiTile label="AHORRO EN TIEMPO" value={`${añosEliminadosEntero} años`} accent={C.greenDeep} />
-                <KpiTile label="AHORRO EN DINERO" value={formatCOP(ahorroTotal)} accent={C.azul} />
+              <div style={{ fontSize: 10.5, color: C.text, lineHeight: 1.35 }}>
+                Así quedaría tu crédito al aplicar la optimización propuesta por NUVEX.
               </div>
 
               <div style={{
-                marginTop: 6, padding: "5px 8px",
+                display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8,
+              }}>
+                <KpiTile label="NUEVA CUOTA" value={formatCOP(nuevaCuota)} accent={C.greenDeep} big />
+                <KpiTile label="NUEVO PLAZO" value={`${scenario.nuevoPlazo} meses`} sub={`${formatNumber(añosOpt, 1)} años`} accent={C.ink} />
+                <KpiTile label="INCREMENTO" value={`+${formatNumber(incrementoPct, 1)}%`} sub={`+${formatCOP(incrementoMensual)}`} accent={C.azul} />
+                <KpiTile label="AHORRO EN TIEMPO" value={`${añosEliminadosEntero} años`} sub="que vuelven a tu vida" accent={C.greenDeep} />
+              </div>
+
+              <div style={{
+                marginTop: "auto", padding: "7px 10px",
                 background: "rgba(132,185,143,0.18)", borderRadius: 8,
                 display: "flex", justifyContent: "space-between", alignItems: "center",
               }}>
-                <div style={{ fontSize: 8.5, fontWeight: 800, color: C.greenDeep, letterSpacing: "0.12em" }}>
+                <div style={{ fontSize: 9, fontWeight: 800, color: C.greenDeep, letterSpacing: "0.12em" }}>
                   NUEVA FECHA DE FINALIZACIÓN
                 </div>
-                <div style={{ fontSize: 13, fontWeight: 900, color: C.greenDeep }}>
+                <div style={{ fontSize: 15, fontWeight: 900, color: C.greenDeep }}>
                   {añoFinOpt}
-                </div>
-              </div>
-            </div>
-
-            {/* Timeline */}
-            <div style={{
-              background: "#fff", border: `1px solid ${C.hairline}`, borderRadius: 10,
-              padding: "6px 10px", display: "flex", flexDirection: "column", gap: 4,
-            }}>
-              <MiniTimeline
-                label="SIN NUVEX" labelColor={C.muted}
-                startYear={añoHoy} endYear={añoFinActual}
-                barColor="#CCD1D9" widthPct={100}
-                pill={`${formatNumber(añosActual, 1)} años`}
-                pillBg="#F1F2F4" pillFg={C.muted}
-              />
-              <MiniTimeline
-                label="CON NUVEX" labelColor={C.greenDeep}
-                startYear={añoHoy} endYear={añoFinOpt}
-                barColor={C.greenDeep}
-                widthPct={añosActual > 0 ? Math.max(8, Math.min(100, (añosOpt / añosActual) * 100)) : 100}
-                pill={`${formatNumber(añosOpt, 1)} años`}
-                pillBg={C.greenSoft} pillFg={C.greenDeep}
-              />
-              <div style={{
-                marginTop: 2, paddingTop: 4, borderTop: `1px dashed ${C.hairline}`,
-                display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6,
-              }}>
-                <TimelineStat label="AÑOS RECUPERADOS" value={`${añosEliminadosEntero}`} color={C.greenDeep} />
-                <TimelineStat label="CUOTAS ELIMINADAS" value={`${cuotasEliminadas}`} color={C.azul} />
-                <TimelineStat label="AHORRO TOTAL" value={formatCOP(ahorroTotal)} color={C.greenDeep} />
-              </div>
-            </div>
-
-            {/* Beneficio económico compacto */}
-            <div style={{
-              background: "#fff", border: `1px solid ${C.hairline}`,
-              borderRadius: 10, padding: "7px 11px",
-            }}>
-              <div style={{
-                fontSize: 8.5, letterSpacing: "0.2em", fontWeight: 900, color: C.muted,
-                marginBottom: 4,
-              }}>BENEFICIO ECONÓMICO</div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, alignItems: "center" }}>
-                <div>
-                  <div style={{ fontSize: 7.5, color: C.muted, fontWeight: 700, letterSpacing: "0.1em" }}>ESTÁNDAR</div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textDecoration: "line-through" }}>
-                    {formatCOP(honorariosBase)}
-                  </div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 7.5, color: C.azul, fontWeight: 800, letterSpacing: "0.1em" }}>APROBADOS</div>
-                  <div style={{ fontSize: 13, fontWeight: 900, color: C.ink }}>
-                    {formatCOP(honorariosFinales)}
-                  </div>
-                </div>
-                <div style={{
-                  background: C.greenSoft, borderRadius: 8, padding: "4px 8px", textAlign: "right",
-                }}>
-                  <div style={{ fontSize: 7.5, color: C.greenDeep, fontWeight: 800, letterSpacing: "0.1em" }}>AHORRO</div>
-                  <div style={{ fontSize: 13, fontWeight: 900, color: C.greenDeep }}>
-                    {formatCOP(descuento > 0 ? descuento : 0)}
-                  </div>
-                </div>
-              </div>
-              <div style={{
-                marginTop: 5, fontSize: 8.5, fontWeight: 800, color: C.red,
-                letterSpacing: "0.14em", textAlign: "center",
-              }}>
-                BENEFICIO COMERCIAL VÁLIDO POR 48 HORAS
-              </div>
-            </div>
-
-            {/* Mensaje personal del Analista — máx 4 líneas */}
-            <div style={{
-              background: `linear-gradient(135deg, ${C.black} 0%, #1a1a1a 100%)`,
-              color: "#fff", borderRadius: 10, padding: "7px 11px",
-              display: "flex", flexDirection: "column", gap: 4,
-            }}>
-              <p style={{
-                margin: 0, fontSize: 9.8, lineHeight: 1.3,
-                color: "rgba(255,255,255,0.92)",
-              }}>
-                Este crédito terminará de una u otra forma. La diferencia es decidir si quieres
-                <span style={{ color: C.green, fontWeight: 700 }}> recuperar parte de tu tiempo financiero</span>.
-                Cada cuota eliminada es tiempo que vuelve a tu vida, a tu familia y a tus proyectos.
-              </p>
-              <div style={{
-                display: "grid", gridTemplateColumns: "1fr auto", alignItems: "center",
-                paddingTop: 3, borderTop: "1px solid rgba(255,255,255,0.15)",
-              }}>
-                <div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.65)", fontWeight: 600 }}>
-                  Ya hicimos los cálculos. La decisión es tuya.
-                </div>
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ fontFamily: SCRIPT, fontSize: 18, color: C.green, lineHeight: 1 }}>
-                    {analista}
-                  </div>
-                  <div style={{ fontSize: 7.5, color: "rgba(255,255,255,0.55)", letterSpacing: "0.14em" }}>
-                    ANALISTA NUVEX
-                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
+        {/* ═══════════════════════════════════════════════
+            BANDA — IMPACTO DE LA OPTIMIZACIÓN (4 KPI premium)
+        ═══════════════════════════════════════════════ */}
+        <div style={{ padding: "12px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
+          <div style={{
+            background: `linear-gradient(135deg, ${C.black} 0%, #1a1a1a 55%, #1f2a4a 130%)`,
+            color: "#fff", borderRadius: 14, padding: "14px 18px",
+            position: "relative", overflow: "hidden",
+            boxShadow: "0 16px 36px -22px rgba(0,0,0,0.45)",
+          }}>
+            <div style={{
+              position: "absolute", right: -30, top: -40, width: 200, height: 200,
+              borderRadius: "50%",
+              background: `radial-gradient(circle, ${C.green}33 0%, transparent 70%)`,
+              pointerEvents: "none",
+            }} />
+            <div style={{
+              fontSize: 10, fontWeight: 900, letterSpacing: "0.28em",
+              color: C.green, marginBottom: 10, position: "relative",
+            }}>
+              IMPACTO DE LA OPTIMIZACIÓN
+            </div>
+            <div style={{
+              display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12,
+              position: "relative",
+            }}>
+              <ImpactTile label="NUEVA CUOTA" value={formatCOP(nuevaCuota)} />
+              <ImpactTile label="NUEVO PLAZO" value={`${scenario.nuevoPlazo} m`} sub={`${formatNumber(añosOpt, 1)} años`} />
+              <ImpactTile label="CUOTAS ELIMINADAS" value={`${cuotasEliminadas}`} sub="menos pagos" />
+              <ImpactTile label="AHORRO TOTAL" value={formatCOP(ahorroTotal)} highlight />
+            </div>
+          </div>
+        </div>
+
+        {/* spacer para empujar footer */}
+        <div style={{ flex: "1 1 auto", minHeight: 6 }} />
 
         {/* ───── FOOTER ───── */}
         <FooterStrip />
@@ -516,8 +452,8 @@ export function PrintDocument(props: Props) {
           />
         </div>
 
-        {/* ───── TABLA COMPARATIVA ÚNICA ───── */}
-        <div style={{ padding: "14px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
+        {/* ───── TABLA COMPARATIVA (más compacta) ───── */}
+        <div style={{ padding: "10px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <ComparisonTable
             cuotaActual={cuotaActual}
             añoFinActual={añoFinActual}
@@ -530,84 +466,158 @@ export function PrintDocument(props: Props) {
           />
         </div>
 
-        {/* ───── ¿POR QUÉ RECOMENDAMOS ESTA OPCIÓN? ───── */}
+        {/* ───── RESUMEN DEL IMPACTO — 4 KPI Cards Premium ───── */}
         <div style={{ padding: "12px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <div style={{
-            background: `linear-gradient(135deg, ${C.greenSoft} 0%, #fff 100%)`,
-            border: `1px solid ${C.green}55`, borderRadius: 12, padding: "10px 14px",
+            fontSize: 10, fontWeight: 900, color: C.muted,
+            letterSpacing: "0.22em", marginBottom: 6,
+          }}>
+            RESUMEN DEL IMPACTO
+          </div>
+          <div style={{
+            display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10,
+          }}>
+            <SummaryKpi label="AÑOS RECUPERADOS" value={`${añosEliminadosEntero}`} sub="años" tone="green" />
+            <SummaryKpi label="CUOTAS ELIMINADAS" value={`${cuotasEliminadas}`} sub="menos pagos" tone="ink" />
+            <SummaryKpi label="AHORRO TOTAL" value={formatCOP(ahorroTotal)} tone="green" />
+            <SummaryKpi label="NUEVA FECHA FIN" value={`${añoFinOpt}`} sub={`antes de ${añoFinActual}`} tone="blue" />
+          </div>
+        </div>
+
+        {/* ───── BENEFICIO ECONÓMICO PREMIUM ───── */}
+        <div style={{ padding: "10px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
+          <div style={{
+            background: `linear-gradient(135deg, #fff 0%, ${C.bgSoft} 100%)`,
+            border: `1px solid ${C.hairline}`, borderRadius: 12, padding: "12px 16px",
+            display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 18, alignItems: "center",
+          }}>
+            <div>
+              <div style={{ fontSize: 9, fontWeight: 900, color: C.muted, letterSpacing: "0.2em" }}>
+                BENEFICIO ECONÓMICO
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 900, color: C.ink, marginTop: 2 }}>
+                Honorarios a éxito NUVEX
+              </div>
+              <div style={{ fontSize: 9.5, color: C.muted, marginTop: 2, maxWidth: 220 }}>
+                Solo se cobran cuando el banco aprueba la optimización.
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 14, alignItems: "center", justifyContent: "center" }}>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: 8, fontWeight: 800, color: C.muted, letterSpacing: "0.14em" }}>
+                  ESTÁNDAR
+                </div>
+                <div style={{
+                  fontSize: 13, fontWeight: 800, color: C.muted, textDecoration: "line-through",
+                }}>
+                  {formatCOP(honorariosBase)}
+                </div>
+              </div>
+              <ArrowRight size={18} color={C.muted} />
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: 8, fontWeight: 900, color: C.azul, letterSpacing: "0.14em" }}>
+                  APROBADOS
+                </div>
+                <div style={{ fontSize: 16, fontWeight: 900, color: C.ink }}>
+                  {formatCOP(honorariosFinales)}
+                </div>
+              </div>
+            </div>
+            <div style={{
+              background: `linear-gradient(135deg, ${C.greenSoft} 0%, #fff 100%)`,
+              border: `1px solid ${C.green}55`, borderRadius: 10,
+              padding: "10px 14px", textAlign: "center", minWidth: 130,
+            }}>
+              <div style={{ fontSize: 8, fontWeight: 900, color: C.greenDeep, letterSpacing: "0.14em" }}>
+                DESCUENTO
+              </div>
+              <div style={{ fontSize: 16, fontWeight: 900, color: C.greenDeep, lineHeight: 1.1 }}>
+                {formatCOP(descuento > 0 ? descuento : 0)}
+              </div>
+              <div style={{ fontSize: 8, color: C.red, fontWeight: 800, letterSpacing: "0.12em", marginTop: 3 }}>
+                VIGENCIA 48 HORAS
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ───── UNA DECISIÓN QUE IMPACTA TU FUTURO ───── */}
+        <div style={{ padding: "10px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
+          <div style={{
+            background: "#fff", borderLeft: `4px solid ${C.greenDeep}`,
+            padding: "8px 14px",
           }}>
             <div style={{
-              fontSize: 11, fontWeight: 900, color: C.greenDeep,
-              letterSpacing: "0.14em", marginBottom: 7,
+              fontSize: 12, fontWeight: 900, color: C.ink, letterSpacing: "-0.01em",
             }}>
-              ¿POR QUÉ RECOMENDAMOS ESTA OPCIÓN?
+              UNA DECISIÓN QUE IMPACTA TU FUTURO
             </div>
-            <div style={{
-              display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10,
+            <p style={{
+              margin: "4px 0 0 0", fontSize: 10, lineHeight: 1.45, color: C.text, maxWidth: 640,
             }}>
-              <ReasonItem text={<>Mayor <b>ahorro financiero</b> en intereses y seguros.</>} />
-              <ReasonItem text={<>Mejor <b>equilibrio</b> entre cuota mensual y plazo.</>} />
-              <ReasonItem text={<>Mayor <b>recuperación de tiempo financiero</b>.</>} />
-            </div>
+              Este crédito terminará de cualquier forma. La diferencia es decidir si deseas
+              <b> recuperar años de vida financiera</b> y reducir el costo total proyectado de tu obligación.
+              Cada cuota eliminada representa tiempo que vuelve a tu familia, tus proyectos y tu tranquilidad financiera.
+            </p>
           </div>
         </div>
 
         {/* Spacer */}
-        <div style={{ flex: "1 1 auto", minHeight: 4 }} />
+        <div style={{ flex: "1 1 auto", minHeight: 6 }} />
 
-
-
-        {/* ───── CTA FINAL SIMPLIFICADO ───── */}
-        <div style={{ padding: "0 22px 16px 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
+        {/* ───── CTA FINAL DOMINANTE (80% ancho, centrado) ───── */}
+        <div style={{
+          padding: "0 22px 16px 22px", breakInside: "avoid", pageBreakInside: "avoid",
+          display: "flex", justifyContent: "center",
+        }}>
           <div style={{
-            background: `linear-gradient(135deg, ${C.black} 0%, #1a1a1a 60%, #1f2a4a 130%)`,
-            color: "#fff", borderRadius: 14, padding: "16px 22px",
+            width: "80%",
+            background: `linear-gradient(135deg, ${C.black} 0%, #1a1a1a 55%, #1f2a4a 130%)`,
+            color: "#fff", borderRadius: 16, padding: "20px 26px",
             position: "relative", overflow: "hidden",
-            boxShadow: "0 18px 40px -22px rgba(0,0,0,0.45)",
+            boxShadow: "0 22px 50px -24px rgba(0,0,0,0.55)",
+            textAlign: "center",
           }}>
             <div style={{
-              position: "absolute", right: -20, top: -30, width: 180, height: 180,
+              position: "absolute", left: "50%", top: -60, width: 260, height: 260,
+              transform: "translateX(-50%)",
               borderRadius: "50%",
-              background: `radial-gradient(circle, ${C.green}44 0%, transparent 70%)`,
+              background: `radial-gradient(circle, ${C.green}33 0%, transparent 70%)`,
+              pointerEvents: "none",
             }} />
-            <div style={{
-              display: "grid", gridTemplateColumns: "1fr auto", gap: 20, alignItems: "center",
-              position: "relative",
-            }}>
-              <div>
-                <div style={{
-                  fontSize: 11, fontWeight: 900, color: C.green, letterSpacing: "0.22em",
-                }}>
-                  UNA DECISIÓN. DOS CAMINOS.
-                </div>
-                <div style={{
-                  marginTop: 6, fontSize: 14, lineHeight: 1.35,
-                  color: "rgba(255,255,255,0.92)", maxWidth: 460,
-                }}>
-                  Tu crédito terminará de cualquier forma.<br />
-                  La diferencia es decidir si deseas
-                  <span style={{ color: C.green, fontWeight: 800 }}> recuperar parte de tu tiempo financiero</span>.
-                </div>
+            <div style={{ position: "relative" }}>
+              <div style={{
+                fontSize: 11, fontWeight: 900, color: C.green, letterSpacing: "0.28em",
+              }}>
+                UNA DECISIÓN · DOS CAMINOS
               </div>
               <div style={{
-                display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6,
+                marginTop: 8, fontSize: 15, lineHeight: 1.4,
+                color: "rgba(255,255,255,0.92)", maxWidth: 520, marginInline: "auto",
               }}>
-                <div style={{
-                  background: C.green, color: "#0E1F14",
-                  padding: "12px 20px", borderRadius: 10,
-                  fontSize: 12.5, fontWeight: 900, letterSpacing: "0.06em",
-                  boxShadow: "0 10px 24px -10px rgba(132,185,143,0.6)",
-                }}>
-                  QUIERO RECUPERAR MI TIEMPO FINANCIERO
-                </div>
-                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.6)", letterSpacing: "0.16em", fontWeight: 700 }}>
-                  PROPUESTA COMERCIAL VÁLIDA POR 48 HORAS
-                </div>
+                Ya hicimos los cálculos.
+                <span style={{ color: C.green, fontWeight: 800 }}> La decisión es tuya.</span>
+              </div>
+              <div style={{
+                marginTop: 14,
+                display: "inline-block",
+                background: `linear-gradient(135deg, ${C.green} 0%, #6FA77B 100%)`,
+                color: "#0E1F14",
+                padding: "14px 32px", borderRadius: 12,
+                fontSize: 14, fontWeight: 900, letterSpacing: "0.08em",
+                boxShadow: "0 14px 30px -12px rgba(132,185,143,0.65)",
+              }}>
+                QUIERO RECUPERAR MI TIEMPO FINANCIERO
+              </div>
+              <div style={{
+                marginTop: 10, fontSize: 9, color: "rgba(255,255,255,0.6)",
+                letterSpacing: "0.18em", fontWeight: 700,
+              }}>
+                PROPUESTA COMERCIAL VÁLIDA POR 48 HORAS
               </div>
             </div>
           </div>
         </div>
-
 
         <FooterStrip />
       </section>
@@ -1621,6 +1631,78 @@ function KpiTile({
   );
 }
 
+/* Tile premium para la banda IMPACTO DE LA OPTIMIZACIÓN (página 1, fondo oscuro) */
+function ImpactTile({
+  label, value, sub, highlight = false,
+}: { label: string; value: string; sub?: string; highlight?: boolean }) {
+  return (
+    <div style={{
+      background: highlight
+        ? "rgba(132,185,143,0.16)"
+        : "rgba(255,255,255,0.06)",
+      border: highlight
+        ? `1px solid ${C.green}66`
+        : "1px solid rgba(255,255,255,0.12)",
+      borderRadius: 10, padding: "10px 12px",
+      display: "flex", flexDirection: "column", gap: 3,
+    }}>
+      <div style={{
+        fontSize: 7.6, letterSpacing: "0.2em", fontWeight: 800,
+        color: highlight ? C.green : "rgba(255,255,255,0.6)",
+      }}>
+        {label}
+      </div>
+      <div style={{
+        fontSize: 16, fontWeight: 900, lineHeight: 1.05, letterSpacing: "-0.02em",
+        color: highlight ? "#E8F4EA" : "#fff",
+      }}>
+        {value}
+      </div>
+      {sub && (
+        <div style={{ fontSize: 7.8, color: "rgba(255,255,255,0.55)", fontWeight: 600 }}>
+          {sub}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* KPI Card premium para el RESUMEN DEL IMPACTO (página 2, fondo claro) */
+function SummaryKpi({
+  label, value, sub, tone,
+}: { label: string; value: string; sub?: string; tone: "green" | "blue" | "ink" }) {
+  const accent = tone === "green" ? C.greenDeep : tone === "blue" ? C.azul : C.ink;
+  const soft = tone === "green" ? C.greenSoft : tone === "blue" ? C.azulSoft : "#F1F2F4";
+  return (
+    <div style={{
+      background: `linear-gradient(155deg, ${soft} 0%, #fff 100%)`,
+      border: `1px solid ${accent}33`,
+      borderRadius: 12, padding: "12px 14px",
+      display: "flex", flexDirection: "column", gap: 4,
+      minHeight: 72,
+    }}>
+      <div style={{
+        fontSize: 8, letterSpacing: "0.2em", fontWeight: 900, color: C.muted,
+      }}>
+        {label}
+      </div>
+      <div style={{
+        fontSize: 20, fontWeight: 900, color: accent,
+        letterSpacing: "-0.025em", lineHeight: 1.05,
+      }}>
+        {value}
+      </div>
+      {sub && (
+        <div style={{ fontSize: 8.5, color: C.muted, fontWeight: 600 }}>
+          {sub}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+
 function TimelineStat({ label, value, color }: { label: string; value: string; color: string }) {
   return (
     <div style={{ textAlign: "center" }}>
@@ -1756,12 +1838,12 @@ function ComparisonTable(props: {
         background: C.black, color: "#fff",
       }}>
         <div style={{
-          padding: "10px 12px", fontSize: 9, fontWeight: 900,
+          padding: "7px 12px", fontSize: 9, fontWeight: 900,
           letterSpacing: "0.18em",
         }}>CONCEPTO</div>
         {cols.map((c) => (
           <div key={c.key} style={{
-            padding: "10px 8px", textAlign: "center",
+            padding: "7px 8px", textAlign: "center",
             fontSize: 9, fontWeight: 900, letterSpacing: "0.12em",
             background: c.isRec ? C.greenDeep : "transparent",
             color: c.isRec ? "#fff" : "rgba(255,255,255,0.78)",
@@ -1786,7 +1868,7 @@ function ComparisonTable(props: {
           background: ri % 2 === 0 ? "#fff" : C.bgSoft,
         }}>
           <div style={{
-            padding: "7px 12px", fontSize: 9.5, fontWeight: 700, color: C.text,
+            padding: "5px 12px", fontSize: 9.5, fontWeight: 700, color: C.text,
           }}>
             {r.label}
           </div>
@@ -1795,7 +1877,7 @@ function ComparisonTable(props: {
             const isCurrent = c.isCurrent;
             return (
               <div key={c.key} style={{
-                padding: "7px 8px", textAlign: "center",
+                padding: "5px 8px", textAlign: "center",
                 fontSize: r.emphasize ? 10.5 : 9.5,
                 fontWeight: isRec || r.emphasize ? 900 : 700,
                 color: isCurrent
