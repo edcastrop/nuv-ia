@@ -23,42 +23,48 @@ export function useNotificaciones() {
 
   const reload = useCallback(async () => {
     if (!user) return;
-    const [lst, c, alertas, cAlertas, colab, cColab] = await Promise.all([
-      listMisNotificaciones(),
-      contarNoLeidas(),
-      listCasoAlertasComoNotif(),
-      contarCasoAlertasNoLeidas(),
-      listColabNotifsComoNotif(),
-      contarColabNotifsNoLeidas(),
-    ]);
-    const merged = [...lst, ...alertas, ...colab].sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-    );
-    setItems(merged);
-    setUnread(c + cAlertas + cColab);
-    setLoading(false);
+    try {
+      const [lst, c, alertas, cAlertas, colab, cColab] = await Promise.all([
+        listMisNotificaciones(),
+        contarNoLeidas(),
+        listCasoAlertasComoNotif(),
+        contarCasoAlertasNoLeidas(),
+        listColabNotifsComoNotif(),
+        contarColabNotifsNoLeidas(),
+      ]);
+      const merged = [...lst, ...alertas, ...colab].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      );
+      setItems(merged);
+      setUnread(c + cAlertas + cColab);
+    } catch {
+      setItems([]);
+      setUnread(0);
+    } finally {
+      setLoading(false);
+    }
   }, [user]);
 
   useEffect(() => {
     if (!user) return;
-    reload();
+    void reload();
     const instanceId = Math.random().toString(36).slice(2, 10);
     const ch = supabase
       .channel(`notif_user_${user.id}_${instanceId}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "notificaciones_usuario", filter: `user_id=eq.${user.id}` },
-        () => reload(),
+        () => { void reload(); },
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "caso_alertas" },
-        () => reload(),
+        () => { void reload(); },
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "colab_notificaciones", filter: `user_id=eq.${user.id}` },
-        () => reload(),
+        () => { void reload(); },
       )
       .subscribe();
     return () => {

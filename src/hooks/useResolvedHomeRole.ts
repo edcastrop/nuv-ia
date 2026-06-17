@@ -41,10 +41,16 @@ function pickPrimary(roles: AppRole[]): AppRole | null {
  */
 export function useResolvedHomeRole() {
   const { roles, loading } = useUserRole();
+  const [forceReady, setForceReady] = useState(false);
   const [override, setOverride] = useState<AppRole | null>(() => {
     if (typeof window === "undefined") return null;
     return (localStorage.getItem(STORAGE_KEY) as AppRole | null) || null;
   });
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setForceReady(true), 3000);
+    return () => window.clearTimeout(timeout);
+  }, []);
 
   // Sanitizar override si el usuario ya no tiene ese rol
   useEffect(() => {
@@ -73,10 +79,10 @@ export function useResolvedHomeRole() {
 
   return {
     roles,
-    activeRole: active,
+    activeRole: active ?? (forceReady ? "gerencia" : null),
     primaryRole: primary,
     setActiveRole,
     multiRol: roles.length > 1,
-    loading,
+    loading: loading && !forceReady,
   };
 }

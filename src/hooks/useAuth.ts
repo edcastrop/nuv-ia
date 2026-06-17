@@ -8,6 +8,8 @@ interface State {
   loading: boolean;
 }
 
+let lastKnownState: State | null = null;
+
 function readCachedSession(): Session | null {
   if (typeof window === "undefined") return null;
   try {
@@ -29,36 +31,50 @@ function readCachedSession(): Session | null {
 export function useAuth(): State {
   const [state, setState] = useState<State>(() => {
     const cached = readCachedSession();
-    return { session: cached, user: cached?.user ?? null, loading: !cached };
+    if (cached) {
+      lastKnownState = { session: cached, user: cached.user, loading: false };
+      return lastKnownState;
+    }
+    return lastKnownState ?? { session: null, user: null, loading: true };
   });
 
   useEffect(() => {
     let active = true;
+    const safeSetState = (next: State) => {
+      lastKnownState = next;
+      setState(next);
+    };
+    const timeout = window.setTimeout(() => {
+      if (!active) return;
+      const cached = readCachedSession() ?? lastKnownState?.session ?? null;
+      safeSetState({ session: cached, user: cached?.user ?? null, loading: false });
+    }, 2500);
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active) return;
       if (session) {
-        setState({ session, user: session.user, loading: false });
+        safeSetState({ session, user: session.user, loading: false });
         return;
       }
       const cached = event === "SIGNED_OUT" ? null : readCachedSession();
-      setState({ session: cached, user: cached?.user ?? null, loading: false });
+      safeSetState({ session: cached, user: cached?.user ?? null, loading: false });
     });
     supabase.auth
       .getSession()
       .then(({ data }) => {
         if (!active) return;
         const session = data.session ?? readCachedSession();
-        setState({ session, user: session?.user ?? null, loading: false });
+        safeSetState({ session, user: session?.user ?? null, loading: false });
       })
       .catch(() => {
         if (!active) return;
         const cached = readCachedSession();
-        setState({ session: cached, user: cached?.user ?? null, loading: false });
+        safeSetState({ session: cached, user: cached?.user ?? null, loading: false });
       });
     return () => {
       active = false;
+      window.clearTimeout(timeout);
       subscription.unsubscribe();
     };
   }, []);

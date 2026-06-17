@@ -16,15 +16,19 @@ export function AcademiaBanner() {
   useEffect(() => {
     if (!user || hidden) return;
     (async () => {
-      const { data: lessons } = await supabase.from("academia_lecciones").select("id");
-      const total = lessons?.length ?? 0;
-      if (!total) return;
-      const { data: done } = await supabase
-        .from("academia_progreso_lecciones")
-        .select("leccion_id")
-        .eq("user_id", user.id)
-        .eq("completada", true);
-      setProgress({ done: done?.length ?? 0, total });
+      try {
+        const { data: lessons } = await supabase.from("academia_lecciones").select("id");
+        const total = lessons?.length ?? 0;
+        if (!total) return;
+        const { data: done } = await supabase
+          .from("academia_progreso_lecciones")
+          .select("leccion_id")
+          .eq("user_id", user.id)
+          .eq("completada", true);
+        setProgress({ done: done?.length ?? 0, total });
+      } catch {
+        setProgress(null);
+      }
     })();
   }, [user, hidden]);
 
