@@ -676,7 +676,9 @@ export function PesosSimulator({
                   <SaveExpedienteButton
                     expedienteId={init?.id}
                     onSaved={handleSaved}
+                    onSeguirSimulando={handleResetMode}
                     enviarAuditoriaManual={!init?.id}
+                    fromSimulador={fromSimulador}
                     payload={{
                       modo: "pesos",
                       cliente: { ...client, intervinientes, cobertura },
