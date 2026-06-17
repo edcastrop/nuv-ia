@@ -69,11 +69,13 @@ export function PesosSimulator({
   onSaved,
   onReset,
   simuladorReturn,
+  fromSimulador,
 }: {
   initialExpediente?: Expediente;
   onSaved?: (e: Expediente) => void;
   onReset?: () => void;
   simuladorReturn?: { maestroId?: string; modo?: "pesos" | "uvr" };
+  fromSimulador?: boolean;
 } = {}) {
   const init = initialExpediente;
   const initCred = (init?.credito_data ?? {}) as Record<string, string>;
@@ -674,7 +676,9 @@ export function PesosSimulator({
                   <SaveExpedienteButton
                     expedienteId={init?.id}
                     onSaved={handleSaved}
+                    onSeguirSimulando={handleResetMode}
                     enviarAuditoriaManual={!init?.id}
+                    fromSimulador={fromSimulador}
                     payload={{
                       modo: "pesos",
                       cliente: { ...client, intervinientes, cobertura },
