@@ -518,28 +518,43 @@ export function PrintDocument(props: Props) {
       >
         {/* Header negro con título + logo */}
         <div style={{
-          background: C.black, color: "#fff", padding: "14px 22px",
-          display: "grid", gridTemplateColumns: "1fr auto", alignItems: "center", gap: 20,
+          background: C.black, color: "#fff", padding: "12px 22px",
+          display: "grid", gridTemplateColumns: "auto 1fr auto", alignItems: "center", gap: 20,
           breakInside: "avoid", pageBreakInside: "avoid",
         }}>
-          <div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            <img
+              src={logoNuvex} alt="NUVEX" crossOrigin="anonymous"
+              style={{ height: 30, width: "auto", filter: "brightness(0) invert(1)" }}
+            />
             <div style={{
-              fontSize: 22, fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em",
+              fontSize: 6.5, letterSpacing: "0.32em", color: "rgba(255,255,255,0.55)",
+              fontWeight: 700, marginLeft: 2,
+            }}>
+              FINANZAS INTELIGENTES
+            </div>
+          </div>
+          <div style={{ paddingLeft: 14, borderLeft: "1px solid rgba(255,255,255,0.22)" }}>
+            <div style={{
+              fontSize: 20, fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em",
             }}>
               COMPARACIÓN DE ESCENARIOS
             </div>
             <div style={{
-              marginTop: 3, fontSize: 10, color: "rgba(255,255,255,0.82)", lineHeight: 1.3, maxWidth: 520,
+              marginTop: 2, fontSize: 9.5, color: "rgba(255,255,255,0.82)", lineHeight: 1.3, maxWidth: 520,
             }}>
               Analizamos diferentes alternativas para que elijas el nivel de optimización
               que mejor se adapta a tus objetivos financieros.
             </div>
           </div>
-          <img
-            src={logoNuvex} alt="NUVEX" crossOrigin="anonymous"
-            style={{ height: 32, width: "auto", filter: "brightness(0) invert(1)" }}
-          />
+          <div style={{
+            fontSize: 9, color: "rgba(255,255,255,0.7)",
+            letterSpacing: "0.18em", fontWeight: 700,
+          }}>
+            Página 2 de 2
+          </div>
         </div>
+
 
         {/* ───── TABLA COMPARATIVA (más compacta) ───── */}
         <div style={{ padding: "10px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
