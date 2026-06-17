@@ -857,6 +857,21 @@ export function UVRSimulator({
                   disabledReason="Primero calcula la simulación UVR."
                   label="Enviar propuesta al cliente"
                 />
+                <WhatsAppPropuestaButton
+                  nombre={client.nombre}
+                  banco={client.banco}
+                  telefono={client.celular}
+                  asesor={client.asesor}
+                  cuotaActual={cuotaSimulacionPesosNum}
+                  propuestas={(calc?.propuestas ?? []).map(p => ({
+                    nuevaCuota: p.nuevaCuotaConSeguro,
+                    añosEliminados: p.añosEliminados,
+                    ahorroTotal: p.ahorroTotal,
+                  }))}
+                  recomendadaIndex={bestIndex >= 0 ? bestIndex : 0}
+                  disabled={!recomendada || !calc || calc.propuestas.length === 0}
+                  disabledReason="Primero calcula la simulación UVR."
+                />
               </div>
             )}
 
