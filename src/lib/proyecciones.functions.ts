@@ -138,6 +138,7 @@ export const urlFirmadaProyeccion = createServerFn({ method: "POST" })
 const FUSIONABLES = [
   "saldoCapital",
   "valorDesembolsado",
+  "tasaEA",
   "cuotaMensual",
   "cuotaActual",
   "cuotaSinSeguros",
@@ -159,6 +160,8 @@ const FUSIONABLES = [
   "tasaCobertura",
   "tieneCobertura",
   "tipoBeneficio",
+  "interesCuota",
+  "capitalCuota",
   "moneda",
   "banco",
   "producto",
@@ -170,6 +173,29 @@ function noVacio(v: unknown): boolean {
   if (typeof v === "number") return Number.isFinite(v) && v !== 0;
   return true;
 }
+
+const parseNum = (v: unknown): number | undefined => {
+  if (!noVacio(v)) return undefined;
+  const cleaned = String(v).replace(/[^\d.,-]/g, "").replace(/\.(?=\d{3}(\D|$))/g, "").replace(",", ".");
+  const n = Number(cleaned);
+  return Number.isFinite(n) && n !== 0 ? n : undefined;
+};
+
+const firstNum = (...values: unknown[]): number | undefined => {
+  for (const value of values) {
+    const n = parseNum(value);
+    if (n !== undefined) return n;
+  }
+  return undefined;
+};
+
+const inferRemainingPayments = (saldo: number, tasaEaPct: number, cuotaFinanciera: number): number | undefined => {
+  if (!(saldo > 0 && tasaEaPct > 0 && cuotaFinanciera > 0)) return undefined;
+  const i = Math.pow(1 + tasaEaPct / 100, 1 / 12) - 1;
+  if (!(i > 0) || cuotaFinanciera <= saldo * i) return undefined;
+  const n = Math.log(cuotaFinanciera / (cuotaFinanciera - saldo * i)) / Math.log(1 + i);
+  return Number.isFinite(n) && n > 0 ? Math.round(n) : undefined;
+};
 
 export const fusionarConExtractoYReauditar = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
