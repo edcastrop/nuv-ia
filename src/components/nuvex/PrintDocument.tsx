@@ -244,39 +244,23 @@ export function PrintDocument(props: Props) {
         {/* ───── HERO ───── */}
         <div style={{
           padding: "10px 22px 4px 22px",
-          display: "grid", gridTemplateColumns: "1.62fr 0.38fr", gap: 14, alignItems: "center",
           breakInside: "avoid", pageBreakInside: "avoid",
         }}>
-          <div>
-            <div style={{ fontSize: 13, color: C.text, marginBottom: 4 }}>
-              Hola, <span style={{ color: C.azul, fontWeight: 800 }}>{primerNombre}</span>
-            </div>
-            <h1 style={{
-              margin: 0, fontSize: 32, lineHeight: 1.01, fontWeight: 900,
-              color: C.black, letterSpacing: "-0.035em",
-            }}>
-              TU CRÉDITO PUEDE<br />
-              TERMINAR <span style={{ color: C.green }}>ANTES</span>
-            </h1>
-            <p style={{
-              marginTop: 7, fontSize: 10.5, lineHeight: 1.4, color: C.muted, maxWidth: 420,
-            }}>
-              Analizamos tu caso y encontramos una oportunidad real para reducir
-              años de pago y mejorar el resultado financiero de tu crédito.
-            </p>
+          <div style={{ fontSize: 13, color: C.text, marginBottom: 4 }}>
+            Hola, <span style={{ color: C.azul, fontWeight: 800 }}>{primerNombre}</span>
           </div>
-          <div style={{
-            position: "relative", borderRadius: 12, overflow: "hidden",
-            height: 90, boxShadow: "0 12px 28px -18px rgba(0,0,0,0.35)",
+          <h1 style={{
+            margin: 0, fontSize: 26, lineHeight: 1.02, fontWeight: 900,
+            color: C.black, letterSpacing: "-0.035em",
           }}>
-            <img
-              src={heroSunset} alt="" crossOrigin="anonymous"
-              style={{
-                position: "absolute", inset: 0,
-                width: "100%", height: "100%", objectFit: "cover",
-              }}
-            />
-          </div>
+            TU CRÉDITO PUEDE TERMINAR <span style={{ color: C.green }}>ANTES</span>
+          </h1>
+          <p style={{
+            marginTop: 5, fontSize: 10.5, lineHeight: 1.4, color: C.muted, maxWidth: 640,
+          }}>
+            Analizamos tu caso y encontramos una oportunidad real para reducir
+            años de pago y mejorar el resultado financiero de tu crédito.
+          </p>
         </div>
 
         {/* ───── DATOS DEL CASO ───── */}
@@ -291,277 +275,212 @@ export function PrintDocument(props: Props) {
             <MetaCol icon={<CalIcon />} label="FECHA" value={fecha} />
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{
-                width: 42, height: 42, borderRadius: "50%",
+                width: 38, height: 38, borderRadius: "50%",
                 background: `linear-gradient(135deg, ${C.azul}, ${C.green})`,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                color: "#fff", fontSize: 13, fontWeight: 800, flexShrink: 0,
+                color: "#fff", fontSize: 12, fontWeight: 800, flexShrink: 0,
               }}>
                 {initialsOf(analista)}
               </div>
               <div style={{ minWidth: 0 }}>
                 <div style={{
-                  fontSize: 7.5, letterSpacing: "0.22em", color: C.muted,
-                  fontWeight: 800,
+                  fontSize: 7.5, letterSpacing: "0.22em", color: C.muted, fontWeight: 800,
                 }}>PREPARADO POR</div>
-                <div style={{ fontSize: 12, fontWeight: 800, color: C.ink, lineHeight: 1.2 }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: C.ink, lineHeight: 1.2 }}>
                   {analista}
                 </div>
-                <div style={{ fontSize: 9, color: C.muted, lineHeight: 1.2 }}>
-                  Analista Financiero
-                </div>
-                <div style={{ fontSize: 9, color: C.green, fontWeight: 700, lineHeight: 1.2 }}>
-                  Certificado NUVEX
+                <div style={{ fontSize: 8.5, color: C.green, fontWeight: 700, lineHeight: 1.2 }}>
+                  Analista NUVEX Certificado
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* ───── 1. CUOTA HOY VS OPTIMIZADA ───── */}
-        <div style={{ padding: "8px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
-          <SectionTitle index="1" title="Tu cuota, hoy y con nuestra optimización" />
-          <div style={{
-            marginTop: 7,
-            display: "grid", gridTemplateColumns: "1fr 36px 1fr", gap: 12, alignItems: "stretch",
-          }}>
-            <CuotaCard
-              eyebrow="VALOR ACTUAL DE TU CUOTA"
-              sub="Hoy pagas"
-              amount={cuotaActual}
-              footer="Cuota mensual actual"
-              color={C.ink}
-              bg="#F4F6F8"
-            />
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {/* ═══════════════════════════════════════════════
+            LAYOUT 40/60 — ESTADO ACTUAL  |  PROPUESTA
+        ═══════════════════════════════════════════════ */}
+        <div style={{
+          padding: "10px 22px 0 22px",
+          display: "grid", gridTemplateColumns: "40fr 60fr", gap: 12,
+          alignItems: "stretch",
+        }}>
+          {/* ═══ COLUMNA IZQUIERDA — ESTADO ACTUAL ═══ */}
+          <EstadoActualCard
+            banco={banco}
+            producto={`${productoLabel} ${monedaLabel}`}
+            plazoInicialMeses={creditState?.plazoInicialMeses ?? (scenario.plazoActual + (creditState?.cuotasPagadas ?? 0))}
+            cuotasPagadas={creditState?.cuotasPagadas ?? 0}
+            cuotasPendientes={creditState?.cuotasPendientes ?? scenario.plazoActual}
+            cuotaActual={cuotaActual}
+            seguros={creditState?.seguros ?? 0}
+            tasaMensualPct={creditState?.tasaMensualPct ?? 0}
+            saldoCapital={creditState?.saldoCapital ?? 0}
+            cuotaSinSeguros={creditState?.cuotaSinSeguros ?? Math.max(0, cuotaActual - (creditState?.seguros ?? 0))}
+            dineroPagado={yaPagado}
+            dineroPendiente={faltaPagarSin}
+            costoTotal={costoTotalSin}
+            vecesPagado={vecesSin}
+            valorDesembolsado={valorDesembolsado}
+          />
+
+          {/* ═══ COLUMNA DERECHA — PROPUESTA + TIMELINE + BENEFICIO + MENSAJE ═══ */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+
+            {/* Propuesta recomendada — KPIs */}
+            <div style={{
+              background: `linear-gradient(155deg, ${C.greenSoft} 0%, #fff 100%)`,
+              border: `1px solid ${C.green}55`, borderRadius: 12,
+              padding: "9px 12px",
+            }}>
               <div style={{
-                width: 32, height: 32, borderRadius: "50%",
-                background: "#fff", border: `1px solid ${C.hairline}`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: "0 4px 10px -6px rgba(0,0,0,0.15)",
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                marginBottom: 6,
               }}>
-                <Arrow color={C.muted} />
+                <div style={{
+                  fontSize: 9, letterSpacing: "0.22em", fontWeight: 900, color: C.greenDeep,
+                }}>PROPUESTA RECOMENDADA</div>
+                <div style={{
+                  background: C.greenDeep, color: "#fff",
+                  fontSize: 7.5, fontWeight: 900, letterSpacing: "0.14em",
+                  padding: "2px 7px", borderRadius: 4,
+                }}>★ NUVEX</div>
+              </div>
+
+              <div style={{
+                display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7,
+              }}>
+                <KpiTile label="NUEVA CUOTA" value={formatCOP(nuevaCuota)} accent={C.greenDeep} big />
+                <KpiTile label="INCREMENTO" value={`+${formatNumber(incrementoPct, 1)}%`} sub={`+${formatCOP(incrementoMensual)}`} accent={C.azul} />
+                <KpiTile label="NUEVO PLAZO" value={`${scenario.nuevoPlazo} meses`} sub={`${formatNumber(añosOpt, 1)} años`} accent={C.ink} />
+                <KpiTile label="CUOTAS ELIMINADAS" value={`${cuotasEliminadas}`} sub="menos pagos" accent={C.greenDeep} />
+                <KpiTile label="AHORRO EN TIEMPO" value={`${añosEliminadosEntero} años`} accent={C.greenDeep} />
+                <KpiTile label="AHORRO EN DINERO" value={formatCOP(ahorroTotal)} accent={C.azul} />
+              </div>
+
+              <div style={{
+                marginTop: 6, padding: "5px 8px",
+                background: "rgba(132,185,143,0.18)", borderRadius: 8,
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+              }}>
+                <div style={{ fontSize: 8.5, fontWeight: 800, color: C.greenDeep, letterSpacing: "0.12em" }}>
+                  NUEVA FECHA DE FINALIZACIÓN
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 900, color: C.greenDeep }}>
+                  {añoFinOpt}
+                </div>
               </div>
             </div>
-            <CuotaCard
-              eyebrow="NUEVO VALOR DE TU CUOTA"
-              sub="Con la optimización"
-              amount={nuevaCuota}
-              footer={`Nueva cuota mensual (+${formatNumber(incrementoPct, 1)}%)`}
-              color={C.greenDeep}
-              bg={C.greenSoft}
-            />
-          </div>
-        </div>
 
-        {/* ───── 1B. RADIOGRAFÍA FINANCIERA DEL CRÉDITO ───── */}
-        {radiografiaOk && (
-          <div style={{ padding: "6px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
-          <div style={{
-            background: "#fff", border: `1px solid ${C.hairline}`, borderRadius: 12,
-            padding: "6px 10px",
-          }}>
+            {/* Timeline */}
+            <div style={{
+              background: "#fff", border: `1px solid ${C.hairline}`, borderRadius: 10,
+              padding: "6px 10px", display: "flex", flexDirection: "column", gap: 4,
+            }}>
+              <MiniTimeline
+                label="SIN NUVEX" labelColor={C.muted}
+                startYear={añoHoy} endYear={añoFinActual}
+                barColor="#CCD1D9" widthPct={100}
+                pill={`${formatNumber(añosActual, 1)} años`}
+                pillBg="#F1F2F4" pillFg={C.muted}
+              />
+              <MiniTimeline
+                label="CON NUVEX" labelColor={C.greenDeep}
+                startYear={añoHoy} endYear={añoFinOpt}
+                barColor={C.greenDeep}
+                widthPct={añosActual > 0 ? Math.max(8, Math.min(100, (añosOpt / añosActual) * 100)) : 100}
+                pill={`${formatNumber(añosOpt, 1)} años`}
+                pillBg={C.greenSoft} pillFg={C.greenDeep}
+              />
               <div style={{
-                fontSize: 9.5, letterSpacing: "0.22em", fontWeight: 800,
-                color: C.muted, marginBottom: 6, textAlign: "center",
+                marginTop: 2, paddingTop: 4, borderTop: `1px dashed ${C.hairline}`,
+                display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6,
               }}>
-                RADIOGRAFÍA FINANCIERA DEL CRÉDITO
-              </div>
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr 1fr 1.25fr",
-                gap: 8, alignItems: "stretch",
-              }}>
-                <RadioMini label="YA HAS PAGADO" value={formatCOP(yaPagado)} tone="neutral" />
-                <RadioMini label="TE FALTA PAGAR" value={formatCOP(faltaPagarSin)} tone="neutral" />
-                <RadioMini label="COSTO TOTAL" value={formatCOP(costoTotalSin)} tone="neutral" />
-                <RadioMini
-                  label="VECES PAGADO"
-                  value={`${formatNumber(vecesSin, 2)}× `}
-                  tone="hero"
-                />
+                <TimelineStat label="AÑOS RECUPERADOS" value={`${añosEliminadosEntero}`} color={C.greenDeep} />
+                <TimelineStat label="CUOTAS ELIMINADAS" value={`${cuotasEliminadas}`} color={C.azul} />
+                <TimelineStat label="AHORRO TOTAL" value={formatCOP(ahorroTotal)} color={C.greenDeep} />
               </div>
             </div>
-          </div>
-        )}
 
-
-        {/* ───── 2. APLICANDO NUESTRA PROPUESTA RECOMENDADA ───── */}
-        <div style={{ padding: "8px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
-          <SectionTitle index="2" title="Aplicando nuestra propuesta recomendada" />
-          <div style={{
-            marginTop: 7,
-            display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12,
-          }}>
-            <ImpactCard
-              icon={<ClockBig color={C.greenDeep} />}
-              eyebrow="AHORRO EN TIEMPO"
-              amount={`${añosEliminadosEntero} AÑOS`}
-              sub={`${cuotasEliminadas} CUOTAS`}
-              note={
-                <>Pasas de terminar en <b>{añoFinActual}</b><br />a terminar en <b>{añoFinOpt}</b></>
-              }
-              accent={C.greenDeep}
-              bg={C.greenSoft}
-            />
-            <ImpactCard
-              icon={<MoneyBig color={C.azul} />}
-              eyebrow="AHORRO EN DINERO"
-              amount={formatCOP(ahorroTotal)}
-              note={<>Menos intereses y seguros<br />durante toda la vida del crédito</>}
-              accent={C.azul}
-              bg={C.azulSoft}
-            />
-          </div>
-
-          {/* Línea de tiempo recomendada — paridad visual con las 3 alternativas */}
-          <div style={{
-            marginTop: 4, background: "#fff",
-            border: `1px solid ${C.hairline}`, borderRadius: 10,
-            padding: "4px 10px", display: "flex", flexDirection: "column", gap: 3,
-          }}>
-            <MiniTimeline
-              label="SIN NUVEX" labelColor={C.muted}
-              startYear={añoHoy} endYear={añoFinActual}
-              barColor="#CCD1D9" widthPct={100}
-              pill={`${formatNumber(añosActual, 1)} años`}
-              pillBg="#F1F2F4" pillFg={C.muted}
-            />
-            <MiniTimeline
-              label="CON NUVEX (RECOMENDADA)" labelColor={C.greenDeep}
-              startYear={añoHoy} endYear={añoFinOpt}
-              barColor={C.greenDeep}
-              widthPct={añosActual > 0 ? Math.max(8, Math.min(100, (añosOpt / añosActual) * 100)) : 100}
-              pill={`${formatNumber(añosOpt, 1)} años`}
-              pillBg={C.greenSoft} pillFg={C.greenDeep}
-            />
-          </div>
-
-          {/* Bullets refuerzo decisión cliente */}
-          <div style={{
-            marginTop: 4, background: C.greenSoft,
-            border: `1px solid ${C.green}33`, borderRadius: 10,
-            padding: "4px 10px", display: "flex", flexWrap: "wrap",
-            gap: "4px 18px", justifyContent: "center", alignItems: "center",
-          }}>
-            <ReinforceBullet text={<>Recuperas <b>{añosEliminadosEntero} años</b> de vida financiera</>} />
-            <ReinforceBullet text={<>Ahorras <b>{formatCOP(ahorroTotal)}</b> durante la vida del crédito</>} />
-            {commercial?.hasDiscount && (
-              <ReinforceBullet text={<>Honorarios con <b>beneficio comercial</b> aplicado</>} />
-            )}
-          </div>
-        </div>
-
-        {/* ───── 3. INVERSIÓN POR ÉXITO + 72H ───── */}
-        <div style={{ padding: "6px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
-          <SectionTitle index="3" title="Beneficio económico autorizado" />
-          <div style={{
-            marginTop: 7,
-            display: "grid", gridTemplateColumns: "1.55fr 1fr", gap: 12,
-          }}>
-            {/* Beneficio económico card */}
+            {/* Beneficio económico compacto */}
             <div style={{
               background: "#fff", border: `1px solid ${C.hairline}`,
-              borderRadius: 12, padding: "7px 12px",
+              borderRadius: 10, padding: "7px 11px",
             }}>
-              <PriceRow label="Tarifa estándar" value={formatCOP(honorariosBase)} strike />
-              <div style={{ height: 1, background: C.hairline, margin: "7px 0" }} />
-              <PriceRow label="Tarifa aprobada para este caso" value={formatCOP(honorariosFinales)} />
               <div style={{
-                marginTop: 7, background: C.greenSoft,
-                borderRadius: 10, padding: "7px 12px",
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-              }}>
+                fontSize: 8.5, letterSpacing: "0.2em", fontWeight: 900, color: C.muted,
+                marginBottom: 4,
+              }}>BENEFICIO ECONÓMICO</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, alignItems: "center" }}>
+                <div>
+                  <div style={{ fontSize: 7.5, color: C.muted, fontWeight: 700, letterSpacing: "0.1em" }}>ESTÁNDAR</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textDecoration: "line-through" }}>
+                    {formatCOP(honorariosBase)}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 7.5, color: C.azul, fontWeight: 800, letterSpacing: "0.1em" }}>APROBADOS</div>
+                  <div style={{ fontSize: 13, fontWeight: 900, color: C.ink }}>
+                    {formatCOP(honorariosFinales)}
+                  </div>
+                </div>
                 <div style={{
-                  fontSize: 11, fontWeight: 800, color: C.greenDeep,
-                  letterSpacing: "0.12em",
-                }}>AHORRO OBTENIDO</div>
-                <div style={{
-                  fontSize: 22, fontWeight: 900, color: C.greenDeep,
-                  letterSpacing: "-0.02em",
+                  background: C.greenSoft, borderRadius: 8, padding: "4px 8px", textAlign: "right",
                 }}>
-                  {formatCOP(descuento > 0 ? descuento : 0)}
+                  <div style={{ fontSize: 7.5, color: C.greenDeep, fontWeight: 800, letterSpacing: "0.1em" }}>AHORRO</div>
+                  <div style={{ fontSize: 13, fontWeight: 900, color: C.greenDeep }}>
+                    {formatCOP(descuento > 0 ? descuento : 0)}
+                  </div>
                 </div>
               </div>
-            </div>
-
-            {/* Urgencia — beneficio comercial 48h sin fecha específica */}
-            <div style={{
-              background: C.red, color: "#fff", borderRadius: 12,
-              padding: "6px 8px", display: "flex", flexDirection: "column",
-              justifyContent: "center", alignItems: "center", textAlign: "center",
-            }}>
               <div style={{
-                fontSize: 8.5, letterSpacing: "0.22em", fontWeight: 700, opacity: 0.95,
-              }}>BENEFICIO COMERCIAL</div>
-              <div style={{
-                display: "flex", alignItems: "center", justifyContent: "center",
-                gap: 6, marginTop: 6,
+                marginTop: 5, fontSize: 8.5, fontWeight: 800, color: C.red,
+                letterSpacing: "0.14em", textAlign: "center",
               }}>
-                <ClockIcon color="#fff" size={15} />
-                <div style={{ fontSize: 16, fontWeight: 900, letterSpacing: "-0.01em" }}>
-                  VÁLIDO POR 48 HORAS
+                BENEFICIO COMERCIAL VÁLIDO POR 48 HORAS
+              </div>
+            </div>
+
+            {/* Mensaje personal del Analista — máx 4 líneas */}
+            <div style={{
+              background: `linear-gradient(135deg, ${C.black} 0%, #1a1a1a 100%)`,
+              color: "#fff", borderRadius: 10, padding: "7px 11px",
+              display: "flex", flexDirection: "column", gap: 4,
+            }}>
+              <p style={{
+                margin: 0, fontSize: 9.8, lineHeight: 1.3,
+                color: "rgba(255,255,255,0.92)",
+              }}>
+                Este crédito terminará de una u otra forma. La diferencia es decidir si quieres
+                <span style={{ color: C.green, fontWeight: 700 }}> recuperar parte de tu tiempo financiero</span>.
+                Cada cuota eliminada es tiempo que vuelve a tu vida, a tu familia y a tus proyectos.
+              </p>
+              <div style={{
+                display: "grid", gridTemplateColumns: "1fr auto", alignItems: "center",
+                paddingTop: 3, borderTop: "1px solid rgba(255,255,255,0.15)",
+              }}>
+                <div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.65)", fontWeight: 600 }}>
+                  Ya hicimos los cálculos. La decisión es tuya.
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontFamily: SCRIPT, fontSize: 18, color: C.green, lineHeight: 1 }}>
+                    {analista}
+                  </div>
+                  <div style={{ fontSize: 7.5, color: "rgba(255,255,255,0.55)", letterSpacing: "0.14em" }}>
+                    ANALISTA NUVEX
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-
-
-        {/* ───── CIERRE EMOCIONAL PREMIUM (full width) ───── */}
-        <div style={{ padding: "6px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
-          <div style={{
-            background: `linear-gradient(135deg, ${C.black} 0%, #1a1a1a 100%)`,
-            color: "#fff", borderRadius: 14, padding: "8px 14px",
-            position: "relative", overflow: "hidden",
-          }}>
-            <div style={{
-              position: "absolute", top: -10, left: 18,
-              fontSize: 48, color: C.green, lineHeight: 1, fontWeight: 900, opacity: 0.28,
-            }}>“</div>
-            <div style={{
-              fontSize: 12, color: C.green, fontWeight: 800, letterSpacing: "0.04em",
-              marginBottom: 4, position: "relative",
-            }}>
-              Una reflexión final
-            </div>
-            <p style={{
-              margin: 0, fontSize: 11, lineHeight: 1.25,
-              color: "rgba(255,255,255,0.94)", position: "relative", maxWidth: "92%",
-            }}>
-              Dentro de algunos años este crédito terminará de una u otra forma.
-              La diferencia es decidir si deseas continuar el camino actual
-              o <span style={{ color: C.green, fontWeight: 700 }}>recuperar parte de tu tiempo financiero</span>.
-              <br /><br />
-              Cada cuota eliminada representa tiempo que vuelve a tu vida,
-              a tu familia y a tus proyectos.
-            </p>
-            <div style={{
-              marginTop: 6, paddingTop: 6,
-              borderTop: "1px solid rgba(255,255,255,0.15)",
-              display: "grid", gridTemplateColumns: "1fr auto", gap: 16, alignItems: "center",
-            }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.85)" }}>
-                La decisión siempre será tuya. Nosotros ya hicimos los cálculos.
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={{
-                  fontFamily: SCRIPT, fontSize: 22, color: C.green, lineHeight: 1,
-                }}>{analista}</div>
-                <div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.6)", marginTop: 2, letterSpacing: "0.12em" }}>
-                  ANALISTA NUVEX
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
 
         {/* ───── FOOTER ───── */}
         <FooterStrip />
       </section>
 
       {/* ============================================================
-          PÁGINA 2 — OTRAS PROYECCIONES + RESUMEN + CIERRE
+          PÁGINA 2 — COMPARACIÓN DE ESCENARIOS
       ============================================================ */}
       <section
         className="nuvex-print-page"
