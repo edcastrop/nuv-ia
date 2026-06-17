@@ -175,7 +175,7 @@ export function PrintDocument(props: Props) {
   const añoFinOpt = fechaFinOpt.getFullYear();
   const añosActual = scenario.plazoActual / 12;
   const añosOpt = scenario.nuevoPlazo / 12;
-  const añosEliminados = Math.max(0, añosActual - añosOpt);
+  const añosEliminados = Math.max(0, recommended.añosEliminados);
   const añosEliminadosEntero = Math.max(0, Math.round(añosEliminados));
   const cuotasEliminadas = Math.max(0, scenario.plazoActual - scenario.nuevoPlazo);
   const incrementoMensual = Math.max(0, nuevaCuota - cuotaActual);
@@ -208,7 +208,7 @@ export function PrintDocument(props: Props) {
     <div id={containerId} className="nuvex-print-only" style={{ background: "#fff", color: C.ink, fontFamily: FONT, width: "210mm", boxSizing: "border-box", letterSpacing: 0 }}>
       <section className="nuvex-print-page" style={pageStyle(true)}>
         <TopBar page="Página 1 de 2" />
-        <main style={{ padding: "20px 30px 0", flex: "1 1 auto", display: "flex", flexDirection: "column" }}>
+        <main style={{ padding: "18px 30px 12px", flex: "1 1 auto", display: "flex", flexDirection: "column" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1.35fr 1fr", gap: 26, alignItems: "center" }}>
             <div>
               <div style={{ fontSize: 15, fontWeight: 800, color: C.text, marginBottom: 8 }}>Hola, <span style={{ color: C.blue }}>{primerNombre.toUpperCase()}</span></div>
@@ -266,19 +266,19 @@ export function PrintDocument(props: Props) {
             />
           </div>
 
-          <div style={{ marginTop: 18, background: `linear-gradient(135deg, ${C.navy}, #041229)`, color: "#fff", borderRadius: 10, padding: "20px 24px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "center" }}>
+          <div style={{ marginTop: 14, background: `linear-gradient(135deg, ${C.navy}, #041229)`, color: "#fff", borderRadius: 10, padding: "18px 24px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "center" }}>
             <DarkBenefit icon={<Shield size={52} color={C.green} strokeWidth={1.6} />} label="HONORARIOS A ÉXITO NUVEX" value={formatCOP(honorariosFinales)} sub="Solo se pagan si el banco aprueba la optimización." />
             <DarkBenefit icon={<Shield size={52} color={C.green} strokeWidth={1.6} />} label="VÁLIDO POR" value="48 HORAS" sub="Propuesta exclusiva para este caso." right />
           </div>
 
-          <div style={{ marginTop: 14, background: C.navy, borderRadius: 10, color: "#fff", padding: "22px 26px", display: "grid", gridTemplateColumns: "1fr auto", gap: 24, alignItems: "center", flex: "1 1 auto" }}>
-            <div style={{ fontSize: 13, lineHeight: 1.45, fontWeight: 600 }}>
+          <div style={{ marginTop: 12, background: C.navy, borderRadius: 10, color: "#fff", padding: "12px 24px", display: "grid", gridTemplateColumns: "1fr auto", gap: 24, alignItems: "center", flex: "0 0 auto" }}>
+            <div style={{ fontSize: 12.5, lineHeight: 1.34, fontWeight: 600 }}>
               <span style={{ color: C.green, fontSize: 34, lineHeight: 0, verticalAlign: "middle" }}>“</span> Este crédito terminará de una u otra forma.<br />
               La diferencia es decidir si quieres <b style={{ color: C.green }}>recuperar parte de tu tiempo financiero.</b><br />
               Cada cuota eliminada es tiempo que vuelve a tu vida,<br />a tu familia y a tus proyectos.
             </div>
             <div style={{ textAlign: "center", minWidth: 200 }}>
-              <div style={{ color: C.green, fontFamily: SIGNATURE, fontSize: 42, lineHeight: 0.9 }}>{analista}</div>
+              <div style={{ color: C.green, fontFamily: SIGNATURE, fontSize: 38, lineHeight: 0.9 }}>{analista}</div>
               <div style={{ marginTop: 6, fontSize: 10.5, letterSpacing: "0.32em", fontWeight: 900 }}>ANALISTA NUVEX</div>
             </div>
           </div>
@@ -288,7 +288,7 @@ export function PrintDocument(props: Props) {
 
       <section className="nuvex-print-page" style={pageStyle(false)}>
         <TopBar page="Página 2 de 2" />
-        <main style={{ padding: "10px 32px 0", flex: "1 1 auto" }}>
+        <main style={{ padding: "10px 32px 12px", flex: "1 1 auto", display: "flex", flexDirection: "column" }}>
           <h2 style={{ margin: 0, fontSize: 24, lineHeight: 1, fontWeight: 950, color: "#071023", letterSpacing: 0 }}>COMPARACIÓN DE ESCENARIOS</h2>
           <p style={{ margin: "4px 0 9px", color: C.text, fontSize: 11.4, lineHeight: 1.28, fontWeight: 600 }}>
             Analizamos diferentes alternativas para que elijas<br />el nivel de optimización que mejor se adapta a tus objetivos financieros.
@@ -311,7 +311,7 @@ export function PrintDocument(props: Props) {
 
           <SectionLabel title="RESUMEN DEL IMPACTO" />
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginTop: 7 }}>
-            <Impact icon={<Clock3 />} label="AÑOS RECUPERADOS" value={`${añosEliminadosEntero}`} sub="años" twin />
+            <Impact icon={<Clock3 />} label="AÑOS RECUPERADOS" value={`${añosEliminadosEntero}`} sub="años" />
             <Impact icon={<CheckCircle2 />} label="CUOTAS ELIMINADAS" value={`${cuotasEliminadas}`} sub="menos pagos" />
             <Impact icon={<PiggyBank />} label="AHORRO TOTAL" value={formatCOP(recommended.ahorroTotal)} />
             <Impact icon={<CalendarDays />} label="NUEVA FECHA FIN" value={`${añoFinOpt}`} sub={`antes de ${añoFinActual}`} blue />
@@ -342,7 +342,7 @@ export function PrintDocument(props: Props) {
             <Step n={5} icon={<Smile />} title="Disfrutas tu optimización" desc="Menos cuotas, más tiempo y más tranquilidad." />
           </div>
 
-          <div style={{ marginTop: 11, background: C.navy, borderRadius: 9, padding: "13px 24px", display: "grid", gridTemplateColumns: "1fr 1.55fr", gap: 22, alignItems: "center", color: "#fff" }}>
+          <div style={{ marginTop: "auto", minHeight: 104, background: C.navy, borderRadius: 9, padding: "18px 24px", display: "grid", gridTemplateColumns: "1fr 1.55fr", gap: 22, alignItems: "center", color: "#fff" }}>
             <div>
               <div style={{ color: C.green, fontSize: 11, fontWeight: 950, letterSpacing: "0.22em" }}>UNA DECISIÓN · DOS CAMINOS</div>
               <div style={{ marginTop: 7, fontSize: 12, fontWeight: 700 }}>Ya hicimos los cálculos. <span style={{ color: C.green }}>La decisión es tuya.</span></div>
@@ -586,11 +586,11 @@ function SectionLabel({ title }: { title: string }) {
   return <div style={{ marginTop: 12, color: C.greenDeep, fontSize: 13.5, fontWeight: 950, letterSpacing: "0.05em" }}>{title}</div>;
 }
 
-function Impact({ icon, label, value, sub, twin, blue }: { icon: ReactNode; label: string; value: string; sub?: string; twin?: boolean; blue?: boolean }) {
+function Impact({ icon, label, value, sub, blue }: { icon: ReactNode; label: string; value: string; sub?: string; blue?: boolean }) {
   return (
     <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, background: "#fff", minHeight: 79, padding: "12px 15px", display: "grid", gridTemplateColumns: "34px 1fr", gap: 10, alignItems: "center" }}>
       <div style={{ color: blue ? C.blue : C.greenDeep }}>{icon}</div>
-      <div><div style={tinyLabelStyle}>{label}</div><div style={{ marginTop: 5, color: blue ? C.blue : C.greenDeep, fontSize: 22, fontWeight: 950, lineHeight: 1 }}>{twin && <span style={{ color: C.greenDeep, marginRight: 18 }}>6</span>}{value}</div>{sub && <div style={{ fontSize: 9.5, color: C.text, fontWeight: 650 }}>{sub}</div>}</div>
+      <div><div style={tinyLabelStyle}>{label}</div><div style={{ marginTop: 5, color: blue ? C.blue : C.greenDeep, fontSize: 22, fontWeight: 950, lineHeight: 1 }}>{value}</div>{sub && <div style={{ fontSize: 9.5, color: C.text, fontWeight: 650 }}>{sub}</div>}</div>
     </div>
   );
 }
