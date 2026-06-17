@@ -78,11 +78,13 @@ export function SaveExpedienteButton({
         >
           {saving
             ? "Enviando…"
-            : expedienteId && !enviarAuditoriaManual
-              ? "Actualizar expediente"
-              : expedienteId
-                ? "Actualizar y enviar a auditoría QA"
-                : "Crear expediente y enviar a auditoría QA"}
+            : fromSimulador
+              ? "Crear expediente"
+              : expedienteId && !enviarAuditoriaManual
+                ? "Actualizar expediente"
+                : expedienteId
+                  ? "Actualizar y enviar a auditoría QA"
+                  : "Crear expediente y enviar a auditoría QA"}
         </button>
       </div>
       {creado && (
