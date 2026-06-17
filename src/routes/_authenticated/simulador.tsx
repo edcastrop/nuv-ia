@@ -131,10 +131,10 @@ function SimuladorPage() {
     <div>
       {!mode && <ModeSelector onPick={handlePickMode} />}
       {mode === "pesos" && (
-        <PesosSimulator initialExpediente={initial} onReset={handleReset} simuladorReturn={simReturn} />
+        <PesosSimulator initialExpediente={initial} onReset={handleReset} simuladorReturn={simReturn} fromSimulador />
       )}
       {mode === "uvr" && (
-        <UVRSimulator initialExpediente={initial} onReset={handleReset} simuladorReturn={simReturn} />
+        <UVRSimulator initialExpediente={initial} onReset={handleReset} simuladorReturn={simReturn} fromSimulador />
       )}
     </div>
   );
