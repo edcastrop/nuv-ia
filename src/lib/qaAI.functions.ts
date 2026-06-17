@@ -818,12 +818,25 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
       tolerancias: overrides,
     });
 
+    const proyeccionesAplicadasIds = Array.isArray(d.proyeccionesAplicadas) ? (d.proyeccionesAplicadas as string[]) : [];
+    const proyeccionesAplicadasAt = typeof d.proyeccionesAplicadasAt === "string" ? d.proyeccionesAplicadasAt : null;
+    const plazoRecalculadoPorProyeccion = d.plazoRecalculadoPorProyeccion === true;
+    const cuotasPendientesExtractoOriginal = parseNum(d.cuotasPendientesExtracto);
+
     const inputsSnap = {
       modalidad,
       extractoLecturaId: ext.id,
       expedienteId: ext.expediente_id,
       reconstruccion: { saldoCapital: saldo, tasaEa: tasa, tasaEaPactada: tasaPactada, cuotasPendientes: cuotasPend, cuotasPagadas: cuotasPag, seguros, coberturaFrechPp: frech, coberturaFrechValorMensual: frechValorMensual, coberturaFrechCuotasRestantes: frechCuotasRestantes, valorDesembolsado: desemb, saldoUVR, valorUVR, cuotaBaseSinSubsidio, cuotaFinancieraSinSeguros },
       extracto: { saldoCapital: saldo, tasaEa: tasa, cuota: cuotaExt, seguros, coberturaFrechPp: frech, coberturaFrechValorMensual: frechValorMensual },
+      proyecciones: {
+        aplicadas: proyeccionesAplicadasIds,
+        aplicadasAt: proyeccionesAplicadasAt,
+        plazoRecalculadoPorProyeccion,
+        cuotasPendientesExtractoOriginal: cuotasPendientesExtractoOriginal ?? null,
+        cuotasPendientesRecalculadas: cuotasPend,
+        count: proyeccionesAplicadasIds.length,
+      },
     };
 
     const { data: aud, error: errAud } = await supabase
