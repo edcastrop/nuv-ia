@@ -278,22 +278,40 @@ export function PrintDocument(props: Props) {
 
         <div style={{ padding: "26px 24px 0 24px" }}>
           <PanelTitle number="03" title="INDICADOR EXCLUSIVO NUVEX" />
-          <div style={{ marginTop: 10, border: `1px solid ${semaforo.color}55`, borderRadius: 16, background: `linear-gradient(135deg, ${semaforo.bg}, #fff 62%)`, padding: "30px 28px", display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 22, alignItems: "center" }}>
-            <div style={{ width: 86, height: 86, borderRadius: 22, background: semaforo.color, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
-              <Target size={46} strokeWidth={1.8} />
-            </div>
-            <div>
-              <div style={{ fontSize: 10, letterSpacing: "0.24em", fontWeight: 900, color: C.ink }}>NÚMERO DE VECES PAGADO</div>
-              <div style={{ marginTop: 8, fontSize: 11, color: C.textSoft, lineHeight: 1.55 }}>
-                Costo total del crédito ÷ valor desembolsado<br />
-                <b style={{ color: C.ink }}>{formatCOP(costoTotalSin)}</b> ÷ <b style={{ color: C.ink }}>{formatCOP(desembolsoRef)}</b>
+          <div style={{ marginTop: 10, border: `1px solid ${semaforo.color}55`, borderRadius: 16, background: `linear-gradient(135deg, ${semaforo.bg}, #fff 62%)`, padding: "28px 28px 24px", minHeight: 250 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 22, alignItems: "center" }}>
+              <div style={{ width: 86, height: 86, borderRadius: 22, background: semaforo.color, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+                <Target size={46} strokeWidth={1.8} />
               </div>
-              <div style={{ marginTop: 9, fontSize: 10.5, color: semaforo.color, fontWeight: 800 }}>{semaforo.note}</div>
+              <div>
+                <div style={{ fontSize: 10, letterSpacing: "0.24em", fontWeight: 900, color: C.ink }}>NÚMERO DE VECES PAGADO</div>
+                <div style={{ marginTop: 8, fontSize: 11, color: C.textSoft, lineHeight: 1.55 }}>
+                  Costo total del crédito ÷ valor desembolsado<br />
+                  <b style={{ color: C.ink }}>{formatCOP(costoTotalSin)}</b> ÷ <b style={{ color: C.ink }}>{formatCOP(desembolsoRef)}</b>
+                </div>
+                <div style={{ marginTop: 9, fontSize: 10.5, color: semaforo.color, fontWeight: 800 }}>{semaforo.note}</div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontSize: 64, lineHeight: 0.95, fontWeight: 900, color: semaforo.color, letterSpacing: "-0.04em" }}>{formatNumber(vecesSin, 2)}x</div>
+                <div style={{ marginTop: 7, display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 9px", borderRadius: 999, background: "#fff", color: semaforo.color, fontSize: 8, fontWeight: 900, letterSpacing: "0.14em", border: `1px solid ${semaforo.color}55` }}>
+                  <BadgeCheck size={12} /> {semaforo.label.toUpperCase()}
+                </div>
+              </div>
             </div>
-            <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: 64, lineHeight: 0.95, fontWeight: 900, color: semaforo.color, letterSpacing: "-0.04em" }}>{formatNumber(vecesSin, 2)}x</div>
-              <div style={{ marginTop: 7, display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 9px", borderRadius: 999, background: "#fff", color: semaforo.color, fontSize: 8, fontWeight: 900, letterSpacing: "0.14em", border: `1px solid ${semaforo.color}55` }}>
-                <BadgeCheck size={12} /> {semaforo.label.toUpperCase()}
+
+            <div style={{ marginTop: 26, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+              <IndicatorPill label="Costo total proyectado" value={formatCOP(costoTotalSin)} />
+              <IndicatorPill label="Valor desembolsado" value={formatCOP(desembolsoRef)} />
+              <IndicatorPill label="Resultado NUVEX" value={`${formatNumber(vecesSin, 2)} veces`} tone={semaforo.color} />
+            </div>
+            <div style={{ marginTop: 18 }}>
+              <div style={{ height: 10, borderRadius: 999, overflow: "hidden", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", border: `1px solid ${C.hairline}` }}>
+                <div style={{ background: C.greenDeep }} />
+                <div style={{ background: "#D9A441" }} />
+                <div style={{ background: C.redDeep }} />
+              </div>
+              <div style={{ marginTop: 7, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", fontSize: 7.4, letterSpacing: "0.16em", fontWeight: 900, color: C.muted, textAlign: "center" }}>
+                <div>CONTROLADO</div><div>ATENCIÓN</div><div>ALERTA ALTA</div>
               </div>
             </div>
           </div>
