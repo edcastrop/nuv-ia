@@ -404,19 +404,25 @@ export function ResultadoFinal({
               <DashCard label="Nueva cuota aprobada" value={formatCOP(aprobado.cuota)} />
               <DashCard label="Honorarios finales" value={formatCOP(aprobado.honorariosFinales)} accent="green" />
               <div
-                className="rounded-xl border-2 p-4 flex flex-col justify-center"
-                style={{ borderColor: metricas.cal.color, backgroundColor: metricas.cal.bg }}
+                className="rounded-xl border p-4 flex flex-col justify-center"
+                style={{
+                  borderColor: "rgba(132,185,143,0.45)",
+                  background:
+                    "linear-gradient(155deg, rgba(132,185,143,0.18) 0%, rgba(20,28,54,0.85) 60%, rgba(5,8,22,0.95) 100%)",
+                  boxShadow: "0 0 0 1px rgba(132,185,143,0.18) inset",
+                }}
               >
-                <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: metricas.cal.color }}>
+                <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--nuvia-accent-green)" }}>
                   Acertividad global
                 </div>
-                <div className="mt-1 text-3xl font-extrabold leading-none" style={{ color: metricas.cal.color }}>
+                <div className="mt-1 text-3xl font-extrabold leading-none" style={{ color: "var(--nuvia-accent-green)" }}>
                   {formatNumber(metricas.global, 1)}%
                 </div>
-                <div className="mt-1 text-[11px] font-bold uppercase tracking-wider" style={{ color: metricas.cal.color }}>
+                <div className="mt-1 text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--nuvia-accent-green)", opacity: 0.85 }}>
                   {metricas.cal.label}
                 </div>
               </div>
+
             </div>
 
             <div className="mt-3 grid gap-2 md:grid-cols-4 text-[11px]">
@@ -638,14 +644,22 @@ function DashCard({ label, value, accent }: { label: string; value: string; acce
     <div
       className="rounded-xl border p-4"
       style={{
-        borderColor: isGreen ? NUVEX.verde : "#E3E7EE",
-        backgroundColor: isGreen ? NUVEX.verdeClaro : "#FFFFFF",
+        borderColor: isGreen ? "rgba(132,185,143,0.45)" : "var(--nuvia-border)",
+        background: isGreen
+          ? "linear-gradient(155deg, rgba(132,185,143,0.18) 0%, rgba(20,28,54,0.85) 60%, rgba(5,8,22,0.95) 100%)"
+          : "linear-gradient(155deg, rgba(20,28,54,0.92) 0%, rgba(13,18,36,0.96) 58%, rgba(5,8,22,0.98) 100%)",
       }}
     >
-      <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: isGreen ? NUVEX.verdeTextoFuerte : "#242424", opacity: 0.75 }}>
+      <div
+        className="text-[10px] font-bold uppercase tracking-wider"
+        style={{ color: isGreen ? "var(--nuvia-accent-green)" : "rgba(230,236,255,0.6)" }}
+      >
         {label}
       </div>
-      <div className="mt-1 text-base font-extrabold leading-tight" style={{ color: isGreen ? NUVEX.verdeTextoFuerte : NUVEX.negro }}>
+      <div
+        className="mt-1 text-base font-extrabold leading-tight"
+        style={{ color: isGreen ? "var(--nuvia-accent-green)" : "var(--nuvia-text-primary)" }}
+      >
         {value}
       </div>
     </div>
@@ -654,12 +668,19 @@ function DashCard({ label, value, accent }: { label: string; value: string; acce
 
 function SubMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-2">
-      <div className="text-[10px] uppercase tracking-wider text-[#242424]/60">{label}</div>
-      <div className="text-sm font-bold text-[#242424]">{value}</div>
+    <div
+      className="rounded-lg border px-3 py-2"
+      style={{
+        borderColor: "var(--nuvia-border)",
+        background: "rgba(255,255,255,0.035)",
+      }}
+    >
+      <div className="text-[10px] uppercase tracking-wider" style={{ color: "var(--nuvia-text-secondary)" }}>{label}</div>
+      <div className="text-sm font-bold" style={{ color: "var(--nuvia-text-primary)" }}>{value}</div>
     </div>
   );
 }
+
 
 function ComparativeProyVsApr({ rows }: { rows: { c: string; p: string; a: string; v: string }[] }) {
   return (
