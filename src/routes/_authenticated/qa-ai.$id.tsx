@@ -541,10 +541,14 @@ function ResultadoQaAi() {
               </div>
               <div>
                 <p className="text-[13.5px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
-                  Certificación aprobada · Listo para crear el caso
+                  {cert.estado === "certificado"
+                    ? "Certificación aprobada · Listo para crear el caso"
+                    : "Certificación aprobada con observaciones · Revisa antes de crear el caso"}
                 </p>
                 <p className="text-[12.5px] mt-0.5" style={{ color: "var(--nuvia-text-secondary)" }}>
-                  La auditoría QA fue exitosa. Vuelve al simulador para guardar el expediente y continuar.
+                  {cert.estado === "certificado"
+                    ? "La auditoría QA fue exitosa. Vuelve al simulador para guardar el expediente y continuar."
+                    : "La auditoría QA fue exitosa con observaciones menores. Revisa el dictamen y vuelve al simulador para guardar el caso."}
                 </p>
               </div>
             </div>
