@@ -1838,12 +1838,12 @@ function ComparisonTable(props: {
         background: C.black, color: "#fff",
       }}>
         <div style={{
-          padding: "10px 12px", fontSize: 9, fontWeight: 900,
+          padding: "7px 12px", fontSize: 9, fontWeight: 900,
           letterSpacing: "0.18em",
         }}>CONCEPTO</div>
         {cols.map((c) => (
           <div key={c.key} style={{
-            padding: "10px 8px", textAlign: "center",
+            padding: "7px 8px", textAlign: "center",
             fontSize: 9, fontWeight: 900, letterSpacing: "0.12em",
             background: c.isRec ? C.greenDeep : "transparent",
             color: c.isRec ? "#fff" : "rgba(255,255,255,0.78)",
