@@ -581,11 +581,6 @@ function ResultadoQaAi() {
         </div>
       </section>
 
-      {/* CTA: continuar al simulador solo si la certificación fue aprobada */}
-      {puedeVolverAlSimulador && (
-        <section
-          className="relative overflow-hidden rounded-[var(--nuvia-radius-lg)] border p-5"
-          style={{
       {/* CTA: continuar al simulador / construir propuesta si la certificación fue aprobada */}
       {(puedeVolverAlSimulador || puedeConstruirPropuesta) && (
         <section
