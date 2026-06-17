@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RegistroRouteImport } from './routes/registro'
 import { Route as PendienteAprobacionRouteImport } from './routes/pendiente-aprobacion'
+import { Route as PdfAuditRouteImport } from './routes/pdf-audit'
 import { Route as MfaVerificarRouteImport } from './routes/mfa-verificar'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
@@ -123,6 +124,11 @@ const RegistroRoute = RegistroRouteImport.update({
 const PendienteAprobacionRoute = PendienteAprobacionRouteImport.update({
   id: '/pendiente-aprobacion',
   path: '/pendiente-aprobacion',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PdfAuditRoute = PdfAuditRouteImport.update({
+  id: '/pdf-audit',
+  path: '/pdf-audit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MfaVerificarRoute = MfaVerificarRouteImport.update({
@@ -680,6 +686,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/mfa-verificar': typeof MfaVerificarRoute
+  '/pdf-audit': typeof PdfAuditRoute
   '/pendiente-aprobacion': typeof PendienteAprobacionRoute
   '/registro': typeof RegistroRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -781,6 +788,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/mfa-verificar': typeof MfaVerificarRoute
+  '/pdf-audit': typeof PdfAuditRoute
   '/pendiente-aprobacion': typeof PendienteAprobacionRoute
   '/registro': typeof RegistroRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -880,6 +888,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/mfa-verificar': typeof MfaVerificarRoute
+  '/pdf-audit': typeof PdfAuditRoute
   '/pendiente-aprobacion': typeof PendienteAprobacionRoute
   '/registro': typeof RegistroRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -983,6 +992,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/mfa-verificar'
+    | '/pdf-audit'
     | '/pendiente-aprobacion'
     | '/registro'
     | '/reset-password'
@@ -1084,6 +1094,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/mfa-verificar'
+    | '/pdf-audit'
     | '/pendiente-aprobacion'
     | '/registro'
     | '/reset-password'
@@ -1182,6 +1193,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/login'
     | '/mfa-verificar'
+    | '/pdf-audit'
     | '/pendiente-aprobacion'
     | '/registro'
     | '/reset-password'
@@ -1285,6 +1297,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
   MfaVerificarRoute: typeof MfaVerificarRoute
+  PdfAuditRoute: typeof PdfAuditRoute
   PendienteAprobacionRoute: typeof PendienteAprobacionRoute
   RegistroRoute: typeof RegistroRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -1321,6 +1334,13 @@ declare module '@tanstack/react-router' {
       path: '/pendiente-aprobacion'
       fullPath: '/pendiente-aprobacion'
       preLoaderRoute: typeof PendienteAprobacionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pdf-audit': {
+      id: '/pdf-audit'
+      path: '/pdf-audit'
+      fullPath: '/pdf-audit'
+      preLoaderRoute: typeof PdfAuditRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mfa-verificar': {
@@ -2255,6 +2275,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
   MfaVerificarRoute: MfaVerificarRoute,
+  PdfAuditRoute: PdfAuditRoute,
   PendienteAprobacionRoute: PendienteAprobacionRoute,
   RegistroRoute: RegistroRoute,
   ResetPasswordRoute: ResetPasswordRoute,
