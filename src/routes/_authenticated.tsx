@@ -233,16 +233,18 @@ function AuthenticatedLayout() {
           if (path !== "/pendiente-aprobacion") {
             setGateState("blocked");
             setGateChecked(true);
-            supabase
-              .from("onboarding_auditoria" as never)
-              .insert({
-                user_id: session.user.id,
-                evento: "acceso_bloqueado",
-                actor_id: session.user.id,
-                detalle: { path, estado_acceso: estado },
-              } as never)
-              .then(() => {})
-              .catch(() => {});
+            void (async () => {
+              try {
+                await supabase.from("onboarding_auditoria" as never).insert({
+                  user_id: session.user.id,
+                  evento: "acceso_bloqueado",
+                  actor_id: session.user.id,
+                  detalle: { path, estado_acceso: estado },
+                } as never);
+              } catch {
+                // Auditoría auxiliar: no debe romper el acceso si falla la red.
+              }
+            })();
             navigate({ to: "/pendiente-aprobacion" });
           } else {
             setGateState("ok");
