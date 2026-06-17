@@ -663,23 +663,56 @@ function SubMetric({ label, value }: { label: string; value: string }) {
 
 function ComparativeProyVsApr({ rows }: { rows: { c: string; p: string; a: string; v: string }[] }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-[#E3E7EE]">
-      <table className="w-full text-sm">
+    <div
+      className="overflow-hidden rounded-xl border"
+      style={{
+        borderColor: "var(--nuvia-border)",
+        background:
+          "linear-gradient(155deg, rgba(20,28,54,0.92) 0%, rgba(13,18,36,0.96) 58%, rgba(5,8,22,0.98) 100%)",
+      }}
+    >
+      <table className="w-full text-sm" style={{ borderCollapse: "collapse" }}>
         <thead>
-          <tr style={{ backgroundColor: NUVEX.negro, color: "#fff" }}>
-            <th className="px-3 py-2 text-left text-[11px] uppercase tracking-wider">Concepto</th>
-            <th className="px-3 py-2 text-right text-[11px] uppercase tracking-wider">Proyectado</th>
-            <th className="px-3 py-2 text-right text-[11px] uppercase tracking-wider">Aprobado</th>
-            <th className="px-3 py-2 text-right text-[11px] uppercase tracking-wider">Variación</th>
+          <tr style={{ background: "rgba(255,255,255,0.04)" }}>
+            <th
+              className="px-3 py-2 text-left text-[11px] uppercase tracking-wider font-bold"
+              style={{ color: "rgba(230,236,255,0.65)", borderBottom: "1px solid var(--nuvia-border)" }}
+            >
+              Concepto
+            </th>
+            <th
+              className="px-3 py-2 text-right text-[11px] uppercase tracking-wider font-bold"
+              style={{ color: "rgba(230,236,255,0.65)", borderBottom: "1px solid var(--nuvia-border)" }}
+            >
+              Proyectado
+            </th>
+            <th
+              className="px-3 py-2 text-right text-[11px] uppercase tracking-wider font-bold"
+              style={{ color: "rgba(230,236,255,0.65)", borderBottom: "1px solid var(--nuvia-border)" }}
+            >
+              Aprobado
+            </th>
+            <th
+              className="px-3 py-2 text-right text-[11px] uppercase tracking-wider font-bold"
+              style={{ color: "rgba(230,236,255,0.65)", borderBottom: "1px solid var(--nuvia-border)" }}
+            >
+              Variación
+            </th>
           </tr>
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={r.c} style={{ backgroundColor: i % 2 ? "#F7F9FB" : "#fff" }}>
-              <td className="px-3 py-2 font-medium text-[#242424]">{r.c}</td>
-              <td className="px-3 py-2 text-right text-[#242424]/80">{r.p}</td>
-              <td className="px-3 py-2 text-right font-semibold text-[#242424]">{r.a}</td>
-              <td className="px-3 py-2 text-right text-[#445DA3] font-semibold">{r.v}</td>
+            <tr
+              key={r.c}
+              style={{
+                background: i % 2 ? "rgba(255,255,255,0.025)" : "transparent",
+                borderTop: "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              <td className="px-3 py-2 font-medium" style={{ color: "var(--nuvia-text-primary)" }}>{r.c}</td>
+              <td className="px-3 py-2 text-right" style={{ color: "var(--nuvia-text-secondary)" }}>{r.p}</td>
+              <td className="px-3 py-2 text-right font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{r.a}</td>
+              <td className="px-3 py-2 text-right font-semibold" style={{ color: "var(--nuvia-accent-primary)" }}>{r.v}</td>
             </tr>
           ))}
         </tbody>
