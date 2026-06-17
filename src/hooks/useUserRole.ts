@@ -86,7 +86,15 @@ export function useUserRole() {
   const [loading, setLoading] = useState(() => authLoading && readRoleCache(user?.id).length === 0);
 
   useEffect(() => {
-    if (authLoading) return;
+    const timeout = window.setTimeout(() => setLoading(false), 3500);
+    return () => window.clearTimeout(timeout);
+  }, []);
+
+  useEffect(() => {
+    if (authLoading) {
+      const timeout = window.setTimeout(() => setLoading(false), 2500);
+      return () => window.clearTimeout(timeout);
+    }
     if (!user) {
       setRoles([]);
       setLoading(false);
