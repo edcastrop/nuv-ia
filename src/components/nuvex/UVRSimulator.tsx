@@ -746,7 +746,9 @@ export function UVRSimulator({
                   <SaveExpedienteButton
                     expedienteId={init?.id}
                     onSaved={handleSaved}
+                    onSeguirSimulando={handleResetMode}
                     enviarAuditoriaManual={!init?.id}
+                    fromSimulador={fromSimulador}
                     payload={{
                       modo: "uvr",
                       cliente: { ...client, intervinientes, cobertura },
