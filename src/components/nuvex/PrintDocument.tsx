@@ -1631,6 +1631,75 @@ function KpiTile({
   );
 }
 
+/* Tile premium para la banda IMPACTO DE LA OPTIMIZACIÓN (página 1, fondo oscuro) */
+function ImpactTile({
+  label, value, sub, highlight = false,
+}: { label: string; value: string; sub?: string; highlight?: boolean }) {
+  return (
+    <div style={{
+      background: highlight
+        ? "rgba(132,185,143,0.16)"
+        : "rgba(255,255,255,0.06)",
+      border: highlight
+        ? `1px solid ${C.green}66`
+        : "1px solid rgba(255,255,255,0.12)",
+      borderRadius: 10, padding: "10px 12px",
+      display: "flex", flexDirection: "column", gap: 3,
+    }}>
+      <div style={{
+        fontSize: 7.6, letterSpacing: "0.2em", fontWeight: 800,
+        color: highlight ? C.green : "rgba(255,255,255,0.6)",
+      }}>
+        {label}
+      </div>
+      <div style={{
+        fontSize: 16, fontWeight: 900, lineHeight: 1.05, letterSpacing: "-0.02em",
+        color: highlight ? "#E8F4EA" : "#fff",
+      }}>
+        {value}
+      </div>
+      {sub && (
+        <div style={{ fontSize: 7.8, color: "rgba(255,255,255,0.55)", fontWeight: 600 }}>
+          {sub}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* KPI Card premium para el RESUMEN DEL IMPACTO (página 2, fondo claro) */
+function SummaryKpi({
+  label, value, sub, tone,
+}: { label: string; value: string; sub?: string; tone: "green" | "blue" | "ink" }) {
+  const accent = tone === "green" ? C.greenDeep : tone === "blue" ? C.azul : C.ink;
+  const soft = tone === "green" ? C.greenSoft : tone === "blue" ? C.azulSoft : "#F1F2F4";
+  return (
+    <div style={{
+      background: `linear-gradient(155deg, ${soft} 0%, #fff 100%)`,
+      border: `1px solid ${accent}33`,
+      borderRadius: 12, padding: "12px 14px",
+      display: "flex", flexDirection: "column", gap: 4,
+      minHeight: 72,
+    }}>
+      <div style={{
+        fontSize: 8, letterSpacing: "0.2em", fontWeight: 900, color: C.muted,
+      }}>
+        {label}
+      </div>
+      <div style={{
+        fontSize: 20, fontWeight: 900, color: accent,
+        letterSpacing: "-0.025em", lineHeight: 1.05,
+      }}>
+        {value}
+      </div>
+      {sub && (
+        <div style={{ fontSize: 8.5, color: C.muted, fontWeight: 600 }}>
+          {sub}
+        </div>
+      )}
+    </div>
+  );
+
 function TimelineStat({ label, value, color }: { label: string; value: string; color: string }) {
   return (
     <div style={{ textAlign: "center" }}>
