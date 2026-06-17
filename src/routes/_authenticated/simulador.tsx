@@ -6,7 +6,6 @@ import { PesosSimulator } from "@/components/nuvex/PesosSimulator";
 import { UVRSimulator } from "@/components/nuvex/UVRSimulator";
 import { ensureOperativeExpedienteForMaestro, getMaestro } from "@/lib/expedienteMaestro";
 import type { Expediente } from "@/lib/expedientes";
-import { hasSimulatorDraft } from "@/components/nuvex/useSimulatorDraft";
 
 const simSearchSchema = z.object({
   maestroId: z.string().optional(),
@@ -24,12 +23,10 @@ export const Route = createFileRoute("/_authenticated/simulador")({
 function SimuladorPage() {
   const { maestroId, modo: modoSearch } = Route.useSearch();
   const navigate = useNavigate();
-  const draftMode = hasSimulatorDraft("pesos", maestroId)
-    ? "pesos"
-    : hasSimulatorDraft("uvr", maestroId)
-      ? "uvr"
-      : null;
-  const [mode, setMode] = useState<null | "pesos" | "uvr">(modoSearch ?? draftMode);
+  // El modo se elige explícitamente por el usuario o viene del expediente maestro / URL.
+  // No se autoselecciona desde drafts en sessionStorage: el usuario debe poder ver
+  // el ModeSelector cada vez que entra a /simulador sin params.
+  const [mode, setMode] = useState<null | "pesos" | "uvr">(modoSearch ?? null);
   const [maestroExp, setMaestroExp] = useState<Expediente | null>(null);
   const [loadingMaestro, setLoadingMaestro] = useState<boolean>(!!maestroId);
   const [maestroErr, setMaestroErr] = useState<string | null>(null);

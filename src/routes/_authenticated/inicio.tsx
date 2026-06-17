@@ -2,8 +2,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { z } from "zod";
 import { RoleHome } from "@/components/home/RoleHome";
-import { hasSimulatorDraft } from "@/components/nuvex/useSimulatorDraft";
-
 
 const homeSearchSchema = z.object({
   maestroId: z.string().optional(),
@@ -22,13 +20,11 @@ export const Route = createFileRoute("/_authenticated/inicio")({
 function Home() {
   const { maestroId, modo: modoSearch, vista } = Route.useSearch();
   const navigate = useNavigate();
-  const draftMode = hasSimulatorDraft("pesos", maestroId)
-    ? "pesos"
-    : hasSimulatorDraft("uvr", maestroId)
-      ? "uvr"
-      : null;
-  // Compatibilidad: si llegan params de simulador a /inicio, redirige a /simulador
-  const wantsSimulator = !!modoSearch || !!maestroId || vista === "simulador" || !!draftMode;
+
+  // Solo redirige cuando llegan params explícitos de simulador (links legados
+  // desde Expediente Maestro, etc.). NO redirige por draft en sessionStorage,
+  // porque eso impediría volver al Home tras lanzar el simulador.
+  const wantsSimulator = !!modoSearch || !!maestroId || vista === "simulador";
 
   useEffect(() => {
     if (wantsSimulator) {
@@ -51,5 +47,3 @@ function Home() {
 
   return <RoleHome onLanzarSimulador={() => navigate({ to: "/simulador" })} />;
 }
-
-
