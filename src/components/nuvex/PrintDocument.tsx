@@ -376,88 +376,95 @@ export function PrintDocument(props: Props) {
         </div>
 
         {/* ═══════════════════════════════════════════════
-            SECCIÓN 3 — BENEFICIO COMERCIAL APROBADO
+            LÍNEA DE TIEMPO — banda horizontal full-width
         ═══════════════════════════════════════════════ */}
-        <div style={{
-          padding: "10px 22px 0 22px",
-          display: "grid", gridTemplateColumns: "1fr 220px", gap: 12,
-          breakInside: "avoid", pageBreakInside: "avoid",
-        }}>
+        <div style={{ padding: "10px 22px 0 22px" }}>
+          <TimelineBand
+            añoHoy={añoHoy}
+            añoFinActual={añoFinActual}
+            añoFinOpt={añoFinOpt}
+            añosActual={añosActual}
+            añosOpt={añosOpt}
+            añosRecuperados={añosEliminadosEntero}
+          />
+        </div>
+
+        {/* ═══════════════════════════════════════════════
+            SECCIÓN 3 — BENEFICIO COMERCIAL APROBADO (unificado)
+        ═══════════════════════════════════════════════ */}
+        <div style={{ padding: "10px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <div style={{
             background: `linear-gradient(135deg, ${C.ink} 0%, #1f2a4a 100%)`,
-            borderRadius: 12, padding: "10px 14px", color: "#fff",
-            display: "flex", flexDirection: "column", gap: 8,
+            borderRadius: 14, padding: "14px 18px", color: "#fff",
+            display: "grid", gridTemplateColumns: "auto 1fr 1fr 1fr auto", gap: 18, alignItems: "center",
+            boxShadow: "0 18px 40px -22px rgba(26,31,46,0.55)",
           }}>
-            <div style={{
-              fontSize: 9.5, letterSpacing: "0.22em", fontWeight: 900, color: "#fff",
-            }}>
-              3. BENEFICIO COMERCIAL APROBADO
-            </div>
-            <div style={{
-              display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, alignItems: "center",
-            }}>
-              <div>
-                <div style={{ fontSize: 7.6, color: "rgba(255,255,255,0.6)", letterSpacing: "0.16em", fontWeight: 800 }}>
-                  HONORARIOS ESTÁNDAR
-                </div>
-                <div style={{
-                  fontSize: 13.5, fontWeight: 800, color: "rgba(255,255,255,0.55)",
-                  textDecoration: "line-through", marginTop: 2,
-                }}>
-                  {formatCOP(honorariosBase)}
-                </div>
+            <div style={{ paddingRight: 14, borderRight: "1px solid rgba(255,255,255,0.16)" }}>
+              <div style={{
+                fontSize: 8.5, letterSpacing: "0.22em", fontWeight: 900,
+                color: "rgba(255,255,255,0.7)",
+              }}>
+                3. BENEFICIO
               </div>
-              <div>
-                <div style={{ fontSize: 7.6, color: "rgba(255,255,255,0.6)", letterSpacing: "0.16em", fontWeight: 800 }}>
-                  HONORARIOS APROBADOS
-                </div>
-                <div style={{
-                  fontSize: 16, fontWeight: 900, color: "#fff",
-                  letterSpacing: "-0.02em", marginTop: 2,
-                }}>
-                  {formatCOP(honorariosFinales)}
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: 7.6, color: C.green, letterSpacing: "0.16em", fontWeight: 800 }}>
-                  AHORRO INMEDIATO
-                </div>
-                <div style={{
-                  fontSize: 16, fontWeight: 900, color: C.green,
-                  letterSpacing: "-0.02em", marginTop: 2,
-                }}>
-                  {formatCOP(descuento > 0 ? descuento : 0)}
-                </div>
+              <div style={{
+                fontSize: 14, fontWeight: 900, color: "#fff", letterSpacing: "-0.01em", marginTop: 2,
+              }}>
+                COMERCIAL<br />APROBADO
               </div>
             </div>
-          </div>
-          <div style={{
-            background: C.black, color: "#fff", borderRadius: 12,
-            padding: "10px 14px", display: "flex", flexDirection: "column",
-            alignItems: "center", justifyContent: "center", textAlign: "center", gap: 2,
-          }}>
-            <div style={{
-              fontSize: 7.6, letterSpacing: "0.2em", fontWeight: 800,
-              color: "rgba(255,255,255,0.65)",
-            }}>
-              BENEFICIO COMERCIAL
+            <div>
+              <div style={{ fontSize: 7.6, color: "rgba(255,255,255,0.6)", letterSpacing: "0.16em", fontWeight: 800 }}>
+                ESTÁNDAR
+              </div>
+              <div style={{
+                fontSize: 13.5, fontWeight: 800, color: "rgba(255,255,255,0.55)",
+                textDecoration: "line-through", marginTop: 2,
+              }}>
+                {formatCOP(honorariosBase)}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: 7.6, color: "rgba(255,255,255,0.6)", letterSpacing: "0.16em", fontWeight: 800 }}>
+                APROBADOS
+              </div>
+              <div style={{
+                fontSize: 17, fontWeight: 900, color: "#fff",
+                letterSpacing: "-0.02em", marginTop: 2,
+              }}>
+                {formatCOP(honorariosFinales)}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: 7.6, color: C.green, letterSpacing: "0.16em", fontWeight: 800 }}>
+                AHORRO INMEDIATO
+              </div>
+              <div style={{
+                fontSize: 17, fontWeight: 900, color: C.green,
+                letterSpacing: "-0.02em", marginTop: 2,
+              }}>
+                {formatCOP(descuento > 0 ? descuento : 0)}
+              </div>
             </div>
             <div style={{
-              fontSize: 13.5, fontWeight: 900, color: C.green,
-              letterSpacing: "-0.01em", lineHeight: 1.15, marginTop: 2,
+              background: "rgba(132,185,143,0.14)",
+              border: `1px solid ${C.green}66`, borderRadius: 10,
+              padding: "8px 12px", textAlign: "center", minWidth: 88,
             }}>
-              ⏱ VÁLIDO POR
-            </div>
-            <div style={{
-              fontSize: 13.5, fontWeight: 900, color: C.green, letterSpacing: "-0.01em",
-            }}>
-              48 HORAS
-            </div>
-            <div style={{ fontSize: 7.6, color: "rgba(255,255,255,0.65)", marginTop: 3 }}>
-              Propuesta exclusiva<br />para este caso.
+              <div style={{
+                fontSize: 7.6, letterSpacing: "0.2em", fontWeight: 900, color: C.green,
+              }}>
+                VÁLIDO POR
+              </div>
+              <div style={{
+                fontSize: 16, fontWeight: 900, color: "#fff",
+                letterSpacing: "-0.01em", lineHeight: 1.05, marginTop: 2,
+              }}>
+                48 HORAS
+              </div>
             </div>
           </div>
         </div>
+
 
         {/* ═══════════════════════════════════════════════
             CITA DEL ANALISTA — Eduard Castro
@@ -663,6 +670,56 @@ export function PrintDocument(props: Props) {
               <b> recuperar años de vida financiera</b> y reducir el costo total proyectado de tu obligación.
               Cada cuota eliminada representa tiempo que vuelve a tu familia, tus proyectos y tu tranquilidad financiera.
             </p>
+          </div>
+        </div>
+
+        {/* ───── ¿QUÉ SUCEDE AHORA? ───── */}
+        <div style={{ padding: "12px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
+          <div style={{
+            fontSize: 10, fontWeight: 900, color: C.muted,
+            letterSpacing: "0.22em", marginBottom: 6,
+          }}>
+            ¿QUÉ SUCEDE AHORA?
+          </div>
+          <div style={{
+            display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8,
+            alignItems: "stretch",
+          }}>
+            {[
+              { n: 1, t: "Firma de", b: "autorización" },
+              { n: 2, t: "Radicación", b: "ante el banco" },
+              { n: 3, t: "Análisis", b: "del banco" },
+              { n: 4, t: "Respuesta", b: "oficial" },
+              { n: 5, t: "Disfrutas tu", b: "optimización" },
+            ].map((s, i) => (
+              <div key={s.n} style={{
+                position: "relative",
+                background: i === 4 ? `linear-gradient(135deg, ${C.greenSoft} 0%, #fff 100%)` : "#fff",
+                border: `1px solid ${i === 4 ? C.green + "88" : C.hairline}`,
+                borderRadius: 10, padding: "10px 10px 10px 10px",
+                display: "flex", flexDirection: "column", gap: 4,
+              }}>
+                <div style={{
+                  width: 22, height: 22, borderRadius: "50%",
+                  background: i === 4 ? C.greenDeep : C.ink,
+                  color: "#fff", fontSize: 11, fontWeight: 900,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  {s.n}
+                </div>
+                <div style={{
+                  fontSize: 8, letterSpacing: "0.18em", fontWeight: 900,
+                  color: C.muted, marginTop: 2,
+                }}>
+                  PASO {s.n}
+                </div>
+                <div style={{
+                  fontSize: 10.5, fontWeight: 800, color: C.ink, lineHeight: 1.2,
+                }}>
+                  {s.t}<br />{s.b}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -1606,24 +1663,21 @@ function PropuestaRecomendadaPanel(props: {
   añosOpt: number;
 }) {
   const {
-    nuevaCuota, añosRecuperados, ahorroTotal, nuevoPlazoMeses, nuevoPlazoAños,
+    nuevaCuota, añosRecuperados, ahorroTotal,
     incrementoPct, incrementoMensual, cuotasEliminadas,
-    añoHoy, añoFinActual, añoFinOpt, añosActual, añosOpt,
   } = props;
-  const sinPct = 100;
-  const conPct = Math.max(20, Math.min(100, (añosOpt / Math.max(añosActual, 1)) * 100));
 
   return (
     <div style={{
-      background: `linear-gradient(155deg, ${C.greenSoft} 0%, #fff 100%)`,
-      border: `1px solid ${C.green}55`, borderRadius: 12,
-      padding: "10px 12px", display: "flex", flexDirection: "column", gap: 8,
+      background: `linear-gradient(155deg, ${C.greenSoft} 0%, #fff 70%)`,
+      border: `1px solid ${C.green}55`, borderRadius: 14,
+      padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12,
       breakInside: "avoid", pageBreakInside: "avoid",
     }}>
       {/* Header */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        paddingBottom: 5, borderBottom: `1px solid ${C.green}33`,
+        paddingBottom: 8, borderBottom: `1px solid ${C.green}33`,
       }}>
         <div style={{
           fontSize: 9.5, letterSpacing: "0.22em", fontWeight: 900, color: C.greenDeep,
@@ -1631,151 +1685,131 @@ function PropuestaRecomendadaPanel(props: {
         <div style={{
           background: C.greenDeep, color: "#fff",
           fontSize: 8, fontWeight: 900, letterSpacing: "0.14em",
-          padding: "2px 6px", borderRadius: 3,
-        }}>★</div>
+          padding: "2px 8px", borderRadius: 3,
+        }}>★ RECOMENDADA</div>
       </div>
 
-      {/* 4 KPIs en fila */}
+      {/* MATRIZ 2×2 — mismo peso visual */}
       <div style={{
-        display: "grid", gridTemplateColumns: "1.1fr 1fr 1.15fr 0.9fr", gap: 10,
+        display: "grid", gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr",
+        gap: 10, flex: "1 1 auto",
       }}>
-        <div>
-          <div style={{ fontSize: 7.5, color: C.muted, fontWeight: 800, letterSpacing: "0.16em" }}>
-            ⟁ NUEVA CUOTA
-          </div>
-          <div style={{
-            fontSize: 16, fontWeight: 900, color: C.greenDeep,
-            letterSpacing: "-0.025em", lineHeight: 1, marginTop: 2,
-          }}>
-            {formatCOP(nuevaCuota)}
-          </div>
-          <div style={{ marginTop: 4, fontSize: 8, color: C.muted, fontWeight: 700, letterSpacing: "0.04em" }}>
-            Incremento mensual
-          </div>
-          <div style={{ fontSize: 11, fontWeight: 900, color: C.azul, letterSpacing: "-0.01em" }}>
-            +{formatNumber(incrementoPct, 1)}%
-          </div>
-          <div style={{ fontSize: 8.5, color: C.muted }}>
-            + {formatCOP(incrementoMensual)}
-          </div>
+        <MatrixTile
+          label="NUEVA CUOTA"
+          value={formatCOP(nuevaCuota)}
+          accent={C.greenDeep}
+          footer={`+${formatNumber(incrementoPct, 1)}% · +${formatCOP(incrementoMensual)}`}
+        />
+        <MatrixTile
+          label="AHORRO TOTAL"
+          value={formatCOP(ahorroTotal)}
+          accent={C.greenDeep}
+          footer="Menos intereses y seguros"
+        />
+        <MatrixTile
+          label="AÑOS RECUPERADOS"
+          value={`${añosRecuperados}`}
+          suffix="años"
+          accent={C.greenDeep}
+          footer="De tu vida financiera"
+        />
+        <MatrixTile
+          label="CUOTAS ELIMINADAS"
+          value={`${cuotasEliminadas}`}
+          suffix="cuotas"
+          accent={C.ink}
+          footer="Menos pagos mensuales"
+        />
+      </div>
+    </div>
+  );
+}
+
+function MatrixTile({
+  label, value, suffix, accent, footer,
+}: {
+  label: string; value: string; suffix?: string; accent: string; footer: string;
+}) {
+  return (
+    <div style={{
+      background: "#fff", border: `1px solid ${C.hairline}`, borderRadius: 10,
+      padding: "10px 12px", display: "flex", flexDirection: "column",
+      justifyContent: "space-between", minHeight: 78,
+    }}>
+      <div style={{
+        fontSize: 7.8, color: C.muted, fontWeight: 800, letterSpacing: "0.18em",
+      }}>
+        {label}
+      </div>
+      <div style={{
+        display: "flex", alignItems: "baseline", gap: 5, marginTop: 2,
+      }}>
+        <div style={{
+          fontSize: 22, fontWeight: 900, color: accent,
+          letterSpacing: "-0.03em", lineHeight: 1,
+        }}>
+          {value}
         </div>
-        <div>
-          <div style={{ fontSize: 7.5, color: C.muted, fontWeight: 800, letterSpacing: "0.16em" }}>
-            ⏱ TIEMPO RECUPERADO
-          </div>
-          <div style={{
-            fontSize: 22, fontWeight: 900, color: C.greenDeep,
-            letterSpacing: "-0.025em", lineHeight: 1, marginTop: 2,
-          }}>
-            {añosRecuperados} AÑOS
-          </div>
-          <div style={{ marginTop: 6, fontSize: 8, color: C.muted, fontWeight: 700, letterSpacing: "0.04em" }}>
-            Cuotas eliminadas
-          </div>
-          <div style={{ fontSize: 14, fontWeight: 900, color: C.ink, letterSpacing: "-0.01em" }}>
-            {cuotasEliminadas}
-          </div>
-          <div style={{ fontSize: 8.5, color: C.muted }}>menos pagos</div>
-        </div>
-        <div>
-          <div style={{ fontSize: 7.5, color: C.muted, fontWeight: 800, letterSpacing: "0.16em" }}>
-            💰 AHORRO
-          </div>
-          <div style={{
-            fontSize: 16, fontWeight: 900, color: C.greenDeep,
-            letterSpacing: "-0.025em", lineHeight: 1, marginTop: 2,
-          }}>
-            {formatCOP(ahorroTotal)}
-          </div>
-          <div style={{
-            marginTop: 4, fontSize: 8.2, color: C.text, lineHeight: 1.3,
-          }}>
-            Menos intereses y seguros<br />durante la vida del crédito
-          </div>
-        </div>
-        <div>
-          <div style={{ fontSize: 7.5, color: C.muted, fontWeight: 800, letterSpacing: "0.16em" }}>
-            📅 NUEVO PLAZO
-          </div>
-          <div style={{
-            fontSize: 22, fontWeight: 900, color: C.ink,
-            letterSpacing: "-0.025em", lineHeight: 1, marginTop: 2,
-          }}>
-            {nuevoPlazoMeses}
-          </div>
+        {suffix && (
           <div style={{ fontSize: 9.5, color: C.text, fontWeight: 700 }}>
-            meses
+            {suffix}
           </div>
-          <div style={{ fontSize: 8.5, color: C.muted, marginTop: 2 }}>
-            {formatNumber(nuevoPlazoAños, 1)} años
-          </div>
-        </div>
+        )}
       </div>
-
-      {/* Línea de tiempo + side panel recuperación */}
       <div style={{
-        display: "grid", gridTemplateColumns: "1fr 130px", gap: 10, alignItems: "stretch",
-        marginTop: 2,
+        fontSize: 8.2, color: C.muted, fontWeight: 600, marginTop: 4, lineHeight: 1.3,
       }}>
-        <div style={{
-          background: "#fff", border: `1px solid ${C.hairline}`, borderRadius: 10,
-          padding: "8px 10px", display: "flex", flexDirection: "column", gap: 5,
-        }}>
-          <div style={{
-            fontSize: 7.8, letterSpacing: "0.2em", fontWeight: 800, color: C.muted,
-          }}>
-            LÍNEA DE TIEMPO
-          </div>
-          <TimelineRow
-            label="SIN NUVEX"
-            startYear={añoHoy}
-            endYear={añoFinActual}
-            barColor="#CFD3DB"
-            widthPct={sinPct}
-            pill={`${formatNumber(añosActual, 1)} años`}
-            pillBg="#F1F2F4"
-            pillFg={C.muted}
-          />
-          <TimelineRow
-            label={<>CON NUVEX<br /><span style={{ fontWeight: 600 }}>(RECOMENDADA)</span></>}
-            startYear={añoHoy}
-            endYear={añoFinOpt}
-            barColor={C.greenDeep}
-            widthPct={conPct}
-            pill={`${formatNumber(nuevoPlazoAños, 1)} años`}
-            pillBg={C.greenSoft}
-            pillFg={C.greenDeep}
-          />
+        {footer}
+      </div>
+    </div>
+  );
+}
+
+function TimelineBand(props: {
+  añoHoy: number; añoFinActual: number; añoFinOpt: number;
+  añosActual: number; añosOpt: number; añosRecuperados: number;
+}) {
+  const { añoHoy, añoFinActual, añoFinOpt, añosActual, añosOpt, añosRecuperados } = props;
+  const sinPct = 100;
+  const conPct = Math.max(20, Math.min(100, (añosOpt / Math.max(añosActual, 1)) * 100));
+  return (
+    <div style={{
+      background: "#fff", border: `1px solid ${C.hairline}`, borderRadius: 12,
+      padding: "10px 16px", display: "flex", flexDirection: "column", gap: 6,
+      breakInside: "avoid", pageBreakInside: "avoid",
+    }}>
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+      }}>
+        <div style={{ fontSize: 9, letterSpacing: "0.22em", fontWeight: 900, color: C.muted }}>
+          LÍNEA DE TIEMPO · ANTES Y DESPUÉS
         </div>
         <div style={{
-          background: `linear-gradient(135deg, ${C.greenSoft} 0%, #fff 100%)`,
-          border: `1px solid ${C.green}66`, borderRadius: 10,
-          padding: "8px 10px", display: "flex", flexDirection: "column",
-          alignItems: "center", justifyContent: "center", textAlign: "center", gap: 2,
+          fontSize: 9, fontWeight: 900, color: C.greenDeep, letterSpacing: "0.16em",
         }}>
-          <div style={{
-            fontSize: 16, fontWeight: 900, color: C.greenDeep, letterSpacing: "-0.02em", lineHeight: 1,
-          }}>
-            {añosRecuperados} AÑOS
-          </div>
-          <div style={{
-            fontSize: 7.5, letterSpacing: "0.18em", fontWeight: 900, color: C.greenDeep,
-          }}>
-            RECUPERADOS
-          </div>
-          <div style={{
-            marginTop: 4, paddingTop: 4, borderTop: `1px solid ${C.green}44`,
-            fontSize: 13, fontWeight: 900, color: C.ink, letterSpacing: "-0.01em",
-          }}>
-            {cuotasEliminadas} CUOTAS
-          </div>
-          <div style={{
-            fontSize: 7.5, letterSpacing: "0.18em", fontWeight: 900, color: C.muted,
-          }}>
-            ELIMINADAS
-          </div>
+          {añosRecuperados} AÑOS RECUPERADOS
         </div>
       </div>
+      <TimelineRow
+        label="SIN NUVEX"
+        startYear={añoHoy}
+        endYear={añoFinActual}
+        barColor="#CFD3DB"
+        widthPct={sinPct}
+        pill={`${formatNumber(añosActual, 1)} años`}
+        pillBg="#F1F2F4"
+        pillFg={C.muted}
+      />
+      <TimelineRow
+        label={<>CON NUVEX</>}
+        startYear={añoHoy}
+        endYear={añoFinOpt}
+        barColor={C.greenDeep}
+        widthPct={conPct}
+        pill={`${formatNumber(añosOpt, 1)} años`}
+        pillBg={C.greenSoft}
+        pillFg={C.greenDeep}
+      />
     </div>
   );
 }
