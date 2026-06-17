@@ -104,7 +104,7 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
     };
   }, [user]);
 
-  const config = activeRole ? (HOME_CONFIG[activeRole] ?? HOME_CONFIG.gerencia) : HOME_CONFIG.gerencia;
+  const config = (activeRole && HOME_CONFIG[activeRole]) || HOME_CONFIG.gerencia || HOME_CONFIG.super_admin;
 
   const saludo = useMemo(() => {
     const hora = new Date().getHours();
@@ -137,17 +137,6 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
     return <WorkspaceLoader label="Cargando tu workspace NUVIA" />;
   }
 
-
-  if (!config) {
-    return (
-      <div
-        className="flex min-h-[60vh] items-center justify-center text-sm"
-        style={{ color: "var(--nuvia-text-secondary)" }}
-      >
-        Tu rol aún no tiene un Home configurado. Contacta a un administrador.
-      </div>
-    );
-  }
 
   const handleAsk = (prompt: string) => {
     try {
