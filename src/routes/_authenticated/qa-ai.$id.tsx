@@ -523,15 +523,6 @@ function ResultadoQaAi() {
         </div>
       </section>
 
-      {/* DEBUG: remove before final */}
-      <section className="border p-4 rounded" style={{ borderColor: "red", color: "white" }}>
-        <p>from: {JSON.stringify(from)}</p>
-        <p>maestroId: {JSON.stringify(maestroId)}</p>
-        <p>modo: {JSON.stringify(modo)}</p>
-        <p>cert.estado: {JSON.stringify(cert.estado)}</p>
-        <p>puedeVolverAlSimulador: {JSON.stringify(puedeVolverAlSimulador)}</p>
-      </section>
-
       {/* CTA: continuar al simulador solo si la certificación fue aprobada */}
       {puedeVolverAlSimulador && (
         <section
