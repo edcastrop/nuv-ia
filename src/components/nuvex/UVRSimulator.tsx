@@ -864,7 +864,7 @@ export function UVRSimulator({
                   asesor={client.asesor}
                   cuotaActual={cuotaSimulacionPesosNum}
                   propuestas={(calc?.propuestas ?? []).map(p => ({
-                    nuevaCuota: p.nuevaCuotaConSeguro,
+                    nuevaCuota: p.nuevaCuotaConSeguroAprox,
                     añosEliminados: p.añosEliminados,
                     ahorroTotal: p.ahorroTotal,
                   }))}
