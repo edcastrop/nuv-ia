@@ -641,11 +641,22 @@ function ResultadoQaAi() {
         return (
           <>
             <ProyeccionesDropzone expedienteId={expId} variant="qa" momento="auditoria"
-              onReauditoria={async () => {
+              onReauditoria={async (nuevaAuditoriaId) => {
                 setReloading(true);
-                try { setData(await fetchAud({ data: { id } }) as { auditoria: Record<string, unknown> | null; inconsistencias: Inc[] }); }
+                try {
+                  // La reauditoría crea un NUEVO dictamen QA (el anterior queda en histórico).
+                  // Si el id cambió, navegamos a la nueva URL; si por alguna razón no, refrescamos.
+                  if (nuevaAuditoriaId && nuevaAuditoriaId !== id) {
+                    if (typeof window !== "undefined") {
+                      window.location.assign(`/qa-ai/${nuevaAuditoriaId}`);
+                      return;
+                    }
+                  }
+                  setData(await fetchAud({ data: { id } }) as { auditoria: Record<string, unknown> | null; inconsistencias: Inc[] });
+                }
                 finally { setReloading(false); }
               }} />
+
             {aplicaCierre ? (
               <>
                 <ProyeccionesDropzone expedienteId={expId} variant="qa" momento="cierre" />
