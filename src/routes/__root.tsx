@@ -11,6 +11,49 @@ import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
 
+const NUVIA_STABILITY_SCRIPT = `
+(() => {
+  if (window.__nuviaStabilityInstalled) return;
+  window.__nuviaStabilityInstalled = true;
+  const importFailure = /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|vite:preloadError/i;
+  const isImportFailure = (reason) => importFailure.test(String((reason && (reason.message || reason.stack)) || reason || ""));
+  const showNotice = () => {
+    if (document.getElementById("nuvia-stability-notice")) return;
+    const el = document.createElement("div");
+    el.id = "nuvia-stability-notice";
+    el.setAttribute("role", "status");
+    el.style.cssText = "position:fixed;z-index:2147483647;left:50%;top:16px;transform:translateX(-50%);max-width:calc(100vw - 32px);border:1px solid rgba(255,255,255,.18);border-radius:999px;background:rgba(5,8,22,.94);color:#e5edf9;padding:10px 16px;font:600 12px/1.3 system-ui,-apple-system,sans-serif;box-shadow:0 18px 50px rgba(0,0,0,.28);backdrop-filter:blur(16px)";
+    el.textContent = "Reconectando NUVIA sin perder la pantalla actual…";
+    document.body.appendChild(el);
+  };
+  const recover = (event, reason) => {
+    if (event && typeof event.preventDefault === "function") event.preventDefault();
+    if (!isImportFailure(reason || event)) return;
+    showNotice();
+    let attempts = 0;
+    const retry = () => {
+      attempts += 1;
+      fetch(window.location.href, { method: "HEAD", cache: "no-store" })
+        .then((response) => {
+          if (response.ok || response.status < 500) window.location.reload();
+          else if (attempts < 24) window.setTimeout(retry, 1250);
+        })
+        .catch(() => {
+          if (attempts < 24) window.setTimeout(retry, 1250);
+        });
+    };
+    window.setTimeout(retry, 750);
+  };
+  window.addEventListener("vite:preloadError", (event) => recover(event, event && event.payload));
+  window.addEventListener("unhandledrejection", (event) => {
+    if (isImportFailure(event.reason)) recover(event, event.reason);
+  });
+  window.addEventListener("error", (event) => {
+    const reason = event.error || event.message;
+    if (isImportFailure(reason)) recover(event, reason);
+  }, true);
+})();`;
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -107,6 +150,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
     <html lang="es">
       <head>
         <HeadContent />
+        <script dangerouslySetInnerHTML={{ __html: NUVIA_STABILITY_SCRIPT }} />
       </head>
       <body style={{ background: "#F4F6FB", color: "#0A1226" }}>
         {children}
