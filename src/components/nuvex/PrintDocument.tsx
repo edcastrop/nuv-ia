@@ -216,7 +216,7 @@ export function PrintDocument(props: Props) {
   const ahorroSeguros = recommended.ahorroSeguros;
 
   // Número del crédito (usa numeroCredito si existe, si no cédula)
-  const numeroCredito = ((client as { numeroCredito?: string }).numeroCredito || client.cedula || "—").toString();
+  const numeroCredito = (client.numeroCredito || client.cedula || "—").toString();
 
   return (
     <div
