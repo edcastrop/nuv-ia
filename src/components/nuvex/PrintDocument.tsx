@@ -22,6 +22,17 @@ export interface CommercialBenefit {
   hasDiscount: boolean;
 }
 
+export interface CreditStateData {
+  plazoInicialMeses?: number;
+  cuotasPagadas?: number;
+  cuotasPendientes?: number;
+  cuotaActual?: number;
+  seguros?: number;
+  cuotaSinSeguros?: number;
+  saldoCapital?: number;
+  tasaMensualPct?: number;
+}
+
 interface Props {
   mode: "pesos" | "uvr";
   client: ClientData;
@@ -56,6 +67,8 @@ interface Props {
   dineroPagadoFecha?: number;
   /** Valor inicial desembolsado del crédito. */
   valorDesembolsado?: number;
+  /** Datos crudos del estado del crédito para la radiografía financiera. */
+  creditState?: CreditStateData;
 }
 
 /* ============================================================
