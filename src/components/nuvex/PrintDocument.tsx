@@ -103,6 +103,7 @@ export function PrintDocument(props: Props) {
     mode, client, recommended, scenario, commercial,
     pesosPropuestas, uvrPropuestas, propuestasComerciales, bestIndex,
     dineroPagadoFecha = 0, valorDesembolsado = 0,
+    creditState,
   } = props;
   const containerId = mode === "uvr" ? "pdf-content-uvr" : "pdf-content-pesos";
 
