@@ -1606,24 +1606,21 @@ function PropuestaRecomendadaPanel(props: {
   añosOpt: number;
 }) {
   const {
-    nuevaCuota, añosRecuperados, ahorroTotal, nuevoPlazoMeses, nuevoPlazoAños,
+    nuevaCuota, añosRecuperados, ahorroTotal,
     incrementoPct, incrementoMensual, cuotasEliminadas,
-    añoHoy, añoFinActual, añoFinOpt, añosActual, añosOpt,
   } = props;
-  const sinPct = 100;
-  const conPct = Math.max(20, Math.min(100, (añosOpt / Math.max(añosActual, 1)) * 100));
 
   return (
     <div style={{
-      background: `linear-gradient(155deg, ${C.greenSoft} 0%, #fff 100%)`,
-      border: `1px solid ${C.green}55`, borderRadius: 12,
-      padding: "10px 12px", display: "flex", flexDirection: "column", gap: 8,
+      background: `linear-gradient(155deg, ${C.greenSoft} 0%, #fff 70%)`,
+      border: `1px solid ${C.green}55`, borderRadius: 14,
+      padding: "14px 16px", display: "flex", flexDirection: "column", gap: 12,
       breakInside: "avoid", pageBreakInside: "avoid",
     }}>
       {/* Header */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        paddingBottom: 5, borderBottom: `1px solid ${C.green}33`,
+        paddingBottom: 8, borderBottom: `1px solid ${C.green}33`,
       }}>
         <div style={{
           fontSize: 9.5, letterSpacing: "0.22em", fontWeight: 900, color: C.greenDeep,
@@ -1631,151 +1628,131 @@ function PropuestaRecomendadaPanel(props: {
         <div style={{
           background: C.greenDeep, color: "#fff",
           fontSize: 8, fontWeight: 900, letterSpacing: "0.14em",
-          padding: "2px 6px", borderRadius: 3,
-        }}>★</div>
+          padding: "2px 8px", borderRadius: 3,
+        }}>★ RECOMENDADA</div>
       </div>
 
-      {/* 4 KPIs en fila */}
+      {/* MATRIZ 2×2 — mismo peso visual */}
       <div style={{
-        display: "grid", gridTemplateColumns: "1.1fr 1fr 1.15fr 0.9fr", gap: 10,
+        display: "grid", gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr",
+        gap: 10, flex: "1 1 auto",
       }}>
-        <div>
-          <div style={{ fontSize: 7.5, color: C.muted, fontWeight: 800, letterSpacing: "0.16em" }}>
-            ⟁ NUEVA CUOTA
-          </div>
-          <div style={{
-            fontSize: 16, fontWeight: 900, color: C.greenDeep,
-            letterSpacing: "-0.025em", lineHeight: 1, marginTop: 2,
-          }}>
-            {formatCOP(nuevaCuota)}
-          </div>
-          <div style={{ marginTop: 4, fontSize: 8, color: C.muted, fontWeight: 700, letterSpacing: "0.04em" }}>
-            Incremento mensual
-          </div>
-          <div style={{ fontSize: 11, fontWeight: 900, color: C.azul, letterSpacing: "-0.01em" }}>
-            +{formatNumber(incrementoPct, 1)}%
-          </div>
-          <div style={{ fontSize: 8.5, color: C.muted }}>
-            + {formatCOP(incrementoMensual)}
-          </div>
+        <MatrixTile
+          label="NUEVA CUOTA"
+          value={formatCOP(nuevaCuota)}
+          accent={C.greenDeep}
+          footer={`+${formatNumber(incrementoPct, 1)}% · +${formatCOP(incrementoMensual)}`}
+        />
+        <MatrixTile
+          label="AHORRO TOTAL"
+          value={formatCOP(ahorroTotal)}
+          accent={C.greenDeep}
+          footer="Menos intereses y seguros"
+        />
+        <MatrixTile
+          label="AÑOS RECUPERADOS"
+          value={`${añosRecuperados}`}
+          suffix="años"
+          accent={C.greenDeep}
+          footer="De tu vida financiera"
+        />
+        <MatrixTile
+          label="CUOTAS ELIMINADAS"
+          value={`${cuotasEliminadas}`}
+          suffix="cuotas"
+          accent={C.ink}
+          footer="Menos pagos mensuales"
+        />
+      </div>
+    </div>
+  );
+}
+
+function MatrixTile({
+  label, value, suffix, accent, footer,
+}: {
+  label: string; value: string; suffix?: string; accent: string; footer: string;
+}) {
+  return (
+    <div style={{
+      background: "#fff", border: `1px solid ${C.hairline}`, borderRadius: 10,
+      padding: "10px 12px", display: "flex", flexDirection: "column",
+      justifyContent: "space-between", minHeight: 78,
+    }}>
+      <div style={{
+        fontSize: 7.8, color: C.muted, fontWeight: 800, letterSpacing: "0.18em",
+      }}>
+        {label}
+      </div>
+      <div style={{
+        display: "flex", alignItems: "baseline", gap: 5, marginTop: 2,
+      }}>
+        <div style={{
+          fontSize: 22, fontWeight: 900, color: accent,
+          letterSpacing: "-0.03em", lineHeight: 1,
+        }}>
+          {value}
         </div>
-        <div>
-          <div style={{ fontSize: 7.5, color: C.muted, fontWeight: 800, letterSpacing: "0.16em" }}>
-            ⏱ TIEMPO RECUPERADO
-          </div>
-          <div style={{
-            fontSize: 22, fontWeight: 900, color: C.greenDeep,
-            letterSpacing: "-0.025em", lineHeight: 1, marginTop: 2,
-          }}>
-            {añosRecuperados} AÑOS
-          </div>
-          <div style={{ marginTop: 6, fontSize: 8, color: C.muted, fontWeight: 700, letterSpacing: "0.04em" }}>
-            Cuotas eliminadas
-          </div>
-          <div style={{ fontSize: 14, fontWeight: 900, color: C.ink, letterSpacing: "-0.01em" }}>
-            {cuotasEliminadas}
-          </div>
-          <div style={{ fontSize: 8.5, color: C.muted }}>menos pagos</div>
-        </div>
-        <div>
-          <div style={{ fontSize: 7.5, color: C.muted, fontWeight: 800, letterSpacing: "0.16em" }}>
-            💰 AHORRO
-          </div>
-          <div style={{
-            fontSize: 16, fontWeight: 900, color: C.greenDeep,
-            letterSpacing: "-0.025em", lineHeight: 1, marginTop: 2,
-          }}>
-            {formatCOP(ahorroTotal)}
-          </div>
-          <div style={{
-            marginTop: 4, fontSize: 8.2, color: C.text, lineHeight: 1.3,
-          }}>
-            Menos intereses y seguros<br />durante la vida del crédito
-          </div>
-        </div>
-        <div>
-          <div style={{ fontSize: 7.5, color: C.muted, fontWeight: 800, letterSpacing: "0.16em" }}>
-            📅 NUEVO PLAZO
-          </div>
-          <div style={{
-            fontSize: 22, fontWeight: 900, color: C.ink,
-            letterSpacing: "-0.025em", lineHeight: 1, marginTop: 2,
-          }}>
-            {nuevoPlazoMeses}
-          </div>
+        {suffix && (
           <div style={{ fontSize: 9.5, color: C.text, fontWeight: 700 }}>
-            meses
+            {suffix}
           </div>
-          <div style={{ fontSize: 8.5, color: C.muted, marginTop: 2 }}>
-            {formatNumber(nuevoPlazoAños, 1)} años
-          </div>
-        </div>
+        )}
       </div>
-
-      {/* Línea de tiempo + side panel recuperación */}
       <div style={{
-        display: "grid", gridTemplateColumns: "1fr 130px", gap: 10, alignItems: "stretch",
-        marginTop: 2,
+        fontSize: 8.2, color: C.muted, fontWeight: 600, marginTop: 4, lineHeight: 1.3,
       }}>
-        <div style={{
-          background: "#fff", border: `1px solid ${C.hairline}`, borderRadius: 10,
-          padding: "8px 10px", display: "flex", flexDirection: "column", gap: 5,
-        }}>
-          <div style={{
-            fontSize: 7.8, letterSpacing: "0.2em", fontWeight: 800, color: C.muted,
-          }}>
-            LÍNEA DE TIEMPO
-          </div>
-          <TimelineRow
-            label="SIN NUVEX"
-            startYear={añoHoy}
-            endYear={añoFinActual}
-            barColor="#CFD3DB"
-            widthPct={sinPct}
-            pill={`${formatNumber(añosActual, 1)} años`}
-            pillBg="#F1F2F4"
-            pillFg={C.muted}
-          />
-          <TimelineRow
-            label={<>CON NUVEX<br /><span style={{ fontWeight: 600 }}>(RECOMENDADA)</span></>}
-            startYear={añoHoy}
-            endYear={añoFinOpt}
-            barColor={C.greenDeep}
-            widthPct={conPct}
-            pill={`${formatNumber(nuevoPlazoAños, 1)} años`}
-            pillBg={C.greenSoft}
-            pillFg={C.greenDeep}
-          />
+        {footer}
+      </div>
+    </div>
+  );
+}
+
+function TimelineBand(props: {
+  añoHoy: number; añoFinActual: number; añoFinOpt: number;
+  añosActual: number; añosOpt: number; añosRecuperados: number;
+}) {
+  const { añoHoy, añoFinActual, añoFinOpt, añosActual, añosOpt, añosRecuperados } = props;
+  const sinPct = 100;
+  const conPct = Math.max(20, Math.min(100, (añosOpt / Math.max(añosActual, 1)) * 100));
+  return (
+    <div style={{
+      background: "#fff", border: `1px solid ${C.hairline}`, borderRadius: 12,
+      padding: "10px 16px", display: "flex", flexDirection: "column", gap: 6,
+      breakInside: "avoid", pageBreakInside: "avoid",
+    }}>
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+      }}>
+        <div style={{ fontSize: 9, letterSpacing: "0.22em", fontWeight: 900, color: C.muted }}>
+          LÍNEA DE TIEMPO · ANTES Y DESPUÉS
         </div>
         <div style={{
-          background: `linear-gradient(135deg, ${C.greenSoft} 0%, #fff 100%)`,
-          border: `1px solid ${C.green}66`, borderRadius: 10,
-          padding: "8px 10px", display: "flex", flexDirection: "column",
-          alignItems: "center", justifyContent: "center", textAlign: "center", gap: 2,
+          fontSize: 9, fontWeight: 900, color: C.greenDeep, letterSpacing: "0.16em",
         }}>
-          <div style={{
-            fontSize: 16, fontWeight: 900, color: C.greenDeep, letterSpacing: "-0.02em", lineHeight: 1,
-          }}>
-            {añosRecuperados} AÑOS
-          </div>
-          <div style={{
-            fontSize: 7.5, letterSpacing: "0.18em", fontWeight: 900, color: C.greenDeep,
-          }}>
-            RECUPERADOS
-          </div>
-          <div style={{
-            marginTop: 4, paddingTop: 4, borderTop: `1px solid ${C.green}44`,
-            fontSize: 13, fontWeight: 900, color: C.ink, letterSpacing: "-0.01em",
-          }}>
-            {cuotasEliminadas} CUOTAS
-          </div>
-          <div style={{
-            fontSize: 7.5, letterSpacing: "0.18em", fontWeight: 900, color: C.muted,
-          }}>
-            ELIMINADAS
-          </div>
+          {añosRecuperados} AÑOS RECUPERADOS
         </div>
       </div>
+      <TimelineRow
+        label="SIN NUVEX"
+        startYear={añoHoy}
+        endYear={añoFinActual}
+        barColor="#CFD3DB"
+        widthPct={sinPct}
+        pill={`${formatNumber(añosActual, 1)} años`}
+        pillBg="#F1F2F4"
+        pillFg={C.muted}
+      />
+      <TimelineRow
+        label={<>CON NUVEX</>}
+        startYear={añoHoy}
+        endYear={añoFinOpt}
+        barColor={C.greenDeep}
+        widthPct={conPct}
+        pill={`${formatNumber(añosOpt, 1)} años`}
+        pillBg={C.greenSoft}
+        pillFg={C.greenDeep}
+      />
     </div>
   );
 }
