@@ -23,6 +23,7 @@ import {
 import { PrintDocument } from "./PrintDocument";
 import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
 import { EnviarDocumentoButton } from "./EnviarDocumentoButton";
+import { WhatsAppPropuestaButton } from "./WhatsAppPropuestaButton";
 import { NUVEX } from "./constants";
 import {
   DiscountModule,
@@ -784,6 +785,21 @@ export function PesosSimulator({
                   disabled={!recomendada || !calc || calc.propuestas.length === 0}
                   disabledReason="Primero calcula la simulación en pesos."
                   label="Enviar propuesta al cliente"
+                />
+                <WhatsAppPropuestaButton
+                  nombre={client.nombre}
+                  banco={client.banco}
+                  telefono={client.celular}
+                  asesor={client.asesor}
+                  cuotaActual={cuotaActualNum}
+                  propuestas={(calc?.propuestas ?? []).map(p => ({
+                    nuevaCuota: p.nuevaCuotaConSeguro,
+                    añosEliminados: p.añosEliminados,
+                    ahorroTotal: p.ahorroTotal,
+                  }))}
+                  recomendadaIndex={bestIndex >= 0 ? bestIndex : 0}
+                  disabled={!recomendada || !calc || calc.propuestas.length === 0}
+                  disabledReason="Primero calcula la simulación en pesos."
                 />
               </div>
             )}

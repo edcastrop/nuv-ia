@@ -534,7 +534,7 @@ function ScenariosTable(props: {
   const fmtVal = (v: AltRow | undefined, key: (r: AltRow) => string) => v ? key(v) : "—";
   const rows: Array<[string, string, string, string, string, string]> = [
     ["Nueva cuota", formatCOP(props.cuotaActual), ...props.esc.map(e => fmtVal(e, r => formatCOP(r.nuevaCuota))), formatCOP(props.recNueva)] as [string, string, string, string, string, string],
-    ["Incremento mensual", "—", ...props.esc.map(e => e ? `+${formatNumber(e.incrementoPct, 1)}%` : "—"), `+${formatNumber(props.recIncPct, 1)}%`] as [string, string, string, string, string, string],
+    ["Incremento mensual", "—", ...props.esc.map(e => e ? `+${formatCOP(Math.max(0, e.nuevaCuota - props.cuotaActual))}` : "—"), `+${formatCOP(Math.max(0, props.recNueva - props.cuotaActual))}`] as [string, string, string, string, string, string],
     ["Nuevo plazo", `${props.plazoActual} m`, ...props.esc.map(e => e ? `${Math.round(e.añosOpt * 12)} m` : "—"), `${props.recPlazo} m`] as [string, string, string, string, string, string],
     ["Fecha final", `${props.añoFinActual}`, ...props.esc.map(e => e ? `${e.añoFinOpt}` : "—"), `${props.recAñoFin}`] as [string, string, string, string, string, string],
     ["Años recuperados", "—", ...props.esc.map(e => e ? `${Math.round(e.añosEliminados)}` : "—"), `${props.recAñosElim}`] as [string, string, string, string, string, string],
