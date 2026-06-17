@@ -586,6 +586,11 @@ function ResultadoQaAi() {
         <section
           className="relative overflow-hidden rounded-[var(--nuvia-radius-lg)] border p-5"
           style={{
+      {/* CTA: continuar al simulador / construir propuesta si la certificación fue aprobada */}
+      {(puedeVolverAlSimulador || puedeConstruirPropuesta) && (
+        <section
+          className="relative overflow-hidden rounded-[var(--nuvia-radius-lg)] border p-5"
+          style={{
             background: "linear-gradient(135deg, rgba(132,185,143,0.18) 0%, rgba(15,23,42,0.55) 100%)",
             borderColor: "rgba(132,185,143,0.45)",
             boxShadow: "0 18px 48px -28px rgba(132,185,143,0.55)",
@@ -600,25 +605,35 @@ function ResultadoQaAi() {
               <div>
                 <p className="text-[13.5px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
                   {cert.estado === "certificado"
-                    ? "Certificación aprobada · Listo para crear el caso"
-                    : "Certificación aprobada con observaciones · Revisa antes de crear el caso"}
+                    ? "Certificación aprobada · Listo para construir las propuestas comerciales"
+                    : "Certificación aprobada con observaciones · Revisa antes de construir las propuestas"}
                 </p>
                 <p className="text-[12.5px] mt-0.5" style={{ color: "var(--nuvia-text-secondary)" }}>
-                  {cert.estado === "certificado"
+                  {puedeVolverAlSimulador
                     ? "La auditoría QA fue exitosa. Vuelve al simulador para guardar el expediente y continuar."
-                    : "La auditoría QA fue exitosa con observaciones menores. Revisa el dictamen y vuelve al simulador para guardar el caso."}
+                    : "La auditoría QA fue exitosa. Abre el caso y arma las 4 propuestas comerciales sobre el plazo real certificado."}
                 </p>
               </div>
             </div>
-            <Link to="/simulador" search={{ maestroId, modo }}>
-              <button className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-[13px] font-semibold transition hover:opacity-90"
-                style={{ background: "var(--nuvia-success)", color: "#0B1220", border: "none", cursor: "pointer", boxShadow: "0 8px 20px -10px rgba(132,185,143,0.6)" }}>
-                <Rocket size={15} /> Volver al simulador
-              </button>
-            </Link>
+            {puedeVolverAlSimulador ? (
+              <Link to="/simulador" search={{ maestroId, modo }}>
+                <button className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-[13px] font-semibold transition hover:opacity-90"
+                  style={{ background: "var(--nuvia-success)", color: "#0B1220", border: "none", cursor: "pointer", boxShadow: "0 8px 20px -10px rgba(132,185,143,0.6)" }}>
+                  <Rocket size={15} /> Volver al simulador
+                </button>
+              </Link>
+            ) : expedienteIdCert ? (
+              <Link to="/casos/$id" params={{ id: expedienteIdCert }}>
+                <button className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-[13px] font-semibold transition hover:opacity-90"
+                  style={{ background: "var(--nuvia-success)", color: "#0B1220", border: "none", cursor: "pointer", boxShadow: "0 8px 20px -10px rgba(132,185,143,0.6)" }}>
+                  <Rocket size={15} /> Construir propuestas comerciales
+                </button>
+              </Link>
+            ) : null}
           </div>
         </section>
       )}
+
 
       {/* BANNER: NUVIA revisó proyecciones del banco */}
       {proyectoresAplicadas && (() => {
