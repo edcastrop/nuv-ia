@@ -138,6 +138,7 @@ export const urlFirmadaProyeccion = createServerFn({ method: "POST" })
 const FUSIONABLES = [
   "saldoCapital",
   "valorDesembolsado",
+  "tasaEA",
   "cuotaMensual",
   "cuotaActual",
   "cuotaSinSeguros",
@@ -159,6 +160,8 @@ const FUSIONABLES = [
   "tasaCobertura",
   "tieneCobertura",
   "tipoBeneficio",
+  "interesCuota",
+  "capitalCuota",
   "moneda",
   "banco",
   "producto",
@@ -170,6 +173,29 @@ function noVacio(v: unknown): boolean {
   if (typeof v === "number") return Number.isFinite(v) && v !== 0;
   return true;
 }
+
+const parseNum = (v: unknown): number | undefined => {
+  if (!noVacio(v)) return undefined;
+  const cleaned = String(v).replace(/[^\d.,-]/g, "").replace(/\.(?=\d{3}(\D|$))/g, "").replace(",", ".");
+  const n = Number(cleaned);
+  return Number.isFinite(n) && n !== 0 ? n : undefined;
+};
+
+const firstNum = (...values: unknown[]): number | undefined => {
+  for (const value of values) {
+    const n = parseNum(value);
+    if (n !== undefined) return n;
+  }
+  return undefined;
+};
+
+const inferRemainingPayments = (saldo: number, tasaEaPct: number, cuotaFinanciera: number): number | undefined => {
+  if (!(saldo > 0 && tasaEaPct > 0 && cuotaFinanciera > 0)) return undefined;
+  const i = Math.pow(1 + tasaEaPct / 100, 1 / 12) - 1;
+  if (!(i > 0) || cuotaFinanciera <= saldo * i) return undefined;
+  const n = Math.log(cuotaFinanciera / (cuotaFinanciera - saldo * i)) / Math.log(1 + i);
+  return Number.isFinite(n) && n > 0 ? Math.round(n) : undefined;
+};
 
 export const fusionarConExtractoYReauditar = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -184,8 +210,9 @@ export const fusionarConExtractoYReauditar = createServerFn({ method: "POST" })
 
     const { data: proys, error: errP } = await supabase
       .from("expediente_proyecciones")
-      .select("id,datos,status")
-      .in("id", data.proyeccionIds);
+      .select("id,datos,status,created_at")
+      .in("id", data.proyeccionIds)
+      .order("created_at", { ascending: true });
     if (errP) throw new Error(errP.message);
     const valid = (proys ?? []).filter((p) => p.status === "analizado" && p.datos);
     if (!valid.length) {
@@ -218,6 +245,50 @@ export const fusionarConExtractoYReauditar = createServerFn({ method: "POST" })
     const datosNuevos: Record<string, unknown> = { ...datosBase };
     for (const [k, v] of Object.entries(fusion)) {
       if (noVacio(v)) datosNuevos[k] = v;
+    }
+    const saldoFusionado = firstNum(datosNuevos.saldoCapital, datosNuevos.saldoPesos);
+    const interesCuotaFusionado = firstNum(datosNuevos.interesCuota);
+    const tasaDerivadaPorInteres = saldoFusionado && interesCuotaFusionado
+      ? (Math.pow(1 + interesCuotaFusionado / saldoFusionado, 12) - 1) * 100
+      : undefined;
+    const tasaFusionada = firstNum(fusion.tasaEA, fusion.tea, fusion.teaCobrada, fusion.tasaCobrada, tasaDerivadaPorInteres, datosNuevos.tasaEA, datosNuevos.tea, datosNuevos.teaCobrada, datosNuevos.tasaCobrada);
+    const segurosFusionados = firstNum(datosNuevos.seguros, datosNuevos.segurosMensuales) ?? 0;
+    const cuotaClienteFusionada = firstNum(
+      datosNuevos.cuotaPagadaCliente,
+      datosNuevos.valorAPagar,
+      datosNuevos.cuotaMensual,
+      datosNuevos.cuotaActual,
+    );
+    const cuotaFinancieraFusionada = firstNum(
+      datosNuevos.cuotaConInteresSinSeguros,
+      datosNuevos.cuotaSinSeguros,
+      cuotaClienteFusionada !== undefined ? Math.max(0, cuotaClienteFusionada - segurosFusionados) : undefined,
+    );
+    const saldoUvrFusionado = firstNum(datosNuevos.saldoUVR);
+    const valorUvrActual = firstNum(datosNuevos.valorUVR);
+    const valorUvrDerivado = saldoFusionado && saldoUvrFusionado ? saldoFusionado / saldoUvrFusionado : undefined;
+    const valorUvrFusionado = firstNum(fusion.valorUVR, valorUvrDerivado, valorUvrActual);
+    const cuotasInferidas = saldoUvrFusionado && valorUvrFusionado && cuotaFinancieraFusionada
+      ? inferRemainingPayments(saldoUvrFusionado, tasaFusionada ?? 0, cuotaFinancieraFusionada / valorUvrFusionado)
+      : inferRemainingPayments(saldoFusionado ?? 0, tasaFusionada ?? 0, cuotaFinancieraFusionada ?? 0);
+    if (cuotasInferidas !== undefined) {
+      datosNuevos.cuotasPendientesExtracto = datosBase.cuotasPendientes ?? null;
+      datosNuevos.cuotasPendientes = String(cuotasInferidas);
+      datosNuevos.plazoRecalculadoPorProyeccion = true;
+    }
+    if (tasaFusionada !== undefined) {
+      datosNuevos.tasaEA = String(tasaFusionada);
+      datosNuevos.tea = String(tasaFusionada);
+      datosNuevos.teaCobrada = String(tasaFusionada);
+    }
+    if (valorUvrFusionado !== undefined) {
+      datosNuevos.valorUVR = String(valorUvrFusionado);
+    }
+    if (cuotaClienteFusionada !== undefined) {
+      datosNuevos.cuotaActual = String(cuotaClienteFusionada);
+    }
+    if (cuotaFinancieraFusionada !== undefined) {
+      datosNuevos.cuotaConInteresSinSeguros = String(cuotaFinancieraFusionada);
     }
     datosNuevos.proyeccionesAplicadas = data.proyeccionIds;
     datosNuevos.proyeccionesAplicadasAt = new Date().toISOString();
