@@ -220,9 +220,9 @@ export function PrintDocument(props: Props) {
               </p>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 4, borderLeft: `1px solid ${C.line}`, minHeight: 115, alignItems: "center" }}>
-              <HeroKpi icon={<CalendarDays size={31} color={C.blue} />} value={`${cuotasEliminadas}`} label="CUOTAS\nELIMINADAS" />
-              <HeroKpi icon={<Clock3 size={31} color={C.greenDeep} />} value={`${añosEliminadosEntero}`} label="AÑOS\nRECUPERADOS" />
-              <HeroKpi icon={<PiggyBank size={32} color={C.blue} />} value={compactMoney(recommended.ahorroTotal)} label="AHORRO\nEN INTERESES\nY SEGUROS" />
+              <HeroKpi icon={<CalendarDays size={31} color={C.blue} />} value={`${cuotasEliminadas}`} label={<>CUOTAS<br />ELIMINADAS</>} />
+              <HeroKpi icon={<Clock3 size={31} color={C.greenDeep} />} value={`${añosEliminadosEntero}`} label={<>AÑOS<br />RECUPERADOS</>} />
+              <HeroKpi icon={<PiggyBank size={32} color={C.blue} />} value={compactMoney(recommended.ahorroTotal)} label={<>AHORRO<br />EN INTERESES<br />Y SEGUROS</>} />
             </div>
           </div>
 
@@ -389,12 +389,12 @@ function TopBar({ page }: { page: string }) {
   );
 }
 
-function HeroKpi({ icon, value, label }: { icon: ReactNode; value: string; label: string }) {
+function HeroKpi({ icon, value, label }: { icon: ReactNode; value: string; label: ReactNode }) {
   return (
     <div style={{ textAlign: "center", borderLeft: `1px solid ${C.line}`, minHeight: 96, display: "flex", flexDirection: "column", justifyContent: "center" }}>
       <div style={{ display: "flex", justifyContent: "center", marginBottom: 5 }}>{icon}</div>
       <div style={{ color: C.greenDeep, fontSize: 28, lineHeight: 0.95, fontWeight: 950, letterSpacing: 0 }}>{value}</div>
-      <div style={{ marginTop: 6, color: "#071023", fontSize: 8.4, lineHeight: 1.15, fontWeight: 950, whiteSpace: "pre-line" }}>{label}</div>
+      <div style={{ marginTop: 6, color: "#071023", fontSize: 8.4, lineHeight: 1.15, fontWeight: 950 }}>{label}</div>
     </div>
   );
 }
