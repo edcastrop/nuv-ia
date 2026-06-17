@@ -631,8 +631,8 @@ function ResultadoQaAi() {
               <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
                 {[
                   ["Extracto inicial", `${Math.round(cuotasAntes)} cuotas reportadas`],
-                  ["Proyección banco", `$${fmt(proyInfo?.saldoCapitalAplicado, 0)} · cuota $${fmt(proyInfo?.cuotaClienteAplicada, 0)}`],
-                  ["Cuota financiera", `$${fmt(proyInfo?.cuotaFinancieraAplicada, 0)} sin seguros · TEA ${fmt(proyInfo?.tasaEaAplicada, 4)}%`],
+                  ["Proyección banco", `$${fmt(proySaldoAplicado, 0)} · cuota $${fmt(proyCuotaCliente, 0)}`],
+                  ["Cuota financiera", `$${fmt(proyCuotaFinanciera, 0)} sin seguros · TEA ${fmt(proyTasaEa, 4)}%`],
                   ["Resultado NUVIA", `${Math.round(cuotasDespues)} meses reales`],
                 ].map(([k, v]) => (
                   <div key={k} className="rounded-lg px-3 py-2" style={{ background: "rgba(0,0,0,0.18)", border: "1px solid var(--nuvia-border)" }}>
