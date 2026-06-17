@@ -900,6 +900,16 @@ export function UVRSimulator({
                     }}
                     dineroPagadoFecha={dineroPagadoFecha}
                     valorDesembolsado={Math.max(valorDesembolsadoNum, saldoPesosNum)}
+                    creditState={{
+                      plazoInicialMeses: plazoInicial,
+                      cuotasPagadas,
+                      cuotasPendientes: cuotasBaseSimulacion,
+                      cuotaActual: input.cuotaActualPesos,
+                      seguros: input.seguros,
+                      cuotaSinSeguros: cuotaSinSegurosNum,
+                      saldoCapital: saldoPesosNum,
+                      tasaMensualPct: calc ? calc.tasaMensual * 100 : 0,
+                    }}
                   />
                 );
               })()}
