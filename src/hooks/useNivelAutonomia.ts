@@ -20,12 +20,13 @@ export function useNivelAutonomia() {
       return;
     }
     let cancel = false;
-    supabase
-      .from("analista_metricas")
-      .select("total_simulaciones, score_promedio, precision_historica, nivel_autonomia")
-      .eq("analista_id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("analista_metricas")
+          .select("total_simulaciones, score_promedio, precision_historica, nivel_autonomia")
+          .eq("analista_id", user.id)
+          .maybeSingle();
         if (cancel) return;
         if (!data) {
           setMetricas(metricasIniciales);
@@ -41,12 +42,12 @@ export function useNivelAutonomia() {
           setMetricas(m);
         }
         setLoading(false);
-      })
-      .catch(() => {
+      } catch {
         if (cancel) return;
         setMetricas(metricasIniciales);
         setLoading(false);
-      });
+      }
+    })();
     return () => {
       cancel = true;
     };

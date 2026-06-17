@@ -62,20 +62,21 @@ export function useUserRole() {
       return;
     }
     let cancel = false;
-    supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .then(({ data }) => {
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id);
         if (cancel) return;
         setRoles((data ?? []).map((r) => r.role as AppRole));
         setLoading(false);
-      })
-      .catch(() => {
+      } catch {
         if (cancel) return;
         setRoles([]);
         setLoading(false);
-      });
+      }
+    })();
     return () => { cancel = true; };
   }, [user, authLoading]);
 
