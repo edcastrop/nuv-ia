@@ -70,11 +70,13 @@ export function UVRSimulator({
   onSaved,
   onReset,
   simuladorReturn,
+  fromSimulador,
 }: {
   initialExpediente?: Expediente;
   onSaved?: (e: Expediente) => void;
   onReset?: () => void;
   simuladorReturn?: { maestroId?: string; modo?: "pesos" | "uvr" };
+  fromSimulador?: boolean;
 } = {}) {
   const init = initialExpediente;
   const initCred = (init?.credito_data ?? {}) as Record<string, string>;
