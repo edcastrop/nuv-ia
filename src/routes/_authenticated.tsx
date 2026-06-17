@@ -31,6 +31,7 @@ import {
   RefreshCw,
   Wrench,
   DollarSign,
+  Rocket,
 } from "lucide-react";
 import { useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -510,6 +511,7 @@ function AuthenticatedLayout() {
             label: "Operación",
             items: [
               { to: "/inicio", label: "Inicio", Icon: LayoutGrid, exact: true },
+              { to: "/simulador", label: "Simulador", Icon: Rocket },
               { to: "/nuvex-ia", label: "NUVIA IA", Icon: Sparkles },
               { to: "/casos", label: "Casos", Icon: FolderKanban },
               ...(has("director_financiero_qa") &&
