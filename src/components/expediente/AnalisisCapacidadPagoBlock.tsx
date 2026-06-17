@@ -478,7 +478,10 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
         <div key={p.rol} className="mb-5 p-4 rounded-lg" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--nuvia-border-soft)" }}>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <Badge className={p.rol === "titular" ? "bg-[#445DA3]" : "bg-slate-600"}>
+              <Badge
+                className="border-0 text-white"
+                style={{ background: p.rol === "titular" ? "var(--nuvia-accent-primary)" : "rgba(255,255,255,0.18)" }}
+              >
                 {p.rol === "titular" ? "TITULAR" : "CODEUDOR"}
               </Badge>
               <Select value={p.tipoPersona} onValueChange={(v) => setTipoPersona(idx, v as TipoPersona)}>
