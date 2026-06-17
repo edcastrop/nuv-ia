@@ -210,8 +210,9 @@ export const fusionarConExtractoYReauditar = createServerFn({ method: "POST" })
 
     const { data: proys, error: errP } = await supabase
       .from("expediente_proyecciones")
-      .select("id,datos,status")
-      .in("id", data.proyeccionIds);
+      .select("id,datos,status,created_at")
+      .in("id", data.proyeccionIds)
+      .order("created_at", { ascending: true });
     if (errP) throw new Error(errP.message);
     const valid = (proys ?? []).filter((p) => p.status === "analizado" && p.datos);
     if (!valid.length) {
