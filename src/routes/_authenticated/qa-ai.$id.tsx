@@ -170,6 +170,8 @@ function StickyHeader({ cliente, banco, producto, fecha, score, scoreColor, cert
 
 function ResultadoQaAi() {
   const { id } = Route.useParams();
+  const { from, maestroId, modo } = Route.useSearch();
+  const fromSimulador = from === "simulador";
   const fetchAud = useServerFn(obtenerAuditoriaQA);
   const doReejecutar = useServerFn(reejecutarAuditoriaQA);
   const [data, setData] = useState<{ auditoria: Record<string, unknown> | null; inconsistencias: Inc[] } | null>(null);
