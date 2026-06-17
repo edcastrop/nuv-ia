@@ -35,6 +35,7 @@ interface RoleHomeProps {
 }
 
 type Counts = Partial<Record<NonNullable<RoleHomeKpi["source"]>, number>>;
+const SAFE_HOME_CONFIG = HOME_CONFIG.gerencia ?? HOME_CONFIG.super_admin!;
 
 export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
   const { user } = useAuth();
@@ -104,7 +105,7 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
     };
   }, [user]);
 
-  const config = (activeRole && HOME_CONFIG[activeRole]) || HOME_CONFIG.gerencia || HOME_CONFIG.super_admin;
+  const config = (activeRole && HOME_CONFIG[activeRole]) || SAFE_HOME_CONFIG;
 
   const saludo = useMemo(() => {
     const hora = new Date().getHours();
