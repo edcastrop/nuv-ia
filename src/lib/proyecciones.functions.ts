@@ -259,7 +259,11 @@ export const fusionarConExtractoYReauditar = createServerFn({ method: "POST" })
       datosNuevos.cuotaSinSeguros,
       cuotaClienteFusionada !== undefined ? Math.max(0, cuotaClienteFusionada - segurosFusionados) : undefined,
     );
-    const cuotasInferidas = inferRemainingPayments(saldoFusionado ?? 0, tasaFusionada ?? 0, cuotaFinancieraFusionada ?? 0);
+    const saldoUvrFusionado = firstNum(datosNuevos.saldoUVR);
+    const valorUvrFusionado = firstNum(datosNuevos.valorUVR);
+    const cuotasInferidas = saldoUvrFusionado && valorUvrFusionado && cuotaFinancieraFusionada
+      ? inferRemainingPayments(saldoUvrFusionado, tasaFusionada ?? 0, cuotaFinancieraFusionada / valorUvrFusionado)
+      : inferRemainingPayments(saldoFusionado ?? 0, tasaFusionada ?? 0, cuotaFinancieraFusionada ?? 0);
     if (cuotasInferidas !== undefined) {
       datosNuevos.cuotasPendientesExtracto = datosBase.cuotasPendientes ?? null;
       datosNuevos.cuotasPendientes = String(cuotasInferidas);
