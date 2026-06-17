@@ -167,7 +167,7 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
         .maybeSingle();
       if (!error && data) {
         setEsVis(!!data.es_vis);
-        setCuota(Number(data.cuota_propuesta));
+        setCuota(Math.round(Number(data.cuota_propuesta)));
         setResultado({
           cuotaPropuesta: Number(data.cuota_propuesta),
           esVis: !!data.es_vis,
