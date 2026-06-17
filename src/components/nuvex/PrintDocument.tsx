@@ -532,38 +532,54 @@ function ScenariosTable(props: {
 }) {
   const labels = ["Conservador", "Equilibrado", "Acelerado"];
   const fmtVal = (v: AltRow | undefined, key: (r: AltRow) => string) => v ? key(v) : "—";
-  const rows = [
-    ["Nueva cuota", formatCOP(props.cuotaActual), ...props.esc.map(e => fmtVal(e, r => formatCOP(r.nuevaCuota))), formatCOP(props.recNueva)],
-    ["Incremento mensual", "—", ...props.esc.map(e => e ? `+${formatNumber(e.incrementoPct, 1)}%` : "—"), `+${formatNumber(props.recIncPct, 1)}%`],
-    ["Nuevo plazo", `${props.plazoActual} m`, ...props.esc.map(e => e ? `${Math.round(e.añosOpt * 12)} m` : "—"), `${props.recPlazo} m`],
-    ["Fecha final", `${props.añoFinActual}`, ...props.esc.map(e => e ? `${e.añoFinOpt}` : "—"), `${props.recAñoFin}`],
-    ["Años recuperados", "—", ...props.esc.map(e => e ? `${Math.round(e.añosEliminados)}` : "—"), `${props.recAñosElim}`],
-    ["Cuotas eliminadas", "—", ...props.esc.map(e => e ? `${e.cuotasEliminadas}` : "—"), `${props.recCuotasElim}`],
-    ["Ahorro total", "—", ...props.esc.map(e => e ? formatCOP(e.ahorroTotal) : "—"), formatCOP(props.recAhorroTotal)],
-    ["Honorarios a éxito", "—", ...props.esc.map(e => e ? formatCOP(e.honorariosFinal) : "—"), formatCOP(props.recHonorarios)],
-    ["Beneficio comercial", "—", ...props.esc.map(() => "—"), "Aprobado"],
+  const rows: Array<[string, string, string, string, string, string]> = [
+    ["Nueva cuota", formatCOP(props.cuotaActual), ...props.esc.map(e => fmtVal(e, r => formatCOP(r.nuevaCuota))), formatCOP(props.recNueva)] as [string, string, string, string, string, string],
+    ["Incremento mensual", "—", ...props.esc.map(e => e ? `+${formatNumber(e.incrementoPct, 1)}%` : "—"), `+${formatNumber(props.recIncPct, 1)}%`] as [string, string, string, string, string, string],
+    ["Nuevo plazo", `${props.plazoActual} m`, ...props.esc.map(e => e ? `${Math.round(e.añosOpt * 12)} m` : "—"), `${props.recPlazo} m`] as [string, string, string, string, string, string],
+    ["Fecha final", `${props.añoFinActual}`, ...props.esc.map(e => e ? `${e.añoFinOpt}` : "—"), `${props.recAñoFin}`] as [string, string, string, string, string, string],
+    ["Años recuperados", "—", ...props.esc.map(e => e ? `${Math.round(e.añosEliminados)}` : "—"), `${props.recAñosElim}`] as [string, string, string, string, string, string],
+    ["Cuotas eliminadas", "—", ...props.esc.map(e => e ? `${e.cuotasEliminadas}` : "—"), `${props.recCuotasElim}`] as [string, string, string, string, string, string],
+    ["Ahorro total", "—", ...props.esc.map(e => e ? formatCOP(e.ahorroTotal) : "—"), formatCOP(props.recAhorroTotal)] as [string, string, string, string, string, string],
+    ["Honorarios a éxito", "—", ...props.esc.map(e => e ? formatCOP(e.honorariosFinal) : "—"), formatCOP(props.recHonorarios)] as [string, string, string, string, string, string],
+    ["Beneficio comercial", "—", ...props.esc.map(() => "—"), "Aprobado"] as [string, string, string, string, string, string],
   ];
+  const cols = "1.55fr 1fr 1fr 1fr 1fr 1.1fr";
+  const headBase: CSSProperties = { color: "#fff", padding: "9px 6px", fontSize: 9, lineHeight: 1.12, fontWeight: 950, textAlign: "center", borderRight: "1px solid rgba(255,255,255,0.12)" };
+  const headDark: CSSProperties = { ...headBase, background: "linear-gradient(180deg,#06111E,#071A3D)" };
+  const headGreen: CSSProperties = { ...headBase, background: `linear-gradient(180deg,${C.greenDeep},${C.greenDark})`, borderRight: `1px solid ${C.greenDark}` };
   return (
     <div style={{ border: `1px solid ${C.line}`, borderRadius: 7, overflow: "hidden", background: "#fff" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
-        <thead><tr>
-          <Th dark>CONCEPTO</Th><Th dark>ACTUAL</Th>
-          {labels.map((l, i) => <Th key={l} dark><div>ESCENARIO {i + 1}</div><small>{l}</small></Th>)}
-          <Th green><div>★ NUVEX</div><small>RECOMENDADO</small></Th>
-        </tr></thead>
-        <tbody>{rows.map((r) => <tr key={r[0]}>{r.map((c, i) => <td key={i} style={{ ...scenarioCell(i === 5), textAlign: i === 0 ? "left" : "center", color: i === 5 ? C.greenDeep : C.text, fontWeight: i === 0 ? 900 : i === 5 ? 950 : 800 }}>{c}</td>)}</tr>)}</tbody>
-      </table>
+      <div style={{ display: "grid", gridTemplateColumns: cols }}>
+        <div style={headDark}>CONCEPTO</div>
+        <div style={headDark}>ACTUAL</div>
+        {labels.map((l, i) => (
+          <div key={l} style={headDark}><div>ESCENARIO {i + 1}</div><div style={{ fontSize: 7.6, fontWeight: 800, color: "rgba(255,255,255,0.75)", marginTop: 1 }}>{l}</div></div>
+        ))}
+        <div style={headGreen}><div>★ NUVEX</div><div style={{ fontSize: 7.6, fontWeight: 800, color: "rgba(255,255,255,0.85)", marginTop: 1 }}>RECOMENDADO</div></div>
+      </div>
+      {rows.map((r, ri) => (
+        <div key={r[0]} style={{ display: "grid", gridTemplateColumns: cols, borderTop: `1px solid ${C.softLine}` }}>
+          {r.map((c, i) => {
+            const isRec = i === 5;
+            const isLabel = i === 0;
+            return (
+              <div key={i} style={{
+                background: isRec ? "#EAF6EE" : ri % 2 === 1 ? "#FAFBFD" : "#fff",
+                color: isRec ? C.greenDark : isLabel ? C.ink : C.text,
+                fontWeight: isLabel ? 900 : isRec ? 950 : 800,
+                fontSize: 9.4,
+                lineHeight: 1.15,
+                padding: "8px 8px",
+                textAlign: isLabel ? "left" : "center",
+                borderRight: `1px solid ${isRec ? "#CFE9D6" : C.line}`,
+              }}>{c}</div>
+            );
+          })}
+        </div>
+      ))}
       <div style={{ background: C.panel, borderTop: `1px solid ${C.line}`, color: C.muted, textAlign: "center", fontSize: 8.6, fontWeight: 800, padding: "7px 10px" }}>Total de escenarios analizados: {props.totalEscenarios} · La columna destacada es la propuesta recomendada por nuestro motor financiero.</div>
     </div>
   );
-}
-
-function Th({ children, dark, green }: { children: ReactNode; dark?: boolean; green?: boolean }) {
-  return <th style={{ background: green ? `linear-gradient(180deg,${C.greenDeep},${C.greenDark})` : dark ? "linear-gradient(180deg,#06111E,#071A3D)" : C.panel, color: "#fff", borderRight: `1px solid ${green ? C.greenDark : "rgba(255,255,255,0.12)"}`, padding: "10px 7px", fontSize: 9, lineHeight: 1.1, fontWeight: 950 }}><div>{children}</div></th>;
-}
-
-function scenarioCell(recommended = false): CSSProperties {
-  return { borderRight: `1px solid ${C.line}`, borderBottom: `1px solid ${C.softLine}`, background: recommended ? "#F2FAF4" : "#fff", padding: "7px 8px", fontSize: 9.2, lineHeight: 1.1 };
 }
 
 function SectionLabel({ title }: { title: string }) {
