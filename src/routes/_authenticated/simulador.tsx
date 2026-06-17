@@ -125,11 +125,17 @@ function SimuladorPage() {
     navigate({ to: "/simulador", search: {} });
   };
 
+  const simReturn = maestroId ? { maestroId, modo: mode ?? undefined } : undefined;
+
   return (
     <div>
       {!mode && <ModeSelector onPick={handlePickMode} />}
-      {mode === "pesos" && <PesosSimulator initialExpediente={initial} onReset={handleReset} />}
-      {mode === "uvr" && <UVRSimulator initialExpediente={initial} onReset={handleReset} />}
+      {mode === "pesos" && (
+        <PesosSimulator initialExpediente={initial} onReset={handleReset} simuladorReturn={simReturn} />
+      )}
+      {mode === "uvr" && (
+        <UVRSimulator initialExpediente={initial} onReset={handleReset} simuladorReturn={simReturn} />
+      )}
     </div>
   );
 }

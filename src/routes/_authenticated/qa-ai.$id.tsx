@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { z } from "zod";
 import { PageLayout, NCard, SectionHeader } from "@/components/nuvia";
 import { useServerFn } from "@tanstack/react-start";
 import { obtenerAuditoriaQA, reejecutarAuditoriaQA } from "@/lib/qaAI.functions";
@@ -16,10 +17,18 @@ import type { Veredicto } from "@/lib/qaMath";
 import {
   Brain, ArrowLeft, AlertTriangle, CheckCircle2, Calculator, Sigma, ShieldAlert,
   Minus, FileDown, Sparkles, RefreshCw, Trophy, ChevronDown, MessageCircle, Coins, Gauge,
+  Rocket,
 } from "lucide-react";
+
+const qaSearchSchema = z.object({
+  from: z.enum(["simulador"]).optional(),
+  maestroId: z.string().optional(),
+  modo: z.enum(["pesos", "uvr"]).optional(),
+});
 
 export const Route = createFileRoute("/_authenticated/qa-ai/$id")({
   component: ResultadoQaAi,
+  validateSearch: qaSearchSchema,
   head: () => ({ meta: [{ title: "Certificación Financiera · NUVIA" }] }),
 });
 
@@ -161,6 +170,8 @@ function StickyHeader({ cliente, banco, producto, fecha, score, scoreColor, cert
 
 function ResultadoQaAi() {
   const { id } = Route.useParams();
+  const { from, maestroId, modo } = Route.useSearch();
+  const fromSimulador = from === "simulador";
   const fetchAud = useServerFn(obtenerAuditoriaQA);
   const doReejecutar = useServerFn(reejecutarAuditoriaQA);
   const [data, setData] = useState<{ auditoria: Record<string, unknown> | null; inconsistencias: Inc[] } | null>(null);
@@ -441,12 +452,24 @@ function ResultadoQaAi() {
                 style={{ background: "rgba(255,255,255,0.06)", color: "var(--nuvia-text-primary)", border: "1px solid var(--nuvia-border)", cursor: reloading ? "not-allowed" : "pointer", opacity: reloading ? 0.5 : 1 }}>
                 <RefreshCw size={14} className={reloading ? "animate-spin" : ""} /> {reloading ? "Reauditando…" : "Reauditar"}
               </button>
-              <Link to="/qa-ai">
-                <button className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12.5px] font-semibold transition hover:opacity-90"
-                  style={{ background: "transparent", color: "var(--nuvia-text-secondary)", border: "1px solid var(--nuvia-border)", cursor: "pointer" }}>
-                  <ArrowLeft size={14} /> Volver
-                </button>
-              </Link>
+              {fromSimulador ? (
+                <Link
+                  to="/simulador"
+                  search={{ maestroId, modo }}
+                >
+                  <button className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[12.5px] font-semibold transition hover:opacity-90"
+                    style={{ background: "var(--nuvia-accent)", color: "#0B1220", border: "none", cursor: "pointer", boxShadow: "0 8px 20px -10px rgba(68,93,163,0.6)" }}>
+                    <Rocket size={14} /> Volver al simulador
+                  </button>
+                </Link>
+              ) : (
+                <Link to="/qa-ai">
+                  <button className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12.5px] font-semibold transition hover:opacity-90"
+                    style={{ background: "transparent", color: "var(--nuvia-text-secondary)", border: "1px solid var(--nuvia-border)", cursor: "pointer" }}>
+                    <ArrowLeft size={14} /> Volver
+                  </button>
+                </Link>
+              )}
             </div>
           </div>
 

@@ -37,7 +37,15 @@ const sevDot = (s?: AutoQASeveridad) => {
   }
 };
 
-export function AutoQAPanel({ loading, result }: { loading?: boolean; result?: AutoQAResult | null }) {
+export function AutoQAPanel({
+  loading,
+  result,
+  simuladorReturn,
+}: {
+  loading?: boolean;
+  result?: AutoQAResult | null;
+  simuladorReturn?: { maestroId?: string; modo?: "pesos" | "uvr" };
+}) {
   if (loading) {
     return (
       <motion.div
@@ -148,6 +156,11 @@ export function AutoQAPanel({ loading, result }: { loading?: boolean; result?: A
         <Link
           to="/qa-ai/$id"
           params={{ id: result.auditoriaId }}
+          search={
+            simuladorReturn
+              ? { from: "simulador" as const, maestroId: simuladorReturn.maestroId, modo: simuladorReturn.modo }
+              : {}
+          }
           className="group inline-flex items-center gap-1.5 rounded-xl border border-white/15 px-3.5 py-2 text-[12px] font-semibold text-white backdrop-blur-xl transition-all hover:border-white/30"
           style={{
             background: "linear-gradient(135deg, rgba(68,93,163,0.9), rgba(132,185,143,0.9))",

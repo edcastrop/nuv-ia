@@ -68,10 +68,12 @@ export function PesosSimulator({
   initialExpediente,
   onSaved,
   onReset,
+  simuladorReturn,
 }: {
   initialExpediente?: Expediente;
   onSaved?: (e: Expediente) => void;
   onReset?: () => void;
+  simuladorReturn?: { maestroId?: string; modo?: "pesos" | "uvr" };
 } = {}) {
   const init = initialExpediente;
   const initCred = (init?.credito_data ?? {}) as Record<string, string>;
@@ -476,7 +478,7 @@ export function PesosSimulator({
           }}
         />
         {init?.id && (autoQALoading || autoQA) && (
-          <AutoQAPanel loading={autoQALoading} result={autoQA} />
+          <AutoQAPanel loading={autoQALoading} result={autoQA} simuladorReturn={simuladorReturn} />
         )}
         <Card>
           <div id="datos-cliente-card" />
