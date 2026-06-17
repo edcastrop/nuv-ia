@@ -275,6 +275,8 @@ function ResultadoQaAi() {
   const trofeo = logro(score);
   const certAprobada = cert.estado === "certificado" || cert.estado === "certificado_obs";
   const puedeVolverAlSimulador = fromSimulador && certAprobada && !!maestroId && !!modo;
+  const expedienteIdCert = typeof a.expediente_id === "string" ? a.expediente_id : null;
+  const puedeConstruirPropuesta = certAprobada && !!expedienteIdCert && !puedeVolverAlSimulador;
   const sevTone = (s: string) => s === "critica" ? "var(--nuvia-danger)" : s === "warning" ? "var(--nuvia-warning)" : "var(--nuvia-text-secondary)";
 
   /* ----- Datos sticky header ----- */
