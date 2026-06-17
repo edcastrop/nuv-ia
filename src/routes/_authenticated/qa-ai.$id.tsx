@@ -258,6 +258,7 @@ function ResultadoQaAi() {
   const scoreColor = score >= 95 ? "var(--nuvia-success)" : score >= 85 ? "var(--nuvia-warning)" : "var(--nuvia-danger)";
   const cert = certificacion(a.dictamen);
   const trofeo = logro(score);
+  const puedeVolverAlSimulador = fromSimulador && cert.estado === "certificado" && !!maestroId && !!modo;
   const sevTone = (s: string) => s === "critica" ? "var(--nuvia-danger)" : s === "warning" ? "var(--nuvia-warning)" : "var(--nuvia-text-secondary)";
 
   /* ----- Datos sticky header ----- */
@@ -452,14 +453,14 @@ function ResultadoQaAi() {
                 style={{ background: "rgba(255,255,255,0.06)", color: "var(--nuvia-text-primary)", border: "1px solid var(--nuvia-border)", cursor: reloading ? "not-allowed" : "pointer", opacity: reloading ? 0.5 : 1 }}>
                 <RefreshCw size={14} className={reloading ? "animate-spin" : ""} /> {reloading ? "Reauditando…" : "Reauditar"}
               </button>
-              {fromSimulador ? (
+              {puedeVolverAlSimulador ? (
                 <Link
                   to="/simulador"
                   search={{ maestroId, modo }}
                 >
                   <button className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[12.5px] font-semibold transition hover:opacity-90"
-                    style={{ background: "var(--nuvia-accent)", color: "#0B1220", border: "none", cursor: "pointer", boxShadow: "0 8px 20px -10px rgba(68,93,163,0.6)" }}>
-                    <Rocket size={14} /> Volver al simulador
+                    style={{ background: "var(--nuvia-success)", color: "#0B1220", border: "none", cursor: "pointer", boxShadow: "0 8px 20px -10px rgba(132,185,143,0.6)" }}>
+                    <Rocket size={14} /> Volver al simulador · Crear caso
                   </button>
                 </Link>
               ) : (
@@ -520,6 +521,50 @@ function ResultadoQaAi() {
           </div>
         </div>
       </section>
+
+      {/* DEBUG: remove before final */}
+      <section className="border p-4 rounded" style={{ borderColor: "red", color: "white" }}>
+        <p>from: {JSON.stringify(from)}</p>
+        <p>maestroId: {JSON.stringify(maestroId)}</p>
+        <p>modo: {JSON.stringify(modo)}</p>
+        <p>cert.estado: {JSON.stringify(cert.estado)}</p>
+        <p>puedeVolverAlSimulador: {JSON.stringify(puedeVolverAlSimulador)}</p>
+      </section>
+
+      {/* CTA: continuar al simulador solo si la certificación fue aprobada */}
+      {puedeVolverAlSimulador && (
+        <section
+          className="relative overflow-hidden rounded-[var(--nuvia-radius-lg)] border p-5"
+          style={{
+            background: "linear-gradient(135deg, rgba(132,185,143,0.18) 0%, rgba(15,23,42,0.55) 100%)",
+            borderColor: "rgba(132,185,143,0.45)",
+            boxShadow: "0 18px 48px -28px rgba(132,185,143,0.55)",
+          }}
+        >
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl border"
+                style={{ background: "rgba(132,185,143,0.25)", borderColor: "rgba(132,185,143,0.45)" }}>
+                <CheckCircle2 size={20} style={{ color: "var(--nuvia-success)" }} />
+              </div>
+              <div>
+                <p className="text-[13.5px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
+                  Certificación aprobada · Listo para crear el caso
+                </p>
+                <p className="text-[12.5px] mt-0.5" style={{ color: "var(--nuvia-text-secondary)" }}>
+                  La auditoría QA fue exitosa. Vuelve al simulador para guardar el expediente y continuar.
+                </p>
+              </div>
+            </div>
+            <Link to="/simulador" search={{ maestroId, modo }}>
+              <button className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-[13px] font-semibold transition hover:opacity-90"
+                style={{ background: "var(--nuvia-success)", color: "#0B1220", border: "none", cursor: "pointer", boxShadow: "0 8px 20px -10px rgba(132,185,143,0.6)" }}>
+                <Rocket size={15} /> Volver al simulador
+              </button>
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* VEREDICTO EJECUTIVO + ACCIÓN RECOMENDADA */}
       <section className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-4">
