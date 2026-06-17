@@ -673,6 +673,56 @@ export function PrintDocument(props: Props) {
           </div>
         </div>
 
+        {/* ───── ¿QUÉ SUCEDE AHORA? ───── */}
+        <div style={{ padding: "12px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
+          <div style={{
+            fontSize: 10, fontWeight: 900, color: C.muted,
+            letterSpacing: "0.22em", marginBottom: 6,
+          }}>
+            ¿QUÉ SUCEDE AHORA?
+          </div>
+          <div style={{
+            display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8,
+            alignItems: "stretch",
+          }}>
+            {[
+              { n: 1, t: "Firma de", b: "autorización" },
+              { n: 2, t: "Radicación", b: "ante el banco" },
+              { n: 3, t: "Análisis", b: "del banco" },
+              { n: 4, t: "Respuesta", b: "oficial" },
+              { n: 5, t: "Disfrutas tu", b: "optimización" },
+            ].map((s, i) => (
+              <div key={s.n} style={{
+                position: "relative",
+                background: i === 4 ? `linear-gradient(135deg, ${C.greenSoft} 0%, #fff 100%)` : "#fff",
+                border: `1px solid ${i === 4 ? C.green + "88" : C.hairline}`,
+                borderRadius: 10, padding: "10px 10px 10px 10px",
+                display: "flex", flexDirection: "column", gap: 4,
+              }}>
+                <div style={{
+                  width: 22, height: 22, borderRadius: "50%",
+                  background: i === 4 ? C.greenDeep : C.ink,
+                  color: "#fff", fontSize: 11, fontWeight: 900,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  {s.n}
+                </div>
+                <div style={{
+                  fontSize: 8, letterSpacing: "0.18em", fontWeight: 900,
+                  color: C.muted, marginTop: 2,
+                }}>
+                  PASO {s.n}
+                </div>
+                <div style={{
+                  fontSize: 10.5, fontWeight: 800, color: C.ink, lineHeight: 1.2,
+                }}>
+                  {s.t}<br />{s.b}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Spacer */}
         <div style={{ flex: "1 1 auto", minHeight: 6 }} />
 
