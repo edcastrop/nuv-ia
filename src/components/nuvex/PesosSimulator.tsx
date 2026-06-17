@@ -829,6 +829,16 @@ export function PesosSimulator({
                     }}
                     dineroPagadoFecha={dineroPagadoFecha}
                     valorDesembolsado={Math.max(valorDesembolsadoNum, saldoCapitalNum)}
+                    creditState={{
+                      plazoInicialMeses: plazoInicial,
+                      cuotasPagadas,
+                      cuotasPendientes: cuotasBaseSimulacion,
+                      cuotaActual: input.cuotaActual,
+                      seguros: input.seguros,
+                      cuotaSinSeguros: cuotaSinSegurosNum,
+                      saldoCapital: input.saldoCapital,
+                      tasaMensualPct: calc ? calc.tasaMensual * 100 : 0,
+                    }}
                   />
                 );
               })()}
