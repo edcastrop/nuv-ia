@@ -1473,6 +1473,358 @@ function FooterItem({ icon, title, lines }: { icon: React.ReactNode; title: stri
 }
 
 
+/* ════════════════════════════════════════════════════════════
+   NUEVA ARQUITECTURA — ESTADO ACTUAL · KPI · TIMELINE · TABLA
+════════════════════════════════════════════════════════════ */
+
+function EstadoActualCard(props: {
+  banco: string; producto: string;
+  plazoInicialMeses: number; cuotasPagadas: number; cuotasPendientes: number;
+  cuotaActual: number; seguros: number; cuotaSinSeguros: number;
+  tasaMensualPct: number; saldoCapital: number;
+  dineroPagado: number; dineroPendiente: number;
+  costoTotal: number; vecesPagado: number;
+  valorDesembolsado: number;
+}) {
+  const {
+    banco, producto, plazoInicialMeses, cuotasPagadas, cuotasPendientes,
+    cuotaActual, seguros, cuotaSinSeguros, tasaMensualPct, saldoCapital,
+    dineroPagado, dineroPendiente, costoTotal, vecesPagado, valorDesembolsado,
+  } = props;
+
+  const tasaMensual = tasaMensualPct / 100;
+  const interesMensual = Math.max(0, saldoCapital * tasaMensual);
+  const capitalMensual = Math.max(0, cuotaSinSeguros - interesMensual);
+  const capitalPagado = valorDesembolsado > 0 && saldoCapital > 0
+    ? Math.max(0, valorDesembolsado - saldoCapital) : 0;
+  const segurosPagados = seguros * cuotasPagadas;
+  const interesesPagados = Math.max(0, dineroPagado - capitalPagado - segurosPagados);
+
+  return (
+    <div style={{
+      background: "#fff", border: `1px solid ${C.hairline}`, borderRadius: 12,
+      padding: "10px 12px", display: "flex", flexDirection: "column", gap: 6,
+      breakInside: "avoid", pageBreakInside: "avoid",
+    }}>
+      <div style={{
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+        paddingBottom: 5, borderBottom: `1px solid ${C.hairline}`,
+      }}>
+        <div style={{
+          fontSize: 9, letterSpacing: "0.22em", fontWeight: 900, color: C.ink,
+        }}>ESTADO ACTUAL DEL CRÉDITO</div>
+        <div style={{
+          background: C.ink, color: "#fff", fontSize: 7, fontWeight: 800,
+          letterSpacing: "0.14em", padding: "2px 6px", borderRadius: 3,
+        }}>DASHBOARD</div>
+      </div>
+
+      <StateGroup title="Producto">
+        <StateRow label="Banco" value={banco} />
+        <StateRow label="Producto" value={producto} />
+        <StateRow label="Plazo inicial" value={`${plazoInicialMeses} meses`} />
+      </StateGroup>
+
+      <StateGroup title="Cuotas">
+        <StateRow label="Canceladas" value={`${cuotasPagadas}`} />
+        <StateRow label="Pendientes" value={`${cuotasPendientes}`} />
+      </StateGroup>
+
+      <StateGroup title="Cuota mensual">
+        <StateRow label="Cuota actual" value={formatCOP(cuotaActual)} bold />
+        <StateRow label="Seguros" value={formatCOP(seguros)} />
+        <StateRow label="Interés mensual" value={formatCOP(interesMensual)} />
+        <StateRow label="Capital mensual" value={formatCOP(capitalMensual)} />
+      </StateGroup>
+
+      <StateGroup title="Pagado a la fecha">
+        <StateRow label="Dinero pagado" value={formatCOP(dineroPagado)} bold />
+        <StateRow label="Intereses pagados" value={formatCOP(interesesPagados)} />
+        <StateRow label="Capital pagado" value={formatCOP(capitalPagado)} />
+      </StateGroup>
+
+      <StateGroup title="Proyección sin NUVEX">
+        <StateRow label="Dinero pendiente" value={formatCOP(dineroPendiente)} />
+        <StateRow label="Costo total proyectado" value={formatCOP(costoTotal)} bold danger />
+      </StateGroup>
+
+      <div style={{
+        marginTop: 2, background: "#FCE6E5", border: `1px solid ${C.red}55`,
+        borderRadius: 8, padding: "6px 10px",
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+      }}>
+        <div style={{ fontSize: 8.5, letterSpacing: "0.18em", fontWeight: 900, color: C.redDeep }}>
+          N° VECES PAGADO
+        </div>
+        <div style={{ fontSize: 18, fontWeight: 900, color: C.redDeep, letterSpacing: "-0.02em" }}>
+          {formatNumber(vecesPagado, 2)}×
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StateGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div style={{
+        fontSize: 7.5, letterSpacing: "0.2em", fontWeight: 800, color: C.muted,
+        marginBottom: 2, textTransform: "uppercase",
+      }}>{title}</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function StateRow({
+  label, value, bold = false, danger = false,
+}: { label: string; value: string; bold?: boolean; danger?: boolean }) {
+  return (
+    <div style={{
+      display: "flex", justifyContent: "space-between", alignItems: "baseline",
+      fontSize: 9.5, lineHeight: 1.3,
+    }}>
+      <span style={{ color: C.text, fontWeight: 500 }}>{label}</span>
+      <span style={{
+        color: danger ? C.redDeep : C.ink,
+        fontWeight: bold ? 900 : 700,
+        letterSpacing: "-0.01em",
+      }}>{value}</span>
+    </div>
+  );
+}
+
+function KpiTile({
+  label, value, sub, accent, big = false,
+}: { label: string; value: string; sub?: string; accent: string; big?: boolean }) {
+  return (
+    <div style={{
+      background: "#fff", border: `1px solid ${C.hairline}`,
+      borderRadius: 8, padding: "5px 8px",
+      display: "flex", flexDirection: "column", justifyContent: "center",
+      minHeight: big ? 50 : 44,
+    }}>
+      <div style={{
+        fontSize: 7.2, letterSpacing: "0.16em", fontWeight: 800, color: C.muted,
+        marginBottom: 2,
+      }}>{label}</div>
+      <div style={{
+        fontSize: big ? 14 : 12, fontWeight: 900, color: accent,
+        letterSpacing: "-0.02em", lineHeight: 1.05,
+      }}>{value}</div>
+      {sub && (
+        <div style={{ fontSize: 7.5, color: C.muted, marginTop: 1, fontWeight: 600 }}>{sub}</div>
+      )}
+    </div>
+  );
+}
+
+function TimelineStat({ label, value, color }: { label: string; value: string; color: string }) {
+  return (
+    <div style={{ textAlign: "center" }}>
+      <div style={{ fontSize: 7, letterSpacing: "0.16em", fontWeight: 800, color: C.muted }}>
+        {label}
+      </div>
+      <div style={{
+        fontSize: 11, fontWeight: 900, color, letterSpacing: "-0.01em", marginTop: 1,
+      }}>{value}</div>
+    </div>
+  );
+}
+
+function ReasonItem({ text }: { text: React.ReactNode }) {
+  return (
+    <div style={{
+      display: "flex", alignItems: "flex-start", gap: 6,
+      fontSize: 9.5, color: C.ink, lineHeight: 1.3,
+    }}>
+      <span style={{
+        width: 16, height: 16, borderRadius: "50%",
+        background: C.greenDeep, color: "#fff",
+        display: "inline-flex", alignItems: "center", justifyContent: "center",
+        fontSize: 10, fontWeight: 900, flexShrink: 0, marginTop: 1,
+      }}>✓</span>
+      <span>{text}</span>
+    </div>
+  );
+}
+
+function ComparisonTable(props: {
+  cuotaActual: number;
+  añoFinActual: number;
+  añosActual: number;
+  plazoActual: number;
+  allPropuestas: AltRow[];
+  bestIndex: number;
+  recHonorariosFinal: number;
+  recTieneDescuento: boolean;
+}) {
+  const {
+    cuotaActual, añoFinActual, añosActual, plazoActual,
+    allPropuestas, bestIndex, recHonorariosFinal, recTieneDescuento,
+  } = props;
+
+  const rec = allPropuestas[bestIndex];
+  const others = allPropuestas
+    .map((p, idx) => ({ p, idx }))
+    .filter(({ idx }) => idx !== bestIndex)
+    .map(({ p }) => p)
+    .slice(0, 3);
+
+  // Columnas: Actual | Escenarios alternativos | Recomendado (último, destacado)
+  const cols = [
+    { key: "actual", label: "ACTUAL", isRec: false, isCurrent: true },
+    ...others.map((_, i) => ({
+      key: `e${i + 1}`, label: `ESCENARIO ${i + 1}`, isRec: false, isCurrent: false,
+    })),
+    { key: "rec", label: "RECOMENDADO", isRec: true, isCurrent: false },
+  ];
+
+  const colData: Record<string, AltRow | null> = { actual: null, rec };
+  others.forEach((p, i) => { colData[`e${i + 1}`] = p; });
+
+  const fmtCuota = (c: { isCurrent: boolean; isRec: boolean; key: string }) => {
+    if (c.isCurrent) return formatCOP(cuotaActual);
+    const d = colData[c.key];
+    return d ? formatCOP(d.nuevaCuota) : "—";
+  };
+  const fmtIncremento = (c: { isCurrent: boolean; key: string }) => {
+    if (c.isCurrent) return "—";
+    const d = colData[c.key];
+    return d ? `+${formatNumber(d.incrementoPct, 1)}%` : "—";
+  };
+  const fmtPlazo = (c: { isCurrent: boolean; key: string }) => {
+    if (c.isCurrent) return `${plazoActual} m`;
+    const d = colData[c.key];
+    return d ? `${Math.round(d.añosOpt * 12)} m` : "—";
+  };
+  const fmtFecha = (c: { isCurrent: boolean; key: string }) => {
+    if (c.isCurrent) return `${añoFinActual}`;
+    const d = colData[c.key];
+    return d ? `${d.añoFinOpt}` : "—";
+  };
+  const fmtAños = (c: { isCurrent: boolean; key: string }) => {
+    if (c.isCurrent) return "—";
+    const d = colData[c.key];
+    return d ? `${Math.round(d.añosEliminados)}` : "—";
+  };
+  const fmtCuotas = (c: { isCurrent: boolean; key: string }) => {
+    if (c.isCurrent) return "—";
+    const d = colData[c.key];
+    return d ? `${d.cuotasEliminadas}` : "—";
+  };
+  const fmtAhorro = (c: { isCurrent: boolean; key: string }) => {
+    if (c.isCurrent) return "—";
+    const d = colData[c.key];
+    return d ? formatCOP(d.ahorroTotal) : "—";
+  };
+  const fmtHonor = (c: { isCurrent: boolean; isRec: boolean; key: string }) => {
+    if (c.isCurrent) return "—";
+    if (c.isRec) return formatCOP(recHonorariosFinal);
+    const d = colData[c.key];
+    return d ? formatCOP(d.honorariosFinal) : "—";
+  };
+  const fmtBeneficio = (c: { isRec: boolean }) => c.isRec
+    ? (recTieneDescuento ? "Descuento aplicado" : "Aprobado")
+    : "—";
+
+  const rows: { label: string; fn: (c: typeof cols[number]) => string; emphasize?: boolean }[] = [
+    { label: "Nueva cuota", fn: fmtCuota, emphasize: true },
+    { label: "Incremento mensual", fn: fmtIncremento },
+    { label: "Nuevo plazo", fn: fmtPlazo },
+    { label: "Fecha final", fn: fmtFecha },
+    { label: "Años recuperados", fn: fmtAños },
+    { label: "Cuotas eliminadas", fn: fmtCuotas },
+    { label: "Ahorro total", fn: fmtAhorro, emphasize: true },
+    { label: "Honorarios a éxito", fn: fmtHonor },
+    { label: "Beneficio comercial", fn: fmtBeneficio },
+  ];
+
+  const totalCols = cols.length;
+  const gridTemplate = `1.3fr ${cols.map((c) => c.isRec ? "1.15fr" : "1fr").join(" ")}`;
+
+  return (
+    <div style={{
+      background: "#fff", border: `1px solid ${C.hairline}`, borderRadius: 12,
+      overflow: "hidden", boxShadow: "0 4px 14px -8px rgba(0,0,0,0.08)",
+    }}>
+      {/* Header */}
+      <div style={{
+        display: "grid", gridTemplateColumns: gridTemplate,
+        background: C.black, color: "#fff",
+      }}>
+        <div style={{
+          padding: "10px 12px", fontSize: 9, fontWeight: 900,
+          letterSpacing: "0.18em",
+        }}>CONCEPTO</div>
+        {cols.map((c) => (
+          <div key={c.key} style={{
+            padding: "10px 8px", textAlign: "center",
+            fontSize: 9, fontWeight: 900, letterSpacing: "0.12em",
+            background: c.isRec ? C.greenDeep : "transparent",
+            color: c.isRec ? "#fff" : "rgba(255,255,255,0.78)",
+            position: "relative",
+          }}>
+            {c.isRec && (
+              <div style={{
+                fontSize: 7, letterSpacing: "0.18em", color: "#fff",
+                opacity: 0.85, marginBottom: 2,
+              }}>★ NUVEX</div>
+            )}
+            {c.label}
+          </div>
+        ))}
+      </div>
+
+      {/* Body */}
+      {rows.map((r, ri) => (
+        <div key={ri} style={{
+          display: "grid", gridTemplateColumns: gridTemplate,
+          borderTop: `1px solid ${C.hairline}`,
+          background: ri % 2 === 0 ? "#fff" : C.bgSoft,
+        }}>
+          <div style={{
+            padding: "7px 12px", fontSize: 9.5, fontWeight: 700, color: C.text,
+          }}>
+            {r.label}
+          </div>
+          {cols.map((c) => {
+            const isRec = c.isRec;
+            const isCurrent = c.isCurrent;
+            return (
+              <div key={c.key} style={{
+                padding: "7px 8px", textAlign: "center",
+                fontSize: r.emphasize ? 10.5 : 9.5,
+                fontWeight: isRec || r.emphasize ? 900 : 700,
+                color: isCurrent
+                  ? C.muted
+                  : isRec ? C.greenDeep : C.ink,
+                background: isRec ? "rgba(132,185,143,0.12)" : "transparent",
+                borderLeft: isRec ? `2px solid ${C.greenDeep}` : "none",
+                letterSpacing: "-0.01em",
+              }}>
+                {r.fn(c)}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+
+      {/* Footer hint */}
+      <div style={{
+        padding: "6px 12px", background: C.bgSoft,
+        borderTop: `1px solid ${C.hairline}`, textAlign: "center",
+        fontSize: 8, color: C.muted, fontStyle: "italic",
+      }}>
+        Total de escenarios analizados: {totalCols - 1} · La columna destacada es la
+        propuesta recomendada por nuestro motor financiero.
+      </div>
+    </div>
+  );
+}
+
 function initialsOf(name: string): string {
   return name
     .trim()
