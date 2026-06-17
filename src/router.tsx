@@ -31,17 +31,6 @@ function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => vo
   );
 }
 
-function DefaultPendingComponent() {
-  return (
-    <div className="flex min-h-[55vh] items-center justify-center bg-[#F4F6FB] px-4 text-[#0A1226]">
-      <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm">
-        <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#84B98F]" />
-        Cargando vista de NUVIA…
-      </div>
-    </div>
-  );
-}
-
 export const getRouter = () => {
   const queryClient = new QueryClient();
 
@@ -52,9 +41,6 @@ export const getRouter = () => {
     defaultPreload: false,
     defaultPreloadStaleTime: 0,
     defaultErrorComponent: DefaultErrorComponent,
-    defaultPendingComponent: DefaultPendingComponent,
-    defaultPendingMs: 250,
-    defaultPendingMinMs: 350,
   });
 
   return router;
