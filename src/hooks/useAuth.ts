@@ -49,11 +49,13 @@ export function useAuth(): State {
       .getSession()
       .then(({ data }) => {
         if (!active) return;
-        setState({ session: data.session, user: data.session?.user ?? null, loading: false });
+        const session = data.session ?? readCachedSession();
+        setState({ session, user: session?.user ?? null, loading: false });
       })
       .catch(() => {
         if (!active) return;
-        setState({ session: null, user: null, loading: false });
+        const cached = readCachedSession();
+        setState({ session: cached, user: cached?.user ?? null, loading: false });
       });
     return () => {
       active = false;

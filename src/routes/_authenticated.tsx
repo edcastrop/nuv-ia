@@ -140,6 +140,8 @@ function AuthenticatedLayout() {
     setReloading(true);
     try {
       await Promise.all([queryClient.invalidateQueries(), router.invalidate()]);
+    } catch {
+      // No propagar un fallo transitorio de red al árbol React.
     } finally {
       setTimeout(() => setReloading(false), 400);
     }
@@ -231,15 +233,18 @@ function AuthenticatedLayout() {
           if (path !== "/pendiente-aprobacion") {
             setGateState("blocked");
             setGateChecked(true);
-            supabase
-              .from("onboarding_auditoria" as never)
-              .insert({
-                user_id: session.user.id,
-                evento: "acceso_bloqueado",
-                actor_id: session.user.id,
-                detalle: { path, estado_acceso: estado },
-              } as never)
-              .then(() => {});
+            void (async () => {
+              try {
+                await supabase.from("onboarding_auditoria" as never).insert({
+                  user_id: session.user.id,
+                  evento: "acceso_bloqueado",
+                  actor_id: session.user.id,
+                  detalle: { path, estado_acceso: estado },
+                } as never);
+              } catch {
+                // Auditoría auxiliar: no debe romper el acceso si falla la red.
+              }
+            })();
             navigate({ to: "/pendiente-aprobacion" });
           } else {
             setGateState("ok");
@@ -304,19 +309,23 @@ function AuthenticatedLayout() {
     let active = true;
     const uid = session.user.id;
     const load = async () => {
-      const [{ count: ca }, { count: nu }] = await Promise.all([
-        supabase
-          .from("caso_alertas" as never)
-          .select("id", { count: "exact", head: true })
-          .eq("leida", false),
-        supabase
-          .from("notificaciones_usuario" as never)
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", uid)
-          .eq("leida", false)
-          .neq("tipo", "mensaje_interno"),
-      ]);
-      if (active) setUnread((ca ?? 0) + (nu ?? 0));
+      try {
+        const [{ count: ca }, { count: nu }] = await Promise.all([
+          supabase
+            .from("caso_alertas" as never)
+            .select("id", { count: "exact", head: true })
+            .eq("leida", false),
+          supabase
+            .from("notificaciones_usuario" as never)
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", uid)
+            .eq("leida", false)
+            .neq("tipo", "mensaje_interno"),
+        ]);
+        if (active) setUnread((ca ?? 0) + (nu ?? 0));
+      } catch {
+        // Mantiene la pantalla estable si el backend/Internet falla momentáneamente.
+      }
     };
 
     load();
@@ -348,14 +357,18 @@ function AuthenticatedLayout() {
     let active = true;
     const uid = session.user.id;
     const loadProfile = async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("nombre, avatar_url")
-        .eq("id", uid)
-        .maybeSingle();
-      if (!active || !data) return;
-      const d = data as { nombre: string | null; avatar_url: string | null };
-      setProfileMeta({ nombre: d.nombre, avatar_url: d.avatar_url });
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("nombre, avatar_url")
+          .eq("id", uid)
+          .maybeSingle();
+        if (!active || !data) return;
+        const d = data as { nombre: string | null; avatar_url: string | null };
+        setProfileMeta({ nombre: d.nombre, avatar_url: d.avatar_url });
+      } catch {
+        // No bloquear navegación por avatar/perfil temporalmente no disponible.
+      }
     };
     loadProfile();
     const ch = supabase
@@ -378,49 +391,53 @@ function AuthenticatedLayout() {
     let active = true;
     const uid = session.user.id;
     const load = async () => {
-      const [{ data: notifsCanal }, { data: miembros }] = await Promise.all([
-        supabase
-          .from("colab_notificaciones" as never)
-          .select("id, colab_canales!inner(tipo)")
-          .eq("user_id", uid)
-          .eq("leida", false),
-        supabase
-          .from("colab_miembros" as never)
-          .select("canal_id, ultima_lectura, colab_canales!inner(id,tipo,archivado)")
-          .eq("user_id", uid),
-      ]);
-      if (!active) return;
-      // Excluir DMs del badge "Colaboración" — los DMs viven en su propio badge "Mensajería".
-      const colabNoDm = ((notifsCanal ?? []) as ColabNotifRow[]).filter(
-        (n) => n.colab_canales?.tipo !== "dm",
-      ).length;
-      setColabUnread(colabNoDm);
+      try {
+        const [{ data: notifsCanal }, { data: miembros }] = await Promise.all([
+          supabase
+            .from("colab_notificaciones" as never)
+            .select("id, colab_canales!inner(tipo)")
+            .eq("user_id", uid)
+            .eq("leida", false),
+          supabase
+            .from("colab_miembros" as never)
+            .select("canal_id, ultima_lectura, colab_canales!inner(id,tipo,archivado)")
+            .eq("user_id", uid),
+        ]);
+        if (!active) return;
+        // Excluir DMs del badge "Colaboración" — los DMs viven en su propio badge "Mensajería".
+        const colabNoDm = ((notifsCanal ?? []) as ColabNotifRow[]).filter(
+          (n) => n.colab_canales?.tipo !== "dm",
+        ).length;
+        setColabUnread(colabNoDm);
 
-      const dmRows = ((miembros ?? []) as ColabMemberRow[]).filter(
-        (m) => m.colab_canales?.tipo === "dm" && !m.colab_canales?.archivado,
-      );
-      if (dmRows.length === 0) {
-        setDmUnread(0);
-        return;
+        const dmRows = ((miembros ?? []) as ColabMemberRow[]).filter(
+          (m) => m.colab_canales?.tipo === "dm" && !m.colab_canales?.archivado,
+        );
+        if (dmRows.length === 0) {
+          setDmUnread(0);
+          return;
+        }
+        const ids = dmRows.map((r) => r.canal_id);
+        const readMap = new Map<string, string | null>(
+          dmRows.map((r) => [r.canal_id, r.ultima_lectura]),
+        );
+        const { data: msgs } = await supabase
+          .from("colab_mensajes" as never)
+          .select("canal_id, user_id, created_at")
+          .in("canal_id", ids)
+          .order("created_at", { ascending: false })
+          .limit(ids.length * 30);
+        if (!active) return;
+        let total = 0;
+        ((msgs ?? []) as ColabMessageRow[]).forEach((m) => {
+          if (m.user_id === uid) return;
+          const last = readMap.get(m.canal_id);
+          if (!last || new Date(m.created_at) > new Date(last)) total++;
+        });
+        setDmUnread(total);
+      } catch {
+        // Los badges colaborativos no deben romper la sesión si hay caída de red.
       }
-      const ids = dmRows.map((r) => r.canal_id);
-      const readMap = new Map<string, string | null>(
-        dmRows.map((r) => [r.canal_id, r.ultima_lectura]),
-      );
-      const { data: msgs } = await supabase
-        .from("colab_mensajes" as never)
-        .select("canal_id, user_id, created_at")
-        .in("canal_id", ids)
-        .order("created_at", { ascending: false })
-        .limit(ids.length * 30);
-      if (!active) return;
-      let total = 0;
-      ((msgs ?? []) as ColabMessageRow[]).forEach((m) => {
-        if (m.user_id === uid) return;
-        const last = readMap.get(m.canal_id);
-        if (!last || new Date(m.created_at) > new Date(last)) total++;
-      });
-      setDmUnread(total);
     };
     load();
     const ch = supabase
@@ -456,14 +473,18 @@ function AuthenticatedLayout() {
     const uid = session.user.id;
     let cancel = false;
     (async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("presencia_visible")
-        .eq("id", uid)
-        .maybeSingle();
-      if (cancel) return;
-      const visible = (data as { presencia_visible?: boolean } | null)?.presencia_visible !== false;
-      iniciarPresenciaPropia(uid, visible);
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("presencia_visible")
+          .eq("id", uid)
+          .maybeSingle();
+        if (cancel) return;
+        const visible = (data as { presencia_visible?: boolean } | null)?.presencia_visible !== false;
+        await iniciarPresenciaPropia(uid, visible);
+      } catch {
+        // Presencia es auxiliar; nunca debe dejar la app en blanco.
+      }
     })();
     return () => {
       cancel = true;

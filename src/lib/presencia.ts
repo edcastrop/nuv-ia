@@ -48,7 +48,9 @@ function suscribirCanal(ch: ReturnType<typeof supabase.channel>) {
 
   _subscribePromise = new Promise<void>((resolve) => {
     ch.subscribe((status) => {
-      if (status === "SUBSCRIBED") resolve();
+      if (status === "SUBSCRIBED" || status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+        resolve();
+      }
     });
   });
 
@@ -83,15 +85,15 @@ export async function iniciarPresenciaPropia(userId: string, visible: boolean) {
   }
 
   const ch = asegurarCanalPresencia();
-  await suscribirCanal(ch);
-  await ch.track({ user_id: userId, online_at: new Date().toISOString() });
+  await suscribirCanal(ch).catch(() => undefined);
+  await ch.track({ user_id: userId, online_at: new Date().toISOString() }).catch(() => undefined);
 
-  await tocarLastSeen(userId);
+  await tocarLastSeen(userId).catch(() => undefined);
   if (typeof window === "undefined" || typeof document === "undefined") return;
 
-  _heartbeatTimer = window.setInterval(() => { tocarLastSeen(userId); }, HEARTBEAT_MS);
+  _heartbeatTimer = window.setInterval(() => { void tocarLastSeen(userId); }, HEARTBEAT_MS);
 
-  const onHide = () => { tocarLastSeen(userId); };
+  const onHide = () => { void tocarLastSeen(userId); };
   document.addEventListener("visibilitychange", onHide);
   window.addEventListener("beforeunload", onHide);
   _removeWindowListeners = () => {
