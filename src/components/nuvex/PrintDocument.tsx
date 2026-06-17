@@ -483,10 +483,10 @@ function InfoTile({ icon, label, value, compact = false, featured = false }: {
 
 function HeroFeature({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: "10px 13px", minHeight: 68 }}>
-      <div style={{ color: C.green, display: "flex", alignItems: "center", marginBottom: 5 }}>{icon}</div>
-      <div style={{ fontSize: 7.4, letterSpacing: "0.18em", color: "rgba(255,255,255,0.62)", fontWeight: 900, textTransform: "uppercase" }}>{label}</div>
-      <div style={{ marginTop: 3, fontSize: 14.8, lineHeight: 1.05, color: "#fff", fontWeight: 900, letterSpacing: "-0.02em" }}>{value}</div>
+    <div style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: "8px 12px", minHeight: 58 }}>
+      <div style={{ color: C.green, display: "flex", alignItems: "center", marginBottom: 3 }}>{icon}</div>
+      <div style={{ fontSize: 7, letterSpacing: "0.18em", color: "rgba(255,255,255,0.62)", fontWeight: 900, textTransform: "uppercase" }}>{label}</div>
+      <div style={{ marginTop: 2, fontSize: 13.6, lineHeight: 1.03, color: "#fff", fontWeight: 900, letterSpacing: "-0.02em" }}>{value}</div>
     </div>
   );
 }
@@ -516,11 +516,11 @@ function BeforeAfterTable({ rows }: { rows: Array<{ label: string; before: strin
 }
 
 const compareHeadStyle: React.CSSProperties = {
-  padding: "10px 14px", fontSize: 8.4, letterSpacing: "0.18em", fontWeight: 900, textAlign: "center",
+  padding: "8px 14px", fontSize: 8.2, letterSpacing: "0.18em", fontWeight: 900, textAlign: "center",
 };
 
 const compareCellStyle: React.CSSProperties = {
-  padding: "8px 13px", fontSize: 9.8, minHeight: 34, display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center",
+  padding: "6px 13px", fontSize: 9.4, minHeight: 30, display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center",
 };
 
 function HeroKpi({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) {
