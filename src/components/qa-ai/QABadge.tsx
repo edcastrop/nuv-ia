@@ -15,12 +15,14 @@ export function QABadge({
   auditoriaId,
   size = "sm",
   className = "",
+  asLink = true,
 }: {
   categoria: QACategoria;
   score?: number | null;
   auditoriaId?: string | null;
   size?: "xs" | "sm" | "md";
   className?: string;
+  asLink?: boolean;
 }) {
   if (!categoria) {
     return (
@@ -46,7 +48,7 @@ export function QABadge({
       {score != null && <span className="opacity-70 font-medium">· {Number(score).toFixed(0)}</span>}
     </span>
   );
-  if (auditoriaId) {
+  if (auditoriaId && asLink) {
     return <Link to="/qa-ai/$id" params={{ id: auditoriaId }} className="hover:opacity-80">{content}</Link>;
   }
   return content;
