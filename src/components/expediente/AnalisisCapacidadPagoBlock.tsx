@@ -140,7 +140,7 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
   const enviarSolicitud = useServerFn(enviarSolicitudPlazoBanco);
 
   const [esVis, setEsVis] = useState(false);
-  const [cuota, setCuota] = useState<number>(cuotaPropuesta || 0);
+  const [cuota, setCuota] = useState<number>(Math.round(cuotaPropuesta || 0));
   const [personas, setPersonas] = useState<PersonaForm[]>([nuevaPersona("titular")]);
   const [analizando, setAnalizando] = useState(false);
   const [resultado, setResultado] = useState<AnalisisCapacidadResultado["data"] | null>(null);
@@ -152,7 +152,7 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
   const [enviandoSolicitud, setEnviandoSolicitud] = useState(false);
 
   useEffect(() => {
-    setCuota(cuotaPropuesta || 0);
+    setCuota(Math.round(cuotaPropuesta || 0));
   }, [cuotaPropuesta]);
 
   // Cargar último análisis guardado
@@ -167,7 +167,7 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
         .maybeSingle();
       if (!error && data) {
         setEsVis(!!data.es_vis);
-        setCuota(Number(data.cuota_propuesta));
+        setCuota(Math.round(Number(data.cuota_propuesta)));
         setResultado({
           cuotaPropuesta: Number(data.cuota_propuesta),
           esVis: !!data.es_vis,
@@ -459,7 +459,7 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5 p-4 rounded-lg" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--nuvia-border-soft)" }}>
         <div>
           <Label className="text-xs" style={{ color: "var(--nuvia-text-secondary)" }}>Cuota propuesta al banco</Label>
-          <Input type="number" value={cuota || ""} onChange={(e) => setCuota(Number(e.target.value))} className="nuvia-input font-bold" />
+          <Input type="number" step={1} value={cuota || ""} onChange={(e) => setCuota(Math.round(Number(e.target.value) || 0))} className="nuvia-input font-bold" />
           <p className="text-xs mt-1" style={{ color: "var(--nuvia-text-tertiary)" }}>Tomada del simulador NUVEX.</p>
         </div>
         <div>
@@ -478,7 +478,10 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
         <div key={p.rol} className="mb-5 p-4 rounded-lg" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--nuvia-border-soft)" }}>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <Badge className={p.rol === "titular" ? "bg-[#445DA3]" : "bg-slate-600"}>
+              <Badge
+                className="border-0 text-white"
+                style={{ background: p.rol === "titular" ? "var(--nuvia-accent-primary)" : "rgba(255,255,255,0.18)" }}
+              >
                 {p.rol === "titular" ? "TITULAR" : "CODEUDOR"}
               </Badge>
               <Select value={p.tipoPersona} onValueChange={(v) => setTipoPersona(idx, v as TipoPersona)}>
@@ -563,7 +566,8 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
         <Button
           onClick={correrAnalisis}
           disabled={analizando || totalArchivos === 0 || cuota <= 0}
-          className="bg-[#445DA3] hover:bg-[#3a4f8a] ml-auto"
+          className="ml-auto border-0 text-white"
+          style={{ background: "var(--nuvia-accent-primary)" }}
         >
           {analizando ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Analizando con IA…</>) : (<><Sparkles className="w-4 h-4 mr-2" />Ejecutar análisis</>)}
         </Button>
@@ -571,7 +575,8 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
           onClick={() => { setPlazoNuevo(0); setOpenSolicitud(true); }}
           disabled={!resultado || totalArchivos === 0}
           variant="outline"
-          className="border-emerald-600 text-emerald-700 hover:bg-emerald-50"
+          className="border-0 text-white disabled:opacity-50"
+          style={{ background: "rgba(132,185,143,0.22)", borderColor: "rgba(132,185,143,0.5)" }}
           title={!resultado ? "Ejecuta primero el análisis" : "Construir y enviar a Jurídica"}
         >
           <Mail className="w-4 h-4 mr-2" /> Construir solicitud al banco
