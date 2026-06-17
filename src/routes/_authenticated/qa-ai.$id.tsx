@@ -263,7 +263,9 @@ function ResultadoQaAi() {
   const sevTone = (s: string) => s === "critica" ? "var(--nuvia-danger)" : s === "warning" ? "var(--nuvia-warning)" : "var(--nuvia-text-secondary)";
 
   /* ----- Datos sticky header ----- */
-  const inputs = (a as Record<string, unknown>).inputs as { extracto?: Record<string, unknown>; reconstruccion?: Record<string, unknown>; simulacion?: Record<string, unknown> } | undefined;
+  const inputs = (a as Record<string, unknown>).inputs as { extracto?: Record<string, unknown>; reconstruccion?: Record<string, unknown>; simulacion?: Record<string, unknown>; proyecciones?: { aplicadas?: string[]; aplicadasAt?: string | null; plazoRecalculadoPorProyeccion?: boolean; cuotasPendientesExtractoOriginal?: number | null; cuotasPendientesRecalculadas?: number | null; count?: number } } | undefined;
+  const proyInfo = inputs?.proyecciones;
+  const proyectoresAplicadas = (proyInfo?.count ?? proyInfo?.aplicadas?.length ?? 0) > 0;
   const ex = (inputs?.extracto ?? {}) as Record<string, unknown>;
   const cliente = (ex.cliente as string) || (ex.titular as string) || "Cliente";
   const banco = (ex.banco as string) || "—";
