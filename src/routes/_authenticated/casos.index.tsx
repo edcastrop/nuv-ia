@@ -492,6 +492,7 @@ function ExpedienteCard({ r, isDup = false }: { r: Expediente; isDup?: boolean }
                 score={r.qa_score ?? null}
                 auditoriaId={r.qa_auditoria_id ?? null}
                 size="xs"
+                asLink={false}
               />
             </div>
             <div className="text-xs mt-0.5" style={{ color: TEXT2 }}>
