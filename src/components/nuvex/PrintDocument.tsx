@@ -501,13 +501,13 @@ export function PrintDocument(props: Props) {
             <div style={{
               fontSize: 22, fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.02em",
             }}>
-              ALTERNATIVAS ANALIZADAS
+              COMPARACIÓN DE ESCENARIOS
             </div>
             <div style={{
-              marginTop: 3, fontSize: 10, color: "rgba(255,255,255,0.82)", lineHeight: 1.3, maxWidth: 480,
+              marginTop: 3, fontSize: 10, color: "rgba(255,255,255,0.82)", lineHeight: 1.3, maxWidth: 520,
             }}>
-              Estas alternativas fueron evaluadas por nuestro sistema para ayudarte
-              a comparar distintos niveles de optimización financiera.
+              Analizamos diferentes alternativas para que elijas el nivel de optimización
+              que mejor se adapta a tus objetivos financieros.
             </div>
           </div>
           <img
@@ -516,62 +516,46 @@ export function PrintDocument(props: Props) {
           />
         </div>
 
-        {/* 3 proyecciones — clasificación dinámica por incremento de cuota */}
-        <div style={{
-          padding: "12px 22px 0 22px",
-          display: "flex", flexDirection: "column", gap: 9,
-        }}>
-          {alternativas.slice(0, 3).map((alt, i) => {
-            const total = Math.min(3, alternativas.length);
-            const dyn = dynamicScenarioMeta(i, total);
-            const tag = alt.minimoAplicado ? "Mínimo aplicado" : null;
-            return (
-              <AlternativaCard
-                key={i}
-                index={i + 1}
-                label={dyn.label}
-                accent={dyn.accent}
-                soft={dyn.soft}
-                deep={dyn.deep}
-                cuota={alt.nuevaCuota}
-                cuotaPct={alt.incrementoPct}
-                ahorroAños={alt.añosEliminados}
-                ahorroCuotas={alt.cuotasEliminadas}
-                ahorroDinero={alt.ahorroTotal}
-                terminaEn={alt.añoFinOpt}
-                terminaActual={añoFinActual}
-                añoHoy={añoHoy}
-                añosActuales={añosActual}
-                añosOpt={alt.añosOpt}
-                quienIdeal={dyn.ideal}
-                honorarios={alt.honorariosFinal}
-                honorariosBase={alt.honorariosFinal}
-                honorariosTag={tag}
-              />
-            );
-          })}
-        </div>
-
-        {/* ───── RESUMEN DE ESCENARIOS ───── */}
-        <div style={{ padding: "12px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
-          <ResumenEscenarios
+        {/* ───── TABLA COMPARATIVA ÚNICA ───── */}
+        <div style={{ padding: "14px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
+          <ComparisonTable
+            cuotaActual={cuotaActual}
+            añoFinActual={añoFinActual}
+            añosActual={añosActual}
+            plazoActual={scenario.plazoActual}
             allPropuestas={allPropuestas}
             bestIndex={bestIndex}
             recHonorariosFinal={recHonorariosFinal}
             recTieneDescuento={recHonorariosTieneDescuento}
           />
+        </div>
+
+        {/* ───── ¿POR QUÉ RECOMENDAMOS ESTA OPCIÓN? ───── */}
+        <div style={{ padding: "12px 22px 0 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
           <div style={{
-            marginTop: 5, fontSize: 8.5, color: C.muted, lineHeight: 1.35,
-            fontStyle: "italic", textAlign: "center",
+            background: `linear-gradient(135deg, ${C.greenSoft} 0%, #fff 100%)`,
+            border: `1px solid ${C.green}55`, borderRadius: 12, padding: "10px 14px",
           }}>
-            Cada alternativa genera un ahorro diferente y, por lo tanto, honorarios distintos.
-            Tú eliges el escenario que mejor se adapta a tus objetivos financieros.
+            <div style={{
+              fontSize: 11, fontWeight: 900, color: C.greenDeep,
+              letterSpacing: "0.14em", marginBottom: 7,
+            }}>
+              ¿POR QUÉ RECOMENDAMOS ESTA OPCIÓN?
+            </div>
+            <div style={{
+              display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10,
+            }}>
+              <ReasonItem text={<>Mayor <b>ahorro financiero</b> en intereses y seguros.</>} />
+              <ReasonItem text={<>Mejor <b>equilibrio</b> entre cuota mensual y plazo.</>} />
+              <ReasonItem text={<>Mayor <b>recuperación de tiempo financiero</b>.</>} />
+            </div>
           </div>
         </div>
 
-
-        {/* Spacer flexible (evita página 3 y reparte el alto) */}
+        {/* Spacer */}
         <div style={{ flex: "1 1 auto", minHeight: 4 }} />
+
+
 
         {/* ───── HERO DE CIERRE (full width) ───── */}
         <div style={{ padding: "0 22px 18px 22px", breakInside: "avoid", pageBreakInside: "avoid" }}>
