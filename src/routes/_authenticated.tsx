@@ -304,19 +304,23 @@ function AuthenticatedLayout() {
     let active = true;
     const uid = session.user.id;
     const load = async () => {
-      const [{ count: ca }, { count: nu }] = await Promise.all([
-        supabase
-          .from("caso_alertas" as never)
-          .select("id", { count: "exact", head: true })
-          .eq("leida", false),
-        supabase
-          .from("notificaciones_usuario" as never)
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", uid)
-          .eq("leida", false)
-          .neq("tipo", "mensaje_interno"),
-      ]);
-      if (active) setUnread((ca ?? 0) + (nu ?? 0));
+      try {
+        const [{ count: ca }, { count: nu }] = await Promise.all([
+          supabase
+            .from("caso_alertas" as never)
+            .select("id", { count: "exact", head: true })
+            .eq("leida", false),
+          supabase
+            .from("notificaciones_usuario" as never)
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", uid)
+            .eq("leida", false)
+            .neq("tipo", "mensaje_interno"),
+        ]);
+        if (active) setUnread((ca ?? 0) + (nu ?? 0));
+      } catch {
+        // Mantiene la pantalla estable si el backend/Internet falla momentáneamente.
+      }
     };
 
     load();
@@ -348,14 +352,18 @@ function AuthenticatedLayout() {
     let active = true;
     const uid = session.user.id;
     const loadProfile = async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("nombre, avatar_url")
-        .eq("id", uid)
-        .maybeSingle();
-      if (!active || !data) return;
-      const d = data as { nombre: string | null; avatar_url: string | null };
-      setProfileMeta({ nombre: d.nombre, avatar_url: d.avatar_url });
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("nombre, avatar_url")
+          .eq("id", uid)
+          .maybeSingle();
+        if (!active || !data) return;
+        const d = data as { nombre: string | null; avatar_url: string | null };
+        setProfileMeta({ nombre: d.nombre, avatar_url: d.avatar_url });
+      } catch {
+        // No bloquear navegación por avatar/perfil temporalmente no disponible.
+      }
     };
     loadProfile();
     const ch = supabase
