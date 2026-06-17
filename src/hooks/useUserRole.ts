@@ -17,6 +17,37 @@ export type AppRole =
   | "auxiliar_operativo"
   | "apoderado";
 
+const ROLE_CACHE_PREFIX = "nuvia.userRoles.";
+let memoryRoles = new Map<string, AppRole[]>();
+
+function readRoleCache(userId?: string): AppRole[] {
+  if (!userId || typeof window === "undefined") return [];
+  const inMemory = memoryRoles.get(userId);
+  if (inMemory) return inMemory;
+  try {
+    const raw = window.localStorage.getItem(`${ROLE_CACHE_PREFIX}${userId}`);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as AppRole[];
+    if (Array.isArray(parsed)) {
+      memoryRoles.set(userId, parsed);
+      return parsed;
+    }
+  } catch {
+    // cache auxiliar inválido: se ignora.
+  }
+  return [];
+}
+
+function writeRoleCache(userId: string, roles: AppRole[]) {
+  memoryRoles.set(userId, roles);
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(`${ROLE_CACHE_PREFIX}${userId}`, JSON.stringify(roles));
+  } catch {
+    // cache auxiliar: no debe afectar navegación.
+  }
+}
+
 export function isManager(roles: AppRole[]): boolean {
   return roles.includes("admin") || roles.includes("super_admin") || roles.includes("gerencia");
 }
@@ -51,8 +82,8 @@ export function canValidarProyeccion(roles: AppRole[]): boolean {
 
 export function useUserRole() {
   const { user, loading: authLoading } = useAuth();
-  const [roles, setRoles] = useState<AppRole[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [roles, setRoles] = useState<AppRole[]>(() => readRoleCache(user?.id));
+  const [loading, setLoading] = useState(() => authLoading && readRoleCache(user?.id).length === 0);
 
   useEffect(() => {
     if (authLoading) return;
@@ -62,6 +93,18 @@ export function useUserRole() {
       return;
     }
     let cancel = false;
+    const cached = readRoleCache(user.id);
+    if (cached.length > 0) {
+      setRoles(cached);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+    const timeout = window.setTimeout(() => {
+      if (cancel) return;
+      setRoles(readRoleCache(user.id));
+      setLoading(false);
+    }, 3500);
     (async () => {
       try {
         const { data } = await supabase
@@ -69,15 +112,17 @@ export function useUserRole() {
           .select("role")
           .eq("user_id", user.id);
         if (cancel) return;
-        setRoles((data ?? []).map((r) => r.role as AppRole));
+        const nextRoles = (data ?? []).map((r) => r.role as AppRole);
+        writeRoleCache(user.id, nextRoles);
+        setRoles(nextRoles);
         setLoading(false);
       } catch {
         if (cancel) return;
-        setRoles([]);
+        setRoles(readRoleCache(user.id));
         setLoading(false);
       }
     })();
-    return () => { cancel = true; };
+    return () => { cancel = true; window.clearTimeout(timeout); };
   }, [user, authLoading]);
 
   return {
