@@ -50,7 +50,6 @@ import { etiquetaNivel } from "@/lib/autonomia";
 import { EtapaTransicionDialog } from "@/components/expediente/EtapaTransicionDialog";
 
 export const Route = createFileRoute("/_authenticated")({
-  ssr: false,
   component: AuthenticatedLayout,
 });
 
