@@ -40,7 +40,7 @@ export function bancoRequiereAnalisisCapacidad(banco: string | undefined | null)
 }
 
 type TipoDoc = "nomina" | "carta_laboral" | "renta" | "extracto" | "otro";
-type TipoPersona = "empleado_mensual" | "empleado_quincenal" | "independiente";
+type TipoPersona = "empleado_mensual" | "empleado_quincenal" | "independiente" | "empleado_independiente";
 type Rol = "titular" | "codeudor";
 
 type ArchivoLocal = {
@@ -116,6 +116,9 @@ function MinDocsHint({ tipo }: { tipo: TipoPersona }) {
   }
   if (tipo === "empleado_quincenal") {
     return <p className="text-xs text-muted-foreground">Requeridos: <b>6 últimas nóminas quincenales</b> + carta laboral + última declaración de renta.</p>;
+  }
+  if (tipo === "empleado_independiente") {
+    return <p className="text-xs text-muted-foreground">Requeridos: <b>3 últimas nóminas</b> + carta laboral + <b>3 últimos extractos bancarios</b> de la actividad independiente + última declaración de renta. NUVIA sumará ambas fuentes.</p>;
   }
   return <p className="text-xs text-muted-foreground">Requeridos: <b>3 últimos extractos bancarios</b> + última declaración de renta.</p>;
 }
