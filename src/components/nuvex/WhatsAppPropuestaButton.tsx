@@ -208,7 +208,7 @@ export function buildWhatsAppMessage(p: {
   lines.push("");
   lines.push(`¿Te animas a que eliminemos intereses innecesarios de tu crédito? ¿En qué horario te queda mejor hoy o mañana?`);
   lines.push("");
-  lines.push(asesor ? `— ${asesor} · NUVEX` : `— Equipo NUVEX`);
+  lines.push(asesor ? `— ${nombreAnalista(asesor)} · NUVEX` : `— Equipo NUVEX`);
 
   return lines.join("\n");
 }
