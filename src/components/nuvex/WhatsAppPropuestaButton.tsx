@@ -133,37 +133,39 @@ export function buildWhatsAppMessage(p: {
   lines.push(`Hola ${nombre} 👋`);
   lines.push("");
   if (asesor) {
-    lines.push(`Soy *${nombreAnalista(asesor)}*, tu analista asignado en *NUVEX*.`);
+    lines.push(`Soy *${nombreAnalista(asesor)}*, tu analista financiera asignada en *NUVEX*.`);
   } else {
-    lines.push(`Te escribo desde *NUVEX*, soy tu analista asignado.`);
+    lines.push(`Te escribo desde *NUVEX*, soy tu analista financiera asignada.`);
   }
   lines.push("");
   lines.push(`Revisé tu crédito con *${banco}* y tengo *muy buenas noticias* para ti 🎉`);
   lines.push("");
 
-  // Panorama general primero
   if (total > 1) {
-    lines.push(`*El panorama general:*`);
-    lines.push(`Podemos ayudarte a *eliminar entre ${añosRange}* de tu crédito y dejarías de pagar entre *${ahorroRange}* en intereses y seguros, dependiendo de la propuesta que elijas. El aumento en tu cuota estaría entre *${incRange}* al mes.`);
+    lines.push(`📊 *Panorama general de tu caso:*`);
     lines.push("");
-    lines.push(`Preparé *${total} propuestas* y te sugiero una en particular que me parece la mejor para tu caso 👇`);
+    lines.push(`Encontramos la posibilidad de que puedas *eliminar de tu crédito entre ${añosRange}*, lo que representaría un ahorro aproximado de entre *${ahorroRange}* en intereses y seguros, dependiendo de la alternativa que decidas tomar.`);
+    lines.push("");
+    lines.push(`Lo anterior lo lograremos con un proceso *jurídico-financiero*, incrementando tu cuota entre *${incRange}* mensuales.`);
+    lines.push("");
+    lines.push(`Preparé *${total} escenarios diferentes* para ti y hay uno en particular que considero el más conveniente 👇`);
     lines.push("");
   } else {
     lines.push(`Te preparé una propuesta de optimización pensada para tu caso 👇`);
     lines.push("");
   }
 
-  // Bloque de la propuesta recomendada con números concretos
   if (recomendada) {
-    lines.push(`*Propuesta que te sugiero:*`);
+    lines.push(`⭐ *Propuesta sugerida por NUVEX*`);
+    lines.push("");
     if (incRecomendado > 0) {
-      lines.push(`• Tu cuota subiría *${formatCOP(incRecomendado)}* al mes`);
+      lines.push(`• Incremento mensual: *${formatCOP(incRecomendado)}*`);
     }
     if (añosRecomendado > 0) {
-      lines.push(`• Podrías *eliminar ${añosRecomendado === 1 ? "1 año" : `${añosRecomendado} años`}* de deuda`);
+      lines.push(`• Tiempo recuperado: *${añosRecomendado === 1 ? "1 año" : `${añosRecomendado} años`}*`);
     }
     if (ahorroRecomendado > 0) {
-      lines.push(`• Eso significa *${compactCOP(ahorroRecomendado)}* que dejarías de pagar en intereses y seguros`);
+      lines.push(`• Ahorro proyectado: *${millonesCOP(ahorroRecomendado)}*`);
     }
     lines.push("");
   }
