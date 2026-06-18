@@ -654,6 +654,13 @@ export function UVRSimulator({
                 </div>
               )}
             </div>
+
+            {/* Nota explicativa sobre hipótesis UVR */}
+            <div className="mt-3">
+              <Alert tone="info">
+                <span className="font-semibold">Hipótesis de UVR:</span> El ahorro mostrado asume que la UVR mantiene la misma variación anual ({variacionUVR ? variacionUVR : "—"}%) tanto en el escenario actual como en las propuestas. Si la inflación futura baja, el ahorro real podría ser mayor.
+              </Alert>
+            </div>
           </div>
         </Card>
 
