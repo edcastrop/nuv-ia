@@ -2,11 +2,12 @@ import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { BrainCircuit } from "lucide-react";
-import { PageLayout, ExecutiveHero } from "@/components/nuvia";
+import { PageLayout, ExecutiveHero, NSelect } from "@/components/nuvia";
 import { useUserRole } from "@/hooks/useUserRole";
 import {
   kbList, kbUpsert, kbDelete, kbAnalitica, kbAnaliticaExport,
 } from "@/lib/nuvex-kb-admin.functions";
+
 
 export const Route = createFileRoute("/_authenticated/super-admin/nuvex-ia-kb")({
   component: AdminKB,
@@ -222,7 +223,7 @@ function KbTab() {
                 list="kb-categorias"
                 value={editing.categoria}
                 onChange={(e) => setEditing({ ...editing, categoria: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-[var(--nuvia-border)] text-sm"
+                className="nuvia-input nuvia-input-sm w-full"
               />
               <datalist id="kb-categorias">
                 {CATEGORIAS_SUGERIDAS.map((c) => <option key={c} value={c} />)}
@@ -232,7 +233,7 @@ function KbTab() {
               <input
                 value={editing.pregunta}
                 onChange={(e) => setEditing({ ...editing, pregunta: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-[var(--nuvia-border)] text-sm"
+                className="nuvia-input nuvia-input-sm w-full"
               />
             </Field>
             <Field label="Respuesta (markdown)">
@@ -240,14 +241,14 @@ function KbTab() {
                 value={editing.respuesta}
                 onChange={(e) => setEditing({ ...editing, respuesta: e.target.value })}
                 rows={10}
-                className="w-full px-3 py-2 rounded-lg border border-[var(--nuvia-border)] text-sm font-mono"
+                className="nuvia-input w-full font-mono text-sm"
               />
             </Field>
             <Field label="Tags (separados por coma)">
               <input
                 value={editing.tags}
                 onChange={(e) => setEditing({ ...editing, tags: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-[var(--nuvia-border)] text-sm"
+                className="nuvia-input nuvia-input-sm w-full"
               />
             </Field>
             <Field label="Audiencias (quién puede ver este artículo)">
@@ -262,8 +263,12 @@ function KbTab() {
                   return (
                     <label
                       key={aud}
-                      className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-[var(--nuvia-border)] cursor-pointer hover:bg-[rgba(255,255,255,0.04)] text-xs"
-                      style={{ background: checked ? "rgba(68,93,163,0.08)" : "white", borderColor: checked ? "#445DA3" : "#E3E7EE" }}
+                      className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border cursor-pointer text-xs transition-colors"
+                      style={{
+                        background: checked ? "rgba(68,93,163,0.18)" : "rgba(255,255,255,0.04)",
+                        borderColor: checked ? "#7C8FD1" : "var(--nuvia-border)",
+                        color: "var(--nuvia-text-primary)",
+                      }}
                     >
                       <input
                         type="checkbox"
@@ -274,9 +279,9 @@ function KbTab() {
                             : editing.audiencias.filter((x) => x !== aud);
                           setEditing({ ...editing, audiencias: next.length ? next : ["interno"] });
                         }}
-                        className="accent-[#445DA3]"
+                        className="accent-[#7C8FD1]"
                       />
-                      <span className="font-medium text-[var(--nuvia-text-primary)]">{label}</span>
+                      <span className="font-medium" style={{ color: "var(--nuvia-text-primary)" }}>{label}</span>
                     </label>
                   );
                 })}
@@ -286,16 +291,17 @@ function KbTab() {
               </p>
             </Field>
             <Field label="Estado">
-              <select
+              <NSelect
                 value={editing.estado}
-                onChange={(e) => setEditing({ ...editing, estado: e.target.value as "activo" | "borrador" | "archivado" })}
-                className="w-full px-3 py-2 rounded-lg border border-[var(--nuvia-border)] text-sm"
-              >
-                <option value="activo">Activo</option>
-                <option value="borrador">Borrador</option>
-                <option value="archivado">Archivado</option>
-              </select>
+                onValueChange={(v) => setEditing({ ...editing, estado: v as "activo" | "borrador" | "archivado" })}
+                options={[
+                  { value: "activo", label: "Activo" },
+                  { value: "borrador", label: "Borrador" },
+                  { value: "archivado", label: "Archivado" },
+                ]}
+              />
             </Field>
+
 
             <div className="flex gap-2 pt-2">
               <button
