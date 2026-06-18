@@ -228,12 +228,12 @@ export function WhatsAppPropuestaButton(props: Props) {
 
   const modal = open ? (
     <div
-      className="fixed inset-0 z-[2147483647] flex h-[100dvh] items-stretch justify-center overflow-hidden bg-black/60 p-3 sm:items-center sm:p-4"
+      className="fixed inset-0 z-[2147483647] flex h-[100dvh] items-center justify-center overflow-hidden bg-black/60 p-3 sm:p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) setOpen(false);
       }}
     >
-      <div className="relative flex h-full min-h-0 w-full max-w-lg flex-col rounded-2xl bg-white p-5 shadow-2xl sm:h-auto sm:max-h-[90dvh] sm:p-6">
+      <div className="relative flex h-[calc(100dvh-1.5rem)] min-h-0 w-full max-w-lg flex-col rounded-2xl bg-white p-5 shadow-2xl sm:h-[90dvh] sm:max-h-[760px] sm:p-6">
         <button
           type="button"
           onClick={() => setOpen(false)}
@@ -255,7 +255,7 @@ export function WhatsAppPropuestaButton(props: Props) {
         <textarea
           readOnly
           value={message}
-          className="mb-4 min-h-0 w-full flex-1 resize-none overflow-y-auto rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm leading-relaxed text-gray-800 outline-none focus:ring-2 focus:ring-[#25D366]/30"
+          className="mb-4 min-h-0 w-full flex-1 resize-none overflow-y-auto overscroll-contain rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm leading-relaxed text-gray-800 outline-none focus:ring-2 focus:ring-[#25D366]/30"
           onFocus={(e) => e.currentTarget.select()}
         />
 
