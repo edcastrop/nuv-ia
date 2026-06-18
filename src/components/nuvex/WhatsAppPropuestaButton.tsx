@@ -38,6 +38,37 @@ function nombreAnalista(nombre?: string): string {
   return `${partes[0]} ${partes[1]}`;
 }
 
+// Heurística de género por primer nombre (es-CO). Devuelve "F" | "M".
+const NOMBRES_MASCULINOS = new Set([
+  "andres","jose","jesus","nicolas","tomas","matias","elias","lucas","ezequiel",
+  "joaquin","ismael","ezequias","ivan","adan","jonas","abraham","noe","moises",
+  "david","daniel","samuel","gabriel","rafael","miguel","angel","manuel","emanuel",
+  "israel","ariel","uriel","raul","saul","cesar","oscar","omar","edgar","hector",
+  "victor","nestor","javier","alexander","alexis","felix","luis","jesús","andrés",
+  "tomás","matías","elías","joaquín","ismaél","iván","adán","jonás","noé","moisés",
+  "ángel","emanuél","raúl","saúl","césar","óscar","omár","édgar","héctor","víctor",
+  "néstor","javiér","félix","luís","eduard","cristhian","cristian","christian",
+  "yeison","jhon","jhonatan","jonathan","brayan","kevin","yair","alvaro","álvaro",
+]);
+const NOMBRES_FEMENINOS = new Set([
+  "marcela","marsela","carmen","isabel","beatriz","raquel","ester","esther","ruth",
+  "abigail","sarai","damaris","judith","miriam","noemi","noemí","ines","inés",
+  "soledad","caridad","mercedes","dolores","pilar","rosario","consuelo","amparo",
+  "azucena","jazmin","jazmín","yamileth","yamile","yulieth","yuliana","leidy",
+  "yeimy","yenny","yiseth","luz","cruz","trinidad","piedad","libertad",
+]);
+
+function generoAnalista(nombre?: string): "F" | "M" {
+  const first = primerNombre(nombre).toLowerCase();
+  if (!first) return "F";
+  if (NOMBRES_MASCULINOS.has(first)) return "M";
+  if (NOMBRES_FEMENINOS.has(first)) return "F";
+  const last = first[first.length - 1];
+  if (last === "a") return "F";
+  if (last === "o") return "M";
+  return "F";
+}
+
 function millonesCOP(n: number): string {
   if (Math.abs(n) >= 1_000_000) {
     const millones = n / 1_000_000;
@@ -114,14 +145,17 @@ export function buildWhatsAppMessage(p: {
   const tieneHonorarios = p.propuestas.some((x) => typeof x.honorarios === "number" && x.honorarios > 0);
   const tiempo = tiempoProcesoBanco(p.banco);
   const asesor = (p.asesor || "").trim();
+  const genero = generoAnalista(asesor);
+  const analistaRol = genero === "M" ? "analista financiero asignado" : "analista financiera asignada";
+  const cierre = genero === "M" ? "Quedo atento." : "Quedo atenta.";
 
   const lines: string[] = [];
   lines.push(`Hola ${nombre} 👋`);
   lines.push("");
   if (asesor) {
-    lines.push(`Soy *${nombreAnalista(asesor)}*, tu analista financiera asignada en *NUVEX*.`);
+    lines.push(`Soy *${nombreAnalista(asesor)}*, tu ${analistaRol} en *NUVEX*.`);
   } else {
-    lines.push(`Te escribo desde *NUVEX*, soy tu analista financiera asignada.`);
+    lines.push(`Te escribo desde *NUVEX*, soy tu ${analistaRol}.`);
   }
   lines.push("");
   lines.push(`Revisé tu crédito con *${banco}* y tengo *muy buenas noticias* para ti 🎉`);
@@ -145,7 +179,7 @@ export function buildWhatsAppMessage(p: {
     lines.push(`⭐ *Propuesta sugerida por NUVEX*`);
     lines.push("");
     if (incRecomendado > 0) lines.push(`• Incremento mensual: *${formatCOP(incRecomendado)}*`);
-    if (añosRecomendado > 0) lines.push(`• Tiempo recuperado: *${añosRecomendado === 1 ? "1 año" : `${añosRecomendado} años`}*`);
+    if (añosRecomendado > 0) lines.push(`• Tiempo eliminado: *${añosRecomendado === 1 ? "1 año" : `${añosRecomendado} años`}*`);
     if (ahorroRecomendado > 0) lines.push(`• Ahorro proyectado: *${millonesCOP(ahorroRecomendado)}*`);
     lines.push("");
   }
@@ -172,9 +206,11 @@ export function buildWhatsAppMessage(p: {
   lines.push("");
   lines.push(`📎 Te envío el PDF con el detalle completo de las propuestas.`);
   lines.push("");
-  lines.push(`¿Te gustaría que revisáramos juntos cuál de las alternativas se adapta mejor a tus finanzas?`);
+  lines.push(`Lo más difícil ya está hecho: encontrar la oportunidad. Ahora solo queda decidir si quieres aprovecharla y cuántos millones quieres eliminar.`);
   lines.push("");
-  lines.push(`Quedo atent@.`);
+  lines.push(`¿Agendamos?`);
+  lines.push("");
+  lines.push(cierre);
   lines.push("");
   lines.push(asesor ? `${nombreAnalista(asesor)}` : `Equipo NUVEX`);
   lines.push(`NUVEX Finanzas Inteligentes`);
