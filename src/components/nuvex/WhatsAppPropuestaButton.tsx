@@ -4,6 +4,8 @@ import { formatCOP } from "../../lib/format";
 
 export interface WhatsAppPropuestaItem {
   nuevaCuota: number;
+  /** Aumento mensual calculado por el escenario comercial. Si llega, tiene prioridad sobre nuevaCuota - cuotaActual. */
+  incrementoMensual?: number;
   añosEliminados: number;
   ahorroTotal: number;
   /** Honorarios base (sin descuento). Si no se envía, se omite el bloque de honorarios. */
@@ -75,7 +77,7 @@ export function buildWhatsAppMessage(p: {
   const total = p.propuestas.length;
 
   const incrementos = p.propuestas
-    .map(x => Math.max(0, x.nuevaCuota - p.cuotaActual))
+    .map(x => Math.max(0, typeof x.incrementoMensual === "number" ? x.incrementoMensual : x.nuevaCuota - p.cuotaActual))
     .filter(v => v >= 0);
   const años = p.propuestas.map(x => Math.max(0, Math.round(x.añosEliminados)));
   const ahorros = p.propuestas.map(x => Math.max(0, x.ahorroTotal));

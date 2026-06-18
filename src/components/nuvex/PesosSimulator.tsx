@@ -797,6 +797,7 @@ export function PesosSimulator({
                     if (analyst.length > 0) {
                       return analyst.map(p => ({
                         nuevaCuota: p.nuevaCuota,
+                        incrementoMensual: p.incrementoMensual,
                         añosEliminados: p.añosEliminados,
                         ahorroTotal: p.ahorroTotal,
                         honorarios: p.honorarios,
@@ -805,6 +806,7 @@ export function PesosSimulator({
                     }
                     return (calc?.propuestas ?? []).map(p => ({
                       nuevaCuota: p.nuevaCuotaConSeguro,
+                      incrementoMensual: p.abonoAdicionalMensual,
                       añosEliminados: p.añosEliminados,
                       ahorroTotal: p.ahorroTotal,
                       honorarios: p.honorariosNuvex,
