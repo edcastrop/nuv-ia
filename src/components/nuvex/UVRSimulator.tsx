@@ -868,6 +868,7 @@ export function UVRSimulator({
                     if (analyst.length > 0) {
                       return analyst.map(p => ({
                         nuevaCuota: p.nuevaCuota,
+                        incrementoMensual: p.incrementoMensual,
                         añosEliminados: p.añosEliminados,
                         ahorroTotal: p.ahorroTotal,
                         honorarios: p.honorarios,
@@ -876,6 +877,7 @@ export function UVRSimulator({
                     }
                     return (calc?.propuestas ?? []).map(p => ({
                       nuevaCuota: p.nuevaCuotaConSeguroAprox,
+                      incrementoMensual: p.abonoAdicionalMensual,
                       añosEliminados: p.añosEliminados,
                       ahorroTotal: p.ahorroTotal,
                       honorarios: p.honorariosNuvex,
