@@ -127,9 +127,19 @@ export function parseDaviviendaLeasingText(rawText: string): ExtractoRecord | nu
   );
   const seguros = segurosDetalle > 0 ? segurosDetalle : segurosResumen;
 
-  const saldoMatch = text.match(/Saldo\s+a\s+la\s+Fecha\s+de\s+Corte:\s*[^\n]*?([0-9]{1,3}(?:,[0-9]{3})*\.[0-9]{4})\s+\$\s*([0-9]{1,3}(?:,[0-9]{3})*\.[0-9]{2})/i);
-  const saldoUVR = isUVR ? moneyToNumber(saldoMatch?.[1] ?? "") : 0;
-  const saldoCapital = moneyToNumber(saldoMatch?.[2] ?? "");
+  // UVR leasing: "Saldo a la Fecha de Corte:" trae UVR + pesos en la misma línea.
+  const saldoMatchUVR = text.match(/Saldo\s+a\s+la\s+Fecha\s+de\s+Corte:?\s*[^\n]*?([0-9]{1,3}(?:,[0-9]{3})*\.[0-9]{4})\s+\$\s*([0-9]{1,3}(?:,[0-9]{3})*\.[0-9]{2})/i);
+  // PESOS leasing: línea "Saldo a: <fecha> $ <monto>" (en el bloque "Nuevo Saldo de su Contrato de Leasing").
+  // OJO: NO confundir con "Saldo a la Fecha de Corte" que en pesos corresponde a Opción de Compra.
+  const saldoLineaPesos = findLine(
+    rawText,
+    /^Saldo\s+a:\s+[A-Za-zÁÉÍÓÚÑáéíóúñ]{3}\.\s*[0-9]{1,2}\/[0-9]{4}\s+\$\s*[0-9]/i,
+  );
+  const saldoPesosMatch = saldoLineaPesos.match(/\$\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{1,2})?)/);
+  const saldoUVR = isUVR ? moneyToNumber(saldoMatchUVR?.[1] ?? "") : 0;
+  const saldoCapital = isUVR
+    ? moneyToNumber(saldoMatchUVR?.[2] ?? "")
+    : moneyToNumber(saldoPesosMatch?.[1] ?? "");
   const valorUVR = isUVR
     ? moneyToNumber(firstMatch(text, /Valor\s+de\s+la\s+UVR\s+a\s+la\s+Fecha\s+de\s+Corte:\s*([0-9]+\.[0-9]{4})/i))
     : 0;
