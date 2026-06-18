@@ -183,7 +183,7 @@ export function buildWhatsAppMessage(p: {
         `El valor de los honorarios para la proyección que te sugiero es de *${formatCOP(honBaseRecomendado)}*. Si tomas la decisión en la llamada con el especialista, podemos evaluar un beneficio por pronta firma.`
       );
     }
-    lines.push(`Nuestros honorarios se cobran como un *porcentaje del número de millones que eliminemos de tu deuda* — solo ganas si ganas.`);
+    lines.push(`Nuestros honorarios se cobran como un *porcentaje del número de millones que eliminemos de tu deuda* — Solo ganamos si tú ganas.`);
     if (total > 1) {
       lines.push(`El rango general de honorarios según la propuesta que elijas está entre *${honRange}*.`);
     }
@@ -206,7 +206,7 @@ export function buildWhatsAppMessage(p: {
   lines.push("");
   lines.push(`📎 Te envío la propuesta en PDF con todo el detalle.`);
   lines.push("");
-  lines.push(`¿Te animas a que agendemos una llamada con el especialista? ¿En qué horario te queda mejor hoy o mañana?`);
+  lines.push(`¿Te animas a que eliminemos intereses innecesarios de tu crédito? ¿En qué horario te queda mejor hoy o mañana?`);
   lines.push("");
   lines.push(asesor ? `— ${asesor} · NUVEX` : `— Equipo NUVEX`);
 
