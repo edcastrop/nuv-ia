@@ -807,8 +807,8 @@ export function PesosSimulator({
                       nuevaCuota: p.nuevaCuotaConSeguro,
                       añosEliminados: p.añosEliminados,
                       ahorroTotal: p.ahorroTotal,
-                      honorarios: p.honorarios,
-                      honorariosFinal: computeDiscount(p.honorarios, discount).final,
+                      honorarios: p.honorariosNuvex,
+                      honorariosFinal: computeDiscount(p.honorariosNuvex, discount).final,
                     }));
                   })()}
                   recomendadaIndex={
