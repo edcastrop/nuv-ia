@@ -140,7 +140,7 @@ export function buildWhatsAppMessage(p: {
   lines.push(`Hola ${nombre} 👋`);
   lines.push("");
   if (asesor) {
-    lines.push(`Soy *${asesor}*, tu analista asignado en *NUVEX*.`);
+    lines.push(`Soy *${nombreAnalista(asesor)}*, tu analista asignado en *NUVEX*.`);
   } else {
     lines.push(`Te escribo desde *NUVEX*, soy tu analista asignado.`);
   }
