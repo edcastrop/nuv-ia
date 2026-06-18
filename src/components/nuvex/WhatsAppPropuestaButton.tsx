@@ -6,6 +6,10 @@ export interface WhatsAppPropuestaItem {
   nuevaCuota: number;
   añosEliminados: number;
   ahorroTotal: number;
+  /** Honorarios base (sin descuento). Si no se envía, se omite el bloque de honorarios. */
+  honorarios?: number;
+  /** Honorarios finales con descuento aplicado. Si no se envía, se asume igual a honorarios. */
+  honorariosFinal?: number;
 }
 
 interface Props {
@@ -33,6 +37,31 @@ function compactCOP(n: number): string {
   return formatCOP(n);
 }
 
+/**
+ * Tiempos de proceso por banco. Conservar sincronizado con
+ * los SLA reales acordados por el equipo comercial.
+ */
+const TIEMPOS_POR_BANCO: Array<{ match: RegExp; tiempo: string }> = [
+  { match: /davivienda/i, tiempo: "30 a 40 días" },
+  { match: /leasing.*bancolombia|bancolombia.*leasing/i, tiempo: "30 días" },
+  { match: /bancolombia/i, tiempo: "30 días" },
+  { match: /caja\s*social|colmena/i, tiempo: "30 días" },
+  { match: /bogot[áa]/i, tiempo: "30 a 40 días" },
+  { match: /av.?\s*villas/i, tiempo: "30 a 40 días" },
+  { match: /popular/i, tiempo: "30 a 40 días" },
+  { match: /occidente/i, tiempo: "30 a 40 días" },
+  { match: /fondo.*nacional.*ahorro|fna/i, tiempo: "60 días" },
+];
+
+function tiempoProcesoBanco(banco?: string): string {
+  const b = (banco || "").trim();
+  if (!b) return "30 a 40 días";
+  for (const { match, tiempo } of TIEMPOS_POR_BANCO) {
+    if (match.test(b)) return tiempo;
+  }
+  return "30 a 40 días";
+}
+
 export function buildWhatsAppMessage(p: {
   nombre?: string;
   banco?: string;
@@ -55,35 +84,83 @@ export function buildWhatsAppMessage(p: {
   const incMax = incrementos.length ? Math.max(...incrementos) : 0;
   const añosMin = años.length ? Math.min(...años) : 0;
   const añosMax = años.length ? Math.max(...años) : 0;
-  const ahorroMin = ahorros.length ? Math.min(...ahorros) : 0;
-  const ahorroMax = ahorros.length ? Math.max(...ahorros) : 0;
 
-  const recIdx = typeof p.recomendadaIndex === "number" ? p.recomendadaIndex : 0;
-  const rec = p.propuestas[recIdx];
-  const recInc = rec ? Math.max(0, rec.nuevaCuota - p.cuotaActual) : incMin;
-  const recAños = rec ? Math.max(0, Math.round(rec.añosEliminados)) : añosMax;
-  const recAhorro = rec ? Math.max(0, rec.ahorroTotal) : ahorroMax;
+  // Ahorro: tomar el de la PRIMERA y la ÚLTIMA propuesta (orden del analista).
+  const ahorroPrimera = ahorros[0] ?? 0;
+  const ahorroUltima = ahorros[ahorros.length - 1] ?? ahorroPrimera;
+  const ahorroLo = Math.min(ahorroPrimera, ahorroUltima);
+  const ahorroHi = Math.max(ahorroPrimera, ahorroUltima);
 
-  const incRange = incMin === incMax ? formatCOP(recInc) : `${formatCOP(incMin)} y ${formatCOP(incMax)}`;
-  const añosRange = añosMin === añosMax ? `${recAños} años` : `${añosMin} y ${añosMax} años`;
-  const ahorroRange = ahorroMin === ahorroMax ? compactCOP(recAhorro) : `${compactCOP(ahorroMin)} y ${compactCOP(ahorroMax)}`;
+  const incRange = incMin === incMax ? formatCOP(incMin) : `${formatCOP(incMin)} y ${formatCOP(incMax)}`;
+  const añosRange = añosMin === añosMax ? `${añosMax} años` : `${añosMin} y ${añosMax} años`;
+  const ahorroRange = ahorroLo === ahorroHi ? compactCOP(ahorroHi) : `${compactCOP(ahorroLo)} y ${compactCOP(ahorroHi)}`;
 
-  const firma = p.asesor ? `\n— ${p.asesor} · NUVEX` : "\n— Equipo NUVEX";
+  // Honorarios: rango base (1ª y última) + final con descuento de la ÚLTIMA propuesta.
+  const honorariosBase = p.propuestas
+    .map(x => (typeof x.honorarios === "number" ? x.honorarios : null))
+    .filter((v): v is number => v != null && v > 0);
+  const tieneHonorarios = honorariosBase.length > 0;
+  const honPrimera = honorariosBase[0] ?? 0;
+  const honUltima = honorariosBase[honorariosBase.length - 1] ?? honPrimera;
+  const honLo = Math.min(honPrimera, honUltima);
+  const honHi = Math.max(honPrimera, honUltima);
+  const honRange = honLo === honHi ? formatCOP(honHi) : `${formatCOP(honLo)} y ${formatCOP(honHi)}`;
 
-  return [
-    `Hola ${nombre} 👋`,
-    ``,
-    `Soy de *NUVEX*. Revisamos tu crédito con *${banco}* y trabajamos *100% a éxito*: solo cobramos si el banco aprueba la optimización.`,
-    ``,
-    `Te preparamos *${total} propuestas* y te recomendamos *1* en particular.`,
-    ``,
-    `Con un aumento pequeño en tu cuota (entre *${incRange}* al mes) podrías:`,
-    `• Recortar entre *${añosRange}* de tu crédito`,
-    `• Ahorrar entre *${ahorroRange}* en intereses y seguros`,
-    ``,
-    `📎 Te envío la propuesta en PDF con el detalle.`,
-    `¿La revisamos juntos y avanzamos hoy?` + firma,
-  ].join("\n");
+  const ultima = p.propuestas[p.propuestas.length - 1];
+  const honFinalUltima =
+    ultima && typeof ultima.honorariosFinal === "number"
+      ? ultima.honorariosFinal
+      : ultima && typeof ultima.honorarios === "number"
+        ? ultima.honorarios
+        : 0;
+  const hayDescuento = ultima && typeof ultima.honorariosFinal === "number"
+    ? ultima.honorariosFinal < (ultima.honorarios ?? ultima.honorariosFinal)
+    : false;
+
+  const tiempo = tiempoProcesoBanco(p.banco);
+  const asesor = (p.asesor || "").trim();
+
+  const lines: string[] = [];
+  lines.push(`Hola ${nombre} 👋`);
+  lines.push("");
+  if (asesor) {
+    lines.push(`Mi nombre es *${asesor}* y seré tu analista asignado en *NUVEX*.`);
+  } else {
+    lines.push(`Te escribo desde *NUVEX*, soy el analista asignado a tu caso.`);
+  }
+  lines.push("");
+  lines.push(`Tengo *buenas noticias* sobre tu crédito con *${banco}* 🎉`);
+  lines.push("");
+  lines.push(`Te preparamos *${total} propuestas* de optimización y te recomendamos *1* en particular.`);
+  lines.push("");
+  lines.push(`Con un aumento en tu cuota (entre *${incRange}* al mes) podrías:`);
+  lines.push(`• Recortar entre *${añosRange}* de tu crédito`);
+  lines.push(`• Eliminar entre *${ahorroRange}* en intereses y seguros`);
+  lines.push("");
+  lines.push(
+    `Trabajamos *100% a éxito*: solo te cobramos si el banco aprueba la eliminación de esos intereses. Si no lo logramos, *no pagas nada*, y eso queda por contrato.`,
+  );
+  lines.push("");
+  lines.push(`⏱ *Tiempo del proceso con ${banco}:* ${tiempo}.`);
+
+  if (tieneHonorarios) {
+    lines.push("");
+    lines.push(`💼 *Honorarios:* entre *${honRange}* según la propuesta que elijas.`);
+    if (hayDescuento && honFinalUltima > 0) {
+      lines.push(
+        `🎁 *Beneficio por pronta firma:* si tomas la decisión en la llamada con el especialista, los honorarios quedan en *${formatCOP(honFinalUltima)}*.`,
+      );
+    }
+  }
+
+  lines.push("");
+  lines.push(`📎 Te envío la propuesta en PDF con todo el detalle.`);
+  lines.push("");
+  lines.push(`¿*Agendamos una llamada con el especialista*? ¿En qué horario te queda mejor hoy o mañana?`);
+  lines.push("");
+  lines.push(asesor ? `— ${asesor} · NUVEX` : `— Equipo NUVEX`);
+
+  return lines.join("\n");
 }
 
 export function WhatsAppPropuestaButton(props: Props) {
@@ -112,7 +189,6 @@ export function WhatsAppPropuestaButton(props: Props) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback for older browsers
       const textarea = document.createElement("textarea");
       textarea.value = message;
       textarea.style.position = "fixed";
@@ -180,7 +256,7 @@ export function WhatsAppPropuestaButton(props: Props) {
               readOnly
               value={message}
               className="mb-4 w-full resize-none rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm leading-relaxed text-gray-800 outline-none focus:ring-2 focus:ring-[#25D366]/30"
-              rows={14}
+              rows={18}
               onFocus={(e) => e.currentTarget.select()}
             />
 
