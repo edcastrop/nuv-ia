@@ -145,6 +145,9 @@ export function buildWhatsAppMessage(p: {
   const tieneHonorarios = p.propuestas.some((x) => typeof x.honorarios === "number" && x.honorarios > 0);
   const tiempo = tiempoProcesoBanco(p.banco);
   const asesor = (p.asesor || "").trim();
+  const genero = generoAnalista(asesor);
+  const analistaRol = genero === "M" ? "analista financiero asignado" : "analista financiera asignada";
+  const cierre = genero === "M" ? "Quedo atento." : "Quedo atenta.";
 
   const lines: string[] = [];
   lines.push(`Hola ${nombre} 👋`);
