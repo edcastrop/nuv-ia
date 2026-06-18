@@ -863,12 +863,29 @@ export function UVRSimulator({
                   telefono={client.celular}
                   asesor={client.asesor}
                   cuotaActual={cuotaSimulacionPesosNum}
-                  propuestas={(calc?.propuestas ?? []).map(p => ({
-                    nuevaCuota: p.nuevaCuotaConSeguroAprox,
-                    añosEliminados: p.añosEliminados,
-                    ahorroTotal: p.ahorroTotal,
-                  }))}
-                  recomendadaIndex={bestIndex >= 0 ? bestIndex : 0}
+                  propuestas={(() => {
+                    const analyst = propuestasComercialesSnapshot?.propuestas ?? [];
+                    if (analyst.length > 0) {
+                      return analyst.map(p => ({
+                        nuevaCuota: p.nuevaCuota,
+                        añosEliminados: p.añosEliminados,
+                        ahorroTotal: p.ahorroTotal,
+                        honorarios: p.honorarios,
+                        honorariosFinal: computeDiscount(p.honorarios, discount).final,
+                      }));
+                    }
+                    return (calc?.propuestas ?? []).map(p => ({
+                      nuevaCuota: p.nuevaCuotaConSeguroAprox,
+                      añosEliminados: p.añosEliminados,
+                      ahorroTotal: p.ahorroTotal,
+                      honorarios: p.honorariosNuvex,
+                      honorariosFinal: computeDiscount(p.honorariosNuvex, discount).final,
+                    }));
+                  })()}
+                  recomendadaIndex={
+                    propuestasComercialesSnapshot?.recommendedIndex ??
+                    (bestIndex >= 0 ? bestIndex : 0)
+                  }
                   disabled={!recomendada || !calc || calc.propuestas.length === 0}
                   disabledReason="Primero calcula la simulación UVR."
                 />
