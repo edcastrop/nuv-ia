@@ -233,7 +233,10 @@ export function WhatsAppPropuestaButton(props: Props) {
         if (e.target === e.currentTarget) setOpen(false);
       }}
     >
-      <div className="relative flex h-[calc(100dvh-1.5rem)] min-h-0 w-full max-w-lg flex-col rounded-2xl bg-white p-5 shadow-2xl sm:h-[90dvh] sm:max-h-[760px] sm:p-6">
+      <div
+        className="relative flex min-h-0 w-full max-w-lg flex-col rounded-2xl bg-white p-5 shadow-2xl sm:p-6"
+        style={{ height: "min(760px, calc(100dvh - 2rem))" }}
+      >
         <button
           type="button"
           onClick={() => setOpen(false)}
