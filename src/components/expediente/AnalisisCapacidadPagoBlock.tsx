@@ -40,7 +40,7 @@ export function bancoRequiereAnalisisCapacidad(banco: string | undefined | null)
 }
 
 type TipoDoc = "nomina" | "carta_laboral" | "renta" | "extracto" | "otro";
-type TipoPersona = "empleado_mensual" | "empleado_quincenal" | "independiente";
+type TipoPersona = "empleado_mensual" | "empleado_quincenal" | "independiente" | "empleado_independiente";
 type Rol = "titular" | "codeudor";
 
 type ArchivoLocal = {
@@ -116,6 +116,9 @@ function MinDocsHint({ tipo }: { tipo: TipoPersona }) {
   }
   if (tipo === "empleado_quincenal") {
     return <p className="text-xs text-muted-foreground">Requeridos: <b>6 últimas nóminas quincenales</b> + carta laboral + última declaración de renta.</p>;
+  }
+  if (tipo === "empleado_independiente") {
+    return <p className="text-xs text-muted-foreground">Requeridos: <b>3 últimas nóminas</b> + carta laboral + <b>3 últimos extractos bancarios</b> de la actividad independiente + última declaración de renta. NUVIA sumará ambas fuentes.</p>;
   }
   return <p className="text-xs text-muted-foreground">Requeridos: <b>3 últimos extractos bancarios</b> + última declaración de renta.</p>;
 }
@@ -485,11 +488,12 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
                 {p.rol === "titular" ? "TITULAR" : "CODEUDOR"}
               </Badge>
               <Select value={p.tipoPersona} onValueChange={(v) => setTipoPersona(idx, v as TipoPersona)}>
-                <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-[260px]"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="empleado_mensual">Empleado · pago mensual</SelectItem>
                   <SelectItem value="empleado_quincenal">Empleado · pago quincenal</SelectItem>
                   <SelectItem value="independiente">Independiente</SelectItem>
+                  <SelectItem value="empleado_independiente">Empleado + Independiente (mixto)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

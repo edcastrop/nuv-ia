@@ -17,7 +17,7 @@ const FileSchema = z.object({
 
 const PersonaSchema = z.object({
   rol: z.enum(["titular", "codeudor"]),
-  tipoPersona: z.enum(["empleado_mensual", "empleado_quincenal", "independiente"]),
+  tipoPersona: z.enum(["empleado_mensual", "empleado_quincenal", "independiente", "empleado_independiente"]),
   archivos: z.array(FileSchema).min(1).max(12),
 });
 
@@ -30,7 +30,7 @@ const InputSchema = z.object({
 
 export type AnalisisPersonaResultado = {
   rol: "titular" | "codeudor";
-  tipoPersona: "empleado_mensual" | "empleado_quincenal" | "independiente";
+  tipoPersona: "empleado_mensual" | "empleado_quincenal" | "independiente" | "empleado_independiente";
   ingresoMensualPromedio: number;
   ingresosDetectados: Array<{
     documento: string;
@@ -105,6 +105,7 @@ const SYSTEM_PROMPT = `Eres NUVEX IA, analista financiero senior. Tu tarea es le
 
 Personas EMPLEADAS — soportes típicos: comprobantes de nómina (mensual o quincenal), carta laboral, declaración de renta.
 Personas INDEPENDIENTES — soportes típicos: 3 últimos extractos bancarios y declaración de renta.
+Personas EMPLEADO + INDEPENDIENTE (ingreso mixto) — la MISMA persona percibe AMBAS fuentes simultáneamente: nóminas del empleo dependiente Y consignaciones recurrentes por actividad independiente. En este caso DEBES sumar las dos corrientes de ingreso mensual (no las promedies entre sí) y reportar el TOTAL en ingresoMensualPromedio. Soportes esperados: nóminas del empleo + extractos bancarios de la cuenta donde recibe los ingresos como independiente + declaración de renta única.
 
 Reglas generales:
 - NO inventes cifras. Si un documento es ilegible o no aplica, devuelve valor 0 y baja la confianza.
@@ -113,13 +114,16 @@ Reglas generales:
 - Para EMPLEADOS: EXCLUYE bonificaciones extraordinarias no recurrentes (prima de éxito puntual, indemnizaciones). INCLUYE auxilios fijos recurrentes (transporte, alimentación).
 - La carta laboral suele repetir el salario; úsala para CRUZAR consistencia, no para sumar al promedio (tipo "salario_carta" con valor 0, observación si difiere >10% de las nóminas).
 - Para INDEPENDIENTES: analiza los abonos/consignaciones recurrentes (no transferencias entre cuentas propias ni reembolsos puntuales), promedia el ingreso mensual de los 3 extractos, deja en observaciones la metodología. Tipo "consignaciones_mensual".
+- Para EMPLEADO+INDEPENDIENTE: calcula por separado (a) promedio nómina neta y (b) promedio consignaciones recurrentes como independiente, SUMA ambos, y en observaciones detalla las dos cifras y la suma. NO cuentes dos veces consignaciones que correspondan al pago de la nómina (identifícalas por monto/empleador/recurrencia y exclúyelas del lado independiente).
 - La renta declarada sirve para CRUZAR consistencia anual (ingresos / 12). Tipo "ingreso_declarado_renta" valor=ingreso mensual implícito; si difiere >15% del promedio del banco/nómina, observación.
-- Confianza "alta" solo si: empleados con ≥3 nóminas mensuales (o 6 quincenales) consistentes; independientes con 3 extractos completos y consistentes con renta.`;
+- Confianza "alta" solo si: empleados con ≥3 nóminas mensuales (o 6 quincenales) consistentes; independientes con 3 extractos completos y consistentes con renta; mixtos con AMBOS sets (nóminas + extractos) consistentes con la renta.`;
 
 function buildUserContent(persona: z.infer<typeof PersonaSchema>) {
   const tipoLabel =
     persona.tipoPersona === "independiente"
       ? "persona independiente (extractos bancarios + renta)"
+      : persona.tipoPersona === "empleado_independiente"
+      ? "persona con INGRESO MIXTO: empleado dependiente + actividad independiente (nóminas + extractos bancarios + renta). Suma ambas fuentes."
       : `empleado ${persona.tipoPersona.replace("empleado_", "").replace("_", " ")}`;
   const intro = `Analiza los soportes financieros de esta ${tipoLabel} y llama la función extraer_ingresos. Documentos adjuntos (${persona.archivos.length}):`;
   const parts: Array<Record<string, unknown>> = [{ type: "text", text: intro }];
