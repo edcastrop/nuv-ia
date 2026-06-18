@@ -21,7 +21,7 @@ export const BANK_PROFILES: BankProfile[] = [
     productos: ["CREDITO_HIPOTECARIO", "LEASING_HABITACIONAL"],
     matchAny: [/bancolombia/i, /grupo\s+bancolombia/i],
     hints: `BANCOLOMBIA — etiquetas LITERALES (no interpretes sinónimos ni valores de anexos):
-- "Saldo a la fecha en que se generó el extracto" → saldoCapital
+- "Saldo a la fecha en que se generó el extracto" → saldoCapital (en pesos).
 - "Valor desembolso" → valorDesembolsado
 - "Plazo total en meses" → plazoInicial
 - "Nro. cuota a cancelar" → cuotasPagadas (es la cuota que se está pagando ahora)
@@ -34,6 +34,13 @@ export const BANK_PROFILES: BankProfile[] = [
 - capitalCuota e interesCuota se toman de "Movimientos Último Periodo" fila "Pago Cuota": columnas "Capital" e "Intereses Corriente". NO uses valores calculados ni aproximados.
 - Validación obligatoria antes de responder: cuotasPagadas + cuotasPendientes - 1 debe ser igual a plazoInicial; capitalCuota + interesCuota + seguros debe coincidir con "Valor a Pagar"; cuotaConSubsidio + seguros debe coincidir con "Valor a Pagar".
 - Si una validación no cuadra, re-lee el campo literal del extracto y baja el score del campo dudoso.
+
+UVR (CRÍTICO — OBLIGATORIO si el producto es "Crédito Hipotecario en UVR"):
+- saldoUVR ← "Saldo UVR" / "Saldo en UVR" / "Saldo de capital en UVR" (número con 4 decimales, ej "371029,7251" → 371029.7251).
+- valorUVR ← "Valor UVR del día" / "Valor de la UVR" / "Valor UVR a la fecha" (número con 4 decimales, ej "372,1234" → 372.1234).
+- Validación: saldoUVR × valorUVR ≈ saldoCapital en pesos (±1%). Si no cuadra, re-lee.
+- Si moneda=UVR y saldoUVR o valorUVR vienen vacíos, RE-LEE el extracto antes de responder.
+  NUNCA dejes estos campos vacíos cuando moneda=UVR; son indispensables para la simulación.
 
 BENEFICIO DE COBERTURA / SUBSIDIO GOBIERNO / FRECH (CRÍTICO):
 - "Valor cuota sin subsidio Gobierno" → cuotaSinSubsidio.
