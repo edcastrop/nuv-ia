@@ -18,7 +18,7 @@ const InputSchema = z.object({
   plazoNuevoMeses: z.number().int().positive().max(360),
   cuotaProyectada: z.number().positive(),
   esVis: z.boolean().default(false),
-  tipoPersona: z.enum(["empleado_mensual", "empleado_quincenal", "independiente", "empleado_independiente"]),
+  tipoPersona: z.enum(["empleado_mensual", "empleado_quincenal", "independiente", "empleado_mensual_independiente", "empleado_quincenal_independiente"]),
   // Lista corta de documentos enviados (nombres legibles, para listar en el cuerpo)
   documentos: z.array(z.string().min(1).max(200)).min(1).max(40),
   adjuntos: z.array(AdjuntoSchema).min(1).max(20),
@@ -74,8 +74,10 @@ export const enviarSolicitudPlazoBanco = createServerFn({ method: "POST" })
         ? "persona independiente"
         : data.tipoPersona === "empleado_quincenal"
         ? "empleado con pago quincenal"
-        : data.tipoPersona === "empleado_independiente"
-        ? "persona con ingreso mixto (empleado + independiente)"
+        : data.tipoPersona === "empleado_mensual_independiente"
+        ? "persona con ingreso mixto (empleado mensual + independiente)"
+        : data.tipoPersona === "empleado_quincenal_independiente"
+        ? "persona con ingreso mixto (empleado quincenal + independiente)"
         : "empleado con pago mensual";
 
     const listaDocs = data.documentos.map((d, i) => `  ${i + 1}. ${d}`).join("\n");
