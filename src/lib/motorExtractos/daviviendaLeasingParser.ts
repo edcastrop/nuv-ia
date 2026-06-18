@@ -149,7 +149,9 @@ export function parseDaviviendaLeasingText(rawText: string): ExtractoRecord | nu
   const cuotaSinSeguros = cuotaMensual > 0 && seguros > 0 ? cuotaMensual - seguros : 0;
   const teaCobrada = rateAfter(text, "Tasa\\s+Inter[eé]s\\s+Cte\\.\\s+Cobrada");
   const teaPactada = rateAfter(text, "Tasa\\s+Inter[eé]s\\s+Cte\\.\\s+Pactada");
-  const fechaExtracto = firstMatch(text, /Saldo\s+a\s+la\s+Fecha\s+de\s+Corte:\s*([A-Za-zÁÉÍÓÚÑáéíóúñ]{3}\.\s*[0-9]{2}\/[0-9]{4})/i);
+  const fechaExtracto =
+    firstMatch(text, /Saldo\s+a\s+la\s+Fecha\s+de\s+Corte:\s*([A-Za-zÁÉÍÓÚÑáéíóúñ]{3}\.\s*[0-9]{1,2}\/[0-9]{4})/i) ||
+    firstMatch(text, /Saldo\s+a:\s+([A-Za-zÁÉÍÓÚÑáéíóúñ]{3}\.\s*[0-9]{1,2}\/[0-9]{4})/i);
   const producto = `Contrato leasing en ${isUVR ? `UVR${submodalidad ? ` ${submodalidad}` : ""}` : "Pesos"} ${beneficioActivo ? "con" : "sin"} beneficio de cobertura`;
 
   const errores: string[] = [];
