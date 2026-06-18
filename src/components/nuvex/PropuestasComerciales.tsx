@@ -251,6 +251,13 @@ export function PropuestasComerciales(props: Props) {
         </button>
       </div>
 
+      {/* Nota explicativa: cuáles cuotas se eliminan */}
+      <div className="mb-4">
+        <Alert tone="info">
+          <span className="font-semibold">¿Qué cuotas se eliminan?</span> El abono adicional a capital reduce el saldo pendiente, pero la cuota mensual se mantiene igual. Esto hace que el crédito termine antes — las cuotas que «desaparecen» son las <strong>últimas del cronograma</strong> (las más lejanas en el tiempo), no las que siguen a la cuota actual. Son precisamente las cuotas más costosas, porque acumulan más intereses e inflación UVR.
+        </Alert>
+      </div>
+
       {/* Franja de comparación rápida — glass dark NUVIA */}
       {cuotasList.length > 0 && (
         <div
