@@ -53,7 +53,10 @@ function moneyFromLine(text: string, rx: RegExp) {
         /\$\s*[0-9]/.test(item) &&
         !/costo|prima|aseguradora|valor\s+asegurado|tasa/i.test(item),
     ) ?? "";
-  const value = line.match(/\$\s*([0-9][0-9.,]*)/)?.[1] ?? "";
+  // Tomar el ÚLTIMO monto en pesos de la línea: en extractos Davivienda con layout
+  // tabular, la etiqueta queda a la derecha y su valor es el último "$ ...".
+  const matches = Array.from(line.matchAll(/\$\s*([0-9][0-9.,]*)/g));
+  const value = matches.length > 0 ? matches[matches.length - 1][1] : "";
   return moneyToNumber(value);
 }
 
