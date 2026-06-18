@@ -17,7 +17,7 @@ const FileSchema = z.object({
 
 const PersonaSchema = z.object({
   rol: z.enum(["titular", "codeudor"]),
-  tipoPersona: z.enum(["empleado_mensual", "empleado_quincenal", "independiente", "empleado_independiente"]),
+  tipoPersona: z.enum(["empleado_mensual", "empleado_quincenal", "independiente", "empleado_mensual_independiente", "empleado_quincenal_independiente"]),
   archivos: z.array(FileSchema).min(1).max(12),
 });
 
@@ -30,7 +30,7 @@ const InputSchema = z.object({
 
 export type AnalisisPersonaResultado = {
   rol: "titular" | "codeudor";
-  tipoPersona: "empleado_mensual" | "empleado_quincenal" | "independiente" | "empleado_independiente";
+  tipoPersona: "empleado_mensual" | "empleado_quincenal" | "independiente" | "empleado_mensual_independiente" | "empleado_quincenal_independiente";
   ingresoMensualPromedio: number;
   ingresosDetectados: Array<{
     documento: string;
@@ -122,8 +122,10 @@ function buildUserContent(persona: z.infer<typeof PersonaSchema>) {
   const tipoLabel =
     persona.tipoPersona === "independiente"
       ? "persona independiente (extractos bancarios + renta)"
-      : persona.tipoPersona === "empleado_independiente"
-      ? "persona con INGRESO MIXTO: empleado dependiente + actividad independiente (nóminas + extractos bancarios + renta). Suma ambas fuentes."
+      : persona.tipoPersona === "empleado_mensual_independiente"
+      ? "persona con INGRESO MIXTO: empleado dependiente CON PAGO MENSUAL + actividad independiente (nóminas mensuales + extractos bancarios + renta). Suma ambas fuentes."
+      : persona.tipoPersona === "empleado_quincenal_independiente"
+      ? "persona con INGRESO MIXTO: empleado dependiente CON PAGO QUINCENAL + actividad independiente (nóminas quincenales + extractos bancarios + renta). Suma ambas fuentes."
       : `empleado ${persona.tipoPersona.replace("empleado_", "").replace("_", " ")}`;
   const intro = `Analiza los soportes financieros de esta ${tipoLabel} y llama la función extraer_ingresos. Documentos adjuntos (${persona.archivos.length}):`;
   const parts: Array<Record<string, unknown>> = [{ type: "text", text: intro }];
