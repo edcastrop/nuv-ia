@@ -128,16 +128,46 @@ function extractCoverageValue(rawText: string, compactText: string) {
   return interestCoverageLine ? lastMoneyFromLine(interestCoverageLine) : 0;
 }
 
+/**
+ * Extrae el saldo a capital del extracto Davivienda Crédito Hipotecario.
+ *
+ * Davivienda imprime el saldo a capital con DOS layouts distintos según moneda:
+ *   1. UVR    → "Saldo a la Fecha de Corte: <fecha> <valorUVR> $ <pesos>"
+ *               (dos columnas: UVR + pesos en la misma línea)
+ *   2. PESOS  → "Saldo a la Fecha de Corte: <fecha> $ <pesos>"
+ *               (una sola columna en pesos)
+ *
+ * Adicionalmente algunos formatos imprimen también "Saldo a: <fecha> $ <pesos>"
+ * como respaldo (bloque resumen). Probamos los tres en orden.
+ *
+ * IMPORTANTE: en LEASING pesos "Saldo a la Fecha de Corte" corresponde a la
+ * Opción de Compra, NO al capital — ese caso se maneja en el parser de leasing.
+ */
 function extractSaldoCorte(rawText: string, compactText: string) {
-  const m = compactText.match(
+  // (1) UVR — UVR + pesos en la misma línea
+  const mUVR = compactText.match(
     /Saldo\s+a\s+la\s+Fecha\s+de\s+Corte:\s*[A-Za-zÁÉÍÓÚÑáéíóúñ]{3}\.\s*[0-9]{1,2}\/\d{4}\s+([0-9]{1,3}(?:,[0-9]{3})*\.\d{4})\s+\$\s*([0-9]{1,3}(?:,[0-9]{3})*\.\d{2})/i,
   );
-  if (m) return { saldoUVR: moneyToNumber(m[1]), saldoCapital: moneyToNumber(m[2]) };
+  if (mUVR) return { saldoUVR: moneyToNumber(mUVR[1]), saldoCapital: moneyToNumber(mUVR[2]) };
 
+  // (2) PESOS — "Saldo a la Fecha de Corte: <fecha> $ <pesos>" (sin columna UVR)
+  const mPesosCorte = compactText.match(
+    /Saldo\s+a\s+la\s+Fecha\s+de\s+Corte:\s*[A-Za-zÁÉÍÓÚÑáéíóúñ]{3}\.\s*[0-9]{1,2}\/\d{4}\s+\$\s*([0-9][0-9.,]*)/i,
+  );
+  if (mPesosCorte) return { saldoUVR: 0, saldoCapital: moneyToNumber(mPesosCorte[1]) };
+
+  // (3) PESOS — bloque alterno "Saldo a: <fecha> $ <pesos>"
+  const mPesosAlt = compactText.match(
+    /Saldo\s+a:\s*[A-Za-zÁÉÍÓÚÑáéíóúñ]{3}\.\s*[0-9]{1,2}\/\d{4}\s+\$\s*([0-9][0-9.,]*)/i,
+  );
+  if (mPesosAlt) return { saldoUVR: 0, saldoCapital: moneyToNumber(mPesosAlt[1]) };
+
+  // Fallback defensivo por si el PDF reordenó tokens: ubicar la línea y tomar
+  // el último monto en pesos + (si existe) UVR con 4 decimales.
   const line = rawText
     .split(/\r?\n/)
     .map((item) => compactSpaces(item).trim())
-    .find((item) => /^Saldo\s+a\s+la\s+Fecha\s+de\s+Corte:/i.test(item));
+    .find((item) => /^Saldo\s+a(?:\s+la\s+Fecha\s+de\s+Corte)?:/i.test(item));
   return {
     saldoUVR: line ? numberFromLine(line, /([0-9]{1,3}(?:,[0-9]{3})*\.\d{4})\s+\$/) : 0,
     saldoCapital: line ? lastMoneyFromLine(line) : 0,
