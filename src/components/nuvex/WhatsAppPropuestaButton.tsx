@@ -153,9 +153,9 @@ export function buildWhatsAppMessage(p: {
   lines.push(`Hola ${nombre} 👋`);
   lines.push("");
   if (asesor) {
-    lines.push(`Soy *${nombreAnalista(asesor)}*, tu analista financiera asignada en *NUVEX*.`);
+    lines.push(`Soy *${nombreAnalista(asesor)}*, tu ${analistaRol} en *NUVEX*.`);
   } else {
-    lines.push(`Te escribo desde *NUVEX*, soy tu analista financiera asignada.`);
+    lines.push(`Te escribo desde *NUVEX*, soy tu ${analistaRol}.`);
   }
   lines.push("");
   lines.push(`Revisé tu crédito con *${banco}* y tengo *muy buenas noticias* para ti 🎉`);
