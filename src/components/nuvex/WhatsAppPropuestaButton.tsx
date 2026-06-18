@@ -277,12 +277,12 @@ export function WhatsAppPropuestaButton(props: Props) {
 
       {open && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
+          className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/60 p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) setOpen(false);
           }}
         >
-          <div className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+          <div className="relative flex max-h-[90vh] w-full max-w-lg flex-col rounded-2xl bg-white p-6 shadow-2xl">
             <button
               type="button"
               onClick={() => setOpen(false)}
@@ -309,7 +309,7 @@ export function WhatsAppPropuestaButton(props: Props) {
             <textarea
               readOnly
               value={message}
-              className="mb-4 w-full resize-none rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm leading-relaxed text-gray-800 outline-none focus:ring-2 focus:ring-[#25D366]/30"
+              className="mb-4 min-h-[200px] w-full flex-1 resize-none overflow-y-auto rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm leading-relaxed text-gray-800 outline-none focus:ring-2 focus:ring-[#25D366]/30"
               rows={18}
               onFocus={(e) => e.currentTarget.select()}
             />
