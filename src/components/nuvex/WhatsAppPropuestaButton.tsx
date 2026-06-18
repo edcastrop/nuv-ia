@@ -179,7 +179,7 @@ export function buildWhatsAppMessage(p: {
     lines.push(`⭐ *Propuesta sugerida por NUVEX*`);
     lines.push("");
     if (incRecomendado > 0) lines.push(`• Incremento mensual: *${formatCOP(incRecomendado)}*`);
-    if (añosRecomendado > 0) lines.push(`• Tiempo recuperado: *${añosRecomendado === 1 ? "1 año" : `${añosRecomendado} años`}*`);
+    if (añosRecomendado > 0) lines.push(`• Tiempo eliminado: *${añosRecomendado === 1 ? "1 año" : `${añosRecomendado} años`}*`);
     if (ahorroRecomendado > 0) lines.push(`• Ahorro proyectado: *${millonesCOP(ahorroRecomendado)}*`);
     lines.push("");
   }
