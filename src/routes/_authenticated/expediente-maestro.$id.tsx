@@ -230,7 +230,11 @@ function MaestroDetail() {
           moneyText("valorDesembolsado", d.valorDesembolsado) || credito.valorDesembolsado || "",
         plazoOriginal: d.plazoInicial || credito.plazoOriginal || "",
         saldoCapital: moneyText("saldoCapital", d.saldoCapital) || credito.saldoCapital || "",
+        saldoPesos: moneyText("saldoCapital", d.saldoCapital) || credito.saldoPesos || credito.saldoCapital || "",
+        saldoUVR: d.saldoUVR || credito.saldoUVR || "",
+        valorUVR: d.valorUVR || credito.valorUVR || "",
         cuotaActual: cuotaActualResuelta,
+        cuotaActualPesos: cuotaActualResuelta,
         seguros:
           segurosResueltos > 0
             ? String(Math.round(segurosResueltos))
@@ -243,6 +247,8 @@ function MaestroDetail() {
           moneyText("cuotaConInteresSinSeguros", d.cuotaSinSubsidio || d.cuotaConSubsidio) || "",
         cuotaBaseSimulacion: cuotaActualResuelta,
         tasa: tasaValida(d.tasaEA) || credito.tasa || "",
+        teaCobrada: tasaValida(d.tasaEA) || credito.teaCobrada || credito.tasa || "",
+        variacionUVR: credito.variacionUVR || "",
         cuotasPagadas: d.cuotasPagadas || credito.cuotasPagadas || "",
         cuotasPendientes: d.cuotasPendientes || credito.cuotasPendientes || "",
       };

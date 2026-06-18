@@ -175,6 +175,30 @@ export function parseCOP(raw: string): string {
   return neg ? `-${out}` : out;
 }
 
+function parseDecimalFlexible(raw: string): string {
+  if (!raw) return "";
+  let s = String(raw).replace(/[^\d.,-]/g, "").trim();
+  if (!s) return "";
+  const neg = s.startsWith("-");
+  if (neg) s = s.slice(1);
+  const lastComma = s.lastIndexOf(",");
+  const lastDot = s.lastIndexOf(".");
+  let normalized = s;
+  if (lastComma !== -1 && lastDot !== -1) {
+    normalized = lastComma > lastDot ? s.replace(/\./g, "").replace(",", ".") : s.replace(/,/g, "");
+  } else if (lastComma !== -1) {
+    const parts = s.split(",");
+    const thousands = parts.length > 1 && parts.slice(1).every((p) => p.length === 3);
+    normalized = thousands ? s.replace(/,/g, "") : s.replace(",", ".");
+  } else if (lastDot !== -1) {
+    const parts = s.split(".");
+    const thousands = parts.length > 1 && parts.slice(1).every((p) => p.length === 3);
+    normalized = thousands ? s.replace(/\./g, "") : s;
+  }
+  const n = parseFloat(`${neg ? "-" : ""}${normalized}`);
+  return Number.isFinite(n) ? String(n) : "";
+}
+
 function parseTasa(raw: string): string {
   if (!raw) return "";
   const m = String(raw)
@@ -316,14 +340,15 @@ function normalizeParsedMotor(
     "interesCuota",
     "capitalCuota",
     "seguros",
-    "valorUVR",
-    "saldoUVR",
     "valorBeneficioMensual",
     "cuotaSinSubsidio",
     "cuotaConSubsidio",
   ];
   for (const k of CAMPOS_MONETARIOS) {
     if (datos[k]) datos[k] = parseCOP(datos[k]);
+  }
+  for (const k of ["valorUVR", "saldoUVR"] as CampoMotor[]) {
+    if (datos[k]) datos[k] = parseDecimalFlexible(datos[k]);
   }
   for (const k of ["tasaEA", "tasaMensual", "tasaCobertura"] as CampoMotor[]) {
     if (datos[k]) datos[k] = parseTasa(datos[k]);

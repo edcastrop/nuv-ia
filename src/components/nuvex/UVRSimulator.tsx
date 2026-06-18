@@ -95,12 +95,12 @@ export function UVRSimulator({
         : defaultIntervinientes(initClient?.tipoProducto),
     cobertura: initClient?.cobertura ?? defaultCobertura,
     valorDesembolsado: initCred.valorDesembolsado ?? "",
-    saldoPesos: initCred.saldoPesos ?? "",
+    saldoPesos: initCred.saldoPesos ?? initCred.saldoCapital ?? "",
     saldoUVR: initCred.saldoUVR ?? "",
     valorUVR: initCred.valorUVR ?? "",
-    cuotaActualPesos: initCred.cuotaActualPesos ?? "",
+    cuotaActualPesos: initCred.cuotaActualPesos ?? initCred.cuotaActual ?? "",
     seguros: initCred.seguros ?? "",
-    teaCobrada: initCred.teaCobrada ?? "",
+    teaCobrada: initCred.teaCobrada ?? initCred.tea ?? "",
     variacionUVR: initCred.variacionUVR ?? getDefaultVariacionUVR(),
     nuevaCuotaManual: initCred.nuevaCuotaManual ?? "",
     cuotasEliminarManual: initCred.cuotasEliminarManual ?? "",
@@ -250,10 +250,19 @@ export function UVRSimulator({
   );
 
   const validaciones: string[] = [];
+  const saldoUvrConsistente =
+    input.saldoPesos <= 0 ||
+    input.saldoUVR <= 0 ||
+    input.valorUVR <= 0 ||
+    Math.abs(input.saldoUVR * input.valorUVR - input.saldoPesos) / input.saldoPesos <= 0.01;
   if (plazoInicial > 0 && cuotasPagadas > plazoInicial)
     validaciones.push("Las cuotas pagadas no pueden ser mayores al plazo inicial.");
   if (input.saldoUVR <= 0 && saldoUVR) validaciones.push("Saldo UVR debe ser mayor a 0.");
   if (input.valorUVR <= 0 && valorUVR) validaciones.push("Valor UVR debe ser mayor a 0.");
+  if (!saldoUvrConsistente)
+    validaciones.push(
+      "Saldo en pesos, Saldo UVR y Valor UVR no coinciden. Revisa los valores antes de simular.",
+    );
   if (cuotaSimulacionPesosNum > 0 && segurosNum > cuotaSimulacionPesosNum)
     validaciones.push("Los seguros no pueden ser mayores que la cuota actual.");
   if (cuotaSimulacionPesosNum > 0 && segurosNum > 0 && cuotaSinSegurosNum <= 0)
@@ -270,6 +279,7 @@ export function UVRSimulator({
     input.cuotaActualPesos > 0 &&
     input.teaCobrada > 0 &&
     cuotasPendientes > 0 &&
+    saldoUvrConsistente &&
     cuotaSinSegurosValida;
 
   const calc = useMemo(() => {
@@ -755,11 +765,14 @@ export function UVRSimulator({
                       cliente: { ...client, intervinientes, cobertura },
                       credito: {
                         valorDesembolsado,
+                        saldoCapital: saldoPesos,
                         saldoPesos,
                         saldoUVR,
                         valorUVR,
+                        cuotaActual: cuotaActualPesos,
                         cuotaActualPesos,
                         seguros,
+                        tea: teaCobrada,
                         teaCobrada,
                         variacionUVR,
                         nuevaCuotaManual,

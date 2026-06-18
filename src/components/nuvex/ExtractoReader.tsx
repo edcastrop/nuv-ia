@@ -938,6 +938,18 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
     const monedaDetectada: "uvr" | "pesos" =
       señalUvrFuerte || (monedaUpper === "UVR" && tieneDatosUvr) ? "uvr" : "pesos";
 
+    if (modo === "uvr") {
+      const saldoUvrNum = parseMontoExtracto(saldoUvrRaw);
+      const valorUvrNum = parseMontoExtracto(valorUvrRaw);
+      if (saldoUvrNum <= 0 || valorUvrNum <= 0) {
+        setErrorMsg(
+          "Extracto UVR incompleto: faltan Saldo UVR o Valor UVR. Corrige esos campos antes de aplicar al simulador.",
+        );
+        setStage("review");
+        return;
+      }
+    }
+
     const payload: ExtractoApplyPayload = {
       cliente: {
         nombre: get("cliente"),
