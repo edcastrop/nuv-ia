@@ -47,10 +47,6 @@ function millonesCOP(n: number): string {
   return formatCOP(n);
 }
 
-/**
- * Tiempos de proceso por banco. Conservar sincronizado con
- * los SLA reales acordados por el equipo comercial.
- */
 const TIEMPOS_POR_BANCO: Array<{ match: RegExp; tiempo: string }> = [
   { match: /davivienda/i, tiempo: "30 a 40 días" },
   { match: /leasing.*bancolombia|bancolombia.*leasing/i, tiempo: "30 días" },
@@ -83,8 +79,6 @@ export function buildWhatsAppMessage(p: {
   const nombre = primerNombre(p.nombre) || "hola";
   const banco = p.banco || "tu banco";
   const total = p.propuestas.length;
-
-  // Índice de la propuesta recomendada (por defecto la primera)
   const recIdx =
     typeof p.recomendadaIndex === "number" &&
     p.recomendadaIndex >= 0 &&
@@ -92,8 +86,6 @@ export function buildWhatsAppMessage(p: {
       ? p.recomendadaIndex
       : 0;
   const recomendada = p.propuestas[recIdx];
-
-  // Datos de la recomendada
   const incRecomendado = recomendada
     ? Math.max(0, typeof recomendada.incrementoMensual === "number" ? recomendada.incrementoMensual : recomendada.nuevaCuota - p.cuotaActual)
     : 0;
@@ -103,29 +95,23 @@ export function buildWhatsAppMessage(p: {
   const honFinalRecomendado = recomendada && typeof recomendada.honorariosFinal === "number" ? recomendada.honorariosFinal : honBaseRecomendado;
   const hayDescuentoRecomendado = honFinalRecomendado > 0 && honFinalRecomendado < honBaseRecomendado;
 
-  // Rango global para contexto (todas las propuestas)
-  const incrementos = p.propuestas
-    .map(x => Math.max(0, typeof x.incrementoMensual === "number" ? x.incrementoMensual : x.nuevaCuota - p.cuotaActual))
-    .filter(v => v >= 0);
+  const incrementos = p.propuestas.map((x) =>
+    Math.max(0, typeof x.incrementoMensual === "number" ? x.incrementoMensual : x.nuevaCuota - p.cuotaActual),
+  );
   const incMin = incrementos.length ? Math.min(...incrementos) : 0;
   const incMax = incrementos.length ? Math.max(...incrementos) : 0;
   const incRange = incMin === incMax ? formatCOP(incMin) : `${formatCOP(incMin)} y ${formatCOP(incMax)}`;
 
-  const años = p.propuestas.map(x => Math.max(0, Math.round(x.añosEliminados)));
+  const años = p.propuestas.map((x) => Math.max(0, Math.round(x.añosEliminados)));
   const añosMin = años.length ? Math.min(...años) : 0;
   const añosMax = años.length ? Math.max(...años) : 0;
   const añosRange = añosMin === añosMax ? `${añosMax} años` : `${añosMin} y ${añosMax} años`;
 
-  const ahorros = p.propuestas.map(x => Math.max(0, x.ahorroTotal));
+  const ahorros = p.propuestas.map((x) => Math.max(0, x.ahorroTotal));
   const ahorroLo = ahorros.length ? Math.min(...ahorros) : 0;
   const ahorroHi = ahorros.length ? Math.max(...ahorros) : 0;
   const ahorroRange = ahorroLo === ahorroHi ? millonesCOP(ahorroHi) : `${millonesCOP(ahorroLo)} y ${millonesCOP(ahorroHi)}`;
-
-  const honorariosBase = p.propuestas
-    .map(x => (typeof x.honorarios === "number" ? x.honorarios : null))
-    .filter((v): v is number => v != null && v > 0);
-  const tieneHonorarios = honorariosBase.length > 0;
-
+  const tieneHonorarios = p.propuestas.some((x) => typeof x.honorarios === "number" && x.honorarios > 0);
   const tiempo = tiempoProcesoBanco(p.banco);
   const asesor = (p.asesor || "").trim();
 
@@ -158,56 +144,40 @@ export function buildWhatsAppMessage(p: {
   if (recomendada) {
     lines.push(`⭐ *Propuesta sugerida por NUVEX*`);
     lines.push("");
-    if (incRecomendado > 0) {
-      lines.push(`• Incremento mensual: *${formatCOP(incRecomendado)}*`);
-    }
-    if (añosRecomendado > 0) {
-      lines.push(`• Tiempo recuperado: *${añosRecomendado === 1 ? "1 año" : `${añosRecomendado} años`}*`);
-    }
-    if (ahorroRecomendado > 0) {
-      lines.push(`• Ahorro proyectado: *${millonesCOP(ahorroRecomendado)}*`);
-    }
+    if (incRecomendado > 0) lines.push(`• Incremento mensual: *${formatCOP(incRecomendado)}*`);
+    if (añosRecomendado > 0) lines.push(`• Tiempo recuperado: *${añosRecomendado === 1 ? "1 año" : `${añosRecomendado} años`}*`);
+    if (ahorroRecomendado > 0) lines.push(`• Ahorro proyectado: *${millonesCOP(ahorroRecomendado)}*`);
     lines.push("");
   }
 
-  // Énfasis en el beneficio por pronta firma
   if (tieneHonorarios && recomendada) {
-    lines.push(`💰 *Sobre los honorarios:*`);
+    lines.push(`💰 *Honorarios a éxito*`);
+    lines.push("");
     if (hayDescuentoRecomendado && honFinalRecomendado > 0) {
-      lines.push(
-        `Si tomas la decisión de que optimicemos tu crédito, te daría un *beneficio en el valor de los honorarios*: un *descuento por pronta firma* en la proyección que te sugiero, quedando en *${formatCOP(honFinalRecomendado)}* en vez de *${formatCOP(honBaseRecomendado)}*.`
-      );
+      lines.push(`Si decides avanzar con nosotros, puedo otorgarte un *beneficio por pronta firma*, dejando los honorarios de esta propuesta en *${formatCOP(honFinalRecomendado)}* en lugar de *${formatCOP(honBaseRecomendado)}*.`);
     } else if (honBaseRecomendado > 0) {
-      lines.push(
-        `El valor de los honorarios para la proyección que te sugiero es de *${formatCOP(honBaseRecomendado)}*. Si tomas la decisión en la llamada con el especialista, podemos evaluar un beneficio por pronta firma.`
-      );
+      lines.push(`Los honorarios de esta propuesta serían de *${formatCOP(honBaseRecomendado)}*. Si decides avanzar en la llamada, podemos revisar un beneficio por pronta firma.`);
     }
-    lines.push(`Nuestros honorarios se cobran como un *porcentaje del número de millones que eliminemos de tu deuda* — Solo ganamos si tú ganas.`);
-    if (total > 1) {
-      lines.push(`El rango general de honorarios según la propuesta que elijas está entre *${honRange}*.`);
-    }
+    lines.push("");
+    lines.push(`Nuestros honorarios solo se generan si obtenemos el resultado aprobado por el banco. Es decir, si no logramos la optimización, *no pagas nada*. Todo esto queda respaldado por contrato.`);
     lines.push("");
   }
 
-  // Garantía de éxito
-  lines.push(
-    `Trabajamos *100% a éxito*: si no logramos la eliminación de esos intereses, *no pagas nada*. Eso queda claro por contrato, así que puedes estar tranquilo.`
-  );
-  lines.push("");
-
-  // Flexibilidad
   if (total > 1) {
-    lines.push(`Si prefieres otra proyección distinta a la que te sugiero, la podemos evaluar en la llamada sin problema.`);
+    lines.push(`Si alguna de las otras alternativas te resulta más atractiva, también podemos revisarla juntos durante la llamada.`);
     lines.push("");
   }
 
-  lines.push(`⏱ *Tiempo estimado con ${banco}:* ${tiempo}.`);
+  lines.push(`⏱ *Tiempo estimado del proceso con ${banco}:* entre ${tiempo}.`);
   lines.push("");
-  lines.push(`📎 Te envío la propuesta en PDF con todo el detalle.`);
+  lines.push(`📎 Te envío el PDF con el detalle completo de las propuestas.`);
   lines.push("");
-  lines.push(`¿Te animas a que eliminemos intereses innecesarios de tu crédito? ¿En qué horario te queda mejor hoy o mañana?`);
+  lines.push(`¿Te gustaría que revisáramos juntos cuál de las alternativas se adapta mejor a tus finanzas?`);
   lines.push("");
-  lines.push(asesor ? `— ${nombreAnalista(asesor)} · NUVEX` : `— Equipo NUVEX`);
+  lines.push(`Quedo atent@.`);
+  lines.push("");
+  lines.push(asesor ? `${nombreAnalista(asesor)}` : `Equipo NUVEX`);
+  lines.push(`NUVEX Finanzas Inteligentes`);
 
   return lines.join("\n");
 }
@@ -256,6 +226,61 @@ export function WhatsAppPropuestaButton(props: Props) {
     }
   }, [message]);
 
+  const modal = open ? (
+    <div
+      className="fixed inset-0 z-[2147483647] flex h-[100dvh] items-stretch justify-center overflow-hidden bg-black/60 p-3 sm:items-center sm:p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) setOpen(false);
+      }}
+    >
+      <div className="relative flex h-full min-h-0 w-full max-w-lg flex-col rounded-2xl bg-white p-5 shadow-2xl sm:h-auto sm:max-h-[90dvh] sm:p-6">
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="absolute right-4 top-4 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          aria-label="Cerrar"
+        >
+          <X size={18} />
+        </button>
+
+        <div className="mb-4 flex shrink-0 items-center gap-2 pr-8">
+          <div className="grid h-8 w-8 place-items-center rounded-lg" style={{ backgroundColor: "#25D366" }}>
+            <MessageCircle size={16} className="text-white" strokeWidth={2.4} />
+          </div>
+          <h3 className="text-lg font-bold text-gray-900">Mensaje para WhatsApp</h3>
+        </div>
+
+        <p className="mb-3 shrink-0 text-sm text-gray-500">Copia el texto y pégalo en tu chat de WhatsApp.</p>
+
+        <textarea
+          readOnly
+          value={message}
+          className="mb-4 min-h-0 w-full flex-1 resize-none overflow-y-auto rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm leading-relaxed text-gray-800 outline-none focus:ring-2 focus:ring-[#25D366]/30"
+          onFocus={(e) => e.currentTarget.select()}
+        />
+
+        <div className="flex shrink-0 items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
+          >
+            Cerrar
+          </button>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow transition-transform hover:scale-[1.01]"
+            style={{ backgroundColor: "#25D366" }}
+          >
+            {copied ? <Check size={16} strokeWidth={2.4} /> : <Copy size={16} strokeWidth={2.4} />}
+            {copied ? "Copiado" : "Copiar mensaje"}
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   return (
     <>
       <button
@@ -270,66 +295,7 @@ export function WhatsAppPropuestaButton(props: Props) {
         Mensaje WhatsApp
       </button>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/60 p-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setOpen(false);
-          }}
-        >
-          <div className="relative flex max-h-[90vh] w-full max-w-lg flex-col rounded-2xl bg-white p-6 shadow-2xl">
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="absolute right-4 top-4 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-              aria-label="Cerrar"
-            >
-              <X size={18} />
-            </button>
-
-            <div className="mb-4 flex items-center gap-2">
-              <div
-                className="grid h-8 w-8 place-items-center rounded-lg"
-                style={{ backgroundColor: "#25D366" }}
-              >
-                <MessageCircle size={16} className="text-white" strokeWidth={2.4} />
-              </div>
-              <h3 className="text-lg font-bold text-gray-900">Mensaje para WhatsApp</h3>
-            </div>
-
-            <p className="mb-3 text-sm text-gray-500">
-              Copia el texto y pégalo en tu chat de WhatsApp.
-            </p>
-
-            <textarea
-              readOnly
-              value={message}
-              className="mb-4 min-h-[200px] w-full flex-1 resize-none overflow-y-auto rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm leading-relaxed text-gray-800 outline-none focus:ring-2 focus:ring-[#25D366]/30"
-              rows={18}
-              onFocus={(e) => e.currentTarget.select()}
-            />
-
-            <div className="flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
-              >
-                Cerrar
-              </button>
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow transition-transform hover:scale-[1.01]"
-                style={{ backgroundColor: "#25D366" }}
-              >
-                {copied ? <Check size={16} strokeWidth={2.4} /> : <Copy size={16} strokeWidth={2.4} />}
-                {copied ? "Copiado" : "Copiar mensaje"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {modal && typeof document !== "undefined" ? createPortal(modal, document.body) : null}
     </>
   );
 }
