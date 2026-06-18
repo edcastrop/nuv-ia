@@ -24,12 +24,8 @@ const confidence = {
   valorDesembolsado: "alta",
 };
 
-function decimalAfter(text: string, label: string) {
-  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const m = text.match(new RegExp(`${escaped}\\s*[:]?\\s*\\$?\\s*([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]+)?|[0-9]+(?:[.,][0-9]+)?)`, "i"));
-  if (!m) return 0;
-  return moneyToNumber(m[1]);
-}
+
+
 
 function extractValorUVR(text: string) {
   // Bancolombia rotula esto como "Valor UVR del día" / "Valor UVR" / "Valor de la UVR"
