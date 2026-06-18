@@ -2,11 +2,12 @@ import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { BrainCircuit } from "lucide-react";
-import { PageLayout, ExecutiveHero } from "@/components/nuvia";
+import { PageLayout, ExecutiveHero, NSelect } from "@/components/nuvia";
 import { useUserRole } from "@/hooks/useUserRole";
 import {
   kbList, kbUpsert, kbDelete, kbAnalitica, kbAnaliticaExport,
 } from "@/lib/nuvex-kb-admin.functions";
+
 
 export const Route = createFileRoute("/_authenticated/super-admin/nuvex-ia-kb")({
   component: AdminKB,
