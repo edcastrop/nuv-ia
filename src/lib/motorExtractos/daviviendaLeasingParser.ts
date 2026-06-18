@@ -53,7 +53,10 @@ function moneyFromLine(text: string, rx: RegExp) {
         /\$\s*[0-9]/.test(item) &&
         !/costo|prima|aseguradora|valor\s+asegurado|tasa/i.test(item),
     ) ?? "";
-  const value = line.match(/\$\s*([0-9][0-9.,]*)/)?.[1] ?? "";
+  // Tomar el ÚLTIMO monto en pesos de la línea: en extractos Davivienda con layout
+  // tabular, la etiqueta queda a la derecha y su valor es el último "$ ...".
+  const matches = Array.from(line.matchAll(/\$\s*([0-9][0-9.,]*)/g));
+  const value = matches.length > 0 ? matches[matches.length - 1][1] : "";
   return moneyToNumber(value);
 }
 
@@ -127,9 +130,19 @@ export function parseDaviviendaLeasingText(rawText: string): ExtractoRecord | nu
   );
   const seguros = segurosDetalle > 0 ? segurosDetalle : segurosResumen;
 
-  const saldoMatch = text.match(/Saldo\s+a\s+la\s+Fecha\s+de\s+Corte:\s*[^\n]*?([0-9]{1,3}(?:,[0-9]{3})*\.[0-9]{4})\s+\$\s*([0-9]{1,3}(?:,[0-9]{3})*\.[0-9]{2})/i);
-  const saldoUVR = isUVR ? moneyToNumber(saldoMatch?.[1] ?? "") : 0;
-  const saldoCapital = moneyToNumber(saldoMatch?.[2] ?? "");
+  // UVR leasing: "Saldo a la Fecha de Corte:" trae UVR + pesos en la misma línea.
+  const saldoMatchUVR = text.match(/Saldo\s+a\s+la\s+Fecha\s+de\s+Corte:?\s*[^\n]*?([0-9]{1,3}(?:,[0-9]{3})*\.[0-9]{4})\s+\$\s*([0-9]{1,3}(?:,[0-9]{3})*\.[0-9]{2})/i);
+  // PESOS leasing: línea "Saldo a: <fecha> $ <monto>" (en el bloque "Nuevo Saldo de su Contrato de Leasing").
+  // OJO: NO confundir con "Saldo a la Fecha de Corte" que en pesos corresponde a Opción de Compra.
+  const saldoLineaPesos = findLine(
+    rawText,
+    /^Saldo\s+a:\s+[A-Za-zÁÉÍÓÚÑáéíóúñ]{3}\.\s*[0-9]{1,2}\/[0-9]{4}\s+\$\s*[0-9]/i,
+  );
+  const saldoPesosMatch = saldoLineaPesos.match(/\$\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{1,2})?)/);
+  const saldoUVR = isUVR ? moneyToNumber(saldoMatchUVR?.[1] ?? "") : 0;
+  const saldoCapital = isUVR
+    ? moneyToNumber(saldoMatchUVR?.[2] ?? "")
+    : moneyToNumber(saldoPesosMatch?.[1] ?? "");
   const valorUVR = isUVR
     ? moneyToNumber(firstMatch(text, /Valor\s+de\s+la\s+UVR\s+a\s+la\s+Fecha\s+de\s+Corte:\s*([0-9]+\.[0-9]{4})/i))
     : 0;
@@ -139,7 +152,9 @@ export function parseDaviviendaLeasingText(rawText: string): ExtractoRecord | nu
   const cuotaSinSeguros = cuotaMensual > 0 && seguros > 0 ? cuotaMensual - seguros : 0;
   const teaCobrada = rateAfter(text, "Tasa\\s+Inter[eé]s\\s+Cte\\.\\s+Cobrada");
   const teaPactada = rateAfter(text, "Tasa\\s+Inter[eé]s\\s+Cte\\.\\s+Pactada");
-  const fechaExtracto = firstMatch(text, /Saldo\s+a\s+la\s+Fecha\s+de\s+Corte:\s*([A-Za-zÁÉÍÓÚÑáéíóúñ]{3}\.\s*[0-9]{2}\/[0-9]{4})/i);
+  const fechaExtracto =
+    firstMatch(text, /Saldo\s+a\s+la\s+Fecha\s+de\s+Corte:\s*([A-Za-zÁÉÍÓÚÑáéíóúñ]{3}\.\s*[0-9]{1,2}\/[0-9]{4})/i) ||
+    firstMatch(text, /Saldo\s+a:\s+([A-Za-zÁÉÍÓÚÑáéíóúñ]{3}\.\s*[0-9]{1,2}\/[0-9]{4})/i);
   const producto = `Contrato leasing en ${isUVR ? `UVR${submodalidad ? ` ${submodalidad}` : ""}` : "Pesos"} ${beneficioActivo ? "con" : "sin"} beneficio de cobertura`;
 
   const errores: string[] = [];
