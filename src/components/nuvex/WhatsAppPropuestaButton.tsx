@@ -30,6 +30,13 @@ function primerNombre(nombre?: string): string {
   return (nombre || "").trim().split(/\s+/)[0] || "";
 }
 
+function nombreAnalista(nombre?: string): string {
+  const partes = (nombre || "").trim().split(/\s+/).filter(Boolean);
+  if (partes.length === 0) return "";
+  if (partes.length === 1) return partes[0];
+  return `${partes[0]} ${partes[1]}`;
+}
+
 function compactCOP(n: number): string {
   if (Math.abs(n) >= 1_000_000) {
     const m = n / 1_000_000;
@@ -133,7 +140,7 @@ export function buildWhatsAppMessage(p: {
   lines.push(`Hola ${nombre} 👋`);
   lines.push("");
   if (asesor) {
-    lines.push(`Soy *${asesor}*, tu analista asignado en *NUVEX*.`);
+    lines.push(`Soy *${nombreAnalista(asesor)}*, tu analista asignado en *NUVEX*.`);
   } else {
     lines.push(`Te escribo desde *NUVEX*, soy tu analista asignado.`);
   }
@@ -176,7 +183,7 @@ export function buildWhatsAppMessage(p: {
         `El valor de los honorarios para la proyección que te sugiero es de *${formatCOP(honBaseRecomendado)}*. Si tomas la decisión en la llamada con el especialista, podemos evaluar un beneficio por pronta firma.`
       );
     }
-    lines.push(`Nuestros honorarios se cobran como un *porcentaje del número de millones que eliminemos de tu deuda* — solo ganas si ganas.`);
+    lines.push(`Nuestros honorarios se cobran como un *porcentaje del número de millones que eliminemos de tu deuda* — Solo ganamos si tú ganas.`);
     if (total > 1) {
       lines.push(`El rango general de honorarios según la propuesta que elijas está entre *${honRange}*.`);
     }
@@ -199,9 +206,9 @@ export function buildWhatsAppMessage(p: {
   lines.push("");
   lines.push(`📎 Te envío la propuesta en PDF con todo el detalle.`);
   lines.push("");
-  lines.push(`¿Te animas a que agendemos una llamada con el especialista? ¿En qué horario te queda mejor hoy o mañana?`);
+  lines.push(`¿Te animas a que eliminemos intereses innecesarios de tu crédito? ¿En qué horario te queda mejor hoy o mañana?`);
   lines.push("");
-  lines.push(asesor ? `— ${asesor} · NUVEX` : `— Equipo NUVEX`);
+  lines.push(asesor ? `— ${nombreAnalista(asesor)} · NUVEX` : `— Equipo NUVEX`);
 
   return lines.join("\n");
 }
