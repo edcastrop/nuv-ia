@@ -340,14 +340,15 @@ function normalizeParsedMotor(
     "interesCuota",
     "capitalCuota",
     "seguros",
-    "valorUVR",
-    "saldoUVR",
     "valorBeneficioMensual",
     "cuotaSinSubsidio",
     "cuotaConSubsidio",
   ];
   for (const k of CAMPOS_MONETARIOS) {
     if (datos[k]) datos[k] = parseCOP(datos[k]);
+  }
+  for (const k of ["valorUVR", "saldoUVR"] as CampoMotor[]) {
+    if (datos[k]) datos[k] = parseDecimalFlexible(datos[k]);
   }
   for (const k of ["tasaEA", "tasaMensual", "tasaCobertura"] as CampoMotor[]) {
     if (datos[k]) datos[k] = parseTasa(datos[k]);
