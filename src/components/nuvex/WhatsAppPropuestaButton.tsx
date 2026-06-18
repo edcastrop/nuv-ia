@@ -38,6 +38,37 @@ function nombreAnalista(nombre?: string): string {
   return `${partes[0]} ${partes[1]}`;
 }
 
+// Heurística de género por primer nombre (es-CO). Devuelve "F" | "M".
+const NOMBRES_MASCULINOS = new Set([
+  "andres","jose","jesus","nicolas","tomas","matias","elias","lucas","ezequiel",
+  "joaquin","ismael","ezequias","ivan","adan","jonas","abraham","noe","moises",
+  "david","daniel","samuel","gabriel","rafael","miguel","angel","manuel","emanuel",
+  "israel","ariel","uriel","raul","saul","cesar","oscar","omar","edgar","hector",
+  "victor","nestor","javier","alexander","alexis","felix","luis","jesús","andrés",
+  "tomás","matías","elías","joaquín","ismaél","iván","adán","jonás","noé","moisés",
+  "ángel","emanuél","raúl","saúl","césar","óscar","omár","édgar","héctor","víctor",
+  "néstor","javiér","félix","luís","eduard","cristhian","cristian","christian",
+  "yeison","jhon","jhonatan","jonathan","brayan","kevin","yair","alvaro","álvaro",
+]);
+const NOMBRES_FEMENINOS = new Set([
+  "marcela","marsela","carmen","isabel","beatriz","raquel","ester","esther","ruth",
+  "abigail","sarai","damaris","judith","miriam","noemi","noemí","ines","inés",
+  "soledad","caridad","mercedes","dolores","pilar","rosario","consuelo","amparo",
+  "azucena","jazmin","jazmín","yamileth","yamile","yulieth","yuliana","leidy",
+  "yeimy","yenny","yiseth","luz","cruz","trinidad","piedad","libertad",
+]);
+
+function generoAnalista(nombre?: string): "F" | "M" {
+  const first = primerNombre(nombre).toLowerCase();
+  if (!first) return "F";
+  if (NOMBRES_MASCULINOS.has(first)) return "M";
+  if (NOMBRES_FEMENINOS.has(first)) return "F";
+  const last = first[first.length - 1];
+  if (last === "a") return "F";
+  if (last === "o") return "M";
+  return "F";
+}
+
 function millonesCOP(n: number): string {
   if (Math.abs(n) >= 1_000_000) {
     const millones = n / 1_000_000;
