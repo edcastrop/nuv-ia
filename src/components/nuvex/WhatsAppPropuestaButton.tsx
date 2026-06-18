@@ -147,12 +147,22 @@ export function buildWhatsAppMessage(p: {
   lines.push("");
   lines.push(`Revisé tu crédito con *${banco}* y tengo *muy buenas noticias* para ti 🎉`);
   lines.push("");
-  lines.push(`Preparé *${total} propuestas* de optimización y te sugiero una en particular que me parece la mejor para tu caso.`);
-  lines.push("");
+
+  // Panorama general primero
+  if (total > 1) {
+    lines.push(`*El panorama general:*`);
+    lines.push(`Podemos ayudarte a *eliminar entre ${añosRange}* de tu crédito y dejarías de pagar entre *${ahorroRange}* en intereses y seguros, dependiendo de la propuesta que elijas. El aumento en tu cuota estaría entre *${incRange}* al mes.`);
+    lines.push("");
+    lines.push(`Preparé *${total} propuestas* y te sugiero una en particular que me parece la mejor para tu caso 👇`);
+    lines.push("");
+  } else {
+    lines.push(`Te preparé una propuesta de optimización pensada para tu caso 👇`);
+    lines.push("");
+  }
 
   // Bloque de la propuesta recomendada con números concretos
   if (recomendada) {
-    lines.push(`*Con la propuesta que te sugiero:*`);
+    lines.push(`*Propuesta que te sugiero:*`);
     if (incRecomendado > 0) {
       lines.push(`• Tu cuota subiría *${formatCOP(incRecomendado)}* al mes`);
     }
@@ -162,12 +172,6 @@ export function buildWhatsAppMessage(p: {
     if (ahorroRecomendado > 0) {
       lines.push(`• Eso significa *${compactCOP(ahorroRecomendado)}* que dejarías de pagar en intereses y seguros`);
     }
-    lines.push("");
-  }
-
-  // Contexto de rango si hay varias propuestas
-  if (total > 1) {
-    lines.push(`En general, según la propuesta que elijas, el aumento en tu cuota estaría entre *${incRange}* al mes, y podrías eliminar entre *${añosRange}* de tu crédito.`);
     lines.push("");
   }
 
