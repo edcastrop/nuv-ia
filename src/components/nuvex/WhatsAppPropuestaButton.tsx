@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { MessageCircle, Copy, X, Check } from "lucide-react";
 import { formatCOP } from "../../lib/format";
 
@@ -37,11 +38,11 @@ function nombreAnalista(nombre?: string): string {
   return `${partes[0]} ${partes[1]}`;
 }
 
-function compactCOP(n: number): string {
+function millonesCOP(n: number): string {
   if (Math.abs(n) >= 1_000_000) {
-    const m = n / 1_000_000;
-    const v = m >= 100 ? Math.round(m).toString() : m.toFixed(1).replace(/\.0$/, "");
-    return `$${v}M`;
+    const millones = n / 1_000_000;
+    const valor = millones >= 100 ? Math.round(millones).toString() : millones.toFixed(1).replace(/\.0$/, "");
+    return `$${valor.replace(".", ",")} millones`;
   }
   return formatCOP(n);
 }
@@ -116,22 +117,14 @@ export function buildWhatsAppMessage(p: {
   const añosRange = añosMin === añosMax ? `${añosMax} años` : `${añosMin} y ${añosMax} años`;
 
   const ahorros = p.propuestas.map(x => Math.max(0, x.ahorroTotal));
-  const ahorroPrimera = ahorros[0] ?? 0;
-  const ahorroUltima = ahorros[ahorros.length - 1] ?? ahorroPrimera;
-  const ahorroLo = Math.min(ahorroPrimera, ahorroUltima);
-  const ahorroHi = Math.max(ahorroPrimera, ahorroUltima);
-  const ahorroRange = ahorroLo === ahorroHi ? compactCOP(ahorroHi) : `${compactCOP(ahorroLo)} y ${compactCOP(ahorroHi)}`;
+  const ahorroLo = ahorros.length ? Math.min(...ahorros) : 0;
+  const ahorroHi = ahorros.length ? Math.max(...ahorros) : 0;
+  const ahorroRange = ahorroLo === ahorroHi ? millonesCOP(ahorroHi) : `${millonesCOP(ahorroLo)} y ${millonesCOP(ahorroHi)}`;
 
-  // Honorarios: rango base (1ª y última)
   const honorariosBase = p.propuestas
     .map(x => (typeof x.honorarios === "number" ? x.honorarios : null))
     .filter((v): v is number => v != null && v > 0);
   const tieneHonorarios = honorariosBase.length > 0;
-  const honPrimera = honorariosBase[0] ?? 0;
-  const honUltima = honorariosBase[honorariosBase.length - 1] ?? honPrimera;
-  const honLo = Math.min(honPrimera, honUltima);
-  const honHi = Math.max(honPrimera, honUltima);
-  const honRange = honLo === honHi ? formatCOP(honHi) : `${formatCOP(honLo)} y ${formatCOP(honHi)}`;
 
   const tiempo = tiempoProcesoBanco(p.banco);
   const asesor = (p.asesor || "").trim();
