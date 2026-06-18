@@ -1,7 +1,7 @@
 /**
  * AnimatedBackground — fondo NUVIA "Soft ambient glow".
  *
- * Tres auras grandes con blur extremo y opacidad muy baja (5–10%) que
+ * Tres auras grandes con blur extremo y opacidad moderada (12–18%) que
  * se desplazan lentamente (25–35 s) por los bordes de la pantalla.
  * Nada de nodos, links, ni paquetes de datos. Solo luz que respira.
  *
@@ -22,14 +22,14 @@ export function AnimatedBackground() {
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(1100px 700px at 20% 10%, rgba(68,93,163,0.28), transparent 60%), radial-gradient(900px 600px at 90% 90%, rgba(132,185,143,0.22), transparent 55%), linear-gradient(160deg, #0A0B10 0%, #0F121C 55%, #0A0B10 100%)",
+            "radial-gradient(1100px 700px at 20% 10%, rgba(68,93,163,0.45), transparent 60%), radial-gradient(900px 600px at 90% 90%, rgba(132,185,143,0.38), transparent 55%), linear-gradient(160deg, #0A0B10 0%, #0F121C 55%, #0A0B10 100%)",
         }}
       />
 
       {/* Grid sutil (estático) */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.04]"
+        className="pointer-events-none absolute inset-0 opacity-[0.08]"
         style={{
           backgroundImage:
             "linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)",
@@ -46,7 +46,7 @@ export function AnimatedBackground() {
         className="pointer-events-none absolute -top-[10%] -left-[10%] h-[60%] w-[60%] rounded-full blur-[120px] nuvia-drift"
         style={{
           background: BLUE,
-          opacity: 0.08,
+          opacity: 0.18,
         }}
       />
 
@@ -56,7 +56,7 @@ export function AnimatedBackground() {
         className="pointer-events-none absolute -bottom-[10%] -right-[10%] h-[50%] w-[50%] rounded-full blur-[100px] nuvia-drift-slow"
         style={{
           background: GREEN,
-          opacity: 0.05,
+          opacity: 0.12,
         }}
       />
 
@@ -66,7 +66,7 @@ export function AnimatedBackground() {
         className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[40%] w-[40%] rounded-full blur-[150px]"
         style={{
           background: VIOLET,
-          opacity: 0.06,
+          opacity: 0.15,
         }}
       />
 
@@ -81,3 +81,4 @@ export function AnimatedBackground() {
     </>
   );
 }
+
