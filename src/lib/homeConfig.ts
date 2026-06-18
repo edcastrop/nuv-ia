@@ -126,7 +126,7 @@ export const HOME_CONFIG: Partial<Record<AppRole, RoleHomeConfig>> = {
     quickActions: [
       { to: "/casos", label: "Mis casos", desc: "Pipeline personal", icon: FolderKanban, tone: "blue" },
       { to: "/directorio", label: "Directorio", desc: "Mis clientes", icon: BookUser, tone: "green" },
-      { to: "/herramientas/proyeccion", label: "Proyección financiera", desc: "Simulador", icon: LineChart, tone: "blue" },
+      { to: "/simulador", label: "Simulador NUVEX", desc: "Propuesta + WhatsApp", icon: LineChart, tone: "blue" },
       { to: "/comisiones", label: "Mis comisiones", desc: "Liquidación y wallet", icon: Wallet, tone: "green" },
       { to: "/wallet", label: "Mi wallet", desc: "Saldo y movimientos", icon: PiggyBank, tone: "blue" },
       MENSAJERIA,
