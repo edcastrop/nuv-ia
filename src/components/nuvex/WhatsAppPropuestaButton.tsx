@@ -206,9 +206,11 @@ export function buildWhatsAppMessage(p: {
   lines.push("");
   lines.push(`📎 Te envío el PDF con el detalle completo de las propuestas.`);
   lines.push("");
-  lines.push(`¿Te gustaría que revisáramos juntos cuál de las alternativas se adapta mejor a tus finanzas?`);
+  lines.push(`Lo más difícil ya está hecho: encontrar la oportunidad. Ahora solo queda decidir si quieres aprovecharla y cuántos millones quieres eliminar.`);
   lines.push("");
-  lines.push(`Quedo atent@.`);
+  lines.push(`¿Agendamos?`);
+  lines.push("");
+  lines.push(cierre);
   lines.push("");
   lines.push(asesor ? `${nombreAnalista(asesor)}` : `Equipo NUVEX`);
   lines.push(`NUVEX Finanzas Inteligentes`);
