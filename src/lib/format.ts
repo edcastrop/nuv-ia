@@ -26,8 +26,29 @@ export function parseCurrency(value: string | number | null | undefined): number
 export function parseDecimal(value: string | number | null | undefined): number {
   if (value === null || value === undefined) return 0;
   if (typeof value === "number") return value;
-  const cleaned = String(value).replace(/[^\d,.-]/g, "").replace(",", ".");
-  return parseFloat(cleaned) || 0;
+  const cleaned = String(value).replace(/[^\d,.-]/g, "").trim();
+  if (!cleaned) return 0;
+  const negative = cleaned.startsWith("-");
+  const unsigned = negative ? cleaned.slice(1) : cleaned;
+  const lastComma = unsigned.lastIndexOf(",");
+  const lastDot = unsigned.lastIndexOf(".");
+  let normalized = unsigned;
+  if (lastComma !== -1 && lastDot !== -1) {
+    normalized = lastComma > lastDot
+      ? unsigned.replace(/\./g, "").replace(",", ".")
+      : unsigned.replace(/,/g, "");
+  } else if (lastComma !== -1) {
+    const parts = unsigned.split(",");
+    const last = parts.at(-1) ?? "";
+    const thousands = parts.length > 1 && parts.slice(1).every((p) => p.length === 3);
+    normalized = thousands ? unsigned.replace(/,/g, "") : unsigned.replace(",", ".");
+  } else if (lastDot !== -1) {
+    const parts = unsigned.split(".");
+    const thousands = parts.length > 1 && parts.slice(1).every((p) => p.length === 3);
+    normalized = thousands ? unsigned.replace(/\./g, "") : unsigned;
+  }
+  const parsed = parseFloat(`${negative ? "-" : ""}${normalized}`);
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 export function parsePercentage(value: string | number | null | undefined): number {

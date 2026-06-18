@@ -36,8 +36,14 @@ export interface CreditoMaestro {
   valorDesembolsado?: string;
   plazoOriginal: string;
   saldoCapital: string;
+  saldoPesos?: string;
+  saldoUVR?: string;
+  valorUVR?: string;
   cuotaActual: string;
+  cuotaActualPesos?: string;
   seguros?: string;
+  teaCobrada?: string;
+  variacionUVR?: string;
   cuotaConSubsidio?: string;
   cuotaConInteresSinSeguros?: string;
   cuotaBaseSimulacion?: string;
@@ -119,8 +125,14 @@ export const emptyCredito = (): CreditoMaestro => ({
   valorDesembolsado: "",
   plazoOriginal: "",
   saldoCapital: "",
+  saldoPesos: "",
+  saldoUVR: "",
+  valorUVR: "",
   cuotaActual: "",
+  cuotaActualPesos: "",
   seguros: "",
+  teaCobrada: "",
+  variacionUVR: "",
   tasa: "",
   cuotasPagadas: "",
   cuotasPendientes: "",
@@ -244,8 +256,8 @@ export function maestroToExpediente(m: ExpedienteMaestro, expedienteId = "") {
   const fresh = m.fresh;
   const sane = normalizeCreditMoneyInput({
     valorDesembolsado: m.credito?.valorDesembolsado,
-    saldoCapital: m.credito?.saldoCapital,
-    cuotaActual: m.credito?.cuotaActual,
+    saldoCapital: m.credito?.saldoPesos || m.credito?.saldoCapital,
+    cuotaActual: m.credito?.cuotaActualPesos || m.credito?.cuotaActual,
     seguros: m.credito?.seguros,
     cuotaBaseSimulacion: m.credito?.cuotaBaseSimulacion,
     cuotaConSubsidio: m.credito?.cuotaConSubsidio,
@@ -294,10 +306,16 @@ export function maestroToExpediente(m: ExpedienteMaestro, expedienteId = "") {
   };
   const credito_data: Record<string, string> = {
     valorDesembolsado: money("valorDesembolsado", m.credito?.valorDesembolsado ?? ""),
-    saldoCapital: money("saldoCapital", m.credito?.saldoCapital ?? ""),
-    cuotaActual: money("cuotaActual", m.credito?.cuotaActual ?? ""),
+    saldoCapital: money("saldoCapital", m.credito?.saldoPesos || m.credito?.saldoCapital || ""),
+    saldoPesos: money("saldoCapital", m.credito?.saldoPesos || m.credito?.saldoCapital || ""),
+    saldoUVR: m.credito?.saldoUVR ?? "",
+    valorUVR: m.credito?.valorUVR ?? "",
+    cuotaActual: money("cuotaActual", m.credito?.cuotaActualPesos || m.credito?.cuotaActual || ""),
+    cuotaActualPesos: money("cuotaActual", m.credito?.cuotaActualPesos || m.credito?.cuotaActual || ""),
     seguros: money("seguros", m.credito?.seguros ?? ""),
     tea: m.credito?.tasa ?? "",
+    teaCobrada: m.credito?.teaCobrada || m.credito?.tasa || "",
+    variacionUVR: m.credito?.variacionUVR ?? "",
     nuevaCuotaManual: "",
   };
   return {
