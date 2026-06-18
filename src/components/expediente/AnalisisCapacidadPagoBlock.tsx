@@ -488,11 +488,12 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
                 {p.rol === "titular" ? "TITULAR" : "CODEUDOR"}
               </Badge>
               <Select value={p.tipoPersona} onValueChange={(v) => setTipoPersona(idx, v as TipoPersona)}>
-                <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-[260px]"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="empleado_mensual">Empleado · pago mensual</SelectItem>
                   <SelectItem value="empleado_quincenal">Empleado · pago quincenal</SelectItem>
                   <SelectItem value="independiente">Independiente</SelectItem>
+                  <SelectItem value="empleado_independiente">Empleado + Independiente (mixto)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
