@@ -170,6 +170,17 @@ export function parseBancolombiaText(rawText: string): ExtractoRecord | null {
     errores.push("Beneficio detectado sin valores operativos suficientes; revisar manualmente.");
   }
 
+  const valorUVRNum = moneda === "UVR" ? extractValorUVR(text) : 0;
+  let saldoUVRNum = moneda === "UVR" ? extractSaldoUVR(text) : 0;
+  // Fallback: si no encontramos "Saldo UVR" pero sí "Valor UVR" y "Saldo capital pesos",
+  // derivamos saldoUVR = saldoPesos / valorUVR (con 4 decimales).
+  if (moneda === "UVR" && !saldoUVRNum && valorUVRNum > 0 && saldoCapital > 0) {
+    saldoUVRNum = Math.round((saldoCapital / valorUVRNum) * 10000) / 10000;
+  }
+  if (moneda === "UVR" && (!valorUVRNum || !saldoUVRNum)) {
+    errores.push("Falta Saldo UVR o Valor UVR en el extracto Bancolombia UVR — verificar el PDF.");
+  }
+
   return {
     banco: "Bancolombia",
     cliente,
