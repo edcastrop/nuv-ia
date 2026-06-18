@@ -17,12 +17,55 @@ const confidence = {
   tea: "alta",
   teaCobrada: "alta",
   teaPactada: "alta",
-  valorUVR: "baja",
-  saldoUVR: "baja",
+  valorUVR: "alta",
+  saldoUVR: "alta",
   valorCobertura: "alta",
   tasaCobertura: "alta",
   valorDesembolsado: "alta",
 };
+
+function decimalAfter(text: string, label: string) {
+  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const m = text.match(new RegExp(`${escaped}\\s*[:]?\\s*\\$?\\s*([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]+)?|[0-9]+(?:[.,][0-9]+)?)`, "i"));
+  if (!m) return 0;
+  return moneyToNumber(m[1]);
+}
+
+function extractValorUVR(text: string) {
+  // Bancolombia rotula esto como "Valor UVR del día" / "Valor UVR" / "Valor de la UVR"
+  // Es UN solo número con 4 decimales (ej "372.1234" o "372,1234").
+  const patterns = [
+    /Valor\s+(?:de\s+la\s+)?UVR\s+del\s+d[ií]a\s*[:]?\s*\$?\s*([0-9]+(?:[.,][0-9]+)?)/i,
+    /Valor\s+(?:de\s+la\s+)?UVR\s+(?:a\s+la\s+fecha|vigente|del\s+per[ií]odo|actual)\s*[:]?\s*\$?\s*([0-9]+(?:[.,][0-9]+)?)/i,
+    /Valor\s+UVR\s*[:]?\s*\$?\s*([0-9]+(?:[.,][0-9]+)?)/i,
+    /Valor\s+de\s+la\s+UVR\s*[:]?\s*\$?\s*([0-9]+(?:[.,][0-9]+)?)/i,
+  ];
+  for (const rx of patterns) {
+    const m = text.match(rx);
+    if (m) {
+      const n = moneyToNumber(m[1]);
+      if (n > 0) return n;
+    }
+  }
+  return 0;
+}
+
+function extractSaldoUVR(text: string) {
+  // Etiqueta típica: "Saldo UVR" / "Saldo en UVR" / "Saldo de capital en UVR".
+  const patterns = [
+    /Saldo\s+(?:de\s+capital\s+)?en\s+UVR\s*[:]?\s*\$?\s*([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]+)?)/i,
+    /Saldo\s+UVR\s*[:]?\s*\$?\s*([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]+)?)/i,
+    /Saldo\s+capital\s+UVR\s*[:]?\s*\$?\s*([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]+)?)/i,
+  ];
+  for (const rx of patterns) {
+    const m = text.match(rx);
+    if (m) {
+      const n = moneyToNumber(m[1]);
+      if (n > 0) return n;
+    }
+  }
+  return 0;
+}
 
 function compactSpaces(text: string) {
   return text.replace(/\u00a0/g, " ").replace(/[ \t]+/g, " ");
