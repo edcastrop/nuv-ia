@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
-import { Loader2, Flag, Clock, AlertTriangle, RefreshCw, Eye, Pencil, SlidersHorizontal, ChevronDown, Radar, Gauge, Coins, ShieldAlert, Sparkles, Download, LayoutGrid, CheckCircle2, Search } from "lucide-react";
+import { Loader2, Flag, Clock, AlertTriangle, RefreshCw, Eye, Pencil, SlidersHorizontal, ChevronDown, Radar, Gauge, Coins, ShieldAlert, Sparkles, Download, LayoutGrid, CheckCircle2, Search, ArrowRight, TrendingUp } from "lucide-react";
 import { listExpedientes, type Expediente } from "@/lib/expedientes";
 import {
   ETAPAS_PIPELINE,
@@ -443,35 +443,35 @@ function PipelinePage() {
           "linear-gradient(180deg, var(--nuvia-bg-primary) 0%, var(--nuvia-bg-secondary) 54%, var(--nuvia-bg-primary) 100%)",
       }}
     >
-      <div className="mx-auto max-w-[1680px] space-y-4">
-        <section className="glass-panel relative overflow-hidden p-3 md:p-4">
+      <div className="mx-auto max-w-[1680px] space-y-5">
+        <section className="glass-panel relative overflow-hidden p-4 md:p-5">
           {/* Aura sutil de torre de control */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 opacity-60"
+            className="pointer-events-none absolute inset-0 opacity-70"
             style={{
               background:
-                "radial-gradient(900px 280px at 8% -10%, color-mix(in oklab, var(--nuvia-accent-blue) 14%, transparent), transparent 60%), radial-gradient(700px 240px at 95% -20%, color-mix(in oklab, var(--nuvia-accent-green) 10%, transparent), transparent 60%)",
+                "radial-gradient(1000px 320px at 8% -10%, color-mix(in oklab, var(--nuvia-accent-blue) 16%, transparent), transparent 60%), radial-gradient(800px 260px at 95% -20%, color-mix(in oklab, var(--nuvia-accent-green) 12%, transparent), transparent 60%)",
             }}
           />
 
           {/* Fila ejecutiva: identidad operacional + 4 KPIs premium */}
-          <div className="relative flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <div className="relative flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
             <div className="flex min-w-0 items-center gap-3">
               <div
                 className="relative grid h-11 w-11 shrink-0 place-items-center rounded-xl text-[var(--nuvia-text-primary)]"
                 style={{
                   background: "var(--nuvia-gradient-primary)",
-                  boxShadow: "var(--nuvia-shadow-md), inset 0 0 0 1px rgba(255,255,255,0.08)",
+                  boxShadow: "var(--nuvia-shadow-md), inset 0 0 0 1px rgba(255,255,255,0.08), 0 0 24px color-mix(in oklab, var(--nuvia-accent-blue) 30%, transparent)",
                 }}
                 aria-hidden
               >
                 <Radar className="h-5 w-5" />
                 <span
-                  className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full"
+                  className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 animate-pulse rounded-full"
                   style={{
                     background: "var(--nuvia-accent-green)",
-                    boxShadow: "0 0 0 2px var(--nuvia-bg-secondary), 0 0 10px color-mix(in oklab, var(--nuvia-accent-green) 70%, transparent)",
+                    boxShadow: "0 0 0 2px var(--nuvia-bg-secondary), 0 0 14px color-mix(in oklab, var(--nuvia-accent-green) 80%, transparent)",
                   }}
                 />
               </div>
@@ -498,15 +498,16 @@ function PipelinePage() {
 
             {/* 4 KPIs ejecutivos — números grandes, labels pequeños, máximo contraste */}
             {!loading && kpis.total > 0 && (
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:flex xl:items-stretch">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:flex xl:items-stretch">
                 <KpiTile
                   label="Casos activos"
                   value={String(kpis.total)}
                   icon={<LayoutGrid className="h-3.5 w-3.5" />}
                 />
                 <KpiTile
-                  label="Riesgo"
+                  label="Casos en riesgo"
                   value={String(kpis.estancados)}
+                  subtext={`${Math.round((kpis.estancados / Math.max(1, kpis.total)) * 100)}% del pipeline`}
                   tone="danger"
                   icon={<ShieldAlert className="h-3.5 w-3.5" />}
                 />
@@ -525,63 +526,96 @@ function PipelinePage() {
             )}
           </div>
 
-          {/* Barra de salud del pipeline — distribución por fase */}
-          {!loading && kpis.total > 0 && (
-            <div className="relative mt-4">
-              <div className="mb-1.5 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-[var(--nuvia-text-secondary)]">
-                <span>Salud del pipeline</span>
-                <span className="tabular-nums">
-                  {Math.max(0, 100 - Math.round((kpis.estancados / Math.max(1, kpis.total)) * 100))}%
-                  <span className="ml-1 opacity-70">saludable</span>
-                </span>
-              </div>
-              <div
-                className="flex h-2 w-full overflow-hidden rounded-full ring-1 ring-[var(--nuvia-border)]"
-                style={{ background: "rgba(255,255,255,0.04)" }}
-                role="img"
-                aria-label="Distribución de casos por fase"
-              >
-                {kpis.fases.map((f) => {
-                  const pct = (f.count / Math.max(1, kpis.total)) * 100;
-                  if (pct <= 0) return null;
-                  const colors: Record<string, string> = {
-                    comercial: "var(--nuvia-accent-blue)",
-                    operativa: "var(--nuvia-accent-purple, #8a7cd6)",
-                    banco: "var(--nuvia-warning)",
-                    cobro: "var(--nuvia-accent-green)",
-                    fin: "color-mix(in oklab, var(--nuvia-accent-green) 70%, white)",
-                  };
-                  return (
-                    <div
-                      key={f.id}
-                      title={`${f.label}: ${f.count}`}
-                      style={{ width: `${pct}%`, background: colors[f.id] ?? "var(--nuvia-accent-blue)" }}
-                    />
-                  );
-                })}
-              </div>
-              <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-[var(--nuvia-text-secondary)]">
-                {kpis.fases.map((f) => {
-                  const colors: Record<string, string> = {
-                    comercial: "var(--nuvia-accent-blue)",
-                    operativa: "var(--nuvia-accent-purple, #8a7cd6)",
-                    banco: "var(--nuvia-warning)",
-                    cobro: "var(--nuvia-accent-green)",
-                    fin: "color-mix(in oklab, var(--nuvia-accent-green) 70%, white)",
-                  };
-                  return (
-                    <span key={f.id} className="inline-flex items-center gap-1.5">
-                      <span className="inline-block h-2 w-2 rounded-sm" style={{ background: colors[f.id] }} />
-                      {f.label.split(" · ")[0]}
-                      <span className="font-semibold tabular-nums text-[var(--nuvia-text-primary)]">{f.count}</span>
+          {/* Flujo operativo segmentado — dónde está el cuello de botella */}
+          {!loading && kpis.total > 0 && (() => {
+            const faseColors: Record<string, string> = {
+              comercial: "var(--nuvia-accent-blue)",
+              operativa: "var(--nuvia-accent-purple, #8a7cd6)",
+              banco: "var(--nuvia-warning)",
+              cobro: "var(--nuvia-accent-green)",
+              fin: "color-mix(in oklab, var(--nuvia-accent-green) 70%, white)",
+            };
+            const faseLabels: Record<string, string> = {
+              comercial: "Comercial",
+              operativa: "Operativa",
+              banco: "Banco",
+              cobro: "Cobro",
+              fin: "Cierre",
+            };
+            const bottleneck = [...kpis.fases]
+              .filter((f) => f.id !== "fin")
+              .sort((a, b) => b.count - a.count)[0];
+            return (
+              <div className="relative mt-5">
+                <div className="mb-2 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-[var(--nuvia-text-secondary)]">
+                  <span className="inline-flex items-center gap-1.5">
+                    Flujo operativo
+                    <span className="hidden h-1 w-1 rounded-full bg-[var(--nuvia-text-secondary)] sm:inline" />
+                    <span className="hidden text-[var(--nuvia-text-secondary)] sm:inline">vista de cuello de botella</span>
+                  </span>
+                  {bottleneck && (
+                    <span className="tabular-nums text-[var(--nuvia-warning)]">
+                      Cuello de botella: <span className="font-bold text-[var(--nuvia-text-primary)]">{faseLabels[bottleneck.id]}</span>
+                      {" · "}
+                      {Math.round((bottleneck.count / Math.max(1, kpis.total)) * 100)}%
                     </span>
-                  );
-                })}
+                  )}
+                </div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-5">
+                  {kpis.fases.map((f, idx) => {
+                    const pct = Math.round((f.count / Math.max(1, kpis.total)) * 100);
+                    const isBottleneck = f.id === bottleneck?.id;
+                    return (
+                      <div
+                        key={f.id}
+                        className={`relative overflow-hidden rounded-xl border p-3 transition`}
+                        style={{
+                          borderColor: `color-mix(in oklab, ${faseColors[f.id]} ${isBottleneck ? 55 : 30}%, transparent)`,
+                          background: `linear-gradient(135deg, color-mix(in oklab, ${faseColors[f.id]} ${isBottleneck ? 18 : 9}%, transparent), color-mix(in oklab, ${faseColors[f.id]} 3%, transparent))`,
+                          boxShadow: isBottleneck
+                            ? `0 10px 28px -16px color-mix(in oklab, ${faseColors[f.id]} 55%, transparent), 0 0 0 1px color-mix(in oklab, ${faseColors[f.id]} 55%, transparent)`
+                            : "0 4px 16px -12px rgba(0,0,0,0.45)",
+                        }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--nuvia-text-secondary)]">
+                            {idx + 1}. {faseLabels[f.id]}
+                          </span>
+                          {isBottleneck && (
+                            <span
+                              className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase text-[var(--nuvia-bg-primary)]"
+                              style={{ background: faseColors[f.id] }}
+                            >
+                              bottleneck
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-1 flex items-baseline gap-2">
+                          <span className="text-xl font-bold tabular-nums text-[var(--nuvia-text-primary)]">
+                            {f.count}
+                          </span>
+                          <span className="text-xs font-semibold tabular-nums" style={{ color: faseColors[f.id] }}>
+                            {pct}%
+                          </span>
+                        </div>
+                        <div
+                          className="absolute bottom-0 left-0 h-[2px]"
+                          style={{ width: `${pct}%`, background: faseColors[f.id] }}
+                        />
+                        {idx < kpis.fases.length - 1 && (
+                          <div className="pointer-events-none absolute -right-3 top-1/2 hidden -translate-y-1/2 sm:block">
+                            <ArrowRight className="h-3.5 w-3.5 text-[var(--nuvia-text-secondary)] opacity-40" />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
-          {/* Alertas inteligentes mini */}
+          {/* Alertas inteligentes con jerarquía visual */}
           {!loading && kpis.total > 0 && (() => {
             const listos = (grupos.get("paz_salvo") ?? []).length + (grupos.get("pago") ?? []).length;
             let criticos = 0;
@@ -593,22 +627,23 @@ function PipelinePage() {
               });
             });
             return (
-              <div className="relative mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <div className="relative mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <AlertaMini
+                  size="lg"
                   tone="danger"
-                  icon={<AlertTriangle className="h-3.5 w-3.5" />}
+                  icon={<AlertTriangle className="h-4 w-4" />}
+                  label="Críticos"
+                  value={criticos}
+                  hint="Más de 2× el SLA — requieren acción inmediata"
+                />
+                <AlertaMini
+                  tone="warning"
+                  icon={<Clock className="h-3.5 w-3.5" />}
                   label="Estancados"
                   value={kpis.estancados}
                   hint="Sobre SLA por etapa"
                   active={soloStuck}
                   onClick={() => setSoloStuck(!soloStuck)}
-                />
-                <AlertaMini
-                  tone="warning"
-                  icon={<ShieldAlert className="h-3.5 w-3.5" />}
-                  label="Críticos"
-                  value={criticos}
-                  hint="Más de 2× el SLA"
                 />
                 <AlertaMini
                   tone="success"
@@ -621,97 +656,127 @@ function PipelinePage() {
             );
           })()}
 
-          {/* Toolbar: Buscar → Filtros → Vista → Análisis IA → Exportar */}
-          <div className="relative mt-3 flex flex-wrap items-center gap-2 border-t border-[var(--nuvia-border)] pt-3">
-            <div className="relative min-w-[220px] flex-1 sm:max-w-[360px]">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--nuvia-text-secondary)]" />
-              <input
-                ref={searchInputRef}
-                value={qLocal}
-                onChange={(e) => setQLocal(e.target.value)}
-                placeholder="Buscar cliente, cédula o crédito…"
-                className="h-9 w-full rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] pl-8 pr-8 text-sm text-[var(--nuvia-text-primary)] outline-none placeholder:text-[rgba(170,179,197,0.55)] focus:border-[var(--nuvia-accent-blue)] focus:ring-2 focus:ring-[rgba(68,93,163,0.22)]"
-              />
-              <kbd className="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 rounded border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.05)] px-1 text-[10px] text-[var(--nuvia-text-secondary)] sm:inline">/</kbd>
-            </div>
+          {/* Momentum + Toolbar */}
+          <div className="relative mt-5 flex flex-col gap-3 border-t border-[var(--nuvia-border)] pt-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              {/* Buscador reducido */}
+              <div className="relative min-w-[200px] flex-1 sm:max-w-[288px]">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--nuvia-text-secondary)]" />
+                <input
+                  ref={searchInputRef}
+                  value={qLocal}
+                  onChange={(e) => setQLocal(e.target.value)}
+                  placeholder="Buscar cliente, cédula o crédito…"
+                  className="h-9 w-full rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] pl-8 pr-8 text-sm text-[var(--nuvia-text-primary)] outline-none placeholder:text-[rgba(170,179,197,0.55)] focus:border-[var(--nuvia-accent-blue)] focus:ring-2 focus:ring-[rgba(68,93,163,0.22)]"
+                />
+                <kbd className="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 rounded border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.05)] px-1 text-[10px] text-[var(--nuvia-text-secondary)] sm:inline">/</kbd>
+              </div>
 
-            <button
-              type="button"
-              onClick={() => setShowFilters((v) => !v)}
-              aria-expanded={showFilters}
-              className={`inline-flex h-9 items-center gap-1.5 rounded-lg border px-2.5 text-xs transition ${
-                showFilters || advancedActive
-                  ? "border-[var(--nuvia-accent-blue)] bg-[rgba(68,93,163,0.16)] text-[var(--nuvia-text-primary)]"
-                  : "border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] text-[var(--nuvia-text-secondary)] hover:border-[var(--nuvia-border-strong)]"
-              }`}
-              title="Banco, analista, fase, mis casos, estancados"
-            >
-              <SlidersHorizontal className="h-3.5 w-3.5" />
-              Filtros
-              {advancedActive && (
-                <span
-                  className="ml-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-semibold text-[var(--nuvia-text-primary)]"
-                  style={{ background: "color-mix(in oklab, var(--nuvia-accent-blue) 55%, transparent)" }}
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowFilters((v) => !v)}
+                  aria-expanded={showFilters}
+                  className={`inline-flex h-9 items-center gap-1.5 rounded-lg border px-2.5 text-xs transition ${
+                    showFilters || advancedActive
+                      ? "border-[var(--nuvia-accent-blue)] bg-[rgba(68,93,163,0.16)] text-[var(--nuvia-text-primary)]"
+                      : "border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] text-[var(--nuvia-text-secondary)] hover:border-[var(--nuvia-border-strong)]"
+                  }`}
+                  title="Banco, analista, fase, mis casos, estancados"
                 >
-                  ON
-                </span>
-              )}
-              <ChevronDown className={`h-3 w-3 transition-transform ${showFilters ? "rotate-180" : ""}`} />
-            </button>
+                  <SlidersHorizontal className="h-3.5 w-3.5" />
+                  Filtros
+                  {advancedActive && (
+                    <span
+                      className="ml-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-semibold text-[var(--nuvia-text-primary)]"
+                      style={{ background: "color-mix(in oklab, var(--nuvia-accent-blue) 55%, transparent)" }}
+                    >
+                      ON
+                    </span>
+                  )}
+                  <ChevronDown className={`h-3 w-3 transition-transform ${showFilters ? "rotate-180" : ""}`} />
+                </button>
 
-            <Link
-              to="/casos"
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-2.5 text-xs text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-border-strong)] hover:text-[var(--nuvia-text-primary)]"
-              title="Cambiar a vista lista"
-            >
-              <Eye className="h-3.5 w-3.5" />
-              Vista
-            </Link>
+                <Link
+                  to="/casos"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-2.5 text-xs text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-border-strong)] hover:text-[var(--nuvia-text-primary)]"
+                  title="Cambiar a vista lista"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  Vista
+                </Link>
 
-            <button
-              type="button"
-              onClick={() => setShowAnalisis((v) => !v)}
-              aria-expanded={showAnalisis}
-              className={`inline-flex h-9 items-center gap-1.5 rounded-lg border px-2.5 text-xs transition ${
-                showAnalisis
-                  ? "border-[var(--nuvia-accent-green)] bg-[rgba(106,168,79,0.16)] text-[var(--nuvia-text-primary)]"
-                  : "border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] text-[var(--nuvia-text-secondary)] hover:border-[var(--nuvia-border-strong)]"
-              }`}
-              title="Embudo ejecutivo y análisis NUVIA"
-            >
-              <Sparkles className="h-3.5 w-3.5 text-[var(--nuvia-accent-green)]" />
-              Análisis IA
-              <ChevronDown className={`h-3 w-3 transition-transform ${showAnalisis ? "rotate-180" : ""}`} />
-            </button>
+                {/* Análisis IA — protagonista */}
+                <button
+                  type="button"
+                  onClick={() => setShowAnalisis((v) => !v)}
+                  aria-expanded={showAnalisis}
+                  className="relative inline-flex h-9 items-center gap-1.5 overflow-hidden rounded-lg border px-3 text-xs font-semibold transition"
+                  title="Embudo ejecutivo y análisis NUVIA"
+                  style={{
+                    borderColor: showAnalisis
+                      ? "var(--nuvia-accent-green)"
+                      : "color-mix(in oklab, var(--nuvia-accent-green) 55%, transparent)",
+                    background: showAnalisis
+                      ? "linear-gradient(135deg, color-mix(in oklab, var(--nuvia-accent-green) 22%, transparent), color-mix(in oklab, var(--nuvia-accent-green) 8%, transparent))"
+                      : "linear-gradient(135deg, color-mix(in oklab, var(--nuvia-accent-green) 12%, transparent), color-mix(in oklab, var(--nuvia-accent-green) 4%, transparent))",
+                    color: "var(--nuvia-text-primary)",
+                    boxShadow: showAnalisis
+                      ? "0 0 0 1px color-mix(in oklab, var(--nuvia-accent-green) 40%, transparent) inset, 0 0 28px -6px color-mix(in oklab, var(--nuvia-accent-green) 55%, transparent)"
+                      : "0 0 0 1px color-mix(in oklab, var(--nuvia-accent-green) 30%, transparent) inset, 0 0 22px -8px color-mix(in oklab, var(--nuvia-accent-green) 35%, transparent)",
+                  }}
+                >
+                  <span className="absolute inset-0 -translate-x-full animate-[shimmer_2.5s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+                  <Sparkles className="relative h-4 w-4 text-[var(--nuvia-accent-green)]" />
+                  <span className="relative">Análisis IA</span>
+                  <ChevronDown className={`relative h-3 w-3 transition-transform ${showAnalisis ? "rotate-180" : ""}`} />
+                </button>
 
-            {advancedActive && (
-              <button
-                onClick={clearAll}
-                className="h-9 rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-2.5 text-xs text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-border-strong)]"
-              >
-                Limpiar
-              </button>
-            )}
+                {advancedActive && (
+                  <button
+                    onClick={clearAll}
+                    className="h-9 rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-2.5 text-xs text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-border-strong)]"
+                  >
+                    Limpiar
+                  </button>
+                )}
+              </div>
 
-            <div className="ml-auto flex items-center gap-2">
-              <button
-                onClick={() => cargar(true)}
-                disabled={loading || refreshing}
-                title={`Actualizado hace ${haceLabel}`}
-                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-2.5 text-xs text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-border-strong)] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <RefreshCw className={`h-3.5 w-3.5 text-[var(--nuvia-accent-green)] ${refreshing ? "animate-spin" : ""}`} />
-                {haceLabel}
-              </button>
-              <button
-                onClick={exportarCSV}
-                disabled={loading || totalVisible === 0}
-                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-transparent px-3 text-xs font-semibold text-[var(--nuvia-text-primary)] shadow-[var(--nuvia-shadow-sm)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
-                style={{ background: "var(--nuvia-gradient-primary)" }}
-              >
-                <Download className="h-3.5 w-3.5" />
-                Exportar
-              </button>
+              {/* Micro bloque de momentum */}
+              <div className="hidden items-center gap-1 rounded-xl border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.025)] px-3 py-1.5 md:flex">
+                <TrendingUp className="h-3.5 w-3.5 text-[var(--nuvia-accent-green)]" />
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--nuvia-text-secondary)]">Momentum</span>
+                <span className="mx-1 h-3 w-px bg-[var(--nuvia-border)]" />
+                <span className="text-[11px] font-semibold text-[var(--nuvia-text-primary)]">+12</span>
+                <span className="text-[10px] text-[var(--nuvia-text-secondary)]">esta semana</span>
+                <span className="mx-1.5 h-3 w-px bg-[var(--nuvia-border)]" />
+                <span className="text-[11px] font-semibold text-[var(--nuvia-accent-green)]">+18%</span>
+                <span className="text-[10px] text-[var(--nuvia-text-secondary)]">velocidad</span>
+                <span className="mx-1.5 h-3 w-px bg-[var(--nuvia-border)]" />
+                <span className="text-[11px] font-semibold text-[var(--nuvia-accent-green)]">+7</span>
+                <span className="text-[10px] text-[var(--nuvia-text-secondary)]">cierres hoy</span>
+              </div>
+
+              <div className="ml-auto flex items-center gap-2">
+                <button
+                  onClick={() => cargar(true)}
+                  disabled={loading || refreshing}
+                  title={`Actualizado hace ${haceLabel}`}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-2.5 text-xs text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-border-strong)] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 text-[var(--nuvia-accent-green)] ${refreshing ? "animate-spin" : ""}`} />
+                  {haceLabel}
+                </button>
+                <button
+                  onClick={exportarCSV}
+                  disabled={loading || totalVisible === 0}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-transparent px-3 text-xs font-semibold text-[var(--nuvia-text-primary)] shadow-[var(--nuvia-shadow-sm)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{ background: "var(--nuvia-gradient-primary)" }}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Exportar
+                </button>
+              </div>
             </div>
           </div>
 
@@ -786,6 +851,7 @@ function PipelinePage() {
             </div>
           )}
         </section>
+
 
 
       {/* KPIs y chips de fase ahora viven dentro del header / filtros avanzados. */}
@@ -1052,11 +1118,13 @@ function PipelinePage() {
 function KpiTile({
   label,
   value,
+  subtext,
   tone,
   icon,
 }: {
   label: string;
   value: string;
+  subtext?: string;
   tone?: "danger" | "success";
   icon?: ReactNode;
 }) {
@@ -1100,9 +1168,15 @@ function KpiTile({
         {icon && <span className="translate-y-[-2px] opacity-90">{icon}</span>}
         <span className="truncate">{value}</span>
       </div>
+      {subtext && (
+        <div className="mt-0.5 text-[10px] font-medium tabular-nums text-[var(--nuvia-text-secondary)]">
+          {subtext}
+        </div>
+      )}
     </div>
   );
 }
+
 
 // Alerta inteligente compacta — clickeable opcional.
 function AlertaMini({
@@ -1113,6 +1187,7 @@ function AlertaMini({
   hint,
   active,
   onClick,
+  size = "md",
 }: {
   tone: "danger" | "warning" | "success";
   icon: ReactNode;
@@ -1121,40 +1196,44 @@ function AlertaMini({
   hint: string;
   active?: boolean;
   onClick?: () => void;
+  size?: "md" | "lg";
 }) {
   const color =
     tone === "danger" ? "var(--nuvia-danger)" : tone === "warning" ? "var(--nuvia-warning)" : "var(--nuvia-accent-green)";
   const Tag = (onClick ? "button" : "div") as "button" | "div";
+  const isLarge = size === "lg";
   return (
     <Tag
       type={onClick ? "button" : undefined}
       onClick={onClick}
-      className={`flex items-center gap-2.5 rounded-xl border px-3 py-2 text-left transition ${onClick ? "cursor-pointer hover:brightness-110" : ""}`}
+      className={`flex items-center gap-3 rounded-xl border px-3.5 py-2.5 text-left transition ${onClick ? "cursor-pointer hover:brightness-110" : ""} ${isLarge ? "sm:col-span-2" : ""}`}
       style={{
         borderColor: active
           ? color
-          : `color-mix(in oklab, ${color} 30%, transparent)`,
-        background: `linear-gradient(135deg, color-mix(in oklab, ${color} ${active ? 16 : 9}%, transparent), color-mix(in oklab, ${color} 3%, transparent))`,
+          : `color-mix(in oklab, ${color} ${isLarge ? 45 : 30}%, transparent)`,
+        background: `linear-gradient(135deg, color-mix(in oklab, ${color} ${active ? (isLarge ? 20 : 16) : (isLarge ? 14 : 9)}%, transparent), color-mix(in oklab, ${color} 3%, transparent))`,
+        boxShadow: isLarge ? `0 10px 28px -16px color-mix(in oklab, ${color} 45%, transparent)` : undefined,
       }}
     >
       <span
-        className="grid h-7 w-7 shrink-0 place-items-center rounded-lg"
-        style={{ background: `color-mix(in oklab, ${color} 22%, transparent)`, color }}
+        className={`grid shrink-0 place-items-center rounded-lg ${isLarge ? "h-9 w-9" : "h-7 w-7"}`}
+        style={{ background: `color-mix(in oklab, ${color} ${isLarge ? 28 : 22}%, transparent)`, color }}
       >
-        {icon}
+        <span className={isLarge ? "scale-110" : ""}>{icon}</span>
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-1.5">
-          <span className="text-[15px] font-bold tabular-nums" style={{ color }}>
+          <span className={`font-bold tabular-nums ${isLarge ? "text-[22px]" : "text-[15px]"}`} style={{ color }}>
             {value}
           </span>
-          <span className="text-xs font-semibold text-[var(--nuvia-text-primary)]">{label}</span>
+          <span className={`font-semibold text-[var(--nuvia-text-primary)] ${isLarge ? "text-sm" : "text-xs"}`}>{label}</span>
         </div>
         <div className="truncate text-[10px] text-[var(--nuvia-text-secondary)]">{hint}</div>
       </div>
     </Tag>
   );
 }
+
 
 
 
