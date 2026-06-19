@@ -460,7 +460,7 @@ function PipelinePage() {
   const advancedActive = !!(banco || soloStuck || fase || mios || asesor);
 
   const funnel = useMemo(() => {
-    const counts = ETAPAS_PIPELINE.map((e) => ({
+    const counts = etapasVisibles.map((e) => ({
       id: e.id,
       numero: e.numero,
       titulo: e.titulo,
@@ -481,14 +481,14 @@ function PipelinePage() {
         drop: prev > 0 ? Math.round(((prev - c.passed) / prev) * 100) : 0,
       };
     });
-  }, [grupos]);
+  }, [grupos, etapasVisibles]);
 
   // Contexto NUVIA IA: snapshot ejecutivo compactado del pipeline visible.
   const pipelineCtx: PipelineCtx = useMemo(() => {
     const etapaTitulo = new Map(ETAPAS_PIPELINE.map((e) => [e.id, `E${e.numero} ${e.titulo}`] as const));
     const topEstancados: PipelineCtx["topEstancados"] = [];
     let sinAsesor = 0;
-    ETAPAS_PIPELINE.forEach((etapa) => {
+    etapasVisibles.forEach((etapa) => {
       const umbral = UMBRAL_DIAS[etapa.id] ?? 0;
       (grupos.get(etapa.id) ?? []).forEach((r) => {
         const d = diasDesde(r.updated_at);
@@ -524,7 +524,7 @@ function PipelinePage() {
       sinAsesor,
       duplicados: dupCedulas.size,
     };
-  }, [grupos, kpis, funnel, profilesMap, dupCedulas]);
+  }, [grupos, etapasVisibles, kpis, funnel, profilesMap, dupCedulas]);
 
   const peekExpediente = peekId ? rows.find((r) => r.id === peekId) ?? null : null;
   const editExpediente = editId ? rows.find((r) => r.id === editId) ?? null : null;
