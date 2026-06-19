@@ -133,6 +133,7 @@ export function ClientCedulaButton({ onApply, expedienteId }: Props) {
   const processFiles = async (files: FileList | File[]) => {
     setStage("reading");
     setErrorMsg(null);
+    lastFilesRef.current = Array.from(files).slice(0, 4);
     try {
       const images = await filesToImages(files);
       const resp = await call({ data: { images } });
@@ -155,6 +156,43 @@ export function ClientCedulaButton({ onApply, expedienteId }: Props) {
     }
   };
 
+  const uploadAsSoporte = async (files: File[]) => {
+    if (!expedienteId || !files.length) return;
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData?.user?.id ?? null;
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i];
+        const safeName = f.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const lado = i === 0 ? "frente" : i === 1 ? "reverso" : `pag${i + 1}`;
+        const path = `${expedienteId}/identidad/cedula_titular_${lado}_${Date.now()}_${safeName}`;
+        const { error: upErr } = await supabase.storage
+          .from("soportes-banco")
+          .upload(path, f, { contentType: f.type || "application/octet-stream", upsert: false });
+        if (upErr) {
+          console.warn("[ClientCedulaButton] No se pudo subir soporte:", upErr);
+          continue;
+        }
+        const { error: insErr } = await supabase
+          .from("expediente_soportes" as never)
+          .insert({
+            expediente_id: expedienteId,
+            categoria: "identidad",
+            subcategoria: "cedula_titular",
+            archivo_nombre: f.name,
+            archivo_path: path,
+            mime_type: f.type || null,
+            size_bytes: f.size ?? null,
+            estado_relacionado: "validacion_identidad",
+            user_id: uid,
+          } as never);
+        if (insErr) console.warn("[ClientCedulaButton] No se pudo registrar soporte:", insErr);
+      }
+    } catch (e) {
+      console.warn("[ClientCedulaButton] Error subiendo soportes de cédula:", e);
+    }
+  };
+
   const apply = () => {
     if (!parsed) return;
     const location = normalizeColombiaLocation(parsed.lugarExpedicion);
@@ -167,6 +205,11 @@ export function ClientCedulaButton({ onApply, expedienteId }: Props) {
       lugarExpedicionMunicipio: location.municipio,
       fechaExpedicion: parsed.fechaExpedicion || "",
     });
+    // Persistir las imágenes originales como soportes del expediente
+    // para que viajen a Contratación (fire-and-forget).
+    const snapshot = [...lastFilesRef.current];
+    void uploadAsSoporte(snapshot);
+
     setStage("applied");
     setTimeout(() => {
       setOpen(false);
