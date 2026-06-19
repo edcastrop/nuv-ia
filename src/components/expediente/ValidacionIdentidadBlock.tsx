@@ -220,6 +220,11 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
         </div>
       )}
 
+      {/* Documentos adjuntos — viajan con el expediente a Contratación */}
+      <SoportesAdjuntos exp={exp} />
+
+
+
       {/* Acciones del licenciado */}
       {esLicenciado && (v.validacion_estado === "pendiente_validacion" || v.validacion_estado === "devuelto_datos_incorrectos") && (
         <div className="rounded-lg border bg-[rgba(255,255,255,0.03)] p-3 mb-3" style={{ borderColor: "#E3E7EE" }}>
