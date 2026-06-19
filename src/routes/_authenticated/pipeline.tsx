@@ -181,6 +181,26 @@ function PipelinePage() {
     })();
   }, []);
 
+  // Cargar perfiles (nombre/email) de TODOS los asesores referenciados en rows.
+  useEffect(() => {
+    const ids = Array.from(new Set(rows.map((r) => r.asesor_id).filter(Boolean)));
+    const missing = ids.filter((id) => !profilesMap.has(id));
+    if (missing.length === 0) return;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, nombre, email")
+        .in("id", missing);
+      const list = (data ?? []) as { id: string; nombre: string | null; email: string | null }[];
+      setProfilesMap((prev) => {
+        const next = new Map(prev);
+        list.forEach((p) => next.set(p.id, { nombre: p.nombre, email: p.email }));
+        return next;
+      });
+    })();
+  }, [rows, profilesMap]);
+
+
   const hace = Math.max(0, Math.round((nowTick - lastUpdated) / 1000));
   const haceLabel = hace < 60 ? `${hace}s` : `${Math.round(hace / 60)}min`;
 
