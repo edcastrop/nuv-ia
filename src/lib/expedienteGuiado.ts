@@ -363,14 +363,28 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
     };
   }
 
-  // 10) Asesor / licenciado en lead / proyección
+  // 10) Asesor / licenciado con simulación lista → debe enviar a Contratación, no volver a simular.
+  if (proyeccionListaParaEnviar(exp, ec) && canSeeAnalystGuide) {
+    return {
+      rol: "licenciado",
+      titulo: "Envía el caso a Contratación",
+      descripcion:
+        "La simulación y la propuesta ya están listas. Usa el envío del módulo financiero; si NUVIA la aprueba, pasa directo a Contratación.",
+      botonLabel: "Enviar a Contratación",
+      scrollToId: "simulador-financiero-qa",
+      tab: "financiero",
+      prioridad: "alta",
+    };
+  }
+
+  // 10.1) Asesor / licenciado en lead / proyección sin propuesta lista
   if ((etapa === "lead" || etapa === "proyeccion") && canSeeAnalystGuide) {
     return {
       rol: "asesor",
       titulo: "Avanza con la proyección financiera",
       descripcion:
         "Completa la simulación. Si NUVIA la aprueba, pasa directo a Contratación; solo se enruta a auditoría QA si NUVIA detecta inconsistencias.",
-      botonLabel: "Abrir simulador",
+      botonLabel: "Ir a financiero",
       scrollToId: "simulador-financiero-qa",
       tab: "financiero",
       prioridad: "media",
