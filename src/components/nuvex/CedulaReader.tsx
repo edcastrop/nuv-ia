@@ -168,6 +168,44 @@ export function CedulaReader({ intervinientes, producto, expedienteId, onApply, 
   };
 
 
+  const uploadQueueAsSoporte = async (idxAplicado: number, filesSnapshot: File[]) => {
+    if (!expedienteId || !filesSnapshot.length) return;
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData?.user?.id ?? null;
+      const sub = idxAplicado === 0 ? "cedula_titular" : `cedula_cotitular_${idxAplicado}`;
+      for (let i = 0; i < filesSnapshot.length; i++) {
+        const f = filesSnapshot[i];
+        const safeName = f.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const lado = i === 0 ? "frente" : i === 1 ? "reverso" : `pag${i + 1}`;
+        const path = `${expedienteId}/identidad/${sub}_${lado}_${Date.now()}_${safeName}`;
+        const { error: upErr } = await supabase.storage
+          .from("soportes-banco")
+          .upload(path, f, { contentType: f.type || "application/octet-stream", upsert: false });
+        if (upErr) {
+          console.warn("[CedulaReader] No se pudo subir soporte de cédula:", upErr);
+          continue;
+        }
+        const { error: insErr } = await supabase
+          .from("expediente_soportes" as never)
+          .insert({
+            expediente_id: expedienteId,
+            categoria: "identidad",
+            subcategoria: sub,
+            archivo_nombre: f.name,
+            archivo_path: path,
+            mime_type: f.type || null,
+            size_bytes: f.size ?? null,
+            estado_relacionado: "validacion_identidad",
+            user_id: uid,
+          } as never);
+        if (insErr) console.warn("[CedulaReader] No se pudo registrar soporte:", insErr);
+      }
+    } catch (e) {
+      console.warn("[CedulaReader] Error subiendo soportes de cédula:", e);
+    }
+  };
+
   const apply = () => {
     if (!parsed) return;
     const list = intervinientes.length ? intervinientes : [defaultInterviniente("Titular" as RolInterviniente)];
@@ -194,6 +232,12 @@ export function CedulaReader({ intervinientes, producto, expedienteId, onApply, 
     if (appliedIdx === 0 && onTitularSync) {
       onTitularSync(patch.nombreCompleto || "", patch.cedula || "");
     }
+
+    // Persistir las imágenes originales como soportes del expediente
+    // (fire-and-forget; no bloquea la UX).
+    const snapshot = [...queue];
+    void uploadQueueAsSoporte(appliedIdx, snapshot);
+
     setStage("applied");
     setTimeout(() => {
       setOpen(false);
