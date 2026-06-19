@@ -69,6 +69,9 @@ function PipelinePage() {
   const [nowTick, setNowTick] = useState<number>(() => Date.now());
   const [qLocal, setQLocal] = useState(search.q);
   const [analistas, setAnalistas] = useState<{ id: string; nombre: string | null; email: string | null }[]>([]);
+  const [profilesMap, setProfilesMap] = useState<Map<string, { nombre: string | null; email: string | null }>>(new Map());
+  const [peekId, setPeekId] = useState<string | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const { q, banco, stuck: soloStuck, fase, mios, asesor } = search;
