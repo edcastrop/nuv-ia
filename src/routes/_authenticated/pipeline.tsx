@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
-import { Loader2, Flag, Clock, AlertTriangle, RefreshCw } from "lucide-react";
+import { Loader2, Flag, Clock, AlertTriangle, RefreshCw, Eye, Pencil } from "lucide-react";
 import { listExpedientes, type Expediente } from "@/lib/expedientes";
 import {
   ETAPAS_PIPELINE,
@@ -17,6 +17,10 @@ import { BANCOS } from "@/components/nuvex/constants";
 import { useAuth } from "@/hooks/useAuth";
 import { getRecentCases } from "@/lib/recentCases";
 import { supabase } from "@/integrations/supabase/client";
+import { AnalistaAvatar } from "@/components/pipeline/AnalistaAvatar";
+import { LeadQuickPeek } from "@/components/pipeline/LeadQuickPeek";
+import { LeadEditDrawer } from "@/components/pipeline/LeadEditDrawer";
+import { NuviaPipelinePanel, type PipelineCtx } from "@/components/pipeline/NuviaPipelinePanel";
 
 const FASE_IDS = ["comercial", "operativa", "banco", "cobro", "fin"] as const;
 type FaseId = (typeof FASE_IDS)[number];
@@ -65,6 +69,9 @@ function PipelinePage() {
   const [nowTick, setNowTick] = useState<number>(() => Date.now());
   const [qLocal, setQLocal] = useState(search.q);
   const [analistas, setAnalistas] = useState<{ id: string; nombre: string | null; email: string | null }[]>([]);
+  const [profilesMap, setProfilesMap] = useState<Map<string, { nombre: string | null; email: string | null }>>(new Map());
+  const [peekId, setPeekId] = useState<string | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const { q, banco, stuck: soloStuck, fase, mios, asesor } = search;
@@ -173,6 +180,26 @@ function PipelinePage() {
       setAnalistas(list);
     })();
   }, []);
+
+  // Cargar perfiles (nombre/email) de TODOS los asesores referenciados en rows.
+  useEffect(() => {
+    const ids = Array.from(new Set(rows.map((r) => r.asesor_id).filter(Boolean)));
+    const missing = ids.filter((id) => !profilesMap.has(id));
+    if (missing.length === 0) return;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, nombre, email")
+        .in("id", missing);
+      const list = (data ?? []) as { id: string; nombre: string | null; email: string | null }[];
+      setProfilesMap((prev) => {
+        const next = new Map(prev);
+        list.forEach((p) => next.set(p.id, { nombre: p.nombre, email: p.email }));
+        return next;
+      });
+    })();
+  }, [rows, profilesMap]);
+
 
   const hace = Math.max(0, Math.round((nowTick - lastUpdated) / 1000));
   const haceLabel = hace < 60 ? `${hace}s` : `${Math.round(hace / 60)}min`;
@@ -347,7 +374,51 @@ function PipelinePage() {
     });
   }, [grupos]);
 
+  // Contexto NUVIA IA: snapshot ejecutivo compactado del pipeline visible.
+  const pipelineCtx: PipelineCtx = useMemo(() => {
+    const etapaTitulo = new Map(ETAPAS_PIPELINE.map((e) => [e.id, `E${e.numero} ${e.titulo}`] as const));
+    const topEstancados: PipelineCtx["topEstancados"] = [];
+    let sinAsesor = 0;
+    ETAPAS_PIPELINE.forEach((etapa) => {
+      const umbral = UMBRAL_DIAS[etapa.id] ?? 0;
+      (grupos.get(etapa.id) ?? []).forEach((r) => {
+        const d = diasDesde(r.updated_at);
+        if (!r.asesor_id) sinAsesor += 1;
+        if (umbral > 0 && d > umbral) {
+          const p = profilesMap.get(r.asesor_id);
+          topEstancados.push({
+            cliente: r.cliente_nombre,
+            banco: r.banco,
+            etapa: etapaTitulo.get(etapa.id) ?? etapa.titulo,
+            dias: d,
+            analista: p?.nombre || p?.email || "—",
+          });
+        }
+      });
+    });
+    topEstancados.sort((a, b) => b.dias - a.dias);
+    return {
+      total: kpis.total,
+      estancados: kpis.estancados,
+      promedioDias: kpis.promedio,
+      honorarios: kpis.honorarios,
+      fases: kpis.fases.map((f) => ({ id: f.id, label: f.label, count: f.count })),
+      funnel: funnel.map((f) => ({
+        numero: f.numero,
+        titulo: f.titulo,
+        count: f.count,
+        passed: f.passed,
+        pct: f.pct,
+        drop: f.drop,
+      })),
+      topEstancados: topEstancados.slice(0, 8),
+      sinAsesor,
+      duplicados: dupCedulas.size,
+    };
+  }, [grupos, kpis, funnel, profilesMap, dupCedulas]);
 
+  const peekExpediente = peekId ? rows.find((r) => r.id === peekId) ?? null : null;
+  const editExpediente = editId ? rows.find((r) => r.id === editId) ?? null : null;
 
 
   return (
@@ -657,17 +728,22 @@ function PipelinePage() {
                         const dias = diasDesde(r.updated_at);
                         const stuck = umbral > 0 && dias > umbral;
                         const isDup = !!r.cedula && dupCedulas.has(r.cedula.trim());
+                        const prof = profilesMap.get(r.asesor_id);
                         return (
-                          <Link
+                          <div
                             key={r.id}
-                            to="/casos/$id"
-                            params={{ id: r.id }}
-                            className="block rounded-xl border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.04)] p-3 text-left transition hover:border-[var(--nuvia-accent-blue)] hover:bg-[rgba(255,255,255,0.065)]"
+                            className="group relative rounded-xl border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.04)] p-3 text-left transition hover:border-[var(--nuvia-accent-blue)] hover:bg-[rgba(255,255,255,0.065)]"
                           >
                             <div className="flex items-center gap-1.5">
-                              <div className="flex-1 truncate text-sm font-semibold text-[var(--nuvia-text-primary)]">
+                              <AnalistaAvatar nombre={prof?.nombre} email={prof?.email} size={22} />
+                              <Link
+                                to="/casos/$id"
+                                params={{ id: r.id }}
+                                className="min-w-0 flex-1 truncate text-sm font-semibold text-[var(--nuvia-text-primary)] hover:underline"
+                                title="Abrir expediente completo"
+                              >
                                 {r.cliente_nombre}
-                              </div>
+                              </Link>
                               {isDup && (
                                 <span
                                   title="Esta cédula tiene más de un expediente activo"
@@ -685,27 +761,41 @@ function PipelinePage() {
                               act. {r.updated_at ? new Date(r.updated_at).toLocaleDateString("es-CO", { day: "2-digit", month: "short" }) : "—"}
                             </div>
                             <div className="mt-2 flex items-center justify-between gap-2">
-                              <span className="inline-flex min-w-0 max-w-[170px] items-center gap-1 truncate rounded-md px-1.5 py-0.5 text-[10px] font-medium text-[var(--nuvia-accent-green)]" style={{ background: "color-mix(in oklab, var(--nuvia-accent-green) 12%, transparent)" }}>
+                              <span className="inline-flex min-w-0 max-w-[120px] items-center gap-1 truncate rounded-md px-1.5 py-0.5 text-[10px] font-medium text-[var(--nuvia-accent-green)]" style={{ background: "color-mix(in oklab, var(--nuvia-accent-green) 12%, transparent)" }}>
                                 <Flag className="h-3 w-3" /> {r.estado}
                               </span>
-                              <span
-                                className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
-                                style={{
-                                  color: stuck ? "var(--nuvia-danger)" : "var(--nuvia-text-secondary)",
-                                  background: stuck
-                                    ? "color-mix(in oklab, var(--nuvia-danger) 12%, transparent)"
-                                    : "rgba(255,255,255,0.045)",
-                                }}
-                              >
-                                {stuck ? (
-                                  <AlertTriangle className="h-3 w-3" />
-                                ) : (
-                                  <Clock className="h-3 w-3" />
-                                )}
-                                {dias}d
-                              </span>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); setPeekId(r.id); }}
+                                  title="Vista rápida"
+                                  className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.05)] text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-accent-blue)] hover:text-[var(--nuvia-text-primary)]"
+                                >
+                                  <Eye className="h-3 w-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); setEditId(r.id); }}
+                                  title="Editar"
+                                  className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.05)] text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-accent-blue)] hover:text-[var(--nuvia-text-primary)]"
+                                >
+                                  <Pencil className="h-3 w-3" />
+                                </button>
+                                <span
+                                  className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
+                                  style={{
+                                    color: stuck ? "var(--nuvia-danger)" : "var(--nuvia-text-secondary)",
+                                    background: stuck
+                                      ? "color-mix(in oklab, var(--nuvia-danger) 12%, transparent)"
+                                      : "rgba(255,255,255,0.045)",
+                                  }}
+                                >
+                                  {stuck ? <AlertTriangle className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                                  {dias}d
+                                </span>
+                              </div>
                             </div>
-                          </Link>
+                          </div>
                         );
                       })
                     )}
@@ -717,6 +807,38 @@ function PipelinePage() {
         </div>
       )}
       </div>
+
+      {peekExpediente && (
+        <LeadQuickPeek
+          expediente={peekExpediente}
+          analista={(() => {
+            const p = profilesMap.get(peekExpediente.asesor_id);
+            return p ? { id: peekExpediente.asesor_id, nombre: p.nombre, email: p.email } : null;
+          })()}
+          diasEnEtapa={diasDesde(peekExpediente.updated_at)}
+          etapaTitulo={(() => {
+            const etapa = computeEtapaActual({
+              estado_caso: (peekExpediente as unknown as { estado_caso?: string | null }).estado_caso ?? null,
+            } as Parameters<typeof computeEtapaActual>[0]);
+            const e = ETAPAS_PIPELINE.find((x) => x.id === etapa);
+            return e ? `E${e.numero} · ${e.titulo}` : "—";
+          })()}
+          onClose={() => setPeekId(null)}
+          onEdit={() => { setEditId(peekExpediente.id); setPeekId(null); }}
+        />
+      )}
+
+      {editExpediente && (
+        <LeadEditDrawer
+          expediente={editExpediente}
+          analistas={analistas}
+          onClose={() => setEditId(null)}
+          onSaved={() => cargar(true)}
+        />
+      )}
+
+      <NuviaPipelinePanel contexto={pipelineCtx} />
     </div>
   );
 }
+
