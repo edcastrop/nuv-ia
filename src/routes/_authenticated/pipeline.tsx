@@ -15,7 +15,6 @@ import {
 } from "@/lib/pipelineEtapas";
 import { BANCOS } from "@/components/nuvex/constants";
 import { useAuth } from "@/hooks/useAuth";
-import { getRecentCases } from "@/lib/recentCases";
 import { supabase } from "@/integrations/supabase/client";
 import { AnalistaAvatar } from "@/components/pipeline/AnalistaAvatar";
 import { LeadQuickPeek } from "@/components/pipeline/LeadQuickPeek";
