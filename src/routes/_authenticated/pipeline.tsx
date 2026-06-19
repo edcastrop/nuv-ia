@@ -1000,6 +1000,12 @@ function PipelinePage() {
         fmtCOP={fmtCOP}
         open={controlOpen}
         onOpenChange={setControlOpen}
+        onSelectBanco={(b) =>
+          navigate({ search: (prev: PipelineSearch) => ({ ...prev, banco: b }), replace: true })
+        }
+        onSelectAnalista={(id) =>
+          navigate({ search: (prev: PipelineSearch) => ({ ...prev, asesor: id }), replace: true })
+        }
       />
 
 
