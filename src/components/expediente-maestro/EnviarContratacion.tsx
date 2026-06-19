@@ -276,9 +276,6 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
     return () => { cancelled = true; };
   }, [ctx.expedienteId]);
 
-  const tieneCedula = soportes.some((s) => s.kind === "cedula");
-  const tieneExtracto = soportes.some((s) => s.kind === "extracto");
-
   const asunto = `${ctx.clienteNombre} - Ficha de contratación y poder${ctx.asesorNombre ? ` - ${ctx.asesorNombre}` : ""}`;
   const cuerpo = useMemo(() => {
     const saludo = `Estimado equipo de Contratación,`;
