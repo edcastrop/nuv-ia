@@ -12,6 +12,7 @@ import {
 import { NUVEX } from "./constants";
 import { Card, SectionTitle, Alert } from "./ui";
 import { AbonoInteligenteCard } from "./AbonoInteligenteCard";
+import { PerfilIngresosEnVivo, type IngresosCliente, type PropuestaParaCapacidad } from "./PerfilIngresosEnVivo";
 import type { PerfilCliente } from "../../lib/abonoAnalogias";
 
 export interface RecomendadaSeleccionada {
@@ -50,6 +51,9 @@ type Common = {
   dineroPagado?: number;
   /** Perfil opcional del cliente para personalizar las analogías. */
   perfilCliente?: PerfilCliente;
+  /** Ingresos capturados en vivo durante la llamada (para validar capacidad 30%/40%). */
+  ingresos?: IngresosCliente;
+  onIngresosChange?: (v: IngresosCliente) => void;
   initialState?: PropuestasComercialesDraft;
   onStateChange?: (s: PropuestasComercialesSnapshot) => void;
   onRecomendadaChange: (r: RecomendadaSeleccionada | null) => void;
@@ -299,6 +303,24 @@ export function PropuestasComerciales(props: Props) {
         buscarCuotasPorAbono={buscarCuotasPorAbono}
         onAgregarEscenario={agregarEscenarioCuotas}
       />
+
+      {/* Perfil de ingresos en vivo — valida 30% NoVIS / 40% VIS contra la propuesta recomendada */}
+      {props.onIngresosChange && (
+        <PerfilIngresosEnVivo
+          value={props.ingresos ?? {}}
+          onChange={props.onIngresosChange}
+          cuotaRecomendada={calcs[effectiveIdx]?.nuevaCuota ?? 0}
+          propuestas={calcs.map<PropuestaParaCapacidad>((c, i) => ({
+            index: i,
+            cuotasEliminadas: c.cuotasEliminadas,
+            nuevaCuota: c.nuevaCuota,
+            valid: c.valid,
+          }))}
+          onSugerirEscenario={(idx) => setRecomendadaIdx(idx)}
+        />
+      )}
+
+
 
 
 
