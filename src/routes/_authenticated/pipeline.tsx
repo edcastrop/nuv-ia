@@ -335,9 +335,6 @@ function PipelinePage() {
   const fmtCOP = (n: number) =>
     new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 
-  // P28 — Vistos recientemente (localStorage). Se refresca al cargar y al refrescar.
-  const recents = useMemo(() => getRecentCases(), [lastUpdated]);
-
   // P30 — Embudo ejecutivo E1→E15: conteo por etapa + conversión acumulada vs E1.
   const [showFunnel, setShowFunnel] = useState<boolean>(() => {
     if (typeof window === "undefined") return true;
@@ -645,25 +642,6 @@ function PipelinePage() {
             </div>
           )}
         </section>
-
-      {recents.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[11px] font-semibold uppercase text-[var(--nuvia-text-secondary)]">
-            Vistos recientemente
-          </span>
-          {recents.map((rc) => (
-            <Link
-              key={rc.id}
-              to="/casos/$id"
-              params={{ id: rc.id }}
-              className="inline-flex max-w-[190px] items-center gap-1 rounded-full border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-3 py-1 text-xs text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-accent-blue)] hover:text-[var(--nuvia-text-primary)]"
-              title={rc.nombre}
-            >
-              <span className="truncate">{rc.nombre}</span>
-            </Link>
-          ))}
-        </div>
-      )}
 
       {/* KPIs y chips de fase ahora viven dentro del header / filtros avanzados. */}
 
