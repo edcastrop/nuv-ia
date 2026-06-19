@@ -350,6 +350,12 @@ export function calculateUVRProjection(input: UVRInput): {
 } {
   const tasaMensual = Math.pow(1 + input.teaCobrada / 100, 1 / 12) - 1;
   const variacionMensualUVR = Math.pow(1 + input.variacionUVR / 100, 1 / 12) - 1;
+  const variacionPropuestasEA =
+    input.variacionUVRPropuestas && input.variacionUVRPropuestas > 0
+      ? input.variacionUVRPropuestas
+      : input.variacionUVR;
+  const variacionMensualUVRPropuestas =
+    Math.pow(1 + variacionPropuestasEA / 100, 1 / 12) - 1;
   const cuotasBase = Math.max(0, input.cuotasPendientes);
   // En UVR el plazo del extracto es el plazo objetivo vigente del crédito.
   // La cuota facturada puede recalcularse periódicamente por el banco; no debe
@@ -382,7 +388,7 @@ export function calculateUVRProjection(input: UVRInput): {
       input.saldoUVR,
       input.valorUVR,
       tasaMensual,
-      variacionMensualUVR,
+      variacionMensualUVRPropuestas,
       nuevaCuotaUVR,
       input.seguros,
       nuevoPlazo,
