@@ -57,6 +57,7 @@ export function ClientFields({
   cuotasPendientes,
   modalidad,
   hideCreditFields = false,
+  expedienteId,
 }: {
   data: ClientData;
   onChange: (next: ClientData) => void;
@@ -67,6 +68,9 @@ export function ClientFields({
   modalidad?: ModalidadCat;
   /** Oculta banco/producto/número/plazo/cuotas — viven en "Datos del crédito". */
   hideCreditFields?: boolean;
+  /** Si está presente, el lector de cédula sube las imágenes como soportes
+   *  del expediente para que viajen a Contratación. */
+  expedienteId?: string | null;
 }) {
   const set = <K extends keyof ClientData>(k: K, v: ClientData[K]) =>
     onChange({ ...data, [k]: v });
@@ -119,7 +123,7 @@ export function ClientFields({
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <ClientCedulaButton onApply={handleCedulaAI} />
+        <ClientCedulaButton onApply={handleCedulaAI} expedienteId={expedienteId} />
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">

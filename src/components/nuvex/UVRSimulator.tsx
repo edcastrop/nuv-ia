@@ -432,6 +432,7 @@ export function UVRSimulator({
         <ExtractoReader
           modo="uvr"
           existingArchivoPath={extractoArchivoPath}
+          expedienteId={init?.id}
           onApply={async (p: ExtractoApplyPayload) => {
             // Alerta crítica: bloquear si el extracto está en Pesos pero estamos en simulador UVR.
             if (p.monedaDetectada && p.monedaDetectada !== "uvr") {
@@ -518,6 +519,7 @@ export function UVRSimulator({
             modalidad="uvr"
             cuotasPendientes={cuotasPendientes}
             hideCreditFields
+            expedienteId={init?.id}
           />
 
           {validaciones.map((v, i) => (

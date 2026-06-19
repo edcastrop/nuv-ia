@@ -3,10 +3,11 @@
 // - Contratación/Jurídica: aprueba, devuelve o bloquea.
 // - Super Admin: puede desbloquear excepcionalmente.
 
-import { useEffect, useMemo, useState } from "react";
-import { ShieldCheck, AlertTriangle, CheckCircle2, Send, RotateCcw, Lock, Unlock, History, Save, X } from "lucide-react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { ShieldCheck, AlertTriangle, CheckCircle2, Send, RotateCcw, Lock, Unlock, History, Save, X, FileText, Download, IdCard, FileSpreadsheet } from "lucide-react";
 import { NCard } from "@/components/nuvia/NCard";
 import { NSelect } from "@/components/nuvia/NSelect";
+import { supabase } from "@/integrations/supabase/client";
 
 
 import type { Expediente } from "@/lib/expedientes";
@@ -117,7 +118,7 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
             </div>
             <h3 className="text-lg font-semibold text-white">Control contractual NUVEX</h3>
             <p className="text-xs text-[var(--nuvia-text-secondary)] mt-0.5">
-              Contratación debe aprobar los datos antes de generar cualquier documento jurídico.
+              El analista confirma los datos y los envía a Contratación junto con la cédula y el extracto. Contratación los consume sin un paso adicional de aprobación.
             </p>
           </div>
         </div>
@@ -220,6 +221,11 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
         </div>
       )}
 
+      {/* Documentos adjuntos — viajan con el expediente a Contratación */}
+      <SoportesAdjuntos exp={exp} />
+
+
+
       {/* Acciones del licenciado */}
       {esLicenciado && (v.validacion_estado === "pendiente_validacion" || v.validacion_estado === "devuelto_datos_incorrectos") && (
         <div className="rounded-lg border bg-[rgba(255,255,255,0.03)] p-3 mb-3" style={{ borderColor: "#E3E7EE" }}>
@@ -242,33 +248,31 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
               className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
               style={{ backgroundColor: "var(--nuvia-accent-blue)" }}
             >
-              <Send size={13} /> Enviar a validación de Contratación
+              <Send size={13} /> Enviar a Contratación
             </button>
           </div>
+          <p className="mt-2 text-[10.5px] text-[var(--nuvia-text-secondary)]">
+            Al enviar, la cédula y el extracto adjuntos viajan con el expediente. Contratación no debe re-aprobar los datos.
+          </p>
         </div>
       )}
 
-      {/* Acciones de contratación */}
-      {esContratacion && v.validacion_estado === "en_revision_contratacion" && (
+      {/* Acciones de Contratación: ya NO aprueba datos (el analista es responsable).
+          Se conserva Devolver / Bloquear como red de seguridad si detecta
+          un error grueso o fraude después de recibir el expediente. */}
+      {esContratacion && (v.validacion_estado === "datos_validados" || v.validacion_estado === "en_revision_contratacion") && (
         <div className="rounded-lg border bg-[rgba(255,255,255,0.03)] p-3 mb-3 space-y-3" style={{ borderColor: "#E3E7EE" }}>
           <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--nuvia-text-secondary)]">
-            Revisión de Contratación
+            Contratación · acciones de excepción
           </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => run(() => aprobarValidacion(exp.id))}
-              disabled={busy}
-              className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold text-white"
-              style={{ backgroundColor: "var(--nuvia-accent-green)" }}
-            >
-              <CheckCircle2 size={13} /> Aprobar datos
-            </button>
-          </div>
+          <p className="text-[11px] text-[var(--nuvia-text-secondary)]">
+            Los datos los aprobó el analista. Solo usa estas acciones si detectas un error grueso o una posible inconsistencia crítica (fraude / suplantación).
+          </p>
 
           <div className="grid md:grid-cols-[1fr_auto] gap-2 items-end">
             <div>
               <label className="block text-[10px] uppercase font-semibold text-[var(--nuvia-text-secondary)] mb-1">
-                Motivo de devolución
+                Motivo de devolución al analista
               </label>
               <NSelect
                 value={motivoDev}
@@ -294,7 +298,7 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
               className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold text-white"
               style={{ backgroundColor: "var(--nuvia-danger)" }}
             >
-              <RotateCcw size={13} /> Devolver
+              <RotateCcw size={13} /> Devolver al analista
             </button>
           </div>
 
@@ -403,6 +407,132 @@ function EditField({
         )
       ) : (
         <div className="text-[12px] text-white truncate" title={value}>{value || "—"}</div>
+      )}
+    </div>
+  );
+}
+
+// ── Documentos adjuntos para Contratación ────────────────────────────────
+// Lista los soportes asociados al expediente (cédula del titular / cotitulares
+// y el extracto del banco) con descarga firmada. Estos archivos viajan con
+// el expediente cuando el analista lo envía a Contratación.
+interface SoporteRow {
+  id: string;
+  bucket: "soportes-banco" | "extractos";
+  categoria: string;
+  subcategoria: string;
+  archivo_nombre: string;
+  archivo_path: string;
+  created_at: string;
+}
+
+function SoportesAdjuntos({ exp }: { exp: Expediente }) {
+  const [items, setItems] = useState<SoporteRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const rows: SoporteRow[] = [];
+
+    // 1) Soportes registrados en expediente_soportes (cédula del analista, etc.)
+    const { data } = await supabase
+      .from("expediente_soportes" as never)
+      .select("id,categoria,subcategoria,archivo_nombre,archivo_path,created_at")
+      .eq("expediente_id", exp.id)
+      .in("categoria", ["identidad", "extracto_banco"])
+      .order("created_at", { ascending: false });
+    for (const r of (data ?? []) as unknown as Array<Omit<SoporteRow, "bucket">>) {
+      rows.push({
+        ...r,
+        bucket: r.categoria === "extracto_banco" ? "extractos" : "soportes-banco",
+      });
+    }
+
+    // 2) Fallback: extracto persistido en cliente_data.extractoArchivoPath
+    //    (camino histórico previo a registrarlo en expediente_soportes).
+    const cd = (exp.cliente_data ?? {}) as unknown as Record<string, unknown>;
+    const extractoPath = typeof cd.extractoArchivoPath === "string" ? cd.extractoArchivoPath : "";
+    if (extractoPath && !rows.some((r) => r.archivo_path === extractoPath)) {
+      rows.push({
+        id: `extracto-cd`,
+        bucket: "extractos",
+        categoria: "extracto_banco",
+        subcategoria: "extracto",
+        archivo_nombre: extractoPath.split("/").pop() || "Extracto del banco",
+        archivo_path: extractoPath,
+        created_at: "",
+      });
+    }
+    setItems(rows);
+    setLoading(false);
+  }, [exp.id, exp.cliente_data]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const download = async (row: SoporteRow) => {
+    const { data, error } = await supabase.storage
+      .from(row.bucket)
+      .createSignedUrl(row.archivo_path, 60 * 5);
+    if (error || !data?.signedUrl) {
+      alert(error?.message || "No se pudo generar el enlace de descarga.");
+      return;
+    }
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const iconFor = (r: SoporteRow) =>
+    r.categoria === "identidad" ? <IdCard size={14} /> :
+    r.categoria === "extracto_banco" ? <FileSpreadsheet size={14} /> :
+    <FileText size={14} />;
+
+  const labelFor = (r: SoporteRow) => {
+    if (r.categoria === "identidad") {
+      if (r.subcategoria.includes("cotitular")) return "Cédula cotitular";
+      return "Cédula titular";
+    }
+    if (r.categoria === "extracto_banco") return "Extracto del banco";
+    return r.categoria;
+  };
+
+  return (
+    <div className="mb-3 rounded-lg border bg-[rgba(255,255,255,0.03)] p-3" style={{ borderColor: "#E3E7EE" }}>
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--nuvia-text-secondary)]">
+          Documentos adjuntos para Contratación
+        </div>
+        <span className="text-[10px] text-[var(--nuvia-text-secondary)]">
+          {items.length} archivo{items.length === 1 ? "" : "s"}
+        </span>
+      </div>
+      {loading ? (
+        <div className="text-[11px] text-[var(--nuvia-text-secondary)]">Cargando…</div>
+      ) : items.length === 0 ? (
+        <div className="text-[11px] text-[var(--nuvia-text-secondary)]">
+          Aún no hay cédula ni extracto adjuntos. Súbelos desde el lector de cédula y el lector de extracto del simulador.
+        </div>
+      ) : (
+        <ul className="space-y-1">
+          {items.map((r) => (
+            <li
+              key={r.id}
+              className="flex items-center justify-between gap-2 rounded border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.02)] px-2 py-1.5 text-xs text-white"
+            >
+              <span className="flex items-center gap-2 truncate">
+                <span className="text-[var(--nuvia-accent-blue)]">{iconFor(r)}</span>
+                <span className="font-semibold">{labelFor(r)}</span>
+                <span className="truncate text-[var(--nuvia-text-secondary)]">— {r.archivo_nombre}</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => download(r)}
+                className="inline-flex items-center gap-1 rounded px-2 py-1 text-[10.5px] font-semibold text-white hover:bg-[rgba(255,255,255,0.06)]"
+                style={{ borderColor: "var(--nuvia-accent-blue)" }}
+              >
+                <Download size={11} /> Ver
+              </button>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );

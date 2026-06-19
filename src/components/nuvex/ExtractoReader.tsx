@@ -92,6 +92,10 @@ interface Props {
   modo: Modo;
   onApply: (data: ExtractoApplyPayload) => boolean | void | Promise<boolean | void>;
   existingArchivoPath?: string | null;
+  /** Si se provee, el extracto subido se registra también en
+   *  `expediente_soportes` (categoria `extracto_banco`) para que viaje
+   *  con el expediente cuando se envíe a Contratación. */
+  expedienteId?: string | null;
 }
 
 // PDF.js dynamic loader (client-only)
@@ -425,7 +429,7 @@ const STAGES: { id: Stage; label: string }[] = [
 type StagedItem = { mime: string; dataUrl: string; sourceName: string };
 const MAX_PAGES = 6;
 
-export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
+export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteId }: Props) {
   const [open, setOpen] = useState(false);
   const [stage, setStage] = useState<Stage>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -519,7 +523,26 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
         upsert: false,
         contentType: f.type || "application/octet-stream",
       });
-      if (!upErr) setArchivoPath(path);
+      if (upErr) return;
+      setArchivoPath(path);
+
+      // Registrar también en expediente_soportes para que viaje a Contratación.
+      if (expedienteId) {
+        const { error: insErr } = await supabase
+          .from("expediente_soportes" as never)
+          .insert({
+            expediente_id: expedienteId,
+            categoria: "extracto_banco",
+            subcategoria: "extracto",
+            archivo_nombre: f.name,
+            archivo_path: path,
+            mime_type: f.type || null,
+            size_bytes: f.size ?? null,
+            estado_relacionado: "validacion_identidad",
+            user_id: uid,
+          } as never);
+        if (insErr) console.warn("[ExtractoReader] No se pudo registrar soporte:", insErr);
+      }
     } catch (e) {
       console.warn("No se pudo subir el archivo a storage:", e);
     }

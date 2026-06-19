@@ -18,9 +18,11 @@ interface Props {
   onChange: (next: Interviniente[]) => void;
   /** Sincroniza nombre/cédula del titular en los campos de cliente al leer la cédula. */
   onTitularSync?: (nombre: string, cedula: string) => void;
+  /** Si se provee, el lector de cédula sube las imágenes como soportes del expediente. */
+  expedienteId?: string | null;
 }
 
-export function IntervinientesFields({ producto, data, onChange, onTitularSync }: Props) {
+export function IntervinientesFields({ producto, data, onChange, onTitularSync, expedienteId }: Props) {
   const leasing = isLeasing(producto);
   const rolT = rolTitular(producto);
   const rolC = rolCotitular(producto);
@@ -65,6 +67,7 @@ export function IntervinientesFields({ producto, data, onChange, onTitularSync }
       <CedulaReader
         intervinientes={list}
         producto={producto}
+        expedienteId={expedienteId}
         onApply={(next) => onChange(next)}
         onTitularSync={onTitularSync}
       />

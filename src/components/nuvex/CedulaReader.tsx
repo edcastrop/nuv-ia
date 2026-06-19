@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { extractCedula, type CedulaData } from "@/lib/cedula.functions";
 import { normalizeColombiaLocation } from "@/lib/colombiaLocations";
+import { supabase } from "@/integrations/supabase/client";
 import { NUVEX } from "./constants";
 import type { Interviniente, RolInterviniente } from "./intervinientes";
 import { defaultInterviniente, rolCotitular } from "./intervinientes";
@@ -24,6 +25,10 @@ type Stage = "idle" | "reading" | "review" | "applied" | "error";
 interface Props {
   intervinientes: Interviniente[];
   producto?: string | null;
+  /** Si está presente, el lector sube las imágenes originales al bucket
+   *  `soportes-banco` y las registra en `expediente_soportes` para que
+   *  viajen con el expediente a Contratación. */
+  expedienteId?: string | null;
   /** Aplica los datos al interviniente en `targetIdx` (o agrega uno nuevo si idx === -1). */
   onApply: (next: Interviniente[], targetIdx: number) => void;
   /** Opcional: si el target es el titular (idx 0), sincroniza también el nombre y cédula en ClientFields. */
@@ -86,7 +91,7 @@ async function renderPdfToImages(file: File): Promise<{ mime: string; dataUrl: s
   return images;
 }
 
-export function CedulaReader({ intervinientes, producto, onApply, onTitularSync }: Props) {
+export function CedulaReader({ intervinientes, producto, expedienteId, onApply, onTitularSync }: Props) {
   const [open, setOpen] = useState(false);
   const [stage, setStage] = useState<Stage>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -163,6 +168,44 @@ export function CedulaReader({ intervinientes, producto, onApply, onTitularSync 
   };
 
 
+  const uploadQueueAsSoporte = async (idxAplicado: number, filesSnapshot: File[]) => {
+    if (!expedienteId || !filesSnapshot.length) return;
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData?.user?.id ?? null;
+      const sub = idxAplicado === 0 ? "cedula_titular" : `cedula_cotitular_${idxAplicado}`;
+      for (let i = 0; i < filesSnapshot.length; i++) {
+        const f = filesSnapshot[i];
+        const safeName = f.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const lado = i === 0 ? "frente" : i === 1 ? "reverso" : `pag${i + 1}`;
+        const path = `${expedienteId}/identidad/${sub}_${lado}_${Date.now()}_${safeName}`;
+        const { error: upErr } = await supabase.storage
+          .from("soportes-banco")
+          .upload(path, f, { contentType: f.type || "application/octet-stream", upsert: false });
+        if (upErr) {
+          console.warn("[CedulaReader] No se pudo subir soporte de cédula:", upErr);
+          continue;
+        }
+        const { error: insErr } = await supabase
+          .from("expediente_soportes" as never)
+          .insert({
+            expediente_id: expedienteId,
+            categoria: "identidad",
+            subcategoria: sub,
+            archivo_nombre: f.name,
+            archivo_path: path,
+            mime_type: f.type || null,
+            size_bytes: f.size ?? null,
+            estado_relacionado: "validacion_identidad",
+            user_id: uid,
+          } as never);
+        if (insErr) console.warn("[CedulaReader] No se pudo registrar soporte:", insErr);
+      }
+    } catch (e) {
+      console.warn("[CedulaReader] Error subiendo soportes de cédula:", e);
+    }
+  };
+
   const apply = () => {
     if (!parsed) return;
     const list = intervinientes.length ? intervinientes : [defaultInterviniente("Titular" as RolInterviniente)];
@@ -189,6 +232,12 @@ export function CedulaReader({ intervinientes, producto, onApply, onTitularSync 
     if (appliedIdx === 0 && onTitularSync) {
       onTitularSync(patch.nombreCompleto || "", patch.cedula || "");
     }
+
+    // Persistir las imágenes originales como soportes del expediente
+    // (fire-and-forget; no bloquea la UX).
+    const snapshot = [...queue];
+    void uploadQueueAsSoporte(appliedIdx, snapshot);
+
     setStage("applied");
     setTimeout(() => {
       setOpen(false);
