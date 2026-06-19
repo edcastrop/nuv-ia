@@ -580,20 +580,7 @@ function PipelinePage() {
                 )}
               </div>
 
-              {/* Micro bloque de momentum */}
-              <div className="hidden items-center gap-1 rounded-xl border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.025)] px-3 py-1.5 md:flex">
-                <TrendingUp className="h-3.5 w-3.5 text-[var(--nuvia-accent-green)]" />
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--nuvia-text-secondary)]">Momentum</span>
-                <span className="mx-1 h-3 w-px bg-[var(--nuvia-border)]" />
-                <span className="text-[11px] font-semibold text-[var(--nuvia-text-primary)]">+12</span>
-                <span className="text-[10px] text-[var(--nuvia-text-secondary)]">esta semana</span>
-                <span className="mx-1.5 h-3 w-px bg-[var(--nuvia-border)]" />
-                <span className="text-[11px] font-semibold text-[var(--nuvia-accent-green)]">+18%</span>
-                <span className="text-[10px] text-[var(--nuvia-text-secondary)]">velocidad</span>
-                <span className="mx-1.5 h-3 w-px bg-[var(--nuvia-border)]" />
-                <span className="text-[11px] font-semibold text-[var(--nuvia-accent-green)]">+7</span>
-                <span className="text-[10px] text-[var(--nuvia-text-secondary)]">cierres hoy</span>
-              </div>
+              {/* Momentum vive ahora dentro de la Torre de control lateral */}
 
               <div className="ml-auto flex items-center gap-2">
                 <button
