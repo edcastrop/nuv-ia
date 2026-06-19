@@ -69,35 +69,15 @@ export function PipelineControlPanel(props: PipelineControlProps) {
 
   return (
     <>
-      {/* Botón flotante (visible cuando está cerrado) */}
-      {!open && (
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          title="Abrir Torre de control (C)"
-          className="fixed right-3 top-24 z-30 inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold shadow-[var(--nuvia-shadow-md)] backdrop-blur transition hover:brightness-110"
-          style={{
-            background: "linear-gradient(135deg, color-mix(in oklab, var(--nuvia-accent-blue) 28%, var(--nuvia-bg-tertiary)), var(--nuvia-bg-tertiary))",
-            borderColor: "color-mix(in oklab, var(--nuvia-accent-blue) 40%, transparent)",
-            color: "var(--nuvia-text-primary)",
-            boxShadow: "0 10px 30px -12px color-mix(in oklab, var(--nuvia-accent-blue) 55%, transparent)",
-          }}
-        >
-          <Radar className="h-3.5 w-3.5 text-[var(--nuvia-accent-green)]" />
-          Control
-          {criticos > 0 && (
-            <span
-              className="rounded-full px-1.5 py-0.5 text-[10px] font-bold"
-              style={{
-                background: "color-mix(in oklab, var(--nuvia-danger) 22%, transparent)",
-                color: "var(--nuvia-danger)",
-              }}
-            >
-              {criticos}
-            </span>
-          )}
-        </button>
+      {/* Overlay (cuando está abierto) — el botón de apertura vive ahora en el header */}
+      {open && (
+        <div
+          aria-hidden
+          onClick={() => onOpenChange(false)}
+          className="fixed inset-0 z-30 bg-black/30 backdrop-blur-[2px]"
+        />
       )}
+
 
       {/* Drawer */}
       <aside
