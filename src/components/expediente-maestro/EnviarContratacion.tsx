@@ -117,8 +117,9 @@ export function EnviarContratacionButton({ ctx, onSent }: Props) {
             </div>
             <div className="text-sm font-semibold text-[#242424]">Enviar expediente a contratación</div>
             <p className="text-xs text-[#242424]/60 mt-0.5">
-              Genera Poder y Datos para Contrato (PDF + Word) y los envía por correo.
+              Envía Poder y Ficha de Datos (Word) junto con la cédula y el extracto del cliente.
             </p>
+
           </div>
           <button
             onClick={() => setOpen(true)}
