@@ -233,7 +233,10 @@ function PipelinePage() {
     const uid = user?.id ?? "";
     return rows.filter((r) => {
       if (mios && uid && r.asesor_id !== uid) return false;
-      if (asesor && r.asesor_id !== asesor) return false;
+      if (asesor) {
+        const asesorIds = asesor.split(",").filter(Boolean);
+        if (!asesorIds.includes(r.asesor_id)) return false;
+      }
       if (banco && r.banco !== banco) return false;
       if (term) {
         const hay = `${r.cliente_nombre} ${r.cedula ?? ""} ${r.numero_credito ?? ""} ${r.banco ?? ""}`.toLowerCase();
@@ -372,6 +375,7 @@ function PipelinePage() {
         const analistaNombre = prof?.nombre || prof?.email || (r.asesor_id ? r.asesor_id.slice(0, 8) : "Sin asignar");
         const analistaKey = analistaNombre.trim().toLowerCase() || asesorId;
         const analistaBucket = analistasMap.get(analistaKey) ?? { id: asesorId, nombre: analistaNombre, total: 0, ahorro: 0, casos: 0 };
+        if (!analistaBucket.id.split(",").includes(asesorId)) analistaBucket.id = `${analistaBucket.id},${asesorId}`;
         analistaBucket.nombre = analistaNombre;
         analistaBucket.total += valor;
         analistaBucket.ahorro += ahorroCaso;
