@@ -666,48 +666,9 @@ function PipelinePage() {
         </div>
       )}
 
+      {/* KPIs y chips de fase ahora viven dentro del header / filtros avanzados. */}
 
-      {!loading && kpis.total > 0 && (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-9">
-          <div className="glass-card p-3">
-            <div className="text-[11px] uppercase text-[var(--nuvia-text-secondary)]">Total</div>
-            <div className="mt-1 text-2xl font-semibold text-[var(--nuvia-text-primary)]">{kpis.total}</div>
-          </div>
-          <div className="rounded-xl border p-3" style={{ borderColor: "color-mix(in oklab, var(--nuvia-danger) 36%, transparent)", background: "color-mix(in oklab, var(--nuvia-danger) 11%, transparent)" }}>
-            <div className="text-[11px] uppercase text-[var(--nuvia-text-secondary)]">Estancados</div>
-            <div className="mt-1 flex items-center gap-1 text-2xl font-semibold text-[var(--nuvia-danger)]">
-              <AlertTriangle className="h-4 w-4" /> {kpis.estancados}
-            </div>
-          </div>
-          <div className="glass-card p-3">
-            <div className="text-[11px] uppercase text-[var(--nuvia-text-secondary)]">Días prom.</div>
-            <div className="mt-1 flex items-center gap-1 text-2xl font-semibold text-[var(--nuvia-text-primary)]">
-              <Clock className="h-4 w-4 text-[var(--nuvia-accent-blue)]" /> {kpis.promedio}
-            </div>
-          </div>
-          <div className="rounded-xl border p-3" title="Suma de honorarios_final de los casos visibles" style={{ borderColor: "color-mix(in oklab, var(--nuvia-accent-green) 34%, transparent)", background: "color-mix(in oklab, var(--nuvia-accent-green) 10%, transparent)" }}>
-            <div className="text-[11px] uppercase text-[var(--nuvia-text-secondary)]">Honorarios</div>
-            <div className="mt-1 truncate text-2xl font-semibold text-[var(--nuvia-accent-green)]">{fmtCOP(kpis.honorarios)}</div>
-          </div>
-          {kpis.fases.map((f) => {
-            const active = fase === f.id;
-            return (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => toggleFase(f.id as FaseId)}
-                className={`rounded-xl border p-3 text-left transition hover:border-[var(--nuvia-accent-blue)] ${active ? "border-[var(--nuvia-accent-blue)] bg-[rgba(68,93,163,0.18)]" : "border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)]"}`}
-                title={active ? "Quitar filtro de fase" : "Filtrar por esta fase"}
-              >
-                <div className="text-[11px] uppercase text-[var(--nuvia-text-secondary)]">{f.label}</div>
-                <div className="mt-1 text-2xl font-semibold text-[var(--nuvia-text-primary)]">{f.count}</div>
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {!loading && funnel[0]?.passed > 0 && (
+      {!loading && showAnalisis && funnel[0]?.passed > 0 && (
         <section className="glass-panel p-4">
           <div className="mb-2 flex items-center justify-between">
             <div>
