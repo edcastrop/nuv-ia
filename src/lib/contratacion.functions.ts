@@ -21,6 +21,12 @@ const InputSchema = z.object({
   attachments: z.array(AttachmentSchema).min(1).max(10),
 });
 
+function isForbiddenLegalPdf(filename: string, contentType: string) {
+  const name = filename.toLowerCase();
+  const isPdf = contentType.toLowerCase().includes("pdf") || name.endsWith(".pdf");
+  return isPdf && (name.includes("poder") || name.includes("ficha"));
+}
+
 const RESEND_GATEWAY = "https://connector-gateway.lovable.dev/resend";
 
 export const enviarContratacion = createServerFn({ method: "POST" })
@@ -61,6 +67,15 @@ export const enviarContratacion = createServerFn({ method: "POST" })
     const fromAddress = `${asesorNombre} (NUVEX) <${SENDER_ADDRESS}>`;
     const replyTo = asesorEmail || SENDER_ADDRESS;
 
+    // Blindaje definitivo: contratación NO debe recibir versiones PDF del Poder
+    // ni de la Ficha Contractual, aunque una pantalla vieja intente enviarlas.
+    const allowedAttachments = data.attachments.filter(
+      (a) => !isForbiddenLegalPdf(a.filename, a.contentType),
+    );
+    if (allowedAttachments.length === 0) {
+      throw new Error("El paquete de contratación no contiene adjuntos válidos.");
+    }
+
     // Llamar a Resend
     const resp = await fetch(`${RESEND_GATEWAY}/emails`, {
       method: "POST",
@@ -76,7 +91,7 @@ export const enviarContratacion = createServerFn({ method: "POST" })
         subject: data.asunto,
         text: data.cuerpo,
         html: await wrapNuvexEmail({ subject: data.asunto, bodyText: data.cuerpo }),
-        attachments: data.attachments.map((a) => ({
+        attachments: allowedAttachments.map((a) => ({
           filename: a.filename,
           content: a.contentBase64,
         })),
@@ -85,7 +100,7 @@ export const enviarContratacion = createServerFn({ method: "POST" })
 
 
     const body = await resp.json().catch(() => ({}));
-    const docsMeta = data.attachments.map((a) => ({
+    const docsMeta = allowedAttachments.map((a) => ({
       name: a.filename,
       type: a.contentType,
       // tamaño aprox a partir del base64
