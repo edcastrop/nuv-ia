@@ -24,10 +24,13 @@ export interface ClientData {
   celular?: string;
   fechaDesembolso?: string;
   lugarExpedicionCedula?: string; // etiqueta combinada "Municipio, Ciudad, Departamento"
+  expedidaEn?: string;
   lugarExpedicionDepartamento?: string;
   lugarExpedicionCiudad?: string;
   lugarExpedicionMunicipio?: string;
   fechaExpedicionCedula?: string;
+  fechaExpedicion?: string;
+  tipoDocumento?: string;
   // Ubicación del cliente
   direccion?: string;
   departamento?: string;
@@ -35,6 +38,7 @@ export interface ClientData {
   municipio?: string;
   // Aditivos opcionales (persistidos en cliente_data jsonb)
   intervinientes?: Interviniente[];
+  informacionJuridica?: Record<string, unknown>;
   cobertura?: Cobertura;
   /** Perfil opcional del cliente para personalizar las analogías del abono inteligente. */
   perfil?: {
