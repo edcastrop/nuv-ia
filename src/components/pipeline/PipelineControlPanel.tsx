@@ -2,7 +2,7 @@
 // Mantiene KPIs, flujo operativo, alertas y momentum fuera del header
 // para que los leads (Kanban) sean los protagonistas.
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import {
   AlertTriangle,
   ArrowRight,
