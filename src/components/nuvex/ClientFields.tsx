@@ -162,6 +162,11 @@ export function ClientFields({
                   lugarExpedicionCiudad: "",
                   lugarExpedicionMunicipio: "",
                   lugarExpedicionCedula: v,
+                  expedidaEn: v,
+                  informacionJuridica: {
+                    ...(data.informacionJuridica ?? {}),
+                    titular: { ...((data.informacionJuridica?.titular as Record<string, unknown> | undefined) ?? {}), expedidaEn: v },
+                  },
                 })
               }
             />
