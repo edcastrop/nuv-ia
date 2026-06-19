@@ -936,7 +936,7 @@ function KpiTile({
   label: string;
   value: string;
   tone?: "danger" | "success";
-  icon?: React.ReactNode;
+  icon?: ReactNode;
 }) {
   const palette =
     tone === "danger"
