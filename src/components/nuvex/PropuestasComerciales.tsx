@@ -778,3 +778,208 @@ function FranjaRow({ label, value, highlight }: { label: string; value: string; 
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Calculadora en vivo — pensada para usar mientras el asesor está en llamada
+// con el cliente. El cliente dice "¿y si abono $200.000?" y aquí se ve, al
+// instante, cuántas cuotas se eliminan, cuánto se ahorra y cuál sería el
+// nuevo plazo. Un clic la suma como un nuevo escenario marcado como
+// recomendado.
+// ---------------------------------------------------------------------------
+function CalculadoraEnVivo({
+  cuotasPendientes,
+  buscarCuotasPorAbono,
+  onAgregarEscenario,
+}: {
+  cuotasPendientes: number;
+  buscarCuotasPorAbono: (abono: number) => { cuotasEliminadas: number; calc: PropuestaCalc } | null;
+  onAgregarEscenario: (cuotas: number) => void;
+}) {
+  const [abierta, setAbierta] = useState(true);
+  const [abonoStr, setAbonoStr] = useState<string>("");
+
+  const abono = useMemo(() => {
+    const n = parseInt(abonoStr.replace(/[^\d]/g, ""), 10);
+    return Number.isFinite(n) ? n : 0;
+  }, [abonoStr]);
+
+  const resultado = useMemo(
+    () => (abono > 0 ? buscarCuotasPorAbono(abono) : null),
+    [abono, buscarCuotasPorAbono],
+  );
+
+  const sugerencias = [100_000, 150_000, 200_000, 300_000, 500_000];
+
+  return (
+    <div
+      className="mb-4 overflow-hidden rounded-2xl border backdrop-blur-xl"
+      style={{
+        background:
+          "linear-gradient(135deg, rgba(20,28,54,0.85) 0%, rgba(28,55,42,0.55) 60%, rgba(20,40,80,0.7) 100%)",
+        borderColor: "rgba(132,185,143,0.45)",
+        boxShadow:
+          "0 18px 44px -22px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.05)",
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => setAbierta((v) => !v)}
+        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+      >
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span
+            className="flex h-8 w-8 items-center justify-center rounded-full"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(132,185,143,0.35), rgba(68,93,163,0.35))",
+              border: "1px solid rgba(132,185,143,0.55)",
+              color: "#A7E0B8",
+            }}
+          >
+            <PhoneCall size={14} />
+          </span>
+          <div className="min-w-0">
+            <div
+              className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em]"
+              style={{ color: "#A7E0B8" }}
+            >
+              <Calculator size={12} /> Calculadora en vivo
+              <span
+                className="rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider"
+                style={{
+                  background: "rgba(132,185,143,0.18)",
+                  color: "#A7E0B8",
+                  border: "1px solid rgba(132,185,143,0.4)",
+                }}
+              >
+                En llamada
+              </span>
+            </div>
+            <div className="text-[11.5px]" style={{ color: "rgba(230,236,255,0.7)" }}>
+              ¿Cuánto quiere abonar el cliente cada mes? Te muestro al instante cuántas cuotas se eliminan.
+            </div>
+          </div>
+        </div>
+        <span style={{ color: "rgba(230,236,255,0.65)" }}>
+          {abierta ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        </span>
+      </button>
+
+      {abierta && (
+        <div className="px-4 pb-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className="flex-1">
+              <label
+                className="text-[10px] font-semibold uppercase tracking-[0.16em]"
+                style={{ color: "rgba(230,236,255,0.6)" }}
+              >
+                Abono mensual adicional deseado (COP)
+              </label>
+              <div className="mt-1 flex items-center gap-2">
+                <span className="text-[14px] font-bold" style={{ color: "rgba(230,236,255,0.7)" }}>
+                  $
+                </span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="Ej. 200.000"
+                  value={abono > 0 ? formatNumber(abono, 0) : abonoStr}
+                  onChange={(e) => setAbonoStr(e.target.value)}
+                  className="nuvia-input flex-1 text-base font-bold outline-none"
+                />
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {sugerencias.map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setAbonoStr(String(v))}
+                    className="rounded-full border px-2.5 py-1 text-[10.5px] font-semibold transition hover:scale-[1.03]"
+                    style={{
+                      background:
+                        abono === v ? "rgba(132,185,143,0.25)" : "rgba(255,255,255,0.05)",
+                      borderColor:
+                        abono === v ? "rgba(132,185,143,0.6)" : "rgba(255,255,255,0.12)",
+                      color: abono === v ? "#A7E0B8" : "rgba(230,236,255,0.75)",
+                    }}
+                  >
+                    +${formatNumber(v, 0)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {abono > 0 && !resultado && (
+            <div className="mt-3 text-[12px]" style={{ color: "#FF9D9D" }}>
+              Con ese abono no se logra eliminar cuotas viables. Prueba con un valor mayor.
+            </div>
+          )}
+
+          {resultado && (
+            <div
+              className="mt-4 grid gap-3 rounded-xl border p-3 sm:grid-cols-4"
+              style={{
+                borderColor: "rgba(132,185,143,0.4)",
+                background:
+                  "linear-gradient(135deg, rgba(132,185,143,0.16), rgba(20,28,54,0.6))",
+              }}
+            >
+              <ResultCell label="Cuotas eliminadas" value={`−${resultado.cuotasEliminadas}`} accent />
+              <ResultCell
+                label="Tiempo eliminado"
+                value={`${(resultado.cuotasEliminadas / 12).toFixed(1)} años`}
+              />
+              <ResultCell label="Nuevo plazo" value={`${resultado.calc.nuevoPlazo} m`} />
+              <ResultCell label="Ahorro total" value={formatCOP(resultado.calc.ahorroTotal)} accent />
+              <div className="flex flex-col items-stretch gap-2 sm:col-span-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-[11px]" style={{ color: "rgba(230,236,255,0.7)" }}>
+                  Incremento real más cercano:{" "}
+                  <strong style={{ color: "#FFFFFF" }}>+{formatCOP(resultado.calc.incrementoMensual)}</strong> · Nueva cuota{" "}
+                  <strong style={{ color: "#FFFFFF" }}>{formatCOP(resultado.calc.nuevaCuota)}</strong>
+                  {Math.abs(resultado.calc.incrementoMensual - abono) > 5000 && (
+                    <span style={{ color: "rgba(230,236,255,0.55)" }}>
+                      {" "}
+                      (el valor exacto no cae justo en una cuota completa; ajustamos al más cercano)
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onAgregarEscenario(resultado.cuotasEliminadas)}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-[12px] font-bold text-white shadow-[0_10px_22px_-12px_rgba(132,185,143,0.55)] transition hover:scale-[1.02]"
+                  style={{ background: "linear-gradient(135deg, #84B98F 0%, #5B7DC8 100%)" }}
+                >
+                  <Plus size={14} /> Usar como nuevo escenario
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="mt-2 text-[10.5px]" style={{ color: "rgba(230,236,255,0.5)" }}>
+            Plazo pendiente: {cuotasPendientes} meses · Los resultados usan el mismo motor de cálculo que las propuestas comerciales.
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ResultCell({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
+  return (
+    <div>
+      <div
+        className="text-[9px] font-semibold uppercase tracking-[0.16em]"
+        style={{ color: "rgba(230,236,255,0.6)" }}
+      >
+        {label}
+      </div>
+      <div
+        className="mt-0.5 text-[18px] font-extrabold leading-tight tracking-tight"
+        style={{ color: accent ? "#A7E0B8" : "#FFFFFF" }}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
