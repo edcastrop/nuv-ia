@@ -102,23 +102,28 @@ export function NuviaPipelinePanel({ contexto }: { contexto: PipelineCtx }) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="fixed right-0 top-1/2 z-40 -translate-y-1/2 rounded-l-2xl border border-r-0 border-[var(--nuvia-border)] py-4 pl-2 pr-1.5 shadow-lg transition hover:pr-2.5"
+        className="group fixed bottom-5 right-5 z-40 grid h-14 w-14 place-items-center rounded-full border shadow-[0_18px_40px_-12px_rgba(68,93,163,0.65)] transition hover:scale-105"
         style={{
           background:
-            "linear-gradient(135deg, color-mix(in oklab, var(--nuvia-accent-blue) 30%, var(--nuvia-bg-secondary)), var(--nuvia-bg-secondary))",
+            "linear-gradient(135deg, color-mix(in oklab, var(--nuvia-accent-blue) 80%, transparent), color-mix(in oklab, var(--nuvia-accent-green) 55%, transparent))",
+          borderColor: "color-mix(in oklab, var(--nuvia-accent-green) 55%, transparent)",
+          color: "var(--nuvia-text-primary)",
         }}
         title="Abrir NUVIA IA"
+        aria-label="Abrir NUVIA IA"
       >
-        <div className="flex flex-col items-center gap-2 text-[var(--nuvia-text-primary)]">
-          <Sparkles className="h-4 w-4 text-[var(--nuvia-accent-green)]" />
-          <span className="[writing-mode:vertical-rl] text-[10px] font-semibold uppercase tracking-wider">
-            NUVIA IA
-          </span>
-          <ChevronLeft className="h-3.5 w-3.5 text-[var(--nuvia-text-secondary)]" />
-        </div>
+        <Sparkles className="h-6 w-6" />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0 rounded-full opacity-60"
+          style={{
+            boxShadow: "0 0 0 1px rgba(255,255,255,0.10) inset, 0 0 28px -4px color-mix(in oklab, var(--nuvia-accent-green) 70%, transparent)",
+          }}
+        />
       </button>
     );
   }
+
 
   return (
     <aside
