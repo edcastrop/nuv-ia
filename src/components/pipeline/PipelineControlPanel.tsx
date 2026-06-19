@@ -2,7 +2,7 @@
 // Mantiene KPIs, flujo operativo, alertas y momentum fuera del header
 // para que los leads (Kanban) sean los protagonistas.
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import {
   AlertTriangle,
   ArrowRight,
@@ -31,21 +31,13 @@ export type PipelineControlProps = {
   soloStuck: boolean;
   onToggleStuck: () => void;
   fmtCOP: (n: number) => string;
+  /** Controlado desde el header (chip "Control"). */
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 };
 
-const STORAGE_KEY = "nuvex.pipeline.control.open";
-
 export function PipelineControlPanel(props: PipelineControlProps) {
-  const [open, setOpen] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem(STORAGE_KEY) === "1";
-  });
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_KEY, open ? "1" : "0");
-    }
-  }, [open]);
+  const { open, onOpenChange } = props;
 
   // Atajo: "c" para alternar el panel de control
   useEffect(() => {
@@ -57,12 +49,12 @@ export function PipelineControlPanel(props: PipelineControlProps) {
       if (isTyping) return;
       if (e.key.toLowerCase() === "c") {
         e.preventDefault();
-        setOpen((v) => !v);
+        onOpenChange(!open);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [open, onOpenChange]);
 
   const { total, estancados, promedio, honorarios, fases, criticos, listos, soloStuck, onToggleStuck, fmtCOP } = props;
 
@@ -77,35 +69,15 @@ export function PipelineControlPanel(props: PipelineControlProps) {
 
   return (
     <>
-      {/* Botón flotante (visible cuando está cerrado) */}
-      {!open && (
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          title="Abrir Torre de control (C)"
-          className="fixed right-3 top-24 z-30 inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold shadow-[var(--nuvia-shadow-md)] backdrop-blur transition hover:brightness-110"
-          style={{
-            background: "linear-gradient(135deg, color-mix(in oklab, var(--nuvia-accent-blue) 28%, var(--nuvia-bg-tertiary)), var(--nuvia-bg-tertiary))",
-            borderColor: "color-mix(in oklab, var(--nuvia-accent-blue) 40%, transparent)",
-            color: "var(--nuvia-text-primary)",
-            boxShadow: "0 10px 30px -12px color-mix(in oklab, var(--nuvia-accent-blue) 55%, transparent)",
-          }}
-        >
-          <Radar className="h-3.5 w-3.5 text-[var(--nuvia-accent-green)]" />
-          Control
-          {criticos > 0 && (
-            <span
-              className="rounded-full px-1.5 py-0.5 text-[10px] font-bold"
-              style={{
-                background: "color-mix(in oklab, var(--nuvia-danger) 22%, transparent)",
-                color: "var(--nuvia-danger)",
-              }}
-            >
-              {criticos}
-            </span>
-          )}
-        </button>
+      {/* Overlay (cuando está abierto) — el botón de apertura vive ahora en el header */}
+      {open && (
+        <div
+          aria-hidden
+          onClick={() => onOpenChange(false)}
+          className="fixed inset-0 z-30 bg-black/30 backdrop-blur-[2px]"
+        />
       )}
+
 
       {/* Drawer */}
       <aside
@@ -140,7 +112,7 @@ export function PipelineControlPanel(props: PipelineControlProps) {
           </div>
           <button
             type="button"
-            onClick={() => setOpen(false)}
+            onClick={() => onOpenChange(false)}
             title="Cerrar (C)"
             className="grid h-8 w-8 place-items-center rounded-lg border border-[var(--nuvia-border)] text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-accent-blue)] hover:text-[var(--nuvia-text-primary)]"
           >
