@@ -1,9 +1,25 @@
 // Popover lateral compacto con resumen del lead. Se abre desde el ícono de ojo.
+// Hidrata datos reales (proyecciones, cuotas pendientes, % auditoría) vía server fn.
 import { useEffect, useRef } from "react";
 import { Link } from "@tanstack/react-router";
-import { X, Building2, IdCard, Hash, Flag, Clock, User2, ExternalLink, Pencil, TrendingUp } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import {
+  X,
+  Building2,
+  IdCard,
+  Hash,
+  Flag,
+  Clock,
+  User2,
+  ExternalLink,
+  Pencil,
+  TrendingUp,
+  ShieldCheck,
+} from "lucide-react";
 import type { Expediente } from "@/lib/expedientes";
 import { AnalistaAvatar } from "./AnalistaAvatar";
+import { getQuickPeekData, type QuickPeekData } from "@/lib/pipelineQuickPeek.functions";
 
 type AnalistaInfo = { id: string; nombre: string | null; email: string | null };
 
@@ -13,31 +29,9 @@ function fmtCOP(n: number | null | undefined): string {
   return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(v);
 }
 
-function readNumeric(obj: unknown, ...keys: string[]): number {
-  if (!obj || typeof obj !== "object") return 0;
-  const o = obj as Record<string, unknown>;
-  for (const k of keys) {
-    const raw = o[k];
-    if (raw == null) continue;
-    if (typeof raw === "number" && Number.isFinite(raw)) return raw;
-    if (typeof raw === "string") {
-      const cleaned = raw.replace(/[^\d.-]/g, "");
-      const n = Number(cleaned);
-      if (Number.isFinite(n) && n !== 0) return n;
-    }
-  }
-  return 0;
-}
-
-function readString(obj: unknown, ...keys: string[]): string {
-  if (!obj || typeof obj !== "object") return "";
-  const o = obj as Record<string, unknown>;
-  for (const k of keys) {
-    const raw = o[k];
-    if (typeof raw === "string" && raw.trim()) return raw.trim();
-    if (typeof raw === "number") return String(raw);
-  }
-  return "";
+function fmtPct(n: number | null | undefined, digits = 2): string {
+  if (n == null || !Number.isFinite(n) || n === 0) return "—";
+  return `${n.toFixed(digits)} %`;
 }
 
 export function LeadQuickPeek({
@@ -56,6 +50,13 @@ export function LeadQuickPeek({
   onEdit: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const fetchPeek = useServerFn(getQuickPeekData);
+
+  const { data: peek } = useQuery<QuickPeekData>({
+    queryKey: ["quick-peek", expediente.id],
+    queryFn: () => fetchPeek({ data: { expedienteId: expediente.id } }),
+    staleTime: 30_000,
+  });
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -65,17 +66,24 @@ export function LeadQuickPeek({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const monto = readNumeric(expediente.credito_data, "saldo", "saldoCapital", "monto", "valorCredito");
-  const plazo = readNumeric(expediente.credito_data, "plazo", "plazoMeses", "plazo_meses");
-  const tasa = readString(expediente.credito_data, "tasa", "tasaEA", "tasa_ea");
-  const cuotaActual = readNumeric(expediente.credito_data, "cuota", "cuotaActual", "valorCuota");
+  const saldo = peek?.saldoCapital ?? 0;
+  const cuotaActual = peek?.cuotaActual ?? 0;
+  const cuotaProp = peek?.cuotaPropuesta ?? 0;
+  const cuotasPend = peek?.cuotasPendientes ?? 0;
+  const cuotasPendProp = peek?.cuotasPendientesProp ?? 0;
+  const tasaActual = peek?.tasaActualPct ?? null;
+  const tasaProp = peek?.tasaPropuestaPct ?? null;
+  const ahorro = peek?.ahorro ?? 0;
+  const audit = peek?.auditPct;
 
-  const propuesta = expediente.propuesta_data as Record<string, unknown> | undefined;
-  const cuotaPropuesta = readNumeric(propuesta, "cuota", "cuotaNueva", "valorCuota");
-  const ahorro = readNumeric(propuesta, "ahorro", "ahorroTotal", "ahorroIntereses");
-
-  const ingresos = readNumeric(expediente.cliente_data as unknown, "ingresosTotales", "ingresos_totales");
-  const pctEnd = ingresos > 0 && cuotaPropuesta > 0 ? Math.round((cuotaPropuesta / ingresos) * 100) : 0;
+  const auditColor =
+    audit == null
+      ? "var(--nuvia-text-secondary)"
+      : audit >= 80
+        ? "var(--nuvia-accent-green)"
+        : audit >= 60
+          ? "var(--nuvia-warning)"
+          : "var(--nuvia-danger)";
 
   return (
     <>
@@ -90,7 +98,7 @@ export function LeadQuickPeek({
         ref={ref}
         role="dialog"
         aria-label={`Resumen de ${expediente.cliente_nombre}`}
-        className="fixed right-0 top-0 z-[81] h-full w-full max-w-[420px] overflow-y-auto border-l border-[var(--nuvia-border)] p-5 text-[var(--nuvia-text-primary)] shadow-2xl"
+        className="fixed right-0 top-0 z-[81] h-full w-full max-w-[440px] overflow-y-auto border-l border-[var(--nuvia-border)] p-5 text-[var(--nuvia-text-primary)] shadow-2xl"
         style={{
           background:
             "linear-gradient(180deg, var(--nuvia-bg-secondary) 0%, var(--nuvia-bg-primary) 100%)",
@@ -144,30 +152,72 @@ export function LeadQuickPeek({
           </div>
         </div>
 
-        {/* Datos clave */}
+        {/* % Auditoría */}
+        <div
+          className="mt-3 rounded-xl border p-3"
+          style={{
+            borderColor: `color-mix(in oklab, ${auditColor} 30%, transparent)`,
+            background: `color-mix(in oklab, ${auditColor} 6%, transparent)`,
+          }}
+        >
+          <div className="flex items-center justify-between gap-2 text-xs">
+            <span className="inline-flex items-center gap-1.5 font-semibold text-[var(--nuvia-text-primary)]">
+              <ShieldCheck className="h-3.5 w-3.5" style={{ color: auditColor }} /> % Auditoría
+            </span>
+            <span className="text-sm font-bold tabular-nums" style={{ color: auditColor }}>
+              {audit == null ? "—" : `${Math.round(audit)}%`}
+            </span>
+          </div>
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full" style={{ background: "rgba(255,255,255,0.06)" }}>
+            <div
+              className="h-full transition-all"
+              style={{ width: `${Math.min(100, Math.max(0, audit ?? 0))}%`, background: auditColor }}
+            />
+          </div>
+        </div>
+
+        {/* Saldo + plazo */}
         <div className="mt-3 grid grid-cols-2 gap-2">
-          <Tile label="Saldo crédito" value={fmtCOP(monto)} />
-          <Tile label="Plazo" value={plazo > 0 ? `${plazo} m` : "—"} />
+          <Tile label="Saldo crédito" value={fmtCOP(saldo)} />
+          <Tile label="Plazo actual" value={peek?.cuotasTotales ? `${peek.cuotasTotales} m` : "—"} />
+        </div>
+
+        {/* Cuotas: actual vs proyectada */}
+        <SectionTitle>Cuota</SectionTitle>
+        <div className="grid grid-cols-2 gap-2">
           <Tile label="Cuota actual" value={fmtCOP(cuotaActual)} />
-          <Tile label="Cuota propuesta" value={fmtCOP(cuotaPropuesta)} accent />
-          <Tile label="Tasa" value={tasa || "—"} />
+          <Tile label="Cuota proyectada" value={fmtCOP(cuotaProp)} accent />
+        </div>
+
+        {/* Cuotas pendientes */}
+        <SectionTitle>Cuotas pendientes por pagar</SectionTitle>
+        <div className="grid grid-cols-2 gap-2">
           <Tile
-            label="% Endeudamiento"
-            value={pctEnd > 0 ? `${pctEnd}%` : "—"}
-            danger={pctEnd > 40}
-            warn={pctEnd > 30 && pctEnd <= 40}
+            label="Actual"
+            value={cuotasPend > 0 ? `${cuotasPend} cuotas` : "—"}
+          />
+          <Tile
+            label="Proyectada"
+            value={cuotasPendProp > 0 ? `${cuotasPendProp} cuotas` : "—"}
+            accent
           />
         </div>
 
-        {ahorro > 0 && (
-          <div className="mt-3 flex items-center gap-2 rounded-xl border border-[color-mix(in_oklab,var(--nuvia-accent-green)_30%,transparent)] bg-[color-mix(in_oklab,var(--nuvia-accent-green)_8%,transparent)] p-3">
-            <TrendingUp className="h-4 w-4 text-[var(--nuvia-accent-green)]" />
-            <div className="text-xs">
-              <div className="text-[var(--nuvia-text-secondary)]">Ahorro proyectado</div>
-              <div className="text-sm font-semibold text-[var(--nuvia-accent-green)]">{fmtCOP(ahorro)}</div>
-            </div>
+        {/* Tasa */}
+        <SectionTitle>Tasa EA</SectionTitle>
+        <div className="grid grid-cols-2 gap-2">
+          <Tile label="Tasa actual" value={fmtPct(tasaActual)} />
+          <Tile label="Tasa proyectada" value={fmtPct(tasaProp)} accent />
+        </div>
+
+        {/* Ahorro */}
+        <div className="mt-3 flex items-center gap-2 rounded-xl border border-[color-mix(in_oklab,var(--nuvia-accent-green)_30%,transparent)] bg-[color-mix(in_oklab,var(--nuvia-accent-green)_8%,transparent)] p-3">
+          <TrendingUp className="h-5 w-5 text-[var(--nuvia-accent-green)]" />
+          <div className="text-xs">
+            <div className="text-[var(--nuvia-text-secondary)]">Ahorro del lead</div>
+            <div className="text-lg font-bold text-[var(--nuvia-accent-green)]">{fmtCOP(ahorro)}</div>
           </div>
-        )}
+        </div>
 
         {/* Analista */}
         <div className="mt-4 flex items-center gap-2 rounded-xl border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.03)] p-3">
@@ -183,9 +233,10 @@ export function LeadQuickPeek({
         </div>
 
         {/* Honorarios */}
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <Tile label="Honorarios base" value={fmtCOP(expediente.honorarios_base)} />
-          <Tile label="Honorarios final" value={fmtCOP(expediente.honorarios_final)} accent />
+        <SectionTitle>Honorarios</SectionTitle>
+        <div className="grid grid-cols-2 gap-2">
+          <Tile label="Base" value={fmtCOP(expediente.honorarios_base)} />
+          <Tile label="Final" value={fmtCOP(expediente.honorarios_final)} accent />
         </div>
 
         {/* Footer acciones */}
@@ -212,6 +263,14 @@ export function LeadQuickPeek({
         </div>
       </aside>
     </>
+  );
+}
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mb-1.5 mt-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--nuvia-text-secondary)]">
+      {children}
+    </div>
   );
 }
 
