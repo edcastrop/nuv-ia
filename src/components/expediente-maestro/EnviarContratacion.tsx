@@ -303,12 +303,22 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
             <pre className="whitespace-pre-wrap font-sans text-[12px]">{cuerpo}</pre>
             <div className="font-semibold text-[#242424] mt-2 mb-1">Adjuntos</div>
             <ul className="list-disc pl-5">
-              <li>{ctx.poderDoc?.filename}.pdf</li>
               <li>{ctx.poderDoc?.filename}.docx</li>
-              <li>{ctx.datosDoc?.filename}.pdf</li>
               <li>{ctx.datosDoc?.filename}.docx</li>
+              {loadingSoportes ? (
+                <li className="text-[#242424]/50">Cargando soportes del cliente…</li>
+              ) : soportes.length === 0 ? (
+                <li className="text-[#B42318]">
+                  ⚠ No se encontró cédula ni extracto del cliente en soportes. Cárgalos antes de enviar.
+                </li>
+              ) : (
+                soportes.map((s, i) => (
+                  <li key={i}>{s.label} — {s.filename}</li>
+                ))
+              )}
             </ul>
           </div>
+
 
           <div>
             <div className="text-[11px] uppercase tracking-wider font-semibold text-[#242424]/70 mb-1">Destinatarios</div>
