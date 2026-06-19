@@ -3,7 +3,7 @@
 
 import { ArrowRight, Sparkles } from "lucide-react";
 import { NCard } from "@/components/nuvia";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useUserRole, type AppRole } from "@/hooks/useUserRole";
 import { useAuth } from "@/hooks/useAuth";
 import { getSiguienteAccion, type TabId } from "@/lib/expedienteGuiado";
 import { roleLabel } from "@/lib/roleLabels";
@@ -24,7 +24,7 @@ export function SiguienteAccionPanel({ exp, onIrATab }: Props) {
   const { roles, loading } = useUserRole();
   const { user } = useAuth();
   if (loading) return null;
-  const effectiveRoles = user?.id === exp.asesor_id ? ["licenciado"] : roles;
+  const effectiveRoles: AppRole[] = user?.id === exp.asesor_id ? ["licenciado"] : roles;
   const accion = getSiguienteAccion(exp, effectiveRoles);
   if (!accion) return null;
 
