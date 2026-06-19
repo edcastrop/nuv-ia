@@ -102,6 +102,7 @@ export function UVRSimulator({
     seguros: initCred.seguros ?? "",
     teaCobrada: initCred.teaCobrada ?? initCred.tea ?? "",
     variacionUVR: initCred.variacionUVR ?? getDefaultVariacionUVR(),
+    variacionUVRPropuestas: initCred.variacionUVRPropuestas ?? "",
     nuevaCuotaManual: initCred.nuevaCuotaManual ?? "",
     cuotasEliminarManual: initCred.cuotasEliminarManual ?? "",
     modoPersonalizada:
@@ -128,6 +129,9 @@ export function UVRSimulator({
   const [seguros, setSeguros] = useState(draft.seguros);
   const [teaCobrada, setTeaCobrada] = useState(draft.teaCobrada);
   const [variacionUVR, setVariacionUVR] = useState(draft.variacionUVR);
+  const [variacionUVRPropuestas, setVariacionUVRPropuestas] = useState<string>(
+    (draft as { variacionUVRPropuestas?: string }).variacionUVRPropuestas ?? "",
+  );
   const [nuevaCuotaManual, setNuevaCuotaManual] = useState(draft.nuevaCuotaManual);
   const [cuotasEliminarManual, setCuotasEliminarManual] = useState(draft.cuotasEliminarManual);
   const [modoPersonalizada, setModoPersonalizada] = useState<"cuota" | "cuotas">(
@@ -169,6 +173,7 @@ export function UVRSimulator({
       seguros,
       teaCobrada,
       variacionUVR,
+      variacionUVRPropuestas,
       nuevaCuotaManual,
       cuotasEliminarManual,
       modoPersonalizada,
@@ -188,6 +193,7 @@ export function UVRSimulator({
       seguros,
       teaCobrada,
       variacionUVR,
+      variacionUVRPropuestas,
       nuevaCuotaManual,
       cuotasEliminarManual,
       modoPersonalizada,
@@ -240,6 +246,7 @@ export function UVRSimulator({
       seguros: segurosNum,
       teaCobrada: parsePercentage(teaCobrada),
       variacionUVR: parsePercentage(variacionUVR),
+      variacionUVRPropuestas: variacionUVRPropuestas ? parsePercentage(variacionUVRPropuestas) : undefined,
       cuotasPendientes,
       plazoInicial,
       porcentajeHonorarios: honorariosPct,
@@ -254,6 +261,7 @@ export function UVRSimulator({
       segurosNum,
       teaCobrada,
       variacionUVR,
+      variacionUVRPropuestas,
       cuotasPendientes,
       plazoInicial,
       honorariosPct,
@@ -668,14 +676,31 @@ export function UVRSimulator({
               )}
             </div>
 
+            <TextField
+              label="Variación UVR EA propuestas (%) · opcional"
+              value={variacionUVRPropuestas}
+              onChange={setVariacionUVRPropuestas}
+              placeholder="5,00"
+              hint="Modo Excel: si se diligencia, las propuestas se proyectan con esta UVR (típico 5%) mientras el escenario actual mantiene la UVR vigente. Vacío = misma UVR en ambos lados (modo NUVIA conservador)."
+            />
+
             {/* Nota explicativa sobre hipótesis UVR */}
             <div className="mt-3">
               <Alert tone="info">
-                <span className="font-semibold">Hipótesis de UVR:</span> El ahorro mostrado asume que la UVR mantiene la misma variación anual ({variacionUVR ? variacionUVR : "—"}%) tanto en el escenario actual como en las propuestas. Si la inflación futura baja, el ahorro real podría ser mayor.
+                {variacionUVRPropuestas && parsePercentage(variacionUVRPropuestas) > 0 ? (
+                  <>
+                    <span className="font-semibold">Hipótesis de UVR (modo Excel):</span> el escenario actual se proyecta con {variacionUVR || "—"}% EA y las propuestas con {variacionUVRPropuestas}% EA. El ahorro mostrado incluye tanto el efecto real de eliminar cuotas como el supuesto de menor inflación futura en las propuestas.
+                  </>
+                ) : (
+                  <>
+                    <span className="font-semibold">Hipótesis de UVR:</span> El ahorro mostrado asume que la UVR mantiene la misma variación anual ({variacionUVR ? variacionUVR : "—"}%) tanto en el escenario actual como en las propuestas. Si la inflación futura baja, el ahorro real podría ser mayor.
+                  </>
+                )}
               </Alert>
             </div>
           </div>
         </Card>
+
 
         {datosCompletos && (
           <>
@@ -825,6 +850,7 @@ export function UVRSimulator({
                         tea: teaCobrada,
                         teaCobrada,
                         variacionUVR,
+                        variacionUVRPropuestas,
                         nuevaCuotaManual,
                         cuotasEliminarManual,
                         propuestasComerciales: JSON.stringify(propuestasComercialesDraft ?? null),

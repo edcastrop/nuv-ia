@@ -247,7 +247,13 @@ export interface UVRInput {
   cuotaSinSeguros: number;
   seguros: number;
   teaCobrada: number; // %
-  variacionUVR: number; // % EA
+  variacionUVR: number; // % EA — escenario actual
+  /**
+   * % EA opcional para proyectar SOLO las propuestas (modo Excel).
+   * Si no se indica o es <=0, se usa la misma `variacionUVR` para propuestas
+   * (modo NUVIA conservador: misma hipótesis en ambos lados).
+   */
+  variacionUVRPropuestas?: number;
   cuotasPendientes: number;
   plazoInicial: number;
   porcentajeHonorarios: number;
@@ -344,6 +350,12 @@ export function calculateUVRProjection(input: UVRInput): {
 } {
   const tasaMensual = Math.pow(1 + input.teaCobrada / 100, 1 / 12) - 1;
   const variacionMensualUVR = Math.pow(1 + input.variacionUVR / 100, 1 / 12) - 1;
+  const variacionPropuestasEA =
+    input.variacionUVRPropuestas && input.variacionUVRPropuestas > 0
+      ? input.variacionUVRPropuestas
+      : input.variacionUVR;
+  const variacionMensualUVRPropuestas =
+    Math.pow(1 + variacionPropuestasEA / 100, 1 / 12) - 1;
   const cuotasBase = Math.max(0, input.cuotasPendientes);
   // En UVR el plazo del extracto es el plazo objetivo vigente del crédito.
   // La cuota facturada puede recalcularse periódicamente por el banco; no debe
@@ -376,7 +388,7 @@ export function calculateUVRProjection(input: UVRInput): {
       input.saldoUVR,
       input.valorUVR,
       tasaMensual,
-      variacionMensualUVR,
+      variacionMensualUVRPropuestas,
       nuevaCuotaUVR,
       input.seguros,
       nuevoPlazo,
@@ -452,7 +464,11 @@ export function calculateUVRManual(
     return { ...base, motivo: "La nueva cuota debe ser mayor a la cuota actual" };
   }
   const tasaMensual = Math.pow(1 + input.teaCobrada / 100, 1 / 12) - 1;
-  const variacionMensualUVR = Math.pow(1 + input.variacionUVR / 100, 1 / 12) - 1;
+  const variacionPropuestasEA =
+    input.variacionUVRPropuestas && input.variacionUVRPropuestas > 0
+      ? input.variacionUVRPropuestas
+      : input.variacionUVR;
+  const variacionMensualUVR = Math.pow(1 + variacionPropuestasEA / 100, 1 / 12) - 1;
   const cuotaSinSeguro = nuevaCuotaPesos - input.seguros;
   const nuevaCuotaUVR = cuotaSinSeguro / input.valorUVR;
   if (nuevaCuotaUVR <= input.saldoUVR * tasaMensual) {
