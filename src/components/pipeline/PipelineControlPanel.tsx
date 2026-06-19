@@ -31,21 +31,13 @@ export type PipelineControlProps = {
   soloStuck: boolean;
   onToggleStuck: () => void;
   fmtCOP: (n: number) => string;
+  /** Controlado desde el header (chip "Control"). */
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 };
 
-const STORAGE_KEY = "nuvex.pipeline.control.open";
-
 export function PipelineControlPanel(props: PipelineControlProps) {
-  const [open, setOpen] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem(STORAGE_KEY) === "1";
-  });
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_KEY, open ? "1" : "0");
-    }
-  }, [open]);
+  const { open, onOpenChange } = props;
 
   // Atajo: "c" para alternar el panel de control
   useEffect(() => {
@@ -57,12 +49,12 @@ export function PipelineControlPanel(props: PipelineControlProps) {
       if (isTyping) return;
       if (e.key.toLowerCase() === "c") {
         e.preventDefault();
-        setOpen((v) => !v);
+        onOpenChange(!open);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [open, onOpenChange]);
 
   const { total, estancados, promedio, honorarios, fases, criticos, listos, soloStuck, onToggleStuck, fmtCOP } = props;
 
