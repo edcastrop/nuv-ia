@@ -926,3 +926,53 @@ function PipelinePage() {
   );
 }
 
+// KPI inline tipo glass — compacto, premium, sin ocupar fila completa.
+function KpiTile({
+  label,
+  value,
+  tone,
+  icon,
+}: {
+  label: string;
+  value: string;
+  tone?: "danger" | "success";
+  icon?: React.ReactNode;
+}) {
+  const palette =
+    tone === "danger"
+      ? {
+          border: "color-mix(in oklab, var(--nuvia-danger) 36%, transparent)",
+          bg: "color-mix(in oklab, var(--nuvia-danger) 11%, transparent)",
+          value: "var(--nuvia-danger)",
+        }
+      : tone === "success"
+      ? {
+          border: "color-mix(in oklab, var(--nuvia-accent-green) 34%, transparent)",
+          bg: "color-mix(in oklab, var(--nuvia-accent-green) 10%, transparent)",
+          value: "var(--nuvia-accent-green)",
+        }
+      : {
+          border: "var(--nuvia-border)",
+          bg: "rgba(255,255,255,0.04)",
+          value: "var(--nuvia-text-primary)",
+        };
+  return (
+    <div
+      className="flex min-w-[112px] flex-col rounded-xl border px-3 py-2"
+      style={{ borderColor: palette.border, background: palette.bg }}
+    >
+      <div className="text-[10px] font-medium uppercase tracking-wide text-[var(--nuvia-text-secondary)]">
+        {label}
+      </div>
+      <div
+        className="mt-0.5 flex items-center gap-1 truncate text-lg font-semibold tabular-nums"
+        style={{ color: palette.value }}
+      >
+        {icon}
+        <span className="truncate">{value}</span>
+      </div>
+    </div>
+  );
+}
+
+
