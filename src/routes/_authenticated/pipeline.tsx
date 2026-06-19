@@ -807,6 +807,38 @@ function PipelinePage() {
         </div>
       )}
       </div>
+
+      {peekExpediente && (
+        <LeadQuickPeek
+          expediente={peekExpediente}
+          analista={(() => {
+            const p = profilesMap.get(peekExpediente.asesor_id);
+            return p ? { id: peekExpediente.asesor_id, nombre: p.nombre, email: p.email } : null;
+          })()}
+          diasEnEtapa={diasDesde(peekExpediente.updated_at)}
+          etapaTitulo={(() => {
+            const etapa = computeEtapaActual({
+              estado_caso: (peekExpediente as unknown as { estado_caso?: string | null }).estado_caso ?? null,
+            } as Parameters<typeof computeEtapaActual>[0]);
+            const e = ETAPAS_PIPELINE.find((x) => x.id === etapa);
+            return e ? `E${e.numero} · ${e.titulo}` : "—";
+          })()}
+          onClose={() => setPeekId(null)}
+          onEdit={() => { setEditId(peekExpediente.id); setPeekId(null); }}
+        />
+      )}
+
+      {editExpediente && (
+        <LeadEditDrawer
+          expediente={editExpediente}
+          analistas={analistas}
+          onClose={() => setEditId(null)}
+          onSaved={() => cargar(true)}
+        />
+      )}
+
+      <NuviaPipelinePanel contexto={pipelineCtx} />
     </div>
   );
 }
+
