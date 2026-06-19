@@ -731,6 +731,7 @@ export function UVRSimulator({
                 cuotasPendientes={cuotasBaseSimulacion}
                 baseCredito={baseCredito > 0 ? baseCredito : saldoBase}
                 dineroPagado={baseCredito > 0 ? dineroPagadoFecha : 0}
+                perfilCliente={client.perfil}
                 initialState={propuestasComercialesDraft}
                 onStateChange={(snapshot) => {
                   setPropuestasComercialesDraft({
