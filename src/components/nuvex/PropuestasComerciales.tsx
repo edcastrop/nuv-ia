@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Plus, Trash2, Star, AlertTriangle } from "lucide-react";
+import { Plus, Trash2, Star, AlertTriangle, PhoneCall, Calculator, ChevronDown, ChevronUp } from "lucide-react";
 import { formatCOP, formatNumber } from "../../lib/format";
 import {
   calculatePesosManualByCuotas,
