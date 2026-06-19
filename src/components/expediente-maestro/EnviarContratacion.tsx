@@ -353,7 +353,11 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
       const attachments: { blob: Blob; filename: string; contentType: string }[] = [
         { blob: poderDocx, filename: `${ctx.poderDoc.filename}.docx`, contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
         { blob: datosDocx, filename: `${ctx.datosDoc.filename}.docx`, contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
-        ...soportesActuales.map((s) => ({ blob: s.blob, filename: s.filename, contentType: s.contentType })),
+        ...soportesActuales.map((s) => ({
+          blob: s.blob,
+          filename: `${s.kind === "cedula" ? "Cedula_Cliente" : s.kind === "extracto" ? "Extracto_Bancario" : "Soporte"}_${s.filename}`,
+          contentType: s.contentType,
+        })),
       ];
       const encoded = await Promise.all(attachments.map(async (a) => ({
         filename: a.filename,
