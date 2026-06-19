@@ -168,6 +168,8 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [soportes, setSoportes] = useState<SoporteAdjunto[]>([]);
+  const [loadingSoportes, setLoadingSoportes] = useState(true);
 
   const reload = async () => {
     setLoadingD(true);
@@ -183,6 +185,19 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
   };
   useEffect(() => { reload(); }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingSoportes(true);
+    fetchSoportesCliente(ctx.expedienteId)
+      .then((rows) => { if (!cancelled) setSoportes(rows); })
+      .catch((e) => { if (!cancelled) setError((e as Error).message); })
+      .finally(() => { if (!cancelled) setLoadingSoportes(false); });
+    return () => { cancelled = true; };
+  }, [ctx.expedienteId]);
+
+  const tieneCedula = soportes.some((s) => s.label.toLowerCase().startsWith("cédula") || s.label.toLowerCase().startsWith("documento de identidad"));
+  const tieneExtracto = soportes.some((s) => s.label.toLowerCase().startsWith("extracto"));
+
   const asunto = `${ctx.clienteNombre} - Ficha de contratación y poder${ctx.asesorNombre ? ` - ${ctx.asesorNombre}` : ""}`;
   const cuerpo = useMemo(() => {
     const saludo = `Estimado equipo de Contratación,`;
@@ -195,14 +210,17 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
       `• Asesor responsable: ${ctx.asesorNombre || "—"}`,
       `• Fecha de envío: ${new Date().toLocaleString("es-CO")}`,
     ].join("\n");
-    const adjuntos = [
+    const lineasAdjuntos = [
       `Documentos adjuntos:`,
-      `- Poder Especial (PDF y Word)`,
-      `- Ficha de Datos del Contrato (PDF y Word)`,
-    ].join("\n");
+      `- Poder Especial (Word)`,
+      `- Ficha de Datos del Contrato (Word)`,
+    ];
+    if (tieneCedula) lineasAdjuntos.push(`- Cédula del cliente`);
+    if (tieneExtracto) lineasAdjuntos.push(`- Extracto bancario del cliente`);
+    const adjuntos = lineasAdjuntos.join("\n");
     const cierre = `Quedamos atentos a cualquier observación o requerimiento adicional para avanzar con la radicación.\n\nCordialmente,\n${ctx.asesorNombre || "Equipo NUVEX"}\nNUVEX — Finanzas Inteligentes`;
     return [saludo, intro, detalle, adjuntos, cierre].join("\n\n");
-  }, [ctx]);
+  }, [ctx, tieneCedula, tieneExtracto]);
 
   const handleAdd = async () => {
     const v = newEmail.trim().toLowerCase();
