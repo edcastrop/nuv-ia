@@ -11,6 +11,7 @@ import {
   IdCard,
 } from "lucide-react";
 import { extractCedula, type CedulaData } from "@/lib/cedula.functions";
+import { normalizeCityText } from "@/lib/colombiaCities";
 import { NUVEX } from "./constants";
 import type { Interviniente, RolInterviniente } from "./intervinientes";
 import { defaultInterviniente, rolCotitular } from "./intervinientes";
