@@ -203,12 +203,12 @@ export function LeadQuickPeek({
           />
         </div>
 
-        {/* Tasa */}
+        {/* Tasa actual */}
         <SectionTitle>Tasa EA</SectionTitle>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2">
           <Tile label="Tasa actual" value={fmtPct(tasaActual)} />
-          <Tile label="Tasa proyectada" value={fmtPct(tasaProp)} accent />
         </div>
+
 
         {/* Ahorro */}
         <div className="mt-3 flex items-center gap-2 rounded-xl border border-[color-mix(in_oklab,var(--nuvia-accent-green)_30%,transparent)] bg-[color-mix(in_oklab,var(--nuvia-accent-green)_8%,transparent)] p-3">
