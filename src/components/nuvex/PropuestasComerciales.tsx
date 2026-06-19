@@ -224,6 +224,37 @@ export function PropuestasComerciales(props: Props) {
     setCuotasList((list) => [...list, sugerida]);
   };
 
+  // Busca el número de cuotas a eliminar cuyo incremento mensual se acerque más
+  // al abono mensual deseado por el cliente durante la llamada.
+  const buscarCuotasPorAbono = (abonoMensualDeseado: number): { cuotasEliminadas: number; calc: PropuestaCalc } | null => {
+    if (!Number.isFinite(abonoMensualDeseado) || abonoMensualDeseado <= 0) return null;
+    const maxCuotas = Math.max(0, props.cuotasPendientes - 1);
+    let best: { cuotasEliminadas: number; calc: PropuestaCalc; diff: number } | null = null;
+    for (let n = 1; n <= maxCuotas; n++) {
+      const c = computePropuesta(props, n);
+      if (!c.valid) continue;
+      const diff = Math.abs(c.incrementoMensual - abonoMensualDeseado);
+      if (!best || diff < best.diff) best = { cuotasEliminadas: n, calc: c, diff };
+      // Optimización: si ya superamos significativamente el abono, podemos cortar.
+      if (c.incrementoMensual > abonoMensualDeseado * 1.6 && best && best.calc.incrementoMensual >= abonoMensualDeseado) break;
+    }
+    return best ? { cuotasEliminadas: best.cuotasEliminadas, calc: best.calc } : null;
+  };
+
+  const agregarEscenarioCuotas = (n: number) => {
+    if (!Number.isFinite(n) || n <= 0) return;
+    setCuotasList((list) => {
+      const exists = list.indexOf(n);
+      if (exists >= 0) {
+        setRecomendadaIdx(exists);
+        return list;
+      }
+      const next = [...list, n];
+      setRecomendadaIdx(next.length - 1);
+      return next;
+    });
+  };
+
   // Mejor ahorro absoluto entre escenarios válidos (para badge "Mayor ahorro")
   const maxAhorroIdx = useMemo(() => {
     let best = -1;
