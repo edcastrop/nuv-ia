@@ -4,6 +4,7 @@
 import { ArrowRight, Sparkles } from "lucide-react";
 import { NCard } from "@/components/nuvia";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useAuth } from "@/hooks/useAuth";
 import { getSiguienteAccion, type TabId } from "@/lib/expedienteGuiado";
 import { roleLabel } from "@/lib/roleLabels";
 import type { Expediente } from "@/lib/expedientes";
@@ -21,8 +22,13 @@ const PRIO_TONE: Record<string, { fg: string; bg: string; border: string; btnBg:
 
 export function SiguienteAccionPanel({ exp, onIrATab }: Props) {
   const { roles, loading } = useUserRole();
+  const { user } = useAuth();
   if (loading) return null;
-  const accion = getSiguienteAccion(exp, roles);
+  const effectiveRoles =
+    user?.id === exp.asesor_id && !roles.some((r) => r === "licenciado" || r === "asesor")
+      ? [...roles, "licenciado" as const]
+      : roles;
+  const accion = getSiguienteAccion(exp, effectiveRoles);
   if (!accion) return null;
 
   const tone = PRIO_TONE[accion.prioridad] ?? PRIO_TONE.baja;
