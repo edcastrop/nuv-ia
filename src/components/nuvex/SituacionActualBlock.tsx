@@ -768,29 +768,67 @@ export function SituacionActualBlock({
 
       {/* Acordeón — detalle completo */}
       {detalle.length > 0 && (
-        <div className="mt-6 rounded-xl border border-[#E3E7EE]">
+        <div
+          className="mt-6 overflow-hidden rounded-2xl"
+          style={{
+            border: "1px solid var(--nuvia-border)",
+            background:
+              "linear-gradient(135deg, rgba(20,28,54,0.55) 0%, rgba(13,18,36,0.55) 100%)",
+          }}
+        >
           <button
             type="button"
             onClick={() => setOpen((o) => !o)}
-            className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-semibold text-[#242424] hover:bg-[#F7F9FB]"
+            className="flex w-full items-center justify-between gap-3 px-5 py-3.5 text-left text-sm font-semibold transition-colors"
+            style={{ color: "var(--nuvia-text-primary)" }}
             aria-expanded={open}
           >
-            <span>Ver detalle completo del crédito</span>
+            <span className="inline-flex items-center gap-2">
+              <span
+                className="inline-block h-1.5 w-1.5 rounded-full"
+                style={{
+                  background: "#7AA0FF",
+                  boxShadow: "0 0 10px rgba(122,160,255,0.7)",
+                }}
+              />
+              Ver detalle completo del crédito
+            </span>
             <span
-              className="text-xs text-[#6B7480] transition-transform"
-              style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
+              className="text-xs transition-transform"
+              style={{
+                color: "var(--nuvia-text-secondary)",
+                transform: open ? "rotate(180deg)" : "rotate(0deg)",
+              }}
             >
               ▾
             </span>
           </button>
           {open && (
-            <div className="grid grid-cols-2 gap-3 border-t border-[#E3E7EE] p-4 md:grid-cols-4">
+            <div
+              className="grid grid-cols-2 gap-3 p-4 md:grid-cols-4"
+              style={{ borderTop: "1px solid var(--nuvia-border)" }}
+            >
               {detalle.map((m) => (
-                <div key={m.label} className="rounded-lg bg-[#F7F9FB] px-3 py-2.5">
-                  <div className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#6B7480]">
+                <div
+                  key={m.label}
+                  className="rounded-xl px-3.5 py-3"
+                  style={{
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                  }}
+                >
+                  <div
+                    className="text-[10.5px] font-semibold uppercase tracking-[0.14em]"
+                    style={{ color: "var(--nuvia-text-secondary)" }}
+                  >
                     {m.label}
                   </div>
-                  <div className="mt-0.5 text-sm font-semibold text-[#0F1115]">{m.value}</div>
+                  <div
+                    className="mt-1 text-sm font-semibold"
+                    style={{ color: "var(--nuvia-text-primary)" }}
+                  >
+                    {m.value}
+                  </div>
                 </div>
               ))}
             </div>
