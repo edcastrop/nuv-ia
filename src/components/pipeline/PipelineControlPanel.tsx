@@ -250,6 +250,15 @@ export function PipelineControlPanel(props: PipelineControlProps) {
             </div>
           )}
 
+          {/* Ahorro acumulado */}
+          <AhorroAcumuladoSection
+            open={open}
+            fmtCOP={fmtCOP}
+            onSelectBanco={onSelectBanco}
+            onSelectAnalista={onSelectAnalista}
+            onClose={() => onOpenChange(false)}
+          />
+
           {/* Momentum */}
           <div>
             <SectionLabel>Momentum</SectionLabel>
