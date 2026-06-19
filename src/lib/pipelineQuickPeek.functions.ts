@@ -55,7 +55,7 @@ export const getQuickPeekData = createServerFn({ method: "POST" })
       supabase
         .from("expedientes")
         .select(
-          "credito_data, propuesta_data, acertividad_global, qa_score, cuotas_pactadas, cuotas_aprobadas_banco",
+          "credito_data, propuesta_data, aprobado_data, acertividad_global, qa_score, cuotas_pactadas, cuotas_aprobadas_banco",
         )
         .eq("id", data.expedienteId)
         .maybeSingle(),
@@ -79,17 +79,23 @@ export const getQuickPeekData = createServerFn({ method: "POST" })
 
     const credito = (exp?.credito_data ?? {}) as Record<string, unknown>;
     const propuesta = (exp?.propuesta_data ?? {}) as Record<string, unknown>;
+    const aprobado = (exp?.aprobado_data ?? {}) as Record<string, unknown>;
     const cobertura = (credito.coberturaFresh ?? {}) as Record<string, unknown>;
 
     // Crédito actual: proyecciones_financieras > credito_data
     const saldoCapital = num(proy?.saldo_capital) || readN(credito, "saldo", "saldoCapital", "monto", "valorCredito", "valorDesembolsado");
     const cuotaActual = num(proy?.cuota_actual) || readN(credito, "cuota", "cuotaActual", "valorCuota", "cuotaPagadaCliente", "cuotaBaseSimulacion");
     const tasaActualPct = num(proy?.tea_pct) || readN(credito, "tea", "tasaEA", "tasa_ea", "tasa", "tea_pct") || null;
-    // Plazo original / cuotas totales — viven en credito_data.coberturaFresh
-    const cuotasTotales =
+    // Plazo actual mostrado = plazo aprobado por el banco.
+    // Para cuotas pendientes actuales se conserva el plazo original del crédito.
+    const plazoAprobadoBanco =
+      num(exp?.cuotas_aprobadas_banco) ||
+      readN(aprobado, "plazoAprobado", "plazo_aprobado", "plazo", "plazoMeses", "plazo_meses");
+    const plazoOriginalCredito =
       num(proy?.cuotas_totales) ||
       readN(cobertura, "cuotasTotales", "cuotas_totales", "plazo", "plazoMeses") ||
       readN(credito, "plazo", "plazoMeses", "plazo_meses", "cuotasTotales", "cuotas_totales");
+    const cuotasTotales = plazoAprobadoBanco || plazoOriginalCredito;
     const cuotasPagadas =
       num(proy?.cuotas_pagadas) ||
       readN(cobertura, "cuotasPagadas", "cuotas_pagadas") ||
@@ -97,7 +103,7 @@ export const getQuickPeekData = createServerFn({ method: "POST" })
     const cuotasPendientes =
       num(proy?.cuotas_pendientes) ||
       readN(cobertura, "cuotasPendientes", "cuotas_pendientes") ||
-      (cuotasTotales > 0 ? Math.max(0, cuotasTotales - cuotasPagadas) : 0);
+      (plazoOriginalCredito > 0 ? Math.max(0, plazoOriginalCredito - cuotasPagadas) : 0);
 
     // Propuesta — claves reales: nuevaCuota, nuevoPlazo, ahorroTotal
     const cuotaPropuesta = readN(propuesta, "nuevaCuota", "cuota", "cuotaNueva", "valorCuota", "cuotaPropuesta");
