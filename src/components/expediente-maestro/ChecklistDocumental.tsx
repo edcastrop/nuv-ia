@@ -968,7 +968,8 @@ function SendChecklistModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
