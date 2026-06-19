@@ -476,23 +476,9 @@ function PipelinePage() {
                 />
               </div>
               <div className="min-w-0">
-                <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--nuvia-accent-green)]">
-                  <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--nuvia-accent-green)]" />
-                  NUVIA · Torre de control
-                </div>
-                <h1 className="text-xl font-semibold leading-tight text-[var(--nuvia-text-primary)] md:text-[22px]">
+                <h1 className="text-[26px] font-bold leading-[1.05] tracking-[-0.02em] text-[var(--nuvia-text-primary)] md:text-[32px] lg:text-[40px]">
                   Pipeline Maestro
                 </h1>
-                <div className="text-[11px] text-[var(--nuvia-text-secondary)]">
-                  <span className="font-semibold text-[var(--nuvia-text-primary)] tabular-nums">{kpis.total}</span> casos activos
-                  {" · "}
-                  <span className="font-semibold text-[var(--nuvia-text-primary)] tabular-nums">{ETAPAS_PIPELINE.length}</span> etapas
-                  {" · "}
-                  <span className="inline-flex items-center gap-1">
-                    <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--nuvia-accent-green)]" />
-                    operación en tiempo real
-                  </span>
-                </div>
               </div>
             </div>
 
