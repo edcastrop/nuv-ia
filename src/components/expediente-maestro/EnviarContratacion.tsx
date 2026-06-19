@@ -22,6 +22,7 @@ interface SoporteAdjunto {
   contentType: string;
   blob: Blob;
   label: string; // "Cédula del titular", "Extracto bancario", etc.
+  kind: "cedula" | "extracto" | "soporte";
 }
 
 const SOPORTE_LABELS: Record<string, string> = {
@@ -40,6 +41,85 @@ function labelSoporte(categoria: string, subcategoria: string): string {
   return subcategoria || categoria;
 }
 
+function kindSoporte(categoria: string, subcategoria: string): SoporteAdjunto["kind"] {
+  const raw = `${categoria} ${subcategoria}`.toLowerCase();
+  if (raw.includes("extracto")) return "extracto";
+  if (raw.includes("identidad") || raw.includes("cedula") || raw.includes("cédula")) return "cedula";
+  return "soporte";
+}
+
+async function downloadStorageSoporte(args: {
+  bucket: "soportes-banco" | "extractos";
+  path: string;
+  filename: string;
+  contentType?: string | null;
+  label: string;
+  kind: SoporteAdjunto["kind"];
+}): Promise<SoporteAdjunto | null> {
+  const { data: signed, error } = await supabase.storage
+    .from(args.bucket)
+    .createSignedUrl(args.path, 300);
+  if (error || !signed?.signedUrl) return null;
+  try {
+    const resp = await fetch(signed.signedUrl);
+    if (!resp.ok) return null;
+    const blob = await resp.blob();
+    return {
+      filename: args.filename || args.path.split("/").pop() || "soporte",
+      contentType: args.contentType || blob.type || resp.headers.get("content-type") || "application/octet-stream",
+      blob,
+      label: args.label,
+      kind: args.kind,
+    };
+  } catch (e) {
+    console.warn("[Contratacion] no se pudo descargar soporte:", args.path, e);
+    return null;
+  }
+}
+
+async function fetchExtractoFallbacks(expedienteId: string, seen: Set<string>): Promise<SoporteAdjunto[]> {
+  const out: SoporteAdjunto[] = [];
+  const addPath = async (path: string, filename?: string | null) => {
+    const clean = path.trim();
+    const key = `extractos:${clean}`;
+    if (!clean || seen.has(key)) return;
+    const soporte = await downloadStorageSoporte({
+      bucket: "extractos",
+      path: clean,
+      filename: filename || clean.split("/").pop() || "Extracto bancario",
+      label: "Extracto bancario",
+      kind: "extracto",
+    });
+    if (soporte) {
+      seen.add(key);
+      out.push(soporte);
+    }
+  };
+
+  const { data: exp } = await supabase
+    .from("expedientes")
+    .select("credito_data, cliente_data")
+    .eq("id", expedienteId)
+    .maybeSingle();
+  const credito = ((exp as { credito_data?: unknown } | null)?.credito_data ?? {}) as Record<string, unknown>;
+  const cliente = ((exp as { cliente_data?: unknown } | null)?.cliente_data ?? {}) as Record<string, unknown>;
+  const paths = [credito.archivoPath, cliente.extractoArchivoPath, cliente.archivoPath]
+    .filter((v): v is string => typeof v === "string" && v.trim().length > 0);
+  for (const p of paths) await addPath(p);
+
+  const { data: lecturas } = await supabase
+    .from("extractos_lecturas" as never)
+    .select("archivo_nombre, archivo_path, created_at")
+    .eq("expediente_id", expedienteId)
+    .not("archivo_path", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(2);
+  for (const r of (lecturas ?? []) as unknown as Array<{ archivo_nombre: string | null; archivo_path: string | null }>) {
+    if (r.archivo_path) await addPath(r.archivo_path, r.archivo_nombre);
+  }
+  return out;
+}
+
 async function fetchSoportesCliente(expedienteId: string): Promise<SoporteAdjunto[]> {
   const { data, error } = await supabase
     .from("expediente_soportes" as never)
@@ -53,25 +133,25 @@ async function fetchSoportesCliente(expedienteId: string): Promise<SoporteAdjunt
     categoria: string; subcategoria: string;
   }>;
   const adjuntos: SoporteAdjunto[] = [];
+  const seen = new Set<string>();
   for (const r of rows) {
-    const { data: signed, error: sErr } = await supabase.storage
-      .from("soportes-banco")
-      .createSignedUrl(r.archivo_path, 300);
-    if (sErr || !signed?.signedUrl) continue;
-    try {
-      const resp = await fetch(signed.signedUrl);
-      if (!resp.ok) continue;
-      const blob = await resp.blob();
-      adjuntos.push({
-        filename: r.archivo_nombre || r.archivo_path.split("/").pop() || "soporte",
-        contentType: r.mime_type || blob.type || "application/octet-stream",
-        blob,
-        label: labelSoporte(r.categoria, r.subcategoria),
-      });
-    } catch (e) {
-      console.warn("[Contratacion] no se pudo descargar soporte:", r.archivo_path, e);
+    const bucket = r.categoria === "extracto_banco" ? "extractos" : "soportes-banco";
+    const key = `${bucket}:${r.archivo_path}`;
+    if (seen.has(key)) continue;
+    const soporte = await downloadStorageSoporte({
+      bucket,
+      path: r.archivo_path,
+      filename: r.archivo_nombre,
+      contentType: r.mime_type,
+      label: labelSoporte(r.categoria, r.subcategoria),
+      kind: kindSoporte(r.categoria, r.subcategoria),
+    });
+    if (soporte) {
+      seen.add(key);
+      adjuntos.push(soporte);
     }
   }
+  adjuntos.push(...await fetchExtractoFallbacks(expedienteId, seen));
   return adjuntos;
 }
 
