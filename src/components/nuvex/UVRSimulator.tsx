@@ -140,6 +140,12 @@ export function UVRSimulator({
   const [showConfigVariacion, setShowConfigVariacion] = useState(false);
   const [variacionDefaultInput, setVariacionDefaultInput] = useState(getDefaultVariacionUVR());
 
+  const handleClientChange = (next: ClientData) => {
+    setClient(next);
+    if (next.intervinientes?.length) setIntervinientes(next.intervinientes);
+    if (next.cobertura) setCobertura(next.cobertura);
+  };
+
   // Prellenar el campo "Asesor NUVEX" con el nombre del perfil autenticado
   useAsesorDefault(client.asesor, (nombre) => setClient((prev) => ({ ...prev, asesor: nombre })));
   const { metricas: metricasAutonomia } = useNivelAutonomia();
@@ -508,7 +514,7 @@ export function UVRSimulator({
 
           <ClientFields
             data={client}
-            onChange={setClient}
+            onChange={handleClientChange}
             modalidad="uvr"
             cuotasPendientes={cuotasPendientes}
             hideCreditFields
