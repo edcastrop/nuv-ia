@@ -301,8 +301,20 @@ function DetalleCuentaCobro() {
     }
   }
 
-  if (loading || rolesLoading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>;
-  if (!cc) return <div className="p-12 text-center text-sm text-[#991B1B]">Cuenta no encontrada.</div>;
+  if (loading || rolesLoading) {
+    return (
+      <PageLayout maxWidth="5xl">
+        <div className="p-12 text-center text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>Cargando…</div>
+      </PageLayout>
+    );
+  }
+  if (!cc) {
+    return (
+      <PageLayout maxWidth="5xl">
+        <div className="p-12 text-center text-sm" style={{ color: "var(--nuvia-danger)" }}>Cuenta no encontrada.</div>
+      </PageLayout>
+    );
+  }
 
   const esDueno = user?.id === cc.user_id;
   const puedeEnviar = esDueno && (cc.estado === "borrador" || cc.estado === "rechazada" || cc.estado === "devuelta_correccion");
@@ -311,10 +323,16 @@ function DetalleCuentaCobro() {
   const puedePagar = esManager && (cc.estado === "aprobada" || cc.estado === "programada_pago");
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-8">
-      <Link to="/comisiones" className="mb-4 inline-flex items-center gap-1 text-[12px] text-[#445DA3] hover:underline">
+    <PageLayout maxWidth="5xl">
+      <Link to="/comisiones" className="inline-flex items-center gap-1 text-[12px] font-semibold hover:underline" style={{ color: "var(--nuvia-accent-blue)" }}>
         <ArrowLeft size={13} /> Volver a comisiones
       </Link>
+
+      <ExecutiveHero
+        badge={{ icon: <Receipt size={12} />, label: "Contabilidad", tone: "blue" }}
+        title="Cuenta de cobro"
+        description="Revisión, aprobación, programación de pago y auditoría contable."
+      />
 
       <NCard variant="elevated" padding="none" className="mb-4 overflow-hidden">
         <div className="flex flex-wrap items-start justify-between gap-4 p-5">
