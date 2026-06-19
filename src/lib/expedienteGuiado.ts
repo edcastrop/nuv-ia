@@ -330,7 +330,8 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
     return {
       rol: "asesor",
       titulo: "Avanza con la proyección financiera",
-      descripcion: "Completa la simulación y envía la proyección a auditoría QA.",
+      descripcion:
+        "Completa la simulación. Si NUVIA la aprueba, pasa directo a Contratación; solo se enruta a auditoría QA si NUVIA detecta inconsistencias.",
       botonLabel: "Abrir simulador",
       scrollToId: "simulador-financiero-qa",
       tab: "financiero",
