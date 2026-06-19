@@ -481,14 +481,16 @@ function DetalleCuentaCobro() {
                 <button
                   onClick={onAprobar}
                   disabled={busy}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F7A45] px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
+                  style={{ background: "var(--nuvia-accent-green)", color: "var(--nuvia-bg-primary)" }}
                 >
                   <CheckCircle2 size={13} /> Aprobar
                 </button>
                 <button
                   onClick={onDevolver}
                   disabled={busy}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#8A5A00] px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-semibold disabled:opacity-50"
+                  style={{ background: "var(--nuvia-warning)", color: "var(--nuvia-bg-primary)" }}
                   title="Devolver al Analista Financiero Comercial para corrección (motivo obligatorio ≥10 caracteres)"
                 >
                   <RotateCcw size={13} /> Devolver para corrección
@@ -496,7 +498,8 @@ function DetalleCuentaCobro() {
                 <button
                   onClick={onRechazar}
                   disabled={busy}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#991B1B] px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
+                  style={{ background: "var(--nuvia-danger)" }}
                 >
                   <XCircle size={13} /> Rechazar (motivo obligatorio)
                 </button>
@@ -504,8 +507,8 @@ function DetalleCuentaCobro() {
             )}
 
             {puedeProgramar && (
-              <div className="space-y-2 rounded-lg border border-[#E3E7EE] bg-white p-3">
-                <div className="text-[12px] font-semibold text-[#0A1226]">
+              <div className="space-y-2 rounded-lg border p-3" style={{ borderColor: "var(--nuvia-border)", background: "rgba(255,255,255,0.035)" }}>
+                <div className="text-[12px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
                   Programar pago (opcional, antes de marcar pagada)
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -514,12 +517,13 @@ function DetalleCuentaCobro() {
                     value={fechaProg}
                     onChange={(e) => setFechaProg(e.target.value)}
                     min={new Date().toISOString().slice(0, 10)}
-                    className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 text-sm outline-none focus:border-[#445DA3]"
+                    className="nuvia-input nuvia-input-sm"
                   />
                   <button
                     onClick={onProgramar}
                     disabled={busy || !fechaProg}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#445DA3] px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
+                    style={{ background: "var(--nuvia-accent-blue)" }}
                   >
                     <CalendarClock size={13} /> Programar
                   </button>
@@ -528,21 +532,22 @@ function DetalleCuentaCobro() {
             )}
 
             {puedePagar && (
-              <div className="space-y-2 rounded-lg border border-[#E0E7FF] bg-[#F5F7FF] p-3">
-                <div className="text-[12px] font-semibold text-[#0A1226]">
-                  Registro de pago <span className="text-[#991B1B]">*</span>
+              <div className="space-y-2 rounded-lg border p-3" style={{ borderColor: "var(--nuvia-border)", background: "rgba(68,93,163,0.12)" }}>
+                <div className="text-[12px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
+                  Registro de pago <span style={{ color: "var(--nuvia-danger)" }}>*</span>
                 </div>
-                <div className="text-[11px] text-[#242424]/70">
+                <div className="text-[11px]" style={{ color: "var(--nuvia-text-secondary)" }}>
                   Adjunta el comprobante (imagen o PDF) para habilitar el botón.
                 </div>
                 <input
                   type="file"
                   accept="image/*,application/pdf"
                   onChange={(e) => setComprobante(e.target.files?.[0] ?? null)}
-                  className="block w-full text-[12px] file:mr-3 file:rounded-md file:border-0 file:bg-[#445DA3] file:px-3 file:py-1.5 file:text-[12px] file:font-semibold file:text-white hover:file:bg-[#384e8a]"
+                  className="block w-full text-[12px] file:mr-3 file:rounded-md file:border-0 file:px-3 file:py-1.5 file:text-[12px] file:font-semibold file:text-white"
+                  style={{ color: "var(--nuvia-text-secondary)" }}
                 />
                 {comprobante && (
-                  <div className="text-[11px] text-[#1F7A45]">
+                  <div className="text-[11px]" style={{ color: "var(--nuvia-accent-green)" }}>
                     ✓ Archivo listo: <b>{comprobante.name}</b>
                   </div>
                 )}
@@ -550,7 +555,8 @@ function DetalleCuentaCobro() {
                   onClick={onMarcarPagada}
                   disabled={busy || !comprobante}
                   title={!comprobante ? "Adjunta el comprobante primero" : undefined}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F7A45] px-4 py-2 text-[12px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{ background: "var(--nuvia-accent-green)", color: "var(--nuvia-bg-primary)" }}
                 >
                   <DollarSign size={13} /> {busy ? "Registrando…" : "Marcar pagada (con comprobante)"}
                 </button>
