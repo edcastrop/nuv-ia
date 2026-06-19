@@ -276,8 +276,8 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
     return () => { cancelled = true; };
   }, [ctx.expedienteId]);
 
-  const tieneCedula = soportes.some((s) => s.label.toLowerCase().startsWith("cédula") || s.label.toLowerCase().startsWith("documento de identidad"));
-  const tieneExtracto = soportes.some((s) => s.label.toLowerCase().startsWith("extracto"));
+  const tieneCedula = soportes.some((s) => s.kind === "cedula");
+  const tieneExtracto = soportes.some((s) => s.kind === "extracto");
 
   const asunto = `${ctx.clienteNombre} - Ficha de contratación y poder${ctx.asesorNombre ? ` - ${ctx.asesorNombre}` : ""}`;
   const cuerpo = useMemo(() => {
@@ -342,9 +342,14 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
       ]);
       // Re-leer soportes en el momento del envío para garantizar consistencia
       // (por si se cargaron justo antes de enviar).
-      const soportesActuales = soportes.length > 0
-        ? soportes
-        : await fetchSoportesCliente(ctx.expedienteId);
+      const soportesActuales = await fetchSoportesCliente(ctx.expedienteId);
+      const cedulaLista = soportesActuales.some((s) => s.kind === "cedula");
+      const extractoListo = soportesActuales.some((s) => s.kind === "extracto");
+      if (!cedulaLista || !extractoListo) {
+        setSoportes(soportesActuales);
+        const faltantes = [!cedulaLista ? "cédula del cliente" : null, !extractoListo ? "extracto bancario" : null].filter(Boolean).join(" y ");
+        throw new Error(`No se puede enviar a contratación: falta adjuntar ${faltantes}.`);
+      }
       const attachments: { blob: Blob; filename: string; contentType: string }[] = [
         { blob: poderDocx, filename: `${ctx.poderDoc.filename}.docx`, contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
         { blob: datosDocx, filename: `${ctx.datosDoc.filename}.docx`, contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
