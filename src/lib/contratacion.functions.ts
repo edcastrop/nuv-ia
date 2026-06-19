@@ -75,6 +75,10 @@ export const enviarContratacion = createServerFn({ method: "POST" })
     if (allowedAttachments.length === 0) {
       throw new Error("El paquete de contratación no contiene adjuntos válidos.");
     }
+    const attachmentNames = allowedAttachments.map((a) => a.filename.toLowerCase()).join("\n");
+    if (!/(cedula|cédula|identidad)/.test(attachmentNames) || !/extracto/.test(attachmentNames)) {
+      throw new Error("El paquete de contratación debe incluir cédula del cliente y extracto bancario.");
+    }
 
     // Llamar a Resend
     const resp = await fetch(`${RESEND_GATEWAY}/emails`, {
