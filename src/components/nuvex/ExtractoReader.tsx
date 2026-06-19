@@ -21,6 +21,7 @@ import {
   buscarProductoComercial,
   parseProductoComercial,
 } from "@/lib/productosBancarios";
+import { hasRealCoverageSignals, normalizeCoverageProductLabel } from "@/lib/coverageDetection";
 
 type Modo = "pesos" | "uvr";
 
@@ -918,16 +919,8 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
     return out;
   };
 
-  const hasBeneficioReal = (data: ExtractoData, producto: string) => {
-    const get = (k: string) => (typeof data[k] === "string" ? (data[k] as string) : "");
-    const valorCobertura = parseMontoExtracto(get("valorCobertura"));
-    const tasaCobertura = parseMontoExtracto(get("tasaCobertura"));
-    const subsidioGobierno = parseMontoExtracto(get("valorSubsidioGobierno"));
-    if (valorCobertura > 0 || tasaCobertura > 0 || subsidioGobierno > 0) return true;
-    const cuotaSinSubsidio = parseMontoExtracto(get("cuotaSinSubsidio")) || parseMontoExtracto(get("valorCuotaSinSubsidioGobierno"));
-    const cuotaCliente = parseMontoExtracto(get("cuotaPagadaCliente")) || parseMontoExtracto(get("valorCuotaConSubsidio"));
-    return cuotaSinSubsidio > 0 && cuotaCliente > 0 && cuotaSinSubsidio > cuotaCliente;
-  };
+  const hasBeneficioReal = (data: ExtractoData, producto: string) =>
+    hasRealCoverageSignals(data as Record<string, unknown>, producto);
 
 
   const updateField = (key: string, value: string) => {
