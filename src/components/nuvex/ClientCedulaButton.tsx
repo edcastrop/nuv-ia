@@ -180,7 +180,7 @@ export function ClientCedulaButton({ onApply }: Props) {
               Lector inteligente de cédula
             </div>
             <div className="text-[11px] text-[#242424]/65">
-              Sube JPG, PNG o PDF · autocompleta nombre y cédula
+              Sube frente y reverso juntos · autocompleta datos contractuales
             </div>
           </div>
         </div>
