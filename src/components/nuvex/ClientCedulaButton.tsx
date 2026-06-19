@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { extractCedula, type CedulaData } from "@/lib/cedula.functions";
 import { normalizeColombiaLocation } from "@/lib/colombiaLocations";
+import { supabase } from "@/integrations/supabase/client";
 import { NUVEX } from "./constants";
 
 type Stage = "idle" | "reading" | "review" | "applied" | "error";
@@ -28,6 +29,10 @@ export interface ClientCedulaPayload {
 
 interface Props {
   onApply: (data: ClientCedulaPayload) => void;
+  /** Si está presente, las imágenes originales se suben al bucket
+   *  `soportes-banco` y se registran en `expediente_soportes` (categoria
+   *  `identidad`) para que viajen con el expediente a Contratación. */
+  expedienteId?: string | null;
 }
 
 function fileToDataUrl(file: File | Blob): Promise<string> {
