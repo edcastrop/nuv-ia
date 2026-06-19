@@ -178,7 +178,7 @@ export function LeadQuickPeek({
         {/* Saldo + plazo */}
         <div className="mt-3 grid grid-cols-2 gap-2">
           <Tile label="Saldo crédito" value={fmtCOP(saldo)} />
-          <Tile label="Plazo actual" value={peek?.cuotasTotales ? `${peek.cuotasTotales} m` : "—"} />
+          <Tile label="Plazo inicial aprobado" value={peek?.cuotasTotales ? `${peek.cuotasTotales} m` : "—"} />
         </div>
 
         {/* Cuotas: actual vs proyectada */}
