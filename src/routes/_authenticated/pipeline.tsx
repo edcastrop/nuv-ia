@@ -532,7 +532,7 @@ function PipelinePage() {
   // Conteos para el panel de control lateral
   const { criticos, listos } = useMemo(() => {
     let cr = 0;
-    ETAPAS_PIPELINE.forEach((e) => {
+    etapasVisibles.forEach((e) => {
       const umbral = UMBRAL_DIAS[e.id] ?? 0;
       if (umbral <= 0) return;
       (grupos.get(e.id) ?? []).forEach((r) => {
@@ -541,7 +541,7 @@ function PipelinePage() {
     });
     const li = (grupos.get("paz_salvo") ?? []).length + (grupos.get("pago") ?? []).length;
     return { criticos: cr, listos: li };
-  }, [grupos]);
+  }, [grupos, etapasVisibles]);
 
 
 
