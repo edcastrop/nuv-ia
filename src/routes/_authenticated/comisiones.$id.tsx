@@ -481,7 +481,7 @@ function DetalleCuentaCobro() {
                 <button
                   onClick={onAprobar}
                   disabled={busy}
-                  className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-semibold disabled:opacity-50"
                   style={{ background: "var(--nuvia-accent-green)", color: "var(--nuvia-bg-primary)" }}
                 >
                   <CheckCircle2 size={13} /> Aprobar
