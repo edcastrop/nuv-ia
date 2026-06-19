@@ -684,17 +684,22 @@ function PipelinePage() {
                         const dias = diasDesde(r.updated_at);
                         const stuck = umbral > 0 && dias > umbral;
                         const isDup = !!r.cedula && dupCedulas.has(r.cedula.trim());
+                        const prof = profilesMap.get(r.asesor_id);
                         return (
-                          <Link
+                          <div
                             key={r.id}
-                            to="/casos/$id"
-                            params={{ id: r.id }}
-                            className="block rounded-xl border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.04)] p-3 text-left transition hover:border-[var(--nuvia-accent-blue)] hover:bg-[rgba(255,255,255,0.065)]"
+                            className="group relative rounded-xl border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.04)] p-3 text-left transition hover:border-[var(--nuvia-accent-blue)] hover:bg-[rgba(255,255,255,0.065)]"
                           >
                             <div className="flex items-center gap-1.5">
-                              <div className="flex-1 truncate text-sm font-semibold text-[var(--nuvia-text-primary)]">
+                              <AnalistaAvatar nombre={prof?.nombre} email={prof?.email} size={22} />
+                              <Link
+                                to="/casos/$id"
+                                params={{ id: r.id }}
+                                className="min-w-0 flex-1 truncate text-sm font-semibold text-[var(--nuvia-text-primary)] hover:underline"
+                                title="Abrir expediente completo"
+                              >
                                 {r.cliente_nombre}
-                              </div>
+                              </Link>
                               {isDup && (
                                 <span
                                   title="Esta cédula tiene más de un expediente activo"
@@ -712,27 +717,41 @@ function PipelinePage() {
                               act. {r.updated_at ? new Date(r.updated_at).toLocaleDateString("es-CO", { day: "2-digit", month: "short" }) : "—"}
                             </div>
                             <div className="mt-2 flex items-center justify-between gap-2">
-                              <span className="inline-flex min-w-0 max-w-[170px] items-center gap-1 truncate rounded-md px-1.5 py-0.5 text-[10px] font-medium text-[var(--nuvia-accent-green)]" style={{ background: "color-mix(in oklab, var(--nuvia-accent-green) 12%, transparent)" }}>
+                              <span className="inline-flex min-w-0 max-w-[120px] items-center gap-1 truncate rounded-md px-1.5 py-0.5 text-[10px] font-medium text-[var(--nuvia-accent-green)]" style={{ background: "color-mix(in oklab, var(--nuvia-accent-green) 12%, transparent)" }}>
                                 <Flag className="h-3 w-3" /> {r.estado}
                               </span>
-                              <span
-                                className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
-                                style={{
-                                  color: stuck ? "var(--nuvia-danger)" : "var(--nuvia-text-secondary)",
-                                  background: stuck
-                                    ? "color-mix(in oklab, var(--nuvia-danger) 12%, transparent)"
-                                    : "rgba(255,255,255,0.045)",
-                                }}
-                              >
-                                {stuck ? (
-                                  <AlertTriangle className="h-3 w-3" />
-                                ) : (
-                                  <Clock className="h-3 w-3" />
-                                )}
-                                {dias}d
-                              </span>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); setPeekId(r.id); }}
+                                  title="Vista rápida"
+                                  className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.05)] text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-accent-blue)] hover:text-[var(--nuvia-text-primary)]"
+                                >
+                                  <Eye className="h-3 w-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); setEditId(r.id); }}
+                                  title="Editar"
+                                  className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.05)] text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-accent-blue)] hover:text-[var(--nuvia-text-primary)]"
+                                >
+                                  <Pencil className="h-3 w-3" />
+                                </button>
+                                <span
+                                  className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
+                                  style={{
+                                    color: stuck ? "var(--nuvia-danger)" : "var(--nuvia-text-secondary)",
+                                    background: stuck
+                                      ? "color-mix(in oklab, var(--nuvia-danger) 12%, transparent)"
+                                      : "rgba(255,255,255,0.045)",
+                                  }}
+                                >
+                                  {stuck ? <AlertTriangle className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                                  {dias}d
+                                </span>
+                              </div>
                             </div>
-                          </Link>
+                          </div>
                         );
                       })
                     )}
