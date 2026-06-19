@@ -455,6 +455,104 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
     };
   }
 
+  // 16) Fallback seguro: ningún rol autenticado debe quedarse sin guía.
+  // Si no es su turno operativo, se muestra seguimiento coherente de la etapa actual.
+  if (roles.length > 0) {
+    const seguimiento: Record<EtapaGuiadaId, Omit<SiguienteAccion, "rol" | "prioridad">> = {
+      lead: {
+        titulo: "Caso en captura inicial",
+        descripcion: "El equipo comercial está completando datos y soportes iniciales del cliente.",
+        botonLabel: "Ver resumen",
+        tab: "resumen",
+      },
+      proyeccion: {
+        titulo: "Proyección financiera en preparación",
+        descripcion: "El analista está trabajando la simulación financiera antes de avanzar el expediente.",
+        botonLabel: "Ver financiero",
+        scrollToId: "simulador-financiero-qa",
+        tab: "financiero",
+      },
+      auditoria_qa: {
+        titulo: "Proyección en auditoría QA",
+        descripcion: "Dirección Financiera está revisando una observación detectada por NUVIA.",
+        botonLabel: "Ver auditoría",
+        scrollToId: "validacion-qa",
+        tab: "auditoria",
+      },
+      contratacion: {
+        titulo: "Caso en Contratación",
+        descripcion: "El expediente ya pasó la proyección y está en generación o firma de documentos jurídicos.",
+        botonLabel: "Ver documentos",
+        scrollToId: "documentos-juridicos",
+        tab: "documentos",
+      },
+      documentacion_bancaria: {
+        titulo: "Documentación bancaria en preparación",
+        descripcion: "Jurídica y Operaciones están consolidando el paquete documental para radicar al banco.",
+        botonLabel: "Ver checklist",
+        scrollToId: "checklist-documental",
+        tab: "documentos",
+      },
+      radicacion: {
+        titulo: "Radicación en curso",
+        descripcion: "Operaciones está radicando o preparando la solicitud ante el banco.",
+        botonLabel: "Ver radicación",
+        scrollToId: "validacion-radicacion",
+        tab: "tareas",
+      },
+      respuesta_banco: {
+        titulo: "Banco evaluando la solicitud",
+        descripcion: "El banco está revisando el caso o pidió una subsanación documental.",
+        botonLabel: "Ver respuesta",
+        scrollToId: "resultado-bancario",
+        tab: "financiero",
+      },
+      resultado_otrosi: {
+        titulo: "Resultado bancario en gestión",
+        descripcion: "El equipo responsable está aplicando condiciones, otrosí o documentos finales del banco.",
+        botonLabel: "Ver resultado",
+        scrollToId: "resultado-bancario",
+        tab: "financiero",
+      },
+      informe_final: {
+        titulo: "Informe final en preparación",
+        descripcion: "Dirección Financiera está consolidando el cierre operativo del caso.",
+        botonLabel: "Ver cierre",
+        scrollToId: "cierre-operativo",
+        tab: "financiero",
+      },
+      cuenta_cobro: {
+        titulo: "Cuenta de cobro en gestión",
+        descripcion: "Contabilidad está preparando o revisando la cuenta de cobro del caso.",
+        botonLabel: "Ver cierre",
+        scrollToId: "cierre-operativo",
+        tab: "financiero",
+      },
+      pago: {
+        titulo: "Pago en validación",
+        descripcion: "Contabilidad y Cartera están validando el pago de honorarios.",
+        botonLabel: "Ver cierre",
+        scrollToId: "cierre-operativo",
+        tab: "financiero",
+      },
+      paz_salvo: {
+        titulo: "Paz y salvo en emisión",
+        descripcion: "El caso está en cierre administrativo y documental.",
+        botonLabel: "Ver cierre",
+        scrollToId: "cierre-operativo",
+        tab: "financiero",
+      },
+      caso_cerrado: {
+        titulo: "Caso cerrado",
+        descripcion: "Este expediente ya está archivado y no requiere acción.",
+        botonLabel: "Ver historial",
+        tab: "historial",
+      },
+    };
+    const item = seguimiento[etapa];
+    return { rol: "todos", prioridad: "baja", ...item };
+  }
+
   return null;
 }
 
