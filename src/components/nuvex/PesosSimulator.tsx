@@ -691,6 +691,33 @@ export function PesosSimulator({
                     onSeguirSimulando={handleResetMode}
                     enviarAuditoriaManual={!init?.id}
                     fromSimulador={fromSimulador}
+                    nivelAutonomia={metricasAutonomia.nivelAutonomia}
+                    auditInput={{
+                      moneda: "pesos",
+                      extracto: {},
+                      analista: {
+                        banco: client.banco,
+                        producto: client.tipoProducto,
+                        saldoCapital: saldoCapitalNum,
+                        cuotaActual: cuotaActualNum,
+                        seguros: parseCurrency(seguros),
+                        teaPct: parsePercentage(tea),
+                        plazoInicial,
+                        cuotasPagadas,
+                        cuotasPendientes,
+                      },
+                      propuesta: {
+                        cuotaActual: cuotaActualNum,
+                        cuotasPendientes,
+                        nuevaCuota: recomendada.nuevaCuota,
+                        nuevoPlazo: recomendada.nuevoPlazo,
+                        cuotasEliminadas: Math.max(0, cuotasPendientes - recomendada.nuevoPlazo),
+                        ahorroIntereses: recomendada.ahorroIntereses,
+                        ahorroSeguros: recomendada.ahorroSeguros,
+                        ahorroTotal: recomendada.ahorroTotal,
+                        honorarios: recomendada.honorarios,
+                      },
+                    }}
                     payload={{
                       modo: "pesos",
                       cliente: { ...client, intervinientes, cobertura },

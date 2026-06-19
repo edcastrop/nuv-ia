@@ -63,11 +63,47 @@ export async function enviarAValidacionQA(expedienteId: string): Promise<void> {
   await notifQASolicitada(expedienteId);
 }
 
+/**
+ * Congela la propuesta vigente del expediente en `aprobado_data`.
+ * Reutilizable tanto por la aprobación QA manual como por la auto-aprobación
+ * del motor NUVIA (cuando el analista tiene autonomía suficiente).
+ */
+export async function snapshotPropuestaAprobada(
+  expedienteId: string,
+  validacionId: string | null,
+  aprobadoPor: string,
+): Promise<void> {
+  const { data: exp } = await supabase
+    .from("expedientes")
+    .select(
+      "propuesta_data, credito_data, cliente_data, honorarios_final, descuento, banco, producto, numero_credito",
+    )
+    .eq("id", expedienteId)
+    .maybeSingle();
+  if (!exp) return;
+  const snapshot = {
+    fechaAprobacion: new Date().toISOString(),
+    aprobadoPor,
+    validacionId,
+    propuesta: (exp as Record<string, unknown>).propuesta_data ?? null,
+    credito: (exp as Record<string, unknown>).credito_data ?? null,
+    cliente: (exp as Record<string, unknown>).cliente_data ?? null,
+    honorariosFinal: (exp as Record<string, unknown>).honorarios_final ?? null,
+    descuento: (exp as Record<string, unknown>).descuento ?? null,
+    banco: (exp as Record<string, unknown>).banco ?? null,
+    producto: (exp as Record<string, unknown>).producto ?? null,
+    numeroCredito: (exp as Record<string, unknown>).numero_credito ?? null,
+  };
+  await supabase
+    .from("expedientes")
+    .update({ aprobado_data: snapshot as unknown as never })
+    .eq("id", expedienteId);
+}
+
 export async function aprobarQA(validacionId: string): Promise<void> {
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) throw new Error("No autenticado");
 
-  // Recuperar la validación para obtener el expediente y poder snapshotear
   const { data: vRow } = await supabase
     .from("validaciones_qa" as never)
     .select("expediente_id")
@@ -85,44 +121,35 @@ export async function aprobarQA(validacionId: string): Promise<void> {
     .eq("id", validacionId);
   if (error) throw new Error(error.message);
 
-  // Snapshot inmutable: congela la propuesta aprobada en aprobado_data
   if (expedienteId) {
-    const { data: exp } = await supabase
-      .from("expedientes")
-      .select(
-        "propuesta_data, credito_data, cliente_data, honorarios_final, descuento, banco, producto, numero_credito",
-      )
-      .eq("id", expedienteId)
-      .maybeSingle();
-    if (exp) {
-      const snapshot = {
-        fechaAprobacion: new Date().toISOString(),
-        aprobadoPor: u.user.id,
-        validacionId,
-        propuesta: (exp as Record<string, unknown>).propuesta_data ?? null,
-        credito: (exp as Record<string, unknown>).credito_data ?? null,
-        cliente: (exp as Record<string, unknown>).cliente_data ?? null,
-        honorariosFinal: (exp as Record<string, unknown>).honorarios_final ?? null,
-        descuento: (exp as Record<string, unknown>).descuento ?? null,
-        banco: (exp as Record<string, unknown>).banco ?? null,
-        producto: (exp as Record<string, unknown>).producto ?? null,
-        numeroCredito: (exp as Record<string, unknown>).numero_credito ?? null,
-      };
-      await supabase
-        .from("expedientes")
-        .update({ aprobado_data: snapshot as unknown as never })
-        .eq("id", expedienteId);
-    }
-    // Auto-avance de estado: marcar el caso como "proyección aprobada QA" para
-    // cerrar la etapa de Auditoría QA en el stepper y habilitar Contratación.
+    await snapshotPropuestaAprobada(expedienteId, validacionId, u.user.id);
     try {
       await cambiarEstadoCaso(expedienteId, "proyeccion_aprobada_qa", "manual", "QA aprobada");
     } catch (e) {
       console.warn("[validacionQA] no se pudo actualizar estado_caso al aprobar QA", e);
     }
-    // Disparador: notificar a asesor + jurídica
     await notifQAAprobada(expedienteId);
   }
+}
+
+/**
+ * Auto-aprobación NUVIA: cuando el motor de auditoría determina que la
+ * simulación es apta para el nivel de autonomía del analista, salta el paso
+ * de QA manual y deja el caso listo para Contratación.
+ */
+export async function aprobarAutomaticamentePorMotor(
+  expedienteId: string,
+  motivo: string,
+): Promise<void> {
+  const { data: u } = await supabase.auth.getUser();
+  if (!u.user) throw new Error("No autenticado");
+  await snapshotPropuestaAprobada(expedienteId, null, u.user.id);
+  try {
+    await cambiarEstadoCaso(expedienteId, "proyeccion_aprobada_qa", "manual", motivo);
+  } catch (e) {
+    console.warn("[validacionQA] no se pudo actualizar estado_caso en auto-aprobación", e);
+  }
+  await notifQAAprobada(expedienteId);
 }
 
 
