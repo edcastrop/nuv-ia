@@ -464,7 +464,11 @@ export function calculateUVRManual(
     return { ...base, motivo: "La nueva cuota debe ser mayor a la cuota actual" };
   }
   const tasaMensual = Math.pow(1 + input.teaCobrada / 100, 1 / 12) - 1;
-  const variacionMensualUVR = Math.pow(1 + input.variacionUVR / 100, 1 / 12) - 1;
+  const variacionPropuestasEA =
+    input.variacionUVRPropuestas && input.variacionUVRPropuestas > 0
+      ? input.variacionUVRPropuestas
+      : input.variacionUVR;
+  const variacionMensualUVR = Math.pow(1 + variacionPropuestasEA / 100, 1 / 12) - 1;
   const cuotaSinSeguro = nuevaCuotaPesos - input.seguros;
   const nuevaCuotaUVR = cuotaSinSeguro / input.valorUVR;
   if (nuevaCuotaUVR <= input.saldoUVR * tasaMensual) {
