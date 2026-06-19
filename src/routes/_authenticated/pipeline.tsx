@@ -568,7 +568,7 @@ function PipelinePage() {
                     return (
                       <div
                         key={f.id}
-                        className={`relative overflow-hidden rounded-xl border p-3 transition ${isBottleneck ? "ring-1" : ""}`}
+                        className={`relative overflow-hidden rounded-xl border p-3 transition`}
                         style={{
                           borderColor: `color-mix(in oklab, ${faseColors[f.id]} ${isBottleneck ? 55 : 30}%, transparent)`,
                           background: `linear-gradient(135deg, color-mix(in oklab, ${faseColors[f.id]} ${isBottleneck ? 18 : 9}%, transparent), color-mix(in oklab, ${faseColors[f.id]} 3%, transparent))`,
