@@ -429,7 +429,7 @@ const STAGES: { id: Stage; label: string }[] = [
 type StagedItem = { mime: string; dataUrl: string; sourceName: string };
 const MAX_PAGES = 6;
 
-export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
+export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteId }: Props) {
   const [open, setOpen] = useState(false);
   const [stage, setStage] = useState<Stage>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
