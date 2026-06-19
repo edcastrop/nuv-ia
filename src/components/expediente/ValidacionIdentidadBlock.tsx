@@ -412,3 +412,129 @@ function EditField({
   );
 }
 
+// ── Documentos adjuntos para Contratación ────────────────────────────────
+// Lista los soportes asociados al expediente (cédula del titular / cotitulares
+// y el extracto del banco) con descarga firmada. Estos archivos viajan con
+// el expediente cuando el analista lo envía a Contratación.
+interface SoporteRow {
+  id: string;
+  bucket: "soportes-banco" | "extractos";
+  categoria: string;
+  subcategoria: string;
+  archivo_nombre: string;
+  archivo_path: string;
+  created_at: string;
+}
+
+function SoportesAdjuntos({ exp }: { exp: Expediente }) {
+  const [items, setItems] = useState<SoporteRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const rows: SoporteRow[] = [];
+
+    // 1) Soportes registrados en expediente_soportes (cédula del analista, etc.)
+    const { data } = await supabase
+      .from("expediente_soportes" as never)
+      .select("id,categoria,subcategoria,archivo_nombre,archivo_path,created_at")
+      .eq("expediente_id", exp.id)
+      .in("categoria", ["identidad", "extracto_banco"])
+      .order("created_at", { ascending: false });
+    for (const r of (data ?? []) as unknown as Array<Omit<SoporteRow, "bucket">>) {
+      rows.push({
+        ...r,
+        bucket: r.categoria === "extracto_banco" ? "extractos" : "soportes-banco",
+      });
+    }
+
+    // 2) Fallback: extracto persistido en cliente_data.extractoArchivoPath
+    //    (camino histórico previo a registrarlo en expediente_soportes).
+    const cd = (exp.cliente_data ?? {}) as Record<string, unknown>;
+    const extractoPath = typeof cd.extractoArchivoPath === "string" ? cd.extractoArchivoPath : "";
+    if (extractoPath && !rows.some((r) => r.archivo_path === extractoPath)) {
+      rows.push({
+        id: `extracto-cd`,
+        bucket: "extractos",
+        categoria: "extracto_banco",
+        subcategoria: "extracto",
+        archivo_nombre: extractoPath.split("/").pop() || "Extracto del banco",
+        archivo_path: extractoPath,
+        created_at: "",
+      });
+    }
+    setItems(rows);
+    setLoading(false);
+  }, [exp.id, exp.cliente_data]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const download = async (row: SoporteRow) => {
+    const { data, error } = await supabase.storage
+      .from(row.bucket)
+      .createSignedUrl(row.archivo_path, 60 * 5);
+    if (error || !data?.signedUrl) {
+      alert(error?.message || "No se pudo generar el enlace de descarga.");
+      return;
+    }
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const iconFor = (r: SoporteRow) =>
+    r.categoria === "identidad" ? <IdCard size={14} /> :
+    r.categoria === "extracto_banco" ? <FileSpreadsheet size={14} /> :
+    <FileText size={14} />;
+
+  const labelFor = (r: SoporteRow) => {
+    if (r.categoria === "identidad") {
+      if (r.subcategoria.includes("cotitular")) return "Cédula cotitular";
+      return "Cédula titular";
+    }
+    if (r.categoria === "extracto_banco") return "Extracto del banco";
+    return r.categoria;
+  };
+
+  return (
+    <div className="mb-3 rounded-lg border bg-[rgba(255,255,255,0.03)] p-3" style={{ borderColor: "#E3E7EE" }}>
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--nuvia-text-secondary)]">
+          Documentos adjuntos para Contratación
+        </div>
+        <span className="text-[10px] text-[var(--nuvia-text-secondary)]">
+          {items.length} archivo{items.length === 1 ? "" : "s"}
+        </span>
+      </div>
+      {loading ? (
+        <div className="text-[11px] text-[var(--nuvia-text-secondary)]">Cargando…</div>
+      ) : items.length === 0 ? (
+        <div className="text-[11px] text-[var(--nuvia-text-secondary)]">
+          Aún no hay cédula ni extracto adjuntos. Súbelos desde el lector de cédula y el lector de extracto del simulador.
+        </div>
+      ) : (
+        <ul className="space-y-1">
+          {items.map((r) => (
+            <li
+              key={r.id}
+              className="flex items-center justify-between gap-2 rounded border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.02)] px-2 py-1.5 text-xs text-white"
+            >
+              <span className="flex items-center gap-2 truncate">
+                <span className="text-[var(--nuvia-accent-blue)]">{iconFor(r)}</span>
+                <span className="font-semibold">{labelFor(r)}</span>
+                <span className="truncate text-[var(--nuvia-text-secondary)]">— {r.archivo_nombre}</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => download(r)}
+                className="inline-flex items-center gap-1 rounded px-2 py-1 text-[10.5px] font-semibold text-white hover:bg-[rgba(255,255,255,0.06)]"
+                style={{ borderColor: "var(--nuvia-accent-blue)" }}
+              >
+                <Download size={11} /> Ver
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
