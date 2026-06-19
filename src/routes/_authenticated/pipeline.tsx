@@ -374,7 +374,51 @@ function PipelinePage() {
     });
   }, [grupos]);
 
+  // Contexto NUVIA IA: snapshot ejecutivo compactado del pipeline visible.
+  const pipelineCtx: PipelineCtx = useMemo(() => {
+    const etapaTitulo = new Map(ETAPAS_PIPELINE.map((e) => [e.id, `E${e.numero} ${e.titulo}`] as const));
+    const topEstancados: PipelineCtx["topEstancados"] = [];
+    let sinAsesor = 0;
+    ETAPAS_PIPELINE.forEach((etapa) => {
+      const umbral = UMBRAL_DIAS[etapa.id] ?? 0;
+      (grupos.get(etapa.id) ?? []).forEach((r) => {
+        const d = diasDesde(r.updated_at);
+        if (!r.asesor_id) sinAsesor += 1;
+        if (umbral > 0 && d > umbral) {
+          const p = profilesMap.get(r.asesor_id);
+          topEstancados.push({
+            cliente: r.cliente_nombre,
+            banco: r.banco,
+            etapa: etapaTitulo.get(etapa.id) ?? etapa.titulo,
+            dias: d,
+            analista: p?.nombre || p?.email || "—",
+          });
+        }
+      });
+    });
+    topEstancados.sort((a, b) => b.dias - a.dias);
+    return {
+      total: kpis.total,
+      estancados: kpis.estancados,
+      promedioDias: kpis.promedio,
+      honorarios: kpis.honorarios,
+      fases: kpis.fases.map((f) => ({ id: f.id, label: f.label, count: f.count })),
+      funnel: funnel.map((f) => ({
+        numero: f.numero,
+        titulo: f.titulo,
+        count: f.count,
+        passed: f.passed,
+        pct: f.pct,
+        drop: f.drop,
+      })),
+      topEstancados: topEstancados.slice(0, 8),
+      sinAsesor,
+      duplicados: dupCedulas.size,
+    };
+  }, [grupos, kpis, funnel, profilesMap, dupCedulas]);
 
+  const peekExpediente = peekId ? rows.find((r) => r.id === peekId) ?? null : null;
+  const editExpediente = editId ? rows.find((r) => r.id === editId) ?? null : null;
 
 
   return (
