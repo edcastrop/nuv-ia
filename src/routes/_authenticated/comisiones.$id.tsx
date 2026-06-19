@@ -391,19 +391,19 @@ function DetalleCuentaCobro() {
         </div>
 
         {(puedeEnviar || puedeAprobar || puedeProgramar || puedePagar) && (
-          <div className="border-t border-[#E3E7EE] bg-[#F7F9FB] p-4 space-y-3">
+          <div className="space-y-3 border-t p-4" style={{ borderColor: "var(--nuvia-border)", background: "rgba(255,255,255,0.025)" }}>
             <input
               value={observ}
               onChange={(e) => setObserv(e.target.value)}
               placeholder={puedeAprobar ? "Observación (obligatoria si rechazas)" : "Observación / mensaje (opcional)"}
-              className="w-full rounded-lg border border-[#E3E7EE] bg-white px-3 py-2 text-sm outline-none focus:border-[#445DA3]"
+              className="nuvia-input nuvia-input-sm w-full"
             />
 
             {puedeEnviar && (
               <div className="space-y-3">
-                <div className="rounded-lg border border-[#E3E7EE] bg-white p-3">
-                  <div className="mb-2 text-[12px] font-semibold text-[#0A1226]">
-                    % Comisión Analista F. Comercial <span className="text-[#991B1B]">*</span>
+                <div className="rounded-lg border p-3" style={{ borderColor: "var(--nuvia-border)", background: "rgba(255,255,255,0.035)" }}>
+                  <div className="mb-2 text-[12px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
+                    % Comisión Analista F. Comercial <span style={{ color: "var(--nuvia-danger)" }}>*</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {PORCENTAJES_COMISION_CC.map((p) => {
@@ -416,9 +416,9 @@ function DetalleCuentaCobro() {
                           onClick={() => guardarPorcentaje(p)}
                           className="rounded-lg border px-4 py-1.5 text-[13px] font-semibold transition disabled:opacity-50"
                           style={{
-                            background: active ? "linear-gradient(135deg,#445DA3,#84B98F)" : "#fff",
-                            color: active ? "#fff" : "#0A1226",
-                            borderColor: active ? "transparent" : "#E3E7EE",
+                            background: active ? "var(--nuvia-gradient-primary)" : "rgba(255,255,255,0.04)",
+                            color: active ? "#fff" : "var(--nuvia-text-primary)",
+                            borderColor: active ? "transparent" : "var(--nuvia-border)",
                           }}
                         >
                           {p}%
@@ -427,7 +427,7 @@ function DetalleCuentaCobro() {
                     })}
                   </div>
                   {!cc.porcentaje_comision && (
-                    <div className="mt-2 text-[11px] text-[#991B1B]">
+                    <div className="mt-2 text-[11px]" style={{ color: "var(--nuvia-danger)" }}>
                       Selecciona el porcentaje antes de enviar la cuenta de cobro.
                     </div>
                   )}
@@ -437,13 +437,13 @@ function DetalleCuentaCobro() {
                   value={destinatariosExtra}
                   onChange={(e) => setDestinatariosExtra(e.target.value)}
                   placeholder="Destinatarios adicionales (opcional, separados por coma). Por defecto: contabilidad@nuvex.com.co"
-                  className="w-full rounded-lg border border-[#E3E7EE] bg-white px-3 py-2 text-sm outline-none focus:border-[#445DA3]"
+                  className="nuvia-input nuvia-input-sm w-full"
                 />
                 <button
                   onClick={onEnviarContabilidad}
                   disabled={busy || !cc.porcentaje_comision}
                   className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
-                  style={{ background: "linear-gradient(135deg,#445DA3,#84B98F)" }}
+                  style={{ background: "var(--nuvia-gradient-primary)" }}
                   title={!cc.porcentaje_comision ? "Selecciona el % de comisión" : undefined}
                 >
                   <Mail size={13} /> {busy ? "Enviando…" : "Enviar a contabilidad por correo (con PDF)"}
@@ -468,7 +468,8 @@ function DetalleCuentaCobro() {
                     }
                   }}
                   disabled={busy || !cc.porcentaje_comision}
-                  className="ml-2 inline-flex items-center gap-1.5 rounded-lg border border-[#E3E7EE] bg-white px-3 py-2 text-[12px] font-semibold text-[#445DA3] disabled:opacity-50"
+                  className="ml-2 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold disabled:opacity-50"
+                  style={{ border: "1px solid var(--nuvia-border)", background: "rgba(255,255,255,0.04)", color: "var(--nuvia-accent-blue)" }}
                 >
                   <Send size={13} /> Marcar enviada (sin correo)
                 </button>
