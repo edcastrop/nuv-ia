@@ -619,6 +619,17 @@ export function PropuestasComerciales(props: Props) {
                     </div>
                   </div>
 
+                  {/* Traductor de Ahorro NUVIA — solo en el escenario recomendado */}
+                  {isRecomendada && (
+                    <AbonoInteligenteCard
+                      abonoMensual={c.incrementoMensual}
+                      ahorroTotal={c.ahorroTotal}
+                      anosEliminados={c.añosEliminados}
+                      cuotasEliminadas={c.cuotasEliminadas}
+                      perfil={props.perfilCliente}
+                    />
+                  )}
+
                   {/* Sección secundaria: honorarios y veces pagado */}
                   <div
                     className="relative mt-5 flex flex-col gap-3 border-t px-5 py-3 text-[11px] min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between"
