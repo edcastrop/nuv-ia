@@ -850,6 +850,7 @@ export function UVRSimulator({
                         tea: teaCobrada,
                         teaCobrada,
                         variacionUVR,
+                        variacionUVRPropuestas,
                         nuevaCuotaManual,
                         cuotasEliminarManual,
                         propuestasComerciales: JSON.stringify(propuestasComercialesDraft ?? null),
