@@ -11,6 +11,8 @@ import {
 } from "../../lib/finance";
 import { NUVEX } from "./constants";
 import { Card, SectionTitle, Alert } from "./ui";
+import { AbonoInteligenteCard } from "./AbonoInteligenteCard";
+import type { PerfilCliente } from "../../lib/abonoAnalogias";
 
 export interface RecomendadaSeleccionada {
   index: number;
@@ -46,6 +48,8 @@ type Common = {
   baseCredito: number; // para "veces pagado" (desembolsado o, en su defecto, saldo actual)
   /** Dinero ya pagado a la fecha. Solo se suma cuando la base es el valor desembolsado. */
   dineroPagado?: number;
+  /** Perfil opcional del cliente para personalizar las analogías. */
+  perfilCliente?: PerfilCliente;
   initialState?: PropuestasComercialesDraft;
   onStateChange?: (s: PropuestasComercialesSnapshot) => void;
   onRecomendadaChange: (r: RecomendadaSeleccionada | null) => void;
@@ -614,6 +618,17 @@ export function PropuestasComerciales(props: Props) {
                       −{c.cuotasEliminadas} cuotas (−{(c.cuotasEliminadas / 12).toFixed(1)} años)
                     </div>
                   </div>
+
+                  {/* Traductor de Ahorro NUVIA — solo en el escenario recomendado */}
+                  {isRecomendada && (
+                    <AbonoInteligenteCard
+                      abonoMensual={c.incrementoMensual}
+                      ahorroTotal={c.ahorroTotal}
+                      anosEliminados={c.añosEliminados}
+                      cuotasEliminadas={c.cuotasEliminadas}
+                      perfil={props.perfilCliente}
+                    />
+                  )}
 
                   {/* Sección secundaria: honorarios y veces pagado */}
                   <div

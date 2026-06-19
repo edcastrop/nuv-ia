@@ -642,6 +642,7 @@ export function PesosSimulator({
                 cuotasPendientes={cuotasBaseSimulacion}
                 baseCredito={baseCreditoReferencia > 0 ? baseCreditoReferencia : saldoBase}
                 dineroPagado={baseCreditoReferencia > 0 ? dineroPagadoFecha : 0}
+                perfilCliente={client.perfil}
                 initialState={propuestasComercialesDraft}
                 onStateChange={(snapshot) => {
                   setPropuestasComercialesDraft({
