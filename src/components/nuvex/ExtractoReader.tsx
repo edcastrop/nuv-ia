@@ -171,32 +171,7 @@ async function extractTextFromPdf(file: File, password?: string): Promise<string
   return pages.join("\n").slice(0, 200_000);
 }
 
-async function fileToDataUrl(file: File | Blob, forceMime?: string): Promise<string> {
-  const targetMime = forceMime || file.type;
-  if (targetMime?.startsWith("image/")) {
-    const objectUrl = URL.createObjectURL(file);
-    try {
-      const img = new Image();
-      img.decoding = "async";
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error("No se pudo preparar la captura para lectura."));
-        img.src = objectUrl;
-      });
-      const maxSide = 1900;
-      const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
-      canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
-      const ctx = canvas.getContext("2d")!;
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      return canvas.toDataURL("image/jpeg", 0.86);
-    } finally {
-      URL.revokeObjectURL(objectUrl);
-    }
-  }
+async function readAsDataUrl(file: File | Blob, forceMime?: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
     r.onload = () => {
@@ -207,9 +182,76 @@ async function fileToDataUrl(file: File | Blob, forceMime?: string): Promise<str
         resolve(result);
       }
     };
-    r.onerror = () => reject(r.error);
+    r.onerror = () => reject(r.error || new Error("No se pudo leer el archivo."));
     r.readAsDataURL(file);
   });
+}
+
+async function fileToDataUrl(file: File | Blob, forceMime?: string): Promise<string> {
+  const targetMime = forceMime || file.type;
+  if (!targetMime?.startsWith("image/")) {
+    return readAsDataUrl(file, forceMime);
+  }
+
+  // Try to downscale via canvas — handles HEIC/large images when supported by the browser.
+  // If anything fails (decode error, tainted canvas, exotic format), fall back to
+  // sending the original bytes as a data URL so the AI can still read the screenshot.
+  try {
+    let width = 0;
+    let height = 0;
+    let source: CanvasImageSource | null = null;
+    let cleanup: (() => void) | null = null;
+
+    if (typeof createImageBitmap === "function") {
+      try {
+        const bitmap = await createImageBitmap(file);
+        source = bitmap;
+        width = bitmap.width;
+        height = bitmap.height;
+        cleanup = () => bitmap.close?.();
+      } catch {
+        source = null;
+      }
+    }
+
+    if (!source) {
+      const objectUrl = URL.createObjectURL(file);
+      try {
+        const img = new Image();
+        img.decoding = "async";
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = () => reject(new Error("decode-failed"));
+          img.src = objectUrl;
+        });
+        source = img;
+        width = img.naturalWidth;
+        height = img.naturalHeight;
+      } finally {
+        // Defer revoke until after drawImage if we used the image; safe to revoke now
+        // because the image is already decoded.
+        URL.revokeObjectURL(objectUrl);
+      }
+    }
+
+    if (!source || !width || !height) throw new Error("no-source");
+
+    const maxSide = 1900;
+    const scale = Math.min(1, maxSide / Math.max(width, height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(width * scale));
+    canvas.height = Math.max(1, Math.round(height * scale));
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+    cleanup?.();
+    return canvas.toDataURL("image/jpeg", 0.86);
+  } catch {
+    // Fallback: send original bytes directly. The downstream model accepts
+    // png/jpeg/webp/heic data URLs.
+    return readAsDataUrl(file, forceMime);
+  }
 }
 
 async function renderBlobPdfToImages(blob: Blob): Promise<{ mime: string; dataUrl: string }[]> {
