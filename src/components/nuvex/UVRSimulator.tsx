@@ -129,6 +129,9 @@ export function UVRSimulator({
   const [seguros, setSeguros] = useState(draft.seguros);
   const [teaCobrada, setTeaCobrada] = useState(draft.teaCobrada);
   const [variacionUVR, setVariacionUVR] = useState(draft.variacionUVR);
+  const [variacionUVRPropuestas, setVariacionUVRPropuestas] = useState<string>(
+    (draft as { variacionUVRPropuestas?: string }).variacionUVRPropuestas ?? "",
+  );
   const [nuevaCuotaManual, setNuevaCuotaManual] = useState(draft.nuevaCuotaManual);
   const [cuotasEliminarManual, setCuotasEliminarManual] = useState(draft.cuotasEliminarManual);
   const [modoPersonalizada, setModoPersonalizada] = useState<"cuota" | "cuotas">(
