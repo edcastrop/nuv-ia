@@ -193,6 +193,7 @@ export function UVRSimulator({
       seguros,
       teaCobrada,
       variacionUVR,
+      variacionUVRPropuestas,
       nuevaCuotaManual,
       cuotasEliminarManual,
       modoPersonalizada,
