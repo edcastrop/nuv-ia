@@ -339,6 +339,72 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
     };
   }
 
+  // 11) Asesor — caso ya entregado a Contratación
+  if (etapa === "contratacion" && (has("asesor") || has("licenciado"))) {
+    return {
+      rol: "asesor",
+      titulo: "Caso enviado a Contratación",
+      descripcion:
+        "El equipo de Contratación está generando contrato y poder con los datos y soportes (cédula + extracto) que cargaste. Recibirás aviso cuando el cliente deba firmar.",
+      botonLabel: "Ver documentos",
+      scrollToId: "documentos-juridicos",
+      tab: "documentos",
+      prioridad: "baja",
+    };
+  }
+
+  // 12) Asesor — documentación bancaria / radicación en manos de jurídica/operaciones
+  if ((etapa === "documentacion_bancaria" || etapa === "radicacion") && (has("asesor") || has("licenciado"))) {
+    return {
+      rol: "asesor",
+      titulo: etapa === "radicacion" ? "Radicación en curso" : "Documentación bancaria en preparación",
+      descripcion:
+        etapa === "radicacion"
+          ? "Operaciones está radicando la solicitud ante el banco. No requiere acción de tu parte por ahora."
+          : "Jurídica y Operaciones están consolidando el paquete documental para radicar al banco.",
+      botonLabel: "Ver checklist",
+      scrollToId: "checklist-documental",
+      tab: "documentos",
+      prioridad: "baja",
+    };
+  }
+
+  // 13) Asesor — banco evaluando
+  if (etapa === "respuesta_banco" && (has("asesor") || has("licenciado"))) {
+    return {
+      rol: "asesor",
+      titulo: "Banco evaluando la solicitud",
+      descripcion:
+        "El banco está revisando el caso. Te avisaremos en cuanto haya respuesta o solicite documentos complementarios.",
+      botonLabel: "Ver estado",
+      scrollToId: "resultado-bancario",
+      tab: "financiero",
+      prioridad: "baja",
+    };
+  }
+
+  // 14) Asesor — etapas finales (informe / cuenta / pago / paz y salvo)
+  if (
+    (etapa === "informe_final" || etapa === "cuenta_cobro" || etapa === "pago" || etapa === "paz_salvo") &&
+    (has("asesor") || has("licenciado"))
+  ) {
+    const titulos: Record<string, string> = {
+      informe_final: "Informe final en preparación",
+      cuenta_cobro: "Cuenta de cobro en gestión",
+      pago: "A la espera del pago del cliente",
+      paz_salvo: "Paz y salvo en emisión",
+    };
+    return {
+      rol: "asesor",
+      titulo: titulos[etapa] ?? "Caso en cierre",
+      descripcion: "Contabilidad y Dirección Financiera están cerrando el caso. No requiere acción del asesor.",
+      botonLabel: "Ver cierre",
+      scrollToId: "cierre-operativo",
+      tab: "financiero",
+      prioridad: "baja",
+    };
+  }
+
   if (ec === "caso_finalizado") {
     return {
       rol: "todos",
