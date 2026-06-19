@@ -75,11 +75,11 @@ export function razonBloqueoDocs(v: ValidacionFields): string | null {
     case "datos_validados":
       return null;
     case "pendiente_validacion":
-      return "Este expediente aún no tiene datos validados. No se pueden generar documentos jurídicos hasta que Contratación apruebe la información.";
+      return "El analista aún no ha confirmado los datos críticos del cliente. No se pueden generar documentos jurídicos hasta que confirme y envíe el expediente a Contratación.";
     case "en_revision_contratacion":
-      return "Datos en revisión por Contratación. Espera la aprobación antes de generar documentos.";
+      return "Expediente en transición. Contratación ya puede consumir los datos: refresca o espera unos segundos.";
     case "devuelto_datos_incorrectos":
-      return "Contratación devolvió el expediente por datos incorrectos. Corrige y reenvía para volver a generar documentos.";
+      return "Contratación devolvió el expediente por datos incorrectos. El analista debe corregir y reenviar.";
     case "bloqueado_inconsistencia":
       return "Expediente bloqueado por inconsistencia crítica. Solo Super Admin puede desbloquear.";
   }
