@@ -9,12 +9,15 @@ import {
   X,
   CheckCircle2,
   IdCard,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { extractCedula, type CedulaData } from "@/lib/cedula.functions";
 import { normalizeColombiaLocation } from "@/lib/colombiaLocations";
 import { NUVEX } from "./constants";
 import type { Interviniente, RolInterviniente } from "./intervinientes";
 import { defaultInterviniente, rolCotitular } from "./intervinientes";
+
 
 type Stage = "idle" | "reading" | "review" | "applied" | "error";
 
