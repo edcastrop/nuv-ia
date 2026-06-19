@@ -125,7 +125,7 @@ export function CedulaReader({ intervinientes, producto, onApply, onTitularSync 
     const patch: Partial<Interviniente> = {
       nombreCompleto: parsed.nombreCompleto || "",
       cedula: parsed.numeroCedula || "",
-      lugarExpedicionCedula: parsed.lugarExpedicion || "",
+      lugarExpedicionCedula: normalizeCityText(parsed.lugarExpedicion || ""),
     };
 
     if (targetIdx === -1) {
