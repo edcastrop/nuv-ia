@@ -20,6 +20,7 @@ import { AnalistaAvatar } from "@/components/pipeline/AnalistaAvatar";
 import { LeadQuickPeek } from "@/components/pipeline/LeadQuickPeek";
 import { LeadEditDrawer } from "@/components/pipeline/LeadEditDrawer";
 import { NuviaPipelinePanel, type PipelineCtx } from "@/components/pipeline/NuviaPipelinePanel";
+import { PipelineControlPanel } from "@/components/pipeline/PipelineControlPanel";
 
 const FASE_IDS = ["comercial", "operativa", "banco", "cobro", "fin"] as const;
 type FaseId = (typeof FASE_IDS)[number];
@@ -434,6 +435,22 @@ function PipelinePage() {
   const peekExpediente = peekId ? rows.find((r) => r.id === peekId) ?? null : null;
   const editExpediente = editId ? rows.find((r) => r.id === editId) ?? null : null;
 
+  // Conteos para el panel de control lateral
+  const { criticos, listos } = useMemo(() => {
+    let cr = 0;
+    ETAPAS_PIPELINE.forEach((e) => {
+      const umbral = UMBRAL_DIAS[e.id] ?? 0;
+      if (umbral <= 0) return;
+      (grupos.get(e.id) ?? []).forEach((r) => {
+        if (diasDesde(r.updated_at) > umbral * 2) cr += 1;
+      });
+    });
+    const li = (grupos.get("paz_salvo") ?? []).length + (grupos.get("pago") ?? []).length;
+    return { criticos: cr, listos: li };
+  }, [grupos]);
+
+
+
 
   return (
     <div
@@ -482,165 +499,16 @@ function PipelinePage() {
               </div>
             </div>
 
-            {/* 4 KPIs ejecutivos — números grandes, labels pequeños, máximo contraste */}
+            {/* Resumen mínimo en el header — el detalle vive en la Torre de control lateral */}
             {!loading && kpis.total > 0 && (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:flex xl:items-stretch">
-                <KpiTile
-                  label="Casos activos"
-                  value={String(kpis.total)}
-                  icon={<LayoutGrid className="h-3.5 w-3.5" />}
-                />
-                <KpiTile
-                  label="Casos en riesgo"
-                  value={String(kpis.estancados)}
-                  subtext={`${Math.round((kpis.estancados / Math.max(1, kpis.total)) * 100)}% del pipeline`}
-                  tone="danger"
-                  icon={<ShieldAlert className="h-3.5 w-3.5" />}
-                />
-                <KpiTile
-                  label="Velocidad"
-                  value={`${kpis.promedio}d`}
-                  icon={<Gauge className="h-3.5 w-3.5 text-[var(--nuvia-accent-blue)]" />}
-                />
-                <KpiTile
-                  label="Pipeline Value"
-                  value={fmtCOP(kpis.honorarios)}
-                  tone="success"
-                  icon={<Coins className="h-3.5 w-3.5" />}
-                />
+              <div className="flex flex-wrap items-center gap-2">
+                <HeaderChip label="Casos activos" value={String(kpis.total)} />
+                <HeaderChip label="En riesgo" value={String(kpis.estancados)} tone="danger" />
+                <HeaderChip label="Velocidad" value={`${kpis.promedio}d`} />
+                <HeaderChip label="Pipeline" value={fmtCOP(kpis.honorarios)} tone="success" />
               </div>
             )}
           </div>
-
-          {/* Flujo operativo segmentado — dónde está el cuello de botella */}
-          {!loading && kpis.total > 0 && (() => {
-            const faseColors: Record<string, string> = {
-              comercial: "var(--nuvia-accent-blue)",
-              operativa: "var(--nuvia-accent-purple, #8a7cd6)",
-              banco: "var(--nuvia-warning)",
-              cobro: "var(--nuvia-accent-green)",
-              fin: "color-mix(in oklab, var(--nuvia-accent-green) 70%, white)",
-            };
-            const faseLabels: Record<string, string> = {
-              comercial: "Comercial",
-              operativa: "Operativa",
-              banco: "Banco",
-              cobro: "Cobro",
-              fin: "Cierre",
-            };
-            const bottleneck = [...kpis.fases]
-              .filter((f) => f.id !== "fin")
-              .sort((a, b) => b.count - a.count)[0];
-            return (
-              <div className="relative mt-5">
-                <div className="mb-2 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-[var(--nuvia-text-secondary)]">
-                  <span className="inline-flex items-center gap-1.5">
-                    Flujo operativo
-                    <span className="hidden h-1 w-1 rounded-full bg-[var(--nuvia-text-secondary)] sm:inline" />
-                    <span className="hidden text-[var(--nuvia-text-secondary)] sm:inline">vista de cuello de botella</span>
-                  </span>
-                  {bottleneck && (
-                    <span className="tabular-nums text-[var(--nuvia-warning)]">
-                      Cuello de botella: <span className="font-bold text-[var(--nuvia-text-primary)]">{faseLabels[bottleneck.id]}</span>
-                      {" · "}
-                      {Math.round((bottleneck.count / Math.max(1, kpis.total)) * 100)}%
-                    </span>
-                  )}
-                </div>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-5">
-                  {kpis.fases.map((f, idx) => {
-                    const pct = Math.round((f.count / Math.max(1, kpis.total)) * 100);
-                    const isBottleneck = f.id === bottleneck?.id;
-                    return (
-                      <div
-                        key={f.id}
-                        className={`relative overflow-hidden rounded-xl border p-3 transition`}
-                        style={{
-                          borderColor: `color-mix(in oklab, ${faseColors[f.id]} ${isBottleneck ? 55 : 30}%, transparent)`,
-                          background: `linear-gradient(135deg, color-mix(in oklab, ${faseColors[f.id]} ${isBottleneck ? 18 : 9}%, transparent), color-mix(in oklab, ${faseColors[f.id]} 3%, transparent))`,
-                          boxShadow: isBottleneck
-                            ? `0 10px 28px -16px color-mix(in oklab, ${faseColors[f.id]} 55%, transparent), 0 0 0 1px color-mix(in oklab, ${faseColors[f.id]} 55%, transparent)`
-                            : "0 4px 16px -12px rgba(0,0,0,0.45)",
-                        }}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--nuvia-text-secondary)]">
-                            {idx + 1}. {faseLabels[f.id]}
-                          </span>
-                          {isBottleneck && (
-                            <span
-                              className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase text-[var(--nuvia-bg-primary)]"
-                              style={{ background: faseColors[f.id] }}
-                            >
-                              bottleneck
-                            </span>
-                          )}
-                        </div>
-                        <div className="mt-1 flex items-baseline gap-2">
-                          <span className="text-xl font-bold tabular-nums text-[var(--nuvia-text-primary)]">
-                            {f.count}
-                          </span>
-                          <span className="text-xs font-semibold tabular-nums" style={{ color: faseColors[f.id] }}>
-                            {pct}%
-                          </span>
-                        </div>
-                        <div
-                          className="absolute bottom-0 left-0 h-[2px]"
-                          style={{ width: `${pct}%`, background: faseColors[f.id] }}
-                        />
-                        {idx < kpis.fases.length - 1 && (
-                          <div className="pointer-events-none absolute -right-3 top-1/2 hidden -translate-y-1/2 sm:block">
-                            <ArrowRight className="h-3.5 w-3.5 text-[var(--nuvia-text-secondary)] opacity-40" />
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })()}
-
-          {/* Alertas inteligentes con jerarquía visual */}
-          {!loading && kpis.total > 0 && (() => {
-            const listos = (grupos.get("paz_salvo") ?? []).length + (grupos.get("pago") ?? []).length;
-            let criticos = 0;
-            ETAPAS_PIPELINE.forEach((e) => {
-              const umbral = UMBRAL_DIAS[e.id] ?? 0;
-              if (umbral <= 0) return;
-              (grupos.get(e.id) ?? []).forEach((r) => {
-                if (diasDesde(r.updated_at) > umbral * 2) criticos += 1;
-              });
-            });
-            return (
-              <div className="relative mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <AlertaMini
-                  size="lg"
-                  tone="danger"
-                  icon={<AlertTriangle className="h-4 w-4" />}
-                  label="Críticos"
-                  value={criticos}
-                  hint="Más de 2× el SLA — requieren acción inmediata"
-                />
-                <AlertaMini
-                  tone="warning"
-                  icon={<Clock className="h-3.5 w-3.5" />}
-                  label="Estancados"
-                  value={kpis.estancados}
-                  hint="Sobre SLA por etapa"
-                  active={soloStuck}
-                  onClick={() => setSoloStuck(!soloStuck)}
-                />
-                <AlertaMini
-                  tone="success"
-                  icon={<CheckCircle2 className="h-3.5 w-3.5" />}
-                  label="Listos para cierre"
-                  value={listos}
-                  hint="En pago y paz y salvo"
-                />
-              </div>
-            );
-          })()}
 
           {/* Momentum + Toolbar */}
           <div className="relative mt-5 flex flex-col gap-3 border-t border-[var(--nuvia-border)] pt-4">
@@ -728,20 +596,7 @@ function PipelinePage() {
                 )}
               </div>
 
-              {/* Micro bloque de momentum */}
-              <div className="hidden items-center gap-1 rounded-xl border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.025)] px-3 py-1.5 md:flex">
-                <TrendingUp className="h-3.5 w-3.5 text-[var(--nuvia-accent-green)]" />
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--nuvia-text-secondary)]">Momentum</span>
-                <span className="mx-1 h-3 w-px bg-[var(--nuvia-border)]" />
-                <span className="text-[11px] font-semibold text-[var(--nuvia-text-primary)]">+12</span>
-                <span className="text-[10px] text-[var(--nuvia-text-secondary)]">esta semana</span>
-                <span className="mx-1.5 h-3 w-px bg-[var(--nuvia-border)]" />
-                <span className="text-[11px] font-semibold text-[var(--nuvia-accent-green)]">+18%</span>
-                <span className="text-[10px] text-[var(--nuvia-text-secondary)]">velocidad</span>
-                <span className="mx-1.5 h-3 w-px bg-[var(--nuvia-border)]" />
-                <span className="text-[11px] font-semibold text-[var(--nuvia-accent-green)]">+7</span>
-                <span className="text-[10px] text-[var(--nuvia-text-secondary)]">cierres hoy</span>
-              </div>
+              {/* Momentum vive ahora dentro de la Torre de control lateral */}
 
               <div className="ml-auto flex items-center gap-2">
                 <button
@@ -1095,130 +950,67 @@ function PipelinePage() {
         />
       )}
 
+      <PipelineControlPanel
+        total={kpis.total}
+        estancados={kpis.estancados}
+        promedio={kpis.promedio}
+        honorarios={kpis.honorarios}
+        fases={kpis.fases.map((f) => ({ id: f.id, label: f.label.split(" · ")[0], count: f.count }))}
+        criticos={criticos}
+        listos={listos}
+        soloStuck={soloStuck}
+        onToggleStuck={() => setSoloStuck(!soloStuck)}
+        fmtCOP={fmtCOP}
+      />
+
       <NuviaPipelinePanel contexto={pipelineCtx} />
     </div>
   );
 }
 
-// KPI ejecutivo — número grande, label pequeño, máximo contraste.
-function KpiTile({
+// Chip compacto del header — etiqueta arriba, valor grande con tono opcional.
+function HeaderChip({
   label,
   value,
-  subtext,
   tone,
-  icon,
 }: {
   label: string;
   value: string;
-  subtext?: string;
   tone?: "danger" | "success";
-  icon?: ReactNode;
 }) {
-  const palette =
+  const color =
     tone === "danger"
-      ? {
-          border: "color-mix(in oklab, var(--nuvia-danger) 40%, transparent)",
-          bg: "linear-gradient(160deg, color-mix(in oklab, var(--nuvia-danger) 14%, transparent), color-mix(in oklab, var(--nuvia-danger) 4%, transparent))",
-          value: "var(--nuvia-danger)",
-          glow: "color-mix(in oklab, var(--nuvia-danger) 30%, transparent)",
-        }
+      ? "var(--nuvia-danger)"
       : tone === "success"
-      ? {
-          border: "color-mix(in oklab, var(--nuvia-accent-green) 38%, transparent)",
-          bg: "linear-gradient(160deg, color-mix(in oklab, var(--nuvia-accent-green) 13%, transparent), color-mix(in oklab, var(--nuvia-accent-green) 4%, transparent))",
-          value: "var(--nuvia-accent-green)",
-          glow: "color-mix(in oklab, var(--nuvia-accent-green) 28%, transparent)",
-        }
-      : {
-          border: "var(--nuvia-border-strong, var(--nuvia-border))",
-          bg: "linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
-          value: "var(--nuvia-text-primary)",
-          glow: "color-mix(in oklab, var(--nuvia-accent-blue) 22%, transparent)",
-        };
+      ? "var(--nuvia-accent-green)"
+      : "var(--nuvia-text-primary)";
+  const border =
+    tone === "danger"
+      ? "color-mix(in oklab, var(--nuvia-danger) 38%, transparent)"
+      : tone === "success"
+      ? "color-mix(in oklab, var(--nuvia-accent-green) 36%, transparent)"
+      : "var(--nuvia-border)";
   return (
     <div
-      className="group relative flex min-w-[124px] flex-col rounded-xl border px-3 py-2.5"
+      className="flex items-center gap-2 rounded-xl border px-3 py-1.5"
       style={{
-        borderColor: palette.border,
-        background: palette.bg,
-        boxShadow: `0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 24px -16px ${palette.glow}`,
+        borderColor: border,
+        background: "rgba(255,255,255,0.03)",
       }}
     >
-      <div className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--nuvia-text-secondary)]">
+      <span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--nuvia-text-secondary)]">
         {label}
-      </div>
-      <div
-        className="mt-0.5 flex items-baseline gap-1.5 truncate text-[22px] font-bold leading-tight tabular-nums"
-        style={{ color: palette.value, textShadow: `0 0 24px ${palette.glow}` }}
+      </span>
+      <span
+        className="text-sm font-bold tabular-nums"
+        style={{ color, textShadow: tone ? `0 0 18px color-mix(in oklab, ${color} 32%, transparent)` : undefined }}
       >
-        {icon && <span className="translate-y-[-2px] opacity-90">{icon}</span>}
-        <span className="truncate">{value}</span>
-      </div>
-      {subtext && (
-        <div className="mt-0.5 text-[10px] font-medium tabular-nums text-[var(--nuvia-text-secondary)]">
-          {subtext}
-        </div>
-      )}
+        {value}
+      </span>
     </div>
   );
 }
 
-
-// Alerta inteligente compacta — clickeable opcional.
-function AlertaMini({
-  tone,
-  icon,
-  label,
-  value,
-  hint,
-  active,
-  onClick,
-  size = "md",
-}: {
-  tone: "danger" | "warning" | "success";
-  icon: ReactNode;
-  label: string;
-  value: number;
-  hint: string;
-  active?: boolean;
-  onClick?: () => void;
-  size?: "md" | "lg";
-}) {
-  const color =
-    tone === "danger" ? "var(--nuvia-danger)" : tone === "warning" ? "var(--nuvia-warning)" : "var(--nuvia-accent-green)";
-  const Tag = (onClick ? "button" : "div") as "button" | "div";
-  const isLarge = size === "lg";
-  return (
-    <Tag
-      type={onClick ? "button" : undefined}
-      onClick={onClick}
-      className={`flex items-center gap-3 rounded-xl border px-3.5 py-2.5 text-left transition ${onClick ? "cursor-pointer hover:brightness-110" : ""} ${isLarge ? "sm:col-span-2" : ""}`}
-      style={{
-        borderColor: active
-          ? color
-          : `color-mix(in oklab, ${color} ${isLarge ? 45 : 30}%, transparent)`,
-        background: `linear-gradient(135deg, color-mix(in oklab, ${color} ${active ? (isLarge ? 20 : 16) : (isLarge ? 14 : 9)}%, transparent), color-mix(in oklab, ${color} 3%, transparent))`,
-        boxShadow: isLarge ? `0 10px 28px -16px color-mix(in oklab, ${color} 45%, transparent)` : undefined,
-      }}
-    >
-      <span
-        className={`grid shrink-0 place-items-center rounded-lg ${isLarge ? "h-9 w-9" : "h-7 w-7"}`}
-        style={{ background: `color-mix(in oklab, ${color} ${isLarge ? 28 : 22}%, transparent)`, color }}
-      >
-        <span className={isLarge ? "scale-110" : ""}>{icon}</span>
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-baseline gap-1.5">
-          <span className={`font-bold tabular-nums ${isLarge ? "text-[22px]" : "text-[15px]"}`} style={{ color }}>
-            {value}
-          </span>
-          <span className={`font-semibold text-[var(--nuvia-text-primary)] ${isLarge ? "text-sm" : "text-xs"}`}>{label}</span>
-        </div>
-        <div className="truncate text-[10px] text-[var(--nuvia-text-secondary)]">{hint}</div>
-      </div>
-    </Tag>
-  );
-}
 
 
 
