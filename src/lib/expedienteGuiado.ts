@@ -383,7 +383,7 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
   if ((etapa === "lead" || etapa === "proyeccion") && canSeeAnalystGuide) {
     return {
       rol: "asesor",
-      titulo: "Avanza con la proyección financiera",
+      titulo: "Completa la simulación financiera",
       descripcion:
         "Completa la simulación. Si NUVIA la aprueba, pasa directo a Contratación; solo se enruta a auditoría QA si NUVIA detecta inconsistencias.",
       botonLabel: "Ir a financiero",
@@ -682,9 +682,8 @@ function proyeccionListaParaEnviar(exp: Expediente, ec: string): boolean {
     qa_categoria?: string | null;
     aprobado_data?: unknown;
   };
-  const estadoSimulado =
-    ["simulacion_realizada", "simulado", "propuesta_presentada", "propuesta_enviada"].includes(ec) ||
-    estadoLegacy === "SIMULADO";
+  const estadoListoPorPipeline = ["simulado", "propuesta_presentada", "propuesta_enviada"].includes(ec);
+  const estadoConSimulacionRealizada = ec === "simulacion_realizada";
   const qaAprobada =
     qa.qa_dictamen === "aprobado" ||
     qa.qa_categoria === "excelente" ||
@@ -692,7 +691,8 @@ function proyeccionListaParaEnviar(exp: Expediente, ec: string): boolean {
     Number(qa.qa_score ?? 0) >= 80 ||
     Boolean(qa.aprobado_data);
 
-  return estadoSimulado && (tienePropuesta(exp) || qaAprobada);
+  if (estadoListoPorPipeline) return true;
+  return estadoConSimulacionRealizada && (tienePropuesta(exp) || qaAprobada || estadoLegacy === "SIMULADO");
 }
 
 function ordenEstado(ec: string): number {
