@@ -1,69 +1,93 @@
-# Veredicto narrativo en la auditoría QA
+# Plan: Quick Peek completo + KPI de Ahorro Acumulado
 
-Hoy la auditoría arroja `score`, `dictamen`, `diferencias[]` y `alertas[]`, pero no narra **quién tiene la razón** ni **dónde está el error**. Propongo añadir un bloque de **Veredicto** que el motor genera automáticamente — el mismo razonamiento que acabo de hacer manualmente, hecho por el sistema cada vez que se corre una auditoría.
+## A. Quick Peek — hidratación de datos
 
-## Qué verá el analista
+**Archivo:** `src/components/pipeline/LeadQuickPeek.tsx` (refactor de lectura, sin cambiar la UI base)
 
-En la página `/qa-ai/:id`, debajo del score, una tarjeta nueva **"Veredicto NUVIA"** con:
+Hoy el peek solo lee `credito_data` y `propuesta_data` con llaves fijas. Vamos a:
 
-1. **Una frase de cabecera** con el resultado: *"El extracto es internamente coherente, pero la cuota cobrada implica un plazo real de 253 meses ≠ 324 reportados."*
-2. **Tabla de responsables** — cuatro filas fijas:
-   - Extracto del banco
-   - Excel del analista
-   - Simulador NUVIA
-   - Auditoría NUVIA
-   
-   Cada una con un check / warning / cruz y una línea de por qué.
-3. **¿El extracto tiene errores?** — Sí / No / Inconsistencia matemática, con la causa probable (1–3 viñetas).
-4. **Recomendación al analista** — qué validar manualmente (recalculo por banco, plazo original vs. remanente, abono extra implícito, etc.).
+1. **Loader nuevo `useQuickPeekData(expedienteId)`** (hook con TanStack Query) que llame a un server fn `getQuickPeekData` y traiga en un solo request:
+   - `proyecciones_financieras` más reciente del expediente (saldo_capital, cuota_actual, tea_pct, cuotas_totales, cuotas_pagadas, cuotas_pendientes).
+   - `expediente_proyecciones` activa (cuota propuesta, plazo nuevo, ahorro, cuotas_pendientes_proyectadas).
+   - `auditoria_global` → último % consolidado del expediente (motor de auditoría general).
+   - `qa_auditorias` → score QA del simulador (extra, ya disponible en `expedientes.qa_score`).
+   - Banco/etapa ya están en el expediente.
 
-## Cómo se genera (matemática, no IA)
+2. **Cascada de lectura** dentro del peek (sin perder retrocompat): `quickPeekData → propuesta_data/credito_data → cliente_data`. Si todo está vacío, "—".
 
-En `src/lib/qaMath.ts` añado `construirVeredicto(inputs, outputs, diferencias)` que ejecuta estos checks deterministas y produce el objeto `veredicto`:
+3. **Tiles nuevos / actualizados:**
+   - Banco (chip arriba se mantiene, pero también agregamos tile destacado en grid).
+   - Etapa (ya existe).
+   - **Cuota actual / Cuota propuesta** (se llenan).
+   - **Cuotas pendientes / Cuotas pendientes proyectadas** (nuevo par de tiles).
+   - **Tasa actual / Tasa propuesta**.
+   - **Ahorro del lead** (ya existe, sube de jerarquía).
+   - **Honorarios base / final** (ya existen).
+   - **% Auditoría** → barra horizontal coloreada (rojo <60, amarillo 60-79, verde ≥80) con el valor del motor de auditoría general.
 
-### Check 1 — Coherencia cuota ↔ plazo ↔ tasa
-Compara la **cuota oficial del extracto** con la **cuota teórica francesa** para (saldo, tasa, plazo).
-- Si `|cuotaOficial − cuotaTeórica| / cuotaTeórica > 2%` → el extracto está sobre/sub-cobrando.
-- Calcula el **plazo real implícito** con la cuota oficial:  
-  `n_real = −ln(1 − saldo·i / cuota) / ln(1+i)`
-- Si `|n_real − plazoReportado| > 6` meses → emite hallazgo "Plazo real implícito ≠ plazo reportado".
+4. Mantener glassmorphism NUVIA y tokens dark existentes; nada de hardcoded colors.
 
-### Check 2 — Saldo UVR ↔ saldo pesos
-`saldoUVR × valorUVR` debe coincidir con `saldoCapital` (tolerancia 0.5%).
+## B. Ahorro Acumulado — dentro del Control Panel lateral
 
-### Check 3 — FRECH coherente
-`cuotaBase − FRECH` debe coincidir con la cuota neta cliente (tolerancia 1%).
+**Archivos:**
+- `src/lib/pipelineAhorro.functions.ts` (nuevo) — server fn `getAhorroAcumulado({ rango })`.
+- `src/components/pipeline/PipelineControlPanel.tsx` (editar) — nueva sección colapsable.
+- `src/routes/_authenticated/pipeline.tsx` (editar) — pasar el rango seleccionado al panel.
 
-### Check 4 — Cuotas pagadas + pendientes = plazo original
-Si hay desfase, lo reporta.
+### Server function
 
-### Reglas para la fila de responsables
-- **Extracto**: ✅ si pasa Check 2, 3 y 4; ⚠️ si falla Check 1 (cuota no reconcilia con plazo).
-- **Excel analista**: ✅ siempre que el escenario sea "cuota teórica del plazo formal" — se asume correcto si el dictamen del extracto pasa.
-- **Simulador NUVIA**: ✅ si usa `cuotasPendientes` del extracto sin recortar.
-- **Auditoría NUVIA**: ✅ si `score ≥ 95`; ⚠️ si entre 70–95; ❌ si rechazada.
+`getAhorroAcumulado({ rango: 'hoy' | 'semana' | 'mes' | 'trimestre' | 'anio' | 'todo' })`:
 
-### Causa probable (Check 1 fallido)
-Reglas heurísticas:
-- Si `n_real < plazoReportado` y diferencia > 30 → "Cuota recalculada con plazo original, no remanente" o "Sobreaporte implícito en la cuota".
-- Si `n_real > plazoReportado` → "Cuota subdimensionada — riesgo de saldo residual".
-- Si Check 3 falla → "Aplicación incorrecta del subsidio FRECH".
+- Filtra `expedientes` donde `estado_caso IN ('cierre','cobro','cerrado')` (estados finales — confirmaré valores exactos del enum al implementar).
+- Ventana sobre `updated_at` / `aceptacion_cliente_at` según el rango.
+- Calcula ahorro por caso desde `propuesta_data.ahorro` con fallback a `expediente_proyecciones`.
+- Devuelve:
+  ```ts
+  {
+    total: number,
+    casos: number,
+    desglose: {
+      bancos: { nombre: string, total: number, casos: number }[],
+      analistas: { id: string, nombre: string, total: number, casos: number }[],
+      oficinas: { nombre: string, total: number, casos: number }[]
+    }
+  }
+  ```
 
-## Cambios técnicos
+### UI dentro del Control Panel
 
-- `src/lib/qaMath.ts`: nueva función `construirVeredicto()` + tipo `Veredicto`. Versión motor → `1.2.0`.
-- `src/lib/qaAI.functions.ts`: persistir `veredicto` dentro de `outputs.veredicto` (no requiere migración — `outputs` es JSONB).
-- `src/components/qa-ai/VeredictoBlock.tsx` (nuevo): tarjeta con cabecera, tabla de responsables, sección "¿Hay errores en el extracto?" y recomendaciones. Estilo dark con tokens NUVIA (NCard / NSelect convenciones).
-- `src/routes/_authenticated/qa-ai.$id.tsx`: insertar `<VeredictoBlock veredicto={data.outputs.veredicto} />` justo después del bloque de score.
-- `src/lib/qaPdf.ts`: incluir el veredicto en el PDF descargable.
-- Reejecutar auditoría existente para poblar el campo.
+Nueva sección colapsable "Ahorro acumulado":
 
-## Lo que NO cambia
+```text
+┌─────────────────────────────────────────┐
+│ AHORRO GENERADO            [Mes ▾]      │
+│ $ 50.230 M  ·  30 clientes              │
+│                                         │
+│ [Bancos] [Analistas] [Oficinas]         │  ← tabs
+│                                         │
+│ Bancolombia       $10.400 M   10 casos →│
+│ Davivienda        $ 8.200 M    7 casos →│
+│ BBVA              $ 5.900 M    5 casos →│
+│ ...                                     │
+└─────────────────────────────────────────┘
+```
 
-- No toco el score ni el dictamen actuales — el veredicto es **explicativo**, paralelo.
-- No uso IA generativa: 100% determinista para que sea auditable y consistente.
-- Modalidades soportadas en v1: UVR y Pesos (FNA, Davivienda).
+- Selector de rango: Hoy / Semana / Mes / Trimestre / Año / Todo, persistido en `localStorage`.
+- Cada fila clickeable filtra el Kanban (`?banco=` / `?asesor=`) y cierra el panel en mobile.
+- Tokens NUVIA dark, glow verde en el total, sparkline opcional al lado (fase 2 si hay tiempo).
 
-## Próximo paso si lo apruebas
+## C. Notas técnicas
 
-Implemento el motor + componente + integración en el detalle de auditoría, y dejo botón "Reejecutar auditoría" disponible para poblar veredictos viejos.
+- Sin cambios de schema.
+- Server fn protegida con `requireSupabaseAuth`.
+- Reuso del query client; `staleTime: 30s` para el peek, `60s` para el ahorro.
+- No tocar lógica de pipeline ni del Kanban; solo lectura adicional.
+- Sin hardcoded colors: todo con `var(--nuvia-*)`.
+
+## Orden de implementación
+
+1. `getQuickPeekData` server fn + hook.
+2. Refactor `LeadQuickPeek` con cascada + nuevos tiles + barra % auditoría.
+3. `getAhorroAcumulado` server fn.
+4. Sección "Ahorro acumulado" en `PipelineControlPanel`.
+5. Verificación con Playwright sobre `/pipeline` (abrir peek de un caso real y verificar valores).
