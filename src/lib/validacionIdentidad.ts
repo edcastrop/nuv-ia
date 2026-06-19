@@ -346,17 +346,24 @@ export async function confirmarChecklistLicenciado(
 }
 
 export async function enviarAValidacion(expedienteId: string, nota?: string) {
+  // Nuevo flujo: la confirmación del analista ES la aprobación final.
+  // Se omite el paso intermedio "en_revision_contratacion": el expediente
+  // pasa directo a `datos_validados` y Contratación lo consume sin volver
+  // a aprobar datos. Devolver / Bloquear se conservan como red de seguridad.
+  const user_id = await uid();
   const snap = await snapshot(expedienteId);
   const { error } = await supabase
     .from("expedientes")
     .update({
-      validacion_estado: "en_revision_contratacion",
+      validacion_estado: "datos_validados",
       validacion_enviado_at: new Date().toISOString(),
+      validacion_aprobado_por: user_id,
+      validacion_aprobado_at: new Date().toISOString(),
       validacion_motivo_devolucion: null,
     } as never)
     .eq("id", expedienteId);
   if (error) throw error;
-  await registrar(expedienteId, "enviar", nota ?? null, snap);
+  await registrar(expedienteId, "enviar_a_contratacion", nota ?? null, snap);
 }
 
 export async function aprobarValidacion(expedienteId: string, nota?: string) {
