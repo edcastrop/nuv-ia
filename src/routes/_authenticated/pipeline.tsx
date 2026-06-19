@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
-import { Loader2, Flag, Clock, AlertTriangle, RefreshCw, Eye, Pencil, SlidersHorizontal, BarChart3, ChevronDown } from "lucide-react";
+import { Loader2, Flag, Clock, AlertTriangle, RefreshCw, Eye, Pencil, SlidersHorizontal, ChevronDown, Radar, Gauge, Coins, ShieldAlert, Sparkles, Download, LayoutGrid, CheckCircle2, Search } from "lucide-react";
 import { listExpedientes, type Expediente } from "@/lib/expedientes";
 import {
   ETAPAS_PIPELINE,
@@ -444,68 +444,196 @@ function PipelinePage() {
       }}
     >
       <div className="mx-auto max-w-[1680px] space-y-4">
-        <section className="glass-panel overflow-hidden p-3 md:p-4">
-          {/* Fila ejecutiva: identidad + 4 KPIs premium + acciones primarias */}
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <section className="glass-panel relative overflow-hidden p-3 md:p-4">
+          {/* Aura sutil de torre de control */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 opacity-60"
+            style={{
+              background:
+                "radial-gradient(900px 280px at 8% -10%, color-mix(in oklab, var(--nuvia-accent-blue) 14%, transparent), transparent 60%), radial-gradient(700px 240px at 95% -20%, color-mix(in oklab, var(--nuvia-accent-green) 10%, transparent), transparent 60%)",
+            }}
+          />
+
+          {/* Fila ejecutiva: identidad operacional + 4 KPIs premium */}
+          <div className="relative flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex min-w-0 items-center gap-3">
               <div
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-sm font-bold text-[var(--nuvia-text-primary)]"
-                style={{ background: "var(--nuvia-gradient-primary)", boxShadow: "var(--nuvia-shadow-sm)" }}
+                className="relative grid h-11 w-11 shrink-0 place-items-center rounded-xl text-[var(--nuvia-text-primary)]"
+                style={{
+                  background: "var(--nuvia-gradient-primary)",
+                  boxShadow: "var(--nuvia-shadow-md), inset 0 0 0 1px rgba(255,255,255,0.08)",
+                }}
                 aria-hidden
               >
-                PM
+                <Radar className="h-5 w-5" />
+                <span
+                  className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full"
+                  style={{
+                    background: "var(--nuvia-accent-green)",
+                    boxShadow: "0 0 0 2px var(--nuvia-bg-secondary), 0 0 10px color-mix(in oklab, var(--nuvia-accent-green) 70%, transparent)",
+                  }}
+                />
               </div>
               <div className="min-w-0">
-                <div className="text-[10px] font-semibold uppercase tracking-wide text-[var(--nuvia-accent-green)]">
-                  NUVIA · Control operativo
+                <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--nuvia-accent-green)]">
+                  <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--nuvia-accent-green)]" />
+                  NUVIA · Torre de control
                 </div>
-                <h1 className="text-lg font-semibold leading-tight text-[var(--nuvia-text-primary)] md:text-xl">
+                <h1 className="text-xl font-semibold leading-tight text-[var(--nuvia-text-primary)] md:text-[22px]">
                   Pipeline Maestro
                 </h1>
                 <div className="text-[11px] text-[var(--nuvia-text-secondary)]">
-                  {totalVisible} de {rows.length} casos · {ETAPAS_PIPELINE.length} etapas
+                  <span className="font-semibold text-[var(--nuvia-text-primary)] tabular-nums">{kpis.total}</span> casos activos
+                  {" · "}
+                  <span className="font-semibold text-[var(--nuvia-text-primary)] tabular-nums">{ETAPAS_PIPELINE.length}</span> etapas
+                  {" · "}
+                  <span className="inline-flex items-center gap-1">
+                    <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--nuvia-accent-green)]" />
+                    operación en tiempo real
+                  </span>
                 </div>
               </div>
             </div>
 
-            {/* 4 KPIs inline tipo glass — premium, sin ocupar fila extra */}
+            {/* 4 KPIs ejecutivos — números grandes, labels pequeños, máximo contraste */}
             {!loading && kpis.total > 0 && (
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:flex xl:items-stretch">
-                <KpiTile label="Total" value={String(kpis.total)} />
                 <KpiTile
-                  label="Estancados"
+                  label="Casos activos"
+                  value={String(kpis.total)}
+                  icon={<LayoutGrid className="h-3.5 w-3.5" />}
+                />
+                <KpiTile
+                  label="Riesgo"
                   value={String(kpis.estancados)}
                   tone="danger"
-                  icon={<AlertTriangle className="h-3.5 w-3.5" />}
+                  icon={<ShieldAlert className="h-3.5 w-3.5" />}
                 />
                 <KpiTile
-                  label="Días prom."
-                  value={String(kpis.promedio)}
-                  icon={<Clock className="h-3.5 w-3.5 text-[var(--nuvia-accent-blue)]" />}
+                  label="Velocidad"
+                  value={`${kpis.promedio}d`}
+                  icon={<Gauge className="h-3.5 w-3.5 text-[var(--nuvia-accent-blue)]" />}
                 />
-                <KpiTile label="Honorarios" value={fmtCOP(kpis.honorarios)} tone="success" />
+                <KpiTile
+                  label="Pipeline Value"
+                  value={fmtCOP(kpis.honorarios)}
+                  tone="success"
+                  icon={<Coins className="h-3.5 w-3.5" />}
+                />
               </div>
             )}
           </div>
 
-          {/* Fila acciones: buscador + refresh + toggles colapsables */}
-          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-[var(--nuvia-border)] pt-3">
-            <input
-              ref={searchInputRef}
-              value={qLocal}
-              onChange={(e) => setQLocal(e.target.value)}
-              placeholder="Buscar cliente, cédula o crédito…"
-              className="h-9 min-w-[220px] flex-1 rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-3 text-sm text-[var(--nuvia-text-primary)] outline-none placeholder:text-[rgba(170,179,197,0.55)] focus:border-[var(--nuvia-accent-blue)] focus:ring-2 focus:ring-[rgba(68,93,163,0.22)] sm:max-w-[340px]"
-            />
-            <button
-              onClick={() => cargar(true)}
-              disabled={loading || refreshing}
-              title={`Actualizado hace ${haceLabel}`}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-2.5 text-xs text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-border-strong)] hover:bg-[rgba(255,255,255,0.06)] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 text-[var(--nuvia-accent-green)] ${refreshing ? "animate-spin" : ""}`} />
-              {haceLabel}
-            </button>
+          {/* Barra de salud del pipeline — distribución por fase */}
+          {!loading && kpis.total > 0 && (
+            <div className="relative mt-4">
+              <div className="mb-1.5 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-[var(--nuvia-text-secondary)]">
+                <span>Salud del pipeline</span>
+                <span className="tabular-nums">
+                  {Math.max(0, 100 - Math.round((kpis.estancados / Math.max(1, kpis.total)) * 100))}%
+                  <span className="ml-1 opacity-70">saludable</span>
+                </span>
+              </div>
+              <div
+                className="flex h-2 w-full overflow-hidden rounded-full ring-1 ring-[var(--nuvia-border)]"
+                style={{ background: "rgba(255,255,255,0.04)" }}
+                role="img"
+                aria-label="Distribución de casos por fase"
+              >
+                {kpis.fases.map((f) => {
+                  const pct = (f.count / Math.max(1, kpis.total)) * 100;
+                  if (pct <= 0) return null;
+                  const colors: Record<string, string> = {
+                    comercial: "var(--nuvia-accent-blue)",
+                    operativa: "var(--nuvia-accent-purple, #8a7cd6)",
+                    banco: "var(--nuvia-warning)",
+                    cobro: "var(--nuvia-accent-green)",
+                    fin: "color-mix(in oklab, var(--nuvia-accent-green) 70%, white)",
+                  };
+                  return (
+                    <div
+                      key={f.id}
+                      title={`${f.label}: ${f.count}`}
+                      style={{ width: `${pct}%`, background: colors[f.id] ?? "var(--nuvia-accent-blue)" }}
+                    />
+                  );
+                })}
+              </div>
+              <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-[var(--nuvia-text-secondary)]">
+                {kpis.fases.map((f) => {
+                  const colors: Record<string, string> = {
+                    comercial: "var(--nuvia-accent-blue)",
+                    operativa: "var(--nuvia-accent-purple, #8a7cd6)",
+                    banco: "var(--nuvia-warning)",
+                    cobro: "var(--nuvia-accent-green)",
+                    fin: "color-mix(in oklab, var(--nuvia-accent-green) 70%, white)",
+                  };
+                  return (
+                    <span key={f.id} className="inline-flex items-center gap-1.5">
+                      <span className="inline-block h-2 w-2 rounded-sm" style={{ background: colors[f.id] }} />
+                      {f.label.split(" · ")[0]}
+                      <span className="font-semibold tabular-nums text-[var(--nuvia-text-primary)]">{f.count}</span>
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Alertas inteligentes mini */}
+          {!loading && kpis.total > 0 && (() => {
+            const listos = (grupos.get("paz_salvo") ?? []).length + (grupos.get("pago") ?? []).length;
+            let criticos = 0;
+            ETAPAS_PIPELINE.forEach((e) => {
+              const umbral = UMBRAL_DIAS[e.id] ?? 0;
+              if (umbral <= 0) return;
+              (grupos.get(e.id) ?? []).forEach((r) => {
+                if (diasDesde(r.updated_at) > umbral * 2) criticos += 1;
+              });
+            });
+            return (
+              <div className="relative mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <AlertaMini
+                  tone="danger"
+                  icon={<AlertTriangle className="h-3.5 w-3.5" />}
+                  label="Estancados"
+                  value={kpis.estancados}
+                  hint="Sobre SLA por etapa"
+                  active={soloStuck}
+                  onClick={() => setSoloStuck(!soloStuck)}
+                />
+                <AlertaMini
+                  tone="warning"
+                  icon={<ShieldAlert className="h-3.5 w-3.5" />}
+                  label="Críticos"
+                  value={criticos}
+                  hint="Más de 2× el SLA"
+                />
+                <AlertaMini
+                  tone="success"
+                  icon={<CheckCircle2 className="h-3.5 w-3.5" />}
+                  label="Listos para cierre"
+                  value={listos}
+                  hint="En pago y paz y salvo"
+                />
+              </div>
+            );
+          })()}
+
+          {/* Toolbar: Buscar → Filtros → Vista → Análisis IA → Exportar */}
+          <div className="relative mt-3 flex flex-wrap items-center gap-2 border-t border-[var(--nuvia-border)] pt-3">
+            <div className="relative min-w-[220px] flex-1 sm:max-w-[360px]">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--nuvia-text-secondary)]" />
+              <input
+                ref={searchInputRef}
+                value={qLocal}
+                onChange={(e) => setQLocal(e.target.value)}
+                placeholder="Buscar cliente, cédula o crédito…"
+                className="h-9 w-full rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] pl-8 pr-8 text-sm text-[var(--nuvia-text-primary)] outline-none placeholder:text-[rgba(170,179,197,0.55)] focus:border-[var(--nuvia-accent-blue)] focus:ring-2 focus:ring-[rgba(68,93,163,0.22)]"
+              />
+              <kbd className="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 rounded border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.05)] px-1 text-[10px] text-[var(--nuvia-text-secondary)] sm:inline">/</kbd>
+            </div>
 
             <button
               type="button"
@@ -531,6 +659,15 @@ function PipelinePage() {
               <ChevronDown className={`h-3 w-3 transition-transform ${showFilters ? "rotate-180" : ""}`} />
             </button>
 
+            <Link
+              to="/casos"
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-2.5 text-xs text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-border-strong)] hover:text-[var(--nuvia-text-primary)]"
+              title="Cambiar a vista lista"
+            >
+              <Eye className="h-3.5 w-3.5" />
+              Vista
+            </Link>
+
             <button
               type="button"
               onClick={() => setShowAnalisis((v) => !v)}
@@ -540,10 +677,10 @@ function PipelinePage() {
                   ? "border-[var(--nuvia-accent-green)] bg-[rgba(106,168,79,0.16)] text-[var(--nuvia-text-primary)]"
                   : "border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] text-[var(--nuvia-text-secondary)] hover:border-[var(--nuvia-border-strong)]"
               }`}
-              title="Embudo ejecutivo y fases"
+              title="Embudo ejecutivo y análisis NUVIA"
             >
-              <BarChart3 className="h-3.5 w-3.5" />
-              Análisis
+              <Sparkles className="h-3.5 w-3.5 text-[var(--nuvia-accent-green)]" />
+              Análisis IA
               <ChevronDown className={`h-3 w-3 transition-transform ${showAnalisis ? "rotate-180" : ""}`} />
             </button>
 
@@ -558,22 +695,29 @@ function PipelinePage() {
 
             <div className="ml-auto flex items-center gap-2">
               <button
+                onClick={() => cargar(true)}
+                disabled={loading || refreshing}
+                title={`Actualizado hace ${haceLabel}`}
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-2.5 text-xs text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-border-strong)] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 text-[var(--nuvia-accent-green)] ${refreshing ? "animate-spin" : ""}`} />
+                {haceLabel}
+              </button>
+              <button
                 onClick={exportarCSV}
                 disabled={loading || totalVisible === 0}
-                className="h-9 rounded-lg border border-transparent px-3 text-xs font-semibold text-[var(--nuvia-text-primary)] shadow-[var(--nuvia-shadow-sm)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-transparent px-3 text-xs font-semibold text-[var(--nuvia-text-primary)] shadow-[var(--nuvia-shadow-sm)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
                 style={{ background: "var(--nuvia-gradient-primary)" }}
               >
-                Exportar CSV
+                <Download className="h-3.5 w-3.5" />
+                Exportar
               </button>
-              <Link to="/casos" className="text-xs font-medium text-[var(--nuvia-accent-green)] hover:underline">
-                Ver lista →
-              </Link>
             </div>
           </div>
 
           {/* Filtros avanzados colapsables */}
           {showFilters && (
-            <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.025)] p-3">
+            <div className="relative mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.025)] p-3">
               <select
                 value={banco}
                 onChange={(e) => setBanco(e.target.value)}
@@ -642,6 +786,7 @@ function PipelinePage() {
             </div>
           )}
         </section>
+
 
       {/* KPIs y chips de fase ahora viven dentro del header / filtros avanzados. */}
 
@@ -903,7 +1048,7 @@ function PipelinePage() {
   );
 }
 
-// KPI inline tipo glass — compacto, premium, sin ocupar fila completa.
+// KPI ejecutivo — número grande, label pequeño, máximo contraste.
 function KpiTile({
   label,
   value,
@@ -918,38 +1063,98 @@ function KpiTile({
   const palette =
     tone === "danger"
       ? {
-          border: "color-mix(in oklab, var(--nuvia-danger) 36%, transparent)",
-          bg: "color-mix(in oklab, var(--nuvia-danger) 11%, transparent)",
+          border: "color-mix(in oklab, var(--nuvia-danger) 40%, transparent)",
+          bg: "linear-gradient(160deg, color-mix(in oklab, var(--nuvia-danger) 14%, transparent), color-mix(in oklab, var(--nuvia-danger) 4%, transparent))",
           value: "var(--nuvia-danger)",
+          glow: "color-mix(in oklab, var(--nuvia-danger) 30%, transparent)",
         }
       : tone === "success"
       ? {
-          border: "color-mix(in oklab, var(--nuvia-accent-green) 34%, transparent)",
-          bg: "color-mix(in oklab, var(--nuvia-accent-green) 10%, transparent)",
+          border: "color-mix(in oklab, var(--nuvia-accent-green) 38%, transparent)",
+          bg: "linear-gradient(160deg, color-mix(in oklab, var(--nuvia-accent-green) 13%, transparent), color-mix(in oklab, var(--nuvia-accent-green) 4%, transparent))",
           value: "var(--nuvia-accent-green)",
+          glow: "color-mix(in oklab, var(--nuvia-accent-green) 28%, transparent)",
         }
       : {
-          border: "var(--nuvia-border)",
-          bg: "rgba(255,255,255,0.04)",
+          border: "var(--nuvia-border-strong, var(--nuvia-border))",
+          bg: "linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
           value: "var(--nuvia-text-primary)",
+          glow: "color-mix(in oklab, var(--nuvia-accent-blue) 22%, transparent)",
         };
   return (
     <div
-      className="flex min-w-[112px] flex-col rounded-xl border px-3 py-2"
-      style={{ borderColor: palette.border, background: palette.bg }}
+      className="group relative flex min-w-[124px] flex-col rounded-xl border px-3 py-2.5"
+      style={{
+        borderColor: palette.border,
+        background: palette.bg,
+        boxShadow: `0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 24px -16px ${palette.glow}`,
+      }}
     >
-      <div className="text-[10px] font-medium uppercase tracking-wide text-[var(--nuvia-text-secondary)]">
+      <div className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--nuvia-text-secondary)]">
         {label}
       </div>
       <div
-        className="mt-0.5 flex items-center gap-1 truncate text-lg font-semibold tabular-nums"
-        style={{ color: palette.value }}
+        className="mt-0.5 flex items-baseline gap-1.5 truncate text-[22px] font-bold leading-tight tabular-nums"
+        style={{ color: palette.value, textShadow: `0 0 24px ${palette.glow}` }}
       >
-        {icon}
+        {icon && <span className="translate-y-[-2px] opacity-90">{icon}</span>}
         <span className="truncate">{value}</span>
       </div>
     </div>
   );
 }
+
+// Alerta inteligente compacta — clickeable opcional.
+function AlertaMini({
+  tone,
+  icon,
+  label,
+  value,
+  hint,
+  active,
+  onClick,
+}: {
+  tone: "danger" | "warning" | "success";
+  icon: ReactNode;
+  label: string;
+  value: number;
+  hint: string;
+  active?: boolean;
+  onClick?: () => void;
+}) {
+  const color =
+    tone === "danger" ? "var(--nuvia-danger)" : tone === "warning" ? "var(--nuvia-warning)" : "var(--nuvia-accent-green)";
+  const Tag = (onClick ? "button" : "div") as "button" | "div";
+  return (
+    <Tag
+      type={onClick ? "button" : undefined}
+      onClick={onClick}
+      className={`flex items-center gap-2.5 rounded-xl border px-3 py-2 text-left transition ${onClick ? "cursor-pointer hover:brightness-110" : ""}`}
+      style={{
+        borderColor: active
+          ? color
+          : `color-mix(in oklab, ${color} 30%, transparent)`,
+        background: `linear-gradient(135deg, color-mix(in oklab, ${color} ${active ? 16 : 9}%, transparent), color-mix(in oklab, ${color} 3%, transparent))`,
+      }}
+    >
+      <span
+        className="grid h-7 w-7 shrink-0 place-items-center rounded-lg"
+        style={{ background: `color-mix(in oklab, ${color} 22%, transparent)`, color }}
+      >
+        {icon}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-[15px] font-bold tabular-nums" style={{ color }}>
+            {value}
+          </span>
+          <span className="text-xs font-semibold text-[var(--nuvia-text-primary)]">{label}</span>
+        </div>
+        <div className="truncate text-[10px] text-[var(--nuvia-text-secondary)]">{hint}</div>
+      </div>
+    </Tag>
+  );
+}
+
 
 
