@@ -567,29 +567,29 @@ function DetalleCuentaCobro() {
       </NCard>
 
       <NCard variant="elevated" padding="none" className="mb-4 overflow-hidden">
-        <div className="border-b border-[#E3E7EE] px-4 py-3 text-sm font-semibold text-[#0A1226]">
+        <div className="border-b px-4 py-3 text-sm font-semibold" style={{ borderColor: "var(--nuvia-border)", color: "var(--nuvia-text-primary)" }}>
           Comisiones incluidas ({items.length})
         </div>
         <table className="w-full text-sm">
-          <thead className="bg-[#F7F9FB] text-[11px] uppercase tracking-wide text-[#242424]/60">
+          <thead className="text-[11px] uppercase tracking-wide" style={{ background: "rgba(255,255,255,0.03)" }}>
             <tr>
-              <th className="px-4 py-2 text-left">Cliente</th>
-              <th className="px-4 py-2 text-left">Banco</th>
-              <th className="px-4 py-2 text-right">Base</th>
-              <th className="px-4 py-2 text-right">%</th>
-              <th className="px-4 py-2 text-right">Valor</th>
+              <th className="px-4 py-2 text-left" style={{ color: "var(--nuvia-text-secondary)" }}>Cliente</th>
+              <th className="px-4 py-2 text-left" style={{ color: "var(--nuvia-text-secondary)" }}>Banco</th>
+              <th className="px-4 py-2 text-right" style={{ color: "var(--nuvia-text-secondary)" }}>Base</th>
+              <th className="px-4 py-2 text-right" style={{ color: "var(--nuvia-text-secondary)" }}>%</th>
+              <th className="px-4 py-2 text-right" style={{ color: "var(--nuvia-text-secondary)" }}>Valor</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#E3E7EE]">
+          <tbody>
             {items.map((it) => {
               const exp = expedientes.get(it.expediente_id);
               return (
-                <tr key={it.id}>
-                  <td className="px-4 py-2 text-[#0A1226]">{exp?.cliente ?? "—"}</td>
-                  <td className="px-4 py-2 text-[#242424]/70">{exp?.banco ?? "—"}</td>
-                  <td className="px-4 py-2 text-right">{formatCOP(Number(it.base))}</td>
-                  <td className="px-4 py-2 text-right">{Number(it.porcentaje).toFixed(2)}%</td>
-                  <td className="px-4 py-2 text-right font-semibold text-[#1F7A45]">
+                <tr key={it.id} style={{ borderTop: "1px solid var(--nuvia-border)" }}>
+                  <td className="px-4 py-2" style={{ color: "var(--nuvia-text-primary)" }}>{exp?.cliente ?? "—"}</td>
+                  <td className="px-4 py-2" style={{ color: "var(--nuvia-text-secondary)" }}>{exp?.banco ?? "—"}</td>
+                  <td className="px-4 py-2 text-right" style={{ color: "var(--nuvia-text-primary)" }}>{formatCOP(Number(it.base))}</td>
+                  <td className="px-4 py-2 text-right" style={{ color: "var(--nuvia-text-primary)" }}>{Number(it.porcentaje).toFixed(2)}%</td>
+                  <td className="px-4 py-2 text-right font-semibold" style={{ color: "var(--nuvia-accent-green)" }}>
                     {formatCOP(Number(it.valor))}
                   </td>
                 </tr>
@@ -600,16 +600,16 @@ function DetalleCuentaCobro() {
       </NCard>
 
       <NCard variant="elevated" padding="none" className="overflow-hidden">
-        <div className="border-b border-[#E3E7EE] px-4 py-3 text-sm font-semibold text-[#0A1226]">Historial</div>
+        <div className="border-b px-4 py-3 text-sm font-semibold" style={{ borderColor: "var(--nuvia-border)", color: "var(--nuvia-text-primary)" }}>Historial</div>
         {historial.length === 0 ? (
-          <div className="p-6 text-center text-sm text-[#242424]/60">Sin movimientos.</div>
+          <div className="p-6 text-center text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>Sin movimientos.</div>
         ) : (
-          <ul className="divide-y divide-[#E3E7EE]">
+          <ul>
             {historial.map((h) => (
-              <li key={h.id} className="px-4 py-2.5">
-                <div className="text-[13px] text-[#0A1226]">{h.accion.replace(/_/g, " ")}</div>
-                {h.observacion && <div className="text-[12px] text-[#242424]/60">{h.observacion}</div>}
-                <div className="text-[11px] text-[#242424]/50">
+              <li key={h.id} className="px-4 py-2.5" style={{ borderTop: "1px solid var(--nuvia-border)" }}>
+                <div className="text-[13px]" style={{ color: "var(--nuvia-text-primary)" }}>{h.accion.replace(/_/g, " ")}</div>
+                {h.observacion && <div className="text-[12px]" style={{ color: "var(--nuvia-text-secondary)" }}>{h.observacion}</div>}
+                <div className="text-[11px]" style={{ color: "var(--nuvia-text-secondary)" }}>
                   {new Date(h.created_at).toLocaleString("es-CO")}
                 </div>
               </li>
