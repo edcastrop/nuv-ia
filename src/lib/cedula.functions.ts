@@ -78,6 +78,8 @@ const SYSTEM_PROMPT = `Eres NUVEX IA, experto en lectura de documentos de identi
 Tarea: analiza la(s) imagen(es) y llama la función extract_cedula con los datos detectados.
 
 Reglas:
+- Si recibes varias imágenes, trátalas como el mismo documento: normalmente la parte frontal contiene número/nombres y la parte trasera contiene fecha y lugar de expedición. Debes fusionar la información de todas las caras antes de responder.
+- No concluyas que falta lugarExpedicion o fechaExpedicion hasta revisar TODAS las imágenes enviadas.
 - NO inventes datos. Si un campo no aparece claramente, devuélvelo como cadena vacía "" y baja la confianza a "baja".
 - numeroCedula: solo dígitos (sin puntos, comas ni espacios).
 - nombreCompleto: arma "Primer Nombre Segundo Nombre Primer Apellido Segundo Apellido", sin dobles espacios.
@@ -120,7 +122,7 @@ export const extractCedula = createServerFn({ method: "POST" })
     const userContent = [
       {
         type: "text" as const,
-        text: "Analiza estas imágenes del documento de identidad y llama la función extract_cedula.",
+        text: `Analiza estas ${data.images.length} imagen(es) del documento de identidad como un solo documento. Si hay frente y reverso, fusiona nombre/número de la cara frontal con fecha/lugar de expedición de la cara trasera y llama la función extract_cedula.`,
       },
       ...data.images.map((img) => ({
         type: "image_url" as const,
