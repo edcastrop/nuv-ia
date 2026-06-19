@@ -296,7 +296,9 @@ function CasoDetail() {
           <div id="validacion-identidad" className="scroll-mt-6">
             <ValidacionIdentidadBlock exp={exp} onChanged={reload} />
           </div>
-          <ValidacionRadicacionBlock expedienteId={exp.id} />
+          <div id="validacion-radicacion" className="scroll-mt-6">
+            <ValidacionRadicacionBlock expedienteId={exp.id} />
+          </div>
           <EntregaDocumentalBlock
             expedienteId={exp.id}
             onIrAFinanciero={() => {

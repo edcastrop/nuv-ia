@@ -24,7 +24,9 @@ export function SiguienteAccionPanel({ exp, onIrATab }: Props) {
   const { roles, loading } = useUserRole();
   const { user } = useAuth();
   if (loading) return null;
-  const effectiveRoles: AppRole[] = user?.id === exp.asesor_id ? ["licenciado"] : roles;
+  const effectiveRoles: AppRole[] = user?.id === exp.asesor_id
+    ? Array.from(new Set<AppRole>([...roles, "licenciado"]))
+    : roles;
   const accion = getSiguienteAccion(exp, effectiveRoles);
   if (!accion) return null;
 

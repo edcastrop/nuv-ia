@@ -337,7 +337,20 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
     };
   }
 
-  // 8) Etapa radicación / documentación → jurídica / operaciones
+  // 8) Documentación completa / radicación → operaciones registra el ID del banco.
+  if (["documentacion_completa", "radicacion_pendiente", "radicacion_preparada"].includes(ec) && canSeeContractGuide) {
+    return {
+      rol: "operaciones",
+      titulo: "Registra el ID de radicado del banco",
+      descripcion: "El checklist documental ya está listo. Registra el código de radicado entregado por el banco para avanzar el expediente.",
+      botonLabel: "Registrar radicado",
+      scrollToId: "validacion-radicacion",
+      tab: "tareas",
+      prioridad: "alta",
+    };
+  }
+
+  // 8.1) Etapa documentación aún no lista → jurídica / operaciones prepara documentos.
   if ((etapa === "documentacion_bancaria" || etapa === "radicacion") && canSeeContractGuide) {
     return {
       rol: "juridica",
@@ -346,6 +359,19 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
       botonLabel: "Ir a documentos",
       scrollToId: "documentos-juridicos",
       tab: "documentos",
+      prioridad: "alta",
+    };
+  }
+
+  // 8.2) Banco en estudio → rol responsable registra la respuesta oficial.
+  if (["radicado_banco", "en_estudio_banco"].includes(ec) && (canSeeFinanceGuide || has("apoderado") || has("director_juridico") || isSuper)) {
+    return {
+      rol: "director_financiero_qa",
+      titulo: "Registra la respuesta oficial del banco",
+      descripcion: "Cuando llegue la aprobación o condiciones del banco, carga la respuesta para continuar con aceptación, informe y cobro.",
+      botonLabel: "Registrar respuesta",
+      scrollToId: "resultado-bancario",
+      tab: "financiero",
       prioridad: "alta",
     };
   }
