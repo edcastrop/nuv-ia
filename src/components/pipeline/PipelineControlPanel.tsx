@@ -397,5 +397,226 @@ function MomentumChip({ value, label, accent }: { value: string; label: string; 
   );
 }
 
+// =============================================================
+// Sección "Ahorro acumulado" — por banco / analista / oficina.
+// =============================================================
+
+const RANGOS: { id: AhorroRango; label: string }[] = [
+  { id: "hoy", label: "Hoy" },
+  { id: "semana", label: "Semana" },
+  { id: "mes", label: "Mes" },
+  { id: "trimestre", label: "Trim." },
+  { id: "anio", label: "Año" },
+  { id: "todo", label: "Todo" },
+];
+
+type CorteId = "bancos" | "analistas" | "oficinas";
+
+function fmtAbreviado(v: number): string {
+  if (!Number.isFinite(v) || v === 0) return "$ 0";
+  const abs = Math.abs(v);
+  if (abs >= 1_000_000_000) return `$ ${(v / 1_000_000_000).toFixed(1)} MM`;
+  if (abs >= 1_000_000) return `$ ${(v / 1_000_000).toFixed(1)} M`;
+  if (abs >= 1_000) return `$ ${(v / 1_000).toFixed(0)}k`;
+  return `$ ${Math.round(v)}`;
+}
+
+function AhorroAcumuladoSection({
+  open,
+  fmtCOP,
+  onSelectBanco,
+  onSelectAnalista,
+  onClose,
+}: {
+  open: boolean;
+  fmtCOP: (n: number) => string;
+  onSelectBanco?: (banco: string) => void;
+  onSelectAnalista?: (analistaId: string) => void;
+  onClose: () => void;
+}) {
+  const [rango, setRango] = useState<AhorroRango>(() => {
+    if (typeof window === "undefined") return "mes";
+    return (localStorage.getItem("pipeline:ahorro-rango") as AhorroRango) || "mes";
+  });
+  const [corte, setCorte] = useState<CorteId>("bancos");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") localStorage.setItem("pipeline:ahorro-rango", rango);
+  }, [rango]);
+
+  const fetchAhorro = useServerFn(getAhorroAcumulado);
+
+  const { data, isLoading } = useQuery<AhorroAcumulado>({
+    queryKey: ["pipeline-ahorro", rango],
+    queryFn: () => fetchAhorro({ data: { rango } }),
+    enabled: open,
+    staleTime: 60_000,
+  });
+
+  const buckets: AhorroBucket[] = useMemo(() => {
+    if (!data) return [];
+    if (corte === "bancos") return data.bancos.slice(0, 8);
+    if (corte === "analistas") return data.analistas.slice(0, 8);
+    return data.oficinas.slice(0, 8);
+  }, [data, corte]);
+
+  const handleClick = (b: AhorroBucket) => {
+    if (corte === "bancos" && onSelectBanco) {
+      onSelectBanco(b.id);
+      onClose();
+    } else if (corte === "analistas" && onSelectAnalista) {
+      onSelectAnalista(b.id);
+      onClose();
+    }
+  };
+
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between">
+        <SectionLabel className="mb-0">
+          <span className="inline-flex items-center gap-1.5">
+            <PiggyBank className="h-3 w-3 text-[var(--nuvia-accent-green)]" /> Ahorro acumulado
+          </span>
+        </SectionLabel>
+      </div>
+
+      {/* Selector de rango */}
+      <div className="mb-2 flex flex-wrap gap-1">
+        {RANGOS.map((r) => (
+          <button
+            key={r.id}
+            type="button"
+            onClick={() => setRango(r.id)}
+            className="rounded-md border px-1.5 py-0.5 text-[10px] font-semibold transition"
+            style={{
+              borderColor: rango === r.id ? "var(--nuvia-accent-green)" : "var(--nuvia-border)",
+              background:
+                rango === r.id
+                  ? "color-mix(in oklab, var(--nuvia-accent-green) 14%, transparent)"
+                  : "rgba(255,255,255,0.02)",
+              color:
+                rango === r.id ? "var(--nuvia-accent-green)" : "var(--nuvia-text-secondary)",
+            }}
+          >
+            {r.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Total */}
+      <div
+        className="rounded-xl border p-3"
+        style={{
+          borderColor: "color-mix(in oklab, var(--nuvia-accent-green) 30%, transparent)",
+          background:
+            "linear-gradient(135deg, color-mix(in oklab, var(--nuvia-accent-green) 10%, transparent), transparent)",
+        }}
+      >
+        <div className="text-[10px] uppercase tracking-wider text-[var(--nuvia-text-secondary)]">
+          Total generado
+        </div>
+        <div
+          className="mt-0.5 text-2xl font-bold tabular-nums leading-none text-[var(--nuvia-accent-green)]"
+          style={{
+            textShadow:
+              "0 0 24px color-mix(in oklab, var(--nuvia-accent-green) 40%, transparent)",
+          }}
+        >
+          {isLoading ? "…" : fmtCOP(data?.total ?? 0)}
+        </div>
+        <div className="mt-1 text-[11px] text-[var(--nuvia-text-secondary)]">
+          {isLoading ? " " : `${data?.casos ?? 0} casos · cerrados`}
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="mt-2 flex gap-1">
+        {(
+          [
+            { id: "bancos", label: "Bancos" },
+            { id: "analistas", label: "Analistas" },
+            { id: "oficinas", label: "Oficinas" },
+          ] as { id: CorteId; label: string }[]
+        ).map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => setCorte(t.id)}
+            className="flex-1 rounded-md border px-2 py-1 text-[10px] font-semibold transition"
+            style={{
+              borderColor: corte === t.id ? "var(--nuvia-accent-blue)" : "var(--nuvia-border)",
+              background:
+                corte === t.id
+                  ? "color-mix(in oklab, var(--nuvia-accent-blue) 14%, transparent)"
+                  : "rgba(255,255,255,0.02)",
+              color:
+                corte === t.id ? "var(--nuvia-text-primary)" : "var(--nuvia-text-secondary)",
+            }}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Desglose */}
+      <div className="mt-2 space-y-1">
+        {isLoading && (
+          <div className="rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.02)] px-3 py-2 text-[11px] text-[var(--nuvia-text-secondary)]">
+            Cargando…
+          </div>
+        )}
+        {!isLoading && buckets.length === 0 && (
+          <div className="rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.02)] px-3 py-2 text-[11px] text-[var(--nuvia-text-secondary)]">
+            Sin cierres en este rango.
+          </div>
+        )}
+        {!isLoading &&
+          buckets.map((b) => {
+            const clickable =
+              (corte === "bancos" && !!onSelectBanco) ||
+              (corte === "analistas" && !!onSelectAnalista);
+            const pct =
+              data && data.total > 0 ? Math.round((b.total / data.total) * 100) : 0;
+            return (
+              <button
+                key={b.id}
+                type="button"
+                onClick={() => handleClick(b)}
+                disabled={!clickable}
+                className={`group relative w-full overflow-hidden rounded-lg border px-2.5 py-1.5 text-left transition ${
+                  clickable ? "cursor-pointer hover:border-[var(--nuvia-accent-blue)]" : "cursor-default"
+                }`}
+                style={{
+                  borderColor: "var(--nuvia-border)",
+                  background: "rgba(255,255,255,0.025)",
+                }}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0 flex-1 truncate text-[11px] font-semibold text-[var(--nuvia-text-primary)]">
+                    {b.nombre}
+                  </div>
+                  <div className="flex shrink-0 items-baseline gap-1.5 tabular-nums">
+                    <span className="text-xs font-bold text-[var(--nuvia-accent-green)]">
+                      {fmtAbreviado(b.total)}
+                    </span>
+                    <span className="text-[10px] text-[var(--nuvia-text-secondary)]">{b.casos}</span>
+                  </div>
+                </div>
+                <div
+                  className="absolute bottom-0 left-0 h-[2px]"
+                  style={{
+                    width: `${pct}%`,
+                    background: "var(--nuvia-accent-green)",
+                    opacity: 0.6,
+                  }}
+                />
+              </button>
+            );
+          })}
+      </div>
+    </div>
+  );
+}
+
 // Re-export para evitar warnings de imports sin usar en algunos bundlers
 export { ArrowRight };
