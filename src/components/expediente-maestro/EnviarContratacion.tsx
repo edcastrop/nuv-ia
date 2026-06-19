@@ -1,12 +1,14 @@
 // Modal "Enviar a Contratación": valida pre-requisitos, deja editar destinatarios,
-// genera Poder + Datos Contrato (PDF y Word) en memoria y dispara el envío.
+// genera Poder + Datos Contrato (Word) en memoria, adjunta cédula + extracto del
+// cliente desde expediente_soportes, y dispara el envío.
 
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Send, X, Plus, Trash2, CheckCircle2, AlertTriangle, Loader2, Mail } from "lucide-react";
 import { NUVEX } from "@/components/nuvex/constants";
 import type { LegalDoc } from "@/lib/legalDocs";
-import { legalDocToPDFBlob, legalDocToDOCXBlob } from "@/lib/legalDocsExport";
+import { legalDocToDOCXBlob } from "@/lib/legalDocsExport";
+import { supabase } from "@/integrations/supabase/client";
 import {
   listDestinatarios, addDestinatario, deleteDestinatario, setDestinatarioActivo,
   type DestinatarioContratacion,
@@ -14,6 +16,64 @@ import {
 import { enviarContratacion } from "@/lib/contratacion.functions";
 import { cambiarEstadoConValidacion } from "@/lib/pipelineTransiciones";
 import { evaluarQaGuard } from "@/lib/qaGuard";
+
+interface SoporteAdjunto {
+  filename: string;
+  contentType: string;
+  blob: Blob;
+  label: string; // "Cédula del titular", "Extracto bancario", etc.
+}
+
+const SOPORTE_LABELS: Record<string, string> = {
+  cedula_titular: "Cédula del titular",
+  extracto: "Extracto bancario",
+};
+
+function labelSoporte(categoria: string, subcategoria: string): string {
+  if (SOPORTE_LABELS[subcategoria]) return SOPORTE_LABELS[subcategoria];
+  if (subcategoria.startsWith("cedula_cotitular")) {
+    const n = subcategoria.replace("cedula_cotitular_", "");
+    return `Cédula cotitular ${n}`;
+  }
+  if (categoria === "identidad") return "Documento de identidad";
+  if (categoria === "extracto_banco") return "Extracto bancario";
+  return subcategoria || categoria;
+}
+
+async function fetchSoportesCliente(expedienteId: string): Promise<SoporteAdjunto[]> {
+  const { data, error } = await supabase
+    .from("expediente_soportes" as never)
+    .select("archivo_nombre, archivo_path, mime_type, categoria, subcategoria, created_at")
+    .eq("expediente_id", expedienteId)
+    .in("categoria", ["identidad", "extracto_banco"])
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(`No se pudieron leer soportes del cliente: ${error.message}`);
+  const rows = (data ?? []) as unknown as Array<{
+    archivo_nombre: string; archivo_path: string; mime_type: string | null;
+    categoria: string; subcategoria: string;
+  }>;
+  const adjuntos: SoporteAdjunto[] = [];
+  for (const r of rows) {
+    const { data: signed, error: sErr } = await supabase.storage
+      .from("soportes-banco")
+      .createSignedUrl(r.archivo_path, 300);
+    if (sErr || !signed?.signedUrl) continue;
+    try {
+      const resp = await fetch(signed.signedUrl);
+      if (!resp.ok) continue;
+      const blob = await resp.blob();
+      adjuntos.push({
+        filename: r.archivo_nombre || r.archivo_path.split("/").pop() || "soporte",
+        contentType: r.mime_type || blob.type || "application/octet-stream",
+        blob,
+        label: labelSoporte(r.categoria, r.subcategoria),
+      });
+    } catch (e) {
+      console.warn("[Contratacion] no se pudo descargar soporte:", r.archivo_path, e);
+    }
+  }
+  return adjuntos;
+}
 
 export interface ContratacionContext {
   expedienteId: string;
