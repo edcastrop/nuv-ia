@@ -123,8 +123,30 @@ export function ClientFields({
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <TextField label="Nombre completo" value={data.nombre} onChange={(v) => set("nombre", v)} />
-        <TextField label="Número de cédula" value={data.cedula} onChange={(v) => set("cedula", v)} />
+        <TextField
+          label="Nombre completo"
+          value={data.nombre}
+          onChange={(v) => onChange({
+            ...data,
+            nombre: v,
+            informacionJuridica: {
+              ...(data.informacionJuridica ?? {}),
+              titular: { ...((data.informacionJuridica?.titular as Record<string, unknown> | undefined) ?? {}), nombre: v },
+            },
+          })}
+        />
+        <TextField
+          label="Número de cédula"
+          value={data.cedula}
+          onChange={(v) => onChange({
+            ...data,
+            cedula: v,
+            informacionJuridica: {
+              ...(data.informacionJuridica ?? {}),
+              titular: { ...((data.informacionJuridica?.titular as Record<string, unknown> | undefined) ?? {}), cedula: v },
+            },
+          })}
+        />
 
         <div>
           <label className="block text-xs font-medium mb-1" style={{ color: "rgba(225,232,248,0.65)" }}>
@@ -150,13 +172,17 @@ export function ClientFields({
                 const dep =
                   data.lugarExpedicionDepartamento ||
                   departamentoDeMunicipio(v);
+                const lugar = [data.lugarExpedicionMunicipio, v, dep].filter(Boolean).join(", ");
                 onChange({
                   ...data,
                   lugarExpedicionDepartamento: dep,
                   lugarExpedicionCiudad: v,
-                  lugarExpedicionCedula: [data.lugarExpedicionMunicipio, v, dep]
-                    .filter(Boolean)
-                    .join(", "),
+                  lugarExpedicionCedula: lugar,
+                  expedidaEn: lugar,
+                  informacionJuridica: {
+                    ...(data.informacionJuridica ?? {}),
+                    titular: { ...((data.informacionJuridica?.titular as Record<string, unknown> | undefined) ?? {}), expedidaEn: lugar },
+                  },
                 });
               }}
               placeholder="Ciudad…"
@@ -168,13 +194,17 @@ export function ClientFields({
                 const dep =
                   data.lugarExpedicionDepartamento ||
                   departamentoDeMunicipio(v);
+                const lugar = [v, data.lugarExpedicionCiudad, dep].filter(Boolean).join(", ");
                 onChange({
                   ...data,
                   lugarExpedicionDepartamento: dep,
                   lugarExpedicionMunicipio: v,
-                  lugarExpedicionCedula: [v, data.lugarExpedicionCiudad, dep]
-                    .filter(Boolean)
-                    .join(", "),
+                  lugarExpedicionCedula: lugar,
+                  expedidaEn: lugar,
+                  informacionJuridica: {
+                    ...(data.informacionJuridica ?? {}),
+                    titular: { ...((data.informacionJuridica?.titular as Record<string, unknown> | undefined) ?? {}), expedidaEn: lugar },
+                  },
                 });
               }}
               placeholder="Municipio…"
