@@ -2,7 +2,7 @@
 // P15 — Filtros (búsqueda, banco, solo estancados).
 // P16 — Filtros persistidos en URL via search params (compartibles).
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
