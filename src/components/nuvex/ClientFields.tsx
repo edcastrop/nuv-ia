@@ -68,15 +68,47 @@ export function ClientFields({
     onChange({ ...data, [k]: v });
 
   const handleCedulaAI = (p: ClientCedulaPayload) => {
+    const nombre = p.nombre || data.nombre;
+    const cedula = p.cedula || data.cedula;
+    const expedidaEn = p.lugarExpedicion || data.lugarExpedicionCedula || "";
+    const fechaExpedicion = p.fechaExpedicion || data.fechaExpedicionCedula || "";
+    const intervinientes = data.intervinientes?.length
+      ? data.intervinientes.map((it, idx) => idx === 0 ? {
+          ...it,
+          nombreCompleto: nombre || it.nombreCompleto,
+          cedula: cedula || it.cedula,
+          lugarExpedicionCedula: expedidaEn || it.lugarExpedicionCedula,
+        } : it)
+      : [{ rol: "Titular" as const, nombreCompleto: nombre, cedula, lugarExpedicionCedula: expedidaEn, direccion: data.direccion || "" }];
     onChange({
       ...data,
-      nombre: p.nombre || data.nombre,
-      cedula: p.cedula || data.cedula,
-      lugarExpedicionCedula: p.lugarExpedicion || data.lugarExpedicionCedula,
+      nombre,
+      cedula,
+      lugarExpedicionCedula: expedidaEn,
+      expedidaEn,
       lugarExpedicionDepartamento: p.lugarExpedicionDepartamento || data.lugarExpedicionDepartamento,
       lugarExpedicionCiudad: p.lugarExpedicionCiudad || data.lugarExpedicionCiudad,
       lugarExpedicionMunicipio: p.lugarExpedicionMunicipio || data.lugarExpedicionMunicipio,
-      fechaExpedicionCedula: p.fechaExpedicion || data.fechaExpedicionCedula,
+      fechaExpedicionCedula: fechaExpedicion,
+      fechaExpedicion,
+      tipoDocumento: "CC",
+      intervinientes,
+      informacionJuridica: {
+        ...((data as unknown as { informacionJuridica?: Record<string, unknown> }).informacionJuridica ?? {}),
+        titular: {
+          ...(((data as unknown as { informacionJuridica?: { titular?: Record<string, unknown> } }).informacionJuridica?.titular) ?? {}),
+          nombre,
+          cedula,
+          tipoDocumento: "CC",
+          expedidaEn,
+          fechaExpedicion,
+          telefono: data.celular || "",
+          email: data.correo || "",
+          direccion: data.direccion || "",
+          ciudad: data.ciudad || data.municipio || "",
+          departamento: data.departamento || "",
+        },
+      },
     });
   };
 
