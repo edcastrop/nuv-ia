@@ -117,7 +117,7 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
             </div>
             <h3 className="text-lg font-semibold text-white">Control contractual NUVEX</h3>
             <p className="text-xs text-[var(--nuvia-text-secondary)] mt-0.5">
-              Contratación debe aprobar los datos antes de generar cualquier documento jurídico.
+              El analista confirma los datos y los envía a Contratación junto con la cédula y el extracto. Contratación los consume sin un paso adicional de aprobación.
             </p>
           </div>
         </div>
