@@ -450,7 +450,7 @@ function SoportesAdjuntos({ exp }: { exp: Expediente }) {
 
     // 2) Fallback: extracto persistido en cliente_data.extractoArchivoPath
     //    (camino histórico previo a registrarlo en expediente_soportes).
-    const cd = (exp.cliente_data ?? {}) as Record<string, unknown>;
+    const cd = (exp.cliente_data ?? {}) as unknown as Record<string, unknown>;
     const extractoPath = typeof cd.extractoArchivoPath === "string" ? cd.extractoArchivoPath : "";
     if (extractoPath && !rows.some((r) => r.archivo_path === extractoPath)) {
       rows.push({
