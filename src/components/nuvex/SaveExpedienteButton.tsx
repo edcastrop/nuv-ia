@@ -110,7 +110,6 @@ export function SaveExpedienteButton({
 
   const buttonLabel = (() => {
     if (saving) return "Enviando…";
-    if (fromSimulador) return "Crear expediente";
     if (expedienteId && !enviarAuditoriaManual) return "Actualizar expediente";
     if (autoAprobable) {
       return expedienteId
@@ -127,6 +126,7 @@ export function SaveExpedienteButton({
         ? "Actualizar y enviar a auditoría QA (revisión obligatoria)"
         : "Crear y enviar a auditoría QA (revisión obligatoria)";
     }
+    if (fromSimulador) return "Crear expediente";
     return expedienteId
       ? "Actualizar y enviar a auditoría QA"
       : "Crear expediente y enviar a auditoría QA";
