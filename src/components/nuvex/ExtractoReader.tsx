@@ -558,7 +558,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
         throw imageErr;
       }
     }
-    if (f.type.startsWith("image/")) {
+    if (f.type.startsWith("image/") || /\.(png|jpe?g|webp|heic|heif)$/i.test(lowerName)) {
       const url = await fileToDataUrl(f);
       return { images: [{ mime: f.type, dataUrl: url }], rawText: "" };
     }
@@ -567,7 +567,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       return { images: imgs, rawText: "" };
     }
     throw new Error(
-      "Formato no soportado. Sube un PDF, imagen (JPG/PNG) o un ZIP con esos archivos.",
+      "Formato no soportado. Sube un PDF, imagen (JPG/PNG/WebP/HEIC) o un ZIP con esos archivos.",
     );
   };
 
