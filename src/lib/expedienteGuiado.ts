@@ -364,12 +364,14 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
   }
 
   // 10) Asesor / licenciado con simulación lista → debe enviar a Contratación, no volver a simular.
+  // Esta regla va ANTES del fallback de lead/proyección y se evalúa con señales redundantes
+  // (estado, propuesta, QA y snapshot) para evitar que un rol de analista vea una guía atrasada.
   if (proyeccionListaParaEnviar(exp, ec) && canSeeAnalystGuide) {
     return {
       rol: "licenciado",
       titulo: "Envía el caso a Contratación",
       descripcion:
-        "La simulación y la propuesta ya están listas. Usa el envío del módulo financiero; si NUVIA la aprueba, pasa directo a Contratación.",
+        "La simulación ya fue generada y NUVIA tiene una propuesta aprobable. Envíala desde el módulo financiero para pasar el caso a Contratación.",
       botonLabel: "Enviar a Contratación",
       scrollToId: "simulador-financiero-qa",
       tab: "financiero",
@@ -381,7 +383,7 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
   if ((etapa === "lead" || etapa === "proyeccion") && canSeeAnalystGuide) {
     return {
       rol: "asesor",
-      titulo: "Avanza con la proyección financiera",
+      titulo: "Completa la simulación financiera",
       descripcion:
         "Completa la simulación. Si NUVIA la aprueba, pasa directo a Contratación; solo se enruta a auditoría QA si NUVIA detecta inconsistencias.",
       botonLabel: "Ir a financiero",
@@ -661,11 +663,36 @@ function tieneCedulaDatos(exp: Expediente): boolean {
 }
 function tienePropuesta(exp: Expediente): boolean {
   const p = (exp as unknown as { propuesta_data?: Record<string, unknown> }).propuesta_data ?? {};
-  return Boolean(p && Number(p.nuevaCuota ?? 0) > 0);
+  if (!p || typeof p !== "object") return false;
+  const valoresNumericosClave = [
+    "nuevaCuota",
+    "nuevoPlazo",
+    "ahorroTotal",
+    "honorarios",
+    "totalProyectado",
+  ];
+  return valoresNumericosClave.some((k) => Number(p[k] ?? 0) > 0) || Object.keys(p).length >= 4;
 }
 
 function proyeccionListaParaEnviar(exp: Expediente, ec: string): boolean {
-  return ["simulacion_realizada", "simulado", "propuesta_presentada", "propuesta_enviada"].includes(ec) && tienePropuesta(exp);
+  const estadoLegacy = (exp as unknown as { estado?: string | null }).estado ?? "";
+  const qa = exp as unknown as {
+    qa_score?: number | string | null;
+    qa_dictamen?: string | null;
+    qa_categoria?: string | null;
+    aprobado_data?: unknown;
+  };
+  const estadoListoPorPipeline = ["simulado", "propuesta_presentada", "propuesta_enviada"].includes(ec);
+  const estadoConSimulacionRealizada = ec === "simulacion_realizada";
+  const qaAprobada =
+    qa.qa_dictamen === "aprobado" ||
+    qa.qa_categoria === "excelente" ||
+    qa.qa_categoria === "aprobado" ||
+    Number(qa.qa_score ?? 0) >= 80 ||
+    Boolean(qa.aprobado_data);
+
+  if (estadoListoPorPipeline) return true;
+  return estadoConSimulacionRealizada && (tienePropuesta(exp) || qaAprobada || estadoLegacy === "SIMULADO");
 }
 
 function ordenEstado(ec: string): number {
