@@ -357,4 +357,5 @@ export const defaultClient: ClientData = {
   departamento: "",
   ciudad: "",
   municipio: "",
+  perfil: {},
 };
