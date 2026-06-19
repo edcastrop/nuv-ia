@@ -242,9 +242,12 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
               className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
               style={{ backgroundColor: "var(--nuvia-accent-blue)" }}
             >
-              <Send size={13} /> Enviar a validación de Contratación
+              <Send size={13} /> Enviar a Contratación
             </button>
           </div>
+          <p className="mt-2 text-[10.5px] text-[var(--nuvia-text-secondary)]">
+            Al enviar, la cédula y el extracto adjuntos viajan con el expediente. Contratación no debe re-aprobar los datos.
+          </p>
         </div>
       )}
 
