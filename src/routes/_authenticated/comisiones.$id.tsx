@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Card } from "@/components/nuvex/ui";
+import { PageLayout, ExecutiveHero, NCard } from "@/components/nuvia";
 import { formatCOP } from "@/lib/format";
 import {
   getCuentaCobro,
@@ -21,7 +21,7 @@ import {
   programarPagoCuentaCobro,
 } from "@/lib/comisiones.functions";
 import { buildCuentaCobroPdf, downloadBlob } from "@/lib/cuentaCobroPdf";
-import { ArrowLeft, Send, CheckCircle2, XCircle, DollarSign, Download, Mail, RotateCcw, CalendarClock } from "lucide-react";
+import { ArrowLeft, Send, CheckCircle2, XCircle, DollarSign, Download, Mail, RotateCcw, CalendarClock, Receipt } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/comisiones/$id")({
   component: DetalleCuentaCobro,
