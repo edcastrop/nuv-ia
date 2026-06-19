@@ -80,15 +80,17 @@ export const getQuickPeekData = createServerFn({ method: "POST" })
     const credito = (exp?.credito_data ?? {}) as Record<string, unknown>;
     const propuesta = (exp?.propuesta_data ?? {}) as Record<string, unknown>;
     const aprobado = (exp?.aprobado_data ?? {}) as Record<string, unknown>;
+    const aprobadoCliente = (aprobado?.cliente ?? {}) as Record<string, unknown>;
     const cobertura = (credito.coberturaFresh ?? {}) as Record<string, unknown>;
 
     // Crédito actual: proyecciones_financieras > credito_data
     const saldoCapital = num(proy?.saldo_capital) || readN(credito, "saldo", "saldoCapital", "monto", "valorCredito", "valorDesembolsado");
     const cuotaActual = num(proy?.cuota_actual) || readN(credito, "cuota", "cuotaActual", "valorCuota", "cuotaPagadaCliente", "cuotaBaseSimulacion");
     const tasaActualPct = num(proy?.tea_pct) || readN(credito, "tea", "tasaEA", "tasa_ea", "tasa", "tea_pct") || null;
-    // Plazo actual mostrado = plazo aprobado por el banco.
+    // Plazo mostrado = Plazo inicial aprobado (meses) (aprobado_data.cliente.plazoInicial).
     // Para cuotas pendientes actuales se conserva el plazo original del crédito.
     const plazoAprobadoBanco =
+      readN(aprobadoCliente, "plazoInicial", "plazo_inicial", "plazoInicialAprobadoMeses") ||
       num(exp?.cuotas_aprobadas_banco) ||
       readN(aprobado, "plazoAprobado", "plazo_aprobado", "plazo", "plazoMeses", "plazo_meses");
     const plazoOriginalCredito =
