@@ -95,13 +95,14 @@ async function renderPdfToImages(file: File): Promise<{ mime: string; dataUrl: s
  * Lector de cédula simplificado para el simulador comercial.
  * Aplica los datos directamente al cliente (sin pasar por intervinientes).
  */
-export function ClientCedulaButton({ onApply }: Props) {
+export function ClientCedulaButton({ onApply, expedienteId }: Props) {
   const [open, setOpen] = useState(false);
   const [stage, setStage] = useState<Stage>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [parsed, setParsed] = useState<CedulaData | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const lastFilesRef = useRef<File[]>([]);
 
   const call = useServerFn(extractCedula);
 
@@ -109,6 +110,7 @@ export function ClientCedulaButton({ onApply }: Props) {
     setStage("idle");
     setErrorMsg(null);
     setParsed(null);
+    lastFilesRef.current = [];
     if (fileRef.current) fileRef.current.value = "";
   };
 
