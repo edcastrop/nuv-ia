@@ -609,7 +609,7 @@ function DetalleCuentaCobro() {
           </ul>
         )}
       </NCard>
-    </div>
+    </PageLayout>
   );
 }
 
