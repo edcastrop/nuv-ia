@@ -35,6 +35,13 @@ export interface ClientData {
   // Aditivos opcionales (persistidos en cliente_data jsonb)
   intervinientes?: Interviniente[];
   cobertura?: Cobertura;
+  /** Perfil opcional del cliente para personalizar las analogías del abono inteligente. */
+  perfil?: {
+    tieneHijos?: boolean;
+    tieneCarro?: boolean;
+    leGustaViajar?: boolean;
+    esEmprendedor?: boolean;
+  };
 }
 
 export function ClientFields({
