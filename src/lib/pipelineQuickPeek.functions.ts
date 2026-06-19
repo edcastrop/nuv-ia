@@ -79,17 +79,24 @@ export const getQuickPeekData = createServerFn({ method: "POST" })
 
     const credito = (exp?.credito_data ?? {}) as Record<string, unknown>;
     const propuesta = (exp?.propuesta_data ?? {}) as Record<string, unknown>;
+    const cobertura = (credito.coberturaFresh ?? {}) as Record<string, unknown>;
 
     // Crédito actual: proyecciones_financieras > credito_data
     const saldoCapital = num(proy?.saldo_capital) || readN(credito, "saldo", "saldoCapital", "monto", "valorCredito", "valorDesembolsado");
     const cuotaActual = num(proy?.cuota_actual) || readN(credito, "cuota", "cuotaActual", "valorCuota", "cuotaPagadaCliente", "cuotaBaseSimulacion");
     const tasaActualPct = num(proy?.tea_pct) || readN(credito, "tea", "tasaEA", "tasa_ea", "tasa", "tea_pct") || null;
+    // Plazo original / cuotas totales — viven en credito_data.coberturaFresh
     const cuotasTotales =
       num(proy?.cuotas_totales) ||
+      readN(cobertura, "cuotasTotales", "cuotas_totales", "plazo", "plazoMeses") ||
       readN(credito, "plazo", "plazoMeses", "plazo_meses", "cuotasTotales", "cuotas_totales");
-    const cuotasPagadas = num(proy?.cuotas_pagadas) || readN(credito, "cuotasPagadas", "cuotas_pagadas");
+    const cuotasPagadas =
+      num(proy?.cuotas_pagadas) ||
+      readN(cobertura, "cuotasPagadas", "cuotas_pagadas") ||
+      readN(credito, "cuotasPagadas", "cuotas_pagadas");
     const cuotasPendientes =
       num(proy?.cuotas_pendientes) ||
+      readN(cobertura, "cuotasPendientes", "cuotas_pendientes") ||
       (cuotasTotales > 0 ? Math.max(0, cuotasTotales - cuotasPagadas) : 0);
 
     // Propuesta — claves reales: nuevaCuota, nuevoPlazo, ahorroTotal
