@@ -247,7 +247,13 @@ export interface UVRInput {
   cuotaSinSeguros: number;
   seguros: number;
   teaCobrada: number; // %
-  variacionUVR: number; // % EA
+  variacionUVR: number; // % EA — escenario actual
+  /**
+   * % EA opcional para proyectar SOLO las propuestas (modo Excel).
+   * Si no se indica o es <=0, se usa la misma `variacionUVR` para propuestas
+   * (modo NUVIA conservador: misma hipótesis en ambos lados).
+   */
+  variacionUVRPropuestas?: number;
   cuotasPendientes: number;
   plazoInicial: number;
   porcentajeHonorarios: number;
