@@ -171,20 +171,73 @@ async function extractTextFromPdf(file: File, password?: string): Promise<string
   return pages.join("\n").slice(0, 200_000);
 }
 
-async function readAsDataUrl(file: File | Blob, forceMime?: string): Promise<string> {
+function inferMimeFromName(name?: string): string {
+  const lower = (name ?? "").toLowerCase();
+  if (lower.endsWith(".pdf")) return "application/pdf";
+  if (lower.endsWith(".png")) return "image/png";
+  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+  if (lower.endsWith(".webp")) return "image/webp";
+  if (lower.endsWith(".heic")) return "image/heic";
+  if (lower.endsWith(".heif")) return "image/heif";
+  if (lower.endsWith(".zip")) return "application/zip";
+  return "application/octet-stream";
+}
+
+function describeFileReadError(err: unknown): string {
+  const e = err as { name?: string; message?: string };
+  const msg = e?.message ?? "";
+  if (e?.name === "NotFoundError" || /requested file|directory could not be found/i.test(msg)) {
+    return "No pude acceder al archivo seleccionado. Si es una captura reciente o está en iCloud/Drive, ábrela o descárgala localmente y vuelve a seleccionarla.";
+  }
+  if (e?.name === "NotReadableError") {
+    return "El navegador no pudo leer el archivo. Ciérralo en otras aplicaciones y vuelve a subirlo.";
+  }
+  return err instanceof Error ? err.message : "No se pudo leer el archivo.";
+}
+
+async function readAsArrayBuffer(blob: Blob): Promise<ArrayBuffer> {
+  if (typeof blob.arrayBuffer === "function") {
+    try {
+      return await blob.arrayBuffer();
+    } catch {
+      // Safari/Chrome can fail here for provider-backed files; retry with FileReader.
+    }
+  }
   return new Promise((resolve, reject) => {
     const r = new FileReader();
-    r.onload = () => {
-      const result = String(r.result);
-      if (forceMime && result.startsWith("data:application/octet-stream")) {
-        resolve(result.replace("data:application/octet-stream", `data:${forceMime}`));
-      } else {
-        resolve(result);
-      }
-    };
+    r.onload = () => resolve(r.result as ArrayBuffer);
     r.onerror = () => reject(r.error || new Error("No se pudo leer el archivo."));
-    r.readAsDataURL(file);
+    r.readAsArrayBuffer(blob);
   });
+}
+
+function arrayBufferToDataUrl(buffer: ArrayBuffer, mime: string): string {
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return `data:${mime};base64,${btoa(binary)}`;
+}
+
+async function snapshotFile(file: File): Promise<File> {
+  try {
+    const buffer = await readAsArrayBuffer(file);
+    const type = file.type || inferMimeFromName(file.name);
+    return new File([buffer], file.name || "extracto", {
+      type,
+      lastModified: file.lastModified || Date.now(),
+    });
+  } catch (err) {
+    throw new Error(describeFileReadError(err));
+  }
+}
+
+async function readAsDataUrl(file: File | Blob, forceMime?: string): Promise<string> {
+  const mime = forceMime || file.type || "application/octet-stream";
+  const buffer = await readAsArrayBuffer(file);
+  return arrayBufferToDataUrl(buffer, mime);
 }
 
 async function fileToDataUrl(file: File | Blob, forceMime?: string): Promise<string> {
@@ -192,6 +245,10 @@ async function fileToDataUrl(file: File | Blob, forceMime?: string): Promise<str
   if (!targetMime?.startsWith("image/")) {
     return readAsDataUrl(file, forceMime);
   }
+
+  const memoryBlob = file instanceof File
+    ? await snapshotFile(file)
+    : new Blob([await readAsArrayBuffer(file)], { type: targetMime });
 
   // Try to downscale via canvas — handles HEIC/large images when supported by the browser.
   // If anything fails (decode error, tainted canvas, exotic format), fall back to
@@ -204,7 +261,7 @@ async function fileToDataUrl(file: File | Blob, forceMime?: string): Promise<str
 
     if (typeof createImageBitmap === "function") {
       try {
-        const bitmap = await createImageBitmap(file);
+        const bitmap = await createImageBitmap(memoryBlob);
         source = bitmap;
         width = bitmap.width;
         height = bitmap.height;
@@ -215,7 +272,7 @@ async function fileToDataUrl(file: File | Blob, forceMime?: string): Promise<str
     }
 
     if (!source) {
-      const objectUrl = URL.createObjectURL(file);
+      const objectUrl = URL.createObjectURL(memoryBlob);
       try {
         const img = new Image();
         img.decoding = "async";
@@ -250,7 +307,7 @@ async function fileToDataUrl(file: File | Blob, forceMime?: string): Promise<str
   } catch {
     // Fallback: send original bytes directly. The downstream model accepts
     // png/jpeg/webp/heic data URLs.
-    return readAsDataUrl(file, forceMime);
+    return readAsDataUrl(memoryBlob, forceMime || targetMime);
   }
 }
 
