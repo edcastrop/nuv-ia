@@ -20,6 +20,7 @@ import { AnalistaAvatar } from "@/components/pipeline/AnalistaAvatar";
 import { LeadQuickPeek } from "@/components/pipeline/LeadQuickPeek";
 import { LeadEditDrawer } from "@/components/pipeline/LeadEditDrawer";
 import { NuviaPipelinePanel, type PipelineCtx } from "@/components/pipeline/NuviaPipelinePanel";
+import { PipelineControlPanel } from "@/components/pipeline/PipelineControlPanel";
 
 const FASE_IDS = ["comercial", "operativa", "banco", "cobro", "fin"] as const;
 type FaseId = (typeof FASE_IDS)[number];
