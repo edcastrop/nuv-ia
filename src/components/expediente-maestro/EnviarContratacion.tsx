@@ -1,12 +1,14 @@
 // Modal "Enviar a Contratación": valida pre-requisitos, deja editar destinatarios,
-// genera Poder + Datos Contrato (PDF y Word) en memoria y dispara el envío.
+// genera Poder + Datos Contrato (Word) en memoria, adjunta cédula + extracto del
+// cliente desde expediente_soportes, y dispara el envío.
 
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Send, X, Plus, Trash2, CheckCircle2, AlertTriangle, Loader2, Mail } from "lucide-react";
 import { NUVEX } from "@/components/nuvex/constants";
 import type { LegalDoc } from "@/lib/legalDocs";
-import { legalDocToPDFBlob, legalDocToDOCXBlob } from "@/lib/legalDocsExport";
+import { legalDocToDOCXBlob } from "@/lib/legalDocsExport";
+import { supabase } from "@/integrations/supabase/client";
 import {
   listDestinatarios, addDestinatario, deleteDestinatario, setDestinatarioActivo,
   type DestinatarioContratacion,
@@ -14,6 +16,64 @@ import {
 import { enviarContratacion } from "@/lib/contratacion.functions";
 import { cambiarEstadoConValidacion } from "@/lib/pipelineTransiciones";
 import { evaluarQaGuard } from "@/lib/qaGuard";
+
+interface SoporteAdjunto {
+  filename: string;
+  contentType: string;
+  blob: Blob;
+  label: string; // "Cédula del titular", "Extracto bancario", etc.
+}
+
+const SOPORTE_LABELS: Record<string, string> = {
+  cedula_titular: "Cédula del titular",
+  extracto: "Extracto bancario",
+};
+
+function labelSoporte(categoria: string, subcategoria: string): string {
+  if (SOPORTE_LABELS[subcategoria]) return SOPORTE_LABELS[subcategoria];
+  if (subcategoria.startsWith("cedula_cotitular")) {
+    const n = subcategoria.replace("cedula_cotitular_", "");
+    return `Cédula cotitular ${n}`;
+  }
+  if (categoria === "identidad") return "Documento de identidad";
+  if (categoria === "extracto_banco") return "Extracto bancario";
+  return subcategoria || categoria;
+}
+
+async function fetchSoportesCliente(expedienteId: string): Promise<SoporteAdjunto[]> {
+  const { data, error } = await supabase
+    .from("expediente_soportes" as never)
+    .select("archivo_nombre, archivo_path, mime_type, categoria, subcategoria, created_at")
+    .eq("expediente_id", expedienteId)
+    .in("categoria", ["identidad", "extracto_banco"])
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(`No se pudieron leer soportes del cliente: ${error.message}`);
+  const rows = (data ?? []) as unknown as Array<{
+    archivo_nombre: string; archivo_path: string; mime_type: string | null;
+    categoria: string; subcategoria: string;
+  }>;
+  const adjuntos: SoporteAdjunto[] = [];
+  for (const r of rows) {
+    const { data: signed, error: sErr } = await supabase.storage
+      .from("soportes-banco")
+      .createSignedUrl(r.archivo_path, 300);
+    if (sErr || !signed?.signedUrl) continue;
+    try {
+      const resp = await fetch(signed.signedUrl);
+      if (!resp.ok) continue;
+      const blob = await resp.blob();
+      adjuntos.push({
+        filename: r.archivo_nombre || r.archivo_path.split("/").pop() || "soporte",
+        contentType: r.mime_type || blob.type || "application/octet-stream",
+        blob,
+        label: labelSoporte(r.categoria, r.subcategoria),
+      });
+    } catch (e) {
+      console.warn("[Contratacion] no se pudo descargar soporte:", r.archivo_path, e);
+    }
+  }
+  return adjuntos;
+}
 
 export interface ContratacionContext {
   expedienteId: string;
@@ -57,8 +117,9 @@ export function EnviarContratacionButton({ ctx, onSent }: Props) {
             </div>
             <div className="text-sm font-semibold text-[#242424]">Enviar expediente a contratación</div>
             <p className="text-xs text-[#242424]/60 mt-0.5">
-              Genera Poder y Datos para Contrato (PDF + Word) y los envía por correo.
+              Envía Poder y Ficha de Datos (Word) junto con la cédula y el extracto del cliente.
             </p>
+
           </div>
           <button
             onClick={() => setOpen(true)}
@@ -108,6 +169,8 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [soportes, setSoportes] = useState<SoporteAdjunto[]>([]);
+  const [loadingSoportes, setLoadingSoportes] = useState(true);
 
   const reload = async () => {
     setLoadingD(true);
@@ -123,6 +186,19 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
   };
   useEffect(() => { reload(); }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingSoportes(true);
+    fetchSoportesCliente(ctx.expedienteId)
+      .then((rows) => { if (!cancelled) setSoportes(rows); })
+      .catch((e) => { if (!cancelled) setError((e as Error).message); })
+      .finally(() => { if (!cancelled) setLoadingSoportes(false); });
+    return () => { cancelled = true; };
+  }, [ctx.expedienteId]);
+
+  const tieneCedula = soportes.some((s) => s.label.toLowerCase().startsWith("cédula") || s.label.toLowerCase().startsWith("documento de identidad"));
+  const tieneExtracto = soportes.some((s) => s.label.toLowerCase().startsWith("extracto"));
+
   const asunto = `${ctx.clienteNombre} - Ficha de contratación y poder${ctx.asesorNombre ? ` - ${ctx.asesorNombre}` : ""}`;
   const cuerpo = useMemo(() => {
     const saludo = `Estimado equipo de Contratación,`;
@@ -135,14 +211,17 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
       `• Asesor responsable: ${ctx.asesorNombre || "—"}`,
       `• Fecha de envío: ${new Date().toLocaleString("es-CO")}`,
     ].join("\n");
-    const adjuntos = [
+    const lineasAdjuntos = [
       `Documentos adjuntos:`,
-      `- Poder Especial (PDF y Word)`,
-      `- Ficha de Datos del Contrato (PDF y Word)`,
-    ].join("\n");
+      `- Poder Especial (Word)`,
+      `- Ficha de Datos del Contrato (Word)`,
+    ];
+    if (tieneCedula) lineasAdjuntos.push(`- Cédula del cliente`);
+    if (tieneExtracto) lineasAdjuntos.push(`- Extracto bancario del cliente`);
+    const adjuntos = lineasAdjuntos.join("\n");
     const cierre = `Quedamos atentos a cualquier observación o requerimiento adicional para avanzar con la radicación.\n\nCordialmente,\n${ctx.asesorNombre || "Equipo NUVEX"}\nNUVEX — Finanzas Inteligentes`;
     return [saludo, intro, detalle, adjuntos, cierre].join("\n\n");
-  }, [ctx]);
+  }, [ctx, tieneCedula, tieneExtracto]);
 
   const handleAdd = async () => {
     const v = newEmail.trim().toLowerCase();
@@ -177,17 +256,19 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
     if (!guard.ok) { setError(guard.reason); return; }
     setSending(true);
     try {
-      const [poderPdf, poderDocx, datosPdf, datosDocx] = await Promise.all([
-        Promise.resolve(legalDocToPDFBlob(ctx.poderDoc)),
+      const [poderDocx, datosDocx] = await Promise.all([
         legalDocToDOCXBlob(ctx.poderDoc),
-        Promise.resolve(legalDocToPDFBlob(ctx.datosDoc)),
         legalDocToDOCXBlob(ctx.datosDoc),
       ]);
-      const attachments = [
-        { blob: poderPdf, filename: `${ctx.poderDoc.filename}.pdf`, contentType: "application/pdf" },
+      // Re-leer soportes en el momento del envío para garantizar consistencia
+      // (por si se cargaron justo antes de enviar).
+      const soportesActuales = soportes.length > 0
+        ? soportes
+        : await fetchSoportesCliente(ctx.expedienteId);
+      const attachments: { blob: Blob; filename: string; contentType: string }[] = [
         { blob: poderDocx, filename: `${ctx.poderDoc.filename}.docx`, contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
-        { blob: datosPdf, filename: `${ctx.datosDoc.filename}.pdf`, contentType: "application/pdf" },
         { blob: datosDocx, filename: `${ctx.datosDoc.filename}.docx`, contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
+        ...soportesActuales.map((s) => ({ blob: s.blob, filename: s.filename, contentType: s.contentType })),
       ];
       const encoded = await Promise.all(attachments.map(async (a) => ({
         filename: a.filename,
@@ -223,12 +304,22 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
             <pre className="whitespace-pre-wrap font-sans text-[12px]">{cuerpo}</pre>
             <div className="font-semibold text-[#242424] mt-2 mb-1">Adjuntos</div>
             <ul className="list-disc pl-5">
-              <li>{ctx.poderDoc?.filename}.pdf</li>
               <li>{ctx.poderDoc?.filename}.docx</li>
-              <li>{ctx.datosDoc?.filename}.pdf</li>
               <li>{ctx.datosDoc?.filename}.docx</li>
+              {loadingSoportes ? (
+                <li className="text-[#242424]/50">Cargando soportes del cliente…</li>
+              ) : soportes.length === 0 ? (
+                <li className="text-[#B42318]">
+                  ⚠ No se encontró cédula ni extracto del cliente en soportes. Cárgalos antes de enviar.
+                </li>
+              ) : (
+                soportes.map((s, i) => (
+                  <li key={i}>{s.label} — {s.filename}</li>
+                ))
+              )}
             </ul>
           </div>
+
 
           <div>
             <div className="text-[11px] uppercase tracking-wider font-semibold text-[#242424]/70 mb-1">Destinatarios</div>
