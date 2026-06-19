@@ -259,6 +259,76 @@ export function ClientFields({
           />
         </div>
       </div>
+
+      {/* Perfil del cliente — para personalizar las analogías del abono inteligente */}
+      <PerfilClienteSection
+        value={data.perfil ?? {}}
+        onChange={(perfil) => onChange({ ...data, perfil })}
+      />
+    </div>
+  );
+}
+
+function PerfilClienteSection({
+  value,
+  onChange,
+}: {
+  value: NonNullable<ClientData["perfil"]>;
+  onChange: (next: NonNullable<ClientData["perfil"]>) => void;
+}) {
+  const toggle = (k: keyof NonNullable<ClientData["perfil"]>) =>
+    onChange({ ...value, [k]: !value[k] });
+
+  const items: Array<{ k: keyof NonNullable<ClientData["perfil"]>; label: string; emoji: string }> = [
+    { k: "tieneHijos", label: "Tiene hijos", emoji: "👨‍👩‍👧" },
+    { k: "tieneCarro", label: "Tiene carro", emoji: "🚗" },
+    { k: "leGustaViajar", label: "Le gusta viajar", emoji: "✈️" },
+    { k: "esEmprendedor", label: "Es emprendedor", emoji: "💼" },
+  ];
+
+  return (
+    <div
+      className="mt-4 rounded-xl border p-3"
+      style={{
+        background: "rgba(20,28,54,0.45)",
+        borderColor: "rgba(255,255,255,0.10)",
+      }}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <div
+            className="text-[10px] font-bold uppercase tracking-[0.16em]"
+            style={{ color: "#F6C453" }}
+          >
+            Perfil del cliente (opcional)
+          </div>
+          <p className="mt-0.5 text-[11px]" style={{ color: "rgba(230,236,255,0.6)" }}>
+            Marca lo que aplique. Lo usamos para humanizar las propuestas con analogías personalizadas.
+          </p>
+        </div>
+      </div>
+      <div className="mt-2.5 flex flex-wrap gap-2">
+        {items.map((it) => {
+          const active = !!value[it.k];
+          return (
+            <button
+              key={it.k}
+              type="button"
+              onClick={() => toggle(it.k)}
+              className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-semibold transition hover:scale-[1.03]"
+              style={{
+                background: active
+                  ? "linear-gradient(135deg, rgba(246,196,83,0.22), rgba(132,185,143,0.18))"
+                  : "rgba(20,28,54,0.55)",
+                color: active ? "#FFE7A0" : "rgba(230,236,255,0.7)",
+                borderColor: active ? "rgba(246,196,83,0.55)" : "rgba(255,255,255,0.14)",
+              }}
+            >
+              <span>{it.emoji}</span> {it.label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
