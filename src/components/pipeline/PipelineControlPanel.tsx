@@ -3,11 +3,8 @@
 // para que los leads (Kanban) sean los protagonistas.
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import {
   AlertTriangle,
-  ArrowRight,
   CheckCircle2,
   ChevronRight,
   Clock,
@@ -20,14 +17,24 @@ import {
   PiggyBank,
   X,
 } from "lucide-react";
-import {
-  getAhorroAcumulado,
-  type AhorroAcumulado,
-  type AhorroBucket,
-  type AhorroRango,
-} from "@/lib/pipelineAhorro.functions";
 
 export type ControlFase = { id: string; label: string; count: number };
+export type PipelineControlBucket = {
+  id: string;
+  nombre: string;
+  total: number;
+  ahorro: number;
+  casos: number;
+};
+export type PipelineControlBreakdown = {
+  total: number;
+  ahorro: number;
+  casos: number;
+  sinAnalista: number;
+  bancos: PipelineControlBucket[];
+  analistas: PipelineControlBucket[];
+  oficinas: PipelineControlBucket[];
+};
 
 export type PipelineControlProps = {
   total: number;
@@ -37,6 +44,7 @@ export type PipelineControlProps = {
   fases: ControlFase[];
   criticos: number;
   listos: number;
+  breakdown: PipelineControlBreakdown;
   soloStuck: boolean;
   onToggleStuck: () => void;
   fmtCOP: (n: number) => string;
@@ -68,7 +76,7 @@ export function PipelineControlPanel(props: PipelineControlProps) {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onOpenChange]);
 
-  const { total, estancados, promedio, honorarios, fases, criticos, listos, soloStuck, onToggleStuck, fmtCOP, onSelectBanco, onSelectAnalista } = props;
+  const { total, estancados, promedio, honorarios, fases, criticos, listos, breakdown, soloStuck, onToggleStuck, fmtCOP, onSelectBanco, onSelectAnalista } = props;
 
   const faseColors: Record<string, string> = {
     comercial: "var(--nuvia-accent-blue)",
@@ -86,7 +94,8 @@ export function PipelineControlPanel(props: PipelineControlProps) {
         <div
           aria-hidden
           onClick={() => onOpenChange(false)}
-          className="fixed inset-0 z-30 bg-black/30 backdrop-blur-[2px]"
+          className="fixed inset-0 z-[45] bg-black/30 backdrop-blur-[2px]"
+          style={{ zIndex: 45 }}
         />
       )}
 
@@ -94,10 +103,11 @@ export function PipelineControlPanel(props: PipelineControlProps) {
       {/* Drawer */}
       <aside
         aria-hidden={!open}
-        className={`fixed right-0 top-0 z-40 flex h-full w-full max-w-[380px] flex-col border-l transition-transform duration-300 ${
+        className={`fixed right-0 top-0 z-[60] flex h-full w-full max-w-[380px] flex-col border-l transition-transform duration-300 ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
         style={{
+          zIndex: 60,
           background: "linear-gradient(180deg, var(--nuvia-bg-secondary) 0%, var(--nuvia-bg-primary) 100%)",
           borderColor: "var(--nuvia-border)",
           boxShadow: open ? "-24px 0 48px -24px rgba(0,0,0,0.55)" : "none",
@@ -252,8 +262,8 @@ export function PipelineControlPanel(props: PipelineControlProps) {
 
           {/* Ahorro acumulado */}
           <AhorroAcumuladoSection
-            open={open}
             fmtCOP={fmtCOP}
+            breakdown={breakdown}
             onSelectBanco={onSelectBanco}
             onSelectAnalista={onSelectAnalista}
             onClose={() => onOpenChange(false)}
@@ -398,17 +408,8 @@ function MomentumChip({ value, label, accent }: { value: string; label: string; 
 }
 
 // =============================================================
-// Sección "Ahorro acumulado" — por banco / analista / oficina.
+// Sección "Sumatoria pipeline" — datos en vivo visibles en tablero.
 // =============================================================
-
-const RANGOS: { id: AhorroRango; label: string }[] = [
-  { id: "hoy", label: "Hoy" },
-  { id: "semana", label: "Semana" },
-  { id: "mes", label: "Mes" },
-  { id: "trimestre", label: "Trim." },
-  { id: "anio", label: "Año" },
-  { id: "todo", label: "Todo" },
-];
 
 type CorteId = "bancos" | "analistas" | "oficinas";
 
@@ -422,45 +423,27 @@ function fmtAbreviado(v: number): string {
 }
 
 function AhorroAcumuladoSection({
-  open,
   fmtCOP,
+  breakdown,
   onSelectBanco,
   onSelectAnalista,
   onClose,
 }: {
-  open: boolean;
   fmtCOP: (n: number) => string;
+  breakdown: PipelineControlBreakdown;
   onSelectBanco?: (banco: string) => void;
   onSelectAnalista?: (analistaId: string) => void;
   onClose: () => void;
 }) {
-  const [rango, setRango] = useState<AhorroRango>(() => {
-    if (typeof window === "undefined") return "mes";
-    return (localStorage.getItem("pipeline:ahorro-rango") as AhorroRango) || "mes";
-  });
   const [corte, setCorte] = useState<CorteId>("bancos");
 
-  useEffect(() => {
-    if (typeof window !== "undefined") localStorage.setItem("pipeline:ahorro-rango", rango);
-  }, [rango]);
+  const buckets = useMemo(() => {
+    if (corte === "bancos") return breakdown.bancos;
+    if (corte === "analistas") return breakdown.analistas;
+    return breakdown.oficinas;
+  }, [breakdown, corte]);
 
-  const fetchAhorro = useServerFn(getAhorroAcumulado);
-
-  const { data, isLoading } = useQuery<AhorroAcumulado>({
-    queryKey: ["pipeline-ahorro", rango],
-    queryFn: () => fetchAhorro({ data: { rango } }),
-    enabled: open,
-    staleTime: 60_000,
-  });
-
-  const buckets: AhorroBucket[] = useMemo(() => {
-    if (!data) return [];
-    if (corte === "bancos") return data.bancos.slice(0, 8);
-    if (corte === "analistas") return data.analistas.slice(0, 8);
-    return data.oficinas.slice(0, 8);
-  }, [data, corte]);
-
-  const handleClick = (b: AhorroBucket) => {
+  const handleClick = (b: PipelineControlBucket) => {
     if (corte === "bancos" && onSelectBanco) {
       onSelectBanco(b.id);
       onClose();
@@ -475,32 +458,9 @@ function AhorroAcumuladoSection({
       <div className="mb-2 flex items-center justify-between">
         <SectionLabel className="mb-0">
           <span className="inline-flex items-center gap-1.5">
-            <PiggyBank className="h-3 w-3 text-[var(--nuvia-accent-green)]" /> Ahorro acumulado
+            <PiggyBank className="h-3 w-3 text-[var(--nuvia-accent-green)]" /> Sumatoria pipeline
           </span>
         </SectionLabel>
-      </div>
-
-      {/* Selector de rango */}
-      <div className="mb-2 flex flex-wrap gap-1">
-        {RANGOS.map((r) => (
-          <button
-            key={r.id}
-            type="button"
-            onClick={() => setRango(r.id)}
-            className="rounded-md border px-1.5 py-0.5 text-[10px] font-semibold transition"
-            style={{
-              borderColor: rango === r.id ? "var(--nuvia-accent-green)" : "var(--nuvia-border)",
-              background:
-                rango === r.id
-                  ? "color-mix(in oklab, var(--nuvia-accent-green) 14%, transparent)"
-                  : "rgba(255,255,255,0.02)",
-              color:
-                rango === r.id ? "var(--nuvia-accent-green)" : "var(--nuvia-text-secondary)",
-            }}
-          >
-            {r.label}
-          </button>
-        ))}
       </div>
 
       {/* Total */}
@@ -513,7 +473,7 @@ function AhorroAcumuladoSection({
         }}
       >
         <div className="text-[10px] uppercase tracking-wider text-[var(--nuvia-text-secondary)]">
-          Total generado
+          Total visible · todos los analistas
         </div>
         <div
           className="mt-0.5 text-2xl font-bold tabular-nums leading-none text-[var(--nuvia-accent-green)]"
@@ -522,10 +482,10 @@ function AhorroAcumuladoSection({
               "0 0 24px color-mix(in oklab, var(--nuvia-accent-green) 40%, transparent)",
           }}
         >
-          {isLoading ? "…" : fmtCOP(data?.total ?? 0)}
+          {fmtCOP(breakdown.total)}
         </div>
         <div className="mt-1 text-[11px] text-[var(--nuvia-text-secondary)]">
-          {isLoading ? " " : `${data?.casos ?? 0} casos · cerrados`}
+          {`${breakdown.casos} casos · ahorro ${fmtAbreviado(breakdown.ahorro)}${breakdown.sinAnalista > 0 ? ` · ${breakdown.sinAnalista} sin analista` : ""}`}
         </div>
       </div>
 
@@ -560,23 +520,26 @@ function AhorroAcumuladoSection({
 
       {/* Desglose */}
       <div className="mt-2 space-y-1">
-        {isLoading && (
-          <div className="rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.02)] px-3 py-2 text-[11px] text-[var(--nuvia-text-secondary)]">
-            Cargando…
+        {corte === "analistas" && breakdown.casos > 0 && (
+          <div className="rounded-lg border px-2.5 py-1.5" style={{ borderColor: "color-mix(in oklab, var(--nuvia-accent-green) 35%, transparent)", background: "color-mix(in oklab, var(--nuvia-accent-green) 9%, transparent)" }}>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] font-bold text-[var(--nuvia-text-primary)]">Todos los analistas</span>
+              <span className="text-xs font-bold tabular-nums text-[var(--nuvia-accent-green)]">{fmtAbreviado(breakdown.total)}</span>
+            </div>
+            <div className="mt-0.5 text-[10px] text-[var(--nuvia-text-secondary)]">{breakdown.casos} casos · ahorro {fmtAbreviado(breakdown.ahorro)}</div>
           </div>
         )}
-        {!isLoading && buckets.length === 0 && (
+        {buckets.length === 0 && (
           <div className="rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.02)] px-3 py-2 text-[11px] text-[var(--nuvia-text-secondary)]">
-            Sin cierres en este rango.
+            Sin casos visibles en este corte.
           </div>
         )}
-        {!isLoading &&
-          buckets.map((b) => {
+        {buckets.map((b) => {
             const clickable =
               (corte === "bancos" && !!onSelectBanco) ||
               (corte === "analistas" && !!onSelectAnalista);
             const pct =
-              data && data.total > 0 ? Math.round((b.total / data.total) * 100) : 0;
+              breakdown.total > 0 ? Math.round((b.total / breakdown.total) * 100) : 0;
             return (
               <button
                 key={b.id}
@@ -602,6 +565,7 @@ function AhorroAcumuladoSection({
                     <span className="text-[10px] text-[var(--nuvia-text-secondary)]">{b.casos}</span>
                   </div>
                 </div>
+                <div className="mt-0.5 text-[10px] text-[var(--nuvia-text-secondary)]">Ahorro {fmtAbreviado(b.ahorro)}</div>
                 <div
                   className="absolute bottom-0 left-0 h-[2px]"
                   style={{
@@ -617,6 +581,3 @@ function AhorroAcumuladoSection({
     </div>
   );
 }
-
-// Re-export para evitar warnings de imports sin usar en algunos bundlers
-export { ArrowRight };

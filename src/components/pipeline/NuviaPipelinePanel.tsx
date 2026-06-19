@@ -127,8 +127,9 @@ export function NuviaPipelinePanel({ contexto }: { contexto: PipelineCtx }) {
 
   return (
     <aside
-      className="fixed right-0 top-[56px] z-40 flex h-[calc(100vh-56px)] w-[360px] flex-col border-l border-[var(--nuvia-border)] text-[var(--nuvia-text-primary)] shadow-2xl"
+      className="fixed right-0 top-[56px] z-30 flex h-[calc(100vh-56px)] w-[360px] flex-col border-l border-[var(--nuvia-border)] text-[var(--nuvia-text-primary)] shadow-2xl"
       style={{
+        zIndex: 30,
         background:
           "linear-gradient(180deg, var(--nuvia-bg-secondary) 0%, var(--nuvia-bg-primary) 100%)",
       }}
