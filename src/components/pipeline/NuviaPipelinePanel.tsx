@@ -1,7 +1,7 @@
 // Panel lateral derecho colapsable con NUVIA IA para el pipeline.
 // Muestra diagnóstico automático + chat libre con contexto del pipeline.
 import { useEffect, useRef, useState } from "react";
-import { Sparkles, ChevronRight, ChevronLeft, Send, Loader2, RefreshCw } from "lucide-react";
+import { Sparkles, ChevronRight, Send, Loader2, RefreshCw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 export type PipelineCtx = {
