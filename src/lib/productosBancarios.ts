@@ -34,7 +34,7 @@ export function parseProductoComercial(nombre?: string | null): ParsedProducto {
   const n = (nombre ?? "").toLowerCase();
   const esLeasing = /leasing(\s+habitacional)?|contrato\s+leasing/.test(n);
   const esUVR = /\buvr\b/.test(n);
-  const cobertura = /con\s+beneficio\s+de\s+cobertura/.test(n);
+  const cobertura = /con\s+beneficio\s+de\s+cobertura|con\s+cobertura/.test(n) && !/sin\s+beneficio\s+de\s+cobertura|sin\s+cobertura/.test(n);
   let submodalidadUVR: SubmodalidadUVR = null;
   if (esUVR) {
     if (/uvr\s+baja/.test(n)) submodalidadUVR = "baja";
@@ -80,8 +80,14 @@ export function buscarProductoComercial(
   },
 ): ProductoBancario | null {
   const { banco, esLeasing, esUVR, cobertura, submodalidadUVR } = filtros;
+  const normBanco = (value?: string | null) => {
+    const n = (value ?? "").toLowerCase();
+    if (/\bfna\b|fondo\s+nacional\s+del\s+ahorro/.test(n)) return "fna";
+    if (/colpatria|davibank/.test(n)) return "davibank";
+    return n.trim();
+  };
   const cand = productos.filter((p) => {
-    if (banco && p.banco.toLowerCase() !== banco.toLowerCase()) return false;
+    if (banco && normBanco(p.banco) !== normBanco(banco)) return false;
     if (typeof esLeasing === "boolean") {
       const isL = p.tipo_producto === "leasing_habitacional";
       if (isL !== esLeasing) return false;
