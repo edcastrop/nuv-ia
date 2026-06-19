@@ -73,6 +73,9 @@ export function ClientFields({
       nombre: p.nombre || data.nombre,
       cedula: p.cedula || data.cedula,
       lugarExpedicionCedula: p.lugarExpedicion || data.lugarExpedicionCedula,
+      lugarExpedicionDepartamento: p.lugarExpedicionDepartamento || data.lugarExpedicionDepartamento,
+      lugarExpedicionCiudad: p.lugarExpedicionCiudad || data.lugarExpedicionCiudad,
+      lugarExpedicionMunicipio: p.lugarExpedicionMunicipio || data.lugarExpedicionMunicipio,
       fechaExpedicionCedula: p.fechaExpedicion || data.fechaExpedicionCedula,
     });
   };
