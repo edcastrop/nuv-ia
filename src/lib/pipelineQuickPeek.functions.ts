@@ -51,7 +51,7 @@ export const getQuickPeekData = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<QuickPeekData> => {
     const { supabase } = context;
 
-    const [{ data: exp }, { data: proy }] = await Promise.all([
+    const [{ data: exp }, { data: proy }, { data: audit }] = await Promise.all([
       supabase
         .from("expedientes")
         .select(
@@ -68,33 +68,50 @@ export const getQuickPeekData = createServerFn({ method: "POST" })
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
+      supabase
+        .from("audit_simulaciones")
+        .select("score_total")
+        .eq("expediente_id", data.expedienteId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ]);
 
     const credito = (exp?.credito_data ?? {}) as Record<string, unknown>;
     const propuesta = (exp?.propuesta_data ?? {}) as Record<string, unknown>;
 
     // Crédito actual: proyecciones_financieras > credito_data
-    const saldoCapital = num(proy?.saldo_capital) || readN(credito, "saldo", "saldoCapital", "monto", "valorCredito");
-    const cuotaActual = num(proy?.cuota_actual) || readN(credito, "cuota", "cuotaActual", "valorCuota");
-    const tasaActualPct = num(proy?.tea_pct) || readN(credito, "tasaEA", "tasa_ea", "tasa") || null;
-    const cuotasTotales = num(proy?.cuotas_totales) || readN(credito, "plazo", "plazoMeses", "plazo_meses");
+    const saldoCapital = num(proy?.saldo_capital) || readN(credito, "saldo", "saldoCapital", "monto", "valorCredito", "valorDesembolsado");
+    const cuotaActual = num(proy?.cuota_actual) || readN(credito, "cuota", "cuotaActual", "valorCuota", "cuotaPagadaCliente", "cuotaBaseSimulacion");
+    const tasaActualPct = num(proy?.tea_pct) || readN(credito, "tea", "tasaEA", "tasa_ea", "tasa", "tea_pct") || null;
+    const cuotasTotales =
+      num(proy?.cuotas_totales) ||
+      readN(credito, "plazo", "plazoMeses", "plazo_meses", "cuotasTotales", "cuotas_totales");
     const cuotasPagadas = num(proy?.cuotas_pagadas) || readN(credito, "cuotasPagadas", "cuotas_pagadas");
     const cuotasPendientes =
       num(proy?.cuotas_pendientes) ||
-      Math.max(0, cuotasTotales - cuotasPagadas);
+      (cuotasTotales > 0 ? Math.max(0, cuotasTotales - cuotasPagadas) : 0);
 
-    // Propuesta
-    const cuotaPropuesta = readN(propuesta, "cuota", "cuotaNueva", "valorCuota", "cuotaPropuesta");
-    const tasaPropuestaPct = readN(propuesta, "tasa", "tasaEA", "tasa_ea", "tasaNueva") || null;
+    // Propuesta — claves reales: nuevaCuota, nuevoPlazo, ahorroTotal
+    const cuotaPropuesta = readN(propuesta, "nuevaCuota", "cuota", "cuotaNueva", "valorCuota", "cuotaPropuesta");
+    const tasaPropuestaPct =
+      readN(propuesta, "nuevaTasa", "tasaNueva", "tasa", "tasaEA", "tasa_ea", "tea") || null;
     const plazoPropuesto =
-      readN(propuesta, "plazo", "plazoNuevo", "plazoMeses", "plazo_meses") ||
+      readN(propuesta, "nuevoPlazo", "plazo", "plazoNuevo", "plazoMeses", "plazo_meses") ||
       num(exp?.cuotas_aprobadas_banco) ||
       num(exp?.cuotas_pactadas);
     const cuotasPendientesProp = plazoPropuesto > 0 ? plazoPropuesto : 0;
-    const ahorro = readN(propuesta, "ahorro", "ahorroTotal", "ahorroIntereses");
+    const ahorro = readN(propuesta, "ahorroTotal", "ahorro", "ahorroIntereses");
 
-    // Auditoría
-    const auditPct = exp?.acertividad_global != null ? num(exp.acertividad_global) : null;
+    // Auditoría: motor general (acertividad_global) → fallback audit_simulaciones.score_total → qa_score
+    const auditPct =
+      exp?.acertividad_global != null
+        ? num(exp.acertividad_global)
+        : audit?.score_total != null
+          ? num(audit.score_total)
+          : exp?.qa_score != null
+            ? num(exp.qa_score)
+            : null;
     const qaPct = exp?.qa_score != null ? num(exp.qa_score) : null;
 
     return {
