@@ -131,9 +131,21 @@ export function ConfirmEstadoModal({ open, nuevoEstado, onConfirm, onCancel }: P
           <button
             onClick={handle}
             disabled={busy || !canConfirm}
-            className="rounded-lg px-4 py-2 text-xs font-semibold disabled:opacity-50"
-            style={{ background: "var(--nuvia-accent-primary)", color: "var(--nuvia-bg-base)" }}
-          >{busy ? "Guardando…" : "Confirmar"}</button>
+            className="rounded-lg px-4 py-2 text-xs font-semibold disabled:cursor-not-allowed"
+            style={{
+              background: canConfirm ? "var(--nuvia-accent-blue)" : "rgba(68,93,163,0.35)",
+              color: "#ffffff",
+              border: canConfirm ? "1px solid var(--nuvia-accent-blue)" : "1px solid rgba(68,93,163,0.5)",
+              boxShadow: canConfirm ? "0 6px 18px rgba(68,93,163,0.35)" : "none",
+            }}
+            title={
+              !canConfirm
+                ? needsRadicadoId
+                  ? "Completa el ID de radicado (mínimo 3 caracteres) y la observación del banco"
+                  : "Completa los campos requeridos"
+                : "Confirmar cambio de estado"
+            }
+          >{busy ? "Guardando…" : "Confirmar y guardar"}</button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
