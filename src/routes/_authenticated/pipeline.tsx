@@ -569,6 +569,34 @@ function PipelinePage() {
                   Vista
                 </Link>
 
+                {/* Torre de control — chip que abre el drawer lateral */}
+                <button
+                  type="button"
+                  onClick={() => setControlOpen((v) => !v)}
+                  aria-expanded={controlOpen}
+                  title="Abrir torre de control (C)"
+                  className={`relative inline-flex h-9 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold transition ${
+                    controlOpen
+                      ? "border-[var(--nuvia-accent-blue)] bg-[rgba(68,93,163,0.18)] text-[var(--nuvia-text-primary)]"
+                      : "border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] text-[var(--nuvia-text-secondary)] hover:border-[var(--nuvia-border-strong)] hover:text-[var(--nuvia-text-primary)]"
+                  }`}
+                >
+                  <Radar className="h-3.5 w-3.5 text-[var(--nuvia-accent-green)]" />
+                  Control
+                  {criticos > 0 && (
+                    <span
+                      className="ml-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-bold"
+                      style={{
+                        background: "color-mix(in oklab, var(--nuvia-danger) 22%, transparent)",
+                        color: "var(--nuvia-danger)",
+                      }}
+                    >
+                      {criticos}
+                    </span>
+                  )}
+                </button>
+
+
                 {/* Análisis IA — protagonista */}
                 <button
                   type="button"
