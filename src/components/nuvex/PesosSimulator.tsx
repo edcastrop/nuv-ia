@@ -501,6 +501,7 @@ export function PesosSimulator({
             modalidad="pesos"
             cuotasPendientes={cuotasPendientes}
             hideCreditFields
+            expedienteId={init?.id}
           />
 
           {validaciones.map((v, i) => (
