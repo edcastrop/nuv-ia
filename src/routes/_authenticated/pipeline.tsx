@@ -950,6 +950,19 @@ function PipelinePage() {
         />
       )}
 
+      <PipelineControlPanel
+        total={kpis.total}
+        estancados={kpis.estancados}
+        promedio={kpis.promedio}
+        honorarios={kpis.honorarios}
+        fases={kpis.fases.map((f) => ({ id: f.id, label: f.label.split(" · ")[0], count: f.count }))}
+        criticos={criticos}
+        listos={listos}
+        soloStuck={soloStuck}
+        onToggleStuck={() => setSoloStuck(!soloStuck)}
+        fmtCOP={fmtCOP}
+      />
+
       <NuviaPipelinePanel contexto={pipelineCtx} />
     </div>
   );
