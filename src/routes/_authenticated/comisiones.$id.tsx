@@ -543,7 +543,7 @@ function DetalleCuentaCobro() {
                   type="file"
                   accept="image/*,application/pdf"
                   onChange={(e) => setComprobante(e.target.files?.[0] ?? null)}
-                  className="block w-full text-[12px] file:mr-3 file:rounded-md file:border-0 file:px-3 file:py-1.5 file:text-[12px] file:font-semibold file:text-white"
+                  className="block w-full text-[12px] file:mr-3 file:rounded-md file:border-0 file:bg-[color:var(--nuvia-accent-blue)] file:px-3 file:py-1.5 file:text-[12px] file:font-semibold file:text-white"
                   style={{ color: "var(--nuvia-text-secondary)" }}
                 />
                 {comprobante && (
@@ -622,11 +622,11 @@ function DetalleCuentaCobro() {
 }
 
 const ESTADO_CC: Record<string, { bg: string; color: string; label: string }> = {
-  borrador: { bg: "#F1F3F8", color: "#445DA3", label: "Borrador" },
-  enviada: { bg: "#EEF1FA", color: "#445DA3", label: "Enviada" },
-  aprobada: { bg: "#EAF7EE", color: "#1F7A45", label: "Aprobada" },
-  devuelta_correccion: { bg: "#FEF3C7", color: "#8A5A00", label: "Devuelta para corrección" },
-  rechazada: { bg: "#FEE2E2", color: "#991B1B", label: "Rechazada" },
-  programada_pago: { bg: "#E0E7FF", color: "#3730A3", label: "Programada para pago" },
-  pagada: { bg: "#DDF4E3", color: "#1F7A45", label: "Pagada" },
+  borrador: { bg: "rgba(165,181,224,0.14)", color: "var(--nuvia-text-secondary)", label: "Borrador" },
+  enviada: { bg: "rgba(68,93,163,0.20)", color: "var(--nuvia-accent-blue)", label: "Enviada" },
+  aprobada: { bg: "rgba(132,185,143,0.18)", color: "var(--nuvia-accent-green)", label: "Aprobada" },
+  devuelta_correccion: { bg: "rgba(246,196,83,0.18)", color: "var(--nuvia-warning)", label: "Devuelta para corrección" },
+  rechazada: { bg: "rgba(255,107,107,0.18)", color: "var(--nuvia-danger)", label: "Rechazada" },
+  programada_pago: { bg: "rgba(68,93,163,0.20)", color: "var(--nuvia-accent-blue)", label: "Programada para pago" },
+  pagada: { bg: "rgba(132,185,143,0.20)", color: "var(--nuvia-accent-green)", label: "Pagada" },
 };
