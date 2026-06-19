@@ -18,6 +18,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiTreasuryCopilotRouteImport } from './routes/api/treasury-copilot'
 import { Route as ApiQaCopilotRouteImport } from './routes/api/qa-copilot'
+import { Route as ApiPipelineNuviaRouteImport } from './routes/api/pipeline-nuvia'
 import { Route as ApiNuvexIaStreamRouteImport } from './routes/api/nuvex-ia-stream'
 import { Route as ApiNuvexGptChatRouteImport } from './routes/api/nuvex-gpt-chat'
 import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
@@ -152,6 +153,11 @@ const ApiTreasuryCopilotRoute = ApiTreasuryCopilotRouteImport.update({
 const ApiQaCopilotRoute = ApiQaCopilotRouteImport.update({
   id: '/api/qa-copilot',
   path: '/api/qa-copilot',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPipelineNuviaRoute = ApiPipelineNuviaRouteImport.update({
+  id: '/api/pipeline-nuvia',
+  path: '/api/pipeline-nuvia',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiNuvexIaStreamRoute = ApiNuvexIaStreamRouteImport.update({
@@ -710,6 +716,7 @@ export interface FileRoutesByFullPath {
   '/wallet': typeof AuthenticatedWalletRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
   '/api/nuvex-ia-stream': typeof ApiNuvexIaStreamRoute
+  '/api/pipeline-nuvia': typeof ApiPipelineNuviaRoute
   '/api/qa-copilot': typeof ApiQaCopilotRoute
   '/api/treasury-copilot': typeof ApiTreasuryCopilotRoute
   '/apoderado/mis-casos': typeof AuthenticatedApoderadoMisCasosRoute
@@ -808,6 +815,7 @@ export interface FileRoutesByTo {
   '/wallet': typeof AuthenticatedWalletRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
   '/api/nuvex-ia-stream': typeof ApiNuvexIaStreamRoute
+  '/api/pipeline-nuvia': typeof ApiPipelineNuviaRoute
   '/api/qa-copilot': typeof ApiQaCopilotRoute
   '/api/treasury-copilot': typeof ApiTreasuryCopilotRoute
   '/apoderado/mis-casos': typeof AuthenticatedApoderadoMisCasosRoute
@@ -910,6 +918,7 @@ export interface FileRoutesById {
   '/_authenticated/wallet': typeof AuthenticatedWalletRoute
   '/api/nuvex-gpt-chat': typeof ApiNuvexGptChatRoute
   '/api/nuvex-ia-stream': typeof ApiNuvexIaStreamRoute
+  '/api/pipeline-nuvia': typeof ApiPipelineNuviaRoute
   '/api/qa-copilot': typeof ApiQaCopilotRoute
   '/api/treasury-copilot': typeof ApiTreasuryCopilotRoute
   '/_authenticated/apoderado/mis-casos': typeof AuthenticatedApoderadoMisCasosRoute
@@ -1013,6 +1022,7 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/api/nuvex-gpt-chat'
     | '/api/nuvex-ia-stream'
+    | '/api/pipeline-nuvia'
     | '/api/qa-copilot'
     | '/api/treasury-copilot'
     | '/apoderado/mis-casos'
@@ -1111,6 +1121,7 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/api/nuvex-gpt-chat'
     | '/api/nuvex-ia-stream'
+    | '/api/pipeline-nuvia'
     | '/api/qa-copilot'
     | '/api/treasury-copilot'
     | '/apoderado/mis-casos'
@@ -1212,6 +1223,7 @@ export interface FileRouteTypes {
     | '/_authenticated/wallet'
     | '/api/nuvex-gpt-chat'
     | '/api/nuvex-ia-stream'
+    | '/api/pipeline-nuvia'
     | '/api/qa-copilot'
     | '/api/treasury-copilot'
     | '/_authenticated/apoderado/mis-casos'
@@ -1290,6 +1302,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiNuvexGptChatRoute: typeof ApiNuvexGptChatRoute
   ApiNuvexIaStreamRoute: typeof ApiNuvexIaStreamRoute
+  ApiPipelineNuviaRoute: typeof ApiPipelineNuviaRoute
   ApiQaCopilotRoute: typeof ApiQaCopilotRoute
   ApiTreasuryCopilotRoute: typeof ApiTreasuryCopilotRoute
   ApiPublicHooksCarteraRecordatoriosRoute: typeof ApiPublicHooksCarteraRecordatoriosRoute
@@ -1363,6 +1376,13 @@ declare module '@tanstack/react-router' {
       path: '/api/qa-copilot'
       fullPath: '/api/qa-copilot'
       preLoaderRoute: typeof ApiQaCopilotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/pipeline-nuvia': {
+      id: '/api/pipeline-nuvia'
+      path: '/api/pipeline-nuvia'
+      fullPath: '/api/pipeline-nuvia'
+      preLoaderRoute: typeof ApiPipelineNuviaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/nuvex-ia-stream': {
@@ -2260,6 +2280,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   ApiNuvexGptChatRoute: ApiNuvexGptChatRoute,
   ApiNuvexIaStreamRoute: ApiNuvexIaStreamRoute,
+  ApiPipelineNuviaRoute: ApiPipelineNuviaRoute,
   ApiQaCopilotRoute: ApiQaCopilotRoute,
   ApiTreasuryCopilotRoute: ApiTreasuryCopilotRoute,
   ApiPublicHooksCarteraRecordatoriosRoute:
