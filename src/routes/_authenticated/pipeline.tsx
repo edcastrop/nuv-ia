@@ -20,10 +20,11 @@ import { AnalistaAvatar } from "@/components/pipeline/AnalistaAvatar";
 import { LeadQuickPeek } from "@/components/pipeline/LeadQuickPeek";
 import { LeadEditDrawer } from "@/components/pipeline/LeadEditDrawer";
 import { NuviaPipelinePanel, type PipelineCtx } from "@/components/pipeline/NuviaPipelinePanel";
-import { PipelineControlPanel } from "@/components/pipeline/PipelineControlPanel";
+import { PipelineControlPanel, type PipelineControlBreakdown } from "@/components/pipeline/PipelineControlPanel";
 
 const FASE_IDS = ["comercial", "operativa", "banco", "cobro", "fin"] as const;
 type FaseId = (typeof FASE_IDS)[number];
+type PipelineProfileLite = { nombre: string | null; email: string | null; sede?: string | null; equipo?: string | null };
 
 export const pipelineSearchSchema = z.object({
   q: fallback(z.string(), "").default(""),
@@ -58,6 +59,22 @@ function diasDesde(iso: string | null | undefined): number {
   return Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 86400000));
 }
 
+function num(v: unknown): number {
+  if (v == null) return 0;
+  if (typeof v === "number" && Number.isFinite(v)) return v;
+  if (typeof v === "string") {
+    const n = Number(v.replace(/[^\d.-]/g, ""));
+    return Number.isFinite(n) ? n : 0;
+  }
+  return 0;
+}
+
+function readAhorro(propuesta: unknown): number {
+  if (!propuesta || typeof propuesta !== "object") return 0;
+  const o = propuesta as Record<string, unknown>;
+  return num(o.ahorro) || num(o.ahorroTotal) || num(o.ahorroIntereses);
+}
+
 function PipelinePage() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: "/pipeline" });
@@ -69,7 +86,7 @@ function PipelinePage() {
   const [nowTick, setNowTick] = useState<number>(() => Date.now());
   const [qLocal, setQLocal] = useState(search.q);
   const [analistas, setAnalistas] = useState<{ id: string; nombre: string | null; email: string | null }[]>([]);
-  const [profilesMap, setProfilesMap] = useState<Map<string, { nombre: string | null; email: string | null }>>(new Map());
+  const [profilesMap, setProfilesMap] = useState<Map<string, PipelineProfileLite>>(new Map());
   const [peekId, setPeekId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -189,12 +206,12 @@ function PipelinePage() {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("id, nombre, email")
+        .select("id, nombre, email, sede, equipo")
         .in("id", missing);
-      const list = (data ?? []) as { id: string; nombre: string | null; email: string | null }[];
+      const list = (data ?? []) as ({ id: string } & PipelineProfileLite)[];
       setProfilesMap((prev) => {
         const next = new Map(prev);
-        list.forEach((p) => next.set(p.id, { nombre: p.nombre, email: p.email }));
+        list.forEach((p) => next.set(p.id, { nombre: p.nombre, email: p.email, sede: p.sede, equipo: p.equipo }));
         return next;
       });
     })();
@@ -216,7 +233,10 @@ function PipelinePage() {
     const uid = user?.id ?? "";
     return rows.filter((r) => {
       if (mios && uid && r.asesor_id !== uid) return false;
-      if (asesor && r.asesor_id !== asesor) return false;
+      if (asesor) {
+        const asesorIds = asesor.split(",").filter(Boolean);
+        if (!asesorIds.includes(r.asesor_id)) return false;
+      }
       if (banco && r.banco !== banco) return false;
       if (term) {
         const hay = `${r.cliente_nombre} ${r.cedula ?? ""} ${r.numero_credito ?? ""} ${r.banco ?? ""}`.toLowerCase();
@@ -249,7 +269,12 @@ function PipelinePage() {
     return m;
   }, [filtered, soloStuck]);
 
-  const totalVisible = Array.from(grupos.values()).reduce((a, b) => a + b.length, 0);
+  const etapasVisibles = useMemo(
+    () => ETAPAS_PIPELINE.filter((etapa) => !fase || FASE_ETAPAS[fase as FaseId].includes(etapa.id)),
+    [fase],
+  );
+
+  const totalVisible = etapasVisibles.reduce((a, etapa) => a + (grupos.get(etapa.id) ?? []).length, 0);
 
   // P17 — Exportar CSV de los casos visibles (respeta filtros + etapa derivada).
   const exportarCSV = () => {
@@ -260,7 +285,7 @@ function PipelinePage() {
       const s = String(v ?? "");
       return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
     };
-    ETAPAS_PIPELINE.forEach((etapa) => {
+    etapasVisibles.forEach((etapa) => {
       (grupos.get(etapa.id) ?? []).forEach((r) => {
         lines.push([
           esc(r.cliente_nombre),
@@ -298,7 +323,7 @@ function PipelinePage() {
       { id: "fin",       label: "Cierre · E15",     etapas: ["finalizado"], count: 0 },
     ];
     let honorarios = 0;
-    ETAPAS_PIPELINE.forEach((etapa) => {
+    etapasVisibles.forEach((etapa) => {
       const items = grupos.get(etapa.id) ?? [];
       const umbral = UMBRAL_DIAS[etapa.id] ?? 0;
       items.forEach((r) => {
@@ -318,7 +343,67 @@ function PipelinePage() {
       honorarios,
       fases,
     };
-  }, [grupos]);
+  }, [grupos, etapasVisibles]);
+
+  const pipelineBreakdown = useMemo<PipelineControlBreakdown>(() => {
+    const bancosMap = new Map<string, PipelineControlBreakdown["bancos"][number]>();
+    const analistasMap = new Map<string, PipelineControlBreakdown["analistas"][number]>();
+    const oficinasMap = new Map<string, PipelineControlBreakdown["oficinas"][number]>();
+    let total = 0;
+    let ahorro = 0;
+    let casos = 0;
+    let sinAnalista = 0;
+
+    etapasVisibles.forEach((etapa) => {
+      (grupos.get(etapa.id) ?? []).forEach((r) => {
+        const valor = num(r.honorarios_final);
+        const ahorroCaso = readAhorro(r.propuesta_data);
+        total += valor;
+        ahorro += ahorroCaso;
+        casos += 1;
+
+        const bancoNombre = r.banco?.trim() || "Sin banco";
+        const bancoBucket = bancosMap.get(bancoNombre) ?? { id: bancoNombre, nombre: bancoNombre, total: 0, ahorro: 0, casos: 0 };
+        bancoBucket.total += valor;
+        bancoBucket.ahorro += ahorroCaso;
+        bancoBucket.casos += 1;
+        bancosMap.set(bancoNombre, bancoBucket);
+
+        const asesorId = r.asesor_id || "sin-analista";
+        if (!r.asesor_id) sinAnalista += 1;
+        const prof = r.asesor_id ? profilesMap.get(r.asesor_id) : undefined;
+        const analistaNombre = prof?.nombre || prof?.email || (r.asesor_id ? r.asesor_id.slice(0, 8) : "Sin asignar");
+        const analistaKey = analistaNombre.trim().toLowerCase() || asesorId;
+        const analistaBucket = analistasMap.get(analistaKey) ?? { id: asesorId, nombre: analistaNombre, total: 0, ahorro: 0, casos: 0 };
+        if (!analistaBucket.id.split(",").includes(asesorId)) analistaBucket.id = `${analistaBucket.id},${asesorId}`;
+        analistaBucket.nombre = analistaNombre;
+        analistaBucket.total += valor;
+        analistaBucket.ahorro += ahorroCaso;
+        analistaBucket.casos += 1;
+        analistasMap.set(analistaKey, analistaBucket);
+
+        const oficina = prof?.sede?.trim() || prof?.equipo?.trim() || "Sin oficina";
+        const oficinaBucket = oficinasMap.get(oficina) ?? { id: oficina, nombre: oficina, total: 0, ahorro: 0, casos: 0 };
+        oficinaBucket.total += valor;
+        oficinaBucket.ahorro += ahorroCaso;
+        oficinaBucket.casos += 1;
+        oficinasMap.set(oficina, oficinaBucket);
+      });
+    });
+
+    const sortDesc = <T extends { total: number; casos: number; nombre: string }>(arr: T[]) =>
+      arr.sort((a, b) => b.total - a.total || b.casos - a.casos || a.nombre.localeCompare(b.nombre, "es"));
+
+    return {
+      total,
+      ahorro,
+      casos,
+      sinAnalista,
+      bancos: sortDesc(Array.from(bancosMap.values())),
+      analistas: sortDesc(Array.from(analistasMap.values())),
+      oficinas: sortDesc(Array.from(oficinasMap.values())),
+    };
+  }, [grupos, etapasVisibles, profilesMap]);
 
   // P24 — Detección de duplicados por cédula (cliente con varios expedientes activos).
   const dupCedulas = useMemo(() => {
@@ -375,7 +460,7 @@ function PipelinePage() {
   const advancedActive = !!(banco || soloStuck || fase || mios || asesor);
 
   const funnel = useMemo(() => {
-    const counts = ETAPAS_PIPELINE.map((e) => ({
+    const counts = etapasVisibles.map((e) => ({
       id: e.id,
       numero: e.numero,
       titulo: e.titulo,
@@ -396,14 +481,14 @@ function PipelinePage() {
         drop: prev > 0 ? Math.round(((prev - c.passed) / prev) * 100) : 0,
       };
     });
-  }, [grupos]);
+  }, [grupos, etapasVisibles]);
 
   // Contexto NUVIA IA: snapshot ejecutivo compactado del pipeline visible.
   const pipelineCtx: PipelineCtx = useMemo(() => {
     const etapaTitulo = new Map(ETAPAS_PIPELINE.map((e) => [e.id, `E${e.numero} ${e.titulo}`] as const));
     const topEstancados: PipelineCtx["topEstancados"] = [];
     let sinAsesor = 0;
-    ETAPAS_PIPELINE.forEach((etapa) => {
+    etapasVisibles.forEach((etapa) => {
       const umbral = UMBRAL_DIAS[etapa.id] ?? 0;
       (grupos.get(etapa.id) ?? []).forEach((r) => {
         const d = diasDesde(r.updated_at);
@@ -439,7 +524,7 @@ function PipelinePage() {
       sinAsesor,
       duplicados: dupCedulas.size,
     };
-  }, [grupos, kpis, funnel, profilesMap, dupCedulas]);
+  }, [grupos, etapasVisibles, kpis, funnel, profilesMap, dupCedulas]);
 
   const peekExpediente = peekId ? rows.find((r) => r.id === peekId) ?? null : null;
   const editExpediente = editId ? rows.find((r) => r.id === editId) ?? null : null;
@@ -447,16 +532,19 @@ function PipelinePage() {
   // Conteos para el panel de control lateral
   const { criticos, listos } = useMemo(() => {
     let cr = 0;
-    ETAPAS_PIPELINE.forEach((e) => {
+    etapasVisibles.forEach((e) => {
       const umbral = UMBRAL_DIAS[e.id] ?? 0;
       if (umbral <= 0) return;
       (grupos.get(e.id) ?? []).forEach((r) => {
         if (diasDesde(r.updated_at) > umbral * 2) cr += 1;
       });
     });
-    const li = (grupos.get("paz_salvo") ?? []).length + (grupos.get("pago") ?? []).length;
+    const visibleIds = new Set(etapasVisibles.map((e) => e.id));
+    const li =
+      (visibleIds.has("paz_salvo") ? (grupos.get("paz_salvo") ?? []).length : 0) +
+      (visibleIds.has("pago") ? (grupos.get("pago") ?? []).length : 0);
     return { criticos: cr, listos: li };
-  }, [grupos]);
+  }, [grupos, etapasVisibles]);
 
 
 
@@ -816,7 +904,7 @@ function PipelinePage() {
       ) : (
         <div className="overflow-x-auto pb-4 scrollbar-thin">
           <div className="flex min-w-max gap-2.5">
-            {ETAPAS_PIPELINE.filter((etapa) => !fase || FASE_ETAPAS[fase as FaseId].includes(etapa.id)).map((etapa) => {
+            {etapasVisibles.map((etapa) => {
               const items = grupos.get(etapa.id) ?? [];
               const umbral = UMBRAL_DIAS[etapa.id] ?? 0;
               const diasArr = items.map((r) => diasDesde(r.updated_at));
@@ -995,6 +1083,7 @@ function PipelinePage() {
         fases={kpis.fases.map((f) => ({ id: f.id, label: f.label.split(" · ")[0], count: f.count }))}
         criticos={criticos}
         listos={listos}
+        breakdown={pipelineBreakdown}
         soloStuck={soloStuck}
         onToggleStuck={() => setSoloStuck(!soloStuck)}
         fmtCOP={fmtCOP}
