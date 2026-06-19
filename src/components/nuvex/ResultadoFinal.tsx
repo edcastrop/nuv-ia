@@ -733,7 +733,7 @@ function ComparativeProyVsApr({ rows }: { rows: { c: string; p: string; a: strin
               <td className="px-3 py-2 font-medium" style={{ color: "var(--nuvia-text-primary)" }}>{r.c}</td>
               <td className="px-3 py-2 text-right" style={{ color: "var(--nuvia-text-secondary)" }}>{r.p}</td>
               <td className="px-3 py-2 text-right font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{r.a}</td>
-              <td className="px-3 py-2 text-right font-semibold" style={{ color: "var(--nuvia-accent-primary)" }}>{r.v}</td>
+              <td className="px-3 py-2 text-right font-semibold" style={{ color: "var(--nuvia-accent-blue)" }}>{r.v}</td>
             </tr>
           ))}
         </tbody>
