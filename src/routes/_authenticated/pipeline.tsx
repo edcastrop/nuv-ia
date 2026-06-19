@@ -970,7 +970,10 @@ function PipelinePage() {
         soloStuck={soloStuck}
         onToggleStuck={() => setSoloStuck(!soloStuck)}
         fmtCOP={fmtCOP}
+        open={controlOpen}
+        onOpenChange={setControlOpen}
       />
+
 
       <NuviaPipelinePanel contexto={pipelineCtx} />
     </div>
