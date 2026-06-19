@@ -255,17 +255,19 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
     if (!guard.ok) { setError(guard.reason); return; }
     setSending(true);
     try {
-      const [poderPdf, poderDocx, datosPdf, datosDocx] = await Promise.all([
-        Promise.resolve(legalDocToPDFBlob(ctx.poderDoc)),
+      const [poderDocx, datosDocx] = await Promise.all([
         legalDocToDOCXBlob(ctx.poderDoc),
-        Promise.resolve(legalDocToPDFBlob(ctx.datosDoc)),
         legalDocToDOCXBlob(ctx.datosDoc),
       ]);
-      const attachments = [
-        { blob: poderPdf, filename: `${ctx.poderDoc.filename}.pdf`, contentType: "application/pdf" },
+      // Re-leer soportes en el momento del envío para garantizar consistencia
+      // (por si se cargaron justo antes de enviar).
+      const soportesActuales = soportes.length > 0
+        ? soportes
+        : await fetchSoportesCliente(ctx.expedienteId);
+      const attachments: { blob: Blob; filename: string; contentType: string }[] = [
         { blob: poderDocx, filename: `${ctx.poderDoc.filename}.docx`, contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
-        { blob: datosPdf, filename: `${ctx.datosDoc.filename}.pdf`, contentType: "application/pdf" },
         { blob: datosDocx, filename: `${ctx.datosDoc.filename}.docx`, contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
+        ...soportesActuales.map((s) => ({ blob: s.blob, filename: s.filename, contentType: s.contentType })),
       ];
       const encoded = await Promise.all(attachments.map(async (a) => ({
         filename: a.filename,
