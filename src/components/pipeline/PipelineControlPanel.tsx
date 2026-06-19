@@ -68,7 +68,7 @@ export function PipelineControlPanel(props: PipelineControlProps) {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onOpenChange]);
 
-  const { total, estancados, promedio, honorarios, fases, criticos, listos, soloStuck, onToggleStuck, fmtCOP } = props;
+  const { total, estancados, promedio, honorarios, fases, criticos, listos, soloStuck, onToggleStuck, fmtCOP, onSelectBanco, onSelectAnalista } = props;
 
   const faseColors: Record<string, string> = {
     comercial: "var(--nuvia-accent-blue)",
