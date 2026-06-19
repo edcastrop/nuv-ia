@@ -266,7 +266,7 @@ export function CedulaReader({ intervinientes, producto, onApply, onTitularSync 
                   e.stopPropagation();
                   setDragActive(false);
                   const files = e.dataTransfer.files;
-                  if (files?.length) processFiles(files);
+                  if (files?.length) addToQueue(files);
                 }}
                 onClick={() => fileRef.current?.click()}
                 className="cursor-pointer rounded-xl border-2 border-dashed p-6 text-center transition-colors"
@@ -277,9 +277,13 @@ export function CedulaReader({ intervinientes, producto, onApply, onTitularSync 
               >
                 <Upload size={22} className="mx-auto" style={{ color: NUVEX.azul }} />
                 <div className="mt-2 text-xs font-semibold text-[#242424]">
-                  Arrastra la cédula aquí o haz clic para subir
+                  {queue.length === 0
+                    ? "Arrastra la cédula aquí o haz clic para subir"
+                    : "Agrega otra imagen (frente o reverso)"}
                 </div>
-                <div className="text-[11px] text-[#242424]/60">Selecciona frente y reverso juntos · JPG, PNG, WEBP o PDF</div>
+                <div className="text-[11px] text-[#242424]/60">
+                  Puedes subir frente y reverso en pasos separados · JPG, PNG, WEBP o PDF (máx. 4)
+                </div>
                 <input
                   ref={fileRef}
                   type="file"
@@ -288,10 +292,58 @@ export function CedulaReader({ intervinientes, producto, onApply, onTitularSync 
                   className="hidden"
                   onChange={(e) => {
                     const files = e.target.files;
-                    if (files?.length) processFiles(files);
+                    if (files?.length) addToQueue(files);
                   }}
                 />
               </div>
+
+              {queue.length > 0 && (
+                <div className="space-y-2 rounded-xl border border-[#E3E7EE] bg-white p-3">
+                  <div className="text-[11px] font-semibold text-[#242424]/70">
+                    Archivos listos ({queue.length}/4)
+                  </div>
+                  <ul className="space-y-1">
+                    {queue.map((f, i) => (
+                      <li
+                        key={`${f.name}-${i}`}
+                        className="flex items-center justify-between gap-2 rounded-lg border border-[#E3E7EE] bg-[#F7F9FB] px-2 py-1.5 text-xs"
+                      >
+                        <span className="truncate">
+                          <span className="font-medium text-[#242424]">{i === 0 ? "Frente" : i === 1 ? "Reverso" : `Imagen ${i + 1}`}:</span>{" "}
+                          <span className="text-[#242424]/70">{f.name}</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeFromQueue(i)}
+                          className="text-[#991B1B] hover:text-[#7F1D1D]"
+                          aria-label="Quitar archivo"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => fileRef.current?.click()}
+                      disabled={queue.length >= 4}
+                      className="inline-flex items-center gap-1 rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 text-[11px] font-medium disabled:opacity-50"
+                    >
+                      <Plus size={12} /> Agregar otra
+                    </button>
+                    <button
+                      type="button"
+                      onClick={processQueue}
+                      className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[11px] font-semibold text-white"
+                      style={{ background: NUVEX.azul }}
+                    >
+                      <Sparkles size={12} /> Procesar con IA ({queue.length})
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {errorMsg && (
                 <div className="flex items-start gap-2 rounded-lg border border-[#FECACA] bg-[#FEF2F2] p-3 text-xs text-[#991B1B]">
                   <AlertTriangle size={14} className="mt-0.5 shrink-0" />
@@ -300,6 +352,7 @@ export function CedulaReader({ intervinientes, producto, onApply, onTitularSync 
               )}
             </>
           )}
+
 
           {stage === "reading" && (
             <div className="flex items-center gap-3 rounded-lg border border-[#E3E7EE] bg-white p-4">
