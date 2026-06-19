@@ -102,6 +102,7 @@ export function UVRSimulator({
     seguros: initCred.seguros ?? "",
     teaCobrada: initCred.teaCobrada ?? initCred.tea ?? "",
     variacionUVR: initCred.variacionUVR ?? getDefaultVariacionUVR(),
+    variacionUVRPropuestas: initCred.variacionUVRPropuestas ?? "",
     nuevaCuotaManual: initCred.nuevaCuotaManual ?? "",
     cuotasEliminarManual: initCred.cuotasEliminarManual ?? "",
     modoPersonalizada:
