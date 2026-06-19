@@ -293,6 +293,16 @@ export async function actualizarCamposCriticos(
   if (campos.numeroCredito !== undefined) cd.numeroCredito = campos.numeroCredito;
   if (campos.tipoProducto !== undefined) cd.tipoProducto = campos.tipoProducto;
 
+  if (campos.nombre !== undefined || campos.cedula !== undefined || campos.lugarExpedicion !== undefined) {
+    const ints = Array.isArray(cd.intervinientes) ? [...(cd.intervinientes as Array<Record<string, unknown>>)] : [];
+    const titularInt = { ...(ints[0] ?? { rol: "Titular", direccion: cd.direccion ?? "" }) };
+    if (campos.nombre !== undefined) titularInt.nombreCompleto = campos.nombre;
+    if (campos.cedula !== undefined) titularInt.cedula = campos.cedula;
+    if (campos.lugarExpedicion !== undefined) titularInt.lugarExpedicionCedula = campos.lugarExpedicion;
+    ints[0] = titularInt;
+    cd.intervinientes = ints;
+  }
+
   if (campos.cotitularActivo !== undefined) cotitular.activo = campos.cotitularActivo as never;
   setIf("cotitularNombre", cotitular, "nombre");
   setIf("cotitularCedula", cotitular, "cedula");
