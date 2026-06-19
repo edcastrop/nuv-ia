@@ -999,11 +999,6 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       esUVR: esUVRFinal,
       cobertura: tieneCob,
     });
-    const matchFallback = buscarProductoComercial(catalogoProductos, {
-      banco,
-      esLeasing: esLeasingFinal,
-      esUVR: esUVRFinal,
-    });
     const match = matchExacto ?? null;
 
     // Sanitizar cédula: descartar valores claramente placeholder/inválidos
