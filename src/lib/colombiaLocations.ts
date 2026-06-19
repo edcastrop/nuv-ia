@@ -1356,7 +1356,6 @@ const LOCATION_ALIASES: Record<string, { departamento: string; municipio: string
   "santa fe bogota": { departamento: "Bogotá D.C.", municipio: "Bogotá D.C." },
   cartagena: { departamento: "Bolívar", municipio: "Cartagena de Indias" },
   mompox: { departamento: "Bolívar", municipio: "Mompós" },
-  armenia: { departamento: "Quindío", municipio: "Armenia" },
   "san andres": { departamento: "San Andrés y Providencia", municipio: "San Andrés" },
 };
 
