@@ -44,7 +44,7 @@ export function SaveExpedienteButton({
     }
   }, [auditInput, nivelAutonomia]);
 
-  const autoAprobable = enviarAuditoriaManual && decision?.accion === "permitir";
+  const autoAprobable = enviarAuditoriaManual && (decision?.accion === "permitir" || decision?.accion === "permitir_con_marca");
 
   const handle = async () => {
     setSaving(true);
@@ -63,8 +63,8 @@ export function SaveExpedienteButton({
       let qaOk = false;
       let autoAprobado = false;
       if (enviarAuditoriaManual) {
-        if (decision?.accion === "permitir") {
-          // Motor NUVIA → apto. Saltamos QA y dejamos el caso listo para Contratación.
+        if (decision?.accion === "permitir" || decision?.accion === "permitir_con_marca") {
+          // Motor NUVIA → apto o apto con marca no crítica. Saltamos QA y dejamos el caso listo para Contratación.
           try {
             await aprobarAutomaticamentePorMotor(
               e.id,
@@ -81,7 +81,7 @@ export function SaveExpedienteButton({
             }
           }
         } else {
-          // Marca de advertencia o bloqueo → red de seguridad: QA manual.
+          // Bloqueo crítico → red de seguridad: QA manual.
           try {
             await enviarAValidacionQA(e.id);
             qaOk = true;
@@ -115,11 +115,6 @@ export function SaveExpedienteButton({
       return expedienteId
         ? "Actualizar y enviar a Contratación"
         : "Crear y enviar a Contratación";
-    }
-    if (decision?.accion === "permitir_con_marca") {
-      return expedienteId
-        ? "Actualizar y enviar a auditoría QA (advertencia)"
-        : "Crear y enviar a auditoría QA (advertencia)";
     }
     if (decision?.accion === "bloquear") {
       return expedienteId
