@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { extractCedula, type CedulaData } from "@/lib/cedula.functions";
 import { normalizeColombiaLocation } from "@/lib/colombiaLocations";
+import { supabase } from "@/integrations/supabase/client";
 import { NUVEX } from "./constants";
 import type { Interviniente, RolInterviniente } from "./intervinientes";
 import { defaultInterviniente, rolCotitular } from "./intervinientes";
@@ -24,6 +25,10 @@ type Stage = "idle" | "reading" | "review" | "applied" | "error";
 interface Props {
   intervinientes: Interviniente[];
   producto?: string | null;
+  /** Si está presente, el lector sube las imágenes originales al bucket
+   *  `soportes-banco` y las registra en `expediente_soportes` para que
+   *  viajen con el expediente a Contratación. */
+  expedienteId?: string | null;
   /** Aplica los datos al interviniente en `targetIdx` (o agrega uno nuevo si idx === -1). */
   onApply: (next: Interviniente[], targetIdx: number) => void;
   /** Opcional: si el target es el titular (idx 0), sincroniza también el nombre y cédula en ClientFields. */
