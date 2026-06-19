@@ -339,6 +339,20 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
     };
   }
 
+  // 10.5) Asesor — caso en auditoría QA (NUVIA enrutó por marca/bloqueo)
+  if (etapa === "auditoria_qa" && (has("asesor") || has("licenciado"))) {
+    return {
+      rol: "asesor",
+      titulo: "Proyección en auditoría QA",
+      descripcion:
+        "NUVIA detectó observaciones y envió la proyección a Dirección Financiera para validación. Te avisaremos con el veredicto.",
+      botonLabel: "Ver auditoría",
+      scrollToId: "validacion-qa",
+      tab: "auditoria",
+      prioridad: "baja",
+    };
+  }
+
   // 11) Asesor — caso ya entregado a Contratación
   if (etapa === "contratacion" && (has("asesor") || has("licenciado"))) {
     return {
