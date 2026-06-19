@@ -573,9 +573,8 @@ function PipelinePage() {
                           borderColor: `color-mix(in oklab, ${faseColors[f.id]} ${isBottleneck ? 55 : 30}%, transparent)`,
                           background: `linear-gradient(135deg, color-mix(in oklab, ${faseColors[f.id]} ${isBottleneck ? 18 : 9}%, transparent), color-mix(in oklab, ${faseColors[f.id]} 3%, transparent))`,
                           boxShadow: isBottleneck
-                            ? `0 10px 28px -16px color-mix(in oklab, ${faseColors[f.id]} 55%, transparent)`
+                            ? `0 10px 28px -16px color-mix(in oklab, ${faseColors[f.id]} 55%, transparent), 0 0 0 1px color-mix(in oklab, ${faseColors[f.id]} 55%, transparent)`
                             : "0 4px 16px -12px rgba(0,0,0,0.45)",
-                          ringColor: isBottleneck ? `color-mix(in oklab, ${faseColors[f.id]} 55%, transparent)` : undefined,
                         }}
                       >
                         <div className="flex items-center justify-between">
