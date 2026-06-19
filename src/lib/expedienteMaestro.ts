@@ -425,6 +425,8 @@ export function expedienteToMaestroLike(exp: Expediente): ExpedienteMaestro {
       nombre: c.nombre ?? exp.cliente_nombre ?? "",
       cedula: c.cedula ?? exp.cedula ?? "",
       tipoDocumento: pickStr("tipoDocumento") || "CC",
+      expedidaEn: pickStr("expedidaEn") || pickStr("lugarExpedicionCedula"),
+      fechaExpedicion: pickStr("fechaExpedicion") || pickStr("fechaExpedicionCedula"),
       ciudad: pickStr("ciudad"),
       email: pickStr("email") || pickStr("correo"),
       telefono: pickStr("telefono") || pickStr("celular"),
