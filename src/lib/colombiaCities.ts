@@ -2,6 +2,8 @@
 // Fuente: división político-administrativa DANE (capitales y municipios principales).
 // Uso obligatorio en todos los campos de ciudad/lugar de expedición del sistema.
 
+import { normalizeColombiaLocation } from "@/lib/colombiaLocations";
+
 export interface CityRecord {
   city: string;
   department: string;
@@ -301,6 +303,8 @@ export function searchCities(query: string, limit = 20): CityRecord[] {
 export function normalizeCityText(raw: string | null | undefined): string {
   const t = (raw || "").trim();
   if (!t) return "";
+  const official = normalizeColombiaLocation(t);
+  if (official.matched) return official.label;
   // ya viene como "Ciudad, Departamento" del catálogo → respetar
   if (t.includes(",")) {
     const [city] = t.split(",").map((s) => s.trim());
