@@ -4,7 +4,35 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronDown, MapPin, Search } from "lucide-react";
-import { COLOMBIA_CITIES, cityLabel, searchCities, type CityRecord } from "@/lib/colombiaCities";
+import { COLOMBIA_DEPARTAMENTOS, fold } from "@/lib/colombiaLocations";
+
+interface CityRecord {
+  city: string;
+  department: string;
+}
+
+const ALL_COLOMBIA_CITIES: CityRecord[] = COLOMBIA_DEPARTAMENTOS.flatMap((d) =>
+  d.municipios.map((city) => ({ city, department: d.departamento })),
+);
+
+function cityLabel(c: CityRecord): string {
+  return `${c.city}, ${c.department}`;
+}
+
+function searchCities(query: string, limit = 50): CityRecord[] {
+  const q = fold(query);
+  if (!q) return ALL_COLOMBIA_CITIES.slice(0, limit);
+  const starts: CityRecord[] = [];
+  const contains: CityRecord[] = [];
+  for (const c of ALL_COLOMBIA_CITIES) {
+    const city = fold(c.city);
+    const department = fold(c.department);
+    const label = fold(cityLabel(c));
+    if (city.startsWith(q) || label.startsWith(q)) starts.push(c);
+    else if (city.includes(q) || department.includes(q) || label.includes(q)) contains.push(c);
+  }
+  return [...starts, ...contains].slice(0, limit);
+}
 
 interface Props {
   value: string;
@@ -149,9 +177,9 @@ export function CitySelect({ value, onChange, placeholder = "Selecciona un munic
             ) : (
               results.map((c) => {
                 const label = cityLabel(c);
-                const selected = label === value;
+                const selected = fold(label) === fold(value);
                 return (
-                  <li key={`${c.dane ?? c.city}-${c.department}`}>
+                  <li key={`${c.city}-${c.department}`}>
                     <button
                       type="button"
                       onClick={() => select(c)}
@@ -169,7 +197,7 @@ export function CitySelect({ value, onChange, placeholder = "Selecciona un munic
             )}
           </ul>
           <div className={footerCls}>
-            {COLOMBIA_CITIES.length} municipios oficiales · catálogo NUVEX
+            {ALL_COLOMBIA_CITIES.length} municipios oficiales · catálogo NUVEX
           </div>
         </div>,
         document.body,

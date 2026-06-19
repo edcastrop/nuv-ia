@@ -4,6 +4,7 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { normalizeColombiaLocation } from "@/lib/colombiaLocations";
 
 const InputSchema = z.object({
   images: z
@@ -175,6 +176,10 @@ export const extractCedula = createServerFn({ method: "POST" })
         ].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
       } else {
         parsed.nombreCompleto = parsed.nombreCompleto.replace(/\s+/g, " ").trim();
+      }
+      if (parsed.lugarExpedicion) {
+        const location = normalizeColombiaLocation(parsed.lugarExpedicion);
+        parsed.lugarExpedicion = location.label || parsed.lugarExpedicion.replace(/\s+/g, " ").trim();
       }
       return { error: null, data: parsed };
     } catch (e) {
