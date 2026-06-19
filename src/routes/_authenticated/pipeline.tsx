@@ -1048,7 +1048,7 @@ function PipelinePage() {
   );
 }
 
-// KPI inline tipo glass — compacto, premium, sin ocupar fila completa.
+// KPI ejecutivo — número grande, label pequeño, máximo contraste.
 function KpiTile({
   label,
   value,
@@ -1063,38 +1063,98 @@ function KpiTile({
   const palette =
     tone === "danger"
       ? {
-          border: "color-mix(in oklab, var(--nuvia-danger) 36%, transparent)",
-          bg: "color-mix(in oklab, var(--nuvia-danger) 11%, transparent)",
+          border: "color-mix(in oklab, var(--nuvia-danger) 40%, transparent)",
+          bg: "linear-gradient(160deg, color-mix(in oklab, var(--nuvia-danger) 14%, transparent), color-mix(in oklab, var(--nuvia-danger) 4%, transparent))",
           value: "var(--nuvia-danger)",
+          glow: "color-mix(in oklab, var(--nuvia-danger) 30%, transparent)",
         }
       : tone === "success"
       ? {
-          border: "color-mix(in oklab, var(--nuvia-accent-green) 34%, transparent)",
-          bg: "color-mix(in oklab, var(--nuvia-accent-green) 10%, transparent)",
+          border: "color-mix(in oklab, var(--nuvia-accent-green) 38%, transparent)",
+          bg: "linear-gradient(160deg, color-mix(in oklab, var(--nuvia-accent-green) 13%, transparent), color-mix(in oklab, var(--nuvia-accent-green) 4%, transparent))",
           value: "var(--nuvia-accent-green)",
+          glow: "color-mix(in oklab, var(--nuvia-accent-green) 28%, transparent)",
         }
       : {
-          border: "var(--nuvia-border)",
-          bg: "rgba(255,255,255,0.04)",
+          border: "var(--nuvia-border-strong, var(--nuvia-border))",
+          bg: "linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
           value: "var(--nuvia-text-primary)",
+          glow: "color-mix(in oklab, var(--nuvia-accent-blue) 22%, transparent)",
         };
   return (
     <div
-      className="flex min-w-[112px] flex-col rounded-xl border px-3 py-2"
-      style={{ borderColor: palette.border, background: palette.bg }}
+      className="group relative flex min-w-[124px] flex-col rounded-xl border px-3 py-2.5"
+      style={{
+        borderColor: palette.border,
+        background: palette.bg,
+        boxShadow: `0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 24px -16px ${palette.glow}`,
+      }}
     >
-      <div className="text-[10px] font-medium uppercase tracking-wide text-[var(--nuvia-text-secondary)]">
+      <div className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--nuvia-text-secondary)]">
         {label}
       </div>
       <div
-        className="mt-0.5 flex items-center gap-1 truncate text-lg font-semibold tabular-nums"
-        style={{ color: palette.value }}
+        className="mt-0.5 flex items-baseline gap-1.5 truncate text-[22px] font-bold leading-tight tabular-nums"
+        style={{ color: palette.value, textShadow: `0 0 24px ${palette.glow}` }}
       >
-        {icon}
+        {icon && <span className="translate-y-[-2px] opacity-90">{icon}</span>}
         <span className="truncate">{value}</span>
       </div>
     </div>
   );
 }
+
+// Alerta inteligente compacta — clickeable opcional.
+function AlertaMini({
+  tone,
+  icon,
+  label,
+  value,
+  hint,
+  active,
+  onClick,
+}: {
+  tone: "danger" | "warning" | "success";
+  icon: ReactNode;
+  label: string;
+  value: number;
+  hint: string;
+  active?: boolean;
+  onClick?: () => void;
+}) {
+  const color =
+    tone === "danger" ? "var(--nuvia-danger)" : tone === "warning" ? "var(--nuvia-warning)" : "var(--nuvia-accent-green)";
+  const Tag = (onClick ? "button" : "div") as "button" | "div";
+  return (
+    <Tag
+      type={onClick ? "button" : undefined}
+      onClick={onClick}
+      className={`flex items-center gap-2.5 rounded-xl border px-3 py-2 text-left transition ${onClick ? "cursor-pointer hover:brightness-110" : ""}`}
+      style={{
+        borderColor: active
+          ? color
+          : `color-mix(in oklab, ${color} 30%, transparent)`,
+        background: `linear-gradient(135deg, color-mix(in oklab, ${color} ${active ? 16 : 9}%, transparent), color-mix(in oklab, ${color} 3%, transparent))`,
+      }}
+    >
+      <span
+        className="grid h-7 w-7 shrink-0 place-items-center rounded-lg"
+        style={{ background: `color-mix(in oklab, ${color} 22%, transparent)`, color }}
+      >
+        {icon}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-[15px] font-bold tabular-nums" style={{ color }}>
+            {value}
+          </span>
+          <span className="text-xs font-semibold text-[var(--nuvia-text-primary)]">{label}</span>
+        </div>
+        <div className="truncate text-[10px] text-[var(--nuvia-text-secondary)]">{hint}</div>
+      </div>
+    </Tag>
+  );
+}
+
 
 
