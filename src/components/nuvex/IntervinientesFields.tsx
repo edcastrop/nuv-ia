@@ -67,6 +67,7 @@ export function IntervinientesFields({ producto, data, onChange, onTitularSync, 
       <CedulaReader
         intervinientes={list}
         producto={producto}
+        expedienteId={expedienteId}
         onApply={(next) => onChange(next)}
         onTitularSync={onTitularSync}
       />
