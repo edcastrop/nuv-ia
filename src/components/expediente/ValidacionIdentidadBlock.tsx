@@ -251,27 +251,22 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
         </div>
       )}
 
-      {/* Acciones de contratación */}
-      {esContratacion && v.validacion_estado === "en_revision_contratacion" && (
+      {/* Acciones de Contratación: ya NO aprueba datos (el analista es responsable).
+          Se conserva Devolver / Bloquear como red de seguridad si detecta
+          un error grueso o fraude después de recibir el expediente. */}
+      {esContratacion && v.validacion_estado === "datos_validados" && (
         <div className="rounded-lg border bg-[rgba(255,255,255,0.03)] p-3 mb-3 space-y-3" style={{ borderColor: "#E3E7EE" }}>
           <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--nuvia-text-secondary)]">
-            Revisión de Contratación
+            Contratación · acciones de excepción
           </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => run(() => aprobarValidacion(exp.id))}
-              disabled={busy}
-              className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold text-white"
-              style={{ backgroundColor: "var(--nuvia-accent-green)" }}
-            >
-              <CheckCircle2 size={13} /> Aprobar datos
-            </button>
-          </div>
+          <p className="text-[11px] text-[var(--nuvia-text-secondary)]">
+            Los datos los aprobó el analista. Solo usa estas acciones si detectas un error grueso o una posible inconsistencia crítica (fraude / suplantación).
+          </p>
 
           <div className="grid md:grid-cols-[1fr_auto] gap-2 items-end">
             <div>
               <label className="block text-[10px] uppercase font-semibold text-[var(--nuvia-text-secondary)] mb-1">
-                Motivo de devolución
+                Motivo de devolución al analista
               </label>
               <NSelect
                 value={motivoDev}
@@ -297,7 +292,7 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
               className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold text-white"
               style={{ backgroundColor: "var(--nuvia-danger)" }}
             >
-              <RotateCcw size={13} /> Devolver
+              <RotateCcw size={13} /> Devolver al analista
             </button>
           </div>
 
