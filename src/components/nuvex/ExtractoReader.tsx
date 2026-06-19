@@ -349,11 +349,15 @@ async function extractImagesFromZip(file: File): Promise<{ mime: string; dataUrl
         if (images.length >= 10) break;
         images.push(img);
       }
-    } else if (/\.(png|jpe?g|webp)$/.test(lower)) {
+    } else if (/\.(png|jpe?g|webp|heic|heif)$/.test(lower)) {
       const mime = lower.endsWith(".png")
         ? "image/png"
         : lower.endsWith(".webp")
           ? "image/webp"
+          : lower.endsWith(".heic")
+            ? "image/heic"
+            : lower.endsWith(".heif")
+              ? "image/heif"
           : "image/jpeg";
       const blob = await entry.async("blob");
       const dataUrl = await fileToDataUrl(blob, mime);
@@ -567,7 +571,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       return { images: imgs, rawText: "" };
     }
     throw new Error(
-      "Formato no soportado. Sube un PDF, imagen (JPG/PNG/WebP/HEIC) o un ZIP con esos archivos.",
+      "Formato no soportado. Sube un PDF, imagen (JPG/PNG/WebP/HEIC/HEIF) o un ZIP con esos archivos.",
     );
   };
 
