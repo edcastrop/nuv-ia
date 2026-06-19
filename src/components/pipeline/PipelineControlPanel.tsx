@@ -112,7 +112,7 @@ export function PipelineControlPanel(props: PipelineControlProps) {
           </div>
           <button
             type="button"
-            onClick={() => setOpen(false)}
+            onClick={() => onOpenChange(false)}
             title="Cerrar (C)"
             className="grid h-8 w-8 place-items-center rounded-lg border border-[var(--nuvia-border)] text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-accent-blue)] hover:text-[var(--nuvia-text-primary)]"
           >
