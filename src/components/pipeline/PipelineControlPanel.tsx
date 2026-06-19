@@ -2,7 +2,9 @@
 // Mantiene KPIs, flujo operativo, alertas y momentum fuera del header
 // para que los leads (Kanban) sean los protagonistas.
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import {
   AlertTriangle,
   ArrowRight,
@@ -15,8 +17,15 @@ import {
   Radar,
   ShieldAlert,
   TrendingUp,
+  PiggyBank,
   X,
 } from "lucide-react";
+import {
+  getAhorroAcumulado,
+  type AhorroAcumulado,
+  type AhorroBucket,
+  type AhorroRango,
+} from "@/lib/pipelineAhorro.functions";
 
 export type ControlFase = { id: string; label: string; count: number };
 
