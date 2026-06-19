@@ -11,6 +11,7 @@ import {
   IdCard,
 } from "lucide-react";
 import { extractCedula, type CedulaData } from "@/lib/cedula.functions";
+import { normalizeColombiaLocation } from "@/lib/colombiaLocations";
 import { NUVEX } from "./constants";
 
 type Stage = "idle" | "reading" | "review" | "applied" | "error";
@@ -19,6 +20,9 @@ export interface ClientCedulaPayload {
   nombre?: string;
   cedula?: string;
   lugarExpedicion?: string;
+  lugarExpedicionDepartamento?: string;
+  lugarExpedicionCiudad?: string;
+  lugarExpedicionMunicipio?: string;
   fechaExpedicion?: string;
 }
 
@@ -119,10 +123,14 @@ export function ClientCedulaButton({ onApply }: Props) {
 
   const apply = () => {
     if (!parsed) return;
+    const location = normalizeColombiaLocation(parsed.lugarExpedicion);
     onApply({
       nombre: parsed.nombreCompleto || "",
       cedula: parsed.numeroCedula || "",
-      lugarExpedicion: parsed.lugarExpedicion || "",
+      lugarExpedicion: location.label || parsed.lugarExpedicion || "",
+      lugarExpedicionDepartamento: location.departamento,
+      lugarExpedicionCiudad: location.municipio,
+      lugarExpedicionMunicipio: location.municipio,
       fechaExpedicion: parsed.fechaExpedicion || "",
     });
     setStage("applied");
@@ -240,7 +248,7 @@ export function ClientCedulaButton({ onApply }: Props) {
             <div className="grid gap-2 text-xs md:grid-cols-2">
               <Field label="Nombre completo" value={parsed.nombreCompleto} />
               <Field label="Número de cédula" value={parsed.numeroCedula} />
-              <Field label="Lugar de expedición" value={parsed.lugarExpedicion} />
+              <Field label="Lugar de expedición" value={normalizeColombiaLocation(parsed.lugarExpedicion).label || parsed.lugarExpedicion} />
               <Field label="Fecha de expedición" value={parsed.fechaExpedicion} />
             </div>
             <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
