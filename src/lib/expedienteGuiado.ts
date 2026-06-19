@@ -661,6 +661,11 @@ function tienePropuesta(exp: Expediente): boolean {
   const p = (exp as unknown as { propuesta_data?: Record<string, unknown> }).propuesta_data ?? {};
   return Boolean(p && Number(p.nuevaCuota ?? 0) > 0);
 }
+
+function proyeccionListaParaEnviar(exp: Expediente, ec: string): boolean {
+  return ["simulacion_realizada", "simulado", "propuesta_presentada", "propuesta_enviada"].includes(ec) && tienePropuesta(exp);
+}
+
 function ordenEstado(ec: string): number {
   const ORD: Record<string, number> = {
     lead_creado: 1, prospecto: 2, extracto_recibido: 3, simulacion_realizada: 4, simulado: 5,
