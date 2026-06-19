@@ -1052,11 +1052,13 @@ function PipelinePage() {
 function KpiTile({
   label,
   value,
+  subtext,
   tone,
   icon,
 }: {
   label: string;
   value: string;
+  subtext?: string;
   tone?: "danger" | "success";
   icon?: ReactNode;
 }) {
@@ -1100,9 +1102,15 @@ function KpiTile({
         {icon && <span className="translate-y-[-2px] opacity-90">{icon}</span>}
         <span className="truncate">{value}</span>
       </div>
+      {subtext && (
+        <div className="mt-0.5 text-[10px] font-medium tabular-nums text-[var(--nuvia-text-secondary)]">
+          {subtext}
+        </div>
+      )}
     </div>
   );
 }
+
 
 // Alerta inteligente compacta — clickeable opcional.
 function AlertaMini({
