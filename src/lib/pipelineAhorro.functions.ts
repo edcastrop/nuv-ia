@@ -90,7 +90,8 @@ export const getAhorroAcumulado = createServerFn({ method: "POST" })
     let q = supabase
       .from("expedientes")
       .select("id, banco, asesor_id, propuesta_data, updated_at, estado_caso")
-      .in("estado_caso", ESTADOS_CIERRE as unknown as string[]);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .in("estado_caso", ESTADOS_CIERRE as any);
     if (desde) q = q.gte("updated_at", desde);
 
     const { data: rows, error } = await q;
@@ -103,13 +104,14 @@ export const getAhorroAcumulado = createServerFn({ method: "POST" })
     const asesorIds = Array.from(
       new Set((rows ?? []).map((r) => r.asesor_id).filter(Boolean) as string[]),
     );
-    let profiles: Array<{ id: string; nombre: string | null; email: string | null; oficina: string | null }> = [];
+    type Prof = { id: string; nombre: string | null; email: string | null; sede: string | null; equipo: string | null };
+    let profiles: Prof[] = [];
     if (asesorIds.length > 0) {
       const { data: profs } = await supabase
         .from("profiles")
-        .select("id, nombre, email, oficina")
+        .select("id, nombre, email, sede, equipo")
         .in("id", asesorIds);
-      profiles = (profs ?? []) as typeof profiles;
+      profiles = ((profs ?? []) as unknown) as Prof[];
     }
     const profileById = new Map(profiles.map((p) => [p.id, p]));
 
