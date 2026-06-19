@@ -807,13 +807,15 @@ function SendChecklistModal({
     }
   }
 
-  return (
+  if (typeof document === "undefined") return null;
+  return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-4 overscroll-contain"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl max-w-2xl w-full max-h-[92vh] overflow-hidden flex flex-col"
+        className="bg-white rounded-2xl max-w-2xl w-full overflow-hidden flex flex-col shadow-2xl"
+        style={{ maxHeight: "min(92vh, 92dvh)" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-3 border-b border-[#E3E7EE]">
