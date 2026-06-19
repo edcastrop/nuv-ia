@@ -43,6 +43,9 @@ export type PipelineControlProps = {
   /** Controlado desde el header (chip "Control"). */
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Filtrar pipeline al hacer click en un banco/analista. */
+  onSelectBanco?: (banco: string) => void;
+  onSelectAnalista?: (analistaId: string) => void;
 };
 
 export function PipelineControlPanel(props: PipelineControlProps) {
