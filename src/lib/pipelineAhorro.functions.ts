@@ -148,7 +148,7 @@ export const getAhorroAcumulado = createServerFn({ method: "POST" })
         ab.casos += 1;
         analistasMap.set(r.asesor_id, ab);
 
-        const oficina = prof?.oficina?.trim() || "Sin oficina";
+        const oficina = prof?.sede?.trim() || prof?.equipo?.trim() || "Sin oficina";
         const ob = oficinasMap.get(oficina) ?? {
           id: oficina,
           nombre: oficina,
