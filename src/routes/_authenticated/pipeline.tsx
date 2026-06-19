@@ -539,7 +539,10 @@ function PipelinePage() {
         if (diasDesde(r.updated_at) > umbral * 2) cr += 1;
       });
     });
-    const li = (grupos.get("paz_salvo") ?? []).length + (grupos.get("pago") ?? []).length;
+    const visibleIds = new Set(etapasVisibles.map((e) => e.id));
+    const li =
+      (visibleIds.has("paz_salvo") ? (grupos.get("paz_salvo") ?? []).length : 0) +
+      (visibleIds.has("pago") ? (grupos.get("pago") ?? []).length : 0);
     return { criticos: cr, listos: li };
   }, [grupos, etapasVisibles]);
 
