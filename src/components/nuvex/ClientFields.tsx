@@ -123,7 +123,7 @@ export function ClientFields({
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <ClientCedulaButton onApply={handleCedulaAI} />
+        <ClientCedulaButton onApply={handleCedulaAI} expedienteId={expedienteId} />
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
