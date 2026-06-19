@@ -518,6 +518,7 @@ export function UVRSimulator({
             modalidad="uvr"
             cuotasPendientes={cuotasPendientes}
             hideCreditFields
+            expedienteId={init?.id}
           />
 
           {validaciones.map((v, i) => (
