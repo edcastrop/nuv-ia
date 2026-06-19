@@ -355,7 +355,14 @@ function PipelinePage() {
   const [showAnalisis, setShowAnalisis] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem("nuvex.pipeline.analisis") === "1";
+  const [controlOpen, setControlOpen] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("nuvex.pipeline.control.open") === "1";
   });
+  useEffect(() => {
+    if (typeof window !== "undefined") localStorage.setItem("nuvex.pipeline.control.open", controlOpen ? "1" : "0");
+  }, [controlOpen]);
+
   useEffect(() => {
     if (typeof window !== "undefined") localStorage.setItem("nuvex.pipeline.filters", showFilters ? "1" : "0");
   }, [showFilters]);
