@@ -1,42 +1,62 @@
-## Cambios solicitados
+## Objetivo
 
-### 1. Eliminar el paso de "Aprobación por Contratación"
-La confirmación del analista pasa a ser la aprobación final. Contratación ya no aprueba datos — los **consume**.
+Eliminar dos candados que están bloqueando al analista:
 
-**Flujo nuevo:**
-1. Analista sube cédula + extracto → Nuvia llena datos.
-2. Analista revisa, edita si hace falta y marca el checkbox de confirmación.
-3. Analista pulsa **"Enviar a Contratación"** → el expediente pasa **directo** a estado `datos_validados` (con `validacion_aprobado_por = analista`).
-4. Contratación abre el expediente y ya puede generar contrato / poder / solicitud — sin botón "Aprobar".
+1. **Validación de datos para Contratación** — ya no exigir un paso de revisión externa cuando el analista subió cédula + extracto y NUVIA leyó los datos.
+2. **Envío obligatorio a Auditoría QA** — cuando el motor NUVIA aprueba la simulación matemáticamente (sin críticas y con score apto para el nivel del analista), el caso pasa directo a Contratación. Solo se enruta a QA si NUVIA detecta discrepancias graves.
 
-**Cambios técnicos:**
-- `src/lib/validacionIdentidad.ts` → `enviarAValidacion()` ahora marca `validacion_estado='datos_validados'`, registra al analista como aprobador, salta `en_revision_contratacion`. Se mantiene el estado en el tipo (para historiales viejos), pero el flujo nuevo no lo usa.
-- `src/components/expediente/ValidacionIdentidadBlock.tsx`:
-  - Botón renombrado a **"Enviar a Contratación"**.
-  - Se elimina el bloque "Aprobar datos" para Contratación.
-  - Se conserva **"Devolver"** y **"Bloquear"** como vías de escape (si Contratación detecta un error grueso o fraude, igual puede frenar). Estos botones se muestran ahora cuando el estado es `datos_validados`.
-  - El texto descriptivo cambia: "El analista es responsable de la veracidad de los datos. Contratación los consume directamente."
+---
 
-### 2. Que la cédula y el extracto "viajen" con el expediente
-Hoy esos archivos los procesa la IA en memoria y se descartan. Vamos a persistirlos al subirlos.
+## Cambios
 
-**Cambios técnicos:**
-- `CedulaReader` recibe `expedienteId?: string`. Al aplicar (después de extraer), sube los archivos originales del `queue` al bucket existente `soportes-banco` con `categoria='identidad'`, `subcategoria='cedula_titular'` (o `cedula_cotitular` según `targetIdx`).
-- `ExtractoReader` recibe `expedienteId?: string`. Al aplicar el extracto, sube el archivo al bucket `extractos` con `categoria='extracto_banco'`, `subcategoria='<banco>_<producto>'`.
-- Si no hay `expedienteId` (simulador nuevo, antes de crear caso), no sube — sin error, no rompe el flujo actual.
-- `IntervinientesFields`, `PesosSimulator`, `UVRSimulator`, `ProyeccionFinancieraView`: pasan `expedienteId` al reader.
-- `ValidacionIdentidadBlock` añade una sección **"Documentos adjuntos para Contratación"** que lista los soportes (`identidad` + `extracto_banco`) del expediente con nombre, fecha y botón de descarga firmada. Así Contratación los tiene a la vista al lado de los datos.
+### 1. Auto-aprobación basada en el motor NUVIA
 
-### 3. Pequeño detalle de UX
-- Mientras el expediente esté en `datos_validados`, el checkbox de confirmación queda visible pero deshabilitado (como "ya confirmado").
-- El historial sigue registrando `enviar` con snapshot, igual que hoy.
+**`src/components/nuvex/SaveExpedienteButton.tsx`**
+- Recibir `auditResult: AuditoriaResultado` y `nivelAutonomia: NivelAutonomia` como props.
+- Al guardar, calcular `decidirPdf(nivel, auditResult)`:
+  - `accion === "permitir"` → **NO** llamar `enviarAValidacionQA`. En su lugar:
+    - `cambiarEstadoCaso(id, "proyeccion_aprobada_qa", "auto", "Aprobada automáticamente por motor NUVIA")`
+    - Guardar `aprobado_data` (snapshot inmutable) replicando lo que hoy hace `aprobarQA()` — extraer a helper `snapshotPropuestaAprobada(expedienteId, validacionId=null)` en `validacionQA.ts`.
+    - Mensaje: "Expediente aprobado por NUVIA · listo para Contratación".
+  - `accion === "permitir_con_marca"` o `"bloquear"` → ruta actual: `enviarAValidacionQA` (queda como red de seguridad para casos con marca de advertencia o críticas).
+- Etiqueta dinámica del botón:
+  - permitir → "Crear y enviar a Contratación"
+  - permitir_con_marca → "Crear y enviar a auditoría QA (advertencia)"
+  - bloquear → "Crear y enviar a auditoría QA (revisión obligatoria)"
 
-## Lo que NO toco
-- Lógica de simulación, motor de honorarios, contratos, poder, solicitud.
-- RLS de tablas (`expediente_soportes` y storage ya tienen las políticas necesarias).
-- Estados / etapas globales del expediente fuera de validación de identidad.
+**`PesosSimulator.tsx` / `UVRSimulator.tsx`**
+- Calcular `auditarSimulacion(input)` ya se hace dentro de `AuditPanel`. Sacar el cálculo al simulador (o levantar el resultado vía callback) y pasarlo + `metricasAutonomia.nivelAutonomia` al `SaveExpedienteButton`.
 
-## Pregunta única antes de implementar
-Voy a mantener **Devolver** y **Bloquear** disponibles para Contratación incluso después de `datos_validados`, como red de seguridad (fraude, error grueso). Si prefieres que el envío sea irreversible y Contratación no pueda devolver, dímelo y los quito.
+**`src/lib/validacionQA.ts`**
+- Extraer la lógica de snapshot de `aprobarQA` a `snapshotPropuestaAprobada(expedienteId, validacionId | null)` reutilizable.
+- `aprobarQA` sigue llamándolo internamente (sin cambios funcionales para el flujo manual de QA).
 
-¿Procedo?
+### 2. Texto de "Siguiente acción" sin forzar auditoría
+
+**`src/lib/expedienteGuiado.ts`** — caso `etapa === "lead" || etapa === "proyeccion"`:
+- Cambiar a:
+  - título: "Avanza con la proyección financiera"
+  - descripción: "Completa la simulación. Si NUVIA la aprueba, pasa directo a Contratación; solo se enruta a auditoría QA si NUVIA detecta inconsistencias."
+
+### 3. Validación de datos — quitar el candado en "Qué falta"
+
+**`src/lib/expedienteGuiado.ts`** — `getBloqueos`, etapa `documentacion_bancaria | radicacion`:
+- Quitar la línea `"Validación de identidad firmada" → juridica`. El analista ya validó al confirmar la cédula (flujo anterior ya hace `validacion_estado = datos_validados` directamente).
+
+### 4. Sin cambios
+
+- Motor de auditoría (`auditEngine.ts`) y reglas de autonomía (`autonomia.ts`): intactos.
+- `aprobarQA` / `devolverQA` manuales: intactos para casos que sí llegan a QA.
+- Permisos / RLS / Stepper / Torre de Control: sin cambios — los estados (`proyeccion_aprobada_qa`, etc.) siguen siendo los mismos, solo cambia quién/cómo se llega a ellos.
+- Componente `ValidacionIdentidadBlock`: ya está en su forma "Enviar a Contratación" desde la iteración previa; no se toca.
+
+---
+
+## Resultado esperado para el caso de ANDRES FELIPE MARTINEZ
+
+1. Analista termina la simulación → motor NUVIA marca **Apto** (score ≥ umbral del nivel, sin críticas).
+2. Click en "Crear y enviar a Contratación" → caso pasa a `proyeccion_aprobada_qa` automáticamente, con `aprobado_data` congelado.
+3. "Tu siguiente acción" desaparece la mención a auditoría; Contratación ve el caso listo con cédula + extracto adjuntos.
+4. Si en otro caso el motor encuentra una crítica (cuota mal, fresh mal, etc.), entonces sí va a QA — el control queda como red de seguridad, no como peaje.
+
+¿Apruebas que ejecute estos cambios?
