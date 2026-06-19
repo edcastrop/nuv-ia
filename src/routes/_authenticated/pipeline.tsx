@@ -1121,6 +1121,7 @@ function AlertaMini({
   hint,
   active,
   onClick,
+  size = "md",
 }: {
   tone: "danger" | "warning" | "success";
   icon: ReactNode;
@@ -1129,40 +1130,44 @@ function AlertaMini({
   hint: string;
   active?: boolean;
   onClick?: () => void;
+  size?: "md" | "lg";
 }) {
   const color =
     tone === "danger" ? "var(--nuvia-danger)" : tone === "warning" ? "var(--nuvia-warning)" : "var(--nuvia-accent-green)";
   const Tag = (onClick ? "button" : "div") as "button" | "div";
+  const isLarge = size === "lg";
   return (
     <Tag
       type={onClick ? "button" : undefined}
       onClick={onClick}
-      className={`flex items-center gap-2.5 rounded-xl border px-3 py-2 text-left transition ${onClick ? "cursor-pointer hover:brightness-110" : ""}`}
+      className={`flex items-center gap-3 rounded-xl border px-3.5 py-2.5 text-left transition ${onClick ? "cursor-pointer hover:brightness-110" : ""} ${isLarge ? "sm:col-span-2" : ""}`}
       style={{
         borderColor: active
           ? color
-          : `color-mix(in oklab, ${color} 30%, transparent)`,
-        background: `linear-gradient(135deg, color-mix(in oklab, ${color} ${active ? 16 : 9}%, transparent), color-mix(in oklab, ${color} 3%, transparent))`,
+          : `color-mix(in oklab, ${color} ${isLarge ? 45 : 30}%, transparent)`,
+        background: `linear-gradient(135deg, color-mix(in oklab, ${color} ${active ? (isLarge ? 20 : 16) : (isLarge ? 14 : 9)}%, transparent), color-mix(in oklab, ${color} 3%, transparent))`,
+        boxShadow: isLarge ? `0 10px 28px -16px color-mix(in oklab, ${color} 45%, transparent)` : undefined,
       }}
     >
       <span
-        className="grid h-7 w-7 shrink-0 place-items-center rounded-lg"
-        style={{ background: `color-mix(in oklab, ${color} 22%, transparent)`, color }}
+        className={`grid shrink-0 place-items-center rounded-lg ${isLarge ? "h-9 w-9" : "h-7 w-7"}`}
+        style={{ background: `color-mix(in oklab, ${color} ${isLarge ? 28 : 22}%, transparent)`, color }}
       >
-        {icon}
+        <span className={isLarge ? "scale-110" : ""}>{icon}</span>
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-1.5">
-          <span className="text-[15px] font-bold tabular-nums" style={{ color }}>
+          <span className={`font-bold tabular-nums ${isLarge ? "text-[22px]" : "text-[15px]"}`} style={{ color }}>
             {value}
           </span>
-          <span className="text-xs font-semibold text-[var(--nuvia-text-primary)]">{label}</span>
+          <span className={`font-semibold text-[var(--nuvia-text-primary)] ${isLarge ? "text-sm" : "text-xs"}`}>{label}</span>
         </div>
         <div className="truncate text-[10px] text-[var(--nuvia-text-secondary)]">{hint}</div>
       </div>
     </Tag>
   );
 }
+
 
 
 
