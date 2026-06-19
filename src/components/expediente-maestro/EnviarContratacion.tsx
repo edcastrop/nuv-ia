@@ -295,13 +295,13 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
       `Documentos adjuntos:`,
       `- Poder Especial (Word)`,
       `- Ficha de Datos del Contrato (Word)`,
+      `- Cédula del cliente`,
+      `- Extracto bancario del cliente`,
     ];
-    if (tieneCedula) lineasAdjuntos.push(`- Cédula del cliente`);
-    if (tieneExtracto) lineasAdjuntos.push(`- Extracto bancario del cliente`);
     const adjuntos = lineasAdjuntos.join("\n");
     const cierre = `Quedamos atentos a cualquier observación o requerimiento adicional para avanzar con la radicación.\n\nCordialmente,\n${ctx.asesorNombre || "Equipo NUVEX"}\nNUVEX — Finanzas Inteligentes`;
     return [saludo, intro, detalle, adjuntos, cierre].join("\n\n");
-  }, [ctx, tieneCedula, tieneExtracto]);
+  }, [ctx]);
 
   const handleAdd = async () => {
     const v = newEmail.trim().toLowerCase();
