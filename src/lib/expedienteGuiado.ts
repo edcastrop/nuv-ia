@@ -363,14 +363,28 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
     };
   }
 
-  // 10) Asesor / licenciado en lead / proyección
+  // 10) Asesor / licenciado con simulación lista → debe enviar a Contratación, no volver a simular.
+  if (proyeccionListaParaEnviar(exp, ec) && canSeeAnalystGuide) {
+    return {
+      rol: "licenciado",
+      titulo: "Envía el caso a Contratación",
+      descripcion:
+        "La simulación y la propuesta ya están listas. Usa el envío del módulo financiero; si NUVIA la aprueba, pasa directo a Contratación.",
+      botonLabel: "Enviar a Contratación",
+      scrollToId: "simulador-financiero-qa",
+      tab: "financiero",
+      prioridad: "alta",
+    };
+  }
+
+  // 10.1) Asesor / licenciado en lead / proyección sin propuesta lista
   if ((etapa === "lead" || etapa === "proyeccion") && canSeeAnalystGuide) {
     return {
       rol: "asesor",
       titulo: "Avanza con la proyección financiera",
       descripcion:
         "Completa la simulación. Si NUVIA la aprueba, pasa directo a Contratación; solo se enruta a auditoría QA si NUVIA detecta inconsistencias.",
-      botonLabel: "Abrir simulador",
+      botonLabel: "Ir a financiero",
       scrollToId: "simulador-financiero-qa",
       tab: "financiero",
       prioridad: "media",
@@ -481,9 +495,11 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
         tab: "resumen",
       },
       proyeccion: {
-        titulo: "Proyección financiera en preparación",
-        descripcion: "El analista está trabajando la simulación financiera antes de avanzar el expediente.",
-        botonLabel: "Ver financiero",
+        titulo: proyeccionListaParaEnviar(exp, ec) ? "Proyección lista para Contratación" : "Proyección financiera en preparación",
+        descripcion: proyeccionListaParaEnviar(exp, ec)
+          ? "El analista ya tiene una propuesta guardada y puede enviarla a Contratación desde el módulo financiero."
+          : "El analista está trabajando la simulación financiera antes de avanzar el expediente.",
+        botonLabel: proyeccionListaParaEnviar(exp, ec) ? "Enviar a Contratación" : "Ver financiero",
         scrollToId: "simulador-financiero-qa",
         tab: "financiero",
       },
@@ -647,6 +663,11 @@ function tienePropuesta(exp: Expediente): boolean {
   const p = (exp as unknown as { propuesta_data?: Record<string, unknown> }).propuesta_data ?? {};
   return Boolean(p && Number(p.nuevaCuota ?? 0) > 0);
 }
+
+function proyeccionListaParaEnviar(exp: Expediente, ec: string): boolean {
+  return ["simulacion_realizada", "simulado", "propuesta_presentada", "propuesta_enviada"].includes(ec) && tienePropuesta(exp);
+}
+
 function ordenEstado(ec: string): number {
   const ORD: Record<string, number> = {
     lead_creado: 1, prospecto: 2, extracto_recibido: 3, simulacion_realizada: 4, simulado: 5,

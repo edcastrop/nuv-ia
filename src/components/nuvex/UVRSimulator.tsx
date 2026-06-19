@@ -149,6 +149,11 @@ export function UVRSimulator({
   // Prellenar el campo "Asesor NUVEX" con el nombre del perfil autenticado
   useAsesorDefault(client.asesor, (nombre) => setClient((prev) => ({ ...prev, asesor: nombre })));
   const { metricas: metricasAutonomia } = useNivelAutonomia();
+  const estadoCasoActual = (init as unknown as { estado_caso?: string | null } | undefined)?.estado_caso ?? "";
+  const puedeEnviarAContratacion =
+    !init?.id ||
+    !!fromSimulador ||
+    ["simulacion_realizada", "simulado", "propuesta_presentada", "propuesta_enviada", "proyeccion_devuelta_qa"].includes(estadoCasoActual);
   const currentDraft = useMemo(
     () => ({
       extractoArchivoPath,
@@ -776,7 +781,7 @@ export function UVRSimulator({
                     expedienteId={init?.id}
                     onSaved={handleSaved}
                     onSeguirSimulando={handleResetMode}
-                    enviarAuditoriaManual={!init?.id}
+                    enviarAuditoriaManual={puedeEnviarAContratacion}
                     fromSimulador={fromSimulador}
                     nivelAutonomia={metricasAutonomia.nivelAutonomia}
                     auditInput={{
