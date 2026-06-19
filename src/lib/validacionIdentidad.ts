@@ -181,12 +181,14 @@ export function extraerCamposCriticosDesdeExpediente(
   };
   const t = ij.titular ?? {};
   const co = ij.cotitular ?? {};
+  const intervinientes = Array.isArray(cd.intervinientes) ? cd.intervinientes as Array<Record<string, unknown>> : [];
+  const titularInterviniente = intervinientes[0] ?? {};
   return {
     nombre: t.nombre || pick("nombre") || exp.cliente_nombre || "",
     tipoDocumento: t.tipoDocumento || pick("tipoDocumento") || "CC",
     cedula: t.cedula || pick("cedula") || exp.cedula || "",
-    lugarExpedicion: t.expedidaEn || pick("expedidaEn") || "",
-    fechaExpedicion: t.fechaExpedicion || pick("fechaExpedicion") || "",
+    lugarExpedicion: t.expedidaEn || pick("expedidaEn") || pick("lugarExpedicionCedula") || (typeof titularInterviniente.lugarExpedicionCedula === "string" ? titularInterviniente.lugarExpedicionCedula : "") || "",
+    fechaExpedicion: t.fechaExpedicion || pick("fechaExpedicion") || pick("fechaExpedicionCedula") || "",
     email: t.email || pick("email") || pick("correo") || "",
     celular: t.telefono || pick("telefono") || pick("celular") || "",
     direccion: t.direccion || pick("direccion") || "",
@@ -274,7 +276,14 @@ export async function actualizarCamposCriticos(
   if (campos.nombre !== undefined) cd.nombre = campos.nombre;
   if (campos.cedula !== undefined) cd.cedula = campos.cedula;
   if (campos.tipoDocumento !== undefined) cd.tipoDocumento = campos.tipoDocumento;
-  if (campos.lugarExpedicion !== undefined) cd.expedidaEn = campos.lugarExpedicion;
+  if (campos.lugarExpedicion !== undefined) {
+    cd.expedidaEn = campos.lugarExpedicion;
+    cd.lugarExpedicionCedula = campos.lugarExpedicion;
+  }
+  if (campos.fechaExpedicion !== undefined) {
+    cd.fechaExpedicion = campos.fechaExpedicion;
+    cd.fechaExpedicionCedula = campos.fechaExpedicion;
+  }
   if (campos.direccion !== undefined) cd.direccion = campos.direccion;
   if (campos.ciudad !== undefined) cd.ciudad = campos.ciudad;
   if (campos.departamento !== undefined) cd.departamento = campos.departamento;
@@ -283,6 +292,16 @@ export async function actualizarCamposCriticos(
   if (campos.banco !== undefined) cd.banco = campos.banco;
   if (campos.numeroCredito !== undefined) cd.numeroCredito = campos.numeroCredito;
   if (campos.tipoProducto !== undefined) cd.tipoProducto = campos.tipoProducto;
+
+  if (campos.nombre !== undefined || campos.cedula !== undefined || campos.lugarExpedicion !== undefined) {
+    const ints = Array.isArray(cd.intervinientes) ? [...(cd.intervinientes as Array<Record<string, unknown>>)] : [];
+    const titularInt = { ...(ints[0] ?? { rol: "Titular", direccion: cd.direccion ?? "" }) };
+    if (campos.nombre !== undefined) titularInt.nombreCompleto = campos.nombre;
+    if (campos.cedula !== undefined) titularInt.cedula = campos.cedula;
+    if (campos.lugarExpedicion !== undefined) titularInt.lugarExpedicionCedula = campos.lugarExpedicion;
+    ints[0] = titularInt;
+    cd.intervinientes = ints;
+  }
 
   if (campos.cotitularActivo !== undefined) cotitular.activo = campos.cotitularActivo as never;
   setIf("cotitularNombre", cotitular, "nombre");

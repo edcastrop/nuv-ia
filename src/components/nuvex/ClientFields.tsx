@@ -24,10 +24,13 @@ export interface ClientData {
   celular?: string;
   fechaDesembolso?: string;
   lugarExpedicionCedula?: string; // etiqueta combinada "Municipio, Ciudad, Departamento"
+  expedidaEn?: string;
   lugarExpedicionDepartamento?: string;
   lugarExpedicionCiudad?: string;
   lugarExpedicionMunicipio?: string;
   fechaExpedicionCedula?: string;
+  fechaExpedicion?: string;
+  tipoDocumento?: string;
   // Ubicación del cliente
   direccion?: string;
   departamento?: string;
@@ -35,6 +38,7 @@ export interface ClientData {
   municipio?: string;
   // Aditivos opcionales (persistidos en cliente_data jsonb)
   intervinientes?: Interviniente[];
+  informacionJuridica?: Record<string, unknown>;
   cobertura?: Cobertura;
   /** Perfil opcional del cliente para personalizar las analogías del abono inteligente. */
   perfil?: {
@@ -68,15 +72,47 @@ export function ClientFields({
     onChange({ ...data, [k]: v });
 
   const handleCedulaAI = (p: ClientCedulaPayload) => {
+    const nombre = p.nombre || data.nombre;
+    const cedula = p.cedula || data.cedula;
+    const expedidaEn = p.lugarExpedicion || data.lugarExpedicionCedula || "";
+    const fechaExpedicion = p.fechaExpedicion || data.fechaExpedicionCedula || "";
+    const intervinientes = data.intervinientes?.length
+      ? data.intervinientes.map((it, idx) => idx === 0 ? {
+          ...it,
+          nombreCompleto: nombre || it.nombreCompleto,
+          cedula: cedula || it.cedula,
+          lugarExpedicionCedula: expedidaEn || it.lugarExpedicionCedula,
+        } : it)
+      : [{ rol: "Titular" as const, nombreCompleto: nombre, cedula, lugarExpedicionCedula: expedidaEn, direccion: data.direccion || "" }];
     onChange({
       ...data,
-      nombre: p.nombre || data.nombre,
-      cedula: p.cedula || data.cedula,
-      lugarExpedicionCedula: p.lugarExpedicion || data.lugarExpedicionCedula,
+      nombre,
+      cedula,
+      lugarExpedicionCedula: expedidaEn,
+      expedidaEn,
       lugarExpedicionDepartamento: p.lugarExpedicionDepartamento || data.lugarExpedicionDepartamento,
       lugarExpedicionCiudad: p.lugarExpedicionCiudad || data.lugarExpedicionCiudad,
       lugarExpedicionMunicipio: p.lugarExpedicionMunicipio || data.lugarExpedicionMunicipio,
-      fechaExpedicionCedula: p.fechaExpedicion || data.fechaExpedicionCedula,
+      fechaExpedicionCedula: fechaExpedicion,
+      fechaExpedicion,
+      tipoDocumento: "CC",
+      intervinientes,
+      informacionJuridica: {
+        ...((data as unknown as { informacionJuridica?: Record<string, unknown> }).informacionJuridica ?? {}),
+        titular: {
+          ...(((data as unknown as { informacionJuridica?: { titular?: Record<string, unknown> } }).informacionJuridica?.titular) ?? {}),
+          nombre,
+          cedula,
+          tipoDocumento: "CC",
+          expedidaEn,
+          fechaExpedicion,
+          telefono: data.celular || "",
+          email: data.correo || "",
+          direccion: data.direccion || "",
+          ciudad: data.ciudad || data.municipio || "",
+          departamento: data.departamento || "",
+        },
+      },
     });
   };
 
@@ -87,8 +123,30 @@ export function ClientFields({
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <TextField label="Nombre completo" value={data.nombre} onChange={(v) => set("nombre", v)} />
-        <TextField label="Número de cédula" value={data.cedula} onChange={(v) => set("cedula", v)} />
+        <TextField
+          label="Nombre completo"
+          value={data.nombre}
+          onChange={(v) => onChange({
+            ...data,
+            nombre: v,
+            informacionJuridica: {
+              ...(data.informacionJuridica ?? {}),
+              titular: { ...((data.informacionJuridica?.titular as Record<string, unknown> | undefined) ?? {}), nombre: v },
+            },
+          })}
+        />
+        <TextField
+          label="Número de cédula"
+          value={data.cedula}
+          onChange={(v) => onChange({
+            ...data,
+            cedula: v,
+            informacionJuridica: {
+              ...(data.informacionJuridica ?? {}),
+              titular: { ...((data.informacionJuridica?.titular as Record<string, unknown> | undefined) ?? {}), cedula: v },
+            },
+          })}
+        />
 
         <div>
           <label className="block text-xs font-medium mb-1" style={{ color: "rgba(225,232,248,0.65)" }}>
@@ -104,6 +162,11 @@ export function ClientFields({
                   lugarExpedicionCiudad: "",
                   lugarExpedicionMunicipio: "",
                   lugarExpedicionCedula: v,
+                  expedidaEn: v,
+                  informacionJuridica: {
+                    ...(data.informacionJuridica ?? {}),
+                    titular: { ...((data.informacionJuridica?.titular as Record<string, unknown> | undefined) ?? {}), expedidaEn: v },
+                  },
                 })
               }
             />
@@ -114,13 +177,17 @@ export function ClientFields({
                 const dep =
                   data.lugarExpedicionDepartamento ||
                   departamentoDeMunicipio(v);
+                const lugar = [data.lugarExpedicionMunicipio, v, dep].filter(Boolean).join(", ");
                 onChange({
                   ...data,
                   lugarExpedicionDepartamento: dep,
                   lugarExpedicionCiudad: v,
-                  lugarExpedicionCedula: [data.lugarExpedicionMunicipio, v, dep]
-                    .filter(Boolean)
-                    .join(", "),
+                  lugarExpedicionCedula: lugar,
+                  expedidaEn: lugar,
+                  informacionJuridica: {
+                    ...(data.informacionJuridica ?? {}),
+                    titular: { ...((data.informacionJuridica?.titular as Record<string, unknown> | undefined) ?? {}), expedidaEn: lugar },
+                  },
                 });
               }}
               placeholder="Ciudad…"
@@ -132,13 +199,17 @@ export function ClientFields({
                 const dep =
                   data.lugarExpedicionDepartamento ||
                   departamentoDeMunicipio(v);
+                const lugar = [v, data.lugarExpedicionCiudad, dep].filter(Boolean).join(", ");
                 onChange({
                   ...data,
                   lugarExpedicionDepartamento: dep,
                   lugarExpedicionMunicipio: v,
-                  lugarExpedicionCedula: [v, data.lugarExpedicionCiudad, dep]
-                    .filter(Boolean)
-                    .join(", "),
+                  lugarExpedicionCedula: lugar,
+                  expedidaEn: lugar,
+                  informacionJuridica: {
+                    ...(data.informacionJuridica ?? {}),
+                    titular: { ...((data.informacionJuridica?.titular as Record<string, unknown> | undefined) ?? {}), expedidaEn: lugar },
+                  },
                 });
               }}
               placeholder="Municipio…"
@@ -355,10 +426,13 @@ export const defaultClient: ClientData = {
   celular: "",
   fechaDesembolso: "",
   lugarExpedicionCedula: "",
+  expedidaEn: "",
   lugarExpedicionDepartamento: "",
   lugarExpedicionCiudad: "",
   lugarExpedicionMunicipio: "",
   fechaExpedicionCedula: "",
+  fechaExpedicion: "",
+  tipoDocumento: "CC",
   direccion: "",
   departamento: "",
   ciudad: "",

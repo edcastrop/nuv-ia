@@ -31,6 +31,25 @@ interface Props {
 }
 
 function fileToDataUrl(file: File | Blob): Promise<string> {
+  if (file.type.startsWith("image/")) {
+    return createImageBitmap(file)
+      .then((bitmap) => {
+        const maxSide = 1800;
+        const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+        canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+        canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        bitmap.close?.();
+        return canvas.toDataURL("image/jpeg", 0.86);
+      })
+      .catch(() => new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result));
+        r.onerror = () => reject(r.error);
+        r.readAsDataURL(file);
+      }));
+  }
   return new Promise((resolve, reject) => {
     const r = new FileReader();
     r.onload = () => resolve(String(r.result));
@@ -88,19 +107,27 @@ export function ClientCedulaButton({ onApply }: Props) {
     if (fileRef.current) fileRef.current.value = "";
   };
 
-  const processFile = async (f: File) => {
+  const filesToImages = async (files: FileList | File[]) => {
+    const selected = Array.from(files).slice(0, 4);
+    const images: { mime: string; dataUrl: string }[] = [];
+    for (const f of selected) {
+      const lower = f.name.toLowerCase();
+      if (f.type === "application/pdf" || lower.endsWith(".pdf")) {
+        images.push(...(await renderPdfToImages(f)));
+      } else if (f.type.startsWith("image/")) {
+        images.push({ mime: "image/jpeg", dataUrl: await fileToDataUrl(f) });
+      } else {
+        throw new Error("Formato no soportado. Sube imágenes (JPG/PNG/WEBP) o un PDF de la cédula.");
+      }
+    }
+    return images.slice(0, 4);
+  };
+
+  const processFiles = async (files: FileList | File[]) => {
     setStage("reading");
     setErrorMsg(null);
     try {
-      let images: { mime: string; dataUrl: string }[] = [];
-      const lower = f.name.toLowerCase();
-      if (f.type === "application/pdf" || lower.endsWith(".pdf")) {
-        images = await renderPdfToImages(f);
-      } else if (f.type.startsWith("image/")) {
-        images = [{ mime: f.type, dataUrl: await fileToDataUrl(f) }];
-      } else {
-        throw new Error("Formato no soportado. Sube una imagen (JPG/PNG/WEBP) o un PDF de la cédula.");
-      }
+      const images = await filesToImages(files);
       const resp = await call({ data: { images } });
       if (resp.error || !resp.data) {
         setErrorMsg(resp.error || "No se pudieron extraer datos.");
@@ -172,7 +199,7 @@ export function ClientCedulaButton({ onApply }: Props) {
               Lector inteligente de cédula
             </div>
             <div className="text-[11px] text-[#242424]/65">
-              Sube JPG, PNG o PDF · autocompleta nombre y cédula
+              Sube frente y reverso juntos · autocompleta datos contractuales
             </div>
           </div>
         </div>
@@ -198,8 +225,8 @@ export function ClientCedulaButton({ onApply }: Props) {
               onDrop={(e) => {
                 e.preventDefault();
                 setDragActive(false);
-                const f = e.dataTransfer.files?.[0];
-                if (f) processFile(f);
+                const files = e.dataTransfer.files;
+                if (files?.length) processFiles(files);
               }}
               onClick={() => fileRef.current?.click()}
               className="cursor-pointer rounded-xl border-2 border-dashed p-5 text-center transition-colors"
@@ -212,15 +239,16 @@ export function ClientCedulaButton({ onApply }: Props) {
               <div className="mt-2 text-xs font-semibold text-[#242424]">
                 Arrastra la cédula o haz clic para subir
               </div>
-              <div className="text-[11px] text-[#242424]/60">JPG, PNG, WEBP o PDF</div>
+                <div className="text-[11px] text-[#242424]/60">Selecciona frente y reverso juntos · JPG, PNG, WEBP o PDF</div>
               <input
                 ref={fileRef}
                 type="file"
+                  multiple
                 accept="image/*,application/pdf"
                 className="hidden"
                 onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) processFile(f);
+                    const files = e.target.files;
+                    if (files?.length) processFiles(files);
                 }}
               />
             </div>
