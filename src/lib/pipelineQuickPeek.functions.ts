@@ -55,7 +55,7 @@ export const getQuickPeekData = createServerFn({ method: "POST" })
       supabase
         .from("expedientes")
         .select(
-          "credito_data, propuesta_data, aprobado_data, acertividad_global, qa_score, cuotas_pactadas, cuotas_aprobadas_banco",
+          "cliente_data, credito_data, propuesta_data, aprobado_data, acertividad_global, qa_score, cuotas_pactadas, cuotas_aprobadas_banco",
         )
         .eq("id", data.expedienteId)
         .maybeSingle(),
@@ -77,6 +77,7 @@ export const getQuickPeekData = createServerFn({ method: "POST" })
         .maybeSingle(),
     ]);
 
+    const cliente = (exp?.cliente_data ?? {}) as Record<string, unknown>;
     const credito = (exp?.credito_data ?? {}) as Record<string, unknown>;
     const propuesta = (exp?.propuesta_data ?? {}) as Record<string, unknown>;
     const aprobado = (exp?.aprobado_data ?? {}) as Record<string, unknown>;
@@ -87,17 +88,16 @@ export const getQuickPeekData = createServerFn({ method: "POST" })
     const saldoCapital = num(proy?.saldo_capital) || readN(credito, "saldo", "saldoCapital", "monto", "valorCredito", "valorDesembolsado");
     const cuotaActual = num(proy?.cuota_actual) || readN(credito, "cuota", "cuotaActual", "valorCuota", "cuotaPagadaCliente", "cuotaBaseSimulacion");
     const tasaActualPct = num(proy?.tea_pct) || readN(credito, "tea", "tasaEA", "tasa_ea", "tasa", "tea_pct") || null;
-    // Plazo mostrado = Plazo inicial aprobado (meses) (aprobado_data.cliente.plazoInicial).
-    // Para cuotas pendientes actuales se conserva el plazo original del crédito.
-    const plazoAprobadoBanco =
-      readN(aprobadoCliente, "plazoInicial", "plazo_inicial", "plazoInicialAprobadoMeses") ||
-      num(exp?.cuotas_aprobadas_banco) ||
-      readN(aprobado, "plazoAprobado", "plazo_aprobado", "plazo", "plazoMeses", "plazo_meses");
+    // Plazo mostrado = "Plazo inicial aprobado (meses)" del cliente/crédito original.
+    // NO usar plazoAprobado/cuotas_aprobadas_banco: esos son el nuevo plazo aprobado/recalculado.
+    const plazoInicialAprobado =
+      readN(cliente, "plazoInicial", "plazo_inicial", "plazoInicialAprobadoMeses") ||
+      readN(aprobadoCliente, "plazoInicial", "plazo_inicial", "plazoInicialAprobadoMeses");
     const plazoOriginalCredito =
       num(proy?.cuotas_totales) ||
       readN(cobertura, "cuotasTotales", "cuotas_totales", "plazo", "plazoMeses") ||
       readN(credito, "plazo", "plazoMeses", "plazo_meses", "cuotasTotales", "cuotas_totales");
-    const cuotasTotales = plazoAprobadoBanco || plazoOriginalCredito;
+    const cuotasTotales = plazoInicialAprobado || plazoOriginalCredito;
     const cuotasPagadas =
       num(proy?.cuotas_pagadas) ||
       readN(cobertura, "cuotasPagadas", "cuotas_pagadas") ||
