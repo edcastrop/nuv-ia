@@ -350,6 +350,24 @@ function PipelinePage() {
     }
   }, [showFunnel]);
 
+  // Header premium: filtros avanzados y panel de análisis colapsados por defecto.
+  const [showFilters, setShowFilters] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("nuvex.pipeline.filters") === "1";
+  });
+  const [showAnalisis, setShowAnalisis] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("nuvex.pipeline.analisis") === "1";
+  });
+  useEffect(() => {
+    if (typeof window !== "undefined") localStorage.setItem("nuvex.pipeline.filters", showFilters ? "1" : "0");
+  }, [showFilters]);
+  useEffect(() => {
+    if (typeof window !== "undefined") localStorage.setItem("nuvex.pipeline.analisis", showAnalisis ? "1" : "0");
+  }, [showAnalisis]);
+
+  const advancedActive = !!(banco || soloStuck || fase || mios || asesor);
+
   const funnel = useMemo(() => {
     const counts = ETAPAS_PIPELINE.map((e) => ({
       id: e.id,
