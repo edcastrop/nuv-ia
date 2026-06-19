@@ -145,7 +145,7 @@ export async function aprobarAutomaticamentePorMotor(
   if (!u.user) throw new Error("No autenticado");
   await snapshotPropuestaAprobada(expedienteId, null, u.user.id);
   try {
-    await cambiarEstadoCaso(expedienteId, "proyeccion_aprobada_qa", "auto", motivo);
+    await cambiarEstadoCaso(expedienteId, "proyeccion_aprobada_qa", "manual", motivo);
   } catch (e) {
     console.warn("[validacionQA] no se pudo actualizar estado_caso en auto-aprobación", e);
   }
