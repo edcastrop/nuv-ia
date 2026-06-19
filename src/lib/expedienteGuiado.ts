@@ -215,6 +215,21 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
   const canSeeFinanceGuide = isFinanciero || isSuper;
   const canSeeAccountingGuide = isContable || isSuper;
 
+  if (ec === "negado_banco" || ec === "prejuridico") {
+    return {
+      rol: "todos",
+      titulo: ec === "prejuridico" ? "Caso en gestión prejurídica" : "Solicitud negada por el banco",
+      descripcion:
+        ec === "prejuridico"
+          ? "El expediente está escalado a gestión prejurídica. Revisa historial y comunicaciones antes de moverlo."
+          : "El banco negó la solicitud. Revisa la respuesta registrada y define el cierre o una nueva estrategia con el equipo responsable.",
+      botonLabel: "Ver respuesta",
+      scrollToId: "resultado-bancario",
+      tab: "financiero",
+      prioridad: "alta",
+    };
+  }
+
   if (etapa === "caso_cerrado" || ec === "proceso_cerrado" || ec === "caso_finalizado") {
     return {
       rol: "todos",
@@ -336,7 +351,7 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
   }
 
   // 9) Devuelto / docs complementarios → ops + analista
-  if ((ec === "devuelto_banco" || ec === "docs_complementarios_banco") && (has("operaciones") || has("juridica") || has("licenciado") || isSuper)) {
+  if ((ec === "devuelto_banco" || ec === "docs_complementarios_banco") && (has("operaciones") || has("juridica") || has("licenciado") || has("asesor") || isSuper)) {
     return {
       rol: "operaciones",
       titulo: "Subsana lo que pidió el banco",
