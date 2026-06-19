@@ -316,7 +316,7 @@ function DetalleCuentaCobro() {
         <ArrowLeft size={13} /> Volver a comisiones
       </Link>
 
-      <Card className="mb-4">
+      <NCard variant="elevated" padding="none" className="mb-4 overflow-hidden">
         <div className="flex flex-wrap items-start justify-between gap-4 p-5">
           <div>
             <div className="text-[11px] uppercase tracking-wide text-[#242424]/60">Cuenta de cobro</div>
@@ -538,9 +538,9 @@ function DetalleCuentaCobro() {
             )}
           </div>
         )}
-      </Card>
+      </NCard>
 
-      <Card className="mb-4">
+      <NCard variant="elevated" padding="none" className="mb-4 overflow-hidden">
         <div className="border-b border-[#E3E7EE] px-4 py-3 text-sm font-semibold text-[#0A1226]">
           Comisiones incluidas ({items.length})
         </div>
@@ -571,9 +571,9 @@ function DetalleCuentaCobro() {
             })}
           </tbody>
         </table>
-      </Card>
+      </NCard>
 
-      <Card>
+      <NCard variant="elevated" padding="none" className="overflow-hidden">
         <div className="border-b border-[#E3E7EE] px-4 py-3 text-sm font-semibold text-[#0A1226]">Historial</div>
         {historial.length === 0 ? (
           <div className="p-6 text-center text-sm text-[#242424]/60">Sin movimientos.</div>
@@ -590,7 +590,7 @@ function DetalleCuentaCobro() {
             ))}
           </ul>
         )}
-      </Card>
+      </NCard>
     </div>
   );
 }
