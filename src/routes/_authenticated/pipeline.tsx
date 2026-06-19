@@ -2,11 +2,11 @@
 // P15 — Filtros (búsqueda, banco, solo estancados).
 // P16 — Filtros persistidos en URL via search params (compartibles).
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
-import { Loader2, Flag, Clock, AlertTriangle, RefreshCw, Eye, Pencil } from "lucide-react";
+import { Loader2, Flag, Clock, AlertTriangle, RefreshCw, Eye, Pencil, SlidersHorizontal, BarChart3, ChevronDown } from "lucide-react";
 import { listExpedientes, type Expediente } from "@/lib/expedientes";
 import {
   ETAPAS_PIPELINE,
@@ -350,6 +350,24 @@ function PipelinePage() {
     }
   }, [showFunnel]);
 
+  // Header premium: filtros avanzados y panel de análisis colapsados por defecto.
+  const [showFilters, setShowFilters] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("nuvex.pipeline.filters") === "1";
+  });
+  const [showAnalisis, setShowAnalisis] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("nuvex.pipeline.analisis") === "1";
+  });
+  useEffect(() => {
+    if (typeof window !== "undefined") localStorage.setItem("nuvex.pipeline.filters", showFilters ? "1" : "0");
+  }, [showFilters]);
+  useEffect(() => {
+    if (typeof window !== "undefined") localStorage.setItem("nuvex.pipeline.analisis", showAnalisis ? "1" : "0");
+  }, [showAnalisis]);
+
+  const advancedActive = !!(banco || soloStuck || fase || mios || asesor);
+
   const funnel = useMemo(() => {
     const counts = ETAPAS_PIPELINE.map((e) => ({
       id: e.id,
@@ -430,32 +448,140 @@ function PipelinePage() {
       }}
     >
       <div className="mx-auto max-w-[1680px] space-y-4">
-        <section className="glass-panel overflow-hidden p-4 md:p-5">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-            <div className="min-w-0">
-              <div className="text-[11px] font-semibold uppercase text-[var(--nuvia-accent-green)]">
-                NUVIA · Control operativo
+        <section className="glass-panel overflow-hidden p-3 md:p-4">
+          {/* Fila ejecutiva: identidad + 4 KPIs premium + acciones primarias */}
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex min-w-0 items-center gap-3">
+              <div
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-sm font-bold text-[var(--nuvia-text-primary)]"
+                style={{ background: "var(--nuvia-gradient-primary)", boxShadow: "var(--nuvia-shadow-sm)" }}
+                aria-hidden
+              >
+                PM
               </div>
-              <h1 className="mt-1 text-2xl font-semibold leading-tight text-[var(--nuvia-text-primary)]">
-                Pipeline Maestro
-              </h1>
-              <div className="mt-1 text-sm text-[var(--nuvia-text-secondary)]">
-                {totalVisible} de {rows.length} casos visibles · {ETAPAS_PIPELINE.length} etapas activas
+              <div className="min-w-0">
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-[var(--nuvia-accent-green)]">
+                  NUVIA · Control operativo
+                </div>
+                <h1 className="text-lg font-semibold leading-tight text-[var(--nuvia-text-primary)] md:text-xl">
+                  Pipeline Maestro
+                </h1>
+                <div className="text-[11px] text-[var(--nuvia-text-secondary)]">
+                  {totalVisible} de {rows.length} casos · {ETAPAS_PIPELINE.length} etapas
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-1 flex-wrap items-center gap-2 xl:justify-end">
-              <input
-                ref={searchInputRef}
-                value={qLocal}
-                onChange={(e) => setQLocal(e.target.value)}
-                placeholder="Buscar cliente, cédula o crédito…"
-                className="h-10 w-full rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-3 text-sm text-[var(--nuvia-text-primary)] outline-none placeholder:text-[rgba(170,179,197,0.55)] focus:border-[var(--nuvia-accent-blue)] focus:ring-2 focus:ring-[rgba(68,93,163,0.22)] sm:w-[280px]"
-              />
+            {/* 4 KPIs inline tipo glass — premium, sin ocupar fila extra */}
+            {!loading && kpis.total > 0 && (
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:flex xl:items-stretch">
+                <KpiTile label="Total" value={String(kpis.total)} />
+                <KpiTile
+                  label="Estancados"
+                  value={String(kpis.estancados)}
+                  tone="danger"
+                  icon={<AlertTriangle className="h-3.5 w-3.5" />}
+                />
+                <KpiTile
+                  label="Días prom."
+                  value={String(kpis.promedio)}
+                  icon={<Clock className="h-3.5 w-3.5 text-[var(--nuvia-accent-blue)]" />}
+                />
+                <KpiTile label="Honorarios" value={fmtCOP(kpis.honorarios)} tone="success" />
+              </div>
+            )}
+          </div>
+
+          {/* Fila acciones: buscador + refresh + toggles colapsables */}
+          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-[var(--nuvia-border)] pt-3">
+            <input
+              ref={searchInputRef}
+              value={qLocal}
+              onChange={(e) => setQLocal(e.target.value)}
+              placeholder="Buscar cliente, cédula o crédito…"
+              className="h-9 min-w-[220px] flex-1 rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-3 text-sm text-[var(--nuvia-text-primary)] outline-none placeholder:text-[rgba(170,179,197,0.55)] focus:border-[var(--nuvia-accent-blue)] focus:ring-2 focus:ring-[rgba(68,93,163,0.22)] sm:max-w-[340px]"
+            />
+            <button
+              onClick={() => cargar(true)}
+              disabled={loading || refreshing}
+              title={`Actualizado hace ${haceLabel}`}
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-2.5 text-xs text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-border-strong)] hover:bg-[rgba(255,255,255,0.06)] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 text-[var(--nuvia-accent-green)] ${refreshing ? "animate-spin" : ""}`} />
+              {haceLabel}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowFilters((v) => !v)}
+              aria-expanded={showFilters}
+              className={`inline-flex h-9 items-center gap-1.5 rounded-lg border px-2.5 text-xs transition ${
+                showFilters || advancedActive
+                  ? "border-[var(--nuvia-accent-blue)] bg-[rgba(68,93,163,0.16)] text-[var(--nuvia-text-primary)]"
+                  : "border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] text-[var(--nuvia-text-secondary)] hover:border-[var(--nuvia-border-strong)]"
+              }`}
+              title="Banco, analista, fase, mis casos, estancados"
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              Filtros
+              {advancedActive && (
+                <span
+                  className="ml-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-semibold text-[var(--nuvia-text-primary)]"
+                  style={{ background: "color-mix(in oklab, var(--nuvia-accent-blue) 55%, transparent)" }}
+                >
+                  ON
+                </span>
+              )}
+              <ChevronDown className={`h-3 w-3 transition-transform ${showFilters ? "rotate-180" : ""}`} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowAnalisis((v) => !v)}
+              aria-expanded={showAnalisis}
+              className={`inline-flex h-9 items-center gap-1.5 rounded-lg border px-2.5 text-xs transition ${
+                showAnalisis
+                  ? "border-[var(--nuvia-accent-green)] bg-[rgba(106,168,79,0.16)] text-[var(--nuvia-text-primary)]"
+                  : "border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] text-[var(--nuvia-text-secondary)] hover:border-[var(--nuvia-border-strong)]"
+              }`}
+              title="Embudo ejecutivo y fases"
+            >
+              <BarChart3 className="h-3.5 w-3.5" />
+              Análisis
+              <ChevronDown className={`h-3 w-3 transition-transform ${showAnalisis ? "rotate-180" : ""}`} />
+            </button>
+
+            {advancedActive && (
+              <button
+                onClick={clearAll}
+                className="h-9 rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-2.5 text-xs text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-border-strong)]"
+              >
+                Limpiar
+              </button>
+            )}
+
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                onClick={exportarCSV}
+                disabled={loading || totalVisible === 0}
+                className="h-9 rounded-lg border border-transparent px-3 text-xs font-semibold text-[var(--nuvia-text-primary)] shadow-[var(--nuvia-shadow-sm)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                style={{ background: "var(--nuvia-gradient-primary)" }}
+              >
+                Exportar CSV
+              </button>
+              <Link to="/casos" className="text-xs font-medium text-[var(--nuvia-accent-green)] hover:underline">
+                Ver lista →
+              </Link>
+            </div>
+          </div>
+
+          {/* Filtros avanzados colapsables */}
+          {showFilters && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.025)] p-3">
               <select
                 value={banco}
                 onChange={(e) => setBanco(e.target.value)}
-                className="h-10 rounded-lg border border-[var(--nuvia-border)] bg-[var(--nuvia-bg-tertiary)] px-3 text-sm text-[var(--nuvia-text-primary)] outline-none focus:border-[var(--nuvia-accent-blue)]"
+                className="h-9 rounded-lg border border-[var(--nuvia-border)] bg-[var(--nuvia-bg-tertiary)] px-3 text-xs text-[var(--nuvia-text-primary)] outline-none focus:border-[var(--nuvia-accent-blue)]"
               >
                 <option value="">Todos los bancos</option>
                 {bancos.map((b) => (
@@ -466,62 +592,59 @@ function PipelinePage() {
                 value={asesor}
                 onChange={(e) => setAsesor(e.target.value)}
                 title="Filtrar por analista financiero"
-                className="h-10 max-w-[230px] rounded-lg border border-[var(--nuvia-border)] bg-[var(--nuvia-bg-tertiary)] px-3 text-sm text-[var(--nuvia-text-primary)] outline-none focus:border-[var(--nuvia-accent-blue)]"
+                className="h-9 max-w-[230px] rounded-lg border border-[var(--nuvia-border)] bg-[var(--nuvia-bg-tertiary)] px-3 text-xs text-[var(--nuvia-text-primary)] outline-none focus:border-[var(--nuvia-accent-blue)]"
               >
                 <option value="">Todos los analistas</option>
                 {analistas.map((a) => (
                   <option key={a.id} value={a.id}>{a.nombre || a.email || a.id.slice(0, 8)}</option>
                 ))}
               </select>
-              <button
-                onClick={() => cargar(true)}
-                disabled={loading || refreshing}
-                title={`Actualizado hace ${haceLabel}`}
-                className="inline-flex h-10 items-center gap-2 rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-3 text-sm text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-border-strong)] hover:bg-[rgba(255,255,255,0.06)] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <RefreshCw className={`h-4 w-4 text-[var(--nuvia-accent-green)] ${refreshing ? "animate-spin" : ""}`} />
-                hace {haceLabel}
-              </button>
-              <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-3 text-sm text-[var(--nuvia-text-secondary)]">
+              <label className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-3 text-xs text-[var(--nuvia-text-secondary)]">
                 <input
                   type="checkbox"
                   checked={mios}
                   onChange={(e) => setMios(e.target.checked)}
                   disabled={!user?.id}
-                  className="h-4 w-4 accent-[var(--nuvia-accent-blue)]"
+                  className="h-3.5 w-3.5 accent-[var(--nuvia-accent-blue)]"
                 />
                 Mis casos
               </label>
-              <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-3 text-sm text-[var(--nuvia-text-secondary)]">
+              <label className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-3 text-xs text-[var(--nuvia-text-secondary)]">
                 <input
                   type="checkbox"
                   checked={soloStuck}
                   onChange={(e) => setSoloStuck(e.target.checked)}
-                  className="h-4 w-4 accent-[var(--nuvia-danger)]"
+                  className="h-3.5 w-3.5 accent-[var(--nuvia-danger)]"
                 />
                 Estancados
               </label>
-              {(q || banco || soloStuck || fase || mios || asesor) && (
-                <button
-                  onClick={clearAll}
-                  className="h-10 rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-3 text-sm text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-border-strong)]"
-                >
-                  Limpiar
-                </button>
-              )}
-              <button
-                onClick={exportarCSV}
-                disabled={loading || totalVisible === 0}
-                className="h-10 rounded-lg border border-transparent px-3 text-sm font-semibold text-[var(--nuvia-text-primary)] shadow-[var(--nuvia-shadow-sm)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
-                style={{ background: "var(--nuvia-gradient-primary)" }}
-              >
-                Exportar CSV
-              </button>
-              <Link to="/casos" className="text-sm font-medium text-[var(--nuvia-accent-green)] hover:underline">
-                Ver lista →
-              </Link>
+
+              {/* Fases en chips compactos dentro de filtros avanzados */}
+              <div className="ml-1 flex flex-wrap items-center gap-1.5">
+                <span className="text-[10px] font-semibold uppercase text-[var(--nuvia-text-secondary)]">Fase:</span>
+                {kpis.fases.map((f) => {
+                  const active = fase === f.id;
+                  return (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => toggleFase(f.id as FaseId)}
+                      className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition ${
+                        active
+                          ? "border-[var(--nuvia-accent-blue)] bg-[rgba(68,93,163,0.22)] text-[var(--nuvia-text-primary)]"
+                          : "border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.04)] text-[var(--nuvia-text-secondary)] hover:border-[var(--nuvia-accent-blue)]"
+                      }`}
+                    >
+                      {f.label}
+                      <span className="rounded bg-[rgba(255,255,255,0.08)] px-1 text-[10px] font-semibold text-[var(--nuvia-text-primary)]">
+                        {f.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
         </section>
 
       {recents.length > 0 && (
@@ -543,48 +666,9 @@ function PipelinePage() {
         </div>
       )}
 
+      {/* KPIs y chips de fase ahora viven dentro del header / filtros avanzados. */}
 
-      {!loading && kpis.total > 0 && (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-9">
-          <div className="glass-card p-3">
-            <div className="text-[11px] uppercase text-[var(--nuvia-text-secondary)]">Total</div>
-            <div className="mt-1 text-2xl font-semibold text-[var(--nuvia-text-primary)]">{kpis.total}</div>
-          </div>
-          <div className="rounded-xl border p-3" style={{ borderColor: "color-mix(in oklab, var(--nuvia-danger) 36%, transparent)", background: "color-mix(in oklab, var(--nuvia-danger) 11%, transparent)" }}>
-            <div className="text-[11px] uppercase text-[var(--nuvia-text-secondary)]">Estancados</div>
-            <div className="mt-1 flex items-center gap-1 text-2xl font-semibold text-[var(--nuvia-danger)]">
-              <AlertTriangle className="h-4 w-4" /> {kpis.estancados}
-            </div>
-          </div>
-          <div className="glass-card p-3">
-            <div className="text-[11px] uppercase text-[var(--nuvia-text-secondary)]">Días prom.</div>
-            <div className="mt-1 flex items-center gap-1 text-2xl font-semibold text-[var(--nuvia-text-primary)]">
-              <Clock className="h-4 w-4 text-[var(--nuvia-accent-blue)]" /> {kpis.promedio}
-            </div>
-          </div>
-          <div className="rounded-xl border p-3" title="Suma de honorarios_final de los casos visibles" style={{ borderColor: "color-mix(in oklab, var(--nuvia-accent-green) 34%, transparent)", background: "color-mix(in oklab, var(--nuvia-accent-green) 10%, transparent)" }}>
-            <div className="text-[11px] uppercase text-[var(--nuvia-text-secondary)]">Honorarios</div>
-            <div className="mt-1 truncate text-2xl font-semibold text-[var(--nuvia-accent-green)]">{fmtCOP(kpis.honorarios)}</div>
-          </div>
-          {kpis.fases.map((f) => {
-            const active = fase === f.id;
-            return (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => toggleFase(f.id as FaseId)}
-                className={`rounded-xl border p-3 text-left transition hover:border-[var(--nuvia-accent-blue)] ${active ? "border-[var(--nuvia-accent-blue)] bg-[rgba(68,93,163,0.18)]" : "border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)]"}`}
-                title={active ? "Quitar filtro de fase" : "Filtrar por esta fase"}
-              >
-                <div className="text-[11px] uppercase text-[var(--nuvia-text-secondary)]">{f.label}</div>
-                <div className="mt-1 text-2xl font-semibold text-[var(--nuvia-text-primary)]">{f.count}</div>
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {!loading && funnel[0]?.passed > 0 && (
+      {!loading && showAnalisis && funnel[0]?.passed > 0 && (
         <section className="glass-panel p-4">
           <div className="mb-2 flex items-center justify-between">
             <div>
@@ -841,4 +925,54 @@ function PipelinePage() {
     </div>
   );
 }
+
+// KPI inline tipo glass — compacto, premium, sin ocupar fila completa.
+function KpiTile({
+  label,
+  value,
+  tone,
+  icon,
+}: {
+  label: string;
+  value: string;
+  tone?: "danger" | "success";
+  icon?: ReactNode;
+}) {
+  const palette =
+    tone === "danger"
+      ? {
+          border: "color-mix(in oklab, var(--nuvia-danger) 36%, transparent)",
+          bg: "color-mix(in oklab, var(--nuvia-danger) 11%, transparent)",
+          value: "var(--nuvia-danger)",
+        }
+      : tone === "success"
+      ? {
+          border: "color-mix(in oklab, var(--nuvia-accent-green) 34%, transparent)",
+          bg: "color-mix(in oklab, var(--nuvia-accent-green) 10%, transparent)",
+          value: "var(--nuvia-accent-green)",
+        }
+      : {
+          border: "var(--nuvia-border)",
+          bg: "rgba(255,255,255,0.04)",
+          value: "var(--nuvia-text-primary)",
+        };
+  return (
+    <div
+      className="flex min-w-[112px] flex-col rounded-xl border px-3 py-2"
+      style={{ borderColor: palette.border, background: palette.bg }}
+    >
+      <div className="text-[10px] font-medium uppercase tracking-wide text-[var(--nuvia-text-secondary)]">
+        {label}
+      </div>
+      <div
+        className="mt-0.5 flex items-center gap-1 truncate text-lg font-semibold tabular-nums"
+        style={{ color: palette.value }}
+      >
+        {icon}
+        <span className="truncate">{value}</span>
+      </div>
+    </div>
+  );
+}
+
 
