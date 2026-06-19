@@ -293,6 +293,15 @@ export function PropuestasComerciales(props: Props) {
         </Alert>
       </div>
 
+      {/* Calculadora en vivo — útil durante la llamada con el cliente */}
+      <CalculadoraEnVivo
+        cuotasPendientes={props.cuotasPendientes}
+        buscarCuotasPorAbono={buscarCuotasPorAbono}
+        onAgregarEscenario={agregarEscenarioCuotas}
+      />
+
+
+
       {/* Franja de comparación rápida — glass dark NUVIA */}
       {cuotasList.length > 0 && (
         <div
