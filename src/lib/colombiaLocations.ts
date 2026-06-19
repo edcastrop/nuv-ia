@@ -1360,6 +1360,13 @@ const LOCATION_ALIASES: Record<string, { departamento: string; municipio: string
   "san andres": { departamento: "San Andrés y Providencia", municipio: "San Andrés" },
 };
 
+const LOCATION_CONTAINS_ALIASES: Record<string, { departamento: string; municipio: string }> = {
+  bogota: { departamento: "Bogotá D.C.", municipio: "Bogotá D.C." },
+  cartagena: { departamento: "Bolívar", municipio: "Cartagena de Indias" },
+  mompox: { departamento: "Bolívar", municipio: "Mompós" },
+  "san andres": { departamento: "San Andrés y Providencia", municipio: "San Andrés" },
+};
+
 /** Normaliza un texto OCR de lugar de expedición contra el catálogo DANE completo. */
 export function normalizeColombiaLocation(raw: string | null | undefined): NormalizedColombiaLocation {
   const original = (raw || "").trim();
@@ -1368,6 +1375,12 @@ export function normalizeColombiaLocation(raw: string | null | undefined): Norma
   const cleaned = cleanLocationText(original);
   const alias = LOCATION_ALIASES[cleaned];
   if (alias) return { ...alias, label: `${alias.municipio}, ${alias.departamento}`, matched: true };
+
+  for (const [needle, location] of Object.entries(LOCATION_CONTAINS_ALIASES)) {
+    if (cleaned.includes(needle)) {
+      return { ...location, label: `${location.municipio}, ${location.departamento}`, matched: true };
+    }
+  }
 
   const candidates = COLOMBIA_DEPARTAMENTOS.flatMap((d) =>
     d.municipios.map((municipio, idx) => ({ departamento: d.departamento, municipio, isCapital: idx === 0 })),
