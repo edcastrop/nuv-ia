@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Card } from "@/components/nuvex/ui";
+import { PageLayout, ExecutiveHero, NCard } from "@/components/nuvia";
 import { formatCOP } from "@/lib/format";
 import {
   getCuentaCobro,
@@ -21,7 +21,7 @@ import {
   programarPagoCuentaCobro,
 } from "@/lib/comisiones.functions";
 import { buildCuentaCobroPdf, downloadBlob } from "@/lib/cuentaCobroPdf";
-import { ArrowLeft, Send, CheckCircle2, XCircle, DollarSign, Download, Mail, RotateCcw, CalendarClock } from "lucide-react";
+import { ArrowLeft, Send, CheckCircle2, XCircle, DollarSign, Download, Mail, RotateCcw, CalendarClock, Receipt } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/comisiones/$id")({
   component: DetalleCuentaCobro,
@@ -301,8 +301,20 @@ function DetalleCuentaCobro() {
     }
   }
 
-  if (loading || rolesLoading) return <div className="p-12 text-center text-sm text-[#242424]/60">Cargando…</div>;
-  if (!cc) return <div className="p-12 text-center text-sm text-[#991B1B]">Cuenta no encontrada.</div>;
+  if (loading || rolesLoading) {
+    return (
+      <PageLayout maxWidth="5xl">
+        <div className="p-12 text-center text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>Cargando…</div>
+      </PageLayout>
+    );
+  }
+  if (!cc) {
+    return (
+      <PageLayout maxWidth="5xl">
+        <div className="p-12 text-center text-sm" style={{ color: "var(--nuvia-danger)" }}>Cuenta no encontrada.</div>
+      </PageLayout>
+    );
+  }
 
   const esDueno = user?.id === cc.user_id;
   const puedeEnviar = esDueno && (cc.estado === "borrador" || cc.estado === "rechazada" || cc.estado === "devuelta_correccion");
@@ -311,45 +323,51 @@ function DetalleCuentaCobro() {
   const puedePagar = esManager && (cc.estado === "aprobada" || cc.estado === "programada_pago");
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-8">
-      <Link to="/comisiones" className="mb-4 inline-flex items-center gap-1 text-[12px] text-[#445DA3] hover:underline">
+    <PageLayout maxWidth="5xl">
+      <Link to="/comisiones" className="inline-flex items-center gap-1 text-[12px] font-semibold hover:underline" style={{ color: "var(--nuvia-accent-blue)" }}>
         <ArrowLeft size={13} /> Volver a comisiones
       </Link>
 
-      <Card className="mb-4">
+      <ExecutiveHero
+        badge={{ icon: <Receipt size={12} />, label: "Contabilidad", tone: "blue" }}
+        title="Cuenta de cobro"
+        description="Revisión, aprobación, programación de pago y auditoría contable."
+      />
+
+      <NCard variant="elevated" padding="none" className="mb-4 overflow-hidden">
         <div className="flex flex-wrap items-start justify-between gap-4 p-5">
           <div>
-            <div className="text-[11px] uppercase tracking-wide text-[#242424]/60">Cuenta de cobro</div>
-            <div className="mt-1 font-mono text-lg font-semibold text-[#0A1226]">{cc.numero}</div>
-            <div className="mt-1 text-[12px] text-[#242424]/70">
+            <div className="text-[11px] uppercase tracking-wide" style={{ color: "var(--nuvia-text-secondary)" }}>Cuenta de cobro</div>
+            <div className="mt-1 font-mono text-lg font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{cc.numero}</div>
+            <div className="mt-1 text-[12px]" style={{ color: "var(--nuvia-text-secondary)" }}>
               Analista F. Comercial: <b>{licenciado?.nombre ?? "—"}</b>
               {licenciado?.email && <> · {licenciado.email}</>}
             </div>
-            <div className="mt-1 text-[12px] text-[#242424]/70">
+            <div className="mt-1 text-[12px]" style={{ color: "var(--nuvia-text-secondary)" }}>
               Creada el {new Date(cc.created_at).toLocaleString("es-CO")}
               {Number(cc.version ?? 1) > 1 && (
-                <span className="ml-2 rounded bg-[#FEF3C7] px-1.5 py-0.5 text-[10px] font-semibold text-[#8A5A00]">
+                <span className="ml-2 rounded px-1.5 py-0.5 text-[10px] font-semibold" style={{ background: "rgba(246,196,83,0.14)", color: "var(--nuvia-warning)" }}>
                   v{cc.version}
                 </span>
               )}
             </div>
             {cc.fecha_programada_pago && (
-              <div className="mt-1 text-[12px] text-[#445DA3]">
+              <div className="mt-1 text-[12px]" style={{ color: "var(--nuvia-accent-blue)" }}>
                 📅 Pago programado: <b>{new Date(cc.fecha_programada_pago + "T00:00:00").toLocaleDateString("es-CO")}</b>
               </div>
             )}
             {cc.motivo_devolucion && cc.estado === "devuelta_correccion" && (
-              <div className="mt-2 rounded-md border border-[#FCA5A5] bg-[#FEF2F2] p-2 text-[12px] text-[#7F1D1D]">
+              <div className="mt-2 rounded-md border p-2 text-[12px]" style={{ background: "rgba(246,196,83,0.10)", borderColor: "rgba(246,196,83,0.35)", color: "var(--nuvia-warning)" }}>
                 <b>Motivo de devolución:</b> {cc.motivo_devolucion}
               </div>
             )}
-            {cc.observaciones && <div className="mt-2 text-[13px] italic text-[#242424]/70">"{cc.observaciones}"</div>}
+            {cc.observaciones && <div className="mt-2 text-[13px] italic" style={{ color: "var(--nuvia-text-secondary)" }}>"{cc.observaciones}"</div>}
           </div>
           <div className="text-right">
-            <div className="text-[11px] uppercase tracking-wide text-[#242424]/60">Total</div>
-            <div className="mt-1 text-2xl font-bold text-[#1F7A45]">{formatCOP(Number(cc.total))}</div>
+            <div className="text-[11px] uppercase tracking-wide" style={{ color: "var(--nuvia-text-secondary)" }}>Total</div>
+            <div className="mt-1 text-2xl font-bold" style={{ color: "var(--nuvia-accent-green)" }}>{formatCOP(Number(cc.total))}</div>
             {cc.porcentaje_comision && (
-              <div className="mt-1 text-[12px] text-[#242424]/70">
+              <div className="mt-1 text-[12px]" style={{ color: "var(--nuvia-text-secondary)" }}>
                 % Comisión Analista F. Comercial: <b>{Number(cc.porcentaje_comision).toFixed(0)}%</b>
               </div>
             )}
@@ -363,7 +381,8 @@ function DetalleCuentaCobro() {
               <button
                 onClick={onDescargar}
                 disabled={busy || items.length === 0}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[#445DA3] px-3 py-1.5 text-[12px] font-semibold text-[#445DA3] hover:bg-[#EEF1FA] disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold disabled:opacity-50"
+                style={{ border: "1px solid var(--nuvia-accent-blue)", color: "var(--nuvia-accent-blue)", background: "rgba(68,93,163,0.12)" }}
               >
                 <Download size={13} /> Descargar PDF
               </button>
@@ -372,19 +391,19 @@ function DetalleCuentaCobro() {
         </div>
 
         {(puedeEnviar || puedeAprobar || puedeProgramar || puedePagar) && (
-          <div className="border-t border-[#E3E7EE] bg-[#F7F9FB] p-4 space-y-3">
+          <div className="space-y-3 border-t p-4" style={{ borderColor: "var(--nuvia-border)", background: "rgba(255,255,255,0.025)" }}>
             <input
               value={observ}
               onChange={(e) => setObserv(e.target.value)}
               placeholder={puedeAprobar ? "Observación (obligatoria si rechazas)" : "Observación / mensaje (opcional)"}
-              className="w-full rounded-lg border border-[#E3E7EE] bg-white px-3 py-2 text-sm outline-none focus:border-[#445DA3]"
+              className="nuvia-input nuvia-input-sm w-full"
             />
 
             {puedeEnviar && (
               <div className="space-y-3">
-                <div className="rounded-lg border border-[#E3E7EE] bg-white p-3">
-                  <div className="mb-2 text-[12px] font-semibold text-[#0A1226]">
-                    % Comisión Analista F. Comercial <span className="text-[#991B1B]">*</span>
+                <div className="rounded-lg border p-3" style={{ borderColor: "var(--nuvia-border)", background: "rgba(255,255,255,0.035)" }}>
+                  <div className="mb-2 text-[12px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
+                    % Comisión Analista F. Comercial <span style={{ color: "var(--nuvia-danger)" }}>*</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {PORCENTAJES_COMISION_CC.map((p) => {
@@ -397,9 +416,9 @@ function DetalleCuentaCobro() {
                           onClick={() => guardarPorcentaje(p)}
                           className="rounded-lg border px-4 py-1.5 text-[13px] font-semibold transition disabled:opacity-50"
                           style={{
-                            background: active ? "linear-gradient(135deg,#445DA3,#84B98F)" : "#fff",
-                            color: active ? "#fff" : "#0A1226",
-                            borderColor: active ? "transparent" : "#E3E7EE",
+                            background: active ? "var(--nuvia-gradient-primary)" : "rgba(255,255,255,0.04)",
+                            color: active ? "var(--primary-foreground)" : "var(--nuvia-text-primary)",
+                            borderColor: active ? "transparent" : "var(--nuvia-border)",
                           }}
                         >
                           {p}%
@@ -408,7 +427,7 @@ function DetalleCuentaCobro() {
                     })}
                   </div>
                   {!cc.porcentaje_comision && (
-                    <div className="mt-2 text-[11px] text-[#991B1B]">
+                    <div className="mt-2 text-[11px]" style={{ color: "var(--nuvia-danger)" }}>
                       Selecciona el porcentaje antes de enviar la cuenta de cobro.
                     </div>
                   )}
@@ -418,13 +437,13 @@ function DetalleCuentaCobro() {
                   value={destinatariosExtra}
                   onChange={(e) => setDestinatariosExtra(e.target.value)}
                   placeholder="Destinatarios adicionales (opcional, separados por coma). Por defecto: contabilidad@nuvex.com.co"
-                  className="w-full rounded-lg border border-[#E3E7EE] bg-white px-3 py-2 text-sm outline-none focus:border-[#445DA3]"
+                  className="nuvia-input nuvia-input-sm w-full"
                 />
                 <button
                   onClick={onEnviarContabilidad}
                   disabled={busy || !cc.porcentaje_comision}
-                  className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
-                  style={{ background: "linear-gradient(135deg,#445DA3,#84B98F)" }}
+                  className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-semibold disabled:opacity-50"
+                  style={{ background: "var(--nuvia-gradient-primary)", color: "var(--primary-foreground)" }}
                   title={!cc.porcentaje_comision ? "Selecciona el % de comisión" : undefined}
                 >
                   <Mail size={13} /> {busy ? "Enviando…" : "Enviar a contabilidad por correo (con PDF)"}
@@ -449,7 +468,8 @@ function DetalleCuentaCobro() {
                     }
                   }}
                   disabled={busy || !cc.porcentaje_comision}
-                  className="ml-2 inline-flex items-center gap-1.5 rounded-lg border border-[#E3E7EE] bg-white px-3 py-2 text-[12px] font-semibold text-[#445DA3] disabled:opacity-50"
+                  className="ml-2 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold disabled:opacity-50"
+                  style={{ border: "1px solid var(--nuvia-border)", background: "rgba(255,255,255,0.04)", color: "var(--nuvia-accent-blue)" }}
                 >
                   <Send size={13} /> Marcar enviada (sin correo)
                 </button>
@@ -461,14 +481,16 @@ function DetalleCuentaCobro() {
                 <button
                   onClick={onAprobar}
                   disabled={busy}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F7A45] px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-semibold disabled:opacity-50"
+                  style={{ background: "var(--nuvia-accent-green)", color: "var(--nuvia-bg-primary)" }}
                 >
                   <CheckCircle2 size={13} /> Aprobar
                 </button>
                 <button
                   onClick={onDevolver}
                   disabled={busy}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#8A5A00] px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-semibold disabled:opacity-50"
+                  style={{ background: "var(--nuvia-warning)", color: "var(--nuvia-bg-primary)" }}
                   title="Devolver al Analista Financiero Comercial para corrección (motivo obligatorio ≥10 caracteres)"
                 >
                   <RotateCcw size={13} /> Devolver para corrección
@@ -476,7 +498,8 @@ function DetalleCuentaCobro() {
                 <button
                   onClick={onRechazar}
                   disabled={busy}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#991B1B] px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-semibold disabled:opacity-50"
+                  style={{ background: "var(--nuvia-danger)", color: "var(--primary-foreground)" }}
                 >
                   <XCircle size={13} /> Rechazar (motivo obligatorio)
                 </button>
@@ -484,8 +507,8 @@ function DetalleCuentaCobro() {
             )}
 
             {puedeProgramar && (
-              <div className="space-y-2 rounded-lg border border-[#E3E7EE] bg-white p-3">
-                <div className="text-[12px] font-semibold text-[#0A1226]">
+              <div className="space-y-2 rounded-lg border p-3" style={{ borderColor: "var(--nuvia-border)", background: "rgba(255,255,255,0.035)" }}>
+                <div className="text-[12px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
                   Programar pago (opcional, antes de marcar pagada)
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -494,12 +517,13 @@ function DetalleCuentaCobro() {
                     value={fechaProg}
                     onChange={(e) => setFechaProg(e.target.value)}
                     min={new Date().toISOString().slice(0, 10)}
-                    className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 text-sm outline-none focus:border-[#445DA3]"
+                    className="nuvia-input nuvia-input-sm"
                   />
                   <button
                     onClick={onProgramar}
                     disabled={busy || !fechaProg}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#445DA3] px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-semibold disabled:opacity-50"
+                    style={{ background: "var(--nuvia-accent-blue)", color: "var(--primary-foreground)" }}
                   >
                     <CalendarClock size={13} /> Programar
                   </button>
@@ -508,21 +532,22 @@ function DetalleCuentaCobro() {
             )}
 
             {puedePagar && (
-              <div className="space-y-2 rounded-lg border border-[#E0E7FF] bg-[#F5F7FF] p-3">
-                <div className="text-[12px] font-semibold text-[#0A1226]">
-                  Registro de pago <span className="text-[#991B1B]">*</span>
+              <div className="space-y-2 rounded-lg border p-3" style={{ borderColor: "var(--nuvia-border)", background: "rgba(68,93,163,0.12)" }}>
+                <div className="text-[12px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
+                  Registro de pago <span style={{ color: "var(--nuvia-danger)" }}>*</span>
                 </div>
-                <div className="text-[11px] text-[#242424]/70">
+                <div className="text-[11px]" style={{ color: "var(--nuvia-text-secondary)" }}>
                   Adjunta el comprobante (imagen o PDF) para habilitar el botón.
                 </div>
                 <input
                   type="file"
                   accept="image/*,application/pdf"
                   onChange={(e) => setComprobante(e.target.files?.[0] ?? null)}
-                  className="block w-full text-[12px] file:mr-3 file:rounded-md file:border-0 file:bg-[#445DA3] file:px-3 file:py-1.5 file:text-[12px] file:font-semibold file:text-white hover:file:bg-[#384e8a]"
+                  className="block w-full text-[12px] file:mr-3 file:rounded-md file:border-0 file:bg-[color:var(--nuvia-accent-blue)] file:px-3 file:py-1.5 file:text-[12px] file:font-semibold file:text-[color:var(--primary-foreground)]"
+                  style={{ color: "var(--nuvia-text-secondary)" }}
                 />
                 {comprobante && (
-                  <div className="text-[11px] text-[#1F7A45]">
+                  <div className="text-[11px]" style={{ color: "var(--nuvia-accent-green)" }}>
                     ✓ Archivo listo: <b>{comprobante.name}</b>
                   </div>
                 )}
@@ -530,7 +555,8 @@ function DetalleCuentaCobro() {
                   onClick={onMarcarPagada}
                   disabled={busy || !comprobante}
                   title={!comprobante ? "Adjunta el comprobante primero" : undefined}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F7A45] px-4 py-2 text-[12px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{ background: "var(--nuvia-accent-green)", color: "var(--nuvia-bg-primary)" }}
                 >
                   <DollarSign size={13} /> {busy ? "Registrando…" : "Marcar pagada (con comprobante)"}
                 </button>
@@ -538,32 +564,32 @@ function DetalleCuentaCobro() {
             )}
           </div>
         )}
-      </Card>
+      </NCard>
 
-      <Card className="mb-4">
-        <div className="border-b border-[#E3E7EE] px-4 py-3 text-sm font-semibold text-[#0A1226]">
+      <NCard variant="elevated" padding="none" className="mb-4 overflow-hidden">
+        <div className="border-b px-4 py-3 text-sm font-semibold" style={{ borderColor: "var(--nuvia-border)", color: "var(--nuvia-text-primary)" }}>
           Comisiones incluidas ({items.length})
         </div>
         <table className="w-full text-sm">
-          <thead className="bg-[#F7F9FB] text-[11px] uppercase tracking-wide text-[#242424]/60">
+          <thead className="text-[11px] uppercase tracking-wide" style={{ background: "rgba(255,255,255,0.03)" }}>
             <tr>
-              <th className="px-4 py-2 text-left">Cliente</th>
-              <th className="px-4 py-2 text-left">Banco</th>
-              <th className="px-4 py-2 text-right">Base</th>
-              <th className="px-4 py-2 text-right">%</th>
-              <th className="px-4 py-2 text-right">Valor</th>
+              <th className="px-4 py-2 text-left" style={{ color: "var(--nuvia-text-secondary)" }}>Cliente</th>
+              <th className="px-4 py-2 text-left" style={{ color: "var(--nuvia-text-secondary)" }}>Banco</th>
+              <th className="px-4 py-2 text-right" style={{ color: "var(--nuvia-text-secondary)" }}>Base</th>
+              <th className="px-4 py-2 text-right" style={{ color: "var(--nuvia-text-secondary)" }}>%</th>
+              <th className="px-4 py-2 text-right" style={{ color: "var(--nuvia-text-secondary)" }}>Valor</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#E3E7EE]">
+          <tbody>
             {items.map((it) => {
               const exp = expedientes.get(it.expediente_id);
               return (
-                <tr key={it.id}>
-                  <td className="px-4 py-2 text-[#0A1226]">{exp?.cliente ?? "—"}</td>
-                  <td className="px-4 py-2 text-[#242424]/70">{exp?.banco ?? "—"}</td>
-                  <td className="px-4 py-2 text-right">{formatCOP(Number(it.base))}</td>
-                  <td className="px-4 py-2 text-right">{Number(it.porcentaje).toFixed(2)}%</td>
-                  <td className="px-4 py-2 text-right font-semibold text-[#1F7A45]">
+                <tr key={it.id} style={{ borderTop: "1px solid var(--nuvia-border)" }}>
+                  <td className="px-4 py-2" style={{ color: "var(--nuvia-text-primary)" }}>{exp?.cliente ?? "—"}</td>
+                  <td className="px-4 py-2" style={{ color: "var(--nuvia-text-secondary)" }}>{exp?.banco ?? "—"}</td>
+                  <td className="px-4 py-2 text-right" style={{ color: "var(--nuvia-text-primary)" }}>{formatCOP(Number(it.base))}</td>
+                  <td className="px-4 py-2 text-right" style={{ color: "var(--nuvia-text-primary)" }}>{Number(it.porcentaje).toFixed(2)}%</td>
+                  <td className="px-4 py-2 text-right font-semibold" style={{ color: "var(--nuvia-accent-green)" }}>
                     {formatCOP(Number(it.valor))}
                   </td>
                 </tr>
@@ -571,36 +597,36 @@ function DetalleCuentaCobro() {
             })}
           </tbody>
         </table>
-      </Card>
+      </NCard>
 
-      <Card>
-        <div className="border-b border-[#E3E7EE] px-4 py-3 text-sm font-semibold text-[#0A1226]">Historial</div>
+      <NCard variant="elevated" padding="none" className="overflow-hidden">
+        <div className="border-b px-4 py-3 text-sm font-semibold" style={{ borderColor: "var(--nuvia-border)", color: "var(--nuvia-text-primary)" }}>Historial</div>
         {historial.length === 0 ? (
-          <div className="p-6 text-center text-sm text-[#242424]/60">Sin movimientos.</div>
+          <div className="p-6 text-center text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>Sin movimientos.</div>
         ) : (
-          <ul className="divide-y divide-[#E3E7EE]">
+          <ul>
             {historial.map((h) => (
-              <li key={h.id} className="px-4 py-2.5">
-                <div className="text-[13px] text-[#0A1226]">{h.accion.replace(/_/g, " ")}</div>
-                {h.observacion && <div className="text-[12px] text-[#242424]/60">{h.observacion}</div>}
-                <div className="text-[11px] text-[#242424]/50">
+              <li key={h.id} className="px-4 py-2.5" style={{ borderTop: "1px solid var(--nuvia-border)" }}>
+                <div className="text-[13px]" style={{ color: "var(--nuvia-text-primary)" }}>{h.accion.replace(/_/g, " ")}</div>
+                {h.observacion && <div className="text-[12px]" style={{ color: "var(--nuvia-text-secondary)" }}>{h.observacion}</div>}
+                <div className="text-[11px]" style={{ color: "var(--nuvia-text-secondary)" }}>
                   {new Date(h.created_at).toLocaleString("es-CO")}
                 </div>
               </li>
             ))}
           </ul>
         )}
-      </Card>
-    </div>
+      </NCard>
+    </PageLayout>
   );
 }
 
 const ESTADO_CC: Record<string, { bg: string; color: string; label: string }> = {
-  borrador: { bg: "#F1F3F8", color: "#445DA3", label: "Borrador" },
-  enviada: { bg: "#EEF1FA", color: "#445DA3", label: "Enviada" },
-  aprobada: { bg: "#EAF7EE", color: "#1F7A45", label: "Aprobada" },
-  devuelta_correccion: { bg: "#FEF3C7", color: "#8A5A00", label: "Devuelta para corrección" },
-  rechazada: { bg: "#FEE2E2", color: "#991B1B", label: "Rechazada" },
-  programada_pago: { bg: "#E0E7FF", color: "#3730A3", label: "Programada para pago" },
-  pagada: { bg: "#DDF4E3", color: "#1F7A45", label: "Pagada" },
+  borrador: { bg: "rgba(165,181,224,0.14)", color: "var(--nuvia-text-secondary)", label: "Borrador" },
+  enviada: { bg: "rgba(68,93,163,0.20)", color: "var(--nuvia-accent-blue)", label: "Enviada" },
+  aprobada: { bg: "rgba(132,185,143,0.18)", color: "var(--nuvia-accent-green)", label: "Aprobada" },
+  devuelta_correccion: { bg: "rgba(246,196,83,0.18)", color: "var(--nuvia-warning)", label: "Devuelta para corrección" },
+  rechazada: { bg: "rgba(255,107,107,0.18)", color: "var(--nuvia-danger)", label: "Rechazada" },
+  programada_pago: { bg: "rgba(68,93,163,0.20)", color: "var(--nuvia-accent-blue)", label: "Programada para pago" },
+  pagada: { bg: "rgba(132,185,143,0.20)", color: "var(--nuvia-accent-green)", label: "Pagada" },
 };

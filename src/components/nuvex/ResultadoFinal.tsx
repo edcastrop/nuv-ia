@@ -733,7 +733,7 @@ function ComparativeProyVsApr({ rows }: { rows: { c: string; p: string; a: strin
               <td className="px-3 py-2 font-medium" style={{ color: "var(--nuvia-text-primary)" }}>{r.c}</td>
               <td className="px-3 py-2 text-right" style={{ color: "var(--nuvia-text-secondary)" }}>{r.p}</td>
               <td className="px-3 py-2 text-right font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{r.a}</td>
-              <td className="px-3 py-2 text-right font-semibold" style={{ color: "var(--nuvia-accent-primary)" }}>{r.v}</td>
+              <td className="px-3 py-2 text-right font-semibold" style={{ color: "var(--nuvia-accent-blue)" }}>{r.v}</td>
             </tr>
           ))}
         </tbody>
@@ -1147,39 +1147,59 @@ function PrintInformeFinal({
           </div>
         </div>
 
-        <div style={{ marginTop: 18, border: "1px solid #E3E7EE", borderRadius: 12, overflow: "hidden" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.5 }}>
-            <thead>
-              <tr style={{ background: NUVEX_GRADIENT, color: "#fff" }}>
-                <th style={{ textAlign: "left", padding: "10px 14px", fontSize: 9, letterSpacing: 1, fontWeight: 700 }}>CONCEPTO</th>
-                <th style={{ textAlign: "right", padding: "10px 14px", fontSize: 9, letterSpacing: 1, fontWeight: 700 }}>PROYECTADO</th>
-                <th style={{ textAlign: "right", padding: "10px 14px", fontSize: 9, letterSpacing: 1, fontWeight: 700 }}>APROBADO</th>
-                <th style={{ textAlign: "right", padding: "10px 14px", fontSize: 9, letterSpacing: 1, fontWeight: 700 }}>VARIACIÓN</th>
-                <th style={{ textAlign: "right", padding: "10px 14px", fontSize: 9, letterSpacing: 1, fontWeight: 700, width: 150 }}>ACERTIVIDAD</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r, i) => {
-                const cap = Math.max(0, Math.min(100, acertividadFilas[i] ?? 0));
-                return (
-                  <tr key={r.c} style={{ background: i % 2 ? "#FAFBFD" : "#fff", borderTop: "1px solid #EEF1F5" }}>
-                    <td style={{ padding: "11px 14px", fontWeight: 700, color: NUVEX.negro }}>{r.c}</td>
-                    <td style={{ padding: "11px 14px", textAlign: "right", color: "#5C6770" }}>{r.p}</td>
-                    <td style={{ padding: "11px 14px", textAlign: "right", fontWeight: 800, color: NUVEX.negro }}>{r.a}</td>
-                    <td style={{ padding: "11px 14px", textAlign: "right", color: NUVEX.azul, fontWeight: 700 }}>{r.v}</td>
-                    <td style={{ padding: "11px 14px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <div style={{ flex: 1, height: 6, borderRadius: 999, background: "#EEF1F5", overflow: "hidden" }}>
-                          <div style={{ width: `${cap}%`, height: "100%", background: NUVEX.verde, borderRadius: 999 }} />
-                        </div>
-                        <div style={{ fontSize: 10, fontWeight: 800, color: NUVEX.verdeTextoFuerte, minWidth: 38, textAlign: "right" }}>{formatNumber(cap, 0)}%</div>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div style={{ marginTop: 18, border: "1px solid #E3E7EE", borderRadius: 12, overflow: "hidden", background: "#FFFFFF" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1.35fr 1fr 1fr 0.9fr 1.25fr",
+              background: NUVEX_GRADIENT,
+              color: "#FFFFFF",
+              fontSize: 9,
+              letterSpacing: 1,
+              fontWeight: 800,
+            }}
+          >
+            {[
+              { label: "CONCEPTO", align: "left" as const },
+              { label: "PROYECTADO", align: "right" as const },
+              { label: "APROBADO", align: "right" as const },
+              { label: "VARIACIÓN", align: "right" as const },
+              { label: "ACERTIVIDAD", align: "right" as const },
+            ].map((h) => (
+              <div key={h.label} style={{ padding: "10px 14px", textAlign: h.align, color: "#FFFFFF" }}>
+                {h.label}
+              </div>
+            ))}
+          </div>
+          {rows.map((r, i) => {
+            const cap = Math.max(0, Math.min(100, acertividadFilas[i] ?? 0));
+            return (
+              <div
+                key={r.c}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1.35fr 1fr 1fr 0.9fr 1.25fr",
+                  alignItems: "center",
+                  background: i % 2 ? "#FAFBFD" : "#FFFFFF",
+                  borderTop: "1px solid #EEF1F5",
+                  fontSize: 10.5,
+                }}
+              >
+                <div style={{ padding: "11px 14px", fontWeight: 800, color: NUVEX.negro }}>{r.c}</div>
+                <div style={{ padding: "11px 14px", textAlign: "right", color: "#5C6770", fontWeight: 700 }}>{r.p}</div>
+                <div style={{ padding: "11px 14px", textAlign: "right", fontWeight: 900, color: NUVEX.negro }}>{r.a}</div>
+                <div style={{ padding: "11px 14px", textAlign: "right", color: NUVEX.azul, fontWeight: 800 }}>{r.v}</div>
+                <div style={{ padding: "11px 14px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ flex: 1, height: 6, borderRadius: 999, background: "#EEF1F5", overflow: "hidden" }}>
+                      <div style={{ width: `${cap}%`, height: "100%", background: NUVEX.verde, borderRadius: 999 }} />
+                    </div>
+                    <div style={{ fontSize: 10, fontWeight: 900, color: NUVEX.verdeTextoFuerte, minWidth: 38, textAlign: "right" }}>{formatNumber(cap, 0)}%</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         <div
