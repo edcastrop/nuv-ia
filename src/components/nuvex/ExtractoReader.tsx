@@ -92,6 +92,10 @@ interface Props {
   modo: Modo;
   onApply: (data: ExtractoApplyPayload) => boolean | void | Promise<boolean | void>;
   existingArchivoPath?: string | null;
+  /** Si se provee, el extracto subido se registra también en
+   *  `expediente_soportes` (categoria `extracto_banco`) para que viaje
+   *  con el expediente cuando se envíe a Contratación. */
+  expedienteId?: string | null;
 }
 
 // PDF.js dynamic loader (client-only)
