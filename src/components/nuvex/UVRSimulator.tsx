@@ -261,6 +261,7 @@ export function UVRSimulator({
       segurosNum,
       teaCobrada,
       variacionUVR,
+      variacionUVRPropuestas,
       cuotasPendientes,
       plazoInicial,
       honorariosPct,
