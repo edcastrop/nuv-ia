@@ -9,6 +9,7 @@ import {
 import { parseBancolombiaText } from "@/lib/motorExtractos/bancolombiaParser";
 import { parseDaviviendaLeasingText } from "@/lib/motorExtractos/daviviendaLeasingParser";
 import { parseDaviviendaHipotecarioText } from "@/lib/motorExtractos/daviviendaHipotecarioParser";
+import { hasRealCoverageSignals } from "@/lib/coverageDetection";
 
 const InputSchema = z.object({
   rawText: z.string().max(250_000).optional(),
@@ -623,8 +624,7 @@ export const extractStatement = createServerFn({ method: "POST" })
       let segurosNum = monto("seguros");
       const cuotaConInteresSinSeguros =
         monto("cuotaConInteresSinSeguros") || monto("cuotaSinSeguros");
-      const tieneCobPorDiferencia =
-        monto("cuotaSinSubsidio") > 0 && cuotaCliente > 0 && monto("cuotaSinSubsidio") > cuotaCliente;
+      const tieneCobPorDiferencia = hasRealCoverageSignals(parsed, String(parsed.producto ?? ""));
       let tieneCob =
         valorBenef > 0 ||
         num("tasaCobertura") > 0 ||

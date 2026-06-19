@@ -21,6 +21,7 @@ import {
   buscarProductoComercial,
   parseProductoComercial,
 } from "@/lib/productosBancarios";
+import { hasRealCoverageSignals, normalizeCoverageProductLabel } from "@/lib/coverageDetection";
 
 type Modo = "pesos" | "uvr";
 
@@ -918,16 +919,8 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
     return out;
   };
 
-  const hasBeneficioReal = (data: ExtractoData, producto: string) => {
-    const get = (k: string) => (typeof data[k] === "string" ? (data[k] as string) : "");
-    const valorCobertura = parseMontoExtracto(get("valorCobertura"));
-    const tasaCobertura = parseMontoExtracto(get("tasaCobertura"));
-    const subsidioGobierno = parseMontoExtracto(get("valorSubsidioGobierno"));
-    if (valorCobertura > 0 || tasaCobertura > 0 || subsidioGobierno > 0) return true;
-    const cuotaSinSubsidio = parseMontoExtracto(get("cuotaSinSubsidio")) || parseMontoExtracto(get("valorCuotaSinSubsidioGobierno"));
-    const cuotaCliente = parseMontoExtracto(get("cuotaPagadaCliente")) || parseMontoExtracto(get("valorCuotaConSubsidio"));
-    return cuotaSinSubsidio > 0 && cuotaCliente > 0 && cuotaSinSubsidio > cuotaCliente;
-  };
+  const hasBeneficioReal = (data: ExtractoData, producto: string) =>
+    hasRealCoverageSignals(data as Record<string, unknown>, producto);
 
 
   const updateField = (key: string, value: string) => {
@@ -970,10 +963,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
     }
 
     const tieneCob = hasBeneficioReal(parsed, get("producto"));
-    let producto = get("producto");
-    if (tieneCob && producto && !/con\s+beneficio\s+de\s+cobertura/i.test(producto)) {
-      producto = `${producto} con Beneficio de Cobertura`;
-    }
+    let producto = normalizeCoverageProductLabel(get("producto"), tieneCob);
     // Normalizar banco: Colpatria -> Davibank (cambio de razón social)
     let banco = get("banco");
     if (/colpatria/i.test(banco)) banco = "Davibank";
@@ -1009,12 +999,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       esUVR: esUVRFinal,
       cobertura: tieneCob,
     });
-    const matchFallback = buscarProductoComercial(catalogoProductos, {
-      banco,
-      esLeasing: esLeasingFinal,
-      esUVR: esUVRFinal,
-    });
-    const match = matchExacto ?? (matchFallback?.cobertura === tieneCob ? matchFallback : null);
+    const match = matchExacto ?? null;
 
     // Sanitizar cédula: descartar valores claramente placeholder/inválidos
     // (todo ceros, vacíos o longitud absurda). Evita que llegue "0000000000"
