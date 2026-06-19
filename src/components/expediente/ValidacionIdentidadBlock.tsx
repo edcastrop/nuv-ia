@@ -3,10 +3,11 @@
 // - Contratación/Jurídica: aprueba, devuelve o bloquea.
 // - Super Admin: puede desbloquear excepcionalmente.
 
-import { useEffect, useMemo, useState } from "react";
-import { ShieldCheck, AlertTriangle, CheckCircle2, Send, RotateCcw, Lock, Unlock, History, Save, X } from "lucide-react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { ShieldCheck, AlertTriangle, CheckCircle2, Send, RotateCcw, Lock, Unlock, History, Save, X, FileText, Download, IdCard, FileSpreadsheet } from "lucide-react";
 import { NCard } from "@/components/nuvia/NCard";
 import { NSelect } from "@/components/nuvia/NSelect";
+import { supabase } from "@/integrations/supabase/client";
 
 
 import type { Expediente } from "@/lib/expedientes";
