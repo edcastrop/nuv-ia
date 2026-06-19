@@ -963,10 +963,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
     }
 
     const tieneCob = hasBeneficioReal(parsed, get("producto"));
-    let producto = get("producto");
-    if (tieneCob && producto && !/con\s+beneficio\s+de\s+cobertura/i.test(producto)) {
-      producto = `${producto} con Beneficio de Cobertura`;
-    }
+    let producto = normalizeCoverageProductLabel(get("producto"), tieneCob);
     // Normalizar banco: Colpatria -> Davibank (cambio de razón social)
     let banco = get("banco");
     if (/colpatria/i.test(banco)) banco = "Davibank";
@@ -1007,7 +1004,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
       esLeasing: esLeasingFinal,
       esUVR: esUVRFinal,
     });
-    const match = matchExacto ?? (matchFallback?.cobertura === tieneCob ? matchFallback : null);
+    const match = matchExacto ?? null;
 
     // Sanitizar cédula: descartar valores claramente placeholder/inválidos
     // (todo ceros, vacíos o longitud absurda). Evita que llegue "0000000000"
