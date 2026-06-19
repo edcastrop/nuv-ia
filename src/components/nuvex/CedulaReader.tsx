@@ -11,6 +11,7 @@ import {
   IdCard,
 } from "lucide-react";
 import { extractCedula, type CedulaData } from "@/lib/cedula.functions";
+import { normalizeCityText } from "@/lib/colombiaCities";
 import { NUVEX } from "./constants";
 import type { Interviniente, RolInterviniente } from "./intervinientes";
 import { defaultInterviniente, rolCotitular } from "./intervinientes";
@@ -124,7 +125,7 @@ export function CedulaReader({ intervinientes, producto, onApply, onTitularSync 
     const patch: Partial<Interviniente> = {
       nombreCompleto: parsed.nombreCompleto || "",
       cedula: parsed.numeroCedula || "",
-      lugarExpedicionCedula: parsed.lugarExpedicion || "",
+      lugarExpedicionCedula: normalizeCityText(parsed.lugarExpedicion || ""),
     };
 
     if (targetIdx === -1) {
@@ -266,7 +267,7 @@ export function CedulaReader({ intervinientes, producto, onApply, onTitularSync 
               <div className="grid gap-2 text-xs md:grid-cols-2">
                 <Field label="Nombre completo" value={parsed.nombreCompleto} conf={parsed.confianza?.nombreCompleto} />
                 <Field label="Número de cédula" value={parsed.numeroCedula} conf={parsed.confianza?.numeroCedula} />
-                <Field label="Lugar de expedición" value={parsed.lugarExpedicion} conf={parsed.confianza?.lugarExpedicion} />
+                <Field label="Lugar de expedición" value={normalizeCityText(parsed.lugarExpedicion)} conf={parsed.confianza?.lugarExpedicion} />
                 <Field label="Fecha de expedición" value={parsed.fechaExpedicion} conf={parsed.confianza?.fechaExpedicion} />
                 {parsed.fechaNacimiento && <Field label="Fecha de nacimiento" value={parsed.fechaNacimiento} />}
                 {parsed.tipoDocumento && <Field label="Tipo" value={parsed.tipoDocumento} />}
