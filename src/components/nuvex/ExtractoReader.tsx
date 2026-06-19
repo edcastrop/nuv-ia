@@ -488,7 +488,14 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
   const handleFileSelect = async (f: File) => {
     setErrorMsg(null);
     setParsed(null);
-    await addFileToStaging(f, undefined);
+    setStage("reading");
+    try {
+      await addFileToStaging(await snapshotFile(f), undefined);
+    } catch (err) {
+      console.error(err);
+      setErrorMsg(err instanceof Error ? err.message : "Error procesando el archivo.");
+      setStage("error");
+    }
   };
 
   const removeStaged = (idx: number) => {
@@ -573,23 +580,24 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath }: Props) {
     }
     setStage("reading");
     try {
-      const res = await fileToPages(f, pwd);
+      const localFile = pwd ? await snapshotFile(f) : f;
+      const res = await fileToPages(localFile, pwd);
       if (res.needsPassword) {
-        setPendingFile(f);
-        setFile(f);
+        setPendingFile(localFile);
+        setFile(localFile);
         setWrongPassword(!!res.wrongPassword);
         setStage("password");
         return;
       }
       const remaining = MAX_PAGES - staging.length;
-      const slice = res.images.slice(0, remaining).map((img) => ({ ...img, sourceName: f.name }));
+      const slice = res.images.slice(0, remaining).map((img) => ({ ...img, sourceName: localFile.name }));
       if (slice.length === 0 && res.rawText.trim().length === 0) {
         throw new Error("No pude leer páginas del archivo. Verifica que no esté dañado.");
       }
       setStaging((prev) => [...prev, ...slice]);
       setStagingRawText((prev) => (prev ? `${prev}\n\n${res.rawText}` : res.rawText));
-      if (!archivoPath) await uploadOriginal(f);
-      setFile(f);
+      if (!archivoPath) await uploadOriginal(localFile);
+      setFile(localFile);
       setPendingFile(null);
       setPassword("");
       if (res.images.length > remaining) {
