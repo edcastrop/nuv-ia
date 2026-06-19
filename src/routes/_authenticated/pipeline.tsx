@@ -370,12 +370,13 @@ function PipelinePage() {
         if (!r.asesor_id) sinAnalista += 1;
         const prof = r.asesor_id ? profilesMap.get(r.asesor_id) : undefined;
         const analistaNombre = prof?.nombre || prof?.email || (r.asesor_id ? r.asesor_id.slice(0, 8) : "Sin asignar");
-        const analistaBucket = analistasMap.get(asesorId) ?? { id: asesorId, nombre: analistaNombre, total: 0, ahorro: 0, casos: 0 };
+        const analistaKey = analistaNombre.trim().toLowerCase() || asesorId;
+        const analistaBucket = analistasMap.get(analistaKey) ?? { id: asesorId, nombre: analistaNombre, total: 0, ahorro: 0, casos: 0 };
         analistaBucket.nombre = analistaNombre;
         analistaBucket.total += valor;
         analistaBucket.ahorro += ahorroCaso;
         analistaBucket.casos += 1;
-        analistasMap.set(asesorId, analistaBucket);
+        analistasMap.set(analistaKey, analistaBucket);
 
         const oficina = prof?.sede?.trim() || prof?.equipo?.trim() || "Sin oficina";
         const oficinaBucket = oficinasMap.get(oficina) ?? { id: oficina, nombre: oficina, total: 0, ahorro: 0, casos: 0 };
