@@ -72,7 +72,6 @@ export function LeadQuickPeek({
   const cuotasPend = peek?.cuotasPendientes ?? 0;
   const cuotasPendProp = peek?.cuotasPendientesProp ?? 0;
   const tasaActual = peek?.tasaActualPct ?? null;
-  const tasaProp = peek?.tasaPropuestaPct ?? null;
   const ahorro = peek?.ahorro ?? 0;
   const audit = peek?.auditPct;
 
