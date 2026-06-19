@@ -495,9 +495,11 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
         tab: "resumen",
       },
       proyeccion: {
-        titulo: "Proyección financiera en preparación",
-        descripcion: "El analista está trabajando la simulación financiera antes de avanzar el expediente.",
-        botonLabel: "Ver financiero",
+        titulo: proyeccionListaParaEnviar(exp, ec) ? "Proyección lista para Contratación" : "Proyección financiera en preparación",
+        descripcion: proyeccionListaParaEnviar(exp, ec)
+          ? "El analista ya tiene una propuesta guardada y puede enviarla a Contratación desde el módulo financiero."
+          : "El analista está trabajando la simulación financiera antes de avanzar el expediente.",
+        botonLabel: proyeccionListaParaEnviar(exp, ec) ? "Enviar a Contratación" : "Ver financiero",
         scrollToId: "simulador-financiero-qa",
         tab: "financiero",
       },
