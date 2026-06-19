@@ -435,6 +435,22 @@ function PipelinePage() {
   const peekExpediente = peekId ? rows.find((r) => r.id === peekId) ?? null : null;
   const editExpediente = editId ? rows.find((r) => r.id === editId) ?? null : null;
 
+  // Conteos para el panel de control lateral
+  const { criticos, listos } = useMemo(() => {
+    let cr = 0;
+    ETAPAS_PIPELINE.forEach((e) => {
+      const umbral = UMBRAL_DIAS[e.id] ?? 0;
+      if (umbral <= 0) return;
+      (grupos.get(e.id) ?? []).forEach((r) => {
+        if (diasDesde(r.updated_at) > umbral * 2) cr += 1;
+      });
+    });
+    const li = (grupos.get("paz_salvo") ?? []).length + (grupos.get("pago") ?? []).length;
+    return { criticos: cr, listos: li };
+  }, [grupos]);
+
+
+
 
   return (
     <div
