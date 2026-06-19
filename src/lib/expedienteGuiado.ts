@@ -379,7 +379,7 @@ export function getBloqueos(exp: Expediente): Bloqueo[] {
     out.push({ que_falta: "Poder firmado por el cliente", responsable_rol: "asesor", prioridad: "alta", scrollToId: "documentos-juridicos", tab: "documentos" });
     out.push({ que_falta: "Solicitud Cambio de Plazos generada", responsable_rol: "juridica", prioridad: "alta", scrollToId: "documentos-juridicos", tab: "documentos" });
     out.push({ que_falta: "Checklist documental 100% completo", responsable_rol: "operaciones", prioridad: "alta", scrollToId: "checklist-documental", tab: "documentos" });
-    out.push({ que_falta: "Validación de identidad firmada", responsable_rol: "juridica", prioridad: "media", scrollToId: "validacion-identidad", tab: "tareas" });
+    // Validación de identidad: el analista la confirmó al subir la cédula; ya no es un bloqueo separado.
   }
 
   if (etapa === "respuesta_banco") {
