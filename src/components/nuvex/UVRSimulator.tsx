@@ -246,6 +246,7 @@ export function UVRSimulator({
       seguros: segurosNum,
       teaCobrada: parsePercentage(teaCobrada),
       variacionUVR: parsePercentage(variacionUVR),
+      variacionUVRPropuestas: variacionUVRPropuestas ? parsePercentage(variacionUVRPropuestas) : undefined,
       cuotasPendientes,
       plazoInicial,
       porcentajeHonorarios: honorariosPct,
