@@ -643,6 +643,8 @@ export function PesosSimulator({
                 baseCredito={baseCreditoReferencia > 0 ? baseCreditoReferencia : saldoBase}
                 dineroPagado={baseCreditoReferencia > 0 ? dineroPagadoFecha : 0}
                 perfilCliente={client.perfil}
+                ingresos={client.ingresos}
+                onIngresosChange={(ingresos) => setClient((prev) => ({ ...prev, ingresos }))}
                 initialState={propuestasComercialesDraft}
                 onStateChange={(snapshot) => {
                   setPropuestasComercialesDraft({

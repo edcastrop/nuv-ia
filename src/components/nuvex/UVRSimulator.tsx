@@ -732,6 +732,8 @@ export function UVRSimulator({
                 baseCredito={baseCredito > 0 ? baseCredito : saldoBase}
                 dineroPagado={baseCredito > 0 ? dineroPagadoFecha : 0}
                 perfilCliente={client.perfil}
+                ingresos={client.ingresos}
+                onIngresosChange={(ingresos) => setClient((prev) => ({ ...prev, ingresos }))}
                 initialState={propuestasComercialesDraft}
                 onStateChange={(snapshot) => {
                   setPropuestasComercialesDraft({

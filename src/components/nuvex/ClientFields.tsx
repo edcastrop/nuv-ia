@@ -5,6 +5,7 @@ import { DepartamentoSelect, MunicipioSelect } from "@/components/ui/LocationSel
 import { departamentoDeMunicipio } from "@/lib/colombiaLocations";
 import type { ModalidadCat } from "@/lib/productosBancarios";
 import type { Cobertura, Interviniente } from "./intervinientes";
+import type { IngresosCliente } from "./PerfilIngresosEnVivo";
 
 export interface ClientData {
   nombre: string;
@@ -42,6 +43,8 @@ export interface ClientData {
     leGustaViajar?: boolean;
     esEmprendedor?: boolean;
   };
+  /** Perfil de ingresos capturado en vivo durante la llamada — alimenta la validación de capacidad 30%/40%. */
+  ingresos?: IngresosCliente;
 }
 
 export function ClientFields({
@@ -358,4 +361,5 @@ export const defaultClient: ClientData = {
   ciudad: "",
   municipio: "",
   perfil: {},
+  ingresos: { tipoCredito: "NoVIS", ocupaciones: [], fuentes: [] },
 };
