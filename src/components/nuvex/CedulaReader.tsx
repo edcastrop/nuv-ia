@@ -93,6 +93,7 @@ export function CedulaReader({ intervinientes, producto, onApply, onTitularSync 
   const [parsed, setParsed] = useState<CedulaData | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [targetIdx, setTargetIdx] = useState<number>(0);
+  const [queue, setQueue] = useState<File[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const call = useServerFn(extractCedula);
@@ -102,11 +103,12 @@ export function CedulaReader({ intervinientes, producto, onApply, onTitularSync 
     setStage("idle");
     setErrorMsg(null);
     setParsed(null);
+    setQueue([]);
     if (fileRef.current) fileRef.current.value = "";
   };
 
-  const filesToImages = async (files: FileList | File[]) => {
-    const selected = Array.from(files).slice(0, 4);
+  const filesToImages = async (files: File[]) => {
+    const selected = files.slice(0, 4);
     const images: { mime: string; dataUrl: string }[] = [];
     for (const f of selected) {
       const lower = f.name.toLowerCase();
@@ -121,11 +123,25 @@ export function CedulaReader({ intervinientes, producto, onApply, onTitularSync 
     return images.slice(0, 4);
   };
 
-  const processFiles = async (files: FileList | File[]) => {
+  const addToQueue = (files: FileList | File[]) => {
+    setErrorMsg(null);
+    setQueue((prev) => {
+      const merged = [...prev, ...Array.from(files)].slice(0, 4);
+      return merged;
+    });
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  const removeFromQueue = (idx: number) => {
+    setQueue((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const processQueue = async () => {
+    if (!queue.length) return;
     setStage("reading");
     setErrorMsg(null);
     try {
-      const images = await filesToImages(files);
+      const images = await filesToImages(queue);
       const resp = await call({ data: { images } });
       if (resp.error || !resp.data) {
         setErrorMsg(resp.error || "No se pudieron extraer datos.");
@@ -145,6 +161,7 @@ export function CedulaReader({ intervinientes, producto, onApply, onTitularSync 
       setStage("error");
     }
   };
+
 
   const apply = () => {
     if (!parsed) return;
