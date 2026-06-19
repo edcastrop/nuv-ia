@@ -397,12 +397,13 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
     };
   }
 
-  // 14) Asesor — etapas finales (informe / cuenta / pago / paz y salvo)
+  // 14) Asesor — etapas finales (resultado/otrosí, informe / cuenta / pago / paz y salvo)
   if (
-    (etapa === "informe_final" || etapa === "cuenta_cobro" || etapa === "pago" || etapa === "paz_salvo") &&
+    (etapa === "resultado_otrosi" || etapa === "informe_final" || etapa === "cuenta_cobro" || etapa === "pago" || etapa === "paz_salvo") &&
     (has("asesor") || has("licenciado"))
   ) {
     const titulos: Record<string, string> = {
+      resultado_otrosi: "Aplicando resultado del banco",
       informe_final: "Informe final en preparación",
       cuenta_cobro: "Cuenta de cobro en gestión",
       pago: "A la espera del pago del cliente",
