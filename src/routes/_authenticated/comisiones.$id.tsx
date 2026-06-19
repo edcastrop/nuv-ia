@@ -337,37 +337,37 @@ function DetalleCuentaCobro() {
       <NCard variant="elevated" padding="none" className="mb-4 overflow-hidden">
         <div className="flex flex-wrap items-start justify-between gap-4 p-5">
           <div>
-            <div className="text-[11px] uppercase tracking-wide text-[#242424]/60">Cuenta de cobro</div>
-            <div className="mt-1 font-mono text-lg font-semibold text-[#0A1226]">{cc.numero}</div>
-            <div className="mt-1 text-[12px] text-[#242424]/70">
+            <div className="text-[11px] uppercase tracking-wide" style={{ color: "var(--nuvia-text-secondary)" }}>Cuenta de cobro</div>
+            <div className="mt-1 font-mono text-lg font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{cc.numero}</div>
+            <div className="mt-1 text-[12px]" style={{ color: "var(--nuvia-text-secondary)" }}>
               Analista F. Comercial: <b>{licenciado?.nombre ?? "—"}</b>
               {licenciado?.email && <> · {licenciado.email}</>}
             </div>
-            <div className="mt-1 text-[12px] text-[#242424]/70">
+            <div className="mt-1 text-[12px]" style={{ color: "var(--nuvia-text-secondary)" }}>
               Creada el {new Date(cc.created_at).toLocaleString("es-CO")}
               {Number(cc.version ?? 1) > 1 && (
-                <span className="ml-2 rounded bg-[#FEF3C7] px-1.5 py-0.5 text-[10px] font-semibold text-[#8A5A00]">
+                <span className="ml-2 rounded px-1.5 py-0.5 text-[10px] font-semibold" style={{ background: "rgba(246,196,83,0.14)", color: "var(--nuvia-warning)" }}>
                   v{cc.version}
                 </span>
               )}
             </div>
             {cc.fecha_programada_pago && (
-              <div className="mt-1 text-[12px] text-[#445DA3]">
+              <div className="mt-1 text-[12px]" style={{ color: "var(--nuvia-accent-blue)" }}>
                 📅 Pago programado: <b>{new Date(cc.fecha_programada_pago + "T00:00:00").toLocaleDateString("es-CO")}</b>
               </div>
             )}
             {cc.motivo_devolucion && cc.estado === "devuelta_correccion" && (
-              <div className="mt-2 rounded-md border border-[#FCA5A5] bg-[#FEF2F2] p-2 text-[12px] text-[#7F1D1D]">
+              <div className="mt-2 rounded-md border p-2 text-[12px]" style={{ background: "rgba(246,196,83,0.10)", borderColor: "rgba(246,196,83,0.35)", color: "var(--nuvia-warning)" }}>
                 <b>Motivo de devolución:</b> {cc.motivo_devolucion}
               </div>
             )}
-            {cc.observaciones && <div className="mt-2 text-[13px] italic text-[#242424]/70">"{cc.observaciones}"</div>}
+            {cc.observaciones && <div className="mt-2 text-[13px] italic" style={{ color: "var(--nuvia-text-secondary)" }}>"{cc.observaciones}"</div>}
           </div>
           <div className="text-right">
-            <div className="text-[11px] uppercase tracking-wide text-[#242424]/60">Total</div>
-            <div className="mt-1 text-2xl font-bold text-[#1F7A45]">{formatCOP(Number(cc.total))}</div>
+            <div className="text-[11px] uppercase tracking-wide" style={{ color: "var(--nuvia-text-secondary)" }}>Total</div>
+            <div className="mt-1 text-2xl font-bold" style={{ color: "var(--nuvia-accent-green)" }}>{formatCOP(Number(cc.total))}</div>
             {cc.porcentaje_comision && (
-              <div className="mt-1 text-[12px] text-[#242424]/70">
+              <div className="mt-1 text-[12px]" style={{ color: "var(--nuvia-text-secondary)" }}>
                 % Comisión Analista F. Comercial: <b>{Number(cc.porcentaje_comision).toFixed(0)}%</b>
               </div>
             )}
@@ -381,7 +381,8 @@ function DetalleCuentaCobro() {
               <button
                 onClick={onDescargar}
                 disabled={busy || items.length === 0}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[#445DA3] px-3 py-1.5 text-[12px] font-semibold text-[#445DA3] hover:bg-[#EEF1FA] disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold disabled:opacity-50"
+                style={{ border: "1px solid var(--nuvia-accent-blue)", color: "var(--nuvia-accent-blue)", background: "rgba(68,93,163,0.12)" }}
               >
                 <Download size={13} /> Descargar PDF
               </button>
