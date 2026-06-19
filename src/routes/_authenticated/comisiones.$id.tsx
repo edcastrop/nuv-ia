@@ -417,7 +417,7 @@ function DetalleCuentaCobro() {
                           className="rounded-lg border px-4 py-1.5 text-[13px] font-semibold transition disabled:opacity-50"
                           style={{
                             background: active ? "var(--nuvia-gradient-primary)" : "rgba(255,255,255,0.04)",
-                            color: active ? "#fff" : "var(--nuvia-text-primary)",
+                            color: active ? "var(--primary-foreground)" : "var(--nuvia-text-primary)",
                             borderColor: active ? "transparent" : "var(--nuvia-border)",
                           }}
                         >
@@ -442,8 +442,8 @@ function DetalleCuentaCobro() {
                 <button
                   onClick={onEnviarContabilidad}
                   disabled={busy || !cc.porcentaje_comision}
-                  className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
-                  style={{ background: "var(--nuvia-gradient-primary)" }}
+                  className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-semibold disabled:opacity-50"
+                  style={{ background: "var(--nuvia-gradient-primary)", color: "var(--primary-foreground)" }}
                   title={!cc.porcentaje_comision ? "Selecciona el % de comisión" : undefined}
                 >
                   <Mail size={13} /> {busy ? "Enviando…" : "Enviar a contabilidad por correo (con PDF)"}
@@ -498,8 +498,8 @@ function DetalleCuentaCobro() {
                 <button
                   onClick={onRechazar}
                   disabled={busy}
-                  className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
-                  style={{ background: "var(--nuvia-danger)" }}
+                  className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-semibold disabled:opacity-50"
+                  style={{ background: "var(--nuvia-danger)", color: "var(--primary-foreground)" }}
                 >
                   <XCircle size={13} /> Rechazar (motivo obligatorio)
                 </button>
@@ -522,8 +522,8 @@ function DetalleCuentaCobro() {
                   <button
                     onClick={onProgramar}
                     disabled={busy || !fechaProg}
-                    className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50"
-                    style={{ background: "var(--nuvia-accent-blue)" }}
+                    className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-semibold disabled:opacity-50"
+                    style={{ background: "var(--nuvia-accent-blue)", color: "var(--primary-foreground)" }}
                   >
                     <CalendarClock size={13} /> Programar
                   </button>
@@ -543,7 +543,7 @@ function DetalleCuentaCobro() {
                   type="file"
                   accept="image/*,application/pdf"
                   onChange={(e) => setComprobante(e.target.files?.[0] ?? null)}
-                  className="block w-full text-[12px] file:mr-3 file:rounded-md file:border-0 file:bg-[color:var(--nuvia-accent-blue)] file:px-3 file:py-1.5 file:text-[12px] file:font-semibold file:text-white"
+                  className="block w-full text-[12px] file:mr-3 file:rounded-md file:border-0 file:bg-[color:var(--nuvia-accent-blue)] file:px-3 file:py-1.5 file:text-[12px] file:font-semibold file:text-[color:var(--primary-foreground)]"
                   style={{ color: "var(--nuvia-text-secondary)" }}
                 />
                 {comprobante && (
