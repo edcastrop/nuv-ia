@@ -206,9 +206,43 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
   const etapa = etapaActualGuiada(exp);
   const has = (r: AppRole) => roles.includes(r);
   const isSuper = has("super_admin") || has("admin");
+  const isAnalista = has("licenciado") || has("asesor");
+  const isContratacion = has("juridica") || has("director_juridico") || has("operaciones") || has("auxiliar_operativo") || has("apoderado");
+  const isFinanciero = has("director_financiero_qa");
+  const isContable = has("contabilidad") || has("cartera");
+  const canSeeAnalystGuide = isAnalista || isSuper;
+  const canSeeContractGuide = isContratacion || isSuper;
+  const canSeeFinanceGuide = isFinanciero || isSuper;
+  const canSeeAccountingGuide = isContable || isSuper;
+
+  if (ec === "negado_banco" || ec === "prejuridico") {
+    return {
+      rol: "todos",
+      titulo: ec === "prejuridico" ? "Caso en gestión prejurídica" : "Solicitud negada por el banco",
+      descripcion:
+        ec === "prejuridico"
+          ? "El expediente está escalado a gestión prejurídica. Revisa historial y comunicaciones antes de moverlo."
+          : "El banco negó la solicitud. Revisa la respuesta registrada y define el cierre o una nueva estrategia con el equipo responsable.",
+      botonLabel: "Ver respuesta",
+      scrollToId: "resultado-bancario",
+      tab: "financiero",
+      prioridad: "alta",
+    };
+  }
+
+  if (etapa === "caso_cerrado" || ec === "proceso_cerrado" || ec === "caso_finalizado") {
+    return {
+      rol: "todos",
+      titulo: "Caso cerrado",
+      descripcion: "Este expediente ya está archivado y no requiere acción.",
+      botonLabel: "Ver historial",
+      tab: "historial",
+      prioridad: "baja",
+    };
+  }
 
   // 1) Devolución QA → analista debe corregir
-  if (ec === "proyeccion_devuelta_qa" && (has("licenciado") || has("asesor") || isSuper)) {
+  if (ec === "proyeccion_devuelta_qa" && canSeeAnalystGuide) {
     return {
       rol: "licenciado",
       titulo: "Corrige la proyección devuelta por QA",
@@ -221,7 +255,7 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
   }
 
   // 2) Pendiente QA → Director Financiero
-  if (ec === "proyeccion_pendiente_qa" && (has("director_financiero_qa") || isSuper)) {
+  if (ec === "proyeccion_pendiente_qa" && canSeeFinanceGuide) {
     return {
       rol: "director_financiero_qa",
       titulo: "Audita la proyección financiera",
@@ -235,7 +269,7 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
 
   // 3) Respuesta banco → analista debe subir aceptación / generar otrosí
   if ((ec === "aprobado" || ec === "aprobado_banco" || ec === "condiciones_aplicadas") &&
-      (has("licenciado") || has("asesor") || isSuper)) {
+      canSeeAnalystGuide) {
     return {
       rol: "licenciado",
       titulo: "Sube la evidencia de aceptación del cliente",
@@ -248,7 +282,7 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
   }
 
   // 4) Resultado final generado → contabilidad genera cuenta de cobro
-  if (ec === "resultado_final_generado" && (has("contabilidad") || isSuper)) {
+  if (ec === "resultado_final_generado" && canSeeAccountingGuide) {
     return {
       rol: "contabilidad",
       titulo: "Genera la cuenta de cobro",
@@ -261,7 +295,7 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
   }
 
   // 5) Cuenta enviada / honorarios pendientes → contabilidad valida pago
-  if ((ec === "cuenta_cobro_enviada" || ec === "honorarios_pendientes") && (has("contabilidad") || has("cartera") || isSuper)) {
+  if ((ec === "cuenta_cobro_enviada" || ec === "honorarios_pendientes") && canSeeAccountingGuide) {
     return {
       rol: "contabilidad",
       titulo: "Valida el pago del cliente",
@@ -286,9 +320,25 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
     };
   }
 
-  // 7) Etapa radicación / documentación → jurídica / operaciones
-  if ((etapa === "documentacion_bancaria" || etapa === "radicacion") &&
-      (has("juridica") || has("operaciones") || has("apoderado") || isSuper)) {
+  // 7) Contratación → jurídica / operaciones toman el expediente que el analista ya envió.
+  if (etapa === "contratacion" && canSeeContractGuide) {
+    const isSigningStep = ec === "contrato_generado" || ec === "contrato_enviado" || ec === "poder_generado";
+    return {
+      rol: "juridica",
+      titulo: isSigningStep ? "Gestiona firmas de contrato y poder" : "Prepara contrato, poder y solicitud",
+      descripcion:
+        isSigningStep
+          ? "El expediente ya está en Contratación. Haz seguimiento a las firmas del cliente y actualiza el avance documental."
+          : "El analista ya envió la proyección aprobada con cédula y extracto. Genera los documentos jurídicos para continuar.",
+      botonLabel: "Abrir documentos",
+      scrollToId: "documentos-juridicos",
+      tab: "documentos",
+      prioridad: "alta",
+    };
+  }
+
+  // 8) Etapa radicación / documentación → jurídica / operaciones
+  if ((etapa === "documentacion_bancaria" || etapa === "radicacion") && canSeeContractGuide) {
     return {
       rol: "juridica",
       titulo: "Completa la documentación para radicar",
@@ -300,8 +350,8 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
     };
   }
 
-  // 8) Devuelto / docs complementarios → ops + analista
-  if ((ec === "devuelto_banco" || ec === "docs_complementarios_banco") && (has("operaciones") || has("juridica") || has("licenciado") || isSuper)) {
+  // 9) Devuelto / docs complementarios → ops + analista
+  if ((ec === "devuelto_banco" || ec === "docs_complementarios_banco") && (has("operaciones") || has("juridica") || has("licenciado") || has("asesor") || isSuper)) {
     return {
       rol: "operaciones",
       titulo: "Subsana lo que pidió el banco",
@@ -313,20 +363,8 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
     };
   }
 
-  // 9) Gerencia → escalamiento si está estancado
-  if ((has("gerencia") || has("admin") || has("super_admin")) && diasDesde(exp.updated_at) >= 3 && ec !== "caso_finalizado") {
-    return {
-      rol: "gerencia",
-      titulo: `Este expediente lleva ${diasDesde(exp.updated_at)} días sin actividad`,
-      descripcion: "Revisa quién es el responsable actual y escala si es necesario.",
-      botonLabel: "Ver control operativo",
-      tab: "resumen",
-      prioridad: "media",
-    };
-  }
-
   // 10) Asesor / licenciado en lead / proyección
-  if ((etapa === "lead" || etapa === "proyeccion") && (has("asesor") || has("licenciado") || isSuper)) {
+  if ((etapa === "lead" || etapa === "proyeccion") && canSeeAnalystGuide) {
     return {
       rol: "asesor",
       titulo: "Avanza con la proyección financiera",
@@ -340,7 +378,7 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
   }
 
   // 10.5) Asesor — caso en auditoría QA (NUVIA enrutó por marca/bloqueo)
-  if (etapa === "auditoria_qa" && (has("asesor") || has("licenciado"))) {
+  if (etapa === "auditoria_qa" && isAnalista) {
     return {
       rol: "asesor",
       titulo: "Proyección en auditoría QA",
@@ -354,7 +392,7 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
   }
 
   // 11) Asesor — caso ya entregado a Contratación
-  if (etapa === "contratacion" && (has("asesor") || has("licenciado"))) {
+  if (etapa === "contratacion" && isAnalista) {
     return {
       rol: "asesor",
       titulo: "Caso enviado a Contratación",
@@ -368,7 +406,7 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
   }
 
   // 12) Asesor — documentación bancaria / radicación en manos de jurídica/operaciones
-  if ((etapa === "documentacion_bancaria" || etapa === "radicacion") && (has("asesor") || has("licenciado"))) {
+  if ((etapa === "documentacion_bancaria" || etapa === "radicacion") && isAnalista) {
     return {
       rol: "asesor",
       titulo: etapa === "radicacion" ? "Radicación en curso" : "Documentación bancaria en preparación",
@@ -384,7 +422,7 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
   }
 
   // 13) Asesor — banco evaluando
-  if (etapa === "respuesta_banco" && (has("asesor") || has("licenciado"))) {
+  if (etapa === "respuesta_banco" && isAnalista) {
     return {
       rol: "asesor",
       titulo: "Banco evaluando la solicitud",
@@ -400,7 +438,7 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
   // 14) Asesor — etapas finales (resultado/otrosí, informe / cuenta / pago / paz y salvo)
   if (
     (etapa === "resultado_otrosi" || etapa === "informe_final" || etapa === "cuenta_cobro" || etapa === "pago" || etapa === "paz_salvo") &&
-    (has("asesor") || has("licenciado"))
+    isAnalista
   ) {
     const titulos: Record<string, string> = {
       resultado_otrosi: "Aplicando resultado del banco",
@@ -420,15 +458,114 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
     };
   }
 
-  if (ec === "caso_finalizado") {
+  // 15) Gerencia → solo después de resolver la acción operativa del rol responsable.
+  if ((has("gerencia") || has("admin") || has("super_admin")) && diasDesde(exp.updated_at) >= 3) {
     return {
-      rol: "todos",
-      titulo: "Caso cerrado",
-      descripcion: "Este expediente ya está archivado y no requiere acción.",
-      botonLabel: "Ver historial",
-      tab: "historial",
-      prioridad: "baja",
+      rol: "gerencia",
+      titulo: `Este expediente lleva ${diasDesde(exp.updated_at)} días sin actividad`,
+      descripcion: "Revisa quién es el responsable actual y escala si es necesario.",
+      botonLabel: "Ver control operativo",
+      tab: "resumen",
+      prioridad: "media",
     };
+  }
+
+  // 16) Fallback seguro: ningún rol autenticado debe quedarse sin guía.
+  // Si no es su turno operativo, se muestra seguimiento coherente de la etapa actual.
+  if (roles.length > 0) {
+    const seguimiento: Record<EtapaGuiadaId, Omit<SiguienteAccion, "rol" | "prioridad">> = {
+      lead: {
+        titulo: "Caso en captura inicial",
+        descripcion: "El equipo comercial está completando datos y soportes iniciales del cliente.",
+        botonLabel: "Ver resumen",
+        tab: "resumen",
+      },
+      proyeccion: {
+        titulo: "Proyección financiera en preparación",
+        descripcion: "El analista está trabajando la simulación financiera antes de avanzar el expediente.",
+        botonLabel: "Ver financiero",
+        scrollToId: "simulador-financiero-qa",
+        tab: "financiero",
+      },
+      auditoria_qa: {
+        titulo: "Proyección en auditoría QA",
+        descripcion: "Dirección Financiera está revisando una observación detectada por NUVIA.",
+        botonLabel: "Ver auditoría",
+        scrollToId: "validacion-qa",
+        tab: "auditoria",
+      },
+      contratacion: {
+        titulo: "Caso en Contratación",
+        descripcion: "El expediente ya pasó la proyección y está en generación o firma de documentos jurídicos.",
+        botonLabel: "Ver documentos",
+        scrollToId: "documentos-juridicos",
+        tab: "documentos",
+      },
+      documentacion_bancaria: {
+        titulo: "Documentación bancaria en preparación",
+        descripcion: "Jurídica y Operaciones están consolidando el paquete documental para radicar al banco.",
+        botonLabel: "Ver checklist",
+        scrollToId: "checklist-documental",
+        tab: "documentos",
+      },
+      radicacion: {
+        titulo: "Radicación en curso",
+        descripcion: "Operaciones está radicando o preparando la solicitud ante el banco.",
+        botonLabel: "Ver radicación",
+        scrollToId: "validacion-radicacion",
+        tab: "tareas",
+      },
+      respuesta_banco: {
+        titulo: "Banco evaluando la solicitud",
+        descripcion: "El banco está revisando el caso o pidió una subsanación documental.",
+        botonLabel: "Ver respuesta",
+        scrollToId: "resultado-bancario",
+        tab: "financiero",
+      },
+      resultado_otrosi: {
+        titulo: "Resultado bancario en gestión",
+        descripcion: "El equipo responsable está aplicando condiciones, otrosí o documentos finales del banco.",
+        botonLabel: "Ver resultado",
+        scrollToId: "resultado-bancario",
+        tab: "financiero",
+      },
+      informe_final: {
+        titulo: "Informe final en preparación",
+        descripcion: "Dirección Financiera está consolidando el cierre operativo del caso.",
+        botonLabel: "Ver cierre",
+        scrollToId: "cierre-operativo",
+        tab: "financiero",
+      },
+      cuenta_cobro: {
+        titulo: "Cuenta de cobro en gestión",
+        descripcion: "Contabilidad está preparando o revisando la cuenta de cobro del caso.",
+        botonLabel: "Ver cierre",
+        scrollToId: "cierre-operativo",
+        tab: "financiero",
+      },
+      pago: {
+        titulo: "Pago en validación",
+        descripcion: "Contabilidad y Cartera están validando el pago de honorarios.",
+        botonLabel: "Ver cierre",
+        scrollToId: "cierre-operativo",
+        tab: "financiero",
+      },
+      paz_salvo: {
+        titulo: "Paz y salvo en emisión",
+        descripcion: "El caso está en cierre administrativo y documental.",
+        botonLabel: "Ver cierre",
+        scrollToId: "cierre-operativo",
+        tab: "financiero",
+      },
+      caso_cerrado: {
+        titulo: "Caso cerrado",
+        descripcion: "Este expediente ya está archivado y no requiere acción.",
+        botonLabel: "Ver historial",
+        tab: "historial",
+      },
+    };
+    const item = seguimiento[etapa];
+    return { rol: "todos", prioridad: "baja", ...item };
   }
 
   return null;
