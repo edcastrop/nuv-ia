@@ -523,7 +523,26 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
         upsert: false,
         contentType: f.type || "application/octet-stream",
       });
-      if (!upErr) setArchivoPath(path);
+      if (upErr) return;
+      setArchivoPath(path);
+
+      // Registrar también en expediente_soportes para que viaje a Contratación.
+      if (expedienteId) {
+        const { error: insErr } = await supabase
+          .from("expediente_soportes" as never)
+          .insert({
+            expediente_id: expedienteId,
+            categoria: "extracto_banco",
+            subcategoria: "extracto",
+            archivo_nombre: f.name,
+            archivo_path: path,
+            mime_type: f.type || null,
+            size_bytes: f.size ?? null,
+            estado_relacionado: "validacion_identidad",
+            user_id: uid,
+          } as never);
+        if (insErr) console.warn("[ExtractoReader] No se pudo registrar soporte:", insErr);
+      }
     } catch (e) {
       console.warn("No se pudo subir el archivo a storage:", e);
     }
