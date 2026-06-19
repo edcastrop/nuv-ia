@@ -1331,3 +1331,67 @@ export function listAllMunicipios(): string[] {
   }
   return out;
 }
+
+export interface NormalizedColombiaLocation {
+  departamento: string;
+  municipio: string;
+  label: string;
+  matched: boolean;
+}
+
+function cleanLocationText(raw: string): string {
+  return fold(raw)
+    .replace(/d\s*\.\s*c\s*\.?/g, "dc")
+    .replace(/[^a-z0-9ñ\s]/g, " ")
+    .replace(/\b(lugar|expedicion|expedida|expedido|cedula|ciudadania|municipio|ciudad|departamento|colombia|republica|de|del|en|la|el)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const LOCATION_ALIASES: Record<string, { departamento: string; municipio: string }> = {
+  bogota: { departamento: "Bogotá D.C.", municipio: "Bogotá D.C." },
+  "bogota dc": { departamento: "Bogotá D.C.", municipio: "Bogotá D.C." },
+  "bogota d c": { departamento: "Bogotá D.C.", municipio: "Bogotá D.C." },
+  "santafe bogota": { departamento: "Bogotá D.C.", municipio: "Bogotá D.C." },
+  "santa fe bogota": { departamento: "Bogotá D.C.", municipio: "Bogotá D.C." },
+  cartagena: { departamento: "Bolívar", municipio: "Cartagena de Indias" },
+  mompox: { departamento: "Bolívar", municipio: "Mompós" },
+  armenia: { departamento: "Quindío", municipio: "Armenia" },
+  "san andres": { departamento: "San Andrés y Providencia", municipio: "San Andrés" },
+};
+
+/** Normaliza un texto OCR de lugar de expedición contra el catálogo DANE completo. */
+export function normalizeColombiaLocation(raw: string | null | undefined): NormalizedColombiaLocation {
+  const original = (raw || "").trim();
+  if (!original) return { departamento: "", municipio: "", label: "", matched: false };
+
+  const cleaned = cleanLocationText(original);
+  const alias = LOCATION_ALIASES[cleaned];
+  if (alias) return { ...alias, label: `${alias.municipio}, ${alias.departamento}`, matched: true };
+
+  const candidates = COLOMBIA_DEPARTAMENTOS.flatMap((d) =>
+    d.municipios.map((municipio, idx) => ({ departamento: d.departamento, municipio, isCapital: idx === 0 })),
+  );
+
+  let best: { departamento: string; municipio: string; score: number } | null = null;
+  for (const c of candidates) {
+    const municipio = cleanLocationText(c.municipio);
+    const departamento = cleanLocationText(c.departamento);
+    if (!municipio) continue;
+
+    let score = 0;
+    if (cleaned === municipio) score += 100;
+    if (cleaned.includes(municipio) && municipio.length >= 4) score += 70 + Math.min(municipio.length, 30);
+    if (municipio.includes(cleaned) && cleaned.length >= 4) score += 45;
+    if (departamento && cleaned.includes(departamento)) score += 35;
+    if (c.isCapital) score += 4;
+
+    if (score > (best?.score ?? 0)) best = { departamento: c.departamento, municipio: c.municipio, score };
+  }
+
+  if (best && best.score >= 60) {
+    return { departamento: best.departamento, municipio: best.municipio, label: `${best.municipio}, ${best.departamento}`, matched: true };
+  }
+
+  return { departamento: "", municipio: "", label: original.replace(/\s+/g, " ").trim(), matched: false };
+}
