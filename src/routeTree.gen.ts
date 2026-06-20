@@ -62,6 +62,7 @@ import { Route as AuthenticatedSuperAdminOnboardingRouteImport } from './routes/
 import { Route as AuthenticatedSuperAdminNuvexIaKbRouteImport } from './routes/_authenticated/super-admin.nuvex-ia-kb'
 import { Route as AuthenticatedSuperAdminMarcaRouteImport } from './routes/_authenticated/super-admin.marca'
 import { Route as AuthenticatedSuperAdminExpedientesRouteImport } from './routes/_authenticated/super-admin.expedientes'
+import { Route as AuthenticatedSuperAdminCostosIaRouteImport } from './routes/_authenticated/super-admin.costos-ia'
 import { Route as AuthenticatedSuperAdminAuditoriaRouteImport } from './routes/_authenticated/super-admin.auditoria'
 import { Route as AuthenticatedSuperAdminAccesosRouteImport } from './routes/_authenticated/super-admin.accesos'
 import { Route as AuthenticatedSuperAdminAcademiaRouteImport } from './routes/_authenticated/super-admin.academia'
@@ -396,6 +397,12 @@ const AuthenticatedSuperAdminExpedientesRoute =
   AuthenticatedSuperAdminExpedientesRouteImport.update({
     id: '/super-admin/expedientes',
     path: '/super-admin/expedientes',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuperAdminCostosIaRoute =
+  AuthenticatedSuperAdminCostosIaRouteImport.update({
+    id: '/super-admin/costos-ia',
+    path: '/super-admin/costos-ia',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedSuperAdminAuditoriaRoute =
@@ -748,6 +755,7 @@ export interface FileRoutesByFullPath {
   '/super-admin/academia': typeof AuthenticatedSuperAdminAcademiaRoute
   '/super-admin/accesos': typeof AuthenticatedSuperAdminAccesosRoute
   '/super-admin/auditoria': typeof AuthenticatedSuperAdminAuditoriaRoute
+  '/super-admin/costos-ia': typeof AuthenticatedSuperAdminCostosIaRoute
   '/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
   '/super-admin/nuvex-ia-kb': typeof AuthenticatedSuperAdminNuvexIaKbRoute
@@ -846,6 +854,7 @@ export interface FileRoutesByTo {
   '/super-admin/academia': typeof AuthenticatedSuperAdminAcademiaRoute
   '/super-admin/accesos': typeof AuthenticatedSuperAdminAccesosRoute
   '/super-admin/auditoria': typeof AuthenticatedSuperAdminAuditoriaRoute
+  '/super-admin/costos-ia': typeof AuthenticatedSuperAdminCostosIaRoute
   '/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
   '/super-admin/nuvex-ia-kb': typeof AuthenticatedSuperAdminNuvexIaKbRoute
@@ -950,6 +959,7 @@ export interface FileRoutesById {
   '/_authenticated/super-admin/academia': typeof AuthenticatedSuperAdminAcademiaRoute
   '/_authenticated/super-admin/accesos': typeof AuthenticatedSuperAdminAccesosRoute
   '/_authenticated/super-admin/auditoria': typeof AuthenticatedSuperAdminAuditoriaRoute
+  '/_authenticated/super-admin/costos-ia': typeof AuthenticatedSuperAdminCostosIaRoute
   '/_authenticated/super-admin/expedientes': typeof AuthenticatedSuperAdminExpedientesRoute
   '/_authenticated/super-admin/marca': typeof AuthenticatedSuperAdminMarcaRoute
   '/_authenticated/super-admin/nuvex-ia-kb': typeof AuthenticatedSuperAdminNuvexIaKbRoute
@@ -1054,6 +1064,7 @@ export interface FileRouteTypes {
     | '/super-admin/academia'
     | '/super-admin/accesos'
     | '/super-admin/auditoria'
+    | '/super-admin/costos-ia'
     | '/super-admin/expedientes'
     | '/super-admin/marca'
     | '/super-admin/nuvex-ia-kb'
@@ -1152,6 +1163,7 @@ export interface FileRouteTypes {
     | '/super-admin/academia'
     | '/super-admin/accesos'
     | '/super-admin/auditoria'
+    | '/super-admin/costos-ia'
     | '/super-admin/expedientes'
     | '/super-admin/marca'
     | '/super-admin/nuvex-ia-kb'
@@ -1255,6 +1267,7 @@ export interface FileRouteTypes {
     | '/_authenticated/super-admin/academia'
     | '/_authenticated/super-admin/accesos'
     | '/_authenticated/super-admin/auditoria'
+    | '/_authenticated/super-admin/costos-ia'
     | '/_authenticated/super-admin/expedientes'
     | '/_authenticated/super-admin/marca'
     | '/_authenticated/super-admin/nuvex-ia-kb'
@@ -1684,6 +1697,13 @@ declare module '@tanstack/react-router' {
       path: '/super-admin/expedientes'
       fullPath: '/super-admin/expedientes'
       preLoaderRoute: typeof AuthenticatedSuperAdminExpedientesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/super-admin/costos-ia': {
+      id: '/_authenticated/super-admin/costos-ia'
+      path: '/super-admin/costos-ia'
+      fullPath: '/super-admin/costos-ia'
+      preLoaderRoute: typeof AuthenticatedSuperAdminCostosIaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/super-admin/auditoria': {
@@ -2184,6 +2204,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSuperAdminAcademiaRoute: typeof AuthenticatedSuperAdminAcademiaRoute
   AuthenticatedSuperAdminAccesosRoute: typeof AuthenticatedSuperAdminAccesosRoute
   AuthenticatedSuperAdminAuditoriaRoute: typeof AuthenticatedSuperAdminAuditoriaRoute
+  AuthenticatedSuperAdminCostosIaRoute: typeof AuthenticatedSuperAdminCostosIaRoute
   AuthenticatedSuperAdminExpedientesRoute: typeof AuthenticatedSuperAdminExpedientesRoute
   AuthenticatedSuperAdminMarcaRoute: typeof AuthenticatedSuperAdminMarcaRoute
   AuthenticatedSuperAdminNuvexIaKbRoute: typeof AuthenticatedSuperAdminNuvexIaKbRoute
@@ -2245,6 +2266,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSuperAdminAcademiaRoute: AuthenticatedSuperAdminAcademiaRoute,
   AuthenticatedSuperAdminAccesosRoute: AuthenticatedSuperAdminAccesosRoute,
   AuthenticatedSuperAdminAuditoriaRoute: AuthenticatedSuperAdminAuditoriaRoute,
+  AuthenticatedSuperAdminCostosIaRoute: AuthenticatedSuperAdminCostosIaRoute,
   AuthenticatedSuperAdminExpedientesRoute:
     AuthenticatedSuperAdminExpedientesRoute,
   AuthenticatedSuperAdminMarcaRoute: AuthenticatedSuperAdminMarcaRoute,
