@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Shield, Users, FolderOpen, Key, Activity, Palette } from "lucide-react";
+import { Shield, Users, FolderOpen, Key, Activity, Palette, Cpu } from "lucide-react";
 import { PageLayout, ExecutiveHero, NCard } from "@/components/nuvia";
 import { supabase } from "@/integrations/supabase/client";
 import { CASO_ESTADOS, labelEstado, type CasoEstado } from "@/lib/casoEstados";
@@ -89,6 +89,7 @@ function SuperAdminDashboard() {
     { to: "/super-admin/permisos", label: "Permisos", icon: Key },
     { to: "/super-admin/auditoria", label: "Auditoría", icon: Activity },
     { to: "/super-admin/marca", label: "Marca", icon: Palette },
+    { to: "/super-admin/costos-ia", label: "Costos IA", icon: Cpu },
   ] as const;
 
   return (
