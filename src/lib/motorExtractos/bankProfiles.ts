@@ -175,16 +175,69 @@ sistemaAmortizacion ← texto literal junto a "Sistema de Amortización"
     banco: "Banco de Bogotá",
     productos: ["CREDITO_HIPOTECARIO"],
     matchAny: [/banco\s+de\s+bogot/i, /bogot[aá]\s+s\.?a/i],
-    hints: `BANCO DE BOGOTÁ HIPOTECARIO:
-- "Valor del crédito" → valorDesembolsado.
-- "Plazo inicial" en meses.
-- "Cuotas pendientes" y "Cuota" / "Valor cuota".
-- MONEDA (CRÍTICO): Banco de Bogotá emite la GRAN MAYORÍA de sus créditos hipotecarios en PESOS.
-  * moneda="PESOS" por defecto.
-  * Solo usa moneda="UVR" si ves literalmente "UVR" en el producto, sistema de amortización
-    o una columna/fila etiquetada "Saldo UVR" / "Valor UVR" / "Valores en UVR" con números.
-  * Montos en "$" con formato peso colombiano (ej "$221.903.943") → PESOS, NO UVR.
-- Beneficio/cobertura: NO lo marques por texto legal ni por la sola palabra "beneficio". Sólo aplica si hay valor mensual > 0 o tasa explícita > 0 de subsidio/cobertura.`,
+    hints: `BANCO DE BOGOTÁ HIPOTECARIO — plantilla "Extracto Crédito de Vivienda"
+(encabezado típico "Nro. ...CH...", bloque "DATOS GENERALES DEL CRÉDITO" y tabla
+CONCEPTO / DETALLE VALOR A PAGAR / DETALLE PAGO ANTERIOR).
+
+MONEDA:
+- Por defecto PESOS. Solo UVR si el extracto literalmente trae columna/fila "Saldo UVR" /
+  "Valor UVR" / "Valores en UVR" con números. Montos con formato "$221.903.943" → PESOS.
+
+DATOS GENERALES DEL CRÉDITO (fila de encabezado):
+- "MONTO APROBADO" → valorDesembolsado (ej "154,347,600.00" → 154347600).
+- "PLAZO INICAL" / "PLAZO INICIAL" → plazoInicial (meses, ej 360).
+- "CUOTA A PAGAR" → cuotasPagadas (es el número de cuota que se está cobrando, ej 23).
+- "CUOTAS PENDIENTES" → cuotasPendientes (ej 330).
+- "SISTEMA DE AMORTIZACIÓN" → sistemaAmortizacion (ej "PESOS - C. FIJA").
+
+TASAS (fila siguiente):
+- "TASA COBRADA E.A." → tasaEA. ESTA ES LA QUE MANDA (es la tasa neta efectiva tras FRECH,
+  ej 8.37). NO uses "TASA PACTADA E.A." como tasaEA — esa es la tasa contractual sin
+  subsidio (ej 12.68) y va en teaPactada si existe el campo.
+- "TASA INTERÉS CON BENEFICIO E.A." → tasaCobertura (ej 4.00). Si > 0 → beneficioActivo="si",
+  tipoBeneficio="FRECH".
+
+SALDOS (fila inferior de la tabla):
+- "SALDO TOTAL A LA FECHA DE CORTE" → saldoCapital (ej "$151,928,185.72" → 151928185.72).
+  ES EL SALDO ANTES DEL PAGO ACTUAL — es el que NUVIA usa para simular.
+- "SALDO DE CAPITAL DESPUÉS DE EFECTUAR ESTE PAGO" NO va en saldoCapital (es saldo posterior).
+
+TABLA "CONCEPTO / DETALLE VALOR A PAGAR" — usa SOLO la columna "DETALLE VALOR A PAGAR":
+- "+ CAPITAL" → capitalCuota (puede ser 0.00 en cuotas de solo interés).
+- "+ INTERESES CORRIENTES" → interesCuota (intereses BRUTOS antes del subsidio, ej 1,634,671.23).
+- "+ SEGURO DE VIDA" + "+ SEGURO INCENDIO Y TERREMOTO" + "+ SEGURO(S) VOLUNTARIO(S)" → seguros
+  (suma, ej 30,562.59 + 40,710.00 + 0 = 71,272.59).
+- "= VALOR TOTAL" → cuotaSinSubsidio (cuota completa antes de aplicar el beneficio,
+  con seguros incluidos, ej 1,705,943.82).
+- "- VALOR BENEFICIO" → valorBeneficioMensual (ej 494,319.23). Si > 0 → beneficioActivo="si",
+  tipoBeneficio="FRECH".
+- "= TOTAL A PAGAR" (también aparece como "VALOR TOTAL A PAGAR" en el encabezado) →
+  cuotaConSubsidio (lo que el cliente paga hoy, ej 1,211,624.59).
+
+CUOTA ACTUAL Y CUOTA PARA SIMULAR (CRÍTICO — aquí estaba el bug histórico):
+- cuotaActual ← "= VALOR TOTAL" (cuota sin subsidio CON seguros, ej 1,705,943.82).
+  Es la cuota real del crédito que NUVIA usará como base de simulación.
+- cuotaConInteresSinSeguros ← cuotaConSubsidio − seguros = TOTAL A PAGAR − seguros
+  (ej 1,211,624.59 − 71,272.59 = 1,140,352.00).
+  NUNCA uses INTERESES CORRIENTES como cuotaConInteresSinSeguros: ese valor es bruto
+  antes del FRECH y al sumarle el beneficio en la fórmula
+  (cuotaBase = cuotaConInteresSinSeguros + beneficio + seguros) se DUPLICA el FRECH
+  y la cuota base sale inflada por exactamente el valor del subsidio.
+- Validación obligatoria: cuotaConSubsidio + valorBeneficioMensual debe ser ≈ cuotaSinSubsidio
+  (ej 1,211,624.59 + 494,319.23 = 1,705,943.82). Si no cuadra, re-lee la tabla.
+- Validación obligatoria: cuotaConInteresSinSeguros + valorBeneficioMensual + seguros debe
+  ser ≈ cuotaSinSubsidio. Si no cuadra, NO inventes — re-lee.
+
+BENEFICIO / FRECH:
+- Si TASA INTERÉS CON BENEFICIO E.A. > 0 o "- VALOR BENEFICIO" > 0 → beneficioActivo="si",
+  tipoBeneficio="FRECH", tasaCobertura=valor de la columna "TASA INTERÉS CON BENEFICIO E.A.",
+  valorBeneficioMensual="- VALOR BENEFICIO".
+- Si ambos están en 0 → beneficioActivo="no" y deja los campos vacíos con score 0.
+
+OTROS CAMPOS:
+- titular ← nombre en mayúsculas debajo del encabezado del extracto (ej "GUERRA LOPEZ JONATHAN JAVID").
+- numeroCredito ← "NÚMERO DE CRÉDITO" (ej 00957809148).
+- fechaCorte ← "FECHA DE CORTE" en formato YYYY-MM-DD.`,
   },
   {
     id: "banco_bogota_leasing",
