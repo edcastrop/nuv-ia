@@ -139,6 +139,16 @@ function SuperAdminDashboard() {
             <Stat label="Pendiente radicación" value={pendRadicacion.toString()} />
             <Stat label="En mora (>30d)" value={enMora.toString()} accent="danger" />
             <Stat label="Analistas F. Comerciales activos" value={porLicenciado.size.toString()} accent="blue" />
+            <Stat
+              label={`Costo IA mes (${costosIA?.mesActual ?? "—"})`}
+              value={costosIA ? fmt(costosIA.totales.costo_mes_cop) : "—"}
+              accent="blue"
+            />
+            <Stat
+              label="Costo IA histórico"
+              value={costosIA ? fmt(costosIA.totales.costo_total_cop) : "—"}
+              accent="green"
+            />
           </div>
 
           <NCard>
