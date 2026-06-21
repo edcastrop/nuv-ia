@@ -5,6 +5,7 @@ import { PageLayout, ExecutiveHero, NCard } from "@/components/nuvia";
 import { supabase } from "@/integrations/supabase/client";
 import { CASO_ESTADOS, labelEstado, type CasoEstado } from "@/lib/casoEstados";
 import { useUserRole } from "@/hooks/useUserRole";
+import { getReporteCostosIA, type ReporteCostosIA } from "@/lib/costosIA.functions";
 
 export const Route = createFileRoute("/_authenticated/super-admin/")({
   component: SuperAdminDashboard,
