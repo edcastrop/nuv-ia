@@ -28,6 +28,7 @@ function SuperAdminDashboard() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [nombres, setNombres] = useState<Map<string, string>>(new Map());
+  const [costosIA, setCostosIA] = useState<ReporteCostosIA | null>(null);
 
   useEffect(() => {
     if (rolesLoading) return;
@@ -45,6 +46,12 @@ function SuperAdminDashboard() {
         const m = new Map<string, string>();
         (profs ?? []).forEach((p) => m.set(p.id, p.nombre || p.email || "—"));
         setNombres(m);
+      }
+      try {
+        const r = await getReporteCostosIA();
+        setCostosIA(r);
+      } catch {
+        // silencioso — el KPI muestra "—"
       }
       setLoading(false);
     })();
