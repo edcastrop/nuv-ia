@@ -70,6 +70,8 @@ export type ReporteCostosIA = {
     costo_total_cop: number;
   };
   porMes: Array<{ mes: string; costo_usd: number; costo_cop: number; usos: number }>;
+  rankingUsuarios: Array<{ user_id: string; nombre: string; rol: string; roles: string[]; usos: number; costo_usd: number; costo_cop: number }>;
+  rankingRoles: Array<{ rol: string; usuarios: number; usos: number; costo_usd: number; costo_cop: number }>;
 };
 
 export const getReporteCostosIA = createServerFn({ method: "GET" })
