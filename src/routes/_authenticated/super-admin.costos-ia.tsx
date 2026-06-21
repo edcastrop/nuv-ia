@@ -216,6 +216,82 @@ function CostosIAView() {
             </NCard>
           )}
 
+          {data.rankingRoles.length > 0 && (
+            <NCard>
+              <h3 className="mb-3 text-base font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
+                Ranking por rol · quién gasta más en IA
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-[11px] uppercase tracking-wider" style={{ color: "var(--nuvia-text-secondary)" }}>
+                      <th className="text-left py-2" style={{ color: "var(--nuvia-text-secondary)" }}>Rol</th>
+                      <th className="text-right" style={{ color: "var(--nuvia-text-secondary)" }}>Usuarios</th>
+                      <th className="text-right" style={{ color: "var(--nuvia-text-secondary)" }}>Usos</th>
+                      <th className="text-right" style={{ color: "var(--nuvia-text-secondary)" }}>Costo USD</th>
+                      <th className="text-right" style={{ color: "var(--nuvia-text-secondary)" }}>Costo COP</th>
+                      <th className="text-right" style={{ color: "var(--nuvia-text-secondary)" }}>% del total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.rankingRoles.map((r) => {
+                      const pct = data.totales.costo_total_usd > 0 ? (r.costo_usd / data.totales.costo_total_usd) * 100 : 0;
+                      return (
+                        <tr key={r.rol} style={{ borderTop: "1px solid var(--nuvia-border)" }}>
+                          <td className="py-2 font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{r.rol}</td>
+                          <td className="text-right" style={{ color: "var(--nuvia-text-primary)" }}>{fmtNum(r.usuarios)}</td>
+                          <td className="text-right" style={{ color: "var(--nuvia-text-primary)" }}>{fmtNum(r.usos)}</td>
+                          <td className="text-right" style={{ color: "var(--nuvia-text-secondary)" }}>{fmtUSDcoarse(r.costo_usd)}</td>
+                          <td className="text-right font-semibold" style={{ color: "var(--nuvia-accent-green)" }}>{fmtCOP(r.costo_cop)}</td>
+                          <td className="text-right" style={{ color: "var(--nuvia-accent-blue)" }}>{pct.toFixed(1)}%</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </NCard>
+          )}
+
+          {data.rankingUsuarios.length > 0 && (
+            <NCard>
+              <h3 className="mb-3 text-base font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
+                Ranking por usuario · top consumidores
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-[11px] uppercase tracking-wider" style={{ color: "var(--nuvia-text-secondary)" }}>
+                      <th className="text-left py-2" style={{ color: "var(--nuvia-text-secondary)" }}>#</th>
+                      <th className="text-left" style={{ color: "var(--nuvia-text-secondary)" }}>Usuario</th>
+                      <th className="text-left" style={{ color: "var(--nuvia-text-secondary)" }}>Rol</th>
+                      <th className="text-right" style={{ color: "var(--nuvia-text-secondary)" }}>Usos</th>
+                      <th className="text-right" style={{ color: "var(--nuvia-text-secondary)" }}>Costo USD</th>
+                      <th className="text-right" style={{ color: "var(--nuvia-text-secondary)" }}>Costo COP</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.rankingUsuarios.slice(0, 20).map((u, i) => (
+                      <tr key={u.user_id} style={{ borderTop: "1px solid var(--nuvia-border)" }}>
+                        <td className="py-2" style={{ color: "var(--nuvia-text-muted)" }}>{i + 1}</td>
+                        <td style={{ color: "var(--nuvia-text-primary)" }}>{u.nombre}</td>
+                        <td style={{ color: "var(--nuvia-text-secondary)" }}>
+                          <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                            style={{ background: "rgba(255,255,255,0.06)", color: "var(--nuvia-text-secondary)" }}>
+                            {u.rol}
+                          </span>
+                        </td>
+                        <td className="text-right" style={{ color: "var(--nuvia-text-primary)" }}>{fmtNum(u.usos)}</td>
+                        <td className="text-right" style={{ color: "var(--nuvia-text-secondary)" }}>{fmtUSDcoarse(u.costo_usd)}</td>
+                        <td className="text-right font-semibold" style={{ color: "var(--nuvia-accent-green)" }}>{fmtCOP(u.costo_cop)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </NCard>
+          )}
+
           <NCard>
             <div className="flex items-start gap-2 text-[12px]" style={{ color: "var(--nuvia-text-secondary)" }}>
               <AlertCircle size={14} style={{ color: "var(--nuvia-accent-blue)", marginTop: 2 }} />

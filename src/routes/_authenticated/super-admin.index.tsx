@@ -5,6 +5,7 @@ import { PageLayout, ExecutiveHero, NCard } from "@/components/nuvia";
 import { supabase } from "@/integrations/supabase/client";
 import { CASO_ESTADOS, labelEstado, type CasoEstado } from "@/lib/casoEstados";
 import { useUserRole } from "@/hooks/useUserRole";
+import { getReporteCostosIA, type ReporteCostosIA } from "@/lib/costosIA.functions";
 
 export const Route = createFileRoute("/_authenticated/super-admin/")({
   component: SuperAdminDashboard,
@@ -27,6 +28,7 @@ function SuperAdminDashboard() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [nombres, setNombres] = useState<Map<string, string>>(new Map());
+  const [costosIA, setCostosIA] = useState<ReporteCostosIA | null>(null);
 
   useEffect(() => {
     if (rolesLoading) return;
@@ -44,6 +46,12 @@ function SuperAdminDashboard() {
         const m = new Map<string, string>();
         (profs ?? []).forEach((p) => m.set(p.id, p.nombre || p.email || "—"));
         setNombres(m);
+      }
+      try {
+        const r = await getReporteCostosIA();
+        setCostosIA(r);
+      } catch {
+        // silencioso — el KPI muestra "—"
       }
       setLoading(false);
     })();
@@ -131,6 +139,16 @@ function SuperAdminDashboard() {
             <Stat label="Pendiente radicación" value={pendRadicacion.toString()} />
             <Stat label="En mora (>30d)" value={enMora.toString()} accent="danger" />
             <Stat label="Analistas F. Comerciales activos" value={porLicenciado.size.toString()} accent="blue" />
+            <Stat
+              label={`Costo IA mes (${costosIA?.mesActual ?? "—"})`}
+              value={costosIA ? fmt(costosIA.totales.costo_mes_cop) : "—"}
+              accent="blue"
+            />
+            <Stat
+              label="Costo IA histórico"
+              value={costosIA ? fmt(costosIA.totales.costo_total_cop) : "—"}
+              accent="green"
+            />
           </div>
 
           <NCard>
