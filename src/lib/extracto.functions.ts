@@ -7,6 +7,7 @@ import {
   parseMontoExtracto,
 } from "@/lib/cuotaBase";
 import { parseBancolombiaText } from "@/lib/motorExtractos/bancolombiaParser";
+import { parseBancoBogotaText } from "@/lib/motorExtractos/bancoBogotaParser";
 import { parseDaviviendaLeasingText } from "@/lib/motorExtractos/daviviendaLeasingParser";
 import { parseDaviviendaHipotecarioText } from "@/lib/motorExtractos/daviviendaHipotecarioParser";
 import { hasRealCoverageSignals } from "@/lib/coverageDetection";
@@ -400,6 +401,7 @@ export const extractStatement = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<ExtractoResponse> => {
     const deterministicData = data.rawText
       ? parseBancolombiaText(data.rawText)
+        ?? parseBancoBogotaText(data.rawText)
         ?? parseDaviviendaHipotecarioText(data.rawText)
         ?? parseDaviviendaLeasingText(data.rawText)
       : null;
