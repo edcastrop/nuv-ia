@@ -7,6 +7,7 @@ import {
   parseMontoExtracto,
 } from "@/lib/cuotaBase";
 import { parseBancolombiaText } from "@/lib/motorExtractos/bancolombiaParser";
+import { parseBancoBogotaText } from "@/lib/motorExtractos/bancoBogotaParser";
 import { parseDaviviendaLeasingText } from "@/lib/motorExtractos/daviviendaLeasingParser";
 import { parseDaviviendaHipotecarioText } from "@/lib/motorExtractos/daviviendaHipotecarioParser";
 import { hasRealCoverageSignals } from "@/lib/coverageDetection";
@@ -325,6 +326,15 @@ REGLAS ESTRICTAS:
   * "Intereses Corrientes" → interesCuota. "Abonos a Capital" → capitalCuota. Abonos a Capital NO es beneficio/cobertura/subsidio.
   * No marques beneficio por la sola palabra cobertura. Solo tieneCobertura="si" si "Interés Cte. Cobertura", "Valor Beneficio", "Valor subsidio" o "Cobertura FRECH" tienen valor > 0. Si no, tieneCobertura="no", tipoBeneficio="", valorCobertura="", tasaCobertura="".
   * Si "Documento No:" es "0000000000" o enmascarado, cedula="". Si no aparece valor desembolsado, valorDesembolsado="".
+- BANCO DE BOGOTÁ HIPOTECARIO — mapeo LITERAL obligatorio para "Extracto Crédito de Vivienda":
+  * "+ INTERESES CORRIENTES" → interesCuota. NO lo uses como cuotaConInteresSinSeguros.
+  * "= VALOR TOTAL" → cuotaSinSubsidio y cuotaMensual: cuota real SIN subsidio CON seguros.
+  * "- VALOR BENEFICIO" → valorCobertura. Si es mayor a 0, tieneCobertura="si" y tipoBeneficio="FRECH".
+  * "= TOTAL A PAGAR" / "VALOR TOTAL A PAGAR" → cuotaPagadaCliente: cuota que paga hoy el cliente CON subsidio.
+  * seguros = "+ SEGURO DE VIDA" + "+ SEGURO INCENDIO Y TERREMOTO" + seguros voluntarios.
+  * cuotaConInteresSinSeguros = cuotaPagadaCliente - seguros. NUNCA interesesCorrientes.
+  * cuotaBaseSimulacion/cuotaMensual = cuotaSinSubsidio = cuotaPagadaCliente + valorCobertura.
+  * Validación obligatoria: cuotaConInteresSinSeguros + valorCobertura + seguros = cuotaSinSubsidio.
 - FNA / Fondo Nacional del Ahorro — mapeo LITERAL obligatorio:
   * "BASE DE CALCULO 360" / "DIAS CALCULO" son días de año comercial, NUNCA plazo del crédito.
   * plazoInicial se calcula por FECHA APERTURA → VENCIMIENTO FINAL o por matemática financiera; típicamente 240 en créditos a 20 años.
@@ -382,11 +392,16 @@ function parseJsonObject(text: string): unknown {
   return JSON.parse(cleaned);
 }
 
+function closeMoney(a: number, b: number): boolean {
+  return Math.abs(a - b) <= Math.max(2_500, Math.max(Math.abs(a), Math.abs(b)) * 0.005);
+}
+
 export const extractStatement = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => InputSchema.parse(data))
   .handler(async ({ data }): Promise<ExtractoResponse> => {
     const deterministicData = data.rawText
       ? parseBancolombiaText(data.rawText)
+        ?? parseBancoBogotaText(data.rawText)
         ?? parseDaviviendaHipotecarioText(data.rawText)
         ?? parseDaviviendaLeasingText(data.rawText)
       : null;
@@ -615,6 +630,7 @@ export const extractStatement = createServerFn({ method: "POST" })
       const tipoLower = (typeof parsed.tipoCredito === "string" ? parsed.tipoCredito : "").toLowerCase();
       const esDaviviendaLeasing = /davivienda/.test(bancoLower) && /leasing/.test(`${productoLower} ${tipoLower}`);
       const esDaviviendaHipotecario = /davivienda/.test(bancoLower) && !esDaviviendaLeasing;
+      const esBancoBogotaHipotecario = /banco\s+de\s+bogot|bogot[aá]/.test(bancoLower) && !/leasing/.test(`${productoLower} ${tipoLower}`);
       const esFna = /fondo\s+nacional\s+del\s+ahorro|\bfna\b/.test(`${bancoLower} ${productoLower}`);
       if (typeof parsed.cedula === "string" && /^0+$/.test(parsed.cedula.trim())) parsed.cedula = "";
 
@@ -777,6 +793,82 @@ export const extractStatement = createServerFn({ method: "POST" })
               "Cuota base de simulación < cuota pagada por cliente. Lectura inconsistente.",
             );
           }
+        }
+      } else if (esBancoBogotaHipotecario) {
+        // ----- BANCO DE BOGOTÁ HIPOTECARIO: FRECH NO se suma sobre intereses brutos -----
+        mapeoBanco = "generico";
+        parsed.banco = "Banco de Bogotá";
+        parsed.tipoCredito = "CREDITO_HIPOTECARIO";
+        parsed.moneda = /\buvr\b/i.test(`${parsed.moneda ?? ""} ${parsed.producto ?? ""} ${parsed.sistemaAmortizacion ?? ""}`) ? "UVR" : "PESOS";
+
+        const vida = monto("valorSeguroVida");
+        const incendio = monto("valorSeguroIncendio");
+        const terremoto = monto("valorSeguroTerremoto");
+        const segurosDetallados = vida + incendio + terremoto;
+        if (segurosDetallados > 0) {
+          segurosNum = segurosDetallados;
+          parsed.seguros = formatMontoExtracto(segurosDetallados);
+        }
+
+        const beneficioBogota = valorBenef || monto("valorSubsidioGobierno");
+        const cuotaClienteBogota = cuotaCliente || monto("valorAPagar") || monto("valorCuotaConSubsidio");
+        const cuotaSinSubLeida = monto("cuotaSinSubsidio") || monto("cuotaMensual");
+        const detalleSinSubsidio = monto("capitalCuota") + monto("interesCuota") + segurosNum;
+        const basePorPagoNeto = cuotaClienteBogota > 0 && beneficioBogota > 0
+          ? cuotaClienteBogota + beneficioBogota
+          : 0;
+        const baseInflada = monto("interesCuota") + beneficioBogota + segurosNum;
+        const cuotaLeidaPareceInflada = cuotaSinSubLeida > 0 && baseInflada > 0 && closeMoney(cuotaSinSubLeida, baseInflada);
+
+        if (beneficioBogota > 0) {
+          tieneCob = true;
+          valorBenef = beneficioBogota;
+          parsed.tieneCobertura = "si";
+          parsed.valorCobertura = formatMontoExtracto(beneficioBogota);
+          parsed.tipoBeneficio = typeof parsed.tipoBeneficio === "string" && parsed.tipoBeneficio ? parsed.tipoBeneficio : "FRECH";
+        } else {
+          tieneCob = false;
+          valorBenef = 0;
+          parsed.tieneCobertura = "no";
+          parsed.valorCobertura = "";
+          parsed.tasaCobertura = "";
+          parsed.tipoBeneficio = "";
+        }
+
+        if (cuotaClienteBogota > 0) parsed.cuotaPagadaCliente = formatMontoExtracto(cuotaClienteBogota);
+
+        if (basePorPagoNeto > 0) {
+          cuotaBase = basePorPagoNeto;
+        } else if (detalleSinSubsidio > segurosNum) {
+          cuotaBase = detalleSinSubsidio;
+        } else if (cuotaSinSubLeida > 0 && !cuotaLeidaPareceInflada) {
+          cuotaBase = cuotaSinSubLeida;
+        } else if (!tieneCob && cuotaClienteBogota > 0) {
+          cuotaBase = cuotaClienteBogota;
+        }
+
+        if (cuotaBase > 0) {
+          parsed.cuotaBaseSimulacion = formatMontoExtracto(cuotaBase);
+          parsed.cuotaMensual = formatMontoExtracto(cuotaBase);
+          parsed.cuotaSinSubsidio = formatMontoExtracto(cuotaBase);
+          const cuotaFinancieraNeta = cuotaClienteBogota > 0
+            ? cuotaClienteBogota - segurosNum
+            : cuotaBase - beneficioBogota - segurosNum;
+          if (cuotaFinancieraNeta > 0) {
+            parsed.cuotaConInteresSinSeguros = formatMontoExtracto(cuotaFinancieraNeta);
+            parsed.cuotaSinSeguros = formatMontoExtracto(cuotaFinancieraNeta);
+          }
+          requiereVerificacion = false;
+        } else {
+          requiereVerificacion = true;
+          errores.push("Banco de Bogotá: no se pudo reconstruir la cuota base sin subsidio.");
+        }
+
+        if (basePorPagoNeto > 0 && cuotaBase > 0 && !closeMoney(cuotaBase, basePorPagoNeto)) {
+          errores.push("Banco de Bogotá: cuota pagada + beneficio no coincide con la cuota base.");
+        }
+        if (cuotaLeidaPareceInflada) {
+          _advertenciasNorm.push("Banco de Bogotá: se corrigió cuota base inflada por doble conteo del FRECH.");
         }
       } else if (esDaviviendaLeasing) {
         // ----- DAVIVIENDA LEASING: no usa lógica genérica de beneficio -----
