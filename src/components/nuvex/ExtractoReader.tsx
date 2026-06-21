@@ -845,6 +845,54 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
     return out;
   };
 
+  const recomputeBancoBogotaHipotecario = (data: ExtractoData): ExtractoData => {
+    const g = (k: string) => (typeof data[k] === "string" ? (data[k] as string) : "");
+    const m = (k: string) => parseMontoExtracto(g(k));
+    const texto = `${g("banco")} ${g("producto")} ${g("tipoCredito")}`.toLowerCase();
+    if (!/banco\s+de\s+bogot|bogot[aá]/.test(texto) || /leasing/.test(texto)) return data;
+
+    const out: ExtractoData = { ...data };
+    const segurosDetallados = m("valorSeguroVida") + m("valorSeguroIncendio") + m("valorSeguroTerremoto");
+    const seguros = segurosDetallados > 0 ? segurosDetallados : m("seguros");
+    const beneficio = m("valorCobertura") || m("valorSubsidioGobierno");
+    const cuotaCliente = m("cuotaPagadaCliente") || m("valorAPagar") || m("valorCuotaConSubsidio");
+    const cuotaSinSubLeida = m("cuotaSinSubsidio") || m("cuotaMensual");
+    const detalleSinSubsidio = m("capitalCuota") + m("interesCuota") + seguros;
+    const basePorPagoNeto = cuotaCliente > 0 && beneficio > 0 ? cuotaCliente + beneficio : 0;
+    let cuotaBase = basePorPagoNeto || (detalleSinSubsidio > seguros ? detalleSinSubsidio : 0) || cuotaSinSubLeida || cuotaCliente;
+
+    out.banco = "Banco de Bogotá";
+    out.tipoCredito = "CREDITO_HIPOTECARIO";
+    out.moneda = /\buvr\b/i.test(`${g("moneda")} ${g("producto")} ${g("sistemaAmortizacion")}`) ? "UVR" : "PESOS";
+    if (seguros > 0) out.seguros = String(Math.round(seguros));
+    if (beneficio > 0) {
+      out.tieneCobertura = "si";
+      out.valorCobertura = String(Math.round(beneficio));
+      out.tipoBeneficio = g("tipoBeneficio") || "FRECH";
+    } else {
+      out.tieneCobertura = "no";
+      out.valorCobertura = "";
+      out.tasaCobertura = "";
+      out.tipoBeneficio = "";
+    }
+    if (cuotaCliente > 0) out.cuotaPagadaCliente = String(Math.round(cuotaCliente));
+    if (cuotaBase > 0) {
+      out.cuotaBaseSimulacion = String(Math.round(cuotaBase));
+      out.cuotaMensual = String(Math.round(cuotaBase));
+      out.cuotaSinSubsidio = String(Math.round(cuotaBase));
+      const cuotaFinancieraNeta = cuotaCliente > 0 ? cuotaCliente - seguros : cuotaBase - beneficio - seguros;
+      if (cuotaFinancieraNeta > 0) {
+        out.cuotaConInteresSinSeguros = String(Math.round(cuotaFinancieraNeta));
+        out.cuotaSinSeguros = String(Math.round(cuotaFinancieraNeta));
+      }
+    }
+    out.requiereVerificacionBeneficio = cuotaBase > 0 ? "no" : "si";
+    out.alertaCuotaBase = cuotaBase > 0 ? "" : "Banco de Bogotá: no se pudo reconstruir la cuota base sin subsidio.";
+    out.erroresValidacion = "";
+    out.mapeoBanco = "banco_bogota_hipotecario";
+    return out;
+  };
+
   const recomputeDaviviendaHipotecario = (data: ExtractoData): ExtractoData => {
     const g = (k: string) => (typeof data[k] === "string" ? (data[k] as string) : "");
     const texto = `${g("banco")} ${g("producto")} ${g("tipoCredito")}`.toLowerCase();
