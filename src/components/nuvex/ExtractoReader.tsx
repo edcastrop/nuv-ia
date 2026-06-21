@@ -659,7 +659,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
           setParsed(
             normalizeExtractData(
               recomputeDaviviendaHipotecario(
-                recomputeDaviviendaLeasing(recomputeBancolombia(det.data)),
+                recomputeDaviviendaLeasing(recomputeBancoBogotaHipotecario(recomputeBancolombia(det.data))),
               ),
             ),
           );
@@ -679,7 +679,9 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
       }
       setParsed(
         normalizeExtractData(
-          recomputeDaviviendaHipotecario(recomputeDaviviendaLeasing(recomputeBancolombia(resp.data))),
+          recomputeDaviviendaHipotecario(
+            recomputeDaviviendaLeasing(recomputeBancoBogotaHipotecario(recomputeBancolombia(resp.data))),
+          ),
         ),
       );
       setStage("review");
