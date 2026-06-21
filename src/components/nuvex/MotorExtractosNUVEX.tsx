@@ -35,6 +35,8 @@ const UMBRAL_BLOQUEO = 90;
 
 // PDF.js loader (idéntico al ExtractoReader actual)
 async function loadPdfJs() {
+  const { ensurePdfJsPolyfills } = await import("@/lib/pdfjsPolyfill");
+  ensurePdfJsPolyfills();
   const pdfjs = await import("pdfjs-dist");
   const workerMod = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")) as {
     default: string;
