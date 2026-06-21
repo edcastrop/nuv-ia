@@ -165,36 +165,103 @@ export const getReporteCostosIA = createServerFn({ method: "GET" })
       { usos_mes: 0, usos_total: 0, costo_mes_usd: 0, costo_mes_cop: 0, costo_total_usd: 0, costo_total_cop: 0 },
     );
 
-    // Serie histórica por mes (últimos 6) — usa nuvex_ia_log + qa_auditorias + executive_copilot_log
+    // Serie histórica por mes (últimos 6) + ranking por usuario/rol
     const seisMesesAtras = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString();
     const [{ data: nuviaSerie }, { data: qaSerie }, { data: execSerie }] = await Promise.all([
-      supabase.from("nuvex_ia_log").select("created_at").gte("created_at", seisMesesAtras),
-      supabase.from("qa_auditorias").select("created_at").gte("created_at", seisMesesAtras),
-      supabase.from("executive_copilot_log").select("created_at").gte("created_at", seisMesesAtras),
+      supabase.from("nuvex_ia_log").select("created_at, usuario_id").gte("created_at", seisMesesAtras),
+      supabase.from("qa_auditorias").select("created_at, ejecutado_by").gte("created_at", seisMesesAtras),
+      supabase.from("executive_copilot_log").select("created_at, usuario_id").gte("created_at", seisMesesAtras),
     ]);
 
     const cuNuvia = costoUnitarioUSD(CATALOGO_COSTOS.find((m) => m.key === "nuvia_chat")!);
     const cuQa = costoUnitarioUSD(CATALOGO_COSTOS.find((m) => m.key === "qa_copilot")!);
     const cuExec = costoUnitarioUSD(CATALOGO_COSTOS.find((m) => m.key === "executive_copilot")!);
 
-    const porMesMap = new Map<string, { usos: number; costo_usd: number }>();
-    const addSerie = (rows: Array<{ created_at: string }> | null, cu: number) => {
-      (rows ?? []).forEach((r) => {
-        const d = new Date(r.created_at);
-        const mes = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-        const cur = porMesMap.get(mes) ?? { usos: 0, costo_usd: 0 };
-        cur.usos += 1;
-        cur.costo_usd += cu;
-        porMesMap.set(mes, cur);
-      });
-    };
-    addSerie(nuviaSerie, cuNuvia);
-    addSerie(qaSerie, cuQa);
-    addSerie(execSerie, cuExec);
+    type Hit = { created_at: string; user_id: string | null; cu: number };
+    const hits: Hit[] = [];
+    (nuviaSerie ?? []).forEach((r) => hits.push({ created_at: (r as { created_at: string }).created_at, user_id: (r as { usuario_id: string | null }).usuario_id, cu: cuNuvia }));
+    (qaSerie ?? []).forEach((r) => hits.push({ created_at: (r as { created_at: string }).created_at, user_id: (r as { ejecutado_by: string | null }).ejecutado_by, cu: cuQa }));
+    (execSerie ?? []).forEach((r) => hits.push({ created_at: (r as { created_at: string }).created_at, user_id: (r as { usuario_id: string | null }).usuario_id, cu: cuExec }));
 
+    const porMesMap = new Map<string, { usos: number; costo_usd: number }>();
+    hits.forEach((h) => {
+      const d = new Date(h.created_at);
+      const mes = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const cur = porMesMap.get(mes) ?? { usos: 0, costo_usd: 0 };
+      cur.usos += 1;
+      cur.costo_usd += h.cu;
+      porMesMap.set(mes, cur);
+    });
     const porMes = Array.from(porMesMap.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([mes, v]) => ({ mes, usos: v.usos, costo_usd: v.costo_usd, costo_cop: v.costo_usd * TASA_COP_POR_USD }));
+
+    // Ranking por usuario
+    const porUsuario = new Map<string, { usos: number; costo_usd: number }>();
+    hits.forEach((h) => {
+      if (!h.user_id) return;
+      const cur = porUsuario.get(h.user_id) ?? { usos: 0, costo_usd: 0 };
+      cur.usos += 1;
+      cur.costo_usd += h.cu;
+      porUsuario.set(h.user_id, cur);
+    });
+
+    const userIds = Array.from(porUsuario.keys());
+    const [profsRes, rolesRes] = userIds.length
+      ? await Promise.all([
+          supabase.from("profiles").select("id, nombre, email").in("id", userIds),
+          supabase.from("user_roles").select("user_id, role").in("user_id", userIds),
+        ])
+      : [{ data: [] as Array<{ id: string; nombre: string | null; email: string | null }> }, { data: [] as Array<{ user_id: string; role: string }> }];
+
+    const nombreMap = new Map<string, string>();
+    ((profsRes.data ?? []) as Array<{ id: string; nombre: string | null; email: string | null }>).forEach((p) => {
+      nombreMap.set(p.id, p.nombre || p.email || "—");
+    });
+    const rolesMap = new Map<string, string[]>();
+    ((rolesRes.data ?? []) as Array<{ user_id: string; role: string }>).forEach((r) => {
+      const arr = rolesMap.get(r.user_id) ?? [];
+      arr.push(r.role);
+      rolesMap.set(r.user_id, arr);
+    });
+    const principalRol = (roles: string[]): string => {
+      const orden = ["super_admin", "admin", "gerencia", "asesor", "qa", "analista", "operativo"];
+      for (const r of orden) if (roles.includes(r)) return r;
+      return roles[0] ?? "sin_rol";
+    };
+
+    const rankingUsuarios = Array.from(porUsuario.entries())
+      .map(([uid, v]) => {
+        const roles = rolesMap.get(uid) ?? [];
+        return {
+          user_id: uid,
+          nombre: nombreMap.get(uid) ?? "—",
+          rol: principalRol(roles),
+          roles,
+          usos: v.usos,
+          costo_usd: v.costo_usd,
+          costo_cop: v.costo_usd * TASA_COP_POR_USD,
+        };
+      })
+      .sort((a, b) => b.costo_usd - a.costo_usd);
+
+    const rolMap = new Map<string, { usos: number; costo_usd: number; usuarios: Set<string> }>();
+    rankingUsuarios.forEach((u) => {
+      const cur = rolMap.get(u.rol) ?? { usos: 0, costo_usd: 0, usuarios: new Set<string>() };
+      cur.usos += u.usos;
+      cur.costo_usd += u.costo_usd;
+      cur.usuarios.add(u.user_id);
+      rolMap.set(u.rol, cur);
+    });
+    const rankingRoles = Array.from(rolMap.entries())
+      .map(([rol, v]) => ({
+        rol,
+        usuarios: v.usuarios.size,
+        usos: v.usos,
+        costo_usd: v.costo_usd,
+        costo_cop: v.costo_usd * TASA_COP_POR_USD,
+      }))
+      .sort((a, b) => b.costo_usd - a.costo_usd);
 
     return {
       fechaCorte: now.toISOString(),
@@ -206,5 +273,7 @@ export const getReporteCostosIA = createServerFn({ method: "GET" })
       filas,
       totales,
       porMes,
+      rankingUsuarios,
+      rankingRoles,
     };
   });
