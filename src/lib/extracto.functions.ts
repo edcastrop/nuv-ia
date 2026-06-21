@@ -325,6 +325,15 @@ REGLAS ESTRICTAS:
   * "Intereses Corrientes" → interesCuota. "Abonos a Capital" → capitalCuota. Abonos a Capital NO es beneficio/cobertura/subsidio.
   * No marques beneficio por la sola palabra cobertura. Solo tieneCobertura="si" si "Interés Cte. Cobertura", "Valor Beneficio", "Valor subsidio" o "Cobertura FRECH" tienen valor > 0. Si no, tieneCobertura="no", tipoBeneficio="", valorCobertura="", tasaCobertura="".
   * Si "Documento No:" es "0000000000" o enmascarado, cedula="". Si no aparece valor desembolsado, valorDesembolsado="".
+- BANCO DE BOGOTÁ HIPOTECARIO — mapeo LITERAL obligatorio para "Extracto Crédito de Vivienda":
+  * "+ INTERESES CORRIENTES" → interesCuota. NO lo uses como cuotaConInteresSinSeguros.
+  * "= VALOR TOTAL" → cuotaSinSubsidio y cuotaMensual: cuota real SIN subsidio CON seguros.
+  * "- VALOR BENEFICIO" → valorCobertura. Si es mayor a 0, tieneCobertura="si" y tipoBeneficio="FRECH".
+  * "= TOTAL A PAGAR" / "VALOR TOTAL A PAGAR" → cuotaPagadaCliente: cuota que paga hoy el cliente CON subsidio.
+  * seguros = "+ SEGURO DE VIDA" + "+ SEGURO INCENDIO Y TERREMOTO" + seguros voluntarios.
+  * cuotaConInteresSinSeguros = cuotaPagadaCliente - seguros. NUNCA interesesCorrientes.
+  * cuotaBaseSimulacion/cuotaMensual = cuotaSinSubsidio = cuotaPagadaCliente + valorCobertura.
+  * Validación obligatoria: cuotaConInteresSinSeguros + valorCobertura + seguros = cuotaSinSubsidio.
 - FNA / Fondo Nacional del Ahorro — mapeo LITERAL obligatorio:
   * "BASE DE CALCULO 360" / "DIAS CALCULO" son días de año comercial, NUNCA plazo del crédito.
   * plazoInicial se calcula por FECHA APERTURA → VENCIMIENTO FINAL o por matemática financiera; típicamente 240 en créditos a 20 años.
