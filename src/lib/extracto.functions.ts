@@ -624,6 +624,7 @@ export const extractStatement = createServerFn({ method: "POST" })
       const tipoLower = (typeof parsed.tipoCredito === "string" ? parsed.tipoCredito : "").toLowerCase();
       const esDaviviendaLeasing = /davivienda/.test(bancoLower) && /leasing/.test(`${productoLower} ${tipoLower}`);
       const esDaviviendaHipotecario = /davivienda/.test(bancoLower) && !esDaviviendaLeasing;
+      const esBancoBogotaHipotecario = /banco\s+de\s+bogot|bogot[aá]/.test(bancoLower) && !/leasing/.test(`${productoLower} ${tipoLower}`);
       const esFna = /fondo\s+nacional\s+del\s+ahorro|\bfna\b/.test(`${bancoLower} ${productoLower}`);
       if (typeof parsed.cedula === "string" && /^0+$/.test(parsed.cedula.trim())) parsed.cedula = "";
 
@@ -786,6 +787,82 @@ export const extractStatement = createServerFn({ method: "POST" })
               "Cuota base de simulación < cuota pagada por cliente. Lectura inconsistente.",
             );
           }
+        }
+      } else if (esBancoBogotaHipotecario) {
+        // ----- BANCO DE BOGOTÁ HIPOTECARIO: FRECH NO se suma sobre intereses brutos -----
+        mapeoBanco = "generico";
+        parsed.banco = "Banco de Bogotá";
+        parsed.tipoCredito = "CREDITO_HIPOTECARIO";
+        parsed.moneda = /\buvr\b/i.test(`${parsed.moneda ?? ""} ${parsed.producto ?? ""} ${parsed.sistemaAmortizacion ?? ""}`) ? "UVR" : "PESOS";
+
+        const vida = monto("valorSeguroVida");
+        const incendio = monto("valorSeguroIncendio");
+        const terremoto = monto("valorSeguroTerremoto");
+        const segurosDetallados = vida + incendio + terremoto;
+        if (segurosDetallados > 0) {
+          segurosNum = segurosDetallados;
+          parsed.seguros = formatMontoExtracto(segurosDetallados);
+        }
+
+        const beneficioBogota = valorBenef || monto("valorSubsidioGobierno");
+        const cuotaClienteBogota = cuotaCliente || monto("valorAPagar") || monto("valorCuotaConSubsidio");
+        const cuotaSinSubLeida = monto("cuotaSinSubsidio") || monto("cuotaMensual");
+        const detalleSinSubsidio = monto("capitalCuota") + monto("interesCuota") + segurosNum;
+        const basePorPagoNeto = cuotaClienteBogota > 0 && beneficioBogota > 0
+          ? cuotaClienteBogota + beneficioBogota
+          : 0;
+        const baseInflada = monto("interesCuota") + beneficioBogota + segurosNum;
+        const cuotaLeidaPareceInflada = cuotaSinSubLeida > 0 && baseInflada > 0 && closeMoney(cuotaSinSubLeida, baseInflada);
+
+        if (beneficioBogota > 0) {
+          tieneCob = true;
+          valorBenef = beneficioBogota;
+          parsed.tieneCobertura = "si";
+          parsed.valorCobertura = formatMontoExtracto(beneficioBogota);
+          parsed.tipoBeneficio = typeof parsed.tipoBeneficio === "string" && parsed.tipoBeneficio ? parsed.tipoBeneficio : "FRECH";
+        } else {
+          tieneCob = false;
+          valorBenef = 0;
+          parsed.tieneCobertura = "no";
+          parsed.valorCobertura = "";
+          parsed.tasaCobertura = "";
+          parsed.tipoBeneficio = "";
+        }
+
+        if (cuotaClienteBogota > 0) parsed.cuotaPagadaCliente = formatMontoExtracto(cuotaClienteBogota);
+
+        if (basePorPagoNeto > 0) {
+          cuotaBase = basePorPagoNeto;
+        } else if (detalleSinSubsidio > segurosNum) {
+          cuotaBase = detalleSinSubsidio;
+        } else if (cuotaSinSubLeida > 0 && !cuotaLeidaPareceInflada) {
+          cuotaBase = cuotaSinSubLeida;
+        } else if (!tieneCob && cuotaClienteBogota > 0) {
+          cuotaBase = cuotaClienteBogota;
+        }
+
+        if (cuotaBase > 0) {
+          parsed.cuotaBaseSimulacion = formatMontoExtracto(cuotaBase);
+          parsed.cuotaMensual = formatMontoExtracto(cuotaBase);
+          parsed.cuotaSinSubsidio = formatMontoExtracto(cuotaBase);
+          const cuotaFinancieraNeta = cuotaClienteBogota > 0
+            ? cuotaClienteBogota - segurosNum
+            : cuotaBase - beneficioBogota - segurosNum;
+          if (cuotaFinancieraNeta > 0) {
+            parsed.cuotaConInteresSinSeguros = formatMontoExtracto(cuotaFinancieraNeta);
+            parsed.cuotaSinSeguros = formatMontoExtracto(cuotaFinancieraNeta);
+          }
+          requiereVerificacion = false;
+        } else {
+          requiereVerificacion = true;
+          errores.push("Banco de Bogotá: no se pudo reconstruir la cuota base sin subsidio.");
+        }
+
+        if (basePorPagoNeto > 0 && cuotaBase > 0 && !closeMoney(cuotaBase, basePorPagoNeto)) {
+          errores.push("Banco de Bogotá: cuota pagada + beneficio no coincide con la cuota base.");
+        }
+        if (cuotaLeidaPareceInflada) {
+          _advertenciasNorm.push("Banco de Bogotá: se corrigió cuota base inflada por doble conteo del FRECH.");
         }
       } else if (esDaviviendaLeasing) {
         // ----- DAVIVIENDA LEASING: no usa lógica genérica de beneficio -----
