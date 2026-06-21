@@ -714,6 +714,13 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
     "saldoUVR", "valorUVR", "saldoCapital",
   ]);
 
+  const BOGOTA_HIPOTECARIO_KEYS = new Set([
+    "banco", "producto", "tipoCredito", "moneda", "sistemaAmortizacion", "cuotaMensual",
+    "cuotaSinSubsidio", "cuotaPagadaCliente", "valorAPagar", "valorCuotaConSubsidio",
+    "valorCobertura", "valorSubsidioGobierno", "seguros", "valorSeguroVida",
+    "valorSeguroIncendio", "valorSeguroTerremoto", "interesCuota", "capitalCuota",
+  ]);
+
 
   // Normaliza cuotasPagadas / cuotasPendientes. Misma lógica que el servidor
   // para que ZIP, PDF, imagen y ediciones manuales produzcan el mismo objeto.
