@@ -391,6 +391,10 @@ function parseJsonObject(text: string): unknown {
   return JSON.parse(cleaned);
 }
 
+function closeMoney(a: number, b: number): boolean {
+  return Math.abs(a - b) <= Math.max(2_500, Math.max(Math.abs(a), Math.abs(b)) * 0.005);
+}
+
 export const extractStatement = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => InputSchema.parse(data))
   .handler(async ({ data }): Promise<ExtractoResponse> => {
