@@ -1012,6 +1012,9 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
       if (BANCOLOMBIA_KEYS.has(key) || key === "banco") {
         next = recomputeBancolombia(next);
       }
+      if (BOGOTA_HIPOTECARIO_KEYS.has(key)) {
+        next = recomputeBancoBogotaHipotecario(next);
+      }
       if (DAVIVIENDA_LEASING_KEYS.has(key)) {
         next = recomputeDaviviendaLeasing(next);
       }
