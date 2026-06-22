@@ -1094,6 +1094,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
       if (DAVIVIENDA_LEASING_KEYS.has(key)) {
         next = recomputeDaviviendaLeasing(next);
       }
+      next = recomputeCajaSocial(next);
       next = recomputeDaviviendaHipotecario(next);
       if (key === "cuotasPagadas" || key === "plazoInicial" || key === "cuotasPendientes" || key === "cuotaActualNumero") {
         next = normalizeExtractData(next);
