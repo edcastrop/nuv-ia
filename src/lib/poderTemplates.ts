@@ -96,12 +96,12 @@ const TPL_PODER_GENERAL_BANCOS: RawBlock[] = [
   { t: "p", text: "Señores:" },
   { t: "p", text: "{{BANCO}}" },
   { t: "sp", size: 8 },
-  { t: "p", text: "Asunto: Poder especial" },
+  { t: "p", text: "Asunto: Poder especial — {{TIPO_PRODUCTO}} {{BANCO}} No. {{NUMERO_CREDITO}}" },
   { t: "sp", size: 12 },
   {
     t: "p",
     text:
-      "Yo, {{NOMBRE_CLIENTE}}, mayor de edad, domiciliado en {{CIUDAD_CLIENTE}}, identificado con cédula de ciudadanía número {{CEDULA_CLIENTE}} de {{LUGAR_EXPEDICION_CLIENTE}}, por medio del presente escrito manifiesto que confiero PODER ESPECIAL a {{NOMBRE_APODERADO}}, identificada con cédula de ciudadanía número {{CEDULA_APODERADO}} de {{LUGAR_EXPEDICION_APODERADO}} y con notificaciones judiciales en el correo juridica@nuvex.com.co o al número celular {{CELULAR_APODERADO}} para que en mi nombre y representación inicie, tramite y lleve hasta su culminación proceso de modificación del plazo del {{TIPO_PRODUCTO}} del cual soy {{CALIDAD_CLIENTE}} ante su entidad, de conformidad con la Ley 546 de 1999.",
+      "Yo, {{NOMBRE_CLIENTE}}, mayor de edad, domiciliado en {{CIUDAD_CLIENTE}}, identificado con cédula de ciudadanía número {{CEDULA_CLIENTE}} de {{LUGAR_EXPEDICION_CLIENTE}}, por medio del presente escrito manifiesto que confiero PODER ESPECIAL a {{NOMBRE_APODERADO}}, identificada con cédula de ciudadanía número {{CEDULA_APODERADO}} de {{LUGAR_EXPEDICION_APODERADO}} y con notificaciones judiciales en el correo juridica@nuvex.com.co o al número celular {{CELULAR_APODERADO}} para que en mi nombre y representación inicie, tramite y lleve hasta su culminación proceso de modificación del plazo del {{TIPO_PRODUCTO}} identificado con el No. {{NUMERO_CREDITO}} ante {{BANCO}}, del cual soy {{CALIDAD_CLIENTE}}, de conformidad con la Ley 546 de 1999.",
   },
   { t: "sp", size: 8 },
   {
@@ -251,9 +251,7 @@ export function validatePoderVariables(v: Partial<PoderVariables>, templateId?: 
     { k: "CEDULA_APODERADO", label: "Apoderado NUVEX (cédula)" },
     { k: "LUGAR_EXPEDICION_APODERADO", label: "Apoderado NUVEX (lugar de expedición)" },
   ];
-  if (templateId && templateId !== "PODER_GENERAL_BANCOS") {
-    need.push({ k: "NUMERO_CREDITO", label: "Número de crédito" });
-  }
+  need.push({ k: "NUMERO_CREDITO", label: "Número de crédito" });
   for (const { k, label } of need) {
     const val = (v[k] ?? "").toString().trim();
     if (!val) missing.push(label);
