@@ -967,11 +967,10 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
     if (plazo > 0 && pendientes > 0) out.cuotasPagadas = String(Math.max(0, plazo - pendientes));
 
     // Seguros: sumar Vida + Incendio + Protección de Pagos (en pesos).
-    // Si el motor entregó un valor agregado pero los desglosados suman > 0 y son mayores,
-    // preferimos el desglose. Esto corrige casos donde "seguros" tomó solo una línea.
+    // Si el extracto tiene los valores individuales de cada seguro, siempre son más precisos
+    // que el valor agregado.
     const segurosDetallados = m("valorSeguroVida") + m("valorSeguroIncendio") + m("valorSeguroTerremoto");
-    const segurosActual = m("seguros");
-    if (segurosDetallados > 0 && (segurosActual === 0 || segurosDetallados > segurosActual * 1.2)) {
+    if (segurosDetallados > 0) {
       out.seguros = String(Math.round(segurosDetallados));
     }
 
