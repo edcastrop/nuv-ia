@@ -9,7 +9,10 @@ import {
 import { parseBancolombiaText } from "@/lib/motorExtractos/bancolombiaParser";
 import { parseBancoBogotaText } from "@/lib/motorExtractos/bancoBogotaParser";
 import { parseDaviviendaLeasingText } from "@/lib/motorExtractos/daviviendaLeasingParser";
-import { parseDaviviendaHipotecarioText } from "@/lib/motorExtractos/daviviendaHipotecarioParser";
+import {
+  extractDaviviendaHipotecarioSegurosMensuales,
+  parseDaviviendaHipotecarioText,
+} from "@/lib/motorExtractos/daviviendaHipotecarioParser";
 import { hasRealCoverageSignals } from "@/lib/coverageDetection";
 
 const InputSchema = z.object({
@@ -315,6 +318,10 @@ REGLAS ESTRICTAS:
   * Los TRES seguros (vida, incendio, terremoto) DEBEN extraerse por separado y cada uno DEBE quedar lleno si aparece en el extracto. Si solo extraes uno o dos, la lectura será rechazada. Verifica visualmente que los tres valores estén presentes antes de responder.
   * Los seguros mensuales se calculan EXCLUSIVAMENTE como valorSeguroVida + valorSeguroIncendio + valorSeguroTerremoto. Nunca incluyas "Valor asegurado Incendio y Terremoto" en esta suma.
   * EJEMPLO REAL Bancolombia (referencia obligatoria): "*Valor seguro vida $ 14,433.00", "*Valor seguro incendio $ 21,654.00", "*Valor seguro terremoto $ 14,435.00" → valorSeguroVida="14433", valorSeguroIncendio="21654", valorSeguroTerremoto="14435". Suma seguros = 50522. Si la tabla "Movimientos Último Periodo" muestra columnas "Seguros Vida / Seguros Incendio / Seguros Terremoto", esos valores deben coincidir con los anteriores.
+- DAVIVIENDA CRÉDITO HIPOTECARIO — seguros (PRIORIDAD CRÍTICA):
+  * seguros SIEMPRE es el valor mensual de "+ Seguros" dentro del bloque "Nuevo Saldo de su crédito" / "Valor en Pesos".
+  * NO sumes "Seguro de Vida" + "Seguro de Incendio y Anexos" de "Valores Aplicados en el Periodo"; ese detalle corresponde a movimientos aplicados del periodo y puede venir acumulado/doble.
+  * Si ves ambos: usa únicamente "+ Seguros" del bloque "Nuevo Saldo de su crédito" y deja valorSeguroVida/valorSeguroIncendio/valorSeguroTerremoto vacíos para no duplicar.
 - DAVIVIENDA LEASING HABITACIONAL — mapeo LITERAL obligatorio:
   * Si aparece "Extracto Contrato Leasing", "Davivienda" y "No. Cánones Pdtes. Pago Total", producto="Extracto Contrato Leasing", tipoCredito="LEASING_HABITACIONAL". moneda="UVR" si Sistema de Amortización o la tabla dice UVR; en caso contrario moneda="PESOS".
   * "Apreciado Cliente" → cliente. "No.Contrato del Leasing" / número junto a "Extracto Contrato Leasing" → numeroCredito.
