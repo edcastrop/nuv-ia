@@ -248,7 +248,7 @@ function extractClienteName(rawText: string): string {
  * en la tabla "Valores Aplicados en el Periodo", que suele ser el ACUMULADO
  * aplicado durante el período y al sumarlo dobla el valor.
  */
-function extractSegurosNuevoSaldo(rawText: string): number {
+export function extractDaviviendaHipotecarioSegurosMensuales(rawText: string): number {
   const compact = compactSpaces(rawText);
   // Busca el bloque "Nuevo Saldo de su crédito|Contrato" y, dentro, "+ Seguros $X".
   const blockMatch = compact.match(
@@ -341,7 +341,7 @@ export function parseDaviviendaHipotecarioText(rawText: string): ExtractoRecord 
   // "Nuevo Saldo de su crédito" (valor mensual real). El detalle vida/incendio
   // aparece TAMBIÉN en la tabla "Valores Aplicados en el Periodo" que suele
   // ser el ACUMULADO del periodo (no la cuota mensual) — usarlo doblaría seguros.
-  const segurosMensualAgregado = extractSegurosNuevoSaldo(rawText);
+  const segurosMensualAgregado = extractDaviviendaHipotecarioSegurosMensuales(rawText);
   const valorSeguroVidaRaw = moneyFromLine(rawText, /Seguro\s+de\s+Vida\b/i);
   const valorSeguroIncendioRaw = moneyFromLine(rawText, /Seguro\s+de\s+Incendio\s+y\s+Anexos/i);
   const valorSeguroProteccionRaw = moneyFromLine(rawText, /Seguro\s+Protecci[oó]n\s+de\s+Pagos/i);
