@@ -1011,7 +1011,12 @@ export function ProyeccionFinancieraView() {
                           next.moneda = "pesos";
                           if (d.pesos.saldoCapital) next.saldoCapital = num(d.pesos.saldoCapital);
                           if (d.pesos.cuotaActual) next.cuotaActual = num(d.pesos.cuotaActual);
-                          if (d.pesos.seguros) next.seguroVida = num(d.pesos.seguros);
+                          if (d.pesos.seguros) {
+                            next.seguroVida = num(d.pesos.seguros);
+                            next.seguroIncendio = 0;
+                            next.seguroTerremoto = 0;
+                            next.otrosSeguros = 0;
+                          }
                           if (d.pesos.tea) next.teaPct = num(d.pesos.tea);
                           if (d.pesos.valorDesembolsado) next.valorDesembolsado = num(d.pesos.valorDesembolsado);
                         }
@@ -1019,7 +1024,12 @@ export function ProyeccionFinancieraView() {
                           next.moneda = "uvr";
                           if (d.uvr.saldoPesos) next.saldoCapital = num(d.uvr.saldoPesos);
                           if (d.uvr.cuotaActualPesos) next.cuotaActual = num(d.uvr.cuotaActualPesos);
-                          if (d.uvr.seguros) next.seguroVida = num(d.uvr.seguros);
+                          if (d.uvr.seguros) {
+                            next.seguroVida = num(d.uvr.seguros);
+                            next.seguroIncendio = 0;
+                            next.seguroTerremoto = 0;
+                            next.otrosSeguros = 0;
+                          }
                           if (d.uvr.teaCobrada) next.teaPct = num(d.uvr.teaCobrada);
                           if (d.uvr.valorDesembolsado) next.valorDesembolsado = num(d.uvr.valorDesembolsado);
                           if (d.uvr.valorUVR) next.uvrValor = num(d.uvr.valorUVR);
