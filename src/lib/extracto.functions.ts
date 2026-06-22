@@ -934,6 +934,26 @@ export const extractStatement = createServerFn({ method: "POST" })
         parsed.banco = "Davivienda";
         parsed.tipoCredito = "CREDITO_HIPOTECARIO";
         parsed.moneda = /\buvr\b/i.test(`${parsed.moneda ?? ""} ${parsed.producto ?? ""} ${parsed.sistemaAmortizacion ?? ""}`) ? "UVR" : "PESOS";
+
+        // Seguros: evitar doble conteo. En Davivienda el desglose Vida/Incendio
+        // aparece en la tabla "Valores Aplicados en el Periodo" (acumulado),
+        // mientras que el valor mensual real es "+ Seguros $X" del bloque
+        // "Nuevo Saldo de su crédito". Si la suma del detalle es >1.4x el agregado,
+        // descartamos el detalle y nos quedamos con el agregado.
+        const sVidaDav = monto("valorSeguroVida");
+        const sIncDav = monto("valorSeguroIncendio");
+        const sProtDav = monto("valorSeguroTerremoto");
+        const sumDetalleDav = sVidaDav + sIncDav + sProtDav;
+        if (segurosNum > 0 && sumDetalleDav > segurosNum * 1.4) {
+          // Mantener segurosNum (valor agregado mensual) y vaciar el detalle inflado.
+          parsed.valorSeguroVida = "";
+          parsed.valorSeguroIncendio = "";
+          parsed.valorSeguroTerremoto = "";
+        } else if (sumDetalleDav > 0 && segurosNum === 0) {
+          segurosNum = sumDetalleDav;
+          parsed.seguros = formatMontoExtracto(sumDetalleDav);
+        }
+
         const tasaCobDav = num("tasaCobertura");
         const cuotaClienteDav = cuotaCliente || monto("valorAPagar") || monto("valorCuotaConSubsidio");
         const cuotaSinSubDav = monto("cuotaSinSubsidio");
@@ -959,6 +979,9 @@ export const extractStatement = createServerFn({ method: "POST" })
         requiereVerificacion = false;
         parsed.cuotaPagadaCliente = cuotaClienteDav > 0 ? formatMontoExtracto(cuotaClienteDav) : parsed.cuotaPagadaCliente;
         parsed.cuotaBaseSimulacion = cuotaBase > 0 ? formatMontoExtracto(cuotaBase) : "";
+        if (cuotaBase > 0 && segurosNum > 0) {
+          parsed.cuotaConInteresSinSeguros = formatMontoExtracto(Math.max(0, cuotaBase - segurosNum));
+        }
       } else if (esFna) {
         // ----- FNA: evitar confundir BASE DE CALCULO 360 (días) con plazo -----
         parsed.banco = "FNA";
