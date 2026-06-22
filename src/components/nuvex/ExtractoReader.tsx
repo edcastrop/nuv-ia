@@ -935,6 +935,12 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
     } else if (cuota > 0 && segurosDav === 0) {
       out.cuotaConInteresSinSeguros = String(Math.round(cuota));
     }
+
+    // Si hay desglose individual de seguros, siempre preferirlo sobre el valor agregado.
+    const segDetalladoHipo = parseMontoExtracto(g("valorSeguroVida")) + parseMontoExtracto(g("valorSeguroIncendio")) + parseMontoExtracto(g("valorSeguroTerremoto"));
+    if (segDetalladoHipo > 0) {
+      out.seguros = String(Math.round(segDetalladoHipo));
+    }
     return out;
   };
 
