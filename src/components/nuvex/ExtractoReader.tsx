@@ -1014,6 +1014,69 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
     return out;
   };
 
+  const recomputeCajaSocial = (data: ExtractoData): ExtractoData => {
+    const g = (k: string) => (typeof data[k] === "string" ? (data[k] as string) : "");
+    const m = (k: string) => parseMontoExtracto(g(k));
+    const banco = g("banco").toLowerCase();
+    if (!/caja\s*social|bcsc/i.test(banco)) return data;
+
+    const out: ExtractoData = { ...data };
+    out.banco = "Banco Caja Social";
+
+    // 1. Detectar moneda
+    const sistema = g("sistemaAmortizacion").toUpperCase();
+    const esUVR = /UVR/.test(sistema) || m("saldoUVR") > 0;
+    out.moneda = esUVR ? "UVR" : "PESOS";
+
+    // 2. Seguros: siempre sumar los 3 individuales
+    const sVida = m("valorSeguroVida");
+    const sInc = m("valorSeguroIncendio");
+    const sTer = m("valorSeguroTerremoto");
+    const segurosSum = sVida + sInc + sTer;
+    if (segurosSum > 0) out.seguros = String(Math.round(segurosSum));
+
+    // 3. Cuota base = Capital + Intereses + Seguros (columna pesos, siempre)
+    const capital = m("abonoCapital");
+    const intereses = m("interesesCorrientes");
+    const cuotaBase = capital + intereses + segurosSum;
+    if (cuotaBase > 0) {
+      out.cuotaMensual = String(Math.round(cuotaBase));
+      out.cuotaBaseSimulacion = String(Math.round(cuotaBase));
+    }
+
+    // 4. Beneficio FRECH (Descuento Intereses DTCO)
+    const dtco = m("descuentoInteresesDTCO");
+    if (dtco > 0) {
+      out.tieneCobertura = "si";
+      out.valorCobertura = String(Math.round(dtco));
+      out.tipoBeneficio = "Beneficio FRECH";
+      const cuotaCliente = m("cuotaPagadaCliente") || m("valorAPagar");
+      if (cuotaCliente > 0) {
+        out.cuotaSinSubsidio = String(Math.round(cuotaCliente + dtco));
+      }
+    } else {
+      out.tieneCobertura = "no";
+      out.valorCobertura = "";
+      out.tipoBeneficio = "";
+      out.cuotaSinSubsidio = "";
+      out.tasaCobertura = "";
+    }
+
+    // 5. cuotaConInteresSinSeguros
+    if (cuotaBase > 0 && segurosSum > 0) {
+      out.cuotaConInteresSinSeguros = String(Math.round(cuotaBase - segurosSum));
+    }
+
+    // 6. Si es pesos: limpiar campos UVR para que el simulador no se confunda
+    if (!esUVR) {
+      out.saldoUVR = "";
+      out.valorUVR = "";
+    }
+
+    out.mapeoBanco = "caja_social";
+    return out;
+  };
+
   const hasBeneficioReal = (data: ExtractoData, producto: string) =>
     hasRealCoverageSignals(data as Record<string, unknown>, producto);
 
