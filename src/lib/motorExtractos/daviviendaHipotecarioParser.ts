@@ -248,13 +248,49 @@ function extractClienteName(rawText: string): string {
  * en la tabla "Valores Aplicados en el Periodo", que suele ser el ACUMULADO
  * aplicado durante el período y al sumarlo dobla el valor.
  */
-function extractSegurosNuevoSaldo(rawText: string): number {
+export function extractDaviviendaHipotecarioSegurosMensuales(rawText: string): number {
   const compact = compactSpaces(rawText);
   // Busca el bloque "Nuevo Saldo de su crédito|Contrato" y, dentro, "+ Seguros $X".
   const blockMatch = compact.match(
-    /Nuevo\s+Saldo\s+de\s+su\s+(?:cr[eé]dito|Contrato[^]*?)[\s\S]{0,1200}?\+\s*Seguros\s*\$?\s*([0-9][0-9.,]*)/i,
+    /Nuevo\s+Saldo\s+de\s+su\s+(?:cr[eé]dito|Contrato)[\s\S]{0,1200}?\+\s*Seguros\s*\$\s*([0-9][0-9.,]*)/i,
   );
   if (blockMatch) return moneyToNumber(blockMatch[1]);
+
+  // En muchos PDF de Davivienda las etiquetas del bloque quedan en una columna
+  // y los valores en otra. Ejemplo real:
+  //   + Seguros
+  //   ...
+  //   Valor en Pesos
+  //   $ 130,565,383.81
+  //   ...
+  //   $ 74,259.00   ← misma posición ordinal que "+ Seguros"
+  // Si no hacemos esta lectura por columnas, se cae al detalle del periodo y
+  // termina sumando seguros acumulados/dobles.
+  const lines = rawText.split(/\r?\n/).map((line) => compactSpaces(line).trim()).filter(Boolean);
+  const start = lines.findIndex((line) => /^Nuevo\s+Saldo\s+de\s+su\s+(?:cr[eé]dito|Contrato)/i.test(line));
+  if (start >= 0) {
+    const window = lines.slice(start + 1, start + 60);
+    const moneyLine = window.find((line) => /^\+\s*Seguros\b/i.test(line) && /\$\s*[0-9]/.test(line));
+    if (moneyLine) return lastMoneyFromLine(moneyLine);
+
+    const valueHeader = window.findIndex((line) => /^Valor\s+en\s+Pesos\b/i.test(line));
+    if (valueHeader > 0) {
+      const labelLines = window.slice(0, valueHeader).filter((line) =>
+        /^(?:[-+]\s*)?(?:Saldo\s+Anterior|Total\s+Aplicado|Intereses\s+Corrientes|Intereses\s+de\s+Mora|Seguros|Valores\s+Prorrogados|Otros\s+Cargos|Saldo\s+a:|Valores\s+del\s+cr[eé]dito)/i.test(line),
+      );
+      const segurosIndex = labelLines.findIndex((line) => /^\+\s*Seguros\b/i.test(line));
+      if (segurosIndex >= 0) {
+        const values = window
+          .slice(valueHeader + 1)
+          .map((line) => line.match(/\$\s*([0-9][0-9.,]*)/)?.[1] ?? "")
+          .filter(Boolean)
+          .map((value) => moneyToNumber(value));
+        const value = values[segurosIndex] ?? 0;
+        if (value > 0) return value;
+      }
+    }
+  }
+
   // Fallback: línea aislada "+ Seguros $X" (algunos layouts pierden el header al re-flow).
   const lineMatch = compact.match(/(?:^|\s)\+\s*Seguros\s*\$\s*([0-9][0-9.,]*)/i);
   return lineMatch ? moneyToNumber(lineMatch[1]) : 0;
@@ -305,7 +341,7 @@ export function parseDaviviendaHipotecarioText(rawText: string): ExtractoRecord 
   // "Nuevo Saldo de su crédito" (valor mensual real). El detalle vida/incendio
   // aparece TAMBIÉN en la tabla "Valores Aplicados en el Periodo" que suele
   // ser el ACUMULADO del periodo (no la cuota mensual) — usarlo doblaría seguros.
-  const segurosMensualAgregado = extractSegurosNuevoSaldo(rawText);
+  const segurosMensualAgregado = extractDaviviendaHipotecarioSegurosMensuales(rawText);
   const valorSeguroVidaRaw = moneyFromLine(rawText, /Seguro\s+de\s+Vida\b/i);
   const valorSeguroIncendioRaw = moneyFromLine(rawText, /Seguro\s+de\s+Incendio\s+y\s+Anexos/i);
   const valorSeguroProteccionRaw = moneyFromLine(rawText, /Seguro\s+Protecci[oó]n\s+de\s+Pagos/i);

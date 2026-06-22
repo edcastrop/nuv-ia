@@ -1007,11 +1007,26 @@ export function ProyeccionFinancieraView() {
                             next.cuotasPendientes = Math.max(0, next.cuotasTotales - next.cuotasPagadas + (esFna ? 1 : 0));
                           }
                         }
+                        const setSegurosDesdeExtracto = (raw?: string) => {
+                          const incoming = num(raw);
+                          if (!(incoming > 0)) return;
+                          const manualActual = totalSegurosMensual(next);
+                          const esDaviviendaHipotecario = /davivienda/i.test(`${next.banco} ${d.cliente?.banco ?? ""}`) &&
+                            !/leasing/i.test(`${next.tipoProducto} ${d.cliente?.tipoProducto ?? ""}`);
+                          const segurosFinales =
+                            esDaviviendaHipotecario && manualActual > 0 && incoming > manualActual * 1.8 && incoming < manualActual * 2.2
+                              ? manualActual
+                              : incoming;
+                          next.seguroVida = segurosFinales;
+                          next.seguroIncendio = 0;
+                          next.seguroTerremoto = 0;
+                          next.otrosSeguros = 0;
+                        };
                         if (d.pesos) {
                           next.moneda = "pesos";
                           if (d.pesos.saldoCapital) next.saldoCapital = num(d.pesos.saldoCapital);
                           if (d.pesos.cuotaActual) next.cuotaActual = num(d.pesos.cuotaActual);
-                          if (d.pesos.seguros) next.seguroVida = num(d.pesos.seguros);
+                          setSegurosDesdeExtracto(d.pesos.seguros);
                           if (d.pesos.tea) next.teaPct = num(d.pesos.tea);
                           if (d.pesos.valorDesembolsado) next.valorDesembolsado = num(d.pesos.valorDesembolsado);
                         }
@@ -1019,7 +1034,7 @@ export function ProyeccionFinancieraView() {
                           next.moneda = "uvr";
                           if (d.uvr.saldoPesos) next.saldoCapital = num(d.uvr.saldoPesos);
                           if (d.uvr.cuotaActualPesos) next.cuotaActual = num(d.uvr.cuotaActualPesos);
-                          if (d.uvr.seguros) next.seguroVida = num(d.uvr.seguros);
+                          setSegurosDesdeExtracto(d.uvr.seguros);
                           if (d.uvr.teaCobrada) next.teaPct = num(d.uvr.teaCobrada);
                           if (d.uvr.valorDesembolsado) next.valorDesembolsado = num(d.uvr.valorDesembolsado);
                           if (d.uvr.valorUVR) next.uvrValor = num(d.uvr.valorUVR);

@@ -9,7 +9,10 @@ import {
 import { parseBancolombiaText } from "@/lib/motorExtractos/bancolombiaParser";
 import { parseBancoBogotaText } from "@/lib/motorExtractos/bancoBogotaParser";
 import { parseDaviviendaLeasingText } from "@/lib/motorExtractos/daviviendaLeasingParser";
-import { parseDaviviendaHipotecarioText } from "@/lib/motorExtractos/daviviendaHipotecarioParser";
+import {
+  extractDaviviendaHipotecarioSegurosMensuales,
+  parseDaviviendaHipotecarioText,
+} from "@/lib/motorExtractos/daviviendaHipotecarioParser";
 import { hasRealCoverageSignals } from "@/lib/coverageDetection";
 
 const InputSchema = z.object({
@@ -315,6 +318,10 @@ REGLAS ESTRICTAS:
   * Los TRES seguros (vida, incendio, terremoto) DEBEN extraerse por separado y cada uno DEBE quedar lleno si aparece en el extracto. Si solo extraes uno o dos, la lectura será rechazada. Verifica visualmente que los tres valores estén presentes antes de responder.
   * Los seguros mensuales se calculan EXCLUSIVAMENTE como valorSeguroVida + valorSeguroIncendio + valorSeguroTerremoto. Nunca incluyas "Valor asegurado Incendio y Terremoto" en esta suma.
   * EJEMPLO REAL Bancolombia (referencia obligatoria): "*Valor seguro vida $ 14,433.00", "*Valor seguro incendio $ 21,654.00", "*Valor seguro terremoto $ 14,435.00" → valorSeguroVida="14433", valorSeguroIncendio="21654", valorSeguroTerremoto="14435". Suma seguros = 50522. Si la tabla "Movimientos Último Periodo" muestra columnas "Seguros Vida / Seguros Incendio / Seguros Terremoto", esos valores deben coincidir con los anteriores.
+- DAVIVIENDA CRÉDITO HIPOTECARIO — seguros (PRIORIDAD CRÍTICA):
+  * seguros SIEMPRE es el valor mensual de "+ Seguros" dentro del bloque "Nuevo Saldo de su crédito" / "Valor en Pesos".
+  * NO sumes "Seguro de Vida" + "Seguro de Incendio y Anexos" de "Valores Aplicados en el Periodo"; ese detalle corresponde a movimientos aplicados del periodo y puede venir acumulado/doble.
+  * Si ves ambos: usa únicamente "+ Seguros" del bloque "Nuevo Saldo de su crédito" y deja valorSeguroVida/valorSeguroIncendio/valorSeguroTerremoto vacíos para no duplicar.
 - DAVIVIENDA LEASING HABITACIONAL — mapeo LITERAL obligatorio:
   * Si aparece "Extracto Contrato Leasing", "Davivienda" y "No. Cánones Pdtes. Pago Total", producto="Extracto Contrato Leasing", tipoCredito="LEASING_HABITACIONAL". moneda="UVR" si Sistema de Amortización o la tabla dice UVR; en caso contrario moneda="PESOS".
   * "Apreciado Cliente" → cliente. "No.Contrato del Leasing" / número junto a "Extracto Contrato Leasing" → numeroCredito.
@@ -935,23 +942,35 @@ export const extractStatement = createServerFn({ method: "POST" })
         parsed.tipoCredito = "CREDITO_HIPOTECARIO";
         parsed.moneda = /\buvr\b/i.test(`${parsed.moneda ?? ""} ${parsed.producto ?? ""} ${parsed.sistemaAmortizacion ?? ""}`) ? "UVR" : "PESOS";
 
-        // Seguros: evitar doble conteo. En Davivienda el desglose Vida/Incendio
-        // aparece en la tabla "Valores Aplicados en el Periodo" (acumulado),
-        // mientras que el valor mensual real es "+ Seguros $X" del bloque
-        // "Nuevo Saldo de su crédito". Si la suma del detalle es >1.4x el agregado,
-        // descartamos el detalle y nos quedamos con el agregado.
+        // Seguros: evitar doble conteo. En Davivienda Hipotecario el único valor
+        // mensual válido es "+ Seguros" del bloque "Nuevo Saldo de su crédito".
+        // El desglose Vida/Incendio de "Valores Aplicados en el Periodo" es un
+        // movimiento aplicado/acumulado y puede venir exactamente doble.
+        const segurosMensualesDav = data.rawText
+          ? extractDaviviendaHipotecarioSegurosMensuales(data.rawText)
+          : 0;
         const sVidaDav = monto("valorSeguroVida");
         const sIncDav = monto("valorSeguroIncendio");
         const sProtDav = monto("valorSeguroTerremoto");
         const sumDetalleDav = sVidaDav + sIncDav + sProtDav;
-        if (segurosNum > 0 && sumDetalleDav > segurosNum * 1.4) {
-          // Mantener segurosNum (valor agregado mensual) y vaciar el detalle inflado.
+        let requiereRevisionSegurosDav = false;
+        if (segurosMensualesDav > 0) {
+          segurosNum = segurosMensualesDav;
+          parsed.seguros = formatMontoExtracto(segurosMensualesDav);
           parsed.valorSeguroVida = "";
           parsed.valorSeguroIncendio = "";
           parsed.valorSeguroTerremoto = "";
+        } else if (segurosNum > 0 && sumDetalleDav > 0 && Math.abs(segurosNum - sumDetalleDav) <= 1) {
+          const mitad = Math.round(segurosNum / 2);
+          segurosNum = mitad;
+          parsed.seguros = formatMontoExtracto(mitad);
+          parsed.valorSeguroVida = "";
+          parsed.valorSeguroIncendio = "";
+          parsed.valorSeguroTerremoto = "";
+          _advertenciasNorm.push("Davivienda: se corrigió seguro mensual que venía doble desde el detalle del periodo.");
         } else if (sumDetalleDav > 0 && segurosNum === 0) {
-          segurosNum = sumDetalleDav;
-          parsed.seguros = formatMontoExtracto(sumDetalleDav);
+          requiereRevisionSegurosDav = true;
+          errores.push("Davivienda: no se encontró '+ Seguros' en Nuevo Saldo; revise seguros manualmente para evitar doble conteo.");
         }
 
         const tasaCobDav = num("tasaCobertura");
@@ -976,7 +995,7 @@ export const extractStatement = createServerFn({ method: "POST" })
         }
         parsed.valorDesembolsado = "";
         cuotaBase = cuotaSinSubDav || cuotaMensual;
-        requiereVerificacion = false;
+        requiereVerificacion = requiereRevisionSegurosDav;
         parsed.cuotaPagadaCliente = cuotaClienteDav > 0 ? formatMontoExtracto(cuotaClienteDav) : parsed.cuotaPagadaCliente;
         parsed.cuotaBaseSimulacion = cuotaBase > 0 ? formatMontoExtracto(cuotaBase) : "";
         if (cuotaBase > 0 && segurosNum > 0) {
