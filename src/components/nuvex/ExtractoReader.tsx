@@ -777,7 +777,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
     const g = (k: string) => (typeof data[k] === "string" ? (data[k] as string) : "");
     const m = (k: string) => parseMontoExtracto(g(k));
     const banco = g("banco").toLowerCase();
-    if (!/bancolombia/.test(banco)) return data;
+    if (!/bancolombia/i.test(banco) || /caja\s*social|davivienda|bogot[aá]|popular|occidente|bbva|av\s*villas|fna|colpatria|davibank/i.test(banco)) return data;
 
     const sVida = m("valorSeguroVida");
     const sInc = m("valorSeguroIncendio");
