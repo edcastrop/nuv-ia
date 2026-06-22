@@ -1273,6 +1273,8 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
   };
 
   // Campos a mostrar según modo
+  const bancoMapeado = (parsed?.mapeoBanco as string) ?? "";
+  const esBancolombia = /bancolombia/i.test(bancoMapeado);
   const fieldsBase: { key: string; label: string }[] = [
     { key: "banco", label: "Banco" },
     { key: "cliente", label: "Nombre del cliente" },
