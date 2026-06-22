@@ -164,11 +164,64 @@ sistemaAmortizacion ← texto literal junto a "Sistema de Amortización"
     banco: "Banco Caja Social",
     productos: ["CREDITO_HIPOTECARIO"],
     matchAny: [/caja\s+social/i, /bcsc/i],
-    hints: `BANCO CAJA SOCIAL:
-- Secciones típicas: "Detalle Cuota a Pagar", "Información General del Crédito", "Saldo Capital".
-- "Cuota Total" → cuotaActual. "Capital + Intereses + Seguros" se desglosa dentro.
-- Plazo bajo "Plazo Original (meses)" o "Plazo Aprobado".
-- Si dice "UVR" en cualquier parte de "Información General", moneda=UVR.`,
+    hints: `BANCO CAJA SOCIAL — 4 modalidades posibles:
+
+DETECCIÓN DE MONEDA (CRÍTICO):
+- Lee "Sistema de Amortización" en "Información General del Crédito".
+- Si contiene "UVR" → moneda="UVR". Ej: "13 CUOTA FIJA FRECH EN UVR".
+- Si contiene "PESOS" o NO contiene "UVR" → moneda="PESOS". Ej: "10 CUOTA FIJA EN PESOS".
+- CONFIRMACIÓN: si columna "Valor en UVR" tiene valores reales (> 0) → UVR. Si todos son 0.0000 → PESOS.
+
+DETECCIÓN DE FRECH (CRÍTICO):
+- Si "Descuento Intereses DTCO" en "Detalle Cuota a Pagar" tiene valor en pesos > 0 → FRECH activo.
+- Si "Tasa de Interés con Beneficio" > 0.00% EA → FRECH activo.
+- Si ambos son 0 o vacíos → sin FRECH.
+
+CAMPOS A EXTRAER (sección "Detalle Cuota a Pagar", columna "Valor en Pesos"):
+- "Abono a Capital" → abonoCapital
+- "Intereses Corrientes" → interesesCorrientes
+- "Seguro de Vida" → valorSeguroVida
+- "Seguro de Incendio" → valorSeguroIncendio
+- "Seguro de Terremoto" → valorSeguroTerremoto
+- "Descuento Intereses DTCO" → descuentoInteresesDTCO (0 si vacío)
+- "Comisión FNG" → ignorar
+- "Seguro de Desempleo e ITT" → ignorar
+
+CAMPOS GENERALES:
+- "Valor a Pagar: PESOS" en "Detalle de Pago" → cuotaPagadaCliente
+- "Saldo Capital Antes de Este Pago" columna Pesos → saldoCapital
+- "Saldo Capital Antes de Este Pago" columna UVR → saldoUVR (solo si moneda=UVR)
+- "Plazo Total" en Meses → plazoInicial
+- "Cuotas Pendientes" → cuotasPendientes
+- "Cuotas Facturadas" → cuotasPagadas
+- "Tasa de Interés Pactada" → teaPactada (solo el número, ej: "15.30" de "15.30 %EA")
+- "Tasa de Interés Cobrada" → tea y teaCobrada
+- "Tasa de Interés con Beneficio" → tasaCobertura (solo si > 0)
+- Número de crédito del encabezado → numeroCredito
+- Nombre del titular del encabezado → cliente
+
+CASO PESOS SIN FRECH (ej: "10 CUOTA FIJA EN PESOS"):
+- cuotaMensual = abonoCapital + interesesCorrientes + seguros (suma de los 3 seguros)
+- saldoUVR = "" (no aplica)
+- tieneCobertura = "no"
+
+CASO PESOS CON FRECH:
+- cuotaMensual = abonoCapital + interesesCorrientes + seguros
+- cuotaPagadaCliente = "Valor a Pagar" (ya incluye el descuento FRECH)
+- tieneCobertura = "si", valorCobertura = descuentoInteresesDTCO
+- tipoBeneficio = "Beneficio FRECH"
+
+CASO UVR SIN FRECH (ej: "CUOTA FIJA EN UVR"):
+- cuotaMensual en pesos = abonoCapital + interesesCorrientes + seguros (columna pesos)
+- saldoUVR = valor columna UVR del saldo capital
+- tieneCobertura = "no"
+
+CASO UVR CON FRECH (ej: "13 CUOTA FIJA FRECH EN UVR"):
+- cuotaMensual en pesos = abonoCapital + interesesCorrientes + seguros (columna pesos)
+- cuotaPagadaCliente = "Valor a Pagar" (con descuento FRECH aplicado)
+- tieneCobertura = "si", valorCobertura = descuentoInteresesDTCO
+- tipoBeneficio = "Beneficio FRECH"
+- saldoUVR = valor columna UVR del saldo capital`,
   },
   {
     id: "banco_bogota_hipotecario",
