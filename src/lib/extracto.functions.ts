@@ -942,23 +942,34 @@ export const extractStatement = createServerFn({ method: "POST" })
         parsed.tipoCredito = "CREDITO_HIPOTECARIO";
         parsed.moneda = /\buvr\b/i.test(`${parsed.moneda ?? ""} ${parsed.producto ?? ""} ${parsed.sistemaAmortizacion ?? ""}`) ? "UVR" : "PESOS";
 
-        // Seguros: evitar doble conteo. En Davivienda el desglose Vida/Incendio
-        // aparece en la tabla "Valores Aplicados en el Periodo" (acumulado),
-        // mientras que el valor mensual real es "+ Seguros $X" del bloque
-        // "Nuevo Saldo de su crédito". Si la suma del detalle es >1.4x el agregado,
-        // descartamos el detalle y nos quedamos con el agregado.
+        // Seguros: evitar doble conteo. En Davivienda Hipotecario el único valor
+        // mensual válido es "+ Seguros" del bloque "Nuevo Saldo de su crédito".
+        // El desglose Vida/Incendio de "Valores Aplicados en el Periodo" es un
+        // movimiento aplicado/acumulado y puede venir exactamente doble.
+        const segurosMensualesDav = data.rawText
+          ? extractDaviviendaHipotecarioSegurosMensuales(data.rawText)
+          : 0;
         const sVidaDav = monto("valorSeguroVida");
         const sIncDav = monto("valorSeguroIncendio");
         const sProtDav = monto("valorSeguroTerremoto");
         const sumDetalleDav = sVidaDav + sIncDav + sProtDav;
-        if (segurosNum > 0 && sumDetalleDav > segurosNum * 1.4) {
-          // Mantener segurosNum (valor agregado mensual) y vaciar el detalle inflado.
+        if (segurosMensualesDav > 0) {
+          segurosNum = segurosMensualesDav;
+          parsed.seguros = formatMontoExtracto(segurosMensualesDav);
           parsed.valorSeguroVida = "";
           parsed.valorSeguroIncendio = "";
           parsed.valorSeguroTerremoto = "";
+        } else if (segurosNum > 0 && sumDetalleDav > 0 && Math.abs(segurosNum - sumDetalleDav) <= 1) {
+          const mitad = Math.round(segurosNum / 2);
+          segurosNum = mitad;
+          parsed.seguros = formatMontoExtracto(mitad);
+          parsed.valorSeguroVida = "";
+          parsed.valorSeguroIncendio = "";
+          parsed.valorSeguroTerremoto = "";
+          _advertenciasNorm.push("Davivienda: se corrigió seguro mensual que venía doble desde el detalle del periodo.");
         } else if (sumDetalleDav > 0 && segurosNum === 0) {
-          segurosNum = sumDetalleDav;
-          parsed.seguros = formatMontoExtracto(sumDetalleDav);
+          requiereVerificacion = true;
+          errores.push("Davivienda: no se encontró '+ Seguros' en Nuevo Saldo; revise seguros manualmente para evitar doble conteo.");
         }
 
         const tasaCobDav = num("tasaCobertura");
