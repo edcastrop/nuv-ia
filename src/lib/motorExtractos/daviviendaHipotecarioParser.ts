@@ -282,11 +282,23 @@ export function parseDaviviendaHipotecarioText(rawText: string): ExtractoRecord 
   const teaPactada =
     firstMatch(text, /Tasa\s+Inter[eé]s\s+Cte\.?\s*Pactada\s+([0-9]+(?:[.,][0-9]+)?)\s+Efectivo/i).replace(",", ".");
 
-  // Seguros
-  const valorSeguroVida = moneyFromLine(rawText, /Seguro\s+de\s+Vida\b/i);
-  const valorSeguroIncendio = moneyFromLine(rawText, /Seguro\s+de\s+Incendio\s+y\s+Anexos/i);
-  const valorSeguroProteccion = moneyFromLine(rawText, /Seguro\s+Protecci[oó]n\s+de\s+Pagos/i);
-  const seguros = valorSeguroVida + valorSeguroIncendio + valorSeguroProteccion;
+  // Seguros — prioridad al agregado mensual "+ Seguros $X" del bloque
+  // "Nuevo Saldo de su crédito" (valor mensual real). El detalle vida/incendio
+  // aparece TAMBIÉN en la tabla "Valores Aplicados en el Periodo" que suele
+  // ser el ACUMULADO del periodo (no la cuota mensual) — usarlo doblaría seguros.
+  const segurosMensualAgregado = extractSegurosNuevoSaldo(rawText);
+  const valorSeguroVidaRaw = moneyFromLine(rawText, /Seguro\s+de\s+Vida\b/i);
+  const valorSeguroIncendioRaw = moneyFromLine(rawText, /Seguro\s+de\s+Incendio\s+y\s+Anexos/i);
+  const valorSeguroProteccionRaw = moneyFromLine(rawText, /Seguro\s+Protecci[oó]n\s+de\s+Pagos/i);
+  const segurosDetalle = valorSeguroVidaRaw + valorSeguroIncendioRaw + valorSeguroProteccionRaw;
+  // Si el agregado mensual existe y el "detalle" lo duplica (>1.4x), usar agregado.
+  const usarAgregado =
+    segurosMensualAgregado > 0 &&
+    (segurosDetalle === 0 || segurosDetalle > segurosMensualAgregado * 1.4);
+  const seguros = usarAgregado ? segurosMensualAgregado : segurosDetalle || segurosMensualAgregado;
+  const valorSeguroVida = usarAgregado ? 0 : valorSeguroVidaRaw;
+  const valorSeguroIncendio = usarAgregado ? 0 : valorSeguroIncendioRaw;
+  const valorSeguroProteccion = usarAgregado ? 0 : valorSeguroProteccionRaw;
 
   // Intereses corrientes / abonos a capital del periodo
   const interesCuota = moneyFromLine(rawText, /Intereses\s+Corrientes\b/i);
