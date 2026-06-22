@@ -953,6 +953,7 @@ export const extractStatement = createServerFn({ method: "POST" })
         const sIncDav = monto("valorSeguroIncendio");
         const sProtDav = monto("valorSeguroTerremoto");
         const sumDetalleDav = sVidaDav + sIncDav + sProtDav;
+        let requiereRevisionSegurosDav = false;
         if (segurosMensualesDav > 0) {
           segurosNum = segurosMensualesDav;
           parsed.seguros = formatMontoExtracto(segurosMensualesDav);
@@ -968,7 +969,7 @@ export const extractStatement = createServerFn({ method: "POST" })
           parsed.valorSeguroTerremoto = "";
           _advertenciasNorm.push("Davivienda: se corrigió seguro mensual que venía doble desde el detalle del periodo.");
         } else if (sumDetalleDav > 0 && segurosNum === 0) {
-          requiereVerificacion = true;
+          requiereRevisionSegurosDav = true;
           errores.push("Davivienda: no se encontró '+ Seguros' en Nuevo Saldo; revise seguros manualmente para evitar doble conteo.");
         }
 
@@ -994,7 +995,7 @@ export const extractStatement = createServerFn({ method: "POST" })
         }
         parsed.valorDesembolsado = "";
         cuotaBase = cuotaSinSubDav || cuotaMensual;
-        requiereVerificacion = false;
+        requiereVerificacion = requiereRevisionSegurosDav;
         parsed.cuotaPagadaCliente = cuotaClienteDav > 0 ? formatMontoExtracto(cuotaClienteDav) : parsed.cuotaPagadaCliente;
         parsed.cuotaBaseSimulacion = cuotaBase > 0 ? formatMontoExtracto(cuotaBase) : "";
         if (cuotaBase > 0 && segurosNum > 0) {
