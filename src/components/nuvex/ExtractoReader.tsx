@@ -1303,23 +1303,21 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
     { key: "valorSeguroVida", label: "Seguro vida (mensual)" },
     { key: "valorSeguroIncendio", label: "Seguro incendio (mensual)" },
     { key: "valorSeguroTerremoto", label: "Seguro terremoto (mensual)" },
-    { key: "valorAPagar", label: "Bancolombia · Valor a Pagar" },
-    {
-      key: "valorCuotaSinSubsidioGobierno",
-      label: "Bancolombia · Valor cuota sin subsidio Gobierno",
-    },
-    { key: "valorSubsidioGobierno", label: "Bancolombia · Valor subsidio Gobierno" },
-    { key: "valorCuotaConSubsidio", label: "Bancolombia · Valor cuota con subsidio" },
     { key: "fechaExtracto", label: "Fecha del extracto" },
   ];
-  const fields =
-    modo === "uvr"
+  const fields = [
+    ...(modo === "uvr"
+      ? [...fieldsBase, { key: "saldoUVR", label: "Saldo en UVR" }, { key: "valorUVR", label: "Valor UVR del día" }]
+      : fieldsBase),
+    ...(esBancolombia
       ? [
-          ...fieldsBase,
-          { key: "saldoUVR", label: "Saldo en UVR" },
-          { key: "valorUVR", label: "Valor UVR del día" },
+          { key: "valorAPagar", label: "Bancolombia · Valor a Pagar" },
+          { key: "valorCuotaSinSubsidioGobierno", label: "Bancolombia · Valor cuota sin subsidio Gobierno" },
+          { key: "valorSubsidioGobierno", label: "Bancolombia · Valor subsidio Gobierno" },
+          { key: "valorCuotaConSubsidio", label: "Bancolombia · Valor cuota con subsidio" },
         ]
-      : fieldsBase;
+      : []),
+  ];
 
   const teaCobrada = (parsed?.teaCobrada as string) ?? "";
   const teaPactada = (parsed?.teaPactada as string) ?? "";
