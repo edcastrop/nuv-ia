@@ -928,18 +928,19 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
     out.alertaCuotaBase = "";
     out.erroresValidacion = "";
     out.mapeoBanco = "davivienda_hipotecario";
-    // Respeta el valor manual de seguros y recalcula cuota con interés sin seguros.
-    const segurosDav = parseMontoExtracto(g("seguros"));
-    if (cuota > 0 && segurosDav > 0) {
-      out.cuotaConInteresSinSeguros = String(Math.max(0, Math.round(cuota - segurosDav)));
-    } else if (cuota > 0 && segurosDav === 0) {
-      out.cuotaConInteresSinSeguros = String(Math.round(cuota));
-    }
-
     // Si hay desglose individual de seguros, siempre preferirlo sobre el valor agregado.
     const segDetalladoHipo = parseMontoExtracto(g("valorSeguroVida")) + parseMontoExtracto(g("valorSeguroIncendio")) + parseMontoExtracto(g("valorSeguroTerremoto"));
     if (segDetalladoHipo > 0) {
       out.seguros = String(Math.round(segDetalladoHipo));
+    }
+
+    const segurosDav = parseMontoExtracto(g("seguros"));
+    const segurosParaCalculo = segDetalladoHipo > 0 ? segDetalladoHipo : segurosDav;
+    const cuota2 = parseMontoExtracto(out.cuotaMensual as string);
+    if (cuota2 > 0 && segurosParaCalculo > 0) {
+      out.cuotaConInteresSinSeguros = String(Math.round(cuota2 - segurosParaCalculo));
+    } else if (cuota2 > 0 && segurosParaCalculo === 0) {
+      out.cuotaConInteresSinSeguros = String(Math.round(cuota2));
     }
     return out;
   };
