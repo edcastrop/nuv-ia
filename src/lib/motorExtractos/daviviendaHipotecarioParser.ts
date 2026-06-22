@@ -241,6 +241,25 @@ function extractClienteName(rawText: string): string {
   return "";
 }
 
+/**
+ * Extrae el valor mensual "+ Seguros $X" del bloque "Nuevo Saldo de su crédito"
+ * (o "Nuevo Saldo de su Contrato de Leasing"). Este es el seguro MENSUAL real
+ * de la próxima cuota — no confundir con el desglose vida/incendio que aparece
+ * en la tabla "Valores Aplicados en el Periodo", que suele ser el ACUMULADO
+ * aplicado durante el período y al sumarlo dobla el valor.
+ */
+function extractSegurosNuevoSaldo(rawText: string): number {
+  const compact = compactSpaces(rawText);
+  // Busca el bloque "Nuevo Saldo de su crédito|Contrato" y, dentro, "+ Seguros $X".
+  const blockMatch = compact.match(
+    /Nuevo\s+Saldo\s+de\s+su\s+(?:cr[eé]dito|Contrato[^]*?)[\s\S]{0,1200}?\+\s*Seguros\s*\$?\s*([0-9][0-9.,]*)/i,
+  );
+  if (blockMatch) return moneyToNumber(blockMatch[1]);
+  // Fallback: línea aislada "+ Seguros $X" (algunos layouts pierden el header al re-flow).
+  const lineMatch = compact.match(/(?:^|\s)\+\s*Seguros\s*\$\s*([0-9][0-9.,]*)/i);
+  return lineMatch ? moneyToNumber(lineMatch[1]) : 0;
+}
+
 
 /**
  * Deterministic parser for Davivienda HIPOTECARIO statements
