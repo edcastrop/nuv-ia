@@ -251,9 +251,7 @@ export function validatePoderVariables(v: Partial<PoderVariables>, templateId?: 
     { k: "CEDULA_APODERADO", label: "Apoderado NUVEX (cédula)" },
     { k: "LUGAR_EXPEDICION_APODERADO", label: "Apoderado NUVEX (lugar de expedición)" },
   ];
-  if (templateId && templateId !== "PODER_GENERAL_BANCOS") {
-    need.push({ k: "NUMERO_CREDITO", label: "Número de crédito" });
-  }
+  need.push({ k: "NUMERO_CREDITO", label: "Número de crédito" });
   for (const { k, label } of need) {
     const val = (v[k] ?? "").toString().trim();
     if (!val) missing.push(label);
