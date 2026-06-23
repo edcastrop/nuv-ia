@@ -521,14 +521,9 @@ export function UVRSimulator({
             } else {
               setCobertura(defaultCobertura);
             }
-            const parseOcr = (v?: string) => {
-              if (!v || !v.trim()) return undefined;
-              const n = parseCurrency(v);
-              return Number.isFinite(n) ? n : undefined;
-            };
-            setInteresMensualExtracto(parseOcr(p.extracto?.interesMensual));
-            setCapitalMensualExtracto(parseOcr(p.extracto?.capitalMensual));
-            setBeneficioFrechMensualExtracto(parseOcr(p.extracto?.beneficioFrechMensual));
+            setInteresMensualExtracto(parseOcrMoney(p.extracto?.interesMensual));
+            setCapitalMensualExtracto(parseOcrMoney(p.extracto?.capitalMensual));
+            setBeneficioFrechMensualExtracto(parseOcrMoney(p.extracto?.beneficioFrechMensual));
             // Auto-QA condicional: sólo cuando el simulador fue abierto desde un
             // Expediente Maestro (init?.id). En modo standalone no se ejecuta.
             if (init?.id && p.raw) {
@@ -893,6 +888,9 @@ export function UVRSimulator({
                         segurosMensuales: cobertura.segurosMensuales || seguros,
                         tieneBeneficio: cobertura.activo ? "si" : "no",
                         coberturaFresh: coberturaFresh as unknown as string,
+                        interesMensualExtracto: interesMensualExtracto === undefined ? "" : String(Math.round(interesMensualExtracto)),
+                        capitalMensualExtracto: capitalMensualExtracto === undefined ? "" : String(Math.round(capitalMensualExtracto)),
+                        beneficioFrechMensualExtracto: beneficioFrechMensualExtracto === undefined ? "" : String(Math.round(beneficioFrechMensualExtracto)),
                         archivoPath: extractoArchivoPath,
                       },
                       propuesta: {
