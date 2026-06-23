@@ -265,9 +265,11 @@ export function PrintDocument(props: Props) {
               dineroPagado={yaPagado}
               interesesPagados={interesesPagados}
               capitalPagado={capitalPagado}
+              segurosPagados={Math.max(0, cuotasPagadas * segurosMensuales)}
               totalPendiente={faltaPagarSin}
               costoTotal={costoTotalSin}
-              veces={vecesSin}
+              vecesPagado={desembolsoRef > 0 ? yaPagado / desembolsoRef : 0}
+              vecesPendiente={desembolsoRef > 0 ? faltaPagarSin / desembolsoRef : vecesSin}
               tieneCobertura={tieneCobertura}
               tipoBeneficio={tipoBeneficio}
               valorBeneficioMensual={valorBeneficioMensual}
