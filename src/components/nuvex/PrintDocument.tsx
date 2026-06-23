@@ -268,6 +268,11 @@ export function PrintDocument(props: Props) {
               totalPendiente={faltaPagarSin}
               costoTotal={costoTotalSin}
               veces={vecesSin}
+              tieneCobertura={tieneCobertura}
+              tipoBeneficio={tipoBeneficio}
+              valorBeneficioMensual={valorBeneficioMensual}
+              cuotaConCobertura={cuotaConCobertura}
+              cuotasPendientesConCobertura={cuotasPendientesConCobertura}
             />
             <RecommendedCard
               nuevaCuota={nuevaCuota}
