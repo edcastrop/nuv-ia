@@ -17,6 +17,7 @@ import {
   calculatePesosManualByCuotas,
   calculatePesosProjection,
   pickBestProposal,
+  pmt,
   type PesosInput,
 } from "../../lib/finance";
 
@@ -900,6 +901,43 @@ export function PesosSimulator({
             {recomendada &&
               (() => {
                 const d = computeDiscount(recomendada.honorarios, discount);
+
+                // ── Cálculo de capital e intereses pagados a la fecha ──────────────
+                const tasaMensual = input.tea > 0
+                  ? Math.pow(1 + input.tea / 100, 1 / 12) - 1
+                  : 0;
+
+                let capitalPagadoCalc = 0;
+                let interesesPagadosCalc = 0;
+
+                if (tasaMensual > 0 && valorDesembolsadoNum > 0 && cuotasPagadas > 0 && plazoInicial > 0) {
+                  let saldoPendiente = valorDesembolsadoNum;
+                  const cuotaFija = pmt(tasaMensual, plazoInicial, valorDesembolsadoNum);
+                  for (let i = 0; i < cuotasPagadas && saldoPendiente > 0; i++) {
+                    const interesCuota = saldoPendiente * tasaMensual;
+                    const capitalCuota = Math.max(0, cuotaFija - interesCuota);
+                    interesesPagadosCalc += interesCuota;
+                    capitalPagadoCalc += capitalCuota;
+                    saldoPendiente = Math.max(0, saldoPendiente - capitalCuota);
+                  }
+                } else if (cuotasPagadas > 0 && input.saldoCapital > 0 && valorDesembolsadoNum > input.saldoCapital) {
+                  capitalPagadoCalc = valorDesembolsadoNum - input.saldoCapital;
+                  interesesPagadosCalc = Math.max(0, dineroPagadoFecha - capitalPagadoCalc);
+                }
+
+                // ── Cuotas pendientes con cobertura FRECH (máx 84 cuotas desde inicio) ──
+                const CUOTAS_MAX_FRECH = 84;
+                const tieneCobertura = cobertura?.activo === true || !!cobertura?.tipoBeneficio;
+                const cuotasPendientesConCobertura = tieneCobertura
+                  ? Math.max(0, CUOTAS_MAX_FRECH - cuotasPagadas)
+                  : 0;
+
+                // ── Interés y capital de la cuota mensual actual ───────────────────
+                const interesMensualActual = tasaMensual > 0 && input.saldoCapital > 0
+                  ? input.saldoCapital * tasaMensual
+                  : 0;
+                const capitalMensualActual = Math.max(0, cuotaSinSegurosNum - interesMensualActual);
+
                 return (
                   <PrintDocument
                     mode="pesos"
@@ -947,9 +985,16 @@ export function PesosSimulator({
                       cuotaSinSeguros: cuotaSinSegurosNum,
                       saldoCapital: input.saldoCapital,
                       tasaMensualPct: calc ? calc.tasaMensual * 100 : 0,
-                      interesMensual: interesMensualExtracto,
-                      capitalMensual: capitalMensualExtracto,
+                      capitalPagado: capitalPagadoCalc,
+                      interesesPagados: interesesPagadosCalc,
+                      interesMensual: interesMensualActual,
+                      capitalMensual: capitalMensualActual,
                       beneficioFrechMensual: beneficioFrechMensualExtracto,
+                      tieneCobertura,
+                      tipoBeneficio: cobertura?.tipoBeneficio || "",
+                      valorBeneficioMensual: cobertura?.valorCobertura ? Number(parseCurrency(cobertura.valorCobertura)) : 0,
+                      cuotaConCobertura: cobertura?.cuotaPagadaCliente ? Number(parseCurrency(cobertura.cuotaPagadaCliente)) : 0,
+                      cuotasPendientesConCobertura,
                     }}
                   />
                 );
