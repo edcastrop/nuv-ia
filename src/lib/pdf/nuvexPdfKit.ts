@@ -685,8 +685,14 @@ export function writeRichText(
   const lineH = size * 1.45;
   const lines = pdf.splitTextToSize(text, contentW) as string[];
 
-  const tokens = (boldTokens || []).filter((t) => t && t.length > 0)
-    .sort((a, b) => b.length - a.length);
+  // Partimos cada token por espacios — si un token multi-palabra ("BANCO DE BOGOTÁ")
+  // se corta entre líneas por el wrap, igual queremos que cada palabra siga en negrilla.
+  const tokens = Array.from(new Set(
+    (boldTokens || [])
+      .flatMap((t) => (t || "").split(/\s+/))
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0),
+  )).sort((a, b) => b.length - a.length);
 
   const buildBoldMask = (line: string): boolean[] => {
     const mask = new Array(line.length).fill(false);
