@@ -18,6 +18,7 @@ import {
   calculateUVRManualByCuotas,
   calculateUVRProjection,
   pickBestProposal,
+  pmt,
   type UVRInput,
 } from "../../lib/finance";
 
