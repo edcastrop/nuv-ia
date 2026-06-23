@@ -455,20 +455,33 @@ function CurrentStateCard(props: {
   beneficioFrechMensual: number | undefined;
   dineroPagado: number;
   interesesPagados: number; capitalPagado: number; totalPendiente: number; costoTotal: number; veces: number;
+  tieneCobertura: boolean; tipoBeneficio: string;
+  valorBeneficioMensual: number; cuotaConCobertura: number;
+  cuotasPendientesConCobertura: number;
 }) {
-  // Si OCR no leyó el dato (undefined), ocultamos la fila para no contaminar el PDF
-  // con placeholders ni con $0 falsos. Si el extracto informa 0 explícitamente, sí mostramos $0.
   const tieneInteres = typeof props.interesMensual === "number";
   const tieneCapital = typeof props.capitalMensual === "number";
-  const tieneFrech = typeof props.beneficioFrechMensual === "number" && props.beneficioFrechMensual > 0;
   return (
     <div style={{ border: `1px solid ${C.line}`, borderRadius: 10, overflow: "hidden", background: "#fff" }}>
       <BlockHeader dark n="1." title="ESTADO ACTUAL DEL CRÉDITO" />
       <div style={{ padding: "13px 13px 10px" }}>
         <Group title="PRODUCTO">
-          <Row label="Banco" value={props.banco} /><Row label="Producto" value={props.producto} /><Row label="Plazo inicial" value={`${props.plazoOriginal} meses`} />
+          <Row label="Banco" value={props.banco} />
+          <Row label="Producto" value={props.producto} />
+          <Row label="Plazo inicial" value={`${props.plazoOriginal} meses`} />
         </Group>
-        <Group title="CUOTAS"><Row label="Canceladas" value={`${props.cuotasPagadas}`} /><Row label="Pendientes" value={`${props.cuotasPendientes}`} /></Group>
+
+        <Group title="CUOTAS">
+          <Row label="Canceladas" value={`${props.cuotasPagadas}`} />
+          <Row label="Pendientes" value={`${props.cuotasPendientes}`} />
+          {props.tieneCobertura && props.cuotasPendientesConCobertura > 0 && (
+            <Row
+              label={`Pendientes con ${props.tipoBeneficio || "cobertura"}`}
+              value={`${props.cuotasPendientesConCobertura}`}
+            />
+          )}
+        </Group>
+
         <Group title="CUOTA MENSUAL">
           <Row label="Cuota actual" value={formatCOP(props.cuotaActual)} />
           <Row label="Seguros" value={formatCOP(props.seguros)} />
@@ -478,13 +491,30 @@ function CurrentStateCard(props: {
           {tieneCapital && (
             <Row label="Capital mensual" value={formatCOP(props.capitalMensual as number)} />
           )}
-          {tieneFrech && (
-            <Row label="Beneficio Fresh mensual" value={formatCOP(props.beneficioFrechMensual as number)} />
+          {props.tieneCobertura && props.valorBeneficioMensual > 0 && (
+            <>
+              <Row
+                label={`Beneficio ${props.tipoBeneficio || "FRECH"} mensual`}
+                value={`- ${formatCOP(props.valorBeneficioMensual)}`}
+              />
+              <Row
+                label="Cuota pagada por cliente"
+                value={formatCOP(props.cuotaConCobertura)}
+              />
+            </>
           )}
         </Group>
 
-        <Group title="PAGADO A LA FECHA"><Row label="Dinero pagado" value={formatCOP(props.dineroPagado)} /><Row label="Intereses pagados" value={formatCOP(props.interesesPagados)} /><Row label="Capital pagado" value={formatCOP(props.capitalPagado)} /></Group>
-        <Group title="PROYECCIÓN SIN NUVEX"><Row label="Dinero pendiente" value={formatCOP(props.totalPendiente)} /><Row label="Costo total proyectado" value={formatCOP(props.costoTotal)} red /></Group>
+        <Group title="PAGADO A LA FECHA">
+          <Row label="Dinero pagado" value={formatCOP(props.dineroPagado)} />
+          <Row label="Intereses pagados" value={formatCOP(props.interesesPagados)} />
+          <Row label="Capital pagado" value={formatCOP(props.capitalPagado)} />
+        </Group>
+
+        <Group title="PROYECCIÓN SIN NUVEX">
+          <Row label="Dinero pendiente" value={formatCOP(props.totalPendiente)} />
+          <Row label="Costo total proyectado" value={formatCOP(props.costoTotal)} red />
+        </Group>
         <div style={{ marginTop: 9, background: "linear-gradient(180deg,#FFF0F0,#FDE4E4)", border: `1px solid #F7CCCC`, borderRadius: 8, padding: "10px 11px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ color: C.red, fontSize: 9, fontWeight: 950, letterSpacing: "0.12em" }}>N° VECES PAGADO</div>
           <div style={{ color: C.red, fontSize: 24, fontWeight: 950, lineHeight: 1 }}>{formatNumber(props.veces, 2)}x</div>
