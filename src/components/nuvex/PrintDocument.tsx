@@ -24,6 +24,7 @@ import {
 import { NUVEX } from "./constants";
 import type { ClientData } from "./ClientFields";
 import { formatCOP, formatNumber } from "../../lib/format";
+import { valorEquivalenteHoyUniforme, factorInflacionAcumulado } from "../../lib/inflacionIPC";
 import type { PesosPropuesta, UVRPropuesta } from "../../lib/finance";
 import type { PropuestaComercialPdfRow } from "./PropuestasComerciales";
 import { calcularMotor } from "../../lib/motorHonorarios";
