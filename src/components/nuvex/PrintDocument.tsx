@@ -57,6 +57,11 @@ export interface CreditStateData {
   dineroPagado?: number;
   interesesPagados?: number;
   capitalPagado?: number;
+  tieneCobertura?: boolean;
+  tipoBeneficio?: string;
+  valorBeneficioMensual?: number;
+  cuotaConCobertura?: number;
+  cuotasPendientesConCobertura?: number;
 }
 
 interface Props {
