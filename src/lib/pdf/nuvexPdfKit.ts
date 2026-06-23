@@ -61,6 +61,8 @@ export interface BrandMeta {
   documento: string;
   /** Consecutivo institucional (ej. "NUVEX-PE-2026-0421"). */
   consecutivo?: string;
+  /** Tipo de diseño de chrome: poder = diagonal institucional, default = azul institucional. */
+  kind?: "poder" | "default";
 }
 
 export interface CardItem {
