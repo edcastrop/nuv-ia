@@ -1232,6 +1232,11 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
       },
       archivoPath: archivoPath ?? undefined,
       monedaDetectada,
+      extracto: {
+        interesMensual: get("interesesCorrientes"),
+        capitalMensual: get("abonoCapital"),
+        beneficioFrechMensual: get("valorCobertura"),
+      },
       raw: {
         banco: bancoCanon,
         producto,
