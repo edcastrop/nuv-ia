@@ -765,7 +765,7 @@ function mapPropuestasToAltRow(mode: "pesos" | "uvr", pesosPropuestas: PesosProp
       const fechaFin = new Date(fechaBase);
       fechaFin.setMonth(fechaFin.getMonth() + p.nuevoPlazo);
       const h = computeHonorarios(p.ahorroIntereses, p.ahorroSeguros, "uvr", plazoOriginal);
-      return { nuevaCuota: cuota, incrementoPct: cuotaActual > 0 ? ((cuota - cuotaActual) / cuotaActual) * 100 : 0, añosEliminados: p.añosEliminados, cuotasEliminadas: p.cuotasEliminadas, ahorroTotal: p.ahorroTotal, añoFinOpt: fechaFin.getFullYear(), añosOpt: p.nuevoPlazo / 12, ...h };
+      return { nuevaCuota: cuota, incrementoPct: cuotaActual > 0 ? ((cuota - cuotaActual) / cuotaActual) * 100 : 0, añosEliminados: p.añosEliminados, cuotasEliminadas: p.cuotasEliminadas, ahorroTotal: p.ahorroTotal, ahorroIntereses: p.ahorroIntereses, ahorroSeguros: p.ahorroSeguros, añoFinOpt: fechaFin.getFullYear(), añosOpt: p.nuevoPlazo / 12, ...h };
     });
   }
   return (pesosPropuestas || []).map((p) => {
