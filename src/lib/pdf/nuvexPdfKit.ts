@@ -664,6 +664,112 @@ export function writeText(
   return cursorY + (opts.lineGap ?? 0);
 }
 
+/**
+ * Igual que writeText pero acepta una lista de substrings a renderizar en
+ * negrilla dentro del párrafo (manteniendo justify y wrap automáticos).
+ */
+export function writeRichText(
+  pdf: jsPDF,
+  y: number,
+  text: string,
+  boldTokens: string[],
+  opts: TextOpts,
+  onPageBreak: () => number,
+): number {
+  const { pageW, marginX, contentBottom } = LAYOUT;
+  const contentW = pageW - marginX * 2;
+  const size = opts.size ?? 10.5;
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(size);
+  pdf.setTextColor(...(opts.color ?? BRAND.ink));
+  const lineH = size * 1.45;
+  const lines = pdf.splitTextToSize(text, contentW) as string[];
+
+  const tokens = (boldTokens || []).filter((t) => t && t.length > 0)
+    .sort((a, b) => b.length - a.length);
+
+  const buildBoldMask = (line: string): boolean[] => {
+    const mask = new Array(line.length).fill(false);
+    for (const t of tokens) {
+      let idx = line.indexOf(t);
+      while (idx !== -1) {
+        for (let k = 0; k < t.length; k += 1) mask[idx + k] = true;
+        idx = line.indexOf(t, idx + t.length);
+      }
+    }
+    return mask;
+  };
+
+  const measureRun = (line: string, mask: boolean[], a: number, b: number): number => {
+    let w = 0;
+    let runStart = a;
+    for (let i = a + 1; i <= b; i += 1) {
+      if (i === b || mask[i] !== mask[runStart]) {
+        pdf.setFont("helvetica", mask[runStart] ? "bold" : "normal");
+        w += pdf.getTextWidth(line.slice(runStart, i));
+        runStart = i;
+      }
+    }
+    return w;
+  };
+
+  const drawRun = (line: string, mask: boolean[], a: number, b: number, x: number, yy: number): number => {
+    let cx = x;
+    let runStart = a;
+    for (let i = a + 1; i <= b; i += 1) {
+      if (i === b || mask[i] !== mask[runStart]) {
+        pdf.setFont("helvetica", mask[runStart] ? "bold" : "normal");
+        const seg = line.slice(runStart, i);
+        pdf.text(seg, cx, yy);
+        cx += pdf.getTextWidth(seg);
+        runStart = i;
+      }
+    }
+    return cx;
+  };
+
+  let cursorY = y;
+  for (let li = 0; li < lines.length; li += 1) {
+    const line = lines[li];
+    const isLast = li === lines.length - 1;
+    if (cursorY + lineH > contentBottom) cursorY = onPageBreak();
+    const mask = buildBoldMask(line);
+
+    // Localizar palabras
+    const words: { start: number; end: number }[] = [];
+    const re = /\S+/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(line)) !== null) {
+      words.push({ start: m.index, end: m.index + m[0].length });
+    }
+
+    if (words.length === 0) { cursorY += lineH; continue; }
+
+    pdf.setFont("helvetica", "normal");
+    const spaceW = pdf.getTextWidth(" ");
+    const wordWidths = words.map((w) => measureRun(line, mask, w.start, w.end));
+    const naturalW = wordWidths.reduce((a, b) => a + b, 0) + spaceW * (words.length - 1);
+
+    let gap = 0;
+    if (opts.align === "justify" && !isLast && words.length > 1) {
+      gap = Math.max(0, (contentW - naturalW) / (words.length - 1));
+    }
+
+    let x = marginX;
+    if (opts.align === "center") {
+      x = (pageW - naturalW) / 2;
+    }
+    for (let wi = 0; wi < words.length; wi += 1) {
+      drawRun(line, mask, words[wi].start, words[wi].end, x, cursorY);
+      x += wordWidths[wi] + spaceW + gap;
+    }
+    cursorY += lineH;
+  }
+  return cursorY + (opts.lineGap ?? 0);
+}
+
+
+
 // ─────────────────────────────── Firmas ─────────────────────────────────────
 
 export interface SignatureCol { label: string; name?: string; cc?: string }
@@ -688,15 +794,16 @@ export function drawSignatures(pdf: jsPDF, y: number, columns: SignatureCol[]): 
     pdf.text(col.label, marginX + colW * i + colW / 2, y + 14, { align: "center" });
   });
 
-  pdf.setFont("helvetica", "normal");
+  pdf.setFont("helvetica", "bold");
   pdf.setFontSize(10);
   pdf.setTextColor(...BRAND.ink);
   columns.forEach((col, i) => {
     if (col.name) pdf.text(col.name, marginX + colW * i + colW / 2, y + 28, { align: "center" });
   });
 
+  pdf.setFont("helvetica", "bold");
   pdf.setFontSize(9);
-  pdf.setTextColor(...BRAND.muted);
+  pdf.setTextColor(...BRAND.ink);
   columns.forEach((col, i) => {
     if (col.cc) pdf.text(col.cc, marginX + colW * i + colW / 2, y + 42, { align: "center" });
   });

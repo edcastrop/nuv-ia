@@ -18,7 +18,7 @@ export type DocBlock =
   | { type: "title"; text: string }
   | { type: "subtitle"; text: string }
   | { type: "heading"; text: string }
-  | { type: "paragraph"; text: string }
+  | { type: "paragraph"; text: string; bold?: boolean; boldTokens?: string[] }
   | { type: "spacer"; size?: number }
   | { type: "section"; text: string } // encabezado de tabla en Datos para Contrato
   | { type: "field"; label: string; value: string } // fila clave/valor
