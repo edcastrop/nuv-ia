@@ -464,6 +464,7 @@ function CurrentStateCard(props: {
   dineroPagado: number;
   interesesPagados: number; capitalPagado: number; segurosPagados: number;
   totalPendiente: number; costoTotal: number;
+  perdidaPoderAdquisitivo: number; inflacionSobreDesembolso: number;
   vecesPagado: number; vecesPendiente: number;
   tieneCobertura: boolean; tipoBeneficio: string;
   valorBeneficioMensual: number; cuotaConCobertura: number;
