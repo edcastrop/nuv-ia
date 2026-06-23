@@ -273,6 +273,7 @@ export function PrintDocument(props: Props) {
               valorBeneficioMensual={valorBeneficioMensual}
               cuotaConCobertura={cuotaConCobertura}
               cuotasPendientesConCobertura={cuotasPendientesConCobertura}
+              saldoCapital={creditState?.saldoCapital ?? 0}
             />
             <RecommendedCard
               nuevaCuota={nuevaCuota}
@@ -481,6 +482,10 @@ function CurrentStateCard(props: {
               value={`${props.cuotasPendientesConCobertura}`}
             />
           )}
+        </Group>
+
+        <Group title="SALDO ACTUAL DE LA DEUDA">
+          <Row label="Saldo capital" value={formatCOP(props.saldoCapital)} />
         </Group>
 
         <Group title="CUOTA MENSUAL">
