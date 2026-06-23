@@ -526,7 +526,14 @@ function CurrentStateCard(props: {
           <Row label="Intereses pagados" value={formatCOP(props.interesesPagados)} red />
           <Row label="Seguros pagados" value={formatCOP(props.segurosPagados)} red />
           <Row label="Capital pagado" value={formatCOP(props.capitalPagado)} green />
+          {props.perdidaPoderAdquisitivo > 0 && (
+            <Row label="Pérdida poder adquisitivo (IPC)" value={formatCOP(props.perdidaPoderAdquisitivo)} red />
+          )}
+          {props.inflacionSobreDesembolso > 0 && (
+            <Row label="Inflación acumulada s/ desembolso" value={formatCOP(props.inflacionSobreDesembolso)} red />
+          )}
         </Group>
+
 
         <Group title="PROYECCIÓN SIN NUVEX">
           <Row label="Dinero pendiente" value={formatCOP(props.totalPendiente)} />
