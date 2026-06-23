@@ -328,6 +328,8 @@ export function PrintDocument(props: Props) {
             recAñoFin={añoFinOpt}
             recAñosElim={añosEliminadosEntero}
             recCuotasElim={cuotasEliminadas}
+            recAhorroIntereses={recommended.ahorroIntereses}
+            recAhorroSeguros={recommended.ahorroSeguros}
             recAhorroTotal={recommended.ahorroTotal}
             recHonorarios={honorariosFinales}
             totalEscenarios={totalEscenarios}
@@ -608,17 +610,19 @@ function DarkBenefit({ icon, label, value, sub, right }: { icon: ReactNode; labe
 }
 
 function ScenariosTable(props: {
-  cuotaActual: number; plazoActual: number; añoFinActual: number; esc: Array<AltRow | undefined>; recNueva: number; recIncPct: number; recPlazo: number; recAñoFin: number; recAñosElim: number; recCuotasElim: number; recAhorroTotal: number; recHonorarios: number; totalEscenarios: number;
+  cuotaActual: number; plazoActual: number; añoFinActual: number; esc: Array<AltRow | undefined>; recNueva: number; recIncPct: number; recPlazo: number; recAñoFin: number; recAñosElim: number; recCuotasElim: number; recAhorroIntereses: number; recAhorroSeguros: number; recAhorroTotal: number; recHonorarios: number; totalEscenarios: number;
 }) {
   const labels = ["Conservador", "Equilibrado", "Acelerado"];
   const fmtVal = (v: AltRow | undefined, key: (r: AltRow) => string) => v ? key(v) : "—";
   const rows: Array<[string, string, string, string, string, string]> = [
     ["Nueva cuota", formatCOP(props.cuotaActual), ...props.esc.map(e => fmtVal(e, r => formatCOP(r.nuevaCuota))), formatCOP(props.recNueva)] as [string, string, string, string, string, string],
     ["Incremento mensual", "—", ...props.esc.map(e => e ? `+${formatCOP(Math.max(0, e.nuevaCuota - props.cuotaActual))}` : "—"), `+${formatCOP(Math.max(0, props.recNueva - props.cuotaActual))}`] as [string, string, string, string, string, string],
-    ["Nuevo plazo", `${props.plazoActual} m`, ...props.esc.map(e => e ? `${Math.round(e.añosOpt * 12)} m` : "—"), `${props.recPlazo} m`] as [string, string, string, string, string, string],
+    ["Cuotas pendientes por pagar", `${props.plazoActual}`, ...props.esc.map(e => e ? `${Math.round(e.añosOpt * 12)}` : "—"), `${props.recPlazo}`] as [string, string, string, string, string, string],
     ["Fecha final", `${props.añoFinActual}`, ...props.esc.map(e => e ? `${e.añoFinOpt}` : "—"), `${props.recAñoFin}`] as [string, string, string, string, string, string],
     ["Años recuperados", "—", ...props.esc.map(e => e ? `${Math.round(e.añosEliminados)}` : "—"), `${props.recAñosElim}`] as [string, string, string, string, string, string],
     ["Cuotas eliminadas", "—", ...props.esc.map(e => e ? `${e.cuotasEliminadas}` : "—"), `${props.recCuotasElim}`] as [string, string, string, string, string, string],
+    ["Ahorro en intereses", "—", ...props.esc.map(e => e ? formatCOP(e.ahorroIntereses) : "—"), formatCOP(props.recAhorroIntereses)] as [string, string, string, string, string, string],
+    ["Ahorro en seguros", "—", ...props.esc.map(e => e ? formatCOP(e.ahorroSeguros) : "—"), formatCOP(props.recAhorroSeguros)] as [string, string, string, string, string, string],
     ["Ahorro total", "—", ...props.esc.map(e => e ? formatCOP(e.ahorroTotal) : "—"), formatCOP(props.recAhorroTotal)] as [string, string, string, string, string, string],
     ["Honorarios a éxito", "—", ...props.esc.map(e => e ? formatCOP(e.honorariosFinal) : "—"), formatCOP(props.recHonorarios)] as [string, string, string, string, string, string],
     ["Beneficio comercial", "—", ...props.esc.map(() => "—"), "Aprobado"] as [string, string, string, string, string, string],
@@ -717,6 +721,8 @@ interface AltRow {
   añosEliminados: number;
   cuotasEliminadas: number;
   ahorroTotal: number;
+  ahorroIntereses: number;
+  ahorroSeguros: number;
   añoFinOpt: number;
   añosOpt: number;
   honorariosFinal: number;
@@ -740,6 +746,8 @@ function mapComercialesToAltRow(propuestas: PropuestaComercialPdfRow[], cuotaAct
       añosEliminados: p.añosEliminados,
       cuotasEliminadas: p.cuotasEliminadas,
       ahorroTotal: p.ahorroTotal,
+      ahorroIntereses: (p as any).ahorroIntereses ?? 0,
+      ahorroSeguros: (p as any).ahorroSeguros ?? 0,
       añoFinOpt: fechaFin.getFullYear(),
       añosOpt: p.nuevoPlazo / 12,
       honorariosFinal: p.honorarios,
@@ -757,7 +765,7 @@ function mapPropuestasToAltRow(mode: "pesos" | "uvr", pesosPropuestas: PesosProp
       const fechaFin = new Date(fechaBase);
       fechaFin.setMonth(fechaFin.getMonth() + p.nuevoPlazo);
       const h = computeHonorarios(p.ahorroIntereses, p.ahorroSeguros, "uvr", plazoOriginal);
-      return { nuevaCuota: cuota, incrementoPct: cuotaActual > 0 ? ((cuota - cuotaActual) / cuotaActual) * 100 : 0, añosEliminados: p.añosEliminados, cuotasEliminadas: p.cuotasEliminadas, ahorroTotal: p.ahorroTotal, añoFinOpt: fechaFin.getFullYear(), añosOpt: p.nuevoPlazo / 12, ...h };
+      return { nuevaCuota: cuota, incrementoPct: cuotaActual > 0 ? ((cuota - cuotaActual) / cuotaActual) * 100 : 0, añosEliminados: p.añosEliminados, cuotasEliminadas: p.cuotasEliminadas, ahorroTotal: p.ahorroTotal, ahorroIntereses: p.ahorroIntereses, ahorroSeguros: p.ahorroSeguros, añoFinOpt: fechaFin.getFullYear(), añosOpt: p.nuevoPlazo / 12, ...h };
     });
   }
   return (pesosPropuestas || []).map((p) => {
@@ -765,7 +773,7 @@ function mapPropuestasToAltRow(mode: "pesos" | "uvr", pesosPropuestas: PesosProp
     const fechaFin = new Date(fechaBase);
     fechaFin.setMonth(fechaFin.getMonth() + p.nuevoPlazo);
     const h = computeHonorarios(p.ahorroIntereses, p.ahorroSeguros, "pesos", plazoOriginal);
-    return { nuevaCuota: cuota, incrementoPct: cuotaActual > 0 ? ((cuota - cuotaActual) / cuotaActual) * 100 : 0, añosEliminados: p.añosEliminados, cuotasEliminadas: p.cuotasEliminadas, ahorroTotal: p.ahorroTotal, añoFinOpt: fechaFin.getFullYear(), añosOpt: p.nuevoPlazo / 12, ...h };
+    return { nuevaCuota: cuota, incrementoPct: cuotaActual > 0 ? ((cuota - cuotaActual) / cuotaActual) * 100 : 0, añosEliminados: p.añosEliminados, cuotasEliminadas: p.cuotasEliminadas, ahorroTotal: p.ahorroTotal, ahorroIntereses: p.ahorroIntereses, ahorroSeguros: p.ahorroSeguros, añoFinOpt: fechaFin.getFullYear(), añosOpt: p.nuevoPlazo / 12, ...h };
   });
 }
 
