@@ -688,15 +688,16 @@ export function drawSignatures(pdf: jsPDF, y: number, columns: SignatureCol[]): 
     pdf.text(col.label, marginX + colW * i + colW / 2, y + 14, { align: "center" });
   });
 
-  pdf.setFont("helvetica", "normal");
+  pdf.setFont("helvetica", "bold");
   pdf.setFontSize(10);
   pdf.setTextColor(...BRAND.ink);
   columns.forEach((col, i) => {
     if (col.name) pdf.text(col.name, marginX + colW * i + colW / 2, y + 28, { align: "center" });
   });
 
+  pdf.setFont("helvetica", "bold");
   pdf.setFontSize(9);
-  pdf.setTextColor(...BRAND.muted);
+  pdf.setTextColor(...BRAND.ink);
   columns.forEach((col, i) => {
     if (col.cc) pdf.text(col.cc, marginX + colW * i + colW / 2, y + 42, { align: "center" });
   });
