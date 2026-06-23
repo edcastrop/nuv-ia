@@ -70,6 +70,16 @@ export type ExtractoApplyPayload = {
     cuotaBaseSimulacion?: string;
     requiereVerificacion?: boolean;
   };
+  /**
+   * Valores mensuales adicionales detectados en el extracto (OCR).
+   * Cadenas vacías significan "no detectado por OCR" → la UI debe mostrar
+   * "Pendiente lectura extracto" y NO interpretar como cero.
+   */
+  extracto?: {
+    interesMensual?: string;
+    capitalMensual?: string;
+    beneficioFrechMensual?: string;
+  };
   archivoPath?: string;
   /** Moneda detectada en el extracto (independiente del modo del simulador). */
   monedaDetectada?: "uvr" | "pesos";
