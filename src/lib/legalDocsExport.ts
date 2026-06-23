@@ -173,10 +173,10 @@ function renderPoderEspecial(pdf: jsPDF, doc: LegalDoc): void {
 
   // ── Comenzar debajo del header (sin hero, sin metaPanel) ─────────────────
 
-  // Comenzar bajo el header ampliado del poder (H=170)
-  let y = 188;
+  // Comenzar bajo el header del poder (H=130)
+  let y = 148;
 
-  const onBreak = () => { nextPage(pdf); return 188; };
+  const onBreak = () => { nextPage(pdf); return 148; };
   const textW = pageW - marginX * 2;
 
   // ── Texto jurídico: extraer el prose del template ─────────────────────────
