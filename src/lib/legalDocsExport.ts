@@ -174,7 +174,7 @@ function renderPoderEspecial(pdf: jsPDF, doc: LegalDoc): void {
   // ── Comenzar debajo del header (sin hero, sin metaPanel) ─────────────────
 
   // contentTop = 128 (justo debajo del header diagonal)
-  let y = contentTop + 8;
+  let y = contentTop + 4;
 
   const onBreak = () => nextPage(pdf);
   const textW = pageW - marginX * 2;
@@ -185,6 +185,15 @@ function renderPoderEspecial(pdf: jsPDF, doc: LegalDoc): void {
 
   for (const b of prose) {
     if (y > contentBottom - 60) y = onBreak();
+
+    // Ignorar bloques que repiten los datos corporativos del footer
+    if (b.type === "paragraph" && (
+      /carrera\s+16/i.test(b.text) ||
+      /bogot[aá]\s*\|\s*bucaramanga/i.test(b.text) ||
+      /\+57\s*316/i.test(b.text) ||
+      /www\.nuvex\.com\.co/i.test(b.text)
+    )) continue;
+
     switch (b.type) {
       case "title":
       case "subtitle":
@@ -198,16 +207,16 @@ function renderPoderEspecial(pdf: jsPDF, doc: LegalDoc): void {
         break;
       case "paragraph":
         y = writeText(pdf, y, b.text, {
-          size: 10.5, align: "justify", lineGap: 7, color: BRAND.ink
+          size: 10, align: "justify", lineGap: 5, color: BRAND.ink
         }, onBreak);
-        y += 6;
+        y += 3;
         break;
       case "spacer":
-        y += b.size ?? 10;
+        y += b.size ?? 6;
         break;
       case "signature":
-        if (y + 100 > contentBottom) y = onBreak();
-        y = drawSignatures(pdf, y + 20, b.columns);
+        if (y + 80 > contentBottom) y = onBreak();
+        y = drawSignatures(pdf, y + 10, b.columns);
         break;
     }
   }
