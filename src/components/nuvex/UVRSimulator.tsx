@@ -79,6 +79,12 @@ export function UVRSimulator({
   simuladorReturn?: { maestroId?: string; modo?: "pesos" | "uvr" };
   fromSimulador?: boolean;
 } = {}) {
+  const parseOcrMoney = (v: string | number | null | undefined) => {
+    if (v === null || v === undefined) return undefined;
+    if (typeof v === "string" && !v.trim()) return undefined;
+    const n = parseCurrency(v);
+    return Number.isFinite(n) ? n : undefined;
+  };
   const init = initialExpediente;
   const initCred = (init?.credito_data ?? {}) as Record<string, string>;
   const initClient = (init?.cliente_data as ClientData | undefined) ?? undefined;
@@ -109,6 +115,13 @@ export function UVRSimulator({
       initCred.cuotasEliminarManual && !initCred.nuevaCuotaManual
         ? ("cuotas" as const)
         : ("cuota" as const),
+    interesMensualExtracto: initCred.interesMensualExtracto ?? initCred.interesMensual ?? "",
+    capitalMensualExtracto: initCred.capitalMensualExtracto ?? initCred.capitalMensual ?? "",
+    beneficioFrechMensualExtracto:
+      initCred.beneficioFrechMensualExtracto ??
+      initCred.beneficioFrechMensual ??
+      initCred.valorBeneficio ??
+      "",
     propuestasComerciales: parseStoredJson<PropuestasComercialesDraft>(initCred.propuestasComerciales),
   });
   const monedaAlerta = useMonedaMismatchAlert();
@@ -138,9 +151,9 @@ export function UVRSimulator({
     draft.modoPersonalizada,
   );
   // Lecturas OCR mensuales del extracto (solo para el PDF de propuesta).
-  const [interesMensualExtracto, setInteresMensualExtracto] = useState<number | undefined>(undefined);
-  const [capitalMensualExtracto, setCapitalMensualExtracto] = useState<number | undefined>(undefined);
-  const [beneficioFrechMensualExtracto, setBeneficioFrechMensualExtracto] = useState<number | undefined>(undefined);
+  const [interesMensualExtracto, setInteresMensualExtracto] = useState<number | undefined>(() => parseOcrMoney(draft.interesMensualExtracto));
+  const [capitalMensualExtracto, setCapitalMensualExtracto] = useState<number | undefined>(() => parseOcrMoney(draft.capitalMensualExtracto));
+  const [beneficioFrechMensualExtracto, setBeneficioFrechMensualExtracto] = useState<number | undefined>(() => parseOcrMoney(draft.beneficioFrechMensualExtracto));
   const [propuestasComercialesDraft, setPropuestasComercialesDraft] =
     useState<PropuestasComercialesDraft | undefined>(() => draft.propuestasComerciales);
   const [propuestasComercialesSnapshot, setPropuestasComercialesSnapshot] =
