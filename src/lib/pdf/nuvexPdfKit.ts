@@ -230,15 +230,74 @@ export function drawPoderFooter(pdf: jsPDF, pageNum: number, totalPages: number)
     { align: "right" }
   );
 
-  // Datos corporativos — solo texto, sin íconos
-  const dataX = 225;
+  // Datos corporativos con íconos vectoriales minimalistas
+  const iconX = 220;
+  const textX = iconX + 12;
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(8);
   pdf.setTextColor(225, 232, 245);
 
-  pdf.text("Carrera 16 # 37-48 piso 4  ·  Bucaramanga", dataX, y0 + 18);
-  pdf.text("www.nuvex.com.co     ·     +57 316 4023779", dataX, y0 + 32);
-  pdf.text("juridica@nuvex.com.co", dataX, y0 + 46);
+  // Línea 1 — pin (ubicación)
+  const y1 = y0 + 18;
+  drawIconPin(pdf, iconX, y1 - 6);
+  pdf.text("Carrera 16 # 37-48 piso 4  ·  Bucaramanga", textX, y1);
+
+  // Línea 2 — globo (web) + teléfono
+  const y2 = y0 + 32;
+  drawIconGlobe(pdf, iconX, y2 - 6);
+  pdf.text("www.nuvex.com.co", textX, y2);
+  const phoneIconX = textX + pdf.getTextWidth("www.nuvex.com.co") + 14;
+  drawIconPhone(pdf, phoneIconX, y2 - 6);
+  pdf.text("+57 316 4023779", phoneIconX + 12, y2);
+
+  // Línea 3 — sobre (email)
+  const y3 = y0 + 46;
+  drawIconEnvelope(pdf, iconX, y3 - 6);
+  pdf.text("juridica@nuvex.com.co", textX, y3);
+}
+
+// ── Íconos vectoriales minimalistas para el footer (≈7×7 pt) ────────────────
+function drawIconPin(pdf: jsPDF, x: number, y: number) {
+  pdf.setDrawColor(225, 232, 245);
+  pdf.setFillColor(225, 232, 245);
+  pdf.setLineWidth(0.6);
+  // gota: círculo + triángulo
+  pdf.circle(x + 3.5, y + 2.5, 2.2, "S");
+  pdf.triangle(x + 1.5, y + 4, x + 5.5, y + 4, x + 3.5, y + 7, "F");
+  pdf.circle(x + 3.5, y + 2.5, 0.7, "F");
+}
+
+function drawIconGlobe(pdf: jsPDF, x: number, y: number) {
+  pdf.setDrawColor(225, 232, 245);
+  pdf.setLineWidth(0.6);
+  const cx = x + 3.5, cy = y + 3.5, r = 3;
+  pdf.circle(cx, cy, r, "S");
+  // ecuador
+  pdf.line(cx - r, cy, cx + r, cy);
+  // meridiano vertical (elipse aplanada simulada con 2 arcos)
+  pdf.line(cx, cy - r, cx, cy + r);
+  // meridiano oblicuo (curva aproximada)
+  pdf.ellipse(cx, cy, r * 0.55, r, "S");
+}
+
+function drawIconPhone(pdf: jsPDF, x: number, y: number) {
+  pdf.setDrawColor(225, 232, 245);
+  pdf.setFillColor(225, 232, 245);
+  pdf.setLineWidth(0.6);
+  // auricular estilizado: dos rectángulos redondeados unidos en diagonal
+  pdf.roundedRect(x + 0.5, y + 0.5, 2.4, 3.2, 0.6, 0.6, "F");
+  pdf.roundedRect(x + 4.1, y + 3.8, 2.4, 3.2, 0.6, 0.6, "F");
+  pdf.setLineWidth(0.8);
+  pdf.line(x + 2.5, y + 2.5, x + 4.5, y + 4.5);
+}
+
+function drawIconEnvelope(pdf: jsPDF, x: number, y: number) {
+  pdf.setDrawColor(225, 232, 245);
+  pdf.setLineWidth(0.6);
+  pdf.rect(x, y + 1, 7, 5, "S");
+  // solapa V
+  pdf.line(x, y + 1, x + 3.5, y + 4);
+  pdf.line(x + 3.5, y + 4, x + 7, y + 1);
 }
 
 
