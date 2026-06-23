@@ -530,12 +530,12 @@ function CurrentStateCard(props: {
           <Row label="Dinero pagado" value={formatCOP(props.dineroPagado)} red />
           <Row label="Intereses pagados" value={formatCOP(props.interesesPagados)} red />
           <Row label="Seguros pagados" value={formatCOP(props.segurosPagados)} red />
-          <Row label="Capital pagado" value={formatCOP(props.capitalPagado)} green />
-          {props.perdidaPoderAdquisitivo > 0 && (
-            <Row label="Pérdida poder adquisitivo (IPC)" value={formatCOP(props.perdidaPoderAdquisitivo)} red />
+          {props.mode === "pesos" && props.esLeasing && props.ivaLeasingPagado > 0 && (
+            <Row label="IVA leasing (19% interés)" value={formatCOP(props.ivaLeasingPagado)} red />
           )}
-          {props.inflacionSobreDesembolso > 0 && (
-            <Row label="Inflación acumulada s/ desembolso" value={formatCOP(props.inflacionSobreDesembolso)} red />
+          <Row label="Capital pagado" value={formatCOP(props.capitalPagado)} green />
+          {props.mode === "uvr" && props.reajusteUVRAcumulado > 0 && (
+            <Row label="Reajuste UVR acumulado" value={formatCOP(props.reajusteUVRAcumulado)} red />
           )}
         </Group>
 
