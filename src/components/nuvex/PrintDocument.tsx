@@ -374,7 +374,7 @@ export function PrintDocument(props: Props) {
               <div style={{ marginTop: 7, fontSize: 12, fontWeight: 700 }}>Ya hicimos los cálculos. <span style={{ color: C.green }}>La decisión es tuya.</span></div>
             </div>
             <div>
-              <div style={{ background: `linear-gradient(180deg, #A7D3AE, ${C.green})`, color: "#061122", borderRadius: 5, padding: "13px 16px", textAlign: "center", fontSize: 13, fontWeight: 950 }}>QUIERO RECUPERAR MI TIEMPO FINANCIERO</div>
+              <div style={{ background: `linear-gradient(180deg, ${NUVEX.verdeFuerte}, ${NUVEX.verde})`, color: "#061122", borderRadius: 5, padding: "13px 16px", textAlign: "center", fontSize: 13, fontWeight: 950 }}>QUIERO RECUPERAR MI TIEMPO FINANCIERO</div>
               <div style={{ marginTop: 8, textAlign: "center", fontSize: 8, letterSpacing: "0.28em", fontWeight: 900, color: "rgba(255,255,255,0.7)" }}>PROPUESTA COMERCIAL VÁLIDA POR 48 HORAS</div>
             </div>
           </div>
