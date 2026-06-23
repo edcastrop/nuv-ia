@@ -160,8 +160,11 @@ export function PrintDocument(props: Props) {
   const cuotaActual = scenario.cuotaActual;
   const nuevaCuota = scenario.nuevaCuota;
   const segurosMensuales = creditState?.seguros ?? 0;
-  const interesMensual = creditState?.interesMensual ?? 0;
-  const capitalMensual = creditState?.capitalMensual ?? Math.max(0, cuotaActual - segurosMensuales - interesMensual);
+  // Si OCR no leyó el dato, dejamos undefined para que el PDF renderice
+  // "Pendiente lectura extracto" en vez de mostrar $0.
+  const interesMensual = creditState?.interesMensual;
+  const capitalMensual = creditState?.capitalMensual;
+  const beneficioFrechMensual = creditState?.beneficioFrechMensual;
   const yaPagado = Math.max(0, dineroPagadoFecha);
   const interesesPagados = creditState?.interesesPagados ?? 0;
   const capitalPagado = creditState?.capitalPagado ?? 0;
