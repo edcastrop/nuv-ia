@@ -251,6 +251,7 @@ export function PrintDocument(props: Props) {
               seguros={segurosMensuales}
               interesMensual={interesMensual}
               capitalMensual={capitalMensual}
+              beneficioFrechMensual={beneficioFrechMensual}
               dineroPagado={yaPagado}
               interesesPagados={interesesPagados}
               capitalPagado={capitalPagado}
