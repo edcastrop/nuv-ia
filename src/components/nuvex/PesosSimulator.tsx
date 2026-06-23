@@ -478,6 +478,15 @@ export function PesosSimulator({
             } else {
               setCobertura(defaultCobertura);
             }
+            // Lecturas mensuales del extracto (string vacío = no detectado por OCR).
+            const parseOcr = (v?: string) => {
+              if (!v || !v.trim()) return undefined;
+              const n = parseCurrency(v);
+              return Number.isFinite(n) ? n : undefined;
+            };
+            setInteresMensualExtracto(parseOcr(p.extracto?.interesMensual));
+            setCapitalMensualExtracto(parseOcr(p.extracto?.capitalMensual));
+            setBeneficioFrechMensualExtracto(parseOcr(p.extracto?.beneficioFrechMensual));
             // Auto-QA condicional: sólo cuando el simulador fue abierto desde un
             // Expediente Maestro (init?.id). En modo standalone no se ejecuta.
             if (init?.id && p.raw) {
