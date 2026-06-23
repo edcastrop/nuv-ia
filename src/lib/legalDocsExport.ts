@@ -21,7 +21,7 @@ import { saveAs } from "file-saver";
 import { NUVEX } from "@/components/nuvex/constants";
 import type { LegalDoc, DocBlock } from "./legalDocs";
 import {
-  BRAND, LAYOUT, loadLogoDataURL, applyChrome,
+  BRAND, LAYOUT, loadLogoDataURL, loadTintedLogoDataURL, applyChrome,
   createNuvexPdf, nextPage,
   drawHero,
   writeText, drawSignatures, roundedRect,
@@ -390,7 +390,9 @@ async function composeBrandedPdf(doc: LegalDoc): Promise<jsPDF> {
   else if (kind === "ficha") renderFichaContractual(pdf, doc);
   else renderGenericLegalDoc(pdf, doc);
 
-  const logoDataUrl = await loadLogoDataURL();
+  const logoDataUrl = kind === "poder"
+    ? await loadTintedLogoDataURL("#A8C5FF")
+    : await loadLogoDataURL();
   const meta: BrandMeta = {
     documento: inferDocumentoLabel(doc, kind),
     consecutivo: doc.consecutivo,
