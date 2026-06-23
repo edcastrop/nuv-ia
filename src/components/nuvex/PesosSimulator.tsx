@@ -930,6 +930,9 @@ export function PesosSimulator({
                       cuotaSinSeguros: cuotaSinSegurosNum,
                       saldoCapital: input.saldoCapital,
                       tasaMensualPct: calc ? calc.tasaMensual * 100 : 0,
+                      interesMensual: interesMensualExtracto,
+                      capitalMensual: capitalMensualExtracto,
+                      beneficioFrechMensual: beneficioFrechMensualExtracto,
                     }}
                   />
                 );
