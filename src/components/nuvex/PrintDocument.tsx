@@ -458,6 +458,7 @@ function CurrentStateCard(props: {
   tieneCobertura: boolean; tipoBeneficio: string;
   valorBeneficioMensual: number; cuotaConCobertura: number;
   cuotasPendientesConCobertura: number;
+  saldoCapital: number;
 }) {
   const tieneInteres = typeof props.interesMensual === "number";
   const tieneCapital = typeof props.capitalMensual === "number";
