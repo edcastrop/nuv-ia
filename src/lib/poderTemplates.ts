@@ -72,10 +72,23 @@ const VAR_KEYS: (keyof PoderVariables)[] = [
   "CIUDAD_APODERADO", "FECHA",
 ];
 
+/** Formatea una cédula colombiana con separadores de miles ("91523377" → "91.523.377"). */
+export function formatCedulaCO(value: string | null | undefined): string {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  const digits = raw.replace(/\D+/g, "");
+  if (!digits) return raw;
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+const CEDULA_KEYS = new Set<keyof PoderVariables>(["CEDULA_CLIENTE", "CEDULA_APODERADO"]);
+
 function subst(text: string, v: PoderVariables): string {
   let out = text;
   for (const k of VAR_KEYS) {
-    out = out.replace(new RegExp(`{{\\s*${k}\\s*}}`, "g"), String(v[k] ?? ""));
+    const raw = v[k] ?? "";
+    const val = CEDULA_KEYS.has(k) ? formatCedulaCO(String(raw)) : String(raw);
+    out = out.replace(new RegExp(`{{\\s*${k}\\s*}}`, "g"), val);
   }
   return out;
 }
