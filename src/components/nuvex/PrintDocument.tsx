@@ -572,8 +572,9 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
   return <div style={{ marginTop: 9 }}><div style={{ color: C.muted, fontSize: 9, fontWeight: 950, letterSpacing: "0.18em", marginBottom: 3 }}>{title}</div>{children}</div>;
 }
 
-function Row({ label, value, red }: { label: string; value: string; red?: boolean }) {
-  return <div style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 8.5, lineHeight: 1.28, fontWeight: 750, color: C.text }}><span>{label}</span><b style={{ color: red ? C.red : C.ink, textAlign: "right", fontWeight: 950 }}>{value}</b></div>;
+function Row({ label, value, red, green }: { label: string; value: string; red?: boolean; green?: boolean }) {
+  const valueColor = green ? C.greenDeep : red ? C.red : C.ink;
+  return <div style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 8.5, lineHeight: 1.28, fontWeight: 750, color: C.text }}><span>{label}</span><b style={{ color: valueColor, textAlign: "right", fontWeight: 950 }}>{value}</b></div>;
 }
 
 function MiniMetric({ icon, label, value, suffix, sub }: { icon: ReactNode; label: string; value: string; suffix?: string; sub: string }) {
