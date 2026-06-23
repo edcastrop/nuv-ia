@@ -328,6 +328,8 @@ export function PrintDocument(props: Props) {
             recAñoFin={añoFinOpt}
             recAñosElim={añosEliminadosEntero}
             recCuotasElim={cuotasEliminadas}
+            recAhorroIntereses={recommended.ahorroIntereses}
+            recAhorroSeguros={recommended.ahorroSeguros}
             recAhorroTotal={recommended.ahorroTotal}
             recHonorarios={honorariosFinales}
             totalEscenarios={totalEscenarios}
