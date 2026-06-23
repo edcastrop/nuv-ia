@@ -100,22 +100,22 @@ interface Props {
 }
 
 const C = {
-  black: "#030A12",
-  navy: "#071A3D",
-  navy2: "#0B214A",
-  ink: NUVEX.negro,
-  text: "#1D2638",
-  muted: "#667087",
-  line: "#E1E6EE",
-  softLine: "#EEF2F6",
-  panel: "#F8FAFC",
-  blue: NUVEX.azul,
-  green: NUVEX.verde,
-  greenDeep: "#23814B",
-  greenDark: "#17683B",
-  greenSoft: "#EAF6EE",
-  red: "#E05252",
-  redSoft: "#FDE9E9",
+  black:     "#030A12",
+  navy:      "#071A3D",
+  navy2:     "#0B214A",
+  ink:       NUVEX.negro,
+  text:      "#1D2638",
+  muted:     "#667087",
+  line:      "#E1E6EE",
+  softLine:  "#EEF2F6",
+  panel:     NUVEX.gris,
+  blue:      NUVEX.azul,
+  green:     NUVEX.verde,
+  greenDeep: NUVEX.verdeTextoFuerte,
+  greenDark: NUVEX.verdeTextoFuerte,
+  greenSoft: NUVEX.verdeClaro,
+  red:       "#E05252",
+  redSoft:   "#FDE9E9",
 };
 
 const FONT = "'Inter','Manrope','SF Pro Display',Arial,sans-serif";
