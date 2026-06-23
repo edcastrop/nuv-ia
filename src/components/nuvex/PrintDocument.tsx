@@ -265,9 +265,11 @@ export function PrintDocument(props: Props) {
               dineroPagado={yaPagado}
               interesesPagados={interesesPagados}
               capitalPagado={capitalPagado}
+              segurosPagados={Math.max(0, cuotasPagadas * segurosMensuales)}
               totalPendiente={faltaPagarSin}
               costoTotal={costoTotalSin}
-              veces={vecesSin}
+              vecesPagado={desembolsoRef > 0 ? yaPagado / desembolsoRef : 0}
+              vecesPendiente={desembolsoRef > 0 ? faltaPagarSin / desembolsoRef : vecesSin}
               tieneCobertura={tieneCobertura}
               tipoBeneficio={tipoBeneficio}
               valorBeneficioMensual={valorBeneficioMensual}
@@ -457,7 +459,9 @@ function CurrentStateCard(props: {
   interesMensual: number | undefined; capitalMensual: number | undefined;
   beneficioFrechMensual: number | undefined;
   dineroPagado: number;
-  interesesPagados: number; capitalPagado: number; totalPendiente: number; costoTotal: number; veces: number;
+  interesesPagados: number; capitalPagado: number; segurosPagados: number;
+  totalPendiente: number; costoTotal: number;
+  vecesPagado: number; vecesPendiente: number;
   tieneCobertura: boolean; tipoBeneficio: string;
   valorBeneficioMensual: number; cuotaConCobertura: number;
   cuotasPendientesConCobertura: number;
@@ -516,6 +520,7 @@ function CurrentStateCard(props: {
         <Group title="PAGADO A LA FECHA">
           <Row label="Dinero pagado" value={formatCOP(props.dineroPagado)} red />
           <Row label="Intereses pagados" value={formatCOP(props.interesesPagados)} red />
+          <Row label="Seguros pagados" value={formatCOP(props.segurosPagados)} red />
           <Row label="Capital pagado" value={formatCOP(props.capitalPagado)} green />
         </Group>
 
@@ -523,9 +528,15 @@ function CurrentStateCard(props: {
           <Row label="Dinero pendiente" value={formatCOP(props.totalPendiente)} />
           <Row label="Costo total proyectado" value={formatCOP(props.costoTotal)} red />
         </Group>
-        <div style={{ marginTop: 9, background: "linear-gradient(180deg,#FFF0F0,#FDE4E4)", border: `1px solid #F7CCCC`, borderRadius: 8, padding: "10px 11px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ color: C.red, fontSize: 9, fontWeight: 950, letterSpacing: "0.12em" }}>N° VECES PAGADO</div>
-          <div style={{ color: C.red, fontSize: 24, fontWeight: 950, lineHeight: 1 }}>{formatNumber(props.veces, 2)}x</div>
+        <div style={{ marginTop: 9, background: "linear-gradient(180deg,#FFF0F0,#FDE4E4)", border: `1px solid #F7CCCC`, borderRadius: 8, padding: "10px 11px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 2, borderRight: "1px solid #F2BCBC", paddingRight: 8 }}>
+            <div style={{ color: C.red, fontSize: 8.4, fontWeight: 950, letterSpacing: "0.1em" }}>N° VECES PAGADO</div>
+            <div style={{ color: C.red, fontSize: 20, fontWeight: 950, lineHeight: 1 }}>{formatNumber(props.vecesPagado, 2)}x</div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 2, paddingLeft: 4 }}>
+            <div style={{ color: C.red, fontSize: 8.4, fontWeight: 950, letterSpacing: "0.1em" }}>N° VECES PENDIENTE</div>
+            <div style={{ color: C.red, fontSize: 20, fontWeight: 950, lineHeight: 1 }}>{formatNumber(props.vecesPendiente, 2)}x</div>
+          </div>
         </div>
       </div>
     </div>
