@@ -180,51 +180,46 @@ export function drawBrandFooter(pdf: jsPDF, pageNum: number, totalPages: number)
 }
 
 export function drawPoderHeader(pdf: jsPDF, logoDataUrl: string, meta: BrandMeta) {
-  const { pageW, marginX, headerH } = LAYOUT;
+  const { pageW, marginX } = LAYOUT;
+  const H = 150; // header ampliado para logo grande
 
-  // 1. Fondo negro completo del header
+  // Fondo negro
   pdf.setFillColor(28, 28, 28);
-  pdf.rect(0, 0, pageW, headerH, "F");
+  pdf.rect(0, 0, pageW, H, "F");
 
-  // 2. Triángulo blanco en esquina inferior derecha
-  //    Vértices: (258, 96) → (612, 0) → (612, 96)
-  //    Efecto: corte diagonal que deja negro a la izquierda y blanco a la derecha
+  // Triángulo blanco esquina inferior derecha
   pdf.setFillColor(255, 255, 255);
-  pdf.triangle(258, headerH, pageW, 0, pageW, headerH, "F");
+  pdf.triangle(pageW * 0.42, H, pageW, 0, pageW, H, "F");
 
-  // 3. Logo NUVEX sobre el negro (lado izquierdo)
-  //    Restringido a x: 48–240 para no pisar el triángulo blanco
+  // Logo NUVEX sobre el negro — al menos al doble del anterior (90 → 180)
   if (logoDataUrl) {
     try {
-      pdf.addImage(logoDataUrl, "PNG", marginX, (headerH - 72) / 2, 0, 72);
+      pdf.addImage(logoDataUrl, "PNG", marginX - 16, (H - 180) / 2, 180, 180);
     } catch { /* ignore */ }
   }
 
-  // 4. Metadatos sobre el blanco (lado derecho, texto oscuro)
-  const rightX = pageW - marginX;
-
-  // Solo mostrar consecutivo, sin label de tipo
+  // Consecutivo a la derecha sobre el blanco
   if (meta.consecutivo) {
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(13);
     pdf.setTextColor(30, 58, 120);
-    pdf.text(meta.consecutivo, rightX, (headerH / 2) + 4, { align: "right" });
+    pdf.text(meta.consecutivo, pageW - marginX, H / 2 + 4, { align: "right" });
   }
 }
 
 export function drawPoderFooter(pdf: jsPDF, pageNum: number, totalPages: number) {
   const { pageW, pageH, marginX, footerH } = LAYOUT;
-  const y0 = pageH - footerH;   // y0 = 728
+  const y0 = pageH - footerH;
 
-  // Fondo negro completo
+  // Fondo negro
   pdf.setFillColor(28, 28, 28);
   pdf.rect(0, y0, pageW, footerH, "F");
 
-  // Triángulo blanco esquina inferior izquierda (espejo del header)
+  // Triángulo blanco esquina inferior izquierda
   pdf.setFillColor(255, 255, 255);
   pdf.triangle(0, y0, 200, y0, 0, pageH, "F");
 
-  // Número de página — extremo derecho, centrado verticalmente en el negro
+  // Paginación derecha
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(8);
   pdf.setTextColor(255, 255, 255);
@@ -235,22 +230,17 @@ export function drawPoderFooter(pdf: jsPDF, pageNum: number, totalPages: number)
     { align: "right" }
   );
 
-  // Datos corporativos con iconos Unicode — a la derecha del triángulo
+  // Datos corporativos — solo texto, sin íconos
   const dataX = 225;
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(8);
-  pdf.setTextColor(195, 210, 230);
+  pdf.setTextColor(225, 232, 245);
 
-  // Línea 1: 📍 dirección
-  pdf.text("\u{1F4CD} Carrera 16 # 37-48 piso 4 · Bucaramanga", dataX, y0 + 18);
-
-  // Línea 2: 🌐 web  y  📱 teléfono
-  pdf.text("\u{1F310} www.nuvex.com.co", dataX, y0 + 32);
-  pdf.text("\u{1F4F1} +57 316 4023779", dataX + 160, y0 + 32);
-
-  // Línea 3: ✉ correo
-  pdf.text("\u2709  juridica@nuvex.com.co", dataX, y0 + 46);
+  pdf.text("Carrera 16 # 37-48 piso 4  ·  Bucaramanga", dataX, y0 + 18);
+  pdf.text("www.nuvex.com.co     ·     +57 316 4023779", dataX, y0 + 32);
+  pdf.text("juridica@nuvex.com.co", dataX, y0 + 46);
 }
+
 
 /**
  * Aplica header+footer a TODAS las páginas existentes del PDF (con paginado real).
