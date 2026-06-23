@@ -220,9 +220,13 @@ export function drawPoderFooter(pdf: jsPDF, pageNum: number, totalPages: number)
   pdf.setFillColor(28, 28, 28);
   pdf.rect(0, y0, pageW, footerH, "F");
 
-  // Triángulo blanco esquina inferior izquierda
+  // Bloque blanco rectangular izquierda (en vez de triángulo)
   pdf.setFillColor(255, 255, 255);
-  pdf.triangle(0, y0, 200, y0, 0, pageH, "F");
+  pdf.rect(0, y0, 160, footerH, "F");
+
+  // Acento verde NUVEX superior
+  pdf.setFillColor(...BRAND.green);
+  pdf.rect(0, y0 - 3, pageW, 3, "F");
 
   // Paginación derecha
   pdf.setFont("helvetica", "bold");
