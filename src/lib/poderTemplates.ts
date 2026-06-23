@@ -237,8 +237,8 @@ export function renderPoderTemplate(id: PoderTemplateId, v: PoderVariables): Doc
         return {
           type: "signature",
           columns: [
-            { label: `EL ${v.CALIDAD_CLIENTE.toUpperCase()} (PODERDANTE)`, name: v.NOMBRE_CLIENTE, cc: `C.C. ${v.CEDULA_CLIENTE} de ${v.LUGAR_EXPEDICION_CLIENTE}` },
-            { label: "EL APODERADO", name: v.NOMBRE_APODERADO, cc: `C.C. ${v.CEDULA_APODERADO} de ${v.LUGAR_EXPEDICION_APODERADO}` },
+            { label: `EL ${v.CALIDAD_CLIENTE.toUpperCase()} (PODERDANTE)`, name: v.NOMBRE_CLIENTE, cc: `C.C. ${formatCedulaCO(v.CEDULA_CLIENTE)} de ${v.LUGAR_EXPEDICION_CLIENTE}` },
+            { label: "EL APODERADO", name: v.NOMBRE_APODERADO, cc: `C.C. ${formatCedulaCO(v.CEDULA_APODERADO)} de ${v.LUGAR_EXPEDICION_APODERADO}` },
           ],
         };
     }
