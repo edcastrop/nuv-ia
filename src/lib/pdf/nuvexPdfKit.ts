@@ -181,20 +181,25 @@ export function drawBrandFooter(pdf: jsPDF, pageNum: number, totalPages: number)
 
 export function drawPoderHeader(pdf: jsPDF, logoDataUrl: string, meta: BrandMeta) {
   const { pageW, marginX } = LAYOUT;
-  const H = 150; // header ampliado para logo grande
+  const H = 170; // header ampliado para logo aún más grande
 
-  // Fondo negro
+  // Fondo negro a ancho completo
   pdf.setFillColor(28, 28, 28);
   pdf.rect(0, 0, pageW, H, "F");
 
-  // Triángulo blanco esquina inferior derecha
+  // Bloque blanco rectangular a la derecha (en vez de triángulo)
+  const whiteBlockX = pageW * 0.58;
   pdf.setFillColor(255, 255, 255);
-  pdf.triangle(pageW * 0.42, H, pageW, 0, pageW, H, "F");
+  pdf.rect(whiteBlockX, 0, pageW - whiteBlockX, H, "F");
 
-  // Logo NUVEX sobre el negro — al menos al doble del anterior (90 → 180)
+  // Acento verde NUVEX inferior
+  pdf.setFillColor(...BRAND.green);
+  pdf.rect(0, H - 4, pageW, 4, "F");
+
+  // Logo NUVEX sobre el negro — al doble del anterior (180 → ~220 efectivo)
   if (logoDataUrl) {
     try {
-      pdf.addImage(logoDataUrl, "PNG", marginX - 16, (H - 180) / 2, 180, 180);
+      pdf.addImage(logoDataUrl, "PNG", marginX - 24, (H - 220) / 2, 220, 220);
     } catch { /* ignore */ }
   }
 
@@ -215,9 +220,13 @@ export function drawPoderFooter(pdf: jsPDF, pageNum: number, totalPages: number)
   pdf.setFillColor(28, 28, 28);
   pdf.rect(0, y0, pageW, footerH, "F");
 
-  // Triángulo blanco esquina inferior izquierda
+  // Bloque blanco rectangular izquierda (en vez de triángulo)
   pdf.setFillColor(255, 255, 255);
-  pdf.triangle(0, y0, 200, y0, 0, pageH, "F");
+  pdf.rect(0, y0, 160, footerH, "F");
+
+  // Acento verde NUVEX superior
+  pdf.setFillColor(...BRAND.green);
+  pdf.rect(0, y0 - 3, pageW, 3, "F");
 
   // Paginación derecha
   pdf.setFont("helvetica", "bold");
