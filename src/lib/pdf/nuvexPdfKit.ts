@@ -766,6 +766,9 @@ export function writeRichText(
     cursorY += lineH;
   }
   return cursorY + (opts.lineGap ?? 0);
+}
+
+
 
 // ─────────────────────────────── Firmas ─────────────────────────────────────
 
