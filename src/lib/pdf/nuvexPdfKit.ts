@@ -54,7 +54,7 @@ export async function loadLogoDataURL(): Promise<string> {
   return logoDataUrlPromise;
 }
 
-/** Carga el logo y lo tinta al color deseado (canvas, client-side only). */
+/** Carga el logo, recorta su transparencia y lo tinta al color deseado (canvas, client-side only). */
 export async function loadTintedLogoDataURL(targetColor: string): Promise<string> {
   const original = await loadLogoDataURL();
   if (!original || typeof document === "undefined") return original;
@@ -67,11 +67,42 @@ export async function loadTintedLogoDataURL(targetColor: string): Promise<string
   return new Promise<string>((resolve) => {
     const img = new Image();
     img.onload = () => {
+      const source = document.createElement("canvas");
+      source.width = img.width;
+      source.height = img.height;
+      const sourceCtx = source.getContext("2d")!;
+      sourceCtx.drawImage(img, 0, 0);
+
+      // El PNG original es cuadrado y trae mucho aire transparente. Si lo
+      // insertamos como 220×220 el logo visible queda pequeño. Recortamos el
+      // bbox alpha para que el tamaño en el PDF corresponda al logo REAL.
+      const data = sourceCtx.getImageData(0, 0, source.width, source.height).data;
+      let minX = source.width;
+      let minY = source.height;
+      let maxX = 0;
+      let maxY = 0;
+      for (let y = 0; y < source.height; y += 1) {
+        for (let x = 0; x < source.width; x += 1) {
+          if (data[(y * source.width + x) * 4 + 3] > 12) {
+            if (x < minX) minX = x;
+            if (y < minY) minY = y;
+            if (x > maxX) maxX = x;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+
+      const pad = 10;
+      const cropX = Math.max(0, minX - pad);
+      const cropY = Math.max(0, minY - pad);
+      const cropW = Math.min(source.width - cropX, maxX - minX + 1 + pad * 2);
+      const cropH = Math.min(source.height - cropY, maxY - minY + 1 + pad * 2);
+
       const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
+      canvas.width = cropW || img.width;
+      canvas.height = cropH || img.height;
       const ctx = canvas.getContext("2d")!;
-      ctx.drawImage(img, 0, 0);
+      ctx.drawImage(source, cropX, cropY, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
       ctx.globalCompositeOperation = "source-atop";
       ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -209,14 +240,14 @@ export function drawBrandFooter(pdf: jsPDF, pageNum: number, totalPages: number)
 
 export function drawPoderHeader(pdf: jsPDF, logoDataUrl: string, meta: BrandMeta) {
   const { pageW, marginX } = LAYOUT;
-  const H = 170; // header ampliado para logo aún más grande
+  const H = 170; // header ampliado para logo grande
 
   // Fondo negro a ancho completo
   pdf.setFillColor(28, 28, 28);
   pdf.rect(0, 0, pageW, H, "F");
 
-  // Bloque blanco rectangular a la derecha (en vez de triángulo)
-  const whiteBlockX = pageW * 0.58;
+  // Bloque blanco rectangular a la derecha — 100% recto, sin diagonales.
+  const whiteBlockX = 392;
   pdf.setFillColor(255, 255, 255);
   pdf.rect(whiteBlockX, 0, pageW - whiteBlockX, H, "F");
 
@@ -224,10 +255,10 @@ export function drawPoderHeader(pdf: jsPDF, logoDataUrl: string, meta: BrandMeta
   pdf.setFillColor(...BRAND.green);
   pdf.rect(0, H - 4, pageW, 4, "F");
 
-  // Logo NUVEX sobre el negro — al doble del anterior (180 → ~220 efectivo)
+  // Logo NUVEX azul claro (#A8C5FF), recortado y realmente grande.
   if (logoDataUrl) {
     try {
-      pdf.addImage(logoDataUrl, "PNG", marginX - 24, (H - 220) / 2, 220, 220);
+      pdf.addImage(logoDataUrl, "PNG", marginX - 22, 23, 300, 145);
     } catch { /* ignore */ }
   }
 
@@ -248,7 +279,7 @@ export function drawPoderFooter(pdf: jsPDF, pageNum: number, totalPages: number)
   pdf.setFillColor(28, 28, 28);
   pdf.rect(0, y0, pageW, footerH, "F");
 
-  // Bloque blanco rectangular izquierda (en vez de triángulo)
+  // Bloque blanco rectangular izquierda — 100% recto, sin diagonales.
   pdf.setFillColor(255, 255, 255);
   pdf.rect(0, y0, 160, footerH, "F");
 
@@ -298,9 +329,9 @@ function drawIconPin(pdf: jsPDF, x: number, y: number) {
   pdf.setDrawColor(225, 232, 245);
   pdf.setFillColor(225, 232, 245);
   pdf.setLineWidth(0.6);
-  // gota: círculo + triángulo
+  // pin minimalista sin triángulos: círculo + tallo.
   pdf.circle(x + 3.5, y + 2.5, 2.2, "S");
-  pdf.triangle(x + 1.5, y + 4, x + 5.5, y + 4, x + 3.5, y + 7, "F");
+  pdf.line(x + 3.5, y + 4.8, x + 3.5, y + 7);
   pdf.circle(x + 3.5, y + 2.5, 0.7, "F");
 }
 
