@@ -79,6 +79,12 @@ export function UVRSimulator({
   simuladorReturn?: { maestroId?: string; modo?: "pesos" | "uvr" };
   fromSimulador?: boolean;
 } = {}) {
+  const parseOcrMoney = (v: string | number | null | undefined) => {
+    if (v === null || v === undefined) return undefined;
+    if (typeof v === "string" && !v.trim()) return undefined;
+    const n = parseCurrency(v);
+    return Number.isFinite(n) ? n : undefined;
+  };
   const init = initialExpediente;
   const initCred = (init?.credito_data ?? {}) as Record<string, string>;
   const initClient = (init?.cliente_data as ClientData | undefined) ?? undefined;
@@ -109,6 +115,13 @@ export function UVRSimulator({
       initCred.cuotasEliminarManual && !initCred.nuevaCuotaManual
         ? ("cuotas" as const)
         : ("cuota" as const),
+    interesMensualExtracto: initCred.interesMensualExtracto ?? initCred.interesMensual ?? "",
+    capitalMensualExtracto: initCred.capitalMensualExtracto ?? initCred.capitalMensual ?? "",
+    beneficioFrechMensualExtracto:
+      initCred.beneficioFrechMensualExtracto ??
+      initCred.beneficioFrechMensual ??
+      initCred.valorBeneficio ??
+      "",
     propuestasComerciales: parseStoredJson<PropuestasComercialesDraft>(initCred.propuestasComerciales),
   });
   const monedaAlerta = useMonedaMismatchAlert();
@@ -138,9 +151,9 @@ export function UVRSimulator({
     draft.modoPersonalizada,
   );
   // Lecturas OCR mensuales del extracto (solo para el PDF de propuesta).
-  const [interesMensualExtracto, setInteresMensualExtracto] = useState<number | undefined>(undefined);
-  const [capitalMensualExtracto, setCapitalMensualExtracto] = useState<number | undefined>(undefined);
-  const [beneficioFrechMensualExtracto, setBeneficioFrechMensualExtracto] = useState<number | undefined>(undefined);
+  const [interesMensualExtracto, setInteresMensualExtracto] = useState<number | undefined>(() => parseOcrMoney(draft.interesMensualExtracto));
+  const [capitalMensualExtracto, setCapitalMensualExtracto] = useState<number | undefined>(() => parseOcrMoney(draft.capitalMensualExtracto));
+  const [beneficioFrechMensualExtracto, setBeneficioFrechMensualExtracto] = useState<number | undefined>(() => parseOcrMoney(draft.beneficioFrechMensualExtracto));
   const [propuestasComercialesDraft, setPropuestasComercialesDraft] =
     useState<PropuestasComercialesDraft | undefined>(() => draft.propuestasComerciales);
   const [propuestasComercialesSnapshot, setPropuestasComercialesSnapshot] =
@@ -178,6 +191,9 @@ export function UVRSimulator({
       teaCobrada,
       variacionUVR,
       variacionUVRPropuestas,
+      interesMensualExtracto,
+      capitalMensualExtracto,
+      beneficioFrechMensualExtracto,
       nuevaCuotaManual,
       cuotasEliminarManual,
       modoPersonalizada,
@@ -198,6 +214,9 @@ export function UVRSimulator({
       teaCobrada,
       variacionUVR,
       variacionUVRPropuestas,
+      interesMensualExtracto,
+      capitalMensualExtracto,
+      beneficioFrechMensualExtracto,
       nuevaCuotaManual,
       cuotasEliminarManual,
       modoPersonalizada,
@@ -502,14 +521,9 @@ export function UVRSimulator({
             } else {
               setCobertura(defaultCobertura);
             }
-            const parseOcr = (v?: string) => {
-              if (!v || !v.trim()) return undefined;
-              const n = parseCurrency(v);
-              return Number.isFinite(n) ? n : undefined;
-            };
-            setInteresMensualExtracto(parseOcr(p.extracto?.interesMensual));
-            setCapitalMensualExtracto(parseOcr(p.extracto?.capitalMensual));
-            setBeneficioFrechMensualExtracto(parseOcr(p.extracto?.beneficioFrechMensual));
+            setInteresMensualExtracto(parseOcrMoney(p.extracto?.interesMensual));
+            setCapitalMensualExtracto(parseOcrMoney(p.extracto?.capitalMensual));
+            setBeneficioFrechMensualExtracto(parseOcrMoney(p.extracto?.beneficioFrechMensual));
             // Auto-QA condicional: sólo cuando el simulador fue abierto desde un
             // Expediente Maestro (init?.id). En modo standalone no se ejecuta.
             if (init?.id && p.raw) {
@@ -874,6 +888,9 @@ export function UVRSimulator({
                         segurosMensuales: cobertura.segurosMensuales || seguros,
                         tieneBeneficio: cobertura.activo ? "si" : "no",
                         coberturaFresh: coberturaFresh as unknown as string,
+                        interesMensualExtracto: interesMensualExtracto === undefined ? "" : String(Math.round(interesMensualExtracto)),
+                        capitalMensualExtracto: capitalMensualExtracto === undefined ? "" : String(Math.round(capitalMensualExtracto)),
+                        beneficioFrechMensualExtracto: beneficioFrechMensualExtracto === undefined ? "" : String(Math.round(beneficioFrechMensualExtracto)),
                         archivoPath: extractoArchivoPath,
                       },
                       propuesta: {
