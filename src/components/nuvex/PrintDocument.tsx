@@ -746,6 +746,8 @@ function mapComercialesToAltRow(propuestas: PropuestaComercialPdfRow[], cuotaAct
       añosEliminados: p.añosEliminados,
       cuotasEliminadas: p.cuotasEliminadas,
       ahorroTotal: p.ahorroTotal,
+      ahorroIntereses: (p as any).ahorroIntereses ?? 0,
+      ahorroSeguros: (p as any).ahorroSeguros ?? 0,
       añoFinOpt: fechaFin.getFullYear(),
       añosOpt: p.nuevoPlazo / 12,
       honorariosFinal: p.honorarios,
