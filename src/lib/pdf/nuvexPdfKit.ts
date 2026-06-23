@@ -240,33 +240,28 @@ export function drawBrandFooter(pdf: jsPDF, pageNum: number, totalPages: number)
 
 export function drawPoderHeader(pdf: jsPDF, logoDataUrl: string, meta: BrandMeta) {
   const { pageW, marginX } = LAYOUT;
-  const H = 170; // header ampliado para logo grande
+  const H = 130; // header compacto, 100% negro
 
-  // Fondo negro a ancho completo
+  // Fondo negro a ancho completo — sin bloques blancos.
   pdf.setFillColor(28, 28, 28);
   pdf.rect(0, 0, pageW, H, "F");
-
-  // Bloque blanco rectangular a la derecha — 100% recto, sin diagonales.
-  const whiteBlockX = 392;
-  pdf.setFillColor(255, 255, 255);
-  pdf.rect(whiteBlockX, 0, pageW - whiteBlockX, H, "F");
 
   // Acento verde NUVEX inferior
   pdf.setFillColor(...BRAND.green);
   pdf.rect(0, H - 4, pageW, 4, "F");
 
-  // Logo NUVEX azul claro (#A8C5FF), recortado y realmente grande.
+  // Logo NUVEX azul claro (#A8C5FF), tamaño moderado.
   if (logoDataUrl) {
     try {
-      pdf.addImage(logoDataUrl, "PNG", marginX - 22, 23, 300, 145);
+      pdf.addImage(logoDataUrl, "PNG", marginX - 12, 20, 190, 92);
     } catch { /* ignore */ }
   }
 
-  // Consecutivo a la derecha sobre el blanco
+  // Consecutivo a la derecha en blanco
   if (meta.consecutivo) {
     pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(13);
-    pdf.setTextColor(30, 58, 120);
+    pdf.setFontSize(12);
+    pdf.setTextColor(255, 255, 255);
     pdf.text(meta.consecutivo, pageW - marginX, H / 2 + 4, { align: "right" });
   }
 }
@@ -275,13 +270,9 @@ export function drawPoderFooter(pdf: jsPDF, pageNum: number, totalPages: number)
   const { pageW, pageH, marginX, footerH } = LAYOUT;
   const y0 = pageH - footerH;
 
-  // Fondo negro
+  // Fondo negro a ancho completo — sin bloques blancos.
   pdf.setFillColor(28, 28, 28);
   pdf.rect(0, y0, pageW, footerH, "F");
-
-  // Bloque blanco rectangular izquierda — 100% recto, sin diagonales.
-  pdf.setFillColor(255, 255, 255);
-  pdf.rect(0, y0, 160, footerH, "F");
 
   // Acento verde NUVEX superior
   pdf.setFillColor(...BRAND.green);
