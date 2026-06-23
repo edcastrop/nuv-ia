@@ -229,7 +229,7 @@ export function PrintDocument(props: Props) {
           <div style={{ display: "grid", gridTemplateColumns: "1.35fr 1fr", gap: 26, alignItems: "center" }}>
             <div>
               <div style={{ fontSize: 15, fontWeight: 800, color: C.text, marginBottom: 8 }}>Hola, <span style={{ color: C.blue }}>{primerNombre.toUpperCase()}</span></div>
-              <h1 style={{ margin: 0, color: "#080D1E", fontSize: 36, lineHeight: 1.02, fontWeight: 950, letterSpacing: 0 }}>
+              <h1 style={{ margin: 0, color: C.ink, fontSize: 36, lineHeight: 1.02, fontWeight: 950, letterSpacing: 0 }}>
                 RECUPERA <span style={{ color: C.greenDeep }}>{añosEliminadosEntero} AÑOS</span><br />DE TU VIDA FINANCIERA
               </h1>
               <p style={{ margin: "12px 0 0", fontSize: 13, lineHeight: 1.38, color: C.text, fontWeight: 600 }}>
