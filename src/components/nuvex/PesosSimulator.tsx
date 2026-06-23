@@ -17,6 +17,7 @@ import {
   calculatePesosManualByCuotas,
   calculatePesosProjection,
   pickBestProposal,
+  pmt,
   type PesosInput,
 } from "../../lib/finance";
 
