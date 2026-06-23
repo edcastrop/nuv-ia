@@ -457,7 +457,9 @@ function CurrentStateCard(props: {
   interesMensual: number | undefined; capitalMensual: number | undefined;
   beneficioFrechMensual: number | undefined;
   dineroPagado: number;
-  interesesPagados: number; capitalPagado: number; totalPendiente: number; costoTotal: number; veces: number;
+  interesesPagados: number; capitalPagado: number; segurosPagados: number;
+  totalPendiente: number; costoTotal: number;
+  vecesPagado: number; vecesPendiente: number;
   tieneCobertura: boolean; tipoBeneficio: string;
   valorBeneficioMensual: number; cuotaConCobertura: number;
   cuotasPendientesConCobertura: number;
