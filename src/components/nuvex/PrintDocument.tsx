@@ -24,7 +24,7 @@ import {
 import { NUVEX } from "./constants";
 import type { ClientData } from "./ClientFields";
 import { formatCOP, formatNumber } from "../../lib/format";
-import { valorEquivalenteHoyUniforme, factorInflacionAcumulado } from "../../lib/inflacionIPC";
+import { factorInflacionAcumulado } from "../../lib/inflacionIPC";
 import type { PesosPropuesta, UVRPropuesta } from "../../lib/finance";
 import type { PropuestaComercialPdfRow } from "./PropuestasComerciales";
 import { calcularMotor } from "../../lib/motorHonorarios";
@@ -269,8 +269,10 @@ export function PrintDocument(props: Props) {
               segurosPagados={Math.max(0, cuotasPagadas * segurosMensuales)}
               totalPendiente={faltaPagarSin}
               costoTotal={costoTotalSin}
-              perdidaPoderAdquisitivo={Math.max(0, valorEquivalenteHoyUniforme(yaPagado, cuotasPagadas) - yaPagado)}
-              inflacionSobreDesembolso={Math.max(0, desembolsoRef * (factorInflacionAcumulado(cuotasPagadas) - 1))}
+              mode={mode}
+              esLeasing={client.tipoProducto === "leasing"}
+              ivaLeasingPagado={mode === "pesos" && client.tipoProducto === "leasing" ? interesesPagados * 0.19 : 0}
+              reajusteUVRAcumulado={mode === "uvr" ? Math.max(0, desembolsoRef * (factorInflacionAcumulado(cuotasPagadas) - 1)) : 0}
               vecesPagado={desembolsoRef > 0 ? yaPagado / desembolsoRef : 0}
               vecesPendiente={desembolsoRef > 0 ? faltaPagarSin / desembolsoRef : vecesSin}
               tieneCobertura={tieneCobertura}
@@ -464,7 +466,10 @@ function CurrentStateCard(props: {
   dineroPagado: number;
   interesesPagados: number; capitalPagado: number; segurosPagados: number;
   totalPendiente: number; costoTotal: number;
-  perdidaPoderAdquisitivo: number; inflacionSobreDesembolso: number;
+  mode: "pesos" | "uvr";
+  esLeasing: boolean;
+  ivaLeasingPagado: number;
+  reajusteUVRAcumulado: number;
   vecesPagado: number; vecesPendiente: number;
   tieneCobertura: boolean; tipoBeneficio: string;
   valorBeneficioMensual: number; cuotaConCobertura: number;
@@ -525,12 +530,12 @@ function CurrentStateCard(props: {
           <Row label="Dinero pagado" value={formatCOP(props.dineroPagado)} red />
           <Row label="Intereses pagados" value={formatCOP(props.interesesPagados)} red />
           <Row label="Seguros pagados" value={formatCOP(props.segurosPagados)} red />
-          <Row label="Capital pagado" value={formatCOP(props.capitalPagado)} green />
-          {props.perdidaPoderAdquisitivo > 0 && (
-            <Row label="Pérdida poder adquisitivo (IPC)" value={formatCOP(props.perdidaPoderAdquisitivo)} red />
+          {props.mode === "pesos" && props.esLeasing && props.ivaLeasingPagado > 0 && (
+            <Row label="IVA leasing (19% interés)" value={formatCOP(props.ivaLeasingPagado)} red />
           )}
-          {props.inflacionSobreDesembolso > 0 && (
-            <Row label="Inflación acumulada s/ desembolso" value={formatCOP(props.inflacionSobreDesembolso)} red />
+          <Row label="Capital pagado" value={formatCOP(props.capitalPagado)} green />
+          {props.mode === "uvr" && props.reajusteUVRAcumulado > 0 && (
+            <Row label="Reajuste UVR acumulado" value={formatCOP(props.reajusteUVRAcumulado)} red />
           )}
         </Group>
 
