@@ -222,32 +222,29 @@ export function drawPoderHeader(pdf: jsPDF, logoDataUrl: string, meta: BrandMeta
 
 export function drawPoderFooter(pdf: jsPDF, pageNum: number, totalPages: number) {
   const { pageW, pageH, marginX, footerH } = LAYOUT;
-  const y0 = pageH - footerH;
+  const y0 = pageH - footerH;   // y0 = 728
 
-  // Fondo negro completo del footer
+  // 1. Fondo negro completo del footer
   pdf.setFillColor(28, 28, 28);
   pdf.rect(0, y0, pageW, footerH, "F");
 
-  // Triángulo blanco: corte diagonal espejo (esquina superior izquierda)
+  // 2. Triángulo blanco en esquina inferior izquierda (espejo del header)
+  //    Vértices: (0, y0) → (240, y0) → (0, 792)
   pdf.setFillColor(255, 255, 255);
-  pdf.triangle(
-    0,            y0,
-    pageW * 0.42, pageH,
-    0,            pageH,
-    "F"
-  );
+  pdf.triangle(0, y0, 240, y0, 0, pageH, "F");
 
-  // Datos corporativos sobre el negro (zona central-derecha)
-  const dataX = pageW * 0.42 + 16;
+  // 3. Datos corporativos sobre el negro (zona central-derecha)
+  //    Empieza en x=260 para no pisar el triángulo blanco
+  const dataX = 268;
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(7.5);
-  pdf.setTextColor(200, 215, 230);
+  pdf.setTextColor(195, 210, 230);
   pdf.text("Carrera 16 # 37-48 piso 4 Centro Bucaramanga", dataX, y0 + 16);
   pdf.text("Bogotá | Bucaramanga", dataX, y0 + 28);
   pdf.text("+57 316 4023779", dataX, y0 + 40);
   pdf.text("www.nuvex.com.co", dataX, y0 + 52);
 
-  // Número de página (extremo derecho)
+  // 4. Número de página (extremo derecho, blanco)
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(8);
   pdf.setTextColor(255, 255, 255);
