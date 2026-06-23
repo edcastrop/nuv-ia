@@ -101,20 +101,27 @@ type RawBlock =
   | { t: "title"; text: string }
   | { t: "subtitle"; text: string }
   | { t: "heading"; text: string }
-  | { t: "p"; text: string }
+  | { t: "p"; text: string; bold?: boolean; boldKeys?: (keyof PoderVariables)[]; boldStatic?: string[] }
   | { t: "sp"; size?: number }
   | { t: "sign" };
 
+const BODY_BOLD_KEYS: (keyof PoderVariables)[] = [
+  "NOMBRE_CLIENTE", "CEDULA_CLIENTE",
+  "NOMBRE_APODERADO", "CEDULA_APODERADO", "CELULAR_APODERADO",
+];
+
 const TPL_PODER_GENERAL_BANCOS: RawBlock[] = [
-  { t: "p", text: "Señores:" },
-  { t: "p", text: "{{BANCO}}" },
+  { t: "p", text: "Señores:", bold: true },
+  { t: "p", text: "{{BANCO}}", bold: true },
   { t: "sp", size: 8 },
-  { t: "p", text: "Asunto: Poder especial" },
+  { t: "p", text: "Asunto: Poder especial", bold: true },
   { t: "sp", size: 12 },
   {
     t: "p",
     text:
       "Yo, {{NOMBRE_CLIENTE}}, mayor de edad, domiciliado en {{CIUDAD_CLIENTE}}, identificado con cédula de ciudadanía número {{CEDULA_CLIENTE}} de {{LUGAR_EXPEDICION_CLIENTE}}, por medio del presente escrito manifiesto que confiero PODER ESPECIAL a {{NOMBRE_APODERADO}}, identificada con cédula de ciudadanía número {{CEDULA_APODERADO}} de {{LUGAR_EXPEDICION_APODERADO}} y con notificaciones judiciales en el correo juridica@nuvex.com.co o al número celular {{CELULAR_APODERADO}} para que en mi nombre y representación inicie, tramite y lleve hasta su culminación proceso de modificación del plazo del {{TIPO_PRODUCTO}} identificado con el No. {{NUMERO_CREDITO}} ante {{BANCO}}, del cual soy {{CALIDAD_CLIENTE}}, de conformidad con la Ley 546 de 1999.",
+    boldKeys: BODY_BOLD_KEYS,
+    boldStatic: ["juridica@nuvex.com.co"],
   },
   { t: "sp", size: 8 },
   {
@@ -126,14 +133,14 @@ const TPL_PODER_GENERAL_BANCOS: RawBlock[] = [
   { t: "p", text: "Atentamente," },
   { t: "sp", size: 14 },
   { t: "p", text: "______________________________" },
-  { t: "p", text: "{{NOMBRE_CLIENTE}}" },
-  { t: "p", text: "{{CEDULA_CLIENTE}} de {{LUGAR_EXPEDICION_CLIENTE}}" },
+  { t: "p", text: "{{NOMBRE_CLIENTE}}", bold: true },
+  { t: "p", text: "{{CEDULA_CLIENTE}} de {{LUGAR_EXPEDICION_CLIENTE}}", bold: true },
   { t: "sp", size: 10 },
   { t: "p", text: "Acepto el poder conferido," },
   { t: "sp", size: 14 },
   { t: "p", text: "________________________________" },
-  { t: "p", text: "{{NOMBRE_APODERADO}}" },
-  { t: "p", text: "C.C {{CEDULA_APODERADO}} de {{LUGAR_EXPEDICION_APODERADO}}" },
+  { t: "p", text: "{{NOMBRE_APODERADO}}", bold: true },
+  { t: "p", text: "C.C {{CEDULA_APODERADO}} de {{LUGAR_EXPEDICION_APODERADO}}", bold: true },
 ];
 
 const TPL_FNA_CREDITO_HIPOTECARIO: RawBlock[] = [
