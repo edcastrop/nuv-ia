@@ -173,8 +173,8 @@ function renderPoderEspecial(pdf: jsPDF, doc: LegalDoc): void {
 
   // ── Comenzar debajo del header (sin hero, sin metaPanel) ─────────────────
 
-  // contentTop = 128 (justo debajo del header diagonal)
-  let y = contentTop + 4;
+  // Comenzar bajo el header ampliado del poder (H=150)
+  let y = 168;
 
   const onBreak = () => nextPage(pdf);
   const textW = pageW - marginX * 2;
