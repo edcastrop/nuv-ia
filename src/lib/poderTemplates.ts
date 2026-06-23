@@ -238,7 +238,23 @@ export function renderPoderTemplate(id: PoderTemplateId, v: PoderVariables): Doc
       case "title": return { type: "title", text: subst(b.text, v) };
       case "subtitle": return { type: "subtitle", text: subst(b.text, v) };
       case "heading": return { type: "heading", text: subst(b.text, v) };
-      case "p": return { type: "paragraph", text: subst(b.text, v) };
+      case "p": {
+        const tokens: string[] = [];
+        if (b.boldKeys) {
+          for (const k of b.boldKeys) {
+            const raw = v[k] ?? "";
+            const val = CEDULA_KEYS.has(k) ? formatCedulaCO(String(raw)) : String(raw);
+            if (val) tokens.push(val);
+          }
+        }
+        if (b.boldStatic) tokens.push(...b.boldStatic.filter(Boolean));
+        return {
+          type: "paragraph",
+          text: subst(b.text, v),
+          ...(b.bold ? { bold: true } : {}),
+          ...(tokens.length ? { boldTokens: tokens } : {}),
+        };
+      }
       case "sp": return { type: "spacer", size: b.size };
       case "sign":
         return {
