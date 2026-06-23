@@ -24,7 +24,7 @@ import {
   BRAND, LAYOUT, loadLogoDataURL, loadTintedLogoDataURL, applyChrome,
   createNuvexPdf, nextPage,
   drawHero,
-  writeText, drawSignatures, roundedRect,
+  writeText, writeRichText, drawSignatures, roundedRect,
   type BrandMeta,
 } from "./pdf/nuvexPdfKit";
 
