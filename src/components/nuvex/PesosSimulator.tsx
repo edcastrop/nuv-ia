@@ -902,41 +902,69 @@ export function PesosSimulator({
               (() => {
                 const d = computeDiscount(recomendada.honorarios, discount);
 
-                // ── Cálculo de capital e intereses pagados a la fecha ──────────────
-                const tasaMensual = input.tea > 0
-                  ? Math.pow(1 + input.tea / 100, 1 / 12) - 1
+                // ── Capital e intereses pagados — reconstrucción desde saldo actual ──
+                const tasaEANum = parsePercentage(tea);
+                const tasaMensual = tasaEANum > 0
+                  ? Math.pow(1 + tasaEANum / 100, 1 / 12) - 1
                   : 0;
 
                 let capitalPagadoCalc = 0;
                 let interesesPagadosCalc = 0;
+                let interesMensualActual = 0;
+                let capitalMensualActual = 0;
 
-                if (tasaMensual > 0 && valorDesembolsadoNum > 0 && cuotasPagadas > 0 && plazoInicial > 0) {
-                  let saldoPendiente = valorDesembolsadoNum;
-                  const cuotaFija = pmt(tasaMensual, plazoInicial, valorDesembolsadoNum);
-                  for (let i = 0; i < cuotasPagadas && saldoPendiente > 0; i++) {
-                    const interesCuota = saldoPendiente * tasaMensual;
-                    const capitalCuota = Math.max(0, cuotaFija - interesCuota);
-                    interesesPagadosCalc += interesCuota;
-                    capitalPagadoCalc += capitalCuota;
-                    saldoPendiente = Math.max(0, saldoPendiente - capitalCuota);
+                const cuotaSimBase = cuotaSinSegurosNum > 0 ? cuotaSinSegurosNum
+                  : Math.max(0, cuotaSimulacionNum - segurosNum);
+
+                if (tasaMensual > 0 && saldoCapitalNum > 0 && cuotasPendientes > 0) {
+                  // Interés de la cuota actual (sobre el saldo de HOY)
+                  interesMensualActual = saldoCapitalNum * tasaMensual;
+                  capitalMensualActual = Math.max(0, cuotaSimBase - interesMensualActual);
+
+                  if (cuotasPagadas > 0) {
+                    // Reconstruir saldo inicial: ir hacia atrás cuota por cuota desde saldo actual
+                    // Saldo N-1 = (SaldoN + Capital_N) donde Capital_N = Cuota - Interes_N
+                    // Interes_N = SaldoN-1 * tasa → despejando: SaldoN-1 = SaldoN / (1 - tasa)...
+                    // Fórmula directa: SaldoInicial = SaldoActual * (1+tasa)^cuotasPagadas
+                    //                               - cuotaFija * ((1+tasa)^cuotasPagadas - 1) / tasa
+                    // Pero más simple: usar el valor de desembolso si existe, si no calcular
+                    // saldo inicial desde fórmula de valor presente
+                    const saldoInicialReconstruido = valorDesembolsadoNum > 0
+                      ? valorDesembolsadoNum
+                      : saldoCapitalNum * Math.pow(1 + tasaMensual, cuotasPagadas)
+                        - cuotaSimBase * (Math.pow(1 + tasaMensual, cuotasPagadas) - 1) / tasaMensual;
+
+                    if (saldoInicialReconstruido > 0) {
+                      // Tabla de amortización desde saldo inicial hasta cuotasPagadas
+                      let saldo = saldoInicialReconstruido;
+                      const cuotaFija = pmt(tasaMensual, plazoInicial > 0 ? plazoInicial : cuotasPagadas + cuotasPendientes, saldoInicialReconstruido);
+                      for (let i = 0; i < cuotasPagadas && saldo > 0; i++) {
+                        const intCuota = saldo * tasaMensual;
+                        const capCuota = Math.max(0, cuotaFija - intCuota);
+                        interesesPagadosCalc += intCuota;
+                        capitalPagadoCalc += capCuota;
+                        saldo = Math.max(0, saldo - capCuota);
+                      }
+                      // Sanity check: capitalPagado no puede superar saldoInicial ni ser negativo
+                      capitalPagadoCalc = Math.min(capitalPagadoCalc, saldoInicialReconstruido);
+                      capitalPagadoCalc = Math.max(0, capitalPagadoCalc);
+                      interesesPagadosCalc = Math.max(0, interesesPagadosCalc);
+                    }
                   }
-                } else if (cuotasPagadas > 0 && input.saldoCapital > 0 && valorDesembolsadoNum > input.saldoCapital) {
-                  capitalPagadoCalc = valorDesembolsadoNum - input.saldoCapital;
+                } else if (saldoCapitalNum > 0 && valorDesembolsadoNum > saldoCapitalNum) {
+                  // Fallback sin tasa: capital pagado = diferencia entre desembolso y saldo actual
+                  capitalPagadoCalc = valorDesembolsadoNum - saldoCapitalNum;
                   interesesPagadosCalc = Math.max(0, dineroPagadoFecha - capitalPagadoCalc);
+                  interesMensualActual = 0;
+                  capitalMensualActual = 0;
                 }
 
-                // ── Cuotas pendientes con cobertura FRECH (máx 84 cuotas desde inicio) ──
+                // ── Cuotas pendientes con cobertura FRECH (84 cuotas máximo desde inicio) ──
                 const CUOTAS_MAX_FRECH = 84;
                 const tieneCobertura = cobertura?.activo === true || !!cobertura?.tipoBeneficio;
                 const cuotasPendientesConCobertura = tieneCobertura
                   ? Math.max(0, CUOTAS_MAX_FRECH - cuotasPagadas)
                   : 0;
-
-                // ── Interés y capital de la cuota mensual actual ───────────────────
-                const interesMensualActual = tasaMensual > 0 && input.saldoCapital > 0
-                  ? input.saldoCapital * tasaMensual
-                  : 0;
-                const capitalMensualActual = Math.max(0, cuotaSinSegurosNum - interesMensualActual);
 
                 return (
                   <PrintDocument
