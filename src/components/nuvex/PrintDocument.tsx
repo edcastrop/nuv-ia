@@ -608,7 +608,7 @@ function DarkBenefit({ icon, label, value, sub, right }: { icon: ReactNode; labe
 }
 
 function ScenariosTable(props: {
-  cuotaActual: number; plazoActual: number; añoFinActual: number; esc: Array<AltRow | undefined>; recNueva: number; recIncPct: number; recPlazo: number; recAñoFin: number; recAñosElim: number; recCuotasElim: number; recAhorroTotal: number; recHonorarios: number; totalEscenarios: number;
+  cuotaActual: number; plazoActual: number; añoFinActual: number; esc: Array<AltRow | undefined>; recNueva: number; recIncPct: number; recPlazo: number; recAñoFin: number; recAñosElim: number; recCuotasElim: number; recAhorroIntereses: number; recAhorroSeguros: number; recAhorroTotal: number; recHonorarios: number; totalEscenarios: number;
 }) {
   const labels = ["Conservador", "Equilibrado", "Acelerado"];
   const fmtVal = (v: AltRow | undefined, key: (r: AltRow) => string) => v ? key(v) : "—";
