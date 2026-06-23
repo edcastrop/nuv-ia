@@ -100,22 +100,22 @@ interface Props {
 }
 
 const C = {
-  black: "#030A12",
-  navy: "#071A3D",
-  navy2: "#0B214A",
-  ink: NUVEX.negro,
-  text: "#1D2638",
-  muted: "#667087",
-  line: "#E1E6EE",
-  softLine: "#EEF2F6",
-  panel: "#F8FAFC",
-  blue: NUVEX.azul,
-  green: NUVEX.verde,
-  greenDeep: "#23814B",
-  greenDark: "#17683B",
-  greenSoft: "#EAF6EE",
-  red: "#E05252",
-  redSoft: "#FDE9E9",
+  black:     "#030A12",
+  navy:      "#071A3D",
+  navy2:     "#0B214A",
+  ink:       NUVEX.negro,
+  text:      "#1D2638",
+  muted:     "#667087",
+  line:      "#E1E6EE",
+  softLine:  "#EEF2F6",
+  panel:     NUVEX.gris,
+  blue:      NUVEX.azul,
+  green:     NUVEX.verde,
+  greenDeep: NUVEX.verdeTextoFuerte,
+  greenDark: NUVEX.verdeTextoFuerte,
+  greenSoft: NUVEX.verdeClaro,
+  red:       "#E05252",
+  redSoft:   "#FDE9E9",
 };
 
 const FONT = "'Inter','Manrope','SF Pro Display',Arial,sans-serif";
@@ -229,7 +229,7 @@ export function PrintDocument(props: Props) {
           <div style={{ display: "grid", gridTemplateColumns: "1.35fr 1fr", gap: 26, alignItems: "center" }}>
             <div>
               <div style={{ fontSize: 15, fontWeight: 800, color: C.text, marginBottom: 8 }}>Hola, <span style={{ color: C.blue }}>{primerNombre.toUpperCase()}</span></div>
-              <h1 style={{ margin: 0, color: "#080D1E", fontSize: 36, lineHeight: 1.02, fontWeight: 950, letterSpacing: 0 }}>
+              <h1 style={{ margin: 0, color: C.ink, fontSize: 36, lineHeight: 1.02, fontWeight: 950, letterSpacing: 0 }}>
                 RECUPERA <span style={{ color: C.greenDeep }}>{añosEliminadosEntero} AÑOS</span><br />DE TU VIDA FINANCIERA
               </h1>
               <p style={{ margin: "12px 0 0", fontSize: 13, lineHeight: 1.38, color: C.text, fontWeight: 600 }}>
@@ -374,7 +374,7 @@ export function PrintDocument(props: Props) {
               <div style={{ marginTop: 7, fontSize: 12, fontWeight: 700 }}>Ya hicimos los cálculos. <span style={{ color: C.green }}>La decisión es tuya.</span></div>
             </div>
             <div>
-              <div style={{ background: `linear-gradient(180deg, #A7D3AE, ${C.green})`, color: "#061122", borderRadius: 5, padding: "13px 16px", textAlign: "center", fontSize: 13, fontWeight: 950 }}>QUIERO RECUPERAR MI TIEMPO FINANCIERO</div>
+              <div style={{ background: `linear-gradient(180deg, ${NUVEX.verdeFuerte}, ${NUVEX.verde})`, color: "#061122", borderRadius: 5, padding: "13px 16px", textAlign: "center", fontSize: 13, fontWeight: 950 }}>QUIERO RECUPERAR MI TIEMPO FINANCIERO</div>
               <div style={{ marginTop: 8, textAlign: "center", fontSize: 8, letterSpacing: "0.28em", fontWeight: 900, color: "rgba(255,255,255,0.7)" }}>PROPUESTA COMERCIAL VÁLIDA POR 48 HORAS</div>
             </div>
           </div>
