@@ -289,8 +289,8 @@ export function drawPoderFooter(pdf: jsPDF, pageNum: number, totalPages: number)
     { align: "right" }
   );
 
-  // Datos corporativos con íconos vectoriales minimalistas
-  const iconX = 220;
+  // Datos corporativos con íconos vectoriales minimalistas (alineados a la izquierda)
+  const iconX = marginX;
   const textX = iconX + 12;
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(8);
