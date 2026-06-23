@@ -48,8 +48,12 @@ export interface CreditStateData {
   cuotaSinSeguros?: number;
   saldoCapital?: number;
   tasaMensualPct?: number;
+  /** `undefined` → no detectado por OCR (renderizar "Pendiente lectura extracto"). */
   interesMensual?: number;
+  /** `undefined` → no detectado por OCR (renderizar "Pendiente lectura extracto"). */
   capitalMensual?: number;
+  /** `undefined` o 0 → no se muestra la fila. */
+  beneficioFrechMensual?: number;
   dineroPagado?: number;
   interesesPagados?: number;
   capitalPagado?: number;
