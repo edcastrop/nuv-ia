@@ -721,6 +721,8 @@ interface AltRow {
   añosEliminados: number;
   cuotasEliminadas: number;
   ahorroTotal: number;
+  ahorroIntereses: number;
+  ahorroSeguros: number;
   añoFinOpt: number;
   añosOpt: number;
   honorariosFinal: number;
