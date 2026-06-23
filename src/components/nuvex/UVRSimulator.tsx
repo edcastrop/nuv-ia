@@ -259,6 +259,62 @@ export function UVRSimulator({
   const saldoPesosNum = parseCurrency(saldoPesos);
   const dineroPagadoFecha = cuotaClienteHoyNum * cuotasPagadas;
 
+  // ── Capital e intereses pagados — reconstrucción desde saldo actual ──
+  const tasaEANum = parsePercentage(teaCobrada);
+  const tasaMensual = tasaEANum > 0
+    ? Math.pow(1 + tasaEANum / 100, 1 / 12) - 1
+    : 0;
+
+  let capitalPagadoCalc = 0;
+  let interesesPagadosCalc = 0;
+  let interesMensualActual = 0;
+  let capitalMensualActual = 0;
+
+  const cuotaSimBase = cuotaSinSegurosNum > 0
+    ? cuotaSinSegurosNum
+    : Math.max(0, cuotaSimulacionPesosNum - segurosNum);
+
+  if (tasaMensual > 0 && saldoPesosNum > 0 && cuotasPendientes > 0) {
+    interesMensualActual = saldoPesosNum * tasaMensual;
+    capitalMensualActual = Math.max(0, cuotaSimBase - interesMensualActual);
+
+    if (cuotasPagadas > 0) {
+      const saldoInicialReconstruido = valorDesembolsadoNum > 0
+        ? valorDesembolsadoNum
+        : saldoPesosNum * Math.pow(1 + tasaMensual, cuotasPagadas)
+          - cuotaSimBase * (Math.pow(1 + tasaMensual, cuotasPagadas) - 1) / tasaMensual;
+
+      if (saldoInicialReconstruido > 0) {
+        let saldo = saldoInicialReconstruido;
+        const cuotaFija = pmt(
+          tasaMensual,
+          plazoInicial > 0 ? plazoInicial : cuotasPagadas + cuotasPendientes,
+          saldoInicialReconstruido
+        );
+        for (let i = 0; i < cuotasPagadas && saldo > 0; i++) {
+          const intCuota = saldo * tasaMensual;
+          const capCuota = Math.max(0, cuotaFija - intCuota);
+          interesesPagadosCalc += intCuota;
+          capitalPagadoCalc += capCuota;
+          saldo = Math.max(0, saldo - capCuota);
+        }
+        capitalPagadoCalc = Math.min(capitalPagadoCalc, saldoInicialReconstruido);
+        capitalPagadoCalc = Math.max(0, capitalPagadoCalc);
+        interesesPagadosCalc = Math.max(0, interesesPagadosCalc);
+      }
+    }
+  } else if (saldoPesosNum > 0 && valorDesembolsadoNum > saldoPesosNum) {
+    capitalPagadoCalc = valorDesembolsadoNum - saldoPesosNum;
+    interesesPagadosCalc = Math.max(0, dineroPagadoFecha - capitalPagadoCalc);
+  }
+
+  // ── Cuotas pendientes con cobertura FRECH (84 cuotas máximo desde inicio) ──
+  const CUOTAS_MAX_FRECH = 84;
+  const tieneCobertura = cobertura?.activo === true || !!cobertura?.tipoBeneficio;
+  const cuotasPendientesConCobertura = tieneCobertura
+    ? Math.max(0, CUOTAS_MAX_FRECH - cuotasPagadas)
+    : 0;
+
   const input: UVRInput = useMemo(
     () => ({
       valorDesembolsado: valorDesembolsadoNum,
@@ -1063,9 +1119,17 @@ export function UVRSimulator({
                       cuotaSinSeguros: cuotaSinSegurosNum,
                       saldoCapital: saldoPesosNum,
                       tasaMensualPct: calc ? calc.tasaMensual * 100 : 0,
-                      interesMensual: interesMensualExtracto,
-                      capitalMensual: capitalMensualExtracto,
-                      beneficioFrechMensual: beneficioFrechMensualExtracto,
+                      capitalPagado: capitalPagadoCalc,
+                      interesesPagados: interesesPagadosCalc,
+                      interesMensual: interesMensualActual,
+                      capitalMensual: capitalMensualActual,
+                      tieneCobertura,
+                      tipoBeneficio: cobertura?.tipoBeneficio || "",
+                      valorBeneficioMensual: cobertura?.valorCobertura
+                        ? Number(cobertura.valorCobertura) : 0,
+                      cuotaConCobertura: cobertura?.cuotaPagadaCliente
+                        ? Number(cobertura.cuotaPagadaCliente) : 0,
+                      cuotasPendientesConCobertura,
                     }}
                   />
                 );
