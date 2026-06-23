@@ -96,7 +96,7 @@ const TPL_PODER_GENERAL_BANCOS: RawBlock[] = [
   { t: "p", text: "Señores:" },
   { t: "p", text: "{{BANCO}}" },
   { t: "sp", size: 8 },
-  { t: "p", text: "Asunto: Poder especial — {{TIPO_PRODUCTO}} {{BANCO}} No. {{NUMERO_CREDITO}}" },
+  { t: "p", text: "Asunto: Poder especial" },
   { t: "sp", size: 12 },
   {
     t: "p",
