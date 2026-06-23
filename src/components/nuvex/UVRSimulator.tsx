@@ -1045,6 +1045,9 @@ export function UVRSimulator({
                       cuotaSinSeguros: cuotaSinSegurosNum,
                       saldoCapital: saldoPesosNum,
                       tasaMensualPct: calc ? calc.tasaMensual * 100 : 0,
+                      interesMensual: interesMensualExtracto,
+                      capitalMensual: capitalMensualExtracto,
+                      beneficioFrechMensual: beneficioFrechMensualExtracto,
                     }}
                   />
                 );
