@@ -48,8 +48,12 @@ export interface CreditStateData {
   cuotaSinSeguros?: number;
   saldoCapital?: number;
   tasaMensualPct?: number;
+  /** `undefined` → no detectado por OCR (renderizar "Pendiente lectura extracto"). */
   interesMensual?: number;
+  /** `undefined` → no detectado por OCR (renderizar "Pendiente lectura extracto"). */
   capitalMensual?: number;
+  /** `undefined` o 0 → no se muestra la fila. */
+  beneficioFrechMensual?: number;
   dineroPagado?: number;
   interesesPagados?: number;
   capitalPagado?: number;
@@ -156,8 +160,11 @@ export function PrintDocument(props: Props) {
   const cuotaActual = scenario.cuotaActual;
   const nuevaCuota = scenario.nuevaCuota;
   const segurosMensuales = creditState?.seguros ?? 0;
-  const interesMensual = creditState?.interesMensual ?? 0;
-  const capitalMensual = creditState?.capitalMensual ?? Math.max(0, cuotaActual - segurosMensuales - interesMensual);
+  // Si OCR no leyó el dato, dejamos undefined para que el PDF renderice
+  // "Pendiente lectura extracto" en vez de mostrar $0.
+  const interesMensual = creditState?.interesMensual;
+  const capitalMensual = creditState?.capitalMensual;
+  const beneficioFrechMensual = creditState?.beneficioFrechMensual;
   const yaPagado = Math.max(0, dineroPagadoFecha);
   const interesesPagados = creditState?.interesesPagados ?? 0;
   const capitalPagado = creditState?.capitalPagado ?? 0;
@@ -244,6 +251,7 @@ export function PrintDocument(props: Props) {
               seguros={segurosMensuales}
               interesMensual={interesMensual}
               capitalMensual={capitalMensual}
+              beneficioFrechMensual={beneficioFrechMensual}
               dineroPagado={yaPagado}
               interesesPagados={interesesPagados}
               capitalPagado={capitalPagado}
@@ -427,9 +435,16 @@ function MetaPerson({ initials, name }: { initials: string; name: string }) {
 
 function CurrentStateCard(props: {
   banco: string; producto: string; plazoOriginal: number; cuotasPagadas: number; cuotasPendientes: number;
-  cuotaActual: number; seguros: number; interesMensual: number; capitalMensual: number; dineroPagado: number;
+  cuotaActual: number; seguros: number;
+  interesMensual: number | undefined; capitalMensual: number | undefined;
+  beneficioFrechMensual: number | undefined;
+  dineroPagado: number;
   interesesPagados: number; capitalPagado: number; totalPendiente: number; costoTotal: number; veces: number;
 }) {
+  // Si OCR no leyó el dato (undefined), mostramos "Pendiente lectura extracto".
+  // Si el extracto informa 0 explícitamente, sí mostramos $0.
+  const fmtOcr = (v: number | undefined) => (v === undefined ? "Pendiente lectura extracto" : formatCOP(v));
+  const tieneFrech = typeof props.beneficioFrechMensual === "number" && props.beneficioFrechMensual > 0;
   return (
     <div style={{ border: `1px solid ${C.line}`, borderRadius: 10, overflow: "hidden", background: "#fff" }}>
       <BlockHeader dark n="1." title="ESTADO ACTUAL DEL CRÉDITO" />
@@ -438,7 +453,15 @@ function CurrentStateCard(props: {
           <Row label="Banco" value={props.banco} /><Row label="Producto" value={props.producto} /><Row label="Plazo inicial" value={`${props.plazoOriginal} meses`} />
         </Group>
         <Group title="CUOTAS"><Row label="Canceladas" value={`${props.cuotasPagadas}`} /><Row label="Pendientes" value={`${props.cuotasPendientes}`} /></Group>
-        <Group title="CUOTA MENSUAL"><Row label="Cuota actual" value={formatCOP(props.cuotaActual)} /><Row label="Seguros" value={formatCOP(props.seguros)} /><Row label="Interés mensual" value={formatCOP(props.interesMensual)} /><Row label="Capital mensual" value={formatCOP(props.capitalMensual)} /></Group>
+        <Group title="CUOTA MENSUAL">
+          <Row label="Cuota actual" value={formatCOP(props.cuotaActual)} />
+          <Row label="Seguros" value={formatCOP(props.seguros)} />
+          <Row label="Interés mensual" value={fmtOcr(props.interesMensual)} />
+          <Row label="Capital mensual" value={fmtOcr(props.capitalMensual)} />
+          {tieneFrech && (
+            <Row label="Beneficio Fresh mensual" value={formatCOP(props.beneficioFrechMensual as number)} />
+          )}
+        </Group>
         <Group title="PAGADO A LA FECHA"><Row label="Dinero pagado" value={formatCOP(props.dineroPagado)} /><Row label="Intereses pagados" value={formatCOP(props.interesesPagados)} /><Row label="Capital pagado" value={formatCOP(props.capitalPagado)} /></Group>
         <Group title="PROYECCIÓN SIN NUVEX"><Row label="Dinero pendiente" value={formatCOP(props.totalPendiente)} /><Row label="Costo total proyectado" value={formatCOP(props.costoTotal)} red /></Group>
         <div style={{ marginTop: 9, background: "linear-gradient(180deg,#FFF0F0,#FDE4E4)", border: `1px solid #F7CCCC`, borderRadius: 8, padding: "10px 11px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>

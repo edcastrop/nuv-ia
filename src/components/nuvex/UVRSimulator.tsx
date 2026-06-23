@@ -137,6 +137,10 @@ export function UVRSimulator({
   const [modoPersonalizada, setModoPersonalizada] = useState<"cuota" | "cuotas">(
     draft.modoPersonalizada,
   );
+  // Lecturas OCR mensuales del extracto (solo para el PDF de propuesta).
+  const [interesMensualExtracto, setInteresMensualExtracto] = useState<number | undefined>(undefined);
+  const [capitalMensualExtracto, setCapitalMensualExtracto] = useState<number | undefined>(undefined);
+  const [beneficioFrechMensualExtracto, setBeneficioFrechMensualExtracto] = useState<number | undefined>(undefined);
   const [propuestasComercialesDraft, setPropuestasComercialesDraft] =
     useState<PropuestasComercialesDraft | undefined>(() => draft.propuestasComerciales);
   const [propuestasComercialesSnapshot, setPropuestasComercialesSnapshot] =
@@ -498,6 +502,14 @@ export function UVRSimulator({
             } else {
               setCobertura(defaultCobertura);
             }
+            const parseOcr = (v?: string) => {
+              if (!v || !v.trim()) return undefined;
+              const n = parseCurrency(v);
+              return Number.isFinite(n) ? n : undefined;
+            };
+            setInteresMensualExtracto(parseOcr(p.extracto?.interesMensual));
+            setCapitalMensualExtracto(parseOcr(p.extracto?.capitalMensual));
+            setBeneficioFrechMensualExtracto(parseOcr(p.extracto?.beneficioFrechMensual));
             // Auto-QA condicional: sólo cuando el simulador fue abierto desde un
             // Expediente Maestro (init?.id). En modo standalone no se ejecuta.
             if (init?.id && p.raw) {
@@ -1033,6 +1045,9 @@ export function UVRSimulator({
                       cuotaSinSeguros: cuotaSinSegurosNum,
                       saldoCapital: saldoPesosNum,
                       tasaMensualPct: calc ? calc.tasaMensual * 100 : 0,
+                      interesMensual: interesMensualExtracto,
+                      capitalMensual: capitalMensualExtracto,
+                      beneficioFrechMensual: beneficioFrechMensualExtracto,
                     }}
                   />
                 );
