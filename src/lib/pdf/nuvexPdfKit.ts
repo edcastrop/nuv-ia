@@ -61,6 +61,8 @@ export interface BrandMeta {
   documento: string;
   /** Consecutivo institucional (ej. "NUVEX-PE-2026-0421"). */
   consecutivo?: string;
+  /** Tipo de diseño de chrome: poder = diagonal institucional, default = azul institucional. */
+  kind?: "poder" | "default";
 }
 
 export interface CardItem {
@@ -177,16 +179,104 @@ export function drawBrandFooter(pdf: jsPDF, pageNum: number, totalPages: number)
   pdf.text("Documento generado automáticamente", pageW - marginX, y0 + 46, { align: "right" });
 }
 
+export function drawPoderHeader(pdf: jsPDF, logoDataUrl: string, meta: BrandMeta) {
+  const { pageW, marginX, headerH } = LAYOUT;
+
+  // Fondo negro completo
+  pdf.setFillColor(28, 28, 28);
+  pdf.rect(0, 0, pageW, headerH, "F");
+
+  // Triángulo blanco: corte diagonal desde centro-inferior hacia esquina superior derecha
+  pdf.setFillColor(255, 255, 255);
+  pdf.triangle(
+    pageW * 0.42, headerH,
+    pageW,        0,
+    pageW,        headerH,
+    "F"
+  );
+
+  // Logo sobre el negro (izquierda, con suficiente margen)
+  if (logoDataUrl) {
+    try {
+      pdf.addImage(logoDataUrl, "PNG", marginX, (headerH - 52) / 2, 0, 52);
+    } catch { /* ignore */ }
+  }
+
+  // Tipo de documento sobre el blanco (derecha superior)
+  const rightX = pageW - marginX;
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(8);
+  pdf.setTextColor(...BRAND.ink);
+  pdf.text(meta.documento.toUpperCase(), rightX, 28, { align: "right", charSpace: 0.5 });
+
+  if (meta.consecutivo) {
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(11);
+    pdf.setTextColor(...BRAND.blueDark);
+    pdf.text(meta.consecutivo, rightX, 46, { align: "right" });
+  }
+
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(7.5);
+  pdf.setTextColor(...BRAND.muted);
+  pdf.text(`Generado: ${fmtFechaLarga()}`, rightX, 64, { align: "right" });
+}
+
+export function drawPoderFooter(pdf: jsPDF, pageNum: number, totalPages: number) {
+  const { pageW, pageH, marginX, footerH } = LAYOUT;
+  const y0 = pageH - footerH;
+
+  // Fondo negro completo del footer
+  pdf.setFillColor(28, 28, 28);
+  pdf.rect(0, y0, pageW, footerH, "F");
+
+  // Triángulo blanco: corte diagonal espejo (esquina superior izquierda)
+  pdf.setFillColor(255, 255, 255);
+  pdf.triangle(
+    0,            y0,
+    pageW * 0.42, pageH,
+    0,            pageH,
+    "F"
+  );
+
+  // Datos corporativos sobre el negro (zona central-derecha)
+  const dataX = pageW * 0.42 + 16;
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(7.5);
+  pdf.setTextColor(200, 215, 230);
+  pdf.text("Carrera 16 # 37-48 piso 4 Centro Bucaramanga", dataX, y0 + 16);
+  pdf.text("Bogotá | Bucaramanga", dataX, y0 + 28);
+  pdf.text("+57 316 4023779", dataX, y0 + 40);
+  pdf.text("www.nuvex.com.co", dataX, y0 + 52);
+
+  // Número de página (extremo derecho)
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(8);
+  pdf.setTextColor(255, 255, 255);
+  pdf.text(
+    `Pág. ${pageNum} de ${totalPages}`,
+    pageW - marginX,
+    y0 + 36,
+    { align: "right" }
+  );
+}
+
 /**
  * Aplica header+footer a TODAS las páginas existentes del PDF (con paginado real).
  * Llamar al final, antes de exportar.
  */
 export function applyChrome(pdf: jsPDF, logoDataUrl: string, meta: BrandMeta) {
   const total = pdf.getNumberOfPages();
+  const esPoder = meta.kind === "poder";
   for (let i = 1; i <= total; i++) {
     pdf.setPage(i);
-    drawBrandHeader(pdf, logoDataUrl, meta);
-    drawBrandFooter(pdf, i, total);
+    if (esPoder) {
+      drawPoderHeader(pdf, logoDataUrl, meta);
+      drawPoderFooter(pdf, i, total);
+    } else {
+      drawBrandHeader(pdf, logoDataUrl, meta);
+      drawBrandFooter(pdf, i, total);
+    }
   }
 }
 

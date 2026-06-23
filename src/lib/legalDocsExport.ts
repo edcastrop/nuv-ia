@@ -391,6 +391,7 @@ async function composeBrandedPdf(doc: LegalDoc): Promise<jsPDF> {
   const meta: BrandMeta = {
     documento: inferDocumentoLabel(doc, kind),
     consecutivo: doc.consecutivo,
+    kind: kind === "poder" ? "poder" : "default",
   };
   applyChrome(pdf, logoDataUrl, meta);
   return pdf;
