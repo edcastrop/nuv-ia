@@ -173,6 +173,11 @@ export function PrintDocument(props: Props) {
   const yaPagado = Math.max(0, dineroPagadoFecha);
   const interesesPagados = creditState?.interesesPagados ?? 0;
   const capitalPagado = creditState?.capitalPagado ?? 0;
+  const tieneCobertura = creditState?.tieneCobertura ?? false;
+  const tipoBeneficio = creditState?.tipoBeneficio ?? "";
+  const valorBeneficioMensual = creditState?.valorBeneficioMensual ?? 0;
+  const cuotaConCobertura = creditState?.cuotaConCobertura ?? 0;
+  const cuotasPendientesConCobertura = creditState?.cuotasPendientesConCobertura ?? 0;
   const faltaPagarSin = Math.max(0, scenario.totalActual);
   const costoTotalSin = yaPagado + faltaPagarSin;
   const desembolsoRef = valorDesembolsado > 0 ? valorDesembolsado : 0;
