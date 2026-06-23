@@ -24,6 +24,7 @@ import {
 import { NUVEX } from "./constants";
 import type { ClientData } from "./ClientFields";
 import { formatCOP, formatNumber } from "../../lib/format";
+import { valorEquivalenteHoyUniforme, factorInflacionAcumulado } from "../../lib/inflacionIPC";
 import type { PesosPropuesta, UVRPropuesta } from "../../lib/finance";
 import type { PropuestaComercialPdfRow } from "./PropuestasComerciales";
 import { calcularMotor } from "../../lib/motorHonorarios";
@@ -268,6 +269,8 @@ export function PrintDocument(props: Props) {
               segurosPagados={Math.max(0, cuotasPagadas * segurosMensuales)}
               totalPendiente={faltaPagarSin}
               costoTotal={costoTotalSin}
+              perdidaPoderAdquisitivo={Math.max(0, valorEquivalenteHoyUniforme(yaPagado, cuotasPagadas) - yaPagado)}
+              inflacionSobreDesembolso={Math.max(0, desembolsoRef * (factorInflacionAcumulado(cuotasPagadas) - 1))}
               vecesPagado={desembolsoRef > 0 ? yaPagado / desembolsoRef : 0}
               vecesPendiente={desembolsoRef > 0 ? faltaPagarSin / desembolsoRef : vecesSin}
               tieneCobertura={tieneCobertura}
@@ -461,6 +464,7 @@ function CurrentStateCard(props: {
   dineroPagado: number;
   interesesPagados: number; capitalPagado: number; segurosPagados: number;
   totalPendiente: number; costoTotal: number;
+  perdidaPoderAdquisitivo: number; inflacionSobreDesembolso: number;
   vecesPagado: number; vecesPendiente: number;
   tieneCobertura: boolean; tipoBeneficio: string;
   valorBeneficioMensual: number; cuotaConCobertura: number;
@@ -522,7 +526,14 @@ function CurrentStateCard(props: {
           <Row label="Intereses pagados" value={formatCOP(props.interesesPagados)} red />
           <Row label="Seguros pagados" value={formatCOP(props.segurosPagados)} red />
           <Row label="Capital pagado" value={formatCOP(props.capitalPagado)} green />
+          {props.perdidaPoderAdquisitivo > 0 && (
+            <Row label="Pérdida poder adquisitivo (IPC)" value={formatCOP(props.perdidaPoderAdquisitivo)} red />
+          )}
+          {props.inflacionSobreDesembolso > 0 && (
+            <Row label="Inflación acumulada s/ desembolso" value={formatCOP(props.inflacionSobreDesembolso)} red />
+          )}
         </Group>
+
 
         <Group title="PROYECCIÓN SIN NUVEX">
           <Row label="Dinero pendiente" value={formatCOP(props.totalPendiente)} />
