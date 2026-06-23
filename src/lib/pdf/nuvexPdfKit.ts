@@ -182,44 +182,42 @@ export function drawBrandFooter(pdf: jsPDF, pageNum: number, totalPages: number)
 export function drawPoderHeader(pdf: jsPDF, logoDataUrl: string, meta: BrandMeta) {
   const { pageW, marginX, headerH } = LAYOUT;
 
-  // Fondo negro completo
+  // 1. Fondo negro completo del header
   pdf.setFillColor(28, 28, 28);
   pdf.rect(0, 0, pageW, headerH, "F");
 
-  // Triángulo blanco: corte diagonal desde centro-inferior hacia esquina superior derecha
+  // 2. Triángulo blanco en esquina inferior derecha
+  //    Vértices: (258, 96) → (612, 0) → (612, 96)
+  //    Efecto: corte diagonal que deja negro a la izquierda y blanco a la derecha
   pdf.setFillColor(255, 255, 255);
-  pdf.triangle(
-    pageW * 0.42, headerH,
-    pageW,        0,
-    pageW,        headerH,
-    "F"
-  );
+  pdf.triangle(258, headerH, pageW, 0, pageW, headerH, "F");
 
-  // Logo sobre el negro (izquierda, con suficiente margen)
+  // 3. Logo NUVEX sobre el negro (lado izquierdo)
+  //    Restringido a x: 48–240 para no pisar el triángulo blanco
   if (logoDataUrl) {
     try {
-      pdf.addImage(logoDataUrl, "PNG", marginX, (headerH - 52) / 2, 0, 52);
+      pdf.addImage(logoDataUrl, "PNG", marginX, (headerH - 44) / 2, 0, 44);
     } catch { /* ignore */ }
   }
 
-  // Tipo de documento sobre el blanco (derecha superior)
+  // 4. Metadatos sobre el blanco (lado derecho, texto oscuro)
   const rightX = pageW - marginX;
   pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(8);
-  pdf.setTextColor(...BRAND.ink);
+  pdf.setFontSize(7.5);
+  pdf.setTextColor(100, 100, 110);
   pdf.text(meta.documento.toUpperCase(), rightX, 28, { align: "right", charSpace: 0.5 });
 
   if (meta.consecutivo) {
     pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(11);
-    pdf.setTextColor(...BRAND.blueDark);
-    pdf.text(meta.consecutivo, rightX, 46, { align: "right" });
+    pdf.setFontSize(12);
+    pdf.setTextColor(30, 58, 120);
+    pdf.text(meta.consecutivo, rightX, 50, { align: "right" });
   }
 
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(7.5);
-  pdf.setTextColor(...BRAND.muted);
-  pdf.text(`Generado: ${fmtFechaLarga()}`, rightX, 64, { align: "right" });
+  pdf.setTextColor(120, 120, 130);
+  pdf.text(`Generado: ${fmtFechaLarga()}`, rightX, 68, { align: "right" });
 }
 
 export function drawPoderFooter(pdf: jsPDF, pageNum: number, totalPages: number) {
