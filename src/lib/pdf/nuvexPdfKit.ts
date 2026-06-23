@@ -54,6 +54,34 @@ export async function loadLogoDataURL(): Promise<string> {
   return logoDataUrlPromise;
 }
 
+/** Carga el logo y lo tinta al color deseado (canvas, client-side only). */
+export async function loadTintedLogoDataURL(targetColor: string): Promise<string> {
+  const original = await loadLogoDataURL();
+  if (!original || typeof document === "undefined") return original;
+
+  const hex = targetColor.replace("#", "");
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+
+  return new Promise<string>((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0);
+      ctx.globalCompositeOperation = "source-atop";
+      ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/png"));
+    };
+    img.onerror = () => resolve(original);
+    img.src = original;
+  });
+}
+
 // ─────────────────────────────── Tipos ──────────────────────────────────────
 
 export interface BrandMeta {
