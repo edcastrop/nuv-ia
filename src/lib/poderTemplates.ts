@@ -108,6 +108,7 @@ type RawBlock =
 const BODY_BOLD_KEYS: (keyof PoderVariables)[] = [
   "NOMBRE_CLIENTE", "CEDULA_CLIENTE",
   "NOMBRE_APODERADO", "CEDULA_APODERADO", "CELULAR_APODERADO",
+  "NUMERO_CREDITO", "BANCO",
 ];
 
 const TPL_PODER_GENERAL_BANCOS: RawBlock[] = [
