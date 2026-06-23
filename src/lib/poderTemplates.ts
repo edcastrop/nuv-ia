@@ -109,23 +109,18 @@ const TPL_PODER_GENERAL_BANCOS: RawBlock[] = [
     text:
       "Mi apoderado queda ampliamente investido para todo aquello que se encuentra estipulado en el artículo 77 del Código General del Proceso, así como para radicar derechos de petición, solicitar pruebas extraprocesales, conciliar, transigir, recibir, desistir, terminar, autorizar, sustituir, firmar y reasumir este poder, sin limitaciones especiales.",
   },
-  { t: "sp", size: 16 },
+  { t: "sp", size: 10 },
   { t: "p", text: "Atentamente," },
-  { t: "sp", size: 24 },
+  { t: "sp", size: 14 },
   { t: "p", text: "______________________________" },
   { t: "p", text: "{{NOMBRE_CLIENTE}}" },
   { t: "p", text: "{{CEDULA_CLIENTE}} de {{LUGAR_EXPEDICION_CLIENTE}}" },
-  { t: "sp", size: 16 },
+  { t: "sp", size: 10 },
   { t: "p", text: "Acepto el poder conferido," },
-  { t: "sp", size: 24 },
+  { t: "sp", size: 14 },
   { t: "p", text: "________________________________" },
   { t: "p", text: "{{NOMBRE_APODERADO}}" },
   { t: "p", text: "C.C {{CEDULA_APODERADO}} de {{LUGAR_EXPEDICION_APODERADO}}" },
-  { t: "sp", size: 24 },
-  { t: "p", text: "Carrera 16 # 37-48 piso 4 Centro Bucaramanga" },
-  { t: "p", text: "Bogotá | Bucaramanga" },
-  { t: "p", text: "+57 316 4023779" },
-  { t: "p", text: "www.nuvex.com.co" },
 ];
 
 const TPL_FNA_CREDITO_HIPOTECARIO: RawBlock[] = [

@@ -215,8 +215,9 @@ function renderPoderEspecial(pdf: jsPDF, doc: LegalDoc): void {
         y += b.size ?? 6;
         break;
       case "signature":
-        if (y + 80 > contentBottom) y = onBreak();
-        y = drawSignatures(pdf, y + 10, b.columns);
+        // No forzar nueva página para firmas — reducir umbral
+        if (y + 65 > contentBottom) y = onBreak();
+        y = drawSignatures(pdf, y + 6, b.columns);
         break;
     }
   }
