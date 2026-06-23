@@ -441,9 +441,10 @@ function CurrentStateCard(props: {
   dineroPagado: number;
   interesesPagados: number; capitalPagado: number; totalPendiente: number; costoTotal: number; veces: number;
 }) {
-  // Si OCR no leyó el dato (undefined), mostramos "Pendiente lectura extracto".
-  // Si el extracto informa 0 explícitamente, sí mostramos $0.
-  const fmtOcr = (v: number | undefined) => (v === undefined ? "Pendiente lectura extracto" : formatCOP(v));
+  // Si OCR no leyó el dato (undefined), ocultamos la fila para no contaminar el PDF
+  // con placeholders ni con $0 falsos. Si el extracto informa 0 explícitamente, sí mostramos $0.
+  const tieneInteres = typeof props.interesMensual === "number";
+  const tieneCapital = typeof props.capitalMensual === "number";
   const tieneFrech = typeof props.beneficioFrechMensual === "number" && props.beneficioFrechMensual > 0;
   return (
     <div style={{ border: `1px solid ${C.line}`, borderRadius: 10, overflow: "hidden", background: "#fff" }}>
@@ -456,12 +457,17 @@ function CurrentStateCard(props: {
         <Group title="CUOTA MENSUAL">
           <Row label="Cuota actual" value={formatCOP(props.cuotaActual)} />
           <Row label="Seguros" value={formatCOP(props.seguros)} />
-          <Row label="Interés mensual" value={fmtOcr(props.interesMensual)} />
-          <Row label="Capital mensual" value={fmtOcr(props.capitalMensual)} />
+          {tieneInteres && (
+            <Row label="Interés mensual" value={formatCOP(props.interesMensual as number)} />
+          )}
+          {tieneCapital && (
+            <Row label="Capital mensual" value={formatCOP(props.capitalMensual as number)} />
+          )}
           {tieneFrech && (
             <Row label="Beneficio Fresh mensual" value={formatCOP(props.beneficioFrechMensual as number)} />
           )}
         </Group>
+
         <Group title="PAGADO A LA FECHA"><Row label="Dinero pagado" value={formatCOP(props.dineroPagado)} /><Row label="Intereses pagados" value={formatCOP(props.interesesPagados)} /><Row label="Capital pagado" value={formatCOP(props.capitalPagado)} /></Group>
         <Group title="PROYECCIÓN SIN NUVEX"><Row label="Dinero pendiente" value={formatCOP(props.totalPendiente)} /><Row label="Costo total proyectado" value={formatCOP(props.costoTotal)} red /></Group>
         <div style={{ marginTop: 9, background: "linear-gradient(180deg,#FFF0F0,#FDE4E4)", border: `1px solid #F7CCCC`, borderRadius: 8, padding: "10px 11px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
