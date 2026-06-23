@@ -206,9 +206,15 @@ function renderPoderEspecial(pdf: jsPDF, doc: LegalDoc): void {
         y += 4;
         break;
       case "paragraph":
-        y = writeText(pdf, y, b.text, {
-          size: 10, align: "justify", lineGap: 5, color: BRAND.ink
-        }, onBreak);
+        if (b.boldTokens && b.boldTokens.length > 0) {
+          y = writeRichText(pdf, y, b.text, b.boldTokens, {
+            size: 10, align: "justify", lineGap: 5, color: BRAND.ink,
+          }, onBreak);
+        } else {
+          y = writeText(pdf, y, b.text, {
+            size: 10, bold: !!b.bold, align: "justify", lineGap: 5, color: BRAND.ink,
+          }, onBreak);
+        }
         y += 3;
         break;
       case "spacer":
