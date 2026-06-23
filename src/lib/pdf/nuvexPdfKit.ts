@@ -196,7 +196,7 @@ export function drawPoderHeader(pdf: jsPDF, logoDataUrl: string, meta: BrandMeta
   //    Restringido a x: 48–240 para no pisar el triángulo blanco
   if (logoDataUrl) {
     try {
-      pdf.addImage(logoDataUrl, "PNG", marginX, (headerH - 44) / 2, 0, 44);
+      pdf.addImage(logoDataUrl, "PNG", marginX, (headerH - 72) / 2, 0, 72);
     } catch { /* ignore */ }
   }
 
