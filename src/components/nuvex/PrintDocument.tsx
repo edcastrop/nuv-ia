@@ -269,6 +269,8 @@ export function PrintDocument(props: Props) {
               segurosPagados={Math.max(0, cuotasPagadas * segurosMensuales)}
               totalPendiente={faltaPagarSin}
               costoTotal={costoTotalSin}
+              perdidaPoderAdquisitivo={Math.max(0, valorEquivalenteHoyUniforme(yaPagado, cuotasPagadas) - yaPagado)}
+              inflacionSobreDesembolso={Math.max(0, desembolsoRef * (factorInflacionAcumulado(cuotasPagadas) - 1))}
               vecesPagado={desembolsoRef > 0 ? yaPagado / desembolsoRef : 0}
               vecesPendiente={desembolsoRef > 0 ? faltaPagarSin / desembolsoRef : vecesSin}
               tieneCobertura={tieneCobertura}
