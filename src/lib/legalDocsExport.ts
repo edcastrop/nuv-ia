@@ -39,7 +39,7 @@ function detectKind(doc: LegalDoc): DocKind {
 }
 
 function inferDocumentoLabel(doc: LegalDoc, kind: DocKind): string {
-  if (kind === "poder") return "Documento Jurídico — Poder Especial";
+  if (kind === "poder") return "Poder especial";
   if (kind === "ficha") return "Documento Administrativo — Ficha Contractual";
   if (/contrato de prestación/i.test(doc.title)) return "Documento Contractual — Prestación de Servicios";
   if (/cuenta de cobro/i.test(doc.title)) return "Documento Administrativo — Cuenta de Cobro";
