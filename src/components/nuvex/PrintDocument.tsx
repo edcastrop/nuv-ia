@@ -615,10 +615,12 @@ function ScenariosTable(props: {
   const rows: Array<[string, string, string, string, string, string]> = [
     ["Nueva cuota", formatCOP(props.cuotaActual), ...props.esc.map(e => fmtVal(e, r => formatCOP(r.nuevaCuota))), formatCOP(props.recNueva)] as [string, string, string, string, string, string],
     ["Incremento mensual", "—", ...props.esc.map(e => e ? `+${formatCOP(Math.max(0, e.nuevaCuota - props.cuotaActual))}` : "—"), `+${formatCOP(Math.max(0, props.recNueva - props.cuotaActual))}`] as [string, string, string, string, string, string],
-    ["Nuevo plazo", `${props.plazoActual} m`, ...props.esc.map(e => e ? `${Math.round(e.añosOpt * 12)} m` : "—"), `${props.recPlazo} m`] as [string, string, string, string, string, string],
+    ["Cuotas pendientes por pagar", `${props.plazoActual}`, ...props.esc.map(e => e ? `${Math.round(e.añosOpt * 12)}` : "—"), `${props.recPlazo}`] as [string, string, string, string, string, string],
     ["Fecha final", `${props.añoFinActual}`, ...props.esc.map(e => e ? `${e.añoFinOpt}` : "—"), `${props.recAñoFin}`] as [string, string, string, string, string, string],
     ["Años recuperados", "—", ...props.esc.map(e => e ? `${Math.round(e.añosEliminados)}` : "—"), `${props.recAñosElim}`] as [string, string, string, string, string, string],
     ["Cuotas eliminadas", "—", ...props.esc.map(e => e ? `${e.cuotasEliminadas}` : "—"), `${props.recCuotasElim}`] as [string, string, string, string, string, string],
+    ["Ahorro en intereses", "—", ...props.esc.map(e => e ? formatCOP(e.ahorroIntereses) : "—"), formatCOP(props.recAhorroIntereses)] as [string, string, string, string, string, string],
+    ["Ahorro en seguros", "—", ...props.esc.map(e => e ? formatCOP(e.ahorroSeguros) : "—"), formatCOP(props.recAhorroSeguros)] as [string, string, string, string, string, string],
     ["Ahorro total", "—", ...props.esc.map(e => e ? formatCOP(e.ahorroTotal) : "—"), formatCOP(props.recAhorroTotal)] as [string, string, string, string, string, string],
     ["Honorarios a éxito", "—", ...props.esc.map(e => e ? formatCOP(e.honorariosFinal) : "—"), formatCOP(props.recHonorarios)] as [string, string, string, string, string, string],
     ["Beneficio comercial", "—", ...props.esc.map(() => "—"), "Aprobado"] as [string, string, string, string, string, string],
