@@ -632,12 +632,30 @@ export function writeText(
   const lineH = (opts.size ?? 10.5) * 1.45;
   const lines = pdf.splitTextToSize(text, contentW) as string[];
   let cursorY = y;
-  for (const line of lines) {
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
+    const isLast = i === lines.length - 1;
     if (cursorY + lineH > contentBottom) cursorY = onPageBreak();
     if (opts.align === "center") {
       pdf.text(line, pageW / 2, cursorY, { align: "center" });
-    } else if (opts.align === "justify") {
-      pdf.text(line, marginX, cursorY, { maxWidth: contentW, align: "justify" });
+    } else if (opts.align === "justify" && !isLast) {
+      // Justificación manual real: distribuye el espacio sobrante entre las
+      // palabras de la línea (la última línea del párrafo queda al ras izquierdo).
+      const words = line.split(/\s+/).filter(Boolean);
+      if (words.length <= 1) {
+        pdf.text(line, marginX, cursorY);
+      } else {
+        const naturalW = pdf.getTextWidth(words.join(" "));
+        const extra = contentW - naturalW;
+        const gap = extra > 0 ? extra / (words.length - 1) : 0;
+        let x = marginX;
+        for (let w = 0; w < words.length; w += 1) {
+          pdf.text(words[w], x, cursorY);
+          if (w < words.length - 1) {
+            x += pdf.getTextWidth(words[w] + " ") + gap;
+          }
+        }
+      }
     } else {
       pdf.text(line, marginX, cursorY);
     }
