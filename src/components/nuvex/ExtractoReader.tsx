@@ -1233,8 +1233,10 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
       archivoPath: archivoPath ?? undefined,
       monedaDetectada,
       extracto: {
-        interesMensual: get("interesesCorrientes"),
-        capitalMensual: get("abonoCapital"),
+        // Nombres varían según banco: la mayoría usa interesCuota/capitalCuota,
+        // Caja Social usa interesesCorrientes/abonoCapital. Fallback en orden.
+        interesMensual: get("interesCuota") || get("interesesCorrientes"),
+        capitalMensual: get("capitalCuota") || get("abonoCapital"),
         beneficioFrechMensual: get("valorCobertura"),
       },
       raw: {
