@@ -514,9 +514,9 @@ function CurrentStateCard(props: {
         </Group>
 
         <Group title="PAGADO A LA FECHA">
-          <Row label="Dinero pagado" value={formatCOP(props.dineroPagado)} />
-          <Row label="Intereses pagados" value={formatCOP(props.interesesPagados)} />
-          <Row label="Capital pagado" value={formatCOP(props.capitalPagado)} />
+          <Row label="Dinero pagado" value={formatCOP(props.dineroPagado)} red />
+          <Row label="Intereses pagados" value={formatCOP(props.interesesPagados)} red />
+          <Row label="Capital pagado" value={formatCOP(props.capitalPagado)} green />
         </Group>
 
         <Group title="PROYECCIÓN SIN NUVEX">
