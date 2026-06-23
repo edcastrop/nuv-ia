@@ -158,63 +158,56 @@ function drawSectionTitle(pdf: jsPDF, y: number, text: string): number {
 // ─────────────────────────────── Renderer: PODER ESPECIAL ───────────────────
 
 function renderPoderEspecial(pdf: jsPDF, doc: LegalDoc): void {
-  // Hero compacto (igual a Cuenta de Cobro / Paz y Salvo)
-  let y = drawHero(pdf, {
-    badge: "NUVEX · Documento Jurídico",
-    title: "Poder Especial",
-    subtitle: "Representación ante entidad financiera",
-    variant: "compact",
+  const { marginX, contentTop, contentBottom, pageW } = LAYOUT;
+
+  // ── Extraer campos del documento ──────────────────────────────────────────
+
+  const cliente  = findField(doc.blocks, /^nombre$/i) || "—";
+  const cedula   = findField(doc.blocks, /^cédula|^cedula/i) || "—";
+  const banco    = findField(doc.blocks, /^banco$/i) || "—";
+  const producto = findField(doc.blocks, /^producto$/i) || "—";
+  const numero   = findField(doc.blocks, /número\s+crédito|numero\s+credito|n[uú]mero\s+de\s+cr[eé]dito/i) || "—";
+  const fecha    = new Date().toLocaleDateString("es-CO", {
+    day: "2-digit", month: "long", year: "numeric"
   });
 
-  // Metadatos: dos columnas label/value sobrias
-  const cliente = findField(doc.blocks, /^nombre$/i);
-  const cedula = findField(doc.blocks, /^cédula|^cedula/i);
-  const banco = findField(doc.blocks, /^banco$/i);
-  const producto = findField(doc.blocks, /^producto$/i);
-  const numero = findField(doc.blocks, /número\s+crédito|numero\s+credito|n[uú]mero\s+de\s+cr[eé]dito/i);
-  const fecha = new Date().toLocaleDateString("es-CO", { day: "2-digit", month: "long", year: "numeric" });
+  // ── Comenzar debajo del header (sin hero, sin metaPanel) ─────────────────
 
-  y = drawMetaPanel(
-    pdf,
-    y,
-    [
-      { label: "Poderdante", value: cliente || "—" },
-      { label: "Cédula", value: cedula || "—" },
-      { label: "Banco", value: banco || "—" },
-    ],
-    [
-      { label: "Fecha de emisión", value: fecha },
-      { label: "Producto", value: producto || "—" },
-      { label: "Número de crédito", value: numero || "—" },
-    ],
-  );
+  // contentTop = 128 (justo debajo del header diagonal)
+  let y = contentTop + 8;
 
-  y = drawDivider(pdf, y);
-  y = drawSectionTitle(pdf, y, "Texto Jurídico");
-
-  // Texto jurídico
   const onBreak = () => nextPage(pdf);
+  const textW = pageW - marginX * 2;
+
+  // ── Texto jurídico: extraer el prose del template ─────────────────────────
+
   const prose = legalProse(doc.blocks);
+
   for (const b of prose) {
-    if (y > LAYOUT.contentBottom - 60) y = onBreak();
+    if (y > contentBottom - 60) y = onBreak();
     switch (b.type) {
       case "title":
-        break; // ya está en hero
       case "subtitle":
-        y = writeText(pdf, y, b.text, { size: 10, bold: true, color: BRAND.muted, lineGap: 6, align: "left" }, onBreak);
-        break;
+        break; // no mostrar títulos — el header ya identifica el documento
       case "heading":
-        y = writeText(pdf, y, b.text, { size: 10.5, bold: true, color: BRAND.blueDark, lineGap: 4 }, onBreak);
+        y += 6;
+        y = writeText(pdf, y, b.text, {
+          size: 10.5, bold: true, color: BRAND.blueDark, lineGap: 4
+        }, onBreak);
+        y += 4;
         break;
       case "paragraph":
-        y = writeText(pdf, y, b.text, { size: 10.5, align: "justify", lineGap: 6 }, onBreak);
+        y = writeText(pdf, y, b.text, {
+          size: 10.5, align: "justify", lineGap: 7, color: BRAND.ink
+        }, onBreak);
+        y += 6;
         break;
       case "spacer":
-        y += b.size ?? 8;
+        y += b.size ?? 10;
         break;
       case "signature":
-        if (y + 80 > LAYOUT.contentBottom) y = onBreak();
-        y = drawSignatures(pdf, y + 24, b.columns);
+        if (y + 100 > contentBottom) y = onBreak();
+        y = drawSignatures(pdf, y + 20, b.columns);
         break;
     }
   }
