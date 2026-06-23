@@ -137,6 +137,10 @@ export function UVRSimulator({
   const [modoPersonalizada, setModoPersonalizada] = useState<"cuota" | "cuotas">(
     draft.modoPersonalizada,
   );
+  // Lecturas OCR mensuales del extracto (solo para el PDF de propuesta).
+  const [interesMensualExtracto, setInteresMensualExtracto] = useState<number | undefined>(undefined);
+  const [capitalMensualExtracto, setCapitalMensualExtracto] = useState<number | undefined>(undefined);
+  const [beneficioFrechMensualExtracto, setBeneficioFrechMensualExtracto] = useState<number | undefined>(undefined);
   const [propuestasComercialesDraft, setPropuestasComercialesDraft] =
     useState<PropuestasComercialesDraft | undefined>(() => draft.propuestasComerciales);
   const [propuestasComercialesSnapshot, setPropuestasComercialesSnapshot] =
