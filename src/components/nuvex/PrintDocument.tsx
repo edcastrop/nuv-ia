@@ -466,7 +466,10 @@ function CurrentStateCard(props: {
   dineroPagado: number;
   interesesPagados: number; capitalPagado: number; segurosPagados: number;
   totalPendiente: number; costoTotal: number;
-  perdidaPoderAdquisitivo: number; inflacionSobreDesembolso: number;
+  mode: "pesos" | "uvr";
+  esLeasing: boolean;
+  ivaLeasingPagado: number;
+  reajusteUVRAcumulado: number;
   vecesPagado: number; vecesPendiente: number;
   tieneCobertura: boolean; tipoBeneficio: string;
   valorBeneficioMensual: number; cuotaConCobertura: number;
