@@ -196,7 +196,8 @@ export function parseDaviviendaLeasingText(rawText: string): ExtractoRecord | nu
     plazoInicial,
     cuotasPagadas,
     cuotasPendientes,
-    tea: teaCobrada,
+    // TEA de proyección = PACTADA (la Cobrada puede ser temporal/subsidiada).
+    tea: teaPactada || teaCobrada,
     teaCobrada,
     teaPactada,
     tasaMensual: "",
