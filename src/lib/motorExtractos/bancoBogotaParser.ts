@@ -76,7 +76,7 @@ function firstMoneyIn(text: string) {
 function classifyInsuranceLabel(text: string): "vida" | "incendio" | "voluntario" | null {
   const up = normalizeForMatch(text);
   if (!/\b(SEGURO|SEGUROS|POLIZA|POLIZA)\b/.test(up) && !/\bOTROS\s+SEGUROS\b/.test(up)) return null;
-  if (/VALOR\s+ASEGURADO|ASEGURADORA|INFORMACION\s+GENERAL|DATOS\s+GENERALES|TASA|BENEFICIO|TOTAL\s+A\s+PAGAR/.test(up)) return null;
+  if (/VALOR\s+ASEGURADO|ASEGURADORA|INFORMACION\s+GENERAL|DATOS\s+GENERALES|TASA|BENEFICIO|TOTAL\s+A\s+PAGAR|CONTRATAD|CORRESPONDE\s+A\s+LA\s+PRIMA|COSTO\s+DE\s+GESTION/.test(up)) return null;
   if (/VIDA/.test(up)) return "vida";
   if (/INCENDIO|TERREMOTO|ANEXO/.test(up)) return "incendio";
   return "voluntario";
