@@ -1073,8 +1073,10 @@ export function ProyeccionFinancieraView() {
                           if (d.uvr.valorDesembolsado) next.valorDesembolsado = num(d.uvr.valorDesembolsado);
                           if (d.uvr.valorUVR) next.uvrValor = num(d.uvr.valorUVR);
                           if (d.uvr.saldoUVR) next.saldoUvr = num(d.uvr.saldoUVR);
-                          if (next.saldoCapital <= 0 && next.saldoUvr > 0 && next.uvrValor > 0) {
-                            next.saldoCapital = next.saldoUvr * next.uvrValor;
+                          const saldoUvr = next.saldoUvr ?? 0;
+                          const uvrValor = next.uvrValor ?? 0;
+                          if (next.saldoCapital <= 0 && saldoUvr > 0 && uvrValor > 0) {
+                            next.saldoCapital = saldoUvr * uvrValor;
                           }
                         }
                         return next;
