@@ -1954,6 +1954,19 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
                     </div>
                   </div>
 
+                  {errorMsg && (
+                    <div
+                      className="mb-4 flex items-start gap-2 rounded-xl px-4 py-3"
+                      style={{
+                        background: "rgba(240,68,56,0.10)",
+                        border: "1px solid rgba(240,68,56,0.40)",
+                      }}
+                    >
+                      <AlertTriangle className="mt-0.5 h-5 w-5 text-[#F04438]" />
+                      <div className="text-xs text-white/85">{errorMsg}</div>
+                    </div>
+                  )}
+
                   {/* Resumen de tasas */}
                   {(teaCobrada || teaPactada || teaUsada) && (
                     <div
