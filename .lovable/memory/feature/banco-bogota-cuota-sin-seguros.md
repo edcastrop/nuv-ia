@@ -37,6 +37,12 @@ espacios de miles, etiqueta en una línea y valor en la siguiente; un solo regex
 "VOLUNTARIO(S)" o tomar el primer valor deja casos en 35.955 cuando el voluntario real suma
 40.570,69 y el total correcto auditado es 76.526,03.
 
+Bug crítico ya identificado: aunque el parser calcule `seguros` completo, la normalización
+posterior NO debe volver a pisarlo con `valorSeguroVida + valorSeguroIncendio + valorSeguroTerremoto`,
+porque Banco de Bogotá no tiene un campo dedicado para voluntarios/otros seguros. Siempre preservar
+el mayor entre el total agregado `seguros` y el subtotal detallado individual; si se pisa, la UI
+muestra totales incompletos como 35.955/46.560 y descuadra la cuota.
+
 Campos críticos de la tabla "DATOS GENERALES DEL CRÉDITO":
 - "MONTO APROBADO" → valorDesembolsado.
 - "PLAZO INICAL/INICIAL" → plazoInicial.
