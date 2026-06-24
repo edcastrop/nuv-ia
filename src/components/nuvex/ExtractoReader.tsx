@@ -755,12 +755,13 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
       out.cuotasPagadas = String(cuotaActualNumero);
     }
     const esBancolombia = typeof out.banco === "string" && /bancolombia/i.test(out.banco);
+    const esBancoBogota = /banco\s+de\s+bogot|bogot[aá]/i.test(`${out.banco ?? ""} ${out.producto ?? ""}`);
     const esFna = /fondo\s+nacional\s+del\s+ahorro|\bfna\b/i.test(`${out.banco ?? ""} ${out.producto ?? ""}`);
     if (cuotasPagadas <= 0 && plazoInicial > 0 && cuotasPendientesExt > 0) {
       cuotasPagadas = Math.max(0, plazoInicial - cuotasPendientesExt + (esFna ? 1 : 0));
       out.cuotasPagadas = String(cuotasPagadas);
     }
-    if (plazoInicial > 0 && cuotasPagadas > 0 && !esBancolombia) {
+    if (plazoInicial > 0 && cuotasPagadas > 0 && !esBancolombia && !esBancoBogota) {
       const calc = plazoInicial - cuotasPagadas + (esFna ? 1 : 0);
       if (calc >= 0) {
         if (cuotasPendientesExt > 0 && cuotasPendientesExt !== calc) {
