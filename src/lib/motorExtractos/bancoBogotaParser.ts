@@ -36,7 +36,83 @@ function normalizeForMatch(text: string) {
 }
 
 function moneyToNumber(value?: string | null) {
-  return parseMontoExtracto(value ?? "");
+  const raw = String(value ?? "");
+  const cleaned = raw.replace(/[^\d,.-]/g, "").trim();
+  const normalizeRepeatedSeparator = (separator: "." | ",") => {
+    const parts = cleaned.split(separator);
+    const last = parts.at(-1) ?? "";
+    if (parts.length > 2 && last.length > 0 && last.length <= 2) {
+      return `${parts.slice(0, -1).join("")}${separator}${last}`;
+    }
+    return cleaned;
+  };
+  const normalized = cleaned.includes(",") && !cleaned.includes(".")
+    ? normalizeRepeatedSeparator(",")
+    : cleaned.includes(".") && !cleaned.includes(",")
+      ? normalizeRepeatedSeparator(".")
+      : cleaned;
+  return parseMontoExtracto(normalized);
+}
+
+const MONEY_TOKEN = String.raw`(?:\$\s*)?([0-9]{1,3}(?:(?:[.,\s][0-9]{3})+)(?:[.,][0-9]{1,2})?|[0-9]{4,}(?:[.,][0-9]{1,2})?|[0-9]+[.,][0-9]{1,2})`;
+
+function extractMoneyValues(text: string) {
+  const rx = new RegExp(MONEY_TOKEN, "g");
+  return Array.from(text.matchAll(rx))
+    .map((match) => moneyToNumber(match[1]))
+    .filter((value) => Number.isFinite(value) && value > 0);
+}
+
+function lastMoneyIn(text: string) {
+  const values = extractMoneyValues(text);
+  return values.at(-1) ?? 0;
+}
+
+function classifyInsuranceLabel(text: string): "vida" | "incendio" | "voluntario" | null {
+  const up = normalizeForMatch(text);
+  if (!/\b(SEGURO|SEGUROS|POLIZA|POLIZA)\b/.test(up) && !/\bOTROS\s+SEGUROS\b/.test(up)) return null;
+  if (/VALOR\s+ASEGURADO|ASEGURADORA|INFORMACION\s+GENERAL|DATOS\s+GENERALES|TASA|BENEFICIO|TOTAL\s+A\s+PAGAR/.test(up)) return null;
+  if (/VIDA/.test(up)) return "vida";
+  if (/INCENDIO|TERREMOTO|ANEXO/.test(up)) return "incendio";
+  return "voluntario";
+}
+
+function extractInsuranceRows(rawText: string) {
+  const result = { vida: 0, incendio: 0, voluntario: 0 };
+  const add = (kind: keyof typeof result, value: number) => {
+    if (value > 0) result[kind] += value;
+  };
+
+  const joined = rawText.split(/\r?\n/).map((line) => compactSpaces(line).trim()).filter(Boolean).join("\n");
+  const conceptSegments = joined.split(/(?=\s*[+\-=]?\s*(?:CAPITAL|INTERESES|SEGUROS?|OTROS\s+SEGUROS|VALOR\s+TOTAL|TOTAL\s+A\s+PAGAR|VALOR\s+BENEFICIO)\b)/i);
+  const usedSegmentKeys = new Set<string>();
+
+  for (const segment of conceptSegments) {
+    const kind = classifyInsuranceLabel(segment);
+    if (!kind) continue;
+    const value = lastMoneyIn(segment);
+    if (!(value > 0)) continue;
+    const key = `${kind}:${Math.round(value * 100)}:${normalizeForMatch(segment).slice(0, 70)}`;
+    if (usedSegmentKeys.has(key)) continue;
+    usedSegmentKeys.add(key);
+    add(kind, value);
+  }
+
+  // Fallback para OCR tabular: etiqueta en una línea y valor en la siguiente.
+  const lines = rawText.split(/\r?\n/).map((line) => compactSpaces(line).trim()).filter(Boolean);
+  for (let i = 0; i < lines.length; i += 1) {
+    const kind = classifyInsuranceLabel(lines[i]);
+    if (!kind) continue;
+    const sameLine = lastMoneyIn(lines[i]);
+    const nextLine = sameLine > 0 ? 0 : lastMoneyIn(`${lines[i + 1] ?? ""} ${lines[i + 2] ?? ""}`);
+    const value = sameLine || nextLine;
+    if (!(value > 0)) continue;
+    const currentTotal = result.vida + result.incendio + result.voluntario;
+    const alreadyCaptured = Math.abs(currentTotal - value) <= 0.5 || [result.vida, result.incendio, result.voluntario].some((v) => Math.abs(v - value) <= 0.5);
+    if (!alreadyCaptured) add(kind, value);
+  }
+
+  return result;
 }
 
 function firstMoneyAfter(text: string, labels: string[]) {
