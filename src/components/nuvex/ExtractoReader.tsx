@@ -1297,7 +1297,10 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
       },
     };
 
-    if (modo === "pesos") {
+    // La forma del payload sigue a la moneda DETECTADA del extracto, no al modo
+    // de la URL: así, un extracto en pesos abierto en /simulador?modo=uvr se
+    // envía correctamente como pesos en vez de quedar bloqueado.
+    if (monedaDetectada === "pesos") {
       payload.pesos = {
         saldoCapital: get("saldoCapital"),
         cuotaActual: cuotaParaSimulador,
