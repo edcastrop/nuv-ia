@@ -228,7 +228,8 @@ function validateBancoBogotaFields(values: {
 
 export function parseBancoBogotaText(rawText: string): ExtractoRecord | null {
   const text = compactSpaces(rawText);
-  if (!/banco\s+de\s+bogot/i.test(text) || !/extracto\s+cr[eé]dito\s+de\s+vivienda/i.test(text)) {
+  const normalizedHeader = normalizeForMatch(text);
+  if (!/BANCO\s*DE\s+BOGOT/.test(normalizedHeader) || !/EXTRACTO\s+CREDITO\s+DE\s+VIVIENDA/.test(normalizedHeader)) {
     return null;
   }
 
