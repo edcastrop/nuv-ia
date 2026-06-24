@@ -196,8 +196,8 @@ export function parseDaviviendaLeasingText(rawText: string): ExtractoRecord | nu
     plazoInicial,
     cuotasPagadas,
     cuotasPendientes,
-    // TEA de proyección = PACTADA (la Cobrada puede ser temporal/subsidiada).
-    tea: teaPactada || teaCobrada,
+    // TEA de proyección = COBRADA (regla NUVEX: siempre cobrada para Davivienda).
+    tea: teaCobrada || teaPactada,
     teaCobrada,
     teaPactada,
     tasaMensual: "",
