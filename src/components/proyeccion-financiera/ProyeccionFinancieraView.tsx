@@ -1308,11 +1308,24 @@ export function ProyeccionFinancieraView() {
                 </Surface>
 
                 {input.moneda === "uvr" && (
-                  <Surface title="Datos UVR">
+                  <Surface
+                    title="Datos UVR"
+                    subtitle={`Corrección mensual ${(selected.res.cuotas[0]?.variacionUvrMesPct ?? 0).toFixed(4)}% · Corrección total ${formatCOP(selected.res.totalCorreccionUvr)}`}
+                  >
                     <div className="grid grid-cols-2 gap-3">
                       <DecimalField label="Valor UVR" value={input.uvrValor || ""} onChange={updDec("uvrValor")} placeholder="380,12" />
                       <DecimalField label="Saldo UVR" value={input.saldoUvr || ""} onChange={updDec("saldoUvr")} placeholder="220.000,00" />
                       <DecimalField label="Variación UVR anual %" value={input.variacionUvrPct || ""} onChange={updDec("variacionUvrPct")} placeholder="6" />
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-3">
+                      <div className="rounded-2xl border border-white/[0.05] bg-white/[0.025] p-3">
+                        <div className="text-[10px] font-medium uppercase tracking-[0.14em] text-white/40">Inflación / UVR acumulada</div>
+                        <div className="mt-1 text-[15px] font-semibold text-[#F8D36A]">{formatCOP(selected.res.totalCorreccionInflacion)}</div>
+                      </div>
+                      <div className="rounded-2xl border border-white/[0.05] bg-white/[0.025] p-3">
+                        <div className="text-[10px] font-medium uppercase tracking-[0.14em] text-white/40">Saldo final UVR</div>
+                        <div className="mt-1 text-[15px] font-semibold text-white">{fmtUvr(selected.res.cuotas.at(-1)?.saldoFinalUvr, 2)}</div>
+                      </div>
                     </div>
                   </Surface>
                 )}
@@ -1449,6 +1462,9 @@ export function ProyeccionFinancieraView() {
                           ["Meses restantes", resActual.res.mesesRestantes, selected.res.mesesRestantes, "int"],
                           ["Total intereses", resActual.res.totalIntereses, selected.res.totalIntereses],
                           ["Total seguros", resActual.res.totalSeguros, selected.res.totalSeguros],
+                          ...(isUvrProjection
+                            ? [["Corrección UVR / inflación", resActual.res.totalCorreccionUvr, selected.res.totalCorreccionUvr]]
+                            : []),
                           ["Costo total", resActual.res.totalPagado, selected.res.totalPagado],
                         ].map(([label, a, b, mode], idx) => {
                           const diff = (b as number) - (a as number);
@@ -1490,6 +1506,19 @@ export function ProyeccionFinancieraView() {
                     </table>
                   </div>
                 </Surface>
+
+                {isUvrProjection && (
+                  <Surface
+                    title="Corrección UVR e inflación"
+                    subtitle="Cada cuota proyecta la cotización UVR, la corrección monetaria y el saldo equivalente en pesos"
+                  >
+                    <div className="grid gap-3 md:grid-cols-3">
+                      <Kpi Icon={TrendingUp} label="Variación UVR EA" value={`${(input.variacionUvrPct ?? 0).toFixed(2)}%`} />
+                      <Kpi Icon={Activity} label="Corrección mensual" value={`${(selected.res.cuotas[0]?.variacionUvrMesPct ?? 0).toFixed(4)}%`} />
+                      <Kpi Icon={Wallet} label="Corrección acumulada" value={formatCOP(selected.res.totalCorreccionUvr)} />
+                    </div>
+                  </Surface>
+                )}
               </div>
             </div>
 
