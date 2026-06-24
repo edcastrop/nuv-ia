@@ -26,9 +26,14 @@ Validación obligatoria del parser:
 - cuotaConSubsidio + valorBeneficioMensual ≈ cuotaSinSubsidio
 - cuotaConInteresSinSeguros + valorBeneficioMensual + seguros ≈ cuotaSinSubsidio
 
-cuotaActual = "= VALOR TOTAL" (cuota sin subsidio con seguros). saldoCapital = "SALDO TOTAL A
-LA FECHA DE CORTE" (no el "DESPUÉS DE EFECTUAR ESTE PAGO"). tasaEA = "TASA COBRADA E.A."
-(8.37 en el caso), no "TASA PACTADA E.A." (12.68 contractual sin subsidio).
+cuotaActual = "= VALOR TOTAL" (cuota sin subsidio con seguros). saldoCapital = "SALDO
+DE CAPITAL DESPUÉS DE EFECTUAR ESTE PAGO" (saldo real tras aplicar el pago; el "SALDO
+TOTAL A LA FECHA DE CORTE" es PREVIO al pago y queda solo como fallback). tasaEA = "TASA
+COBRADA E.A." (8.37 en el caso) para mostrar, pero `tea` de simulación usa "TASA PACTADA
+E.A." cuando hay FRECH porque la cobrada ya está descontada y no reproduce la cuota base.
+Seguros: barrer TODAS las filas que empiezan por "+ SEGURO" / "+ OTROS SEGUROS" excepto
+vida e incendio/terremoto para no perder voluntarios múltiples; un solo regex para
+"VOLUNTARIO(S)" se queda corto cuando hay más de una fila.
 
 Campos críticos de la tabla "DATOS GENERALES DEL CRÉDITO":
 - "MONTO APROBADO" → valorDesembolsado.
