@@ -12,7 +12,7 @@ export interface ProyeccionFinancieraInput {
   banco: string;
   tipoProducto: TipoProducto;
   moneda: Moneda;
-  fechaDesembolso: string; // ISO yyyy-mm-dd
+  fechaDesembolso: string; // ISO yyyy-mm-dd usado como fecha de inicio de proyección/próxima cuota
 
   // Crédito
   valorDesembolsado: number;
@@ -98,6 +98,25 @@ const addMonths = (d: Date, n: number): Date => {
   return x;
 };
 
+const parseDateOnly = (value: string): Date | null => {
+  if (!value) return null;
+  const m = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) {
+    const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    return Number.isFinite(d.getTime()) ? d : null;
+  }
+  const d = new Date(value);
+  return Number.isFinite(d.getTime()) ? d : null;
+};
+
+const cuotaPmt = (tasaMensual: number, periodos: number, saldo: number): number => {
+  const n = Math.max(0, Math.round(periodos));
+  const pv = Math.max(0, saldo);
+  if (pv <= 0 || n <= 0) return 0;
+  if (Math.abs(tasaMensual) < 1e-10) return pv / n;
+  return (pv * tasaMensual) / (1 - Math.pow(1 + tasaMensual, -n));
+};
+
 export const totalSegurosMensual = (i: ProyeccionFinancieraInput): number =>
   (i.seguroVida || 0) + (i.seguroIncendio || 0) + (i.seguroTerremoto || 0) + (i.otrosSeguros || 0);
 
@@ -117,20 +136,15 @@ export function proyectarEscenario(
   const segurosBase = totalSegurosMensual(input);
   const teaUsada = escenario.nuevaTasa && escenario.nuevaTasa > 0 ? escenario.nuevaTasa : input.teaPct;
   const tasaMensual = teaUsada > 0 ? Math.pow(1 + teaUsada / 100, 1 / 12) - 1 : 0;
-  const cuotaSinSegurosBase = Math.max(0, input.cuotaActual - segurosBase);
-  const fechaInicio = input.fechaDesembolso ? new Date(input.fechaDesembolso) : new Date();
+  const cuotasPendientesOficiales = Math.max(0, Math.round(input.cuotasPendientes || 0));
+  const fechaInicio = parseDateOnly(input.fechaDesembolso) ?? new Date();
 
   const esUvr = input.moneda === "uvr";
   const variacionAnual = esUvr ? Math.max(0, input.variacionUvrPct ?? 0) : 0;
   const factorUvr = variacionAnual > 0 ? Math.pow(1 + variacionAnual / 100, 1 / 12) : 1;
 
-  let saldo = Math.max(0, input.saldoCapital);
-  if (escenario.abonoExtraordinario > 0) {
-    saldo = Math.max(0, saldo - escenario.abonoExtraordinario);
-  }
-
   const aporteExtra = Math.max(0, escenario.aporteMensualExtra);
-  const maxMeses = Math.max(input.cuotasPendientes || 360, 360) + 60;
+  const maxMeses = Math.max(cuotasPendientesOficiales || 360, 360) + 60;
   const cuotas: CuotaProyectada[] = [];
 
   let totalCapital = 0;
@@ -138,7 +152,67 @@ export function proyectarEscenario(
   let totalSeguros = 0;
   let totalPagado = 0;
   let i = 0;
-  let cuotaSinSeguros = cuotaSinSegurosBase;
+
+  if (esUvr && (input.saldoUvr ?? 0) > 0 && (input.uvrValor ?? 0) > 0) {
+    let valorUvr = Math.max(0, input.uvrValor ?? 0);
+    let saldoUvr = Math.max(0, input.saldoUvr ?? 0);
+    const cuotaUvrBase = cuotaPmt(tasaMensual, cuotasPendientesOficiales, saldoUvr);
+    if (escenario.abonoExtraordinario > 0 && valorUvr > 0) {
+      saldoUvr = Math.max(0, saldoUvr - escenario.abonoExtraordinario / valorUvr);
+    }
+
+    while (saldoUvr > 0.0001 && i < maxMeses) {
+      if (i > 0 && factorUvr !== 1) valorUvr *= factorUvr;
+      const interesUvr = saldoUvr * tasaMensual;
+      const aporteExtraUvr = valorUvr > 0 ? aporteExtra / valorUvr : 0;
+      let capitalUvr = cuotaUvrBase - interesUvr + aporteExtraUvr;
+      if (capitalUvr <= 0) break;
+      if (capitalUvr > saldoUvr) capitalUvr = saldoUvr;
+
+      const saldoFinalUvr = Math.max(0, saldoUvr - capitalUvr);
+      const interes = interesUvr * valorUvr;
+      const capital = capitalUvr * valorUvr;
+      const seguros = segurosBase;
+      const cuotaBase = interes + (capital - aporteExtra) + seguros;
+      const cuotaConExtra = cuotaBase + aporteExtra;
+
+      cuotas.push({
+        numero: i + 1,
+        fecha: addMonths(fechaInicio, i),
+        saldoInicial: saldoUvr * valorUvr,
+        capital,
+        interes,
+        seguros,
+        cuota: cuotaBase,
+        cuotaConExtra,
+        saldoFinal: saldoFinalUvr * valorUvr,
+      });
+
+      totalCapital += capital;
+      totalIntereses += interes;
+      totalSeguros += seguros;
+      totalPagado += cuotaConExtra;
+      saldoUvr = saldoFinalUvr;
+      i++;
+    }
+
+    return {
+      cuotas,
+      totalCapital,
+      totalIntereses,
+      totalSeguros,
+      totalPagado,
+      fechaFinalizacion: cuotas.length > 0 ? cuotas[cuotas.length - 1].fecha : null,
+      mesesRestantes: cuotas.length,
+    };
+  }
+
+  let saldo = Math.max(0, input.saldoCapital);
+  const cuotaProgramada = cuotaPmt(tasaMensual, cuotasPendientesOficiales, saldo);
+  let cuotaSinSeguros = cuotaProgramada > 0 ? cuotaProgramada : Math.max(0, input.cuotaActual - segurosBase);
+  if (escenario.abonoExtraordinario > 0) {
+    saldo = Math.max(0, saldo - escenario.abonoExtraordinario);
+  }
   let seguros = segurosBase;
 
   while (saldo > 0.5 && i < maxMeses) {
@@ -157,7 +231,7 @@ export function proyectarEscenario(
 
     cuotas.push({
       numero: i + 1,
-      fecha: addMonths(fechaInicio, (input.cuotasPagadas || 0) + i),
+      fecha: addMonths(fechaInicio, i),
       saldoInicial: saldo,
       capital,
       interes,
