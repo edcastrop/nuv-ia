@@ -80,7 +80,7 @@ const blankInput: ProyeccionFinancieraInput = {
   banco: "",
   tipoProducto: "hipotecario",
   moneda: "pesos",
-  fechaDesembolso: new Date().toISOString().slice(0, 10),
+  fechaDesembolso: "",
   valorDesembolsado: 0,
   saldoCapital: 0,
   cuotaActual: 0,
@@ -129,6 +129,38 @@ const BANCOS = [
   "Crezcamos",
   "Otro",
 ];
+
+function normalizarFechaISO(value?: string): string {
+  if (!value) return "";
+  const raw = String(value).trim();
+  const iso = raw.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
+  if (iso) return iso[0];
+  const meses: Record<string, string> = {
+    ene: "01", jan: "01",
+    feb: "02",
+    mar: "03",
+    abr: "04", apr: "04",
+    may: "05",
+    jun: "06",
+    jul: "07",
+    ago: "08", aug: "08",
+    sep: "09", sept: "09",
+    oct: "10",
+    nov: "11",
+    dic: "12", dec: "12",
+  };
+  const compact = raw.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const namedMatches = Array.from(compact.matchAll(/\b([a-z]{3,4})\.?\s*(\d{1,2})\/(\d{4})\b/g));
+  const named = namedMatches.at(-1);
+  if (named) {
+    const mes = meses[named[1].slice(0, 3)];
+    if (mes) return `${named[3]}-${mes}-${named[2].padStart(2, "0")}`;
+  }
+  const numericMatches = Array.from(raw.matchAll(/\b(\d{1,2})[/-](\d{1,2})[/-](\d{4})\b/g));
+  const numeric = numericMatches.at(-1);
+  if (numeric) return `${numeric[3]}-${numeric[2].padStart(2, "0")}-${numeric[1].padStart(2, "0")}`;
+  return "";
+}
 
 function fmtFecha(d: Date | null): string {
   if (!d) return "—";
@@ -997,15 +1029,19 @@ export function ProyeccionFinancieraView() {
                         if (d.cliente?.banco) next.banco = d.cliente.banco;
                         if (d.cliente?.cedula) next.cedula = d.cliente.cedula;
                         if (d.cliente?.numeroCredito) next.numeroCredito = d.cliente.numeroCredito;
+                        if (d.cliente?.fechaExtracto) {
+                          const fecha = normalizarFechaISO(d.cliente.fechaExtracto);
+                          if (fecha) next.fechaDesembolso = fecha;
+                        }
                         if (d.cliente?.plazoInicial) next.cuotasTotales = num(d.cliente.plazoInicial);
                         if (d.cliente?.cuotasPagadas) {
                           next.cuotasPagadas = num(d.cliente.cuotasPagadas);
-                          if (d.cliente?.cuotasPendientes) {
-                            next.cuotasPendientes = num(d.cliente.cuotasPendientes);
-                          } else if (next.cuotasTotales) {
-                            const esFna = /fondo\s+nacional\s+del\s+ahorro|\bfna\b/i.test(`${d.cliente?.banco ?? ""} ${d.cliente?.tipoProducto ?? ""}`);
-                            next.cuotasPendientes = Math.max(0, next.cuotasTotales - next.cuotasPagadas + (esFna ? 1 : 0));
-                          }
+                        }
+                        if (d.cliente?.cuotasPendientes) {
+                          next.cuotasPendientes = num(d.cliente.cuotasPendientes);
+                        } else if (next.cuotasTotales && next.cuotasPagadas) {
+                          const esFna = /fondo\s+nacional\s+del\s+ahorro|\bfna\b/i.test(`${d.cliente?.banco ?? ""} ${d.cliente?.tipoProducto ?? ""}`);
+                          next.cuotasPendientes = Math.max(0, next.cuotasTotales - next.cuotasPagadas + (esFna ? 1 : 0));
                         }
                         const setSegurosDesdeExtracto = (raw?: string) => {
                           const incoming = num(raw);
@@ -1039,6 +1075,11 @@ export function ProyeccionFinancieraView() {
                           if (d.uvr.valorDesembolsado) next.valorDesembolsado = num(d.uvr.valorDesembolsado);
                           if (d.uvr.valorUVR) next.uvrValor = num(d.uvr.valorUVR);
                           if (d.uvr.saldoUVR) next.saldoUvr = num(d.uvr.saldoUVR);
+                          const saldoUvr = next.saldoUvr ?? 0;
+                          const uvrValor = next.uvrValor ?? 0;
+                          if (next.saldoCapital <= 0 && saldoUvr > 0 && uvrValor > 0) {
+                            next.saldoCapital = saldoUvr * uvrValor;
+                          }
                         }
                         return next;
                       });
@@ -1158,7 +1199,7 @@ export function ProyeccionFinancieraView() {
                       />
                     </div>
                     <Field
-                      label="Fecha de desembolso"
+                        label="Fecha inicio proyección"
                       type="date"
                       value={input.fechaDesembolso}
                       onChange={(v) => upd("fechaDesembolso", v)}

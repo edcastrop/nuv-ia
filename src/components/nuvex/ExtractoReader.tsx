@@ -40,6 +40,7 @@ export type ExtractoApplyPayload = {
     plazoInicial?: string;
     cuotasPagadas?: string;
     cuotasPendientes?: string;
+    fechaExtracto?: string;
   };
   // Para pesos
   pesos?: {
@@ -1278,6 +1279,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
         plazoInicial: get("plazoInicial"),
         cuotasPagadas: get("cuotasPagadas"),
         cuotasPendientes: get("cuotasPendientes"),
+        fechaExtracto: get("fechaExtracto"),
       },
       archivoPath: archivoPath ?? undefined,
       monedaDetectada,
