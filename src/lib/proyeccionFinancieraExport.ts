@@ -154,7 +154,7 @@ export function exportProyeccionFinancieraPDF(ctx: ExportCtx) {
       ["Valor desembolsado", formatCOP(input.valorDesembolsado), "Saldo a capital", formatCOP(input.saldoCapital)],
       ["Cuota actual", formatCOP(input.cuotaActual), "Tasa (EA)", `${input.teaPct.toFixed(2)}%`],
       ["Plazo inicial", `${input.cuotasTotales} cuotas`, "Cuotas pagadas", `${input.cuotasPagadas}`],
-      ["Cuotas pendientes", `${input.cuotasPendientes || actual.mesesRestantes}`, "Fecha desembolso", input.fechaDesembolso],
+      ["Cuotas pendientes", `${input.cuotasPendientes || actual.mesesRestantes}`, "Fecha inicio proyección", input.fechaDesembolso || "—"],
     ],
   });
 
