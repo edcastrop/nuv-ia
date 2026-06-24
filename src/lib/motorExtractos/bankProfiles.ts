@@ -272,7 +272,7 @@ TASAS (fila siguiente):
 - "TASA COBRADA E.A." → tasaEA. ESTA ES LA QUE MANDA (es la tasa neta efectiva tras FRECH,
   ej 8.37). NO uses "TASA PACTADA E.A." como tasaEA — esa es la tasa contractual sin
   subsidio (ej 12.68) y va en teaPactada si existe el campo.
-- Para simulación matemática con FRECH, `tea` debe usar "TASA PACTADA E.A." porque esa tasa
+- Para simulación matemática con FRECH, tea debe usar "TASA PACTADA E.A." porque esa tasa
   reproduce la cuota base sin subsidio; conserva "TASA COBRADA E.A." en teaCobrada para mostrar.
 - "TASA INTERÉS CON BENEFICIO E.A." → tasaCobertura (ej 4.00). Si > 0 → beneficioActivo="si",
   tipoBeneficio="FRECH".
