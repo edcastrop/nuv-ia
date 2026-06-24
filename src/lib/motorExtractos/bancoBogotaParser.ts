@@ -42,7 +42,7 @@ function moneyToNumber(value?: string | null) {
 function firstMoneyAfter(text: string, labels: string[]) {
   for (const label of labels) {
     const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const rx = new RegExp(`${escaped}\\s+\\$?\\s*([0-9][0-9.,]*)`, "i");
+    const rx = new RegExp(`${escaped}\\*?\\s+\\$?\\s*([0-9][0-9.,]*)`, "i");
     const value = moneyToNumber(text.match(rx)?.[1] ?? "");
     if (value > 0) return value;
   }
@@ -250,8 +250,9 @@ export function parseBancoBogotaText(rawText: string): ExtractoRecord | null {
   const interesCuota = firstMoneyAfter(text, ["+ INTERESES CORRIENTES", "INTERESES CORRIENTES"]);
   const valorSeguroVida = firstMoneyAfter(text, ["+ SEGURO DE VIDA", "SEGURO DE VIDA"]);
   const valorSeguroIncendio = firstMoneyAfter(text, ["+ SEGURO INCENDIO Y TERREMOTO", "SEGURO INCENDIO Y TERREMOTO"]);
+  const valorSeguroVoluntario = firstMoneyAfter(text, ["+ SEGURO(S) VOLUNTARIO(S)", "SEGURO(S) VOLUNTARIO(S)"]);
   const valorSeguroTerremoto = 0;
-  const seguros = valorSeguroVida + valorSeguroIncendio + valorSeguroTerremoto;
+  const seguros = valorSeguroVida + valorSeguroIncendio + valorSeguroVoluntario + valorSeguroTerremoto;
   const cuotaSinSubsidio = firstMoneyAfter(text, ["= VALOR TOTAL", "VALOR TOTAL"]);
   const valorBeneficio = firstMoneyAfter(text, ["- VALOR BENEFICIO", "VALOR BENEFICIO"]);
   const totalAPagar = firstMoneyAfter(text, ["= TOTAL A PAGAR", "= TOTAL APAGAR", "VALOR TOTAL A PAGAR", "TOTAL A PAGAR", "TOTAL APAGAR"]);
