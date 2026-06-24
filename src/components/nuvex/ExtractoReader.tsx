@@ -1252,7 +1252,10 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
     const monedaDetectada: "uvr" | "pesos" =
       señalUvrFuerte || (monedaUpper === "UVR" && tieneDatosUvr) ? "uvr" : "pesos";
 
-    if (modo === "uvr") {
+    // Solo exigimos campos UVR si el EXTRACTO detectado es UVR.
+    // Si el usuario abrió el simulador en modo UVR pero subió un extracto en pesos,
+    // dejamos que el flujo continúe como pesos (monedaDetectada manda).
+    if (modo === "uvr" && monedaDetectada === "uvr") {
       const saldoUvrNum = parseMontoExtracto(saldoUvrRaw);
       const valorUvrNum = parseMontoExtracto(valorUvrRaw);
       if (saldoUvrNum <= 0 || valorUvrNum <= 0) {
