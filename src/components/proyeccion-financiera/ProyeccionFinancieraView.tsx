@@ -167,6 +167,14 @@ function fmtFecha(d: Date | null): string {
   return d.toLocaleDateString("es-CO", { year: "numeric", month: "short" });
 }
 
+function fmtUvr(n?: number, decimals = 4): string {
+  if (!Number.isFinite(n ?? NaN)) return "—";
+  return (n ?? 0).toLocaleString("es-CO", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+}
+
 // ──────────────────────────────────────────────────────────────────────────
 // UI primitives (dark · premium)
 // ──────────────────────────────────────────────────────────────────────────
@@ -660,6 +668,7 @@ export function ProyeccionFinancieraView() {
   );
 
   const segurosMes = totalSegurosMensual(input);
+  const isUvrProjection = input.moneda === "uvr";
   const hasCaseRequiredData = Boolean(
     input.clienteNombre?.trim() && input.cedula?.trim() && input.banco?.trim(),
   );
@@ -726,6 +735,15 @@ export function ProyeccionFinancieraView() {
     })
     .filter((_, i, arr) => i % Math.max(1, Math.floor(arr.length / 60)) === 0);
 
+  const chartUvrCorreccion = selected.res.cuotas
+    .filter((_, i) => i % Math.max(1, Math.floor(selected.res.cuotas.length / 80)) === 0)
+    .map((c) => ({
+      mes: c.numero,
+      "Valor UVR": Number((c.valorUvr ?? input.uvrValor ?? 0).toFixed(4)),
+      "Corrección UVR": Math.round(c.correccionUvr ?? 0),
+      "Saldo en pesos": Math.round(c.saldoFinal),
+    }));
+
   const composicion = (() => {
     const c = selected.res.cuotas[0];
     if (!c) return [];
@@ -747,15 +765,33 @@ export function ProyeccionFinancieraView() {
   ];
 
   const exportCsv = () => {
-    const headers = ["#", "Fecha", "Cuota", "Capital", "Interés", "Seguros", "Saldo"];
+    const headers = isUvrProjection
+      ? ["#", "Fecha", "Valor UVR", "Cuota UVR", "Capital UVR", "Interés UVR", "Saldo UVR", "Cuota pesos", "Capital pesos", "Interés pesos", "Seguros", "Corrección UVR / inflación", "Saldo pesos"]
+      : ["#", "Fecha", "Cuota", "Capital", "Interés", "Seguros", "Saldo"];
     const rows = selected.res.cuotas.map((c) => [
       c.numero,
-      c.fecha.toISOString().slice(0, 10),
-      Math.round(c.cuotaConExtra),
-      Math.round(c.capital),
-      Math.round(c.interes),
-      Math.round(c.seguros),
-      Math.round(c.saldoFinal),
+      c.fecha ? c.fecha.toISOString().slice(0, 10) : "",
+      ...(isUvrProjection
+        ? [
+            (c.valorUvr ?? 0).toFixed(4),
+            (c.cuotaUvr ?? 0).toFixed(6),
+            (c.capitalUvr ?? 0).toFixed(6),
+            (c.interesUvr ?? 0).toFixed(6),
+            (c.saldoFinalUvr ?? 0).toFixed(6),
+            Math.round(c.cuotaConExtra),
+            Math.round(c.capital),
+            Math.round(c.interes),
+            Math.round(c.seguros),
+            Math.round(c.correccionUvr ?? 0),
+            Math.round(c.saldoFinal),
+          ]
+        : [
+            Math.round(c.cuotaConExtra),
+            Math.round(c.capital),
+            Math.round(c.interes),
+            Math.round(c.seguros),
+            Math.round(c.saldoFinal),
+          ]),
     ]);
     const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
