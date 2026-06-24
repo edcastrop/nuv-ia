@@ -164,7 +164,7 @@ export function exportProyeccionFinancieraPDF(ctx: ExportCtx) {
     body: [
       ["Cliente", input.clienteNombre || "—", "Banco", input.banco || "—"],
       ["Producto", input.tipoProducto === "hipotecario" ? "Hipotecario" : "Leasing habitacional", "Moneda", input.moneda.toUpperCase()],
-      ["Valor desembolsado", formatCOP(input.valorDesembolsado), "Saldo a capital", formatCOP(input.saldoCapital)],
+      ["Valor desembolsado", input.valorDesembolsado > 0 ? formatCOP(input.valorDesembolsado) : "No informado", "Saldo a capital", formatCOP(input.saldoCapital)],
       ["Cuota actual", formatCOP(input.cuotaActual), "Tasa (EA)", `${input.teaPct.toFixed(2)}%`],
       ["Plazo inicial", `${input.cuotasTotales} cuotas`, "Cuotas pagadas", `${input.cuotasPagadas}`],
       ["Cuotas pendientes", `${input.cuotasPendientes || actual.mesesRestantes}`, "Fecha inicio proyección", input.fechaDesembolso || "—"],
@@ -229,7 +229,7 @@ export function exportProyeccionFinancieraPDF(ctx: ExportCtx) {
         "Meses restantes",
         `${actual.mesesRestantes}`,
         `${optimizado.mesesRestantes}`,
-        `−${kpis.mesesEliminados} meses`,
+        `-${kpis.mesesEliminados} meses`,
       ],
       [
         "Fecha terminación",
@@ -241,27 +241,27 @@ export function exportProyeccionFinancieraPDF(ctx: ExportCtx) {
         "Total intereses",
         formatCOP(actual.totalIntereses),
         formatCOP(optimizado.totalIntereses),
-        `−${formatCOP(kpis.interesesEvitados)}`,
+        `-${formatCOP(kpis.interesesEvitados)}`,
       ],
       [
         "Total seguros",
         formatCOP(actual.totalSeguros),
         formatCOP(optimizado.totalSeguros),
-        `−${formatCOP(kpis.segurosEvitados)}`,
+        `-${formatCOP(kpis.segurosEvitados)}`,
       ],
       ...(isUvr
         ? [[
             "Corrección UVR / inflación",
             formatCOP(actual.totalCorreccionUvr),
             formatCOP(optimizado.totalCorreccionUvr),
-            `${optimizado.totalCorreccionUvr >= actual.totalCorreccionUvr ? "+" : "−"}${formatCOP(Math.abs(optimizado.totalCorreccionUvr - actual.totalCorreccionUvr))}`,
+            `${optimizado.totalCorreccionUvr >= actual.totalCorreccionUvr ? "+" : "-"}${formatCOP(Math.abs(optimizado.totalCorreccionUvr - actual.totalCorreccionUvr))}`,
           ]]
         : []),
       [
         "Costo total proyectado",
         formatCOP(actual.totalPagado),
         formatCOP(optimizado.totalPagado),
-        `−${formatCOP(kpis.ahorroTotal)}`,
+        `-${formatCOP(kpis.ahorroTotal)}`,
       ],
     ],
   });
