@@ -52,9 +52,9 @@ export function clasificar(input: InputMotor): { clasificacion: ClasificacionMH;
     return { clasificacion: "uvr_360", porcentaje: 3 };
   }
   if (ahorro <= 100_000_000) return { clasificacion: "estandar", porcentaje: 6 };
-  if (ahorro <= 200_000_000) return { clasificacion: "intermedio", porcentaje: 5 };
-  if (ahorro <= 400_000_000) return { clasificacion: "premium", porcentaje: 4 };
-  return { clasificacion: "corporativo", porcentaje: 3.5 };
+  if (ahorro <= 200_000_000) return { clasificacion: "intermedio", porcentaje: 4 };
+  if (ahorro <= 400_000_000) return { clasificacion: "premium", porcentaje: 3 };
+  return { clasificacion: "corporativo", porcentaje: 2.5 };
 }
 
 export function descuentoMaximoPct(honorario: number): number {
