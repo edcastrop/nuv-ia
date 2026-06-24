@@ -402,7 +402,10 @@ export function parseDaviviendaHipotecarioText(rawText: string): ExtractoRecord 
     plazoInicial,
     cuotasPagadas,
     cuotasPendientes,
-    tea: teaCobrada,
+    // La TEA usada para proyectar siempre es la PACTADA. La Cobrada puede
+    // estar temporalmente reducida (Media UVR, FRECH, subsidio) y haría que
+    // el motor calcule menos cuotas de las que realmente faltan según el banco.
+    tea: teaPactada || teaCobrada,
     teaCobrada,
     teaPactada,
     tasaMensual: "",
