@@ -150,12 +150,14 @@ function normalizarFechaISO(value?: string): string {
     dic: "12", dec: "12",
   };
   const compact = raw.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  const named = compact.match(/\b([a-z]{3,4})\.?\s*(\d{1,2})\/(\d{4})\b/);
+  const namedMatches = Array.from(compact.matchAll(/\b([a-z]{3,4})\.?\s*(\d{1,2})\/(\d{4})\b/g));
+  const named = namedMatches.at(-1);
   if (named) {
     const mes = meses[named[1].slice(0, 3)];
     if (mes) return `${named[3]}-${mes}-${named[2].padStart(2, "0")}`;
   }
-  const numeric = raw.match(/\b(\d{1,2})[/-](\d{1,2})[/-](\d{4})\b/);
+  const numericMatches = Array.from(raw.matchAll(/\b(\d{1,2})[/-](\d{1,2})[/-](\d{4})\b/g));
+  const numeric = numericMatches.at(-1);
   if (numeric) return `${numeric[3]}-${numeric[2].padStart(2, "0")}-${numeric[1].padStart(2, "0")}`;
   return "";
 }

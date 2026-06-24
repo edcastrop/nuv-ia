@@ -162,16 +162,16 @@ export function proyectarEscenario(
     }
 
     while (saldoUvr > 0.0001 && i < maxMeses) {
-      if (i > 0 && factorUvr !== 1) valorUvr *= factorUvr;
+      const valorUvrProy = valorUvr * factorUvr;
       const interesUvr = saldoUvr * tasaMensual;
-      const aporteExtraUvr = valorUvr > 0 ? aporteExtra / valorUvr : 0;
+      const aporteExtraUvr = valorUvrProy > 0 ? aporteExtra / valorUvrProy : 0;
       let capitalUvr = cuotaUvrBase - interesUvr + aporteExtraUvr;
       if (capitalUvr <= 0) break;
       if (capitalUvr > saldoUvr) capitalUvr = saldoUvr;
 
       const saldoFinalUvr = Math.max(0, saldoUvr - capitalUvr);
-      const interes = interesUvr * valorUvr;
-      const capital = capitalUvr * valorUvr;
+      const interes = interesUvr * valorUvrProy;
+      const capital = capitalUvr * valorUvrProy;
       const seguros = segurosBase;
       const cuotaBase = interes + (capital - aporteExtra) + seguros;
       const cuotaConExtra = cuotaBase + aporteExtra;
@@ -179,13 +179,13 @@ export function proyectarEscenario(
       cuotas.push({
         numero: i + 1,
         fecha: addMonths(fechaInicio, i),
-        saldoInicial: saldoUvr * valorUvr,
+        saldoInicial: saldoUvr * valorUvrProy,
         capital,
         interes,
         seguros,
         cuota: cuotaBase,
         cuotaConExtra,
-        saldoFinal: saldoFinalUvr * valorUvr,
+        saldoFinal: saldoFinalUvr * valorUvrProy,
       });
 
       totalCapital += capital;
@@ -193,6 +193,7 @@ export function proyectarEscenario(
       totalSeguros += seguros;
       totalPagado += cuotaConExtra;
       saldoUvr = saldoFinalUvr;
+      valorUvr = valorUvrProy;
       i++;
     }
 
