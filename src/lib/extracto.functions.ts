@@ -812,10 +812,14 @@ export const extractStatement = createServerFn({ method: "POST" })
         const vida = monto("valorSeguroVida");
         const incendio = monto("valorSeguroIncendio");
         const terremoto = monto("valorSeguroTerremoto");
+        const segurosAgregados = monto("seguros");
         const segurosDetallados = vida + incendio + terremoto;
-        if (segurosDetallados > 0) {
-          segurosNum = segurosDetallados;
-          parsed.seguros = formatMontoExtracto(segurosDetallados);
+        // Banco de Bogotá puede traer seguros voluntarios/otros seguros que no
+        // tienen campo individual en el payload. Si ya existe un agregado mayor,
+        // ese agregado es la suma completa y NO debe pisarse con vida+incendio.
+        if (segurosAgregados > 0 || segurosDetallados > 0) {
+          segurosNum = Math.max(segurosAgregados, segurosDetallados);
+          parsed.seguros = formatMontoExtracto(segurosNum);
         }
 
         const beneficioBogota = valorBenef || monto("valorSubsidioGobierno");

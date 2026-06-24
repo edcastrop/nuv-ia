@@ -866,7 +866,11 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
 
     const out: ExtractoData = { ...data };
     const segurosDetallados = m("valorSeguroVida") + m("valorSeguroIncendio") + m("valorSeguroTerremoto");
-    const seguros = segurosDetallados > 0 ? segurosDetallados : m("seguros");
+    const segurosAgregados = m("seguros");
+    // Banco de Bogotá: los voluntarios/otros seguros no tienen campo individual.
+    // Por eso NO se puede reemplazar el total agregado por vida+incendio(+terremoto),
+    // porque se pierden esos seguros y la UI muestra un total menor.
+    const seguros = Math.max(segurosAgregados, segurosDetallados);
     const beneficio = m("valorCobertura") || m("valorSubsidioGobierno");
     const cuotaCliente = m("cuotaPagadaCliente") || m("valorAPagar") || m("valorCuotaConSubsidio");
     const cuotaSinSubLeida = m("cuotaSinSubsidio") || m("cuotaMensual");
