@@ -10,6 +10,7 @@ encabezado "Nro. ...CH..."):
 - "= VALOR TOTAL" es la cuota SIN subsidio CON seguros (cuotaSinSubsidio).
 - "- VALOR BENEFICIO" es el FRECH mensual (valorBeneficioMensual).
 - "= TOTAL A PAGAR" es la cuota CON subsidio que paga hoy el cliente (cuotaConSubsidio).
+- En seguros, sumar vida + incendio/terremoto + seguro(s) voluntario(s) cuando la fila exista; caso real 16.748,52 + 19.206,82 + 40.570,69 = 76.526,03.
 
 **Regla** para alimentar `cuotaConInteresSinSeguros` (campo que NUVIA suma con beneficio + seguros
 para reconstruir la cuota base de simulación):
