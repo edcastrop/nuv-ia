@@ -1664,6 +1664,32 @@ export function ProyeccionFinancieraView() {
                       </ResponsiveContainer>
                     </div>
                   </Surface>
+
+                  {isUvrProjection && (
+                    <Surface title="UVR e inflación" subtitle="Valor UVR, corrección monetaria y saldo corregido">
+                      <div className="h-[320px]">
+                        <ResponsiveContainer>
+                          <LineChart data={chartUvrCorreccion} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="2 4" stroke={gridColor} vertical={false} />
+                            <XAxis dataKey="mes" tick={axisTick} axisLine={false} tickLine={false} />
+                            <YAxis
+                              yAxisId="pesos"
+                              tick={axisTick}
+                              axisLine={false}
+                              tickLine={false}
+                              tickFormatter={(v) => `${(v / 1_000_000).toFixed(0)}M`}
+                            />
+                            <YAxis yAxisId="uvr" orientation="right" tick={axisTick} axisLine={false} tickLine={false} />
+                            <Tooltip formatter={(v: number, name: string) => name === "Valor UVR" ? fmtUvr(v, 4) : formatCOP(v)} contentStyle={tooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} wrapperStyle={{ outline: "none" }} />
+                            <Legend wrapperStyle={{ fontSize: 11, color: "rgba(255,255,255,0.6)" }} />
+                            <Line yAxisId="uvr" type="monotone" dataKey="Valor UVR" stroke={NUVIA.ambar} strokeWidth={2.5} dot={false} />
+                            <Line yAxisId="pesos" type="monotone" dataKey="Corrección UVR" stroke={NUVIA.azul} strokeWidth={2.5} dot={false} />
+                            <Line yAxisId="pesos" type="monotone" dataKey="Saldo en pesos" stroke={NUVIA.verde} strokeWidth={2.5} dot={false} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </Surface>
+                  )}
                 </div>
 
                 {/* Informe ejecutivo · banca privada */}
@@ -1827,10 +1853,14 @@ export function ProyeccionFinancieraView() {
                           <th className="px-4 py-3">#</th>
                           <th className="px-4 py-3">Fecha</th>
                           <th className="px-4 py-3 text-right">Cuota</th>
+                          {isUvrProjection && <th className="px-4 py-3 text-right">Valor UVR</th>}
+                          {isUvrProjection && <th className="px-4 py-3 text-right">Cuota UVR</th>}
                           <th className="px-4 py-3 text-right">Capital</th>
                           <th className="px-4 py-3 text-right">Interés</th>
                           <th className="px-4 py-3 text-right">Seguros</th>
+                          {isUvrProjection && <th className="px-4 py-3 text-right">Corrección UVR / inflación</th>}
                           <th className="px-4 py-3 text-right">Saldo</th>
+                          {isUvrProjection && <th className="px-4 py-3 text-right">Saldo UVR</th>}
                         </tr>
                       </thead>
                       <tbody>
@@ -1845,12 +1875,16 @@ export function ProyeccionFinancieraView() {
                             <td className="px-4 py-2.5 text-right text-white">
                               {formatCOP(c.cuotaConExtra)}
                             </td>
+                            {isUvrProjection && <td className="px-4 py-2.5 text-right text-[#F8D36A]">{fmtUvr(c.valorUvr, 4)}</td>}
+                            {isUvrProjection && <td className="px-4 py-2.5 text-right text-white/65">{fmtUvr(c.cuotaUvr, 6)}</td>}
                             <td className="px-4 py-2.5 text-right text-[#A6CDAE]">{formatCOP(c.capital)}</td>
                             <td className="px-4 py-2.5 text-right text-rose-300">{formatCOP(c.interes)}</td>
                             <td className="px-4 py-2.5 text-right text-white/55">{formatCOP(c.seguros)}</td>
+                            {isUvrProjection && <td className="px-4 py-2.5 text-right text-[#F8D36A]">{formatCOP(c.correccionUvr ?? 0)}</td>}
                             <td className="px-4 py-2.5 text-right font-medium text-white">
                               {formatCOP(c.saldoFinal)}
                             </td>
+                            {isUvrProjection && <td className="px-4 py-2.5 text-right font-medium text-white/70">{fmtUvr(c.saldoFinalUvr, 4)}</td>}
                           </tr>
                         ))}
                       </tbody>
