@@ -54,7 +54,7 @@ export interface EscenarioInput {
 
 export interface CuotaProyectada {
   numero: number;
-  fecha: Date;
+  fecha: Date | null;
   saldoInicial: number;
   capital: number;
   interes: number;
@@ -62,6 +62,15 @@ export interface CuotaProyectada {
   cuota: number;
   cuotaConExtra: number;
   saldoFinal: number;
+  valorUvr?: number;
+  saldoInicialUvr?: number;
+  cuotaUvr?: number;
+  capitalUvr?: number;
+  interesUvr?: number;
+  saldoFinalUvr?: number;
+  variacionUvrMesPct?: number;
+  correccionUvr?: number;
+  correccionInflacion?: number;
 }
 
 export interface ResultadoEscenario {
@@ -69,6 +78,8 @@ export interface ResultadoEscenario {
   totalCapital: number;
   totalIntereses: number;
   totalSeguros: number;
+  totalCorreccionUvr: number;
+  totalCorreccionInflacion: number;
   totalPagado: number;
   fechaFinalizacion: Date | null;
   mesesRestantes: number;
@@ -137,7 +148,7 @@ export function proyectarEscenario(
   const teaUsada = escenario.nuevaTasa && escenario.nuevaTasa > 0 ? escenario.nuevaTasa : input.teaPct;
   const tasaMensual = teaUsada > 0 ? Math.pow(1 + teaUsada / 100, 1 / 12) - 1 : 0;
   const cuotasPendientesOficiales = Math.max(0, Math.round(input.cuotasPendientes || 0));
-  const fechaInicio = parseDateOnly(input.fechaDesembolso) ?? new Date();
+  const fechaInicio = parseDateOnly(input.fechaDesembolso);
 
   const esUvr = input.moneda === "uvr";
   const variacionAnual = esUvr ? Math.max(0, input.variacionUvrPct ?? 0) : 0;
@@ -150,18 +161,22 @@ export function proyectarEscenario(
   let totalCapital = 0;
   let totalIntereses = 0;
   let totalSeguros = 0;
+  let totalCorreccionUvr = 0;
+  let totalCorreccionInflacion = 0;
   let totalPagado = 0;
   let i = 0;
 
-  if (esUvr && (input.saldoUvr ?? 0) > 0 && (input.uvrValor ?? 0) > 0) {
+  if (esUvr && (input.uvrValor ?? 0) > 0 && ((input.saldoUvr ?? 0) > 0 || input.saldoCapital > 0)) {
     let valorUvr = Math.max(0, input.uvrValor ?? 0);
-    let saldoUvr = Math.max(0, input.saldoUvr ?? 0);
+    let saldoUvr = Math.max(0, (input.saldoUvr ?? 0) > 0 ? input.saldoUvr ?? 0 : input.saldoCapital / valorUvr);
     const cuotaUvrBase = cuotaPmt(tasaMensual, cuotasPendientesOficiales, saldoUvr);
     if (escenario.abonoExtraordinario > 0 && valorUvr > 0) {
       saldoUvr = Math.max(0, saldoUvr - escenario.abonoExtraordinario / valorUvr);
     }
 
     while (saldoUvr > 0.0001 && i < maxMeses) {
+      const valorUvrAnterior = valorUvr;
+      const saldoInicialUvr = saldoUvr;
       const valorUvrProy = valorUvr * factorUvr;
       const interesUvr = saldoUvr * tasaMensual;
       const aporteExtraUvr = valorUvrProy > 0 ? aporteExtra / valorUvrProy : 0;
@@ -175,22 +190,35 @@ export function proyectarEscenario(
       const seguros = segurosBase;
       const cuotaBase = interes + (capital - aporteExtra) + seguros;
       const cuotaConExtra = cuotaBase + aporteExtra;
+      const correccionUvr = saldoInicialUvr * (valorUvrProy - valorUvrAnterior);
+      const correccionInflacion = correccionUvr;
 
       cuotas.push({
         numero: i + 1,
-        fecha: addMonths(fechaInicio, i),
-        saldoInicial: saldoUvr * valorUvrProy,
+        fecha: fechaInicio ? addMonths(fechaInicio, i) : null,
+        saldoInicial: saldoInicialUvr * valorUvrAnterior,
         capital,
         interes,
         seguros,
         cuota: cuotaBase,
         cuotaConExtra,
         saldoFinal: saldoFinalUvr * valorUvrProy,
+        valorUvr: valorUvrProy,
+        saldoInicialUvr,
+        cuotaUvr: cuotaUvrBase,
+        capitalUvr,
+        interesUvr,
+        saldoFinalUvr,
+        variacionUvrMesPct: (factorUvr - 1) * 100,
+        correccionUvr,
+        correccionInflacion,
       });
 
       totalCapital += capital;
       totalIntereses += interes;
       totalSeguros += seguros;
+      totalCorreccionUvr += correccionUvr;
+      totalCorreccionInflacion += correccionInflacion;
       totalPagado += cuotaConExtra;
       saldoUvr = saldoFinalUvr;
       valorUvr = valorUvrProy;
@@ -202,6 +230,8 @@ export function proyectarEscenario(
       totalCapital,
       totalIntereses,
       totalSeguros,
+      totalCorreccionUvr,
+      totalCorreccionInflacion,
       totalPagado,
       fechaFinalizacion: cuotas.length > 0 ? cuotas[cuotas.length - 1].fecha : null,
       mesesRestantes: cuotas.length,
@@ -232,7 +262,7 @@ export function proyectarEscenario(
 
     cuotas.push({
       numero: i + 1,
-      fecha: addMonths(fechaInicio, i),
+      fecha: fechaInicio ? addMonths(fechaInicio, i) : null,
       saldoInicial: saldo,
       capital,
       interes,
@@ -255,6 +285,8 @@ export function proyectarEscenario(
     totalCapital,
     totalIntereses,
     totalSeguros,
+    totalCorreccionUvr,
+    totalCorreccionInflacion,
     totalPagado,
     fechaFinalizacion: cuotas.length > 0 ? cuotas[cuotas.length - 1].fecha : null,
     mesesRestantes: cuotas.length,
