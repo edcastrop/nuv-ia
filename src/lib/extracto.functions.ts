@@ -334,11 +334,12 @@ REGLAS ESTRICTAS:
   * No marques beneficio por la sola palabra cobertura. Solo tieneCobertura="si" si "Interés Cte. Cobertura", "Valor Beneficio", "Valor subsidio" o "Cobertura FRECH" tienen valor > 0. Si no, tieneCobertura="no", tipoBeneficio="", valorCobertura="", tasaCobertura="".
   * Si "Documento No:" es "0000000000" o enmascarado, cedula="". Si no aparece valor desembolsado, valorDesembolsado="".
 - BANCO DE BOGOTÁ HIPOTECARIO — mapeo LITERAL obligatorio para "Extracto Crédito de Vivienda":
+  * La tabla tiene dos columnas: "DETALLE VALOR A PAGAR" (cuota actual) y "DETALLE PAGO ANTERIOR". Para capital, intereses y seguros toma SIEMPRE el PRIMER monto de cada renglón; el segundo monto es pago anterior y NO se usa.
   * "+ INTERESES CORRIENTES" → interesCuota. NO lo uses como cuotaConInteresSinSeguros.
   * "= VALOR TOTAL" → cuotaSinSubsidio y cuotaMensual: cuota real SIN subsidio CON seguros.
   * "- VALOR BENEFICIO" → valorCobertura. Si es mayor a 0, tieneCobertura="si" y tipoBeneficio="FRECH".
   * "= TOTAL A PAGAR" / "VALOR TOTAL A PAGAR" → cuotaPagadaCliente: cuota que paga hoy el cliente CON subsidio.
-  * seguros = sumar TODAS las filas de seguro del detalle mensual: vida + incendio/terremoto + seguro(s) voluntario(s) + otros seguros/pólizas voluntarias si aparecen. No tomes solo el primer voluntario; caso auditado 16,748.52 + 19,206.82 + 40,570.69 = 76,526.03.
+  * seguros = sumar TODAS las filas de seguro del detalle mensual usando el PRIMER monto de cada fila: vida + incendio/terremoto + seguro(s) voluntario(s) + otros seguros/pólizas voluntarias si aparecen. No tomes solo el primer voluntario; caso auditado 16,748.52 + 19,206.82 + 40,570.69 = 76,526.03. NO uses los segundos valores 21,708.72 / 24,851.18 / 52,483.31 porque son "DETALLE PAGO ANTERIOR".
   * cuotaConInteresSinSeguros = cuotaPagadaCliente - seguros. NUNCA interesesCorrientes.
   * cuotaBaseSimulacion/cuotaMensual = cuotaSinSubsidio = cuotaPagadaCliente + valorCobertura.
   * Validación obligatoria: cuotaConInteresSinSeguros + valorCobertura + seguros = cuotaSinSubsidio.
