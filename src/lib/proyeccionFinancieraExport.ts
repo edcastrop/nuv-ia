@@ -164,7 +164,7 @@ export function exportProyeccionFinancieraPDF(ctx: ExportCtx) {
     body: [
       ["Cliente", input.clienteNombre || "—", "Banco", input.banco || "—"],
       ["Producto", input.tipoProducto === "hipotecario" ? "Hipotecario" : "Leasing habitacional", "Moneda", input.moneda.toUpperCase()],
-      ["Valor desembolsado", formatCOP(input.valorDesembolsado), "Saldo a capital", formatCOP(input.saldoCapital)],
+      ["Valor desembolsado", input.valorDesembolsado > 0 ? formatCOP(input.valorDesembolsado) : "No informado", "Saldo a capital", formatCOP(input.saldoCapital)],
       ["Cuota actual", formatCOP(input.cuotaActual), "Tasa (EA)", `${input.teaPct.toFixed(2)}%`],
       ["Plazo inicial", `${input.cuotasTotales} cuotas`, "Cuotas pagadas", `${input.cuotasPagadas}`],
       ["Cuotas pendientes", `${input.cuotasPendientes || actual.mesesRestantes}`, "Fecha inicio proyección", input.fechaDesembolso || "—"],
