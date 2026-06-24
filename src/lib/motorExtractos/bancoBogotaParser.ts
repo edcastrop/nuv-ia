@@ -84,7 +84,7 @@ function extractInsuranceRows(rawText: string) {
   };
 
   const joined = rawText.split(/\r?\n/).map((line) => compactSpaces(line).trim()).filter(Boolean).join("\n");
-  const conceptSegments = joined.split(/(?=\s*[+\-=]?\s*(?:CAPITAL|INTERESES|SEGUROS?|OTROS\s+SEGUROS|VALOR\s+TOTAL|TOTAL\s+A\s+PAGAR|VALOR\s+BENEFICIO)\b)/i);
+  const conceptSegments = joined.split(/(?=\s*(?:\$\s*)?[+\-=]?\s*(?:CAPITAL|INTERESES|SEGUROS?|OTROS\s+SEGUROS|P[ÓO]LIZA|VALOR\s+TOTAL|TOTAL\s+A\s+PAGAR|VALOR\s+BENEFICIO)\b)/i);
   const usedSegmentKeys = new Set<string>();
 
   for (const segment of conceptSegments) {
@@ -107,9 +107,7 @@ function extractInsuranceRows(rawText: string) {
     const nextLine = sameLine > 0 ? 0 : lastMoneyIn(`${lines[i + 1] ?? ""} ${lines[i + 2] ?? ""}`);
     const value = sameLine || nextLine;
     if (!(value > 0)) continue;
-    const currentTotal = result.vida + result.incendio + result.voluntario;
-    const alreadyCaptured = Math.abs(currentTotal - value) <= 0.5 || [result.vida, result.incendio, result.voluntario].some((v) => Math.abs(v - value) <= 0.5);
-    if (!alreadyCaptured) add(kind, value);
+    if (result[kind] <= 0) add(kind, value);
   }
 
   return result;
