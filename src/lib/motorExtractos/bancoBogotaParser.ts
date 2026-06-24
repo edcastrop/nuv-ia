@@ -293,7 +293,11 @@ export function parseBancoBogotaText(rawText: string): ExtractoRecord | null {
     plazoInicial,
     cuotasPagadas,
     cuotasPendientes,
-    tea: tasaEA,
+    // Cuando hay FRECH, la "Tasa Cobrada E.A." ya está descontado el beneficio
+    // y NO reproduce la cuota base (sin subsidio) que paga el saldo. La cuota base
+    // se generó con la "Tasa Pactada E.A." (rate contractual). Para que la matemática
+    // financiera reproduzca la cuota real, usamos la pactada cuando hay cobertura.
+    tea: tieneCobertura && teaPactada ? teaPactada : tasaEA,
     teaCobrada: tasaEA,
     teaPactada,
     tasaMensual: "",
