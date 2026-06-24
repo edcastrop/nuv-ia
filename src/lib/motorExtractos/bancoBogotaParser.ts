@@ -68,6 +68,11 @@ function lastMoneyIn(text: string) {
   return values.at(-1) ?? 0;
 }
 
+function firstMoneyIn(text: string) {
+  const values = extractMoneyValues(text);
+  return values[0] ?? 0;
+}
+
 function classifyInsuranceLabel(text: string): "vida" | "incendio" | "voluntario" | null {
   const up = normalizeForMatch(text);
   if (!/\b(SEGURO|SEGUROS|POLIZA|POLIZA)\b/.test(up) && !/\bOTROS\s+SEGUROS\b/.test(up)) return null;
@@ -90,7 +95,11 @@ function extractInsuranceRows(rawText: string) {
   for (const segment of conceptSegments) {
     const kind = classifyInsuranceLabel(segment);
     if (!kind) continue;
-    const value = lastMoneyIn(segment);
+    // Banco de Bogotá imprime dos columnas: "DETALLE VALOR A PAGAR" y
+    // "DETALLE PAGO ANTERIOR". La cuota actual es SIEMPRE el primer monto
+    // del renglón; tomar el último arrastra el pago anterior (ej. 21.708,72
+    // en vez de 16.748,52) y descuadra todos los seguros.
+    const value = firstMoneyIn(segment);
     if (!(value > 0)) continue;
     const key = `${kind}:${Math.round(value * 100)}:${normalizeForMatch(segment).slice(0, 70)}`;
     if (usedSegmentKeys.has(key)) continue;
@@ -103,8 +112,8 @@ function extractInsuranceRows(rawText: string) {
   for (let i = 0; i < lines.length; i += 1) {
     const kind = classifyInsuranceLabel(lines[i]);
     if (!kind) continue;
-    const sameLine = lastMoneyIn(lines[i]);
-    const nextLine = sameLine > 0 ? 0 : lastMoneyIn(`${lines[i + 1] ?? ""} ${lines[i + 2] ?? ""}`);
+    const sameLine = firstMoneyIn(lines[i]);
+    const nextLine = sameLine > 0 ? 0 : firstMoneyIn(`${lines[i + 1] ?? ""} ${lines[i + 2] ?? ""}`);
     const value = sameLine || nextLine;
     if (!(value > 0)) continue;
     if (result[kind] <= 0) add(kind, value);
@@ -303,7 +312,11 @@ function validateBancoBogotaFields(values: {
 export function parseBancoBogotaText(rawText: string): ExtractoRecord | null {
   const text = compactSpaces(rawText);
   const normalizedHeader = normalizeForMatch(text);
-  if (!/BANCO\s*DE\s+BOGOT/.test(normalizedHeader) || !/EXTRACTO\s+CREDITO\s+DE\s+VIVIENDA/.test(normalizedHeader)) {
+  const looksBancoBogota =
+    /BANCO\s*DE\s+BOGOT/.test(normalizedHeader) ||
+    /BANCO\s*DE\s*BOGOT/.test(normalizedHeader.replace(/\s+/g, "")) ||
+    /BANCODEBOGOTA\.COM/.test(normalizedHeader.replace(/\s+/g, ""));
+  if (!looksBancoBogota || !/EXTRACTO\s+CREDITO\s+DE\s+VIVIENDA/.test(normalizedHeader)) {
     return null;
   }
 
@@ -422,6 +435,7 @@ export function parseBancoBogotaText(rawText: string): ExtractoRecord | null {
     valorSeguroVida: formatMontoExtracto(valorSeguroVida),
     valorSeguroIncendio: formatMontoExtracto(valorSeguroIncendio),
     valorSeguroTerremoto: "",
+    valorSegurosVoluntarios: formatMontoExtracto(valorSegurosVoluntarios),
     valorCuotaSinSubsidioGobierno: "",
     valorSubsidioGobierno: formatMontoExtracto(valorBeneficio),
     valorCuotaConSubsidio: formatMontoExtracto(totalAPagar),

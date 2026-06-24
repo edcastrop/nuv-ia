@@ -43,6 +43,13 @@ porque Banco de Bogotá no tiene un campo dedicado para voluntarios/otros seguro
 el mayor entre el total agregado `seguros` y el subtotal detallado individual; si se pisa, la UI
 muestra totales incompletos como 35.955/46.560 y descuadra la cuota.
 
+Corrección adicional auditada: en Banco de Bogotá la tabla trae dos columnas (`DETALLE VALOR A PAGAR`
+y `DETALLE PAGO ANTERIOR`). Para seguros, capital e intereses de la cuota actual se toma el PRIMER
+monto del renglón, no el último. Caso real 2026-06: vida 16.748,52; incendio y terremoto 19.206,82;
+voluntario 40.570,69; total seguros 76.526,03. Si la IA entrega un agregado absurdo, reconstruir
+seguros por matemática financiera: `= VALOR TOTAL - CAPITAL - INTERESES CORRIENTES` y validar que
+`TOTAL A PAGAR - seguros = cuotaConInteresSinSeguros`.
+
 Campos críticos de la tabla "DATOS GENERALES DEL CRÉDITO":
 - "MONTO APROBADO" → valorDesembolsado.
 - "PLAZO INICAL/INICIAL" → plazoInicial.

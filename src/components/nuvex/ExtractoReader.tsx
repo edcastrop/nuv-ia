@@ -431,6 +431,34 @@ function confColor(c: Confianza, value: string) {
   };
 }
 
+function pickBancoBogotaSeguros(values: {
+  segurosAgregados: number;
+  segurosDetallados: number;
+  cuotaSinSubLeida: number;
+  capital: number;
+  interes: number;
+  cuotaCliente: number;
+  beneficio: number;
+}) {
+  const porDetalleCuota = values.cuotaSinSubLeida - values.capital - values.interes;
+  const candidatos = [
+    porDetalleCuota > 0 ? porDetalleCuota : 0,
+    values.segurosAgregados,
+    values.segurosDetallados,
+  ].filter((value) => Number.isFinite(value) && value > 0);
+  const cuotaReferencia = values.cuotaSinSubLeida || values.cuotaCliente || 0;
+  const plausibles = candidatos.filter((value) => {
+    if (!(cuotaReferencia > 0)) return true;
+    return value <= Math.max(250_000, cuotaReferencia * 0.35);
+  });
+
+  if (porDetalleCuota > 0 && (!cuotaReferencia || porDetalleCuota <= Math.max(250_000, cuotaReferencia * 0.35))) {
+    return porDetalleCuota;
+  }
+  if (plausibles.length > 0) return Math.max(...plausibles);
+  return Math.max(...candidatos, 0);
+}
+
 const STAGES: { id: Stage; label: string }[] = [
   { id: "idle", label: "Archivo cargado" },
   { id: "reading", label: "Leyendo extracto" },
@@ -730,7 +758,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
     "banco", "producto", "tipoCredito", "moneda", "sistemaAmortizacion", "cuotaMensual",
     "cuotaSinSubsidio", "cuotaPagadaCliente", "valorAPagar", "valorCuotaConSubsidio",
     "valorCobertura", "valorSubsidioGobierno", "seguros", "valorSeguroVida",
-    "valorSeguroIncendio", "valorSeguroTerremoto", "interesCuota", "capitalCuota",
+    "valorSeguroIncendio", "valorSeguroTerremoto", "valorSegurosVoluntarios", "interesCuota", "capitalCuota",
   ]);
 
 
@@ -865,15 +893,24 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
     if (!/banco\s+de\s+bogot|bogot[aá]/.test(texto) || /leasing/.test(texto)) return data;
 
     const out: ExtractoData = { ...data };
-    const segurosDetallados = m("valorSeguroVida") + m("valorSeguroIncendio") + m("valorSeguroTerremoto");
+    const vida = m("valorSeguroVida");
+    const incendio = m("valorSeguroIncendio");
+    const terremoto = m("valorSeguroTerremoto");
+    const voluntario = m("valorSegurosVoluntarios");
+    const segurosDetallados = vida + incendio + terremoto + voluntario;
     const segurosAgregados = m("seguros");
-    // Banco de Bogotá: los voluntarios/otros seguros no tienen campo individual.
-    // Por eso NO se puede reemplazar el total agregado por vida+incendio(+terremoto),
-    // porque se pierden esos seguros y la UI muestra un total menor.
-    const seguros = Math.max(segurosAgregados, segurosDetallados);
     const beneficio = m("valorCobertura") || m("valorSubsidioGobierno");
     const cuotaCliente = m("cuotaPagadaCliente") || m("valorAPagar") || m("valorCuotaConSubsidio");
     const cuotaSinSubLeida = m("cuotaSinSubsidio") || m("cuotaMensual");
+    const seguros = pickBancoBogotaSeguros({
+      segurosAgregados,
+      segurosDetallados,
+      cuotaSinSubLeida,
+      capital: m("capitalCuota"),
+      interes: m("interesCuota"),
+      cuotaCliente,
+      beneficio,
+    });
     const detalleSinSubsidio = m("capitalCuota") + m("interesCuota") + seguros;
     const basePorPagoNeto = cuotaCliente > 0 && beneficio > 0 ? cuotaCliente + beneficio : 0;
     let cuotaBase = basePorPagoNeto || (detalleSinSubsidio > seguros ? detalleSinSubsidio : 0) || cuotaSinSubLeida || cuotaCliente;
@@ -881,7 +918,11 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
     out.banco = "Banco de Bogotá";
     out.tipoCredito = "CREDITO_HIPOTECARIO";
     out.moneda = /\buvr\b/i.test(`${g("moneda")} ${g("producto")} ${g("sistemaAmortizacion")}`) ? "UVR" : "PESOS";
-    if (seguros > 0) out.seguros = String(Math.round(seguros));
+    if (seguros > 0) {
+      out.seguros = String(Math.round(seguros));
+      const voluntarios = seguros - vida - incendio - terremoto;
+      if (voluntarios > 0) out.valorSegurosVoluntarios = String(Math.round(voluntarios));
+    }
     if (beneficio > 0) {
       out.tieneCobertura = "si";
       out.valorCobertura = String(Math.round(beneficio));
@@ -1297,6 +1338,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
   // Campos a mostrar según modo
   const bancoMapeado = (parsed?.mapeoBanco as string) ?? "";
   const esBancolombia = /bancolombia/i.test(bancoMapeado);
+  const esBancoBogota = /banco_bogota/i.test(bancoMapeado) || /banco\s+de\s+bogot|bogot[aá]/i.test((parsed?.banco as string) ?? "");
   const fieldsBase: { key: string; label: string }[] = [
     { key: "banco", label: "Banco" },
     { key: "cliente", label: "Nombre del cliente" },
@@ -1323,8 +1365,10 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
     { key: "cuotaConInteresSinSeguros", label: "Cuota con interés / sin seguros" },
     { key: "cuotaSinSubsidio", label: "Cuota sin subsidio (si el extracto la muestra)" },
     { key: "valorSeguroVida", label: "Seguro vida (mensual)" },
-    { key: "valorSeguroIncendio", label: "Seguro incendio (mensual)" },
-    { key: "valorSeguroTerremoto", label: "Seguro terremoto (mensual)" },
+    { key: "valorSeguroIncendio", label: esBancoBogota ? "Seguro incendio y terremoto (mensual)" : "Seguro incendio (mensual)" },
+    ...(esBancoBogota
+      ? [{ key: "valorSegurosVoluntarios", label: "Seguros voluntarios / otros (mensual)" }]
+      : [{ key: "valorSeguroTerremoto", label: "Seguro terremoto (mensual)" }]),
     { key: "fechaExtracto", label: "Fecha del extracto" },
   ];
   const fields = [

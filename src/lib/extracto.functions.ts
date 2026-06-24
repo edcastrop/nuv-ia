@@ -403,6 +403,34 @@ function closeMoney(a: number, b: number): boolean {
   return Math.abs(a - b) <= Math.max(2_500, Math.max(Math.abs(a), Math.abs(b)) * 0.005);
 }
 
+function pickBancoBogotaSeguros(values: {
+  segurosAgregados: number;
+  segurosDetallados: number;
+  cuotaSinSubLeida: number;
+  capital: number;
+  interes: number;
+  cuotaCliente: number;
+  beneficio: number;
+}) {
+  const porDetalleCuota = values.cuotaSinSubLeida - values.capital - values.interes;
+  const candidatos = [
+    porDetalleCuota > 0 ? porDetalleCuota : 0,
+    values.segurosAgregados,
+    values.segurosDetallados,
+  ].filter((value) => Number.isFinite(value) && value > 0);
+  const cuotaReferencia = values.cuotaSinSubLeida || values.cuotaCliente || 0;
+  const plausibles = candidatos.filter((value) => {
+    if (!(cuotaReferencia > 0)) return true;
+    return value <= Math.max(250_000, cuotaReferencia * 0.35);
+  });
+
+  if (porDetalleCuota > 0 && (!cuotaReferencia || porDetalleCuota <= Math.max(250_000, cuotaReferencia * 0.35))) {
+    return porDetalleCuota;
+  }
+  if (plausibles.length > 0) return Math.max(...plausibles);
+  return Math.max(...candidatos, 0);
+}
+
 export const extractStatement = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => InputSchema.parse(data))
   .handler(async ({ data }): Promise<ExtractoResponse> => {
@@ -657,7 +685,7 @@ export const extractStatement = createServerFn({ method: "POST" })
       let cuotaBase = 0;
       let requiereVerificacion = false;
       const errores: string[] = [];
-      let mapeoBanco: "bancolombia" | "davivienda_leasing" | "davivienda_hipotecario" | "generico" = "generico";
+      let mapeoBanco: "bancolombia" | "banco_bogota_hipotecario" | "davivienda_leasing" | "davivienda_hipotecario" | "generico" = "generico";
       const inferRemainingByPmt = (saldo: number, tasaEaPct: number, cuotaFinanciera: number): number => {
         if (!(saldo > 0 && tasaEaPct > 0 && cuotaFinanciera > 0)) return 0;
         const i = Math.pow(1 + tasaEaPct / 100, 1 / 12) - 1;
@@ -804,7 +832,7 @@ export const extractStatement = createServerFn({ method: "POST" })
         }
       } else if (esBancoBogotaHipotecario) {
         // ----- BANCO DE BOGOTÁ HIPOTECARIO: FRECH NO se suma sobre intereses brutos -----
-        mapeoBanco = "generico";
+        mapeoBanco = "banco_bogota_hipotecario";
         parsed.banco = "Banco de Bogotá";
         parsed.tipoCredito = "CREDITO_HIPOTECARIO";
         parsed.moneda = /\buvr\b/i.test(`${parsed.moneda ?? ""} ${parsed.producto ?? ""} ${parsed.sistemaAmortizacion ?? ""}`) ? "UVR" : "PESOS";
@@ -812,19 +840,30 @@ export const extractStatement = createServerFn({ method: "POST" })
         const vida = monto("valorSeguroVida");
         const incendio = monto("valorSeguroIncendio");
         const terremoto = monto("valorSeguroTerremoto");
+        const voluntario = monto("valorSegurosVoluntarios");
         const segurosAgregados = monto("seguros");
-        const segurosDetallados = vida + incendio + terremoto;
-        // Banco de Bogotá puede traer seguros voluntarios/otros seguros que no
-        // tienen campo individual en el payload. Si ya existe un agregado mayor,
-        // ese agregado es la suma completa y NO debe pisarse con vida+incendio.
-        if (segurosAgregados > 0 || segurosDetallados > 0) {
-          segurosNum = Math.max(segurosAgregados, segurosDetallados);
-          parsed.seguros = formatMontoExtracto(segurosNum);
-        }
-
+        const segurosDetallados = vida + incendio + terremoto + voluntario;
         const beneficioBogota = valorBenef || monto("valorSubsidioGobierno");
         const cuotaClienteBogota = cuotaCliente || monto("valorAPagar") || monto("valorCuotaConSubsidio");
         const cuotaSinSubLeida = monto("cuotaSinSubsidio") || monto("cuotaMensual");
+        // Banco de Bogotá trae seguros voluntarios sin campo individual, pero
+        // también puede venir un agregado mal leído por IA. La fuente matemática
+        // más segura es: =VALOR TOTAL - CAPITAL - INTERESES CORRIENTES.
+        if (segurosAgregados > 0 || segurosDetallados > 0 || cuotaSinSubLeida > 0) {
+          segurosNum = pickBancoBogotaSeguros({
+            segurosAgregados,
+            segurosDetallados,
+            cuotaSinSubLeida,
+            capital: monto("capitalCuota"),
+            interes: monto("interesCuota"),
+            cuotaCliente: cuotaClienteBogota,
+            beneficio: beneficioBogota,
+          });
+          parsed.seguros = formatMontoExtracto(segurosNum);
+          const voluntarios = segurosNum - vida - incendio - terremoto;
+          if (voluntarios > 0) parsed.valorSegurosVoluntarios = formatMontoExtracto(voluntarios);
+        }
+
         const detalleSinSubsidio = monto("capitalCuota") + monto("interesCuota") + segurosNum;
         const basePorPagoNeto = cuotaClienteBogota > 0 && beneficioBogota > 0
           ? cuotaClienteBogota + beneficioBogota
