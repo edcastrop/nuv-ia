@@ -28,3 +28,10 @@ Validación obligatoria del parser:
 cuotaActual = "= VALOR TOTAL" (cuota sin subsidio con seguros). saldoCapital = "SALDO TOTAL A
 LA FECHA DE CORTE" (no el "DESPUÉS DE EFECTUAR ESTE PAGO"). tasaEA = "TASA COBRADA E.A."
 (8.37 en el caso), no "TASA PACTADA E.A." (12.68 contractual sin subsidio).
+
+Campos críticos de la tabla "DATOS GENERALES DEL CRÉDITO":
+- "MONTO APROBADO" → valorDesembolsado.
+- "PLAZO INICAL/INICIAL" → plazoInicial.
+- "CUOTA A PAGAR" → cuotasPagadas / cuotaActualNumero (número de cuota facturada, no monto).
+- "CUOTAS PENDIENTES" → cuotasPendientes literal del extracto; para Banco de Bogotá no recalcular como plazoInicial - cuotasPagadas, porque en casos reales 240, 27 y 214 cuadran con tolerancia por calendario bancario.
+- En OCR, la fila de tasas puede salir como `14 16 8 76 5.00...`; debe reconstruirse como tasa pactada 14.16, tasa cobrada 8.76 y tasa cobertura 5.00.
