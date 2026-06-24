@@ -29,6 +29,18 @@ function fmtMes(d: Date): string {
   return d.toLocaleDateString("es-CO", { year: "numeric", month: "short" });
 }
 
+function fmtMesOpt(d: Date | null): string {
+  return d ? fmtMes(d) : "—";
+}
+
+function fmtUvr(n?: number, decimals = 4): string {
+  if (!Number.isFinite(n ?? NaN)) return "—";
+  return (n ?? 0).toLocaleString("es-CO", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+}
+
 function header(pdf: jsPDF, ctx: ExportCtx, page: number) {
   // Banda superior
   pdf.setFillColor(...NEGRO);
@@ -109,6 +121,7 @@ export interface ExportCtx {
 export function exportProyeccionFinancieraPDF(ctx: ExportCtx) {
   const pdf = new jsPDF("p", "mm", "a4");
   const { input, escenario, actual, optimizado, kpis } = ctx;
+  const isUvr = input.moneda === "uvr";
 
   // ============ PÁGINA 1 — Portada + datos cliente + KPIs
   header(pdf, ctx, 1);
@@ -155,6 +168,9 @@ export function exportProyeccionFinancieraPDF(ctx: ExportCtx) {
       ["Cuota actual", formatCOP(input.cuotaActual), "Tasa (EA)", `${input.teaPct.toFixed(2)}%`],
       ["Plazo inicial", `${input.cuotasTotales} cuotas`, "Cuotas pagadas", `${input.cuotasPagadas}`],
       ["Cuotas pendientes", `${input.cuotasPendientes || actual.mesesRestantes}`, "Fecha inicio proyección", input.fechaDesembolso || "—"],
+      ...(isUvr
+        ? [["Valor UVR inicial", fmtUvr(input.uvrValor, 4), "Variación UVR / inflación EA", `${(input.variacionUvrPct ?? 0).toFixed(2)}%`]]
+        : []),
     ],
   });
 
@@ -233,6 +249,14 @@ export function exportProyeccionFinancieraPDF(ctx: ExportCtx) {
         formatCOP(optimizado.totalSeguros),
         `−${formatCOP(kpis.segurosEvitados)}`,
       ],
+      ...(isUvr
+        ? [[
+            "Corrección UVR / inflación",
+            formatCOP(actual.totalCorreccionUvr),
+            formatCOP(optimizado.totalCorreccionUvr),
+            `${optimizado.totalCorreccionUvr >= actual.totalCorreccionUvr ? "+" : "−"}${formatCOP(Math.abs(optimizado.totalCorreccionUvr - actual.totalCorreccionUvr))}`,
+          ]]
+        : []),
       [
         "Costo total proyectado",
         formatCOP(actual.totalPagado),
@@ -300,15 +324,16 @@ export function exportProyeccionFinancieraPDF(ctx: ExportCtx) {
   pdf.setTextColor(...GRIS_MEDIO);
   pdf.text("Crédito actual vs. estrategia optimizada — agrupado por año.", 10, 41);
 
-  type AnioRow = { capital: number; interes: number; seguros: number; cuotas: number; saldoFin: number };
-  const groupBy = (res: ResultadoEscenario): Map<number, AnioRow> => {
-    const m = new Map<number, AnioRow>();
+  type AnioRow = { capital: number; interes: number; seguros: number; correccion: number; cuotas: number; saldoFin: number };
+  const groupBy = (res: ResultadoEscenario): Map<string, AnioRow> => {
+    const m = new Map<string, AnioRow>();
     res.cuotas.forEach((c) => {
-      const a = c.fecha.getFullYear();
-      const prev = m.get(a) ?? { capital: 0, interes: 0, seguros: 0, cuotas: 0, saldoFin: 0 };
+      const a = c.fecha ? String(c.fecha.getFullYear()) : `Meses ${Math.floor((c.numero - 1) / 12) * 12 + 1}-${Math.floor((c.numero - 1) / 12) * 12 + 12}`;
+      const prev = m.get(a) ?? { capital: 0, interes: 0, seguros: 0, correccion: 0, cuotas: 0, saldoFin: 0 };
       prev.capital += c.capital;
       prev.interes += c.interes;
       prev.seguros += c.seguros;
+      prev.correccion += c.correccionUvr ?? 0;
       prev.cuotas += 1;
       prev.saldoFin = c.saldoFinal;
       m.set(a, prev);
@@ -325,10 +350,12 @@ export function exportProyeccionFinancieraPDF(ctx: ExportCtx) {
     head: [
       [
         { content: "Año", rowSpan: 2 },
-        { content: "Crédito Actual", colSpan: 3, styles: { halign: "center", fillColor: ROJO } },
-        { content: escenario.nombre, colSpan: 3, styles: { halign: "center", fillColor: VERDE } },
+        { content: "Crédito Actual", colSpan: isUvr ? 4 : 3, styles: { halign: "center", fillColor: ROJO } },
+        { content: escenario.nombre, colSpan: isUvr ? 4 : 3, styles: { halign: "center", fillColor: VERDE } },
       ],
-      ["Cuotas", "Total año", "Saldo", "Cuotas", "Total año", "Saldo"],
+      isUvr
+        ? ["Cuotas", "Total año", "Corrección", "Saldo", "Cuotas", "Total año", "Corrección", "Saldo"]
+        : ["Cuotas", "Total año", "Saldo", "Cuotas", "Total año", "Saldo"],
     ],
     headStyles: { fillColor: NEGRO, textColor: 255, fontSize: 8.5, halign: "center" },
     styles: { fontSize: 8, cellPadding: 1.8, halign: "right" },
@@ -337,7 +364,17 @@ export function exportProyeccionFinancieraPDF(ctx: ExportCtx) {
     body: todosLosAnios.map((anio) => {
       const a = anosActual.get(anio);
       const o = anosOpt.get(anio);
-      return [
+      return isUvr ? [
+        `${anio}`,
+        a ? `${a.cuotas}` : "—",
+        a ? formatCOP(a.capital + a.interes + a.seguros) : "—",
+        a ? formatCOP(a.correccion) : "—",
+        a ? formatCOP(a.saldoFin) : "—",
+        o ? `${o.cuotas}` : "—",
+        o ? formatCOP(o.capital + o.interes + o.seguros) : "—",
+        o ? formatCOP(o.correccion) : "—",
+        o ? formatCOP(o.saldoFin) : "—",
+      ] : [
         `${anio}`,
         a ? `${a.cuotas}` : "—",
         a ? formatCOP(a.capital + a.interes + a.seguros) : "—",
@@ -348,13 +385,9 @@ export function exportProyeccionFinancieraPDF(ctx: ExportCtx) {
       ];
     }),
     foot: [[
-      "Total",
-      `${actual.cuotas.length}`,
-      formatCOP(actual.totalPagado),
-      "—",
-      `${optimizado.cuotas.length}`,
-      formatCOP(optimizado.totalPagado),
-      "—",
+      ...(isUvr
+        ? ["Total", `${actual.cuotas.length}`, formatCOP(actual.totalPagado), formatCOP(actual.totalCorreccionUvr), "—", `${optimizado.cuotas.length}`, formatCOP(optimizado.totalPagado), formatCOP(optimizado.totalCorreccionUvr), "—"]
+        : ["Total", `${actual.cuotas.length}`, formatCOP(actual.totalPagado), "—", `${optimizado.cuotas.length}`, formatCOP(optimizado.totalPagado), "—"]),
     ]],
     footStyles: { fillColor: NEGRO, textColor: 255, fontSize: 8.5, fontStyle: "bold", halign: "right" },
     didDrawPage: () => footer(pdf),
@@ -383,7 +416,9 @@ export function exportProyeccionFinancieraPDF(ctx: ExportCtx) {
     autoTable(pdf, {
       startY: 46,
       margin: { top: 30, bottom: 18, left: 10, right: 10 },
-      head: [["#", "Fecha", "Cuota", "Capital", "Interés", "Seguros", "Saldo final"]],
+      head: [isUvr
+        ? ["#", "Fecha", "Valor UVR", "Cuota UVR", "Capital", "Interés", "Corrección", "Saldo final", "Saldo UVR"]
+        : ["#", "Fecha", "Cuota", "Capital", "Interés", "Seguros", "Saldo final"]],
       headStyles: { fillColor: accent, textColor: 255, fontSize: 8.5, halign: "right" },
       columnStyles: {
         0: { halign: "center", cellWidth: 14, fontStyle: "bold" },
@@ -391,16 +426,35 @@ export function exportProyeccionFinancieraPDF(ctx: ExportCtx) {
       },
       styles: { fontSize: 7.8, cellPadding: 1.4, halign: "right" },
       alternateRowStyles: { fillColor: GRIS_CLARO },
-      body: res.cuotas.map((c) => [
+      body: res.cuotas.map((c) => isUvr ? [
         `${c.numero}`,
-        fmtMes(c.fecha),
+        fmtMesOpt(c.fecha),
+        fmtUvr(c.valorUvr, 4),
+        fmtUvr(c.cuotaUvr, 6),
+        formatCOP(c.capital),
+        formatCOP(c.interes),
+        formatCOP(c.correccionUvr ?? 0),
+        formatCOP(c.saldoFinal),
+        fmtUvr(c.saldoFinalUvr, 4),
+      ] : [
+        `${c.numero}`,
+        fmtMesOpt(c.fecha),
         formatCOP(c.cuotaConExtra),
         formatCOP(c.capital),
         formatCOP(c.interes),
         formatCOP(c.seguros),
         formatCOP(c.saldoFinal),
       ]),
-      foot: [[
+      foot: [isUvr ? [
+        { content: "TOTAL", colSpan: 2, styles: { halign: "center", fontStyle: "bold" } },
+        "—",
+        "—",
+        formatCOP(res.totalCapital),
+        formatCOP(res.totalIntereses),
+        formatCOP(res.totalCorreccionUvr),
+        "—",
+        "—",
+      ] : [
         { content: "TOTAL", colSpan: 2, styles: { halign: "center", fontStyle: "bold" } },
         formatCOP(res.totalPagado),
         formatCOP(res.totalCapital),
