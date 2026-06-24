@@ -72,7 +72,7 @@ function firstTextAfter(text: string, rx: RegExp) {
 }
 
 function cleanCreditNumber(value: string) {
-  return value.replace(/\D/g, "").replace(/^0+(?=\d{6,})/, "0");
+  return value.replace(/\D/g, "");
 }
 
 function extractCreditNumber(rawText: string, text: string) {
@@ -123,10 +123,8 @@ function extractCliente(rawText: string) {
 function extractDatosGenerales(rawText: string) {
   const normalized = normalizeForMatch(rawText);
   const start = normalized.indexOf("DATOS GENERALES DEL CREDITO");
-  const endCandidates = [
-    normalized.indexOf("TASA PACTADA", start >= 0 ? start : 0),
-    normalized.indexOf("CONCEPTO", start >= 0 ? start : 0),
-  ].filter((idx) => idx > (start >= 0 ? start : 0));
+  const endCandidates = [normalized.indexOf("TASA PACTADA", start >= 0 ? start : 0)]
+    .filter((idx) => idx > (start >= 0 ? start : 0));
   const end = endCandidates.length ? Math.min(...endCandidates) : (start >= 0 ? start + 1200 : 1200);
   const block = start >= 0 ? normalized.slice(start, end) : normalized;
   const valueRow = block.match(
@@ -165,7 +163,7 @@ function extractRates(rawText: string) {
   const normalized = normalizeForMatch(rawText);
   const start = normalized.indexOf("TASA PACTADA");
   if (start < 0) return { teaPactada: "", tasaEA: "", tasaCobertura: "" };
-  const endCandidates = [normalized.indexOf("1.", start), normalized.indexOf("CONCEPTO", start)].filter((idx) => idx > start);
+  const endCandidates = [normalized.indexOf("\n1.", start), normalized.indexOf("\nCONCEPTO", start)].filter((idx) => idx > start);
   const end = endCandidates.length ? Math.min(...endCandidates) : start + 700;
   const lines = normalized.slice(start, end).split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   const valueLine = lines.find((line) => {
@@ -255,7 +253,7 @@ export function parseBancoBogotaText(rawText: string): ExtractoRecord | null {
   const seguros = valorSeguroVida + valorSeguroIncendio + valorSeguroTerremoto;
   const cuotaSinSubsidio = firstMoneyAfter(text, ["= VALOR TOTAL", "VALOR TOTAL"]);
   const valorBeneficio = firstMoneyAfter(text, ["- VALOR BENEFICIO", "VALOR BENEFICIO"]);
-  const totalAPagar = firstMoneyAfter(text, ["= TOTAL A PAGAR", "VALOR TOTAL A PAGAR", "TOTAL A PAGAR"]);
+  const totalAPagar = firstMoneyAfter(text, ["= TOTAL A PAGAR", "= TOTAL APAGAR", "VALOR TOTAL A PAGAR", "TOTAL A PAGAR", "TOTAL APAGAR"]);
   const baseCalculada = totalAPagar > 0 && valorBeneficio > 0 ? totalAPagar + valorBeneficio : cuotaSinSubsidio;
   const cuotaBase = baseCalculada || (capitalCuota + interesCuota + seguros) || totalAPagar;
   const cuotaFinancieraNeta = totalAPagar > 0 && seguros > 0 ? totalAPagar - seguros : cuotaBase - valorBeneficio - seguros;
