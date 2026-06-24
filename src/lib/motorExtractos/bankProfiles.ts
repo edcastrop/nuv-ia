@@ -283,12 +283,15 @@ SALDOS (fila inferior de la tabla):
 - "SALDO TOTAL A LA FECHA DE CORTE" queda solo como fallback si no aparece el saldo posterior.
 
 TABLA "CONCEPTO / DETALLE VALOR A PAGAR" — usa SOLO la columna "DETALLE VALOR A PAGAR":
+- La tabla trae dos importes por renglón: el PRIMER monto es la cuota actual y el SEGUNDO es
+  "DETALLE PAGO ANTERIOR". Para capital, intereses y seguros toma SIEMPRE el primer monto.
 - "+ CAPITAL" → capitalCuota (puede ser 0.00 en cuotas de solo interés).
 - "+ INTERESES CORRIENTES" → interesCuota (intereses BRUTOS antes del subsidio, ej 1,634,671.23).
 - seguros = sumar TODAS las filas de seguro del detalle mensual: "+ SEGURO DE VIDA" +
   "+ SEGURO INCENDIO Y TERREMOTO" + "+ SEGURO(S) VOLUNTARIO(S)" + "+ SEGURO VOLUNTARIO" +
   "+ OTROS SEGUROS" / pólizas voluntarias si aparecen. No tomes solo el primer voluntario.
-  Caso auditado: 16,748.52 + 19,206.82 + 40,570.69 = 76,526.03.
+  Caso auditado: 16,748.52 + 19,206.82 + 40,570.69 = 76,526.03. NO uses los segundos
+  montos 21,708.72 / 24,851.18 / 52,483.31 porque corresponden al pago anterior.
 - "= VALOR TOTAL" → cuotaSinSubsidio (cuota completa antes de aplicar el beneficio,
   con seguros incluidos, ej 1,705,943.82).
 - "- VALOR BENEFICIO" → valorBeneficioMensual (ej 494,319.23). Si > 0 → beneficioActivo="si",
