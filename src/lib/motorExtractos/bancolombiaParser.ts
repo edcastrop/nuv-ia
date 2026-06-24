@@ -194,7 +194,10 @@ export function parseBancolombiaText(rawText: string): ExtractoRecord | null {
     plazoInicial: normalizeInt(firstMatch(text, /Plazo\s+total\s+en\s+meses\s+([0-9]{1,3})/i)),
     cuotasPagadas: normalizeInt(firstMatch(text, /Nro\.\s+cuota\s+a\s+cancelar\s+([0-9]+)/i)),
     cuotasPendientes: normalizeInt(firstMatch(text, /Nro\.\s+cuotas\s+pendientes\s+para\s+pago\s+total\s+([0-9]+)/i)),
-    tea: percentAfter(text, "Tasa interés cobrada"),
+    // Con Subsidio Gobierno (FRECH), la "Tasa interés cobrada" del extracto ya viene
+    // descontada por el subsidio y NO reproduce la cuota base sin subsidio. La pactada
+    // sí, porque es la tasa contractual con la que se construyó la tabla de amortización.
+    tea: tieneCobertura && percentAfter(text, "Tasa interés pactada") ? percentAfter(text, "Tasa interés pactada") : percentAfter(text, "Tasa interés cobrada"),
     teaCobrada: percentAfter(text, "Tasa interés cobrada"),
     teaPactada: percentAfter(text, "Tasa interés pactada"),
     tasaMensual: "",

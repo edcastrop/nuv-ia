@@ -1949,7 +1949,9 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
                         </div>
                       ) : teaUsada ? (
                         <div className="mt-2 text-[11px] text-white/65">
-                          Se usa la tasa de interés cobrada para la proyección.
+                          {tieneBeneficio && teaPactada && teaUsada === teaPactada
+                            ? "Crédito con beneficio (FRECH/Subsidio): se usa la tasa pactada porque reproduce la cuota base sin subsidio. La tasa cobrada ya viene descontada y no recalcula la amortización real."
+                            : "Se usa la tasa de interés cobrada para la proyección."}
                         </div>
                       ) : null}
                     </div>
