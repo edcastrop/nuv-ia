@@ -166,9 +166,9 @@ export function proyectarEscenario(
   let totalPagado = 0;
   let i = 0;
 
-  if (esUvr && (input.saldoUvr ?? 0) > 0 && (input.uvrValor ?? 0) > 0) {
+  if (esUvr && (input.uvrValor ?? 0) > 0 && ((input.saldoUvr ?? 0) > 0 || input.saldoCapital > 0)) {
     let valorUvr = Math.max(0, input.uvrValor ?? 0);
-    let saldoUvr = Math.max(0, input.saldoUvr ?? 0);
+    let saldoUvr = Math.max(0, (input.saldoUvr ?? 0) > 0 ? input.saldoUvr ?? 0 : input.saldoCapital / valorUvr);
     const cuotaUvrBase = cuotaPmt(tasaMensual, cuotasPendientesOficiales, saldoUvr);
     if (escenario.abonoExtraordinario > 0 && valorUvr > 0) {
       saldoUvr = Math.max(0, saldoUvr - escenario.abonoExtraordinario / valorUvr);
