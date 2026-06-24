@@ -338,7 +338,7 @@ REGLAS ESTRICTAS:
   * "= VALOR TOTAL" → cuotaSinSubsidio y cuotaMensual: cuota real SIN subsidio CON seguros.
   * "- VALOR BENEFICIO" → valorCobertura. Si es mayor a 0, tieneCobertura="si" y tipoBeneficio="FRECH".
   * "= TOTAL A PAGAR" / "VALOR TOTAL A PAGAR" → cuotaPagadaCliente: cuota que paga hoy el cliente CON subsidio.
-  * seguros = "+ SEGURO DE VIDA" + "+ SEGURO INCENDIO Y TERREMOTO" + seguros voluntarios.
+  * seguros = sumar TODAS las filas de seguro del detalle mensual: vida + incendio/terremoto + seguro(s) voluntario(s) + otros seguros/pólizas voluntarias si aparecen. No tomes solo el primer voluntario; caso auditado 16,748.52 + 19,206.82 + 40,570.69 = 76,526.03.
   * cuotaConInteresSinSeguros = cuotaPagadaCliente - seguros. NUNCA interesesCorrientes.
   * cuotaBaseSimulacion/cuotaMensual = cuotaSinSubsidio = cuotaPagadaCliente + valorCobertura.
   * Validación obligatoria: cuotaConInteresSinSeguros + valorCobertura + seguros = cuotaSinSubsidio.

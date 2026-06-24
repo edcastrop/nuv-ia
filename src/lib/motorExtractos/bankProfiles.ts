@@ -272,19 +272,23 @@ TASAS (fila siguiente):
 - "TASA COBRADA E.A." → tasaEA. ESTA ES LA QUE MANDA (es la tasa neta efectiva tras FRECH,
   ej 8.37). NO uses "TASA PACTADA E.A." como tasaEA — esa es la tasa contractual sin
   subsidio (ej 12.68) y va en teaPactada si existe el campo.
+- Para simulación matemática con FRECH, `tea` debe usar "TASA PACTADA E.A." porque esa tasa
+  reproduce la cuota base sin subsidio; conserva "TASA COBRADA E.A." en teaCobrada para mostrar.
 - "TASA INTERÉS CON BENEFICIO E.A." → tasaCobertura (ej 4.00). Si > 0 → beneficioActivo="si",
   tipoBeneficio="FRECH".
 
 SALDOS (fila inferior de la tabla):
-- "SALDO TOTAL A LA FECHA DE CORTE" → saldoCapital (ej "$151,928,185.72" → 151928185.72).
-  ES EL SALDO ANTES DEL PAGO ACTUAL — es el que NUVIA usa para simular.
-- "SALDO DE CAPITAL DESPUÉS DE EFECTUAR ESTE PAGO" NO va en saldoCapital (es saldo posterior).
+- "SALDO DE CAPITAL DESPUÉS DE EFECTUAR ESTE PAGO" → saldoCapital. Es el saldo real posterior
+  al pago y el que debe alimentar la simulación.
+- "SALDO TOTAL A LA FECHA DE CORTE" queda solo como fallback si no aparece el saldo posterior.
 
 TABLA "CONCEPTO / DETALLE VALOR A PAGAR" — usa SOLO la columna "DETALLE VALOR A PAGAR":
 - "+ CAPITAL" → capitalCuota (puede ser 0.00 en cuotas de solo interés).
 - "+ INTERESES CORRIENTES" → interesCuota (intereses BRUTOS antes del subsidio, ej 1,634,671.23).
-- "+ SEGURO DE VIDA" + "+ SEGURO INCENDIO Y TERREMOTO" + "+ SEGURO(S) VOLUNTARIO(S)" → seguros
-  (suma, ej 30,562.59 + 40,710.00 + 0 = 71,272.59).
+- seguros = sumar TODAS las filas de seguro del detalle mensual: "+ SEGURO DE VIDA" +
+  "+ SEGURO INCENDIO Y TERREMOTO" + "+ SEGURO(S) VOLUNTARIO(S)" + "+ SEGURO VOLUNTARIO" +
+  "+ OTROS SEGUROS" / pólizas voluntarias si aparecen. No tomes solo el primer voluntario.
+  Caso auditado: 16,748.52 + 19,206.82 + 40,570.69 = 76,526.03.
 - "= VALOR TOTAL" → cuotaSinSubsidio (cuota completa antes de aplicar el beneficio,
   con seguros incluidos, ej 1,705,943.82).
 - "- VALOR BENEFICIO" → valorBeneficioMensual (ej 494,319.23). Si > 0 → beneficioActivo="si",
