@@ -164,64 +164,89 @@ sistemaAmortizacion ← texto literal junto a "Sistema de Amortización"
     banco: "Banco Caja Social",
     productos: ["CREDITO_HIPOTECARIO"],
     matchAny: [/caja\s+social/i, /bcsc/i],
-    hints: `BANCO CAJA SOCIAL — 4 modalidades posibles:
+    hints: `BANCO CAJA SOCIAL — Estado de Cuenta Crédito de Vivienda.
+Plantilla con secciones: "Detalle de Pago", "Detalle Cuota a Pagar" (Concepto / Valor en UVR / Valor en Pesos),
+"Saldo Capital Antes de Este Pago" (UVR | Pesos), "Información General del Crédito".
 
-DETECCIÓN DE MONEDA (CRÍTICO):
-- Lee "Sistema de Amortización" en "Información General del Crédito".
-- Si contiene "UVR" → moneda="UVR". Ej: "13 CUOTA FIJA FRECH EN UVR".
-- Si contiene "PESOS" o NO contiene "UVR" → moneda="PESOS". Ej: "10 CUOTA FIJA EN PESOS".
-- CONFIRMACIÓN: si columna "Valor en UVR" tiene valores reales (> 0) → UVR. Si todos son 0.0000 → PESOS.
+══ PASO 1 — DETECTAR MONEDA (CRÍTICO, primero) ══
+Lee "Sistema de Amortización" en "Información General del Crédito":
+- Contiene "UVR" → moneda="UVR" (ej "13 CUOTA FIJA FRECH EN UVR", "CUOTA CONSTANTE EN UVR-VIVDA VIS").
+- Contiene "PESOS" o NO contiene "UVR" → moneda="PESOS" (ej "10 CUOTA FIJA EN PESOS", "12 CUOTA FIJA FRECH EN PESOS").
+CONFIRMACIÓN en tabla "Detalle Cuota a Pagar":
+- Columna "Valor en UVR" con valores > 0.0000 en Abono a Capital e Intereses → UVR.
+- Todos los "Valor en UVR" = 0.0000 → PESOS (columnas UVR existen pero vacías).
 
-DETECCIÓN DE FRECH (CRÍTICO):
-- Si "Descuento Intereses DTCO" en "Detalle Cuota a Pagar" tiene valor en pesos > 0 → FRECH activo.
-- Si "Tasa de Interés con Beneficio" > 0.00% EA → FRECH activo.
-- Si ambos son 0 o vacíos → sin FRECH.
+══ PASO 2 — DETECTAR FRECH ══
+En "Detalle Cuota a Pagar", fila "Descuento Intereses DTCO", columna "Valor en Pesos":
+- > 0 → tieneCobertura="si", tipoBeneficio="FRECH", valorBeneficioMensual=ese valor.
+- 0/vacío/inexistente → tieneCobertura="no", valorBeneficioMensual=0.
+CONFIRMACIÓN: "Tasa de Interés con Beneficio" > 0.00% EA confirma FRECH; = 0.00% EA = sin FRECH.
 
-CAMPOS A EXTRAER (sección "Detalle Cuota a Pagar", columna "Valor en Pesos"):
-- "Abono a Capital" → abonoCapital
-- "Intereses Corrientes" → interesesCorrientes
-- "Seguro de Vida" → valorSeguroVida
-- "Seguro de Incendio" → valorSeguroIncendio
-- "Seguro de Terremoto" → valorSeguroTerremoto
-- "Descuento Intereses DTCO" → descuentoInteresesDTCO (0 si vacío)
-- "Comisión FNG" → ignorar
-- "Seguro de Desempleo e ITT" → ignorar
+══ PASO 3 — CAMPOS DE "Detalle Cuota a Pagar" ══
+REGLA CRÍTICA: SIEMPRE leer "Valor en Pesos" (columna derecha, el número MÁS GRANDE).
+NUNCA usar "Valor en UVR" para campos en pesos.
+- "Abono a Capital"           → capitalCuota
+- "Intereses Corrientes"      → interesCuota
+- "Seguro de Vida"            → valorSeguroVida
+- "Seguro de Incendio"        → valorSeguroIncendio
+- "Seguro de Terremoto"       → valorSeguroTerremoto
+- "Descuento Intereses DTCO"  → valorBeneficioMensual (0 si vacío)
+- "Comisión FNG"              → IGNORAR
+- "Seguro de Desempleo e ITT" → IGNORAR
+- "Intereses de Mora"         → solo si > 0
+CALCULADO OBLIGATORIO:
+- seguros     = valorSeguroVida + valorSeguroIncendio + valorSeguroTerremoto
+- cuotaActual = capitalCuota + interesCuota + seguros
+NUNCA usar "Valor a Pagar: PESOS" como cuotaActual.
+Si tieneCobertura="si" verificar: cuotaActual ≈ cuotaConSubsidio + valorBeneficioMensual.
 
-CAMPOS GENERALES:
-- "Valor a Pagar: PESOS" en "Detalle de Pago" → cuotaPagadaCliente
-- "Saldo Capital Antes de Este Pago" columna Pesos → saldoCapital
-- "Saldo Capital Antes de Este Pago" columna UVR → saldoUVR (solo si moneda=UVR)
-- "Plazo Total" en Meses → plazoInicial
-- "Cuotas Pendientes" → cuotasPendientes
-- "Cuotas Facturadas" → cuotasPagadas
-- "Tasa de Interés Pactada" → teaPactada (solo el número, ej: "15.30" de "15.30 %EA")
-- "Tasa de Interés Cobrada" → tea y teaCobrada
-- "Tasa de Interés con Beneficio" → tasaCobertura (solo si > 0)
-- Número de crédito del encabezado → numeroCredito
-- Nombre del titular del encabezado → cliente
+══ PASO 4 — CAMPOS GENERALES ══
+- "Valor a Pagar: PESOS" (sección "Detalle de Pago") → cuotaConSubsidio.
+- "Saldo Capital Antes de Este Pago":
+  · saldoCapital = columna "Pesos" (8-9 dígitos, ej 105,560,004.05). De los dos números, el de pesos es SIEMPRE el mayor.
+  · saldoUVR    = columna "UVR" SOLO si moneda=UVR (ej 245,463.7471). Si moneda=PESOS → saldoUVR="".
+- "Información General del Crédito":
+  · "Plazo Total" + "Meses"              → plazoInicial (entero).
+  · "Cuotas Pendientes"                   → cuotasPendientes.
+  · "Cuotas Facturadas"                   → cuotasPagadas (ej "001" → 1).
+  · "Tasa de Interés Cobrada"             → tasaEA
+      - PESOS: solo el número (ej "15.30 %EA" → 15.30; "10.85 %EA" → 10.85).
+      - UVR: solo el número después de "UVR+" (ej "UVR+ 4.50 %EA" → 4.50).
+      - NUNCA usar "Tasa de Interés Pactada" como tasaEA.
+  · "Tasa de Interés Pactada"             → teaPactada (referencia, no usada en simulación).
+  · "Tasa de Interés con Beneficio"       → tasaCobertura (0 si sin FRECH).
+- Encabezado: "Número de Crédito" → numeroCredito; nombre del titular → cliente.
 
-CASO PESOS SIN FRECH (ej: "10 CUOTA FIJA EN PESOS"):
-- cuotaMensual = abonoCapital + interesesCorrientes + seguros (suma de los 3 seguros)
-- saldoUVR = "" (no aplica)
-- tieneCobertura = "no"
+══ PASO 5 — REGLAS POR MODALIDAD ══
+A) PESOS SIN FRECH (ej "10 CUOTA FIJA EN PESOS"):
+   cuotaActual = capitalCuota+interesCuota+seguros [CALCULAR];
+   cuotaConSubsidio = cuotaActual; saldoUVR=""; tieneCobertura="no";
+   tasaEA = "Tasa de Interés Cobrada".
+B) PESOS CON FRECH (ej "12 CUOTA FIJA FRECH EN PESOS"):
+   cuotaActual = capitalCuota+interesCuota+seguros [CALCULAR];
+   cuotaConSubsidio = "Valor a Pagar: PESOS"; valorBeneficioMensual = "Descuento Intereses DTCO";
+   verificar cuotaConSubsidio + valorBeneficioMensual ≈ cuotaActual (±1%);
+   saldoUVR=""; tieneCobertura="si"; tipoBeneficio="FRECH";
+   tasaEA = "Tasa de Interés Cobrada" (NO la Pactada);
+   tasaCobertura = "Tasa de Interés con Beneficio".
+C) UVR SIN FRECH:
+   cuotaActual = capitalCuota+interesCuota+seguros [CALCULAR, pesos];
+   cuotaConSubsidio = cuotaActual;
+   saldoCapital = col Pesos; saldoUVR = col UVR; tieneCobertura="no";
+   tasaEA = número tras "UVR+" en "Tasa de Interés Cobrada".
+D) UVR CON FRECH (ej "13 CUOTA FIJA FRECH EN UVR"):
+   cuotaActual = capitalCuota+interesCuota+seguros [CALCULAR, pesos];
+   cuotaConSubsidio = "Valor a Pagar: PESOS"; valorBeneficioMensual = "Descuento Intereses DTCO";
+   saldoCapital = col Pesos; saldoUVR = col UVR;
+   tieneCobertura="si"; tipoBeneficio="FRECH";
+   tasaEA = número tras "UVR+" en "Tasa de Interés Cobrada" (NO la Pactada);
+   tasaCobertura = "Tasa de Interés con Beneficio".
 
-CASO PESOS CON FRECH:
-- cuotaMensual = abonoCapital + interesesCorrientes + seguros
-- cuotaPagadaCliente = "Valor a Pagar" (ya incluye el descuento FRECH)
-- tieneCobertura = "si", valorCobertura = descuentoInteresesDTCO
-- tipoBeneficio = "Beneficio FRECH"
-
-CASO UVR SIN FRECH (ej: "CUOTA FIJA EN UVR"):
-- cuotaMensual en pesos = abonoCapital + interesesCorrientes + seguros (columna pesos)
-- saldoUVR = valor columna UVR del saldo capital
-- tieneCobertura = "no"
-
-CASO UVR CON FRECH (ej: "13 CUOTA FIJA FRECH EN UVR"):
-- cuotaMensual en pesos = abonoCapital + interesesCorrientes + seguros (columna pesos)
-- cuotaPagadaCliente = "Valor a Pagar" (con descuento FRECH aplicado)
-- tieneCobertura = "si", valorCobertura = descuentoInteresesDTCO
-- tipoBeneficio = "Beneficio FRECH"
-- saldoUVR = valor columna UVR del saldo capital`,
+══ VALIDACIÓN CRUZADA OBLIGATORIA ══
+1) cuotasPagadas + cuotasPendientes ≈ plazoInicial (±2).
+2) Si tieneCobertura="si": cuotaConSubsidio + valorBeneficioMensual ≈ cuotaActual (±1%).
+3) Si tieneCobertura="no": cuotaConSubsidio ≈ cuotaActual (±1%).
+4) Si moneda=UVR: saldoUVR > 0.`,
   },
   {
     id: "banco_bogota_hipotecario",
