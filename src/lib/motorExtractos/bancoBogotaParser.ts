@@ -241,7 +241,21 @@ export function parseBancoBogotaText(rawText: string): ExtractoRecord | null {
   const plazoInicial = datosGenerales.plazoInicial || firstNumberAfter(text, ["PLAZO INICAL", "PLAZO INICIAL"]);
   const cuotasPagadas = datosGenerales.cuotasPagadas || firstNumberAfter(text, ["CUOTA A PAGAR", "CUOTA ACTUAL"]);
   const cuotasPendientes = datosGenerales.cuotasPendientes || firstNumberAfter(text, ["CUOTAS PENDIENTES"]);
-  const saldoCapital = firstMoneyAfter(text, ["SALDO TOTAL A LA FECHA DE CORTE"]);
+  // Banco de Bogotá: el saldo que refleja la realidad financiera tras aplicar la
+  // cuota es "SALDO DE CAPITAL DESPUÉS DE EFECTUAR ESTE PAGO" (el "SALDO TOTAL A
+  // LA FECHA DE CORTE" es el saldo previo al pago). Usamos el primero como base
+  // de simulación y dejamos el segundo como fallback.
+  const saldoDespuesPago = firstMoneyAfter(text, [
+    "SALDO DE CAPITAL DESPUES DE EFECTUAR ESTE PAGO",
+    "SALDO DE CAPITAL DESPUÉS DE EFECTUAR ESTE PAGO",
+    "SALDO CAPITAL DESPUES DE EFECTUAR ESTE PAGO",
+    "SALDO CAPITAL DESPUÉS DE EFECTUAR ESTE PAGO",
+  ]);
+  const saldoFechaCorte = firstMoneyAfter(text, [
+    "SALDO TOTAL A LA FECHA DE CORTE",
+    "SALDO A LA FECHA DE CORTE",
+  ]);
+  const saldoCapital = saldoDespuesPago > 0 ? saldoDespuesPago : saldoFechaCorte;
   const tasaEA = tasas.tasaEA || firstPercentAfter(text, ["TASA COBRADA E.A.", "TASA COBRADA EA"]);
   const teaPactada = tasas.teaPactada || firstPercentAfter(text, ["TASA PACTADA E.A.", "TASA PACTADA EA"]);
   const tasaCobertura = tasas.tasaCobertura || firstPercentAfter(text, ["TASA INTERÉS CON BENEFICIO E.A.", "TASA INTERES CON BENEFICIO E.A."]);
@@ -249,10 +263,42 @@ export function parseBancoBogotaText(rawText: string): ExtractoRecord | null {
   const capitalCuota = firstMoneyAfter(text, ["+ CAPITAL", "CAPITAL"]);
   const interesCuota = firstMoneyAfter(text, ["+ INTERESES CORRIENTES", "INTERESES CORRIENTES"]);
   const valorSeguroVida = firstMoneyAfter(text, ["+ SEGURO DE VIDA", "SEGURO DE VIDA"]);
-  const valorSeguroIncendio = firstMoneyAfter(text, ["+ SEGURO INCENDIO Y TERREMOTO", "SEGURO INCENDIO Y TERREMOTO"]);
-  const valorSeguroVoluntario = firstMoneyAfter(text, ["+ SEGURO(S) VOLUNTARIO(S)", "SEGURO(S) VOLUNTARIO(S)"]);
+  const valorSeguroIncendio = firstMoneyAfter(text, [
+    "+ SEGURO INCENDIO Y TERREMOTO",
+    "SEGURO INCENDIO Y TERREMOTO",
+    "+ SEGURO DE INCENDIO Y TERREMOTO",
+    "SEGURO DE INCENDIO Y TERREMOTO",
+  ]);
+  // Voluntarios: pueden venir como "+ SEGURO(S) VOLUNTARIO(S)", "+ SEGUROS VOLUNTARIOS",
+  // "+ SEGURO VOLUNTARIO", "+ OTROS SEGUROS" o como varias filas separadas. Para no
+  // perder ninguno (el caso real suma ~40.570 que estaban quedando fuera), barremos
+  // TODAS las líneas que comienzan con "+ SEGURO ... VOLUNTARIO" / "+ OTROS SEGUROS".
+  const lineasTexto = rawText.split(/\r?\n/).map((line) => compactSpaces(line));
+  const moneyAtEnd = /([0-9][0-9.,]*)\s*$/;
+  let valorSegurosVoluntarios = 0;
+  for (const line of lineasTexto) {
+    const up = removeDiacritics(line).toUpperCase();
+    if (!/^\+?\s*(SEGURO|SEGUROS|OTROS\s+SEGUROS)\b/.test(up)) continue;
+    if (/VIDA/.test(up)) continue;
+    if (/INCENDIO|TERREMOTO/.test(up)) continue;
+    const m = line.match(moneyAtEnd);
+    const v = m ? moneyToNumber(m[1]) : 0;
+    if (v > 0) valorSegurosVoluntarios += v;
+  }
+  if (valorSegurosVoluntarios === 0) {
+    valorSegurosVoluntarios = firstMoneyAfter(text, [
+      "+ SEGURO(S) VOLUNTARIO(S)",
+      "SEGURO(S) VOLUNTARIO(S)",
+      "+ SEGUROS VOLUNTARIOS",
+      "SEGUROS VOLUNTARIOS",
+      "+ SEGURO VOLUNTARIO",
+      "SEGURO VOLUNTARIO",
+      "+ OTROS SEGUROS",
+      "OTROS SEGUROS",
+    ]);
+  }
   const valorSeguroTerremoto = 0;
-  const seguros = valorSeguroVida + valorSeguroIncendio + valorSeguroVoluntario + valorSeguroTerremoto;
+  const seguros = valorSeguroVida + valorSeguroIncendio + valorSegurosVoluntarios + valorSeguroTerremoto;
   const cuotaSinSubsidio = firstMoneyAfter(text, ["= VALOR TOTAL", "VALOR TOTAL"]);
   const valorBeneficio = firstMoneyAfter(text, ["- VALOR BENEFICIO", "VALOR BENEFICIO"]);
   const totalAPagar = firstMoneyAfter(text, ["= TOTAL A PAGAR", "= TOTAL APAGAR", "VALOR TOTAL A PAGAR", "TOTAL A PAGAR", "TOTAL APAGAR"]);
