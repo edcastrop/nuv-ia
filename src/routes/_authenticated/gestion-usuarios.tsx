@@ -262,6 +262,13 @@ function ReasignarModal({ origen, usuarios, onClose, onDone }: {
         </div>
         <div className="p-5 space-y-3">
           <div>
+            <label className="nuvia-label block mb-1">Reasignar como</label>
+            <select value={tipo} onChange={(e) => setTipo(e.target.value as "asesor" | "licenciado")} className="nuvia-input">
+              <option value="asesor">Asesor del caso</option>
+              <option value="licenciado">Licenciado del caso</option>
+            </select>
+          </div>
+          <div>
             <label className="nuvia-label block mb-1">Reasignar a</label>
             <select value={destino} onChange={(e) => setDestino(e.target.value)} className="nuvia-input">
               <option value="">— Selecciona destinatario —</option>
@@ -270,6 +277,7 @@ function ReasignarModal({ origen, usuarios, onClose, onDone }: {
               ))}
             </select>
           </div>
+
           <div className="flex items-center justify-between">
             <span className="text-[12px]" style={{ color: "var(--nuvia-text-secondary)" }}>{casos.length} casos activos · {seleccion.size} seleccionados</span>
             <button onClick={toggleAll} className="text-[11px] hover:underline" style={{ color: "var(--nuvia-accent-blue)" }}>
