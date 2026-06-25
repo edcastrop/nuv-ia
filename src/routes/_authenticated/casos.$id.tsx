@@ -288,7 +288,6 @@ function CasoDetail() {
           <EquipoCasoCard
             expedienteId={exp.id}
             asesorId={exp.asesor_id}
-            licenciadoId={(exp as unknown as { licenciado_id?: string | null }).licenciado_id ?? null}
             onChange={() => reload()}
           />
           <ResumenEjecutivo exp={exp} />
