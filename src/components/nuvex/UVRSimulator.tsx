@@ -450,6 +450,19 @@ export function UVRSimulator({
       }
     : null;
 
+  // Broadcast de la propuesta recomendada viva (UVR) → Análisis de Capacidad
+  // de Pago la escucha para recalcular el % de endeudamiento sobre la cuota
+  // de la propuesta seleccionada (1, 2, 3 o 4) ANTES de guardar.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!recomendada || !init?.id) return;
+    window.dispatchEvent(
+      new CustomEvent("nuvex:recomendada-change", {
+        detail: { expedienteId: init.id, nuevaCuota: recomendada.nuevaCuota, index: recomendada.index },
+      }),
+    );
+  }, [recomendada?.nuevaCuota, recomendada?.index, init?.id]);
+
   const ahorroNegativo = recomendada && (recomendada.ahorroTotal < 0 || recomendada.honorarios < 0);
 
   const cuotasBaseSimulacion = Math.max(0, cuotasPendientes);
