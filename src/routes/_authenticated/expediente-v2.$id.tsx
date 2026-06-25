@@ -1480,7 +1480,7 @@ function EquipoCasoCard({
     try {
       const { error: upErr } = await supabase
         .from("expedientes")
-        .update({ [field]: value })
+        .update({ [field]: value } as never)
         .eq("id", expedienteId);
       if (upErr) throw upErr;
       const { data: auth } = await supabase.auth.getUser();
@@ -1489,7 +1489,7 @@ function EquipoCasoCard({
         accion_origen: "reasignacion_equipo",
         observacion: `${field === "asesor_id" ? "Asesor" : "Licenciado"} reasignado${value ? "" : " (sin asignar)"}`,
         usuario_id: auth.user?.id ?? null,
-      });
+      } as never);
       onChange(field, value);
     } catch (e) {
       setError((e as Error).message);
