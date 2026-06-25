@@ -661,7 +661,17 @@ export const extractStatementMotor = createServerFn({ method: "POST" })
       /* ignore */
     }
 
-    if (/colpatria/i.test(det.banco)) det.banco = "Davibank";
+    // Normalización de marca: Davibank (antes Colpatria/Scotiabank Colpatria) suele
+    // confundirse con Davivienda por el prefijo "DAVI". Forzamos Davibank si hay
+    // cualquier evidencia de la marca correcta, sea en el banco detectado o en la
+    // evidencia textual que devolvió el detector.
+    const huellaDavibank = /davi\s*bank|davibank|davibank\.com|colpatria|scotiabank/i;
+    if (
+      huellaDavibank.test(det.banco) ||
+      huellaDavibank.test(det.evidencia ?? "")
+    ) {
+      det.banco = "Davibank";
+    }
 
     const profile = findProfileByName(det.banco, det.producto);
     if (!profile) {
