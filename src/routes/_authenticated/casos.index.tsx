@@ -155,7 +155,11 @@ function CasosPage() {
       .then(async (r) => {
         if (cancel) return;
         setRows(r);
-        const ids = Array.from(new Set(r.map((row) => row.asesor_id).filter(Boolean)));
+        const ids = Array.from(
+          new Set(
+            r.flatMap((row) => [row.asesor_id, row.licenciado_id]).filter(Boolean) as string[],
+          ),
+        );
         if (ids.length > 0) {
           const { data: profs } = await supabase.from("profiles").select("id,nombre,email").in("id", ids);
           const m = new Map<string, { nombre: string | null; email: string | null }>();
@@ -168,11 +172,12 @@ function CasosPage() {
     return () => { cancel = true; };
   }, [search, estado, etapa]);
 
-  // P26 — Filtro client-side "Mis casos" (asesor_id === user.id).
+  // "Mis casos": el usuario es asesor O licenciado del caso.
   const filteredRows = useMemo(() => {
     if (!mios || !user?.id) return rows;
-    return rows.filter((r) => r.asesor_id === user.id);
+    return rows.filter((r) => r.asesor_id === user.id || r.licenciado_id === user.id);
   }, [rows, mios, user?.id]);
+
 
   // P26 — Detección de duplicados por cédula entre los expedientes cargados.
   const dupCedulas = useMemo(() => {
@@ -404,8 +409,10 @@ function CasosPage() {
                 r={r}
                 isDup={!!r.cedula && dupCedulas.has(r.cedula.trim())}
                 asesor={asesores.get(r.asesor_id)}
+                licenciado={r.licenciado_id ? asesores.get(r.licenciado_id) : undefined}
               />
             ))
+
           )}
         </section>
 
@@ -434,7 +441,7 @@ function CasosPage() {
 
 
 
-function ExpedienteCard({ r, isDup = false, asesor }: { r: Expediente; isDup?: boolean; asesor?: { nombre?: string | null; email?: string | null } }) {
+function ExpedienteCard({ r, isDup = false, asesor, licenciado }: { r: Expediente; isDup?: boolean; asesor?: { nombre?: string | null; email?: string | null }; licenciado?: { nombre?: string | null; email?: string | null } }) {
   const theme = ESTADO_THEME[r.estado];
   const aColor = avatarColor(r.cliente_nombre);
   const initial = (r.cliente_nombre || "?").trim().charAt(0).toUpperCase();
@@ -512,14 +519,28 @@ function ExpedienteCard({ r, isDup = false, asesor }: { r: Expediente; isDup?: b
             <div className="text-xs mt-0.5" style={{ color: TEXT2 }}>
               CC {r.cedula || "—"}
             </div>
-            {asesor && (
-              <div className="flex items-center gap-1.5 mt-1">
-                <AnalistaAvatar nombre={asesor.nombre} email={asesor.email} size={16} />
-                <span className="text-[11px] truncate" style={{ color: TEXT2 }}>
-                  {asesor.nombre || asesor.email || "Sin asesor"}
-                </span>
+            {(asesor || licenciado) && (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+                {asesor && (
+                  <div className="flex items-center gap-1.5" title="Asesor del caso">
+                    <AnalistaAvatar nombre={asesor.nombre} email={asesor.email} size={16} />
+                    <span className="text-[11px] truncate" style={{ color: TEXT2 }}>
+                      {asesor.nombre || asesor.email || "Sin asesor"}
+                    </span>
+                  </div>
+                )}
+                {licenciado && (
+                  <div className="flex items-center gap-1.5" title="Licenciado del caso">
+                    <span className="text-[9px] font-bold uppercase tracking-wider px-1 rounded" style={{ background: "rgba(31,109,61,0.15)", color: "#86EFAC", border: "1px solid rgba(31,109,61,0.4)" }}>Lic</span>
+                    <AnalistaAvatar nombre={licenciado.nombre} email={licenciado.email} size={16} />
+                    <span className="text-[11px] truncate" style={{ color: TEXT2 }}>
+                      {licenciado.nombre || licenciado.email || ""}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
+
           </div>
         </div>
 

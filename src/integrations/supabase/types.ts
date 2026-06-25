@@ -2926,6 +2926,7 @@ export type Database = {
           honorarios_pactados: number | null
           honorarios_recalculados: number | null
           id: string
+          licenciado_id: string | null
           modo: Database["public"]["Enums"]["expediente_modo"]
           numero_credito: string | null
           producto: string | null
@@ -2981,6 +2982,7 @@ export type Database = {
           honorarios_pactados?: number | null
           honorarios_recalculados?: number | null
           id?: string
+          licenciado_id?: string | null
           modo: Database["public"]["Enums"]["expediente_modo"]
           numero_credito?: string | null
           producto?: string | null
@@ -3036,6 +3038,7 @@ export type Database = {
           honorarios_pactados?: number | null
           honorarios_recalculados?: number | null
           id?: string
+          licenciado_id?: string | null
           modo?: Database["public"]["Enums"]["expediente_modo"]
           numero_credito?: string | null
           producto?: string | null
