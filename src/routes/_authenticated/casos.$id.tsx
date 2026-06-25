@@ -284,6 +284,12 @@ function CasoDetail() {
 
         {/* RESUMEN */}
         <TabsContent value="resumen" className="space-y-4">
+          <EquipoCasoCard
+            expedienteId={exp.id}
+            asesorId={exp.asesor_id}
+            licenciadoId={(exp as unknown as { licenciado_id?: string | null }).licenciado_id ?? null}
+            onChange={() => reload()}
+          />
           <ResumenEjecutivo exp={exp} />
           <QueFaltaPanel exp={exp} onIrATab={setTab} />
           <ChecklistRolPanel exp={exp} onIrATab={setTab} />
