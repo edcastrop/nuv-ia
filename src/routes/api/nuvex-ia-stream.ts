@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { z } from "zod";
 
 type Audiencia = "interno" | "apoderado" | "cliente";
 
