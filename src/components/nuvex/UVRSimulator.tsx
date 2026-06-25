@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Alert, Card, SectionTitle, TextField } from "./ui";
 import { SituacionActualBlock } from "./SituacionActualBlock";
 import { ClientFields, defaultClient, type ClientData } from "./ClientFields";
@@ -449,6 +449,19 @@ export function UVRSimulator({
         totalProyectado: recomendadaPicked.totalProyectado,
       }
     : null;
+
+  // Broadcast de la propuesta recomendada viva (UVR) → Análisis de Capacidad
+  // de Pago la escucha para recalcular el % de endeudamiento sobre la cuota
+  // de la propuesta seleccionada (1, 2, 3 o 4) ANTES de guardar.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!recomendada || !init?.id) return;
+    window.dispatchEvent(
+      new CustomEvent("nuvex:recomendada-change", {
+        detail: { expedienteId: init.id, nuevaCuota: recomendada.nuevaCuota, index: recomendada.index },
+      }),
+    );
+  }, [recomendada?.nuevaCuota, recomendada?.index, init?.id]);
 
   const ahorroNegativo = recomendada && (recomendada.ahorroTotal < 0 || recomendada.honorarios < 0);
 
