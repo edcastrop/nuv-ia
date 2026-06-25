@@ -21,15 +21,13 @@ function buildTotp(secret: string, label: string): OTPAuth.TOTP {
 const SENDER_DOMAIN = "notify.nuvex.com.co";
 const FROM_ADDRESS = "NUVEX Seguridad <seguridad@notify.nuvex.com.co>";
 
-function hashCodigo(codigo: string): string {
-  // Hash simple — el código vive 10 minutos. Para auditoría/integridad.
-  // No es secreto a largo plazo. Usar SHA-256 vía Web Crypto.
-  const enc = new TextEncoder().encode(codigo);
-  // crypto.subtle.digest es async, así que devolvemos hex base. Usamos sync fallback.
-  // Aquí preferimos un hash determinístico: hex de bytes con salt fijo (mejor que claro).
-  let h = 0;
-  for (let i = 0; i < enc.length; i++) h = (h * 31 + enc[i]) | 0;
-  return `v1.${h.toString(16)}.${codigo.length}`;
+async function hashCodigo(codigo: string, userId: string): Promise<string> {
+  const data = new TextEncoder().encode(`nuvex-mfa-v2:${userId}:${codigo}`);
+  const buffer = await crypto.subtle.digest("SHA-256", data);
+  const hex = Array.from(new Uint8Array(buffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return `v2.${hex}`;
 }
 
 function crearTokenUnsubscribe(userId: string): string {
@@ -60,7 +58,7 @@ export const enviarCodigoMfaEmail = createServerFn({ method: "POST" })
 
     await supabase.from("mfa_codigos_email").insert({
       user_id: userId,
-      codigo_hash: hashCodigo(codigo),
+      codigo_hash: await hashCodigo(codigo, userId),
       expira_at: expira,
     });
 
@@ -114,7 +112,7 @@ export const verificarCodigoMfaEmail = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ codigo: z.string().regex(/^\d{6}$/) }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const expected = hashCodigo(data.codigo);
+    const expected = await hashCodigo(data.codigo, userId);
 
     const { data: rows } = await supabase
       .from("mfa_codigos_email")
