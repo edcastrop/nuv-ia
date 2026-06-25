@@ -60,15 +60,32 @@ export const Route = createFileRoute("/api/nuvex-gpt-chat")({
 
           // ────────────────────────────────────────────────────────────────────
 
-          const body = (await request.json()) as {
-            messages: Array<{ role: "user" | "assistant"; content: string }>;
-            modulo_contexto?: string | null;
-            conversacion_id?: string | null;
-          };
+          const BodySchema = z.object({
+            messages: z.array(
+              z.object({
+                role: z.enum(["user", "assistant"]),
+                content: z.string().min(1).max(8000),
+              })
+            ).min(1).max(20),
+            modulo_contexto: z.string().max(80).nullable().optional(),
+            conversacion_id: z.string().uuid().nullable().optional(),
+          });
 
-          const messages = (body.messages ?? []).slice(-12);
+          const bodyRaw = await request.json();
+          const bodyParsed = BodySchema.safeParse(bodyRaw);
+
+          if (!bodyParsed.success) {
+            return new Response(
+              JSON.stringify({ error: "Solicitud inválida", detalle: bodyParsed.error.flatten() }),
+              { status: 400, headers: { "Content-Type": "application/json" } },
+            );
+          }
+
+          const { messages: allMessages, modulo_contexto, conversacion_id: convIdBody } = bodyParsed.data;
+
+          const messages = allMessages.slice(-12);
           const lastUserMsg = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
-          const modulo = (body.modulo_contexto ?? "").toLowerCase();
+          const modulo = (modulo_contexto ?? "").toLowerCase();
 
           // Resolve user role
           const { data: rolesData } = await supabase
