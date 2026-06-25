@@ -38,6 +38,7 @@ import { SiguienteAccionPanel } from "@/components/expediente/SiguienteAccionPan
 import { QueFaltaPanel } from "@/components/expediente/QueFaltaPanel";
 import { ChecklistRolPanel } from "@/components/expediente/ChecklistRolPanel";
 import { ResumenEjecutivo } from "@/components/expediente/ResumenEjecutivo";
+import { EquipoCasoCard } from "@/components/expediente/EquipoCasoCard";
 import { ControlOperativoPanel } from "@/components/expediente/ControlOperativoPanel";
 import { ETAPA_A_DESTINO, type EtapaGuiadaId, type TabId } from "@/lib/expedienteGuiado";
 
@@ -284,6 +285,12 @@ function CasoDetail() {
 
         {/* RESUMEN */}
         <TabsContent value="resumen" className="space-y-4">
+          <EquipoCasoCard
+            expedienteId={exp.id}
+            asesorId={exp.asesor_id}
+            licenciadoId={(exp as unknown as { licenciado_id?: string | null }).licenciado_id ?? null}
+            onChange={() => reload()}
+          />
           <ResumenEjecutivo exp={exp} />
           <QueFaltaPanel exp={exp} onIrATab={setTab} />
           <ChecklistRolPanel exp={exp} onIrATab={setTab} />
