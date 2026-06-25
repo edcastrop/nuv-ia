@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Alert, Card, SectionTitle, TextField } from "./ui";
 import { SituacionActualBlock } from "./SituacionActualBlock";
 import { ClientFields, defaultClient, type ClientData } from "./ClientFields";
