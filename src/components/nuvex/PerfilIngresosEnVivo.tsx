@@ -41,6 +41,7 @@ export interface IngresosCliente {
   /** Activar cuando el crédito tenga cotitular. */
   tieneCotitular?: boolean;
   cotitularNombre?: string;
+  cotitularOcupaciones?: OcupacionTipo[];
   cotitularFuentes?: FuenteIngreso[];
 }
 
