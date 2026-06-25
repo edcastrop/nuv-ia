@@ -57,9 +57,14 @@ export const Route = createFileRoute("/api/nuvex-ia-stream")({
             auth: { persistSession: false, autoRefreshToken: false },
           });
 
-          const { data: userData, error: userErr } = await supabase.auth.getUser();
-          if (userErr || !userData.user) return new Response("Unauthorized", { status: 401 });
-          const userId = userData.user.id;
+          const { data: claimsData, error: claimsErr } = await supabase.auth.getClaims(token);
+          if (claimsErr || !claimsData?.claims?.sub) {
+            return new Response(JSON.stringify({ error: "Unauthorized" }), {
+              status: 401,
+              headers: { "Content-Type": "application/json" },
+            });
+          }
+          const userId = claimsData.claims.sub;
 
           // ── Rate limiting: máx 30 consultas por usuario por minuto ──────────
 
