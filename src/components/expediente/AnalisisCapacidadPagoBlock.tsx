@@ -166,6 +166,22 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
     }
   }, [cuotaPropuesta]);
 
+  // Escucha la propuesta recomendada VIVA del simulador (antes de guardar):
+  // cuando el analista cambia entre Propuesta 1, 2, 3 o 4 dentro del mismo
+  // expediente, el simulador emite `nuvex:recomendada-change` y aquí
+  // actualizamos la cuota a validar sin esperar a que se persista.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handler = (ev: Event) => {
+      const detail = (ev as CustomEvent).detail as { expedienteId?: string; nuevaCuota?: number } | undefined;
+      if (!detail || detail.expedienteId !== expedienteId) return;
+      const nueva = Number(detail.nuevaCuota ?? 0);
+      if (nueva > 0) setCuota(Math.round(nueva));
+    };
+    window.addEventListener("nuvex:recomendada-change", handler);
+    return () => window.removeEventListener("nuvex:recomendada-change", handler);
+  }, [expedienteId]);
+
   // Cargar último análisis guardado (sin pisar la cuota viva de la propuesta)
   useEffect(() => {
     (async () => {
