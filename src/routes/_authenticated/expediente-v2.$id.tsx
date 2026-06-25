@@ -34,6 +34,7 @@ import {
   Target,
   TrendingUp,
   User,
+  UserCog,
   Users,
   X,
 } from "lucide-react";
@@ -50,9 +51,11 @@ import {
   KpiGrid,
   KpiCard,
   NCard,
+  NSelect,
   SectionHeader,
   EmptyState,
 } from "@/components/nuvia";
+import { useUserRole, isManager, type AppRole } from "@/hooks/useUserRole";
 import {
   listTareas,
   crearTarea,
@@ -170,7 +173,10 @@ function ExpedienteV2Page() {
   const [commTab, setCommTab] = useState<"whatsapp" | "email" | "llamada" | "nota">("whatsapp");
   const [profilesById, setProfilesById] = useState<Record<string, ProfileLite>>({});
   const [profileList, setProfileList] = useState<ProfileLite[]>([]);
+  const [rolesByUserId, setRolesByUserId] = useState<Record<string, AppRole[]>>({});
   const [showTareaForm, setShowTareaForm] = useState(false);
+  const { roles: currentRoles } = useUserRole();
+  const canReassign = isManager(currentRoles);
 
   useEffect(() => {
     (async () => {
@@ -193,6 +199,14 @@ function ExpedienteV2Page() {
         const list = (profs as ProfileLite[]) ?? [];
         setProfileList(list);
         setProfilesById(Object.fromEntries(list.map((p) => [p.id, p])));
+        const { data: ur } = await supabase
+          .from("user_roles")
+          .select("user_id, role");
+        const rolesMap: Record<string, AppRole[]> = {};
+        ((ur ?? []) as Array<{ user_id: string; role: AppRole }>).forEach((r) => {
+          (rolesMap[r.user_id] ??= []).push(r.role);
+        });
+        setRolesByUserId(rolesMap);
       } catch (e) {
         setErr((e as Error).message);
       } finally {
@@ -515,6 +529,20 @@ function ExpedienteV2Page() {
           </Link>
         }
       />
+
+      {/* ===== EQUIPO DEL CASO ===== */}
+      <EquipoCasoCard
+        expedienteId={exp.id}
+        asesorId={exp.asesor_id}
+        licenciadoId={exp.licenciado_id ?? null}
+        profiles={profileList}
+        rolesByUserId={rolesByUserId}
+        canEdit={canReassign}
+        onChange={(field, newId) =>
+          setExp((prev) => (prev ? { ...prev, [field]: newId } as Expediente : prev))
+        }
+      />
+
 
       {/* ===== SIGNOS VITALES (6 KPI) ===== */}
       <KpiGrid cols={3}>
@@ -1392,3 +1420,138 @@ function BitacoraEntry({ b, autorNombre }: { b: BitacoraRow; autorNombre: string
     </div>
   );
 }
+
+// ===== Equipo del caso (Asesor + Licenciado) =====
+interface EquipoCasoCardProps {
+  expedienteId: string;
+  asesorId: string | null | undefined;
+  licenciadoId: string | null | undefined;
+  profiles: ProfileLite[];
+  rolesByUserId: Record<string, AppRole[]>;
+  canEdit: boolean;
+  onChange: (field: "asesor_id" | "licenciado_id", newId: string | null) => void;
+}
+
+function EquipoCasoCard({
+  expedienteId,
+  asesorId,
+  licenciadoId,
+  profiles,
+  rolesByUserId,
+  canEdit,
+  onChange,
+}: EquipoCasoCardProps) {
+  const [saving, setSaving] = useState<null | "asesor_id" | "licenciado_id">(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const asesorOpts = useMemo(
+    () =>
+      profiles
+        .filter((p) => {
+          const rs = rolesByUserId[p.id] ?? [];
+          return rs.some((r) =>
+            ["asesor", "auxiliar_operativo", "gerencia", "super_admin", "admin"].includes(r),
+          );
+        })
+        .map((p) => ({ value: p.id, label: p.nombre || p.email || p.id.slice(0, 6) })),
+    [profiles, rolesByUserId],
+  );
+
+  const licenciadoOpts = useMemo(
+    () =>
+      [{ value: "__none__", label: "— Sin asignar —" }].concat(
+        profiles
+          .filter((p) => (rolesByUserId[p.id] ?? []).includes("licenciado"))
+          .map((p) => ({ value: p.id, label: p.nombre || p.email || p.id.slice(0, 6) })),
+      ),
+    [profiles, rolesByUserId],
+  );
+
+  const asesor = asesorId ? profiles.find((p) => p.id === asesorId) : null;
+  const licenciado = licenciadoId ? profiles.find((p) => p.id === licenciadoId) : null;
+
+  const handleChange = async (
+    field: "asesor_id" | "licenciado_id",
+    rawValue: string,
+  ) => {
+    const value = rawValue === "__none__" ? null : rawValue;
+    setSaving(field);
+    setError(null);
+    try {
+      const { error: upErr } = await supabase
+        .from("expedientes")
+        .update({ [field]: value } as never)
+        .eq("id", expedienteId);
+      if (upErr) throw upErr;
+      const { data: auth } = await supabase.auth.getUser();
+      await supabase.from("expediente_historial").insert({
+        expediente_id: expedienteId,
+        accion_origen: "reasignacion_equipo",
+        observacion: `${field === "asesor_id" ? "Asesor" : "Licenciado"} reasignado${value ? "" : " (sin asignar)"}`,
+        usuario_id: auth.user?.id ?? null,
+      } as never);
+      onChange(field, value);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  return (
+    <NCard variant="default">
+      <SectionHeader
+        title="Equipo del caso"
+        description="Asesor responsable y licenciado asignado a este expediente."
+        icon={<UserCog size={14} />}
+      />
+      <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-[var(--nuvia-text-secondary)] mb-1">
+            Asesor comercial
+          </div>
+          {canEdit ? (
+            <NSelect
+              value={asesorId ?? ""}
+              onValueChange={(v) => handleChange("asesor_id", v)}
+              options={asesorOpts}
+              placeholder={saving === "asesor_id" ? "Guardando…" : "Seleccionar asesor"}
+            />
+          ) : (
+            <div className="text-[13px] text-[var(--nuvia-text-primary)] inline-flex items-center gap-2">
+              <User size={12} /> {asesor?.nombre ?? asesor?.email ?? "Sin asignar"}
+            </div>
+          )}
+        </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-[var(--nuvia-text-secondary)] mb-1">
+            Licenciado
+          </div>
+          {canEdit ? (
+            <NSelect
+              value={licenciadoId ?? "__none__"}
+              onValueChange={(v) => handleChange("licenciado_id", v)}
+              options={licenciadoOpts}
+              placeholder={saving === "licenciado_id" ? "Guardando…" : "Seleccionar licenciado"}
+            />
+          ) : (
+            <div className="text-[13px] text-[var(--nuvia-text-primary)] inline-flex items-center gap-2">
+              <UserCog size={12} /> {licenciado?.nombre ?? licenciado?.email ?? "Sin asignar"}
+            </div>
+          )}
+        </div>
+      </div>
+      {error && (
+        <div className="mt-2 text-[11px] text-rose-400 inline-flex items-center gap-1">
+          <AlertTriangle size={11} /> {error}
+        </div>
+      )}
+      {!canEdit && (
+        <div className="mt-2 text-[10px] text-[var(--nuvia-text-secondary)]">
+          Solo gerencia / super admin puede reasignar desde aquí.
+        </div>
+      )}
+    </NCard>
+  );
+}
+
