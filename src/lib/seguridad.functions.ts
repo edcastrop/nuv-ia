@@ -5,6 +5,37 @@ import { sendLovableEmail } from "@lovable.dev/email-js";
 import * as OTPAuth from "otpauth";
 import QRCode from "qrcode";
 
+// ── Cifrado AES-256-GCM para mfa_secret ─────────────────────────────────────
+
+async function getTotpKey(): Promise<CryptoKey> {
+  const raw = process.env.TOTP_ENCRYPTION_KEY ?? "";
+  if (raw.length !== 64) throw new Error("TOTP_ENCRYPTION_KEY debe ser de 64 caracteres hex (32 bytes).");
+  const bytes = new Uint8Array(raw.match(/.{2}/g)!.map((h) => parseInt(h, 16)));
+  return crypto.subtle.importKey("raw", bytes, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
+}
+
+async function encryptTotpSecret(secret: string): Promise<string> {
+  const key = await getTotpKey();
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const data = new TextEncoder().encode(secret);
+  const cipher = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, data);
+  const ivHex = Array.from(iv).map((b) => b.toString(16).padStart(2, "0")).join("");
+  const cipherHex = Array.from(new Uint8Array(cipher)).map((b) => b.toString(16).padStart(2, "0")).join("");
+  return `aes256gcm.v1:${ivHex}:${cipherHex}`;
+}
+
+async function decryptTotpSecret(stored: string): Promise<string> {
+  if (!stored.startsWith("aes256gcm.v1:")) throw new Error("Formato de mfa_secret no reconocido.");
+  const [, ivHex, cipherHex] = stored.split(":");
+  const iv = new Uint8Array(ivHex.match(/.{2}/g)!.map((h) => parseInt(h, 16)));
+  const cipher = new Uint8Array(cipherHex.match(/.{2}/g)!.map((h) => parseInt(h, 16)));
+  const key = await getTotpKey();
+  const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, cipher);
+  return new TextDecoder().decode(plain);
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+
 const TOTP_ISSUER = "NUVEX";
 
 function buildTotp(secret: string, label: string): OTPAuth.TOTP {
@@ -187,7 +218,8 @@ export const iniciarEnrolarTotp = createServerFn({ method: "POST" })
 
     // Guardamos el secret pendiente (se "activa" cuando confirme el código).
     // Reusamos columna mfa_secret; el método queda en "email" o "ninguno" hasta confirmar.
-    await supabase.from("profiles").update({ mfa_secret: secret }).eq("id", userId);
+    const secretCifrado = await encryptTotpSecret(secret);
+    await supabase.from("profiles").update({ mfa_secret: secretCifrado }).eq("id", userId);
     return { otpauthUrl, qrDataUrl, secret };
   });
 
@@ -202,7 +234,8 @@ export const confirmarEnrolarTotp = createServerFn({ method: "POST" })
     const row = prof as { email?: string; mfa_secret?: string | null } | null;
     if (!row?.mfa_secret) throw new Error("No hay enrolamiento TOTP en curso. Inicia de nuevo.");
 
-    const totp = buildTotp(row.mfa_secret, row.email ?? userId);
+    const secretPlano = await decryptTotpSecret(row.mfa_secret);
+    const totp = buildTotp(secretPlano, row.email ?? userId);
     const delta = totp.validate({ token: data.codigo, window: 1 });
     if (delta === null) throw new Error("Código inválido. Verifica la hora del dispositivo e intenta de nuevo.");
 
@@ -231,7 +264,8 @@ export const verificarCodigoTotp = createServerFn({ method: "POST" })
     if (!row?.mfa_secret || row.mfa_metodo !== "totp") {
       throw new Error("No tienes una app autenticadora configurada. Usa el código por correo.");
     }
-    const totp = buildTotp(row.mfa_secret, row.email ?? userId);
+    const secretPlano = await decryptTotpSecret(row.mfa_secret);
+    const totp = buildTotp(secretPlano, row.email ?? userId);
     const delta = totp.validate({ token: data.codigo, window: 1 });
     if (delta === null) {
       await supabase.from("acceso_auditoria").insert({
