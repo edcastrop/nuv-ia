@@ -600,14 +600,30 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
       </div>
 
       {/* Resultado */}
-      {cargandoUltimo ? null : resultado && (
+      {cargandoUltimo ? null : resultado && (() => {
+        const livePct = resultado.ingresoTotal > 0 ? cuota / resultado.ingresoTotal : 0;
+        const liveSemaforo: "verde" | "amarillo" | "rojo" | "sin_datos" =
+          resultado.ingresoTotal <= 0
+            ? "sin_datos"
+            : livePct <= limiteAplicable
+              ? "verde"
+              : livePct <= limiteAplicable * 1.05
+                ? "amarillo"
+                : "rojo";
+        const cambioCuota = Math.round(cuota) !== Math.round(resultado.cuotaPropuesta);
+        return (
         <div className="border-t pt-5" style={{ borderColor: "var(--nuvia-border-soft)" }}>
+          {cambioCuota && (
+            <div className="mb-3 p-3 rounded-lg text-xs" style={{ background: "rgba(245,200,128,0.12)", border: "1px solid rgba(245,200,128,0.4)", color: "var(--nuvia-text-primary)" }}>
+              Cambiaste la propuesta. Se recalculó el % de endeudamiento con la nueva cuota ({formatCOP(cuota)}) sobre los ingresos detectados. Vuelve a ejecutar el análisis para persistir el resultado.
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <div className="md:col-span-2 p-5 rounded-xl" style={{ background: "rgba(0,0,0,0.35)", border: "1px solid var(--nuvia-border-medium)", color: "var(--nuvia-text-primary)" }}>
               <div className="text-xs uppercase tracking-wide mb-1" style={{ color: "var(--nuvia-text-tertiary)" }}>% Endeudamiento</div>
-              <div className="text-5xl font-bold">{(resultado.porcentajeEndeudamiento * 100).toFixed(1)}%</div>
-              <div className="text-sm mt-1" style={{ color: "var(--nuvia-text-secondary)" }}>Límite del banco: {Math.round(resultado.limiteAplicable * 100)}%</div>
-              <div className="mt-3"><SemaforoBadge s={resultado.semaforo} /></div>
+              <div className="text-5xl font-bold">{(livePct * 100).toFixed(1)}%</div>
+              <div className="text-sm mt-1" style={{ color: "var(--nuvia-text-secondary)" }}>Límite del banco: {Math.round(limiteAplicable * 100)}%</div>
+              <div className="mt-3"><SemaforoBadge s={liveSemaforo} /></div>
             </div>
             <div className="p-4 rounded-xl" style={{ background: "rgba(132,185,143,0.12)", border: "1px solid rgba(132,185,143,0.35)" }}>
               <div className="text-xs uppercase" style={{ color: "rgb(132,185,143)" }}>Ingreso total detectado</div>
@@ -616,17 +632,17 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
             </div>
             <div className="p-4 rounded-xl" style={{ background: "rgba(122,160,255,0.12)", border: "1px solid rgba(122,160,255,0.35)" }}>
               <div className="text-xs uppercase" style={{ color: "var(--nuvia-accent-primary)" }}>Cuota propuesta</div>
-              <div className="text-2xl font-bold" style={{ color: "var(--nuvia-text-primary)" }}>{formatCOP(resultado.cuotaPropuesta)}</div>
-              <div className="text-xs mt-1" style={{ color: "var(--nuvia-text-secondary)" }}>{resultado.esVis ? "Crédito VIS" : "Crédito No VIS"}</div>
+              <div className="text-2xl font-bold" style={{ color: "var(--nuvia-text-primary)" }}>{formatCOP(cuota)}</div>
+              <div className="text-xs mt-1" style={{ color: "var(--nuvia-text-secondary)" }}>{esVis ? "Crédito VIS" : "Crédito No VIS"}</div>
             </div>
           </div>
 
           <div className="p-4 rounded-lg mb-4" style={
-            resultado.semaforo === "verde" ? { background: "rgba(132,185,143,0.14)", border: "1px solid rgba(132,185,143,0.4)", color: "var(--nuvia-text-primary)" }
-            : resultado.semaforo === "amarillo" ? { background: "rgba(245,200,128,0.14)", border: "1px solid rgba(245,200,128,0.4)", color: "var(--nuvia-text-primary)" }
+            liveSemaforo === "verde" ? { background: "rgba(132,185,143,0.14)", border: "1px solid rgba(132,185,143,0.4)", color: "var(--nuvia-text-primary)" }
+            : liveSemaforo === "amarillo" ? { background: "rgba(245,200,128,0.14)", border: "1px solid rgba(245,200,128,0.4)", color: "var(--nuvia-text-primary)" }
             : { background: "rgba(255,107,107,0.16)", border: "1px solid rgba(255,107,107,0.4)", color: "var(--nuvia-text-primary)" }
           }>
-            <p className="text-sm font-medium">{resultado.mensaje}</p>
+            <p className="text-sm font-medium">{cambioCuota ? `Re-evaluación viva sobre cuota ${formatCOP(cuota)}.` : resultado.mensaje}</p>
           </div>
 
           {resultado.personas.map((per) => (
