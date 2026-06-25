@@ -433,7 +433,7 @@ function CasosPage() {
 
 
 
-function ExpedienteCard({ r, isDup = false }: { r: Expediente; isDup?: boolean }) {
+function ExpedienteCard({ r, isDup = false, asesor }: { r: Expediente; isDup?: boolean; asesor?: { nombre?: string | null; email?: string | null } }) {
   const theme = ESTADO_THEME[r.estado];
   const aColor = avatarColor(r.cliente_nombre);
   const initial = (r.cliente_nombre || "?").trim().charAt(0).toUpperCase();
