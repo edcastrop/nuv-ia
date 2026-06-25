@@ -511,6 +511,14 @@ function ExpedienteCard({ r, isDup = false, asesor }: { r: Expediente; isDup?: b
             <div className="text-xs mt-0.5" style={{ color: TEXT2 }}>
               CC {r.cedula || "—"}
             </div>
+            {asesor && (
+              <div className="flex items-center gap-1.5 mt-1">
+                <AnalistaAvatar nombre={asesor.nombre} email={asesor.email} size={16} />
+                <span className="text-[11px] truncate" style={{ color: TEXT2 }}>
+                  {asesor.nombre || asesor.email || "Sin asesor"}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
