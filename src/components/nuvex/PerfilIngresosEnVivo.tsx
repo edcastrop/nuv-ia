@@ -73,6 +73,7 @@ const BILLETERAS = [
   "RappiPay",
   "Tpaga",
   "Bold",
+  "NU",
   "Otra",
 ];
 
