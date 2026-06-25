@@ -1,6 +1,6 @@
 // Equipo del caso — Asesor responsable (Analista Financiero Comercial)
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, User, UserCog } from "lucide-react";
+import { AlertTriangle, User, UserCog, ArrowRightLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { NCard, NSelect, SectionHeader } from "@/components/nuvia";
 import { useUserRole, isManager, type AppRole } from "@/hooks/useUserRole";
@@ -26,8 +26,12 @@ export function EquipoCasoCard({ expedienteId, asesorId, onChange }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [localAsesor, setLocalAsesor] = useState<string | null>(asesorId ?? null);
+  const [selectedAsesor, setSelectedAsesor] = useState<string | null>(asesorId ?? null);
 
-  useEffect(() => setLocalAsesor(asesorId ?? null), [asesorId]);
+  useEffect(() => {
+    setLocalAsesor(asesorId ?? null);
+    setSelectedAsesor(asesorId ?? null);
+  }, [asesorId]);
 
   useEffect(() => {
     (async () => {
@@ -59,9 +63,15 @@ export function EquipoCasoCard({ expedienteId, asesorId, onChange }: Props) {
   );
 
   const asesor = localAsesor ? profiles.find((p) => p.id === localAsesor) : null;
+  const selectedLabel = selectedAsesor
+    ? profiles.find((p) => p.id === selectedAsesor)?.nombre ?? profiles.find((p) => p.id === selectedAsesor)?.email ?? "Asesor"
+    : null;
 
-  const handleChange = async (rawValue: string) => {
-    const value = rawValue === "__none__" ? null : rawValue;
+  const hasChanges = selectedAsesor !== localAsesor;
+
+  const handleReasignar = async () => {
+    const value = selectedAsesor;
+    if (!hasChanges) return;
     setSaving(true);
     setError(null);
     try {
@@ -74,7 +84,7 @@ export function EquipoCasoCard({ expedienteId, asesorId, onChange }: Props) {
       await supabase.from("expediente_historial").insert({
         expediente_id: expedienteId,
         accion_origen: "reasignacion_equipo",
-        observacion: `Asesor comercial reasignado${value ? "" : " (sin asignar)"}`,
+        observacion: `Asesor comercial reasignado${value ? ` a ${selectedLabel}` : " (sin asignar)"}`,
         usuario_id: auth.user?.id ?? null,
       } as never);
       setLocalAsesor(value);
@@ -98,12 +108,25 @@ export function EquipoCasoCard({ expedienteId, asesorId, onChange }: Props) {
           Asesor comercial
         </div>
         {canEdit ? (
-          <NSelect
-            value={localAsesor ?? ""}
-            onValueChange={handleChange}
-            options={asesorOpts}
-            placeholder={saving ? "Guardando…" : "Seleccionar asesor"}
-          />
+          <div className="flex flex-col gap-2">
+            <NSelect
+              value={selectedAsesor ?? ""}
+              onValueChange={(val) => setSelectedAsesor(val === "" ? null : val)}
+              options={asesorOpts}
+              placeholder="Seleccionar asesor"
+            />
+            {hasChanges && (
+              <button
+                onClick={handleReasignar}
+                disabled={saving}
+                className="inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                style={{ backgroundColor: "var(--nuvia-accent-blue)" }}
+              >
+                <ArrowRightLeft size={12} />
+                {saving ? "Reasignando…" : `Reasignar a ${selectedLabel ?? "—"}`}
+              </button>
+            )}
+          </div>
         ) : (
           <div className="text-[13px] text-[var(--nuvia-text-primary)] inline-flex items-center gap-2">
             <User size={12} /> {asesor?.nombre ?? asesor?.email ?? "Sin asignar"}
