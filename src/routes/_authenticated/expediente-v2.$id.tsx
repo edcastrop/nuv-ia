@@ -34,6 +34,7 @@ import {
   Target,
   TrendingUp,
   User,
+  UserCog,
   Users,
   X,
 } from "lucide-react";
