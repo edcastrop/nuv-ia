@@ -1,12 +1,11 @@
 // "Perfil de Ingresos en Vivo" — anclado a la propuesta comercial.
 // Pensado para que el analista lo llene durante la llamada con el cliente.
-// Calcula promedio simple de 3 meses por fuente, suma todas las fuentes y
-// compara contra el % máximo permitido (30% NoVIS / 40% VIS) frente a la
-// cuota de la propuesta recomendada. Si no cumple, sugiere la siguiente
-// proyección que sí cumpla.
+// Calcula promedio simple de 3 meses por fuente, suma todas las fuentes
+// (titular + cotitular si aplica) y compara contra el % máximo permitido
+// (30% NoVIS / 40% VIS) frente a la cuota de la propuesta recomendada.
 
 import { useMemo, useState } from "react";
-import { Plus, Trash2, ChevronDown, ChevronUp, Wallet, Users } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronUp, Wallet, Users, UserPlus } from "lucide-react";
 import { formatCOP } from "../../lib/format";
 
 export type TipoCredito = "VIS" | "NoVIS";
@@ -21,12 +20,15 @@ export type FuenteIngresoTipo =
   | "emprendimiento"
   | "giros_exterior"
   | "dividendos"
+  | "billetera_virtual"
   | "otro";
 
 export interface FuenteIngreso {
   id: string;
   tipo: FuenteIngresoTipo;
   descripcion?: string;
+  /** Para billeteras virtuales: nombre de la billetera (Nequi, Daviplata, etc.) */
+  billetera?: string;
   mes1: number;
   mes2: number;
   mes3: number;
@@ -36,6 +38,10 @@ export interface IngresosCliente {
   tipoCredito?: TipoCredito;
   ocupaciones?: OcupacionTipo[];
   fuentes?: FuenteIngreso[];
+  /** Activar cuando el crédito tenga cotitular. */
+  tieneCotitular?: boolean;
+  cotitularNombre?: string;
+  cotitularFuentes?: FuenteIngreso[];
 }
 
 const OCUPACIONES: Array<{ k: OcupacionTipo; label: string; emoji: string }> = [
@@ -53,7 +59,21 @@ const FUENTES_CAT: Array<{ k: FuenteIngresoTipo; label: string }> = [
   { k: "emprendimiento", label: "Emprendimiento" },
   { k: "giros_exterior", label: "Giros del exterior" },
   { k: "dividendos", label: "Dividendos" },
+  { k: "billetera_virtual", label: "Billetera virtual" },
   { k: "otro", label: "Otro" },
+];
+
+const BILLETERAS = [
+  "Nequi",
+  "Daviplata",
+  "Movii",
+  "Dale!",
+  "Lulo Bank",
+  "Powwi",
+  "RappiPay",
+  "Tpaga",
+  "Bold",
+  "Otra",
 ];
 
 function nuevaFuente(tipo: FuenteIngresoTipo = "salario"): FuenteIngreso {
@@ -91,11 +111,8 @@ export function PerfilIngresosEnVivo({
 }: {
   value: IngresosCliente;
   onChange: (v: IngresosCliente) => void;
-  /** Cuota de la propuesta actualmente recomendada (la que se enviará al cliente). */
   cuotaRecomendada: number;
-  /** Todas las propuestas para encontrar una alternativa si la recomendada no cumple. */
   propuestas: PropuestaParaCapacidad[];
-  /** Permite al analista marcar como recomendada otra propuesta sugerida. */
   onSugerirEscenario?: (index: number) => void;
 }) {
   const [abierto, setAbierto] = useState<boolean>(false);
@@ -103,14 +120,21 @@ export function PerfilIngresosEnVivo({
   const tipoCredito: TipoCredito = value.tipoCredito ?? "NoVIS";
   const ocupaciones = value.ocupaciones ?? [];
   const fuentes = value.fuentes ?? [];
+  const tieneCotitular = value.tieneCotitular ?? false;
+  const cotitularFuentes = value.cotitularFuentes ?? [];
 
   const porcentajeMax = tipoCredito === "VIS" ? 0.4 : 0.3;
   const labelPct = tipoCredito === "VIS" ? "40%" : "30%";
 
-  const ingresoTotal = useMemo(
+  const ingresoTitular = useMemo(
     () => fuentes.reduce((acc, f) => acc + promedio(f), 0),
     [fuentes],
   );
+  const ingresoCotitular = useMemo(
+    () => (tieneCotitular ? cotitularFuentes.reduce((acc, f) => acc + promedio(f), 0) : 0),
+    [tieneCotitular, cotitularFuentes],
+  );
+  const ingresoTotal = ingresoTitular + ingresoCotitular;
   const capacidadMaxima = ingresoTotal * porcentajeMax;
   const tieneDatos = ingresoTotal > 0;
 
@@ -119,12 +143,11 @@ export function PerfilIngresosEnVivo({
   const excede = tieneDatos && cuotaRecomendada > 0 && cuotaRecomendada > capacidadMaxima;
   const delta = capacidadMaxima - cuotaRecomendada;
 
-  // Sugiere la propuesta de MENOR esfuerzo que SÍ cumpla (menor cuota válida que ≤ capacidad).
   const sugerencia = useMemo(() => {
     if (!excede || !tieneDatos) return null;
     const candidatas = propuestas
       .filter((p) => p.valid && p.nuevaCuota > 0 && p.nuevaCuota <= capacidadMaxima)
-      .sort((a, b) => b.nuevaCuota - a.nuevaCuota); // la más alta dentro del límite = mayor abono permitido
+      .sort((a, b) => b.nuevaCuota - a.nuevaCuota);
     return candidatas[0] ?? null;
   }, [excede, tieneDatos, propuestas, capacidadMaxima]);
 
@@ -137,13 +160,22 @@ export function PerfilIngresosEnVivo({
 
   const setTipoCredito = (t: TipoCredito) => onChange({ ...value, tipoCredito: t });
 
-  const addFuente = () => onChange({ ...value, fuentes: [...fuentes, nuevaFuente()] });
-  const removeFuente = (id: string) =>
-    onChange({ ...value, fuentes: fuentes.filter((f) => f.id !== id) });
-  const updateFuente = (id: string, patch: Partial<FuenteIngreso>) =>
-    onChange({ ...value, fuentes: fuentes.map((f) => (f.id === id ? { ...f, ...patch } : f)) });
+  // Helpers genéricos para manipular cualquiera de las dos listas (titular/cotitular).
+  const updateLista = (
+    key: "fuentes" | "cotitularFuentes",
+    next: FuenteIngreso[],
+  ) => onChange({ ...value, [key]: next });
 
-  // Color semáforo
+  const addFuente = (key: "fuentes" | "cotitularFuentes") =>
+    updateLista(key, [...(value[key] ?? []), nuevaFuente()]);
+  const removeFuente = (key: "fuentes" | "cotitularFuentes", id: string) =>
+    updateLista(key, (value[key] ?? []).filter((f) => f.id !== id));
+  const updateFuente = (
+    key: "fuentes" | "cotitularFuentes",
+    id: string,
+    patch: Partial<FuenteIngreso>,
+  ) => updateLista(key, (value[key] ?? []).map((f) => (f.id === id ? { ...f, ...patch } : f)));
+
   const semaforoColor = !tieneDatos
     ? "rgba(230,236,255,0.55)"
     : excede
@@ -164,8 +196,7 @@ export function PerfilIngresosEnVivo({
     <div
       className="mb-4 rounded-2xl border backdrop-blur-xl overflow-hidden"
       style={{
-        background:
-          "linear-gradient(135deg, rgba(30,40,75,0.65), rgba(15,22,46,0.7))",
+        background: "linear-gradient(135deg, rgba(30,40,75,0.65), rgba(15,22,46,0.7))",
         borderColor: tieneDatos
           ? excede
             ? "rgba(255,120,120,0.55)"
@@ -174,7 +205,6 @@ export function PerfilIngresosEnVivo({
         boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 12px 30px -18px rgba(0,0,0,0.55)",
       }}
     >
-      {/* Header — siempre visible, muestra semáforo aunque esté cerrado */}
       <button
         type="button"
         onClick={() => setAbierto((v) => !v)}
@@ -191,16 +221,16 @@ export function PerfilIngresosEnVivo({
             <Wallet size={16} style={{ color: "#F6C453" }} />
           </span>
           <div className="min-w-0">
-            <div
-              className="text-[10px] font-bold uppercase tracking-[0.16em]"
-              style={{ color: "#F6C453" }}
-            >
+            <div className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: "#F6C453" }}>
               Perfil de ingresos en vivo · {labelPct}
             </div>
             <div className="text-sm font-semibold truncate" style={{ color: "#E6ECFF" }}>
               {tieneDatos ? (
                 <>
                   Ingreso prom. {formatCOP(ingresoTotal)} · Capacidad {formatCOP(capacidadMaxima)}
+                  {tieneCotitular && ingresoCotitular > 0 && (
+                    <span className="ml-1 opacity-75">(incl. cotitular)</span>
+                  )}
                 </>
               ) : (
                 <>Captura ocupación e ingresos del cliente durante la llamada</>
@@ -260,7 +290,7 @@ export function PerfilIngresosEnVivo({
             <div className="mb-1.5 flex items-center gap-1.5">
               <Users size={12} style={{ color: "#F6C453" }} />
               <span className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: "#F6C453" }}>
-                Ocupación (selecciona todas las que apliquen)
+                Ocupación del titular (selecciona todas las que apliquen)
               </span>
             </div>
             <div className="flex flex-wrap gap-1.5">
@@ -287,123 +317,72 @@ export function PerfilIngresosEnVivo({
             </div>
           </div>
 
-          {/* Fuentes de ingreso */}
-          <div>
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: "#F6C453" }}>
-                Fuentes de ingreso (últimos 3 meses)
-              </span>
-              <button
-                type="button"
-                onClick={addFuente}
-                className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-semibold text-white transition hover:scale-[1.02]"
-                style={{
-                  background: "linear-gradient(135deg, #445DA3 0%, #84B98F 100%)",
-                }}
-              >
-                <Plus size={12} /> Agregar fuente
-              </button>
-            </div>
+          {/* Fuentes del titular */}
+          <FuentesBlock
+            titulo="Fuentes de ingreso del titular (últimos 3 meses)"
+            fuentes={fuentes}
+            onAdd={() => addFuente("fuentes")}
+            onRemove={(id) => removeFuente("fuentes", id)}
+            onUpdate={(id, patch) => updateFuente("fuentes", id, patch)}
+            promedioTotal={ingresoTitular}
+          />
 
-            {fuentes.length === 0 ? (
-              <div
-                className="rounded-lg border border-dashed px-3 py-4 text-center text-[11px]"
-                style={{ borderColor: "rgba(255,255,255,0.14)", color: "rgba(230,236,255,0.55)" }}
-              >
-                Sin fuentes capturadas. Pregunta al cliente sus ingresos y agrégalos arriba.
+          {/* Cotitular toggle */}
+          <div
+            className="rounded-xl border p-3"
+            style={{
+              background: "rgba(20,28,54,0.55)",
+              borderColor: tieneCotitular ? "rgba(132,185,143,0.40)" : "rgba(255,255,255,0.10)",
+            }}
+          >
+            <label className="flex items-center justify-between gap-3 cursor-pointer">
+              <div className="flex items-center gap-2 min-w-0">
+                <UserPlus size={14} style={{ color: "#84B98F" }} />
+                <div className="min-w-0">
+                  <div className="text-[11px] font-bold uppercase tracking-[0.14em]" style={{ color: "#84B98F" }}>
+                    ¿Crédito con cotitular / codeudor?
+                  </div>
+                  <div className="text-[10px]" style={{ color: "rgba(230,236,255,0.55)" }}>
+                    Sus ingresos se suman al titular para validar el {labelPct}.
+                  </div>
+                </div>
               </div>
-            ) : (
-              <div className="space-y-2">
-                {fuentes.map((f) => {
-                  const prom = promedio(f);
-                  return (
-                    <div
-                      key={f.id}
-                      className="rounded-xl border p-2.5"
-                      style={{
-                        background: "rgba(15,22,46,0.55)",
-                        borderColor: "rgba(255,255,255,0.08)",
-                      }}
-                    >
-                      <div className="flex flex-wrap items-center gap-2">
-                        <select
-                          value={f.tipo}
-                          onChange={(e) => updateFuente(f.id, { tipo: e.target.value as FuenteIngresoTipo })}
-                          className="rounded-md border bg-transparent px-2 py-1 text-[11px] font-semibold"
-                          style={{
-                            color: "#E6ECFF",
-                            background: "rgba(20,28,54,0.85)",
-                            borderColor: "rgba(255,255,255,0.14)",
-                          }}
-                        >
-                          {FUENTES_CAT.map((c) => (
-                            <option key={c.k} value={c.k} style={{ background: "#141C36", color: "#E6ECFF" }}>
-                              {c.label}
-                            </option>
-                          ))}
-                        </select>
-                        <input
-                          type="text"
-                          placeholder="Detalle (opcional)"
-                          value={f.descripcion ?? ""}
-                          onChange={(e) => updateFuente(f.id, { descripcion: e.target.value })}
-                          className="min-w-0 flex-1 rounded-md border bg-transparent px-2 py-1 text-[11px]"
-                          style={{
-                            color: "#E6ECFF",
-                            background: "rgba(20,28,54,0.55)",
-                            borderColor: "rgba(255,255,255,0.10)",
-                          }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeFuente(f.id)}
-                          className="ml-auto inline-flex items-center justify-center rounded-md p-1 transition hover:bg-white/5"
-                          aria-label="Eliminar fuente"
-                          style={{ color: "#FF9C9C" }}
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                      <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                        {(["mes1", "mes2", "mes3"] as const).map((m, i) => (
-                          <label key={m} className="flex flex-col gap-1">
-                            <span className="text-[9px] font-bold uppercase tracking-[0.14em]" style={{ color: "rgba(230,236,255,0.5)" }}>
-                              Mes {i + 1}
-                            </span>
-                            <input
-                              type="text"
-                              inputMode="numeric"
-                              value={f[m] ? formatCOP(f[m]) : ""}
-                              onChange={(e) => updateFuente(f.id, { [m]: parseCop(e.target.value) } as Partial<FuenteIngreso>)}
-                              placeholder="$0"
-                              className="rounded-md border bg-transparent px-2 py-1 text-[12px] font-semibold"
-                              style={{
-                                color: "#E6ECFF",
-                                background: "rgba(20,28,54,0.55)",
-                                borderColor: "rgba(255,255,255,0.10)",
-                              }}
-                            />
-                          </label>
-                        ))}
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[9px] font-bold uppercase tracking-[0.14em]" style={{ color: "#84B98F" }}>
-                            Promedio
-                          </span>
-                          <div
-                            className="rounded-md border px-2 py-1 text-[12px] font-extrabold"
-                            style={{
-                              color: "#A7E0B8",
-                              background: "rgba(132,185,143,0.10)",
-                              borderColor: "rgba(132,185,143,0.30)",
-                            }}
-                          >
-                            {formatCOP(prom)}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+              <input
+                type="checkbox"
+                checked={tieneCotitular}
+                onChange={(e) => onChange({ ...value, tieneCotitular: e.target.checked })}
+                className="h-4 w-4 accent-emerald-400"
+              />
+            </label>
+
+            {tieneCotitular && (
+              <div className="mt-3 space-y-3">
+                <label className="flex flex-col gap-1">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: "rgba(230,236,255,0.55)" }}>
+                    Nombre del cotitular
+                  </span>
+                  <input
+                    type="text"
+                    value={value.cotitularNombre ?? ""}
+                    onChange={(e) => onChange({ ...value, cotitularNombre: e.target.value })}
+                    placeholder="Nombre completo"
+                    className="rounded-md border px-2 py-1 text-[12px] font-semibold"
+                    style={{
+                      color: "#E6ECFF",
+                      background: "rgba(15,22,46,0.65)",
+                      borderColor: "rgba(255,255,255,0.10)",
+                    }}
+                  />
+                </label>
+                <FuentesBlock
+                  titulo="Fuentes de ingreso del cotitular (últimos 3 meses)"
+                  fuentes={cotitularFuentes}
+                  onAdd={() => addFuente("cotitularFuentes")}
+                  onRemove={(id) => removeFuente("cotitularFuentes", id)}
+                  onUpdate={(id, patch) => updateFuente("cotitularFuentes", id, patch)}
+                  promedioTotal={ingresoCotitular}
+                  accent="#84B98F"
+                />
               </div>
             )}
           </div>
@@ -421,14 +400,17 @@ export function PerfilIngresosEnVivo({
             }}
           >
             <div className="grid gap-2 sm:grid-cols-3">
-              <Stat label="Ingreso promedio total" value={formatCOP(ingresoTotal)} />
+              <Stat
+                label="Ingreso promedio total"
+                value={formatCOP(ingresoTotal)}
+                hint={tieneCotitular ? `Titular ${formatCOP(ingresoTitular)} + cotitular ${formatCOP(ingresoCotitular)}` : undefined}
+              />
               <Stat label={`Capacidad permitida (${labelPct})`} value={formatCOP(capacidadMaxima)} />
               <Stat label="Cuota de la propuesta" value={cuotaRecomendada > 0 ? formatCOP(cuotaRecomendada) : "—"} />
             </div>
 
             {tieneDatos && cuotaRecomendada > 0 && (
               <div className="mt-3">
-                {/* Barra visual */}
                 <div className="relative h-3 w-full overflow-hidden rounded-full" style={{ background: "rgba(255,255,255,0.06)" }}>
                   <div
                     className="absolute inset-y-0 left-0 transition-all"
@@ -448,7 +430,6 @@ export function PerfilIngresosEnVivo({
                   {excede && <>Excede en {formatCOP(-delta)}. Esta propuesta no cumple el {labelPct}.</>}
                 </div>
 
-                {/* Sugerencia automática */}
                 {excede && sugerencia && (
                   <div
                     className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border p-2.5"
@@ -481,7 +462,7 @@ export function PerfilIngresosEnVivo({
                       color: "#FFB3B3",
                     }}
                   >
-                    Ninguna proyección actual cumple el {labelPct} para este cliente. Considera bajar el abono o solicitar codeudor.
+                    Ninguna proyección actual cumple el {labelPct} para este cliente. Considera bajar el abono{tieneCotitular ? "" : ", agregar cotitular"} o solicitar codeudor.
                   </div>
                 )}
               </div>
@@ -493,7 +474,151 @@ export function PerfilIngresosEnVivo({
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function FuentesBlock({
+  titulo,
+  fuentes,
+  onAdd,
+  onRemove,
+  onUpdate,
+  promedioTotal,
+  accent = "#F6C453",
+}: {
+  titulo: string;
+  fuentes: FuenteIngreso[];
+  onAdd: () => void;
+  onRemove: (id: string) => void;
+  onUpdate: (id: string, patch: Partial<FuenteIngreso>) => void;
+  promedioTotal: number;
+  accent?: string;
+}) {
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: accent }}>
+          {titulo}
+        </span>
+        <div className="flex items-center gap-2">
+          {promedioTotal > 0 && (
+            <span className="text-[10px] font-bold" style={{ color: "#A7E0B8" }}>
+              Σ {formatCOP(promedioTotal)}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={onAdd}
+            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-semibold text-white transition hover:scale-[1.02]"
+            style={{ background: "linear-gradient(135deg, #445DA3 0%, #84B98F 100%)" }}
+          >
+            <Plus size={12} /> Agregar fuente
+          </button>
+        </div>
+      </div>
+
+      {fuentes.length === 0 ? (
+        <div
+          className="rounded-lg border border-dashed px-3 py-4 text-center text-[11px]"
+          style={{ borderColor: "rgba(255,255,255,0.14)", color: "rgba(230,236,255,0.55)" }}
+        >
+          Sin fuentes capturadas.
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {fuentes.map((f) => {
+            const prom = promedio(f);
+            const esBilletera = f.tipo === "billetera_virtual";
+            return (
+              <div
+                key={f.id}
+                className="rounded-xl border p-2.5"
+                style={{ background: "rgba(15,22,46,0.55)", borderColor: "rgba(255,255,255,0.08)" }}
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    value={f.tipo}
+                    onChange={(e) => onUpdate(f.id, { tipo: e.target.value as FuenteIngresoTipo })}
+                    className="rounded-md border bg-transparent px-2 py-1 text-[11px] font-semibold"
+                    style={{ color: "#E6ECFF", background: "rgba(20,28,54,0.85)", borderColor: "rgba(255,255,255,0.14)" }}
+                  >
+                    {FUENTES_CAT.map((c) => (
+                      <option key={c.k} value={c.k} style={{ background: "#141C36", color: "#E6ECFF" }}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                  {esBilletera ? (
+                    <select
+                      value={f.billetera ?? ""}
+                      onChange={(e) => onUpdate(f.id, { billetera: e.target.value })}
+                      className="rounded-md border bg-transparent px-2 py-1 text-[11px] font-semibold"
+                      style={{ color: "#E6ECFF", background: "rgba(20,28,54,0.85)", borderColor: "rgba(255,255,255,0.14)" }}
+                    >
+                      <option value="" style={{ background: "#141C36", color: "#E6ECFF" }}>
+                        ¿Cuál billetera?
+                      </option>
+                      {BILLETERAS.map((b) => (
+                        <option key={b} value={b} style={{ background: "#141C36", color: "#E6ECFF" }}>
+                          {b}
+                        </option>
+                      ))}
+                    </select>
+                  ) : null}
+                  <input
+                    type="text"
+                    placeholder={esBilletera ? "Detalle (titular de la cuenta, etc.)" : "Detalle (opcional)"}
+                    value={f.descripcion ?? ""}
+                    onChange={(e) => onUpdate(f.id, { descripcion: e.target.value })}
+                    className="min-w-0 flex-1 rounded-md border bg-transparent px-2 py-1 text-[11px]"
+                    style={{ color: "#E6ECFF", background: "rgba(20,28,54,0.55)", borderColor: "rgba(255,255,255,0.10)" }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => onRemove(f.id)}
+                    className="ml-auto inline-flex items-center justify-center rounded-md p-1 transition hover:bg-white/5"
+                    aria-label="Eliminar fuente"
+                    style={{ color: "#FF9C9C" }}
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+                <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {(["mes1", "mes2", "mes3"] as const).map((m, i) => (
+                    <label key={m} className="flex flex-col gap-1">
+                      <span className="text-[9px] font-bold uppercase tracking-[0.14em]" style={{ color: "rgba(230,236,255,0.5)" }}>
+                        Mes {i + 1}
+                      </span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={f[m] ? formatCOP(f[m]) : ""}
+                        onChange={(e) => onUpdate(f.id, { [m]: parseCop(e.target.value) } as Partial<FuenteIngreso>)}
+                        placeholder="$0"
+                        className="rounded-md border bg-transparent px-2 py-1 text-[12px] font-semibold"
+                        style={{ color: "#E6ECFF", background: "rgba(20,28,54,0.55)", borderColor: "rgba(255,255,255,0.10)" }}
+                      />
+                    </label>
+                  ))}
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[9px] font-bold uppercase tracking-[0.14em]" style={{ color: "#84B98F" }}>
+                      Promedio
+                    </span>
+                    <div
+                      className="rounded-md border px-2 py-1 text-[12px] font-extrabold"
+                      style={{ color: "#A7E0B8", background: "rgba(132,185,143,0.10)", borderColor: "rgba(132,185,143,0.30)" }}
+                    >
+                      {formatCOP(prom)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div>
       <div className="text-[9px] font-bold uppercase tracking-[0.14em]" style={{ color: "rgba(230,236,255,0.55)" }}>
@@ -502,6 +627,11 @@ function Stat({ label, value }: { label: string; value: string }) {
       <div className="text-[15px] font-extrabold" style={{ color: "#E6ECFF" }}>
         {value}
       </div>
+      {hint && (
+        <div className="text-[9px] mt-0.5" style={{ color: "rgba(230,236,255,0.5)" }}>
+          {hint}
+        </div>
+      )}
     </div>
   );
 }
