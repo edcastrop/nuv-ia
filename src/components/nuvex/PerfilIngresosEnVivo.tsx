@@ -41,6 +41,7 @@ export interface IngresosCliente {
   /** Activar cuando el crédito tenga cotitular. */
   tieneCotitular?: boolean;
   cotitularNombre?: string;
+  cotitularOcupaciones?: OcupacionTipo[];
   cotitularFuentes?: FuenteIngreso[];
 }
 
@@ -375,6 +376,44 @@ export function PerfilIngresosEnVivo({
                     }}
                   />
                 </label>
+
+                {/* Ocupación del cotitular */}
+                <div>
+                  <div className="mb-1.5 flex items-center gap-1.5">
+                    <Users size={12} style={{ color: "#84B98F" }} />
+                    <span className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: "#84B98F" }}>
+                      Ocupación del cotitular (selecciona todas las que apliquen)
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {OCUPACIONES.map((o) => {
+                      const active = (value.cotitularOcupaciones ?? []).includes(o.k);
+                      return (
+                        <button
+                          key={o.k}
+                          type="button"
+                          onClick={() => {
+                            const set = new Set(value.cotitularOcupaciones ?? []);
+                            if (set.has(o.k)) set.delete(o.k);
+                            else set.add(o.k);
+                            onChange({ ...value, cotitularOcupaciones: Array.from(set) });
+                          }}
+                          className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition"
+                          style={{
+                            background: active
+                              ? "linear-gradient(135deg, rgba(132,185,143,0.22), rgba(68,93,163,0.18))"
+                              : "rgba(20,28,54,0.55)",
+                            color: active ? "#A7E0B8" : "rgba(230,236,255,0.7)",
+                            borderColor: active ? "rgba(132,185,143,0.55)" : "rgba(255,255,255,0.14)",
+                          }}
+                        >
+                          <span>{o.emoji}</span> {o.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <FuentesBlock
                   titulo="Fuentes de ingreso del cotitular (últimos 3 meses)"
                   fuentes={cotitularFuentes}
