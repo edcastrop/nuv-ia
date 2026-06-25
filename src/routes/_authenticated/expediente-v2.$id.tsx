@@ -199,6 +199,14 @@ function ExpedienteV2Page() {
         const list = (profs as ProfileLite[]) ?? [];
         setProfileList(list);
         setProfilesById(Object.fromEntries(list.map((p) => [p.id, p])));
+        const { data: ur } = await supabase
+          .from("user_roles")
+          .select("user_id, role");
+        const rolesMap: Record<string, AppRole[]> = {};
+        ((ur ?? []) as Array<{ user_id: string; role: AppRole }>).forEach((r) => {
+          (rolesMap[r.user_id] ??= []).push(r.role);
+        });
+        setRolesByUserId(rolesMap);
       } catch (e) {
         setErr((e as Error).message);
       } finally {
