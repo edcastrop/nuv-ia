@@ -1,62 +1,51 @@
+# Auditoría funcional — Equipo de analistas
+
 ## Objetivo
+Recorrer cada herramienta que un analista usa para producir un caso, detectar bugs que rompen flujo y corregirlos sin tocar lógica que ya validamos juntos (poderes PDF, propuesta comercial, parsers Davivienda/Davibank/Bogotá/Caja Social, honorarios, capacidad de pago, proyección UVR, reasignación).
 
-Eliminar dos candados que están bloqueando al analista:
+## Roles en producción
+`asesor` (2), `licenciado` (6), `director_financiero_qa` (3), `gerencia` (2), `contabilidad` (1), `super_admin` (1). La auditoría se enfoca en **asesor + licenciado** (analistas) y verifica que `director_financiero_qa` y `gerencia` no pierdan visibilidad.
 
-1. **Validación de datos para Contratación** — ya no exigir un paso de revisión externa cuando el analista subió cédula + extracto y NUVIA leyó los datos.
-2. **Envío obligatorio a Auditoría QA** — cuando el motor NUVIA aprueba la simulación matemáticamente (sin críticas y con score apto para el nivel del analista), el caso pasa directo a Contratación. Solo se enruta a QA si NUVIA detecta discrepancias graves.
+## Alcance — herramientas del analista
+1. **Casos / Pipeline** (`/casos`, `/pipeline`, `/pipeline-v2`) — listado, filtros "Mis casos", avatar doble analista, reasignación.
+2. **Expediente** (`/casos/$id`, `/expediente-maestro/$id`, `/expediente-v2/$id`) — stepper 13 pasos, bitácora, checklist, validaciones, soportes, historial.
+3. **Motor de Extractos** (`MotorExtractosNUVEX`, parsers banco) — lectura, modal moneda, override, agregados de seguros.
+4. **Simuladores Pesos / UVR** y **Propuestas comerciales** — evento `nuvex:recomendada-change`, persistencia.
+5. **Análisis de Capacidad de Pago** — sincronía con cuota viva (ya corregido — verificar regresiones).
+6. **Motor de Honorarios** — tiers nuevos (6/4/3/2.5/UVR 3%).
+7. **Proyección financiera** (`/proyeccion`, `/proyeccion-financiera`, `/herramientas/proyeccion`) — UVR + inflación, export PDF.
+8. **Propuesta comercial PDF** (`PrintDocument`) — colores, seguros pagados/pendientes, IPC por moneda/producto.
+9. **Poderes / Documentos jurídicos** — header/footer negro, justificado, negrillas, cédulas con puntos.
+10. **NUVIA IA / KB** (`/nuvex-ia`) — rate limit, Zod, similarity, audiencias.
+11. **Colaboración, mensajería, notificaciones** — acceso por rol.
+12. **Gestión de usuarios** (`/gestion-usuarios`) — reasignación de casos.
 
----
+## Método
+Por cada módulo:
+- **Estático**: revisar route + componentes para imports rotos, `useEffect` con dependencias incorrectas, props no propagadas, RLS implícita (`asesor_id === user.id`).
+- **Datos**: consultar Supabase para detectar filas huérfanas, FKs rotas, casos sin `asesor_id`, propuestas desincronizadas con `analisis_capacidad_pago`.
+- **Build/Types**: typecheck dirigido a archivos tocados.
+- **Runtime**: logs del worker filtrados por endpoint del módulo cuando aplique.
 
-## Cambios
+## Entregable
+1. **Informe en chat** agrupado por módulo: severidad (bloqueante / alto / medio), causa raíz, archivo:línea.
+2. **Fixes aplicados en la misma tanda** para todo lo bloqueante y alto. Lo medio queda listado para que tú decidas.
+3. **Verificación**: build limpio + spot-check con Playwright en `/casos`, `/casos/$id` y un simulador para confirmar que nada de lo ya validado se rompió.
 
-### 1. Auto-aprobación basada en el motor NUVIA
+## Reglas que respeto
+- No re-diseño UI ya aprobada (PDF poder, propuesta comercial, header dark NUVIA).
+- No toco `client.ts`, `client.server.ts`, `auth-middleware.ts`, `types.ts`.
+- Cualquier cambio de RLS o GRANT pasa por migración con bloque completo.
+- Si un hallazgo cambia comportamiento de negocio (ej. fórmula, % endeudamiento, regla bancaria), te pregunto antes de tocarlo.
 
-**`src/components/nuvex/SaveExpedienteButton.tsx`**
-- Recibir `auditResult: AuditoriaResultado` y `nivelAutonomia: NivelAutonomia` como props.
-- Al guardar, calcular `decidirPdf(nivel, auditResult)`:
-  - `accion === "permitir"` → **NO** llamar `enviarAValidacionQA`. En su lugar:
-    - `cambiarEstadoCaso(id, "proyeccion_aprobada_qa", "auto", "Aprobada automáticamente por motor NUVIA")`
-    - Guardar `aprobado_data` (snapshot inmutable) replicando lo que hoy hace `aprobarQA()` — extraer a helper `snapshotPropuestaAprobada(expedienteId, validacionId=null)` en `validacionQA.ts`.
-    - Mensaje: "Expediente aprobado por NUVIA · listo para Contratación".
-  - `accion === "permitir_con_marca"` o `"bloquear"` → ruta actual: `enviarAValidacionQA` (queda como red de seguridad para casos con marca de advertencia o críticas).
-- Etiqueta dinámica del botón:
-  - permitir → "Crear y enviar a Contratación"
-  - permitir_con_marca → "Crear y enviar a auditoría QA (advertencia)"
-  - bloquear → "Crear y enviar a auditoría QA (revisión obligatoria)"
+## Detalles técnicos (referencia)
+- `casos.index.tsx`: filtro "Mis casos" usa `asesor_id === user.id`; verificar que `licenciado` también pueda filtrar por sus casos asignados.
+- `expediente-maestro.$id.tsx`: estado `asesor`/`licenciado` viene de `expediente.asesor`/`.licenciado` (jsonb), no de `user_roles` — confirmar que no se sobreescriben al recargar.
+- `AnalisisCapacidadPagoBlock`: cuota viva ya escucha `nuvex:recomendada-change` — validar que el evento se dispara también desde `expediente-v2`.
+- `motorExtractos.functions.ts`: validar que el normalizador Davibank no genere falsos positivos para Davivienda real.
+- Honorarios: confirmar que los tiers nuevos se usan en propuesta comercial y en cuentas de cobro.
 
-**`PesosSimulator.tsx` / `UVRSimulator.tsx`**
-- Calcular `auditarSimulacion(input)` ya se hace dentro de `AuditPanel`. Sacar el cálculo al simulador (o levantar el resultado vía callback) y pasarlo + `metricasAutonomia.nivelAutonomia` al `SaveExpedienteButton`.
-
-**`src/lib/validacionQA.ts`**
-- Extraer la lógica de snapshot de `aprobarQA` a `snapshotPropuestaAprobada(expedienteId, validacionId | null)` reutilizable.
-- `aprobarQA` sigue llamándolo internamente (sin cambios funcionales para el flujo manual de QA).
-
-### 2. Texto de "Siguiente acción" sin forzar auditoría
-
-**`src/lib/expedienteGuiado.ts`** — caso `etapa === "lead" || etapa === "proyeccion"`:
-- Cambiar a:
-  - título: "Avanza con la proyección financiera"
-  - descripción: "Completa la simulación. Si NUVIA la aprueba, pasa directo a Contratación; solo se enruta a auditoría QA si NUVIA detecta inconsistencias."
-
-### 3. Validación de datos — quitar el candado en "Qué falta"
-
-**`src/lib/expedienteGuiado.ts`** — `getBloqueos`, etapa `documentacion_bancaria | radicacion`:
-- Quitar la línea `"Validación de identidad firmada" → juridica`. El analista ya validó al confirmar la cédula (flujo anterior ya hace `validacion_estado = datos_validados` directamente).
-
-### 4. Sin cambios
-
-- Motor de auditoría (`auditEngine.ts`) y reglas de autonomía (`autonomia.ts`): intactos.
-- `aprobarQA` / `devolverQA` manuales: intactos para casos que sí llegan a QA.
-- Permisos / RLS / Stepper / Torre de Control: sin cambios — los estados (`proyeccion_aprobada_qa`, etc.) siguen siendo los mismos, solo cambia quién/cómo se llega a ellos.
-- Componente `ValidacionIdentidadBlock`: ya está en su forma "Enviar a Contratación" desde la iteración previa; no se toca.
-
----
-
-## Resultado esperado para el caso de ANDRES FELIPE MARTINEZ
-
-1. Analista termina la simulación → motor NUVIA marca **Apto** (score ≥ umbral del nivel, sin críticas).
-2. Click en "Crear y enviar a Contratación" → caso pasa a `proyeccion_aprobada_qa` automáticamente, con `aprobado_data` congelado.
-3. "Tu siguiente acción" desaparece la mención a auditoría; Contratación ve el caso listo con cédula + extracto adjuntos.
-4. Si en otro caso el motor encuentra una crítica (cuota mal, fresh mal, etc.), entonces sí va a QA — el control queda como red de seguridad, no como peaje.
-
-¿Apruebas que ejecute estos cambios?
+## Lo que NO está en este alcance
+- Rediseño visual.
+- Cambios a Finanzas / Treasury / Wallet / Contabilidad (no son herramientas del analista).
+- Auditoría de seguridad / RLS profunda (esa es la opción "Ambas" — la pediste aparte si quieres).
