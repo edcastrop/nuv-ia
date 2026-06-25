@@ -155,7 +155,11 @@ function CasosPage() {
       .then(async (r) => {
         if (cancel) return;
         setRows(r);
-        const ids = Array.from(new Set(r.map((row) => row.asesor_id).filter(Boolean)));
+        const ids = Array.from(
+          new Set(
+            r.flatMap((row) => [row.asesor_id, row.licenciado_id]).filter(Boolean) as string[],
+          ),
+        );
         if (ids.length > 0) {
           const { data: profs } = await supabase.from("profiles").select("id,nombre,email").in("id", ids);
           const m = new Map<string, { nombre: string | null; email: string | null }>();
@@ -168,11 +172,12 @@ function CasosPage() {
     return () => { cancel = true; };
   }, [search, estado, etapa]);
 
-  // P26 — Filtro client-side "Mis casos" (asesor_id === user.id).
+  // "Mis casos": el usuario es asesor O licenciado del caso.
   const filteredRows = useMemo(() => {
     if (!mios || !user?.id) return rows;
-    return rows.filter((r) => r.asesor_id === user.id);
+    return rows.filter((r) => r.asesor_id === user.id || r.licenciado_id === user.id);
   }, [rows, mios, user?.id]);
+
 
   // P26 — Detección de duplicados por cédula entre los expedientes cargados.
   const dupCedulas = useMemo(() => {
