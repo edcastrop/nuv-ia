@@ -199,6 +199,7 @@ function ReasignarModal({ origen, usuarios, onClose, onDone }: {
   onClose: () => void;
   onDone: () => void | Promise<void>;
 }) {
+  const [tipo, setTipo] = useState<"asesor" | "licenciado">("asesor");
   const [casos, setCasos] = useState<Array<{ id: string; cliente_nombre: string; estado_caso: string | null }>>([]);
   const [seleccion, setSeleccion] = useState<Set<string>>(new Set());
   const [destino, setDestino] = useState<string>("");
@@ -206,16 +207,18 @@ function ReasignarModal({ origen, usuarios, onClose, onDone }: {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    setSeleccion(new Set());
     (async () => {
+      const col = tipo === "asesor" ? "asesor_id" : "licenciado_id";
       const { data } = await supabase.from("expedientes")
         .select("id, cliente_nombre, estado_caso")
-        .eq("asesor_id", origen.id)
+        .eq(col, origen.id)
         .not("estado_caso", "in", `(${ESTADOS_ACTIVOS.map((s) => `"${s}"`).join(",")})`)
         .order("updated_at", { ascending: false })
         .limit(200);
       setCasos((data ?? []) as Array<{ id: string; cliente_nombre: string; estado_caso: string | null }>);
     })();
-  }, [origen.id]);
+  }, [origen.id, tipo]);
 
   const toggle = (id: string) => {
     const ns = new Set(seleccion);
@@ -229,23 +232,26 @@ function ReasignarModal({ origen, usuarios, onClose, onDone }: {
     setBusy(true); setError(null);
     try {
       const ids = Array.from(seleccion);
-      const { error: e } = await supabase.from("expedientes").update({ asesor_id: destino } as never).in("id", ids);
+      const col = tipo === "asesor" ? "asesor_id" : "licenciado_id";
+      const patch: Record<string, string> = { [col]: destino };
+      const { error: e } = await supabase.from("expedientes").update(patch as never).in("id", ids);
       if (e) throw e;
       const { data: auth } = await supabase.auth.getUser();
       await supabase.from("auditoria_global").insert(
         ids.map((eid) => ({
           entidad: "expediente",
           entidad_id: eid,
-          accion: "reasignar_asesor",
+          accion: tipo === "asesor" ? "reasignar_asesor" : "reasignar_licenciado",
           user_id: auth.user?.id ?? null,
-          valor_anterior: { asesor_id: origen.id } as never,
-          valor_nuevo: { asesor_id: destino } as never,
+          valor_anterior: { [col]: origen.id } as never,
+          valor_nuevo: { [col]: destino } as never,
         })) as never,
       );
       await onDone();
     } catch (e) { setError((e as Error).message); }
     finally { setBusy(false); }
   };
+
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={onClose}>
