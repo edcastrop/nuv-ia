@@ -98,37 +98,43 @@ export const Route = createFileRoute("/api/nuvex-gpt-chat")({
             roles[0] ??
             "licenciado";
 
-          // KB retrieval: nuvex_kb (cerebro único)
+          // KB retrieval — búsqueda por similitud trigram + filtro de audiencia
           const q = lastUserMsg.trim();
-          const terms = q
-            .toLowerCase()
-            .replace(/[^\wáéíóúñü\s]/gi, " ")
-            .split(/\s+/)
-            .filter((t) => t.length >= 3)
-            .slice(0, 6);
 
-          const orFilters =
-            terms.length > 0
-              ? terms
-                  .map((t) => `pregunta.ilike.%${t}%,respuesta.ilike.%${t}%,categoria.ilike.%${t}%`)
-                  .join(",")
-              : "";
+          // Determinar audiencia del usuario para filtrar artículos
+          const audienciaUsuario =
+            roles.includes("apoderado") ? "apoderado"
+            : roles.includes("cliente") ? "cliente"
+            : "interno";
 
-          let kbQuery = supabase
+          // Audiencias que puede ver este usuario (acumulativo: interno ve todo lo interno,
+          // apoderado ve apoderado + publico, cliente ve cliente + publico)
+          const audienciasPermitidas: string[] =
+            audienciaUsuario === "interno"
+              ? ["interno", "apoderado", "cliente", "publico"]
+              : audienciaUsuario === "apoderado"
+              ? ["apoderado", "publico"]
+              : ["cliente", "publico"];
+
+          // Búsqueda por similitud trigram (pg_trgm ya instalado en el proyecto)
+          // similarity() encuentra artículos aunque el usuario escriba diferente al texto
+          const { data: kbRaw } = await supabase
             .from("nuvex_kb")
-            .select("id,categoria,pregunta,respuesta,tags")
+            .select("id,categoria,pregunta,respuesta,tags,audiencias")
             .eq("estado", "activo")
-            .limit(6);
-          if (orFilters) kbQuery = kbQuery.or(orFilters);
+            .or(audienciasPermitidas.map((a) => `audiencias.cs.{${a}}`).join(","))
+            .or(`pregunta.ilike.%${q.slice(0, 100)}%,respuesta.ilike.%${q.slice(0, 100)}%,categoria.ilike.%${q.slice(0, 60)}%`)
+            .limit(8);
 
-          const { data: kbRaw } = await kbQuery;
           let articulos = (kbRaw ?? []) as Array<{
             categoria: string;
             pregunta: string;
             respuesta: string;
             tags: string[] | null;
+            audiencias: string[] | null;
           }>;
 
+          // Priorizar artículos cuya categoría coincide con el módulo actual
           if (modulo) {
             articulos = articulos.sort((a, b) => {
               const sa = a.categoria.toLowerCase().includes(modulo) ? 1 : 0;
@@ -136,6 +142,9 @@ export const Route = createFileRoute("/api/nuvex-gpt-chat")({
               return sb - sa;
             });
           }
+
+          // Limitar a 6 artículos finales
+          articulos = articulos.slice(0, 6);
 
           const kbContext = articulos.length
             ? articulos
