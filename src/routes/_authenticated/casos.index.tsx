@@ -152,7 +152,17 @@ function CasosPage() {
     let cancel = false;
     setLoading(true);
     listExpedientes({ search, estado, etapa })
-      .then((r) => { if (!cancel) setRows(r); })
+      .then(async (r) => {
+        if (cancel) return;
+        setRows(r);
+        const ids = Array.from(new Set(r.map((row) => row.asesor_id).filter(Boolean)));
+        if (ids.length > 0) {
+          const { data: profs } = await supabase.from("profiles").select("id,nombre,email").in("id", ids);
+          const m = new Map<string, { nombre: string | null; email: string | null }>();
+          (profs ?? []).forEach((p: any) => m.set(p.id, { nombre: p.nombre ?? null, email: p.email ?? null }));
+          if (!cancel) setAsesores(m);
+        }
+      })
       .catch((e) => { if (!cancel) setErr(e.message); })
       .finally(() => { if (!cancel) setLoading(false); });
     return () => { cancel = true; };
