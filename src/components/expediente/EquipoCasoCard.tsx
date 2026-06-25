@@ -1,6 +1,6 @@
 // Equipo del caso — Asesor responsable (Analista Financiero Comercial)
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, User, UserCog } from "lucide-react";
+import { AlertTriangle, User, UserCog, ArrowRightLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { NCard, NSelect, SectionHeader } from "@/components/nuvia";
 import { useUserRole, isManager, type AppRole } from "@/hooks/useUserRole";
