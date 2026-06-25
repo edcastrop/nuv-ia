@@ -73,7 +73,9 @@ export interface AprobadoData {
 export interface Expediente {
   id: string;
   asesor_id: string;
+  licenciado_id?: string | null;
   modo: "pesos" | "uvr";
+
   cliente_nombre: string;
   cedula: string | null;
   banco: string | null;
