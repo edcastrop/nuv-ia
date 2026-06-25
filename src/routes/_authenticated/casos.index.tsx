@@ -519,14 +519,28 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado }: { r: Expedient
             <div className="text-xs mt-0.5" style={{ color: TEXT2 }}>
               CC {r.cedula || "—"}
             </div>
-            {asesor && (
-              <div className="flex items-center gap-1.5 mt-1">
-                <AnalistaAvatar nombre={asesor.nombre} email={asesor.email} size={16} />
-                <span className="text-[11px] truncate" style={{ color: TEXT2 }}>
-                  {asesor.nombre || asesor.email || "Sin asesor"}
-                </span>
+            {(asesor || licenciado) && (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+                {asesor && (
+                  <div className="flex items-center gap-1.5" title="Asesor del caso">
+                    <AnalistaAvatar nombre={asesor.nombre} email={asesor.email} size={16} />
+                    <span className="text-[11px] truncate" style={{ color: TEXT2 }}>
+                      {asesor.nombre || asesor.email || "Sin asesor"}
+                    </span>
+                  </div>
+                )}
+                {licenciado && (
+                  <div className="flex items-center gap-1.5" title="Licenciado del caso">
+                    <span className="text-[9px] font-bold uppercase tracking-wider px-1 rounded" style={{ background: "rgba(31,109,61,0.15)", color: "#86EFAC", border: "1px solid rgba(31,109,61,0.4)" }}>Lic</span>
+                    <AnalistaAvatar nombre={licenciado.nombre} email={licenciado.email} size={16} />
+                    <span className="text-[11px] truncate" style={{ color: TEXT2 }}>
+                      {licenciado.nombre || licenciado.email || ""}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
+
           </div>
         </div>
 
