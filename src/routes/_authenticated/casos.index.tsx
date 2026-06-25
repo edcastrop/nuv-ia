@@ -409,8 +409,10 @@ function CasosPage() {
                 r={r}
                 isDup={!!r.cedula && dupCedulas.has(r.cedula.trim())}
                 asesor={asesores.get(r.asesor_id)}
+                licenciado={r.licenciado_id ? asesores.get(r.licenciado_id) : undefined}
               />
             ))
+
           )}
         </section>
 
