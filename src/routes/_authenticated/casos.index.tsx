@@ -31,6 +31,8 @@ import {
   KpiCard,
   InsightCard,
 } from "@/components/nuvia";
+import { AnalistaAvatar } from "@/components/pipeline/AnalistaAvatar";
+import { supabase } from "@/integrations/supabase/client";
 
 
 const ETAPA_IDS = ETAPAS_PIPELINE.map((e) => e.id) as [EtapaPipelineId, ...EtapaPipelineId[]];
