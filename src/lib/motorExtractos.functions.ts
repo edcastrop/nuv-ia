@@ -210,6 +210,13 @@ function parseTasa(raw: string): string {
 
 const SYSTEM_DETECTOR = `Eres un clasificador de extractos bancarios colombianos. Mira las imágenes y llena la función detectar_banco_producto. NO inventes — usa solo lo visible.
 
+REGLA CRÍTICA — DAVIBANK vs DAVIVIENDA (NO confundir, son bancos distintos):
+- DAVIBANK (antes Scotiabank Colpatria): logo "DAVIbank" (la palabra "bank" en minúscula pegada a "DAVI"), texto "DAVIBANK TE INFORMA", dominio www.davibank.com, encabezados "DAVIBANK". Reporta banco="Davibank".
+- DAVIVIENDA: logo "Davivienda" (casita roja), texto "Banco Davivienda S.A.", dominio www.davivienda.com, productos rotulados como "Davivienda Hipotecario" o "Leasing Habitacional Davivienda". Reporta banco="Davivienda".
+- Si ves "DAVIbank", "Davibank", "davibank.com" o "DAVIBANK TE INFORMA" en cualquier parte del extracto → banco="Davibank" SIEMPRE. NUNCA reportes "Davivienda" en ese caso.
+- Si ves "Colpatria" o "Scotiabank Colpatria" → banco="Davibank".
+- En la 'evidencia' cita el texto literal del logo o encabezado que justifica la elección del banco.
+
 REGLA CRÍTICA DE MONEDA (no equivocarse):
 - moneda="UVR" SOLO si el extracto muestra EXPLÍCITAMENTE al menos UNA de estas señales:
   * Texto literal "UVR" en el nombre del producto, sistema de amortización o encabezado de columnas ("Valores en UVR", "Saldo UVR", "Valor UVR del día", "Cotización UVR").
