@@ -108,12 +108,25 @@ export function EquipoCasoCard({ expedienteId, asesorId, onChange }: Props) {
           Asesor comercial
         </div>
         {canEdit ? (
-          <NSelect
-            value={localAsesor ?? ""}
-            onValueChange={handleChange}
-            options={asesorOpts}
-            placeholder={saving ? "Guardando…" : "Seleccionar asesor"}
-          />
+          <div className="flex flex-col gap-2">
+            <NSelect
+              value={selectedAsesor ?? ""}
+              onValueChange={(val) => setSelectedAsesor(val === "" ? null : val)}
+              options={asesorOpts}
+              placeholder="Seleccionar asesor"
+            />
+            {hasChanges && (
+              <button
+                onClick={handleReasignar}
+                disabled={saving}
+                className="inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                style={{ backgroundColor: "var(--nuvia-accent-blue)" }}
+              >
+                <ArrowRightLeft size={12} />
+                {saving ? "Reasignando…" : `Reasignar a ${selectedLabel ?? "—"}`}
+              </button>
+            )}
+          </div>
         ) : (
           <div className="text-[13px] text-[var(--nuvia-text-primary)] inline-flex items-center gap-2">
             <User size={12} /> {asesor?.nombre ?? asesor?.email ?? "Sin asignar"}
