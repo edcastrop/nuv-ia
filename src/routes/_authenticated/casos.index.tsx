@@ -403,6 +403,7 @@ function CasosPage() {
                 key={r.id}
                 r={r}
                 isDup={!!r.cedula && dupCedulas.has(r.cedula.trim())}
+                asesor={asesores.get(r.asesor_id)}
               />
             ))
           )}
