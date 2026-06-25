@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { z } from "zod";
 
 type Audiencia = "interno" | "apoderado" | "cliente";
 
@@ -79,14 +80,24 @@ export const Route = createFileRoute("/api/nuvex-ia-stream")({
 
           // ────────────────────────────────────────────────────────────────────
 
-          const body = (await request.json()) as {
-            pregunta: string; modulo?: string | null;
-            origen?: "nuvex_ia" | "nuvex_gpt" | "cliente";
-          };
-          const pregunta = (body.pregunta ?? "").toString().slice(0, 1000).trim();
-          if (pregunta.length < 2) return new Response("Pregunta inválida", { status: 400 });
-          const modulo = (body.modulo ?? "").toLowerCase() || null;
-          const origen = body.origen ?? "nuvex_ia";
+          const BodySchema = z.object({
+            pregunta: z.string().min(2).max(1000),
+            modulo: z.string().max(80).nullable().optional(),
+            origen: z.enum(["nuvex_ia", "nuvex_gpt", "cliente"]).optional().default("nuvex_ia"),
+          });
+
+          const bodyRaw = await request.json();
+          const bodyParsed = BodySchema.safeParse(bodyRaw);
+
+          if (!bodyParsed.success) {
+            return new Response(
+              JSON.stringify({ error: "Solicitud inválida", detalle: bodyParsed.error.flatten() }),
+              { status: 400, headers: { "Content-Type": "application/json" } },
+            );
+          }
+
+          const { pregunta, modulo: moduloRaw, origen } = bodyParsed.data;
+          const modulo = (moduloRaw ?? "").toLowerCase() || null;
 
           // Roles + audiencia
           const { data: rolesData } = await supabase.from("user_roles").select("role").eq("user_id", userId);
