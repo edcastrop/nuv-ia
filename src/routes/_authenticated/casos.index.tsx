@@ -31,6 +31,8 @@ import {
   KpiCard,
   InsightCard,
 } from "@/components/nuvia";
+import { AnalistaAvatar } from "@/components/pipeline/AnalistaAvatar";
+import { supabase } from "@/integrations/supabase/client";
 
 
 const ETAPA_IDS = ETAPAS_PIPELINE.map((e) => e.id) as [EtapaPipelineId, ...EtapaPipelineId[]];
@@ -127,6 +129,7 @@ function CasosPage() {
   const [rows, setRows] = useState<Expediente[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [asesores, setAsesores] = useState<Map<string, { nombre: string | null; email: string | null }>>(new Map());
 
   // Debounce text input → URL
   useEffect(() => {
@@ -149,7 +152,17 @@ function CasosPage() {
     let cancel = false;
     setLoading(true);
     listExpedientes({ search, estado, etapa })
-      .then((r) => { if (!cancel) setRows(r); })
+      .then(async (r) => {
+        if (cancel) return;
+        setRows(r);
+        const ids = Array.from(new Set(r.map((row) => row.asesor_id).filter(Boolean)));
+        if (ids.length > 0) {
+          const { data: profs } = await supabase.from("profiles").select("id,nombre,email").in("id", ids);
+          const m = new Map<string, { nombre: string | null; email: string | null }>();
+          (profs ?? []).forEach((p: any) => m.set(p.id, { nombre: p.nombre ?? null, email: p.email ?? null }));
+          if (!cancel) setAsesores(m);
+        }
+      })
       .catch((e) => { if (!cancel) setErr(e.message); })
       .finally(() => { if (!cancel) setLoading(false); });
     return () => { cancel = true; };
@@ -390,6 +403,7 @@ function CasosPage() {
                 key={r.id}
                 r={r}
                 isDup={!!r.cedula && dupCedulas.has(r.cedula.trim())}
+                asesor={asesores.get(r.asesor_id)}
               />
             ))
           )}
@@ -420,7 +434,7 @@ function CasosPage() {
 
 
 
-function ExpedienteCard({ r, isDup = false }: { r: Expediente; isDup?: boolean }) {
+function ExpedienteCard({ r, isDup = false, asesor }: { r: Expediente; isDup?: boolean; asesor?: { nombre?: string | null; email?: string | null } }) {
   const theme = ESTADO_THEME[r.estado];
   const aColor = avatarColor(r.cliente_nombre);
   const initial = (r.cliente_nombre || "?").trim().charAt(0).toUpperCase();
@@ -498,6 +512,14 @@ function ExpedienteCard({ r, isDup = false }: { r: Expediente; isDup?: boolean }
             <div className="text-xs mt-0.5" style={{ color: TEXT2 }}>
               CC {r.cedula || "—"}
             </div>
+            {asesor && (
+              <div className="flex items-center gap-1.5 mt-1">
+                <AnalistaAvatar nombre={asesor.nombre} email={asesor.email} size={16} />
+                <span className="text-[11px] truncate" style={{ color: TEXT2 }}>
+                  {asesor.nombre || asesor.email || "Sin asesor"}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
