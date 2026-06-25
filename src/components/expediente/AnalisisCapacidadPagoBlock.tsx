@@ -679,7 +679,8 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
             </div>
           ))}
         </div>
-      )}
+        );
+      })()}
 
       <Dialog open={openSolicitud} onOpenChange={setOpenSolicitud}>
         <DialogContent className="max-w-lg">
