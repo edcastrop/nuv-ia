@@ -530,6 +530,20 @@ function ExpedienteV2Page() {
         }
       />
 
+      {/* ===== EQUIPO DEL CASO ===== */}
+      <EquipoCasoCard
+        expedienteId={exp.id}
+        asesorId={exp.asesor_id}
+        licenciadoId={exp.licenciado_id ?? null}
+        profiles={profileList}
+        rolesByUserId={rolesByUserId}
+        canEdit={canReassign}
+        onChange={(field, newId) =>
+          setExp((prev) => (prev ? { ...prev, [field]: newId } as Expediente : prev))
+        }
+      />
+
+
       {/* ===== SIGNOS VITALES (6 KPI) ===== */}
       <KpiGrid cols={3}>
         <KpiCard
