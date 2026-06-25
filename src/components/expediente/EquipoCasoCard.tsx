@@ -26,8 +26,12 @@ export function EquipoCasoCard({ expedienteId, asesorId, onChange }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [localAsesor, setLocalAsesor] = useState<string | null>(asesorId ?? null);
+  const [selectedAsesor, setSelectedAsesor] = useState<string | null>(asesorId ?? null);
 
-  useEffect(() => setLocalAsesor(asesorId ?? null), [asesorId]);
+  useEffect(() => {
+    setLocalAsesor(asesorId ?? null);
+    setSelectedAsesor(asesorId ?? null);
+  }, [asesorId]);
 
   useEffect(() => {
     (async () => {
