@@ -19,8 +19,8 @@ interface Props {
 }
 
 export function EquipoCasoCard({ expedienteId, asesorId, licenciadoId, onChange }: Props) {
-  const { role } = useUserRole();
-  const canEdit = isManager(role);
+  const { roles } = useUserRole();
+  const canEdit = isManager(roles);
 
   const [profiles, setProfiles] = useState<ProfileLite[]>([]);
   const [rolesByUserId, setRolesByUserId] = useState<Record<string, AppRole[]>>({});
