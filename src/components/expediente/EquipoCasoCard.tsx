@@ -63,9 +63,15 @@ export function EquipoCasoCard({ expedienteId, asesorId, onChange }: Props) {
   );
 
   const asesor = localAsesor ? profiles.find((p) => p.id === localAsesor) : null;
+  const selectedLabel = selectedAsesor
+    ? profiles.find((p) => p.id === selectedAsesor)?.nombre ?? profiles.find((p) => p.id === selectedAsesor)?.email ?? "Asesor"
+    : null;
 
-  const handleChange = async (rawValue: string) => {
-    const value = rawValue === "__none__" ? null : rawValue;
+  const hasChanges = selectedAsesor !== localAsesor;
+
+  const handleReasignar = async () => {
+    const value = selectedAsesor;
+    if (!hasChanges) return;
     setSaving(true);
     setError(null);
     try {
@@ -78,7 +84,7 @@ export function EquipoCasoCard({ expedienteId, asesorId, onChange }: Props) {
       await supabase.from("expediente_historial").insert({
         expediente_id: expedienteId,
         accion_origen: "reasignacion_equipo",
-        observacion: `Asesor comercial reasignado${value ? "" : " (sin asignar)"}`,
+        observacion: `Asesor comercial reasignado${value ? ` a ${selectedLabel}` : " (sin asignar)"}`,
         usuario_id: auth.user?.id ?? null,
       } as never);
       setLocalAsesor(value);
