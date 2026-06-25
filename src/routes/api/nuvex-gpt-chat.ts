@@ -40,6 +40,25 @@ export const Route = createFileRoute("/api/nuvex-gpt-chat")({
           }
           const userId = userData.user.id;
 
+          // ── Rate limiting: máx 30 consultas por usuario por minuto ──────────
+
+          const ventana = new Date(Date.now() - 60_000).toISOString();
+
+          const { count: recentCount } = await supabase
+            .from("nuvex_ia_log")
+            .select("id", { count: "exact", head: true })
+            .eq("usuario_id", userId)
+            .gte("created_at", ventana);
+
+          if ((recentCount ?? 0) >= 30) {
+            return new Response(
+              JSON.stringify({ error: "Has superado el límite de 30 consultas por minuto. Intenta de nuevo en unos segundos." }),
+              { status: 429, headers: { "Content-Type": "application/json" } },
+            );
+          }
+
+          // ────────────────────────────────────────────────────────────────────
+
           const body = (await request.json()) as {
             messages: Array<{ role: "user" | "assistant"; content: string }>;
             modulo_contexto?: string | null;
