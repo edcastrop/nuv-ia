@@ -173,7 +173,10 @@ function ExpedienteV2Page() {
   const [commTab, setCommTab] = useState<"whatsapp" | "email" | "llamada" | "nota">("whatsapp");
   const [profilesById, setProfilesById] = useState<Record<string, ProfileLite>>({});
   const [profileList, setProfileList] = useState<ProfileLite[]>([]);
+  const [rolesByUserId, setRolesByUserId] = useState<Record<string, AppRole[]>>({});
   const [showTareaForm, setShowTareaForm] = useState(false);
+  const { roles: currentRoles } = useUserRole();
+  const canReassign = isManager(currentRoles);
 
   useEffect(() => {
     (async () => {
