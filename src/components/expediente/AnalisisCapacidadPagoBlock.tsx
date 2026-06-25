@@ -157,11 +157,16 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
   const [plazoNuevo, setPlazoNuevo] = useState<number>(0);
   const [enviandoSolicitud, setEnviandoSolicitud] = useState(false);
 
+  // La cuota es DINÁMICA: refleja la propuesta seleccionada en el simulador
+  // (Propuesta 1, 2, 3 o 4 → propuesta_data.nuevaCuota). Cuando el analista
+  // cambia de propuesta, recalculamos todo bajo esa nueva cuota.
   useEffect(() => {
-    setCuota(Math.round(cuotaPropuesta || 0));
+    if (cuotaPropuesta && cuotaPropuesta > 0) {
+      setCuota(Math.round(cuotaPropuesta));
+    }
   }, [cuotaPropuesta]);
 
-  // Cargar último análisis guardado
+  // Cargar último análisis guardado (sin pisar la cuota viva de la propuesta)
   useEffect(() => {
     (async () => {
       const { data, error } = await supabase
@@ -173,7 +178,9 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
         .maybeSingle();
       if (!error && data) {
         setEsVis(!!data.es_vis);
-        setCuota(Math.round(Number(data.cuota_propuesta)));
+        if (!cuotaPropuesta || cuotaPropuesta <= 0) {
+          setCuota(Math.round(Number(data.cuota_propuesta)));
+        }
         setResultado({
           cuotaPropuesta: Number(data.cuota_propuesta),
           esVis: !!data.es_vis,
@@ -188,6 +195,7 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
       }
       setCargandoUltimo(false);
     })();
+     
   }, [expedienteId]);
 
   const limiteAplicable = esVis ? 0.40 : 0.30;
