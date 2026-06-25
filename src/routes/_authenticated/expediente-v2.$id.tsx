@@ -51,9 +51,11 @@ import {
   KpiGrid,
   KpiCard,
   NCard,
+  NSelect,
   SectionHeader,
   EmptyState,
 } from "@/components/nuvia";
+import { useUserRole, isManager, type AppRole } from "@/hooks/useUserRole";
 import {
   listTareas,
   crearTarea,
