@@ -69,6 +69,7 @@ function QaAiDashboard() {
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <HeaderButton onClick={() => setCopilotoOpen(true)} icon={<Sparkles size={14} />} label="Copiloto QA" />
             <Link to="/qa-ai/nuevo"><HeaderButton primary icon={<Plus size={14} />} label="Auditar nuevo" /></Link>
+            <Link to="/qa-ai/aprobados"><HeaderButton tone="success" icon={<Trophy size={14} />} label="Casos aprobados" /></Link>
             <Link to="/qa-ai/alertas"><HeaderButton icon={<Bell size={14} />} label="Alertas" /></Link>
             <Link to="/qa-ai/config"><HeaderButton icon={<Settings size={14} />} label="Reglas" /></Link>
           </div>
