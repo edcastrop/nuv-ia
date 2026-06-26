@@ -284,17 +284,19 @@ export const getCaseSnapshotData = createServerFn({ method: "POST" })
         dto.honorarios.pactados = n(exp.honorarios_pactados);
       }
       try {
-        const { data: cc } = await supabase
-          .from("cuentas_cobro")
-          .select("estado")
-          .eq("expediente_id", id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        if (cc) {
-          dto.honorarios.cuentaCobroEmitida = true;
-          dto.honorarios.estadoPago = s(cc.estado);
-          dto.honorarios.pazYSalvo = /paz|salvo|pagad/i.test(String(cc.estado ?? ""));
+        if (analistaId) {
+          const { data: cc } = await supabase
+            .from("cuentas_cobro")
+            .select("estado")
+            .eq("user_id", analistaId)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (cc) {
+            dto.honorarios.cuentaCobroEmitida = true;
+            dto.honorarios.estadoPago = s(cc.estado);
+            dto.honorarios.pazYSalvo = /paz|salvo|pagad/i.test(String(cc.estado ?? ""));
+          }
         }
       } catch { /* opcional */ }
 
@@ -337,7 +339,7 @@ export const getCaseSnapshotData = createServerFn({ method: "POST" })
           const { data: ur } = await supabase
             .from("user_roles")
             .select("user_id")
-            .eq("role", r.appRole)
+            .eq("role", r.appRole as "asesor")
             .limit(1);
           const uid = ur?.[0]?.user_id;
           if (!uid) continue;
