@@ -241,7 +241,35 @@ export const listAuditoriasQA = createServerFn({ method: "POST" })
       .order("ejecutado_at", { ascending: false })
       .limit(data.limit);
     if (error) throw new Error(error.message);
-    return { rows: rows ?? [] };
+
+    const baseRows = rows ?? [];
+    const expIds = [...new Set(baseRows.map((r) => r.expediente_id).filter(Boolean))];
+    const anaIds = [...new Set(baseRows.map((r) => r.analista_id).filter(Boolean))];
+
+    const [expRes, profRes] = await Promise.all([
+      expIds.length
+        ? context.supabase.from("expedientes").select("id,cliente_nombre,banco").in("id", expIds)
+        : Promise.resolve({ data: [] as Array<{ id: string; cliente_nombre: string | null; banco: string | null }> }),
+      anaIds.length
+        ? context.supabase.from("profiles").select("id,nombre").in("id", anaIds)
+        : Promise.resolve({ data: [] as Array<{ id: string; nombre: string | null }> }),
+    ]);
+
+    const expMap = new Map((expRes.data ?? []).map((e) => [e.id, e]));
+    const profMap = new Map((profRes.data ?? []).map((p) => [p.id, p]));
+
+    const enriched = baseRows.map((r) => {
+      const exp = r.expediente_id ? expMap.get(r.expediente_id) : undefined;
+      const prof = r.analista_id ? profMap.get(r.analista_id) : undefined;
+      return {
+        ...r,
+        cliente_nombre: exp?.cliente_nombre ?? null,
+        banco: exp?.banco ?? null,
+        analista_nombre: prof?.nombre ?? null,
+      };
+    });
+
+    return { rows: enriched };
   });
 
 export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
