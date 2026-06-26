@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Json } from "@/integrations/supabase/types";
+
 import { auditar, QA_MOTOR_VERSION, TOLERANCIAS_DEFAULT, type Inconsistencia, type Modalidad, type Tolerancias } from "./qaMath";
 
 // ─────────────────────────────────────────────────────────────
@@ -237,7 +239,7 @@ export const listAuditoriasQA = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase
       .from("qa_auditorias")
-      .select("id,expediente_id,analista_id,modalidad,qa_score,categoria,dictamen,ejecutado_at")
+      .select("id,expediente_id,analista_id,extracto_id,modalidad,qa_score,categoria,dictamen,ejecutado_at")
       .order("ejecutado_at", { ascending: false })
       .limit(data.limit);
     if (error) throw new Error(error.message);
@@ -245,32 +247,40 @@ export const listAuditoriasQA = createServerFn({ method: "POST" })
     const baseRows = rows ?? [];
     const expIds = [...new Set(baseRows.map((r) => r.expediente_id).filter((id): id is string => !!id))];
     const anaIds = [...new Set(baseRows.map((r) => r.analista_id).filter((id): id is string => !!id))];
+    const extIds = [...new Set(baseRows.map((r) => r.extracto_id).filter((id): id is string => !!id))];
 
-    const [expRes, profRes] = await Promise.all([
+    const [expRes, profRes, extRes] = await Promise.all([
       expIds.length
         ? context.supabase.from("expedientes").select("id,cliente_nombre,banco").in("id", expIds)
         : Promise.resolve({ data: [] as Array<{ id: string; cliente_nombre: string | null; banco: string | null }> }),
       anaIds.length
         ? context.supabase.from("profiles").select("id,nombre").in("id", anaIds)
         : Promise.resolve({ data: [] as Array<{ id: string; nombre: string | null }> }),
+      extIds.length
+        ? context.supabase.from("extractos_lecturas").select("id,archivo_path").in("id", extIds)
+        : Promise.resolve({ data: [] as Array<{ id: string; archivo_path: string | null }> }),
     ]);
 
     const expMap = new Map((expRes.data ?? []).map((e) => [e.id, e]));
     const profMap = new Map((profRes.data ?? []).map((p) => [p.id, p]));
+    const extMap = new Map((extRes.data ?? []).map((e) => [e.id, e]));
 
     const enriched = baseRows.map((r) => {
       const exp = r.expediente_id ? expMap.get(r.expediente_id) : undefined;
       const prof = r.analista_id ? profMap.get(r.analista_id) : undefined;
+      const ext = r.extracto_id ? extMap.get(r.extracto_id) : undefined;
       return {
         ...r,
         cliente_nombre: exp?.cliente_nombre ?? null,
         banco: exp?.banco ?? null,
         analista_nombre: prof?.nombre ?? null,
+        tiene_extracto: !!(ext && ext.archivo_path),
       };
     });
 
     return { rows: enriched };
   });
+
 
 export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -388,8 +398,34 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
       sugerencia: i.sugerencia ?? null,
       created_at: String(i.created_at),
     }));
-    return { auditoria, inconsistencias: inconsistenciasOverride ?? inconsistenciasDb };
+    let extracto: {
+      id: string; archivo_path: string | null; archivo_nombre: string | null;
+      banco: string | null; producto: string | null; moneda: string | null;
+      datos: Json; created_at: string | null;
+    } | null = null;
+
+    if (auditoria.extracto_id) {
+      const { data: extRow } = await context.supabase
+        .from("extractos_lecturas")
+        .select("id,archivo_path,archivo_nombre,banco,producto,moneda,datos,created_at")
+        .eq("id", auditoria.extracto_id as string)
+        .maybeSingle();
+      if (extRow) {
+        extracto = {
+          id: String(extRow.id),
+          archivo_path: (extRow.archivo_path as string | null) ?? null,
+          archivo_nombre: (extRow.archivo_nombre as string | null) ?? null,
+          banco: (extRow.banco as string | null) ?? null,
+          producto: (extRow.producto as string | null) ?? null,
+          moneda: (extRow.moneda as string | null) ?? null,
+          datos: (extRow.datos as Json) ?? null,
+          created_at: (extRow.created_at as string | null) ?? null,
+        };
+      }
+    }
+    return { auditoria, inconsistencias: inconsistenciasOverride ?? inconsistenciasDb, extracto };
   });
+
 
 export const qaKpis = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

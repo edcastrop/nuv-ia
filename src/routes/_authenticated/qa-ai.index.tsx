@@ -10,7 +10,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { CopilotoQADrawer } from "@/components/qa-ai/CopilotoQADrawer";
 import {
   Brain, ShieldCheck, CheckCircle2, AlertTriangle, XCircle,
-  Gauge, Inbox, ArrowRight, Plus, Bell, Settings, Activity, Sparkles,
+  Gauge, Inbox, ArrowRight, Plus, Bell, Settings, Activity, Sparkles, Paperclip,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/qa-ai/")({
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_authenticated/qa-ai/")({
 type Row = {
   id: string; expediente_id: string | null; analista_id: string | null;
   modalidad: string; qa_score: number; categoria: string; dictamen: string; ejecutado_at: string;
-  cliente_nombre: string | null; banco: string | null; analista_nombre: string | null;
+  cliente_nombre: string | null; banco: string | null; analista_nombre: string | null; tiene_extracto?: boolean;
 };
 
 function QaAiDashboard() {
@@ -113,9 +113,10 @@ function QaAiDashboard() {
             <table className="w-full text-[12.5px]">
               <thead>
                 <tr style={{ background: "rgba(255,255,255,0.03)" }}>
-                  {["Fecha", "Cliente", "Banco", "Analista", "Modalidad", "Score", "Dictamen", ""].map((h) => (
+                  {["Fecha", "Cliente", "Banco", "Analista", "Modalidad", "Score", "Dictamen", "Extracto", ""].map((h) => (
                     <th key={h} className="text-left px-4 py-2 font-medium" style={{ color: "var(--nuvia-text-secondary)", borderBottom: "1px solid var(--nuvia-border)" }}>{h}</th>
                   ))}
+
                 </tr>
               </thead>
               <tbody>
@@ -128,6 +129,10 @@ function QaAiDashboard() {
                     <td className="px-4 py-2 capitalize" style={{ color: "var(--nuvia-text-primary)" }}>{r.modalidad}</td>
                     <td className="px-4 py-2 tabular-nums font-semibold" style={{ color: scoreTone(Number(r.qa_score)) }}>{Number(r.qa_score).toFixed(1)}</td>
                     <td className="px-4 py-2" style={{ color: "var(--nuvia-text-primary)" }}>{dictamenLabel[r.dictamen] ?? r.dictamen}</td>
+                    <td className="px-4 py-2" title={r.tiene_extracto ? "Extracto adjunto disponible" : "Sin extracto adjunto"}>
+                      {r.tiene_extracto ? <Paperclip size={14} style={{ color: "var(--nuvia-accent)" }} /> : <span style={{ color: "var(--nuvia-text-muted)" }}>—</span>}
+                    </td>
+
                     <td className="px-4 py-2 text-right">
                       <Link to="/qa-ai/$id" params={{ id: r.id }} className="inline-flex items-center gap-1 text-xs" style={{ color: "var(--nuvia-accent)" }}>
                         Ver <ArrowRight size={12} />
