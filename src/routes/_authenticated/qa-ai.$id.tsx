@@ -19,6 +19,7 @@ import {
   Minus, FileDown, Sparkles, RefreshCw, Trophy, ChevronDown, MessageCircle, Coins, Gauge,
   Rocket, FileText, Paperclip,
 } from "lucide-react";
+import { ConversacionAuditoria } from "@/components/qa-ai/ConversacionAuditoria";
 
 
 const qaSearchSchema = z.object({
