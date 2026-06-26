@@ -133,9 +133,26 @@ function QaAiDashboard() {
                     <td className="px-4 py-2 capitalize" style={{ color: "var(--nuvia-text-primary)" }}>{r.modalidad}</td>
                     <td className="px-4 py-2 tabular-nums font-semibold" style={{ color: scoreTone(Number(r.qa_score)) }}>{Number(r.qa_score).toFixed(1)}</td>
                     <td className="px-4 py-2" style={{ color: "var(--nuvia-text-primary)" }}>{dictamenLabel[r.dictamen] ?? r.dictamen}</td>
-                    <td className="px-4 py-2" title={r.tiene_extracto ? "Extracto adjunto disponible" : "Sin extracto adjunto"}>
-                      {r.tiene_extracto ? <Paperclip size={14} style={{ color: "var(--nuvia-accent)" }} /> : <span style={{ color: "var(--nuvia-text-muted)" }}>—</span>}
+                    <td className="px-4 py-2" title={r.extracto_path ? "Abrir extracto adjunto" : "Sin extracto adjunto"}>
+                      {r.extracto_path ? (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const { data, error } = await supabase.storage.from("extractos").createSignedUrl(r.extracto_path!, 60 * 5);
+                            if (error || !data?.signedUrl) { alert("No se pudo abrir el extracto: " + (error?.message ?? "sin URL")); return; }
+                            window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+                          }}
+                          className="inline-flex items-center justify-center rounded p-1 transition hover:bg-white/5"
+                          style={{ color: "var(--nuvia-accent)" }}
+                          aria-label="Abrir extracto adjunto"
+                        >
+                          <Paperclip size={14} />
+                        </button>
+                      ) : (
+                        <span style={{ color: "var(--nuvia-text-muted)" }}>—</span>
+                      )}
                     </td>
+
 
                     <td className="px-4 py-2 text-right">
                       <Link to="/qa-ai/$id" params={{ id: r.id }} className="inline-flex items-center gap-1 text-xs" style={{ color: "var(--nuvia-accent)" }}>
