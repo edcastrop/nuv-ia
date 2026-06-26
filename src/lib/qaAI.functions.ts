@@ -1129,7 +1129,7 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
 
     await notificarQASolicitadaServer(supabase as never, {
       expedienteId: ext.expediente_id ?? null,
-      analistaId: userId,
+      analistaId: analistaRealId,
       auditoriaId,
       dictamen: String(result.score.dictamen),
       score: Number(result.score.score) || 0,
