@@ -593,6 +593,45 @@ function ResultadoQaAi() {
         score={score} scoreColor={scoreColor} certLabel={cert.label} certColor={cert.color}
       />
 
+      {/* FICHA DE CONTEXTO */}
+      <div className="mt-2">
+        <NCard>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--nuvia-text-muted)" }}>Banco · Producto</p>
+              <p className="text-[13px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{banco}</p>
+              <p className="text-[12px]" style={{ color: "var(--nuvia-text-secondary)" }}>{producto}{data?.extracto?.moneda ? ` · ${data.extracto.moneda}` : ""}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--nuvia-text-muted)" }}>Cliente · Obligación</p>
+              <p className="text-[13px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{cliente}</p>
+              {!!(ex.numeroObligacion ?? ex.numeroCredito) && (
+                <p className="text-[12px] tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>
+                  N° {String(ex.numeroObligacion ?? ex.numeroCredito)}
+                </p>
+              )}
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--nuvia-text-muted)" }}>Crédito</p>
+              <p className="text-[13px] font-semibold tabular-nums" style={{ color: "var(--nuvia-text-primary)" }}>
+                Saldo ${fmt(numDato(recSnap.saldoCapital), 0)}
+              </p>
+              <p className="text-[12px]" style={{ color: "var(--nuvia-text-secondary)" }}>
+                {fmt(numDato(recSnap.tasaEa), 4)}% EA · Cuota ${fmt(numDato(ex.cuota ?? recSnap.cuotaBaseSinSubsidio), 0)}
+              </p>
+              <p className="text-[12px]" style={{ color: "var(--nuvia-text-secondary)" }}>
+                {Math.round(numDato(recSnap.cuotasPagadas) ?? 0)} pagadas · {Math.round(numDato(recSnap.cuotasPendientes) ?? 0)} pendientes
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--nuvia-text-muted)" }}>Analista</p>
+              <p className="text-[13px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{data?.analista?.nombre ?? data?.ejecutor?.nombre ?? "Analista"}</p>
+              <p className="text-[12px]" style={{ color: "var(--nuvia-text-secondary)" }}>{cert.label}</p>
+            </div>
+          </div>
+        </NCard>
+      </div>
+
       {/* HERO DE CERTIFICACIÓN */}
       <section
         className="relative overflow-hidden rounded-[var(--nuvia-radius-lg)]"
