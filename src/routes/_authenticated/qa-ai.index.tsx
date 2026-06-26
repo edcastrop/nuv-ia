@@ -21,6 +21,7 @@ export const Route = createFileRoute("/_authenticated/qa-ai/")({
 type Row = {
   id: string; expediente_id: string | null; analista_id: string | null;
   modalidad: string; qa_score: number; categoria: string; dictamen: string; ejecutado_at: string;
+  cliente_nombre: string | null; banco: string | null; analista_nombre: string | null;
 };
 
 function QaAiDashboard() {
@@ -112,7 +113,7 @@ function QaAiDashboard() {
             <table className="w-full text-[12.5px]">
               <thead>
                 <tr style={{ background: "rgba(255,255,255,0.03)" }}>
-                  {["Fecha", "Modalidad", "Score", "Dictamen", ""].map((h) => (
+                  {["Fecha", "Cliente", "Banco", "Analista", "Modalidad", "Score", "Dictamen", ""].map((h) => (
                     <th key={h} className="text-left px-4 py-2 font-medium" style={{ color: "var(--nuvia-text-secondary)", borderBottom: "1px solid var(--nuvia-border)" }}>{h}</th>
                   ))}
                 </tr>
@@ -121,6 +122,9 @@ function QaAiDashboard() {
                 {rows.map((r) => (
                   <tr key={r.id} style={{ borderBottom: "1px solid var(--nuvia-border)" }}>
                     <td className="px-4 py-2 tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>{new Date(r.ejecutado_at).toLocaleString("es-CO")}</td>
+                    <td className="px-4 py-2" style={{ color: "var(--nuvia-text-primary)" }}>{r.cliente_nombre ?? "—"}</td>
+                    <td className="px-4 py-2" style={{ color: "var(--nuvia-text-primary)" }}>{r.banco ?? "—"}</td>
+                    <td className="px-4 py-2" style={{ color: "var(--nuvia-text-primary)" }}>{r.analista_nombre ?? "—"}</td>
                     <td className="px-4 py-2 capitalize" style={{ color: "var(--nuvia-text-primary)" }}>{r.modalidad}</td>
                     <td className="px-4 py-2 tabular-nums font-semibold" style={{ color: scoreTone(Number(r.qa_score)) }}>{Number(r.qa_score).toFixed(1)}</td>
                     <td className="px-4 py-2" style={{ color: "var(--nuvia-text-primary)" }}>{dictamenLabel[r.dictamen] ?? r.dictamen}</td>
