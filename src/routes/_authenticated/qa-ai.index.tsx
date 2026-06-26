@@ -8,6 +8,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { qaKpis, listAuditoriasQA } from "@/lib/qaAI.functions";
 import { useUserRole } from "@/hooks/useUserRole";
 import { CopilotoQADrawer } from "@/components/qa-ai/CopilotoQADrawer";
+import { supabase } from "@/integrations/supabase/client";
+
 import {
   Brain, ShieldCheck, CheckCircle2, AlertTriangle, XCircle,
   Gauge, Inbox, ArrowRight, Plus, Bell, Settings, Activity, Sparkles, Paperclip,
