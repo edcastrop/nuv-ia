@@ -207,7 +207,7 @@ function ResultadoQaAi() {
     return () => { cancel = true; };
   }, []);
 
-  useEffect(() => { (async () => setData(await fetchAud({ data: { id } }) as { auditoria: Record<string, unknown> | null; inconsistencias: Inc[] }))(); }, [id, fetchAud]);
+  useEffect(() => { (async () => setData(await fetchAud({ data: { id } }) as { auditoria: Record<string, unknown> | null; inconsistencias: Inc[]; extracto?: ExtractoInfo | null }))(); }, [id, fetchAud]);
 
   const recomputo = useMemo(() => {
     if (!data?.auditoria) return null;
