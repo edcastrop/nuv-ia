@@ -113,9 +113,10 @@ function QaAiDashboard() {
             <table className="w-full text-[12.5px]">
               <thead>
                 <tr style={{ background: "rgba(255,255,255,0.03)" }}>
-                  {["Fecha", "Cliente", "Banco", "Analista", "Modalidad", "Score", "Dictamen", ""].map((h) => (
+                  {["Fecha", "Cliente", "Banco", "Analista", "Modalidad", "Score", "Dictamen", "Extracto", ""].map((h) => (
                     <th key={h} className="text-left px-4 py-2 font-medium" style={{ color: "var(--nuvia-text-secondary)", borderBottom: "1px solid var(--nuvia-border)" }}>{h}</th>
                   ))}
+
                 </tr>
               </thead>
               <tbody>
