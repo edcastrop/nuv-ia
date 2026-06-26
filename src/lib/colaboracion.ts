@@ -97,7 +97,26 @@ export async function getCanalDeAuditoria(
     created_by: user.id,
   };
   const { data, error } = await T("colab_canales").insert(payload as never).select().single();
-  if (error) throw error;
+  if (error) {
+    // Carrera o RLS ocultaba el canal existente: re-consultar y unirse
+    if ((error as any).code === "23505" || /duplicate key/i.test(error.message ?? "")) {
+      // Intentar leerlo (puede que RLS lo oculte si aún no es miembro)
+      const { data: again } = await T("colab_canales")
+        .select("*")
+        .eq("auditoria_id", auditoriaId)
+        .maybeSingle();
+      if (again) {
+        await T("colab_miembros")
+          .upsert({ canal_id: (again as any).id, user_id: user.id, rol: "miembro" } as never)
+          .select();
+        return again as unknown as Canal;
+      }
+      // RLS lo oculta: pedir al backend que nos agregue como miembro vía RPC segura no existe aquí;
+      // como fallback retornamos un stub mínimo para no romper la UI.
+      throw new Error("El hilo de esta auditoría ya existe pero no tienes acceso. Pide al auditor que te agregue.");
+    }
+    throw error;
+  }
   const canalId = (data as any).id as string;
   // Miembros únicos: creador + participantes válidos
   const ids = Array.from(new Set([user.id, ...participantes.filter((x): x is string => !!x)]));
