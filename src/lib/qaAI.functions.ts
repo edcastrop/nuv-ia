@@ -243,8 +243,8 @@ export const listAuditoriasQA = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     const baseRows = rows ?? [];
-    const expIds = [...new Set(baseRows.map((r) => r.expediente_id).filter(Boolean))];
-    const anaIds = [...new Set(baseRows.map((r) => r.analista_id).filter(Boolean))];
+    const expIds = [...new Set(baseRows.map((r) => r.expediente_id).filter((id): id is string => !!id))];
+    const anaIds = [...new Set(baseRows.map((r) => r.analista_id).filter((id): id is string => !!id))];
 
     const [expRes, profRes] = await Promise.all([
       expIds.length
