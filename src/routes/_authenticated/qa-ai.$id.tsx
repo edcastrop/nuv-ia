@@ -39,6 +39,18 @@ type Inc = {
   mensaje: string; sugerencia: string | null;
 };
 
+type ExtractoInfo = {
+  id: string;
+  archivo_path: string | null;
+  archivo_nombre: string | null;
+  banco: string | null;
+  producto: string | null;
+  moneda: string | null;
+  datos: Record<string, unknown> | null;
+  created_at: string | null;
+};
+
+
 const penLabel: Record<string, string> = {
   inconsistencias_info: "Inconsistencias informativas",
   inconsistencias_warning: "Inconsistencias de advertencia",
