@@ -11,6 +11,7 @@ import {
 } from "@/lib/qaReviewExpediente";
 import { getCanalDeAuditoria, enviarMensaje } from "@/lib/colaboracion";
 import { useUserRole, isDirectorQA } from "@/hooks/useUserRole";
+import { ComparativaAnalistaAuditor } from "./ComparativaAnalistaAuditor";
 
 /**
  * Bloque embebido en `/qa-ai/$id` que renderiza el simulador (Pesos/UVR)
