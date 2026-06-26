@@ -192,6 +192,12 @@ export const auditarCaso = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const overrides = await cargarToleranciasActivasInterno(supabase as never);
+    const analistaRealId = await resolverAnalistaRealQA(supabase as unknown as QaSupabase, {
+      expedienteId: data.expedienteId ?? null,
+      inputAnalistaId: data.analistaId ?? null,
+      fallbackUserId: userId,
+    });
+
     const result = auditar({
       modalidad: data.modalidad as Modalidad,
       reconstruccion: {
@@ -221,7 +227,7 @@ export const auditarCaso = createServerFn({ method: "POST" })
       .from("qa_auditorias")
       .insert({
         expediente_id: data.expedienteId ?? null,
-        analista_id: data.analistaId ?? null,
+        analista_id: analistaRealId,
         simulacion_id: data.simulacionId ?? null,
         extracto_id: data.extractoId ?? null,
         modalidad: data.modalidad,
@@ -293,7 +299,7 @@ export const auditarCaso = createServerFn({ method: "POST" })
 
     await notificarQASolicitadaServer(supabase as never, {
       expedienteId: data.expedienteId ?? null,
-      analistaId: userId,
+      analistaId: analistaRealId,
       auditoriaId,
       dictamen: String(result.score.dictamen),
       score: Number(result.score.score) || 0,
@@ -316,31 +322,36 @@ export const listAuditoriasQA = createServerFn({ method: "POST" })
 
     const baseRows = rows ?? [];
     const expIds = [...new Set(baseRows.map((r) => r.expediente_id).filter((id): id is string => !!id))];
-    const anaIds = [...new Set(baseRows.map((r) => r.analista_id).filter((id): id is string => !!id))];
     const extIds = [...new Set(baseRows.map((r) => r.extracto_id).filter((id): id is string => !!id))];
 
-    const [expRes, profRes, extRes] = await Promise.all([
+    const [expRes, extRes] = await Promise.all([
       expIds.length
-        ? context.supabase.from("expedientes").select("id,cliente_nombre,banco").in("id", expIds)
-        : Promise.resolve({ data: [] as Array<{ id: string; cliente_nombre: string | null; banco: string | null }> }),
-      anaIds.length
-        ? context.supabase.from("profiles").select("id,nombre").in("id", anaIds)
-        : Promise.resolve({ data: [] as Array<{ id: string; nombre: string | null }> }),
+        ? context.supabase.from("expedientes").select("id,cliente_nombre,banco,asesor_id").in("id", expIds)
+        : Promise.resolve({ data: [] as Array<{ id: string; cliente_nombre: string | null; banco: string | null; asesor_id: string | null }> }),
       extIds.length
         ? context.supabase.from("extractos_lecturas").select("id,archivo_path").in("id", extIds)
         : Promise.resolve({ data: [] as Array<{ id: string; archivo_path: string | null }> }),
     ]);
 
     const expMap = new Map((expRes.data ?? []).map((e) => [e.id, e]));
+    const effectiveAnaIds = [...new Set(baseRows.map((r) => {
+      const exp = r.expediente_id ? expMap.get(r.expediente_id) : undefined;
+      return exp?.asesor_id ?? r.analista_id;
+    }).filter((id): id is string => !!id))];
+    const profRes = effectiveAnaIds.length
+      ? await context.supabase.from("profiles").select("id,nombre").in("id", effectiveAnaIds)
+      : { data: [] as Array<{ id: string; nombre: string | null }> };
     const profMap = new Map((profRes.data ?? []).map((p) => [p.id, p]));
     const extMap = new Map((extRes.data ?? []).map((e) => [e.id, e]));
 
     const enriched = baseRows.map((r) => {
       const exp = r.expediente_id ? expMap.get(r.expediente_id) : undefined;
-      const prof = r.analista_id ? profMap.get(r.analista_id) : undefined;
+      const analistaId = exp?.asesor_id ?? r.analista_id;
+      const prof = analistaId ? profMap.get(analistaId) : undefined;
       const ext = r.extracto_id ? extMap.get(r.extracto_id) : undefined;
       return {
         ...r,
+        analista_id: analistaId,
         cliente_nombre: exp?.cliente_nombre ?? null,
         banco: exp?.banco ?? null,
         analista_nombre: prof?.nombre ?? null,
@@ -368,31 +379,36 @@ export const listAuditoriasAprobadas = createServerFn({ method: "POST" })
 
     const baseRows = rows ?? [];
     const expIds = [...new Set(baseRows.map((r) => r.expediente_id).filter((id): id is string => !!id))];
-    const anaIds = [...new Set(baseRows.map((r) => r.analista_id).filter((id): id is string => !!id))];
     const extIds = [...new Set(baseRows.map((r) => r.extracto_id).filter((id): id is string => !!id))];
 
-    const [expRes, profRes, extRes] = await Promise.all([
+    const [expRes, extRes] = await Promise.all([
       expIds.length
-        ? context.supabase.from("expedientes").select("id,cliente_nombre,banco").in("id", expIds)
-        : Promise.resolve({ data: [] as Array<{ id: string; cliente_nombre: string | null; banco: string | null }> }),
-      anaIds.length
-        ? context.supabase.from("profiles").select("id,nombre").in("id", anaIds)
-        : Promise.resolve({ data: [] as Array<{ id: string; nombre: string | null }> }),
+        ? context.supabase.from("expedientes").select("id,cliente_nombre,banco,asesor_id").in("id", expIds)
+        : Promise.resolve({ data: [] as Array<{ id: string; cliente_nombre: string | null; banco: string | null; asesor_id: string | null }> }),
       extIds.length
         ? context.supabase.from("extractos_lecturas").select("id,archivo_path").in("id", extIds)
         : Promise.resolve({ data: [] as Array<{ id: string; archivo_path: string | null }> }),
     ]);
 
     const expMap = new Map((expRes.data ?? []).map((e) => [e.id, e]));
+    const effectiveAnaIds = [...new Set(baseRows.map((r) => {
+      const exp = r.expediente_id ? expMap.get(r.expediente_id) : undefined;
+      return exp?.asesor_id ?? r.analista_id;
+    }).filter((id): id is string => !!id))];
+    const profRes = effectiveAnaIds.length
+      ? await context.supabase.from("profiles").select("id,nombre").in("id", effectiveAnaIds)
+      : { data: [] as Array<{ id: string; nombre: string | null }> };
     const profMap = new Map((profRes.data ?? []).map((p) => [p.id, p]));
     const extMap = new Map((extRes.data ?? []).map((e) => [e.id, e]));
 
     const enriched = baseRows.map((r) => {
       const exp = r.expediente_id ? expMap.get(r.expediente_id) : undefined;
-      const prof = r.analista_id ? profMap.get(r.analista_id) : undefined;
+      const analistaId = exp?.asesor_id ?? r.analista_id;
+      const prof = analistaId ? profMap.get(analistaId) : undefined;
       const ext = r.extracto_id ? extMap.get(r.extracto_id) : undefined;
       return {
         ...r,
+        analista_id: analistaId,
         cliente_nombre: exp?.cliente_nombre ?? null,
         banco: exp?.banco ?? null,
         analista_nombre: prof?.nombre ?? null,
@@ -545,9 +561,21 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
         };
       }
     }
+    let analistaIdVista = (auditoria.analista_id as string | null) ?? null;
+    if (auditoria.expediente_id) {
+      const { data: expRow } = await context.supabase
+        .from("expedientes")
+        .select("asesor_id")
+        .eq("id", auditoria.expediente_id as string)
+        .maybeSingle();
+      if (expRow?.asesor_id) analistaIdVista = expRow.asesor_id as string;
+      if (analistaIdVista && analistaIdVista !== auditoria.analista_id) {
+        auditoria = { ...auditoria, analista_id: analistaIdVista } as typeof aud;
+      }
+    }
     const [analistaProf, ejecutorProf] = await Promise.all([
-      (auditoria.analista_id as string)
-        ? context.supabase.from("profiles").select("id,nombre,email").eq("id", auditoria.analista_id as string).maybeSingle()
+      analistaIdVista
+        ? context.supabase.from("profiles").select("id,nombre,email").eq("id", analistaIdVista).maybeSingle()
         : Promise.resolve({ data: null }),
       (auditoria.ejecutado_by as string)
         ? context.supabase.from("profiles").select("id,nombre,email").eq("id", auditoria.ejecutado_by as string).maybeSingle()
@@ -908,6 +936,32 @@ const parseNum = (v: unknown): number | undefined => {
   return Number.isFinite(n) ? n : undefined;
 };
 
+type QaSupabase = {
+  from: (table: string) => {
+    select: (columns: string) => {
+      eq: (column: string, value: string) => {
+        maybeSingle: () => Promise<{ data: Record<string, unknown> | null }>;
+      };
+    };
+  };
+};
+
+async function resolverAnalistaRealQA(
+  supabase: QaSupabase,
+  params: { expedienteId?: string | null; extractoAsesorId?: string | null; inputAnalistaId?: string | null; fallbackUserId: string },
+): Promise<string> {
+  if (params.expedienteId) {
+    const { data: expRow } = await supabase
+      .from("expedientes")
+      .select("asesor_id")
+      .eq("id", params.expedienteId)
+      .maybeSingle();
+    const asesorId = typeof expRow?.asesor_id === "string" ? expRow.asesor_id : null;
+    if (asesorId) return asesorId;
+  }
+  return params.extractoAsesorId ?? params.inputAnalistaId ?? params.fallbackUserId;
+}
+
 const inferRemainingPayments = (saldo: number, tasaEaPct: number, cuotaFinanciera: number): number => {
   if (!(saldo > 0 && tasaEaPct > 0 && cuotaFinanciera > 0)) return 0;
   const i = Math.pow(1 + tasaEaPct / 100, 1 / 12) - 1;
@@ -931,7 +985,7 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
 
     const { data: ext, error: errExt } = await supabase
       .from("extractos_lecturas")
-      .select("id,expediente_id,banco,producto,datos")
+      .select("id,expediente_id,asesor_id,banco,producto,datos")
       .eq("id", data.extractoLecturaId)
       .single();
     if (errExt) throw new Error(errExt.message);
@@ -1043,17 +1097,13 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
       },
     };
 
-    // Resolver el analista real del caso (asesor_id del expediente),
-    // no quien ejecuta la simulación (puede ser admin/auditor en modo revisión).
-    let analistaRealId: string = userId;
-    if (ext.expediente_id) {
-      const { data: expRow } = await supabase
-        .from("expedientes")
-        .select("asesor_id")
-        .eq("id", ext.expediente_id)
-        .maybeSingle();
-      if (expRow?.asesor_id) analistaRealId = expRow.asesor_id as string;
-    }
+    // Resolver el analista real del caso (asesor_id del expediente). Si el
+    // expediente aún no tiene asesor, usa el asesor guardado en la lectura.
+    const analistaRealId = await resolverAnalistaRealQA(supabase as unknown as QaSupabase, {
+      expedienteId: ext.expediente_id ?? null,
+      extractoAsesorId: typeof ext.asesor_id === "string" ? ext.asesor_id : null,
+      fallbackUserId: userId,
+    });
 
     const { data: aud, error: errAud } = await supabase
       .from("qa_auditorias")
@@ -1400,16 +1450,13 @@ export const qaCommandCenter = createServerFn({ method: "POST" })
     const audits = audRaw ?? [];
 
     const expIds = [...new Set(audits.map((r) => r.expediente_id).filter((id): id is string => !!id))];
-    const anaIds = [...new Set(audits.map((r) => r.analista_id).filter((id): id is string => !!id))];
     const extIds = [...new Set(audits.map((r) => r.extracto_id).filter((id): id is string => !!id))];
 
-    const [expRes, profRes, extRes, alertasRes, incsRes] = await Promise.all([
+    const [expRes, extRes, alertasRes, incsRes] = await Promise.all([
       expIds.length ? supabase.from("expedientes")
         .select("id,cliente_nombre,banco,producto,estado_caso,subestado,sla_vence_at,validacion_estado,asesor_id,honorarios_final,credito_data")
         .in("id", expIds)
         : Promise.resolve({ data: [] as Array<Record<string, unknown>> }),
-      anaIds.length ? supabase.from("profiles").select("id,nombre").in("id", anaIds)
-        : Promise.resolve({ data: [] as Array<{ id: string; nombre: string | null }> }),
       extIds.length ? supabase.from("extractos_lecturas").select("id,archivo_path").in("id", extIds)
         : Promise.resolve({ data: [] as Array<{ id: string; archivo_path: string | null }> }),
       supabase.from("qa_alertas")
@@ -1422,6 +1469,12 @@ export const qaCommandCenter = createServerFn({ method: "POST" })
     ]);
 
     const expMap = new Map((expRes.data ?? []).map((e) => [e.id as string, e]));
+    const effectiveAnaIds = [...new Set(audits.map((r) => {
+      const exp = r.expediente_id ? expMap.get(r.expediente_id) : undefined;
+      return (exp?.asesor_id as string | null | undefined) ?? r.analista_id;
+    }).filter((id): id is string => !!id))];
+    const profRes = effectiveAnaIds.length ? await supabase.from("profiles").select("id,nombre").in("id", effectiveAnaIds)
+      : { data: [] as Array<{ id: string; nombre: string | null }> };
     const profMap = new Map((profRes.data ?? []).map((p) => [p.id, p]));
     const extMap = new Map((extRes.data ?? []).map((e) => [e.id, e]));
     const alertas = alertasRes.data ?? [];
@@ -1440,7 +1493,8 @@ export const qaCommandCenter = createServerFn({ method: "POST" })
     const nowMs = Date.now();
     const rows = audits.map((r) => {
       const exp = r.expediente_id ? expMap.get(r.expediente_id) : undefined;
-      const prof = r.analista_id ? profMap.get(r.analista_id) : undefined;
+      const analistaId = ((exp?.asesor_id as string | null | undefined) ?? r.analista_id) || null;
+      const prof = analistaId ? profMap.get(analistaId) : undefined;
       const ext = r.extracto_id ? extMap.get(r.extracto_id) : undefined;
       const al = alertasByAud.get(r.id) ?? { abiertas: 0, criticas: 0 };
       const sla = exp?.sla_vence_at ? new Date(exp.sla_vence_at as string).getTime() : null;
@@ -1453,7 +1507,7 @@ export const qaCommandCenter = createServerFn({ method: "POST" })
         return Number(rec.coberturaFrechValorMensual ?? 0) > 0 || Number(rec.coberturaFrechPp ?? 0) > 0;
       })();
       return {
-        id: r.id, expediente_id: r.expediente_id, analista_id: r.analista_id,
+        id: r.id, expediente_id: r.expediente_id, analista_id: analistaId,
         modalidad: r.modalidad as string,
         qa_score: Number(r.qa_score ?? 0),
         categoria: r.categoria as string, dictamen: r.dictamen as string,
