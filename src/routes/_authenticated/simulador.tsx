@@ -273,7 +273,7 @@ function SimuladorPage() {
   return (
     <div>
       {auditoriaId && (
-        <div className="sticky top-0 z-[60] mx-4 mt-4 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-r from-[#0B1220] via-[#111A2E] to-[#0B1220] shadow-[0_18px_50px_-22px_rgba(0,0,0,0.8)] backdrop-blur">
+        <div className="sticky top-0 z-[60] overflow-hidden border-b border-white/10 bg-gradient-to-r from-[#0B1220] via-[#111A2E] to-[#0B1220] shadow-[0_18px_50px_-22px_rgba(0,0,0,0.8)] backdrop-blur">
           <div className="flex items-start gap-3 px-5 py-4">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-400/30 bg-amber-400/10 text-amber-300 shadow-[0_0_24px_-6px_rgba(251,191,36,0.55)]">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
