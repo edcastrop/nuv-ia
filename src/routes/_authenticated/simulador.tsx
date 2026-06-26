@@ -97,6 +97,12 @@ function SimuladorPage() {
         const m = await getMaestro(maestroId);
         let exp = await ensureOperativeExpedienteForMaestro(m);
         if (auditoriaId) {
+          // Modo revisión QA: limpiar drafts previos del simulador en sessionStorage
+          // para que los inputs de la auditoría sean la única fuente de verdad.
+          try {
+            clearSimulatorDraft("pesos", exp.id);
+            clearSimulatorDraft("uvr", exp.id);
+          } catch { /* noop */ }
           try {
             const aud = await obtenerAuditoriaQA({ data: { id: auditoriaId } });
             const inputs = (aud as { auditoria?: { inputs?: Record<string, unknown>; modalidad?: string } })
