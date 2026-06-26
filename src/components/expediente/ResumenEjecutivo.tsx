@@ -3,6 +3,7 @@
 // NUVIA dark.
 
 import { NCard, SectionHeader } from "@/components/nuvia";
+import { CaseSnapshotButton } from "./CaseSnapshotButton";
 import { EstadoBadge } from "@/components/nuvex/EstadoBadge";
 import {
   etapaActualGuiada,
@@ -91,9 +92,12 @@ export function ResumenEjecutivo({ exp }: { exp: Expediente }) {
         title="Resumen ejecutivo"
         description={exp.cliente_nombre}
         action={
-          <div className="text-right">
-            <div className="text-[10px] uppercase tracking-wider" style={{ color: "var(--nuvia-text-secondary)" }}>Avance</div>
-            <div className="text-2xl font-bold" style={{ color: "var(--nuvia-accent-blue)" }}>{pct}%</div>
+          <div className="flex items-center gap-3">
+            <CaseSnapshotButton expedienteId={exp.id} clienteNombre={exp.cliente_nombre} />
+            <div className="text-right">
+              <div className="text-[10px] uppercase tracking-wider" style={{ color: "var(--nuvia-text-secondary)" }}>Avance</div>
+              <div className="text-2xl font-bold" style={{ color: "var(--nuvia-accent-blue)" }}>{pct}%</div>
+            </div>
           </div>
         }
       />
