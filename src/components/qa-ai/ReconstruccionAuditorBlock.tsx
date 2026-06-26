@@ -36,7 +36,7 @@ export function ReconstruccionAuditorBlock({
 }) {
   const { roles } = useUserRole();
   const puedeEditar = isDirectorQA(roles);
-  const [open, setOpen] = useState<boolean>(puedeEditar);
+  const [open, setOpen] = useState<boolean>(true);
   const [enviando, setEnviando] = useState(false);
 
   const modalidad = String(inputs.modalidad ?? auditoria.modalidad ?? "pesos");
