@@ -62,6 +62,50 @@ export async function getCanalDeCaso(casoId: string, nombre: string): Promise<Ca
   return data as unknown as Canal;
 }
 
+/**
+ * Hilo de conversación de una auditoría QA.
+ * Crea el canal la primera vez que alguien lo abre y agrega como miembros al
+ * auditor (usuario actual), al analista que ejecutó la simulación y a quien
+ * ejecutó la auditoría (si difieren).
+ */
+export async function getCanalDeAuditoria(
+  auditoriaId: string,
+  nombre: string,
+  participantes: Array<string | null | undefined> = [],
+): Promise<Canal> {
+  const { data: ex } = await T("colab_canales")
+    .select("*")
+    .eq("auditoria_id", auditoriaId)
+    .maybeSingle();
+  if (ex) {
+    // Asegurar membresía del usuario actual (entra cualquier auditor con acceso al dictamen)
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await T("colab_miembros")
+        .upsert({ canal_id: (ex as any).id, user_id: user.id, rol: "miembro" } as never)
+        .select();
+    }
+    return ex as unknown as Canal;
+  }
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("No autenticado");
+  const payload = {
+    nombre: `QA · ${nombre}`,
+    tipo: "qa_auditoria",
+    auditoria_id: auditoriaId,
+    privado: true,
+    created_by: user.id,
+  };
+  const { data, error } = await T("colab_canales").insert(payload as never).select().single();
+  if (error) throw error;
+  const canalId = (data as any).id as string;
+  // Miembros únicos: creador + participantes válidos
+  const ids = Array.from(new Set([user.id, ...participantes.filter((x): x is string => !!x)]));
+  const rows = ids.map((uid) => ({ canal_id: canalId, user_id: uid, rol: uid === user.id ? "admin" : "miembro" }));
+  await T("colab_miembros").insert(rows as never);
+  return data as unknown as Canal;
+}
+
 export async function crearCanal(input: { nombre: string; descripcion?: string; privado?: boolean; tipo?: CanalTipo }): Promise<Canal> {
   const { data: { user } } = await supabase.auth.getUser();
   const payload = {
