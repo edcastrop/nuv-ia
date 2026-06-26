@@ -237,7 +237,7 @@ export const listAuditoriasQA = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase
       .from("qa_auditorias")
-      .select("id,expediente_id,analista_id,modalidad,qa_score,categoria,dictamen,ejecutado_at")
+      .select("id,expediente_id,analista_id,extracto_id,modalidad,qa_score,categoria,dictamen,ejecutado_at")
       .order("ejecutado_at", { ascending: false })
       .limit(data.limit);
     if (error) throw new Error(error.message);
@@ -245,32 +245,40 @@ export const listAuditoriasQA = createServerFn({ method: "POST" })
     const baseRows = rows ?? [];
     const expIds = [...new Set(baseRows.map((r) => r.expediente_id).filter((id): id is string => !!id))];
     const anaIds = [...new Set(baseRows.map((r) => r.analista_id).filter((id): id is string => !!id))];
+    const extIds = [...new Set(baseRows.map((r) => r.extracto_id).filter((id): id is string => !!id))];
 
-    const [expRes, profRes] = await Promise.all([
+    const [expRes, profRes, extRes] = await Promise.all([
       expIds.length
         ? context.supabase.from("expedientes").select("id,cliente_nombre,banco").in("id", expIds)
         : Promise.resolve({ data: [] as Array<{ id: string; cliente_nombre: string | null; banco: string | null }> }),
       anaIds.length
         ? context.supabase.from("profiles").select("id,nombre").in("id", anaIds)
         : Promise.resolve({ data: [] as Array<{ id: string; nombre: string | null }> }),
+      extIds.length
+        ? context.supabase.from("extractos_lecturas").select("id,archivo_path").in("id", extIds)
+        : Promise.resolve({ data: [] as Array<{ id: string; archivo_path: string | null }> }),
     ]);
 
     const expMap = new Map((expRes.data ?? []).map((e) => [e.id, e]));
     const profMap = new Map((profRes.data ?? []).map((p) => [p.id, p]));
+    const extMap = new Map((extRes.data ?? []).map((e) => [e.id, e]));
 
     const enriched = baseRows.map((r) => {
       const exp = r.expediente_id ? expMap.get(r.expediente_id) : undefined;
       const prof = r.analista_id ? profMap.get(r.analista_id) : undefined;
+      const ext = r.extracto_id ? extMap.get(r.extracto_id) : undefined;
       return {
         ...r,
         cliente_nombre: exp?.cliente_nombre ?? null,
         banco: exp?.banco ?? null,
         analista_nombre: prof?.nombre ?? null,
+        tiene_extracto: !!(ext && ext.archivo_path),
       };
     });
 
     return { rows: enriched };
   });
+
 
 export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
