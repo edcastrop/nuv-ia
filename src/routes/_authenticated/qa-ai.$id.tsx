@@ -20,6 +20,7 @@ import {
   Rocket, FileText, Paperclip,
 } from "lucide-react";
 import { ConversacionAuditoria } from "@/components/qa-ai/ConversacionAuditoria";
+import { ReconstruccionAuditorBlock } from "@/components/qa-ai/ReconstruccionAuditorBlock";
 
 
 const qaSearchSchema = z.object({
