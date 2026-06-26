@@ -192,6 +192,12 @@ export const auditarCaso = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const overrides = await cargarToleranciasActivasInterno(supabase as never);
+    const analistaRealId = await resolverAnalistaRealQA(supabase as unknown as QaSupabase, {
+      expedienteId: data.expedienteId ?? null,
+      inputAnalistaId: data.analistaId ?? null,
+      fallbackUserId: userId,
+    });
+
     const result = auditar({
       modalidad: data.modalidad as Modalidad,
       reconstruccion: {
@@ -221,7 +227,7 @@ export const auditarCaso = createServerFn({ method: "POST" })
       .from("qa_auditorias")
       .insert({
         expediente_id: data.expedienteId ?? null,
-        analista_id: data.analistaId ?? null,
+        analista_id: analistaRealId,
         simulacion_id: data.simulacionId ?? null,
         extracto_id: data.extractoId ?? null,
         modalidad: data.modalidad,
@@ -293,7 +299,7 @@ export const auditarCaso = createServerFn({ method: "POST" })
 
     await notificarQASolicitadaServer(supabase as never, {
       expedienteId: data.expedienteId ?? null,
-      analistaId: userId,
+      analistaId: analistaRealId,
       auditoriaId,
       dictamen: String(result.score.dictamen),
       score: Number(result.score.score) || 0,
