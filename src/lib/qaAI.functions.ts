@@ -1043,11 +1043,23 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
       },
     };
 
+    // Resolver el analista real del caso (asesor_id del expediente),
+    // no quien ejecuta la simulación (puede ser admin/auditor en modo revisión).
+    let analistaRealId: string = userId;
+    if (ext.expediente_id) {
+      const { data: expRow } = await supabase
+        .from("expedientes")
+        .select("asesor_id")
+        .eq("id", ext.expediente_id)
+        .maybeSingle();
+      if (expRow?.asesor_id) analistaRealId = expRow.asesor_id as string;
+    }
+
     const { data: aud, error: errAud } = await supabase
       .from("qa_auditorias")
       .insert({
         expediente_id: ext.expediente_id,
-        analista_id: userId,
+        analista_id: analistaRealId,
         extracto_id: ext.id,
         modalidad,
         motor_version: QA_MOTOR_VERSION,
@@ -1117,7 +1129,7 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
 
     await notificarQASolicitadaServer(supabase as never, {
       expedienteId: ext.expediente_id ?? null,
-      analistaId: userId,
+      analistaId: analistaRealId,
       auditoriaId,
       dictamen: String(result.score.dictamen),
       score: Number(result.score.score) || 0,
