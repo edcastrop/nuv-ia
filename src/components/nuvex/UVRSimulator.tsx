@@ -73,12 +73,14 @@ export function UVRSimulator({
   onReset,
   simuladorReturn,
   fromSimulador,
+  qaEmbedded,
 }: {
   initialExpediente?: Expediente;
   onSaved?: (e: Expediente) => void;
   onReset?: () => void;
   simuladorReturn?: { maestroId?: string; modo?: "pesos" | "uvr" };
   fromSimulador?: boolean;
+  qaEmbedded?: boolean;
 } = {}) {
   const parseOcrMoney = (v: string | number | null | undefined) => {
     if (v === null || v === undefined) return undefined;
@@ -548,11 +550,11 @@ export function UVRSimulator({
   }
 
   return (
-    <div className="relative min-h-screen isolate overflow-hidden">
-      <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+    <div className={`relative isolate overflow-hidden ${qaEmbedded ? "" : "min-h-screen"}`}>
+      {!qaEmbedded && <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <AnimatedBackground />
-      </div>
-      <div className="relative z-10 mx-auto max-w-7xl space-y-4 px-6 py-6">
+      </div>}
+      <div className={`relative z-10 mx-auto max-w-7xl space-y-4 ${qaEmbedded ? "px-5 pb-5 pt-0" : "px-6 py-6"}`}>
         {onReset && (
           <div className="flex justify-end">
             <button
@@ -563,7 +565,7 @@ export function UVRSimulator({
             </button>
           </div>
         )}
-        <ExtractoReader
+        {!qaEmbedded && <ExtractoReader
           modo="uvr"
           existingArchivoPath={extractoArchivoPath}
           expedienteId={init?.id}
@@ -640,11 +642,11 @@ export function UVRSimulator({
               });
             }
           }}
-        />
-        {init?.id && (autoQALoading || autoQA) && (
+        />}
+        {!qaEmbedded && init?.id && (autoQALoading || autoQA) && (
           <AutoQAPanel loading={autoQALoading} result={autoQA} simuladorReturn={simuladorReturn} />
         )}
-        <Card>
+        {!qaEmbedded && <Card>
           <div id="datos-cliente-card" />
           <SectionTitle sub="Información general del cliente y del crédito en UVR">
             Datos del cliente
@@ -669,13 +671,14 @@ export function UVRSimulator({
               <Alert>Cuotas pendientes ≤ 72. Revise viabilidad de la propuesta.</Alert>
             </div>
           )}
-        </Card>
+        </Card>}
 
-        <FreshBlock data={cobertura} onChange={setCobertura} />
+        {!qaEmbedded && <FreshBlock data={cobertura} onChange={setCobertura} />}
 
         <Card>
+          <div id="qa-simulador-campos" />
           <SectionTitle sub="Información financiera del crédito en UVR">
-            Datos del crédito
+            {qaEmbedded ? "Corrección del auditor · Datos del crédito" : "Datos del crédito"}
           </SectionTitle>
           <CreditoMetaFields
             data={client}
@@ -824,6 +827,8 @@ export function UVRSimulator({
             </div>
           </div>
         </Card>
+
+        {qaEmbedded && <FreshBlock data={cobertura} onChange={setCobertura} />}
 
 
         {datosCompletos && (
