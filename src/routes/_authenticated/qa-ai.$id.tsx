@@ -181,6 +181,138 @@ function StickyHeader({ cliente, banco, producto, fecha, score, scoreColor, cert
   );
 }
 
+/* ---------- Extracto original (vista para auditor) ---------- */
+
+function ExtractoOriginalAccordion({ extracto }: { extracto: ExtractoInfo | null }) {
+  const [opening, setOpening] = useState(false);
+
+  const handleOpen = async () => {
+    if (!extracto?.archivo_path) return;
+    setOpening(true);
+    try {
+      const { data: signed, error } = await supabase.storage
+        .from("extractos")
+        .createSignedUrl(extracto.archivo_path, 60 * 5);
+      if (error || !signed?.signedUrl) {
+        alert(error?.message ?? "No fue posible generar el enlace al extracto.");
+        return;
+      }
+      window.open(signed.signedUrl, "_blank", "noopener,noreferrer");
+    } finally {
+      setOpening(false);
+    }
+  };
+
+  const titulo = extracto ? "Extracto original del cliente" : "Extracto original (no adjunto)";
+  const count = extracto?.archivo_path ? "PDF disponible" : "sin archivo";
+
+  const datosVisibles = (() => {
+    if (!extracto?.datos) return [] as Array<[string, string]>;
+    const d = extracto.datos;
+    const fmtVal = (v: unknown): string => {
+      if (v == null || v === "") return "—";
+      if (typeof v === "number") return v.toLocaleString("es-CO");
+      if (typeof v === "boolean") return v ? "Sí" : "No";
+      return String(v);
+    };
+    const keys: Array<[string, string]> = [
+      ["banco", "Banco"], ["titular", "Titular"], ["cliente", "Cliente"], ["numeroObligacion", "N° obligación"],
+      ["saldoCapital", "Saldo capital"], ["cuota", "Cuota actual"], ["cuotaActual", "Cuota actual"],
+      ["tasaEa", "Tasa EA"], ["tasaPactada", "Tasa pactada"], ["tasaCobrada", "Tasa cobrada"],
+      ["cuotasPagadas", "Cuotas pagadas"], ["cuotasPendientes", "Cuotas pendientes"],
+      ["seguros", "Seguros"], ["valorCobertura", "FRECH (valor)"], ["tasaCobertura", "FRECH (pp)"],
+      ["saldoUVR", "Saldo UVR"], ["valorUVR", "Valor UVR"],
+      ["fechaCorte", "Fecha de corte"], ["fechaDesembolso", "Fecha desembolso"],
+    ];
+    const seen = new Set<string>();
+    const rows: Array<[string, string]> = [];
+    for (const [k, label] of keys) {
+      if (seen.has(label)) continue;
+      const v = (d as Record<string, unknown>)[k];
+      if (v !== undefined && v !== null && v !== "") {
+        rows.push([label, fmtVal(v)]);
+        seen.add(label);
+      }
+    }
+    return rows;
+  })();
+
+  return (
+    <Accordion
+      title={titulo}
+      icon={<FileText size={15} style={{ color: "var(--nuvia-accent)" }} />}
+      count={count}
+      defaultOpen={false}
+    >
+      <div className="px-5 py-4 space-y-4">
+        {!extracto ? (
+          <p className="text-[12.5px]" style={{ color: "var(--nuvia-text-secondary)" }}>
+            Esta auditoría no tiene un extracto adjunto en el lector. El analista pudo haber capturado los datos manualmente.
+          </p>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-center gap-2 text-[11.5px]">
+              {extracto.banco && (
+                <span className="px-2 py-0.5 rounded-full" style={{ background: "rgba(255,255,255,0.05)", color: "var(--nuvia-text-secondary)", border: "1px solid var(--nuvia-border)" }}>
+                  Banco: <b style={{ color: "var(--nuvia-text-primary)" }}>{extracto.banco}</b>
+                </span>
+              )}
+              {extracto.producto && (
+                <span className="px-2 py-0.5 rounded-full" style={{ background: "rgba(255,255,255,0.05)", color: "var(--nuvia-text-secondary)", border: "1px solid var(--nuvia-border)" }}>
+                  Producto: <b style={{ color: "var(--nuvia-text-primary)" }}>{extracto.producto}</b>
+                </span>
+              )}
+              {extracto.moneda && (
+                <span className="px-2 py-0.5 rounded-full" style={{ background: "rgba(255,255,255,0.05)", color: "var(--nuvia-text-secondary)", border: "1px solid var(--nuvia-border)" }}>
+                  Moneda: <b style={{ color: "var(--nuvia-text-primary)" }}>{extracto.moneda}</b>
+                </span>
+              )}
+              {extracto.created_at && (
+                <span className="px-2 py-0.5 rounded-full" style={{ background: "rgba(255,255,255,0.05)", color: "var(--nuvia-text-secondary)", border: "1px solid var(--nuvia-border)" }}>
+                  Capturado: <b style={{ color: "var(--nuvia-text-primary)" }}>{new Date(extracto.created_at).toLocaleString("es-CO")}</b>
+                </span>
+              )}
+            </div>
+
+            {datosVisibles.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1.5 text-[12px]">
+                {datosVisibles.map(([k, v]) => (
+                  <div key={k} className="flex items-baseline justify-between gap-3 border-b border-dashed py-1" style={{ borderColor: "var(--nuvia-border)" }}>
+                    <span style={{ color: "var(--nuvia-text-muted)" }}>{k}</span>
+                    <span className="tabular-nums font-medium" style={{ color: "var(--nuvia-text-primary)" }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleOpen}
+                disabled={!extracto.archivo_path || opening}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-[12px] font-semibold"
+                style={{
+                  background: extracto.archivo_path ? "var(--nuvia-accent)" : "rgba(255,255,255,0.05)",
+                  color: extracto.archivo_path ? "#0b0b0b" : "var(--nuvia-text-muted)",
+                  border: "1px solid var(--nuvia-border)",
+                  cursor: extracto.archivo_path && !opening ? "pointer" : "not-allowed",
+                }}
+              >
+                <Paperclip size={13} />
+                {extracto.archivo_path ? (opening ? "Abriendo…" : "Ver extracto adjunto") : "Sin archivo adjunto"}
+              </button>
+              {extracto.archivo_nombre && (
+                <span className="text-[11.5px]" style={{ color: "var(--nuvia-text-muted)" }}>{extracto.archivo_nombre}</span>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </Accordion>
+  );
+}
+
+
+
 function ResultadoQaAi() {
   const { id } = Route.useParams();
   const { from, maestroId, modo } = Route.useSearch();
