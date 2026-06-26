@@ -213,15 +213,44 @@ export function ReconstruccionAuditorBlock({
 
           {/* Simulador embebido */}
           <div
+            id="qa-simulador-embebido"
+            className="px-5 py-4"
+            style={{ borderTop: "1px solid var(--nuvia-border)" }}
+          >
+            <div
+              className="flex flex-wrap items-center justify-between gap-3 rounded-xl px-4 py-3"
+              style={{
+                background: "linear-gradient(135deg, rgba(68,93,163,0.18), rgba(132,185,143,0.12))",
+                border: "1px solid rgba(132,185,143,0.28)",
+              }}
+            >
+              <div>
+                <div className="text-[10.5px] font-bold uppercase tracking-[0.18em]" style={{ color: "#84B98F" }}>
+                  Aquí corrige el auditor
+                </div>
+                <div className="mt-1 text-[13px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
+                  Simulador embebido · modifica los campos de Datos del crédito
+                </div>
+              </div>
+              <a
+                href="#qa-simulador-campos"
+                className="inline-flex items-center rounded-lg px-3 py-1.5 text-[11.5px] font-semibold no-underline"
+                style={{ background: "var(--nuvia-gradient-primary)", color: "#FFFFFF" }}
+              >
+                Ir a campos editables
+              </a>
+            </div>
+          </div>
+          <div
             style={{
               opacity: puedeEditar ? 1 : 0.92,
               pointerEvents: puedeEditar ? "auto" : "none",
             }}
           >
             {modo === "pesos" ? (
-              <PesosSimulator initialExpediente={expediente} fromSimulador />
+              <PesosSimulator initialExpediente={expediente} fromSimulador qaEmbedded />
             ) : (
-              <UVRSimulator initialExpediente={expediente} fromSimulador />
+              <UVRSimulator initialExpediente={expediente} fromSimulador qaEmbedded />
             )}
           </div>
         </div>

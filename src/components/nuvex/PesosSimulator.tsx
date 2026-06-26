@@ -72,12 +72,14 @@ export function PesosSimulator({
   onReset,
   simuladorReturn,
   fromSimulador,
+  qaEmbedded,
 }: {
   initialExpediente?: Expediente;
   onSaved?: (e: Expediente) => void;
   onReset?: () => void;
   simuladorReturn?: { maestroId?: string; modo?: "pesos" | "uvr" };
   fromSimulador?: boolean;
+  qaEmbedded?: boolean;
 } = {}) {
   const parseOcrMoney = (v: string | number | null | undefined) => {
     if (v === null || v === undefined) return undefined;
@@ -465,12 +467,12 @@ export function PesosSimulator({
     : 0;
 
   return (
-    <div className="relative min-h-screen isolate overflow-hidden">
+    <div className={`relative isolate overflow-hidden ${qaEmbedded ? "" : "min-h-screen"}`}>
       {/* Fondo animado NUVIA (estilo login) */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+      {!qaEmbedded && <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <AnimatedBackground />
-      </div>
-      <div className="relative z-10 mx-auto max-w-7xl space-y-4 px-6 py-6">
+      </div>}
+      <div className={`relative z-10 mx-auto max-w-7xl space-y-4 ${qaEmbedded ? "px-5 pb-5 pt-0" : "px-6 py-6"}`}>
         {onReset && (
           <div className="flex justify-end">
             <button
@@ -481,7 +483,7 @@ export function PesosSimulator({
             </button>
           </div>
         )}
-        <ExtractoReader
+        {!qaEmbedded && <ExtractoReader
           modo="pesos"
           existingArchivoPath={extractoArchivoPath}
           expedienteId={init?.id}
@@ -557,11 +559,11 @@ export function PesosSimulator({
               });
             }
           }}
-        />
-        {init?.id && (autoQALoading || autoQA) && (
+        />}
+        {!qaEmbedded && init?.id && (autoQALoading || autoQA) && (
           <AutoQAPanel loading={autoQALoading} result={autoQA} simuladorReturn={simuladorReturn} />
         )}
-        <Card>
+        {!qaEmbedded && <Card>
           <div id="datos-cliente-card" />
           <SectionTitle sub="Información general del cliente y del crédito">
             Datos del cliente
@@ -586,11 +588,12 @@ export function PesosSimulator({
               <Alert>Cuotas pendientes ≤ 72. Revise viabilidad de la propuesta.</Alert>
             </div>
           )}
-        </Card>
+        </Card>}
 
         <Card>
+          <div id="qa-simulador-campos" />
           <SectionTitle sub="Información financiera del crédito en pesos">
-            Datos del crédito
+            {qaEmbedded ? "Corrección del auditor · Datos del crédito" : "Datos del crédito"}
           </SectionTitle>
           <CreditoMetaFields
             data={client}
