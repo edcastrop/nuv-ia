@@ -637,7 +637,7 @@ function ResultadoQaAi() {
             <div className="mt-5 flex flex-wrap items-center gap-2">
               <button onClick={() => setCopilotoOpen(true)}
                 className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[12.5px] font-semibold transition hover:opacity-90"
-                style={{ background: "var(--nuvia-accent)", color: "#0B1220", border: "none", cursor: "pointer", boxShadow: "0 8px 20px -10px rgba(68,93,163,0.6)" }}>
+                style={{ background: "linear-gradient(135deg, #F5C77E 0%, #E5A94A 100%)", color: "#0B1220", border: "1px solid rgba(245,199,126,0.6)", cursor: "pointer", boxShadow: "0 8px 24px -8px rgba(229,169,74,0.55)" }}>
                 <MessageCircle size={14} /> Explícame este dictamen
               </button>
               <button onClick={handlePdf}
