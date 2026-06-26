@@ -201,6 +201,16 @@ export function ReconstruccionAuditorBlock({
             </div>
           )}
 
+          {/* V2 — Comparativa en vivo Analista vs Auditor */}
+          <ComparativaAnalistaAuditor
+            auditoriaId={auditoriaId}
+            sandboxExpedienteId={sandboxId}
+            modo={modo}
+            analista={analistaRaw}
+            cliente={cliente}
+            banco={banco}
+          />
+
           {/* Simulador embebido */}
           <div
             style={{
