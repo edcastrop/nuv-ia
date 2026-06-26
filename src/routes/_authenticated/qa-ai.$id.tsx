@@ -816,11 +816,14 @@ function ResultadoQaAi() {
         </p>
       </div>
 
+      <ExtractoOriginalAccordion extracto={data.extracto ?? null} />
+
       <Accordion title="Veredicto técnico completo" icon={<Brain size={15} style={{ color: "var(--nuvia-accent)" }} />}>
         <div className="-mt-px">
           <VeredictoBlock veredicto={veredicto} />
         </div>
       </Accordion>
+
 
       <Accordion
         title="Penalizaciones aplicadas al QA Score"
