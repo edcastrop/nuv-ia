@@ -20,7 +20,7 @@ import {
 import { obtenerAuditoriaQA } from "@/lib/qaAI.functions";
 import { clearSimulatorDraft } from "@/components/nuvex/useSimulatorDraft";
 import { getExpediente, type Expediente } from "@/lib/expedientes";
-import { numToStr, overlayAuditInputs, expedienteFromAudit } from "@/lib/qaReviewExpediente";
+import { overlayAuditInputs, expedienteFromAudit } from "@/lib/qaReviewExpediente";
 
 const simSearchSchema = z.object({
   maestroId: z.string().optional(),
