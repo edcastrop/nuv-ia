@@ -88,14 +88,15 @@ function QaAiDashboard() {
   );
 }
 
-function HeaderButton({ icon, label, primary, onClick }: { icon: React.ReactNode; label: string; primary?: boolean; onClick?: () => void }) {
+function HeaderButton({ icon, label, primary, tone, onClick }: { icon: React.ReactNode; label: string; primary?: boolean; tone?: "success"; onClick?: () => void }) {
+  const isSuccess = tone === "success";
   return (
     <button onClick={onClick} style={{
       display: "inline-flex", alignItems: "center", gap: 6,
       padding: "8px 14px", borderRadius: 10, fontSize: 12, fontWeight: 500, cursor: "pointer",
-      background: primary ? "linear-gradient(135deg, #5B8CFF 0%, #7B61FF 100%)" : "rgba(255,255,255,0.04)",
-      color: primary ? "#FFFFFF" : "#A8B3CF",
-      border: primary ? "1px solid rgba(91,140,255,0.5)" : "1px solid rgba(255,255,255,0.1)",
+      background: primary ? "linear-gradient(135deg, #5B8CFF 0%, #7B61FF 100%)" : isSuccess ? "rgba(31,210,134,0.10)" : "rgba(255,255,255,0.04)",
+      color: primary ? "#FFFFFF" : isSuccess ? "#1FD286" : "#A8B3CF",
+      border: primary ? "1px solid rgba(91,140,255,0.5)" : isSuccess ? "1px solid rgba(31,210,134,0.35)" : "1px solid rgba(255,255,255,0.1)",
       boxShadow: primary ? "0 8px 24px -10px rgba(91,140,255,0.6)" : "none",
     }}>{icon} {label}</button>
   );
