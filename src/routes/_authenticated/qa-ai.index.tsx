@@ -1,173 +1,101 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import {
-  PageLayout, ExecutiveHero, KpiGrid, KpiCard,
-  NCard, SectionHeader, EmptyState,
-} from "@/components/nuvia";
+import { PageLayout, NCard } from "@/components/nuvia";
 import { useServerFn } from "@tanstack/react-start";
-import { qaKpis, listAuditoriasQA } from "@/lib/qaAI.functions";
+import { qaCommandCenter } from "@/lib/qaAI.functions";
 import { useUserRole } from "@/hooks/useUserRole";
 import { CopilotoQADrawer } from "@/components/qa-ai/CopilotoQADrawer";
-import { supabase } from "@/integrations/supabase/client";
-
-import {
-  Brain, ShieldCheck, CheckCircle2, AlertTriangle, XCircle,
-  Gauge, Inbox, ArrowRight, Plus, Bell, Settings, Activity, Sparkles, Paperclip,
-} from "lucide-react";
+import { CommandCenter, type CCRow, type CCBank, type CCAnalista, type CCError, type CCTrend } from "@/components/qa-ai/command/CommandCenter";
+import { Brain, Plus, Bell, Settings, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/qa-ai/")({
   component: QaAiDashboard,
-  head: () => ({ meta: [{ title: "NUVIA Financial QA AI · Auditor matemático" }] }),
+  head: () => ({ meta: [{ title: "NUVIA Financial QA AI · Command Center" }] }),
 });
 
-type Row = {
-  id: string; expediente_id: string | null; analista_id: string | null;
-  modalidad: string; qa_score: number; categoria: string; dictamen: string; ejecutado_at: string;
-  cliente_nombre: string | null; banco: string | null; analista_nombre: string | null;
-  tiene_extracto?: boolean; extracto_path?: string | null;
+type CCData = {
+  rows: CCRow[]; bancos: CCBank[]; analistas: CCAnalista[];
+  topErrores: CCError[]; tendencia: CCTrend[]; prioridad: Record<string, number>;
 };
-
 
 function QaAiDashboard() {
   const { canValidarProyeccion, loading: rolesLoading } = useUserRole();
-  const fetchKpis = useServerFn(qaKpis);
-  const fetchList = useServerFn(listAuditoriasQA);
-  const [kpis, setKpis] = useState<{ total: number; aprobados: number; obs: number; rechazados: number; pendientesRevision: number; promedio: number; alertasAbiertas: number; alertasCriticasAbiertas: number; topTipo: string | null; topCount: number } | null>(null);
-  const [rows, setRows] = useState<Row[]>([]);
+  const fetchCC = useServerFn(qaCommandCenter);
+  const [data, setData] = useState<CCData | null>(null);
   const [loading, setLoading] = useState(true);
   const [copilotoOpen, setCopilotoOpen] = useState(false);
 
   useEffect(() => {
     if (rolesLoading || !canValidarProyeccion) { setLoading(false); return; }
     (async () => {
-      const [k, l] = await Promise.all([fetchKpis(), fetchList({ data: { limit: 50 } })]);
-      setKpis(k); setRows(l.rows as Row[]); setLoading(false);
+      const d = await fetchCC({ data: { limit: 500, days: 30 } });
+      setData(d as CCData);
+      setLoading(false);
     })();
-  }, [rolesLoading, canValidarProyeccion, fetchKpis, fetchList]);
+  }, [rolesLoading, canValidarProyeccion, fetchCC]);
 
   if (rolesLoading || loading) {
-    return <PageLayout><NCard><p className="text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>Cargando…</p></NCard></PageLayout>;
+    return <PageLayout><NCard><p className="text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>Cargando Command Center…</p></NCard></PageLayout>;
   }
   if (!canValidarProyeccion) {
     return <PageLayout><NCard><p className="text-sm" style={{ color: "var(--nuvia-danger)" }}>Acceso restringido al Director Financiero QA.</p></NCard></PageLayout>;
   }
 
-  const scoreTone = (s: number) => s >= 95 ? "var(--nuvia-success)" : s >= 85 ? "var(--nuvia-warning)" : "var(--nuvia-danger)";
-  const dictamenLabel: Record<string, string> = {
-    aprobado: "APROBADO", aprobado_obs: "APROBADO C/OBS", requiere_revision: "REVISAR", rechazado: "RECHAZADO",
-  };
-
   return (
     <PageLayout>
-      <ExecutiveHero
-        badge={{ icon: <Brain size={12} />, label: "QA AI · Beta", tone: "blue" }}
-        title="NUVIA Financial QA AI"
-        description="Auditor matemático autónomo: reconstruye cada simulación desde cero, la contrasta con el extracto bancario y emite dictamen automático."
-        actions={
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={() => setCopilotoOpen(true)}
-              className="nuvia-input nuvia-input-sm"
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer" }}
-            >
-              <Sparkles size={14} /> Copiloto QA
-            </button>
-            <Link to="/qa-ai/nuevo">
-              <button className="nuvia-input nuvia-input-sm" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer", background: "var(--nuvia-accent)", color: "#fff", border: "none" }}>
-                <Plus size={14} /> Auditar nuevo
-              </button>
-            </Link>
-            <Link to="/qa-ai/alertas">
-              <button className="nuvia-input nuvia-input-sm" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer" }}>
-                <Bell size={14} /> Ver alertas
-              </button>
-            </Link>
-            {canValidarProyeccion && (
-              <Link to="/qa-ai/config">
-                <button className="nuvia-input nuvia-input-sm" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", cursor: "pointer" }}>
-                  <Settings size={14} /> Configurar reglas
-                </button>
-              </Link>
-            )}
+      {/* HEADER */}
+      <div style={{
+        background: "linear-gradient(135deg, #0D1323 0%, #111A2E 60%, #0D1323 100%)",
+        border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, padding: "22px 24px",
+        marginBottom: 16, boxShadow: "0 24px 60px -32px rgba(91,140,255,0.35)",
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 24, flexWrap: "wrap" }}>
+          <div>
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 10px",
+              borderRadius: 999, background: "rgba(91,140,255,0.12)", color: "#5B8CFF",
+              border: "1px solid rgba(91,140,255,0.3)", fontSize: 10.5, fontWeight: 600, letterSpacing: 0.8,
+              textTransform: "uppercase", marginBottom: 10,
+            }}>
+              <Brain size={12} /> Financial Intelligence OS
+            </div>
+            <h1 style={{ fontSize: 26, fontWeight: 700, color: "#FFFFFF", margin: 0, letterSpacing: -0.4 }}>
+              NUVIA Financial QA AI
+            </h1>
+            <p style={{ fontSize: 13, color: "#A8B3CF", margin: "6px 0 0", maxWidth: 720 }}>
+              Centro de control de auditoría matemática, reconstrucción financiera y gestión de riesgo operativo.
+            </p>
           </div>
-        }
-      />
-
-      <KpiGrid cols={4}>
-        <KpiCard label="Casos auditados" value={kpis?.total ?? 0} icon={<ShieldCheck size={14} />} tone="blue" />
-        <KpiCard label="Aprobados" value={kpis?.aprobados ?? 0} icon={<CheckCircle2 size={14} />} tone="green" />
-        <KpiCard label="Con observaciones" value={kpis?.obs ?? 0} icon={<AlertTriangle size={14} />} tone="warning" />
-        <KpiCard label="Rechazados" value={kpis?.rechazados ?? 0} icon={<XCircle size={14} />} tone="danger" />
-      </KpiGrid>
-      <KpiGrid cols={4}>
-        <KpiCard label="QA Score promedio" value={`${(kpis?.promedio ?? 0).toFixed(1)} / 100`} icon={<Gauge size={14} />} tone="blue" />
-        <KpiCard label="Alertas críticas abiertas" value={kpis?.alertasCriticasAbiertas ?? 0} icon={<AlertTriangle size={14} />} tone="danger" />
-        <KpiCard label="Pendientes revisión" value={kpis?.pendientesRevision ?? 0} icon={<Activity size={14} />} tone="warning" />
-        <KpiCard label="Inconsistencia top" value={kpis?.topTipo ? `${kpis.topTipo} (${kpis.topCount})` : "—"} icon={<Inbox size={14} />} tone="blue" />
-      </KpiGrid>
-
-      <NCard padding="none">
-        <div style={{ padding: "16px 20px 12px" }}>
-          <SectionHeader title={`Auditorías recientes (${rows.length})`} description="Últimas 50 ejecuciones del motor matemático." />
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <HeaderButton onClick={() => setCopilotoOpen(true)} icon={<Sparkles size={14} />} label="Copiloto QA" />
+            <Link to="/qa-ai/nuevo"><HeaderButton primary icon={<Plus size={14} />} label="Auditar nuevo" /></Link>
+            <Link to="/qa-ai/alertas"><HeaderButton icon={<Bell size={14} />} label="Alertas" /></Link>
+            <Link to="/qa-ai/config"><HeaderButton icon={<Settings size={14} />} label="Reglas" /></Link>
+          </div>
         </div>
-        {rows.length === 0 ? (
-          <EmptyState icon={<Inbox size={28} />} title="Sin auditorías" description="Ejecuta tu primera auditoría matemática." />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-[12.5px]">
-              <thead>
-                <tr style={{ background: "rgba(255,255,255,0.03)" }}>
-                  {["Fecha", "Cliente", "Banco", "Analista", "Modalidad", "Score", "Dictamen", "Extracto", ""].map((h) => (
-                    <th key={h} className="text-left px-4 py-2 font-medium" style={{ color: "var(--nuvia-text-secondary)", borderBottom: "1px solid var(--nuvia-border)" }}>{h}</th>
-                  ))}
+      </div>
 
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={r.id} style={{ borderBottom: "1px solid var(--nuvia-border)" }}>
-                    <td className="px-4 py-2 tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>{new Date(r.ejecutado_at).toLocaleString("es-CO")}</td>
-                    <td className="px-4 py-2" style={{ color: "var(--nuvia-text-primary)" }}>{r.cliente_nombre ?? "—"}</td>
-                    <td className="px-4 py-2" style={{ color: "var(--nuvia-text-primary)" }}>{r.banco ?? "—"}</td>
-                    <td className="px-4 py-2" style={{ color: "var(--nuvia-text-primary)" }}>{r.analista_nombre ?? "—"}</td>
-                    <td className="px-4 py-2 capitalize" style={{ color: "var(--nuvia-text-primary)" }}>{r.modalidad}</td>
-                    <td className="px-4 py-2 tabular-nums font-semibold" style={{ color: scoreTone(Number(r.qa_score)) }}>{Number(r.qa_score).toFixed(1)}</td>
-                    <td className="px-4 py-2" style={{ color: "var(--nuvia-text-primary)" }}>{dictamenLabel[r.dictamen] ?? r.dictamen}</td>
-                    <td className="px-4 py-2" title={r.extracto_path ? "Abrir extracto adjunto" : "Sin extracto adjunto"}>
-                      {r.extracto_path ? (
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            const { data, error } = await supabase.storage.from("extractos").createSignedUrl(r.extracto_path!, 60 * 5);
-                            if (error || !data?.signedUrl) { alert("No se pudo abrir el extracto: " + (error?.message ?? "sin URL")); return; }
-                            window.open(data.signedUrl, "_blank", "noopener,noreferrer");
-                          }}
-                          className="inline-flex items-center justify-center rounded p-1 transition hover:bg-white/5"
-                          style={{ color: "var(--nuvia-accent)" }}
-                          aria-label="Abrir extracto adjunto"
-                        >
-                          <Paperclip size={14} />
-                        </button>
-                      ) : (
-                        <span style={{ color: "var(--nuvia-text-muted)" }}>—</span>
-                      )}
-                    </td>
-
-
-                    <td className="px-4 py-2 text-right">
-                      <Link to="/qa-ai/$id" params={{ id: r.id }} className="inline-flex items-center gap-1 text-xs" style={{ color: "var(--nuvia-accent)" }}>
-                        Ver <ArrowRight size={12} />
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </NCard>
+      {data && (
+        <CommandCenter
+          rows={data.rows} bancos={data.bancos} analistas={data.analistas}
+          topErrores={data.topErrores} tendencia={data.tendencia} prioridad={data.prioridad}
+        />
+      )}
 
       <CopilotoQADrawer open={copilotoOpen} onClose={() => setCopilotoOpen(false)} />
     </PageLayout>
+  );
+}
+
+function HeaderButton({ icon, label, primary, onClick }: { icon: React.ReactNode; label: string; primary?: boolean; onClick?: () => void }) {
+  return (
+    <button onClick={onClick} style={{
+      display: "inline-flex", alignItems: "center", gap: 6,
+      padding: "8px 14px", borderRadius: 10, fontSize: 12, fontWeight: 500, cursor: "pointer",
+      background: primary ? "linear-gradient(135deg, #5B8CFF 0%, #7B61FF 100%)" : "rgba(255,255,255,0.04)",
+      color: primary ? "#FFFFFF" : "#A8B3CF",
+      border: primary ? "1px solid rgba(91,140,255,0.5)" : "1px solid rgba(255,255,255,0.1)",
+      boxShadow: primary ? "0 8px 24px -10px rgba(91,140,255,0.6)" : "none",
+    }}>{icon} {label}</button>
   );
 }

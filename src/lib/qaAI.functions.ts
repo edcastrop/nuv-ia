@@ -1228,3 +1228,176 @@ export const reejecutarAuditoriaQA = createServerFn({ method: "POST" })
 
     return { ok: true, score: result.score.score, dictamen: result.score.dictamen };
   });
+
+// ─────────────────────────────────────────────────────────────
+// FASE NUVIA — Command Center (read-only aggregation)
+// ─────────────────────────────────────────────────────────────
+export const qaCommandCenter = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({
+    limit: z.number().int().positive().max(1000).default(500),
+    days: z.number().int().positive().max(180).default(30),
+  }).parse(input ?? {}))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const sinceISO = new Date(Date.now() - data.days * 86400000).toISOString();
+
+    const { data: audRaw } = await supabase
+      .from("qa_auditorias")
+      .select("id,expediente_id,analista_id,extracto_id,modalidad,qa_score,categoria,dictamen,ejecutado_at,alertas,inputs")
+      .order("ejecutado_at", { ascending: false })
+      .limit(data.limit);
+    const audits = audRaw ?? [];
+
+    const expIds = [...new Set(audits.map((r) => r.expediente_id).filter((id): id is string => !!id))];
+    const anaIds = [...new Set(audits.map((r) => r.analista_id).filter((id): id is string => !!id))];
+    const extIds = [...new Set(audits.map((r) => r.extracto_id).filter((id): id is string => !!id))];
+
+    const [expRes, profRes, extRes, alertasRes, incsRes] = await Promise.all([
+      expIds.length ? supabase.from("expedientes")
+        .select("id,cliente_nombre,banco,producto,estado_caso,subestado,sla_vence_at,validacion_estado,asesor_id,honorarios_final,credito_data")
+        .in("id", expIds)
+        : Promise.resolve({ data: [] as Array<Record<string, unknown>> }),
+      anaIds.length ? supabase.from("profiles").select("id,nombre").in("id", anaIds)
+        : Promise.resolve({ data: [] as Array<{ id: string; nombre: string | null }> }),
+      extIds.length ? supabase.from("extractos_lecturas").select("id,archivo_path").in("id", extIds)
+        : Promise.resolve({ data: [] as Array<{ id: string; archivo_path: string | null }> }),
+      supabase.from("qa_alertas")
+        .select("id,auditoria_id,severidad,estado,tipo,created_at")
+        .gte("created_at", sinceISO),
+      supabase.from("qa_inconsistencias")
+        .select("auditoria_id,tipo,severidad,created_at")
+        .gte("created_at", sinceISO)
+        .limit(5000),
+    ]);
+
+    const expMap = new Map((expRes.data ?? []).map((e) => [e.id as string, e]));
+    const profMap = new Map((profRes.data ?? []).map((p) => [p.id, p]));
+    const extMap = new Map((extRes.data ?? []).map((e) => [e.id, e]));
+    const alertas = alertasRes.data ?? [];
+    const incs = incsRes.data ?? [];
+
+    const alertasByAud = new Map<string, { abiertas: number; criticas: number }>();
+    alertas.forEach((a) => {
+      const k = String(a.auditoria_id ?? "");
+      if (!k) return;
+      const cur = alertasByAud.get(k) ?? { abiertas: 0, criticas: 0 };
+      if (a.estado === "abierta") cur.abiertas += 1;
+      if (a.estado === "abierta" && a.severidad === "critica") cur.criticas += 1;
+      alertasByAud.set(k, cur);
+    });
+
+    const nowMs = Date.now();
+    const rows = audits.map((r) => {
+      const exp = r.expediente_id ? expMap.get(r.expediente_id) : undefined;
+      const prof = r.analista_id ? profMap.get(r.analista_id) : undefined;
+      const ext = r.extracto_id ? extMap.get(r.extracto_id) : undefined;
+      const al = alertasByAud.get(r.id) ?? { abiertas: 0, criticas: 0 };
+      const sla = exp?.sla_vence_at ? new Date(exp.sla_vence_at as string).getTime() : null;
+      const slaVencido = sla !== null && sla < nowMs;
+      const credito = (exp?.credito_data ?? {}) as Record<string, unknown>;
+      const ticket = Number(credito.saldoCapital ?? credito.saldo_capital ?? credito.valor_credito ?? 0) || Number(exp?.honorarios_final ?? 0);
+      const fresh = (() => {
+        const inp = (r.inputs ?? {}) as Record<string, unknown>;
+        const rec = (inp.reconstruccion ?? {}) as Record<string, unknown>;
+        return Number(rec.coberturaFrechValorMensual ?? 0) > 0 || Number(rec.coberturaFrechPp ?? 0) > 0;
+      })();
+      return {
+        id: r.id, expediente_id: r.expediente_id, analista_id: r.analista_id,
+        modalidad: r.modalidad as string,
+        qa_score: Number(r.qa_score ?? 0),
+        categoria: r.categoria as string, dictamen: r.dictamen as string,
+        ejecutado_at: r.ejecutado_at as string,
+        cliente_nombre: (exp?.cliente_nombre as string | null) ?? null,
+        banco: (exp?.banco as string | null) ?? null,
+        producto: (exp?.producto as string | null) ?? null,
+        estado_caso: (exp?.estado_caso as string | null) ?? null,
+        subestado: (exp?.subestado as string | null) ?? null,
+        validacion_estado: (exp?.validacion_estado as string | null) ?? null,
+        analista_nombre: (prof?.nombre as string | null) ?? null,
+        extracto_path: (ext?.archivo_path as string | null) ?? null,
+        alertas_abiertas: al.abiertas, alertas_criticas: al.criticas,
+        sla_vence_at: (exp?.sla_vence_at as string | null) ?? null,
+        sla_vencido: slaVencido,
+        ticket, fresh,
+      };
+    });
+
+    // Bank risk
+    const bankAgg = new Map<string, { auditados: number; sumScore: number; errores: number }>();
+    rows.forEach((r) => {
+      const k = r.banco ?? "—";
+      const cur = bankAgg.get(k) ?? { auditados: 0, sumScore: 0, errores: 0 };
+      cur.auditados += 1;
+      cur.sumScore += r.qa_score;
+      if (r.dictamen === "rechazado" || r.dictamen === "requiere_revision") cur.errores += 1;
+      bankAgg.set(k, cur);
+    });
+    const bancos = [...bankAgg.entries()].map(([banco, v]) => {
+      const prom = v.auditados ? v.sumScore / v.auditados : 0;
+      const pctErr = v.auditados ? (v.errores / v.auditados) * 100 : 0;
+      const riesgo = (prom < 90 || pctErr > 15) ? "alto" : prom < 95 ? "medio" : "bajo";
+      return { banco, auditados: v.auditados, promedio: prom, pctError: pctErr, riesgo };
+    }).sort((a, b) => (a.riesgo === b.riesgo ? a.promedio - b.promedio : (a.riesgo === "alto" ? -1 : b.riesgo === "alto" ? 1 : a.riesgo === "medio" ? -1 : 1)));
+
+    // Analyst ranking
+    const anaAgg = new Map<string, { id: string | null; nombre: string; auditados: number; sumScore: number; aprob: number; rech: number }>();
+    rows.forEach((r) => {
+      const k = r.analista_id ?? "—";
+      const cur = anaAgg.get(k) ?? { id: r.analista_id, nombre: r.analista_nombre ?? "Sin analista", auditados: 0, sumScore: 0, aprob: 0, rech: 0 };
+      cur.auditados += 1; cur.sumScore += r.qa_score;
+      if (r.dictamen === "aprobado" || r.dictamen === "aprobado_obs") cur.aprob += 1;
+      if (r.dictamen === "rechazado") cur.rech += 1;
+      anaAgg.set(k, cur);
+    });
+    const analistas = [...anaAgg.values()].map((v) => {
+      const prom = v.auditados ? v.sumScore / v.auditados : 0;
+      const precision = v.auditados ? (v.aprob / v.auditados) * 100 : 0;
+      const nivel = precision >= 95 && v.auditados >= 10 ? 3 : precision >= 85 ? 2 : 1;
+      return { ...v, promedio: prom, precision, nivel };
+    }).sort((a, b) => b.precision - a.precision);
+
+    // Top errors
+    const errAgg = new Map<string, { tipo: string; total: number; criticas: number; ultimos7: number }>();
+    const sevenAgo = nowMs - 7 * 86400000;
+    incs.forEach((i) => {
+      const cur = errAgg.get(i.tipo as string) ?? { tipo: i.tipo as string, total: 0, criticas: 0, ultimos7: 0 };
+      cur.total += 1;
+      if (i.severidad === "critica") cur.criticas += 1;
+      if (new Date(i.created_at as string).getTime() > sevenAgo) cur.ultimos7 += 1;
+      errAgg.set(i.tipo as string, cur);
+    });
+    const topErrores = [...errAgg.values()].sort((a, b) => b.total - a.total).slice(0, 8);
+
+    // 30d trend (by day)
+    const trendMap = new Map<string, { fecha: string; score: number; n: number; aprobados: number; observados: number; rechazados: number; criticos: number }>();
+    for (let d = data.days - 1; d >= 0; d--) {
+      const key = new Date(nowMs - d * 86400000).toISOString().slice(0, 10);
+      trendMap.set(key, { fecha: key, score: 0, n: 0, aprobados: 0, observados: 0, rechazados: 0, criticos: 0 });
+    }
+    rows.forEach((r) => {
+      const k = (r.ejecutado_at ?? "").slice(0, 10);
+      const t = trendMap.get(k);
+      if (!t) return;
+      t.score += r.qa_score; t.n += 1;
+      if (r.dictamen === "aprobado") t.aprobados += 1;
+      else if (r.dictamen === "aprobado_obs") t.observados += 1;
+      else if (r.dictamen === "rechazado") t.rechazados += 1;
+      if (r.alertas_criticas > 0) t.criticos += 1;
+    });
+    const tendencia = [...trendMap.values()].map((t) => ({
+      ...t, scoreProm: t.n ? t.score / t.n : 0,
+    }));
+
+    // Priority counts
+    const prioridad = {
+      bloqueados: rows.filter((r) => r.dictamen === "rechazado" || r.estado_caso === "bloqueado").length,
+      esperandoDictamen: rows.filter((r) => r.dictamen === "requiere_revision").length,
+      devueltos: rows.filter((r) => r.validacion_estado === "devuelto").length,
+      alertasCriticas: rows.reduce((s, r) => s + r.alertas_criticas, 0),
+      uvrSinRevision: rows.filter((r) => r.modalidad === "uvr" && (r.dictamen === "requiere_revision" || r.qa_score < 90)).length,
+      slaVencidos: rows.filter((r) => r.sla_vencido).length,
+    };
+
+    return { rows, bancos, analistas, topErrores, tendencia, prioridad };
+  });
