@@ -49,6 +49,31 @@ export function ReconstruccionAuditorBlock({
 
   const snapshot = useMemo(() => snapshotInputsAnalista(inputs), [inputs]);
 
+  // Snapshot numérico (no formateado) para la Comparativa Analista vs Auditor.
+  const analistaRaw = useMemo(() => {
+    const rec = (inputs.reconstruccion ?? {}) as Record<string, unknown>;
+    const ext = (inputs.extracto ?? {}) as Record<string, unknown>;
+    const pick = (a: unknown, b?: unknown) => {
+      const n = Number(a);
+      if (Number.isFinite(n) && n !== 0) return n;
+      const m = Number(b);
+      return Number.isFinite(m) ? m : 0;
+    };
+    return {
+      saldoCapital: pick(rec.saldoCapital, ext.saldoCapital),
+      tasaEa: pick(rec.tasaEa, ext.tasaEa),
+      tasaEaPactada: pick(rec.tasaEaPactada),
+      seguros: pick(rec.seguros, ext.seguros),
+      cuotaBaseSinSubsidio: pick(rec.cuotaBaseSinSubsidio, ext.cuota),
+      cuotasPendientes: pick(rec.cuotasPendientes),
+      saldoUVR: pick(rec.saldoUVR),
+      valorUVR: pick(rec.valorUVR),
+      variacionUvrEa: pick(rec.variacionUvrEa),
+    };
+  }, [inputs]);
+
+  const sandboxId = `qa-review-${auditoriaId}`;
+
   const handleEnviarHilo = async () => {
     if (!puedeEditar || enviando) return;
     setEnviando(true);
