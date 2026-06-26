@@ -51,12 +51,13 @@ export function CopilotoQADrawer({
   if (!open) return null;
   return (
     <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 60 }} />
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", zIndex: 9998, backdropFilter: "blur(2px)" }} />
       <aside
         style={{
           position: "fixed", top: 0, right: 0, height: "100vh", width: "min(440px, 96vw)",
-          background: "var(--nuvia-surface)", borderLeft: "1px solid var(--nuvia-border)",
-          zIndex: 61, display: "flex", flexDirection: "column",
+          background: "#0B1220", borderLeft: "1px solid var(--nuvia-border)",
+          boxShadow: "-20px 0 60px rgba(0,0,0,0.55)",
+          zIndex: 9999, display: "flex", flexDirection: "column",
         }}
       >
         <header style={{ padding: "14px 16px", borderBottom: "1px solid var(--nuvia-border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
