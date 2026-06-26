@@ -320,7 +320,13 @@ function ResultadoQaAi() {
   const fromSimulador = from === "simulador";
   const fetchAud = useServerFn(obtenerAuditoriaQA);
   const doReejecutar = useServerFn(reejecutarAuditoriaQA);
-  const [data, setData] = useState<{ auditoria: Record<string, unknown> | null; inconsistencias: Inc[]; extracto?: ExtractoInfo | null } | null>(null);
+  const [data, setData] = useState<{
+    auditoria: Record<string, unknown> | null;
+    inconsistencias: Inc[];
+    extracto?: ExtractoInfo | null;
+    analista?: { nombre?: string | null; email?: string | null } | null;
+    ejecutor?: { nombre?: string | null; email?: string | null } | null;
+  } | null>(null);
   const [copilotoOpen, setCopilotoOpen] = useState(false);
   const [verTodas, setVerTodas] = useState(false);
   const [reloading, setReloading] = useState(false);
