@@ -652,7 +652,7 @@ function ResultadoQaAi() {
               {expedienteIdCert ? (
                 <Link
                   to="/simulador"
-                  search={{ maestroId: expedienteIdCert, modo: (a.modalidad === "uvr" ? "uvr" : "pesos") as "pesos" | "uvr" }}
+                  search={{ maestroId: expedienteIdCert, modo: (a.modalidad === "uvr" ? "uvr" : "pesos") as "pesos" | "uvr", auditoriaId: id }}
                   title="Abrir la simulación original del analista para revisar los datos ingresados con NUVIA"
                 >
                   <button className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[12.5px] font-semibold transition hover:opacity-90"
@@ -661,6 +661,7 @@ function ResultadoQaAi() {
                   </button>
                 </Link>
               ) : null}
+
 
               {puedeVolverAlSimulador ? (
                 <Link
