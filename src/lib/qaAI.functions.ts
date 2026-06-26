@@ -963,7 +963,7 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
 
     const { data: ext, error: errExt } = await supabase
       .from("extractos_lecturas")
-      .select("id,expediente_id,banco,producto,datos")
+      .select("id,expediente_id,asesor_id,banco,producto,datos")
       .eq("id", data.extractoLecturaId)
       .single();
     if (errExt) throw new Error(errExt.message);
@@ -1075,17 +1075,13 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
       },
     };
 
-    // Resolver el analista real del caso (asesor_id del expediente),
-    // no quien ejecuta la simulación (puede ser admin/auditor en modo revisión).
-    let analistaRealId: string = userId;
-    if (ext.expediente_id) {
-      const { data: expRow } = await supabase
-        .from("expedientes")
-        .select("asesor_id")
-        .eq("id", ext.expediente_id)
-        .maybeSingle();
-      if (expRow?.asesor_id) analistaRealId = expRow.asesor_id as string;
-    }
+    // Resolver el analista real del caso (asesor_id del expediente). Si el
+    // expediente aún no tiene asesor, usa el asesor guardado en la lectura.
+    const analistaRealId = await resolverAnalistaRealQA(supabase as unknown as QaSupabase, {
+      expedienteId: ext.expediente_id ?? null,
+      extractoAsesorId: typeof ext.asesor_id === "string" ? ext.asesor_id : null,
+      fallbackUserId: userId,
+    });
 
     const { data: aud, error: errAud } = await supabase
       .from("qa_auditorias")
