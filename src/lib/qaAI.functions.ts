@@ -401,8 +401,9 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
     let extracto: {
       id: string; archivo_path: string | null; archivo_nombre: string | null;
       banco: string | null; producto: string | null; moneda: string | null;
-      datos: Record<string, unknown> | null; created_at: string | null;
+      datos: Json; created_at: string | null;
     } | null = null;
+
     if (auditoria.extracto_id) {
       const { data: extRow } = await context.supabase
         .from("extractos_lecturas")
