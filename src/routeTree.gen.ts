@@ -24,7 +24,6 @@ import { Route as ApiNuvexGptChatRouteImport } from './routes/api/nuvex-gpt-chat
 import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
 import { Route as AuthenticatedTorreControlRouteImport } from './routes/_authenticated/torre-control'
 import { Route as AuthenticatedSimuladorRouteImport } from './routes/_authenticated/simulador'
-import { Route as AuthenticatedQaRouteImport } from './routes/_authenticated/qa'
 import { Route as AuthenticatedProyeccionFinancieraRouteImport } from './routes/_authenticated/proyeccion-financiera'
 import { Route as AuthenticatedProyeccionRouteImport } from './routes/_authenticated/proyeccion'
 import { Route as AuthenticatedProductividadRouteImport } from './routes/_authenticated/productividad'
@@ -186,11 +185,6 @@ const AuthenticatedTorreControlRoute =
 const AuthenticatedSimuladorRoute = AuthenticatedSimuladorRouteImport.update({
   id: '/simulador',
   path: '/simulador',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedQaRoute = AuthenticatedQaRouteImport.update({
-  id: '/qa',
-  path: '/qa',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedProyeccionFinancieraRoute =
@@ -724,7 +718,6 @@ export interface FileRoutesByFullPath {
   '/productividad': typeof AuthenticatedProductividadRoute
   '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/proyeccion-financiera': typeof AuthenticatedProyeccionFinancieraRoute
-  '/qa': typeof AuthenticatedQaRoute
   '/simulador': typeof AuthenticatedSimuladorRoute
   '/torre-control': typeof AuthenticatedTorreControlRoute
   '/wallet': typeof AuthenticatedWalletRoute
@@ -825,7 +818,6 @@ export interface FileRoutesByTo {
   '/productividad': typeof AuthenticatedProductividadRoute
   '/proyeccion': typeof AuthenticatedProyeccionRoute
   '/proyeccion-financiera': typeof AuthenticatedProyeccionFinancieraRoute
-  '/qa': typeof AuthenticatedQaRoute
   '/simulador': typeof AuthenticatedSimuladorRoute
   '/torre-control': typeof AuthenticatedTorreControlRoute
   '/wallet': typeof AuthenticatedWalletRoute
@@ -930,7 +922,6 @@ export interface FileRoutesById {
   '/_authenticated/productividad': typeof AuthenticatedProductividadRoute
   '/_authenticated/proyeccion': typeof AuthenticatedProyeccionRoute
   '/_authenticated/proyeccion-financiera': typeof AuthenticatedProyeccionFinancieraRoute
-  '/_authenticated/qa': typeof AuthenticatedQaRoute
   '/_authenticated/simulador': typeof AuthenticatedSimuladorRoute
   '/_authenticated/torre-control': typeof AuthenticatedTorreControlRoute
   '/_authenticated/wallet': typeof AuthenticatedWalletRoute
@@ -1036,7 +1027,6 @@ export interface FileRouteTypes {
     | '/productividad'
     | '/proyeccion'
     | '/proyeccion-financiera'
-    | '/qa'
     | '/simulador'
     | '/torre-control'
     | '/wallet'
@@ -1137,7 +1127,6 @@ export interface FileRouteTypes {
     | '/productividad'
     | '/proyeccion'
     | '/proyeccion-financiera'
-    | '/qa'
     | '/simulador'
     | '/torre-control'
     | '/wallet'
@@ -1241,7 +1230,6 @@ export interface FileRouteTypes {
     | '/_authenticated/productividad'
     | '/_authenticated/proyeccion'
     | '/_authenticated/proyeccion-financiera'
-    | '/_authenticated/qa'
     | '/_authenticated/simulador'
     | '/_authenticated/torre-control'
     | '/_authenticated/wallet'
@@ -1444,13 +1432,6 @@ declare module '@tanstack/react-router' {
       path: '/simulador'
       fullPath: '/simulador'
       preLoaderRoute: typeof AuthenticatedSimuladorRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/qa': {
-      id: '/_authenticated/qa'
-      path: '/qa'
-      fullPath: '/qa'
-      preLoaderRoute: typeof AuthenticatedQaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/proyeccion-financiera': {
@@ -2205,7 +2186,6 @@ interface AuthenticatedRouteChildren {
   AuthenticatedProductividadRoute: typeof AuthenticatedProductividadRoute
   AuthenticatedProyeccionRoute: typeof AuthenticatedProyeccionRoute
   AuthenticatedProyeccionFinancieraRoute: typeof AuthenticatedProyeccionFinancieraRoute
-  AuthenticatedQaRoute: typeof AuthenticatedQaRoute
   AuthenticatedSimuladorRoute: typeof AuthenticatedSimuladorRoute
   AuthenticatedTorreControlRoute: typeof AuthenticatedTorreControlRoute
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
@@ -2266,7 +2246,6 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedProyeccionRoute: AuthenticatedProyeccionRoute,
   AuthenticatedProyeccionFinancieraRoute:
     AuthenticatedProyeccionFinancieraRoute,
-  AuthenticatedQaRoute: AuthenticatedQaRoute,
   AuthenticatedSimuladorRoute: AuthenticatedSimuladorRoute,
   AuthenticatedTorreControlRoute: AuthenticatedTorreControlRoute,
   AuthenticatedWalletRoute: AuthenticatedWalletRoute,
