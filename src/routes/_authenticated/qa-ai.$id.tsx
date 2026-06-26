@@ -17,8 +17,9 @@ import type { Veredicto } from "@/lib/qaMath";
 import {
   Brain, ArrowLeft, AlertTriangle, CheckCircle2, Calculator, Sigma, ShieldAlert,
   Minus, FileDown, Sparkles, RefreshCw, Trophy, ChevronDown, MessageCircle, Coins, Gauge,
-  Rocket,
+  Rocket, FileText, Paperclip,
 } from "lucide-react";
+
 
 const qaSearchSchema = z.object({
   from: z.enum(["simulador"]).optional(),
