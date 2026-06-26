@@ -291,8 +291,17 @@ export const auditarCaso = createServerFn({ method: "POST" })
       user_id: userId,
     });
 
+    await notificarQASolicitadaServer(supabase as never, {
+      expedienteId: data.expedienteId ?? null,
+      analistaId: userId,
+      auditoriaId,
+      dictamen: String(result.score.dictamen),
+      score: Number(result.score.score) || 0,
+    });
+
     return { auditoriaId, ...result };
   });
+
 
 export const listAuditoriasQA = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
