@@ -463,6 +463,34 @@ export function UVRSimulator({
     );
   }, [recomendada?.nuevaCuota, recomendada?.index, init?.id]);
 
+  // V2 QA: modo sandbox de revisión QA — retransmite inputs UVR vivos
+  // para la Comparativa Analista vs Auditor.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const id = init?.id;
+    if (!id || !id.startsWith("qa-review-")) return;
+    window.dispatchEvent(
+      new CustomEvent("nuvex:simulador-inputs", {
+        detail: {
+          expedienteId: id,
+          modo: "uvr",
+          saldoCapital: saldoPesosNum,
+          tasaEa: tasaEANum,
+          seguros: segurosNum,
+          cuotaBase: cuotaSimulacionPesosNum,
+          cuotasPendientes,
+          saldoUVR: parseDecimal(saldoUVR),
+          valorUVR: parseDecimal(valorUVR),
+          variacionUVR: parsePercentage(variacionUVR),
+          nuevaCuota: recomendada?.nuevaCuota ?? null,
+        },
+      }),
+    );
+  }, [
+    init?.id, saldoPesosNum, tasaEANum, segurosNum, cuotaSimulacionPesosNum,
+    cuotasPendientes, saldoUVR, valorUVR, variacionUVR, recomendada?.nuevaCuota,
+  ]);
+
   const ahorroNegativo = recomendada && (recomendada.ahorroTotal < 0 || recomendada.honorarios < 0);
 
   const cuotasBaseSimulacion = Math.max(0, cuotasPendientes);

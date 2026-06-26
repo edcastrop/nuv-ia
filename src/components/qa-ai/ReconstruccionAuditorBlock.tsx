@@ -11,6 +11,7 @@ import {
 } from "@/lib/qaReviewExpediente";
 import { getCanalDeAuditoria, enviarMensaje } from "@/lib/colaboracion";
 import { useUserRole, isDirectorQA } from "@/hooks/useUserRole";
+import { ComparativaAnalistaAuditor } from "./ComparativaAnalistaAuditor";
 
 /**
  * Bloque embebido en `/qa-ai/$id` que renderiza el simulador (Pesos/UVR)
@@ -47,6 +48,31 @@ export function ReconstruccionAuditorBlock({
   );
 
   const snapshot = useMemo(() => snapshotInputsAnalista(inputs), [inputs]);
+
+  // Snapshot numérico (no formateado) para la Comparativa Analista vs Auditor.
+  const analistaRaw = useMemo(() => {
+    const rec = (inputs.reconstruccion ?? {}) as Record<string, unknown>;
+    const ext = (inputs.extracto ?? {}) as Record<string, unknown>;
+    const pick = (a: unknown, b?: unknown) => {
+      const n = Number(a);
+      if (Number.isFinite(n) && n !== 0) return n;
+      const m = Number(b);
+      return Number.isFinite(m) ? m : 0;
+    };
+    return {
+      saldoCapital: pick(rec.saldoCapital, ext.saldoCapital),
+      tasaEa: pick(rec.tasaEa, ext.tasaEa),
+      tasaEaPactada: pick(rec.tasaEaPactada),
+      seguros: pick(rec.seguros, ext.seguros),
+      cuotaBaseSinSubsidio: pick(rec.cuotaBaseSinSubsidio, ext.cuota),
+      cuotasPendientes: pick(rec.cuotasPendientes),
+      saldoUVR: pick(rec.saldoUVR),
+      valorUVR: pick(rec.valorUVR),
+      variacionUvrEa: pick(rec.variacionUvrEa),
+    };
+  }, [inputs]);
+
+  const sandboxId = `qa-review-${auditoriaId}`;
 
   const handleEnviarHilo = async () => {
     if (!puedeEditar || enviando) return;
@@ -174,6 +200,16 @@ export function ReconstruccionAuditorBlock({
               </div>
             </div>
           )}
+
+          {/* V2 — Comparativa en vivo Analista vs Auditor */}
+          <ComparativaAnalistaAuditor
+            auditoriaId={auditoriaId}
+            sandboxExpedienteId={sandboxId}
+            modo={modo}
+            analista={analistaRaw}
+            cliente={cliente}
+            banco={banco}
+          />
 
           {/* Simulador embebido */}
           <div
