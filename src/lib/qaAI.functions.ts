@@ -396,8 +396,33 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
       sugerencia: i.sugerencia ?? null,
       created_at: String(i.created_at),
     }));
-    return { auditoria, inconsistencias: inconsistenciasOverride ?? inconsistenciasDb };
+    let extracto: {
+      id: string; archivo_path: string | null; archivo_nombre: string | null;
+      banco: string | null; producto: string | null; moneda: string | null;
+      datos: Record<string, unknown> | null; created_at: string | null;
+    } | null = null;
+    if (auditoria.extracto_id) {
+      const { data: extRow } = await context.supabase
+        .from("extractos_lecturas")
+        .select("id,archivo_path,archivo_nombre,banco,producto,moneda,datos,created_at")
+        .eq("id", auditoria.extracto_id as string)
+        .maybeSingle();
+      if (extRow) {
+        extracto = {
+          id: String(extRow.id),
+          archivo_path: (extRow.archivo_path as string | null) ?? null,
+          archivo_nombre: (extRow.archivo_nombre as string | null) ?? null,
+          banco: (extRow.banco as string | null) ?? null,
+          producto: (extRow.producto as string | null) ?? null,
+          moneda: (extRow.moneda as string | null) ?? null,
+          datos: (extRow.datos as Record<string, unknown> | null) ?? null,
+          created_at: (extRow.created_at as string | null) ?? null,
+        };
+      }
+    }
+    return { auditoria, inconsistencias: inconsistenciasOverride ?? inconsistenciasDb, extracto };
   });
+
 
 export const qaKpis = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
