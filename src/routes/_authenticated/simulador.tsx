@@ -18,6 +18,7 @@ import {
   emptyApoderado,
 } from "@/lib/expedienteMaestro";
 import { obtenerAuditoriaQA } from "@/lib/qaAI.functions";
+import { clearSimulatorDraft } from "@/components/nuvex/useSimulatorDraft";
 import type { Expediente } from "@/lib/expedientes";
 
 const simSearchSchema = z.object({
