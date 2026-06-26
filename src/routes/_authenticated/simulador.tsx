@@ -193,6 +193,12 @@ function SimuladorPage() {
 
   return (
     <div>
+      {auditoriaId && (
+        <div className="mx-4 mt-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm text-amber-200">
+          🔍 <strong>Modo revisión QA:</strong> los campos del simulador se prellenan con los inputs exactos que el analista usó en la auditoría
+          (saldo capital, tasa pactada, seguros, cuota, UVR y desembolso). Cambios aquí no afectan al expediente del analista.
+        </div>
+      )}
       {!mode && <ModeSelector onPick={handlePickMode} />}
       {mode === "pesos" && (
         <PesosSimulator initialExpediente={initial} onReset={handleReset} simuladorReturn={simReturn} fromSimulador />
