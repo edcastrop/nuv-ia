@@ -908,6 +908,32 @@ const parseNum = (v: unknown): number | undefined => {
   return Number.isFinite(n) ? n : undefined;
 };
 
+type QaSupabase = {
+  from: (table: string) => {
+    select: (columns: string) => {
+      eq: (column: string, value: string) => {
+        maybeSingle: () => Promise<{ data: Record<string, unknown> | null }>;
+      };
+    };
+  };
+};
+
+async function resolverAnalistaRealQA(
+  supabase: QaSupabase,
+  params: { expedienteId?: string | null; extractoAsesorId?: string | null; inputAnalistaId?: string | null; fallbackUserId: string },
+): Promise<string> {
+  if (params.expedienteId) {
+    const { data: expRow } = await supabase
+      .from("expedientes")
+      .select("asesor_id")
+      .eq("id", params.expedienteId)
+      .maybeSingle();
+    const asesorId = typeof expRow?.asesor_id === "string" ? expRow.asesor_id : null;
+    if (asesorId) return asesorId;
+  }
+  return params.extractoAsesorId ?? params.inputAnalistaId ?? params.fallbackUserId;
+}
+
 const inferRemainingPayments = (saldo: number, tasaEaPct: number, cuotaFinanciera: number): number => {
   if (!(saldo > 0 && tasaEaPct > 0 && cuotaFinanciera > 0)) return 0;
   const i = Math.pow(1 + tasaEaPct / 100, 1 / 12) - 1;
