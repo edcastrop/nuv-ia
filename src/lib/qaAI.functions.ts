@@ -322,31 +322,36 @@ export const listAuditoriasQA = createServerFn({ method: "POST" })
 
     const baseRows = rows ?? [];
     const expIds = [...new Set(baseRows.map((r) => r.expediente_id).filter((id): id is string => !!id))];
-    const anaIds = [...new Set(baseRows.map((r) => r.analista_id).filter((id): id is string => !!id))];
     const extIds = [...new Set(baseRows.map((r) => r.extracto_id).filter((id): id is string => !!id))];
 
-    const [expRes, profRes, extRes] = await Promise.all([
+    const [expRes, extRes] = await Promise.all([
       expIds.length
-        ? context.supabase.from("expedientes").select("id,cliente_nombre,banco").in("id", expIds)
-        : Promise.resolve({ data: [] as Array<{ id: string; cliente_nombre: string | null; banco: string | null }> }),
-      anaIds.length
-        ? context.supabase.from("profiles").select("id,nombre").in("id", anaIds)
-        : Promise.resolve({ data: [] as Array<{ id: string; nombre: string | null }> }),
+        ? context.supabase.from("expedientes").select("id,cliente_nombre,banco,asesor_id").in("id", expIds)
+        : Promise.resolve({ data: [] as Array<{ id: string; cliente_nombre: string | null; banco: string | null; asesor_id: string | null }> }),
       extIds.length
         ? context.supabase.from("extractos_lecturas").select("id,archivo_path").in("id", extIds)
         : Promise.resolve({ data: [] as Array<{ id: string; archivo_path: string | null }> }),
     ]);
 
     const expMap = new Map((expRes.data ?? []).map((e) => [e.id, e]));
+    const effectiveAnaIds = [...new Set(baseRows.map((r) => {
+      const exp = r.expediente_id ? expMap.get(r.expediente_id) : undefined;
+      return exp?.asesor_id ?? r.analista_id;
+    }).filter((id): id is string => !!id))];
+    const profRes = effectiveAnaIds.length
+      ? await context.supabase.from("profiles").select("id,nombre").in("id", effectiveAnaIds)
+      : { data: [] as Array<{ id: string; nombre: string | null }> };
     const profMap = new Map((profRes.data ?? []).map((p) => [p.id, p]));
     const extMap = new Map((extRes.data ?? []).map((e) => [e.id, e]));
 
     const enriched = baseRows.map((r) => {
       const exp = r.expediente_id ? expMap.get(r.expediente_id) : undefined;
-      const prof = r.analista_id ? profMap.get(r.analista_id) : undefined;
+      const analistaId = exp?.asesor_id ?? r.analista_id;
+      const prof = analistaId ? profMap.get(analistaId) : undefined;
       const ext = r.extracto_id ? extMap.get(r.extracto_id) : undefined;
       return {
         ...r,
+        analista_id: analistaId,
         cliente_nombre: exp?.cliente_nombre ?? null,
         banco: exp?.banco ?? null,
         analista_nombre: prof?.nombre ?? null,
