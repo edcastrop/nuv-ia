@@ -418,7 +418,7 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
           banco: (extRow.banco as string | null) ?? null,
           producto: (extRow.producto as string | null) ?? null,
           moneda: (extRow.moneda as string | null) ?? null,
-          datos: (extRow.datos as Record<string, unknown> | null) ?? null,
+          datos: (extRow.datos as Json) ?? null,
           created_at: (extRow.created_at as string | null) ?? null,
         };
       }
