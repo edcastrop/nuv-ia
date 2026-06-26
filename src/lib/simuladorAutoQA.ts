@@ -74,11 +74,17 @@ export async function triggerSimuladorAutoQA(opts: {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("No autenticado");
     const datos = normalizeQaDatos(raw);
+    const { data: exp } = await supabase
+      .from("expedientes")
+      .select("asesor_id")
+      .eq("id", expedienteId)
+      .maybeSingle();
+    const analistaId = (exp as { asesor_id?: string | null } | null)?.asesor_id ?? user.id;
     const { data: inserted, error: insErr } = await supabase
       .from("extractos_lecturas")
       .insert({
         expediente_id: expedienteId,
-        asesor_id: user.id,
+        asesor_id: analistaId,
         aprobado_por: user.id,
         banco: raw.banco ?? (typeof datos.banco === "string" ? datos.banco : undefined),
         producto: raw.producto ?? (typeof datos.producto === "string" ? datos.producto : undefined),
