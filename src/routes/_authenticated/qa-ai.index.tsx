@@ -6,7 +6,7 @@ import { qaCommandCenter } from "@/lib/qaAI.functions";
 import { useUserRole } from "@/hooks/useUserRole";
 import { CopilotoQADrawer } from "@/components/qa-ai/CopilotoQADrawer";
 import { CommandCenter, type CCRow, type CCBank, type CCAnalista, type CCError, type CCTrend } from "@/components/qa-ai/command/CommandCenter";
-import { Brain, Plus, Bell, Settings, Sparkles } from "lucide-react";
+import { Brain, Plus, Bell, Settings, Sparkles, Trophy } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/qa-ai/")({
   component: QaAiDashboard,
@@ -69,6 +69,7 @@ function QaAiDashboard() {
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <HeaderButton onClick={() => setCopilotoOpen(true)} icon={<Sparkles size={14} />} label="Copiloto QA" />
             <Link to="/qa-ai/nuevo"><HeaderButton primary icon={<Plus size={14} />} label="Auditar nuevo" /></Link>
+            <Link to="/qa-ai/aprobados"><HeaderButton tone="success" icon={<Trophy size={14} />} label="Casos aprobados" /></Link>
             <Link to="/qa-ai/alertas"><HeaderButton icon={<Bell size={14} />} label="Alertas" /></Link>
             <Link to="/qa-ai/config"><HeaderButton icon={<Settings size={14} />} label="Reglas" /></Link>
           </div>
@@ -87,14 +88,15 @@ function QaAiDashboard() {
   );
 }
 
-function HeaderButton({ icon, label, primary, onClick }: { icon: React.ReactNode; label: string; primary?: boolean; onClick?: () => void }) {
+function HeaderButton({ icon, label, primary, tone, onClick }: { icon: React.ReactNode; label: string; primary?: boolean; tone?: "success"; onClick?: () => void }) {
+  const isSuccess = tone === "success";
   return (
     <button onClick={onClick} style={{
       display: "inline-flex", alignItems: "center", gap: 6,
       padding: "8px 14px", borderRadius: 10, fontSize: 12, fontWeight: 500, cursor: "pointer",
-      background: primary ? "linear-gradient(135deg, #5B8CFF 0%, #7B61FF 100%)" : "rgba(255,255,255,0.04)",
-      color: primary ? "#FFFFFF" : "#A8B3CF",
-      border: primary ? "1px solid rgba(91,140,255,0.5)" : "1px solid rgba(255,255,255,0.1)",
+      background: primary ? "linear-gradient(135deg, #5B8CFF 0%, #7B61FF 100%)" : isSuccess ? "rgba(31,210,134,0.10)" : "rgba(255,255,255,0.04)",
+      color: primary ? "#FFFFFF" : isSuccess ? "#1FD286" : "#A8B3CF",
+      border: primary ? "1px solid rgba(91,140,255,0.5)" : isSuccess ? "1px solid rgba(31,210,134,0.35)" : "1px solid rgba(255,255,255,0.1)",
       boxShadow: primary ? "0 8px 24px -10px rgba(91,140,255,0.6)" : "none",
     }}>{icon} {label}</button>
   );
