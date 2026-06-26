@@ -207,9 +207,13 @@ export function MotorExtractosNUVEX({ expedienteId, onConfirm }: Props) {
       const {
         data: { user },
       } = await supabase.auth.getUser();
+      const { data: exp } = expedienteId
+        ? await supabase.from("expedientes" as never).select("asesor_id").eq("id", expedienteId).maybeSingle()
+        : { data: null };
+      const analistaId = (exp as { asesor_id?: string | null } | null)?.asesor_id ?? user?.id ?? null;
       const { data: inserted, error: insErr } = await supabase.from("extractos_lecturas").insert({
         expediente_id: expedienteId ?? null,
-        asesor_id: user?.id,
+        asesor_id: analistaId,
         aprobado_por: user?.id,
         banco: result.banco,
         producto: result.producto || null,
