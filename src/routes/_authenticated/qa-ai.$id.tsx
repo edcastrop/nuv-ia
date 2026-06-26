@@ -331,21 +331,6 @@ function ResultadoQaAi() {
   const [copilotoOpen, setCopilotoOpen] = useState(false);
   const [verTodas, setVerTodas] = useState(false);
   const [reloading, setReloading] = useState(false);
-  const [nombre, setNombre] = useState<string>("Analista");
-
-  useEffect(() => {
-    let cancel = false;
-    (async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user || cancel) return;
-        const { data: prof } = await supabase.from("profiles" as never).select("nombre").eq("id", user.id).maybeSingle();
-        const n = (prof as { nombre?: string } | null)?.nombre ?? user.user_metadata?.full_name ?? null;
-        if (!cancel) setNombre(primerNombre(n, user.email));
-      } catch { /* noop */ }
-    })();
-    return () => { cancel = true; };
-  }, []);
 
   useEffect(() => { (async () => setData(await fetchAud({ data: { id } }) as {
     auditoria: Record<string, unknown> | null;
@@ -458,6 +443,7 @@ function ResultadoQaAi() {
   const banco = (ex.banco as string) || "—";
   const producto = a.modalidad === "uvr" ? "Hipotecario UVR" : a.modalidad === "hipotecario" ? "Hipotecario" : a.modalidad === "leasing" ? "Leasing" : String(a.modalidad ?? "Crédito");
   const fecha = new Date(a.ejecutado_at).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" });
+  const nombreAnalista = primerNombre(data?.analista?.nombre ?? data?.ejecutor?.nombre, data?.analista?.email ?? data?.ejecutor?.email);
 
   /* ----- Mensaje NUVIA al hero ----- */
   const msgArr = cert.estado === "certificado" ? MSGS_APROBADO
@@ -674,14 +660,7 @@ function ResultadoQaAi() {
             </div>
 
             <p className="mt-5 text-[15px] leading-snug max-w-xl" style={{ color: "var(--nuvia-text-primary)" }}>
-              <span className="font-semibold">
-                {(() => {
-                  const h = new Date().getHours();
-                  if (h < 12) return "Buenos días";
-                  if (h < 19) return "Buenas tardes";
-                  return "Buenas noches";
-                })()}, {nombre}.
-              </span>{" "}
+              <span className="font-semibold">Caso auditado: {nombreAnalista}.</span>{" "}
               <span style={{ color: "var(--nuvia-text-secondary)" }}>{mensajeHero}</span>
             </p>
 
