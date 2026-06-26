@@ -194,8 +194,8 @@ function SimuladorPage() {
   return (
     <div>
       {auditoriaId && (
-        <div className="mx-4 mt-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm text-amber-200">
-          🔍 <strong>Modo revisión QA:</strong> los campos del simulador se prellenan con los inputs exactos que el analista usó en la auditoría
+        <div className="mx-4 mt-4 rounded-lg border border-amber-600 bg-amber-100 px-4 py-3 text-sm text-amber-950 shadow-sm dark:border-amber-500/50 dark:bg-amber-500/15 dark:text-amber-100">
+          🔍 <strong className="font-semibold">Modo revisión QA:</strong> los campos del simulador se prellenan con los inputs exactos que el analista usó en la auditoría
           (saldo capital, tasa pactada, seguros, cuota, UVR y desembolso). Cambios aquí no afectan al expediente del analista.
         </div>
       )}
