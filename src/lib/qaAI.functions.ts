@@ -561,9 +561,21 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
         };
       }
     }
+    let analistaIdVista = (auditoria.analista_id as string | null) ?? null;
+    if (auditoria.expediente_id) {
+      const { data: expRow } = await context.supabase
+        .from("expedientes")
+        .select("asesor_id")
+        .eq("id", auditoria.expediente_id as string)
+        .maybeSingle();
+      if (expRow?.asesor_id) analistaIdVista = expRow.asesor_id as string;
+      if (analistaIdVista && analistaIdVista !== auditoria.analista_id) {
+        auditoria = { ...auditoria, analista_id: analistaIdVista } as typeof aud;
+      }
+    }
     const [analistaProf, ejecutorProf] = await Promise.all([
-      (auditoria.analista_id as string)
-        ? context.supabase.from("profiles").select("id,nombre,email").eq("id", auditoria.analista_id as string).maybeSingle()
+      analistaIdVista
+        ? context.supabase.from("profiles").select("id,nombre,email").eq("id", analistaIdVista).maybeSingle()
         : Promise.resolve({ data: null }),
       (auditoria.ejecutado_by as string)
         ? context.supabase.from("profiles").select("id,nombre,email").eq("id", auditoria.ejecutado_by as string).maybeSingle()
