@@ -1,84 +1,41 @@
-## NUVIA Financial QA AI — Command Center Redesign
+# Case Snapshot PDF — Resumen ejecutivo del caso
 
-Rediseño completo de la **capa visual, operativa y analítica** del módulo. **No se toca** lógica matemática, motor QA, reglas, score, base de datos, permisos, automatizaciones ni integraciones. Todo el dashboard lee data real desde los server functions existentes (`qaAI.functions.ts`), extendiendo solo las consultas de lectura cuando haga falta para alimentar los nuevos paneles.
+Módulo nuevo, **aditivo**: no toca expediente, PDFs comerciales, contratos, informes ni permisos existentes.
 
-### Archivos a crear/modificar
+## Entregables
 
-**Modificar** (frontend puro):
-- `src/routes/_authenticated/qa-ai.index.tsx` — reemplazar dashboard actual por command center
-- `src/lib/qaAI.functions.ts` — **agregar** server fns de lectura agregada (no se toca lo existente):
-  - `qaRiesgoPorBanco()` — agregaciones por banco desde `qa_auditorias`
-  - `qaRankingAnalistas()` — agregaciones por analista
-  - `qaTopInconsistencias()` — top desde `qa_inconsistencias`
-  - `qaTendencia30d()` — serie 30 días
-  - `qaColaRevision(filters)` — lista priorizada
-  - `qaCopilotoSignals()` — señales para panel lateral
+1. **`src/lib/caseSnapshot.functions.ts`** — `getCaseSnapshotData(expedienteId)` server fn con `requireSupabaseAuth`. Agrupa en un único payload tipado:
+   - Expediente, cliente, banco, producto, estado, fecha, analista (resuelto vía `resolverAnalistaRealQA` ya existente), score QA, nivel autonomía.
+   - Perfil cliente (de `clientes` + `analisis_capacidad_pago` más reciente).
+   - Perfil crédito (última lectura en `extractos_lecturas` + `expedientes`).
+   - Propuesta seleccionada (de `expediente_proyecciones` / `proyeccion_escenarios` marcado como recomendado).
+   - Honorarios (`honorarios_calculos` + `cuentas_cobro` + `comisiones`).
+   - Estado operativo (de `expediente_checklist_*`, `envios_contratacion`, `audit_respuestas_banco`, `cartera`).
+   - Intervinientes (analista, director financiero, jurídica, apoderado, contabilidad, gerencias — vía `user_roles` + `profiles`).
+   - Trazabilidad (últimos 10 de `expediente_historial` / `caso_eventos`).
 
-**Crear** componentes en `src/components/qa-ai/`:
-- `QAFilterBar.tsx` — barra sticky de filtros globales (FASE 1)
-- `PanelPrioridad.tsx` — 6 cards "Requieren tu atención" (FASE 2)
-- `HeatmapBancos.tsx` — tabla riesgo por banco (FASE 3)
-- `RankingAnalistas.tsx` — tabla desempeño + nivel autonomía (FASE 4)
-- `TopInconsistencias.tsx` — lista con tendencia/gravedad (FASE 5)
-- `TendenciaQAChart.tsx` — gráfico líneas 30 días (FASE 6, recharts)
-- `ColaRevision.tsx` — tabla priorizada con acciones (FASE 7)
-- `CopilotoQAPanel.tsx` — panel lateral señales automáticas (FASE 8, reutiliza drawer existente)
-- `ReconstruirCasoButton.tsx` — modo investigación (FASE 9, abre `qa-ai/$id` con todos los bloques)
+2. **`src/lib/caseSnapshotPdf.ts`** — Generador con `pdf-lib` (ya usado en `paqueteDocumentalPdf.ts`). Diseño **NUVIA dark premium**:
+   - Paleta: fondo `#0B1226`, superficie `#141C30`, borde `rgba(255,255,255,0.08)`, primario `#445DA3`, accent `#84B98F`, texto `#F5F7FB`, secundario `#A8B1C8`.
+   - Tipografía Helvetica/HelveticaBold (built-in pdf-lib). Mayúsculas para labels, tabular para cifras.
+   - Estructura: portada, perfil cliente, perfil crédito, propuesta (con badge "RECOMENDADA POR NUVIA"), honorarios, timeline operativo (10 hitos con check/dot), intervinientes, trazabilidad. Header con logo NUVIA + footer con paginación, fecha de emisión, "Financial Intelligence Executive Snapshot".
+   - Formateo COP con `formatCOP` existente (`src/lib/format.ts`).
 
-### Layout final del dashboard
+3. **`src/components/expediente/CaseSnapshotButton.tsx`** — Botón "Descargar Case Snapshot" (icono `FileDown`), tono NUVIA primary glow. Estados: idle / loading / done. Visible para roles: `analista`, `director_financiero`, `juridica`, `apoderado`, `contabilidad`, `gerencia_administrativa`, `gerencia_comercial`, `super_admin`, `admin`. Usa `useUserRole` + `useServerFn` + descarga vía `descargarBlob`.
 
-```text
-┌───────────────────────────────────────────────────────────┐
-│ HERO: NUVIA Financial QA AI                               │
-│ Centro de Control de Auditoría Matemática y Riesgo Op.    │
-├───────────────────────────────────────────────────────────┤
-│ [Filtros sticky: Analista|Banco|Producto|Modal|UVR|...]   │
-├───────────────────────────────────────────────────────────┤
-│ REQUIEREN TU ATENCIÓN (6 cards clickeables)               │
-│ [Bloqueados] [Esp.Dictamen] [Devueltos] [Críticas]        │
-│ [UVR sin rev] [Vencidos SLA]                              │
-├──────────────────────────┬────────────────────────────────┤
-│ RIESGO POR BANCO         │ RANKING ANALISTAS              │
-│ (heatmap, click→filtra)  │ (precisión, autonomía L1/L2/L3)│
-├──────────────────────────┼────────────────────────────────┤
-│ TOP INCONSISTENCIAS      │ TENDENCIA QA 30d (líneas)      │
-├──────────────────────────┴────────────────────────────────┤
-│ COLA DE REVISIÓN (orden inteligente + acciones)           │
-│ Cliente|Banco|Analista|Producto|Modal|Score|Riesgo|Estado │
-│ Acciones: Ver | Dictamen | Devolver | Aprobar | Reconstruir│
-└───────────────────────────────────────────────────────────┘
-                       ┌──────────────────────┐
-                       │ COPILOTO QA (drawer) │
-                       │ señales automáticas  │
-                       └──────────────────────┘
-```
+4. **Integración**: insertar `<CaseSnapshotButton expedienteId={exp.id} />` en `src/components/expediente/ResumenEjecutivo.tsx` dentro del `action` del `SectionHeader` (junto al % avance). Sin migraciones, sin cambios de schema.
 
-### Reglas de cálculo (solo presentación, no motor)
+## Detalles técnicos
 
-- **Riesgo banco**: alto si `avg_score<90` o `%error>15`; medio 90–95; bajo >95
-- **Autonomía analista**: L1 supervisado (precisión<85 o <10 casos); L2 semi (85–94); L3 autónomo (≥95 y ≥30 casos)
-- **Orden cola**: `prioridad = (critico*1000) + (bloqueado*500) + (100-score)*10 + diasAntiguedad + ticket/1M`
-- **SLA vencido**: `ejecutado_at > 48h` sin dictamen final
+- Server fn devuelve DTO plano (sin `Date`, sin instancias). Errores controlados → fallback con campos vacíos para no romper PDF.
+- Resolución de analista: reutiliza patrón existente que prioriza `expedientes.asesor_id` sobre el caller.
+- Datos faltantes → render como "—", nunca crashea.
+- PDF tamaño Letter, márgenes 50pt, secciones con tarjetas redondeadas simuladas (`drawRectangle` con borde + fill translúcido).
+- Timeline operativo: 10 dots horizontales con color verde (hecho) / amarillo (en curso) / gris (pendiente).
+- No instala dependencias nuevas (pdf-lib ya está).
+- No modifica RLS, permisos, ni rutas existentes.
 
-### Diseño visual
+## Validaciones post-build
 
-- Tokens NUVIA existentes: `#242424` fondo, `#445DA3` azul accent, `#84B98F` verde éxito, `#FFFFFF` texto
-- Componentes `NCard`, `KpiCard`, `SectionHeader`, `nuvia-input`, `NSelect` (memoria de inputs dark)
-- Tablas: `color` explícito en cada `th`/`td` con tokens (memoria dark-table)
-- Gráficos: recharts ya disponible, líneas finas estilo Bloomberg
-- Cards de prioridad: borde lateral 3px con color de severidad
-
-### Validaciones antes de entregar
-
-- Tipos OK (`tsgo`), build limpio
-- Server fns existentes (`qaKpis`, `listAuditoriasQA`, `obtenerAuditoriaQA`) **intactas**
-- Permisos vía `useUserRole().canValidarProyeccion` se mantienen
-- CopilotoQADrawer existente sigue funcionando
-- Navegación a `/qa-ai/$id`, `/qa-ai/nuevo`, `/qa-ai/alertas`, `/qa-ai/config` intacta
-- Botón "Abrir simulación del analista" en `qa-ai/$id` intacto
-
-### Fuera de alcance (no se toca)
-
-Motor matemático, `qaMath.ts`, `qaGuard.ts`, `simuladorAutoQA.ts`, reglas en `qa_reglas`, score, RLS, migraciones, edge functions, `qa-ai.$id.tsx`, `qa-ai.nuevo.tsx`, `qa-ai.config.tsx`, `qa-ai.alertas.tsx`.
-
-¿Apruebas el plan para implementarlo?
+- Build limpio.
+- Abrir caso → botón visible → PDF se descarga con datos reales del caso actual.
+- Verificar en preview (Playwright) que el botón aparece y descarga sin error de consola.
