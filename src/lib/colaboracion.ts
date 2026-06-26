@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type CanalTipo = "area" | "caso" | "dm" | "custom";
+export type CanalTipo = "area" | "caso" | "dm" | "custom" | "qa_auditoria";
 
 export interface Canal {
   id: string;
