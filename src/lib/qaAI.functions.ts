@@ -275,7 +275,9 @@ export const listAuditoriasQA = createServerFn({ method: "POST" })
         banco: exp?.banco ?? null,
         analista_nombre: prof?.nombre ?? null,
         tiene_extracto: !!(ext && ext.archivo_path),
+        extracto_path: ext?.archivo_path ?? null,
       };
+
     });
 
     return { rows: enriched };
