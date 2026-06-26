@@ -392,6 +392,30 @@ export function PesosSimulator({
     );
   }, [recomendada?.nuevaCuota, recomendada?.index, init?.id]);
 
+  // V2 QA: cuando el simulador corre en modo sandbox de revisión QA
+  // (expediente.id con prefijo `qa-review-`), retransmite los inputs vivos
+  // que el auditor está editando para que la Comparativa Analista vs Auditor
+  // pueda calcular diferencias en tiempo real, sin guardar nada.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const id = init?.id;
+    if (!id || !id.startsWith("qa-review-")) return;
+    window.dispatchEvent(
+      new CustomEvent("nuvex:simulador-inputs", {
+        detail: {
+          expedienteId: id,
+          modo: "pesos",
+          saldoCapital: saldoCapitalNum,
+          tasaEa: parsePercentage(tea),
+          seguros: segurosNum,
+          cuotaBase: cuotaSimulacionNum,
+          cuotasPendientes,
+          nuevaCuota: recomendada?.nuevaCuota ?? null,
+        },
+      }),
+    );
+  }, [init?.id, saldoCapitalNum, tea, segurosNum, cuotaSimulacionNum, cuotasPendientes, recomendada?.nuevaCuota]);
+
   const ahorroNegativo = recomendada && (recomendada.ahorroTotal < 0 || recomendada.honorarios < 0);
 
   const cuotasBaseSimulacion = Math.max(0, cuotasPendientes);
