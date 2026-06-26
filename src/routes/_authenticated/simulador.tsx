@@ -273,9 +273,24 @@ function SimuladorPage() {
   return (
     <div>
       {auditoriaId && (
-        <div className="sticky top-0 z-[60] mx-4 mt-4 rounded-lg border-2 border-amber-500 bg-amber-300 px-4 py-3 text-sm font-medium text-slate-950 shadow-lg">
-          🔍 <strong className="font-semibold">Modo revisión QA:</strong> los campos del simulador se prellenan con los inputs exactos que el analista usó en la auditoría
-          (saldo capital, tasa pactada, seguros, cuota, UVR y desembolso). Cambios aquí no afectan al expediente del analista.
+        <div className="sticky top-0 z-[60] mx-4 mt-4 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-r from-[#0B1220] via-[#111A2E] to-[#0B1220] shadow-[0_18px_50px_-22px_rgba(0,0,0,0.8)] backdrop-blur">
+          <div className="flex items-start gap-3 px-5 py-4">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-400/30 bg-amber-400/10 text-amber-300 shadow-[0_0_24px_-6px_rgba(251,191,36,0.55)]">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+            </div>
+            <div className="flex-1 text-[13px] leading-relaxed text-slate-200">
+              <div className="mb-0.5 flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 rounded-full border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-300">Modo revisión QA</span>
+                <span className="text-[11px] uppercase tracking-[0.18em] text-slate-500">NUVIA · Financial QA AI</span>
+              </div>
+              <p className="text-slate-300/90">
+                Los campos se prellenan con los inputs exactos del analista en la auditoría —{" "}
+                <span className="text-slate-100">saldo capital, tasa pactada, seguros, cuota, UVR y desembolso</span>. Cualquier cambio aquí{" "}
+                <span className="font-medium text-amber-300">no afecta</span> el expediente original.
+              </p>
+            </div>
+          </div>
+          <div className="h-px bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
         </div>
       )}
       {!mode && <ModeSelector onPick={handlePickMode} />}
