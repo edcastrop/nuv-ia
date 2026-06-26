@@ -346,7 +346,13 @@ function ResultadoQaAi() {
     return () => { cancel = true; };
   }, []);
 
-  useEffect(() => { (async () => setData(await fetchAud({ data: { id } }) as { auditoria: Record<string, unknown> | null; inconsistencias: Inc[]; extracto?: ExtractoInfo | null }))(); }, [id, fetchAud]);
+  useEffect(() => { (async () => setData(await fetchAud({ data: { id } }) as {
+    auditoria: Record<string, unknown> | null;
+    inconsistencias: Inc[];
+    extracto?: ExtractoInfo | null;
+    analista?: { nombre?: string | null; email?: string | null } | null;
+    ejecutor?: { nombre?: string | null; email?: string | null } | null;
+  }))(); }, [id, fetchAud]);
 
   const recomputo = useMemo(() => {
     if (!data?.auditoria) return null;
