@@ -19,6 +19,7 @@ import {
   Minus, FileDown, Sparkles, RefreshCw, Trophy, ChevronDown, MessageCircle, Coins, Gauge,
   Rocket, FileText, Paperclip,
 } from "lucide-react";
+import { ConversacionAuditoria } from "@/components/qa-ai/ConversacionAuditoria";
 
 
 const qaSearchSchema = z.object({
@@ -963,6 +964,16 @@ function ResultadoQaAi() {
       </div>
 
       <ExtractoOriginalAccordion extracto={data.extracto ?? null} />
+
+      <ConversacionAuditoria
+        auditoriaId={id}
+        cliente={cliente}
+        banco={banco}
+        participantes={[
+          (data.auditoria?.analista_id as string | null) ?? null,
+          (data.auditoria?.ejecutado_by as string | null) ?? null,
+        ]}
+      />
 
       <Accordion title="Veredicto técnico completo" icon={<Brain size={15} style={{ color: "var(--nuvia-accent)" }} />}>
         <div className="-mt-px">
