@@ -88,6 +88,67 @@ const mapInconsistencias = (auditoriaId: string, incs: Inconsistencia[]): QAInco
     created_at: new Date(0).toISOString(),
   }));
 
+// ─────────────────────────────────────────────────────────────
+// Notifica a Directores Financieros QA + Super Admins que llegó
+// una nueva proyección/auditoría a revisar. Se ejecuta en el
+// servidor justo después de insertar en `qa_auditorias`, para
+// que el bell + toast + sonido lleguen en tiempo real vía la
+// suscripción de `notificaciones_usuario` en el cliente.
+// Nunca rompe la acción principal: cualquier fallo se traga.
+// ─────────────────────────────────────────────────────────────
+async function notificarQASolicitadaServer(
+  supabase: { from: (t: string) => unknown },
+  params: { expedienteId: string | null; analistaId: string | null; auditoriaId: string; dictamen: string; score: number },
+): Promise<void> {
+  try {
+    if (!params.expedienteId) return;
+    const sb = supabase as unknown as {
+      from: (t: string) => {
+        select: (c: string) => {
+          in: (k: string, v: string[]) => Promise<{ data: Array<{ user_id: string }> | null }>;
+          eq: (k: string, v: string) => { maybeSingle: () => Promise<{ data: { cliente_nombre?: string | null; banco?: string | null } | null }> };
+        };
+        insert: (rows: unknown[]) => Promise<unknown>;
+      };
+    };
+
+    const { data: roleRows } = await sb
+      .from("user_roles")
+      .select("user_id")
+      .in("role", ["director_financiero_qa", "super_admin"]);
+    const ids = Array.from(new Set((roleRows ?? []).map((r) => r.user_id).filter(Boolean)));
+    const targets = params.analistaId ? ids.filter((u) => u !== params.analistaId) : ids;
+    if (targets.length === 0) return;
+
+    const { data: exp } = await sb
+      .from("expedientes")
+      .select("cliente_nombre,banco")
+      .eq("id", params.expedienteId)
+      .maybeSingle();
+    const cliente = exp?.cliente_nombre ?? null;
+    const banco = exp?.banco ?? null;
+    const partes = [cliente, banco].filter(Boolean).join(" · ");
+
+    const severidad: "alta" | "media" =
+      params.dictamen === "rechazado" || params.dictamen === "devuelto" || params.score < 70 ? "alta" : "media";
+
+    await sb.from("notificaciones_usuario").insert(
+      targets.map((u) => ({
+        user_id: u,
+        tipo: "qa_solicitada",
+        titulo: "Nueva proyección para auditar",
+        mensaje: partes ? `${partes} — score ${Math.round(params.score)}` : `Score ${Math.round(params.score)}`,
+        link: `/qa-ai/${params.auditoriaId}`,
+        severidad,
+        metadata: { expediente_id: params.expedienteId, auditoria_id: params.auditoriaId, dictamen: params.dictamen, score: params.score },
+      })),
+    );
+  } catch {
+    /* swallow */
+  }
+}
+
+
 const AuditarInputSchema = z.object({
   expedienteId: z.string().uuid().nullable().optional(),
   simulacionId: z.string().uuid().nullable().optional(),
@@ -230,8 +291,17 @@ export const auditarCaso = createServerFn({ method: "POST" })
       user_id: userId,
     });
 
+    await notificarQASolicitadaServer(supabase as never, {
+      expedienteId: data.expedienteId ?? null,
+      analistaId: userId,
+      auditoriaId,
+      dictamen: String(result.score.dictamen),
+      score: Number(result.score.score) || 0,
+    });
+
     return { auditoriaId, ...result };
   });
+
 
 export const listAuditoriasQA = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -1036,6 +1106,16 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
       payload: { score: result.score.score, dictamen: result.score.dictamen, fuente: "lector_extractos" },
       user_id: userId,
     });
+
+    await notificarQASolicitadaServer(supabase as never, {
+      expedienteId: ext.expediente_id ?? null,
+      analistaId: userId,
+      auditoriaId,
+      dictamen: String(result.score.dictamen),
+      score: Number(result.score.score) || 0,
+    });
+
+
 
     return {
       auditoriaId,
