@@ -1598,6 +1598,7 @@ export type Database = {
         Row: {
           archivado: boolean
           area: string | null
+          auditoria_id: string | null
           caso_id: string | null
           created_at: string
           created_by: string | null
@@ -1611,6 +1612,7 @@ export type Database = {
         Insert: {
           archivado?: boolean
           area?: string | null
+          auditoria_id?: string | null
           caso_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -1624,6 +1626,7 @@ export type Database = {
         Update: {
           archivado?: boolean
           area?: string | null
+          auditoria_id?: string | null
           caso_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -6079,7 +6082,7 @@ export type Database = {
         | "proyeccion_pendiente_qa"
         | "proyeccion_aprobada_qa"
         | "proyeccion_devuelta_qa"
-      colab_canal_tipo: "area" | "caso" | "dm" | "custom"
+      colab_canal_tipo: "area" | "caso" | "dm" | "custom" | "qa_auditoria"
       expediente_estado:
         | "SIMULADO"
         | "FIRMADO"
@@ -6419,7 +6422,7 @@ export const Constants = {
         "proyeccion_aprobada_qa",
         "proyeccion_devuelta_qa",
       ],
-      colab_canal_tipo: ["area", "caso", "dm", "custom"],
+      colab_canal_tipo: ["area", "caso", "dm", "custom", "qa_auditoria"],
       expediente_estado: [
         "SIMULADO",
         "FIRMADO",
