@@ -158,8 +158,16 @@ function SimuladorPage() {
       try {
         let exp: Expediente | null = null;
         if (maestroId) {
-          const m = await getMaestro(maestroId);
-          exp = await ensureOperativeExpedienteForMaestro(m);
+          try {
+            const m = await getMaestro(maestroId);
+            exp = await ensureOperativeExpedienteForMaestro(m);
+          } catch {
+            if (auditoriaId) {
+              try { exp = await getExpediente(maestroId); } catch { /* la auditoría puede no tener caso operativo */ }
+            } else {
+              throw new Error("No se encontró este expediente maestro o ya no está disponible.");
+            }
+          }
         }
         if (auditoriaId) {
           try {
