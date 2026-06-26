@@ -1450,16 +1450,13 @@ export const qaCommandCenter = createServerFn({ method: "POST" })
     const audits = audRaw ?? [];
 
     const expIds = [...new Set(audits.map((r) => r.expediente_id).filter((id): id is string => !!id))];
-    const anaIds = [...new Set(audits.map((r) => r.analista_id).filter((id): id is string => !!id))];
     const extIds = [...new Set(audits.map((r) => r.extracto_id).filter((id): id is string => !!id))];
 
-    const [expRes, profRes, extRes, alertasRes, incsRes] = await Promise.all([
+    const [expRes, extRes, alertasRes, incsRes] = await Promise.all([
       expIds.length ? supabase.from("expedientes")
         .select("id,cliente_nombre,banco,producto,estado_caso,subestado,sla_vence_at,validacion_estado,asesor_id,honorarios_final,credito_data")
         .in("id", expIds)
         : Promise.resolve({ data: [] as Array<Record<string, unknown>> }),
-      anaIds.length ? supabase.from("profiles").select("id,nombre").in("id", anaIds)
-        : Promise.resolve({ data: [] as Array<{ id: string; nombre: string | null }> }),
       extIds.length ? supabase.from("extractos_lecturas").select("id,archivo_path").in("id", extIds)
         : Promise.resolve({ data: [] as Array<{ id: string; archivo_path: string | null }> }),
       supabase.from("qa_alertas")
@@ -1472,6 +1469,12 @@ export const qaCommandCenter = createServerFn({ method: "POST" })
     ]);
 
     const expMap = new Map((expRes.data ?? []).map((e) => [e.id as string, e]));
+    const effectiveAnaIds = [...new Set(audits.map((r) => {
+      const exp = r.expediente_id ? expMap.get(r.expediente_id) : undefined;
+      return (exp?.asesor_id as string | null | undefined) ?? r.analista_id;
+    }).filter((id): id is string => !!id))];
+    const profRes = effectiveAnaIds.length ? await supabase.from("profiles").select("id,nombre").in("id", effectiveAnaIds)
+      : { data: [] as Array<{ id: string; nombre: string | null }> };
     const profMap = new Map((profRes.data ?? []).map((p) => [p.id, p]));
     const extMap = new Map((extRes.data ?? []).map((e) => [e.id, e]));
     const alertas = alertasRes.data ?? [];
@@ -1490,7 +1493,8 @@ export const qaCommandCenter = createServerFn({ method: "POST" })
     const nowMs = Date.now();
     const rows = audits.map((r) => {
       const exp = r.expediente_id ? expMap.get(r.expediente_id) : undefined;
-      const prof = r.analista_id ? profMap.get(r.analista_id) : undefined;
+      const analistaId = ((exp?.asesor_id as string | null | undefined) ?? r.analista_id) || null;
+      const prof = analistaId ? profMap.get(analistaId) : undefined;
       const ext = r.extracto_id ? extMap.get(r.extracto_id) : undefined;
       const al = alertasByAud.get(r.id) ?? { abiertas: 0, criticas: 0 };
       const sla = exp?.sla_vence_at ? new Date(exp.sla_vence_at as string).getTime() : null;
@@ -1503,7 +1507,7 @@ export const qaCommandCenter = createServerFn({ method: "POST" })
         return Number(rec.coberturaFrechValorMensual ?? 0) > 0 || Number(rec.coberturaFrechPp ?? 0) > 0;
       })();
       return {
-        id: r.id, expediente_id: r.expediente_id, analista_id: r.analista_id,
+        id: r.id, expediente_id: r.expediente_id, analista_id: analistaId,
         modalidad: r.modalidad as string,
         qa_score: Number(r.qa_score ?? 0),
         categoria: r.categoria as string, dictamen: r.dictamen as string,
