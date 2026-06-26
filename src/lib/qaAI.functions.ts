@@ -545,7 +545,15 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
         };
       }
     }
-    return { auditoria, inconsistencias: inconsistenciasOverride ?? inconsistenciasDb, extracto };
+    const [analistaProf, ejecutorProf] = await Promise.all([
+      (auditoria.analista_id as string)
+        ? context.supabase.from("profiles").select("id,nombre,email").eq("id", auditoria.analista_id as string).maybeSingle()
+        : Promise.resolve({ data: null }),
+      (auditoria.ejecutado_by as string)
+        ? context.supabase.from("profiles").select("id,nombre,email").eq("id", auditoria.ejecutado_by as string).maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
+    return { auditoria, inconsistencias: inconsistenciasOverride ?? inconsistenciasDb, extracto, analista: analistaProf.data, ejecutor: ejecutorProf.data };
   });
 
 
