@@ -617,7 +617,7 @@ function AuthenticatedLayout() {
                 ? [{ to: "/productividad", label: "Productividad", Icon: BarChart3 }]
                 : []),
               ...(hasAny("super_admin", "admin", "director_financiero_qa", "gerencia")
-                ? [{ to: "/qa", label: "QA", Icon: ClipboardCheck }]
+                ? [{ to: "/qa-ai", label: "NUVIA QA AI", Icon: ClipboardCheck }]
                 : []),
             ],
           },

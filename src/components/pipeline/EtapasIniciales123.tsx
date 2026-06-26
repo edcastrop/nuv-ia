@@ -326,7 +326,7 @@ function EtapaPanel({
               {validacion?.resultado === "devuelta" ? "Reenviar a QA" : "Enviar a QA"}
             </button>
             <Link
-              to="/qa"
+              to="/qa-ai"
               className="text-[11px] text-[#445DA3] hover:underline"
             >
               Ver tablero QA →
