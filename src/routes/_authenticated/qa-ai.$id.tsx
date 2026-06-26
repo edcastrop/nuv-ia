@@ -20,6 +20,7 @@ import {
   Rocket, FileText, Paperclip,
 } from "lucide-react";
 import { ConversacionAuditoria } from "@/components/qa-ai/ConversacionAuditoria";
+import { ReconstruccionAuditorBlock } from "@/components/qa-ai/ReconstruccionAuditorBlock";
 
 
 const qaSearchSchema = z.object({
@@ -1015,6 +1016,16 @@ function ResultadoQaAi() {
       </div>
 
       <ExtractoOriginalAccordion extracto={data.extracto ?? null} />
+
+      {inputs ? (
+        <ReconstruccionAuditorBlock
+          auditoriaId={id}
+          auditoria={a as unknown as Record<string, unknown>}
+          inputs={inputs as unknown as Record<string, unknown>}
+          cliente={cliente}
+          banco={banco}
+        />
+      ) : null}
 
       <ConversacionAuditoria
         auditoriaId={id}

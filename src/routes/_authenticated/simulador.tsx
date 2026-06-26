@@ -20,6 +20,7 @@ import {
 import { obtenerAuditoriaQA } from "@/lib/qaAI.functions";
 import { clearSimulatorDraft } from "@/components/nuvex/useSimulatorDraft";
 import { getExpediente, type Expediente } from "@/lib/expedientes";
+import { overlayAuditInputs, expedienteFromAudit } from "@/lib/qaReviewExpediente";
 
 const simSearchSchema = z.object({
   maestroId: z.string().optional(),
@@ -35,104 +36,8 @@ export const Route = createFileRoute("/_authenticated/simulador")({
   }),
 });
 
-function numToStr(v: unknown): string {
-  if (v === null || v === undefined || v === "") return "";
-  const n = Number(v);
-  if (!Number.isFinite(n)) return "";
-  return String(n);
-}
 
-function overlayAuditInputs(exp: Expediente, inputs: Record<string, unknown>): Expediente {
-  const rec = (inputs.reconstruccion ?? {}) as Record<string, unknown>;
-  const ext = (inputs.extracto ?? {}) as Record<string, unknown>;
-  const cred = { ...(exp.credito_data ?? {}) } as Record<string, string>;
-  const setIfEmpty = (k: string, v: string) => {
-    if (v && !cred[k]) cred[k] = v;
-  };
-  // Override siempre con datos auditados (fuente de verdad para revisión QA).
-  const saldoCapital = numToStr(rec.saldoCapital ?? ext.saldoCapital);
-  const tasa = numToStr(rec.tasaEa ?? ext.tasaEa);
-  const tasaPactada = numToStr(rec.tasaEaPactada);
-  const seguros = numToStr(rec.seguros ?? ext.seguros);
-  const cuotaBase = numToStr(rec.cuotaBaseSinSubsidio ?? ext.cuota);
-  const valorDesembolsado = numToStr(rec.valorDesembolsado);
-  const saldoUVR = numToStr(rec.saldoUVR);
-  const valorUVR = numToStr(rec.valorUVR);
-  const variacionUVR = numToStr(rec.variacionUvrEa);
-  if (saldoCapital) { cred.saldoCapital = saldoCapital; cred.saldoPesos = saldoCapital; }
-  if (tasa) { cred.tea = tasa; cred.teaCobrada = tasaPactada || tasa; }
-  if (seguros) cred.seguros = seguros;
-  if (cuotaBase) { cred.cuotaActual = cuotaBase; cred.cuotaActualPesos = cuotaBase; }
-  if (valorDesembolsado) cred.valorDesembolsado = valorDesembolsado;
-  if (saldoUVR) cred.saldoUVR = saldoUVR;
-  if (valorUVR) cred.valorUVR = valorUVR;
-  if (variacionUVR) cred.variacionUVR = variacionUVR;
-  setIfEmpty("interesMensualExtracto", numToStr(ext.intereses));
-  setIfEmpty("capitalMensualExtracto", numToStr(ext.capital));
-  return { ...exp, credito_data: cred as never };
-}
 
-function expedienteFromAudit(auditoria: Record<string, unknown>, inputs: Record<string, unknown>): Expediente {
-  const rec = (inputs.reconstruccion ?? {}) as Record<string, unknown>;
-  const ext = (inputs.extracto ?? {}) as Record<string, unknown>;
-  const modalidad = String(inputs.modalidad ?? auditoria.modalidad ?? "pesos");
-  const id = typeof auditoria.expediente_id === "string" && auditoria.expediente_id
-    ? auditoria.expediente_id
-    : `qa-review-${String(auditoria.id ?? "temporal")}`;
-  return {
-    id,
-    asesor_id: typeof auditoria.analista_id === "string" ? auditoria.analista_id : "",
-    modo: modalidad === "uvr" ? "uvr" : "pesos",
-    cliente_nombre: "Revisión QA",
-    cedula: null,
-    banco: typeof ext.banco === "string" ? ext.banco : null,
-    numero_credito: typeof ext.numeroObligacion === "string" ? ext.numeroObligacion : null,
-    producto: modalidad === "uvr" ? "Crédito UVR" : "Crédito en pesos",
-    cliente_data: {
-      nombre: "",
-      cedula: "",
-      numeroCredito: typeof ext.numeroObligacion === "string" ? ext.numeroObligacion : "",
-      banco: typeof ext.banco === "string" ? ext.banco : "",
-      tipoProducto: modalidad === "uvr" ? "Crédito UVR" : "Crédito en pesos",
-      productoBancarioId: null,
-      asesor: "",
-      plazoInicial: "",
-      cuotasPagadas: numToStr(rec.cuotasPagadas),
-      cuotasPendientes: numToStr(rec.cuotasPendientes),
-      porcentajeHonorarios: "6",
-      correo: "",
-      celular: "",
-      fechaDesembolso: "",
-      lugarExpedicionCedula: "",
-      expedidaEn: "",
-      lugarExpedicionDepartamento: "",
-      lugarExpedicionCiudad: "",
-      lugarExpedicionMunicipio: "",
-      fechaExpedicionCedula: "",
-      fechaExpedicion: "",
-      tipoDocumento: "CC",
-      direccion: "",
-      departamento: "",
-      ciudad: "",
-      municipio: "",
-      perfil: {},
-      ingresos: { tipoCredito: "NoVIS", ocupaciones: [], fuentes: [] },
-    } as never,
-    credito_data: {},
-    propuesta_data: {},
-    discount_data: {},
-    honorarios_base: 0,
-    honorarios_final: 0,
-    descuento: 0,
-    estado: "SIMULADO",
-    estado_caso: null,
-    fecha_simulacion: new Date().toISOString().slice(0, 10),
-    aprobado_data: null,
-    acertividad_global: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  } as never;
-}
 
 function SimuladorPage() {
   const { maestroId, modo: modoSearch, auditoriaId } = Route.useSearch();
