@@ -649,6 +649,19 @@ function ResultadoQaAi() {
                 style={{ background: "rgba(255,255,255,0.06)", color: "var(--nuvia-text-primary)", border: "1px solid var(--nuvia-border)", cursor: reloading ? "not-allowed" : "pointer", opacity: reloading ? 0.5 : 1 }}>
                 <RefreshCw size={14} className={reloading ? "animate-spin" : ""} /> {reloading ? "Reauditando…" : "Reauditar"}
               </button>
+              {expedienteIdCert ? (
+                <Link
+                  to="/simulador"
+                  search={{ maestroId: expedienteIdCert, modo: (a.modalidad === "uvr" ? "uvr" : "pesos") as "pesos" | "uvr" }}
+                  title="Abrir la simulación original del analista para revisar los datos ingresados con NUVIA"
+                >
+                  <button className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[12.5px] font-semibold transition hover:opacity-90"
+                    style={{ background: "rgba(255,255,255,0.06)", color: "var(--nuvia-text-primary)", border: "1px solid var(--nuvia-accent)", cursor: "pointer" }}>
+                    <Calculator size={14} /> Abrir simulación del analista
+                  </button>
+                </Link>
+              ) : null}
+
               {puedeVolverAlSimulador ? (
                 <Link
                   to="/simulador"
