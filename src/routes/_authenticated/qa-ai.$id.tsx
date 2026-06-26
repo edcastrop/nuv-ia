@@ -1017,6 +1017,16 @@ function ResultadoQaAi() {
 
       <ExtractoOriginalAccordion extracto={data.extracto ?? null} />
 
+      {inputs ? (
+        <ReconstruccionAuditorBlock
+          auditoriaId={id}
+          auditoria={a as unknown as Record<string, unknown>}
+          inputs={inputs as unknown as Record<string, unknown>}
+          cliente={cliente}
+          banco={banco}
+        />
+      ) : null}
+
       <ConversacionAuditoria
         auditoriaId={id}
         cliente={cliente}
