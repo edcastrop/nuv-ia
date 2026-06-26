@@ -17,11 +17,13 @@ import {
   emptyLicenciado,
   emptyApoderado,
 } from "@/lib/expedienteMaestro";
+import { obtenerAuditoriaQA } from "@/lib/qaAI.functions";
 import type { Expediente } from "@/lib/expedientes";
 
 const simSearchSchema = z.object({
   maestroId: z.string().optional(),
   modo: z.enum(["pesos", "uvr"]).optional(),
+  auditoriaId: z.string().optional(),
 });
 
 export const Route = createFileRoute("/_authenticated/simulador")({
@@ -32,8 +34,45 @@ export const Route = createFileRoute("/_authenticated/simulador")({
   }),
 });
 
+function numToStr(v: unknown): string {
+  if (v === null || v === undefined || v === "") return "";
+  const n = Number(v);
+  if (!Number.isFinite(n)) return "";
+  return String(n);
+}
+
+function overlayAuditInputs(exp: Expediente, inputs: Record<string, unknown>): Expediente {
+  const rec = (inputs.reconstruccion ?? {}) as Record<string, unknown>;
+  const ext = (inputs.extracto ?? {}) as Record<string, unknown>;
+  const cred = { ...(exp.credito_data ?? {}) } as Record<string, string>;
+  const setIfEmpty = (k: string, v: string) => {
+    if (v && !cred[k]) cred[k] = v;
+  };
+  // Override siempre con datos auditados (fuente de verdad para revisión QA).
+  const saldoCapital = numToStr(rec.saldoCapital ?? ext.saldoCapital);
+  const tasa = numToStr(rec.tasaEa ?? ext.tasaEa);
+  const tasaPactada = numToStr(rec.tasaEaPactada);
+  const seguros = numToStr(rec.seguros ?? ext.seguros);
+  const cuotaBase = numToStr(rec.cuotaBaseSinSubsidio ?? ext.cuota);
+  const valorDesembolsado = numToStr(rec.valorDesembolsado);
+  const saldoUVR = numToStr(rec.saldoUVR);
+  const valorUVR = numToStr(rec.valorUVR);
+  const variacionUVR = numToStr(rec.variacionUvrEa);
+  if (saldoCapital) { cred.saldoCapital = saldoCapital; cred.saldoPesos = saldoCapital; }
+  if (tasa) { cred.tea = tasa; cred.teaCobrada = tasaPactada || tasa; }
+  if (seguros) cred.seguros = seguros;
+  if (cuotaBase) { cred.cuotaActual = cuotaBase; cred.cuotaActualPesos = cuotaBase; }
+  if (valorDesembolsado) cred.valorDesembolsado = valorDesembolsado;
+  if (saldoUVR) cred.saldoUVR = saldoUVR;
+  if (valorUVR) cred.valorUVR = valorUVR;
+  if (variacionUVR) cred.variacionUVR = variacionUVR;
+  setIfEmpty("interesMensualExtracto", numToStr(ext.intereses));
+  setIfEmpty("capitalMensualExtracto", numToStr(ext.capital));
+  return { ...exp, credito_data: cred as never };
+}
+
 function SimuladorPage() {
-  const { maestroId, modo: modoSearch } = Route.useSearch();
+  const { maestroId, modo: modoSearch, auditoriaId } = Route.useSearch();
   const navigate = useNavigate();
   // El modo se elige explícitamente por el usuario o viene de la URL / expediente maestro.
   // No se autoselecciona desde drafts en sessionStorage.
@@ -52,15 +91,33 @@ function SimuladorPage() {
     }
     setLoadingMaestro(true);
     setMaestroErr(null);
-    getMaestro(maestroId)
-      .then(async (m) => {
-        const exp = await ensureOperativeExpedienteForMaestro(m);
+    (async () => {
+      try {
+        const m = await getMaestro(maestroId);
+        let exp = await ensureOperativeExpedienteForMaestro(m);
+        if (auditoriaId) {
+          try {
+            const aud = await obtenerAuditoriaQA({ data: { id: auditoriaId } });
+            const inputs = (aud as { auditoria?: { inputs?: Record<string, unknown>; modalidad?: string } })
+              ?.auditoria?.inputs;
+            if (inputs) exp = overlayAuditInputs(exp, inputs);
+            const modAud = (aud as { auditoria?: { modalidad?: string } })?.auditoria?.modalidad;
+            if (modAud === "uvr") setMode((c) => c ?? "uvr");
+            else if (modAud) setMode((c) => c ?? "pesos");
+          } catch (e) {
+            console.warn("No se pudo cargar la auditoría para prellenar simulador", e);
+          }
+        }
         setMaestroExp(exp);
         setMode((current) => current ?? exp.modo);
-      })
-      .catch((e) => setMaestroErr((e as Error).message))
-      .finally(() => setLoadingMaestro(false));
-  }, [maestroId]);
+      } catch (e) {
+        setMaestroErr((e as Error).message);
+      } finally {
+        setLoadingMaestro(false);
+      }
+    })();
+  }, [maestroId, auditoriaId]);
+
 
   // Cuando el usuario elige un modo SIN maestroId previo, creamos un expediente
   // maestro vacío y su expediente operativo, y redirigimos con los params en la URL.
