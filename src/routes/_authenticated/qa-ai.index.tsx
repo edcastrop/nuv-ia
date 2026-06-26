@@ -21,6 +21,7 @@ export const Route = createFileRoute("/_authenticated/qa-ai/")({
 type Row = {
   id: string; expediente_id: string | null; analista_id: string | null;
   modalidad: string; qa_score: number; categoria: string; dictamen: string; ejecutado_at: string;
+  cliente_nombre: string | null; banco: string | null; analista_nombre: string | null;
 };
 
 function QaAiDashboard() {
