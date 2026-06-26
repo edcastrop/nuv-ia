@@ -19,7 +19,7 @@ import {
 } from "@/lib/expedienteMaestro";
 import { obtenerAuditoriaQA } from "@/lib/qaAI.functions";
 import { clearSimulatorDraft } from "@/components/nuvex/useSimulatorDraft";
-import type { Expediente } from "@/lib/expedientes";
+import { getExpediente, type Expediente } from "@/lib/expedientes";
 
 const simSearchSchema = z.object({
   maestroId: z.string().optional(),
@@ -72,6 +72,68 @@ function overlayAuditInputs(exp: Expediente, inputs: Record<string, unknown>): E
   return { ...exp, credito_data: cred as never };
 }
 
+function expedienteFromAudit(auditoria: Record<string, unknown>, inputs: Record<string, unknown>): Expediente {
+  const rec = (inputs.reconstruccion ?? {}) as Record<string, unknown>;
+  const ext = (inputs.extracto ?? {}) as Record<string, unknown>;
+  const modalidad = String(inputs.modalidad ?? auditoria.modalidad ?? "pesos");
+  const id = typeof auditoria.expediente_id === "string" && auditoria.expediente_id
+    ? auditoria.expediente_id
+    : `qa-review-${String(auditoria.id ?? "temporal")}`;
+  return {
+    id,
+    asesor_id: typeof auditoria.analista_id === "string" ? auditoria.analista_id : "",
+    modo: modalidad === "uvr" ? "uvr" : "pesos",
+    cliente_nombre: "Revisión QA",
+    cedula: null,
+    banco: typeof ext.banco === "string" ? ext.banco : null,
+    numero_credito: typeof ext.numeroObligacion === "string" ? ext.numeroObligacion : null,
+    producto: modalidad === "uvr" ? "Crédito UVR" : "Crédito en pesos",
+    cliente_data: {
+      nombre: "",
+      cedula: "",
+      numeroCredito: typeof ext.numeroObligacion === "string" ? ext.numeroObligacion : "",
+      banco: typeof ext.banco === "string" ? ext.banco : "",
+      tipoProducto: modalidad === "uvr" ? "Crédito UVR" : "Crédito en pesos",
+      productoBancarioId: null,
+      asesor: "",
+      plazoInicial: "",
+      cuotasPagadas: numToStr(rec.cuotasPagadas),
+      cuotasPendientes: numToStr(rec.cuotasPendientes),
+      porcentajeHonorarios: "6",
+      correo: "",
+      celular: "",
+      fechaDesembolso: "",
+      lugarExpedicionCedula: "",
+      expedidaEn: "",
+      lugarExpedicionDepartamento: "",
+      lugarExpedicionCiudad: "",
+      lugarExpedicionMunicipio: "",
+      fechaExpedicionCedula: "",
+      fechaExpedicion: "",
+      tipoDocumento: "CC",
+      direccion: "",
+      departamento: "",
+      ciudad: "",
+      municipio: "",
+      perfil: {},
+      ingresos: { tipoCredito: "NoVIS", ocupaciones: [], fuentes: [] },
+    } as never,
+    credito_data: {},
+    propuesta_data: {},
+    discount_data: {},
+    honorarios_base: 0,
+    honorarios_final: 0,
+    descuento: 0,
+    estado: "SIMULADO",
+    estado_caso: null,
+    fecha_simulacion: new Date().toISOString().slice(0, 10),
+    aprobado_data: null,
+    acertividad_global: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  } as never;
+}
+
 function SimuladorPage() {
   const { maestroId, modo: modoSearch, auditoriaId } = Route.useSearch();
   const navigate = useNavigate();
@@ -79,13 +141,13 @@ function SimuladorPage() {
   // No se autoselecciona desde drafts en sessionStorage.
   const [mode, setMode] = useState<null | "pesos" | "uvr">(modoSearch ?? null);
   const [maestroExp, setMaestroExp] = useState<Expediente | null>(null);
-  const [loadingMaestro, setLoadingMaestro] = useState<boolean>(!!maestroId);
+  const [loadingMaestro, setLoadingMaestro] = useState<boolean>(!!maestroId || !!auditoriaId);
   const [creating, setCreating] = useState<boolean>(false);
   const [maestroErr, setMaestroErr] = useState<string | null>(null);
 
   // Carga del maestro existente (si llegó por URL desde Expediente Maestro).
   useEffect(() => {
-    if (!maestroId) {
+    if (!maestroId && !auditoriaId) {
       setMaestroExp(null);
       setLoadingMaestro(false);
       return;
@@ -94,29 +156,38 @@ function SimuladorPage() {
     setMaestroErr(null);
     (async () => {
       try {
-        const m = await getMaestro(maestroId);
-        let exp = await ensureOperativeExpedienteForMaestro(m);
+        let exp: Expediente | null = null;
+        if (maestroId) {
+          const m = await getMaestro(maestroId);
+          exp = await ensureOperativeExpedienteForMaestro(m);
+        }
         if (auditoriaId) {
-          // Modo revisión QA: limpiar drafts previos del simulador en sessionStorage
-          // para que los inputs de la auditoría sean la única fuente de verdad.
-          try {
-            clearSimulatorDraft("pesos", exp.id);
-            clearSimulatorDraft("uvr", exp.id);
-          } catch { /* noop */ }
           try {
             const aud = await obtenerAuditoriaQA({ data: { id: auditoriaId } });
-            const inputs = (aud as { auditoria?: { inputs?: Record<string, unknown>; modalidad?: string } })
-              ?.auditoria?.inputs;
-            if (inputs) exp = overlayAuditInputs(exp, inputs);
-            const modAud = (aud as { auditoria?: { modalidad?: string } })?.auditoria?.modalidad;
-            if (modAud === "uvr") setMode((c) => c ?? "uvr");
-            else if (modAud) setMode((c) => c ?? "pesos");
+            const auditoria = (aud as { auditoria?: Record<string, unknown> })?.auditoria;
+            const inputs = auditoria?.inputs as Record<string, unknown> | undefined;
+            const expIdAud = typeof auditoria?.expediente_id === "string" ? auditoria.expediente_id : null;
+            if (!exp && expIdAud) {
+              try { exp = await getExpediente(expIdAud); } catch { /* puede ser auditoría sin expediente operativo */ }
+            }
+            if (auditoria && inputs) {
+              exp = overlayAuditInputs(exp ?? expedienteFromAudit(auditoria, inputs), inputs);
+              try {
+                clearSimulatorDraft("pesos", exp.id);
+                clearSimulatorDraft("uvr", exp.id);
+              } catch { /* noop */ }
+            }
+            const modAud = typeof auditoria?.modalidad === "string" ? auditoria.modalidad : inputs?.modalidad;
+            if (modAud === "uvr") setMode("uvr");
+            else if (modAud) setMode("pesos");
           } catch (e) {
             console.warn("No se pudo cargar la auditoría para prellenar simulador", e);
           }
         }
-        setMaestroExp(exp);
-        setMode((current) => current ?? exp.modo);
+        if (exp) {
+          setMaestroExp(exp);
+          setMode((current) => current ?? exp.modo);
+        }
       } catch (e) {
         setMaestroErr((e as Error).message);
       } finally {
@@ -194,7 +265,7 @@ function SimuladorPage() {
   return (
     <div>
       {auditoriaId && (
-        <div className="mx-4 mt-4 rounded-lg border border-amber-600 bg-amber-100 px-4 py-3 text-sm text-amber-950 shadow-sm dark:border-amber-500/50 dark:bg-amber-500/15 dark:text-amber-100">
+        <div className="sticky top-0 z-[60] mx-4 mt-4 rounded-lg border-2 border-amber-500 bg-amber-300 px-4 py-3 text-sm font-medium text-slate-950 shadow-lg">
           🔍 <strong className="font-semibold">Modo revisión QA:</strong> los campos del simulador se prellenan con los inputs exactos que el analista usó en la auditoría
           (saldo capital, tasa pactada, seguros, cuota, UVR y desembolso). Cambios aquí no afectan al expediente del analista.
         </div>
