@@ -40,8 +40,9 @@ export function CaseSnapshotButton({ expedienteId, clienteNombre }: Props) {
     setState("loading");
     try {
       const dto = await fetchData({ data: { expedienteId } });
-      const blob = await generarCaseSnapshotPdf(dto);
-      descargarSnapshot(blob, clienteNombre ?? dto.meta.cliente);
+      const mod = await import("@/lib/caseSnapshotPdf");
+      const blob = await mod.generarCaseSnapshotPdf(dto);
+      mod.descargarSnapshot(blob, clienteNombre ?? dto.meta.cliente);
       setState("done");
       setTimeout(() => setState("idle"), 2500);
     } catch (err) {
