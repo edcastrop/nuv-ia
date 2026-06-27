@@ -443,7 +443,7 @@ function Intervinientes({ dto }: { dto: CaseSnapshotDTO }) {
               <Text style={s.avatarText}>{initials(p.nombre)}</Text>
             </View>
             <View style={s.personMeta}>
-              <Text style={s.personRole}>{p.rol.toUpperCase()}</Text>
+              <Text style={s.personRole}>{abbrevRol(p.rol)}</Text>
               <Text style={s.personName}>{safe(p.nombre)}</Text>
             </View>
           </View>
