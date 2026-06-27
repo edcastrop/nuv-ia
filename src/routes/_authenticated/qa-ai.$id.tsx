@@ -1064,8 +1064,14 @@ function ResultadoQaAi() {
           inputs={inputs as unknown as Record<string, unknown>}
           cliente={cliente}
           banco={banco}
+          scoreActual={Number((a as Record<string, unknown>)?.qa_score ?? 0)}
+          onValidated={async () => {
+            const fresh = await fetchAud({ data: { id } }) as typeof data;
+            setData(fresh);
+          }}
         />
       ) : null}
+
 
       <ConversacionAuditoria
         auditoriaId={id}
