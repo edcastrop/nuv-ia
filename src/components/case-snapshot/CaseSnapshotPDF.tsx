@@ -327,8 +327,8 @@ const Wave = () => (
 const ClienteAvatar = () => (
   <div
     style={{
-      width: 58,
-      height: 58,
+      width: 52,
+      height: 52,
       borderRadius: "50%",
       background: "radial-gradient(circle at 35% 20%, #4F69D9, #1D2C71 72%)",
       boxShadow: "0 0 30px rgba(59,130,246,0.22)",
@@ -338,16 +338,16 @@ const ClienteAvatar = () => (
       flexShrink: 0,
     }}
   >
-    <SvgUser size={35} color="#EAF2FF" />
+    <SvgUser size={31} color="#EAF2FF" />
   </div>
 );
 
 const Field = ({ icon, label, value, width }: { icon: ReactNode; label: string; value: ReactNode; width?: number }) => (
   <div style={{ width, flex: width ? "0 0 auto" : 1, minWidth: 0, display: "flex", alignItems: "flex-start", gap: 9 }}>
     {icon}
-    <div style={{ minWidth: 0 }}>
+    <div style={{ minWidth: 0, flex: 1 }}>
       <MiniLabel style={{ marginBottom: 5, color: C.textLabel }}>{label}</MiniLabel>
-      <div style={{ fontSize: 10, lineHeight: 1.32, color: C.text, fontWeight: 700, wordBreak: "break-word" }}>{value}</div>
+      <div style={{ fontSize: 9.6, lineHeight: 1.24, color: C.text, fontWeight: 700, wordBreak: "normal", overflowWrap: "break-word" }}>{value}</div>
     </div>
   </div>
 );
@@ -438,19 +438,19 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
             <div style={{ fontSize: 31, fontWeight: 950, color: C.text, letterSpacing: "0", lineHeight: 1 }}>CASE SNAPSHOT</div>
             <div style={{ fontSize: 10.5, color: C.textMuted, marginTop: 5, letterSpacing: "0.08em", textTransform: "uppercase" }}>Resumen ejecutivo del caso</div>
           </div>
-          <div style={{ width: 245, background: "rgba(7,15,31,0.72)", border: `1px solid ${C.border2}`, borderRadius: 5, padding: "9px 14px", boxSizing: "border-box" }}>
+          <div style={{ width: 320, minHeight: 64, background: "rgba(7,15,31,0.82)", border: `1px solid ${C.border2}`, borderRadius: 5, padding: "11px 15px", boxSizing: "border-box", position: "relative", zIndex: 2 }}>
             <MiniLabel style={{ color: C.textSec, marginBottom: 4 }}>ID Expediente</MiniLabel>
-            <div style={{ fontSize: 10.5, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", color: "#FFFFFF", fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shortId(e.id)}</div>
+            <div style={{ fontSize: 11, lineHeight: 1.25, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", color: "#FFFFFF", fontWeight: 850, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shortId(e.id)}</div>
           </div>
         </div>
 
         <Card style={{ padding: 13, marginBottom: 10 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "175px 110px 1fr 95px 120px", gap: 11, alignItems: "center" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "188px 98px minmax(184px,1fr) 76px 118px", gap: 9, alignItems: "center" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
               <ClienteAvatar />
               <div style={{ minWidth: 0 }}>
                 <MiniLabel style={{ color: C.textLabel, marginBottom: 3 }}>Cliente</MiniLabel>
-                <div style={{ fontSize: 15.5, fontWeight: 950, color: C.text, lineHeight: 1.12, wordBreak: "break-word", textTransform: "uppercase" }}>{e.cliente.nombre}</div>
+                <div style={{ fontSize: 14.3, fontWeight: 950, color: C.text, lineHeight: 1.08, wordBreak: "normal", overflowWrap: "break-word", textTransform: "uppercase" }}>{e.cliente.nombre}</div>
               </div>
             </div>
             <Field icon={<IconWrap><SvgBank /></IconWrap>} label="Banco" value={e.banco} />
@@ -653,7 +653,7 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
         </Card>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
-          <Card style={{ padding: "11px 12px" }}>
+          <Card style={{ padding: "12px 12px", minHeight: 214 }}>
             <Label>Intervinientes</Label>
             <div style={{ display: "grid", gridTemplateColumns: "95px 1fr 117px", paddingBottom: 7, borderBottom: `1px solid ${C.border}` }}>
               <MiniLabel style={{ fontSize: 7 }}>Rol</MiniLabel>
@@ -661,18 +661,18 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
               <MiniLabel style={{ fontSize: 7 }}>Correo</MiniLabel>
             </div>
             {e.intervinientes.slice(0, 5).map((p, i) => (
-              <div key={`${p.rol}-${i}`} style={{ display: "grid", gridTemplateColumns: "95px 1fr 117px", alignItems: "center", minHeight: 28, borderBottom: i < Math.min(e.intervinientes.length, 5) - 1 ? `1px solid rgba(30,45,69,0.55)` : "none" }}>
+              <div key={`${p.rol}-${i}`} style={{ display: "grid", gridTemplateColumns: "95px 1fr 117px", alignItems: "center", minHeight: 31, borderBottom: i < Math.min(e.intervinientes.length, 5) - 1 ? `1px solid rgba(30,45,69,0.55)` : "none" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
                   <span style={{ flexShrink: 0 }}>{ROL_ICON[p.rol] ?? ROL_ICON.Analista}</span>
-                  <span style={{ fontSize: 8.1, color: C.textSec, fontWeight: 750, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.rol}</span>
+                  <span style={{ fontSize: 8.1, lineHeight: 1.2, color: C.textSec, fontWeight: 750, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.rol}</span>
                 </div>
-                <div style={{ fontSize: 8.6, color: C.text, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: 6 }}>{p.nombre}</div>
-                <div style={{ fontSize: 7.8, color: C.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.correo}</div>
+                <div style={{ fontSize: 8.6, lineHeight: 1.2, color: C.text, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: 6 }}>{p.nombre}</div>
+                <div style={{ fontSize: 7.8, lineHeight: 1.2, color: C.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.correo}</div>
               </div>
             ))}
           </Card>
 
-          <Card style={{ padding: "11px 12px" }}>
+          <Card style={{ padding: "12px 12px", minHeight: 214 }}>
             <Label>Trazabilidad</Label>
             <div style={{ display: "grid", gridTemplateColumns: "75px 1fr 86px", paddingBottom: 7, borderBottom: `1px solid ${C.border}` }}>
               <MiniLabel style={{ fontSize: 7 }}>Fecha</MiniLabel>
@@ -680,13 +680,13 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
               <MiniLabel style={{ fontSize: 7 }}>Usuario</MiniLabel>
             </div>
             {e.trazabilidad.slice(0, 5).map((t, i) => (
-              <div key={`${t.fecha}-${i}`} style={{ display: "grid", gridTemplateColumns: "75px 1fr 86px", alignItems: "center", minHeight: 28, borderBottom: i < Math.min(e.trazabilidad.length, 5) - 1 ? `1px solid rgba(30,45,69,0.55)` : "none" }}>
+              <div key={`${t.fecha}-${i}`} style={{ display: "grid", gridTemplateColumns: "75px 1fr 86px", alignItems: "center", minHeight: 31, borderBottom: i < Math.min(e.trazabilidad.length, 5) - 1 ? `1px solid rgba(30,45,69,0.55)` : "none" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
                   <span style={{ width: 7, height: 7, borderRadius: 999, background: C.blue, flexShrink: 0 }} />
-                  <span style={{ fontSize: 8.1, color: C.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.fecha}</span>
+                  <span style={{ fontSize: 8.1, lineHeight: 1.2, color: C.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.fecha}</span>
                 </div>
-                <div style={{ fontSize: 8.6, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: 6 }}>{t.accion.replace(/_/g, " ")}</div>
-                <div style={{ fontSize: 8.1, color: C.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.usuario}</div>
+                <div style={{ fontSize: 8.6, lineHeight: 1.2, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: 6 }}>{t.accion.replace(/_/g, " ")}</div>
+                <div style={{ fontSize: 8.1, lineHeight: 1.2, color: C.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.usuario}</div>
               </div>
             ))}
           </Card>
