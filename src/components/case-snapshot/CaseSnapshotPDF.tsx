@@ -394,7 +394,7 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
         {/* [3] CARD CLIENTE */}
         <Card style={{ padding: 16, marginBottom: 18 }}>
           {/* Row 1 */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, overflow: "hidden" }}>
             {/* Col 1 cliente */}
             <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1.8, minWidth: 0 }}>
               <div
@@ -715,14 +715,14 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
                     alignItems: "center",
                   }}
                 >
-                  <div style={{ flex: 1, color: C.textSec, textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.05em", fontSize: 9 }}>
+                  <div style={{ flex: 1, color: C.textSec, textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.05em", fontSize: 9, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
                     {p.rol}
                   </div>
-                  <div style={{ flex: 1.3, display: "flex", alignItems: "center", gap: 6, color: C.text }}>
+                  <div style={{ flex: 1.3, display: "flex", alignItems: "center", gap: 6, color: C.text, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
                     <Avatar name={p.nombre} size={22} />
-                    <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.nombre}</span>
+                    <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0, flex: 1 }}>{p.nombre}</span>
                   </div>
-                  <div style={{ flex: 1.5, color: C.textSec, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  <div style={{ flex: 1.5, color: C.textSec, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0 }}>
                     {p.correo}
                   </div>
                 </div>
@@ -748,14 +748,14 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
                     alignItems: "center",
                   }}
                 >
-                  <div style={{ flex: 1, color: C.textSec, display: "flex", alignItems: "center", gap: 6 }}>
+                  <div style={{ flex: 1, color: C.textSec, display: "flex", alignItems: "center", gap: 6, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     <span style={{ width: 6, height: 6, borderRadius: 999, background: C.blue, flexShrink: 0 }} />
                     {t.fecha}
                   </div>
-                  <div style={{ flex: 1.6, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <div style={{ flex: 1.6, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>
                     {t.accion}
                   </div>
-                  <div style={{ flex: 1, color: C.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <div style={{ flex: 1, color: C.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>
                     {t.usuario}
                   </div>
                 </div>
@@ -801,7 +801,7 @@ const Divider = () => (
 );
 
 const ColField: React.FC<{ icon: any; label: string; value: string; flex?: number }> = ({ icon: Icon, label, value, flex = 1 }) => (
-  <div style={{ flex, minWidth: 0 }}>
+  <div style={{ flex, minWidth: 0, overflow: "hidden" }}>
     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
       <Icon size={11} color={C.textSec} />
       <MetricLabel>{label}</MetricLabel>
@@ -815,7 +815,7 @@ const ColField: React.FC<{ icon: any; label: string; value: string; flex?: numbe
         textOverflow: "ellipsis",
         whiteSpace: "normal",
         wordBreak: "break-word",
-        lineHeight: 1.3,
+        lineHeight: 1.25,
       }}
     >
       {value}
