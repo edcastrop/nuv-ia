@@ -72,6 +72,7 @@ export interface CaseSnapshotDTO {
   };
   honorarios: {
     pactados: number;
+    honorarioRecalculado?: number;
     porcentaje: number;
     estadoCobro: string;
     estadoPago: string;
