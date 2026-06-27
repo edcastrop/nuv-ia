@@ -438,9 +438,9 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
             <div style={{ fontSize: 31, fontWeight: 950, color: C.text, letterSpacing: "0", lineHeight: 1 }}>CASE SNAPSHOT</div>
             <div style={{ fontSize: 10.5, color: C.textMuted, marginTop: 5, letterSpacing: "0.08em", textTransform: "uppercase" }}>Resumen ejecutivo del caso</div>
           </div>
-          <div style={{ width: 320, minHeight: 64, background: "rgba(7,15,31,0.82)", border: `1px solid ${C.border2}`, borderRadius: 5, padding: "11px 15px", boxSizing: "border-box", position: "relative", zIndex: 2 }}>
-            <MiniLabel style={{ color: C.textSec, marginBottom: 4 }}>ID Expediente</MiniLabel>
-            <div style={{ fontSize: 11, lineHeight: 1.25, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", color: "#FFFFFF", fontWeight: 850, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shortId(e.id)}</div>
+          <div style={{ width: 320, minHeight: 64, background: "#080F22", border: `1px solid ${C.border2}`, borderRadius: 5, padding: "11px 15px", boxSizing: "border-box", position: "relative", zIndex: 5, boxShadow: "0 0 0 1px rgba(59,130,246,0.18), 0 0 24px rgba(59,130,246,0.18)" }}>
+            <MiniLabel style={{ color: C.blue2, marginBottom: 4 }}>ID Expediente</MiniLabel>
+            <div style={{ fontSize: 11.5, lineHeight: 1.25, fontFamily: "'Courier New', Courier, monospace", color: "#F8FAFF", fontWeight: 700, letterSpacing: "0.02em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shortId(e.id)}</div>
           </div>
         </div>
 
