@@ -800,8 +800,8 @@ const Divider = () => (
   <div style={{ width: 1, alignSelf: "stretch", background: C.border, margin: "0 4px" }} />
 );
 
-const ColField: React.FC<{ icon: any; label: string; value: string }> = ({ icon: Icon, label, value }) => (
-  <div style={{ flex: 1, minWidth: 0 }}>
+const ColField: React.FC<{ icon: any; label: string; value: string; flex?: number }> = ({ icon: Icon, label, value, flex = 1 }) => (
+  <div style={{ flex, minWidth: 0 }}>
     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
       <Icon size={11} color={C.textSec} />
       <MetricLabel>{label}</MetricLabel>
@@ -813,7 +813,9 @@ const ColField: React.FC<{ icon: any; label: string; value: string }> = ({ icon:
         fontWeight: 600,
         overflow: "hidden",
         textOverflow: "ellipsis",
-        whiteSpace: "nowrap",
+        whiteSpace: "normal",
+        wordBreak: "break-word",
+        lineHeight: 1.3,
       }}
     >
       {value}
