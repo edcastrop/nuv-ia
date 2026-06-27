@@ -355,10 +355,27 @@ const Field = ({ icon, label, value, width }: { icon: ReactNode; label: string; 
 
 const PStep = ({ nombre, estado, isLast }: { nombre: string; estado: PipelineEstado; isLast: boolean }) => {
   const active = estado === "completado" || estado === "en_proceso";
-  const bg = estado === "completado" ? C.green : estado === "en_proceso" ? C.blue : "#172139";
-  const border = estado === "completado" ? C.green : estado === "en_proceso" ? C.blue2 : estado === "pendiente" ? C.border2 : "#334155";
+  const bg =
+    estado === "completado"
+      ? "radial-gradient(circle at 35% 25%, #34D399, #059669 75%)"
+      : estado === "en_proceso"
+      ? "radial-gradient(circle at 35% 25%, #60A5FA, #1D4ED8 75%)"
+      : "#172139";
+  const border = estado === "completado" ? C.green2 : estado === "en_proceso" ? C.blue2 : estado === "pendiente" ? C.border2 : "#334155";
+  const ring =
+    estado === "completado"
+      ? "0 0 0 4px rgba(16,185,129,0.18), 0 0 22px rgba(16,185,129,0.55)"
+      : estado === "en_proceso"
+      ? "0 0 0 4px rgba(59,130,246,0.20), 0 0 26px rgba(96,165,250,0.65)"
+      : "none";
   const iconColor = active ? "#FFFFFF" : C.textLabel;
   const iconFn = PL_ICONS[nombre] ?? PL_ICONS.Simulación;
+  const lineBg =
+    estado === "completado"
+      ? "linear-gradient(90deg, #10B981, #34D399)"
+      : estado === "en_proceso"
+      ? "linear-gradient(90deg, #10B981 0%, #3B82F6 55%, #29354D 100%)"
+      : "#29354D";
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", position: "relative", minWidth: 0 }}>
@@ -366,19 +383,21 @@ const PStep = ({ nombre, estado, isLast }: { nombre: string; estado: PipelineEst
         <div
           style={{
             position: "absolute",
-            top: 15,
+            top: 20,
             left: "50%",
             width: "100%",
-            height: 2,
-            background: estado === "completado" ? C.green : "#29354D",
+            height: 3,
+            background: lineBg,
+            borderRadius: 2,
             zIndex: 0,
+            boxShadow: estado === "completado" ? "0 0 8px rgba(16,185,129,0.4)" : "none",
           }}
         />
       )}
       <div
         style={{
-          width: 30,
-          height: 30,
+          width: 40,
+          height: 40,
           borderRadius: "50%",
           background: bg,
           border: `1.5px solid ${border}`,
@@ -386,15 +405,16 @@ const PStep = ({ nombre, estado, isLast }: { nombre: string; estado: PipelineEst
           alignItems: "center",
           justifyContent: "center",
           zIndex: 1,
-          boxShadow: active ? `0 0 0 4px ${bg}20` : "none",
+          boxShadow: ring,
         }}
       >
         {iconFn(iconColor)}
       </div>
-      <div style={{ marginTop: 7, fontSize: 7.4, color: estado === "no_iniciado" ? C.textLabel : C.textSec, textAlign: "center", fontWeight: 700, lineHeight: 1.22, maxWidth: 58 }}>{nombre}</div>
+      <div style={{ marginTop: 9, fontSize: 8.2, color: estado === "no_iniciado" ? C.textLabel : C.text, textAlign: "center", fontWeight: 800, lineHeight: 1.22, maxWidth: 68, letterSpacing: "0.02em" }}>{nombre}</div>
     </div>
   );
 };
+
 
 export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(({ expediente: e }, ref) => {
   const varPct = e.credito.cuotaActual ? (((e.propuesta.nuevaCuota - e.credito.cuotaActual) / e.credito.cuotaActual) * 100).toFixed(1) : "0";
