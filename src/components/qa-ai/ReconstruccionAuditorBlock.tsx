@@ -12,7 +12,9 @@ import {
 import { getCanalDeAuditoria, enviarMensaje } from "@/lib/colaboracion";
 import { useUserRole, isDirectorQA } from "@/hooks/useUserRole";
 import { ComparativaAnalistaAuditor } from "./ComparativaAnalistaAuditor";
+import { NuviaValidacionAuditorBlock } from "./NuviaValidacionAuditorBlock";
 import { clearSimulatorDraft } from "@/components/nuvex/useSimulatorDraft";
+
 
 /**
  * Bloque embebido en `/qa-ai/$id` que renderiza el simulador (Pesos/UVR)
