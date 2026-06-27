@@ -6,7 +6,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { FileDown, Loader2, Check } from "lucide-react";
 import { useUserRole, type AppRole } from "@/hooks/useUserRole";
 import { getCaseSnapshotData } from "@/lib/caseSnapshot.functions";
-import { generarCaseSnapshotPdf, descargarSnapshot } from "@/lib/caseSnapshotPdf";
+// NOTA: `@/lib/caseSnapshotPdf` se importa dinámicamente dentro del handler
+// para evitar que @react-pdf/renderer entre en el bundle de la ruta (causa OOM en build Nitro).
 
 const ROLES_PERMITIDOS: AppRole[] = [
   "asesor",
