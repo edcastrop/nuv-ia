@@ -327,20 +327,21 @@ const Wave = () => (
 const ClienteAvatar = () => (
   <div
     style={{
-      width: 52,
-      height: 52,
+      width: 63,
+      height: 63,
       borderRadius: "50%",
       background: "radial-gradient(circle at 35% 20%, #4F69D9, #1D2C71 72%)",
-      boxShadow: "0 0 30px rgba(59,130,246,0.22)",
+      boxShadow: "0 0 38px rgba(59,130,246,0.32), inset 0 0 0 1px rgba(138,109,255,0.35)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       flexShrink: 0,
     }}
   >
-    <SvgUser size={31} color="#EAF2FF" />
+    <SvgUser size={37} color="#EAF2FF" />
   </div>
 );
+
 
 const Field = ({ icon, label, value, width }: { icon: ReactNode; label: string; value: ReactNode; width?: number }) => (
   <div style={{ width, flex: width ? "0 0 auto" : 1, minWidth: 0, display: "flex", alignItems: "flex-start", gap: 9 }}>
@@ -354,10 +355,27 @@ const Field = ({ icon, label, value, width }: { icon: ReactNode; label: string; 
 
 const PStep = ({ nombre, estado, isLast }: { nombre: string; estado: PipelineEstado; isLast: boolean }) => {
   const active = estado === "completado" || estado === "en_proceso";
-  const bg = estado === "completado" ? C.green : estado === "en_proceso" ? C.blue : "#172139";
-  const border = estado === "completado" ? C.green : estado === "en_proceso" ? C.blue2 : estado === "pendiente" ? C.border2 : "#334155";
+  const bg =
+    estado === "completado"
+      ? "radial-gradient(circle at 35% 25%, #34D399, #059669 75%)"
+      : estado === "en_proceso"
+      ? "radial-gradient(circle at 35% 25%, #60A5FA, #1D4ED8 75%)"
+      : "#172139";
+  const border = estado === "completado" ? C.green2 : estado === "en_proceso" ? C.blue2 : estado === "pendiente" ? C.border2 : "#334155";
+  const ring =
+    estado === "completado"
+      ? "0 0 0 4px rgba(16,185,129,0.18), 0 0 22px rgba(16,185,129,0.55)"
+      : estado === "en_proceso"
+      ? "0 0 0 4px rgba(59,130,246,0.20), 0 0 26px rgba(96,165,250,0.65)"
+      : "none";
   const iconColor = active ? "#FFFFFF" : C.textLabel;
   const iconFn = PL_ICONS[nombre] ?? PL_ICONS.Simulación;
+  const lineBg =
+    estado === "completado"
+      ? "linear-gradient(90deg, #10B981, #34D399)"
+      : estado === "en_proceso"
+      ? "linear-gradient(90deg, #10B981 0%, #3B82F6 55%, #29354D 100%)"
+      : "#29354D";
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", position: "relative", minWidth: 0 }}>
@@ -365,19 +383,21 @@ const PStep = ({ nombre, estado, isLast }: { nombre: string; estado: PipelineEst
         <div
           style={{
             position: "absolute",
-            top: 15,
+            top: 20,
             left: "50%",
             width: "100%",
-            height: 2,
-            background: estado === "completado" ? C.green : "#29354D",
+            height: 3,
+            background: lineBg,
+            borderRadius: 2,
             zIndex: 0,
+            boxShadow: estado === "completado" ? "0 0 8px rgba(16,185,129,0.4)" : "none",
           }}
         />
       )}
       <div
         style={{
-          width: 30,
-          height: 30,
+          width: 40,
+          height: 40,
           borderRadius: "50%",
           background: bg,
           border: `1.5px solid ${border}`,
@@ -385,15 +405,16 @@ const PStep = ({ nombre, estado, isLast }: { nombre: string; estado: PipelineEst
           alignItems: "center",
           justifyContent: "center",
           zIndex: 1,
-          boxShadow: active ? `0 0 0 4px ${bg}20` : "none",
+          boxShadow: ring,
         }}
       >
         {iconFn(iconColor)}
       </div>
-      <div style={{ marginTop: 7, fontSize: 7.4, color: estado === "no_iniciado" ? C.textLabel : C.textSec, textAlign: "center", fontWeight: 700, lineHeight: 1.22, maxWidth: 58 }}>{nombre}</div>
+      <div style={{ marginTop: 9, fontSize: 8.2, color: estado === "no_iniciado" ? C.textLabel : C.text, textAlign: "center", fontWeight: 800, lineHeight: 1.22, maxWidth: 68, letterSpacing: "0.02em" }}>{nombre}</div>
     </div>
   );
 };
+
 
 export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(({ expediente: e }, ref) => {
   const varPct = e.credito.cuotaActual ? (((e.propuesta.nuevaCuota - e.credito.cuotaActual) / e.credito.cuotaActual) * 100).toFixed(1) : "0";
@@ -422,35 +443,35 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
       <Wave />
 
       <div style={{ position: "relative", zIndex: 1 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 22 }}>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 950, color: C.text, lineHeight: 0.95, letterSpacing: "0.02em" }}>NUVIA</div>
-            <div style={{ fontSize: 8.3, color: C.blue2, fontWeight: 800, letterSpacing: "0.1em", marginTop: 4 }}>FINANCIAL INTELLIGENCE</div>
+            <div style={{ fontSize: 30, fontWeight: 950, color: C.text, lineHeight: 0.95, letterSpacing: "0.02em" }}>NUVIA</div>
+            <div style={{ fontSize: 9.2, color: C.blue2, fontWeight: 800, letterSpacing: "0.12em", marginTop: 6 }}>FINANCIAL INTELLIGENCE</div>
           </div>
-          <div style={{ textAlign: "right", paddingTop: 1 }}>
-            <div style={{ fontSize: 9.2, color: C.textSec, lineHeight: 1.35 }}>Fecha de emisión: {fechaHoy()}</div>
-            <div style={{ fontSize: 8.4, color: C.textMuted, lineHeight: 1.35 }}>Documento ejecutivo • No reemplaza el expediente operativo</div>
+          <div style={{ textAlign: "right", paddingTop: 4 }}>
+            <div style={{ fontSize: 8.4, color: C.textMuted, lineHeight: 1.35, fontWeight: 500 }}>Fecha de emisión: <span style={{ color: C.textSec, fontWeight: 600 }}>{fechaHoy()}</span></div>
+            <div style={{ fontSize: 7.6, color: C.textLabel, lineHeight: 1.35, fontWeight: 400, marginTop: 2 }}>Documento ejecutivo • No reemplaza el expediente operativo</div>
           </div>
         </div>
 
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 14 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 18 }}>
           <div>
-            <div style={{ fontSize: 31, fontWeight: 950, color: C.text, letterSpacing: "0", lineHeight: 1 }}>CASE SNAPSHOT</div>
-            <div style={{ fontSize: 10.5, color: C.textMuted, marginTop: 5, letterSpacing: "0.08em", textTransform: "uppercase" }}>Resumen ejecutivo del caso</div>
+            <div style={{ fontSize: 40, fontWeight: 950, color: C.text, letterSpacing: "0", lineHeight: 1 }}>CASE SNAPSHOT</div>
+            <div style={{ fontSize: 10.5, color: C.textMuted, marginTop: 7, letterSpacing: "0.08em", textTransform: "uppercase" }}>Resumen ejecutivo del caso</div>
           </div>
-          <div style={{ width: 320, minHeight: 64, background: "#080F22", border: `1px solid ${C.border2}`, borderRadius: 5, padding: "11px 15px", boxSizing: "border-box", position: "relative", zIndex: 5, boxShadow: "0 0 0 1px rgba(59,130,246,0.18), 0 0 24px rgba(59,130,246,0.18)" }}>
+          <div style={{ width: 320, minHeight: 52, background: "#080F22", border: `1px solid ${C.border2}`, borderRadius: 5, padding: "8px 15px", boxSizing: "border-box", position: "relative", zIndex: 5, boxShadow: "0 0 0 1px rgba(59,130,246,0.18), 0 0 24px rgba(59,130,246,0.18)" }}>
             <MiniLabel style={{ color: C.blue2, marginBottom: 4 }}>ID Expediente</MiniLabel>
-            <div style={{ fontSize: 11.5, lineHeight: 1.25, fontFamily: "'Courier New', Courier, monospace", color: "#F8FAFF", fontWeight: 700, letterSpacing: "0.02em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shortId(e.id)}</div>
+            <div style={{ fontSize: 11.5, lineHeight: 1.2, fontFamily: "'Courier New', Courier, monospace", color: "#F8FAFF", fontWeight: 700, letterSpacing: "0.02em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shortId(e.id)}</div>
           </div>
         </div>
 
-        <Card style={{ padding: 13, marginBottom: 10 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "188px 98px minmax(184px,1fr) 76px 118px", gap: 9, alignItems: "center" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+        <Card style={{ padding: 28, marginBottom: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "210px 108px minmax(180px,1fr) 88px 132px", gap: 22, alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16, minWidth: 0, paddingRight: 14, borderRight: `1px solid ${C.border}` }}>
               <ClienteAvatar />
               <div style={{ minWidth: 0 }}>
-                <MiniLabel style={{ color: C.textLabel, marginBottom: 3 }}>Cliente</MiniLabel>
-                <div style={{ fontSize: 11.6, fontWeight: 950, color: C.text, lineHeight: 1.15, wordBreak: "normal", overflowWrap: "break-word", textTransform: "uppercase", letterSpacing: "0.005em" }}>{e.cliente.nombre}</div>
+                <MiniLabel style={{ color: C.textLabel, marginBottom: 4 }}>Cliente</MiniLabel>
+                <div style={{ fontSize: 12, fontWeight: 950, color: C.text, lineHeight: 1.15, wordBreak: "normal", overflowWrap: "break-word", textTransform: "uppercase", letterSpacing: "0.01em" }}>{e.cliente.nombre}</div>
               </div>
             </div>
             <Field icon={<IconWrap><SvgBank /></IconWrap>} label="Banco" value={e.banco} />
@@ -458,23 +479,24 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
             <Field icon={<IconWrap><SvgMoney /></IconWrap>} label="Modalidad" value={e.modalidad} />
             <Field icon={<IconWrap color={C.green}><SvgCheckCircle /></IconWrap>} label="Estado del caso" value={<span style={{ color: C.green2 }}>{e.estado}</span>} />
           </div>
-          <div style={{ height: 1, background: C.border, margin: "12px 0" }} />
-          <div style={{ display: "grid", gridTemplateColumns: "176px 170px 1fr 135px", gap: 16, alignItems: "center" }}>
+
+          <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(59,130,246,0.45), rgba(138,109,255,0.35), transparent)", margin: "20px 0" }} />
+          <div style={{ display: "grid", gridTemplateColumns: "190px 190px 1fr 145px", gap: 24, alignItems: "center" }}>
             <Field icon={<IconWrap><SvgUser /></IconWrap>} label="Analista" value={e.analista} />
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 9 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 11 }}>
               <IconWrap><SvgShield /></IconWrap>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <MiniLabel style={{ color: C.textLabel, marginBottom: 2 }}>Score QA</MiniLabel>
+                <MiniLabel style={{ color: C.textLabel, marginBottom: 3 }}>Score QA</MiniLabel>
                 <div style={{ fontSize: 15.5, fontWeight: 950, color: C.text }}>{e.qaScore.toFixed(1)} <span style={{ fontSize: 10, color: C.textSec, fontWeight: 700 }}>/ 100</span></div>
-                <div style={{ height: 5, background: "#152038", borderRadius: 999, marginTop: 3, overflow: "hidden" }}>
+                <div style={{ height: 5, background: "#152038", borderRadius: 999, marginTop: 4, overflow: "hidden" }}>
                   <div style={{ width: `${Math.max(0, Math.min(100, e.qaScore))}%`, height: "100%", background: "linear-gradient(90deg, #3B82F6, #8B5CF6)", borderRadius: 999 }} />
                 </div>
               </div>
             </div>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 9 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 11 }}>
               <IconWrap><SvgChart /></IconWrap>
               <div>
-                <MiniLabel style={{ color: C.textLabel, marginBottom: 4 }}>Nivel autonomía</MiniLabel>
+                <MiniLabel style={{ color: C.textLabel, marginBottom: 5 }}>Nivel autonomía</MiniLabel>
                 <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                   <span style={{ fontSize: 14, fontWeight: 950, color: C.text }}>{e.nivelAutonomia}</span>
                   <Pill color={C.blue} small>Supervisada</Pill>
@@ -484,6 +506,7 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
             <Field icon={<IconWrap><SvgCalendarSmall /></IconWrap>} label="Fecha" value={e.fecha} />
           </div>
         </Card>
+
 
         <Card style={{ padding: 12, marginBottom: 10 }}>
           <Label>Foto completa del crédito</Label>
@@ -505,55 +528,57 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
           </div>
           <div
             style={{
-              minHeight: 106,
-              borderRadius: 7,
-              border: `1px solid ${C.border}`,
+              minHeight: 132,
+              borderRadius: 10,
+              border: `1px solid rgba(138,109,255,0.45)`,
               background:
-                "radial-gradient(circle at 97% 0%, rgba(59,130,246,0.45), transparent 16%), linear-gradient(115deg, rgba(9,18,44,0.98), rgba(8,20,42,0.88) 60%, rgba(9,31,60,0.94))",
+                "radial-gradient(circle at 18% 35%, rgba(68,93,163,0.55), transparent 42%), radial-gradient(circle at 92% 70%, rgba(138,109,255,0.42), transparent 45%), linear-gradient(120deg, #0A1330 0%, #131845 55%, #1B1748 100%)",
+              boxShadow: "0 0 0 1px rgba(138,109,255,0.18), 0 18px 48px rgba(68,93,163,0.32), inset 0 1px 0 rgba(255,255,255,0.05)",
               display: "grid",
-              gridTemplateColumns: "48% 1fr",
+              gridTemplateColumns: "45% 55%",
               alignItems: "center",
               overflow: "hidden",
+              position: "relative",
             }}
           >
-            <div style={{ textAlign: "center", borderRight: `1px solid ${C.border}`, padding: "8px 20px" }}>
-              <MiniLabel style={{ fontSize: 9, marginBottom: 7 }}>Vas a pagar</MiniLabel>
-              <div style={{ fontSize: 55, fontWeight: 950, lineHeight: 0.9, letterSpacing: "0", background: "linear-gradient(90deg, #3B82F6, #A78BFA)", WebkitBackgroundClip: "text", color: "transparent" }}>{e.credito.multiplicador.toFixed(2)}x</div>
-              <div style={{ fontSize: 10.3, fontWeight: 850, color: C.textSec, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 7 }}>El valor de tu crédito</div>
+            <div style={{ textAlign: "center", padding: "14px 18px", position: "relative" }}>
+              <MiniLabel style={{ fontSize: 9, marginBottom: 8, color: "#C7B8FF" }}>Vas a pagar</MiniLabel>
+              <div style={{ fontSize: 68, fontWeight: 950, lineHeight: 0.88, letterSpacing: "-0.02em", background: "linear-gradient(95deg, #6E8BFF 0%, #8A6DFF 55%, #C7B8FF 100%)", WebkitBackgroundClip: "text", color: "transparent", filter: "drop-shadow(0 0 22px rgba(138,109,255,0.45))" }}>{e.credito.multiplicador.toFixed(2)}x</div>
+              <div style={{ fontSize: 10.5, fontWeight: 900, color: "#E8E1FF", letterSpacing: "0.14em", textTransform: "uppercase", marginTop: 10 }}>El valor de tu crédito</div>
             </div>
-            <div style={{ padding: "0 24px", fontSize: 11.2, color: C.textSec, lineHeight: 1.55 }}>
-              Con las condiciones actuales, terminarás pagando <strong style={{ color: C.blue2 }}>{e.credito.multiplicador.toFixed(2)} veces</strong> el valor del crédito desembolsado.
+            <div style={{ padding: "0 26px 0 22px", fontSize: 11.4, color: "#DCE3F5", lineHeight: 1.6, borderLeft: "1px solid rgba(138,109,255,0.22)" }}>
+              Con las condiciones actuales, terminarás pagando <strong style={{ color: "#C7B8FF" }}>{e.credito.multiplicador.toFixed(2)} veces</strong> el valor del crédito desembolsado.
               <br />
               Este análisis considera intereses, seguros y costos asociados durante todo el plazo del crédito.
             </div>
           </div>
+
         </Card>
 
         <div style={{ display: "grid", gridTemplateColumns: "41% 59%", gap: 8, marginBottom: 10 }}>
           <div>
-            <Card style={{ padding: 10, marginBottom: 8 }}>
-              <Label style={{ marginBottom: 12 }}>Diagnóstico NUVIA AI</Label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7, marginBottom: 9 }}>
-                <div style={{ textAlign: "center" }}>
-                  <SvgVelocimetro color={C.amber} />
-                  <MiniLabel style={{ marginTop: 4, fontSize: 7 }}>Riesgo operativo</MiniLabel>
-                  <div style={{ fontSize: 14, fontWeight: 950, color: C.amber }}>MEDIO</div>
-                </div>
-                <div style={{ textAlign: "center" }}>
-                  <SvgDiana color={C.green} />
-                  <MiniLabel style={{ marginTop: 4, fontSize: 7 }}>Viabilidad</MiniLabel>
-                  <div style={{ fontSize: 14, fontWeight: 950, color: C.green2 }}>ALTA</div>
-                </div>
-                <div style={{ textAlign: "center" }}>
-                  <SvgRed color={C.amber} />
-                  <MiniLabel style={{ marginTop: 4, fontSize: 7 }}>Complejidad</MiniLabel>
-                  <div style={{ fontSize: 14, fontWeight: 950, color: C.amber }}>MEDIA</div>
-                </div>
+            <Card style={{ padding: 14, marginBottom: 8 }}>
+              <Label style={{ marginBottom: 14 }}>Diagnóstico NUVIA AI</Label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14, marginBottom: 12 }}>
+                {[
+                  { icon: <SvgVelocimetro color={C.amber} />, label: "Riesgo operativo", value: "MEDIO", color: C.amber, glow: "rgba(245,158,11,0.45)" },
+                  { icon: <SvgDiana color={C.green} />, label: "Viabilidad", value: "ALTA", color: C.green2, glow: "rgba(16,185,129,0.5)" },
+                  { icon: <SvgRed color={C.amber} />, label: "Complejidad", value: "MEDIA", color: C.amber, glow: "rgba(245,158,11,0.45)" },
+                ].map((m) => (
+                  <div key={m.label} style={{ textAlign: "center" }}>
+                    <div style={{ width: 54, height: 54, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center", filter: `drop-shadow(0 0 14px ${m.glow})` }}>
+                      <div style={{ transform: "scale(1.35)", transformOrigin: "center" }}>{m.icon}</div>
+                    </div>
+                    <MiniLabel style={{ marginTop: 9, fontSize: 7.4, color: C.textSec }}>{m.label}</MiniLabel>
+                    <div style={{ fontSize: 14.5, fontWeight: 950, color: m.color, marginTop: 3, letterSpacing: "0.04em" }}>{m.value}</div>
+                  </div>
+                ))}
               </div>
-              <div style={{ fontSize: 10.2, color: C.textSec, lineHeight: 1.45 }}>
+              <div style={{ fontSize: 10.4, color: C.text, lineHeight: 1.5 }}>
                 Este crédito presenta una <strong style={{ color: C.blue2 }}>oportunidad de optimización</strong> significativa. La propuesta seleccionada <strong style={{ color: C.blue2 }}>reduce el tiempo de deuda</strong>, disminuye el costo financiero total y <strong style={{ color: C.blue2 }}>mejora tu salud financiera</strong>.
               </div>
             </Card>
+
             <Card style={{ padding: 11 }}>
               <Label style={{ marginBottom: 12 }}>Honorarios</Label>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 9, marginBottom: 10 }}>
@@ -583,51 +608,52 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
             </Card>
           </div>
 
-          <Card style={{ padding: 12, borderColor: C.green, position: "relative", overflow: "hidden" }}>
-            <div style={{ position: "absolute", top: 0, right: 0, width: 170, height: 26, background: "linear-gradient(90deg, rgba(16,185,129,0.5), rgba(16,185,129,0.9))", clipPath: "polygon(14% 0, 100% 0, 100% 100%, 0 100%)", display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 12, boxSizing: "border-box" }}>
-              <span style={{ fontSize: 8.2, fontWeight: 950, color: C.text, letterSpacing: "0.04em" }}>RECOMENDADA POR NUVIA ★</span>
+          <Card style={{ padding: 16, borderColor: "rgba(16,185,129,0.55)", position: "relative", overflow: "hidden", boxShadow: "0 0 0 1px rgba(16,185,129,0.18), 0 22px 50px rgba(16,185,129,0.18), inset 0 1px 0 rgba(255,255,255,0.04)" }}>
+            <div style={{ position: "absolute", top: 0, right: 0, height: 30, padding: "0 16px 0 26px", display: "flex", alignItems: "center", background: "linear-gradient(95deg, rgba(16,185,129,0.0) 0%, rgba(16,185,129,0.55) 35%, rgba(52,211,153,0.95) 100%)", clipPath: "polygon(12% 0, 100% 0, 100% 100%, 0 100%)", boxShadow: "0 0 18px rgba(16,185,129,0.45)" }}>
+              <span style={{ fontSize: 8.6, fontWeight: 950, color: "#06140E", letterSpacing: "0.08em", textTransform: "uppercase" }}>★ Recomendada por NUVIA</span>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 13 }}>
-              <SvgCheckCircle size={20} color={C.green2} />
+            <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 16 }}>
+              <SvgCheckCircle size={22} color={C.green2} />
               <Label style={{ marginBottom: 0 }}>Propuesta seleccionada</Label>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, border: `1px solid ${C.border}`, borderRadius: 7, overflow: "hidden", marginBottom: 1 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 8 }}>
               {[
                 { label: "Nueva cuota", value: cop(e.propuesta.nuevaCuota), sub: `${Number(varPct) >= 0 ? "+" : ""}${varPct}% vs actual`, color: C.green2 },
                 { label: "Nuevo plazo", value: `${e.propuesta.nuevoPlazo} meses`, sub: `-${mesesDiff} meses`, color: C.textSec },
                 { label: "Cuotas eliminadas", value: String(e.propuesta.cuotasEliminadas), sub: `-${cuotasElimPct}% del plazo total`, color: C.green2 },
               ].map((x) => (
-                <div key={x.label} style={{ background: "rgba(12,24,45,0.9)", padding: "14px 10px 12px", minHeight: 76, textAlign: "center" }}>
+                <div key={x.label} style={{ background: "linear-gradient(180deg, rgba(15,30,52,0.95), rgba(10,20,38,0.95))", border: `1px solid ${C.border}`, borderRadius: 7, padding: "16px 12px 14px", minHeight: 92, textAlign: "center" }}>
                   <MiniLabel>{x.label}</MiniLabel>
-                  <div style={{ fontSize: 18, fontWeight: 950, color: C.text, marginTop: 7, lineHeight: 1.05 }}>{x.value}</div>
-                  <div style={{ fontSize: 8.3, color: x.color, marginTop: 6 }}>{x.sub}</div>
+                  <div style={{ fontSize: 22, fontWeight: 950, color: C.text, marginTop: 9, lineHeight: 1.05, letterSpacing: "-0.01em" }}>{x.value}</div>
+                  <div style={{ fontSize: 8.6, color: x.color, marginTop: 7, fontWeight: 700 }}>{x.sub}</div>
                 </div>
               ))}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, border: `1px solid ${C.border}`, borderTop: "none", borderRadius: "0 0 7px 7px", overflow: "hidden", marginBottom: 1 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 10 }}>
               {[
                 { label: "Ahorro total", value: cop(e.propuesta.ahorroTotal), sub: `${ahorrosPct}% del total a pagar` },
                 { label: "Ahorro intereses", value: cop(e.propuesta.ahorroIntereses), sub: "Proyección estimada" },
                 { label: "Ahorro seguros", value: cop(e.propuesta.ahorroSeguros), sub: "Proyección estimada" },
               ].map((x) => (
-                <div key={x.label} style={{ background: "rgba(12,24,45,0.9)", padding: "13px 9px 11px", minHeight: 72, textAlign: "center" }}>
+                <div key={x.label} style={{ background: "linear-gradient(180deg, rgba(15,30,52,0.95), rgba(10,20,38,0.95))", border: `1px solid ${C.border}`, borderRadius: 7, padding: "15px 11px 13px", minHeight: 86, textAlign: "center" }}>
                   <MiniLabel>{x.label}</MiniLabel>
-                  <div style={{ fontSize: 17, fontWeight: 950, color: C.text, marginTop: 7, lineHeight: 1.05 }}>{x.value}</div>
-                  <div style={{ fontSize: 8.3, color: C.textMuted, marginTop: 6 }}>{x.sub}</div>
+                  <div style={{ fontSize: 20, fontWeight: 950, color: C.text, marginTop: 9, lineHeight: 1.05, letterSpacing: "-0.01em" }}>{x.value}</div>
+                  <div style={{ fontSize: 8.6, color: C.textMuted, marginTop: 7 }}>{x.sub}</div>
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: 8, padding: "12px 18px", minHeight: 55, background: "rgba(16,185,129,0.08)", border: `1px solid ${C.border}`, borderRadius: 7, display: "flex", alignItems: "center", gap: 16 }}>
-              <Calendar size={25} color={C.green2} />
-              <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
+            <div style={{ marginTop: 10, padding: "14px 20px", minHeight: 64, background: "radial-gradient(circle at 12% 50%, rgba(16,185,129,0.22), transparent 55%), rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.35)", borderRadius: 8, display: "flex", alignItems: "center", gap: 18 }}>
+              <Calendar size={28} color={C.green2} />
+              <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
                 <div>
                   <MiniLabel>Tiempo recuperado</MiniLabel>
-                  <div style={{ fontSize: 22, fontWeight: 950, color: C.green2, lineHeight: 1.05 }}>{e.propuesta.tiempoRecuperado}</div>
+                  <div style={{ fontSize: 24, fontWeight: 950, color: C.green2, lineHeight: 1.05, marginTop: 3 }}>{e.propuesta.tiempoRecuperado}</div>
                 </div>
-                <div style={{ color: C.textSec, fontSize: 10.2 }}>Reducción en el tiempo total de deuda</div>
+                <div style={{ color: C.textSec, fontSize: 10.4 }}>Reducción en el tiempo total de deuda</div>
               </div>
             </div>
           </Card>
+
         </div>
 
         <Card style={{ padding: 12, marginBottom: 10 }}>
@@ -652,45 +678,46 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
           </div>
         </Card>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
-          <Card style={{ padding: "12px 12px", minHeight: 214 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
+          <Card style={{ padding: "14px 14px", minHeight: 248 }}>
             <Label>Intervinientes</Label>
-            <div style={{ display: "grid", gridTemplateColumns: "95px 1fr 117px", paddingBottom: 7, borderBottom: `1px solid ${C.border}` }}>
-              <MiniLabel style={{ fontSize: 7 }}>Rol</MiniLabel>
-              <MiniLabel style={{ fontSize: 7 }}>Nombre</MiniLabel>
-              <MiniLabel style={{ fontSize: 7 }}>Correo</MiniLabel>
+            <div style={{ display: "grid", gridTemplateColumns: "100px 1fr 125px", paddingBottom: 9, borderBottom: `1px solid ${C.border2}` }}>
+              <MiniLabel style={{ fontSize: 7.4, color: C.blue2 }}>Rol</MiniLabel>
+              <MiniLabel style={{ fontSize: 7.4, color: C.blue2 }}>Nombre</MiniLabel>
+              <MiniLabel style={{ fontSize: 7.4, color: C.blue2 }}>Correo</MiniLabel>
             </div>
             {e.intervinientes.slice(0, 5).map((p, i) => (
-              <div key={`${p.rol}-${i}`} style={{ display: "grid", gridTemplateColumns: "95px 1fr 117px", alignItems: "center", minHeight: 31, borderBottom: i < Math.min(e.intervinientes.length, 5) - 1 ? `1px solid rgba(30,45,69,0.55)` : "none" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
+              <div key={`${p.rol}-${i}`} style={{ display: "grid", gridTemplateColumns: "100px 1fr 125px", alignItems: "center", minHeight: 40, borderBottom: i < Math.min(e.intervinientes.length, 5) - 1 ? `1px solid rgba(30,45,69,0.6)` : "none" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
                   <span style={{ flexShrink: 0 }}>{ROL_ICON[p.rol] ?? ROL_ICON.Analista}</span>
-                  <span style={{ fontSize: 8.1, lineHeight: 1.2, color: C.textSec, fontWeight: 750, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.rol}</span>
+                  <span style={{ fontSize: 8.8, lineHeight: 1.2, color: C.text, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.rol}</span>
                 </div>
-                <div style={{ fontSize: 8.6, lineHeight: 1.2, color: C.text, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: 6 }}>{p.nombre}</div>
-                <div style={{ fontSize: 7.8, lineHeight: 1.2, color: C.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.correo}</div>
+                <div style={{ fontSize: 9.4, lineHeight: 1.2, color: C.text, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: 8 }}>{p.nombre}</div>
+                <div style={{ fontSize: 8.4, lineHeight: 1.2, color: C.textSec, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.correo}</div>
               </div>
             ))}
           </Card>
 
-          <Card style={{ padding: "12px 12px", minHeight: 214 }}>
+          <Card style={{ padding: "14px 14px", minHeight: 248 }}>
             <Label>Trazabilidad</Label>
-            <div style={{ display: "grid", gridTemplateColumns: "75px 1fr 86px", paddingBottom: 7, borderBottom: `1px solid ${C.border}` }}>
-              <MiniLabel style={{ fontSize: 7 }}>Fecha</MiniLabel>
-              <MiniLabel style={{ fontSize: 7 }}>Acción</MiniLabel>
-              <MiniLabel style={{ fontSize: 7 }}>Usuario</MiniLabel>
+            <div style={{ display: "grid", gridTemplateColumns: "80px 1fr 92px", paddingBottom: 9, borderBottom: `1px solid ${C.border2}` }}>
+              <MiniLabel style={{ fontSize: 7.4, color: C.blue2 }}>Fecha</MiniLabel>
+              <MiniLabel style={{ fontSize: 7.4, color: C.blue2 }}>Acción</MiniLabel>
+              <MiniLabel style={{ fontSize: 7.4, color: C.blue2 }}>Usuario</MiniLabel>
             </div>
             {e.trazabilidad.slice(0, 5).map((t, i) => (
-              <div key={`${t.fecha}-${i}`} style={{ display: "grid", gridTemplateColumns: "75px 1fr 86px", alignItems: "center", minHeight: 31, borderBottom: i < Math.min(e.trazabilidad.length, 5) - 1 ? `1px solid rgba(30,45,69,0.55)` : "none" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
-                  <span style={{ width: 7, height: 7, borderRadius: 999, background: C.blue, flexShrink: 0 }} />
-                  <span style={{ fontSize: 8.1, lineHeight: 1.2, color: C.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.fecha}</span>
+              <div key={`${t.fecha}-${i}`} style={{ display: "grid", gridTemplateColumns: "80px 1fr 92px", alignItems: "center", minHeight: 40, borderBottom: i < Math.min(e.trazabilidad.length, 5) - 1 ? `1px solid rgba(30,45,69,0.6)` : "none" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 999, background: C.blue, flexShrink: 0, boxShadow: "0 0 8px rgba(59,130,246,0.65)" }} />
+                  <span style={{ fontSize: 8.6, lineHeight: 1.2, color: C.text, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.fecha}</span>
                 </div>
-                <div style={{ fontSize: 8.6, lineHeight: 1.2, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: 6 }}>{t.accion.replace(/_/g, " ")}</div>
-                <div style={{ fontSize: 8.1, lineHeight: 1.2, color: C.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.usuario}</div>
+                <div style={{ fontSize: 9.2, lineHeight: 1.2, color: C.text, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: 8 }}>{t.accion.replace(/_/g, " ")}</div>
+                <div style={{ fontSize: 8.6, lineHeight: 1.2, color: C.textSec, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.usuario}</div>
               </div>
             ))}
           </Card>
         </div>
+
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
