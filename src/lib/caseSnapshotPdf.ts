@@ -151,11 +151,11 @@ function drawClienteRow(ctx: Ctx, d: CaseSnapshotDTO) {
 
   // 5 columnas: cliente | banco | producto | modalidad | estado
   const cols = [
-    { l: "CLIENTE", v: safe(d.meta.cliente), big: true, color: C.text, icon: "👤" },
-    { l: "BANCO", v: safe(d.meta.banco), color: C.text, icon: "🏦" },
-    { l: "PRODUCTO", v: safe(d.meta.producto), color: C.text, icon: "📄" },
-    { l: "MODALIDAD", v: safe(d.meta.modalidad).toUpperCase(), color: C.text, icon: "💼" },
-    { l: "ESTADO DEL CASO", v: safe(d.meta.estadoCaso).replace(/_/g, " ").toUpperCase(), color: C.accent, icon: "✓" },
+    { l: "CLIENTE", v: safe(d.meta.cliente), big: true, color: C.text },
+    { l: "BANCO", v: safe(d.meta.banco), color: C.text },
+    { l: "PRODUCTO", v: safe(d.meta.producto), color: C.text },
+    { l: "MODALIDAD", v: safe(d.meta.modalidad).toUpperCase(), color: C.text },
+    { l: "ESTADO DEL CASO", v: safe(d.meta.estadoCaso).replace(/_/g, " ").toUpperCase(), color: C.accent },
   ];
   const colW = w / cols.length;
   cols.forEach((c, i) => {
@@ -369,9 +369,9 @@ function drawPropuesta(ctx: Ctx, d: CaseSnapshotDTO) {
   rect(ctx, x, y + h - 3, w, 3, C.accent);
 
   // header
-  T(ctx, "✓  PROPUESTA SELECCIONADA", x + 14, y + h - 22, { size: 10, bold: true, color: C.accent });
+  T(ctx, "PROPUESTA SELECCIONADA", x + 14, y + h - 22, { size: 10, bold: true, color: C.accent });
   // badge "RECOMENDADA POR NUVIA"
-  const label = "★  RECOMENDADA POR NUVIA";
+  const label = "RECOMENDADA POR NUVIA";
   const lw = ctx.bold.widthOfTextAtSize(label, 6.5) + 14;
   ctx.page.drawRectangle({
     x: x + w - lw - 12, y: y + h - 28, width: lw, height: 14,
@@ -417,7 +417,7 @@ function drawPropuesta(ctx: Ctx, d: CaseSnapshotDTO) {
   const bY = y + 10;
   const bH = 36;
   card(ctx, x + 14, bY, w - 28, bH, { fill: C.bgSoft });
-  T(ctx, "📅  TIEMPO RECUPERADO", x + 24, bY + bH - 12, { size: 6.5, bold: true, color: C.muted });
+  T(ctx, "TIEMPO RECUPERADO", x + 24, bY + bH - 12, { size: 6.5, bold: true, color: C.muted });
   const years = p.tiempoRecuperado ? `${(p.tiempoRecuperado / 12).toFixed(0)} años` : "—";
   T(ctx, years, x + 24, bY + 10, { size: 14, bold: true, color: C.accent });
   T(ctx, "Reducción en el tiempo total de deuda", x + 24 + 80, bY + 13, { size: 8.5, color: C.textDim });
