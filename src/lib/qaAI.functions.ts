@@ -315,7 +315,7 @@ export const listAuditoriasQA = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase
       .from("qa_auditorias")
-      .select("id,expediente_id,analista_id,extracto_id,modalidad,qa_score,categoria,dictamen,ejecutado_at")
+      .select("id,codigo,expediente_id,analista_id,extracto_id,modalidad,qa_score,categoria,dictamen,ejecutado_at,auditor_aprobado_at,auditor_aprobado_by")
       .order("ejecutado_at", { ascending: false })
       .limit(data.limit);
     if (error) throw new Error(error.message);
