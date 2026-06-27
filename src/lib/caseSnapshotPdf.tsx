@@ -199,6 +199,16 @@ const dictamenLabel = (d?: string | null) => {
   if (!d) return "PENDIENTE";
   return d.toUpperCase().replace(/_/g, " ");
 };
+const abbrevRol = (r: string) => {
+  const up = (r || "").toUpperCase().replace(/_/g, " ");
+  return up
+    .replace(/DIRECTOR\b/g, "DIR.")
+    .replace(/FINANCIERO\b/g, "FINANC.")
+    .replace(/CONTABILIDAD\b/g, "CONTAB.")
+    .replace(/OPERACIONES\b/g, "OPER.")
+    .replace(/DIRECCION\b/g, "DIR.")
+    .slice(0, 18);
+};
 const riskScore = (dto: CaseSnapshotDTO) => {
   // Heurística simple (0-100): mayor veces pagado, peor riesgo.
   const v = dto.credito.vecesPagado || 1;
