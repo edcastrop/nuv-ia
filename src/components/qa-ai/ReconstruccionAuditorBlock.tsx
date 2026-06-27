@@ -30,13 +30,18 @@ export function ReconstruccionAuditorBlock({
   inputs,
   cliente,
   banco,
+  scoreActual,
+  onValidated,
 }: {
   auditoriaId: string;
   auditoria: Record<string, unknown>;
   inputs: Record<string, unknown>;
   cliente: string;
   banco: string;
+  scoreActual?: number;
+  onValidated?: () => void;
 }) {
+
   const { roles } = useUserRole();
   const puedeEditar = isDirectorQA(roles);
   const [open, setOpen] = useState<boolean>(true);
