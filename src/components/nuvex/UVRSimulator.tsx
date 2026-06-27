@@ -1138,6 +1138,19 @@ export function UVRSimulator({
               </div>
             )}
 
+            {recomendada && auditoriaId && (
+              <div className="mt-3 flex justify-end">
+                <button
+                  onClick={handleAprobar}
+                  disabled={aprobando}
+                  className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold shadow transition-transform hover:scale-[1.01]"
+                  style={{ background: "var(--nuvia-success)", color: "#0b0b0b" }}
+                >
+                  {aprobando ? "Aprobando…" : "✓ Aprobar y liberar al analista"}
+                </button>
+              </div>
+            )}
+
             {recomendada &&
               (() => {
                 const d = computeDiscount(recomendada.honorarios, discount);
