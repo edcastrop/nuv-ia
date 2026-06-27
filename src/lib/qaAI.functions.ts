@@ -1507,10 +1507,13 @@ export const qaCommandCenter = createServerFn({ method: "POST" })
         return Number(rec.coberturaFrechValorMensual ?? 0) > 0 || Number(rec.coberturaFrechPp ?? 0) > 0;
       })();
       return {
-        id: r.id, expediente_id: r.expediente_id, analista_id: analistaId,
+        id: r.id,
+        codigo: (r as unknown as { codigo: string | null }).codigo ?? null,
+        expediente_id: r.expediente_id, analista_id: analistaId,
         modalidad: r.modalidad as string,
         qa_score: Number(r.qa_score ?? 0),
         categoria: r.categoria as string, dictamen: r.dictamen as string,
+        auditor_aprobado_at: (r as unknown as { auditor_aprobado_at: string | null }).auditor_aprobado_at ?? null,
         ejecutado_at: r.ejecutado_at as string,
         cliente_nombre: (exp?.cliente_nombre as string | null) ?? null,
         banco: (exp?.banco as string | null) ?? null,
