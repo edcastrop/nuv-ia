@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Wrench, Send, Eye, EyeOff } from "lucide-react";
-import { NCard, SectionHeader } from "@/components/nuvia";
+import { NCard } from "@/components/nuvia";
 import { PesosSimulator } from "@/components/nuvex/PesosSimulator";
 import { UVRSimulator } from "@/components/nuvex/UVRSimulator";
 import {
@@ -12,6 +12,7 @@ import {
 import { getCanalDeAuditoria, enviarMensaje } from "@/lib/colaboracion";
 import { useUserRole, isDirectorQA } from "@/hooks/useUserRole";
 import { ComparativaAnalistaAuditor } from "./ComparativaAnalistaAuditor";
+import { clearSimulatorDraft } from "@/components/nuvex/useSimulatorDraft";
 
 /**
  * Bloque embebido en `/qa-ai/$id` que renderiza el simulador (Pesos/UVR)
@@ -73,6 +74,25 @@ export function ReconstruccionAuditorBlock({
   }, [inputs]);
 
   const sandboxId = `qa-review-${auditoriaId}`;
+
+  // V2 QA FIX: el sandbox usa un id estable (`qa-review-<auditoriaId>`), así
+  // que el draft de sessionStorage persistía valores viejos del auditor y
+  // pisaba el prellenado con los inputs reales del analista. Limpiamos el
+  // draft ANTES de que el simulador hijo se monte (vía useState initializer,
+  // que corre síncrono en render) para que el simulador siempre arranque con
+  // la reconstrucción del analista. Los cambios del auditor se re-persisten
+  // automáticamente mientras edita en esta sesión.
+  useState(() => {
+    if (typeof window !== "undefined") {
+      clearSimulatorDraft(modo, sandboxId);
+    }
+    return true;
+  });
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined") clearSimulatorDraft(modo, sandboxId);
+    };
+  }, [modo, sandboxId]);
 
   const handleEnviarHilo = async () => {
     if (!puedeEditar || enviando) return;
