@@ -343,6 +343,7 @@ function ResultadoQaAi() {
   const fromSimulador = from === "simulador";
   const fetchAud = useServerFn(obtenerAuditoriaQA);
   const doReejecutar = useServerFn(reejecutarAuditoriaQA);
+  const doAprobar = useServerFn(aprobarAuditoriaPorAuditor);
   const [data, setData] = useState<{
     auditoria: Record<string, unknown> | null;
     inconsistencias: Inc[];
@@ -353,6 +354,7 @@ function ResultadoQaAi() {
   const [copilotoOpen, setCopilotoOpen] = useState(false);
   const [verTodas, setVerTodas] = useState(false);
   const [reloading, setReloading] = useState(false);
+  const [aprobando, setAprobando] = useState(false);
 
   useEffect(() => { (async () => setData(await fetchAud({ data: { id } }) as {
     auditoria: Record<string, unknown> | null;
