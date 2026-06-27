@@ -557,29 +557,28 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
 
         <div style={{ display: "grid", gridTemplateColumns: "41% 59%", gap: 8, marginBottom: 10 }}>
           <div>
-            <Card style={{ padding: 10, marginBottom: 8 }}>
-              <Label style={{ marginBottom: 12 }}>Diagnóstico NUVIA AI</Label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7, marginBottom: 9 }}>
-                <div style={{ textAlign: "center" }}>
-                  <SvgVelocimetro color={C.amber} />
-                  <MiniLabel style={{ marginTop: 4, fontSize: 7 }}>Riesgo operativo</MiniLabel>
-                  <div style={{ fontSize: 14, fontWeight: 950, color: C.amber }}>MEDIO</div>
-                </div>
-                <div style={{ textAlign: "center" }}>
-                  <SvgDiana color={C.green} />
-                  <MiniLabel style={{ marginTop: 4, fontSize: 7 }}>Viabilidad</MiniLabel>
-                  <div style={{ fontSize: 14, fontWeight: 950, color: C.green2 }}>ALTA</div>
-                </div>
-                <div style={{ textAlign: "center" }}>
-                  <SvgRed color={C.amber} />
-                  <MiniLabel style={{ marginTop: 4, fontSize: 7 }}>Complejidad</MiniLabel>
-                  <div style={{ fontSize: 14, fontWeight: 950, color: C.amber }}>MEDIA</div>
-                </div>
+            <Card style={{ padding: 14, marginBottom: 8 }}>
+              <Label style={{ marginBottom: 14 }}>Diagnóstico NUVIA AI</Label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14, marginBottom: 12 }}>
+                {[
+                  { icon: <SvgVelocimetro color={C.amber} />, label: "Riesgo operativo", value: "MEDIO", color: C.amber, glow: "rgba(245,158,11,0.45)" },
+                  { icon: <SvgDiana color={C.green} />, label: "Viabilidad", value: "ALTA", color: C.green2, glow: "rgba(16,185,129,0.5)" },
+                  { icon: <SvgRed color={C.amber} />, label: "Complejidad", value: "MEDIA", color: C.amber, glow: "rgba(245,158,11,0.45)" },
+                ].map((m) => (
+                  <div key={m.label} style={{ textAlign: "center" }}>
+                    <div style={{ width: 54, height: 54, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center", filter: `drop-shadow(0 0 14px ${m.glow})` }}>
+                      <div style={{ transform: "scale(1.35)", transformOrigin: "center" }}>{m.icon}</div>
+                    </div>
+                    <MiniLabel style={{ marginTop: 9, fontSize: 7.4, color: C.textSec }}>{m.label}</MiniLabel>
+                    <div style={{ fontSize: 14.5, fontWeight: 950, color: m.color, marginTop: 3, letterSpacing: "0.04em" }}>{m.value}</div>
+                  </div>
+                ))}
               </div>
-              <div style={{ fontSize: 10.2, color: C.textSec, lineHeight: 1.45 }}>
+              <div style={{ fontSize: 10.4, color: C.text, lineHeight: 1.5 }}>
                 Este crédito presenta una <strong style={{ color: C.blue2 }}>oportunidad de optimización</strong> significativa. La propuesta seleccionada <strong style={{ color: C.blue2 }}>reduce el tiempo de deuda</strong>, disminuye el costo financiero total y <strong style={{ color: C.blue2 }}>mejora tu salud financiera</strong>.
               </div>
             </Card>
+
             <Card style={{ padding: 11 }}>
               <Label style={{ marginBottom: 12 }}>Honorarios</Label>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 9, marginBottom: 10 }}>
