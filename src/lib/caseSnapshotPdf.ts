@@ -869,37 +869,57 @@ export async function generarCaseSnapshotPdf(d: CaseSnapshotDTO): Promise<Blob> 
   // PORTADA
   drawCover(ctx, d);
 
-  // P2 — FOTO DEL CRÉDITO
+  // P2 — INTELIGENCIA FINANCIERA DEL CLIENTE
   newPage(ctx, d);
-  sectionTitle(ctx, "01 · Snapshot del crédito", "Foto completa del crédito vigente", d);
+  sectionTitle(ctx, "01 · Perfil financiero del cliente", "Inteligencia financiera del hogar", d);
+  drawPerfilFinanciero(ctx, d);
+  sectionTitle(ctx, "02 · Historia financiera", "Recorrido del cliente con el banco", d);
+  drawHistoriaFinanciera(ctx, d);
+  sectionTitle(ctx, "03 · Termómetro de capacidad", "Lectura visual del flujo de caja", d);
+  drawTermometro(ctx, d);
+
+  // P3 — FOTO DEL CRÉDITO
+  newPage(ctx, d);
+  sectionTitle(ctx, "04 · Snapshot del crédito", "Foto completa del crédito vigente", d);
   drawCreditKpis(ctx, d);
   drawHeroVeces(ctx, d);
   drawCreditSubMetrics(ctx, d);
 
   // DIAGNÓSTICO
-  sectionTitle(ctx, "02 · Diagnóstico NUVIA AI", "Lectura inteligente del caso", d);
+  sectionTitle(ctx, "05 · Diagnóstico NUVIA AI", "Lectura inteligente del caso", d);
   drawDiagnostico(ctx, d);
 
   // PROPUESTA
   newPage(ctx, d);
-  sectionTitle(ctx, "03 · Propuesta seleccionada", "Reconstrucción financiera recomendada", d);
+  sectionTitle(ctx, "06 · Propuesta seleccionada", "Reconstrucción financiera recomendada", d);
   drawPropuesta(ctx, d);
+  drawPropuestaInsight(ctx, d);
+
+  // SOPORTE LEGAL
+  newPage(ctx, d);
+  sectionTitle(ctx, "07 · Soporte legal y normativo", "Marco regulatorio que respalda la propuesta", d);
+  drawSoporteLegal(ctx, d);
+
+  // IMPACTO FUTURO
+  sectionTitle(ctx, "08 · Impacto futuro", "Línea de tiempo del beneficio", d);
+  drawImpactoFuturo(ctx, d);
 
   // HONORARIOS
-  sectionTitle(ctx, "04 · Honorarios", "Modelo comercial del caso", d);
+  sectionTitle(ctx, "09 · Honorarios", "Modelo comercial y ROI del servicio", d);
   drawHonorarios(ctx, d);
 
   // OPERATIVO
-  sectionTitle(ctx, "05 · Estado operativo", "Recorrido de gestión del caso", d);
+  sectionTitle(ctx, "10 · Estado operativo", "Recorrido de gestión del caso", d);
   drawTimeline(ctx, d);
 
   // EQUIPO + TRAZABILIDAD
   newPage(ctx, d);
-  sectionTitle(ctx, "06 · Equipo del caso", "Intervinientes responsables", d);
+  sectionTitle(ctx, "11 · Equipo del caso", "Intervinientes responsables", d);
   drawIntervinientes(ctx, d);
 
-  sectionTitle(ctx, "07 · Trazabilidad", "Eventos relevantes del expediente", d);
+  sectionTitle(ctx, "12 · Trazabilidad", "Eventos relevantes del expediente", d);
   drawTrazabilidad(ctx, d);
+
 
   // Calcular total páginas y re-pintar footers
   ctx.totalPages = ctx.pageNum;
