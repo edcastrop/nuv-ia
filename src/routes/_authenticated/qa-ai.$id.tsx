@@ -600,7 +600,10 @@ function ResultadoQaAi() {
       <StickyHeader
         cliente={cliente} banco={banco} producto={producto} fecha={fecha}
         score={score} scoreColor={scoreColor} certLabel={cert.label} certColor={cert.color}
+        codigo={(a as unknown as { codigo: string | null }).codigo ?? null}
+        auditorAprobado={!!(a as unknown as { auditor_aprobado_at: string | null }).auditor_aprobado_at}
       />
+
 
       {/* FICHA DE CONTEXTO */}
       <div className="mt-2">
