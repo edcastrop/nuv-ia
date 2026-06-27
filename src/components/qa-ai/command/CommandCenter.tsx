@@ -452,14 +452,14 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
         <table style={{ width: "100%", fontSize: 12, minWidth: 1100 }}>
           <thead>
             <tr style={{ background: "rgba(255,255,255,0.03)" }}>
-              {["Prioridad", "Cliente", "Banco", "Analista", "Producto", "Modalidad", "Ticket", "Score", "Estado QA", "Riesgo", "Acciones"].map((h) => (
+              {["Prioridad", "Código", "Cliente", "Banco", "Analista", "Producto", "Modalidad", "Ticket", "Score", "Estado QA", "Riesgo", "Acciones"].map((h) => (
                 <th key={h} style={{ textAlign: "left", padding: "10px 12px", color: C.textSec, fontWeight: 500, borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {ordered.length === 0 ? (
-              <tr><td colSpan={11} style={{ padding: 32, textAlign: "center", color: C.textMuted }}>Sin casos en la cola.</td></tr>
+              <tr><td colSpan={12} style={{ padding: 32, textAlign: "center", color: C.textMuted }}>Sin casos en la cola.</td></tr>
             ) : ordered.map((r) => {
               const p = prioridad(r);
               const d = dictamen[r.dictamen] ?? { label: r.dictamen, color: C.textSec };
@@ -470,6 +470,12 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
                       padding: "3px 10px", borderRadius: 999, fontSize: 10.5, fontWeight: 600,
                       background: `${p.color}22`, color: p.color, border: `1px solid ${p.color}44`, whiteSpace: "nowrap",
                     }}>{p.label}</span>
+                  </td>
+                  <td style={{ padding: "10px 12px", color: C.textSec, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 10.5, whiteSpace: "nowrap" }}>
+                    {(r as unknown as { codigo: string | null }).codigo ?? "—"}
+                    {(r as unknown as { auditor_aprobado_at: string | null }).auditor_aprobado_at ? (
+                      <span title="Aprobada por auditor" style={{ marginLeft: 6, color: C.success }}>✓</span>
+                    ) : null}
                   </td>
                   <td style={{ padding: "10px 12px", color: C.text, fontWeight: 500 }}>{r.cliente_nombre ?? "—"}</td>
                   <td style={{ padding: "10px 12px", color: C.text }}>{r.banco ?? "—"}</td>
