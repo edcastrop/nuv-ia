@@ -62,6 +62,14 @@ function buildPipeline(dto: CaseSnapshotDTO): CaseSnapshotData["pipeline"] {
   }));
 }
 
+function formatEstadoCaso(raw: string): string {
+  if (!raw || raw === "—") return "—";
+  return raw
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .trim();
+}
+
 function dtoToSnapshot(dto: CaseSnapshotDTO): CaseSnapshotData {
   const m = dto.meta;
   const c = dto.credito;
