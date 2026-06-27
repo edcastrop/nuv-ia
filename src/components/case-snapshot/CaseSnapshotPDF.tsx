@@ -608,51 +608,52 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
             </Card>
           </div>
 
-          <Card style={{ padding: 12, borderColor: C.green, position: "relative", overflow: "hidden" }}>
-            <div style={{ position: "absolute", top: 0, right: 0, width: 170, height: 26, background: "linear-gradient(90deg, rgba(16,185,129,0.5), rgba(16,185,129,0.9))", clipPath: "polygon(14% 0, 100% 0, 100% 100%, 0 100%)", display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 12, boxSizing: "border-box" }}>
-              <span style={{ fontSize: 8.2, fontWeight: 950, color: C.text, letterSpacing: "0.04em" }}>RECOMENDADA POR NUVIA ★</span>
+          <Card style={{ padding: 16, borderColor: "rgba(16,185,129,0.55)", position: "relative", overflow: "hidden", boxShadow: "0 0 0 1px rgba(16,185,129,0.18), 0 22px 50px rgba(16,185,129,0.18), inset 0 1px 0 rgba(255,255,255,0.04)" }}>
+            <div style={{ position: "absolute", top: 0, right: 0, height: 30, padding: "0 16px 0 26px", display: "flex", alignItems: "center", background: "linear-gradient(95deg, rgba(16,185,129,0.0) 0%, rgba(16,185,129,0.55) 35%, rgba(52,211,153,0.95) 100%)", clipPath: "polygon(12% 0, 100% 0, 100% 100%, 0 100%)", boxShadow: "0 0 18px rgba(16,185,129,0.45)" }}>
+              <span style={{ fontSize: 8.6, fontWeight: 950, color: "#06140E", letterSpacing: "0.08em", textTransform: "uppercase" }}>★ Recomendada por NUVIA</span>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 13 }}>
-              <SvgCheckCircle size={20} color={C.green2} />
+            <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 16 }}>
+              <SvgCheckCircle size={22} color={C.green2} />
               <Label style={{ marginBottom: 0 }}>Propuesta seleccionada</Label>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, border: `1px solid ${C.border}`, borderRadius: 7, overflow: "hidden", marginBottom: 1 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 8 }}>
               {[
                 { label: "Nueva cuota", value: cop(e.propuesta.nuevaCuota), sub: `${Number(varPct) >= 0 ? "+" : ""}${varPct}% vs actual`, color: C.green2 },
                 { label: "Nuevo plazo", value: `${e.propuesta.nuevoPlazo} meses`, sub: `-${mesesDiff} meses`, color: C.textSec },
                 { label: "Cuotas eliminadas", value: String(e.propuesta.cuotasEliminadas), sub: `-${cuotasElimPct}% del plazo total`, color: C.green2 },
               ].map((x) => (
-                <div key={x.label} style={{ background: "rgba(12,24,45,0.9)", padding: "14px 10px 12px", minHeight: 76, textAlign: "center" }}>
+                <div key={x.label} style={{ background: "linear-gradient(180deg, rgba(15,30,52,0.95), rgba(10,20,38,0.95))", border: `1px solid ${C.border}`, borderRadius: 7, padding: "16px 12px 14px", minHeight: 92, textAlign: "center" }}>
                   <MiniLabel>{x.label}</MiniLabel>
-                  <div style={{ fontSize: 18, fontWeight: 950, color: C.text, marginTop: 7, lineHeight: 1.05 }}>{x.value}</div>
-                  <div style={{ fontSize: 8.3, color: x.color, marginTop: 6 }}>{x.sub}</div>
+                  <div style={{ fontSize: 22, fontWeight: 950, color: C.text, marginTop: 9, lineHeight: 1.05, letterSpacing: "-0.01em" }}>{x.value}</div>
+                  <div style={{ fontSize: 8.6, color: x.color, marginTop: 7, fontWeight: 700 }}>{x.sub}</div>
                 </div>
               ))}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, border: `1px solid ${C.border}`, borderTop: "none", borderRadius: "0 0 7px 7px", overflow: "hidden", marginBottom: 1 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 10 }}>
               {[
                 { label: "Ahorro total", value: cop(e.propuesta.ahorroTotal), sub: `${ahorrosPct}% del total a pagar` },
                 { label: "Ahorro intereses", value: cop(e.propuesta.ahorroIntereses), sub: "Proyección estimada" },
                 { label: "Ahorro seguros", value: cop(e.propuesta.ahorroSeguros), sub: "Proyección estimada" },
               ].map((x) => (
-                <div key={x.label} style={{ background: "rgba(12,24,45,0.9)", padding: "13px 9px 11px", minHeight: 72, textAlign: "center" }}>
+                <div key={x.label} style={{ background: "linear-gradient(180deg, rgba(15,30,52,0.95), rgba(10,20,38,0.95))", border: `1px solid ${C.border}`, borderRadius: 7, padding: "15px 11px 13px", minHeight: 86, textAlign: "center" }}>
                   <MiniLabel>{x.label}</MiniLabel>
-                  <div style={{ fontSize: 17, fontWeight: 950, color: C.text, marginTop: 7, lineHeight: 1.05 }}>{x.value}</div>
-                  <div style={{ fontSize: 8.3, color: C.textMuted, marginTop: 6 }}>{x.sub}</div>
+                  <div style={{ fontSize: 20, fontWeight: 950, color: C.text, marginTop: 9, lineHeight: 1.05, letterSpacing: "-0.01em" }}>{x.value}</div>
+                  <div style={{ fontSize: 8.6, color: C.textMuted, marginTop: 7 }}>{x.sub}</div>
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: 8, padding: "12px 18px", minHeight: 55, background: "rgba(16,185,129,0.08)", border: `1px solid ${C.border}`, borderRadius: 7, display: "flex", alignItems: "center", gap: 16 }}>
-              <Calendar size={25} color={C.green2} />
-              <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
+            <div style={{ marginTop: 10, padding: "14px 20px", minHeight: 64, background: "radial-gradient(circle at 12% 50%, rgba(16,185,129,0.22), transparent 55%), rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.35)", borderRadius: 8, display: "flex", alignItems: "center", gap: 18 }}>
+              <Calendar size={28} color={C.green2} />
+              <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
                 <div>
                   <MiniLabel>Tiempo recuperado</MiniLabel>
-                  <div style={{ fontSize: 22, fontWeight: 950, color: C.green2, lineHeight: 1.05 }}>{e.propuesta.tiempoRecuperado}</div>
+                  <div style={{ fontSize: 24, fontWeight: 950, color: C.green2, lineHeight: 1.05, marginTop: 3 }}>{e.propuesta.tiempoRecuperado}</div>
                 </div>
-                <div style={{ color: C.textSec, fontSize: 10.2 }}>Reducción en el tiempo total de deuda</div>
+                <div style={{ color: C.textSec, fontSize: 10.4 }}>Reducción en el tiempo total de deuda</div>
               </div>
             </div>
           </Card>
+
         </div>
 
         <Card style={{ padding: 12, marginBottom: 10 }}>
