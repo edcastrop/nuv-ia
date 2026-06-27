@@ -3,21 +3,25 @@
 // NO usa Tailwind. Todos los estilos inline.
 
 import { forwardRef, type CSSProperties, type ReactNode } from "react";
-
 import { Calendar, Copy } from "lucide-react";
 
 const C = {
-  bgPage:    "#0A0E1A",
-  bgCard:    "#111827",
-  bgInner:   "#1A2235",
-  border:    "#1E2D45",
-  blue:      "#3B82F6",
-  green:     "#10B981",
-  purple:    "#8B5CF6",
-  amber:     "#F59E0B",
-  red:       "#EF4444",
-  text:      "#F9FAFB",
-  textSec:   "#9CA3AF",
+  bgPage: "#060B19",
+  bgCard: "#0B1327",
+  bgInner: "#101B34",
+  bgInner2: "#0D172D",
+  border: "#1E2D45",
+  border2: "#263A60",
+  blue: "#3B82F6",
+  blue2: "#60A5FA",
+  green: "#10B981",
+  green2: "#34D399",
+  purple: "#8B5CF6",
+  amber: "#F59E0B",
+  red: "#EF4444",
+  text: "#F9FAFB",
+  textSec: "#CBD5E1",
+  textMuted: "#9CA3AF",
   textLabel: "#6B7280",
 };
 
@@ -69,15 +73,180 @@ export interface CaseSnapshotPDFProps {
   expediente: CaseSnapshotData;
 }
 
-const cop = (n: number) =>
-  "$" + Math.round(n || 0).toLocaleString("es-CO").replace(/,/g, ".");
+const cop = (n: number) => "$" + Math.round(n || 0).toLocaleString("es-CO").replace(/,/g, ".");
 
 const initials = (name: string) =>
-  (name || "—").split(/\s+/).filter(Boolean).slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() ?? "").join("") || "—";
+  (name || "—")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("") || "—";
 
 const fechaHoy = () =>
   new Date().toLocaleDateString("es-CO", { day: "2-digit", month: "long", year: "numeric" });
+
+const shortId = (id: string) => (id || "—").slice(0, 36);
+
+const Label = ({ children, style }: { children: ReactNode; style?: CSSProperties }) => (
+  <div
+    style={{
+      fontSize: 11,
+      fontWeight: 800,
+      letterSpacing: "0.06em",
+      textTransform: "uppercase",
+      color: C.text,
+      marginBottom: 10,
+      ...style,
+    }}
+  >
+    {children}
+  </div>
+);
+
+const MiniLabel = ({ children, style }: { children: ReactNode; style?: CSSProperties }) => (
+  <div
+    style={{
+      fontSize: 8,
+      fontWeight: 800,
+      letterSpacing: "0.09em",
+      textTransform: "uppercase",
+      color: C.textMuted,
+      lineHeight: 1.15,
+      ...style,
+    }}
+  >
+    {children}
+  </div>
+);
+
+const Card = ({ children, style }: { children: ReactNode; style?: CSSProperties }) => (
+  <div
+    style={{
+      background: "linear-gradient(180deg, rgba(15,24,45,0.98), rgba(8,15,31,0.98))",
+      border: `1px solid ${C.border}`,
+      borderRadius: 8,
+      boxShadow: "0 16px 40px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.03)",
+      ...style,
+    }}
+  >
+    {children}
+  </div>
+);
+
+const Inner = ({ children, style }: { children: ReactNode; style?: CSSProperties }) => (
+  <div
+    style={{
+      background: "linear-gradient(180deg, rgba(17,29,56,0.95), rgba(9,17,34,0.95))",
+      border: `1px solid ${C.border}`,
+      borderRadius: 6,
+      padding: 12,
+      ...style,
+    }}
+  >
+    {children}
+  </div>
+);
+
+const Pill = ({ color, children, small }: { color: string; children: ReactNode; small?: boolean }) => (
+  <span
+    style={{
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: small ? "2px 7px" : "4px 9px",
+      borderRadius: 999,
+      fontSize: small ? 7 : 8,
+      fontWeight: 900,
+      letterSpacing: "0.05em",
+      textTransform: "uppercase",
+      color,
+      background: `${color}22`,
+      border: `1px solid ${color}55`,
+      whiteSpace: "nowrap",
+      lineHeight: 1.1,
+    }}
+  >
+    {children}
+  </span>
+);
+
+const IconWrap = ({ children, color = C.blue, size = 22 }: { children: ReactNode; color?: string; size?: number }) => (
+  <span
+    style={{
+      width: size,
+      height: size,
+      borderRadius: 6,
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      color,
+      background: `${color}16`,
+      border: `1px solid ${color}40`,
+      flexShrink: 0,
+    }}
+  >
+    {children}
+  </span>
+);
+
+const SvgUser = ({ size = 22, color = "currentColor" }: { size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4.5 20c1.4-4 4.1-6 7.5-6s6.1 2 7.5 6" />
+  </svg>
+);
+
+const SvgBank = ({ size = 17, color = "currentColor" }: { size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 9h18L12 4 3 9Z" />
+    <path d="M5 9v8M9 9v8M15 9v8M19 9v8M4 17h16M3 20h18" />
+  </svg>
+);
+
+const SvgShield = ({ size = 17, color = "currentColor" }: { size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
+    <path d="m9 12 2 2 4-5" />
+  </svg>
+);
+
+const SvgMoney = ({ size = 17, color = "currentColor" }: { size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="5" width="18" height="14" rx="2" />
+    <path d="M12 8v8M14.5 10a2.3 2.3 0 0 0-2.5-1.2c-1.5 0-2.4.6-2.4 1.6 0 2.5 5 1.1 5 3.8 0 1.1-1 2-2.7 2a3.6 3.6 0 0 1-3-1.4" />
+  </svg>
+);
+
+const SvgCheckCircle = ({ size = 18, color = "currentColor" }: { size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="9" />
+    <path d="m8 12 2.6 2.6L16.5 9" />
+  </svg>
+);
+
+const SvgChart = ({ size = 18, color = "currentColor" }: { size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M5 19V9M12 19V5M19 19v-7" />
+    <path d="M3 19h18" />
+    <path d="M5 9h2M12 5h2M19 12h2" />
+  </svg>
+);
+
+const SvgCalendarSmall = ({ size = 17, color = "currentColor" }: { size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="4" y="5" width="16" height="15" rx="2" />
+    <path d="M8 3v4M16 3v4M4 10h16" />
+  </svg>
+);
+
+const SvgFile = ({ size = 17, color = "currentColor" }: { size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z" />
+    <path d="M14 3v6h6" />
+    <path d="M8 14h8M8 18h5" />
+  </svg>
+);
 
 const SvgVelocimetro = ({ color }: { color: string }) => (
   <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
@@ -116,379 +285,424 @@ const SvgRed = ({ color }: { color: string }) => (
 );
 
 const PL_ICONS: Record<string, (c: string) => ReactNode> = {
-  "Simulación":      (c) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>,
-  "QA":              (c) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
-  "Contrato":        (c) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>,
-  "Poder":           (c) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
-  "Checklist":       (c) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><polyline points="3 6 4 7 6 5"/><polyline points="3 12 4 13 6 11"/><polyline points="3 18 4 19 6 17"/></svg>,
-  "Radicación":      (c) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
-  "Respuesta Banco": (c) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>,
-  "Informe Final":   (c) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 12 18 15 13"/></svg>,
-  "Cuenta Cobro":    (c) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>,
-  "Paz y Salvo":     (c) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
+  Simulación: (c) => <SvgCheckCircle size={13} color={c} />,
+  QA: (c) => <SvgShield size={13} color={c} />,
+  Contrato: (c) => <SvgFile size={13} color={c} />,
+  Poder: (c) => <SvgUser size={13} color={c} />,
+  Checklist: (c) => <SvgCheckCircle size={13} color={c} />,
+  Radicación: (c) => <SvgFile size={13} color={c} />,
+  "Respuesta Banco": (c) => <SvgFile size={13} color={c} />,
+  "Informe Final": (c) => <SvgFile size={13} color={c} />,
+  "Cuenta Cobro": (c) => <SvgMoney size={13} color={c} />,
+  "Paz y Salvo": (c) => <SvgCheckCircle size={13} color={c} />,
 };
 
 const ROL_ICON: Record<string, ReactNode> = {
-  "Analista": <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>,
-  "Director Financiero": <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>,
-  "Contabilidad": <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="13" y2="15"/></svg>,
-  "Gerencia": <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>,
+  Analista: <SvgUser size={13} color={C.blue2} />,
+  "Director Financiero": <SvgChart size={13} color={C.blue2} />,
+  Contabilidad: <SvgMoney size={13} color={C.blue2} />,
+  Gerencia: (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={C.blue2} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
+    </svg>
+  ),
 };
 
-const Label = ({ children, style }: { children: ReactNode; style?: CSSProperties }) => (
-  <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "#6B7280", marginBottom: 8, ...style }}>{children}</div>
+const Wave = () => (
+  <svg width="330" height="70" viewBox="0 0 330 70" fill="none" style={{ position: "absolute", top: 28, left: 232, opacity: 0.92 }}>
+    <defs>
+      <linearGradient id="nuvia-wave" x1="0" y1="32" x2="330" y2="32" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#8B5CF6" stopOpacity="0" />
+        <stop offset="0.22" stopColor="#8B5CF6" />
+        <stop offset="0.52" stopColor="#3B82F6" />
+        <stop offset="1" stopColor="#10B981" stopOpacity="0" />
+      </linearGradient>
+    </defs>
+    <path d="M0 33C45 20 76 24 106 43C136 62 168 64 200 38C230 15 270 13 330 27" stroke="url(#nuvia-wave)" strokeWidth="1.5" />
+    <path d="M0 37C45 24 77 28 108 46C140 64 169 67 202 42C232 20 270 18 330 31" stroke="#60A5FA" strokeOpacity="0.25" strokeWidth="0.8" />
+    <path d="M0 29C45 18 77 22 108 39C140 57 169 59 202 35C232 14 270 12 330 24" stroke="#8B5CF6" strokeOpacity="0.22" strokeWidth="0.8" />
+  </svg>
 );
 
-const MiniLabel = ({ children, style }: { children: ReactNode; style?: CSSProperties }) => (
-  <div style={{ fontSize: 9, fontWeight: 500, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "#9CA3AF", ...style }}>{children}</div>
-);
-
-const Card = ({ children, style }: { children: ReactNode; style?: CSSProperties }) => (
-  <div style={{ background: "#111827", border: "1px solid #1E2D45", borderRadius: 12, ...style }}>{children}</div>
-);
-
-const Inner = ({ children, style }: { children: ReactNode; style?: CSSProperties }) => (
-  <div style={{ background: "#1A2235", border: "1px solid #1E2D45", borderRadius: 8, padding: 12, ...style }}>{children}</div>
-);
-
-const Pill = ({ color, children, small }: { color: string; children: ReactNode; small?: boolean }) => (
-  <span style={{ display: "inline-flex", alignItems: "center", padding: small ? "2px 7px" : "3px 9px", borderRadius: 999, fontSize: small ? 7.5 : 9, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" as const, color, background: `${color}22`, border: `1px solid ${color}55`, whiteSpace: "nowrap" }}>{children}</span>
-);
-
-const Avatar = ({ name, size = 30 }: { name: string; size?: number }) => (
-  <div style={{ width: size, height: size, borderRadius: "50%", background: "#1A2235", border: "1px solid #1E2D45", color: "#3B82F6", fontSize: size * 0.34, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-    {initials(name)}
+const ClienteAvatar = () => (
+  <div
+    style={{
+      width: 58,
+      height: 58,
+      borderRadius: "50%",
+      background: "radial-gradient(circle at 35% 20%, #4F69D9, #1D2C71 72%)",
+      boxShadow: "0 0 30px rgba(59,130,246,0.22)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+    }}
+  >
+    <SvgUser size={35} color="#EAF2FF" />
   </div>
 );
 
-const Divider = () => <div style={{ width: 1, alignSelf: "stretch", background: "#1E2D45", margin: "0 8px", flexShrink: 0 }} />;
+const Field = ({ icon, label, value, width }: { icon: ReactNode; label: string; value: ReactNode; width?: number }) => (
+  <div style={{ width, flex: width ? "0 0 auto" : 1, minWidth: 0, display: "flex", alignItems: "flex-start", gap: 9 }}>
+    {icon}
+    <div style={{ minWidth: 0 }}>
+      <MiniLabel style={{ marginBottom: 5, color: C.textLabel }}>{label}</MiniLabel>
+      <div style={{ fontSize: 10.2, lineHeight: 1.35, color: C.text, fontWeight: 750, wordBreak: "break-word" }}>{value}</div>
+    </div>
+  </div>
+);
 
 const PStep = ({ nombre, estado, isLast }: { nombre: string; estado: PipelineEstado; isLast: boolean }) => {
-  let bg = "#1A2235", border = "#1E2D45", iconColor = "#6B7280";
-  if (estado === "completado") { bg = "#10B981"; border = "#10B981"; iconColor = "#fff"; }
-  if (estado === "en_proceso") { bg = "#3B82F6"; border = "#3B82F6"; iconColor = "#fff"; }
-  if (estado === "pendiente")  { bg = "#1A2235"; border = "#F59E0B"; iconColor = "#F59E0B"; }
-  const iconFn = PL_ICONS[nombre] ?? PL_ICONS["Simulación"];
+  const active = estado === "completado" || estado === "en_proceso";
+  const bg = estado === "completado" ? C.green : estado === "en_proceso" ? C.blue : "#172139";
+  const border = estado === "completado" ? C.green : estado === "en_proceso" ? C.blue2 : estado === "pendiente" ? C.border2 : "#334155";
+  const iconColor = active ? "#FFFFFF" : C.textLabel;
+  const iconFn = PL_ICONS[nombre] ?? PL_ICONS.Simulación;
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1, position: "relative" }}>
-      {!isLast && <div style={{ position: "absolute", top: 14, left: "50%", width: "100%", height: 2, background: estado === "completado" ? "#10B981" : "#1E2D45", zIndex: 0 }} />}
-      <div style={{ width: 28, height: 28, borderRadius: "50%", background: bg, border: `1.5px solid ${border}`, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1, flexShrink: 0 }}>
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", position: "relative", minWidth: 0 }}>
+      {!isLast && (
+        <div
+          style={{
+            position: "absolute",
+            top: 15,
+            left: "50%",
+            width: "100%",
+            height: 2,
+            background: estado === "completado" ? C.green : "#29354D",
+            zIndex: 0,
+          }}
+        />
+      )}
+      <div
+        style={{
+          width: 30,
+          height: 30,
+          borderRadius: "50%",
+          background: bg,
+          border: `1.5px solid ${border}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1,
+          boxShadow: active ? `0 0 0 4px ${bg}20` : "none",
+        }}
+      >
         {iconFn(iconColor)}
       </div>
-      <div style={{ marginTop: 5, fontSize: 7.5, color: estado === "no_iniciado" ? "#6B7280" : "#9CA3AF", textAlign: "center", fontWeight: 600, lineHeight: 1.2, maxWidth: 55 }}>{nombre}</div>
+      <div style={{ marginTop: 7, fontSize: 7.4, color: estado === "no_iniciado" ? C.textLabel : C.textSec, textAlign: "center", fontWeight: 700, lineHeight: 1.22, maxWidth: 58 }}>{nombre}</div>
     </div>
   );
 };
 
-export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
-  ({ expediente: e }, ref) => {
-    const varPct = e.credito.cuotaActual ? (((e.propuesta.nuevaCuota - e.credito.cuotaActual) / e.credito.cuotaActual) * 100).toFixed(1) : "0";
-    const ahorrosPct = e.credito.costoTotal ? ((e.propuesta.ahorroTotal / e.credito.costoTotal) * 100).toFixed(1) : "0";
-    const cuotasElimPct = e.credito.cuotasPendientes ? ((e.propuesta.cuotasEliminadas / e.credito.cuotasPendientes) * 100).toFixed(1) : "0";
-    const mesesDiff = Math.max(0, e.credito.cuotasPendientes - e.propuesta.nuevoPlazo);
+export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(({ expediente: e }, ref) => {
+  const varPct = e.credito.cuotaActual ? (((e.propuesta.nuevaCuota - e.credito.cuotaActual) / e.credito.cuotaActual) * 100).toFixed(1) : "0";
+  const ahorrosPct = e.credito.costoTotal ? ((e.propuesta.ahorroTotal / e.credito.costoTotal) * 100).toFixed(1) : "0";
+  const cuotasElimPct = e.credito.cuotasPendientes ? ((e.propuesta.cuotasEliminadas / e.credito.cuotasPendientes) * 100).toFixed(1) : "0";
+  const mesesDiff = Math.max(0, e.credito.cuotasPendientes - e.propuesta.nuevoPlazo);
 
-    return (
-      <div ref={ref} style={{ width: 794, background: "#0A0E1A", color: "#F9FAFB", fontFamily: FONT, padding: "28px 32px", boxSizing: "border-box", fontSize: 12, lineHeight: 1.4 }}>
-        {/* HEADER */}
+  return (
+    <div
+      ref={ref}
+      style={{
+        width: 794,
+        minHeight: 1191,
+        position: "relative",
+        overflow: "hidden",
+        background:
+          "radial-gradient(circle at 88% 33%, rgba(59,130,246,0.18), transparent 18%), radial-gradient(circle at 42% 7%, rgba(139,92,246,0.15), transparent 20%), linear-gradient(180deg, #050918 0%, #071021 52%, #050918 100%)",
+        color: C.text,
+        fontFamily: FONT,
+        padding: "28px 30px 25px",
+        boxSizing: "border-box",
+        fontSize: 12,
+        lineHeight: 1.4,
+      }}
+    >
+      <Wave />
+
+      <div style={{ position: "relative", zIndex: 1 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
           <div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-              <span style={{ fontSize: 17, fontWeight: 800, color: "#F9FAFB" }}>NUVIA</span>
-              <span style={{ fontSize: 7.5, fontWeight: 700, letterSpacing: "0.22em", color: "#3B82F6" }}>FINANCIAL INTELLIGENCE</span>
-            </div>
-            <div style={{ marginTop: 5, width: 210, height: 2, background: "linear-gradient(90deg, #3B82F6, #8B5CF6, transparent)", borderRadius: 2 }} />
+            <div style={{ fontSize: 22, fontWeight: 950, color: C.text, lineHeight: 0.95, letterSpacing: "0.02em" }}>NUVIA</div>
+            <div style={{ fontSize: 8.3, color: C.blue2, fontWeight: 800, letterSpacing: "0.1em", marginTop: 4 }}>FINANCIAL INTELLIGENCE</div>
           </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 9.5, color: "#9CA3AF" }}>Fecha de emisión:</div>
-            <div style={{ fontSize: 11, color: "#F9FAFB", fontWeight: 600 }}>{fechaHoy()}</div>
-            <div style={{ fontSize: 8.5, color: "#6B7280", marginTop: 3 }}>Documento ejecutivo · No reemplaza el expediente operativo</div>
+          <div style={{ textAlign: "right", paddingTop: 1 }}>
+            <div style={{ fontSize: 9.2, color: C.textSec, lineHeight: 1.35 }}>Fecha de emisión: {fechaHoy()}</div>
+            <div style={{ fontSize: 8.4, color: C.textMuted, lineHeight: 1.35 }}>Documento ejecutivo • No reemplaza el expediente operativo</div>
           </div>
         </div>
 
-        {/* TÍTULO */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 14 }}>
           <div>
-            <div style={{ fontSize: 34, fontWeight: 800, color: "#F9FAFB", letterSpacing: "-0.02em", lineHeight: 1 }}>CASE SNAPSHOT</div>
-            <div style={{ fontSize: 10.5, color: "#9CA3AF", marginTop: 4, letterSpacing: "0.1em", textTransform: "uppercase" }}>Resumen ejecutivo del caso</div>
+            <div style={{ fontSize: 31, fontWeight: 950, color: C.text, letterSpacing: "0", lineHeight: 1 }}>CASE SNAPSHOT</div>
+            <div style={{ fontSize: 10.5, color: C.textMuted, marginTop: 5, letterSpacing: "0.08em", textTransform: "uppercase" }}>Resumen ejecutivo del caso</div>
           </div>
-          <div style={{ background: "#111827", border: "1px solid #1E2D45", borderRadius: 8, padding: "8px 14px", textAlign: "right" }}>
-            <div style={{ fontSize: 8.5, color: "#6B7280", letterSpacing: "0.1em", textTransform: "uppercase" }}>ID Expediente</div>
-            <div style={{ fontSize: 10.5, fontFamily: "ui-monospace, monospace", color: "#3B82F6", marginTop: 2, fontWeight: 600 }}>{e.id.slice(0, 18)}</div>
+          <div style={{ width: 245, background: "rgba(7,15,31,0.72)", border: `1px solid ${C.border2}`, borderRadius: 5, padding: "9px 14px", boxSizing: "border-box" }}>
+            <MiniLabel style={{ color: C.textSec, marginBottom: 4 }}>ID Expediente</MiniLabel>
+            <div style={{ fontSize: 10.5, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", color: C.text, fontWeight: 750, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shortId(e.id)}</div>
           </div>
         </div>
 
-        {/* CARD CLIENTE */}
-        <Card style={{ padding: 14, marginBottom: 14 }}>
-          {/* Fila 1 */}
-          <div style={{ display: "flex", alignItems: "flex-start" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, width: 168, flexShrink: 0 }}>
-              <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#1A2235", border: "1px solid #1E2D45", color: "#3B82F6", fontSize: 15, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{initials(e.cliente.nombre)}</div>
+        <Card style={{ padding: 13, marginBottom: 10 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "200px 125px 1fr 100px 135px", gap: 13, alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+              <ClienteAvatar />
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#F9FAFB", lineHeight: 1.25, wordBreak: "break-word" }}>{e.cliente.nombre}</div>
-                <div style={{ fontSize: 9, color: "#9CA3AF", marginTop: 2 }}>CC {e.cliente.cc}</div>
+                <MiniLabel style={{ color: C.textLabel, marginBottom: 3 }}>Cliente</MiniLabel>
+                <div style={{ fontSize: 15.5, fontWeight: 950, color: C.text, lineHeight: 1.12, wordBreak: "break-word", textTransform: "uppercase" }}>{e.cliente.nombre}</div>
               </div>
             </div>
-            <Divider />
-            <div style={{ width: 90, flexShrink: 0 }}>
-              <MiniLabel style={{ marginBottom: 4 }}>Banco</MiniLabel>
-              <div style={{ fontSize: 11, color: "#F9FAFB", fontWeight: 600, lineHeight: 1.3 }}>{e.banco}</div>
-            </div>
-            <Divider />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <MiniLabel style={{ marginBottom: 4 }}>Producto</MiniLabel>
-              <div style={{ fontSize: 11, color: "#F9FAFB", fontWeight: 600, lineHeight: 1.3 }}>{e.producto}</div>
-            </div>
-            <Divider />
-            <div style={{ width: 72, flexShrink: 0 }}>
-              <MiniLabel style={{ marginBottom: 4 }}>Modalidad</MiniLabel>
-              <div style={{ fontSize: 11, color: "#F9FAFB", fontWeight: 600 }}>{e.modalidad}</div>
-            </div>
-            <Divider />
-            <div style={{ width: 105, flexShrink: 0 }}>
-              <MiniLabel style={{ marginBottom: 4 }}>Estado del caso</MiniLabel>
-              <Pill color="#10B981" small>{e.estado}</Pill>
-            </div>
+            <Field icon={<IconWrap><SvgBank /></IconWrap>} label="Banco" value={e.banco} />
+            <Field icon={<IconWrap><SvgShield /></IconWrap>} label="Producto" value={e.producto} />
+            <Field icon={<IconWrap><SvgMoney /></IconWrap>} label="Modalidad" value={e.modalidad} />
+            <Field icon={<IconWrap color={C.green}><SvgCheckCircle /></IconWrap>} label="Estado del caso" value={<span style={{ color: C.green2 }}>{e.estado}</span>} />
           </div>
-          <div style={{ height: 1, background: "#1E2D45", margin: "12px 0" }} />
-          {/* Fila 2 */}
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <div style={{ width: 168, flexShrink: 0 }}>
-              <MiniLabel style={{ marginBottom: 3 }}>Analista</MiniLabel>
-              <div style={{ fontSize: 11, color: "#F9FAFB", fontWeight: 600 }}>{e.analista}</div>
-            </div>
-            <Divider />
-            <div style={{ width: 155, flexShrink: 0 }}>
-              <MiniLabel style={{ marginBottom: 3 }}>Score QA</MiniLabel>
-              <div style={{ fontSize: 15, fontWeight: 800, color: "#3B82F6" }}>{e.qaScore.toFixed(1)} <span style={{ fontSize: 10, color: "#9CA3AF", fontWeight: 500 }}>/ 100</span></div>
-              <div style={{ height: 3, background: "#1E2D45", borderRadius: 999, marginTop: 4, overflow: "hidden" }}>
-                <div style={{ height: "100%", width: `${Math.min(100, e.qaScore)}%`, background: "linear-gradient(90deg, #3B82F6, #8B5CF6)" }} />
+          <div style={{ height: 1, background: C.border, margin: "12px 0" }} />
+          <div style={{ display: "grid", gridTemplateColumns: "176px 170px 1fr 135px", gap: 16, alignItems: "center" }}>
+            <Field icon={<IconWrap><SvgUser /></IconWrap>} label="Analista" value={e.analista} />
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 9 }}>
+              <IconWrap><SvgShield /></IconWrap>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <MiniLabel style={{ color: C.textLabel, marginBottom: 2 }}>Score QA</MiniLabel>
+                <div style={{ fontSize: 15.5, fontWeight: 950, color: C.text }}>{e.qaScore.toFixed(1)} <span style={{ fontSize: 10, color: C.textSec, fontWeight: 700 }}>/ 100</span></div>
+                <div style={{ height: 5, background: "#152038", borderRadius: 999, marginTop: 3, overflow: "hidden" }}>
+                  <div style={{ width: `${Math.max(0, Math.min(100, e.qaScore))}%`, height: "100%", background: "linear-gradient(90deg, #3B82F6, #8B5CF6)", borderRadius: 999 }} />
+                </div>
               </div>
             </div>
-            <Divider />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <MiniLabel style={{ marginBottom: 3 }}>Nivel autonomía</MiniLabel>
-              <div style={{ display: "flex", gap: 5, alignItems: "center", marginTop: 2, flexWrap: "nowrap" }}>
-                <Pill color="#3B82F6" small>{e.nivelAutonomia}</Pill>
-                <Pill color="#F59E0B" small>Supervisada</Pill>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 9 }}>
+              <IconWrap><SvgChart /></IconWrap>
+              <div>
+                <MiniLabel style={{ color: C.textLabel, marginBottom: 4 }}>Nivel autonomía</MiniLabel>
+                <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                  <span style={{ fontSize: 14, fontWeight: 950, color: C.text }}>{e.nivelAutonomia}</span>
+                  <Pill color={C.blue} small>Supervisada</Pill>
+                </div>
               </div>
             </div>
-            <Divider />
-            <div style={{ width: 105, flexShrink: 0 }}>
-              <MiniLabel style={{ marginBottom: 3 }}>Fecha</MiniLabel>
-              <div style={{ fontSize: 11, color: "#F9FAFB", fontWeight: 600 }}>{e.fecha}</div>
+            <Field icon={<IconWrap><SvgCalendarSmall /></IconWrap>} label="Fecha" value={e.fecha} />
+          </div>
+        </Card>
+
+        <Card style={{ padding: 12, marginBottom: 10 }}>
+          <Label>Foto completa del crédito</Label>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 9, marginBottom: 13 }}>
+            {[
+              { label: "Saldo actual", val: cop(e.credito.saldoActual) },
+              { label: "Cuota actual", val: cop(e.credito.cuotaActual) },
+              { label: "Cuotas pendientes", val: String(e.credito.cuotasPendientes) },
+              { label: "Costo total del crédito", val: cop(e.credito.costoTotal) },
+            ].map(({ label, val }) => (
+              <Inner key={label} style={{ padding: "11px 13px", minHeight: 58 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 9 }}>
+                  <MiniLabel style={{ color: C.blue2 }}>{label}</MiniLabel>
+                  <Copy size={13} color={C.blue2} />
+                </div>
+                <div style={{ fontSize: 17.5, fontWeight: 950, color: C.text, letterSpacing: "0" }}>{val}</div>
+              </Inner>
+            ))}
+          </div>
+          <div
+            style={{
+              minHeight: 106,
+              borderRadius: 7,
+              border: `1px solid ${C.border}`,
+              background:
+                "radial-gradient(circle at 97% 0%, rgba(59,130,246,0.45), transparent 16%), linear-gradient(115deg, rgba(9,18,44,0.98), rgba(8,20,42,0.88) 60%, rgba(9,31,60,0.94))",
+              display: "grid",
+              gridTemplateColumns: "48% 1fr",
+              alignItems: "center",
+              overflow: "hidden",
+            }}
+          >
+            <div style={{ textAlign: "center", borderRight: `1px solid ${C.border}`, padding: "8px 20px" }}>
+              <MiniLabel style={{ fontSize: 9, marginBottom: 7 }}>Vas a pagar</MiniLabel>
+              <div style={{ fontSize: 55, fontWeight: 950, lineHeight: 0.9, letterSpacing: "0", background: "linear-gradient(90deg, #3B82F6, #A78BFA)", WebkitBackgroundClip: "text", color: "transparent" }}>{e.credito.multiplicador.toFixed(2)}x</div>
+              <div style={{ fontSize: 10.3, fontWeight: 850, color: C.textSec, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 7 }}>El valor de tu crédito</div>
+            </div>
+            <div style={{ padding: "0 24px", fontSize: 11.2, color: C.textSec, lineHeight: 1.55 }}>
+              Con las condiciones actuales, terminarás pagando <strong style={{ color: C.blue2 }}>{e.credito.multiplicador.toFixed(2)} veces</strong> el valor del crédito desembolsado.
+              <br />
+              Este análisis considera intereses, seguros y costos asociados durante todo el plazo del crédito.
             </div>
           </div>
         </Card>
 
-        {/* FOTO CRÉDITO */}
-        <Label>Foto completa del crédito</Label>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10, marginBottom: 12 }}>
-          {[
-            { label: "Saldo actual", val: cop(e.credito.saldoActual) },
-            { label: "Cuota actual", val: cop(e.credito.cuotaActual) },
-            { label: "Cuotas pendientes", val: String(e.credito.cuotasPendientes) },
-            { label: "Costo total del crédito", val: cop(e.credito.costoTotal) },
-          ].map(({ label, val }) => (
-            <Inner key={label}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
-                <MiniLabel>{label}</MiniLabel>
-                <Copy size={10} color="#6B7280" />
-              </div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: "#F9FAFB", letterSpacing: "-0.02em" }}>{val}</div>
-            </Inner>
-          ))}
-        </div>
-
-        {/* BANNER MULTIPLICADOR */}
-        <div style={{ background: "linear-gradient(120deg, #1A1040 0%, #111827 70%)", borderRadius: 12, border: "1px solid #1E2D45", borderLeft: "3px solid #8B5CF6", padding: "14px 18px", display: "flex", alignItems: "center", gap: 20, marginBottom: 16 }}>
-          <div style={{ flexShrink: 0, textAlign: "center", minWidth: 120 }}>
-            <MiniLabel>Vas a pagar</MiniLabel>
-            <div style={{ fontSize: 42, fontWeight: 800, color: "#8B5CF6", lineHeight: 1, letterSpacing: "-0.03em" }}>{e.credito.multiplicador.toFixed(2)}x</div>
-            <div style={{ fontSize: 9, color: "#9CA3AF", letterSpacing: "0.08em", textTransform: "uppercase" }}>El valor de tu crédito</div>
-          </div>
-          <div style={{ flex: 1, fontSize: 11, color: "#9CA3AF", lineHeight: 1.6 }}>
-            Con las condiciones actuales, terminarás pagando{" "}
-            <strong style={{ color: "#3B82F6" }}>{e.credito.multiplicador.toFixed(2)} veces</strong> el valor del crédito desembolsado.
-            Este análisis considera intereses, seguros y costos asociados durante todo el plazo del crédito.
-          </div>
-        </div>
-
-        {/* DIAGNÓSTICO + PROPUESTA */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "41% 59%", gap: 8, marginBottom: 10 }}>
           <div>
-            <Label>Diagnóstico NUVIA AI</Label>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 10 }}>
-              <Inner style={{ padding: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: 5, textAlign: "center" }}>
-                <SvgVelocimetro color="#F59E0B" /><MiniLabel>Riesgo operativo</MiniLabel>
-                <div style={{ fontSize: 13, fontWeight: 800, color: "#F59E0B" }}>MEDIO</div>
-              </Inner>
-              <Inner style={{ padding: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: 5, textAlign: "center" }}>
-                <SvgDiana color="#10B981" /><MiniLabel>Viabilidad</MiniLabel>
-                <div style={{ fontSize: 13, fontWeight: 800, color: "#10B981" }}>ALTA</div>
-              </Inner>
-              <Inner style={{ padding: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: 5, textAlign: "center" }}>
-                <SvgRed color="#F59E0B" /><MiniLabel>Complejidad</MiniLabel>
-                <div style={{ fontSize: 13, fontWeight: 800, color: "#F59E0B" }}>MEDIA</div>
-              </Inner>
-            </div>
-            <div style={{ fontSize: 11, color: "#9CA3AF", lineHeight: 1.55, marginBottom: 10 }}>
-              Este crédito presenta una <strong style={{ color: "#3B82F6" }}>oportunidad de optimización</strong> significativa.
-              La propuesta seleccionada <strong style={{ color: "#3B82F6" }}>reduce el tiempo de deuda</strong>, disminuye el
-              costo financiero total y <strong style={{ color: "#3B82F6" }}>mejora tu salud financiera</strong>.
-            </div>
-            <Inner style={{ padding: 12 }}>
-              <Label style={{ fontSize: 9, marginBottom: 8 }}>Honorarios</Label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 10 }}>
+            <Card style={{ padding: 10, marginBottom: 8 }}>
+              <Label style={{ marginBottom: 12 }}>Diagnóstico NUVIA AI</Label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7, marginBottom: 9 }}>
+                <div style={{ textAlign: "center" }}>
+                  <SvgVelocimetro color={C.amber} />
+                  <MiniLabel style={{ marginTop: 4, fontSize: 7 }}>Riesgo operativo</MiniLabel>
+                  <div style={{ fontSize: 14, fontWeight: 950, color: C.amber }}>MEDIO</div>
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <SvgDiana color={C.green} />
+                  <MiniLabel style={{ marginTop: 4, fontSize: 7 }}>Viabilidad</MiniLabel>
+                  <div style={{ fontSize: 14, fontWeight: 950, color: C.green2 }}>ALTA</div>
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <SvgRed color={C.amber} />
+                  <MiniLabel style={{ marginTop: 4, fontSize: 7 }}>Complejidad</MiniLabel>
+                  <div style={{ fontSize: 14, fontWeight: 950, color: C.amber }}>MEDIA</div>
+                </div>
+              </div>
+              <div style={{ fontSize: 10.2, color: C.textSec, lineHeight: 1.45 }}>
+                Este crédito presenta una <strong style={{ color: C.blue2 }}>oportunidad de optimización</strong> significativa. La propuesta seleccionada <strong style={{ color: C.blue2 }}>reduce el tiempo de deuda</strong>, disminuye el costo financiero total y <strong style={{ color: C.blue2 }}>mejora tu salud financiera</strong>.
+              </div>
+            </Card>
+            <Card style={{ padding: 11 }}>
+              <Label style={{ marginBottom: 12 }}>Honorarios</Label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 9, marginBottom: 10 }}>
                 {[
-                  { label: "Pactados",     val: cop(e.honorarios.pactados),     color: "#F9FAFB" },
-                  { label: "Recalculados", val: cop(e.honorarios.recalculados), color: "#F9FAFB" },
-                  { label: "Variación",    val: `${e.honorarios.variacion >= 0 ? "+" : ""}${cop(e.honorarios.variacion)}`, color: e.honorarios.variacion < 0 ? "#EF4444" : "#10B981" },
+                  { label: "Pactados", val: cop(e.honorarios.pactados), color: C.text },
+                  { label: "Recalculados", val: cop(e.honorarios.recalculados), color: C.text },
+                  { label: "Variación", val: `${e.honorarios.variacion >= 0 ? "+" : ""}${cop(e.honorarios.variacion)}`, color: e.honorarios.variacion < 0 ? C.red : C.green2 },
                 ].map(({ label, val, color }) => (
-                  <div key={label}><MiniLabel>{label}</MiniLabel>
-                    <div style={{ fontSize: 12, fontWeight: 700, color, marginTop: 3 }}>{val}</div>
+                  <div key={label}>
+                    <MiniLabel style={{ fontSize: 7 }}>{label}</MiniLabel>
+                    <div style={{ fontSize: 10.8, fontWeight: 900, color, marginTop: 4 }}>{val}</div>
                   </div>
                 ))}
               </div>
-              <div style={{ borderTop: "1px solid #1E2D45", paddingTop: 8, display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
                 {[
-                  { label: "Estado cobro", val: e.honorarios.estadoCobro, color: "#9CA3AF" },
-                  { label: "Estado pago",  val: e.honorarios.estadoPago,  color: "#9CA3AF" },
-                  { label: "Paz y salvo",  val: e.honorarios.pazYSalvo ? "Sí" : "No", color: e.honorarios.pazYSalvo ? "#10B981" : "#F59E0B" },
+                  { label: "Estado cobro", val: e.honorarios.estadoCobro, color: C.textSec },
+                  { label: "Estado pago", val: e.honorarios.estadoPago, color: C.textSec },
+                  { label: "Paz y salvo", val: e.honorarios.pazYSalvo ? "Sí" : "No", color: e.honorarios.pazYSalvo ? C.green2 : C.textSec },
                 ].map(({ label, val, color }) => (
-                  <div key={label} style={{ fontSize: 9, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.07em" }}>
-                    {label}: <strong style={{ color }}>{val}</strong>
+                  <div key={label}>
+                    <MiniLabel style={{ fontSize: 6.7 }}>{label}</MiniLabel>
+                    <div style={{ fontSize: 9.8, color, fontWeight: 850, marginTop: 4, textTransform: "uppercase" }}>{val}</div>
                   </div>
                 ))}
               </div>
-            </Inner>
+            </Card>
           </div>
-          <div>
-            <Label>Propuesta seleccionada</Label>
-            <div style={{ background: "linear-gradient(135deg, #0F2A1A 0%, #0B1A14 100%)", border: "1px solid #10B981", borderRadius: 12, padding: 14, position: "relative" }}>
-              <div style={{ position: "absolute", top: 10, right: 10 }}>
-                <Pill color="#10B981" small>★ Recomendada por NUVIA</Pill>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginTop: 28, paddingBottom: 12, borderBottom: "1px solid #1E2D45" }}>
-                <div><MiniLabel>Nueva cuota</MiniLabel>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: "#F9FAFB", marginTop: 3 }}>{cop(e.propuesta.nuevaCuota)}</div>
-                  <div style={{ fontSize: 9, color: "#9CA3AF", marginTop: 2 }}>{Number(varPct) >= 0 ? "+" : ""}{varPct}% vs actual</div>
+
+          <Card style={{ padding: 12, borderColor: C.green, position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", top: 0, right: 0, width: 170, height: 26, background: "linear-gradient(90deg, rgba(16,185,129,0.5), rgba(16,185,129,0.9))", clipPath: "polygon(14% 0, 100% 0, 100% 100%, 0 100%)", display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 12, boxSizing: "border-box" }}>
+              <span style={{ fontSize: 8.2, fontWeight: 950, color: C.text, letterSpacing: "0.04em" }}>RECOMENDADA POR NUVIA ★</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 13 }}>
+              <SvgCheckCircle size={20} color={C.green2} />
+              <Label style={{ marginBottom: 0 }}>Propuesta seleccionada</Label>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, border: `1px solid ${C.border}`, borderRadius: 7, overflow: "hidden", marginBottom: 1 }}>
+              {[
+                { label: "Nueva cuota", value: cop(e.propuesta.nuevaCuota), sub: `${Number(varPct) >= 0 ? "+" : ""}${varPct}% vs actual`, color: C.green2 },
+                { label: "Nuevo plazo", value: `${e.propuesta.nuevoPlazo} meses`, sub: `-${mesesDiff} meses`, color: C.textSec },
+                { label: "Cuotas eliminadas", value: String(e.propuesta.cuotasEliminadas), sub: `-${cuotasElimPct}% del plazo total`, color: C.green2 },
+              ].map((x) => (
+                <div key={x.label} style={{ background: "rgba(12,24,45,0.9)", padding: "14px 10px 12px", minHeight: 76, textAlign: "center" }}>
+                  <MiniLabel>{x.label}</MiniLabel>
+                  <div style={{ fontSize: 18, fontWeight: 950, color: C.text, marginTop: 7, lineHeight: 1.05 }}>{x.value}</div>
+                  <div style={{ fontSize: 8.3, color: x.color, marginTop: 6 }}>{x.sub}</div>
                 </div>
-                <div><MiniLabel>Nuevo plazo</MiniLabel>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: "#F9FAFB", marginTop: 3 }}>{e.propuesta.nuevoPlazo} meses</div>
-                  <div style={{ fontSize: 9, color: "#10B981", marginTop: 2 }}>-{mesesDiff} meses</div>
+              ))}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, border: `1px solid ${C.border}`, borderTop: "none", borderRadius: "0 0 7px 7px", overflow: "hidden", marginBottom: 1 }}>
+              {[
+                { label: "Ahorro total", value: cop(e.propuesta.ahorroTotal), sub: `${ahorrosPct}% del total a pagar` },
+                { label: "Ahorro intereses", value: cop(e.propuesta.ahorroIntereses), sub: "Proyección estimada" },
+                { label: "Ahorro seguros", value: cop(e.propuesta.ahorroSeguros), sub: "Proyección estimada" },
+              ].map((x) => (
+                <div key={x.label} style={{ background: "rgba(12,24,45,0.9)", padding: "13px 9px 11px", minHeight: 72, textAlign: "center" }}>
+                  <MiniLabel>{x.label}</MiniLabel>
+                  <div style={{ fontSize: 17, fontWeight: 950, color: C.text, marginTop: 7, lineHeight: 1.05 }}>{x.value}</div>
+                  <div style={{ fontSize: 8.3, color: C.textMuted, marginTop: 6 }}>{x.sub}</div>
                 </div>
-                <div><MiniLabel>Cuotas eliminadas</MiniLabel>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: "#F9FAFB", marginTop: 3 }}>{e.propuesta.cuotasEliminadas}</div>
-                  <div style={{ fontSize: 9, color: "#10B981", marginTop: 2 }}>-{cuotasElimPct}% del plazo total</div>
-                </div>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, paddingTop: 12, paddingBottom: 12, borderBottom: "1px solid #1E2D45" }}>
-                <div><MiniLabel>Ahorro total</MiniLabel>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: "#10B981", marginTop: 3 }}>{cop(e.propuesta.ahorroTotal)}</div>
-                  <div style={{ fontSize: 9, color: "#9CA3AF", marginTop: 2 }}>{ahorrosPct}% del total a pagar</div>
-                </div>
-                <div><MiniLabel>Ahorro intereses</MiniLabel>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: "#10B981", marginTop: 3 }}>{cop(e.propuesta.ahorroIntereses)}</div>
-                  <div style={{ fontSize: 9, color: "#6B7280", marginTop: 2 }}>Proyección estimada</div>
-                </div>
-                <div><MiniLabel>Ahorro seguros</MiniLabel>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: "#10B981", marginTop: 3 }}>{cop(e.propuesta.ahorroSeguros)}</div>
-                  <div style={{ fontSize: 9, color: "#6B7280", marginTop: 2 }}>Proyección estimada</div>
-                </div>
-              </div>
-              <div style={{ marginTop: 12, padding: "10px 12px", background: "#10B98115", border: "1px solid #10B98140", borderRadius: 8, display: "flex", alignItems: "center", gap: 10 }}>
-                <Calendar size={18} color="#10B981" />
+              ))}
+            </div>
+            <div style={{ marginTop: 8, padding: "12px 18px", minHeight: 55, background: "rgba(16,185,129,0.08)", border: `1px solid ${C.border}`, borderRadius: 7, display: "flex", alignItems: "center", gap: 16 }}>
+              <Calendar size={25} color={C.green2} />
+              <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
                 <div>
-                  <div style={{ fontSize: 8.5, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em" }}>Tiempo recuperado</div>
-                  <div style={{ fontSize: 19, fontWeight: 800, color: "#10B981", lineHeight: 1.1 }}>{e.propuesta.tiempoRecuperado}</div>
-                  <div style={{ fontSize: 9.5, color: "#9CA3AF", marginTop: 1 }}>Reducción en el tiempo total de deuda</div>
+                  <MiniLabel>Tiempo recuperado</MiniLabel>
+                  <div style={{ fontSize: 22, fontWeight: 950, color: C.green2, lineHeight: 1.05 }}>{e.propuesta.tiempoRecuperado}</div>
                 </div>
+                <div style={{ color: C.textSec, fontSize: 10.2 }}>Reducción en el tiempo total de deuda</div>
               </div>
             </div>
-          </div>
+          </Card>
         </div>
 
-        {/* PIPELINE */}
-        <Label>Estado operativo del caso</Label>
-        <Card style={{ padding: 14, marginBottom: 16 }}>
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+        <Card style={{ padding: 12, marginBottom: 10 }}>
+          <Label>Estado operativo del caso</Label>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", padding: "3px 5px 0" }}>
             {e.pipeline.map((p, i) => (
-              <PStep key={i} nombre={p.nombre} estado={p.estado} isLast={i === e.pipeline.length - 1} />
+              <PStep key={`${p.nombre}-${i}`} nombre={p.nombre} estado={p.estado} isLast={i === e.pipeline.length - 1} />
             ))}
           </div>
-          <div style={{ display: "flex", gap: 12, marginTop: 10, paddingTop: 8, borderTop: "1px solid #1E2D45", fontSize: 9, color: "#9CA3AF" }}>
+          <div style={{ display: "flex", justifyContent: "center", gap: 22, marginTop: 14, fontSize: 7.5, color: C.textMuted }}>
             {[
-              { color: "#10B981", label: "Completado",  outline: false },
-              { color: "#3B82F6", label: "En proceso",  outline: false },
-              { color: "#F59E0B", label: "Pendiente",   outline: true },
-              { color: "#6B7280", label: "No iniciado", outline: true },
+              { color: C.green, label: "Completado", outline: false },
+              { color: C.blue, label: "En proceso", outline: false },
+              { color: C.textLabel, label: "Pendiente", outline: true },
+              { color: C.textLabel, label: "No iniciado", outline: true },
             ].map(({ color, label, outline }) => (
-              <div key={label} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <span style={{ width: 8, height: 8, borderRadius: 999, background: outline ? "transparent" : color, border: `1.5px solid ${color}`, flexShrink: 0 }} />
+              <div key={label} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <span style={{ width: 7, height: 7, borderRadius: 999, background: outline ? "transparent" : color, border: `1.3px solid ${color}` }} />
                 {label}
               </div>
             ))}
           </div>
         </Card>
 
-        {/* INTERVINIENTES + TRAZABILIDAD */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 16 }}>
-          <div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
+          <Card style={{ padding: "11px 12px" }}>
             <Label>Intervinientes</Label>
-            <Card style={{ padding: "8px 10px" }}>
-              <div style={{ display: "flex", padding: "0 0 6px", borderBottom: "1px solid #1E2D45" }}>
-                <div style={{ width: 90, flexShrink: 0, fontSize: 8, fontWeight: 700, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.1em" }}>Rol</div>
-                <div style={{ flex: 1, minWidth: 0, fontSize: 8, fontWeight: 700, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.1em" }}>Nombre</div>
-                <div style={{ width: 110, flexShrink: 0, fontSize: 8, fontWeight: 700, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.1em" }}>Correo</div>
-              </div>
-              {e.intervinientes.slice(0, 5).map((p, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", padding: "6px 0", borderBottom: i < e.intervinientes.length - 1 ? "1px solid #1E2D45" : "none" }}>
-                  <div style={{ width: 90, flexShrink: 0, display: "flex", alignItems: "center", gap: 4, overflow: "hidden" }}>
-                    <span style={{ flexShrink: 0 }}>{ROL_ICON[p.rol] ?? ROL_ICON["Analista"]}</span>
-                    <span style={{ fontSize: 8, color: "#9CA3AF", fontWeight: 600, textTransform: "uppercase", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.rol}</span>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 5 }}>
-                    <Avatar name={p.nombre} size={18} />
-                    <span style={{ fontSize: 10, color: "#F9FAFB", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>{p.nombre}</span>
-                  </div>
-                  <div style={{ width: 110, flexShrink: 0, fontSize: 8.5, color: "#9CA3AF", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.correo}</div>
+            <div style={{ display: "grid", gridTemplateColumns: "95px 1fr 117px", paddingBottom: 7, borderBottom: `1px solid ${C.border}` }}>
+              <MiniLabel style={{ fontSize: 7 }}>Rol</MiniLabel>
+              <MiniLabel style={{ fontSize: 7 }}>Nombre</MiniLabel>
+              <MiniLabel style={{ fontSize: 7 }}>Correo</MiniLabel>
+            </div>
+            {e.intervinientes.slice(0, 5).map((p, i) => (
+              <div key={`${p.rol}-${i}`} style={{ display: "grid", gridTemplateColumns: "95px 1fr 117px", alignItems: "center", minHeight: 28, borderBottom: i < Math.min(e.intervinientes.length, 5) - 1 ? `1px solid rgba(30,45,69,0.55)` : "none" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
+                  <span style={{ flexShrink: 0 }}>{ROL_ICON[p.rol] ?? ROL_ICON.Analista}</span>
+                  <span style={{ fontSize: 8.1, color: C.textSec, fontWeight: 750, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.rol}</span>
                 </div>
-              ))}
-            </Card>
-          </div>
-          <div>
+                <div style={{ fontSize: 8.6, color: C.text, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: 6 }}>{p.nombre}</div>
+                <div style={{ fontSize: 7.8, color: C.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.correo}</div>
+              </div>
+            ))}
+          </Card>
+
+          <Card style={{ padding: "11px 12px" }}>
             <Label>Trazabilidad</Label>
-            <Card style={{ padding: "8px 10px" }}>
-              <div style={{ display: "flex", padding: "0 0 6px", borderBottom: "1px solid #1E2D45" }}>
-                <div style={{ width: 68, flexShrink: 0, fontSize: 8, fontWeight: 700, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.1em" }}>Fecha</div>
-                <div style={{ flex: 1, minWidth: 0, fontSize: 8, fontWeight: 700, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.1em" }}>Acción</div>
-                <div style={{ width: 75, flexShrink: 0, fontSize: 8, fontWeight: 700, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.1em" }}>Usuario</div>
-              </div>
-              {e.trazabilidad.slice(0, 5).map((t, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", padding: "6px 0", borderBottom: i < 4 ? "1px solid #1E2D45" : "none" }}>
-                  <div style={{ width: 68, flexShrink: 0, display: "flex", alignItems: "center", gap: 4 }}>
-                    <span style={{ width: 5, height: 5, borderRadius: 999, background: "#3B82F6", flexShrink: 0 }} />
-                    <span style={{ fontSize: 9, color: "#9CA3AF", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.fecha}</span>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0, fontSize: 10, color: "#F9FAFB", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.accion.replace(/_/g, " ")}</div>
-                  <div style={{ width: 75, flexShrink: 0, fontSize: 9, color: "#9CA3AF", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.usuario}</div>
+            <div style={{ display: "grid", gridTemplateColumns: "75px 1fr 86px", paddingBottom: 7, borderBottom: `1px solid ${C.border}` }}>
+              <MiniLabel style={{ fontSize: 7 }}>Fecha</MiniLabel>
+              <MiniLabel style={{ fontSize: 7 }}>Acción</MiniLabel>
+              <MiniLabel style={{ fontSize: 7 }}>Usuario</MiniLabel>
+            </div>
+            {e.trazabilidad.slice(0, 5).map((t, i) => (
+              <div key={`${t.fecha}-${i}`} style={{ display: "grid", gridTemplateColumns: "75px 1fr 86px", alignItems: "center", minHeight: 28, borderBottom: i < Math.min(e.trazabilidad.length, 5) - 1 ? `1px solid rgba(30,45,69,0.55)` : "none" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
+                  <span style={{ width: 7, height: 7, borderRadius: 999, background: C.blue, flexShrink: 0 }} />
+                  <span style={{ fontSize: 8.1, color: C.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.fecha}</span>
                 </div>
-              ))}
-            </Card>
-          </div>
+                <div style={{ fontSize: 8.6, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: 6 }}>{t.accion.replace(/_/g, " ")}</div>
+                <div style={{ fontSize: 8.1, color: C.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.usuario}</div>
+              </div>
+            ))}
+          </Card>
         </div>
 
-        {/* FOOTER */}
-        <div style={{ borderTop: "1px solid #1E2D45", paddingTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#F9FAFB" }}>NUVIA <span style={{ color: "#3B82F6", fontWeight: 600 }}>Financial Intelligence</span></div>
-            <div style={{ fontSize: 9, color: "#3B82F6", marginTop: 2 }}>Transformamos datos en decisiones financieras inteligentes.</div>
+            <div style={{ fontSize: 20, fontWeight: 950, color: C.text, lineHeight: 1 }}>NUVIA</div>
+            <div style={{ fontSize: 7.7, color: C.blue2, fontWeight: 800, letterSpacing: "0.1em", marginTop: 3 }}>FINANCIAL INTELLIGENCE</div>
           </div>
-          <div style={{ fontSize: 9, color: "#6B7280" }}>Página 1 de 1</div>
+          <div style={{ fontSize: 9, color: C.blue2 }}>Transformamos datos en decisiones financieras inteligentes.</div>
+          <div style={{ fontSize: 9, color: C.textLabel }}>Página 1 de 1</div>
         </div>
       </div>
-    );
-  }
-);
+    </div>
+  );
+});
 
 CaseSnapshotPDF.displayName = "CaseSnapshotPDF";
