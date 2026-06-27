@@ -152,8 +152,13 @@ function Accordion({ title, icon, count, children, defaultOpen = false }:
 
 /* ---------- Sticky header ---------- */
 
-function StickyHeader({ cliente, banco, producto, fecha, score, scoreColor, certLabel, certColor }:
-  { cliente: string; banco: string; producto: string; fecha: string; score: number; scoreColor: string; certLabel: string; certColor: string }) {
+function StickyHeader({ cliente, banco, producto, fecha, score, scoreColor, certLabel, certColor, codigo, auditorAprobado }:
+  { cliente: string; banco: string; producto: string; fecha: string; score: number; scoreColor: string; certLabel: string; certColor: string; codigo: string | null; auditorAprobado: boolean }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async () => {
+    if (!codigo) return;
+    try { await navigator.clipboard.writeText(codigo); setCopied(true); setTimeout(() => setCopied(false), 1400); } catch { /* ignore */ }
+  };
   return (
     <div
       className="sticky top-0 z-30 -mx-4 px-4 py-2 backdrop-blur-md"
@@ -164,6 +169,23 @@ function StickyHeader({ cliente, banco, producto, fecha, score, scoreColor, cert
     >
       <div className="flex items-center gap-3 flex-wrap text-[11.5px]">
         <span className="font-bold uppercase tracking-[0.18em]" style={{ color: "var(--nuvia-accent)" }}>NUVIA · Certificación</span>
+        {codigo && (
+          <button
+            type="button"
+            onClick={handleCopy}
+            title="Copiar código de auditoría"
+            className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-mono text-[10.5px] font-semibold transition hover:opacity-80"
+            style={{ background: "rgba(132,185,143,0.12)", color: "var(--nuvia-success)", border: "1px solid rgba(132,185,143,0.4)", cursor: "pointer" }}
+          >
+            {copied ? "Copiado ✓" : codigo}
+          </button>
+        )}
+        {auditorAprobado && (
+          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+            style={{ background: "rgba(132,185,143,0.18)", color: "var(--nuvia-success)", border: "1px solid rgba(132,185,143,0.5)" }}>
+            ✓ Aprobada por auditor
+          </span>
+        )}
         <span style={{ color: "var(--nuvia-border)" }}>·</span>
         <span style={{ color: "var(--nuvia-text-primary)" }}><b>{cliente}</b></span>
         <span style={{ color: "var(--nuvia-text-secondary)" }}>{banco}</span>
