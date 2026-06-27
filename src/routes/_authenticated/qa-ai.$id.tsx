@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { z } from "zod";
 import { PageLayout, NCard, SectionHeader } from "@/components/nuvia";
 import { useServerFn } from "@tanstack/react-start";
-import { obtenerAuditoriaQA, reejecutarAuditoriaQA } from "@/lib/qaAI.functions";
+import { obtenerAuditoriaQA, reejecutarAuditoriaQA, aprobarAuditoriaPorAuditor } from "@/lib/qaAI.functions";
 import { auditar, reconstruir, type AuditarInput } from "@/lib/qaMath";
 import { exportarDictamenPDF } from "@/lib/qaPdf";
 import { CopilotoQADrawer } from "@/components/qa-ai/CopilotoQADrawer";
