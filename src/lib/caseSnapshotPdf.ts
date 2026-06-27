@@ -368,16 +368,26 @@ function drawPropuesta(ctx: Ctx, d: CaseSnapshotDTO) {
   // top accent
   rect(ctx, x, y + h - 3, w, 3, C.accent);
 
-  // header
-  T(ctx, "PROPUESTA SELECCIONADA", x + 14, y + h - 22, { size: 10, bold: true, color: C.accent });
+  // header con check icon
+  ctx.page.drawCircle({ x: x + 22, y: y + h - 19, size: 7, color: C.accent, opacity: 0.22, borderColor: C.accent, borderWidth: 0.8 });
+  ctx.page.drawLine({ start: { x: x + 19, y: y + h - 19 }, end: { x: x + 21.5, y: y + h - 22 }, color: C.accent, thickness: 1.4 });
+  ctx.page.drawLine({ start: { x: x + 21.5, y: y + h - 22 }, end: { x: x + 25, y: y + h - 16 }, color: C.accent, thickness: 1.4 });
+  T(ctx, "PROPUESTA SELECCIONADA", x + 34, y + h - 22, { size: 10, bold: true, color: C.accent });
   // badge "RECOMENDADA POR NUVIA"
   const label = "RECOMENDADA POR NUVIA";
-  const lw = ctx.bold.widthOfTextAtSize(label, 6.5) + 14;
+  const lw = ctx.bold.widthOfTextAtSize(label, 6.5) + 22;
   ctx.page.drawRectangle({
     x: x + w - lw - 12, y: y + h - 28, width: lw, height: 14,
     color: C.accent, opacity: 0.18, borderColor: C.accent, borderWidth: 0.5, borderOpacity: 0.6,
   });
-  T(ctx, label, x + w - lw - 5, y + h - 25, { size: 6.5, bold: true, color: C.accent });
+  // star simple (4 puntas con líneas)
+  const sx = x + w - lw - 12 + 8, sy = y + h - 21;
+  ctx.page.drawLine({ start: { x: sx - 2.5, y: sy }, end: { x: sx + 2.5, y: sy }, color: C.accent, thickness: 1 });
+  ctx.page.drawLine({ start: { x: sx, y: sy - 2.5 }, end: { x: sx, y: sy + 2.5 }, color: C.accent, thickness: 1 });
+  ctx.page.drawLine({ start: { x: sx - 1.8, y: sy - 1.8 }, end: { x: sx + 1.8, y: sy + 1.8 }, color: C.accent, thickness: 0.7 });
+  ctx.page.drawLine({ start: { x: sx - 1.8, y: sy + 1.8 }, end: { x: sx + 1.8, y: sy - 1.8 }, color: C.accent, thickness: 0.7 });
+  T(ctx, label, x + w - lw + 4, y + h - 25, { size: 6.5, bold: true, color: C.accent });
+
 
   const p = d.propuesta;
 
