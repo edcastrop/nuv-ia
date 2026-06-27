@@ -396,7 +396,7 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
           {/* Row 1 */}
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {/* Col 1 cliente */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1.4, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1.8, minWidth: 0 }}>
               <div
                 style={{
                   width: 48,
