@@ -590,6 +590,21 @@ function ResultadoQaAi() {
     } finally { setReloading(false); }
   };
 
+  const yaAprobadaAuditor = !!(a as unknown as { auditor_aprobado_at: string | null }).auditor_aprobado_at;
+  const handleAprobar = async () => {
+    if (aprobando || yaAprobadaAuditor) return;
+    const notas = window.prompt("Notas para el analista (opcional):", "") ?? "";
+    if (!window.confirm("¿Aprobar esta auditoría y notificar al analista para que continúe el caso?")) return;
+    setAprobando(true);
+    try {
+      const res = await doAprobar({ data: { auditoriaId: id, notas } }) as { ok: boolean; codigo: string | null };
+      setData(await fetchAud({ data: { id } }) as { auditoria: Record<string, unknown> | null; inconsistencias: Inc[] });
+      alert(`✓ Auditoría ${res.codigo ?? ""} aprobada. El analista fue notificado.`);
+    } catch (err) {
+      alert((err as Error).message);
+    } finally { setAprobando(false); }
+  };
+
   const handlePdf = () => exportarDictamenPDF({
     auditoriaId: id, modalidad: a.modalidad, motorVersion: a.motor_version, ejecutadoAt: a.ejecutado_at,
     qaScore: score, categoria: categoriaEfectiva, dictamen: dictamenEfectivo, outputs: o,
