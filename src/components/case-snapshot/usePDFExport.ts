@@ -33,26 +33,24 @@ export function usePDFExport(
       const pdf = new JsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
       const pageW = pdf.internal.pageSize.getWidth();
       const pageH = pdf.internal.pageSize.getHeight();
-      const imgRatio = canvas.height / canvas.width;
-      const renderW = pageW;
-      const renderH = renderW * imgRatio;
 
       const imgData = canvas.toDataURL("image/jpeg", 0.95);
 
+      // Calcular si cabe en una página o necesita escalar
+      const canvasRatio = canvas.height / canvas.width;
+      const renderW = pageW;
+      const renderH = renderW * canvasRatio;
+
       if (renderH <= pageH) {
+        // Cabe en una página — centrar verticalmente si sobra espacio
         pdf.addImage(imgData, "JPEG", 0, 0, renderW, renderH);
       } else {
-        // Multi-page slicing
-        let remaining = renderH;
-        let y = 0;
-        while (remaining > 0) {
-          pdf.addImage(imgData, "JPEG", 0, y, renderW, renderH);
-          remaining -= pageH;
-          if (remaining > 0) {
-            pdf.addPage();
-            y -= pageH;
-          }
-        }
+        // Contenido más largo que A4: escalar TODO para que quepa en 1 página
+        // (el diseño es una sola hoja ejecutiva, no debe partirse)
+        const scaledH = pageH;
+        const scaledW = scaledH / canvasRatio;
+        const offsetX = (pageW - scaledW) / 2;
+        pdf.addImage(imgData, "JPEG", offsetX, 0, scaledW, scaledH);
       }
 
       const fileName = options.fileName ?? "NUVIA_CaseSnapshot.pdf";

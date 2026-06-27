@@ -62,6 +62,14 @@ function buildPipeline(dto: CaseSnapshotDTO): CaseSnapshotData["pipeline"] {
   }));
 }
 
+function formatEstadoCaso(raw: string): string {
+  if (!raw || raw === "—") return "—";
+  return raw
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .trim();
+}
+
 function dtoToSnapshot(dto: CaseSnapshotDTO): CaseSnapshotData {
   const m = dto.meta;
   const c = dto.credito;
@@ -82,7 +90,7 @@ function dtoToSnapshot(dto: CaseSnapshotDTO): CaseSnapshotData {
     banco: m.banco,
     producto: m.producto,
     modalidad: m.modalidad,
-    estado: m.estadoCaso || m.estado || "—",
+    estado: formatEstadoCaso(m.estadoCaso || m.estado || "—"),
     analista: m.analista?.nombre ?? "—",
     qaScore: m.qaScore ?? 0,
     nivelAutonomia: m.nivelAutonomia != null ? `N${m.nivelAutonomia}` : "N—",
@@ -105,10 +113,10 @@ function dtoToSnapshot(dto: CaseSnapshotDTO): CaseSnapshotData {
     },
     honorarios: {
       pactados: h.pactados,
-      recalculados: h.pactados,
-      variacion: 0,
-      estadoCobro: h.estadoCobro,
-      estadoPago: h.estadoPago,
+      recalculados: h.honorarioRecalculado ?? h.pactados,
+      variacion: (h.honorarioRecalculado ?? h.pactados) - h.pactados,
+      estadoCobro: h.estadoCobro || "—",
+      estadoPago: h.estadoPago || "—",
       pazYSalvo: h.pazYSalvo,
     },
     pipeline: buildPipeline(dto),

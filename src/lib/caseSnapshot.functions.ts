@@ -72,6 +72,7 @@ export interface CaseSnapshotDTO {
   };
   honorarios: {
     pactados: number;
+    honorarioRecalculado?: number;
     porcentaje: number;
     estadoCobro: string;
     estadoPago: string;
@@ -109,7 +110,7 @@ function emptyDTO(id: string): CaseSnapshotDTO {
       ahorroSeguros: 0, tiempoRecuperado: 0, recomendada: false,
     },
     honorarios: {
-      pactados: 0, porcentaje: 0, estadoCobro: "—", estadoPago: "—",
+      pactados: 0, honorarioRecalculado: 0, porcentaje: 0, estadoCobro: "—", estadoPago: "—",
       cuentaCobroEmitida: false, pazYSalvo: false,
     },
     timeline: [],
@@ -395,7 +396,13 @@ export const getCaseSnapshotData = createServerFn({ method: "POST" })
           (ps ?? []).forEach((p) => nameById.set(p.id as string, s(p.nombre)));
         }
         dto.trazabilidad = hist.map((h) => ({
-          fecha: s(h.created_at),
+          fecha: h.created_at
+            ? new Date(h.created_at).toLocaleDateString("es-CO", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })
+            : "—",
           accion: s(h.accion_origen ?? h.estado_caso_nuevo ?? h.nota ?? h.observacion, "—"),
           usuario: h.user_id ? nameById.get(h.user_id as string) ?? "—" : "—",
         }));

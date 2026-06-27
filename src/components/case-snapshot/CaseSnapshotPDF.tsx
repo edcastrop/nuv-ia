@@ -396,7 +396,7 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
           {/* Row 1 */}
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {/* Col 1 cliente */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1.4, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1.8, minWidth: 0 }}>
               <div
                 style={{
                   width: 48,
@@ -424,11 +424,11 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
             </div>
 
             <Divider />
-            <ColField icon={Building2} label="Banco" value={e.banco} />
+            <ColField icon={Building2} label="Banco" value={e.banco} flex={0.9} />
             <Divider />
-            <ColField icon={FileText} label="Producto" value={e.producto} />
+            <ColField icon={FileText} label="Producto" value={e.producto} flex={0.9} />
             <Divider />
-            <ColField icon={DollarSign} label="Modalidad" value={e.modalidad} />
+            <ColField icon={DollarSign} label="Modalidad" value={e.modalidad} flex={0.9} />
             <Divider />
             <div style={{ flex: 1 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
@@ -800,8 +800,8 @@ const Divider = () => (
   <div style={{ width: 1, alignSelf: "stretch", background: C.border, margin: "0 4px" }} />
 );
 
-const ColField: React.FC<{ icon: any; label: string; value: string }> = ({ icon: Icon, label, value }) => (
-  <div style={{ flex: 1, minWidth: 0 }}>
+const ColField: React.FC<{ icon: any; label: string; value: string; flex?: number }> = ({ icon: Icon, label, value, flex = 1 }) => (
+  <div style={{ flex, minWidth: 0 }}>
     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
       <Icon size={11} color={C.textSec} />
       <MetricLabel>{label}</MetricLabel>
@@ -813,7 +813,9 @@ const ColField: React.FC<{ icon: any; label: string; value: string }> = ({ icon:
         fontWeight: 600,
         overflow: "hidden",
         textOverflow: "ellipsis",
-        whiteSpace: "nowrap",
+        whiteSpace: "normal",
+        wordBreak: "break-word",
+        lineHeight: 1.3,
       }}
     >
       {value}
