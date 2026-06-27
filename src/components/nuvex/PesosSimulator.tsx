@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { Alert, Card, SectionTitle, TextField } from "./ui";
 import { SituacionActualBlock } from "./SituacionActualBlock";
 import { ClientFields, defaultClient, type ClientData } from "./ClientFields";
@@ -66,6 +67,8 @@ import {
   useSimulatorDraft,
 } from "./useSimulatorDraft";
 
+import { aprobarAuditoriaPorAuditor } from "@/lib/qaAI.functions";
+
 export function PesosSimulator({
   initialExpediente,
   onSaved,
@@ -73,6 +76,7 @@ export function PesosSimulator({
   simuladorReturn,
   fromSimulador,
   qaEmbedded,
+  auditoriaId,
 }: {
   initialExpediente?: Expediente;
   onSaved?: (e: Expediente) => void;
@@ -80,6 +84,7 @@ export function PesosSimulator({
   simuladorReturn?: { maestroId?: string; modo?: "pesos" | "uvr" };
   fromSimulador?: boolean;
   qaEmbedded?: boolean;
+  auditoriaId?: string;
 } = {}) {
   const parseOcrMoney = (v: string | number | null | undefined) => {
     if (v === null || v === undefined) return undefined;
@@ -151,6 +156,8 @@ export function PesosSimulator({
     useState<PropuestasComercialesDraft | undefined>(() => draft.propuestasComerciales);
   const [propuestasComercialesSnapshot, setPropuestasComercialesSnapshot] =
     useState<PropuestasComercialesSnapshot | null>(null);
+  const [aprobando, setAprobando] = useState(false);
+  const doAprobar = useServerFn(aprobarAuditoriaPorAuditor);
 
   const handleClientChange = (next: ClientData) => {
     setClient(next);
@@ -468,7 +475,22 @@ export function PesosSimulator({
       : saldoBase > 0
         ? recomendada.totalProyectado / saldoBase
         : 0
-    : 0;
+        : 0;
+
+  const handleAprobar = async () => {
+    if (aprobando || !auditoriaId) return;
+    const notas = window.prompt("Notas para el analista (opcional):", "") ?? "";
+    if (!window.confirm("¿Aprobar esta auditoría y notificar al analista para que continúe el caso?")) return;
+    setAprobando(true);
+    try {
+      const res = await doAprobar({ data: { auditoriaId, notas } }) as { ok: boolean; codigo: string | null };
+      alert(`✓ Auditoría ${res.codigo ?? ""} aprobada. El analista fue notificado.`);
+    } catch (err) {
+      alert((err as Error).message);
+    } finally {
+      setAprobando(false);
+    }
+  };
 
   return (
     <div className={`relative isolate overflow-hidden ${qaEmbedded ? "" : "min-h-screen"}`}>
@@ -939,6 +961,19 @@ export function PesosSimulator({
                   disabled={!recomendada || !calc || calc.propuestas.length === 0}
                   disabledReason="Primero calcula la simulación en pesos."
                 />
+              </div>
+            )}
+
+            {recomendada && auditoriaId && (
+              <div className="mt-3 flex justify-end">
+                <button
+                  onClick={handleAprobar}
+                  disabled={aprobando}
+                  className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold shadow transition-transform hover:scale-[1.01]"
+                  style={{ background: "var(--nuvia-success)", color: "#0b0b0b" }}
+                >
+                  {aprobando ? "Aprobando…" : "✓ Aprobar y liberar al analista"}
+                </button>
               </div>
             )}
 
