@@ -528,28 +528,31 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
           </div>
           <div
             style={{
-              minHeight: 106,
-              borderRadius: 7,
-              border: `1px solid ${C.border}`,
+              minHeight: 132,
+              borderRadius: 10,
+              border: `1px solid rgba(138,109,255,0.45)`,
               background:
-                "radial-gradient(circle at 97% 0%, rgba(59,130,246,0.45), transparent 16%), linear-gradient(115deg, rgba(9,18,44,0.98), rgba(8,20,42,0.88) 60%, rgba(9,31,60,0.94))",
+                "radial-gradient(circle at 18% 35%, rgba(68,93,163,0.55), transparent 42%), radial-gradient(circle at 92% 70%, rgba(138,109,255,0.42), transparent 45%), linear-gradient(120deg, #0A1330 0%, #131845 55%, #1B1748 100%)",
+              boxShadow: "0 0 0 1px rgba(138,109,255,0.18), 0 18px 48px rgba(68,93,163,0.32), inset 0 1px 0 rgba(255,255,255,0.05)",
               display: "grid",
-              gridTemplateColumns: "48% 1fr",
+              gridTemplateColumns: "45% 55%",
               alignItems: "center",
               overflow: "hidden",
+              position: "relative",
             }}
           >
-            <div style={{ textAlign: "center", borderRight: `1px solid ${C.border}`, padding: "8px 20px" }}>
-              <MiniLabel style={{ fontSize: 9, marginBottom: 7 }}>Vas a pagar</MiniLabel>
-              <div style={{ fontSize: 55, fontWeight: 950, lineHeight: 0.9, letterSpacing: "0", background: "linear-gradient(90deg, #3B82F6, #A78BFA)", WebkitBackgroundClip: "text", color: "transparent" }}>{e.credito.multiplicador.toFixed(2)}x</div>
-              <div style={{ fontSize: 10.3, fontWeight: 850, color: C.textSec, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 7 }}>El valor de tu crédito</div>
+            <div style={{ textAlign: "center", padding: "14px 18px", position: "relative" }}>
+              <MiniLabel style={{ fontSize: 9, marginBottom: 8, color: "#C7B8FF" }}>Vas a pagar</MiniLabel>
+              <div style={{ fontSize: 68, fontWeight: 950, lineHeight: 0.88, letterSpacing: "-0.02em", background: "linear-gradient(95deg, #6E8BFF 0%, #8A6DFF 55%, #C7B8FF 100%)", WebkitBackgroundClip: "text", color: "transparent", filter: "drop-shadow(0 0 22px rgba(138,109,255,0.45))" }}>{e.credito.multiplicador.toFixed(2)}x</div>
+              <div style={{ fontSize: 10.5, fontWeight: 900, color: "#E8E1FF", letterSpacing: "0.14em", textTransform: "uppercase", marginTop: 10 }}>El valor de tu crédito</div>
             </div>
-            <div style={{ padding: "0 24px", fontSize: 11.2, color: C.textSec, lineHeight: 1.55 }}>
-              Con las condiciones actuales, terminarás pagando <strong style={{ color: C.blue2 }}>{e.credito.multiplicador.toFixed(2)} veces</strong> el valor del crédito desembolsado.
+            <div style={{ padding: "0 26px 0 22px", fontSize: 11.4, color: "#DCE3F5", lineHeight: 1.6, borderLeft: "1px solid rgba(138,109,255,0.22)" }}>
+              Con las condiciones actuales, terminarás pagando <strong style={{ color: "#C7B8FF" }}>{e.credito.multiplicador.toFixed(2)} veces</strong> el valor del crédito desembolsado.
               <br />
               Este análisis considera intereses, seguros y costos asociados durante todo el plazo del crédito.
             </div>
           </div>
+
         </Card>
 
         <div style={{ display: "grid", gridTemplateColumns: "41% 59%", gap: 8, marginBottom: 10 }}>
