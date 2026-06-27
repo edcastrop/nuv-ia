@@ -450,7 +450,7 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
               <ClienteAvatar />
               <div style={{ minWidth: 0 }}>
                 <MiniLabel style={{ color: C.textLabel, marginBottom: 3 }}>Cliente</MiniLabel>
-                <div style={{ fontSize: 14.3, fontWeight: 950, color: C.text, lineHeight: 1.08, wordBreak: "normal", overflowWrap: "break-word", textTransform: "uppercase" }}>{e.cliente.nombre}</div>
+                <div style={{ fontSize: 11.6, fontWeight: 950, color: C.text, lineHeight: 1.15, wordBreak: "normal", overflowWrap: "break-word", textTransform: "uppercase", letterSpacing: "0.005em" }}>{e.cliente.nombre}</div>
               </div>
             </div>
             <Field icon={<IconWrap><SvgBank /></IconWrap>} label="Banco" value={e.banco} />
