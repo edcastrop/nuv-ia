@@ -272,7 +272,9 @@ export const getCaseSnapshotData = createServerFn({ method: "POST" })
       dto.propuesta.tiempoRecuperado = n(
         pData.tiempo_recuperado ?? pData.tiempoRecuperado ?? pData.meses_recuperados ?? pData.añosEliminados,
       );
-      dto.propuesta.recomendada = Boolean(pData.recomendada ?? pData.is_recomendada ?? pData.recomendadaIdx === pData.index ?? true);
+      dto.propuesta.recomendada = Boolean(
+        pData.recomendada ?? pData.is_recomendada ?? (pData.recomendadaIdx != null && pData.recomendadaIdx === pData.index) ?? true,
+      );
 
       // Total proyectado / costo real / veces pagado — derivamos si faltan.
       dto.credito.totalProyectado = n(
