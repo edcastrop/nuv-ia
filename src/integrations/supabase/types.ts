@@ -4643,8 +4643,12 @@ export type Database = {
         Row: {
           alertas: Json
           analista_id: string | null
+          auditor_aprobado_at: string | null
+          auditor_aprobado_by: string | null
+          auditor_notas: string | null
           auto_ejecutada: boolean
           categoria: Database["public"]["Enums"]["qa_categoria"]
+          codigo: string | null
           created_at: string
           dictamen: Database["public"]["Enums"]["qa_dictamen"]
           diferencias: Json
@@ -4664,8 +4668,12 @@ export type Database = {
         Insert: {
           alertas?: Json
           analista_id?: string | null
+          auditor_aprobado_at?: string | null
+          auditor_aprobado_by?: string | null
+          auditor_notas?: string | null
           auto_ejecutada?: boolean
           categoria: Database["public"]["Enums"]["qa_categoria"]
+          codigo?: string | null
           created_at?: string
           dictamen: Database["public"]["Enums"]["qa_dictamen"]
           diferencias?: Json
@@ -4685,8 +4693,12 @@ export type Database = {
         Update: {
           alertas?: Json
           analista_id?: string | null
+          auditor_aprobado_at?: string | null
+          auditor_aprobado_by?: string | null
+          auditor_notas?: string | null
           auto_ejecutada?: boolean
           categoria?: Database["public"]["Enums"]["qa_categoria"]
+          codigo?: string | null
           created_at?: string
           dictamen?: Database["public"]["Enums"]["qa_dictamen"]
           diferencias?: Json
@@ -5919,6 +5931,7 @@ export type Database = {
         }
         Returns: string
       }
+      nuvia_iniciales_perfil: { Args: { _user_id: string }; Returns: string }
       preview_desvinculacion: { Args: { _target: string }; Returns: Json }
       procesar_recordatorios_onboarding: { Args: never; Returns: Json }
       qa_bloquea_avance: { Args: { _expediente_id: string }; Returns: boolean }
