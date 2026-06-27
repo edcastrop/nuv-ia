@@ -431,15 +431,292 @@ function drawPropuesta(ctx: Ctx, d: CaseSnapshotDTO) {
   ctx.y -= ch + 14;
 }
 
+// ───────────────── PERFIL FINANCIERO (Grid 4x2) ─────────────────
+function computePerfil(d: CaseSnapshotDTO) {
+  const ing = (d.cliente.ingresos || 0) + (d.cliente.otrosIngresos || 0);
+  const cuota = d.credito.cuotaActual || 0;
+  const capUsada = ing > 0 ? (cuota / ing) * 100 : 0;
+  const capMax = 40; // Decreto 583/2025
+  const capLibre = Math.max(capMax - capUsada, 0);
+  const endGlobal = d.cliente.endeudamiento || 0;
+  let score = d.meta.qaScore;
+  if (score == null) {
+    let s = 100;
+    if (capUsada > 40) s -= (capUsada - 40) * 1.2;
+    if ((d.credito.vecesPagado || 0) > 1.5) s -= (d.credito.vecesPagado - 1.5) * 12;
+    if (endGlobal > 35) s -= (endGlobal - 35) * 0.6;
+    score = Math.max(0, Math.min(100, Math.round(s)));
+  }
+  const toneFor = (v: number, good: number, bad: number) =>
+    v <= good ? C.accent : v <= bad ? C.amber : C.red;
+  return {
+    cards: [
+      { l: "Ingresos del hogar", v: moneyShort(ing), c: C.primaryHi },
+      { l: "Capacidad usada", v: ing > 0 ? `${capUsada.toFixed(1)}%` : "—", c: ing > 0 ? toneFor(capUsada, 30, 40) : C.muted },
+      { l: "Capacidad máxima legal", v: `${capMax}%`, c: C.accent },
+      { l: "Capacidad libre", v: ing > 0 ? `${capLibre.toFixed(1)}%` : "—", c: capLibre > 5 ? C.accent : C.amber },
+      { l: "LTV (saldo / valor)", v: "—", c: C.gold },
+      { l: "Patrimonio estimado", v: "—", c: C.text },
+      { l: "Endeudamiento global", v: endGlobal > 0 ? `${endGlobal.toFixed(1)}%` : "—", c: endGlobal > 0 ? toneFor(endGlobal, 30, 45) : C.muted },
+      { l: "Score financiero NUVIA", v: `${score}/100`, c: score >= 70 ? C.accent : score >= 50 ? C.amber : C.red },
+    ],
+  };
+}
+
+function drawPerfilFinanciero(ctx: Ctx, d: CaseSnapshotDTO) {
+  const perfil = computePerfil(d);
+  const cols = 4;
+  const rows = 2;
+  const gap = 8;
+  const w = (PAGE_W - MARGIN * 2 - gap * (cols - 1)) / cols;
+  const h = 70;
+  const totalH = rows * h + (rows - 1) * gap;
+  ensure(ctx, totalH + 6, d);
+  perfil.cards.forEach((k, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const x = MARGIN + col * (w + gap);
+    const y = ctx.y - (row + 1) * h - row * gap;
+    card(ctx, x, y, w, h, { fill: C.surface });
+    ctx.page.drawRectangle({ x, y: y + h - 2, width: w, height: 2, color: k.c });
+    const idx = String(i + 1).padStart(2, "0");
+    drawText(ctx, idx, x + 12, y + h - 16, { size: 6.5, bold: true, color: C.dim });
+    drawText(ctx, k.l.toUpperCase(), x + 12, y + h - 28, { size: 6.5, bold: true, color: C.muted, maxW: w - 24 });
+    drawText(ctx, k.v, x + 12, y + 16, { size: 15, bold: true, color: k.c, maxW: w - 20 });
+  });
+  ctx.y -= totalH + 14;
+}
+
+// ───────────────── HISTORIA FINANCIERA (split + ring) ─────────────────
+function drawHistoriaFinanciera(ctx: Ctx, d: CaseSnapshotDTO) {
+  const cuotasPag = d.credito.cuotasPagadas || 0;
+  const cuota = d.credito.cuotaActual || 0;
+  const interesMes = d.credito.interesMensual || 0;
+  const segurosMes = d.credito.seguros || 0;
+  const capitalMes = d.credito.capitalMensual || 0;
+  const dineroPagado = cuotasPag * cuota;
+  const interesesPagados = cuotasPag * interesMes;
+  const segurosPagados = cuotasPag * segurosMes;
+  const capitalAmortReal = Math.max(
+    (d.credito.valorDesembolsado || 0) - (d.credito.saldoCapital || 0),
+    cuotasPag * capitalMes,
+  );
+  const eficiencia = dineroPagado > 0 ? (capitalAmortReal / dineroPagado) * 100 : 0;
+  const ringColor = eficiencia >= 30 ? C.accent : eficiencia >= 15 ? C.amber : C.red;
+
+  const h = 178;
+  ensure(ctx, h + 8, d);
+  const w = PAGE_W - MARGIN * 2;
+  card(ctx, MARGIN, ctx.y - h, w, h, { fill: C.surface });
+  ctx.page.drawRectangle({ x: MARGIN, y: ctx.y - 3, width: w, height: 3, color: C.primaryHi });
+
+  drawText(ctx, "TU HISTORIAL FINANCIERO CON EL BANCO", MARGIN + 18, ctx.y - 22, { size: 7.5, bold: true, color: C.primaryHi });
+
+  const leftX = MARGIN + 18;
+  const items = [
+    { l: "Tiempo pagando", v: cuotasPag > 0 ? `${cuotasPag} meses` : "—" },
+    { l: "Dinero pagado total", v: moneyShort(dineroPagado) },
+    { l: "Intereses pagados", v: moneyShort(interesesPagados) },
+    { l: "Seguros pagados", v: moneyShort(segurosPagados) },
+    { l: "Capital real amortizado", v: moneyShort(capitalAmortReal) },
+  ];
+  items.forEach((it, i) => {
+    const y = ctx.y - 46 - i * 20;
+    drawText(ctx, it.l.toUpperCase(), leftX, y, { size: 6.5, bold: true, color: C.muted });
+    drawText(ctx, it.v, leftX + 150, y, { size: 10, bold: true, color: C.text });
+  });
+
+  // Progress ring
+  const cx = PAGE_W - MARGIN - 80;
+  const cy = ctx.y - 92;
+  const R = 44;
+  ctx.page.drawCircle({ x: cx, y: cy, size: R, color: C.bgSoft, borderColor: C.borderSoft, borderWidth: 1 });
+  ctx.page.drawCircle({
+    x: cx, y: cy, size: R - 1,
+    borderColor: ringColor, borderWidth: 6,
+    opacity: Math.min(1, Math.max(0.25, eficiencia / 100)),
+  });
+  ctx.page.drawCircle({ x: cx, y: cy, size: R - 8, color: C.surface });
+  const pctTxt = `${eficiencia.toFixed(1)}%`;
+  const ptw = ctx.bold.widthOfTextAtSize(pctTxt, 17);
+  drawText(ctx, pctTxt, cx - ptw / 2, cy - 3, { size: 17, bold: true, color: ringColor });
+  const sub = "EFICIENCIA";
+  const sw = ctx.bold.widthOfTextAtSize(sub, 6.5);
+  drawText(ctx, sub, cx - sw / 2, cy - 18, { size: 6.5, bold: true, color: C.muted });
+
+  // Insight IA
+  const insight = dineroPagado > 0
+    ? `Has pagado ${moneyShort(dineroPagado)} y solo el ${eficiencia.toFixed(1)}% ha reducido tu deuda real.`
+    : "Aún no hay historial de pagos suficiente para diagnóstico.";
+  const lines = wrapLines(ctx.font, insight, 8.5, w - 240);
+  drawText(ctx, "NUVIA AI INSIGHT", leftX, ctx.y - h + 32, { size: 6.5, bold: true, color: C.accent });
+  lines.forEach((ln, i) => {
+    drawText(ctx, ln, leftX, ctx.y - h + 18 - i * 11, { size: 8.5, color: C.textDim, maxW: w - 240 });
+  });
+
+  ctx.y -= h + 14;
+}
+
+// ───────────────── TERMÓMETRO DE CAPACIDAD ─────────────────
+function drawTermometro(ctx: Ctx, d: CaseSnapshotDTO) {
+  const ing = (d.cliente.ingresos || 0) + (d.cliente.otrosIngresos || 0);
+  if (ing <= 0) return;
+  const cuota = d.credito.cuotaActual || 0;
+  const nuevaCuota = d.propuesta.nuevaCuota || cuota;
+  const capMax = ing * 0.4;
+  const capRest = Math.max(capMax - cuota, 0);
+  const max = Math.max(ing, cuota, nuevaCuota, capMax) * 1.05;
+
+  const bars = [
+    { l: "Ingreso mensual", v: ing, c: C.primaryHi },
+    { l: "Cuota actual", v: cuota, c: C.red },
+    { l: "Nueva cuota propuesta", v: nuevaCuota, c: C.accent },
+    { l: "Capacidad restante", v: capRest, c: C.gold },
+  ];
+
+  const rowH = 26;
+  const h = 28 + bars.length * rowH + 8;
+  ensure(ctx, h + 8, d);
+  const w = PAGE_W - MARGIN * 2;
+  card(ctx, MARGIN, ctx.y - h, w, h, { fill: C.surface });
+  drawText(ctx, "TERMÓMETRO DE CAPACIDAD", MARGIN + 18, ctx.y - 18, { size: 7.5, bold: true, color: C.accent });
+
+  const barX = MARGIN + 170;
+  const barMaxW = w - 170 - 110;
+  bars.forEach((b, i) => {
+    const y = ctx.y - 40 - i * rowH;
+    drawText(ctx, b.l.toUpperCase(), MARGIN + 18, y - 4, { size: 7, bold: true, color: C.muted });
+    ctx.page.drawRectangle({ x: barX, y: y - 8, width: barMaxW, height: 8, color: C.bgSoft, borderColor: C.borderSoft, borderWidth: 0.5 });
+    const fillW = max > 0 ? (b.v / max) * barMaxW : 0;
+    if (fillW > 0) ctx.page.drawRectangle({ x: barX, y: y - 8, width: fillW, height: 8, color: b.c });
+    drawText(ctx, moneyShort(b.v), barX + barMaxW + 8, y - 6, { size: 8.5, bold: true, color: C.text });
+  });
+  ctx.y -= h + 14;
+}
+
+// ───────────────── BADGES + IA BOX (sobre propuesta) ─────────────────
+function drawPropuestaInsight(ctx: Ctx, d: CaseSnapshotDTO) {
+  const ahorro = d.propuesta.ahorroTotal || 0;
+  const ing = (d.cliente.ingresos || 0) + (d.cliente.otrosIngresos || 0);
+  const nueva = d.propuesta.nuevaCuota || 0;
+  const capRatio = ing > 0 ? (nueva / ing) * 100 : 0;
+  const badges: Array<{ l: string; c: RGB }> = [];
+  if (ahorro > 0) badges.push({ l: "OPTIMIZACIÓN VIABLE", c: C.accent });
+  if (ing > 0 && capRatio <= 35) badges.push({ l: "CAPACIDAD SALUDABLE", c: C.accent });
+  if ((d.credito.vecesPagado || 0) < 2) badges.push({ l: "BAJO RIESGO", c: C.primaryHi });
+  if (!badges.length) return;
+  ensure(ctx, 70, d);
+  let x = MARGIN;
+  badges.forEach((b) => {
+    const tw = ctx.bold.widthOfTextAtSize(b.l, 7) + 16;
+    ctx.page.drawRectangle({ x, y: ctx.y - 18, width: tw, height: 16, color: b.c, opacity: 0.16, borderColor: b.c, borderWidth: 0.5 });
+    drawText(ctx, b.l, x + 8, ctx.y - 14, { size: 7, bold: true, color: b.c });
+    x += tw + 6;
+  });
+  ctx.y -= 26;
+  const msg = "NUVIA recomienda este escenario por equilibrio entre ahorro y flujo de caja sostenible.";
+  const lines = wrapLines(ctx.font, msg, 9, PAGE_W - MARGIN * 2 - 36);
+  const h = 22 + lines.length * 12;
+  card(ctx, MARGIN, ctx.y - h, PAGE_W - MARGIN * 2, h, { fill: C.bgSoft });
+  ctx.page.drawRectangle({ x: MARGIN, y: ctx.y - h, width: 2, height: h, color: C.accent });
+  drawText(ctx, "RECOMENDACIÓN NUVIA AI", MARGIN + 14, ctx.y - 14, { size: 6.8, bold: true, color: C.accent });
+  lines.forEach((ln, i) => drawText(ctx, ln, MARGIN + 14, ctx.y - 28 - i * 12, { size: 9, color: C.textDim }));
+  ctx.y -= h + 12;
+}
+
+// ───────────────── SOPORTE LEGAL Y NORMATIVO ─────────────────
+function drawSoporteLegal(ctx: Ctx, d: CaseSnapshotDTO) {
+  const items = [
+    { ref: "LEY 546 · ART 17 #8", t: "Prepago parcial sin penalidad", desc: "Derecho a abonos a capital sin sanciones ni cobros adicionales." },
+    { ref: "LEY 546 · ART 17 #8", t: "Reducción de plazo", desc: "El deudor puede solicitar reducción de plazo manteniendo la cuota." },
+    { ref: "LEY 546 · ART 2 #5", t: "Protección de capacidad de pago", desc: "El sistema debe preservar la estabilidad financiera del deudor." },
+    { ref: "DECRETO 583 / 2025", t: "Capacidad hasta 40%", desc: "Endeudamiento hipotecario máximo del 40% del ingreso del hogar." },
+  ];
+  const cols = 2;
+  const gap = 10;
+  const w = (PAGE_W - MARGIN * 2 - gap) / cols;
+  const h = 78;
+  const rows = Math.ceil(items.length / cols);
+  ensure(ctx, rows * h + (rows - 1) * gap + 6, d);
+  items.forEach((it, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const x = MARGIN + col * (w + gap);
+    const y = ctx.y - (row + 1) * h - row * gap;
+    card(ctx, x, y, w, h, { fill: C.surface });
+    ctx.page.drawRectangle({ x, y, width: 2, height: h, color: C.gold });
+    drawText(ctx, it.ref, x + 14, y + h - 16, { size: 6.5, bold: true, color: C.gold });
+    drawText(ctx, it.t, x + 14, y + h - 34, { size: 11, bold: true, color: C.text, maxW: w - 24 });
+    const lines = wrapLines(ctx.font, it.desc, 8, w - 28);
+    lines.slice(0, 2).forEach((ln, j) => drawText(ctx, ln, x + 14, y + 22 - j * 10, { size: 8, color: C.textDim }));
+  });
+  ctx.y -= rows * h + (rows - 1) * gap + 14;
+}
+
+// ───────────────── IMPACTO FUTURO (timeline) ─────────────────
+function drawImpactoFuturo(ctx: Ctx, d: CaseSnapshotDTO) {
+  const pendientes = d.credito.cuotasPendientes || 0;
+  const eliminadas = d.propuesta.cuotasEliminadas || 0;
+  if (!pendientes && !eliminadas) return;
+  const hoy = new Date();
+  const finOriginal = new Date(hoy); finOriginal.setMonth(finOriginal.getMonth() + pendientes);
+  const finOptimizado = new Date(hoy); finOptimizado.setMonth(finOptimizado.getMonth() + Math.max(pendientes - eliminadas, 0));
+  const aniosRec = eliminadas / 12;
+
+  const h = 120;
+  ensure(ctx, h + 8, d);
+  const w = PAGE_W - MARGIN * 2;
+  card(ctx, MARGIN, ctx.y - h, w, h, { fill: C.surface });
+  drawText(ctx, "IMPACTO FUTURO · INVESTMENT TIMELINE", MARGIN + 18, ctx.y - 18, { size: 7.5, bold: true, color: C.accent });
+
+  const trackY = ctx.y - 58;
+  const startX = MARGIN + 40;
+  const endX = PAGE_W - MARGIN - 40;
+  const totalW = endX - startX;
+  ctx.page.drawRectangle({ x: startX, y: trackY - 1, width: totalW, height: 2, color: C.borderSoft });
+  const optW = pendientes > 0 ? totalW * (Math.max(pendientes - eliminadas, 0) / pendientes) : totalW;
+  ctx.page.drawRectangle({ x: startX, y: trackY - 1, width: optW, height: 2, color: C.accent });
+
+  const points = [
+    { x: startX, label: "HOY", date: fmtDate(hoy.toISOString()), color: C.text },
+    { x: startX + optW, label: "CON NUVIA", date: fmtDate(finOptimizado.toISOString()), color: C.accent },
+    { x: endX, label: "SIN NUVIA", date: fmtDate(finOriginal.toISOString()), color: C.red },
+  ];
+  points.forEach((p) => {
+    ctx.page.drawCircle({ x: p.x, y: trackY, size: 5, color: C.surface });
+    ctx.page.drawCircle({ x: p.x, y: trackY, size: 4, color: p.color });
+    const lw = ctx.bold.widthOfTextAtSize(p.label, 7);
+    drawText(ctx, p.label, p.x - lw / 2, trackY + 10, { size: 7, bold: true, color: p.color });
+    const dw = ctx.font.widthOfTextAtSize(p.date, 7);
+    drawText(ctx, p.date, p.x - dw / 2, trackY - 14, { size: 7, color: C.muted });
+  });
+
+  const metrics = [
+    { l: "AÑOS RECUPERADOS", v: aniosRec > 0 ? `${aniosRec.toFixed(1)} años` : "—" },
+    { l: "CUOTAS ELIMINADAS", v: eliminadas ? `${eliminadas}` : "—" },
+    { l: "AHORRO TOTAL", v: moneyShort(d.propuesta.ahorroTotal) },
+  ];
+  const colW = (w - 36) / 3;
+  metrics.forEach((m, i) => {
+    const mx = MARGIN + 18 + i * colW;
+    drawText(ctx, m.l, mx, ctx.y - h + 30, { size: 6.5, bold: true, color: C.muted });
+    drawText(ctx, m.v, mx, ctx.y - h + 14, { size: 11, bold: true, color: C.accent });
+  });
+  ctx.y -= h + 14;
+}
+
 // ───────────────── HONORARIOS ─────────────────
 function drawHonorarios(ctx: Ctx, d: CaseSnapshotDTO) {
+  const honor = d.honorarios.pactados || 0;
+  const ahorro = d.propuesta.ahorroTotal || 0;
+  const roi = honor > 0 ? ahorro / honor : 0;
   const h = 70;
-  ensure(ctx, h + 8, d);
+  ensure(ctx, h + 70, d);
   const w = PAGE_W - MARGIN * 2;
   card(ctx, MARGIN, ctx.y - h, w, h, { fill: C.surface });
   const colW = w / 4;
   const items = [
-    { l: "PACTADOS", v: money(d.honorarios.pactados), c: C.accent },
+    { l: "HONORARIO APROBADO", v: money(honor), c: C.accent },
     { l: "PORCENTAJE", v: pct(d.honorarios.porcentaje), c: C.text },
     { l: "ESTADO COBRO", v: safe(d.honorarios.estadoCobro).toUpperCase(), c: C.textDim },
     { l: "PAZ Y SALVO", v: d.honorarios.pazYSalvo ? "SÍ" : "PENDIENTE", c: d.honorarios.pazYSalvo ? C.accent : C.amber },
@@ -450,7 +727,24 @@ function drawHonorarios(ctx: Ctx, d: CaseSnapshotDTO) {
     drawText(ctx, it.l, x + 16, ctx.y - 22, { size: 6.8, bold: true, color: C.muted });
     drawText(ctx, it.v, x + 16, ctx.y - 48, { size: 13, bold: true, color: it.c, maxW: colW - 22 });
   });
-  ctx.y -= h + 14;
+  ctx.y -= h + 10;
+
+  if (roi > 0) {
+    const rh = 56;
+    card(ctx, MARGIN, ctx.y - rh, w, rh, { fill: C.bgSoft });
+    ctx.page.drawRectangle({ x: MARGIN, y: ctx.y - rh, width: 3, height: rh, color: C.accent });
+    drawText(ctx, "ROI DEL SERVICIO NUVIA", MARGIN + 16, ctx.y - 16, { size: 7, bold: true, color: C.accent });
+    const big = `${roi.toFixed(1)}×`;
+    drawText(ctx, big, MARGIN + 16, ctx.y - 44, { size: 22, bold: true, color: C.accent });
+    const tx = MARGIN + 16 + ctx.bold.widthOfTextAtSize(big, 22) + 16;
+    drawText(ctx, `Por cada $1 invertido en honorarios, el cliente recupera $${roi.toFixed(2)}.`,
+      tx, ctx.y - 30, { size: 10, bold: true, color: C.text, maxW: w - (tx - MARGIN) - 20 });
+    drawText(ctx, `Ahorro total ${money(ahorro)} · Honorario ${money(honor)}`,
+      tx, ctx.y - 44, { size: 8, color: C.textDim, maxW: w - (tx - MARGIN) - 20 });
+    ctx.y -= rh + 14;
+  } else {
+    ctx.y -= 4;
+  }
 }
 
 // ───────────────── TIMELINE OPERATIVO ─────────────────
