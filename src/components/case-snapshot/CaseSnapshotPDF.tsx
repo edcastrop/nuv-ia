@@ -684,6 +684,29 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
         {/* [6] PIPELINE */}
         <SectionLabel>Estado operativo del caso</SectionLabel>
         <Card style={{ padding: 14, marginBottom: 18 }}>
+          {(() => {
+            const total = e.pipeline.length || 1;
+            const done = e.pipeline.filter(p => p.estado === "completado").length;
+            const inProg = e.pipeline.filter(p => p.estado === "en_proceso").length;
+            const pct = Math.round((done / total) * 100);
+            return (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, paddingBottom: 10, borderBottom: `1px solid ${C.border}` }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: C.text, letterSpacing: "-0.02em" }}>{done}<span style={{ color: C.textLabel, fontWeight: 600 }}>/{total}</span></div>
+                  <div style={{ fontSize: 10, color: C.textSec, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600 }}>etapas completadas</div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, maxWidth: 320, marginLeft: 20 }}>
+                  <div style={{ flex: 1, height: 5, background: C.bgInner, borderRadius: 999, overflow: "hidden", border: `1px solid ${C.border}` }}>
+                    <div style={{ height: "100%", width: `${pct}%`, background: `linear-gradient(90deg, ${C.green}, ${C.blue})`, borderRadius: 999 }} />
+                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: C.green, minWidth: 36, textAlign: "right" }}>{pct}%</div>
+                </div>
+                {inProg > 0 && (
+                  <Pill color={C.blue} style={{ marginLeft: 12 }}>{inProg} en curso</Pill>
+                )}
+              </div>
+            );
+          })()}
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
             {e.pipeline.map((p, i) => (
               <PipelineStep key={i} nombre={p.nombre} estado={p.estado} isLast={i === e.pipeline.length - 1} />
