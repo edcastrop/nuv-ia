@@ -76,18 +76,23 @@ function dtoToSnapshot(dto: CaseSnapshotDTO): CaseSnapshotData {
   const p = dto.propuesta;
   const h = dto.honorarios;
   const costoTotal = c.costoReal || c.totalProyectado || 0;
-  const costoSinSeguros = c.costoReal > 0
-    ? c.costoReal
-    : c.totalProyectado - ((c.seguros ?? 0) * c.cuotasPendientes);
-  const multiplicador = c.vecesPagado > 0
-    ? c.vecesPagado
-    : c.saldoCapital > 0
-      ? costoSinSeguros / c.saldoCapital
-      : 0;
+
+  // cuotaActual: usar la cuota del extracto tal como viene.
+  // Banco de Bogotá ya reporta cuota neta (sin seguros desglosados).
+  // NO restar seguros — el campo seguros puede ser 0 o ya estar incluido.
+  const cuotaDisplay = c.cuotaActual || 0;
+
+  // multiplicador: recalcular siempre desde costoTotal / saldoCapital
+  // para evitar usar el vecesPagado guardado que puede incluir seguros.
+  const multiplicador =
+    c.saldoCapital > 0 && costoTotal > 0
+      ? costoTotal / c.saldoCapital
+      : c.vecesPagado || 0;
+
   const tiempoMeses = p.tiempoRecuperado || 0;
   const tiempoRecuperado =
     tiempoMeses >= 12
-      ? `${(tiempoMeses / 12).toFixed(1)} años`
+      ? `${Math.floor(tiempoMeses / 12)} años`
       : `${tiempoMeses} meses`;
 
   return {
@@ -111,9 +116,7 @@ function dtoToSnapshot(dto: CaseSnapshotDTO): CaseSnapshotData {
       : "—",
     credito: {
       saldoActual: c.saldoCapital,
-      cuotaActual: c.cuotaActual > 0
-        ? c.cuotaActual - (c.seguros ?? 0)
-        : 0,
+      cuotaActual: cuotaDisplay,
       cuotasPendientes: c.cuotasPendientes,
       costoTotal,
       multiplicador,
