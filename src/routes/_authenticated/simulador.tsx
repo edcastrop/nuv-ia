@@ -200,10 +200,10 @@ function SimuladorPage() {
       )}
       {!mode && <ModeSelector onPick={handlePickMode} />}
       {mode === "pesos" && (
-        <PesosSimulator initialExpediente={initial} onReset={handleReset} simuladorReturn={simReturn} fromSimulador />
+        <PesosSimulator initialExpediente={initial} onReset={handleReset} simuladorReturn={simReturn} fromSimulador auditoriaId={auditoriaId} />
       )}
       {mode === "uvr" && (
-        <UVRSimulator initialExpediente={initial} onReset={handleReset} simuladorReturn={simReturn} fromSimulador />
+        <UVRSimulator initialExpediente={initial} onReset={handleReset} simuladorReturn={simReturn} fromSimulador auditoriaId={auditoriaId} />
       )}
     </div>
   );
