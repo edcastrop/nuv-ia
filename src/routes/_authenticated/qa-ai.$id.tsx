@@ -727,14 +727,33 @@ function ResultadoQaAi() {
                 <Link
                   to="/simulador"
                   search={{ maestroId: expedienteIdCert, modo: (a.modalidad === "uvr" ? "uvr" : "pesos") as "pesos" | "uvr", auditoriaId: id }}
-                  title="Abrir la simulación original del analista para revisar los datos ingresados con NUVIA"
+                  title="Abrir el simulador con los datos del analista para que tú mismo verifiques la proyección"
                 >
                   <button className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[12.5px] font-semibold transition hover:opacity-90"
                     style={{ background: "rgba(255,255,255,0.06)", color: "var(--nuvia-text-primary)", border: "1px solid var(--nuvia-accent)", cursor: "pointer" }}>
-                    <Calculator size={14} /> Abrir simulación del analista
+                    <Calculator size={14} /> Verificar proyección como auditor
                   </button>
                 </Link>
               ) : null}
+
+              <button
+                onClick={handleAprobar}
+                disabled={aprobando || yaAprobadaAuditor}
+                title={yaAprobadaAuditor ? "Esta auditoría ya fue aprobada por el auditor" : "Aprobar la auditoría y notificar al analista para que continúe"}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[12.5px] font-semibold transition hover:opacity-90"
+                style={{
+                  background: yaAprobadaAuditor ? "rgba(132,185,143,0.18)" : "var(--nuvia-success)",
+                  color: yaAprobadaAuditor ? "var(--nuvia-success)" : "#0B1220",
+                  border: `1px solid ${yaAprobadaAuditor ? "rgba(132,185,143,0.5)" : "transparent"}`,
+                  cursor: (aprobando || yaAprobadaAuditor) ? "not-allowed" : "pointer",
+                  opacity: aprobando ? 0.6 : 1,
+                  boxShadow: yaAprobadaAuditor ? "none" : "0 8px 20px -10px rgba(132,185,143,0.6)",
+                }}
+              >
+                <CheckCircle2 size={14} />
+                {yaAprobadaAuditor ? "Aprobada por auditor" : aprobando ? "Aprobando…" : "Aprobar y liberar al analista"}
+              </button>
+
 
 
               {puedeVolverAlSimulador ? (
