@@ -58,9 +58,9 @@ const C = {
   dim: "#64748B",
 };
 
-// ── Page
+// ── Page (alto ajustado al contenido real → sin hueco vertical)
 const W = 612;
-const H = 1080;
+const H = 960;
 
 const s = StyleSheet.create({
   page: { backgroundColor: C.bg, padding: 22, fontFamily: "Inter", color: C.text, fontSize: 9 },
