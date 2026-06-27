@@ -68,6 +68,8 @@ import {
   useSimulatorDraft,
 } from "./useSimulatorDraft";
 
+import { aprobarAuditoriaPorAuditor } from "@/lib/qaAI.functions";
+
 export function UVRSimulator({
   initialExpediente,
   onSaved,
@@ -75,6 +77,7 @@ export function UVRSimulator({
   simuladorReturn,
   fromSimulador,
   qaEmbedded,
+  auditoriaId,
 }: {
   initialExpediente?: Expediente;
   onSaved?: (e: Expediente) => void;
@@ -82,6 +85,7 @@ export function UVRSimulator({
   simuladorReturn?: { maestroId?: string; modo?: "pesos" | "uvr" };
   fromSimulador?: boolean;
   qaEmbedded?: boolean;
+  auditoriaId?: string;
 } = {}) {
   const parseOcrMoney = (v: string | number | null | undefined) => {
     if (v === null || v === undefined) return undefined;
