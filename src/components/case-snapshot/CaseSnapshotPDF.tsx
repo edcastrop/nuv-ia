@@ -426,9 +426,9 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
             <Divider />
             <ColField icon={Building2} label="Banco" value={e.banco} flex={0.9} />
             <Divider />
-            <ColField icon={FileText} label="Producto" value={e.producto} />
+            <ColField icon={FileText} label="Producto" value={e.producto} flex={0.9} />
             <Divider />
-            <ColField icon={DollarSign} label="Modalidad" value={e.modalidad} />
+            <ColField icon={DollarSign} label="Modalidad" value={e.modalidad} flex={0.9} />
             <Divider />
             <div style={{ flex: 1 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
