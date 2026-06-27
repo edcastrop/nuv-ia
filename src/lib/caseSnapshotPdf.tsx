@@ -58,9 +58,9 @@ const C = {
   dim: "#64748B",
 };
 
-// ── Page
+// ── Page (alto ajustado al contenido real → sin hueco vertical)
 const W = 612;
-const H = 1080;
+const H = 960;
 
 const s = StyleSheet.create({
   page: { backgroundColor: C.bg, padding: 22, fontFamily: "Inter", color: C.text, fontSize: 9 },
@@ -154,14 +154,14 @@ const s = StyleSheet.create({
   tlLine: { height: 2, flex: 1 },
   tlLabel: { color: C.textDim, fontSize: 6.5, marginTop: 4, fontWeight: 600, textAlign: "center" },
 
-  // Intervinientes
-  peopleRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  person: { width: "31%", flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: C.bgSoft, borderRadius: 8, padding: 6, borderWidth: 1, borderColor: C.borderSoft },
-  avatar: { width: 24, height: 24, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-  avatarText: { color: "#fff", fontSize: 8, fontWeight: 800 },
+  // Intervinientes — 2 por fila (48%), evita overflow de labels largos como "DIR. FINANCIERO" o "CONTABILIDAD"
+  peopleRow: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  person: { width: "48.5%", flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: C.bgSoft, borderRadius: 8, padding: 6, borderWidth: 1, borderColor: C.borderSoft },
+  avatar: { width: 22, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center" },
+  avatarText: { color: "#fff", fontSize: 7.5, fontWeight: 800 },
   personMeta: { flex: 1 },
-  personRole: { color: C.muted, fontSize: 6.5, fontWeight: 700, letterSpacing: 1 },
-  personName: { color: C.text, fontSize: 8, fontWeight: 700 },
+  personRole: { color: C.muted, fontSize: 6, fontWeight: 700, letterSpacing: 0.8 },
+  personName: { color: C.text, fontSize: 7.5, fontWeight: 700 },
 
   // Trazabilidad
   trazaItem: { flexDirection: "row", gap: 8, paddingVertical: 4, borderBottomWidth: 0.5, borderBottomColor: C.border },
@@ -198,6 +198,16 @@ const avatarColor = (seed: string): string => {
 const dictamenLabel = (d?: string | null) => {
   if (!d) return "PENDIENTE";
   return d.toUpperCase().replace(/_/g, " ");
+};
+const abbrevRol = (r: string) => {
+  const up = (r || "").toUpperCase().replace(/_/g, " ");
+  return up
+    .replace(/DIRECTOR\b/g, "DIR.")
+    .replace(/FINANCIERO\b/g, "FINANC.")
+    .replace(/CONTABILIDAD\b/g, "CONTAB.")
+    .replace(/OPERACIONES\b/g, "OPER.")
+    .replace(/DIRECCION\b/g, "DIR.")
+    .slice(0, 18);
 };
 const riskScore = (dto: CaseSnapshotDTO) => {
   // Heurística simple (0-100): mayor veces pagado, peor riesgo.
@@ -443,7 +453,7 @@ function Intervinientes({ dto }: { dto: CaseSnapshotDTO }) {
               <Text style={s.avatarText}>{initials(p.nombre)}</Text>
             </View>
             <View style={s.personMeta}>
-              <Text style={s.personRole}>{p.rol.toUpperCase()}</Text>
+              <Text style={s.personRole}>{abbrevRol(p.rol)}</Text>
               <Text style={s.personName}>{safe(p.nombre)}</Text>
             </View>
           </View>

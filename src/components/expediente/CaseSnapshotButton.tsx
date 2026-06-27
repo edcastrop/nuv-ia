@@ -6,7 +6,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { FileDown, Loader2, Check } from "lucide-react";
 import { useUserRole, type AppRole } from "@/hooks/useUserRole";
 import { getCaseSnapshotData } from "@/lib/caseSnapshot.functions";
-import { generarCaseSnapshotPdf, descargarSnapshot } from "@/lib/caseSnapshotPdf";
+// NOTA: `@/lib/caseSnapshotPdf` se importa dinámicamente dentro del handler
+// para evitar que @react-pdf/renderer entre en el bundle de la ruta (causa OOM en build Nitro).
 
 const ROLES_PERMITIDOS: AppRole[] = [
   "asesor",
@@ -39,8 +40,9 @@ export function CaseSnapshotButton({ expedienteId, clienteNombre }: Props) {
     setState("loading");
     try {
       const dto = await fetchData({ data: { expedienteId } });
-      const blob = await generarCaseSnapshotPdf(dto);
-      descargarSnapshot(blob, clienteNombre ?? dto.meta.cliente);
+      const mod = await import("@/lib/caseSnapshotPdf");
+      const blob = await mod.generarCaseSnapshotPdf(dto);
+      mod.descargarSnapshot(blob, clienteNombre ?? dto.meta.cliente);
       setState("done");
       setTimeout(() => setState("idle"), 2500);
     } catch (err) {
