@@ -156,6 +156,8 @@ export function PesosSimulator({
     useState<PropuestasComercialesDraft | undefined>(() => draft.propuestasComerciales);
   const [propuestasComercialesSnapshot, setPropuestasComercialesSnapshot] =
     useState<PropuestasComercialesSnapshot | null>(null);
+  const [aprobando, setAprobando] = useState(false);
+  const doAprobar = useServerFn(aprobarAuditoriaPorAuditor);
 
   const handleClientChange = (next: ClientData) => {
     setClient(next);
