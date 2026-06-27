@@ -347,7 +347,7 @@ const Field = ({ icon, label, value, width }: { icon: ReactNode; label: string; 
     {icon}
     <div style={{ minWidth: 0 }}>
       <MiniLabel style={{ marginBottom: 5, color: C.textLabel }}>{label}</MiniLabel>
-      <div style={{ fontSize: 10.2, lineHeight: 1.35, color: C.text, fontWeight: 750, wordBreak: "break-word" }}>{value}</div>
+      <div style={{ fontSize: 10, lineHeight: 1.32, color: C.text, fontWeight: 700, wordBreak: "break-word" }}>{value}</div>
     </div>
   </div>
 );
@@ -408,7 +408,7 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
         width: 794,
         minHeight: 1191,
         position: "relative",
-        overflow: "hidden",
+        overflow: "visible",
         background:
           "radial-gradient(circle at 88% 33%, rgba(59,130,246,0.18), transparent 18%), radial-gradient(circle at 42% 7%, rgba(139,92,246,0.15), transparent 20%), linear-gradient(180deg, #050918 0%, #071021 52%, #050918 100%)",
         color: C.text,
@@ -440,12 +440,12 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
           </div>
           <div style={{ width: 245, background: "rgba(7,15,31,0.72)", border: `1px solid ${C.border2}`, borderRadius: 5, padding: "9px 14px", boxSizing: "border-box" }}>
             <MiniLabel style={{ color: C.textSec, marginBottom: 4 }}>ID Expediente</MiniLabel>
-            <div style={{ fontSize: 10.5, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", color: C.text, fontWeight: 750, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shortId(e.id)}</div>
+            <div style={{ fontSize: 10.5, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", color: "#FFFFFF", fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shortId(e.id)}</div>
           </div>
         </div>
 
         <Card style={{ padding: 13, marginBottom: 10 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "200px 125px 1fr 100px 135px", gap: 13, alignItems: "center" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "175px 110px 1fr 95px 120px", gap: 11, alignItems: "center" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
               <ClienteAvatar />
               <div style={{ minWidth: 0 }}>
