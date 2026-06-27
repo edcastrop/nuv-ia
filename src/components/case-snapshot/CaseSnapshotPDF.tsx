@@ -347,7 +347,7 @@ const Field = ({ icon, label, value, width }: { icon: ReactNode; label: string; 
     {icon}
     <div style={{ minWidth: 0 }}>
       <MiniLabel style={{ marginBottom: 5, color: C.textLabel }}>{label}</MiniLabel>
-      <div style={{ fontSize: 10.2, lineHeight: 1.35, color: C.text, fontWeight: 750, wordBreak: "break-word" }}>{value}</div>
+      <div style={{ fontSize: 10, lineHeight: 1.32, color: C.text, fontWeight: 700, wordBreak: "break-word" }}>{value}</div>
     </div>
   </div>
 );
