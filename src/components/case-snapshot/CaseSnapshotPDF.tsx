@@ -478,30 +478,46 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
 
         <div
           style={{
-            background: `linear-gradient(120deg, #1A1040 0%, ${C.bgCard} 70%)`,
-            borderRadius: 12,
+            position: "relative",
+            background: `radial-gradient(120% 180% at 0% 50%, #2A1465 0%, #160A36 35%, ${C.bgCard} 78%)`,
+            borderRadius: 14,
             border: `1px solid ${C.border}`,
             borderLeft: `3px solid ${C.purple}`,
-            padding: 16,
+            padding: "18px 20px",
             display: "flex",
             alignItems: "center",
-            gap: 18,
+            gap: 22,
             marginBottom: 18,
+            overflow: "hidden",
           }}
         >
-          <div style={{ flexShrink: 0 }}>
-            <MetricLabel>Vas a pagar</MetricLabel>
-            <div style={{ fontSize: 44, fontWeight: 800, color: C.purple, lineHeight: 1, letterSpacing: "-0.03em" }}>
+          <div style={{
+            position: "absolute", top: -40, left: -40, width: 180, height: 180,
+            background: `radial-gradient(circle, ${C.purple}55 0%, transparent 70%)`,
+            pointerEvents: "none",
+          }} />
+          <div style={{ flexShrink: 0, position: "relative" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+              <span style={{ width: 5, height: 5, borderRadius: 999, background: C.purple, boxShadow: `0 0 8px ${C.purple}` }} />
+              <MetricLabel style={{ color: "#C4B5FD" }}>Vas a pagar</MetricLabel>
+            </div>
+            <div style={{
+              fontSize: 52, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.04em",
+              background: `linear-gradient(135deg, #FFFFFF 0%, ${C.purple} 100%)`,
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}>
               {e.credito.multiplicador.toFixed(2)}x
             </div>
-            <div style={{ fontSize: 10, color: C.textSec, marginTop: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+            <div style={{ fontSize: 10, color: "#A78BFA", marginTop: 6, letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 600 }}>
               El valor de tu crédito
             </div>
           </div>
-          <div style={{ flex: 1, fontSize: 11.5, color: C.textSec, lineHeight: 1.55 }}>
+          <div style={{ width: 1, alignSelf: "stretch", background: `linear-gradient(180deg, transparent, ${C.border}, transparent)` }} />
+          <div style={{ flex: 1, fontSize: 11.5, color: C.textSec, lineHeight: 1.6, position: "relative" }}>
             Si mantienes las condiciones actuales pagarás{" "}
-            <strong style={{ color: C.blue }}>{e.credito.multiplicador.toFixed(2)} veces</strong> el valor desembolsado.
-            La propuesta NUVIA reduce significativamente este múltiplo y libera capacidad financiera.
+            <strong style={{ color: "#C4B5FD" }}>{e.credito.multiplicador.toFixed(2)} veces</strong> el valor desembolsado.
+            La propuesta NUVIA <strong style={{ color: C.green }}>reduce este múltiplo</strong> y libera capacidad financiera de forma inmediata.
           </div>
         </div>
 
@@ -668,6 +684,29 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
         {/* [6] PIPELINE */}
         <SectionLabel>Estado operativo del caso</SectionLabel>
         <Card style={{ padding: 14, marginBottom: 18 }}>
+          {(() => {
+            const total = e.pipeline.length || 1;
+            const done = e.pipeline.filter(p => p.estado === "completado").length;
+            const inProg = e.pipeline.filter(p => p.estado === "en_proceso").length;
+            const pct = Math.round((done / total) * 100);
+            return (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, paddingBottom: 10, borderBottom: `1px solid ${C.border}` }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: C.text, letterSpacing: "-0.02em" }}>{done}<span style={{ color: C.textLabel, fontWeight: 600 }}>/{total}</span></div>
+                  <div style={{ fontSize: 10, color: C.textSec, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600 }}>etapas completadas</div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, maxWidth: 320, marginLeft: 20 }}>
+                  <div style={{ flex: 1, height: 5, background: C.bgInner, borderRadius: 999, overflow: "hidden", border: `1px solid ${C.border}` }}>
+                    <div style={{ height: "100%", width: `${pct}%`, background: `linear-gradient(90deg, ${C.green}, ${C.blue})`, borderRadius: 999 }} />
+                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: C.green, minWidth: 36, textAlign: "right" }}>{pct}%</div>
+                </div>
+                {inProg > 0 && (
+                  <Pill color={C.blue} style={{ marginLeft: 12 }}>{inProg} en curso</Pill>
+                )}
+              </div>
+            );
+          })()}
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
             {e.pipeline.map((p, i) => (
               <PipelineStep key={i} nombre={p.nombre} estado={p.estado} isLast={i === e.pipeline.length - 1} />
