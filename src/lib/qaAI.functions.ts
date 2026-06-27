@@ -1608,3 +1608,71 @@ export const qaCommandCenter = createServerFn({ method: "POST" })
 
     return { rows, bancos, analistas, topErrores, tendencia, prioridad };
   });
+
+/**
+ * Aprobar manualmente una auditoría como auditor, sellando fecha + autor +
+ * notas y notificando al analista para que pueda continuar el caso.
+ */
+export const aprobarAuditoriaPorAuditor = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({
+      auditoriaId: z.string().uuid(),
+      notas: z.string().trim().max(2000).optional().default(""),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: aud, error: errAud } = await supabase
+      .from("qa_auditorias")
+      .select("id,codigo,analista_id,expediente_id,qa_score,dictamen,auditor_aprobado_at")
+      .eq("id", data.auditoriaId)
+      .maybeSingle();
+    if (errAud) throw new Error(errAud.message);
+    if (!aud) throw new Error("Auditoría no encontrada");
+
+    const yaAprobada = !!aud.auditor_aprobado_at;
+
+    const { error: errUpd } = await supabase
+      .from("qa_auditorias")
+      .update({
+        auditor_aprobado_at: new Date().toISOString(),
+        auditor_aprobado_by: userId,
+        auditor_notas: data.notas || null,
+      })
+      .eq("id", data.auditoriaId);
+    if (errUpd) throw new Error(errUpd.message);
+
+    if (!yaAprobada && aud.analista_id) {
+      try {
+        await supabase.from("notificaciones_usuario").insert({
+          user_id: aud.analista_id,
+          titulo: `Auditoría ${aud.codigo ?? aud.id.slice(0, 8)} aprobada`,
+          mensaje:
+            `Tu auditoría QA fue verificada y aprobada por el auditor. ` +
+            `Puedes continuar con la propuesta comercial del caso.` +
+            (data.notas ? ` Notas: ${data.notas}` : ""),
+          tipo: "qa_auditoria_aprobada",
+          link: `/qa-ai/${aud.id}`,
+          metadata: {
+            auditoria_id: aud.id,
+            codigo: aud.codigo,
+            expediente_id: aud.expediente_id,
+            score: aud.qa_score,
+            dictamen: aud.dictamen,
+          } as unknown as Json,
+        });
+      } catch {
+        /* no-op best-effort */
+      }
+    }
+
+    return {
+      ok: true,
+      yaAprobada,
+      codigo: aud.codigo,
+      aprobadoAt: new Date().toISOString(),
+    };
+  });
+
