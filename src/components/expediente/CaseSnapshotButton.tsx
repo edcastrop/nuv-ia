@@ -237,8 +237,8 @@ export function CaseSnapshotButton({ expedienteId, clienteNombre }: Props) {
           style={{
             position: "fixed",
             top: 0,
-            left: 0,
-            opacity: 0,
+            left: -10000,
+            opacity: 1,
             pointerEvents: "none",
             zIndex: -50,
             // Mantener layout real para que html2canvas mida correctamente
