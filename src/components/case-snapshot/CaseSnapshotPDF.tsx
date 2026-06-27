@@ -327,20 +327,21 @@ const Wave = () => (
 const ClienteAvatar = () => (
   <div
     style={{
-      width: 52,
-      height: 52,
+      width: 63,
+      height: 63,
       borderRadius: "50%",
       background: "radial-gradient(circle at 35% 20%, #4F69D9, #1D2C71 72%)",
-      boxShadow: "0 0 30px rgba(59,130,246,0.22)",
+      boxShadow: "0 0 38px rgba(59,130,246,0.32), inset 0 0 0 1px rgba(138,109,255,0.35)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       flexShrink: 0,
     }}
   >
-    <SvgUser size={31} color="#EAF2FF" />
+    <SvgUser size={37} color="#EAF2FF" />
   </div>
 );
+
 
 const Field = ({ icon, label, value, width }: { icon: ReactNode; label: string; value: ReactNode; width?: number }) => (
   <div style={{ width, flex: width ? "0 0 auto" : 1, minWidth: 0, display: "flex", alignItems: "flex-start", gap: 9 }}>
