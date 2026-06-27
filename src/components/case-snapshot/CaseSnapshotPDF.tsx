@@ -4,26 +4,11 @@
 
 import { forwardRef, type CSSProperties } from "react";
 import {
-  Building2,
-  FileText,
-  DollarSign,
-  CheckCircle2,
-  User,
-  Calendar,
-  Copy,
-  Gauge,
-  Target,
-  Network,
-  Check,
-  FileSignature,
-  ClipboardCheck,
-  Send,
-  Inbox,
-  FileCheck2,
-  Receipt,
-  ShieldCheck,
-  FlaskConical,
-  ClipboardList,
+  Building2, FileText, DollarSign, CheckCircle2,
+  User, Calendar, Copy, Gauge, Target, Network,
+  Check, Send, Inbox, FileCheck2, Receipt,
+  ClipboardList, FlaskConical, ShieldCheck,
+  FilePen, ListChecks, HandshakeIcon,
 } from "lucide-react";
 
 /* ============================ TOKENS ============================ */
@@ -227,16 +212,16 @@ const Avatar: React.FC<{ name: string; size?: number; color?: string }> = ({
 
 /* ============================ PIPELINE ============================ */
 const PIPELINE_ICONS: Record<string, any> = {
-  Simulación: FlaskConical,
-  QA: ShieldCheck,
-  Contrato: FileSignature,
-  Poder: FileText,
-  Checklist: ClipboardCheck,
-  Radicación: Send,
+  "Simulación":      FlaskConical,
+  "QA":              ShieldCheck,
+  "Contrato":        FilePen,
+  "Poder":           HandshakeIcon,
+  "Checklist":       ListChecks,
+  "Radicación":      Send,
   "Respuesta Banco": Inbox,
-  "Informe Final": FileCheck2,
-  "Cuenta Cobro": Receipt,
-  "Paz y Salvo": ClipboardList,
+  "Informe Final":   FileCheck2,
+  "Cuenta Cobro":    Receipt,
+  "Paz y Salvo":     ClipboardList,
 };
 
 const PipelineStep: React.FC<{ nombre: string; estado: PipelineEstado; isLast: boolean }> = ({
@@ -394,7 +379,7 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
         {/* [3] CARD CLIENTE */}
         <Card style={{ padding: 16, marginBottom: 18 }}>
           {/* Row 1 */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, overflow: "hidden" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, overflow: "visible" }}>
             {/* Col 1 cliente */}
             <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1.8, minWidth: 0 }}>
               <div
@@ -424,11 +409,11 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
             </div>
 
             <Divider />
-            <ColField icon={Building2} label="Banco" value={e.banco} flex={0.9} />
+            <ColField icon={Building2} label="Banco" value={e.banco} flex={1} />
             <Divider />
-            <ColField icon={FileText} label="Producto" value={e.producto} flex={0.9} />
+            <ColField icon={FileText} label="Producto" value={e.producto} flex={1.4} />
             <Divider />
-            <ColField icon={DollarSign} label="Modalidad" value={e.modalidad} flex={0.9} />
+            <ColField icon={DollarSign} label="Modalidad" value={e.modalidad} flex={1} />
             <Divider />
             <div style={{ flex: 1 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
@@ -801,7 +786,7 @@ const Divider = () => (
 );
 
 const ColField: React.FC<{ icon: any; label: string; value: string; flex?: number }> = ({ icon: Icon, label, value, flex = 1 }) => (
-  <div style={{ flex, minWidth: 0, overflow: "hidden" }}>
+  <div style={{ flex, minWidth: 0 }}>
     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
       <Icon size={11} color={C.textSec} />
       <MetricLabel>{label}</MetricLabel>
