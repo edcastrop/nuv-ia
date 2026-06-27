@@ -90,7 +90,7 @@ function dtoToSnapshot(dto: CaseSnapshotDTO): CaseSnapshotData {
     banco: m.banco,
     producto: m.producto,
     modalidad: m.modalidad,
-    estado: m.estadoCaso || m.estado || "—",
+    estado: formatEstadoCaso(m.estadoCaso || m.estado || "—"),
     analista: m.analista?.nombre ?? "—",
     qaScore: m.qaScore ?? 0,
     nivelAutonomia: m.nivelAutonomia != null ? `N${m.nivelAutonomia}` : "N—",
