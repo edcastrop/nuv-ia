@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Wrench, Send, Eye, EyeOff } from "lucide-react";
-import { NCard, SectionHeader } from "@/components/nuvia";
+import { NCard } from "@/components/nuvia";
 import { PesosSimulator } from "@/components/nuvex/PesosSimulator";
 import { UVRSimulator } from "@/components/nuvex/UVRSimulator";
 import {
@@ -12,6 +12,7 @@ import {
 import { getCanalDeAuditoria, enviarMensaje } from "@/lib/colaboracion";
 import { useUserRole, isDirectorQA } from "@/hooks/useUserRole";
 import { ComparativaAnalistaAuditor } from "./ComparativaAnalistaAuditor";
+import { clearSimulatorDraft } from "@/components/nuvex/useSimulatorDraft";
 
 /**
  * Bloque embebido en `/qa-ai/$id` que renderiza el simulador (Pesos/UVR)
