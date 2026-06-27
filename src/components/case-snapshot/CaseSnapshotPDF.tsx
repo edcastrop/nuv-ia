@@ -215,7 +215,7 @@ const PIPELINE_ICONS: Record<string, any> = {
   "Simulación":      FlaskConical,
   "QA":              ShieldCheck,
   "Contrato":        FilePen,
-  "Poder":           HandshakeIcon ?? Handshake ?? FileText,
+  "Poder":           HandshakeIcon,
   "Checklist":       ListChecks,
   "Radicación":      Send,
   "Respuesta Banco": Inbox,
