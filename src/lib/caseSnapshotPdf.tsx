@@ -154,14 +154,14 @@ const s = StyleSheet.create({
   tlLine: { height: 2, flex: 1 },
   tlLabel: { color: C.textDim, fontSize: 6.5, marginTop: 4, fontWeight: 600, textAlign: "center" },
 
-  // Intervinientes
-  peopleRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  person: { width: "31%", flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: C.bgSoft, borderRadius: 8, padding: 6, borderWidth: 1, borderColor: C.borderSoft },
-  avatar: { width: 24, height: 24, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-  avatarText: { color: "#fff", fontSize: 8, fontWeight: 800 },
+  // Intervinientes — 2 por fila (48%), evita overflow de labels largos como "DIR. FINANCIERO" o "CONTABILIDAD"
+  peopleRow: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  person: { width: "48.5%", flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: C.bgSoft, borderRadius: 8, padding: 6, borderWidth: 1, borderColor: C.borderSoft },
+  avatar: { width: 22, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center" },
+  avatarText: { color: "#fff", fontSize: 7.5, fontWeight: 800 },
   personMeta: { flex: 1 },
-  personRole: { color: C.muted, fontSize: 6.5, fontWeight: 700, letterSpacing: 1 },
-  personName: { color: C.text, fontSize: 8, fontWeight: 700 },
+  personRole: { color: C.muted, fontSize: 6, fontWeight: 700, letterSpacing: 0.8 },
+  personName: { color: C.text, fontSize: 7.5, fontWeight: 700 },
 
   // Trazabilidad
   trazaItem: { flexDirection: "row", gap: 8, paddingVertical: 4, borderBottomWidth: 0.5, borderBottomColor: C.border },
