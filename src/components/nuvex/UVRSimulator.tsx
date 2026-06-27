@@ -166,6 +166,8 @@ export function UVRSimulator({
     useState<PropuestasComercialesDraft | undefined>(() => draft.propuestasComerciales);
   const [propuestasComercialesSnapshot, setPropuestasComercialesSnapshot] =
     useState<PropuestasComercialesSnapshot | null>(null);
+  const [aprobando, setAprobando] = useState(false);
+  const doAprobar = useServerFn(aprobarAuditoriaPorAuditor);
   const [showConfigVariacion, setShowConfigVariacion] = useState(false);
   const [variacionDefaultInput, setVariacionDefaultInput] = useState(getDefaultVariacionUVR());
 
