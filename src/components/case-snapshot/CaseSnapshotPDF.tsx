@@ -408,7 +408,7 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
         width: 794,
         minHeight: 1191,
         position: "relative",
-        overflow: "hidden",
+        overflow: "visible",
         background:
           "radial-gradient(circle at 88% 33%, rgba(59,130,246,0.18), transparent 18%), radial-gradient(circle at 42% 7%, rgba(139,92,246,0.15), transparent 20%), linear-gradient(180deg, #050918 0%, #071021 52%, #050918 100%)",
         color: C.text,
