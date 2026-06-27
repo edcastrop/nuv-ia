@@ -21,37 +21,30 @@ export function usePDFExport(
       ]);
       const JsPDF = (jspdfMod as any).jsPDF ?? (jspdfMod as any).default;
 
+      const captureWidth = Math.max(el.scrollWidth, el.offsetWidth);
+      const captureHeight = Math.max(el.scrollHeight, el.offsetHeight);
+
       const canvas = await html2canvas(el, {
         scale: 2,
         useCORS: true,
-        backgroundColor: "#0A0E1A",
+        backgroundColor: "#050918",
         logging: false,
-        windowWidth: el.scrollWidth,
-        windowHeight: el.scrollHeight,
+        scrollX: 0,
+        scrollY: 0,
+        width: captureWidth,
+        height: captureHeight,
+        windowWidth: captureWidth,
+        windowHeight: captureHeight,
       });
 
-      const pdf = new JsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
-      const pageW = pdf.internal.pageSize.getWidth();
-      const pageH = pdf.internal.pageSize.getHeight();
+      const pdf = new JsPDF({
+        orientation: "portrait",
+        unit: "pt",
+        format: [captureWidth, captureHeight],
+      });
 
-      const imgData = canvas.toDataURL("image/jpeg", 0.95);
-
-      // Calcular si cabe en una página o necesita escalar
-      const canvasRatio = canvas.height / canvas.width;
-      const renderW = pageW;
-      const renderH = renderW * canvasRatio;
-
-      if (renderH <= pageH) {
-        // Cabe en una página — centrar verticalmente si sobra espacio
-        pdf.addImage(imgData, "JPEG", 0, 0, renderW, renderH);
-      } else {
-        // Contenido más largo que A4: escalar TODO para que quepa en 1 página
-        // (el diseño es una sola hoja ejecutiva, no debe partirse)
-        const scaledH = pageH;
-        const scaledW = scaledH / canvasRatio;
-        const offsetX = (pageW - scaledW) / 2;
-        pdf.addImage(imgData, "JPEG", offsetX, 0, scaledW, scaledH);
-      }
+      const imgData = canvas.toDataURL("image/png");
+      pdf.addImage(imgData, "PNG", 0, 0, captureWidth, captureHeight);
 
       const fileName = options.fileName ?? "NUVIA_CaseSnapshot.pdf";
       pdf.save(fileName);
