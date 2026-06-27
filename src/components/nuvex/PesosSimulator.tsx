@@ -222,10 +222,14 @@ export function PesosSimulator({
   const esFna = /fondo\s+nacional\s+del\s+ahorro|\bfna\b/i.test(
     `${client.banco} ${client.tipoProducto}`,
   );
+  // Auto-cálculo: si hay plazo inicial, siempre recalcular en función de
+  // (plazo - pagadas). Solo respetar el valor persistido cuando no hay
+  // suficiente información para recalcular (evita romper casos legacy).
+  const cuotasPendientesAuto = Math.max(0, plazoInicial - cuotasPagadas + (esFna ? 1 : 0));
   const cuotasPendientes =
-    cuotasPendientesGuardadas > 0
-      ? cuotasPendientesGuardadas
-      : Math.max(0, plazoInicial - cuotasPagadas + (esFna ? 1 : 0));
+    plazoInicial > 0
+      ? cuotasPendientesAuto
+      : (cuotasPendientesGuardadas > 0 ? cuotasPendientesGuardadas : cuotasPendientesAuto);
   const honorariosPct = parsePercentage(client.porcentajeHonorarios) || 6;
 
   const saneCredito = normalizeCreditMoneyInput({
