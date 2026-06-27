@@ -164,21 +164,16 @@ function drawClienteRow(ctx: Ctx, d: CaseSnapshotDTO) {
     // mini icon dot
     ctx.page.drawCircle({ x: cx + 18, y: y + h / 2, size: 9, color: C.bgSoft, borderColor: C.primary, borderWidth: 0.6 });
     T(ctx, c.l, cx + 36, y + h - 18, { size: 6.5, bold: true, color: C.muted });
-    if (c.big) {
-      T(ctx, c.v, cx + 36, y + h - 36, { size: 10, bold: true, color: c.color, maxW: colW - 44 });
-      // segunda línea si nombre largo
-      const split = c.v.split(/\s+/);
-      if (split.length > 2 && ctx.bold.widthOfTextAtSize(c.v, 10) > colW - 44) {
-        const mid = Math.ceil(split.length / 2);
-        T(ctx, split.slice(0, mid).join(" "), cx + 36, y + h - 34, { size: 10, bold: true, color: c.color, maxW: colW - 44 });
-        T(ctx, split.slice(mid).join(" "), cx + 36, y + h - 48, { size: 10, bold: true, color: c.color, maxW: colW - 44 });
-      }
+    // Soporta hasta 2 líneas, mismo tratamiento para todas las columnas
+    const fontSize = c.big ? 10 : 9;
+    const lines = wrapLines(ctx.bold, c.v, fontSize, colW - 44);
+    if (lines.length === 1) {
+      T(ctx, lines[0], cx + 36, y + h - 36, { size: fontSize, bold: true, color: c.color, maxW: colW - 44 });
     } else {
-      const lines = wrapLines(ctx.bold, c.v, 9, colW - 44);
-      lines.slice(0, 2).forEach((ln, j) => {
-        T(ctx, ln, cx + 36, y + h - 34 - j * 11, { size: 9, bold: true, color: c.color, maxW: colW - 44 });
-      });
+      T(ctx, lines[0], cx + 36, y + h - 32, { size: fontSize, bold: true, color: c.color, maxW: colW - 44 });
+      T(ctx, lines.slice(1).join(" "), cx + 36, y + h - 44, { size: fontSize, bold: true, color: c.color, maxW: colW - 44 });
     }
+
   });
 }
 
