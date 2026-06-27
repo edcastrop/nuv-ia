@@ -2,10 +2,10 @@
 // Estilo dark NUVIA Financial Intelligence. Se renderiza en un contenedor 794×1123px.
 // No usa Tailwind para evitar dependencias de tema; todos los estilos inline.
 
-import { forwardRef, type CSSProperties } from "react";
+import { forwardRef, type CSSProperties, type ReactNode } from "react";
 import {
   Building2, FileText, DollarSign, CheckCircle2,
-  User, Calendar, Copy, Gauge, Target, Network,
+  User, Calendar, Copy,
   Check, Send, Inbox, FileCheck2, Receipt,
   ClipboardList, FlaskConical, ShieldCheck,
   FilePen, ListChecks, HandshakeIcon,
@@ -298,6 +298,13 @@ const PipelineStep: React.FC<{ nombre: string; estado: PipelineEstado; isLast: b
 /* ============================ MAIN ============================ */
 export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
   ({ expediente: e }, ref) => {
+
+    const ROL_ICONS: Record<string, ReactNode> = {
+      "Analista": <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.blue} strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>,
+      "Director Financiero": <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.blue} strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>,
+      "Contabilidad": <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.blue} strokeWidth="2" strokeLinecap="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h8M8 14h5"/></svg>,
+      "Gerencia": <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.blue} strokeWidth="2" strokeLinecap="round"><polygon points="12,2 15,9 22,9 16,14 18,21 12,17 6,21 8,14 2,9 9,9"/></svg>,
+    };
     return (
       <div
         ref={ref}
@@ -504,9 +511,9 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
           <div>
             <SectionLabel>Diagnóstico NUVIA AI</SectionLabel>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 10 }}>
-              <DiagCard icon={Gauge} label="Riesgo operativo" value="MEDIO" color={C.amber} />
-              <DiagCard icon={Target} label="Viabilidad" value="ALTA" color={C.green} />
-              <DiagCard icon={Network} label="Complejidad" value="MEDIA" color={C.amber} />
+              <DiagCard icon="gauge" label="Riesgo operativo" value="MEDIO" color={C.amber} />
+              <DiagCard icon="target" label="Viabilidad" value="ALTA" color={C.green} />
+              <DiagCard icon="network" label="Complejidad" value="MEDIA" color={C.amber} />
             </div>
             <div style={{ fontSize: 11.5, color: C.textSec, lineHeight: 1.5, marginBottom: 10 }}>
               Existe una <strong style={{ color: C.blue }}>oportunidad de optimización</strong> sobre la estructura
@@ -701,10 +708,15 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
                     alignItems: "center",
                   }}
                 >
-                  <div style={{ flex: 1, color: C.textSec, textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.05em", fontSize: 9, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {p.rol}
+                  <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 5 }}>
+                    <span style={{ flexShrink: 0 }}>{ROL_ICONS[p.rol] ?? ROL_ICONS["Analista"]}</span>
+                    <span style={{
+                      color: C.textSec, textTransform: "uppercase", fontWeight: 600,
+                      letterSpacing: "0.05em", fontSize: 9,
+                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"
+                    }}>{p.rol}</span>
                   </div>
-                  <div style={{ flex: 1.3, display: "flex", alignItems: "center", gap: 6, color: C.text, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
+                  <div style={{ flex: 1.3, display: "flex", alignItems: "center", gap: 6, color: C.text, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     <Avatar name={p.nombre} size={22} />
                     <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0, flex: 1 }}>{p.nombre}</span>
                   </div>
@@ -739,7 +751,7 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
                     {t.fecha}
                   </div>
                   <div style={{ flex: 1.6, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>
-                    {t.accion}
+                    {t.accion.replace(/_/g, " ")}
                   </div>
                   <div style={{ flex: 1, color: C.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>
                     {t.usuario}
@@ -818,31 +830,56 @@ const MetricCard: React.FC<{ label: string; value: string }> = ({ label, value }
   </InnerCard>
 );
 
-const DiagCard: React.FC<{ icon: any; label: string; value: string; color: string }> = ({
-  icon: Icon,
+const IconVelocimetro = ({ color }: { color: string }) => (
+  <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+    <circle cx="16" cy="16" r="13" stroke={color} strokeWidth="1.5" fill={`${color}18`}/>
+    <path d="M8 20 A9 9 0 0 1 24 20" stroke={color} strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+    <line x1="16" y1="20" x2="11" y2="13" stroke={color} strokeWidth="1.8" strokeLinecap="round"/>
+    <circle cx="16" cy="20" r="1.5" fill={color}/>
+    <line x1="8.5" y1="20" x2="10" y2="20" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
+    <line x1="22" y1="20" x2="23.5" y2="20" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
+    <line x1="16" y1="11" x2="16" y2="12.5" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
+  </svg>
+);
+
+const IconDiana = ({ color }: { color: string }) => (
+  <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+    <circle cx="16" cy="16" r="13" stroke={color} strokeWidth="1.5" fill={`${color}18`}/>
+    <circle cx="16" cy="16" r="8" stroke={color} strokeWidth="1.2" fill="none"/>
+    <circle cx="16" cy="16" r="3.5" fill={color} fillOpacity="0.8"/>
+    <line x1="22" y1="10" x2="18" y2="14" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    <polyline points="20,9 23,9 23,12" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+  </svg>
+);
+
+const IconRed = ({ color }: { color: string }) => (
+  <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+    <circle cx="16" cy="16" r="13" stroke={color} strokeWidth="1.5" fill={`${color}18`}/>
+    <circle cx="16" cy="9" r="2.5" fill={color} fillOpacity="0.9"/>
+    <circle cx="9" cy="21" r="2.5" fill={color} fillOpacity="0.9"/>
+    <circle cx="23" cy="21" r="2.5" fill={color} fillOpacity="0.9"/>
+    <circle cx="16" cy="17" r="2" fill={color}/>
+    <line x1="16" y1="11.5" x2="16" y2="15" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
+    <line x1="14.2" y1="16.2" x2="11" y2="18.8" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
+    <line x1="17.8" y1="16.2" x2="21" y2="18.8" stroke={color} strokeWidth="1.2" strokeLinecap="round"/>
+  </svg>
+);
+
+const DiagCard: React.FC<{ icon: "gauge"|"target"|"network"; label: string; value: string; color: string }> = ({
+  icon,
   label,
   value,
   color,
-}) => (
-  <InnerCard style={{ padding: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-    <div
-      style={{
-        width: 36,
-        height: 36,
-        borderRadius: "50%",
-        background: `${color}22`,
-        border: `1.5px solid ${color}66`,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <Icon size={18} color={color} strokeWidth={1.8} />
-    </div>
-    <MetricLabel style={{ textAlign: "center" }}>{label}</MetricLabel>
-    <div style={{ fontSize: 13, fontWeight: 800, color, letterSpacing: "0.04em" }}>{value}</div>
-  </InnerCard>
-);
+}) => {
+  const IconSVG = icon === "gauge" ? IconVelocimetro : icon === "target" ? IconDiana : IconRed;
+  return (
+    <InnerCard style={{ padding: 12, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, textAlign: "center" }}>
+      <IconSVG color={color} />
+      <MetricLabel>{label}</MetricLabel>
+      <div style={{ fontSize: 14, fontWeight: 800, color, letterSpacing: "0.04em" }}>{value}</div>
+    </InnerCard>
+  );
+};
 
 const HonCol: React.FC<{ label: string; value: string; color?: string }> = ({ label, value, color = C.text }) => (
   <div>
