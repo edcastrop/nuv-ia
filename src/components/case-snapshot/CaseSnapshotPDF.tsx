@@ -466,20 +466,20 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
         </div>
 
         <Card style={{ padding: 28, marginBottom: 12 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "210px 110px minmax(190px,1fr) 88px 130px", gap: 20, alignItems: "center" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 16, minWidth: 0 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "210px 108px minmax(180px,1fr) 88px 132px", gap: 22, alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16, minWidth: 0, paddingRight: 14, borderRight: `1px solid ${C.border}` }}>
               <ClienteAvatar />
               <div style={{ minWidth: 0 }}>
                 <MiniLabel style={{ color: C.textLabel, marginBottom: 4 }}>Cliente</MiniLabel>
                 <div style={{ fontSize: 12, fontWeight: 950, color: C.text, lineHeight: 1.15, wordBreak: "normal", overflowWrap: "break-word", textTransform: "uppercase", letterSpacing: "0.01em" }}>{e.cliente.nombre}</div>
-                <div style={{ fontSize: 8.6, color: C.textMuted, marginTop: 3, fontWeight: 600 }}>CC {e.cliente.cc}</div>
               </div>
             </div>
-            <div style={{ width: 1, height: 46, background: "linear-gradient(180deg, transparent, rgba(59,130,246,0.35), transparent)", justifySelf: "start", marginLeft: -8 }} />
             <Field icon={<IconWrap><SvgBank /></IconWrap>} label="Banco" value={e.banco} />
             <Field icon={<IconWrap><SvgShield /></IconWrap>} label="Producto" value={e.producto} />
+            <Field icon={<IconWrap><SvgMoney /></IconWrap>} label="Modalidad" value={e.modalidad} />
             <Field icon={<IconWrap color={C.green}><SvgCheckCircle /></IconWrap>} label="Estado del caso" value={<span style={{ color: C.green2 }}>{e.estado}</span>} />
           </div>
+
           <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(59,130,246,0.45), rgba(138,109,255,0.35), transparent)", margin: "20px 0" }} />
           <div style={{ display: "grid", gridTemplateColumns: "190px 190px 1fr 145px", gap: 24, alignItems: "center" }}>
             <Field icon={<IconWrap><SvgUser /></IconWrap>} label="Analista" value={e.analista} />
