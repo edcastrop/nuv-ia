@@ -238,6 +238,16 @@ export function ReconstruccionAuditorBlock({
             banco={banco}
           />
 
+          {/* V3 — NUVIA valida la reconstrucción del auditor y actualiza el score */}
+          <NuviaValidacionAuditorBlock
+            auditoriaId={auditoriaId}
+            sandboxExpedienteId={sandboxId}
+            scoreActual={Number(scoreActual ?? auditoria.qa_score ?? 0)}
+            onValidated={onValidated}
+          />
+
+
+
           {/* Simulador embebido */}
           <div
             id="qa-simulador-embebido"
