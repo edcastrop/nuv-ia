@@ -12,7 +12,9 @@ import {
 import { getCanalDeAuditoria, enviarMensaje } from "@/lib/colaboracion";
 import { useUserRole, isDirectorQA } from "@/hooks/useUserRole";
 import { ComparativaAnalistaAuditor } from "./ComparativaAnalistaAuditor";
+import { NuviaValidacionAuditorBlock } from "./NuviaValidacionAuditorBlock";
 import { clearSimulatorDraft } from "@/components/nuvex/useSimulatorDraft";
+
 
 /**
  * Bloque embebido en `/qa-ai/$id` que renderiza el simulador (Pesos/UVR)
@@ -28,13 +30,18 @@ export function ReconstruccionAuditorBlock({
   inputs,
   cliente,
   banco,
+  scoreActual,
+  onValidated,
 }: {
   auditoriaId: string;
   auditoria: Record<string, unknown>;
   inputs: Record<string, unknown>;
   cliente: string;
   banco: string;
+  scoreActual?: number;
+  onValidated?: () => void;
 }) {
+
   const { roles } = useUserRole();
   const puedeEditar = isDirectorQA(roles);
   const [open, setOpen] = useState<boolean>(true);
@@ -230,6 +237,16 @@ export function ReconstruccionAuditorBlock({
             cliente={cliente}
             banco={banco}
           />
+
+          {/* V3 — NUVIA valida la reconstrucción del auditor y actualiza el score */}
+          <NuviaValidacionAuditorBlock
+            auditoriaId={auditoriaId}
+            sandboxExpedienteId={sandboxId}
+            scoreActual={Number(scoreActual ?? auditoria.qa_score ?? 0)}
+            onValidated={onValidated}
+          />
+
+
 
           {/* Simulador embebido */}
           <div

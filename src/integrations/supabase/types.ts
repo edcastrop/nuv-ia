@@ -4646,6 +4646,8 @@ export type Database = {
           auditor_aprobado_at: string | null
           auditor_aprobado_by: string | null
           auditor_notas: string | null
+          auditor_score_anterior: number | null
+          auditor_validated_at: string | null
           auto_ejecutada: boolean
           categoria: Database["public"]["Enums"]["qa_categoria"]
           codigo: string | null
@@ -4671,6 +4673,8 @@ export type Database = {
           auditor_aprobado_at?: string | null
           auditor_aprobado_by?: string | null
           auditor_notas?: string | null
+          auditor_score_anterior?: number | null
+          auditor_validated_at?: string | null
           auto_ejecutada?: boolean
           categoria: Database["public"]["Enums"]["qa_categoria"]
           codigo?: string | null
@@ -4696,6 +4700,8 @@ export type Database = {
           auditor_aprobado_at?: string | null
           auditor_aprobado_by?: string | null
           auditor_notas?: string | null
+          auditor_score_anterior?: number | null
+          auditor_validated_at?: string | null
           auto_ejecutada?: boolean
           categoria?: Database["public"]["Enums"]["qa_categoria"]
           codigo?: string | null
