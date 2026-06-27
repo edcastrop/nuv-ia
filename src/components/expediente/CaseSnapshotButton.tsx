@@ -77,8 +77,6 @@ function dtoToSnapshot(dto: CaseSnapshotDTO): CaseSnapshotData {
   const h = dto.honorarios;
   const costoTotal = c.costoReal || c.totalProyectado || 0;
 
-  const costoTotal = c.costoReal || c.totalProyectado || 0;
-
   // NO restar seguros — cuotaActual del extracto ya viene neta
   const cuotaDisplay = c.cuotaActual || 0;
 
