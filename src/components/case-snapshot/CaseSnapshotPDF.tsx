@@ -119,7 +119,7 @@ const SectionLabel = ({ children, style }: { children: React.ReactNode; style?: 
   </div>
 );
 
-const MetricLabel = ({ children }: { children: React.ReactNode }) => (
+const MetricLabel = ({ children, style }: { children: React.ReactNode; style?: CSSProperties }) => (
   <div
     style={{
       fontSize: 10,
@@ -127,6 +127,7 @@ const MetricLabel = ({ children }: { children: React.ReactNode }) => (
       letterSpacing: "0.08em",
       textTransform: "uppercase",
       color: C.textSec,
+      ...style,
     }}
   >
     {children}
@@ -411,9 +412,9 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
             <Divider />
             <ColField icon={Building2} label="Banco" value={e.banco} flex={1} />
             <Divider />
-            <ColField icon={FileText} label="Producto" value={e.producto} flex={1.4} />
+            <ColField icon={FileText} label="Producto" value={e.producto} flex={1.6} />
             <Divider />
-            <ColField icon={DollarSign} label="Modalidad" value={e.modalidad} flex={1} />
+            <ColField icon={DollarSign} label="Modalidad" value={e.modalidad} flex={0.8} />
             <Divider />
             <div style={{ flex: 1 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
@@ -796,7 +797,6 @@ const ColField: React.FC<{ icon: any; label: string; value: string; flex?: numbe
         fontSize: 12,
         color: C.text,
         fontWeight: 600,
-        overflow: "hidden",
         textOverflow: "ellipsis",
         whiteSpace: "normal",
         wordBreak: "break-word",
@@ -824,12 +824,23 @@ const DiagCard: React.FC<{ icon: any; label: string; value: string; color: strin
   value,
   color,
 }) => (
-  <InnerCard style={{ padding: 10 }}>
-    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-      <Icon size={12} color={color} />
-      <MetricLabel>{label}</MetricLabel>
+  <InnerCard style={{ padding: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+    <div
+      style={{
+        width: 36,
+        height: 36,
+        borderRadius: "50%",
+        background: `${color}22`,
+        border: `1.5px solid ${color}66`,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Icon size={18} color={color} strokeWidth={1.8} />
     </div>
-    <div style={{ fontSize: 14, fontWeight: 800, color, letterSpacing: "0.04em" }}>{value}</div>
+    <MetricLabel style={{ textAlign: "center" }}>{label}</MetricLabel>
+    <div style={{ fontSize: 13, fontWeight: 800, color, letterSpacing: "0.04em" }}>{value}</div>
   </InnerCard>
 );
 

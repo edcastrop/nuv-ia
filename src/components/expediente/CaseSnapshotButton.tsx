@@ -77,16 +77,14 @@ function dtoToSnapshot(dto: CaseSnapshotDTO): CaseSnapshotData {
   const h = dto.honorarios;
   const costoTotal = c.costoReal || c.totalProyectado || 0;
 
-  // cuotaActual: usar la cuota del extracto tal como viene.
-  // Banco de Bogotá ya reporta cuota neta (sin seguros desglosados).
-  // NO restar seguros — el campo seguros puede ser 0 o ya estar incluido.
+  // NO restar seguros — cuotaActual del extracto ya viene neta
   const cuotaDisplay = c.cuotaActual || 0;
 
-  // multiplicador: recalcular siempre desde costoTotal / saldoCapital
-  // para evitar usar el vecesPagado guardado que puede incluir seguros.
+  // Multiplicador: siempre recalcular desde costoTotal/saldoCapital
+  // para evitar usar vecesPagado guardado que puede estar mal
   const multiplicador =
-    c.saldoCapital > 0 && costoTotal > 0
-      ? costoTotal / c.saldoCapital
+    costoTotal > 0 && c.saldoCapital > 0
+      ? Math.round((costoTotal / c.saldoCapital) * 100) / 100
       : c.vecesPagado || 0;
 
   const tiempoMeses = p.tiempoRecuperado || 0;
