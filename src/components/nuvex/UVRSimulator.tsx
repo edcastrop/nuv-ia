@@ -242,10 +242,11 @@ export function UVRSimulator({
   const esFna = /fondo\s+nacional\s+del\s+ahorro|\bfna\b/i.test(
     `${client.banco} ${client.tipoProducto}`,
   );
+  const cuotasPendientesAuto = Math.max(0, plazoInicial - cuotasPagadas + (esFna ? 1 : 0));
   const cuotasPendientes =
-    cuotasPendientesGuardadas > 0
-      ? cuotasPendientesGuardadas
-      : Math.max(0, plazoInicial - cuotasPagadas + (esFna ? 1 : 0));
+    plazoInicial > 0
+      ? cuotasPendientesAuto
+      : (cuotasPendientesGuardadas > 0 ? cuotasPendientesGuardadas : cuotasPendientesAuto);
   const honorariosPct = parsePercentage(client.porcentajeHonorarios) || 6;
 
   const valorDesembolsadoNum = parseCurrency(valorDesembolsado);
