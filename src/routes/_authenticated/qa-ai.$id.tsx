@@ -463,8 +463,9 @@ function ResultadoQaAi() {
   const proyCuotaCliente = numDato(proyInfo?.cuotaClienteAplicada) ?? numDato(ex.cuota);
   const proyCuotaFinanciera = numDato(proyInfo?.cuotaFinancieraAplicada) ?? numDato(recSnap.cuotaFinancieraSinSeguros);
   const proyTasaEa = numDato(proyInfo?.tasaEaAplicada) ?? numDato(recSnap.tasaEa);
-  const cliente = (ex.cliente as string) || (ex.titular as string) || "Cliente";
-  const banco = (ex.banco as string) || "—";
+  const expInfo = (data as unknown as { expediente?: { cliente_nombre: string | null; banco: string | null; codigo: string | null } | null })?.expediente ?? null;
+  const cliente = (ex.cliente as string) || (ex.titular as string) || expInfo?.cliente_nombre || "Cliente";
+  const banco = (ex.banco as string) || expInfo?.banco || "—";
   const producto = a.modalidad === "uvr" ? "Hipotecario UVR" : a.modalidad === "hipotecario" ? "Hipotecario" : a.modalidad === "leasing" ? "Leasing" : String(a.modalidad ?? "Crédito");
   const fecha = new Date(a.ejecutado_at).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" });
   const nombreAnalista = primerNombre(data?.analista?.nombre ?? data?.ejecutor?.nombre, data?.analista?.email ?? data?.ejecutor?.email);
