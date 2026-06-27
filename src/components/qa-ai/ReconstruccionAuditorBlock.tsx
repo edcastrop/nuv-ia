@@ -75,6 +75,20 @@ export function ReconstruccionAuditorBlock({
 
   const sandboxId = `qa-review-${auditoriaId}`;
 
+  // V2 QA FIX: el sandbox usa un id estable (`qa-review-<auditoriaId>`), así
+  // que el draft de sessionStorage persistía valores viejos del auditor y
+  // pisaba el prellenado con los inputs reales del analista. Limpiamos el
+  // draft cada vez que entramos al bloque para que la base sea siempre la
+  // reconstrucción del analista; los cambios del auditor se vuelven a
+  // persistir automáticamente mientras edita en esta sesión.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    clearSimulatorDraft(modo, sandboxId);
+    return () => {
+      clearSimulatorDraft(modo, sandboxId);
+    };
+  }, [modo, sandboxId]);
+
   const handleEnviarHilo = async () => {
     if (!puedeEditar || enviando) return;
     setEnviando(true);
