@@ -478,30 +478,46 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
 
         <div
           style={{
-            background: `linear-gradient(120deg, #1A1040 0%, ${C.bgCard} 70%)`,
-            borderRadius: 12,
+            position: "relative",
+            background: `radial-gradient(120% 180% at 0% 50%, #2A1465 0%, #160A36 35%, ${C.bgCard} 78%)`,
+            borderRadius: 14,
             border: `1px solid ${C.border}`,
             borderLeft: `3px solid ${C.purple}`,
-            padding: 16,
+            padding: "18px 20px",
             display: "flex",
             alignItems: "center",
-            gap: 18,
+            gap: 22,
             marginBottom: 18,
+            overflow: "hidden",
           }}
         >
-          <div style={{ flexShrink: 0 }}>
-            <MetricLabel>Vas a pagar</MetricLabel>
-            <div style={{ fontSize: 44, fontWeight: 800, color: C.purple, lineHeight: 1, letterSpacing: "-0.03em" }}>
+          <div style={{
+            position: "absolute", top: -40, left: -40, width: 180, height: 180,
+            background: `radial-gradient(circle, ${C.purple}55 0%, transparent 70%)`,
+            pointerEvents: "none",
+          }} />
+          <div style={{ flexShrink: 0, position: "relative" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+              <span style={{ width: 5, height: 5, borderRadius: 999, background: C.purple, boxShadow: `0 0 8px ${C.purple}` }} />
+              <MetricLabel style={{ color: "#C4B5FD" }}>Vas a pagar</MetricLabel>
+            </div>
+            <div style={{
+              fontSize: 52, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.04em",
+              background: `linear-gradient(135deg, #FFFFFF 0%, ${C.purple} 100%)`,
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}>
               {e.credito.multiplicador.toFixed(2)}x
             </div>
-            <div style={{ fontSize: 10, color: C.textSec, marginTop: 4, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+            <div style={{ fontSize: 10, color: "#A78BFA", marginTop: 6, letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 600 }}>
               El valor de tu crédito
             </div>
           </div>
-          <div style={{ flex: 1, fontSize: 11.5, color: C.textSec, lineHeight: 1.55 }}>
+          <div style={{ width: 1, alignSelf: "stretch", background: `linear-gradient(180deg, transparent, ${C.border}, transparent)` }} />
+          <div style={{ flex: 1, fontSize: 11.5, color: C.textSec, lineHeight: 1.6, position: "relative" }}>
             Si mantienes las condiciones actuales pagarás{" "}
-            <strong style={{ color: C.blue }}>{e.credito.multiplicador.toFixed(2)} veces</strong> el valor desembolsado.
-            La propuesta NUVIA reduce significativamente este múltiplo y libera capacidad financiera.
+            <strong style={{ color: "#C4B5FD" }}>{e.credito.multiplicador.toFixed(2)} veces</strong> el valor desembolsado.
+            La propuesta NUVIA <strong style={{ color: C.green }}>reduce este múltiplo</strong> y libera capacidad financiera de forma inmediata.
           </div>
         </div>
 
