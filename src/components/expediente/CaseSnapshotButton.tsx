@@ -76,8 +76,14 @@ function dtoToSnapshot(dto: CaseSnapshotDTO): CaseSnapshotData {
   const p = dto.propuesta;
   const h = dto.honorarios;
   const costoTotal = c.costoReal || c.totalProyectado || 0;
-  const multiplicador =
-    c.vecesPagado || (c.saldoCapital ? costoTotal / c.saldoCapital : 0) || 0;
+  const costoSinSeguros = c.costoReal > 0
+    ? c.costoReal
+    : c.totalProyectado - ((c.seguros ?? 0) * c.cuotasPendientes);
+  const multiplicador = c.vecesPagado > 0
+    ? c.vecesPagado
+    : c.saldoCapital > 0
+      ? costoSinSeguros / c.saldoCapital
+      : 0;
   const tiempoMeses = p.tiempoRecuperado || 0;
   const tiempoRecuperado =
     tiempoMeses >= 12
@@ -94,10 +100,20 @@ function dtoToSnapshot(dto: CaseSnapshotDTO): CaseSnapshotData {
     analista: m.analista?.nombre ?? "—",
     qaScore: m.qaScore ?? 0,
     nivelAutonomia: m.nivelAutonomia != null ? `N${m.nivelAutonomia}` : "N—",
-    fecha: m.fecha,
+    fecha: m.fecha && m.fecha !== "—"
+      ? (() => {
+          try {
+            return new Date(m.fecha).toLocaleDateString("es-CO", {
+              day: "numeric", month: "short", year: "numeric"
+            });
+          } catch { return m.fecha; }
+        })()
+      : "—",
     credito: {
       saldoActual: c.saldoCapital,
-      cuotaActual: c.cuotaActual,
+      cuotaActual: c.cuotaActual > 0
+        ? c.cuotaActual - (c.seguros ?? 0)
+        : 0,
       cuotasPendientes: c.cuotasPendientes,
       costoTotal,
       multiplicador,
