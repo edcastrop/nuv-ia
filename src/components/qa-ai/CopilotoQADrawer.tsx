@@ -133,8 +133,14 @@ export function CopilotoQADrawer({
           />
           <button
             type="submit" disabled={loading || !input.trim()}
-            className="nuvia-input nuvia-input-sm"
-            style={{ background: "var(--nuvia-accent)", color: "#fff", border: "none", padding: "0 14px", cursor: "pointer", opacity: loading || !input.trim() ? 0.5 : 1 }}
+            style={{
+              flexShrink: 0,
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+              background: "var(--nuvia-accent)", color: "#fff", border: "none",
+              padding: "0 14px", height: 36, borderRadius: "0.625rem",
+              cursor: loading || !input.trim() ? "not-allowed" : "pointer",
+              opacity: loading || !input.trim() ? 0.5 : 1,
+            }}
           >
             <Send size={14} />
           </button>
