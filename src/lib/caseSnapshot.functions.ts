@@ -110,7 +110,7 @@ function emptyDTO(id: string): CaseSnapshotDTO {
       ahorroSeguros: 0, tiempoRecuperado: 0, recomendada: false,
     },
     honorarios: {
-      pactados: 0, porcentaje: 0, estadoCobro: "—", estadoPago: "—",
+      pactados: 0, honorarioRecalculado: 0, porcentaje: 0, estadoCobro: "—", estadoPago: "—",
       cuentaCobroEmitida: false, pazYSalvo: false,
     },
     timeline: [],
