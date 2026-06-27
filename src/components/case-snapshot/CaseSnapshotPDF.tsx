@@ -440,7 +440,7 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
           </div>
           <div style={{ width: 245, background: "rgba(7,15,31,0.72)", border: `1px solid ${C.border2}`, borderRadius: 5, padding: "9px 14px", boxSizing: "border-box" }}>
             <MiniLabel style={{ color: C.textSec, marginBottom: 4 }}>ID Expediente</MiniLabel>
-            <div style={{ fontSize: 10.5, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", color: C.text, fontWeight: 750, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shortId(e.id)}</div>
+            <div style={{ fontSize: 10.5, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", color: "#FFFFFF", fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shortId(e.id)}</div>
           </div>
         </div>
 
