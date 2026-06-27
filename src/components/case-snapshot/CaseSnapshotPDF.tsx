@@ -443,59 +443,60 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
       <Wave />
 
       <div style={{ position: "relative", zIndex: 1 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 22 }}>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 950, color: C.text, lineHeight: 0.95, letterSpacing: "0.02em" }}>NUVIA</div>
-            <div style={{ fontSize: 8.3, color: C.blue2, fontWeight: 800, letterSpacing: "0.1em", marginTop: 4 }}>FINANCIAL INTELLIGENCE</div>
+            <div style={{ fontSize: 30, fontWeight: 950, color: C.text, lineHeight: 0.95, letterSpacing: "0.02em" }}>NUVIA</div>
+            <div style={{ fontSize: 9.2, color: C.blue2, fontWeight: 800, letterSpacing: "0.12em", marginTop: 6 }}>FINANCIAL INTELLIGENCE</div>
           </div>
-          <div style={{ textAlign: "right", paddingTop: 1 }}>
-            <div style={{ fontSize: 9.2, color: C.textSec, lineHeight: 1.35 }}>Fecha de emisión: {fechaHoy()}</div>
-            <div style={{ fontSize: 8.4, color: C.textMuted, lineHeight: 1.35 }}>Documento ejecutivo • No reemplaza el expediente operativo</div>
+          <div style={{ textAlign: "right", paddingTop: 4 }}>
+            <div style={{ fontSize: 8.4, color: C.textMuted, lineHeight: 1.35, fontWeight: 500 }}>Fecha de emisión: <span style={{ color: C.textSec, fontWeight: 600 }}>{fechaHoy()}</span></div>
+            <div style={{ fontSize: 7.6, color: C.textLabel, lineHeight: 1.35, fontWeight: 400, marginTop: 2 }}>Documento ejecutivo • No reemplaza el expediente operativo</div>
           </div>
         </div>
 
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 14 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 18 }}>
           <div>
-            <div style={{ fontSize: 31, fontWeight: 950, color: C.text, letterSpacing: "0", lineHeight: 1 }}>CASE SNAPSHOT</div>
-            <div style={{ fontSize: 10.5, color: C.textMuted, marginTop: 5, letterSpacing: "0.08em", textTransform: "uppercase" }}>Resumen ejecutivo del caso</div>
+            <div style={{ fontSize: 40, fontWeight: 950, color: C.text, letterSpacing: "0", lineHeight: 1 }}>CASE SNAPSHOT</div>
+            <div style={{ fontSize: 10.5, color: C.textMuted, marginTop: 7, letterSpacing: "0.08em", textTransform: "uppercase" }}>Resumen ejecutivo del caso</div>
           </div>
-          <div style={{ width: 320, minHeight: 64, background: "#080F22", border: `1px solid ${C.border2}`, borderRadius: 5, padding: "11px 15px", boxSizing: "border-box", position: "relative", zIndex: 5, boxShadow: "0 0 0 1px rgba(59,130,246,0.18), 0 0 24px rgba(59,130,246,0.18)" }}>
+          <div style={{ width: 320, minHeight: 52, background: "#080F22", border: `1px solid ${C.border2}`, borderRadius: 5, padding: "8px 15px", boxSizing: "border-box", position: "relative", zIndex: 5, boxShadow: "0 0 0 1px rgba(59,130,246,0.18), 0 0 24px rgba(59,130,246,0.18)" }}>
             <MiniLabel style={{ color: C.blue2, marginBottom: 4 }}>ID Expediente</MiniLabel>
-            <div style={{ fontSize: 11.5, lineHeight: 1.25, fontFamily: "'Courier New', Courier, monospace", color: "#F8FAFF", fontWeight: 700, letterSpacing: "0.02em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shortId(e.id)}</div>
+            <div style={{ fontSize: 11.5, lineHeight: 1.2, fontFamily: "'Courier New', Courier, monospace", color: "#F8FAFF", fontWeight: 700, letterSpacing: "0.02em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shortId(e.id)}</div>
           </div>
         </div>
 
-        <Card style={{ padding: 13, marginBottom: 10 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "188px 98px minmax(184px,1fr) 76px 118px", gap: 9, alignItems: "center" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+        <Card style={{ padding: 28, marginBottom: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "210px 110px minmax(190px,1fr) 88px 130px", gap: 20, alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16, minWidth: 0 }}>
               <ClienteAvatar />
               <div style={{ minWidth: 0 }}>
-                <MiniLabel style={{ color: C.textLabel, marginBottom: 3 }}>Cliente</MiniLabel>
-                <div style={{ fontSize: 11.6, fontWeight: 950, color: C.text, lineHeight: 1.15, wordBreak: "normal", overflowWrap: "break-word", textTransform: "uppercase", letterSpacing: "0.005em" }}>{e.cliente.nombre}</div>
+                <MiniLabel style={{ color: C.textLabel, marginBottom: 4 }}>Cliente</MiniLabel>
+                <div style={{ fontSize: 12, fontWeight: 950, color: C.text, lineHeight: 1.15, wordBreak: "normal", overflowWrap: "break-word", textTransform: "uppercase", letterSpacing: "0.01em" }}>{e.cliente.nombre}</div>
+                <div style={{ fontSize: 8.6, color: C.textMuted, marginTop: 3, fontWeight: 600 }}>CC {e.cliente.cc}</div>
               </div>
             </div>
+            <div style={{ width: 1, height: 46, background: "linear-gradient(180deg, transparent, rgba(59,130,246,0.35), transparent)", justifySelf: "start", marginLeft: -8 }} />
             <Field icon={<IconWrap><SvgBank /></IconWrap>} label="Banco" value={e.banco} />
             <Field icon={<IconWrap><SvgShield /></IconWrap>} label="Producto" value={e.producto} />
-            <Field icon={<IconWrap><SvgMoney /></IconWrap>} label="Modalidad" value={e.modalidad} />
             <Field icon={<IconWrap color={C.green}><SvgCheckCircle /></IconWrap>} label="Estado del caso" value={<span style={{ color: C.green2 }}>{e.estado}</span>} />
           </div>
-          <div style={{ height: 1, background: C.border, margin: "12px 0" }} />
-          <div style={{ display: "grid", gridTemplateColumns: "176px 170px 1fr 135px", gap: 16, alignItems: "center" }}>
+          <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(59,130,246,0.45), rgba(138,109,255,0.35), transparent)", margin: "20px 0" }} />
+          <div style={{ display: "grid", gridTemplateColumns: "190px 190px 1fr 145px", gap: 24, alignItems: "center" }}>
             <Field icon={<IconWrap><SvgUser /></IconWrap>} label="Analista" value={e.analista} />
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 9 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 11 }}>
               <IconWrap><SvgShield /></IconWrap>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <MiniLabel style={{ color: C.textLabel, marginBottom: 2 }}>Score QA</MiniLabel>
+                <MiniLabel style={{ color: C.textLabel, marginBottom: 3 }}>Score QA</MiniLabel>
                 <div style={{ fontSize: 15.5, fontWeight: 950, color: C.text }}>{e.qaScore.toFixed(1)} <span style={{ fontSize: 10, color: C.textSec, fontWeight: 700 }}>/ 100</span></div>
-                <div style={{ height: 5, background: "#152038", borderRadius: 999, marginTop: 3, overflow: "hidden" }}>
+                <div style={{ height: 5, background: "#152038", borderRadius: 999, marginTop: 4, overflow: "hidden" }}>
                   <div style={{ width: `${Math.max(0, Math.min(100, e.qaScore))}%`, height: "100%", background: "linear-gradient(90deg, #3B82F6, #8B5CF6)", borderRadius: 999 }} />
                 </div>
               </div>
             </div>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 9 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 11 }}>
               <IconWrap><SvgChart /></IconWrap>
               <div>
-                <MiniLabel style={{ color: C.textLabel, marginBottom: 4 }}>Nivel autonomía</MiniLabel>
+                <MiniLabel style={{ color: C.textLabel, marginBottom: 5 }}>Nivel autonomía</MiniLabel>
                 <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                   <span style={{ fontSize: 14, fontWeight: 950, color: C.text }}>{e.nivelAutonomia}</span>
                   <Pill color={C.blue} small>Supervisada</Pill>
@@ -505,6 +506,7 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
             <Field icon={<IconWrap><SvgCalendarSmall /></IconWrap>} label="Fecha" value={e.fecha} />
           </div>
         </Card>
+
 
         <Card style={{ padding: 12, marginBottom: 10 }}>
           <Label>Foto completa del crédito</Label>
