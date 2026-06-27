@@ -315,7 +315,7 @@ export const listAuditoriasQA = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase
       .from("qa_auditorias")
-      .select("id,expediente_id,analista_id,extracto_id,modalidad,qa_score,categoria,dictamen,ejecutado_at")
+      .select("id,codigo,expediente_id,analista_id,extracto_id,modalidad,qa_score,categoria,dictamen,ejecutado_at,auditor_aprobado_at,auditor_aprobado_by")
       .order("ejecutado_at", { ascending: false })
       .limit(data.limit);
     if (error) throw new Error(error.message);
@@ -371,7 +371,7 @@ export const listAuditoriasAprobadas = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase
       .from("qa_auditorias")
-      .select("id,expediente_id,analista_id,extracto_id,modalidad,qa_score,categoria,dictamen,ejecutado_at")
+      .select("id,codigo,expediente_id,analista_id,extracto_id,modalidad,qa_score,categoria,dictamen,ejecutado_at,auditor_aprobado_at,auditor_aprobado_by")
       .in("dictamen", ["aprobado", "aprobado_obs"])
       .order("ejecutado_at", { ascending: false })
       .limit(data.limit);
@@ -1444,7 +1444,7 @@ export const qaCommandCenter = createServerFn({ method: "POST" })
 
     const { data: audRaw } = await supabase
       .from("qa_auditorias")
-      .select("id,expediente_id,analista_id,extracto_id,modalidad,qa_score,categoria,dictamen,ejecutado_at,alertas,inputs")
+      .select("id,codigo,expediente_id,analista_id,extracto_id,modalidad,qa_score,categoria,dictamen,ejecutado_at,alertas,inputs,auditor_aprobado_at,auditor_aprobado_by")
       .order("ejecutado_at", { ascending: false })
       .limit(data.limit);
     const audits = audRaw ?? [];
@@ -1507,10 +1507,13 @@ export const qaCommandCenter = createServerFn({ method: "POST" })
         return Number(rec.coberturaFrechValorMensual ?? 0) > 0 || Number(rec.coberturaFrechPp ?? 0) > 0;
       })();
       return {
-        id: r.id, expediente_id: r.expediente_id, analista_id: analistaId,
+        id: r.id,
+        codigo: (r as unknown as { codigo: string | null }).codigo ?? null,
+        expediente_id: r.expediente_id, analista_id: analistaId,
         modalidad: r.modalidad as string,
         qa_score: Number(r.qa_score ?? 0),
         categoria: r.categoria as string, dictamen: r.dictamen as string,
+        auditor_aprobado_at: (r as unknown as { auditor_aprobado_at: string | null }).auditor_aprobado_at ?? null,
         ejecutado_at: r.ejecutado_at as string,
         cliente_nombre: (exp?.cliente_nombre as string | null) ?? null,
         banco: (exp?.banco as string | null) ?? null,
@@ -1605,3 +1608,71 @@ export const qaCommandCenter = createServerFn({ method: "POST" })
 
     return { rows, bancos, analistas, topErrores, tendencia, prioridad };
   });
+
+/**
+ * Aprobar manualmente una auditoría como auditor, sellando fecha + autor +
+ * notas y notificando al analista para que pueda continuar el caso.
+ */
+export const aprobarAuditoriaPorAuditor = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({
+      auditoriaId: z.string().uuid(),
+      notas: z.string().trim().max(2000).optional().default(""),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: aud, error: errAud } = await supabase
+      .from("qa_auditorias")
+      .select("id,codigo,analista_id,expediente_id,qa_score,dictamen,auditor_aprobado_at")
+      .eq("id", data.auditoriaId)
+      .maybeSingle();
+    if (errAud) throw new Error(errAud.message);
+    if (!aud) throw new Error("Auditoría no encontrada");
+
+    const yaAprobada = !!aud.auditor_aprobado_at;
+
+    const { error: errUpd } = await supabase
+      .from("qa_auditorias")
+      .update({
+        auditor_aprobado_at: new Date().toISOString(),
+        auditor_aprobado_by: userId,
+        auditor_notas: data.notas || null,
+      })
+      .eq("id", data.auditoriaId);
+    if (errUpd) throw new Error(errUpd.message);
+
+    if (!yaAprobada && aud.analista_id) {
+      try {
+        await supabase.from("notificaciones_usuario").insert({
+          user_id: aud.analista_id,
+          titulo: `Auditoría ${aud.codigo ?? aud.id.slice(0, 8)} aprobada`,
+          mensaje:
+            `Tu auditoría QA fue verificada y aprobada por el auditor. ` +
+            `Puedes continuar con la propuesta comercial del caso.` +
+            (data.notas ? ` Notas: ${data.notas}` : ""),
+          tipo: "qa_auditoria_aprobada",
+          link: `/qa-ai/${aud.id}`,
+          metadata: {
+            auditoria_id: aud.id,
+            codigo: aud.codigo,
+            expediente_id: aud.expediente_id,
+            score: aud.qa_score,
+            dictamen: aud.dictamen,
+          } as unknown as Json,
+        });
+      } catch {
+        /* no-op best-effort */
+      }
+    }
+
+    return {
+      ok: true,
+      yaAprobada,
+      codigo: aud.codigo,
+      aprobadoAt: new Date().toISOString(),
+    };
+  });
+

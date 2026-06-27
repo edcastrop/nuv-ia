@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { z } from "zod";
 import { PageLayout, NCard, SectionHeader } from "@/components/nuvia";
 import { useServerFn } from "@tanstack/react-start";
-import { obtenerAuditoriaQA, reejecutarAuditoriaQA } from "@/lib/qaAI.functions";
+import { obtenerAuditoriaQA, reejecutarAuditoriaQA, aprobarAuditoriaPorAuditor } from "@/lib/qaAI.functions";
 import { auditar, reconstruir, type AuditarInput } from "@/lib/qaMath";
 import { exportarDictamenPDF } from "@/lib/qaPdf";
 import { CopilotoQADrawer } from "@/components/qa-ai/CopilotoQADrawer";
@@ -152,8 +152,13 @@ function Accordion({ title, icon, count, children, defaultOpen = false }:
 
 /* ---------- Sticky header ---------- */
 
-function StickyHeader({ cliente, banco, producto, fecha, score, scoreColor, certLabel, certColor }:
-  { cliente: string; banco: string; producto: string; fecha: string; score: number; scoreColor: string; certLabel: string; certColor: string }) {
+function StickyHeader({ cliente, banco, producto, fecha, score, scoreColor, certLabel, certColor, codigo, auditorAprobado }:
+  { cliente: string; banco: string; producto: string; fecha: string; score: number; scoreColor: string; certLabel: string; certColor: string; codigo: string | null; auditorAprobado: boolean }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async () => {
+    if (!codigo) return;
+    try { await navigator.clipboard.writeText(codigo); setCopied(true); setTimeout(() => setCopied(false), 1400); } catch { /* ignore */ }
+  };
   return (
     <div
       className="sticky top-0 z-30 -mx-4 px-4 py-2 backdrop-blur-md"
@@ -164,6 +169,23 @@ function StickyHeader({ cliente, banco, producto, fecha, score, scoreColor, cert
     >
       <div className="flex items-center gap-3 flex-wrap text-[11.5px]">
         <span className="font-bold uppercase tracking-[0.18em]" style={{ color: "var(--nuvia-accent)" }}>NUVIA · Certificación</span>
+        {codigo && (
+          <button
+            type="button"
+            onClick={handleCopy}
+            title="Copiar código de auditoría"
+            className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-mono text-[10.5px] font-semibold transition hover:opacity-80"
+            style={{ background: "rgba(132,185,143,0.12)", color: "var(--nuvia-success)", border: "1px solid rgba(132,185,143,0.4)", cursor: "pointer" }}
+          >
+            {copied ? "Copiado ✓" : codigo}
+          </button>
+        )}
+        {auditorAprobado && (
+          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+            style={{ background: "rgba(132,185,143,0.18)", color: "var(--nuvia-success)", border: "1px solid rgba(132,185,143,0.5)" }}>
+            ✓ Aprobada por auditor
+          </span>
+        )}
         <span style={{ color: "var(--nuvia-border)" }}>·</span>
         <span style={{ color: "var(--nuvia-text-primary)" }}><b>{cliente}</b></span>
         <span style={{ color: "var(--nuvia-text-secondary)" }}>{banco}</span>
@@ -321,6 +343,7 @@ function ResultadoQaAi() {
   const fromSimulador = from === "simulador";
   const fetchAud = useServerFn(obtenerAuditoriaQA);
   const doReejecutar = useServerFn(reejecutarAuditoriaQA);
+  const doAprobar = useServerFn(aprobarAuditoriaPorAuditor);
   const [data, setData] = useState<{
     auditoria: Record<string, unknown> | null;
     inconsistencias: Inc[];
@@ -331,6 +354,7 @@ function ResultadoQaAi() {
   const [copilotoOpen, setCopilotoOpen] = useState(false);
   const [verTodas, setVerTodas] = useState(false);
   const [reloading, setReloading] = useState(false);
+  const [aprobando, setAprobando] = useState(false);
 
   useEffect(() => { (async () => setData(await fetchAud({ data: { id } }) as {
     auditoria: Record<string, unknown> | null;
@@ -566,6 +590,21 @@ function ResultadoQaAi() {
     } finally { setReloading(false); }
   };
 
+  const yaAprobadaAuditor = !!(a as unknown as { auditor_aprobado_at: string | null }).auditor_aprobado_at;
+  const handleAprobar = async () => {
+    if (aprobando || yaAprobadaAuditor) return;
+    const notas = window.prompt("Notas para el analista (opcional):", "") ?? "";
+    if (!window.confirm("¿Aprobar esta auditoría y notificar al analista para que continúe el caso?")) return;
+    setAprobando(true);
+    try {
+      const res = await doAprobar({ data: { auditoriaId: id, notas } }) as { ok: boolean; codigo: string | null };
+      setData(await fetchAud({ data: { id } }) as { auditoria: Record<string, unknown> | null; inconsistencias: Inc[] });
+      alert(`✓ Auditoría ${res.codigo ?? ""} aprobada. El analista fue notificado.`);
+    } catch (err) {
+      alert((err as Error).message);
+    } finally { setAprobando(false); }
+  };
+
   const handlePdf = () => exportarDictamenPDF({
     auditoriaId: id, modalidad: a.modalidad, motorVersion: a.motor_version, ejecutadoAt: a.ejecutado_at,
     qaScore: score, categoria: categoriaEfectiva, dictamen: dictamenEfectivo, outputs: o,
@@ -578,7 +617,10 @@ function ResultadoQaAi() {
       <StickyHeader
         cliente={cliente} banco={banco} producto={producto} fecha={fecha}
         score={score} scoreColor={scoreColor} certLabel={cert.label} certColor={cert.color}
+        codigo={(a as unknown as { codigo: string | null }).codigo ?? null}
+        auditorAprobado={!!(a as unknown as { auditor_aprobado_at: string | null }).auditor_aprobado_at}
       />
+
 
       {/* FICHA DE CONTEXTO */}
       <div className="mt-2">
@@ -685,14 +727,33 @@ function ResultadoQaAi() {
                 <Link
                   to="/simulador"
                   search={{ maestroId: expedienteIdCert, modo: (a.modalidad === "uvr" ? "uvr" : "pesos") as "pesos" | "uvr", auditoriaId: id }}
-                  title="Abrir la simulación original del analista para revisar los datos ingresados con NUVIA"
+                  title="Abrir el simulador con los datos del analista para que tú mismo verifiques la proyección"
                 >
                   <button className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[12.5px] font-semibold transition hover:opacity-90"
                     style={{ background: "rgba(255,255,255,0.06)", color: "var(--nuvia-text-primary)", border: "1px solid var(--nuvia-accent)", cursor: "pointer" }}>
-                    <Calculator size={14} /> Abrir simulación del analista
+                    <Calculator size={14} /> Verificar proyección como auditor
                   </button>
                 </Link>
               ) : null}
+
+              <button
+                onClick={handleAprobar}
+                disabled={aprobando || yaAprobadaAuditor}
+                title={yaAprobadaAuditor ? "Esta auditoría ya fue aprobada por el auditor" : "Aprobar la auditoría y notificar al analista para que continúe"}
+                className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[12.5px] font-semibold transition hover:opacity-90"
+                style={{
+                  background: yaAprobadaAuditor ? "rgba(132,185,143,0.18)" : "var(--nuvia-success)",
+                  color: yaAprobadaAuditor ? "var(--nuvia-success)" : "#0B1220",
+                  border: `1px solid ${yaAprobadaAuditor ? "rgba(132,185,143,0.5)" : "transparent"}`,
+                  cursor: (aprobando || yaAprobadaAuditor) ? "not-allowed" : "pointer",
+                  opacity: aprobando ? 0.6 : 1,
+                  boxShadow: yaAprobadaAuditor ? "none" : "0 8px 20px -10px rgba(132,185,143,0.6)",
+                }}
+              >
+                <CheckCircle2 size={14} />
+                {yaAprobadaAuditor ? "Aprobada por auditor" : aprobando ? "Aprobando…" : "Aprobar y liberar al analista"}
+              </button>
+
 
 
               {puedeVolverAlSimulador ? (
