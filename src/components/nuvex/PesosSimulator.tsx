@@ -475,7 +475,22 @@ export function PesosSimulator({
       : saldoBase > 0
         ? recomendada.totalProyectado / saldoBase
         : 0
-    : 0;
+        : 0;
+
+  const handleAprobar = async () => {
+    if (aprobando || !auditoriaId) return;
+    const notas = window.prompt("Notas para el analista (opcional):", "") ?? "";
+    if (!window.confirm("¿Aprobar esta auditoría y notificar al analista para que continúe el caso?")) return;
+    setAprobando(true);
+    try {
+      const res = await doAprobar({ data: { auditoriaId, notas } }) as { ok: boolean; codigo: string | null };
+      alert(`✓ Auditoría ${res.codigo ?? ""} aprobada. El analista fue notificado.`);
+    } catch (err) {
+      alert((err as Error).message);
+    } finally {
+      setAprobando(false);
+    }
+  };
 
   return (
     <div className={`relative isolate overflow-hidden ${qaEmbedded ? "" : "min-h-screen"}`}>
