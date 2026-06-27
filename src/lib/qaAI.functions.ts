@@ -563,15 +563,23 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
       }
     }
     let analistaIdVista = (auditoria.analista_id as string | null) ?? null;
+    let expedienteInfo: { cliente_nombre: string | null; banco: string | null; codigo: string | null } | null = null;
     if (auditoria.expediente_id) {
       const { data: expRow } = await context.supabase
         .from("expedientes")
-        .select("asesor_id")
+        .select("asesor_id,cliente_nombre,banco,codigo")
         .eq("id", auditoria.expediente_id as string)
         .maybeSingle();
       if (expRow?.asesor_id) analistaIdVista = expRow.asesor_id as string;
       if (analistaIdVista && analistaIdVista !== auditoria.analista_id) {
         auditoria = { ...auditoria, analista_id: analistaIdVista } as typeof aud;
+      }
+      if (expRow) {
+        expedienteInfo = {
+          cliente_nombre: (expRow.cliente_nombre as string | null) ?? null,
+          banco: (expRow.banco as string | null) ?? null,
+          codigo: (expRow.codigo as string | null) ?? null,
+        };
       }
     }
     const [analistaProf, ejecutorProf] = await Promise.all([
@@ -582,7 +590,7 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
         ? context.supabase.from("profiles").select("id,nombre,email").eq("id", auditoria.ejecutado_by as string).maybeSingle()
         : Promise.resolve({ data: null }),
     ]);
-    return { auditoria, inconsistencias: inconsistenciasOverride ?? inconsistenciasDb, extracto, analista: analistaProf.data, ejecutor: ejecutorProf.data };
+    return { auditoria, inconsistencias: inconsistenciasOverride ?? inconsistenciasDb, extracto, analista: analistaProf.data, ejecutor: ejecutorProf.data, expediente: expedienteInfo };
   });
 
 
