@@ -1444,7 +1444,7 @@ export const qaCommandCenter = createServerFn({ method: "POST" })
 
     const { data: audRaw } = await supabase
       .from("qa_auditorias")
-      .select("id,expediente_id,analista_id,extracto_id,modalidad,qa_score,categoria,dictamen,ejecutado_at,alertas,inputs")
+      .select("id,codigo,expediente_id,analista_id,extracto_id,modalidad,qa_score,categoria,dictamen,ejecutado_at,alertas,inputs,auditor_aprobado_at,auditor_aprobado_by")
       .order("ejecutado_at", { ascending: false })
       .limit(data.limit);
     const audits = audRaw ?? [];
