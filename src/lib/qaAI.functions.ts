@@ -1779,3 +1779,140 @@ export const aprobarAuditoriaPorAuditor = createServerFn({ method: "POST" })
     };
   });
 
+// ─────────────────────────────────────────────────────────────
+// NUVIA · Validación matemática de la reconstrucción del AUDITOR
+// El auditor edita los inputs en el sandbox `qa-review-<auditoriaId>`.
+// Esta función toma esos overrides, los fusiona contra el snapshot
+// reconstruido, vuelve a correr `auditar()` y persiste el nuevo
+// `qa_score` / `dictamen` / `outputs` para que el certificado refleje
+// el delta (ej. 85 → 95). Preserva el score anterior en
+// `auditor_score_anterior` y marca `auditor_validated_at`.
+// ─────────────────────────────────────────────────────────────
+export const validarReconstruccionAuditor = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({
+      auditoriaId: z.string().uuid(),
+      overrides: z.object({
+        saldoCapital: z.number().optional(),
+        tasaEa: z.number().optional(),
+        seguros: z.number().optional(),
+        cuotaBase: z.number().optional(),
+        cuotasPendientes: z.number().optional(),
+        saldoUVR: z.number().optional(),
+        valorUVR: z.number().optional(),
+        variacionUVR: z.number().optional(),
+      }).passthrough(),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: aud, error } = await supabase
+      .from("qa_auditorias")
+      .select("*")
+      .eq("id", data.auditoriaId)
+      .single();
+    if (error) throw new Error(error.message);
+
+    const inputs = (aud.inputs ?? {}) as Record<string, unknown>;
+    const rec = { ...(inputs.reconstruccion ?? {}) } as Record<string, unknown>;
+    const o = data.overrides;
+
+    const num = (v: unknown) => {
+      const n = Number(v);
+      return Number.isFinite(n) && n > 0 ? n : undefined;
+    };
+
+    // Fusión de overrides del auditor sobre la reconstrucción base
+    if (num(o.saldoCapital) !== undefined) rec.saldoCapital = o.saldoCapital;
+    if (num(o.tasaEa) !== undefined) rec.tasaEa = o.tasaEa;
+    if (o.seguros !== undefined && Number.isFinite(o.seguros)) rec.seguros = o.seguros;
+    if (num(o.cuotasPendientes) !== undefined) rec.cuotasPendientes = o.cuotasPendientes;
+    if (num(o.cuotaBase) !== undefined) {
+      rec.cuotaBaseSinSubsidio = o.cuotaBase;
+      const seg = Number(rec.seguros ?? 0);
+      rec.cuotaFinancieraSinSeguros = Math.max(0, Number(o.cuotaBase) - seg);
+    }
+    if (num(o.saldoUVR) !== undefined) rec.saldoUVR = o.saldoUVR;
+    if (num(o.valorUVR) !== undefined) rec.valorUVR = o.valorUVR;
+    if (o.variacionUVR !== undefined && Number.isFinite(o.variacionUVR)) rec.variacionUvrEa = o.variacionUVR;
+
+    inputs.reconstruccion = rec;
+
+    const modalidadFinal = (inputs.modalidad as Modalidad | undefined) ?? (aud.modalidad as Modalidad);
+    const overrides = await cargarToleranciasActivasInterno(supabase as never);
+
+    const result = auditar({
+      modalidad: modalidadFinal,
+      reconstruccion: { ...rec, modalidad: modalidadFinal } as never,
+      extracto: inputs.extracto as never,
+      simulacion: inputs.simulacion as never,
+      tolerancias: overrides,
+    });
+
+    const scoreAnterior = Number(aud.qa_score ?? 0);
+    const scoreNuevo = Number(result.score.score) || 0;
+
+    const { error: updErr } = await supabase
+      .from("qa_auditorias")
+      .update({
+        motor_version: QA_MOTOR_VERSION,
+        qa_score: scoreNuevo,
+        categoria: result.score.categoria,
+        dictamen: result.score.dictamen,
+        inputs: JSON.parse(JSON.stringify(inputs)),
+        outputs: JSON.parse(JSON.stringify({
+          cuotaTeorica: result.reconstruccion.cuotaTeorica,
+          cuotaConSubsidio: result.reconstruccion.cuotaConSubsidio,
+          cuotaTotalConSeguros: result.reconstruccion.cuotaTotalConSeguros,
+          beneficioMensualFrech: result.reconstruccion.beneficioMensualFrech,
+          costoTotal: result.reconstruccion.costoTotal,
+          vecesPagado: result.reconstruccion.vecesPagado,
+          totalIntereses: result.reconstruccion.totalIntereses,
+          totalCorreccionUvr: result.reconstruccion.totalCorreccionUvr,
+          iMv: result.reconstruccion.iMv,
+          primerasCuotas: result.reconstruccion.primerasCuotas,
+          ultimasCuotas: result.reconstruccion.ultimasCuotas,
+          todasCuotas: result.reconstruccion.todasCuotas,
+          veredicto: result.veredicto,
+        })),
+        diferencias: JSON.parse(JSON.stringify(result.inconsistencias)),
+        alertas: JSON.parse(JSON.stringify(result.inconsistencias.filter((i) => i.severidad === "critica"))),
+        ejecutado_at: new Date().toISOString(),
+        ejecutado_by: userId,
+        auditor_validated_at: new Date().toISOString(),
+        auditor_score_anterior: scoreAnterior,
+      } as never)
+      .eq("id", data.auditoriaId);
+    if (updErr) throw new Error(updErr.message);
+
+    await supabase.from("qa_inconsistencias").delete().eq("auditoria_id", data.auditoriaId);
+    if (result.inconsistencias.length) {
+      await supabase.from("qa_inconsistencias").insert(
+        result.inconsistencias.map((i) => ({
+          auditoria_id: data.auditoriaId,
+          tipo: i.tipo,
+          severidad: i.severidad,
+          campo: i.campo ?? null,
+          valor_extracto: i.valorExtracto ?? null,
+          valor_calculado: i.valorCalculado ?? null,
+          diferencia: i.diferencia ?? null,
+          mensaje: i.mensaje,
+          sugerencia: i.sugerencia ?? null,
+        })),
+      );
+    }
+
+    return {
+      ok: true,
+      scoreAnterior,
+      scoreNuevo,
+      delta: Math.round((scoreNuevo - scoreAnterior) * 100) / 100,
+      categoria: result.score.categoria,
+      dictamen: result.score.dictamen,
+      veredicto: result.veredicto,
+      inconsistencias: result.inconsistencias.length,
+      criticas: result.inconsistencias.filter((i) => i.severidad === "critica").length,
+    };
+  });
+
