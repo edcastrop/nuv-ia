@@ -218,26 +218,30 @@ export const getCaseSnapshotData = createServerFn({ method: "POST" })
         dto.cliente.scoreInterno = s(acp.semaforo).toUpperCase();
       }
 
-      // Crédito
+      // Crédito — acepta tanto snake_case como camelCase (datos reales del expediente).
+      const cobertura = (crData.coberturaFresh ?? {}) as Record<string, unknown>;
       dto.credito.banco = s(exp.banco);
       dto.credito.numeroCredito = s(exp.numero_credito);
       dto.credito.producto = s(exp.producto);
       dto.credito.modalidad = s(exp.modo);
       dto.credito.saldoCapital = n(crData.saldo_capital ?? crData.saldoCapital);
       dto.credito.valorDesembolsado = n(crData.valor_desembolsado ?? crData.valorDesembolsado);
-      dto.credito.plazoAprobado = n(crData.plazo ?? crData.plazo_aprobado ?? exp.cuotas_aprobadas_banco);
-      dto.credito.cuotasPagadas = n(crData.cuotas_pagadas);
-      dto.credito.cuotasPendientes = n(crData.cuotas_pendientes ?? crData.cuotas_restantes);
-      dto.credito.cuotaActual = n(crData.cuota_actual ?? crData.cuota);
-      dto.credito.seguros = n(crData.seguros ?? crData.seguro_mensual);
-      dto.credito.interesMensual = n(crData.interes_mensual ?? crData.intereses_mes);
-      dto.credito.capitalMensual = n(crData.capital_mensual ?? crData.capital_mes);
-      dto.credito.freshMensual = n(crData.fresh ?? crData.frech ?? crData.fresh_mensual);
-      dto.credito.tea = n(crData.tea ?? crData.tasa_ea);
+      dto.credito.plazoAprobado = n(
+        crData.plazo ?? crData.plazo_aprobado ?? crData.plazoAprobado ?? cobertura.cuotasTotales ?? exp.cuotas_aprobadas_banco,
+      );
+      dto.credito.cuotasPagadas = n(crData.cuotas_pagadas ?? crData.cuotasPagadas ?? cobertura.cuotasPagadas);
+      dto.credito.cuotasPendientes = n(
+        crData.cuotas_pendientes ?? crData.cuotasPendientes ?? crData.cuotas_restantes ?? cobertura.cuotasPendientes,
+      );
+      dto.credito.cuotaActual = n(crData.cuota_actual ?? crData.cuotaActual ?? crData.cuota ?? crData.cuotaBaseSimulacion);
+      dto.credito.seguros = n(crData.seguros ?? crData.segurosMensuales ?? crData.seguro_mensual);
+      dto.credito.interesMensual = n(crData.interes_mensual ?? crData.interesMensualExtracto ?? crData.intereses_mes);
+      dto.credito.capitalMensual = n(crData.capital_mensual ?? crData.capitalMensualExtracto ?? crData.capital_mes);
+      dto.credito.freshMensual = n(
+        crData.fresh ?? crData.frech ?? crData.fresh_mensual ?? crData.beneficioFrechMensualExtracto ?? cobertura.valorMensual,
+      );
+      dto.credito.tea = n(crData.tea ?? crData.tasa_ea ?? crData.teaPactada);
       dto.credito.tem = n(crData.tem ?? crData.tasa_mensual);
-      dto.credito.vecesPagado = n(crData.veces_pagado);
-      dto.credito.totalProyectado = n(crData.total_proyectado ?? crData.total_por_pagar);
-      dto.credito.costoReal = n(crData.costo_real_credito ?? crData.costo_real);
 
       // Última lectura del extracto para refinar
       const { data: lectura } = await supabase
@@ -250,23 +254,40 @@ export const getCaseSnapshotData = createServerFn({ method: "POST" })
       if (lectura?.datos) {
         const ld = lectura.datos as Record<string, unknown>;
         if (!dto.credito.saldoCapital) dto.credito.saldoCapital = n(ld.saldo_capital ?? ld.saldoCapital);
-        if (!dto.credito.cuotaActual) dto.credito.cuotaActual = n(ld.cuota ?? ld.cuota_mensual);
+        if (!dto.credito.cuotaActual) dto.credito.cuotaActual = n(ld.cuota ?? ld.cuota_mensual ?? ld.cuotaActual);
         if (!dto.credito.seguros) dto.credito.seguros = n(ld.seguros);
-        if (!dto.credito.tea) dto.credito.tea = n(ld.tea ?? ld.tea_pactada);
+        if (!dto.credito.tea) dto.credito.tea = n(ld.tea ?? ld.tea_pactada ?? ld.teaPactada);
         if (!dto.credito.tem) dto.credito.tem = n(ld.tem);
       }
 
-      // Propuesta
+      // Propuesta — acepta snake_case y camelCase.
       dto.propuesta.escenario = s(pData.escenario ?? pData.nombre);
-      dto.propuesta.cuotasEliminadas = n(pData.cuotas_eliminadas);
-      dto.propuesta.nuevoPlazo = n(pData.nuevo_plazo ?? pData.plazo_nuevo);
-      dto.propuesta.nuevaCuota = n(pData.nueva_cuota ?? pData.cuota_nueva);
-      dto.propuesta.incrementoMensual = n(pData.incremento_mensual);
-      dto.propuesta.ahorroTotal = n(pData.ahorro_total);
-      dto.propuesta.ahorroIntereses = n(pData.ahorro_intereses);
-      dto.propuesta.ahorroSeguros = n(pData.ahorro_seguros);
-      dto.propuesta.tiempoRecuperado = n(pData.tiempo_recuperado ?? pData.meses_recuperados);
-      dto.propuesta.recomendada = Boolean(pData.recomendada ?? pData.is_recomendada ?? true);
+      dto.propuesta.cuotasEliminadas = n(pData.cuotas_eliminadas ?? pData.cuotasEliminadas);
+      dto.propuesta.nuevoPlazo = n(pData.nuevo_plazo ?? pData.nuevoPlazo ?? pData.plazo_nuevo);
+      dto.propuesta.nuevaCuota = n(pData.nueva_cuota ?? pData.nuevaCuota ?? pData.cuota_nueva);
+      dto.propuesta.incrementoMensual = n(pData.incremento_mensual ?? pData.incrementoMensual);
+      dto.propuesta.ahorroTotal = n(pData.ahorro_total ?? pData.ahorroTotal);
+      dto.propuesta.ahorroIntereses = n(pData.ahorro_intereses ?? pData.ahorroIntereses);
+      dto.propuesta.ahorroSeguros = n(pData.ahorro_seguros ?? pData.ahorroSeguros);
+      dto.propuesta.tiempoRecuperado = n(
+        pData.tiempo_recuperado ?? pData.tiempoRecuperado ?? pData.meses_recuperados ?? pData.añosEliminados,
+      );
+      dto.propuesta.recomendada = Boolean(
+        pData.recomendada ?? pData.is_recomendada ?? (pData.recomendadaIdx != null && pData.recomendadaIdx === pData.index) ?? true,
+      );
+
+      // Total proyectado / costo real / veces pagado — derivamos si faltan.
+      dto.credito.totalProyectado = n(
+        crData.total_proyectado ?? crData.totalProyectado ?? crData.total_por_pagar ?? pData.totalProyectado,
+      );
+      dto.credito.costoReal = n(crData.costo_real_credito ?? crData.costo_real ?? crData.costoReal);
+      if (!dto.credito.costoReal && dto.credito.totalProyectado) {
+        dto.credito.costoReal = dto.credito.totalProyectado;
+      }
+      dto.credito.vecesPagado = n(crData.veces_pagado ?? crData.vecesPagado);
+      if (!dto.credito.vecesPagado && dto.credito.totalProyectado && dto.credito.saldoCapital) {
+        dto.credito.vecesPagado = dto.credito.totalProyectado / dto.credito.saldoCapital;
+      }
 
       // Honorarios
       const { data: hon } = await supabase
