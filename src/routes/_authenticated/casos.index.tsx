@@ -37,7 +37,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const ETAPA_IDS = ETAPAS_PIPELINE.map((e) => e.id) as [EtapaPipelineId, ...EtapaPipelineId[]];
 
-const casosSearchSchema = z.object({
+export const casosSearchSchema = z.object({
   q: fallback(z.string(), "").default(""),
   estado: fallback(z.enum(["", ...ESTADOS]), "").default(""),
   etapa: fallback(z.enum(["", ...ETAPA_IDS]), "").default(""),
