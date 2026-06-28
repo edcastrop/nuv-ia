@@ -678,41 +678,41 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
           </div>
         </Card>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
-          <Card style={{ padding: "14px 14px", minHeight: 248 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14, alignItems: "stretch" }}>
+          <Card style={{ padding: "15px 14px 16px", minHeight: 286 }}>
             <Label>Intervinientes</Label>
-            <div style={{ display: "grid", gridTemplateColumns: "100px 1fr 125px", paddingBottom: 9, borderBottom: `1px solid ${C.border2}` }}>
+            <div style={{ display: "grid", gridTemplateColumns: "92px minmax(0, 1fr) 132px", columnGap: 8, paddingBottom: 10, borderBottom: `1px solid ${C.border2}` }}>
               <MiniLabel style={{ fontSize: 7.4, color: C.blue2 }}>Rol</MiniLabel>
               <MiniLabel style={{ fontSize: 7.4, color: C.blue2 }}>Nombre</MiniLabel>
               <MiniLabel style={{ fontSize: 7.4, color: C.blue2 }}>Correo</MiniLabel>
             </div>
             {e.intervinientes.slice(0, 5).map((p, i) => (
-              <div key={`${p.rol}-${i}`} style={{ display: "grid", gridTemplateColumns: "100px 1fr 125px", alignItems: "center", minHeight: 40, borderBottom: i < Math.min(e.intervinientes.length, 5) - 1 ? `1px solid rgba(30,45,69,0.6)` : "none" }}>
+              <div key={`${p.rol}-${i}`} style={{ display: "grid", gridTemplateColumns: "92px minmax(0, 1fr) 132px", columnGap: 8, alignItems: "center", minHeight: 45, padding: "7px 0", borderBottom: i < Math.min(e.intervinientes.length, 5) - 1 ? `1px solid rgba(30,45,69,0.6)` : "none" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
                   <span style={{ flexShrink: 0 }}>{ROL_ICON[p.rol] ?? ROL_ICON.Analista}</span>
-                  <span style={{ fontSize: 8.8, lineHeight: 1.2, color: C.text, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.rol}</span>
+                  <span style={{ fontSize: 8.8, lineHeight: 1.25, color: C.text, fontWeight: 850, overflowWrap: "anywhere" }}>{p.rol}</span>
                 </div>
-                <div style={{ fontSize: 9.4, lineHeight: 1.2, color: C.text, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: 8 }}>{p.nombre}</div>
-                <div style={{ fontSize: 8.4, lineHeight: 1.2, color: C.textSec, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.correo}</div>
+                <div style={{ fontSize: 9.5, lineHeight: 1.25, color: C.text, fontWeight: 780, overflowWrap: "anywhere", paddingRight: 2 }}>{p.nombre}</div>
+                <div style={{ fontSize: 8.2, lineHeight: 1.25, color: C.textSec, fontWeight: 600, overflowWrap: "anywhere" }}>{p.correo}</div>
               </div>
             ))}
           </Card>
 
-          <Card style={{ padding: "14px 14px", minHeight: 248 }}>
+          <Card style={{ padding: "15px 14px 16px", minHeight: 286 }}>
             <Label>Trazabilidad</Label>
-            <div style={{ display: "grid", gridTemplateColumns: "80px 1fr 92px", paddingBottom: 9, borderBottom: `1px solid ${C.border2}` }}>
+            <div style={{ display: "grid", gridTemplateColumns: "74px minmax(0, 1fr) 84px", columnGap: 8, paddingBottom: 10, borderBottom: `1px solid ${C.border2}` }}>
               <MiniLabel style={{ fontSize: 7.4, color: C.blue2 }}>Fecha</MiniLabel>
               <MiniLabel style={{ fontSize: 7.4, color: C.blue2 }}>Acción</MiniLabel>
               <MiniLabel style={{ fontSize: 7.4, color: C.blue2 }}>Usuario</MiniLabel>
             </div>
             {e.trazabilidad.slice(0, 5).map((t, i) => (
-              <div key={`${t.fecha}-${i}`} style={{ display: "grid", gridTemplateColumns: "80px 1fr 92px", alignItems: "center", minHeight: 40, borderBottom: i < Math.min(e.trazabilidad.length, 5) - 1 ? `1px solid rgba(30,45,69,0.6)` : "none" }}>
+              <div key={`${t.fecha}-${i}`} style={{ display: "grid", gridTemplateColumns: "74px minmax(0, 1fr) 84px", columnGap: 8, alignItems: "center", minHeight: 45, padding: "7px 0", borderBottom: i < Math.min(e.trazabilidad.length, 5) - 1 ? `1px solid rgba(30,45,69,0.6)` : "none" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
                   <span style={{ width: 8, height: 8, borderRadius: 999, background: C.blue, flexShrink: 0, boxShadow: "0 0 8px rgba(59,130,246,0.65)" }} />
-                  <span style={{ fontSize: 8.6, lineHeight: 1.2, color: C.text, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.fecha}</span>
+                  <span style={{ fontSize: 8.2, lineHeight: 1.25, color: C.text, fontWeight: 780, overflowWrap: "anywhere" }}>{t.fecha}</span>
                 </div>
-                <div style={{ fontSize: 9.2, lineHeight: 1.2, color: C.text, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: 8 }}>{t.accion.replace(/_/g, " ")}</div>
-                <div style={{ fontSize: 8.6, lineHeight: 1.2, color: C.textSec, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.usuario}</div>
+                <div style={{ fontSize: 9.2, lineHeight: 1.28, color: C.text, fontWeight: 720, overflowWrap: "anywhere", paddingRight: 2 }}>{t.accion.replace(/_/g, " ")}</div>
+                <div style={{ fontSize: 8.4, lineHeight: 1.25, color: C.textSec, fontWeight: 600, overflowWrap: "anywhere" }}>{t.usuario}</div>
               </div>
             ))}
           </Card>
