@@ -867,6 +867,12 @@ function InformacionJuridicaEditor({
       <div className="text-[11px] uppercase tracking-wider font-semibold mb-2" style={{ color: NUVEX.azul }}>
         Titular
       </div>
+      <div className="mb-3">
+        <CedulaReaderMaestro
+          label="titular"
+          onApply={(patch) => onTitular({ ...titular, ...patch })}
+        />
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         <IJSelect label="Tipo de documento" value={titular.tipoDocumento || "CC"} options={TIPOS_DOC} onChange={(v) => setT("tipoDocumento", v)} />
         <IJField label="Número de documento" value={titular.cedula || ""} onChange={(v) => setT("cedula", v)} required />
@@ -893,20 +899,56 @@ function InformacionJuridicaEditor({
           <div className="text-[11px] uppercase tracking-wider font-semibold mt-3 mb-2" style={{ color: NUVEX.azul }}>
             Cotitular / Colocatario
           </div>
+          <div className="mb-3">
+            <CedulaReaderMaestro
+              label="cotitular"
+              onApply={(patch) => onCotitular({ ...cotitular, ...patch })}
+            />
+          </div>
+          <label className="mb-3 flex items-center gap-2 rounded-lg border border-[#445DA3]/20 bg-[#445DA3]/5 p-3 text-sm text-[#242424]">
+            <input
+              type="checkbox"
+              checked={!!cotitular.mismaDireccionTitular}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                if (checked) {
+                  onCotitular({
+                    ...cotitular,
+                    mismaDireccionTitular: true,
+                    direccion: titular.direccion || "",
+                    ciudad: titular.ciudad || "",
+                    departamento: titular.departamento || (titular.ciudad ? cityDepartment(titular.ciudad) || "" : ""),
+                  });
+                } else {
+                  onCotitular({ ...cotitular, mismaDireccionTitular: false });
+                }
+              }}
+            />
+            <span>Vive en la misma dirección del titular (dirección, ciudad y departamento)</span>
+          </label>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             <IJField label="Nombre completo" value={cotitular.nombre || ""} onChange={(v) => setC("nombre", v)} required />
             <IJSelect label="Tipo de documento" value={cotitular.tipoDocumento || "CC"} options={TIPOS_DOC} onChange={(v) => setC("tipoDocumento", v)} />
             <IJField label="Número de documento" value={cotitular.cedula || ""} onChange={(v) => setC("cedula", v)} required />
             <IJCity label="Lugar de expedición" value={cotitular.expedidaEn || ""} onChange={(v) => setC("expedidaEn", v)} required placeholder="Selecciona municipio de expedición…" />
             <IJField label="Fecha de expedición" value={cotitular.fechaExpedicion || ""} placeholder="DD/MM/AAAA" onChange={(v) => setC("fechaExpedicion", v)} />
-            <IJCity label="Ciudad de residencia" value={cotitular.ciudad || ""} onChange={(v) => setC("ciudad", v)} required />
-            <IJReadonly label="Departamento" value={cotitular.departamento || ""} hint="Se autocompleta desde la ciudad seleccionada" required />
+            {cotitular.mismaDireccionTitular ? (
+              <IJReadonly label="Ciudad de residencia" value={cotitular.ciudad || ""} hint="Heredada del titular" required />
+            ) : (
+              <IJCity label="Ciudad de residencia" value={cotitular.ciudad || ""} onChange={(v) => setC("ciudad", v)} required />
+            )}
+            <IJReadonly label="Departamento" value={cotitular.departamento || ""} hint={cotitular.mismaDireccionTitular ? "Heredado del titular" : "Se autocompleta desde la ciudad seleccionada"} required />
             <IJField label="Correo electrónico" value={cotitular.email || ""} onChange={(v) => setC("email", v)} />
             <IJField label="Celular" value={cotitular.telefono || ""} onChange={(v) => setC("telefono", v)} />
-            <IJField label="Dirección" value={cotitular.direccion || ""} onChange={(v) => setC("direccion", v)} />
+            {cotitular.mismaDireccionTitular ? (
+              <IJReadonly label="Dirección" value={cotitular.direccion || ""} hint="Heredada del titular" />
+            ) : (
+              <IJField label="Dirección" value={cotitular.direccion || ""} onChange={(v) => setC("direccion", v)} />
+            )}
           </div>
         </>
       )}
+
 
       {!canPersist && (
         <p className="mt-3 text-[11px] text-[#242424]/60">
