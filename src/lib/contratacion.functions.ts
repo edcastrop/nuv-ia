@@ -66,11 +66,8 @@ export const enviarContratacion = createServerFn({ method: "POST" })
     const fromAddress = `${asesorNombre} (NUVEX) <${SENDER_ADDRESS}>`;
     const replyTo = asesorEmail || SENDER_ADDRESS;
 
-    // Blindaje definitivo: contratación NO debe recibir versiones PDF del Poder
-    // ni de la Ficha Contractual, aunque una pantalla vieja intente enviarlas.
-    const allowedAttachments = data.attachments.filter(
-      (a) => !isForbiddenLegalPdf(a.filename, a.contentType),
-    );
+    // El paquete de contratación viaja tal cual lo arma el cliente (PDF NUVEX).
+    const allowedAttachments = data.attachments;
     if (allowedAttachments.length === 0) {
       throw new Error("El paquete de contratación no contiene adjuntos válidos.");
     }
