@@ -438,93 +438,46 @@ function TiltGlass({
   rel?: string;
   ariaLabel?: string;
 }) {
-  const [pos, setPos] = useState({ x: 50, y: 50, rx: 0, ry: 0, active: false });
-  const activate = () => setPos((p) => ({ ...p, active: true }));
-  const handleMove = (e: React.PointerEvent<HTMLElement>) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - r.left) / r.width) * 100;
-    const y = ((e.clientY - r.top) / r.height) * 100;
-    const ry = ((x - 50) / 50) * 12;
-    const rx = -((y - 50) / 50) * 12;
-    setPos({ x, y, rx, ry, active: true });
-  };
-  const handleLeave = () => setPos({ x: 50, y: 50, rx: 0, ry: 0, active: false });
+  // Efecto SimCard del simulador: lift + glow exterior + shimmer radial superior +
+  // cambio de color de borde/fondo. Sin tilt 3D ni spotlight de cursor.
+  const accent = gradient ?? "linear-gradient(135deg, rgba(165,181,224,0.55), rgba(132,185,143,0.55))";
 
-  const style: React.CSSProperties = {
-    background: pos.active
-      ? "linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.03))"
-      : "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.018))",
-    border: pos.active ? "1px solid rgba(255,255,255,0.3)" : "1px solid rgba(255,255,255,0.08)",
-    backdropFilter: "blur(24px) saturate(180%)",
-    transform: `perspective(900px) rotateX(${pos.rx}deg) rotateY(${pos.ry}deg) translateY(${pos.active ? "-6px" : "0"}) scale(${pos.active ? 1.025 : 1}) translateZ(0)`,
-    transformStyle: "preserve-3d",
-    transition: pos.active
-      ? "background 160ms ease, border-color 160ms ease, box-shadow 160ms ease"
-      : "transform 380ms cubic-bezier(.2,.8,.2,1), background 260ms ease, border-color 260ms ease, box-shadow 260ms ease",
-    boxShadow: pos.active
-      ? "0 28px 70px -24px rgba(68,93,163,0.62), 0 18px 45px -28px rgba(132,185,143,0.55), 0 0 0 1px rgba(255,255,255,0.14) inset"
-      : "0 12px 35px -30px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.05) inset",
-  };
+  const baseCls = `group relative z-10 block rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-2xl transition-all duration-500 ease-out hover:-translate-y-1.5 hover:border-white/25 hover:bg-white/[0.06] ${className}`;
 
   const inner = (
     <>
-      <div
+      {/* Glow exterior animado */}
+      <span
         aria-hidden
-        className="absolute inset-0 pointer-events-none opacity-70"
-        style={{ background: "linear-gradient(115deg, rgba(255,255,255,0.12), transparent 28%, rgba(255,255,255,0.04) 54%, transparent 72%)" }}
+        className="pointer-events-none absolute -inset-0.5 -z-10 rounded-2xl opacity-0 blur-md transition-opacity duration-500 group-hover:opacity-70"
+        style={{ background: accent }}
       />
-      <div
+      {/* Acento superior */}
+      <span
         aria-hidden
-        className="absolute inset-0 pointer-events-none transition-opacity duration-300"
-        style={{
-          opacity: pos.active ? 1 : 0,
-          background: `radial-gradient(380px circle at ${pos.x}% ${pos.y}%, rgba(255,255,255,0.28), rgba(132,185,143,0.12) 28%, transparent 62%)`,
-        }}
+        className="pointer-events-none absolute inset-x-6 top-0 h-px opacity-0 transition-opacity duration-500 group-hover:opacity-80"
+        style={{ background: `linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent)` }}
       />
-      {gradient && (
-        <div
-          aria-hidden
-          className="absolute -top-16 -right-16 h-40 w-40 rounded-full blur-[80px] transition-opacity duration-300"
-          style={{ background: gradient, opacity: pos.active ? 0.55 : 0 }}
-        />
-      )}
-      <div className="relative h-full" style={{ transform: "translateZ(20px)" }}>
-        {children}
-      </div>
+      {/* Shimmer radial superior */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+        style={{ background: `radial-gradient(600px circle at 50% -10%, rgba(165,181,224,0.18), transparent 60%)` }}
+      />
+      <div className="relative h-full">{children}</div>
     </>
   );
 
-  const baseCls = `group relative z-10 rounded-2xl overflow-hidden will-change-transform ${className}`;
-
   if (href) {
     return (
-      <a
-        href={href}
-        target={target}
-        rel={rel}
-        aria-label={ariaLabel}
-        onPointerEnter={activate}
-        onPointerMove={handleMove}
-        onPointerLeave={handleLeave}
-        className={baseCls}
-        style={style}
-      >
+      <a href={href} target={target} rel={rel} aria-label={ariaLabel} className={baseCls}>
         {inner}
       </a>
     );
   }
-  return (
-    <div
-      onPointerEnter={activate}
-      onPointerMove={handleMove}
-      onPointerLeave={handleLeave}
-      className={baseCls}
-      style={style}
-    >
-      {inner}
-    </div>
-  );
+  return <div className={baseCls}>{inner}</div>;
 }
+
 
 function TiltGlassCard({ t, Icon, gradient }: { t: string; Icon: any; gradient: string }) {
   return (
