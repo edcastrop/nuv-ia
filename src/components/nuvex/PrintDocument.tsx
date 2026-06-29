@@ -234,7 +234,7 @@ export function PrintDocument(props: Props) {
     <div id={containerId} className="nuvex-print-only" style={{ background: "#fff", color: C.ink, fontFamily: FONT, width: "210mm", boxSizing: "border-box", letterSpacing: 0 }}>
       <section className="nuvex-print-page" style={pageStyle(true)}>
         <TopBar page="Página 1 de 2" />
-        <main style={{ padding: "18px 30px 12px", flex: "1 1 auto", display: "flex", flexDirection: "column" }}>
+        <main style={{ padding: "18px 30px 12px", flex: "1 1 auto", minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1.35fr 1fr", gap: 26, alignItems: "center" }}>
             <div>
               <div style={{ fontSize: 15, fontWeight: 800, color: C.text, marginBottom: 8 }}>Hola, <span style={{ color: C.blue }}>{primerNombre.toUpperCase()}</span></div>
