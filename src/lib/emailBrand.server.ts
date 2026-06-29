@@ -28,7 +28,7 @@ const DEFAULTS: BrandRow = {
   color_azul: "#445DA3",
   color_verde: "#84B98F",
   color_negro: "#242424",
-  logo_url: "https://sistema-nuvex.lovable.app/logo-nuvex.png",
+  logo_url: "https://nuv-ia.lovable.app/logo-nuvex.png",
 };
 
 let cache: { value: BrandRow; expires: number } | null = null;
@@ -40,9 +40,13 @@ export async function getBrand(): Promise<BrandRow> {
       .from("brand_config" as never)
       .select("*")
       .maybeSingle();
-    const value = { ...DEFAULTS, ...((data ?? {}) as Partial<BrandRow>) };
-    cache = { value, expires: Date.now() + 60_000 };
-    return value;
+    const merged = { ...DEFAULTS, ...((data ?? {}) as Partial<BrandRow>) };
+    // Auto-heal: si el logo_url en DB apunta a un dominio caído/404, usar el default.
+    if (!merged.logo_url || /sistema-nuvex\.lovable\.app/i.test(merged.logo_url)) {
+      merged.logo_url = DEFAULTS.logo_url;
+    }
+    cache = { value: merged, expires: Date.now() + 60_000 };
+    return merged;
   } catch {
     return DEFAULTS;
   }

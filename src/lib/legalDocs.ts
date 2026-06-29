@@ -330,6 +330,13 @@ export function buildDatosContrato(
     { type: "field", label: "Número de crédito", value: fmtTxt(cr.numeroCredito) },
     { type: "field", label: "Plazo original (meses)", value: fmtTxt(cr.plazoOriginal) },
     { type: "field", label: "Cuotas pagadas", value: fmtTxt(cr.cuotasPagadas) },
+    { type: "field", label: "Cuotas pendientes por pagar", value: (() => {
+      const plazo = Number(cr.plazoOriginal) || 0;
+      const pagadas = Number(cr.cuotasPagadas) || 0;
+      const declaradas = Number((cr as { cuotasPendientes?: unknown }).cuotasPendientes) || 0;
+      const pend = declaradas > 0 ? declaradas : Math.max(0, plazo - pagadas);
+      return String(pend);
+    })() },
     { type: "field", label: "Cuota actual", value: fmtCOP(cr.cuotaActual) },
     { type: "spacer", size: 6 },
 
