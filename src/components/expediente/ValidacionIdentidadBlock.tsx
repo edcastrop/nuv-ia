@@ -187,7 +187,29 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
         <EditField label="Dirección" value={draft.direccion || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, direccion: val })} className="md:col-span-2" />
         <EditField label="Email" value={draft.email || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, email: val })} />
         <EditField label="Celular" value={draft.celular || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, celular: val })} />
-        {(draft.cotitularActivo || campos.cotitularActivo) && (
+        {(puedeEditar || draft.cotitularActivo || campos.cotitularActivo) && (
+          <label
+            className="md:col-span-3 flex items-center gap-2 rounded-lg border bg-[rgba(255,255,255,0.04)] px-2 py-2 text-xs text-white"
+            style={{ borderColor: draft.cotitularActivo ? "var(--nuvia-accent-blue)" : "#E3E7EE" }}
+          >
+            <input
+              type="checkbox"
+              checked={!!draft.cotitularActivo}
+              disabled={!puedeEditar}
+              onChange={(e) => {
+                const activo = e.target.checked;
+                setDraft({
+                  ...draft,
+                  cotitularActivo: activo,
+                  cotitularDireccion: activo && !draft.cotitularDireccion ? draft.direccion || "" : draft.cotitularDireccion,
+                });
+              }}
+              className="h-3.5 w-3.5 accent-[var(--nuvia-accent-blue)]"
+            />
+            <span className="font-semibold">El crédito tiene cotitular / colocatario</span>
+          </label>
+        )}
+        {draft.cotitularActivo && (
           <>
             <EditField label="Cotitular" value={draft.cotitularNombre || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, cotitularNombre: val })} />
             <EditField label="Doc. cotitular" value={draft.cotitularCedula || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, cotitularCedula: val.replace(/\D/g, "") })} />
