@@ -270,12 +270,23 @@ export const getCaseSnapshotData = createServerFn({ method: "POST" })
       dto.propuesta.ahorroTotal = n(pData.ahorro_total ?? pData.ahorroTotal);
       dto.propuesta.ahorroIntereses = n(pData.ahorro_intereses ?? pData.ahorroIntereses);
       dto.propuesta.ahorroSeguros = n(pData.ahorro_seguros ?? pData.ahorroSeguros);
-      dto.propuesta.tiempoRecuperado = n(
-        pData.tiempo_recuperado ?? pData.tiempoRecuperado ?? pData.meses_recuperados ?? pData.añosEliminados,
-      );
+      const mesesRecuperadosGuardados = n(pData.tiempo_recuperado ?? pData.tiempoRecuperado ?? pData.meses_recuperados);
+      const añosEliminadosGuardados = n(pData.años_eliminados ?? pData.añosEliminados);
+      dto.propuesta.tiempoRecuperado =
+        dto.propuesta.cuotasEliminadas ||
+        mesesRecuperadosGuardados ||
+        (añosEliminadosGuardados ? añosEliminadosGuardados * 12 : 0);
       dto.propuesta.recomendada = Boolean(
         pData.recomendada ?? pData.is_recomendada ?? (pData.recomendadaIdx != null && pData.recomendadaIdx === pData.index) ?? true,
       );
+
+      // Coherencia financiera del snapshot: en créditos con cobertura/FRECH, las
+      // cuotas pendientes de la cobertura NO son el plazo pendiente del crédito.
+      // Para la propuesta seleccionada, el plazo base debe ser nuevo plazo + cuotas eliminadas.
+      const plazoPendientePropuesto = dto.propuesta.nuevoPlazo + dto.propuesta.cuotasEliminadas;
+      if (plazoPendientePropuesto > 0 && Math.abs(dto.credito.cuotasPendientes - plazoPendientePropuesto) > 1) {
+        dto.credito.cuotasPendientes = plazoPendientePropuesto;
+      }
 
       // Total proyectado / costo real / veces pagado — derivamos si faltan.
       dto.credito.totalProyectado = n(

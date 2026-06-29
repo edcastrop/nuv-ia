@@ -87,7 +87,11 @@ function dtoToSnapshot(dto: CaseSnapshotDTO): CaseSnapshotData {
       ? Math.round((costoTotal / c.saldoCapital) * 100) / 100
       : c.vecesPagado || 0;
 
-  const tiempoMeses = p.tiempoRecuperado || 0;
+  const cuotasPendientesCoherentes =
+    p.nuevoPlazo > 0 && p.cuotasEliminadas > 0
+      ? p.nuevoPlazo + p.cuotasEliminadas
+      : c.cuotasPendientes;
+  const tiempoMeses = p.cuotasEliminadas || p.tiempoRecuperado || Math.max(0, cuotasPendientesCoherentes - p.nuevoPlazo);
   const tiempoRecuperado =
     tiempoMeses >= 12
       ? `${Math.floor(tiempoMeses / 12)} años`
@@ -115,7 +119,7 @@ function dtoToSnapshot(dto: CaseSnapshotDTO): CaseSnapshotData {
     credito: {
       saldoActual: c.saldoCapital,
       cuotaActual: cuotaDisplay,
-      cuotasPendientes: c.cuotasPendientes,
+      cuotasPendientes: cuotasPendientesCoherentes,
       costoTotal,
       multiplicador,
     },
