@@ -120,13 +120,60 @@ function emptyDTO(id: string): CaseSnapshotDTO {
 }
 
 function n(v: unknown, d = 0): number {
-  const x = typeof v === "string" ? parseFloat(v) : (v as number);
+  const x = typeof v === "string"
+    ? Number(
+        v
+          .replace(/[^\d,.-]/g, "")
+          .replace(/\.(?=\d{3}(\D|$))/g, "")
+          .replace(",", "."),
+      )
+    : (v as number);
   return Number.isFinite(x) ? Number(x) : d;
 }
 function s(v: unknown, d = "—"): string {
   if (v == null) return d;
   const str = String(v).trim();
   return str.length ? str : d;
+}
+
+function pmt(rate: number, nper: number, pv: number): number {
+  if (!(nper > 0) || !(pv > 0)) return 0;
+  if (!rate) return pv / nper;
+  return (rate * pv) / (1 - Math.pow(1 + rate, -nper));
+}
+
+function proyectarUVRPendiente(params: {
+  saldoUVR: number;
+  valorUVR: number;
+  tea: number;
+  variacionUVR: number;
+  seguros: number;
+  plazo: number;
+}): number {
+  const { saldoUVR, valorUVR, tea, variacionUVR, seguros, plazo } = params;
+  if (!(saldoUVR > 0 && valorUVR > 0 && plazo > 0)) return 0;
+  const tasaMensual = Math.pow(1 + tea / 100, 1 / 12) - 1;
+  const variacionMensual = Math.pow(1 + variacionUVR / 100, 1 / 12) - 1;
+  const cuotaUVR = pmt(tasaMensual, plazo, saldoUVR);
+  let saldo = saldoUVR;
+  let valor = valorUVR;
+  let total = 0;
+  for (let i = 0; i < plazo && saldo > 0; i += 1) {
+    const interes = saldo * tasaMensual;
+    const capital = Math.max(0, Math.min(saldo, cuotaUVR - interes));
+    const cuotaEfectiva = interes + capital;
+    valor *= 1 + variacionMensual;
+    total += cuotaEfectiva * valor + seguros;
+    saldo = Math.max(0, saldo - capital);
+  }
+  return total;
+}
+
+function proyectarPesosPendiente(params: { saldo: number; tea: number; seguros: number; plazo: number }): number {
+  const { saldo, tea, seguros, plazo } = params;
+  if (!(saldo > 0 && plazo > 0)) return 0;
+  const tasaMensual = Math.pow(1 + tea / 100, 1 / 12) - 1;
+  return (pmt(tasaMensual, plazo, saldo) + seguros) * plazo;
 }
 
 export const getCaseSnapshotData = createServerFn({ method: "POST" })
@@ -288,17 +335,42 @@ export const getCaseSnapshotData = createServerFn({ method: "POST" })
         dto.credito.cuotasPendientes = plazoPendientePropuesto;
       }
 
-      // Total proyectado / costo real / veces pagado — derivamos si faltan.
-      dto.credito.totalProyectado = n(
-        crData.total_proyectado ?? crData.totalProyectado ?? crData.total_por_pagar ?? pData.totalProyectado,
-      );
+      // Total proyectado / costo real / veces pagado.
+      // pData.totalProyectado pertenece a la PROPUESTA, no al escenario actual;
+      // por eso el snapshot debe reconstruir el escenario actual desde el crédito.
+      dto.credito.totalProyectado = n(crData.total_proyectado ?? crData.totalProyectado ?? crData.total_por_pagar);
+      if (!dto.credito.totalProyectado) {
+        const saldoUVR = n(crData.saldo_uvr ?? crData.saldoUVR);
+        const valorUVR = n(crData.valor_uvr ?? crData.valorUVR);
+        const variacionUVR = n(crData.variacion_uvr ?? crData.variacionUVR, 0);
+        const esUVR = /uvr/i.test(`${exp.modo ?? ""} ${exp.producto ?? ""}`) || saldoUVR > 0;
+        dto.credito.totalProyectado = esUVR
+          ? proyectarUVRPendiente({
+              saldoUVR,
+              valorUVR,
+              tea: dto.credito.tea,
+              variacionUVR,
+              seguros: dto.credito.seguros,
+              plazo: dto.credito.cuotasPendientes,
+            })
+          : proyectarPesosPendiente({
+              saldo: dto.credito.saldoCapital,
+              tea: dto.credito.tea,
+              seguros: dto.credito.seguros,
+              plazo: dto.credito.cuotasPendientes,
+            });
+      }
+      const cuotaPagadaCliente = n(crData.cuota_pagada_cliente ?? crData.cuotaPagadaCliente ?? cobertura.cuotaPagadaCliente);
+      const dineroPagadoFecha = (cuotaPagadaCliente || dto.credito.cuotaActual) * dto.credito.cuotasPagadas;
       dto.credito.costoReal = n(crData.costo_real_credito ?? crData.costo_real ?? crData.costoReal);
       if (!dto.credito.costoReal && dto.credito.totalProyectado) {
-        dto.credito.costoReal = dto.credito.totalProyectado;
+        dto.credito.costoReal = dto.credito.totalProyectado + dineroPagadoFecha;
       }
       dto.credito.vecesPagado = n(crData.veces_pagado ?? crData.vecesPagado);
-      if (!dto.credito.vecesPagado && dto.credito.totalProyectado && dto.credito.saldoCapital) {
-        dto.credito.vecesPagado = dto.credito.totalProyectado / dto.credito.saldoCapital;
+      if (!dto.credito.vecesPagado) {
+        const baseCredito = dto.credito.valorDesembolsado > 0 ? dto.credito.valorDesembolsado : dto.credito.saldoCapital;
+        const numerador = dto.credito.valorDesembolsado > 0 ? dto.credito.costoReal : dto.credito.totalProyectado;
+        dto.credito.vecesPagado = baseCredito > 0 && numerador > 0 ? numerador / baseCredito : 0;
       }
 
       // Honorarios
@@ -311,10 +383,18 @@ export const getCaseSnapshotData = createServerFn({ method: "POST" })
         .maybeSingle();
       if (hon) {
         dto.honorarios.pactados = n(hon.honorario_ofertado ?? hon.honorario_topado);
+        dto.honorarios.honorarioRecalculado = n(hon.honorario_topado ?? hon.honorario_ofertado);
         dto.honorarios.porcentaje = n(hon.porcentaje_aplicado);
         dto.honorarios.estadoCobro = s(hon.estado);
-      } else if (exp.honorarios_pactados) {
-        dto.honorarios.pactados = n(exp.honorarios_pactados);
+      }
+      if (!dto.honorarios.pactados) {
+        dto.honorarios.pactados = n(exp.honorarios_final ?? exp.honorarios_pactados ?? pData.honorarios ?? exp.honorarios_base);
+      }
+      if (!dto.honorarios.honorarioRecalculado) {
+        dto.honorarios.honorarioRecalculado = n(exp.honorarios_base ?? pData.honorarios ?? dto.honorarios.pactados);
+      }
+      if (!dto.honorarios.porcentaje) {
+        dto.honorarios.porcentaje = n((exp.aprobado_data as Record<string, unknown> | null)?.cliente && ((exp.aprobado_data as Record<string, unknown>).cliente as Record<string, unknown>).porcentajeHonorarios);
       }
       try {
         if (analistaId) {
