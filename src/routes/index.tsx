@@ -433,15 +433,36 @@ function SectionProposito() {
             inteligencia financiera, automatización e innovación para acompañar a las familias
             en la gestión de sus créditos de vivienda.
           </p>
-          <div className="mt-8 flex flex-wrap gap-2.5">
-            {["Inteligencia Financiera", "Automatización", "Innovación", "Propósito Social"].map((t) => (
-              <span
+          <div className="mt-8 grid grid-cols-2 gap-3">
+            {[
+              { t: "Inteligencia Financiera", Icon: Cpu, gradient: `linear-gradient(135deg, ${BLUE}, #6B8FD9)` },
+              { t: "Automatización", Icon: Settings2, gradient: `linear-gradient(135deg, #5A7DC9, ${GREEN})` },
+              { t: "Innovación", Icon: Lightbulb, gradient: `linear-gradient(135deg, ${GREEN}, #A8D4B0)` },
+              { t: "Propósito Social", Icon: Sparkles, gradient: `linear-gradient(135deg, ${BLUE}, ${GREEN})` },
+            ].map(({ t, Icon, gradient }) => (
+              <div
                 key={t}
-                className="px-3.5 py-1.5 rounded-full text-[11.5px] text-white/75"
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+                className="group relative rounded-2xl p-4 overflow-hidden transition-all hover:-translate-y-0.5 cursor-default"
+                style={{
+                  background: "linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.015))",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                }}
               >
-                {t}
-              </span>
+                <div
+                  aria-hidden
+                  className="absolute -top-16 -right-16 h-40 w-40 rounded-full blur-[80px] opacity-0 group-hover:opacity-50 transition-opacity"
+                  style={{ background: gradient }}
+                />
+                <div className="relative flex items-center gap-3">
+                  <div
+                    className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
+                    style={{ background: gradient }}
+                  >
+                    <Icon size={16} className="text-white" />
+                  </div>
+                  <div className="text-[13px] font-medium text-white/90 leading-tight">{t}</div>
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -470,6 +491,15 @@ function ConceptualVisual() {
             <stop offset="0%" stopColor={GREEN} stopOpacity="0.35" />
             <stop offset="100%" stopColor={GREEN} stopOpacity="0" />
           </linearGradient>
+          <linearGradient id="grSweep" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="white" stopOpacity="0" />
+            <stop offset="50%" stopColor="white" stopOpacity="0.18" />
+            <stop offset="100%" stopColor="white" stopOpacity="0" />
+          </linearGradient>
+          <radialGradient id="grPulse" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0%" stopColor={GREEN} stopOpacity="0.5" />
+            <stop offset="100%" stopColor={GREEN} stopOpacity="0" />
+          </radialGradient>
         </defs>
 
         {/* grid */}
@@ -482,24 +512,55 @@ function ConceptualVisual() {
           d="M0,220 L40,200 L80,210 L120,170 L160,180 L200,140 L240,130 L280,100 L320,110 L360,70 L400,80 L400,300 L0,300 Z"
           fill="url(#grArea)"
         />
-        {/* línea */}
+        {/* línea animada (draw) */}
         <path
           d="M0,220 L40,200 L80,210 L120,170 L160,180 L200,140 L240,130 L280,100 L320,110 L360,70 L400,80"
           fill="none"
           stroke="url(#grLine)"
           strokeWidth="2.5"
-        />
+          strokeDasharray="600"
+          strokeDashoffset="600"
+        >
+          <animate attributeName="stroke-dashoffset" from="600" to="0" dur="2.4s" fill="freeze" />
+        </path>
 
-        {/* puntos */}
+        {/* shine sweep */}
+        <rect x="-200" y="0" width="200" height="300" fill="url(#grSweep)">
+          <animate attributeName="x" from="-200" to="500" dur="3.5s" repeatCount="indefinite" />
+        </rect>
+
+        {/* puntos con halo pulsante */}
         {[40,80,120,160,200,240,280,320,360].map((x, i) => {
           const ys = [200,210,170,180,140,130,100,110,70];
           return (
-            <circle key={x} cx={x} cy={ys[i]} r="3" fill="white">
-              <animate attributeName="r" values="2.5;4.5;2.5" dur={`${3 + i % 3}s`} repeatCount="indefinite" />
-            </circle>
+            <g key={x}>
+              <circle cx={x} cy={ys[i]} r="14" fill="url(#grPulse)">
+                <animate attributeName="r" values="8;16;8" dur={`${2.4 + (i % 3) * 0.4}s`} repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.6;0;0.6" dur={`${2.4 + (i % 3) * 0.4}s`} repeatCount="indefinite" />
+              </circle>
+              <circle cx={x} cy={ys[i]} r="3" fill="white">
+                <animate attributeName="r" values="2.5;4.5;2.5" dur={`${3 + i % 3}s`} repeatCount="indefinite" />
+              </circle>
+            </g>
           );
         })}
       </svg>
+
+      {/* halo ambient animado */}
+      <motion.div
+        aria-hidden
+        className="absolute -top-24 -right-24 h-72 w-72 rounded-full blur-[100px]"
+        style={{ background: `radial-gradient(circle, ${BLUE}88, transparent 70%)` }}
+        animate={{ opacity: [0.35, 0.65, 0.35], scale: [1, 1.1, 1] }}
+        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        aria-hidden
+        className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full blur-[100px]"
+        style={{ background: `radial-gradient(circle, ${GREEN}77, transparent 70%)` }}
+        animate={{ opacity: [0.3, 0.6, 0.3], scale: [1.1, 1, 1.1] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+      />
 
       <div className="absolute bottom-5 left-5 right-5 rounded-2xl p-4 flex items-center justify-between"
         style={{ background: "rgba(10,12,20,0.7)", backdropFilter: "blur(14px)", border: "1px solid rgba(255,255,255,0.06)" }}>
@@ -507,7 +568,14 @@ function ConceptualVisual() {
           <div className="text-[10.5px] font-bold uppercase tracking-[0.2em] text-white/45">Proyección</div>
           <div className="text-[14px] text-white font-medium mt-0.5">Ahorro estimado en intereses</div>
         </div>
-        <div className="text-[20px] font-semibold" style={{ color: GREEN }}>+ 24.3%</div>
+        <motion.div
+          className="text-[20px] font-semibold"
+          style={{ color: GREEN }}
+          animate={{ opacity: [0.7, 1, 0.7] }}
+          transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+        >
+          + 24.3%
+        </motion.div>
       </div>
     </div>
   );
