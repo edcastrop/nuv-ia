@@ -357,23 +357,8 @@ export function PrintDocument(props: Props) {
             <Impact icon={<CalendarDays />} label="NUEVA FECHA FIN" value={`${añoFinOpt}`} sub={`antes de ${añoFinActual}`} blue />
           </div>
 
-          <div style={{ marginTop: 13, border: `1px solid ${C.line}`, borderRadius: 10, background: C.panel, padding: "16px 16px", display: "grid", gridTemplateColumns: "1.25fr 0.72fr 0.16fr 0.9fr 0.9fr", gap: 12, alignItems: "center" }}>
-            <div>
-              <div style={{ color: C.greenDeep, fontWeight: 950, fontSize: 14, letterSpacing: "0.06em" }}>BENEFICIO ECONÓMICO</div>
-              <div style={{ marginTop: 8, fontSize: 12.5, fontWeight: 900, color: C.ink }}>Honorarios a Éxito NUVEX</div>
-              <div style={{ marginTop: 3, fontSize: 10.4, color: C.text, lineHeight: 1.25, fontWeight: 600 }}>Solo se cobran cuando el banco<br />aprueba la optimización.</div>
-            </div>
-            <PriceBox label="ESTÁNDAR" value={formatCOP(honorariosBase)} crossed />
-            <ArrowRight size={26} color={C.muted} />
-            <PriceBox label="APROBADOS" value={formatCOP(honorariosFinales)} />
-            <div style={{ border: `1px solid ${C.green}66`, background: "linear-gradient(180deg,#EFF9F1,#E8F5EB)", borderRadius: 9, padding: "10px 12px", textAlign: "center" }}>
-              <div style={{ fontSize: 9, color: C.greenDark, fontWeight: 950, letterSpacing: "0.12em" }}>DESCUENTO</div>
-              <div style={{ color: C.greenDeep, fontSize: 19, fontWeight: 950 }}>{formatCOP(descuento)}</div>
-              <div style={{ color: C.red, fontSize: 9.2, fontWeight: 950, letterSpacing: "0.08em" }}>VIGENCIA {vigenciaCorta}</div>
-            </div>
-          </div>
-
           <DecisionRapidaTable honorariosBase={honorariosBase} horasActivas={Number(horasVigencia)} />
+
 
 
 
