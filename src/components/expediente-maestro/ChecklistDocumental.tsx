@@ -74,6 +74,9 @@ function fmtDate(iso?: string | null) {
 export function ChecklistDocumental({ expediente, simExpediente }: Props) {
   const [perfil, setPerfil] = useState<PerfilLaboral>("empleado");
   const [flags, setFlags] = useState<FlagsCliente>(FLAGS_DEFAULT);
+  const cotitularActivo = !!expediente.cotitular?.activo;
+  const [perfilCot, setPerfilCot] = useState<PerfilLaboral>("empleado");
+  const [flagsCot, setFlagsCot] = useState<FlagsCliente>(FLAGS_DEFAULT);
   const [rows, setRows] = useState<ChecklistRow[]>([]);
   const [pending, setPending] = useState<EstadoMap>({});
   const [loading, setLoading] = useState(true);
