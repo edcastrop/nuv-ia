@@ -748,7 +748,7 @@ function DecisionRapidaTable({ honorariosBase, horasActivas }: { honorariosBase:
             <div style={{ fontSize: 10.5, fontWeight: 950, letterSpacing: "0.08em", color: "rgba(255,255,255,0.85)" }}>TARIFA FINAL ÚNICA</div>
             <div style={{ marginTop: 4, fontSize: 11, fontWeight: 700, lineHeight: 1.3, color: "rgba(255,255,255,0.78)" }}>
               {hayAhorro
-                ? "Tu propuesta ya parte del piso comercial NUVEX, así que los tres tramos (12h · 24h · 48h) llegan al mismo valor mínimo."
+                ? "Decidir hoy es recuperar años de tu vida financiera. Cada cuota eliminada es dinero que vuelve a tu familia y a tus proyectos."
                 : "Por el tamaño del caso, los honorarios ya están en el mínimo NUVEX. No es posible aplicar un descuento adicional por tiempo de decisión."}
             </div>
           </div>
