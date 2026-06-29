@@ -334,8 +334,8 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
     if (!guard.ok) { setError(guard.reason); return; }
     setSending(true);
     try {
-      const poderBlobs = await Promise.all(ctx.poderDocs.map((d) => legalDocToDOCXBlob(d)));
-      const datosDocx = await legalDocToDOCXBlob(ctx.datosDoc);
+      const poderBlobs = await Promise.all(ctx.poderDocs.map((d) => legalDocToPDFBlob(d)));
+      const datosPdf = await legalDocToPDFBlob(ctx.datosDoc);
       // Re-leer soportes en el momento del envío para garantizar consistencia
       // (por si se cargaron justo antes de enviar).
       const soportesActuales = await fetchSoportesCliente(ctx.expedienteId);
@@ -347,12 +347,12 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
         throw new Error(`No se puede enviar a contratación: falta adjuntar ${faltantes}.`);
       }
       const attachments: { blob: Blob; filename: string; contentType: string }[] = [
-        ...poderBlobs.map((blob, i) => ({
+        ...poderBlobs.map((blob: Blob, i: number) => ({
           blob,
-          filename: `${ctx.poderDocs[i].filename}.docx`,
-          contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          filename: `${ctx.poderDocs[i].filename}.pdf`,
+          contentType: "application/pdf",
         })),
-        { blob: datosDocx, filename: `${ctx.datosDoc.filename}.docx`, contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
+        { blob: datosPdf, filename: `${ctx.datosDoc.filename}.pdf`, contentType: "application/pdf" },
         ...soportesActuales.map((s) => ({
           blob: s.blob,
           filename: `${s.kind === "cedula" ? "Cedula_Cliente" : s.kind === "extracto" ? "Extracto_Bancario" : "Soporte"}_${s.filename}`,
