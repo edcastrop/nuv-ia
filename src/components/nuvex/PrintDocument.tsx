@@ -780,6 +780,9 @@ function DecisionRapidaTable({ honorariosBase, horasActivas }: { honorariosBase:
       )}
     </div>
   );
+}
+
+
 
 
 function Step({ n, icon, title, desc, green }: { n: number; icon: ReactNode; title: string; desc: string; green?: boolean }) {
