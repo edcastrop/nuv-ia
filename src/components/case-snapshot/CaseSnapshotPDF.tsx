@@ -88,6 +88,11 @@ const fechaHoy = () =>
 
 const shortId = (id: string) => (id || "—").slice(0, 36);
 
+const safeNumber = (value: unknown) => {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+};
+
 const compactFecha = (fecha: string) =>
   (fecha || "—")
     .replace(/\s+de\s+/g, " ")
@@ -427,6 +432,16 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
   const ahorrosPct = e.credito.costoTotal ? ((e.propuesta.ahorroTotal / e.credito.costoTotal) * 100).toFixed(1) : "0";
   const cuotasElimPct = e.credito.cuotasPendientes ? ((e.propuesta.cuotasEliminadas / e.credito.cuotasPendientes) * 100).toFixed(1) : "0";
   const mesesDiff = Math.max(0, e.credito.cuotasPendientes - e.propuesta.nuevoPlazo);
+  const totalAPagarEstimado = Math.max(
+    safeNumber(e.credito.costoTotal),
+    safeNumber(e.credito.cuotaActual) * safeNumber(e.credito.cuotasPendientes),
+    safeNumber(e.credito.saldoActual) * safeNumber(e.credito.multiplicador),
+  );
+  const multiplicadorCalculado = safeNumber(e.credito.multiplicador) ||
+    (safeNumber(e.credito.saldoActual) && totalAPagarEstimado
+      ? totalAPagarEstimado / safeNumber(e.credito.saldoActual)
+      : 0);
+  const multiplicadorTexto = multiplicadorCalculado > 0 ? `${multiplicadorCalculado.toFixed(2)}x` : "—";
 
   return (
     <div
@@ -465,14 +480,14 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
             <div style={{ fontSize: 40, fontWeight: 950, color: C.text, letterSpacing: "0", lineHeight: 1 }}>CASE SNAPSHOT</div>
             <div style={{ fontSize: 10.5, color: C.textMuted, marginTop: 7, letterSpacing: "0.08em", textTransform: "uppercase" }}>Resumen ejecutivo del caso</div>
           </div>
-          <div style={{ width: 280, flexShrink: 0, minHeight: 52, background: "#080F22", border: `1px solid ${C.border2}`, borderRadius: 5, padding: "8px 14px", boxSizing: "border-box", position: "relative", zIndex: 5, boxShadow: "0 0 0 1px rgba(59,130,246,0.18), 0 0 24px rgba(59,130,246,0.18)" }}>
-            <MiniLabel style={{ color: C.blue2, marginBottom: 4 }}>ID Expediente</MiniLabel>
-            <div style={{ fontSize: 10.5, lineHeight: 1.2, fontFamily: "'Courier New', Courier, monospace", color: "#F8FAFF", fontWeight: 700, letterSpacing: "0.02em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shortId(e.id)}</div>
+          <div style={{ width: 316, flexShrink: 0, minHeight: 58, background: "#080F22", border: `1px solid ${C.border2}`, borderRadius: 5, padding: "10px 14px", boxSizing: "border-box", position: "relative", zIndex: 5, boxShadow: "0 0 0 1px rgba(59,130,246,0.18), 0 0 24px rgba(59,130,246,0.18)", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+            <MiniLabel style={{ color: C.blue2, marginBottom: 5 }}>ID Expediente</MiniLabel>
+            <div style={{ fontSize: 9.7, lineHeight: 1.25, fontFamily: "'Courier New', Courier, monospace", color: "#F8FAFF", fontWeight: 800, letterSpacing: "0", whiteSpace: "nowrap", overflow: "visible" }}>{shortId(e.id)}</div>
           </div>
         </div>
 
-        <Card style={{ padding: 22, marginBottom: 12 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "180px 86px minmax(120px,1fr) 74px 116px", gap: 12, alignItems: "center" }}>
+        <Card style={{ padding: 20, marginBottom: 12, overflow: "visible" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "176px 88px minmax(166px,1fr) 70px 154px", gap: 10, alignItems: "center", width: "100%", boxSizing: "border-box" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0, paddingRight: 8, borderRight: `1px solid ${C.border}` }}>
               <ClienteAvatar />
               <div style={{ minWidth: 0 }}>
@@ -483,7 +498,7 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
             <Field icon={<IconWrap><SvgBank /></IconWrap>} label="Banco" value={e.banco} />
             <Field icon={<IconWrap><SvgShield /></IconWrap>} label="Producto" value={e.producto} />
             <Field icon={<IconWrap><SvgMoney /></IconWrap>} label="Modalidad" value={e.modalidad} />
-            <Field icon={<IconWrap color={C.green}><SvgCheckCircle /></IconWrap>} label="Estado del caso" value={<span style={{ color: C.green2 }}>{e.estado}</span>} />
+            <Field icon={<IconWrap color={C.green}><SvgCheckCircle /></IconWrap>} label="Estado del caso" value={<span style={{ display: "block", color: C.green2, fontSize: 10.4, lineHeight: 1.14, fontWeight: 900, textShadow: "0 0 10px rgba(16,185,129,0.28)" }}>{e.estado}</span>} />
           </div>
 
           <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(59,130,246,0.45), rgba(138,109,255,0.35), transparent)", margin: "20px 0" }} />
@@ -547,15 +562,15 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
               position: "relative",
             }}
           >
-            <div style={{ textAlign: "center", padding: "14px 18px", position: "relative" }}>
+              <div style={{ textAlign: "center", padding: "14px 18px", position: "relative", minWidth: 0 }}>
               <MiniLabel style={{ fontSize: 9, marginBottom: 8, color: "#C7B8FF" }}>Vas a pagar</MiniLabel>
-              <div style={{ fontSize: 68, fontWeight: 950, lineHeight: 0.88, letterSpacing: "-0.02em", color: "#C7B8FF", textShadow: "0 0 22px rgba(138,109,255,0.55), 0 0 8px rgba(110,139,255,0.45)" }}>{(e.credito.multiplicador > 0 ? e.credito.multiplicador : 0).toFixed(2)}x</div>
+              <div style={{ fontSize: 62, fontWeight: 950, lineHeight: 1, letterSpacing: "0", color: "#C7B8FF", textShadow: "0 0 22px rgba(138,109,255,0.55), 0 0 8px rgba(110,139,255,0.45)", whiteSpace: "nowrap" }}>{multiplicadorTexto}</div>
               <div style={{ fontSize: 10.5, fontWeight: 900, color: "#E8E1FF", letterSpacing: "0.14em", textTransform: "uppercase", marginTop: 10 }}>El valor de tu crédito</div>
             </div>
             <div style={{ padding: "0 26px 0 22px", fontSize: 11.4, color: "#DCE3F5", lineHeight: 1.6, borderLeft: "1px solid rgba(138,109,255,0.22)" }}>
-              Con las condiciones actuales, terminarás pagando <strong style={{ color: "#C7B8FF" }}>{e.credito.multiplicador.toFixed(2)} veces</strong> el valor del crédito desembolsado.
+              Con las condiciones actuales, terminarás pagando <strong style={{ color: "#C7B8FF" }}>{multiplicadorTexto === "—" ? "—" : multiplicadorTexto.replace("x", " veces")}</strong> el valor del crédito desembolsado.
               <br />
-              Este análisis considera intereses, seguros y costos asociados durante todo el plazo del crédito.
+              Valor total proyectado: <strong style={{ color: "#F8FAFF" }}>{cop(totalAPagarEstimado)}</strong>. Incluye intereses, seguros y costos asociados durante todo el plazo.
             </div>
           </div>
 
