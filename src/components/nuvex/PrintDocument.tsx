@@ -304,7 +304,7 @@ export function PrintDocument(props: Props) {
 
           <div style={{ marginTop: 14, background: `linear-gradient(135deg, ${C.navy}, #041229)`, color: "#fff", borderRadius: 10, padding: "18px 24px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "center" }}>
             <DarkBenefit icon={<Shield size={52} color={C.green} strokeWidth={1.6} />} label="HONORARIOS A ÉXITO NUVEX" value={formatCOP(honorariosFinales)} sub="Solo se pagan si el banco aprueba la optimización." />
-            <DarkBenefit icon={<Shield size={52} color={C.green} strokeWidth={1.6} />} label="VÁLIDO POR" value="48 HORAS" sub="Propuesta exclusiva para este caso." right />
+            <DarkBenefit icon={<Shield size={52} color={C.green} strokeWidth={1.6} />} label="VÁLIDO POR" value={vigenciaCorta} sub="Desde el envío de esta propuesta." right />
           </div>
 
           <div style={{ marginTop: 12, background: C.navy, borderRadius: 10, color: "#fff", padding: "12px 24px", display: "grid", gridTemplateColumns: "1fr auto", gap: 24, alignItems: "center", flex: "0 0 auto" }}>
