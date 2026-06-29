@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 import type { Expediente } from "@/lib/expedientes";
 import { CitySelect } from "@/components/ui/CitySelect";
+import { CedulaReaderMaestro } from "@/components/expediente-maestro/CedulaReaderMaestro";
 import {
   readValidacion,
   detectarInconsistencias,
@@ -211,6 +212,25 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
         )}
         {draft.cotitularActivo && (
           <>
+            {puedeEditar && (
+              <div className="md:col-span-3">
+                <CedulaReaderMaestro
+                  label="cotitular"
+                  tone="dark"
+                  expedienteId={exp.id}
+                  soporteSubcategoria="cedula_cotitular_1"
+                  onApply={(patch) => {
+                    setDraft({
+                      ...draft,
+                      cotitularActivo: true,
+                      cotitularNombre: patch.nombre || draft.cotitularNombre || "",
+                      cotitularCedula: patch.cedula || draft.cotitularCedula || "",
+                      cotitularDireccion: patch.direccion || draft.cotitularDireccion || draft.direccion || "",
+                    });
+                  }}
+                />
+              </div>
+            )}
             <EditField label="Cotitular" value={draft.cotitularNombre || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, cotitularNombre: val })} />
             <EditField label="Doc. cotitular" value={draft.cotitularCedula || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, cotitularCedula: val.replace(/\D/g, "") })} />
             <EditField label="Dir. cotitular" value={draft.cotitularDireccion || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, cotitularDireccion: val })} />
