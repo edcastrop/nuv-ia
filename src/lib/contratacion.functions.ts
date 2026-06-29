@@ -21,11 +21,10 @@ const InputSchema = z.object({
   attachments: z.array(AttachmentSchema).min(1).max(10),
 });
 
-function isForbiddenLegalPdf(filename: string, contentType: string) {
-  const name = filename.toLowerCase();
-  const isPdf = contentType.toLowerCase().includes("pdf") || name.endsWith(".pdf");
-  return isPdf && (name.includes("poder") || name.includes("ficha"));
-}
+// Nota: el Poder Especial y la Ficha Contractual viajan ahora a contratación
+// en formato PDF con el branding NUVEX (mismo PDF que descarga el botón azul).
+// Las versiones .docx quedan deprecadas para el envío a contratación.
+
 
 const RESEND_GATEWAY = "https://connector-gateway.lovable.dev/resend";
 
@@ -67,11 +66,8 @@ export const enviarContratacion = createServerFn({ method: "POST" })
     const fromAddress = `${asesorNombre} (NUVEX) <${SENDER_ADDRESS}>`;
     const replyTo = asesorEmail || SENDER_ADDRESS;
 
-    // Blindaje definitivo: contratación NO debe recibir versiones PDF del Poder
-    // ni de la Ficha Contractual, aunque una pantalla vieja intente enviarlas.
-    const allowedAttachments = data.attachments.filter(
-      (a) => !isForbiddenLegalPdf(a.filename, a.contentType),
-    );
+    // El paquete de contratación viaja tal cual lo arma el cliente (PDF NUVEX).
+    const allowedAttachments = data.attachments;
     if (allowedAttachments.length === 0) {
       throw new Error("El paquete de contratación no contiene adjuntos válidos.");
     }
