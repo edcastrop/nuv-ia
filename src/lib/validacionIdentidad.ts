@@ -183,6 +183,12 @@ export function extraerCamposCriticosDesdeExpediente(
   const co = ij.cotitular ?? {};
   const intervinientes = Array.isArray(cd.intervinientes) ? cd.intervinientes as Array<Record<string, unknown>> : [];
   const titularInterviniente = intervinientes[0] ?? {};
+  const cotitularInterviniente = (intervinientes[1] ?? {}) as Record<string, unknown>;
+  const coStr = (k: string) => (typeof cotitularInterviniente[k] === "string" ? (cotitularInterviniente[k] as string) : "");
+  const cotitularActivo =
+    !!co.activo ||
+    !!(co.nombre || co.cedula) ||
+    !!(coStr("nombreCompleto") || coStr("cedula"));
   return {
     nombre: t.nombre || pick("nombre") || exp.cliente_nombre || "",
     tipoDocumento: t.tipoDocumento || pick("tipoDocumento") || "CC",
@@ -197,11 +203,12 @@ export function extraerCamposCriticosDesdeExpediente(
     banco: pick("banco") || exp.banco || "",
     numeroCredito: pick("numeroCredito") || exp.numero_credito || "",
     tipoProducto: pick("tipoProducto") || exp.producto || "",
-    cotitularActivo: !!co.activo,
-    cotitularNombre: co.nombre || "",
-    cotitularCedula: co.cedula || "",
-    cotitularDireccion: co.direccion || "",
+    cotitularActivo,
+    cotitularNombre: co.nombre || coStr("nombreCompleto") || "",
+    cotitularCedula: co.cedula || coStr("cedula") || "",
+    cotitularDireccion: co.direccion || coStr("direccion") || "",
   };
+
 }
 
 // ── Operaciones contra Supabase ───────────────────────────────────────────
