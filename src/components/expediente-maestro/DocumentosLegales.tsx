@@ -828,6 +828,27 @@ function InformacionJuridicaEditor({
   const setT = <K extends keyof ClienteMaestro>(k: K, v: string) => onTitular({ ...titular, [k]: v });
   const setC = <K extends keyof CotitularMaestro>(k: K, v: string) => onCotitular({ ...cotitular, [k]: v });
 
+  // Mantener cotitular sincronizado con la dirección del titular cuando el checkbox está activo.
+  useEffect(() => {
+    if (!cotitular.activo || !cotitular.mismaDireccionTitular) return;
+    const dep = titular.departamento || (titular.ciudad ? cityDepartment(titular.ciudad) || "" : "");
+    const next: Partial<CotitularMaestro> & { activo?: boolean } = {
+      ...cotitular,
+      direccion: titular.direccion || "",
+      ciudad: titular.ciudad || "",
+      departamento: dep,
+    };
+    if (
+      next.direccion !== cotitular.direccion ||
+      next.ciudad !== cotitular.ciudad ||
+      next.departamento !== cotitular.departamento
+    ) {
+      onCotitular(next);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [titular.direccion, titular.ciudad, titular.departamento, cotitular.activo, cotitular.mismaDireccionTitular]);
+
+
   return (
     <div className="rounded-xl border bg-white p-4 mb-4" style={{ borderColor: "#E3E7EE" }}>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
