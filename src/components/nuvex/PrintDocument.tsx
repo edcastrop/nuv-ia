@@ -371,6 +371,10 @@ export function PrintDocument(props: Props) {
             </div>
           </div>
 
+          <DecisionRapidaTable honorariosBase={honorariosBase} horasActivas={Number(horasVigencia)} />
+
+
+
           <SectionLabel title="¿QUÉ SUCEDE AHORA?" />
           <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10, marginTop: 7 }}>
             <Step n={1} icon={<Pencil />} title="Firma de autorización" desc="Nos autorizas para gestionar tu caso." />
@@ -715,6 +719,71 @@ function Impact({ icon, label, value, sub, blue }: { icon: ReactNode; label: str
 function PriceBox({ label, value, crossed }: { label: string; value: string; crossed?: boolean }) {
   return <div><div style={{ ...tinyLabelStyle, textAlign: "center" }}>{label}</div><div style={{ marginTop: 7, color: C.ink, fontSize: 18, lineHeight: 1, fontWeight: 950, textAlign: "center", textDecoration: crossed ? "line-through" : undefined }}>{value}</div></div>;
 }
+
+const TIERS_DR: { horas: 12 | 24 | 48; pct: number; label: string; icon: string }[] = [
+  { horas: 12, pct: 25, label: "Decisión en 12 horas", icon: "⚡" },
+  { horas: 24, pct: 20, label: "Decisión en 24 horas", icon: "🕐" },
+  { horas: 48, pct: 15, label: "Decisión en 48 horas", icon: "📅" },
+];
+
+function DecisionRapidaTable({ honorariosBase, horasActivas }: { honorariosBase: number; horasActivas: number }) {
+  const activeTier = TIERS_DR.find((t) => t.horas === horasActivas) ?? null;
+  return (
+    <div style={{ marginTop: 12, border: `1px solid ${C.line}`, borderRadius: 10, background: C.panel, padding: "12px 14px 13px" }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 9 }}>
+        <div style={{ color: C.greenDeep, fontWeight: 950, fontSize: 13, letterSpacing: "0.06em" }}>BENEFICIO POR DECISIÓN RÁPIDA</div>
+        <div style={{ color: C.text, fontSize: 9.5, fontWeight: 700, letterSpacing: "0.05em" }}>Mientras más rápido decidas, más ahorras en honorarios.</div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 9 }}>
+        {TIERS_DR.map((t) => {
+          const activo = activeTier?.horas === t.horas;
+          const precio = Math.round(honorariosBase * (1 - t.pct / 100));
+          const ahorro = honorariosBase - precio;
+          const bg = activo ? "linear-gradient(180deg,#1F7A45,#155A33)" : "#FFFFFF";
+          const borderCol = activo ? C.greenDeep : C.line;
+          const textInk = activo ? "#FFFFFF" : C.ink;
+          const textMuted = activo ? "rgba(255,255,255,0.78)" : C.text;
+          const accent = activo ? "#FFFFFF" : C.greenDeep;
+          return (
+            <div key={t.horas} style={{ position: "relative", border: `1.4px solid ${borderCol}`, borderRadius: 9, background: bg, padding: "10px 11px 11px", boxShadow: activo ? "0 10px 24px -14px rgba(31,122,69,0.85)" : "none" }}>
+              {activo && (
+                <div style={{ position: "absolute", top: -9, right: 10, background: "#0B1226", color: "#84F5A8", fontSize: 8.2, fontWeight: 950, letterSpacing: "0.18em", padding: "3px 8px", borderRadius: 999 }}>SELECCIONADA</div>
+              )}
+              <div style={{ display: "flex", alignItems: "center", gap: 6, color: accent, fontSize: 10, fontWeight: 950, letterSpacing: "0.06em" }}>
+                <span style={{ fontSize: 13 }}>{t.icon}</span>{t.label.toUpperCase()}
+              </div>
+              <div style={{ marginTop: 6, color: accent, fontSize: 22, fontWeight: 950, lineHeight: 1 }}>{t.pct}% OFF</div>
+              <div style={{ marginTop: 7, display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 6 }}>
+                <span style={{ fontSize: 8.6, fontWeight: 800, color: textMuted, letterSpacing: "0.04em" }}>ESTÁNDAR</span>
+                <span style={{ fontSize: 10.5, fontWeight: 800, color: textMuted, textDecoration: "line-through" }}>{formatCOP(honorariosBase)}</span>
+              </div>
+              <div style={{ marginTop: 3, display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 6 }}>
+                <span style={{ fontSize: 8.6, fontWeight: 950, color: accent, letterSpacing: "0.04em" }}>HONORARIOS</span>
+                <span style={{ fontSize: 15, fontWeight: 950, color: textInk, lineHeight: 1 }}>{formatCOP(precio)}</span>
+              </div>
+              <div style={{ marginTop: 6, paddingTop: 6, borderTop: `1px dashed ${activo ? "rgba(255,255,255,0.32)" : C.line}`, display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 6 }}>
+                <span style={{ fontSize: 8.6, fontWeight: 950, color: accent, letterSpacing: "0.04em" }}>AHORRO</span>
+                <span style={{ fontSize: 13, fontWeight: 950, color: activo ? "#84F5A8" : C.greenDeep }}>{formatCOP(ahorro)}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {activeTier ? (
+        <div style={{ marginTop: 9, fontSize: 9.6, color: C.text, fontWeight: 700, textAlign: "center" }}>
+          Tu propuesta actual aplica el beneficio de <b style={{ color: C.greenDeep }}>{activeTier.horas} horas</b> · vigencia desde el envío de esta propuesta.
+        </div>
+      ) : (
+        <div style={{ marginTop: 9, fontSize: 9.6, color: C.text, fontWeight: 700, textAlign: "center" }}>
+          Selecciona cuanto antes el tramo que más te convenga: cada hora cuenta.
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+
 
 function Step({ n, icon, title, desc, green }: { n: number; icon: ReactNode; title: string; desc: string; green?: boolean }) {
   return (
