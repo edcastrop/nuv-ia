@@ -201,6 +201,11 @@ export function PrintDocument(props: Props) {
   const honorariosFinales = commercial?.hasDiscount ? commercial.finales : recommended.honorarios;
   const honorariosBase = commercial?.honorariosBase ?? recommended.honorarios;
   const descuento = commercial?.hasDiscount ? Math.max(0, honorariosBase - honorariosFinales) : 0;
+  // Vigencia para mostrar en bloques "VÁLIDO POR" y "VIGENCIA". Default 48h si no hay.
+  const vigenciaRaw = (commercial?.vigencia ?? "").trim();
+  const horasMatch = vigenciaRaw.match(/(\d{1,3})\s*h/i);
+  const horasVigencia = horasMatch ? horasMatch[1] : "48";
+  const vigenciaCorta = `${horasVigencia} HORAS`;
 
   const consistenciaOk = Math.abs((commercial?.honorariosBase ?? recommended.honorarios) - recommended.honorarios) < 1;
   if (!consistenciaOk) {
@@ -299,7 +304,7 @@ export function PrintDocument(props: Props) {
 
           <div style={{ marginTop: 14, background: `linear-gradient(135deg, ${C.navy}, #041229)`, color: "#fff", borderRadius: 10, padding: "18px 24px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "center" }}>
             <DarkBenefit icon={<Shield size={52} color={C.green} strokeWidth={1.6} />} label="HONORARIOS A ÉXITO NUVEX" value={formatCOP(honorariosFinales)} sub="Solo se pagan si el banco aprueba la optimización." />
-            <DarkBenefit icon={<Shield size={52} color={C.green} strokeWidth={1.6} />} label="VÁLIDO POR" value="48 HORAS" sub="Propuesta exclusiva para este caso." right />
+            <DarkBenefit icon={<Shield size={52} color={C.green} strokeWidth={1.6} />} label="VÁLIDO POR" value={vigenciaCorta} sub="Desde el envío de esta propuesta." right />
           </div>
 
           <div style={{ marginTop: 12, background: C.navy, borderRadius: 10, color: "#fff", padding: "12px 24px", display: "grid", gridTemplateColumns: "1fr auto", gap: 24, alignItems: "center", flex: "0 0 auto" }}>
@@ -362,7 +367,7 @@ export function PrintDocument(props: Props) {
             <div style={{ border: `1px solid ${C.green}66`, background: "linear-gradient(180deg,#EFF9F1,#E8F5EB)", borderRadius: 9, padding: "10px 12px", textAlign: "center" }}>
               <div style={{ fontSize: 9, color: C.greenDark, fontWeight: 950, letterSpacing: "0.12em" }}>DESCUENTO</div>
               <div style={{ color: C.greenDeep, fontSize: 19, fontWeight: 950 }}>{formatCOP(descuento)}</div>
-              <div style={{ color: C.red, fontSize: 9.2, fontWeight: 950, letterSpacing: "0.08em" }}>VIGENCIA 48 HORAS</div>
+              <div style={{ color: C.red, fontSize: 9.2, fontWeight: 950, letterSpacing: "0.08em" }}>VIGENCIA {vigenciaCorta}</div>
             </div>
           </div>
 

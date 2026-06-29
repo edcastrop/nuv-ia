@@ -47,6 +47,22 @@ export function computeDiscount(honorariosBase: number, d: DiscountState) {
   };
 }
 
+const PRESETS: { horas: 12 | 24 | 48; pct: number; label: string }[] = [
+  { horas: 12, pct: 25, label: "Decisión en 12h" },
+  { horas: 24, pct: 20, label: "Decisión en 24h" },
+  { horas: 48, pct: 15, label: "Decisión en 48h" },
+];
+
+export function vigenciaPresetMatch(state: DiscountState): 12 | 24 | 48 | null {
+  if (state.type !== "percent") return null;
+  const v = parseFloat(String(state.value).replace(",", ".")) || 0;
+  const preset = PRESETS.find((p) => Math.abs(p.pct - v) < 0.01);
+  if (!preset) return null;
+  // Vigencia debe contener "Xh" o "X horas"
+  const re = new RegExp(`(^|\\D)${preset.horas}\\s*h(oras)?\\b`, "i");
+  return re.test(state.vigencia ?? "") ? preset.horas : null;
+}
+
 export function DiscountModule({
   honorariosBase,
   state,
@@ -63,11 +79,56 @@ export function DiscountModule({
   const set = <K extends keyof DiscountState>(k: K, v: DiscountState[K]) =>
     onChange({ ...state, [k]: v });
 
+  const presetActivo = vigenciaPresetMatch(state);
+
+  const aplicarPreset = (p: (typeof PRESETS)[number]) => {
+    onChange({
+      type: "percent",
+      value: String(p.pct),
+      vigencia: `${p.horas} horas desde el envío de la propuesta`,
+    });
+  };
+
   return (
     <Card>
-      <SectionTitle sub="Beneficio comercial autorizado para impulsar el cierre">
-        Descuento comercial sobre honorarios
+      <SectionTitle sub="Premia la decisión rápida del cliente. La vigencia se cuenta desde el envío de la propuesta.">
+        Beneficio por decisión rápida
       </SectionTitle>
+      <div className="mb-4 grid gap-2 md:grid-cols-3">
+        {PRESETS.map((p) => {
+          const activo = presetActivo === p.horas;
+          return (
+            <button
+              key={p.horas}
+              type="button"
+              onClick={() => aplicarPreset(p)}
+              className="rounded-xl border px-3 py-3 text-left transition"
+              style={{
+                background: activo
+                  ? "linear-gradient(135deg, #1F7A45 0%, #2EA85F 100%)"
+                  : "#fff",
+                color: activo ? "#fff" : "#242424",
+                borderColor: activo ? "#1F7A45" : "#E3E7EE",
+                boxShadow: activo ? "0 8px 22px -10px rgba(31,122,69,0.7)" : "none",
+              }}
+            >
+              <div className="text-[10px] font-bold uppercase tracking-wider opacity-80">
+                {p.label}
+              </div>
+              <div className="mt-0.5 text-xl font-extrabold leading-none">
+                −{p.pct}%
+              </div>
+              <div className="mt-1 text-[10.5px] font-semibold opacity-85">
+                Vigencia {p.horas} horas
+              </div>
+            </button>
+          );
+        })}
+      </div>
+      <hr className="my-3 border-[#E3E7EE]" />
+      <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-[#242424]/60">
+        Ajuste manual (opcional)
+      </div>
       <div className="grid gap-4 md:grid-cols-4">
         <label className="flex flex-col gap-1">
           <span className="text-xs font-medium uppercase tracking-wide text-[#242424]/70">
