@@ -76,15 +76,18 @@ function dtoToSnapshot(dto: CaseSnapshotDTO): CaseSnapshotData {
   const p = dto.propuesta;
   const h = dto.honorarios;
   const costoTotal = c.costoReal || c.totalProyectado || 0;
+  const totalPendiente = c.totalProyectado || costoTotal;
 
   // NO restar seguros — cuotaActual del extracto ya viene neta
   const cuotaDisplay = c.cuotaActual || 0;
 
   // Multiplicador: siempre recalcular desde costoTotal/saldoCapital
   // para evitar usar vecesPagado guardado que puede estar mal
+  const baseMultiplicador = c.valorDesembolsado > 0 ? c.valorDesembolsado : c.saldoCapital;
+  const numeradorMultiplicador = c.valorDesembolsado > 0 ? costoTotal : totalPendiente;
   const multiplicador =
-    costoTotal > 0 && c.saldoCapital > 0
-      ? Math.round((costoTotal / c.saldoCapital) * 100) / 100
+    numeradorMultiplicador > 0 && baseMultiplicador > 0
+      ? Math.round((numeradorMultiplicador / baseMultiplicador) * 100) / 100
       : c.vecesPagado || 0;
 
   const cuotasPendientesCoherentes =
