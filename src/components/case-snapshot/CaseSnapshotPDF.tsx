@@ -643,10 +643,10 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
                 { label: "Nuevo plazo", value: `${e.propuesta.nuevoPlazo} meses`, sub: `-${mesesDiff} meses`, color: C.textSec },
                 { label: "Cuotas eliminadas", value: String(e.propuesta.cuotasEliminadas), sub: `-${cuotasElimPct}% del plazo total`, color: C.green2 },
               ].map((x) => (
-                <div key={x.label} style={{ background: "linear-gradient(180deg, rgba(15,30,52,0.95), rgba(10,20,38,0.95))", border: `1px solid ${C.border}`, borderRadius: 7, padding: "14px 8px 12px", minHeight: 92, textAlign: "center", overflow: "hidden", boxSizing: "border-box" }}>
+                <div key={x.label} style={{ background: "linear-gradient(180deg, rgba(15,30,52,0.95), rgba(10,20,38,0.95))", border: `1px solid ${C.border}`, borderRadius: 7, padding: "13px 7px 12px", minHeight: 106, textAlign: "center", overflow: "visible", boxSizing: "border-box" }}>
                   <MiniLabel>{x.label}</MiniLabel>
-                  <div style={{ fontSize: 16.5, fontWeight: 950, color: C.text, marginTop: 8, lineHeight: 1.1, letterSpacing: "-0.01em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{x.value}</div>
-                  <div style={{ fontSize: 8.2, color: x.color, marginTop: 7, fontWeight: 700, lineHeight: 1.2 }}>{x.sub}</div>
+                  <div style={{ fontSize: 13.4, fontWeight: 950, color: C.text, marginTop: 9, lineHeight: 1.38, letterSpacing: "0", whiteSpace: "nowrap", overflow: "visible" }}>{x.value}</div>
+                  <div style={{ fontSize: 8.2, color: x.color, marginTop: 8, fontWeight: 700, lineHeight: 1.28 }}>{x.sub}</div>
                 </div>
               ))}
             </div>
@@ -656,10 +656,10 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
                 { label: "Ahorro intereses", value: cop(e.propuesta.ahorroIntereses), sub: "Proyección estimada" },
                 { label: "Ahorro seguros", value: cop(e.propuesta.ahorroSeguros), sub: "Proyección estimada" },
               ].map((x) => (
-                <div key={x.label} style={{ background: "linear-gradient(180deg, rgba(15,30,52,0.95), rgba(10,20,38,0.95))", border: `1px solid ${C.border}`, borderRadius: 7, padding: "13px 8px 12px", minHeight: 86, textAlign: "center", overflow: "hidden", boxSizing: "border-box" }}>
+                <div key={x.label} style={{ background: "linear-gradient(180deg, rgba(15,30,52,0.95), rgba(10,20,38,0.95))", border: `1px solid ${C.border}`, borderRadius: 7, padding: "12px 7px 12px", minHeight: 98, textAlign: "center", overflow: "visible", boxSizing: "border-box" }}>
                   <MiniLabel>{x.label}</MiniLabel>
-                  <div style={{ fontSize: 15.5, fontWeight: 950, color: C.text, marginTop: 8, lineHeight: 1.1, letterSpacing: "-0.01em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{x.value}</div>
-                  <div style={{ fontSize: 8.2, color: C.textMuted, marginTop: 7, lineHeight: 1.2 }}>{x.sub}</div>
+                  <div style={{ fontSize: 12.8, fontWeight: 950, color: C.text, marginTop: 9, lineHeight: 1.38, letterSpacing: "0", whiteSpace: "nowrap", overflow: "visible" }}>{x.value}</div>
+                  <div style={{ fontSize: 8.2, color: C.textMuted, marginTop: 8, lineHeight: 1.28 }}>{x.sub}</div>
                 </div>
               ))}
             </div>
