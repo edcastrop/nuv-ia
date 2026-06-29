@@ -487,7 +487,7 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
         </div>
 
         <Card style={{ padding: 20, marginBottom: 12, overflow: "visible" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "184px 94px minmax(156px,1fr) 72px 148px", gap: 10, alignItems: "center", width: "100%", boxSizing: "border-box" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "176px 88px minmax(166px,1fr) 70px 154px", gap: 10, alignItems: "center", width: "100%", boxSizing: "border-box" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0, paddingRight: 8, borderRight: `1px solid ${C.border}` }}>
               <ClienteAvatar />
               <div style={{ minWidth: 0 }}>
