@@ -130,8 +130,6 @@ export function buildWhatsAppMessage(p: {
   const ahorroRecomendado = recomendada ? Math.max(0, recomendada.ahorroTotal) : 0;
   const añosRecomendado = recomendada ? Math.max(0, Math.round(recomendada.añosEliminados)) : 0;
   const honBaseRecomendado = recomendada && typeof recomendada.honorarios === "number" ? recomendada.honorarios : 0;
-  const honFinalRecomendado = recomendada && typeof recomendada.honorariosFinal === "number" ? recomendada.honorariosFinal : honBaseRecomendado;
-  const hayDescuentoRecomendado = honFinalRecomendado > 0 && honFinalRecomendado < honBaseRecomendado;
 
   const incrementos = p.propuestas.map((x) =>
     Math.max(0, typeof x.incrementoMensual === "number" ? x.incrementoMensual : x.nuevaCuota - p.cuotaActual),
