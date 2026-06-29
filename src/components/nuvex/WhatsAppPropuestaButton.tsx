@@ -191,16 +191,36 @@ export function buildWhatsAppMessage(p: {
     lines.push("");
   }
 
-  if (tieneHonorarios && recomendada) {
-    lines.push(`💰 *Honorarios a éxito*`);
+  if (tieneHonorarios && recomendada && honBaseRecomendado > 0) {
+    const tiers = DR_TIERS.map((t) => {
+      const bruto = Math.round(honBaseRecomendado * (1 - t.pct / 100));
+      const precio = Math.max(HONORARIOS_MIN_FINAL, bruto);
+      return { ...t, precio, ahorro: Math.max(0, honBaseRecomendado - precio) };
+    });
+    const uniquePrices = Array.from(new Set(tiers.map((t) => t.precio)));
+    const colapsado = uniquePrices.length === 1;
+
+    lines.push(`💰 *Honorarios a éxito — Beneficio por decisión rápida*`);
     lines.push("");
-    if (hayDescuentoRecomendado && honFinalRecomendado > 0) {
-      lines.push(`Si decides avanzar con nosotros, puedo otorgarte un *beneficio por pronta firma*, dejando los honorarios de esta propuesta en *${formatCOP(honFinalRecomendado)}* en lugar de *${formatCOP(honBaseRecomendado)}*.`);
-    } else if (honBaseRecomendado > 0) {
-      lines.push(`Los honorarios de esta propuesta serían de *${formatCOP(honBaseRecomendado)}*. Si decides avanzar en la llamada, podemos revisar un beneficio por pronta firma.`);
+    lines.push(`Tarifa estándar: *${formatCOP(honBaseRecomendado)}*`);
+    lines.push("");
+
+    if (colapsado) {
+      const precio = uniquePrices[0]!;
+      const ahorro = Math.max(0, honBaseRecomendado - precio);
+      lines.push(`Por el tamaño de tu caso, los honorarios ya parten del *mínimo NUVEX*:`);
+      lines.push(`👉 *${formatCOP(precio)}* — tarifa final única${ahorro > 0 ? ` (ahorro ${formatCOP(ahorro)} vs. estándar)` : ""}.`);
+      lines.push("");
+      lines.push(`_Mientras más pasa el tiempo, más se pierde dinero. Decidir hoy es recuperar años de tu vida financiera._`);
+    } else {
+      tiers.forEach((t) => {
+        lines.push(`${t.emoji} *Decisión en ${t.horas}h* (-${t.pct}%) → *${formatCOP(t.precio)}*  _ahorras ${formatCOP(t.ahorro)}_`);
+      });
+      lines.push("");
+      lines.push(`Mientras más rápido decidas, más ahorras en honorarios. El reloj corre desde el envío de esta propuesta ⏳`);
     }
     lines.push("");
-    lines.push(`Nuestros honorarios solo se generan si obtenemos el resultado aprobado por el banco. Es decir, si no logramos la optimización, *no pagas nada*. Todo esto queda respaldado por contrato.`);
+    lines.push(`Nuestros honorarios solo se generan si obtenemos el resultado aprobado por el banco. Si no logramos la optimización, *no pagas nada*. Todo queda respaldado por contrato.`);
     lines.push("");
   }
 
