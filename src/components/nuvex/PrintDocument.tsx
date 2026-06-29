@@ -25,7 +25,7 @@ import { NUVEX } from "./constants";
 import type { ClientData } from "./ClientFields";
 import { formatCOP, formatNumber } from "../../lib/format";
 import { factorInflacionAcumulado } from "../../lib/inflacionIPC";
-import type { PesosPropuesta, UVRPropuesta } from "../../lib/finance";
+import { HONORARIOS_MIN_FINAL, type PesosPropuesta, type UVRPropuesta } from "../../lib/finance";
 import type { PropuestaComercialPdfRow } from "./PropuestasComerciales";
 import { calcularMotor } from "../../lib/motorHonorarios";
 import logoNuvex from "@/assets/logo-nuvex-cropped.png";
@@ -205,8 +205,9 @@ export function PrintDocument(props: Props) {
   const vigenciaRaw = (commercial?.vigencia ?? "").trim();
   const horasMatch = vigenciaRaw.match(/(\d{1,3})\s*h/i);
   const horasVigencia = horasMatch ? horasMatch[1] : "48";
-  // Página 1 SIEMPRE muestra el mejor descuento (12h = 25%) como gancho comercial.
-  const honorariosMejorTier = Math.round(honorariosBase * 0.75);
+  // Página 1 SIEMPRE muestra el mejor descuento (12h = 25%) como gancho comercial,
+  // respetando el piso comercial mínimo de honorarios.
+  const honorariosMejorTier = Math.max(HONORARIOS_MIN_FINAL, Math.round(honorariosBase * 0.75));
   const vigenciaMejorTier = "12 HORAS";
 
   const consistenciaOk = Math.abs((commercial?.honorariosBase ?? recommended.honorarios) - recommended.honorarios) < 1;
@@ -724,8 +725,10 @@ function DecisionRapidaTable({ honorariosBase, horasActivas }: { honorariosBase:
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 9 }}>
         {TIERS_DR.map((t) => {
           const activo = activeTier?.horas === t.horas;
-          const precio = Math.round(honorariosBase * (1 - t.pct / 100));
-          const ahorro = honorariosBase - precio;
+          const precioBruto = Math.round(honorariosBase * (1 - t.pct / 100));
+          const precio = Math.max(HONORARIOS_MIN_FINAL, precioBruto);
+          const ahorro = Math.max(0, honorariosBase - precio);
+          const pisoAplicado = precio !== precioBruto;
           const bg = activo ? "linear-gradient(180deg,#1F7A45,#155A33)" : "#FFFFFF";
           const borderCol = activo ? C.greenDeep : C.line;
           const textInk = activo ? "#FFFFFF" : C.ink;
@@ -739,7 +742,12 @@ function DecisionRapidaTable({ honorariosBase, horasActivas }: { honorariosBase:
               <div style={{ display: "flex", alignItems: "center", gap: 6, color: accent, fontSize: 10, fontWeight: 950, letterSpacing: "0.06em" }}>
                 <span style={{ fontSize: 13 }}>{t.icon}</span>{t.label.toUpperCase()}
               </div>
-              <div style={{ marginTop: 6, color: accent, fontSize: 22, fontWeight: 950, lineHeight: 1 }}>{t.pct}% OFF</div>
+              <div style={{ marginTop: 6, color: accent, fontSize: 22, fontWeight: 950, lineHeight: 1 }}>
+                {t.pct}% OFF
+                {pisoAplicado && (
+                  <span style={{ marginLeft: 6, fontSize: 8.4, fontWeight: 800, letterSpacing: "0.08em", color: accent, opacity: 0.85 }}>· PISO MÍN.</span>
+                )}
+              </div>
               <div style={{ marginTop: 7, display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 6 }}>
                 <span style={{ fontSize: 8.6, fontWeight: 800, color: textMuted, letterSpacing: "0.04em" }}>ESTÁNDAR</span>
                 <span style={{ fontSize: 10.5, fontWeight: 800, color: textMuted, textDecoration: "line-through" }}>{formatCOP(honorariosBase)}</span>
