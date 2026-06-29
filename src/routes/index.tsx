@@ -422,12 +422,14 @@ function SectionImpacto() {
 function TiltGlassCard({ t, Icon, gradient }: { t: string; Icon: any; gradient: string }) {
   const [pos, setPos] = useState({ x: 50, y: 50, rx: 0, ry: 0, active: false });
 
-  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const activate = () => setPos((p) => ({ ...p, active: true }));
+
+  const handleMove = (e: React.PointerEvent<HTMLDivElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - r.left) / r.width) * 100;
     const y = ((e.clientY - r.top) / r.height) * 100;
-    const ry = ((x - 50) / 50) * 8;
-    const rx = -((y - 50) / 50) * 8;
+    const ry = ((x - 50) / 50) * 15;
+    const rx = -((y - 50) / 50) * 15;
     setPos({ x, y, rx, ry, active: true });
   };
 
@@ -435,30 +437,38 @@ function TiltGlassCard({ t, Icon, gradient }: { t: string; Icon: any; gradient: 
 
   return (
     <div
-      onMouseMove={handleMove}
-      onMouseLeave={handleLeave}
-      className="group relative rounded-2xl p-4 overflow-hidden cursor-default"
+      onPointerEnter={activate}
+      onPointerMove={handleMove}
+      onPointerLeave={handleLeave}
+      className="group relative min-h-[92px] rounded-2xl p-4 overflow-hidden cursor-default will-change-transform"
       style={{
         background: pos.active
-          ? "linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02))"
-          : "linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.015))",
-        border: "1px solid rgba(255,255,255,0.10)",
-        backdropFilter: "blur(14px) saturate(140%)",
-        transform: `perspective(800px) rotateX(${pos.rx}deg) rotateY(${pos.ry}deg) translateZ(0)`,
+          ? "linear-gradient(135deg, rgba(255,255,255,0.16), rgba(255,255,255,0.035))"
+          : "linear-gradient(135deg, rgba(255,255,255,0.095), rgba(255,255,255,0.025))",
+        border: pos.active ? "1px solid rgba(255,255,255,0.34)" : "1px solid rgba(255,255,255,0.16)",
+        backdropFilter: "blur(24px) saturate(180%)",
+        transform: `perspective(760px) rotateX(${pos.rx}deg) rotateY(${pos.ry}deg) translateY(${pos.active ? "-8px" : "0"}) scale(${pos.active ? 1.045 : 1}) translateZ(0)`,
         transformStyle: "preserve-3d",
-        transition: "transform 250ms ease, background 250ms ease, box-shadow 250ms ease",
+        transition: pos.active
+          ? "background 160ms ease, border-color 160ms ease, box-shadow 160ms ease"
+          : "transform 360ms cubic-bezier(.2,.8,.2,1), background 260ms ease, border-color 260ms ease, box-shadow 260ms ease",
         boxShadow: pos.active
-          ? "0 18px 40px -18px rgba(68,93,163,0.55), 0 0 0 1px rgba(255,255,255,0.06) inset"
-          : "0 0 0 1px rgba(255,255,255,0.04) inset",
+          ? "0 28px 70px -24px rgba(68,93,163,0.72), 0 18px 45px -28px rgba(132,185,143,0.75), 0 0 0 1px rgba(255,255,255,0.18) inset"
+          : "0 12px 35px -30px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.06) inset",
       }}
     >
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none opacity-70"
+        style={{ background: "linear-gradient(115deg, rgba(255,255,255,0.16), transparent 28%, rgba(255,255,255,0.05) 54%, transparent 72%)" }}
+      />
       {/* spotlight que sigue el mouse */}
       <div
         aria-hidden
         className="absolute inset-0 pointer-events-none transition-opacity duration-300"
         style={{
           opacity: pos.active ? 1 : 0,
-          background: `radial-gradient(280px circle at ${pos.x}% ${pos.y}%, rgba(255,255,255,0.18), transparent 55%)`,
+          background: `radial-gradient(360px circle at ${pos.x}% ${pos.y}%, rgba(255,255,255,0.34), rgba(132,185,143,0.14) 28%, transparent 62%)`,
         }}
       />
       {/* halo gradiente esquina */}
@@ -481,12 +491,12 @@ function TiltGlassCard({ t, Icon, gradient }: { t: string; Icon: any; gradient: 
       />
       <div className="relative flex items-center gap-3" style={{ transform: "translateZ(20px)" }}>
         <div
-          className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110"
-          style={{ background: gradient, boxShadow: "0 8px 20px -8px rgba(0,0,0,0.5)" }}
+          className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-125 group-hover:-rotate-6"
+          style={{ background: gradient, boxShadow: pos.active ? "0 16px 34px -10px rgba(132,185,143,0.55)" : "0 8px 20px -8px rgba(0,0,0,0.5)" }}
         >
           <Icon size={16} className="text-white" />
         </div>
-        <div className="text-[13px] font-medium text-white/90 leading-tight">{t}</div>
+        <div className="text-[13px] font-semibold text-white leading-tight drop-shadow-sm">{t}</div>
       </div>
     </div>
   );
@@ -506,7 +516,16 @@ function SectionProposito() {
             inteligencia financiera, automatización e innovación para acompañar a las familias
             en la gestión de sus créditos de vivienda.
           </p>
-          <div className="mt-8 grid grid-cols-2 gap-3" style={{ perspective: "1000px" }}>
+          <div className="relative mt-8 grid grid-cols-2 gap-3 rounded-3xl p-3" style={{ perspective: "1000px" }}>
+            <div
+              aria-hidden
+              className="absolute inset-0 rounded-3xl"
+              style={{
+                background:
+                  "radial-gradient(circle at 18% 12%, rgba(68,93,163,0.42), transparent 38%), radial-gradient(circle at 82% 88%, rgba(132,185,143,0.34), transparent 42%), linear-gradient(135deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01))",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
+            />
             {[
               { t: "Inteligencia Financiera", Icon: Cpu, gradient: `linear-gradient(135deg, ${BLUE}, #6B8FD9)` },
               { t: "Automatización", Icon: Settings2, gradient: `linear-gradient(135deg, #5A7DC9, ${GREEN})` },
