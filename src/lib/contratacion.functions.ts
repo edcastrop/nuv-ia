@@ -21,11 +21,10 @@ const InputSchema = z.object({
   attachments: z.array(AttachmentSchema).min(1).max(10),
 });
 
-function isForbiddenLegalPdf(filename: string, contentType: string) {
-  const name = filename.toLowerCase();
-  const isPdf = contentType.toLowerCase().includes("pdf") || name.endsWith(".pdf");
-  return isPdf && (name.includes("poder") || name.includes("ficha"));
-}
+// Nota: el Poder Especial y la Ficha Contractual viajan ahora a contratación
+// en formato PDF con el branding NUVEX (mismo PDF que descarga el botón azul).
+// Las versiones .docx quedan deprecadas para el envío a contratación.
+
 
 const RESEND_GATEWAY = "https://connector-gateway.lovable.dev/resend";
 
