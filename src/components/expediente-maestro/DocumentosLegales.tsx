@@ -812,7 +812,7 @@ function IJSelect({
 }
 
 function InformacionJuridicaEditor({
-  titular, cotitular, onTitular, onCotitular, canPersist, saving, saved, onSave, onSync, syncFlash,
+  titular, cotitular, onTitular, onCotitular, canPersist, saving, saved, onSave, onSync, syncFlash, expedienteId,
 }: {
   titular: Partial<ClienteMaestro>;
   cotitular: Partial<CotitularMaestro> & { activo?: boolean };
@@ -824,6 +824,7 @@ function InformacionJuridicaEditor({
   onSave: () => void;
   onSync: () => void;
   syncFlash: boolean;
+  expedienteId?: string;
 }) {
   const setT = <K extends keyof ClienteMaestro>(k: K, v: string) => onTitular({ ...titular, [k]: v });
   const setC = <K extends keyof CotitularMaestro>(k: K, v: string) => onCotitular({ ...cotitular, [k]: v });
@@ -892,6 +893,8 @@ function InformacionJuridicaEditor({
         <CedulaReaderMaestro
           label="titular"
           tone="dark"
+          expedienteId={expedienteId}
+          soporteSubcategoria="cedula_titular"
           onApply={(patch) => onTitular({ ...titular, ...patch })}
         />
       </div>
@@ -925,7 +928,9 @@ function InformacionJuridicaEditor({
             <CedulaReaderMaestro
               label="cotitular"
               tone="dark"
-              onApply={(patch) => onCotitular({ ...cotitular, ...patch })}
+              expedienteId={expedienteId}
+              soporteSubcategoria="cedula_cotitular_1"
+              onApply={(patch) => onCotitular({ ...cotitular, activo: true, ...patch })}
             />
           </div>
           <label className="mb-3 flex items-center gap-2 rounded-lg border border-[#445DA3]/20 bg-[#445DA3]/5 p-3 text-sm text-[#242424]">
