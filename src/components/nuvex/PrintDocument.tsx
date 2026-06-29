@@ -327,7 +327,7 @@ export function PrintDocument(props: Props) {
 
       <section className="nuvex-print-page" style={pageStyle(false)}>
         <TopBar page="Página 2 de 2" />
-        <main style={{ padding: "10px 32px 12px", flex: "1 1 auto", display: "flex", flexDirection: "column" }}>
+        <main style={{ padding: "10px 32px 12px", flex: "1 1 auto", minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
           <h2 style={{ margin: 0, fontSize: 24, lineHeight: 1, fontWeight: 950, color: "#071023", letterSpacing: 0 }}>COMPARACIÓN DE ESCENARIOS</h2>
           <p style={{ margin: "4px 0 9px", color: C.text, fontSize: 11.4, lineHeight: 1.28, fontWeight: 600 }}>
             Analizamos diferentes alternativas para que elijas<br />el nivel de optimización que mejor se adapta a tus objetivos financieros.
