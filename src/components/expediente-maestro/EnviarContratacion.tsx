@@ -7,7 +7,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Send, X, Plus, Trash2, CheckCircle2, AlertTriangle, Loader2, Mail } from "lucide-react";
 import { NUVEX } from "@/components/nuvex/constants";
 import type { LegalDoc } from "@/lib/legalDocs";
-import { legalDocToDOCXBlob } from "@/lib/legalDocsExport";
+import { legalDocToPDFBlob } from "@/lib/legalDocsExport";
 import { supabase } from "@/integrations/supabase/client";
 import {
   listDestinatarios, addDestinatario, deleteDestinatario, setDestinatarioActivo,
