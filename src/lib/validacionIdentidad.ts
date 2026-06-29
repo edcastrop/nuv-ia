@@ -105,6 +105,9 @@ export interface CamposCriticos {
   cotitularNombre?: string;
   cotitularCedula?: string;
   cotitularDireccion?: string;
+  cotitularEmail?: string;
+  cotitularCelular?: string;
+  cotitularLugarExpedicion?: string;
 }
 
 export type Inconsistencia = {
