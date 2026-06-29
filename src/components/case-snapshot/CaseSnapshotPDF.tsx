@@ -549,7 +549,7 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
           >
             <div style={{ textAlign: "center", padding: "14px 18px", position: "relative" }}>
               <MiniLabel style={{ fontSize: 9, marginBottom: 8, color: "#C7B8FF" }}>Vas a pagar</MiniLabel>
-              <div style={{ fontSize: 68, fontWeight: 950, lineHeight: 0.88, letterSpacing: "-0.02em", background: "linear-gradient(95deg, #6E8BFF 0%, #8A6DFF 55%, #C7B8FF 100%)", WebkitBackgroundClip: "text", color: "transparent", filter: "drop-shadow(0 0 22px rgba(138,109,255,0.45))" }}>{e.credito.multiplicador.toFixed(2)}x</div>
+              <div style={{ fontSize: 68, fontWeight: 950, lineHeight: 0.88, letterSpacing: "-0.02em", color: "#C7B8FF", textShadow: "0 0 22px rgba(138,109,255,0.55), 0 0 8px rgba(110,139,255,0.45)" }}>{(e.credito.multiplicador > 0 ? e.credito.multiplicador : 0).toFixed(2)}x</div>
               <div style={{ fontSize: 10.5, fontWeight: 900, color: "#E8E1FF", letterSpacing: "0.14em", textTransform: "uppercase", marginTop: 10 }}>El valor de tu crédito</div>
             </div>
             <div style={{ padding: "0 26px 0 22px", fontSize: 11.4, color: "#DCE3F5", lineHeight: 1.6, borderLeft: "1px solid rgba(138,109,255,0.22)" }}>
