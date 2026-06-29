@@ -11,6 +11,7 @@ import type {
 } from "@/lib/expedienteMaestro";
 import type { CoberturaFresh } from "@/lib/proyeccion";
 import { ChevronDown } from "lucide-react";
+import { CedulaReaderMaestro } from "./CedulaReaderMaestro";
 
 function Accordion({
   title, subtitle, defaultOpen = true, children,
