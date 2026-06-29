@@ -175,20 +175,29 @@ export function extraerCamposCriticosDesdeExpediente(
 ): CamposCriticos {
   const cd = (exp.cliente_data ?? {}) as unknown as Record<string, unknown>;
   const pick = (k: string) => (typeof cd[k] === "string" ? (cd[k] as string) : "");
+  const obj = (k: string) => (cd[k] && typeof cd[k] === "object" && !Array.isArray(cd[k]) ? (cd[k] as Record<string, unknown>) : {});
+  const objStr = (source: Record<string, unknown>, ...keys: string[]) => {
+    for (const k of keys) {
+      if (typeof source[k] === "string" && String(source[k]).trim()) return String(source[k]);
+    }
+    return "";
+  };
   const ij = (cd.informacionJuridica ?? {}) as {
     titular?: Record<string, string>;
     cotitular?: Record<string, string> & { activo?: boolean };
   };
   const t = ij.titular ?? {};
   const co = ij.cotitular ?? {};
+  const coFlat = obj("cotitular");
   const intervinientes = Array.isArray(cd.intervinientes) ? cd.intervinientes as Array<Record<string, unknown>> : [];
   const titularInterviniente = intervinientes[0] ?? {};
   const cotitularInterviniente = (intervinientes[1] ?? {}) as Record<string, unknown>;
-  const coStr = (k: string) => (typeof cotitularInterviniente[k] === "string" ? (cotitularInterviniente[k] as string) : "");
+  const coStr = (...keys: string[]) => objStr(cotitularInterviniente, ...keys) || objStr(coFlat, ...keys);
   const cotitularActivo =
     !!co.activo ||
+    !!coFlat.activo ||
     !!(co.nombre || co.cedula) ||
-    !!(coStr("nombreCompleto") || coStr("cedula"));
+    !!(coStr("nombreCompleto", "nombre") || coStr("cedula", "numeroDocumento", "documento"));
   return {
     nombre: t.nombre || pick("nombre") || exp.cliente_nombre || "",
     tipoDocumento: t.tipoDocumento || pick("tipoDocumento") || "CC",
@@ -204,8 +213,8 @@ export function extraerCamposCriticosDesdeExpediente(
     numeroCredito: pick("numeroCredito") || exp.numero_credito || "",
     tipoProducto: pick("tipoProducto") || exp.producto || "",
     cotitularActivo,
-    cotitularNombre: co.nombre || coStr("nombreCompleto") || "",
-    cotitularCedula: co.cedula || coStr("cedula") || "",
+    cotitularNombre: co.nombre || coStr("nombreCompleto", "nombre") || "",
+    cotitularCedula: co.cedula || coStr("cedula", "numeroDocumento", "documento") || "",
     cotitularDireccion: co.direccion || coStr("direccion") || "",
   };
 
@@ -314,6 +323,26 @@ export async function actualizarCamposCriticos(
   setIf("cotitularNombre", cotitular, "nombre");
   setIf("cotitularCedula", cotitular, "cedula");
   setIf("cotitularDireccion", cotitular, "direccion");
+
+  if (
+    campos.cotitularActivo !== undefined ||
+    campos.cotitularNombre !== undefined ||
+    campos.cotitularCedula !== undefined ||
+    campos.cotitularDireccion !== undefined
+  ) {
+    const ints = Array.isArray(cd.intervinientes) ? [...(cd.intervinientes as Array<Record<string, unknown>>)] : [];
+    if (!ints[0]) ints[0] = { rol: "Titular", nombreCompleto: cd.nombre ?? cur?.cliente_nombre ?? "", cedula: cd.cedula ?? cur?.cedula ?? "" };
+    const cotInt = { ...(ints[1] ?? { rol: "Cotitular" }) };
+    if (campos.cotitularNombre !== undefined) cotInt.nombreCompleto = campos.cotitularNombre;
+    if (campos.cotitularCedula !== undefined) cotInt.cedula = campos.cotitularCedula;
+    if (campos.cotitularDireccion !== undefined) cotInt.direccion = campos.cotitularDireccion;
+    if (campos.cotitularActivo === false && !cotInt.nombreCompleto && !cotInt.cedula) {
+      ints.splice(1, 1);
+    } else if (campos.cotitularActivo !== false || cotInt.nombreCompleto || cotInt.cedula) {
+      ints[1] = cotInt;
+    }
+    cd.intervinientes = ints;
+  }
 
   cd.informacionJuridica = { ...ij, titular, cotitular };
 
