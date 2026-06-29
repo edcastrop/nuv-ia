@@ -435,6 +435,68 @@ export function ChecklistDocumental({ expediente, simExpediente }: Props) {
         </div>
       </div>
 
+      {/* Selector perfil + flags del COTITULAR (si aplica) */}
+      {cotitularActivo && (
+        <div className="grid gap-3 md:grid-cols-2 mb-4">
+          <div className="rounded-lg border p-3" style={{ borderColor: "#C7D9EF", backgroundColor: "#EEF4FB" }}>
+            <div className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: NUVEX.azul }}>
+              Perfil laboral · Cotitular{expediente.cotitular?.nombre ? ` (${expediente.cotitular.nombre})` : ""}
+            </div>
+            <div className="flex gap-1.5 flex-wrap">
+              {(["empleado", "independiente", "ambos"] as PerfilLaboral[]).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPerfilCot(p)}
+                  className="px-2.5 py-1 rounded-md text-xs font-medium border"
+                  style={{
+                    borderColor: perfilCot === p ? NUVEX.azul : "#C7D9EF",
+                    backgroundColor: perfilCot === p ? NUVEX.azul : "#fff",
+                    color: perfilCot === p ? "#fff" : "#242424",
+                  }}
+                >
+                  {p === "ambos" ? "Empleado + Independiente" : p[0].toUpperCase() + p.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-lg border bg-white p-3 space-y-2" style={{ borderColor: "#C7D9EF" }}>
+            <div className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: NUVEX.azul }}>
+              Condiciones del cotitular
+            </div>
+            <label className="flex items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                checked={flagsCot.declaraRenta}
+                onChange={(e) => setFlagsCot((s) => ({ ...s, declaraRenta: e.target.checked }))}
+              />
+              ¿Cotitular declara renta?
+            </label>
+            <label className="flex items-center gap-2 text-xs">
+              <span>Frecuencia de pago:</span>
+              <select
+                value={flagsCot.frecuenciaPago}
+                onChange={(e) =>
+                  setFlagsCot((s) => ({ ...s, frecuenciaPago: e.target.value as "mensual" | "quincenal" }))
+                }
+                className="rounded-md border border-[#E3E7EE] px-2 py-0.5 text-xs"
+              >
+                <option value="mensual">Mensual (3 desprendibles)</option>
+                <option value="quincenal">Quincenal (6 desprendibles)</option>
+              </select>
+            </label>
+            <label className="flex items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                checked={flagsCot.recibePorBilleteras}
+                onChange={(e) => setFlagsCot((s) => ({ ...s, recibePorBilleteras: e.target.checked }))}
+              />
+              ¿Recibe ingresos por billeteras virtuales?
+            </label>
+          </div>
+        </div>
+      )}
+
+
       {/* Lista de documentos */}
       <div className="space-y-2">
         {loading && <div className="text-xs text-[#242424]/60">Cargando…</div>}
