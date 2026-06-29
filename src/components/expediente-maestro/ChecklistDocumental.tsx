@@ -153,8 +153,14 @@ export function ChecklistDocumental({ expediente, simExpediente }: Props) {
 
 
   const docs = useMemo(
-    () => buildChecklist(expediente, perfil, flags),
-    [expediente, perfil, flags],
+    () =>
+      buildChecklist(expediente, perfil, flags, {
+        activo: cotitularActivo,
+        perfil: perfilCot,
+        flags: flagsCot,
+        nombre: expediente.cotitular?.nombre ?? "",
+      }),
+    [expediente, perfil, flags, cotitularActivo, perfilCot, flagsCot],
   );
 
   const rowByDocId = useMemo(() => {
