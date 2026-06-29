@@ -738,7 +738,7 @@ function DecisionRapidaTable({ honorariosBase, horasActivas }: { honorariosBase:
           <div style={{ color: C.greenDeep, fontWeight: 950, fontSize: 13, letterSpacing: "0.06em" }}>BENEFICIO POR DECISIÓN RÁPIDA</div>
           <div style={{ color: C.text, fontSize: 9.5, fontWeight: 700, letterSpacing: "0.05em" }}>
             {hayAhorro
-              ? "Honorarios en piso comercial — ahorro máximo garantizado."
+              ? "Mientras más pasa el tiempo, más se pierde dinero."
               : "Honorarios mínimos NUVEX — no aplica descuento adicional."}
           </div>
         </div>
