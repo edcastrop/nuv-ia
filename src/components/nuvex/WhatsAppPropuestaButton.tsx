@@ -2,6 +2,13 @@ import { useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { MessageCircle, Copy, X, Check } from "lucide-react";
 import { formatCOP } from "../../lib/format";
+import { HONORARIOS_MIN_FINAL } from "../../lib/finance";
+
+const DR_TIERS: { horas: 12 | 24 | 48; pct: number; emoji: string }[] = [
+  { horas: 12, pct: 25, emoji: "⚡" },
+  { horas: 24, pct: 20, emoji: "🕐" },
+  { horas: 48, pct: 15, emoji: "📅" },
+];
 
 export interface WhatsAppPropuestaItem {
   nuevaCuota: number;
