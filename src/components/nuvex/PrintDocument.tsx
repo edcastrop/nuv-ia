@@ -201,11 +201,13 @@ export function PrintDocument(props: Props) {
   const honorariosFinales = commercial?.hasDiscount ? commercial.finales : recommended.honorarios;
   const honorariosBase = commercial?.honorariosBase ?? recommended.honorarios;
   const descuento = commercial?.hasDiscount ? Math.max(0, honorariosBase - honorariosFinales) : 0;
-  // Vigencia para mostrar en bloques "VÁLIDO POR" y "VIGENCIA". Default 48h si no hay.
+  // Vigencia para mostrar en bloque "VIGENCIA" del tier activo. Default 48h si no hay.
   const vigenciaRaw = (commercial?.vigencia ?? "").trim();
   const horasMatch = vigenciaRaw.match(/(\d{1,3})\s*h/i);
   const horasVigencia = horasMatch ? horasMatch[1] : "48";
-  const vigenciaCorta = `${horasVigencia} HORAS`;
+  // Página 1 SIEMPRE muestra el mejor descuento (12h = 25%) como gancho comercial.
+  const honorariosMejorTier = Math.round(honorariosBase * 0.75);
+  const vigenciaMejorTier = "12 HORAS";
 
   const consistenciaOk = Math.abs((commercial?.honorariosBase ?? recommended.honorarios) - recommended.honorarios) < 1;
   if (!consistenciaOk) {
