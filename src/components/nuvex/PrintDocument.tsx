@@ -371,7 +371,7 @@ export function PrintDocument(props: Props) {
             </div>
           </div>
 
-          <DecisionRapidaTable honorariosBase={honorariosBase} horasActivas={horasVigencia} />
+          <DecisionRapidaTable honorariosBase={honorariosBase} horasActivas={Number(horasVigencia)} />
 
 
 
