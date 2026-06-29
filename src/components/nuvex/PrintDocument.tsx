@@ -305,20 +305,20 @@ export function PrintDocument(props: Props) {
             />
           </div>
 
-          <div style={{ marginTop: 12, background: `linear-gradient(135deg, ${C.navy}, #041229)`, color: "#fff", borderRadius: 10, padding: "16px 22px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 22, alignItems: "center" }}>
-            <DarkBenefit icon={<Shield size={48} color={C.green} strokeWidth={1.6} />} label="HONORARIOS A ÉXITO NUVEX" value={formatCOP(honorariosMejorTier)} sub="Tarifa con beneficio máximo por decisión en 12 horas. Solo se pagan si el banco aprueba la optimización." />
-            <DarkBenefit icon={<Shield size={48} color={C.green} strokeWidth={1.6} />} label="VÁLIDO POR" value={vigenciaMejorTier} sub="Desde el envío de esta propuesta. Mira en la página 2 los otros tramos disponibles (24h y 48h)." right />
+          <div style={{ marginTop: 10, background: `linear-gradient(135deg, ${C.navy}, #041229)`, color: "#fff", borderRadius: 10, padding: "11px 20px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, alignItems: "center" }}>
+            <DarkBenefit icon={<Shield size={42} color={C.green} strokeWidth={1.6} />} label="HONORARIOS A ÉXITO NUVEX" value={formatCOP(honorariosMejorTier)} sub="Beneficio máximo por decisión en 12 horas. Solo se pagan si el banco aprueba." />
+            <DarkBenefit icon={<Shield size={42} color={C.green} strokeWidth={1.6} />} label="VÁLIDO POR" value={vigenciaMejorTier} sub="Desde el envío. Ver otros tramos (24h y 48h) en página 2." right />
           </div>
 
-          <div style={{ marginTop: 10, background: C.navy, borderRadius: 10, color: "#fff", padding: "10px 22px", display: "grid", gridTemplateColumns: "1fr auto", gap: 22, alignItems: "center", flex: "0 0 auto" }}>
-            <div style={{ fontSize: 12.5, lineHeight: 1.34, fontWeight: 600 }}>
-              <span style={{ color: C.green, fontSize: 34, lineHeight: 0, verticalAlign: "middle" }}>“</span> Este crédito terminará de una u otra forma.<br />
+          <div style={{ marginTop: 8, background: C.navy, borderRadius: 10, color: "#fff", padding: "8px 20px", display: "grid", gridTemplateColumns: "1fr auto", gap: 18, alignItems: "center", flex: "0 0 auto" }}>
+            <div style={{ fontSize: 11.5, lineHeight: 1.3, fontWeight: 600 }}>
+              <span style={{ color: C.green, fontSize: 28, lineHeight: 0, verticalAlign: "middle" }}>“</span> Este crédito terminará de una u otra forma.<br />
               La diferencia es decidir si quieres <b style={{ color: C.green }}>recuperar parte de tu tiempo financiero.</b><br />
-              Cada cuota eliminada es tiempo que vuelve a tu vida,<br />a tu familia y a tus proyectos.
+              Cada cuota eliminada es tiempo que vuelve a tu vida, a tu familia y a tus proyectos.
             </div>
-            <div style={{ textAlign: "center", minWidth: 200 }}>
-              <div style={{ color: C.green, fontFamily: SIGNATURE, fontSize: 38, lineHeight: 0.9 }}>{analista}</div>
-              <div style={{ marginTop: 6, fontSize: 10.5, letterSpacing: "0.32em", fontWeight: 900 }}>ANALISTA NUVEX</div>
+            <div style={{ textAlign: "center", minWidth: 180 }}>
+              <div style={{ color: C.green, fontFamily: SIGNATURE, fontSize: 30, lineHeight: 0.9 }}>{analista}</div>
+              <div style={{ marginTop: 3, fontSize: 9.5, letterSpacing: "0.3em", fontWeight: 900 }}>ANALISTA NUVEX</div>
             </div>
           </div>
         </main>
