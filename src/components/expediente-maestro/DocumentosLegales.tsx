@@ -347,6 +347,7 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
           saved={savedFlash}
           onSync={syncFromCase}
           syncFlash={syncFlash}
+          expedienteId={expedienteIdToPersist}
           onSave={async () => {
             if (!expedienteIdToPersist) return;
             setSavingIJ(true);
