@@ -725,8 +725,10 @@ function DecisionRapidaTable({ honorariosBase, horasActivas }: { honorariosBase:
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 9 }}>
         {TIERS_DR.map((t) => {
           const activo = activeTier?.horas === t.horas;
-          const precio = Math.round(honorariosBase * (1 - t.pct / 100));
-          const ahorro = honorariosBase - precio;
+          const precioBruto = Math.round(honorariosBase * (1 - t.pct / 100));
+          const precio = Math.max(HONORARIOS_MIN_FINAL, precioBruto);
+          const ahorro = Math.max(0, honorariosBase - precio);
+          const pisoAplicado = precio !== precioBruto;
           const bg = activo ? "linear-gradient(180deg,#1F7A45,#155A33)" : "#FFFFFF";
           const borderCol = activo ? C.greenDeep : C.line;
           const textInk = activo ? "#FFFFFF" : C.ink;
