@@ -141,6 +141,10 @@ export function MaestroEditor(p: Props) {
         </label>
         {p.cotitular.activo && (
           <>
+            <CedulaReaderMaestro
+              label={rolCotitular}
+              onApply={(patch) => p.onCotitular({ ...p.cotitular, ...patch })}
+            />
             <label className="mb-4 flex items-center gap-2 rounded-lg border border-[#445DA3]/20 bg-[#445DA3]/5 p-3 text-sm text-[#242424]">
               <input type="checkbox" checked={heredada} onChange={(e) => toggleMismaDireccion(e.target.checked)} />
               <span>Vive en la misma dirección del {rolTitular}</span>
