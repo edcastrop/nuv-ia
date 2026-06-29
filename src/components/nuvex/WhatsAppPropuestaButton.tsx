@@ -193,10 +193,12 @@ export function buildWhatsAppMessage(p: {
     const tiers = DR_TIERS.map((t) => {
       const bruto = Math.round(honBaseRecomendado * (1 - t.pct / 100));
       const precio = Math.max(HONORARIOS_MIN_FINAL, bruto);
-      return { ...t, precio, ahorro: Math.max(0, honBaseRecomendado - precio) };
+      return { ...t, precio, ahorro: Math.max(0, honBaseRecomendado - precio), pisoAplicado: precio !== bruto };
     });
+    const algunEnPiso = tiers.some((t) => t.pisoAplicado);
     const uniquePrices = Array.from(new Set(tiers.map((t) => t.precio)));
-    const colapsado = uniquePrices.length === 1;
+    const colapsado = algunEnPiso || uniquePrices.length === 1;
+    const precioColapsado = Math.min(...tiers.map((t) => t.precio));
 
     lines.push(`💰 *Honorarios a éxito — Beneficio por decisión rápida*`);
     lines.push("");
@@ -204,7 +206,7 @@ export function buildWhatsAppMessage(p: {
     lines.push("");
 
     if (colapsado) {
-      const precio = uniquePrices[0]!;
+      const precio = precioColapsado;
       const ahorro = Math.max(0, honBaseRecomendado - precio);
       lines.push(`Por el tamaño de tu caso, los honorarios ya parten del *mínimo NUVEX*:`);
       lines.push(`👉 *${formatCOP(precio)}* — tarifa final única${ahorro > 0 ? ` (ahorro ${formatCOP(ahorro)} vs. estándar)` : ""}.`);
