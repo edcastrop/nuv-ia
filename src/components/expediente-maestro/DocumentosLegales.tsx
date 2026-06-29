@@ -891,6 +891,7 @@ function InformacionJuridicaEditor({
       <div className="mb-3">
         <CedulaReaderMaestro
           label="titular"
+          tone="dark"
           onApply={(patch) => onTitular({ ...titular, ...patch })}
         />
       </div>
@@ -923,6 +924,7 @@ function InformacionJuridicaEditor({
           <div className="mb-3">
             <CedulaReaderMaestro
               label="cotitular"
+              tone="dark"
               onApply={(patch) => onCotitular({ ...cotitular, ...patch })}
             />
           </div>

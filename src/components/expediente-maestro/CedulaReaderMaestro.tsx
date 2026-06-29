@@ -23,6 +23,8 @@ interface Props {
   label: string;
   /** Aplica el patch a los datos actuales. */
   onApply: (patch: Partial<ClienteMaestro> | Partial<CotitularMaestro>) => void;
+  /** Tono visual: "light" (default) para fichas blancas; "dark" para superficies NUVIA dark. */
+  tone?: "light" | "dark";
 }
 
 function fileToDataUrl(file: File | Blob): Promise<string> {
@@ -79,7 +81,63 @@ async function renderPdfToImages(file: File): Promise<{ mime: string; dataUrl: s
   return out;
 }
 
-export function CedulaReaderMaestro({ label, onApply }: Props) {
+export function CedulaReaderMaestro({ label, onApply, tone = "light" }: Props) {
+  const dark = tone === "dark";
+  // Paleta NUVIA dark (alineada con .nuvia-input y NCard oscura)
+  const T = dark
+    ? {
+        cardBg: "linear-gradient(180deg, rgba(68,93,163,0.10) 0%, rgba(16,22,40,0.55) 100%)",
+        cardBorder: "rgba(132,150,200,0.22)",
+        title: "#E6ECFF",
+        subtitle: "rgba(230,236,255,0.65)",
+        text: "#E6ECFF",
+        textMuted: "rgba(230,236,255,0.70)",
+        innerBg: "rgba(11,16,32,0.55)",
+        innerBorder: "rgba(132,150,200,0.22)",
+        chipBg: "rgba(17,24,44,0.65)",
+        chipBorder: "rgba(132,150,200,0.18)",
+        dropBg: "rgba(11,16,32,0.45)",
+        dropBgActive: "rgba(68,93,163,0.18)",
+        dropBorder: "rgba(132,150,200,0.35)",
+        ghostBtnBg: "rgba(17,24,44,0.7)",
+        ghostBtnBorder: "rgba(132,150,200,0.30)",
+        ghostBtnText: "#E6ECFF",
+        errorBg: "rgba(153,27,27,0.18)",
+        errorBorder: "rgba(254,202,202,0.30)",
+        errorText: "#FCA5A5",
+        successBg: "rgba(22,101,52,0.20)",
+        successBorder: "rgba(187,247,208,0.30)",
+        successText: "#86EFAC",
+        fieldBg: "rgba(17,24,44,0.6)",
+        fieldBorder: "rgba(132,150,200,0.18)",
+      }
+    : {
+        cardBg: "linear-gradient(180deg,#F8FAFF 0%,#FFFFFF 100%)",
+        cardBorder: "#E3E7EE",
+        title: NUVEX.azul,
+        subtitle: "rgba(36,36,36,0.65)",
+        text: "#242424",
+        textMuted: "rgba(36,36,36,0.65)",
+        innerBg: "#FFFFFF",
+        innerBorder: "#E3E7EE",
+        chipBg: "#F7F9FB",
+        chipBorder: "#E3E7EE",
+        dropBg: "#FFFFFF",
+        dropBgActive: "#EEF2FF",
+        dropBorder: "#CBD5E1",
+        ghostBtnBg: "#FFFFFF",
+        ghostBtnBorder: "#E3E7EE",
+        ghostBtnText: "#242424",
+        errorBg: "#FEF2F2",
+        errorBorder: "#FECACA",
+        errorText: "#991B1B",
+        successBg: "#F0FDF4",
+        successBorder: "#BBF7D0",
+        successText: "#166534",
+        fieldBg: "#F7F9FB",
+        fieldBorder: "#E3E7EE",
+      };
+
   const [open, setOpen] = useState(false);
   const [stage, setStage] = useState<Stage>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -167,7 +225,7 @@ export function CedulaReaderMaestro({ label, onApply }: Props) {
   return (
     <div
       className="mb-4 rounded-xl border p-4"
-      style={{ borderColor: "#E3E7EE", background: "linear-gradient(180deg,#F8FAFF 0%,#FFFFFF 100%)" }}
+      style={{ borderColor: T.cardBorder, background: T.cardBg }}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
@@ -178,13 +236,13 @@ export function CedulaReaderMaestro({ label, onApply }: Props) {
             <IdCard size={18} />
           </div>
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider" style={{ color: NUVEX.azul }}>
+            <div className="text-[11px] font-bold uppercase tracking-wider" style={{ color: T.title }}>
               Lector inteligente de cédula
             </div>
-            <div className="text-sm font-semibold text-[#242424]">
+            <div className="text-sm font-semibold" style={{ color: T.text }}>
               Sube la cédula del {label} y autocompleta los datos
             </div>
-            <div className="mt-0.5 text-[11px] text-[#242424]/65">
+            <div className="mt-0.5 text-[11px]" style={{ color: T.subtitle }}>
               Cédula amarilla o digital · JPG, PNG, WEBP o PDF · frente y reverso
             </div>
           </div>
@@ -219,17 +277,17 @@ export function CedulaReaderMaestro({ label, onApply }: Props) {
                 onClick={() => fileRef.current?.click()}
                 className="cursor-pointer rounded-xl border-2 border-dashed p-6 text-center transition-colors"
                 style={{
-                  borderColor: dragActive ? NUVEX.azul : "#CBD5E1",
-                  background: dragActive ? "#EEF2FF" : "#FFFFFF",
+                  borderColor: dragActive ? NUVEX.azul : T.dropBorder,
+                  background: dragActive ? T.dropBgActive : T.dropBg,
                 }}
               >
                 <Upload size={22} className="mx-auto" style={{ color: NUVEX.azul }} />
-                <div className="mt-2 text-xs font-semibold text-[#242424]">
+                <div className="mt-2 text-xs font-semibold" style={{ color: T.text }}>
                   {queue.length === 0
                     ? "Arrastra la cédula aquí o haz clic para subir"
                     : "Agrega otra imagen (frente o reverso)"}
                 </div>
-                <div className="text-[11px] text-[#242424]/60">
+                <div className="text-[11px]" style={{ color: T.textMuted }}>
                   JPG, PNG, WEBP o PDF (máx. 4)
                 </div>
                 <input
@@ -245,26 +303,28 @@ export function CedulaReaderMaestro({ label, onApply }: Props) {
               </div>
 
               {queue.length > 0 && (
-                <div className="space-y-2 rounded-xl border border-[#E3E7EE] bg-white p-3">
-                  <div className="text-[11px] font-semibold text-[#242424]/70">
+                <div className="space-y-2 rounded-xl border p-3" style={{ borderColor: T.innerBorder, background: T.innerBg }}>
+                  <div className="text-[11px] font-semibold" style={{ color: T.textMuted }}>
                     Archivos listos ({queue.length}/4)
                   </div>
                   <ul className="space-y-1">
                     {queue.map((f, i) => (
                       <li
                         key={`${f.name}-${i}`}
-                        className="flex items-center justify-between gap-2 rounded-lg border border-[#E3E7EE] bg-[#F7F9FB] px-2 py-1.5 text-xs"
+                        className="flex items-center justify-between gap-2 rounded-lg border px-2 py-1.5 text-xs"
+                        style={{ borderColor: T.chipBorder, background: T.chipBg }}
                       >
                         <span className="truncate">
-                          <span className="font-medium text-[#242424]">
+                          <span className="font-medium" style={{ color: T.text }}>
                             {i === 0 ? "Frente" : i === 1 ? "Reverso" : `Imagen ${i + 1}`}:
                           </span>{" "}
-                          <span className="text-[#242424]/70">{f.name}</span>
+                          <span style={{ color: T.textMuted }}>{f.name}</span>
                         </span>
                         <button
                           type="button"
                           onClick={() => removeFromQueue(i)}
-                          className="text-[#991B1B] hover:text-[#7F1D1D]"
+                          className="hover:opacity-80"
+                          style={{ color: dark ? "#FCA5A5" : "#991B1B" }}
                           aria-label="Quitar archivo"
                         >
                           <Trash2 size={13} />
@@ -277,7 +337,8 @@ export function CedulaReaderMaestro({ label, onApply }: Props) {
                       type="button"
                       onClick={() => fileRef.current?.click()}
                       disabled={queue.length >= 4}
-                      className="inline-flex items-center gap-1 rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 text-[11px] font-medium disabled:opacity-50"
+                      className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-[11px] font-medium disabled:opacity-50"
+                      style={{ borderColor: T.ghostBtnBorder, background: T.ghostBtnBg, color: T.ghostBtnText }}
                     >
                       <Plus size={12} /> Agregar otra
                     </button>
@@ -294,7 +355,10 @@ export function CedulaReaderMaestro({ label, onApply }: Props) {
               )}
 
               {errorMsg && (
-                <div className="flex items-start gap-2 rounded-lg border border-[#FECACA] bg-[#FEF2F2] p-3 text-xs text-[#991B1B]">
+                <div
+                  className="flex items-start gap-2 rounded-lg border p-3 text-xs"
+                  style={{ borderColor: T.errorBorder, background: T.errorBg, color: T.errorText }}
+                >
                   <AlertTriangle size={14} className="mt-0.5 shrink-0" />
                   <span>{errorMsg}</span>
                 </div>
@@ -303,32 +367,34 @@ export function CedulaReaderMaestro({ label, onApply }: Props) {
           )}
 
           {stage === "reading" && (
-            <div className="flex items-center gap-3 rounded-lg border border-[#E3E7EE] bg-white p-4">
+            <div className="flex items-center gap-3 rounded-lg border p-4" style={{ borderColor: T.innerBorder, background: T.innerBg }}>
               <Loader2 className="animate-spin" size={18} style={{ color: NUVEX.azul }} />
-              <div className="text-xs text-[#242424]/80">Analizando documento con IA…</div>
+              <div className="text-xs" style={{ color: T.text }}>Analizando documento con IA…</div>
             </div>
           )}
 
           {stage === "review" && parsed && (
-            <div className="space-y-3 rounded-xl border border-[#E3E7EE] bg-white p-4">
-              <div className="text-[11px] font-semibold" style={{ color: NUVEX.azul }}>
+            <div className="space-y-3 rounded-xl border p-4" style={{ borderColor: T.innerBorder, background: T.innerBg }}>
+              <div className="text-[11px] font-semibold" style={{ color: T.title }}>
                 Datos detectados — revisa y confirma
               </div>
               <div className="grid gap-2 text-xs md:grid-cols-2">
-                <Field label="Nombre completo" value={parsed.nombreCompleto} />
-                <Field label="Número de cédula" value={parsed.numeroCedula} />
+                <Field label="Nombre completo" value={parsed.nombreCompleto} theme={T} />
+                <Field label="Número de cédula" value={parsed.numeroCedula} theme={T} />
                 <Field
                   label="Lugar de expedición"
                   value={normalizeColombiaLocation(parsed.lugarExpedicion).label || parsed.lugarExpedicion}
+                  theme={T}
                 />
-                <Field label="Fecha de expedición" value={parsed.fechaExpedicion} />
-                {parsed.fechaNacimiento && <Field label="Fecha de nacimiento" value={parsed.fechaNacimiento} />}
+                <Field label="Fecha de expedición" value={parsed.fechaExpedicion} theme={T} />
+                {parsed.fechaNacimiento && <Field label="Fecha de nacimiento" value={parsed.fechaNacimiento} theme={T} />}
               </div>
               <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
                 <button
                   type="button"
                   onClick={reset}
-                  className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-1.5 text-[11px] font-medium"
+                  className="rounded-lg border px-3 py-1.5 text-[11px] font-medium"
+                  style={{ borderColor: T.ghostBtnBorder, background: T.ghostBtnBg, color: T.ghostBtnText }}
                 >
                   Reintentar
                 </button>
@@ -345,7 +411,10 @@ export function CedulaReaderMaestro({ label, onApply }: Props) {
           )}
 
           {stage === "applied" && (
-            <div className="flex items-center gap-2 rounded-lg border border-[#BBF7D0] bg-[#F0FDF4] p-3 text-xs text-[#166534]">
+            <div
+              className="flex items-center gap-2 rounded-lg border p-3 text-xs"
+              style={{ borderColor: T.successBorder, background: T.successBg, color: T.successText }}
+            >
               <CheckCircle2 size={14} /> Datos aplicados correctamente al {label}.
             </div>
           )}
@@ -355,11 +424,14 @@ export function CedulaReaderMaestro({ label, onApply }: Props) {
   );
 }
 
-function Field({ label, value }: { label: string; value?: string }) {
+type FieldTheme = { fieldBorder: string; fieldBg: string; text: string; textMuted: string };
+
+function Field({ label, value, theme }: { label: string; value?: string; theme: FieldTheme }) {
   return (
-    <div className="rounded-lg border border-[#E3E7EE] bg-[#F7F9FB] p-2">
-      <div className="text-[10px] uppercase tracking-wider text-[#242424]/55">{label}</div>
-      <div className="text-[12px] font-semibold text-[#242424]">{value || "—"}</div>
+    <div className="rounded-lg border p-2" style={{ borderColor: theme.fieldBorder, background: theme.fieldBg }}>
+      <div className="text-[10px] uppercase tracking-wider" style={{ color: theme.textMuted }}>{label}</div>
+      <div className="text-[12px] font-semibold" style={{ color: theme.text }}>{value || "—"}</div>
     </div>
   );
 }
+
