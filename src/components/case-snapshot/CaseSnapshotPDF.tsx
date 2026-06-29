@@ -663,14 +663,14 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: 10, padding: "14px 20px", minHeight: 64, background: "radial-gradient(circle at 12% 50%, rgba(16,185,129,0.22), transparent 55%), rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.35)", borderRadius: 8, display: "flex", alignItems: "center", gap: 18 }}>
-              <Calendar size={28} color={C.green2} />
-              <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
-                <div>
+            <div style={{ marginTop: 10, padding: "13px 14px", minHeight: 64, background: "radial-gradient(circle at 12% 50%, rgba(16,185,129,0.22), transparent 55%), rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.35)", borderRadius: 8, display: "flex", alignItems: "center", gap: 12, boxSizing: "border-box" }}>
+              <Calendar size={26} color={C.green2} />
+              <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap", minWidth: 0 }}>
+                <div style={{ minWidth: 0 }}>
                   <MiniLabel>Tiempo recuperado</MiniLabel>
-                  <div style={{ fontSize: 24, fontWeight: 950, color: C.green2, lineHeight: 1.05, marginTop: 3 }}>{e.propuesta.tiempoRecuperado}</div>
+                  <div style={{ fontSize: 20, fontWeight: 950, color: C.green2, lineHeight: 1.05, marginTop: 3 }}>{e.propuesta.tiempoRecuperado}</div>
                 </div>
-                <div style={{ color: C.textSec, fontSize: 10.4 }}>Reducción en el tiempo total de deuda</div>
+                <div style={{ color: C.textSec, fontSize: 9.6, lineHeight: 1.25 }}>Reducción en el tiempo total de deuda</div>
               </div>
             </div>
           </Card>
