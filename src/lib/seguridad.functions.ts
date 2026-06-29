@@ -60,7 +60,7 @@ async function readTotpSecret(stored: string): Promise<{ secret: string; legacy:
 }
 
 async function upgradeLegacyTotpSecret(
-  supabase: { from: (table: string) => { update: (values: Record<string, unknown>) => { eq: (column: string, value: string) => Promise<unknown> } } },
+  supabase: { from: (table: "profiles") => { update: (values: { mfa_secret: string }) => { eq: (column: "id", value: string) => unknown } } },
   userId: string,
   secret: string,
 ) {
