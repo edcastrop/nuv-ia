@@ -24,14 +24,39 @@ async function encryptTotpSecret(secret: string): Promise<string> {
   return `aes256gcm.v1:${ivHex}:${cipherHex}`;
 }
 
-async function decryptTotpSecret(stored: string): Promise<string> {
-  if (!stored.startsWith("aes256gcm.v1:")) throw new Error("Formato de mfa_secret no reconocido.");
+const TOTP_SECRET_PREFIX = "aes256gcm.v1:";
+
+function normalizeLegacyTotpSecret(value: string | null | undefined): string | null {
+  const raw = (value ?? "").trim();
+  if (!raw) return null;
+
+  if (raw.toLowerCase().startsWith("otpauth://")) {
+    try {
+      const url = new URL(raw);
+      return normalizeLegacyTotpSecret(url.searchParams.get("secret"));
+    } catch {
+      return null;
+    }
+  }
+
+  const cleaned = raw.replace(/[\s-]/g, "").toUpperCase();
+  return /^[A-Z2-7]+=*$/.test(cleaned) && cleaned.replace(/=+$/g, "").length >= 16 ? cleaned : null;
+}
+
+async function readTotpSecret(stored: string): Promise<{ secret: string; legacy: boolean }> {
+  if (!stored.startsWith(TOTP_SECRET_PREFIX)) {
+    const legacySecret = normalizeLegacyTotpSecret(stored);
+    if (legacySecret) return { secret: legacySecret, legacy: true };
+    throw new Error("No pudimos leer la app autenticadora registrada. Usa Correo para verificar y vuelve a configurar App auth desde Mi Perfil.");
+  }
   const [, ivHex, cipherHex] = stored.split(":");
   const iv = new Uint8Array(ivHex.match(/.{2}/g)!.map((h) => parseInt(h, 16)));
   const cipher = new Uint8Array(cipherHex.match(/.{2}/g)!.map((h) => parseInt(h, 16)));
   const key = await getTotpKey();
   const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, cipher);
-  return new TextDecoder().decode(plain);
+  const secret = normalizeLegacyTotpSecret(new TextDecoder().decode(plain));
+  if (!secret) throw new Error("No pudimos leer la app autenticadora registrada. Usa Correo para verificar y vuelve a configurar App auth desde Mi Perfil.");
+  return { secret, legacy: false };
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -234,16 +259,18 @@ export const confirmarEnrolarTotp = createServerFn({ method: "POST" })
     const row = prof as { email?: string; mfa_secret?: string | null } | null;
     if (!row?.mfa_secret) throw new Error("No hay enrolamiento TOTP en curso. Inicia de nuevo.");
 
-    const secretPlano = await decryptTotpSecret(row.mfa_secret);
-    const totp = buildTotp(secretPlano, row.email ?? userId);
+    const storedSecret = await readTotpSecret(row.mfa_secret);
+    const totp = buildTotp(storedSecret.secret, row.email ?? userId);
     const delta = totp.validate({ token: data.codigo, window: 1 });
     if (delta === null) throw new Error("Código inválido. Verifica la hora del dispositivo e intenta de nuevo.");
+    const migratedSecret = storedSecret.legacy ? await encryptTotpSecret(storedSecret.secret) : null;
 
     await supabase
       .from("profiles")
       .update({
         mfa_metodo: "totp",
         mfa_verificado_at: new Date().toISOString(),
+        ...(migratedSecret ? { mfa_secret: migratedSecret } : {}),
       })
       .eq("id", userId);
     await supabase.from("acceso_auditoria").insert({
@@ -264,8 +291,8 @@ export const verificarCodigoTotp = createServerFn({ method: "POST" })
     if (!row?.mfa_secret || row.mfa_metodo !== "totp") {
       throw new Error("No tienes una app autenticadora configurada. Usa el código por correo.");
     }
-    const secretPlano = await decryptTotpSecret(row.mfa_secret);
-    const totp = buildTotp(secretPlano, row.email ?? userId);
+    const storedSecret = await readTotpSecret(row.mfa_secret);
+    const totp = buildTotp(storedSecret.secret, row.email ?? userId);
     const delta = totp.validate({ token: data.codigo, window: 1 });
     if (delta === null) {
       await supabase.from("acceso_auditoria").insert({
@@ -275,7 +302,10 @@ export const verificarCodigoTotp = createServerFn({ method: "POST" })
     }
     await supabase
       .from("profiles")
-      .update({ mfa_verificado_at: new Date().toISOString() })
+      .update({
+        mfa_verificado_at: new Date().toISOString(),
+        ...(storedSecret.legacy ? { mfa_secret: await encryptTotpSecret(storedSecret.secret) } : {}),
+      })
       .eq("id", userId);
     await supabase.from("acceso_auditoria").insert({
       user_id: userId, actor_id: userId, accion: "mfa_verificado", detalle: { metodo: "totp" },
