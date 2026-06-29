@@ -291,9 +291,9 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
     ].join("\n");
     const lineasAdjuntos = [
       `Documentos adjuntos:`,
-      `- Poder Especial (Word)`,
+      ...ctx.poderDocs.map((d) => `- ${d.title} (Word)`),
       `- Ficha de Datos del Contrato (Word)`,
-      `- Cédula del cliente`,
+      `- Cédula del cliente${ctx.poderDocs.length > 1 ? " y cotitular" : ""}`,
       `- Extracto bancario del cliente`,
     ];
     const adjuntos = lineasAdjuntos.join("\n");
