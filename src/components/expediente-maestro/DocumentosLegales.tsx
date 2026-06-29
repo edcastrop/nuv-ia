@@ -924,6 +924,7 @@ function InformacionJuridicaEditor({
           <div className="mb-3">
             <CedulaReaderMaestro
               label="cotitular"
+              tone="dark"
               onApply={(patch) => onCotitular({ ...cotitular, ...patch })}
             />
           </div>
