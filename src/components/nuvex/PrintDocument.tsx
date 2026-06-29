@@ -734,7 +734,7 @@ function DecisionRapidaTable({ honorariosBase, horasActivas }: { honorariosBase:
 
   // Caso colapsado: el descuento máximo ya alcanza el piso → no hay diferenciación entre 12h/24h/48h.
   if (sinDiferenciacion) {
-    const precioFinal = uniquePrices[0]!;
+    const precioFinal = precioColapsado;
     const hayAhorro = ahorroMax > 0;
     return (
       <div style={{ marginTop: 12, border: `1px solid ${C.line}`, borderRadius: 10, background: C.panel, padding: "12px 14px 13px" }}>
