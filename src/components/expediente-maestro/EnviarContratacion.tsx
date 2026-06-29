@@ -393,8 +393,8 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
             <pre className="whitespace-pre-wrap font-sans text-[12px]">{cuerpo}</pre>
             <div className="font-semibold text-[#242424] mt-2 mb-1">Adjuntos</div>
             <ul className="list-disc pl-5">
-              {ctx.poderDocs.map((d, i) => <li key={i}>{d.filename}.docx</li>)}
-              <li>{ctx.datosDoc?.filename}.docx</li>
+              {ctx.poderDocs.map((d, i) => <li key={i}>{d.filename}.pdf</li>)}
+              <li>{ctx.datosDoc?.filename}.pdf</li>
               {loadingSoportes ? (
                 <li className="text-[#242424]/50">Cargando soportes del cliente…</li>
               ) : soportes.length === 0 ? (
