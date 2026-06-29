@@ -11,6 +11,7 @@ import type {
 } from "@/lib/expedienteMaestro";
 import type { CoberturaFresh } from "@/lib/proyeccion";
 import { ChevronDown } from "lucide-react";
+import { CedulaReaderMaestro } from "./CedulaReaderMaestro";
 
 function Accordion({
   title, subtitle, defaultOpen = true, children,
@@ -140,6 +141,10 @@ export function MaestroEditor(p: Props) {
         </label>
         {p.cotitular.activo && (
           <>
+            <CedulaReaderMaestro
+              label={rolCotitular}
+              onApply={(patch) => p.onCotitular({ ...p.cotitular, ...patch })}
+            />
             <label className="mb-4 flex items-center gap-2 rounded-lg border border-[#445DA3]/20 bg-[#445DA3]/5 p-3 text-sm text-[#242424]">
               <input type="checkbox" checked={heredada} onChange={(e) => toggleMismaDireccion(e.target.checked)} />
               <span>Vive en la misma dirección del {rolTitular}</span>
@@ -198,6 +203,10 @@ export function MaestroEditor(p: Props) {
             <div className="text-[11px] uppercase tracking-wider font-semibold mb-2" style={{ color: NUVEX.azul }}>
               {esLeasing ? "Colocatario" : "Cotitular"}
             </div>
+            <CedulaReaderMaestro
+              label={rolCotitular}
+              onApply={(patch) => p.onCotitular({ ...p.cotitular, ...patch })}
+            />
             <label className="mb-3 flex items-center gap-2 rounded-lg border border-[#445DA3]/20 bg-[#445DA3]/5 p-3 text-sm text-[#242424]">
               <input type="checkbox" checked={heredada} onChange={(e) => toggleMismaDireccion(e.target.checked)} />
               <span>Vive en la misma dirección del {rolTitular} (dirección, ciudad y departamento)</span>
