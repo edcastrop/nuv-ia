@@ -716,6 +716,62 @@ const TIERS_DR: { horas: 12 | 24 | 48; pct: number; label: string; icon: string 
 
 function DecisionRapidaTable({ honorariosBase, horasActivas }: { honorariosBase: number; horasActivas: number }) {
   const activeTier = TIERS_DR.find((t) => t.horas === horasActivas) ?? null;
+
+  // Compute each tier price respecting the commercial floor.
+  const computed = TIERS_DR.map((t) => {
+    const bruto = Math.round(honorariosBase * (1 - t.pct / 100));
+    const precio = Math.max(HONORARIOS_MIN_FINAL, bruto);
+    return { ...t, precio, ahorro: Math.max(0, honorariosBase - precio), pisoAplicado: precio !== bruto };
+  });
+
+  const uniquePrices = Array.from(new Set(computed.map((c) => c.precio)));
+  const sinDiferenciacion = uniquePrices.length === 1; // todos los tramos llegan al mismo precio (piso)
+  const ahorroMax = Math.max(0, honorariosBase - uniquePrices[0]!);
+
+  // Caso colapsado: el descuento máximo ya alcanza el piso → no hay diferenciación entre 12h/24h/48h.
+  if (sinDiferenciacion) {
+    const precioFinal = uniquePrices[0]!;
+    const hayAhorro = ahorroMax > 0;
+    return (
+      <div style={{ marginTop: 12, border: `1px solid ${C.line}`, borderRadius: 10, background: C.panel, padding: "12px 14px 13px" }}>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 9 }}>
+          <div style={{ color: C.greenDeep, fontWeight: 950, fontSize: 13, letterSpacing: "0.06em" }}>BENEFICIO POR DECISIÓN RÁPIDA</div>
+          <div style={{ color: C.text, fontSize: 9.5, fontWeight: 700, letterSpacing: "0.05em" }}>
+            {hayAhorro
+              ? "Honorarios en piso comercial — ahorro máximo garantizado."
+              : "Honorarios mínimos NUVEX — no aplica descuento adicional."}
+          </div>
+        </div>
+        <div style={{ position: "relative", border: `1.4px solid ${C.greenDeep}`, borderRadius: 9, background: "linear-gradient(180deg,#1F7A45,#155A33)", padding: "14px 18px", color: "#fff", display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr", gap: 16, alignItems: "center" }}>
+          <div style={{ position: "absolute", top: -9, right: 14, background: "#0B1226", color: "#84F5A8", fontSize: 8.2, fontWeight: 950, letterSpacing: "0.18em", padding: "3px 8px", borderRadius: 999 }}>HONORARIOS MÍNIMOS</div>
+          <div>
+            <div style={{ fontSize: 10.5, fontWeight: 950, letterSpacing: "0.08em", color: "rgba(255,255,255,0.85)" }}>TARIFA FINAL ÚNICA</div>
+            <div style={{ marginTop: 4, fontSize: 11, fontWeight: 700, lineHeight: 1.3, color: "rgba(255,255,255,0.78)" }}>
+              {hayAhorro
+                ? "Tu propuesta ya parte del piso comercial NUVEX, así que los tres tramos (12h · 24h · 48h) llegan al mismo valor mínimo."
+                : "Por el tamaño del caso, los honorarios ya están en el mínimo NUVEX. No es posible aplicar un descuento adicional por tiempo de decisión."}
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: 9, fontWeight: 800, color: "rgba(255,255,255,0.78)", letterSpacing: "0.06em" }}>ESTÁNDAR</div>
+            <div style={{ marginTop: 4, fontSize: 14, fontWeight: 950, color: "rgba(255,255,255,0.85)", textDecoration: hayAhorro ? "line-through" : undefined }}>{formatCOP(honorariosBase)}</div>
+            <div style={{ marginTop: 9, fontSize: 9, fontWeight: 800, color: "rgba(255,255,255,0.78)", letterSpacing: "0.06em" }}>HONORARIOS</div>
+            <div style={{ marginTop: 4, fontSize: 20, fontWeight: 950, color: "#fff", lineHeight: 1 }}>{formatCOP(precioFinal)}</div>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: 9, fontWeight: 800, color: "rgba(255,255,255,0.78)", letterSpacing: "0.06em" }}>{hayAhorro ? "AHORRO MÁXIMO" : "AHORRO"}</div>
+            <div style={{ marginTop: 4, fontSize: 22, fontWeight: 950, color: "#84F5A8", lineHeight: 1 }}>{formatCOP(ahorroMax)}</div>
+            <div style={{ marginTop: 6, fontSize: 8.6, fontWeight: 700, color: "rgba(255,255,255,0.75)", letterSpacing: "0.04em" }}>{hayAhorro ? "vs. tarifa estándar" : "sin reducción adicional"}</div>
+          </div>
+        </div>
+        <div style={{ marginTop: 9, fontSize: 9.6, color: C.text, fontWeight: 700, textAlign: "center" }}>
+          Vigencia desde el envío de esta propuesta · honorarios mínimos NUVEX: <b style={{ color: C.greenDeep }}>{formatCOP(HONORARIOS_MIN_FINAL)}</b>.
+        </div>
+      </div>
+    );
+  }
+
+  // Caso normal: 3 tramos diferenciados.
   return (
     <div style={{ marginTop: 12, border: `1px solid ${C.line}`, borderRadius: 10, background: C.panel, padding: "12px 14px 13px" }}>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 9 }}>
@@ -723,12 +779,8 @@ function DecisionRapidaTable({ honorariosBase, horasActivas }: { honorariosBase:
         <div style={{ color: C.text, fontSize: 9.5, fontWeight: 700, letterSpacing: "0.05em" }}>Mientras más rápido decidas, más ahorras en honorarios.</div>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 9 }}>
-        {TIERS_DR.map((t) => {
+        {computed.map((t) => {
           const activo = activeTier?.horas === t.horas;
-          const precioBruto = Math.round(honorariosBase * (1 - t.pct / 100));
-          const precio = Math.max(HONORARIOS_MIN_FINAL, precioBruto);
-          const ahorro = Math.max(0, honorariosBase - precio);
-          const pisoAplicado = precio !== precioBruto;
           const bg = activo ? "linear-gradient(180deg,#1F7A45,#155A33)" : "#FFFFFF";
           const borderCol = activo ? C.greenDeep : C.line;
           const textInk = activo ? "#FFFFFF" : C.ink;
@@ -744,7 +796,7 @@ function DecisionRapidaTable({ honorariosBase, horasActivas }: { honorariosBase:
               </div>
               <div style={{ marginTop: 6, color: accent, fontSize: 22, fontWeight: 950, lineHeight: 1 }}>
                 {t.pct}% OFF
-                {pisoAplicado && (
+                {t.pisoAplicado && (
                   <span style={{ marginLeft: 6, fontSize: 8.4, fontWeight: 800, letterSpacing: "0.08em", color: accent, opacity: 0.85 }}>· PISO MÍN.</span>
                 )}
               </div>
@@ -754,11 +806,11 @@ function DecisionRapidaTable({ honorariosBase, horasActivas }: { honorariosBase:
               </div>
               <div style={{ marginTop: 3, display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 6 }}>
                 <span style={{ fontSize: 8.6, fontWeight: 950, color: accent, letterSpacing: "0.04em" }}>HONORARIOS</span>
-                <span style={{ fontSize: 15, fontWeight: 950, color: textInk, lineHeight: 1 }}>{formatCOP(precio)}</span>
+                <span style={{ fontSize: 15, fontWeight: 950, color: textInk, lineHeight: 1 }}>{formatCOP(t.precio)}</span>
               </div>
               <div style={{ marginTop: 6, paddingTop: 6, borderTop: `1px dashed ${activo ? "rgba(255,255,255,0.32)" : C.line}`, display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 6 }}>
                 <span style={{ fontSize: 8.6, fontWeight: 950, color: accent, letterSpacing: "0.04em" }}>AHORRO</span>
-                <span style={{ fontSize: 13, fontWeight: 950, color: activo ? "#84F5A8" : C.greenDeep }}>{formatCOP(ahorro)}</span>
+                <span style={{ fontSize: 13, fontWeight: 950, color: activo ? "#84F5A8" : C.greenDeep }}>{formatCOP(t.ahorro)}</span>
               </div>
             </div>
           );
