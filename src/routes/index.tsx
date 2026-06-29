@@ -433,36 +433,14 @@ function SectionProposito() {
             inteligencia financiera, automatización e innovación para acompañar a las familias
             en la gestión de sus créditos de vivienda.
           </p>
-          <div className="mt-8 grid grid-cols-2 gap-3">
+          <div className="mt-8 grid grid-cols-2 gap-3" style={{ perspective: "1000px" }}>
             {[
               { t: "Inteligencia Financiera", Icon: Cpu, gradient: `linear-gradient(135deg, ${BLUE}, #6B8FD9)` },
               { t: "Automatización", Icon: Settings2, gradient: `linear-gradient(135deg, #5A7DC9, ${GREEN})` },
               { t: "Innovación", Icon: Lightbulb, gradient: `linear-gradient(135deg, ${GREEN}, #A8D4B0)` },
               { t: "Propósito Social", Icon: Sparkles, gradient: `linear-gradient(135deg, ${BLUE}, ${GREEN})` },
-            ].map(({ t, Icon, gradient }) => (
-              <div
-                key={t}
-                className="group relative rounded-2xl p-4 overflow-hidden transition-all hover:-translate-y-0.5 cursor-default"
-                style={{
-                  background: "linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.015))",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                }}
-              >
-                <div
-                  aria-hidden
-                  className="absolute -top-16 -right-16 h-40 w-40 rounded-full blur-[80px] opacity-0 group-hover:opacity-50 transition-opacity"
-                  style={{ background: gradient }}
-                />
-                <div className="relative flex items-center gap-3">
-                  <div
-                    className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
-                    style={{ background: gradient }}
-                  >
-                    <Icon size={16} className="text-white" />
-                  </div>
-                  <div className="text-[13px] font-medium text-white/90 leading-tight">{t}</div>
-                </div>
-              </div>
+            ].map((card) => (
+              <TiltGlassCard key={card.t} {...card} />
             ))}
           </div>
         </div>
