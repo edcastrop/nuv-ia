@@ -742,7 +742,12 @@ function DecisionRapidaTable({ honorariosBase, horasActivas }: { honorariosBase:
               <div style={{ display: "flex", alignItems: "center", gap: 6, color: accent, fontSize: 10, fontWeight: 950, letterSpacing: "0.06em" }}>
                 <span style={{ fontSize: 13 }}>{t.icon}</span>{t.label.toUpperCase()}
               </div>
-              <div style={{ marginTop: 6, color: accent, fontSize: 22, fontWeight: 950, lineHeight: 1 }}>{t.pct}% OFF</div>
+              <div style={{ marginTop: 6, color: accent, fontSize: 22, fontWeight: 950, lineHeight: 1 }}>
+                {t.pct}% OFF
+                {pisoAplicado && (
+                  <span style={{ marginLeft: 6, fontSize: 8.4, fontWeight: 800, letterSpacing: "0.08em", color: accent, opacity: 0.85 }}>· PISO MÍN.</span>
+                )}
+              </div>
               <div style={{ marginTop: 7, display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 6 }}>
                 <span style={{ fontSize: 8.6, fontWeight: 800, color: textMuted, letterSpacing: "0.04em" }}>ESTÁNDAR</span>
                 <span style={{ fontSize: 10.5, fontWeight: 800, color: textMuted, textDecoration: "line-through" }}>{formatCOP(honorariosBase)}</span>
