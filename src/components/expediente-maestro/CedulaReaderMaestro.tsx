@@ -81,7 +81,63 @@ async function renderPdfToImages(file: File): Promise<{ mime: string; dataUrl: s
   return out;
 }
 
-export function CedulaReaderMaestro({ label, onApply }: Props) {
+export function CedulaReaderMaestro({ label, onApply, tone = "light" }: Props) {
+  const dark = tone === "dark";
+  // Paleta NUVIA dark (alineada con .nuvia-input y NCard oscura)
+  const T = dark
+    ? {
+        cardBg: "linear-gradient(180deg, rgba(68,93,163,0.10) 0%, rgba(16,22,40,0.55) 100%)",
+        cardBorder: "rgba(132,150,200,0.22)",
+        title: "#E6ECFF",
+        subtitle: "rgba(230,236,255,0.65)",
+        text: "#E6ECFF",
+        textMuted: "rgba(230,236,255,0.70)",
+        innerBg: "rgba(11,16,32,0.55)",
+        innerBorder: "rgba(132,150,200,0.22)",
+        chipBg: "rgba(17,24,44,0.65)",
+        chipBorder: "rgba(132,150,200,0.18)",
+        dropBg: "rgba(11,16,32,0.45)",
+        dropBgActive: "rgba(68,93,163,0.18)",
+        dropBorder: "rgba(132,150,200,0.35)",
+        ghostBtnBg: "rgba(17,24,44,0.7)",
+        ghostBtnBorder: "rgba(132,150,200,0.30)",
+        ghostBtnText: "#E6ECFF",
+        errorBg: "rgba(153,27,27,0.18)",
+        errorBorder: "rgba(254,202,202,0.30)",
+        errorText: "#FCA5A5",
+        successBg: "rgba(22,101,52,0.20)",
+        successBorder: "rgba(187,247,208,0.30)",
+        successText: "#86EFAC",
+        fieldBg: "rgba(17,24,44,0.6)",
+        fieldBorder: "rgba(132,150,200,0.18)",
+      }
+    : {
+        cardBg: "linear-gradient(180deg,#F8FAFF 0%,#FFFFFF 100%)",
+        cardBorder: "#E3E7EE",
+        title: NUVEX.azul,
+        subtitle: "rgba(36,36,36,0.65)",
+        text: "#242424",
+        textMuted: "rgba(36,36,36,0.65)",
+        innerBg: "#FFFFFF",
+        innerBorder: "#E3E7EE",
+        chipBg: "#F7F9FB",
+        chipBorder: "#E3E7EE",
+        dropBg: "#FFFFFF",
+        dropBgActive: "#EEF2FF",
+        dropBorder: "#CBD5E1",
+        ghostBtnBg: "#FFFFFF",
+        ghostBtnBorder: "#E3E7EE",
+        ghostBtnText: "#242424",
+        errorBg: "#FEF2F2",
+        errorBorder: "#FECACA",
+        errorText: "#991B1B",
+        successBg: "#F0FDF4",
+        successBorder: "#BBF7D0",
+        successText: "#166534",
+        fieldBg: "#F7F9FB",
+        fieldBorder: "#E3E7EE",
+      };
+
   const [open, setOpen] = useState(false);
   const [stage, setStage] = useState<Stage>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
