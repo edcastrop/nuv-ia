@@ -487,7 +487,7 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
         </div>
 
         <Card style={{ padding: 20, marginBottom: 12, overflow: "visible" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "176px 88px minmax(166px,1fr) 70px 154px", gap: 10, alignItems: "center", width: "100%", boxSizing: "border-box" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "172px 86px minmax(150px,1fr) 70px 178px", gap: 10, alignItems: "center", width: "100%", boxSizing: "border-box" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0, paddingRight: 8, borderRight: `1px solid ${C.border}` }}>
               <ClienteAvatar />
               <div style={{ minWidth: 0 }}>
@@ -498,7 +498,13 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
             <Field icon={<IconWrap><SvgBank /></IconWrap>} label="Banco" value={e.banco} />
             <Field icon={<IconWrap><SvgShield /></IconWrap>} label="Producto" value={e.producto} />
             <Field icon={<IconWrap><SvgMoney /></IconWrap>} label="Modalidad" value={e.modalidad} />
-            <Field icon={<IconWrap color={C.green}><SvgCheckCircle /></IconWrap>} label="Estado del caso" value={<span style={{ display: "block", color: C.green2, fontSize: 10.4, lineHeight: 1.14, fontWeight: 900, textShadow: "0 0 10px rgba(16,185,129,0.28)" }}>{e.estado}</span>} />
+            <div style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
+              <IconWrap color={C.green}><SvgCheckCircle /></IconWrap>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <MiniLabel style={{ marginBottom: 5, color: C.textLabel }}>Estado del caso</MiniLabel>
+                <div style={{ display: "block", color: C.green2, fontSize: 9.4, lineHeight: 1.2, fontWeight: 900, textShadow: "0 0 10px rgba(16,185,129,0.28)", wordBreak: "normal", overflowWrap: "break-word" }}>{e.estado}</div>
+              </div>
+            </div>
           </div>
 
           <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(59,130,246,0.45), rgba(138,109,255,0.35), transparent)", margin: "20px 0" }} />
@@ -514,13 +520,32 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
                 </div>
               </div>
             </div>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 11 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 11, minWidth: 0 }}>
               <IconWrap><SvgChart /></IconWrap>
-              <div>
+              <div style={{ minWidth: 0, flex: 1 }}>
                 <MiniLabel style={{ color: C.textLabel, marginBottom: 5 }}>Nivel autonomía</MiniLabel>
-                <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                  <span style={{ fontSize: 14, fontWeight: 950, color: C.text }}>{e.nivelAutonomia}</span>
-                  <Pill color={C.blue} small>Supervisada</Pill>
+                <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 14, fontWeight: 950, color: C.text, lineHeight: 1 }}>{e.nivelAutonomia}</span>
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "3px 10px 4px",
+                      borderRadius: 999,
+                      fontSize: 7.4,
+                      fontWeight: 900,
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                      color: C.blue,
+                      background: `${C.blue}22`,
+                      border: `1px solid ${C.blue}55`,
+                      whiteSpace: "nowrap",
+                      lineHeight: 1.15,
+                    }}
+                  >
+                    Supervisada
+                  </span>
                 </div>
               </div>
             </div>
