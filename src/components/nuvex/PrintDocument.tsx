@@ -367,7 +367,7 @@ export function PrintDocument(props: Props) {
             <div style={{ border: `1px solid ${C.green}66`, background: "linear-gradient(180deg,#EFF9F1,#E8F5EB)", borderRadius: 9, padding: "10px 12px", textAlign: "center" }}>
               <div style={{ fontSize: 9, color: C.greenDark, fontWeight: 950, letterSpacing: "0.12em" }}>DESCUENTO</div>
               <div style={{ color: C.greenDeep, fontSize: 19, fontWeight: 950 }}>{formatCOP(descuento)}</div>
-              <div style={{ color: C.red, fontSize: 9.2, fontWeight: 950, letterSpacing: "0.08em" }}>VIGENCIA 48 HORAS</div>
+              <div style={{ color: C.red, fontSize: 9.2, fontWeight: 950, letterSpacing: "0.08em" }}>VIGENCIA {vigenciaCorta}</div>
             </div>
           </div>
 
