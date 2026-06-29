@@ -487,7 +487,7 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
         </div>
 
         <Card style={{ padding: 20, marginBottom: 12, overflow: "visible" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "186px 98px minmax(150px,1fr) 76px 122px", gap: 10, alignItems: "center", width: "100%", boxSizing: "border-box" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "184px 94px minmax(156px,1fr) 72px 148px", gap: 10, alignItems: "center", width: "100%", boxSizing: "border-box" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0, paddingRight: 8, borderRight: `1px solid ${C.border}` }}>
               <ClienteAvatar />
               <div style={{ minWidth: 0 }}>
@@ -498,7 +498,7 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
             <Field icon={<IconWrap><SvgBank /></IconWrap>} label="Banco" value={e.banco} />
             <Field icon={<IconWrap><SvgShield /></IconWrap>} label="Producto" value={e.producto} />
             <Field icon={<IconWrap><SvgMoney /></IconWrap>} label="Modalidad" value={e.modalidad} />
-            <Field icon={<IconWrap color={C.green}><SvgCheckCircle /></IconWrap>} label="Estado del caso" value={<span style={{ color: C.green2 }}>{e.estado}</span>} />
+            <Field icon={<IconWrap color={C.green}><SvgCheckCircle /></IconWrap>} label="Estado del caso" value={<span style={{ display: "block", color: C.green2, fontSize: 10.4, lineHeight: 1.14, fontWeight: 900, textShadow: "0 0 10px rgba(16,185,129,0.28)" }}>{e.estado}</span>} />
           </div>
 
           <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(59,130,246,0.45), rgba(138,109,255,0.35), transparent)", margin: "20px 0" }} />
