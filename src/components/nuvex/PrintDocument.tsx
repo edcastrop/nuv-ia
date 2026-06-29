@@ -724,9 +724,13 @@ function DecisionRapidaTable({ honorariosBase, horasActivas }: { honorariosBase:
     return { ...t, precio, ahorro: Math.max(0, honorariosBase - precio), pisoAplicado: precio !== bruto };
   });
 
+  // Colapsamos cuando CUALQUIER tier toca el piso comercial: en ese caso la diferenciación
+  // entre 12h/24h/48h es artificial y confunde al cliente (todos terminan cerca del mínimo).
+  const algunTierEnPiso = computed.some((c) => c.pisoAplicado);
   const uniquePrices = Array.from(new Set(computed.map((c) => c.precio)));
-  const sinDiferenciacion = uniquePrices.length === 1; // todos los tramos llegan al mismo precio (piso)
-  const ahorroMax = Math.max(0, honorariosBase - uniquePrices[0]!);
+  const sinDiferenciacion = algunTierEnPiso || uniquePrices.length === 1;
+  const precioColapsado = Math.min(...computed.map((c) => c.precio));
+  const ahorroMax = Math.max(0, honorariosBase - precioColapsado);
 
   // Caso colapsado: el descuento máximo ya alcanza el piso → no hay diferenciación entre 12h/24h/48h.
   if (sinDiferenciacion) {
