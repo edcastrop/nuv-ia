@@ -161,7 +161,8 @@ export interface ContratacionContext {
   banco: string;
   producto: string;
   asesorNombre: string;
-  poderDoc: LegalDoc | null;
+  /** Poderes a enviar: titular + (si aplica) cotitular/colocatario. */
+  poderDocs: LegalDoc[];
   datosDoc: LegalDoc | null;
   faltantes: string[]; // razones por las que NO se puede enviar
 }
