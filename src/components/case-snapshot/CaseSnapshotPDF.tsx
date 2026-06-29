@@ -460,24 +460,24 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
           </div>
         </div>
 
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 18 }}>
-          <div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 18, gap: 16 }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ fontSize: 40, fontWeight: 950, color: C.text, letterSpacing: "0", lineHeight: 1 }}>CASE SNAPSHOT</div>
             <div style={{ fontSize: 10.5, color: C.textMuted, marginTop: 7, letterSpacing: "0.08em", textTransform: "uppercase" }}>Resumen ejecutivo del caso</div>
           </div>
-          <div style={{ width: 320, minHeight: 52, background: "#080F22", border: `1px solid ${C.border2}`, borderRadius: 5, padding: "8px 15px", boxSizing: "border-box", position: "relative", zIndex: 5, boxShadow: "0 0 0 1px rgba(59,130,246,0.18), 0 0 24px rgba(59,130,246,0.18)" }}>
+          <div style={{ width: 280, flexShrink: 0, minHeight: 52, background: "#080F22", border: `1px solid ${C.border2}`, borderRadius: 5, padding: "8px 14px", boxSizing: "border-box", position: "relative", zIndex: 5, boxShadow: "0 0 0 1px rgba(59,130,246,0.18), 0 0 24px rgba(59,130,246,0.18)" }}>
             <MiniLabel style={{ color: C.blue2, marginBottom: 4 }}>ID Expediente</MiniLabel>
-            <div style={{ fontSize: 11.5, lineHeight: 1.2, fontFamily: "'Courier New', Courier, monospace", color: "#F8FAFF", fontWeight: 700, letterSpacing: "0.02em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shortId(e.id)}</div>
+            <div style={{ fontSize: 10.5, lineHeight: 1.2, fontFamily: "'Courier New', Courier, monospace", color: "#F8FAFF", fontWeight: 700, letterSpacing: "0.02em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shortId(e.id)}</div>
           </div>
         </div>
 
-        <Card style={{ padding: 28, marginBottom: 12 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "210px 108px minmax(180px,1fr) 88px 132px", gap: 22, alignItems: "center" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 16, minWidth: 0, paddingRight: 14, borderRight: `1px solid ${C.border}` }}>
+        <Card style={{ padding: 22, marginBottom: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "180px 86px minmax(120px,1fr) 74px 116px", gap: 12, alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0, paddingRight: 8, borderRight: `1px solid ${C.border}` }}>
               <ClienteAvatar />
               <div style={{ minWidth: 0 }}>
                 <MiniLabel style={{ color: C.textLabel, marginBottom: 4 }}>Cliente</MiniLabel>
-                <div style={{ fontSize: 12, fontWeight: 950, color: C.text, lineHeight: 1.15, wordBreak: "normal", overflowWrap: "break-word", textTransform: "uppercase", letterSpacing: "0.01em" }}>{e.cliente.nombre}</div>
+                <div style={{ fontSize: 10.5, fontWeight: 950, color: C.text, lineHeight: 1.15, wordBreak: "normal", overflowWrap: "break-word", textTransform: "uppercase", letterSpacing: "0.01em" }}>{e.cliente.nombre}</div>
               </div>
             </div>
             <Field icon={<IconWrap><SvgBank /></IconWrap>} label="Banco" value={e.banco} />
