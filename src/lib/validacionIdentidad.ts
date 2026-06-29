@@ -219,6 +219,9 @@ export function extraerCamposCriticosDesdeExpediente(
     cotitularNombre: co.nombre || coStr("nombreCompleto", "nombre") || "",
     cotitularCedula: co.cedula || coStr("cedula", "numeroDocumento", "documento") || "",
     cotitularDireccion: co.direccion || coStr("direccion") || "",
+    cotitularEmail: co.email || coStr("email", "correo") || "",
+    cotitularCelular: co.telefono || co.celular || co.whatsapp || coStr("telefono", "celular", "whatsapp") || "",
+    cotitularLugarExpedicion: co.expedidaEn || co.lugarExpedicion || coStr("lugarExpedicionCedula", "expedidaEn", "lugarExpedicion") || "",
   };
 
 }
