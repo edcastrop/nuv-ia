@@ -413,21 +413,46 @@ export const getCaseSnapshotData = createServerFn({ method: "POST" })
         }
       } catch { /* opcional */ }
 
-      // Timeline operativo
-      const estadoCaso = String(exp.estado_caso ?? "");
-      const hitos = [
-        "Simulación", "QA", "Contrato", "Poder", "Checklist",
-        "Radicación", "Respuesta banco", "Informe final", "Cuenta cobro", "Paz y salvo",
+      // Timeline operativo — semaforizado contra el `orden` del catálogo de estados
+      // de caso (src/lib/casoEstados.ts). Cada hito define el umbral de "completado"
+      // y la ventana de "en proceso". Si el orden actual cae por encima → completado;
+      // si cae dentro → en curso; por debajo → pendiente.
+      const estadoCaso = String(exp.estado_caso ?? "").toLowerCase();
+      // Inline para no acoplar tipos de cliente al server fn.
+      const ORDEN_BY_KEY: Record<string, number> = {
+        lead_creado: 1, prospecto: 2, extracto_recibido: 3,
+        simulacion_realizada: 4, simulado: 5,
+        proyeccion_pendiente_qa: 5.1, proyeccion_aprobada_qa: 5.2, proyeccion_devuelta_qa: 5.3,
+        propuesta_presentada: 6, propuesta_enviada: 7, acepto_propuesta: 8,
+        negociacion: 9, pendiente_contratacion: 10,
+        enviado_contratacion: 11, contrato_enviado: 12, contrato_generado: 13, contrato_firmado: 14,
+        poder_generado: 15, poder_firmado: 16, documentacion_completa: 17,
+        radicacion_pendiente: 18, radicacion_preparada: 19, radicado_banco: 20,
+        en_estudio_banco: 21, docs_complementarios_banco: 22, aprobado: 23, aprobado_banco: 24,
+        documentos_banco_firmados: 25, condiciones_aplicadas: 26, aplicado_banco: 27,
+        resultado_final_generado: 28,
+        cuenta_cobro_generada: 29, cuenta_cobro_enviada: 30,
+        honorarios_pendientes: 31, honorarios_pagados: 32,
+        paz_y_salvo_generado: 33, caso_finalizado: 34,
+      };
+      const ordenActual = ORDEN_BY_KEY[estadoCaso] ?? 0;
+      // Cada hito: [doneAt, inProgressMin] — completado si ordenActual ≥ doneAt;
+      // en curso si ordenActual está en [inProgressMin, doneAt).
+      const hitos: Array<{ etiqueta: string; doneAt: number; inProgressMin: number }> = [
+        { etiqueta: "Simulación",      doneAt: 5,   inProgressMin: 3 },
+        { etiqueta: "QA",              doneAt: 5.2, inProgressMin: 5.1 },
+        { etiqueta: "Contrato",        doneAt: 14,  inProgressMin: 10 },
+        { etiqueta: "Poder",           doneAt: 16,  inProgressMin: 15 },
+        { etiqueta: "Checklist",       doneAt: 17,  inProgressMin: 16.5 },
+        { etiqueta: "Radicación",      doneAt: 20,  inProgressMin: 18 },
+        { etiqueta: "Respuesta banco", doneAt: 24,  inProgressMin: 21 },
+        { etiqueta: "Informe final",   doneAt: 28,  inProgressMin: 25 },
+        { etiqueta: "Cuenta cobro",    doneAt: 30,  inProgressMin: 29 },
+        { etiqueta: "Paz y salvo",     doneAt: 33,  inProgressMin: 31 },
       ];
-      const ordenEstados = [
-        "lead_creado", "simulado", "qa_aprobado", "contrato_firmado",
-        "poder_firmado", "checklist_completo", "radicado", "respuesta_banco",
-        "informe_final", "cuenta_cobro", "paz_y_salvo", "cerrado",
-      ];
-      const idx = ordenEstados.findIndex((e) => estadoCaso.includes(e));
-      dto.timeline = hitos.map((etiqueta, i) => ({
+      dto.timeline = hitos.map(({ etiqueta, doneAt, inProgressMin }) => ({
         etiqueta,
-        estado: idx < 0 ? "pendiente" : i < idx ? "hecho" : i === idx ? "curso" : "pendiente",
+        estado: ordenActual >= doneAt ? "hecho" : ordenActual >= inProgressMin ? "curso" : "pendiente",
       }));
 
       // Intervinientes (roles relevantes asociados a usuarios activos)
