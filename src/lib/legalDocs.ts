@@ -298,13 +298,31 @@ export function buildDatosContrato(
     { type: "paragraph", text: `Cliente: ${fullName(c.nombre)} · Entidad: ${safe(cr.banco).toUpperCase()} · Generado el ${hoy()}.` },
     { type: "spacer", size: 10 },
 
-    { type: "section", text: "1. CLIENTE" },
+    { type: "section", text: "1. CLIENTE TITULAR" },
     { type: "field", label: "Nombre completo", value: fmtTxt(c.nombre) },
     { type: "field", label: "Documento", value: `${c.tipoDocumento || "CC"} ${fmtTxt(c.cedula)}${c.expedidaEn ? ` de ${c.expedidaEn}` : ""}` },
     { type: "field", label: "Ciudad de residencia", value: fmtTxt(c.ciudad) },
+    { type: "field", label: "Dirección", value: fmtTxt(c.direccion) },
     { type: "field", label: "Correo", value: fmtTxt(c.email) },
     { type: "field", label: "Celular", value: fmtTxt(c.telefono) },
     { type: "spacer", size: 6 },
+
+    ...(() => {
+      const co = e.cotitular;
+      const tieneCo = !!(co && (co.activo || (co.nombre && co.nombre.trim()) || (co.cedula && co.cedula.trim())));
+      if (!tieneCo) return [] as DocBlock[];
+      const calidad = /leasing\s+habitacional/i.test(cr.tipoProducto || "") ? "COLOCATARIO" : "COTITULAR";
+      return [
+        { type: "section", text: `1B. ${calidad}` } as DocBlock,
+        { type: "field", label: "Nombre completo", value: fmtTxt(co!.nombre) } as DocBlock,
+        { type: "field", label: "Documento", value: `${co!.tipoDocumento || "CC"} ${fmtTxt(co!.cedula)}${co!.expedidaEn ? ` de ${co!.expedidaEn}` : ""}` } as DocBlock,
+        { type: "field", label: "Ciudad de residencia", value: fmtTxt(co!.ciudad) } as DocBlock,
+        { type: "field", label: "Dirección", value: fmtTxt(co!.direccion) } as DocBlock,
+        { type: "field", label: "Correo", value: fmtTxt(co!.email) } as DocBlock,
+        { type: "field", label: "Celular", value: fmtTxt(co!.telefono) } as DocBlock,
+        { type: "spacer", size: 6 } as DocBlock,
+      ];
+    })(),
 
     { type: "section", text: "2. PRODUCTO FINANCIERO" },
     { type: "field", label: "Banco", value: fmtTxt(cr.banco) },

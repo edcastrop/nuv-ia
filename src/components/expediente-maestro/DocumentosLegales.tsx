@@ -83,8 +83,12 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
       telefono: t.telefono || caseSource.telefono || "",
     });
     const co = (expediente.cotitular ?? {}) as Partial<CotitularMaestro> & { activo?: boolean };
+    // Auto-activar cotitular si hay datos persistidos (nombre o cédula) aunque
+    // el flag explícito no esté marcado: garantiza que Poder Especial del
+    // cotitular y la Ficha Contractual lo incluyan automáticamente.
+    const autoActivo = !!co.activo || !!(co.nombre && co.nombre.trim()) || !!(co.cedula && co.cedula.trim());
     setIjCotitular({
-      activo: !!co.activo,
+      activo: autoActivo,
       nombre: co.nombre || "",
       tipoDocumento: co.tipoDocumento || "CC",
       cedula: co.cedula || "",
