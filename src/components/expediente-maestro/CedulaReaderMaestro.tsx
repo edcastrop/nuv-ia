@@ -23,6 +23,8 @@ interface Props {
   label: string;
   /** Aplica el patch a los datos actuales. */
   onApply: (patch: Partial<ClienteMaestro> | Partial<CotitularMaestro>) => void;
+  /** Tono visual: "light" (default) para fichas blancas; "dark" para superficies NUVIA dark. */
+  tone?: "light" | "dark";
 }
 
 function fileToDataUrl(file: File | Blob): Promise<string> {
