@@ -250,10 +250,69 @@ function aplicaPerfil(doc: DocRequerido, perfil: PerfilLaboral): boolean {
   return doc.perfil === perfil;
 }
 
+export interface CotitularChecklistInput {
+  activo: boolean;
+  perfil: PerfilLaboral;
+  flags: FlagsCliente;
+  nombre?: string;
+}
+
+/** Construye los documentos financieros del cotitular (con id/label sufijado). */
+function buildDocsCotitular(
+  expediente: ExpedienteMaestro,
+  cotitular: CotitularChecklistInput,
+): DocRequerido[] {
+  const banco = detectBanco(expediente.credito?.banco);
+  const especificos = MATRIZ_DOCUMENTAL[banco];
+  const exigeCedulaAmpliada = especificos.some((d) => d.id === "cedula_ampliada_150");
+  const tag = cotitular.nombre?.trim()
+    ? `Cotitular · ${cotitular.nombre.trim()}`
+    : "Cotitular";
+
+  const cedulaCot: DocRequerido = exigeCedulaAmpliada
+    ? {
+        ...CEDULA_AMPLIADA,
+        id: "cedula_ampliada_150_cot",
+        nombre: `Cédula ampliada al 150% (${tag})`,
+        observacion: "Reemplaza la cédula estándar del cotitular para este banco.",
+      }
+    : {
+        id: "cedula_cliente_cot",
+        nombre: `Cédula del cotitular (${tag})`,
+        obligatorio: true,
+        perfil: "ambos",
+      };
+
+  const idsFinancieros = new Set([
+    "carta_laboral",
+    "desprendibles_3",
+    "desprendibles_6",
+    "renta_empleado",
+    "renta_independiente",
+    "extractos_3",
+    "billeteras_3m",
+    "cert_ingresos_retenciones",
+  ]);
+  const financierosBanco: DocRequerido[] = especificos.filter((d) => idsFinancieros.has(d.id));
+
+  const result: DocRequerido[] = [cedulaCot];
+  const vistos = new Set<string>([cedulaCot.id]);
+  for (const d of financierosBanco) {
+    const newId = `${d.id}_cot`;
+    if (vistos.has(newId)) continue;
+    if (!aplicaPerfil(d, cotitular.perfil)) continue;
+    if (d.condicion && !d.condicion(cotitular.flags)) continue;
+    vistos.add(newId);
+    result.push({ ...d, id: newId, nombre: `${d.nombre} — ${tag}` });
+  }
+  return result;
+}
+
 export function buildChecklist(
   expediente: ExpedienteMaestro,
   perfil: PerfilLaboral,
   flags: FlagsCliente,
+  cotitular?: CotitularChecklistInput,
 ): DocRequerido[] {
   const banco = detectBanco(expediente.credito?.banco);
   const especificos = MATRIZ_DOCUMENTAL[banco];
@@ -277,6 +336,15 @@ export function buildChecklist(
     if (d.condicion && !d.condicion(flags)) continue;
     vistos.add(d.id);
     result.push(d);
+  }
+
+  // Documentos del cotitular (si aplica)
+  if (cotitular?.activo) {
+    for (const d of buildDocsCotitular(expediente, cotitular)) {
+      if (vistos.has(d.id)) continue;
+      vistos.add(d.id);
+      result.push(d);
+    }
   }
   return result;
 }
