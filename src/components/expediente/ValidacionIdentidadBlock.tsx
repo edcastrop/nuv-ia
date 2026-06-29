@@ -212,35 +212,38 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
           </label>
         )}
         {draft.cotitularActivo && (
-          <>
+          <div className="md:col-span-3 space-y-3 rounded-xl border bg-[rgba(255,255,255,0.03)] p-3" style={{ borderColor: "rgba(132,150,200,0.22)" }}>
             {puedeEditar && (
-              <div className="md:col-span-3">
-                <CedulaReaderMaestro
-                  label="cotitular"
-                  tone="dark"
-                  expedienteId={exp.id}
-                  soporteSubcategoria="cedula_cotitular_1"
-                  onSoporteUploaded={() => setSoportesVersion((n) => n + 1)}
-                  onApply={(patch) => {
-                    setDraft({
-                      ...draft,
-                      cotitularActivo: true,
-                      cotitularNombre: patch.nombre || draft.cotitularNombre || "",
-                      cotitularCedula: patch.cedula || draft.cotitularCedula || "",
-                      cotitularDireccion: patch.direccion || draft.cotitularDireccion || draft.direccion || "",
-                      cotitularLugarExpedicion: (patch as { expedidaEn?: string }).expedidaEn || draft.cotitularLugarExpedicion || "",
-                    });
-                  }}
-                />
-              </div>
+              <CedulaReaderMaestro
+                label="cotitular"
+                tone="dark"
+                expedienteId={exp.id}
+                soporteSubcategoria="cedula_cotitular_1"
+                onSoporteUploaded={() => setSoportesVersion((n) => n + 1)}
+                onApply={(patch) => {
+                  setDraft({
+                    ...draft,
+                    cotitularActivo: true,
+                    cotitularNombre: patch.nombre || draft.cotitularNombre || "",
+                    cotitularCedula: patch.cedula || draft.cotitularCedula || "",
+                    cotitularDireccion: patch.direccion || draft.cotitularDireccion || draft.direccion || "",
+                    cotitularLugarExpedicion: (patch as { expedidaEn?: string }).expedidaEn || draft.cotitularLugarExpedicion || "",
+                  });
+                }}
+              />
             )}
-            <EditField label="Cotitular" value={draft.cotitularNombre || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, cotitularNombre: val })} />
-            <EditField label="Doc. cotitular" value={draft.cotitularCedula || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, cotitularCedula: val.replace(/\D/g, "") })} />
-            <EditField label="Lugar expedición cotitular" value={draft.cotitularLugarExpedicion || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, cotitularLugarExpedicion: val })} kind="city" />
-            <EditField label="Dir. cotitular" value={draft.cotitularDireccion || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, cotitularDireccion: val })} className="md:col-span-2" />
-            <EditField label="Email cotitular" value={draft.cotitularEmail || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, cotitularEmail: val })} />
-            <EditField label="WhatsApp cotitular" value={draft.cotitularCelular || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, cotitularCelular: val })} />
-          </>
+            <div className="text-[11px] uppercase tracking-wider font-semibold text-[var(--nuvia-text-secondary)]">
+              Datos completos del cotitular
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <EditField label="Cotitular" value={draft.cotitularNombre || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, cotitularNombre: val })} />
+              <EditField label="Doc. cotitular" value={draft.cotitularCedula || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, cotitularCedula: val.replace(/\D/g, "") })} />
+              <EditField label="Lugar expedición cédula" value={draft.cotitularLugarExpedicion || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, cotitularLugarExpedicion: val })} kind="city" />
+              <EditField label="Correo cotitular" value={draft.cotitularEmail || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, cotitularEmail: val })} />
+              <EditField label="WhatsApp cotitular" value={draft.cotitularCelular || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, cotitularCelular: val.replace(/[^\d+\s]/g, "") })} />
+              <EditField label="Dir. cotitular" value={draft.cotitularDireccion || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, cotitularDireccion: val })} />
+            </div>
+          </div>
         )}
       </div>
 
