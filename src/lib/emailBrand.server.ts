@@ -77,7 +77,7 @@ export async function wrapNuvexEmail(opts: {
     <tr><td align="center">
       <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 6px 24px -12px rgba(36,36,36,0.18);">
         <tr><td style="padding:28px 32px 20px;border-bottom:3px solid ${b.color_azul};">
-          <img src="${b.logo_url}" alt="${escapeHtml(b.nombre_comercial)}" height="44" style="display:block;height:44px;width:auto;border:0;outline:none;text-decoration:none;">
+          <img src="${b.logo_url}" alt="${escapeHtml(b.nombre_comercial)}" height="72" style="display:block;height:72px;width:auto;border:0;outline:none;text-decoration:none;">
         </td></tr>
         <tr><td style="padding:28px 32px;font-size:14px;line-height:1.65;color:${b.color_negro};">
           ${html}
