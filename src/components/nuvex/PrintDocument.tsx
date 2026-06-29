@@ -327,9 +327,9 @@ export function PrintDocument(props: Props) {
 
       <section className="nuvex-print-page" style={pageStyle(false)}>
         <TopBar page="Página 2 de 2" />
-        <main style={{ padding: "10px 32px 12px", flex: "1 1 auto", minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-          <h2 style={{ margin: 0, fontSize: 24, lineHeight: 1, fontWeight: 950, color: "#071023", letterSpacing: 0 }}>COMPARACIÓN DE ESCENARIOS</h2>
-          <p style={{ margin: "4px 0 9px", color: C.text, fontSize: 11.4, lineHeight: 1.28, fontWeight: 600 }}>
+        <main style={{ padding: "8px 30px 8px", flex: "1 1 auto", minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+          <h2 style={{ margin: 0, fontSize: 22, lineHeight: 1, fontWeight: 950, color: "#071023", letterSpacing: 0 }}>COMPARACIÓN DE ESCENARIOS</h2>
+          <p style={{ margin: "3px 0 7px", color: C.text, fontSize: 10.8, lineHeight: 1.22, fontWeight: 600 }}>
             Analizamos diferentes alternativas para que elijas<br />el nivel de optimización que mejor se adapta a tus objetivos financieros.
           </p>
           <ScenariosTable
@@ -351,7 +351,7 @@ export function PrintDocument(props: Props) {
           />
 
           <SectionLabel title="RESUMEN DEL IMPACTO" />
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginTop: 7 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginTop: 5 }}>
             <Impact icon={<Clock3 />} label="AÑOS RECUPERADOS" value={`${añosEliminadosEntero}`} sub="años" />
             <Impact icon={<CheckCircle2 />} label="CUOTAS ELIMINADAS" value={`${cuotasEliminadas}`} sub="menos pagos" />
             <Impact icon={<PiggyBank />} label="AHORRO TOTAL" value={formatCOP(recommended.ahorroTotal)} />
@@ -364,7 +364,7 @@ export function PrintDocument(props: Props) {
 
 
           <SectionLabel title="¿QUÉ SUCEDE AHORA?" />
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10, marginTop: 7 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8, marginTop: 5 }}>
             <Step n={1} icon={<Pencil />} title="Firma de autorización" desc="Nos autorizas para gestionar tu caso." />
             <Step n={2} icon={<FolderUp />} title="Radicación ante el banco" desc="Presentamos la solicitud de optimización." />
             <Step n={3} icon={<Building2 />} title="Análisis del banco" desc="El banco evalúa la viabilidad." />
@@ -372,14 +372,14 @@ export function PrintDocument(props: Props) {
             <Step n={5} icon={<Smile />} title="Disfrutas tu optimización" desc="Menos cuotas, más tiempo y más tranquilidad." />
           </div>
 
-          <div style={{ marginTop: 13, minHeight: 112, background: C.navy, borderRadius: 9, padding: "18px 24px", display: "grid", gridTemplateColumns: "1fr 1.55fr", gap: 22, alignItems: "center", color: "#fff" }}>
+          <div style={{ marginTop: 9, minHeight: 88, background: C.navy, borderRadius: 9, padding: "12px 22px", display: "grid", gridTemplateColumns: "1fr 1.55fr", gap: 18, alignItems: "center", color: "#fff" }}>
             <div>
-              <div style={{ color: C.green, fontSize: 11, fontWeight: 950, letterSpacing: "0.22em" }}>UNA DECISIÓN · DOS CAMINOS</div>
-              <div style={{ marginTop: 7, fontSize: 12, fontWeight: 700 }}>Ya hicimos los cálculos. <span style={{ color: C.green }}>La decisión es tuya.</span></div>
+              <div style={{ color: C.green, fontSize: 10.5, fontWeight: 950, letterSpacing: "0.2em" }}>UNA DECISIÓN · DOS CAMINOS</div>
+              <div style={{ marginTop: 5, fontSize: 11, fontWeight: 700 }}>Ya hicimos los cálculos. <span style={{ color: C.green }}>La decisión es tuya.</span></div>
             </div>
             <div>
-              <div style={{ background: `linear-gradient(180deg, ${NUVEX.verdeFuerte}, ${NUVEX.verde})`, color: "#061122", borderRadius: 5, padding: "13px 16px", textAlign: "center", fontSize: 13, fontWeight: 950 }}>QUIERO RECUPERAR MI TIEMPO FINANCIERO</div>
-              <div style={{ marginTop: 8, textAlign: "center", fontSize: 8, letterSpacing: "0.28em", fontWeight: 900, color: "rgba(255,255,255,0.7)" }}>PROPUESTA COMERCIAL VÁLIDA POR 48 HORAS</div>
+              <div style={{ background: `linear-gradient(180deg, ${NUVEX.verdeFuerte}, ${NUVEX.verde})`, color: "#061122", borderRadius: 5, padding: "10px 14px", textAlign: "center", fontSize: 12, fontWeight: 950 }}>QUIERO RECUPERAR MI TIEMPO FINANCIERO</div>
+              <div style={{ marginTop: 6, textAlign: "center", fontSize: 7.5, letterSpacing: "0.24em", fontWeight: 900, color: "rgba(255,255,255,0.7)" }}>PROPUESTA COMERCIAL VÁLIDA POR 48 HORAS</div>
             </div>
           </div>
         </main>
@@ -653,7 +653,7 @@ function ScenariosTable(props: {
     ["Beneficio comercial", "—", ...props.esc.map(() => "—"), "Aprobado"] as [string, string, string, string, string, string],
   ];
   const cols = "1.55fr 1fr 1fr 1fr 1fr 1.1fr";
-  const headBase: CSSProperties = { color: "#fff", padding: "9px 6px", fontSize: 9, lineHeight: 1.12, fontWeight: 950, textAlign: "center", borderRight: "1px solid rgba(255,255,255,0.12)" };
+  const headBase: CSSProperties = { color: "#fff", padding: "7px 6px", fontSize: 8.5, lineHeight: 1.08, fontWeight: 950, textAlign: "center", borderRight: "1px solid rgba(255,255,255,0.12)" };
   const headDark: CSSProperties = { ...headBase, background: "linear-gradient(180deg,#06111E,#071A3D)" };
   const headGreen: CSSProperties = { ...headBase, background: `linear-gradient(180deg,${C.greenDeep},${C.greenDark})`, borderRight: `1px solid ${C.greenDark}` };
   return (
@@ -676,9 +676,9 @@ function ScenariosTable(props: {
                 background: isRec ? "#EAF6EE" : ri % 2 === 1 ? "#FAFBFD" : "#fff",
                 color: isRec ? C.greenDark : isLabel ? C.ink : C.text,
                 fontWeight: isLabel ? 900 : isRec ? 950 : 800,
-                fontSize: 9.4,
-                lineHeight: 1.15,
-                padding: "8px 8px",
+                fontSize: 8.6,
+                lineHeight: 1.08,
+                padding: "5px 7px",
                 textAlign: isLabel ? "left" : "center",
                 borderRight: `1px solid ${isRec ? "#CFE9D6" : C.line}`,
               }}>{c}</div>
@@ -686,20 +686,20 @@ function ScenariosTable(props: {
           })}
         </div>
       ))}
-      <div style={{ background: C.panel, borderTop: `1px solid ${C.line}`, color: C.muted, textAlign: "center", fontSize: 8.6, fontWeight: 800, padding: "7px 10px" }}>Total de escenarios analizados: {props.totalEscenarios} · La columna destacada es la propuesta recomendada por nuestro motor financiero.</div>
+      <div style={{ background: C.panel, borderTop: `1px solid ${C.line}`, color: C.muted, textAlign: "center", fontSize: 8, fontWeight: 800, padding: "5px 10px" }}>Total de escenarios analizados: {props.totalEscenarios} · La columna destacada es la propuesta recomendada por nuestro motor financiero.</div>
     </div>
   );
 }
 
 function SectionLabel({ title }: { title: string }) {
-  return <div style={{ marginTop: 12, color: C.greenDeep, fontSize: 13.5, fontWeight: 950, letterSpacing: "0.05em" }}>{title}</div>;
+  return <div style={{ marginTop: 8, color: C.greenDeep, fontSize: 12.6, fontWeight: 950, letterSpacing: "0.05em" }}>{title}</div>;
 }
 
 function Impact({ icon, label, value, sub, blue }: { icon: ReactNode; label: string; value: string; sub?: string; blue?: boolean }) {
   return (
-    <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, background: "#fff", minHeight: 79, padding: "12px 15px", display: "grid", gridTemplateColumns: "34px 1fr", gap: 10, alignItems: "center" }}>
+    <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, background: "#fff", minHeight: 66, padding: "9px 12px", display: "grid", gridTemplateColumns: "30px 1fr", gap: 8, alignItems: "center" }}>
       <div style={{ color: blue ? C.blue : C.greenDeep }}>{icon}</div>
-      <div><div style={tinyLabelStyle}>{label}</div><div style={{ marginTop: 5, color: blue ? C.blue : C.greenDeep, fontSize: 22, fontWeight: 950, lineHeight: 1 }}>{value}</div>{sub && <div style={{ fontSize: 9.5, color: C.text, fontWeight: 650 }}>{sub}</div>}</div>
+      <div><div style={{ ...tinyLabelStyle, fontSize: 7.8 }}>{label}</div><div style={{ marginTop: 4, color: blue ? C.blue : C.greenDeep, fontSize: 19, fontWeight: 950, lineHeight: 1 }}>{value}</div>{sub && <div style={{ fontSize: 8.5, color: C.text, fontWeight: 650 }}>{sub}</div>}</div>
     </div>
   );
 }
@@ -737,20 +737,20 @@ function DecisionRapidaTable({ honorariosBase, horasActivas }: { honorariosBase:
     const precioFinal = precioColapsado;
     const hayAhorro = ahorroMax > 0;
     return (
-      <div style={{ marginTop: 12, border: `1px solid ${C.line}`, borderRadius: 10, background: C.panel, padding: "12px 14px 13px" }}>
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 9 }}>
-          <div style={{ color: C.greenDeep, fontWeight: 950, fontSize: 13, letterSpacing: "0.06em" }}>BENEFICIO POR DECISIÓN RÁPIDA</div>
-          <div style={{ color: C.text, fontSize: 9.5, fontWeight: 700, letterSpacing: "0.05em" }}>
+      <div style={{ marginTop: 8, border: `1px solid ${C.line}`, borderRadius: 9, background: C.panel, padding: "9px 12px 10px" }}>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 6 }}>
+          <div style={{ color: C.greenDeep, fontWeight: 950, fontSize: 12, letterSpacing: "0.06em" }}>BENEFICIO POR DECISIÓN RÁPIDA</div>
+          <div style={{ color: C.text, fontSize: 8.8, fontWeight: 700, letterSpacing: "0.05em" }}>
             {hayAhorro
               ? "Mientras más pasa el tiempo, más se pierde dinero."
               : "Honorarios mínimos NUVEX — no aplica descuento adicional."}
           </div>
         </div>
-        <div style={{ position: "relative", border: `1.4px solid ${C.greenDeep}`, borderRadius: 9, background: "linear-gradient(180deg,#1F7A45,#155A33)", padding: "14px 18px", color: "#fff", display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr", gap: 16, alignItems: "center" }}>
+        <div style={{ position: "relative", border: `1.4px solid ${C.greenDeep}`, borderRadius: 9, background: "linear-gradient(180deg,#1F7A45,#155A33)", padding: "11px 16px", color: "#fff", display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr", gap: 14, alignItems: "center" }}>
           <div style={{ position: "absolute", top: -9, right: 14, background: "#0B1226", color: "#84F5A8", fontSize: 8.2, fontWeight: 950, letterSpacing: "0.18em", padding: "3px 8px", borderRadius: 999 }}>HONORARIOS MÍNIMOS</div>
           <div>
             <div style={{ fontSize: 10.5, fontWeight: 950, letterSpacing: "0.08em", color: "rgba(255,255,255,0.85)" }}>TARIFA FINAL ÚNICA</div>
-            <div style={{ marginTop: 4, fontSize: 11, fontWeight: 700, lineHeight: 1.3, color: "rgba(255,255,255,0.78)" }}>
+            <div style={{ marginTop: 3, fontSize: 10, fontWeight: 700, lineHeight: 1.22, color: "rgba(255,255,255,0.78)" }}>
               {hayAhorro
                 ? "Decidir hoy es recuperar años de tu vida financiera. Cada cuota eliminada es dinero que vuelve a tu familia y a tus proyectos."
                 : "Por el tamaño del caso, los honorarios ya están en el mínimo NUVEX. No es posible aplicar un descuento adicional por tiempo de decisión."}
@@ -758,17 +758,17 @@ function DecisionRapidaTable({ honorariosBase, horasActivas }: { honorariosBase:
           </div>
           <div>
             <div style={{ fontSize: 9, fontWeight: 800, color: "rgba(255,255,255,0.78)", letterSpacing: "0.06em" }}>ESTÁNDAR</div>
-            <div style={{ marginTop: 4, fontSize: 14, fontWeight: 950, color: "rgba(255,255,255,0.85)", textDecoration: hayAhorro ? "line-through" : undefined }}>{formatCOP(honorariosBase)}</div>
+            <div style={{ marginTop: 3, fontSize: 13, fontWeight: 950, color: "rgba(255,255,255,0.85)", textDecoration: hayAhorro ? "line-through" : undefined }}>{formatCOP(honorariosBase)}</div>
             <div style={{ marginTop: 9, fontSize: 9, fontWeight: 800, color: "rgba(255,255,255,0.78)", letterSpacing: "0.06em" }}>HONORARIOS</div>
-            <div style={{ marginTop: 4, fontSize: 20, fontWeight: 950, color: "#fff", lineHeight: 1 }}>{formatCOP(precioFinal)}</div>
+            <div style={{ marginTop: 3, fontSize: 18, fontWeight: 950, color: "#fff", lineHeight: 1 }}>{formatCOP(precioFinal)}</div>
           </div>
           <div style={{ textAlign: "right" }}>
             <div style={{ fontSize: 9, fontWeight: 800, color: "rgba(255,255,255,0.78)", letterSpacing: "0.06em" }}>{hayAhorro ? "AHORRO MÁXIMO" : "AHORRO"}</div>
-            <div style={{ marginTop: 4, fontSize: 22, fontWeight: 950, color: "#84F5A8", lineHeight: 1 }}>{formatCOP(ahorroMax)}</div>
-            <div style={{ marginTop: 6, fontSize: 8.6, fontWeight: 700, color: "rgba(255,255,255,0.75)", letterSpacing: "0.04em" }}>{hayAhorro ? "vs. tarifa estándar" : "sin reducción adicional"}</div>
+            <div style={{ marginTop: 3, fontSize: 20, fontWeight: 950, color: "#84F5A8", lineHeight: 1 }}>{formatCOP(ahorroMax)}</div>
+            <div style={{ marginTop: 4, fontSize: 8.2, fontWeight: 700, color: "rgba(255,255,255,0.75)", letterSpacing: "0.04em" }}>{hayAhorro ? "vs. tarifa estándar" : "sin reducción adicional"}</div>
           </div>
         </div>
-        <div style={{ marginTop: 9, fontSize: 9.6, color: C.text, fontWeight: 700, textAlign: "center" }}>
+        <div style={{ marginTop: 6, fontSize: 8.8, color: C.text, fontWeight: 700, textAlign: "center" }}>
           Vigencia desde el envío de esta propuesta · honorarios mínimos NUVEX: <b style={{ color: C.greenDeep }}>{formatCOP(HONORARIOS_MIN_FINAL)}</b>.
         </div>
       </div>
@@ -777,12 +777,12 @@ function DecisionRapidaTable({ honorariosBase, horasActivas }: { honorariosBase:
 
   // Caso normal: 3 tramos diferenciados.
   return (
-    <div style={{ marginTop: 12, border: `1px solid ${C.line}`, borderRadius: 10, background: C.panel, padding: "12px 14px 13px" }}>
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 9 }}>
-        <div style={{ color: C.greenDeep, fontWeight: 950, fontSize: 13, letterSpacing: "0.06em" }}>BENEFICIO POR DECISIÓN RÁPIDA</div>
-        <div style={{ color: C.text, fontSize: 9.5, fontWeight: 700, letterSpacing: "0.05em" }}>Mientras más rápido decidas, más ahorras en honorarios.</div>
+    <div style={{ marginTop: 8, border: `1px solid ${C.line}`, borderRadius: 9, background: C.panel, padding: "9px 12px 10px" }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 6 }}>
+        <div style={{ color: C.greenDeep, fontWeight: 950, fontSize: 12, letterSpacing: "0.06em" }}>BENEFICIO POR DECISIÓN RÁPIDA</div>
+        <div style={{ color: C.text, fontSize: 8.8, fontWeight: 700, letterSpacing: "0.05em" }}>Mientras más rápido decidas, más ahorras en honorarios.</div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 9 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 7 }}>
         {computed.map((t) => {
           const activo = activeTier?.horas === t.horas;
           const bg = activo ? "linear-gradient(180deg,#1F7A45,#155A33)" : "#FFFFFF";
@@ -791,20 +791,20 @@ function DecisionRapidaTable({ honorariosBase, horasActivas }: { honorariosBase:
           const textMuted = activo ? "rgba(255,255,255,0.78)" : C.text;
           const accent = activo ? "#FFFFFF" : C.greenDeep;
           return (
-            <div key={t.horas} style={{ position: "relative", border: `1.4px solid ${borderCol}`, borderRadius: 9, background: bg, padding: "10px 11px 11px", boxShadow: activo ? "0 10px 24px -14px rgba(31,122,69,0.85)" : "none" }}>
+            <div key={t.horas} style={{ position: "relative", border: `1.4px solid ${borderCol}`, borderRadius: 8, background: bg, padding: "8px 10px 9px", boxShadow: activo ? "0 10px 24px -14px rgba(31,122,69,0.85)" : "none" }}>
               {activo && (
                 <div style={{ position: "absolute", top: -9, right: 10, background: "#0B1226", color: "#84F5A8", fontSize: 8.2, fontWeight: 950, letterSpacing: "0.18em", padding: "3px 8px", borderRadius: 999 }}>SELECCIONADA</div>
               )}
               <div style={{ display: "flex", alignItems: "center", gap: 6, color: accent, fontSize: 10, fontWeight: 950, letterSpacing: "0.06em" }}>
                 <span style={{ fontSize: 13 }}>{t.icon}</span>{t.label.toUpperCase()}
               </div>
-              <div style={{ marginTop: 6, color: accent, fontSize: 22, fontWeight: 950, lineHeight: 1 }}>
+              <div style={{ marginTop: 4, color: accent, fontSize: 20, fontWeight: 950, lineHeight: 1 }}>
                 {t.pct}% OFF
                 {t.pisoAplicado && (
                   <span style={{ marginLeft: 6, fontSize: 8.4, fontWeight: 800, letterSpacing: "0.08em", color: accent, opacity: 0.85 }}>· PISO MÍN.</span>
                 )}
               </div>
-              <div style={{ marginTop: 7, display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 6 }}>
+              <div style={{ marginTop: 5, display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 6 }}>
                 <span style={{ fontSize: 8.6, fontWeight: 800, color: textMuted, letterSpacing: "0.04em" }}>ESTÁNDAR</span>
                 <span style={{ fontSize: 10.5, fontWeight: 800, color: textMuted, textDecoration: "line-through" }}>{formatCOP(honorariosBase)}</span>
               </div>
@@ -812,7 +812,7 @@ function DecisionRapidaTable({ honorariosBase, horasActivas }: { honorariosBase:
                 <span style={{ fontSize: 8.6, fontWeight: 950, color: accent, letterSpacing: "0.04em" }}>HONORARIOS</span>
                 <span style={{ fontSize: 15, fontWeight: 950, color: textInk, lineHeight: 1 }}>{formatCOP(t.precio)}</span>
               </div>
-              <div style={{ marginTop: 6, paddingTop: 6, borderTop: `1px dashed ${activo ? "rgba(255,255,255,0.32)" : C.line}`, display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 6 }}>
+              <div style={{ marginTop: 5, paddingTop: 5, borderTop: `1px dashed ${activo ? "rgba(255,255,255,0.32)" : C.line}`, display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 6 }}>
                 <span style={{ fontSize: 8.6, fontWeight: 950, color: accent, letterSpacing: "0.04em" }}>AHORRO</span>
                 <span style={{ fontSize: 13, fontWeight: 950, color: activo ? "#84F5A8" : C.greenDeep }}>{formatCOP(t.ahorro)}</span>
               </div>
@@ -821,11 +821,11 @@ function DecisionRapidaTable({ honorariosBase, horasActivas }: { honorariosBase:
         })}
       </div>
       {activeTier ? (
-        <div style={{ marginTop: 9, fontSize: 9.6, color: C.text, fontWeight: 700, textAlign: "center" }}>
+        <div style={{ marginTop: 6, fontSize: 8.8, color: C.text, fontWeight: 700, textAlign: "center" }}>
           Tu propuesta actual aplica el beneficio de <b style={{ color: C.greenDeep }}>{activeTier.horas} horas</b> · vigencia desde el envío de esta propuesta.
         </div>
       ) : (
-        <div style={{ marginTop: 9, fontSize: 9.6, color: C.text, fontWeight: 700, textAlign: "center" }}>
+        <div style={{ marginTop: 6, fontSize: 8.8, color: C.text, fontWeight: 700, textAlign: "center" }}>
           Selecciona cuanto antes el tramo que más te convenga: cada hora cuenta.
         </div>
       )}
@@ -838,11 +838,11 @@ function DecisionRapidaTable({ honorariosBase, horasActivas }: { honorariosBase:
 
 function Step({ n, icon, title, desc, green }: { n: number; icon: ReactNode; title: string; desc: string; green?: boolean }) {
   return (
-    <div style={{ border: `1px solid ${C.line}`, borderRadius: 9, background: "#fff", minHeight: 126, padding: "10px 12px", position: "relative" }}>
+    <div style={{ border: `1px solid ${C.line}`, borderRadius: 8, background: "#fff", minHeight: 102, padding: "8px 10px", position: "relative" }}>
       <div style={{ position: "absolute", left: 7, top: 7, width: 20, height: 20, borderRadius: "50%", background: C.black, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 950 }}>{n}</div>
-      <div style={{ marginTop: 19, color: green ? C.greenDeep : C.ink, display: "flex", justifyContent: "center" }}>{icon}</div>
-      <div style={{ marginTop: 10, color: C.ink, fontSize: 10.2, lineHeight: 1.14, fontWeight: 950 }}>{title}</div>
-      <div style={{ marginTop: 7, color: C.text, fontSize: 8.5, lineHeight: 1.22, fontWeight: 600 }}>{desc}</div>
+      <div style={{ marginTop: 17, color: green ? C.greenDeep : C.ink, display: "flex", justifyContent: "center" }}>{icon}</div>
+      <div style={{ marginTop: 7, color: C.ink, fontSize: 9.2, lineHeight: 1.08, fontWeight: 950 }}>{title}</div>
+      <div style={{ marginTop: 5, color: C.text, fontSize: 7.8, lineHeight: 1.16, fontWeight: 600 }}>{desc}</div>
     </div>
   );
 }
