@@ -304,7 +304,6 @@ export function PrintDocument(props: Props) {
             />
           </div>
 
-          <div style={{ marginTop: 14, background: `linear-gradient(135deg, ${C.navy}, #041229)`, color: "#fff", borderRadius: 10, padding: "18px 24px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "center" }}>
           <div style={{ marginTop: 12, background: `linear-gradient(135deg, ${C.navy}, #041229)`, color: "#fff", borderRadius: 10, padding: "16px 22px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 22, alignItems: "center" }}>
             <DarkBenefit icon={<Shield size={48} color={C.green} strokeWidth={1.6} />} label="HONORARIOS A ÉXITO NUVEX" value={formatCOP(honorariosMejorTier)} sub="Tarifa con beneficio máximo por decisión en 12 horas. Solo se pagan si el banco aprueba la optimización." />
             <DarkBenefit icon={<Shield size={48} color={C.green} strokeWidth={1.6} />} label="VÁLIDO POR" value={vigenciaMejorTier} sub="Desde el envío de esta propuesta. Mira en la página 2 los otros tramos disponibles (24h y 48h)." right />
