@@ -201,11 +201,13 @@ export function PrintDocument(props: Props) {
   const honorariosFinales = commercial?.hasDiscount ? commercial.finales : recommended.honorarios;
   const honorariosBase = commercial?.honorariosBase ?? recommended.honorarios;
   const descuento = commercial?.hasDiscount ? Math.max(0, honorariosBase - honorariosFinales) : 0;
-  // Vigencia para mostrar en bloques "VÁLIDO POR" y "VIGENCIA". Default 48h si no hay.
+  // Vigencia para mostrar en bloque "VIGENCIA" del tier activo. Default 48h si no hay.
   const vigenciaRaw = (commercial?.vigencia ?? "").trim();
   const horasMatch = vigenciaRaw.match(/(\d{1,3})\s*h/i);
   const horasVigencia = horasMatch ? horasMatch[1] : "48";
-  const vigenciaCorta = `${horasVigencia} HORAS`;
+  // Página 1 SIEMPRE muestra el mejor descuento (12h = 25%) como gancho comercial.
+  const honorariosMejorTier = Math.round(honorariosBase * 0.75);
+  const vigenciaMejorTier = "12 HORAS";
 
   const consistenciaOk = Math.abs((commercial?.honorariosBase ?? recommended.honorarios) - recommended.honorarios) < 1;
   if (!consistenciaOk) {
@@ -302,12 +304,12 @@ export function PrintDocument(props: Props) {
             />
           </div>
 
-          <div style={{ marginTop: 14, background: `linear-gradient(135deg, ${C.navy}, #041229)`, color: "#fff", borderRadius: 10, padding: "18px 24px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "center" }}>
-            <DarkBenefit icon={<Shield size={52} color={C.green} strokeWidth={1.6} />} label="HONORARIOS A ÉXITO NUVEX" value={formatCOP(honorariosFinales)} sub="Solo se pagan si el banco aprueba la optimización." />
-            <DarkBenefit icon={<Shield size={52} color={C.green} strokeWidth={1.6} />} label="VÁLIDO POR" value={vigenciaCorta} sub="Desde el envío de esta propuesta." right />
+          <div style={{ marginTop: 12, background: `linear-gradient(135deg, ${C.navy}, #041229)`, color: "#fff", borderRadius: 10, padding: "16px 22px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 22, alignItems: "center" }}>
+            <DarkBenefit icon={<Shield size={48} color={C.green} strokeWidth={1.6} />} label="HONORARIOS A ÉXITO NUVEX" value={formatCOP(honorariosMejorTier)} sub="Tarifa con beneficio máximo por decisión en 12 horas. Solo se pagan si el banco aprueba la optimización." />
+            <DarkBenefit icon={<Shield size={48} color={C.green} strokeWidth={1.6} />} label="VÁLIDO POR" value={vigenciaMejorTier} sub="Desde el envío de esta propuesta. Mira en la página 2 los otros tramos disponibles (24h y 48h)." right />
           </div>
 
-          <div style={{ marginTop: 12, background: C.navy, borderRadius: 10, color: "#fff", padding: "12px 24px", display: "grid", gridTemplateColumns: "1fr auto", gap: 24, alignItems: "center", flex: "0 0 auto" }}>
+          <div style={{ marginTop: 10, background: C.navy, borderRadius: 10, color: "#fff", padding: "10px 22px", display: "grid", gridTemplateColumns: "1fr auto", gap: 22, alignItems: "center", flex: "0 0 auto" }}>
             <div style={{ fontSize: 12.5, lineHeight: 1.34, fontWeight: 600 }}>
               <span style={{ color: C.green, fontSize: 34, lineHeight: 0, verticalAlign: "middle" }}>“</span> Este crédito terminará de una u otra forma.<br />
               La diferencia es decidir si quieres <b style={{ color: C.green }}>recuperar parte de tu tiempo financiero.</b><br />
@@ -355,23 +357,8 @@ export function PrintDocument(props: Props) {
             <Impact icon={<CalendarDays />} label="NUEVA FECHA FIN" value={`${añoFinOpt}`} sub={`antes de ${añoFinActual}`} blue />
           </div>
 
-          <div style={{ marginTop: 13, border: `1px solid ${C.line}`, borderRadius: 10, background: C.panel, padding: "16px 16px", display: "grid", gridTemplateColumns: "1.25fr 0.72fr 0.16fr 0.9fr 0.9fr", gap: 12, alignItems: "center" }}>
-            <div>
-              <div style={{ color: C.greenDeep, fontWeight: 950, fontSize: 14, letterSpacing: "0.06em" }}>BENEFICIO ECONÓMICO</div>
-              <div style={{ marginTop: 8, fontSize: 12.5, fontWeight: 900, color: C.ink }}>Honorarios a Éxito NUVEX</div>
-              <div style={{ marginTop: 3, fontSize: 10.4, color: C.text, lineHeight: 1.25, fontWeight: 600 }}>Solo se cobran cuando el banco<br />aprueba la optimización.</div>
-            </div>
-            <PriceBox label="ESTÁNDAR" value={formatCOP(honorariosBase)} crossed />
-            <ArrowRight size={26} color={C.muted} />
-            <PriceBox label="APROBADOS" value={formatCOP(honorariosFinales)} />
-            <div style={{ border: `1px solid ${C.green}66`, background: "linear-gradient(180deg,#EFF9F1,#E8F5EB)", borderRadius: 9, padding: "10px 12px", textAlign: "center" }}>
-              <div style={{ fontSize: 9, color: C.greenDark, fontWeight: 950, letterSpacing: "0.12em" }}>DESCUENTO</div>
-              <div style={{ color: C.greenDeep, fontSize: 19, fontWeight: 950 }}>{formatCOP(descuento)}</div>
-              <div style={{ color: C.red, fontSize: 9.2, fontWeight: 950, letterSpacing: "0.08em" }}>VIGENCIA {vigenciaCorta}</div>
-            </div>
-          </div>
-
           <DecisionRapidaTable honorariosBase={honorariosBase} horasActivas={Number(horasVigencia)} />
+
 
 
 
