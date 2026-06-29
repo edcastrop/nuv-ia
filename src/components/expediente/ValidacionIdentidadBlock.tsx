@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 import type { Expediente } from "@/lib/expedientes";
 import { CitySelect } from "@/components/ui/CitySelect";
+import { CedulaReaderMaestro } from "@/components/expediente-maestro/CedulaReaderMaestro";
 import {
   readValidacion,
   detectarInconsistencias,
@@ -62,6 +63,7 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
   const [motivoOtro, setMotivoOtro] = useState("");
   const [motivoBloqueo, setMotivoBloqueo] = useState("");
   const [motivoDesb, setMotivoDesb] = useState("");
+  const [soportesVersion, setSoportesVersion] = useState(0);
 
   // Edición directa de campos críticos (sin modo toggle)
   const [draft, setDraft] = useState<CamposCriticos>(campos);
@@ -187,8 +189,50 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
         <EditField label="Dirección" value={draft.direccion || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, direccion: val })} className="md:col-span-2" />
         <EditField label="Email" value={draft.email || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, email: val })} />
         <EditField label="Celular" value={draft.celular || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, celular: val })} />
-        {(draft.cotitularActivo || campos.cotitularActivo) && (
+        {(puedeEditar || draft.cotitularActivo || campos.cotitularActivo) && (
+          <label
+            className="md:col-span-3 flex items-center gap-2 rounded-lg border bg-[rgba(255,255,255,0.04)] px-2 py-2 text-xs text-white"
+            style={{ borderColor: draft.cotitularActivo ? "var(--nuvia-accent-blue)" : "#E3E7EE" }}
+          >
+            <input
+              type="checkbox"
+              checked={!!draft.cotitularActivo}
+              disabled={!puedeEditar}
+              onChange={(e) => {
+                const activo = e.target.checked;
+                setDraft({
+                  ...draft,
+                  cotitularActivo: activo,
+                  cotitularDireccion: activo && !draft.cotitularDireccion ? draft.direccion || "" : draft.cotitularDireccion,
+                });
+              }}
+              className="h-3.5 w-3.5 accent-[var(--nuvia-accent-blue)]"
+            />
+            <span className="font-semibold">El crédito tiene cotitular / colocatario</span>
+          </label>
+        )}
+        {draft.cotitularActivo && (
           <>
+            {puedeEditar && (
+              <div className="md:col-span-3">
+                <CedulaReaderMaestro
+                  label="cotitular"
+                  tone="dark"
+                  expedienteId={exp.id}
+                  soporteSubcategoria="cedula_cotitular_1"
+                  onSoporteUploaded={() => setSoportesVersion((n) => n + 1)}
+                  onApply={(patch) => {
+                    setDraft({
+                      ...draft,
+                      cotitularActivo: true,
+                      cotitularNombre: patch.nombre || draft.cotitularNombre || "",
+                      cotitularCedula: patch.cedula || draft.cotitularCedula || "",
+                      cotitularDireccion: patch.direccion || draft.cotitularDireccion || draft.direccion || "",
+                    });
+                  }}
+                />
+              </div>
+            )}
             <EditField label="Cotitular" value={draft.cotitularNombre || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, cotitularNombre: val })} />
             <EditField label="Doc. cotitular" value={draft.cotitularCedula || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, cotitularCedula: val.replace(/\D/g, "") })} />
             <EditField label="Dir. cotitular" value={draft.cotitularDireccion || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, cotitularDireccion: val })} />
@@ -222,7 +266,7 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
       )}
 
       {/* Documentos adjuntos — viajan con el expediente a Contratación */}
-      <SoportesAdjuntos exp={exp} />
+      <SoportesAdjuntos exp={exp} refreshKey={soportesVersion} />
 
 
 
@@ -426,7 +470,7 @@ interface SoporteRow {
   created_at: string;
 }
 
-function SoportesAdjuntos({ exp }: { exp: Expediente }) {
+function SoportesAdjuntos({ exp, refreshKey = 0 }: { exp: Expediente; refreshKey?: number }) {
   const [items, setItems] = useState<SoporteRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -467,7 +511,7 @@ function SoportesAdjuntos({ exp }: { exp: Expediente }) {
     setLoading(false);
   }, [exp.id, exp.cliente_data]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(); }, [load, refreshKey]);
 
   const download = async (row: SoporteRow) => {
     const { data, error } = await supabase.storage

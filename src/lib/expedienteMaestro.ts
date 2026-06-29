@@ -414,6 +414,34 @@ export function expedienteToMaestroLike(exp: Expediente): ExpedienteMaestro {
   };
   const t = ij.titular ?? {};
   const co = ij.cotitular ?? {};
+  const intervinientes = Array.isArray(cAny.intervinientes) ? (cAny.intervinientes as Array<Record<string, unknown>>) : [];
+  const cotInterviniente = (intervinientes[1] ?? {}) as Record<string, unknown>;
+  const cotFlat = cAny.cotitular && typeof cAny.cotitular === "object" && !Array.isArray(cAny.cotitular)
+    ? (cAny.cotitular as Record<string, unknown>)
+    : {};
+  const pickCot = (...keys: string[]) => {
+    for (const source of [co as Record<string, unknown>, cotInterviniente, cotFlat]) {
+      for (const key of keys) {
+        if (typeof source[key] === "string" && String(source[key]).trim()) return String(source[key]);
+      }
+    }
+    return "";
+  };
+  const cotitularDerivado: CotitularMaestro = {
+    ...emptyCotitular(),
+    ...co,
+    activo: !!co.activo || !!cotFlat.activo || !!pickCot("nombre", "nombreCompleto") || !!pickCot("cedula", "documento", "numeroDocumento"),
+    nombre: pickCot("nombre", "nombreCompleto"),
+    cedula: pickCot("cedula", "documento", "numeroDocumento"),
+    tipoDocumento: pickCot("tipoDocumento") || "CC",
+    expedidaEn: pickCot("expedidaEn", "lugarExpedicionCedula"),
+    fechaExpedicion: pickCot("fechaExpedicion", "fechaExpedicionCedula"),
+    ciudad: pickCot("ciudad"),
+    departamento: pickCot("departamento"),
+    direccion: pickCot("direccion"),
+    email: pickCot("email", "correo"),
+    telefono: pickCot("telefono", "celular"),
+  };
   return {
     id: exp.id,
     asesor_id: exp.asesor_id,
@@ -434,7 +462,7 @@ export function expedienteToMaestroLike(exp: Expediente): ExpedienteMaestro {
       // Los valores persistidos en Información Jurídica priman
       ...t,
     },
-    cotitular: { ...emptyCotitular(), ...co, activo: !!co.activo },
+    cotitular: cotitularDerivado,
     credito: {
       ...emptyCredito(),
       banco: c.banco ?? exp.banco ?? "",
