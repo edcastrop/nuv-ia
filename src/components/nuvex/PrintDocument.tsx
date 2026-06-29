@@ -25,7 +25,7 @@ import { NUVEX } from "./constants";
 import type { ClientData } from "./ClientFields";
 import { formatCOP, formatNumber } from "../../lib/format";
 import { factorInflacionAcumulado } from "../../lib/inflacionIPC";
-import type { PesosPropuesta, UVRPropuesta } from "../../lib/finance";
+import { HONORARIOS_MIN_FINAL, type PesosPropuesta, type UVRPropuesta } from "../../lib/finance";
 import type { PropuestaComercialPdfRow } from "./PropuestasComerciales";
 import { calcularMotor } from "../../lib/motorHonorarios";
 import logoNuvex from "@/assets/logo-nuvex-cropped.png";
