@@ -28,7 +28,7 @@ const DEFAULTS: BrandRow = {
   color_azul: "#445DA3",
   color_verde: "#84B98F",
   color_negro: "#242424",
-  logo_url: "https://sistema-nuvex.lovable.app/logo-nuvex.png",
+  logo_url: "https://nuv-ia.lovable.app/logo-nuvex.png",
 };
 
 let cache: { value: BrandRow; expires: number } | null = null;
