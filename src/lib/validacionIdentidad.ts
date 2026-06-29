@@ -329,12 +329,18 @@ export async function actualizarCamposCriticos(
   setIf("cotitularNombre", cotitular, "nombre");
   setIf("cotitularCedula", cotitular, "cedula");
   setIf("cotitularDireccion", cotitular, "direccion");
+  setIf("cotitularEmail", cotitular, "email");
+  setIf("cotitularCelular", cotitular, "telefono");
+  setIf("cotitularLugarExpedicion", cotitular, "expedidaEn");
 
   if (
     campos.cotitularActivo !== undefined ||
     campos.cotitularNombre !== undefined ||
     campos.cotitularCedula !== undefined ||
-    campos.cotitularDireccion !== undefined
+    campos.cotitularDireccion !== undefined ||
+    campos.cotitularEmail !== undefined ||
+    campos.cotitularCelular !== undefined ||
+    campos.cotitularLugarExpedicion !== undefined
   ) {
     const ints = Array.isArray(cd.intervinientes) ? [...(cd.intervinientes as Array<Record<string, unknown>>)] : [];
     if (!ints[0]) ints[0] = { rol: "Titular", nombreCompleto: cd.nombre ?? cur?.cliente_nombre ?? "", cedula: cd.cedula ?? cur?.cedula ?? "" };
@@ -342,6 +348,13 @@ export async function actualizarCamposCriticos(
     if (campos.cotitularNombre !== undefined) cotInt.nombreCompleto = campos.cotitularNombre;
     if (campos.cotitularCedula !== undefined) cotInt.cedula = campos.cotitularCedula;
     if (campos.cotitularDireccion !== undefined) cotInt.direccion = campos.cotitularDireccion;
+    if (campos.cotitularEmail !== undefined) cotInt.email = campos.cotitularEmail;
+    if (campos.cotitularCelular !== undefined) {
+      cotInt.telefono = campos.cotitularCelular;
+      cotInt.celular = campos.cotitularCelular;
+      cotInt.whatsapp = campos.cotitularCelular;
+    }
+    if (campos.cotitularLugarExpedicion !== undefined) cotInt.lugarExpedicionCedula = campos.cotitularLugarExpedicion;
     if (campos.cotitularActivo === false && !cotInt.nombreCompleto && !cotInt.cedula) {
       ints.splice(1, 1);
     } else if (campos.cotitularActivo !== false || cotInt.nombreCompleto || cotInt.cedula) {
