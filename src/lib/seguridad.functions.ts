@@ -59,18 +59,6 @@ async function readTotpSecret(stored: string): Promise<{ secret: string; legacy:
   return { secret, legacy: false };
 }
 
-async function upgradeLegacyTotpSecret(
-  supabase: { from: (table: "profiles") => { update: (values: { mfa_secret: string }) => { eq: (column: "id", value: string) => unknown } } },
-  userId: string,
-  secret: string,
-) {
-  try {
-    await supabase.from("profiles").update({ mfa_secret: await encryptTotpSecret(secret) }).eq("id", userId);
-  } catch {
-    // No bloqueamos el acceso: la prioridad operativa es que el usuario pueda verificar.
-  }
-}
-
 // ────────────────────────────────────────────────────────────────────────────
 
 const TOTP_ISSUER = "NUVEX";
@@ -275,13 +263,14 @@ export const confirmarEnrolarTotp = createServerFn({ method: "POST" })
     const totp = buildTotp(storedSecret.secret, row.email ?? userId);
     const delta = totp.validate({ token: data.codigo, window: 1 });
     if (delta === null) throw new Error("Código inválido. Verifica la hora del dispositivo e intenta de nuevo.");
-    if (storedSecret.legacy) await upgradeLegacyTotpSecret(supabase, userId, storedSecret.secret);
+    const migratedSecret = storedSecret.legacy ? await encryptTotpSecret(storedSecret.secret) : null;
 
     await supabase
       .from("profiles")
       .update({
         mfa_metodo: "totp",
         mfa_verificado_at: new Date().toISOString(),
+        ...(migratedSecret ? { mfa_secret: migratedSecret } : {}),
       })
       .eq("id", userId);
     await supabase.from("acceso_auditoria").insert({
@@ -313,9 +302,11 @@ export const verificarCodigoTotp = createServerFn({ method: "POST" })
     }
     await supabase
       .from("profiles")
-      .update({ mfa_verificado_at: new Date().toISOString() })
+      .update({
+        mfa_verificado_at: new Date().toISOString(),
+        ...(storedSecret.legacy ? { mfa_secret: await encryptTotpSecret(storedSecret.secret) } : {}),
+      })
       .eq("id", userId);
-    if (storedSecret.legacy) await upgradeLegacyTotpSecret(supabase, userId, storedSecret.secret);
     await supabase.from("acceso_auditoria").insert({
       user_id: userId, actor_id: userId, accion: "mfa_verificado", detalle: { metodo: "totp" },
     });
