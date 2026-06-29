@@ -295,7 +295,8 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
   );
 
   // ── Contexto para "Enviar a Contratación"
-  const poderListo = poderes.length > 0 && poderes[0].missing.length === 0;
+  const poderesValidos = poderes.filter((p) => p.missing.length === 0).map((p) => p.doc);
+  const poderListo = poderes.length > 0 && poderesValidos.length === poderes.length;
   const datosListos = datosDoc.blocks.length > 0;
   const clienteCompleto = !!(live.cliente?.nombre && live.cliente?.cedula);
   const juridicaCompleta = !!(
@@ -310,7 +311,7 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
   if (!clienteCompleto) contratacionFaltantes.push("Datos del cliente (nombre y cédula).");
   if (!juridicaCompleta) contratacionFaltantes.push("Información jurídica del titular (nombre, cédula, lugar de expedición, ciudad de residencia y dirección).");
   if (!selectedAp) contratacionFaltantes.push("Selecciona un apoderado NUVEX.");
-  if (!poderListo) contratacionFaltantes.push("Poder Especial generado sin datos faltantes.");
+  if (!poderListo) contratacionFaltantes.push("Poder Especial generado sin datos faltantes (titular y cotitular si aplica).");
   if (!datosListos) contratacionFaltantes.push("Datos para Contrato generados.");
   if (modalidad === "financiado" && saldoRestante !== 0) {
     contratacionFaltantes.push("La suma de las cuotas debe coincidir con los honorarios finales del cliente.");
@@ -322,7 +323,7 @@ export function DocumentosLegales({ expediente, liveOverride, simExpediente, exp
     banco: live.credito?.banco || simExpediente?.banco || "",
     producto: live.credito?.tipoProducto || simExpediente?.producto || "",
     asesorNombre: live.asesor?.nombre || "",
-    poderDoc: poderListo ? poderes[0].doc : null,
+    poderDocs: poderListo ? poderesValidos : [],
     datosDoc: datosListos ? datosDoc : null,
     faltantes: contratacionFaltantes,
   };

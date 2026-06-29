@@ -161,7 +161,8 @@ export interface ContratacionContext {
   banco: string;
   producto: string;
   asesorNombre: string;
-  poderDoc: LegalDoc | null;
+  /** Poderes a enviar: titular + (si aplica) cotitular/colocatario. */
+  poderDocs: LegalDoc[];
   datosDoc: LegalDoc | null;
   faltantes: string[]; // razones por las que NO se puede enviar
 }
@@ -290,9 +291,9 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
     ].join("\n");
     const lineasAdjuntos = [
       `Documentos adjuntos:`,
-      `- Poder Especial (Word)`,
+      ...ctx.poderDocs.map((d) => `- ${d.title} (Word)`),
       `- Ficha de Datos del Contrato (Word)`,
-      `- Cédula del cliente`,
+      `- Cédula del cliente${ctx.poderDocs.length > 1 ? " y cotitular" : ""}`,
       `- Extracto bancario del cliente`,
     ];
     const adjuntos = lineasAdjuntos.join("\n");
@@ -328,15 +329,13 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
     setError(null);
     const dests = Array.from(selected);
     if (dests.length === 0) { setError("Selecciona al menos un destinatario."); return; }
-    if (!ctx.poderDoc || !ctx.datosDoc) { setError("Faltan documentos por generar."); return; }
+    if (!ctx.poderDocs.length || !ctx.datosDoc) { setError("Faltan documentos por generar."); return; }
     const guard = await evaluarQaGuard(ctx.expedienteId);
     if (!guard.ok) { setError(guard.reason); return; }
     setSending(true);
     try {
-      const [poderDocx, datosDocx] = await Promise.all([
-        legalDocToDOCXBlob(ctx.poderDoc),
-        legalDocToDOCXBlob(ctx.datosDoc),
-      ]);
+      const poderBlobs = await Promise.all(ctx.poderDocs.map((d) => legalDocToDOCXBlob(d)));
+      const datosDocx = await legalDocToDOCXBlob(ctx.datosDoc);
       // Re-leer soportes en el momento del envío para garantizar consistencia
       // (por si se cargaron justo antes de enviar).
       const soportesActuales = await fetchSoportesCliente(ctx.expedienteId);
@@ -348,7 +347,11 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
         throw new Error(`No se puede enviar a contratación: falta adjuntar ${faltantes}.`);
       }
       const attachments: { blob: Blob; filename: string; contentType: string }[] = [
-        { blob: poderDocx, filename: `${ctx.poderDoc.filename}.docx`, contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
+        ...poderBlobs.map((blob, i) => ({
+          blob,
+          filename: `${ctx.poderDocs[i].filename}.docx`,
+          contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        })),
         { blob: datosDocx, filename: `${ctx.datosDoc.filename}.docx`, contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
         ...soportesActuales.map((s) => ({
           blob: s.blob,
@@ -390,7 +393,7 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
             <pre className="whitespace-pre-wrap font-sans text-[12px]">{cuerpo}</pre>
             <div className="font-semibold text-[#242424] mt-2 mb-1">Adjuntos</div>
             <ul className="list-disc pl-5">
-              <li>{ctx.poderDoc?.filename}.docx</li>
+              {ctx.poderDocs.map((d, i) => <li key={i}>{d.filename}.docx</li>)}
               <li>{ctx.datosDoc?.filename}.docx</li>
               {loadingSoportes ? (
                 <li className="text-[#242424]/50">Cargando soportes del cliente…</li>
