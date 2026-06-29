@@ -267,7 +267,7 @@ function SectionQueEs() {
         automatizar procesos documentales y brindar información estratégica para la toma de decisiones.
       </SectionLead>
 
-      <div className="mt-16 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-16 grid gap-5 sm:grid-cols-2 lg:grid-cols-4" style={{ perspective: "1000px" }}>
         {cards.map((c, i) => (
           <motion.div
             key={c.title}
@@ -275,23 +275,24 @@ function SectionQueEs() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-60px" }}
             transition={{ duration: 0.5, delay: i * 0.06 }}
-            className="group relative rounded-2xl p-6 h-full transition-all"
-            style={{
-              background: "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015))",
-              border: "1px solid rgba(255,255,255,0.07)",
-            }}
+            className="h-full"
           >
-            <div
-              className="h-11 w-11 rounded-xl flex items-center justify-center mb-5 transition-transform group-hover:scale-105"
-              style={{
-                background: "linear-gradient(135deg, rgba(68,93,163,0.25), rgba(132,185,143,0.18))",
-                border: "1px solid rgba(255,255,255,0.08)",
-              }}
+            <TiltGlass
+              className="p-6 h-full"
+              gradient={`linear-gradient(135deg, ${i % 2 === 0 ? BLUE : GREEN}, ${i % 2 === 0 ? GREEN : BLUE})`}
             >
-              <c.Icon size={18} className="text-white" />
-            </div>
-            <div className="text-[15px] font-semibold text-white tracking-tight">{c.title}</div>
-            <div className="mt-2 text-[13.5px] leading-[1.6] text-white/55">{c.desc}</div>
+              <div
+                className="h-11 w-11 rounded-xl flex items-center justify-center mb-5 transition-transform group-hover:scale-110 group-hover:-rotate-6"
+                style={{
+                  background: "linear-gradient(135deg, rgba(68,93,163,0.35), rgba(132,185,143,0.28))",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                }}
+              >
+                <c.Icon size={18} className="text-white" />
+              </div>
+              <div className="text-[15px] font-semibold text-white tracking-tight">{c.title}</div>
+              <div className="mt-2 text-[13.5px] leading-[1.6] text-white/60">{c.desc}</div>
+            </TiltGlass>
           </motion.div>
         ))}
       </div>
@@ -394,21 +395,22 @@ function SectionImpacto() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.06 }}
-              className="rounded-2xl p-6 relative overflow-hidden"
-              style={{
-                background: "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
-                border: "1px solid rgba(255,255,255,0.06)",
-              }}
+              style={{ perspective: "1000px" }}
             >
-              <k.Icon size={16} className="text-white/40 mb-4" />
-              <div
-                className="text-[34px] sm:text-[40px] font-semibold tracking-[-0.03em] leading-none bg-clip-text text-transparent"
-                style={{ backgroundImage: `linear-gradient(135deg, #ffffff, ${i % 2 === 0 ? BLUE : GREEN})` }}
+              <TiltGlass
+                className="p-6 h-full"
+                gradient={`linear-gradient(135deg, ${i % 2 === 0 ? BLUE : GREEN}, #ffffff)`}
               >
-                {k.value}
-              </div>
-              <div className="mt-3 text-[13px] text-white/70 font-medium">{k.label}</div>
-              {k.sub && <div className="mt-1 text-[11.5px] text-white/40">{k.sub}</div>}
+                <k.Icon size={16} className="text-white/50 mb-4" />
+                <div
+                  className="text-[34px] sm:text-[40px] font-semibold tracking-[-0.03em] leading-none bg-clip-text text-transparent"
+                  style={{ backgroundImage: `linear-gradient(135deg, #ffffff, ${i % 2 === 0 ? BLUE : GREEN})` }}
+                >
+                  {k.value}
+                </div>
+                <div className="mt-3 text-[13px] text-white/75 font-medium">{k.label}</div>
+                {k.sub && <div className="mt-1 text-[11.5px] text-white/45">{k.sub}</div>}
+              </TiltGlass>
             </motion.div>
           ))}
         </div>
@@ -419,86 +421,124 @@ function SectionImpacto() {
 
 /* ──────────────────── SECCIÓN 4 — TECNOLOGÍA CON PROPÓSITO ──────────────────── */
 
-function TiltGlassCard({ t, Icon, gradient }: { t: string; Icon: any; gradient: string }) {
+function TiltGlass({
+  children,
+  className = "",
+  gradient,
+  href,
+  target,
+  rel,
+  ariaLabel,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  gradient?: string;
+  href?: string;
+  target?: string;
+  rel?: string;
+  ariaLabel?: string;
+}) {
   const [pos, setPos] = useState({ x: 50, y: 50, rx: 0, ry: 0, active: false });
-
   const activate = () => setPos((p) => ({ ...p, active: true }));
-
-  const handleMove = (e: React.PointerEvent<HTMLDivElement>) => {
+  const handleMove = (e: React.PointerEvent<HTMLElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - r.left) / r.width) * 100;
     const y = ((e.clientY - r.top) / r.height) * 100;
-    const ry = ((x - 50) / 50) * 15;
-    const rx = -((y - 50) / 50) * 15;
+    const ry = ((x - 50) / 50) * 12;
+    const rx = -((y - 50) / 50) * 12;
     setPos({ x, y, rx, ry, active: true });
   };
-
   const handleLeave = () => setPos({ x: 50, y: 50, rx: 0, ry: 0, active: false });
 
-  return (
-    <div
-      onPointerEnter={activate}
-      onPointerMove={handleMove}
-      onPointerLeave={handleLeave}
-      className="group relative z-10 min-h-[92px] rounded-2xl p-4 overflow-hidden cursor-default will-change-transform"
-      style={{
-        background: pos.active
-          ? "linear-gradient(135deg, rgba(255,255,255,0.16), rgba(255,255,255,0.035))"
-          : "linear-gradient(135deg, rgba(255,255,255,0.095), rgba(255,255,255,0.025))",
-        border: pos.active ? "1px solid rgba(255,255,255,0.34)" : "1px solid rgba(255,255,255,0.16)",
-        backdropFilter: "blur(24px) saturate(180%)",
-        transform: `perspective(760px) rotateX(${pos.rx}deg) rotateY(${pos.ry}deg) translateY(${pos.active ? "-8px" : "0"}) scale(${pos.active ? 1.045 : 1}) translateZ(0)`,
-        transformStyle: "preserve-3d",
-        transition: pos.active
-          ? "background 160ms ease, border-color 160ms ease, box-shadow 160ms ease"
-          : "transform 360ms cubic-bezier(.2,.8,.2,1), background 260ms ease, border-color 260ms ease, box-shadow 260ms ease",
-        boxShadow: pos.active
-          ? "0 28px 70px -24px rgba(68,93,163,0.72), 0 18px 45px -28px rgba(132,185,143,0.75), 0 0 0 1px rgba(255,255,255,0.18) inset"
-          : "0 12px 35px -30px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.06) inset",
-      }}
-    >
+  const style: React.CSSProperties = {
+    background: pos.active
+      ? "linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.03))"
+      : "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.018))",
+    border: pos.active ? "1px solid rgba(255,255,255,0.3)" : "1px solid rgba(255,255,255,0.08)",
+    backdropFilter: "blur(24px) saturate(180%)",
+    transform: `perspective(900px) rotateX(${pos.rx}deg) rotateY(${pos.ry}deg) translateY(${pos.active ? "-6px" : "0"}) scale(${pos.active ? 1.025 : 1}) translateZ(0)`,
+    transformStyle: "preserve-3d",
+    transition: pos.active
+      ? "background 160ms ease, border-color 160ms ease, box-shadow 160ms ease"
+      : "transform 380ms cubic-bezier(.2,.8,.2,1), background 260ms ease, border-color 260ms ease, box-shadow 260ms ease",
+    boxShadow: pos.active
+      ? "0 28px 70px -24px rgba(68,93,163,0.62), 0 18px 45px -28px rgba(132,185,143,0.55), 0 0 0 1px rgba(255,255,255,0.14) inset"
+      : "0 12px 35px -30px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.05) inset",
+  };
+
+  const inner = (
+    <>
       <div
         aria-hidden
         className="absolute inset-0 pointer-events-none opacity-70"
-        style={{ background: "linear-gradient(115deg, rgba(255,255,255,0.16), transparent 28%, rgba(255,255,255,0.05) 54%, transparent 72%)" }}
+        style={{ background: "linear-gradient(115deg, rgba(255,255,255,0.12), transparent 28%, rgba(255,255,255,0.04) 54%, transparent 72%)" }}
       />
-      {/* spotlight que sigue el mouse */}
       <div
         aria-hidden
         className="absolute inset-0 pointer-events-none transition-opacity duration-300"
         style={{
           opacity: pos.active ? 1 : 0,
-          background: `radial-gradient(360px circle at ${pos.x}% ${pos.y}%, rgba(255,255,255,0.34), rgba(132,185,143,0.14) 28%, transparent 62%)`,
+          background: `radial-gradient(380px circle at ${pos.x}% ${pos.y}%, rgba(255,255,255,0.28), rgba(132,185,143,0.12) 28%, transparent 62%)`,
         }}
       />
-      {/* halo gradiente esquina */}
-      <div
-        aria-hidden
-        className="absolute -top-16 -right-16 h-40 w-40 rounded-full blur-[80px] opacity-0 group-hover:opacity-60 transition-opacity"
-        style={{ background: gradient }}
-      />
-      {/* borde brillante en hover */}
-      <div
-        aria-hidden
-        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-        style={{
-          background: `linear-gradient(135deg, rgba(255,255,255,0.18), transparent 40%)`,
-          WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
-          WebkitMaskComposite: "xor",
-          maskComposite: "exclude",
-          padding: "1px",
-        }}
-      />
-      <div className="relative flex items-center gap-3" style={{ transform: "translateZ(20px)" }}>
+      {gradient && (
         <div
-          className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-125 group-hover:-rotate-6"
-          style={{ background: gradient, boxShadow: pos.active ? "0 16px 34px -10px rgba(132,185,143,0.55)" : "0 8px 20px -8px rgba(0,0,0,0.5)" }}
+          aria-hidden
+          className="absolute -top-16 -right-16 h-40 w-40 rounded-full blur-[80px] transition-opacity duration-300"
+          style={{ background: gradient, opacity: pos.active ? 0.55 : 0 }}
+        />
+      )}
+      <div className="relative h-full" style={{ transform: "translateZ(20px)" }}>
+        {children}
+      </div>
+    </>
+  );
+
+  const baseCls = `group relative z-10 rounded-2xl overflow-hidden will-change-transform ${className}`;
+
+  if (href) {
+    return (
+      <a
+        href={href}
+        target={target}
+        rel={rel}
+        aria-label={ariaLabel}
+        onPointerEnter={activate}
+        onPointerMove={handleMove}
+        onPointerLeave={handleLeave}
+        className={baseCls}
+        style={style}
+      >
+        {inner}
+      </a>
+    );
+  }
+  return (
+    <div
+      onPointerEnter={activate}
+      onPointerMove={handleMove}
+      onPointerLeave={handleLeave}
+      className={baseCls}
+      style={style}
+    >
+      {inner}
+    </div>
+  );
+}
+
+function TiltGlassCard({ t, Icon, gradient }: { t: string; Icon: any; gradient: string }) {
+  return (
+    <TiltGlass className="min-h-[92px] p-4 cursor-default" gradient={gradient}>
+      <div className="flex items-center gap-3">
+        <div
+          className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6"
+          style={{ background: gradient, boxShadow: "0 10px 24px -10px rgba(0,0,0,0.55)" }}
         >
           <Icon size={16} className="text-white" />
         </div>
         <div className="text-[13px] font-semibold text-white leading-tight drop-shadow-sm">{t}</div>
       </div>
-    </div>
+    </TiltGlass>
   );
 }
 
@@ -766,7 +806,7 @@ function SectionEcosistema() {
         para créditos de vivienda en Colombia.
       </SectionLead>
 
-      <div className="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" style={{ perspective: "1000px" }}>
         {items.map((it, i) => (
           <motion.div
             key={it.title}
@@ -774,28 +814,24 @@ function SectionEcosistema() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-60px" }}
             transition={{ duration: 0.45, delay: (i % 4) * 0.05 }}
-            className="group relative rounded-2xl p-5 transition-all hover:-translate-y-0.5"
-            style={{
-              background: "linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.015))",
-              border: "1px solid rgba(255,255,255,0.07)",
-            }}
+            className="h-full"
           >
-            <div
-              className="h-10 w-10 rounded-xl flex items-center justify-center mb-4"
-              style={{
-                background: "rgba(10,12,20,0.6)",
-                border: "1px solid rgba(255,255,255,0.08)",
-              }}
+            <TiltGlass
+              className="p-5 h-full"
+              gradient={`linear-gradient(135deg, ${i % 2 === 0 ? BLUE : GREEN}, ${i % 2 === 0 ? GREEN : BLUE})`}
             >
-              <it.Icon size={17} style={{ color: i % 2 === 0 ? BLUE : GREEN }} />
-            </div>
-            <div className="text-[14px] font-semibold tracking-tight text-white">{it.title}</div>
-            <div className="mt-1.5 text-[12.5px] leading-[1.55] text-white/55">{it.desc}</div>
-            <div
-              aria-hidden
-              className="absolute inset-x-0 -bottom-px h-px opacity-0 group-hover:opacity-100 transition-opacity"
-              style={{ background: `linear-gradient(90deg, transparent, ${GREEN}, transparent)` }}
-            />
+              <div
+                className="h-10 w-10 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 group-hover:-rotate-6"
+                style={{
+                  background: "rgba(10,12,20,0.6)",
+                  border: "1px solid rgba(255,255,255,0.14)",
+                }}
+              >
+                <it.Icon size={17} style={{ color: i % 2 === 0 ? BLUE : GREEN }} />
+              </div>
+              <div className="text-[14px] font-semibold tracking-tight text-white">{it.title}</div>
+              <div className="mt-1.5 text-[12.5px] leading-[1.55] text-white/60">{it.desc}</div>
+            </TiltGlass>
           </motion.div>
         ))}
       </div>
@@ -836,40 +872,33 @@ function SectionRedes() {
         especializado para ayudar a más familias a tomar mejores decisiones.
       </SectionLead>
 
-      <div className="mt-14 grid gap-6 md:grid-cols-2">
+      <div className="mt-14 grid gap-6 md:grid-cols-2" style={{ perspective: "1000px" }}>
         {redes.map((r) => (
-          <a
+          <TiltGlass
             key={r.name}
             href={r.url}
             target="_blank"
             rel="noreferrer"
-            className="group relative rounded-3xl p-8 overflow-hidden transition-all hover:-translate-y-1"
-            style={{
-              background: "linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.015))",
-              border: "1px solid rgba(255,255,255,0.08)",
-            }}
+            ariaLabel={r.cta}
+            className="p-8"
+            gradient={r.gradient}
           >
             <div
-              aria-hidden
-              className="absolute -top-20 -right-20 h-56 w-56 rounded-full blur-[100px] opacity-0 group-hover:opacity-40 transition-opacity"
-              style={{ background: r.gradient }}
-            />
-            <div
-              className="h-14 w-14 rounded-2xl flex items-center justify-center mb-6"
-              style={{ background: r.gradient }}
+              className="h-14 w-14 rounded-2xl flex items-center justify-center mb-6 transition-transform group-hover:scale-110 group-hover:-rotate-3"
+              style={{ background: r.gradient, boxShadow: "0 18px 40px -16px rgba(0,0,0,0.6)" }}
             >
               <r.Icon size={22} className="text-white" />
             </div>
             <div className="flex items-baseline gap-3">
-              <div className="text-[22px] font-semibold tracking-tight">{r.name}</div>
-              <div className="text-[12.5px] text-white/45">{r.handle}</div>
+              <div className="text-[22px] font-semibold tracking-tight text-white">{r.name}</div>
+              <div className="text-[12.5px] text-white/50">{r.handle}</div>
             </div>
-            <p className="mt-3 text-[14px] text-white/60 leading-[1.6] max-w-md">{r.desc}</p>
-            <div className="mt-7 inline-flex items-center gap-2 text-[13px] font-medium text-white/85 group-hover:text-white">
+            <p className="mt-3 text-[14px] text-white/65 leading-[1.6] max-w-md">{r.desc}</p>
+            <div className="mt-7 inline-flex items-center gap-2 text-[13px] font-medium text-white/90 group-hover:text-white">
               {r.cta}
               <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
             </div>
-          </a>
+          </TiltGlass>
         ))}
       </div>
     </Section>
