@@ -18,6 +18,7 @@ import { CitySelect } from "@/components/ui/CitySelect";
 import { normalizeCityText, cityDepartment } from "@/lib/colombiaCities";
 import { honorariosFinalesCliente } from "@/lib/honorarios";
 import { supabase } from "@/integrations/supabase/client";
+import { CedulaReaderMaestro } from "./CedulaReaderMaestro";
 
 const fmtCOP = (n: number) =>
   !isFinite(n) || n === 0
