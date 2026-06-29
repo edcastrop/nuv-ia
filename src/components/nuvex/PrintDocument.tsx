@@ -327,9 +327,9 @@ export function PrintDocument(props: Props) {
 
       <section className="nuvex-print-page" style={pageStyle(false)}>
         <TopBar page="Página 2 de 2" />
-        <main style={{ padding: "10px 32px 12px", flex: "1 1 auto", minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-          <h2 style={{ margin: 0, fontSize: 24, lineHeight: 1, fontWeight: 950, color: "#071023", letterSpacing: 0 }}>COMPARACIÓN DE ESCENARIOS</h2>
-          <p style={{ margin: "4px 0 9px", color: C.text, fontSize: 11.4, lineHeight: 1.28, fontWeight: 600 }}>
+        <main style={{ padding: "8px 30px 8px", flex: "1 1 auto", minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+          <h2 style={{ margin: 0, fontSize: 22, lineHeight: 1, fontWeight: 950, color: "#071023", letterSpacing: 0 }}>COMPARACIÓN DE ESCENARIOS</h2>
+          <p style={{ margin: "3px 0 7px", color: C.text, fontSize: 10.8, lineHeight: 1.22, fontWeight: 600 }}>
             Analizamos diferentes alternativas para que elijas<br />el nivel de optimización que mejor se adapta a tus objetivos financieros.
           </p>
           <ScenariosTable
@@ -351,7 +351,7 @@ export function PrintDocument(props: Props) {
           />
 
           <SectionLabel title="RESUMEN DEL IMPACTO" />
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginTop: 7 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginTop: 5 }}>
             <Impact icon={<Clock3 />} label="AÑOS RECUPERADOS" value={`${añosEliminadosEntero}`} sub="años" />
             <Impact icon={<CheckCircle2 />} label="CUOTAS ELIMINADAS" value={`${cuotasEliminadas}`} sub="menos pagos" />
             <Impact icon={<PiggyBank />} label="AHORRO TOTAL" value={formatCOP(recommended.ahorroTotal)} />
@@ -364,7 +364,7 @@ export function PrintDocument(props: Props) {
 
 
           <SectionLabel title="¿QUÉ SUCEDE AHORA?" />
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10, marginTop: 7 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8, marginTop: 5 }}>
             <Step n={1} icon={<Pencil />} title="Firma de autorización" desc="Nos autorizas para gestionar tu caso." />
             <Step n={2} icon={<FolderUp />} title="Radicación ante el banco" desc="Presentamos la solicitud de optimización." />
             <Step n={3} icon={<Building2 />} title="Análisis del banco" desc="El banco evalúa la viabilidad." />
@@ -372,14 +372,14 @@ export function PrintDocument(props: Props) {
             <Step n={5} icon={<Smile />} title="Disfrutas tu optimización" desc="Menos cuotas, más tiempo y más tranquilidad." />
           </div>
 
-          <div style={{ marginTop: 13, minHeight: 112, background: C.navy, borderRadius: 9, padding: "18px 24px", display: "grid", gridTemplateColumns: "1fr 1.55fr", gap: 22, alignItems: "center", color: "#fff" }}>
+          <div style={{ marginTop: 9, minHeight: 88, background: C.navy, borderRadius: 9, padding: "12px 22px", display: "grid", gridTemplateColumns: "1fr 1.55fr", gap: 18, alignItems: "center", color: "#fff" }}>
             <div>
-              <div style={{ color: C.green, fontSize: 11, fontWeight: 950, letterSpacing: "0.22em" }}>UNA DECISIÓN · DOS CAMINOS</div>
-              <div style={{ marginTop: 7, fontSize: 12, fontWeight: 700 }}>Ya hicimos los cálculos. <span style={{ color: C.green }}>La decisión es tuya.</span></div>
+              <div style={{ color: C.green, fontSize: 10.5, fontWeight: 950, letterSpacing: "0.2em" }}>UNA DECISIÓN · DOS CAMINOS</div>
+              <div style={{ marginTop: 5, fontSize: 11, fontWeight: 700 }}>Ya hicimos los cálculos. <span style={{ color: C.green }}>La decisión es tuya.</span></div>
             </div>
             <div>
-              <div style={{ background: `linear-gradient(180deg, ${NUVEX.verdeFuerte}, ${NUVEX.verde})`, color: "#061122", borderRadius: 5, padding: "13px 16px", textAlign: "center", fontSize: 13, fontWeight: 950 }}>QUIERO RECUPERAR MI TIEMPO FINANCIERO</div>
-              <div style={{ marginTop: 8, textAlign: "center", fontSize: 8, letterSpacing: "0.28em", fontWeight: 900, color: "rgba(255,255,255,0.7)" }}>PROPUESTA COMERCIAL VÁLIDA POR 48 HORAS</div>
+              <div style={{ background: `linear-gradient(180deg, ${NUVEX.verdeFuerte}, ${NUVEX.verde})`, color: "#061122", borderRadius: 5, padding: "10px 14px", textAlign: "center", fontSize: 12, fontWeight: 950 }}>QUIERO RECUPERAR MI TIEMPO FINANCIERO</div>
+              <div style={{ marginTop: 6, textAlign: "center", fontSize: 7.5, letterSpacing: "0.24em", fontWeight: 900, color: "rgba(255,255,255,0.7)" }}>PROPUESTA COMERCIAL VÁLIDA POR 48 HORAS</div>
             </div>
           </div>
         </main>
