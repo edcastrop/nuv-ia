@@ -63,6 +63,7 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
   const [motivoOtro, setMotivoOtro] = useState("");
   const [motivoBloqueo, setMotivoBloqueo] = useState("");
   const [motivoDesb, setMotivoDesb] = useState("");
+  const [soportesVersion, setSoportesVersion] = useState(0);
 
   // Edición directa de campos críticos (sin modo toggle)
   const [draft, setDraft] = useState<CamposCriticos>(campos);
@@ -219,6 +220,7 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
                   tone="dark"
                   expedienteId={exp.id}
                   soporteSubcategoria="cedula_cotitular_1"
+                  onSoporteUploaded={() => setSoportesVersion((n) => n + 1)}
                   onApply={(patch) => {
                     setDraft({
                       ...draft,
@@ -264,7 +266,7 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
       )}
 
       {/* Documentos adjuntos — viajan con el expediente a Contratación */}
-      <SoportesAdjuntos exp={exp} />
+      <SoportesAdjuntos exp={exp} refreshKey={soportesVersion} />
 
 
 
@@ -468,7 +470,7 @@ interface SoporteRow {
   created_at: string;
 }
 
-function SoportesAdjuntos({ exp }: { exp: Expediente }) {
+function SoportesAdjuntos({ exp, refreshKey = 0 }: { exp: Expediente; refreshKey?: number }) {
   const [items, setItems] = useState<SoporteRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -509,7 +511,7 @@ function SoportesAdjuntos({ exp }: { exp: Expediente }) {
     setLoading(false);
   }, [exp.id, exp.cliente_data]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(); }, [load, refreshKey]);
 
   const download = async (row: SoporteRow) => {
     const { data, error } = await supabase.storage
