@@ -126,9 +126,9 @@ export function DiscountModule({
         })}
       </div>
       <hr className="my-3 border-[#E3E7EE]" />
-      <SectionTitle sub="Beneficio comercial autorizado para impulsar el cierre">
-        Descuento comercial sobre honorarios
-      </SectionTitle>
+      <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-[#242424]/60">
+        Ajuste manual (opcional)
+      </div>
       <div className="grid gap-4 md:grid-cols-4">
         <label className="flex flex-col gap-1">
           <span className="text-xs font-medium uppercase tracking-wide text-[#242424]/70">
