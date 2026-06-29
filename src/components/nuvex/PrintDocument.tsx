@@ -371,6 +371,10 @@ export function PrintDocument(props: Props) {
             </div>
           </div>
 
+          <DecisionRapidaTable honorariosBase={honorariosBase} horasActivas={horasVigencia} />
+
+
+
           <SectionLabel title="¿QUÉ SUCEDE AHORA?" />
           <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10, marginTop: 7 }}>
             <Step n={1} icon={<Pencil />} title="Firma de autorización" desc="Nos autorizas para gestionar tu caso." />
