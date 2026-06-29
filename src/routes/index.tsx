@@ -440,7 +440,7 @@ function TiltGlassCard({ t, Icon, gradient }: { t: string; Icon: any; gradient: 
       onPointerEnter={activate}
       onPointerMove={handleMove}
       onPointerLeave={handleLeave}
-      className="group relative min-h-[92px] rounded-2xl p-4 overflow-hidden cursor-default will-change-transform"
+      className="group relative z-10 min-h-[92px] rounded-2xl p-4 overflow-hidden cursor-default will-change-transform"
       style={{
         background: pos.active
           ? "linear-gradient(135deg, rgba(255,255,255,0.16), rgba(255,255,255,0.035))"
@@ -519,7 +519,7 @@ function SectionProposito() {
           <div className="relative mt-8 grid grid-cols-2 gap-3 rounded-3xl p-3" style={{ perspective: "1000px" }}>
             <div
               aria-hidden
-              className="absolute inset-0 rounded-3xl"
+              className="pointer-events-none absolute inset-0 rounded-3xl"
               style={{
                 background:
                   "radial-gradient(circle at 18% 12%, rgba(68,93,163,0.42), transparent 38%), radial-gradient(circle at 82% 88%, rgba(132,185,143,0.34), transparent 42%), linear-gradient(135deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01))",
