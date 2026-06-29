@@ -15,6 +15,7 @@ import { normalizeColombiaLocation } from "@/lib/colombiaLocations";
 import { cityDepartment } from "@/lib/colombiaCities";
 import { NUVEX } from "@/components/nuvex/constants";
 import type { ClienteMaestro, CotitularMaestro } from "@/lib/expedienteMaestro";
+import { supabase } from "@/integrations/supabase/client";
 
 type Stage = "idle" | "reading" | "review" | "applied" | "error";
 
@@ -25,6 +26,12 @@ interface Props {
   onApply: (patch: Partial<ClienteMaestro> | Partial<CotitularMaestro>) => void;
   /** Tono visual: "light" (default) para fichas blancas; "dark" para superficies NUVIA dark. */
   tone?: "light" | "dark";
+  /** Si está presente, guarda los archivos originales como soporte del expediente. */
+  expedienteId?: string | null;
+  /** Subcategoría documental usada al registrar la cédula en soportes. */
+  soporteSubcategoria?: string;
+  /** Notifica cuando el soporte queda registrado para refrescar listados. */
+  onSoporteUploaded?: () => void;
 }
 
 function fileToDataUrl(file: File | Blob): Promise<string> {
@@ -81,7 +88,7 @@ async function renderPdfToImages(file: File): Promise<{ mime: string; dataUrl: s
   return out;
 }
 
-export function CedulaReaderMaestro({ label, onApply, tone = "light" }: Props) {
+export function CedulaReaderMaestro({ label, onApply, tone = "light", expedienteId, soporteSubcategoria, onSoporteUploaded }: Props) {
   const dark = tone === "dark";
   // Paleta NUVIA dark (alineada con .nuvia-input y NCard oscura)
   const T = dark
@@ -200,8 +207,48 @@ export function CedulaReaderMaestro({ label, onApply, tone = "light" }: Props) {
     }
   };
 
+  const uploadQueueAsSoporte = async (filesSnapshot: File[]) => {
+    if (!expedienteId || !filesSnapshot.length) return;
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData?.user?.id ?? null;
+      const sub = soporteSubcategoria || (label.toLowerCase().includes("cotitular") ? "cedula_cotitular_1" : "cedula_titular");
+      for (let i = 0; i < filesSnapshot.length; i++) {
+        const f = filesSnapshot[i];
+        const safeName = f.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const lado = i === 0 ? "frente" : i === 1 ? "reverso" : `pag${i + 1}`;
+        const path = `${expedienteId}/identidad/${sub}_${lado}_${Date.now()}_${safeName}`;
+        const { error: upErr } = await supabase.storage
+          .from("soportes-banco")
+          .upload(path, f, { contentType: f.type || "application/octet-stream", upsert: false });
+        if (upErr) {
+          console.warn("[CedulaReaderMaestro] No se pudo subir soporte de cédula:", upErr);
+          continue;
+        }
+        const { error: insErr } = await supabase
+          .from("expediente_soportes" as never)
+          .insert({
+            expediente_id: expedienteId,
+            categoria: "identidad",
+            subcategoria: sub,
+            archivo_nombre: f.name,
+            archivo_path: path,
+            mime_type: f.type || null,
+            size_bytes: f.size ?? null,
+            estado_relacionado: "validacion_identidad",
+            user_id: uid,
+          } as never);
+        if (insErr) console.warn("[CedulaReaderMaestro] No se pudo registrar soporte:", insErr);
+      }
+      onSoporteUploaded?.();
+    } catch (e) {
+      console.warn("[CedulaReaderMaestro] Error subiendo soportes de cédula:", e);
+    }
+  };
+
   const apply = () => {
     if (!parsed) return;
+    const filesSnapshot = [...queue];
     const loc = normalizeColombiaLocation(parsed.lugarExpedicion);
     const expedidaEn = loc.label || parsed.lugarExpedicion || "";
     const ciudadDep = cityDepartment(expedidaEn);
@@ -215,6 +262,7 @@ export function CedulaReaderMaestro({ label, onApply, tone = "light" }: Props) {
     };
     if (ciudadDep) patch.departamento = ciudadDep;
     onApply(patch);
+    void uploadQueueAsSoporte(filesSnapshot);
     setStage("applied");
     setTimeout(() => {
       setOpen(false);
