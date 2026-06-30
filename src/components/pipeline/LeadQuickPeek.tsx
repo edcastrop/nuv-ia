@@ -136,6 +136,7 @@ export function LeadQuickPeek({
   const cuotaProp = peek?.cuotaPropuesta || readN(propuestaData, "nuevaCuota", "cuotaPropuesta", "cuotaNueva", "cuota");
   const cuotasTotalesFallback = readN(creditoData, "cuotasTotales", "cuotas_totales", "plazo", "plazoMeses") || num(clienteData.plazoInicial);
   const cuotasPagadasFallback = readN(creditoData, "cuotasPagadas", "cuotas_pagadas") || num(clienteData.cuotasPagadas);
+  const cuotasTotales = peek?.cuotasTotales || cuotasTotalesFallback;
   const cuotasPend = peek?.cuotasPendientes || readN(creditoData, "cuotasPendientes", "cuotas_pendientes", "cuotasRestantes") || (cuotasTotalesFallback > 0 ? Math.max(0, cuotasTotalesFallback - cuotasPagadasFallback) : 0);
   const cuotasPendProp = peek?.cuotasPendientesProp || readN(propuestaData, "nuevoPlazo", "plazo", "plazoNuevo", "plazoMeses");
   const tasaActual = peek?.tasaActualPct || readN(creditoData, "teaPct", "tea", "tasaEA", "tasaEa", "tasa_ea", "teaPactada") || null;
@@ -252,7 +253,7 @@ export function LeadQuickPeek({
         {/* Saldo + plazo */}
         <div className="mt-3 grid grid-cols-2 gap-2">
           <Tile label="Saldo crédito" value={fmtCOP(saldo)} />
-          <Tile label="Plazo inicial aprobado" value={peek?.cuotasTotales ? `${peek.cuotasTotales} m` : "—"} />
+          <Tile label="Plazo inicial aprobado" value={cuotasTotales ? `${cuotasTotales} m` : "—"} />
         </div>
 
         {/* Cuotas: actual vs proyectada */}
