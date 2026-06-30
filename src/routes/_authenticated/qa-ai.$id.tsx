@@ -438,6 +438,10 @@ function ResultadoQaAi() {
   const dictamenEfectivo = recomputo?.score.dictamen ?? a.dictamen;
   const categoriaEfectiva = recomputo?.score.categoria ?? a.categoria;
   const isUvr = a.modalidad === "uvr";
+  // NUVIA QA Gate (UVR): no se puede aprobar/liberar sin Variación UVR EA.
+  // Si la reconstrucción no trae el dato (>0), el dictamen no es concluyente.
+  const recVarUvrEa = Number(((inputs?.reconstruccion ?? {}) as Record<string, unknown>).variacionUvrEa);
+  const uvrPendienteVariables = isUvr && (!Number.isFinite(recVarUvrEa) || recVarUvrEa <= 0);
   const scoreColor = score >= 95 ? "var(--nuvia-success)" : score >= 85 ? "var(--nuvia-warning)" : "var(--nuvia-danger)";
   const cert = certificacion(dictamenEfectivo);
   const trofeo = logro(score);
