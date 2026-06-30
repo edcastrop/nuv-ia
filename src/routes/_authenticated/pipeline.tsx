@@ -1,4 +1,6 @@
-// P14 — Vista Kanban del Pipeline Maestro NUVEX (15 etapas E1→E15).
+// P14 — Vista Kanban del Pipeline de Leads NUVEX.
+// El tablero visual muestra 2 etapas ejecutivas; las 15 etapas maestras siguen
+// existiendo como estado interno del expediente y auditoría operativa.
 // P15 — Filtros (búsqueda, banco, solo estancados).
 // P16 — Filtros persistidos en URL via search params (compartibles).
 
@@ -23,7 +25,7 @@ import { NuviaPipelinePanel, type PipelineCtx } from "@/components/pipeline/Nuvi
 import { PipelineControlPanel, type PipelineControlBreakdown } from "@/components/pipeline/PipelineControlPanel";
 import { faseLead, motivosRevision, progresoLead } from "@/lib/leadFases";
 
-const FASE_IDS = ["comercial", "operativa", "banco", "cobro", "fin"] as const;
+const FASE_IDS = ["con_proyeccion", "en_revision"] as const;
 type FaseId = (typeof FASE_IDS)[number];
 type PipelineProfileLite = { nombre: string | null; email: string | null; sede?: string | null; equipo?: string | null };
 type PipelineIdentity = {
@@ -42,12 +44,26 @@ export const pipelineSearchSchema = z.object({
   asesor: fallback(z.string(), "").default(""),
 });
 
-const FASE_ETAPAS: Record<FaseId, EtapaPipelineId[]> = {
-  comercial: ["lead", "extracto", "proyeccion", "presentacion", "cierre"],
-  operativa: ["contratacion", "radicacion"],
-  banco: ["banco", "resultado_banco", "aceptacion_cliente"],
-  cobro: ["informe", "cuenta", "pago", "paz_salvo"],
-  fin: ["finalizado"],
+const PIPELINE_LEAD_LANES: ReadonlyArray<(typeof ETAPAS_PIPELINE)[number]> = [
+  {
+    id: "lead",
+    numero: 1,
+    titulo: "Lead con Proyección",
+    descripcion: "Lead con datos comerciales, extracto y/o simulación en flujo normal.",
+    responsables: ["asesor", "licenciado"],
+  },
+  {
+    id: "proyeccion",
+    numero: 2,
+    titulo: "Lead en Revisión",
+    descripcion: "Casos que requieren decisión de Dirección antes de avanzar.",
+    responsables: ["director_financiero_qa", "gerencia"],
+  },
+];
+
+const FASE_LANE: Record<FaseId, EtapaPipelineId> = {
+  con_proyeccion: "lead",
+  en_revision: "proyeccion",
 };
 
 export const Route = createFileRoute("/_authenticated/pipeline")({
@@ -108,6 +124,16 @@ function preferPipelineText(current: unknown, fallback?: unknown): string {
   if (!isPlaceholderText(current)) return cleanText(current);
   const f = cleanText(fallback);
   return f && !isPlaceholderText(f) ? f : cleanText(current);
+}
+
+function etapaInterna(exp: Expediente): EtapaPipelineId {
+  return computeEtapaActual({
+    estado_caso: (exp as unknown as { estado_caso?: string | null }).estado_caso ?? null,
+  } as Parameters<typeof computeEtapaActual>[0]);
+}
+
+function laneVisualLead(exp: Expediente, qa: { id: string; score: number; dictamen: string | null } | undefined): EtapaPipelineId {
+  return motivosRevision(exp, qa).length > 0 ? "proyeccion" : "lead";
 }
 
 function identityFromPayload(payload: unknown): PipelineIdentity {
