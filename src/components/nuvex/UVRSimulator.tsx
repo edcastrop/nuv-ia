@@ -185,6 +185,35 @@ export function UVRSimulator({
   } | null>(null);
   const autoQAFiredRef = useRef(false);
 
+  // Dispara la auto-QA UVR pendiente cuando el analista completa las dos
+  // variaciones UVR (histórica + propuestas). Garantiza que NUVIA sólo emita
+  // dictamen cuando la matemática de corrección monetaria está completa.
+  useEffect(() => {
+    if (!init?.id) return;
+    if (!pendingAutoQARaw) return;
+    if (!uvrVarsReady) return;
+    if (autoQAFiredRef.current) return;
+    autoQAFiredRef.current = true;
+    void triggerSimuladorAutoQA({
+      expedienteId: init.id,
+      raw: pendingAutoQARaw.raw,
+      onStart: () => {
+        setAutoQALoading(true);
+        setAutoQA(null);
+      },
+      onResult: (r) => {
+        setAutoQA(r);
+        setAutoQALoading(false);
+        setPendingAutoQARaw(null);
+      },
+      onError: () => {
+        setAutoQALoading(false);
+        autoQAFiredRef.current = false;
+      },
+    });
+  }, [init?.id, pendingAutoQARaw, uvrVarsReady]);
+
+
   const handleClientChange = (next: ClientData) => {
     setClient(next);
     if (next.intervinientes?.length) setIntervinientes(next.intervinientes);
