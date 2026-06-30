@@ -425,7 +425,7 @@ function PipelinePage() {
 
   // P17 — Exportar CSV de los casos visibles (respeta filtros + etapa derivada).
   const exportarCSV = () => {
-    const etapaTitulo = new Map(ETAPAS_PIPELINE.map((e) => [e.id, `E${e.numero} ${e.titulo}`]));
+    const etapaTitulo = new Map(PIPELINE_LEAD_LANES.map((e) => [e.id, `E${e.numero} ${e.titulo}`]));
     const headers = ["Cliente", "Cédula", "Banco", "Crédito", "Etapa", "Estado", "Días", "Actualizado"];
     const lines: string[] = [headers.join(",")];
     const esc = (v: unknown) => {
@@ -971,7 +971,7 @@ function PipelinePage() {
           <div className="mb-2 flex items-center justify-between">
             <div>
               <div className="text-[11px] font-semibold uppercase text-[var(--nuvia-accent-green)]">
-                Embudo ejecutivo · E1 → E{ETAPAS_PIPELINE.length}
+                Embudo ejecutivo · Leads E1 → E2
               </div>
               <div className="text-xs text-[var(--nuvia-text-secondary)]">
                 Conversión acumulada de casos visibles vs. E1 ({funnel[0].passed}).
@@ -1155,8 +1155,7 @@ function PipelinePage() {
                               act. {r.updated_at ? new Date(r.updated_at).toLocaleDateString("es-CO", { day: "2-digit", month: "short" }) : "—"}
                             </div>
                             {(() => {
-                              const fase = faseLead(r, qa);
-                              if (!fase) return null;
+                              const fase = laneVisualLead(r, qa) === "proyeccion" ? "en_revision" : "con_proyeccion";
                               const prog = progresoLead(r, qa);
                               const motivos = fase === "en_revision" ? motivosRevision(r, qa) : [];
                               return (
@@ -1283,11 +1282,10 @@ function PipelinePage() {
           })()}
           diasEnEtapa={diasDesde(peekExpediente.updated_at)}
           etapaTitulo={(() => {
-            const etapa = computeEtapaActual({
-              estado_caso: (peekExpediente as unknown as { estado_caso?: string | null }).estado_caso ?? null,
-            } as Parameters<typeof computeEtapaActual>[0]);
-            const e = ETAPAS_PIPELINE.find((x) => x.id === etapa);
-            return e ? `E${e.numero} · ${e.titulo}` : "—";
+            const lane = laneVisualLead(peekExpediente, qaMap.get(peekExpediente.id));
+            const e = PIPELINE_LEAD_LANES.find((x) => x.id === lane);
+            const interna = ETAPAS_PIPELINE.find((x) => x.id === etapaInterna(peekExpediente));
+            return e ? `E${e.numero} · ${e.titulo}${interna ? ` · Interna: ${interna.titulo}` : ""}` : "—";
           })()}
           onClose={() => setPeekId(null)}
           onEdit={() => { setEditId(peekExpediente.id); setPeekId(null); }}
