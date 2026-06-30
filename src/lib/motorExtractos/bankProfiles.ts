@@ -169,12 +169,24 @@ Plantilla con secciones: "Detalle de Pago", "Detalle Cuota a Pagar" (Concepto / 
 "Saldo Capital Antes de Este Pago" (UVR | Pesos), "Información General del Crédito".
 
 ══ PASO 1 — DETECTAR MONEDA (CRÍTICO, primero) ══
-Lee "Sistema de Amortización" en "Información General del Crédito":
-- Contiene "UVR" → moneda="UVR" (ej "13 CUOTA FIJA FRECH EN UVR", "CUOTA CONSTANTE EN UVR-VIVDA VIS").
-- Contiene "PESOS" o NO contiene "UVR" → moneda="PESOS" (ej "10 CUOTA FIJA EN PESOS", "12 CUOTA FIJA FRECH EN PESOS").
-CONFIRMACIÓN en tabla "Detalle Cuota a Pagar":
-- Columna "Valor en UVR" con valores > 0.0000 en Abono a Capital e Intereses → UVR.
-- Todos los "Valor en UVR" = 0.0000 → PESOS (columnas UVR existen pero vacías).
+Lee EXCLUSIVAMENTE "Sistema de Amortización" en "Información General del Crédito".
+La moneda se determina por el SUFIJO final del texto:
+- Termina en "EN PESOS" (con o sin FRECH) → moneda="PESOS".
+  Ejemplos: "10 CUOTA FIJA EN PESOS", "12 CUOTA FIJA FRECH EN PESOS".
+- Termina en "EN UVR" / "UVR-VIVDA" / "UVR VIS" → moneda="UVR".
+  Ejemplos: "13 CUOTA FIJA FRECH EN UVR", "CUOTA CONSTANTE EN UVR-VIVDA VIS".
+
+PROHIBIDO marcar moneda="UVR" sólo porque el extracto contenga la palabra "UVR" en otras
+secciones (Cotización UVR, columna "Valor en UVR", "Saldo Capital UVR/Pesos", "Para Sistema
+de Amortización en UVR aplica UVR + Tasa", "Valores Asegurados Vida (UVR)"). Esos textos
+aparecen SIEMPRE en TODOS los extractos Caja Social (pesos y UVR) porque el formato es el mismo.
+
+CONFIRMACIÓN OBLIGATORIA en tabla "Detalle Cuota a Pagar":
+- Columna "Valor en UVR" con valores > 0.0000 en Abono a Capital e Intereses → confirma UVR.
+- TODOS los "Valor en UVR" = 0.0000 (Abono a Capital = 0.0000 Y Intereses = 0.0000) → confirma PESOS,
+  AUNQUE las columnas UVR existan en el formato. Esta es la regla MÁS FUERTE: si UVR=0 → PESOS.
+Si el Paso 1 dice UVR pero la confirmación dice PESOS → moneda="PESOS" (gana la evidencia numérica).
+
 
 ══ PASO 2 — DETECTAR FRECH ══
 En "Detalle Cuota a Pagar", fila "Descuento Intereses DTCO", columna "Valor en Pesos":
