@@ -23,7 +23,7 @@ import { LeadQuickPeek } from "@/components/pipeline/LeadQuickPeek";
 import { LeadEditDrawer } from "@/components/pipeline/LeadEditDrawer";
 import { NuviaPipelinePanel, type PipelineCtx } from "@/components/pipeline/NuviaPipelinePanel";
 import { PipelineControlPanel, type PipelineControlBreakdown } from "@/components/pipeline/PipelineControlPanel";
-import { faseLead, motivosRevision, progresoLead } from "@/lib/leadFases";
+import { motivosRevision, progresoLead } from "@/lib/leadFases";
 
 const FASE_IDS = ["con_proyeccion", "en_revision"] as const;
 type FaseId = (typeof FASE_IDS)[number];
@@ -565,7 +565,7 @@ function PipelinePage() {
   const fmtCOP = (n: number) =>
     new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 
-  // P30 — Embudo ejecutivo E1→E15: conteo por etapa + conversión acumulada vs E1.
+  // P30 — Embudo ejecutivo E1→E2: conteo por etapa + conversión acumulada vs E1.
   const [showFunnel, setShowFunnel] = useState<boolean>(() => {
     if (typeof window === "undefined") return true;
     return localStorage.getItem("nuvex.pipeline.funnel") !== "0";
@@ -629,7 +629,7 @@ function PipelinePage() {
 
   // Contexto NUVIA IA: snapshot ejecutivo compactado del pipeline visible.
   const pipelineCtx: PipelineCtx = useMemo(() => {
-    const etapaTitulo = new Map(ETAPAS_PIPELINE.map((e) => [e.id, `E${e.numero} ${e.titulo}`] as const));
+    const etapaTitulo = new Map(PIPELINE_LEAD_LANES.map((e) => [e.id, `E${e.numero} ${e.titulo}`] as const));
     const topEstancados: PipelineCtx["topEstancados"] = [];
     let sinAsesor = 0;
     etapasVisibles.forEach((etapa) => {
@@ -735,7 +735,7 @@ function PipelinePage() {
               </div>
               <div className="min-w-0">
                 <h1 className="text-[26px] font-bold leading-[1.05] tracking-[-0.02em] text-[var(--nuvia-text-primary)] md:text-[32px] lg:text-[40px]">
-                  Pipeline Maestro
+                  Pipeline de Leads
                 </h1>
               </div>
             </div>
