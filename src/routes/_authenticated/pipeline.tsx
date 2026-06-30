@@ -1050,7 +1050,6 @@ function PipelinePage() {
                                 ) : (
                                   <Link
                                     to="/qa-ai/nuevo"
-                                    search={{ expediente: r.id } as never}
                                     onClick={(e) => e.stopPropagation()}
                                     title="Sin auditoría QA — crear"
                                     className="inline-flex items-center gap-1 rounded-md border border-dashed border-[var(--nuvia-border)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-accent-blue)] hover:text-[var(--nuvia-text-primary)]"
