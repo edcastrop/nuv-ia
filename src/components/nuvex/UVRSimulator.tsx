@@ -171,6 +171,20 @@ export function UVRSimulator({
   const [showConfigVariacion, setShowConfigVariacion] = useState(false);
   const [variacionDefaultInput, setVariacionDefaultInput] = useState(getDefaultVariacionUVR());
 
+  // NUVIA QA Gate (UVR): el veredicto sólo se emite cuando el analista
+  // ingresó Variación UVR EA histórica Y Variación UVR EA propuestas (>0).
+  // Sin ambos, las proyecciones de saldo/corrección monetaria no son
+  // concluyentes y NUVIA no puede emitir dictamen.
+  const uvrVarsReady = useMemo(() => {
+    const hist = parsePercentage(variacionUVR);
+    const prop = parsePercentage(variacionUVRPropuestas);
+    return Number.isFinite(hist) && hist > 0 && Number.isFinite(prop) && prop > 0;
+  }, [variacionUVR, variacionUVRPropuestas]);
+  const [pendingAutoQARaw, setPendingAutoQARaw] = useState<{
+    raw: Parameters<typeof triggerSimuladorAutoQA>[0]["raw"];
+  } | null>(null);
+  const autoQAFiredRef = useRef(false);
+
   const handleClientChange = (next: ClientData) => {
     setClient(next);
     if (next.intervinientes?.length) setIntervinientes(next.intervinientes);
