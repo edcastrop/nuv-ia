@@ -397,15 +397,13 @@ function PipelinePage() {
 
   const grupos = useMemo(() => {
     const m = new Map<EtapaPipelineId, Expediente[]>();
-    ETAPAS_PIPELINE.forEach((e) => m.set(e.id, []));
+    PIPELINE_LEAD_LANES.forEach((e) => m.set(e.id, []));
     filtered.forEach((r) => {
-      const etapa = computeEtapaActual({
-        estado_caso: (r as unknown as { estado_caso?: string | null }).estado_caso ?? null,
-      } as Parameters<typeof computeEtapaActual>[0]);
+      const etapa = etapaInterna(r);
       const dias = diasDesde(r.updated_at);
       const umbral = UMBRAL_DIAS[etapa] ?? 0;
       if (soloStuck && !(umbral > 0 && dias > umbral)) return;
-      m.get(etapa)?.push(r);
+      m.get(laneVisualLead(r, qaMap.get(r.id)))?.push(r);
     });
     // P27 — Ordenar cada columna por antigüedad descendente (más estancados arriba).
     m.forEach((items) => {
@@ -416,10 +414,10 @@ function PipelinePage() {
       });
     });
     return m;
-  }, [filtered, soloStuck]);
+  }, [filtered, soloStuck, qaMap]);
 
   const etapasVisibles = useMemo(
-    () => ETAPAS_PIPELINE.filter((etapa) => !fase || FASE_ETAPAS[fase as FaseId].includes(etapa.id)),
+    () => PIPELINE_LEAD_LANES.filter((etapa) => !fase || FASE_LANE[fase as FaseId] === etapa.id),
     [fase],
   );
 
