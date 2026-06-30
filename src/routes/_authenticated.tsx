@@ -32,6 +32,9 @@ import {
   Wrench,
   DollarSign,
   Rocket,
+  ArrowLeft,
+  ArrowRight,
+
 } from "lucide-react";
 import { useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -919,6 +922,41 @@ function AuthenticatedLayout() {
               >
                 <LayoutGrid size={16} />
               </button>
+
+              {/* Botones globales Atrás / Adelante — disponibles en todas las páginas y todos los roles */}
+              <div
+                className="flex items-center rounded-lg overflow-hidden"
+                style={{ border: "1px solid var(--nuvia-border)", background: "rgba(255,255,255,0.04)" }}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (typeof window !== "undefined" && window.history.length > 1) {
+                      window.history.back();
+                    } else {
+                      navigate({ to: "/inicio" });
+                    }
+                  }}
+                  aria-label="Volver"
+                  title="Volver a la página anterior"
+                  className="inline-flex h-9 w-9 items-center justify-center text-white/85 hover:bg-white/10 transition"
+                >
+                  <ArrowLeft size={16} />
+                </button>
+                <div className="h-5 w-px" style={{ background: "var(--nuvia-border)" }} />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (typeof window !== "undefined") window.history.forward();
+                  }}
+                  aria-label="Adelante"
+                  title="Ir a la página siguiente"
+                  className="inline-flex h-9 w-9 items-center justify-center text-white/85 hover:bg-white/10 transition"
+                >
+                  <ArrowRight size={16} />
+                </button>
+              </div>
+
               <div className="hidden md:flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.22em] text-white/50">
                 <span
                   className="inline-flex h-1.5 w-1.5 rounded-full"
@@ -927,6 +965,7 @@ function AuthenticatedLayout() {
                 NUVIA · Inteligencia Financiera
               </div>
             </div>
+
 
             <div className="flex items-center gap-3">
               {!loadingAutonomia && (
