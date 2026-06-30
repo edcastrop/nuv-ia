@@ -218,6 +218,29 @@ function PipelinePage() {
     })();
   }, [rows, profilesMap]);
 
+  // Última auditoría QA por expediente — para badge de score en la tarjeta.
+  useEffect(() => {
+    const ids = Array.from(new Set(rows.map((r) => r.id).filter(Boolean)));
+    if (ids.length === 0) return;
+    let cancel = false;
+    (async () => {
+      const { data } = await supabase
+        .from("qa_auditorias")
+        .select("id, expediente_id, qa_score, dictamen, created_at")
+        .in("expediente_id", ids)
+        .order("created_at", { ascending: false });
+      if (cancel || !data) return;
+      const next = new Map<string, { id: string; score: number; dictamen: string | null }>();
+      for (const row of data as Array<{ id: string; expediente_id: string; qa_score: number | null; dictamen: string | null }>) {
+        if (!row.expediente_id || next.has(row.expediente_id)) continue;
+        next.set(row.expediente_id, { id: row.id, score: Number(row.qa_score ?? 0), dictamen: row.dictamen });
+      }
+      setQaMap(next);
+    })();
+    return () => { cancel = true; };
+  }, [rows]);
+
+
 
   const hace = Math.max(0, Math.round((nowTick - lastUpdated) / 1000));
   const haceLabel = hace < 60 ? `${hace}s` : `${Math.round(hace / 60)}min`;
