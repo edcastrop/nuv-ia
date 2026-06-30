@@ -743,21 +743,34 @@ function ResultadoQaAi() {
 
               <button
                 onClick={handleAprobar}
-                disabled={aprobando || yaAprobadaAuditor}
-                title={yaAprobadaAuditor ? "Esta auditoría ya fue aprobada por el auditor" : "Aprobar la auditoría y notificar al analista para que continúe"}
+                disabled={aprobando || yaAprobadaAuditor || uvrPendienteVariables}
+                title={
+                  uvrPendienteVariables
+                    ? "NUVIA no puede liberar: falta Variación UVR EA en la reconstrucción del analista (> 0%)."
+                    : yaAprobadaAuditor
+                    ? "Esta auditoría ya fue aprobada por el auditor"
+                    : "Aprobar la auditoría y notificar al analista para que continúe"
+                }
                 className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[12.5px] font-semibold transition hover:opacity-90"
                 style={{
-                  background: yaAprobadaAuditor ? "rgba(132,185,143,0.18)" : "var(--nuvia-success)",
-                  color: yaAprobadaAuditor ? "var(--nuvia-success)" : "#0B1220",
-                  border: `1px solid ${yaAprobadaAuditor ? "rgba(132,185,143,0.5)" : "transparent"}`,
-                  cursor: (aprobando || yaAprobadaAuditor) ? "not-allowed" : "pointer",
+                  background: uvrPendienteVariables
+                    ? "rgba(148,163,184,0.25)"
+                    : yaAprobadaAuditor ? "rgba(132,185,143,0.18)" : "var(--nuvia-success)",
+                  color: uvrPendienteVariables
+                    ? "var(--nuvia-text-secondary)"
+                    : yaAprobadaAuditor ? "var(--nuvia-success)" : "#0B1220",
+                  border: `1px solid ${uvrPendienteVariables ? "rgba(148,163,184,0.4)" : yaAprobadaAuditor ? "rgba(132,185,143,0.5)" : "transparent"}`,
+                  cursor: (aprobando || yaAprobadaAuditor || uvrPendienteVariables) ? "not-allowed" : "pointer",
                   opacity: aprobando ? 0.6 : 1,
-                  boxShadow: yaAprobadaAuditor ? "none" : "0 8px 20px -10px rgba(132,185,143,0.6)",
+                  boxShadow: (yaAprobadaAuditor || uvrPendienteVariables) ? "none" : "0 8px 20px -10px rgba(132,185,143,0.6)",
                 }}
               >
                 <CheckCircle2 size={14} />
-                {yaAprobadaAuditor ? "Aprobada por auditor" : aprobando ? "Aprobando…" : "Aprobar y liberar al analista"}
+                {uvrPendienteVariables
+                  ? "⏸ Pendiente variables UVR"
+                  : yaAprobadaAuditor ? "Aprobada por auditor" : aprobando ? "Aprobando…" : "Aprobar y liberar al analista"}
               </button>
+
 
 
 
