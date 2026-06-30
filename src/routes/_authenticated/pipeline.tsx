@@ -1,4 +1,6 @@
-// P14 — Vista Kanban del Pipeline Maestro NUVEX (15 etapas E1→E15).
+// P14 — Vista Kanban del Pipeline de Leads NUVEX.
+// El tablero visual muestra 2 etapas ejecutivas; las 15 etapas maestras siguen
+// existiendo como estado interno del expediente y auditoría operativa.
 // P15 — Filtros (búsqueda, banco, solo estancados).
 // P16 — Filtros persistidos en URL via search params (compartibles).
 
@@ -21,9 +23,9 @@ import { LeadQuickPeek } from "@/components/pipeline/LeadQuickPeek";
 import { LeadEditDrawer } from "@/components/pipeline/LeadEditDrawer";
 import { NuviaPipelinePanel, type PipelineCtx } from "@/components/pipeline/NuviaPipelinePanel";
 import { PipelineControlPanel, type PipelineControlBreakdown } from "@/components/pipeline/PipelineControlPanel";
-import { faseLead, motivosRevision, progresoLead } from "@/lib/leadFases";
+import { motivosRevision, progresoLead } from "@/lib/leadFases";
 
-const FASE_IDS = ["comercial", "operativa", "banco", "cobro", "fin"] as const;
+const FASE_IDS = ["con_proyeccion", "en_revision"] as const;
 type FaseId = (typeof FASE_IDS)[number];
 type PipelineProfileLite = { nombre: string | null; email: string | null; sede?: string | null; equipo?: string | null };
 type PipelineIdentity = {
@@ -42,12 +44,26 @@ export const pipelineSearchSchema = z.object({
   asesor: fallback(z.string(), "").default(""),
 });
 
-const FASE_ETAPAS: Record<FaseId, EtapaPipelineId[]> = {
-  comercial: ["lead", "extracto", "proyeccion", "presentacion", "cierre"],
-  operativa: ["contratacion", "radicacion"],
-  banco: ["banco", "resultado_banco", "aceptacion_cliente"],
-  cobro: ["informe", "cuenta", "pago", "paz_salvo"],
-  fin: ["finalizado"],
+const PIPELINE_LEAD_LANES: ReadonlyArray<(typeof ETAPAS_PIPELINE)[number]> = [
+  {
+    id: "lead",
+    numero: 1,
+    titulo: "Lead con Proyección",
+    descripcion: "Lead con datos comerciales, extracto y/o simulación en flujo normal.",
+    responsables: ["asesor", "licenciado"],
+  },
+  {
+    id: "proyeccion",
+    numero: 2,
+    titulo: "Lead en Revisión",
+    descripcion: "Casos que requieren decisión de Dirección antes de avanzar.",
+    responsables: ["director_financiero_qa", "gerencia"],
+  },
+];
+
+const FASE_LANE: Record<FaseId, EtapaPipelineId> = {
+  con_proyeccion: "lead",
+  en_revision: "proyeccion",
 };
 
 export const Route = createFileRoute("/_authenticated/pipeline")({
@@ -108,6 +124,16 @@ function preferPipelineText(current: unknown, fallback?: unknown): string {
   if (!isPlaceholderText(current)) return cleanText(current);
   const f = cleanText(fallback);
   return f && !isPlaceholderText(f) ? f : cleanText(current);
+}
+
+function etapaInterna(exp: Expediente): EtapaPipelineId {
+  return computeEtapaActual({
+    estado_caso: (exp as unknown as { estado_caso?: string | null }).estado_caso ?? null,
+  } as Parameters<typeof computeEtapaActual>[0]);
+}
+
+function laneVisualLead(exp: Expediente, qa: { id: string; score: number; dictamen: string | null } | undefined): EtapaPipelineId {
+  return motivosRevision(exp, qa).length > 0 ? "proyeccion" : "lead";
 }
 
 function identityFromPayload(payload: unknown): PipelineIdentity {
@@ -371,15 +397,13 @@ function PipelinePage() {
 
   const grupos = useMemo(() => {
     const m = new Map<EtapaPipelineId, Expediente[]>();
-    ETAPAS_PIPELINE.forEach((e) => m.set(e.id, []));
+    PIPELINE_LEAD_LANES.forEach((e) => m.set(e.id, []));
     filtered.forEach((r) => {
-      const etapa = computeEtapaActual({
-        estado_caso: (r as unknown as { estado_caso?: string | null }).estado_caso ?? null,
-      } as Parameters<typeof computeEtapaActual>[0]);
+      const etapa = etapaInterna(r);
       const dias = diasDesde(r.updated_at);
       const umbral = UMBRAL_DIAS[etapa] ?? 0;
       if (soloStuck && !(umbral > 0 && dias > umbral)) return;
-      m.get(etapa)?.push(r);
+      m.get(laneVisualLead(r, qaMap.get(r.id)))?.push(r);
     });
     // P27 — Ordenar cada columna por antigüedad descendente (más estancados arriba).
     m.forEach((items) => {
@@ -390,10 +414,10 @@ function PipelinePage() {
       });
     });
     return m;
-  }, [filtered, soloStuck]);
+  }, [filtered, soloStuck, qaMap]);
 
   const etapasVisibles = useMemo(
-    () => ETAPAS_PIPELINE.filter((etapa) => !fase || FASE_ETAPAS[fase as FaseId].includes(etapa.id)),
+    () => PIPELINE_LEAD_LANES.filter((etapa) => !fase || FASE_LANE[fase as FaseId] === etapa.id),
     [fase],
   );
 
@@ -401,7 +425,7 @@ function PipelinePage() {
 
   // P17 — Exportar CSV de los casos visibles (respeta filtros + etapa derivada).
   const exportarCSV = () => {
-    const etapaTitulo = new Map(ETAPAS_PIPELINE.map((e) => [e.id, `E${e.numero} ${e.titulo}`]));
+    const etapaTitulo = new Map(PIPELINE_LEAD_LANES.map((e) => [e.id, `E${e.numero} ${e.titulo}`]));
     const headers = ["Cliente", "Cédula", "Banco", "Crédito", "Etapa", "Estado", "Días", "Actualizado"];
     const lines: string[] = [headers.join(",")];
     const esc = (v: unknown) => {
@@ -439,11 +463,8 @@ function PipelinePage() {
     let estancados = 0;
     let total = 0;
     const fases: Array<{ id: string; label: string; etapas: EtapaPipelineId[]; count: number }> = [
-      { id: "comercial", label: "Comercial · E1-5", etapas: ["lead", "extracto", "proyeccion", "presentacion", "cierre"], count: 0 },
-      { id: "operativa", label: "Operativa · E6-7", etapas: ["contratacion", "radicacion"], count: 0 },
-      { id: "banco",     label: "Banco · E8-10",    etapas: ["banco", "resultado_banco", "aceptacion_cliente"], count: 0 },
-      { id: "cobro",     label: "Cobro · E11-14",   etapas: ["informe", "cuenta", "pago", "paz_salvo"], count: 0 },
-      { id: "fin",       label: "Cierre · E15",     etapas: ["finalizado"], count: 0 },
+      { id: "con_proyeccion", label: "Lead con Proyección", etapas: ["lead"], count: 0 },
+      { id: "en_revision", label: "Lead en Revisión", etapas: ["proyeccion"], count: 0 },
     ];
     let honorarios = 0;
     etapasVisibles.forEach((etapa) => {
@@ -544,7 +565,7 @@ function PipelinePage() {
   const fmtCOP = (n: number) =>
     new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 
-  // P30 — Embudo ejecutivo E1→E15: conteo por etapa + conversión acumulada vs E1.
+  // P30 — Embudo ejecutivo E1→E2: conteo por etapa + conversión acumulada vs E1.
   const [showFunnel, setShowFunnel] = useState<boolean>(() => {
     if (typeof window === "undefined") return true;
     return localStorage.getItem("nuvex.pipeline.funnel") !== "0";
@@ -608,7 +629,7 @@ function PipelinePage() {
 
   // Contexto NUVIA IA: snapshot ejecutivo compactado del pipeline visible.
   const pipelineCtx: PipelineCtx = useMemo(() => {
-    const etapaTitulo = new Map(ETAPAS_PIPELINE.map((e) => [e.id, `E${e.numero} ${e.titulo}`] as const));
+    const etapaTitulo = new Map(PIPELINE_LEAD_LANES.map((e) => [e.id, `E${e.numero} ${e.titulo}`] as const));
     const topEstancados: PipelineCtx["topEstancados"] = [];
     let sinAsesor = 0;
     etapasVisibles.forEach((etapa) => {
@@ -714,7 +735,7 @@ function PipelinePage() {
               </div>
               <div className="min-w-0">
                 <h1 className="text-[26px] font-bold leading-[1.05] tracking-[-0.02em] text-[var(--nuvia-text-primary)] md:text-[32px] lg:text-[40px]">
-                  Pipeline Maestro
+                  Pipeline de Leads
                 </h1>
               </div>
             </div>
@@ -950,7 +971,7 @@ function PipelinePage() {
           <div className="mb-2 flex items-center justify-between">
             <div>
               <div className="text-[11px] font-semibold uppercase text-[var(--nuvia-accent-green)]">
-                Embudo ejecutivo · E1 → E{ETAPAS_PIPELINE.length}
+                Embudo ejecutivo · Leads E1 → E2
               </div>
               <div className="text-xs text-[var(--nuvia-text-secondary)]">
                 Conversión acumulada de casos visibles vs. E1 ({funnel[0].passed}).
@@ -1134,8 +1155,7 @@ function PipelinePage() {
                               act. {r.updated_at ? new Date(r.updated_at).toLocaleDateString("es-CO", { day: "2-digit", month: "short" }) : "—"}
                             </div>
                             {(() => {
-                              const fase = faseLead(r, qa);
-                              if (!fase) return null;
+                              const fase = laneVisualLead(r, qa) === "proyeccion" ? "en_revision" : "con_proyeccion";
                               const prog = progresoLead(r, qa);
                               const motivos = fase === "en_revision" ? motivosRevision(r, qa) : [];
                               return (
@@ -1262,11 +1282,10 @@ function PipelinePage() {
           })()}
           diasEnEtapa={diasDesde(peekExpediente.updated_at)}
           etapaTitulo={(() => {
-            const etapa = computeEtapaActual({
-              estado_caso: (peekExpediente as unknown as { estado_caso?: string | null }).estado_caso ?? null,
-            } as Parameters<typeof computeEtapaActual>[0]);
-            const e = ETAPAS_PIPELINE.find((x) => x.id === etapa);
-            return e ? `E${e.numero} · ${e.titulo}` : "—";
+            const lane = laneVisualLead(peekExpediente, qaMap.get(peekExpediente.id));
+            const e = PIPELINE_LEAD_LANES.find((x) => x.id === lane);
+            const interna = ETAPAS_PIPELINE.find((x) => x.id === etapaInterna(peekExpediente));
+            return e ? `E${e.numero} · ${e.titulo}${interna ? ` · Interna: ${interna.titulo}` : ""}` : "—";
           })()}
           onClose={() => setPeekId(null)}
           onEdit={() => { setEditId(peekExpediente.id); setPeekId(null); }}
