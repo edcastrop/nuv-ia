@@ -463,11 +463,8 @@ function PipelinePage() {
     let estancados = 0;
     let total = 0;
     const fases: Array<{ id: string; label: string; etapas: EtapaPipelineId[]; count: number }> = [
-      { id: "comercial", label: "Comercial · E1-5", etapas: ["lead", "extracto", "proyeccion", "presentacion", "cierre"], count: 0 },
-      { id: "operativa", label: "Operativa · E6-7", etapas: ["contratacion", "radicacion"], count: 0 },
-      { id: "banco",     label: "Banco · E8-10",    etapas: ["banco", "resultado_banco", "aceptacion_cliente"], count: 0 },
-      { id: "cobro",     label: "Cobro · E11-14",   etapas: ["informe", "cuenta", "pago", "paz_salvo"], count: 0 },
-      { id: "fin",       label: "Cierre · E15",     etapas: ["finalizado"], count: 0 },
+      { id: "con_proyeccion", label: "Lead con Proyección", etapas: ["lead"], count: 0 },
+      { id: "en_revision", label: "Lead en Revisión", etapas: ["proyeccion"], count: 0 },
     ];
     let honorarios = 0;
     etapasVisibles.forEach((etapa) => {
