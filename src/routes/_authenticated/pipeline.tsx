@@ -991,6 +991,14 @@ function PipelinePage() {
                         const stuck = umbral > 0 && dias > umbral;
                         const isDup = !!r.cedula && dupCedulas.has(r.cedula.trim());
                         const prof = profilesMap.get(r.asesor_id);
+                        const qa = qaMap.get(r.id);
+                        const qaTone = !qa
+                          ? { color: "var(--nuvia-text-secondary)", bg: "rgba(255,255,255,0.05)", border: "var(--nuvia-border)" }
+                          : qa.score >= 90
+                            ? { color: "var(--nuvia-accent-green)", bg: "color-mix(in oklab, var(--nuvia-accent-green) 14%, transparent)", border: "color-mix(in oklab, var(--nuvia-accent-green) 36%, transparent)" }
+                            : qa.score >= 70
+                              ? { color: "var(--nuvia-warning)", bg: "color-mix(in oklab, var(--nuvia-warning) 14%, transparent)", border: "color-mix(in oklab, var(--nuvia-warning) 36%, transparent)" }
+                              : { color: "var(--nuvia-danger)", bg: "color-mix(in oklab, var(--nuvia-danger) 14%, transparent)", border: "color-mix(in oklab, var(--nuvia-danger) 36%, transparent)" };
                         return (
                           <div
                             key={r.id}
