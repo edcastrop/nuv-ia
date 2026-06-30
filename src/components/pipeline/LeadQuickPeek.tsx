@@ -16,6 +16,7 @@ import {
   Pencil,
   TrendingUp,
   ShieldCheck,
+  AlertCircle,
 } from "lucide-react";
 import type { Expediente } from "@/lib/expedientes";
 import { AnalistaAvatar } from "./AnalistaAvatar";
@@ -32,6 +33,63 @@ function fmtCOP(n: number | null | undefined): string {
 function fmtPct(n: number | null | undefined, digits = 2): string {
   if (n == null || !Number.isFinite(n) || n === 0) return "—";
   return `${n.toFixed(digits)} %`;
+}
+
+function num(v: unknown): number {
+  if (v == null) return 0;
+  if (typeof v === "number" && Number.isFinite(v)) return v;
+  if (typeof v === "string") {
+    let s = v.trim().replace(/[^\d,.-]/g, "");
+    if (!s) return 0;
+    const hasComma = s.includes(",");
+    const hasDot = s.includes(".");
+    if (hasComma && hasDot) {
+      s = s.lastIndexOf(",") > s.lastIndexOf(".")
+        ? s.replace(/\./g, "").replace(",", ".")
+        : s.replace(/,/g, "");
+    } else if (hasComma) {
+      s = s.replace(",", ".");
+    } else if ((s.match(/\./g) ?? []).length > 1) {
+      s = s.replace(/\./g, "");
+    }
+    const n = Number(s);
+    return Number.isFinite(n) ? n : 0;
+  }
+  return 0;
+}
+
+function record(v: unknown): Record<string, unknown> {
+  return v && typeof v === "object" ? (v as Record<string, unknown>) : {};
+}
+
+function readN(obj: unknown, ...keys: string[]): number {
+  const o = record(obj);
+  for (const k of keys) {
+    const v = num(o[k]);
+    if (v !== 0) return v;
+  }
+  return 0;
+}
+
+function text(v: unknown): string {
+  if (v == null) return "";
+  const s = String(v).trim();
+  if (!s || s === "—" || /^null$/i.test(s) || /^undefined$/i.test(s)) return "";
+  return s;
+}
+
+function placeholder(v: unknown): boolean {
+  const s = text(v).toLowerCase();
+  return !s || s === "sin nombre" || s === "s/cédula" || s === "sin banco";
+}
+
+function prefer(current: unknown, ...fallbacks: unknown[]): string {
+  if (!placeholder(current)) return text(current);
+  for (const v of fallbacks) {
+    const s = text(v);
+    if (s && !placeholder(s)) return s;
+  }
+  return text(current);
 }
 
 export function LeadQuickPeek({
@@ -52,7 +110,7 @@ export function LeadQuickPeek({
   const ref = useRef<HTMLDivElement>(null);
   const fetchPeek = useServerFn(getQuickPeekData);
 
-  const { data: peek } = useQuery<QuickPeekData>({
+  const { data: peek, error } = useQuery<QuickPeekData>({
     queryKey: ["quick-peek", expediente.id],
     queryFn: () => fetchPeek({ data: { expedienteId: expediente.id } }),
     staleTime: 30_000,
@@ -66,14 +124,23 @@ export function LeadQuickPeek({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const saldo = peek?.saldoCapital ?? 0;
-  const cuotaActual = peek?.cuotaActual ?? 0;
-  const cuotaProp = peek?.cuotaPropuesta ?? 0;
-  const cuotasPend = peek?.cuotasPendientes ?? 0;
-  const cuotasPendProp = peek?.cuotasPendientesProp ?? 0;
-  const tasaActual = peek?.tasaActualPct ?? null;
-  const ahorro = peek?.ahorro ?? 0;
-  const audit = peek?.auditPct;
+  const clienteData = record(expediente.cliente_data);
+  const creditoData = record(expediente.credito_data);
+  const propuestaData = record(expediente.propuesta_data);
+  const displayNombre = prefer(expediente.cliente_nombre, peek?.clienteNombre, clienteData.nombre, clienteData.clienteNombre);
+  const displayCedula = prefer(expediente.cedula, peek?.cedula, clienteData.cedula, clienteData.identificacion);
+  const displayBanco = prefer(expediente.banco, peek?.banco, clienteData.banco);
+  const displayNumeroCredito = prefer(expediente.numero_credito, peek?.numeroCredito, clienteData.numeroCredito, clienteData.numero_credito);
+  const saldo = peek?.saldoCapital || readN(creditoData, "saldoCapital", "saldo_capital", "saldo", "valorCredito", "valorDesembolsado");
+  const cuotaActual = peek?.cuotaActual || readN(creditoData, "cuotaActual", "cuota_actual", "cuota", "cuotaBaseSimulacion", "cuotaPagadaCliente");
+  const cuotaProp = peek?.cuotaPropuesta || readN(propuestaData, "nuevaCuota", "cuotaPropuesta", "cuotaNueva", "cuota");
+  const cuotasTotalesFallback = readN(creditoData, "cuotasTotales", "cuotas_totales", "plazo", "plazoMeses") || num(clienteData.plazoInicial);
+  const cuotasPagadasFallback = readN(creditoData, "cuotasPagadas", "cuotas_pagadas") || num(clienteData.cuotasPagadas);
+  const cuotasPend = peek?.cuotasPendientes || readN(creditoData, "cuotasPendientes", "cuotas_pendientes", "cuotasRestantes") || (cuotasTotalesFallback > 0 ? Math.max(0, cuotasTotalesFallback - cuotasPagadasFallback) : 0);
+  const cuotasPendProp = peek?.cuotasPendientesProp || readN(propuestaData, "nuevoPlazo", "plazo", "plazoNuevo", "plazoMeses");
+  const tasaActual = peek?.tasaActualPct || readN(creditoData, "teaPct", "tea", "tasaEA", "tasaEa", "tasa_ea", "teaPactada") || null;
+  const ahorro = peek?.ahorro || readN(propuestaData, "ahorroTotal", "ahorro", "ahorroIntereses");
+  const audit = peek?.auditPct ?? expediente.qa_score ?? expediente.acertividad_global;
 
   const auditColor =
     audit == null
@@ -96,7 +163,7 @@ export function LeadQuickPeek({
       <aside
         ref={ref}
         role="dialog"
-        aria-label={`Resumen de ${expediente.cliente_nombre}`}
+        aria-label={`Resumen de ${displayNombre || "lead"}`}
         className="fixed right-0 top-0 z-[81] h-full w-full max-w-[440px] overflow-y-auto border-l border-[var(--nuvia-border)] p-5 text-[var(--nuvia-text-primary)] shadow-2xl"
         style={{
           background:
@@ -108,16 +175,16 @@ export function LeadQuickPeek({
             <div className="text-[10px] font-semibold uppercase tracking-wider text-[var(--nuvia-accent-green)]">
               Quick Peek · NUVIA
             </div>
-            <h2 className="mt-0.5 truncate text-lg font-semibold">{expediente.cliente_nombre}</h2>
+            <h2 className="mt-0.5 truncate text-lg font-semibold">{displayNombre || "Sin nombre"}</h2>
             <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-[var(--nuvia-text-secondary)]">
               <span className="inline-flex items-center gap-1 rounded-md border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.04)] px-1.5 py-0.5">
-                <IdCard className="h-3 w-3" /> {expediente.cedula ?? "s/cédula"}
+                <IdCard className="h-3 w-3" /> {displayCedula || "s/cédula"}
               </span>
               <span className="inline-flex items-center gap-1 rounded-md border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.04)] px-1.5 py-0.5">
-                <Building2 className="h-3 w-3" /> {expediente.banco ?? "—"}
+                <Building2 className="h-3 w-3" /> {displayBanco || "—"}
               </span>
               <span className="inline-flex items-center gap-1 rounded-md border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.04)] px-1.5 py-0.5">
-                <Hash className="h-3 w-3" /> {expediente.numero_credito ?? "—"}
+                <Hash className="h-3 w-3" /> {displayNumeroCredito || "—"}
               </span>
             </div>
           </div>
@@ -129,6 +196,13 @@ export function LeadQuickPeek({
             <X className="h-4 w-4" />
           </button>
         </div>
+
+        {error && (
+          <div className="mt-3 flex items-start gap-2 rounded-xl border border-[color-mix(in_oklab,var(--nuvia-warning)_30%,transparent)] bg-[color-mix(in_oklab,var(--nuvia-warning)_8%,transparent)] p-3 text-[11px] text-[var(--nuvia-text-secondary)]">
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--nuvia-warning)]" />
+            Vista rápida usando datos base del expediente mientras se sincroniza la data enriquecida.
+          </div>
+        )}
 
         {/* Etapa actual */}
         <div
