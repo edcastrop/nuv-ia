@@ -47,6 +47,40 @@ export function SaveExpedienteButton({
   const autoAprobable = enviarAuditoriaManual && (decision?.accion === "permitir" || decision?.accion === "permitir_con_marca");
 
   const handle = async () => {
+    // 🟡 Alerta de primera simulación (una sola vez por analista/navegador).
+    // Recuerda verificar los datos antes de guardar para evitar casos huérfanos / "Sin nombre".
+    try {
+      const FIRST_KEY = "nuvia.simulador.primeraVez.v1";
+      if (typeof window !== "undefined" && !window.localStorage.getItem(FIRST_KEY)) {
+        const ok = window.confirm(
+          "🔔 NUVIA · Antes de guardar tu primera simulación\n\n" +
+            "Verifica que los datos del cliente estén correctos:\n" +
+            "  • Nombre completo del cliente\n" +
+            "  • Cédula\n" +
+            "  • Banco y número de crédito\n\n" +
+            "Los casos sin nombre generan desorden en el tablero de Casos y dificultan la auditoría QA.\n\n" +
+            "¿Deseas continuar?",
+        );
+        if (!ok) return;
+        window.localStorage.setItem(FIRST_KEY, new Date().toISOString());
+      }
+    } catch {
+      /* localStorage no disponible — no bloqueamos el guardado */
+    }
+
+    // 🛑 Validación dura: nombre del cliente vacío → exigir confirmación explícita.
+    const nombre = (payload.cliente?.nombre ?? "").trim();
+    if (!nombre) {
+      const ok =
+        typeof window !== "undefined" &&
+        window.confirm(
+          "⚠️ Este caso no tiene NOMBRE DEL CLIENTE.\n\n" +
+            "Aparecerá como “Sin nombre” en la lista de Casos y será difícil de identificar.\n\n" +
+            "¿Deseas guardarlo de todas formas?",
+        );
+      if (!ok) return;
+    }
+
     setSaving(true);
     setMsg(null);
     try {
