@@ -87,6 +87,7 @@ function PipelinePage() {
   const [qLocal, setQLocal] = useState(search.q);
   const [analistas, setAnalistas] = useState<{ id: string; nombre: string | null; email: string | null }[]>([]);
   const [profilesMap, setProfilesMap] = useState<Map<string, PipelineProfileLite>>(new Map());
+  const [qaMap, setQaMap] = useState<Map<string, { id: string; score: number; dictamen: string | null }>>(new Map());
   const [peekId, setPeekId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -216,6 +217,29 @@ function PipelinePage() {
       });
     })();
   }, [rows, profilesMap]);
+
+  // Última auditoría QA por expediente — para badge de score en la tarjeta.
+  useEffect(() => {
+    const ids = Array.from(new Set(rows.map((r) => r.id).filter(Boolean)));
+    if (ids.length === 0) return;
+    let cancel = false;
+    (async () => {
+      const { data } = await supabase
+        .from("qa_auditorias")
+        .select("id, expediente_id, qa_score, dictamen, created_at")
+        .in("expediente_id", ids)
+        .order("created_at", { ascending: false });
+      if (cancel || !data) return;
+      const next = new Map<string, { id: string; score: number; dictamen: string | null }>();
+      for (const row of data as Array<{ id: string; expediente_id: string; qa_score: number | null; dictamen: string | null }>) {
+        if (!row.expediente_id || next.has(row.expediente_id)) continue;
+        next.set(row.expediente_id, { id: row.id, score: Number(row.qa_score ?? 0), dictamen: row.dictamen });
+      }
+      setQaMap(next);
+    })();
+    return () => { cancel = true; };
+  }, [rows]);
+
 
 
   const hace = Math.max(0, Math.round((nowTick - lastUpdated) / 1000));
@@ -967,6 +991,14 @@ function PipelinePage() {
                         const stuck = umbral > 0 && dias > umbral;
                         const isDup = !!r.cedula && dupCedulas.has(r.cedula.trim());
                         const prof = profilesMap.get(r.asesor_id);
+                        const qa = qaMap.get(r.id);
+                        const qaTone = !qa
+                          ? { color: "var(--nuvia-text-secondary)", bg: "rgba(255,255,255,0.05)", border: "var(--nuvia-border)" }
+                          : qa.score >= 90
+                            ? { color: "var(--nuvia-accent-green)", bg: "color-mix(in oklab, var(--nuvia-accent-green) 14%, transparent)", border: "color-mix(in oklab, var(--nuvia-accent-green) 36%, transparent)" }
+                            : qa.score >= 70
+                              ? { color: "var(--nuvia-warning)", bg: "color-mix(in oklab, var(--nuvia-warning) 14%, transparent)", border: "color-mix(in oklab, var(--nuvia-warning) 36%, transparent)" }
+                              : { color: "var(--nuvia-danger)", bg: "color-mix(in oklab, var(--nuvia-danger) 14%, transparent)", border: "color-mix(in oklab, var(--nuvia-danger) 36%, transparent)" };
                         return (
                           <div
                             key={r.id}
@@ -1003,6 +1035,29 @@ function PipelinePage() {
                                 <Flag className="h-3 w-3" /> {r.estado}
                               </span>
                               <div className="flex items-center gap-1">
+                                {qa ? (
+                                  <Link
+                                    to="/qa-ai/$id"
+                                    params={{ id: qa.id }}
+                                    onClick={(e) => e.stopPropagation()}
+                                    title={`Auditoría QA · ${qa.dictamen ?? "sin dictamen"} · ${qa.score}/100`}
+                                    className="inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold transition hover:brightness-110"
+                                    style={{ color: qaTone.color, background: qaTone.bg, borderColor: qaTone.border }}
+                                  >
+                                    <ShieldAlert className="h-3 w-3" />
+                                    QA {Math.round(qa.score)}
+                                  </Link>
+                                ) : (
+                                  <Link
+                                    to="/qa-ai/nuevo"
+                                    onClick={(e) => e.stopPropagation()}
+                                    title="Sin auditoría QA — crear"
+                                    className="inline-flex items-center gap-1 rounded-md border border-dashed border-[var(--nuvia-border)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-accent-blue)] hover:text-[var(--nuvia-text-primary)]"
+                                  >
+                                    <ShieldAlert className="h-3 w-3" />
+                                    QA —
+                                  </Link>
+                                )}
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); setPeekId(r.id); }}
