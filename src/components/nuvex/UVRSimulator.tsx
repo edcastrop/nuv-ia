@@ -663,23 +663,32 @@ export function UVRSimulator({
             setBeneficioFrechMensualExtracto(parseOcrMoney(p.extracto?.beneficioFrechMensual));
             // Auto-QA condicional: sólo cuando el simulador fue abierto desde un
             // Expediente Maestro (init?.id). En modo standalone no se ejecuta.
+            // GATE UVR: si faltan las variaciones UVR (histórica + propuestas)
+            // dejamos la lectura "pendiente" y NUVIA no emite veredicto aún.
             if (init?.id && p.raw) {
-              void triggerSimuladorAutoQA({
-                expedienteId: init.id,
-                raw: { ...p.raw, archivoPath: p.archivoPath ?? null },
-                onStart: () => {
-                  setAutoQALoading(true);
-                  setAutoQA(null);
-                },
-                onResult: (r) => {
-                  setAutoQA(r);
-                  setAutoQALoading(false);
-                },
-                onError: () => setAutoQALoading(false),
-              });
+              setPendingAutoQARaw({ raw: { ...p.raw, archivoPath: p.archivoPath ?? null } });
+              autoQAFiredRef.current = false;
+              setAutoQA(null);
             }
           }}
         />}
+        {!qaEmbedded && init?.id && pendingAutoQARaw && !uvrVarsReady && (
+          <Card>
+            <div
+              className="rounded-lg px-4 py-3 text-[13px] leading-snug"
+              style={{
+                background: "rgba(245,158,11,0.08)",
+                border: "1px solid rgba(245,158,11,0.45)",
+                color: "#92400E",
+              }}
+            >
+              <div className="font-semibold mb-1">⏸ NUVIA QA · Pendiente de variables UVR</div>
+              <div>
+                Sin <b>Variación UVR EA histórica</b> y <b>Variación UVR EA propuestas</b> las proyecciones de saldo, corrección monetaria y ahorro no son concluyentes. NUVIA emitirá su dictamen automáticamente cuando ambos campos estén diligenciados ({">"} 0%).
+              </div>
+            </div>
+          </Card>
+        )}
         {!qaEmbedded && init?.id && (autoQALoading || autoQA) && (
           <AutoQAPanel loading={autoQALoading} result={autoQA} simuladorReturn={simuladorReturn} />
         )}
