@@ -21,6 +21,7 @@ import { LeadQuickPeek } from "@/components/pipeline/LeadQuickPeek";
 import { LeadEditDrawer } from "@/components/pipeline/LeadEditDrawer";
 import { NuviaPipelinePanel, type PipelineCtx } from "@/components/pipeline/NuviaPipelinePanel";
 import { PipelineControlPanel, type PipelineControlBreakdown } from "@/components/pipeline/PipelineControlPanel";
+import { faseLead, motivosRevision, progresoLead } from "@/lib/leadFases";
 
 const FASE_IDS = ["comercial", "operativa", "banco", "cobro", "fin"] as const;
 type FaseId = (typeof FASE_IDS)[number];
@@ -1132,6 +1133,55 @@ function PipelinePage() {
                             <div className="mt-1 text-[11px] text-[rgba(170,179,197,0.72)]">
                               act. {r.updated_at ? new Date(r.updated_at).toLocaleDateString("es-CO", { day: "2-digit", month: "short" }) : "—"}
                             </div>
+                            {(() => {
+                              const fase = faseLead(r, qa);
+                              if (!fase) return null;
+                              const prog = progresoLead(r, qa);
+                              const motivos = fase === "en_revision" ? motivosRevision(r, qa) : [];
+                              return (
+                                <div className="mt-2 flex flex-wrap items-center gap-1">
+                                  <span
+                                    title="Lead con extracto cargado"
+                                    className="inline-flex h-5 w-5 items-center justify-center rounded text-[10px]"
+                                    style={{
+                                      background: prog.extracto ? "color-mix(in oklab, var(--nuvia-accent-green) 16%, transparent)" : "rgba(255,255,255,0.04)",
+                                      color: prog.extracto ? "var(--nuvia-accent-green)" : "var(--nuvia-text-secondary)",
+                                    }}
+                                  >📄</span>
+                                  <span
+                                    title="Lead con simulación generada"
+                                    className="inline-flex h-5 w-5 items-center justify-center rounded text-[10px]"
+                                    style={{
+                                      background: prog.simulacion ? "color-mix(in oklab, var(--nuvia-accent-green) 16%, transparent)" : "rgba(255,255,255,0.04)",
+                                      color: prog.simulacion ? "var(--nuvia-accent-green)" : "var(--nuvia-text-secondary)",
+                                    }}
+                                  >🧮</span>
+                                  <span
+                                    title={prog.qa ? `QA ejecutado · ${prog.qaScore ?? 0}/100` : "Sin QA"}
+                                    className="inline-flex h-5 w-5 items-center justify-center rounded text-[10px]"
+                                    style={{
+                                      background: prog.qa ? "color-mix(in oklab, var(--nuvia-accent-green) 16%, transparent)" : "rgba(255,255,255,0.04)",
+                                      color: prog.qa ? "var(--nuvia-accent-green)" : "var(--nuvia-text-secondary)",
+                                    }}
+                                  >🛡️</span>
+                                  {fase === "en_revision" && (
+                                    <Link
+                                      to="/direccion/revisiones"
+                                      onClick={(e) => e.stopPropagation()}
+                                      title={motivos.map((m) => `• ${m.detalle}`).join("\n") || "Lead en revisión Dirección"}
+                                      className="ml-auto inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold transition hover:brightness-110"
+                                      style={{
+                                        color: "var(--nuvia-warning)",
+                                        background: "color-mix(in oklab, var(--nuvia-warning) 14%, transparent)",
+                                        border: "1px solid color-mix(in oklab, var(--nuvia-warning) 36%, transparent)",
+                                      }}
+                                    >
+                                      <ShieldAlert className="h-3 w-3" /> Revisión
+                                    </Link>
+                                  )}
+                                </div>
+                              );
+                            })()}
                             <div className="mt-2 flex items-center justify-between gap-2">
                               <span className="inline-flex min-w-0 max-w-[120px] items-center gap-1 truncate rounded-md px-1.5 py-0.5 text-[10px] font-medium text-[var(--nuvia-accent-green)]" style={{ background: "color-mix(in oklab, var(--nuvia-accent-green) 12%, transparent)" }}>
                                 <Flag className="h-3 w-3" /> {r.estado}

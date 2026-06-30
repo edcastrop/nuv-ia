@@ -34,7 +34,7 @@ import {
   Rocket,
   ArrowLeft,
   ArrowRight,
-
+  ShieldAlert,
 } from "lucide-react";
 import { useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -558,6 +558,9 @@ function AuthenticatedLayout() {
               )
                 ? []
                 : [{ to: "/pipeline", label: "Pipeline", Icon: Kanban }]),
+              ...(hasAny("super_admin", "admin", "gerencia", "director_financiero_qa", "director_juridico")
+                ? [{ to: "/direccion/revisiones", label: "Revisiones", Icon: ShieldAlert }]
+                : []),
               { to: "/expediente-maestro", label: "Expediente", Icon: UserSquare2 },
               { to: "/proyeccion", label: "Proyección", Icon: LineChart },
               // Proyección Financiera ahora vive dentro de /herramientas
