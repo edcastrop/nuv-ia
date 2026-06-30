@@ -44,12 +44,40 @@ export const pipelineSearchSchema = z.object({
   asesor: fallback(z.string(), "").default(""),
 });
 
-const PIPELINE_LEAD_LANES: ReadonlyArray<(typeof ETAPAS_PIPELINE)[number]> = ETAPAS_PIPELINE;
-
-const FASE_LANE: Record<FaseId, "con_proyeccion" | "en_revision"> = {
-  con_proyeccion: "con_proyeccion",
-  en_revision: "en_revision",
+type PipelineLaneId = FaseId | EtapaPipelineId;
+type PipelineLane = {
+  id: PipelineLaneId;
+  numero: number;
+  titulo: string;
+  descripcion: string;
+  internalIds: ReadonlyArray<EtapaPipelineId>;
 };
+
+const LEAD_INTERNAL_STAGES: ReadonlyArray<EtapaPipelineId> = ["lead", "extracto", "proyeccion"];
+
+const PIPELINE_VISUAL_LANES: ReadonlyArray<PipelineLane> = [
+  {
+    id: "con_proyeccion",
+    numero: 1,
+    titulo: "Lead con Proyección",
+    descripcion: "Lead comercial con soporte bancario, simulación o avance financiero listo para gestión.",
+    internalIds: LEAD_INTERNAL_STAGES,
+  },
+  {
+    id: "en_revision",
+    numero: 2,
+    titulo: "Lead en Revisión",
+    descripcion: "Lead que requiere validación de Dirección antes de continuar el flujo comercial.",
+    internalIds: LEAD_INTERNAL_STAGES,
+  },
+  ...ETAPAS_PIPELINE.filter((e) => e.numero >= 4).map((e, idx) => ({
+    id: e.id,
+    numero: idx + 3,
+    titulo: e.titulo,
+    descripcion: e.descripcion,
+    internalIds: [e.id] as const,
+  })),
+];
 
 
 export const Route = createFileRoute("/_authenticated/pipeline")({
@@ -118,8 +146,22 @@ function etapaInterna(exp: Expediente): EtapaPipelineId {
   } as Parameters<typeof computeEtapaActual>[0]);
 }
 
-function laneVisualLead(exp: Expediente, qa: { id: string; score: number; dictamen: string | null } | undefined): EtapaPipelineId {
-  return motivosRevision(exp, qa).length > 0 ? "proyeccion" : "lead";
+function isLeadInternalStage(etapa: EtapaPipelineId): boolean {
+  return LEAD_INTERNAL_STAGES.includes(etapa);
+}
+
+function laneVisualLead(exp: Expediente, qa: { id: string; score: number; dictamen: string | null } | undefined): PipelineLaneId {
+  const etapa = etapaInterna(exp);
+  if (!isLeadInternalStage(etapa)) return etapa;
+  return motivosRevision(exp, qa).length > 0 ? "en_revision" : "con_proyeccion";
+}
+
+function getLaneById(id: PipelineLaneId): PipelineLane {
+  return PIPELINE_VISUAL_LANES.find((x) => x.id === id) ?? PIPELINE_VISUAL_LANES[0];
+}
+
+function rowSla(exp: Expediente): number {
+  return UMBRAL_DIAS[etapaInterna(exp)] ?? 0;
 }
 
 function identityFromPayload(payload: unknown): PipelineIdentity {
@@ -382,14 +424,14 @@ function PipelinePage() {
   }, [rows, q, banco, mios, asesor, user?.id, identityMap]);
 
   const grupos = useMemo(() => {
-    const m = new Map<EtapaPipelineId, Expediente[]>();
-    PIPELINE_LEAD_LANES.forEach((e) => m.set(e.id, []));
+    const m = new Map<PipelineLaneId, Expediente[]>();
+    PIPELINE_VISUAL_LANES.forEach((e) => m.set(e.id, []));
     filtered.forEach((r) => {
-      const etapa = etapaInterna(r);
+      const lane = laneVisualLead(r, qaMap.get(r.id));
       const dias = diasDesde(r.updated_at);
-      const umbral = UMBRAL_DIAS[etapa] ?? 0;
+      const umbral = rowSla(r);
       if (soloStuck && !(umbral > 0 && dias > umbral)) return;
-      m.get(etapa)?.push(r);
+      m.get(lane)?.push(r);
     });
     // P27 — Ordenar cada columna por antigüedad descendente (más estancados arriba).
     m.forEach((items) => {
@@ -404,10 +446,8 @@ function PipelinePage() {
 
   const etapasVisibles = useMemo(
     () => {
-      if (!fase) return PIPELINE_LEAD_LANES;
-      // Filtro por fase: con_proyeccion = etapas 1-5, en_revision = casos con motivos QA (se filtra por row más abajo)
-      if (fase === "con_proyeccion") return PIPELINE_LEAD_LANES.filter((e) => e.numero <= 5);
-      return PIPELINE_LEAD_LANES;
+      if (!fase) return PIPELINE_VISUAL_LANES;
+      return PIPELINE_VISUAL_LANES.filter((e) => e.id === fase);
     },
     [fase],
   );
@@ -417,7 +457,7 @@ function PipelinePage() {
 
   // P17 — Exportar CSV de los casos visibles (respeta filtros + etapa derivada).
   const exportarCSV = () => {
-    const etapaTitulo = new Map(PIPELINE_LEAD_LANES.map((e) => [e.id, `E${e.numero} ${e.titulo}`]));
+    const etapaTitulo = new Map(PIPELINE_VISUAL_LANES.map((e) => [e.id, `E${e.numero} ${e.titulo}`]));
     const headers = ["Cliente", "Cédula", "Banco", "Crédito", "Etapa", "Estado", "Días", "Actualizado"];
     const lines: string[] = [headers.join(",")];
     const esc = (v: unknown) => {
@@ -454,23 +494,21 @@ function PipelinePage() {
     let totalDias = 0;
     let estancados = 0;
     let total = 0;
-    const fases: Array<{ id: string; label: string; etapas: EtapaPipelineId[]; count: number }> = [
-      { id: "con_proyeccion", label: "Lead con Proyección", etapas: ["lead"], count: 0 },
-      { id: "en_revision", label: "Lead en Revisión", etapas: ["proyeccion"], count: 0 },
+    const fases: Array<{ id: string; label: string; count: number }> = [
+      { id: "con_proyeccion", label: "Lead con Proyección", count: grupos.get("con_proyeccion")?.length ?? 0 },
+      { id: "en_revision", label: "Lead en Revisión", count: grupos.get("en_revision")?.length ?? 0 },
     ];
     let honorarios = 0;
     etapasVisibles.forEach((etapa) => {
       const items = grupos.get(etapa.id) ?? [];
-      const umbral = UMBRAL_DIAS[etapa.id] ?? 0;
       items.forEach((r) => {
         const d = diasDesde(r.updated_at);
+        const umbral = rowSla(r);
         total += 1;
         totalDias += d;
         honorarios += Number(r.honorarios_final ?? 0);
         if (umbral > 0 && d > umbral) estancados += 1;
       });
-      const fase = fases.find((f) => f.etapas.includes(etapa.id));
-      if (fase) fase.count += items.length;
     });
     return {
       total,
@@ -621,13 +659,13 @@ function PipelinePage() {
 
   // Contexto NUVIA IA: snapshot ejecutivo compactado del pipeline visible.
   const pipelineCtx: PipelineCtx = useMemo(() => {
-    const etapaTitulo = new Map(PIPELINE_LEAD_LANES.map((e) => [e.id, `E${e.numero} ${e.titulo}`] as const));
+    const etapaTitulo = new Map(PIPELINE_VISUAL_LANES.map((e) => [e.id, `E${e.numero} ${e.titulo}`] as const));
     const topEstancados: PipelineCtx["topEstancados"] = [];
     let sinAsesor = 0;
     etapasVisibles.forEach((etapa) => {
-      const umbral = UMBRAL_DIAS[etapa.id] ?? 0;
       (grupos.get(etapa.id) ?? []).forEach((r) => {
         const d = diasDesde(r.updated_at);
+        const umbral = rowSla(r);
         if (!r.asesor_id) sinAsesor += 1;
         if (umbral > 0 && d > umbral) {
           const p = profilesMap.get(r.asesor_id);
@@ -669,9 +707,9 @@ function PipelinePage() {
   const { criticos, listos } = useMemo(() => {
     let cr = 0;
     etapasVisibles.forEach((e) => {
-      const umbral = UMBRAL_DIAS[e.id] ?? 0;
-      if (umbral <= 0) return;
       (grupos.get(e.id) ?? []).forEach((r) => {
+        const umbral = rowSla(r);
+        if (umbral <= 0) return;
         if (diasDesde(r.updated_at) > umbral * 2) cr += 1;
       });
     });
@@ -1042,9 +1080,13 @@ function PipelinePage() {
           <div className="flex min-w-max gap-2.5">
             {etapasVisibles.map((etapa) => {
               const items = grupos.get(etapa.id) ?? [];
-              const umbral = UMBRAL_DIAS[etapa.id] ?? 0;
               const diasArr = items.map((r) => diasDesde(r.updated_at));
-              const stuckCount = umbral > 0 ? diasArr.filter((d) => d > umbral).length : 0;
+              const stuckCount = items.filter((r) => {
+                const umbral = rowSla(r);
+                return umbral > 0 && diasDesde(r.updated_at) > umbral;
+              }).length;
+              const laneSlaValues = Array.from(new Set(items.map(rowSla).filter((v) => v > 0))).sort((a, b) => a - b);
+              const slaLabel = laneSlaValues.length === 0 ? "—" : laneSlaValues.length === 1 ? `${laneSlaValues[0]}d` : "variable";
               const avgDias = diasArr.length > 0 ? Math.round(diasArr.reduce((a, b) => a + b, 0) / diasArr.length) : 0;
               const heatStyle = stuckCount > 0
                 ? {
@@ -1081,7 +1123,7 @@ function PipelinePage() {
                     <div className="mb-3 flex items-center justify-between gap-2 px-1 text-xs">
                       <span className="inline-flex items-center gap-1 text-[var(--nuvia-text-secondary)]">
                         <Clock className="h-3 w-3" /> prom. {avgDias}d
-                        {umbral > 0 && <span className="opacity-70">· SLA {umbral}d</span>}
+                        {slaLabel !== "—" && <span className="opacity-70">· SLA {slaLabel}</span>}
                       </span>
                       {stuckCount > 0 && (
                         <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-semibold text-[var(--nuvia-danger)]" style={{ background: "color-mix(in oklab, var(--nuvia-danger) 13%, transparent)" }}>
@@ -1100,6 +1142,7 @@ function PipelinePage() {
                     ) : (
                       items.map((r) => {
                         const dias = diasDesde(r.updated_at);
+                        const umbral = rowSla(r);
                         const stuck = umbral > 0 && dias > umbral;
                         const isDup = !!r.cedula && dupCedulas.has(r.cedula.trim());
                         const prof = profilesMap.get(r.asesor_id);
@@ -1147,13 +1190,13 @@ function PipelinePage() {
                               act. {r.updated_at ? new Date(r.updated_at).toLocaleDateString("es-CO", { day: "2-digit", month: "short" }) : "—"}
                             </div>
                             {(() => {
-                              const fase = laneVisualLead(r, qa) === "proyeccion" ? "en_revision" : "con_proyeccion";
+                              const fase = laneVisualLead(r, qa) === "en_revision" ? "en_revision" : "con_proyeccion";
                               const prog = progresoLead(r, qa);
                               const motivos = fase === "en_revision" ? motivosRevision(r, qa) : [];
                               return (
                                 <div className="mt-2 flex flex-wrap items-center gap-1">
                                   <span
-                                    title="Lead con extracto cargado"
+                                    title="Soporte bancario cargado"
                                     className="inline-flex h-5 w-5 items-center justify-center rounded text-[10px]"
                                     style={{
                                       background: prog.extracto ? "color-mix(in oklab, var(--nuvia-accent-green) 16%, transparent)" : "rgba(255,255,255,0.04)",
@@ -1275,9 +1318,8 @@ function PipelinePage() {
           diasEnEtapa={diasDesde(peekExpediente.updated_at)}
           etapaTitulo={(() => {
             const lane = laneVisualLead(peekExpediente, qaMap.get(peekExpediente.id));
-            const e = PIPELINE_LEAD_LANES.find((x) => x.id === lane);
-            const interna = ETAPAS_PIPELINE.find((x) => x.id === etapaInterna(peekExpediente));
-            return e ? `E${e.numero} · ${e.titulo}${interna ? ` · Interna: ${interna.titulo}` : ""}` : "—";
+            const e = getLaneById(lane);
+            return e ? `E${e.numero} · ${e.titulo}` : "—";
           })()}
           onClose={() => setPeekId(null)}
           onEdit={() => { setEditId(peekExpediente.id); setPeekId(null); }}
