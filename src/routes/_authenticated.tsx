@@ -34,7 +34,7 @@ import {
   Rocket,
   ArrowLeft,
   ArrowRight,
-
+  ShieldAlert,
 } from "lucide-react";
 import { useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
