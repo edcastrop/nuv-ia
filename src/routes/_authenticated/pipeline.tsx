@@ -60,7 +60,7 @@ const PIPELINE_VISUAL_LANES: ReadonlyArray<PipelineLane> = [
     id: "con_proyeccion",
     numero: 1,
     titulo: "Lead con Proyección",
-    descripcion: "Lead comercial con extracto, simulación o avance financiero listo para gestión.",
+    descripcion: "Lead comercial con soporte bancario, simulación o avance financiero listo para gestión.",
     internalIds: LEAD_INTERNAL_STAGES,
   },
   {
