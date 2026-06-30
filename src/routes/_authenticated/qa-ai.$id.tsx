@@ -711,6 +711,23 @@ function ResultadoQaAi() {
               <span style={{ color: "var(--nuvia-text-secondary)" }}>{mensajeHero}</span>
             </p>
 
+            {uvrPendienteVariables && (
+              <div
+                className="mt-4 rounded-lg px-3.5 py-2.5 text-[12.5px] leading-snug"
+                style={{
+                  background: "rgba(245,158,11,0.10)",
+                  border: "1px solid rgba(245,158,11,0.45)",
+                  color: "#FBBF24",
+                }}
+              >
+                <span className="font-semibold">⏸ NUVIA QA · Pendiente de variables UVR.</span>{" "}
+                <span style={{ color: "var(--nuvia-text-secondary)" }}>
+                  La reconstrucción no registra <b>Variación UVR EA</b>. Sin este dato la corrección monetaria y las proyecciones no son concluyentes; el dictamen no puede liberarse al analista hasta que se ingrese ({">"} 0%).
+                </span>
+              </div>
+            )}
+
+
             {/* Acciones premium */}
             <div className="mt-5 flex flex-wrap items-center gap-2">
               <button onClick={() => setCopilotoOpen(true)}
