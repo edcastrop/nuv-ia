@@ -357,10 +357,11 @@ function PipelinePage() {
         const asesorIds = asesor.split(",").filter(Boolean);
         if (!asesorIds.includes(r.asesor_id)) return false;
       }
-      if (banco && r.banco !== banco) return false;
+      const identity = identityMap.get(r.id);
+      const displayBanco = preferPipelineText(r.banco, identity?.banco);
+      if (banco && displayBanco !== banco) return false;
       if (term) {
-        const identity = identityMap.get(r.id);
-        const hay = `${preferPipelineText(r.cliente_nombre, identity?.clienteNombre)} ${preferPipelineText(r.cedula, identity?.cedula)} ${preferPipelineText(r.numero_credito, identity?.numeroCredito)} ${preferPipelineText(r.banco, identity?.banco)}`.toLowerCase();
+        const hay = `${preferPipelineText(r.cliente_nombre, identity?.clienteNombre)} ${preferPipelineText(r.cedula, identity?.cedula)} ${preferPipelineText(r.numero_credito, identity?.numeroCredito)} ${displayBanco}`.toLowerCase();
         if (!hay.includes(term)) return false;
       }
       return true;
@@ -1089,6 +1090,10 @@ function PipelinePage() {
                         const isDup = !!r.cedula && dupCedulas.has(r.cedula.trim());
                         const prof = profilesMap.get(r.asesor_id);
                         const qa = qaMap.get(r.id);
+                        const identity = identityMap.get(r.id);
+                        const displayCliente = preferPipelineText(r.cliente_nombre, identity?.clienteNombre) || "Sin nombre";
+                        const displayCedula = preferPipelineText(r.cedula, identity?.cedula) || "s/cédula";
+                        const displayBanco = preferPipelineText(r.banco, identity?.banco) || "—";
                         const qaTone = !qa
                           ? { color: "var(--nuvia-text-secondary)", bg: "rgba(255,255,255,0.05)", border: "var(--nuvia-border)" }
                           : qa.score >= 90
@@ -1109,7 +1114,7 @@ function PipelinePage() {
                                 className="min-w-0 flex-1 truncate text-sm font-semibold text-[var(--nuvia-text-primary)] hover:underline"
                                 title="Abrir expediente completo"
                               >
-                                {r.cliente_nombre}
+                                 {displayCliente}
                               </Link>
                               {isDup && (
                                 <span
@@ -1122,7 +1127,7 @@ function PipelinePage() {
                               )}
                             </div>
                             <div className="mt-1 truncate text-xs text-[var(--nuvia-text-secondary)]">
-                              {r.banco ?? "—"} · {r.cedula ?? "s/cédula"}
+                               {displayBanco} · {displayCedula}
                             </div>
                             <div className="mt-1 text-[11px] text-[rgba(170,179,197,0.72)]">
                               act. {r.updated_at ? new Date(r.updated_at).toLocaleDateString("es-CO", { day: "2-digit", month: "short" }) : "—"}
