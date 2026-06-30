@@ -209,12 +209,16 @@ Si tieneCobertura="si" verificar: cuotaActual ≈ cuotaConSubsidio + valorBenefi
   · "Plazo Total" + "Meses"              → plazoInicial (entero).
   · "Cuotas Pendientes"                   → cuotasPendientes.
   · "Cuotas Facturadas"                   → cuotasPagadas (ej "001" → 1).
-  · "Tasa de Interés Cobrada"             → tasaEA
-      - PESOS: solo el número (ej "15.30 %EA" → 15.30; "10.85 %EA" → 10.85).
+  · "Tasa de Interés Cobrada"             → teaCobrada (referencia visual; NO usar como tasaEA cuando hay FRECH).
+      - PESOS: solo el número (ej "15.30 %EA" → 15.30; "10.85 %EA" → 10.85; "9.00 %EA" → 9.00).
       - UVR: solo el número después de "UVR+" (ej "UVR+ 4.50 %EA" → 4.50).
-      - NUNCA usar "Tasa de Interés Pactada" como tasaEA.
-  · "Tasa de Interés Pactada"             → teaPactada (referencia, no usada en simulación).
+  · "Tasa de Interés Pactada"             → teaPactada (tasa contractual; ES la que reproduce la cuota cuando hay FRECH).
   · "Tasa de Interés con Beneficio"       → tasaCobertura (0 si sin FRECH).
+  · REGLA tasaEA (matemática financiera Caja Social):
+      - SIN FRECH → tasaEA = "Tasa de Interés Cobrada".
+      - CON FRECH → tasaEA = "Tasa de Interés Pactada" (la cuota base se calcula con la pactada;
+        el subsidio aparece aparte como "Descuento Intereses DTCO" y reduce el "Valor a Pagar").
+        Verificación: saldoCapital × ((1+pactada)^(1/12) − 1) ≈ "Intereses Corrientes" del extracto.
 - Encabezado: "Número de Crédito" → numeroCredito; nombre del titular → cliente.
 
 ══ PASO 5 — REGLAS POR MODALIDAD ══
@@ -227,7 +231,8 @@ B) PESOS CON FRECH (ej "12 CUOTA FIJA FRECH EN PESOS"):
    cuotaConSubsidio = "Valor a Pagar: PESOS"; valorBeneficioMensual = "Descuento Intereses DTCO";
    verificar cuotaConSubsidio + valorBeneficioMensual ≈ cuotaActual (±1%);
    saldoUVR=""; tieneCobertura="si"; tipoBeneficio="FRECH";
-   tasaEA = "Tasa de Interés Cobrada" (NO la Pactada);
+   tasaEA = "Tasa de Interés Pactada" (NO la Cobrada — la pactada genera la cuota nominal,
+   el FRECH se aplica como descuento de intereses);
    tasaCobertura = "Tasa de Interés con Beneficio".
 C) UVR SIN FRECH:
    cuotaActual = capitalCuota+interesCuota+seguros [CALCULAR, pesos];
@@ -239,8 +244,9 @@ D) UVR CON FRECH (ej "13 CUOTA FIJA FRECH EN UVR"):
    cuotaConSubsidio = "Valor a Pagar: PESOS"; valorBeneficioMensual = "Descuento Intereses DTCO";
    saldoCapital = col Pesos; saldoUVR = col UVR;
    tieneCobertura="si"; tipoBeneficio="FRECH";
-   tasaEA = número tras "UVR+" en "Tasa de Interés Cobrada" (NO la Pactada);
+   tasaEA = número tras "UVR+" en "Tasa de Interés Pactada" (NO la Cobrada);
    tasaCobertura = "Tasa de Interés con Beneficio".
+
 
 ══ VALIDACIÓN CRUZADA OBLIGATORIA ══
 1) cuotasPagadas + cuotasPendientes ≈ plazoInicial (±2).
