@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Alert, Card, SectionTitle, TextField } from "./ui";
 import { SituacionActualBlock } from "./SituacionActualBlock";
@@ -170,6 +170,49 @@ export function UVRSimulator({
   const doAprobar = useServerFn(aprobarAuditoriaPorAuditor);
   const [showConfigVariacion, setShowConfigVariacion] = useState(false);
   const [variacionDefaultInput, setVariacionDefaultInput] = useState(getDefaultVariacionUVR());
+
+  // NUVIA QA Gate (UVR): el veredicto sólo se emite cuando el analista
+  // ingresó Variación UVR EA histórica Y Variación UVR EA propuestas (>0).
+  // Sin ambos, las proyecciones de saldo/corrección monetaria no son
+  // concluyentes y NUVIA no puede emitir dictamen.
+  const uvrVarsReady = useMemo(() => {
+    const hist = parsePercentage(variacionUVR);
+    const prop = parsePercentage(variacionUVRPropuestas);
+    return Number.isFinite(hist) && hist > 0 && Number.isFinite(prop) && prop > 0;
+  }, [variacionUVR, variacionUVRPropuestas]);
+  const [pendingAutoQARaw, setPendingAutoQARaw] = useState<{
+    raw: Parameters<typeof triggerSimuladorAutoQA>[0]["raw"];
+  } | null>(null);
+  const autoQAFiredRef = useRef(false);
+
+  // Dispara la auto-QA UVR pendiente cuando el analista completa las dos
+  // variaciones UVR (histórica + propuestas). Garantiza que NUVIA sólo emita
+  // dictamen cuando la matemática de corrección monetaria está completa.
+  useEffect(() => {
+    if (!init?.id) return;
+    if (!pendingAutoQARaw) return;
+    if (!uvrVarsReady) return;
+    if (autoQAFiredRef.current) return;
+    autoQAFiredRef.current = true;
+    void triggerSimuladorAutoQA({
+      expedienteId: init.id,
+      raw: pendingAutoQARaw.raw,
+      onStart: () => {
+        setAutoQALoading(true);
+        setAutoQA(null);
+      },
+      onResult: (r) => {
+        setAutoQA(r);
+        setAutoQALoading(false);
+        setPendingAutoQARaw(null);
+      },
+      onError: () => {
+        setAutoQALoading(false);
+        autoQAFiredRef.current = false;
+      },
+    });
+  }, [init?.id, pendingAutoQARaw, uvrVarsReady]);
+
 
   const handleClientChange = (next: ClientData) => {
     setClient(next);
@@ -649,23 +692,32 @@ export function UVRSimulator({
             setBeneficioFrechMensualExtracto(parseOcrMoney(p.extracto?.beneficioFrechMensual));
             // Auto-QA condicional: sólo cuando el simulador fue abierto desde un
             // Expediente Maestro (init?.id). En modo standalone no se ejecuta.
+            // GATE UVR: si faltan las variaciones UVR (histórica + propuestas)
+            // dejamos la lectura "pendiente" y NUVIA no emite veredicto aún.
             if (init?.id && p.raw) {
-              void triggerSimuladorAutoQA({
-                expedienteId: init.id,
-                raw: { ...p.raw, archivoPath: p.archivoPath ?? null },
-                onStart: () => {
-                  setAutoQALoading(true);
-                  setAutoQA(null);
-                },
-                onResult: (r) => {
-                  setAutoQA(r);
-                  setAutoQALoading(false);
-                },
-                onError: () => setAutoQALoading(false),
-              });
+              setPendingAutoQARaw({ raw: { ...p.raw, archivoPath: p.archivoPath ?? null } });
+              autoQAFiredRef.current = false;
+              setAutoQA(null);
             }
           }}
         />}
+        {!qaEmbedded && init?.id && pendingAutoQARaw && !uvrVarsReady && (
+          <Card>
+            <div
+              className="rounded-lg px-4 py-3 text-[13px] leading-snug"
+              style={{
+                background: "rgba(245,158,11,0.08)",
+                border: "1px solid rgba(245,158,11,0.45)",
+                color: "#92400E",
+              }}
+            >
+              <div className="font-semibold mb-1">⏸ NUVIA QA · Pendiente de variables UVR</div>
+              <div>
+                Sin <b>Variación UVR EA histórica</b> y <b>Variación UVR EA propuestas</b> las proyecciones de saldo, corrección monetaria y ahorro no son concluyentes. NUVIA emitirá su dictamen automáticamente cuando ambos campos estén diligenciados ({">"} 0%).
+              </div>
+            </div>
+          </Card>
+        )}
         {!qaEmbedded && init?.id && (autoQALoading || autoQA) && (
           <AutoQAPanel loading={autoQALoading} result={autoQA} simuladorReturn={simuladorReturn} />
         )}
@@ -1139,17 +1191,33 @@ export function UVRSimulator({
             )}
 
             {recomendada && auditoriaId && (
-              <div className="mt-3 flex justify-end">
+              <div className="mt-3 flex flex-col items-end gap-1.5">
                 <button
                   onClick={handleAprobar}
-                  disabled={aprobando}
+                  disabled={aprobando || !uvrVarsReady}
+                  title={
+                    !uvrVarsReady
+                      ? "NUVIA no puede liberar el caso hasta que diligencies Variación UVR EA histórica y Variación UVR EA propuestas (> 0%)."
+                      : undefined
+                  }
                   className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold shadow transition-transform hover:scale-[1.01]"
-                  style={{ background: "var(--nuvia-success)", color: "#0b0b0b" }}
+                  style={{
+                    background: uvrVarsReady ? "var(--nuvia-success)" : "rgba(148,163,184,0.4)",
+                    color: uvrVarsReady ? "#0b0b0b" : "#475569",
+                    cursor: aprobando || !uvrVarsReady ? "not-allowed" : "pointer",
+                    opacity: aprobando ? 0.7 : 1,
+                  }}
                 >
                   {aprobando ? "Aprobando…" : "✓ Aprobar y liberar al analista"}
                 </button>
+                {!uvrVarsReady && (
+                  <div className="text-[11px] font-medium" style={{ color: "#92400E" }}>
+                    ⏸ Pendiente: ingresa Variación UVR EA histórica y propuestas para que NUVIA emita el dictamen.
+                  </div>
+                )}
               </div>
             )}
+
 
             {recomendada &&
               (() => {

@@ -453,6 +453,10 @@ function ResultadoQaAi() {
   const proyectoresAplicadas = (proyInfo?.count ?? proyInfo?.aplicadas?.length ?? 0) > 0;
   const ex = (inputs?.extracto ?? {}) as Record<string, unknown>;
   const recSnap = (inputs?.reconstruccion ?? {}) as Record<string, unknown>;
+  // NUVIA QA Gate (UVR): no se puede aprobar/liberar sin Variación UVR EA (> 0).
+  // Sin ese dato la matemática de corrección monetaria no es concluyente.
+  const recVarUvrEa = Number(recSnap.variacionUvrEa);
+  const uvrPendienteVariables = isUvr && (!Number.isFinite(recVarUvrEa) || recVarUvrEa <= 0);
   const numDato = (v: unknown): number | undefined => {
     if (typeof v === "number" && Number.isFinite(v)) return v;
     if (v == null || v === "") return undefined;
@@ -707,6 +711,23 @@ function ResultadoQaAi() {
               <span style={{ color: "var(--nuvia-text-secondary)" }}>{mensajeHero}</span>
             </p>
 
+            {uvrPendienteVariables && (
+              <div
+                className="mt-4 rounded-lg px-3.5 py-2.5 text-[12.5px] leading-snug"
+                style={{
+                  background: "rgba(245,158,11,0.10)",
+                  border: "1px solid rgba(245,158,11,0.45)",
+                  color: "#FBBF24",
+                }}
+              >
+                <span className="font-semibold">⏸ NUVIA QA · Pendiente de variables UVR.</span>{" "}
+                <span style={{ color: "var(--nuvia-text-secondary)" }}>
+                  La reconstrucción no registra <b>Variación UVR EA</b>. Sin este dato la corrección monetaria y las proyecciones no son concluyentes; el dictamen no puede liberarse al analista hasta que se ingrese ({">"} 0%).
+                </span>
+              </div>
+            )}
+
+
             {/* Acciones premium */}
             <div className="mt-5 flex flex-wrap items-center gap-2">
               <button onClick={() => setCopilotoOpen(true)}
@@ -739,21 +760,34 @@ function ResultadoQaAi() {
 
               <button
                 onClick={handleAprobar}
-                disabled={aprobando || yaAprobadaAuditor}
-                title={yaAprobadaAuditor ? "Esta auditoría ya fue aprobada por el auditor" : "Aprobar la auditoría y notificar al analista para que continúe"}
+                disabled={aprobando || yaAprobadaAuditor || uvrPendienteVariables}
+                title={
+                  uvrPendienteVariables
+                    ? "NUVIA no puede liberar: falta Variación UVR EA en la reconstrucción del analista (> 0%)."
+                    : yaAprobadaAuditor
+                    ? "Esta auditoría ya fue aprobada por el auditor"
+                    : "Aprobar la auditoría y notificar al analista para que continúe"
+                }
                 className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[12.5px] font-semibold transition hover:opacity-90"
                 style={{
-                  background: yaAprobadaAuditor ? "rgba(132,185,143,0.18)" : "var(--nuvia-success)",
-                  color: yaAprobadaAuditor ? "var(--nuvia-success)" : "#0B1220",
-                  border: `1px solid ${yaAprobadaAuditor ? "rgba(132,185,143,0.5)" : "transparent"}`,
-                  cursor: (aprobando || yaAprobadaAuditor) ? "not-allowed" : "pointer",
+                  background: uvrPendienteVariables
+                    ? "rgba(148,163,184,0.25)"
+                    : yaAprobadaAuditor ? "rgba(132,185,143,0.18)" : "var(--nuvia-success)",
+                  color: uvrPendienteVariables
+                    ? "var(--nuvia-text-secondary)"
+                    : yaAprobadaAuditor ? "var(--nuvia-success)" : "#0B1220",
+                  border: `1px solid ${uvrPendienteVariables ? "rgba(148,163,184,0.4)" : yaAprobadaAuditor ? "rgba(132,185,143,0.5)" : "transparent"}`,
+                  cursor: (aprobando || yaAprobadaAuditor || uvrPendienteVariables) ? "not-allowed" : "pointer",
                   opacity: aprobando ? 0.6 : 1,
-                  boxShadow: yaAprobadaAuditor ? "none" : "0 8px 20px -10px rgba(132,185,143,0.6)",
+                  boxShadow: (yaAprobadaAuditor || uvrPendienteVariables) ? "none" : "0 8px 20px -10px rgba(132,185,143,0.6)",
                 }}
               >
                 <CheckCircle2 size={14} />
-                {yaAprobadaAuditor ? "Aprobada por auditor" : aprobando ? "Aprobando…" : "Aprobar y liberar al analista"}
+                {uvrPendienteVariables
+                  ? "⏸ Pendiente variables UVR"
+                  : yaAprobadaAuditor ? "Aprobada por auditor" : aprobando ? "Aprobando…" : "Aprobar y liberar al analista"}
               </button>
+
 
 
 
