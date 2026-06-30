@@ -115,7 +115,7 @@ function DireccionRevisionesPage() {
   return (
     <PageLayout>
       <ExecutiveHero
-        badge={{ icon: <ShieldAlert size={12} />, label: "Dirección · Revisiones", tone: "amber" }}
+        badge={{ icon: <ShieldAlert size={12} />, label: "Dirección · Revisiones", tone: "warning" }}
         title="Leads en revisión"
         description="Casos en fase comercial que requieren decisión de Dirección antes de avanzar."
         actions={
