@@ -389,7 +389,7 @@ function PipelinePage() {
       const dias = diasDesde(r.updated_at);
       const umbral = UMBRAL_DIAS[etapa] ?? 0;
       if (soloStuck && !(umbral > 0 && dias > umbral)) return;
-      m.get(laneVisualLead(r, qaMap.get(r.id)))?.push(r);
+      m.get(etapa)?.push(r);
     });
     // P27 — Ordenar cada columna por antigüedad descendente (más estancados arriba).
     m.forEach((items) => {
@@ -403,9 +403,15 @@ function PipelinePage() {
   }, [filtered, soloStuck, qaMap]);
 
   const etapasVisibles = useMemo(
-    () => PIPELINE_LEAD_LANES.filter((etapa) => !fase || FASE_LANE[fase as FaseId] === etapa.id),
+    () => {
+      if (!fase) return PIPELINE_LEAD_LANES;
+      // Filtro por fase: con_proyeccion = etapas 1-5, en_revision = casos con motivos QA (se filtra por row más abajo)
+      if (fase === "con_proyeccion") return PIPELINE_LEAD_LANES.filter((e) => e.numero <= 5);
+      return PIPELINE_LEAD_LANES;
+    },
     [fase],
   );
+
 
   const totalVisible = etapasVisibles.reduce((a, etapa) => a + (grupos.get(etapa.id) ?? []).length, 0);
 
