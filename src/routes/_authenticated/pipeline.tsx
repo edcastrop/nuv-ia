@@ -1035,6 +1035,30 @@ function PipelinePage() {
                                 <Flag className="h-3 w-3" /> {r.estado}
                               </span>
                               <div className="flex items-center gap-1">
+                                {qa ? (
+                                  <Link
+                                    to="/qa-ai/$id"
+                                    params={{ id: qa.id }}
+                                    onClick={(e) => e.stopPropagation()}
+                                    title={`Auditoría QA · ${qa.dictamen ?? "sin dictamen"} · ${qa.score}/100`}
+                                    className="inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold transition hover:brightness-110"
+                                    style={{ color: qaTone.color, background: qaTone.bg, borderColor: qaTone.border }}
+                                  >
+                                    <ShieldAlert className="h-3 w-3" />
+                                    QA {Math.round(qa.score)}
+                                  </Link>
+                                ) : (
+                                  <Link
+                                    to="/qa-ai/nuevo"
+                                    search={{ expediente: r.id } as never}
+                                    onClick={(e) => e.stopPropagation()}
+                                    title="Sin auditoría QA — crear"
+                                    className="inline-flex items-center gap-1 rounded-md border border-dashed border-[var(--nuvia-border)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--nuvia-text-secondary)] transition hover:border-[var(--nuvia-accent-blue)] hover:text-[var(--nuvia-text-primary)]"
+                                  >
+                                    <ShieldAlert className="h-3 w-3" />
+                                    QA —
+                                  </Link>
+                                )}
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); setPeekId(r.id); }}
