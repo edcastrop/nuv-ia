@@ -84,22 +84,23 @@ function DireccionRevisionesPage() {
     return () => { cancel = true; };
   }, [rows]);
 
-  const enRevision = useMemo(() => {
+  type RevisionRow = { exp: Expediente; qa: NonNullable<QALite> | undefined; motivos: ReturnType<typeof motivosRevision> };
+  const enRevision = useMemo<RevisionRow[]>(() => {
     const term = q.trim().toLowerCase();
-    return rows
-      .map((r) => {
-        const qa = qaMap.get(r.id);
-        const fase = faseLead(r, qa);
-        if (fase !== "en_revision") return null;
-        return { exp: r, qa, motivos: motivosRevision(r, qa) };
-      })
-      .filter((x): x is { exp: Expediente; qa: QALite; motivos: ReturnType<typeof motivosRevision> } => x !== null)
-      .filter((x) => {
-        if (!term) return true;
-        const hay = `${x.exp.cliente_nombre ?? ""} ${x.exp.cedula ?? ""} ${x.exp.banco ?? ""}`.toLowerCase();
-        return hay.includes(term);
-      })
-      .sort((a, b) => b.motivos.length - a.motivos.length);
+    const out: RevisionRow[] = [];
+    for (const r of rows) {
+      const qa = qaMap.get(r.id);
+      const fase = faseLead(r, qa);
+      if (fase !== "en_revision") continue;
+      const motivos = motivosRevision(r, qa);
+      if (term) {
+        const hay = `${r.cliente_nombre ?? ""} ${r.cedula ?? ""} ${r.banco ?? ""}`.toLowerCase();
+        if (!hay.includes(term)) continue;
+      }
+      out.push({ exp: r, qa, motivos });
+    }
+    out.sort((a, b) => b.motivos.length - a.motivos.length);
+    return out;
   }, [rows, qaMap, q]);
 
   const kpis = useMemo(() => {

@@ -86,6 +86,7 @@ import { Route as AuthenticatedFinanzasAuditoriaRouteImport } from './routes/_au
 import { Route as AuthenticatedFinanzasAlertasRouteImport } from './routes/_authenticated/finanzas.alertas'
 import { Route as AuthenticatedExpedienteV2IdRouteImport } from './routes/_authenticated/expediente-v2.$id'
 import { Route as AuthenticatedExpedienteMaestroIdRouteImport } from './routes/_authenticated/expediente-maestro.$id'
+import { Route as AuthenticatedDireccionRevisionesRouteImport } from './routes/_authenticated/direccion.revisiones'
 import { Route as AuthenticatedContratacionValidacionRouteImport } from './routes/_authenticated/contratacion.validacion'
 import { Route as AuthenticatedContabilidadCuentasCobroRouteImport } from './routes/_authenticated/contabilidad.cuentas-cobro'
 import { Route as AuthenticatedComisionesIdRouteImport } from './routes/_authenticated/comisiones.$id'
@@ -541,6 +542,12 @@ const AuthenticatedExpedienteMaestroIdRoute =
     path: '/expediente-maestro/$id',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedDireccionRevisionesRoute =
+  AuthenticatedDireccionRevisionesRouteImport.update({
+    id: '/direccion/revisiones',
+    path: '/direccion/revisiones',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedContratacionValidacionRoute =
   AuthenticatedContratacionValidacionRouteImport.update({
     id: '/contratacion/validacion',
@@ -732,6 +739,7 @@ export interface FileRoutesByFullPath {
   '/comisiones/$id': typeof AuthenticatedComisionesIdRoute
   '/contabilidad/cuentas-cobro': typeof AuthenticatedContabilidadCuentasCobroRoute
   '/contratacion/validacion': typeof AuthenticatedContratacionValidacionRoute
+  '/direccion/revisiones': typeof AuthenticatedDireccionRevisionesRoute
   '/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/expediente-v2/$id': typeof AuthenticatedExpedienteV2IdRoute
   '/finanzas/alertas': typeof AuthenticatedFinanzasAlertasRoute
@@ -832,6 +840,7 @@ export interface FileRoutesByTo {
   '/comisiones/$id': typeof AuthenticatedComisionesIdRoute
   '/contabilidad/cuentas-cobro': typeof AuthenticatedContabilidadCuentasCobroRoute
   '/contratacion/validacion': typeof AuthenticatedContratacionValidacionRoute
+  '/direccion/revisiones': typeof AuthenticatedDireccionRevisionesRoute
   '/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/expediente-v2/$id': typeof AuthenticatedExpedienteV2IdRoute
   '/finanzas/alertas': typeof AuthenticatedFinanzasAlertasRoute
@@ -936,6 +945,7 @@ export interface FileRoutesById {
   '/_authenticated/comisiones/$id': typeof AuthenticatedComisionesIdRoute
   '/_authenticated/contabilidad/cuentas-cobro': typeof AuthenticatedContabilidadCuentasCobroRoute
   '/_authenticated/contratacion/validacion': typeof AuthenticatedContratacionValidacionRoute
+  '/_authenticated/direccion/revisiones': typeof AuthenticatedDireccionRevisionesRoute
   '/_authenticated/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/_authenticated/expediente-v2/$id': typeof AuthenticatedExpedienteV2IdRoute
   '/_authenticated/finanzas/alertas': typeof AuthenticatedFinanzasAlertasRoute
@@ -1041,6 +1051,7 @@ export interface FileRouteTypes {
     | '/comisiones/$id'
     | '/contabilidad/cuentas-cobro'
     | '/contratacion/validacion'
+    | '/direccion/revisiones'
     | '/expediente-maestro/$id'
     | '/expediente-v2/$id'
     | '/finanzas/alertas'
@@ -1141,6 +1152,7 @@ export interface FileRouteTypes {
     | '/comisiones/$id'
     | '/contabilidad/cuentas-cobro'
     | '/contratacion/validacion'
+    | '/direccion/revisiones'
     | '/expediente-maestro/$id'
     | '/expediente-v2/$id'
     | '/finanzas/alertas'
@@ -1244,6 +1256,7 @@ export interface FileRouteTypes {
     | '/_authenticated/comisiones/$id'
     | '/_authenticated/contabilidad/cuentas-cobro'
     | '/_authenticated/contratacion/validacion'
+    | '/_authenticated/direccion/revisiones'
     | '/_authenticated/expediente-maestro/$id'
     | '/_authenticated/expediente-v2/$id'
     | '/_authenticated/finanzas/alertas'
@@ -1868,6 +1881,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedExpedienteMaestroIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/direccion/revisiones': {
+      id: '/_authenticated/direccion/revisiones'
+      path: '/direccion/revisiones'
+      fullPath: '/direccion/revisiones'
+      preLoaderRoute: typeof AuthenticatedDireccionRevisionesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/contratacion/validacion': {
       id: '/_authenticated/contratacion/validacion'
       path: '/contratacion/validacion'
@@ -2195,6 +2215,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedComisionesIdRoute: typeof AuthenticatedComisionesIdRoute
   AuthenticatedContabilidadCuentasCobroRoute: typeof AuthenticatedContabilidadCuentasCobroRoute
   AuthenticatedContratacionValidacionRoute: typeof AuthenticatedContratacionValidacionRoute
+  AuthenticatedDireccionRevisionesRoute: typeof AuthenticatedDireccionRevisionesRoute
   AuthenticatedExpedienteMaestroIdRoute: typeof AuthenticatedExpedienteMaestroIdRoute
   AuthenticatedExpedienteV2IdRoute: typeof AuthenticatedExpedienteV2IdRoute
   AuthenticatedQaAiIdRoute: typeof AuthenticatedQaAiIdRoute
@@ -2257,6 +2278,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedContabilidadCuentasCobroRoute,
   AuthenticatedContratacionValidacionRoute:
     AuthenticatedContratacionValidacionRoute,
+  AuthenticatedDireccionRevisionesRoute: AuthenticatedDireccionRevisionesRoute,
   AuthenticatedExpedienteMaestroIdRoute: AuthenticatedExpedienteMaestroIdRoute,
   AuthenticatedExpedienteV2IdRoute: AuthenticatedExpedienteV2IdRoute,
   AuthenticatedQaAiIdRoute: AuthenticatedQaAiIdRoute,
