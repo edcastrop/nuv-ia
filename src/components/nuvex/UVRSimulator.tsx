@@ -1191,17 +1191,33 @@ export function UVRSimulator({
             )}
 
             {recomendada && auditoriaId && (
-              <div className="mt-3 flex justify-end">
+              <div className="mt-3 flex flex-col items-end gap-1.5">
                 <button
                   onClick={handleAprobar}
-                  disabled={aprobando}
+                  disabled={aprobando || !uvrVarsReady}
+                  title={
+                    !uvrVarsReady
+                      ? "NUVIA no puede liberar el caso hasta que diligencies Variación UVR EA histórica y Variación UVR EA propuestas (> 0%)."
+                      : undefined
+                  }
                   className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold shadow transition-transform hover:scale-[1.01]"
-                  style={{ background: "var(--nuvia-success)", color: "#0b0b0b" }}
+                  style={{
+                    background: uvrVarsReady ? "var(--nuvia-success)" : "rgba(148,163,184,0.4)",
+                    color: uvrVarsReady ? "#0b0b0b" : "#475569",
+                    cursor: aprobando || !uvrVarsReady ? "not-allowed" : "pointer",
+                    opacity: aprobando ? 0.7 : 1,
+                  }}
                 >
                   {aprobando ? "Aprobando…" : "✓ Aprobar y liberar al analista"}
                 </button>
+                {!uvrVarsReady && (
+                  <div className="text-[11px] font-medium" style={{ color: "#92400E" }}>
+                    ⏸ Pendiente: ingresa Variación UVR EA histórica y propuestas para que NUVIA emita el dictamen.
+                  </div>
+                )}
               </div>
             )}
+
 
             {recomendada &&
               (() => {
