@@ -453,6 +453,10 @@ function ResultadoQaAi() {
   const proyectoresAplicadas = (proyInfo?.count ?? proyInfo?.aplicadas?.length ?? 0) > 0;
   const ex = (inputs?.extracto ?? {}) as Record<string, unknown>;
   const recSnap = (inputs?.reconstruccion ?? {}) as Record<string, unknown>;
+  // NUVIA QA Gate (UVR): no se puede aprobar/liberar sin Variación UVR EA (> 0).
+  // Sin ese dato la matemática de corrección monetaria no es concluyente.
+  const recVarUvrEa = Number(recSnap.variacionUvrEa);
+  const uvrPendienteVariables = isUvr && (!Number.isFinite(recVarUvrEa) || recVarUvrEa <= 0);
   const numDato = (v: unknown): number | undefined => {
     if (typeof v === "number" && Number.isFinite(v)) return v;
     if (v == null || v === "") return undefined;
