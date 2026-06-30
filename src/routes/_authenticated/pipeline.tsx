@@ -494,9 +494,9 @@ function PipelinePage() {
     let totalDias = 0;
     let estancados = 0;
     let total = 0;
-    const fases: Array<{ id: string; label: string; etapas: EtapaPipelineId[]; count: number }> = [
-      { id: "con_proyeccion", label: "Lead con Proyección", etapas: [], count: grupos.get("con_proyeccion")?.length ?? 0 },
-      { id: "en_revision", label: "Lead en Revisión", etapas: [], count: grupos.get("en_revision")?.length ?? 0 },
+    const fases: Array<{ id: string; label: string; count: number }> = [
+      { id: "con_proyeccion", label: "Lead con Proyección", count: grupos.get("con_proyeccion")?.length ?? 0 },
+      { id: "en_revision", label: "Lead en Revisión", count: grupos.get("en_revision")?.length ?? 0 },
     ];
     let honorarios = 0;
     etapasVisibles.forEach((etapa) => {
