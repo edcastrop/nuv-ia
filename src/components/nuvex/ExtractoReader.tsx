@@ -1243,15 +1243,31 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
     // (el modelo a veces lo marca por error en extractos en pesos).
     const saldoUvrRaw = get("saldoUVR");
     const valorUvrRaw = get("valorUVR");
+    // IMPORTANTE: "0", "0.0000", vacío o sólo ceros NO son datos UVR válidos.
+    // Caja Social y Bancolombia siempre IMPRIMEN columnas UVR aunque el crédito
+    // sea en pesos (rellenas con 0.0000), por eso requerimos un número > 0.
     const tieneDatosUvr =
-      (saldoUvrRaw && saldoUvrRaw.replace(/[^\d]/g, "") !== "") ||
-      (valorUvrRaw && valorUvrRaw.replace(/[^\d]/g, "") !== "");
+      parseMontoExtracto(saldoUvrRaw) > 0 || parseMontoExtracto(valorUvrRaw) > 0;
     const sistemaAmortLower = get("sistemaAmortizacion").toLowerCase();
     const productoLower = get("producto").toLowerCase();
-    const uvrEnTexto = /\buvr\b/.test(productoLower) || /\buvr\b/.test(sistemaAmortLower);
-    const señalUvrFuerte = parsedAttrs.esUVR || tieneDatosUvr || uvrEnTexto;
+    // Regla de texto: SOLO marca UVR si el sistema de amortización dice "EN UVR"
+    // (o "UVR-" / "UVR ") como sufijo del producto. La sola mención de "UVR"
+    // no basta porque aparece en notas como "Para Sistema de Amortización en
+    // UVR aplica UVR + Tasa" en TODOS los extractos de vivienda.
+    const uvrEnTexto =
+      /\ben\s+uvr\b/.test(sistemaAmortLower) ||
+      /\buvr[- ]?(vis|vivda|vivienda)/.test(sistemaAmortLower) ||
+      /\ben\s+uvr\b/.test(productoLower) ||
+      /\buvr[- ]?(vis|vivda|vivienda)/.test(productoLower);
+    // PESOS explícito gana sobre cualquier otra señal débil.
+    const sistemaDicePesos = /\ben\s+pesos\b/.test(sistemaAmortLower);
+    const señalUvrFuerte =
+      !sistemaDicePesos && (parsedAttrs.esUVR || tieneDatosUvr || uvrEnTexto);
     const monedaDetectada: "uvr" | "pesos" =
-      señalUvrFuerte || (monedaUpper === "UVR" && tieneDatosUvr) ? "uvr" : "pesos";
+      señalUvrFuerte || (monedaUpper === "UVR" && tieneDatosUvr && !sistemaDicePesos)
+        ? "uvr"
+        : "pesos";
+
 
     // Solo exigimos campos UVR si el EXTRACTO detectado es UVR.
     // Si el usuario abrió el simulador en modo UVR pero subió un extracto en pesos,
