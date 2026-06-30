@@ -310,17 +310,26 @@ export function PrintDocument(props: Props) {
             <DarkBenefit icon={<Shield size={42} color={C.green} strokeWidth={1.6} />} label="VÁLIDO POR" value={vigenciaMejorTier} sub="Desde el envío. Ver otros tramos (24h y 48h) en página 2." right />
           </div>
 
-          <div style={{ marginTop: 8, background: C.navy, borderRadius: 10, color: "#fff", padding: "8px 20px", display: "grid", gridTemplateColumns: "1fr auto", gap: 18, alignItems: "center", flex: "0 0 auto" }}>
-            <div style={{ fontSize: 11.5, lineHeight: 1.3, fontWeight: 600 }}>
-              <span style={{ color: C.green, fontSize: 28, lineHeight: 0, verticalAlign: "middle" }}>“</span> Este crédito terminará de una u otra forma.<br />
-              La diferencia es decidir si quieres <b style={{ color: C.green }}>recuperar parte de tu tiempo financiero.</b><br />
-              Cada cuota eliminada es tiempo que vuelve a tu vida, a tu familia y a tus proyectos.
-            </div>
-            <div style={{ textAlign: "center", minWidth: 180 }}>
-              <div style={{ color: C.green, fontFamily: SIGNATURE, fontSize: 30, lineHeight: 0.9 }}>{analista}</div>
-              <div style={{ marginTop: 3, fontSize: 9.5, letterSpacing: "0.3em", fontWeight: 900 }}>ANALISTA NUVEX</div>
-            </div>
-          </div>
+          {(() => {
+            // Escala la firma cursiva según longitud del nombre para evitar
+            // que nombres largos (3+ palabras) desborden el contenedor y se
+            // pinten sobre el footer del PDF.
+            const nombreLen = analista.length;
+            const firmaFontSize = nombreLen > 28 ? 16 : nombreLen > 22 ? 19 : nombreLen > 16 ? 23 : 28;
+            return (
+              <div style={{ marginTop: 8, background: C.navy, borderRadius: 10, color: "#fff", padding: "8px 20px", display: "grid", gridTemplateColumns: "1fr 220px", gap: 18, alignItems: "center", flex: "0 0 auto" }}>
+                <div style={{ fontSize: 11.5, lineHeight: 1.3, fontWeight: 600 }}>
+                  <span style={{ color: C.green, fontSize: 28, lineHeight: 0, verticalAlign: "middle" }}>“</span> Este crédito terminará de una u otra forma.<br />
+                  La diferencia es decidir si quieres <b style={{ color: C.green }}>recuperar parte de tu tiempo financiero.</b><br />
+                  Cada cuota eliminada es tiempo que vuelve a tu vida, a tu familia y a tus proyectos.
+                </div>
+                <div style={{ textAlign: "center", maxWidth: 220, overflow: "hidden" }}>
+                  <div style={{ color: C.green, fontFamily: SIGNATURE, fontSize: firmaFontSize, lineHeight: 1.05, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{analista}</div>
+                  <div style={{ marginTop: 3, fontSize: 9.5, letterSpacing: "0.3em", fontWeight: 900 }}>ANALISTA NUVEX</div>
+                </div>
+              </div>
+            );
+          })()}
         </main>
         <FooterStrip />
       </section>
