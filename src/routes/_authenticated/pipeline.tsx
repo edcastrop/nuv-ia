@@ -1196,7 +1196,7 @@ function PipelinePage() {
                               return (
                                 <div className="mt-2 flex flex-wrap items-center gap-1">
                                   <span
-                                    title="Lead con extracto cargado"
+                                    title="Soporte bancario cargado"
                                     className="inline-flex h-5 w-5 items-center justify-center rounded text-[10px]"
                                     style={{
                                       background: prog.extracto ? "color-mix(in oklab, var(--nuvia-accent-green) 16%, transparent)" : "rgba(255,255,255,0.04)",
