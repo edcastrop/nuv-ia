@@ -25,6 +25,12 @@ import { PipelineControlPanel, type PipelineControlBreakdown } from "@/component
 const FASE_IDS = ["comercial", "operativa", "banco", "cobro", "fin"] as const;
 type FaseId = (typeof FASE_IDS)[number];
 type PipelineProfileLite = { nombre: string | null; email: string | null; sede?: string | null; equipo?: string | null };
+type PipelineIdentity = {
+  clienteNombre?: string | null;
+  cedula?: string | null;
+  banco?: string | null;
+  numeroCredito?: string | null;
+};
 
 export const pipelineSearchSchema = z.object({
   q: fallback(z.string(), "").default(""),
@@ -75,6 +81,55 @@ function readAhorro(propuesta: unknown): number {
   return num(o.ahorro) || num(o.ahorroTotal) || num(o.ahorroIntereses);
 }
 
+function cleanText(v: unknown): string {
+  if (v == null) return "";
+  const s = String(v).trim();
+  if (!s || s === "—" || /^null$/i.test(s) || /^undefined$/i.test(s)) return "";
+  return s;
+}
+
+function isPlaceholderText(v: unknown): boolean {
+  const s = cleanText(v).toLowerCase();
+  return !s || s === "sin nombre" || s === "s/cédula" || s === "sin banco";
+}
+
+function readText(obj: unknown, ...keys: string[]): string {
+  if (!obj || typeof obj !== "object") return "";
+  const o = obj as Record<string, unknown>;
+  for (const k of keys) {
+    const v = cleanText(o[k]);
+    if (v) return v;
+  }
+  return "";
+}
+
+function preferPipelineText(current: unknown, fallback?: unknown): string {
+  if (!isPlaceholderText(current)) return cleanText(current);
+  const f = cleanText(fallback);
+  return f && !isPlaceholderText(f) ? f : cleanText(current);
+}
+
+function identityFromPayload(payload: unknown): PipelineIdentity {
+  const o = payload && typeof payload === "object" ? (payload as Record<string, unknown>) : {};
+  const reconstruccion = o.reconstruccion && typeof o.reconstruccion === "object" ? (o.reconstruccion as Record<string, unknown>) : {};
+  const extracto = o.extracto && typeof o.extracto === "object" ? (o.extracto as Record<string, unknown>) : {};
+  return {
+    clienteNombre: readText(o, "cliente", "nombre", "clienteNombre") || readText(extracto, "cliente", "nombre", "clienteNombre"),
+    cedula: readText(o, "cedula", "identificacion") || readText(extracto, "cedula", "identificacion"),
+    banco: readText(o, "banco") || readText(extracto, "banco") || readText(reconstruccion, "banco"),
+    numeroCredito: readText(o, "numeroCredito", "numero_credito") || readText(extracto, "numeroCredito", "numero_credito"),
+  };
+}
+
+function mergeIdentity(base: PipelineIdentity | undefined, next: PipelineIdentity): PipelineIdentity {
+  return {
+    clienteNombre: preferPipelineText(base?.clienteNombre, next.clienteNombre) || base?.clienteNombre || next.clienteNombre,
+    cedula: preferPipelineText(base?.cedula, next.cedula) || base?.cedula || next.cedula,
+    banco: preferPipelineText(base?.banco, next.banco) || base?.banco || next.banco,
+    numeroCredito: preferPipelineText(base?.numeroCredito, next.numeroCredito) || base?.numeroCredito || next.numeroCredito,
+  };
+}
+
 function PipelinePage() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: "/pipeline" });
@@ -88,6 +143,7 @@ function PipelinePage() {
   const [analistas, setAnalistas] = useState<{ id: string; nombre: string | null; email: string | null }[]>([]);
   const [profilesMap, setProfilesMap] = useState<Map<string, PipelineProfileLite>>(new Map());
   const [qaMap, setQaMap] = useState<Map<string, { id: string; score: number; dictamen: string | null }>>(new Map());
+  const [identityMap, setIdentityMap] = useState<Map<string, PipelineIdentity>>(new Map());
   const [peekId, setPeekId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -240,6 +296,46 @@ function PipelinePage() {
     return () => { cancel = true; };
   }, [rows]);
 
+  // Hidrata cabeceras del Pipeline cuando el expediente quedó con "Sin nombre"
+  // pero la lectura del extracto o la auditoría QA sí contienen datos confiables.
+  useEffect(() => {
+    const needsHydration = rows.filter((r) =>
+      isPlaceholderText(r.cliente_nombre) || isPlaceholderText(r.cedula) || isPlaceholderText(r.banco) || isPlaceholderText(r.numero_credito),
+    );
+    if (needsHydration.length === 0) {
+      setIdentityMap(new Map());
+      return;
+    }
+    let cancel = false;
+    const ids = needsHydration.map((r) => r.id);
+    (async () => {
+      const [lecturas, auditorias] = await Promise.all([
+        supabase
+          .from("extractos_lecturas")
+          .select("expediente_id, datos, created_at")
+          .in("expediente_id", ids)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("qa_auditorias")
+          .select("expediente_id, inputs, created_at")
+          .in("expediente_id", ids)
+          .order("created_at", { ascending: false }),
+      ]);
+      if (cancel) return;
+      const next = new Map<string, PipelineIdentity>();
+      for (const row of (lecturas.data ?? []) as Array<{ expediente_id: string | null; datos: unknown }>) {
+        if (!row.expediente_id || next.has(row.expediente_id)) continue;
+        next.set(row.expediente_id, identityFromPayload(row.datos));
+      }
+      for (const row of (auditorias.data ?? []) as Array<{ expediente_id: string | null; inputs: unknown }>) {
+        if (!row.expediente_id) continue;
+        next.set(row.expediente_id, mergeIdentity(next.get(row.expediente_id), identityFromPayload(row.inputs)));
+      }
+      setIdentityMap(next);
+    })();
+    return () => { cancel = true; };
+  }, [rows]);
+
 
 
   const hace = Math.max(0, Math.round((nowTick - lastUpdated) / 1000));
@@ -261,14 +357,16 @@ function PipelinePage() {
         const asesorIds = asesor.split(",").filter(Boolean);
         if (!asesorIds.includes(r.asesor_id)) return false;
       }
-      if (banco && r.banco !== banco) return false;
+      const identity = identityMap.get(r.id);
+      const displayBanco = preferPipelineText(r.banco, identity?.banco);
+      if (banco && displayBanco !== banco) return false;
       if (term) {
-        const hay = `${r.cliente_nombre} ${r.cedula ?? ""} ${r.numero_credito ?? ""} ${r.banco ?? ""}`.toLowerCase();
+        const hay = `${preferPipelineText(r.cliente_nombre, identity?.clienteNombre)} ${preferPipelineText(r.cedula, identity?.cedula)} ${preferPipelineText(r.numero_credito, identity?.numeroCredito)} ${displayBanco}`.toLowerCase();
         if (!hay.includes(term)) return false;
       }
       return true;
     });
-  }, [rows, q, banco, mios, asesor, user?.id]);
+  }, [rows, q, banco, mios, asesor, user?.id, identityMap]);
 
   const grupos = useMemo(() => {
     const m = new Map<EtapaPipelineId, Expediente[]>();
@@ -992,6 +1090,10 @@ function PipelinePage() {
                         const isDup = !!r.cedula && dupCedulas.has(r.cedula.trim());
                         const prof = profilesMap.get(r.asesor_id);
                         const qa = qaMap.get(r.id);
+                        const identity = identityMap.get(r.id);
+                        const displayCliente = preferPipelineText(r.cliente_nombre, identity?.clienteNombre) || "Sin nombre";
+                        const displayCedula = preferPipelineText(r.cedula, identity?.cedula) || "s/cédula";
+                        const displayBanco = preferPipelineText(r.banco, identity?.banco) || "—";
                         const qaTone = !qa
                           ? { color: "var(--nuvia-text-secondary)", bg: "rgba(255,255,255,0.05)", border: "var(--nuvia-border)" }
                           : qa.score >= 90
@@ -1012,7 +1114,7 @@ function PipelinePage() {
                                 className="min-w-0 flex-1 truncate text-sm font-semibold text-[var(--nuvia-text-primary)] hover:underline"
                                 title="Abrir expediente completo"
                               >
-                                {r.cliente_nombre}
+                                 {displayCliente}
                               </Link>
                               {isDup && (
                                 <span
@@ -1025,7 +1127,7 @@ function PipelinePage() {
                               )}
                             </div>
                             <div className="mt-1 truncate text-xs text-[var(--nuvia-text-secondary)]">
-                              {r.banco ?? "—"} · {r.cedula ?? "s/cédula"}
+                               {displayBanco} · {displayCedula}
                             </div>
                             <div className="mt-1 text-[11px] text-[rgba(170,179,197,0.72)]">
                               act. {r.updated_at ? new Date(r.updated_at).toLocaleDateString("es-CO", { day: "2-digit", month: "short" }) : "—"}
