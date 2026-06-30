@@ -44,12 +44,40 @@ export const pipelineSearchSchema = z.object({
   asesor: fallback(z.string(), "").default(""),
 });
 
-const PIPELINE_LEAD_LANES: ReadonlyArray<(typeof ETAPAS_PIPELINE)[number]> = ETAPAS_PIPELINE;
-
-const FASE_LANE: Record<FaseId, "con_proyeccion" | "en_revision"> = {
-  con_proyeccion: "con_proyeccion",
-  en_revision: "en_revision",
+type PipelineLaneId = FaseId | EtapaPipelineId;
+type PipelineLane = {
+  id: PipelineLaneId;
+  numero: number;
+  titulo: string;
+  descripcion: string;
+  internalIds: ReadonlyArray<EtapaPipelineId>;
 };
+
+const LEAD_INTERNAL_STAGES: ReadonlyArray<EtapaPipelineId> = ["lead", "extracto", "proyeccion"];
+
+const PIPELINE_VISUAL_LANES: ReadonlyArray<PipelineLane> = [
+  {
+    id: "con_proyeccion",
+    numero: 1,
+    titulo: "Lead con Proyección",
+    descripcion: "Lead comercial con extracto, simulación o avance financiero listo para gestión.",
+    internalIds: LEAD_INTERNAL_STAGES,
+  },
+  {
+    id: "en_revision",
+    numero: 2,
+    titulo: "Lead en Revisión",
+    descripcion: "Lead que requiere validación de Dirección antes de continuar el flujo comercial.",
+    internalIds: LEAD_INTERNAL_STAGES,
+  },
+  ...ETAPAS_PIPELINE.filter((e) => e.numero >= 4).map((e, idx) => ({
+    id: e.id,
+    numero: idx + 3,
+    titulo: e.titulo,
+    descripcion: e.descripcion,
+    internalIds: [e.id] as const,
+  })),
+];
 
 
 export const Route = createFileRoute("/_authenticated/pipeline")({
