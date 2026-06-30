@@ -44,27 +44,13 @@ export const pipelineSearchSchema = z.object({
   asesor: fallback(z.string(), "").default(""),
 });
 
-const PIPELINE_LEAD_LANES: ReadonlyArray<(typeof ETAPAS_PIPELINE)[number]> = [
-  {
-    id: "lead",
-    numero: 1,
-    titulo: "Lead con Proyección",
-    descripcion: "Lead con datos comerciales, extracto y/o simulación en flujo normal.",
-    responsables: ["asesor", "licenciado"],
-  },
-  {
-    id: "proyeccion",
-    numero: 2,
-    titulo: "Lead en Revisión",
-    descripcion: "Casos que requieren decisión de Dirección antes de avanzar.",
-    responsables: ["director_financiero_qa", "gerencia"],
-  },
-];
+const PIPELINE_LEAD_LANES: ReadonlyArray<(typeof ETAPAS_PIPELINE)[number]> = ETAPAS_PIPELINE;
 
-const FASE_LANE: Record<FaseId, EtapaPipelineId> = {
-  con_proyeccion: "lead",
-  en_revision: "proyeccion",
+const FASE_LANE: Record<FaseId, "con_proyeccion" | "en_revision"> = {
+  con_proyeccion: "con_proyeccion",
+  en_revision: "en_revision",
 };
+
 
 export const Route = createFileRoute("/_authenticated/pipeline")({
   validateSearch: zodValidator(pipelineSearchSchema),
@@ -403,7 +389,7 @@ function PipelinePage() {
       const dias = diasDesde(r.updated_at);
       const umbral = UMBRAL_DIAS[etapa] ?? 0;
       if (soloStuck && !(umbral > 0 && dias > umbral)) return;
-      m.get(laneVisualLead(r, qaMap.get(r.id)))?.push(r);
+      m.get(etapa)?.push(r);
     });
     // P27 — Ordenar cada columna por antigüedad descendente (más estancados arriba).
     m.forEach((items) => {
@@ -417,9 +403,15 @@ function PipelinePage() {
   }, [filtered, soloStuck, qaMap]);
 
   const etapasVisibles = useMemo(
-    () => PIPELINE_LEAD_LANES.filter((etapa) => !fase || FASE_LANE[fase as FaseId] === etapa.id),
+    () => {
+      if (!fase) return PIPELINE_LEAD_LANES;
+      // Filtro por fase: con_proyeccion = etapas 1-5, en_revision = casos con motivos QA (se filtra por row más abajo)
+      if (fase === "con_proyeccion") return PIPELINE_LEAD_LANES.filter((e) => e.numero <= 5);
+      return PIPELINE_LEAD_LANES;
+    },
     [fase],
   );
+
 
   const totalVisible = etapasVisibles.reduce((a, etapa) => a + (grupos.get(etapa.id) ?? []).length, 0);
 
