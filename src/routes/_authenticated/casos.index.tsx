@@ -427,7 +427,9 @@ function CasosPage() {
                 asesor={asesores.get(r.asesor_id)}
                 licenciado={r.licenciado_id ? asesores.get(r.licenciado_id) : undefined}
                 auditCode={r.qa_auditoria_id ? auditCodes.get(r.qa_auditoria_id) : undefined}
+                onAudited={() => setReloadKey((k) => k + 1)}
               />
+
             ))
 
           )}
