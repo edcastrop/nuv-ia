@@ -135,6 +135,13 @@ function HerramientasLanding() {
             tagline="Lectura IA + escenarios"
             description="Lee cualquier extracto y compara escenarios con abonos o renegociación."
           />
+          <ToolCard
+            to="/herramientas/amortizacion"
+            title="NUVIA Amortization Engine"
+            Icon={Calculator}
+            tagline="Solo modalidad PESOS"
+            description="Motor de amortización inteligente para analizar la composición exacta de cualquier cuota."
+          />
         </motion.div>
 
         <motion.div
