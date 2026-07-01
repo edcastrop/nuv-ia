@@ -68,17 +68,24 @@ export function SaveExpedienteButton({
       /* localStorage no disponible — no bloqueamos el guardado */
     }
 
-    // 🛑 Validación dura: nombre del cliente vacío → exigir confirmación explícita.
+    // 🛑 Bloqueo duro: sin nombre del cliente NO se guarda el caso.
+    // NUVIA extrae el nombre desde el extracto; si aparece vacío es porque el
+    // analista no aplicó la lectura al simulador. Los casos "Sin nombre"
+    // rompen la trazabilidad en Casos, QA y Auditoría.
     const nombre = (payload.cliente?.nombre ?? "").trim();
     if (!nombre) {
-      const ok =
-        typeof window !== "undefined" &&
-        window.confirm(
-          "⚠️ Este caso no tiene NOMBRE DEL CLIENTE.\n\n" +
-            "Aparecerá como “Sin nombre” en la lista de Casos y será difícil de identificar.\n\n" +
-            "¿Deseas guardarlo de todas formas?",
+      setMsg(
+        "❌ No se puede guardar: falta el NOMBRE DEL CLIENTE. Aplica la lectura del extracto o escribe el nombre en la ficha del cliente antes de guardar.",
+      );
+      if (typeof window !== "undefined") {
+        window.alert(
+          "No se puede guardar este caso sin el NOMBRE DEL CLIENTE.\n\n" +
+            "• Si ya cargaste el extracto, vuelve a Datos del cliente y pulsa \"Aplicar al simulador\".\n" +
+            "• Si lo estás capturando manual, escribe el nombre completo en el campo Cliente.\n\n" +
+            "NUVIA ya no acepta casos \"Sin nombre\" para evitar desorden en el tablero de Casos y en la auditoría QA.",
         );
-      if (!ok) return;
+      }
+      return;
     }
 
     setSaving(true);

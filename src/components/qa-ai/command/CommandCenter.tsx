@@ -28,10 +28,12 @@ export type Filters = {
   analista: string; banco: string; producto: string; modalidad: string;
   moneda: string; estadoQa: string; nivel: string; rango: string;
   scoreMin: string; criticos: boolean; fresh: boolean;
+  q: string;
 };
 export const EMPTY_FILTERS: Filters = {
   analista: "", banco: "", producto: "", modalidad: "", moneda: "",
   estadoQa: "", nivel: "", rango: "30", scoreMin: "", criticos: false, fresh: false,
+  q: "",
 };
 
 const C = {
@@ -47,6 +49,7 @@ const fCop = (n: number) => new Intl.NumberFormat("es-CO", { style: "currency", 
 function applyFilters(rows: CCRow[], f: Filters): CCRow[] {
   const since = f.rango ? Date.now() - Number(f.rango) * 86400000 : 0;
   const sm = Number(f.scoreMin) || 0;
+  const q = (f.q ?? "").trim().toLowerCase();
   return rows.filter((r) => {
     if (f.analista && r.analista_id !== f.analista) return false;
     if (f.banco && r.banco !== f.banco) return false;
@@ -59,6 +62,10 @@ function applyFilters(rows: CCRow[], f: Filters): CCRow[] {
     if (sm && r.qa_score < sm) return false;
     if (f.criticos && r.alertas_criticas <= 0) return false;
     if (f.fresh && !r.fresh) return false;
+    if (q) {
+      const hay = `${r.cliente_nombre ?? ""} ${r.analista_nombre ?? ""} ${r.banco ?? ""} ${(r as unknown as { codigo?: string | null }).codigo ?? ""}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
     return true;
   });
 }
@@ -98,6 +105,11 @@ export function CommandCenter(props: {
     return props.analistas.filter((a) => ids.has(a.id ?? "—"));
   }, [props.analistas, filtered]);
 
+  const analistaNombreActivo = useMemo(() => {
+    if (!f.analista) return null;
+    return analistasOpts.find((a) => a.id === f.analista)?.nombre ?? null;
+  }, [f.analista, analistasOpts]);
+
   return (
     <div style={{ display: "grid", gap: 20 }}>
       <FilterBar
@@ -105,6 +117,23 @@ export function CommandCenter(props: {
         bancos={bancosOpts} productos={productosOpts} analistas={analistasOpts}
         onReset={() => { setF(EMPTY_FILTERS); setPriorityFilter(null); }}
       />
+
+      {(f.analista || f.banco || f.producto || f.modalidad || f.moneda || f.estadoQa || f.criticos || f.fresh || f.q) && (
+        <ActiveFilterChips
+          items={[
+            f.analista && analistaNombreActivo ? { key: "analista", label: `Analista: ${analistaNombreActivo}`, clear: () => setF((x) => ({ ...x, analista: "" })) } : null,
+            f.banco ? { key: "banco", label: `Banco: ${f.banco}`, clear: () => setF((x) => ({ ...x, banco: "" })) } : null,
+            f.producto ? { key: "producto", label: `Producto: ${f.producto}`, clear: () => setF((x) => ({ ...x, producto: "" })) } : null,
+            f.modalidad ? { key: "modalidad", label: `Modalidad: ${f.modalidad}`, clear: () => setF((x) => ({ ...x, modalidad: "" })) } : null,
+            f.moneda ? { key: "moneda", label: `Moneda: ${f.moneda}`, clear: () => setF((x) => ({ ...x, moneda: "" })) } : null,
+            f.estadoQa ? { key: "estadoQa", label: `Dictamen: ${f.estadoQa}`, clear: () => setF((x) => ({ ...x, estadoQa: "" })) } : null,
+            f.criticos ? { key: "criticos", label: `Solo críticos`, clear: () => setF((x) => ({ ...x, criticos: false })) } : null,
+            f.fresh ? { key: "fresh", label: `FRECH activo`, clear: () => setF((x) => ({ ...x, fresh: false })) } : null,
+            f.q ? { key: "q", label: `Buscar: "${f.q}"`, clear: () => setF((x) => ({ ...x, q: "" })) } : null,
+          ].filter(Boolean) as Array<{ key: string; label: string; clear: () => void }>}
+          total={filtered.length}
+        />
+      )}
 
       <PriorityPanel counts={props.prioridad} active={priorityFilter} onPick={(k) => setPriorityFilter(priorityFilter === k ? null : k)} />
 
@@ -119,6 +148,30 @@ export function CommandCenter(props: {
       </div>
 
       <ReviewQueue rows={filtered} />
+    </div>
+  );
+}
+
+function ActiveFilterChips({ items, total }: { items: Array<{ key: string; label: string; clear: () => void }>; total: number }) {
+  return (
+    <div style={{
+      display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8,
+      background: "rgba(91,140,255,0.06)", border: `1px solid rgba(91,140,255,0.25)`,
+      borderRadius: 12, padding: "10px 14px",
+    }}>
+      <span style={{ fontSize: 11, fontWeight: 600, color: C.primary, letterSpacing: 0.6, textTransform: "uppercase" }}>
+        Filtrado · {total} caso{total === 1 ? "" : "s"}
+      </span>
+      {items.map((it) => (
+        <button key={it.key} onClick={it.clear} style={{
+          display: "inline-flex", alignItems: "center", gap: 6,
+          background: "rgba(91,140,255,0.12)", border: `1px solid rgba(91,140,255,0.35)`,
+          color: C.text, fontSize: 11.5, fontWeight: 500,
+          padding: "4px 10px", borderRadius: 999, cursor: "pointer",
+        }}>
+          {it.label} <span style={{ color: C.textSec, fontWeight: 700 }}>×</span>
+        </button>
+      ))}
     </div>
   );
 }
@@ -146,6 +199,12 @@ function FilterBar({
       border: `1px solid ${C.border}`, borderRadius: 14, padding: 12,
       display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center",
     }}>
+      <input
+        style={{ ...sel, minWidth: 220, flex: "1 1 220px" }}
+        placeholder="Buscar cliente, analista, banco o código…"
+        value={f.q}
+        onChange={(e) => setF((x) => ({ ...x, q: e.target.value }))}
+      />
       <select style={sel} value={f.analista} onChange={(e) => setF((x) => ({ ...x, analista: e.target.value }))}>
         <option value="">Analista · todos</option>
         {analistas.map((a) => <option key={a.id} value={a.id}>{a.nombre}</option>)}

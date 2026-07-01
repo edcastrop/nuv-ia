@@ -148,9 +148,18 @@ export async function upsertExpediente(p: UpsertPayload): Promise<Expediente> {
   const user = userData.user;
   if (!user) throw new Error("No autenticado");
 
+  const nombreLimpio = (p.cliente.nombre ?? "").trim();
+  // Solo bloqueamos "Sin nombre" al CREAR. En actualizaciones respetamos el
+  // valor existente para no romper flujos de edición parcial (checklist, QA).
+  if (!p.id && !nombreLimpio) {
+    throw new Error(
+      "No se puede crear el expediente sin el nombre del cliente. Aplica la lectura del extracto o completa el campo Cliente.",
+    );
+  }
+
   const row = {
     modo: p.modo,
-    cliente_nombre: p.cliente.nombre || "Sin nombre",
+    cliente_nombre: nombreLimpio || "Sin nombre",
     cedula: p.cliente.cedula || null,
     banco: p.cliente.banco || null,
     numero_credito: p.cliente.numeroCredito || null,
