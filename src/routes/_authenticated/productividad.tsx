@@ -421,70 +421,215 @@ function TrendChip({ delta }: { delta: number }) {
   );
 }
 
+const PODIUM_BG = "#071120";
+const PODIUM_CARD = "rgba(14,24,44,0.85)";
+const PODIUM_BORDER = "rgba(255,255,255,0.08)";
+const PODIUM_BLUE = "#4D7CFE";
+const PODIUM_GOLD = "#F7B500";
+const PODIUM_SILVER = "#C0C7D1";
+const PODIUM_BRONZE = "#C57B57";
+
 function PodiumBlock({
   top3,
   loading,
+  rango,
+  setRango,
+  mesRef,
+  setMesRef,
 }: {
   top3: (ProductividadUsuario & { score: number })[];
   loading: boolean;
+  rango: RangoKey;
+  setRango: (k: RangoKey) => void;
+  mesRef: { anio: number; mes: number };
+  setMesRef: (v: { anio: number; mes: number }) => void;
 }) {
   const [second, first, third] = [top3[1], top3[0], top3[2]];
   return (
     <section
-      className="relative overflow-hidden rounded-[20px]"
+      className="relative overflow-hidden"
       style={{
-        background:
-          "radial-gradient(circle at 50% 0%, rgba(251,191,36,0.10) 0%, transparent 50%), var(--nuvia-bg-tertiary)",
-        border: "1px solid var(--nuvia-border-strong)",
-        padding: "var(--nuvia-space-5)",
-        boxShadow: "var(--nuvia-shadow-md)",
+        background: `radial-gradient(circle at 50% -10%, rgba(247,181,0,0.12) 0%, transparent 55%), radial-gradient(circle at 15% 110%, rgba(77,124,254,0.10) 0%, transparent 45%), ${PODIUM_BG}`,
+        border: `1px solid ${PODIUM_BORDER}`,
+        borderRadius: 28,
+        padding: 28,
+        boxShadow: "0 20px 60px rgba(0,0,0,0.45)",
+        backdropFilter: "blur(18px)",
       }}
     >
-      <div className="flex items-center justify-between mb-6">
+      {/* HEADER */}
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-3">
           <div
-            className="grid place-items-center rounded-xl"
+            className="grid place-items-center"
             style={{
-              width: 36,
-              height: 36,
-              background: "linear-gradient(135deg, #fbbf24, #f59e0b)",
+              width: 44,
+              height: 44,
+              borderRadius: 14,
+              background: "linear-gradient(135deg, #F7B500, #E89600)",
               color: "#0b1121",
+              boxShadow: "0 8px 24px rgba(247,181,0,0.35)",
             }}
           >
-            <Trophy size={18} />
+            <Trophy size={20} />
           </div>
           <div>
-            <div className="font-bold text-white" style={{ fontSize: "var(--nuvia-text-h3)" }}>
+            <div className="font-bold uppercase tracking-wider" style={{ color: "#FFFFFF", fontSize: 18, letterSpacing: "0.02em" }}>
               Podium NUVIA
             </div>
-            <div style={{ fontSize: "var(--nuvia-text-caption)", color: "var(--nuvia-text-secondary)" }}>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.65)", marginTop: 2 }}>
               Top 3 del periodo · Disciplina, seguimiento y equipo.
             </div>
           </div>
         </div>
+
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Segmented control */}
+          <div
+            className="flex items-center gap-1 p-1"
+            style={{
+              background: "rgba(255,255,255,0.04)",
+              border: `1px solid ${PODIUM_BORDER}`,
+              borderRadius: 999,
+            }}
+          >
+            {RANGOS_PRODUCTIVIDAD.map((r) => {
+              const active = rango === r.key;
+              return (
+                <button
+                  key={r.key}
+                  onClick={() => setRango(r.key)}
+                  className="transition-all"
+                  style={{
+                    padding: "6px 14px",
+                    borderRadius: 999,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                    background: active
+                      ? `linear-gradient(135deg, ${PODIUM_BLUE}, #6C93FF)`
+                      : "transparent",
+                    color: active ? "#FFFFFF" : "rgba(255,255,255,0.65)",
+                    border: "none",
+                    cursor: "pointer",
+                    boxShadow: active ? `0 4px 16px rgba(77,124,254,0.45)` : "none",
+                  }}
+                >
+                  {r.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Date picker */}
+          <label
+            className="flex items-center gap-2"
+            style={{
+              padding: "8px 14px",
+              background: "rgba(255,255,255,0.04)",
+              border: `1px solid ${PODIUM_BORDER}`,
+              borderRadius: 999,
+              color: "rgba(255,255,255,0.85)",
+              fontSize: 12,
+              fontWeight: 600,
+            }}
+          >
+            <CalendarIcon size={13} style={{ color: PODIUM_BLUE }} />
+            <input
+              type="month"
+              value={`${mesRef.anio}-${String(mesRef.mes).padStart(2, "0")}`}
+              onChange={(e) => {
+                const [a, m] = e.target.value.split("-").map(Number);
+                if (a && m) setMesRef({ anio: a, mes: m });
+              }}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "#FFFFFF",
+                fontSize: 12,
+                fontWeight: 600,
+                outline: "none",
+                colorScheme: "dark",
+                cursor: "pointer",
+              }}
+            />
+          </label>
+        </div>
       </div>
 
+      {/* PODIUM GRID */}
       {loading ? (
-        <div className="py-10 text-center text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>
+        <div className="py-16 text-center text-sm" style={{ color: "rgba(255,255,255,0.65)" }}>
           Calculando podium…
         </div>
       ) : top3.length === 0 ? (
-        <div className="py-10 text-center text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>
+        <div className="py-16 text-center text-sm" style={{ color: "rgba(255,255,255,0.65)" }}>
           Aún no hay resultados suficientes para el podium.
         </div>
       ) : (
-        <div className="grid gap-4 items-end" style={{ gridTemplateColumns: "1fr 1.3fr 1fr" }}>
-          <PodiumSpot user={second} pos={2} height={160} glow="#cbd5e1" />
-          <PodiumSpot user={first} pos={1} height={210} glow="#fbbf24" />
-          <PodiumSpot user={third} pos={3} height={140} glow="#d97706" />
+        <div
+          className="grid gap-5 items-end"
+          style={{ gridTemplateColumns: "1fr 1.15fr 1fr" }}
+        >
+          <PodiumSpot user={second} pos={2} heightPct={85} glow={PODIUM_SILVER} />
+          <PodiumSpot user={first}  pos={1} heightPct={100} glow={PODIUM_GOLD} />
+          <PodiumSpot user={third}  pos={3} heightPct={78} glow={PODIUM_BRONZE} />
         </div>
       )}
 
+      {/* FOOTER MOTIVACIONAL */}
       <div
-        className="mt-6 text-center italic"
-        style={{ fontSize: "var(--nuvia-text-caption)", color: "var(--nuvia-text-secondary)" }}
+        className="mt-8 flex flex-wrap items-center justify-between gap-4"
+        style={{
+          padding: "18px 22px",
+          borderRadius: 20,
+          background: "rgba(255,255,255,0.03)",
+          border: `1px solid ${PODIUM_BORDER}`,
+          backdropFilter: "blur(12px)",
+        }}
       >
-        “Los resultados se construyen con disciplina, seguimiento y trabajo en equipo.”
+        <div className="flex items-center gap-3">
+          <div
+            className="grid place-items-center"
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 12,
+              background: "linear-gradient(135deg, rgba(247,181,0,0.20), rgba(77,124,254,0.20))",
+              color: PODIUM_GOLD,
+              border: `1px solid rgba(247,181,0,0.30)`,
+            }}
+          >
+            <Medal size={18} />
+          </div>
+          <div>
+            <div className="font-bold" style={{ color: "#FFFFFF", fontSize: 14 }}>
+              ¡Sigue así, equipo!
+            </div>
+            <div style={{ color: "rgba(255,255,255,0.65)", fontSize: 12, marginTop: 2 }}>
+              La constancia de hoy construye los resultados de mañana. Sigamos creciendo juntos.
+            </div>
+          </div>
+        </div>
+        <button
+          className="flex items-center gap-2 transition-all hover:scale-[1.02]"
+          style={{
+            padding: "10px 18px",
+            borderRadius: 999,
+            background: "rgba(255,255,255,0.04)",
+            border: `1px solid ${PODIUM_BORDER}`,
+            color: "#FFFFFF",
+            fontSize: 12,
+            fontWeight: 700,
+            letterSpacing: "0.04em",
+            textTransform: "uppercase",
+            backdropFilter: "blur(8px)",
+            cursor: "pointer",
+          }}
+        >
+          Ver ranking completo <ArrowRight size={13} />
+        </button>
       </div>
     </section>
   );
@@ -493,70 +638,227 @@ function PodiumBlock({
 function PodiumSpot({
   user,
   pos,
-  height,
+  heightPct,
   glow,
 }: {
   user: (ProductividadUsuario & { score: number }) | undefined;
   pos: 1 | 2 | 3;
-  height: number;
+  heightPct: number;
   glow: string;
 }) {
+  const baseHeight = 420;
+  const height = Math.round((baseHeight * heightPct) / 100);
+  const avatarSize = pos === 1 ? 96 : 72;
+  const scoreSize = pos === 1 ? 48 : 32;
+  const medal = pos === 1 ? "🥇" : pos === 2 ? "🥈" : "🥉";
+  const badgeLabel = pos === 1 ? "MEJOR DESEMPEÑO" : pos === 2 ? "SEGUNDO LUGAR" : "TERCER LUGAR";
+
   if (!user) {
     return (
       <div
-        className="rounded-2xl grid place-items-center text-xs"
+        className="grid place-items-center text-xs"
         style={{
           height,
+          borderRadius: 24,
           background: "rgba(255,255,255,0.02)",
-          border: "1px dashed var(--nuvia-border)",
-          color: "var(--nuvia-text-secondary)",
+          border: "1px dashed rgba(255,255,255,0.10)",
+          color: "rgba(255,255,255,0.5)",
         }}
       >
         Puesto {pos} vacante
       </div>
     );
   }
-  const medal = pos === 1 ? "🥇" : pos === 2 ? "🥈" : "🥉";
+
   return (
     <div
-      className="relative rounded-2xl overflow-hidden flex flex-col items-center justify-end pb-4 pt-6 px-3"
+      className="relative flex flex-col items-center transition-all duration-300 hover:scale-[1.02]"
       style={{
         height,
-        background:
-          "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%)",
+        borderRadius: 28,
+        padding: pos === 1 ? "44px 20px 24px" : "38px 18px 22px",
+        background: `linear-gradient(180deg, ${PODIUM_CARD} 0%, rgba(10,18,34,0.95) 100%)`,
         border: `1px solid ${glow}55`,
-        boxShadow: `0 0 40px -8px ${glow}66, inset 0 0 24px ${glow}22`,
+        boxShadow:
+          pos === 1
+            ? `0 0 60px -12px ${glow}, 0 20px 48px rgba(0,0,0,0.55), inset 0 1px 0 ${glow}33`
+            : `0 0 32px -12px ${glow}AA, 0 12px 32px rgba(0,0,0,0.45), inset 0 1px 0 ${glow}22`,
+        backdropFilter: "blur(18px)",
       }}
     >
+      {/* Halo radial detrás avatar */}
       <div
-        className="absolute top-0 inset-x-0 h-1"
-        style={{ background: `linear-gradient(90deg, transparent, ${glow}, transparent)` }}
+        className="absolute pointer-events-none"
+        style={{
+          top: pos === 1 ? 20 : 24,
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: avatarSize + 80,
+          height: avatarSize + 80,
+          borderRadius: "50%",
+          background: `radial-gradient(circle, ${glow}44 0%, transparent 65%)`,
+          filter: "blur(8px)",
+        }}
       />
-      <div className="text-2xl mb-2">{medal}</div>
-      <Avatar nombre={user.nombre} avatarUrl={user.avatar_url} size={pos === 1 ? 64 : 52} />
+
+      {/* Badge flotante */}
       <div
-        className="mt-2 font-bold text-center text-white"
-        style={{ fontSize: pos === 1 ? 15 : 13, lineHeight: 1.2 }}
+        className="absolute flex items-center gap-1.5"
+        style={{
+          top: -14,
+          left: "50%",
+          transform: "translateX(-50%)",
+          padding: "6px 14px",
+          borderRadius: 999,
+          background: `linear-gradient(135deg, ${glow}, ${glow}CC)`,
+          color: "#0b1121",
+          fontSize: 12,
+          fontWeight: 800,
+          letterSpacing: "0.06em",
+          boxShadow: `0 6px 20px ${glow}88`,
+          whiteSpace: "nowrap",
+        }}
+      >
+        <span style={{ fontSize: 14 }}>{medal}</span>
+        <span>#{pos}</span>
+      </div>
+
+      {/* Avatar */}
+      <div className="relative" style={{ zIndex: 2 }}>
+        <div
+          style={{
+            padding: 3,
+            borderRadius: "50%",
+            background: `linear-gradient(135deg, ${glow}, ${glow}66)`,
+            boxShadow: `0 8px 24px ${glow}66`,
+          }}
+        >
+          <div style={{ background: PODIUM_BG, borderRadius: "50%", padding: 2 }}>
+            <Avatar nombre={user.nombre} avatarUrl={user.avatar_url} size={avatarSize} />
+          </div>
+        </div>
+      </div>
+
+      {/* Nombre */}
+      <div
+        className="mt-4 text-center font-bold uppercase"
+        style={{
+          color: "#FFFFFF",
+          fontSize: pos === 1 ? 15 : 13,
+          letterSpacing: "0.04em",
+          lineHeight: 1.25,
+          zIndex: 2,
+        }}
       >
         {user.nombre}
       </div>
+
+      {/* Badge desempeño */}
       <div
-        className="mt-1 font-mono font-bold"
-        style={{ color: glow, fontSize: pos === 1 ? 22 : 18 }}
+        className="mt-2"
+        style={{
+          padding: "3px 10px",
+          borderRadius: 999,
+          background: `${glow}18`,
+          border: `1px solid ${glow}44`,
+          color: glow,
+          fontSize: 9,
+          fontWeight: 800,
+          letterSpacing: "0.10em",
+          zIndex: 2,
+        }}
       >
-        {user.score}
+        {badgeLabel}
       </div>
+
+      {/* Score */}
+      <div className="mt-4 flex flex-col items-center" style={{ zIndex: 2 }}>
+        <div
+          style={{
+            color: "rgba(255,255,255,0.55)",
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: "0.16em",
+          }}
+        >
+          SCORE
+        </div>
+        <div
+          className="font-black tabular-nums"
+          style={{
+            color: glow,
+            fontSize: scoreSize,
+            lineHeight: 1,
+            marginTop: 4,
+            textShadow: `0 0 24px ${glow}66`,
+            fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+          }}
+        >
+          {user.score}
+        </div>
+      </div>
+
+      {/* Divider */}
       <div
-        className="flex gap-3 mt-1 text-[10px]"
-        style={{ color: "var(--nuvia-text-secondary)" }}
-      >
-        <span>T {user.cambios_estado}</span>
-        <span>C {user.casos_cerrados}</span>
-        <span>A {user.alertas_recibidas}</span>
+        className="mt-4 w-full"
+        style={{
+          height: 1,
+          background: `linear-gradient(90deg, transparent, ${glow}55, transparent)`,
+          zIndex: 2,
+        }}
+      />
+
+      {/* Métricas */}
+      <div className="mt-4 grid grid-cols-3 gap-2 w-full" style={{ zIndex: 2 }}>
+        <MetricMini icon={<Repeat size={12} />} label="Trans." value={user.cambios_estado} color={PODIUM_BLUE} />
+        <MetricMini icon={<CheckCircle2 size={12} />} label="Cerr." value={user.casos_cerrados} color="#84B98F" />
+        <MetricMini icon={<Bell size={12} />} label="Alert." value={user.alertas_recibidas} color="#F6C453" />
       </div>
     </div>
   );
 }
+
+function MetricMini({
+  icon,
+  label,
+  value,
+  color,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+  color: string;
+}) {
+  return (
+    <div
+      className="flex flex-col items-center gap-1"
+      style={{
+        padding: "8px 4px",
+        borderRadius: 10,
+        background: "rgba(255,255,255,0.03)",
+        border: "1px solid rgba(255,255,255,0.06)",
+      }}
+    >
+      <div style={{ color }}>{icon}</div>
+      <div className="font-bold tabular-nums" style={{ color: "#FFFFFF", fontSize: 14 }}>
+        {value}
+      </div>
+      <div
+        style={{
+          color: "rgba(255,255,255,0.55)",
+          fontSize: 9,
+          fontWeight: 700,
+          letterSpacing: "0.06em",
+          textTransform: "uppercase",
+        }}
+      >
+        {label}
+      </div>
+    </div>
+  );
+}
+
+
 
 function MetaEquipo({
   cerrados,
