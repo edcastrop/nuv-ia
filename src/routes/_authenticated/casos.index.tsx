@@ -476,15 +476,23 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r
           : `${dias}d`;
   const SlaIcon = nivel === "critico" ? AlertTriangle : Clock;
 
+  const qaScore = r.qa_score ?? null;
+  const qaCat = (r.qa_categoria ?? "").toString().toUpperCase();
+  const qaFailed = qaCat.includes("FAIL") || qaCat.includes("RECHAZ") || (qaScore !== null && qaScore < 70);
+  const qaTone = qaFailed
+    ? { bg: "rgba(244,63,94,0.12)", fg: "#FB7185", border: "rgba(244,63,94,0.45)" }
+    : qaScore !== null
+      ? { bg: "rgba(132,185,143,0.10)", fg: "#84B98F", border: "rgba(132,185,143,0.35)" }
+      : { bg: "rgba(148,163,184,0.10)", fg: "#94A3B8", border: "rgba(148,163,184,0.30)" };
+
   return (
-    <Link
-      to="/casos/$id"
-      params={{ id: r.id }}
-      className="group relative block overflow-hidden rounded-[20px] p-5 transition-all duration-300 hover:-translate-y-0.5"
+    <div
+      className="group relative overflow-hidden rounded-[20px] transition-all duration-300 hover:-translate-y-0.5"
       style={{
         background: `linear-gradient(180deg, ${CARD}, ${CARD2})`,
         border: `1px solid ${BORDER}`,
         boxShadow: "0 4px 20px -8px rgba(0,0,0,0.4)",
+        minHeight: 220,
       }}
     >
       {/* Línea lateral por estado */}
@@ -494,154 +502,228 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r
       />
       {/* Glow hover */}
       <span
-        className="absolute -right-20 top-1/2 -translate-y-1/2 h-40 w-40 rounded-full opacity-0 transition-opacity duration-500 group-hover:opacity-30 blur-3xl"
+        className="absolute -right-20 top-1/2 -translate-y-1/2 h-40 w-40 rounded-full opacity-0 transition-opacity duration-500 group-hover:opacity-30 blur-3xl pointer-events-none"
         style={{ background: theme.color }}
       />
 
-      <div className="relative grid items-center gap-4" style={{ gridTemplateColumns: "auto 1fr auto auto auto" }}>
-        {/* Avatar + nombre */}
-        <div className="flex items-center gap-4">
-          <div
-            className="flex h-14 w-14 items-center justify-center rounded-full text-xl font-bold text-white shrink-0"
-            style={{
-              background: `linear-gradient(135deg, ${aColor}, ${aColor}99)`,
-              boxShadow: `0 4px 14px -4px ${aColor}80`,
-            }}
-          >
-            {initial}
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <div className="font-semibold text-base truncate" style={{ color: "#F1F5F9" }}>{r.cliente_nombre || "Sin nombre"}</div>
-              {isDup && (
-                <span
-                  title="Esta cédula tiene más de un expediente activo"
-                  className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider"
-                  style={{ background: "rgba(245,158,11,0.15)", color: "#F59E0B", border: "1px solid rgba(245,158,11,0.4)" }}
-                >
-                  Dup
-                </span>
-              )}
-              <QABadge
-                categoria={r.qa_categoria ?? null}
-                score={r.qa_score ?? null}
-                auditoriaId={r.qa_auditoria_id ?? null}
-                size="xs"
-                asLink={false}
-              />
-              {auditCode && (
-                <Link
-                  to="/qa-ai/$id"
-                  params={{ id: r.qa_auditoria_id ?? "" }}
-                  onClick={(e) => e.stopPropagation()}
-                  title="Ir a la auditoría QA"
-                  className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider hover:brightness-125 transition"
-                  style={{
-                    background: "rgba(68,93,163,0.15)",
-                    color: "#A5B5E0",
-                    border: "1px solid rgba(68,93,163,0.45)",
-                    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-                  }}
-                >
-                  {auditCode}
-                </Link>
-              )}
-            </div>
-            <div className="text-xs mt-0.5" style={{ color: TEXT2 }}>
-              CC {r.cedula || "—"}
-            </div>
-            {(asesor || licenciado) && (
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
-                {asesor && (
-                  <div className="flex items-center gap-1.5" title="Asesor del caso">
-                    <AnalistaAvatar nombre={asesor.nombre} email={asesor.email} size={16} />
-                    <span className="text-[11px] truncate" style={{ color: TEXT2 }}>
-                      {asesor.nombre || asesor.email || "Sin asesor"}
-                    </span>
-                  </div>
-                )}
-                {licenciado && (
-                  <div className="flex items-center gap-1.5" title="Analista Financiero Comercial del caso">
-                    <span className="text-[9px] font-bold uppercase tracking-wider px-1 rounded" style={{ background: "rgba(31,109,61,0.15)", color: "#86EFAC", border: "1px solid rgba(31,109,61,0.4)" }}>AFC</span>
-                    <AnalistaAvatar nombre={licenciado.nombre} email={licenciado.email} size={16} />
-                    <span className="text-[11px] truncate" style={{ color: TEXT2 }}>
-                      {licenciado.nombre || licenciado.email || ""}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-
-          </div>
-        </div>
-
-        {/* Tags centrales */}
-        <div className="hidden lg:flex flex-wrap gap-2">
+      {/* HEADER: etapa (izq) + QA state (der) */}
+      <div
+        className="relative flex items-center justify-between gap-3 px-5 py-2.5"
+        style={{ borderBottom: `1px solid ${BORDER}` }}
+      >
+        <div className="flex items-center gap-2">
           <span
             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold"
-            style={{
-              background: "rgba(68,93,163,0.10)",
-              color: AZUL,
-              border: `1px solid ${AZUL}40`,
-            }}
+            style={{ background: "rgba(68,93,163,0.10)", color: AZUL, border: `1px solid ${AZUL}40` }}
             title={etapa.descripcion}
           >
-            <Flag size={11} />
-            E{etapa.numero} · {etapa.titulo}
+            <Flag size={11} /> E{etapa.numero} · {etapa.titulo}
           </span>
           <span
             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold"
             style={{ background: slaTheme.bg, color: slaTheme.fg, border: `1px solid ${slaTheme.border}` }}
             title={`Tiempo desde último cambio. SLA etapa: ${umbral} día(s).`}
           >
-            <SlaIcon size={11} />
-            {slaLabel}
+            <SlaIcon size={11} /> {slaLabel}
           </span>
-          <Tag icon={<Building2 size={11} />} text={r.banco || "Sin banco"} />
-          <Tag icon={<Hash size={11} />} text={r.numero_credito || "—"} />
-          <Tag icon={<Sparkles size={11} />} text={r.modo.toUpperCase()} accent={AZUL} />
-          <Tag icon={<Calendar size={11} />} text={r.fecha_simulacion} />
+          {isDup && (
+            <span
+              title="Esta cédula tiene más de un expediente activo"
+              className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider"
+              style={{ background: "rgba(245,158,11,0.15)", color: "#F59E0B", border: "1px solid rgba(245,158,11,0.4)" }}
+            >
+              Dup
+            </span>
+          )}
         </div>
-
-        {/* Honorarios */}
-        <div className="text-right hidden md:block">
-          <div className="text-[10px] font-bold uppercase tracking-[0.15em]" style={{ color: TEXT2 }}>
-            Honorarios
-          </div>
-          <div className="text-xl font-bold mt-0.5" style={{ color: VERDE }}>
-            {formatCOP(Number(r.honorarios_final))}
-          </div>
-        </div>
-
-        {/* Estado */}
-        <div className="hidden sm:block">
+        <div className="flex items-center gap-2">
           <span
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
-            style={{
-              background: `${theme.color}1A`,
-              color: theme.color,
-              border: `1px solid ${theme.color}40`,
-            }}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
+            style={{ background: `${theme.color}1A`, color: theme.color, border: `1px solid ${theme.color}40` }}
           >
             <span className="h-1.5 w-1.5 rounded-full" style={{ background: theme.color }} />
             {r.estado}
           </span>
-        </div>
-
-        {/* CTA */}
-        <div
-          className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold uppercase tracking-wider transition-all group-hover:translate-x-0.5"
-          style={{
-            background: "rgba(132,185,143,0.08)",
-            color: VERDE,
-            border: `1px solid ${VERDE}33`,
-          }}
-        >
-          Ver expediente
-          <ArrowRight size={14} />
+          <span
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
+            style={{ background: qaTone.bg, color: qaTone.fg, border: `1px solid ${qaTone.border}` }}
+            title="Estado de auditoría QA"
+          >
+            QA {qaFailed ? "FAILED" : qaScore !== null ? "OK" : "—"}
+            {qaScore !== null && <> • {qaScore}</>}
+          </span>
         </div>
       </div>
-    </Link>
+
+      {/* CUERPO: 4 columnas */}
+      <div
+        className="relative grid gap-5 px-5 py-4"
+        style={{ gridTemplateColumns: "32% 28% 20% 20%" }}
+      >
+        {/* COL 1 — IDENTIDAD */}
+        <div className="flex flex-col gap-2 min-w-0">
+          <div className="flex items-start gap-3 min-w-0">
+            <div
+              className="flex items-center justify-center rounded-full text-2xl font-bold text-white shrink-0"
+              style={{
+                width: 72,
+                height: 72,
+                background: `linear-gradient(135deg, ${aColor}, ${aColor}99)`,
+                boxShadow: `0 6px 18px -6px ${aColor}80`,
+              }}
+            >
+              {initial}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div
+                className="font-semibold text-[15px] leading-tight"
+                style={{ color: "#F1F5F9", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}
+                title={r.cliente_nombre || "Sin nombre"}
+              >
+                {r.cliente_nombre || "Sin nombre"}
+              </div>
+              <div className="text-[11px] mt-1" style={{ color: TEXT2 }}>
+                CC {r.cedula || "—"}
+              </div>
+              {(asesor || licenciado) && (
+                <div className="flex items-center gap-1.5 mt-1.5 min-w-0" title="Analista asignado">
+                  <AnalistaAvatar
+                    nombre={(licenciado?.nombre ?? asesor?.nombre) ?? null}
+                    email={(licenciado?.email ?? asesor?.email) ?? null}
+                    size={16}
+                  />
+                  <span className="text-[10.5px] truncate" style={{ color: TEXT2 }}>
+                    {licenciado?.nombre || licenciado?.email || asesor?.nombre || asesor?.email || ""}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <QABadge
+              categoria={r.qa_categoria ?? null}
+              score={r.qa_score ?? null}
+              auditoriaId={r.qa_auditoria_id ?? null}
+              size="xs"
+              asLink={false}
+            />
+            {auditCode && (
+              <Link
+                to="/qa-ai/$id"
+                params={{ id: r.qa_auditoria_id ?? "" }}
+                onClick={(e) => e.stopPropagation()}
+                title="Ir a la auditoría QA"
+                className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider hover:brightness-125 transition"
+                style={{
+                  background: "rgba(68,93,163,0.15)",
+                  color: "#A5B5E0",
+                  border: "1px solid rgba(68,93,163,0.45)",
+                  fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                }}
+              >
+                {auditCode}
+              </Link>
+            )}
+          </div>
+        </div>
+
+        {/* COL 2 — DATOS DEL CRÉDITO */}
+        <div className="flex flex-col justify-center min-w-0 divide-y" style={{ borderColor: BORDER }}>
+          <DataRow icon={<Clock size={12} />} label="Edad lead" value={`${dias} día${dias === 1 ? "" : "s"}`} />
+          <DataRow icon={<Building2 size={12} />} label="Banco" value={r.banco || "—"} />
+          <DataRow icon={<Hash size={12} />} label="Crédito" value={r.numero_credito || "—"} mono />
+          <DataRow icon={<Sparkles size={12} />} label="Modalidad" value={r.modo.toUpperCase()} accent={AZUL} />
+          <DataRow icon={<Calendar size={12} />} label="Fecha" value={r.fecha_simulacion || "—"} />
+        </div>
+
+        {/* COL 3 — HONORARIOS KPI */}
+        <div className="flex flex-col justify-center gap-2 min-w-0">
+          <div className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: TEXT2 }}>
+            Honorarios
+          </div>
+          <div
+            className="text-[26px] font-bold leading-none tabular-nums"
+            style={{ color: VERDE, textShadow: `0 0 24px ${VERDE}40` }}
+          >
+            {formatCOP(Number(r.honorarios_final))}
+          </div>
+          <span
+            className="inline-flex items-center gap-1.5 self-start px-2 py-0.5 rounded-full text-[9.5px] font-bold uppercase tracking-wider"
+            style={{
+              background: `${theme.color}1A`,
+              color: theme.color,
+              border: `1px solid ${theme.color}55`,
+              boxShadow: `0 0 12px -2px ${theme.color}55`,
+            }}
+          >
+            <span className="h-1 w-1 rounded-full" style={{ background: theme.color }} />
+            {r.estado}
+          </span>
+        </div>
+
+        {/* COL 4 — ACCIONES */}
+        <div className="flex flex-col justify-center gap-3 min-w-0">
+          <Link
+            to="/casos/$id"
+            params={{ id: r.id }}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white transition hover:brightness-110"
+            style={{
+              background: `linear-gradient(135deg, ${AZUL}, ${VERDE})`,
+              boxShadow: `0 8px 24px -10px ${AZUL}`,
+            }}
+          >
+            Ver expediente <ArrowRight size={13} />
+          </Link>
+          <Link
+            to="/casos/$id"
+            params={{ id: r.id }}
+            search={{ tab: "snapshot" } as never}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-[11px] font-semibold uppercase tracking-wider transition"
+            style={{
+              background: "rgba(132,185,143,0.08)",
+              color: VERDE,
+              border: `1px solid ${VERDE}44`,
+            }}
+          >
+            Snapshot PDF
+          </Link>
+          <Link
+            to="/casos/$id"
+            params={{ id: r.id }}
+            search={{ tab: "trazabilidad" } as never}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-[11px] font-semibold uppercase tracking-wider transition"
+            style={{
+              background: "rgba(255,255,255,0.03)",
+              color: TEXT2,
+              border: `1px solid ${BORDER}`,
+            }}
+          >
+            Trazabilidad
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DataRow({ icon, label, value, mono, accent }: { icon: React.ReactNode; label: string; value: string; mono?: boolean; accent?: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-1.5 min-w-0">
+      <div className="flex items-center gap-1.5 shrink-0" style={{ color: TEXT2 }}>
+        {icon}
+        <span className="text-[10.5px] uppercase tracking-wider font-semibold">{label}</span>
+      </div>
+      <div
+        className="text-[12px] font-semibold truncate text-right min-w-0"
+        style={{
+          color: accent ?? "#E2E8F0",
+          fontFamily: mono ? "ui-monospace, SFMono-Regular, Menlo, monospace" : undefined,
+        }}
+        title={value}
+      >
+        {value}
+      </div>
+    </div>
   );
 }
 
