@@ -61,7 +61,7 @@ function SocialProofCard({ caso, closing, onClose }: { caso: Caso; closing: bool
   return createPortal(
     <div
       style={{
-        position: "fixed", bottom: 32, left: 32, zIndex: 2147483590,
+        position: "fixed", bottom: 32, right: 32, zIndex: 2147483590,
         width: 410, maxWidth: "calc(100vw - 40px)",
       }}
       className="nuvia-social-proof-anchor"
