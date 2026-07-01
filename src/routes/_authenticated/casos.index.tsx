@@ -653,7 +653,25 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode, onAud
                 {auditCode}
               </Link>
             )}
+            {puedeAuditar && (
+              <button
+                type="button"
+                onClick={runAuditoria}
+                disabled={auditando}
+                title="Ejecuta la auditoría NUVIA usando los datos ya guardados en el expediente (sin necesidad de subir extracto)."
+                className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider transition hover:brightness-125 disabled:opacity-60 disabled:cursor-wait"
+                style={{
+                  background: "linear-gradient(135deg, rgba(132,185,143,0.18), rgba(68,93,163,0.18))",
+                  color: "#B8E5C0",
+                  border: "1px solid rgba(132,185,143,0.45)",
+                }}
+              >
+                {auditando ? <Loader2 size={11} className="animate-spin" /> : <ShieldCheck size={11} />}
+                {auditando ? "Auditando…" : "Ejecutar auditoría NUVIA"}
+              </button>
+            )}
           </div>
+
         </div>
 
         {/* COL 2 — DATOS DEL CRÉDITO */}
