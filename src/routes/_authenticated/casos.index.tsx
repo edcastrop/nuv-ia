@@ -557,12 +557,12 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r
 
       {/* CUERPO: 4 columnas */}
       <div
-        className="relative grid gap-5 px-5 py-4"
+        className="relative grid gap-5 px-7 py-6"
         style={{ gridTemplateColumns: "32% 28% 20% 20%" }}
       >
         {/* COL 1 — IDENTIDAD */}
-        <div className="flex flex-col gap-2 min-w-0">
-          <div className="flex items-start gap-3 min-w-0">
+        <div className="flex flex-col justify-center gap-[18px] min-w-0 h-full">
+          <div className="flex items-center gap-5 min-w-0">
             <div
               className="flex items-center justify-center rounded-full text-2xl font-bold text-white shrink-0"
               style={{
@@ -582,11 +582,11 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r
               >
                 {r.cliente_nombre || "Sin nombre"}
               </div>
-              <div className="text-[11px] mt-1" style={{ color: TEXT2 }}>
+              <div className="text-[11px] mt-2" style={{ color: TEXT2 }}>
                 CC {r.cedula || "—"}
               </div>
               {(asesor || licenciado) && (
-                <div className="flex items-center gap-1.5 mt-1.5 min-w-0" title="Analista asignado">
+                <div className="flex items-center gap-1.5 mt-3.5 min-w-0" title="Analista asignado">
                   <AnalistaAvatar
                     nombre={(licenciado?.nombre ?? asesor?.nombre) ?? null}
                     email={(licenciado?.email ?? asesor?.email) ?? null}
@@ -628,7 +628,7 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r
         </div>
 
         {/* COL 2 — DATOS DEL CRÉDITO */}
-        <div className="flex flex-col justify-center min-w-0 divide-y" style={{ borderColor: BORDER }}>
+        <div className="flex flex-col justify-center min-w-0 divide-y gap-[14px]" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
           <DataRow icon={<Clock size={12} />} label="Edad lead" value={`${dias} día${dias === 1 ? "" : "s"}`} />
           <DataRow icon={<Building2 size={12} />} label="Banco" value={r.banco || "—"} />
           <DataRow icon={<Hash size={12} />} label="Crédito" value={r.numero_credito || "—"} mono />
@@ -708,7 +708,7 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r
 
 function DataRow({ icon, label, value, mono, accent }: { icon: React.ReactNode; label: string; value: string; mono?: boolean; accent?: string }) {
   return (
-    <div className="flex items-center justify-between gap-3 py-1.5 min-w-0">
+    <div className="flex items-center justify-between gap-3 pb-2.5 min-w-0">
       <div className="flex items-center gap-1.5 shrink-0" style={{ color: TEXT2 }}>
         {icon}
         <span className="text-[10.5px] uppercase tracking-wider font-semibold">{label}</span>
