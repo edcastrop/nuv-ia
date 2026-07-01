@@ -839,7 +839,8 @@ function MetricMini({
     <div
       className="flex flex-col items-center gap-1"
       style={{
-        padding: "8px 4px",
+        height: 74,
+        padding: 12,
         borderRadius: 10,
         background: "rgba(255,255,255,0.03)",
         border: "1px solid rgba(255,255,255,0.06)",
