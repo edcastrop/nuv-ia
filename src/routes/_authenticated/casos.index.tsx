@@ -508,7 +508,7 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r
 
       {/* HEADER: etapa (izq) + QA state (der) */}
       <div
-        className="relative flex items-center justify-between gap-3 px-5 py-2.5"
+        className="relative flex items-center justify-between gap-3 px-6 pt-4 pb-3 h-14"
         style={{ borderBottom: `1px solid ${BORDER}` }}
       >
         <div className="flex items-center gap-2">
@@ -557,12 +557,12 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r
 
       {/* CUERPO: 4 columnas */}
       <div
-        className="relative grid gap-5 px-5 py-4"
+        className="relative grid gap-5 px-7 py-6"
         style={{ gridTemplateColumns: "32% 28% 20% 20%" }}
       >
         {/* COL 1 — IDENTIDAD */}
-        <div className="flex flex-col gap-2 min-w-0">
-          <div className="flex items-start gap-3 min-w-0">
+        <div className="flex flex-col justify-center gap-[18px] min-w-0 h-full">
+          <div className="flex items-center gap-5 min-w-0">
             <div
               className="flex items-center justify-center rounded-full text-2xl font-bold text-white shrink-0"
               style={{
@@ -582,11 +582,11 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r
               >
                 {r.cliente_nombre || "Sin nombre"}
               </div>
-              <div className="text-[11px] mt-1" style={{ color: TEXT2 }}>
+              <div className="text-[11px] mt-2" style={{ color: TEXT2 }}>
                 CC {r.cedula || "—"}
               </div>
               {(asesor || licenciado) && (
-                <div className="flex items-center gap-1.5 mt-1.5 min-w-0" title="Analista asignado">
+                <div className="flex items-center gap-1.5 mt-3.5 min-w-0" title="Analista asignado">
                   <AnalistaAvatar
                     nombre={(licenciado?.nombre ?? asesor?.nombre) ?? null}
                     email={(licenciado?.email ?? asesor?.email) ?? null}
@@ -628,7 +628,7 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r
         </div>
 
         {/* COL 2 — DATOS DEL CRÉDITO */}
-        <div className="flex flex-col justify-center min-w-0 divide-y" style={{ borderColor: BORDER }}>
+        <div className="flex flex-col justify-center min-w-0 divide-y gap-[14px]" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
           <DataRow icon={<Clock size={12} />} label="Edad lead" value={`${dias} día${dias === 1 ? "" : "s"}`} />
           <DataRow icon={<Building2 size={12} />} label="Banco" value={r.banco || "—"} />
           <DataRow icon={<Hash size={12} />} label="Crédito" value={r.numero_credito || "—"} mono />
@@ -637,12 +637,12 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r
         </div>
 
         {/* COL 3 — HONORARIOS KPI */}
-        <div className="flex flex-col justify-center gap-2 min-w-0">
-          <div className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: TEXT2 }}>
+        <div className="flex flex-col justify-center min-w-0 h-full">
+          <div className="text-[10px] font-bold uppercase tracking-[0.18em] mb-3" style={{ color: TEXT2 }}>
             Honorarios
           </div>
           <div
-            className="text-[26px] font-bold leading-none tabular-nums"
+            className="text-[26px] font-bold leading-none tabular-nums mb-4"
             style={{ color: VERDE, textShadow: `0 0 24px ${VERDE}40` }}
           >
             {formatCOP(Number(r.honorarios_final))}
@@ -662,11 +662,11 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r
         </div>
 
         {/* COL 4 — ACCIONES */}
-        <div className="flex flex-col justify-center gap-3 min-w-0">
+        <div className="flex flex-col justify-center items-center gap-4 min-w-0 pr-7">
           <Link
             to="/casos/$id"
             params={{ id: r.id }}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white transition hover:brightness-110"
+            className="inline-flex w-[260px] h-14 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white transition hover:brightness-110"
             style={{
               background: `linear-gradient(135deg, ${AZUL}, ${VERDE})`,
               boxShadow: `0 8px 24px -10px ${AZUL}`,
@@ -678,7 +678,7 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r
             to="/casos/$id"
             params={{ id: r.id }}
             search={{ tab: "snapshot" } as never}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-[11px] font-semibold uppercase tracking-wider transition"
+            className="inline-flex w-[260px] h-14 items-center justify-center gap-2 rounded-xl px-3 py-2 text-[11px] font-semibold uppercase tracking-wider transition"
             style={{
               background: "rgba(132,185,143,0.08)",
               color: VERDE,
@@ -691,7 +691,7 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r
             to="/casos/$id"
             params={{ id: r.id }}
             search={{ tab: "trazabilidad" } as never}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-[11px] font-semibold uppercase tracking-wider transition"
+            className="inline-flex w-[260px] h-14 items-center justify-center gap-2 rounded-xl px-3 py-2 text-[11px] font-semibold uppercase tracking-wider transition"
             style={{
               background: "rgba(255,255,255,0.03)",
               color: TEXT2,
@@ -708,7 +708,7 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r
 
 function DataRow({ icon, label, value, mono, accent }: { icon: React.ReactNode; label: string; value: string; mono?: boolean; accent?: string }) {
   return (
-    <div className="flex items-center justify-between gap-3 py-1.5 min-w-0">
+    <div className="flex items-center justify-between gap-3 pb-2.5 min-w-0">
       <div className="flex items-center gap-1.5 shrink-0" style={{ color: TEXT2 }}>
         {icon}
         <span className="text-[10.5px] uppercase tracking-wider font-semibold">{label}</span>
