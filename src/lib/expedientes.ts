@@ -260,7 +260,7 @@ async function hydrateExpedienteSnapshot(row: Expediente): Promise<Expediente> {
     }
   }
 
-  const clienteNext = normalizeClienteSnapshot(clienteActual, source) as ClientData;
+  const clienteNext = normalizeClienteSnapshot(clienteActual, source) as unknown as ClientData;
   const creditoNext = normalizeCreditoSnapshot(creditoActual, source) as Record<string, string>;
   const patch: Partial<Expediente> & LooseRecord = {};
 
@@ -350,7 +350,7 @@ export async function upsertExpediente(p: UpsertPayload): Promise<Expediente> {
     numeroCredito: p.cliente.numeroCredito,
     producto: p.cliente.tipoProducto,
   };
-  const clienteNormalizado = normalizeClienteSnapshot(p.cliente as unknown as LooseRecord, incomingSource) as ClientData;
+  const clienteNormalizado = normalizeClienteSnapshot(p.cliente as unknown as LooseRecord, incomingSource) as unknown as ClientData;
   const creditoNormalizado = normalizeCreditoSnapshot(p.credito as unknown as LooseRecord, incomingSource) as Record<string, string>;
 
   const baseRow = {
