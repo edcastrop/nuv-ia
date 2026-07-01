@@ -244,6 +244,25 @@ export function CapacidadPagoTool() {
             <div className={`text-xs ${esVis ? "text-white/80" : "text-white/50"}`}>Límite del 40%</div>
           </button>
         </div>
+        <div className="mt-4">
+          <Label className="text-[10px] font-semibold text-white/60 uppercase tracking-[0.18em]">Banco destino (opcional)</Label>
+          <Select value={banco || "__none"} onValueChange={(v) => setBanco(v === "__none" ? "" : v)}>
+            <SelectTrigger className="mt-2 bg-white/[0.05] border-white/15 text-white">
+              <SelectValue placeholder="Sin banco específico" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none">Sin banco específico</SelectItem>
+              {BANCOS.map((b) => (
+                <SelectItem key={b} value={b}>{b}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {excluyePrima && (
+            <p className="mt-2 text-xs text-amber-200/90 bg-amber-500/10 border border-amber-400/30 rounded-lg px-3 py-2">
+              <b>{banco}</b> no considera la <b>prima</b> como ingreso recurrente. NUVIA la detectará y la excluirá del promedio mensual.
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-5 rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl">
