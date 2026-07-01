@@ -114,6 +114,181 @@ export interface UpsertPayload {
   descuento: number;
 }
 
+type LooseRecord = Record<string, unknown>;
+
+const asRecord = (v: unknown): LooseRecord =>
+  v && typeof v === "object" && !Array.isArray(v) ? (v as LooseRecord) : {};
+
+const isMeaningfulValue = (v: unknown): boolean => {
+  if (v === undefined || v === null) return false;
+  if (typeof v === "string") return v.trim() !== "";
+  if (typeof v === "number") return Number.isFinite(v);
+  if (typeof v === "boolean") return v === true;
+  if (Array.isArray(v)) return v.some(isMeaningfulValue);
+  if (typeof v === "object") return Object.values(v as LooseRecord).some(isMeaningfulValue);
+  return true;
+};
+
+const firstMeaningful = (...values: unknown[]): unknown =>
+  values.find(isMeaningfulValue);
+
+const stringFrom = (...values: unknown[]): string => {
+  const v = firstMeaningful(...values);
+  return v === undefined ? "" : String(v).trim();
+};
+
+const mergePreservingMeaningful = (
+  existing: LooseRecord | null | undefined,
+  incoming: LooseRecord | null | undefined,
+): LooseRecord => {
+  const out: LooseRecord = { ...(existing ?? {}) };
+  const src = incoming ?? {};
+  for (const k of Object.keys(src)) {
+    const next = src[k];
+    const prev = out[k];
+    if (!isMeaningfulValue(next)) continue;
+    if (
+      prev && next &&
+      typeof prev === "object" && !Array.isArray(prev) &&
+      typeof next === "object" && !Array.isArray(next)
+    ) {
+      out[k] = mergePreservingMeaningful(prev as LooseRecord, next as LooseRecord);
+    } else if (!isMeaningfulValue(prev) || isMeaningfulValue(next)) {
+      out[k] = next;
+    }
+  }
+  return out;
+};
+
+const setIfBlank = (target: LooseRecord, key: string, ...values: unknown[]) => {
+  if (!isMeaningfulValue(target[key])) {
+    const v = firstMeaningful(...values);
+    if (v !== undefined) target[key] = String(v).trim();
+  }
+};
+
+const normalizeClienteSnapshot = (
+  raw: LooseRecord | null | undefined,
+  source: LooseRecord,
+): LooseRecord => {
+  const out: LooseRecord = { ...(raw ?? {}) };
+  setIfBlank(out, "nombre", source.nombre, source.cliente_nombre, source.cliente, source.titular);
+  setIfBlank(out, "cedula", source.cedula, source.documento, source.numeroDocumento);
+  setIfBlank(out, "banco", source.banco);
+  setIfBlank(out, "numeroCredito", source.numeroCredito, source.numero_credito);
+  setIfBlank(out, "tipoProducto", source.tipoProducto, source.producto, source.tipo_credito, source.tipoCredito);
+  setIfBlank(out, "plazoInicial", source.plazoInicial, source.cuotasTotales, source.plazoOriginal);
+  setIfBlank(out, "cuotasPagadas", source.cuotasPagadas);
+  setIfBlank(out, "cuotasPendientes", source.cuotasPendientes);
+  setIfBlank(out, "fechaDesembolso", source.fechaDesembolso);
+  if (!isMeaningfulValue(out.porcentajeHonorarios)) out.porcentajeHonorarios = "6";
+
+  const cobertura = asRecord(out.cobertura);
+  const tasaCobertura = stringFrom(cobertura.tasaCobertura, source.tasaCobertura, source.coberturaFrechPp);
+  const valorCobertura = stringFrom(cobertura.valorCobertura, source.valorCobertura, source.valorSubsidioGobierno, source.coberturaFrechValorMensual);
+  out.cobertura = {
+    activo: cobertura.activo === true || !!tasaCobertura || !!valorCobertura,
+    tasaCobertura,
+    valorCobertura,
+  };
+  return out;
+};
+
+const normalizeCreditoSnapshot = (
+  raw: LooseRecord | null | undefined,
+  source: LooseRecord,
+): LooseRecord => {
+  const out: LooseRecord = { ...(raw ?? {}) };
+  setIfBlank(out, "tea", source.tea, source.teaPactada, source.tasaEA, source.teaPct, source.tasaEa);
+  setIfBlank(out, "teaCobrada", source.teaCobrada, source.tasaEA, source.teaPct, source.tasaEa);
+  setIfBlank(out, "cuotaActual", source.cuotaActual, source.cuotaMensual, source.valorAPagar, source.cuotaPagadaCliente);
+  setIfBlank(out, "cuotaActualPesos", source.cuotaActualPesos, source.cuotaActual, source.cuotaMensual, source.valorAPagar, source.cuotaPagadaCliente);
+  setIfBlank(out, "saldoCapital", source.saldoCapital, source.saldoPesos);
+  setIfBlank(out, "saldoPesos", source.saldoPesos, source.saldoCapital);
+  setIfBlank(out, "saldoUVR", source.saldoUVR);
+  setIfBlank(out, "valorUVR", source.valorUVR);
+  setIfBlank(out, "seguros", source.seguros, source.totalSeguros);
+  setIfBlank(out, "valorDesembolsado", source.valorDesembolsado);
+  setIfBlank(out, "cuotaConInteresSinSeguros", source.cuotaConInteresSinSeguros, source.cuotaSinSeguros);
+  setIfBlank(out, "cuotaBaseSimulacion", source.cuotaBaseSimulacion, source.cuotaSinSubsidio);
+  setIfBlank(out, "variacionUVR", source.variacionUVR, source.variacionUvrPct, source.variacion_uvr_pct);
+  return out;
+};
+
+const jsonChanged = (a: unknown, b: unknown) => JSON.stringify(a ?? {}) !== JSON.stringify(b ?? {});
+
+async function hydrateExpedienteSnapshot(row: Expediente): Promise<Expediente> {
+  const clienteActual = asRecord(row.cliente_data);
+  const creditoActual = asRecord(row.credito_data);
+  let source: LooseRecord = {
+    ...clienteActual,
+    ...creditoActual,
+    cliente_nombre: row.cliente_nombre,
+    cedula: row.cedula,
+    banco: row.banco,
+    numero_credito: row.numero_credito,
+    producto: row.producto,
+  };
+
+  const necesitaExtracto =
+    !isMeaningfulValue(clienteActual.nombre) ||
+    !isMeaningfulValue(clienteActual.banco) ||
+    !isMeaningfulValue(clienteActual.numeroCredito) ||
+    !isMeaningfulValue(creditoActual.saldoCapital) ||
+    !isMeaningfulValue(creditoActual.cuotaActual) ||
+    !isMeaningfulValue(creditoActual.tea);
+
+  if (necesitaExtracto) {
+    try {
+      const { data: ext } = await supabase
+        .from("extractos_lecturas")
+        .select("banco,producto,moneda,datos,created_at")
+        .eq("expediente_id", row.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const d = asRecord(ext?.datos);
+      source = {
+        ...source,
+        ...d,
+        banco: firstMeaningful(source.banco, d.banco, ext?.banco),
+        producto: firstMeaningful(source.producto, d.producto, ext?.producto),
+        moneda: firstMeaningful(d.moneda, ext?.moneda),
+      };
+    } catch {
+      // La hidratación es defensiva; si la lectura no está disponible, devolvemos el expediente base.
+    }
+  }
+
+  const clienteNext = normalizeClienteSnapshot(clienteActual, source) as unknown as ClientData;
+  const creditoNext = normalizeCreditoSnapshot(creditoActual, source) as Record<string, string>;
+  const patch: Partial<Expediente> & LooseRecord = {};
+
+  const clienteNombre = stringFrom(row.cliente_nombre, clienteNext.nombre);
+  const cedula = stringFrom(row.cedula, clienteNext.cedula);
+  const banco = stringFrom(row.banco, clienteNext.banco, source.banco);
+  const numeroCredito = stringFrom(row.numero_credito, clienteNext.numeroCredito, source.numeroCredito);
+  const producto = stringFrom(row.producto, clienteNext.tipoProducto, source.producto);
+
+  if (clienteNombre && (!row.cliente_nombre || row.cliente_nombre === "Sin nombre")) patch.cliente_nombre = clienteNombre;
+  if (cedula && !row.cedula) patch.cedula = cedula;
+  if (banco && !row.banco) patch.banco = banco;
+  if (numeroCredito && !row.numero_credito) patch.numero_credito = numeroCredito;
+  if (producto && !row.producto) patch.producto = producto;
+  if (jsonChanged(clienteActual, clienteNext)) patch.cliente_data = clienteNext;
+  if (jsonChanged(creditoActual, creditoNext)) patch.credito_data = creditoNext;
+
+  if (Object.keys(patch).length > 0) {
+    try {
+      await supabase.from("expedientes").update(patch as never).eq("id", row.id);
+    } catch {
+      // Si el usuario puede leer pero no actualizar, al menos devolvemos la vista hidratada en memoria.
+    }
+    return { ...row, ...patch } as Expediente;
+  }
+  return row;
+}
+
 export async function listExpedientes(params: { search?: string; estado?: EstadoExpediente | ""; etapa?: EtapaPipelineId | "" } = {}) {
   let q = supabase
     .from("expedientes")
@@ -140,7 +315,7 @@ export async function getExpediente(id: string): Promise<Expediente> {
   const { data, error } = await supabase.from("expedientes").select("*").eq("id", id).maybeSingle();
   if (error) throw error;
   if (!data) throw new Error("No se encontró este expediente o ya no está disponible.");
-  return data as unknown as Expediente;
+  return hydrateExpedienteSnapshot(data as unknown as Expediente);
 }
 
 export async function upsertExpediente(p: UpsertPayload): Promise<Expediente> {
@@ -157,28 +332,6 @@ export async function upsertExpediente(p: UpsertPayload): Promise<Expediente> {
     );
   }
 
-  // ── Anti-wipe (Audelina/Marsela): en UPDATES nunca sobreescribimos un
-  //    valor ya persistido con vacío. El bug histórico era que un re-save
-  //    del simulador (con payload parcial o reset) borraba cliente_data /
-  //    credito_data del expediente y el caso quedaba huérfano en /casos y
-  //    /qa-ai. Merge defensivo: conservamos toda clave existente cuando la
-  //    nueva llega vacía / null / string en blanco.
-  const mergeJson = (
-    existing: Record<string, unknown> | null | undefined,
-    incoming: Record<string, unknown> | null | undefined,
-  ): Record<string, unknown> => {
-    const out: Record<string, unknown> = { ...(existing ?? {}) };
-    const src = incoming ?? {};
-    for (const k of Object.keys(src)) {
-      const v = src[k];
-      const isEmpty =
-        v === undefined ||
-        v === null ||
-        (typeof v === "string" && v.trim() === "");
-      if (!isEmpty) out[k] = v;
-    }
-    return out;
-  };
   const pickNonEmpty = (
     nu: string | null | undefined,
     prev: string | null | undefined,
@@ -188,15 +341,27 @@ export async function upsertExpediente(p: UpsertPayload): Promise<Expediente> {
     return prev ?? null;
   };
 
+  const incomingSource: LooseRecord = {
+    ...(p.credito as unknown as LooseRecord),
+    ...(p.cliente as unknown as LooseRecord),
+    cliente_nombre: nombreLimpio,
+    cedula: p.cliente.cedula,
+    banco: p.cliente.banco,
+    numeroCredito: p.cliente.numeroCredito,
+    producto: p.cliente.tipoProducto,
+  };
+  const clienteNormalizado = normalizeClienteSnapshot(p.cliente as unknown as LooseRecord, incomingSource) as unknown as ClientData;
+  const creditoNormalizado = normalizeCreditoSnapshot(p.credito as unknown as LooseRecord, incomingSource) as Record<string, string>;
+
   const baseRow = {
     modo: p.modo,
-    cliente_nombre: nombreLimpio || "Sin nombre",
-    cedula: p.cliente.cedula || null,
-    banco: p.cliente.banco || null,
-    numero_credito: p.cliente.numeroCredito || null,
-    producto: p.cliente.tipoProducto || null,
-    cliente_data: p.cliente as unknown as never,
-    credito_data: p.credito as unknown as never,
+    cliente_nombre: nombreLimpio || clienteNormalizado.nombre || "Sin nombre",
+    cedula: clienteNormalizado.cedula || null,
+    banco: clienteNormalizado.banco || null,
+    numero_credito: clienteNormalizado.numeroCredito || null,
+    producto: clienteNormalizado.tipoProducto || null,
+    cliente_data: clienteNormalizado as unknown as never,
+    credito_data: creditoNormalizado as unknown as never,
     propuesta_data: p.propuesta as unknown as never,
     discount_data: p.discountState as unknown as never,
     honorarios_base: p.honorariosBase,
@@ -241,18 +406,25 @@ export async function upsertExpediente(p: UpsertPayload): Promise<Expediente> {
       banco: pickNonEmpty(baseRow.banco, prevRow.banco),
       numero_credito: pickNonEmpty(baseRow.numero_credito, prevRow.numero_credito),
       producto: pickNonEmpty(baseRow.producto, prevRow.producto),
-      cliente_data: mergeJson(
-        prevRow.cliente_data,
-        p.cliente as unknown as Record<string, unknown>,
+      cliente_data: normalizeClienteSnapshot(
+        mergePreservingMeaningful(prevRow.cliente_data, clienteNormalizado as unknown as LooseRecord),
+        {
+          ...incomingSource,
+          cliente_nombre: pickNonEmpty(nombreLimpio || null, prevRow.cliente_nombre),
+          cedula: pickNonEmpty(baseRow.cedula, prevRow.cedula),
+          banco: pickNonEmpty(baseRow.banco, prevRow.banco),
+          numero_credito: pickNonEmpty(baseRow.numero_credito, prevRow.numero_credito),
+          producto: pickNonEmpty(baseRow.producto, prevRow.producto),
+        },
       ) as unknown as never,
-      credito_data: mergeJson(
-        prevRow.credito_data,
-        p.credito as unknown as Record<string, unknown>,
+      credito_data: normalizeCreditoSnapshot(
+        mergePreservingMeaningful(prevRow.credito_data, creditoNormalizado as unknown as LooseRecord),
+        incomingSource,
       ) as unknown as never,
       propuesta_data: propuestaFinal as unknown as never,
-      discount_data: mergeJson(
+      discount_data: mergePreservingMeaningful(
         prevRow.discount_data,
-        p.discountState as unknown as Record<string, unknown>,
+        p.discountState as unknown as LooseRecord,
       ) as unknown as never,
       honorarios_base: p.honorariosBase || Number(prevRow.honorarios_base ?? 0),
       honorarios_final: p.honorariosFinal || Number(prevRow.honorarios_final ?? 0),
