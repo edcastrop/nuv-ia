@@ -579,12 +579,12 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
           </div>
           <div
             style={{
-              minHeight: 132,
-              borderRadius: 10,
-              border: `1px solid rgba(138,109,255,0.45)`,
+              minHeight: 150,
+              borderRadius: 12,
+              border: `1px solid rgba(138,109,255,0.55)`,
               background:
-                "radial-gradient(circle at 18% 35%, rgba(68,93,163,0.55), transparent 42%), radial-gradient(circle at 92% 70%, rgba(138,109,255,0.42), transparent 45%), linear-gradient(120deg, #0A1330 0%, #131845 55%, #1B1748 100%)",
-              boxShadow: "0 0 0 1px rgba(138,109,255,0.18), 0 18px 48px rgba(68,93,163,0.32), inset 0 1px 0 rgba(255,255,255,0.05)",
+                "radial-gradient(circle at 12% 40%, rgba(68,93,163,0.85), transparent 45%), radial-gradient(circle at 88% 65%, rgba(138,109,255,0.6), transparent 48%), linear-gradient(120deg, #101B4B 0%, #1B2270 45%, #2A1E6E 100%)",
+              boxShadow: "0 0 0 1px rgba(138,109,255,0.28), 0 24px 64px rgba(68,93,163,0.4), inset 0 1px 0 rgba(255,255,255,0.07)",
               display: "grid",
               gridTemplateColumns: "45% 55%",
               alignItems: "center",
@@ -592,17 +592,18 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
               position: "relative",
             }}
           >
-              <div style={{ textAlign: "center", padding: "14px 18px", position: "relative", minWidth: 0 }}>
-              <MiniLabel style={{ fontSize: 9, marginBottom: 8, color: "#C7B8FF" }}>Vas a pagar</MiniLabel>
-              <div style={{ fontSize: 62, fontWeight: 950, lineHeight: 1, letterSpacing: "0", color: "#C7B8FF", textShadow: "0 0 22px rgba(138,109,255,0.55), 0 0 8px rgba(110,139,255,0.45)", whiteSpace: "nowrap" }}>{multiplicadorTexto}</div>
-              <div style={{ fontSize: 10.5, fontWeight: 900, color: "#E8E1FF", letterSpacing: "0.14em", textTransform: "uppercase", marginTop: 10 }}>El valor de tu crédito</div>
+            <div style={{ textAlign: "center", padding: "22px 20px", position: "relative", minWidth: 0 }}>
+              <MiniLabel style={{ fontSize: 9.4, marginBottom: 10, color: "#C7B8FF", letterSpacing: "0.16em" }}>Vas a pagar</MiniLabel>
+              <div style={{ fontSize: 78, fontWeight: 950, lineHeight: 0.95, letterSpacing: "-0.02em", color: "#E5DEFF", textShadow: "0 0 32px rgba(138,109,255,0.75), 0 0 12px rgba(110,139,255,0.55)", whiteSpace: "nowrap" }}>{multiplicadorTexto}</div>
+              <div style={{ fontSize: 10.8, fontWeight: 900, color: "#EFEAFF", letterSpacing: "0.18em", textTransform: "uppercase", marginTop: 14 }}>El valor de tu crédito</div>
             </div>
-            <div style={{ padding: "0 26px 0 22px", fontSize: 11.4, color: "#DCE3F5", lineHeight: 1.6, borderLeft: "1px solid rgba(138,109,255,0.22)" }}>
+            <div style={{ padding: "18px 28px 18px 24px", fontSize: 11.6, color: "#E5E9F7", lineHeight: 1.65, borderLeft: "1px solid rgba(138,109,255,0.3)" }}>
               Con las condiciones actuales, terminarás pagando <strong style={{ color: "#C7B8FF" }}>{multiplicadorTexto === "—" ? "—" : multiplicadorTexto.replace("x", " veces")}</strong> el valor del crédito desembolsado.
               <br />
               Valor total proyectado: <strong style={{ color: "#F8FAFF" }}>{cop(totalAPagarEstimado)}</strong>. Incluye intereses, seguros y costos asociados durante todo el plazo.
             </div>
           </div>
+
 
         </Card>
 
