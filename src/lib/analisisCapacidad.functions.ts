@@ -297,8 +297,9 @@ export const analizarCapacidadPago = createServerFn({ method: "POST" })
       return { error: "LOVABLE_API_KEY no está configurada en el servidor.", data: null };
     }
 
+    const excluirPrima = bancoExcluyePrima(data.banco);
     const resultados = await Promise.all(
-      data.personas.map((p) => analizarPersona(apiKey, p)),
+      data.personas.map((p) => analizarPersona(apiKey, p, { excluirPrima, banco: data.banco })),
     );
 
     const personas = resultados.map((r) => r.persona);
