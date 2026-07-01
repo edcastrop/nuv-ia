@@ -589,7 +589,7 @@ function PodiumBlock({
         className="flex flex-wrap items-center justify-between gap-4"
         style={{
           marginTop: 40,
-          padding: "24px 32px",
+          padding: "30px 40px",
           borderRadius: 20,
           background: "rgba(255,255,255,0.03)",
           border: `1px solid ${PODIUM_BORDER}`,
@@ -622,20 +622,21 @@ function PodiumBlock({
         <button
           className="flex items-center gap-2 transition-all hover:scale-[1.02]"
           style={{
-            padding: "10px 18px",
+            padding: "12px 24px",
             borderRadius: 999,
-            background: "rgba(255,255,255,0.04)",
+            background: "linear-gradient(135deg, rgba(77,124,254,0.18), rgba(247,181,0,0.12))",
             border: `1px solid ${PODIUM_BORDER}`,
             color: "#FFFFFF",
-            fontSize: 12,
-            fontWeight: 700,
+            fontSize: 13,
+            fontWeight: 800,
             letterSpacing: "0.04em",
             textTransform: "uppercase",
             backdropFilter: "blur(8px)",
             cursor: "pointer",
+            boxShadow: "0 6px 20px rgba(0,0,0,0.35)",
           }}
         >
-          Ver ranking completo <ArrowRight size={13} />
+          Ver ranking completo <ArrowRight size={14} />
         </button>
       </div>
     </section>
