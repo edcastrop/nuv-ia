@@ -120,6 +120,9 @@ export function CapacidadPagoTool() {
   const [dragIdx, setDragIdx] = useState<number | null>(null);
 
   const limiteAplicable = esVis ? 0.40 : 0.30;
+  const excluyePrima = !!banco && (BANCOS_EXCLUYEN_PRIMA as readonly string[]).some(
+    (b) => banco.toLowerCase() === b.toLowerCase() || banco.toLowerCase().includes(b.toLowerCase()),
+  );
   const totalArchivos = useMemo(() => personas.reduce((s, p) => s + p.archivos.length, 0), [personas]);
 
   const tipoDocFromName = (name: string): TipoDoc => {
