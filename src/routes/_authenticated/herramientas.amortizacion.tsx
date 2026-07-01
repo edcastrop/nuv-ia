@@ -85,6 +85,31 @@ function construirTabla(valor: number, tea: number, n: number, seguros: number):
   return rows;
 }
 
+function construirTablaUVR(
+  valorUVR: number,
+  teaUVR: number,
+  n: number,
+  uvr0: number,
+  varAnual: number,
+  segurosCOP: number,
+): Row[] {
+  const base = construirTabla(valorUVR, teaUVR, n, 0);
+  return base.map((r) => {
+    const uvrT = uvr0 * Math.pow(1 + varAnual, (r.periodo - 1) / 12);
+    const cuotaCOP = r.cuota * uvrT;
+    return {
+      periodo: r.periodo,
+      saldoInicial: r.saldoInicial * uvrT,
+      cuota: cuotaCOP,
+      interes: r.interes * uvrT,
+      capital: r.capital * uvrT,
+      seguros: segurosCOP,
+      totalCuota: cuotaCOP + segurosCOP,
+      saldoFinal: r.saldoFinal * uvrT,
+    };
+  });
+}
+
 function findBreakEven(rows: Row[]): number | null {
   for (const r of rows) {
     if (r.capital >= r.interes) return r.periodo;
