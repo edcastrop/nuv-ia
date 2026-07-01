@@ -14,16 +14,16 @@ interface Caso {
 }
 
 const CASOS: Caso[] = [
-  { nombre: "María Fernanda Ríos",   ciudad: "Bogotá",       banco: "Bancolombia",        tiempo: "4 años", dinero:  86_400_000, testimonio: "NUVIA me mostró una alternativa que nunca me explicó el banco." },
-  { nombre: "Carlos Andrés Mejía",   ciudad: "Medellín",     banco: "Davivienda",         tiempo: "5 años", dinero: 112_700_000, testimonio: "Entendí mi crédito en minutos y pude tomar una mejor decisión." },
-  { nombre: "Laura Camila Torres",   ciudad: "Bucaramanga",  banco: "Banco de Bogotá",    tiempo: "3 años", dinero:  64_900_000, testimonio: "El análisis fue claro, visual y muy fácil de entender." },
-  { nombre: "Juan Sebastián Gómez",  ciudad: "Cali",         banco: "Banco Popular",      tiempo: "6 años", dinero: 138_200_000, testimonio: "No sabía que podía reducir tiempo sin cambiar de banco." },
-  { nombre: "Paola Andrea Vargas",   ciudad: "Barranquilla", banco: "Davivienda",         tiempo: "4 años", dinero:  91_300_000, testimonio: "Me ayudaron a recuperar años de vida financiera." },
-  { nombre: "Andrés Felipe Duarte",  ciudad: "Cúcuta",       banco: "Banco de Occidente", tiempo: "2 años", dinero:  42_800_000, testimonio: "La propuesta fue precisa y el proceso muy profesional." },
-  { nombre: "Juliana Marcela Peña",  ciudad: "Pereira",      banco: "Caja Social",        tiempo: "3 años", dinero:  58_600_000, testimonio: "Por fin entendí cuánto podía ahorrar realmente." },
-  { nombre: "Ricardo Alfonso Bernal",ciudad: "Cartagena",    banco: "AV Villas",          tiempo: "5 años", dinero: 104_500_000, testimonio: "El sistema me dio claridad antes de tomar la decisión." },
-  { nombre: "Natalia Sofía Herrera", ciudad: "Manizales",    banco: "Davibank",           tiempo: "4 años", dinero:  79_200_000, testimonio: "Me sorprendió ver el impacto en tiempo y dinero." },
-  { nombre: "Diego Alejandro Prieto",ciudad: "Ibagué",       banco: "FNA",                tiempo: "6 años", dinero: 126_900_000, testimonio: "Sentí que tenía una auditoría financiera hecha para mi caso." },
+  { nombre: "María Fernanda Ríos",    ciudad: "Bogotá",       banco: "Bancolombia",        tiempo: "4 años", dinero:  86_400_000, testimonio: "Gracias a NUVEX me ahorré casi 86 millones en intereses y me quitaron 4 años del crédito." },
+  { nombre: "Carlos Andrés Mejía",    ciudad: "Medellín",     banco: "Davivienda",         tiempo: "5 años", dinero: 112_700_000, testimonio: "Con NUVEX entendí mi crédito por primera vez... y terminé pagando 112 millones menos." },
+  { nombre: "Laura Camila Torres",    ciudad: "Bucaramanga",  banco: "Banco de Bogotá",    tiempo: "3 años", dinero:  64_900_000, testimonio: "Nunca imaginé que iba a recuperar 3 años y casi 65 millones sin cambiar de banco." },
+  { nombre: "Juan Sebastián Gómez",   ciudad: "Cali",         banco: "Banco Popular",      tiempo: "6 años", dinero: 138_200_000, testimonio: "NUVEX me mostró cómo salir 6 años antes del crédito y ahorrarme más de 138 millones." },
+  { nombre: "Paola Andrea Vargas",    ciudad: "Barranquilla", banco: "Davivienda",         tiempo: "4 años", dinero:  91_300_000, testimonio: "Sentí que por fin alguien defendía mi bolsillo. Me ahorré 91 millones y 4 años de cuotas." },
+  { nombre: "Andrés Felipe Duarte",   ciudad: "Cúcuta",       banco: "Banco de Occidente", tiempo: "2 años", dinero:  42_800_000, testimonio: "Con NUVEX me quitaron 2 años del crédito y 42 millones que hubieran sido puro interés." },
+  { nombre: "Juliana Marcela Peña",   ciudad: "Pereira",      banco: "Caja Social",        tiempo: "3 años", dinero:  58_600_000, testimonio: "Yo pensaba que ya no había nada que hacer. NUVEX me devolvió 3 años y 58 millones." },
+  { nombre: "Ricardo Alfonso Bernal", ciudad: "Cartagena",    banco: "AV Villas",          tiempo: "5 años", dinero: 104_500_000, testimonio: "Ahorré 104 millones en intereses y recorté 5 años. Ojalá lo hubiera hecho antes." },
+  { nombre: "Natalia Sofía Herrera",  ciudad: "Manizales",    banco: "Davibank",           tiempo: "4 años", dinero:  79_200_000, testimonio: "NUVEX me ahorró 79 millones y me sacó del crédito 4 años antes. Increíble." },
+  { nombre: "Diego Alejandro Prieto", ciudad: "Ibagué",       banco: "FNA",                tiempo: "6 años", dinero: 126_900_000, testimonio: "Con NUVEX terminé pagando 126 millones menos y salí del crédito 6 años antes de lo previsto." },
 ];
 
 const COOLDOWN_KEY = "nuvia:social-proof:cooldown-until";
