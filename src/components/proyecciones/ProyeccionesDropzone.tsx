@@ -328,8 +328,16 @@ export function ProyeccionesDropzone({ expedienteId, onReauditoria, variant = "q
   }, [fnUrl]);
 
   const eliminar = useCallback(async (id: string) => {
-    await fnDelete({ data: { id } });
-    await load();
+    setBusy(id);
+    setErr(null);
+    try {
+      await fnDelete({ data: { id } });
+      await load();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "No se pudo eliminar la proyección");
+    } finally {
+      setBusy(null);
+    }
   }, [fnDelete, load]);
 
   const fusionarYReauditar = useCallback(async () => {
@@ -538,11 +546,12 @@ export function ProyeccionesDropzone({ expedienteId, onReauditoria, variant = "q
                 </button>
                 <button
                   onClick={() => eliminar(it.id)}
+                  disabled={busy === it.id}
                   className="text-[11px] inline-flex items-center gap-1 px-2 py-1 rounded hover:opacity-80"
-                  style={{ color: "#DC2626" }}
+                  style={{ color: "#DC2626", opacity: busy === it.id ? 0.45 : 1, cursor: busy === it.id ? "wait" : "pointer" }}
                   title="Eliminar"
                 >
-                  <Trash2 size={12} />
+                  {busy === it.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
                 </button>
               </li>
             ))}

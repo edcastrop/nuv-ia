@@ -708,8 +708,12 @@ export function ProyeccionFinancieraView() {
 
   const removeEscenario = (id: string) => {
     if (escenarios.length <= 2) return;
-    setEscenarios((p) => p.filter((e) => e.id !== id));
-    if (selectedId === id) setSelectedId(escenarios[0].id);
+    const restantes = escenarios.filter((e) => e.id !== id);
+    setEscenarios(restantes);
+    if (selectedId === id) {
+      const siguiente = restantes.find((e) => e.tipo !== "actual") ?? restantes[0];
+      if (siguiente) setSelectedId(siguiente.id);
+    }
   };
 
   // Charts data
@@ -1409,8 +1413,9 @@ export function ProyeccionFinancieraView() {
                       />
                       <div className="flex items-end">
                         <button
+                          type="button"
                           onClick={() => removeEscenario(selected.id)}
-                          disabled={escenarios.length <= 2}
+                          disabled={escenarios.length <= 2 || selected.esc.tipo === "actual"}
                           className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-[12px] font-medium text-white/65 transition hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-30"
                         >
                           Eliminar escenario
