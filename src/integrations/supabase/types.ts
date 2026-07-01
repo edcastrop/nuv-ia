@@ -5939,6 +5939,15 @@ export type Database = {
         Returns: string
       }
       nuvia_iniciales_perfil: { Args: { _user_id: string }; Returns: string }
+      nuvia_jsonb_deep_merge_non_empty: {
+        Args: { _base: Json; _patch: Json }
+        Returns: Json
+      }
+      nuvia_jsonb_meaningful: { Args: { _v: Json }; Returns: boolean }
+      nuvia_patch_expediente_from_extracto: {
+        Args: { _exp_id: string }
+        Returns: undefined
+      }
       preview_desvinculacion: { Args: { _target: string }; Returns: Json }
       procesar_recordatorios_onboarding: { Args: never; Returns: Json }
       qa_bloquea_avance: { Args: { _expediente_id: string }; Returns: boolean }
