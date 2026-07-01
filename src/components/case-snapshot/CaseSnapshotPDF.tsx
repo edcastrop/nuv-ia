@@ -394,34 +394,38 @@ const PStep = ({ nombre, estado, isLast }: { nombre: string; estado: PipelineEst
         <div
           style={{
             position: "absolute",
-            top: 20,
+            top: 26,
             left: "50%",
             width: "100%",
-            height: 3,
+            height: 4,
             background: lineBg,
-            borderRadius: 2,
+            borderRadius: 3,
             zIndex: 0,
-            boxShadow: estado === "completado" ? "0 0 8px rgba(16,185,129,0.4)" : "none",
+            boxShadow: estado === "completado" ? "0 0 12px rgba(16,185,129,0.55)" : estado === "en_proceso" ? "0 0 12px rgba(59,130,246,0.5)" : "none",
           }}
         />
       )}
       <div
         style={{
-          width: 40,
-          height: 40,
+          width: 52,
+          height: 52,
           borderRadius: "50%",
           background: bg,
-          border: `1.5px solid ${border}`,
+          border: `1.8px solid ${border}`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           zIndex: 1,
-          boxShadow: ring,
+          boxShadow: estado === "completado"
+            ? "0 0 0 5px rgba(16,185,129,0.22), 0 0 30px rgba(16,185,129,0.7)"
+            : estado === "en_proceso"
+            ? "0 0 0 5px rgba(59,130,246,0.24), 0 0 34px rgba(96,165,250,0.85)"
+            : ring,
         }}
       >
         {iconFn(iconColor)}
       </div>
-      <div style={{ marginTop: 9, fontSize: 8.2, color: estado === "no_iniciado" ? C.textLabel : C.text, textAlign: "center", fontWeight: 800, lineHeight: 1.22, maxWidth: 68, letterSpacing: "0.02em" }}>{nombre}</div>
+      <div style={{ marginTop: 11, fontSize: 8.6, color: estado === "no_iniciado" ? C.textLabel : C.text, textAlign: "center", fontWeight: 850, lineHeight: 1.22, maxWidth: 74, letterSpacing: "0.03em" }}>{nombre}</div>
     </div>
   );
 };
