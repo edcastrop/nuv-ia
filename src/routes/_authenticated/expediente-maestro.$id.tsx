@@ -42,6 +42,7 @@ import { SiguienteAccionPanel } from "@/components/expediente/SiguienteAccionPan
 import { QueFaltaPanel } from "@/components/expediente/QueFaltaPanel";
 import { ChecklistRolPanel } from "@/components/expediente/ChecklistRolPanel";
 import { QABadge } from "@/components/qa-ai/QABadge";
+import { OtrosCreditosCliente } from "@/components/expediente-maestro/OtrosCreditosCliente";
 
 
 export const Route = createFileRoute("/_authenticated/expediente-maestro/$id")({
@@ -398,6 +399,10 @@ function MaestroDetail() {
           </div>
         </div>
       </section>
+
+      <OtrosCreditosCliente currentId={id} cedula={cliente.cedula} />
+
+
 
       {/* Capa guiada NUVEX (13 etapas + Siguiente acción + Qué falta + Checklist por rol).
           Solo se muestra si existe un caso operativo asociado a la cédula. */}
