@@ -72,7 +72,7 @@ export function EscalarTicketDialog({
               <label className="text-xs font-medium text-white/80 uppercase tracking-wide">Área</label>
               <NSelect
                 value={area}
-                onChange={(v) => setArea(v as typeof area)}
+                onValueChange={(v: string) => setArea(v as typeof area)}
                 options={[
                   { value: "juridica", label: "Jurídica" },
                   { value: "operaciones", label: "Operaciones" },
@@ -87,7 +87,7 @@ export function EscalarTicketDialog({
               <label className="text-xs font-medium text-white/80 uppercase tracking-wide">Prioridad</label>
               <NSelect
                 value={prioridad}
-                onChange={(v) => setPrioridad(v as typeof prioridad)}
+                onValueChange={(v: string) => setPrioridad(v as typeof prioridad)}
                 options={[
                   { value: "baja", label: "Baja" },
                   { value: "media", label: "Media" },
