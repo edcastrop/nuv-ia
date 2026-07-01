@@ -1165,7 +1165,7 @@ function ResultadoQaAi() {
         </p>
       </div>
 
-      <ExtractoOriginalAccordion extracto={data.extracto ?? null} />
+      <ExtractoOriginalAccordion extracto={data.extracto ?? null} expedienteId={expedienteIdCert} />
 
       {inputs ? (
         <ReconstruccionAuditorBlock
