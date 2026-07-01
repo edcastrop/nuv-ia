@@ -919,7 +919,23 @@ function NField({
   );
 }
 
-function KPI({ label, value, color, strong }: { label: string; value: number; color: string; strong?: boolean }) {
+function KPI({
+  label,
+  value,
+  color,
+  strong,
+  icon,
+  hint,
+  trend,
+}: {
+  label: string;
+  value: number;
+  color: string;
+  strong?: boolean;
+  icon?: React.ReactNode;
+  hint?: string;
+  trend?: "up" | "down";
+}) {
   const display = useCountUp(value);
   return (
     <motion.div
@@ -933,13 +949,30 @@ function KPI({ label, value, color, strong }: { label: string; value: number; co
         style={{ background: `radial-gradient(circle, ${color}, transparent 70%)` }}
       />
       <div className="relative">
-        <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/50">{label}</div>
+        <div className="flex items-start justify-between gap-2">
+          <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/50">{label}</div>
+          {icon && (
+            <div
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-white/[0.08]"
+              style={{ background: `${color}22`, color }}
+            >
+              {icon}
+            </div>
+          )}
+        </div>
         <div
           className={`mt-2 tabular-nums font-bold text-white ${strong ? "text-[26px]" : "text-[22px]"}`}
           style={strong ? { textShadow: `0 0 24px ${color}66` } : undefined}
         >
           {fmtCOP(display)}
         </div>
+        {hint && (
+          <div className="mt-1.5 flex items-center gap-1 text-[10.5px] text-white/50">
+            {trend === "up" && <TrendingUp className="h-3 w-3 text-emerald-400" />}
+            {trend === "down" && <TrendingUp className="h-3 w-3 text-red-400 rotate-180" />}
+            <span>{hint}</span>
+          </div>
+        )}
       </div>
     </motion.div>
   );
