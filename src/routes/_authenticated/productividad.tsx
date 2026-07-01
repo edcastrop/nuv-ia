@@ -841,14 +841,15 @@ function MetricMini({
       className="flex flex-col items-center gap-1"
       style={{
         height: 74,
-        padding: 12,
+        padding: 14,
         borderRadius: 10,
         background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(255,255,255,0.06)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        boxShadow: "0 4px 14px rgba(0,0,0,0.22)",
       }}
     >
       <div style={{ color }}>{icon}</div>
-      <div className="font-bold tabular-nums" style={{ color: "#FFFFFF", fontSize: 14 }}>
+      <div className="font-bold tabular-nums" style={{ color: "#FFFFFF", fontSize: 17 }}>
         {value}
       </div>
       <div
