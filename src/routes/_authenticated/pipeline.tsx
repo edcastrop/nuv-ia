@@ -941,9 +941,22 @@ function PipelinePage() {
                 className="h-9 max-w-[230px] rounded-lg border border-[var(--nuvia-border)] bg-[var(--nuvia-bg-tertiary)] px-3 text-xs text-[var(--nuvia-text-primary)] outline-none focus:border-[var(--nuvia-accent-blue)]"
               >
                 <option value="">Todos los analistas</option>
-                {analistas.map((a) => (
-                  <option key={a.id} value={a.id}>{a.nombre || a.email || a.id.slice(0, 8)}</option>
-                ))}
+                {(() => {
+                  const seen = new Set<string>();
+                  const combined: { id: string; nombre: string | null; email: string | null }[] = [];
+                  analistas.forEach((a) => { if (!seen.has(a.id)) { seen.add(a.id); combined.push(a); } });
+                  rows.forEach((r) => {
+                    if (!r.asesor_id || seen.has(r.asesor_id)) return;
+                    const p = profilesMap.get(r.asesor_id);
+                    seen.add(r.asesor_id);
+                    combined.push({ id: r.asesor_id, nombre: p?.nombre ?? null, email: p?.email ?? null });
+                  });
+                  combined.sort((a, b) => (a.nombre || a.email || "").localeCompare(b.nombre || b.email || "", "es"));
+                  return combined.map((a) => (
+                    <option key={a.id} value={a.id}>{a.nombre || a.email || a.id.slice(0, 8)}</option>
+                  ));
+                })()}
+
               </select>
               <label className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.035)] px-3 text-xs text-[var(--nuvia-text-secondary)]">
                 <input
