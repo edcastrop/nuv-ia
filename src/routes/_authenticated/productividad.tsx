@@ -653,8 +653,8 @@ function PodiumSpot({
   height: number;
   glow: string;
 }) {
-  const avatarSize = pos === 1 ? 96 : 72;
-  const scoreSize = pos === 1 ? 68 : 32;
+  const avatarSize = pos === 1 ? 128 : 96;
+  const scoreSize = pos === 1 ? 88 : 48;
   const medal = pos === 1 ? "🥇" : pos === 2 ? "🥈" : "🥉";
   const badgeLabel = pos === 1 ? "MEJOR DESEMPEÑO" : pos === 2 ? "SEGUNDO LUGAR" : "TERCER LUGAR";
 
