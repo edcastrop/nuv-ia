@@ -789,11 +789,12 @@ function PodiumSpot({
           SCORE
         </div>
         <div
-          className="font-black tabular-nums"
+          className="tabular-nums"
           style={{
             color: glow,
             fontSize: scoreSize,
-            lineHeight: 1,
+            lineHeight: pos === 1 ? 0.9 : 1,
+            fontWeight: pos === 1 ? 800 : 900,
             marginTop: 4,
             textShadow: `0 0 24px ${glow}66`,
             fontFamily: "'JetBrains Mono', ui-monospace, monospace",
