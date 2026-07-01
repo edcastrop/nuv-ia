@@ -19,6 +19,7 @@ import {
   Target,
 } from "lucide-react";
 import { NUVEX } from "@/components/nuvex/constants";
+import { ExtractoReader, type ExtractoApplyPayload } from "@/components/nuvex/ExtractoReader";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/herramientas/amortizacion")({
@@ -179,6 +180,48 @@ function AmortizationEngine() {
     setCalculated(false);
   }
 
+  function handleExtractoApply(p: ExtractoApplyPayload) {
+    if (p.monedaDetectada && p.monedaDetectada !== "pesos") {
+      toast.error(
+        "Extracto rechazado: NUVIA Amortization Engine solo procesa créditos en PESOS. Detectado: " +
+          p.monedaDetectada.toUpperCase(),
+        { duration: 6000 },
+      );
+      return false;
+    }
+    let filled = 0;
+    if (p.pesos?.tea) {
+      setTea(String(p.pesos.tea));
+      filled++;
+    }
+    if (p.cliente.plazoInicial) {
+      setPlazo(String(p.cliente.plazoInicial));
+      filled++;
+    }
+    const valorBase =
+      p.pesos?.valorDesembolsado && parseFloat(p.pesos.valorDesembolsado) > 0
+        ? p.pesos.valorDesembolsado
+        : p.pesos?.saldoCapital || "";
+    if (valorBase) {
+      setValor(String(valorBase));
+      filled++;
+    }
+    if (p.pesos?.seguros) {
+      setSeguros(String(p.pesos.seguros));
+      filled++;
+    }
+    setCalculated(false);
+    if (filled === 0) {
+      toast.warning("No se detectaron valores utilizables en el extracto. Ingresa los datos manualmente.");
+    } else {
+      toast.success(
+        `Extracto aplicado (${filled} campos). Solo falta indicar el periodo a consultar y presionar Calcular.`,
+        { duration: 5000 },
+      );
+    }
+    return true;
+  }
+
   async function handleExportExcel() {
     if (!rows.length) return toast.error("Primero calcula la amortización");
     const XLSX = await import("xlsx");
@@ -333,6 +376,21 @@ function AmortizationEngine() {
 
         {/* HERO */}
         <Hero />
+
+        {/* LECTOR DE EXTRACTOS */}
+        <div className="mt-8">
+          <PremiumCard>
+            <CardHeader
+              icon={<FileText className="h-4 w-4" />}
+              badge="Auto-fill"
+              title="Lector de extractos NUVIA"
+              subtitle="Arrastra o carga el extracto en PESOS y NUVIA autocompleta TEA, plazo, valor del crédito y seguros. Solo debe quedar pendiente el periodo a consultar."
+            />
+            <div className="mt-5">
+              <ExtractoReader modo="pesos" onApply={handleExtractoApply} />
+            </div>
+          </PremiumCard>
+        </div>
 
         {/* PANEL PRINCIPAL */}
         <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
