@@ -80,9 +80,15 @@ export function CommandCenter(props: {
   const productosOpts = useMemo(() => [...new Set(props.rows.map((r) => r.producto).filter(Boolean))] as string[], [props.rows]);
   const analistasOpts = useMemo(() => {
     const m = new Map<string, string>();
-    props.rows.forEach((r) => { if (r.analista_id && r.analista_nombre) m.set(r.analista_id, r.analista_nombre); });
-    return [...m.entries()].map(([id, nombre]) => ({ id, nombre }));
-  }, [props.rows]);
+    // Start with the full analyst roster provided by the server (so every
+    // analista appears in the filter, even without recent audits).
+    props.analistas.forEach((a) => { if (a.id) m.set(a.id, a.nombre); });
+    // Backfill from rows in case any recent audit has an analyst not yet in the roster.
+    props.rows.forEach((r) => { if (r.analista_id && r.analista_nombre && !m.has(r.analista_id)) m.set(r.analista_id, r.analista_nombre); });
+    return [...m.entries()]
+      .map(([id, nombre]) => ({ id, nombre }))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+  }, [props.rows, props.analistas]);
 
   const filtered = useMemo(() => {
     let out = applyFilters(props.rows, f);
