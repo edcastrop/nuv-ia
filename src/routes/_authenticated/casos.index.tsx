@@ -460,7 +460,31 @@ function CasosPage() {
 
 
 
-function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r: Expediente; isDup?: boolean; asesor?: { nombre?: string | null; email?: string | null }; licenciado?: { nombre?: string | null; email?: string | null }; auditCode?: string }) {
+function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode, onAudited }: { r: Expediente; isDup?: boolean; asesor?: { nombre?: string | null; email?: string | null }; licenciado?: { nombre?: string | null; email?: string | null }; auditCode?: string; onAudited?: () => void }) {
+  const [auditando, setAuditando] = useState(false);
+  const puedeAuditar = !r.qa_auditoria_id;
+  const runAuditoria = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (auditando) return;
+    setAuditando(true);
+    try {
+      const cd = (r.credito_data ?? {}) as Record<string, unknown>;
+      const pd = (r.propuesta_data ?? {}) as Record<string, unknown>;
+      await triggerSimuladorAutoQA({
+        expedienteId: r.id,
+        raw: {
+          banco: r.banco ?? undefined,
+          producto: r.producto ?? undefined,
+          moneda: r.modo === "uvr" ? "UVR" : "PESOS",
+          datos: { ...cd, ...pd, banco: r.banco, producto: r.producto, modo: r.modo, cedula: r.cedula, cliente: r.cliente_nombre },
+        },
+      });
+      onAudited?.();
+    } finally {
+      setAuditando(false);
+    }
+  };
   const theme = ESTADO_THEME[r.estado];
   const aColor = avatarColor(r.cliente_nombre);
   const initial = (r.cliente_nombre || "?").trim().charAt(0).toUpperCase();
