@@ -564,10 +564,19 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
     }
     let analistaIdVista = (auditoria.analista_id as string | null) ?? null;
     let expedienteInfo: { cliente_nombre: string | null; banco: string | null; codigo: string | null } | null = null;
+    // Hidratación defensiva: si el expediente quedó con "Sin nombre" pero el
+    // extracto sí extrajo el nombre/banco/cédula, propagamos y hacemos
+    // backfill silencioso para que /casos, /pipeline y esta vista dejen de
+    // mostrar "Sin nombre" al analista y al auditor.
+    const dEx = (extracto?.datos ?? {}) as Record<string, unknown>;
+    const extNombre = typeof dEx.cliente === "string" ? dEx.cliente.trim() : "";
+    const extBanco = typeof dEx.banco === "string" ? dEx.banco.trim() : "";
+    const extCedula = typeof dEx.cedula === "string" ? dEx.cedula.trim() : "";
+    const extNumCred = typeof dEx.numeroCredito === "string" ? dEx.numeroCredito.trim() : "";
     if (auditoria.expediente_id) {
       const { data: expRow } = await context.supabase
         .from("expedientes")
-        .select("asesor_id,cliente_nombre,banco,codigo")
+        .select("asesor_id,cliente_nombre,banco,codigo,cedula,numero_credito")
         .eq("id", auditoria.expediente_id as string)
         .maybeSingle();
       if (expRow?.asesor_id) analistaIdVista = expRow.asesor_id as string;
@@ -575,12 +584,37 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
         auditoria = { ...auditoria, analista_id: analistaIdVista } as typeof aud;
       }
       if (expRow) {
+        const nombreActual = (expRow.cliente_nombre as string | null) ?? null;
+        const bancoActual = (expRow.banco as string | null) ?? null;
+        const cedulaActual = (expRow.cedula as string | null) ?? null;
+        const numCredActual = (expRow.numero_credito as string | null) ?? null;
+        const necesitaNombre = !nombreActual || nombreActual.trim() === "" || nombreActual.trim().toLowerCase() === "sin nombre";
+        const patch: Record<string, string> = {};
+        if (necesitaNombre && extNombre) patch.cliente_nombre = extNombre;
+        if ((!bancoActual || bancoActual.trim() === "") && (extBanco || (extracto?.banco ?? ""))) patch.banco = extBanco || String(extracto?.banco ?? "");
+        if ((!cedulaActual || cedulaActual.trim() === "") && extCedula) patch.cedula = extCedula;
+        if ((!numCredActual || numCredActual.trim() === "") && extNumCred) patch.numero_credito = extNumCred;
+        if (Object.keys(patch).length > 0) {
+          try {
+            await context.supabase
+              .from("expedientes")
+              .update(patch as never)
+              .eq("id", auditoria.expediente_id as string);
+          } catch { /* backfill best-effort */ }
+        }
         expedienteInfo = {
-          cliente_nombre: (expRow.cliente_nombre as string | null) ?? null,
-          banco: (expRow.banco as string | null) ?? null,
+          cliente_nombre: patch.cliente_nombre ?? nombreActual ?? (extNombre || null),
+          banco: patch.banco ?? bancoActual ?? (extBanco || (extracto?.banco ?? null)),
           codigo: (expRow.codigo as string | null) ?? null,
         };
       }
+    }
+    if (!expedienteInfo && (extNombre || extBanco)) {
+      expedienteInfo = {
+        cliente_nombre: extNombre || null,
+        banco: extBanco || (extracto?.banco ?? null),
+        codigo: null,
+      };
     }
     const [analistaProf, ejecutorProf] = await Promise.all([
       analistaIdVista
