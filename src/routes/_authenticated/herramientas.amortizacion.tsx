@@ -377,6 +377,21 @@ function AmortizationEngine() {
         {/* HERO */}
         <Hero />
 
+        {/* LECTOR DE EXTRACTOS */}
+        <div className="mt-8">
+          <PremiumCard>
+            <CardHeader
+              icon={<FileText className="h-4 w-4" />}
+              badge="Auto-fill"
+              title="Lector de extractos NUVIA"
+              subtitle="Arrastra o carga el extracto en PESOS y NUVIA autocompleta TEA, plazo, valor del crédito y seguros. Solo debe quedar pendiente el periodo a consultar."
+            />
+            <div className="mt-5">
+              <ExtractoReader modo="pesos" onApply={handleExtractoApply} />
+            </div>
+          </PremiumCard>
+        </div>
+
         {/* PANEL PRINCIPAL */}
         <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
           {/* LEFT: Inputs */}
