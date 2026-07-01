@@ -637,12 +637,12 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r
         </div>
 
         {/* COL 3 — HONORARIOS KPI */}
-        <div className="flex flex-col justify-center gap-2 min-w-0">
-          <div className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: TEXT2 }}>
+        <div className="flex flex-col justify-center min-w-0 h-full">
+          <div className="text-[10px] font-bold uppercase tracking-[0.18em] mb-3" style={{ color: TEXT2 }}>
             Honorarios
           </div>
           <div
-            className="text-[26px] font-bold leading-none tabular-nums"
+            className="text-[26px] font-bold leading-none tabular-nums mb-4"
             style={{ color: VERDE, textShadow: `0 0 24px ${VERDE}40` }}
           >
             {formatCOP(Number(r.honorarios_final))}
@@ -662,7 +662,7 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r
         </div>
 
         {/* COL 4 — ACCIONES */}
-        <div className="flex flex-col justify-center gap-3 min-w-0">
+        <div className="flex flex-col justify-center items-center gap-4 min-w-0 pr-7">
           <Link
             to="/casos/$id"
             params={{ id: r.id }}
