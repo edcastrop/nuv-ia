@@ -598,7 +598,7 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
           try {
             await context.supabase
               .from("expedientes")
-              .update(patch)
+              .update(patch as never)
               .eq("id", auditoria.expediente_id as string);
           } catch { /* backfill best-effort */ }
         }
