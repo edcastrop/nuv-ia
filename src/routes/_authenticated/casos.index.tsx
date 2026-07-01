@@ -167,6 +167,18 @@ function CasosPage() {
           (profs ?? []).forEach((p: any) => m.set(p.id, { nombre: p.nombre ?? null, email: p.email ?? null }));
           if (!cancel) setAsesores(m);
         }
+        const auditIds = Array.from(
+          new Set(r.map((row) => row.qa_auditoria_id).filter(Boolean) as string[]),
+        );
+        if (auditIds.length > 0) {
+          const { data: auds } = await supabase
+            .from("qa_auditorias")
+            .select("id,codigo")
+            .in("id", auditIds);
+          const am = new Map<string, string>();
+          (auds ?? []).forEach((a: any) => { if (a.codigo) am.set(a.id, a.codigo); });
+          if (!cancel) setAuditCodes(am);
+        }
       })
       .catch((e) => { if (!cancel) setErr(e.message); })
       .finally(() => { if (!cancel) setLoading(false); });
