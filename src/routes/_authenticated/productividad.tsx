@@ -474,7 +474,7 @@ function PodiumBlock({
             <Trophy size={20} />
           </div>
           <div>
-            <div className="font-bold uppercase tracking-wider" style={{ color: "#FFFFFF", fontSize: 18, letterSpacing: "0.02em" }}>
+            <div className="uppercase" style={{ color: "#FFFFFF", fontSize: 20, fontWeight: 800, letterSpacing: "0.01em" }}>
               Podium NUVIA
             </div>
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.65)", marginTop: 2 }}>
@@ -570,16 +570,16 @@ function PodiumBlock({
       ) : (
         <div
           className="grid items-end"
-          style={{ gridTemplateColumns: "1fr 1.15fr 1fr", gap: 28 }}
+          style={{ gridTemplateColumns: "1fr 1.15fr 1fr", gap: 23 }}
         >
           <div className="flex items-end" style={{ transform: "translateY(-35px)" }}>
-            <PodiumSpot user={second} pos={2} height={430} glow={PODIUM_SILVER} />
+            <PodiumSpot user={second} pos={2} height={353} glow={PODIUM_SILVER} />
           </div>
           <div className="flex items-end">
-            <PodiumSpot user={first}  pos={1} height={540} glow={PODIUM_GOLD} />
+            <PodiumSpot user={first}  pos={1} height={648} glow={PODIUM_GOLD} />
           </div>
           <div className="flex items-end" style={{ transform: "translateY(-15px)" }}>
-            <PodiumSpot user={third}  pos={3} height={390} glow={PODIUM_BRONZE} />
+            <PodiumSpot user={third}  pos={3} height={296} glow={PODIUM_BRONZE} />
           </div>
         </div>
       )}
@@ -589,7 +589,7 @@ function PodiumBlock({
         className="flex flex-wrap items-center justify-between gap-4"
         style={{
           marginTop: 40,
-          padding: "24px 32px",
+          padding: "30px 40px",
           borderRadius: 20,
           background: "rgba(255,255,255,0.03)",
           border: `1px solid ${PODIUM_BORDER}`,
@@ -622,20 +622,21 @@ function PodiumBlock({
         <button
           className="flex items-center gap-2 transition-all hover:scale-[1.02]"
           style={{
-            padding: "10px 18px",
+            padding: "12px 24px",
             borderRadius: 999,
-            background: "rgba(255,255,255,0.04)",
+            background: "linear-gradient(135deg, rgba(77,124,254,0.18), rgba(247,181,0,0.12))",
             border: `1px solid ${PODIUM_BORDER}`,
             color: "#FFFFFF",
-            fontSize: 12,
-            fontWeight: 700,
+            fontSize: 13,
+            fontWeight: 800,
             letterSpacing: "0.04em",
             textTransform: "uppercase",
             backdropFilter: "blur(8px)",
             cursor: "pointer",
+            boxShadow: "0 6px 20px rgba(0,0,0,0.35)",
           }}
         >
-          Ver ranking completo <ArrowRight size={13} />
+          Ver ranking completo <ArrowRight size={14} />
         </button>
       </div>
     </section>
@@ -653,8 +654,8 @@ function PodiumSpot({
   height: number;
   glow: string;
 }) {
-  const avatarSize = pos === 1 ? 96 : 72;
-  const scoreSize = pos === 1 ? 68 : 32;
+  const avatarSize = pos === 1 ? 128 : 96;
+  const scoreSize = pos === 1 ? 88 : 48;
   const medal = pos === 1 ? "🥇" : pos === 2 ? "🥈" : "🥉";
   const badgeLabel = pos === 1 ? "MEJOR DESEMPEÑO" : pos === 2 ? "SEGUNDO LUGAR" : "TERCER LUGAR";
 
@@ -683,11 +684,11 @@ function PodiumSpot({
         borderRadius: 28,
         padding: pos === 1 ? "44px 20px 24px" : "38px 18px 22px",
         background: `linear-gradient(180deg, ${PODIUM_CARD} 0%, rgba(10,18,34,0.95) 100%)`,
-        border: `1px solid ${glow}55`,
+        border: `1px solid ${glow}66`,
         boxShadow:
           pos === 1
-            ? "0 0 40px rgba(247,181,0,0.22)"
-            : `0 0 32px -12px ${glow}AA, 0 12px 32px rgba(0,0,0,0.45), inset 0 1px 0 ${glow}22`,
+            ? "0 0 26px rgba(247,181,0,0.26)"
+            : `0 0 21px -8px ${glow}CC, 0 12px 32px rgba(0,0,0,0.45), inset 0 1px 0 ${glow}29`,
         backdropFilter: "blur(18px)",
       }}
     >
@@ -701,8 +702,8 @@ function PodiumSpot({
           width: avatarSize + 80,
           height: avatarSize + 80,
           borderRadius: "50%",
-          background: `radial-gradient(circle, ${glow}44 0%, transparent 65%)`,
-          filter: "blur(8px)",
+          background: `radial-gradient(circle, ${glow}52 0%, transparent 65%)`,
+          filter: "blur(5px)",
         }}
       />
 
@@ -734,8 +735,8 @@ function PodiumSpot({
           style={{
             padding: 3,
             borderRadius: "50%",
-            background: `linear-gradient(135deg, ${glow}, ${glow}66)`,
-            boxShadow: `0 8px 24px ${glow}66`,
+            background: `linear-gradient(135deg, ${glow}, ${glow}7A)`,
+            boxShadow: `0 8px 28px ${glow}7A`,
           }}
         >
           <div style={{ background: PODIUM_BG, borderRadius: "50%", padding: 2 }}>
@@ -746,12 +747,13 @@ function PodiumSpot({
 
       {/* Nombre */}
       <div
-        className="mt-4 text-center font-bold uppercase"
+        className="mt-4 text-center uppercase"
         style={{
           color: "#FFFFFF",
-          fontSize: pos === 1 ? 15 : 13,
-          letterSpacing: "0.04em",
-          lineHeight: 1.25,
+          fontSize: pos === 1 ? 16 : 14,
+          fontWeight: 800,
+          letterSpacing: "0.015em",
+          lineHeight: 1.15,
           zIndex: 2,
         }}
       >
@@ -793,10 +795,10 @@ function PodiumSpot({
           style={{
             color: glow,
             fontSize: scoreSize,
-            lineHeight: pos === 1 ? 0.9 : 1,
-            fontWeight: pos === 1 ? 800 : 900,
+            lineHeight: 0.82,
+            fontWeight: 900,
             marginTop: 4,
-            textShadow: `0 0 24px ${glow}66`,
+            textShadow: `0 0 16px ${glow}7A`,
             fontFamily: "'JetBrains Mono', ui-monospace, monospace",
           }}
         >
@@ -816,9 +818,9 @@ function PodiumSpot({
 
       {/* Métricas */}
       <div className="mt-4 grid grid-cols-3 gap-2 w-full" style={{ zIndex: 2 }}>
-        <MetricMini icon={<Repeat size={12} />} label="Trans." value={user.cambios_estado} color={PODIUM_BLUE} />
-        <MetricMini icon={<CheckCircle2 size={12} />} label="Cerr." value={user.casos_cerrados} color="#84B98F" />
-        <MetricMini icon={<Bell size={12} />} label="Alert." value={user.alertas_recibidas} color="#F6C453" />
+        <MetricMini icon={<Repeat size={15} />} label="Trans." value={user.cambios_estado} color={PODIUM_BLUE} />
+        <MetricMini icon={<CheckCircle2 size={15} />} label="Cerr." value={user.casos_cerrados} color="#84B98F" />
+        <MetricMini icon={<Bell size={15} />} label="Alert." value={user.alertas_recibidas} color="#F6C453" />
       </div>
     </div>
   );
@@ -840,14 +842,15 @@ function MetricMini({
       className="flex flex-col items-center gap-1"
       style={{
         height: 74,
-        padding: 12,
+        padding: 14,
         borderRadius: 10,
         background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(255,255,255,0.06)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        boxShadow: "0 4px 14px rgba(0,0,0,0.22)",
       }}
     >
       <div style={{ color }}>{icon}</div>
-      <div className="font-bold tabular-nums" style={{ color: "#FFFFFF", fontSize: 14 }}>
+      <div className="font-bold tabular-nums" style={{ color: "#FFFFFF", fontSize: 17 }}>
         {value}
       </div>
       <div
