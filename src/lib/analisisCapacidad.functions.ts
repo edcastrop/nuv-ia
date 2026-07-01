@@ -98,7 +98,7 @@ const tool = {
               valor: { type: "number", description: "Valor mensual o quincenal en pesos colombianos. 0 si no aplica al cálculo (ej. carta laboral repite información)." },
               tipo: {
                 type: "string",
-                enum: ["neto_mensual", "neto_quincenal", "devengado_mensual", "devengado_quincenal", "ingreso_declarado_renta", "salario_carta", "no_aplica"],
+                enum: ["neto_mensual", "neto_quincenal", "devengado_mensual", "devengado_quincenal", "ingreso_declarado_renta", "salario_carta", "consignaciones_mensual", "prima_excluida", "no_aplica"],
               },
             },
             required: ["documento", "periodo", "valor", "tipo"],
