@@ -265,7 +265,7 @@ function ReasignarModal({ origen, usuarios, onClose, onDone }: {
             <label className="nuvia-label block mb-1">Reasignar como</label>
             <select value={tipo} onChange={(e) => setTipo(e.target.value as "asesor" | "licenciado")} className="nuvia-input">
               <option value="asesor">Asesor del caso</option>
-              <option value="licenciado">Licenciado del caso</option>
+              <option value="licenciado">Analista Financiero Comercial del caso</option>
             </select>
           </div>
           <div>

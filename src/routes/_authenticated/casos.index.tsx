@@ -530,8 +530,8 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado }: { r: Expedient
                   </div>
                 )}
                 {licenciado && (
-                  <div className="flex items-center gap-1.5" title="Licenciado del caso">
-                    <span className="text-[9px] font-bold uppercase tracking-wider px-1 rounded" style={{ background: "rgba(31,109,61,0.15)", color: "#86EFAC", border: "1px solid rgba(31,109,61,0.4)" }}>Lic</span>
+                  <div className="flex items-center gap-1.5" title="Analista Financiero Comercial del caso">
+                    <span className="text-[9px] font-bold uppercase tracking-wider px-1 rounded" style={{ background: "rgba(31,109,61,0.15)", color: "#86EFAC", border: "1px solid rgba(31,109,61,0.4)" }}>AFC</span>
                     <AnalistaAvatar nombre={licenciado.nombre} email={licenciado.email} size={16} />
                     <span className="text-[11px] truncate" style={{ color: TEXT2 }}>
                       {licenciado.nombre || licenciado.email || ""}
