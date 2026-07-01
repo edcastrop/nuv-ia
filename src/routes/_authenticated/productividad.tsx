@@ -14,10 +14,10 @@ import { useUserRole } from "@/hooks/useUserRole";
 import {
   cargarProductividad,
   RANGOS_PRODUCTIVIDAD,
-  rangoMesISO,
   type ProductividadUsuario,
   type RangoKey,
 } from "@/lib/productividad";
+
 import {
   Activity,
   TrendingUp,
