@@ -13,7 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Loader2, Upload, X, ShieldCheck, AlertTriangle, AlertOctagon, FileText, Sparkles } from "lucide-react";
 import { formatCOP } from "@/lib/format";
-import { analizarCapacidadPago, type AnalisisCapacidadResultado } from "@/lib/analisisCapacidad.functions";
+import { analizarCapacidadPago, type AnalisisCapacidadResultado, BANCOS_EXCLUYEN_PRIMA } from "@/lib/analisisCapacidad.functions";
+import { BANCOS } from "@/components/nuvex/constants";
 import { unzipSync } from "fflate";
 
 type TipoDoc = "nomina" | "carta_laboral" | "renta" | "extracto" | "otro";
@@ -111,6 +112,7 @@ export function CapacidadPagoTool() {
   const ejecutar = useServerFn(analizarCapacidadPago);
 
   const [esVis, setEsVis] = useState(false);
+  const [banco, setBanco] = useState<string>("");
   const [cuota, setCuota] = useState<number>(0);
   const [personas, setPersonas] = useState<PersonaForm[]>([nuevaPersona("titular")]);
   const [analizando, setAnalizando] = useState(false);
@@ -118,6 +120,9 @@ export function CapacidadPagoTool() {
   const [dragIdx, setDragIdx] = useState<number | null>(null);
 
   const limiteAplicable = esVis ? 0.40 : 0.30;
+  const excluyePrima = !!banco && (BANCOS_EXCLUYEN_PRIMA as readonly string[]).some(
+    (b) => banco.toLowerCase() === b.toLowerCase() || banco.toLowerCase().includes(b.toLowerCase()),
+  );
   const totalArchivos = useMemo(() => personas.reduce((s, p) => s + p.archivos.length, 0), [personas]);
 
   const tipoDocFromName = (name: string): TipoDoc => {
@@ -190,6 +195,7 @@ export function CapacidadPagoTool() {
           expedienteId: PLACEHOLDER_EXPEDIENTE_ID,
           cuotaPropuesta: cuota,
           esVis,
+          banco: banco || undefined,
           personas: personas.map((p) => ({
             rol: p.rol,
             tipoPersona: p.tipoPersona,
@@ -237,6 +243,25 @@ export function CapacidadPagoTool() {
             <div className="text-sm font-bold">VIS</div>
             <div className={`text-xs ${esVis ? "text-white/80" : "text-white/50"}`}>Límite del 40%</div>
           </button>
+        </div>
+        <div className="mt-4">
+          <Label className="text-[10px] font-semibold text-white/60 uppercase tracking-[0.18em]">Banco destino (opcional)</Label>
+          <Select value={banco || "__none"} onValueChange={(v) => setBanco(v === "__none" ? "" : v)}>
+            <SelectTrigger className="mt-2 bg-white/[0.05] border-white/15 text-white">
+              <SelectValue placeholder="Sin banco específico" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none">Sin banco específico</SelectItem>
+              {BANCOS.map((b) => (
+                <SelectItem key={b} value={b}>{b}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {excluyePrima && (
+            <p className="mt-2 text-xs text-amber-200/90 bg-amber-500/10 border border-amber-400/30 rounded-lg px-3 py-2">
+              <b>{banco}</b> no considera la <b>prima</b> como ingreso recurrente. NUVIA la detectará y la excluirá del promedio mensual.
+            </p>
+          )}
         </div>
       </div>
 

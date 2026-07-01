@@ -21,12 +21,29 @@ const PersonaSchema = z.object({
   archivos: z.array(FileSchema).min(1).max(12),
 });
 
+// Bancos que NO consideran la prima como ingreso recurrente para radicación.
+// La prima se paga 2 veces al año → no promedia como salario mensual.
+export const BANCOS_EXCLUYEN_PRIMA = [
+  "Davivienda",
+  "Davibank",
+  "FNA",
+  "Banco de Bogotá",
+  "Banco Popular",
+] as const;
+
 const InputSchema = z.object({
   expedienteId: z.string().uuid(),
   cuotaPropuesta: z.number().positive(),
   esVis: z.boolean().default(false),
+  banco: z.string().max(80).optional(),
   personas: z.array(PersonaSchema).min(1).max(2),
 });
+
+function bancoExcluyePrima(banco?: string): boolean {
+  if (!banco) return false;
+  const n = banco.trim().toLowerCase();
+  return BANCOS_EXCLUYEN_PRIMA.some((b) => n === b.toLowerCase() || n.includes(b.toLowerCase()));
+}
 
 export type AnalisisPersonaResultado = {
   rol: "titular" | "codeudor";
@@ -81,7 +98,7 @@ const tool = {
               valor: { type: "number", description: "Valor mensual o quincenal en pesos colombianos. 0 si no aplica al cálculo (ej. carta laboral repite información)." },
               tipo: {
                 type: "string",
-                enum: ["neto_mensual", "neto_quincenal", "devengado_mensual", "devengado_quincenal", "ingreso_declarado_renta", "salario_carta", "no_aplica"],
+                enum: ["neto_mensual", "neto_quincenal", "devengado_mensual", "devengado_quincenal", "ingreso_declarado_renta", "salario_carta", "consignaciones_mensual", "prima_excluida", "no_aplica"],
               },
             },
             required: ["documento", "periodo", "valor", "tipo"],
@@ -118,7 +135,10 @@ Reglas generales:
 - La renta declarada sirve para CRUZAR consistencia anual (ingresos / 12). Tipo "ingreso_declarado_renta" valor=ingreso mensual implícito; si difiere >15% del promedio del banco/nómina, observación.
 - Confianza "alta" solo si: empleados con ≥3 nóminas mensuales (o 6 quincenales) consistentes; independientes con 3 extractos completos y consistentes con renta; mixtos con AMBOS sets (nóminas + extractos) consistentes con la renta.`;
 
-function buildUserContent(persona: z.infer<typeof PersonaSchema>) {
+function buildUserContent(
+  persona: z.infer<typeof PersonaSchema>,
+  opts: { excluirPrima: boolean; banco?: string },
+) {
   const tipoLabel =
     persona.tipoPersona === "independiente"
       ? "persona independiente (extractos bancarios + renta)"
@@ -127,14 +147,16 @@ function buildUserContent(persona: z.infer<typeof PersonaSchema>) {
       : persona.tipoPersona === "empleado_quincenal_independiente"
       ? "persona con INGRESO MIXTO: empleado dependiente CON PAGO QUINCENAL + actividad independiente (nóminas quincenales + extractos bancarios + renta). Suma ambas fuentes."
       : `empleado ${persona.tipoPersona.replace("empleado_", "").replace("_", " ")}`;
-  const intro = `Analiza los soportes financieros de esta ${tipoLabel} y llama la función extraer_ingresos. Documentos adjuntos (${persona.archivos.length}):`;
+  const reglaPrima = opts.excluirPrima
+    ? `\n\nREGLA DEL BANCO (${opts.banco ?? "banco destino"}): NO consideres la PRIMA como ingreso mensual. La prima legal (junio y diciembre), prima extralegal, prima de servicios, prima de vacaciones, prima de antigüedad y cualquier "prima" identificable en las nóminas se paga 2 veces al año, no es recurrente mensual y este banco la EXCLUYE del cálculo de capacidad. RÉSTALA del devengado/neto antes de promediar. En ingresosDetectados agrega una entrada con tipo "prima_excluida" indicando el valor descontado por documento, y anótalo en observaciones.`
+    : "";
+  const intro = `Analiza los soportes financieros de esta ${tipoLabel} y llama la función extraer_ingresos.${reglaPrima}\n\nDocumentos adjuntos (${persona.archivos.length}):`;
   const parts: Array<Record<string, unknown>> = [{ type: "text", text: intro }];
   for (const f of persona.archivos) {
     parts.push({ type: "text", text: `\n— ${f.tipo.toUpperCase()}: ${f.nombre}` });
     if (f.mime.startsWith("image/")) {
       parts.push({ type: "image_url", image_url: { url: f.dataUrl } });
     } else {
-      // PDFs u otros: enviar como file block (OpenRouter/Gemini)
       const base64 = f.dataUrl.includes(",") ? f.dataUrl.split(",")[1] : f.dataUrl;
       parts.push({
         type: "file",
@@ -151,8 +173,9 @@ function buildUserContent(persona: z.infer<typeof PersonaSchema>) {
 async function analizarPersona(
   apiKey: string,
   persona: z.infer<typeof PersonaSchema>,
+  opts: { excluirPrima: boolean; banco?: string },
 ): Promise<{ persona: AnalisisPersonaResultado; modelo: string; error?: string }> {
-  const userContent = buildUserContent(persona);
+  const userContent = buildUserContent(persona, opts);
 
   const call = (model: string) =>
     fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -274,8 +297,9 @@ export const analizarCapacidadPago = createServerFn({ method: "POST" })
       return { error: "LOVABLE_API_KEY no está configurada en el servidor.", data: null };
     }
 
+    const excluirPrima = bancoExcluyePrima(data.banco);
     const resultados = await Promise.all(
-      data.personas.map((p) => analizarPersona(apiKey, p)),
+      data.personas.map((p) => analizarPersona(apiKey, p, { excluirPrima, banco: data.banco })),
     );
 
     const personas = resultados.map((r) => r.persona);
