@@ -683,11 +683,11 @@ function PodiumSpot({
         borderRadius: 28,
         padding: pos === 1 ? "44px 20px 24px" : "38px 18px 22px",
         background: `linear-gradient(180deg, ${PODIUM_CARD} 0%, rgba(10,18,34,0.95) 100%)`,
-        border: `1px solid ${glow}55`,
+        border: `1px solid ${glow}66`,
         boxShadow:
           pos === 1
-            ? "0 0 40px rgba(247,181,0,0.22)"
-            : `0 0 32px -12px ${glow}AA, 0 12px 32px rgba(0,0,0,0.45), inset 0 1px 0 ${glow}22`,
+            ? "0 0 26px rgba(247,181,0,0.26)"
+            : `0 0 21px -8px ${glow}CC, 0 12px 32px rgba(0,0,0,0.45), inset 0 1px 0 ${glow}29`,
         backdropFilter: "blur(18px)",
       }}
     >
