@@ -734,8 +734,8 @@ function PodiumSpot({
           style={{
             padding: 3,
             borderRadius: "50%",
-            background: `linear-gradient(135deg, ${glow}, ${glow}66)`,
-            boxShadow: `0 8px 24px ${glow}66`,
+            background: `linear-gradient(135deg, ${glow}, ${glow}7A)`,
+            boxShadow: `0 8px 28px ${glow}7A`,
           }}
         >
           <div style={{ background: PODIUM_BG, borderRadius: "50%", padding: 2 }}>
