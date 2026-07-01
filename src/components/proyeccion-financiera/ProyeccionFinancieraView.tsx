@@ -1415,7 +1415,7 @@ export function ProyeccionFinancieraView() {
                         <button
                           type="button"
                           onClick={() => removeEscenario(selected.id)}
-                          disabled={escenarios.length <= 2 || selected.esc.tipo === "actual"}
+                          disabled={escenarios.length <= 2}
                           className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-[12px] font-medium text-white/65 transition hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-30"
                         >
                           Eliminar escenario
