@@ -9,12 +9,14 @@ export interface ProductividadUsuario {
   user_id: string;
   nombre: string;
   email: string | null;
-  cambios_estado: number;       // # transiciones realizadas en el periodo
-  casos_cerrados: number;       // expedientes finalizados/proceso_cerrado en periodo
-  casos_activos: number;        // expedientes activos asignados hoy
-  alertas_recibidas: number;    // notificaciones tipo caso_estancado o incidente
-  horas_promedio_ciclo: number; // promedio de horas entre creación y cierre
+  avatar_url: string | null;
+  cambios_estado: number;
+  casos_cerrados: number;
+  casos_activos: number;
+  alertas_recibidas: number;
+  horas_promedio_ciclo: number;
 }
+
 
 const ESTADOS_CERRADOS_SET = new Set<string>(ESTADOS_CERRADOS);
 
