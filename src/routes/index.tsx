@@ -59,6 +59,7 @@ function LandingPage() {
       <SectionRedes />
       <CtaFinal />
       <FooterPremium />
+      <NuviaSocialProofToast />
     </div>
   );
 }
