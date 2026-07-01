@@ -433,7 +433,7 @@ function AmortizationEngine() {
         </Link>
 
         {/* HERO */}
-        <Hero />
+        <Hero modo={modo} />
 
         {/* LECTOR DE EXTRACTOS */}
         <div className="mt-8">
@@ -442,10 +442,10 @@ function AmortizationEngine() {
               icon={<FileText className="h-4 w-4" />}
               badge="Auto-fill"
               title="Lector de extractos NUVIA"
-              subtitle="Arrastra o carga el extracto en PESOS y NUVIA autocompleta TEA, plazo, valor del crédito y seguros. Solo debe quedar pendiente el periodo a consultar."
+              subtitle="Arrastra o carga el extracto (PESOS o UVR). NUVIA detecta la modalidad y autocompleta TEA, plazo, valor y seguros. Solo debe quedar pendiente el periodo a consultar."
             />
             <div className="mt-5">
-              <ExtractoReader modo="pesos" onApply={handleExtractoApply} />
+              <ExtractoReader modo={modo} onApply={handleExtractoApply} />
             </div>
           </PremiumCard>
         </div>
@@ -458,16 +458,50 @@ function AmortizationEngine() {
               icon={<Calculator className="h-4 w-4" />}
               badge="Input"
               title="Datos del crédito"
-              subtitle="Ingresa los parámetros del sistema francés en pesos."
+              subtitle={
+                modo === "uvr"
+                  ? "Sistema francés en UVR. Ingresa la TEA UVR, el saldo en UVR y la variación anual esperada."
+                  : "Ingresa los parámetros del sistema francés en pesos."
+              }
             />
-            <div className="space-y-4 mt-6">
+
+            {/* Modo toggle PESOS / UVR */}
+            <div className="mt-5 inline-flex items-center rounded-xl border border-white/10 bg-white/[0.03] p-1">
+              {(["pesos", "uvr"] as const).map((m) => {
+                const active = modo === m;
+                return (
+                  <button
+                    key={m}
+                    onClick={() => {
+                      setModo(m);
+                      setCalculated(false);
+                    }}
+                    className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wider transition ${
+                      active ? "text-white" : "text-white/50 hover:text-white/80"
+                    }`}
+                    style={
+                      active
+                        ? {
+                            background: `linear-gradient(135deg, ${NUVEX.azul}, ${NUVEX.verde})`,
+                            boxShadow: `0 8px 20px -10px ${NUVEX.verde}`,
+                          }
+                        : undefined
+                    }
+                  >
+                    {m === "pesos" ? "Pesos" : "UVR"}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="space-y-4 mt-5">
               <NField
-                label="TEA (Tasa Efectiva Anual)"
+                label={modo === "uvr" ? "TEA UVR (Tasa Efectiva Anual)" : "TEA (Tasa Efectiva Anual)"}
                 icon={<Percent className="h-3.5 w-3.5" />}
                 suffix="%"
                 value={tea}
                 onChange={setTea}
-                placeholder="13.5"
+                placeholder={modo === "uvr" ? "8.5" : "13.5"}
               />
               <NField
                 label="Plazo aprobado"
@@ -478,13 +512,34 @@ function AmortizationEngine() {
                 placeholder="180"
               />
               <NField
-                label="Valor crédito aprobado"
+                label={modo === "uvr" ? "Valor crédito en UVR" : "Valor crédito aprobado"}
                 icon={<DollarSign className="h-3.5 w-3.5" />}
-                prefix="$"
+                prefix={modo === "uvr" ? "" : "$"}
+                suffix={modo === "uvr" ? "UVR" : undefined}
                 value={valor}
                 onChange={setValor}
-                placeholder="200.000.000"
+                placeholder={modo === "uvr" ? "500000" : "200.000.000"}
               />
+              {modo === "uvr" && (
+                <>
+                  <NField
+                    label="UVR inicial (COP por UVR)"
+                    icon={<DollarSign className="h-3.5 w-3.5" />}
+                    prefix="$"
+                    value={uvrInicial}
+                    onChange={setUvrInicial}
+                    placeholder="340.50"
+                  />
+                  <NField
+                    label="Variación UVR anual esperada"
+                    icon={<TrendingUp className="h-3.5 w-3.5" />}
+                    suffix="% EA"
+                    value={varUvr}
+                    onChange={setVarUvr}
+                    placeholder="5.5"
+                  />
+                </>
+              )}
               <NField
                 label="Periodo a consultar"
                 icon={<Target className="h-3.5 w-3.5" />}
@@ -494,13 +549,14 @@ function AmortizationEngine() {
                 placeholder="1"
               />
               <NField
-                label="Seguros mensuales"
+                label="Seguros mensuales (COP)"
                 icon={<ShieldCheck className="h-3.5 w-3.5" />}
                 prefix="$"
                 value={seguros}
                 onChange={setSeguros}
                 placeholder="120.000"
               />
+
 
               {calculated && tasaMensual > 0 && (
                 <motion.div
