@@ -421,15 +421,15 @@ function AmortizationEngine() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#050816] text-white">
+    <div className="relative min-h-screen overflow-hidden bg-[#0B1020] text-white font-[Inter,system-ui,sans-serif] antialiased">
       <BackgroundFX />
       <div className="relative mx-auto w-full max-w-[1400px] px-6 py-8">
         {/* Back */}
         <Link
           to="/herramientas"
-          className="inline-flex items-center gap-1.5 text-xs text-white/60 hover:text-white transition mb-6"
+          className="group inline-flex items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-1.5 text-[11px] font-medium text-white/60 hover:text-white hover:bg-white/[0.05] hover:border-white/[0.10] transition-all duration-200 mb-6"
         >
-          <ArrowLeft className="h-3.5 w-3.5" /> Volver a Herramientas
+          <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" /> Volver a Herramientas
         </Link>
 
         {/* HERO */}
