@@ -638,18 +638,16 @@ function PodiumBlock({
 function PodiumSpot({
   user,
   pos,
-  heightPct,
+  height,
   glow,
 }: {
   user: (ProductividadUsuario & { score: number }) | undefined;
   pos: 1 | 2 | 3;
-  heightPct: number;
+  height: number;
   glow: string;
 }) {
-  const baseHeight = 420;
-  const height = Math.round((baseHeight * heightPct) / 100);
   const avatarSize = pos === 1 ? 96 : 72;
-  const scoreSize = pos === 1 ? 48 : 32;
+  const scoreSize = pos === 1 ? 68 : 32;
   const medal = pos === 1 ? "🥇" : pos === 2 ? "🥈" : "🥉";
   const badgeLabel = pos === 1 ? "MEJOR DESEMPEÑO" : pos === 2 ? "SEGUNDO LUGAR" : "TERCER LUGAR";
 
