@@ -529,6 +529,23 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r
                 size="xs"
                 asLink={false}
               />
+              {auditCode && (
+                <Link
+                  to="/qa-ai/$id"
+                  params={{ id: r.qa_auditoria_id ?? "" }}
+                  onClick={(e) => e.stopPropagation()}
+                  title="Ir a la auditoría QA"
+                  className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider hover:brightness-125 transition"
+                  style={{
+                    background: "rgba(68,93,163,0.15)",
+                    color: "#A5B5E0",
+                    border: "1px solid rgba(68,93,163,0.45)",
+                    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                  }}
+                >
+                  {auditCode}
+                </Link>
+              )}
             </div>
             <div className="text-xs mt-0.5" style={{ color: TEXT2 }}>
               CC {r.cedula || "—"}
