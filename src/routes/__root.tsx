@@ -151,12 +151,14 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isLanding = pathname === "/";
 
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
       <Toaster position="bottom-right" richColors closeButton />
-      <VictoryProvider />
+      {!isLanding && <VictoryProvider />}
     </QueryClientProvider>
   );
 }
