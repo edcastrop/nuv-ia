@@ -173,8 +173,9 @@ function buildUserContent(
 async function analizarPersona(
   apiKey: string,
   persona: z.infer<typeof PersonaSchema>,
+  opts: { excluirPrima: boolean; banco?: string },
 ): Promise<{ persona: AnalisisPersonaResultado; modelo: string; error?: string }> {
-  const userContent = buildUserContent(persona);
+  const userContent = buildUserContent(persona, opts);
 
   const call = (model: string) =>
     fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
