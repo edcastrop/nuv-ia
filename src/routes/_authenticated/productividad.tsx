@@ -163,42 +163,8 @@ function ProductividadPage() {
     );
   }
 
-  const rangoActions = (
-    <div className="flex gap-2 flex-wrap items-center">
-      {RANGOS_PRODUCTIVIDAD.map((r) => (
-        <button
-          key={r.key}
-          onClick={() => setRango(r.key)}
-          className="rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition"
-          style={{
-            background:
-              rango === r.key
-                ? "linear-gradient(135deg, var(--nuvia-accent-blue), var(--nuvia-accent-green))"
-                : "rgba(255,255,255,0.04)",
-            color: rango === r.key ? "#fff" : "var(--nuvia-text-secondary)",
-            border: rango === r.key ? "1px solid transparent" : "1px solid var(--nuvia-border)",
-          }}
-        >
-          {r.label}
-        </button>
-      ))}
-      <input
-        type="month"
-        value={`${mesRef.anio}-${String(mesRef.mes).padStart(2, "0")}`}
-        onChange={(e) => {
-          const [a, m] = e.target.value.split("-").map(Number);
-          if (a && m) setMesRef({ anio: a, mes: m });
-        }}
-        className="rounded-full px-3 py-1.5 text-[11px] font-semibold"
-        style={{
-          background: "rgba(255,255,255,0.04)",
-          border: "1px solid var(--nuvia-border)",
-          color: "var(--nuvia-text-primary)",
-          colorScheme: "dark",
-        }}
-      />
-    </div>
-  );
+
+
 
   return (
     <PageLayout>
