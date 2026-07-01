@@ -157,7 +157,38 @@ export async function upsertExpediente(p: UpsertPayload): Promise<Expediente> {
     );
   }
 
-  const row = {
+  // ── Anti-wipe (Audelina/Marsela): en UPDATES nunca sobreescribimos un
+  //    valor ya persistido con vacío. El bug histórico era que un re-save
+  //    del simulador (con payload parcial o reset) borraba cliente_data /
+  //    credito_data del expediente y el caso quedaba huérfano en /casos y
+  //    /qa-ai. Merge defensivo: conservamos toda clave existente cuando la
+  //    nueva llega vacía / null / string en blanco.
+  const mergeJson = (
+    existing: Record<string, unknown> | null | undefined,
+    incoming: Record<string, unknown> | null | undefined,
+  ): Record<string, unknown> => {
+    const out: Record<string, unknown> = { ...(existing ?? {}) };
+    const src = incoming ?? {};
+    for (const k of Object.keys(src)) {
+      const v = src[k];
+      const isEmpty =
+        v === undefined ||
+        v === null ||
+        (typeof v === "string" && v.trim() === "");
+      if (!isEmpty) out[k] = v;
+    }
+    return out;
+  };
+  const pickNonEmpty = (
+    nu: string | null | undefined,
+    prev: string | null | undefined,
+  ): string | null => {
+    const n = (nu ?? "").trim();
+    if (n) return n;
+    return prev ?? null;
+  };
+
+  const baseRow = {
     modo: p.modo,
     cliente_nombre: nombreLimpio || "Sin nombre",
     cedula: p.cliente.cedula || null,
@@ -174,9 +205,62 @@ export async function upsertExpediente(p: UpsertPayload): Promise<Expediente> {
   };
 
   if (p.id) {
+    const { data: prev } = await supabase
+      .from("expedientes")
+      .select(
+        "cliente_nombre,cedula,banco,numero_credito,producto,cliente_data,credito_data,propuesta_data,discount_data,honorarios_base,honorarios_final",
+      )
+      .eq("id", p.id)
+      .maybeSingle();
+
+    const prevRow = (prev ?? {}) as {
+      cliente_nombre?: string | null;
+      cedula?: string | null;
+      banco?: string | null;
+      numero_credito?: string | null;
+      producto?: string | null;
+      cliente_data?: Record<string, unknown> | null;
+      credito_data?: Record<string, unknown> | null;
+      propuesta_data?: Record<string, unknown> | null;
+      discount_data?: Record<string, unknown> | null;
+      honorarios_base?: number | null;
+      honorarios_final?: number | null;
+    };
+
+    const propuestaIncoming = (p.propuesta ?? {}) as Record<string, unknown>;
+    const propuestaFinal =
+      Object.keys(propuestaIncoming).length > 0
+        ? propuestaIncoming
+        : (prevRow.propuesta_data ?? {});
+
+    const mergedRow = {
+      ...baseRow,
+      cliente_nombre:
+        pickNonEmpty(nombreLimpio || null, prevRow.cliente_nombre) || "Sin nombre",
+      cedula: pickNonEmpty(baseRow.cedula, prevRow.cedula),
+      banco: pickNonEmpty(baseRow.banco, prevRow.banco),
+      numero_credito: pickNonEmpty(baseRow.numero_credito, prevRow.numero_credito),
+      producto: pickNonEmpty(baseRow.producto, prevRow.producto),
+      cliente_data: mergeJson(
+        prevRow.cliente_data,
+        p.cliente as unknown as Record<string, unknown>,
+      ) as unknown as never,
+      credito_data: mergeJson(
+        prevRow.credito_data,
+        p.credito as unknown as Record<string, unknown>,
+      ) as unknown as never,
+      propuesta_data: propuestaFinal as unknown as never,
+      discount_data: mergeJson(
+        prevRow.discount_data,
+        p.discountState as unknown as Record<string, unknown>,
+      ) as unknown as never,
+      honorarios_base: p.honorariosBase || Number(prevRow.honorarios_base ?? 0),
+      honorarios_final: p.honorariosFinal || Number(prevRow.honorarios_final ?? 0),
+    };
+
     const { data, error } = await supabase
       .from("expedientes")
-      .update(row)
+      .update(mergedRow)
       .eq("id", p.id)
       .select()
       .maybeSingle();
@@ -186,7 +270,7 @@ export async function upsertExpediente(p: UpsertPayload): Promise<Expediente> {
   }
   const { data, error } = await supabase
     .from("expedientes")
-    .insert({ ...row, asesor_id: user.id })
+    .insert({ ...baseRow, asesor_id: user.id })
     .select()
     .single();
   if (error) throw error;
