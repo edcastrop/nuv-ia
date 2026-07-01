@@ -746,12 +746,13 @@ function PodiumSpot({
 
       {/* Nombre */}
       <div
-        className="mt-4 text-center font-bold uppercase"
+        className="mt-4 text-center uppercase"
         style={{
           color: "#FFFFFF",
-          fontSize: pos === 1 ? 15 : 13,
-          letterSpacing: "0.04em",
-          lineHeight: 1.25,
+          fontSize: pos === 1 ? 16 : 14,
+          fontWeight: 800,
+          letterSpacing: "0.015em",
+          lineHeight: 1.15,
           zIndex: 2,
         }}
       >
