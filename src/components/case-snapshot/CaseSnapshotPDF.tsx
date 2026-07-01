@@ -338,18 +338,18 @@ const Wave = () => (
 const ClienteAvatar = () => (
   <div
     style={{
-      width: 63,
-      height: 63,
+      width: 77,
+      height: 77,
       borderRadius: "50%",
       background: "radial-gradient(circle at 35% 20%, #4F69D9, #1D2C71 72%)",
-      boxShadow: "0 0 38px rgba(59,130,246,0.32), inset 0 0 0 1px rgba(138,109,255,0.35)",
+      boxShadow: "0 0 46px rgba(59,130,246,0.38), inset 0 0 0 1px rgba(138,109,255,0.42)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       flexShrink: 0,
     }}
   >
-    <SvgUser size={37} color="#EAF2FF" />
+    <SvgUser size={45} color="#EAF2FF" />
   </div>
 );
 
