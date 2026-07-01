@@ -964,11 +964,11 @@ function useCountUp(target: number, duration = 700) {
 }
 
 function Th({ children }: { children: React.ReactNode }) {
-  return <th className="px-3 py-3 font-semibold text-white/70 whitespace-nowrap">{children}</th>;
+  return <th className="px-4 py-3.5 font-semibold text-white/65 whitespace-nowrap">{children}</th>;
 }
 function Td({ children, className = "", strong }: { children: React.ReactNode; className?: string; strong?: boolean }) {
   return (
-    <td className={`px-3 py-2.5 whitespace-nowrap text-white/85 ${strong ? "font-semibold text-white" : ""} ${className}`}>
+    <td className={`px-4 py-3 whitespace-nowrap text-white/85 ${strong ? "font-semibold text-white" : ""} ${className}`}>
       {children}
     </td>
   );
@@ -981,10 +981,17 @@ function BackgroundFX() {
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(circle at 15% 10%, rgba(68,93,163,0.35), transparent 55%), radial-gradient(circle at 85% 85%, rgba(132,185,143,0.28), transparent 55%), radial-gradient(circle at 50% 50%, rgba(147,51,234,0.15), transparent 60%)",
+            "radial-gradient(circle at 15% 10%, rgba(68,93,163,0.28), transparent 55%), radial-gradient(circle at 85% 85%, rgba(132,185,143,0.22), transparent 55%), radial-gradient(circle at 50% 50%, rgba(68,93,163,0.10), transparent 60%)",
         }}
       />
-      <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(180deg, #050816 0%, #081028 100%)", opacity: 0.6 }} />
+      <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(180deg, #0B1020 0%, #121826 100%)", opacity: 0.7 }} />
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.015] mix-blend-overlay"
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+        }}
+      />
     </>
   );
 }
