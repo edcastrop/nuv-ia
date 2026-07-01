@@ -207,7 +207,44 @@ function StickyHeader({ cliente, banco, producto, fecha, score, scoreColor, cert
 
 /* ---------- Extracto original (vista para auditor) ---------- */
 
-function ExtractoOriginalAccordion({ extracto }: { extracto: ExtractoInfo | null }) {
+function ExtractoOriginalAccordion({ extracto, expedienteId }: { extracto: ExtractoInfo | null; expedienteId: string | null }) {
+  const [opening, setOpening] = useState(false);
+  const [openingIdx, setOpeningIdx] = useState<number | null>(null);
+  const [soportes, setSoportes] = useState<Array<{ id: string; archivo_path: string; archivo_nombre: string | null; mime_type: string | null; created_at: string | null }>>([]);
+
+  useEffect(() => {
+    if (!expedienteId) { setSoportes([]); return; }
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("expediente_soportes" as never)
+        .select("id, archivo_path, archivo_nombre, mime_type, created_at")
+        .eq("expediente_id", expedienteId)
+        .eq("categoria", "extracto_banco")
+        .order("created_at", { ascending: true });
+      if (!cancelled && !error && Array.isArray(data)) {
+        setSoportes(data as never);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [expedienteId]);
+
+  const openPath = async (path: string, idx?: number) => {
+    if (typeof idx === "number") setOpeningIdx(idx);
+    try {
+      const { data: signed, error } = await supabase.storage
+        .from("extractos")
+        .createSignedUrl(path, 60 * 5);
+      if (error || !signed?.signedUrl) {
+        alert(error?.message ?? "No fue posible generar el enlace al extracto.");
+        return;
+      }
+      window.open(signed.signedUrl, "_blank", "noopener,noreferrer");
+    } finally {
+      if (typeof idx === "number") setOpeningIdx(null);
+    }
+  };
+
   const [opening, setOpening] = useState(false);
 
   const handleOpen = async () => {
