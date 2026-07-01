@@ -564,10 +564,14 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
         upsert: false,
         contentType: f.type || "application/octet-stream",
       });
-      if (upErr) return;
-      setArchivoPath(path);
+      if (upErr) {
+        console.warn("[ExtractoReader] upload error:", upErr);
+        return;
+      }
+      // Primer archivo → archivo_path principal de la lectura.
+      // TODOS los archivos → expediente_soportes (multi-imagen viaja completo a QA).
+      setArchivoPath((prev) => prev ?? path);
 
-      // Registrar también en expediente_soportes para que viaje a Contratación.
       if (expedienteId) {
         const { error: insErr } = await supabase
           .from("expediente_soportes" as never)
@@ -665,7 +669,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
       }
       setStaging((prev) => [...prev, ...slice]);
       setStagingRawText((prev) => (prev ? `${prev}\n\n${res.rawText}` : res.rawText));
-      if (!archivoPath) await uploadOriginal(localFile);
+      await uploadOriginal(localFile);
       setFile(localFile);
       setPendingFile(null);
       setPassword("");

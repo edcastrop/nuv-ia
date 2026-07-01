@@ -207,28 +207,57 @@ function StickyHeader({ cliente, banco, producto, fecha, score, scoreColor, cert
 
 /* ---------- Extracto original (vista para auditor) ---------- */
 
-function ExtractoOriginalAccordion({ extracto }: { extracto: ExtractoInfo | null }) {
+function ExtractoOriginalAccordion({ extracto, expedienteId }: { extracto: ExtractoInfo | null; expedienteId: string | null }) {
   const [opening, setOpening] = useState(false);
+  const [openingIdx, setOpeningIdx] = useState<number | null>(null);
+  const [soportes, setSoportes] = useState<Array<{ id: string; archivo_path: string; archivo_nombre: string | null; mime_type: string | null; created_at: string | null }>>([]);
 
-  const handleOpen = async () => {
-    if (!extracto?.archivo_path) return;
-    setOpening(true);
+  useEffect(() => {
+    if (!expedienteId) { setSoportes([]); return; }
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("expediente_soportes" as never)
+        .select("id, archivo_path, archivo_nombre, mime_type, created_at")
+        .eq("expediente_id", expedienteId)
+        .eq("categoria", "extracto_banco")
+        .order("created_at", { ascending: true });
+      if (!cancelled && !error && Array.isArray(data)) {
+        setSoportes(data as never);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [expedienteId]);
+
+  const openPath = async (path: string, idx?: number) => {
+    if (typeof idx === "number") setOpeningIdx(idx);
     try {
       const { data: signed, error } = await supabase.storage
         .from("extractos")
-        .createSignedUrl(extracto.archivo_path, 60 * 5);
+        .createSignedUrl(path, 60 * 5);
       if (error || !signed?.signedUrl) {
         alert(error?.message ?? "No fue posible generar el enlace al extracto.");
         return;
       }
       window.open(signed.signedUrl, "_blank", "noopener,noreferrer");
     } finally {
+      if (typeof idx === "number") setOpeningIdx(null);
+    }
+  };
+
+  const handleOpen = async () => {
+    if (!extracto?.archivo_path) return;
+    setOpening(true);
+    try {
+      await openPath(extracto.archivo_path);
+    } finally {
       setOpening(false);
     }
   };
 
+  const totalArchivos = soportes.length + (extracto?.archivo_path && !soportes.some((s) => s.archivo_path === extracto.archivo_path) ? 1 : 0);
   const titulo = extracto ? "Extracto original del cliente" : "Extracto original (no adjunto)";
-  const count = extracto?.archivo_path ? "PDF disponible" : "sin archivo";
+  const count = totalArchivos > 0 ? `${totalArchivos} archivo${totalArchivos > 1 ? "s" : ""}` : "sin archivo";
 
   const datosVisibles = (() => {
     if (!extracto?.datos) return [] as Array<[string, string]>;
@@ -322,12 +351,38 @@ function ExtractoOriginalAccordion({ extracto }: { extracto: ExtractoInfo | null
                 }}
               >
                 <Paperclip size={13} />
-                {extracto.archivo_path ? (opening ? "Abriendo…" : "Ver extracto adjunto") : "Sin archivo adjunto"}
+                {extracto.archivo_path ? (opening ? "Abriendo…" : "Ver extracto principal") : "Sin archivo principal"}
               </button>
               {extracto.archivo_nombre && (
                 <span className="text-[11.5px]" style={{ color: "var(--nuvia-text-muted)" }}>{extracto.archivo_nombre}</span>
               )}
             </div>
+
+            {soportes.length > 0 && (
+              <div className="mt-2">
+                <div className="text-[11.5px] font-semibold mb-1.5" style={{ color: "var(--nuvia-text-secondary)" }}>
+                  Todos los archivos que subió el analista ({soportes.length}):
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  {soportes.map((s, idx) => (
+                    <button
+                      key={s.id}
+                      onClick={() => openPath(s.archivo_path, idx)}
+                      className="flex items-center justify-between gap-3 px-3 py-1.5 rounded-md text-[12px] text-left"
+                      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--nuvia-border)", color: "var(--nuvia-text-primary)" }}
+                    >
+                      <span className="flex items-center gap-2 truncate">
+                        <Paperclip size={12} style={{ color: "var(--nuvia-accent)" }} />
+                        <span className="truncate">{s.archivo_nombre ?? s.archivo_path}</span>
+                      </span>
+                      <span className="text-[11px]" style={{ color: "var(--nuvia-text-muted)" }}>
+                        {openingIdx === idx ? "Abriendo…" : "Abrir"}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
@@ -1110,7 +1165,7 @@ function ResultadoQaAi() {
         </p>
       </div>
 
-      <ExtractoOriginalAccordion extracto={data.extracto ?? null} />
+      <ExtractoOriginalAccordion extracto={data.extracto ?? null} expedienteId={expedienteIdCert} />
 
       {inputs ? (
         <ReconstruccionAuditorBlock
