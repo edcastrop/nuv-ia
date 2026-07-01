@@ -8,6 +8,7 @@ import {
   Instagram, MapPin, Phone, Globe, Calendar, Award,
 } from "lucide-react";
 import { AnimatedBackground } from "@/components/home/widgets/AnimatedBackground";
+import { NuviaSocialProofToast } from "@/components/victory/NuviaSocialProofToast";
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -58,6 +59,7 @@ function LandingPage() {
       <SectionRedes />
       <CtaFinal />
       <FooterPremium />
+      <NuviaSocialProofToast />
     </div>
   );
 }
