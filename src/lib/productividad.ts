@@ -18,21 +18,30 @@ export interface ProductividadUsuario {
 
 const ESTADOS_CERRADOS_SET = new Set<string>(ESTADOS_CERRADOS);
 
-export async function cargarProductividad(desdeISO: string): Promise<ProductividadUsuario[]> {
+export async function cargarProductividad(
+  desdeISO: string,
+  hastaISO?: string,
+): Promise<ProductividadUsuario[]> {
+  const hasta = hastaISO ?? new Date().toISOString();
+  const audQ = supabase.from("auditoria_global")
+    .select("user_id, accion, created_at")
+    .gte("created_at", desdeISO)
+    .lte("created_at", hasta)
+    .in("accion", ["cambiar_estado", "cambio_estado", "transicion_estado", "reasignar_asesor"]);
+  const notiQ = supabase.from("notificaciones_usuario")
+    .select("user_id, tipo, created_at")
+    .gte("created_at", desdeISO)
+    .lte("created_at", hasta);
+
   const [{ data: profs }, { data: aud }, { data: exps }, { data: notis }] = await Promise.all([
-    supabase.from("profiles").select("id, nombre, email, estado_acceso").eq("estado_acceso", "aprobado"),
-    supabase.from("auditoria_global")
-      .select("user_id, accion, created_at")
-      .gte("created_at", desdeISO)
-      .in("accion", ["cambiar_estado", "cambio_estado", "transicion_estado", "reasignar_asesor"]),
+    supabase.from("profiles").select("id, nombre, email, estado_acceso, avatar_url").eq("estado_acceso", "aprobado"),
+    audQ,
     supabase.from("expedientes")
       .select("id, asesor_id, estado_caso, created_at, updated_at"),
-    supabase.from("notificaciones_usuario")
-      .select("user_id, tipo, created_at")
-      .gte("created_at", desdeISO),
+    notiQ,
   ]);
 
-  type Prof = { id: string; nombre: string | null; email: string | null };
+  type Prof = { id: string; nombre: string | null; email: string | null; avatar_url: string | null };
   type Aud = { user_id: string | null; accion: string; created_at: string };
   type Exp = { id: string; asesor_id: string | null; estado_caso: string | null; created_at: string; updated_at: string };
   type Noti = { user_id: string; tipo: string; created_at: string };
@@ -49,7 +58,8 @@ export async function cargarProductividad(desdeISO: string): Promise<Productivid
   ((exps ?? []) as Exp[]).forEach((e) => {
     if (!e.asesor_id) return;
     const cerrado = e.estado_caso && ESTADOS_CERRADOS_SET.has(e.estado_caso);
-    if (cerrado && new Date(e.updated_at).toISOString() >= desdeISO) {
+    const updISO = new Date(e.updated_at).toISOString();
+    if (cerrado && updISO >= desdeISO && updISO <= hasta) {
       cerradosByUser.set(e.asesor_id, (cerradosByUser.get(e.asesor_id) ?? 0) + 1);
       const horas = (new Date(e.updated_at).getTime() - new Date(e.created_at).getTime()) / 3_600_000;
       const arr = ciclosByUser.get(e.asesor_id) ?? [];
@@ -68,13 +78,14 @@ export async function cargarProductividad(desdeISO: string): Promise<Productivid
     }
   });
 
-  const out: ProductividadUsuario[] = ((profs ?? []) as Prof[]).map((p) => {
+  const out: (ProductividadUsuario & { avatar_url: string | null })[] = ((profs ?? []) as Prof[]).map((p) => {
     const ciclos = ciclosByUser.get(p.id) ?? [];
     const prom = ciclos.length ? ciclos.reduce((s, x) => s + x, 0) / ciclos.length : 0;
     return {
       user_id: p.id,
       nombre: p.nombre || p.email || "—",
       email: p.email,
+      avatar_url: p.avatar_url,
       cambios_estado: cambiosByUser.get(p.id) ?? 0,
       casos_cerrados: cerradosByUser.get(p.id) ?? 0,
       casos_activos: activosByUser.get(p.id) ?? 0,
@@ -90,9 +101,10 @@ export async function cargarProductividad(desdeISO: string): Promise<Productivid
 }
 
 export const RANGOS_PRODUCTIVIDAD = [
-  { key: "7d",  label: "Últimos 7 días",  dias: 7 },
-  { key: "30d", label: "Últimos 30 días", dias: 30 },
-  { key: "90d", label: "Últimos 90 días", dias: 90 },
+  { key: "mensual",    label: "Mensual",    dias: 30 },
+  { key: "bimensual",  label: "Bimensual",  dias: 60 },
+  { key: "trimestral", label: "Trimestral", dias: 90 },
+  { key: "semestral",  label: "Semestral",  dias: 180 },
 ] as const;
 
 export type RangoKey = typeof RANGOS_PRODUCTIVIDAD[number]["key"];
@@ -100,3 +112,11 @@ export type RangoKey = typeof RANGOS_PRODUCTIVIDAD[number]["key"];
 export function isoDesdeDias(dias: number): string {
   return new Date(Date.now() - dias * 86_400_000).toISOString();
 }
+
+/** Devuelve { desde, hasta } para un mes YYYY-MM (mes 1-12). */
+export function rangoMesISO(anio: number, mes: number): { desde: string; hasta: string } {
+  const desde = new Date(Date.UTC(anio, mes - 1, 1)).toISOString();
+  const hasta = new Date(Date.UTC(anio, mes, 1) - 1).toISOString();
+  return { desde, hasta };
+}
+
