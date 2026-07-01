@@ -85,6 +85,31 @@ function construirTabla(valor: number, tea: number, n: number, seguros: number):
   return rows;
 }
 
+function construirTablaUVR(
+  valorUVR: number,
+  teaUVR: number,
+  n: number,
+  uvr0: number,
+  varAnual: number,
+  segurosCOP: number,
+): Row[] {
+  const base = construirTabla(valorUVR, teaUVR, n, 0);
+  return base.map((r) => {
+    const uvrT = uvr0 * Math.pow(1 + varAnual, (r.periodo - 1) / 12);
+    const cuotaCOP = r.cuota * uvrT;
+    return {
+      periodo: r.periodo,
+      saldoInicial: r.saldoInicial * uvrT,
+      cuota: cuotaCOP,
+      interes: r.interes * uvrT,
+      capital: r.capital * uvrT,
+      seguros: segurosCOP,
+      totalCuota: cuotaCOP + segurosCOP,
+      saldoFinal: r.saldoFinal * uvrT,
+    };
+  });
+}
+
 function findBreakEven(rows: Row[]): number | null {
   for (const r of rows) {
     if (r.capital >= r.interes) return r.periodo;
@@ -137,11 +162,15 @@ const fmtPct = (v: number, d = 4) => `${(v * 100).toFixed(d)}%`;
 // ============================================================================
 
 function AmortizationEngine() {
+  const [modo, setModo] = useState<"pesos" | "uvr">("pesos");
   const [tea, setTea] = useState<string>("13.5");
   const [plazo, setPlazo] = useState<string>("180");
   const [valor, setValor] = useState<string>("200000000");
   const [periodo, setPeriodo] = useState<string>("1");
   const [seguros, setSeguros] = useState<string>("120000");
+  // UVR-only fields
+  const [uvrInicial, setUvrInicial] = useState<string>("340.50");
+  const [varUvr, setVarUvr] = useState<string>("5.5");
   const [calculated, setCalculated] = useState(false);
 
   const teaNum = parseFloat(tea) / 100 || 0;
@@ -149,13 +178,19 @@ function AmortizationEngine() {
   const valorNum = parseFloat(valor) || 0;
   const periodoNum = parseInt(periodo) || 0;
   const segurosNum = parseFloat(seguros) || 0;
+  const uvrInicialNum = parseFloat(uvrInicial) || 0;
+  const varUvrNum = parseFloat(varUvr) / 100 || 0;
 
   const tasaMensual = teaNum > 0 ? tasaMensualFromTEA(teaNum) : 0;
 
   const rows = useMemo(() => {
     if (!calculated || teaNum <= 0 || plazoNum <= 0 || valorNum <= 0) return [];
+    if (modo === "uvr") {
+      if (uvrInicialNum <= 0) return [];
+      return construirTablaUVR(valorNum, teaNum, plazoNum, uvrInicialNum, varUvrNum, segurosNum);
+    }
     return construirTabla(valorNum, teaNum, plazoNum, segurosNum);
-  }, [calculated, teaNum, plazoNum, valorNum, segurosNum]);
+  }, [calculated, modo, teaNum, plazoNum, valorNum, segurosNum, uvrInicialNum, varUvrNum]);
 
   const currentRow = rows[Math.min(Math.max(periodoNum, 1), rows.length) - 1];
   const insight = useMemo(() => (rows.length ? generateInsight(rows, periodoNum) : ""), [rows, periodoNum]);
@@ -163,12 +198,16 @@ function AmortizationEngine() {
   function handleCalculate() {
     if (teaNum <= 0) return toast.error("TEA debe ser mayor a 0");
     if (plazoNum <= 0) return toast.error("Plazo debe ser mayor a 0");
-    if (valorNum <= 0) return toast.error("Valor del crédito debe ser mayor a 0");
+    if (valorNum <= 0)
+      return toast.error(modo === "uvr" ? "Valor del crédito en UVR debe ser mayor a 0" : "Valor del crédito debe ser mayor a 0");
     if (periodoNum < 1 || periodoNum > plazoNum)
       return toast.error(`Periodo debe estar entre 1 y ${plazoNum}`);
     if (segurosNum < 0) return toast.error("Seguros no puede ser negativo");
+    if (modo === "uvr") {
+      if (uvrInicialNum <= 0) return toast.error("UVR inicial debe ser mayor a 0");
+    }
     setCalculated(true);
-    toast.success("Amortización calculada");
+    toast.success(`Amortización ${modo === "uvr" ? "UVR" : "PESOS"} calculada`);
   }
 
   function handleReset() {
@@ -181,41 +220,60 @@ function AmortizationEngine() {
   }
 
   function handleExtractoApply(p: ExtractoApplyPayload) {
-    if (p.monedaDetectada && p.monedaDetectada !== "pesos") {
-      toast.error(
-        "Extracto rechazado: NUVIA Amortization Engine solo procesa créditos en PESOS. Detectado: " +
-          p.monedaDetectada.toUpperCase(),
-        { duration: 6000 },
-      );
-      return false;
+    const moneda = p.monedaDetectada;
+    // Ajuste automático de modo según lo detectado
+    if (moneda === "uvr" && modo !== "uvr") {
+      setModo("uvr");
+    } else if (moneda === "pesos" && modo !== "pesos") {
+      setModo("pesos");
     }
     let filled = 0;
-    if (p.pesos?.tea) {
-      setTea(String(p.pesos.tea));
-      filled++;
-    }
     if (p.cliente.plazoInicial) {
       setPlazo(String(p.cliente.plazoInicial));
       filled++;
     }
-    const valorBase =
-      p.pesos?.valorDesembolsado && parseFloat(p.pesos.valorDesembolsado) > 0
-        ? p.pesos.valorDesembolsado
-        : p.pesos?.saldoCapital || "";
-    if (valorBase) {
-      setValor(String(valorBase));
-      filled++;
-    }
-    if (p.pesos?.seguros) {
-      setSeguros(String(p.pesos.seguros));
-      filled++;
+    if (moneda === "uvr") {
+      if (p.uvr?.teaCobrada) {
+        setTea(String(p.uvr.teaCobrada));
+        filled++;
+      }
+      const valorU = p.uvr?.saldoUVR || "";
+      if (valorU) {
+        setValor(String(valorU));
+        filled++;
+      }
+      if (p.uvr?.valorUVR) {
+        setUvrInicial(String(p.uvr.valorUVR));
+        filled++;
+      }
+      if (p.uvr?.seguros) {
+        setSeguros(String(p.uvr.seguros));
+        filled++;
+      }
+    } else {
+      if (p.pesos?.tea) {
+        setTea(String(p.pesos.tea));
+        filled++;
+      }
+      const valorBase =
+        p.pesos?.valorDesembolsado && parseFloat(p.pesos.valorDesembolsado) > 0
+          ? p.pesos.valorDesembolsado
+          : p.pesos?.saldoCapital || "";
+      if (valorBase) {
+        setValor(String(valorBase));
+        filled++;
+      }
+      if (p.pesos?.seguros) {
+        setSeguros(String(p.pesos.seguros));
+        filled++;
+      }
     }
     setCalculated(false);
     if (filled === 0) {
       toast.warning("No se detectaron valores utilizables en el extracto. Ingresa los datos manualmente.");
     } else {
       toast.success(
-        `Extracto aplicado (${filled} campos). Solo falta indicar el periodo a consultar y presionar Calcular.`,
+        `Extracto ${moneda === "uvr" ? "UVR" : "PESOS"} aplicado (${filled} campos). Solo falta indicar el periodo a consultar y presionar Calcular.`,
         { duration: 5000 },
       );
     }
@@ -267,7 +325,7 @@ function AmortizationEngine() {
     doc.text("Amortization Engine", 40, 55);
     doc.setFontSize(9);
     doc.setTextColor(200, 210, 230);
-    doc.text("Composición matemática exacta · Solo modalidad PESOS", 40, 72);
+    doc.text(`Composición matemática exacta · Modalidad ${modo === "uvr" ? "UVR" : "PESOS"}`, 40, 72);
 
     // Datos base
     let y = 120;
@@ -375,7 +433,7 @@ function AmortizationEngine() {
         </Link>
 
         {/* HERO */}
-        <Hero />
+        <Hero modo={modo} />
 
         {/* LECTOR DE EXTRACTOS */}
         <div className="mt-8">
@@ -384,10 +442,10 @@ function AmortizationEngine() {
               icon={<FileText className="h-4 w-4" />}
               badge="Auto-fill"
               title="Lector de extractos NUVIA"
-              subtitle="Arrastra o carga el extracto en PESOS y NUVIA autocompleta TEA, plazo, valor del crédito y seguros. Solo debe quedar pendiente el periodo a consultar."
+              subtitle="Arrastra o carga el extracto (PESOS o UVR). NUVIA detecta la modalidad y autocompleta TEA, plazo, valor y seguros. Solo debe quedar pendiente el periodo a consultar."
             />
             <div className="mt-5">
-              <ExtractoReader modo="pesos" onApply={handleExtractoApply} />
+              <ExtractoReader modo={modo} onApply={handleExtractoApply} />
             </div>
           </PremiumCard>
         </div>
@@ -400,16 +458,50 @@ function AmortizationEngine() {
               icon={<Calculator className="h-4 w-4" />}
               badge="Input"
               title="Datos del crédito"
-              subtitle="Ingresa los parámetros del sistema francés en pesos."
+              subtitle={
+                modo === "uvr"
+                  ? "Sistema francés en UVR. Ingresa la TEA UVR, el saldo en UVR y la variación anual esperada."
+                  : "Ingresa los parámetros del sistema francés en pesos."
+              }
             />
-            <div className="space-y-4 mt-6">
+
+            {/* Modo toggle PESOS / UVR */}
+            <div className="mt-5 inline-flex items-center rounded-xl border border-white/10 bg-white/[0.03] p-1">
+              {(["pesos", "uvr"] as const).map((m) => {
+                const active = modo === m;
+                return (
+                  <button
+                    key={m}
+                    onClick={() => {
+                      setModo(m);
+                      setCalculated(false);
+                    }}
+                    className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wider transition ${
+                      active ? "text-white" : "text-white/50 hover:text-white/80"
+                    }`}
+                    style={
+                      active
+                        ? {
+                            background: `linear-gradient(135deg, ${NUVEX.azul}, ${NUVEX.verde})`,
+                            boxShadow: `0 8px 20px -10px ${NUVEX.verde}`,
+                          }
+                        : undefined
+                    }
+                  >
+                    {m === "pesos" ? "Pesos" : "UVR"}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="space-y-4 mt-5">
               <NField
-                label="TEA (Tasa Efectiva Anual)"
+                label={modo === "uvr" ? "TEA UVR (Tasa Efectiva Anual)" : "TEA (Tasa Efectiva Anual)"}
                 icon={<Percent className="h-3.5 w-3.5" />}
                 suffix="%"
                 value={tea}
                 onChange={setTea}
-                placeholder="13.5"
+                placeholder={modo === "uvr" ? "8.5" : "13.5"}
               />
               <NField
                 label="Plazo aprobado"
@@ -420,13 +512,34 @@ function AmortizationEngine() {
                 placeholder="180"
               />
               <NField
-                label="Valor crédito aprobado"
+                label={modo === "uvr" ? "Valor crédito en UVR" : "Valor crédito aprobado"}
                 icon={<DollarSign className="h-3.5 w-3.5" />}
-                prefix="$"
+                prefix={modo === "uvr" ? "" : "$"}
+                suffix={modo === "uvr" ? "UVR" : undefined}
                 value={valor}
                 onChange={setValor}
-                placeholder="200.000.000"
+                placeholder={modo === "uvr" ? "500000" : "200.000.000"}
               />
+              {modo === "uvr" && (
+                <>
+                  <NField
+                    label="UVR inicial (COP por UVR)"
+                    icon={<DollarSign className="h-3.5 w-3.5" />}
+                    prefix="$"
+                    value={uvrInicial}
+                    onChange={setUvrInicial}
+                    placeholder="340.50"
+                  />
+                  <NField
+                    label="Variación UVR anual esperada"
+                    icon={<TrendingUp className="h-3.5 w-3.5" />}
+                    suffix="% EA"
+                    value={varUvr}
+                    onChange={setVarUvr}
+                    placeholder="5.5"
+                  />
+                </>
+              )}
               <NField
                 label="Periodo a consultar"
                 icon={<Target className="h-3.5 w-3.5" />}
@@ -436,13 +549,14 @@ function AmortizationEngine() {
                 placeholder="1"
               />
               <NField
-                label="Seguros mensuales"
+                label="Seguros mensuales (COP)"
                 icon={<ShieldCheck className="h-3.5 w-3.5" />}
                 prefix="$"
                 value={seguros}
                 onChange={setSeguros}
                 placeholder="120.000"
               />
+
 
               {calculated && tasaMensual > 0 && (
                 <motion.div
@@ -648,7 +762,7 @@ function AmortizationEngine() {
 // SUBCOMPONENTS
 // ============================================================================
 
-function Hero() {
+function Hero({ modo }: { modo: "pesos" | "uvr" }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
@@ -694,7 +808,7 @@ function Hero() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Badge icon={<Calculator className="h-3 w-3" />} label="Mathematical Engine" tone="blue" />
-          <Badge icon={<Lock className="h-3 w-3" />} label="Solo modalidad PESOS" tone="green" />
+          <Badge icon={<Lock className="h-3 w-3" />} label={modo === "uvr" ? "Modalidad UVR" : "Modalidad PESOS"} tone="green" />
         </div>
       </div>
 
@@ -706,7 +820,7 @@ function Hero() {
       >
         <Info className="h-4 w-4 text-amber-300 mt-0.5 shrink-0" />
         <div className="text-xs text-amber-100/85 leading-relaxed">
-          <b className="text-amber-200">Alcance del motor:</b> NUVIA Amortization Engine actualmente solo está disponible para créditos en pesos con sistema francés de cuota fija. Para créditos UVR, leasing UVR o productos indexados utiliza el módulo UVR Engine.
+          <b className="text-amber-200">Alcance del motor:</b> NUVIA Amortization Engine soporta créditos en <b>PESOS</b> (sistema francés de cuota fija) y en <b>UVR</b> (con proyección de variación anual esperada). Selecciona la modalidad arriba o carga el extracto para autodetectar.
         </div>
       </motion.div>
     </motion.div>
