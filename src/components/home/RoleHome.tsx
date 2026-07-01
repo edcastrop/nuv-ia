@@ -246,6 +246,12 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
           </div>
         </section>
 
+        {/* ═══ NUVIA VICTORY FEED — cierres firmados en vivo ═══ */}
+        <section>
+          <SectionTitle>Victorias del equipo</SectionTitle>
+          <VictoryFeed limit={6} />
+        </section>
+
         {/* ═══ FILA 5 — PENDIENTES + RECOMENDACIONES ═══ */}
         <div className="grid gap-5 lg:grid-cols-3">
           <div className="lg:col-span-1">
