@@ -95,6 +95,7 @@ export type ExtractoApplyPayload = {
     moneda?: string;
     datos?: Record<string, unknown>;
     archivoNombre?: string;
+    archivos?: Array<{ path: string; name: string; mime: string | null; size: number | null }>;
   };
 };
 
@@ -468,6 +469,7 @@ const STAGES: { id: Stage; label: string }[] = [
 ];
 
 type StagedItem = { mime: string; dataUrl: string; sourceName: string };
+type UploadedOriginal = { path: string; name: string; mime: string | null; size: number | null };
 const MAX_PAGES = 6;
 
 export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteId }: Props) {
@@ -486,6 +488,9 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
   const [stagingRawText, setStagingRawText] = useState("");
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [stagingNotice, setStagingNotice] = useState<string | null>(null);
+  const [uploadedOriginals, setUploadedOriginals] = useState<UploadedOriginal[]>([]);
+  const stagingCountRef = useRef(0);
+  const uploadedOriginalsRef = useRef<UploadedOriginal[]>([]);
   const { data: catalogoProductos = [] } = useProductosBancarios();
 
   useEffect(() => {
@@ -529,9 +534,12 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
     setParsed(null);
     setArchivoPath(null);
     setStaging([]);
+    stagingCountRef.current = 0;
     setStagingRawText("");
     setPendingFile(null);
     setStagingNotice(null);
+    uploadedOriginalsRef.current = [];
+    setUploadedOriginals([]);
     if (fileRef.current) fileRef.current.value = "";
   };
 
@@ -548,16 +556,42 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
     }
   };
 
+  const handleFilesSelect = async (files: FileList | File[] | null | undefined) => {
+    const selected = Array.from(files ?? []).filter(Boolean);
+    if (selected.length === 0) return;
+    setErrorMsg(null);
+    setParsed(null);
+    setStage("reading");
+    for (const selectedFile of selected) {
+      if (stagingCountRef.current >= MAX_PAGES) {
+        setStagingNotice(`Se cargaron ${MAX_PAGES} páginas. El resto de archivos no se leyó por el límite del motor.`);
+        break;
+      }
+      try {
+        await addFileToStaging(await snapshotFile(selectedFile), undefined);
+      } catch (err) {
+        console.error(err);
+        setErrorMsg(err instanceof Error ? err.message : "Error procesando el archivo.");
+        setStage("error");
+        break;
+      }
+    }
+  };
+
   const removeStaged = (idx: number) => {
-    setStaging((prev) => prev.filter((_, i) => i !== idx));
+    setStaging((prev) => {
+      const next = prev.filter((_, i) => i !== idx);
+      stagingCountRef.current = next.length;
+      return next;
+    });
     setStagingNotice(null);
   };
 
-  const uploadOriginal = async (f: File) => {
+  const uploadOriginal = async (f: File): Promise<UploadedOriginal | null> => {
     try {
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData?.user?.id;
-      if (!uid) return;
+      if (!uid) return null;
       const path = `${uid}/${Date.now()}_${f.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
       const { error: upErr } = await supabase.storage.from("extractos").upload(path, f, {
         cacheControl: "3600",
@@ -566,11 +600,19 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
       });
       if (upErr) {
         console.warn("[ExtractoReader] upload error:", upErr);
-        return;
+        return null;
       }
       // Primer archivo → archivo_path principal de la lectura.
       // TODOS los archivos → expediente_soportes (multi-imagen viaja completo a QA).
       setArchivoPath((prev) => prev ?? path);
+      const uploaded: UploadedOriginal = {
+        path,
+        name: f.name,
+        mime: f.type || null,
+        size: f.size ?? null,
+      };
+      uploadedOriginalsRef.current = [...uploadedOriginalsRef.current, uploaded];
+      setUploadedOriginals(uploadedOriginalsRef.current);
 
       if (expedienteId) {
         const { error: insErr } = await supabase
@@ -588,8 +630,10 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
           } as never);
         if (insErr) console.warn("[ExtractoReader] No se pudo registrar soporte:", insErr);
       }
+      return uploaded;
     } catch (e) {
       console.warn("No se pudo subir el archivo a storage:", e);
+      return null;
     }
   };
 
@@ -647,7 +691,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
   const addFileToStaging = async (f: File, pwd: string | undefined) => {
     setErrorMsg(null);
     setStagingNotice(null);
-    if (staging.length >= MAX_PAGES) {
+    if (stagingCountRef.current >= MAX_PAGES) {
       setStagingNotice(`Ya llegaste al máximo de ${MAX_PAGES} páginas. Elimina alguna para añadir más.`);
       return;
     }
@@ -662,11 +706,12 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
         setStage("password");
         return;
       }
-      const remaining = MAX_PAGES - staging.length;
+      const remaining = MAX_PAGES - stagingCountRef.current;
       const slice = res.images.slice(0, remaining).map((img) => ({ ...img, sourceName: localFile.name }));
       if (slice.length === 0 && res.rawText.trim().length === 0) {
         throw new Error("No pude leer páginas del archivo. Verifica que no esté dañado.");
       }
+      stagingCountRef.current += slice.length;
       setStaging((prev) => [...prev, ...slice]);
       setStagingRawText((prev) => (prev ? `${prev}\n\n${res.rawText}` : res.rawText));
       await uploadOriginal(localFile);
@@ -1288,6 +1333,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
       }
     }
 
+    const primaryArchivoPath = archivoPath ?? uploadedOriginalsRef.current[0]?.path ?? null;
     const payload: ExtractoApplyPayload = {
       cliente: {
         nombre: get("cliente"),
@@ -1301,7 +1347,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
         cuotasPendientes: get("cuotasPendientes"),
         fechaExtracto: get("fechaExtracto"),
       },
-      archivoPath: archivoPath ?? undefined,
+      archivoPath: primaryArchivoPath ?? undefined,
       monedaDetectada,
       extracto: {
         // Nombres varían según banco: la mayoría usa interesCuota/capitalCuota,
@@ -1315,7 +1361,8 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
         producto,
         moneda: monedaDetectada,
         datos: parsed as unknown as Record<string, unknown>,
-        archivoNombre: file?.name,
+        archivoNombre: uploadedOriginalsRef.current[0]?.name ?? file?.name,
+        archivos: uploadedOriginalsRef.current,
       },
     };
 
@@ -1484,10 +1531,10 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
           e.preventDefault();
           e.stopPropagation();
           setDragActive(false);
-          const f = e.dataTransfer?.files?.[0];
-          if (f) {
+          const files = e.dataTransfer?.files;
+          if (files?.length) {
             setOpen(true);
-            handleFileSelect(f);
+            void handleFilesSelect(files);
           }
         }}
         style={{
@@ -1630,12 +1677,13 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
         ref={fileRef}
         type="file"
         accept="application/pdf,image/png,image/jpeg,image/webp,application/zip,.zip"
+        multiple
         className="hidden"
         onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) {
+          const files = e.target.files;
+          if (files?.length) {
             setOpen(true);
-            handleFileSelect(f);
+            void handleFilesSelect(files);
           }
         }}
       />
@@ -1755,8 +1803,8 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
                         e.preventDefault();
                         e.stopPropagation();
                         setDragActive(false);
-                        const f = e.dataTransfer.files?.[0];
-                        if (f) handleFileSelect(f);
+                        const files = e.dataTransfer.files;
+                        if (files?.length) void handleFilesSelect(files);
                       }}
                       onClick={() => fileRef.current?.click()}
                       className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed py-12 text-center transition-all ${
@@ -1795,6 +1843,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
                           </div>
                           <div className="text-[11px] text-white/55">
                             {staging.length} / {MAX_PAGES} páginas · NUVIA leerá todas como un solo extracto.
+                            {uploadedOriginals.length > 0 ? ` · ${uploadedOriginals.length} archivo${uploadedOriginals.length > 1 ? "s" : ""} guardado${uploadedOriginals.length > 1 ? "s" : ""}` : ""}
                           </div>
                         </div>
                         <div className="flex gap-2">
