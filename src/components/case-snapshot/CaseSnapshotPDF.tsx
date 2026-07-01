@@ -731,42 +731,43 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
         </Card>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14, alignItems: "stretch" }}>
-          <Card style={{ padding: "15px 14px 16px", minHeight: 286 }}>
+          <Card style={{ padding: "18px 16px 18px", minHeight: 306 }}>
             <Label>Intervinientes</Label>
             {e.intervinientes.slice(0, 5).map((p, i) => (
-              <div key={`${p.rol}-${i}`} style={{ display: "flex", alignItems: "center", gap: 10, minHeight: 48, padding: "8px 0", borderBottom: i < Math.min(e.intervinientes.length, 5) - 1 ? `1px solid rgba(30,45,69,0.62)` : "none" }}>
-                <div style={{ width: 27, height: 27, borderRadius: 8, background: "rgba(59,130,246,0.12)", border: "1px solid rgba(96,165,250,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 0 14px rgba(59,130,246,0.13)" }}>
+              <div key={`${p.rol}-${i}`} style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 58, padding: "10px 0", borderBottom: i < Math.min(e.intervinientes.length, 5) - 1 ? `1px solid rgba(40,58,90,0.75)` : "none" }}>
+                <div style={{ width: 30, height: 30, borderRadius: 8, background: "rgba(59,130,246,0.16)", border: "1px solid rgba(96,165,250,0.45)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 0 16px rgba(59,130,246,0.2)" }}>
                   {ROL_ICON[p.rol] ?? ROL_ICON.Analista}
                 </div>
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 }}>
-                    <div style={{ fontSize: 8, lineHeight: 1.15, color: C.blue2, fontWeight: 900, letterSpacing: "0.04em", textTransform: "uppercase", flex: "0 0 auto", maxWidth: 112, overflowWrap: "anywhere" }}>{p.rol}</div>
-                    <div style={{ fontSize: 10.1, lineHeight: 1.18, color: C.text, fontWeight: 850, overflowWrap: "anywhere", flex: 1 }}>{p.nombre}</div>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 10, minWidth: 0 }}>
+                    <div style={{ fontSize: 8.2, lineHeight: 1.15, color: C.blue2, fontWeight: 900, letterSpacing: "0.05em", textTransform: "uppercase", flex: "0 0 auto", maxWidth: 118, overflowWrap: "anywhere" }}>{p.rol}</div>
+                    <div style={{ fontSize: 10.4, lineHeight: 1.2, color: "#FFFFFF", fontWeight: 900, overflowWrap: "anywhere", flex: 1 }}>{p.nombre}</div>
                   </div>
-                  <div style={{ fontSize: 8.4, lineHeight: 1.2, color: C.textSec, fontWeight: 600, overflowWrap: "anywhere", marginTop: 4 }}>{p.correo}</div>
+                  <div style={{ fontSize: 8.6, lineHeight: 1.2, color: "#DDE4F2", fontWeight: 600, overflowWrap: "anywhere", marginTop: 5 }}>{p.correo}</div>
                 </div>
               </div>
             ))}
           </Card>
 
-          <Card style={{ padding: "15px 14px 16px", minHeight: 286 }}>
+          <Card style={{ padding: "18px 16px 18px", minHeight: 306 }}>
             <Label>Trazabilidad</Label>
             {e.trazabilidad.slice(0, 5).map((t, i) => (
-              <div key={`${t.fecha}-${i}`} style={{ display: "flex", gap: 10, minHeight: 48, padding: "8px 0", borderBottom: i < Math.min(e.trazabilidad.length, 5) - 1 ? `1px solid rgba(30,45,69,0.62)` : "none" }}>
-                <div style={{ paddingTop: 4, flexShrink: 0 }}>
-                  <span style={{ width: 9, height: 9, borderRadius: 999, background: C.blue, display: "block", boxShadow: "0 0 11px rgba(59,130,246,0.75)" }} />
+              <div key={`${t.fecha}-${i}`} style={{ display: "flex", gap: 12, minHeight: 58, padding: "10px 0", borderBottom: i < Math.min(e.trazabilidad.length, 5) - 1 ? `1px solid rgba(40,58,90,0.75)` : "none" }}>
+                <div style={{ paddingTop: 5, flexShrink: 0 }}>
+                  <span style={{ width: 10, height: 10, borderRadius: 999, background: C.blue, display: "block", boxShadow: "0 0 14px rgba(59,130,246,0.85), 0 0 0 3px rgba(59,130,246,0.15)" }} />
                 </div>
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, minWidth: 0 }}>
-                    <div style={{ fontSize: 8.2, lineHeight: 1.15, color: C.blue2, fontWeight: 900, letterSpacing: "0.04em", textTransform: "uppercase", whiteSpace: "nowrap" }}>{compactFecha(t.fecha)}</div>
-                    <div style={{ fontSize: 8.4, lineHeight: 1.15, color: C.textSec, fontWeight: 650, textAlign: "right", overflowWrap: "anywhere", maxWidth: 112 }}>{t.usuario}</div>
+                    <div style={{ fontSize: 8.4, lineHeight: 1.15, color: C.blue2, fontWeight: 900, letterSpacing: "0.05em", textTransform: "uppercase", whiteSpace: "nowrap" }}>{compactFecha(t.fecha)}</div>
+                    <div style={{ fontSize: 8.6, lineHeight: 1.15, color: "#DDE4F2", fontWeight: 700, textAlign: "right", overflowWrap: "anywhere", maxWidth: 120 }}>{t.usuario}</div>
                   </div>
-                  <div style={{ fontSize: 9.6, lineHeight: 1.25, color: C.text, fontWeight: 760, overflowWrap: "anywhere", marginTop: 6 }}>{t.accion.replace(/_/g, " ")}</div>
+                  <div style={{ fontSize: 10, lineHeight: 1.3, color: "#FFFFFF", fontWeight: 800, overflowWrap: "anywhere", marginTop: 7 }}>{t.accion.replace(/_/g, " ")}</div>
                 </div>
               </div>
             ))}
           </Card>
         </div>
+
 
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
