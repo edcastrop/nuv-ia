@@ -896,10 +896,10 @@ function NField({
 }) {
   return (
     <div>
-      <label className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-white/50 mb-1.5">
+      <label className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-white/55 mb-1.5">
         {icon} {label}
       </label>
-      <div className="group relative flex items-center rounded-xl border border-white/10 bg-white/[0.03] focus-within:border-[#84B98F]/50 focus-within:bg-white/[0.05] transition">
+      <div className="group relative flex items-center rounded-[14px] border border-white/[0.08] bg-white/[0.03] transition-all duration-200 focus-within:border-[#445DA3]/60 focus-within:bg-white/[0.05] focus-within:shadow-[0_0_0_3px_rgba(68,93,163,0.18)]">
         {prefix && <span className="pl-3 text-white/40 text-sm">{prefix}</span>}
         <input
           type="text"
@@ -919,18 +919,20 @@ function KPI({ label, value, color, strong }: { label: string; value: number; co
   const display = useCountUp(value);
   return (
     <motion.div
-      whileHover={{ y: -2 }}
-      className="relative rounded-2xl border border-white/[0.08] bg-white/[0.025] p-4 overflow-hidden group"
+      whileHover={{ y: -2, scale: 1.015 }}
+      transition={{ duration: 0.2 }}
+      className="relative rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 overflow-hidden group backdrop-blur-xl hover:border-white/[0.14] transition-colors"
+      style={{ boxShadow: "0 8px 30px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.03)" }}
     >
       <div
-        className="absolute -top-10 -right-10 h-24 w-24 rounded-full blur-2xl opacity-40 group-hover:opacity-60 transition"
+        className="absolute -top-10 -right-10 h-24 w-24 rounded-full blur-2xl opacity-40 group-hover:opacity-70 transition-opacity duration-300"
         style={{ background: `radial-gradient(circle, ${color}, transparent 70%)` }}
       />
       <div className="relative">
-        <div className="text-[9.5px] font-bold uppercase tracking-[0.14em] text-white/45">{label}</div>
+        <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/50">{label}</div>
         <div
-          className={`mt-1.5 tabular-nums ${strong ? "text-2xl" : "text-xl"} font-semibold text-white`}
-          style={strong ? { textShadow: `0 0 20px ${color}55` } : undefined}
+          className={`mt-2 tabular-nums font-bold text-white ${strong ? "text-[26px]" : "text-[22px]"}`}
+          style={strong ? { textShadow: `0 0 24px ${color}66` } : undefined}
         >
           {fmtCOP(display)}
         </div>
