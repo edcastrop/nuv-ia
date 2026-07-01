@@ -852,11 +852,11 @@ function PremiumCard({ children }: { children: React.ReactNode }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       whileHover={{ y: -2 }}
-      className="relative rounded-[22px] border border-white/[0.08] bg-white/[0.025] backdrop-blur-2xl p-6"
-      style={{ boxShadow: "0 30px 60px -40px rgba(0,0,0,0.9)" }}
+      className="relative rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-xl p-6 md:p-7 transition-all duration-200 hover:border-white/[0.12]"
+      style={{ boxShadow: "0 8px 40px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.03)" }}
     >
       <span
-        className="pointer-events-none absolute inset-x-8 top-0 h-px"
+        className="pointer-events-none absolute inset-x-8 top-0 h-px opacity-70"
         style={{ background: "linear-gradient(90deg, transparent, rgba(132,185,143,0.5), transparent)" }}
       />
       {children}
@@ -867,14 +867,15 @@ function PremiumCard({ children }: { children: React.ReactNode }) {
 function CardHeader({ icon, badge, title, subtitle }: { icon: React.ReactNode; badge: string; title: string; subtitle: string }) {
   return (
     <div>
-      <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-[#84B98F]">
+      <div className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#84B98F]">
         {icon} {badge}
       </div>
-      <h2 className="mt-1.5 text-xl font-semibold tracking-tight text-white">{title}</h2>
-      <p className="mt-1 text-xs text-white/50">{subtitle}</p>
+      <h2 className="mt-2.5 text-xl md:text-[22px] font-semibold tracking-tight text-white leading-tight">{title}</h2>
+      <p className="mt-1.5 text-[12.5px] text-white/60 leading-relaxed">{subtitle}</p>
     </div>
   );
 }
+
 
 function NField({
   label,
