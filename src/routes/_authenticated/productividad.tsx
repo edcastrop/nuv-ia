@@ -586,9 +586,10 @@ function PodiumBlock({
 
       {/* FOOTER MOTIVACIONAL */}
       <div
-        className="mt-8 flex flex-wrap items-center justify-between gap-4"
+        className="flex flex-wrap items-center justify-between gap-4"
         style={{
-          padding: "18px 22px",
+          marginTop: 40,
+          padding: "24px 32px",
           borderRadius: 20,
           background: "rgba(255,255,255,0.03)",
           border: `1px solid ${PODIUM_BORDER}`,
