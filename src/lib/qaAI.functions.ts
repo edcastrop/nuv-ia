@@ -576,7 +576,7 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
     if (auditoria.expediente_id) {
       const { data: expRow } = await context.supabase
         .from("expedientes")
-        .select("asesor_id,cliente_nombre,banco,codigo,cedula,numero_credito")
+        .select("asesor_id,cliente_nombre,banco,codigo,cedula,numero_credito,producto,cliente_data,credito_data")
         .eq("id", auditoria.expediente_id as string)
         .maybeSingle();
       if (expRow?.asesor_id) analistaIdVista = expRow.asesor_id as string;
@@ -588,12 +588,59 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
         const bancoActual = (expRow.banco as string | null) ?? null;
         const cedulaActual = (expRow.cedula as string | null) ?? null;
         const numCredActual = (expRow.numero_credito as string | null) ?? null;
+        const productoActual = (expRow.producto as string | null) ?? null;
         const necesitaNombre = !nombreActual || nombreActual.trim() === "" || nombreActual.trim().toLowerCase() === "sin nombre";
-        const patch: Record<string, string> = {};
+        const patch: Record<string, unknown> = {};
         if (necesitaNombre && extNombre) patch.cliente_nombre = extNombre;
         if ((!bancoActual || bancoActual.trim() === "") && (extBanco || (extracto?.banco ?? ""))) patch.banco = extBanco || String(extracto?.banco ?? "");
         if ((!cedulaActual || cedulaActual.trim() === "") && extCedula) patch.cedula = extCedula;
         if ((!numCredActual || numCredActual.trim() === "") && extNumCred) patch.numero_credito = extNumCred;
+        if ((!productoActual || productoActual.trim() === "") && (extracto?.producto ?? "")) patch.producto = String(extracto?.producto ?? "");
+
+        // ── Reconstrucción defensiva del expediente huérfano (Marsela/Audelina).
+        //    Si cliente_data / credito_data quedaron vacíos (bug histórico de
+        //    re-save del simulador) pero el extracto sí trae la información,
+        //    los rehidratamos para que el caso vuelva a ser navegable en
+        //    /casos y en la reconstrucción QA.
+        const prevCliente = (expRow.cliente_data ?? {}) as Record<string, unknown>;
+        const prevCredito = (expRow.credito_data ?? {}) as Record<string, unknown>;
+        const isBlank = (v: unknown) => v === undefined || v === null || (typeof v === "string" && v.trim() === "");
+        const clienteVacio = !prevCliente || Object.values(prevCliente).every(isBlank);
+        const creditoVacio = !prevCredito || Object.values(prevCredito).every(isBlank);
+        const val = <T,>(k: string): T | undefined => dEx[k] as T | undefined;
+        if (clienteVacio && (extNombre || extBanco || extCedula || extNumCred)) {
+          patch.cliente_data = {
+            ...prevCliente,
+            nombre: extNombre || (patch.cliente_nombre as string) || (prevCliente.nombre ?? ""),
+            cedula: extCedula || (prevCliente.cedula ?? ""),
+            banco: extBanco || String(extracto?.banco ?? "") || (prevCliente.banco ?? ""),
+            numeroCredito: extNumCred || (prevCliente.numeroCredito ?? ""),
+            tipoProducto: String(extracto?.producto ?? "") || (prevCliente.tipoProducto ?? ""),
+            asesor: (prevCliente.asesor ?? "") as string,
+            plazoInicial: String(val<unknown>("plazoInicial") ?? prevCliente.plazoInicial ?? ""),
+            cuotasPagadas: String(val<unknown>("cuotasPagadas") ?? prevCliente.cuotasPagadas ?? ""),
+            porcentajeHonorarios: (prevCliente.porcentajeHonorarios ?? "6") as string,
+            cobertura: (prevCliente.cobertura ?? { activo: false, tasaCobertura: "", valorCobertura: "" }) as unknown,
+          };
+        }
+        if (creditoVacio && (val("saldoCapital") || val("cuotaActual") || val("tasaEA"))) {
+          patch.credito_data = {
+            ...prevCredito,
+            tea: String(val<unknown>("tasaEA") ?? val<unknown>("tea") ?? prevCredito.tea ?? ""),
+            teaCobrada: String(val<unknown>("teaCobrada") ?? prevCredito.teaCobrada ?? ""),
+            cuotaActual: String(val<unknown>("cuotaActual") ?? prevCredito.cuotaActual ?? ""),
+            cuotaActualPesos: String(val<unknown>("cuotaActualPesos") ?? prevCredito.cuotaActualPesos ?? ""),
+            saldoCapital: String(val<unknown>("saldoCapital") ?? prevCredito.saldoCapital ?? ""),
+            saldoPesos: String(val<unknown>("saldoPesos") ?? prevCredito.saldoPesos ?? ""),
+            saldoUVR: String(val<unknown>("saldoUVR") ?? prevCredito.saldoUVR ?? ""),
+            valorUVR: String(val<unknown>("valorUVR") ?? prevCredito.valorUVR ?? ""),
+            seguros: String(val<unknown>("seguros") ?? prevCredito.seguros ?? ""),
+            valorDesembolsado: String(val<unknown>("valorDesembolsado") ?? prevCredito.valorDesembolsado ?? ""),
+            variacionUVR: String(prevCredito.variacionUVR ?? ""),
+            nuevaCuotaManual: String(prevCredito.nuevaCuotaManual ?? ""),
+          };
+        }
+
         if (Object.keys(patch).length > 0) {
           try {
             await context.supabase
@@ -603,8 +650,8 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
           } catch { /* backfill best-effort */ }
         }
         expedienteInfo = {
-          cliente_nombre: patch.cliente_nombre ?? nombreActual ?? (extNombre || null),
-          banco: patch.banco ?? bancoActual ?? (extBanco || (extracto?.banco ?? null)),
+          cliente_nombre: (patch.cliente_nombre as string | undefined) ?? nombreActual ?? (extNombre || null),
+          banco: (patch.banco as string | undefined) ?? bancoActual ?? (extBanco || (extracto?.banco ?? null)),
           codigo: (expRow.codigo as string | null) ?? null,
         };
       }
