@@ -186,7 +186,7 @@ function CasosPage() {
       .catch((e) => { if (!cancel) setErr(e.message); })
       .finally(() => { if (!cancel) setLoading(false); });
     return () => { cancel = true; };
-  }, [search, estado, etapa]);
+  }, [search, estado, etapa, reloadKey]);
 
   // "Mis casos": el usuario es asesor O licenciado del caso.
   const filteredRows = useMemo(() => {
