@@ -13,43 +13,67 @@ import {
 } from "@/lib/victoryTrigger";
 
 /* ---------------------------- Audio Synthesizer ---------------------------- */
-// Chime "premium corporate success" — 3 notas armónicas + shimmer, ~1.5s.
+// "Cha-ching!" — caja registradora clásica: doble campana metálica (ding-ding)
+// con síntesis FM + click mecánico inicial del cajón. ~1.4s.
 async function playVictoryChime() {
   try {
     const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     const ctx = new AC();
     const master = ctx.createGain();
-    master.gain.value = 0.28;
+    master.gain.value = 0.34;
     master.connect(ctx.destination);
 
-    // Reverb-lite via delay
+    // Reverb-lite via delay para brillo metálico
     const delay = ctx.createDelay();
-    delay.delayTime.value = 0.14;
+    delay.delayTime.value = 0.09;
     const feedback = ctx.createGain();
-    feedback.gain.value = 0.22;
+    feedback.gain.value = 0.28;
     delay.connect(feedback).connect(delay).connect(master);
 
-    const notes = [
-      { f: 523.25, t: 0.00 },  // C5
-      { f: 659.25, t: 0.12 },  // E5
-      { f: 783.99, t: 0.24 },  // G5
-      { f: 1046.50, t: 0.42 }, // C6 shimmer
-    ];
     const now = ctx.currentTime;
-    for (const n of notes) {
-      const osc = ctx.createOscillator();
-      const g = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(n.f, now + n.t);
-      g.gain.setValueAtTime(0.0001, now + n.t);
-      g.gain.exponentialRampToValueAtTime(0.55, now + n.t + 0.03);
-      g.gain.exponentialRampToValueAtTime(0.0001, now + n.t + 1.1);
-      osc.connect(g);
-      g.connect(master);
-      g.connect(delay);
-      osc.start(now + n.t);
-      osc.stop(now + n.t + 1.15);
+
+    // Click mecánico inicial (drawer): ruido corto filtrado
+    const noiseBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.05), ctx.sampleRate);
+    const nd = noiseBuf.getChannelData(0);
+    for (let i = 0; i < nd.length; i++) nd[i] = (Math.random() * 2 - 1) * (1 - i / nd.length);
+    const noise = ctx.createBufferSource();
+    noise.buffer = noiseBuf;
+    const nFilt = ctx.createBiquadFilter();
+    nFilt.type = "highpass";
+    nFilt.frequency.value = 2000;
+    const nGain = ctx.createGain();
+    nGain.gain.value = 0.25;
+    noise.connect(nFilt).connect(nGain).connect(master);
+    noise.start(now);
+
+    // Dos "ding" campana (cha-ching): FM sine con modulador para timbre metálico
+    const dings = [
+      { t: 0.02, carrier: 1760, mod: 2637, modGain: 800 },  // "cha" (A6)
+      { t: 0.22, carrier: 2093, mod: 3136, modGain: 950 },  // "ching" (C7, más brillante)
+    ];
+    for (const d of dings) {
+      const carrier = ctx.createOscillator();
+      const modulator = ctx.createOscillator();
+      const modGain = ctx.createGain();
+      const env = ctx.createGain();
+      carrier.type = "sine";
+      modulator.type = "sine";
+      carrier.frequency.setValueAtTime(d.carrier, now + d.t);
+      modulator.frequency.setValueAtTime(d.mod, now + d.t);
+      modGain.gain.setValueAtTime(d.modGain, now + d.t);
+      modulator.connect(modGain).connect(carrier.frequency);
+      env.gain.setValueAtTime(0.0001, now + d.t);
+      env.gain.exponentialRampToValueAtTime(0.7, now + d.t + 0.008);
+      env.gain.exponentialRampToValueAtTime(0.0001, now + d.t + 0.9);
+      carrier.connect(env);
+      env.connect(master);
+      env.connect(delay);
+      modulator.start(now + d.t);
+      carrier.start(now + d.t);
+      modulator.stop(now + d.t + 1.0);
+      carrier.stop(now + d.t + 1.0);
     }
+
     setTimeout(() => ctx.close().catch(() => {}), 1600);
   } catch (e) {
     console.warn("[victory] audio failed", e);
