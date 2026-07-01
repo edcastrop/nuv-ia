@@ -19,6 +19,7 @@ import {
   Target,
 } from "lucide-react";
 import { NUVEX } from "@/components/nuvex/constants";
+import { ExtractoReader, type ExtractoApplyPayload } from "@/components/nuvex/ExtractoReader";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/herramientas/amortizacion")({
