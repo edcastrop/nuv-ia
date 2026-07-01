@@ -53,23 +53,35 @@ function setCooldown(until: number) {
 
 /* ----------------------------- Toast Item -------------------------------- */
 
+function initials(name: string): string {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? "").join("");
+}
+
 function SocialProofCard({ caso, closing, onClose }: { caso: Caso; closing: boolean; onClose: () => void }) {
   return createPortal(
     <div
       style={{
         position: "fixed", bottom: 32, left: 32, zIndex: 2147483590,
-        width: 390, maxWidth: "calc(100vw - 40px)",
+        width: 410, maxWidth: "calc(100vw - 40px)",
       }}
       className="nuvia-social-proof-anchor"
     >
       <style>{`
         @keyframes nuviaSpSlideIn {
-          from { transform: translateX(-120%); opacity: 0; }
-          to   { transform: translateX(0); opacity: 1; }
+          from { transform: translateX(-120%) scale(.98); opacity: 0; }
+          to   { transform: translateX(0) scale(1); opacity: 1; }
         }
         @keyframes nuviaSpSlideOut {
-          from { transform: translateX(0); opacity: 1; }
-          to   { transform: translateX(-120%); opacity: 0; }
+          from { transform: translateX(0) scale(1); opacity: 1; }
+          to   { transform: translateX(-120%) scale(.98); opacity: 0; }
+        }
+        @keyframes nuviaSpShine {
+          0%   { transform: translateX(-100%); }
+          100% { transform: translateX(200%); }
+        }
+        @keyframes nuviaSpPulse {
+          0%, 100% { opacity: .55; }
+          50%      { opacity: 1; }
         }
         @media (max-width: 640px) {
           .nuvia-social-proof-anchor {
@@ -86,98 +98,149 @@ function SocialProofCard({ caso, closing, onClose }: { caso: Caso; closing: bool
         aria-live="polite"
         style={{
           position: "relative",
-          minHeight: 130,
-          padding: "14px 16px 14px 14px",
-          borderRadius: 16,
-          background: "linear-gradient(155deg, rgba(14,24,44,.94), rgba(9,16,32,.96))",
-          border: "1px solid rgba(255,255,255,.10)",
+          minHeight: 138,
+          padding: "16px 18px 16px 16px",
+          borderRadius: 20,
+          background:
+            "linear-gradient(160deg, rgba(19,27,51,.94) 0%, rgba(13,18,36,.96) 60%, rgba(5,8,22,.98) 100%)",
+          border: "1px solid rgba(255,255,255,.08)",
           color: "#E7EEFB",
-          fontFamily: "Inter, ui-sans-serif, system-ui",
-          backdropFilter: "blur(14px)",
-          boxShadow: "0 18px 50px rgba(0,0,0,.45), 0 0 0 1px rgba(77,124,254,.18), 0 0 30px rgba(46,204,113,.14)",
+          fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif",
+          backdropFilter: "blur(22px) saturate(140%)",
+          boxShadow:
+            "0 24px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(68,93,163,.14), 0 0 40px rgba(132,185,143,.10)",
           animation: closing
-            ? "nuviaSpSlideOut .25s ease-in forwards"
-            : "nuviaSpSlideIn .35s cubic-bezier(.2,1,.3,1)",
+            ? "nuviaSpSlideOut .28s ease-in forwards"
+            : "nuviaSpSlideIn .42s cubic-bezier(.2,1,.3,1)",
+          overflow: "hidden",
         }}
       >
+        {/* Top gradient border · NUVIA blue → green */}
+        <div style={{
+          position: "absolute", top: 0, left: 0, right: 0, height: 1,
+          background: "linear-gradient(90deg, transparent, #445DA3, #84B98F, transparent)",
+        }} />
+        {/* Ambient corner glows */}
+        <div style={{
+          position: "absolute", top: -40, right: -40, width: 160, height: 160,
+          background: "radial-gradient(circle, rgba(132,185,143,.16), transparent 70%)",
+          pointerEvents: "none",
+        }} />
+        <div style={{
+          position: "absolute", bottom: -50, left: -50, width: 180, height: 180,
+          background: "radial-gradient(circle, rgba(68,93,163,.14), transparent 70%)",
+          pointerEvents: "none",
+        }} />
+        {/* Subtle shine sweep */}
+        <div style={{
+          position: "absolute", top: 0, left: 0, width: "40%", height: "100%",
+          background: "linear-gradient(115deg, transparent 30%, rgba(255,255,255,.05) 50%, transparent 70%)",
+          animation: "nuviaSpShine 3.2s ease-in-out .4s 1",
+          pointerEvents: "none",
+        }} />
+
         <button
           onClick={onClose}
           aria-label="Cerrar"
           style={{
-            position: "absolute", top: 8, right: 8,
-            background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.10)",
-            color: "#B9C6DE", borderRadius: 8, padding: 4, cursor: "pointer",
+            position: "absolute", top: 10, right: 10,
+            background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.08)",
+            color: "#8397B8", borderRadius: 8, width: 22, height: 22, cursor: "pointer",
             display: "flex", alignItems: "center", justifyContent: "center",
+            transition: "all .18s ease", zIndex: 2,
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,.10)"; e.currentTarget.style.color = "#E7EEFB"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,.05)"; e.currentTarget.style.color = "#8397B8"; }}
         >
-          <X size={12} />
+          <X size={11} strokeWidth={2.5} />
         </button>
 
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 5,
-          padding: "3px 9px", borderRadius: 999,
-          background: "linear-gradient(90deg, rgba(46,204,113,.22), rgba(77,124,254,.18))",
-          border: "1px solid rgba(46,204,113,.4)",
-          fontSize: 10, fontWeight: 700, color: "#9BE8B8", letterSpacing: 0.4,
+        {/* Badge NUVIA */}
+        <div style={{
+          position: "relative",
+          display: "inline-flex", alignItems: "center", gap: 6,
+          padding: "4px 10px", borderRadius: 999,
+          background: "linear-gradient(90deg, rgba(132,185,143,.14), rgba(68,93,163,.14))",
+          border: "1px solid rgba(132,185,143,.30)",
+          fontSize: 9.5, fontWeight: 700, color: "#B8E1C1",
+          letterSpacing: 0.6, textTransform: "uppercase",
         }}>
-          <CheckCircle2 size={10} /> Caso optimizado
+          <span style={{
+            width: 6, height: 6, borderRadius: "50%", background: "#84B98F",
+            boxShadow: "0 0 8px #84B98F", animation: "nuviaSpPulse 1.8s ease-in-out infinite",
+          }} />
+          Optimizado por NUVEX
         </div>
 
-        <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+        {/* Cliente */}
+        <div style={{ position: "relative", marginTop: 11, display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
           <div style={{
-            width: 30, height: 30, borderRadius: 8,
-            background: "linear-gradient(135deg, rgba(77,124,254,.24), rgba(46,204,113,.18))",
-            border: "1px solid rgba(255,255,255,.10)",
+            width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+            background: "linear-gradient(135deg, #445DA3, #84B98F)",
             display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 12, fontWeight: 800, color: "#fff",
+            letterSpacing: 0.3,
+            boxShadow: "0 4px 14px rgba(68,93,163,.35), inset 0 1px 0 rgba(255,255,255,.18)",
           }}>
-            <Sparkles size={14} color="#9BE8B8" />
+            {initials(caso.nombre)}
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{
-              fontSize: 13.5, fontWeight: 800, color: "#FFFFFF",
+              fontSize: 14, fontWeight: 700, color: "#FFFFFF", letterSpacing: -0.1,
               whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
             }}>
               {caso.nombre}
             </div>
-            <div style={{ fontSize: 11, color: "#8397B8", marginTop: 1 }}>
-              {caso.ciudad} · <span style={{
-                display: "inline-block", padding: "1px 6px", borderRadius: 6,
-                background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.08)",
-                color: "#B9C6DE", fontSize: 10, fontWeight: 600,
+            <div style={{ fontSize: 11, color: "#8397B8", marginTop: 2, display: "flex", alignItems: "center", gap: 6 }}>
+              <span>{caso.ciudad}</span>
+              <span style={{ opacity: .4 }}>·</span>
+              <span style={{
+                display: "inline-block", padding: "1.5px 7px", borderRadius: 5,
+                background: "rgba(68,93,163,.16)", border: "1px solid rgba(68,93,163,.30)",
+                color: "#BCD0FF", fontSize: 10, fontWeight: 600, letterSpacing: 0.1,
               }}>{caso.banco}</span>
             </div>
           </div>
         </div>
 
+        {/* KPI grid */}
         <div style={{
-          marginTop: 10,
+          position: "relative",
+          marginTop: 12,
           display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8,
         }}>
           <div style={{
-            padding: "7px 9px", borderRadius: 10,
-            background: "rgba(77,124,254,.10)", border: "1px solid rgba(77,124,254,.30)",
+            padding: "8px 10px", borderRadius: 11,
+            background: "linear-gradient(160deg, rgba(68,93,163,.14), rgba(68,93,163,.06))",
+            border: "1px solid rgba(68,93,163,.28)",
           }}>
-            <div style={{ fontSize: 9.5, color: "#8397B8", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "inline-flex", alignItems: "center", gap: 4 }}>
+            <div style={{ fontSize: 9, color: "#8397B8", fontWeight: 700, letterSpacing: 1.1, textTransform: "uppercase", display: "inline-flex", alignItems: "center", gap: 4 }}>
               <Clock3 size={10} /> Recuperó
             </div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: "#BCD0FF", marginTop: 1 }}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: "#BCD0FF", marginTop: 2, letterSpacing: -0.2 }}>
               {caso.tiempo}
             </div>
           </div>
           <div style={{
-            padding: "7px 9px", borderRadius: 10,
-            background: "rgba(46,204,113,.10)", border: "1px solid rgba(46,204,113,.30)",
+            padding: "8px 10px", borderRadius: 11,
+            background: "linear-gradient(160deg, rgba(132,185,143,.16), rgba(132,185,143,.06))",
+            border: "1px solid rgba(132,185,143,.30)",
           }}>
-            <div style={{ fontSize: 9.5, color: "#8397B8", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", display: "inline-flex", alignItems: "center", gap: 4 }}>
+            <div style={{ fontSize: 9, color: "#8397B8", fontWeight: 700, letterSpacing: 1.1, textTransform: "uppercase", display: "inline-flex", alignItems: "center", gap: 4 }}>
               <TrendingUp size={10} /> Ahorró
             </div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: "#9BE8B8", marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <div style={{ fontSize: 15, fontWeight: 800, color: "#B8E1C1", marginTop: 2, letterSpacing: -0.3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {fmtMoney(caso.dinero)}
             </div>
           </div>
         </div>
 
+        {/* Testimonio */}
         <div style={{
-          marginTop: 9, fontSize: 11.5, color: "#C9D5EA", lineHeight: 1.35,
+          position: "relative",
+          marginTop: 11, paddingLeft: 10,
+          borderLeft: "2px solid rgba(132,185,143,.35)",
+          fontSize: 11.5, color: "#C9D5EA", lineHeight: 1.42,
           fontStyle: "italic",
           display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
           overflow: "hidden",
