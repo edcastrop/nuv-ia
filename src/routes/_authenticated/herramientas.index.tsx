@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Wrench, Sparkles, LineChart, ArrowRight, ShieldCheck, FileBarChart } from "lucide-react";
+import { Wrench, Sparkles, LineChart, ArrowRight, ShieldCheck, FileBarChart, Calculator } from "lucide-react";
 import { NUVEX } from "@/components/nuvex/constants";
 
 export const Route = createFileRoute("/_authenticated/herramientas/")({
