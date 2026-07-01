@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Trophy, Flame, Volume2, VolumeX, X } from "lucide-react";
+import { Trophy, Flame, Volume2, VolumeX, X, PartyPopper } from "lucide-react";
 import {
   subscribeVictoryLocal,
   subscribeVictoryBroadcast,
@@ -8,6 +8,7 @@ import {
   readStreak,
   isVictoryMuted,
   setVictoryMuted,
+  fireVictory,
   type VictoryEvent,
   type StreakState,
 } from "@/lib/victoryTrigger";
@@ -249,6 +250,37 @@ function MuteToggle() {
   );
 }
 
+function TestVictoryButton() {
+  return (
+    <button
+      onClick={() => {
+        void fireVictory({
+          kind: "contrato_firmado",
+          analistaId: null,
+          analista: "Demo NUVIA",
+          banco: "Banco de Bogotá",
+          cliente: "Cliente Demo",
+          honorarios: 4500000,
+          expedienteId: null,
+        });
+      }}
+      title="Probar Victory (cha-ching)"
+      aria-label="Probar Victory"
+      style={{
+        position: "fixed", bottom: 18, left: 66, zIndex: 2147483500,
+        width: 40, height: 40, borderRadius: 999,
+        background: "linear-gradient(145deg,#F7B500,#E28900)", color: "#1a1200",
+        border: "1px solid rgba(255,255,255,.15)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        cursor: "pointer",
+        boxShadow: "0 8px 24px rgba(247,181,0,.45)",
+      }}
+    >
+      <PartyPopper size={16} />
+    </button>
+  );
+}
+
 /* ------------------------------ Provider ---------------------------------- */
 
 export function VictoryProvider() {
@@ -304,6 +336,7 @@ export function VictoryProvider() {
         />
       )}
       <MuteToggle />
+      <TestVictoryButton />
     </>
   );
 }
