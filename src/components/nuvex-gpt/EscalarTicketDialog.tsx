@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { NSelect } from "@/components/nuvia/NSelect";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -56,49 +54,90 @@ export function EscalarTicketDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Escalar consulta</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
-          <div>
-            <label className="text-xs font-medium text-muted-foreground">Área</label>
-            <Select value={area} onValueChange={(v) => setArea(v as typeof area)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="juridica">Jurídica</SelectItem>
-                <SelectItem value="operaciones">Operaciones</SelectItem>
-                <SelectItem value="contabilidad">Contabilidad</SelectItem>
-                <SelectItem value="director_qa">Director Financiero QA</SelectItem>
-                <SelectItem value="soporte">Soporte CRM</SelectItem>
-              </SelectContent>
-            </Select>
+      <DialogContent
+        className="max-w-md border-0 p-0 bg-transparent shadow-none"
+      >
+        <div className="nuvia-glass-card p-6 sm:p-7 rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-white text-lg font-semibold tracking-tight">
+              Escalar consulta
+            </DialogTitle>
+            <p className="text-xs text-white/60 mt-1">
+              Envía tu caso al área especializada de NUVIA.
+            </p>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-5">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-white/80 uppercase tracking-wide">Área</label>
+              <NSelect
+                value={area}
+                onValueChange={(v: string) => setArea(v as typeof area)}
+                options={[
+                  { value: "juridica", label: "Jurídica" },
+                  { value: "operaciones", label: "Operaciones" },
+                  { value: "contabilidad", label: "Contabilidad" },
+                  { value: "director_qa", label: "Director Financiero QA" },
+                  { value: "soporte", label: "Soporte CRM" },
+                ]}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-white/80 uppercase tracking-wide">Prioridad</label>
+              <NSelect
+                value={prioridad}
+                onValueChange={(v: string) => setPrioridad(v as typeof prioridad)}
+                options={[
+                  { value: "baja", label: "Baja" },
+                  { value: "media", label: "Media" },
+                  { value: "alta", label: "Alta" },
+                  { value: "urgente", label: "Urgente" },
+                ]}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-white/80 uppercase tracking-wide">Asunto</label>
+              <input
+                className="nuvia-input w-full"
+                value={asunto}
+                onChange={(e) => setAsunto(e.target.value)}
+                maxLength={200}
+                placeholder="Describe el asunto en una línea"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-white/80 uppercase tracking-wide">Descripción</label>
+              <textarea
+                className="nuvia-input w-full min-h-[140px] resize-y py-2.5"
+                value={descripcion}
+                onChange={(e) => setDescripcion(e.target.value)}
+                rows={5}
+                maxLength={4000}
+                placeholder="Detalla el caso, contexto y qué necesitas del área."
+              />
+            </div>
           </div>
-          <div>
-            <label className="text-xs font-medium text-muted-foreground">Prioridad</label>
-            <Select value={prioridad} onValueChange={(v) => setPrioridad(v as typeof prioridad)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="baja">Baja</SelectItem>
-                <SelectItem value="media">Media</SelectItem>
-                <SelectItem value="alta">Alta</SelectItem>
-                <SelectItem value="urgente">Urgente</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-muted-foreground">Asunto</label>
-            <Input value={asunto} onChange={(e) => setAsunto(e.target.value)} maxLength={200} />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-muted-foreground">Descripción</label>
-            <Textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} rows={5} maxLength={4000} />
-          </div>
+
+          <DialogFooter className="mt-6 gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+              className="text-white/80 hover:text-white hover:bg-white/10 border border-white/10"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={submit}
+              disabled={saving}
+              className="bg-gradient-to-r from-[#3B82F6] to-[#22C55E] text-white font-semibold hover:opacity-95 shadow-lg shadow-blue-500/20"
+            >
+              {saving ? "Enviando…" : "Crear ticket"}
+            </Button>
+          </DialogFooter>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={submit} disabled={saving}>{saving ? "Enviando…" : "Crear ticket"}</Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
