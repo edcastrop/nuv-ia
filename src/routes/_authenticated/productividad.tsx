@@ -21,7 +21,6 @@ import {
 import {
   Activity,
   TrendingUp,
-  TrendingDown,
   Minus,
   Users,
   Timer,
@@ -32,6 +31,7 @@ import {
   ArrowUp,
   ArrowDown,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/productividad")({
   component: ProductividadPage,
