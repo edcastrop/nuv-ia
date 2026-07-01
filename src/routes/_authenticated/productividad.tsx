@@ -569,20 +569,27 @@ function PodiumBlock({
         </div>
       ) : (
         <div
-          className="grid gap-5 items-end"
-          style={{ gridTemplateColumns: "1fr 1.15fr 1fr" }}
+          className="grid items-end"
+          style={{ gridTemplateColumns: "1fr 1.15fr 1fr", gap: 28 }}
         >
-          <PodiumSpot user={second} pos={2} heightPct={85} glow={PODIUM_SILVER} />
-          <PodiumSpot user={first}  pos={1} heightPct={100} glow={PODIUM_GOLD} />
-          <PodiumSpot user={third}  pos={3} heightPct={78} glow={PODIUM_BRONZE} />
+          <div className="flex items-end" style={{ transform: "translateY(-35px)" }}>
+            <PodiumSpot user={second} pos={2} height={430} glow={PODIUM_SILVER} />
+          </div>
+          <div className="flex items-end">
+            <PodiumSpot user={first}  pos={1} height={540} glow={PODIUM_GOLD} />
+          </div>
+          <div className="flex items-end" style={{ transform: "translateY(-15px)" }}>
+            <PodiumSpot user={third}  pos={3} height={390} glow={PODIUM_BRONZE} />
+          </div>
         </div>
       )}
 
       {/* FOOTER MOTIVACIONAL */}
       <div
-        className="mt-8 flex flex-wrap items-center justify-between gap-4"
+        className="flex flex-wrap items-center justify-between gap-4"
         style={{
-          padding: "18px 22px",
+          marginTop: 40,
+          padding: "24px 32px",
           borderRadius: 20,
           background: "rgba(255,255,255,0.03)",
           border: `1px solid ${PODIUM_BORDER}`,
@@ -638,18 +645,16 @@ function PodiumBlock({
 function PodiumSpot({
   user,
   pos,
-  heightPct,
+  height,
   glow,
 }: {
   user: (ProductividadUsuario & { score: number }) | undefined;
   pos: 1 | 2 | 3;
-  heightPct: number;
+  height: number;
   glow: string;
 }) {
-  const baseHeight = 420;
-  const height = Math.round((baseHeight * heightPct) / 100);
   const avatarSize = pos === 1 ? 96 : 72;
-  const scoreSize = pos === 1 ? 48 : 32;
+  const scoreSize = pos === 1 ? 68 : 32;
   const medal = pos === 1 ? "🥇" : pos === 2 ? "🥈" : "🥉";
   const badgeLabel = pos === 1 ? "MEJOR DESEMPEÑO" : pos === 2 ? "SEGUNDO LUGAR" : "TERCER LUGAR";
 
@@ -681,7 +686,7 @@ function PodiumSpot({
         border: `1px solid ${glow}55`,
         boxShadow:
           pos === 1
-            ? `0 0 60px -12px ${glow}, 0 20px 48px rgba(0,0,0,0.55), inset 0 1px 0 ${glow}33`
+            ? "0 0 40px rgba(247,181,0,0.22)"
             : `0 0 32px -12px ${glow}AA, 0 12px 32px rgba(0,0,0,0.45), inset 0 1px 0 ${glow}22`,
         backdropFilter: "blur(18px)",
       }}
@@ -724,7 +729,7 @@ function PodiumSpot({
       </div>
 
       {/* Avatar */}
-      <div className="relative" style={{ zIndex: 2 }}>
+      <div className="relative" style={{ zIndex: 2, marginTop: pos === 1 ? -20 : 0 }}>
         <div
           style={{
             padding: 3,
@@ -784,11 +789,12 @@ function PodiumSpot({
           SCORE
         </div>
         <div
-          className="font-black tabular-nums"
+          className="tabular-nums"
           style={{
             color: glow,
             fontSize: scoreSize,
-            lineHeight: 1,
+            lineHeight: pos === 1 ? 0.9 : 1,
+            fontWeight: pos === 1 ? 800 : 900,
             marginTop: 4,
             textShadow: `0 0 24px ${glow}66`,
             fontFamily: "'JetBrains Mono', ui-monospace, monospace",
@@ -833,7 +839,8 @@ function MetricMini({
     <div
       className="flex flex-col items-center gap-1"
       style={{
-        padding: "8px 4px",
+        height: 74,
+        padding: 12,
         borderRadius: 10,
         background: "rgba(255,255,255,0.03)",
         border: "1px solid rgba(255,255,255,0.06)",
