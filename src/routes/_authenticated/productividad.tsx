@@ -817,9 +817,9 @@ function PodiumSpot({
 
       {/* Métricas */}
       <div className="mt-4 grid grid-cols-3 gap-2 w-full" style={{ zIndex: 2 }}>
-        <MetricMini icon={<Repeat size={12} />} label="Trans." value={user.cambios_estado} color={PODIUM_BLUE} />
-        <MetricMini icon={<CheckCircle2 size={12} />} label="Cerr." value={user.casos_cerrados} color="#84B98F" />
-        <MetricMini icon={<Bell size={12} />} label="Alert." value={user.alertas_recibidas} color="#F6C453" />
+        <MetricMini icon={<Repeat size={15} />} label="Trans." value={user.cambios_estado} color={PODIUM_BLUE} />
+        <MetricMini icon={<CheckCircle2 size={15} />} label="Cerr." value={user.casos_cerrados} color="#84B98F" />
+        <MetricMini icon={<Bell size={15} />} label="Alert." value={user.alertas_recibidas} color="#F6C453" />
       </div>
     </div>
   );
