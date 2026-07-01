@@ -65,6 +65,32 @@ export function useEstadoSugerido(expedienteId: string | undefined | null, onCha
       // y AMBOS ya están firmados, avanzar a "documentación completa" para
       // cerrar visualmente la etapa de Contratación y abrir Documentación Bancaria.
       if (pendiente.accion === "contrato_firmado" || pendiente.accion === "poder_firmado") {
+        // 🏆 NUVIA Victory Trigger — capa de gamificación (no toca lógica CRM)
+        try {
+          const { data: expRow } = await supabase
+            .from("expedientes")
+            .select("cliente_nombre,banco,honorarios_final,honorarios_base,asesor_id")
+            .eq("id", expedienteId)
+            .maybeSingle();
+          const r = (expRow as { cliente_nombre?: string | null; banco?: string | null; honorarios_final?: number | null; honorarios_base?: number | null; asesor_id?: string | null } | null) ?? null;
+          let analistaNombre = "Analista NUVIA";
+          if (r?.asesor_id) {
+            const { data: prof } = await supabase.from("profiles").select("nombre,email" as never).eq("id", r.asesor_id).maybeSingle();
+            const p = prof as { nombre?: string | null; email?: string | null } | null;
+            analistaNombre = p?.nombre || p?.email || analistaNombre;
+          }
+          await fireVictory({
+            kind: pendiente.accion,
+            analistaId: r?.asesor_id ?? null,
+            analista: analistaNombre,
+            banco: r?.banco || "—",
+            cliente: r?.cliente_nombre || "Cliente NUVIA",
+            honorarios: r?.honorarios_final ?? r?.honorarios_base ?? null,
+            expedienteId,
+          });
+        } catch (e) {
+          console.warn("[victory] no se pudo disparar", e);
+        }
         try {
           const { data: hist } = await supabase
             .from("expediente_historial")
