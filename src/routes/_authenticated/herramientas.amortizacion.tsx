@@ -762,7 +762,7 @@ function AmortizationEngine() {
 // SUBCOMPONENTS
 // ============================================================================
 
-function Hero() {
+function Hero({ modo }: { modo: "pesos" | "uvr" }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
