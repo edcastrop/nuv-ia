@@ -569,12 +569,18 @@ function PodiumBlock({
         </div>
       ) : (
         <div
-          className="grid gap-5 items-end"
-          style={{ gridTemplateColumns: "1fr 1.15fr 1fr" }}
+          className="grid items-end"
+          style={{ gridTemplateColumns: "1fr 1.15fr 1fr", gap: 28 }}
         >
-          <PodiumSpot user={second} pos={2} heightPct={85} glow={PODIUM_SILVER} />
-          <PodiumSpot user={first}  pos={1} heightPct={100} glow={PODIUM_GOLD} />
-          <PodiumSpot user={third}  pos={3} heightPct={78} glow={PODIUM_BRONZE} />
+          <div className="flex items-end" style={{ transform: "translateY(-35px)" }}>
+            <PodiumSpot user={second} pos={2} height={430} glow={PODIUM_SILVER} />
+          </div>
+          <div className="flex items-end">
+            <PodiumSpot user={first}  pos={1} height={540} glow={PODIUM_GOLD} />
+          </div>
+          <div className="flex items-end" style={{ transform: "translateY(-15px)" }}>
+            <PodiumSpot user={third}  pos={3} height={390} glow={PODIUM_BRONZE} />
+          </div>
         </div>
       )}
 
