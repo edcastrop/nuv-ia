@@ -701,8 +701,8 @@ function PodiumSpot({
           width: avatarSize + 80,
           height: avatarSize + 80,
           borderRadius: "50%",
-          background: `radial-gradient(circle, ${glow}44 0%, transparent 65%)`,
-          filter: "blur(8px)",
+          background: `radial-gradient(circle, ${glow}52 0%, transparent 65%)`,
+          filter: "blur(5px)",
         }}
       />
 
