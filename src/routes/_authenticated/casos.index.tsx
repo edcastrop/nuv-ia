@@ -130,6 +130,7 @@ function CasosPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [asesores, setAsesores] = useState<Map<string, { nombre: string | null; email: string | null }>>(new Map());
+  const [auditCodes, setAuditCodes] = useState<Map<string, string>>(new Map());
 
   // Debounce text input → URL
   useEffect(() => {
@@ -165,6 +166,18 @@ function CasosPage() {
           const m = new Map<string, { nombre: string | null; email: string | null }>();
           (profs ?? []).forEach((p: any) => m.set(p.id, { nombre: p.nombre ?? null, email: p.email ?? null }));
           if (!cancel) setAsesores(m);
+        }
+        const auditIds = Array.from(
+          new Set(r.map((row) => row.qa_auditoria_id).filter(Boolean) as string[]),
+        );
+        if (auditIds.length > 0) {
+          const { data: auds } = await supabase
+            .from("qa_auditorias")
+            .select("id,codigo")
+            .in("id", auditIds);
+          const am = new Map<string, string>();
+          (auds ?? []).forEach((a: any) => { if (a.codigo) am.set(a.id, a.codigo); });
+          if (!cancel) setAuditCodes(am);
         }
       })
       .catch((e) => { if (!cancel) setErr(e.message); })
@@ -410,6 +423,7 @@ function CasosPage() {
                 isDup={!!r.cedula && dupCedulas.has(r.cedula.trim())}
                 asesor={asesores.get(r.asesor_id)}
                 licenciado={r.licenciado_id ? asesores.get(r.licenciado_id) : undefined}
+                auditCode={r.qa_auditoria_id ? auditCodes.get(r.qa_auditoria_id) : undefined}
               />
             ))
 
@@ -441,7 +455,7 @@ function CasosPage() {
 
 
 
-function ExpedienteCard({ r, isDup = false, asesor, licenciado }: { r: Expediente; isDup?: boolean; asesor?: { nombre?: string | null; email?: string | null }; licenciado?: { nombre?: string | null; email?: string | null } }) {
+function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r: Expediente; isDup?: boolean; asesor?: { nombre?: string | null; email?: string | null }; licenciado?: { nombre?: string | null; email?: string | null }; auditCode?: string }) {
   const theme = ESTADO_THEME[r.estado];
   const aColor = avatarColor(r.cliente_nombre);
   const initial = (r.cliente_nombre || "?").trim().charAt(0).toUpperCase();
@@ -515,6 +529,23 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado }: { r: Expedient
                 size="xs"
                 asLink={false}
               />
+              {auditCode && (
+                <Link
+                  to="/qa-ai/$id"
+                  params={{ id: r.qa_auditoria_id ?? "" }}
+                  onClick={(e) => e.stopPropagation()}
+                  title="Ir a la auditoría QA"
+                  className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider hover:brightness-125 transition"
+                  style={{
+                    background: "rgba(68,93,163,0.15)",
+                    color: "#A5B5E0",
+                    border: "1px solid rgba(68,93,163,0.45)",
+                    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                  }}
+                >
+                  {auditCode}
+                </Link>
+              )}
             </div>
             <div className="text-xs mt-0.5" style={{ color: TEXT2 }}>
               CC {r.cedula || "—"}
