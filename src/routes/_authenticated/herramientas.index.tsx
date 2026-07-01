@@ -139,8 +139,9 @@ function HerramientasLanding() {
             to="/herramientas/amortizacion"
             title="NUVIA Amortization Engine"
             Icon={Calculator}
-            tagline="Solo modalidad PESOS"
+            tagline="Pesos + UVR"
             description="Motor de amortización inteligente para analizar la composición exacta de cualquier cuota."
+
           />
         </motion.div>
 
