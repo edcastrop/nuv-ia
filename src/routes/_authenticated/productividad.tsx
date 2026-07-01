@@ -206,7 +206,6 @@ function ProductividadPage() {
         badge={{ icon: <Activity size={12} />, label: `Gerencia · ${periodo.label}`, tone: "blue" }}
         title="Productividad y Tiempos"
         description="Ranking gamificado, retos del equipo y coaching NUVIA por periodo."
-        actions={rangoActions}
       />
 
       <KpiGrid cols={4}>
@@ -217,7 +216,15 @@ function ProductividadPage() {
       </KpiGrid>
 
       {/* PODIUM NUVIA */}
-      <PodiumBlock top3={top3} loading={loading} />
+      <PodiumBlock
+        top3={top3}
+        loading={loading}
+        rango={rango}
+        setRango={setRango}
+        mesRef={mesRef}
+        setMesRef={setMesRef}
+      />
+
 
       {/* META DEL EQUIPO */}
       <MetaEquipo
