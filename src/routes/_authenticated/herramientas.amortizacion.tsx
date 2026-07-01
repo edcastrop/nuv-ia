@@ -421,15 +421,15 @@ function AmortizationEngine() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#050816] text-white">
+    <div className="relative min-h-screen overflow-hidden bg-[#0B1020] text-white font-[Inter,system-ui,sans-serif] antialiased">
       <BackgroundFX />
       <div className="relative mx-auto w-full max-w-[1400px] px-6 py-8">
         {/* Back */}
         <Link
           to="/herramientas"
-          className="inline-flex items-center gap-1.5 text-xs text-white/60 hover:text-white transition mb-6"
+          className="group inline-flex items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-1.5 text-[11px] font-medium text-white/60 hover:text-white hover:bg-white/[0.05] hover:border-white/[0.10] transition-all duration-200 mb-6"
         >
-          <ArrowLeft className="h-3.5 w-3.5" /> Volver a Herramientas
+          <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" /> Volver a Herramientas
         </Link>
 
         {/* HERO */}
@@ -572,19 +572,21 @@ function AmortizationEngine() {
               )}
 
               <div className="flex gap-2 pt-2">
-                <button
+                <motion.button
+                  whileHover={{ y: -1 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={handleCalculate}
-                  className="flex-1 rounded-xl px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 active:scale-[0.98]"
+                  className="flex-1 rounded-[14px] px-4 py-3 text-sm font-semibold text-white transition-all duration-200 hover:brightness-110"
                   style={{
                     background: `linear-gradient(135deg, ${NUVEX.azul}, ${NUVEX.verde})`,
-                    boxShadow: `0 12px 30px -12px ${NUVEX.verde}`,
+                    boxShadow: `0 12px 30px -12px ${NUVEX.verde}, inset 0 1px 0 rgba(255,255,255,0.2)`,
                   }}
                 >
                   Calcular
-                </button>
+                </motion.button>
                 <button
                   onClick={handleReset}
-                  className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/70 hover:bg-white/[0.06] hover:text-white transition inline-flex items-center gap-1.5"
+                  className="rounded-[14px] border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-white/70 hover:bg-white/[0.06] hover:text-white hover:border-white/[0.14] transition-all duration-200 inline-flex items-center gap-1.5"
                 >
                   <RotateCcw className="h-3.5 w-3.5" /> Limpiar
                 </button>
@@ -677,25 +679,27 @@ function AmortizationEngine() {
                 <div className="flex gap-2">
                   <button
                     onClick={handleExportExcel}
-                    className="rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] px-3.5 py-2 text-xs font-medium text-white/80 hover:text-white transition inline-flex items-center gap-1.5"
+                    className="rounded-[14px] border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/[0.14] px-3.5 py-2 text-xs font-medium text-white/80 hover:text-white transition-all duration-200 inline-flex items-center gap-1.5"
                   >
                     <FileSpreadsheet className="h-3.5 w-3.5" /> Excel
                   </button>
-                  <button
+                  <motion.button
+                    whileHover={{ y: -1 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={handleExportPDF}
-                    className="rounded-xl px-3.5 py-2 text-xs font-semibold text-white transition hover:brightness-110 inline-flex items-center gap-1.5"
-                    style={{ background: `linear-gradient(135deg, ${NUVEX.azul}, ${NUVEX.verde})` }}
+                    className="rounded-[14px] px-3.5 py-2 text-xs font-semibold text-white transition-all duration-200 hover:brightness-110 inline-flex items-center gap-1.5"
+                    style={{ background: `linear-gradient(135deg, ${NUVEX.azul}, ${NUVEX.verde})`, boxShadow: `0 10px 24px -12px ${NUVEX.verde}` }}
                   >
                     <FileText className="h-3.5 w-3.5" /> PDF
-                  </button>
+                  </motion.button>
                 </div>
               </div>
 
-              <div className="mt-5 rounded-2xl border border-white/10 overflow-hidden">
+              <div className="mt-6 rounded-2xl border border-white/[0.08] overflow-hidden">
                 <div className="max-h-[520px] overflow-auto nuvia-scroll">
-                  <table className="w-full text-xs tabular-nums">
-                    <thead className="sticky top-0 z-10 backdrop-blur-xl" style={{ background: "rgba(8,16,40,0.95)" }}>
-                      <tr className="text-left text-[10.5px] uppercase tracking-wider text-white/60">
+                  <table className="w-full text-[12.5px] tabular-nums">
+                    <thead className="sticky top-0 z-10 backdrop-blur-xl" style={{ background: "rgba(11,16,32,0.96)", boxShadow: "0 1px 0 rgba(255,255,255,0.06)" }}>
+                      <tr className="text-left text-[10.5px] uppercase tracking-[0.14em] text-white/55">
                         <Th>Periodo</Th>
                         <Th>Saldo inicial</Th>
                         <Th>Cuota financiera</Th>
@@ -712,15 +716,15 @@ function AmortizationEngine() {
                         return (
                           <tr
                             key={r.periodo}
-                            className={`transition-colors border-t border-white/[0.04] hover:bg-white/[0.04] ${
-                              isCurrent ? "bg-[rgba(132,185,143,0.08)]" : r.periodo % 2 === 0 ? "bg-white/[0.015]" : ""
+                            className={`transition-colors duration-150 border-t border-white/[0.04] hover:bg-white/[0.045] ${
+                              isCurrent ? "bg-[rgba(132,185,143,0.09)]" : r.periodo % 2 === 0 ? "bg-white/[0.012]" : ""
                             }`}
                           >
                             <Td strong={isCurrent}>
                               {isCurrent && (
                                 <span
                                   className="inline-block w-1.5 h-1.5 rounded-full mr-1.5"
-                                  style={{ background: NUVEX.verde, boxShadow: `0 0 8px ${NUVEX.verde}` }}
+                                  style={{ background: NUVEX.verde, boxShadow: `0 0 10px ${NUVEX.verde}` }}
                                 />
                               )}
                               {r.periodo}
@@ -768,45 +772,45 @@ function Hero({ modo }: { modo: "pesos" | "uvr" }) {
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="relative overflow-hidden rounded-[28px] border border-white/10 p-8"
+      className="relative overflow-hidden rounded-3xl border border-white/[0.08] p-8 md:p-10 backdrop-blur-xl"
       style={{
         background:
-          "linear-gradient(135deg, rgba(15,26,51,0.9), rgba(8,16,40,0.9))",
-        boxShadow: "0 30px 60px -30px rgba(0,0,0,0.9)",
+          "linear-gradient(135deg, rgba(18,24,38,0.92), rgba(11,16,32,0.92))",
+        boxShadow: "0 30px 80px -40px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.04)",
       }}
     >
       <div
-        className="absolute -top-24 -right-24 h-72 w-72 rounded-full blur-3xl opacity-40"
+        className="absolute -top-32 -right-24 h-80 w-80 rounded-full blur-3xl opacity-45"
         style={{ background: `radial-gradient(circle, ${NUVEX.azul}, transparent 70%)` }}
       />
       <div
-        className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full blur-3xl opacity-30"
+        className="absolute -bottom-32 -left-24 h-80 w-80 rounded-full blur-3xl opacity-30"
         style={{ background: `radial-gradient(circle, ${NUVEX.verde}, transparent 70%)` }}
       />
-      <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-        <div className="flex items-start gap-4">
+      <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-8">
+        <div className="flex items-start gap-5 min-w-0">
           <div
-            className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/15"
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/15"
             style={{
-              background: "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))",
-              boxShadow: `0 16px 40px -16px ${NUVEX.verde}`,
+              background: "linear-gradient(135deg, rgba(68,93,163,0.9), rgba(132,185,143,0.9))",
+              boxShadow: `0 20px 40px -18px ${NUVEX.verde}, inset 0 1px 0 rgba(255,255,255,0.25)`,
             }}
           >
             <Calculator className="h-6 w-6 text-white" />
           </div>
-          <div>
-            <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#84B98F] flex items-center gap-1.5">
-              <Sparkles size={12} /> NUVIA · Financial intelligence
+          <div className="min-w-0">
+            <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#84B98F] flex items-center gap-1.5">
+              <Sparkles size={12} /> NUVIA · Financial Intelligence
             </div>
-            <h1 className="mt-1 text-3xl md:text-4xl font-semibold tracking-tight text-white">
+            <h1 className="mt-2 text-3xl md:text-[38px] font-semibold tracking-tight leading-[1.05] text-white">
               NUVIA Amortization Engine
             </h1>
-            <p className="mt-2 max-w-xl text-sm text-white/60 leading-relaxed">
+            <p className="mt-2.5 max-w-xl text-sm text-white/70 leading-relaxed">
               Analiza la composición matemática exacta de cualquier cuota de tu crédito.
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 shrink-0">
           <Badge icon={<Calculator className="h-3 w-3" />} label="Mathematical Engine" tone="blue" />
           <Badge icon={<Lock className="h-3 w-3" />} label={modo === "uvr" ? "Modalidad UVR" : "Modalidad PESOS"} tone="green" />
         </div>
@@ -816,16 +820,17 @@ function Hero({ modo }: { modo: "pesos" | "uvr" }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
-        className="relative mt-6 rounded-xl border border-amber-400/25 bg-amber-500/[0.06] p-3.5 flex items-start gap-3"
+        className="relative mt-7 rounded-2xl border border-amber-400/20 bg-amber-500/[0.05] p-4 flex items-start gap-3 backdrop-blur-sm"
       >
         <Info className="h-4 w-4 text-amber-300 mt-0.5 shrink-0" />
         <div className="text-xs text-amber-100/85 leading-relaxed">
-          <b className="text-amber-200">Alcance del motor:</b> NUVIA Amortization Engine soporta créditos en <b>PESOS</b> (sistema francés de cuota fija) y en <b>UVR</b> (con proyección de variación anual esperada). Selecciona la modalidad arriba o carga el extracto para autodetectar.
+          <b className="text-amber-200">Alcance del motor:</b> NUVIA Amortization Engine soporta créditos en <b>PESOS</b> (sistema francés de cuota fija) y en <b>UVR</b> (con proyección de variación anual esperada). Selecciona la modalidad o carga el extracto para autodetectar.
         </div>
       </motion.div>
     </motion.div>
   );
 }
+
 
 function Badge({ icon, label, tone }: { icon: React.ReactNode; label: string; tone: "blue" | "green" }) {
   const bg =
@@ -851,11 +856,11 @@ function PremiumCard({ children }: { children: React.ReactNode }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       whileHover={{ y: -2 }}
-      className="relative rounded-[22px] border border-white/[0.08] bg-white/[0.025] backdrop-blur-2xl p-6"
-      style={{ boxShadow: "0 30px 60px -40px rgba(0,0,0,0.9)" }}
+      className="relative rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-xl p-6 md:p-7 transition-all duration-200 hover:border-white/[0.12]"
+      style={{ boxShadow: "0 8px 40px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.03)" }}
     >
       <span
-        className="pointer-events-none absolute inset-x-8 top-0 h-px"
+        className="pointer-events-none absolute inset-x-8 top-0 h-px opacity-70"
         style={{ background: "linear-gradient(90deg, transparent, rgba(132,185,143,0.5), transparent)" }}
       />
       {children}
@@ -866,14 +871,15 @@ function PremiumCard({ children }: { children: React.ReactNode }) {
 function CardHeader({ icon, badge, title, subtitle }: { icon: React.ReactNode; badge: string; title: string; subtitle: string }) {
   return (
     <div>
-      <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-[#84B98F]">
+      <div className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#84B98F]">
         {icon} {badge}
       </div>
-      <h2 className="mt-1.5 text-xl font-semibold tracking-tight text-white">{title}</h2>
-      <p className="mt-1 text-xs text-white/50">{subtitle}</p>
+      <h2 className="mt-2.5 text-xl md:text-[22px] font-semibold tracking-tight text-white leading-tight">{title}</h2>
+      <p className="mt-1.5 text-[12.5px] text-white/60 leading-relaxed">{subtitle}</p>
     </div>
   );
 }
+
 
 function NField({
   label,
@@ -894,10 +900,10 @@ function NField({
 }) {
   return (
     <div>
-      <label className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-white/50 mb-1.5">
+      <label className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-white/55 mb-1.5">
         {icon} {label}
       </label>
-      <div className="group relative flex items-center rounded-xl border border-white/10 bg-white/[0.03] focus-within:border-[#84B98F]/50 focus-within:bg-white/[0.05] transition">
+      <div className="group relative flex items-center rounded-[14px] border border-white/[0.08] bg-white/[0.03] transition-all duration-200 focus-within:border-[#445DA3]/60 focus-within:bg-white/[0.05] focus-within:shadow-[0_0_0_3px_rgba(68,93,163,0.18)]">
         {prefix && <span className="pl-3 text-white/40 text-sm">{prefix}</span>}
         <input
           type="text"
@@ -917,18 +923,20 @@ function KPI({ label, value, color, strong }: { label: string; value: number; co
   const display = useCountUp(value);
   return (
     <motion.div
-      whileHover={{ y: -2 }}
-      className="relative rounded-2xl border border-white/[0.08] bg-white/[0.025] p-4 overflow-hidden group"
+      whileHover={{ y: -2, scale: 1.015 }}
+      transition={{ duration: 0.2 }}
+      className="relative rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 overflow-hidden group backdrop-blur-xl hover:border-white/[0.14] transition-colors"
+      style={{ boxShadow: "0 8px 30px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.03)" }}
     >
       <div
-        className="absolute -top-10 -right-10 h-24 w-24 rounded-full blur-2xl opacity-40 group-hover:opacity-60 transition"
+        className="absolute -top-10 -right-10 h-24 w-24 rounded-full blur-2xl opacity-40 group-hover:opacity-70 transition-opacity duration-300"
         style={{ background: `radial-gradient(circle, ${color}, transparent 70%)` }}
       />
       <div className="relative">
-        <div className="text-[9.5px] font-bold uppercase tracking-[0.14em] text-white/45">{label}</div>
+        <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/50">{label}</div>
         <div
-          className={`mt-1.5 tabular-nums ${strong ? "text-2xl" : "text-xl"} font-semibold text-white`}
-          style={strong ? { textShadow: `0 0 20px ${color}55` } : undefined}
+          className={`mt-2 tabular-nums font-bold text-white ${strong ? "text-[26px]" : "text-[22px]"}`}
+          style={strong ? { textShadow: `0 0 24px ${color}66` } : undefined}
         >
           {fmtCOP(display)}
         </div>
@@ -956,11 +964,11 @@ function useCountUp(target: number, duration = 700) {
 }
 
 function Th({ children }: { children: React.ReactNode }) {
-  return <th className="px-3 py-3 font-semibold text-white/70 whitespace-nowrap">{children}</th>;
+  return <th className="px-4 py-3.5 font-semibold text-white/65 whitespace-nowrap">{children}</th>;
 }
 function Td({ children, className = "", strong }: { children: React.ReactNode; className?: string; strong?: boolean }) {
   return (
-    <td className={`px-3 py-2.5 whitespace-nowrap text-white/85 ${strong ? "font-semibold text-white" : ""} ${className}`}>
+    <td className={`px-4 py-3 whitespace-nowrap text-white/85 ${strong ? "font-semibold text-white" : ""} ${className}`}>
       {children}
     </td>
   );
@@ -973,10 +981,17 @@ function BackgroundFX() {
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(circle at 15% 10%, rgba(68,93,163,0.35), transparent 55%), radial-gradient(circle at 85% 85%, rgba(132,185,143,0.28), transparent 55%), radial-gradient(circle at 50% 50%, rgba(147,51,234,0.15), transparent 60%)",
+            "radial-gradient(circle at 15% 10%, rgba(68,93,163,0.28), transparent 55%), radial-gradient(circle at 85% 85%, rgba(132,185,143,0.22), transparent 55%), radial-gradient(circle at 50% 50%, rgba(68,93,163,0.10), transparent 60%)",
         }}
       />
-      <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(180deg, #050816 0%, #081028 100%)", opacity: 0.6 }} />
+      <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(180deg, #0B1020 0%, #121826 100%)", opacity: 0.7 }} />
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.015] mix-blend-overlay"
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+        }}
+      />
     </>
   );
 }
