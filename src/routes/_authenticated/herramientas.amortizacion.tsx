@@ -162,11 +162,15 @@ const fmtPct = (v: number, d = 4) => `${(v * 100).toFixed(d)}%`;
 // ============================================================================
 
 function AmortizationEngine() {
+  const [modo, setModo] = useState<"pesos" | "uvr">("pesos");
   const [tea, setTea] = useState<string>("13.5");
   const [plazo, setPlazo] = useState<string>("180");
   const [valor, setValor] = useState<string>("200000000");
   const [periodo, setPeriodo] = useState<string>("1");
   const [seguros, setSeguros] = useState<string>("120000");
+  // UVR-only fields
+  const [uvrInicial, setUvrInicial] = useState<string>("340.50");
+  const [varUvr, setVarUvr] = useState<string>("5.5");
   const [calculated, setCalculated] = useState(false);
 
   const teaNum = parseFloat(tea) / 100 || 0;
@@ -174,13 +178,19 @@ function AmortizationEngine() {
   const valorNum = parseFloat(valor) || 0;
   const periodoNum = parseInt(periodo) || 0;
   const segurosNum = parseFloat(seguros) || 0;
+  const uvrInicialNum = parseFloat(uvrInicial) || 0;
+  const varUvrNum = parseFloat(varUvr) / 100 || 0;
 
   const tasaMensual = teaNum > 0 ? tasaMensualFromTEA(teaNum) : 0;
 
   const rows = useMemo(() => {
     if (!calculated || teaNum <= 0 || plazoNum <= 0 || valorNum <= 0) return [];
+    if (modo === "uvr") {
+      if (uvrInicialNum <= 0) return [];
+      return construirTablaUVR(valorNum, teaNum, plazoNum, uvrInicialNum, varUvrNum, segurosNum);
+    }
     return construirTabla(valorNum, teaNum, plazoNum, segurosNum);
-  }, [calculated, teaNum, plazoNum, valorNum, segurosNum]);
+  }, [calculated, modo, teaNum, plazoNum, valorNum, segurosNum, uvrInicialNum, varUvrNum]);
 
   const currentRow = rows[Math.min(Math.max(periodoNum, 1), rows.length) - 1];
   const insight = useMemo(() => (rows.length ? generateInsight(rows, periodoNum) : ""), [rows, periodoNum]);
@@ -188,12 +198,16 @@ function AmortizationEngine() {
   function handleCalculate() {
     if (teaNum <= 0) return toast.error("TEA debe ser mayor a 0");
     if (plazoNum <= 0) return toast.error("Plazo debe ser mayor a 0");
-    if (valorNum <= 0) return toast.error("Valor del crédito debe ser mayor a 0");
+    if (valorNum <= 0)
+      return toast.error(modo === "uvr" ? "Valor del crédito en UVR debe ser mayor a 0" : "Valor del crédito debe ser mayor a 0");
     if (periodoNum < 1 || periodoNum > plazoNum)
       return toast.error(`Periodo debe estar entre 1 y ${plazoNum}`);
     if (segurosNum < 0) return toast.error("Seguros no puede ser negativo");
+    if (modo === "uvr") {
+      if (uvrInicialNum <= 0) return toast.error("UVR inicial debe ser mayor a 0");
+    }
     setCalculated(true);
-    toast.success("Amortización calculada");
+    toast.success(`Amortización ${modo === "uvr" ? "UVR" : "PESOS"} calculada`);
   }
 
   function handleReset() {
