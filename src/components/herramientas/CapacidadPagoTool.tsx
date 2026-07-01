@@ -112,6 +112,7 @@ export function CapacidadPagoTool() {
   const ejecutar = useServerFn(analizarCapacidadPago);
 
   const [esVis, setEsVis] = useState(false);
+  const [banco, setBanco] = useState<string>("");
   const [cuota, setCuota] = useState<number>(0);
   const [personas, setPersonas] = useState<PersonaForm[]>([nuevaPersona("titular")]);
   const [analizando, setAnalizando] = useState(false);
