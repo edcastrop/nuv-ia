@@ -291,13 +291,13 @@ function PipelinePage() {
     };
   }, []);
 
-  // Cargar analistas financieros (rol "licenciado") para el filtro.
+  // Cargar analistas (roles operativos) para el filtro.
   useEffect(() => {
     (async () => {
       const { data: ur } = await supabase
         .from("user_roles")
-        .select("user_id")
-        .eq("role", "licenciado" as never);
+        .select("user_id, role")
+        .in("role", ["licenciado", "asesor", "contabilidad", "gerencia", "director_financiero_qa"] as never);
       const ids = Array.from(new Set((ur ?? []).map((r) => (r as { user_id: string }).user_id)));
       if (ids.length === 0) { setAnalistas([]); return; }
       const { data: profs } = await supabase
@@ -309,6 +309,7 @@ function PipelinePage() {
       setAnalistas(list);
     })();
   }, []);
+
 
   // Cargar perfiles (nombre/email) de TODOS los asesores referenciados en rows.
   useEffect(() => {
