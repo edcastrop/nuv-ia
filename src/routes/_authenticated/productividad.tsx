@@ -794,10 +794,10 @@ function PodiumSpot({
           style={{
             color: glow,
             fontSize: scoreSize,
-            lineHeight: pos === 1 ? 0.9 : 1,
-            fontWeight: pos === 1 ? 800 : 900,
+            lineHeight: 0.82,
+            fontWeight: 900,
             marginTop: 4,
-            textShadow: `0 0 24px ${glow}66`,
+            textShadow: `0 0 16px ${glow}7A`,
             fontFamily: "'JetBrains Mono', ui-monospace, monospace",
           }}
         >
