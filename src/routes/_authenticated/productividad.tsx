@@ -729,7 +729,7 @@ function PodiumSpot({
       </div>
 
       {/* Avatar */}
-      <div className="relative" style={{ zIndex: 2 }}>
+      <div className="relative" style={{ zIndex: 2, marginTop: pos === 1 ? -20 : 0 }}>
         <div
           style={{
             padding: 3,
