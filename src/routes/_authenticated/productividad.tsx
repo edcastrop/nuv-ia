@@ -30,7 +30,14 @@ import {
   Flame,
   ArrowUp,
   ArrowDown,
+  Medal,
+  Calendar as CalendarIcon,
+  ArrowRight,
+  Repeat,
+  CheckCircle2,
+  Bell,
 } from "lucide-react";
+
 
 
 export const Route = createFileRoute("/_authenticated/productividad")({
