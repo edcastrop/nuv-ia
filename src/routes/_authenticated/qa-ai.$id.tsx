@@ -351,12 +351,38 @@ function ExtractoOriginalAccordion({ extracto, expedienteId }: { extracto: Extra
                 }}
               >
                 <Paperclip size={13} />
-                {extracto.archivo_path ? (opening ? "Abriendo…" : "Ver extracto adjunto") : "Sin archivo adjunto"}
+                {extracto.archivo_path ? (opening ? "Abriendo…" : "Ver extracto principal") : "Sin archivo principal"}
               </button>
               {extracto.archivo_nombre && (
                 <span className="text-[11.5px]" style={{ color: "var(--nuvia-text-muted)" }}>{extracto.archivo_nombre}</span>
               )}
             </div>
+
+            {soportes.length > 0 && (
+              <div className="mt-2">
+                <div className="text-[11.5px] font-semibold mb-1.5" style={{ color: "var(--nuvia-text-secondary)" }}>
+                  Todos los archivos que subió el analista ({soportes.length}):
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  {soportes.map((s, idx) => (
+                    <button
+                      key={s.id}
+                      onClick={() => openPath(s.archivo_path, idx)}
+                      className="flex items-center justify-between gap-3 px-3 py-1.5 rounded-md text-[12px] text-left"
+                      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--nuvia-border)", color: "var(--nuvia-text-primary)" }}
+                    >
+                      <span className="flex items-center gap-2 truncate">
+                        <Paperclip size={12} style={{ color: "var(--nuvia-accent)" }} />
+                        <span className="truncate">{s.archivo_nombre ?? s.archivo_path}</span>
+                      </span>
+                      <span className="text-[11px]" style={{ color: "var(--nuvia-text-muted)" }}>
+                        {openingIdx === idx ? "Abriendo…" : "Abrir"}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
