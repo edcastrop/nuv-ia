@@ -72,6 +72,7 @@ import { Route as AuthenticatedQaAiAlertasRouteImport } from './routes/_authenti
 import { Route as AuthenticatedQaAiIdRouteImport } from './routes/_authenticated/qa-ai.$id'
 import { Route as AuthenticatedHerramientasProyeccionRouteImport } from './routes/_authenticated/herramientas.proyeccion'
 import { Route as AuthenticatedHerramientasCapacidadPagoRouteImport } from './routes/_authenticated/herramientas.capacidad-pago'
+import { Route as AuthenticatedHerramientasAmortizacionRouteImport } from './routes/_authenticated/herramientas.amortizacion'
 import { Route as AuthenticatedFinanzasWalletsRouteImport } from './routes/_authenticated/finanzas.wallets'
 import { Route as AuthenticatedFinanzasTreasuryRouteImport } from './routes/_authenticated/finanzas.treasury'
 import { Route as AuthenticatedFinanzasTesoreriaRouteImport } from './routes/_authenticated/finanzas.tesoreria'
@@ -458,6 +459,12 @@ const AuthenticatedHerramientasCapacidadPagoRoute =
     path: '/capacidad-pago',
     getParentRoute: () => AuthenticatedHerramientasRoute,
   } as any)
+const AuthenticatedHerramientasAmortizacionRoute =
+  AuthenticatedHerramientasAmortizacionRouteImport.update({
+    id: '/amortizacion',
+    path: '/amortizacion',
+    getParentRoute: () => AuthenticatedHerramientasRoute,
+  } as any)
 const AuthenticatedFinanzasWalletsRoute =
   AuthenticatedFinanzasWalletsRouteImport.update({
     id: '/wallets',
@@ -754,6 +761,7 @@ export interface FileRoutesByFullPath {
   '/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
   '/finanzas/treasury': typeof AuthenticatedFinanzasTreasuryRouteWithChildren
   '/finanzas/wallets': typeof AuthenticatedFinanzasWalletsRoute
+  '/herramientas/amortizacion': typeof AuthenticatedHerramientasAmortizacionRoute
   '/herramientas/capacidad-pago': typeof AuthenticatedHerramientasCapacidadPagoRoute
   '/herramientas/proyeccion': typeof AuthenticatedHerramientasProyeccionRoute
   '/qa-ai/$id': typeof AuthenticatedQaAiIdRoute
@@ -854,6 +862,7 @@ export interface FileRoutesByTo {
   '/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
   '/finanzas/wallets': typeof AuthenticatedFinanzasWalletsRoute
+  '/herramientas/amortizacion': typeof AuthenticatedHerramientasAmortizacionRoute
   '/herramientas/capacidad-pago': typeof AuthenticatedHerramientasCapacidadPagoRoute
   '/herramientas/proyeccion': typeof AuthenticatedHerramientasProyeccionRoute
   '/qa-ai/$id': typeof AuthenticatedQaAiIdRoute
@@ -960,6 +969,7 @@ export interface FileRoutesById {
   '/_authenticated/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
   '/_authenticated/finanzas/treasury': typeof AuthenticatedFinanzasTreasuryRouteWithChildren
   '/_authenticated/finanzas/wallets': typeof AuthenticatedFinanzasWalletsRoute
+  '/_authenticated/herramientas/amortizacion': typeof AuthenticatedHerramientasAmortizacionRoute
   '/_authenticated/herramientas/capacidad-pago': typeof AuthenticatedHerramientasCapacidadPagoRoute
   '/_authenticated/herramientas/proyeccion': typeof AuthenticatedHerramientasProyeccionRoute
   '/_authenticated/qa-ai/$id': typeof AuthenticatedQaAiIdRoute
@@ -1066,6 +1076,7 @@ export interface FileRouteTypes {
     | '/finanzas/tesoreria'
     | '/finanzas/treasury'
     | '/finanzas/wallets'
+    | '/herramientas/amortizacion'
     | '/herramientas/capacidad-pago'
     | '/herramientas/proyeccion'
     | '/qa-ai/$id'
@@ -1166,6 +1177,7 @@ export interface FileRouteTypes {
     | '/finanzas/reportes'
     | '/finanzas/tesoreria'
     | '/finanzas/wallets'
+    | '/herramientas/amortizacion'
     | '/herramientas/capacidad-pago'
     | '/herramientas/proyeccion'
     | '/qa-ai/$id'
@@ -1271,6 +1283,7 @@ export interface FileRouteTypes {
     | '/_authenticated/finanzas/tesoreria'
     | '/_authenticated/finanzas/treasury'
     | '/_authenticated/finanzas/wallets'
+    | '/_authenticated/herramientas/amortizacion'
     | '/_authenticated/herramientas/capacidad-pago'
     | '/_authenticated/herramientas/proyeccion'
     | '/_authenticated/qa-ai/$id'
@@ -1783,6 +1796,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHerramientasCapacidadPagoRouteImport
       parentRoute: typeof AuthenticatedHerramientasRoute
     }
+    '/_authenticated/herramientas/amortizacion': {
+      id: '/_authenticated/herramientas/amortizacion'
+      path: '/amortizacion'
+      fullPath: '/herramientas/amortizacion'
+      preLoaderRoute: typeof AuthenticatedHerramientasAmortizacionRouteImport
+      parentRoute: typeof AuthenticatedHerramientasRoute
+    }
     '/_authenticated/finanzas/wallets': {
       id: '/_authenticated/finanzas/wallets'
       path: '/wallets'
@@ -2165,6 +2185,7 @@ const AuthenticatedFinanzasRouteWithChildren =
   )
 
 interface AuthenticatedHerramientasRouteChildren {
+  AuthenticatedHerramientasAmortizacionRoute: typeof AuthenticatedHerramientasAmortizacionRoute
   AuthenticatedHerramientasCapacidadPagoRoute: typeof AuthenticatedHerramientasCapacidadPagoRoute
   AuthenticatedHerramientasProyeccionRoute: typeof AuthenticatedHerramientasProyeccionRoute
   AuthenticatedHerramientasIndexRoute: typeof AuthenticatedHerramientasIndexRoute
@@ -2172,6 +2193,8 @@ interface AuthenticatedHerramientasRouteChildren {
 
 const AuthenticatedHerramientasRouteChildren: AuthenticatedHerramientasRouteChildren =
   {
+    AuthenticatedHerramientasAmortizacionRoute:
+      AuthenticatedHerramientasAmortizacionRoute,
     AuthenticatedHerramientasCapacidadPagoRoute:
       AuthenticatedHerramientasCapacidadPagoRoute,
     AuthenticatedHerramientasProyeccionRoute:
@@ -2340,13 +2363,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
