@@ -227,7 +227,7 @@ export async function upsertExpediente(p: UpsertPayload): Promise<Expediente> {
       honorarios_final?: number | null;
     };
 
-    const propuestaIncoming = (p.propuesta ?? {}) as Record<string, unknown>;
+    const propuestaIncoming = (p.propuesta ?? {}) as unknown as Record<string, unknown>;
     const propuestaFinal =
       Object.keys(propuestaIncoming).length > 0
         ? propuestaIncoming
