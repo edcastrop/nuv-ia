@@ -61,19 +61,19 @@ function SocialProofCard({ caso, closing, onClose }: { caso: Caso; closing: bool
   return createPortal(
     <div
       style={{
-        position: "fixed", bottom: 32, left: 32, zIndex: 2147483590,
+        position: "fixed", bottom: 32, right: 32, zIndex: 2147483590,
         width: 410, maxWidth: "calc(100vw - 40px)",
       }}
       className="nuvia-social-proof-anchor"
     >
       <style>{`
         @keyframes nuviaSpSlideIn {
-          from { transform: translateX(-120%) scale(.98); opacity: 0; }
+          from { transform: translateX(120%) scale(.98); opacity: 0; }
           to   { transform: translateX(0) scale(1); opacity: 1; }
         }
         @keyframes nuviaSpSlideOut {
           from { transform: translateX(0) scale(1); opacity: 1; }
-          to   { transform: translateX(-120%) scale(.98); opacity: 0; }
+          to   { transform: translateX(120%) scale(.98); opacity: 0; }
         }
         @keyframes nuviaSpShine {
           0%   { transform: translateX(-100%); }
