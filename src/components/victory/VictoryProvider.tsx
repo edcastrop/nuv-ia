@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Trophy, Flame, Volume2, VolumeX, X } from "lucide-react";
+import { Trophy, Flame, Volume2, VolumeX, X, PartyPopper } from "lucide-react";
 import {
   subscribeVictoryLocal,
   subscribeVictoryBroadcast,
@@ -8,6 +8,7 @@ import {
   readStreak,
   isVictoryMuted,
   setVictoryMuted,
+  fireVictory,
   type VictoryEvent,
   type StreakState,
 } from "@/lib/victoryTrigger";
