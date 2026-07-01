@@ -679,17 +679,19 @@ function AmortizationEngine() {
                 <div className="flex gap-2">
                   <button
                     onClick={handleExportExcel}
-                    className="rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] px-3.5 py-2 text-xs font-medium text-white/80 hover:text-white transition inline-flex items-center gap-1.5"
+                    className="rounded-[14px] border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/[0.14] px-3.5 py-2 text-xs font-medium text-white/80 hover:text-white transition-all duration-200 inline-flex items-center gap-1.5"
                   >
                     <FileSpreadsheet className="h-3.5 w-3.5" /> Excel
                   </button>
-                  <button
+                  <motion.button
+                    whileHover={{ y: -1 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={handleExportPDF}
-                    className="rounded-xl px-3.5 py-2 text-xs font-semibold text-white transition hover:brightness-110 inline-flex items-center gap-1.5"
-                    style={{ background: `linear-gradient(135deg, ${NUVEX.azul}, ${NUVEX.verde})` }}
+                    className="rounded-[14px] px-3.5 py-2 text-xs font-semibold text-white transition-all duration-200 hover:brightness-110 inline-flex items-center gap-1.5"
+                    style={{ background: `linear-gradient(135deg, ${NUVEX.azul}, ${NUVEX.verde})`, boxShadow: `0 10px 24px -12px ${NUVEX.verde}` }}
                   >
                     <FileText className="h-3.5 w-3.5" /> PDF
-                  </button>
+                  </motion.button>
                 </div>
               </div>
 
