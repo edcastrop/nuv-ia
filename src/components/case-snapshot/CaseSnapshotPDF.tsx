@@ -468,25 +468,26 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
       <Wave />
 
       <div style={{ position: "relative", zIndex: 1 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 22 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 34 }}>
           <div>
-            <div style={{ fontSize: 30, fontWeight: 950, color: C.text, lineHeight: 0.95, letterSpacing: "0.02em" }}>NUVIA</div>
-            <div style={{ fontSize: 9.2, color: C.blue2, fontWeight: 800, letterSpacing: "0.12em", marginTop: 6 }}>FINANCIAL INTELLIGENCE</div>
+            <div style={{ fontSize: 41, fontWeight: 950, color: C.text, lineHeight: 0.95, letterSpacing: "0.02em" }}>NUVIA</div>
+            <div style={{ fontSize: 10, color: C.blue2, fontWeight: 800, letterSpacing: "0.14em", marginTop: 8 }}>FINANCIAL INTELLIGENCE</div>
           </div>
-          <div style={{ textAlign: "right", paddingTop: 4 }}>
-            <div style={{ fontSize: 8.4, color: C.textMuted, lineHeight: 1.35, fontWeight: 500 }}>Fecha de emisión: <span style={{ color: C.textSec, fontWeight: 600 }}>{fechaHoy()}</span></div>
-            <div style={{ fontSize: 7.6, color: C.textLabel, lineHeight: 1.35, fontWeight: 400, marginTop: 2 }}>Documento ejecutivo • No reemplaza el expediente operativo</div>
+          <div style={{ textAlign: "right", paddingTop: 6, opacity: 0.82 }}>
+            <div style={{ fontSize: 7.6, color: C.textLabel, lineHeight: 1.3, fontWeight: 500, letterSpacing: "0.02em" }}>Fecha de emisión</div>
+            <div style={{ fontSize: 8.6, color: C.textSec, lineHeight: 1.3, fontWeight: 600, marginTop: 2 }}>{fechaHoy()}</div>
+            <div style={{ fontSize: 7, color: C.textLabel, lineHeight: 1.3, fontWeight: 400, marginTop: 3, opacity: 0.75 }}>Documento ejecutivo · No reemplaza el expediente</div>
           </div>
         </div>
 
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 18, gap: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20, gap: 16 }}>
           <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: 40, fontWeight: 950, color: C.text, letterSpacing: "0", lineHeight: 1 }}>CASE SNAPSHOT</div>
-            <div style={{ fontSize: 10.5, color: C.textMuted, marginTop: 7, letterSpacing: "0.08em", textTransform: "uppercase" }}>Resumen ejecutivo del caso</div>
+            <div style={{ fontSize: 51, fontWeight: 950, color: C.text, letterSpacing: "-0.005em", lineHeight: 1 }}>CASE SNAPSHOT</div>
+            <div style={{ fontSize: 10.5, color: C.textMuted, marginTop: 9, letterSpacing: "0.08em", textTransform: "uppercase" }}>Resumen ejecutivo del caso</div>
           </div>
-          <div style={{ width: 316, flexShrink: 0, minHeight: 58, background: "#080F22", border: `1px solid ${C.border2}`, borderRadius: 5, padding: "10px 14px", boxSizing: "border-box", position: "relative", zIndex: 5, boxShadow: "0 0 0 1px rgba(59,130,246,0.18), 0 0 24px rgba(59,130,246,0.18)", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-            <MiniLabel style={{ color: C.blue2, marginBottom: 5 }}>ID Expediente</MiniLabel>
-            <div style={{ fontSize: 9.7, lineHeight: 1.25, fontFamily: "'Courier New', Courier, monospace", color: "#F8FAFF", fontWeight: 800, letterSpacing: "0", whiteSpace: "nowrap", overflow: "visible" }}>{shortId(e.id)}</div>
+          <div style={{ width: 316, flexShrink: 0, minHeight: 46, background: "#080F22", border: `1px solid ${C.border2}`, borderRadius: 5, padding: "8px 14px", boxSizing: "border-box", position: "relative", zIndex: 5, boxShadow: "0 0 0 1px rgba(59,130,246,0.18), 0 0 24px rgba(59,130,246,0.18)", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+            <MiniLabel style={{ color: C.blue2, marginBottom: 4 }}>ID Expediente</MiniLabel>
+            <div style={{ fontSize: 9.7, lineHeight: 1.2, fontFamily: "'Courier New', Courier, monospace", color: "#F8FAFF", fontWeight: 800, letterSpacing: "0", whiteSpace: "nowrap", overflow: "visible" }}>{shortId(e.id)}</div>
           </div>
         </div>
 
