@@ -474,7 +474,7 @@ function PodiumBlock({
             <Trophy size={20} />
           </div>
           <div>
-            <div className="font-bold uppercase tracking-wider" style={{ color: "#FFFFFF", fontSize: 18, letterSpacing: "0.02em" }}>
+            <div className="uppercase" style={{ color: "#FFFFFF", fontSize: 20, fontWeight: 800, letterSpacing: "0.01em" }}>
               Podium NUVIA
             </div>
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.65)", marginTop: 2 }}>
