@@ -820,7 +820,7 @@ function Hero({ modo }: { modo: "pesos" | "uvr" }) {
       >
         <Info className="h-4 w-4 text-amber-300 mt-0.5 shrink-0" />
         <div className="text-xs text-amber-100/85 leading-relaxed">
-          <b className="text-amber-200">Alcance del motor:</b> NUVIA Amortization Engine actualmente solo está disponible para créditos en pesos con sistema francés de cuota fija. Para créditos UVR, leasing UVR o productos indexados utiliza el módulo UVR Engine.
+          <b className="text-amber-200">Alcance del motor:</b> NUVIA Amortization Engine soporta créditos en <b>PESOS</b> (sistema francés de cuota fija) y en <b>UVR</b> (con proyección de variación anual esperada). Selecciona la modalidad arriba o carga el extracto para autodetectar.
         </div>
       </motion.div>
     </motion.div>
