@@ -1487,7 +1487,7 @@ function EquipoCasoCard({
       await supabase.from("expediente_historial").insert({
         expediente_id: expedienteId,
         accion_origen: "reasignacion_equipo",
-        observacion: `${field === "asesor_id" ? "Asesor" : "Licenciado"} reasignado${value ? "" : " (sin asignar)"}`,
+        observacion: `${field === "asesor_id" ? "Asesor" : "Analista Financiero Comercial"} reasignado${value ? "" : " (sin asignar)"}`,
         usuario_id: auth.user?.id ?? null,
       } as never);
       onChange(field, value);
