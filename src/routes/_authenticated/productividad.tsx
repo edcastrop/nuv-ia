@@ -573,13 +573,13 @@ function PodiumBlock({
           style={{ gridTemplateColumns: "1fr 1.15fr 1fr", gap: 23 }}
         >
           <div className="flex items-end" style={{ transform: "translateY(-35px)" }}>
-            <PodiumSpot user={second} pos={2} height={353} glow={PODIUM_SILVER} />
+            <PodiumSpot user={second} pos={2} height={470} glow={PODIUM_SILVER} />
           </div>
           <div className="flex items-end">
             <PodiumSpot user={first}  pos={1} height={648} glow={PODIUM_GOLD} />
           </div>
           <div className="flex items-end" style={{ transform: "translateY(-15px)" }}>
-            <PodiumSpot user={third}  pos={3} height={296} glow={PODIUM_BRONZE} />
+            <PodiumSpot user={third}  pos={3} height={440} glow={PODIUM_BRONZE} />
           </div>
         </div>
       )}
@@ -680,7 +680,8 @@ function PodiumSpot({
     <div
       className="relative flex flex-col items-center transition-all duration-300 hover:scale-[1.02]"
       style={{
-        height,
+        width: "100%",
+        minHeight: height,
         borderRadius: 28,
         padding: pos === 1 ? "44px 20px 24px" : "38px 18px 22px",
         background: `linear-gradient(180deg, ${PODIUM_CARD} 0%, rgba(10,18,34,0.95) 100%)`,
