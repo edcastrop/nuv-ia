@@ -68,12 +68,12 @@ function SocialProofCard({ caso, closing, onClose }: { caso: Caso; closing: bool
     >
       <style>{`
         @keyframes nuviaSpSlideIn {
-          from { transform: translateX(-120%) scale(.98); opacity: 0; }
+          from { transform: translateX(120%) scale(.98); opacity: 0; }
           to   { transform: translateX(0) scale(1); opacity: 1; }
         }
         @keyframes nuviaSpSlideOut {
           from { transform: translateX(0) scale(1); opacity: 1; }
-          to   { transform: translateX(-120%) scale(.98); opacity: 0; }
+          to   { transform: translateX(120%) scale(.98); opacity: 0; }
         }
         @keyframes nuviaSpShine {
           0%   { transform: translateX(-100%); }
