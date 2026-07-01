@@ -21,12 +21,29 @@ const PersonaSchema = z.object({
   archivos: z.array(FileSchema).min(1).max(12),
 });
 
+// Bancos que NO consideran la prima como ingreso recurrente para radicación.
+// La prima se paga 2 veces al año → no promedia como salario mensual.
+export const BANCOS_EXCLUYEN_PRIMA = [
+  "Davivienda",
+  "Davibank",
+  "FNA",
+  "Banco de Bogotá",
+  "Banco Popular",
+] as const;
+
 const InputSchema = z.object({
   expedienteId: z.string().uuid(),
   cuotaPropuesta: z.number().positive(),
   esVis: z.boolean().default(false),
+  banco: z.string().max(80).optional(),
   personas: z.array(PersonaSchema).min(1).max(2),
 });
+
+function bancoExcluyePrima(banco?: string): boolean {
+  if (!banco) return false;
+  const n = banco.trim().toLowerCase();
+  return BANCOS_EXCLUYEN_PRIMA.some((b) => n === b.toLowerCase() || n.includes(b.toLowerCase()));
+}
 
 export type AnalisisPersonaResultado = {
   rol: "titular" | "codeudor";
