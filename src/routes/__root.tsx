@@ -158,6 +158,7 @@ function RootComponent() {
       <Outlet />
       <Toaster position="bottom-right" richColors closeButton />
       <VictoryProvider />
+      <NuviaSocialProofToast />
     </QueryClientProvider>
   );
 }
