@@ -163,14 +163,14 @@ const fmtPct = (v: number, d = 4) => `${(v * 100).toFixed(d)}%`;
 
 function AmortizationEngine() {
   const [modo, setModo] = useState<"pesos" | "uvr">("pesos");
-  const [tea, setTea] = useState<string>("13.5");
-  const [plazo, setPlazo] = useState<string>("180");
-  const [valor, setValor] = useState<string>("200000000");
-  const [periodo, setPeriodo] = useState<string>("1");
-  const [seguros, setSeguros] = useState<string>("120000");
+  const [tea, setTea] = useState<string>("");
+  const [plazo, setPlazo] = useState<string>("");
+  const [valor, setValor] = useState<string>("");
+  const [periodo, setPeriodo] = useState<string>("");
+  const [seguros, setSeguros] = useState<string>("");
   // UVR-only fields
-  const [uvrInicial, setUvrInicial] = useState<string>("340.50");
-  const [varUvr, setVarUvr] = useState<string>("5.5");
+  const [uvrInicial, setUvrInicial] = useState<string>("");
+  const [varUvr, setVarUvr] = useState<string>("");
   const [calculated, setCalculated] = useState(false);
 
   const teaNum = parseFloat(tea) / 100 || 0;
