@@ -669,7 +669,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
       }
       setStaging((prev) => [...prev, ...slice]);
       setStagingRawText((prev) => (prev ? `${prev}\n\n${res.rawText}` : res.rawText));
-      if (!archivoPath) await uploadOriginal(localFile);
+      await uploadOriginal(localFile);
       setFile(localFile);
       setPendingFile(null);
       setPassword("");
