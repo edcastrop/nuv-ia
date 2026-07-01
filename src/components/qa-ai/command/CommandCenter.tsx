@@ -6,6 +6,7 @@ import {
   ArrowRight, FileSearch, Paperclip, TrendingUp, TrendingDown, Minus,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { NSelect } from "@/components/nuvia/NSelect";
 
 export type CCRow = {
   id: string; expediente_id: string | null; analista_id: string | null;
@@ -80,9 +81,15 @@ export function CommandCenter(props: {
   const productosOpts = useMemo(() => [...new Set(props.rows.map((r) => r.producto).filter(Boolean))] as string[], [props.rows]);
   const analistasOpts = useMemo(() => {
     const m = new Map<string, string>();
-    props.rows.forEach((r) => { if (r.analista_id && r.analista_nombre) m.set(r.analista_id, r.analista_nombre); });
-    return [...m.entries()].map(([id, nombre]) => ({ id, nombre }));
-  }, [props.rows]);
+    // Start with the full analyst roster provided by the server (so every
+    // analista appears in the filter, even without recent audits).
+    props.analistas.forEach((a) => { if (a.id) m.set(a.id, a.nombre); });
+    // Backfill from rows in case any recent audit has an analyst not yet in the roster.
+    props.rows.forEach((r) => { if (r.analista_id && r.analista_nombre && !m.has(r.analista_id)) m.set(r.analista_id, r.analista_nombre); });
+    return [...m.entries()]
+      .map(([id, nombre]) => ({ id, nombre }))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+  }, [props.rows, props.analistas]);
 
   const filtered = useMemo(() => {
     let out = applyFilters(props.rows, f);
@@ -192,6 +199,33 @@ function FilterBar({
     display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: C.textSec,
     background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 8, padding: "7px 10px", cursor: "pointer",
   };
+  const analistaOpts = [{ value: "", label: "Analista · todos" }, ...analistas.map((a) => ({ value: a.id, label: a.nombre }))];
+  const bancoOpts = [{ value: "", label: "Banco · todos" }, ...bancos.map((b) => ({ value: b, label: b }))];
+  const productoOpts = [{ value: "", label: "Producto · todos" }, ...productos.map((p) => ({ value: p, label: p }))];
+  const modalidadOpts = [
+    { value: "", label: "Modalidad · todas" },
+    { value: "hipotecario", label: "Hipotecario" },
+    { value: "leasing", label: "Leasing" },
+    { value: "uvr", label: "UVR" },
+  ];
+  const monedaOpts = [
+    { value: "", label: "Moneda · todas" },
+    { value: "pesos", label: "Pesos" },
+    { value: "uvr", label: "UVR" },
+  ];
+  const estadoQaOpts = [
+    { value: "", label: "Estado QA · todos" },
+    { value: "aprobado", label: "Aprobado" },
+    { value: "aprobado_obs", label: "Con observaciones" },
+    { value: "requiere_revision", label: "Requiere revisión" },
+    { value: "rechazado", label: "Rechazado" },
+  ];
+  const rangoOpts = [
+    { value: "7", label: "Últimos 7 días" },
+    { value: "30", label: "Últimos 30 días" },
+    { value: "90", label: "Últimos 90 días" },
+    { value: "", label: "Todo el histórico" },
+  ];
   return (
     <div style={{
       position: "sticky", top: 0, zIndex: 30,
@@ -205,42 +239,13 @@ function FilterBar({
         value={f.q}
         onChange={(e) => setF((x) => ({ ...x, q: e.target.value }))}
       />
-      <select style={sel} value={f.analista} onChange={(e) => setF((x) => ({ ...x, analista: e.target.value }))}>
-        <option value="">Analista · todos</option>
-        {analistas.map((a) => <option key={a.id} value={a.id}>{a.nombre}</option>)}
-      </select>
-      <select style={sel} value={f.banco} onChange={(e) => setF((x) => ({ ...x, banco: e.target.value }))}>
-        <option value="">Banco · todos</option>
-        {bancos.map((b) => <option key={b} value={b}>{b}</option>)}
-      </select>
-      <select style={sel} value={f.producto} onChange={(e) => setF((x) => ({ ...x, producto: e.target.value }))}>
-        <option value="">Producto · todos</option>
-        {productos.map((p) => <option key={p} value={p}>{p}</option>)}
-      </select>
-      <select style={sel} value={f.modalidad} onChange={(e) => setF((x) => ({ ...x, modalidad: e.target.value }))}>
-        <option value="">Modalidad · todas</option>
-        <option value="hipotecario">Hipotecario</option>
-        <option value="leasing">Leasing</option>
-        <option value="uvr">UVR</option>
-      </select>
-      <select style={sel} value={f.moneda} onChange={(e) => setF((x) => ({ ...x, moneda: e.target.value }))}>
-        <option value="">Moneda</option>
-        <option value="pesos">Pesos</option>
-        <option value="uvr">UVR</option>
-      </select>
-      <select style={sel} value={f.estadoQa} onChange={(e) => setF((x) => ({ ...x, estadoQa: e.target.value }))}>
-        <option value="">Estado QA</option>
-        <option value="aprobado">Aprobado</option>
-        <option value="aprobado_obs">Con observaciones</option>
-        <option value="requiere_revision">Requiere revisión</option>
-        <option value="rechazado">Rechazado</option>
-      </select>
-      <select style={sel} value={f.rango} onChange={(e) => setF((x) => ({ ...x, rango: e.target.value }))}>
-        <option value="7">Últimos 7 días</option>
-        <option value="30">Últimos 30 días</option>
-        <option value="90">Últimos 90 días</option>
-        <option value="">Todo</option>
-      </select>
+      <NSelect minWidth={170} value={f.analista} onValueChange={(v) => setF((x) => ({ ...x, analista: v }))} options={analistaOpts} placeholder="Analista · todos" />
+      <NSelect minWidth={150} value={f.banco} onValueChange={(v) => setF((x) => ({ ...x, banco: v }))} options={bancoOpts} placeholder="Banco · todos" />
+      <NSelect minWidth={150} value={f.producto} onValueChange={(v) => setF((x) => ({ ...x, producto: v }))} options={productoOpts} placeholder="Producto · todos" />
+      <NSelect minWidth={150} value={f.modalidad} onValueChange={(v) => setF((x) => ({ ...x, modalidad: v }))} options={modalidadOpts} placeholder="Modalidad · todas" />
+      <NSelect minWidth={130} value={f.moneda} onValueChange={(v) => setF((x) => ({ ...x, moneda: v }))} options={monedaOpts} placeholder="Moneda · todas" />
+      <NSelect minWidth={170} value={f.estadoQa} onValueChange={(v) => setF((x) => ({ ...x, estadoQa: v }))} options={estadoQaOpts} placeholder="Estado QA" />
+      <NSelect minWidth={160} value={f.rango} onValueChange={(v) => setF((x) => ({ ...x, rango: v }))} options={rangoOpts} placeholder="Rango" />
       <input
         style={{ ...sel, minWidth: 90 }} placeholder="Score mín."
         value={f.scoreMin} onChange={(e) => setF((x) => ({ ...x, scoreMin: e.target.value.replace(/[^\d.]/g, "") }))}
