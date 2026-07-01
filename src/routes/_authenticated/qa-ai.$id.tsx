@@ -245,27 +245,19 @@ function ExtractoOriginalAccordion({ extracto, expedienteId }: { extracto: Extra
     }
   };
 
-  const [opening, setOpening] = useState(false);
-
   const handleOpen = async () => {
     if (!extracto?.archivo_path) return;
     setOpening(true);
     try {
-      const { data: signed, error } = await supabase.storage
-        .from("extractos")
-        .createSignedUrl(extracto.archivo_path, 60 * 5);
-      if (error || !signed?.signedUrl) {
-        alert(error?.message ?? "No fue posible generar el enlace al extracto.");
-        return;
-      }
-      window.open(signed.signedUrl, "_blank", "noopener,noreferrer");
+      await openPath(extracto.archivo_path);
     } finally {
       setOpening(false);
     }
   };
 
+  const totalArchivos = soportes.length + (extracto?.archivo_path && !soportes.some((s) => s.archivo_path === extracto.archivo_path) ? 1 : 0);
   const titulo = extracto ? "Extracto original del cliente" : "Extracto original (no adjunto)";
-  const count = extracto?.archivo_path ? "PDF disponible" : "sin archivo";
+  const count = totalArchivos > 0 ? `${totalArchivos} archivo${totalArchivos > 1 ? "s" : ""}` : "sin archivo";
 
   const datosVisibles = (() => {
     if (!extracto?.datos) return [] as Array<[string, string]>;
