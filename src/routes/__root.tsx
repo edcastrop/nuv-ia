@@ -8,6 +8,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
+import { VictoryProvider } from "@/components/victory/VictoryProvider";
 
 import appCss from "../styles.css?url";
 
@@ -155,6 +156,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <Outlet />
       <Toaster position="bottom-right" richColors closeButton />
+      <VictoryProvider />
     </QueryClientProvider>
   );
 }
