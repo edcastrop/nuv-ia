@@ -8,6 +8,7 @@ import { roleLabel } from "@/lib/roleLabels";
 import { supabase } from "@/integrations/supabase/client";
 import { HOME_CONFIG, type RoleHomeKpi } from "@/lib/homeConfig";
 import { WorkspaceLoader } from "./WorkspaceLoader";
+import { VictoryFeed } from "@/components/victory/VictoryFeed";
 import {
   NuviaIAPromptCard,
   KpiCard,
