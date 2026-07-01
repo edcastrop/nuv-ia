@@ -508,7 +508,7 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r
 
       {/* HEADER: etapa (izq) + QA state (der) */}
       <div
-        className="relative flex items-center justify-between gap-3 px-5 py-2.5"
+        className="relative flex items-center justify-between gap-3 px-6 pt-4 pb-3 h-14"
         style={{ borderBottom: `1px solid ${BORDER}` }}
       >
         <div className="flex items-center gap-2">
