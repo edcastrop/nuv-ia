@@ -325,7 +325,7 @@ function AmortizationEngine() {
     doc.text("Amortization Engine", 40, 55);
     doc.setFontSize(9);
     doc.setTextColor(200, 210, 230);
-    doc.text("Composición matemática exacta · Solo modalidad PESOS", 40, 72);
+    doc.text(`Composición matemática exacta · Modalidad ${modo === "uvr" ? "UVR" : "PESOS"}`, 40, 72);
 
     // Datos base
     let y = 120;
