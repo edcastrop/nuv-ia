@@ -195,6 +195,7 @@ export function CapacidadPagoTool() {
           expedienteId: PLACEHOLDER_EXPEDIENTE_ID,
           cuotaPropuesta: cuota,
           esVis,
+          banco: banco || undefined,
           personas: personas.map((p) => ({
             rol: p.rol,
             tipoPersona: p.tipoPersona,
