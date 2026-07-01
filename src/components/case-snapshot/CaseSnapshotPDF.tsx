@@ -660,48 +660,48 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
             </Card>
           </div>
 
-          <Card style={{ padding: "40px 14px 14px", borderColor: "rgba(16,185,129,0.55)", position: "relative", overflow: "hidden", boxShadow: "0 0 0 1px rgba(16,185,129,0.18), 0 22px 50px rgba(16,185,129,0.18), inset 0 1px 0 rgba(255,255,255,0.04)" }}>
-            <div style={{ position: "absolute", top: 0, right: 0, height: 28, padding: "0 14px 0 24px", display: "flex", alignItems: "center", background: "linear-gradient(95deg, rgba(16,185,129,0.0) 0%, rgba(16,185,129,0.55) 35%, rgba(52,211,153,0.95) 100%)", clipPath: "polygon(12% 0, 100% 0, 100% 100%, 0 100%)", boxShadow: "0 0 18px rgba(16,185,129,0.45)" }}>
-              <span style={{ fontSize: 8.4, fontWeight: 950, color: "#06140E", letterSpacing: "0.08em", textTransform: "uppercase" }}>★ Recomendada por NUVIA</span>
+          <Card style={{ padding: "48px 20px 22px", borderColor: "rgba(16,185,129,0.6)", position: "relative", overflow: "hidden", boxShadow: "0 0 0 1px rgba(16,185,129,0.24), 0 26px 60px rgba(16,185,129,0.24), inset 0 1px 0 rgba(255,255,255,0.05)" }}>
+            <div style={{ position: "absolute", top: 0, right: 0, height: 32, padding: "0 18px 0 32px", display: "flex", alignItems: "center", background: "linear-gradient(95deg, rgba(16,185,129,0.0) 0%, rgba(16,185,129,0.65) 30%, rgba(52,211,153,1) 100%)", clipPath: "polygon(14% 0, 100% 0, 100% 100%, 0 100%)", boxShadow: "0 0 24px rgba(16,185,129,0.65)" }}>
+              <span style={{ fontSize: 9, fontWeight: 950, color: "#04120A", letterSpacing: "0.12em", textTransform: "uppercase" }}>★ Recomendada por NUVIA</span>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 14 }}>
-              <SvgCheckCircle size={22} color={C.green2} />
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
+              <SvgCheckCircle size={24} color={C.green2} />
               <Label style={{ marginBottom: 0 }}>Propuesta seleccionada</Label>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7, marginBottom: 7 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 11, marginBottom: 11 }}>
               {[
                 { label: "Nueva cuota", value: cop(e.propuesta.nuevaCuota), sub: `${Number(varPct) >= 0 ? "+" : ""}${varPct}% vs actual`, color: C.green2 },
                 { label: "Nuevo plazo", value: `${e.propuesta.nuevoPlazo} meses`, sub: `-${mesesDiff} meses`, color: C.textSec },
                 { label: "Cuotas eliminadas", value: String(e.propuesta.cuotasEliminadas), sub: `-${cuotasElimPct}% del plazo total`, color: C.green2 },
               ].map((x) => (
-                <div key={x.label} style={{ background: "linear-gradient(180deg, rgba(15,30,52,0.95), rgba(10,20,38,0.95))", border: `1px solid ${C.border}`, borderRadius: 7, padding: "13px 7px 12px", minHeight: 106, textAlign: "center", overflow: "visible", boxSizing: "border-box" }}>
+                <div key={x.label} style={{ background: "linear-gradient(180deg, rgba(15,30,52,0.98), rgba(10,20,38,0.98))", border: `1px solid ${C.border2}`, borderRadius: 8, padding: "16px 8px 15px", minHeight: 126, textAlign: "center", overflow: "visible", boxSizing: "border-box", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)" }}>
                   <MiniLabel>{x.label}</MiniLabel>
-                  <div style={{ fontSize: 13.4, fontWeight: 950, color: C.text, marginTop: 9, lineHeight: 1.38, letterSpacing: "0", whiteSpace: "nowrap", overflow: "visible" }}>{x.value}</div>
-                  <div style={{ fontSize: 8.2, color: x.color, marginTop: 8, fontWeight: 700, lineHeight: 1.28 }}>{x.sub}</div>
+                  <div style={{ fontSize: 16.2, fontWeight: 950, color: C.text, marginTop: 11, lineHeight: 1.35, letterSpacing: "-0.005em", whiteSpace: "nowrap", overflow: "visible" }}>{x.value}</div>
+                  <div style={{ fontSize: 8.4, color: x.color, marginTop: 10, fontWeight: 700, lineHeight: 1.28 }}>{x.sub}</div>
                 </div>
               ))}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7, marginBottom: 10 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 11, marginBottom: 12 }}>
               {[
                 { label: "Ahorro total", value: cop(e.propuesta.ahorroTotal), sub: `${ahorrosPct}% del total a pagar` },
                 { label: "Ahorro intereses", value: cop(e.propuesta.ahorroIntereses), sub: "Proyección estimada" },
                 { label: "Ahorro seguros", value: cop(e.propuesta.ahorroSeguros), sub: "Proyección estimada" },
               ].map((x) => (
-                <div key={x.label} style={{ background: "linear-gradient(180deg, rgba(15,30,52,0.95), rgba(10,20,38,0.95))", border: `1px solid ${C.border}`, borderRadius: 7, padding: "12px 7px 12px", minHeight: 98, textAlign: "center", overflow: "visible", boxSizing: "border-box" }}>
+                <div key={x.label} style={{ background: "linear-gradient(180deg, rgba(15,30,52,0.98), rgba(10,20,38,0.98))", border: `1px solid ${C.border2}`, borderRadius: 8, padding: "15px 8px 14px", minHeight: 116, textAlign: "center", overflow: "visible", boxSizing: "border-box", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)" }}>
                   <MiniLabel>{x.label}</MiniLabel>
-                  <div style={{ fontSize: 12.8, fontWeight: 950, color: C.text, marginTop: 9, lineHeight: 1.38, letterSpacing: "0", whiteSpace: "nowrap", overflow: "visible" }}>{x.value}</div>
-                  <div style={{ fontSize: 8.2, color: C.textMuted, marginTop: 8, lineHeight: 1.28 }}>{x.sub}</div>
+                  <div style={{ fontSize: 15.4, fontWeight: 950, color: C.text, marginTop: 11, lineHeight: 1.35, letterSpacing: "-0.005em", whiteSpace: "nowrap", overflow: "visible" }}>{x.value}</div>
+                  <div style={{ fontSize: 8.4, color: C.textMuted, marginTop: 10, lineHeight: 1.28 }}>{x.sub}</div>
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: 10, padding: "13px 14px", minHeight: 64, background: "radial-gradient(circle at 12% 50%, rgba(16,185,129,0.22), transparent 55%), rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.35)", borderRadius: 8, display: "flex", alignItems: "center", gap: 12, boxSizing: "border-box" }}>
-              <Calendar size={26} color={C.green2} />
-              <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap", minWidth: 0 }}>
+            <div style={{ marginTop: 12, padding: "15px 16px", minHeight: 72, background: "radial-gradient(circle at 12% 50%, rgba(16,185,129,0.28), transparent 55%), rgba(16,185,129,0.09)", border: "1px solid rgba(16,185,129,0.4)", borderRadius: 9, display: "flex", alignItems: "center", gap: 14, boxSizing: "border-box" }}>
+              <Calendar size={28} color={C.green2} />
+              <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap", minWidth: 0 }}>
                 <div style={{ minWidth: 0 }}>
                   <MiniLabel>Tiempo recuperado</MiniLabel>
-                  <div style={{ fontSize: 20, fontWeight: 950, color: C.green2, lineHeight: 1.05, marginTop: 3 }}>{e.propuesta.tiempoRecuperado}</div>
+                  <div style={{ fontSize: 22, fontWeight: 950, color: C.green2, lineHeight: 1.05, marginTop: 4 }}>{e.propuesta.tiempoRecuperado}</div>
                 </div>
-                <div style={{ color: C.textSec, fontSize: 9.6, lineHeight: 1.25 }}>Reducción en el tiempo total de deuda</div>
+                <div style={{ color: C.textSec, fontSize: 9.8, lineHeight: 1.25 }}>Reducción en el tiempo total de deuda</div>
               </div>
             </div>
           </Card>
