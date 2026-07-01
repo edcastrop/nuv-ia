@@ -6,6 +6,7 @@ import {
   ArrowRight, FileSearch, Paperclip, TrendingUp, TrendingDown, Minus,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { NSelect } from "@/components/nuvia/NSelect";
 
 export type CCRow = {
   id: string; expediente_id: string | null; analista_id: string | null;
