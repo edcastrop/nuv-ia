@@ -572,19 +572,21 @@ function AmortizationEngine() {
               )}
 
               <div className="flex gap-2 pt-2">
-                <button
+                <motion.button
+                  whileHover={{ y: -1 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={handleCalculate}
-                  className="flex-1 rounded-xl px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110 active:scale-[0.98]"
+                  className="flex-1 rounded-[14px] px-4 py-3 text-sm font-semibold text-white transition-all duration-200 hover:brightness-110"
                   style={{
                     background: `linear-gradient(135deg, ${NUVEX.azul}, ${NUVEX.verde})`,
-                    boxShadow: `0 12px 30px -12px ${NUVEX.verde}`,
+                    boxShadow: `0 12px 30px -12px ${NUVEX.verde}, inset 0 1px 0 rgba(255,255,255,0.2)`,
                   }}
                 >
                   Calcular
-                </button>
+                </motion.button>
                 <button
                   onClick={handleReset}
-                  className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/70 hover:bg-white/[0.06] hover:text-white transition inline-flex items-center gap-1.5"
+                  className="rounded-[14px] border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-white/70 hover:bg-white/[0.06] hover:text-white hover:border-white/[0.14] transition-all duration-200 inline-flex items-center gap-1.5"
                 >
                   <RotateCcw className="h-3.5 w-3.5" /> Limpiar
                 </button>
