@@ -33,6 +33,8 @@ import {
 } from "@/components/nuvia";
 import { AnalistaAvatar } from "@/components/pipeline/AnalistaAvatar";
 import { supabase } from "@/integrations/supabase/client";
+import { triggerSimuladorAutoQA } from "@/lib/simuladorAutoQA";
+import { ShieldCheck, Loader2 } from "lucide-react";
 
 
 const ETAPA_IDS = ETAPAS_PIPELINE.map((e) => e.id) as [EtapaPipelineId, ...EtapaPipelineId[]];
@@ -131,6 +133,7 @@ function CasosPage() {
   const [err, setErr] = useState<string | null>(null);
   const [asesores, setAsesores] = useState<Map<string, { nombre: string | null; email: string | null }>>(new Map());
   const [auditCodes, setAuditCodes] = useState<Map<string, string>>(new Map());
+  const [reloadKey, setReloadKey] = useState(0);
 
   // Debounce text input → URL
   useEffect(() => {
@@ -183,7 +186,7 @@ function CasosPage() {
       .catch((e) => { if (!cancel) setErr(e.message); })
       .finally(() => { if (!cancel) setLoading(false); });
     return () => { cancel = true; };
-  }, [search, estado, etapa]);
+  }, [search, estado, etapa, reloadKey]);
 
   // "Mis casos": el usuario es asesor O licenciado del caso.
   const filteredRows = useMemo(() => {
@@ -424,7 +427,9 @@ function CasosPage() {
                 asesor={asesores.get(r.asesor_id)}
                 licenciado={r.licenciado_id ? asesores.get(r.licenciado_id) : undefined}
                 auditCode={r.qa_auditoria_id ? auditCodes.get(r.qa_auditoria_id) : undefined}
+                onAudited={() => setReloadKey((k) => k + 1)}
               />
+
             ))
 
           )}
@@ -455,7 +460,31 @@ function CasosPage() {
 
 
 
-function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r: Expediente; isDup?: boolean; asesor?: { nombre?: string | null; email?: string | null }; licenciado?: { nombre?: string | null; email?: string | null }; auditCode?: string }) {
+function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode, onAudited }: { r: Expediente; isDup?: boolean; asesor?: { nombre?: string | null; email?: string | null }; licenciado?: { nombre?: string | null; email?: string | null }; auditCode?: string; onAudited?: () => void }) {
+  const [auditando, setAuditando] = useState(false);
+  const puedeAuditar = !r.qa_auditoria_id;
+  const runAuditoria = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (auditando) return;
+    setAuditando(true);
+    try {
+      const cd = (r.credito_data ?? {}) as Record<string, unknown>;
+      const pd = (r.propuesta_data ?? {}) as Record<string, unknown>;
+      await triggerSimuladorAutoQA({
+        expedienteId: r.id,
+        raw: {
+          banco: r.banco ?? undefined,
+          producto: r.producto ?? undefined,
+          moneda: r.modo === "uvr" ? "UVR" : "PESOS",
+          datos: { ...cd, ...pd, banco: r.banco, producto: r.producto, modo: r.modo, cedula: r.cedula, cliente: r.cliente_nombre },
+        },
+      });
+      onAudited?.();
+    } finally {
+      setAuditando(false);
+    }
+  };
   const theme = ESTADO_THEME[r.estado];
   const aColor = avatarColor(r.cliente_nombre);
   const initial = (r.cliente_nombre || "?").trim().charAt(0).toUpperCase();
@@ -624,7 +653,25 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r
                 {auditCode}
               </Link>
             )}
+            {puedeAuditar && (
+              <button
+                type="button"
+                onClick={runAuditoria}
+                disabled={auditando}
+                title="Ejecuta la auditoría NUVIA usando los datos ya guardados en el expediente (sin necesidad de subir extracto)."
+                className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider transition hover:brightness-125 disabled:opacity-60 disabled:cursor-wait"
+                style={{
+                  background: "linear-gradient(135deg, rgba(132,185,143,0.18), rgba(68,93,163,0.18))",
+                  color: "#B8E5C0",
+                  border: "1px solid rgba(132,185,143,0.45)",
+                }}
+              >
+                {auditando ? <Loader2 size={11} className="animate-spin" /> : <ShieldCheck size={11} />}
+                {auditando ? "Auditando…" : "Ejecutar auditoría NUVIA"}
+              </button>
+            )}
           </div>
+
         </div>
 
         {/* COL 2 — DATOS DEL CRÉDITO */}
