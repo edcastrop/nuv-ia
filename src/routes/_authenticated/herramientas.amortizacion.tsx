@@ -768,45 +768,45 @@ function Hero({ modo }: { modo: "pesos" | "uvr" }) {
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="relative overflow-hidden rounded-[28px] border border-white/10 p-8"
+      className="relative overflow-hidden rounded-3xl border border-white/[0.08] p-8 md:p-10 backdrop-blur-xl"
       style={{
         background:
-          "linear-gradient(135deg, rgba(15,26,51,0.9), rgba(8,16,40,0.9))",
-        boxShadow: "0 30px 60px -30px rgba(0,0,0,0.9)",
+          "linear-gradient(135deg, rgba(18,24,38,0.92), rgba(11,16,32,0.92))",
+        boxShadow: "0 30px 80px -40px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.04)",
       }}
     >
       <div
-        className="absolute -top-24 -right-24 h-72 w-72 rounded-full blur-3xl opacity-40"
+        className="absolute -top-32 -right-24 h-80 w-80 rounded-full blur-3xl opacity-45"
         style={{ background: `radial-gradient(circle, ${NUVEX.azul}, transparent 70%)` }}
       />
       <div
-        className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full blur-3xl opacity-30"
+        className="absolute -bottom-32 -left-24 h-80 w-80 rounded-full blur-3xl opacity-30"
         style={{ background: `radial-gradient(circle, ${NUVEX.verde}, transparent 70%)` }}
       />
-      <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-        <div className="flex items-start gap-4">
+      <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-8">
+        <div className="flex items-start gap-5 min-w-0">
           <div
-            className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/15"
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/15"
             style={{
-              background: "linear-gradient(135deg, rgba(68,93,163,0.85), rgba(132,185,143,0.85))",
-              boxShadow: `0 16px 40px -16px ${NUVEX.verde}`,
+              background: "linear-gradient(135deg, rgba(68,93,163,0.9), rgba(132,185,143,0.9))",
+              boxShadow: `0 20px 40px -18px ${NUVEX.verde}, inset 0 1px 0 rgba(255,255,255,0.25)`,
             }}
           >
             <Calculator className="h-6 w-6 text-white" />
           </div>
-          <div>
-            <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#84B98F] flex items-center gap-1.5">
-              <Sparkles size={12} /> NUVIA · Financial intelligence
+          <div className="min-w-0">
+            <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#84B98F] flex items-center gap-1.5">
+              <Sparkles size={12} /> NUVIA · Financial Intelligence
             </div>
-            <h1 className="mt-1 text-3xl md:text-4xl font-semibold tracking-tight text-white">
+            <h1 className="mt-2 text-3xl md:text-[38px] font-semibold tracking-tight leading-[1.05] text-white">
               NUVIA Amortization Engine
             </h1>
-            <p className="mt-2 max-w-xl text-sm text-white/60 leading-relaxed">
+            <p className="mt-2.5 max-w-xl text-sm text-white/70 leading-relaxed">
               Analiza la composición matemática exacta de cualquier cuota de tu crédito.
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 shrink-0">
           <Badge icon={<Calculator className="h-3 w-3" />} label="Mathematical Engine" tone="blue" />
           <Badge icon={<Lock className="h-3 w-3" />} label={modo === "uvr" ? "Modalidad UVR" : "Modalidad PESOS"} tone="green" />
         </div>
@@ -816,16 +816,17 @@ function Hero({ modo }: { modo: "pesos" | "uvr" }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
-        className="relative mt-6 rounded-xl border border-amber-400/25 bg-amber-500/[0.06] p-3.5 flex items-start gap-3"
+        className="relative mt-7 rounded-2xl border border-amber-400/20 bg-amber-500/[0.05] p-4 flex items-start gap-3 backdrop-blur-sm"
       >
         <Info className="h-4 w-4 text-amber-300 mt-0.5 shrink-0" />
         <div className="text-xs text-amber-100/85 leading-relaxed">
-          <b className="text-amber-200">Alcance del motor:</b> NUVIA Amortization Engine soporta créditos en <b>PESOS</b> (sistema francés de cuota fija) y en <b>UVR</b> (con proyección de variación anual esperada). Selecciona la modalidad arriba o carga el extracto para autodetectar.
+          <b className="text-amber-200">Alcance del motor:</b> NUVIA Amortization Engine soporta créditos en <b>PESOS</b> (sistema francés de cuota fija) y en <b>UVR</b> (con proyección de variación anual esperada). Selecciona la modalidad o carga el extracto para autodetectar.
         </div>
       </motion.div>
     </motion.div>
   );
 }
+
 
 function Badge({ icon, label, tone }: { icon: React.ReactNode; label: string; tone: "blue" | "green" }) {
   const bg =
