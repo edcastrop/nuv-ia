@@ -25,6 +25,10 @@ function EstadoIcono({ estado }: { estado: VeredictoEstado }) {
 
 export function VeredictoBlock({ veredicto }: { veredicto: Veredicto | null | undefined }) {
   if (!veredicto) return null;
+  const tieneDiscrepancia =
+    veredicto.extractoTieneErrores !== "no" ||
+    Math.abs(veredicto.desfasePlazo ?? 0) > 0 ||
+    (veredicto.hallazgos ?? []).some((h) => h.severidad !== "info");
 
   const errLabel = veredicto.extractoTieneErrores === "no"
     ? "No — el extracto reconcilia internamente."
@@ -194,7 +198,7 @@ export function VeredictoBlock({ veredicto }: { veredicto: Veredicto | null | un
       </div>
 
       {/* Recomendaciones */}
-      {veredicto.recomendaciones.length > 0 && (
+      {tieneDiscrepancia && veredicto.recomendaciones.length > 0 && (
         <div style={{ padding: "16px 20px 20px" }}>
           <p className="text-xs uppercase tracking-wider flex items-center gap-1.5" style={{ color: "var(--nuvia-text-secondary)" }}>
             <Lightbulb size={12} /> Recomendaciones al analista

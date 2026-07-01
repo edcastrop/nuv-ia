@@ -150,6 +150,7 @@ function toPdfRow(c: PropuestaCalc, index: number, fuente: "automatica" | "manua
 }
 
 export function PropuestasComerciales(props: Props) {
+  const [revision, setRevision] = useState(0);
   const [cuotasList, setCuotasList] = useState<number[]>(() =>
     props.initialState?.cuotasList?.length ? props.initialState.cuotasList : defaultCuotas(props),
   );
@@ -216,9 +217,16 @@ export function PropuestasComerciales(props: Props) {
   };
 
   const removePropuesta = (idx: number) => {
-    setCuotasList((list) => list.filter((_, i) => i !== idx));
-    if (recomendadaIdx === idx) setRecomendadaIdx(-1);
-    else if (recomendadaIdx > idx) setRecomendadaIdx((i) => i - 1);
+    setCuotasList((list) => {
+      const next = list.filter((_, i) => i !== idx);
+      setRevision((r) => r + 1);
+      return next;
+    });
+    setRecomendadaIdx((current) => {
+      if (current === idx) return -1;
+      if (current > idx) return current - 1;
+      return current;
+    });
   };
 
   const addPropuesta = () => {
@@ -462,7 +470,7 @@ export function PropuestasComerciales(props: Props) {
 
           return (
             <div
-              key={idx}
+              key={`${revision}-${idx}-${cuotas}`}
               className="relative flex min-w-0 flex-col overflow-hidden rounded-2xl border backdrop-blur-xl transition hover:-translate-y-0.5"
               style={{
                 background: isRecomendada
@@ -538,7 +546,11 @@ export function PropuestasComerciales(props: Props) {
                 </div>
                 <button
                   type="button"
-                  onClick={() => removePropuesta(idx)}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    removePropuesta(idx);
+                  }}
                   className="transition"
                   style={{ color: "rgba(230,236,255,0.4)" }}
                   title="Eliminar escenario"

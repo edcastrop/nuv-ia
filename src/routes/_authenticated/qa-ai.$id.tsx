@@ -535,7 +535,13 @@ function ResultadoQaAi() {
     : nivelDesfase === "MEDIO" ? "var(--nuvia-warning)" : "var(--nuvia-danger)";
 
   /* ----- Acción recomendada (máx 3) ----- */
-  const acciones = (veredicto?.recomendaciones ?? []).slice(0, 3);
+  const requiereAclaracion =
+    incCrit > 0 ||
+    incWarn > 0 ||
+    (veredicto?.extractoTieneErrores && veredicto.extractoTieneErrores !== "no") ||
+    Math.abs(desfase) > 0 ||
+    score < 95;
+  const acciones = requiereAclaracion ? (veredicto?.recomendaciones ?? []).slice(0, 3) : [];
   if (proyectoresAplicadas && incCrit === 0 && incWarn === 0) {
     acciones.splice(0, acciones.length,
       `Construye la propuesta comercial con ${Math.round(proyInfo?.cuotasPendientesRecalculadas ?? veredicto?.plazoImplicito ?? 0)} meses reales, no con las ${Math.round(proyInfo?.cuotasPendientesExtractoOriginal ?? 0)} cuotas del extracto inicial.`,
@@ -543,7 +549,7 @@ function ResultadoQaAi() {
       "El caso queda matemáticamente certificado: avanza al simulador/propuesta y conserva la proyección oficial como soporte.",
     );
   }
-  if (acciones.length === 0) {
+  if (acciones.length === 0 && requiereAclaracion) {
     if (cert.estado === "certificado") {
       acciones.push("Avanza con la propuesta de optimización del crédito al cliente.");
     } else if (cert.estado === "certificado_obs") {
@@ -1017,24 +1023,38 @@ function ResultadoQaAi() {
           )}
         </NCard>
 
-        {/* Acción recomendada */}
-        <NCard>
-          <div className="flex items-center gap-2 mb-3">
-            <Sparkles size={15} style={{ color: "var(--nuvia-accent)" }} />
-            <h3 className="text-[13.5px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
-              Basado en lo anterior, esta es mi recomendación
-            </h3>
-          </div>
-          <ul className="space-y-2.5">
-            {acciones.map((r, i) => (
-              <li key={i} className="flex items-start gap-2.5 rounded-lg px-3 py-2.5"
-                style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.10), rgba(132,185,143,0.08))", border: "1px solid var(--nuvia-border)" }}>
-                <span className="text-[14px] leading-none" style={{ color: "var(--nuvia-accent-green)" }}>👉</span>
-                <span className="text-[13px] leading-snug" style={{ color: "var(--nuvia-text-primary)" }}>{r}</span>
-              </li>
-            ))}
-          </ul>
-        </NCard>
+        {/* Acción recomendada: solo cuando hay discrepancias materiales */}
+        {requiereAclaracion && acciones.length > 0 ? (
+          <NCard>
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles size={15} style={{ color: "var(--nuvia-accent)" }} />
+              <h3 className="text-[13.5px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
+                Basado en lo anterior, esta es mi recomendación
+              </h3>
+            </div>
+            <ul className="space-y-2.5">
+              {acciones.map((r, i) => (
+                <li key={i} className="flex items-start gap-2.5 rounded-lg px-3 py-2.5"
+                  style={{ background: "linear-gradient(135deg, rgba(68,93,163,0.10), rgba(132,185,143,0.08))", border: "1px solid var(--nuvia-border)" }}>
+                  <span className="text-[14px] leading-none" style={{ color: "var(--nuvia-accent-green)" }}>👉</span>
+                  <span className="text-[13px] leading-snug" style={{ color: "var(--nuvia-text-primary)" }}>{r}</span>
+                </li>
+              ))}
+            </ul>
+          </NCard>
+        ) : (
+          <NCard>
+            <div className="flex items-center gap-2 mb-2">
+              <CheckCircle2 size={15} style={{ color: "var(--nuvia-success)" }} />
+              <h3 className="text-[13.5px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
+                Auditoría sin recomendaciones correctivas
+              </h3>
+            </div>
+            <p className="text-[13px] leading-snug" style={{ color: "var(--nuvia-text-secondary)" }}>
+              El caso está matemáticamente certificado. No se requieren llamadas de aclaración al banco ni al cliente por discrepancias financieras.
+            </p>
+          </NCard>
+        )}
       </section>
 
       {/* REFLEXIÓN NUVIA — motor de inspiración */}

@@ -878,9 +878,7 @@ export function construirVeredicto(
   // ── Recomendaciones (lenguaje sencillo, ajustadas al tipo de crédito) ──
   const recs: string[] = hallazgos.map((h) => h.pista);
 
-  if (recs.length === 0) {
-    recs.push("Todo cuadra: puede continuar tranquilo con la simulación y la propuesta al cliente.");
-  } else {
+  if (recs.length > 0) {
     // 1) Abonos a capital — matiz UVR
     if (isUvr) {
       recs.push(
@@ -970,7 +968,7 @@ export function construirVeredicto(
     filas,
     extractoTieneErrores,
     causasProbables: causas.slice(0, 3),
-    recomendaciones: dedupe(recs).slice(0, 8),
+    recomendaciones: extractoTieneErrores === "no" && score.score >= 95 ? [] : dedupe(recs).slice(0, 8),
     hallazgos,
     plazoImplicito,
     plazoReportado,
