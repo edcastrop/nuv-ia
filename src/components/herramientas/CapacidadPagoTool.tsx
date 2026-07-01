@@ -13,7 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Loader2, Upload, X, ShieldCheck, AlertTriangle, AlertOctagon, FileText, Sparkles } from "lucide-react";
 import { formatCOP } from "@/lib/format";
-import { analizarCapacidadPago, type AnalisisCapacidadResultado } from "@/lib/analisisCapacidad.functions";
+import { analizarCapacidadPago, type AnalisisCapacidadResultado, BANCOS_EXCLUYEN_PRIMA } from "@/lib/analisisCapacidad.functions";
+import { BANCOS } from "@/components/nuvex/constants";
 import { unzipSync } from "fflate";
 
 type TipoDoc = "nomina" | "carta_laboral" | "renta" | "extracto" | "otro";
