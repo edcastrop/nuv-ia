@@ -558,7 +558,7 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r
       {/* CUERPO: 4 columnas */}
       <div
         className="relative grid gap-5 px-7 py-6"
-        style={{ gridTemplateColumns: "32% 28% 20% 20%" }}
+        style={{ gridTemplateColumns: "minmax(0, 32fr) minmax(0, 28fr) minmax(0, 20fr) minmax(0, 20fr)" }}
       >
         {/* COL 1 — IDENTIDAD */}
         <div className="flex flex-col justify-center gap-[18px] min-w-0 h-full">
@@ -662,11 +662,11 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r
         </div>
 
         {/* COL 4 — ACCIONES */}
-        <div className="flex flex-col justify-center items-center gap-4 min-w-0 pr-7">
+        <div className="flex flex-col justify-center items-center gap-4 min-w-0 pr-7 overflow-hidden">
           <Link
             to="/casos/$id"
             params={{ id: r.id }}
-            className="inline-flex w-[260px] h-14 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white transition hover:brightness-110"
+            className="inline-flex w-full max-w-[260px] h-14 shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white transition hover:brightness-110"
             style={{
               background: `linear-gradient(135deg, ${AZUL}, ${VERDE})`,
               boxShadow: `0 8px 24px -10px ${AZUL}`,
@@ -678,7 +678,7 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r
             to="/casos/$id"
             params={{ id: r.id }}
             search={{ tab: "snapshot" } as never}
-            className="inline-flex w-[260px] h-14 items-center justify-center gap-2 rounded-xl px-3 py-2 text-[11px] font-semibold uppercase tracking-wider transition"
+            className="inline-flex w-full max-w-[260px] h-14 shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2 text-[11px] font-semibold uppercase tracking-wider transition"
             style={{
               background: "rgba(132,185,143,0.08)",
               color: VERDE,
@@ -691,7 +691,7 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode }: { r
             to="/casos/$id"
             params={{ id: r.id }}
             search={{ tab: "trazabilidad" } as never}
-            className="inline-flex w-[260px] h-14 items-center justify-center gap-2 rounded-xl px-3 py-2 text-[11px] font-semibold uppercase tracking-wider transition"
+            className="inline-flex w-full max-w-[260px] h-14 shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2 text-[11px] font-semibold uppercase tracking-wider transition"
             style={{
               background: "rgba(255,255,255,0.03)",
               color: TEXT2,
