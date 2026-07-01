@@ -95,6 +95,7 @@ export type ExtractoApplyPayload = {
     moneda?: string;
     datos?: Record<string, unknown>;
     archivoNombre?: string;
+    archivos?: Array<{ path: string; name: string; mime: string | null; size: number | null }>;
   };
 };
 
@@ -578,7 +579,11 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
   };
 
   const removeStaged = (idx: number) => {
-    setStaging((prev) => prev.filter((_, i) => i !== idx));
+    setStaging((prev) => {
+      const next = prev.filter((_, i) => i !== idx);
+      stagingCountRef.current = next.length;
+      return next;
+    });
     setStagingNotice(null);
   };
 
