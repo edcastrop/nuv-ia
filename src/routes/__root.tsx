@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { VictoryProvider } from "@/components/victory/VictoryProvider";
+import { NuviaSocialProofToast } from "@/components/victory/NuviaSocialProofToast";
 
 import appCss from "../styles.css?url";
 
@@ -157,6 +158,7 @@ function RootComponent() {
       <Outlet />
       <Toaster position="bottom-right" richColors closeButton />
       <VictoryProvider />
+      <NuviaSocialProofToast />
     </QueryClientProvider>
   );
 }

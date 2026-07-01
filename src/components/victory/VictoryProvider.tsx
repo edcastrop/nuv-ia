@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Trophy, Flame, Volume2, VolumeX, X, PartyPopper } from "lucide-react";
 import {
@@ -24,7 +24,6 @@ async function playVictoryChime() {
     master.gain.value = 0.34;
     master.connect(ctx.destination);
 
-    // Reverb-lite via delay para brillo metálico
     const delay = ctx.createDelay();
     delay.delayTime.value = 0.09;
     const feedback = ctx.createGain();
@@ -33,7 +32,6 @@ async function playVictoryChime() {
 
     const now = ctx.currentTime;
 
-    // Click mecánico inicial (drawer): ruido corto filtrado
     const noiseBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.05), ctx.sampleRate);
     const nd = noiseBuf.getChannelData(0);
     for (let i = 0; i < nd.length; i++) nd[i] = (Math.random() * 2 - 1) * (1 - i / nd.length);
@@ -47,10 +45,9 @@ async function playVictoryChime() {
     noise.connect(nFilt).connect(nGain).connect(master);
     noise.start(now);
 
-    // Dos "ding" campana (cha-ching): FM sine con modulador para timbre metálico
     const dings = [
-      { t: 0.02, carrier: 1760, mod: 2637, modGain: 800 },  // "cha" (A6)
-      { t: 0.22, carrier: 2093, mod: 3136, modGain: 950 },  // "ching" (C7, más brillante)
+      { t: 0.02, carrier: 1760, mod: 2637, modGain: 800 },
+      { t: 0.22, carrier: 2093, mod: 3136, modGain: 950 },
     ];
     for (const d of dings) {
       const carrier = ctx.createOscillator();
@@ -81,7 +78,7 @@ async function playVictoryChime() {
   }
 }
 
-/* ------------------------------- Modal ------------------------------------ */
+/* ------------------------------- Types ------------------------------------ */
 
 interface QueueItem { evt: VictoryEvent; isMine: boolean; streak?: StreakState }
 
@@ -90,134 +87,188 @@ function formatMoney(v: number | null): string {
   return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(v);
 }
 
-function VictoryModal({ item, onClose }: { item: QueueItem; onClose: () => void }) {
+/* --------------------------- Money Rain Overlay --------------------------- */
+
+function MoneyRain({ show }: { show: boolean }) {
+  const particles = useMemo(() => {
+    return Array.from({ length: 22 }).map((_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      delay: Math.random() * 1.6,
+      duration: 4.2 + Math.random() * 1.8,
+      size: 16 + Math.random() * 14,
+      drift: (Math.random() - 0.5) * 60,
+      rotate: (Math.random() - 0.5) * 40,
+      symbol: Math.random() > 0.55 ? "$" : Math.random() > 0.5 ? "₿" : "€",
+      hue: Math.random() > 0.5 ? "#84B98F" : "#F7B500",
+    }));
+  }, [show]);
+
+  if (!show) return null;
+  return createPortal(
+    <div
+      aria-hidden
+      style={{
+        position: "fixed", inset: 0, zIndex: 2147483400,
+        pointerEvents: "none", overflow: "hidden",
+      }}
+    >
+      <style>{`
+        @keyframes nuviaMoneyFall {
+          0%   { transform: translate3d(0,-8vh,0) rotate(0deg); opacity: 0; }
+          10%  { opacity: .55; }
+          85%  { opacity: .35; }
+          100% { transform: translate3d(var(--drift,0px), 108vh, 0) rotate(var(--rot,0deg)); opacity: 0; }
+        }
+      `}</style>
+      {particles.map((p) => (
+        <span
+          key={p.id}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: `${p.left}%`,
+            fontSize: p.size,
+            fontWeight: 800,
+            color: p.hue,
+            textShadow: `0 0 12px ${p.hue}55, 0 2px 6px rgba(0,0,0,.4)`,
+            fontFamily: "Inter, ui-sans-serif, system-ui",
+            ["--drift" as string]: `${p.drift}px`,
+            ["--rot" as string]: `${p.rotate}deg`,
+            animation: `nuviaMoneyFall ${p.duration}s ${p.delay}s linear forwards`,
+            willChange: "transform, opacity",
+          } as React.CSSProperties}
+        >
+          {p.symbol}
+        </span>
+      ))}
+    </div>,
+    document.body,
+  );
+}
+
+/* ------------------------------ Toast ------------------------------------- */
+
+function VictoryToast({ item, onClose, closing }: { item: QueueItem; onClose: () => void; closing: boolean }) {
   const { evt, isMine, streak } = item;
   const kindLabel = evt.kind === "contrato_firmado" ? "CONTRATO CERRADO" : "PODER FIRMADO";
 
   return createPortal(
     <div
       style={{
-        position: "fixed", inset: 0, zIndex: 2147483600,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        background: "rgba(4,8,20,0.62)", backdropFilter: "blur(14px)",
-        animation: "nuviaVictoryFade .35s ease-out",
+        position: "fixed", bottom: 32, right: 32, zIndex: 2147483600,
+        width: 420, maxWidth: "calc(100vw - 40px)",
       }}
-      onClick={onClose}
     >
       <style>{`
-        @keyframes nuviaVictoryFade { from{opacity:0} to{opacity:1} }
-        @keyframes nuviaVictoryPop { 0%{transform:scale(.82);opacity:0} 60%{transform:scale(1.04);opacity:1} 100%{transform:scale(1);opacity:1} }
-        @keyframes nuviaVictoryGlow {
-          0%,100% { box-shadow: 0 0 0 1px rgba(77,124,254,.35), 0 30px 90px rgba(77,124,254,.35), 0 0 60px rgba(46,204,113,.28); }
-          50%     { box-shadow: 0 0 0 1px rgba(46,204,113,.55), 0 30px 120px rgba(46,204,113,.55), 0 0 90px rgba(77,124,254,.45); }
+        @keyframes nuviaVictorySlideIn {
+          from { transform: translateX(120%); opacity: 0; }
+          to   { transform: translateX(0); opacity: 1; }
         }
-        @keyframes nuviaVictorySpark {
-          0% { transform: translate(-50%,-50%) scale(0); opacity:.9 }
-          100% { transform: translate(-50%,-50%) scale(3); opacity:0 }
+        @keyframes nuviaVictorySlideOut {
+          from { transform: translateX(0); opacity: 1; }
+          to   { transform: translateX(120%); opacity: 0; }
+        }
+        @keyframes nuviaVictoryGlow {
+          0%,100% { box-shadow: 0 0 0 1px rgba(77,124,254,.30), 0 18px 50px rgba(77,124,254,.28), 0 0 40px rgba(46,204,113,.20); }
+          50%     { box-shadow: 0 0 0 1px rgba(46,204,113,.45), 0 22px 60px rgba(46,204,113,.35), 0 0 55px rgba(77,124,254,.30); }
         }
       `}</style>
 
       <div
-        onClick={(e) => e.stopPropagation()}
+        role="status"
+        aria-live="polite"
         style={{
           position: "relative",
-          width: "min(520px, 92vw)",
-          padding: "34px 30px 28px",
-          borderRadius: 22,
+          minHeight: 120,
+          padding: "16px 18px 16px 16px",
+          borderRadius: 16,
           background: "linear-gradient(155deg, rgba(14,24,44,.94), rgba(9,16,32,.96))",
           border: "1px solid rgba(255,255,255,.10)",
           color: "#E7EEFB",
-          animation: "nuviaVictoryPop .5s cubic-bezier(.2,1.2,.3,1), nuviaVictoryGlow 2.2s ease-in-out infinite",
+          fontFamily: "Inter, ui-sans-serif, system-ui",
+          backdropFilter: "blur(14px)",
+          animation: closing
+            ? "nuviaVictorySlideOut .25s ease-in forwards"
+            : "nuviaVictorySlideIn .35s cubic-bezier(.2,1,.3,1), nuviaVictoryGlow 2.4s ease-in-out infinite .35s",
           overflow: "hidden",
         }}
       >
-        {/* halos */}
-        <span style={{ position:"absolute", left:"50%", top:"18%", width:8, height:8, background:"radial-gradient(circle, rgba(247,181,0,.9), transparent 70%)", borderRadius:"50%", animation:"nuviaVictorySpark 1.6s ease-out .2s infinite" }} />
-        <span style={{ position:"absolute", left:"30%", top:"40%", width:6, height:6, background:"radial-gradient(circle, rgba(46,204,113,.9), transparent 70%)", borderRadius:"50%", animation:"nuviaVictorySpark 1.9s ease-out .5s infinite" }} />
-        <span style={{ position:"absolute", left:"70%", top:"36%", width:6, height:6, background:"radial-gradient(circle, rgba(77,124,254,.9), transparent 70%)", borderRadius:"50%", animation:"nuviaVictorySpark 2.1s ease-out .8s infinite" }} />
-
         <button
           onClick={onClose}
           aria-label="Cerrar"
           style={{
-            position: "absolute", top: 12, right: 12,
+            position: "absolute", top: 8, right: 8,
             background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.10)",
-            color: "#B9C6DE", borderRadius: 10, padding: 6, cursor: "pointer",
+            color: "#B9C6DE", borderRadius: 8, padding: 4, cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
           }}
         >
-          <X size={14} />
+          <X size={12} />
         </button>
 
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+        <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
           <div style={{
-            width: 72, height: 72, borderRadius: "50%",
-            background: "radial-gradient(circle at 30% 30%, rgba(247,181,0,.35), rgba(247,181,0,0) 70%), linear-gradient(145deg, #F7B500, #E28900)",
+            flex: "0 0 auto",
+            width: 48, height: 48, borderRadius: 12,
+            background: "radial-gradient(circle at 30% 30%, rgba(247,181,0,.35), rgba(247,181,0,0) 70%), linear-gradient(145deg,#F7B500,#E28900)",
             display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: "0 12px 40px rgba(247,181,0,.45)",
+            boxShadow: "0 8px 24px rgba(247,181,0,.45)",
           }}>
-            <Trophy size={36} color="#1a1200" strokeWidth={2.4} />
+            <Trophy size={24} color="#1a1200" strokeWidth={2.4} />
           </div>
 
-          <div style={{ fontSize: 11, letterSpacing: 3, fontWeight: 700, color: "#9BE8B8", textTransform: "uppercase" }}>
-            🏆 NUVIA · Victory
-          </div>
-          <h2 style={{ fontSize: 26, fontWeight: 800, letterSpacing: -0.5, textAlign: "center", margin: 0 }}>
-            {kindLabel}
-          </h2>
-          <div style={{ fontSize: 14, color: "#B9C6DE", textAlign: "center" }}>
-            {isMine ? "¡Cerraste un nuevo caso!" : `${evt.analista} cerró un nuevo caso`}
-          </div>
-        </div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: 10, letterSpacing: 2, fontWeight: 700, color: "#9BE8B8", textTransform: "uppercase" }}>
+              NUVIA · Victory
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 800, letterSpacing: -0.2, marginTop: 2, color: "#FFFFFF" }}>
+              {kindLabel}
+            </div>
+            <div style={{ fontSize: 12.5, color: "#B9C6DE", marginTop: 3, lineHeight: 1.35 }}>
+              {isMine ? "¡Cerraste un nuevo caso!" : `${evt.analista} cerró un nuevo caso`}
+              {evt.banco ? ` · ${evt.banco}` : ""}
+            </div>
 
-        <div style={{
-          marginTop: 22, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10,
-        }}>
-          <InfoCell label="Analista" value={evt.analista} />
-          <InfoCell label="Banco" value={evt.banco} />
-          <InfoCell label="Cliente" value={evt.cliente} />
-          <InfoCell label="Honorarios" value={formatMoney(evt.honorarios)} highlight />
-        </div>
-
-        <div style={{
-          marginTop: 20, display: "flex", justifyContent: "center", alignItems: "center", gap: 10, flexWrap: "wrap",
-        }}>
-          <span style={{
-            display: "inline-flex", alignItems: "center", gap: 6,
-            padding: "6px 12px", borderRadius: 999,
-            background: "linear-gradient(90deg, rgba(46,204,113,.22), rgba(77,124,254,.22))",
-            border: "1px solid rgba(46,204,113,.45)",
-            fontSize: 12, fontWeight: 700, color: "#9BE8B8",
-          }}>
-            +1 cierre
-          </span>
-          {isMine && streak && streak.actual > 1 && (
-            <span style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              padding: "6px 12px", borderRadius: 999,
-              background: "rgba(247,181,0,.14)", border: "1px solid rgba(247,181,0,.45)",
-              fontSize: 12, fontWeight: 700, color: "#FFD97A",
+            <div style={{
+              marginTop: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10,
             }}>
-              <Flame size={12} /> Racha ×{streak.actual}
-              {streak.actual >= (streak.record ?? 0) && streak.actual > 1 ? " · Récord" : ""}
-            </span>
-          )}
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 10, color: "#8397B8", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>
+                  Cliente
+                </div>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: "#E7EEFB", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {evt.cliente || "—"}
+                </div>
+              </div>
+              <div style={{
+                padding: "6px 10px", borderRadius: 10,
+                background: "linear-gradient(135deg, rgba(46,204,113,.18), rgba(46,204,113,.06))",
+                border: "1px solid rgba(46,204,113,.4)",
+                fontSize: 13, fontWeight: 800, color: "#9BE8B8",
+                whiteSpace: "nowrap",
+              }}>
+                {formatMoney(evt.honorarios)}
+              </div>
+            </div>
+
+            {isMine && streak && streak.actual > 1 && (
+              <div style={{ marginTop: 8 }}>
+                <span style={{
+                  display: "inline-flex", alignItems: "center", gap: 4,
+                  padding: "3px 8px", borderRadius: 999,
+                  background: "rgba(247,181,0,.14)", border: "1px solid rgba(247,181,0,.4)",
+                  fontSize: 10.5, fontWeight: 700, color: "#FFD97A",
+                }}>
+                  <Flame size={10} /> Racha ×{streak.actual}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>,
     document.body,
-  );
-}
-
-function InfoCell({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-  return (
-    <div style={{
-      padding: "10px 12px", borderRadius: 12,
-      background: highlight ? "linear-gradient(135deg, rgba(46,204,113,.14), rgba(46,204,113,.06))" : "rgba(255,255,255,.04)",
-      border: `1px solid ${highlight ? "rgba(46,204,113,.35)" : "rgba(255,255,255,.08)"}`,
-    }}>
-      <div style={{ fontSize: 10, color: "#8397B8", textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 }}>{label}</div>
-      <div style={{ marginTop: 2, fontSize: 14, fontWeight: 700, color: highlight ? "#9BE8B8" : "#E7EEFB", wordBreak: "break-word" }}>{value}</div>
-    </div>
   );
 }
 
@@ -285,11 +336,12 @@ function TestVictoryButton() {
 
 export function VictoryProvider() {
   const [queue, setQueue] = useState<QueueItem[]>([]);
+  const [closing, setClosing] = useState(false);
+  const [rain, setRain] = useState(false);
   const currentRef = useRef<QueueItem | null>(null);
   const currentUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    // capturar user actual (best-effort)
     import("@/integrations/supabase/client").then(({ supabase }) => {
       supabase.auth.getUser().then(({ data }) => {
         currentUserIdRef.current = data.user?.id ?? null;
@@ -306,33 +358,55 @@ export function VictoryProvider() {
     const offLocal = subscribeVictoryLocal((evt) => enqueue(evt, true));
     const offRemote = subscribeVictoryBroadcast((evt) => {
       const isMine = !!currentUserIdRef.current && evt.analistaId === currentUserIdRef.current;
-      // si el evento remoto es realmente mío (otra pestaña), evitar doble modal
       if (isMine) return;
       enqueue(evt, false);
     });
     return () => { offLocal(); offRemote(); };
   }, []);
 
-  // procesar cola
   const current = queue[0] ?? null;
+
   useEffect(() => {
     if (!current || currentRef.current === current) return;
     currentRef.current = current;
+    setClosing(false);
+    setRain(true);
     if (!isVictoryMuted()) playVictoryChime();
-    const t = setTimeout(() => {
+
+    const rainOff = setTimeout(() => setRain(false), 5200);
+    const closeStart = setTimeout(() => setClosing(true), 4200);
+    const dequeue = setTimeout(() => {
       currentRef.current = null;
+      setClosing(false);
       setQueue((q) => q.slice(1));
-    }, 4200);
-    return () => clearTimeout(t);
+    }, 4500);
+
+    return () => {
+      clearTimeout(rainOff);
+      clearTimeout(closeStart);
+      clearTimeout(dequeue);
+    };
   }, [current]);
+
+  const closeNow = () => {
+    setClosing(true);
+    setTimeout(() => {
+      currentRef.current = null;
+      setClosing(false);
+      setRain(false);
+      setQueue((q) => q.slice(1));
+    }, 260);
+  };
 
   return (
     <>
+      <MoneyRain show={rain && !!current} />
       {current && (
-        <VictoryModal
+        <VictoryToast
           key={current.evt.id}
           item={current}
-          onClose={() => { currentRef.current = null; setQueue((q) => q.slice(1)); }}
+          closing={closing}
+          onClose={closeNow}
         />
       )}
       <MuteToggle />
@@ -341,5 +415,4 @@ export function VictoryProvider() {
   );
 }
 
-// re-export defaults
 export { readStreak };
