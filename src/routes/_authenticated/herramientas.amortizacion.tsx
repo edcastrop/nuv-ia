@@ -695,11 +695,11 @@ function AmortizationEngine() {
                 </div>
               </div>
 
-              <div className="mt-5 rounded-2xl border border-white/10 overflow-hidden">
+              <div className="mt-6 rounded-2xl border border-white/[0.08] overflow-hidden">
                 <div className="max-h-[520px] overflow-auto nuvia-scroll">
-                  <table className="w-full text-xs tabular-nums">
-                    <thead className="sticky top-0 z-10 backdrop-blur-xl" style={{ background: "rgba(8,16,40,0.95)" }}>
-                      <tr className="text-left text-[10.5px] uppercase tracking-wider text-white/60">
+                  <table className="w-full text-[12.5px] tabular-nums">
+                    <thead className="sticky top-0 z-10 backdrop-blur-xl" style={{ background: "rgba(11,16,32,0.96)", boxShadow: "0 1px 0 rgba(255,255,255,0.06)" }}>
+                      <tr className="text-left text-[10.5px] uppercase tracking-[0.14em] text-white/55">
                         <Th>Periodo</Th>
                         <Th>Saldo inicial</Th>
                         <Th>Cuota financiera</Th>
@@ -716,15 +716,15 @@ function AmortizationEngine() {
                         return (
                           <tr
                             key={r.periodo}
-                            className={`transition-colors border-t border-white/[0.04] hover:bg-white/[0.04] ${
-                              isCurrent ? "bg-[rgba(132,185,143,0.08)]" : r.periodo % 2 === 0 ? "bg-white/[0.015]" : ""
+                            className={`transition-colors duration-150 border-t border-white/[0.04] hover:bg-white/[0.045] ${
+                              isCurrent ? "bg-[rgba(132,185,143,0.09)]" : r.periodo % 2 === 0 ? "bg-white/[0.012]" : ""
                             }`}
                           >
                             <Td strong={isCurrent}>
                               {isCurrent && (
                                 <span
                                   className="inline-block w-1.5 h-1.5 rounded-full mr-1.5"
-                                  style={{ background: NUVEX.verde, boxShadow: `0 0 8px ${NUVEX.verde}` }}
+                                  style={{ background: NUVEX.verde, boxShadow: `0 0 10px ${NUVEX.verde}` }}
                                 />
                               )}
                               {r.periodo}
