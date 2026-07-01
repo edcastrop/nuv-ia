@@ -611,14 +611,14 @@ function AmortizationEngine() {
                   exit={{ opacity: 0 }}
                   className="mt-6 grid grid-cols-2 gap-3"
                 >
-                  <KPI label="Saldo inicial" value={currentRow.saldoInicial} color={NUVEX.azul} />
-                  <KPI label="Cuota financiera" value={currentRow.cuota} color="#9333EA" />
-                  <KPI label="Interés del periodo" value={currentRow.interes} color="#EF4444" />
-                  <KPI label="Capital abonado" value={currentRow.capital} color={NUVEX.verde} />
-                  <KPI label="Seguros" value={currentRow.seguros} color="#F59E0B" />
-                  <KPI label="Total cuota" value={currentRow.totalCuota} color="#38BDF8" strong />
+                  <KPI label="Saldo inicial" value={currentRow.saldoInicial} color={NUVEX.azul} icon={<DollarSign className="h-3.5 w-3.5" />} hint="Al iniciar el periodo" />
+                  <KPI label="Cuota financiera" value={currentRow.cuota} color="#9333EA" icon={<Calculator className="h-3.5 w-3.5" />} hint={`${((currentRow.cuota / currentRow.totalCuota) * 100).toFixed(1)}% del total`} />
+                  <KPI label="Interés del periodo" value={currentRow.interes} color="#EF4444" icon={<Percent className="h-3.5 w-3.5" />} hint={`${((currentRow.interes / currentRow.cuota) * 100).toFixed(1)}% de la cuota`} trend="down" />
+                  <KPI label="Capital abonado" value={currentRow.capital} color={NUVEX.verde} icon={<Target className="h-3.5 w-3.5" />} hint={`${((currentRow.capital / currentRow.cuota) * 100).toFixed(1)}% de la cuota`} trend="up" />
+                  <KPI label="Seguros" value={currentRow.seguros} color="#F59E0B" icon={<ShieldCheck className="h-3.5 w-3.5" />} hint="Mensual" />
+                  <KPI label="Total cuota" value={currentRow.totalCuota} color="#38BDF8" strong icon={<TrendingUp className="h-3.5 w-3.5" />} hint="Financiera + seguros" />
                   <div className="col-span-2">
-                    <KPI label="Saldo final" value={currentRow.saldoFinal} color={NUVEX.verde} strong />
+                    <KPI label="Saldo final" value={currentRow.saldoFinal} color={NUVEX.verde} strong icon={<Lock className="h-3.5 w-3.5" />} hint={`Reducción de ${fmtCOP(currentRow.saldoInicial - currentRow.saldoFinal)} en el periodo`} />
                   </div>
                 </motion.div>
               ) : (
