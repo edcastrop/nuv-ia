@@ -685,7 +685,7 @@ function PodiumSpot({
         border: `1px solid ${glow}55`,
         boxShadow:
           pos === 1
-            ? `0 0 60px -12px ${glow}, 0 20px 48px rgba(0,0,0,0.55), inset 0 1px 0 ${glow}33`
+            ? "0 0 40px rgba(247,181,0,0.22)"
             : `0 0 32px -12px ${glow}AA, 0 12px 32px rgba(0,0,0,0.45), inset 0 1px 0 ${glow}22`,
         backdropFilter: "blur(18px)",
       }}
