@@ -130,6 +130,7 @@ function CasosPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [asesores, setAsesores] = useState<Map<string, { nombre: string | null; email: string | null }>>(new Map());
+  const [auditCodes, setAuditCodes] = useState<Map<string, string>>(new Map());
 
   // Debounce text input → URL
   useEffect(() => {
