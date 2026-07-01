@@ -355,7 +355,7 @@ export function CapacidadPagoTool() {
         </div>
       ))}
 
-      <div className="flex items-center gap-3 mb-5 flex-wrap">
+      <div className="flex items-center gap-3 mb-2 flex-wrap">
         {personas.length < 2 && (
           <Button variant="outline" size="sm" onClick={agregarCodeudor} className="border-white/20 bg-white/[0.04] text-white hover:bg-white/10 hover:text-white">
             + Agregar codeudor
@@ -363,13 +363,20 @@ export function CapacidadPagoTool() {
         )}
         <Button
           onClick={correrAnalisis}
-          disabled={analizando || totalArchivos === 0 || cuota <= 0}
-          className="ml-auto text-white border-0 shadow-lg shadow-[#445DA3]/30 disabled:opacity-50"
+          disabled={analizando}
+          className="ml-auto text-white border-0 shadow-lg shadow-[#445DA3]/30"
           style={{ background: `linear-gradient(135deg, ${NUVEX_AZUL}, ${NUVEX_VERDE})` }}
         >
           {analizando ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Analizando con IA…</>) : (<><Sparkles className="w-4 h-4 mr-2" />Ejecutar análisis</>)}
         </Button>
       </div>
+      {(cuota <= 0 || totalArchivos === 0) && !analizando && (
+        <p className="mb-5 text-xs text-amber-200/90 text-right">
+          Para ejecutar: {cuota <= 0 && <b>ingresa la cuota propuesta</b>}
+          {cuota <= 0 && totalArchivos === 0 && " · "}
+          {totalArchivos === 0 && <b>sube al menos un soporte</b>}.
+        </p>
+      )}
 
       {resultado && (
         <div className="border-t border-white/10 pt-6">
