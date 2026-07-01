@@ -26,11 +26,12 @@ const CASOS: Caso[] = [
   { nombre: "Diego Alejandro Prieto", ciudad: "Ibagué",       banco: "FNA",                tiempo: "6 años", dinero: 126_900_000, testimonio: "Con NUVEX terminé pagando 126 millones menos y salí del crédito 6 años antes de lo previsto." },
 ];
 
-const COOLDOWN_KEY = "nuvia:social-proof:cooldown-until";
+const COOLDOWN_KEY = "nuvia:landing-social-proof:cooldown-until:v2";
 const COOLDOWN_MS = 10 * 60 * 1000; // 10 min
 const VISIBLE_MS = 8_000;
 const MIN_GAP_MS = 18_000;
 const MAX_GAP_MS = 35_000;
+const FIRST_APPEAR_MS = 2_200;
 
 function fmtMoney(v: number): string {
   return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(v);
@@ -211,7 +212,7 @@ export function NuviaSocialProofToast() {
   }, []);
 
   useEffect(() => {
-    // primer disparo con leve retardo
+    // Primer disparo rápido en landing: el ciclo random queda para los siguientes.
     const first = setTimeout(() => {
       if (readCooldown() > Date.now()) {
         scheduleNext();
@@ -219,7 +220,7 @@ export function NuviaSocialProofToast() {
       }
       setClosing(false);
       setCurrent(CASOS[idxRef.current]);
-    }, 6000 + Math.random() * 4000);
+    }, FIRST_APPEAR_MS);
     return () => {
       clearTimeout(first);
       if (timerRef.current) clearTimeout(timerRef.current);
