@@ -808,7 +808,7 @@ function Hero({ modo }: { modo: "pesos" | "uvr" }) {
         </div>
         <div className="flex flex-wrap gap-2">
           <Badge icon={<Calculator className="h-3 w-3" />} label="Mathematical Engine" tone="blue" />
-          <Badge icon={<Lock className="h-3 w-3" />} label="Solo modalidad PESOS" tone="green" />
+          <Badge icon={<Lock className="h-3 w-3" />} label={modo === "uvr" ? "Modalidad UVR" : "Modalidad PESOS"} tone="green" />
         </div>
       </div>
 
