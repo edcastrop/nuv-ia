@@ -120,6 +120,10 @@ export function MaestroEditor(p: Props) {
   return (
     <div className="space-y-4">
       <Accordion title="Datos del cliente" subtitle="Información personal del titular">
+        <CedulaReaderMaestro
+          label={rolTitular}
+          onApply={(patch) => p.onCliente({ ...p.cliente, ...(patch as Partial<ClienteMaestro>) })}
+        />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <TextField label="Nombre completo" value={p.cliente.nombre} onChange={(v) => p.onCliente(set(p.cliente, "nombre", v))} />
           <TextField label="Cédula" value={p.cliente.cedula} onChange={(v) => p.onCliente(set(p.cliente, "cedula", v))} />
