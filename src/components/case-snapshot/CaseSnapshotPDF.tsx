@@ -491,29 +491,29 @@ export const CaseSnapshotPDF = forwardRef<HTMLDivElement, CaseSnapshotPDFProps>(
           </div>
         </div>
 
-        <Card style={{ padding: 20, marginBottom: 12, overflow: "visible" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "172px 86px minmax(150px,1fr) 70px 178px", gap: 10, alignItems: "center", width: "100%", boxSizing: "border-box" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0, paddingRight: 8, borderRight: `1px solid ${C.border}` }}>
+        <Card style={{ padding: 28, marginBottom: 12, overflow: "visible" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "186px 96px minmax(150px,1fr) 78px 190px", gap: 20, alignItems: "center", width: "100%", boxSizing: "border-box" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0, paddingRight: 14, borderRight: `1px solid ${C.border2}`, boxShadow: "1px 0 0 rgba(96,165,250,0.08)" }}>
               <ClienteAvatar />
               <div style={{ minWidth: 0 }}>
-                <MiniLabel style={{ color: C.textLabel, marginBottom: 4 }}>Cliente</MiniLabel>
-                <div style={{ fontSize: 10.5, fontWeight: 950, color: C.text, lineHeight: 1.15, wordBreak: "normal", overflowWrap: "break-word", textTransform: "uppercase", letterSpacing: "0.01em" }}>{e.cliente.nombre}</div>
+                <MiniLabel style={{ color: C.textLabel, marginBottom: 5 }}>Cliente</MiniLabel>
+                <div style={{ fontSize: 10.8, fontWeight: 950, color: C.text, lineHeight: 1.18, wordBreak: "normal", overflowWrap: "break-word", textTransform: "uppercase", letterSpacing: "0.01em" }}>{e.cliente.nombre}</div>
               </div>
             </div>
             <Field icon={<IconWrap><SvgBank /></IconWrap>} label="Banco" value={e.banco} />
             <Field icon={<IconWrap><SvgShield /></IconWrap>} label="Producto" value={e.producto} />
             <Field icon={<IconWrap><SvgMoney /></IconWrap>} label="Modalidad" value={e.modalidad} />
-            <div style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 11, minWidth: 0, paddingLeft: 14, borderLeft: `1px solid ${C.border2}`, boxShadow: "-1px 0 0 rgba(52,211,153,0.1)" }}>
               <IconWrap color={C.green}><SvgCheckCircle /></IconWrap>
               <div style={{ minWidth: 0, flex: 1 }}>
                 <MiniLabel style={{ marginBottom: 5, color: C.textLabel }}>Estado del caso</MiniLabel>
-                <div style={{ display: "block", color: C.green2, fontSize: 9.4, lineHeight: 1.2, fontWeight: 900, textShadow: "0 0 10px rgba(16,185,129,0.28)", wordBreak: "normal", overflowWrap: "break-word" }}>{e.estado}</div>
+                <div style={{ display: "block", color: C.green2, fontSize: 9.6, lineHeight: 1.2, fontWeight: 900, textShadow: "0 0 12px rgba(16,185,129,0.35)", wordBreak: "normal", overflowWrap: "break-word" }}>{e.estado}</div>
               </div>
             </div>
           </div>
 
-          <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(59,130,246,0.45), rgba(138,109,255,0.35), transparent)", margin: "20px 0" }} />
-          <div style={{ display: "grid", gridTemplateColumns: "190px 190px 1fr 145px", gap: 24, alignItems: "center" }}>
+          <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(59,130,246,0.5), rgba(138,109,255,0.4), transparent)", margin: "24px 0" }} />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 30, alignItems: "center" }}>
             <Field icon={<IconWrap><SvgUser /></IconWrap>} label="Analista" value={e.analista} />
             <div style={{ display: "flex", alignItems: "flex-start", gap: 11 }}>
               <IconWrap><SvgShield /></IconWrap>
