@@ -4,6 +4,7 @@ import { ACCION_A_ESTADO, type AccionOrigen, type CasoEstado } from "@/lib/casoE
 import { cambiarEstadoConValidacion, TransicionInvalidaError } from "@/lib/pipelineTransiciones";
 import { supabase } from "@/integrations/supabase/client";
 import { programarEntregaDesdeBanco } from "@/lib/entregaDocumental";
+import { fireVictory } from "@/lib/victoryTrigger";
 
 export interface ConfirmExtras {
   radicadoIdBanco?: string;
