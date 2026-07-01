@@ -680,7 +680,8 @@ function PodiumSpot({
     <div
       className="relative flex flex-col items-center transition-all duration-300 hover:scale-[1.02]"
       style={{
-        height,
+        width: "100%",
+        minHeight: height,
         borderRadius: 28,
         padding: pos === 1 ? "44px 20px 24px" : "38px 18px 22px",
         background: `linear-gradient(180deg, ${PODIUM_CARD} 0%, rgba(10,18,34,0.95) 100%)`,
