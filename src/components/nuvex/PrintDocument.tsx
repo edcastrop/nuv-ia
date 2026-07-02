@@ -739,130 +739,63 @@ function PriceBox({ label, value, crossed }: { label: string; value: string; cro
   return <div><div style={{ ...tinyLabelStyle, textAlign: "center" }}>{label}</div><div style={{ marginTop: 7, color: C.ink, fontSize: 18, lineHeight: 1, fontWeight: 950, textAlign: "center", textDecoration: crossed ? "line-through" : undefined }}>{value}</div></div>;
 }
 
-const TIERS_DR: { horas: 12 | 24 | 48; pct: number; label: string; icon: string }[] = [
-  { horas: 12, pct: 25, label: "Decisión en 12 horas", icon: "⚡" },
-  { horas: 24, pct: 20, label: "Decisión en 24 horas", icon: "🕐" },
-  { horas: 48, pct: 15, label: "Decisión en 48 horas", icon: "📅" },
-];
-
-function DecisionRapidaTable({ honorariosBase, horasActivas }: { honorariosBase: number; horasActivas: number }) {
-  const activeTier = TIERS_DR.find((t) => t.horas === horasActivas) ?? null;
-
-  // Compute each tier price respecting the commercial floor.
-  const computed = TIERS_DR.map((t) => {
-    const bruto = Math.round(honorariosBase * (1 - t.pct / 100));
-    const precio = Math.max(HONORARIOS_MIN_FINAL, bruto);
-    return { ...t, precio, ahorro: Math.max(0, honorariosBase - precio), pisoAplicado: precio !== bruto };
-  });
-
-  // Colapsamos cuando CUALQUIER tier toca el piso comercial: en ese caso la diferenciación
-  // entre 12h/24h/48h es artificial y confunde al cliente (todos terminan cerca del mínimo).
-  const algunTierEnPiso = computed.some((c) => c.pisoAplicado);
-  const uniquePrices = Array.from(new Set(computed.map((c) => c.precio)));
-  const sinDiferenciacion = algunTierEnPiso || uniquePrices.length === 1;
-  const precioColapsado = Math.min(...computed.map((c) => c.precio));
-  const ahorroMax = Math.max(0, honorariosBase - precioColapsado);
-
-  // Caso colapsado: el descuento máximo ya alcanza el piso → no hay diferenciación entre 12h/24h/48h.
-  if (sinDiferenciacion) {
-    const precioFinal = precioColapsado;
-    const hayAhorro = ahorroMax > 0;
-    return (
-      <div style={{ marginTop: 8, border: `1px solid ${C.line}`, borderRadius: 9, background: C.panel, padding: "9px 12px 10px" }}>
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 6 }}>
-          <div style={{ color: C.greenDeep, fontWeight: 950, fontSize: 12, letterSpacing: "0.06em" }}>BENEFICIO POR DECISIÓN RÁPIDA</div>
-          <div style={{ color: C.text, fontSize: 8.8, fontWeight: 700, letterSpacing: "0.05em" }}>
-            {hayAhorro
-              ? "Mientras más pasa el tiempo, más se pierde dinero."
-              : "Honorarios mínimos NUVEX — no aplica descuento adicional."}
-          </div>
-        </div>
-        <div style={{ position: "relative", border: `1.4px solid ${C.greenDeep}`, borderRadius: 9, background: "linear-gradient(180deg,#1F7A45,#155A33)", padding: "11px 16px", color: "#fff", display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr", gap: 14, alignItems: "center" }}>
-          <div style={{ position: "absolute", top: -9, right: 14, background: "#0B1226", color: "#84F5A8", fontSize: 8.2, fontWeight: 950, letterSpacing: "0.18em", padding: "3px 8px", borderRadius: 999 }}>HONORARIOS MÍNIMOS</div>
-          <div>
-            <div style={{ fontSize: 10.5, fontWeight: 950, letterSpacing: "0.08em", color: "rgba(255,255,255,0.85)" }}>TARIFA FINAL ÚNICA</div>
-            <div style={{ marginTop: 3, fontSize: 10, fontWeight: 700, lineHeight: 1.22, color: "rgba(255,255,255,0.78)" }}>
-              {hayAhorro
-                ? "Decidir hoy es recuperar años de tu vida financiera. Cada cuota eliminada es dinero que vuelve a tu familia y a tus proyectos."
-                : "Por el tamaño del caso, los honorarios ya están en el mínimo NUVEX. No es posible aplicar un descuento adicional por tiempo de decisión."}
-            </div>
-          </div>
-          <div>
-            <div style={{ fontSize: 9, fontWeight: 800, color: "rgba(255,255,255,0.78)", letterSpacing: "0.06em" }}>ESTÁNDAR</div>
-            <div style={{ marginTop: 3, fontSize: 13, fontWeight: 950, color: "rgba(255,255,255,0.85)", textDecoration: hayAhorro ? "line-through" : undefined }}>{formatCOP(honorariosBase)}</div>
-            <div style={{ marginTop: 9, fontSize: 9, fontWeight: 800, color: "rgba(255,255,255,0.78)", letterSpacing: "0.06em" }}>HONORARIOS</div>
-            <div style={{ marginTop: 3, fontSize: 18, fontWeight: 950, color: "#fff", lineHeight: 1 }}>{formatCOP(precioFinal)}</div>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 9, fontWeight: 800, color: "rgba(255,255,255,0.78)", letterSpacing: "0.06em" }}>{hayAhorro ? "AHORRO MÁXIMO" : "AHORRO"}</div>
-            <div style={{ marginTop: 3, fontSize: 20, fontWeight: 950, color: "#84F5A8", lineHeight: 1 }}>{formatCOP(ahorroMax)}</div>
-            <div style={{ marginTop: 4, fontSize: 8.2, fontWeight: 700, color: "rgba(255,255,255,0.75)", letterSpacing: "0.04em" }}>{hayAhorro ? "vs. tarifa estándar" : "sin reducción adicional"}</div>
-          </div>
-        </div>
-        <div style={{ marginTop: 6, fontSize: 8.8, color: C.text, fontWeight: 700, textAlign: "center" }}>
-          Vigencia desde el envío de esta propuesta · honorarios mínimos NUVEX: <b style={{ color: C.greenDeep }}>{formatCOP(HONORARIOS_MIN_FINAL)}</b>.
-        </div>
-      </div>
-    );
-  }
-
-  // Caso normal: 3 tramos diferenciados.
+function HonorariosFinalesBox({
+  honorariosBase,
+  honorariosFinales,
+  descuento,
+  descuentoPct,
+  vigencia,
+}: {
+  honorariosBase: number;
+  honorariosFinales: number;
+  descuento: number;
+  descuentoPct: number;
+  vigencia: string;
+}) {
+  const hayDescuento = descuento > 0;
   return (
     <div style={{ marginTop: 8, border: `1px solid ${C.line}`, borderRadius: 9, background: C.panel, padding: "9px 12px 10px" }}>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 6 }}>
-        <div style={{ color: C.greenDeep, fontWeight: 950, fontSize: 12, letterSpacing: "0.06em" }}>BENEFICIO POR DECISIÓN RÁPIDA</div>
-        <div style={{ color: C.text, fontSize: 8.8, fontWeight: 700, letterSpacing: "0.05em" }}>Mientras más rápido decidas, más ahorras en honorarios.</div>
+        <div style={{ color: C.greenDeep, fontWeight: 950, fontSize: 12, letterSpacing: "0.06em" }}>HONORARIOS A ÉXITO NUVEX</div>
+        <div style={{ color: C.text, fontSize: 8.8, fontWeight: 700, letterSpacing: "0.05em" }}>
+          {hayDescuento ? `Descuento comercial aplicado (${descuentoPct}%).` : "Tarifa estándar sobre el beneficio obtenido."}
+        </div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 7 }}>
-        {computed.map((t) => {
-          const activo = activeTier?.horas === t.horas;
-          const bg = activo ? "linear-gradient(180deg,#1F7A45,#155A33)" : "#FFFFFF";
-          const borderCol = activo ? C.greenDeep : C.line;
-          const textInk = activo ? "#FFFFFF" : C.ink;
-          const textMuted = activo ? "rgba(255,255,255,0.78)" : C.text;
-          const accent = activo ? "#FFFFFF" : C.greenDeep;
-          return (
-            <div key={t.horas} style={{ position: "relative", border: `1.4px solid ${borderCol}`, borderRadius: 8, background: bg, padding: "8px 10px 9px", boxShadow: activo ? "0 10px 24px -14px rgba(31,122,69,0.85)" : "none" }}>
-              {activo && (
-                <div style={{ position: "absolute", top: -9, right: 10, background: "#0B1226", color: "#84F5A8", fontSize: 8.2, fontWeight: 950, letterSpacing: "0.18em", padding: "3px 8px", borderRadius: 999 }}>SELECCIONADA</div>
-              )}
-              <div style={{ display: "flex", alignItems: "center", gap: 6, color: accent, fontSize: 10, fontWeight: 950, letterSpacing: "0.06em" }}>
-                <span style={{ fontSize: 13 }}>{t.icon}</span>{t.label.toUpperCase()}
-              </div>
-              <div style={{ marginTop: 4, color: accent, fontSize: 20, fontWeight: 950, lineHeight: 1 }}>
-                {t.pct}% OFF
-                {t.pisoAplicado && (
-                  <span style={{ marginLeft: 6, fontSize: 8.4, fontWeight: 800, letterSpacing: "0.08em", color: accent, opacity: 0.85 }}>· PISO MÍN.</span>
-                )}
-              </div>
-              <div style={{ marginTop: 5, display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 6 }}>
-                <span style={{ fontSize: 8.6, fontWeight: 800, color: textMuted, letterSpacing: "0.04em" }}>ESTÁNDAR</span>
-                <span style={{ fontSize: 10.5, fontWeight: 800, color: textMuted, textDecoration: "line-through" }}>{formatCOP(honorariosBase)}</span>
-              </div>
-              <div style={{ marginTop: 3, display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 6 }}>
-                <span style={{ fontSize: 8.6, fontWeight: 950, color: accent, letterSpacing: "0.04em" }}>HONORARIOS</span>
-                <span style={{ fontSize: 15, fontWeight: 950, color: textInk, lineHeight: 1 }}>{formatCOP(t.precio)}</span>
-              </div>
-              <div style={{ marginTop: 5, paddingTop: 5, borderTop: `1px dashed ${activo ? "rgba(255,255,255,0.32)" : C.line}`, display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 6 }}>
-                <span style={{ fontSize: 8.6, fontWeight: 950, color: accent, letterSpacing: "0.04em" }}>AHORRO</span>
-                <span style={{ fontSize: 13, fontWeight: 950, color: activo ? "#84F5A8" : C.greenDeep }}>{formatCOP(t.ahorro)}</span>
-              </div>
+      <div style={{ position: "relative", border: `1.4px solid ${C.greenDeep}`, borderRadius: 9, background: "linear-gradient(180deg,#1F7A45,#155A33)", padding: "11px 16px", color: "#fff", display: "grid", gridTemplateColumns: hayDescuento ? "1.2fr 1fr 1fr" : "1.6fr 1fr", gap: 14, alignItems: "center" }}>
+        <div>
+          <div style={{ fontSize: 10.5, fontWeight: 950, letterSpacing: "0.08em", color: "rgba(255,255,255,0.85)" }}>
+            {hayDescuento ? "TARIFA FINAL CON DESCUENTO" : "TARIFA FINAL"}
+          </div>
+          <div style={{ marginTop: 3, fontSize: 10, fontWeight: 700, lineHeight: 1.22, color: "rgba(255,255,255,0.78)" }}>
+            Solo se pagan si el banco aprueba tu optimización. Todo queda respaldado por contrato.
+          </div>
+          {vigencia && (
+            <div style={{ marginTop: 6, fontSize: 9, fontWeight: 900, color: "#84F5A8", letterSpacing: "0.08em" }}>
+              VIGENCIA · {vigencia.toUpperCase()}
             </div>
-          );
-        })}
+          )}
+        </div>
+        {hayDescuento && (
+          <div>
+            <div style={{ fontSize: 9, fontWeight: 800, color: "rgba(255,255,255,0.78)", letterSpacing: "0.06em" }}>ESTÁNDAR</div>
+            <div style={{ marginTop: 3, fontSize: 13, fontWeight: 950, color: "rgba(255,255,255,0.85)", textDecoration: "line-through" }}>{formatCOP(honorariosBase)}</div>
+            <div style={{ marginTop: 9, fontSize: 9, fontWeight: 800, color: "rgba(255,255,255,0.78)", letterSpacing: "0.06em" }}>DESCUENTO</div>
+            <div style={{ marginTop: 3, fontSize: 16, fontWeight: 950, color: "#84F5A8", lineHeight: 1 }}>−{formatCOP(descuento)}</div>
+          </div>
+        )}
+        <div style={{ textAlign: "right" }}>
+          <div style={{ fontSize: 9, fontWeight: 800, color: "rgba(255,255,255,0.78)", letterSpacing: "0.06em" }}>HONORARIOS FINALES</div>
+          <div style={{ marginTop: 3, fontSize: 22, fontWeight: 950, color: "#fff", lineHeight: 1 }}>{formatCOP(honorariosFinales)}</div>
+          {hayDescuento && (
+            <div style={{ marginTop: 4, fontSize: 8.2, fontWeight: 700, color: "rgba(255,255,255,0.75)", letterSpacing: "0.04em" }}>vs. {formatCOP(honorariosBase)} estándar</div>
+          )}
+        </div>
       </div>
-      {activeTier ? (
-        <div style={{ marginTop: 6, fontSize: 8.8, color: C.text, fontWeight: 700, textAlign: "center" }}>
-          Tu propuesta actual aplica el beneficio de <b style={{ color: C.greenDeep }}>{activeTier.horas} horas</b> · vigencia desde el envío de esta propuesta.
-        </div>
-      ) : (
-        <div style={{ marginTop: 6, fontSize: 8.8, color: C.text, fontWeight: 700, textAlign: "center" }}>
-          Selecciona cuanto antes el tramo que más te convenga: cada hora cuenta.
-        </div>
-      )}
     </div>
   );
 }
+
+
 
 
 
