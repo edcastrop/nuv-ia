@@ -410,7 +410,6 @@ export function VictoryProvider() {
         />
       )}
       <MuteToggle />
-      <TestVictoryButton />
     </>
   );
 }
