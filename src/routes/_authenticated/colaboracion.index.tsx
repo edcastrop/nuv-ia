@@ -437,6 +437,42 @@ function PanelHeader({ label, accent, right }: { label: string; accent: string; 
   );
 }
 
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "??";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function OwnerAvatar({ name, priority }: { name: string; priority: "alta" | "media" | "baja" }) {
+  const border =
+    priority === "alta" ? "rgba(239,68,68,0.55)" :
+    priority === "media" ? "rgba(245,158,11,0.55)" :
+                           "rgba(16,185,129,0.55)";
+  const glow =
+    priority === "alta" ? "rgba(239,68,68,0.35)" :
+    priority === "media" ? "rgba(245,158,11,0.35)" :
+                           "rgba(16,185,129,0.35)";
+  const hasOwner = name && name !== "Sin asignar";
+  return (
+    <span
+      title={hasOwner ? `Analista responsable · ${name}` : "Analista responsable"}
+      className="relative inline-flex items-center justify-center rounded-full shrink-0 transition"
+      style={{
+        width: 28, height: 28,
+        background: "linear-gradient(135deg, rgba(11,18,32,0.9), rgba(15,23,42,0.85))",
+        border: `1.5px solid ${hasOwner ? border : "rgba(255,255,255,0.15)"}`,
+        boxShadow: hasOwner ? `0 0 10px ${glow}, inset 0 1px 0 rgba(255,255,255,0.06)` : "inset 0 1px 0 rgba(255,255,255,0.04)",
+        backdropFilter: "blur(8px)",
+      }}
+    >
+      <span className="text-[10px] font-extrabold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.95)", textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}>
+        {hasOwner ? initialsOf(name) : "—"}
+      </span>
+    </span>
+  );
+}
+
 function prioTone(p: "alta" | "media" | "baja" | "todos") {
   if (p === "alta")  return { bg: "rgba(239,68,68,0.15)",  fg: "#FCA5A5", border: "rgba(239,68,68,0.4)" };
   if (p === "media") return { bg: "rgba(245,158,11,0.15)", fg: "#FCD34D", border: "rgba(245,158,11,0.4)" };
