@@ -528,8 +528,9 @@ function AuthenticatedLayout() {
               { to: "/apoderado/mis-casos", label: "Mis casos", Icon: Briefcase },
               { to: "/nuvex-ia", label: "NUVIA IA", Icon: Sparkles },
               { to: "/colaboracion/dm", label: "Mensajería", Icon: MessageSquare, badge: dmUnread },
-              { to: "/directorio", label: "Directorio", Icon: BookUser },
-              { to: "/notificaciones", label: "Alertas", Icon: Bell, badge: unread },
+              { to: "/directorio", label: "Directorio NUVEX", Icon: BookUser },
+              { to: "/notificaciones", label: "Centro de Alertas", Icon: Bell, badge: unread },
+
               { to: "/mi-perfil", label: "Mi Perfil", Icon: UserCircle },
             ],
           },
