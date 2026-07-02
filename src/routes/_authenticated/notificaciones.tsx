@@ -26,7 +26,13 @@ export const Route = createFileRoute("/_authenticated/notificaciones")({
   head: () => ({ meta: [{ title: "Centro de Alertas · NUVEX" }] }),
 });
 
-type TabKey = "estancados" | "sin_seguimiento" | "honorarios";
+type TabKey = "qa" | "estancados" | "sin_seguimiento" | "honorarios";
+
+interface QAPend {
+  id: string;
+  expediente_id: string;
+  solicitada_at: string;
+}
 
 interface Alerta {
   id: string;
