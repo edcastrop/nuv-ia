@@ -10,8 +10,15 @@ import {
   type NotifPrefs,
 } from "@/lib/notifPreferencias";
 import { reproducirSonido, precalentarAudio, type SoundKind } from "@/lib/notifSound";
+import {
+  esSirena,
+  generarFaviconConBadge,
+  aplicarFavicon,
+  limpiarFaviconDinamico,
+} from "@/lib/notifSirena";
 
 const TITULO_BASE = "Nuvex";
+const SIRENA_REPEAT_MS = 5 * 60_000; // 5 min
 
 function tipoToSound(tipo: string): SoundKind {
   if (tipo === "dm" || tipo.startsWith("dm")) return "dm";
