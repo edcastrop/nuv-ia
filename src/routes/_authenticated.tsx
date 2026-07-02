@@ -624,7 +624,6 @@ function AuthenticatedLayout() {
                 "gerencia",
                 "licenciado",
                 "asesor",
-                "director_financiero_qa",
               )
                 ? [{ to: "/honorarios-motor", label: "Motor de Honorarios", Icon: DollarSign }]
                 : []),
