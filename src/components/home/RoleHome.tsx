@@ -7,6 +7,8 @@ import { useResolvedHomeRole } from "@/hooks/useResolvedHomeRole";
 import { roleLabel } from "@/lib/roleLabels";
 import { supabase } from "@/integrations/supabase/client";
 import { HOME_CONFIG, type RoleHomeKpi } from "@/lib/homeConfig";
+import { CASO_ESTADOS } from "@/lib/casoEstados";
+import { qaKpis } from "@/lib/qaAI.functions";
 import { WorkspaceLoader } from "./WorkspaceLoader";
 import { SuperAdminControlCenter } from "./SuperAdminControlCenter";
 import { VictoryFeed } from "@/components/victory/VictoryFeed";
