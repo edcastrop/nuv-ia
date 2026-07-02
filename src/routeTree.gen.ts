@@ -97,6 +97,8 @@ import { Route as AuthenticatedApoderadoMisCasosRouteImport } from './routes/_au
 import { Route as AuthenticatedFinanzasTreasuryIndexRouteImport } from './routes/_authenticated/finanzas.treasury.index'
 import { Route as AuthenticatedColaboracionDmIndexRouteImport } from './routes/_authenticated/colaboracion.dm.index'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicHooksRecomputeSnapshotsRouteImport } from './routes/api/public/hooks/recompute-snapshots'
 import { Route as ApiPublicHooksOnboardingRecordatoriosRouteImport } from './routes/api/public/hooks/onboarding-recordatorios'
 import { Route as ApiPublicHooksFinanzasCronRouteImport } from './routes/api/public/hooks/finanzas-cron'
@@ -607,6 +609,16 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksRecomputeSnapshotsRoute =
   ApiPublicHooksRecomputeSnapshotsRouteImport.update({
     id: '/api/public/hooks/recompute-snapshots',
@@ -805,6 +817,8 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
   '/api/public/hooks/onboarding-recordatorios': typeof ApiPublicHooksOnboardingRecordatoriosRoute
   '/api/public/hooks/recompute-snapshots': typeof ApiPublicHooksRecomputeSnapshotsRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/colaboracion/dm/': typeof AuthenticatedColaboracionDmIndexRoute
   '/finanzas/treasury/': typeof AuthenticatedFinanzasTreasuryIndexRoute
@@ -906,6 +920,8 @@ export interface FileRoutesByTo {
   '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
   '/api/public/hooks/onboarding-recordatorios': typeof ApiPublicHooksOnboardingRecordatoriosRoute
   '/api/public/hooks/recompute-snapshots': typeof ApiPublicHooksRecomputeSnapshotsRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/colaboracion/dm': typeof AuthenticatedColaboracionDmIndexRoute
   '/finanzas/treasury': typeof AuthenticatedFinanzasTreasuryIndexRoute
@@ -1013,6 +1029,8 @@ export interface FileRoutesById {
   '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
   '/api/public/hooks/onboarding-recordatorios': typeof ApiPublicHooksOnboardingRecordatoriosRoute
   '/api/public/hooks/recompute-snapshots': typeof ApiPublicHooksRecomputeSnapshotsRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/colaboracion/dm/': typeof AuthenticatedColaboracionDmIndexRoute
   '/_authenticated/finanzas/treasury/': typeof AuthenticatedFinanzasTreasuryIndexRoute
@@ -1120,6 +1138,8 @@ export interface FileRouteTypes {
     | '/api/public/hooks/finanzas-cron'
     | '/api/public/hooks/onboarding-recordatorios'
     | '/api/public/hooks/recompute-snapshots'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/colaboracion/dm/'
     | '/finanzas/treasury/'
@@ -1221,6 +1241,8 @@ export interface FileRouteTypes {
     | '/api/public/hooks/finanzas-cron'
     | '/api/public/hooks/onboarding-recordatorios'
     | '/api/public/hooks/recompute-snapshots'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/colaboracion/dm'
     | '/finanzas/treasury'
@@ -1327,6 +1349,8 @@ export interface FileRouteTypes {
     | '/api/public/hooks/finanzas-cron'
     | '/api/public/hooks/onboarding-recordatorios'
     | '/api/public/hooks/recompute-snapshots'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/_authenticated/colaboracion/dm/'
     | '/_authenticated/finanzas/treasury/'
@@ -1350,6 +1374,8 @@ export interface RootRouteChildren {
   ApiPublicHooksFinanzasCronRoute: typeof ApiPublicHooksFinanzasCronRoute
   ApiPublicHooksOnboardingRecordatoriosRoute: typeof ApiPublicHooksOnboardingRecordatoriosRoute
   ApiPublicHooksRecomputeSnapshotsRoute: typeof ApiPublicHooksRecomputeSnapshotsRoute
+  LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
+  LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
@@ -1971,6 +1997,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lovable/email/auth/webhook': {
+      id: '/lovable/email/auth/webhook'
+      path: '/lovable/email/auth/webhook'
+      fullPath: '/lovable/email/auth/webhook'
+      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/recompute-snapshots': {
       id: '/api/public/hooks/recompute-snapshots'
       path: '/api/public/hooks/recompute-snapshots'
@@ -2358,6 +2398,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksOnboardingRecordatoriosRoute:
     ApiPublicHooksOnboardingRecordatoriosRoute,
   ApiPublicHooksRecomputeSnapshotsRoute: ApiPublicHooksRecomputeSnapshotsRoute,
+  LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
+  LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
