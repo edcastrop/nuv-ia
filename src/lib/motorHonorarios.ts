@@ -80,9 +80,6 @@ export function calcularMotor(input: InputMotor): ResultadoMotor {
   const descMax = descuentoMaximoPct(recomendado);
   const ofertas = [
     { etiqueta: "Honorario base", valor: recomendado, descuentoPct: 0 },
-    { etiqueta: "Pronta firma 10%", valor: Math.round(recomendado * 0.9), descuentoPct: 10 },
-    { etiqueta: "Pronta firma 20%", valor: Math.round(recomendado * 0.8), descuentoPct: 20 },
-    { etiqueta: "Pronta firma 30%", valor: Math.round(recomendado * 0.7), descuentoPct: 30 },
   ];
   return {
     ahorroTotal,

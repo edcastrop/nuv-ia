@@ -204,20 +204,14 @@ function Calculadora({ initial }: { initial?: InitialData }) {
               </div>
             )}
 
-            {/* Generador de ofertas */}
-            <Panel title="Generador automático de ofertas">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {resultado.ofertas.map((o) => (
-                  <button
-                    key={o.etiqueta}
-                    onClick={() => setHonorarioOfertado(String(o.valor))}
-                    className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 text-left transition hover:border-[#84B98F]/50 hover:bg-white/[0.05]"
-                  >
-                    <div className="text-[10px] uppercase tracking-wider" style={{ color: COLORS.muted }}>{o.etiqueta}</div>
-                    <div className="mt-1 text-lg font-semibold" style={{ color: "#FFFFFF" }}>{formatCOP(o.valor)}</div>
-                    <div className="mt-1 text-xs" style={{ color: COLORS.green }}>{o.descuentoPct > 0 ? `-${o.descuentoPct}% descuento` : "Sin descuento"}</div>
-                  </button>
-                ))}
+            {/* Referencia comercial */}
+            <Panel title="Referencia comercial">
+              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
+                <div className="text-[10px] uppercase tracking-wider" style={{ color: COLORS.muted }}>Honorario base recomendado</div>
+                <div className="mt-1 text-xl font-semibold" style={{ color: "#FFFFFF" }}>{formatCOP(resultado.honorarioRecomendado)}</div>
+                <div className="mt-1 text-xs" style={{ color: COLORS.green }}>
+                  Si se negocia un descuento, escríbelo manualmente en la oferta comercial.
+                </div>
               </div>
             </Panel>
 

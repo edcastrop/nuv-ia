@@ -31,6 +31,7 @@ import {
   DiscountModule,
   computeDiscount,
   defaultDiscount,
+  normalizeDiscountState,
   type DiscountState,
 } from "./DiscountModule";
 // ResultadoFinal removido del simulador: vive en el Expediente (Etapa 9+).
@@ -98,10 +99,11 @@ export function UVRSimulator({
   const initClient = (init?.cliente_data as ClientData | undefined) ?? undefined;
   const draft = readSimulatorDraft("uvr", init?.id, {
     extractoArchivoPath: typeof initCred.archivoPath === "string" ? initCred.archivoPath : "",
-    discount:
+    discount: normalizeDiscountState(
       init?.discount_data && Object.keys(init.discount_data).length
-        ? (init.discount_data as unknown as DiscountState)
+        ? init.discount_data
         : defaultDiscount,
+    ),
     client: initClient ?? defaultClient,
     intervinientes:
       initClient?.intervinientes && initClient.intervinientes.length > 0
@@ -138,7 +140,7 @@ export function UVRSimulator({
   );
   const [autoQA, setAutoQA] = useState<AutoQAResult | null>(null);
   const [autoQALoading, setAutoQALoading] = useState(false);
-  const [discount, setDiscount] = useState<DiscountState>(() => draft.discount);
+  const [discount, setDiscount] = useState<DiscountState>(() => normalizeDiscountState(draft.discount));
   const [client, setClient] = useState<ClientData>(() => draft.client);
   const [intervinientes, setIntervinientes] = useState<Interviniente[]>(() => draft.intervinientes);
   const [cobertura, setCobertura] = useState<Cobertura>(() => draft.cobertura);
