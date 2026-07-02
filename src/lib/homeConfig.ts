@@ -124,9 +124,9 @@ export const HOME_CONFIG: Partial<Record<AppRole, RoleHomeConfig>> = {
     },
     kpis: [
       { id: "mios", label: "Mis casos activos", icon: FolderKanban, tone: "blue", source: "expedientes.activos.miAsesor" },
-      { id: "firm", label: "Mis firmados", icon: FileText, tone: "green", source: "static" },
-      { id: "com", label: "Comisiones devengadas", icon: Wallet, tone: "blue", source: "static" },
-      { id: "conv", label: "Tasa conversión", icon: Trophy, tone: "green", source: "static" },
+      { id: "firm", label: "Mis firmados", icon: FileText, tone: "green", source: "expedientes.firmados.miAsesor" },
+      { id: "com", label: "Comisiones devengadas", icon: Wallet, tone: "blue", source: "comisiones.devengadas.miAsesor" },
+      { id: "conv", label: "Tasa conversión", icon: Trophy, tone: "green", source: "static", staticValue: "—" },
     ],
     quickActions: [
       { to: "/casos", label: "Mis casos", desc: "Pipeline personal", icon: FolderKanban, tone: "blue" },
