@@ -3,6 +3,8 @@ import { Bell, CheckCheck, X, ExternalLink } from "lucide-react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { useNotificaciones } from "@/hooks/useNotificaciones";
 import type { Notificacion } from "@/lib/notificaciones";
+import { limpiarFaviconDinamico } from "@/lib/notifSirena";
+
 
 const TIPO_LABEL: Record<string, string> = {
   usuario_aprobado: "Usuario aprobado",
