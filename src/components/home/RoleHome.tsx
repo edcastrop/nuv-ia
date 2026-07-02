@@ -106,22 +106,30 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
           supabase
             .from("expedientes" as never)
             .select("id", { count: "exact", head: true })
-            .eq("estado_caso", "aprobado") as unknown as PromiseLike<{ count: number | null }>,
+            .in("estado_caso", ESTADOS_APROBADO) as unknown as PromiseLike<{ count: number | null }>,
           "expedientes.aprobados",
         ),
         tryCount(
           supabase
             .from("expedientes" as never)
             .select("id", { count: "exact", head: true })
-            .eq("estado_caso", "firmado") as unknown as PromiseLike<{ count: number | null }>,
+            .in("estado_caso", ESTADOS_FIRMADO) as unknown as PromiseLike<{ count: number | null }>,
           "expedientes.firmados",
         ),
         tryCount(
           supabase
             .from("expedientes" as never)
             .select("id", { count: "exact", head: true })
-            .eq("estado_caso", "pagado") as unknown as PromiseLike<{ count: number | null }>,
+            .in("estado_caso", ESTADOS_PAGADO) as unknown as PromiseLike<{ count: number | null }>,
           "expedientes.pagados",
+        ),
+        tryCount(
+          supabase
+            .from("expedientes" as never)
+            .select("id", { count: "exact", head: true })
+            .eq("asesor_id", user.id)
+            .in("estado_caso", ESTADOS_FIRMADO) as unknown as PromiseLike<{ count: number | null }>,
+          "expedientes.firmados.miAsesor",
         ),
         tryCount(
           supabase
