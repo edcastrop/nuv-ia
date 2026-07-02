@@ -632,11 +632,11 @@ function Section({ title, subtitle, children }: { title: string; subtitle?: stri
       border: `1px solid ${C.border}`, borderRadius: 16, overflow: "hidden",
       boxShadow: "0 12px 32px -20px rgba(0,0,0,0.6)",
     }}>
-      <div style={{ padding: "14px 18px", borderBottom: `1px solid ${C.border}` }}>
-        <h3 style={{ fontSize: 13, fontWeight: 600, color: C.text, margin: 0, letterSpacing: 0.2 }}>{title}</h3>
-        {subtitle && <p style={{ fontSize: 11.5, color: C.textMuted, margin: "3px 0 0" }}>{subtitle}</p>}
+      <div style={{ padding: "8px 12px", borderBottom: `1px solid ${C.border}` }}>
+        <h3 style={{ fontSize: 12, fontWeight: 600, color: C.text, margin: 0, letterSpacing: 0.2 }}>{title}</h3>
+        {subtitle && <p style={{ fontSize: 10.5, color: C.textMuted, margin: "2px 0 0" }}>{subtitle}</p>}
       </div>
-      <div style={{ padding: 14 }}>{children}</div>
+      <div style={{ padding: 10 }}>{children}</div>
     </div>
   );
 }
