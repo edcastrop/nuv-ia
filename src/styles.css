@@ -300,6 +300,23 @@
   100% { transform: translateX(100%); }
 }
 
+@keyframes nuvia-float-0 {
+  0%, 100% { transform: translate(0, 0); opacity: 0.6; }
+  50% { transform: translate(6px, -10px); opacity: 1; }
+}
+@keyframes nuvia-float-1 {
+  0%, 100% { transform: translate(0, 0); opacity: 0.5; }
+  50% { transform: translate(-8px, 8px); opacity: 0.9; }
+}
+@keyframes nuvia-float-2 {
+  0%, 100% { transform: translate(0, 0); opacity: 0.55; }
+  50% { transform: translate(10px, 6px); opacity: 1; }
+}
+@keyframes nuvia-breath {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.85; }
+}
+
 
 
 
