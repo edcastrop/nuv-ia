@@ -20,7 +20,12 @@ export interface RoleHomeKpi {
     | "expedientes.aprobados"
     | "expedientes.firmados"
     | "expedientes.pagados"
+    | "expedientes.firmados.miAsesor"
+    | "comisiones.devengadas.miAsesor"
     | "notificaciones.criticas"
+    | "qa.colaRevision"
+    | "qa.hallazgosAbiertos"
+    | "qa.porcentajeAprobacion"
     | "static";
   staticValue?: string;
 }
@@ -119,9 +124,9 @@ export const HOME_CONFIG: Partial<Record<AppRole, RoleHomeConfig>> = {
     },
     kpis: [
       { id: "mios", label: "Mis casos activos", icon: FolderKanban, tone: "blue", source: "expedientes.activos.miAsesor" },
-      { id: "firm", label: "Mis firmados", icon: FileText, tone: "green", source: "static" },
-      { id: "com", label: "Comisiones devengadas", icon: Wallet, tone: "blue", source: "static" },
-      { id: "conv", label: "Tasa conversión", icon: Trophy, tone: "green", source: "static" },
+      { id: "firm", label: "Mis firmados", icon: FileText, tone: "green", source: "expedientes.firmados.miAsesor" },
+      { id: "com", label: "Comisiones devengadas", icon: Wallet, tone: "blue", source: "comisiones.devengadas.miAsesor" },
+      { id: "conv", label: "Tasa conversión", icon: Trophy, tone: "green", source: "static", staticValue: "—" },
     ],
     quickActions: [
       { to: "/casos", label: "Mis casos", desc: "Pipeline personal", icon: FolderKanban, tone: "blue" },
@@ -150,10 +155,10 @@ export const HOME_CONFIG: Partial<Record<AppRole, RoleHomeConfig>> = {
       prompt: "Lista los casos con discrepancias documentales más frecuentes esta semana.",
     },
     kpis: [
-      { id: "qa", label: "Casos en cola QA", icon: ClipboardCheck, tone: "warning", source: "static" },
-      { id: "halz", label: "Hallazgos abiertos", icon: FileCheck, tone: "danger", source: "static" },
-      { id: "apr", label: "% aprobación QA", icon: ShieldCheck, tone: "green", source: "static" },
-      { id: "t", label: "Tiempo medio revisión", icon: Activity, tone: "blue", source: "static" },
+      { id: "qa", label: "Casos en cola QA", icon: ClipboardCheck, tone: "warning", source: "qa.colaRevision" },
+      { id: "halz", label: "Hallazgos abiertos", icon: FileCheck, tone: "danger", source: "qa.hallazgosAbiertos" },
+      { id: "apr", label: "% aprobación QA", icon: ShieldCheck, tone: "green", source: "qa.porcentajeAprobacion" },
+      { id: "t", label: "Tiempo medio revisión", icon: Activity, tone: "blue", source: "static", staticValue: "—" },
     ],
     quickActions: [
       { to: "/pipeline", label: "Cola QA", desc: "Pipeline pendiente revisión", icon: ClipboardCheck, tone: "blue" },

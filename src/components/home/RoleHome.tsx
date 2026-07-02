@@ -7,6 +7,8 @@ import { useResolvedHomeRole } from "@/hooks/useResolvedHomeRole";
 import { roleLabel } from "@/lib/roleLabels";
 import { supabase } from "@/integrations/supabase/client";
 import { HOME_CONFIG, type RoleHomeKpi } from "@/lib/homeConfig";
+import { CASO_ESTADOS } from "@/lib/casoEstados";
+import { qaKpis } from "@/lib/qaAI.functions";
 import { WorkspaceLoader } from "./WorkspaceLoader";
 import { SuperAdminControlCenter } from "./SuperAdminControlCenter";
 import { VictoryFeed } from "@/components/victory/VictoryFeed";
@@ -86,6 +88,15 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
           /* silencioso */
         }
       };
+      const ESTADOS_RECHAZO = ["devuelto_banco", "negado_banco", "prejuridico"];
+      const estadosDesde = (claveOrden: string) => {
+        const base = CASO_ESTADOS.find((e) => e.key === claveOrden)!.orden;
+        return CASO_ESTADOS.filter((e) => e.orden >= base && !ESTADOS_RECHAZO.includes(e.key))
+          .map((e) => e.key);
+      };
+      const ESTADOS_APROBADO = estadosDesde("aprobado");
+      const ESTADOS_FIRMADO = estadosDesde("contrato_firmado");
+      const ESTADOS_PAGADO = estadosDesde("honorarios_pagados");
       await Promise.all([
         tryCount(
           supabase
@@ -104,22 +115,30 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
           supabase
             .from("expedientes" as never)
             .select("id", { count: "exact", head: true })
-            .eq("estado_caso", "aprobado") as unknown as PromiseLike<{ count: number | null }>,
+            .in("estado_caso", ESTADOS_APROBADO) as unknown as PromiseLike<{ count: number | null }>,
           "expedientes.aprobados",
         ),
         tryCount(
           supabase
             .from("expedientes" as never)
             .select("id", { count: "exact", head: true })
-            .eq("estado_caso", "firmado") as unknown as PromiseLike<{ count: number | null }>,
+            .in("estado_caso", ESTADOS_FIRMADO) as unknown as PromiseLike<{ count: number | null }>,
           "expedientes.firmados",
         ),
         tryCount(
           supabase
             .from("expedientes" as never)
             .select("id", { count: "exact", head: true })
-            .eq("estado_caso", "pagado") as unknown as PromiseLike<{ count: number | null }>,
+            .in("estado_caso", ESTADOS_PAGADO) as unknown as PromiseLike<{ count: number | null }>,
           "expedientes.pagados",
+        ),
+        tryCount(
+          supabase
+            .from("expedientes" as never)
+            .select("id", { count: "exact", head: true })
+            .eq("asesor_id", user.id)
+            .in("estado_caso", ESTADOS_FIRMADO) as unknown as PromiseLike<{ count: number | null }>,
+          "expedientes.firmados.miAsesor",
         ),
         tryCount(
           supabase
@@ -130,11 +149,47 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
           "notificaciones.criticas",
         ),
       ]);
+      try {
+        const { data: comisionesRows } = await supabase
+          .from("comisiones" as never)
+          .select("valor")
+          .eq("user_id", user.id);
+        const totalComisiones = ((comisionesRows ?? []) as Array<{ valor: number }>)
+          .reduce((s, r) => s + Number(r.valor || 0), 0);
+        if (!cancel) setCounts((prev) => ({ ...prev, "comisiones.devengadas.miAsesor": totalComisiones }));
+      } catch {
+        /* silencioso */
+      }
     })();
     return () => {
       cancel = true;
     };
   }, [user]);
+
+  // QA KPIs — solo para director financiero QA
+  useEffect(() => {
+    if (!user) return;
+    const isQa = activeRole === "director_financiero_qa" || roles.includes("director_financiero_qa" as AppRole);
+    if (!isQa) return;
+    let cancel = false;
+    (async () => {
+      try {
+        const qa = await qaKpis();
+        if (cancel) return;
+        setCounts((prev) => ({
+          ...prev,
+          "qa.colaRevision": qa.pendientesRevision,
+          "qa.hallazgosAbiertos": qa.alertasAbiertas,
+          "qa.porcentajeAprobacion": qa.total ? Math.round(((qa.aprobados + qa.obs) / qa.total) * 100) : 0,
+        }));
+      } catch {
+        /* silencioso */
+      }
+    })();
+    return () => {
+      cancel = true;
+    };
+  }, [user, activeRole, roles]);
 
   const config = (activeRole && HOME_CONFIG[activeRole]) || SAFE_HOME_CONFIG;
 
