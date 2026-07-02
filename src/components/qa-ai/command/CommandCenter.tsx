@@ -933,7 +933,7 @@ function NuviaInsights({
           <div style={{ fontSize: 9.5, fontWeight: 800, color: NUVIA_GREEN, letterSpacing: 1.6, textTransform: "uppercase", paddingLeft: 2 }}>
             Predictive Engine
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 400, overflowY: "auto", paddingRight: 4 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 360, overflowY: "auto", paddingRight: 4 }}>
             <PredictCard
               icon={<TrendingUp size={13} />}
               iconColor={C.danger}
