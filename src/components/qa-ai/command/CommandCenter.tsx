@@ -840,8 +840,8 @@ function NuviaInsights({
 
       {/* 3-column grid */}
       <div style={{
-        display: "grid", gridTemplateColumns: "40% 35% 25%", gap: 14,
-        position: "relative", maxHeight: 460,
+        display: "grid", gridTemplateColumns: "38% 37% 25%", gap: 14,
+        position: "relative", alignItems: "stretch",
       }}>
         {/* ── COL 1 · BRAIN CORE */}
         <div style={{
