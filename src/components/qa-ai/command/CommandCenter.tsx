@@ -184,7 +184,15 @@ export function CommandCenter(props: {
       </div>
 
       {/* ROW 4 · Insights */}
-      <NuviaInsights insights={insights} />
+      <NuviaInsights
+        insights={insights}
+        counts={props.prioridad}
+        bancos={props.bancos}
+        analistas={props.analistas}
+        errores={props.topErrores}
+        tendencia={props.tendencia}
+        totalCasos={filtered.length}
+      />
 
       {/* ROW 5 · Review Queue compact */}
       <ReviewQueue rows={filtered} />
@@ -688,170 +696,514 @@ function generateInsights(bancos: CCBank[], analistas: CCAnalista[], counts: Rec
   return list.slice(0, 5);
 }
 
-function NuviaInsights({ insights }: { insights: Insight[] }) {
+function useCountUp(target: number, duration = 900) {
+  const [v, setV] = useState(0);
+  useEffect(() => {
+    let raf = 0; const t0 = performance.now();
+    const step = (t: number) => {
+      const p = Math.min(1, (t - t0) / duration);
+      setV(Math.round(target * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return v;
+}
+
+function Sparkline({ values, color = "#5B8CFF", height = 26, width = 70 }: { values: number[]; color?: string; height?: number; width?: number }) {
+  if (!values.length) return null;
+  const min = Math.min(...values), max = Math.max(...values);
+  const span = Math.max(1, max - min);
+  const pts = values.map((v, i) => {
+    const x = (i / Math.max(1, values.length - 1)) * width;
+    const y = height - ((v - min) / span) * (height - 2) - 1;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(" ");
+  return (
+    <svg width={width} height={height} style={{ display: "block" }}>
+      <defs>
+        <linearGradient id={`sg-${color.replace("#","")}`} x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.35" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polyline points={`0,${height} ${pts} ${width},${height}`} fill={`url(#sg-${color.replace("#","")})`} stroke="none" />
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function NuviaInsights({
+  insights, counts, bancos, analistas, errores, tendencia, totalCasos,
+}: {
+  insights: Insight[]; counts: Record<string, number>;
+  bancos: CCBank[]; analistas: CCAnalista[]; errores: CCError[];
+  tendencia: CCTrend[]; totalCasos: number;
+}) {
+  // ── Live AI metrics
+  const bloqueados = counts.bloqueados ?? 0;
+  const criticas = counts.criticas ?? 0;
+  const uvrPend = counts.uvrSinRevision ?? 0;
+  const precisionGlobal = useMemo(() => {
+    const withData = analistas.filter(a => a.auditados > 0);
+    if (!withData.length) return 0;
+    return withData.reduce((s, a) => s + a.precision, 0) / withData.length;
+  }, [analistas]);
+
+  const cCasos = useCountUp(totalCasos);
+  const cAlerts = useCountUp(criticas);
+  const cBloq = useCountUp(bloqueados);
+  const cPrec = useCountUp(Math.round(precisionGlobal * 10));
+
+  // ── Predictions
+  const worstBankPred = useMemo(() => {
+    const b = [...bancos].filter(x => x.auditados > 0).sort((a, b) => b.pctError - a.pctError)[0];
+    if (!b) return null;
+    const risk = Math.min(95, Math.round(b.pctError * 1.6 + (b.auditados > 10 ? 20 : 10)));
+    return { name: b.banco, risk };
+  }, [bancos]);
+  const rechazoMasivo = useMemo(() => {
+    if (!bancos.length) return 0;
+    const avgErr = bancos.reduce((s, b) => s + b.pctError, 0) / bancos.length;
+    return Math.min(90, Math.round(avgErr * 1.4 + (criticas > 50 ? 15 : 5)));
+  }, [bancos, criticas]);
+  const bestAnalyst = useMemo(() => {
+    return [...analistas].filter(a => a.auditados >= 2).sort((a, b) => b.precision - a.precision)[0] ?? null;
+  }, [analistas]);
+  const trendError = useMemo(() => {
+    if (tendencia.length < 8) return { delta: 0, spark: [] as number[] };
+    const spark = tendencia.slice(-14).map(t => t.rechazados + t.criticos);
+    const half = Math.floor(spark.length / 2);
+    const a = spark.slice(0, half).reduce((s, v) => s + v, 0) / Math.max(1, half);
+    const b = spark.slice(half).reduce((s, v) => s + v, 0) / Math.max(1, spark.length - half);
+    const delta = a === 0 ? 0 : Math.round(((b - a) / a) * 100);
+    return { delta, spark };
+  }, [tendencia]);
+  const sparkPrecision = useMemo(() => tendencia.slice(-14).map(t => t.scoreProm), [tendencia]);
+  const sparkBloq = useMemo(() => tendencia.slice(-14).map(t => t.rechazados), [tendencia]);
+
   const impactColor = (i: Insight["impact"]) => i === "alto" ? C.danger : i === "medio" ? C.warning : C.info;
+  const NUVIA_GREEN = "#84B98F";
+  const NUVIA_BLUE = "#445DA3";
+
   return (
     <div style={{
-      background: `linear-gradient(135deg, rgba(91,140,255,0.08) 0%, ${C.surface} 55%)`,
-      border: `1px solid rgba(91,140,255,0.22)`, borderRadius: 22, padding: 20,
-      boxShadow: "0 0 40px rgba(91,140,255,0.10)",
+      background: "linear-gradient(180deg, #0A1224 0%, #08111F 100%)",
+      border: `1px solid rgba(68,93,163,0.20)`, borderRadius: 22, padding: 18,
+      boxShadow: "0 20px 50px rgba(68,93,163,0.18)",
       position: "relative", overflow: "hidden",
     }}>
+      {/* Ambient glow */}
       <div aria-hidden style={{
-        position: "absolute", right: -80, top: -80, width: 260, height: 260, borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(91,140,255,0.18) 0%, transparent 70%)",
-        pointerEvents: "none",
+        position: "absolute", left: "18%", top: "50%", width: 380, height: 380, borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(68,93,163,0.28) 0%, transparent 65%)",
+        filter: "blur(30px)", transform: "translateY(-50%)", pointerEvents: "none",
       }} />
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, position: "relative" }}>
+      <div aria-hidden style={{
+        position: "absolute", right: "5%", bottom: "-20%", width: 260, height: 260, borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(132,185,143,0.15) 0%, transparent 70%)",
+        filter: "blur(24px)", pointerEvents: "none",
+      }} />
+
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, position: "relative" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{
+            width: 38, height: 38, borderRadius: 12,
+            background: `linear-gradient(135deg, ${NUVIA_BLUE}, ${NUVIA_GREEN})`,
+            border: `1px solid rgba(132,185,143,0.35)`, color: "#EAF1FF",
+            display: "grid", placeItems: "center",
+            boxShadow: `0 0 24px ${NUVIA_BLUE}88, inset 0 0 12px rgba(255,255,255,0.15)`,
+          }}><Sparkles size={18} /></div>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: C.text, letterSpacing: 0.6, textTransform: "uppercase" }}>NUVIA Insights</div>
+            <div style={{ fontSize: 10.5, color: C.textMuted, letterSpacing: 0.4 }}>
+              Motor de inteligencia predictiva y detección operativa en tiempo real.
+            </div>
+          </div>
+        </div>
         <div style={{
-          width: 32, height: 32, borderRadius: 10,
-          background: "linear-gradient(135deg, rgba(91,140,255,0.35), rgba(123,97,255,0.25))",
-          border: "1px solid rgba(91,140,255,0.45)", color: "#B5D0FF",
-          display: "grid", placeItems: "center",
-          boxShadow: "0 0 20px rgba(91,140,255,0.45)",
-        }}><Sparkles size={16} /></div>
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: C.text, letterSpacing: 0.04 }}>NUVIA QA INSIGHTS</div>
-          <div style={{ fontSize: 10.5, color: C.textMuted, letterSpacing: 1.2, textTransform: "uppercase" }}>Sugerencias inteligentes basadas en datos.</div>
+          display: "inline-flex", alignItems: "center", gap: 7,
+          padding: "5px 11px", borderRadius: 999,
+          background: `linear-gradient(90deg, rgba(132,185,143,0.18), rgba(68,93,163,0.18))`,
+          border: `1px solid ${NUVIA_GREEN}55`,
+          fontSize: 10, fontWeight: 800, letterSpacing: 1.4, color: NUVIA_GREEN,
+        }}>
+          <span style={{
+            width: 7, height: 7, borderRadius: "50%", background: NUVIA_GREEN,
+            boxShadow: `0 0 10px ${NUVIA_GREEN}`, animation: "nuvia-live-blink 1.6s ease-in-out infinite",
+          }} />
+          LIVE AI
         </div>
       </div>
 
+      {/* 3-column grid */}
       <div style={{
-        display: "grid", gridTemplateColumns: "minmax(0,1fr) 280px", gap: 20,
-        position: "relative", alignItems: "center",
+        display: "grid", gridTemplateColumns: "40% 35% 25%", gap: 14,
+        position: "relative", maxHeight: 460,
       }}>
+        {/* ── COL 1 · BRAIN CORE */}
         <div style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${Math.min(insights.length, 3)}, minmax(0,1fr))`,
-          gap: 12,
+          position: "relative",
+          background: "rgba(255,255,255,0.02)",
+          border: `1px solid rgba(68,93,163,0.20)`, borderRadius: 18,
+          padding: "10px 12px 12px",
+          display: "flex", flexDirection: "column", alignItems: "stretch", gap: 8,
+          overflow: "hidden",
         }}>
-          {insights.map((it, i) => {
-            const c = impactColor(it.impact);
-            return (
-              <div key={i} style={{
-                background: "rgba(5,8,22,0.55)", border: `1px solid ${C.border}`,
-                borderRadius: 14, padding: 14,
-                display: "grid", gridTemplateColumns: "auto 1fr", gap: 12, alignItems: "flex-start",
-                transition: "transform .22s, border-color .22s",
-              }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.borderColor = `${c}55`; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.borderColor = C.border; }}
-              >
-                <div style={{
-                  width: 34, height: 34, borderRadius: 10, flexShrink: 0,
-                  background: `linear-gradient(135deg, ${c}33, ${c}11)`,
-                  border: `1px solid ${c}44`, color: c,
-                  display: "grid", placeItems: "center",
-                  boxShadow: `0 0 16px ${c}44`,
-                }}>{it.icon}</div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 12.5, color: C.text, fontWeight: 500, lineHeight: 1.4 }}>{it.title}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
-                    {it.cta && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ fontSize: 9.5, fontWeight: 800, color: NUVIA_GREEN, letterSpacing: 1.6, textTransform: "uppercase" }}>Brain Core</div>
+            <div style={{ fontSize: 9.5, color: C.textMuted, letterSpacing: 1.2, textTransform: "uppercase" }}>Cognitive Engine</div>
+          </div>
+          <HolographicBrain />
+          <div style={{
+            display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 6, marginTop: 2,
+          }}>
+            <BrainMetric dot={NUVIA_BLUE} label="Procesando" value={`${cCasos} casos`} />
+            <BrainMetric dot={C.danger} label="Alertas críticas" value={`${cAlerts}`} />
+            <BrainMetric dot={C.warning} label="Bloqueos" value={`${cBloq}`} />
+            <BrainMetric dot={NUVIA_GREEN} label="Precisión global" value={`${(cPrec / 10).toFixed(1)}%`} />
+          </div>
+        </div>
+
+        {/* ── COL 2 · CRITICAL INSIGHTS */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 0 }}>
+          <div style={{ fontSize: 9.5, fontWeight: 800, color: NUVIA_BLUE, letterSpacing: 1.6, textTransform: "uppercase", paddingLeft: 2 }}>
+            Insights críticos
+          </div>
+          <div style={{
+            display: "flex", flexDirection: "column", gap: 8,
+            overflowY: "auto", paddingRight: 4, maxHeight: 400,
+          }}>
+            {insights.map((it, i) => {
+              const c = impactColor(it.impact);
+              return (
+                <div key={i} style={{
+                  background: "rgba(255,255,255,0.04)",
+                  border: `1px solid rgba(68,93,163,0.20)`,
+                  borderLeft: `3px solid ${c}`,
+                  borderRadius: 12, padding: "10px 12px",
+                  display: "grid", gridTemplateColumns: "auto 1fr", gap: 10, alignItems: "flex-start",
+                  transition: "transform .22s ease, border-color .22s, box-shadow .22s",
+                  boxShadow: `0 0 0 rgba(0,0,0,0)`,
+                }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-4px)";
+                    e.currentTarget.style.borderColor = `${c}66`;
+                    e.currentTarget.style.boxShadow = `0 12px 24px rgba(0,0,0,0.35), 0 0 22px ${c}22`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.borderColor = "rgba(68,93,163,0.20)";
+                    e.currentTarget.style.boxShadow = "0 0 0 rgba(0,0,0,0)";
+                  }}
+                >
+                  <div style={{
+                    width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+                    background: `linear-gradient(135deg, ${c}33, ${c}11)`,
+                    border: `1px solid ${c}44`, color: c,
+                    display: "grid", placeItems: "center",
+                    boxShadow: `0 0 12px ${c}55`,
+                  }}>{it.icon}</div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 11.5, color: C.text, fontWeight: 600, lineHeight: 1.35 }}>{it.title}</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
+                      <span style={{
+                        padding: "1px 7px", borderRadius: 999, fontSize: 8.5, fontWeight: 800,
+                        textTransform: "uppercase", letterSpacing: 1,
+                        background: `${c}22`, color: c, border: `1px solid ${c}44`,
+                      }}>Impacto {it.impact}</span>
                       <button style={{
-                        display: "inline-flex", alignItems: "center", gap: 4,
+                        marginLeft: "auto",
+                        display: "inline-flex", alignItems: "center", gap: 3,
                         background: "transparent", border: "none", cursor: "pointer",
-                        color: C.info, fontSize: 11, fontWeight: 600, padding: 0,
-                      }}>Ver análisis <ArrowRight size={11} /></button>
-                    )}
+                        color: NUVIA_BLUE, fontSize: 10.5, fontWeight: 700, padding: 0,
+                      }}>{it.cta ?? "Ver análisis"} <ArrowRight size={10} /></button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
-        <HolographicBrain />
+        {/* ── COL 3 · PREDICTIVE ENGINE */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 0 }}>
+          <div style={{ fontSize: 9.5, fontWeight: 800, color: NUVIA_GREEN, letterSpacing: 1.6, textTransform: "uppercase", paddingLeft: 2 }}>
+            Predictive Engine
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 400, overflowY: "auto", paddingRight: 4 }}>
+            <PredictCard
+              icon={<TrendingUp size={13} />}
+              iconColor={C.danger}
+              label={worstBankPred ? `Riesgo saturación ${worstBankPred.name}` : "Riesgo saturación banco"}
+              value={`${worstBankPred?.risk ?? 0}%`}
+              spark={sparkBloq} sparkColor={C.danger}
+            />
+            <PredictCard
+              icon={<Zap size={13} />}
+              iconColor={C.warning}
+              label="Prob. rechazo masivo"
+              value={`${rechazoMasivo}%`}
+              spark={sparkBloq} sparkColor={C.warning}
+            />
+            <PredictCard
+              icon={<Activity size={13} />}
+              iconColor={NUVIA_GREEN}
+              label={bestAnalyst ? `Mayor mejora · ${bestAnalyst.nombre.split(" ")[0]}` : "Analista destacado"}
+              value={bestAnalyst ? `${bestAnalyst.precision.toFixed(0)}%` : "—"}
+              spark={sparkPrecision} sparkColor={NUVIA_GREEN}
+            />
+            <PredictCard
+              icon={trendError.delta <= 0 ? <TrendingDown size={13} /> : <TrendingUp size={13} />}
+              iconColor={trendError.delta <= 0 ? NUVIA_GREEN : C.danger}
+              label="Tendencia de errores"
+              value={`${trendError.delta > 0 ? "+" : ""}${trendError.delta}%`}
+              spark={trendError.spark} sparkColor={trendError.delta <= 0 ? NUVIA_GREEN : C.danger}
+            />
+            <PredictCard
+              icon={<Coins size={13} />}
+              iconColor={NUVIA_BLUE}
+              label="UVR pendiente revisión"
+              value={`${uvrPend}`}
+              spark={sparkBloq} sparkColor={NUVIA_BLUE}
+            />
+          </div>
+        </div>
       </div>
+    </div>
+  );
+}
+
+function BrainMetric({ dot, label, value }: { dot: string; label: string; value: string }) {
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 7,
+      background: "rgba(255,255,255,0.03)", border: "1px solid rgba(68,93,163,0.18)",
+      borderRadius: 10, padding: "6px 8px",
+    }}>
+      <span style={{
+        width: 7, height: 7, borderRadius: "50%", background: dot,
+        boxShadow: `0 0 8px ${dot}`, flexShrink: 0,
+      }} />
+      <div style={{ minWidth: 0, lineHeight: 1.1 }}>
+        <div style={{ fontSize: 8.5, color: C.textMuted, letterSpacing: 0.6, textTransform: "uppercase", fontWeight: 700 }}>{label}</div>
+        <div style={{ fontSize: 11.5, color: C.text, fontWeight: 700, marginTop: 1 }}>{value}</div>
+      </div>
+    </div>
+  );
+}
+
+function PredictCard({ icon, iconColor, label, value, spark, sparkColor }: {
+  icon: React.ReactNode; iconColor: string; label: string; value: string;
+  spark: number[]; sparkColor: string;
+}) {
+  return (
+    <div style={{
+      background: "rgba(255,255,255,0.04)",
+      border: "1px solid rgba(68,93,163,0.20)",
+      borderRadius: 12, padding: "9px 11px",
+      display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 8, alignItems: "center",
+      transition: "transform .22s, box-shadow .22s, border-color .22s",
+    }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translateY(-4px)";
+        e.currentTarget.style.borderColor = `${iconColor}55`;
+        e.currentTarget.style.boxShadow = `0 12px 22px rgba(0,0,0,0.35), 0 0 18px ${iconColor}22`;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.borderColor = "rgba(68,93,163,0.20)";
+        e.currentTarget.style.boxShadow = "none";
+      }}
+    >
+      <div style={{
+        width: 24, height: 24, borderRadius: 7,
+        background: `linear-gradient(135deg, ${iconColor}33, ${iconColor}11)`,
+        border: `1px solid ${iconColor}44`, color: iconColor,
+        display: "grid", placeItems: "center", boxShadow: `0 0 10px ${iconColor}44`,
+      }}>{icon}</div>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 9, color: C.textMuted, letterSpacing: 0.6, textTransform: "uppercase", fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{label}</div>
+        <div style={{ fontSize: 14, color: C.text, fontWeight: 800, lineHeight: 1.1, marginTop: 2 }}>{value}</div>
+      </div>
+      <Sparkline values={spark} color={sparkColor} height={22} width={54} />
     </div>
   );
 }
 
 /* ═══════════════════ HOLOGRAPHIC BRAIN ═══════════════════ */
 function HolographicBrain() {
+  const NEURONS = useMemo(() => Array.from({ length: 14 }).map(() => ({
+    x: 50 + (Math.random() - 0.5) * 68,
+    y: 50 + (Math.random() - 0.5) * 68,
+    r: 1 + Math.random() * 1.6,
+    d: 2.4 + Math.random() * 2.8,
+    delay: -Math.random() * 4,
+  })), []);
+  const CONNECTIONS = useMemo(() => {
+    const c: Array<{ x1: number; y1: number; x2: number; y2: number; d: number; delay: number }> = [];
+    for (let i = 0; i < 10; i++) {
+      const a = NEURONS[Math.floor(Math.random() * NEURONS.length)];
+      const b = NEURONS[Math.floor(Math.random() * NEURONS.length)];
+      if (a && b && a !== b) c.push({ x1: a.x, y1: a.y, x2: b.x, y2: b.y, d: 2.5 + Math.random() * 2, delay: -Math.random() * 3 });
+    }
+    return c;
+  }, [NEURONS]);
+
   return (
     <div style={{
-      position: "relative", width: 260, height: 200, margin: "0 auto",
+      position: "relative", width: "100%", aspectRatio: "1 / 1", maxHeight: 220, margin: "0 auto",
       display: "grid", placeItems: "center",
     }}>
       <style>{`
+        @keyframes nuvia-live-blink { 0%,100% { opacity:1;} 50% { opacity:.35;} }
         @keyframes nuvia-brain-spin { from { transform: translate(-50%,-50%) rotate(0deg);} to { transform: translate(-50%,-50%) rotate(360deg);} }
         @keyframes nuvia-brain-spin-rev { from { transform: translate(-50%,-50%) rotate(360deg);} to { transform: translate(-50%,-50%) rotate(0deg);} }
         @keyframes nuvia-brain-pulse {
-          0%, 100% { opacity: .85; transform: translate(-50%,-50%) scale(1); box-shadow: 0 0 40px rgba(91,140,255,0.9), inset 0 0 20px rgba(255,255,255,0.35); }
-          50% { opacity: 1; transform: translate(-50%,-50%) scale(1.08); box-shadow: 0 0 60px rgba(91,140,255,1), inset 0 0 26px rgba(255,255,255,0.5); }
+          0%, 100% { opacity:.88; transform: translate(-50%,-50%) scale(1); box-shadow: 0 0 32px rgba(68,93,163,0.9), 0 0 60px rgba(132,185,143,0.35), inset 0 0 18px rgba(255,255,255,0.35);}
+          50% { opacity:1; transform: translate(-50%,-50%) scale(1.09); box-shadow: 0 0 55px rgba(68,93,163,1), 0 0 90px rgba(132,185,143,0.55), inset 0 0 24px rgba(255,255,255,0.5);}
         }
         @keyframes nuvia-particle-orbit {
           0% { transform: rotate(var(--a)) translateX(var(--r)) scale(.6); opacity: 0; }
           20% { opacity: 1; }
           100% { transform: rotate(calc(var(--a) + 360deg)) translateX(var(--r)) scale(1); opacity: 0; }
         }
-        @keyframes nuvia-scan {
-          0% { transform: translateY(-40px); }
-          100% { transform: translateY(40px); }
+        @keyframes nuvia-neuron-pulse {
+          0%,100% { opacity:.35; r: var(--r0);}
+          50% { opacity: 1; r: calc(var(--r0) * 1.6);}
+        }
+        @keyframes nuvia-syn { 0%,100% { stroke-opacity: 0.15;} 50% { stroke-opacity: 0.75;} }
+        @keyframes nuvia-wave {
+          0% { transform: translate(-50%,-50%) scale(0.6); opacity: 0.7;}
+          100% { transform: translate(-50%,-50%) scale(1.6); opacity: 0;}
+        }
+        @keyframes nuvia-datastream {
+          0% { stroke-dashoffset: 30; opacity: 0;}
+          20% { opacity: 1;}
+          100% { stroke-dashoffset: -30; opacity: 0;}
         }
       `}</style>
 
+      {/* Ambient */}
       <div style={{
         position: "absolute", inset: 0,
-        background: "radial-gradient(circle at 50% 50%, rgba(91,140,255,0.35) 0%, rgba(91,140,255,0.10) 40%, transparent 70%)",
-        filter: "blur(8px)",
+        background: "radial-gradient(circle at 50% 50%, rgba(68,93,163,0.35) 0%, rgba(132,185,143,0.10) 40%, transparent 72%)",
+        filter: "blur(10px)",
       }} />
 
-      <div style={{
-        position: "absolute", top: "50%", left: "50%",
-        width: 180, height: 180, borderRadius: "50%",
-        border: "1px dashed rgba(91,140,255,0.45)",
-        animation: "nuvia-brain-spin 22s linear infinite",
-      }} />
-      <div style={{
-        position: "absolute", top: "50%", left: "50%",
-        width: 140, height: 140, borderRadius: "50%",
-        border: "1px solid rgba(123,97,255,0.55)",
-        boxShadow: "inset 0 0 20px rgba(91,140,255,0.35), 0 0 20px rgba(91,140,255,0.35)",
-        animation: "nuvia-brain-spin-rev 16s linear infinite",
-      }} />
-      <div style={{
-        position: "absolute", top: "50%", left: "50%",
-        width: 108, height: 108, borderRadius: "50%",
-        border: "2px solid rgba(91,140,255,0.85)",
-        boxShadow: "0 0 25px rgba(91,140,255,0.6), inset 0 0 20px rgba(91,140,255,0.4)",
-        animation: "nuvia-brain-spin 10s linear infinite",
-      }} />
-
-      <div style={{
-        position: "absolute", top: "50%", left: "50%",
-        width: 74, height: 74, borderRadius: "50%",
-        background: "radial-gradient(circle at 35% 30%, #B5D0FF 0%, #5B8CFF 45%, #1E3A8A 100%)",
-        animation: "nuvia-brain-pulse 3.2s ease-in-out infinite",
-      }} />
-
-      <div style={{
-        position: "absolute", top: "50%", left: "50%",
-        width: 74, height: 74, borderRadius: "50%",
-        overflow: "hidden",
-        transform: "translate(-50%,-50%)",
-        pointerEvents: "none",
-      }}>
-        <div style={{
-          position: "absolute", left: 0, right: 0, height: 2,
-          background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent)",
-          animation: "nuvia-scan 2.4s linear infinite",
+      {/* Energy waves */}
+      {[0, 1.2, 2.4].map((delay, i) => (
+        <div key={`w-${i}`} style={{
+          position: "absolute", top: "50%", left: "50%",
+          width: 120, height: 120, borderRadius: "50%",
+          border: "1px solid rgba(132,185,143,0.55)",
+          animation: `nuvia-wave 3.6s ease-out ${delay}s infinite`,
+          transformOrigin: "center",
         }} />
-      </div>
+      ))}
 
+      {/* Orbital rings */}
+      <div style={{
+        position: "absolute", top: "50%", left: "50%",
+        width: "88%", aspectRatio: "1/1", borderRadius: "50%",
+        border: "1px dashed rgba(68,93,163,0.55)",
+        animation: "nuvia-brain-spin 24s linear infinite",
+      }} />
+      <div style={{
+        position: "absolute", top: "50%", left: "50%",
+        width: "68%", aspectRatio: "1/1", borderRadius: "50%",
+        border: "1px solid rgba(132,185,143,0.55)",
+        boxShadow: "inset 0 0 20px rgba(68,93,163,0.35), 0 0 22px rgba(132,185,143,0.35)",
+        animation: "nuvia-brain-spin-rev 18s linear infinite",
+      }} />
+      <div style={{
+        position: "absolute", top: "50%", left: "50%",
+        width: "50%", aspectRatio: "1/1", borderRadius: "50%",
+        border: "2px solid rgba(68,93,163,0.9)",
+        boxShadow: "0 0 22px rgba(68,93,163,0.65), inset 0 0 18px rgba(132,185,143,0.35)",
+        animation: "nuvia-brain-spin 12s linear infinite",
+      }} />
+
+      {/* Neural network */}
+      <svg viewBox="0 0 100 100" style={{
+        position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none",
+      }}>
+        <defs>
+          <radialGradient id="brain-core" cx="35%" cy="30%" r="70%">
+            <stop offset="0%" stopColor="#EAF1FF" />
+            <stop offset="35%" stopColor="#84B98F" stopOpacity="0.85" />
+            <stop offset="70%" stopColor="#445DA3" />
+            <stop offset="100%" stopColor="#0A1224" />
+          </radialGradient>
+          <linearGradient id="brain-stream" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#445DA3" stopOpacity="0" />
+            <stop offset="50%" stopColor="#84B98F" stopOpacity="1" />
+            <stop offset="100%" stopColor="#445DA3" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+
+        {/* Synapse lines */}
+        {CONNECTIONS.map((c, i) => (
+          <line key={`c-${i}`}
+            x1={c.x1} y1={c.y1} x2={c.x2} y2={c.y2}
+            stroke="#84B98F" strokeWidth="0.3" strokeOpacity="0.4"
+            style={{ animation: `nuvia-syn ${c.d}s ease-in-out ${c.delay}s infinite` }}
+          />
+        ))}
+
+        {/* Neurons */}
+        {NEURONS.map((n, i) => (
+          <circle key={`n-${i}`}
+            cx={n.x} cy={n.y} r={n.r}
+            fill="#B5D0FF"
+            style={{
+              ["--r0" as any]: `${n.r}`,
+              animation: `nuvia-neuron-pulse ${n.d}s ease-in-out ${n.delay}s infinite`,
+              filter: "drop-shadow(0 0 2px #84B98F)",
+            } as React.CSSProperties}
+          />
+        ))}
+
+        {/* Data streams in/out */}
+        {[
+          { x1: 5, y1: 50, x2: 30, y2: 50, d: 1.6, delay: 0 },
+          { x1: 95, y1: 50, x2: 70, y2: 50, d: 1.8, delay: 0.4 },
+          { x1: 50, y1: 5, x2: 50, y2: 30, d: 2.0, delay: 0.8 },
+          { x1: 50, y1: 95, x2: 50, y2: 70, d: 1.9, delay: 1.2 },
+          { x1: 15, y1: 20, x2: 34, y2: 34, d: 2.1, delay: 0.2 },
+          { x1: 85, y1: 80, x2: 66, y2: 66, d: 2.1, delay: 1.4 },
+        ].map((s, i) => (
+          <line key={`s-${i}`} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2}
+            stroke="url(#brain-stream)" strokeWidth="0.6"
+            strokeDasharray="4 6"
+            style={{ animation: `nuvia-datastream ${s.d}s linear ${s.delay}s infinite` }}
+          />
+        ))}
+      </svg>
+
+      {/* Core orb */}
+      <div style={{
+        position: "absolute", top: "50%", left: "50%",
+        width: "34%", aspectRatio: "1/1", borderRadius: "50%",
+        background: "radial-gradient(circle at 35% 30%, #EAF1FF 0%, #84B98F 30%, #445DA3 65%, #0A1224 100%)",
+        animation: "nuvia-brain-pulse 3s ease-in-out infinite",
+      }} />
+
+      {/* Orbiting particles */}
       {[
-        { a: "0deg", r: "72px", d: "4s", c: "#7B61FF" },
-        { a: "72deg", r: "84px", d: "5.5s", c: "#5B8CFF" },
-        { a: "144deg", r: "68px", d: "3.6s", c: "#22D3EE" },
-        { a: "216deg", r: "90px", d: "6s", c: "#5B8CFF" },
-        { a: "288deg", r: "76px", d: "4.4s", c: "#B5D0FF" },
+        { a: "0deg", r: "34%", d: "5s", c: "#84B98F" },
+        { a: "72deg", r: "38%", d: "6.5s", c: "#445DA3" },
+        { a: "144deg", r: "32%", d: "4.6s", c: "#B5D0FF" },
+        { a: "216deg", r: "40%", d: "7s", c: "#84B98F" },
+        { a: "288deg", r: "36%", d: "5.4s", c: "#445DA3" },
       ].map((p, i) => (
-        <div key={i} style={{
+        <div key={`p-${i}`} style={{
           position: "absolute", top: "50%", left: "50%", width: 0, height: 0,
         }}>
           <div style={{
-            position: "absolute", width: 6, height: 6, borderRadius: "50%",
+            position: "absolute", width: 5, height: 5, borderRadius: "50%",
             background: p.c, boxShadow: `0 0 10px ${p.c}`,
             ["--a" as any]: p.a, ["--r" as any]: p.r,
             animation: `nuvia-particle-orbit ${p.d} linear infinite`,
