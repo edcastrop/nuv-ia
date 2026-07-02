@@ -113,8 +113,9 @@ export function NotificationBell() {
 
   return (
     <>
-      <div className="relative z-[9999]" ref={ref}>
+      <div className="relative" ref={ref}>
         <button
+          ref={btnRef}
           onClick={() => setOpen((o) => !o)}
           className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl text-white/80 transition hover:text-white"
           style={{
@@ -134,10 +135,16 @@ export function NotificationBell() {
           )}
         </button>
 
-        {open && (
+        {open && anchor && (
           <div
-            className="glass-modal absolute right-0 mt-2 w-[380px] max-h-[480px] overflow-hidden z-[9999] flex flex-col"
-            style={{ color: "var(--nuvia-text-primary)" }}
+            className="glass-modal w-[380px] max-h-[480px] overflow-hidden flex flex-col"
+            style={{
+              position: "fixed",
+              top: anchor.top,
+              right: anchor.right,
+              zIndex: 2147483000,
+              color: "var(--nuvia-text-primary)",
+            }}
           >
             <div
               className="flex items-center justify-between px-4 py-3"
