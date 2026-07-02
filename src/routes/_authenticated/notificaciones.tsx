@@ -18,6 +18,7 @@ import {
   CheckCircle2,
   BellRing,
   ArrowRight,
+  Zap,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/notificaciones")({
