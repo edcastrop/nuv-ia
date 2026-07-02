@@ -497,6 +497,31 @@ function ResultadoQaAi() {
   const categoriaEfectiva = recomputo?.score.categoria ?? a.categoria;
   const isUvr = a.modalidad === "uvr";
   const scoreColor = score >= 95 ? "var(--nuvia-success)" : score >= 85 ? "var(--nuvia-warning)" : "var(--nuvia-danger)";
+
+  // Auto-sync: si el motor recomputó un score/dictamen distinto al persistido (o la versión de motor cambió),
+  // persistimos silenciosamente para que TODOS los roles (lista, tarjetas, otros dashboards) vean el valor vigente.
+  useEffect(() => {
+    if (!data?.auditoria || !recomputo) return;
+    const storedScore = Number(a.qa_score ?? 0);
+    const storedDictamen = String(a.dictamen ?? "");
+    const storedVersion = String((a as Record<string, unknown>).motor_version ?? "");
+    const nuevoScore = Number(recomputo.score.score);
+    const nuevoDictamen = String(recomputo.score.dictamen);
+    const necesitaSync = storedVersion !== QA_MOTOR_VERSION
+      || Math.abs(nuevoScore - storedScore) >= 0.5
+      || nuevoDictamen !== storedDictamen;
+    if (!necesitaSync || reloading) return;
+    let cancel = false;
+    (async () => {
+      try {
+        await doReejecutar({ data: { id } });
+        if (cancel) return;
+        setData(await fetchAud({ data: { id } }) as { auditoria: Record<string, unknown> | null; inconsistencias: Inc[] });
+      } catch { /* silencioso */ }
+    })();
+    return () => { cancel = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, a.qa_score, a.dictamen, (a as Record<string, unknown>).motor_version, recomputo?.score.score, recomputo?.score.dictamen]);
   const cert = certificacion(dictamenEfectivo);
   const trofeo = logro(score);
   const certAprobada = cert.estado === "certificado" || cert.estado === "certificado_obs";
