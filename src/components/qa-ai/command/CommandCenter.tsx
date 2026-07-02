@@ -118,7 +118,7 @@ export function CommandCenter(props: {
   }, [f.analista, analistasOpts]);
 
   return (
-    <div style={{ display: "grid", gap: 20 }}>
+    <div style={{ display: "grid", gap: 10 }}>
       <FilterBar
         f={f} setF={setF}
         bancos={bancosOpts} productos={productosOpts} analistas={analistasOpts}
@@ -144,12 +144,12 @@ export function CommandCenter(props: {
 
       <PriorityPanel counts={props.prioridad} active={priorityFilter} onPick={(k) => setPriorityFilter(priorityFilter === k ? null : k)} />
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         <BankHeatmap bancos={visibleBancos} onPick={(b) => setF((x) => ({ ...x, banco: x.banco === b ? "" : b }))} active={f.banco} />
         <AnalystRanking analistas={visibleAnalistas} onPick={(a) => setF((x) => ({ ...x, analista: x.analista === a ? "" : a }))} active={f.analista} />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 10 }}>
         <QaHealthTrend data={props.tendencia} />
         <TopErrors errores={props.topErrores} />
       </div>
@@ -158,6 +158,7 @@ export function CommandCenter(props: {
     </div>
   );
 }
+
 
 function ActiveFilterChips({ items, total }: { items: Array<{ key: string; label: string; clear: () => void }>; total: number }) {
   return (
