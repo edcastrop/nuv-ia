@@ -17,12 +17,37 @@ export const defaultDiscount: DiscountState = {
   vigencia: "",
 };
 
+const LEGACY_QUICK_DECISION_VIGENCIAS = new Set([
+  "12h",
+  "12 h",
+  "12 horas",
+  "24h",
+  "24 h",
+  "24 horas",
+  "48h",
+  "48 h",
+  "48 horas",
+]);
+
+export function normalizeDiscountState(value: unknown): DiscountState {
+  const raw = value && typeof value === "object" ? (value as Partial<DiscountState>) : {};
+  const type: DiscountType = raw.type === "fixed" ? "fixed" : "percent";
+  const vigencia = String(raw.vigencia ?? "").trim();
+
+  return {
+    type,
+    value: String(raw.value ?? ""),
+    vigencia: LEGACY_QUICK_DECISION_VIGENCIAS.has(vigencia.toLowerCase()) ? "" : vigencia,
+  };
+}
+
 export function computeDiscount(honorariosBase: number, d: DiscountState) {
+  const normalized = normalizeDiscountState(d);
   const raw = parseFloat(
-    String(d.value).replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", "."),
+    String(normalized.value).replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", "."),
   ) || 0;
   let descuentoSolicitado = 0;
-  if (d.type === "percent") descuentoSolicitado = (honorariosBase * raw) / 100;
+  if (normalized.type === "percent") descuentoSolicitado = (honorariosBase * raw) / 100;
   else descuentoSolicitado = raw;
   descuentoSolicitado = Math.max(0, Math.min(descuentoSolicitado, honorariosBase));
 
@@ -56,16 +81,17 @@ export function DiscountModule({
   state: DiscountState;
   onChange: (s: DiscountState) => void;
 }) {
+  const safeState = normalizeDiscountState(state);
   const { descuento, final, hasDiscount, bloqueado, aplicaPiso } = computeDiscount(
     honorariosBase,
-    state,
+    safeState,
   );
   const set = <K extends keyof DiscountState>(k: K, v: DiscountState[K]) =>
-    onChange({ ...state, [k]: v });
+    onChange({ ...safeState, [k]: v });
 
   return (
     <Card>
-      <SectionTitle sub="Aplica un descuento comercial en porcentaje o valor fijo. La vigencia se cuenta desde el envío de la propuesta.">
+      <SectionTitle sub="Aplica únicamente un descuento comercial manual en porcentaje o valor fijo.">
         Descuento comercial (opcional)
       </SectionTitle>
       <div className="grid gap-4 md:grid-cols-4">
@@ -74,7 +100,7 @@ export function DiscountModule({
             Tipo de descuento
           </span>
           <select
-            value={state.type}
+            value={safeState.type}
             onChange={(e) => set("type", e.target.value as DiscountType)}
             className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#445DA3] focus:ring-2 focus:ring-[#445DA3]/15"
           >
@@ -83,16 +109,16 @@ export function DiscountModule({
           </select>
         </label>
         <TextField
-          label={state.type === "percent" ? "Descuento (%)" : "Descuento ($)"}
-          value={state.value}
+          label={safeState.type === "percent" ? "Descuento (%)" : "Descuento ($)"}
+          value={safeState.value}
           onChange={(v) => set("value", v)}
-          placeholder={state.type === "percent" ? "20" : "3.000.000"}
+          placeholder={safeState.type === "percent" ? "20" : "3.000.000"}
         />
         <TextField
-          label="Vigencia del beneficio (opcional)"
-          value={state.vigencia}
+          label="Vigencia comercial (opcional)"
+          value={safeState.vigencia}
           onChange={(v) => set("vigencia", v)}
-          placeholder="48 horas / 30 nov 2026"
+          placeholder="30 nov 2026"
         />
         <div
           className="flex flex-col justify-center rounded-xl p-3"
