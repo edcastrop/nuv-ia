@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Link } from "@tanstack/react-router";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, Area, AreaChart } from "recharts";
 import {
@@ -7,12 +7,13 @@ import {
   Sparkles, Activity, Zap, Radar,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { QA_MOTOR_VERSION } from "@/lib/qaMath";
 
 
 export type CCRow = {
   id: string; expediente_id: string | null; analista_id: string | null;
-  modalidad: string; qa_score: number; categoria: string; dictamen: string;
-  ejecutado_at: string;
+  codigo?: string | null; modalidad: string; motor_version?: string | null; qa_score: number; categoria: string; dictamen: string;
+  ejecutado_at: string; updated_at?: string | null; auditor_aprobado_at?: string | null;
   cliente_nombre: string | null; banco: string | null; producto: string | null;
   estado_caso: string | null; subestado: string | null; validacion_estado: string | null;
   analista_nombre: string | null; extracto_path: string | null;
@@ -1217,6 +1218,7 @@ function HolographicBrain() {
 
 /* ═══════════════════ REVIEW QUEUE (Top 5) ═══════════════════ */
 function ReviewQueue({ rows }: { rows: CCRow[] }) {
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
   const score = (s: number) => s >= 95 ? C.success : s >= 85 ? C.warning : C.danger;
   const dictamen: Record<string, { label: string; color: string }> = {
     aprobado: { label: "APROBADO", color: C.success },
@@ -1258,6 +1260,26 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
   const [showAll, setShowAll] = useState(false);
   const visibles = showAll ? ordered : ordered.slice(0, 5);
 
+  const scrollQueue = (direction: -1 | 1) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.scrollBy({ left: direction * Math.round(el.clientWidth * 0.72), behavior: "smooth" });
+  };
+
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    const max = el.scrollWidth - el.clientWidth;
+    if (max <= 0) return;
+    const horizontalIntent = Math.abs(e.deltaX) >= Math.abs(e.deltaY);
+    const delta = horizontalIntent ? e.deltaX : (e.shiftKey ? e.deltaY : 0);
+    if (!delta) return;
+    const next = Math.max(0, Math.min(max, el.scrollLeft + delta));
+    if (next !== el.scrollLeft) {
+      e.preventDefault();
+      el.scrollLeft = next;
+    }
+  };
+
   const th: React.CSSProperties = {
     textAlign: "left", padding: "10px 12px", color: C.textMuted, fontWeight: 700,
     borderBottom: `1px solid ${C.divider}`, whiteSpace: "nowrap", fontSize: 9.5,
@@ -1270,7 +1292,17 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
       title={`Cola de revisión · Top ${visibles.length} de ${ordered.length}`}
       subtitle="Orden inteligente: criticidad → bloqueo → score → antigüedad → ticket"
     >
-      <div style={{ overflowX: "auto" }}>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 10 }}>
+        <button type="button" onClick={() => scrollQueue(-1)} title="Mover cola hacia la izquierda" style={{
+          width: 30, height: 28, borderRadius: 8, cursor: "pointer",
+          background: "rgba(255,255,255,0.04)", color: C.textSec, border: `1px solid ${C.border}`,
+        }}>←</button>
+        <button type="button" onClick={() => scrollQueue(1)} title="Mover cola hacia la derecha" style={{
+          width: 30, height: 28, borderRadius: 8, cursor: "pointer",
+          background: "rgba(255,255,255,0.04)", color: C.textSec, border: `1px solid ${C.border}`,
+        }}>→</button>
+      </div>
+      <div ref={scrollerRef} onWheel={handleWheel} style={{ overflowX: "auto", overscrollBehaviorX: "contain", touchAction: "pan-x pan-y" }}>
         <table style={{ width: "100%", fontSize: 12, minWidth: 1100, borderCollapse: "separate", borderSpacing: 0 }}>
           <thead>
             <tr>
@@ -1297,9 +1329,12 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
                     }}>{p.label}</span>
                   </td>
                   <td style={{ ...td, color: C.textSec, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 10.5 }}>
-                    {(r as unknown as { codigo: string | null }).codigo ?? "—"}
-                    {(r as unknown as { auditor_aprobado_at: string | null }).auditor_aprobado_at ? (
+                    {r.codigo ?? "—"}
+                    {r.auditor_aprobado_at ? (
                       <span title="Aprobada por auditor" style={{ marginLeft: 6, color: C.success }}>✓</span>
+                    ) : null}
+                    {r.motor_version && r.motor_version !== QA_MOTOR_VERSION ? (
+                      <span title="Motor desactualizado" style={{ marginLeft: 6, color: C.danger }}>↻</span>
                     ) : null}
                   </td>
                   <td style={{ ...td, color: C.textSec, fontVariantNumeric: "tabular-nums", fontSize: 11 }}>

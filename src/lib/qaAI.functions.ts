@@ -1527,16 +1527,18 @@ export const qaCommandCenter = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({
     limit: z.number().int().positive().max(1000).default(500),
     days: z.number().int().positive().max(180).default(30),
+    refreshKey: z.number().optional(),
   }).parse(input ?? {}))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
     const sinceISO = new Date(Date.now() - data.days * 86400000).toISOString();
 
-    const { data: audRaw } = await supabase
+    const { data: audRaw, error: audError } = await supabase
       .from("qa_auditorias")
-      .select("id,codigo,expediente_id,analista_id,extracto_id,modalidad,qa_score,categoria,dictamen,ejecutado_at,alertas,inputs,auditor_aprobado_at,auditor_aprobado_by")
+      .select("id,codigo,expediente_id,analista_id,extracto_id,modalidad,motor_version,qa_score,categoria,dictamen,ejecutado_at,updated_at,alertas,inputs,auditor_aprobado_at,auditor_aprobado_by")
       .order("ejecutado_at", { ascending: false })
       .limit(data.limit);
+    if (audError) throw new Error(audError.message);
     const audits = audRaw ?? [];
 
     const expIds = [...new Set(audits.map((r) => r.expediente_id).filter((id): id is string => !!id))];
@@ -1601,10 +1603,12 @@ export const qaCommandCenter = createServerFn({ method: "POST" })
         codigo: (r as unknown as { codigo: string | null }).codigo ?? null,
         expediente_id: r.expediente_id, analista_id: analistaId,
         modalidad: r.modalidad as string,
+        motor_version: (r as unknown as { motor_version: string | null }).motor_version ?? null,
         qa_score: Number(r.qa_score ?? 0),
         categoria: r.categoria as string, dictamen: r.dictamen as string,
         auditor_aprobado_at: (r as unknown as { auditor_aprobado_at: string | null }).auditor_aprobado_at ?? null,
         ejecutado_at: r.ejecutado_at as string,
+        updated_at: (r as unknown as { updated_at: string | null }).updated_at ?? null,
         cliente_nombre: (exp?.cliente_nombre as string | null) ?? null,
         banco: (exp?.banco as string | null) ?? null,
         producto: (exp?.producto as string | null) ?? null,

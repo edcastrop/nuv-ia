@@ -18,6 +18,8 @@ type CCData = {
   topErrores: CCError[]; tendencia: CCTrend[]; prioridad: Record<string, number>;
 };
 
+const QA_CC_REFRESH_MS = 15_000;
+
 function QaAiDashboard() {
   const { canValidarProyeccion, loading: rolesLoading } = useUserRole();
   const fetchCC = useServerFn(qaCommandCenter);
@@ -27,12 +29,29 @@ function QaAiDashboard() {
   const [globalQ, setGlobalQ] = useState("");
 
   useEffect(() => {
-    if (rolesLoading || !canValidarProyeccion) { setLoading(false); return; }
-    (async () => {
-      const d = await fetchCC({ data: { limit: 500, days: 30 } });
+    if (rolesLoading) return;
+    if (!canValidarProyeccion) { setLoading(false); return; }
+    let cancelled = false;
+    let timer: number | null = null;
+    const load = async (silent = false) => {
+      if (!silent) setLoading(true);
+      const d = await fetchCC({ data: { limit: 500, days: 30, refreshKey: Date.now() } });
+      if (cancelled) return;
       setData(d as CCData);
       setLoading(false);
+    };
+    (async () => {
+      try {
+        await load(false);
+        timer = window.setInterval(() => void load(true), QA_CC_REFRESH_MS);
+      } catch {
+        if (!cancelled) setLoading(false);
+      }
     })();
+    return () => {
+      cancelled = true;
+      if (timer) window.clearInterval(timer);
+    };
   }, [rolesLoading, canValidarProyeccion, fetchCC]);
 
   if (rolesLoading || loading) {
