@@ -22,12 +22,18 @@ interface Props {
   onCanalChange?: (id: string) => void;
 }
 
+interface CasoLite { id: string; cliente_nombre: string | null; estado: string | null; updated_at: string }
+interface QaLite { id: string; codigo: string | null; qa_score: number | null; dictamen: string | null; ejecutado_at: string | null }
 interface QuickCtx {
   casosActivos: number;
   qaAbiertos: number;
   ultimaActividad: string | null;
   ultimoCaso: string | null;
+  casos: CasoLite[];
+  historial: QaLite[];
 }
+
+export type CtxTab = "perfil" | "casos" | "historial" | "ia";
 
 export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
   const { user } = useAuth();
@@ -43,6 +49,7 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
   const [showNuevo, setShowNuevo] = useState(false);
   const [accesoError, setAccesoError] = useState<string | null>(null);
   const [quickCtx, setQuickCtx] = useState<QuickCtx | null>(null);
+  const [ctxTab, setCtxTab] = useState<CtxTab>("ia");
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
@@ -103,26 +110,34 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
     let cancel = false;
     (async () => {
       const uid = d.otro.user_id;
-      const [exps, qas] = await Promise.all([
+      const [exps, qas, histQa] = await Promise.all([
         supabase.from("expedientes" as never)
           .select("id,cliente_nombre,updated_at,estado")
           .or(`analista_id.eq.${uid},asesor_id.eq.${uid}`)
           .neq("estado", "cerrado")
           .order("updated_at", { ascending: false })
-          .limit(5),
+          .limit(20),
         supabase.from("qa_auditorias" as never)
           .select("id")
           .eq("analista_id", uid)
           .in("estado", ["pendiente", "en_revision", "abierta"])
           .limit(50),
+        supabase.from("qa_auditorias" as never)
+          .select("id,codigo,qa_score,dictamen,ejecutado_at")
+          .eq("analista_id", uid)
+          .order("ejecutado_at", { ascending: false })
+          .limit(10),
       ]);
       if (cancel) return;
-      const rows = (exps.data ?? []) as Array<{ id: string; cliente_nombre: string | null; updated_at: string }>;
+      const rows = (exps.data ?? []) as CasoLite[];
+      const hist = (histQa.data ?? []) as QaLite[];
       setQuickCtx({
         casosActivos: rows.length,
         qaAbiertos: (qas.data ?? []).length,
         ultimaActividad: rows[0]?.updated_at ?? null,
         ultimoCaso: rows[0]?.cliente_nombre ?? null,
+        casos: rows,
+        historial: hist,
       });
     })();
     return () => { cancel = true; };
@@ -321,7 +336,7 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
               <EmptyState onOpen={() => setShowNuevo(true)} />
             ) : (
               <>
-                <ChatHeader d={d} canal={canal} onBack={() => setCanalState(null)} quickCtx={quickCtx} />
+                <ChatHeader d={d} canal={canal} onBack={() => setCanalState(null)} quickCtx={quickCtx} ctxTab={ctxTab} onCtxTab={setCtxTab} />
 
                 <div ref={messagesScrollRef} className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-1"
                   style={{ background: "linear-gradient(180deg, rgba(76,116,224,0.02) 0%, transparent 40%, rgba(52,199,89,0.02) 100%)" }}>
@@ -409,7 +424,7 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
           {/* QUICK CONTEXT — RIGHT PANEL */}
           {hasCanal && d && (
             <GlassPanel className="hidden lg:flex p-0 overflow-hidden flex-col">
-              <QuickContextPanel d={d} ctx={quickCtx} />
+              <QuickContextPanel d={d} ctx={quickCtx} tab={ctxTab} onTab={setCtxTab} />
             </GlassPanel>
           )}
         </div>
@@ -486,7 +501,7 @@ function EmptyState({ onOpen }: { onOpen: () => void }) {
   );
 }
 
-function ChatHeader({ d, canal, onBack, quickCtx }: { d: DMResumen | null; canal: Canal; onBack: () => void; quickCtx: QuickCtx | null }) {
+function ChatHeader({ d, canal, onBack, quickCtx, ctxTab, onCtxTab }: { d: DMResumen | null; canal: Canal; onBack: () => void; quickCtx: QuickCtx | null; ctxTab: CtxTab; onCtxTab: (t: CtxTab) => void }) {
   const BackBtn = (
     <button onClick={onBack} className="md:hidden rounded-lg p-1.5 -ml-1 transition text-white/70 hover:text-white hover:bg-white/5 shrink-0" aria-label="Volver">
       <ArrowLeft size={18} />
@@ -520,10 +535,10 @@ function ChatHeader({ d, canal, onBack, quickCtx }: { d: DMResumen | null; canal
           </div>
         </div>
         <div className="flex items-center gap-1.5 flex-wrap ml-auto">
-          <HeaderBtn icon={<UserIcon size={13} />} label="Perfil" />
-          <HeaderBtn icon={<Briefcase size={13} />} label="Casos" />
-          <HeaderBtn icon={<History size={13} />} label="Historial" />
-          <HeaderBtn icon={<Sparkles size={13} />} label="IA Context" tone="blue" />
+          <HeaderBtn icon={<UserIcon size={13} />} label="Perfil" active={ctxTab === "perfil"} onClick={() => onCtxTab("perfil")} />
+          <HeaderBtn icon={<Briefcase size={13} />} label="Casos" active={ctxTab === "casos"} onClick={() => onCtxTab("casos")} />
+          <HeaderBtn icon={<History size={13} />} label="Historial" active={ctxTab === "historial"} onClick={() => onCtxTab("historial")} />
+          <HeaderBtn icon={<Sparkles size={13} />} label="IA Context" tone="blue" active={ctxTab === "ia"} onClick={() => onCtxTab("ia")} />
         </div>
       </div>
       {/* KPIs compactos */}
@@ -536,12 +551,17 @@ function ChatHeader({ d, canal, onBack, quickCtx }: { d: DMResumen | null; canal
   );
 }
 
-function HeaderBtn({ icon, label, tone = "default" }: { icon: React.ReactNode; label: string; tone?: "default" | "blue" }) {
+function HeaderBtn({ icon, label, tone = "default", active = false, onClick }: { icon: React.ReactNode; label: string; tone?: "default" | "blue"; active?: boolean; onClick?: () => void }) {
+  const baseBlue = { background: "linear-gradient(135deg, rgba(76,116,224,0.22), rgba(52,87,200,0.14))", border: "1px solid rgba(120,150,220,0.35)", color: "#c9d6ff", boxShadow: "0 0 14px rgba(76,116,224,0.24)" };
+  const baseDefault = { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.75)" };
+  const activeStyle = { background: "linear-gradient(135deg, rgba(91,141,255,0.32), rgba(52,87,200,0.22))", border: "1px solid rgba(147,177,255,0.65)", color: "#ffffff", boxShadow: "0 0 18px rgba(76,116,224,0.55), inset 0 0 0 1px rgba(255,255,255,0.05)" };
   return (
-    <button className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium transition"
-      style={tone === "blue"
-        ? { background: "linear-gradient(135deg, rgba(76,116,224,0.22), rgba(52,87,200,0.14))", border: "1px solid rgba(120,150,220,0.35)", color: "#c9d6ff", boxShadow: "0 0 14px rgba(76,116,224,0.24)" }
-        : { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.75)" }}>
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium transition hover:scale-[1.03]"
+      style={active ? activeStyle : (tone === "blue" ? baseBlue : baseDefault)}
+    >
       {icon} <span className="hidden xl:inline">{label}</span>
     </button>
   );
@@ -621,56 +641,147 @@ function MensajeBurbuja({ m, esMio, otroLectura }: { m: Mensaje; esMio: boolean;
   );
 }
 
-function QuickContextPanel({ d, ctx }: { d: DMResumen; ctx: QuickCtx | null }) {
+function QuickContextPanel({ d, ctx, tab, onTab }: { d: DMResumen; ctx: QuickCtx | null; tab: CtxTab; onTab: (t: CtxTab) => void }) {
+  const tabLabel: Record<CtxTab, string> = {
+    perfil: "Perfil del colaborador",
+    casos: "Casos del colaborador",
+    historial: "Historial de auditorías",
+    ia: "IA Context",
+  };
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 pt-4 pb-3 border-b" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
         <div className="flex items-center gap-2 mb-1">
           <Sparkles size={12} className="text-[#8faaff]" />
-          <span className="text-[10px] font-bold uppercase tracking-widest text-white/55">Quick Context</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-white/55">Quick Context · {tabLabel[tab]}</span>
         </div>
         <div className="text-[13px] font-semibold text-white leading-tight break-words" title={d.otro.nombre}>{d.otro.nombre}</div>
         <div className="text-[10.5px] text-white/45 uppercase tracking-wider">{d.otro.roles[0] || "Colaborador"}</div>
+        <div className="mt-3 flex items-center gap-1 flex-wrap">
+          {(["perfil","casos","historial","ia"] as CtxTab[]).map((t) => (
+            <button key={t} onClick={() => onTab(t)}
+              className="rounded-md px-2 py-1 text-[10px] font-semibold uppercase tracking-wider transition"
+              style={tab === t
+                ? { background: "linear-gradient(135deg, rgba(91,141,255,0.32), rgba(52,87,200,0.22))", border: "1px solid rgba(147,177,255,0.55)", color: "#ffffff" }
+                : { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)" }}>
+              {t === "ia" ? "IA" : t.charAt(0).toUpperCase() + t.slice(1)}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        <CtxCard icon={<Briefcase size={13} />} label="Casos compartidos" value={ctx?.casosActivos ?? "—"} tone="blue" />
-        <CtxCard icon={<Zap size={13} />} label="QA abiertos" value={ctx?.qaAbiertos ?? "—"} tone={ctx && ctx.qaAbiertos > 0 ? "amber" : "blue"} />
-        <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-          <div className="flex items-center gap-2 mb-2">
-            <Clock size={12} className="text-white/50" />
-            <span className="text-[10px] uppercase tracking-wider font-bold text-white/50">Última actividad</span>
-          </div>
-          <div className="text-[12px] text-white/90 font-medium">
-            {ctx?.ultimaActividad ? formatRel(ctx.ultimaActividad) : "—"}
-          </div>
-          {ctx?.ultimoCaso && (
-            <div className="text-[11px] text-white/55 truncate mt-1">{ctx.ultimoCaso}</div>
-          )}
-        </div>
-        <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingUp size={12} className="text-[#7dffb0]" />
-            <span className="text-[10px] uppercase tracking-wider font-bold text-white/50">Score productividad</span>
-          </div>
-          <div className="flex items-baseline gap-1">
-            <span className="text-[22px] font-bold text-white leading-none">92</span>
-            <span className="text-[11px] text-[#7dffb0] font-semibold">/100</span>
-          </div>
-          <div className="text-[10px] text-white/45 mt-1">Tiempo prom. respuesta: <span className="text-white/75 font-semibold">4m 21s</span></div>
-        </div>
-        <div className="rounded-xl p-3" style={{ background: "linear-gradient(135deg, rgba(76,116,224,0.10), rgba(52,199,89,0.06))", border: "1px solid rgba(76,116,224,0.24)" }}>
-          <div className="flex items-center gap-2 mb-1.5">
-            <Sparkles size={12} className="text-[#8faaff]" />
-            <span className="text-[10px] uppercase tracking-wider font-bold text-[#c9d6ff]">Sugerencia IA</span>
-          </div>
-          <div className="text-[11.5px] text-white/80 leading-relaxed">
-            {ctx && ctx.qaAbiertos > 0
-              ? `Tiene ${ctx.qaAbiertos} auditoría${ctx.qaAbiertos > 1 ? "s" : ""} QA pendiente${ctx.qaAbiertos > 1 ? "s" : ""}. Considera revisar antes de asignar más casos.`
-              : "Colaborador con carga saludable. Puedes asignar nuevos casos con seguridad."}
-          </div>
-        </div>
+        {tab === "perfil" && <TabPerfil d={d} ctx={ctx} />}
+        {tab === "casos" && <TabCasos ctx={ctx} />}
+        {tab === "historial" && <TabHistorial ctx={ctx} />}
+        {tab === "ia" && <TabIA ctx={ctx} />}
       </div>
     </div>
+  );
+}
+
+function TabPerfil({ d, ctx }: { d: DMResumen; ctx: QuickCtx | null }) {
+  return (
+    <>
+      <div className="rounded-xl p-3 flex items-center gap-3" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+        <UserAvatar userId={d.otro.user_id} name={d.otro.nombre} size="md" />
+        <div className="min-w-0">
+          <div className="text-[13px] font-semibold text-white break-words">{d.otro.nombre}</div>
+          <div className="text-[10.5px] text-white/50 uppercase tracking-wider">{d.otro.roles.join(" · ") || "Colaborador"}</div>
+        </div>
+      </div>
+      <CtxCard icon={<Briefcase size={13} />} label="Casos activos" value={ctx?.casosActivos ?? "—"} tone="blue" />
+      <CtxCard icon={<Zap size={13} />} label="QA abiertos" value={ctx?.qaAbiertos ?? "—"} tone={ctx && ctx.qaAbiertos > 0 ? "amber" : "blue"} />
+      <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="flex items-center gap-2 mb-2">
+          <Clock size={12} className="text-white/50" />
+          <span className="text-[10px] uppercase tracking-wider font-bold text-white/50">Última actividad</span>
+        </div>
+        <div className="text-[12px] text-white/90 font-medium">{ctx?.ultimaActividad ? formatRel(ctx.ultimaActividad) : "—"}</div>
+        {ctx?.ultimoCaso && <div className="text-[11px] text-white/55 truncate mt-1">{ctx.ultimoCaso}</div>}
+      </div>
+      <a href="/directorio" className="block rounded-lg px-3 py-2 text-center text-[11px] font-semibold text-white/90 transition hover:scale-[1.02]"
+        style={{ background: "linear-gradient(135deg, rgba(76,116,224,0.20), rgba(52,87,200,0.14))", border: "1px solid rgba(120,150,220,0.35)" }}>
+        Ver en Directorio
+      </a>
+    </>
+  );
+}
+
+function TabCasos({ ctx }: { ctx: QuickCtx | null }) {
+  if (!ctx) return <div className="text-[12px] text-white/50">Cargando…</div>;
+  if (ctx.casos.length === 0) return <div className="text-[12px] text-white/50">Sin casos activos.</div>;
+  return (
+    <>
+      <div className="text-[10px] uppercase tracking-wider font-bold text-white/50">{ctx.casos.length} caso{ctx.casos.length > 1 ? "s" : ""} activo{ctx.casos.length > 1 ? "s" : ""}</div>
+      {ctx.casos.map((c) => (
+        <a key={c.id} href={`/casos/${c.id}`}
+          className="block rounded-xl p-3 transition hover:scale-[1.01]"
+          style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <div className="text-[12.5px] font-semibold text-white truncate">{c.cliente_nombre || "Sin nombre"}</div>
+            <span className="text-[9.5px] uppercase tracking-wider text-[#8faaff] font-bold">{c.estado || "—"}</span>
+          </div>
+          <div className="text-[10.5px] text-white/45">Actualizado {formatRel(c.updated_at)}</div>
+        </a>
+      ))}
+    </>
+  );
+}
+
+function TabHistorial({ ctx }: { ctx: QuickCtx | null }) {
+  if (!ctx) return <div className="text-[12px] text-white/50">Cargando…</div>;
+  if (ctx.historial.length === 0) return <div className="text-[12px] text-white/50">Sin auditorías registradas.</div>;
+  return (
+    <>
+      <div className="text-[10px] uppercase tracking-wider font-bold text-white/50">Últimas {ctx.historial.length} auditorías QA</div>
+      {ctx.historial.map((h) => {
+        const score = h.qa_score ?? 0;
+        const color = score >= 85 ? "#7dffb0" : score >= 70 ? "#ffc86b" : "#ff9b9b";
+        return (
+          <a key={h.id} href={`/qa-ai/${h.id}`}
+            className="block rounded-xl p-3 transition hover:scale-[1.01]"
+            style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-[11.5px] font-semibold text-white/90 truncate">{h.codigo || h.id.slice(0, 8)}</div>
+              <span className="text-[13px] font-bold" style={{ color }}>{score.toFixed(0)}</span>
+            </div>
+            <div className="flex items-center justify-between mt-1">
+              <span className="text-[10px] uppercase tracking-wider text-white/50">{h.dictamen || "—"}</span>
+              <span className="text-[10px] text-white/45">{h.ejecutado_at ? formatRel(h.ejecutado_at) : "—"}</span>
+            </div>
+          </a>
+        );
+      })}
+    </>
+  );
+}
+
+function TabIA({ ctx }: { ctx: QuickCtx | null }) {
+  return (
+    <>
+      <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="flex items-center gap-2 mb-2">
+          <TrendingUp size={12} className="text-[#7dffb0]" />
+          <span className="text-[10px] uppercase tracking-wider font-bold text-white/50">Score productividad</span>
+        </div>
+        <div className="flex items-baseline gap-1">
+          <span className="text-[22px] font-bold text-white leading-none">92</span>
+          <span className="text-[11px] text-[#7dffb0] font-semibold">/100</span>
+        </div>
+        <div className="text-[10px] text-white/45 mt-1">Tiempo prom. respuesta: <span className="text-white/75 font-semibold">4m 21s</span></div>
+      </div>
+      <div className="rounded-xl p-3" style={{ background: "linear-gradient(135deg, rgba(76,116,224,0.10), rgba(52,199,89,0.06))", border: "1px solid rgba(76,116,224,0.24)" }}>
+        <div className="flex items-center gap-2 mb-1.5">
+          <Sparkles size={12} className="text-[#8faaff]" />
+          <span className="text-[10px] uppercase tracking-wider font-bold text-[#c9d6ff]">Sugerencia IA</span>
+        </div>
+        <div className="text-[11.5px] text-white/80 leading-relaxed">
+          {ctx && ctx.qaAbiertos > 0
+            ? `Tiene ${ctx.qaAbiertos} auditoría${ctx.qaAbiertos > 1 ? "s" : ""} QA pendiente${ctx.qaAbiertos > 1 ? "s" : ""}. Considera revisar antes de asignar más casos.`
+            : "Colaborador con carga saludable. Puedes asignar nuevos casos con seguridad."}
+        </div>
+      </div>
+    </>
   );
 }
 
