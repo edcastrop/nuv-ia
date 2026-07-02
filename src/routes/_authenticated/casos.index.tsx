@@ -412,18 +412,18 @@ function CasosPage() {
 
       {/* ============ FILTROS COMPACTOS ============ */}
       <section
-        className="rounded-2xl backdrop-blur-xl flex flex-col md:flex-row gap-2 p-2"
+        className="rounded-2xl backdrop-blur-xl flex flex-wrap items-center gap-2 p-2"
         style={{ background: CARD, border: `1px solid ${BORDER}` }}
       >
-        <div className="relative flex-1 min-w-0">
+        <div className="relative flex-1 basis-full md:basis-[280px] min-w-[240px]">
           <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: TEXT2 }} />
           <input
             type="text"
             value={qLocal}
             onChange={(e) => setQLocal(e.target.value)}
-            placeholder="Buscar cliente, cédula, banco o crédito…"
-            className="w-full h-11 bg-transparent pl-11 pr-4 text-[13px] outline-none placeholder:text-slate-500"
-            style={{ color: "#fff" }}
+            placeholder="Buscar cliente, cédula, banco, crédito o código de auditoría (NUV_AUD_…)"
+            className="w-full h-11 bg-transparent pl-11 pr-4 text-[13px] outline-none placeholder:text-slate-500 rounded-lg"
+            style={{ color: "#fff", border: `1px solid ${BORDER}` }}
           />
         </div>
         <GlassSelect value={estado} onChange={(v) => setEstado(v as EstadoExpediente | "")} placeholder="Estado">
