@@ -501,7 +501,7 @@ function EmptyState({ onOpen }: { onOpen: () => void }) {
   );
 }
 
-function ChatHeader({ d, canal, onBack, quickCtx }: { d: DMResumen | null; canal: Canal; onBack: () => void; quickCtx: QuickCtx | null }) {
+function ChatHeader({ d, canal, onBack, quickCtx, ctxTab, onCtxTab }: { d: DMResumen | null; canal: Canal; onBack: () => void; quickCtx: QuickCtx | null; ctxTab: CtxTab; onCtxTab: (t: CtxTab) => void }) {
   const BackBtn = (
     <button onClick={onBack} className="md:hidden rounded-lg p-1.5 -ml-1 transition text-white/70 hover:text-white hover:bg-white/5 shrink-0" aria-label="Volver">
       <ArrowLeft size={18} />
