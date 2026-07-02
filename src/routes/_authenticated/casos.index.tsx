@@ -976,7 +976,7 @@ function TimelineCard({
         style={{ background: theme.color }}
       />
 
-      <div className="relative grid gap-4 px-5 py-4 items-center" style={{ gridTemplateColumns: "minmax(0,2.4fr) minmax(0,3fr) minmax(0,1.5fr) auto" }}>
+      <div className="relative grid gap-4 px-5 py-4 items-center" style={{ gridTemplateColumns: "minmax(0,2.4fr) minmax(0,2.6fr) minmax(190px,2fr) auto" }}>
         {/* LEFT — Identity */}
         <div className="flex items-center gap-3 min-w-0">
           <div
