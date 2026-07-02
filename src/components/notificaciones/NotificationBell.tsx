@@ -30,10 +30,22 @@ function sevLabel(s: string) {
   return s === "alta" ? "Alta" : s === "media" ? "Media" : "Baja";
 }
 
+type TabKey = "todas" | "qa" | "mensajes" | "sistema";
+
+function categorize(n: Notificacion): Exclude<TabKey, "todas"> {
+  const id = String(n.id);
+  const tipo = String(n.tipo || "");
+  const titulo = String(n.titulo || "");
+  if (tipo === "alerta_qa" || /qa/i.test(titulo) || /qa/i.test(tipo)) return "qa";
+  if (id.startsWith("colab:") || tipo === "mensaje_interno" || tipo === "mencion") return "mensajes";
+  return "sistema";
+}
+
 export function NotificationBell() {
   const { items, unread, leer, leerTodas } = useNotificaciones();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<TabKey>("todas");
   const [detalle, setDetalle] = useState<Notificacion | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -44,6 +56,11 @@ export function NotificationBell() {
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
+
+  const counts = { qa: 0, mensajes: 0, sistema: 0 } as Record<Exclude<TabKey, "todas">, number>;
+  items.forEach((n) => { counts[categorize(n)] += 1; });
+  const filtered = tab === "todas" ? items : items.filter((n) => categorize(n) === tab);
+
 
   const abrirDetalle = (n: Notificacion) => {
     if (!n.leida) void leer(n.id);
