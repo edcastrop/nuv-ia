@@ -3,7 +3,7 @@ import { MensajeriaView } from "@/components/colaboracion/MensajeriaView";
 
 export const Route = createFileRoute("/_authenticated/colaboracion/dm/")({
   component: DMIndex,
-  head: () => ({ meta: [{ title: "Mensajería Directa · NUVEX" }] }),
+  head: () => ({ meta: [{ title: "Direct Messages · NUVIA" }] }),
 });
 
 function DMIndex() {
