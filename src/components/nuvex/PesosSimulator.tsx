@@ -31,6 +31,7 @@ import {
   DiscountModule,
   computeDiscount,
   defaultDiscount,
+  normalizeDiscountState,
   type DiscountState,
 } from "./DiscountModule";
 // ResultadoFinal removido del simulador: vive en el Expediente (Etapa 9+).
@@ -97,10 +98,11 @@ export function PesosSimulator({
   const initClient = (init?.cliente_data as ClientData | undefined) ?? undefined;
   const draft = readSimulatorDraft("pesos", init?.id, {
     extractoArchivoPath: typeof initCred.archivoPath === "string" ? initCred.archivoPath : "",
-    discount:
+    discount: normalizeDiscountState(
       init?.discount_data && Object.keys(init.discount_data).length
-        ? (init.discount_data as unknown as DiscountState)
+        ? init.discount_data
         : defaultDiscount,
+    ),
     client: initClient ?? defaultClient,
     intervinientes:
       initClient?.intervinientes && initClient.intervinientes.length > 0
@@ -133,7 +135,7 @@ export function PesosSimulator({
   const [extractoArchivoPath, setExtractoArchivoPath] = useState<string>(
     () => draft.extractoArchivoPath,
   );
-  const [discount, setDiscount] = useState<DiscountState>(() => draft.discount);
+  const [discount, setDiscount] = useState<DiscountState>(() => normalizeDiscountState(draft.discount));
   const [client, setClient] = useState<ClientData>(() => draft.client);
   const [intervinientes, setIntervinientes] = useState<Interviniente[]>(() => draft.intervinientes);
   const [cobertura, setCobertura] = useState<Cobertura>(() => draft.cobertura);
