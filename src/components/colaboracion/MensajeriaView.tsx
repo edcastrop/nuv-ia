@@ -292,7 +292,7 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <div className="text-[12.5px] font-semibold truncate text-white/95">{x.otro.nombre}</div>
+                        <div className="text-[12.5px] font-semibold text-white/95 leading-tight break-words" title={x.otro.nombre}>{x.otro.nombre}</div>
                         {x.ultimo_mensaje && <div className="text-[10px] shrink-0 text-white/45 font-medium">{formatRel(x.ultimo_mensaje.created_at)}</div>}
                       </div>
                       <div className="text-[10.5px] truncate text-white/50 uppercase tracking-wider font-medium">{x.otro.roles[0] || "Colaborador"}</div>
@@ -439,7 +439,7 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
                   style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
                   <UserAvatar userId={p.user_id} name={p.nombre} size="md" />
                   <div className="min-w-0">
-                    <div className="text-[13px] font-semibold truncate text-white">{p.nombre}</div>
+                    <div className="text-[13px] font-semibold text-white leading-tight break-words" title={p.nombre}>{p.nombre}</div>
                     <div className="text-[11px] truncate text-white/50">{p.roles.join(", ") || "—"}</div>
                   </div>
                 </button>
@@ -503,7 +503,7 @@ function ChatHeader({ d, canal, onBack, quickCtx }: { d: DMResumen | null; canal
   return (
     <div className="border-b px-4 md:px-5 py-3"
       style={{ borderColor: "rgba(255,255,255,0.06)", background: "linear-gradient(180deg, rgba(76,116,224,0.06), transparent)" }}>
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-start gap-3">
         {BackBtn}
         <div className="relative shrink-0">
           <UserAvatar userId={d.otro.user_id} name={d.otro.nombre} size="md" />
@@ -511,15 +511,15 @@ function ChatHeader({ d, canal, onBack, quickCtx }: { d: DMResumen | null; canal
             <PresenceDot userId={d.otro.user_id} lastSeenAt={d.otro.last_seen_at} visible={d.otro.presencia_visible} />
           </span>
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="text-[14px] font-semibold text-white truncate leading-tight">{d.otro.nombre}</div>
+        <div className="min-w-[220px] flex-1 pr-2">
+          <div className="text-[14px] font-semibold text-white leading-tight break-words" title={d.otro.nombre}>{d.otro.nombre}</div>
           <div className="text-[11px] text-white/55 truncate flex items-center gap-1.5 mt-0.5">
             <span className="uppercase tracking-wider">{d.otro.roles[0] || "Colaborador"}</span>
             <span className="text-white/25">·</span>
             <PresenceDot userId={d.otro.user_id} lastSeenAt={d.otro.last_seen_at} visible={d.otro.presencia_visible} showText />
           </div>
         </div>
-        <div className="hidden md:flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 flex-wrap ml-auto">
           <HeaderBtn icon={<UserIcon size={13} />} label="Perfil" />
           <HeaderBtn icon={<Briefcase size={13} />} label="Casos" />
           <HeaderBtn icon={<History size={13} />} label="Historial" />
@@ -629,7 +629,7 @@ function QuickContextPanel({ d, ctx }: { d: DMResumen; ctx: QuickCtx | null }) {
           <Sparkles size={12} className="text-[#8faaff]" />
           <span className="text-[10px] font-bold uppercase tracking-widest text-white/55">Quick Context</span>
         </div>
-        <div className="text-[13px] font-semibold text-white leading-tight">{d.otro.nombre}</div>
+        <div className="text-[13px] font-semibold text-white leading-tight break-words" title={d.otro.nombre}>{d.otro.nombre}</div>
         <div className="text-[10.5px] text-white/45 uppercase tracking-wider">{d.otro.roles[0] || "Colaborador"}</div>
       </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
