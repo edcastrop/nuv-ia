@@ -534,54 +534,60 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
     window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   };
 
+  const [showAll, setShowAll] = useState(false);
+  const visibles = showAll ? ordered : ordered.slice(0, 5);
+
   return (
-    <Section title={`Cola de revisión (${ordered.length})`} subtitle="Orden inteligente: criticidad → bloqueo → score → antigüedad → ticket.">
+    <Section
+      title={`Cola de revisión · Top ${visibles.length} de ${ordered.length}`}
+      subtitle="Orden inteligente: criticidad → bloqueo → score → antigüedad → ticket."
+    >
       <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", fontSize: 12, minWidth: 1100 }}>
+        <table style={{ width: "100%", fontSize: 11.5, minWidth: 1100 }}>
           <thead>
             <tr style={{ background: "rgba(255,255,255,0.03)" }}>
               {["Prioridad", "Código", "Fecha", "Cliente", "Banco", "Analista", "Producto", "Modalidad", "Ticket", "Score", "Estado QA", "Riesgo", "Acciones"].map((h) => (
-                <th key={h} style={{ textAlign: "left", padding: "10px 12px", color: C.textSec, fontWeight: 500, borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>{h}</th>
+                <th key={h} style={{ textAlign: "left", padding: "6px 10px", color: C.textSec, fontWeight: 500, borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap", fontSize: 10.5 }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {ordered.length === 0 ? (
-              <tr><td colSpan={13} style={{ padding: 32, textAlign: "center", color: C.textMuted }}>Sin casos en la cola.</td></tr>
-            ) : ordered.map((r) => {
+            {visibles.length === 0 ? (
+              <tr><td colSpan={13} style={{ padding: 24, textAlign: "center", color: C.textMuted }}>Sin casos en la cola.</td></tr>
+            ) : visibles.map((r) => {
               const p = prioridad(r);
               const d = dictamen[r.dictamen] ?? { label: r.dictamen, color: C.textSec };
               return (
                 <tr key={r.id} style={{ borderBottom: `1px solid ${C.border}` }}>
-                  <td style={{ padding: "10px 12px" }}>
+                  <td style={{ padding: "6px 10px" }}>
                     <span style={{
-                      padding: "3px 10px", borderRadius: 999, fontSize: 10.5, fontWeight: 600,
+                      padding: "2px 8px", borderRadius: 999, fontSize: 10, fontWeight: 600,
                       background: `${p.color}22`, color: p.color, border: `1px solid ${p.color}44`, whiteSpace: "nowrap",
                     }}>{p.label}</span>
                   </td>
-                  <td style={{ padding: "10px 12px", color: C.textSec, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 10.5, whiteSpace: "nowrap" }}>
+                  <td style={{ padding: "6px 10px", color: C.textSec, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 10, whiteSpace: "nowrap" }}>
                     {(r as unknown as { codigo: string | null }).codigo ?? "—"}
                     {(r as unknown as { auditor_aprobado_at: string | null }).auditor_aprobado_at ? (
                       <span title="Aprobada por auditor" style={{ marginLeft: 6, color: C.success }}>✓</span>
                     ) : null}
                   </td>
-                  <td style={{ padding: "10px 12px", color: C.textSec, whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums", fontSize: 11 }}>
+                  <td style={{ padding: "6px 10px", color: C.textSec, whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums", fontSize: 10.5 }}>
                     {r.ejecutado_at ? new Date(r.ejecutado_at).toLocaleString("es-CO", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—"}
                   </td>
-                  <td style={{ padding: "10px 12px", color: C.text, fontWeight: 500 }}>{r.cliente_nombre ?? "—"}</td>
-                  <td style={{ padding: "10px 12px", color: C.text }}>{r.banco ?? "—"}</td>
-                  <td style={{ padding: "10px 12px", color: C.textSec }}>{r.analista_nombre ?? "—"}</td>
-                  <td style={{ padding: "10px 12px", color: C.textSec }}>{r.producto ?? "—"}</td>
-                  <td style={{ padding: "10px 12px", color: C.text, textTransform: "capitalize" }}>{r.modalidad}</td>
-                  <td style={{ padding: "10px 12px", color: C.textSec, fontVariantNumeric: "tabular-nums" }}>{r.ticket ? fCop(r.ticket) : "—"}</td>
-                  <td style={{ padding: "10px 12px", color: score(r.qa_score), fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{r.qa_score.toFixed(1)}</td>
-                  <td style={{ padding: "10px 12px" }}>
+                  <td style={{ padding: "6px 10px", color: C.text, fontWeight: 500 }}>{r.cliente_nombre ?? "—"}</td>
+                  <td style={{ padding: "6px 10px", color: C.text }}>{r.banco ?? "—"}</td>
+                  <td style={{ padding: "6px 10px", color: C.textSec }}>{r.analista_nombre ?? "—"}</td>
+                  <td style={{ padding: "6px 10px", color: C.textSec }}>{r.producto ?? "—"}</td>
+                  <td style={{ padding: "6px 10px", color: C.text, textTransform: "capitalize" }}>{r.modalidad}</td>
+                  <td style={{ padding: "6px 10px", color: C.textSec, fontVariantNumeric: "tabular-nums" }}>{r.ticket ? fCop(r.ticket) : "—"}</td>
+                  <td style={{ padding: "6px 10px", color: score(r.qa_score), fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{r.qa_score.toFixed(1)}</td>
+                  <td style={{ padding: "6px 10px" }}>
                     <span style={{
-                      padding: "3px 10px", borderRadius: 999, fontSize: 10.5, fontWeight: 600,
+                      padding: "2px 8px", borderRadius: 999, fontSize: 10, fontWeight: 600,
                       background: `${d.color}22`, color: d.color, border: `1px solid ${d.color}44`, whiteSpace: "nowrap",
                     }}>{d.label}</span>
                   </td>
-                  <td style={{ padding: "10px 12px" }}>
+                  <td style={{ padding: "6px 10px" }}>
                     {r.alertas_criticas > 0 ? (
                       <span style={{ color: C.danger, display: "inline-flex", alignItems: "center", gap: 4 }}>
                         <AlertTriangle size={12} /> {r.alertas_criticas}
@@ -592,25 +598,25 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
                       <span style={{ color: C.textMuted }}>—</span>
                     )}
                   </td>
-                  <td style={{ padding: "10px 12px" }}>
-                    <div style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
+                  <td style={{ padding: "6px 10px" }}>
+                    <div style={{ display: "inline-flex", gap: 4, alignItems: "center" }}>
                       <Link to="/qa-ai/$id" params={{ id: r.id }} title="Ver dictamen" style={{
-                        display: "inline-flex", alignItems: "center", gap: 4, padding: "5px 10px",
-                        borderRadius: 8, background: `${C.primary}1a`, color: C.primary,
-                        border: `1px solid ${C.primary}44`, fontSize: 11, whiteSpace: "nowrap",
-                      }}>Ver <ArrowRight size={11} /></Link>
+                        display: "inline-flex", alignItems: "center", gap: 3, padding: "3px 8px",
+                        borderRadius: 6, background: `${C.primary}1a`, color: C.primary,
+                        border: `1px solid ${C.primary}44`, fontSize: 10.5, whiteSpace: "nowrap",
+                      }}>Ver <ArrowRight size={10} /></Link>
                       <Link
                         to="/simulador" search={{ auditoriaId: r.id, modo: r.modalidad === "uvr" ? "uvr" : "pesos" } as never}
                         title="Reconstruir caso" style={{
-                          display: "inline-flex", alignItems: "center", gap: 4, padding: "5px 10px",
-                          borderRadius: 8, background: `${C.secondary}1a`, color: C.secondary,
-                          border: `1px solid ${C.secondary}44`, fontSize: 11, whiteSpace: "nowrap",
-                        }}><FileSearch size={11} /> Reconstruir</Link>
+                          display: "inline-flex", alignItems: "center", gap: 3, padding: "3px 8px",
+                          borderRadius: 6, background: `${C.secondary}1a`, color: C.secondary,
+                          border: `1px solid ${C.secondary}44`, fontSize: 10.5, whiteSpace: "nowrap",
+                        }}><FileSearch size={10} /> Recons.</Link>
                       {r.extracto_path && (
                         <button onClick={() => openExtracto(r.extracto_path!)} title="Abrir extracto" style={{
-                          padding: "5px 8px", borderRadius: 8, background: "transparent",
+                          padding: "3px 6px", borderRadius: 6, background: "transparent",
                           color: C.textSec, border: `1px solid ${C.border}`, cursor: "pointer",
-                        }}><Paperclip size={11} /></button>
+                        }}><Paperclip size={10} /></button>
                       )}
                     </div>
                   </td>
@@ -620,9 +626,23 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
           </tbody>
         </table>
       </div>
+      {ordered.length > 5 && (
+        <div style={{ display: "flex", justifyContent: "center", marginTop: 8 }}>
+          <button
+            onClick={() => setShowAll((v) => !v)}
+            style={{
+              background: `${C.primary}14`, border: `1px solid ${C.primary}44`, color: C.primary,
+              padding: "6px 16px", borderRadius: 8, fontSize: 11.5, fontWeight: 600, cursor: "pointer",
+            }}
+          >
+            {showAll ? "Ver solo Top 5 ▲" : `Ver todos (${ordered.length}) ▼`}
+          </button>
+        </div>
+      )}
     </Section>
   );
 }
+
 
 // ───────────── SHARED SHELL ─────────────
 function Section({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
