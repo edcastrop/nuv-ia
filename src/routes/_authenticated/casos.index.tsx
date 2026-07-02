@@ -487,12 +487,7 @@ function CasosPage() {
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-between px-1 pb-1">
-              <div className="text-[10.5px] font-bold uppercase tracking-[0.22em]" style={{ color: TEXT2 }}>
-                <Activity size={11} className="inline mr-1.5" />
-                {filteredRows.length} expediente{filteredRows.length === 1 ? "" : "s"} en operación
-              </div>
-            </div>
+
             {filteredRows.map((r) => (
               <TimelineCard
                 key={r.id}
