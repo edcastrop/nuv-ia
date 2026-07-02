@@ -149,11 +149,47 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
           "notificaciones.criticas",
         ),
       ]);
+      try {
+        const { data: comisionesRows } = await supabase
+          .from("comisiones" as never)
+          .select("valor")
+          .eq("user_id", user.id);
+        const totalComisiones = ((comisionesRows ?? []) as Array<{ valor: number }>)
+          .reduce((s, r) => s + Number(r.valor || 0), 0);
+        if (!cancel) setCounts((prev) => ({ ...prev, "comisiones.devengadas.miAsesor": totalComisiones }));
+      } catch {
+        /* silencioso */
+      }
     })();
     return () => {
       cancel = true;
     };
   }, [user]);
+
+  // QA KPIs — solo para director financiero QA
+  useEffect(() => {
+    if (!user) return;
+    const isQa = activeRole === "director_financiero_qa" || roles.includes("director_financiero_qa" as AppRole);
+    if (!isQa) return;
+    let cancel = false;
+    (async () => {
+      try {
+        const qa = await qaKpis();
+        if (cancel) return;
+        setCounts((prev) => ({
+          ...prev,
+          "qa.colaRevision": qa.pendientesRevision,
+          "qa.hallazgosAbiertos": qa.alertasAbiertas,
+          "qa.porcentajeAprobacion": qa.total ? Math.round(((qa.aprobados + qa.obs) / qa.total) * 100) : 0,
+        }));
+      } catch {
+        /* silencioso */
+      }
+    })();
+    return () => {
+      cancel = true;
+    };
+  }, [user, activeRole, roles]);
 
   const config = (activeRole && HOME_CONFIG[activeRole]) || SAFE_HOME_CONFIG;
 
