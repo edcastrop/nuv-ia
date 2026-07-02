@@ -140,6 +140,11 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
     return <WorkspaceLoader label="Cargando tu workspace NUVIA" />;
   }
 
+  // Super Admin → Global Control Center (rediseño premium dedicado)
+  if (activeRole === "super_admin" || activeRole === "admin") {
+    return <SuperAdminControlCenter onLanzarSimulador={onLanzarSimulador} />;
+  }
+
 
   const handleAsk = (prompt: string) => {
     try {
