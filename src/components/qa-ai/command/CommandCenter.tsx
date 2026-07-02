@@ -840,8 +840,8 @@ function NuviaInsights({
 
       {/* 3-column grid */}
       <div style={{
-        display: "grid", gridTemplateColumns: "40% 35% 25%", gap: 14,
-        position: "relative", maxHeight: 460,
+        display: "grid", gridTemplateColumns: "38% 37% 25%", gap: 14,
+        position: "relative", alignItems: "stretch",
       }}>
         {/* ── COL 1 · BRAIN CORE */}
         <div style={{
@@ -874,7 +874,7 @@ function NuviaInsights({
           </div>
           <div style={{
             display: "flex", flexDirection: "column", gap: 8,
-            overflowY: "auto", paddingRight: 4, maxHeight: 400,
+            overflowY: "auto", paddingRight: 4, maxHeight: 360,
           }}>
             {insights.map((it, i) => {
               const c = impactColor(it.impact);
@@ -933,7 +933,7 @@ function NuviaInsights({
           <div style={{ fontSize: 9.5, fontWeight: 800, color: NUVIA_GREEN, letterSpacing: 1.6, textTransform: "uppercase", paddingLeft: 2 }}>
             Predictive Engine
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 400, overflowY: "auto", paddingRight: 4 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 360, overflowY: "auto", paddingRight: 4 }}>
             <PredictCard
               icon={<TrendingUp size={13} />}
               iconColor={C.danger}
@@ -1054,7 +1054,7 @@ function HolographicBrain() {
 
   return (
     <div style={{
-      position: "relative", width: "100%", aspectRatio: "1 / 1", maxHeight: 220, margin: "0 auto",
+      position: "relative", width: "100%", height: 210, maxWidth: 240, margin: "0 auto",
       display: "grid", placeItems: "center",
     }}>
       <style>{`
