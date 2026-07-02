@@ -2,6 +2,24 @@ import { supabase } from "@/integrations/supabase/client";
 import type { ClientData } from "@/components/nuvex/ClientFields";
 import { estadosParaEtapa, type EtapaPipelineId } from "@/lib/pipelineEtapas";
 
+const LEGACY_QUICK_DECISION_VIGENCIAS = new Set([
+  "12h", "12 h", "12 horas",
+  "24h", "24 h", "24 horas",
+  "48h", "48 h", "48 horas",
+]);
+
+function sanitizeDiscountForPersist(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object") return {};
+  const raw = value as Record<string, unknown>;
+  const vigencia = String(raw.vigencia ?? "").trim();
+  const cleanVigencia = LEGACY_QUICK_DECISION_VIGENCIAS.has(vigencia.toLowerCase()) ? "" : vigencia;
+  return {
+    type: raw.type === "fixed" ? "fixed" : "percent",
+    value: String(raw.value ?? ""),
+    vigencia: cleanVigencia,
+  };
+}
+
 export type EstadoExpediente =
   | "SIMULADO"
   | "FIRMADO"
@@ -444,10 +462,10 @@ export async function upsertExpediente(p: UpsertPayload): Promise<Expediente> {
         incomingSource,
       ) as unknown as never,
       propuesta_data: propuestaFinal as unknown as never,
-      discount_data: mergePreservingMeaningful(
-        prevRow.discount_data,
-        p.discountState as unknown as LooseRecord,
-      ) as unknown as never,
+      // discount_data: NO merge — el descuento comercial debe reflejar exactamente
+      // el estado actual del formulario (evita que "vigencia" legacy tipo "48 horas"
+      // se preserve al guardar). Se normaliza para descartar tiers antiguos.
+      discount_data: sanitizeDiscountForPersist(p.discountState) as unknown as never,
       honorarios_base: p.honorariosBase || Number(prevRow.honorarios_base ?? 0),
       honorarios_final: p.honorariosFinal || Number(prevRow.honorarios_final ?? 0),
     };
