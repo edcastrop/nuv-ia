@@ -43,6 +43,61 @@ const T = (n: string) => supabase.from(n as never);
 
 const cleanName = (value?: string | null) => value?.replace(/\s+/g, " ").trim() || "";
 
+const capitalizeNamePart = (value: string) =>
+  value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : value;
+
+const normalizeNamePart = (value: string) =>
+  value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z]/g, "");
+
+const EMAIL_WORDS_TO_IGNORE = new Set([
+  "gerencia", "administrativa", "comercial", "direccion", "financiera", "contabilidad", "nuvex", "nuvia",
+]);
+
+function collaboratorDisplayName(nombre?: string | null, email?: string | null, correoCorp?: string | null) {
+  const base = cleanName(nombre) || email || "Usuario";
+  const baseParts = base.split(" ").filter(Boolean);
+  if (baseParts.length >= 3) return base;
+
+  const normalizedBaseParts = baseParts.map(normalizeNamePart).filter(Boolean);
+  const normalizedCompactBase = normalizedBaseParts.join("");
+  const sources = [email, correoCorp]
+    .map((v) => cleanName(v).split("@")[0] ?? "")
+    .filter(Boolean);
+
+  for (const source of sources) {
+    const alphaCompact = normalizeNamePart(source);
+    if (normalizedCompactBase && alphaCompact.startsWith(normalizedCompactBase)) {
+      const tail = alphaCompact.slice(normalizedCompactBase.length);
+      if (tail.length >= 3 && !EMAIL_WORDS_TO_IGNORE.has(tail)) return `${base} ${capitalizeNamePart(tail)}`;
+    }
+
+    const chunks = source
+      .split(/[._\-\d]+/g)
+      .map(normalizeNamePart)
+      .filter((chunk) => chunk.length >= 3 && !EMAIL_WORDS_TO_IGNORE.has(chunk));
+    if (!chunks.length) continue;
+
+    const used = new Set(normalizedBaseParts);
+    const firstNameInitial = normalizedBaseParts[0]?.charAt(0) ?? "";
+    const lastName = normalizedBaseParts[1] ?? "";
+    const output = [...baseParts];
+
+    for (const chunk of chunks) {
+      if (used.has(chunk)) continue;
+      if (firstNameInitial && lastName && chunk === `${firstNameInitial}${lastName}`) {
+        used.add(lastName);
+        continue;
+      }
+      output.push(capitalizeNamePart(chunk));
+      used.add(chunk);
+    }
+
+    if (output.length > baseParts.length) return output.join(" ");
+  }
+
+  return base;
+}
+
 export async function listCanales(): Promise<Canal[]> {
   const { data, error } = await T("colab_canales")
     .select("*")
@@ -255,7 +310,7 @@ export async function listMisDMs(): Promise<DMResumen[]> {
     listDirectorioFull(),
     otroIds.length
       ? T("profiles")
-        .select("id, nombre, email, avatar_url, last_seen_at, presencia_visible")
+        .select("id, nombre, email, correo_corporativo, avatar_url, last_seen_at, presencia_visible")
         .in("id", otroIds as never)
       : Promise.resolve({ data: [] as any[], error: null }),
     otroIds.length
@@ -273,7 +328,7 @@ export async function listMisDMs(): Promise<DMResumen[]> {
     const rolesRaw = rolesMap.get(p.id) ?? [];
     return [p.id, {
       user_id: p.id,
-      nombre: cleanName(p.nombre) || p.email || "Usuario",
+      nombre: collaboratorDisplayName(p.nombre, p.email, p.correo_corporativo),
       foto_url: p.avatar_url ?? null,
       roles: rolesRaw.map(labelRol),
       last_seen_at: p.last_seen_at ?? null,
@@ -404,7 +459,7 @@ export async function listDirectorioFull(): Promise<DirectorioPersona[]> {
       : (p.rol_solicitado ? [String(p.rol_solicitado)] : []);
     return {
       user_id: p.id,
-      nombre: cleanName(p.nombre) || p.email || "Usuario",
+      nombre: collaboratorDisplayName(p.nombre, p.email, p.correo_corporativo),
       correo: p.email ?? null,
       correo_corp: p.correo_corporativo ?? null,
       whatsapp: p.whatsapp ?? null,
