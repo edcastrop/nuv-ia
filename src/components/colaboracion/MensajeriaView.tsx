@@ -45,6 +45,7 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
   const [quickCtx, setQuickCtx] = useState<QuickCtx | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const messagesScrollRef = useRef<HTMLDivElement>(null);
 
   const setCanal = (c: Canal | null) => {
     setCanalState(c);
@@ -89,7 +90,11 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
     return () => { unsub(); };
   }, [canal?.id, user?.id]);
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs.length]);
+  useEffect(() => {
+    const scroller = messagesScrollRef.current;
+    if (!scroller) return;
+    scroller.scrollTo({ top: scroller.scrollHeight, behavior: "smooth" });
+  }, [msgs.length]);
 
   // Quick context lookup — casos activos + QA abiertos con el otro usuario
   const d = useMemo(() => dms.find((x) => x.canal.id === canal?.id) ?? null, [dms, canal?.id]);
@@ -318,7 +323,7 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
               <>
                 <ChatHeader d={d} canal={canal} onBack={() => setCanalState(null)} quickCtx={quickCtx} />
 
-                <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-1"
+                <div ref={messagesScrollRef} className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-1"
                   style={{ background: "linear-gradient(180deg, rgba(76,116,224,0.02) 0%, transparent 40%, rgba(52,199,89,0.02) 100%)" }}>
                   {grouped.length === 0 && (
                     <div className="h-full flex flex-col items-center justify-center text-center gap-3 text-white/50">

@@ -796,6 +796,7 @@ function AuthenticatedLayout() {
   };
 
   const sidebarWidth = collapsed ? 76 : 248;
+  const isDirectMessagesRoute = location.pathname === "/colaboracion/dm" || location.pathname.startsWith("/colaboracion/dm/");
 
   const SidebarContent = (
     <aside
@@ -1036,8 +1037,8 @@ function AuthenticatedLayout() {
           </div>
         </header>
 
-        <main className="flex-1 bg-[#F4F6FB] text-[#0A1226]">
-          {!isApoderado && (
+        <main className={`flex-1 min-h-0 bg-[#F4F6FB] text-[#0A1226] ${isDirectMessagesRoute ? "overflow-hidden" : ""}`}>
+          {!isApoderado && !isDirectMessagesRoute && (
             <>
               <div className="px-4">
                 <OnboardingChecklistBanner />
@@ -1048,11 +1049,11 @@ function AuthenticatedLayout() {
           <Outlet />
         </main>
 
-        {!isApoderado && <NuvexGptButton />}
+        {!isApoderado && !isDirectMessagesRoute && <NuvexGptButton />}
         <NotificacionesAlerts />
         <EtapaTransicionDialog />
 
-        <footer
+        {!isDirectMessagesRoute && <footer
           style={{
             background: "var(--nuvia-bg-primary)",
             borderTop: "1px solid var(--nuvia-border)",
@@ -1067,7 +1068,7 @@ function AuthenticatedLayout() {
               SOC 2 · ISO 27001 · {CORPORATIVO.web}
             </span>
           </div>
-        </footer>
+        </footer>}
       </div>
     </div>
   );
