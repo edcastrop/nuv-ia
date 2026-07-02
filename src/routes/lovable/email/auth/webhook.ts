@@ -132,9 +132,12 @@ export const Route = createFileRoute("/lovable/email/auth/webhook")({
         }
 
         // Build template props from payload.data (HookData structure).
-        // Para recovery construimos un enlace directo a /reset-password con
-        // token_hash + type, que funciona en cualquier navegador/dispositivo
-        // (a diferencia del flujo PKCE por defecto que exige el mismo browser).
+        // Para "recovery" forzamos un enlace basado en token_hash + type=recovery
+        // (verifyOtp) en lugar del flujo PKCE por defecto. Esto permite abrir
+        // el correo desde CUALQUIER navegador o dispositivo — el flujo PKCE
+        // exige el mismo navegador donde se solicitó el reset y provocaba que
+        // "el botón no funcionara" cuando el usuario abría el correo en otro
+        // dispositivo (móvil, escritorio distinto, vista previa de correo).
         const DEFAULT_APP_URL = 'https://nuv-ia.lovable.app'
         const requestedRedirect: string | undefined = payload.data.redirect_to
         const baseUrl = (() => {
