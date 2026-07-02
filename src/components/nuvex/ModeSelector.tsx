@@ -69,7 +69,7 @@ export function ModeSelector({ onPick }: { onPick: (m: "pesos" | "uvr") => void 
       <FloatingParticles />
 
       {/* HEADER */}
-      <header className="relative z-10 mx-auto flex max-w-[1240px] items-center justify-between px-6 pt-3 sm:px-10">
+      <header className="relative z-10 mx-auto flex max-w-[1240px] items-center justify-between px-6 pt-1 sm:px-10">
         <div className="flex items-center gap-3">
           <div
             className="flex h-10 w-10 items-center justify-center rounded-xl text-base font-bold text-white shadow-[0_8px_30px_-8px_rgba(68,93,163,0.7)]"
@@ -85,7 +85,7 @@ export function ModeSelector({ onPick }: { onPick: (m: "pesos" | "uvr") => void 
       </header>
 
       {/* HERO */}
-      <section className="relative z-10 mx-auto grid max-w-[1240px] items-start gap-10 px-6 pt-5 sm:px-10 lg:grid-cols-[1.05fr_1fr] lg:pt-6">
+      <section className="relative z-10 mx-auto grid max-w-[1240px] items-start gap-8 px-6 pt-2 sm:px-10 lg:grid-cols-[1.05fr_1fr] lg:pt-3">
         {/* IZQUIERDA */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -134,7 +134,7 @@ export function ModeSelector({ onPick }: { onPick: (m: "pesos" | "uvr") => void 
       </section>
 
       {/* SIMULATOR CARDS */}
-      <section className="relative z-10 mx-auto mt-24 max-w-[1240px] px-6 sm:px-10">
+      <section className="relative z-10 mx-auto mt-10 max-w-[1240px] px-6 sm:px-10">
         <div className="grid gap-7 md:grid-cols-2">
           <SimCard
             onClick={() => onPick("pesos")}
