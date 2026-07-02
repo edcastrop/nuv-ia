@@ -216,10 +216,11 @@ export function NotificacionesAlerts() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items, prefs]);
 
-  // Reset título al desmontar
+  // Reset título + favicon al desmontar
   useEffect(() => {
     return () => {
       if (typeof document !== "undefined") document.title = TITULO_BASE;
+      limpiarFaviconDinamico();
     };
   }, []);
 
