@@ -176,7 +176,7 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
       <div className="pointer-events-none absolute -top-24 -left-24 h-[440px] w-[440px] rounded-full blur-[140px]" style={{ background: "radial-gradient(circle, rgba(68,93,163,0.32), transparent 70%)" }} />
       <div className="pointer-events-none absolute -bottom-32 -right-24 h-[520px] w-[520px] rounded-full blur-[160px]" style={{ background: "radial-gradient(circle, rgba(52,199,89,0.14), transparent 70%)" }} />
 
-      <div className="relative z-10 px-4 md:px-6 pt-4 pb-3">
+      <div className="relative z-10 px-4 md:px-6 pt-5 pb-4 flex-1 flex flex-col min-h-0">
         {/* HERO / HEADER */}
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
