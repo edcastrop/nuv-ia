@@ -49,7 +49,14 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<TabKey>("todas");
   const [detalle, setDetalle] = useState<Notificacion | null>(null);
+  const [anchor, setAnchor] = useState<{ top: number; right: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+
+  const recomputeAnchor = () => {
+    const r = btnRef.current?.getBoundingClientRect();
+    if (r) setAnchor({ top: r.bottom + 8, right: window.innerWidth - r.right });
+  };
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -58,6 +65,18 @@ export function NotificationBell() {
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    recomputeAnchor();
+    const on = () => recomputeAnchor();
+    window.addEventListener("resize", on);
+    window.addEventListener("scroll", on, true);
+    return () => {
+      window.removeEventListener("resize", on);
+      window.removeEventListener("scroll", on, true);
+    };
+  }, [open]);
 
   const counts = { qa: 0, mensajes: 0, sistema: 0 } as Record<Exclude<TabKey, "todas">, number>;
   items.forEach((n) => { counts[categorize(n)] += 1; });
@@ -94,8 +113,9 @@ export function NotificationBell() {
 
   return (
     <>
-      <div className="relative z-[9999]" ref={ref}>
+      <div className="relative" ref={ref}>
         <button
+          ref={btnRef}
           onClick={() => setOpen((o) => !o)}
           className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl text-white/80 transition hover:text-white"
           style={{
@@ -115,10 +135,16 @@ export function NotificationBell() {
           )}
         </button>
 
-        {open && (
+        {open && anchor && (
           <div
-            className="glass-modal absolute right-0 mt-2 w-[380px] max-h-[480px] overflow-hidden z-[9999] flex flex-col"
-            style={{ color: "var(--nuvia-text-primary)" }}
+            className="glass-modal w-[380px] max-h-[480px] overflow-hidden flex flex-col"
+            style={{
+              position: "fixed",
+              top: anchor.top,
+              right: anchor.right,
+              zIndex: 2147483000,
+              color: "var(--nuvia-text-primary)",
+            }}
           >
             <div
               className="flex items-center justify-between px-4 py-3"
