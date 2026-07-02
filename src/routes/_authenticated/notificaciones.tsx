@@ -564,7 +564,7 @@ function NotificacionesPage() {
                       const col = done ? C.green : active ? "#fff" : "rgba(231,236,245,.4)";
                       const border = done ? `${C.green}88` : active ? riskColor : "rgba(255,255,255,.10)";
                       return (
-                        <FragmentWithKey key={p}>
+                        <Fragment key={p}>
                           <div className="nvx-phase-node"
                             style={{
                               background: bg, color: col, border: `1px solid ${border}`,
@@ -575,7 +575,7 @@ function NotificacionesPage() {
                             <div className={`nvx-phase-line ${done ? "active" : ""}`}
                               style={{ background: done ? `${C.green}33` : "rgba(255,255,255,.06)" }} />
                           )}
-                        </FragmentWithKey>
+                        </Fragment>
                       );
                     })}
                   </div>
