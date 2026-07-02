@@ -980,70 +980,75 @@ function TimelineCard({
                   : nivel === "atencion" ? { label: "Media", color: "#F59E0B" }
                   : { label: "Normal", color: VERDE };
 
+  // Estado dinero — Pagado / Simulado
+  const honorariosPagados = ["honorarios_pagados", "caso_finalizado", "paz_y_salvo_generado"].includes(r.estado_caso ?? "");
+  const pagoLabel = honorariosPagados ? "Pagado" : "Simulado";
+  const pagoColor = honorariosPagados ? VERDE : "#A5B5E0";
+
   return (
     <div
       className="group relative overflow-hidden rounded-2xl backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5"
       style={{
-        background: `linear-gradient(180deg, rgba(10,22,40,0.75), rgba(7,17,32,0.88))`,
+        background: `linear-gradient(180deg, rgba(10,22,40,0.72), rgba(7,17,32,0.86))`,
         border: `1px solid ${BORDER}`,
         boxShadow: `0 6px 24px -12px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.04)`,
       }}
     >
-      {/* Lateral glow bar — stage */}
+      {/* Slim severity bar (SLA) */}
       <span
         className="absolute left-0 top-0 bottom-0 w-[3px]"
         style={{
-          background: `linear-gradient(180deg, ${stageColor}, ${stageColor}20)`,
-          boxShadow: `0 0 22px ${stageColor}88, 0 0 44px ${stageColor}44`,
+          background: `linear-gradient(180deg, ${slaTheme.fg}, ${slaTheme.fg}22)`,
+          boxShadow: `0 0 12px ${slaTheme.fg}88`,
         }}
-      />
-      {/* Hover glow */}
-      <span
-        className="absolute -right-20 top-1/2 -translate-y-1/2 h-40 w-40 rounded-full opacity-0 transition-opacity duration-500 group-hover:opacity-25 blur-3xl pointer-events-none"
-        style={{ background: stageColor }}
       />
 
       <div
-        className="relative grid gap-4 px-5 py-3.5 items-center"
-        style={{ gridTemplateColumns: "minmax(0,30fr) minmax(0,35fr) minmax(200px,20fr) minmax(150px,15fr)" }}
+        className="relative grid gap-6 px-6 py-5 items-center"
+        style={{ gridTemplateColumns: "minmax(0,25fr) minmax(0,45fr) minmax(210px,20fr) minmax(140px,10fr)" }}
       >
-        {/* ============ 1 · CLIENTE (30%) ============ */}
-        <div className="flex items-center gap-3 min-w-0">
-          {/* Avatar with stage-aware glow */}
-          <div className="relative shrink-0">
-            <span
-              className="absolute inset-0 rounded-2xl blur-lg opacity-70"
-              style={{ background: stageColor }}
-            />
-            <div
-              className="relative flex items-center justify-center rounded-2xl text-[16px] font-black text-white"
-              style={{
-                width: 50, height: 50,
-                background: `linear-gradient(135deg, ${aColor}, ${aColor}AA)`,
-                border: `1.5px solid ${stageColor}`,
-                boxShadow: `0 0 18px ${stageColor}66, inset 0 1px 0 rgba(255,255,255,0.2)`,
-              }}
-            >
-              {initial}
-            </div>
-            {/* stage ring pulse */}
-            <span
-              className="absolute -inset-1 rounded-2xl border pointer-events-none animate-pulse"
-              style={{ borderColor: `${stageColor}55` }}
-            />
+        {/* ============ 1 · IDENTIDAD CLIENTE (25%) ============ */}
+        <div className="flex items-center gap-3.5 min-w-0">
+          <div
+            className="relative shrink-0 flex items-center justify-center rounded-2xl text-[19px] font-black text-white"
+            style={{
+              width: 56, height: 56,
+              background: `linear-gradient(135deg, ${aColor}, ${aColor}AA)`,
+              border: `1px solid rgba(255,255,255,0.14)`,
+              boxShadow: `inset 0 1px 0 rgba(255,255,255,0.15)`,
+            }}
+          >
+            {initial}
           </div>
 
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+            <div className="font-bold text-[14px] leading-tight truncate text-white" title={r.cliente_nombre || "Sin nombre"}>
+              {r.cliente_nombre || "Sin nombre"}
+            </div>
+            <div className="flex items-center gap-1.5 text-[11px] mt-1 min-w-0" style={{ color: "#CBD5E1" }}>
+              <Building2 size={10} className="shrink-0 opacity-70" />
+              <span className="truncate font-medium">{r.banco || "—"}</span>
+            </div>
+            <div className="text-[10.5px] mt-0.5 min-w-0 truncate" style={{ color: TEXT2 }}>
+              <span className="uppercase tracking-wide">{r.producto || "—"}</span>
+              <span className="text-white/20 mx-1">·</span>
+              <span className="font-bold" style={{ color: AZUL }}>{r.modo.toUpperCase()}</span>
+            </div>
+            <div className="text-[10px] mt-0.5 truncate font-mono" style={{ color: TEXT2 }}>
+              Nº {r.numero_credito || r.cedula || "—"}
+            </div>
+
+            {/* Badges compactos */}
+            <div className="flex items-center gap-1 mt-2 flex-wrap">
               <span
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[8.5px] font-bold uppercase tracking-wider"
-                style={{ background: "rgba(68,93,163,0.15)", color: "#A5B5E0", border: `1px solid ${AZUL}55` }}
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[8.5px] font-bold uppercase tracking-wider"
+                style={{ background: "rgba(68,93,163,0.12)", color: "#A5B5E0", border: `1px solid ${AZUL}44` }}
                 title={etapa.descripcion}
               >
                 <Flag size={8} /> E{etapa.numero}
               </span>
               <span
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[8.5px] font-bold uppercase tracking-wider"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[8.5px] font-bold uppercase tracking-wider"
                 style={{ background: slaTheme.bg, color: slaTheme.fg, border: `1px solid ${slaTheme.border}` }}
               >
                 <Clock size={8} /> {slaLabel}
@@ -1052,40 +1057,17 @@ function TimelineCard({
                 <span className="rounded px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider"
                   style={{ background: "rgba(245,158,11,0.15)", color: "#F59E0B", border: "1px solid rgba(245,158,11,0.4)" }}>Dup</span>
               )}
-              {r.codigo && (
-                <span
-                  className="ml-auto rounded px-1.5 py-0.5 text-[8.5px] font-black tracking-wider truncate max-w-[180px]"
-                  style={{ background: "rgba(16,185,129,0.12)", color: "#34D399", border: "1px solid rgba(16,185,129,0.35)", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
-                  title={`Código de expediente NUVIA · ${r.codigo}`}
-                >
-                  {r.codigo}
-                </span>
-              )}
             </div>
-            <div className="font-bold text-[13.5px] leading-tight truncate text-white" title={r.cliente_nombre || "Sin nombre"}>
-              {r.cliente_nombre || "Sin nombre"}
-            </div>
-            <div className="flex items-center gap-1.5 text-[10.5px] mt-0.5 min-w-0" style={{ color: TEXT2 }}>
-              <Building2 size={9} className="shrink-0" />
-              <span className="truncate">{r.banco || "—"}</span>
-              <span className="text-white/20">·</span>
-              <span className="truncate">Nº {r.numero_credito || r.cedula || "—"}</span>
-            </div>
-            <div className="flex items-center gap-1 mt-0.5 text-[9.5px]" style={{ color: TEXT2 }}>
-              <span className="uppercase tracking-wide">{r.producto || "—"}</span>
-              <span className="text-white/20">·</span>
-              <span className="font-bold" style={{ color: AZUL }}>{r.modo.toUpperCase()}</span>
-            </div>
-            {/* Analista badge */}
+
             {analistaNombre && (
-              <div className="inline-flex items-center gap-1.5 mt-1.5 pl-0.5 pr-2 py-0.5 rounded-full"
+              <div className="inline-flex items-center gap-1.5 mt-2 pl-0.5 pr-2 py-0.5 rounded-full"
                    style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${BORDER}` }}
                    title={`Analista · ${analistaNombre}`}>
                 <span className="inline-flex items-center justify-center rounded-full text-[8.5px] font-black text-white"
                       style={{ width: 18, height: 18, background: `linear-gradient(135deg, ${AZUL}, ${VERDE})` }}>
                   {analistaIni || <AnalistaAvatar nombre={analistaNombre} email={analistaEmail} size={14} />}
                 </span>
-                <span className="text-[10px] font-semibold truncate max-w-[160px]" style={{ color: "#CBD5E1" }}>
+                <span className="text-[10px] font-semibold truncate max-w-[140px]" style={{ color: "#CBD5E1" }}>
                   {analistaNombre}
                 </span>
               </div>
@@ -1093,24 +1075,36 @@ function TimelineCard({
           </div>
         </div>
 
-        {/* ============ 2 · PIPELINE (35%) ============ */}
-        <div className="min-w-0 px-1">
-          <div className="flex items-center justify-between mb-1.5">
+        {/* ============ 2 · PIPELINE + HEALTH (45%) ============ */}
+        <div className="min-w-0">
+          <div className="flex items-center justify-between mb-2">
             <span className="text-[8.5px] font-bold uppercase tracking-[0.22em]" style={{ color: TEXT2 }}>Pipeline</span>
-            <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: stageColor, textShadow: `0 0 10px ${stageColor}88` }}>
-              {MILESTONES[activeIdx]?.label ?? "—"}
-            </span>
+            <div className="flex items-center gap-2">
+              {r.codigo && (
+                <span
+                  className="rounded px-1.5 py-0.5 text-[9px] font-black tracking-wider"
+                  style={{ background: "rgba(16,185,129,0.10)", color: "#34D399", border: "1px solid rgba(16,185,129,0.30)", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                  title={`Código de expediente NUVIA · ${r.codigo}`}
+                >
+                  {r.codigo}
+                </span>
+              )}
+              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: stageColor, textShadow: `0 0 10px ${stageColor}66` }}>
+                {MILESTONES[activeIdx]?.label ?? "—"}
+              </span>
+            </div>
           </div>
-          <div className="relative">
+
+          <div className="relative pt-1">
             {/* rail */}
-            <div className="absolute left-1 right-1 top-1/2 -translate-y-1/2 h-[2px] rounded-full" style={{ background: "rgba(255,255,255,0.06)" }} />
+            <div className="absolute left-2 right-2 top-[10px] h-[2px] rounded-full" style={{ background: "rgba(255,255,255,0.06)" }} />
             {/* filled rail */}
             <div
-              className="absolute left-1 top-1/2 -translate-y-1/2 h-[2px] rounded-full transition-all duration-500"
+              className="absolute left-2 top-[10px] h-[2px] rounded-full transition-all duration-500"
               style={{
-                width: `calc((100% - 8px) * ${activeIdx / (MILESTONES.length - 1)})`,
+                width: `calc((100% - 16px) * ${activeIdx / (MILESTONES.length - 1)})`,
                 background: `linear-gradient(90deg, ${AZUL}, ${stageColor})`,
-                boxShadow: `0 0 10px ${stageColor}`,
+                boxShadow: `0 0 8px ${stageColor}88`,
               }}
             />
             <div className="relative flex items-center justify-between">
@@ -1119,21 +1113,21 @@ function TimelineCard({
                 const active = i === activeIdx;
                 const nodeColor = STAGE_GLOW[i] ?? AZUL;
                 return (
-                  <div key={m.key} className="flex flex-col items-center gap-1">
+                  <div key={m.key} className="flex flex-col items-center gap-1.5">
                     <div
                       className="relative rounded-full transition-all"
                       style={{
-                        width: active ? 14 : 10, height: active ? 14 : 10,
-                        background: done ? `linear-gradient(135deg, ${AZUL}, ${nodeColor})` : "rgba(255,255,255,0.08)",
-                        border: `1.5px solid ${done ? "rgba(255,255,255,0.45)" : "rgba(255,255,255,0.1)"}`,
-                        boxShadow: active ? `0 0 12px ${nodeColor}, 0 0 24px ${nodeColor}66` : done ? `0 0 6px ${nodeColor}55` : "none",
+                        width: active ? 20 : 14, height: active ? 20 : 14,
+                        background: done ? `linear-gradient(135deg, ${AZUL}, ${nodeColor})` : "rgba(255,255,255,0.06)",
+                        border: `1.5px solid ${done ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.10)"}`,
+                        boxShadow: active ? `0 0 14px ${nodeColor}, 0 0 28px ${nodeColor}55` : "none",
                       }}
                     >
                       {active && (
-                        <span className="absolute inset-0 rounded-full animate-ping" style={{ background: nodeColor, opacity: 0.5 }} />
+                        <span className="absolute inset-0 rounded-full animate-ping" style={{ background: nodeColor, opacity: 0.4 }} />
                       )}
                     </div>
-                    <span className="text-[8px] font-bold uppercase tracking-wider" style={{ color: done ? "#E2E8F0" : TEXT2 }}>
+                    <span className="text-[8.5px] font-bold uppercase tracking-wider" style={{ color: done ? "#E2E8F0" : TEXT2 }}>
                       {m.label}
                     </span>
                   </div>
@@ -1142,62 +1136,70 @@ function TimelineCard({
             </div>
           </div>
 
-          {/* Health score */}
-          <div className="mt-2.5 flex items-center gap-2">
-            <div className="flex items-center gap-1 text-[8.5px] font-bold uppercase tracking-[0.18em] shrink-0" style={{ color: TEXT2 }}>
-              <Activity size={9} /> Health
+          {/* Operational Health */}
+          <div className="mt-4">
+            <div className="flex items-center justify-between mb-1">
+              <span className="inline-flex items-center gap-1 text-[8.5px] font-bold uppercase tracking-[0.22em]" style={{ color: TEXT2 }}>
+                <Activity size={9} /> Operational Health
+              </span>
+              <span className="text-[11px] font-black tabular-nums" style={{ color: healthColor, textShadow: `0 0 10px ${healthColor}55` }}>
+                {healthScore}%
+              </span>
             </div>
-            <div className="relative flex-1 h-[5px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
+            <div className="relative w-full h-[6px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
               <div
                 className="absolute inset-y-0 left-0 rounded-full transition-all duration-700"
                 style={{
                   width: `${healthScore}%`,
                   background: `linear-gradient(90deg, ${AZUL}, ${healthColor})`,
-                  boxShadow: `0 0 10px ${healthColor}88`,
+                  boxShadow: `0 0 8px ${healthColor}66`,
                 }}
               />
-            </div>
-            <div className="text-[10.5px] font-black tabular-nums shrink-0" style={{ color: healthColor, textShadow: `0 0 10px ${healthColor}66` }}>
-              {healthScore}%
             </div>
           </div>
         </div>
 
-        {/* ============ 3 · CONTROL (20%) ============ */}
-        <div className="min-w-0 rounded-xl px-3 py-2.5 flex flex-col gap-1.5"
+        {/* ============ 3 · HONORARIOS + ESTADOS (20%) ============ */}
+        <div className="min-w-0 rounded-xl px-4 py-3.5 flex flex-col gap-2"
              style={{ background: "rgba(255,255,255,0.025)", border: `1px solid ${BORDER}` }}>
-          <div className="text-[8px] font-bold uppercase tracking-[0.22em]" style={{ color: TEXT2 }}>Honorarios</div>
-          <div className="text-[19px] font-black tabular-nums leading-none" style={{ color: VERDE, textShadow: `0 0 16px ${VERDE}44` }}>
+          <div className="text-[8.5px] font-bold uppercase tracking-[0.22em]" style={{ color: TEXT2 }}>Honorarios</div>
+          <div className="text-[22px] font-black tabular-nums leading-none" style={{ color: VERDE }}>
             {formatCOP(Number(r.honorarios_final))}
           </div>
-          <div className="flex flex-wrap gap-1 mt-1">
-            <QABadge categoria={r.qa_categoria ?? null} score={r.qa_score ?? null} auditoriaId={r.qa_auditoria_id ?? null} size="xs" asLink={false} />
+
+          <div className="flex flex-col gap-1 mt-1">
+            {/* QA badge */}
+            <div>
+              <QABadge categoria={r.qa_categoria ?? null} score={r.qa_score ?? null} auditoriaId={r.qa_auditoria_id ?? null} size="xs" asLink={false} />
+            </div>
+            {/* Pagado / Simulado */}
             <span
-              className="inline-flex items-center gap-1 px-1.5 py-[2px] rounded-full text-[8.5px] font-bold uppercase tracking-wider"
-              style={{
-                background: qaFailed ? "rgba(244,63,94,0.12)" : `${theme.color}1A`,
-                color: qaFailed ? "#FB7185" : theme.color,
-                border: `1px solid ${qaFailed ? "rgba(244,63,94,0.45)" : theme.color + "55"}`,
-              }}
+              className="inline-flex items-center gap-1 px-1.5 py-[3px] rounded text-[8.5px] font-bold uppercase tracking-wider w-fit"
+              style={{ background: `${pagoColor}15`, color: pagoColor, border: `1px solid ${pagoColor}44` }}
             >
-              <span className="h-1 w-1 rounded-full" style={{ background: qaFailed ? "#FB7185" : theme.color }} />
-              {qaFailed ? "QA FAIL" : theme.label}
+              <span className="h-1 w-1 rounded-full" style={{ background: pagoColor }} />
+              {pagoLabel}
             </span>
+            {/* Normal / Crítico */}
             <span
-              className="inline-flex items-center gap-1 px-1.5 py-[2px] rounded-full text-[8.5px] font-bold uppercase tracking-wider"
-              style={{ background: `${prioridad.color}1A`, color: prioridad.color, border: `1px solid ${prioridad.color}55` }}
+              className="inline-flex items-center gap-1 px-1.5 py-[3px] rounded text-[8.5px] font-bold uppercase tracking-wider w-fit"
+              style={{
+                background: qaFailed ? "rgba(244,63,94,0.12)" : `${prioridad.color}15`,
+                color: qaFailed ? "#FB7185" : prioridad.color,
+                border: `1px solid ${qaFailed ? "rgba(244,63,94,0.4)" : prioridad.color + "44"}`,
+              }}
               title="Prioridad operativa"
             >
-              <Zap size={8} /> {prioridad.label}
+              <Zap size={8} /> {qaFailed ? "Crítico" : prioridad.label}
             </span>
             {auditCode && (
               <Link
                 to="/qa-ai/$id" params={{ id: r.qa_auditoria_id ?? "" }} onClick={(e) => e.stopPropagation()}
                 title="Ir a la auditoría QA"
-                className="rounded px-1.5 py-[2px] text-[8px] font-bold uppercase tracking-wider hover:brightness-125 transition truncate max-w-full"
+                className="rounded px-1.5 py-[3px] text-[8px] font-bold uppercase tracking-wider hover:brightness-125 transition truncate max-w-full w-fit"
                 style={{
-                  background: "rgba(68,93,163,0.15)", color: "#A5B5E0",
-                  border: "1px solid rgba(68,93,163,0.45)",
+                  background: "rgba(68,93,163,0.12)", color: "#A5B5E0",
+                  border: "1px solid rgba(68,93,163,0.40)",
                   fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
                 }}
               >{auditCode}</Link>
@@ -1205,7 +1207,7 @@ function TimelineCard({
           </div>
         </div>
 
-        {/* ============ 4 · ACCIONES (15%) ============ */}
+        {/* ============ 4 · ACCIONES (10%) ============ */}
         <div className="flex flex-col gap-1.5 shrink-0 w-full">
           <Link
             to="/casos/$id" params={{ id: r.id }}
@@ -1216,32 +1218,30 @@ function TimelineCard({
           </Link>
           <Link
             to="/casos/$id" params={{ id: r.id }} search={{ tab: "trazabilidad" } as never}
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 h-7 text-[9.5px] font-semibold uppercase tracking-wider transition whitespace-nowrap w-full hover:bg-white/[0.06]"
-            style={{ background: "rgba(255,255,255,0.03)", color: TEXT2, border: `1px solid ${BORDER}` }}
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 h-8 text-[9.5px] font-semibold uppercase tracking-wider transition whitespace-nowrap w-full hover:bg-white/[0.06]"
+            style={{ background: "rgba(255,255,255,0.03)", color: "#CBD5E1", border: `1px solid ${BORDER}` }}
           >
             Timeline
           </Link>
           <Link
             to="/casos/$id" params={{ id: r.id }} search={{ tab: "snapshot" } as never}
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 h-7 text-[9.5px] font-semibold uppercase tracking-wider transition whitespace-nowrap w-full hover:brightness-125"
-            style={{ background: "rgba(132,185,143,0.08)", color: VERDE, border: `1px solid ${VERDE}44` }}
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 h-8 text-[9.5px] font-semibold uppercase tracking-wider transition whitespace-nowrap w-full hover:bg-white/[0.06]"
+            style={{ background: "rgba(255,255,255,0.03)", color: "#CBD5E1", border: `1px solid ${BORDER}` }}
           >
             Documentos
           </Link>
-          {puedeAuditar && (
-            <button
-              type="button" onClick={runAuditoria} disabled={auditando}
-              title="Ejecutar auditoría NUVIA"
-              className="inline-flex items-center justify-center gap-1 rounded-lg px-3 h-7 text-[9.5px] font-bold uppercase tracking-wider transition hover:brightness-125 disabled:opacity-60 whitespace-nowrap w-full"
-              style={{
-                background: "linear-gradient(135deg, rgba(132,185,143,0.16), rgba(68,93,163,0.16))",
-                color: "#B8E5C0", border: "1px solid rgba(132,185,143,0.45)",
-              }}
-            >
-              {auditando ? <Loader2 size={10} className="animate-spin" /> : <ShieldCheck size={10} />}
-              {auditando ? "Auditando…" : "Auditar"}
-            </button>
-          )}
+          <button
+            type="button" onClick={runAuditoria} disabled={auditando || !puedeAuditar}
+            title={puedeAuditar ? "Ejecutar auditoría NUVIA" : "Ya auditado"}
+            className="inline-flex items-center justify-center gap-1 rounded-lg px-3 h-8 text-[9.5px] font-bold uppercase tracking-wider transition hover:brightness-125 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap w-full"
+            style={{
+              background: "linear-gradient(135deg, rgba(132,185,143,0.14), rgba(68,93,163,0.14))",
+              color: "#B8E5C0", border: "1px solid rgba(132,185,143,0.40)",
+            }}
+          >
+            {auditando ? <Loader2 size={10} className="animate-spin" /> : <ShieldCheck size={10} />}
+            {auditando ? "Auditando…" : "Auditar"}
+          </button>
         </div>
       </div>
     </div>
