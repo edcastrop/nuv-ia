@@ -542,7 +542,9 @@ function AuthenticatedLayout() {
               { to: "/simulador", label: "Simulador", Icon: Rocket },
               { to: "/nuvex-ia", label: "NUVIA IA", Icon: Sparkles },
               { to: "/casos", label: "Casos", Icon: FolderKanban },
-              { to: "/pipeline", label: "Pipeline", Icon: Kanban },
+              ...(!(has("director_financiero_qa") && !hasAny("super_admin", "admin", "gerencia", "licenciado", "asesor"))
+                ? [{ to: "/pipeline", label: "Pipeline", Icon: Kanban }]
+                : []),
 
               ...(hasAny("super_admin", "admin", "gerencia", "director_financiero_qa", "director_juridico")
                 ? [{ to: "/direccion/revisiones", label: "Revisiones", Icon: ShieldAlert }]
