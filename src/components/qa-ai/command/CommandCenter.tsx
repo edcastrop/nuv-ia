@@ -544,6 +544,9 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
                       <span title="Aprobada por auditor" style={{ marginLeft: 6, color: C.success }}>✓</span>
                     ) : null}
                   </td>
+                  <td style={{ padding: "10px 12px", color: C.textSec, whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums", fontSize: 11 }}>
+                    {r.ejecutado_at ? new Date(r.ejecutado_at).toLocaleString("es-CO", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—"}
+                  </td>
                   <td style={{ padding: "10px 12px", color: C.text, fontWeight: 500 }}>{r.cliente_nombre ?? "—"}</td>
                   <td style={{ padding: "10px 12px", color: C.text }}>{r.banco ?? "—"}</td>
                   <td style={{ padding: "10px 12px", color: C.textSec }}>{r.analista_nombre ?? "—"}</td>
