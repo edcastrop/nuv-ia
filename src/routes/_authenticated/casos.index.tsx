@@ -1080,18 +1080,18 @@ function TimelineCard({
         </div>
 
         {/* RIGHT — Score / honorarios */}
-        <div className="min-w-0 flex flex-col items-end gap-1.5">
+        <div className="min-w-0 flex flex-col items-end gap-1.5 max-w-full overflow-hidden">
           <div className="text-[9px] font-bold uppercase tracking-[0.18em]" style={{ color: TEXT2 }}>Honorarios</div>
           <div className="text-[18px] font-black tabular-nums leading-none" style={{ color: VERDE, textShadow: `0 0 18px ${VERDE}44` }}>
             {formatCOP(Number(r.honorarios_final))}
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap justify-end max-w-full">
             <QABadge categoria={r.qa_categoria ?? null} score={r.qa_score ?? null} auditoriaId={r.qa_auditoria_id ?? null} size="xs" asLink={false} />
             {auditCode && (
               <Link
                 to="/qa-ai/$id" params={{ id: r.qa_auditoria_id ?? "" }} onClick={(e) => e.stopPropagation()}
                 title="Ir a la auditoría QA"
-                className="rounded px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wider hover:brightness-125 transition"
+                className="rounded px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wider hover:brightness-125 transition truncate max-w-full"
                 style={{
                   background: "rgba(68,93,163,0.15)", color: "#A5B5E0",
                   border: "1px solid rgba(68,93,163,0.45)",
@@ -1100,6 +1100,7 @@ function TimelineCard({
               >{auditCode}</Link>
             )}
           </div>
+
           <span
             className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
             style={{
