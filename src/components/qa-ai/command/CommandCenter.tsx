@@ -184,7 +184,7 @@ function ActiveFilterChips({ items, total }: { items: Array<{ key: string; label
   );
 }
 
-// ───────────── FILTER BAR ─────────────
+// ───────────── FILTER BAR (compact + collapsible) ─────────────
 function FilterBar({
   f, setF, bancos, productos, analistas, onReset,
 }: {
@@ -192,23 +192,25 @@ function FilterBar({
   bancos: string[]; productos: string[]; analistas: { id: string; nombre: string }[];
   onReset: () => void;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const sel: React.CSSProperties = {
     background: C.surface2, color: C.text, border: `1px solid ${C.border}`,
-    borderRadius: 8, padding: "7px 10px", fontSize: 12, minWidth: 120, outline: "none",
+    borderRadius: 7, padding: "5px 8px", fontSize: 11.5, minWidth: 110, outline: "none", height: 30,
   };
   const chk: React.CSSProperties = {
-    display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: C.textSec,
-    background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 8, padding: "7px 10px", cursor: "pointer",
+    display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, color: C.textSec,
+    background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 7, padding: "5px 9px", cursor: "pointer", height: 30,
   };
+  const advancedActive = Boolean(f.producto || f.modalidad || f.moneda || f.rango !== "30" || f.scoreMin || f.criticos || f.fresh);
   return (
     <div style={{
       position: "sticky", top: 0, zIndex: 30,
-      background: "rgba(13,19,35,0.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
-      border: `1px solid ${C.border}`, borderRadius: 14, padding: 12,
-      display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center",
+      background: "rgba(13,19,35,0.9)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
+      border: `1px solid ${C.border}`, borderRadius: 12, padding: 8,
+      display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center",
     }}>
       <input
-        style={{ ...sel, minWidth: 220, flex: "1 1 220px" }}
+        style={{ ...sel, minWidth: 200, flex: "1 1 200px" }}
         placeholder="Buscar cliente, analista, banco o código…"
         value={f.q}
         onChange={(e) => setF((x) => ({ ...x, q: e.target.value }))}
@@ -221,21 +223,6 @@ function FilterBar({
         <option value="">Banco · todos</option>
         {bancos.map((b) => <option key={b} value={b}>{b}</option>)}
       </select>
-      <select style={sel} value={f.producto} onChange={(e) => setF((x) => ({ ...x, producto: e.target.value }))}>
-        <option value="">Producto · todos</option>
-        {productos.map((p) => <option key={p} value={p}>{p}</option>)}
-      </select>
-      <select style={sel} value={f.modalidad} onChange={(e) => setF((x) => ({ ...x, modalidad: e.target.value }))}>
-        <option value="">Modalidad · todas</option>
-        <option value="hipotecario">Hipotecario</option>
-        <option value="leasing">Leasing</option>
-        <option value="uvr">UVR</option>
-      </select>
-      <select style={sel} value={f.moneda} onChange={(e) => setF((x) => ({ ...x, moneda: e.target.value }))}>
-        <option value="">Moneda · todas</option>
-        <option value="pesos">Pesos</option>
-        <option value="uvr">UVR</option>
-      </select>
       <select style={sel} value={f.estadoQa} onChange={(e) => setF((x) => ({ ...x, estadoQa: e.target.value }))}>
         <option value="">Estado QA · todos</option>
         <option value="aprobado">Aprobado</option>
@@ -243,31 +230,63 @@ function FilterBar({
         <option value="requiere_revision">Requiere revisión</option>
         <option value="rechazado">Rechazado</option>
       </select>
-      <select style={sel} value={f.rango} onChange={(e) => setF((x) => ({ ...x, rango: e.target.value }))}>
-        <option value="7">Últimos 7 días</option>
-        <option value="30">Últimos 30 días</option>
-        <option value="90">Últimos 90 días</option>
-        <option value="">Todo el histórico</option>
-      </select>
-
-      <input
-        style={{ ...sel, minWidth: 90 }} placeholder="Score mín."
-        value={f.scoreMin} onChange={(e) => setF((x) => ({ ...x, scoreMin: e.target.value.replace(/[^\d.]/g, "") }))}
-      />
-      <label style={chk}>
-        <input type="checkbox" checked={f.criticos} onChange={(e) => setF((x) => ({ ...x, criticos: e.target.checked }))} />
-        Críticos
-      </label>
-      <label style={chk}>
-        <input type="checkbox" checked={f.fresh} onChange={(e) => setF((x) => ({ ...x, fresh: e.target.checked }))} />
-        FRECH activo
-      </label>
-      <button onClick={onReset} style={{ marginLeft: "auto", background: "transparent", color: C.textSec, border: `1px solid ${C.border}`, borderRadius: 8, padding: "7px 12px", fontSize: 12, cursor: "pointer" }}>
-        Limpiar filtros
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        style={{
+          ...chk,
+          color: advancedActive ? C.primary : C.textSec,
+          border: `1px solid ${advancedActive ? C.primary : C.border}`,
+          cursor: "pointer",
+        }}
+        title="Filtros avanzados"
+      >
+        Más filtros {expanded ? "▲" : "▼"}
       </button>
+      <button onClick={onReset} style={{ marginLeft: "auto", background: "transparent", color: C.textSec, border: `1px solid ${C.border}`, borderRadius: 7, padding: "5px 10px", fontSize: 11.5, cursor: "pointer", height: 30 }}>
+        Limpiar
+      </button>
+
+      {expanded && (
+        <div style={{ width: "100%", display: "flex", gap: 6, flexWrap: "wrap", paddingTop: 6, borderTop: `1px dashed ${C.border}` }}>
+          <select style={sel} value={f.producto} onChange={(e) => setF((x) => ({ ...x, producto: e.target.value }))}>
+            <option value="">Producto · todos</option>
+            {productos.map((p) => <option key={p} value={p}>{p}</option>)}
+          </select>
+          <select style={sel} value={f.modalidad} onChange={(e) => setF((x) => ({ ...x, modalidad: e.target.value }))}>
+            <option value="">Modalidad · todas</option>
+            <option value="hipotecario">Hipotecario</option>
+            <option value="leasing">Leasing</option>
+            <option value="uvr">UVR</option>
+          </select>
+          <select style={sel} value={f.moneda} onChange={(e) => setF((x) => ({ ...x, moneda: e.target.value }))}>
+            <option value="">Moneda · todas</option>
+            <option value="pesos">Pesos</option>
+            <option value="uvr">UVR</option>
+          </select>
+          <select style={sel} value={f.rango} onChange={(e) => setF((x) => ({ ...x, rango: e.target.value }))}>
+            <option value="7">Últimos 7 días</option>
+            <option value="30">Últimos 30 días</option>
+            <option value="90">Últimos 90 días</option>
+            <option value="">Todo el histórico</option>
+          </select>
+          <input
+            style={{ ...sel, minWidth: 90 }} placeholder="Score mín."
+            value={f.scoreMin} onChange={(e) => setF((x) => ({ ...x, scoreMin: e.target.value.replace(/[^\d.]/g, "") }))}
+          />
+          <label style={chk}>
+            <input type="checkbox" checked={f.criticos} onChange={(e) => setF((x) => ({ ...x, criticos: e.target.checked }))} />
+            Críticos
+          </label>
+          <label style={chk}>
+            <input type="checkbox" checked={f.fresh} onChange={(e) => setF((x) => ({ ...x, fresh: e.target.checked }))} />
+            FRECH activo
+          </label>
+        </div>
+      )}
     </div>
   );
 }
+
 
 // ───────────── PRIORITY PANEL ─────────────
 function PriorityPanel({ counts, active, onPick }: { counts: Record<string, number>; active: string | null; onPick: (k: string) => void }) {
