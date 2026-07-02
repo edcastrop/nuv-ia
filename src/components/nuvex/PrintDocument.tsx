@@ -122,6 +122,14 @@ const C = {
 const FONT = "'Inter','Manrope','SF Pro Display',Arial,sans-serif";
 const SIGNATURE = "'Allura','Caveat','Brush Script MT',cursive";
 
+function cleanCommercialVigencia(value: string | undefined): string {
+  const vigencia = (value ?? "").trim();
+  if (["12h", "12 h", "12 horas", "24h", "24 h", "24 horas", "48h", "48 h", "48 horas"].includes(vigencia.toLowerCase())) {
+    return "";
+  }
+  return vigencia;
+}
+
 function compactMoney(n: number): string {
   if (Math.abs(n) >= 1_000_000) return `$${(n / 1_000_000).toFixed(0)}M`;
   if (Math.abs(n) >= 1_000) return `$${(n / 1_000).toFixed(0)}K`;
@@ -202,7 +210,7 @@ export function PrintDocument(props: Props) {
   const honorariosBase = commercial?.honorariosBase ?? recommended.honorarios;
   const descuento = commercial?.hasDiscount ? Math.max(0, honorariosBase - honorariosFinales) : 0;
   // Vigencia comercial (texto libre capturado por el analista). Puede estar vacía.
-  const vigenciaRaw = (commercial?.vigencia ?? "").trim();
+  const vigenciaRaw = cleanCommercialVigencia(commercial?.vigencia);
   const descuentoPct = commercial?.hasDiscount && honorariosBase > 0
     ? Math.round(((honorariosBase - honorariosFinales) / honorariosBase) * 100)
     : 0;
