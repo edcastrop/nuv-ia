@@ -874,7 +874,7 @@ function NuviaInsights({
           </div>
           <div style={{
             display: "flex", flexDirection: "column", gap: 8,
-            overflowY: "auto", paddingRight: 4, maxHeight: 400,
+            overflowY: "auto", paddingRight: 4, maxHeight: 360,
           }}>
             {insights.map((it, i) => {
               const c = impactColor(it.impact);
