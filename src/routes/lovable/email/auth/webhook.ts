@@ -131,12 +131,22 @@ export const Route = createFileRoute("/lovable/email/auth/webhook")({
           )
         }
 
-        // Build template props from payload.data (HookData structure)
+        // Build template props from payload.data (HookData structure).
+        // Para recovery construimos un enlace directo a /reset-password con
+        // token_hash + type, que funciona en cualquier navegador/dispositivo
+        // (a diferencia del flujo PKCE por defecto que exige el mismo browser).
+        const APP_URL = 'https://nuv-ia.lovable.app'
+        const tokenHash = payload.data.token_hash
+        const emailActionType = payload.data.email_action_type || payload.data.action_type
+        let confirmationUrl: string = payload.data.url
+        if (emailActionType === 'recovery' && tokenHash) {
+          confirmationUrl = `${APP_URL}/reset-password?token_hash=${encodeURIComponent(tokenHash)}&type=recovery`
+        }
         const templateProps = {
           siteName: SITE_NAME,
           siteUrl: `https://${ROOT_DOMAIN}`,
           recipient: payload.data.email,
-          confirmationUrl: payload.data.url,
+          confirmationUrl,
           token: payload.data.token,
           email: payload.data.email,
           oldEmail: payload.data.old_email,
