@@ -100,6 +100,35 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
             .eq("asesor_id", user.id) as unknown as PromiseLike<{ count: number | null }>,
           "expedientes.activos.miAsesor",
         ),
+        tryCount(
+          supabase
+            .from("expedientes" as never)
+            .select("id", { count: "exact", head: true })
+            .eq("estado_caso", "aprobado") as unknown as PromiseLike<{ count: number | null }>,
+          "expedientes.aprobados",
+        ),
+        tryCount(
+          supabase
+            .from("expedientes" as never)
+            .select("id", { count: "exact", head: true })
+            .eq("estado_caso", "firmado") as unknown as PromiseLike<{ count: number | null }>,
+          "expedientes.firmados",
+        ),
+        tryCount(
+          supabase
+            .from("expedientes" as never)
+            .select("id", { count: "exact", head: true })
+            .eq("estado_caso", "pagado") as unknown as PromiseLike<{ count: number | null }>,
+          "expedientes.pagados",
+        ),
+        tryCount(
+          supabase
+            .from("notificaciones_usuario" as never)
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", user.id)
+            .eq("leida", false) as unknown as PromiseLike<{ count: number | null }>,
+          "notificaciones.criticas",
+        ),
       ]);
     })();
     return () => {
