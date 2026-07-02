@@ -562,7 +562,10 @@ function AuthenticatedLayout() {
               )
                 ? [{ to: "/herramientas", label: "Herramientas", Icon: Wrench }]
                 : []),
-              { to: "/notificaciones", label: "Alertas", Icon: Bell, badge: unread },
+              // Superficies transversales: Centro de Alertas y Directorio deben estar
+              // disponibles para TODOS los roles sin excepción (ya sin gate por rol).
+              { to: "/notificaciones", label: "Centro de Alertas", Icon: Bell, badge: unread },
+              { to: "/directorio", label: "Directorio NUVEX", Icon: BookUser },
               {
                 to: "/colaboracion",
                 label: "Colaboración",
@@ -570,7 +573,7 @@ function AuthenticatedLayout() {
                 badge: colabUnread,
               },
               { to: "/colaboracion/dm", label: "Mensajería", Icon: MessageSquare, badge: dmUnread },
-              { to: "/directorio", label: "Directorio", Icon: BookUser },
+
             ],
           },
           {
