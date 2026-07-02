@@ -470,7 +470,7 @@ function TopErrors({ errores }: { errores: CCError[] }) {
 function QaHealthTrend({ data }: { data: CCTrend[] }) {
   return (
     <Section title="Salud operativa QA" subtitle="Score promedio, aprobaciones, observaciones, rechazos y críticos.">
-      <div style={{ width: "100%", height: 280, padding: "8px 0" }}>
+      <div style={{ width: "100%", height: 200, padding: "4px 0" }}>
         <ResponsiveContainer>
           <LineChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: -10 }}>
             <CartesianGrid stroke={C.border} strokeDasharray="3 3" vertical={false} />
