@@ -49,6 +49,7 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
   const [showNuevo, setShowNuevo] = useState(false);
   const [accesoError, setAccesoError] = useState<string | null>(null);
   const [quickCtx, setQuickCtx] = useState<QuickCtx | null>(null);
+  const [ctxTab, setCtxTab] = useState<CtxTab>("ia");
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
