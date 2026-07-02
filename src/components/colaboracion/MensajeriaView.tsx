@@ -424,7 +424,7 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
           {/* QUICK CONTEXT — RIGHT PANEL */}
           {hasCanal && d && (
             <GlassPanel className="hidden lg:flex p-0 overflow-hidden flex-col">
-              <QuickContextPanel d={d} ctx={quickCtx} />
+              <QuickContextPanel d={d} ctx={quickCtx} tab={ctxTab} onTab={setCtxTab} />
             </GlassPanel>
           )}
         </div>
