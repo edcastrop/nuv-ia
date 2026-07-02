@@ -184,7 +184,15 @@ export function CommandCenter(props: {
       </div>
 
       {/* ROW 4 · Insights */}
-      <NuviaInsights insights={insights} />
+      <NuviaInsights
+        insights={insights}
+        counts={props.prioridad}
+        bancos={props.bancos}
+        analistas={props.analistas}
+        errores={props.topErrores}
+        tendencia={props.tendencia}
+        totalCasos={filtered.length}
+      />
 
       {/* ROW 5 · Review Queue compact */}
       <ReviewQueue rows={filtered} />
