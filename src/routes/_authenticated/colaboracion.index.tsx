@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Hash, MessageSquare, Users, Bell, Plus, FolderKanban, ArrowLeft, MessagesSquare,
+  Hash, Users, Bell, Plus, FolderKanban, MessagesSquare,
   Search, Filter, Shield, Briefcase, Building2, Scale, ClipboardCheck, Calculator,
   FileText, Activity, Clock, Sparkles, AlertTriangle, TrendingUp, Zap, ChevronRight, Radio,
 } from "lucide-react";
