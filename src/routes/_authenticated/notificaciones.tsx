@@ -255,6 +255,47 @@ function NotificacionesPage() {
           >
             Cargando…
           </div>
+        ) : tab === "qa" ? (
+          qaPend.length === 0 ? (
+            <EmptyState
+              icon={<CheckCircle2 size={20} />}
+              title="Sin auditorías pendientes"
+              description="Todas las validaciones QA están al día."
+            />
+          ) : (
+            <ListaRows>
+              {qaPend.map((q) => {
+                const exp = expedienteById.get(q.expediente_id);
+                const mins = Math.floor((now - new Date(q.solicitada_at).getTime()) / 60_000);
+                const label = mins < 60 ? `${mins} min` : `${Math.floor(mins / 60)}h ${mins % 60}m`;
+                const critico = mins >= 120;
+                const atencion = mins >= 60;
+                const color = critico
+                  ? "var(--nuvia-danger)"
+                  : atencion
+                    ? "var(--nuvia-warning)"
+                    : "var(--nuvia-accent-blue)";
+                return (
+                  <Row
+                    key={q.id}
+                    titulo={exp?.cliente_nombre ?? "Caso"}
+                    sub={exp?.banco ?? "—"}
+                    detalle={
+                      <span style={{ color }}>
+                        {critico ? "🚨 CRÍTICO · " : atencion ? "⏰ Atención · " : "⏳ "}
+                        Esperando dictamen QA hace {label}
+                      </span>
+                    }
+                    actions={
+                      <LinkBtn to="/qa-ai" params={{}}>
+                        Auditar ahora <ArrowRight size={11} />
+                      </LinkBtn>
+                    }
+                  />
+                );
+              })}
+            </ListaRows>
+          )
         ) : tab === "estancados" ? (
           estancados.length === 0 ? (
             <EmptyState
