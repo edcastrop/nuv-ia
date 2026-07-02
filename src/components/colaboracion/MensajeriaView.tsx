@@ -336,7 +336,7 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
               <EmptyState onOpen={() => setShowNuevo(true)} />
             ) : (
               <>
-                <ChatHeader d={d} canal={canal} onBack={() => setCanalState(null)} quickCtx={quickCtx} />
+                <ChatHeader d={d} canal={canal} onBack={() => setCanalState(null)} quickCtx={quickCtx} ctxTab={ctxTab} onCtxTab={setCtxTab} />
 
                 <div ref={messagesScrollRef} className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-1"
                   style={{ background: "linear-gradient(180deg, rgba(76,116,224,0.02) 0%, transparent 40%, rgba(52,199,89,0.02) 100%)" }}>
