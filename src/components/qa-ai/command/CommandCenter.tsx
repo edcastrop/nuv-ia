@@ -1054,7 +1054,7 @@ function HolographicBrain() {
 
   return (
     <div style={{
-      position: "relative", width: "100%", aspectRatio: "1 / 1", maxHeight: 220, margin: "0 auto",
+      position: "relative", width: "100%", height: 210, maxWidth: 240, margin: "0 auto",
       display: "grid", placeItems: "center",
     }}>
       <style>{`
