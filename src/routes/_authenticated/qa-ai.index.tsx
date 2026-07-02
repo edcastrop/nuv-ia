@@ -139,6 +139,8 @@ function QaAiDashboard() {
         </div>
       </div>
 
+      <QASLABanner />
+
       {data && (
         <CommandCenter
           rows={data.rows} bancos={data.bancos} analistas={data.analistas}
