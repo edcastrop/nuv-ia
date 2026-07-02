@@ -381,7 +381,15 @@ export function PrintDocument(props: Props) {
             <Impact icon={<CalendarDays />} label="NUEVA FECHA FIN" value={`${añoFinOpt}`} sub={`antes de ${añoFinActual}`} blue />
           </div>
 
-          <DecisionRapidaTable honorariosBase={honorariosBase} horasActivas={Number(horasVigencia)} />
+          <HonorariosFinalesBox
+            honorariosBase={honorariosBase}
+            honorariosFinales={honorariosFinales}
+            descuento={descuento}
+            descuentoPct={descuentoPct}
+            vigencia={vigenciaRaw}
+          />
+
+
 
 
 
