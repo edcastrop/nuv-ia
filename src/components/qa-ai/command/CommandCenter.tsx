@@ -300,11 +300,11 @@ function PriorityPanel({ counts, active, onPick }: { counts: Record<string, numb
   ];
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
-        <h2 style={{ fontSize: 13, fontWeight: 600, letterSpacing: 1.2, color: C.textSec, textTransform: "uppercase" }}>Requieren tu atención</h2>
-        {active && <button onClick={() => onPick(active)} style={{ fontSize: 11, color: C.primary, background: "transparent", border: "none", cursor: "pointer" }}>Quitar filtro</button>}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+        <h2 style={{ fontSize: 10.5, fontWeight: 600, letterSpacing: 1.2, color: C.textSec, textTransform: "uppercase", margin: 0 }}>Requieren tu atención</h2>
+        {active && <button onClick={() => onPick(active)} style={{ fontSize: 10.5, color: C.primary, background: "transparent", border: "none", cursor: "pointer" }}>Quitar filtro</button>}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(0,1fr))", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(0,1fr))", gap: 8 }}>
         {cards.map((c) => {
           const isActive = active === c.key;
           return (
@@ -312,15 +312,15 @@ function PriorityPanel({ counts, active, onPick }: { counts: Record<string, numb
               textAlign: "left", cursor: "pointer",
               background: isActive ? `linear-gradient(135deg, ${c.color}22, ${C.surface1})` : C.surface1,
               border: `1px solid ${isActive ? c.color : C.border}`,
-              borderRadius: 14, padding: 14, transition: "all 0.2s",
-              boxShadow: isActive ? `0 0 0 1px ${c.color}55, 0 12px 32px -16px ${c.color}66` : "none",
+              borderRadius: 10, padding: "8px 10px", transition: "all 0.2s",
+              boxShadow: isActive ? `0 0 0 1px ${c.color}55, 0 8px 20px -12px ${c.color}66` : "none",
+              display: "flex", alignItems: "center", gap: 10, minWidth: 0,
             }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, color: c.color, marginBottom: 8 }}>
-                {c.icon}
-                <span style={{ fontSize: 10.5, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.8 }}>{c.label}</span>
+              <div style={{ color: c.color, flexShrink: 0 }}>{c.icon}</div>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontSize: 9.5, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.6, color: c.color, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.label}</div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: C.text, lineHeight: 1.1, fontVariantNumeric: "tabular-nums" }}>{c.value}</div>
               </div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: C.text, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{c.value}</div>
-              <div style={{ fontSize: 10.5, color: C.textMuted, marginTop: 6 }}>Click para filtrar cola →</div>
             </button>
           );
         })}
@@ -328,6 +328,7 @@ function PriorityPanel({ counts, active, onPick }: { counts: Record<string, numb
     </div>
   );
 }
+
 
 // ───────────── BANK HEATMAP ─────────────
 function BankHeatmap({ bancos, onPick, active }: { bancos: CCBank[]; onPick: (b: string) => void; active: string }) {
