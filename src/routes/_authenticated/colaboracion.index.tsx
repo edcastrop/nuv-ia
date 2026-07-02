@@ -252,20 +252,33 @@ function ColaboracionPage() {
                 const sla = slaOf(c.id);
                 const etapa = etapaOf(c.id);
                 const p = prioTone(prio);
+                const owner = (c.caso_id && ownerMap[c.caso_id]) || {};
+                const cliente = owner.cliente || c.nombre.replace(/^Caso\s*·\s*/i, "");
+                const banco = owner.banco || c.descripcion || "Sin banco asignado";
+                const analistaName = owner.analista || "Sin asignar";
                 return (
                   <button key={c.id} onClick={() => setCanal(c.id)}
                     className="w-full text-left rounded-lg p-2.5 transition-all relative overflow-hidden group"
                     style={active
                       ? { background: "linear-gradient(135deg, rgba(59,130,246,0.14), rgba(16,185,129,0.06))", border: "1px solid rgba(59,130,246,0.45)", boxShadow: "0 0 20px rgba(59,130,246,0.15)" }
                       : { background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <div className="text-[12px] font-bold truncate flex-1" style={{ color: "rgba(255,255,255,0.95)" }}>
-                        {c.nombre.replace(/^Caso\s*·\s*/i, "")}
+                    <div className="flex items-start justify-between gap-2 mb-0.5">
+                      <div className="text-[12px] font-bold truncate flex-1 uppercase tracking-tight" style={{ color: "rgba(255,255,255,0.95)" }}>
+                        {cliente}
                       </div>
                       <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider rounded px-1.5 py-0.5" style={{ background: p.bg, color: p.fg, border: `1px solid ${p.border}` }}>{prio}</span>
                     </div>
-                    <div className="text-[10px] mb-1.5 truncate" style={{ color: "rgba(255,255,255,0.55)" }}>{c.descripcion || "Sin banco asignado"}</div>
-                    <div className="flex items-center justify-between gap-2 text-[10px]">
+                    <div className="text-[10px] truncate" style={{ color: "rgba(255,255,255,0.55)" }}>{banco}</div>
+
+                    {/* Analista owner */}
+                    <div className="mt-1.5 flex items-center gap-1.5">
+                      <OwnerAvatar name={analistaName} priority={prio} />
+                      <span className="text-[10.5px] font-medium truncate" style={{ color: owner.analista ? "rgba(255,255,255,0.82)" : "rgba(255,255,255,0.4)" }}>
+                        {analistaName}
+                      </span>
+                    </div>
+
+                    <div className="mt-1.5 flex items-center justify-between gap-2 text-[10px]">
                       <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5" style={{ background: "rgba(139,92,246,0.12)", color: "#C4B5FD", border: "1px solid rgba(139,92,246,0.25)" }}>
                         <Activity size={9} /> {etapa}
                       </span>
