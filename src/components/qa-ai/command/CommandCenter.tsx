@@ -381,7 +381,7 @@ function AnalystRanking({ analistas, onPick, active }: { analistas: CCAnalista[]
   const nivelColor = (n: number) => n === 3 ? C.success : n === 2 ? C.info : C.warning;
   return (
     <Section title="Desempeño de analistas" subtitle="Precisión, score promedio y nivel de autonomía.">
-      <div style={{ maxHeight: 320, overflowY: "auto" }}>
+      <div style={{ maxHeight: 220, overflowY: "auto" }}>
         <table style={{ width: "100%", fontSize: 12 }}>
           <thead>
             <tr style={{ background: "rgba(255,255,255,0.03)" }}>
