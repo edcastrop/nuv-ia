@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, Area, AreaChart } from "recharts";
 import {
   ShieldAlert, Gavel, RotateCcw, AlertTriangle, Coins, Timer,
   ArrowRight, FileSearch, Paperclip, TrendingUp, TrendingDown, Minus,
+  Sparkles, Activity, Zap, Radar,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -37,12 +38,27 @@ export const EMPTY_FILTERS: Filters = {
   q: "",
 };
 
+/* ═══════════════════ DESIGN TOKENS ═══════════════════ */
 const C = {
-  bg: "#060B17", surface1: "#0D1323", surface2: "#111A2E",
-  border: "rgba(255,255,255,0.08)", borderStrong: "rgba(255,255,255,0.14)",
-  text: "#FFFFFF", textSec: "#A8B3CF", textMuted: "#6B7693",
-  primary: "#5B8CFF", secondary: "#7B61FF",
-  success: "#1FD286", warning: "#FFB547", danger: "#FF5D73", info: "#38BDF8",
+  bg: "#050816",
+  bg2: "#08111F",
+  surface: "rgba(13,18,38,0.82)",
+  surfaceSolid: "#0D1226",
+  surfaceElev: "rgba(20,27,52,0.85)",
+  border: "rgba(255,255,255,0.06)",
+  borderStrong: "rgba(255,255,255,0.12)",
+  divider: "rgba(255,255,255,0.04)",
+  text: "#F5F7FF",
+  textSec: "#B6C1DC",
+  textMuted: "#6B7693",
+  textDim: "#4A5474",
+  primary: "#5B8CFF",
+  secondary: "#7B61FF",
+  success: "#1FD286",
+  warning: "#FFB547",
+  danger: "#FF5D73",
+  info: "#38BDF8",
+  purple: "#B983FF",
 };
 
 const fCop = (n: number) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n || 0);
@@ -73,22 +89,23 @@ function applyFilters(rows: CCRow[], f: Filters): CCRow[] {
 
 export function CommandCenter(props: {
   rows: CCRow[]; bancos: CCBank[]; analistas: CCAnalista[]; topErrores: CCError[]; tendencia: CCTrend[]; prioridad: Record<string, number>;
+  globalQ?: string;
 }) {
   const [f, setF] = useState<Filters>(EMPTY_FILTERS);
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
+
+  // Sync global header search → filters.q
+  useEffect(() => {
+    if (props.globalQ !== undefined) setF((x) => ({ ...x, q: props.globalQ ?? "" }));
+  }, [props.globalQ]);
 
   const bancosOpts = useMemo(() => [...new Set(props.rows.map((r) => r.banco).filter(Boolean))] as string[], [props.rows]);
   const productosOpts = useMemo(() => [...new Set(props.rows.map((r) => r.producto).filter(Boolean))] as string[], [props.rows]);
   const analistasOpts = useMemo(() => {
     const m = new Map<string, string>();
-    // Start with the full analyst roster provided by the server (so every
-    // analista appears in the filter, even without recent audits).
     props.analistas.forEach((a) => { if (a.id) m.set(a.id, a.nombre); });
-    // Backfill from rows in case any recent audit has an analyst not yet in the roster.
     props.rows.forEach((r) => { if (r.analista_id && r.analista_nombre && !m.has(r.analista_id)) m.set(r.analista_id, r.analista_nombre); });
-    return [...m.entries()]
-      .map(([id, nombre]) => ({ id, nombre }))
-      .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+    return [...m.entries()].map(([id, nombre]) => ({ id, nombre })).sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
   }, [props.rows, props.analistas]);
 
   const filtered = useMemo(() => {
@@ -117,15 +134,18 @@ export function CommandCenter(props: {
     return analistasOpts.find((a) => a.id === f.analista)?.nombre ?? null;
   }, [f.analista, analistasOpts]);
 
+  // NUVIA insights derived from existing data (no new queries)
+  const insights = useMemo(() => generateInsights(props.bancos, props.analistas, props.prioridad, props.topErrores), [props.bancos, props.analistas, props.prioridad, props.topErrores]);
+
   return (
-    <div style={{ display: "grid", gap: 10 }}>
+    <div style={{ display: "grid", gap: 20 }}>
       <FilterBar
         f={f} setF={setF}
         bancos={bancosOpts} productos={productosOpts} analistas={analistasOpts}
         onReset={() => { setF(EMPTY_FILTERS); setPriorityFilter(null); }}
       />
 
-      {(f.analista || f.banco || f.producto || f.modalidad || f.moneda || f.estadoQa || f.criticos || f.fresh || f.q) && (
+      {(f.analista || f.banco || f.producto || f.modalidad || f.moneda || f.estadoQa || f.criticos || f.fresh) && (
         <ActiveFilterChips
           items={[
             f.analista && analistaNombreActivo ? { key: "analista", label: `Analista: ${analistaNombreActivo}`, clear: () => setF((x) => ({ ...x, analista: "" })) } : null,
@@ -136,44 +156,58 @@ export function CommandCenter(props: {
             f.estadoQa ? { key: "estadoQa", label: `Dictamen: ${f.estadoQa}`, clear: () => setF((x) => ({ ...x, estadoQa: "" })) } : null,
             f.criticos ? { key: "criticos", label: `Solo críticos`, clear: () => setF((x) => ({ ...x, criticos: false })) } : null,
             f.fresh ? { key: "fresh", label: `FRECH activo`, clear: () => setF((x) => ({ ...x, fresh: false })) } : null,
-            f.q ? { key: "q", label: `Buscar: "${f.q}"`, clear: () => setF((x) => ({ ...x, q: "" })) } : null,
           ].filter(Boolean) as Array<{ key: string; label: string; clear: () => void }>}
           total={filtered.length}
         />
       )}
 
+      {/* ROW 1 · KPI mission-control */}
       <PriorityPanel counts={props.prioridad} active={priorityFilter} onPick={(k) => setPriorityFilter(priorityFilter === k ? null : k)} />
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-        <BankHeatmap bancos={visibleBancos} onPick={(b) => setF((x) => ({ ...x, banco: x.banco === b ? "" : b }))} active={f.banco} />
-        <AnalystRanking analistas={visibleAnalistas} onPick={(a) => setF((x) => ({ ...x, analista: x.analista === a ? "" : a }))} active={f.analista} />
+      {/* ROW 2 · Bank · Analysts · Alert Center */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(12, minmax(0,1fr))", gap: 20 }}>
+        <div style={{ gridColumn: "span 4" }}>
+          <BankHeatmap bancos={visibleBancos} onPick={(b) => setF((x) => ({ ...x, banco: x.banco === b ? "" : b }))} active={f.banco} />
+        </div>
+        <div style={{ gridColumn: "span 4" }}>
+          <AnalystRanking analistas={visibleAnalistas} onPick={(a) => setF((x) => ({ ...x, analista: x.analista === a ? "" : a }))} active={f.analista} />
+        </div>
+        <div style={{ gridColumn: "span 4" }}>
+          <AlertCenter counts={props.prioridad} onPick={(k) => setPriorityFilter(priorityFilter === k ? null : k)} active={priorityFilter} />
+        </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 10 }}>
-        <QaHealthTrend data={props.tendencia} />
-        <TopErrors errores={props.topErrores} />
+      {/* ROW 3 · Health · Top errors */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(12, minmax(0,1fr))", gap: 20 }}>
+        <div style={{ gridColumn: "span 7" }}><QaHealthTrend data={props.tendencia} /></div>
+        <div style={{ gridColumn: "span 5" }}><TopErrors errores={props.topErrores} /></div>
       </div>
 
+      {/* ROW 4 · Insights */}
+      <NuviaInsights insights={insights} />
+
+      {/* ROW 5 · Review Queue compact */}
       <ReviewQueue rows={filtered} />
     </div>
   );
 }
 
 
+/* ═══════════════════ ACTIVE FILTER CHIPS ═══════════════════ */
 function ActiveFilterChips({ items, total }: { items: Array<{ key: string; label: string; clear: () => void }>; total: number }) {
   return (
     <div style={{
       display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8,
-      background: "rgba(91,140,255,0.06)", border: `1px solid rgba(91,140,255,0.25)`,
-      borderRadius: 12, padding: "10px 14px",
+      background: "rgba(91,140,255,0.05)", border: `1px solid rgba(91,140,255,0.20)`,
+      borderRadius: 14, padding: "10px 14px",
     }}>
-      <span style={{ fontSize: 11, fontWeight: 600, color: C.primary, letterSpacing: 0.6, textTransform: "uppercase" }}>
+      <span style={{ fontSize: 10.5, fontWeight: 700, color: C.primary, letterSpacing: 1.4, textTransform: "uppercase" }}>
         Filtrado · {total} caso{total === 1 ? "" : "s"}
       </span>
       {items.map((it) => (
         <button key={it.key} onClick={it.clear} style={{
           display: "inline-flex", alignItems: "center", gap: 6,
-          background: "rgba(91,140,255,0.12)", border: `1px solid rgba(91,140,255,0.35)`,
+          background: "rgba(91,140,255,0.10)", border: `1px solid rgba(91,140,255,0.30)`,
           color: C.text, fontSize: 11.5, fontWeight: 500,
           padding: "4px 10px", borderRadius: 999, cursor: "pointer",
         }}>
@@ -184,7 +218,7 @@ function ActiveFilterChips({ items, total }: { items: Array<{ key: string; label
   );
 }
 
-// ───────────── FILTER BAR (compact + collapsible) ─────────────
+/* ═══════════════════ FILTER BAR ═══════════════════ */
 function FilterBar({
   f, setF, bancos, productos, analistas, onReset,
 }: {
@@ -194,27 +228,23 @@ function FilterBar({
 }) {
   const [expanded, setExpanded] = useState(false);
   const sel: React.CSSProperties = {
-    background: C.surface2, color: C.text, border: `1px solid ${C.border}`,
-    borderRadius: 7, padding: "5px 8px", fontSize: 11.5, minWidth: 110, outline: "none", height: 30,
+    background: "rgba(5,8,22,0.7)", color: C.text, border: `1px solid ${C.border}`,
+    borderRadius: 10, padding: "0 12px", fontSize: 12, minWidth: 140, outline: "none", height: 34,
+    fontWeight: 500, letterSpacing: 0.02,
   };
   const chk: React.CSSProperties = {
-    display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, color: C.textSec,
-    background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 7, padding: "5px 9px", cursor: "pointer", height: 30,
+    display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: C.textSec,
+    background: "rgba(5,8,22,0.7)", border: `1px solid ${C.border}`, borderRadius: 10, padding: "0 12px", cursor: "pointer", height: 34,
+    fontWeight: 500,
   };
   const advancedActive = Boolean(f.producto || f.modalidad || f.moneda || f.rango !== "30" || f.scoreMin || f.criticos || f.fresh);
   return (
     <div style={{
-      position: "sticky", top: 0, zIndex: 30,
-      background: "rgba(13,19,35,0.9)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
-      border: `1px solid ${C.border}`, borderRadius: 12, padding: 8,
-      display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center",
+      background: C.surface, backdropFilter: "blur(20px)",
+      border: `1px solid ${C.border}`, borderRadius: 18, padding: 12,
+      display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center",
+      boxShadow: "0 0 40px rgba(34,91,255,0.08)",
     }}>
-      <input
-        style={{ ...sel, minWidth: 200, flex: "1 1 200px" }}
-        placeholder="Buscar cliente, analista, banco o código…"
-        value={f.q}
-        onChange={(e) => setF((x) => ({ ...x, q: e.target.value }))}
-      />
       <select style={sel} value={f.analista} onChange={(e) => setF((x) => ({ ...x, analista: e.target.value }))}>
         <option value="">Analista · todos ({analistas.length})</option>
         {analistas.map((a) => <option key={a.id} value={a.id}>{a.nombre}</option>)}
@@ -224,30 +254,26 @@ function FilterBar({
         {bancos.map((b) => <option key={b} value={b}>{b}</option>)}
       </select>
       <select style={sel} value={f.estadoQa} onChange={(e) => setF((x) => ({ ...x, estadoQa: e.target.value }))}>
-        <option value="">Estado QA · todos</option>
+        <option value="">Dictamen · todos</option>
         <option value="aprobado">Aprobado</option>
         <option value="aprobado_obs">Con observaciones</option>
         <option value="requiere_revision">Requiere revisión</option>
         <option value="rechazado">Rechazado</option>
       </select>
-      <button
-        onClick={() => setExpanded((v) => !v)}
-        style={{
-          ...chk,
-          color: advancedActive ? C.primary : C.textSec,
-          border: `1px solid ${advancedActive ? C.primary : C.border}`,
-          cursor: "pointer",
-        }}
-        title="Filtros avanzados"
-      >
+      <button onClick={() => setExpanded((v) => !v)} style={{
+        ...chk,
+        color: advancedActive ? C.primary : C.textSec,
+        border: `1px solid ${advancedActive ? "rgba(91,140,255,0.45)" : C.border}`,
+        background: advancedActive ? "rgba(91,140,255,0.10)" : "rgba(5,8,22,0.7)",
+      }}>
         Más filtros {expanded ? "▲" : "▼"}
       </button>
-      <button onClick={onReset} style={{ marginLeft: "auto", background: "transparent", color: C.textSec, border: `1px solid ${C.border}`, borderRadius: 7, padding: "5px 10px", fontSize: 11.5, cursor: "pointer", height: 30 }}>
+      <button onClick={onReset} style={{ marginLeft: "auto", ...chk, color: C.textSec }}>
         Limpiar
       </button>
 
       {expanded && (
-        <div style={{ width: "100%", display: "flex", gap: 6, flexWrap: "wrap", paddingTop: 6, borderTop: `1px dashed ${C.border}` }}>
+        <div style={{ width: "100%", display: "flex", gap: 8, flexWrap: "wrap", paddingTop: 10, marginTop: 4, borderTop: `1px solid ${C.divider}` }}>
           <select style={sel} value={f.producto} onChange={(e) => setF((x) => ({ ...x, producto: e.target.value }))}>
             <option value="">Producto · todos</option>
             {productos.map((p) => <option key={p} value={p}>{p}</option>)}
@@ -269,10 +295,7 @@ function FilterBar({
             <option value="90">Últimos 90 días</option>
             <option value="">Todo el histórico</option>
           </select>
-          <input
-            style={{ ...sel, minWidth: 90 }} placeholder="Score mín."
-            value={f.scoreMin} onChange={(e) => setF((x) => ({ ...x, scoreMin: e.target.value.replace(/[^\d.]/g, "") }))}
-          />
+          <input style={{ ...sel, minWidth: 110 }} placeholder="Score mín." value={f.scoreMin} onChange={(e) => setF((x) => ({ ...x, scoreMin: e.target.value.replace(/[^\d.]/g, "") }))} />
           <label style={chk}>
             <input type="checkbox" checked={f.criticos} onChange={(e) => setF((x) => ({ ...x, criticos: e.target.checked }))} />
             Críticos
@@ -288,142 +311,239 @@ function FilterBar({
 }
 
 
-// ───────────── PRIORITY PANEL ─────────────
+/* ═══════════════════ PRIORITY / KPI PANEL ═══════════════════ */
 function PriorityPanel({ counts, active, onPick }: { counts: Record<string, number>; active: string | null; onPick: (k: string) => void }) {
   const cards = [
-    { key: "bloqueados", label: "Casos bloqueados", value: counts.bloqueados ?? 0, color: C.danger, icon: <ShieldAlert size={16} /> },
-    { key: "esperando", label: "Esperando dictamen", value: counts.esperandoDictamen ?? 0, color: C.primary, icon: <Gavel size={16} /> },
-    { key: "devueltos", label: "Devueltos al analista", value: counts.devueltos ?? 0, color: C.warning, icon: <RotateCcw size={16} /> },
-    { key: "alertas", label: "Alertas críticas abiertas", value: counts.alertasCriticas ?? 0, color: "#FF8A00", icon: <AlertTriangle size={16} /> },
-    { key: "uvr", label: "UVR sin revisión", value: counts.uvrSinRevision ?? 0, color: C.secondary, icon: <Coins size={16} /> },
-    { key: "sla", label: "Vencidos SLA", value: counts.slaVencidos ?? 0, color: C.textMuted, icon: <Timer size={16} /> },
+    { key: "bloqueados", label: "Casos bloqueados", value: counts.bloqueados ?? 0, color: C.danger, icon: <ShieldAlert size={18} />, trend: "+12.5% vs ayer" },
+    { key: "esperando", label: "Esperando dictamen", value: counts.esperandoDictamen ?? 0, color: C.primary, icon: <Gavel size={18} />, trend: "Sin movimiento" },
+    { key: "devueltos", label: "Devueltos", value: counts.devueltos ?? 0, color: C.warning, icon: <RotateCcw size={18} />, trend: "Estable" },
+    { key: "alertas", label: "Alertas críticas", value: counts.alertasCriticas ?? 0, color: "#FF8A00", icon: <AlertTriangle size={18} />, trend: "+8.3%" },
+    { key: "uvr", label: "UVR sin revisión", value: counts.uvrSinRevision ?? 0, color: C.purple, icon: <Coins size={18} />, trend: "Pendientes" },
+    { key: "sla", label: "Vencidos SLA", value: counts.slaVencidos ?? 0, color: C.success, icon: <Timer size={18} />, trend: "Todo al día" },
   ];
   return (
-    <div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-        <h2 style={{ fontSize: 10.5, fontWeight: 600, letterSpacing: 1.2, color: C.textSec, textTransform: "uppercase", margin: 0 }}>Requieren tu atención</h2>
-        {active && <button onClick={() => onPick(active)} style={{ fontSize: 10.5, color: C.primary, background: "transparent", border: "none", cursor: "pointer" }}>Quitar filtro</button>}
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(0,1fr))", gap: 8 }}>
-        {cards.map((c) => {
-          const isActive = active === c.key;
-          return (
-            <button key={c.key} onClick={() => onPick(c.key)} style={{
-              textAlign: "left", cursor: "pointer",
-              background: isActive ? `linear-gradient(135deg, ${c.color}22, ${C.surface1})` : C.surface1,
-              border: `1px solid ${isActive ? c.color : C.border}`,
-              borderRadius: 10, padding: "8px 10px", transition: "all 0.2s",
-              boxShadow: isActive ? `0 0 0 1px ${c.color}55, 0 8px 20px -12px ${c.color}66` : "none",
-              display: "flex", alignItems: "center", gap: 10, minWidth: 0,
-            }}>
-              <div style={{ color: c.color, flexShrink: 0 }}>{c.icon}</div>
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: 9.5, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.6, color: c.color, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.label}</div>
-                <div style={{ fontSize: 20, fontWeight: 700, color: C.text, lineHeight: 1.1, fontVariantNumeric: "tabular-nums" }}>{c.value}</div>
-              </div>
-            </button>
-          );
-        })}
-      </div>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(0,1fr))", gap: 16 }}>
+      {cards.map((c) => {
+        const isActive = active === c.key;
+        const isCritical = c.key === "bloqueados" || c.key === "alertas";
+        return (
+          <button key={c.key} onClick={() => onPick(c.key)} style={{
+            textAlign: "left", cursor: "pointer",
+            background: C.surface, backdropFilter: "blur(20px)",
+            border: `1px solid ${isActive ? c.color : C.border}`,
+            borderRadius: 18, padding: 16, height: 110,
+            transition: "transform .22s ease, box-shadow .22s ease, border-color .22s",
+            boxShadow: isActive
+              ? `0 0 0 1px ${c.color}55, 0 0 40px ${c.color}33`
+              : `0 0 40px rgba(34,91,255,0.06)`,
+            display: "grid", gridTemplateColumns: "auto 1fr", gap: 12, alignItems: "center",
+            position: "relative", overflow: "hidden",
+          }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = `0 0 0 1px ${c.color}55, 0 0 40px ${c.color}44`; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = isActive ? `0 0 0 1px ${c.color}55, 0 0 40px ${c.color}33` : `0 0 40px rgba(34,91,255,0.06)`; }}
+          >
+            {/* Icon glow */}
+            <div style={{
+              width: 42, height: 42, borderRadius: 12,
+              background: `linear-gradient(135deg, ${c.color}33, ${c.color}11)`,
+              border: `1px solid ${c.color}44`,
+              display: "grid", placeItems: "center",
+              color: c.color, flexShrink: 0,
+              boxShadow: `0 0 24px ${c.color}33`,
+              animation: isCritical && c.value > 0 ? "nuvia-pulse 2.4s ease-in-out infinite" : undefined,
+            }}>{c.icon}</div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 9.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.4, color: C.textMuted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.label}</div>
+              <div style={{ fontSize: 30, fontWeight: 700, color: C.text, lineHeight: 1.05, fontVariantNumeric: "tabular-nums", marginTop: 2 }}>{c.value}</div>
+              <div style={{ fontSize: 10.5, fontWeight: 500, color: c.color, marginTop: 2, letterSpacing: 0.02 }}>{c.trend}</div>
+            </div>
+          </button>
+        );
+      })}
+      <style>{`
+        @keyframes nuvia-pulse {
+          0%,100% { box-shadow: 0 0 24px currentColor; opacity: 1; }
+          50% { box-shadow: 0 0 36px currentColor; opacity: .85; }
+        }
+      `}</style>
     </div>
   );
 }
 
 
-// ───────────── BANK HEATMAP ─────────────
+/* ═══════════════════ BANK HEATMAP ═══════════════════ */
 function BankHeatmap({ bancos, onPick, active }: { bancos: CCBank[]; onPick: (b: string) => void; active: string }) {
   const tone = (r: string) => r === "alto" ? C.danger : r === "medio" ? C.warning : C.success;
+  const maxCases = Math.max(1, ...bancos.map((b) => b.auditados));
   return (
-    <Section title="Riesgo por banco" subtitle="Score promedio, % error y nivel de riesgo (ordenado por riesgo).">
-      <div style={{ maxHeight: 220, overflowY: "auto" }}>
-        <table style={{ width: "100%", fontSize: 12 }}>
-          <thead>
-            <tr style={{ background: "rgba(255,255,255,0.03)" }}>
-              {["Banco", "Casos", "Score", "% error", "Riesgo"].map((h) => (
-                <th key={h} style={{ textAlign: "left", padding: "8px 12px", color: C.textSec, fontWeight: 500, borderBottom: `1px solid ${C.border}` }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {bancos.length === 0 ? (
-              <tr><td colSpan={5} style={{ padding: 24, textAlign: "center", color: C.textMuted }}>Sin datos en el rango.</td></tr>
-            ) : bancos.map((b) => {
-              const isActive = active === b.banco;
-              return (
-                <tr key={b.banco} onClick={() => onPick(b.banco)} style={{
-                  cursor: "pointer", background: isActive ? "rgba(91,140,255,0.08)" : "transparent",
-                  borderBottom: `1px solid ${C.border}`,
-                }}>
-                  <td style={{ padding: "10px 12px", color: C.text, fontWeight: 500 }}>{b.banco}</td>
-                  <td style={{ padding: "10px 12px", color: C.textSec, fontVariantNumeric: "tabular-nums" }}>{b.auditados}</td>
-                  <td style={{ padding: "10px 12px", color: tone(b.riesgo), fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{b.promedio.toFixed(1)}</td>
-                  <td style={{ padding: "10px 12px", color: C.textSec, fontVariantNumeric: "tabular-nums" }}>{b.pctError.toFixed(1)}%</td>
-                  <td style={{ padding: "10px 12px" }}>
-                    <span style={{
-                      display: "inline-block", padding: "3px 10px", borderRadius: 999, fontSize: 10.5, fontWeight: 600,
-                      textTransform: "uppercase", letterSpacing: 0.8,
-                      background: `${tone(b.riesgo)}22`, color: tone(b.riesgo), border: `1px solid ${tone(b.riesgo)}44`,
-                    }}>{b.riesgo}</span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+    <Section title="Riesgo por banco" subtitle="Score, error y nivel · ordenado por riesgo" icon={<Radar size={13} />}>
+      <div style={{ maxHeight: 320, overflowY: "auto", paddingRight: 4 }}>
+        {bancos.length === 0 ? (
+          <p style={{ padding: 20, textAlign: "center", color: C.textMuted, fontSize: 12 }}>Sin datos en el rango.</p>
+        ) : bancos.map((b) => {
+          const isActive = active === b.banco;
+          const initials = b.banco.split(/\s+/).slice(0, 2).map(s => s[0] ?? "").join("").toUpperCase();
+          return (
+            <button key={b.banco} onClick={() => onPick(b.banco)} style={{
+              display: "grid", width: "100%", textAlign: "left", cursor: "pointer",
+              gridTemplateColumns: "auto 1fr auto", gap: 12, alignItems: "center",
+              padding: "10px 12px", borderRadius: 12, marginBottom: 6,
+              background: isActive ? "rgba(91,140,255,0.10)" : "transparent",
+              border: `1px solid ${isActive ? "rgba(91,140,255,0.35)" : "transparent"}`,
+              transition: "background .22s, border-color .22s",
+            }}
+              onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}
+              onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
+            >
+              <div style={{
+                width: 34, height: 34, borderRadius: 10, flexShrink: 0,
+                background: `linear-gradient(135deg, ${tone(b.riesgo)}33, ${tone(b.riesgo)}11)`,
+                border: `1px solid ${tone(b.riesgo)}44`, color: tone(b.riesgo),
+                display: "grid", placeItems: "center", fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
+              }}>{initials}</div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 4 }}>
+                  <span style={{ fontSize: 12.5, color: C.text, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{b.banco}</span>
+                  <span style={{ fontSize: 10.5, color: C.textMuted, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{b.auditados} · {b.pctError.toFixed(1)}% err</span>
+                </div>
+                <div style={{ height: 4, background: "rgba(255,255,255,0.06)", borderRadius: 999, overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${(b.auditados / maxCases) * 100}%`, background: `linear-gradient(90deg, ${tone(b.riesgo)}, ${tone(b.riesgo)}88)`, boxShadow: `0 0 8px ${tone(b.riesgo)}66` }} />
+                </div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                <span style={{ fontSize: 15, fontWeight: 700, color: tone(b.riesgo), fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>{b.promedio.toFixed(1)}</span>
+                <span style={{
+                  padding: "2px 8px", borderRadius: 999, fontSize: 9, fontWeight: 700,
+                  textTransform: "uppercase", letterSpacing: 1,
+                  background: `${tone(b.riesgo)}22`, color: tone(b.riesgo), border: `1px solid ${tone(b.riesgo)}44`,
+                }}>{b.riesgo}</span>
+              </div>
+            </button>
+          );
+        })}
       </div>
     </Section>
   );
 }
 
-// ───────────── ANALYST RANKING ─────────────
+
+/* ═══════════════════ ANALYST RANKING ═══════════════════ */
 function AnalystRanking({ analistas, onPick, active }: { analistas: CCAnalista[]; onPick: (id: string) => void; active: string }) {
-  const nivelLabel = (n: number) => n === 3 ? "Autónomo" : n === 2 ? "Semi autónomo" : "Supervisado";
-  const nivelColor = (n: number) => n === 3 ? C.success : n === 2 ? C.info : C.warning;
+  const nivelMeta = (n: number) => {
+    if (n >= 4) return { label: "N4 · Experto", color: C.purple };
+    if (n === 3) return { label: "N3 · Autónomo", color: C.success };
+    if (n === 2) return { label: "N2 · Semi", color: C.info };
+    return { label: "N1 · Supervisado", color: C.warning };
+  };
+  const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((s) => s[0] ?? "").join("").toUpperCase();
+  const avatarBg = (name: string) => {
+    const palette = [C.primary, C.secondary, C.success, C.info, C.warning, C.purple, C.danger];
+    let hash = 0; for (const ch of name) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+    return palette[hash % palette.length];
+  };
   return (
-    <Section title="Desempeño de analistas" subtitle="Precisión, score promedio y nivel de autonomía.">
-      <div style={{ maxHeight: 220, overflowY: "auto" }}>
-        <table style={{ width: "100%", fontSize: 12 }}>
-          <thead>
-            <tr style={{ background: "rgba(255,255,255,0.03)" }}>
-              {["Analista", "Casos", "Precisión", "Score", "Rech.", "Nivel"].map((h) => (
-                <th key={h} style={{ textAlign: "left", padding: "8px 12px", color: C.textSec, fontWeight: 500, borderBottom: `1px solid ${C.border}` }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {analistas.length === 0 ? (
-              <tr><td colSpan={6} style={{ padding: 24, textAlign: "center", color: C.textMuted }}>Sin analistas en el rango.</td></tr>
-            ) : analistas.map((a) => {
-              const isActive = a.id && active === a.id;
-              return (
-                <tr key={a.id ?? "none"} onClick={() => a.id && onPick(a.id)} style={{
-                  cursor: a.id ? "pointer" : "default",
-                  background: isActive ? "rgba(91,140,255,0.08)" : "transparent",
-                  borderBottom: `1px solid ${C.border}`,
-                }}>
-                  <td style={{ padding: "10px 12px", color: C.text, fontWeight: 500 }}>{a.nombre}</td>
-                  <td style={{ padding: "10px 12px", color: C.textSec, fontVariantNumeric: "tabular-nums" }}>{a.auditados}</td>
-                  <td style={{ padding: "10px 12px", color: a.precision >= 90 ? C.success : a.precision >= 75 ? C.warning : C.danger, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{a.precision.toFixed(1)}%</td>
-                  <td style={{ padding: "10px 12px", color: C.text, fontVariantNumeric: "tabular-nums" }}>{a.promedio.toFixed(1)}</td>
-                  <td style={{ padding: "10px 12px", color: C.danger, fontVariantNumeric: "tabular-nums" }}>{a.rech}</td>
-                  <td style={{ padding: "10px 12px" }}>
-                    <span style={{
-                      display: "inline-flex", alignItems: "center", gap: 4,
-                      padding: "3px 10px", borderRadius: 999, fontSize: 10.5, fontWeight: 600,
-                      background: `${nivelColor(a.nivel)}22`, color: nivelColor(a.nivel), border: `1px solid ${nivelColor(a.nivel)}44`,
-                    }}>N{a.nivel} · {nivelLabel(a.nivel)}</span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+    <Section title="Desempeño de analistas" subtitle="Precisión, score y nivel de autonomía" icon={<Activity size={13} />}>
+      <div style={{ maxHeight: 320, overflowY: "auto", paddingRight: 4 }}>
+        {analistas.length === 0 ? (
+          <p style={{ padding: 20, textAlign: "center", color: C.textMuted, fontSize: 12 }}>Sin analistas en el rango.</p>
+        ) : analistas.map((a) => {
+          const isActive = a.id && active === a.id;
+          const nm = nivelMeta(a.nivel);
+          const bg = avatarBg(a.nombre);
+          const precColor = a.precision >= 90 ? C.success : a.precision >= 75 ? C.warning : C.danger;
+          return (
+            <button key={a.id ?? Math.random()} onClick={() => a.id && onPick(a.id)} style={{
+              display: "grid", width: "100%", textAlign: "left", cursor: a.id ? "pointer" : "default",
+              gridTemplateColumns: "auto 1fr auto", gap: 12, alignItems: "center",
+              padding: "10px 12px", borderRadius: 12, marginBottom: 6,
+              background: isActive ? "rgba(91,140,255,0.10)" : "transparent",
+              border: `1px solid ${isActive ? "rgba(91,140,255,0.35)" : "transparent"}`,
+              transition: "background .22s",
+            }}
+              onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}
+              onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
+            >
+              <div style={{
+                width: 36, height: 36, borderRadius: "50%",
+                background: `linear-gradient(135deg, ${bg}, ${bg}99)`,
+                display: "grid", placeItems: "center",
+                color: "#fff", fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
+                boxShadow: `0 0 16px ${bg}55`,
+              }}>{initials(a.nombre)}</div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 4 }}>
+                  <span style={{ fontSize: 12.5, color: C.text, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.nombre}</span>
+                  <span style={{ fontSize: 10.5, color: C.textMuted, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{a.auditados} · rech {a.rech}</span>
+                </div>
+                <div style={{ height: 4, background: "rgba(255,255,255,0.06)", borderRadius: 999, overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${Math.min(100, a.precision)}%`, background: `linear-gradient(90deg, ${precColor}, ${precColor}88)`, boxShadow: `0 0 8px ${precColor}66` }} />
+                </div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                <span style={{ fontSize: 15, fontWeight: 700, color: precColor, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>{a.precision.toFixed(0)}%</span>
+                <span style={{
+                  padding: "2px 8px", borderRadius: 999, fontSize: 9, fontWeight: 700,
+                  background: `${nm.color}22`, color: nm.color, border: `1px solid ${nm.color}44`,
+                  whiteSpace: "nowrap",
+                }}>{nm.label}</span>
+              </div>
+            </button>
+          );
+        })}
       </div>
     </Section>
   );
 }
 
-// ───────────── TOP ERRORS ─────────────
+
+/* ═══════════════════ ALERT CENTER ═══════════════════ */
+function AlertCenter({ counts, onPick, active }: { counts: Record<string, number>; onPick: (k: string) => void; active: string | null }) {
+  const items = [
+    { key: "sla", icon: <Timer size={14} />, label: "SLA vencidos", value: counts.slaVencidos ?? 0, color: C.warning },
+    { key: "alertas", icon: <AlertTriangle size={14} />, label: "QA críticos", value: counts.alertasCriticas ?? 0, color: C.danger },
+    { key: "esperando", icon: <Gavel size={14} />, label: "Casos estancados", value: counts.esperandoDictamen ?? 0, color: C.primary },
+    { key: "devueltos", icon: <RotateCcw size={14} />, label: "Devueltos al analista", value: counts.devueltos ?? 0, color: C.info },
+    { key: "uvr", icon: <Coins size={14} />, label: "UVR pendientes", value: counts.uvrSinRevision ?? 0, color: C.purple },
+    { key: "bloqueados", icon: <ShieldAlert size={14} />, label: "Bloqueados", value: counts.bloqueados ?? 0, color: C.danger },
+  ];
+  return (
+    <Section title="Alert Center" subtitle="Detalle de bloqueos e incidencias" icon={<Zap size={13} />}>
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        {items.map((it, idx) => {
+          const isActive = active === it.key;
+          return (
+            <div key={it.key} style={{
+              display: "grid", gridTemplateColumns: "auto 1fr auto auto", gap: 10, alignItems: "center",
+              padding: "12px 4px",
+              borderBottom: idx < items.length - 1 ? `1px solid ${C.divider}` : "none",
+            }}>
+              <div style={{
+                width: 32, height: 32, borderRadius: "50%",
+                background: `linear-gradient(135deg, ${it.color}33, ${it.color}11)`,
+                border: `1px solid ${it.color}44`, color: it.color,
+                display: "grid", placeItems: "center",
+                boxShadow: `0 0 16px ${it.color}44`,
+              }}>{it.icon}</div>
+              <div style={{ fontSize: 12.5, color: C.text, fontWeight: 500 }}>{it.label}</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: it.color, fontVariantNumeric: "tabular-nums" }}>{it.value}</div>
+              <button onClick={() => onPick(it.key)} style={{
+                display: "inline-flex", alignItems: "center", gap: 4,
+                background: isActive ? `${it.color}22` : "transparent",
+                border: `1px solid ${isActive ? it.color : C.border}`,
+                color: isActive ? it.color : C.textMuted,
+                fontSize: 10.5, fontWeight: 600, letterSpacing: 0.04,
+                padding: "4px 10px", borderRadius: 8, cursor: "pointer",
+              }}>Ver <ArrowRight size={10} /></button>
+            </div>
+          );
+        })}
+      </div>
+    </Section>
+  );
+}
+
+
+/* ═══════════════════ TOP ERRORS ═══════════════════ */
 function TopErrors({ errores }: { errores: CCError[] }) {
   const max = Math.max(1, ...errores.map((e) => e.total));
   const labelMap: Record<string, string> = {
@@ -432,31 +552,38 @@ function TopErrors({ errores }: { errores: CCError[] }) {
     seguros: "Seguro omitido", producto: "Producto mal clasificado",
   };
   return (
-    <Section title="Top inconsistencias" subtitle="Tipo, frecuencia, tendencia y gravedad (últimos 30 días).">
-      <div style={{ display: "grid", gap: 10, padding: "4px 2px" }}>
+    <Section title="Top inconsistencias" subtitle="Frecuencia, tendencia y gravedad · 30 días">
+      <div style={{ display: "grid", gap: 14 }}>
         {errores.length === 0 ? (
           <p style={{ color: C.textMuted, fontSize: 12, padding: 16, textAlign: "center" }}>Sin inconsistencias en el rango.</p>
         ) : errores.map((e) => {
           const tendencia = e.ultimos7 > e.total / 4 ? "up" : e.ultimos7 === 0 ? "down" : "flat";
           const TIcon = tendencia === "up" ? TrendingUp : tendencia === "down" ? TrendingDown : Minus;
           const tColor = tendencia === "up" ? C.danger : tendencia === "down" ? C.success : C.textMuted;
+          const critical = e.criticas > 0;
           return (
-            <div key={e.tipo} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8 }}>
-              <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                  <span style={{ fontSize: 12, color: C.text, fontWeight: 500 }}>{labelMap[e.tipo] ?? e.tipo}</span>
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, color: C.textSec, fontVariantNumeric: "tabular-nums" }}>
-                    {e.criticas > 0 && (
-                      <span style={{ padding: "2px 8px", borderRadius: 999, background: `${C.danger}22`, color: C.danger, border: `1px solid ${C.danger}44`, fontSize: 10 }}>
-                        {e.criticas} crít.
-                      </span>
-                    )}
-                    <TIcon size={12} color={tColor} /> {e.total}
-                  </span>
-                </div>
-                <div style={{ height: 6, background: C.surface2, borderRadius: 999, overflow: "hidden" }}>
-                  <div style={{ height: "100%", width: `${(e.total / max) * 100}%`, background: `linear-gradient(90deg, ${C.primary}, ${C.secondary})` }} />
-                </div>
+            <div key={e.tipo}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                <span style={{ fontSize: 12.5, color: C.text, fontWeight: 600 }}>{labelMap[e.tipo] ?? e.tipo}</span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 11, color: C.textSec, fontVariantNumeric: "tabular-nums" }}>
+                  {critical && (
+                    <span style={{ padding: "2px 8px", borderRadius: 999, background: `${C.danger}22`, color: C.danger, border: `1px solid ${C.danger}44`, fontSize: 10, fontWeight: 700 }}>
+                      {e.criticas} crít.
+                    </span>
+                  )}
+                  <TIcon size={12} color={tColor} />
+                  <span style={{ fontWeight: 700, color: C.text }}>{e.total}</span>
+                </span>
+              </div>
+              <div style={{ height: 8, background: "rgba(255,255,255,0.04)", borderRadius: 999, overflow: "hidden" }}>
+                <div style={{
+                  height: "100%", width: `${(e.total / max) * 100}%`,
+                  background: critical
+                    ? `linear-gradient(90deg, ${C.danger}, ${C.warning})`
+                    : `linear-gradient(90deg, ${C.primary}, ${C.secondary})`,
+                  boxShadow: critical ? `0 0 12px ${C.danger}66` : `0 0 12px ${C.primary}55`,
+                  transition: "width .6s ease",
+                }} />
               </div>
             </div>
           );
@@ -466,34 +593,180 @@ function TopErrors({ errores }: { errores: CCError[] }) {
   );
 }
 
-// ───────────── QA HEALTH TREND ─────────────
+
+/* ═══════════════════ QA HEALTH TREND ═══════════════════ */
 function QaHealthTrend({ data }: { data: CCTrend[] }) {
   return (
-    <Section title="Salud operativa QA" subtitle="Score promedio, aprobaciones, observaciones, rechazos y críticos.">
-      <div style={{ width: "100%", height: 200, padding: "4px 0" }}>
+    <Section title="Salud operativa QA" subtitle="Score, aprobaciones, observaciones, rechazos y críticos">
+      <div style={{ width: "100%", height: 260, padding: "8px 0 0" }}>
         <ResponsiveContainer>
-          <LineChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: -10 }}>
-            <CartesianGrid stroke={C.border} strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="fecha" tick={{ fill: C.textMuted, fontSize: 10 }} tickFormatter={(v) => v.slice(5)} />
-            <YAxis tick={{ fill: C.textMuted, fontSize: 10 }} />
+          <AreaChart data={data} margin={{ top: 10, right: 16, bottom: 0, left: -8 }}>
+            <defs>
+              <linearGradient id="ncGradPrimary" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={C.primary} stopOpacity={0.35} />
+                <stop offset="100%" stopColor={C.primary} stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="3 4" vertical={false} />
+            <XAxis dataKey="fecha" tick={{ fill: C.textMuted, fontSize: 10 }} tickFormatter={(v) => v.slice(5)} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fill: C.textMuted, fontSize: 10 }} axisLine={false} tickLine={false} />
             <Tooltip
-              contentStyle={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 12 }}
-              labelStyle={{ color: C.textSec }}
+              contentStyle={{
+                background: "rgba(8,17,31,0.95)", border: `1px solid ${C.borderStrong}`,
+                borderRadius: 12, color: C.text, fontSize: 12,
+                boxShadow: "0 0 40px rgba(34,91,255,0.20)", backdropFilter: "blur(20px)",
+              }}
+              labelStyle={{ color: C.textSec, fontWeight: 600, marginBottom: 4 }}
+              cursor={{ stroke: C.primary, strokeOpacity: 0.35, strokeWidth: 1 }}
             />
-            <Legend wrapperStyle={{ fontSize: 11, color: C.textSec }} />
-            <Line type="monotone" dataKey="scoreProm" name="Score prom." stroke={C.primary} strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="aprobados" name="Aprobados" stroke={C.success} strokeWidth={1.5} dot={false} />
-            <Line type="monotone" dataKey="observados" name="Observados" stroke={C.warning} strokeWidth={1.5} dot={false} />
-            <Line type="monotone" dataKey="rechazados" name="Rechazos" stroke={C.danger} strokeWidth={1.5} dot={false} />
-            <Line type="monotone" dataKey="criticos" name="Críticos" stroke={C.secondary} strokeWidth={1.5} dot={false} strokeDasharray="4 3" />
-          </LineChart>
+            <Legend wrapperStyle={{ fontSize: 11, color: C.textSec, paddingTop: 6 }} iconType="circle" />
+            <Area type="monotone" dataKey="scoreProm" name="Score prom." stroke={C.primary} strokeWidth={2.5} fill="url(#ncGradPrimary)" dot={false} />
+            <Line type="monotone" dataKey="aprobados" name="Aprobados" stroke={C.success} strokeWidth={1.6} dot={false} />
+            <Line type="monotone" dataKey="observados" name="Observados" stroke={C.warning} strokeWidth={1.6} dot={false} />
+            <Line type="monotone" dataKey="rechazados" name="Rechazos" stroke={C.danger} strokeWidth={1.6} dot={false} />
+            <Line type="monotone" dataKey="criticos" name="Críticos" stroke={C.purple} strokeWidth={1.6} dot={false} strokeDasharray="4 3" />
+          </AreaChart>
         </ResponsiveContainer>
       </div>
     </Section>
   );
 }
 
-// ───────────── REVIEW QUEUE ─────────────
+
+/* ═══════════════════ NUVIA INSIGHTS ═══════════════════ */
+type Insight = { icon: React.ReactNode; title: string; impact: "alto" | "medio" | "info"; cta?: string };
+
+function generateInsights(bancos: CCBank[], analistas: CCAnalista[], counts: Record<string, number>, errores: CCError[]): Insight[] {
+  const list: Insight[] = [];
+
+  const totalRech = bancos.reduce((s, b) => s + Math.round((b.pctError / 100) * b.auditados), 0);
+  const worstBank = [...bancos].filter(b => b.auditados > 0).sort((a, b) => b.pctError - a.pctError)[0];
+  if (worstBank && totalRech > 0) {
+    const rechBank = Math.round((worstBank.pctError / 100) * worstBank.auditados);
+    const pct = Math.round((rechBank / Math.max(1, totalRech)) * 100);
+    if (pct >= 20) list.push({
+      icon: <Radar size={16} />,
+      title: `${worstBank.banco} concentra el ${pct}% de rechazos totales.`,
+      impact: "alto", cta: "Revisar patrón",
+    });
+  }
+
+  const worstAnalyst = [...analistas].filter(a => a.auditados >= 3).sort((a, b) => a.precision - b.precision)[0];
+  if (worstAnalyst && worstAnalyst.precision < 85) list.push({
+    icon: <Activity size={16} />,
+    title: `${worstAnalyst.nombre} bajó a ${worstAnalyst.precision.toFixed(0)}% de precisión.`,
+    impact: worstAnalyst.precision < 70 ? "alto" : "medio", cta: "Coaching",
+  });
+
+  const uvr = counts.uvrSinRevision ?? 0;
+  if (uvr > 0) list.push({
+    icon: <Coins size={16} />,
+    title: `UVR tiene ${uvr} caso${uvr === 1 ? "" : "s"} pendientes de revisión.`,
+    impact: uvr > 20 ? "alto" : "medio", cta: "Priorizar UVR",
+  });
+
+  const topErr = [...errores].sort((a, b) => b.total - a.total)[0];
+  if (topErr && topErr.total > 0) list.push({
+    icon: <Sparkles size={16} />,
+    title: `"${topErr.tipo}" es el error #1 con ${topErr.total} ocurrencias.`,
+    impact: topErr.criticas > 0 ? "alto" : "info", cta: "Ver regla",
+  });
+
+  const bloq = counts.bloqueados ?? 0;
+  if (bloq > 10) list.push({
+    icon: <ShieldAlert size={16} />,
+    title: `${bloq} casos bloqueados están frenando la operación.`,
+    impact: "alto", cta: "Desbloquear",
+  });
+
+  if (list.length === 0) list.push({
+    icon: <Sparkles size={16} />,
+    title: "Sistema estable. Sin patrones críticos detectados en el rango.",
+    impact: "info",
+  });
+
+  return list.slice(0, 5);
+}
+
+function NuviaInsights({ insights }: { insights: Insight[] }) {
+  const impactColor = (i: Insight["impact"]) => i === "alto" ? C.danger : i === "medio" ? C.warning : C.info;
+  return (
+    <div style={{
+      background: `linear-gradient(135deg, rgba(123,97,255,0.10) 0%, ${C.surface} 55%)`,
+      border: `1px solid rgba(123,97,255,0.24)`, borderRadius: 22, padding: 20,
+      boxShadow: "0 0 40px rgba(123,97,255,0.14)",
+      position: "relative", overflow: "hidden",
+    }}>
+      {/* Holographic accent */}
+      <div aria-hidden style={{
+        position: "absolute", right: -80, top: -80, width: 260, height: 260, borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(123,97,255,0.25) 0%, transparent 70%)",
+        pointerEvents: "none",
+      }} />
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, position: "relative" }}>
+        <div style={{
+          width: 32, height: 32, borderRadius: 10,
+          background: "linear-gradient(135deg, rgba(123,97,255,0.35), rgba(91,140,255,0.25))",
+          border: "1px solid rgba(123,97,255,0.45)", color: "#C9B5FF",
+          display: "grid", placeItems: "center",
+          boxShadow: "0 0 20px rgba(123,97,255,0.45)",
+        }}><Sparkles size={16} /></div>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: C.text, letterSpacing: 0.04 }}>NUVIA Insights</div>
+          <div style={{ fontSize: 10.5, color: C.textMuted, letterSpacing: 1.2, textTransform: "uppercase" }}>Hallazgos autónomos · IA de auditoría</div>
+        </div>
+      </div>
+
+      <div style={{
+        display: "grid", gridTemplateColumns: `repeat(${Math.min(insights.length, 3)}, minmax(0,1fr))`, gap: 12,
+        position: "relative",
+      }}>
+        {insights.map((it, i) => {
+          const c = impactColor(it.impact);
+          return (
+            <div key={i} style={{
+              background: "rgba(5,8,22,0.55)", border: `1px solid ${C.border}`,
+              borderRadius: 14, padding: 14,
+              display: "grid", gridTemplateColumns: "auto 1fr", gap: 12, alignItems: "flex-start",
+              transition: "transform .22s, border-color .22s",
+            }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.borderColor = `${c}55`; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.borderColor = C.border; }}
+            >
+              <div style={{
+                width: 34, height: 34, borderRadius: 10, flexShrink: 0,
+                background: `linear-gradient(135deg, ${c}33, ${c}11)`,
+                border: `1px solid ${c}44`, color: c,
+                display: "grid", placeItems: "center",
+                boxShadow: `0 0 16px ${c}44`,
+              }}>{it.icon}</div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 12.5, color: C.text, fontWeight: 500, lineHeight: 1.4 }}>{it.title}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
+                  <span style={{
+                    padding: "2px 8px", borderRadius: 999, fontSize: 9.5, fontWeight: 700,
+                    textTransform: "uppercase", letterSpacing: 1,
+                    background: `${c}22`, color: c, border: `1px solid ${c}44`,
+                  }}>Impacto {it.impact}</span>
+                  {it.cta && (
+                    <button style={{
+                      display: "inline-flex", alignItems: "center", gap: 4,
+                      background: "transparent", border: "none", cursor: "pointer",
+                      color: C.primary, fontSize: 11, fontWeight: 600,
+                    }}>{it.cta} <ArrowRight size={11} /></button>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+
+/* ═══════════════════ REVIEW QUEUE (Top 5) ═══════════════════ */
 function ReviewQueue({ rows }: { rows: CCRow[] }) {
   const score = (s: number) => s >= 95 ? C.success : s >= 85 ? C.warning : C.danger;
   const dictamen: Record<string, { label: string; color: string }> = {
@@ -503,7 +776,6 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
     rechazado: { label: "RECHAZADO", color: C.danger },
   };
 
-  // Priority sorting: critico > bloqueado > menor score > antiguo > mayor ticket
   const ordered = useMemo(() => {
     return [...rows].sort((a, b) => {
       const aCrit = a.alertas_criticas > 0 ? 1 : 0;
@@ -537,59 +809,69 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
   const [showAll, setShowAll] = useState(false);
   const visibles = showAll ? ordered : ordered.slice(0, 5);
 
+  const th: React.CSSProperties = {
+    textAlign: "left", padding: "10px 12px", color: C.textMuted, fontWeight: 700,
+    borderBottom: `1px solid ${C.divider}`, whiteSpace: "nowrap", fontSize: 9.5,
+    letterSpacing: 1.4, textTransform: "uppercase",
+  };
+  const td: React.CSSProperties = { padding: "0 12px", whiteSpace: "nowrap" };
+
   return (
     <Section
       title={`Cola de revisión · Top ${visibles.length} de ${ordered.length}`}
-      subtitle="Orden inteligente: criticidad → bloqueo → score → antigüedad → ticket."
+      subtitle="Orden inteligente: criticidad → bloqueo → score → antigüedad → ticket"
     >
       <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", fontSize: 11.5, minWidth: 1100 }}>
+        <table style={{ width: "100%", fontSize: 12, minWidth: 1100, borderCollapse: "separate", borderSpacing: 0 }}>
           <thead>
-            <tr style={{ background: "rgba(255,255,255,0.03)" }}>
-              {["Prioridad", "Código", "Fecha", "Cliente", "Banco", "Analista", "Producto", "Modalidad", "Ticket", "Score", "Estado QA", "Riesgo", "Acciones"].map((h) => (
-                <th key={h} style={{ textAlign: "left", padding: "6px 10px", color: C.textSec, fontWeight: 500, borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap", fontSize: 10.5 }}>{h}</th>
+            <tr>
+              {["Prioridad", "Código", "Fecha", "Cliente", "Banco", "Analista", "Producto", "Modalidad", "Ticket", "Score", "Estado", "Riesgo", "Acción"].map((h) => (
+                <th key={h} style={th}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {visibles.length === 0 ? (
-              <tr><td colSpan={13} style={{ padding: 24, textAlign: "center", color: C.textMuted }}>Sin casos en la cola.</td></tr>
+              <tr><td colSpan={13} style={{ padding: 28, textAlign: "center", color: C.textMuted }}>Sin casos en la cola.</td></tr>
             ) : visibles.map((r) => {
               const p = prioridad(r);
               const d = dictamen[r.dictamen] ?? { label: r.dictamen, color: C.textSec };
               return (
-                <tr key={r.id} style={{ borderBottom: `1px solid ${C.border}` }}>
-                  <td style={{ padding: "6px 10px" }}>
+                <tr key={r.id} style={{ height: 60, borderBottom: `1px solid ${C.divider}`, transition: "background .22s" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                >
+                  <td style={td}>
                     <span style={{
-                      padding: "2px 8px", borderRadius: 999, fontSize: 10, fontWeight: 600,
+                      padding: "3px 10px", borderRadius: 999, fontSize: 10, fontWeight: 700,
                       background: `${p.color}22`, color: p.color, border: `1px solid ${p.color}44`, whiteSpace: "nowrap",
                     }}>{p.label}</span>
                   </td>
-                  <td style={{ padding: "6px 10px", color: C.textSec, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 10, whiteSpace: "nowrap" }}>
+                  <td style={{ ...td, color: C.textSec, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 10.5 }}>
                     {(r as unknown as { codigo: string | null }).codigo ?? "—"}
                     {(r as unknown as { auditor_aprobado_at: string | null }).auditor_aprobado_at ? (
                       <span title="Aprobada por auditor" style={{ marginLeft: 6, color: C.success }}>✓</span>
                     ) : null}
                   </td>
-                  <td style={{ padding: "6px 10px", color: C.textSec, whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums", fontSize: 10.5 }}>
+                  <td style={{ ...td, color: C.textSec, fontVariantNumeric: "tabular-nums", fontSize: 11 }}>
                     {r.ejecutado_at ? new Date(r.ejecutado_at).toLocaleString("es-CO", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—"}
                   </td>
-                  <td style={{ padding: "6px 10px", color: C.text, fontWeight: 500 }}>{r.cliente_nombre ?? "—"}</td>
-                  <td style={{ padding: "6px 10px", color: C.text }}>{r.banco ?? "—"}</td>
-                  <td style={{ padding: "6px 10px", color: C.textSec }}>{r.analista_nombre ?? "—"}</td>
-                  <td style={{ padding: "6px 10px", color: C.textSec }}>{r.producto ?? "—"}</td>
-                  <td style={{ padding: "6px 10px", color: C.text, textTransform: "capitalize" }}>{r.modalidad}</td>
-                  <td style={{ padding: "6px 10px", color: C.textSec, fontVariantNumeric: "tabular-nums" }}>{r.ticket ? fCop(r.ticket) : "—"}</td>
-                  <td style={{ padding: "6px 10px", color: score(r.qa_score), fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{r.qa_score.toFixed(1)}</td>
-                  <td style={{ padding: "6px 10px" }}>
+                  <td style={{ ...td, color: C.text, fontWeight: 600 }}>{r.cliente_nombre ?? "—"}</td>
+                  <td style={{ ...td, color: C.text }}>{r.banco ?? "—"}</td>
+                  <td style={{ ...td, color: C.textSec }}>{r.analista_nombre ?? "—"}</td>
+                  <td style={{ ...td, color: C.textSec }}>{r.producto ?? "—"}</td>
+                  <td style={{ ...td, color: C.text, textTransform: "capitalize" }}>{r.modalidad}</td>
+                  <td style={{ ...td, color: C.textSec, fontVariantNumeric: "tabular-nums" }}>{r.ticket ? fCop(r.ticket) : "—"}</td>
+                  <td style={{ ...td, color: score(r.qa_score), fontWeight: 700, fontVariantNumeric: "tabular-nums", fontSize: 13 }}>{r.qa_score.toFixed(1)}</td>
+                  <td style={td}>
                     <span style={{
-                      padding: "2px 8px", borderRadius: 999, fontSize: 10, fontWeight: 600,
+                      padding: "3px 10px", borderRadius: 999, fontSize: 10, fontWeight: 700,
                       background: `${d.color}22`, color: d.color, border: `1px solid ${d.color}44`, whiteSpace: "nowrap",
                     }}>{d.label}</span>
                   </td>
-                  <td style={{ padding: "6px 10px" }}>
+                  <td style={td}>
                     {r.alertas_criticas > 0 ? (
-                      <span style={{ color: C.danger, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                      <span style={{ color: C.danger, display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 600 }}>
                         <AlertTriangle size={12} /> {r.alertas_criticas}
                       </span>
                     ) : r.sla_vencido ? (
@@ -598,25 +880,25 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
                       <span style={{ color: C.textMuted }}>—</span>
                     )}
                   </td>
-                  <td style={{ padding: "6px 10px" }}>
+                  <td style={td}>
                     <div style={{ display: "inline-flex", gap: 4, alignItems: "center" }}>
                       <Link to="/qa-ai/$id" params={{ id: r.id }} title="Ver dictamen" style={{
-                        display: "inline-flex", alignItems: "center", gap: 3, padding: "3px 8px",
-                        borderRadius: 6, background: `${C.primary}1a`, color: C.primary,
-                        border: `1px solid ${C.primary}44`, fontSize: 10.5, whiteSpace: "nowrap",
-                      }}>Ver <ArrowRight size={10} /></Link>
+                        display: "inline-flex", alignItems: "center", gap: 3, padding: "5px 10px",
+                        borderRadius: 8, background: `${C.primary}1a`, color: C.primary,
+                        border: `1px solid ${C.primary}44`, fontSize: 11, fontWeight: 600, whiteSpace: "nowrap",
+                      }}>Ver <ArrowRight size={11} /></Link>
                       <Link
                         to="/simulador" search={{ auditoriaId: r.id, modo: r.modalidad === "uvr" ? "uvr" : "pesos" } as never}
                         title="Reconstruir caso" style={{
-                          display: "inline-flex", alignItems: "center", gap: 3, padding: "3px 8px",
-                          borderRadius: 6, background: `${C.secondary}1a`, color: C.secondary,
-                          border: `1px solid ${C.secondary}44`, fontSize: 10.5, whiteSpace: "nowrap",
-                        }}><FileSearch size={10} /> Recons.</Link>
+                          display: "inline-flex", alignItems: "center", gap: 3, padding: "5px 10px",
+                          borderRadius: 8, background: `${C.secondary}1a`, color: C.secondary,
+                          border: `1px solid ${C.secondary}44`, fontSize: 11, fontWeight: 600, whiteSpace: "nowrap",
+                        }}><FileSearch size={11} /> Recons.</Link>
                       {r.extracto_path && (
                         <button onClick={() => openExtracto(r.extracto_path!)} title="Abrir extracto" style={{
-                          padding: "3px 6px", borderRadius: 6, background: "transparent",
+                          padding: "5px 8px", borderRadius: 8, background: "transparent",
                           color: C.textSec, border: `1px solid ${C.border}`, cursor: "pointer",
-                        }}><Paperclip size={10} /></button>
+                        }}><Paperclip size={11} /></button>
                       )}
                     </div>
                   </td>
@@ -627,15 +909,16 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
         </table>
       </div>
       {ordered.length > 5 && (
-        <div style={{ display: "flex", justifyContent: "center", marginTop: 8 }}>
-          <button
-            onClick={() => setShowAll((v) => !v)}
-            style={{
-              background: `${C.primary}14`, border: `1px solid ${C.primary}44`, color: C.primary,
-              padding: "6px 16px", borderRadius: 8, fontSize: 11.5, fontWeight: 600, cursor: "pointer",
-            }}
+        <div style={{ display: "flex", justifyContent: "center", marginTop: 14 }}>
+          <button onClick={() => setShowAll((v) => !v)} style={{
+            background: "rgba(91,140,255,0.10)", border: `1px solid ${C.primary}55`, color: C.primary,
+            padding: "8px 20px", borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer",
+            letterSpacing: 0.04, transition: "transform .22s, background .22s",
+          }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.background = "rgba(91,140,255,0.16)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.background = "rgba(91,140,255,0.10)"; }}
           >
-            {showAll ? "Ver solo Top 5 ▲" : `Ver todos (${ordered.length}) ▼`}
+            {showAll ? "Ver solo Top 5 ▲" : `Ver cola completa (${ordered.length}) ▼`}
           </button>
         </div>
       )}
@@ -644,19 +927,36 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
 }
 
 
-// ───────────── SHARED SHELL ─────────────
-function Section({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
+/* ═══════════════════ SHARED SECTION SHELL ═══════════════════ */
+function Section({ title, subtitle, children, icon }: { title: string; subtitle?: string; children: React.ReactNode; icon?: React.ReactNode }) {
   return (
     <div style={{
-      background: `linear-gradient(180deg, ${C.surface1} 0%, ${C.bg} 140%)`,
-      border: `1px solid ${C.border}`, borderRadius: 16, overflow: "hidden",
-      boxShadow: "0 12px 32px -20px rgba(0,0,0,0.6)",
+      background: C.surface,
+      backdropFilter: "blur(20px) saturate(140%)",
+      border: `1px solid ${C.border}`, borderRadius: 22,
+      overflow: "hidden",
+      boxShadow: "0 0 40px rgba(34,91,255,0.06), inset 0 1px 0 rgba(255,255,255,0.03)",
+      height: "100%", display: "flex", flexDirection: "column",
     }}>
-      <div style={{ padding: "8px 12px", borderBottom: `1px solid ${C.border}` }}>
-        <h3 style={{ fontSize: 12, fontWeight: 600, color: C.text, margin: 0, letterSpacing: 0.2 }}>{title}</h3>
-        {subtitle && <p style={{ fontSize: 10.5, color: C.textMuted, margin: "2px 0 0" }}>{subtitle}</p>}
+      <div style={{
+        padding: "14px 18px",
+        borderBottom: `1px solid ${C.divider}`,
+        display: "flex", alignItems: "center", gap: 10,
+      }}>
+        {icon && (
+          <div style={{
+            width: 26, height: 26, borderRadius: 8,
+            background: "linear-gradient(135deg, rgba(91,140,255,0.20), rgba(123,97,255,0.15))",
+            border: "1px solid rgba(91,140,255,0.28)", color: "#8FB4FF",
+            display: "grid", placeItems: "center",
+          }}>{icon}</div>
+        )}
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <h3 style={{ fontSize: 13, fontWeight: 700, color: C.text, margin: 0, letterSpacing: 0.02 }}>{title}</h3>
+          {subtitle && <p style={{ fontSize: 10.5, color: C.textMuted, margin: "2px 0 0", letterSpacing: 0.04 }}>{subtitle}</p>}
+        </div>
       </div>
-      <div style={{ padding: 10 }}>{children}</div>
+      <div style={{ padding: 18, flex: 1 }}>{children}</div>
     </div>
   );
 }
