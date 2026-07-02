@@ -5841,6 +5841,7 @@ export type Database = {
         Args: { _canal: string; _user: string }
         Returns: boolean
       }
+      colab_es_revisor_qa: { Args: { _user: string }; Returns: boolean }
       colab_puede_ver_canal: {
         Args: { _canal: string; _user: string }
         Returns: boolean
