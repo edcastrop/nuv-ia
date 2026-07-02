@@ -144,6 +144,7 @@ function NotificacionesPage() {
   };
 
   const tabs: { key: TabKey; label: string; count: number; Icon: typeof Inbox }[] = [
+    { key: "qa", label: "QA Pendiente", count: qaPend.length, Icon: Zap },
     { key: "estancados", label: "Estancados", count: estancados.length, Icon: AlertTriangle },
     { key: "sin_seguimiento", label: "Sin seguimiento", count: sinSeguimiento.length, Icon: Clock },
     { key: "honorarios", label: "Honorarios", count: honorariosPend.length, Icon: CircleDollarSign },
