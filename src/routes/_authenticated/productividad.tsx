@@ -86,8 +86,12 @@ function scoreOf(r: ProductividadUsuario): number {
 }
 
 function ProductividadPage() {
-  const { isSuperAdmin, roles } = useUserRole();
-  const autorizado = isSuperAdmin || roles.includes("gerencia" as never);
+  const { isSuperAdmin } = useUserRole();
+  // Abrimos Productividad a todos los colaboradores autenticados: el podio y el
+  // ranking son motivación transversal, no un módulo restringido a Gerencia.
+  const autorizado = true;
+  void isSuperAdmin;
+
 
   const now = new Date();
   const [rango, setRango] = useState<RangoKey>("mensual");

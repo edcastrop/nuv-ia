@@ -528,8 +528,9 @@ function AuthenticatedLayout() {
               { to: "/apoderado/mis-casos", label: "Mis casos", Icon: Briefcase },
               { to: "/nuvex-ia", label: "NUVIA IA", Icon: Sparkles },
               { to: "/colaboracion/dm", label: "Mensajería", Icon: MessageSquare, badge: dmUnread },
-              { to: "/directorio", label: "Directorio", Icon: BookUser },
-              { to: "/notificaciones", label: "Alertas", Icon: Bell, badge: unread },
+              { to: "/directorio", label: "Directorio NUVEX", Icon: BookUser },
+              { to: "/notificaciones", label: "Centro de Alertas", Icon: Bell, badge: unread },
+
               { to: "/mi-perfil", label: "Mi Perfil", Icon: UserCircle },
             ],
           },
@@ -562,7 +563,10 @@ function AuthenticatedLayout() {
               )
                 ? [{ to: "/herramientas", label: "Herramientas", Icon: Wrench }]
                 : []),
-              { to: "/notificaciones", label: "Alertas", Icon: Bell, badge: unread },
+              // Superficies transversales: Centro de Alertas y Directorio deben estar
+              // disponibles para TODOS los roles sin excepción (ya sin gate por rol).
+              { to: "/notificaciones", label: "Centro de Alertas", Icon: Bell, badge: unread },
+              { to: "/directorio", label: "Directorio NUVEX", Icon: BookUser },
               {
                 to: "/colaboracion",
                 label: "Colaboración",
@@ -570,7 +574,7 @@ function AuthenticatedLayout() {
                 badge: colabUnread,
               },
               { to: "/colaboracion/dm", label: "Mensajería", Icon: MessageSquare, badge: dmUnread },
-              { to: "/directorio", label: "Directorio", Icon: BookUser },
+
             ],
           },
           {
@@ -607,9 +611,11 @@ function AuthenticatedLayout() {
               ...(hasAny("super_admin", "gerencia")
                 ? [{ to: "/gestion-usuarios", label: "Gestión usuarios", Icon: Users }]
                 : []),
-              ...(hasAny("super_admin", "gerencia")
-                ? [{ to: "/productividad", label: "Productividad", Icon: BarChart3 }]
-                : []),
+              // Productividad: visible para toda la organización — el podio NUVIA es
+              // motivación transversal (comercial, operaciones, jurídica, etc.).
+              { to: "/productividad", label: "Productividad", Icon: BarChart3 },
+
+
               ...(hasAny("super_admin", "admin", "director_financiero_qa", "gerencia")
                 ? [{ to: "/qa-ai", label: "NUVIA QA AI", Icon: ClipboardCheck }]
                 : []),
