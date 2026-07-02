@@ -61,6 +61,39 @@ function ColaboracionPage() {
   const canalesArea = canales.filter((c) => c.tipo === "area" || c.tipo === "custom");
   const canalesCaso = canales.filter((c) => c.tipo === "caso");
 
+  // Owner info per caso (cliente, banco, analista) — resolved from expedientes + profiles
+  const [ownerMap, setOwnerMap] = useState<Record<string, CasoOwnerInfo>>({});
+  useEffect(() => {
+    const casoIds = canalesCaso.map((c) => c.caso_id).filter((x): x is string => !!x);
+    if (casoIds.length === 0) { setOwnerMap({}); return; }
+    let active = true;
+    (async () => {
+      const { data: exps } = await supabase
+        .from("expedientes")
+        .select("id, cliente_nombre, banco, asesor_id")
+        .in("id", casoIds);
+      const rows = (exps ?? []) as Array<{ id: string; cliente_nombre: string | null; banco: string | null; asesor_id: string | null }>;
+      const asesorIds = Array.from(new Set(rows.map((r) => r.asesor_id).filter((x): x is string => !!x)));
+      let profMap: Record<string, string> = {};
+      if (asesorIds.length > 0) {
+        const { data: profs } = await supabase.from("profiles").select("id, nombre").in("id", asesorIds);
+        profMap = Object.fromEntries(((profs ?? []) as Array<{ id: string; nombre: string | null }>).map((p) => [p.id, p.nombre || ""]));
+      }
+      if (!active) return;
+      const map: Record<string, CasoOwnerInfo> = {};
+      for (const r of rows) {
+        map[r.id] = {
+          cliente: r.cliente_nombre || undefined,
+          banco: r.banco || undefined,
+          analista: r.asesor_id ? profMap[r.asesor_id] : undefined,
+          asesor_id: r.asesor_id || undefined,
+        };
+      }
+      setOwnerMap(map);
+    })();
+    return () => { active = false; };
+  }, [canalesCaso.map((c) => c.caso_id || "").join(",")]);
+
   const setCanal = (id: string) => navigate({ to: "/colaboracion", search: { canal: id, tab } });
   const setTabAndSync = (t: string) => { setTab(t); navigate({ to: "/colaboracion", search: { canal: search.canal, tab: t } }); };
 
