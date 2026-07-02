@@ -94,7 +94,7 @@ export function NotificationBell() {
 
   return (
     <>
-      <div className="relative" ref={ref}>
+      <div className="relative z-[9999]" ref={ref}>
         <button
           onClick={() => setOpen((o) => !o)}
           className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl text-white/80 transition hover:text-white"
