@@ -231,10 +231,9 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
 
         {/* MAIN GRID */}
         <div
-          className="flex flex-col md:grid gap-3 md:gap-4"
+          className="flex flex-col md:grid gap-3 md:gap-4 flex-1 min-h-0"
           style={{
             gridTemplateColumns: hasCanal ? "320px minmax(0,1fr) 300px" : "320px minmax(0,1fr)",
-            height: "calc(100dvh - 168px)",
           }}
         >
           {/* PANEL IZQUIERDO */}
