@@ -535,10 +535,10 @@ function ChatHeader({ d, canal, onBack, quickCtx, ctxTab, onCtxTab }: { d: DMRes
           </div>
         </div>
         <div className="flex items-center gap-1.5 flex-wrap ml-auto">
-          <HeaderBtn icon={<UserIcon size={13} />} label="Perfil" />
-          <HeaderBtn icon={<Briefcase size={13} />} label="Casos" />
-          <HeaderBtn icon={<History size={13} />} label="Historial" />
-          <HeaderBtn icon={<Sparkles size={13} />} label="IA Context" tone="blue" />
+          <HeaderBtn icon={<UserIcon size={13} />} label="Perfil" active={ctxTab === "perfil"} onClick={() => onCtxTab("perfil")} />
+          <HeaderBtn icon={<Briefcase size={13} />} label="Casos" active={ctxTab === "casos"} onClick={() => onCtxTab("casos")} />
+          <HeaderBtn icon={<History size={13} />} label="Historial" active={ctxTab === "historial"} onClick={() => onCtxTab("historial")} />
+          <HeaderBtn icon={<Sparkles size={13} />} label="IA Context" tone="blue" active={ctxTab === "ia"} onClick={() => onCtxTab("ia")} />
         </div>
       </div>
       {/* KPIs compactos */}
