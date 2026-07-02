@@ -1,4 +1,4 @@
-import { Home, TrendingUp, ArrowRight, MapPin, Building2, Phone, Globe } from "lucide-react";
+import { Home, TrendingUp, ArrowRight, MapPin, Building2, Phone, Layers } from "lucide-react";
 import { motion } from "framer-motion";
 import { NUVEX } from "./constants";
 
@@ -7,7 +7,7 @@ export function ModeSelector({ onPick }: { onPick: (m: "pesos" | "uvr") => void 
     <div
       className="relative min-h-screen w-full overflow-hidden"
       style={{
-        background: `radial-gradient(1200px 600px at 10% 0%, rgba(68,93,163,0.35), transparent 60%), radial-gradient(900px 500px at 100% 100%, rgba(132,185,143,0.22), transparent 55%), linear-gradient(135deg, #071526 0%, #0B1B2B 50%, #10253A 100%)`,
+        background: `radial-gradient(1200px 600px at 10% 0%, rgba(68,93,163,0.22), transparent 60%), radial-gradient(900px 500px at 100% 100%, rgba(132,185,143,0.14), transparent 55%), linear-gradient(135deg, #071526 0%, #0B1B2B 50%, #10253A 100%)`,
       }}
     >
       {/* Grid sutil */}
@@ -20,15 +20,15 @@ export function ModeSelector({ onPick }: { onPick: (m: "pesos" | "uvr") => void 
         }}
       />
 
-      {/* Floating orbs animados (estilo Login) */}
+      {/* Floating orbs (intensidad reducida ~35%) */}
       <motion.div
-        className="pointer-events-none absolute -top-40 -left-40 h-[28rem] w-[28rem] rounded-full blur-[120px] opacity-40"
+        className="pointer-events-none absolute -top-40 -left-40 h-[28rem] w-[28rem] rounded-full blur-[120px] opacity-[0.26]"
         style={{ background: NUVEX.azul }}
         animate={{ x: [0, 30, 0], y: [0, 20, 0] }}
         transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
-        className="pointer-events-none absolute -bottom-48 right-0 h-[32rem] w-[32rem] rounded-full blur-[140px] opacity-30"
+        className="pointer-events-none absolute -bottom-48 right-0 h-[32rem] w-[32rem] rounded-full blur-[140px] opacity-[0.20]"
         style={{ background: NUVEX.verde }}
         animate={{ x: [0, -40, 0], y: [0, -20, 0] }}
         transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
@@ -37,7 +37,7 @@ export function ModeSelector({ onPick }: { onPick: (m: "pesos" | "uvr") => void 
       {/* Red neuronal de fondo */}
       <NeuralCanvas />
 
-      {/* HEADER */}
+      {/* HEADER — solo NUVIA */}
       <motion.header
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -46,23 +46,23 @@ export function ModeSelector({ onPick }: { onPick: (m: "pesos" | "uvr") => void 
       >
         <div className="flex items-center gap-3">
           <div
-            className="flex h-11 w-11 items-center justify-center rounded-xl text-base font-bold text-white shadow-lg"
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-base font-bold text-white shadow-lg"
             style={{ background: `linear-gradient(135deg, ${NUVEX.azul}, ${NUVEX.verde})` }}
           >
             N
           </div>
-          <div>
-            <div className="text-sm font-semibold tracking-tight text-white">NUVEX</div>
-            <div className="-mt-0.5 text-[10px] uppercase tracking-[0.18em] text-white/55">Finanzas Inteligentes</div>
-          </div>
+          <div className="text-[15px] font-semibold tracking-[0.02em] text-white">NUVIA</div>
         </div>
-        <p className="hidden text-xs italic text-white/55 sm:block">
+        <p
+          className="hidden italic text-white/55 sm:block"
+          style={{ fontSize: 12, letterSpacing: "0.5px", opacity: 0.55 }}
+        >
           "El ahorro no es un lujo, es un derecho."
         </p>
       </motion.header>
 
       {/* CENTRO */}
-      <main className="relative z-10 mx-auto max-w-6xl px-6 pb-48 pt-14 sm:px-10 sm:pt-20">
+      <main className="relative z-10 mx-auto max-w-[1100px] px-6 pb-48 pt-20 sm:px-10 sm:pt-28">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -70,29 +70,12 @@ export function ModeSelector({ onPick }: { onPick: (m: "pesos" | "uvr") => void 
           className="text-center"
         >
           <div
-            className="inline-flex items-center gap-2 rounded-full border border-[#84B98F]/40 bg-white/[0.04] backdrop-blur px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]"
-            style={{ color: NUVEX.verde }}
+            className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] backdrop-blur px-3.5 py-1.5 uppercase text-white/80"
+            style={{ fontSize: 11, letterSpacing: "3px" }}
           >
             <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ background: NUVEX.verde }} />
-            Acceso licenciados NUVEX
+            Simuladores NUVIA
           </div>
-          <h1 className="mx-auto mt-5 max-w-3xl text-3xl font-semibold leading-[1.1] tracking-tight text-white sm:text-4xl md:text-5xl">
-            Simulador{" "}
-            <span
-              className="bg-clip-text text-transparent"
-              style={{ backgroundImage: `linear-gradient(90deg, ${NUVEX.azul}, ${NUVEX.verde})` }}
-            >
-              NUVEX
-            </span>
-            <br className="hidden sm:block" /> de Optimización de Créditos
-          </h1>
-          <p className="mx-auto mt-4 max-w-xl text-sm text-white/65 sm:text-base">
-            Seleccione el tipo de simulador para iniciar la propuesta de optimización financiera.
-          </p>
-          <div
-            className="mx-auto mt-6 h-px w-32 rounded-full"
-            style={{ background: `linear-gradient(90deg, transparent, ${NUVEX.azul}, ${NUVEX.verde}, transparent)` }}
-          />
         </motion.div>
 
         {/* TARJETAS con stagger */}
@@ -103,14 +86,15 @@ export function ModeSelector({ onPick }: { onPick: (m: "pesos" | "uvr") => void 
             hidden: {},
             visible: { transition: { staggerChildren: 0.15, delayChildren: 0.35 } },
           }}
-          className="mt-12 grid gap-6 md:grid-cols-2"
+          className="mt-14 grid gap-8 md:grid-cols-2"
         >
           <SimCard
             onClick={() => onPick("pesos")}
             color={NUVEX.azul}
             badge="PESOS"
             title="Simulador en Pesos"
-            description="Créditos hipotecarios y leasing habitacional denominados en pesos colombianos con o sin beneficio de cobertura."
+            description="Créditos hipotecarios y leasing habitacional en pesos colombianos."
+            features={["Sistema francés", "Tasa fija", "Amortización exacta"]}
             Icon={Home}
           />
           <SimCard
@@ -118,7 +102,8 @@ export function ModeSelector({ onPick }: { onPick: (m: "pesos" | "uvr") => void 
             color={NUVEX.verde}
             badge="UVR"
             title="Simulador en UVR"
-            description="Créditos hipotecarios y leasing habitacional en UVR con proyección de corrección monetaria."
+            description="Proyección inteligente con comportamiento UVR y escenarios de corrección."
+            features={["Corrección monetaria", "Proyección UVR", "Escenarios variables"]}
             Icon={TrendingUp}
           />
         </motion.div>
@@ -133,10 +118,10 @@ export function ModeSelector({ onPick }: { onPick: (m: "pesos" | "uvr") => void 
       >
         <div className="mx-auto max-w-6xl rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl px-5 py-4 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6)]">
           <div className="grid grid-cols-1 gap-4 text-[12px] text-white/70 md:grid-cols-4 md:divide-x md:divide-white/10">
-            <FooterBlock Icon={MapPin} title="Bucaramanga" lines={["Carrera 16 # 37-48 piso 4", "Centro de Bucaramanga"]} />
-            <FooterBlock Icon={Building2} title="Bogotá · Aliado Jurídico" lines={["Calle 93 # 18-28 Of. 704", "Bogotá D.C. - Colombia"]} />
+            <FooterBlock Icon={MapPin} title="Bucaramanga" lines={["Carrera 16 # 37-48 piso 4"]} />
+            <FooterBlock Icon={Building2} title="Bogotá" lines={["Calle 93 # 18-28 Of. 704"]} />
             <FooterBlock Icon={Phone} title="Contacto" lines={["+57 316 402 3779"]} />
-            <FooterBlock Icon={Globe} title="Web" lines={["www.nuvex.com.co"]} />
+            <FooterBlock Icon={Layers} title="Plataforma" lines={["NUVIA Core"]} />
           </div>
         </div>
       </motion.footer>
@@ -150,6 +135,7 @@ function SimCard({
   badge,
   title,
   description,
+  features,
   Icon,
 }: {
   onClick: () => void;
@@ -157,6 +143,7 @@ function SimCard({
   badge: string;
   title: string;
   description: string;
+  features: string[];
   Icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
 }) {
   return (
@@ -166,7 +153,7 @@ function SimCard({
         hidden: { opacity: 0, y: 24, scale: 0.97 },
         visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
       }}
-      whileHover={{ y: -6 }}
+      whileHover={{ y: -6, scale: 1.02 }}
       transition={{ type: "spring", stiffness: 280, damping: 22 }}
       className="group relative block text-left"
     >
@@ -175,7 +162,10 @@ function SimCard({
         className="pointer-events-none absolute -inset-0.5 rounded-[32px] opacity-0 blur transition-opacity duration-500 group-hover:opacity-100"
         style={{ background: `${color}55` }}
       />
-      <div className="relative flex h-full flex-col rounded-[32px] border border-white/10 bg-white/[0.03] p-8 backdrop-blur-2xl transition-colors duration-300 group-hover:border-white/20 group-hover:bg-white/[0.06] sm:p-10">
+      <div
+        className="relative flex h-full flex-col rounded-[32px] border border-white/10 bg-white/[0.03] p-8 backdrop-blur-2xl transition-all duration-300 group-hover:border-white/25 group-hover:bg-white/[0.06] sm:p-10"
+        style={{ boxShadow: "0 20px 60px -30px rgba(0,0,0,0.6)" }}
+      >
         {/* Acento superior */}
         <span
           className="absolute inset-x-8 top-0 h-px opacity-60"
@@ -189,7 +179,7 @@ function SimCard({
           }}
         />
 
-        <div className="relative mb-10 flex items-start justify-between">
+        <div className="relative mb-8 flex items-start justify-between">
           <motion.div
             whileHover={{ scale: 1.08, rotate: -2 }}
             transition={{ type: "spring", stiffness: 320, damping: 18 }}
@@ -209,11 +199,23 @@ function SimCard({
         <h2 className="relative text-2xl font-semibold tracking-tight text-white sm:text-[26px]">
           {title}
         </h2>
-        <p className="relative mt-3 flex-grow text-sm leading-relaxed text-white/55">
+        <p className="relative mt-3 text-sm leading-relaxed text-white/60">
           {description}
         </p>
 
-        <div className="relative mt-10 flex items-center justify-between">
+        <ul className="relative mt-6 space-y-2">
+          {features.map((f) => (
+            <li key={f} className="flex items-center gap-2.5 text-[13px] text-white/70">
+              <span
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ background: color, boxShadow: `0 0 8px ${color}` }}
+              />
+              {f}
+            </li>
+          ))}
+        </ul>
+
+        <div className="relative mt-10 flex items-center justify-between border-t border-white/10 pt-5">
           <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/70 transition-colors group-hover:text-white">
             Iniciar simulación
           </span>
