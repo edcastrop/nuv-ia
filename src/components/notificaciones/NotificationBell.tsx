@@ -134,8 +134,41 @@ export function NotificationBell() {
                 <CheckCheck size={12} /> Marcar todas
               </button>
             </div>
+            <div
+              className="flex items-center gap-1 px-2 py-1.5"
+              style={{ borderBottom: "1px solid var(--nuvia-border)" }}
+            >
+              {([
+                { k: "todas", label: "Todas", n: items.length },
+                { k: "qa", label: "QA", n: counts.qa },
+                { k: "mensajes", label: "Mensajes", n: counts.mensajes },
+                { k: "sistema", label: "Sistema", n: counts.sistema },
+              ] as Array<{ k: TabKey; label: string; n: number }>).map((t) => {
+                const active = tab === t.k;
+                return (
+                  <button
+                    key={t.k}
+                    onClick={() => setTab(t.k)}
+                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition"
+                    style={{
+                      background: active ? "rgba(68,93,163,0.22)" : "transparent",
+                      color: active ? "var(--nuvia-text-primary)" : "var(--nuvia-text-secondary)",
+                      border: active ? "1px solid var(--nuvia-border)" : "1px solid transparent",
+                    }}
+                  >
+                    {t.label}
+                    <span
+                      className="rounded-full px-1.5 text-[9px] font-bold"
+                      style={{ background: "rgba(255,255,255,0.08)", color: "var(--nuvia-text-primary)" }}
+                    >
+                      {t.n}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
             <div className="overflow-y-auto scrollbar-thin">
-              {items.length === 0 ? (
+              {filtered.length === 0 ? (
                 <div
                   className="p-8 text-center text-[12px]"
                   style={{ color: "var(--nuvia-text-secondary)" }}
@@ -144,7 +177,8 @@ export function NotificationBell() {
                 </div>
               ) : (
                 <ul style={{ borderColor: "var(--nuvia-border)" }} className="divide-y divide-white/[0.06]">
-                  {items.slice(0, 30).map((n) => (
+                  {filtered.slice(0, 30).map((n) => (
+
                     <li key={n.id}>
                       <button
                         type="button"
