@@ -692,75 +692,172 @@ function NuviaInsights({ insights }: { insights: Insight[] }) {
   const impactColor = (i: Insight["impact"]) => i === "alto" ? C.danger : i === "medio" ? C.warning : C.info;
   return (
     <div style={{
-      background: `linear-gradient(135deg, rgba(123,97,255,0.10) 0%, ${C.surface} 55%)`,
-      border: `1px solid rgba(123,97,255,0.24)`, borderRadius: 22, padding: 20,
-      boxShadow: "0 0 40px rgba(123,97,255,0.14)",
+      background: `linear-gradient(135deg, rgba(91,140,255,0.08) 0%, ${C.surface} 55%)`,
+      border: `1px solid rgba(91,140,255,0.22)`, borderRadius: 22, padding: 20,
+      boxShadow: "0 0 40px rgba(91,140,255,0.10)",
       position: "relative", overflow: "hidden",
     }}>
-      {/* Holographic accent */}
       <div aria-hidden style={{
         position: "absolute", right: -80, top: -80, width: 260, height: 260, borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(123,97,255,0.25) 0%, transparent 70%)",
+        background: "radial-gradient(circle, rgba(91,140,255,0.18) 0%, transparent 70%)",
         pointerEvents: "none",
       }} />
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, position: "relative" }}>
         <div style={{
           width: 32, height: 32, borderRadius: 10,
-          background: "linear-gradient(135deg, rgba(123,97,255,0.35), rgba(91,140,255,0.25))",
-          border: "1px solid rgba(123,97,255,0.45)", color: "#C9B5FF",
+          background: "linear-gradient(135deg, rgba(91,140,255,0.35), rgba(123,97,255,0.25))",
+          border: "1px solid rgba(91,140,255,0.45)", color: "#B5D0FF",
           display: "grid", placeItems: "center",
-          boxShadow: "0 0 20px rgba(123,97,255,0.45)",
+          boxShadow: "0 0 20px rgba(91,140,255,0.45)",
         }}><Sparkles size={16} /></div>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: C.text, letterSpacing: 0.04 }}>NUVIA Insights</div>
-          <div style={{ fontSize: 10.5, color: C.textMuted, letterSpacing: 1.2, textTransform: "uppercase" }}>Hallazgos autónomos · IA de auditoría</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: C.text, letterSpacing: 0.04 }}>NUVIA QA INSIGHTS</div>
+          <div style={{ fontSize: 10.5, color: C.textMuted, letterSpacing: 1.2, textTransform: "uppercase" }}>Sugerencias inteligentes basadas en datos.</div>
         </div>
       </div>
 
       <div style={{
-        display: "grid", gridTemplateColumns: `repeat(${Math.min(insights.length, 3)}, minmax(0,1fr))`, gap: 12,
-        position: "relative",
+        display: "grid", gridTemplateColumns: "minmax(0,1fr) 280px", gap: 20,
+        position: "relative", alignItems: "center",
       }}>
-        {insights.map((it, i) => {
-          const c = impactColor(it.impact);
-          return (
-            <div key={i} style={{
-              background: "rgba(5,8,22,0.55)", border: `1px solid ${C.border}`,
-              borderRadius: 14, padding: 14,
-              display: "grid", gridTemplateColumns: "auto 1fr", gap: 12, alignItems: "flex-start",
-              transition: "transform .22s, border-color .22s",
-            }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.borderColor = `${c}55`; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.borderColor = C.border; }}
-            >
-              <div style={{
-                width: 34, height: 34, borderRadius: 10, flexShrink: 0,
-                background: `linear-gradient(135deg, ${c}33, ${c}11)`,
-                border: `1px solid ${c}44`, color: c,
-                display: "grid", placeItems: "center",
-                boxShadow: `0 0 16px ${c}44`,
-              }}>{it.icon}</div>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 12.5, color: C.text, fontWeight: 500, lineHeight: 1.4 }}>{it.title}</div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
-                  <span style={{
-                    padding: "2px 8px", borderRadius: 999, fontSize: 9.5, fontWeight: 700,
-                    textTransform: "uppercase", letterSpacing: 1,
-                    background: `${c}22`, color: c, border: `1px solid ${c}44`,
-                  }}>Impacto {it.impact}</span>
-                  {it.cta && (
-                    <button style={{
-                      display: "inline-flex", alignItems: "center", gap: 4,
-                      background: "transparent", border: "none", cursor: "pointer",
-                      color: C.primary, fontSize: 11, fontWeight: 600,
-                    }}>{it.cta} <ArrowRight size={11} /></button>
-                  )}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: `repeat(${Math.min(insights.length, 3)}, minmax(0,1fr))`,
+          gap: 12,
+        }}>
+          {insights.map((it, i) => {
+            const c = impactColor(it.impact);
+            return (
+              <div key={i} style={{
+                background: "rgba(5,8,22,0.55)", border: `1px solid ${C.border}`,
+                borderRadius: 14, padding: 14,
+                display: "grid", gridTemplateColumns: "auto 1fr", gap: 12, alignItems: "flex-start",
+                transition: "transform .22s, border-color .22s",
+              }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.borderColor = `${c}55`; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.borderColor = C.border; }}
+              >
+                <div style={{
+                  width: 34, height: 34, borderRadius: 10, flexShrink: 0,
+                  background: `linear-gradient(135deg, ${c}33, ${c}11)`,
+                  border: `1px solid ${c}44`, color: c,
+                  display: "grid", placeItems: "center",
+                  boxShadow: `0 0 16px ${c}44`,
+                }}>{it.icon}</div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 12.5, color: C.text, fontWeight: 500, lineHeight: 1.4 }}>{it.title}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
+                    {it.cta && (
+                      <button style={{
+                        display: "inline-flex", alignItems: "center", gap: 4,
+                        background: "transparent", border: "none", cursor: "pointer",
+                        color: C.info, fontSize: 11, fontWeight: 600, padding: 0,
+                      }}>Ver análisis <ArrowRight size={11} /></button>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
+
+        <HolographicBrain />
       </div>
+    </div>
+  );
+}
+
+/* ═══════════════════ HOLOGRAPHIC BRAIN ═══════════════════ */
+function HolographicBrain() {
+  return (
+    <div style={{
+      position: "relative", width: 260, height: 200, margin: "0 auto",
+      display: "grid", placeItems: "center",
+    }}>
+      <style>{`
+        @keyframes nuvia-brain-spin { from { transform: translate(-50%,-50%) rotate(0deg);} to { transform: translate(-50%,-50%) rotate(360deg);} }
+        @keyframes nuvia-brain-spin-rev { from { transform: translate(-50%,-50%) rotate(360deg);} to { transform: translate(-50%,-50%) rotate(0deg);} }
+        @keyframes nuvia-brain-pulse {
+          0%, 100% { opacity: .85; transform: translate(-50%,-50%) scale(1); box-shadow: 0 0 40px rgba(91,140,255,0.9), inset 0 0 20px rgba(255,255,255,0.35); }
+          50% { opacity: 1; transform: translate(-50%,-50%) scale(1.08); box-shadow: 0 0 60px rgba(91,140,255,1), inset 0 0 26px rgba(255,255,255,0.5); }
+        }
+        @keyframes nuvia-particle-orbit {
+          0% { transform: rotate(var(--a)) translateX(var(--r)) scale(.6); opacity: 0; }
+          20% { opacity: 1; }
+          100% { transform: rotate(calc(var(--a) + 360deg)) translateX(var(--r)) scale(1); opacity: 0; }
+        }
+        @keyframes nuvia-scan {
+          0% { transform: translateY(-40px); }
+          100% { transform: translateY(40px); }
+        }
+      `}</style>
+
+      <div style={{
+        position: "absolute", inset: 0,
+        background: "radial-gradient(circle at 50% 50%, rgba(91,140,255,0.35) 0%, rgba(91,140,255,0.10) 40%, transparent 70%)",
+        filter: "blur(8px)",
+      }} />
+
+      <div style={{
+        position: "absolute", top: "50%", left: "50%",
+        width: 180, height: 180, borderRadius: "50%",
+        border: "1px dashed rgba(91,140,255,0.45)",
+        animation: "nuvia-brain-spin 22s linear infinite",
+      }} />
+      <div style={{
+        position: "absolute", top: "50%", left: "50%",
+        width: 140, height: 140, borderRadius: "50%",
+        border: "1px solid rgba(123,97,255,0.55)",
+        boxShadow: "inset 0 0 20px rgba(91,140,255,0.35), 0 0 20px rgba(91,140,255,0.35)",
+        animation: "nuvia-brain-spin-rev 16s linear infinite",
+      }} />
+      <div style={{
+        position: "absolute", top: "50%", left: "50%",
+        width: 108, height: 108, borderRadius: "50%",
+        border: "2px solid rgba(91,140,255,0.85)",
+        boxShadow: "0 0 25px rgba(91,140,255,0.6), inset 0 0 20px rgba(91,140,255,0.4)",
+        animation: "nuvia-brain-spin 10s linear infinite",
+      }} />
+
+      <div style={{
+        position: "absolute", top: "50%", left: "50%",
+        width: 74, height: 74, borderRadius: "50%",
+        background: "radial-gradient(circle at 35% 30%, #B5D0FF 0%, #5B8CFF 45%, #1E3A8A 100%)",
+        animation: "nuvia-brain-pulse 3.2s ease-in-out infinite",
+      }} />
+
+      <div style={{
+        position: "absolute", top: "50%", left: "50%",
+        width: 74, height: 74, borderRadius: "50%",
+        overflow: "hidden",
+        transform: "translate(-50%,-50%)",
+        pointerEvents: "none",
+      }}>
+        <div style={{
+          position: "absolute", left: 0, right: 0, height: 2,
+          background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent)",
+          animation: "nuvia-scan 2.4s linear infinite",
+        }} />
+      </div>
+
+      {[
+        { a: "0deg", r: "72px", d: "4s", c: "#7B61FF" },
+        { a: "72deg", r: "84px", d: "5.5s", c: "#5B8CFF" },
+        { a: "144deg", r: "68px", d: "3.6s", c: "#22D3EE" },
+        { a: "216deg", r: "90px", d: "6s", c: "#5B8CFF" },
+        { a: "288deg", r: "76px", d: "4.4s", c: "#B5D0FF" },
+      ].map((p, i) => (
+        <div key={i} style={{
+          position: "absolute", top: "50%", left: "50%", width: 0, height: 0,
+        }}>
+          <div style={{
+            position: "absolute", width: 6, height: 6, borderRadius: "50%",
+            background: p.c, boxShadow: `0 0 10px ${p.c}`,
+            ["--a" as any]: p.a, ["--r" as any]: p.r,
+            animation: `nuvia-particle-orbit ${p.d} linear infinite`,
+          } as React.CSSProperties} />
+        </div>
+      ))}
     </div>
   );
 }
