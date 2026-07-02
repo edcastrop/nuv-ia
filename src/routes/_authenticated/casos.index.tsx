@@ -515,91 +515,255 @@ function CasosPage() {
    HOLOGRAM
    ===================================================== */
 function NuviaHologram() {
+  // Holograma tipo mockup: stack de folders/expedientes proyectados sobre base circular de energía
+  const CYAN = "#4FC3F7";
   return (
-    <div className="relative w-[260px] h-[260px] flex items-center justify-center">
-      {/* Orbital rings */}
-      {[0, 1, 2].map((i) => (
+    <div className="relative w-[320px] h-[320px] flex items-end justify-center select-none">
+      {/* ================= BASE HOLOGRÁFICA ================= */}
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[300px] h-[130px]" style={{ perspective: 600 }}>
+        {/* Glow radial base */}
         <div
-          key={i}
-          className="absolute rounded-full pointer-events-none"
+          className="absolute inset-0 pointer-events-none"
           style={{
-            width: `${140 + i * 45}px`,
-            height: `${140 + i * 45}px`,
-            border: `1px solid ${i % 2 === 0 ? AZUL : VERDE}${i === 0 ? "66" : "33"}`,
-            animation: `hologramSpin${i} ${14 + i * 5}s linear infinite`,
-            transform: `rotate(${i * 30}deg)`,
-            boxShadow: `0 0 24px -8px ${i % 2 === 0 ? AZUL : VERDE}`,
+            background: `radial-gradient(ellipse at 50% 70%, ${CYAN}55 0%, ${AZUL}33 30%, transparent 65%)`,
+            filter: "blur(14px)",
           }}
         />
-      ))}
-      {/* Pulse rings */}
+        {/* Anillos concéntricos elípticos */}
+        {[0, 1, 2, 3].map((i) => (
+          <div
+            key={`ring${i}`}
+            className="absolute left-1/2 pointer-events-none rounded-full"
+            style={{
+              bottom: 10 + i * 3,
+              width: 260 - i * 40,
+              height: (260 - i * 40) * 0.28,
+              transform: "translateX(-50%)",
+              border: `1.5px solid ${CYAN}${i === 0 ? "AA" : i === 1 ? "77" : "44"}`,
+              boxShadow: `0 0 18px ${CYAN}66, inset 0 0 12px ${CYAN}33`,
+              animation: `holoRingPulse ${2.5 + i * 0.4}s ease-in-out ${i * 0.2}s infinite`,
+            }}
+          />
+        ))}
+        {/* Anillo punteado exterior con rotación */}
+        <div
+          className="absolute left-1/2 pointer-events-none rounded-full"
+          style={{
+            bottom: 4,
+            width: 300,
+            height: 84,
+            transform: "translateX(-50%)",
+            border: `1.5px dashed ${CYAN}88`,
+            animation: "holoBaseSpin 20s linear infinite",
+          }}
+        />
+        {/* Beams verticales que emergen de la base */}
+        {[-70, -35, 0, 35, 70].map((x, idx) => (
+          <div
+            key={`beam${idx}`}
+            className="absolute bottom-8 pointer-events-none"
+            style={{
+              left: `calc(50% + ${x}px)`,
+              width: 1,
+              height: 90 + Math.abs(x) * 0.2,
+              background: `linear-gradient(to top, ${CYAN}CC, ${CYAN}00)`,
+              boxShadow: `0 0 6px ${CYAN}`,
+              animation: `holoBeam ${1.8 + idx * 0.3}s ease-in-out ${idx * 0.15}s infinite`,
+              opacity: 0.65,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* ================= STACK DE EXPEDIENTES ================= */}
+      <div
+        className="relative"
+        style={{
+          animation: "holoFloat 4s ease-in-out infinite",
+          filter: `drop-shadow(0 0 22px ${CYAN}66) drop-shadow(0 0 40px ${AZUL}55)`,
+        }}
+      >
+        <FolderStack cyan={CYAN} />
+      </div>
+
+      {/* ================= ANILLOS ORBITALES DEL STACK ================= */}
       {[0, 1].map((i) => (
         <div
-          key={`p${i}`}
-          className="absolute rounded-full pointer-events-none"
+          key={`orbit${i}`}
+          className="absolute left-1/2 top-[50%] pointer-events-none rounded-full"
           style={{
-            width: 120, height: 120,
-            border: `1px solid ${VERDE}55`,
-            animation: `hologramPulse 3s ease-out ${i * 1.5}s infinite`,
-          }}
-        />
-      ))}
-      {/* Orbiting particles */}
-      {[0, 1, 2, 3].map((i) => (
-        <div
-          key={`orb${i}`}
-          className="absolute pointer-events-none"
-          style={{
-            width: 100 + i * 40, height: 100 + i * 40,
-            animation: `hologramSpin0 ${8 + i * 3}s linear ${i % 2 ? "reverse" : ""} infinite`,
+            width: 240 + i * 30,
+            height: 240 + i * 30,
+            transform: `translate(-50%, -60%) rotateX(72deg)`,
+            border: `1px ${i === 0 ? "solid" : "dashed"} ${CYAN}${i === 0 ? "55" : "33"}`,
+            animation: `holoOrbit${i} ${16 + i * 6}s linear ${i % 2 ? "reverse" : ""} infinite`,
           }}
         >
+          {/* partícula orbitando */}
           <div
             className="absolute rounded-full"
             style={{
               top: -3, left: "50%",
-              width: 6, height: 6,
-              background: i % 2 === 0 ? AZUL : VERDE,
-              boxShadow: `0 0 12px ${i % 2 === 0 ? AZUL : VERDE}`,
+              width: 5, height: 5,
+              background: CYAN,
+              boxShadow: `0 0 10px ${CYAN}, 0 0 20px ${CYAN}`,
               transform: "translateX(-50%)",
             }}
           />
         </div>
       ))}
-      {/* Core sphere */}
+
+      {/* ================= PARTÍCULAS FLOTANTES ================= */}
+      {[
+        { x: -100, y: -40, d: 3.2 },
+        { x: 110, y: -60, d: 3.8 },
+        { x: -80, y: 20, d: 2.6 },
+        { x: 90, y: 40, d: 3.4 },
+        { x: 0, y: -110, d: 2.8 },
+      ].map((p, i) => (
+        <div
+          key={`p${i}`}
+          className="absolute top-1/2 left-1/2 rounded-full pointer-events-none"
+          style={{
+            width: 3, height: 3,
+            background: CYAN,
+            boxShadow: `0 0 8px ${CYAN}`,
+            transform: `translate(${p.x}px, ${p.y}px)`,
+            animation: `holoParticle ${p.d}s ease-in-out ${i * 0.4}s infinite`,
+          }}
+        />
+      ))}
+
+      <style>{`
+        @keyframes holoFloat {
+          0%, 100% { transform: translateY(-6px); }
+          50%      { transform: translateY(-14px); }
+        }
+        @keyframes holoRingPulse {
+          0%, 100% { opacity: 0.7; }
+          50%      { opacity: 1; }
+        }
+        @keyframes holoBaseSpin {
+          from { transform: translateX(-50%) rotate(0deg); }
+          to   { transform: translateX(-50%) rotate(360deg); }
+        }
+        @keyframes holoBeam {
+          0%, 100% { opacity: 0.25; transform: scaleY(0.9); }
+          50%      { opacity: 0.9;  transform: scaleY(1.15); }
+        }
+        @keyframes holoOrbit0 {
+          from { transform: translate(-50%, -60%) rotateX(72deg) rotateZ(0deg); }
+          to   { transform: translate(-50%, -60%) rotateX(72deg) rotateZ(360deg); }
+        }
+        @keyframes holoOrbit1 {
+          from { transform: translate(-50%, -60%) rotateX(72deg) rotateZ(0deg); }
+          to   { transform: translate(-50%, -60%) rotateX(72deg) rotateZ(360deg); }
+        }
+        @keyframes holoParticle {
+          0%, 100% { opacity: 0.4; transform: translate(var(--tx,0), var(--ty,0)) scale(1); }
+          50%      { opacity: 1;   transform: translate(var(--tx,0), var(--ty,0)) scale(1.6); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+/** Stack de 3 folders holográficos (SVG) con NUVEX+ label */
+function FolderStack({ cyan }: { cyan: string }) {
+  const Folder = ({ offset, opacity, scale }: { offset: number; opacity: number; scale: number }) => (
+    <svg
+      width={150 * scale} height={110 * scale} viewBox="0 0 150 110"
+      className="absolute"
+      style={{
+        left: `calc(50% - ${(150 * scale) / 2}px + ${offset}px)`,
+        top: -offset * 1.2,
+        opacity,
+      }}
+    >
+      <defs>
+        <linearGradient id={`fg${offset}`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor={cyan} stopOpacity="0.55" />
+          <stop offset="60%" stopColor={AZUL} stopOpacity="0.35" />
+          <stop offset="100%" stopColor="#0A1628" stopOpacity="0.85" />
+        </linearGradient>
+        <linearGradient id={`fgTop${offset}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={cyan} stopOpacity="0.9" />
+          <stop offset="100%" stopColor={AZUL} stopOpacity="0.5" />
+        </linearGradient>
+      </defs>
+      {/* Tab superior */}
+      <path
+        d="M4 18 L58 18 L68 8 L146 8 L146 22 L4 22 Z"
+        fill={`url(#fgTop${offset})`}
+        stroke={cyan} strokeWidth="1.2" strokeOpacity="0.9"
+      />
+      {/* Cuerpo folder */}
+      <rect
+        x="4" y="20" width="142" height="82" rx="4"
+        fill={`url(#fg${offset})`}
+        stroke={cyan} strokeWidth="1.4" strokeOpacity="0.95"
+      />
+      {/* Scanlines horizontales */}
+      {[32, 42, 52, 62, 72, 82, 92].map((y) => (
+        <line key={y} x1="12" y1={y} x2="138" y2={y} stroke={cyan} strokeOpacity="0.12" strokeWidth="0.6" />
+      ))}
+      {/* Esquinas iluminadas */}
+      <path d="M4 26 L4 20 L10 20" fill="none" stroke={cyan} strokeWidth="1.6" />
+      <path d="M146 20 L146 26" fill="none" stroke={cyan} strokeWidth="1.6" />
+      <path d="M4 96 L4 102 L10 102" fill="none" stroke={cyan} strokeWidth="1.6" />
+      <path d="M146 102 L140 102" fill="none" stroke={cyan} strokeWidth="1.6" />
+    </svg>
+  );
+
+  return (
+    <div className="relative" style={{ width: 180, height: 150 }}>
+      {/* Folders traseros → frontal */}
+      <Folder offset={14} opacity={0.5} scale={0.95} />
+      <Folder offset={7} opacity={0.75} scale={0.98} />
+      <Folder offset={0} opacity={1} scale={1} />
+
+      {/* Label NUVEX+ centrado en el folder frontal */}
       <div
-        className="relative rounded-full flex items-center justify-center"
+        className="absolute left-1/2 top-[62%] -translate-x-1/2 -translate-y-1/2 flex items-center gap-1"
         style={{
-          width: 88, height: 88,
-          background: `radial-gradient(circle at 35% 30%, #A5B5E0, ${AZUL} 45%, #0A1628 100%)`,
-          boxShadow: `0 0 60px ${AZUL}, 0 0 120px ${AZUL}66, inset 0 0 30px rgba(255,255,255,0.15)`,
-          animation: "hologramBreath 3.5s ease-in-out infinite",
+          fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
         }}
       >
-        <div className="text-[9px] font-black tracking-[0.18em] text-white" style={{ textShadow: `0 0 12px ${AZUL}` }}>
-          NUVIA
-        </div>
+        <span
+          className="text-[15px] font-black tracking-[0.14em]"
+          style={{ color: "#E8F5FF", textShadow: `0 0 10px ${cyan}, 0 0 20px ${cyan}` }}
+        >
+          NUVEX
+        </span>
+        <span
+          className="text-[15px] font-black"
+          style={{ color: cyan, textShadow: `0 0 10px ${cyan}` }}
+        >
+          +
+        </span>
       </div>
-      {/* Base energy pad */}
+
+      {/* Scan line vertical animada sobre el folder frontal */}
       <div
-        className="absolute bottom-0 left-1/2 -translate-x-1/2 rounded-full pointer-events-none"
-        style={{
-          width: 200, height: 30,
-          background: `radial-gradient(ellipse at center, ${AZUL}55 0%, transparent 70%)`,
-          filter: "blur(8px)",
-        }}
-      />
+        className="absolute pointer-events-none overflow-hidden rounded-md"
+        style={{ left: "50%", top: 6, transform: "translateX(-50%)", width: 148, height: 96 }}
+      >
+        <div
+          className="absolute left-0 right-0"
+          style={{
+            height: 3,
+            background: `linear-gradient(90deg, transparent, ${cyan}, transparent)`,
+            boxShadow: `0 0 12px ${cyan}`,
+            animation: "holoScan 3s linear infinite",
+          }}
+        />
+      </div>
       <style>{`
-        @keyframes hologramSpin0 { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes hologramSpin1 { from { transform: rotate(30deg); } to { transform: rotate(390deg); } }
-        @keyframes hologramSpin2 { from { transform: rotate(60deg); } to { transform: rotate(420deg); } }
-        @keyframes hologramPulse {
-          0% { transform: scale(0.6); opacity: 0.8; }
-          100% { transform: scale(2.2); opacity: 0; }
-        }
-        @keyframes hologramBreath {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.06); }
+        @keyframes holoScan {
+          0%   { top: -6px; opacity: 0; }
+          10%  { opacity: 1; }
+          90%  { opacity: 1; }
+          100% { top: 100px; opacity: 0; }
         }
       `}</style>
     </div>
