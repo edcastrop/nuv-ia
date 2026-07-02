@@ -4,7 +4,7 @@ import { z } from "zod";
 import { PageLayout, NCard, SectionHeader } from "@/components/nuvia";
 import { useServerFn } from "@tanstack/react-start";
 import { obtenerAuditoriaQA, reejecutarAuditoriaQA, aprobarAuditoriaPorAuditor } from "@/lib/qaAI.functions";
-import { auditar, reconstruir, type AuditarInput } from "@/lib/qaMath";
+import { auditar, reconstruir, QA_MOTOR_VERSION, type AuditarInput } from "@/lib/qaMath";
 import { exportarDictamenPDF } from "@/lib/qaPdf";
 import { CopilotoQADrawer } from "@/components/qa-ai/CopilotoQADrawer";
 import { VeredictoBlock } from "@/components/qa-ai/VeredictoBlock";
