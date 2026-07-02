@@ -117,7 +117,7 @@ export function NotificationBell() {
 
         {open && (
           <div
-            className="glass-modal absolute right-0 mt-2 w-[380px] max-h-[480px] overflow-hidden z-50 flex flex-col"
+            className="glass-modal absolute right-0 mt-2 w-[380px] max-h-[480px] overflow-hidden z-[9999] flex flex-col"
             style={{ color: "var(--nuvia-text-primary)" }}
           >
             <div
