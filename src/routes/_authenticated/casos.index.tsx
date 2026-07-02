@@ -362,7 +362,7 @@ function CasosPage() {
           </div>
 
           {/* RIGHT: HOLOGRAM + LIVE PIPELINE */}
-          <div className="relative flex items-center justify-center min-h-[300px]">
+          <div className="relative flex items-center justify-center min-h-[340px]">
             <NuviaHologram />
             <LivePipeline pipeline={pipeline} />
           </div>
