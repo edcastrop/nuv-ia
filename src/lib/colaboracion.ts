@@ -41,6 +41,8 @@ export interface NotifColab {
 
 const T = (n: string) => supabase.from(n as never);
 
+const cleanName = (value?: string | null) => value?.replace(/\s+/g, " ").trim() || "";
+
 export async function listCanales(): Promise<Canal[]> {
   const { data, error } = await T("colab_canales")
     .select("*")
@@ -248,9 +250,36 @@ export async function listMisDMs(): Promise<DMResumen[]> {
   const otroPorCanal = new Map<string, { user_id: string; ultima_lectura: string }>();
   ((otrosMiembros ?? []) as any[]).forEach((m) => { otroPorCanal.set(m.canal_id, { user_id: m.user_id, ultima_lectura: m.ultima_lectura }); });
 
-  const otroIds = Array.from(new Set(Array.from(otroPorCanal.values()).map((v) => v.user_id)));
-  const dir = await listDirectorioFull();
+  const otroIds = Array.from(new Set(Array.from(otroPorCanal.values()).map((v) => v.user_id).filter(Boolean)));
+  const [dir, perfilesOtros, rolesOtros] = await Promise.all([
+    listDirectorioFull(),
+    otroIds.length
+      ? T("profiles")
+        .select("id, nombre, email, avatar_url, last_seen_at, presencia_visible")
+        .in("id", otroIds as never)
+      : Promise.resolve({ data: [] as any[], error: null }),
+    otroIds.length
+      ? supabase.from("user_roles").select("user_id, role").in("user_id", otroIds)
+      : Promise.resolve({ data: [] as any[], error: null }),
+  ]);
   const dirMap = new Map(dir.map((d) => [d.user_id, d]));
+  const rolesMap = new Map<string, string[]>();
+  ((rolesOtros.data ?? []) as any[]).forEach((r) => {
+    const arr = rolesMap.get(r.user_id) ?? [];
+    arr.push(r.role);
+    rolesMap.set(r.user_id, arr);
+  });
+  const perfilDirectoMap = new Map(((perfilesOtros.data ?? []) as any[]).map((p) => {
+    const rolesRaw = rolesMap.get(p.id) ?? [];
+    return [p.id, {
+      user_id: p.id,
+      nombre: cleanName(p.nombre) || p.email || "Usuario",
+      foto_url: p.avatar_url ?? null,
+      roles: rolesRaw.map(labelRol),
+      last_seen_at: p.last_seen_at ?? null,
+      presencia_visible: p.presencia_visible !== false,
+    }];
+  }));
 
   const { data: ultMsgs } = await T("colab_mensajes")
     .select("canal_id, user_id, texto, created_at, borrado")
@@ -262,14 +291,14 @@ export async function listMisDMs(): Promise<DMResumen[]> {
 
   const resumen: DMResumen[] = dmRows.map((r) => {
     const otroRef = otroPorCanal.get(r.canal_id);
-    const perfil = otroRef ? dirMap.get(otroRef.user_id) : undefined;
+    const perfil = otroRef ? (dirMap.get(otroRef.user_id) ?? perfilDirectoMap.get(otroRef.user_id)) : undefined;
     const myRead = myReadByCanal.get(r.canal_id);
     const noLeidos = ((ultMsgs ?? []) as any[]).filter((m) => m.canal_id === r.canal_id && m.user_id !== user.id && (!myRead || new Date(m.created_at) > new Date(myRead))).length;
     return {
       canal: r.colab_canales as Canal,
       otro: {
         user_id: otroRef?.user_id ?? "",
-        nombre: perfil?.nombre ?? "Usuario",
+        nombre: cleanName(perfil?.nombre) || "Usuario",
         foto_url: perfil?.foto_url ?? null,
         roles: perfil?.roles ?? [],
         ultima_lectura: otroRef?.ultima_lectura ?? null,
@@ -280,7 +309,6 @@ export async function listMisDMs(): Promise<DMResumen[]> {
       no_leidos: noLeidos,
     };
   });
-  void otroIds;
   resumen.sort((a, b) => {
     const ta = a.ultimo_mensaje ? new Date(a.ultimo_mensaje.created_at).getTime() : 0;
     const tb = b.ultimo_mensaje ? new Date(b.ultimo_mensaje.created_at).getTime() : 0;
@@ -376,7 +404,7 @@ export async function listDirectorioFull(): Promise<DirectorioPersona[]> {
       : (p.rol_solicitado ? [String(p.rol_solicitado)] : []);
     return {
       user_id: p.id,
-      nombre: p.nombre ?? p.email ?? "Usuario",
+      nombre: cleanName(p.nombre) || p.email || "Usuario",
       correo: p.email ?? null,
       correo_corp: p.correo_corporativo ?? null,
       whatsapp: p.whatsapp ?? null,
