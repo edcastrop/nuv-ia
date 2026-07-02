@@ -13,29 +13,28 @@ import {
   FolderOpen,
   Wallet,
   Building2,
-  Hash,
-  Calendar,
-  ArrowRight,
-  MapPin,
-  Phone,
-  Globe,
   Sparkles,
   Flag,
   AlertTriangle,
   Clock,
+  ArrowRight,
+  ArrowUpRight,
+  ShieldCheck,
+  Loader2,
+  Zap,
+  TrendingUp,
+  Target,
+  Activity,
+  CheckCircle2,
+  FileText,
+  Radio,
+  Cpu,
+  Download,
 } from "lucide-react";
-import {
-  PageLayout,
-  ExecutiveHero,
-  KpiGrid,
-  KpiCard,
-  InsightCard,
-} from "@/components/nuvia";
+import { PageLayout } from "@/components/nuvia";
 import { AnalistaAvatar } from "@/components/pipeline/AnalistaAvatar";
 import { supabase } from "@/integrations/supabase/client";
 import { triggerSimuladorAutoQA } from "@/lib/simuladorAutoQA";
-import { ShieldCheck, Loader2 } from "lucide-react";
-
 
 const ETAPA_IDS = ETAPAS_PIPELINE.map((e) => e.id) as [EtapaPipelineId, ...EtapaPipelineId[]];
 
@@ -49,77 +48,69 @@ export const casosSearchSchema = z.object({
 export const Route = createFileRoute("/_authenticated/casos/")({
   validateSearch: zodValidator(casosSearchSchema),
   component: CasosPage,
-  head: () => ({ meta: [{ title: "Expedientes · NUVEX" }] }),
+  head: () => ({ meta: [{ title: "Expedientes NUVIA · Command Center" }] }),
 });
 
+/* ============ Tokens ============ */
 const AZUL = "#445DA3";
 const VERDE = "#84B98F";
-const BG = "#050816";
-const CARD = "#0A1628";
-const CARD2 = "#071120";
+const CARD = "rgba(10,22,40,0.72)";
+const CARD_SOLID = "#0A1628";
 const BORDER = "rgba(255,255,255,0.08)";
+const BORDER_STRONG = "rgba(255,255,255,0.14)";
 const TEXT2 = "#94A3B8";
 
 const ESTADO_THEME: Record<EstadoExpediente, { color: string; label: string }> = {
   SIMULADO: { color: "#445DA3", label: "Simulado" },
   FIRMADO: { color: "#9333EA", label: "Firmado" },
-  ENVIADO_CONTRATACION: { color: "#6366F1", label: "Enviado a Contratación" },
+  ENVIADO_CONTRATACION: { color: "#6366F1", label: "Enviado" },
   RADICADO: { color: "#F97316", label: "Radicado" },
   APROBADO: { color: "#84B98F", label: "Aprobado" },
-  CONDICIONES_APLICADAS: { color: "#16A34A", label: "Condiciones aplicadas" },
+  CONDICIONES_APLICADAS: { color: "#16A34A", label: "Condiciones" },
   FACTURADO: { color: "#D4A017", label: "Facturado" },
   PAGADO: { color: "#1F7A45", label: "Pagado" },
 };
 
 const AVATAR_COLORS = ["#445DA3", "#84B98F", "#9333EA", "#F97316", "#D4A017", "#0EA5E9", "#EC4899"];
-
 function avatarColor(name: string) {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
   return AVATAR_COLORS[h % AVATAR_COLORS.length];
 }
 
-// SLA por etapa (días) — alineado con AlertasEstancamientoPanel.
 const UMBRAL_DIAS_ETAPA: Record<EtapaPipelineId, number> = {
-  lead: 3,
-  extracto: 3,
-  proyeccion: 5,
-  presentacion: 5,
-  cierre: 7,
-  contratacion: 7,
-  radicacion: 5,
-  banco: 21,
-  resultado_banco: 5,
-  aceptacion_cliente: 5,
-  informe: 5,
-  cuenta: 5,
-  pago: 10,
-  comision: 10,
-  paz_salvo: 5,
-  finalizado: 0,
+  lead: 3, extracto: 3, proyeccion: 5, presentacion: 5, cierre: 7, contratacion: 7,
+  radicacion: 5, banco: 21, resultado_banco: 5, aceptacion_cliente: 5, informe: 5,
+  cuenta: 5, pago: 10, comision: 10, paz_salvo: 5, finalizado: 0,
 };
 
 function diasDesde(iso: string | null | undefined): number {
   if (!iso) return 0;
-  const ms = Date.now() - new Date(iso).getTime();
-  return Math.max(0, Math.floor(ms / 86400000));
+  return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86400000));
 }
 
 type SlaNivel = "ok" | "atencion" | "critico" | "neutral";
-
 function slaNivel(dias: number, umbral: number): SlaNivel {
   if (umbral <= 0) return "neutral";
   if (dias >= umbral * 1.5) return "critico";
   if (dias >= umbral) return "atencion";
   return "ok";
 }
-
 const SLA_COLORS: Record<SlaNivel, { bg: string; fg: string; border: string }> = {
   ok:       { bg: "rgba(132,185,143,0.10)", fg: "#84B98F", border: "rgba(132,185,143,0.35)" },
   atencion: { bg: "rgba(245,158,11,0.10)",  fg: "#F59E0B", border: "rgba(245,158,11,0.40)" },
   critico:  { bg: "rgba(244,63,94,0.12)",   fg: "#FB7185", border: "rgba(244,63,94,0.45)" },
   neutral:  { bg: "rgba(148,163,184,0.10)", fg: "#94A3B8", border: "rgba(148,163,184,0.30)" },
 };
+
+/* Pipeline milestones (5-step progress) */
+const MILESTONES = [
+  { key: "simulacion", label: "Sim", etapa: 1 },
+  { key: "qa",         label: "QA",  etapa: 4 },
+  { key: "radicado",   label: "Rad", etapa: 8 },
+  { key: "aprobado",   label: "Apr", etapa: 10 },
+  { key: "firmado",    label: "Firm", etapa: 15 },
+];
 
 function CasosPage() {
   type CasosSearch = z.infer<typeof casosSearchSchema>;
@@ -135,7 +126,11 @@ function CasosPage() {
   const [auditCodes, setAuditCodes] = useState<Map<string, string>>(new Map());
   const [reloadKey, setReloadKey] = useState(0);
 
-  // Debounce text input → URL
+  // Filtros locales adicionales
+  const [banco, setBanco] = useState<string>("");
+  const [analistaId, setAnalistaId] = useState<string>("");
+  const [modalidad, setModalidad] = useState<string>("");
+
   useEffect(() => {
     const t = setTimeout(() => {
       if (qLocal !== search) {
@@ -159,25 +154,16 @@ function CasosPage() {
       .then(async (r) => {
         if (cancel) return;
         setRows(r);
-        const ids = Array.from(
-          new Set(
-            r.flatMap((row) => [row.asesor_id, row.licenciado_id]).filter(Boolean) as string[],
-          ),
-        );
+        const ids = Array.from(new Set(r.flatMap((row) => [row.asesor_id, row.licenciado_id]).filter(Boolean) as string[]));
         if (ids.length > 0) {
           const { data: profs } = await supabase.from("profiles").select("id,nombre,email").in("id", ids);
           const m = new Map<string, { nombre: string | null; email: string | null }>();
           (profs ?? []).forEach((p: any) => m.set(p.id, { nombre: p.nombre ?? null, email: p.email ?? null }));
           if (!cancel) setAsesores(m);
         }
-        const auditIds = Array.from(
-          new Set(r.map((row) => row.qa_auditoria_id).filter(Boolean) as string[]),
-        );
+        const auditIds = Array.from(new Set(r.map((row) => row.qa_auditoria_id).filter(Boolean) as string[]));
         if (auditIds.length > 0) {
-          const { data: auds } = await supabase
-            .from("qa_auditorias")
-            .select("id,codigo")
-            .in("id", auditIds);
+          const { data: auds } = await supabase.from("qa_auditorias").select("id,codigo").in("id", auditIds);
           const am = new Map<string, string>();
           (auds ?? []).forEach((a: any) => { if (a.codigo) am.set(a.id, a.codigo); });
           if (!cancel) setAuditCodes(am);
@@ -188,14 +174,16 @@ function CasosPage() {
     return () => { cancel = true; };
   }, [search, estado, etapa, reloadKey]);
 
-  // "Mis casos": el usuario es asesor O licenciado del caso.
   const filteredRows = useMemo(() => {
-    if (!mios || !user?.id) return rows;
-    return rows.filter((r) => r.asesor_id === user.id || r.licenciado_id === user.id);
-  }, [rows, mios, user?.id]);
+    return rows.filter((r) => {
+      if (mios && user?.id && !(r.asesor_id === user.id || r.licenciado_id === user.id)) return false;
+      if (banco && r.banco !== banco) return false;
+      if (modalidad && r.modo !== modalidad) return false;
+      if (analistaId && r.asesor_id !== analistaId && r.licenciado_id !== analistaId) return false;
+      return true;
+    });
+  }, [rows, mios, user?.id, banco, modalidad, analistaId]);
 
-
-  // P26 — Detección de duplicados por cédula entre los expedientes cargados.
   const dupCedulas = useMemo(() => {
     const counts = new Map<string, number>();
     rows.forEach((r) => {
@@ -208,12 +196,57 @@ function CasosPage() {
     return s;
   }, [rows]);
 
-  const totals = useMemo(() => ({
-    total: filteredRows.length,
-    honorarios: filteredRows.reduce((s, r) => s + Number(r.honorarios_final || 0), 0),
-  }), [filteredRows]);
+  const bancos = useMemo(() => Array.from(new Set(rows.map((r) => r.banco).filter(Boolean))) as string[], [rows]);
+  const analistasList = useMemo(() => {
+    const s = new Map<string, string>();
+    rows.forEach((r) => {
+      const id = r.licenciado_id ?? r.asesor_id;
+      if (!id) return;
+      const info = asesores.get(id);
+      s.set(id, info?.nombre || info?.email || id.slice(0, 6));
+    });
+    return Array.from(s.entries());
+  }, [rows, asesores]);
 
-  // P21 — Exportar CSV de los casos visibles (respeta búsqueda, estado y etapa).
+  /* Métricas hero */
+  const kpis = useMemo(() => {
+    const honorarios = filteredRows.reduce((s, r) => s + Number(r.honorarios_final || 0), 0);
+    const total = filteredRows.length;
+    const firmados = filteredRows.filter((r) => r.estado === "FIRMADO" || r.estado === "PAGADO" || r.estado === "FACTURADO").length;
+    const listosFirma = filteredRows.filter((r) => {
+      const et = computeEtapaActual({ estado_caso: r.estado_caso ?? null });
+      return et === "cierre" || et === "contratacion" || et === "aceptacion_cliente";
+    }).length;
+    const conversion = total > 0 ? Math.round((firmados / total) * 100) : 0;
+    return { honorarios, total, conversion, listosFirma };
+  }, [filteredRows]);
+
+  /* Live pipeline counts */
+  const pipeline = useMemo(() => {
+    const c = { sim: 0, qa: 0, rad: 0, apr: 0, firm: 0 };
+    filteredRows.forEach((r) => {
+      if (r.qa_auditoria_id) c.qa += 1;
+      if (r.estado === "SIMULADO") c.sim += 1;
+      if (r.estado === "RADICADO" || r.estado === "ENVIADO_CONTRATACION") c.rad += 1;
+      if (r.estado === "APROBADO" || r.estado === "CONDICIONES_APLICADAS") c.apr += 1;
+      if (r.estado === "FIRMADO" || r.estado === "FACTURADO" || r.estado === "PAGADO") c.firm += 1;
+    });
+    return c;
+  }, [filteredRows]);
+
+  /* IA: riesgo, oportunidad, acción */
+  const insightIA = useMemo(() => {
+    const criticos = filteredRows.filter((r) => {
+      const etId = computeEtapaActual({ estado_caso: r.estado_caso ?? null });
+      return slaNivel(diasDesde(r.updated_at), UMBRAL_DIAS_ETAPA[etId] ?? 0) === "critico";
+    });
+    const oportunidad = [...filteredRows]
+      .filter((r) => Number(r.honorarios_final || 0) > 0 && r.estado !== "PAGADO")
+      .sort((a, b) => Number(b.honorarios_final || 0) - Number(a.honorarios_final || 0))[0];
+    const accion = filteredRows.find((r) => !r.qa_auditoria_id && r.estado === "SIMULADO");
+    return { criticos, oportunidad, accion };
+  }, [filteredRows]);
+
   const exportarCSV = () => {
     const headers = ["Cliente", "Cédula", "Banco", "Crédito", "Modo", "Estado", "Etapa", "Días", "Honorarios", "Actualizado"];
     const esc = (v: unknown) => {
@@ -225,202 +258,243 @@ function CasosPage() {
       const etId = computeEtapaActual({ estado_caso: r.estado_caso ?? null });
       const et = getEtapaById(etId);
       lines.push([
-        esc(r.cliente_nombre),
-        esc(r.cedula),
-        esc(r.banco),
-        esc(r.numero_credito),
-        esc(r.modo),
-        esc(ESTADO_THEME[r.estado]?.label ?? r.estado),
-        esc(`E${et.numero} ${et.titulo}`),
-        esc(diasDesde(r.updated_at)),
-        esc(r.honorarios_final ?? 0),
-        esc(r.updated_at?.slice(0, 10)),
+        esc(r.cliente_nombre), esc(r.cedula), esc(r.banco), esc(r.numero_credito),
+        esc(r.modo), esc(ESTADO_THEME[r.estado]?.label ?? r.estado),
+        esc(`E${et.numero} ${et.titulo}`), esc(diasDesde(r.updated_at)),
+        esc(r.honorarios_final ?? 0), esc(r.updated_at?.slice(0, 10)),
       ].join(","));
     });
     const blob = new Blob([`\uFEFF${lines.join("\n")}`], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `casos-${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    a.download = `expedientes-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
 
   return (
-    <PageLayout>
-      <ExecutiveHero
-        badge={{ icon: <Sparkles size={12} />, label: "Gestión de Casos", tone: "blue" }}
-        title="Expedientes NUVEX"
-        description="Administra, consulta y realiza seguimiento a cada simulación generada."
-        actions={
+    <PageLayout maxWidth="7xl">
+      {/* ============ HERO COMMAND CENTER ============ */}
+      <section
+        className="relative overflow-hidden rounded-[24px] backdrop-blur-2xl"
+        style={{
+          background: `linear-gradient(135deg, rgba(10,22,40,0.85) 0%, rgba(7,17,32,0.9) 100%)`,
+          border: `1px solid ${BORDER_STRONG}`,
+          boxShadow: "0 30px 80px -30px rgba(68,93,163,0.35), inset 0 1px 0 rgba(255,255,255,0.06)",
+        }}
+      >
+        {/* Grid lines background */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-[0.12]"
+          style={{
+            backgroundImage: `linear-gradient(rgba(255,255,255,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.12) 1px, transparent 1px)`,
+            backgroundSize: "48px 48px",
+            maskImage: "radial-gradient(ellipse at center, black 40%, transparent 85%)",
+          }}
+        />
+        {/* Light beams */}
+        <div className="absolute -top-32 left-1/4 h-[280px] w-[280px] rounded-full blur-[110px] pointer-events-none" style={{ background: AZUL, opacity: 0.28 }} />
+        <div className="absolute -bottom-24 right-1/4 h-[240px] w-[240px] rounded-full blur-[100px] pointer-events-none" style={{ background: VERDE, opacity: 0.22 }} />
+
+        <div className="relative grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-8 p-8">
+          {/* LEFT */}
+          <div className="flex flex-col justify-between gap-6 min-w-0">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.2em]"
+                  style={{ background: "rgba(68,93,163,0.15)", color: "#A5B5E0", border: `1px solid ${AZUL}55` }}>
+                  <Radio size={10} className="animate-pulse" /> Gestión de expedientes
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.2em]"
+                  style={{ background: "rgba(132,185,143,0.12)", color: VERDE, border: `1px solid ${VERDE}55` }}>
+                  <Cpu size={10} /> NUVIA CORE · LIVE
+                </span>
+              </div>
+              <h1
+                className="font-black leading-[0.95] tracking-tight"
+                style={{
+                  fontSize: "clamp(38px, 4.6vw, 60px)",
+                  backgroundImage: `linear-gradient(120deg, #FFFFFF 0%, #A5B5E0 55%, ${VERDE} 100%)`,
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  color: "transparent",
+                }}
+              >
+                EXPEDIENTES NUVIA
+              </h1>
+              <p className="mt-3 text-[13.5px] max-w-xl leading-relaxed" style={{ color: "#B8C4D8" }}>
+                Control inteligente de simulaciones, cierres, radicaciones y aprobaciones.
+                Sistema operativo de expedientes vivos en tiempo real.
+              </p>
+            </div>
+
+            {/* Quick stats micro-glass */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+              <MicroStat icon={<FolderOpen size={13} />} label="Activos" value={String(kpis.total)} tone="blue" />
+              <MicroStat icon={<Wallet size={13} />} label="Honorarios" value={formatCOP(kpis.honorarios)} tone="green" small />
+              <MicroStat icon={<TrendingUp size={13} />} label="Conversión" value={`${kpis.conversion}%`} tone="blue" />
+              <MicroStat icon={<CheckCircle2 size={13} />} label="Listos firma" value={String(kpis.listosFirma)} tone="green" />
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-wrap gap-2.5">
+              <Link
+                to="/inicio"
+                className="inline-flex items-center gap-2 rounded-xl px-5 h-11 text-[11px] font-bold uppercase tracking-wider text-white transition hover:brightness-110"
+                style={{
+                  background: `linear-gradient(135deg, ${AZUL}, ${VERDE})`,
+                  boxShadow: `0 10px 30px -10px ${AZUL}, 0 0 0 1px rgba(255,255,255,0.08) inset`,
+                }}
+              >
+                <Plus size={14} /> Nueva simulación
+              </Link>
+              <button
+                type="button"
+                onClick={exportarCSV}
+                disabled={loading || filteredRows.length === 0}
+                className="inline-flex items-center gap-2 rounded-xl px-4 h-11 text-[11px] font-bold uppercase tracking-wider transition disabled:opacity-50 hover:bg-white/10"
+                style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${BORDER_STRONG}`, color: "#fff" }}
+              >
+                <Download size={13} /> Exportar CSV
+              </button>
+            </div>
+          </div>
+
+          {/* RIGHT: HOLOGRAM + LIVE PIPELINE */}
+          <div className="relative flex items-center justify-center min-h-[300px]">
+            <NuviaHologram />
+            <LivePipeline pipeline={pipeline} />
+          </div>
+        </div>
+      </section>
+
+      {/* ============ NUVIA IA STRIP ============ */}
+      <div className="flex items-center justify-between px-1">
+        <div>
+          <div className="text-[11px] font-bold uppercase tracking-[0.22em]" style={{ color: VERDE }}>
+            NUVIA IA · Inteligencia de expedientes
+          </div>
+          <div className="text-[11.5px] mt-0.5" style={{ color: TEXT2 }}>
+            Recomendaciones ejecutivas basadas en comportamiento, aging y probabilidad de cierre.
+          </div>
+        </div>
+      </div>
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <IACard
+          tone="risk"
+          icon={<AlertTriangle size={16} />}
+          title="Riesgo detectado"
+          value={insightIA.criticos.length > 0 ? `${insightIA.criticos.length} expedientes fuera de SLA` : "Todo dentro de SLA"}
+          hint={insightIA.criticos[0] ? `Prioridad: ${insightIA.criticos[0].cliente_nombre}` : "Sistema en verde"}
+          cta="Revisar críticos"
+          onClick={() => insightIA.criticos[0] && (window.location.href = `/casos/${insightIA.criticos[0].id}`)}
+        />
+        <IACard
+          tone="opportunity"
+          icon={<TrendingUp size={16} />}
+          title="Oportunidad de cierre"
+          value={insightIA.oportunidad ? insightIA.oportunidad.cliente_nombre || "Expediente" : "Sin oportunidades activas"}
+          hint={insightIA.oportunidad ? `${formatCOP(Number(insightIA.oportunidad.honorarios_final || 0))} en honorarios` : "—"}
+          cta="Abrir expediente"
+          onClick={() => insightIA.oportunidad && (window.location.href = `/casos/${insightIA.oportunidad.id}`)}
+        />
+        <IACard
+          tone="action"
+          icon={<Zap size={16} />}
+          title="Próxima acción NUVIA"
+          value={insightIA.accion ? `Auditar ${insightIA.accion.cliente_nombre || "expediente"}` : "Todo auditado"}
+          hint={insightIA.accion ? "Simulado sin QA · ejecutar auditoría" : "Sistema al día"}
+          cta="Ir al expediente"
+          onClick={() => insightIA.accion && (window.location.href = `/casos/${insightIA.accion.id}`)}
+        />
+      </section>
+
+      {/* ============ FILTROS COMPACTOS ============ */}
+      <section
+        className="rounded-2xl backdrop-blur-xl flex flex-col md:flex-row gap-2 p-2"
+        style={{ background: CARD, border: `1px solid ${BORDER}` }}
+      >
+        <div className="relative flex-1 min-w-0">
+          <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: TEXT2 }} />
+          <input
+            type="text"
+            value={qLocal}
+            onChange={(e) => setQLocal(e.target.value)}
+            placeholder="Buscar cliente, cédula, banco o crédito…"
+            className="w-full h-11 bg-transparent pl-11 pr-4 text-[13px] outline-none placeholder:text-slate-500"
+            style={{ color: "#fff" }}
+          />
+        </div>
+        <GlassSelect value={estado} onChange={(v) => setEstado(v as EstadoExpediente | "")} placeholder="Estado">
+          <option value="" style={{ background: CARD_SOLID }}>Todos los estados</option>
+          {ESTADOS.map((s) => <option key={s} value={s} style={{ background: CARD_SOLID }}>{ESTADO_THEME[s].label}</option>)}
+        </GlassSelect>
+        <GlassSelect value={etapa} onChange={(v) => setEtapa(v as EtapaPipelineId | "")} placeholder="Etapa">
+          <option value="" style={{ background: CARD_SOLID }}>Todas las etapas</option>
+          {ETAPAS_PIPELINE.map((e) => <option key={e.id} value={e.id} style={{ background: CARD_SOLID }}>E{e.numero} · {e.titulo}</option>)}
+        </GlassSelect>
+        <GlassSelect value={banco} onChange={setBanco} placeholder="Banco">
+          <option value="" style={{ background: CARD_SOLID }}>Todos los bancos</option>
+          {bancos.map((b) => <option key={b} value={b} style={{ background: CARD_SOLID }}>{b}</option>)}
+        </GlassSelect>
+        <GlassSelect value={analistaId} onChange={setAnalistaId} placeholder="Analista">
+          <option value="" style={{ background: CARD_SOLID }}>Todos los analistas</option>
+          {analistasList.map(([id, name]) => <option key={id} value={id} style={{ background: CARD_SOLID }}>{name}</option>)}
+        </GlassSelect>
+        <GlassSelect value={modalidad} onChange={setModalidad} placeholder="Modalidad">
+          <option value="" style={{ background: CARD_SOLID }}>Todas</option>
+          <option value="pesos" style={{ background: CARD_SOLID }}>PESOS</option>
+          <option value="uvr" style={{ background: CARD_SOLID }}>UVR</option>
+        </GlassSelect>
+        <button
+          type="button"
+          onClick={() => setMios(!mios)}
+          disabled={!user?.id}
+          className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 h-11 text-[11px] font-bold uppercase tracking-wider transition disabled:opacity-50 whitespace-nowrap"
+          style={{
+            background: mios ? `linear-gradient(135deg, ${AZUL}, ${VERDE})` : "rgba(255,255,255,0.04)",
+            color: mios ? "#fff" : TEXT2,
+            border: `1px solid ${mios ? "transparent" : BORDER}`,
+          }}
+        >
+          <Sparkles size={11} /> Míos
+        </button>
+      </section>
+
+      {/* ============ TIMELINE CARDS ============ */}
+      <section className="space-y-2.5">
+        {err && (
+          <div className="rounded-xl p-4 text-sm" style={{ background: "rgba(180,35,24,0.1)", border: "1px solid rgba(180,35,24,0.3)", color: "#FCA5A5" }}>
+            {err}
+          </div>
+        )}
+        {loading ? (
+          <div className="py-24 text-center text-sm flex items-center justify-center gap-2" style={{ color: TEXT2 }}>
+            <Loader2 size={14} className="animate-spin" /> Cargando expedientes…
+          </div>
+        ) : filteredRows.length === 0 ? (
+          <div
+            className="py-20 text-center text-sm rounded-2xl"
+            style={{ background: CARD, border: `1px solid ${BORDER}`, color: TEXT2 }}
+          >
+            No hay expedientes que coincidan.{" "}
+            {!search && !estado && !mios && (
+              <>Crea tu primer caso desde el{" "}
+                <Link to="/inicio" className="font-semibold hover:underline" style={{ color: VERDE }}>simulador</Link>.
+              </>
+            )}
+          </div>
+        ) : (
           <>
-            <button
-              type="button"
-              onClick={exportarCSV}
-              disabled={loading || filteredRows.length === 0}
-              className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-wider transition disabled:cursor-not-allowed disabled:opacity-50"
-              style={{
-                background: "rgba(255,255,255,0.04)",
-                border: `1px solid ${BORDER}`,
-                color: "#fff",
-              }}
-            >
-              <ArrowRight size={14} className="-rotate-90" />
-              Exportar CSV
-            </button>
-            <Link
-              to="/inicio"
-              className="inline-flex items-center gap-2 rounded-lg px-5 py-2 text-xs font-bold uppercase tracking-wider text-white transition"
-              style={{
-                background: `linear-gradient(135deg, ${AZUL}, ${VERDE})`,
-                boxShadow: `0 8px 24px -8px ${AZUL}`,
-              }}
-            >
-              <Plus size={14} />
-              Nueva simulación
-            </Link>
-          </>
-        }
-      />
-
-      <KpiGrid cols={2}>
-        <KpiCard
-          icon={<FolderOpen size={16} />}
-          tone="blue"
-          label="Expedientes activos"
-          value={String(totals.total)}
-          hint="Casos registrados"
-        />
-        <KpiCard
-          icon={<Wallet size={16} />}
-          tone="green"
-          label="Honorarios proyectados"
-          value={formatCOP(totals.honorarios)}
-          hint="Pipeline acumulado"
-        />
-      </KpiGrid>
-
-      <InsightCard scope="casos" />
-
-
-
-        {/* FILTROS */}
-        <section className="grid gap-4 md:grid-cols-[1fr_200px_200px]">
-          <div
-            className="relative rounded-2xl backdrop-blur-xl transition-all focus-within:border-[#445DA3]/60"
-            style={{
-              background: `linear-gradient(180deg, ${CARD}, ${CARD2})`,
-              border: `1px solid ${BORDER}`,
-              height: 60,
-            }}
-          >
-            <Search size={18} className="absolute left-5 top-1/2 -translate-y-1/2" style={{ color: TEXT2 }} />
-            <input
-              type="text"
-              value={qLocal}
-              onChange={(e) => setQLocal(e.target.value)}
-              placeholder="Buscar cliente, cédula, banco o crédito..."
-              className="w-full h-full bg-transparent pl-14 pr-5 text-sm outline-none placeholder:text-slate-500"
-              style={{ color: "#fff" }}
-            />
-          </div>
-
-          <div
-            className="relative rounded-2xl backdrop-blur-xl"
-            style={{
-              background: `linear-gradient(180deg, ${CARD}, ${CARD2})`,
-              border: `1px solid ${BORDER}`,
-              height: 60,
-            }}
-          >
-            <select
-              value={estado}
-              onChange={(e) => setEstado(e.target.value as EstadoExpediente | "")}
-              className="w-full h-full bg-transparent px-5 text-sm outline-none appearance-none cursor-pointer font-medium"
-              style={{ color: "#fff" }}
-            >
-              <option value="" style={{ background: CARD }}>Todos los estados</option>
-              {ESTADOS.map((s) => (
-                <option key={s} value={s} style={{ background: CARD }}>{ESTADO_THEME[s].label}</option>
-              ))}
-            </select>
-            <ArrowRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none" style={{ color: TEXT2 }} />
-          </div>
-
-          <div
-            className="relative rounded-2xl backdrop-blur-xl"
-            style={{
-              background: `linear-gradient(180deg, ${CARD}, ${CARD2})`,
-              border: `1px solid ${BORDER}`,
-              height: 60,
-            }}
-          >
-            <Flag size={14} className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: TEXT2 }} />
-            <select
-              value={etapa}
-              onChange={(e) => setEtapa(e.target.value as EtapaPipelineId | "")}
-              className="w-full h-full bg-transparent pl-10 pr-8 text-sm outline-none appearance-none cursor-pointer font-medium"
-              style={{ color: "#fff" }}
-            >
-              <option value="" style={{ background: CARD }}>Todas las etapas</option>
-              {ETAPAS_PIPELINE.map((e) => (
-                <option key={e.id} value={e.id} style={{ background: CARD }}>E{e.numero} · {e.titulo}</option>
-              ))}
-            </select>
-            <ArrowRight size={14} className="absolute right-5 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none" style={{ color: TEXT2 }} />
-          </div>
-        </section>
-
-        {/* P26 — Chip "Mis casos" */}
-        <section className="flex flex-wrap items-center gap-2 -mt-1">
-          <button
-            type="button"
-            onClick={() => setMios(!mios)}
-            disabled={!user?.id}
-            className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition disabled:cursor-not-allowed disabled:opacity-50"
-            style={{
-              background: mios ? `linear-gradient(135deg, ${AZUL}, ${VERDE})` : "rgba(255,255,255,0.04)",
-              color: mios ? "#fff" : TEXT2,
-              border: `1px solid ${mios ? "transparent" : BORDER}`,
-            }}
-            title="Mostrar solo los expedientes asignados a mí"
-          >
-            <Sparkles size={12} /> Mis casos
-          </button>
-          {(search || estado || etapa || mios) && (
-            <span className="text-[11px]" style={{ color: TEXT2 }}>
-              {filteredRows.length} de {rows.length} expedientes
-            </span>
-          )}
-        </section>
-
-        {/* LISTADO */}
-        <section className="space-y-3">
-          {err && (
-            <div className="rounded-xl p-4 text-sm" style={{ background: "rgba(180,35,24,0.1)", border: "1px solid rgba(180,35,24,0.3)", color: "#FCA5A5" }}>
-              {err}
+            <div className="flex items-center justify-between px-1 pb-1">
+              <div className="text-[10.5px] font-bold uppercase tracking-[0.22em]" style={{ color: TEXT2 }}>
+                <Activity size={11} className="inline mr-1.5" />
+                {filteredRows.length} expediente{filteredRows.length === 1 ? "" : "s"} en operación
+              </div>
             </div>
-          )}
-          {loading ? (
-            <div className="py-24 text-center text-sm" style={{ color: TEXT2 }}>Cargando expedientes…</div>
-          ) : filteredRows.length === 0 ? (
-            <div
-              className="py-20 text-center text-sm rounded-2xl"
-              style={{ background: `linear-gradient(180deg, ${CARD}, ${CARD2})`, border: `1px solid ${BORDER}`, color: TEXT2 }}
-            >
-              No hay expedientes que coincidan.
-              {!search && !estado && !mios && (
-                <>
-                  {" "}Crea tu primer caso desde el{" "}
-                  <Link to="/inicio" className="font-semibold hover:underline" style={{ color: VERDE }}>simulador</Link>.
-                </>
-              )}
-            </div>
-          ) : (
-            filteredRows.map((r) => (
-              <ExpedienteCard
+            {filteredRows.map((r) => (
+              <TimelineCard
                 key={r.id}
                 r={r}
                 isDup={!!r.cedula && dupCedulas.has(r.cedula.trim())}
@@ -429,43 +503,255 @@ function CasosPage() {
                 auditCode={r.qa_auditoria_id ? auditCodes.get(r.qa_auditoria_id) : undefined}
                 onAudited={() => setReloadKey((k) => k + 1)}
               />
-
-            ))
-
-          )}
-        </section>
-
-        {/* FOOTER */}
-        <footer className="pt-16">
-          <div className="h-px w-full" style={{ background: `linear-gradient(90deg, transparent, ${AZUL}, ${VERDE}, transparent)` }} />
-          <div
-            className="mt-8 grid gap-6 md:grid-cols-4 rounded-2xl p-6 backdrop-blur-xl"
-            style={{ background: `linear-gradient(180deg, ${CARD}, ${CARD2})`, border: `1px solid ${BORDER}` }}
-          >
-            <FooterBlock icon={<MapPin size={14} />} title="Bucaramanga" lines={["Carrera 16 #37-48", "Piso 4 · Centro"]} />
-            <FooterBlock icon={<MapPin size={14} />} title="Bogotá" lines={["Calle 93 #18-28", "Oficina 704"]} />
-            <FooterBlock icon={<Phone size={14} />} title="Contacto" lines={["+57 316 402 3779"]} />
-            <FooterBlock icon={<Globe size={14} />} title="Web" lines={["www.nuvex.com.co"]} />
-          </div>
-          <div className="text-center text-[11px] mt-6 pb-2" style={{ color: TEXT2 }}>
-            © {new Date().getFullYear()} NUVEX Finanzas Inteligentes · El ahorro no es un lujo, es un derecho.
-          </div>
-        </footer>
+            ))}
+          </>
+        )}
+      </section>
     </PageLayout>
   );
 }
 
+/* =====================================================
+   HOLOGRAM
+   ===================================================== */
+function NuviaHologram() {
+  return (
+    <div className="relative w-[260px] h-[260px] flex items-center justify-center">
+      {/* Orbital rings */}
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            width: `${140 + i * 45}px`,
+            height: `${140 + i * 45}px`,
+            border: `1px solid ${i % 2 === 0 ? AZUL : VERDE}${i === 0 ? "66" : "33"}`,
+            animation: `hologramSpin${i} ${14 + i * 5}s linear infinite`,
+            transform: `rotate(${i * 30}deg)`,
+            boxShadow: `0 0 24px -8px ${i % 2 === 0 ? AZUL : VERDE}`,
+          }}
+        />
+      ))}
+      {/* Pulse rings */}
+      {[0, 1].map((i) => (
+        <div
+          key={`p${i}`}
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            width: 120, height: 120,
+            border: `1px solid ${VERDE}55`,
+            animation: `hologramPulse 3s ease-out ${i * 1.5}s infinite`,
+          }}
+        />
+      ))}
+      {/* Orbiting particles */}
+      {[0, 1, 2, 3].map((i) => (
+        <div
+          key={`orb${i}`}
+          className="absolute pointer-events-none"
+          style={{
+            width: 100 + i * 40, height: 100 + i * 40,
+            animation: `hologramSpin0 ${8 + i * 3}s linear ${i % 2 ? "reverse" : ""} infinite`,
+          }}
+        >
+          <div
+            className="absolute rounded-full"
+            style={{
+              top: -3, left: "50%",
+              width: 6, height: 6,
+              background: i % 2 === 0 ? AZUL : VERDE,
+              boxShadow: `0 0 12px ${i % 2 === 0 ? AZUL : VERDE}`,
+              transform: "translateX(-50%)",
+            }}
+          />
+        </div>
+      ))}
+      {/* Core sphere */}
+      <div
+        className="relative rounded-full flex items-center justify-center"
+        style={{
+          width: 88, height: 88,
+          background: `radial-gradient(circle at 35% 30%, #A5B5E0, ${AZUL} 45%, #0A1628 100%)`,
+          boxShadow: `0 0 60px ${AZUL}, 0 0 120px ${AZUL}66, inset 0 0 30px rgba(255,255,255,0.15)`,
+          animation: "hologramBreath 3.5s ease-in-out infinite",
+        }}
+      >
+        <div className="text-[9px] font-black tracking-[0.18em] text-white" style={{ textShadow: `0 0 12px ${AZUL}` }}>
+          NUVIA
+        </div>
+      </div>
+      {/* Base energy pad */}
+      <div
+        className="absolute bottom-0 left-1/2 -translate-x-1/2 rounded-full pointer-events-none"
+        style={{
+          width: 200, height: 30,
+          background: `radial-gradient(ellipse at center, ${AZUL}55 0%, transparent 70%)`,
+          filter: "blur(8px)",
+        }}
+      />
+      <style>{`
+        @keyframes hologramSpin0 { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes hologramSpin1 { from { transform: rotate(30deg); } to { transform: rotate(390deg); } }
+        @keyframes hologramSpin2 { from { transform: rotate(60deg); } to { transform: rotate(420deg); } }
+        @keyframes hologramPulse {
+          0% { transform: scale(0.6); opacity: 0.8; }
+          100% { transform: scale(2.2); opacity: 0; }
+        }
+        @keyframes hologramBreath {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.06); }
+        }
+      `}</style>
+    </div>
+  );
+}
 
-/* ===== Helpers ===== */
+function LivePipeline({ pipeline }: { pipeline: { sim: number; qa: number; rad: number; apr: number; firm: number } }) {
+  const items = [
+    { label: "SIMULADO", value: pipeline.sim, color: AZUL, icon: <Sparkles size={10} /> },
+    { label: "QA", value: pipeline.qa, color: "#0EA5E9", icon: <ShieldCheck size={10} /> },
+    { label: "RADICADO", value: pipeline.rad, color: "#F97316", icon: <FileText size={10} /> },
+    { label: "APROBADO", value: pipeline.apr, color: VERDE, icon: <CheckCircle2 size={10} /> },
+    { label: "FIRMADO", value: pipeline.firm, color: "#9333EA", icon: <Flag size={10} /> },
+  ];
+  return (
+    <div className="absolute right-0 top-1/2 -translate-y-1/2 flex flex-col gap-1.5 w-[140px]">
+      {items.map((it) => (
+        <div
+          key={it.label}
+          className="flex items-center justify-between px-2.5 py-1.5 rounded-lg backdrop-blur-lg transition hover:scale-[1.03]"
+          style={{
+            background: `linear-gradient(90deg, ${it.color}18, rgba(10,22,40,0.6))`,
+            border: `1px solid ${it.color}44`,
+            boxShadow: `0 0 12px -4px ${it.color}55`,
+          }}
+        >
+          <div className="flex items-center gap-1.5" style={{ color: it.color }}>
+            {it.icon}
+            <span className="text-[9px] font-bold uppercase tracking-wider">{it.label}</span>
+          </div>
+          <span className="text-[12px] font-black tabular-nums text-white">{it.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
+/* =====================================================
+   MICRO STAT
+   ===================================================== */
+function MicroStat({ icon, label, value, tone, small }: { icon: React.ReactNode; label: string; value: string; tone: "blue" | "green"; small?: boolean }) {
+  const c = tone === "blue" ? AZUL : VERDE;
+  return (
+    <div
+      className="relative rounded-xl px-3 py-2.5 backdrop-blur-xl overflow-hidden group transition hover:-translate-y-0.5"
+      style={{
+        background: "rgba(255,255,255,0.03)",
+        border: `1px solid ${BORDER_STRONG}`,
+        boxShadow: `inset 0 1px 0 rgba(255,255,255,0.04)`,
+      }}
+    >
+      <div className="absolute -top-8 -right-8 w-16 h-16 rounded-full blur-2xl opacity-0 group-hover:opacity-40 transition-opacity" style={{ background: c }} />
+      <div className="relative flex items-center gap-1.5 mb-1" style={{ color: c }}>
+        {icon}
+        <span className="text-[9.5px] font-bold uppercase tracking-[0.15em]">{label}</span>
+      </div>
+      <div className={`relative font-black tabular-nums leading-none text-white ${small ? "text-[15px]" : "text-[20px]"}`}>
+        {value}
+      </div>
+    </div>
+  );
+}
 
+/* =====================================================
+   IA CARD
+   ===================================================== */
+function IACard({
+  tone, icon, title, value, hint, cta, onClick,
+}: { tone: "risk" | "opportunity" | "action"; icon: React.ReactNode; title: string; value: string; hint: string; cta: string; onClick?: () => void }) {
+  const palette = tone === "risk"
+    ? { fg: "#FB7185", glow: "244,63,94", ring: "rgba(244,63,94,0.45)" }
+    : tone === "opportunity"
+      ? { fg: VERDE, glow: "132,185,143", ring: "rgba(132,185,143,0.45)" }
+      : { fg: "#A5B5E0", glow: "68,93,163", ring: "rgba(68,93,163,0.5)" };
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group relative overflow-hidden rounded-2xl p-5 text-left backdrop-blur-xl transition hover:-translate-y-0.5"
+      style={{
+        background: `linear-gradient(180deg, rgba(10,22,40,0.85), rgba(7,17,32,0.9))`,
+        border: `1px solid ${palette.ring}`,
+        boxShadow: `0 12px 40px -20px rgba(${palette.glow},0.6), inset 0 1px 0 rgba(255,255,255,0.05)`,
+      }}
+    >
+      <div
+        className="absolute -top-16 -right-16 w-40 h-40 rounded-full blur-3xl opacity-30 group-hover:opacity-60 transition-opacity"
+        style={{ background: palette.fg }}
+      />
+      <div className="relative flex items-start justify-between mb-3">
+        <div
+          className="inline-flex items-center justify-center w-9 h-9 rounded-xl"
+          style={{
+            background: `linear-gradient(135deg, rgba(${palette.glow},0.25), rgba(${palette.glow},0.08))`,
+            border: `1px solid ${palette.ring}`,
+            color: palette.fg,
+            boxShadow: `0 0 20px -4px rgba(${palette.glow},0.6)`,
+          }}
+        >
+          {icon}
+        </div>
+        <span className="text-[9.5px] font-bold uppercase tracking-[0.18em]" style={{ color: palette.fg }}>
+          {tone === "risk" ? "Riesgo" : tone === "opportunity" ? "Oportunidad" : "Acción"}
+        </span>
+      </div>
+      <div className="relative">
+        <div className="text-[10.5px] font-bold uppercase tracking-[0.16em] mb-1" style={{ color: TEXT2 }}>
+          {title}
+        </div>
+        <div className="text-[15px] font-bold text-white leading-tight line-clamp-2" title={value}>
+          {value}
+        </div>
+        <div className="text-[11px] mt-1.5" style={{ color: TEXT2 }}>{hint}</div>
+      </div>
+      <div className="relative mt-4 inline-flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-wider transition group-hover:gap-2.5" style={{ color: palette.fg }}>
+        {cta} <ArrowUpRight size={12} />
+      </div>
+    </button>
+  );
+}
 
-function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode, onAudited }: { r: Expediente; isDup?: boolean; asesor?: { nombre?: string | null; email?: string | null }; licenciado?: { nombre?: string | null; email?: string | null }; auditCode?: string; onAudited?: () => void }) {
+/* =====================================================
+   GLASS SELECT
+   ===================================================== */
+function GlassSelect({ value, onChange, placeholder, children }: { value: string; onChange: (v: string) => void; placeholder: string; children: React.ReactNode }) {
+  return (
+    <div className="relative">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={placeholder}
+        className="h-11 min-w-[130px] bg-transparent pl-3 pr-8 text-[11.5px] font-semibold outline-none appearance-none cursor-pointer rounded-lg transition hover:bg-white/[0.04]"
+        style={{ color: value ? "#fff" : TEXT2, border: `1px solid ${BORDER}` }}
+      >
+        {children}
+      </select>
+      <ArrowRight size={11} className="absolute right-3 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none" style={{ color: TEXT2 }} />
+    </div>
+  );
+}
+
+/* =====================================================
+   TIMELINE CARD — compact executive density
+   ===================================================== */
+function TimelineCard({
+  r, isDup = false, asesor, licenciado, auditCode, onAudited,
+}: { r: Expediente; isDup?: boolean; asesor?: { nombre?: string | null; email?: string | null }; licenciado?: { nombre?: string | null; email?: string | null }; auditCode?: string; onAudited?: () => void }) {
   const [auditando, setAuditando] = useState(false);
   const puedeAuditar = !r.qa_auditoria_id;
+
   const runAuditoria = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault(); e.stopPropagation();
     if (auditando) return;
     setAuditando(true);
     try {
@@ -481,10 +767,9 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode, onAud
         },
       });
       onAudited?.();
-    } finally {
-      setAuditando(false);
-    }
+    } finally { setAuditando(false); }
   };
+
   const theme = ESTADO_THEME[r.estado];
   const aColor = avatarColor(r.cliente_nombre);
   const initial = (r.cliente_nombre || "?").trim().charAt(0).toUpperCase();
@@ -495,312 +780,213 @@ function ExpedienteCard({ r, isDup = false, asesor, licenciado, auditCode, onAud
   const dias = diasDesde(r.updated_at);
   const nivel = slaNivel(dias, umbral);
   const slaTheme = SLA_COLORS[nivel];
-  const slaLabel =
-    nivel === "critico"
-      ? `${dias}d · SLA ${umbral}d`
-      : nivel === "atencion"
-        ? `${dias}d / ${umbral}d`
-        : nivel === "ok"
-          ? `${dias}d`
-          : `${dias}d`;
+  const slaLabel = nivel === "critico" ? `${dias}d · SLA ${umbral}d` : nivel === "atencion" ? `${dias}d / ${umbral}d` : `${dias}d`;
   const SlaIcon = nivel === "critico" ? AlertTriangle : Clock;
 
   const qaScore = r.qa_score ?? null;
   const qaCat = (r.qa_categoria ?? "").toString().toUpperCase();
   const qaFailed = qaCat.includes("FAIL") || qaCat.includes("RECHAZ") || (qaScore !== null && qaScore < 70);
-  const qaTone = qaFailed
-    ? { bg: "rgba(244,63,94,0.12)", fg: "#FB7185", border: "rgba(244,63,94,0.45)" }
-    : qaScore !== null
-      ? { bg: "rgba(132,185,143,0.10)", fg: "#84B98F", border: "rgba(132,185,143,0.35)" }
-      : { bg: "rgba(148,163,184,0.10)", fg: "#94A3B8", border: "rgba(148,163,184,0.30)" };
+
+  // Progress: current milestone
+  const currentIdx = MILESTONES.findIndex((m) => etapa.numero <= m.etapa);
+  const activeIdx = currentIdx === -1 ? MILESTONES.length - 1 : currentIdx;
+  const progressPct = ((activeIdx + 1) / MILESTONES.length) * 100;
 
   return (
     <div
-      className="group relative overflow-hidden rounded-[20px] transition-all duration-300 hover:-translate-y-0.5"
+      className="group relative overflow-hidden rounded-2xl backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5"
       style={{
-        background: `linear-gradient(180deg, ${CARD}, ${CARD2})`,
+        background: `linear-gradient(180deg, rgba(10,22,40,0.75), rgba(7,17,32,0.85))`,
         border: `1px solid ${BORDER}`,
-        boxShadow: "0 4px 20px -8px rgba(0,0,0,0.4)",
-        minHeight: 220,
+        boxShadow: "0 6px 24px -12px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.04)",
       }}
     >
-      {/* Línea lateral por estado */}
+      {/* Lateral bar */}
       <span
-        className="absolute left-0 top-0 bottom-0 w-1 rounded-l-[20px]"
-        style={{ background: `linear-gradient(180deg, ${theme.color}, ${theme.color}40)` }}
+        className="absolute left-0 top-0 bottom-0 w-[3px]"
+        style={{ background: `linear-gradient(180deg, ${theme.color}, ${theme.color}30)`, boxShadow: `0 0 16px ${theme.color}55` }}
       />
-      {/* Glow hover */}
+      {/* Hover glow */}
       <span
-        className="absolute -right-20 top-1/2 -translate-y-1/2 h-40 w-40 rounded-full opacity-0 transition-opacity duration-500 group-hover:opacity-30 blur-3xl pointer-events-none"
+        className="absolute -right-20 top-1/2 -translate-y-1/2 h-40 w-40 rounded-full opacity-0 transition-opacity duration-500 group-hover:opacity-25 blur-3xl pointer-events-none"
         style={{ background: theme.color }}
       />
 
-      {/* HEADER: etapa (izq) + QA state (der) */}
-      <div
-        className="relative flex items-center justify-between gap-3 px-6 pt-4 pb-3 h-14"
-        style={{ borderBottom: `1px solid ${BORDER}` }}
-      >
-        <div className="flex items-center gap-2">
-          <span
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold"
-            style={{ background: "rgba(68,93,163,0.10)", color: AZUL, border: `1px solid ${AZUL}40` }}
-            title={etapa.descripcion}
+      <div className="relative grid gap-4 px-5 py-4 items-center" style={{ gridTemplateColumns: "minmax(0,2.4fr) minmax(0,3fr) minmax(0,1.5fr) auto" }}>
+        {/* LEFT — Identity */}
+        <div className="flex items-center gap-3 min-w-0">
+          <div
+            className="flex items-center justify-center rounded-xl text-[15px] font-black text-white shrink-0"
+            style={{
+              width: 46, height: 46,
+              background: `linear-gradient(135deg, ${aColor}, ${aColor}99)`,
+              boxShadow: `0 6px 18px -6px ${aColor}80, inset 0 1px 0 rgba(255,255,255,0.15)`,
+            }}
           >
-            <Flag size={11} /> E{etapa.numero} · {etapa.titulo}
-          </span>
-          <span
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold"
-            style={{ background: slaTheme.bg, color: slaTheme.fg, border: `1px solid ${slaTheme.border}` }}
-            title={`Tiempo desde último cambio. SLA etapa: ${umbral} día(s).`}
-          >
-            <SlaIcon size={11} /> {slaLabel}
-          </span>
-          {isDup && (
-            <span
-              title="Esta cédula tiene más de un expediente activo"
-              className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider"
-              style={{ background: "rgba(245,158,11,0.15)", color: "#F59E0B", border: "1px solid rgba(245,158,11,0.4)" }}
-            >
-              Dup
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <span
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
-            style={{ background: `${theme.color}1A`, color: theme.color, border: `1px solid ${theme.color}40` }}
-          >
-            <span className="h-1.5 w-1.5 rounded-full" style={{ background: theme.color }} />
-            {r.estado}
-          </span>
-          <span
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
-            style={{ background: qaTone.bg, color: qaTone.fg, border: `1px solid ${qaTone.border}` }}
-            title="Estado de auditoría QA"
-          >
-            QA {qaFailed ? "FAILED" : qaScore !== null ? "OK" : "—"}
-            {qaScore !== null && <> • {qaScore}</>}
-          </span>
-        </div>
-      </div>
-
-      {/* CUERPO: 4 columnas */}
-      <div
-        className="relative grid gap-5 px-7 py-6"
-        style={{ gridTemplateColumns: "minmax(0, 32fr) minmax(0, 28fr) minmax(0, 20fr) minmax(0, 20fr)" }}
-      >
-        {/* COL 1 — IDENTIDAD */}
-        <div className="flex flex-col justify-center gap-[18px] min-w-0 h-full">
-          <div className="flex items-center gap-5 min-w-0">
-            <div
-              className="flex items-center justify-center rounded-full text-2xl font-bold text-white shrink-0"
-              style={{
-                width: 72,
-                height: 72,
-                background: `linear-gradient(135deg, ${aColor}, ${aColor}99)`,
-                boxShadow: `0 6px 18px -6px ${aColor}80`,
-              }}
-            >
-              {initial}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div
-                className="font-semibold text-[15px] leading-tight"
-                style={{ color: "#F1F5F9", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}
-                title={r.cliente_nombre || "Sin nombre"}
+            {initial}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+              <span
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider"
+                style={{ background: "rgba(68,93,163,0.15)", color: "#A5B5E0", border: `1px solid ${AZUL}55` }}
+                title={etapa.descripcion}
               >
-                {r.cliente_nombre || "Sin nombre"}
-              </div>
-              <div className="text-[11px] mt-2" style={{ color: TEXT2 }}>
-                CC {r.cedula || "—"}
-              </div>
-              {(asesor || licenciado) && (
-                <div className="flex items-center gap-1.5 mt-3.5 min-w-0" title="Analista asignado">
-                  <AnalistaAvatar
-                    nombre={(licenciado?.nombre ?? asesor?.nombre) ?? null}
-                    email={(licenciado?.email ?? asesor?.email) ?? null}
-                    size={16}
-                  />
-                  <span className="text-[10.5px] truncate" style={{ color: TEXT2 }}>
-                    {licenciado?.nombre || licenciado?.email || asesor?.nombre || asesor?.email || ""}
-                  </span>
-                </div>
+                <Flag size={9} /> E{etapa.numero}
+              </span>
+              <span
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider"
+                style={{ background: slaTheme.bg, color: slaTheme.fg, border: `1px solid ${slaTheme.border}` }}
+              >
+                <SlaIcon size={9} /> {slaLabel}
+              </span>
+              {isDup && (
+                <span className="rounded px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wider"
+                  style={{ background: "rgba(245,158,11,0.15)", color: "#F59E0B", border: "1px solid rgba(245,158,11,0.4)" }}>Dup</span>
               )}
             </div>
+            <div className="font-semibold text-[13px] leading-tight truncate text-white" title={r.cliente_nombre || "Sin nombre"}>
+              {r.cliente_nombre || "Sin nombre"}
+            </div>
+            <div className="flex items-center gap-2 text-[10.5px] mt-1 min-w-0" style={{ color: TEXT2 }}>
+              <span className="truncate">CC {r.cedula || "—"}</span>
+              <span className="text-white/20">·</span>
+              <span className="inline-flex items-center gap-1 truncate"><Building2 size={9} /> {r.banco || "—"}</span>
+              <span className="text-white/20">·</span>
+              <span className="font-bold" style={{ color: AZUL }}>{r.modo.toUpperCase()}</span>
+            </div>
+            {(asesor || licenciado) && (
+              <div className="flex items-center gap-1.5 mt-1.5 min-w-0" title="Analista asignado">
+                <AnalistaAvatar
+                  nombre={(licenciado?.nombre ?? asesor?.nombre) ?? null}
+                  email={(licenciado?.email ?? asesor?.email) ?? null}
+                  size={14}
+                />
+                <span className="text-[10px] truncate" style={{ color: TEXT2 }}>
+                  {licenciado?.nombre || licenciado?.email || asesor?.nombre || asesor?.email || ""}
+                </span>
+              </div>
+            )}
           </div>
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <QABadge
-              categoria={r.qa_categoria ?? null}
-              score={r.qa_score ?? null}
-              auditoriaId={r.qa_auditoria_id ?? null}
-              size="xs"
-              asLink={false}
+        </div>
+
+        {/* CENTER — Progress timeline */}
+        <div className="min-w-0 px-2">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[9.5px] font-bold uppercase tracking-[0.18em]" style={{ color: TEXT2 }}>Pipeline</span>
+            <span className="text-[9.5px] font-bold tabular-nums" style={{ color: theme.color }}>{Math.round(progressPct)}%</span>
+          </div>
+          <div className="relative">
+            <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[2px] rounded-full" style={{ background: "rgba(255,255,255,0.06)" }} />
+            <div
+              className="absolute left-0 top-1/2 -translate-y-1/2 h-[2px] rounded-full transition-all duration-500"
+              style={{
+                width: `${progressPct}%`,
+                background: `linear-gradient(90deg, ${AZUL}, ${theme.color})`,
+                boxShadow: `0 0 10px ${theme.color}`,
+              }}
             />
+            <div className="relative flex items-center justify-between">
+              {MILESTONES.map((m, i) => {
+                const done = i <= activeIdx;
+                const active = i === activeIdx;
+                return (
+                  <div key={m.key} className="flex flex-col items-center gap-1">
+                    <div
+                      className="relative rounded-full transition-all"
+                      style={{
+                        width: active ? 14 : 10, height: active ? 14 : 10,
+                        background: done ? `linear-gradient(135deg, ${AZUL}, ${VERDE})` : "rgba(255,255,255,0.08)",
+                        border: `1.5px solid ${done ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.1)"}`,
+                        boxShadow: active ? `0 0 12px ${VERDE}, 0 0 24px ${VERDE}55` : "none",
+                      }}
+                    >
+                      {active && (
+                        <span className="absolute inset-0 rounded-full animate-ping" style={{ background: VERDE, opacity: 0.5 }} />
+                      )}
+                    </div>
+                    <span className="text-[8.5px] font-bold uppercase tracking-wider" style={{ color: done ? "#fff" : TEXT2 }}>
+                      {m.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT — Score / honorarios */}
+        <div className="min-w-0 flex flex-col items-end gap-1.5">
+          <div className="text-[9px] font-bold uppercase tracking-[0.18em]" style={{ color: TEXT2 }}>Honorarios</div>
+          <div className="text-[18px] font-black tabular-nums leading-none" style={{ color: VERDE, textShadow: `0 0 18px ${VERDE}44` }}>
+            {formatCOP(Number(r.honorarios_final))}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <QABadge categoria={r.qa_categoria ?? null} score={r.qa_score ?? null} auditoriaId={r.qa_auditoria_id ?? null} size="xs" asLink={false} />
             {auditCode && (
               <Link
-                to="/qa-ai/$id"
-                params={{ id: r.qa_auditoria_id ?? "" }}
-                onClick={(e) => e.stopPropagation()}
+                to="/qa-ai/$id" params={{ id: r.qa_auditoria_id ?? "" }} onClick={(e) => e.stopPropagation()}
                 title="Ir a la auditoría QA"
-                className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider hover:brightness-125 transition"
+                className="rounded px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wider hover:brightness-125 transition"
                 style={{
-                  background: "rgba(68,93,163,0.15)",
-                  color: "#A5B5E0",
+                  background: "rgba(68,93,163,0.15)", color: "#A5B5E0",
                   border: "1px solid rgba(68,93,163,0.45)",
                   fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
                 }}
-              >
-                {auditCode}
-              </Link>
+              >{auditCode}</Link>
             )}
-            {puedeAuditar && (
-              <button
-                type="button"
-                onClick={runAuditoria}
-                disabled={auditando}
-                title="Ejecuta la auditoría NUVIA usando los datos ya guardados en el expediente (sin necesidad de subir extracto)."
-                className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider transition hover:brightness-125 disabled:opacity-60 disabled:cursor-wait"
-                style={{
-                  background: "linear-gradient(135deg, rgba(132,185,143,0.18), rgba(68,93,163,0.18))",
-                  color: "#B8E5C0",
-                  border: "1px solid rgba(132,185,143,0.45)",
-                }}
-              >
-                {auditando ? <Loader2 size={11} className="animate-spin" /> : <ShieldCheck size={11} />}
-                {auditando ? "Auditando…" : "Ejecutar auditoría NUVIA"}
-              </button>
-            )}
-          </div>
-
-        </div>
-
-        {/* COL 2 — DATOS DEL CRÉDITO */}
-        <div className="flex flex-col justify-center min-w-0 divide-y gap-[14px]" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
-          <DataRow icon={<Clock size={12} />} label="Edad lead" value={`${dias} día${dias === 1 ? "" : "s"}`} />
-          <DataRow icon={<Building2 size={12} />} label="Banco" value={r.banco || "—"} />
-          <DataRow icon={<Hash size={12} />} label="Crédito" value={r.numero_credito || "—"} mono />
-          <DataRow icon={<Sparkles size={12} />} label="Modalidad" value={r.modo.toUpperCase()} accent={AZUL} />
-          <DataRow icon={<Calendar size={12} />} label="Fecha" value={r.fecha_simulacion || "—"} />
-        </div>
-
-        {/* COL 3 — HONORARIOS KPI */}
-        <div className="flex flex-col justify-center min-w-0 h-full">
-          <div className="text-[10px] font-bold uppercase tracking-[0.18em] mb-3" style={{ color: TEXT2 }}>
-            Honorarios
-          </div>
-          <div
-            className="text-[26px] font-bold leading-none tabular-nums mb-4"
-            style={{ color: VERDE, textShadow: `0 0 24px ${VERDE}40` }}
-          >
-            {formatCOP(Number(r.honorarios_final))}
           </div>
           <span
-            className="inline-flex items-center gap-1.5 self-start px-2 py-0.5 rounded-full text-[9.5px] font-bold uppercase tracking-wider"
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
             style={{
-              background: `${theme.color}1A`,
-              color: theme.color,
-              border: `1px solid ${theme.color}55`,
-              boxShadow: `0 0 12px -2px ${theme.color}55`,
+              background: qaFailed ? "rgba(244,63,94,0.12)" : `${theme.color}1A`,
+              color: qaFailed ? "#FB7185" : theme.color,
+              border: `1px solid ${qaFailed ? "rgba(244,63,94,0.45)" : theme.color + "55"}`,
             }}
           >
-            <span className="h-1 w-1 rounded-full" style={{ background: theme.color }} />
-            {r.estado}
+            <span className="h-1 w-1 rounded-full" style={{ background: qaFailed ? "#FB7185" : theme.color }} />
+            {qaFailed ? "QA FAIL" : theme.label}
           </span>
         </div>
 
-        {/* COL 4 — ACCIONES */}
-        <div className="flex flex-col justify-center items-center gap-4 min-w-0 pr-7 overflow-hidden">
+        {/* ACTIONS */}
+        <div className="flex flex-col gap-1.5 shrink-0">
           <Link
-            to="/casos/$id"
-            params={{ id: r.id }}
-            className="inline-flex w-full max-w-[260px] h-14 shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white transition hover:brightness-110"
-            style={{
-              background: `linear-gradient(135deg, ${AZUL}, ${VERDE})`,
-              boxShadow: `0 8px 24px -10px ${AZUL}`,
-            }}
+            to="/casos/$id" params={{ id: r.id }}
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 h-8 text-[10px] font-bold uppercase tracking-wider text-white transition hover:brightness-110 whitespace-nowrap"
+            style={{ background: `linear-gradient(135deg, ${AZUL}, ${VERDE})`, boxShadow: `0 6px 18px -8px ${AZUL}` }}
           >
-            Ver expediente <ArrowRight size={13} />
+            Ver expediente <ArrowRight size={11} />
           </Link>
           <Link
-            to="/casos/$id"
-            params={{ id: r.id }}
-            search={{ tab: "snapshot" } as never}
-            className="inline-flex w-full max-w-[260px] h-14 shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2 text-[11px] font-semibold uppercase tracking-wider transition"
-            style={{
-              background: "rgba(132,185,143,0.08)",
-              color: VERDE,
-              border: `1px solid ${VERDE}44`,
-            }}
+            to="/casos/$id" params={{ id: r.id }} search={{ tab: "trazabilidad" } as never}
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 h-7 text-[9.5px] font-semibold uppercase tracking-wider transition whitespace-nowrap"
+            style={{ background: "rgba(255,255,255,0.04)", color: TEXT2, border: `1px solid ${BORDER}` }}
           >
-            Snapshot PDF
+            Timeline
           </Link>
           <Link
-            to="/casos/$id"
-            params={{ id: r.id }}
-            search={{ tab: "trazabilidad" } as never}
-            className="inline-flex w-full max-w-[260px] h-14 shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2 text-[11px] font-semibold uppercase tracking-wider transition"
-            style={{
-              background: "rgba(255,255,255,0.03)",
-              color: TEXT2,
-              border: `1px solid ${BORDER}`,
-            }}
+            to="/casos/$id" params={{ id: r.id }} search={{ tab: "snapshot" } as never}
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 h-7 text-[9.5px] font-semibold uppercase tracking-wider transition whitespace-nowrap"
+            style={{ background: "rgba(132,185,143,0.08)", color: VERDE, border: `1px solid ${VERDE}44` }}
           >
-            Trazabilidad
+            Documentos
           </Link>
+          {puedeAuditar && (
+            <button
+              type="button" onClick={runAuditoria} disabled={auditando}
+              title="Ejecutar auditoría NUVIA"
+              className="inline-flex items-center justify-center gap-1 rounded-lg px-2 h-6 text-[9px] font-bold uppercase tracking-wider transition hover:brightness-125 disabled:opacity-60 whitespace-nowrap"
+              style={{
+                background: "linear-gradient(135deg, rgba(132,185,143,0.18), rgba(68,93,163,0.18))",
+                color: "#B8E5C0", border: "1px solid rgba(132,185,143,0.45)",
+              }}
+            >
+              {auditando ? <Loader2 size={10} className="animate-spin" /> : <ShieldCheck size={10} />}
+              {auditando ? "…" : "Auditar"}
+            </button>
+          )}
         </div>
-      </div>
-    </div>
-  );
-}
-
-function DataRow({ icon, label, value, mono, accent }: { icon: React.ReactNode; label: string; value: string; mono?: boolean; accent?: string }) {
-  return (
-    <div className="flex items-center justify-between gap-3 pb-2.5 min-w-0">
-      <div className="flex items-center gap-1.5 shrink-0" style={{ color: TEXT2 }}>
-        {icon}
-        <span className="text-[10.5px] uppercase tracking-wider font-semibold">{label}</span>
-      </div>
-      <div
-        className="text-[12px] font-semibold truncate text-right min-w-0"
-        style={{
-          color: accent ?? "#E2E8F0",
-          fontFamily: mono ? "ui-monospace, SFMono-Regular, Menlo, monospace" : undefined,
-        }}
-        title={value}
-      >
-        {value}
-      </div>
-    </div>
-  );
-}
-
-function Tag({ icon, text, accent }: { icon: React.ReactNode; text: string; accent?: string }) {
-  return (
-    <span
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium backdrop-blur-xl"
-      style={{
-        background: "rgba(255,255,255,0.04)",
-        color: accent ?? TEXT2,
-        border: "1px solid rgba(255,255,255,0.10)",
-        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
-      }}
-    >
-      <span style={{ color: accent ?? TEXT2 }}>{icon}</span>
-      {text}
-    </span>
-  );
-}
-
-
-function FooterBlock({ icon, title, lines }: { icon: React.ReactNode; title: string; lines: string[] }) {
-  return (
-    <div>
-      <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] mb-2" style={{ color: VERDE }}>
-        {icon}
-        {title}
-      </div>
-      <div className="space-y-1 text-sm" style={{ color: TEXT2 }}>
-        {lines.map((l, i) => <div key={i}>{l}</div>)}
       </div>
     </div>
   );
