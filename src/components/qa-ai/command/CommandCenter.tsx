@@ -526,7 +526,7 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
           </thead>
           <tbody>
             {ordered.length === 0 ? (
-              <tr><td colSpan={12} style={{ padding: 32, textAlign: "center", color: C.textMuted }}>Sin casos en la cola.</td></tr>
+              <tr><td colSpan={13} style={{ padding: 32, textAlign: "center", color: C.textMuted }}>Sin casos en la cola.</td></tr>
             ) : ordered.map((r) => {
               const p = prioridad(r);
               const d = dictamen[r.dictamen] ?? { label: r.dictamen, color: C.textSec };
