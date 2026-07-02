@@ -79,7 +79,7 @@ export function useResolvedHomeRole() {
 
   return {
     roles,
-    activeRole: active ?? (forceReady ? "gerencia" : null),
+    activeRole: active,
     primaryRole: primary,
     setActiveRole,
     multiRol: roles.length > 1,
