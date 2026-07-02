@@ -116,6 +116,7 @@ export interface Expediente {
   qa_categoria?: "excelente" | "aprobado" | "revisar" | "rechazado" | null;
   qa_auditoria_id?: string | null;
   qa_ejecutada_at?: string | null;
+  codigo?: string | null;
   created_at: string;
   updated_at: string;
 }
