@@ -304,9 +304,25 @@ export function PrintDocument(props: Props) {
           </div>
 
           <div style={{ marginTop: 10, background: `linear-gradient(135deg, ${C.navy}, #041229)`, color: "#fff", borderRadius: 10, padding: "11px 20px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, alignItems: "center" }}>
-            <DarkBenefit icon={<Shield size={42} color={C.green} strokeWidth={1.6} />} label="HONORARIOS A ÉXITO NUVEX" value={formatCOP(honorariosMejorTier)} sub="Beneficio máximo por decisión en 12 horas. Solo se pagan si el banco aprueba." />
-            <DarkBenefit icon={<Shield size={42} color={C.green} strokeWidth={1.6} />} label="VÁLIDO POR" value={vigenciaMejorTier} sub="Desde el envío. Ver otros tramos (24h y 48h) en página 2." right />
+            <DarkBenefit
+              icon={<Shield size={42} color={C.green} strokeWidth={1.6} />}
+              label="HONORARIOS A ÉXITO NUVEX"
+              value={formatCOP(honorariosFinales)}
+              sub={commercial?.hasDiscount
+                ? `Incluye descuento comercial de ${descuentoPct}% sobre ${formatCOP(honorariosBase)}. Solo se pagan si el banco aprueba.`
+                : "Solo se pagan si el banco aprueba tu optimización."}
+            />
+            <DarkBenefit
+              icon={<Shield size={42} color={C.green} strokeWidth={1.6} />}
+              label="VÁLIDO POR"
+              value={vigenciaRaw ? vigenciaRaw.toUpperCase() : "SIN VENCIMIENTO"}
+              sub={vigenciaRaw
+                ? "Vigencia desde el envío de esta propuesta."
+                : "Propuesta activa mientras las condiciones del crédito se mantengan."}
+              right
+            />
           </div>
+
 
           {(() => {
             // Escala la firma cursiva según longitud del nombre para evitar
