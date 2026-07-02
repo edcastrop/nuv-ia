@@ -292,7 +292,7 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <div className="text-[12.5px] font-semibold truncate text-white/95">{x.otro.nombre}</div>
+                        <div className="text-[12.5px] font-semibold text-white/95 leading-tight break-words" title={x.otro.nombre}>{x.otro.nombre}</div>
                         {x.ultimo_mensaje && <div className="text-[10px] shrink-0 text-white/45 font-medium">{formatRel(x.ultimo_mensaje.created_at)}</div>}
                       </div>
                       <div className="text-[10.5px] truncate text-white/50 uppercase tracking-wider font-medium">{x.otro.roles[0] || "Colaborador"}</div>
@@ -439,7 +439,7 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
                   style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
                   <UserAvatar userId={p.user_id} name={p.nombre} size="md" />
                   <div className="min-w-0">
-                    <div className="text-[13px] font-semibold truncate text-white">{p.nombre}</div>
+                    <div className="text-[13px] font-semibold text-white leading-tight break-words" title={p.nombre}>{p.nombre}</div>
                     <div className="text-[11px] truncate text-white/50">{p.roles.join(", ") || "—"}</div>
                   </div>
                 </button>
