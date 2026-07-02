@@ -69,14 +69,16 @@ function diasDesde(iso: string) {
 }
 
 function NotificacionesPage() {
-  const [tab, setTab] = useState<TabKey>("estancados");
+  const [tab, setTab] = useState<TabKey>("qa");
   const [alertas, setAlertas] = useState<Alerta[]>([]);
   const [expedientes, setExpedientes] = useState<Expediente[]>([]);
+  const [qaPend, setQaPend] = useState<QAPend[]>([]);
   const [loading, setLoading] = useState(true);
+  const [now, setNow] = useState(Date.now());
 
   const cargar = async () => {
     setLoading(true);
-    const [{ data: al }, { data: ex }] = await Promise.all([
+    const [{ data: al }, { data: ex }, { data: qa }] = await Promise.all([
       supabase
         .from("caso_alertas" as never)
         .select("*")
@@ -88,15 +90,24 @@ function NotificacionesPage() {
           "id, cliente_nombre, banco, producto, estado_caso, updated_at, honorarios_final" as never,
         )
         .order("updated_at", { ascending: false }),
+      supabase
+        .from("validaciones_qa" as never)
+        .select("id, expediente_id, solicitada_at")
+        .is("resultado", null)
+        .order("solicitada_at", { ascending: true }),
     ]);
     setAlertas((al ?? []) as unknown as Alerta[]);
     setExpedientes((ex ?? []) as unknown as Expediente[]);
+    setQaPend((qa ?? []) as unknown as QAPend[]);
     setLoading(false);
   };
 
   useEffect(() => {
     cargar();
+    const iv = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(iv);
   }, []);
+
 
   const expedienteById = useMemo(() => {
     const m = new Map<string, Expediente>();
