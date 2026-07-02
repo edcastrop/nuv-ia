@@ -137,7 +137,7 @@ export function buildPoderFromTemplate(i: BuildPoderInput): PoderResult {
   const safeName = (i.poderdante.nombre || "Cliente").replace(/\s+/g, "_");
   const year = new Date().getFullYear();
   const seq = String(Date.now()).slice(-4);
-  const consecutivo = `NVX_${year}_${seq}`;
+  const consecutivo = `NUV_${year}_${seq}`;
   return {
     templateId,
     missing,
@@ -410,7 +410,7 @@ export function buildDatosContrato(
     filename: `Ficha_Contractual_NUVEX_${(c.nombre || "Cliente").replace(/\s+/g, "_")}`,
     title: "Ficha Contractual NUVEX",
     blocks,
-    consecutivo: `NVX_${year}_${seq}`,
+    consecutivo: `NUV_${year}_${seq}`,
     validationIssues: issues,
   };
 }
@@ -1198,7 +1198,7 @@ export function buildSolicitudCambioPlazos(
     filename: `Solicitud_Cambio_Plazos_${(c.nombre || "Cliente").replace(/\s+/g, "_")}`,
     title: "Solicitud Cambio de Plazos",
     blocks,
-    consecutivo: `NVX_${year}_${seq}`,
+    consecutivo: `NUV_${year}_${seq}`,
     validationIssues: issues.length > 0 ? issues : undefined,
   };
 }
