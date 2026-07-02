@@ -335,7 +335,7 @@ function BankHeatmap({ bancos, onPick, active }: { bancos: CCBank[]; onPick: (b:
   const tone = (r: string) => r === "alto" ? C.danger : r === "medio" ? C.warning : C.success;
   return (
     <Section title="Riesgo por banco" subtitle="Score promedio, % error y nivel de riesgo (ordenado por riesgo).">
-      <div style={{ maxHeight: 320, overflowY: "auto" }}>
+      <div style={{ maxHeight: 220, overflowY: "auto" }}>
         <table style={{ width: "100%", fontSize: 12 }}>
           <thead>
             <tr style={{ background: "rgba(255,255,255,0.03)" }}>
