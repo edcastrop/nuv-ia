@@ -128,7 +128,14 @@ export function NotificationBell() {
                 Notificaciones
               </div>
               <button
-                onClick={leerTodas}
+                onClick={async () => {
+                  await leerTodas();
+                  limpiarFaviconDinamico();
+                  if (typeof document !== "undefined") {
+                    document.title = document.title.replace(/^\(\d+\+?\)\s*/, "").replace(/^🔴[^—]*—\s*/, "");
+                  }
+                }}
+
                 className="inline-flex items-center gap-1 text-[11px] font-medium hover:underline disabled:opacity-40"
                 style={{ color: "var(--nuvia-accent-blue)" }}
                 disabled={unread === 0}
