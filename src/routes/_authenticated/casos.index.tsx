@@ -1056,7 +1056,7 @@ function TimelineCard({
               <Building2 size={9} className="shrink-0" />
               <span className="truncate">{r.banco || "—"}</span>
               <span className="text-white/20">·</span>
-              <span className="truncate">Nº {r.credito_num || r.cedula || "—"}</span>
+              <span className="truncate">Nº {r.numero_credito || r.cedula || "—"}</span>
             </div>
             <div className="flex items-center gap-1 mt-0.5 text-[9.5px]" style={{ color: TEXT2 }}>
               <span className="uppercase tracking-wide">{r.producto || "—"}</span>
