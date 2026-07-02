@@ -144,6 +144,7 @@ export async function listColabNotifsComoNotif(limit = 30): Promise<Notificacion
   }>;
   if (arr.length === 0) return [];
   const canalIds = Array.from(new Set(arr.map((a) => a.canal_id).filter(Boolean) as string[]));
+  const msgIds = Array.from(new Set(arr.map((a) => a.mensaje_id).filter(Boolean) as string[]));
   const { data: canales } = canalIds.length
     ? await supabase.from("colab_canales" as never).select("id, nombre, tipo").in("id", canalIds)
     : { data: [] as Array<{ id: string; nombre: string; tipo: string }> };
@@ -151,12 +152,25 @@ export async function listColabNotifsComoNotif(limit = 30): Promise<Notificacion
   ((canales ?? []) as Array<{ id: string; nombre: string; tipo: string }>).forEach((c) =>
     cMap.set(c.id, { nombre: c.nombre, tipo: c.tipo }),
   );
+  const { data: mensajes } = msgIds.length
+    ? await supabase.from("colab_mensajes" as never).select("id, user_id").in("id", msgIds)
+    : { data: [] as Array<{ id: string; user_id: string }> };
+  const mMap = new Map<string, string>();
+  ((mensajes ?? []) as Array<{ id: string; user_id: string }>).forEach((m) => mMap.set(m.id, m.user_id));
+  const autorIds = Array.from(new Set(Array.from(mMap.values()).filter(Boolean)));
+  const { data: profs } = autorIds.length
+    ? await supabase.from("profiles" as never).select("id, nombre").in("id", autorIds)
+    : { data: [] as Array<{ id: string; nombre: string }> };
+  const pMap = new Map<string, string>();
+  ((profs ?? []) as Array<{ id: string; nombre: string }>).forEach((p) => pMap.set(p.id, p.nombre));
   return arr.map((a) => {
     const c = a.canal_id ? cMap.get(a.canal_id) : undefined;
     const esDM = c?.tipo === "dm";
+    const autorId = a.mensaje_id ? mMap.get(a.mensaje_id) : undefined;
+    const autorNombre = autorId ? pMap.get(autorId) : undefined;
     const titulo = esDM
-      ? `Mensaje directo${c?.nombre && c.nombre !== "DM" ? ` · ${c.nombre}` : ""}`
-      : `Mensaje en ${c?.nombre ?? "canal"}`;
+      ? `Mensaje directo${autorNombre ? ` de ${autorNombre}` : c?.nombre && c.nombre !== "DM" ? ` · ${c.nombre}` : ""}`
+      : `${autorNombre ? `${autorNombre} en ` : "Mensaje en "}${c?.nombre ? `#${c.nombre}` : "canal"}`;
     const link = a.canal_id
       ? (esDM ? `/colaboracion/dm/${a.canal_id}` : `/colaboracion?canal=${a.canal_id}`)
       : "/colaboracion";
@@ -169,11 +183,12 @@ export async function listColabNotifsComoNotif(limit = 30): Promise<Notificacion
       link,
       severidad: "media",
       leida: a.leida,
-      metadata: { canal_id: a.canal_id, mensaje_id: a.mensaje_id, colab_notif_id: a.id },
+      metadata: { canal_id: a.canal_id, mensaje_id: a.mensaje_id, colab_notif_id: a.id, autor_id: autorId, autor_nombre: autorNombre, canal_tipo: c?.tipo, canal_nombre: c?.nombre },
       created_at: a.created_at,
     } satisfies Notificacion;
   });
 }
+
 
 export async function contarColabNotifsNoLeidas(): Promise<number> {
   const { data: u } = await supabase.auth.getUser();
