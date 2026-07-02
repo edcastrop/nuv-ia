@@ -172,7 +172,18 @@ function NotificacionesPage() {
         }
       />
 
-      <KpiGrid cols={3}>
+      <KpiGrid cols={4}>
+        <KpiCard
+          label="QA pendiente"
+          value={qaPend.length}
+          icon={<Zap size={14} />}
+          tone="danger"
+          hint={
+            qaPend.length > 0
+              ? `Más antigua hace ${Math.floor((now - new Date(qaPend[0].solicitada_at).getTime()) / 60_000)} min`
+              : "Sin auditorías sin dictamen"
+          }
+        />
         <KpiCard
           label="Estancados"
           value={estancados.length}
