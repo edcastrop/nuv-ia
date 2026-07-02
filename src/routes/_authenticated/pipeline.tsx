@@ -1427,6 +1427,15 @@ function PipelinePage() {
                             <div className="mt-1 truncate text-xs text-[var(--nuvia-text-secondary)]">
                                {displayBanco} · {displayCedula}
                             </div>
+                            {r.codigo && (
+                              <div
+                                className="mt-1 inline-block rounded px-1.5 py-0.5 text-[10px] font-black tracking-wider"
+                                style={{ background: "color-mix(in oklab, var(--nuvia-accent-green) 12%, transparent)", color: "var(--nuvia-accent-green)", border: "1px solid color-mix(in oklab, var(--nuvia-accent-green) 32%, transparent)", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                                title={`Código de expediente NUVIA · ${r.codigo}`}
+                              >
+                                {r.codigo}
+                              </div>
+                            )}
                             <div className="mt-1 text-[11px] text-[rgba(170,179,197,0.72)]">
                               act. {r.updated_at ? new Date(r.updated_at).toLocaleDateString("es-CO", { day: "2-digit", month: "short" }) : "—"}
                             </div>
