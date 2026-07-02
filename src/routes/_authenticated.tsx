@@ -604,9 +604,13 @@ function AuthenticatedLayout() {
               ...(hasAny("super_admin", "admin", "gerencia")
                 ? [{ to: "/incidentes", label: "Incidentes", Icon: ShieldCheck }]
                 : []),
+              ...(hasAny("super_admin", "gerencia")
+                ? [{ to: "/gestion-usuarios", label: "Gestión usuarios", Icon: Users }]
+                : []),
               // Productividad: visible para toda la organización — el podio NUVIA es
               // motivación transversal (comercial, operaciones, jurídica, etc.).
               { to: "/productividad", label: "Productividad", Icon: BarChart3 },
+
 
               ...(hasAny("super_admin", "admin", "director_financiero_qa", "gerencia")
                 ? [{ to: "/qa-ai", label: "NUVIA QA AI", Icon: ClipboardCheck }]
