@@ -88,6 +88,15 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
           /* silencioso */
         }
       };
+      const ESTADOS_RECHAZO = ["devuelto_banco", "negado_banco", "prejuridico"];
+      const estadosDesde = (claveOrden: string) => {
+        const base = CASO_ESTADOS.find((e) => e.key === claveOrden)!.orden;
+        return CASO_ESTADOS.filter((e) => e.orden >= base && !ESTADOS_RECHAZO.includes(e.key))
+          .map((e) => e.key);
+      };
+      const ESTADOS_APROBADO = estadosDesde("aprobado");
+      const ESTADOS_FIRMADO = estadosDesde("contrato_firmado");
+      const ESTADOS_PAGADO = estadosDesde("honorarios_pagados");
       await Promise.all([
         tryCount(
           supabase
