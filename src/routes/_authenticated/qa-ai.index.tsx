@@ -43,38 +43,29 @@ function QaAiDashboard() {
 
   return (
     <PageLayout>
-      {/* HEADER */}
+      {/* HEADER · COMPACT */}
       <div style={{
         background: "linear-gradient(135deg, #0D1323 0%, #111A2E 60%, #0D1323 100%)",
-        border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, padding: "22px 24px",
-        marginBottom: 16, boxShadow: "0 24px 60px -32px rgba(91,140,255,0.35)",
+        border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "10px 16px",
+        marginBottom: 10, boxShadow: "0 12px 28px -20px rgba(91,140,255,0.35)",
+        display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap",
       }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 24, flexWrap: "wrap" }}>
-          <div>
-            <div style={{
-              display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 10px",
-              borderRadius: 999, background: "rgba(91,140,255,0.12)", color: "#5B8CFF",
-              border: "1px solid rgba(91,140,255,0.3)", fontSize: 10.5, fontWeight: 600, letterSpacing: 0.8,
-              textTransform: "uppercase", marginBottom: 10,
-            }}>
-              <Brain size={12} /> Financial Intelligence OS
-            </div>
-            <h1 style={{ fontSize: 26, fontWeight: 700, color: "#FFFFFF", margin: 0, letterSpacing: -0.4 }}>
-              NUVIA Financial QA AI
-            </h1>
-            <p style={{ fontSize: 13, color: "#A8B3CF", margin: "6px 0 0", maxWidth: 720 }}>
-              Centro de control de auditoría matemática, reconstrucción financiera y gestión de riesgo operativo.
-            </p>
-          </div>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <HeaderButton onClick={() => setCopilotoOpen(true)} icon={<Sparkles size={14} />} label="Copiloto QA" />
-            <Link to="/qa-ai/nuevo"><HeaderButton primary icon={<Plus size={14} />} label="Auditar nuevo" /></Link>
-            <Link to="/qa-ai/aprobados"><HeaderButton tone="success" icon={<Trophy size={14} />} label="Casos aprobados" /></Link>
-            <Link to="/qa-ai/alertas"><HeaderButton icon={<Bell size={14} />} label="Alertas" /></Link>
-            <Link to="/qa-ai/config"><HeaderButton icon={<Settings size={14} />} label="Reglas" /></Link>
-          </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+          <Brain size={16} color="#5B8CFF" />
+          <h1 style={{ fontSize: 16, fontWeight: 700, color: "#FFFFFF", margin: 0, letterSpacing: -0.2, whiteSpace: "nowrap" }}>
+            NUVIA Financial QA AI
+          </h1>
+          <span style={{ fontSize: 11, color: "#6B7693", whiteSpace: "nowrap" }}>· Command Center</span>
+        </div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <HeaderButton onClick={() => setCopilotoOpen(true)} icon={<Sparkles size={12} />} label="Copiloto" />
+          <Link to="/qa-ai/nuevo"><HeaderButton primary icon={<Plus size={12} />} label="Auditar" /></Link>
+          <Link to="/qa-ai/aprobados"><HeaderButton tone="success" icon={<Trophy size={12} />} label="Aprobados" /></Link>
+          <Link to="/qa-ai/alertas"><HeaderButton icon={<Bell size={12} />} label="Alertas" /></Link>
+          <Link to="/qa-ai/config"><HeaderButton icon={<Settings size={12} />} label="Reglas" /></Link>
         </div>
       </div>
+
 
       {data && (
         <CommandCenter

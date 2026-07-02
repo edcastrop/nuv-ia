@@ -118,7 +118,7 @@ export function CommandCenter(props: {
   }, [f.analista, analistasOpts]);
 
   return (
-    <div style={{ display: "grid", gap: 20 }}>
+    <div style={{ display: "grid", gap: 10 }}>
       <FilterBar
         f={f} setF={setF}
         bancos={bancosOpts} productos={productosOpts} analistas={analistasOpts}
@@ -144,12 +144,12 @@ export function CommandCenter(props: {
 
       <PriorityPanel counts={props.prioridad} active={priorityFilter} onPick={(k) => setPriorityFilter(priorityFilter === k ? null : k)} />
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         <BankHeatmap bancos={visibleBancos} onPick={(b) => setF((x) => ({ ...x, banco: x.banco === b ? "" : b }))} active={f.banco} />
         <AnalystRanking analistas={visibleAnalistas} onPick={(a) => setF((x) => ({ ...x, analista: x.analista === a ? "" : a }))} active={f.analista} />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 10 }}>
         <QaHealthTrend data={props.tendencia} />
         <TopErrors errores={props.topErrores} />
       </div>
@@ -158,6 +158,7 @@ export function CommandCenter(props: {
     </div>
   );
 }
+
 
 function ActiveFilterChips({ items, total }: { items: Array<{ key: string; label: string; clear: () => void }>; total: number }) {
   return (
@@ -183,7 +184,7 @@ function ActiveFilterChips({ items, total }: { items: Array<{ key: string; label
   );
 }
 
-// ───────────── FILTER BAR ─────────────
+// ───────────── FILTER BAR (compact + collapsible) ─────────────
 function FilterBar({
   f, setF, bancos, productos, analistas, onReset,
 }: {
@@ -191,23 +192,25 @@ function FilterBar({
   bancos: string[]; productos: string[]; analistas: { id: string; nombre: string }[];
   onReset: () => void;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const sel: React.CSSProperties = {
     background: C.surface2, color: C.text, border: `1px solid ${C.border}`,
-    borderRadius: 8, padding: "7px 10px", fontSize: 12, minWidth: 120, outline: "none",
+    borderRadius: 7, padding: "5px 8px", fontSize: 11.5, minWidth: 110, outline: "none", height: 30,
   };
   const chk: React.CSSProperties = {
-    display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: C.textSec,
-    background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 8, padding: "7px 10px", cursor: "pointer",
+    display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, color: C.textSec,
+    background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 7, padding: "5px 9px", cursor: "pointer", height: 30,
   };
+  const advancedActive = Boolean(f.producto || f.modalidad || f.moneda || f.rango !== "30" || f.scoreMin || f.criticos || f.fresh);
   return (
     <div style={{
       position: "sticky", top: 0, zIndex: 30,
-      background: "rgba(13,19,35,0.85)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
-      border: `1px solid ${C.border}`, borderRadius: 14, padding: 12,
-      display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center",
+      background: "rgba(13,19,35,0.9)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
+      border: `1px solid ${C.border}`, borderRadius: 12, padding: 8,
+      display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center",
     }}>
       <input
-        style={{ ...sel, minWidth: 220, flex: "1 1 220px" }}
+        style={{ ...sel, minWidth: 200, flex: "1 1 200px" }}
         placeholder="Buscar cliente, analista, banco o código…"
         value={f.q}
         onChange={(e) => setF((x) => ({ ...x, q: e.target.value }))}
@@ -220,21 +223,6 @@ function FilterBar({
         <option value="">Banco · todos</option>
         {bancos.map((b) => <option key={b} value={b}>{b}</option>)}
       </select>
-      <select style={sel} value={f.producto} onChange={(e) => setF((x) => ({ ...x, producto: e.target.value }))}>
-        <option value="">Producto · todos</option>
-        {productos.map((p) => <option key={p} value={p}>{p}</option>)}
-      </select>
-      <select style={sel} value={f.modalidad} onChange={(e) => setF((x) => ({ ...x, modalidad: e.target.value }))}>
-        <option value="">Modalidad · todas</option>
-        <option value="hipotecario">Hipotecario</option>
-        <option value="leasing">Leasing</option>
-        <option value="uvr">UVR</option>
-      </select>
-      <select style={sel} value={f.moneda} onChange={(e) => setF((x) => ({ ...x, moneda: e.target.value }))}>
-        <option value="">Moneda · todas</option>
-        <option value="pesos">Pesos</option>
-        <option value="uvr">UVR</option>
-      </select>
       <select style={sel} value={f.estadoQa} onChange={(e) => setF((x) => ({ ...x, estadoQa: e.target.value }))}>
         <option value="">Estado QA · todos</option>
         <option value="aprobado">Aprobado</option>
@@ -242,31 +230,63 @@ function FilterBar({
         <option value="requiere_revision">Requiere revisión</option>
         <option value="rechazado">Rechazado</option>
       </select>
-      <select style={sel} value={f.rango} onChange={(e) => setF((x) => ({ ...x, rango: e.target.value }))}>
-        <option value="7">Últimos 7 días</option>
-        <option value="30">Últimos 30 días</option>
-        <option value="90">Últimos 90 días</option>
-        <option value="">Todo el histórico</option>
-      </select>
-
-      <input
-        style={{ ...sel, minWidth: 90 }} placeholder="Score mín."
-        value={f.scoreMin} onChange={(e) => setF((x) => ({ ...x, scoreMin: e.target.value.replace(/[^\d.]/g, "") }))}
-      />
-      <label style={chk}>
-        <input type="checkbox" checked={f.criticos} onChange={(e) => setF((x) => ({ ...x, criticos: e.target.checked }))} />
-        Críticos
-      </label>
-      <label style={chk}>
-        <input type="checkbox" checked={f.fresh} onChange={(e) => setF((x) => ({ ...x, fresh: e.target.checked }))} />
-        FRECH activo
-      </label>
-      <button onClick={onReset} style={{ marginLeft: "auto", background: "transparent", color: C.textSec, border: `1px solid ${C.border}`, borderRadius: 8, padding: "7px 12px", fontSize: 12, cursor: "pointer" }}>
-        Limpiar filtros
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        style={{
+          ...chk,
+          color: advancedActive ? C.primary : C.textSec,
+          border: `1px solid ${advancedActive ? C.primary : C.border}`,
+          cursor: "pointer",
+        }}
+        title="Filtros avanzados"
+      >
+        Más filtros {expanded ? "▲" : "▼"}
       </button>
+      <button onClick={onReset} style={{ marginLeft: "auto", background: "transparent", color: C.textSec, border: `1px solid ${C.border}`, borderRadius: 7, padding: "5px 10px", fontSize: 11.5, cursor: "pointer", height: 30 }}>
+        Limpiar
+      </button>
+
+      {expanded && (
+        <div style={{ width: "100%", display: "flex", gap: 6, flexWrap: "wrap", paddingTop: 6, borderTop: `1px dashed ${C.border}` }}>
+          <select style={sel} value={f.producto} onChange={(e) => setF((x) => ({ ...x, producto: e.target.value }))}>
+            <option value="">Producto · todos</option>
+            {productos.map((p) => <option key={p} value={p}>{p}</option>)}
+          </select>
+          <select style={sel} value={f.modalidad} onChange={(e) => setF((x) => ({ ...x, modalidad: e.target.value }))}>
+            <option value="">Modalidad · todas</option>
+            <option value="hipotecario">Hipotecario</option>
+            <option value="leasing">Leasing</option>
+            <option value="uvr">UVR</option>
+          </select>
+          <select style={sel} value={f.moneda} onChange={(e) => setF((x) => ({ ...x, moneda: e.target.value }))}>
+            <option value="">Moneda · todas</option>
+            <option value="pesos">Pesos</option>
+            <option value="uvr">UVR</option>
+          </select>
+          <select style={sel} value={f.rango} onChange={(e) => setF((x) => ({ ...x, rango: e.target.value }))}>
+            <option value="7">Últimos 7 días</option>
+            <option value="30">Últimos 30 días</option>
+            <option value="90">Últimos 90 días</option>
+            <option value="">Todo el histórico</option>
+          </select>
+          <input
+            style={{ ...sel, minWidth: 90 }} placeholder="Score mín."
+            value={f.scoreMin} onChange={(e) => setF((x) => ({ ...x, scoreMin: e.target.value.replace(/[^\d.]/g, "") }))}
+          />
+          <label style={chk}>
+            <input type="checkbox" checked={f.criticos} onChange={(e) => setF((x) => ({ ...x, criticos: e.target.checked }))} />
+            Críticos
+          </label>
+          <label style={chk}>
+            <input type="checkbox" checked={f.fresh} onChange={(e) => setF((x) => ({ ...x, fresh: e.target.checked }))} />
+            FRECH activo
+          </label>
+        </div>
+      )}
     </div>
   );
 }
+
 
 // ───────────── PRIORITY PANEL ─────────────
 function PriorityPanel({ counts, active, onPick }: { counts: Record<string, number>; active: string | null; onPick: (k: string) => void }) {
@@ -280,11 +300,11 @@ function PriorityPanel({ counts, active, onPick }: { counts: Record<string, numb
   ];
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
-        <h2 style={{ fontSize: 13, fontWeight: 600, letterSpacing: 1.2, color: C.textSec, textTransform: "uppercase" }}>Requieren tu atención</h2>
-        {active && <button onClick={() => onPick(active)} style={{ fontSize: 11, color: C.primary, background: "transparent", border: "none", cursor: "pointer" }}>Quitar filtro</button>}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+        <h2 style={{ fontSize: 10.5, fontWeight: 600, letterSpacing: 1.2, color: C.textSec, textTransform: "uppercase", margin: 0 }}>Requieren tu atención</h2>
+        {active && <button onClick={() => onPick(active)} style={{ fontSize: 10.5, color: C.primary, background: "transparent", border: "none", cursor: "pointer" }}>Quitar filtro</button>}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(0,1fr))", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(0,1fr))", gap: 8 }}>
         {cards.map((c) => {
           const isActive = active === c.key;
           return (
@@ -292,15 +312,15 @@ function PriorityPanel({ counts, active, onPick }: { counts: Record<string, numb
               textAlign: "left", cursor: "pointer",
               background: isActive ? `linear-gradient(135deg, ${c.color}22, ${C.surface1})` : C.surface1,
               border: `1px solid ${isActive ? c.color : C.border}`,
-              borderRadius: 14, padding: 14, transition: "all 0.2s",
-              boxShadow: isActive ? `0 0 0 1px ${c.color}55, 0 12px 32px -16px ${c.color}66` : "none",
+              borderRadius: 10, padding: "8px 10px", transition: "all 0.2s",
+              boxShadow: isActive ? `0 0 0 1px ${c.color}55, 0 8px 20px -12px ${c.color}66` : "none",
+              display: "flex", alignItems: "center", gap: 10, minWidth: 0,
             }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, color: c.color, marginBottom: 8 }}>
-                {c.icon}
-                <span style={{ fontSize: 10.5, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.8 }}>{c.label}</span>
+              <div style={{ color: c.color, flexShrink: 0 }}>{c.icon}</div>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontSize: 9.5, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.6, color: c.color, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.label}</div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: C.text, lineHeight: 1.1, fontVariantNumeric: "tabular-nums" }}>{c.value}</div>
               </div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: C.text, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{c.value}</div>
-              <div style={{ fontSize: 10.5, color: C.textMuted, marginTop: 6 }}>Click para filtrar cola →</div>
             </button>
           );
         })}
@@ -309,12 +329,13 @@ function PriorityPanel({ counts, active, onPick }: { counts: Record<string, numb
   );
 }
 
+
 // ───────────── BANK HEATMAP ─────────────
 function BankHeatmap({ bancos, onPick, active }: { bancos: CCBank[]; onPick: (b: string) => void; active: string }) {
   const tone = (r: string) => r === "alto" ? C.danger : r === "medio" ? C.warning : C.success;
   return (
     <Section title="Riesgo por banco" subtitle="Score promedio, % error y nivel de riesgo (ordenado por riesgo).">
-      <div style={{ maxHeight: 320, overflowY: "auto" }}>
+      <div style={{ maxHeight: 220, overflowY: "auto" }}>
         <table style={{ width: "100%", fontSize: 12 }}>
           <thead>
             <tr style={{ background: "rgba(255,255,255,0.03)" }}>
@@ -360,7 +381,7 @@ function AnalystRanking({ analistas, onPick, active }: { analistas: CCAnalista[]
   const nivelColor = (n: number) => n === 3 ? C.success : n === 2 ? C.info : C.warning;
   return (
     <Section title="Desempeño de analistas" subtitle="Precisión, score promedio y nivel de autonomía.">
-      <div style={{ maxHeight: 320, overflowY: "auto" }}>
+      <div style={{ maxHeight: 220, overflowY: "auto" }}>
         <table style={{ width: "100%", fontSize: 12 }}>
           <thead>
             <tr style={{ background: "rgba(255,255,255,0.03)" }}>
@@ -449,7 +470,7 @@ function TopErrors({ errores }: { errores: CCError[] }) {
 function QaHealthTrend({ data }: { data: CCTrend[] }) {
   return (
     <Section title="Salud operativa QA" subtitle="Score promedio, aprobaciones, observaciones, rechazos y críticos.">
-      <div style={{ width: "100%", height: 280, padding: "8px 0" }}>
+      <div style={{ width: "100%", height: 200, padding: "4px 0" }}>
         <ResponsiveContainer>
           <LineChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: -10 }}>
             <CartesianGrid stroke={C.border} strokeDasharray="3 3" vertical={false} />
@@ -513,54 +534,60 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
     window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   };
 
+  const [showAll, setShowAll] = useState(false);
+  const visibles = showAll ? ordered : ordered.slice(0, 5);
+
   return (
-    <Section title={`Cola de revisión (${ordered.length})`} subtitle="Orden inteligente: criticidad → bloqueo → score → antigüedad → ticket.">
+    <Section
+      title={`Cola de revisión · Top ${visibles.length} de ${ordered.length}`}
+      subtitle="Orden inteligente: criticidad → bloqueo → score → antigüedad → ticket."
+    >
       <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", fontSize: 12, minWidth: 1100 }}>
+        <table style={{ width: "100%", fontSize: 11.5, minWidth: 1100 }}>
           <thead>
             <tr style={{ background: "rgba(255,255,255,0.03)" }}>
               {["Prioridad", "Código", "Fecha", "Cliente", "Banco", "Analista", "Producto", "Modalidad", "Ticket", "Score", "Estado QA", "Riesgo", "Acciones"].map((h) => (
-                <th key={h} style={{ textAlign: "left", padding: "10px 12px", color: C.textSec, fontWeight: 500, borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>{h}</th>
+                <th key={h} style={{ textAlign: "left", padding: "6px 10px", color: C.textSec, fontWeight: 500, borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap", fontSize: 10.5 }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {ordered.length === 0 ? (
-              <tr><td colSpan={13} style={{ padding: 32, textAlign: "center", color: C.textMuted }}>Sin casos en la cola.</td></tr>
-            ) : ordered.map((r) => {
+            {visibles.length === 0 ? (
+              <tr><td colSpan={13} style={{ padding: 24, textAlign: "center", color: C.textMuted }}>Sin casos en la cola.</td></tr>
+            ) : visibles.map((r) => {
               const p = prioridad(r);
               const d = dictamen[r.dictamen] ?? { label: r.dictamen, color: C.textSec };
               return (
                 <tr key={r.id} style={{ borderBottom: `1px solid ${C.border}` }}>
-                  <td style={{ padding: "10px 12px" }}>
+                  <td style={{ padding: "6px 10px" }}>
                     <span style={{
-                      padding: "3px 10px", borderRadius: 999, fontSize: 10.5, fontWeight: 600,
+                      padding: "2px 8px", borderRadius: 999, fontSize: 10, fontWeight: 600,
                       background: `${p.color}22`, color: p.color, border: `1px solid ${p.color}44`, whiteSpace: "nowrap",
                     }}>{p.label}</span>
                   </td>
-                  <td style={{ padding: "10px 12px", color: C.textSec, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 10.5, whiteSpace: "nowrap" }}>
+                  <td style={{ padding: "6px 10px", color: C.textSec, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 10, whiteSpace: "nowrap" }}>
                     {(r as unknown as { codigo: string | null }).codigo ?? "—"}
                     {(r as unknown as { auditor_aprobado_at: string | null }).auditor_aprobado_at ? (
                       <span title="Aprobada por auditor" style={{ marginLeft: 6, color: C.success }}>✓</span>
                     ) : null}
                   </td>
-                  <td style={{ padding: "10px 12px", color: C.textSec, whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums", fontSize: 11 }}>
+                  <td style={{ padding: "6px 10px", color: C.textSec, whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums", fontSize: 10.5 }}>
                     {r.ejecutado_at ? new Date(r.ejecutado_at).toLocaleString("es-CO", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—"}
                   </td>
-                  <td style={{ padding: "10px 12px", color: C.text, fontWeight: 500 }}>{r.cliente_nombre ?? "—"}</td>
-                  <td style={{ padding: "10px 12px", color: C.text }}>{r.banco ?? "—"}</td>
-                  <td style={{ padding: "10px 12px", color: C.textSec }}>{r.analista_nombre ?? "—"}</td>
-                  <td style={{ padding: "10px 12px", color: C.textSec }}>{r.producto ?? "—"}</td>
-                  <td style={{ padding: "10px 12px", color: C.text, textTransform: "capitalize" }}>{r.modalidad}</td>
-                  <td style={{ padding: "10px 12px", color: C.textSec, fontVariantNumeric: "tabular-nums" }}>{r.ticket ? fCop(r.ticket) : "—"}</td>
-                  <td style={{ padding: "10px 12px", color: score(r.qa_score), fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{r.qa_score.toFixed(1)}</td>
-                  <td style={{ padding: "10px 12px" }}>
+                  <td style={{ padding: "6px 10px", color: C.text, fontWeight: 500 }}>{r.cliente_nombre ?? "—"}</td>
+                  <td style={{ padding: "6px 10px", color: C.text }}>{r.banco ?? "—"}</td>
+                  <td style={{ padding: "6px 10px", color: C.textSec }}>{r.analista_nombre ?? "—"}</td>
+                  <td style={{ padding: "6px 10px", color: C.textSec }}>{r.producto ?? "—"}</td>
+                  <td style={{ padding: "6px 10px", color: C.text, textTransform: "capitalize" }}>{r.modalidad}</td>
+                  <td style={{ padding: "6px 10px", color: C.textSec, fontVariantNumeric: "tabular-nums" }}>{r.ticket ? fCop(r.ticket) : "—"}</td>
+                  <td style={{ padding: "6px 10px", color: score(r.qa_score), fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{r.qa_score.toFixed(1)}</td>
+                  <td style={{ padding: "6px 10px" }}>
                     <span style={{
-                      padding: "3px 10px", borderRadius: 999, fontSize: 10.5, fontWeight: 600,
+                      padding: "2px 8px", borderRadius: 999, fontSize: 10, fontWeight: 600,
                       background: `${d.color}22`, color: d.color, border: `1px solid ${d.color}44`, whiteSpace: "nowrap",
                     }}>{d.label}</span>
                   </td>
-                  <td style={{ padding: "10px 12px" }}>
+                  <td style={{ padding: "6px 10px" }}>
                     {r.alertas_criticas > 0 ? (
                       <span style={{ color: C.danger, display: "inline-flex", alignItems: "center", gap: 4 }}>
                         <AlertTriangle size={12} /> {r.alertas_criticas}
@@ -571,25 +598,25 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
                       <span style={{ color: C.textMuted }}>—</span>
                     )}
                   </td>
-                  <td style={{ padding: "10px 12px" }}>
-                    <div style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
+                  <td style={{ padding: "6px 10px" }}>
+                    <div style={{ display: "inline-flex", gap: 4, alignItems: "center" }}>
                       <Link to="/qa-ai/$id" params={{ id: r.id }} title="Ver dictamen" style={{
-                        display: "inline-flex", alignItems: "center", gap: 4, padding: "5px 10px",
-                        borderRadius: 8, background: `${C.primary}1a`, color: C.primary,
-                        border: `1px solid ${C.primary}44`, fontSize: 11, whiteSpace: "nowrap",
-                      }}>Ver <ArrowRight size={11} /></Link>
+                        display: "inline-flex", alignItems: "center", gap: 3, padding: "3px 8px",
+                        borderRadius: 6, background: `${C.primary}1a`, color: C.primary,
+                        border: `1px solid ${C.primary}44`, fontSize: 10.5, whiteSpace: "nowrap",
+                      }}>Ver <ArrowRight size={10} /></Link>
                       <Link
                         to="/simulador" search={{ auditoriaId: r.id, modo: r.modalidad === "uvr" ? "uvr" : "pesos" } as never}
                         title="Reconstruir caso" style={{
-                          display: "inline-flex", alignItems: "center", gap: 4, padding: "5px 10px",
-                          borderRadius: 8, background: `${C.secondary}1a`, color: C.secondary,
-                          border: `1px solid ${C.secondary}44`, fontSize: 11, whiteSpace: "nowrap",
-                        }}><FileSearch size={11} /> Reconstruir</Link>
+                          display: "inline-flex", alignItems: "center", gap: 3, padding: "3px 8px",
+                          borderRadius: 6, background: `${C.secondary}1a`, color: C.secondary,
+                          border: `1px solid ${C.secondary}44`, fontSize: 10.5, whiteSpace: "nowrap",
+                        }}><FileSearch size={10} /> Recons.</Link>
                       {r.extracto_path && (
                         <button onClick={() => openExtracto(r.extracto_path!)} title="Abrir extracto" style={{
-                          padding: "5px 8px", borderRadius: 8, background: "transparent",
+                          padding: "3px 6px", borderRadius: 6, background: "transparent",
                           color: C.textSec, border: `1px solid ${C.border}`, cursor: "pointer",
-                        }}><Paperclip size={11} /></button>
+                        }}><Paperclip size={10} /></button>
                       )}
                     </div>
                   </td>
@@ -599,9 +626,23 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
           </tbody>
         </table>
       </div>
+      {ordered.length > 5 && (
+        <div style={{ display: "flex", justifyContent: "center", marginTop: 8 }}>
+          <button
+            onClick={() => setShowAll((v) => !v)}
+            style={{
+              background: `${C.primary}14`, border: `1px solid ${C.primary}44`, color: C.primary,
+              padding: "6px 16px", borderRadius: 8, fontSize: 11.5, fontWeight: 600, cursor: "pointer",
+            }}
+          >
+            {showAll ? "Ver solo Top 5 ▲" : `Ver todos (${ordered.length}) ▼`}
+          </button>
+        </div>
+      )}
     </Section>
   );
 }
+
 
 // ───────────── SHARED SHELL ─────────────
 function Section({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
@@ -611,11 +652,11 @@ function Section({ title, subtitle, children }: { title: string; subtitle?: stri
       border: `1px solid ${C.border}`, borderRadius: 16, overflow: "hidden",
       boxShadow: "0 12px 32px -20px rgba(0,0,0,0.6)",
     }}>
-      <div style={{ padding: "14px 18px", borderBottom: `1px solid ${C.border}` }}>
-        <h3 style={{ fontSize: 13, fontWeight: 600, color: C.text, margin: 0, letterSpacing: 0.2 }}>{title}</h3>
-        {subtitle && <p style={{ fontSize: 11.5, color: C.textMuted, margin: "3px 0 0" }}>{subtitle}</p>}
+      <div style={{ padding: "8px 12px", borderBottom: `1px solid ${C.border}` }}>
+        <h3 style={{ fontSize: 12, fontWeight: 600, color: C.text, margin: 0, letterSpacing: 0.2 }}>{title}</h3>
+        {subtitle && <p style={{ fontSize: 10.5, color: C.textMuted, margin: "2px 0 0" }}>{subtitle}</p>}
       </div>
-      <div style={{ padding: 14 }}>{children}</div>
+      <div style={{ padding: 10 }}>{children}</div>
     </div>
   );
 }
