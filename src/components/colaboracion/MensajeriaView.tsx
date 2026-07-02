@@ -22,12 +22,18 @@ interface Props {
   onCanalChange?: (id: string) => void;
 }
 
+interface CasoLite { id: string; cliente_nombre: string | null; estado: string | null; updated_at: string }
+interface QaLite { id: string; codigo: string | null; qa_score: number | null; dictamen: string | null; ejecutado_at: string | null }
 interface QuickCtx {
   casosActivos: number;
   qaAbiertos: number;
   ultimaActividad: string | null;
   ultimoCaso: string | null;
+  casos: CasoLite[];
+  historial: QaLite[];
 }
+
+export type CtxTab = "perfil" | "casos" | "historial" | "ia";
 
 export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
   const { user } = useAuth();
