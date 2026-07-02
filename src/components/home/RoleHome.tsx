@@ -8,6 +8,7 @@ import { roleLabel } from "@/lib/roleLabels";
 import { supabase } from "@/integrations/supabase/client";
 import { HOME_CONFIG, type RoleHomeKpi } from "@/lib/homeConfig";
 import { WorkspaceLoader } from "./WorkspaceLoader";
+import { SuperAdminControlCenter } from "./SuperAdminControlCenter";
 import { VictoryFeed } from "@/components/victory/VictoryFeed";
 import {
   NuviaIAPromptCard,
@@ -137,6 +138,11 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
 
   if (loading) {
     return <WorkspaceLoader label="Cargando tu workspace NUVIA" />;
+  }
+
+  // Super Admin → Global Control Center (rediseño premium dedicado)
+  if (activeRole === "super_admin" || activeRole === "admin") {
+    return <SuperAdminControlCenter onLanzarSimulador={onLanzarSimulador} />;
   }
 
 
