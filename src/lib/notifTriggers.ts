@@ -97,7 +97,7 @@ export async function notifQASolicitada(expedienteId: string): Promise<void> {
   } catch {
     /* swallow */
   }
-  await notificarRoles(["director_financiero_qa", "super_admin"], {
+  await notificarRoles(["director_financiero_qa", "super_admin", "operaciones"], {
     tipo: "qa_solicitada",
     titulo: "Nueva proyección pendiente de validar",
     mensaje: cliente ? `Cliente: ${cliente}` : "Revisa el dashboard QA.",
