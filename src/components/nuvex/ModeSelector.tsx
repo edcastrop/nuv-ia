@@ -69,7 +69,7 @@ export function ModeSelector({ onPick }: { onPick: (m: "pesos" | "uvr") => void 
       <FloatingParticles />
 
       {/* HEADER */}
-      <header className="relative z-10 mx-auto flex max-w-[1240px] items-center justify-between px-6 pt-8 sm:px-10">
+      <header className="relative z-10 mx-auto flex max-w-[1240px] items-center justify-between px-6 pt-4 sm:px-10">
         <div className="flex items-center gap-3">
           <div
             className="flex h-10 w-10 items-center justify-center rounded-xl text-base font-bold text-white shadow-[0_8px_30px_-8px_rgba(68,93,163,0.7)]"
@@ -85,7 +85,7 @@ export function ModeSelector({ onPick }: { onPick: (m: "pesos" | "uvr") => void 
       </header>
 
       {/* HERO */}
-      <section className="relative z-10 mx-auto grid max-w-[1240px] items-center gap-14 px-6 pt-16 sm:px-10 lg:grid-cols-[1.05fr_1fr] lg:pt-24">
+      <section className="relative z-10 mx-auto grid max-w-[1240px] items-center gap-14 px-6 pt-10 sm:px-10 lg:grid-cols-[1.05fr_1fr] lg:pt-14">
         {/* IZQUIERDA */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
