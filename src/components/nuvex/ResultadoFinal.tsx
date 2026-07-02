@@ -1420,7 +1420,7 @@ function PrintCuentaCobro({
             </div>
             {hasDiscount && (
               <div style={{ marginTop: 8, fontSize: 10, color: NUVEX.verdeTextoFuerte, fontWeight: 700, letterSpacing: 0.4 }}>
-                Beneficio aplicado: ahorras {formatCOP(aprobado.descuento)} sobre los honorarios originales.
+                Descuento comercial aplicado: ahorras {formatCOP(aprobado.descuento)} sobre los honorarios originales.
               </div>
             )}
           </div>
