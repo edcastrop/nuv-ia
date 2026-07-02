@@ -110,26 +110,34 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
     let cancel = false;
     (async () => {
       const uid = d.otro.user_id;
-      const [exps, qas] = await Promise.all([
+      const [exps, qas, histQa] = await Promise.all([
         supabase.from("expedientes" as never)
           .select("id,cliente_nombre,updated_at,estado")
           .or(`analista_id.eq.${uid},asesor_id.eq.${uid}`)
           .neq("estado", "cerrado")
           .order("updated_at", { ascending: false })
-          .limit(5),
+          .limit(20),
         supabase.from("qa_auditorias" as never)
           .select("id")
           .eq("analista_id", uid)
           .in("estado", ["pendiente", "en_revision", "abierta"])
           .limit(50),
+        supabase.from("qa_auditorias" as never)
+          .select("id,codigo,qa_score,dictamen,ejecutado_at")
+          .eq("analista_id", uid)
+          .order("ejecutado_at", { ascending: false })
+          .limit(10),
       ]);
       if (cancel) return;
-      const rows = (exps.data ?? []) as Array<{ id: string; cliente_nombre: string | null; updated_at: string }>;
+      const rows = (exps.data ?? []) as CasoLite[];
+      const hist = (histQa.data ?? []) as QaLite[];
       setQuickCtx({
         casosActivos: rows.length,
         qaAbiertos: (qas.data ?? []).length,
         ultimaActividad: rows[0]?.updated_at ?? null,
         ultimoCaso: rows[0]?.cliente_nombre ?? null,
+        casos: rows,
+        historial: hist,
       });
     })();
     return () => { cancel = true; };
