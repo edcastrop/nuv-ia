@@ -167,7 +167,7 @@ function NotificacionesPage() {
               color: "var(--nuvia-danger)",
             }}
           >
-            {estancados.length + sinSeguimiento.length + honorariosPend.length} señales activas
+            {estancados.length + sinSeguimiento.length + honorariosPend.length + qaPend.length} señales activas
           </span>
         }
       />
