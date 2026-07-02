@@ -1052,6 +1052,15 @@ function TimelineCard({
                 <span className="rounded px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider"
                   style={{ background: "rgba(245,158,11,0.15)", color: "#F59E0B", border: "1px solid rgba(245,158,11,0.4)" }}>Dup</span>
               )}
+              {r.codigo && (
+                <span
+                  className="ml-auto rounded px-1.5 py-0.5 text-[8.5px] font-black tracking-wider truncate max-w-[180px]"
+                  style={{ background: "rgba(16,185,129,0.12)", color: "#34D399", border: "1px solid rgba(16,185,129,0.35)", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                  title={`Código de expediente NUVIA · ${r.codigo}`}
+                >
+                  {r.codigo}
+                </span>
+              )}
             </div>
             <div className="font-bold text-[13.5px] leading-tight truncate text-white" title={r.cliente_nombre || "Sin nombre"}>
               {r.cliente_nombre || "Sin nombre"}
