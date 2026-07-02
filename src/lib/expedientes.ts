@@ -444,10 +444,10 @@ export async function upsertExpediente(p: UpsertPayload): Promise<Expediente> {
         incomingSource,
       ) as unknown as never,
       propuesta_data: propuestaFinal as unknown as never,
-      discount_data: mergePreservingMeaningful(
-        prevRow.discount_data,
-        p.discountState as unknown as LooseRecord,
-      ) as unknown as never,
+      // discount_data: NO merge — el descuento comercial debe reflejar exactamente
+      // el estado actual del formulario (evita que "vigencia" legacy tipo "48 horas"
+      // se preserve al guardar). Se normaliza para descartar tiers antiguos.
+      discount_data: sanitizeDiscountForPersist(p.discountState) as unknown as never,
       honorarios_base: p.honorariosBase || Number(prevRow.honorarios_base ?? 0),
       honorarios_final: p.honorariosFinal || Number(prevRow.honorarios_final ?? 0),
     };
