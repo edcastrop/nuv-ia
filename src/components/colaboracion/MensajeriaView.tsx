@@ -167,7 +167,7 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
   const grouped = useMemo(() => groupByDate(msgs), [msgs]);
 
   return (
-    <div className="relative min-h-[calc(100dvh-4rem)] overflow-hidden" style={{ background: "#050816" }}>
+    <div className="relative h-[calc(100dvh-4rem)] flex flex-col overflow-hidden" style={{ background: "#050816" }}>
       {/* Ambient background */}
       <div className="pointer-events-none absolute inset-0 opacity-[0.06]" style={{
         backgroundImage: "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
@@ -176,7 +176,7 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
       <div className="pointer-events-none absolute -top-24 -left-24 h-[440px] w-[440px] rounded-full blur-[140px]" style={{ background: "radial-gradient(circle, rgba(68,93,163,0.32), transparent 70%)" }} />
       <div className="pointer-events-none absolute -bottom-32 -right-24 h-[520px] w-[520px] rounded-full blur-[160px]" style={{ background: "radial-gradient(circle, rgba(52,199,89,0.14), transparent 70%)" }} />
 
-      <div className="relative z-10 px-4 md:px-6 pt-4 pb-3">
+      <div className="relative z-10 px-4 md:px-6 pt-5 pb-4 flex-1 flex flex-col min-h-0">
         {/* HERO / HEADER */}
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
@@ -231,10 +231,9 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
 
         {/* MAIN GRID */}
         <div
-          className="flex flex-col md:grid gap-3 md:gap-4"
+          className="flex flex-col md:grid gap-3 md:gap-4 flex-1 min-h-0"
           style={{
             gridTemplateColumns: hasCanal ? "320px minmax(0,1fr) 300px" : "320px minmax(0,1fr)",
-            height: "calc(100dvh - 168px)",
           }}
         >
           {/* PANEL IZQUIERDO */}
