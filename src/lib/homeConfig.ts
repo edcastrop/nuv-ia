@@ -20,7 +20,12 @@ export interface RoleHomeKpi {
     | "expedientes.aprobados"
     | "expedientes.firmados"
     | "expedientes.pagados"
+    | "expedientes.firmados.miAsesor"
+    | "comisiones.devengadas.miAsesor"
     | "notificaciones.criticas"
+    | "qa.colaRevision"
+    | "qa.hallazgosAbiertos"
+    | "qa.porcentajeAprobacion"
     | "static";
   staticValue?: string;
 }
